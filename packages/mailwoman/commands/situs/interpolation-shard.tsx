@@ -28,14 +28,13 @@ import { globPaths } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
-import { basename, dirname } from "@mailwoman/platform/path"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Box, Text } from "ink"
+import { basename, dirname, resolvePath } from "path-ts"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
-
-import { buildSHA, stampLayerManifest } from "../../gazetteer-pipeline/stamp-manifest.ts"
+import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
  * Provenance tag for the baked `interp_calibration` row — the split-conformal multi-region recalibration this build
@@ -114,7 +113,7 @@ export const spec = {
 		state: { type: "string", required: true, choices: Object.keys(STATE_FIPS), description: "US state abbreviation" },
 		"edges-dir": {
 			type: "string",
-			default: dataRootPath("census", "tiger2023-edges"),
+			default: resolvePath(dataRootPath("census", "tiger2023-edges")),
 			description: "TIGER EDGES directory",
 		},
 		release: { type: "string", default: "TIGER2023", description: "TIGER release tag" },
@@ -153,7 +152,7 @@ const SitusInterpolationShard: ParsedCommandComponent<Options> = ({ options }) =
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { parseJSONStrict } = await import("@mailwoman/core/objects")
-		const { INTERP_RADIUS_CALIBRATION } = await import("../../interp-calibration.ts")
+		const { INTERP_RADIUS_CALIBRATION } = await import("#interp-calibration")
 
 		if (!options.state || !STATE_FIPS[options.state.toUpperCase()]) {
 			throw new CommandError(
@@ -162,7 +161,10 @@ const SitusInterpolationShard: ParsedCommandComponent<Options> = ({ options }) =
 		}
 
 		const STATE = options.state.toUpperCase()
-		const finalOut = options.out ?? dataRootPath("interpolation", `interpolation-us-${STATE.toLowerCase()}.db`)
+
+		const finalOut = resolvePath(
+			options.out ?? dataRootPath("interpolation", `interpolation-us-${STATE.toLowerCase()}.db`)
+		)
 
 		// Optional maintainer deps: the shared schema/normalizer (resolver-wof-sqlite, an optional peer)
 		// and the DuckDB spatial reader (@duckdb/node-api, a dev dep). Both dynamic + guarded so the
@@ -349,7 +351,7 @@ const SitusInterpolationShard: ParsedCommandComponent<Options> = ({ options }) =
 			createdAt: new Date().toISOString(),
 		})
 
-		swapDatabaseIntoPlace(tmpOut, finalOut)
+		await swapDatabaseIntoPlace(tmpOut, finalOut)
 
 		return [
 			`${sides} segment-sides → ${finalOut}`,

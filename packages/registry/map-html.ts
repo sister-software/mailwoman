@@ -28,7 +28,7 @@
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { layers, namedFlavor } from "@protomaps/basemaps"
 
-import type { MapFeatureData } from "./types.ts"
+import type { MapFeatureData } from "#types"
 
 /**
  * MapLibre GL release the page pins (CDN + SRI). Matches the workspace's `maplibre-gl` major.

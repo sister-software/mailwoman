@@ -9,7 +9,7 @@
  *   territories, and the 4-digit postcode.
  */
 
-export * from "./delivery-service.ts"
-export * from "./level-designator.ts"
-export * from "./postcode.ts"
-export * from "./state.ts"
+export * from "#au/delivery-service"
+export * from "#au/level-designator"
+export * from "#au/postcode"
+export * from "#au/state"

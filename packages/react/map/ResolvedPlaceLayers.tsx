@@ -15,7 +15,8 @@
 
 import type { ReactNode } from "react"
 
-import type { MapPlaceRenderSpec } from "./place-render.ts"
+import type { MapPlaceRenderSpec } from "#map/place-render"
+
 import { PlaceMarker } from "./PlaceMarker.tsx"
 import { ResultCamera } from "./ResultCamera.tsx"
 import { ResultOverlay } from "./ResultOverlay.tsx"

@@ -34,9 +34,8 @@ import {
 	type ResolvedEntity,
 	type SourceRecord,
 } from "#index"
-
-import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
-import { norm } from "./shared.ts"
+import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
+import { norm } from "#tools/shared"
 
 /**
  * Distinct sources an entity needs to count toward the triple-corroborated tally.

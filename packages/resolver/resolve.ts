@@ -30,9 +30,9 @@ import {
 	applyAdminCoherence,
 	applyExplicitCountryCoherence,
 	applyRegionCountryCoherence,
-} from "./admin-coherence-passes.ts"
-import { adminContainmentVerdict, firstRegionQualifier, partitionByContainment } from "./admin-containment.ts"
-import { describeCapabilityGaps, reportCapabilityGaps } from "./backend-capabilities.ts"
+} from "#admin-coherence-passes"
+import { adminContainmentVerdict, firstRegionQualifier, partitionByContainment } from "#admin-containment"
+import { describeCapabilityGaps, reportCapabilityGaps } from "#backend-capabilities"
 import {
 	BARE_REGION_DOMINANCE_LOG10,
 	bareCountryCandidate,
@@ -40,15 +40,15 @@ import {
 	logPopulation,
 	loneBareLocalityNode,
 	pickLargerAdmin,
-} from "./bare-toponym-race.ts"
-import { decorateNode } from "./decorate-node.ts"
+} from "#bare-toponym-race"
+import { decorateNode } from "#decorate-node"
 import {
 	findPostcodeCountryScope,
 	type PostcodeCountryScope,
 	stampPostcodeCountryScope,
-} from "./postcode-country-coherence.ts"
-import { type CoordinateOptionalPlace, postcodePrefixResolvedPlace, probePostcodePrefix } from "./postcode-prefix.ts"
-import { applyPostcodeShapeCoherence, isShapeExcludedPostcode } from "./postcode-shape-coherence.ts"
+} from "#postcode-country-coherence"
+import { type CoordinateOptionalPlace, postcodePrefixResolvedPlace, probePostcodePrefix } from "#postcode-prefix"
+import { applyPostcodeShapeCoherence, isShapeExcludedPostcode } from "#postcode-shape-coherence"
 import {
 	applyPostcodeConsistency,
 	applySpanRescore,
@@ -58,15 +58,15 @@ import {
 	NOOP_TRACE_RECORDER,
 	pickCompletion,
 	type ResolutionState,
-} from "./resolve-passes.ts"
-import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "./street-tier.ts"
+} from "#resolve-passes"
+import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "#street-tier"
 import {
 	type CapitalLevelFn,
 	DEFAULT_COUNTRY_PRIOR_WEIGHT,
 	promoteCapitals,
 	rankByCountryPrior,
 	rankByImportance,
-} from "./toponym-prior.ts"
+} from "#toponym-prior"
 
 /**
  * Build a `Resolver` backed by a `ResolverBackend`. The backend can be any concrete impl structurally compatible with

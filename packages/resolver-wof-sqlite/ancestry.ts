@@ -17,7 +17,7 @@
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { allRows } from "./sqlite-utils.ts"
+import { allRows } from "#sqlite-utils"
 
 /**
  * WOF placetype → containment depth, coarsest = 1. Higher = finer. Placetypes we never resolve (continent, empire, …)

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./buildings.ts"
-export * from "./composition.ts"
-export * from "./layers.ts"
-export * from "./theme.ts"
+export * from "#base/buildings"
+export * from "#base/composition"
+export * from "#base/layers"
+export * from "#base/theme"

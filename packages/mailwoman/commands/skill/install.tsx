@@ -38,7 +38,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { copyPath, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { Text } from "ink"
 import { resolvePath } from "path-ts"
 
@@ -71,16 +71,12 @@ interface Options {
  * candidate distances are tried — exactly one exists on disk in any given tree.
  */
 async function resolveSkillSourceDir(): Promise<string> {
-	const compiledTreeCandidate = new URL("../../../skills/mailwoman", import.meta.url)
+	const dir = resolvePackagePath("mailwoman", "skills", "mailwoman")
 
-	if (await pathExists(compiledTreeCandidate)) return fileURLToPath(compiledTreeCandidate)
-
-	const sourceTreeCandidate = new URL("../../skills/mailwoman", import.meta.url)
-
-	if (await pathExists(sourceTreeCandidate)) return fileURLToPath(sourceTreeCandidate)
+	if (await pathExists(dir)) return dir
 
 	throw new CommandError(
-		`Could not locate the packaged skill directory relative to ${import.meta.url}. ` +
+		`Could not locate the packaged skill directory at ${dir}. ` +
 			"This is a packaging bug in the mailwoman npm package — please file an issue."
 	)
 }

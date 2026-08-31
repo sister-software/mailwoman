@@ -29,14 +29,14 @@
 // product's geometry, and a second copy of it is a second place for a hole to stop being one.
 import { rectangleRing, reversedRing as holeRing } from "@mailwoman/spatial"
 
-import { ringAreaReadings } from "./rings.ts"
+import { ringAreaReadings } from "#rings"
 import type {
 	CoastalFeatureSource,
 	CoastalInstabilityFeature,
 	CoastalSourceFeature,
 	MultiPolygonRings,
-} from "./sdk/ingest.ts"
-import { NCERM_SCENARIOS_BY_KEY, NCERM_SOURCE_EPSG, type CoastalScenario } from "./vocabulary.ts"
+} from "#sdk/ingest"
+import { NCERM_SCENARIOS_BY_KEY, NCERM_SOURCE_EPSG, type CoastalScenario } from "#vocabulary"
 
 /**
  * Re-exported so a fixture in another workspace builds its rings the same way this one does.

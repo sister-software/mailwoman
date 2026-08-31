@@ -12,13 +12,14 @@
  *     --golden data/eval/external/oa-pt-coord-150.jsonl --default-country PT --n 30
  */
 import { type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
+import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
+const { values: rawValues } = parseArguments({
 	options: {
 		base: { type: "string" },
 		cand: { type: "string" },
@@ -62,7 +63,7 @@ async function main() {
 
 	const base = await mk(values["base"] || "")
 	const cand = await mk(values["cand"] || "")
-	const resolver = createWOFResolver(new WOFSQLitePlaceLookup({ databasePath: WOF }))
+	const resolver = createWOFResolver(new WOFSQLitePlaceLookup({ databasePath: resolvePath(WOF) }))
 	const opts = { defaultCountry: cc }
 
 	const didResolve = async (tree: AddressTree): Promise<boolean> => {

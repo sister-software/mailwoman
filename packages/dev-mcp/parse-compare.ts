@@ -31,7 +31,7 @@ import { APIClient } from "@mailwoman/core/api"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { COMPONENT_TO_LIBPOSTAL, toLibpostalComponents, treeToParseMatches } from "@mailwoman/libpostal"
 
-import { assertScorableEndpoint, EXTERNAL_ARM_MIN_REQUEST_INTERVAL_MS } from "./external-arm.ts"
+import { assertScorableEndpoint, EXTERNAL_ARM_MIN_REQUEST_INTERVAL_MS } from "#external-arm"
 
 const PARSE_TIMEOUT_MS = 15_000
 

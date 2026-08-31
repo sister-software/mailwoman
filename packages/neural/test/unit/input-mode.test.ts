@@ -10,10 +10,10 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { NeuralAddressClassifier, type NeuralRunner } from "@mailwoman/neural/classifier"
 import { parseGazetteerLexicon } from "@mailwoman/neural/gazetteer-inference"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 interface Fixture {
@@ -21,7 +21,9 @@ interface Fixture {
 	locality_lexicon: Parameters<typeof parseGazetteerLexicon>[0]
 }
 
-const fixture = await readLocalJSONFile<Fixture>(join(import.meta.dirname, "../fixtures/evidence-parity-v2.json"))
+const fixture = await readLocalJSONFile<Fixture>(
+	resolvePackagePath("@mailwoman/neural", "test", "fixtures", "evidence-parity-v2.json")
+)
 
 const LABELS = ["O", "B-street", "I-street", "B-locality", "I-locality"]
 
@@ -39,7 +41,7 @@ function stubRunner(seen: { evidence: unknown[] }): NeuralRunner {
 
 async function makeClassifier(seen: { evidence: unknown[] }) {
 	const tokenizer = await MailwomanTokenizer.loadFromFile(
-		join(import.meta.dirname, "../fixtures/tokenizer-v0.1.0.model")
+		resolvePackagePath("@mailwoman/neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 	)
 
 	return new NeuralAddressClassifier({

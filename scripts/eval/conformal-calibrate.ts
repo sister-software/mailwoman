@@ -50,8 +50,8 @@
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath, median, tempRootPath } from "@mailwoman/core/utils"
-import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
@@ -67,7 +67,7 @@ const COVERAGE_TOLERANCE = 0.03
  */
 const INFLATED_INTERVAL_RATIO = 1.1
 
-const { values: rawValues } = parseArgs({
+const { values: rawValues } = parseArguments({
 	options: {
 		"address-points": { type: "string" },
 		alpha: { type: "string" },

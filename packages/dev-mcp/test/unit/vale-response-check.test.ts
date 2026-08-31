@@ -4,15 +4,15 @@
  * @author Teffen Ellis, et al.
  */
 
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { spawnSync } from "@mailwoman/platform/child_process"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { spawnProcessSync } from "@mailwoman/core/process"
 import { describe, expect, it } from "vitest"
 
-const HOOK_PATH = fileURLToPath(new URL("../../hooks/vale-response-check.ts", import.meta.url))
+const HOOK_PATH = resolvePackagePath("@mailwoman/dev-mcp", "hooks", "vale-response-check.ts")
 
 function runHook(lastAssistantMessage: string, stopHookActive = false): string {
-	const result = spawnSync(process.execPath, [HOOK_PATH], {
+	const result = spawnProcessSync(process.execPath, [HOOK_PATH], {
 		input: JSON.stringify({ last_assistant_message: lastAssistantMessage, stop_hook_active: stopHookActive }),
 		encoding: "utf8",
 	})

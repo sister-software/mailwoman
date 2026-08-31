@@ -11,6 +11,11 @@
 
 import type { ReactNode } from "react"
 
+import { buildParsePayload } from "#pipeline/copy"
+import { PIPELINE_DEFAULT_ADDRESS, PIPELINE_PRESETS } from "#pipeline/presets"
+import type { PipelinePanels, PipelineRuntime } from "#pipeline/types"
+import { useParsePipeline } from "#pipeline/useParsePipeline"
+
 import { ClientOnly } from "../common/ClientOnly.tsx"
 import { CopyButton } from "../common/CopyButton.tsx"
 import { KindBadge } from "../common/KindBadge.tsx"
@@ -18,12 +23,8 @@ import { LoadingIndicator } from "../common/LoadingIndicator.tsx"
 import { PresetChips, type Preset } from "../common/PresetChips.tsx"
 import { CandidatePicker } from "./CandidatePicker.tsx"
 import { ComponentTable } from "./ComponentTable.tsx"
-import { buildParsePayload } from "./copy.ts"
-import { PIPELINE_DEFAULT_ADDRESS, PIPELINE_PRESETS } from "./presets.ts"
 import { QueryForm } from "./QueryForm.tsx"
 import { ResolvedPlace } from "./ResolvedPlace.tsx"
-import type { PipelinePanels, PipelineRuntime } from "./types.ts"
-import { useParsePipeline } from "./useParsePipeline.ts"
 
 export interface PipelineExplorerProps {
 	/**

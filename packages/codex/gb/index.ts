@@ -8,7 +8,7 @@
  *   vocabulary.
  */
 
-export * from "./country.ts"
-export * from "./postcode-area.ts"
-export * from "./postcode.ts"
-export * from "./street-type.ts"
+export * from "#gb/country"
+export * from "#gb/postcode-area"
+export * from "#gb/postcode"
+export * from "#gb/street-type"

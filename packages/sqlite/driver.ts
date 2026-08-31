@@ -4,7 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { DatabaseSync, StatementSync } from "@mailwoman/platform/sqlite"
+import type { DatabaseSync, StatementSync } from "node:sqlite"
+
 import {
 	CompiledQuery,
 	createQueryId,
@@ -17,7 +18,7 @@ import {
 	SelectQueryNode,
 } from "kysely"
 
-import type { SqliteDialectConfig } from "./dialect-config.ts"
+import type { SqliteDialectConfig } from "#dialect-config"
 
 class ConnectionMutex {
 	#promise?: Promise<void>

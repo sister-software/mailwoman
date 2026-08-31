@@ -14,18 +14,18 @@
 
 import { resolvePath } from "path-ts"
 
-import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
-import { resolveInputSet, type InputSetRef } from "./input-sets.ts"
-import { describeObservedRate, type Selection } from "./power.ts"
+import type { EngineConfig, EngineRegistryLike } from "#engine-registry"
+import { resolveInputSet, type InputSetRef } from "#input-sets"
+import { describeObservedRate, type Selection } from "#power"
+import { curveByStratum, errorClasses, reliabilityCurve, thresholdTable } from "#reliability"
 import {
 	coarsePlacerReliabilitySample,
 	ComponentAggregate,
 	decodeReliabilitySample,
 	UnassertedPolicy,
 	type SurfaceSample,
-} from "./reliability-surfaces.ts"
-import { curveByStratum, errorClasses, reliabilityCurve, thresholdTable } from "./reliability.ts"
-import { provenanceFor } from "./tool-kit.ts"
+} from "#reliability-surfaces"
+import { provenanceFor } from "#tool-kit"
 
 /**
  * The confidence surfaces this tool can grade. Each is a distinct head over distinct features — they share a
@@ -158,7 +158,7 @@ async function placerRun(registry: EngineRegistryLike, args: Record<string, unkn
 		// measurement are the corpus and the tree.
 		provenance: {
 			corpus,
-			tree_fingerprint: registry.fingerprint().digest,
+			tree_fingerprint: (await registry.fingerprint()).digest,
 			note: "coarse-placer surface: no geocode engine is involved, so no engine_id or input_set applies",
 		},
 		nRequested: sample.observations.length + sample.excluded.reduce((total, entry) => total + entry.n, 0),

@@ -15,8 +15,8 @@
  *   `curated: false`, and the head-noun derivation is what proposes the addressed form from it.
  */
 
-import { normalizeSurface } from "./surfaces.ts"
-import { CONCEPT_QIDS, type SubVenueSurface } from "./table.ts"
+import { normalizeSurface } from "#tools/sub-venue/surfaces"
+import { CONCEPT_QIDS, type SubVenueSurface } from "#tools/sub-venue/table"
 
 /**
  * The SPARQL results envelope, narrowed to the columns the designator-label query produces.

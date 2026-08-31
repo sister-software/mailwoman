@@ -10,12 +10,11 @@
  *   browser.
  */
 
+import { featurize } from "#coarse-placer/featurize"
+import { $public } from "#env/index"
 import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
 
-import { $public } from "../env/index.ts"
-import { featurize } from "./featurize.ts"
-
-export { COARSE_CLASSES, FEATURE_DIM, featurize } from "./featurize.ts"
+export { COARSE_CLASSES, FEATURE_DIM, featurize } from "#coarse-placer/featurize"
 
 export interface CoarsePlacerArtifact {
 	/**
@@ -152,7 +151,7 @@ export class CoarsePlacer {
 	 * doesn't pull them in.
 	 */
 	static async fromArtifactDir(dir: string, opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
-		const { join } = await import("@mailwoman/platform/path")
+		const { join } = await import("path-ts")
 		const meta = await readLocalJSONFile<CoarsePlacerMeta>(join(dir, "meta.json"))
 		const buf = await readLocalBuffer(join(dir, "weights.bin"))
 		// Copy out of the (possibly pooled, possibly mis-aligned) Buffer into a fresh ArrayBuffer so the
@@ -184,7 +183,7 @@ export class CoarsePlacer {
 		const dir = $public.MAILWOMAN_COARSE_PLACER_DIR
 
 		if (dir) return CoarsePlacer.fromArtifactDir(dir, opts)
-		const { corePackagePath } = await import("../utils/repo.ts")
+		const { corePackagePath } = await import("#utils/repo")
 
 		return CoarsePlacer.fromArtifactDir(corePackagePath("data", "coarse-placer"), opts)
 	}

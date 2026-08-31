@@ -15,8 +15,8 @@ import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { join } from "@mailwoman/platform/path"
 import { listGateSpecs, resolveGateSpecPath, runPromotionGate } from "mailwoman/eval-harness/promotion-gate"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -184,7 +184,7 @@ describe("paired weights-caches (#47)", () => {
 		await writeLocalTextFile("fake-tokenizer", join(pkg, "tokenizer.model"))
 		await writeLocalJSONFile({ training: { tokenizer_version: "v0.6.0-a0" } }, join(pkg, "model-card.json"))
 
-		return root
+		return root.toString()
 	}
 
 	it("refuses --int8-weights-cache without --weights-cache", async () => {

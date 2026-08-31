@@ -23,8 +23,8 @@
  *   ending "near me" is not a locality and answering it as one is the bug.
  */
 
-import { MAX_LOCALITY_ONLY_LENGTH, STREET_SUFFIXES } from "./rules.ts"
-import type { NormalizedInputLite, QueryShapeLike } from "./types.ts"
+import { MAX_LOCALITY_ONLY_LENGTH, STREET_SUFFIXES } from "#rules"
+import type { NormalizedInputLite, QueryShapeLike } from "#types"
 
 /**
  * `locality_only` scores 0.85. Both refinement kinds sit under it by a whole confidence step so no float-comparison

@@ -11,20 +11,19 @@
 import type { SystemCode } from "@mailwoman/codex"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 
+import { parseAnchorLookup, type AnchorLookup } from "#anchor-inference"
+import { NeuralAddressClassifier } from "#classifier"
+import { parseCountryLexicon } from "#country-inference"
+import type { CountryLexicon } from "#country-inference"
+import { parseGazetteerLexicon } from "#gazetteer-inference"
+import type { GazetteerLexicon } from "#gazetteer-inference"
 import { DEFAULT_INTRA_OP_THREADS, ONNXRunner } from "#onnx-runner"
-
-import { parseAnchorLookup, type AnchorLookup } from "./anchor-inference.ts"
-import { NeuralAddressClassifier } from "./classifier.ts"
-import { parseCountryLexicon } from "./country-inference.ts"
-import type { CountryLexicon } from "./country-inference.ts"
-import { parseGazetteerLexicon } from "./gazetteer-inference.ts"
-import type { GazetteerLexicon } from "./gazetteer-inference.ts"
-import { peekPairIndexHeader, PairIndexResolver } from "./pair-index-resolver.ts"
-import type { PlacetypePairPriorOpts } from "./placetype-pair-prior.ts"
-import { PostcodeBinaryResolver } from "./postcode-binary-resolver.ts"
-import { parseSemiCRFTransitions, type SemiCRFTransitions } from "./semi-markov-decode.ts"
-import { MailwomanTokenizer } from "./tokenizer.ts"
-import type { ResolvedWeights, ResolveWeightsOpts } from "./weights.ts"
+import { peekPairIndexHeader, PairIndexResolver } from "#pair-index-resolver"
+import type { PlacetypePairPriorOpts } from "#placetype-pair-prior"
+import { PostcodeBinaryResolver } from "#postcode-binary-resolver"
+import { parseSemiCRFTransitions, type SemiCRFTransitions } from "#semi-markov-decode"
+import { MailwomanTokenizer } from "#tokenizer"
+import type { ResolvedWeights, ResolveWeightsOpts } from "#weights"
 
 /**
  * One-call factory that resolves the weights package (or explicit paths), loads the tokenizer and ONNX runner, and
@@ -63,18 +62,20 @@ export async function loadClassifierFromWeights(
 		{ readLabelsFromModelCard, readCRFTransitions, readRequiredChannels, unfedAnchorDetail, unfedChannelWarner },
 	] = await Promise.all([
 		import(/* webpackIgnore: true */ "@mailwoman/core/env"),
-		import(/* webpackIgnore: true */ "./weights.ts"),
-		import(/* webpackIgnore: true */ "./weights-channels.ts"),
+		import(/* webpackIgnore: true */ "#weights"),
+		import(/* webpackIgnore: true */ "#weights-channels"),
 	])
 
 	/* oxlint-enable typescript/no-restricted-imports */
-	const resolved: ResolvedWeights = resolveWeights(opts)
+	const resolved: ResolvedWeights = await resolveWeights(opts)
 
 	// The vocabulary belongs to the MODEL, so an overlay that shares a base model inherits it rather than
 	// restating it. A carrier package's own card describes the overlay — its version, its own artifacts —
 	// and omitting `labels` there is correct; copying them in would be a second copy to go stale on the
 	// next retrain. Falling back is what keeps the two facts in one place.
-	const labels = readLabelsFromModelCard(resolved.modelCardPath) ?? readLabelsFromModelCard(resolved.baseModelCardPath)
+	const labels =
+		(await readLabelsFromModelCard(resolved.modelCardPath)) ??
+		(await readLabelsFromModelCard(resolved.baseModelCardPath))
 
 	const crf = await readCRFTransitions(resolved.crfTransitionsPath)
 	// #727 stage-2: parse the span head's segment-transition grammar when the bundle ships it (v3+). Failure to parse
@@ -118,7 +119,7 @@ export async function loadClassifierFromWeights(
 	// SOFT: each channel is best-effort. A caller-passed `postcodeAnchorLookup` always wins. When
 	// the model-card declares a channel REQUIRED but the package didn't ship its data, we warn ONCE
 	// (mirroring neural-web's `warnOnUnfedTrainedChannels`) and run that channel OFF — never crash.
-	const declared = readRequiredChannels(resolved.modelCardPath)
+	const declared = await readRequiredChannels(resolved.modelCardPath)
 
 	let postcodeAnchorLookup = opts.postcodeAnchorLookup
 
@@ -144,7 +145,7 @@ export async function loadClassifierFromWeights(
 	// returns undefined for the packages that ship no binary on purpose, e.g. en-gb under #1476).
 	const anchorDetail =
 		declared?.anchor?.required && !(postcodeAnchorLookup && postcodeAnchorLookup.size)
-			? unfedAnchorDetail(resolved.packageDir)
+			? await unfedAnchorDetail(resolved.packageDir)
 			: undefined
 
 	if (anchorDetail) {

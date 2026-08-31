@@ -19,9 +19,7 @@
  *   never holds it: a web stream piped to a write stream.
  */
 
-import { openWriteStream } from "@mailwoman/core/fs/streams"
-import { Readable } from "@mailwoman/platform/stream"
-import { pipeline } from "@mailwoman/platform/stream/promises"
+import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 
 const GEOFABRIK_BASE = "https://download.geofabrik.de"
 

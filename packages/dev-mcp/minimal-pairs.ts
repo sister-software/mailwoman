@@ -28,7 +28,7 @@
 
 import { haversineKm } from "@mailwoman/spatial"
 
-import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
+import type { EngineConfig, EngineRegistryLike } from "#engine-registry"
 
 /**
  * How far the resolved point must move before the rung is called a divergence, in kilometres.

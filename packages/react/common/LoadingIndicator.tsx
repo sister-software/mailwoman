@@ -11,7 +11,7 @@
 
 import { memo, type ReactNode } from "react"
 
-import { cx } from "./cx.ts"
+import { cx } from "#common/cx"
 
 export type LoadingMode = "pulse" | "spinner" | "staged"
 

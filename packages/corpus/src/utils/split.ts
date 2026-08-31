@@ -26,10 +26,10 @@
 
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
+import { spawnProcess } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import { spawn } from "@mailwoman/platform/child_process"
-import { createHash } from "@mailwoman/platform/crypto"
-import { join } from "@mailwoman/platform/path"
+import { createHash } from "@mailwoman/core/utils/hash"
+import { join, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import type { CanonicalRow, LabeledRow } from "#types"
@@ -173,7 +173,7 @@ export function hashBucket(id: string, n: number): number {
  *
  * Reruns produce byte-identical files (the underlying `splitRows` is deterministic).
  */
-export async function writeSplitManifests(manifest: SplitManifest, outputDir: string): Promise<void> {
+export async function writeSplitManifests(manifest: SplitManifest, outputDir: PathBuilderLike): Promise<void> {
 	await makeDirectories(outputDir)
 
 	for (const name of ["train", "val", "test"] as const) {
@@ -206,7 +206,7 @@ export type SplitInputLabeledRow = Pick<LabeledRow, "source_id" | "country" | "c
  */
 export async function writeSplitManifestsFromLabeledFiles(opts: {
 	labeledPaths: Record<SplitName, string>
-	outputDir: string
+	outputDir: PathBuilderLike
 	corpusVersion: string
 	counts: Record<SplitName, number>
 	holdouts?: Record<string, readonly string[]>
@@ -263,7 +263,7 @@ async function streamSortedSourceIDs(labeledJsonlPath: string, outPath: string):
 
 	await new Promise<void>((resolve, reject) => {
 		// LC_ALL=C: byte-sort, locale-independent → deterministic across hosts.
-		const proc = spawn("sort", [unsortedPath, "-o", outPath], { env: childEnv({ LC_ALL: "C" }) })
+		const proc = spawnProcess("sort", [unsortedPath, "-o", outPath], { env: childEnv({ LC_ALL: "C" }) })
 		proc.on("error", reject)
 
 		proc.on("exit", (code) => {

@@ -33,17 +33,16 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { compareReferential, REFERENTIAL_SATURATION_POPULATION } from "@mailwoman/core/resolver"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows, dataRootPath, getRow, wofShardPaths } from "@mailwoman/core/utils"
-import { parseArgs } from "@mailwoman/platform/util"
 import type { PlaceCandidate } from "@mailwoman/resolver-wof-sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { loadHardSliceBoard } from "../eval-harness/hard-slice-board.ts"
+import { loadHardSliceBoard } from "#eval-harness/hard-slice-board"
 
-const { values } = parseArgs({ options: { board: { type: "string" } } })
+const { values } = parseArguments({ options: { board: { type: "string" } } })
 
 //#region 1 — Gazetteer census of the saturated tail
 
@@ -113,7 +112,13 @@ const preSplitKey = (a: PlaceCandidate, b: PlaceCandidate): number =>
  */
 const postSplitKey = (a: PlaceCandidate, b: PlaceCandidate): number => compareReferential(a, b) || b.score - a.score
 
-const wofPaths = wofShardPaths().filter(pathExistsSync)
+const wofPaths: string[] = []
+
+for (const shardPath of wofShardPaths()) {
+	if (await pathExists(shardPath)) {
+		wofPaths.push(shardPath)
+	}
+}
 
 console.log(`### 2. Live query replay\n`)
 

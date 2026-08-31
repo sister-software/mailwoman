@@ -16,9 +16,9 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { changeMode } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join, type PathBuilder } from "path-ts"
 import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -28,8 +28,8 @@ afterAll(() => fixtures.disposeAsync())
 // Record every DatabaseSync construction (path + the readOnly option) while delegating to the real implementation.
 const spy = vi.hoisted(() => ({ opens: [] as Array<{ path: string; readOnly: boolean | undefined }> }))
 
-vi.mock("@mailwoman/platform/sqlite", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@mailwoman/platform/sqlite")>()
+vi.mock("node:sqlite", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("node:sqlite")>()
 
 	class RecordingDatabaseSync extends actual.DatabaseSync {
 		constructor(path: string, options?: { readOnly?: boolean }) {
@@ -60,7 +60,7 @@ afterAll(() => vi.resetModules())
 // Dynamic imports AFTER the reset (and after the hoisted vi.mock registration above) so the
 // module-under-test chain evaluates against the RecordingDatabaseSync mock.
 // oxlint-disable-next-line no-restricted-imports -- this probe RECORDS the construction, so it must name the builtin
-await import("@mailwoman/platform/sqlite")
+await import("node:sqlite")
 const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite/lookup")
 
 /**
@@ -98,7 +98,7 @@ function readOnlyForOpenOf(path: string): boolean | undefined {
 }
 
 describe("WOFSQLitePlaceLookup open mode (databasePath branch)", () => {
-	let dir: string
+	let dir: PathBuilder
 	let dbPath: string
 
 	beforeEach(async () => {

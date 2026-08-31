@@ -16,14 +16,14 @@
  *   of the brand-lexicon work) can chain `variant-aliases` → this table itself.
  */
 
-import { createBrandLookupCore } from "./brands-lookup-core.ts"
-import { readPackagedTable } from "./packaged-data.ts"
-import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "./types.ts"
+import { createBrandLookupCore } from "#brands-lookup-core"
+import { readPackagedTable } from "#packaged-data"
+import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "#types"
 
-const TABLE = readPackagedTable<POIBrandTable>("brands.json")
+const TABLE = await readPackagedTable<POIBrandTable>("brands.json")
 const CORE = createBrandLookupCore(TABLE)
 
-export type { BrandMatch } from "./brands-lookup-core.ts"
+export type { BrandMatch } from "#brands-lookup-core"
 
 /**
  * Exact-phrase brand lookup against `name` + `aliases`. Confidence is always 1.0 (exact match only). Deduplicated by

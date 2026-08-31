@@ -11,7 +11,7 @@
 
 import { isPresent } from "@mailwoman/core/objects"
 
-import type { ColumnMapping } from "../ingest.ts"
+import type { ColumnMapping } from "#ingest"
 
 export interface SourceSpec {
 	source: string

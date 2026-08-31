@@ -16,10 +16,10 @@
  *   imports, plus `HEAD` and the dirty set, and a change makes the engine UNREACHABLE rather than wrong.
  */
 
-import { readDirectoryEntriesSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
-import { execFileSync } from "@mailwoman/platform/child_process"
-import { createHash } from "@mailwoman/platform/crypto"
-import { join } from "@mailwoman/platform/path"
+import { readDirectoryEntries, statPath } from "@mailwoman/core/fs/readers"
+import { runFileSync } from "@mailwoman/core/process"
+import { sha256Hex } from "@mailwoman/core/utils/hash"
+import { join, resolvePath, type PathBuilderLike } from "path-ts"
 
 /**
  * Workspaces whose source an engine's module graph reaches. Editing anything here can change a parse or a resolve, so
@@ -75,7 +75,7 @@ export interface TreeFingerprint {
 	filesWalked: number
 }
 
-function newestSourceMtime(root: string): { mtimeMs: number; path: string | null; count: number } {
+async function newestSourceMtime(root: string): Promise<{ mtimeMs: number; path: string | null; count: number }> {
 	let newest = 0
 	let newestPath: string | null = null
 	let count = 0
@@ -86,7 +86,7 @@ function newestSourceMtime(root: string): { mtimeMs: number; path: string | null
 		let entries
 
 		try {
-			entries = readDirectoryEntriesSync(dir)
+			entries = await readDirectoryEntries(dir)
 		} catch {
 			// A workspace that does not exist in this checkout contributes nothing rather than throwing — the caller's
 			// emptiness check is what catches a list that is wrong in total.
@@ -107,7 +107,7 @@ function newestSourceMtime(root: string): { mtimeMs: number; path: string | null
 			count++
 
 			const full = join(dir, entry.name)
-			const { mtimeMs } = statPathSync(full)
+			const { mtimeMs } = await statPath(full)
 
 			if (mtimeMs > newest) {
 				newest = mtimeMs
@@ -127,9 +127,9 @@ function newestSourceMtime(root: string): { mtimeMs: number; path: string | null
  * fixed-width `slice(3)` takes the first character of the path with it. Callers that want a bare token trim their own
  * result.
  */
-function git(repoRoot: string, args: string[]): string {
+function git(repoRoot: PathBuilderLike, args: string[]): string {
 	try {
-		return execFileSync("git", args, { cwd: repoRoot, encoding: "utf8" }).replace(/\n+$/, "")
+		return runFileSync("git", args, { cwd: resolvePath(repoRoot), encoding: "utf8" }).replace(/\n+$/, "")
 	} catch {
 		return ""
 	}
@@ -140,13 +140,13 @@ function git(repoRoot: string, args: string[]): string {
  *
  * @throws If the walk found no source files at all — see {@link TreeFingerprint.filesWalked}.
  */
-export function computeTreeFingerprint(repoRoot: string): TreeFingerprint {
+export async function computeTreeFingerprint(repoRoot: PathBuilderLike): Promise<TreeFingerprint> {
 	let newestMtimeMs = 0
 	let newestPath: string | null = null
 	let filesWalked = 0
 
 	for (const workspace of FINGERPRINTED_WORKSPACES) {
-		const result = newestSourceMtime(join(repoRoot, workspace))
+		const result = await newestSourceMtime(join(repoRoot, workspace))
 
 		filesWalked += result.count
 
@@ -171,10 +171,7 @@ export function computeTreeFingerprint(repoRoot: string): TreeFingerprint {
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- small, bounded, already in memory
 	const dirtyFiles = status ? status.split("\n").map((line) => line.slice(3).trim()) : []
 
-	const digest = createHash("sha256")
-		.update(`${gitHead}\n${newestMtimeMs}\n${filesWalked}\n${dirtyFiles.join("\n")}`)
-		.digest("hex")
-		.slice(0, 16)
+	const digest = sha256Hex(`${gitHead}\n${newestMtimeMs}\n${filesWalked}\n${dirtyFiles.join("\n")}`).slice(0, 16)
 
 	return { digest, gitHead, dirtyFiles, newestMtimeMs, newestPath, filesWalked }
 }

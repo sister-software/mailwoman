@@ -30,13 +30,13 @@ import { openReadStream } from "@mailwoman/core/fs/streams"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
+import { makeMulberry32, type ShardRecipe } from "#shard-recipes/scaffold"
 import { type LocaleBaseTuple, type SynthesizedLocaleRow, synthesizeLocaleRow } from "#synthesizers/german"
 import { alignRow } from "#utils"
-
-import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
 /**
  * One per-country OA source part: either a cached `zip` + `csv` member (streamed out of the archive) or an extracted
@@ -45,9 +45,9 @@ import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
  * whose REGION column is empty (DE — the Bundesland is implied by the per-state file).
  */
 export interface LocalePart {
-	zip?: string
+	zip?: PathBuilderLike
 	csv?: string
-	path?: string
+	path?: PathBuilderLike
 	region?: string
 	/**
 	 * NZ — the OA DISTRICT column holds the city (`Auckland`) and CITY holds the suburb (`Birkenhead`). When set, map

@@ -17,7 +17,7 @@
 
 import { $public } from "@mailwoman/core/env"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { execFileSync } from "@mailwoman/platform/child_process"
+import { runFileSync } from "@mailwoman/core/process"
 
 const PYTHON = $public.PYTHON ?? "corpus-python/.venv/bin/python"
 const TRAIN_REMOTE = "corpus-python/modal/train_remote.py"
@@ -49,7 +49,7 @@ function installedVersion(pkg: string): string {
 	try {
 		// stderr → "ignore" mirrors the bash `2>/dev/null`: a not-installed package throws
 		// PackageNotFoundError with a noisy traceback we deliberately swallow (it's the MISSING path).
-		return execFileSync(PYTHON, ["-c", `import importlib.metadata as m; print(m.version('${pkg}'))`], {
+		return runFileSync(PYTHON, ["-c", `import importlib.metadata as m; print(m.version('${pkg}'))`], {
 			encoding: "utf8",
 			stdio: ["ignore", "pipe", "ignore"],
 		}).trim()

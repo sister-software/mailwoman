@@ -38,9 +38,9 @@
 
 import { $private, $public } from "@mailwoman/core/env"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { spawnProcessSync } from "@mailwoman/core/process"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { spawnSync } from "@mailwoman/platform/child_process"
-import { resolve } from "@mailwoman/platform/path"
+import { resolvePath } from "path-ts"
 
 import { dereferenceWorkspaceSymlinks, packWorkspaceForPublish } from "./pack-workspace.ts"
 import { verifyTarball } from "./verify-tarball.ts"
@@ -68,13 +68,13 @@ if (SKIP_WEIGHTS && isWeightsWorkspace) {
 	process.exit(0)
 }
 
-const cwd = resolve(repoRoot, workspacePath)
+const cwd = resolvePath(repoRoot, workspacePath)
 
 // Dereference any symlinks among the workspace's `files` entries before
 // publishing — npm/yarn refuse to upload tarballs containing symlinks
 // (registry returns HTTP 415). The neural-weights workspaces in particular
 // can end up with symlinks from `scripts/link-dev-weights.ts`.
-dereferenceWorkspaceSymlinks(cwd)
+await dereferenceWorkspaceSymlinks(cwd)
 
 await using tmpDir = await temporaryDirectory("mailwoman-publish-")
 const tarballPath = tmpDir.resolve("package.tgz")
@@ -83,7 +83,7 @@ const tarballPath = tmpDir.resolve("package.tgz")
 // smoke test uses, so what we test is what we ship).
 console.error(`publish-workspace: packing ${workspacePath} with injected publish exports`)
 
-packWorkspaceForPublish(cwd, tarballPath)
+await packWorkspaceForPublish(cwd, tarballPath)
 
 // Step 2: verify the tarball contains what the manifest promises — every concrete exports target,
 // every literal `files` entry (see verify-tarball.ts for the en-in incident that guard exists for),
@@ -127,7 +127,7 @@ if (dryRun) {
 	process.exit(0)
 }
 
-const publishResult = spawnSync("npm", publishArgs, { stdio: ["inherit", "inherit", "pipe"] })
+const publishResult = spawnProcessSync("npm", publishArgs, { stdio: ["inherit", "inherit", "pipe"] })
 const stderr = publishResult.stderr?.toString() ?? ""
 
 if (publishResult.status !== 0 && /cannot publish over the previously published version/i.test(stderr)) {

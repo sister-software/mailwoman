@@ -13,10 +13,10 @@
 import type { ProviderID } from "@mailwoman/bdc/sdk/common"
 import { readAvailabilityRows, readAvailabilityRowsSync, type BDCAvailabilityRow } from "@mailwoman/bdc/sdk/parsing"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { join } from "@mailwoman/platform/path"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { expect, test } from "vitest"
 
-const fixturePath = join(import.meta.dirname, "../../../test-fixtures/availability-micro.csv")
+const fixturePath = resolvePackagePath("@mailwoman/bdc", "test-fixtures", "availability-micro.csv")
 const fixtureBuffer = await readLocalBuffer(fixturePath)
 
 function parseFixture(providerID = 999 as ProviderID): BDCAvailabilityRow[] {

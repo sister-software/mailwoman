@@ -6,7 +6,7 @@
 
 import { isValidLatitude, isValidLongitude } from "@mailwoman/spatial/coordinate-bounds"
 
-import { CLIError, CLIUsageError, type CommandSpec, parseCommand, renderCommandHelp } from "../spec.ts"
+import { CLIError, CLIUsageError, type CommandSpec, parseCommand, renderCommandHelp } from "#cli-native/spec"
 
 /**
  * Native reverse-geocode command contract.

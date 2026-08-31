@@ -13,13 +13,11 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath } from "@mailwoman/core/utils"
-import { execFile } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
 import { describe, expect, test } from "vitest"
 
-const exec = promisify(execFile)
 const cliBin = workspacePath("mailwoman", "out", "cli.js")
 
 /**
@@ -43,7 +41,7 @@ describe("parse --debug (runtime pipeline)", () => {
 	test("US ZIP+4 fast-path emits PipelineResult with path='fast-path' + timing + tree", async () => {
 		// Bare US ZIP+4 hits the fast-path (postcode_only kind, unambiguous us_zip4 hit). Doesn't
 		// require neural weights — the fast-path tree is built from QueryShape.
-		const { stdout } = await exec(process.execPath, [cliBin, "parse", "--debug", "10118-1234"], {
+		const { stdout } = await runFile(process.execPath, [cliBin, "parse", "--debug", "10118-1234"], {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
@@ -76,7 +74,7 @@ describe("parse --debug (runtime pipeline)", () => {
 	}, 20_000)
 
 	test("locality_only fast-path identifies single-word inputs", async () => {
-		const { stdout } = await exec(process.execPath, [cliBin, "parse", "--debug", "Paris"], {
+		const { stdout } = await runFile(process.execPath, [cliBin, "parse", "--debug", "Paris"], {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
@@ -87,7 +85,7 @@ describe("parse --debug (runtime pipeline)", () => {
 	}, 20_000)
 
 	test("queryShape carries the detected known-format hit for postcode inputs", async () => {
-		const { stdout } = await exec(process.execPath, [cliBin, "parse", "--debug", "10118-1234"], {
+		const { stdout } = await runFile(process.execPath, [cliBin, "parse", "--debug", "10118-1234"], {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
@@ -99,7 +97,7 @@ describe("parse --debug (runtime pipeline)", () => {
 	}, 20_000)
 
 	test("normalize records the offsetMap so consumers can map spans back to raw", async () => {
-		const { stdout } = await exec(process.execPath, [cliBin, "parse", "--debug", "  Paris  "], {
+		const { stdout } = await runFile(process.execPath, [cliBin, "parse", "--debug", "  Paris  "], {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})

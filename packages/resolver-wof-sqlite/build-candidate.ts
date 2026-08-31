@@ -44,31 +44,31 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { createCandidateFTS } from "./candidate-fts.ts"
-import { IMPORTANCE_JOIN_GATE_KM, loadImportanceIndex } from "./candidate-importance.ts"
+import { createCandidateFTS } from "#candidate-fts"
+import { IMPORTANCE_JOIN_GATE_KM, loadImportanceIndex } from "#candidate-importance"
 import {
 	CANDIDATE_COLUMNS,
 	createCandidateStagingTables,
 	createCandidateTable,
 	type CandidateDatabase,
-} from "./candidate-schema.ts"
-import { explodeAliasBags } from "./candidate/alias-bags.ts"
-import { buildAncestorsSidecar } from "./candidate/ancestors-sidecar.ts"
-import { stageCountryDisplayNames } from "./candidate/country-display-names.ts"
-import { GLOSS_KEY_THRESHOLD, stampNameRoles } from "./candidate/name-roles.ts"
-import type { PlaceAttrs } from "./candidate/place-attrs.ts"
-import { foldShard } from "./candidate/shard-fold.ts"
-import { createCapitalTable } from "./capital-schema.ts"
-import type { CapitalPoint } from "./capitals.ts"
-import { resurrectCurrencyHoles } from "./currency-backfill.ts"
-import type { WOFDatabase } from "./schema.ts"
-import { normalizeLocalityForKey } from "./street-normalize.ts"
+} from "#candidate-schema"
+import { explodeAliasBags } from "#candidate/alias-bags"
+import { buildAncestorsSidecar } from "#candidate/ancestors-sidecar"
+import { stageCountryDisplayNames } from "#candidate/country-display-names"
+import { GLOSS_KEY_THRESHOLD, stampNameRoles } from "#candidate/name-roles"
+import type { PlaceAttrs } from "#candidate/place-attrs"
+import { foldShard } from "#candidate/shard-fold"
+import { createCapitalTable } from "#capital-schema"
+import type { CapitalPoint } from "#capitals"
+import { resurrectCurrencyHoles } from "#currency-backfill"
+import type { WOFDatabase } from "#schema"
+import { normalizeLocalityForKey } from "#street-normalize"
 
 // The build's contract is this module path; the passes behind it live in `./candidate/`. Re-exported
 // here so a consumer never has to know which pass owns which name.
-export { stageCountryDisplayNames } from "./candidate/country-display-names.ts"
-export { GLOSS_EXCLUDED_PLACETYPES, GLOSS_KEY_THRESHOLD } from "./candidate/name-roles.ts"
-export type { PlaceAttrs } from "./candidate/place-attrs.ts"
+export { stageCountryDisplayNames } from "#candidate/country-display-names"
+export { GLOSS_EXCLUDED_PLACETYPES, GLOSS_KEY_THRESHOLD } from "#candidate/name-roles"
+export type { PlaceAttrs } from "#candidate/place-attrs"
 
 export interface BuildCandidateOptions {
 	/**

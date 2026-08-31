@@ -11,7 +11,7 @@
 
 import type { Kysely } from "kysely"
 
-import { ADDRESS_CONVENTION_TABLE } from "./convention.ts"
+import { ADDRESS_CONVENTION_TABLE } from "#convention"
 
 /**
  * One convention profile, keyed by the WOF admin polygon it attaches to.

@@ -79,8 +79,8 @@ describe("transformExportsForPublish", () => {
 	})
 
 	it("rewrites every source-targeting condition, not only node", () => {
-		// @mailwoman/platform's shape: the Node target and the unsupported-runtime target are different FILES, and both
-		// are source in the dev map. Rewriting only `node` shipped browser and worker bundlers a raw `.ts`.
+		// A map whose Node target and browser target are different FILES, both source in the dev map. Rewriting only
+		// `node` shipped browser and worker bundlers a raw `.ts`.
 		const result = transformExportsForPublish({
 			"./fs": {
 				node: "./node/fs.ts",
@@ -113,8 +113,8 @@ describe("assertNoSourceTargets", () => {
 
 	it("names the workspace and the leaked target", () => {
 		expect(() =>
-			assertNoSourceTargets("packages/platform exports", { "./fs": { browser: "./unsupported/fs.ts" } })
-		).toThrow(/packages\/platform exports.*\.\/unsupported\/fs\.ts/s)
+			assertNoSourceTargets("packages/example exports", { "./fs": { browser: "./unsupported/fs.ts" } })
+		).toThrow(/packages\/example exports.*\.\/unsupported\/fs\.ts/s)
 	})
 
 	it("accepts a declaration file, which is a legitimate publish target", () => {

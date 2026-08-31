@@ -32,7 +32,7 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 
-import { isImplausibleResolution } from "./plausibility.ts"
+import { isImplausibleResolution } from "#plausibility"
 
 /**
  * One candidate parse from the k-best decode, with its (within-input comparable) score.

@@ -35,7 +35,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { JSONSpliterator } from "spliterator"
 
-import { flattenNodes } from "./flatten-nodes.ts"
+import { flattenNodes } from "#eval-harness/flatten-nodes"
 
 /**
  * Fixture set backing the fragment board — bare-street and partial-address probes.

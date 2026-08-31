@@ -9,9 +9,9 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 
-import { alignAndWrite, type ShardRecipe, shardSourceID } from "./scaffold.ts"
+import { alignAndWrite, type ShardRecipe, shardSourceID } from "#shard-recipes/scaffold"
 
 /**
  * A separate sampler bucket so a receipt measures these reviewed after-locality rows and no other postcode placement.
@@ -66,7 +66,7 @@ interface Variant {
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
 export function defaultReviewedPostcodeTuplePath(): string {
-	return fileURLToPath(import.meta.resolve("@mailwoman/corpus/data/reviewed-ve-postcode-tuples.json"))
+	return resolveModulePath("@mailwoman/corpus/data/reviewed-ve-postcode-tuples.json")
 }
 
 export async function readReviewedPostcodeTuples(

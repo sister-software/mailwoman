@@ -24,23 +24,23 @@ export interface NativeCommandRoute {
 export const nativeCommandRoutes: Readonly<Record<string, NativeCommandRoute>> = {
 	autocomplete: {
 		summary: "Complete a place-name prefix from the FST gazetteer.",
-		load: () => import("./commands/autocomplete.ts"),
+		load: () => import("#cli-native/commands/autocomplete"),
 	},
 	doctor: {
 		summary: "Check runtime, model, and optional data readiness.",
-		load: () => import("./commands/doctor.ts"),
+		load: () => import("#cli-native/commands/doctor"),
 	},
 	geocode: {
 		summary: "Turn an address into a coordinate.",
-		load: () => import("./commands/geocode.ts"),
+		load: () => import("#cli-native/commands/geocode"),
 	},
 	openapi: {
 		summary: "Emit the native API OpenAPI document.",
-		load: () => import("./commands/openapi.ts"),
+		load: () => import("#cli-native/commands/openapi"),
 	},
 	reverse: {
 		summary: "Resolve a coordinate to its administrative hierarchy.",
-		load: () => import("./commands/reverse.ts"),
+		load: () => import("#cli-native/commands/reverse"),
 	},
 }
 

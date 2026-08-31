@@ -23,13 +23,13 @@ import {
 import { describe, expect, it } from "vitest"
 
 describe("baseline registry", () => {
-	it("loads every registered row", () => {
-		expect(listBaselines().length).toBeGreaterThan(0)
+	it("loads every registered row", async () => {
+		expect((await listBaselines()).length).toBeGreaterThan(0)
 	})
 
-	it("demands a reproducible provenance on every row", () => {
+	it("demands a reproducible provenance on every row", async () => {
 		// A baseline you can't reproduce from its own row is a rumor.
-		for (const baseline of listBaselines()) {
+		for (const baseline of await listBaselines()) {
 			expect(baseline.commit, `${baseline.id} has no commit`).toBeTruthy()
 			expect(baseline.command, `${baseline.id} has no command`).toBeTruthy()
 			expect(baseline.note, `${baseline.id} has no note`).toBeTruthy()
@@ -37,70 +37,72 @@ describe("baseline registry", () => {
 		}
 	})
 
-	it("carries an absolute tolerance on any zero-valued row", () => {
+	it("carries an absolute tolerance on any zero-valued row", async () => {
 		// Relative deviation is undefined at zero — such a row would silently never fire.
-		for (const baseline of listBaselines()) {
+		for (const baseline of await listBaselines()) {
 			if (baseline.value === 0) {
 				expect(baseline.tolerance_abs, `${baseline.id} is zero-valued with no tolerance_abs`).toBeGreaterThan(0)
 			}
 		}
 	})
 
-	it("has unique ids", () => {
-		const ids = listBaselines().map((b) => b.id)
+	it("has unique ids", async () => {
+		const ids = (await listBaselines()).map((b) => b.id)
 
 		expect(new Set(ids).size).toBe(ids.length)
 	})
 })
 
 describe("assertBaselines", () => {
-	it("passes a reading on its baseline", () => {
-		const verdict = assertBaselines([{ id: "parity.street.token_at_1@v264", observed: 0.573 }])
+	it("passes a reading on its baseline", async () => {
+		const verdict = await assertBaselines([{ id: "parity.street.token_at_1@v264", observed: 0.573 }])
 
 		expect(verdict.ok).toBe(true)
 		expect(verdict.checked).toBe(1)
 	})
 
-	it("passes a reading inside tolerance", () => {
+	it("passes a reading inside tolerance", async () => {
 		// 0.573 -> 0.60 is +4.7%, under the 10% default.
-		const verdict = assertBaselines([{ id: "parity.street.token_at_1@v264", observed: 0.6 }])
+		const verdict = await assertBaselines([{ id: "parity.street.token_at_1@v264", observed: 0.6 }])
 
 		expect(verdict.ok).toBe(true)
 	})
 
-	it("REFUSES the Phase 1 incident — token@1 0.348 against a 0.573 baseline", () => {
-		const verdict = assertBaselines([{ id: "parity.street.token_at_1@v264", observed: 0.348 }])
+	it("REFUSES the Phase 1 incident — token@1 0.348 against a 0.573 baseline", async () => {
+		const verdict = await assertBaselines([{ id: "parity.street.token_at_1@v264", observed: 0.348 }])
 
 		expect(verdict.ok).toBe(false)
 		expect(verdict.violations[0]!.kind).toBe("deviation")
 		expect(verdict.violations[0]!.deviationRel).toBeLessThan(-0.35)
 	})
 
-	it("REFUSES the Phase 4a incident — a dark resolver reading 0.000 street evidence", () => {
-		const verdict = assertBaselines([{ id: "paris.resolver.street_evidence_rate@ban-street-centroids", observed: 0 }])
+	it("REFUSES the Phase 4a incident — a dark resolver reading 0.000 street evidence", async () => {
+		const verdict = await assertBaselines([
+			{ id: "paris.resolver.street_evidence_rate@ban-street-centroids", observed: 0 },
+		])
 
 		expect(verdict.ok).toBe(false)
 		expect(verdict.violations[0]!.kind).toBe("deviation")
 	})
 
-	it("is TWO-SIDED — a metric far ABOVE its baseline refuses too", () => {
+	it("is TWO-SIDED — a metric far ABOVE its baseline refuses too", async () => {
 		// The usual cause of a jump is that the number changed meaning, not that the model improved.
-		const verdict = assertBaselines([{ id: "parity.street.token_at_1@v264", observed: 0.95 }])
+		const verdict = await assertBaselines([{ id: "parity.street.token_at_1@v264", observed: 0.95 }])
 
 		expect(verdict.ok).toBe(false)
 		expect(verdict.violations[0]!.deviationRel).toBeGreaterThan(0)
 	})
 
-	it("refuses an unregistered id rather than passing it", () => {
+	it("refuses an unregistered id rather than passing it", async () => {
 		// An unverifiable reading is exactly the state both incidents were in.
-		const verdict = assertBaselines([{ id: "nope.not.a.baseline@v999", observed: 0.5 }])
+		const verdict = await assertBaselines([{ id: "nope.not.a.baseline@v999", observed: 0.5 }])
 
 		expect(verdict.ok).toBe(false)
 		expect(verdict.violations[0]!.kind).toBe("unregistered")
 	})
 
-	it("reports every violation, not just the first", () => {
-		const verdict = assertBaselines([
+	it("reports every violation, not just the first", async () => {
+		const verdict = await assertBaselines([
 			{ id: "parity.street.token_at_1@v264", observed: 0.348 },
 			{ id: "parity.street.oracle_at_10@v264-summed-bio", observed: 0.749 },
 			{ id: "nope.not.a.baseline@v999", observed: 0.5 },
@@ -110,31 +112,31 @@ describe("assertBaselines", () => {
 		expect(verdict.checked).toBe(3)
 	})
 
-	it("honours a row's absolute tolerance", () => {
-		const baseline = findBaseline("paris.resolver.street_evidence_rate@ban-street-centroids")!
+	it("honours a row's absolute tolerance", async () => {
+		const baseline = (await findBaseline("paris.resolver.street_evidence_rate@ban-street-centroids"))!
 
 		expect(baseline.tolerance_abs).toBe(0.01)
 		// 0.016 -> 0.02 is inside the absolute band even though it is +25% relative.
-		expect(assertBaselines([{ id: baseline.id, observed: 0.02 }]).ok).toBe(true)
-		expect(assertBaselines([{ id: baseline.id, observed: 0.05 }]).ok).toBe(false)
+		expect((await assertBaselines([{ id: baseline.id, observed: 0.02 }])).ok).toBe(true)
+		expect((await assertBaselines([{ id: baseline.id, observed: 0.05 }])).ok).toBe(false)
 	})
 })
 
 describe("profiles", () => {
-	it("registers the arc's two models", () => {
-		expect(listProfiles()).toEqual(expect.arrayContaining(["v264", "v301"]))
+	it("registers the arc's two models", async () => {
+		expect(await listProfiles()).toEqual(expect.arrayContaining(["v264", "v301"]))
 	})
 
-	it("maps every profile metric to a baseline that exists", () => {
+	it("maps every profile metric to a baseline that exists", async () => {
 		// A profile pointing at a missing row would check nothing while looking like it checked.
-		for (const name of listProfiles()) {
-			for (const [metricKey, id] of Object.entries(resolveProfile(name).observe)) {
-				expect(findBaseline(id), `profile ${name}.${metricKey} -> unknown baseline ${id}`).toBeDefined()
+		for (const name of await listProfiles()) {
+			for (const [metricKey, id] of Object.entries((await resolveProfile(name)).observe)) {
+				expect(await findBaseline(id), `profile ${name}.${metricKey} -> unknown baseline ${id}`).toBeDefined()
 			}
 		}
 	})
 
-	it("never mixes harnesses within one profile", () => {
+	it("never mixes harnesses within one profile", async () => {
 		// The bug this file shipped with on 2026-07-16: oracle-k's `v301` profile pointed its seg@1
 		// reading at a LEARNED-span-decode row (0.5768) while oracle-k computes the summed-BIO
 		// stand-in (0.449) — two harnesses compared through one id, refusing on a healthy run.
@@ -142,11 +144,13 @@ describe("profiles", () => {
 		//
 		// The token@1 row is the one legitimate crossover: every JS harness computes the same BIO
 		// argmax, so `js-ship-config` is shared. Anything else must be single-harness.
-		for (const name of listProfiles()) {
+		for (const name of await listProfiles()) {
+			const profile = await resolveProfile(name)
+
 			const harnesses = new Set(
-				Object.values(resolveProfile(name).observe)
-					.map((id) => findBaseline(id)!.harness)
-					.filter((harness) => harness !== "js-ship-config")
+				(await Promise.all(Object.values(profile.observe).map(async (id) => (await findBaseline(id))!.harness))).filter(
+					(harness) => harness !== "js-ship-config"
+				)
 			)
 
 			expect([...harnesses], `profile ${name} spans harnesses ${[...harnesses].join(" + ")}`).toHaveLength(
@@ -155,23 +159,23 @@ describe("profiles", () => {
 		}
 	})
 
-	it("keeps the summed-BIO stand-in and the learned span decode on separate ids", () => {
+	it("keeps the summed-BIO stand-in and the learned span decode on separate ids", async () => {
 		// They are different numbers on the same weights — 0.449 vs 0.5768 on v301. If a future edit
 		// collapses them, every span-head claim becomes uninterpretable.
-		const standIn = findBaseline("parity.street.seg_at_1@v301-summed-bio")!
-		const learned = findBaseline("parity.street.seg_at_1@v301-span")!
+		const standIn = (await findBaseline("parity.street.seg_at_1@v301-summed-bio"))!
+		const learned = (await findBaseline("parity.street.seg_at_1@v301-span"))!
 
 		expect(standIn.harness).toBe("js-summed-bio-segdecode")
 		expect(learned.harness).toBe("js-span-decode")
 		expect(standIn.value).not.toBe(learned.value)
 	})
 
-	it("refuses an unknown profile rather than checking nothing", () => {
-		expect(() => resolveProfile("v999")).toThrow(/Unknown baseline profile/)
+	it("refuses an unknown profile rather than checking nothing", async () => {
+		await expect(resolveProfile("v999")).rejects.toThrow(/Unknown baseline profile/)
 	})
 
-	it("passes v264's registered readings", () => {
-		const verdict = assertProfile("v264", {
+	it("passes v264's registered readings", async () => {
+		const verdict = await assertProfile("v264", {
 			"street.token_at_1": 0.573,
 			"street.seg_at_1": 0.453,
 			"street.oracle_at_5": 0.663,
@@ -182,38 +186,40 @@ describe("profiles", () => {
 		expect(verdict.checked).toBe(4)
 	})
 
-	it("REFUSES the Phase 1 reading through the profile", () => {
-		const verdict = assertProfile("v264", { "street.token_at_1": 0.348 })
+	it("REFUSES the Phase 1 reading through the profile", async () => {
+		const verdict = await assertProfile("v264", { "street.token_at_1": 0.348 })
 
 		expect(verdict.ok).toBe(false)
 	})
 
-	it("ignores metrics the profile doesn't vouch for", () => {
+	it("ignores metrics the profile doesn't vouch for", async () => {
 		// A profile declares what it can vouch for, not everything a harness computes.
-		const verdict = assertProfile("v264", { "street.token_at_1": 0.573, "postcode.something_else": 0.1 })
+		const verdict = await assertProfile("v264", { "street.token_at_1": 0.573, "postcode.something_else": 0.1 })
 
 		expect(verdict.ok).toBe(true)
 		expect(verdict.checked).toBe(1)
 	})
 
-	it("checks nothing when a run measured nothing", () => {
-		expect(assertProfile("v264", {}).checked).toBe(0)
+	it("checks nothing when a run measured nothing", async () => {
+		expect((await assertProfile("v264", {})).checked).toBe(0)
 	})
 })
 
 describe("guardReport", () => {
-	it("is silent when the instruments read true", () => {
-		expect(() => guardReport([{ id: "parity.street.token_at_1@v264", observed: 0.573 }])).not.toThrow()
+	it("is silent when the instruments read true", async () => {
+		await expect(guardReport([{ id: "parity.street.token_at_1@v264", observed: 0.573 }])).resolves.toBeUndefined()
 	})
 
-	it("throws rather than letting a broken harness print", () => {
-		expect(() => guardReport([{ id: "parity.street.token_at_1@v264", observed: 0.348 }])).toThrow(/REFUSING TO REPORT/)
+	it("throws rather than letting a broken harness print", async () => {
+		await expect(guardReport([{ id: "parity.street.token_at_1@v264", observed: 0.348 }])).rejects.toThrow(
+			/REFUSING TO REPORT/
+		)
 	})
 })
 
 describe("formatVerdict", () => {
-	it("names the deviation, the provenance, and the reproduce command", () => {
-		const message = formatVerdict(assertBaselines([{ id: "parity.street.token_at_1@v264", observed: 0.348 }]))
+	it("names the deviation, the provenance, and the reproduce command", async () => {
+		const message = formatVerdict(await assertBaselines([{ id: "parity.street.token_at_1@v264", observed: 0.348 }]))
 
 		expect(message).toContain("REFUSING TO REPORT")
 		expect(message).toContain("reads LOW")
@@ -221,15 +227,15 @@ describe("formatVerdict", () => {
 		expect(message).toContain("mailwoman eval oracle-k")
 	})
 
-	it("tells an unregistered reading how to register itself", () => {
-		const message = formatVerdict(assertBaselines([{ id: "nope@v999", observed: 0.5 }]))
+	it("tells an unregistered reading how to register itself", async () => {
+		const message = formatVerdict(await assertBaselines([{ id: "nope@v999", observed: 0.5 }]))
 
 		expect(message).toContain("NO REGISTERED BASELINE")
 		expect(message).toContain("baselines.json")
 	})
 
-	it("warns against widening tolerance instead of re-registering", () => {
-		const message = formatVerdict(assertBaselines([{ id: "parity.street.token_at_1@v264", observed: 0.348 }]))
+	it("warns against widening tolerance instead of re-registering", async () => {
+		const message = formatVerdict(await assertBaselines([{ id: "parity.street.token_at_1@v264", observed: 0.348 }]))
 
 		expect(message).toContain("silent gate drift")
 	})

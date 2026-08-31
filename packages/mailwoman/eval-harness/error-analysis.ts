@@ -35,7 +35,7 @@ import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { resolve } from "@mailwoman/platform/path"
+import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 interface GoldenEntry {
@@ -89,7 +89,7 @@ async function loadGolden(dir: string): Promise<GoldenEntry[]> {
 	const entries: GoldenEntry[] = []
 
 	for (const file of ["us.jsonl", "fr.jsonl", "adversarial.jsonl"]) {
-		const path = resolve(dir, file)
+		const path = resolvePath(dir, file)
 
 		try {
 			for await (const entry of JSONSpliterator.fromAsync<GoldenEntry>(path)) {
@@ -148,7 +148,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 	// fails closed in strict mode if a declared channel can't actually be fed; `--no-strict` opts out.
 	const resolved = options.model
 		? { modelPath: options.model, tokenizerPath: options.tokenizer!, modelCardPath: options.modelCard! }
-		: resolveWeights({ locale: "en-us" })
+		: await resolveWeights({ locale: "en-us" })
 
 	if (!resolved.modelPath || !resolved.tokenizerPath || !resolved.modelCardPath)
 		throw new Error("createScorer needs model + tokenizer + model-card; resolveWeights returned incomplete paths")

@@ -10,8 +10,8 @@
 
 import type { ReactNode } from "react"
 
-import { formatDistance } from "./runtime.ts"
-import type { LiveSearchState } from "./types.ts"
+import { formatDistance } from "#poi/runtime"
+import type { LiveSearchState } from "#poi/types"
 
 export interface LiveResultsBlockProps {
 	/**

@@ -1,10 +1,11 @@
 import { openReadStream, openWriteStream } from "@mailwoman/core/fs/streams"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { parseArgs } from "@mailwoman/platform/util"
+import { resolvePath } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
-import { titleCaseGB } from "../gb-title-case.ts"
+import { titleCaseGB } from "#tools/gb-title-case"
 
 const HOUSE_NUMBER_PATTERN = /^\d+[A-Za-z]?(\s*-\s*\d+[A-Za-z]?)?$/
 
@@ -107,10 +108,10 @@ async function runPPDExtract(inputPath: string, outputPath: string): Promise<PPD
 }
 
 runIfScript(import.meta, async () => {
-	const { values } = parseArgs({
+	const { values } = parseArguments({
 		options: {
-			input: { type: "string", default: dataRootPath("ppd", "2026-07-22", "pp-complete.csv") },
-			output: { type: "string", default: dataRootPath("ppd", "2026-07-22", "gb-tuples.csv") },
+			input: { type: "string", default: resolvePath(dataRootPath("ppd", "2026-07-22", "pp-complete.csv")) },
+			output: { type: "string", default: resolvePath(dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")) },
 		},
 	})
 

@@ -17,7 +17,7 @@
 
 import type { Kysely } from "kysely"
 
-import type { RouteKey } from "./street-normalize.ts"
+import type { RouteKey } from "#street-normalize"
 
 /**
  * One TIGER street-segment edge: a `(from_hn, to_hn)` house-number range on one `side` of a named street, with the

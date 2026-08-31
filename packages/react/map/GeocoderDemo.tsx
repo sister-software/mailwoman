@@ -22,17 +22,18 @@
 import { type ReactNode, useCallback, useEffect, useRef } from "react"
 import type { MapRef } from "react-map-gl/maplibre"
 
+import type { DemoPanels, DemoRuntime, MapBias } from "#map/types"
+import { useCompareState } from "#map/useCompareState"
+import { useDemoGeocode } from "#map/useDemoGeocode"
+import { useMapPlaceRender } from "#map/useMapPlaceRender"
+import { usePlaceAutocomplete } from "#map/usePlaceAutocomplete"
+
 import { ClientOnly } from "../common/ClientOnly.tsx"
 import type { Preset } from "../common/PresetChips.tsx"
 import { DemoControls } from "./DemoControls.tsx"
 import { DemoMap } from "./DemoMap.tsx"
 import { OverlayLayers } from "./OverlayLayers.tsx"
 import { ResolvedPlaceLayers } from "./ResolvedPlaceLayers.tsx"
-import type { DemoPanels, DemoRuntime, MapBias } from "./types.ts"
-import { useCompareState } from "./useCompareState.ts"
-import { useDemoGeocode } from "./useDemoGeocode.ts"
-import { useMapPlaceRender } from "./useMapPlaceRender.ts"
-import { usePlaceAutocomplete } from "./usePlaceAutocomplete.ts"
 
 export interface GeocoderDemoProps {
 	/**

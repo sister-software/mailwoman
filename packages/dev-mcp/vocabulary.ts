@@ -164,7 +164,7 @@ export async function runVocabulary(options: VocabularyOptions): Promise<Vocabul
 	if (!tokenizerPath) {
 		const { resolveWeights } = await import("@mailwoman/neural/weights")
 
-		tokenizerPath = resolveWeights({ locale: options.locale ?? "en-us" }).tokenizerPath
+		tokenizerPath = (await resolveWeights({ locale: options.locale ?? "en-us" })).tokenizerPath
 	}
 
 	const tokenizer: Tokenizer = await MailwomanTokenizer.loadFromFile(tokenizerPath)

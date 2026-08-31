@@ -9,6 +9,7 @@
  *   `mailwoman/gazetteer-pipeline/fst.ts` for the curation policy.
  */
 
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -48,7 +49,7 @@ const GazetteerBuildFST: ParsedCommandComponent<Options> = ({ options }) => {
 
 		return built.map(
 			(b) =>
-				`fst-${b.locale} → ${b.path} (${(b.bytes / 1e6).toFixed(1)} MB, ${b.nameInsertions} insertions, ${b.excludedInsertions} excluded)`
+				`fst-${b.locale} → ${b.path} (${ByteFormatter.formatIEC(b.bytes)}, ${b.nameInsertions} insertions, ${b.excludedInsertions} excluded)`
 		)
 	})
 

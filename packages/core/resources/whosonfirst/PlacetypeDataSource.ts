@@ -14,9 +14,8 @@ import {
 	Alpha3bToAlpha2,
 	isAlpha3bLanguageCode,
 } from "#resources/languages"
-
-import { tryWithBackoff } from "./backoff.ts"
-import type { WhosOnFirstPlacetype } from "./placetypes/definition.ts"
+import { tryWithBackoff } from "#resources/whosonfirst/backoff"
+import type { WhosOnFirstPlacetype } from "#resources/whosonfirst/placetypes/definition"
 
 export interface PlacetypeDataSourceOptions<
 	P extends WhosOnFirstPlacetype = WhosOnFirstPlacetype,

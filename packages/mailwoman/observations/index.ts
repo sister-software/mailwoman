@@ -24,14 +24,14 @@ export type {
 	AbsenceObservationRouteOptions,
 	AbsenceRefusal,
 	AbsenceRouteIdentity,
-} from "./absence-route.ts"
+} from "#observations/absence-route"
 
 export {
 	ABSENCE_REFUSALS,
 	createAbsenceObservationRoute,
 	describeAbsenceObservation,
 	recoverCoverageResolution,
-} from "./absence-route.ts"
+} from "#observations/absence-route"
 
 export type {
 	AuthorityDesignationObservation,
@@ -39,9 +39,13 @@ export type {
 	AuthorityDesignationRouteOptions,
 	DesignationDecision,
 	DesignationRefusal,
-} from "./flood-route.ts"
+} from "#observations/flood-route"
 
-export { createAuthorityDesignationRoute, DESIGNATION_REFUSALS, describeAuthorityDesignation } from "./flood-route.ts"
+export {
+	createAuthorityDesignationRoute,
+	DESIGNATION_REFUSALS,
+	describeAuthorityDesignation,
+} from "#observations/flood-route"
 
 export type {
 	CoastalDecision,
@@ -49,9 +53,9 @@ export type {
 	CoastalErosionRoute,
 	CoastalErosionRouteOptions,
 	CoastalRefusal,
-} from "./coastal-route.ts"
+} from "#observations/coastal-route"
 
-export { COASTAL_REFUSALS, createCoastalErosionRoute, describeCoastalErosion } from "./coastal-route.ts"
+export { COASTAL_REFUSALS, createCoastalErosionRoute, describeCoastalErosion } from "#observations/coastal-route"
 
 export type {
 	SoilCapabilityObservation,
@@ -59,9 +63,9 @@ export type {
 	SoilCapabilityRouteOptions,
 	SoilDesignationDecision,
 	SoilDesignationRefusal,
-} from "./soil-route.ts"
+} from "#observations/soil-route"
 
-export { createSoilCapabilityRoute, describeSoilCapability, SOIL_DESIGNATION_REFUSALS } from "./soil-route.ts"
+export { createSoilCapabilityRoute, describeSoilCapability, SOIL_DESIGNATION_REFUSALS } from "#observations/soil-route"
 
 export type {
 	ZoningDecision,
@@ -69,9 +73,9 @@ export type {
 	ZoningDesignationRoute,
 	ZoningDesignationRouteOptions,
 	ZoningRefusal,
-} from "./zoning-route.ts"
+} from "#observations/zoning-route"
 
-export { createZoningDesignationRoute, describeZoningDesignation, ZONING_REFUSALS } from "./zoning-route.ts"
+export { createZoningDesignationRoute, describeZoningDesignation, ZONING_REFUSALS } from "#observations/zoning-route"
 
 export {
 	absenceObservationMarker,
@@ -92,15 +96,15 @@ export {
 	ZONING_DESIGNATION_MECHANISM,
 	zoningDesignationMarker,
 	zoningDesignationMarkers,
-} from "./observation-marker.ts"
+} from "#observations/observation-marker"
 
-export type { LayerDesignationRoutes } from "./observation-marker.ts"
+export type { LayerDesignationRoutes } from "#observations/observation-marker"
 
 export type {
 	SemanticObservation,
 	SemanticObservationRoute,
 	SemanticObservationRouteOptions,
 	SemanticRouteIdentity,
-} from "./semantic-route.ts"
+} from "#observations/semantic-route"
 
-export { createSemanticObservationRoute } from "./semantic-route.ts"
+export { createSemanticObservationRoute } from "#observations/semantic-route"

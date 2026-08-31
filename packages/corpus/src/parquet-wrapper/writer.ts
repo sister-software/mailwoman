@@ -18,14 +18,14 @@ import type { WriterOptions } from "@dsnp/parquetjs/dist/lib/declare.js"
 import { osopen, type WriteStreamMinimal } from "@dsnp/parquetjs/dist/lib/util.js"
 import { ParquetEnvelopeWriter } from "@dsnp/parquetjs/dist/lib/writer.js"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import * as path from "@mailwoman/platform/path"
+import { dirname } from "path-ts"
 
 import {
 	type ParquetRecordLike,
 	ParquetSchema,
 	type ParquetSchemaDefinition,
 	ParquetSchemaDefinitionCache,
-} from "./schema.ts"
+} from "#parquet-wrapper/schema"
 
 /**
  * A typed Parquet writer, wrapping the base Parquet writer.
@@ -59,7 +59,7 @@ export class ParquetWriter<T extends ParquetRecordLike> extends BaseParquetWrite
 		opts?: WriterOptions
 	): Promise<ParquetWriter<T>> {
 		if (typeof sourcePath === "string") {
-			await makeDirectories(path.dirname(sourcePath))
+			await makeDirectories(dirname(sourcePath))
 		}
 
 		const outputStream = await osopen(sourcePath, opts)

@@ -18,14 +18,15 @@
  */
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath, percentile } from "@mailwoman/core/utils"
-import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
+import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
+const { values: rawValues } = parseArguments({
 	options: { model: { type: "string" }, n: { type: "string" } },
 	strict: false,
 	allowPositionals: true,
@@ -60,7 +61,7 @@ const hasWOF = (n: N9): boolean => !!n.placeID?.startsWith("wof:") || ((n.childr
 async function main() {
 	const { createScorer } = await import("@mailwoman/neural/scorer")
 	const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	using lookup = new WOFSQLitePlaceLookup({ databasePath: WOF })
+	using lookup = new WOFSQLitePlaceLookup({ databasePath: resolvePath(WOF) })
 	const resolver = createWOFResolver(lookup)
 
 	const model = await createScorer({

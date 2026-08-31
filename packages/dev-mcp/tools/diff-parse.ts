@@ -10,7 +10,7 @@
 import { diffParse, isChange, renderParseDiff } from "@mailwoman/core/decoder/parse-diff"
 import { z } from "zod"
 
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
+import type { DevTool, DevToolDeps } from "#tool-kit"
 
 /**
  * How many diffs to render in full before falling back to a one-line-per-input summary.

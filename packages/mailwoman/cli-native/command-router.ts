@@ -3,15 +3,22 @@ import { render } from "ink"
 import { createElement } from "react"
 import type { ComponentType } from "react"
 
-import { CLIUsageError, type CommandSpec, parseCommand, renderCommandHelp } from "./spec.ts"
+import { CLIUsageError, type CommandSpec, parseCommand, renderCommandHelp } from "#cli-native/spec"
 
 interface CommandModule {
 	spec?: CommandSpec
 	default?: ComponentType<{ options: unknown; args: unknown[] }>
 }
 
+/**
+ * The COMPILED command tree, whichever tree this module runs from. The commands are TSX, which Node cannot load from
+ * source, so the router reads `out/commands/` even when the package's `#` imports have handed it the source router —
+ * the same switch `geocode-stream.ts` makes for its worker.
+ */
+const COMMANDS_ROOT = new URL(import.meta.url.includes("/out/") ? "../commands/" : "../out/commands/", import.meta.url)
+
 const commandURL = (parts: readonly string[], index = false): URL =>
-	new URL(`../commands/${parts.join("/")}${index ? "/index" : ""}.js`, import.meta.url)
+	new URL(`${parts.join("/")}${index ? "/index" : ""}.js`, COMMANDS_ROOT)
 
 const OPTION_INITIALISMS = new Map([["db", "DB"]])
 
@@ -50,7 +57,7 @@ async function runCommand(module: CommandModule, commandPath: string, argv: read
 }
 
 async function groupHelp(parts: readonly string[]): Promise<number> {
-	const entries = await readDirectoryEntries(new URL(`../commands/${parts.join("/")}/`, import.meta.url))
+	const entries = await readDirectoryEntries(new URL(`${parts.join("/")}/`, COMMANDS_ROOT))
 
 	const commands = entries
 		.filter(
@@ -69,7 +76,7 @@ async function groupHelp(parts: readonly string[]): Promise<number> {
 }
 
 async function rootHelp(): Promise<number> {
-	const entries = await readDirectoryEntries(new URL("../commands/", import.meta.url))
+	const entries = await readDirectoryEntries(COMMANDS_ROOT)
 
 	const filesystemCommands = entries
 		.filter(
@@ -77,7 +84,7 @@ async function rootHelp(): Promise<number> {
 		)
 		.map((entry) => entry.name.replace(/\.js$/u, ""))
 
-	const { nativeCommandRoutes } = await import("./router.ts")
+	const { nativeCommandRoutes } = await import("#cli-native/router")
 	const commands = new Map(filesystemCommands.map((name) => [name, ""]))
 
 	for (const [name, route] of Object.entries(nativeCommandRoutes)) {
@@ -109,7 +116,7 @@ export async function dispatchCommand(argv: readonly string[]): Promise<number> 
 			continue
 		}
 
-		if (await tryStat(new URL(`../commands/${candidate.join("/")}/`, import.meta.url))) {
+		if (await tryStat(new URL(`${candidate.join("/")}/`, COMMANDS_ROOT))) {
 			commandParts.push(value)
 
 			continue

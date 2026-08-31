@@ -1,3 +1,4 @@
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath } from "@mailwoman/core/utils"
 /**
  * Smoke test: confirm WOFSQLitePlaceLookup works against our CUSTOM unified DB (admin-global-priority.db) now that
@@ -6,10 +7,9 @@ import { dataRootPath } from "@mailwoman/core/utils"
  *
  * Run: node scripts/smoke-resolve.ts
  */
-import { parseArgs } from "@mailwoman/platform/util"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 
-const { positionals } = parseArgs({ allowPositionals: true })
+const { positionals } = parseArguments({ allowPositionals: true })
 const DB = positionals[0] ?? String(dataRootPath("wof", "admin-global-priority.db"))
 using lookup = new WOFSQLitePlaceLookup({ databasePath: DB })
 

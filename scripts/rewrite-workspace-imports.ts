@@ -6,9 +6,9 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { runShellSync } from "@mailwoman/core/process"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { execSync } from "@mailwoman/platform/child_process"
-import { dirname, relative, resolve } from "@mailwoman/platform/path"
+import { dirname, relative, resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 const repoRoot = repoRootPath()
@@ -17,11 +17,11 @@ const repoRoot = repoRootPath()
  * Files to rewrite: everything under packages/, recursively, .ts/.tsx.
  */
 function listFiles() {
-	const out = execSync("git ls-files packages/", { cwd: repoRoot, encoding: "utf8" })
+	const out = runShellSync("git ls-files packages/", { cwd: repoRoot, encoding: "utf8" })
 
 	return [...TextSpliterator.from(out)]
 		.filter((p) => p.endsWith(".ts") || p.endsWith(".tsx"))
-		.map((p) => resolve(repoRoot, p))
+		.map((p) => resolvePath(repoRoot, p))
 }
 
 /**
@@ -51,7 +51,7 @@ const rootRelative: Record<string, string> = {
 
 function relIntoRoot(filePath: string, targetRelative: string) {
 	const fromDir = dirname(filePath)
-	const target = resolve(repoRoot, targetRelative)
+	const target = resolvePath(repoRoot, targetRelative)
 	let rel = relative(fromDir, target)
 	rel = rel.split("\\").join("/")
 

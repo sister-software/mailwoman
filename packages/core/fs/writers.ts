@@ -13,19 +13,11 @@
  *   made npm answer HTTP 415.
  */
 
-import {
-	appendFile,
-	chmod,
-	copyFile,
-	cp,
-	mkdir,
-	rename,
-	rm,
-	symlink,
-	utimes,
-	writeFile,
-} from "@mailwoman/platform/fs/promises"
+import { appendFile, chmod, copyFile, cp, mkdir, rename, rm, symlink, utimes, writeFile } from "node:fs/promises"
+
 import { dirname, type PathBuilderLike, resolvePath } from "path-ts"
+
+// #region Directories
 
 /**
  * Create a directory and any missing parent directories, like `mkdir -p`.
@@ -49,6 +41,10 @@ export function makeDirectories<T extends PathBuilderLike[]>(...paths: T): Promi
 export function makeDirectoryExclusive(path: PathBuilderLike): Promise<void> {
 	return mkdir(path.toString()).then(() => undefined)
 }
+
+// #endregion
+
+// #region Files
 
 /**
  * A buffer-like object that can be written to a file.
@@ -144,6 +140,10 @@ export async function writeLocalFile<S extends PathBuilderLike[]>(
 	return writeFile(filePath, content)
 }
 
+// #endregion
+
+//#region Appending
+
 /**
  * Append text to a local file, creating it and its parent directory when neither exists.
  *
@@ -164,6 +164,8 @@ export async function appendLocalTextFile<S extends PathBuilderLike[]>(
 
 	return appendFile(filePath, content, "utf8")
 }
+
+// #endregion
 
 /**
  * Remove a file, or a directory and everything under it.

@@ -13,15 +13,13 @@
  *   the flag that skips the encoder, and the benchmark path now honours it.
  */
 
+import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath } from "@mailwoman/core/utils"
-import { execFile } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { spec as parseSpec } from "mailwoman/commands/parse"
 import { describe, expect, test } from "vitest"
 
-const exec = promisify(execFile)
 const cliBin = workspacePath("mailwoman", "out", "cli.js")
 
 describe("--benchmark option", () => {
@@ -53,7 +51,7 @@ describe("--benchmark option", () => {
 
 describe("npx mailwoman parse --benchmark <N> --degraded '<input>'", () => {
 	test("emits the percentile report and exits 0", async () => {
-		const { stdout } = await exec(
+		const { stdout } = await runFile(
 			process.execPath,
 			[cliBin, "parse", "--benchmark", "10", "--degraded", "350 5th Ave, New York, NY 10118"],
 			{ env: childEnv({ MAILWOMAN_TEST_MODE: "1" }) }
@@ -75,7 +73,7 @@ describe("npx mailwoman parse --benchmark <N> --degraded '<input>'", () => {
 		let err: (Error & { stderr?: string; stdout?: string; code?: number }) | undefined
 
 		try {
-			await exec(process.execPath, [cliBin, "parse", "--benchmark", "5", "--neural", "hello world"])
+			await runFile(process.execPath, [cliBin, "parse", "--benchmark", "5", "--neural", "hello world"])
 		} catch (error) {
 			err = error as Error & { stderr?: string; stdout?: string; code?: number }
 		}

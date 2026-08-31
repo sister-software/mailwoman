@@ -36,8 +36,8 @@ import { openReadStream } from "@mailwoman/core/fs/streams"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import type { ComponentTag } from "@mailwoman/core/types"
 import type { PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
-import { join } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
+import { join } from "path-ts"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
@@ -205,8 +205,8 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 		const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair-index-resolver")
 		const { PairIndexBuilder, applyPairIndexHoldout } = await import("#gazetteer-pipeline/pair-index")
 		const { CSVSpliterator, JSONSpliterator } = await import("spliterator")
-		const { extractBoroughPairs } = await import("../../gazetteer-pipeline/borough-pairs.ts")
-		const { extractLieuDitPairs } = await import("../../gazetteer-pipeline/lieudit-pairs.ts")
+		const { extractBoroughPairs } = await import("#gazetteer-pipeline/borough-pairs")
+		const { extractLieuDitPairs } = await import("#gazetteer-pipeline/lieudit-pairs")
 
 		const country = options.country.toLowerCase()
 

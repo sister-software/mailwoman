@@ -35,9 +35,9 @@
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
 
-import type { FSTNode } from "./fst-matcher.ts"
-import { FSTMatcher } from "./fst-matcher.ts"
-import type { FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.ts"
+import type { FSTNode } from "#fst-matcher"
+import { FSTMatcher } from "#fst-matcher"
+import type { FSTProvenance, PlaceEntry, PlacetypeID } from "#fst-types"
 
 /**
  * Format version that widened the per-state edge and place counters from 16 to 32 bits, growing the state entry from 12

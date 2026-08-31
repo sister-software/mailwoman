@@ -19,6 +19,7 @@
  *   `@mailwoman/resolver-wof-sqlite` peer.
  */
 
+import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -44,8 +45,6 @@ interface Options {
 
 const GazetteerBuildPostcodeNIOSM: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { artifactSizeMB } = await import("#gazetteer-pipeline")
-
 		const { buildPostcodeNIOSM, NI_LIVE_POSTCODES, NI_TOTAL_DISTRICTS, NI_TOTAL_SECTORS } =
 			await import("#gazetteer/postcode/ni-osm-shard")
 
@@ -64,7 +63,7 @@ const GazetteerBuildPostcodeNIOSM: ParsedCommandComponent<Options> = ({ options 
 			.join(", ")
 
 		return [
-			`postcode ni-osm: ${result.out} (${await artifactSizeMB(result.out)} MB)`,
+			`postcode ni-osm: ${result.out} (${await formatFileSize(result.out)})`,
 			`${result.inserted.toLocaleString()} unit postcodes — OSM data cut ${result.osmTimestamp}`,
 			`read ${stats.elements.toLocaleString()} elements (${Object.entries(stats.pointsByType)
 				.map(([type, n]) => `${n.toLocaleString()} ${type}`)

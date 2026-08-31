@@ -23,16 +23,14 @@
  *        bytes interleaved into a corrupt-but-parseable entry.
  */
 
-import { randomUUID } from "@mailwoman/platform/crypto"
-import { join } from "@mailwoman/platform/path"
 import { type AxiosStorage, buildStorage, type NotEmptyStorageValue, type StorageValue } from "axios-cache-interceptor"
+import { join, type PathBuilderLike } from "path-ts"
 
 import { readLocalTextFile } from "#fs/readers"
 import { makeDirectories, movePath, removePath, removePathIfPresent, writeLocalFile } from "#fs/writers"
-
-import { ConsoleLogger, type IRuntimeLogger } from "../logging/index.ts"
-import { tryParsingJSON } from "../objects.ts"
-import { sha256Hex } from "../utils/hash.ts"
+import { ConsoleLogger, type IRuntimeLogger } from "#logging/index"
+import { tryParsingJSON } from "#objects"
+import { sha256Hex } from "#utils/hash"
 
 /**
  * Options for {@linkcode buildDiskStorage}.
@@ -41,7 +39,7 @@ export interface DiskStorageOptions {
 	/**
 	 * The directory cache entries live in. Created on first write (recursively).
 	 */
-	directory: string
+	directory: PathBuilderLike
 	/**
 	 * An additional, domain-specific gate run against every entry BEFORE it is written. Return `false` (or throw) to drop
 	 * the write; the entry is removed rather than persisted, so the next request re-fetches.
@@ -198,7 +196,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 			const finalPath = entryPath(key)
 			// Unique per write — `process.pid` separates processes, `randomUUID()` separates concurrent
 			// writes inside one. A deterministic name here is the ENOENT/interleaving bug in the file header.
-			const buildingPath = `${finalPath}.${process.pid}.${randomUUID()}.building`
+			const buildingPath = `${finalPath}.${process.pid}.${crypto.randomUUID()}.building`
 
 			try {
 				await makeDirectories(directory)

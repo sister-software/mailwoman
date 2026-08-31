@@ -32,14 +32,15 @@
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { placetypeSpecificity } from "@mailwoman/core/resources/whosonfirst"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows, dataRootPath, percentile } from "@mailwoman/core/utils"
-import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { ClassificationRecord } from "mailwoman"
 import { v0RecordToTree } from "mailwoman/eval-harness/v0-tree-adapter"
+import { resolvePath } from "path-ts"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
 /**
@@ -47,7 +48,7 @@ import { v0RecordToTree } from "mailwoman/eval-harness/v0-tree-adapter"
  */
 const MIN_COLLISION_REDUCTION = 5
 
-const { values: rawValues } = parseArgs({
+const { values: rawValues } = parseArguments({
 	options: { db: { type: "string" }, n: { type: "string" }, out: { type: "string" } },
 	strict: false,
 	allowPositionals: true,
@@ -119,7 +120,7 @@ const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0
 /**
  * --- args ----------------------------------------------------------------------------------------.
  */
-const DB = values["db"] || dataRootPath("wof", "admin-global-priority.db")
+const DB = resolvePath(values["db"] || dataRootPath("wof", "admin-global-priority.db"))
 /**
  * Per stratum.
  */

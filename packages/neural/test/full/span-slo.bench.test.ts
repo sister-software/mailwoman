@@ -18,7 +18,7 @@ import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { tempRootPath } from "@mailwoman/core/utils"
 import { WebONNXRunner } from "@mailwoman/neural/web-onnx-runner"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 /**

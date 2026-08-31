@@ -11,7 +11,7 @@
 
 import type { StatementSync } from "@mailwoman/sqlite/client"
 
-import { mintFamilyID } from "../family-id.ts"
+import { mintFamilyID } from "#sdk/family-id"
 
 // mintFamilyID lives in family-id.ts — filer-lookup.ts's readFamilyDisplayNames needs the
 // identical canonicalization rule to tell apart which target node's edge names a given family_id, and re-deriving it

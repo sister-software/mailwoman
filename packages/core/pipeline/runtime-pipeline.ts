@@ -12,10 +12,9 @@
  *   Implementation contract per `docs/engineering/reference/STAGES.md`.
  */
 
-import { isBareTreeOf } from "../decoder/tree-shape.ts"
-import type { AddressNode, AddressTree } from "../decoder/types.ts"
-import type { ComponentTag } from "../types/component.ts"
-import { PipelineFaultStage, WORD_CONSISTENCY_SHIP_DEFAULT, deriveInputMode } from "./types.ts"
+import { isBareTreeOf } from "#decoder/tree-shape"
+import type { AddressNode, AddressTree } from "#decoder/types"
+import { PipelineFaultStage, WORD_CONSISTENCY_SHIP_DEFAULT, deriveInputMode } from "#pipeline/types"
 import type {
 	AddressClassifier,
 	FSTMatcherLike,
@@ -32,7 +31,8 @@ import type {
 	QueryKindResult,
 	QueryShapeLite,
 	RuntimePipelineStages,
-} from "./types.ts"
+} from "#pipeline/types"
+import type { ComponentTag } from "#types/component"
 
 /**
  * Kind confidence required to skip the full pipeline. Set high deliberately: a short-circuit that fires on a wrong kind

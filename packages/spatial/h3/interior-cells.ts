@@ -24,30 +24,24 @@
 
 import { cellToBoundary, gridDisk, polygonToCells } from "h3-js"
 
-import { geometryContains, type GeojsonGeometry, type GeojsonPosition } from "../geometries/polygon.ts"
-import { shortCellToInt, type H3Cell } from "./cell.ts"
+import { arealPolygons, geometryContains, type ParsedGeometry, type PolygonRings } from "#geometries/polygon"
+import { shortCellToInt, type H3Cell } from "#h3/cell"
 
 /**
  * The rings a polyfill walks: every polygon's OUTER ring. Holes are deliberately not subtracted here — a hole would
  * only ever remove cells, and the interior test below re-checks every returned cell's vertices against the full
  * geometry (holes included), so a hole cannot survive into the result.
  */
-function outerRings(geometry: GeojsonGeometry): GeojsonPosition[][] {
-	const coordinates = (geometry as { coordinates?: unknown }).coordinates
+function outerRings(geometry: ParsedGeometry): PolygonRings {
+	const polygons = arealPolygons(geometry)
 
-	if (geometry.type === "Polygon") {
-		const rings = coordinates as GeojsonPosition[][]
-
-		return rings.length ? [rings[0]!] : []
+	if (!polygons) {
+		throw new Error(
+			`coverage region: expected a Polygon or MultiPolygon geometry, got ${JSON.stringify(geometry.type)}`
+		)
 	}
 
-	if (geometry.type === "MultiPolygon") {
-		const polygons = coordinates as GeojsonPosition[][][]
-
-		return polygons.filter((rings) => rings.length).map((rings) => rings[0]!)
-	}
-
-	throw new Error(`coverage region: expected a Polygon or MultiPolygon geometry, got ${JSON.stringify(geometry.type)}`)
+	return polygons.filter((rings) => rings.length).map((rings) => rings[0]!)
 }
 
 /**
@@ -57,7 +51,7 @@ function outerRings(geometry: GeojsonGeometry): GeojsonPosition[][] {
  * {@link interiorCoverageCellSet}; using this rectangle as the region would claim survey over every corner the outline
  * does not reach.
  */
-export function geometryBBox(geometry: GeojsonGeometry): {
+export function geometryBBox(geometry: ParsedGeometry): {
 	minLon: number
 	minLat: number
 	maxLon: number
@@ -99,7 +93,7 @@ export function geometryBBox(geometry: GeojsonGeometry): {
  * Every cell whose CENTRE falls inside `geometry`, at `resolution`. The raw polyfill — {@link interiorCoverageCells}
  * narrows it.
  */
-export function regionCoverageCells(geometry: GeojsonGeometry, resolution: number): H3Cell[] {
+export function regionCoverageCells(geometry: ParsedGeometry, resolution: number): H3Cell[] {
 	const cells = new Set<string>()
 
 	for (const ring of outerRings(geometry)) {
@@ -118,7 +112,7 @@ export function regionCoverageCells(geometry: GeojsonGeometry, resolution: numbe
  * The cells of {@link regionCoverageCells} that lie wholly inside `geometry` — see the module docstring for why both
  * tests are applied.
  */
-export function interiorCoverageCells(geometry: GeojsonGeometry, resolution: number): H3Cell[] {
+export function interiorCoverageCells(geometry: ParsedGeometry, resolution: number): H3Cell[] {
 	const polyfilled = new Set<string>(regionCoverageCells(geometry, resolution))
 	const interior: H3Cell[] = []
 
@@ -139,6 +133,6 @@ export function interiorCoverageCells(geometry: GeojsonGeometry, resolution: num
  * The 48-bit short-cell form of {@link interiorCoverageCells}, as a membership set — the shape both a row clipper and a
  * coverage writer probe.
  */
-export function interiorCoverageCellSet(geometry: GeojsonGeometry, resolution: number): Set<number> {
+export function interiorCoverageCellSet(geometry: ParsedGeometry, resolution: number): Set<number> {
 	return new Set(interiorCoverageCells(geometry, resolution).map((cell) => shortCellToInt(cell)))
 }

@@ -28,8 +28,8 @@
 import { abbreviationDictionary } from "@mailwoman/normalize"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { buildGauntletDeps, runOne } from "./harness.ts"
-import { type GauntletLayerOptions, layerDepsOptions } from "./regression.ts"
+import { buildGauntletDeps, runOne } from "#eval-harness/gauntlet/harness"
+import { type GauntletLayerOptions, layerDepsOptions } from "#eval-harness/gauntlet/regression"
 
 /**
  * Shortest span body worth mutating — below it a perturbation changes the token entirely.

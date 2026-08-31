@@ -14,8 +14,8 @@ import {
 	buildPostcode,
 	createFccBdcAdapter,
 } from "@mailwoman/corpus/adapters/fcc-bdc/adapter"
-import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join } from "path-ts"
 import { beforeEach, describe, expect, it } from "vitest"
 
 import { runAdapter } from "#runner"

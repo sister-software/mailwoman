@@ -27,7 +27,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { resolve } from "@mailwoman/platform/path"
+import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
  * Build inputs for one country's placetype-pair index. Shape mirrored from `release.config.json`; only `db` is read
@@ -69,8 +69,8 @@ export interface ReleaseConfig {
 /**
  * Read `release.config.json`. The one parse, so a second reader cannot invent a different shape for the same file.
  */
-export async function readReleaseConfig(repoRoot: string): Promise<ReleaseConfig> {
-	return readLocalJSONFile<ReleaseConfig>(resolve(repoRoot, "release.config.json"))
+export async function readReleaseConfig(repoRoot: PathBuilderLike): Promise<ReleaseConfig> {
+	return readLocalJSONFile<ReleaseConfig>(repoRoot, "release.config.json")
 }
 
 /**
@@ -94,14 +94,14 @@ const REPO_COMMITTED_SOFT_FEED_CHANNELS = [
  * disagreeing would ship a lexicon of a different generation than the checkout's, and nothing downstream compares
  * them.
  */
-export function repoCommittedSoftFeedSources(repoRoot: string, softFeed: SoftFeedRecipe): Map<string, string> {
+export function repoCommittedSoftFeedSources(repoRoot: PathBuilderLike, softFeed: SoftFeedRecipe): Map<string, string> {
 	const sources = new Map<string, string>()
 
 	for (const [shippedName, key] of REPO_COMMITTED_SOFT_FEED_CHANNELS) {
 		const rel = softFeed[key]
 
 		if (typeof rel === "string") {
-			sources.set(shippedName, resolve(repoRoot, rel))
+			sources.set(shippedName, resolvePath(repoRoot, rel))
 		}
 	}
 
@@ -117,7 +117,7 @@ export function repoCommittedSoftFeedSources(repoRoot: string, softFeed: SoftFee
  */
 export interface LinkableArtifact {
 	shippedName: string
-	sourcePath: string
+	sourcePath: PathBuilderLike
 }
 
 /**
@@ -169,20 +169,20 @@ export interface WeightsRecipe {
  * rather than each consumer re-reading the environment and disagreeing about precedence.
  */
 export async function readWeightsRecipe(
-	repoRoot: string,
-	dataRoot: string,
+	repoRoot: PathBuilder,
+	dataRoot: PathBuilder,
 	overrides: { model?: string; tokenizer?: string } = {}
 ): Promise<WeightsRecipe> {
 	const config = await readReleaseConfig(repoRoot)
 	const softFeed = config.softFeed ?? {}
 
-	const model = overrides.model ?? resolve(dataRoot, config.weights.model)
-	const tokenizer = overrides.tokenizer ?? resolve(dataRoot, config.weights.tokenizer)
+	const model = overrides.model ?? resolvePath(dataRoot, config.weights.model)
+	const tokenizer = overrides.tokenizer ?? resolvePath(dataRoot, config.weights.tokenizer)
 
 	// `copy-weights.ts` lets an absolute config entry pass through; matching that here keeps the two readers
 	// from disagreeing about what a leading slash means.
 	const underDataRoot = (rel: string, ...segments: string[]): string =>
-		rel.startsWith("/") ? rel : resolve(dataRoot, ...segments, rel)
+		rel.startsWith("/") ? rel : resolvePath(dataRoot, ...segments, rel)
 
 	const linkableFor = (locale: string): LinkableArtifact[] => {
 		const out: LinkableArtifact[] = [
@@ -209,8 +209,14 @@ export async function readWeightsRecipe(
 		// therefore not a lean install — it silently resolves the gazetteer and street-context priors OFF, which
 		// is a scoring change with no error. Named here so one reader knows the whole dev set.
 		out.push(
-			{ shippedName: `fst-${locale}.bin`, sourcePath: resolve(dataRoot, "wof", "fst-per-locale", `fst-${locale}.bin`) },
-			{ shippedName: "fst-street-morphology.bin", sourcePath: resolve(dataRoot, "wof", "fst-street-morphology.bin") }
+			{
+				shippedName: `fst-${locale}.bin`,
+				sourcePath: dataRoot("wof", "fst-per-locale", `fst-${locale}.bin`),
+			},
+			{
+				shippedName: "fst-street-morphology.bin",
+				sourcePath: dataRoot("wof", "fst-street-morphology.bin"),
+			}
 		)
 
 		return out

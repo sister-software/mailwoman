@@ -36,7 +36,7 @@ import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import { saverestToISODate } from "./tabular.ts"
+import { saverestToISODate } from "#sdk/tabular"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.
 export { isTransientResourceError } from "@mailwoman/core/api"

@@ -8,9 +8,8 @@
  */
 
 import { stableSourceID } from "#adapters/utils"
+import { alignAndWrite, makeLcg, readTuples, type ShardRecipe } from "#shard-recipes/scaffold"
 import { synthesizeStreetRow, type StreetBaseTuple } from "#synthesizers/street"
-
-import { alignAndWrite, makeLcg, readTuples, type ShardRecipe } from "./scaffold.ts"
 
 /**
  * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,

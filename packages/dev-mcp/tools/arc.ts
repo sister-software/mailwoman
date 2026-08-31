@@ -9,9 +9,9 @@
 
 import { z } from "zod"
 
-import { renderArc, runArc, summarizeArc } from "../arc.ts"
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
-import { INPUT_SET_SCHEMA } from "../tool-kit.ts"
+import { renderArc, runArc, summarizeArc } from "#arc"
+import type { DevTool, DevToolDeps } from "#tool-kit"
+import { INPUT_SET_SCHEMA } from "#tool-kit"
 
 export const arcTool = async ({ registry }: DevToolDeps): Promise<DevTool> => ({
 	name: "mwdev_arc",

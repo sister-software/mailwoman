@@ -4,12 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { bundleAliases, configureDemoWebpack } from "@mailwoman/docs/plugins/demo-assets/webpack-policy"
 import { buildWorkspaceAliases } from "@mailwoman/docs/plugins/demo-assets/workspace-aliases"
-import { resolve } from "@mailwoman/platform/path"
+import { resolvePath } from "path-ts"
 import { describe, expect, test } from "vitest"
 
-const docsDir = resolve(import.meta.dirname, "../../../..")
+const docsDir = resolvePackagePath("@mailwoman/docs")
 
 describe("docs webpack policy", () => {
 	test("places browser-safe leaf aliases before their Node-backed barrels", async () => {
@@ -24,7 +25,7 @@ describe("docs webpack policy", () => {
 		const config = configureDemoWebpack(
 			{ cache: false },
 			docsDir,
-			await bundleAliases(true, resolve(docsDir, "src", "empty-shim.js"))
+			await bundleAliases(true, resolvePath(docsDir, "src", "empty-shim.js"))
 		)
 
 		const aliases = config.resolve?.alias as Record<string, string>

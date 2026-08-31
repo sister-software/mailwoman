@@ -12,11 +12,11 @@ import { decodeAsJSON, type AddressNode, type AddressTree, type DroppedSpan } fr
 import type { QueryIntentMarker } from "@mailwoman/core/pipeline"
 import { adminLadderForNodes } from "@mailwoman/resolver"
 
-import { adminCoherenceField, type AdminCoherenceReport } from "./admin-coherence.ts"
-import type { AuthoritativeAssertion } from "./authoritative.ts"
-import { capitalPromotionOf, postcodeCountryScopeOf, variantAliasExemptionOf } from "./geocode-tree-reads.ts"
-import { assembleHierarchy, lineageAnchorNode, type HierarchyEntry } from "./hierarchy-lineage.ts"
-import { assembleStreetName } from "./street-name-assembly.ts"
+import { adminCoherenceField, type AdminCoherenceReport } from "#admin-coherence"
+import type { AuthoritativeAssertion } from "#authoritative"
+import { capitalPromotionOf, postcodeCountryScopeOf, variantAliasExemptionOf } from "#geocode-tree-reads"
+import { assembleHierarchy, lineageAnchorNode, type HierarchyEntry } from "#hierarchy-lineage"
+import { assembleStreetName } from "#street-name-assembly"
 
 /**
  * The resolution tier that produced the coordinate. `address_point` > `interpolated` > `street` > `admin`.

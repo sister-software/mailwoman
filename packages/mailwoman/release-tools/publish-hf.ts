@@ -33,13 +33,14 @@
  */
 
 import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { spawnProcessSync } from "@mailwoman/core/process"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import { spawnSync } from "@mailwoman/platform/child_process"
-import { tmpdir } from "@mailwoman/platform/os"
-import { basename, resolve } from "@mailwoman/platform/path"
+import { tempRootPath } from "@mailwoman/core/utils"
+import { basename } from "path-ts"
 
 /**
  * The parseArgs option names of the required per-release artifacts.
@@ -120,7 +121,7 @@ function fail(msg: string): never {
 }
 
 function run(cmd: string, args: string[]) {
-	const r = spawnSync(cmd, args, { stdio: "inherit", env: childEnv() })
+	const r = spawnProcessSync(cmd, args, { stdio: "inherit", env: childEnv() })
 
 	if (r.status !== 0) {
 		fail(`${cmd} ${args.join(" ")} → exit ${r.status}`)
@@ -239,7 +240,7 @@ async function verifyRequiredFiles(args: PublishHFOptions): Promise<void> {
 			fail(`${localPath} is empty`)
 		}
 
-		console.error(`  ✓ ${f.remoteName}: ${localPath} (${(size / 1024 / 1024).toFixed(1)} MB)`)
+		console.error(`  ✓ ${f.remoteName}: ${localPath} (${ByteFormatter.formatIEC(size)})`)
 	}
 }
 
@@ -471,7 +472,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		releases.defaultVersion = args.version
 	}
 
-	const tmpReleases = resolve(tmpdir(), `releases-${args.locale}-${Date.now()}.json`)
+	const tmpReleases = tempRootPath(`releases-${args.locale}-${Date.now()}.json`)
 	await writeLocalJSONFile(releases, tmpReleases)
 	run("hf", ["buckets", "cp", tmpReleases, `${BUCKET_PATH}/${args.locale}/releases.json`])
 

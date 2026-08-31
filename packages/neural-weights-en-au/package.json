@@ -26,6 +26,13 @@
 		"!scripts/**",
 		"!test/**"
 	],
+	"imports": {
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
 	"exports": {
 		"./*": "./*"
 	},
@@ -33,12 +40,12 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@mailwoman/neural-weights-en-us": "workspace:*",
-		"@mailwoman/platform": "workspace:*"
+		"@mailwoman/neural-weights-en-us": "workspace:*"
 	},
 	"devDependencies": {
 		"@mailwoman/core": "workspace:*",
-		"@mailwoman/resolver-wof-sqlite": "workspace:*"
+		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"path-ts": "^2.3.0"
 	},
 	"mailwoman": {
 		"baseWeights": "@mailwoman/neural-weights-en-us"

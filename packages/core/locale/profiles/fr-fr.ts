@@ -10,7 +10,7 @@
  *   included here.
  */
 
-import type { LocaleProfile } from "../locale.ts"
+import type { LocaleProfile } from "#locale/locale"
 
 /**
  * French locale profile — postcode before locality, and the CEDEX line handled as its own component.

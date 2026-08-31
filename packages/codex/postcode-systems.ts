@@ -21,14 +21,14 @@
  *   for".
  */
 
-import { normalizeAuPostcode } from "./au/index.ts"
-import { normalizeCaPostalCode } from "./ca/index.ts"
-import { normalizePLZ } from "./de/index.ts"
-import { normalizeCodePostal } from "./fr/index.ts"
-import { normalizeUkPostcode } from "./gb/index.ts"
-import { normalizeJpPostalCode } from "./jp/index.ts"
-import { normalizeNZPostcode } from "./nz/index.ts"
-import { isZipCode } from "./us/index.ts"
+import { normalizeAuPostcode } from "#au/index"
+import { normalizeCaPostalCode } from "#ca/index"
+import { normalizePLZ } from "#de/index"
+import { normalizeCodePostal } from "#fr/index"
+import { normalizeUkPostcode } from "#gb/index"
+import { normalizeJpPostalCode } from "#jp/index"
+import { normalizeNZPostcode } from "#nz/index"
+import { isZipCode } from "#us/index"
 
 /**
  * A codex address-system code — the subpath under `@mailwoman/codex/<system>`.

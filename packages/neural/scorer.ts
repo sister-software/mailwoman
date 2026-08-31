@@ -24,19 +24,21 @@
 import { ADDRESS_SYSTEM_CONVENTIONS, type SystemCode } from "@mailwoman/codex"
 import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	parseAnchorLookup,
 	shapedKeyerObligationViolation,
 	type AnchorLookup,
 	type AnchorSpanMode,
-} from "./anchor-inference.ts"
-import { NeuralAddressClassifier } from "./classifier.ts"
-import { parseCountryLexicon, type CountryLexicon } from "./country-inference.ts"
-import { parseGazetteerLexicon, type GazetteerLexicon } from "./gazetteer-inference.ts"
-import { ONNXRunner } from "./onnx-runner.ts"
-import { PostcodeBinaryResolver } from "./postcode-binary-resolver.ts"
-import { MailwomanTokenizer } from "./tokenizer.ts"
+} from "#anchor-inference"
+import { NeuralAddressClassifier } from "#classifier"
+import { parseCountryLexicon, type CountryLexicon } from "#country-inference"
+import { parseGazetteerLexicon, type GazetteerLexicon } from "#gazetteer-inference"
+import { ONNXRunner } from "#onnx-runner"
+import { PostcodeBinaryResolver } from "#postcode-binary-resolver"
+import { MailwomanTokenizer } from "#tokenizer"
+import { resolveWeights } from "#weights"
 import {
 	inferRequiredChannelsFromInputs,
 	lookupTagCapability,
@@ -44,8 +46,7 @@ import {
 	readLabelsFromModelCard,
 	readRequiredChannels,
 	type RequiredChannels,
-} from "./weights-channels.ts"
-import { resolveWeights } from "./weights.ts"
+} from "#weights-channels"
 
 /**
  * Delta threshold for the capability-manifest gate (#718/#719): a conventions row may forbid a tag only if the mask
@@ -79,10 +80,10 @@ export const DEFAULT_COUNTRY_LEXICON = "data/gazetteer/country-surface-lexicon-v
  * The one exception is a `shaped` card, which inverts the default order — see the comment on that branch.
  */
 async function resolveAnchorSource(
-	pinned: string | undefined,
+	pinned: PathBuilderLike | undefined,
 	locale: string | undefined,
 	spanMode: AnchorSpanMode | undefined
-): Promise<{ path: string; binary: boolean } | undefined> {
+): Promise<{ path: PathBuilderLike; binary: boolean } | undefined> {
 	// A caller-pinned path wins, and its FORMAT is read off the extension: a `.bin` is PCB1, anything
 	// else is the JSON pilot dump. The option used to be documented "always JSON" and pointing it at a
 	// candidate's own `postcode-<cc>.bin` threw a parse error — which left no way to grade a candidate
@@ -99,7 +100,7 @@ async function resolveAnchorSource(
 	}
 
 	try {
-		return resolveWeights({ locale }).anchorLookupPath ?? { path: DEFAULT_ANCHOR_LOOKUP, binary: false }
+		return (await resolveWeights({ locale })).anchorLookupPath ?? { path: DEFAULT_ANCHOR_LOOKUP, binary: false }
 	} catch {
 		return (await pathExists(DEFAULT_ANCHOR_LOOKUP)) ? { path: DEFAULT_ANCHOR_LOOKUP, binary: false } : undefined
 	}
@@ -114,7 +115,7 @@ async function defaultGazetteerLexicon(locale: string | undefined): Promise<stri
 	if (await pathExists(DEFAULT_GAZETTEER_LEXICON)) return DEFAULT_GAZETTEER_LEXICON
 
 	try {
-		return resolveWeights({ locale }).gazetteerLexiconPath
+		return (await resolveWeights({ locale })).gazetteerLexiconPath
 	} catch {
 		return undefined
 	}
@@ -128,7 +129,7 @@ async function defaultCountryLexicon(locale: string | undefined): Promise<string
 	if (await pathExists(DEFAULT_COUNTRY_LEXICON)) return DEFAULT_COUNTRY_LEXICON
 
 	try {
-		return resolveWeights({ locale }).countryLexiconPath
+		return (await resolveWeights({ locale })).countryLexiconPath
 	} catch {
 		return undefined
 	}
@@ -146,15 +147,15 @@ async function defaultCountryLexicon(locale: string | undefined): Promise<string
  */
 async function defaultStreetTypeLexicon(
 	locale: string | undefined,
-	modelCardPath: string
+	modelCardPath: PathBuilderLike
 ): Promise<string | undefined> {
-	const declared = readRequiredChannels(modelCardPath)?.street_type?.lexicon
+	const declared = (await readRequiredChannels(modelCardPath))?.street_type?.lexicon
 	const repoDefault = `data/gazetteer/${declared ?? "street-type-lexicon-v3.json"}`
 
 	if (await pathExists(repoDefault)) return repoDefault
 
 	try {
-		return resolveWeights({ locale }).streetTypeLexiconPath
+		return (await resolveWeights({ locale })).streetTypeLexiconPath
 	} catch {
 		return undefined
 	}
@@ -167,13 +168,13 @@ async function defaultStreetTypeLexicon(
  * complexity ceiling (86 against a maximum of 85 with the ternary inlined), and a lint error is a worse place to learn
  * that than here.
  */
-function fstPathEntry(fstPath: string | undefined): { fstPath?: string } {
+function fstPathEntry(fstPath: PathBuilderLike | undefined): { fstPath?: PathBuilderLike } {
 	return fstPath ? { fstPath } : {}
 }
 
-function defaultLocalitySurfaceLexicon(locale: string | undefined): string | undefined {
+async function defaultLocalitySurfaceLexicon(locale: string | undefined): Promise<string | undefined> {
 	try {
-		return resolveWeights({ locale }).localitySurfaceLexiconPath
+		return (await resolveWeights({ locale })).localitySurfaceLexiconPath
 	} catch {
 		return undefined
 	}
@@ -195,7 +196,7 @@ function declaredAnchorSpanMode(declared: RequiredChannels): AnchorSpanMode | un
 function assertShapedKeyerObligation(
 	lookup: AnchorLookup | undefined,
 	spanMode: AnchorSpanMode | undefined,
-	anchorSourcePath: string | undefined,
+	anchorSourcePath: PathBuilderLike | undefined,
 	strict: boolean
 ): void {
 	const violation = shapedKeyerObligationViolation(lookup, spanMode, anchorSourcePath)
@@ -208,7 +209,7 @@ function assertShapedKeyerObligation(
 /**
  * Load an `AnchorLookup` from either a PCB1 binary or a JSON pilot lookup (#718 D1).
  */
-async function loadAnchorLookup(source: { path: string; binary: boolean }): Promise<AnchorLookup> {
+async function loadAnchorLookup(source: { path: PathBuilderLike; binary: boolean }): Promise<AnchorLookup> {
 	return source.binary
 		? new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(source.path))).toAnchorLookup()
 		: parseAnchorLookup(await readLocalJSONFile(source.path))
@@ -259,15 +260,15 @@ export interface CreateScorerOpts {
 	/**
 	 * Path to the `model.onnx`.
 	 */
-	modelPath: string
+	modelPath: PathBuilderLike
 	/**
 	 * Path to the `tokenizer.model`.
 	 */
-	tokenizerPath: string
+	tokenizerPath: PathBuilderLike
 	/**
 	 * Path to the `model-card.json` (label vocab + the `requires` ship-config).
 	 */
-	modelCardPath: string
+	modelCardPath: PathBuilderLike
 	/**
 	 * Per-locale FST gazetteer path (`fst-<locale>.bin`), surfaced on the built classifier as
 	 * {@link NeuralAddressClassifier.fstPath} so a caller assembling `createRuntimePipeline` gets the decode-time
@@ -281,7 +282,7 @@ export interface CreateScorerOpts {
 	 * candidate model goes through this constructor, so every one of them was assembling a pipeline whose gazetteer prior
 	 * was silently OFF — which is why an FST change could not be measured by any eval in the tree.
 	 */
-	fstPath?: string
+	fstPath?: PathBuilderLike
 	/**
 	 * Postcode→anchor lookup path — a JSON pilot lookup, or a PCB1 `.bin` (recognized by extension, so a candidate's own
 	 * `postcode-<cc>.bin` can be pinned; before that it was JSON-only and pointing at a binary threw a parse error).
@@ -290,12 +291,12 @@ export interface CreateScorerOpts {
 	 * `@mailwoman/neural-weights-<locale>` package (#718 D1) — EXCEPT for a card declaring `span_mode: "shaped"`, which
 	 * inverts the order. See {@link resolveAnchorSource}.
 	 */
-	anchorLookupPath?: string
+	anchorLookupPath?: PathBuilderLike
 	/**
 	 * Gazetteer-anchor lexicon path. Default {@link DEFAULT_GAZETTEER_LEXICON} when it exists, else the soft-feed sibling
 	 * shipped in the weights package (#718 D1).
 	 */
-	gazetteerLexiconPath?: string
+	gazetteerLexiconPath?: PathBuilderLike
 	/**
 	 * Street-type evidence lexicon path (Option-A bundle). Default: repo artifact, else the weights sibling.
 	 */
@@ -374,7 +375,7 @@ class CapabilityViolationError extends Error {
 let warnedNoCapabilities = false
 
 async function assertConventionsRespectCapabilities(
-	modelCardPath: string,
+	modelCardPath: PathBuilderLike,
 	tier: string,
 	strict: boolean
 ): Promise<void> {
@@ -442,7 +443,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		throw new Error(`createScorer: modelCardPath does not exist: ${opts.modelCardPath}`)
 	}
 
-	const labels = readLabelsFromModelCard(opts.modelCardPath)
+	const labels = await readLabelsFromModelCard(opts.modelCardPath)
 
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(opts.tokenizerPath),
@@ -453,7 +454,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	// fall back to the ONNX graph's declared inputs — a model exporting anchor_features/gazetteer_features
 	// trained with those channels mandatory. Conventions/bridge are card-only (not graph-observable).
 	const declared: RequiredChannels =
-		readRequiredChannels(opts.modelCardPath) ?? inferRequiredChannelsFromInputs(await runner.inputNames())
+		(await readRequiredChannels(opts.modelCardPath)) ?? inferRequiredChannelsFromInputs(await runner.inputNames())
 
 	// --- Capability-manifest delta-gate (#718/#719) -----------------------------------------------
 	// BEFORE wiring the conventions mask, prove the shipped codex `forbiddenTags` don't destroy a tag
@@ -587,7 +588,9 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		}
 	}
 
-	const localitySurfaceLexiconPath = opts.localitySurfaceLexiconPath ?? defaultLocalitySurfaceLexicon(opts.locale)
+	const localitySurfaceLexiconPath =
+		opts.localitySurfaceLexiconPath ?? (await defaultLocalitySurfaceLexicon(opts.locale))
+
 	const localitySurfaceRequired = declared.locality_surface?.required ?? false
 	let localitySurfaceLexicon: GazetteerLexicon | undefined
 

@@ -37,9 +37,9 @@ import { $public } from "@mailwoman/core/env"
 import { pathExists, readLink, readLocalTextFile, statLink, statPath } from "@mailwoman/core/fs/readers"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { spawnProcessSync } from "@mailwoman/core/process"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { spawnSync } from "@mailwoman/platform/child_process"
-import { dirname, resolve } from "@mailwoman/platform/path"
+import { dirname, resolvePath } from "path-ts"
 
 import type { ReleaseInfo } from "#shared/demo-helpers"
 
@@ -74,7 +74,7 @@ export async function resolveWeightsArtifact(filename: string): Promise<string |
 
 	if (st.isSymbolicLink()) {
 		const target = await readLink(filePath)
-		const resolved = resolve(dirname(filePath), target)
+		const resolved = resolvePath(dirname(filePath), target)
 
 		return (await pathExists(resolved)) ? resolved : null
 	}
@@ -139,7 +139,7 @@ export async function stageSQLJSHTTPVFS(destDir: string): Promise<boolean> {
 	let copied = 0
 
 	for (const f of files) {
-		const src = resolve(distDir, f)
+		const src = resolvePath(distDir, f)
 
 		if (!(await pathExists(src))) {
 			console.warn(`[demo-assets] sql.js-httpvfs: missing ${f} in dist`)
@@ -147,7 +147,7 @@ export async function stageSQLJSHTTPVFS(destDir: string): Promise<boolean> {
 			return false
 		}
 
-		const dest = resolve(destDir, f)
+		const dest = resolvePath(destDir, f)
 
 		// Idempotent stage: skip when the destination already matches (by size). This runs in
 		// loadContent(), which the Docusaurus dev server (`yarn start`) re-invokes on reload — and
@@ -213,7 +213,7 @@ export async function stagePairIndexes(destDir: string): Promise<boolean> {
 			continue
 		}
 
-		const dest = resolve(destDir, file)
+		const dest = resolvePath(destDir, file)
 
 		// Idempotent stage (same reload-loop guard as stageSQLJSHTTPVFS): skip a byte-identical copy.
 		if ((await pathExists(dest)) && (await statPath(dest)).size === (await statPath(src)).size) continue
@@ -272,7 +272,7 @@ export async function buildFSTBinary(fstPath: string, opts: { repoRoot: string; 
 
 	console.log(`[demo-assets] FST: building from ${wofDB}`)
 
-	const result = spawnSync("node", ["--input-type=module", "-e", script], {
+	const result = spawnProcessSync("node", ["--input-type=module", "-e", script], {
 		cwd: opts.repoRoot,
 		stdio: ["pipe", "inherit", "inherit"],
 		timeout: 120_000,

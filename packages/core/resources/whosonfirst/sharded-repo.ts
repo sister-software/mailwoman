@@ -11,13 +11,10 @@
  *   parsed record has.
  */
 
-import { resolvePath } from "path-ts"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 
-import { statPath } from "#fs/readers"
-import { pathExistsSync, readLocalTextFileSync } from "#fs/readers-sync"
-import { tryParsingJSON } from "#objects"
-
-import type { WOFFeature } from "./placetypes/admin.ts"
+import { isDirectory, pathExists, readLocalJSONFile } from "#fs/readers"
+import type { WOFFeature } from "#resources/whosonfirst/placetypes/admin"
 
 /**
  * The GitHub organization holding the country data repositories.
@@ -41,15 +38,15 @@ export function wofRepoName(theme: "admin" | "postalcode" | "venue", country: st
  * admin ingest's depth-agnostic GeoJSON glob reads. The shipped postcode shards were built from repositories cloned by
  * hand as `<root>/<name>`. A reader that knows one layout reports a repository that is present as MISSING, and every
  * reader here treats missing as "no evidence" and continues — so the wrong layout is silent, not loud.
- *
- * Synchronous to match {@link readWOFFeature}: these readers run inside sync loops over database rows.
  */
-export async function resolveWOFRepo(reposRoot: string, name: string, owner = WOF_DATA_OWNER): Promise<string | null> {
+export async function resolveWOFRepo(
+	reposRoot: PathBuilderLike,
+	name: string,
+	owner = WOF_DATA_OWNER
+): Promise<string | null> {
 	for (const candidate of [resolvePath(reposRoot, owner, name), resolvePath(reposRoot, name)]) {
-		try {
-			if ((await statPath(candidate)).isDirectory()) return candidate.toString()
-		} catch {
-			// Absent, or unreadable — try the other layout, then answer null.
+		if (await isDirectory(candidate)) {
+			return candidate.toString()
 		}
 	}
 
@@ -62,7 +59,7 @@ export async function resolveWOFRepo(reposRoot: string, name: string, owner = WO
  * The pairing every reader needs: {@link readWOFFeature} takes roots that already point INTO `data`.
  */
 export async function resolveWOFDataDir(
-	reposRoot: string,
+	reposRoot: PathBuilderLike,
 	theme: "admin" | "postalcode" | "venue",
 	country: string
 ): Promise<string | null> {
@@ -102,20 +99,17 @@ export function wofIDPathSegments(id: number): string[] {
  * `null` conflates "absent" with "unparseable" on purpose: every caller so far treats both as "no evidence for this
  * place" and continues. A caller that needs to tell them apart should read the file itself.
  */
-export function readWOFFeature(id: number, roots: readonly string[]): WOFFeature | null {
+export async function readWOFFeature(id: number, roots: readonly string[]): Promise<WOFFeature | null> {
 	const segments = wofIDPathSegments(id)
 
 	for (const root of roots) {
 		const path = resolvePath(root, ...segments)
 
-		if (!pathExistsSync(path)) continue
+		if (!(await pathExists(path))) continue
 
-		try {
-			return tryParsingJSON<WOFFeature>(readLocalTextFileSync(path))
-		} catch {
-			// The file vanished or turned unreadable between existsSync and the read — same "no evidence" verdict.
-			return null
-		}
+		// Unreadable or unparseable — the file vanished between the probe and the read, or is not JSON — is the same
+		// "no evidence" verdict as absent.
+		return readLocalJSONFile<WOFFeature>(path).catch(() => null)
 	}
 
 	return null

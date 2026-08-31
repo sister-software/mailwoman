@@ -35,11 +35,11 @@
 
 import { readLocalJSONFile, readLocalTextFile, tryStat } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
-import { resolve } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
+import { resolvePath } from "path-ts"
 
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		locale: { type: "string" },
 		artifact: { type: "string" },
@@ -75,7 +75,7 @@ const rootVersion = await readLocalJSONFile<{ version: string }>(repoRootPath("p
 	(res) => res.version
 )
 
-await makeDirectories(resolve(pkgDir, "scripts"))
+await makeDirectories(resolvePath(pkgDir, "scripts"))
 
 await writeLocalJSONFile(
 	{
@@ -119,7 +119,7 @@ await writeLocalTextFile(
 // de-de's docstring — describing German addresses, in packages whose code was correct. Generating it
 // leaves nothing to copy; the magnitudes below are placeholders the author is told to calibrate.
 await writeLocalTextFile(
-	resolve(pkgDir, "scripts", "link-dev-weights.ts"),
+	resolvePath(pkgDir, "scripts", "link-dev-weights.ts"),
 	`/**
  * @copyright Sister Software
  * @license AGPL-3.0

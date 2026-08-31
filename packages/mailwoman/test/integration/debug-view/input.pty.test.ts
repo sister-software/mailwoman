@@ -23,8 +23,8 @@
  */
 
 import { isExecutable } from "@mailwoman/core/fs/readers"
-import { spawn } from "@mailwoman/platform/child_process"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { spawnProcess } from "@mailwoman/core/process"
 import { describe, expect, it } from "vitest"
 
 const ESC = "\u001B"
@@ -39,7 +39,7 @@ const META_BACKSPACE = `${ESC}\u007F`
  */
 const CTRL_W = "\u0017"
 
-const PROBE = fileURLToPath(new URL("../../../debug-view/test/input-probe.ts", import.meta.url))
+const PROBE = resolvePackagePath("mailwoman", "debug-view", "test", "input-probe.ts")
 
 const PTY_COLUMNS = 100
 const PTY_ROWS = 30
@@ -67,7 +67,7 @@ function delay(ms: number): Promise<void> {
  */
 async function driveInput(keys: string[]): Promise<string> {
 	const command = [`stty cols ${PTY_COLUMNS} rows ${PTY_ROWS}`, `node '${PROBE}'`].join("; ")
-	const child = spawn("script", ["-q", "-e", "-c", command, "/dev/null"], { stdio: ["pipe", "pipe", "pipe"] })
+	const child = spawnProcess("script", ["-q", "-e", "-c", command, "/dev/null"], { stdio: ["pipe", "pipe", "pipe"] })
 
 	let output = ""
 

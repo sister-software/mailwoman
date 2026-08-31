@@ -31,10 +31,11 @@
  *   malformed input and throws (decision 8), not silently coerced to `null`.
  */
 
-import { openReadStream } from "@mailwoman/core/fs/streams"
-import { createInterface } from "@mailwoman/platform/readline"
+import { createInterface } from "node:readline"
 
-import { toFRN, type FRN } from "./frn.ts"
+import { openReadStream } from "@mailwoman/core/fs/streams"
+
+import { toFRN, type FRN } from "#sdk/frn"
 
 /**
  * The three provider-list CSV columns this parser actually reads, named after Nexus's `RawProviderRecord`

@@ -123,7 +123,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 		scorerPairwiseEval,
 	} = await import("@mailwoman/registry/tools")
 
-	const { evalGeocoderFactory } = await import("./run.tsx")
+	const { evalGeocoderFactory } = await import("#commands/registry/run")
 
 	const createGeocoder = evalGeocoderFactory({
 		wof: options.wof,
@@ -181,9 +181,9 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 			// The threaded-geocode surface is injected lazily — the worker pool only loads when requested.
 			const geocodeStream: EvalGeocodeStream = (records, opts) =>
 				(async function* () {
-					const { geocodeStream: stream } = await import("../../geocode-stream.ts")
+					const { geocodeStream: stream } = await import("#geocode-stream")
 					const { dataRootPath } = await import("@mailwoman/core/utils")
-					const { mailwomanDataRoot } = await import("../../resolver-backend.ts")
+					const { mailwomanDataRoot } = await import("#resolver-backend")
 
 					yield* stream(records, {
 						mapping: opts.mapping,

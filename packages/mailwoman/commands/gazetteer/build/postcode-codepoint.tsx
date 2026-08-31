@@ -15,6 +15,7 @@
  *   `@mailwoman/resolver-wof-sqlite` peer.
  */
 
+import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -43,7 +44,6 @@ interface Options {
 
 const GazetteerBuildPostcodeCodePoint: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { artifactSizeMB } = await import("#gazetteer-pipeline")
 		const { buildPostcodeCodePoint } = await import("#gazetteer/postcode/codepoint-shard")
 
 		const result = await buildPostcodeCodePoint({
@@ -56,7 +56,7 @@ const GazetteerBuildPostcodeCodePoint: ParsedCommandComponent<Options> = ({ opti
 		const { stats, metadata } = result
 
 		return [
-			`postcode codepoint: ${result.out} (${await artifactSizeMB(result.out)} MB)`,
+			`postcode codepoint: ${result.out} (${await formatFileSize(result.out)})`,
 			`${result.inserted.toLocaleString()} unit postcodes — OS release ${result.osVersion} (dataset ${metadata.datasetVersion}, © ${metadata.copyrightDate})`,
 			`read ${stats.read.toLocaleString()} · dropped ${stats.skippedNoCoordinate.toLocaleString()} no-coordinate (PQI 90) · ${stats.skippedMalformed.toLocaleString()} malformed`,
 			`manifest claims ${metadata.totalRows.toLocaleString()} rows across ${Object.keys(metadata.rowsByArea).length} areas — ${

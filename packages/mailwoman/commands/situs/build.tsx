@@ -33,14 +33,14 @@
  *   regardless.
  */
 
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { spawn } from "@mailwoman/platform/child_process"
-import * as os from "@mailwoman/platform/os"
-import * as path from "@mailwoman/platform/path"
+import { spawnProcess } from "@mailwoman/core/process"
+import { availableParallelism } from "@mailwoman/core/utils/system"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
+import { join } from "path-ts"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
@@ -161,7 +161,7 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 		await makeDirectories(outDir)
 
 		const concurrency = Math.max(1, options.concurrency || 4)
-		const cores = os.availableParallelism?.() ?? os.cpus().length
+		const cores = availableParallelism()
 		const threads = Math.max(1, options.threads || Math.floor(cores / concurrency))
 		// The per-state ADDRESS-POINT builder is now the sibling `situs address-points` command (the
 		// old `scripts/build-address-point-shard.ts` was migrated into the CLI). Re-invoke the SAME CLI
@@ -180,8 +180,8 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 
 		// A shard is COMPLETE iff its address_point table has rows AND the streetkey index exists — the
 		// index is the last build step, so its presence means insert + index + VACUUM all finished.
-		const isComplete = (dbPath: string): boolean => {
-			if (!pathExistsSync(dbPath)) return false
+		const isComplete = async (dbPath: string): Promise<boolean> => {
+			if (!(await pathExists(dbPath))) return false
 
 			try {
 				using db = new DatabaseClient<AddressPointDatabase>(dbPath, { readOnly: true })
@@ -199,10 +199,10 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 			}
 		}
 
-		const buildOneState = (stateCode: string): Promise<StateResult> => {
-			const dbPath = path.join(outDir, `address-points-us-${stateCode.toLowerCase()}.db`)
+		const buildOneState = async (stateCode: string): Promise<StateResult> => {
+			const dbPath = join(outDir, `address-points-us-${stateCode.toLowerCase()}.db`)
 
-			if (!options.force && isComplete(dbPath)) return Promise.resolve({ state: stateCode, skipped: true })
+			if (!options.force && (await isComplete(dbPath))) return { state: stateCode, skipped: true }
 
 			return new Promise((resolve) => {
 				const argv = [
@@ -224,7 +224,7 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 				}
 
 				const t = Date.now()
-				const child = spawn(process.execPath, argv)
+				const child = spawnProcess(process.execPath, argv)
 
 				let out = "",
 					err = ""
@@ -259,7 +259,7 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 			failed = 0,
 			totalRows = 0
 
-		const attributionPath = path.join(outDir, "ATTRIBUTION.json")
+		const attributionPath = join(outDir, "ATTRIBUTION.json")
 
 		// parallelMap yields results AS THEY COMPLETE (out of order), capped at `concurrency` in
 		// flight. Each result carries its own state, so out-of-order is fine for the state-keyed

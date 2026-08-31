@@ -13,7 +13,7 @@
  *   loudly; a hand-loosened one ships the next #1026.
  */
 
-import type { VerifyBaseline } from "./verify.ts"
+import type { VerifyBaseline } from "#gazetteer-pipeline/verify"
 
 /**
  * Row and index counts a freshly-built gazetteer is expected to clear. A build under these is reported as suspect

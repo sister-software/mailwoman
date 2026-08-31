@@ -13,9 +13,9 @@
  *   city-state. The shared span means every role gets the same `value`.
  */
 
-import type { ComponentTag } from "../types/component.ts"
-import type { AddressNode, AddressTree } from "./types.ts"
-import { type UnknownSpan, unknownSpans } from "./unknown-spans.ts"
+import type { AddressNode, AddressTree } from "#decoder/types"
+import { type UnknownSpan, unknownSpans } from "#decoder/unknown-spans"
+import type { ComponentTag } from "#types/component"
 
 /**
  * A span the flat projection could not represent, and why.

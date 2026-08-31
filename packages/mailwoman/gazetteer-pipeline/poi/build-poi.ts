@@ -45,7 +45,6 @@ import {
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { dirname, join } from "@mailwoman/platform/path"
 import { POI_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import {
 	createPOIBrandIndex,
@@ -62,10 +61,11 @@ import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { cellToParent, latLngToCell, polygonToCells } from "h3-js"
+import { dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 
-import { DEFAULT_RELEASE } from "./defaults.ts"
+import { DEFAULT_RELEASE } from "#gazetteer-pipeline/poi/defaults"
 
-export { DEFAULT_RELEASE } from "./defaults.ts"
+export { DEFAULT_RELEASE } from "#gazetteer-pipeline/poi/defaults"
 
 /**
  * Coverage is aggregated one level coarser than the row spine — a res-6 cell covers a whole metro area.
@@ -187,7 +187,7 @@ export interface IngestPlacesResult {
  */
 export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPlacesResult> {
 	const release = opts.release ?? DEFAULT_RELEASE
-	const outDir = opts.out ?? dataRootPath("overture", release, "places")
+	const outDir = resolvePath(opts.out ?? dataRootPath("overture", release, "places"))
 	await makeDirectories(outDir)
 	const phase = opts.onPhase ?? (() => {})
 
@@ -423,7 +423,7 @@ export interface BuildPOIOptions {
 	/**
 	 * Output `poi.db` path. Removed + rebuilt if already present (build-on-copy at the file level; see module docstring).
 	 */
-	out: string
+	out: PathBuilderLike
 	/**
 	 * Overture release this build's rows came from — becomes the manifest's `sourceVintage`.
 	 */
@@ -699,11 +699,12 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 		kdb.exec("VACUUM")
 	}
 
-	progress("seal", opts.out)
-	await sealDatabase(opts.out)
+	const out = resolvePath(opts.out)
+	progress("seal", out)
+	await sealDatabase(out)
 
 	return {
-		out: opts.out,
+		out,
 		rows: inserted,
 		skipped,
 		categories: categoryCodes.size,

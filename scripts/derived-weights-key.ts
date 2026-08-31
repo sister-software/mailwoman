@@ -20,9 +20,9 @@
 
 import { pathExists, readDirectory, readLocalBuffer, statPath } from "@mailwoman/core/fs/readers"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
-import { createHash } from "@mailwoman/platform/crypto"
-import { join, relative, resolve } from "@mailwoman/platform/path"
+import { createHash } from "@mailwoman/core/utils/hash"
 import { POSTCODE_BINARY_KEY_FLOORS } from "mailwoman/gazetteer-pipeline/postcode/binary"
+import { join, relative, resolvePath } from "path-ts"
 
 /**
  * Repo-relative files the derived binaries are a function of, beyond the `data/gazetteer` payload enumerated by
@@ -58,7 +58,7 @@ export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
  * {@link DERIVED_WEIGHTS_INPUTS}, where an explicit list is the point.
  */
 async function gazetteerDataPaths(): Promise<string[]> {
-	const dir = resolve(repoRootPath(), "data", "gazetteer")
+	const dir = resolvePath(repoRootPath(), "data", "gazetteer")
 
 	if (!(await pathExists(dir))) return []
 
@@ -76,8 +76,8 @@ async function postcodePipelinePaths(): Promise<string[]> {
 	const root = repoRootPath()
 
 	const dirs = [
-		resolve(root, "packages/mailwoman/gazetteer-pipeline/postcode"),
-		resolve(root, "packages/mailwoman/out/gazetteer-pipeline/postcode"),
+		resolvePath(root, "packages/mailwoman/gazetteer-pipeline/postcode"),
+		resolvePath(root, "packages/mailwoman/out/gazetteer-pipeline/postcode"),
 	]
 
 	const paths: string[] = []
@@ -117,7 +117,7 @@ export async function derivedWeightsInputs(): Promise<DerivedWeightsInput[]> {
 	const [gazetteerData, postcodePipeline] = await Promise.all([gazetteerDataPaths(), postcodePipelinePaths()])
 
 	return [
-		...DERIVED_WEIGHTS_INPUTS.map((name) => ({ name, path: resolve(root, name) })),
+		...DERIVED_WEIGHTS_INPUTS.map((name) => ({ name, path: resolvePath(root, name) })),
 		...gazetteerData.map((path) => ({ name: relative(root, path), path })),
 		...postcodePipeline.map((path) => ({ name: relative(root, path), path })),
 	]

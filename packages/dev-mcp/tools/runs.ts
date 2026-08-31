@@ -10,8 +10,8 @@
 
 import { z } from "zod"
 
-import { RETENTION_DAYS, RETENTION_MAX_RUNS, RUN_STORE_DIR, getRun, listRuns } from "../run-store.ts"
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
+import { RETENTION_DAYS, RETENTION_MAX_RUNS, RUN_STORE_DIR, getRun, listRuns } from "#run-store"
+import type { DevTool, DevToolDeps } from "#tool-kit"
 
 export const runsTool = async ({ registry }: DevToolDeps): Promise<DevTool> => ({
 	name: "mwdev_runs",
@@ -27,7 +27,7 @@ export const runsTool = async ({ registry }: DevToolDeps): Promise<DevTool> => (
 		limit: z.number().int().positive().max(200).default(25),
 	}),
 	handler: async (args) => {
-		const fingerprint = registry.fingerprint().digest
+		const fingerprint = (await registry.fingerprint()).digest
 
 		if (args["action"] === "get") {
 			const runID = args["run_id"] as string | undefined

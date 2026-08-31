@@ -38,10 +38,10 @@
  *   loudly instead of silently drifting.
  */
 
+import { createRequire } from "@mailwoman/core/module/resolvers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { createRequire } from "@mailwoman/platform/module"
-import { dirname, join, resolve } from "@mailwoman/platform/path"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { repoRootPath } from "@mailwoman/core/utils"
+import { dirname, join } from "path-ts"
 import { $ } from "zx"
 
 /**
@@ -95,7 +95,7 @@ interface StyleLeg {
 	cleanCountsEverySeverity: boolean
 }
 
-const DOCS_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..")
+const DOCS_DIR = repoRootPath("docs")
 
 const LEGS: StyleLeg[] = [
 	{

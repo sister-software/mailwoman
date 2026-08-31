@@ -8,7 +8,7 @@
  *   arrays at accepting states.
  */
 
-import type { FSTContinuation, FSTMatchResult, FSTQueryResult, PlaceEntry } from "./fst-types.ts"
+import type { FSTContinuation, FSTMatchResult, FSTQueryResult, PlaceEntry } from "#fst-types"
 
 interface FSTNode {
 	edges: Map<string, number>

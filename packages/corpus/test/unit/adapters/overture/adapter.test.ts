@@ -10,7 +10,7 @@ import {
 	OVERTURE_DEFAULT_LICENSE,
 	createOvertureAdapter,
 } from "@mailwoman/corpus/adapters/overture/adapter"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 import { runAdapter } from "#runner"

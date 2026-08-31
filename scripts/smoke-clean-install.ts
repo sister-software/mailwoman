@@ -2,6 +2,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { runFileSync, spawnProcess } from "@mailwoman/core/process"
 import { repoRootPath } from "@mailwoman/core/utils"
 /**
  * @copyright Sister Software
@@ -26,8 +27,7 @@ import { repoRootPath } from "@mailwoman/core/utils"
  *
  *   Run AFTER `yarn compile`. Usage: node scripts/smoke-clean-install.ts
  */
-import { execFileSync, spawn } from "@mailwoman/platform/child_process"
-import { join, resolve } from "@mailwoman/platform/path"
+import { join, resolvePath as resolve } from "path-ts"
 
 import { packWorkspaceForPublish } from "./pack-workspace.ts"
 
@@ -44,7 +44,6 @@ const repoRoot = repoRootPath()
 const WORKSPACES: Record<string, string> = {
 	// Runtime capability boundary shared by the publish graph. Pack it first so every consumer resolves
 	// the source-coherent tarball instead of a stale (or not-yet-published) registry version.
-	"@mailwoman/platform": "packages/platform",
 	"@mailwoman/core": "packages/core",
 	"@mailwoman/spatial": "packages/spatial",
 	"@mailwoman/sqlite": "packages/sqlite",
@@ -180,7 +179,7 @@ const STANDALONE_LEAVES: Record<string, string[]> = {
 	// Core otherwise qualifies as a dependency-clean leaf. Its first-party runtime dependencies are supplied as local
 	// tarballs rather than resolved from npm: `@mailwoman/sqlite` is a NEW name with no publish yet, so a registry
 	// install answers E404 and the probe reports a packaging failure that is really an unblessed name.
-	"@mailwoman/core": ["@mailwoman/platform", "@mailwoman/sqlite"],
+	"@mailwoman/core": ["@mailwoman/sqlite"],
 }
 
 /**
@@ -211,7 +210,7 @@ const MCP_EXPECTED_TOOLS = [
  */
 async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number> {
 	const binPath = join(projDir, "node_modules", ".bin", "mailwoman-mcp")
-	const child = spawn(binPath, [], { cwd: projDir, stdio: ["pipe", "pipe", "pipe"] })
+	const child = spawnProcess(binPath, [], { cwd: projDir, stdio: ["pipe", "pipe", "pipe"] })
 
 	let stderr = ""
 
@@ -361,10 +360,10 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 await using tmp = await temporaryDirectory("mw-smoke-")
 const tarDir = tmp.resolve("tarballs")
 const proj = tmp.resolve("proj")
-execFileSync("mkdir", ["-p", tarDir, proj])
+runFileSync("mkdir", ["-p", tarDir, proj])
 
 const run = (cmd: string, args: string[], cwd: string) =>
-	execFileSync(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" })
+	runFileSync(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" })
 
 /**
  * Closure-completeness guard: every `workspace:*` @mailwoman dep of a packed workspace must itself be in WORKSPACES. An
@@ -410,7 +409,7 @@ try {
 		// Pack via the SHARED publish path (injected publishConfig.exports) — a raw `yarn pack`
 		// ships the dev map (node → .ts), which consumers can never load (node_modules type-strip
 		// refusal) and which this smoke exists to catch.
-		await packWorkspaceForPublish(resolve(repoRoot, dir), tgz)
+		packWorkspaceForPublish(resolve(repoRoot, dir), tgz)
 		deps[name] = `file:${tgz}`
 	}
 
@@ -462,7 +461,7 @@ try {
 		console.log(`[smoke] standalone-leaf import: ${leaf} alone (no umbrella, no hoisting)…`)
 
 		const solo = tmp.resolve(`solo-${leafDir}`)
-		execFileSync("mkdir", ["-p", solo])
+		runFileSync("mkdir", ["-p", solo])
 
 		await writeLocalJSONFile(
 			{

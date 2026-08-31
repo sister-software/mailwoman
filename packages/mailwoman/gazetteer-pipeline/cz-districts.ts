@@ -24,7 +24,7 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createHash } from "@mailwoman/platform/crypto"
+import { md5Hex } from "@mailwoman/core/utils/hash"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
@@ -60,7 +60,7 @@ export async function buildCZDistrictsShard(
 	const tmpPath = `${outPath}.tmp`
 
 	const raw = await readLocalTextFile(sourcePath)
-	const sourceMD5 = createHash("md5").update(raw).digest("hex")
+	const sourceMD5 = md5Hex(raw)
 
 	// GeoNames places format: 0=geonameid 1=name 2=asciiname … 4=lat 5=lon 6=featureClass 7=featureCode.
 	const byName = new Map<string, { name: string; lat: number; lon: number; feature: string }>()
@@ -125,7 +125,7 @@ export async function buildCZDistrictsShard(
 		db.exec("ANALYZE")
 	}
 
-	swapDatabaseIntoPlace(tmpPath, outPath)
+	await swapDatabaseIntoPlace(tmpPath, outPath)
 	await sealDatabase(outPath)
 
 	return { out: outPath, inserted, sourceMD5 }

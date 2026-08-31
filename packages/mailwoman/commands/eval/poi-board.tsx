@@ -63,7 +63,7 @@ interface Options {
 const EvalPoiBoard: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { runPOIBoard } = await import("../../eval-harness/poi-board.ts")
+			const { runPOIBoard } = await import("#eval-harness/poi-board")
 
 			const { report, exitCode } = await runPOIBoard({
 				locale: options.locale,

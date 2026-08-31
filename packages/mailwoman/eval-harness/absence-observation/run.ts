@@ -29,18 +29,7 @@ import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
 
-import { type LayerManifest, probeManifest } from "../../data-inventory.ts"
-import { buildSHA } from "../../gazetteer-pipeline/stamp-manifest.ts"
-import {
-	type AbsenceObservation,
-	type AbsenceObservationRoute,
-	type AbsenceRouteIdentity,
-	createAbsenceObservationRoute,
-	createSemanticObservationRoute,
-	describeAbsenceObservation,
-	type SemanticObservationRoute,
-} from "../../observations/index.ts"
-import { createPOIBoardPipeline, type POIBoardOptions, type POIBoardResolverBackend } from "../poi-board.ts"
+import { type LayerManifest, probeManifest } from "#data-inventory"
 import {
 	type AbsenceCounts,
 	type AbsenceExpectedOutcome,
@@ -51,7 +40,18 @@ import {
 	computeAbsenceCounts,
 	decideAbsenceProbe,
 	loadAbsenceProbeDefinition,
-} from "./probe.ts"
+} from "#eval-harness/absence-observation/probe"
+import { createPOIBoardPipeline, type POIBoardOptions, type POIBoardResolverBackend } from "#eval-harness/poi-board"
+import { buildSHA } from "#gazetteer-pipeline/stamp-manifest"
+import {
+	type AbsenceObservation,
+	type AbsenceObservationRoute,
+	type AbsenceRouteIdentity,
+	createAbsenceObservationRoute,
+	createSemanticObservationRoute,
+	describeAbsenceObservation,
+	type SemanticObservationRoute,
+} from "#observations/index"
 
 export interface AbsenceArtifactIdentity {
 	poiDatabasePath: string
@@ -127,7 +127,7 @@ async function readWeightsIdentity(options: AbsenceProbeOptions): Promise<{
 	weightsVersion: string
 }> {
 	const locale = options.locale ?? "en-US"
-	const resolved = resolveWeights({ locale, cacheRoot: options.weightsCacheRoot })
+	const resolved = await resolveWeights({ locale, cacheRoot: options.weightsCacheRoot })
 	const cardPath = resolved.modelCardPath ?? resolved.baseModelCardPath
 
 	if (!cardPath) {
@@ -165,7 +165,7 @@ async function readArtifactIdentity(
  * were never compared. Pass `db` explicitly only to measure that mismatch on purpose.
  */
 export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = {}): Promise<AbsenceProbeReceipt> {
-	const definition = loadAbsenceProbeDefinition(options.definitionPath, options.freezePath)
+	const definition = await loadAbsenceProbeDefinition(options.definitionPath, options.freezePath)
 
 	const coverageDatabasePath = options.coverageDatabasePath ?? String(dataRootPath("poi", definition.coverageLayerFile))
 

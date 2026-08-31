@@ -25,19 +25,19 @@ import { readWOFFeature, resolveWOFDataDir } from "@mailwoman/core/resources/who
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
-import { PathBuilder } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
 export interface CentroidFillOptions {
 	/**
 	 * GeoNames postal dump dir (`<CC>.txt`). Omit to skip pass 2.
 	 */
-	geonamesDir?: string
+	geonamesDir?: PathBuilderLike
 	/**
 	 * The combined `allCountries-postal.txt`, consulted when {@link geonamesDir} has no `<CC>.txt` for a country. Default
 	 * `<data-root>/geonames/allCountries-postal.txt` — the only place the US dump exists.
 	 */
-	geonamesCombined?: string
+	geonamesCombined?: PathBuilderLike
 	/**
 	 * The admin gazetteer to borrow parent/ancestor centroids from (ATTACHed read-only). Omit to skip passes 3–4.
 	 */
@@ -107,9 +107,9 @@ interface GeonamesPostcode {
 const geonamesCache = new Map<string, Map<string, GeonamesPostcode>>()
 
 async function readGeonamesPostal(
-	geonamesDir: string,
+	geonamesDir: PathBuilderLike,
 	country: string,
-	combinedPath: string
+	combinedPath: PathBuilderLike
 ): Promise<Map<string, GeonamesPostcode>> {
 	// The centroid pass and the name pass ask for the same country, and the combined dump is 140 MB.
 	const cached = geonamesCache.get(`${geonamesDir}\u0000${country}`)
@@ -171,8 +171,8 @@ async function readGeonamesPostal(
  */
 async function geonamesNameFill(
 	kdb: DatabaseClient<WOFDatabase>,
-	geonamesDir: string,
-	combinedPath: string
+	geonamesDir: PathBuilderLike,
+	combinedPath: PathBuilderLike
 ): Promise<number> {
 	const countries = (
 		await kdb
@@ -240,8 +240,8 @@ async function geonamesNameFill(
 
 async function geonamesFill(
 	db: DatabaseClient<WOFDatabase>,
-	geonamesDir: string,
-	combinedPath: string
+	geonamesDir: PathBuilderLike,
+	combinedPath: PathBuilderLike
 ): Promise<number> {
 	// The GeoNames UPDATE matches on (country, name); the build only indexes placetype/country/parent,
 	// so without this the per-postcode UPDATEs scan each country's rows (minutes on 400k+ rows). `kdb`
@@ -326,7 +326,7 @@ async function ancestorFallback(db: DatabaseClient<WOFDatabase>, reposDir: strin
 		let hierarchy: Record<string, number> | undefined
 
 		try {
-			hierarchy = readWOFFeature(row.id, [dataDir])?.properties?.["wof:hierarchy"]?.[0]
+			hierarchy = (await readWOFFeature(row.id, [dataDir]))?.properties?.["wof:hierarchy"]?.[0]
 		} catch {
 			continue // file missing or unreadable — leave unplaced
 		}
@@ -383,7 +383,7 @@ export async function fillPostcodeCentroids(
 		// walking up out of `geonamesDir`, which only lands correctly when that argument is the default.
 		const combinedPath = opts.geonamesCombined ?? dataRootPath("geonames", "allCountries-postal.txt")
 
-		phase("fill-geonames", opts.geonamesDir)
+		phase("fill-geonames", `${opts.geonamesDir}`)
 		geonamesFixed = await geonamesFill(db, opts.geonamesDir, combinedPath)
 
 		phase("name-geonames", "delivery-city names")

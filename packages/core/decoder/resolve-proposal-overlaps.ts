@@ -38,7 +38,7 @@
  *   Pure module: reads only `span.{start,end}` + `confidence`. Safe to import anywhere.
  */
 
-import type { ClassificationProposal } from "../types/index.ts"
+import type { ClassificationProposal } from "#types/index"
 
 /**
  * Half-open interval overlap: `[aStart,aEnd)` and `[bStart,bEnd)` share at least one position.

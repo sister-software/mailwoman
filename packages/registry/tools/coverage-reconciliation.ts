@@ -43,9 +43,8 @@ import {
 	type ReconcileConfig,
 	type SourceRecord,
 } from "#index"
-
-import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
-import { buildSpecs } from "./shared.ts"
+import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
+import { buildSpecs } from "#tools/shared"
 
 /**
  * Options for {@linkcode coverageReconciliation}.

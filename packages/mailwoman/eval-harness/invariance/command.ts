@@ -8,7 +8,7 @@
  *   narrates everything and owns only the exit code, matching `eval gate` / `eval error-analysis`.
  */
 
-import { type ModelSelectOptions, loadSuite, buildParseFn, runInvarianceSuite } from "./runner.ts"
+import { type ModelSelectOptions, loadSuite, buildParseFn, runInvarianceSuite } from "#eval-harness/invariance/runner"
 
 export interface InvarianceCommandOptions extends ModelSelectOptions {
 	/**

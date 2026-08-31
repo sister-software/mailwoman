@@ -1,3 +1,5 @@
+import { sleep } from "#utils/sleep"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -7,8 +9,6 @@
  *   This lives apart from `DataSourceCache` because both that module and `PlacetypeDataSource` need
  *   it, and each already imports the other — putting it in either one closes an import cycle.
  */
-
-import { setTimeout } from "@mailwoman/platform/timers/promises"
 
 /**
  * Given a callback, attempt to run it up to `attempts` times.
@@ -32,7 +32,7 @@ export async function tryWithBackoff<T>(attempts: number, callback: () => T): Pr
 
 		// We try to avoid contention by giving a pause between attempts.
 		const delay = Math.floor(Math.random() * 1000) + 1000 * attempts
-		await setTimeout(delay)
+		await sleep(delay)
 	}
 
 	throw lastError

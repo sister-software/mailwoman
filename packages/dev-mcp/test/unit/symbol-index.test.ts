@@ -15,7 +15,7 @@ import {
 	selectReportable,
 	type DeclarationSite,
 } from "@mailwoman/dev-mcp/symbol-index"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -26,7 +26,7 @@ afterAll(() => fixtures.disposeAsync())
  * A miniature repository: one exported home, one deliberate local copy, one nested decoy.
  */
 async function seedFixture(): Promise<string> {
-	const root = fixtures.use(await temporaryDirectory("mw-symbol-index-")).path
+	const root = String(fixtures.use(await temporaryDirectory("mw-symbol-index-")).path)
 
 	await makeDirectories(join(root, "packages", "core", "utils"))
 	await makeDirectories(join(root, "packages", "api-kit"))

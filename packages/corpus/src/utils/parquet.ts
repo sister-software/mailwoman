@@ -40,12 +40,11 @@
 import { tryStat } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
+import { join, type PathBuilderLike } from "path-ts"
 
 import { ParquetWriter, type ParquetSchemaDefinition } from "#parquet-wrapper"
 import type { LabeledRow } from "#types"
-
-import type { SplitName } from "./split.ts"
+import type { SplitName } from "#utils/split"
 
 /**
  * Row groups flush at this many rows (parquetjs internal cadence within a shard).
@@ -165,7 +164,7 @@ export interface WriteShardsOptions {
 	/**
 	 * Root output directory; corpus version dir is created beneath.
 	 */
-	outputDir: string
+	outputDir: PathBuilderLike
 
 	/**
 	 * Corpus version stamped onto rows + into the output directory name.

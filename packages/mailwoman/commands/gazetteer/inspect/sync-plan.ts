@@ -9,6 +9,7 @@
  *   as a message rather than as a directory full of unwanted clones.
  */
 
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { WOF_DATA_OWNER, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
@@ -175,7 +176,7 @@ export function selectRepos(discovered: readonly DiscoveredRepo[], options: Sele
 		if (!options.all) {
 			throw new CommandError(
 				`No --repos or --countries filter. Syncing all of ${WOF_REPO_OWNER} means ` +
-					`${discovered.length} repositories, ${(totalKB(discovered) / 1024 / 1024).toFixed(1)} GB as GitHub ` +
+					`${discovered.length} repositories, ${ByteFormatter.formatSI(totalKB(discovered) * 1024)} as GitHub ` +
 					`reports them — several times that once checked out. Pass --all to confirm, or narrow the sync.`
 			)
 		}

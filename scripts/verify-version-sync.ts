@@ -20,7 +20,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { resolve } from "@mailwoman/platform/path"
+import { resolvePath } from "path-ts"
 
 import { releaseWorkspaces } from "./release-stage.ts"
 
@@ -48,7 +48,7 @@ export interface VersionSyncResult {
  * Compare every `.release-it.json` workspace's version against the root's.
  */
 export async function checkVersionSync(repoRoot: string): Promise<VersionSyncResult> {
-	const root = await readLocalJSONFile<{ version?: unknown }>(resolve(repoRoot, "package.json"))
+	const root = await readLocalJSONFile<{ version?: unknown }>(resolvePath(repoRoot, "package.json"))
 
 	if (typeof root.version !== "string") {
 		throw new TypeError(`verify-version-sync: ${repoRoot}/package.json declares no string "version".`)
@@ -58,7 +58,7 @@ export async function checkVersionSync(repoRoot: string): Promise<VersionSyncRes
 	const drift: VersionDrift[] = []
 
 	for (const workspace of workspaces) {
-		const manifestPath = resolve(repoRoot, workspace, "package.json")
+		const manifestPath = resolvePath(repoRoot, workspace, "package.json")
 		const manifest = await readLocalJSONFile<{ version?: unknown }>(manifestPath)
 
 		if (manifest.version !== root.version) {

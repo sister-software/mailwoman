@@ -28,16 +28,13 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { execFile, spawn } from "@mailwoman/platform/child_process"
-import { basename, join } from "@mailwoman/platform/path"
-import { promisify } from "@mailwoman/platform/util"
-import { assertRingsInsideExtent, type MultiPolygonRings, type PolygonRings } from "@mailwoman/spatial"
+import { runFile, spawnProcess } from "@mailwoman/core/process"
+import { arealPolygons, assertRingsInsideExtent, type MultiPolygonRings } from "@mailwoman/spatial"
 import { assertDatumTransformationAvailable } from "@mailwoman/spatial/projection-transform"
+import { basename, join } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
-import { SSURGO_SOURCE_EPSG } from "../vocabulary.ts"
-
-const execFileAsync = promisify(execFile)
+import { SSURGO_SOURCE_EPSG } from "#vocabulary"
 
 /**
  * Coordinate decimals ogr2ogr writes into the stream. Nine is well past the source's own precision — the metadata
@@ -133,7 +130,7 @@ export async function readSoilSourceIdentity(options: SoilIngestOptions): Promis
 	const layer = options.layer ?? basename(options.shapefilePath, ".shp")
 	const expectEPSG = options.expectEPSG ?? SSURGO_SOURCE_EPSG
 
-	const { stdout } = await execFileAsync("ogrinfo", ["-json", "-so", options.shapefilePath, layer], {
+	const { stdout } = await runFile("ogrinfo", ["-json", "-so", options.shapefilePath, layer], {
 		maxBuffer: 32 * 1024 * 1024,
 	})
 
@@ -241,7 +238,7 @@ export async function* readSoilDelineations(
 		options.shapefilePath,
 	]
 
-	const child = spawn("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
+	const child = spawnProcess("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
 	const stderr: string[] = []
 
 	child.stderr.setEncoding("utf8")
@@ -327,9 +324,9 @@ function toDelineation(
  * @throws {Error} When the geometry is neither.
  */
 function normalizePolygons(geometry: { type: string; coordinates: unknown }, featureID: string): MultiPolygonRings {
-	if (geometry.type === "MultiPolygon") return geometry.coordinates as MultiPolygonRings
+	const polygons = arealPolygons(geometry)
 
-	if (geometry.type === "Polygon") return [geometry.coordinates as PolygonRings]
+	if (polygons) return polygons
 
 	throw new Error(`soil ingest: delineation ${featureID} is a ${geometry.type}, expected Polygon or MultiPolygon`)
 }

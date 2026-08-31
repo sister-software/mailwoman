@@ -86,7 +86,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { AdminLocator } from "./admin-locator.ts"
+import { AdminLocator } from "#gazetteer-pipeline/admin-locator"
 
 /**
  * Prefix granularity a build extracts. `"outward"` is the GB/NI outward code (area + district); the digit levels are

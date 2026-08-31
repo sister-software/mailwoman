@@ -14,8 +14,8 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { createRequire } from "@mailwoman/core/module/resolvers"
 import * as geographicModel from "@mailwoman/geographic-model"
-import { createRequire } from "@mailwoman/platform/module"
 import { describe, expect, it } from "vitest"
 
 interface Manifest {

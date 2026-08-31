@@ -44,9 +44,9 @@ import {
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent, latLngToCell } from "h3-js"
 
-import { SoilCapabilityLookup, SoilReadingKind } from "../index.ts"
-import type { SoilDatabase } from "../schema.ts"
-import type { SoilDataAccessClient } from "./client.ts"
+import { SoilCapabilityLookup, SoilReadingKind } from "#index"
+import type { SoilDatabase } from "#schema"
+import type { SoilDataAccessClient } from "#sdk/client"
 
 /**
  * One point, both verdicts, and whether they agree.

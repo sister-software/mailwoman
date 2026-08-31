@@ -54,7 +54,7 @@ import {
 	observationLayerRecord,
 	type ObservationCoverageRecord,
 	type ObservationLayerRecord,
-} from "./layer-record.ts"
+} from "#observations/layer-record"
 
 /**
  * One coastal-erosion designation, recorded beside an answer.

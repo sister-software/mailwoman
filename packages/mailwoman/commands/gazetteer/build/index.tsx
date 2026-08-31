@@ -10,8 +10,9 @@
  *   Both artifacts land at STAGING/dated paths; swapping/promoting stays deliberate (RELEASING.md).
  */
 
-import { join } from "@mailwoman/platform/path"
+import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
+import { join } from "path-ts"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
@@ -34,7 +35,7 @@ interface Options {
 
 const GazetteerBuild: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { artifactSizeMB, buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeShards, wofDir } =
+		const { buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeShards, wofDir } =
 			await import("#gazetteer-pipeline")
 
 		console.error("▸ build admin (staging)")
@@ -59,8 +60,8 @@ const GazetteerBuild: ParsedCommandComponent<Options> = ({ options }) => {
 		})
 
 		return [
-			`admin: ${admin.out} (${await artifactSizeMB(admin.out)} MB) — ${admin.verify ? "verify PASS" : "verify SKIPPED"}, sealed`,
-			`candidate: ${candidateOut} (${await artifactSizeMB(candidateOut)} MB) — ${candidate.rows.toLocaleString()} rows, sealed`,
+			`admin: ${admin.out} (${await formatFileSize(admin.out)}) — ${admin.verify ? "verify PASS" : "verify SKIPPED"}, sealed`,
+			`candidate: ${candidateOut} (${await formatFileSize(candidateOut)}) — ${candidate.rows.toLocaleString()} rows, sealed`,
 			"next: mailwoman gazetteer verify --db <admin>, then swap + promote per RELEASING.md",
 		]
 	})

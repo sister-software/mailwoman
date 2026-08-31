@@ -11,7 +11,6 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
 import {
 	GEONAMES_POSTAL_ID_BASE,
 	ingestGeonamesPostal,
@@ -19,6 +18,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/geonames-postal"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 describe("normalizePostcodeName (the #920 name law)", () => {

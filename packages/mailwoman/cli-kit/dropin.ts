@@ -26,17 +26,11 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { parseArgs } from "@mailwoman/platform/util"
 
-import { type FreshnessArtifact, type FreshnessReport, readFreshness } from "../freshness.ts"
-import {
-	buildNoGazetteerMessage,
-	mailwomanDataRoot,
-	resolveCandidateDBPath,
-	wofShardPaths,
-} from "../resolver-backend.ts"
+import { type FreshnessArtifact, type FreshnessReport, readFreshness } from "#freshness"
+import { buildNoGazetteerMessage, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "#resolver-backend"
 
 /**
  * The docs page every drop-in's missing-gazetteer message points a stranger at (#1009). One constant so the three
@@ -61,7 +55,7 @@ function fail(message: string): never {
  * or opens a gazetteer.
  */
 export function parseOpenAPIFlags(binaryName: string): { flavor?: string; out?: string } {
-	const { values } = parseArgs({
+	const { values } = parseArguments({
 		options: {
 			flavor: { type: "string", default: "3.1" },
 			out: { type: "string" },
@@ -124,11 +118,18 @@ export async function resolveGazetteerOrExit(candidateDBFlag: string | undefined
 		fail(`✗ --candidate-db not found: ${candidateDBFlag}`)
 	}
 
-	const wofPaths = wofShardPaths().filter(pathExistsSync)
+	const wofPaths: string[] = []
+
+	for (const shardPath of wofShardPaths()) {
+		if (await pathExists(shardPath)) {
+			wofPaths.push(shardPath)
+		}
+	}
+
 	// Candidate gazetteer = worldwide resolution (population-first ranking + global coverage + the FTS5-trigram typo
 	// fallback). --candidate-db, else $MAILWOMAN_CANDIDATE_DB, else the `<data-root>/wof/candidate.db` convention
 	// path. Absent → the admin FTS shards.
-	const candidateDB = resolveCandidateDBPath(candidateDBFlag)
+	const candidateDB = await resolveCandidateDBPath(candidateDBFlag)
 
 	if (!candidateDB && !wofPaths.length) {
 		fail(buildNoGazetteerMessage({ dataRoot: mailwomanDataRoot(), docsPath: GAZETTEER_DOCS_PATH }))
@@ -169,7 +170,11 @@ export function gazetteerBannerLines({ adminDBPath, candidateDB }: GazetteerPath
  * Call once at boot: a server holds its handles for its whole life, so the artifact it serves from is the one it opened
  * at start, whatever a later symlink swap points at.
  */
-export function gazetteerFreshness({ adminDBPath, candidateDB, wofPaths }: GazetteerPaths): FreshnessReport {
+export async function gazetteerFreshness({
+	adminDBPath,
+	candidateDB,
+	wofPaths,
+}: GazetteerPaths): Promise<FreshnessReport> {
 	const artifacts: FreshnessArtifact[] = []
 
 	if (candidateDB) {
@@ -184,7 +189,7 @@ export function gazetteerFreshness({ adminDBPath, candidateDB, wofPaths }: Gazet
 		artifacts.push({ name: "reverse-admin", path: adminDBPath })
 	}
 
-	return readFreshness(artifacts)
+	return await readFreshness(artifacts)
 }
 
 /**
@@ -210,7 +215,7 @@ export interface DropInCLI {
  * command exits 1; a bare invocation prints usage and exits 0.
  */
 export async function runDropInCLI({ binaryName, openapi, serve, usage }: DropInCLI): Promise<void> {
-	const command = parseArgs({ strict: false, allowPositionals: true }).positionals[0]
+	const command = parseArguments({ strict: false, allowPositionals: true }).positionals[0]
 
 	switch (command) {
 		case "serve":

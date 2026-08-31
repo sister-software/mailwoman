@@ -37,8 +37,7 @@ import type { BIOLabel, ComponentTag } from "@mailwoman/core/types"
 import { distance as levenshteinDistance } from "fastest-levenshtein"
 
 import type { CanonicalRow, LabeledRow, QuarantinedRow } from "#types"
-
-import { whitespaceTokenizer, type TokenSpan, type Tokenizer } from "./tokenize.ts"
+import { whitespaceTokenizer, type TokenSpan, type Tokenizer } from "#utils/tokenize"
 
 /**
  * Options for `alignRow`.

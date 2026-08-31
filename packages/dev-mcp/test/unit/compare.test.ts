@@ -18,7 +18,7 @@ import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
 import { ExternalGeocoderClient } from "@mailwoman/dev-mcp/external-arm"
 import { afterAll, describe, expect, it } from "vitest"
 
-import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
+import { stubEngine, stubEngineRegistry } from "#test/stub-registry"
 
 /**
  * Every comparison writes its answers to the run store. Redirected here so a test run never touches the operator's
@@ -72,7 +72,7 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 		repoRoot: "/tmp/stub",
 		maxResident: 2,
 		size: 1,
-		fingerprint: () => ({
+		fingerprint: async () => ({
 			digest: "tree0",
 			gitHead: "head0",
 			dirtyFiles: [],

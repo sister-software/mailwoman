@@ -18,7 +18,7 @@
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { ADDRESS_CONVENTION_TABLE, type Convention, type ConventionSource } from "./convention.ts"
+import { ADDRESS_CONVENTION_TABLE, type Convention, type ConventionSource } from "#convention"
 
 export class SqliteConventionSource<DB> implements ConventionSource {
 	readonly #db: DatabaseClient<DB>

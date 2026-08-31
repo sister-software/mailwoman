@@ -12,10 +12,10 @@
  *   Regenerate: `node codex/tools/export-country-surfaces.ts` (writes the corpus-python data file).
  */
 
-import { writeLocalTextFileSync } from "@mailwoman/core/fs/writers-sync"
-import { resolve } from "@mailwoman/platform/path"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { repoRootPath } from "@mailwoman/core/utils"
 
-import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "../country/country.ts"
+import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "#country/country"
 
 // Merge: rich surface forms where the codex curates them, else the canonical English name for every
 // ISO 3166-1 alpha-2. Canonical-name-first (the codex's own ordering) so the common form leads.
@@ -31,9 +31,9 @@ for (const [iso2, name] of ISO2_TO_NAME) {
 	}
 }
 
-const out = resolve(import.meta.dirname, "../../../corpus-python/src/mailwoman_train/data/country-surfaces.json")
+const out = repoRootPath("corpus-python", "src", "mailwoman_train", "data", "country-surfaces.json")
 
-writeLocalTextFileSync(
+await writeLocalTextFile(
 	JSON.stringify(
 		{
 			_generated: "codex/tools/export-country-surfaces.ts from @mailwoman/codex COUNTRY_SURFACE_FORMS + ISO2_TO_NAME",

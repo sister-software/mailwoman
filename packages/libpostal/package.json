@@ -27,7 +27,11 @@
 	],
 	"type": "module",
 	"imports": {
-		"#package.json": "./package.json"
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
@@ -47,7 +51,6 @@
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/neural-weights-en-us": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
-		"@mailwoman/platform": "workspace:*",
 		"hono": "^4.13.0",
 		"mailwoman": "workspace:*",
 		"zod": "^4.4.3"

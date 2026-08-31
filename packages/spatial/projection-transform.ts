@@ -1,3 +1,5 @@
+import { runFile } from "@mailwoman/core/process"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -27,11 +29,6 @@
  *   distinguishes were observed from the same command on the same machine, before and after the grid was
  *   installed, and they are the difference between a metre-accurate layer and a 3 m-offset one.
  */
-
-import { execFile } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
-
-const execFileAsync = promisify(execFile)
 
 /**
  * What PROJ would do, and whether it can actually do it.
@@ -100,13 +97,7 @@ export async function assertDatumTransformationAvailable(
 ): Promise<DatumTransformationVerdict> {
 	const targetEPSG = options.targetEPSG ?? WGS84_EPSG
 
-	const { stdout } = await execFileAsync("projinfo", [
-		"-s",
-		`EPSG:${sourceEPSG}`,
-		"-t",
-		`EPSG:${targetEPSG}`,
-		"--summary",
-	])
+	const { stdout } = await runFile("projinfo", ["-s", `EPSG:${sourceEPSG}`, "-t", `EPSG:${targetEPSG}`, "--summary"])
 
 	const verdict = assessDatumTransformation(stdout)
 

@@ -8,9 +8,9 @@
 
 import type { LatLngLiteral } from "@googlemaps/google-maps-services-js"
 
-import { isValidLatitude, isValidLongitude } from "./coordinate-bounds.ts"
+import { isValidLatitude, isValidLongitude } from "#coordinate-bounds"
 
-export { isValidLatitude, isValidLongitude } from "./coordinate-bounds.ts"
+export { isValidLatitude, isValidLongitude } from "#coordinate-bounds"
 
 /**
  * Arity of a `[lon, lat]` coordinate tuple.

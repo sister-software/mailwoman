@@ -29,14 +29,14 @@
  */
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { geometryContains, haversineKm, type GeojsonGeometry } from "@mailwoman/spatial"
+import { geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { ancestorLineage, placetypeDepth } from "./ancestry.ts"
-import { PLACE_BBOX_TABLE } from "./fts.ts"
-import type { WOFDatabase } from "./schema.ts"
-import { allRows } from "./sqlite-utils.ts"
-import type { PlaceCandidate, WOFPlacetype } from "./types.ts"
+import { ancestorLineage, placetypeDepth } from "#ancestry"
+import { PLACE_BBOX_TABLE } from "#fts"
+import type { WOFDatabase } from "#schema"
+import { allRows } from "#sqlite-utils"
+import type { PlaceCandidate, WOFPlacetype } from "#types"
 
 /**
  * Largest absolute latitude in WGS-84 degrees.
@@ -170,7 +170,7 @@ export class WOFReverseGeocoder implements Disposable {
 	 * LRU-tracked; the polygons are DP-simplified and small, the cap exists only to keep a long-lived server process
 	 * honest.
 	 */
-	readonly #geometryCache = new Map<number, GeojsonGeometry | null>()
+	readonly #geometryCache = new Map<number, ParsedGeometry | null>()
 	static readonly #GEOMETRY_CACHE_CAP = 4096
 
 	constructor(opts: WOFReverseGeocoderOpts) {
@@ -438,7 +438,7 @@ export class WOFReverseGeocoder implements Disposable {
 	/**
 	 * Parsed GeoJSON geometry for a WOF id, or null when absent / unparseable / no polygon DB.
 	 */
-	#geometry(id: number): GeojsonGeometry | null {
+	#geometry(id: number): ParsedGeometry | null {
 		if (!this.#polygons) return null
 		const cached = this.#geometryCache.get(id)
 
@@ -450,7 +450,7 @@ export class WOFReverseGeocoder implements Disposable {
 
 		const row = this.#polygons.prepare(`SELECT geom FROM polygons WHERE id = ?`).get(id) as { geom: string } | undefined
 		// Malformed row parses to null — treat as no-polygon rather than failing the query.
-		const geometry = row ? tryParsingJSON<GeojsonGeometry>(row.geom) : null
+		const geometry = row ? tryParsingJSON<ParsedGeometry>(row.geom) : null
 
 		this.#geometryCache.set(id, geometry)
 

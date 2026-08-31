@@ -14,7 +14,7 @@
  *   cycle (the lesson); canonical and city-first keep the polarity balanced (the v1.9.9 lesson).
  */
 
-import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
+import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "#shard-recipes/scaffold"
 
 /**
  * The order-cycle slot for the STREET-LESS form (`«city» «pc», Česko`) — the exact surface of the

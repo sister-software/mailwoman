@@ -51,9 +51,9 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { join } from "path-ts"
 
-import { buildFTS, type BuildFTSResult } from "../fts.ts"
-import type { ShardMetaDatabase } from "./geonames-tail.ts"
-import { createShardMetaTable } from "./geonames-tail.ts"
+import { buildFTS, type BuildFTSResult } from "#gazetteer-pipeline/fts"
+import type { ShardMetaDatabase } from "#gazetteer-pipeline/postcode/geonames-tail"
+import { createShardMetaTable } from "#gazetteer-pipeline/postcode/geonames-tail"
 import {
 	acquireNIPostcodes,
 	createNIOSMParseStats,
@@ -68,7 +68,7 @@ import {
 	OSM_LICENSE_URL,
 	type OverpassResponse,
 	parseNIPostcodes,
-} from "./ni-osm/index.ts"
+} from "#gazetteer-pipeline/postcode/ni-osm/index"
 
 /**
  * Synthetic id base for the NI OSM rows — its own namespace above Code-Point Open (9.7e12), so every postcode source

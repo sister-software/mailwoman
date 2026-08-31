@@ -27,12 +27,12 @@
  *   MCP channel. All protocol traffic rides the IPC channel via `process.send`.
  */
 
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { z } from "zod"
 
-import { EngineRegistry } from "./engine-registry.ts"
-import { JobRegistry } from "./jobs.ts"
-import { buildToolTable, type DevTool } from "./tools/index.ts"
+import { EngineRegistry } from "#engine-registry"
+import { JobRegistry } from "#jobs"
+import { buildToolTable, type DevTool } from "#tools/index"
 
 interface HandshakeMessage {
 	type: "handshake"
@@ -62,7 +62,7 @@ export type WorkerOutbound =
 	| { type: "result"; id: number; ok: true; value: unknown }
 	| { type: "result"; id: number; ok: false; error: string }
 
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		"repo-root": { type: "string" },
 		"max-resident": { type: "string" },
@@ -73,7 +73,7 @@ if (!values["repo-root"]) {
 	throw new Error("worker: --repo-root is required (the shim always passes it)")
 }
 
-const registry = new EngineRegistry(
+const registry = await EngineRegistry.create(
 	values["repo-root"],
 	values["max-resident"] ? Number.parseInt(values["max-resident"], 10) : 2
 )

@@ -33,6 +33,7 @@
  *   `grep` the same bytes the builder saw.
  */
 
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
@@ -192,7 +193,7 @@ export async function extractCodePointOpen(options: ExtractCodePointOptions): Pr
 		throw new Error(`extractCodePointOpen: no ${CSV_ENTRY_PREFIX}*.csv entries in ${options.archivePath}`)
 	}
 
-	phase("extract", `${csvPaths.length} area CSVs, ${(totalBytes / 1_000_000).toFixed(1)} MB`)
+	phase("extract", `${csvPaths.length} area CSVs, ${ByteFormatter.formatIEC(totalBytes)}`)
 
 	const metadataPath = join(docDir, "metadata.txt")
 	const metadata = parseCodePointMetadata(await readLocalTextFile(metadataPath))

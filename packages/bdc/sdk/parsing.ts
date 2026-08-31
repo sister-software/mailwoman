@@ -57,7 +57,7 @@
 import type { AsyncDataResource } from "spliterator"
 import { CSVSpliterator } from "spliterator"
 
-import type { ProviderID } from "./common.ts"
+import type { ProviderID } from "#sdk/common"
 
 /**
  * Column positions in the FCC's 12-column availability CSV. Named rather than sliced by offset so a reader can check

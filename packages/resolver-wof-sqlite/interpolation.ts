@@ -31,9 +31,9 @@ import type { InterpolationLookup } from "@mailwoman/resolver"
 import { clampFraction, haversineKm, pointAlong } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { hasTable, prepareAll, type PreparedAll } from "./sqlite-utils.ts"
-import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "./street-normalize.ts"
-import type { StreetSegmentDatabase } from "./street-segment-schema.ts"
+import { hasTable, prepareAll, type PreparedAll } from "#sqlite-utils"
+import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "#street-normalize"
+import type { StreetSegmentDatabase } from "#street-segment-schema"
 
 /**
  * How an interpolated answer was computed (#483 Method 2):

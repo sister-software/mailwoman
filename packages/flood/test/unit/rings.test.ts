@@ -14,7 +14,7 @@ import {
 	ringSignedAreaM2,
 } from "@mailwoman/flood/rings"
 import { holeRing, rectangleRing } from "@mailwoman/flood/test-kit"
-import { pointInPolygonRings } from "@mailwoman/spatial"
+import { pointInPolygon } from "@mailwoman/spatial"
 import { describe, expect, it } from "vitest"
 
 describe("ring blob", () => {
@@ -46,7 +46,7 @@ describe("ring blob", () => {
 			[2, 2, false],
 		] as Array<[number, number, boolean]>) {
 			expect(pointInEncodedRings(blob, lon, lat)).toBe(expected)
-			expect(pointInPolygonRings(lon, lat, rings as [number, number][][])).toBe(expected)
+			expect(pointInPolygon(lon, lat, rings)).toBe(expected)
 		}
 	})
 

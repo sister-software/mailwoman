@@ -1,6 +1,5 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 /**
@@ -10,6 +9,7 @@ import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-sche
  */
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { fillPostcodeCentroids } from "mailwoman/gazetteer-pipeline/postcode/centroid-fills"
+import { join } from "path-ts"
 import { expect, test } from "vitest"
 
 test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordinates untouched", async () => {

@@ -28,17 +28,17 @@
  *   operator-gated after the battery.
  */
 
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
-import { join, resolve } from "@mailwoman/platform/path"
 import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
 import { fstStaleReason, peekFSTStampFields, readWOFSourceIdentity } from "@mailwoman/resolver-wof-sqlite/fst-freshness"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join, resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 /**
@@ -155,7 +155,9 @@ export async function checkAdminDerivedFSTFreshness(dbPath: string): Promise<FST
 	const source = await readWOFSourceIdentity(dbPath)
 	const wofRoot = String(dataRootPath("wof"))
 
-	return ADMIN_DERIVED_FST_ARTIFACTS.map((relative): FSTFreshnessRow => {
+	const rows: FSTFreshnessRow[] = []
+
+	for (const relative of ADMIN_DERIVED_FST_ARTIFACTS) {
 		const path = join(wofRoot, relative)
 		const locale = /fst-per-locale\/fst-(?<locale>[a-z]{2}-[a-z]{2})\.bin$/.exec(relative)?.groups?.locale
 		const buildable = locale !== undefined && FST_LOCALES.has(locale)
@@ -164,23 +166,29 @@ export async function checkAdminDerivedFSTFreshness(dbPath: string): Promise<FST
 			? `mailwoman gazetteer build fst --locales ${locale}`
 			: `NO BUILDER — ${locale ?? "this artifact"} has no FST_LOCALES entry (built by the pre-#1318 flow)`
 
-		if (!pathExistsSync(path)) return { artifact: relative, present: false, rebuildCommand }
+		if (!(await pathExists(path))) {
+			rows.push({ artifact: relative, present: false, rebuildCommand })
 
-		const fields = peekFSTStampFields(path)
+			continue
+		}
+
+		const fields = await peekFSTStampFields(path)
 
 		const staleReason = fstStaleReason(fields, {
 			source,
 			...(buildable ? { exclusionPolicy: EXCLUSION_POLICY_ID } : {}),
 		})
 
-		return {
+		rows.push({
 			artifact: relative,
 			present: true,
 			...(staleReason === undefined ? {} : { staleReason }),
 			...(fields?.provenance?.builtAt ? { builtAt: fields.provenance.builtAt } : {}),
 			rebuildCommand,
-		}
-	})
+		})
+	}
+
+	return rows
 }
 
 /**
@@ -410,7 +418,7 @@ export interface BuiltLocaleFST {
 export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<BuiltLocaleFST[]> {
 	const locales = opts.locales ?? [...FST_LOCALES.keys()]
 	const dbPath = opts.dbPath ?? String(dataRootPath("wof", "admin-global-priority.db"))
-	const outputDir = resolve(opts.outputDir ?? String(dataRootPath("wof", "fst-per-locale-curated")))
+	const outputDir = resolvePath(opts.outputDir ?? String(dataRootPath("wof", "fst-per-locale-curated")))
 	const progress = opts.onProgress ?? (() => {})
 
 	const exclusion = opts.uncurated ? undefined : await loadDegenerateSurfaces()
@@ -467,7 +475,7 @@ export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<B
 		})
 
 		progress(
-			`  wrote ${outPath} (${(bytes.length / 1e6).toFixed(1)} MB, ${provenance.nameInsertions} insertions, ${provenance.excludedInsertions ?? 0} excluded)`
+			`  wrote ${outPath} (${ByteFormatter.formatIEC(bytes.length)}, ${provenance.nameInsertions} insertions, ${provenance.excludedInsertions ?? 0} excluded)`
 		)
 	}
 

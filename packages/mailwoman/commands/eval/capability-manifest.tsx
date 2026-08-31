@@ -48,7 +48,7 @@ interface Options {
 
 const EvalCapabilityManifest: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { generateCapabilityManifest } = await import("../../eval-harness/capability-manifest.ts")
+		const { generateCapabilityManifest } = await import("#eval-harness/capability-manifest")
 
 		return generateCapabilityManifest(options)
 	})

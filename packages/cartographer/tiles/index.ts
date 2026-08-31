@@ -4,6 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./api.ts"
-export * from "./coords.ts"
-export * from "./schema.ts"
+export * from "#tiles/api"
+export * from "#tiles/coords"
+export * from "#tiles/schema"

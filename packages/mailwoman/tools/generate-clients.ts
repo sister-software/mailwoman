@@ -34,7 +34,6 @@
  */
 
 import { pathExists, readDirectory, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import {
 	copyFileTo,
 	makeDirectories,
@@ -42,10 +41,10 @@ import {
 	writeLocalFile,
 	writeLocalTextFile,
 } from "@mailwoman/core/fs/writers"
+import { spawnProcessSync } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
-import { spawnSync } from "@mailwoman/platform/child_process"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 
 import type { Check } from "#cli-kit"
 
@@ -147,7 +146,7 @@ function fail(message: string): never {
 function run(cmd: string, args: string[], options: { cwd?: string } = {}): void {
 	console.error(`  $ ${cmd} ${args.join(" ")}${options.cwd ? `  (in ${options.cwd})` : ""}`)
 
-	const r = spawnSync(cmd, args, { stdio: "inherit", env: childEnv(), cwd: options.cwd })
+	const r = spawnProcessSync(cmd, args, { stdio: "inherit", env: childEnv(), cwd: options.cwd })
 
 	if (r.error) {
 		fail(`${cmd} ${args.join(" ")} → failed to launch: ${r.error.message}`)
@@ -173,7 +172,13 @@ async function readMailwomanVersion(): Promise<string> {
  * not from source.
  */
 async function checkCompiled(): Promise<void> {
-	const missing = CLIENT_SURFACES.filter((surface) => !pathExistsSync(emitterCLIPath(surface)))
+	const missing: string[] = []
+
+	for (const surface of CLIENT_SURFACES) {
+		if (!(await pathExists(emitterCLIPath(surface)))) {
+			missing.push(surface)
+		}
+	}
 
 	if (missing.length) {
 		fail(

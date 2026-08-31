@@ -10,8 +10,8 @@
  */
 
 import { decodeAsTuples } from "@mailwoman/core/decoder"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
 import { CLIUsageError } from "#cli-kit"
@@ -24,7 +24,7 @@ const MIN_REPORTABLE_SAMPLES = 4
 // TODO: Use Tagged from type-fest to force type.
 const fold = (v: string) => v.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
-const { positionals } = parseArgs({
+const { positionals } = parseArguments({
 	allowPositionals: true,
 })
 

@@ -15,9 +15,9 @@
  *   See `docs/engineering/reference/STAGES.md` § Stage 2 for the contract.
  */
 
-export { detectLocale, detectLocaleSync } from "./detect.ts"
-export { scoreByPostcode, scoreByScript, scoreFallback } from "./rules.ts"
-export type { LocaleCandidate } from "./rules.ts"
+export { detectLocale, detectLocaleSync } from "#detect"
+export { scoreByPostcode, scoreByScript, scoreFallback } from "#rules"
+export type { LocaleCandidate } from "#rules"
 
 export type {
 	DetectLocaleOpts,
@@ -26,4 +26,4 @@ export type {
 	MachinePreferences,
 	NormalizedInputLite,
 	QueryShapeLike,
-} from "./types.ts"
+} from "#types"

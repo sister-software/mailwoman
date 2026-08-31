@@ -51,10 +51,10 @@ import { $private } from "@mailwoman/core/env"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { dirname } from "@mailwoman/platform/path"
+import { dirname } from "path-ts"
 import { createNewlineWriter } from "spliterator"
 
-import { ParquetReader } from "../parquet-wrapper/index.ts"
+import { ParquetReader } from "#parquet-wrapper/index"
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -483,8 +483,9 @@ export async function expandGolden(
 	options: ExpandGoldenOptions = {},
 	report?: (line: string) => void
 ): Promise<ExpandGoldenSummary> {
-	const corpusPath =
+	const corpusPath = (
 		options.corpus ?? dataRootPath("corpus", "versioned", "v0.2.0", "corpus-v0.2.0", "test", "part-0000.parquet")
+	).toString()
 
 	const count = options.count ?? 100
 	const variants = options.variants ?? 5

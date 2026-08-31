@@ -17,7 +17,7 @@ The router holds only a summary, an optional routing predicate, and a dynamic lo
 geocode: {
   summary: "Turn an address into a coordinate.",
   accepts: args => !args.includes("--debug"),
-  load: () => import("./commands/geocode.ts"),
+  load: () => import("#cli-native/commands/geocode"),
 }
 ```
 

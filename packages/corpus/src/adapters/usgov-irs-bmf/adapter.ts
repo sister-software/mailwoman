@@ -42,7 +42,7 @@ export const USGOV_IRS_BMF_DEFAULT_LICENSE = "Public Domain"
  */
 const PO_BOX = /^\s*(?:P\.?\s?O\.?\s*BOX|POB|BOX)\s+\w/i
 
-interface IrsBmfRow {
+interface IRSBMFRow {
 	EIN: string
 	NAME: string
 	STREET: string
@@ -78,7 +78,7 @@ function composeRaw(
 	return [venue, streetPart, cityPart].filter(isPresent).join(", ")
 }
 
-export function createUsgovIrsBmfAdapter(): CorpusAdapter {
+export function createUSGovIRSBMFAdapter(): CorpusAdapter {
 	return {
 		id: USGOV_IRS_BMF_ADAPTER_ID,
 		defaultLicense: USGOV_IRS_BMF_DEFAULT_LICENSE,
@@ -98,7 +98,7 @@ export function createUsgovIrsBmfAdapter(): CorpusAdapter {
 
 			let emitted = 0
 
-			for await (const record of rows as AsyncIterable<IrsBmfRow>) {
+			for await (const record of rows as AsyncIterable<IRSBMFRow>) {
 				if (opts.signal?.aborted) break
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
@@ -160,4 +160,4 @@ export function createUsgovIrsBmfAdapter(): CorpusAdapter {
 /**
  * The configured adapter instance registered with the corpus builder.
  */
-export const usgovIrsBmfAdapter = createUsgovIrsBmfAdapter()
+export const USGovIRSBMFAdapter = createUSGovIRSBMFAdapter()

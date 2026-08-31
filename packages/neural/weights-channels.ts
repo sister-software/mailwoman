@@ -8,11 +8,10 @@
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { resolve } from "@mailwoman/platform/path"
+import { type PathBuilderLike, resolvePath } from "path-ts"
 
-import type { AnchorSpanMode } from "./anchor-inference.ts"
+import type { AnchorSpanMode } from "#anchor-inference"
 
 /**
  * The structured `requires` block of a `model-card.json` (#718) — the declared SHIP-CONFIG the model was trained
@@ -102,20 +101,20 @@ export interface DeclaredArtifact {
  * @returns `undefined` when the package has no card, the card has no `files` block, or none of `keys` appears there —
  * all three meaning "this package declares no such artifact", which is a legal posture, not a fault.
  */
-export function readDeclaredArtifactFile(
-	packageDir: string | undefined,
+export async function readDeclaredArtifactFile(
+	packageDir: PathBuilderLike | undefined,
 	keys: readonly string[] = ANCHOR_ARTIFACT_CARD_KEYS
-): DeclaredArtifact | undefined {
+): Promise<DeclaredArtifact | undefined> {
 	if (!packageDir) return undefined
 
-	const cardPath = resolve(packageDir, "model-card.json")
+	const cardPath = resolvePath(packageDir, "model-card.json")
 
-	if (!pathExistsSync(cardPath)) return undefined
+	if (!(await pathExists(cardPath))) return undefined
 
 	let parsed: unknown
 
 	try {
-		parsed = tryParsingJSON(readLocalTextFileSync(cardPath))
+		parsed = tryParsingJSON(await readLocalTextFile(cardPath))
 	} catch {
 		return undefined
 	}
@@ -131,9 +130,9 @@ export function readDeclaredArtifactFile(
 		// `$comment_postcode_anchor`), so only a plain filename counts as a declaration.
 		if (typeof file !== "string" || !file || file.startsWith("$")) continue
 
-		const path = resolve(packageDir, file)
+		const path = resolvePath(packageDir, file)
 
-		return { key, file, path, present: pathExistsSync(path) }
+		return { key, file, path, present: await pathExists(path) }
 	}
 
 	return undefined
@@ -192,8 +191,8 @@ export function unfedChannelWarner(weightsPackage: string): (channel: UnfedChann
  * `buildGauntletDeps` asserts the presence a GRADING run needs, which is the only place that knows whether this
  * particular run needs GB anchors.
  */
-export function unfedAnchorDetail(packageDir: string | undefined): string | undefined {
-	const declared = readDeclaredArtifactFile(packageDir)
+export async function unfedAnchorDetail(packageDir: PathBuilderLike | undefined): Promise<string | undefined> {
+	const declared = await readDeclaredArtifactFile(packageDir)
 
 	if (!declared) return undefined
 
@@ -209,12 +208,14 @@ export function unfedAnchorDetail(packageDir: string | undefined): string | unde
  * entry with a non-boolean `required`) — a malformed declared contract is a loud artifact bug, not a silent
  * re-default.
  */
-export function readRequiredChannels(modelCardPath: string | undefined): RequiredChannels | undefined {
-	if (!modelCardPath || !pathExistsSync(modelCardPath)) return undefined
+export async function readRequiredChannels(
+	modelCardPath: PathBuilderLike | undefined
+): Promise<RequiredChannels | undefined> {
+	if (!modelCardPath || !(await pathExists(modelCardPath))) return undefined
 	let raw: string
 
 	try {
-		raw = readLocalTextFileSync(modelCardPath)
+		raw = await readLocalTextFile(modelCardPath)
 	} catch {
 		return undefined
 	}
@@ -352,7 +353,7 @@ export type CapabilityManifest = Record<string, Record<string, Record<string, Ta
  * malformed cell simply yields no capability claim — `undefined` from `lookupTagCapability`).
  */
 export async function readCapabilityManifest(
-	modelCardPath: string | undefined
+	modelCardPath: PathBuilderLike | undefined
 ): Promise<CapabilityManifest | undefined> {
 	if (!modelCardPath || !(await pathExists(modelCardPath))) return undefined
 	let raw: string
@@ -414,7 +415,7 @@ export interface CRFTransitions {
  * Read learned CRF transition parameters from `crf-transitions.json`. Returns `undefined` when the file is missing or
  * malformed — callers fall back to the structural BIO mask only.
  */
-export async function readCRFTransitions(crfPath: string | undefined): Promise<CRFTransitions | undefined> {
+export async function readCRFTransitions(crfPath: PathBuilderLike | undefined): Promise<CRFTransitions | undefined> {
 	if (!crfPath || !(await pathExists(crfPath))) return undefined
 	let raw: string
 
@@ -453,12 +454,14 @@ export async function readCRFTransitions(crfPath: string | undefined): Promise<C
  * emits e.g. `labels: 21` rather than `labels: [...]` is a corrupted artifact and should be loud, not silently
  * re-defaulted.
  */
-export function readLabelsFromModelCard(modelCardPath: string | undefined): readonly string[] | undefined {
-	if (!modelCardPath || !pathExistsSync(modelCardPath)) return undefined
+export async function readLabelsFromModelCard(
+	modelCardPath: PathBuilderLike | undefined
+): Promise<readonly string[] | undefined> {
+	if (!modelCardPath || !(await pathExists(modelCardPath))) return undefined
 	let raw: string
 
 	try {
-		raw = readLocalTextFileSync(modelCardPath)
+		raw = await readLocalTextFile(modelCardPath)
 	} catch {
 		return undefined
 	}

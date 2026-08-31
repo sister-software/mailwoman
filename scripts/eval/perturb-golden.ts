@@ -22,12 +22,12 @@
 import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { tempRootPath } from "@mailwoman/core/utils"
-import { dirname, join } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
+import { dirname, join } from "path-ts"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
+const { values: rawValues } = parseArguments({
 	options: { golden: { type: "string" }, out: { type: "string" }, "per-file": { type: "string" } },
 	strict: false,
 	allowPositionals: true,

@@ -12,8 +12,8 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import type { GeoFeature, InferGeoFeatureCollection, MultiPolygonLiteral, PolygonLiteral } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { MultiPolygonCoords } from "./index.ts"
-import type { NUTSDatabase } from "./schema.ts"
+import type { MultiPolygonCoords } from "#index"
+import type { NUTSDatabase } from "#schema"
 
 interface NUTSProperties {
 	NUTS_ID: string

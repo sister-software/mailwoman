@@ -42,10 +42,9 @@
 import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
 import type { ComponentTag } from "@mailwoman/core/types"
 
+import { emitWOFJSONRows, type WOFVariantSpec } from "#adapters/wof-json-rows"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 import { buildAncestryIndex, normalizeNameKey, walkFeatures, type WOFRecord } from "#utils"
-
-import { emitWOFJSONRows, type WOFVariantSpec } from "../wof-json-rows.ts"
 
 /**
  * Display name for the country, keyed by ISO 3166-1 alpha-2.

@@ -12,11 +12,11 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 
-import { parseCIKLookupData, type CompanyTickerEntry } from "../sdk/edgar-filings.ts"
-import { collectEdgarSubsidiaryRows, type EdgarIngestReport } from "../sdk/edgar-ingest.ts"
-import { createSECClient } from "../sdk/sec-client.ts"
+import { parseCIKLookupData, type CompanyTickerEntry } from "#sdk/edgar-filings"
+import { collectEdgarSubsidiaryRows, type EdgarIngestReport } from "#sdk/edgar-ingest"
+import { createSECClient } from "#sdk/sec-client"
 
-export type { EdgarIngestReport, EdgarSkipReason } from "../sdk/edgar-ingest.ts"
+export type { EdgarIngestReport, EdgarSkipReason } from "#sdk/edgar-ingest"
 
 export interface FilerEdgarIngestOptions {
 	/**
@@ -78,7 +78,7 @@ export async function filerEdgarIngest(options: FilerEdgarIngestOptions): Promis
 			: undefined,
 	})
 
-	const { join } = await import("@mailwoman/platform/path")
+	const { join } = await import("path-ts")
 
 	await makeDirectories(options.outDir)
 

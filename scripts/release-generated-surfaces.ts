@@ -20,7 +20,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { resolve } from "@mailwoman/platform/path"
+import { resolvePath } from "path-ts"
 import { $ } from "zx"
 
 /**
@@ -34,7 +34,7 @@ export const GENERATED_SURFACES = [
 
 async function releaseGeneratedSurfaces(): Promise<void> {
 	const repoRoot = String(repoRootPath())
-	const compiledCLI = resolve(repoRoot, "packages/mailwoman/out/cli.js")
+	const compiledCLI = resolvePath(repoRoot, "packages/mailwoman/out/cli.js")
 
 	if (!(await pathExists(compiledCLI))) {
 		throw new Error(
@@ -47,7 +47,7 @@ async function releaseGeneratedSurfaces(): Promise<void> {
 
 	for (const generator of generators) {
 		process.stderr.write(`$ node ${generator}\n`)
-		await $({ cwd: repoRoot, stdio: "inherit" })`${process.execPath} ${resolve(repoRoot, generator)}`
+		await $({ cwd: repoRoot, stdio: "inherit" })`${process.execPath} ${resolvePath(repoRoot, generator)}`
 	}
 
 	for (const surface of GENERATED_SURFACES) {

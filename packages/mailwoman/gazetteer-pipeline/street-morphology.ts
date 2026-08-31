@@ -29,10 +29,10 @@
 
 import { changeMode, makeDirectories, movePath, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
-import { dirname, resolve } from "@mailwoman/platform/path"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { buildStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder"
 import { STREET_MORPHOLOGY_ARTIFACT_FILENAME } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"
+import { dirname, resolvePath } from "path-ts"
 
 export interface BuildStreetMorphologyArtifactOpts {
 	/**
@@ -70,11 +70,11 @@ export async function buildStreetMorphologyArtifact(
 ): Promise<BuiltStreetMorphologyArtifact> {
 	const progress = opts.onProgress ?? (() => {})
 	const dictionariesDir = opts.dictionariesDir ?? resourceDictionaryPath("libpostal")
-	const outPath = resolve(opts.output ?? String(dataRootPath("wof", STREET_MORPHOLOGY_ARTIFACT_FILENAME)))
+	const outPath = resolvePath(opts.output ?? String(dataRootPath("wof", STREET_MORPHOLOGY_ARTIFACT_FILENAME)))
 
 	progress(`building street-morphology FST from ${dictionariesDir}`)
 
-	const result = buildStreetMorphologyFST({
+	const result = await buildStreetMorphologyFST({
 		dictionariesDir,
 		...(opts.locales && opts.locales.length ? { locales: opts.locales } : {}),
 		...(opts.minVariantLength !== undefined ? { minVariantLength: opts.minVariantLength } : {}),

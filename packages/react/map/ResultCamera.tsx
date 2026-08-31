@@ -23,7 +23,7 @@ import type { FitBoundsOptions } from "maplibre-gl"
 import { type ReactNode, useEffect } from "react"
 import { useMap } from "react-map-gl/maplibre"
 
-import type { MapCameraTarget } from "./place-render.ts"
+import type { MapCameraTarget } from "#map/place-render"
 
 /**
  * The `fitBounds` options for a `bounds` target — and the reason this is a named function rather than an object literal

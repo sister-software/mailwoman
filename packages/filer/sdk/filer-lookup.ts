@@ -124,8 +124,8 @@ import {
 	readFilerManifest,
 	type FilerDatabase,
 	type FilerNodeTable,
-} from "../schema.ts"
-import { isFRN, type FRN } from "./frn.ts"
+} from "#schema"
+import { isFRN, type FRN } from "#sdk/frn"
 
 /**
  * Exactly one of `frn`/`form499ID`/`bdcProviderID` is required — {@linkcode filerLookup} throws otherwise (matching

@@ -11,8 +11,8 @@
 
 import type { Meta, StoryObj } from "@storybook/react-vite"
 
-import type { DemoAssetsLoadContext, DemoManifest, DemoReleaseBase } from "./useDemoRuntime.ts"
-import { useDemoRuntime } from "./useDemoRuntime.ts"
+import type { DemoAssetsLoadContext, DemoManifest, DemoReleaseBase } from "#runtime/useDemoRuntime"
+import { useDemoRuntime } from "#runtime/useDemoRuntime"
 
 interface StoryRelease extends DemoReleaseBase {
 	modelSize: string

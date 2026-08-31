@@ -5,8 +5,8 @@
  * @file Browser/SSR bundle policy for the docs demo.
  */
 
-import { createHash } from "@mailwoman/platform/crypto"
-import { resolve } from "@mailwoman/platform/path"
+import { md5Hex } from "@mailwoman/core/utils/hash"
+import { resolvePath } from "path-ts"
 import type { Configuration } from "webpack"
 import webpack from "webpack"
 
@@ -47,7 +47,7 @@ function hashAliases(alias: Record<string, string>): string {
 		.toSorted()
 		.map((key) => `${key}=${alias[key]}`)
 
-	return createHash("md5").update(entries.join("\n")).digest("hex")
+	return md5Hex(entries.join("\n"))
 }
 
 export async function bundleAliases(isServer: boolean, emptyShim: string): Promise<Record<string, string>> {
@@ -107,7 +107,7 @@ export function configureDemoWebpack(
 	docsDir: string,
 	alias: Record<string, string>
 ): Configuration {
-	const emptyShim = resolve(docsDir, "src", "empty-shim.js")
+	const emptyShim = resolvePath(docsDir, "src", "empty-shim.js")
 
 	return {
 		...filesystemCache(config, alias),
@@ -118,6 +118,9 @@ export function configureDemoWebpack(
 			}),
 		],
 		resolve: {
+			// The alias map above puts every `@mailwoman/*` subpath on SOURCE; a package's own `#` imports must land on
+			// source too, and they carry that under the `node` condition, so it joins webpack's own list.
+			conditionNames: ["node", "..."],
 			alias,
 			extensionAlias: { ".js": [".ts", ".js"] },
 			fallback: fallbackMap(),

@@ -6,8 +6,9 @@
 
 import type { Meta, StoryObj } from "@storybook/react-vite"
 
+import type { CategoryRecord } from "#poi/types"
+
 import { SubjectPanel } from "./SubjectPanel.tsx"
-import type { CategoryRecord } from "./types.ts"
 
 const meta: Meta<typeof SubjectPanel> = {
 	title: "POI/SubjectPanel",

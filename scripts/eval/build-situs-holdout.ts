@@ -1,5 +1,5 @@
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 /**
  * @copyright Sister Software
@@ -17,7 +17,7 @@ import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/addres
  */
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-const { values: a } = parseArgs({
+const { values: a } = parseArguments({
 	options: {
 		shard: { type: "string" },
 		region: { type: "string", default: "" },

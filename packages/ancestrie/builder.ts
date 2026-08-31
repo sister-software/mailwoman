@@ -13,7 +13,7 @@
  *   operation all the same; the reader (`reader.ts`) is the runtime surface.
  */
 
-import type { AncestrieHeader } from "./format.ts"
+import type { AncestrieHeader } from "#format"
 import {
 	ANCESTRIE_FORMAT_VERSION,
 	computeSections,
@@ -25,8 +25,8 @@ import {
 	ID_INDEX_ENTRY_SIZE,
 	STATE_ENTRY_SIZE,
 	writeHeader,
-} from "./format.ts"
-import type { AncestrieBuilderOptions, AncestrieEntry, JSONValue, SealOptions, TokenNormalizer } from "./types.ts"
+} from "#format"
+import type { AncestrieBuilderOptions, AncestrieEntry, JSONValue, SealOptions, TokenNormalizer } from "#types"
 
 /**
  * Upper bound for ids, parent ids, and every table index — the format stores them as u32.

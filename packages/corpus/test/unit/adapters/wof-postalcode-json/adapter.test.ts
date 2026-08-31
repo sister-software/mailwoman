@@ -11,7 +11,7 @@ import {
 	createWOFPostalcodeAdapter,
 	postcodeVariantsFor,
 } from "@mailwoman/corpus/adapters/wof-postalcode-json/adapter"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 import { runAdapter } from "#runner"

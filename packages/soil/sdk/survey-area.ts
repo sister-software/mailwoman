@@ -29,11 +29,12 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { execFile } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
-import type { GeojsonGeometry } from "@mailwoman/spatial"
+import { runFile } from "@mailwoman/core/process"
+import type { ParsedGeometry } from "@mailwoman/spatial"
+import type { PathBuilderLike } from "path-ts"
 
-import type { SoilComponentTable, SoilMapUnitTable } from "../schema.ts"
+import type { SoilComponentTable, SoilMapUnitTable } from "#schema"
+import { domainCodes, readDeclaredDomains, readTable, readTabularDictionary, type DomainMember } from "#sdk/tabular"
 import {
 	COINTERP_OVERALL_RULE_DEPTH,
 	farmlandScope,
@@ -41,10 +42,7 @@ import {
 	SSURGO_NO_MAPPING_NAMES,
 	SSURGO_NO_MAPPING_SYMBOLS,
 	SSURGO_PUBLIC_INFORMATION_SENTENCE,
-} from "../vocabulary.ts"
-import { domainCodes, readDeclaredDomains, readTable, readTabularDictionary, type DomainMember } from "./tabular.ts"
-
-const execFileAsync = promisify(execFile)
+} from "#vocabulary"
 
 /**
  * The declared domains this layer validates against, and stores.
@@ -89,11 +87,14 @@ export interface SurveyAreaAttributes {
  * @throws {Error} When the metadata's use constraints no longer carry the public-information sentence, when a `Choice`
  *   column holds a value outside the authority's own declared domain, or when the export declares no legend row.
  */
-export function readSurveyAreaAttributes(tabularDirectory: string, areaSymbol: string): SurveyAreaAttributes {
-	const dictionary = readTabularDictionary(tabularDirectory)
-	const domains = readDeclaredDomains(tabularDirectory)
+export async function readSurveyAreaAttributes(
+	tabularDirectory: PathBuilderLike,
+	areaSymbol: string
+): Promise<SurveyAreaAttributes> {
+	const dictionary = await readTabularDictionary(tabularDirectory)
+	const domains = await readDeclaredDomains(tabularDirectory)
 
-	const catalog = readTable(tabularDirectory, dictionary, "sacatalog", [
+	const catalog = await readTable(tabularDirectory, dictionary, "sacatalog", [
 		"areasymbol",
 		"areaname",
 		"saverest",
@@ -110,7 +111,7 @@ export function readSurveyAreaAttributes(tabularDirectory: string, areaSymbol: s
 	const catalogRow = catalog.rows[0]!
 	const metadata = readFGDCMetadata(catalogRow.fgdcmetadata!, areaSymbol)
 
-	const legend = readTable(tabularDirectory, dictionary, "legend", [
+	const legend = await readTable(tabularDirectory, dictionary, "legend", [
 		"areasymbol",
 		"areaname",
 		"areaacres",
@@ -123,7 +124,7 @@ export function readSurveyAreaAttributes(tabularDirectory: string, areaSymbol: s
 
 	const legendRow = legend.rows.find((row) => row.areasymbol === areaSymbol) ?? legend.rows[0]!
 
-	const mapUnitRows = readTable(tabularDirectory, dictionary, "mapunit", [
+	const mapUnitRows = await readTable(tabularDirectory, dictionary, "mapunit", [
 		"mukey",
 		"musym",
 		"muname",
@@ -132,10 +133,10 @@ export function readSurveyAreaAttributes(tabularDirectory: string, areaSymbol: s
 		"farmlndcl",
 	])
 
-	const aggregate = readTable(tabularDirectory, dictionary, "muaggatt", ["mukey", "niccdcd", "niccdcdpct"])
+	const aggregate = await readTable(tabularDirectory, dictionary, "muaggatt", ["mukey", "niccdcd", "niccdcdpct"])
 	const aggregateByMukey = new Map(aggregate.rows.map((row) => [row.mukey!, row]))
 
-	const componentRows = readTable(tabularDirectory, dictionary, "component", [
+	const componentRows = await readTable(tabularDirectory, dictionary, "component", [
 		"cokey",
 		"mukey",
 		"comppct_r",
@@ -147,7 +148,7 @@ export function readSurveyAreaAttributes(tabularDirectory: string, areaSymbol: s
 		"irrcapscl",
 	])
 
-	const nccpiByCokey = readNCCPI(tabularDirectory, dictionary)
+	const nccpiByCokey = await readNCCPI(tabularDirectory, dictionary)
 
 	const classCodes = domainCodes(domains, "capability_class")
 	const subclassCodes = domainCodes(domains, "capability_subclass")
@@ -268,11 +269,17 @@ function nullable(value: string | undefined): string | null {
  * value. Sub-rules at greater depths are the submodels (corn, soybeans, small grains, cotton), which this layer does
  * not carry.
  */
-function readNCCPI(
-	tabularDirectory: string,
-	dictionary: ReturnType<typeof readTabularDictionary>
-): Map<string, number> {
-	const rows = readTable(tabularDirectory, dictionary, "cointerp", ["cokey", "mrulename", "ruledepth", "interphr"])
+async function readNCCPI(
+	tabularDirectory: PathBuilderLike,
+	dictionary: Awaited<ReturnType<typeof readTabularDictionary>>
+): Promise<Map<string, number>> {
+	const rows = await readTable(tabularDirectory, dictionary, "cointerp", [
+		"cokey",
+		"mrulename",
+		"ruledepth",
+		"interphr",
+	])
+
 	const byCokey = new Map<string, number>()
 
 	for (const row of rows.rows) {
@@ -434,14 +441,12 @@ function normalizeFGDCDate(value: string): string {
  * @throws {Error} When the shapefile holds anything other than exactly one feature. Taking the first of several would
  *   silently choose which ground the coverage claim is about.
  */
-export async function readSurveyAreaOutline(shapefilePath: string): Promise<GeojsonGeometry> {
-	const { stdout } = await execFileAsync(
-		"ogr2ogr",
-		["-f", "GeoJSON", "/vsistdout/", "-t_srs", "EPSG:4326", shapefilePath],
-		{ maxBuffer: 256 * 1024 * 1024 }
-	)
+export async function readSurveyAreaOutline(shapefilePath: string): Promise<ParsedGeometry> {
+	const { stdout } = await runFile("ogr2ogr", ["-f", "GeoJSON", "/vsistdout/", "-t_srs", "EPSG:4326", shapefilePath], {
+		maxBuffer: 256 * 1024 * 1024,
+	})
 
-	const collection = parseJSONStrict<{ features?: Array<{ geometry?: GeojsonGeometry }> }>(stdout)
+	const collection = parseJSONStrict<{ features?: Array<{ geometry?: ParsedGeometry }> }>(stdout)
 	const features = collection.features ?? []
 
 	if (features.length !== 1) {

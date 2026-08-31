@@ -26,9 +26,9 @@ import type {
 } from "@mailwoman/ancestrie"
 import { autocomplete as ancestrieAutocomplete } from "@mailwoman/ancestrie"
 
-import type { FSTMatcher } from "./fst-matcher.ts"
-import { normalizeTokens } from "./fst-matcher.ts"
-import type { PlaceEntry } from "./fst-types.ts"
+import type { FSTMatcher } from "#fst-matcher"
+import { normalizeTokens } from "#fst-matcher"
+import type { PlaceEntry } from "#fst-types"
 
 export interface AutocompleteResult {
 	query: string

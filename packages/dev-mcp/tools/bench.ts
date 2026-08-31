@@ -10,11 +10,11 @@
 
 import { z } from "zod"
 
-import { assembleBench, summarizeLatency } from "../bench.ts"
-import type { EngineConfig } from "../engine-registry.ts"
-import { resolveInputSet, type InputSetRef } from "../input-sets.ts"
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
-import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA, provenanceFor } from "../tool-kit.ts"
+import { assembleBench, summarizeLatency } from "#bench"
+import type { EngineConfig } from "#engine-registry"
+import { resolveInputSet, type InputSetRef } from "#input-sets"
+import type { DevTool, DevToolDeps } from "#tool-kit"
+import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA, provenanceFor } from "#tool-kit"
 
 export const benchTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_bench",

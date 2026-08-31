@@ -6,12 +6,12 @@
  *   Core API utilities.
  */
 
-export * from "./APIClient.ts"
-export * from "./clock.ts"
-export * from "./headless.ts"
-export * from "./pacer.ts"
-export * from "./responses.ts"
-export * from "./retry.ts"
+export * from "#api/APIClient"
+export * from "#api/clock"
+export * from "#api/headless"
+export * from "#api/pacer"
+export * from "#api/responses"
+export * from "#api/retry"
 
 // NOT `./disk-storage.ts` — it imports `node:fs/promises`, and this barrel reaches a browser bundle
 // (docs' DashboardMap → @mailwoman/cartographer → tiles/api.ts → @mailwoman/core/api). Import it from

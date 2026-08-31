@@ -1,9 +1,9 @@
 import { defaultRegistry } from "async-init"
 
-import { ResourceError } from "#errors"
+import { ResourceError } from "#errors/schema"
 import { ConsoleLogger } from "#logging"
 
-export { cliArguments, passThroughCLIArguments, scriptEntryPath } from "../arguments.ts"
+export { cliArguments, passThroughCLIArguments, scriptEntryPath } from "#scripting/arguments"
 
 /**
  * Logs an error that occurred while running a script.

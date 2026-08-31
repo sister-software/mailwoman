@@ -434,8 +434,10 @@ describe("recovering the coverage resolution from the cells themselves", () => {
 	})
 })
 
+const frozenAbsenceDefinition = await loadAbsenceProbeDefinition()
+
 describe("the frozen pre-registration", () => {
-	const definition = loadAbsenceProbeDefinition()
+	const definition = frozenAbsenceDefinition
 
 	it("loads, and its content hash matches the committed freeze record", () => {
 		expect(definition.probeID).toBe("absence-observation-pharmacy-idf-v1")

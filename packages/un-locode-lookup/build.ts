@@ -11,8 +11,8 @@
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { CSVSpliterator } from "spliterator"
 
-import { foldName, parseUNLocodeCoords } from "./index.ts"
-import type { UNLocodeDatabase } from "./schema.ts"
+import { foldName, parseUNLocodeCoords } from "#index"
+import type { UNLocodeDatabase } from "#schema"
 
 interface CSVRow {
 	Country: string

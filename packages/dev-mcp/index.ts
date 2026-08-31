@@ -6,12 +6,12 @@
  *   Public surface of the maintainer-only development MCP server.
  */
 
-export { EngineRegistry, resolveConfig, engineID, type EngineConfig, type Engine } from "./engine-registry.ts"
-export { assembleBench, summarizeLatency, CONCURRENCY_NOTE, type BenchReading, type LatencyReading } from "./bench.ts"
+export { EngineRegistry, resolveConfig, engineID, type EngineConfig, type Engine } from "#engine-registry"
+export { assembleBench, summarizeLatency, CONCURRENCY_NOTE, type BenchReading, type LatencyReading } from "#bench"
 
-export { checkCLIAllowlist, type AllowlistVerdict } from "./cli-allowlist.ts"
+export { checkCLIAllowlist, type AllowlistVerdict } from "#cli-allowlist"
 
-export { assertCompiledFresh, checkCompiledFreshness, type CompiledFreshness } from "./compiled-tree.ts"
+export { assertCompiledFresh, checkCompiledFreshness, type CompiledFreshness } from "#compiled-tree"
 
 export {
 	lookupFST,
@@ -20,12 +20,12 @@ export {
 	loadFSTArtifact,
 	LookupSource,
 	type LookupRow,
-} from "./lookup.ts"
+} from "#lookup"
 
-export { readGateReport, summarizeGateReport, LEDGER_NOTE, type GateReport, type FloorReading } from "./gate-report.ts"
-export { parseGauntletReport, summarizeGauntletReport, type GauntletReport } from "./gauntlet-report.ts"
-export { JobRegistry, type Job, type JobSummary, type JobState } from "./jobs.ts"
-export { checkConfounds, VariableIsolation, assertComparableField, type ConfoundReading } from "./confound.ts"
+export { readGateReport, summarizeGateReport, LEDGER_NOTE, type GateReport, type FloorReading } from "#gate-report"
+export { parseGauntletReport, summarizeGauntletReport, type GauntletReport } from "#gauntlet-report"
+export { JobRegistry, type Job, type JobSummary, type JobState } from "#jobs"
+export { checkConfounds, VariableIsolation, assertComparableField, type ConfoundReading } from "#confound"
 
 export {
 	aggregateByShape,
@@ -38,7 +38,7 @@ export {
 	SHAPE_PREDICATES,
 	type DiagnoseShape,
 	type RowAccount,
-} from "./diagnose.ts"
+} from "#diagnose"
 
 export {
 	enumerateFlips,
@@ -47,11 +47,11 @@ export {
 	COUNTERFACTUAL_LEVERS,
 	type CounterfactualLever,
 	type RowCounterfactuals,
-} from "./counterfactual.ts"
+} from "#counterfactual"
 
-export { gradeRow, significance, seedToCaseTable, caseCarriesTruth, type RowGrade } from "./grade.ts"
-export { resolveInputSet, type InputSetRef, type ResolvedInputSet } from "./input-sets.ts"
-export { describeObservedRate, wilsonInterval, zeroEventUpperBound, type PowerReading } from "./power.ts"
-export { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "./tree-fingerprint.ts"
-export { buildToolTable, type DevTool, type DevToolDeps, type Provenance } from "./tools/index.ts"
-export { createDevMCPServer } from "./server.ts"
+export { gradeRow, significance, seedToCaseTable, caseCarriesTruth, type RowGrade } from "#grade"
+export { resolveInputSet, type InputSetRef, type ResolvedInputSet } from "#input-sets"
+export { describeObservedRate, wilsonInterval, zeroEventUpperBound, type PowerReading } from "#power"
+export { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "#tree-fingerprint"
+export { buildToolTable, type DevTool, type DevToolDeps, type Provenance } from "#tools/index"
+export { createDevMCPServer } from "#server"

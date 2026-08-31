@@ -11,7 +11,7 @@ import {
 	USGOV_SAMHSA_DEFAULT_LICENSE,
 	createUsgovSamhsaTreatmentLocatorAdapter,
 } from "@mailwoman/corpus/adapters/usgov-samhsa-treatment-locator/adapter"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 import { runAdapter } from "#runner"

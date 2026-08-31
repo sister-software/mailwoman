@@ -25,12 +25,11 @@
  *   - `--concurrency <n>` — parallel per-country fetches; default `8`
  */
 
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 
+import { APIClient, pluckResponseData } from "#api/index"
 import { makeDirectories, writeLocalFile } from "#fs/writers"
 import { corePackagePath } from "#utils"
-
-import { APIClient, pluckResponseData } from "../api/index.ts"
 
 const BASE_URL = "https://chromium-i18n.appspot.com/ssl-address/data"
 

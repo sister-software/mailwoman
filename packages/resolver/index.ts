@@ -11,26 +11,21 @@
  *   what used to be `@mailwoman/core/resolver`.
  */
 
-export { RemoteResolver, serializableResolveOpts } from "./remote-resolver.ts"
+export { RemoteResolver, serializableResolveOpts } from "#remote-resolver"
 
 export type {
 	RemoteResolverOpts,
 	ResolveTreeRequest,
 	ResolveTreeResponse,
 	SerializableResolveOpts,
-} from "./remote-resolver.ts"
+} from "#remote-resolver"
 
-export { createWOFResolver } from "./resolve.ts"
+export { createWOFResolver } from "#resolve"
 
-export {
-	COUNTRY_BBOX,
-	finestResolvedCoordinate,
-	isImplausibleResolution,
-	outsideExpectedCountry,
-} from "./plausibility.ts"
+export { COUNTRY_BBOX, finestResolvedCoordinate, isImplausibleResolution, outsideExpectedCountry } from "#plausibility"
 
-export type { PlausibilityOpts, PlausibilityVerdict, ResolvedCoordinate } from "./plausibility.ts"
-export { foldStreetSurface, isPureTypeVocabulary, pickByStreetEvidence } from "./street-evidence.ts"
+export type { PlausibilityOpts, PlausibilityVerdict, ResolvedCoordinate } from "#plausibility"
+export { foldStreetSurface, isPureTypeVocabulary, pickByStreetEvidence } from "#street-evidence"
 
 export type {
 	PickByStreetEvidenceOpts,
@@ -38,7 +33,7 @@ export type {
 	StreetEvidencePick,
 	StreetEvidenceScope,
 	StreetLocalityEvidence,
-} from "./street-evidence.ts"
+} from "#street-evidence"
 
 export {
 	findPostcodeCountryScope,
@@ -46,12 +41,12 @@ export {
 	localityValuesInDocumentOrder,
 	POSTCODE_COUNTRY_COHERENCE_GATE_KM,
 	stampPostcodeCountryScope,
-} from "./postcode-country-coherence.ts"
+} from "#postcode-country-coherence"
 
-export type { PostcodeCountryScope, PostcodeCountryScopeOpts } from "./postcode-country-coherence.ts"
-export { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.ts"
-export type { RescoreCandidate, SpanRescoreOptions } from "./span-rescore.ts"
-export { adminContainmentVerdict, partitionByContainment } from "./admin-containment.ts"
+export type { PostcodeCountryScope, PostcodeCountryScopeOpts } from "#postcode-country-coherence"
+export { findRescoreCandidate, hasResolvedPlace } from "#span-rescore"
+export type { RescoreCandidate, SpanRescoreOptions } from "#span-rescore"
+export { adminContainmentVerdict, partitionByContainment } from "#admin-containment"
 
 export {
 	ADMIN_LADDER_LOCALITY_FIRST,
@@ -61,12 +56,12 @@ export {
 	AREA_GRADE_POSTALCODE_SPECIFICITY,
 	mostSpecificResolved,
 	resolvedSpecificity,
-} from "./admin-winner.ts"
+} from "#admin-winner"
 
-export type { ResolvedPostcodeHit, ResolvedSpecificityInput } from "./admin-winner.ts"
+export type { ResolvedPostcodeHit, ResolvedSpecificityInput } from "#admin-winner"
 
 // The type contract + placetype helpers live in core (pure types, keep core a leaf). Re-export so
 // consumers get the whole surface from `@mailwoman/resolver`.
 export * from "@mailwoman/core/resolver"
 
-export * from "./rerank.ts"
+export * from "#rerank"

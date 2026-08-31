@@ -27,6 +27,7 @@ import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
 const fixtures = await Array.fromAsync(JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES))
+const probeDefinition = await loadProbeDefinition()
 
 function intentOutcome(poiIntent: POIIntentOutcome): POIBoardOutcome {
 	return { path: "poi", poiIntent }
@@ -629,7 +630,7 @@ describe("the tracked-row convention", () => {
 })
 
 describe("the promoted semantic-utility family (#1960)", () => {
-	const definition = loadProbeDefinition()
+	const definition = probeDefinition
 	const promoted = fixtures.filter((f) => f.rowRef?.startsWith("semantic-utility/probe-definition.json#"))
 
 	it("promotes all four frozen target rows, and nothing else", () => {

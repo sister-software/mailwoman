@@ -14,7 +14,7 @@
 
 import type { ReactNode } from "react"
 
-import type { DemoVersionOption } from "./types.ts"
+import type { DemoVersionOption } from "#map/types"
 
 export interface VersionPickerProps {
 	/**

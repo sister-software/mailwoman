@@ -30,7 +30,7 @@
  *   untouched.
  */
 
-import { identityMap } from "./offset-map.ts"
+import { identityMap } from "#offset-map"
 
 export interface CjkResult {
 	text: string

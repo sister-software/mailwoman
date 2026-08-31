@@ -189,7 +189,7 @@ export async function loadDemoAssets(
 
 	if (release.hasWOFDB) {
 		try {
-			const { loadHTTPVFSDatabase, WOFCandidateTableLookup } = await import("./httpvfs-resolver")
+			const { loadHTTPVFSDatabase, WOFCandidateTableLookup } = await import("#shared/httpvfs-resolver")
 			const worker = await loadHTTPVFSDatabase(adminGazetteerURL(), sqljsBaseURL)
 
 			if (!ctx.signal.aborted) {

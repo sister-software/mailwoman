@@ -19,7 +19,7 @@
  *   axios either.
  */
 
-import type { APIClientConfig } from "./APIClient.ts"
+import type { APIClientConfig } from "#api/APIClient"
 
 const HTTP_OK = 200
 const HTTP_MULTIPLE_CHOICES = 300

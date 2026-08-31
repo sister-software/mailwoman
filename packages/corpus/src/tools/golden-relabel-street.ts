@@ -61,10 +61,10 @@ import { pathExists, readDirectoryEntries, readLocalBuffer, readLocalTextFile } 
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { isPresent, parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { sha256File } from "@mailwoman/core/utils"
-import { basename, join } from "@mailwoman/platform/path"
+import { basename, join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { NAME_PRONE_US_SUFFIXES } from "../name-prone-us-suffixes.ts"
+import { NAME_PRONE_US_SUFFIXES } from "#name-prone-us-suffixes"
 
 // ── Types ──────────────────────────────────────────────────────────────────
 

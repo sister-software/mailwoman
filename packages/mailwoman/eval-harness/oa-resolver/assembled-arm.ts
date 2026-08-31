@@ -8,10 +8,9 @@
 
 import { COARSE_CLASSES } from "@mailwoman/core/coarse-placer"
 
+import type { OAResolverEvalOptions } from "#eval-harness/oa-resolver/options"
+import type { buildParseRig } from "#eval-harness/oa-resolver/parse-rig"
 import { createRuntimePipeline, loadDefaultPlaceCountry } from "#index"
-
-import type { OAResolverEvalOptions } from "./options.ts"
-import type { buildParseRig } from "./parse-rig.ts"
 
 /**
  * The rig pieces the assembled pipeline shares with the bare neural arm. Sharing them is the whole point: an arm-to-arm

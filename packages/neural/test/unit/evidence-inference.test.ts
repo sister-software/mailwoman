@@ -16,9 +16,9 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { buildGazetteerFeatures, parseGazetteerLexicon } from "@mailwoman/neural/gazetteer-inference"
 import type { TokenizedPiece } from "@mailwoman/neural/tokenizer"
-import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 interface FixtureCase {
@@ -34,7 +34,9 @@ interface Fixture {
 	cases: FixtureCase[]
 }
 
-const fixture = await readLocalJSONFile<Fixture>(join(import.meta.dirname, "../fixtures/evidence-parity-v2.json"))
+const fixture = await readLocalJSONFile<Fixture>(
+	resolvePackagePath("@mailwoman/neural", "test", "fixtures", "evidence-parity-v2.json")
+)
 
 const toPieces = (c: FixtureCase): TokenizedPiece[] =>
 	c.pieces.map((p) => ({ piece: p.piece, id: 0, start: p.start, end: p.end }))

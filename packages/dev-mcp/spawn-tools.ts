@@ -13,18 +13,17 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { tempRootPath } from "@mailwoman/core/utils"
 import { listGateSpecs } from "mailwoman/eval-harness/promotion-gate"
 import { z } from "zod"
 
-import { checkCLIAllowlist } from "./cli-allowlist.ts"
-import { assertCompiledFresh } from "./compiled-tree.ts"
-import type { EngineRegistryLike } from "./engine-registry.ts"
-import { missingWeightsCacheArtifacts, readGateReport } from "./gate-report.ts"
-import { parseGauntletReport } from "./gauntlet-report.ts"
-import type { JobRegistry } from "./jobs.ts"
-import { summarizeJob, type DevTool } from "./tool-kit.ts"
+import { checkCLIAllowlist } from "#cli-allowlist"
+import { assertCompiledFresh } from "#compiled-tree"
+import type { EngineRegistryLike } from "#engine-registry"
+import { missingWeightsCacheArtifacts, readGateReport } from "#gate-report"
+import { parseGauntletReport } from "#gauntlet-report"
+import type { JobRegistry } from "#jobs"
+import { summarizeJob, type DevTool } from "#tool-kit"
 
 /**
  * Where each gate job wrote its battery, keyed by job id.
@@ -61,7 +60,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				// The gauntlet writes its whole report to stdout, and stdout here is the JSON-RPC channel — so it is
 				// spawned rather than imported. That puts the COMPILED tree back on the path, which is what this guard is
 				// for: a stale out/ would grade replaced code and report a verdict rather than an error.
-				const freshness = assertCompiledFresh(registry.repoRoot)
+				const freshness = await assertCompiledFresh(registry.repoRoot)
 
 				const layer = (args["layer"] as string) ?? "regression"
 				const argv = ["packages/mailwoman/out/cli.js", "eval", "gauntlet"]
@@ -159,7 +158,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				const weightsCache = args["weights_cache"] as string | undefined
 
 				if (weightsCache) {
-					const cache = missingWeightsCacheArtifacts(weightsCache)
+					const cache = await missingWeightsCacheArtifacts(weightsCache)
 
 					if (cache.kind === "wrong-shape") {
 						throw new Error(
@@ -183,8 +182,8 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				// Spawned for the same reason the gauntlet is: it writes its battery report to stdout, which here is the
 				// JSON-RPC channel. The gate ALSO runs its own recompile-before-eval guard, stricter than this one and meant
 				// to fire — it is surfaced verbatim rather than pre-empted.
-				const freshness = assertCompiledFresh(registry.repoRoot)
-				const outDir = (args["out_dir"] as string | undefined) ?? join(tmpdir(), `mwdev-gate-${jobs.list().length}`)
+				const freshness = await assertCompiledFresh(registry.repoRoot)
+				const outDir = (args["out_dir"] as string | undefined) ?? tempRootPath(`mwdev-gate-${jobs.list().length}`)
 				const argv = ["packages/mailwoman/out/cli.js", "eval", "gate", "--gate", gate, "--out-dir", outDir]
 
 				for (const [flag, key] of [
@@ -234,7 +233,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 
 				if (!verdict.allowed) throw new Error(`mwdev_cli refused: ${verdict.reason}`)
 
-				const freshness = assertCompiledFresh(registry.repoRoot)
+				const freshness = await assertCompiledFresh(registry.repoRoot)
 				const verb = argv.find((argument) => !argument.startsWith("-")) ?? "help"
 
 				const job = jobs.start(

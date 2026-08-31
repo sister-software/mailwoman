@@ -20,7 +20,7 @@ import {
 	writeLocalFile,
 	writeLocalTextFile,
 } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
+import { join, type PathBuilder } from "path-ts"
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
@@ -173,7 +173,7 @@ describe("derivedStoreServeViolation — the serve-time floor (#1528)", () => {
 		return header
 	}
 
-	let dir: string
+	let dir: PathBuilder
 
 	beforeEach(async () => {
 		dir = fixtures.use(await temporaryDirectory("derived-serve-")).path

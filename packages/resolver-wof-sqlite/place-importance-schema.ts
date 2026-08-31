@@ -35,7 +35,7 @@ import { referentialFromPopulation } from "@mailwoman/core/resolver"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { Kysely } from "kysely"
 
-import { allRows } from "./sqlite-utils.ts"
+import { allRows } from "#sqlite-utils"
 
 //#region Schema
 

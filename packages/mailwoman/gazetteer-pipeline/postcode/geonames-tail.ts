@@ -41,10 +41,10 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { join } from "path-ts"
 
-import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "../defaults.ts"
-import { buildFTS, type BuildFTSResult } from "../fts.ts"
+import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
+import { buildFTS, type BuildFTSResult } from "#gazetteer-pipeline/fts"
 
-export { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "../defaults.ts"
+export { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
 
 /**
  * `meta` is the artifact's own provenance record — a key/value table read at open, so the licence obligation and the

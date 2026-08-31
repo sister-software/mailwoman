@@ -12,10 +12,9 @@
  *   `synthesizeBoundaryStressRow` is NOT re-exported from the corpus index — imported directly here.
  */
 
+import { makeMulberry32, type ShardRecipe, shardSourceID } from "#shard-recipes/scaffold"
 import { type BoundaryStressTemplate, synthesizeBoundaryStressRow } from "#synthesizers/boundary-stress"
 import { alignRow } from "#utils"
-
-import { makeMulberry32, type ShardRecipe, shardSourceID } from "./scaffold.ts"
 
 /**
  * Revised composition (v1.7.0, DeepSeek-tuned 2026-06-18): `bare-locality` ~11% (recover the 84% locality drop on bare

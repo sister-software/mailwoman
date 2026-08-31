@@ -35,8 +35,8 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { TextSpliterator } from "spliterator"
 
-import { nameContainsSurfaces, type SurfaceIndex } from "./surfaces.ts"
-import type { IdentifierShape, SubVenueSurface } from "./table.ts"
+import { nameContainsSurfaces, type SurfaceIndex } from "#tools/sub-venue/surfaces"
+import type { IdentifierShape, SubVenueSurface } from "#tools/sub-venue/table"
 
 /**
  * One row of a harvestable source, as read back off JSONL or out of a layer database.

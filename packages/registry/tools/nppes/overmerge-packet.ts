@@ -10,9 +10,8 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
 
 import type { ResolvedEntity, SourceRecord } from "#index"
-
-import type { MessyRow } from "./sample.ts"
-import type { TruthLabel } from "./truth-grains.ts"
+import type { MessyRow } from "#tools/nppes/sample"
+import type { TruthLabel } from "#tools/nppes/truth-grains"
 
 /**
  * Everything the packet reads.

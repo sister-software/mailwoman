@@ -29,14 +29,14 @@ import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { prettyJSON } from "@mailwoman/core/objects"
 import { allRows, dataRootPath, workspacePath } from "@mailwoman/core/utils"
-import { dirname } from "@mailwoman/platform/path"
 import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "@mailwoman/poi-taxonomy"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { dirname, type PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "./defaults.ts"
+import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#gazetteer-pipeline/poi/defaults"
 
-export { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "./defaults.ts"
+export { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#gazetteer-pipeline/poi/defaults"
 
 /**
  * The brand TABLE's own schema/data version — bump when the shape or matching semantics change. Independent of
@@ -47,7 +47,7 @@ export const BRAND_TABLE_VERSION = "0.2.0"
 /**
  * Default `poi.db` read location — same default `build/poi.tsx`'s command uses for its `--out`.
  */
-export function defaultPOIDatabasePath(): string {
+export function defaultPOIDatabasePath(): PathBuilder {
 	return dataRootPath("poi", "poi.db")
 }
 
@@ -76,7 +76,7 @@ export interface BrandNameCount {
  * brand_wikidata IS NOT NULL AND name IS NOT NULL GROUP BY brand_wikidata, name`. Opens `dbPath` READ-ONLY — this
  * builder only ever reads a sealed `poi.db`, never writes one.
  */
-export function readBrandNameCounts(dbPath: string): BrandNameCount[] {
+export function readBrandNameCounts(dbPath: PathBuilderLike): BrandNameCount[] {
 	using db = new DatabaseClient<POIDatabase>(dbPath, { readOnly: true })
 
 	return allRows<BrandNameCount>(
@@ -92,7 +92,7 @@ export function readBrandNameCounts(dbPath: string): BrandNameCount[] {
 /**
  * Reads `dbPath`'s layer manifest and narrows it to what {@link POIBrandSourceLayer} needs.
  */
-export async function readSourceLayer(dbPath: string): Promise<POIBrandSourceLayer> {
+export async function readSourceLayer(dbPath: PathBuilderLike): Promise<POIBrandSourceLayer> {
 	using kdb = new DatabaseClient<LayerContractDatabase>(dbPath, { readOnly: true })
 
 	const manifest = await readLayerManifest(kdb)
@@ -179,7 +179,7 @@ export interface BuildBrandTableOptions {
 	 * A built `poi.db` to read. Ignored when `rows` is given. Required (along with `sourceLayer`, or it's read from here
 	 * too) unless `rows` is given.
 	 */
-	dbPath?: string
+	dbPath?: PathBuilderLike
 	/**
 	 * Injected row source — the testability seam. When given, `node:sqlite` is never touched.
 	 */

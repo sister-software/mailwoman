@@ -19,16 +19,16 @@
  */
 
 import { readDirectoryEntries, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { PairIndexResolver, serializePairIndex, type PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
 import { detectPairIndexCountry, type LoadedPairIndex, resolvePairIndexForText } from "@mailwoman/neural/web-loader"
-import { dirname, join } from "@mailwoman/platform/path"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { describe, expect, test } from "vitest"
 
 const browserSafePackageRoots = {
-	"locale-gate": dirname(fileURLToPath(import.meta.resolve("@mailwoman/locale-gate/package.json"))),
-	"query-shape": dirname(fileURLToPath(import.meta.resolve("@mailwoman/query-shape/package.json"))),
+	"locale-gate": resolvePackageDirectory("@mailwoman/locale-gate").toString(),
+	"query-shape": resolvePackageDirectory("@mailwoman/query-shape").toString(),
 } as const
 
 // ── Browser-safety scope ─────────────────────────────────────────────────────────────────────────────

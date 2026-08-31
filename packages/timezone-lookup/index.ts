@@ -13,7 +13,7 @@ import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { TimezoneDatabase } from "./schema.ts"
+import type { TimezoneDatabase } from "#schema"
 
 /**
  * Normalized geometry: an array of polygons, each `[outerRing, ...holes]`, each ring `[[lon,lat],…]`.

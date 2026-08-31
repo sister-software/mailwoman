@@ -28,6 +28,13 @@
 		"!test/**"
 	],
 	"type": "module",
+	"imports": {
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		"./styles": {

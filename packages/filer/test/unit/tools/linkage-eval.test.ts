@@ -12,6 +12,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { FilerEdgeAssertion, FilerRelationship, type FilerDatabase } from "@mailwoman/filer/schema"
 import { toFRN } from "@mailwoman/filer/sdk/frn"
 import {
@@ -33,7 +34,6 @@ import {
 	type FilerLinkageEvalResult,
 	type LinkageEvalRun,
 } from "@mailwoman/filer/tools/linkage-eval"
-import { join } from "@mailwoman/platform/path"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
@@ -48,9 +48,10 @@ const FRN_SHARED_REGISTRANT_1 = toFRN("9100000010")!
 const FRN_SHARED_REGISTRANT_2 = toFRN("9100000011")!
 const FRN_COMANAGED = toFRN("9100000012")!
 
-const PUBLISHED_REPORT_PATH = join(
-	import.meta.dirname,
-	"../../../../../docs/records/evals",
+const PUBLISHED_REPORT_PATH = repoRootPath(
+	"docs",
+	"records",
+	"evals",
 	`${PUBLISHED_LINKAGE_EVAL_DATE}-filer-linkage.md`
 )
 

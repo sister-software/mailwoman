@@ -7,9 +7,8 @@
  * each case's country. This wrapper makes that routing and its artifact provenance inspectable before a board run.
  */
 
-import { realPathSync } from "@mailwoman/core/fs/readers-sync"
+import { realPath } from "@mailwoman/core/fs/readers"
 import { resolveWeights, type ResolvedWeights } from "@mailwoman/neural/weights"
-import { relative, resolve, sep } from "@mailwoman/platform/path"
 import {
 	buildGauntletDeps,
 	runOne,
@@ -18,9 +17,10 @@ import {
 	type GauntletResult,
 } from "mailwoman/eval-harness/gauntlet/harness"
 import { overlayLocale } from "mailwoman/eval-harness/gauntlet/routing"
+import { type PathBuilderLike, relative, resolvePath, sep } from "path-ts"
 
-import type { EngineConfig } from "./engine-registry.ts"
-import type { ResolvedInput } from "./input-sets.ts"
+import type { EngineConfig } from "#engine-registry"
+import type { ResolvedInput } from "#input-sets"
 
 const SUPPORTED_CONFIG_KEYS = new Set<keyof EngineConfig>([
 	"weights_cache",
@@ -57,8 +57,8 @@ export interface RoutedMailwomanArm extends Disposable {
 
 export interface RoutedMailwomanArmDeps {
 	buildDeps(options: GauntletDepsOptions): Promise<GauntletDeps>
-	resolveWeights(options: { locale: string; cacheRoot?: string }): ResolvedWeights
-	realpath(path: string): string
+	resolveWeights(options: { locale: string; cacheRoot?: string }): Promise<ResolvedWeights>
+	realpath(path: PathBuilderLike): Promise<string>
 	runOne(
 		input: string,
 		deps: GauntletDeps,
@@ -69,7 +69,7 @@ export interface RoutedMailwomanArmDeps {
 const DEFAULT_DEPS: RoutedMailwomanArmDeps = {
 	buildDeps: buildGauntletDeps,
 	resolveWeights,
-	realpath: realPathSync,
+	realpath: realPath,
 	runOne,
 }
 
@@ -84,20 +84,28 @@ function assertSupportedConfig(config: EngineConfig): void {
 	}
 }
 
-function assertInsideCache(path: string, cacheRoot: string, realpath: (path: string) => string): string {
-	const root = realpath(cacheRoot)
-	const target = realpath(path)
+async function assertInsideCache(
+	path: PathBuilderLike,
+	cacheRoot: string,
+	realpath: (path: PathBuilderLike) => Promise<string>
+): Promise<string> {
+	const root = await realpath(cacheRoot)
+	const target = await realpath(path)
 	const fromRoot = relative(root, target)
 
-	if (fromRoot === ".." || fromRoot.startsWith(`..${sep}`) || resolve(root, fromRoot) !== target) {
+	if (fromRoot === ".." || fromRoot.startsWith(`..${sep}`) || resolvePath(root, fromRoot) !== target) {
 		throw new Error(`Candidate artifact resolved outside weights_cache: ${path} -> ${target}; cache is ${root}.`)
 	}
 
 	return target
 }
 
-function preflightLocale(locale: string, cacheRoot: string, deps: RoutedMailwomanArmDeps): RoutedArtifactProvenance {
-	const resolved = deps.resolveWeights({ locale, cacheRoot })
+async function preflightLocale(
+	locale: string,
+	cacheRoot: string,
+	deps: RoutedMailwomanArmDeps
+): Promise<RoutedArtifactProvenance> {
+	const resolved = await deps.resolveWeights({ locale, cacheRoot })
 
 	if (!resolved.packageDir) throw new Error(`Candidate locale ${locale} resolved without a package directory.`)
 
@@ -109,32 +117,32 @@ function preflightLocale(locale: string, cacheRoot: string, deps: RoutedMailwoma
 	]
 
 	for (const path of paths) {
-		assertInsideCache(path, cacheRoot, deps.realpath)
+		await assertInsideCache(path, cacheRoot, deps.realpath)
 	}
 
 	return {
 		locale,
 		source: resolved.source,
-		package_dir: deps.realpath(resolved.packageDir),
-		model_path: deps.realpath(resolved.modelPath),
-		tokenizer_path: deps.realpath(resolved.tokenizerPath),
+		package_dir: await deps.realpath(resolved.packageDir),
+		model_path: await deps.realpath(resolved.modelPath),
+		tokenizer_path: await deps.realpath(resolved.tokenizerPath),
 		artifacts: resolved.artifacts,
 	}
 }
 
-function resolveLocale(locale: string, cacheRoot: string | undefined, deps: RoutedMailwomanArmDeps) {
-	if (cacheRoot) return preflightLocale(locale, cacheRoot, deps)
+async function resolveLocale(locale: string, cacheRoot: string | undefined, deps: RoutedMailwomanArmDeps) {
+	if (cacheRoot) return await preflightLocale(locale, cacheRoot, deps)
 
-	const resolved = deps.resolveWeights({ locale })
+	const resolved = await deps.resolveWeights({ locale })
 
 	if (!resolved.packageDir) throw new Error(`Shipped locale ${locale} resolved without a package directory.`)
 
 	return {
 		locale,
 		source: resolved.source,
-		package_dir: deps.realpath(resolved.packageDir),
-		model_path: deps.realpath(resolved.modelPath),
-		tokenizer_path: deps.realpath(resolved.tokenizerPath),
+		package_dir: await deps.realpath(resolved.packageDir),
+		model_path: await deps.realpath(resolved.modelPath),
+		tokenizer_path: await deps.realpath(resolved.tokenizerPath),
 		artifacts: resolved.artifacts,
 	}
 }
@@ -161,7 +169,7 @@ export async function buildRoutedMailwomanArm(
 	)
 
 	const locales = ["en-US", ...Object.values(routes)].filter((locale, index, all) => all.indexOf(locale) === index)
-	const artifacts = locales.map((locale) => resolveLocale(locale, cacheRoot, deps))
+	const artifacts = await Promise.all(locales.map(async (locale) => resolveLocale(locale, cacheRoot, deps)))
 	const baseModelPath = artifacts[0]!.model_path
 	const mismatched = artifacts.filter((artifact) => artifact.model_path !== baseModelPath)
 
@@ -192,10 +200,12 @@ export async function buildRoutedMailwomanArm(
 		})
 	)
 
+	const weightsCache = cacheRoot ? await deps.realpath(cacheRoot) : null
+
 	return Object.assign(resources.move(), {
 		provenance: {
 			engine: "mailwoman:gauntlet-routed" as const,
-			weights_cache: cacheRoot ? deps.realpath(cacheRoot) : null,
+			weights_cache: weightsCache,
 			base_model_path: baseModelPath,
 			routes,
 			artifacts_by_locale: artifacts,

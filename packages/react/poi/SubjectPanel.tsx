@@ -10,7 +10,7 @@
 
 import type { ReactNode } from "react"
 
-import type { POISubject } from "./types.ts"
+import type { POISubject } from "#poi/types"
 
 export interface SubjectPanelProps {
 	subject: POISubject

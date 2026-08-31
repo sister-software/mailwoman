@@ -20,7 +20,7 @@ import {
 	createFilerManifestTable,
 	createFilerNodeTable,
 	type FilerDatabase,
-} from "../../schema.ts"
+} from "#schema"
 
 /**
  * Create the build-only `filer_attribute_stage` table — see `build-filer.ts`'s module docstring for why `value` is part

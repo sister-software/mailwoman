@@ -14,8 +14,8 @@
 
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import type { AblationGrade } from "./ablation-expectation.ts"
-import type { ResolutionTier } from "./schema.ts"
+import type { AblationGrade } from "#eval-harness/gauntlet/ablation-expectation"
+import type { ResolutionTier } from "#eval-harness/gauntlet/schema"
 
 /**
  * The component classes this runner deletes — every tag the curated corpus actually asserts, and every one

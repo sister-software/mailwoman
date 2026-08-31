@@ -50,7 +50,7 @@ interface Options {
 const EvalConformance: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { runConformanceCommand } = await import("../../eval-harness/conformance/command.ts")
+			const { runConformanceCommand } = await import("#eval-harness/conformance/command")
 
 			return runConformanceCommand({
 				...(options.suite ? { suite: options.suite } : {}),

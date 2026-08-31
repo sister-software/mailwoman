@@ -47,24 +47,24 @@ import {
 	writeLayerManifest,
 	type CoverageCell,
 } from "@mailwoman/core/layers"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { runChunkProcess } from "@mailwoman/core/utils"
-import { fileURLToPath } from "@mailwoman/platform/url"
 import { expandH3Cell, shortCellToInt, type H3Cell, type H3CellShort } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { compactCells, getResolution } from "h3-js"
 
-import { createFloodTables, FloodCellContainment, type FloodDatabase } from "../schema.ts"
+import { createFloodTables, FloodCellContainment, type FloodDatabase } from "#schema"
+import type { FloodMapExtent } from "#sdk/extent"
+import type { FloodFeatureSource } from "#sdk/ingest"
+import { ingestFloodChunk, type FloodChunkResult } from "#sdk/ingest-chunk"
 import {
 	EA_FLOOD_ATTRIBUTION,
 	EA_FLOOD_DATASET_ID,
 	EA_FLOOD_LAYER_NAME,
 	EA_FLOOD_LICENSE,
 	EA_FLOOD_ZONE_DEFINITIONS,
-} from "../vocabulary.ts"
-import type { FloodMapExtent } from "./extent.ts"
-import { ingestFloodChunk, type FloodChunkResult } from "./ingest-chunk.ts"
-import type { FloodFeatureSource } from "./ingest.ts"
+} from "#vocabulary"
 
 /**
  * Schema version of the domain tables. Bumped when a column changes meaning, never for an added column a reader can
@@ -313,7 +313,7 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 		await kdb.destroy()
 
 		await sealDatabase(tmpPath)
-		swapDatabaseIntoPlace(tmpPath, options.out)
+		await swapDatabaseIntoPlace(tmpPath, options.out)
 
 		const totalCellRows = cells.wholeRows + cells.partialRows
 
@@ -464,7 +464,7 @@ async function runBatchedIngest(
 ): Promise<StreamResult> {
 	const { batched } = options
 	const chunkSize = batched.chunkSize ?? DEFAULT_CHUNK_SIZE
-	const script = fileURLToPath(import.meta.resolve("@mailwoman/flood/scripts/ingest-chunk"))
+	const script = resolveModulePath("@mailwoman/flood/scripts/ingest-chunk")
 	const chunks: FloodChunkResult[] = []
 
 	for (let from = batched.objectIDFrom; from <= batched.objectIDTo; from += chunkSize) {

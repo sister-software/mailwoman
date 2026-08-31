@@ -29,14 +29,14 @@
  *   and continue.
  */
 
-import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, readFileRangeSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readFileRange, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { md5FileSync } from "@mailwoman/core/utils/hash"
+import { md5File } from "@mailwoman/core/utils/hash"
+import { basename, resolvePath, type PathBuilderLike } from "path-ts"
 
-import { FST_FORMAT_VERSION } from "./fst-serialize.ts"
-import type { FSTProvenance } from "./fst-types.ts"
+import { FST_FORMAT_VERSION } from "#fst-serialize"
+import type { FSTProvenance } from "#fst-types"
 
 /**
  * Fixed header size in bytes — mirrors `fst-serialize.ts`'s `HEADER_SIZE`. Duplicated rather than exported across
@@ -116,12 +116,12 @@ export interface FSTExpectation {
  * Returns `undefined` for a file that is absent, too small, or not an FST at all — none of which is this function's
  * business to diagnose.
  */
-export function peekFSTStampFields(path: string): FSTStampFields | undefined {
-	if (!pathExistsSync(path)) return undefined
-	const size = statPathSync(path).size
+export async function peekFSTStampFields(path: string): Promise<FSTStampFields | undefined> {
+	if (!(await pathExists(path))) return undefined
+	const size = (await statPath(path)).size
 
 	if (size < HEADER_SIZE) return undefined
-	const header = readFileRangeSync(path, 0, HEADER_SIZE)
+	const header = await readFileRange(path, 0, HEADER_SIZE)
 
 	if (header.readUInt32LE(0) !== MAGIC) return undefined
 	const formatVersion = header.readUInt16LE(4)
@@ -133,20 +133,20 @@ export function peekFSTStampFields(path: string): FSTStampFields | undefined {
 	// truncated file. Both read as "no stamp", which is what the caller does with them anyway.
 	if (trailerStart === 0 || trailerStart + 4 > size) return { formatVersion, provenance: undefined }
 
-	const jsonLength = readFileRangeSync(path, trailerStart, 4).readUInt32LE(0)
+	const jsonLength = (await readFileRange(path, trailerStart, 4)).readUInt32LE(0)
 
 	if (jsonLength === 0 || trailerStart + 4 + jsonLength > size) return { formatVersion, provenance: undefined }
 
-	const json = readFileRangeSync(path, trailerStart + 4, jsonLength)
+	const json = await readFileRange(path, trailerStart + 4, jsonLength)
 
 	return { formatVersion, provenance: tryParsingJSON<FSTProvenance>(json.toString("utf8")) ?? undefined }
 }
 
 /**
- * Re-exported from `@mailwoman/core/utils/hash`, where it lives beside its asynchronous twin. Two builders and this
- * package's own test import it from here, and the sidecar convention below is what it is for.
+ * Re-exported from `@mailwoman/core/utils/hash`. This package's own test imports it from here, and the sidecar
+ * convention below is what it is for.
  */
-export { md5FileSync } from "@mailwoman/core/utils/hash"
+export { md5File } from "@mailwoman/core/utils/hash"
 
 /**
  * The source identity an FST build should stamp, or a check should compare against.
@@ -160,7 +160,11 @@ export { md5FileSync } from "@mailwoman/core/utils/hash"
  * write and the caller still gets its answer, because refusing to check freshness on a read-only tree would be the
  * wrong trade.
  */
-export async function readWOFSourceIdentity(path: string, { refreshSidecar = true } = {}): Promise<FSTSourceIdentity> {
+export async function readWOFSourceIdentity(
+	source: PathBuilderLike,
+	{ refreshSidecar = true } = {}
+): Promise<FSTSourceIdentity> {
+	const path = resolvePath(source)
 	const stats = await statPath(path)
 	const memoKey = `${path}\0${stats.mtimeMs}\0${stats.size}`
 	const hit = sourceIdentityMemo.get(memoKey)
@@ -182,11 +186,11 @@ export async function readWOFSourceIdentity(path: string, { refreshSidecar = tru
 	}
 
 	if (!md5) {
-		md5 = md5FileSync(path)
+		md5 = await md5File(path)
 
 		if (refreshSidecar) {
 			try {
-				await writeLocalTextFile(`${md5}  ${path.split("/").pop()}\n`, sidecarPath)
+				await writeLocalTextFile(`${md5}  ${basename(path)}\n`, sidecarPath)
 			} catch {
 				// Read-only data root — the digest is still correct, it just isn't cached.
 			}
@@ -271,7 +275,7 @@ export async function fstFreshnessWarning({
 }): Promise<string | undefined> {
 	if (!(await pathExists(fstPath)) || !(await pathExists(sourceDBPath))) return undefined
 
-	const reason = fstStaleReason(peekFSTStampFields(fstPath), {
+	const reason = fstStaleReason(await peekFSTStampFields(fstPath), {
 		source: await readWOFSourceIdentity(sourceDBPath),
 		...(formatVersion === undefined ? {} : { formatVersion }),
 		...(exclusionPolicy === undefined ? {} : { exclusionPolicy }),

@@ -31,6 +31,8 @@
  *   for every point in a hole.
  */
 
+import type { MultiPolygonRings } from "#geometries/polygon"
+
 /**
  * Format version stamped into every blob. A reader that meets a different number throws rather than reinterpreting
  * bytes it does not know the shape of.
@@ -52,16 +54,6 @@ const RING_ENTRY_BYTES = 8
  * §3.1.6). Fewer is a degenerate ring, and encoding one would store a polygon no point can be inside.
  */
 const MINIMUM_RING_POSITIONS = 4
-
-/**
- * One polygon's rings: `[exterior, ...holes]`, each ring a list of `[lon, lat]` positions.
- */
-export type PolygonRings = ReadonlyArray<ReadonlyArray<readonly number[]>>
-
-/**
- * A feature's polygons — `MultiPolygon` coordinates, with a bare `Polygon` lifted into the same shape.
- */
-export type MultiPolygonRings = ReadonlyArray<PolygonRings>
 
 /**
  * One decoded feature: `[exteriorRing, ...holes]` per polygon, each ring a flat `[lon, lat, lon, lat, …]` run.

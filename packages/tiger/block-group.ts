@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { TIGERClassCode } from "./class-code.ts"
-import type { TIGERFunctionalStatus } from "./functional-status.ts"
-import type { LegalStatisticalAreaDescription } from "./legal-statistical-area.ts"
-import type { AdminLevel1Code } from "./state.ts"
+import type { TIGERClassCode } from "#class-code"
+import type { TIGERFunctionalStatus } from "#functional-status"
+import type { LegalStatisticalAreaDescription } from "#legal-statistical-area"
+import type { AdminLevel1Code } from "#state"
 
 /**
  * @title TIGER Block Group

@@ -16,8 +16,8 @@
 
 import { AsciifyTerminal } from "@sister.software/asciify/tui"
 
-import type { RGBAGrid } from "./raster.ts"
-import type { RGB } from "./style.ts"
+import type { RGBAGrid } from "#raster"
+import type { RGB } from "#style"
 
 const SGR_RESET = "\u001B[0m"
 

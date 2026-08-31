@@ -17,7 +17,7 @@ import { OracleMeter, OracleProviderName, type OracleGeocoderLike } from "@mailw
 import { listRuns } from "@mailwoman/dev-mcp/run-store"
 import { afterAll, describe, expect, it } from "vitest"
 
-import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
+import { stubEngine, stubEngineRegistry } from "#test/stub-registry"
 
 const RUN_STORE = await temporaryDirectory("mwdev-arms-runs-")
 
@@ -57,7 +57,7 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 		repoRoot: "/tmp/stub",
 		maxResident: 2,
 		size: 1,
-		fingerprint: () => ({
+		fingerprint: async () => ({
 			digest: "tree0",
 			gitHead: "head0",
 			dirtyFiles: [],

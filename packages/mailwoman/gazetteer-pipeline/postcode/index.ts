@@ -14,21 +14,21 @@
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { resolveWOFRepo, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
-import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
+import { join, type PathBuilderLike } from "path-ts"
 
-import { dataRootPath } from "../../resolver-backend.ts"
-import { ingestWOF, type IngestWOFResult } from "../admin/ingest-wof.ts"
-import { buildFTS } from "../fts.ts"
-import { type CentroidFillResult, fillPostcodeCentroids } from "./centroid-fills.ts"
+import { ingestWOF, type IngestWOFResult } from "#gazetteer-pipeline/admin/ingest-wof"
+import { buildFTS } from "#gazetteer-pipeline/fts"
+import { type CentroidFillResult, fillPostcodeCentroids } from "#gazetteer-pipeline/postcode/centroid-fills"
 import {
 	fillGeonamesPlaceholders,
 	fillPlaceholderCentroids,
 	parseGeonamesCentroids,
 	parseZCTACentroids,
-} from "./zcta-centroids.ts"
+} from "#gazetteer-pipeline/postcode/zcta-centroids"
+import { dataRootPath } from "#resolver-backend"
 
 export interface BuildPostcodeShardOptions {
 	/**
@@ -46,11 +46,11 @@ export interface BuildPostcodeShardOptions {
 	/**
 	 * Census ZCTA Gazetteer file (US pass 1). Default `<data-root>/census/2024_Gaz_zcta_national.txt`.
 	 */
-	zctaPath?: string
+	zctaPath?: PathBuilderLike
 	/**
 	 * GeoNames postal dump dir. Default `<data-root>/geonames-postal`.
 	 */
-	geonamesPostalDir?: string
+	geonamesPostalDir?: PathBuilderLike
 	/**
 	 * Admin gazetteer for the parent/ancestor borrows. Default the live `admin-global-priority.db`.
 	 */
@@ -138,7 +138,7 @@ export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promi
 			const zctaPath = opts.zctaPath ?? dataRootPath("census", "2024_Gaz_zcta_national.txt")
 
 			if (await pathExists(zctaPath)) {
-				phase("fill-zcta", zctaPath)
+				phase("fill-zcta", `${zctaPath}`)
 				zctaFilled = fillPlaceholderCentroids(db, parseZCTACentroids(await readLocalTextFile(zctaPath)))
 			} else {
 				phase("fill-zcta", `SKIPPED (${zctaPath} not present)`)
@@ -200,7 +200,7 @@ export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promi
 	return { out, postcodesIngested: ingest.placesIngested, zctaFilled, geonamesUSFilled, fills, sealed: true }
 }
 
-export * from "./binary.ts"
-export * from "./centroid-fills.ts"
-export * from "./geonames-tail.ts"
-export * from "./zcta-centroids.ts"
+export * from "#gazetteer-pipeline/postcode/binary"
+export * from "#gazetteer-pipeline/postcode/centroid-fills"
+export * from "#gazetteer-pipeline/postcode/geonames-tail"
+export * from "#gazetteer-pipeline/postcode/zcta-centroids"

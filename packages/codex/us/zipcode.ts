@@ -9,7 +9,7 @@
 
 import type { Tagged } from "type-fest"
 
-import { isUSStateAbbreviation, type USStateAbbreviation } from "./state.ts"
+import { isUSStateAbbreviation, type USStateAbbreviation } from "#us/state"
 
 /**
  * USPS-recognized ZIP code digits.

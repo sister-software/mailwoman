@@ -5,10 +5,10 @@
  * @file The acquisition + build surface for the EA coastal-erosion layer. The READER is the package root.
  */
 
-export * from "./build-coastal.ts"
-export * from "./cells.ts"
-export * from "./client.ts"
-export * from "./download.ts"
-export * from "./ingest.ts"
-export * from "./measure-resolutions.ts"
-export * from "./verify.ts"
+export * from "#sdk/build-coastal"
+export * from "#sdk/cells"
+export * from "#sdk/client"
+export * from "#sdk/download"
+export * from "#sdk/ingest"
+export * from "#sdk/measure-resolutions"
+export * from "#sdk/verify"

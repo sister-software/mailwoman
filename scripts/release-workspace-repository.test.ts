@@ -1,5 +1,6 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { resolvePath } from "path-ts"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -17,7 +18,6 @@ import { repoRootPath } from "@mailwoman/core/utils"
  *   This asserts EVERY workspace in the `.release-it.json` publish set carries the canonical
  *   `repository` block, so a drift fails at PR/CI time instead of mid-release.
  */
-import { resolve } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 const repoRoot = repoRootPath()
@@ -29,7 +29,7 @@ const CANONICAL_URL = "https://github.com/sister-software/mailwoman.git"
 async function releaseWorkspaces(): Promise<string[]> {
 	const releaseIt = await readLocalJSONFile<{
 		plugins?: { "@release-it-plugins/workspaces"?: { workspaces?: unknown } }
-	}>(resolve(repoRoot, ".release-it.json"))
+	}>(resolvePath(repoRoot, ".release-it.json"))
 
 	const ws = releaseIt?.plugins?.["@release-it-plugins/workspaces"]?.workspaces
 
@@ -46,7 +46,7 @@ describe("#757 release provenance: every published workspace declares its reposi
 	it.each(workspaces)("%s/package.json has the canonical repository block", async (ws) => {
 		const pkg = await readLocalJSONFile<{
 			repository?: { type?: string; url?: string; directory?: string }
-		}>(resolve(repoRoot, ws, "package.json"))
+		}>(resolvePath(repoRoot, ws, "package.json"))
 
 		const repo = pkg.repository
 		// A missing/empty repository.url is exactly what npm provenance rejects with E422.

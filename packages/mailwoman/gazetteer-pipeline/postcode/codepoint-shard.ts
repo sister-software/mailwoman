@@ -49,7 +49,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { join } from "path-ts"
 
-import { buildFTS, type BuildFTSResult } from "../fts.ts"
+import { buildFTS, type BuildFTSResult } from "#gazetteer-pipeline/fts"
 import {
 	CODEPOINT_COVERAGE_NOTE,
 	CODEPOINT_LICENSE,
@@ -62,8 +62,8 @@ import {
 	downloadCodePointOpen,
 	extractCodePointOpen,
 	readCodePointCSV,
-} from "./codepoint/index.ts"
-import { createShardMetaTable } from "./geonames-tail.ts"
+} from "#gazetteer-pipeline/postcode/codepoint/index"
+import { createShardMetaTable } from "#gazetteer-pipeline/postcode/geonames-tail"
 
 /**
  * Synthetic id base for Code-Point Open rows — its own namespace above GeoNames-postal (9.5e12) and NL PC6 (9.6e12), so

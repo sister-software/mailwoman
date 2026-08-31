@@ -58,10 +58,10 @@ import { APIClient, type ClockLike } from "@mailwoman/core/api"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "./download.ts"
-import { writeManifest } from "./download.ts"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { writeManifest } from "#tools/fetch/download"
 
 const SLUG = "wikidata-subvenue"
 

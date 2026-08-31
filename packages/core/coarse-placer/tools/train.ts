@@ -12,13 +12,12 @@
  *   $MAILWOMAN_DATA_ROOT/coarse-placer/model]`
  */
 
-import * as path from "@mailwoman/platform/path"
+import { type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { COARSE_CLASSES, FEATURE_DIM, featurize } from "#coarse-placer/featurize"
 import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "#fs/writers"
 import { dataRootPath, repoRootPath } from "#utils"
-
-import { COARSE_CLASSES, FEATURE_DIM, featurize } from "../featurize.ts"
 
 /**
  * Lowest calibration temperature swept.
@@ -59,11 +58,11 @@ export interface TrainCoarsePlacerOptions {
 	/**
 	 * Artifact output dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
 	 */
-	out?: string
+	out?: PathBuilderLike
 	/**
 	 * Dataset dir (`{train,val}.jsonl`). Default `<repo>/data/coarse-placer`.
 	 */
-	data?: string
+	data?: PathBuilderLike
 }
 
 /**
@@ -87,7 +86,7 @@ export async function trainCoarsePlacer(
 	const epochs = options.epochs ?? 12
 	const lr0 = options.lr ?? 0.1
 	const l2 = options.l2 ?? 0.000001
-	const outDir = options.out || dataRootPath("coarse-placer", "model")
+	const outDir = resolvePathBuilder(options.out || dataRootPath("coarse-placer", "model"))
 	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 
 	const C = COARSE_CLASSES.length
@@ -96,7 +95,7 @@ export async function trainCoarsePlacer(
 
 	async function load(split: string): Promise<Sample[]> {
 		const rows = await Array.fromAsync(
-			JSONSpliterator.fromAsync<{ raw: string; country: string }>(path.join(dataDir, `${split}.jsonl`))
+			JSONSpliterator.fromAsync<{ raw: string; country: string }>(resolvePath(dataDir, `${split}.jsonl`))
 		)
 
 		// Precompute features once: Int32Array of active indices + label id per row.
@@ -276,11 +275,17 @@ export async function trainCoarsePlacer(
 			trainedAt: null,
 			trainRows: train.length,
 		},
-		path.join(outDir, "meta.json")
+		resolvePath(outDir, "meta.json")
 	)
 
-	await writeLocalBuffer(Buffer.from(W.buffer), path.join(outDir, "weights.bin"))
+	await writeLocalBuffer(Buffer.from(W.buffer), resolvePath(outDir, "weights.bin"))
 	report?.(`→ ${outDir}/meta.json + weights.bin (${(W.byteLength / 1e6).toFixed(1)} MB fp32)`)
 
-	return { outDir, trainRows: train.length, valRows: val.length, temperature: bestT, valNLL: bestNLL }
+	return {
+		outDir: resolvePath(outDir),
+		trainRows: train.length,
+		valRows: val.length,
+		temperature: bestT,
+		valNLL: bestNLL,
+	}
 }

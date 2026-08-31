@@ -40,6 +40,7 @@ import createSentencePiece, {
 	type SentencePieceModule,
 	type SentencePieceProcessor,
 } from "@mailwoman/sentencepiece-wasm"
+import type { PathBuilderLike } from "path-ts"
 
 /**
  * SentencePiece's word-boundary marker (U+2581 LOWER ONE EIGHTH BLOCK).
@@ -159,9 +160,9 @@ export class MailwomanTokenizer {
 	 * in a browser throws at runtime; use `loadFromBase64` (or the URL-fetching loaders in `@mailwoman/neural-web`)
 	 * instead.
 	 */
-	static async loadFromFile(modelPath: string): Promise<MailwomanTokenizer> {
-		const { readFile } = await import(/* webpackIgnore: true */ "@mailwoman/platform/fs/promises")
-		const buf = await readFile(modelPath)
+	static async loadFromFile(modelPath: PathBuilderLike): Promise<MailwomanTokenizer> {
+		const { readFile } = await import(/* webpackIgnore: true */ "node:fs/promises")
+		const buf = await readFile(modelPath.toString())
 
 		return MailwomanTokenizer.loadFromBytes(new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength))
 	}

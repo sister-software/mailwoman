@@ -10,8 +10,8 @@ import type {
 	LayerSpecification,
 } from "@maplibre/maplibre-gl-style-spec"
 
-import { LayerID } from "../styles/layers.ts"
-import { MailwomanBaseTileSetID } from "./theme.ts"
+import { MailwomanBaseTileSetID } from "#base/theme"
+import { LayerID } from "#styles/layers"
 
 const BuildingLayerID = LayerID.bind(null, "buildings")
 

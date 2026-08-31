@@ -10,18 +10,18 @@
  *   stricter reading of the argument vector gets wrong while still looking correct for `mw --version`.
  */
 
-import { execFileSync } from "@mailwoman/platform/child_process"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { runFileSync } from "@mailwoman/core/process"
 import { describe, expect, it } from "vitest"
 
-const CLI = fileURLToPath(import.meta.resolve("../../cli.ts"))
+const CLI = resolvePackagePath("mailwoman", "cli.ts")
 
 /**
  * Combined stdout+stderr, whatever the exit code — a launcher crash is the thing under test.
  */
 function runCLI(...args: string[]): string {
 	try {
-		return execFileSync("node", [CLI, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] })
+		return runFileSync("node", [CLI, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] })
 	} catch (error) {
 		const failure = error as { stdout?: string; stderr?: string }
 

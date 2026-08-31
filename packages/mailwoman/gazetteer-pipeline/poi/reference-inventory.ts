@@ -15,14 +15,15 @@
 
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
-import type { BBox } from "./build-poi.ts"
+import type { BBox } from "#gazetteer-pipeline/poi/build-poi"
 
 export interface ReferenceInventoryQuery {
 	/**
 	 * Path to a sealed POI layer database.
 	 */
-	databasePath: string
+	databasePath: PathBuilderLike
 	/**
 	 * A `poi_category_codes.category` value, e.g. `pharmacy`.
 	 */

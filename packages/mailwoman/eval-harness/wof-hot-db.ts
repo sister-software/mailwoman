@@ -15,7 +15,7 @@
 
 import { $public } from "@mailwoman/core/env"
 import { tempRootPath } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 
 /**
  * The default demo stage directory. This is a staged release path rather than a data-root artifact.

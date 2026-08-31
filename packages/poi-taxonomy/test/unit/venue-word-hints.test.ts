@@ -14,7 +14,7 @@ import { venueWordHint, venueWordHintCount, venueWordHintProvenance } from "@mai
 import type { VenueWordHintTable } from "@mailwoman/poi-taxonomy/venue-word-hints"
 import { describe, expect, it } from "vitest"
 
-const TABLE = readPackagedTable<VenueWordHintTable>("venue-word-hints.json")
+const TABLE = await readPackagedTable<VenueWordHintTable>("venue-word-hints.json")
 
 describe("venue-word-hints table integrity", () => {
 	it("every committed row honors the provenance block's own bars", () => {

@@ -10,7 +10,7 @@
  *   highest-confidence non-null result; ties broken by scorer order (most-specific first).
  */
 
-import type { QueryShapeLike } from "./types.ts"
+import type { QueryShapeLike } from "#types"
 
 /**
  * Confidence at or above which a known-format hit counts as unambiguous. Ambiguous hits — a bare 5-digit run, which

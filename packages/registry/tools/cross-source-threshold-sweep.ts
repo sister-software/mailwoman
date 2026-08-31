@@ -28,7 +28,9 @@
  */
 
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { pathToFileURL } from "@mailwoman/core/module/file-url"
 import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
+import { resolvePath } from "path-ts"
 
 import {
 	addressFrequencyKey,
@@ -43,9 +45,8 @@ import {
 	type ResolvedEntity,
 	type SourceRecord,
 } from "#index"
-
-import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
-import { buildSpecs } from "./shared.ts"
+import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
+import { buildSpecs } from "#tools/shared"
 
 /**
  * Independent sources that must agree before a cluster counts as cross-source corroborated.
@@ -300,9 +301,6 @@ export async function crossSourceThresholdSweep(
 	const candidateArms: ArmMetrics[] = []
 
 	if (CANDIDATE) {
-		const { pathToFileURL } = await import("@mailwoman/platform/url")
-		const { resolve: resolvePath } = await import("@mailwoman/platform/path")
-
 		const mod = (await import(pathToFileURL(resolvePath(CANDIDATE)).href)) as {
 			CROSS_SOURCE_GBT_MODEL?: typeof DEDUP_GBT_MODEL
 			CROSS_SOURCE_GBT_META?: { recommendedThreshold?: number }

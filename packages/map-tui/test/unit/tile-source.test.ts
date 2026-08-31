@@ -4,14 +4,15 @@
  * @author Teffen Ellis, et al.
  */
 
+import { createServer } from "node:http"
+import type { AddressInfo } from "node:net"
+
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { readAttribution, TileSource } from "@mailwoman/map-tui/tile-source"
-import { createServer } from "@mailwoman/platform/http"
-import type { AddressInfo } from "@mailwoman/platform/net"
-import { fileURLToPath } from "@mailwoman/platform/url"
 import { afterAll, describe, expect, it } from "vitest"
 
-const FIXTURE = fileURLToPath(new URL("../fixtures/portland.pmtiles", import.meta.url))
+const FIXTURE = resolvePackagePath("@mailwoman/map-tui", "test", "fixtures", "portland.pmtiles")
 
 describe("TileSource", async () => {
 	const source = await TileSource.open(FIXTURE)

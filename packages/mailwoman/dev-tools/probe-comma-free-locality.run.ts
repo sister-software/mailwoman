@@ -22,13 +22,13 @@
  */
 
 import { decodeAsTuples } from "@mailwoman/core/decoder"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
 import { createRuntimePipeline } from "#index"
 
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		"cache-root": { type: "string" },
 		label: { type: "string", default: "arm" },

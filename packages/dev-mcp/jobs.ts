@@ -1,3 +1,5 @@
+import { type ChildProcess, spawnProcess } from "@mailwoman/core/process"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -13,8 +15,6 @@
  *   corrupt the transport — which is also why the gauntlet is spawned at all rather than imported (it writes its whole
  *   report to stdout by design).
  */
-
-import { spawn, type ChildProcess } from "@mailwoman/platform/child_process"
 
 export type JobState = "running" | "succeeded" | "failed" | "cancelled"
 
@@ -67,7 +67,7 @@ export class JobRegistry {
 	 */
 	start(label: string, command: string, args: string[], cwd: string): Job {
 		const jobID = `job-${++this.#counter}`
-		const child = spawn(command, args, { cwd, stdio: ["ignore", "pipe", "pipe"] })
+		const child = spawnProcess(command, args, { cwd, stdio: ["ignore", "pipe", "pipe"] })
 
 		const job: Job = {
 			jobID,

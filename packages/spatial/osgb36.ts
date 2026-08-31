@@ -61,7 +61,7 @@
  *   @see https://www.ordnancesurvey.co.uk/documents/resources/guide-coordinate-systems-great-britain.pdf
  */
 
-import type { Coordinates2D } from "./position.ts"
+import type { Coordinates2D } from "#position"
 
 /**
  * Semi-major axis of the Airy 1830 ellipsoid, in metres — the figure of the Earth OSGB36 is referenced to.

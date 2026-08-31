@@ -26,7 +26,7 @@ import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { TIGERDatabase } from "../sdk/schema.ts"
+import type { TIGERDatabase } from "#sdk/schema"
 
 /**
  * Attempts to place a dot inside its polygon by rejection sampling before giving up on it.

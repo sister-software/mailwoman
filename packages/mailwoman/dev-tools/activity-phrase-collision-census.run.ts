@@ -18,8 +18,8 @@
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { parseArgs } from "@mailwoman/platform/util"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -28,10 +28,10 @@ import {
 	type CensusVenue,
 	printPhraseCollisionCensus,
 	runPhraseCollisionCensus,
-} from "../eval-harness/activity-lexicon/phrase-collision-census.ts"
-import { createPOINameLookup } from "../poi-intent.ts"
+} from "#eval-harness/activity-lexicon/phrase-collision-census"
+import { createPOINameLookup } from "#poi-intent"
 
-const { values } = parseArgs({ options: { db: { type: "string" }, out: { type: "string" } } })
+const { values } = parseArguments({ options: { db: { type: "string" }, out: { type: "string" } } })
 
 const databasePath = values.db ?? String(dataRootPath("poi", "poi.db"))
 using database = new DatabaseClient<POIDatabase>(databasePath, { readOnly: true })

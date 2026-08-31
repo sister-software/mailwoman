@@ -47,10 +47,9 @@
  */
 
 import { candidateSystemsForPostcode, UNIT_GRADE_POSTCODE } from "@mailwoman/codex"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 
-import type { ConformanceFixture } from "./fixture.ts"
+import type { ConformanceFixture } from "#eval-harness/conformance/fixture"
 
 /**
  * The law name every row in this suite carries.
@@ -299,16 +298,15 @@ export function whitespaceApplicability(
 /**
  * The committed suite.
  *
- * `new URL`-relative with a compiled-tree fallback: `tsc` emits no `.jsonl` into `out/`, so a compiled caller reads the
- * source-tree copy. Same bridge as `gauntlet/cases/load.ts`'s `CASES_DIR`.
+ * Anchored at the package root: `tsc` emits no `.jsonl` into `out/`, so the file is named from where the package starts
+ * rather than from where this module runs.
  */
-export const WHITESPACE_SUITE_PATH = ((): string => {
-	const sibling = fileURLToPath(new URL("whitespace.jsonl", import.meta.url))
-
-	if (pathExistsSync(sibling)) return sibling
-
-	return fileURLToPath(new URL("../../../eval-harness/conformance/whitespace.jsonl", import.meta.url))
-})()
+export const WHITESPACE_SUITE_PATH: string = resolvePackagePath(
+	"mailwoman",
+	"eval-harness",
+	"conformance",
+	"whitespace.jsonl"
+)
 
 /**
  * Everything that must be true of a whitespace row, checked without running anything.

@@ -18,13 +18,12 @@ import { Text } from "ink"
 import type React from "react"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
-import { probeWeights, WeightsGuard, type WeightsOutcome } from "#cli-kit/weights-guard"
+import { WeightsGuard, type WeightsOutcome } from "#cli-kit/weights-guard"
+import { resolverDefaultCountry } from "#country-scope"
 import type { createRuntimePipeline } from "#index"
 
-import { resolverDefaultCountry } from "../country-scope.ts"
-
-export { localeToCountry, resolverDefaultCountry } from "../country-scope.ts"
-export type { CountryScope } from "../country-scope.ts"
+export { localeToCountry, resolverDefaultCountry } from "#country-scope"
+export type { CountryScope } from "#country-scope"
 
 /**
  * Bytes per KiB, for human-readable sizes.
@@ -161,7 +160,9 @@ const ParseCommand: ParsedCommandComponent<ParseOptions> = ({ options, args }) =
 		!options.model &&
 		!options.tokenizer
 
-	if (guardEligible && (options.degraded || options.downloadWeights || !probeWeights(options.locale).ok)) {
+	// The guard owns the probe now (it is async, so a render-time check is not possible); it settles
+	// to the same "neural" path when weights resolve and nothing else was forced.
+	if (guardEligible) {
 		return (
 			<WeightsGuard locale={options.locale} autoDownload={options.downloadWeights} forceDegraded={options.degraded}>
 				{(outcome) => <ParseTask options={options} args={args} weightsOutcome={outcome} />}
@@ -302,8 +303,8 @@ async function resolveWithCandidates(
 		opts.postcodeContainmentCoherence = true
 	}
 
-	const { resolveCandidateDBPath } = await import("../resolver-backend.ts")
-	const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
+	const { resolveCandidateDBPath } = await import("#resolver-backend")
+	const dc = resolverDefaultCountry(options, !!(await resolveCandidateDBPath()))
 
 	if (dc) {
 		opts.defaultCountry = dc
@@ -319,7 +320,7 @@ async function resolveWithCandidates(
 
 async function withResolver<T>(options: ParseOptions, fn: (resolver: Resolver) => Promise<T>): Promise<T> {
 	const { createWOFResolver } = await import("@mailwoman/resolver")
-	const { createResolverBackend, resolveCandidateDBPath } = await import("../resolver-backend.ts")
+	const { createResolverBackend, resolveCandidateDBPath } = await import("#resolver-backend")
 
 	// Dynamic import so `@mailwoman/resolver-wof-sqlite` stays a true optional peer dep — users who
 	// never set --resolve don't pay for kysely + the resolver bundle.
@@ -335,8 +336,8 @@ async function withResolver<T>(options: ParseOptions, fn: (resolver: Resolver) =
 	}
 
 	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend (no WOF admin path required); else FTS.
-	const lookup = createResolverBackend(mod, {
-		wofPaths: resolveCandidateDBPath() ? "" : await resolveWOFPath(options),
+	const lookup = await createResolverBackend(mod, {
+		wofPaths: (await resolveCandidateDBPath()) ? "" : await resolveWOFPath(options),
 	})
 
 	try {
@@ -481,8 +482,8 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 	// rather than a higher-priority foreign homonym. Inferred from --locale unless --default-country
 	// overrides (or is `none`). Only meaningful on the --resolve path; harmless otherwise.
 	if (options.resolve) {
-		const { resolveCandidateDBPath } = await import("../resolver-backend.ts")
-		const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
+		const { resolveCandidateDBPath } = await import("#resolver-backend")
+		const dc = resolverDefaultCountry(options, !!(await resolveCandidateDBPath()))
 
 		if (dc) {
 			resolveOpts.defaultCountry = dc

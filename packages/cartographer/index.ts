@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./base/index.ts"
-export * from "./bdc/index.ts"
-export * from "./hspa/index.ts"
-export * from "./styles/index.ts"
-export * from "./tiger/index.ts"
-export * from "./tiles/index.ts"
+export * from "#base/index"
+export * from "#bdc/index"
+export * from "#hspa/index"
+export * from "#styles/index"
+export * from "#tiger/index"
+export * from "#tiles/index"

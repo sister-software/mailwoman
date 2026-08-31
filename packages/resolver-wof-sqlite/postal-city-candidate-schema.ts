@@ -20,7 +20,7 @@
 
 import { sql, type Kysely } from "kysely"
 
-import type { NameKey } from "./street-normalize.ts"
+import type { NameKey } from "#street-normalize"
 
 /**
  * One postal-city → geo-locality edge, keyed exactly by `(name_key, postcode)`. The probe returns the geographic

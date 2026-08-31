@@ -19,7 +19,7 @@
 
 import { haversineKm } from "@mailwoman/spatial"
 
-import { DEFAULT_TOL_M } from "./gauntlet/check-case.ts"
+import { DEFAULT_TOL_M } from "#eval-harness/gauntlet/check-case"
 
 /**
  * The six ways a truth-graded row can relate to the answers on hand, plus the ungraded bucket.

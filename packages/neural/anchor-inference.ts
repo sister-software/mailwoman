@@ -24,8 +24,10 @@
  *   so it lands with the retrain that widened the lookup, not before.
  */
 
-import { collectMatches } from "./postcode-repair.ts"
-import type { TokenizedPiece } from "./tokenizer.ts"
+import type { PathBuilderLike } from "path-ts"
+
+import { collectMatches } from "#postcode-repair"
+import type { TokenizedPiece } from "#tokenizer"
 
 /**
  * The locale class order — MUST match Python `mailwoman_train/labels.py::LOCALE_COUNTRIES`. The posterior occupies
@@ -203,7 +205,7 @@ export const SHAPED_ONLY_KEY_SCAN_LIMIT = 1000
 export function shapedKeyerObligationViolation(
 	lookup: AnchorLookup | undefined,
 	spanMode: AnchorSpanMode | undefined,
-	anchorSourcePath: string | undefined
+	anchorSourcePath: PathBuilderLike | undefined
 ): string | null {
 	if (!lookup || spanMode === "shaped") return null
 	const shapedOnly = countShapedOnlyKeys(lookup)
@@ -242,7 +244,7 @@ let warnedShapedObligation = false
 export function warnShapedKeyerObligationOnce(
 	lookup: AnchorLookup | undefined,
 	spanMode: AnchorSpanMode | undefined,
-	anchorSourcePath: string | undefined
+	anchorSourcePath: PathBuilderLike | undefined
 ): void {
 	if (warnedShapedObligation) return
 	const violation = shapedKeyerObligationViolation(lookup, spanMode, anchorSourcePath)

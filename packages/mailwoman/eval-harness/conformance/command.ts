@@ -36,9 +36,7 @@
  *   first; the committed corpus is read only for a run that includes such a law.
  */
 
-import { loadRegressionCases } from "../gauntlet/cases/load.ts"
-import { buildGauntletDeps, type GauntletDepsOptions } from "../gauntlet/harness.ts"
-import { type ConformanceFixture, loadConformanceFixtures } from "./fixture.ts"
+import { type ConformanceFixture, loadConformanceFixtures } from "#eval-harness/conformance/fixture"
 import {
 	type ConformanceFinding,
 	type ConformanceSummary,
@@ -47,8 +45,10 @@ import {
 	runConformanceFixtures,
 	summarizeConformanceRun,
 	tracedGauntletObserver,
-} from "./run.ts"
-import { CONFORMANCE_SUITES, describeLaw, suiteForLaw } from "./suites.ts"
+} from "#eval-harness/conformance/run"
+import { CONFORMANCE_SUITES, describeLaw, suiteForLaw } from "#eval-harness/conformance/suites"
+import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
+import { buildGauntletDeps, type GauntletDepsOptions } from "#eval-harness/gauntlet/harness"
 
 /**
  * Load every named suite into one fixture list, refusing an id that two files both claim.

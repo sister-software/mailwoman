@@ -10,8 +10,8 @@
 
 import { z } from "zod"
 
-import { ENGINE_RIGS, rigQuery, rigStart, rigStatus, rigStop, type EngineRigName } from "../engine-rigs.ts"
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
+import { ENGINE_RIGS, rigQuery, rigStart, rigStatus, rigStop, type EngineRigName } from "#engine-rigs"
+import type { DevTool, DevToolDeps } from "#tool-kit"
 
 export const rigTool = (_deps: DevToolDeps): DevTool => ({
 	name: "mwdev_rig",

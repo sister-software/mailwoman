@@ -7,8 +7,8 @@
  *   postal), and the admin hierarchy of départements and régions.
  */
 
-export * from "./cedex.ts"
-export * from "./code-postal.ts"
-export * from "./departement.ts"
-export * from "./region.ts"
-export * from "./voie.ts"
+export * from "#fr/cedex"
+export * from "#fr/code-postal"
+export * from "#fr/departement"
+export * from "#fr/region"
+export * from "#fr/voie"

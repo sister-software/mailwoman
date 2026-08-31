@@ -12,14 +12,14 @@
  *   (`table.ts`) — this module only owns the `node:fs` load + the module-level singleton.
  */
 
-import { createLookupCore } from "./lookup-core.ts"
-import { readPackagedTable } from "./packaged-data.ts"
-import type { CategoryRecord, POITaxonomyTable } from "./types.ts"
+import { createLookupCore } from "#lookup-core"
+import { readPackagedTable } from "#packaged-data"
+import type { CategoryRecord, POITaxonomyTable } from "#types"
 
-const TABLE = readPackagedTable<POITaxonomyTable>("taxonomy.json")
+const TABLE = await readPackagedTable<POITaxonomyTable>("taxonomy.json")
 const CORE = createLookupCore(TABLE)
 
-export type { CategoryMatch } from "./lookup-core.ts"
+export type { CategoryMatch } from "#lookup-core"
 
 /**
  * Exact-phrase category lookup. `locale` gates locale-restricted synonyms with the variant-aliases semantics: exact

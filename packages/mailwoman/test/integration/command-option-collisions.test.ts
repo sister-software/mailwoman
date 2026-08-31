@@ -4,7 +4,7 @@
 
 import { readDirectoryEntriesRecursive, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { workspacePath } from "@mailwoman/core/utils"
-import { join, relative, sep } from "@mailwoman/platform/path"
+import { join, relative, sep } from "path-ts"
 import ts from "typescript"
 import { describe, expect, test } from "vitest"
 

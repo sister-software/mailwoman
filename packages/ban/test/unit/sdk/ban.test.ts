@@ -13,7 +13,7 @@ import { cleanLieuDit, extractBANAddrPoints } from "@mailwoman/ban/sdk/extract"
 import { streetLocaleForBANCountry, supportedBANCountries } from "@mailwoman/ban/sdk/street-locale"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { afterAll, expect, test } from "vitest"
 
 const fixtures = new AsyncDisposableStack()

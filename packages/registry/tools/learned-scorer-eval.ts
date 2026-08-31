@@ -48,9 +48,8 @@ import {
 	type ColumnMapping,
 	type SourceRecord,
 } from "#index"
-
-import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
-import { addr, MIN_GROUP_SIZE, norm, NPPES_COLUMNS as C, TRAINING_EPOCHS } from "./shared.ts"
+import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
+import { addr, MIN_GROUP_SIZE, norm, NPPES_COLUMNS as C, TRAINING_EPOCHS } from "#tools/shared"
 
 /**
  * Smallest mean gap counted as a real difference rather than seed noise.

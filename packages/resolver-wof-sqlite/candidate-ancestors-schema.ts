@@ -59,8 +59,8 @@ import { sql, type Kysely } from "kysely"
 // Type-only and circular on purpose (candidate-schema extends CandidateAncestorsDatabase): Kysely's
 // DB parameter is invariant, so the DDL functions must take the FULL database type their caller
 // holds. Erased at runtime.
-import type { CandidateDatabase } from "./candidate-schema.ts"
-import type { NameKey } from "./street-normalize.ts"
+import type { CandidateDatabase } from "#candidate-schema"
+import type { NameKey } from "#street-normalize"
 
 /**
  * The deepest chain the sidecar stores per place. WOF containment within the resolvable placetypes (country …

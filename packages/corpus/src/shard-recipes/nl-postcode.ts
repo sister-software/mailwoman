@@ -18,7 +18,7 @@
  *   keep polarity balanced (the v1.9.9 lesson).
  */
 
-import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
+import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "#shard-recipes/scaffold"
 
 /**
  * "1012LG" → "1012 LG". The tuples carry the unspaced OA form; the spaced form is the failing case.

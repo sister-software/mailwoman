@@ -15,11 +15,9 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { movePath } from "@mailwoman/core/fs/writers"
 import { verifyZipIntegrity } from "@mailwoman/core/fs/zip"
-import { Readable } from "@mailwoman/platform/stream"
-import { pipeline } from "@mailwoman/platform/stream/promises"
 
 /**
  * Download `url` to `dest` unless a VALID copy is already there. Returns `true` when the cache was reused, `false` when

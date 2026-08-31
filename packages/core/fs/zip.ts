@@ -15,16 +15,16 @@
  *   size and offset slots and carries the real values in the entry's extra field.
  */
 
-import { createWriteStream } from "@mailwoman/platform/fs"
-import { mkdir } from "@mailwoman/platform/fs/promises"
-import { basename, dirname, join } from "@mailwoman/platform/path"
-import { pipeline } from "@mailwoman/platform/stream/promises"
-import { crc32 } from "@mailwoman/platform/zlib"
+import { createWriteStream } from "node:fs"
+import { pipeline } from "node:stream/promises"
+import { crc32 } from "node:zlib"
+
 import ADMZip from "adm-zip"
-import type { PathBuilderLike } from "path-ts"
+import { resolvePath, dirname, basename, type PathBuilderLike } from "path-ts"
 import { open as openArchive, type Entry, type ZipFileOptions } from "yauzl-promise"
 
-import { tryStat } from "./readers.ts"
+import { tryStat } from "#fs/readers"
+import { makeDirectories } from "#fs/writers"
 
 type StreamingArchive = Awaited<ReturnType<typeof openArchive>>
 
@@ -245,10 +245,10 @@ export async function extractZipEntries(
 		if (selector && !selectorMatches(selector, entry.filename)) continue
 
 		const relative = flatten ? basename(entry.filename) : entry.filename
-		const destination = join(String(destinationDirectory), relative)
+		const destination = resolvePath(destinationDirectory, relative)
 
 		if (!flatten) {
-			await mkdir(dirname(destination), { recursive: true })
+			await makeDirectories(dirname(destination))
 		}
 
 		const existing = skipExisting ? await tryStat(destination) : null

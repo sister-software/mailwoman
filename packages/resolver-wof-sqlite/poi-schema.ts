@@ -16,7 +16,7 @@ import type { LayerContractDatabase } from "@mailwoman/core/layers"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql, type Kysely } from "kysely"
 
-import type { NameKey } from "./street-normalize.ts"
+import type { NameKey } from "#street-normalize"
 
 /**
  * One POI row. Clustered PK: h3_cell → category_id → neg_rank → rowid_key.

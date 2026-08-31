@@ -66,7 +66,7 @@ interface Options {
 const EvalSemanticUtilityProbe: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { printProbeReceipt, runSemanticUtilityProbe } = await import("../../eval-harness/semantic-utility/run.ts")
+			const { printProbeReceipt, runSemanticUtilityProbe } = await import("#eval-harness/semantic-utility/run")
 
 			const receipt = await runSemanticUtilityProbe({
 				locale: options.locale,

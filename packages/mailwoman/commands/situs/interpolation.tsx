@@ -25,17 +25,16 @@
  *   lands on stdout.
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { readDirectorySync } from "@mailwoman/core/fs/readers-sync"
-import { openWriteStream } from "@mailwoman/core/fs/streams"
+import * as https from "node:https"
+
+import { pathExists, readDirectory, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { openWriteStream, pipeline } from "@mailwoman/core/fs/streams"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { spawnProcessSync } from "@mailwoman/core/process"
 import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
-import { spawnSync } from "@mailwoman/platform/child_process"
-import * as https from "@mailwoman/platform/https"
-import * as path from "@mailwoman/platform/path"
-import { pipeline } from "@mailwoman/platform/stream/promises"
 import { Box, Text } from "ink"
+import { basename, dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -76,7 +75,7 @@ export const spec = {
 	options: {
 		"edges-dir": {
 			type: "string",
-			default: dataRootPath("census", "tiger2023-edges"),
+			default: resolvePath(dataRootPath("census", "tiger2023-edges")),
 			description: "TIGER download directory",
 		},
 		"out-dir": { type: "string", description: "Shard output directory" },
@@ -238,7 +237,7 @@ async function loadRankedCounties(): Promise<CountyRecord[]> {
 	}
 
 	const records = await fetchAndBuildRanking()
-	await makeDirectories(path.dirname(RANKED_FILE))
+	await makeDirectories(dirname(RANKED_FILE))
 	await writeLocalJSONFile(records, RANKED_FILE)
 
 	console.error(`Saved county ranking → ${RANKED_FILE} (${records.length} counties)`)
@@ -296,7 +295,7 @@ async function downloadFile(url: string, dest: string, retries = 3): Promise<voi
 			if (!retryable || attempt === retries) throw error
 			const delay = attempt * 2000
 
-			console.error(`  [retry ${attempt}/${retries}] ${path.basename(dest)}: ${message} — waiting ${delay}ms`)
+			console.error(`  [retry ${attempt}/${retries}] ${basename(dest)}: ${message} — waiting ${delay}ms`)
 
 			await new Promise((r) => {
 				setTimeout(r, delay)
@@ -384,7 +383,7 @@ async function downloadParallel(
 		while (idx < tasks.length) {
 			const task = tasks[idx++]!
 			const shpBase = `tl_2023_${task.geoid}_edges.shp`
-			const shpPath = path.join(edgesDir, shpBase)
+			const shpPath = join(edgesDir, shpBase)
 
 			// Idempotency: skip if the SHP is already present (the ZIP may be gone after extraction)
 			if (await pathExists(shpPath)) {
@@ -442,12 +441,12 @@ interface ShardBuildResult {
  */
 async function buildStateShard(
 	stateAbbr: string,
-	edgesDir: string,
-	outDir: string,
+	edgesDir: PathBuilderLike,
+	outDir: PathBuilderLike,
 	release: string,
 	force: boolean
 ): Promise<ShardBuildResult | null> {
-	const outDB = path.join(outDir, `interpolation-us-${stateAbbr.toLowerCase()}.db`)
+	const outDB = join(outDir, `interpolation-us-${stateAbbr.toLowerCase()}.db`)
 
 	if ((await pathExists(outDB)) && !force) {
 		console.error(`  [skip] ${stateAbbr}: shard already exists at ${outDB} (--force to rebuild)`)
@@ -458,7 +457,7 @@ async function buildStateShard(
 	await makeDirectories(outDir)
 	const t0 = Date.now()
 
-	const result = spawnSync(
+	const result = spawnProcessSync(
 		process.execPath,
 		[
 			CLI_ENTRY,
@@ -467,7 +466,7 @@ async function buildStateShard(
 			"--state",
 			stateAbbr,
 			"--edges-dir",
-			edgesDir,
+			resolvePath(edgesDir),
 			"--release",
 			release,
 			"--out",
@@ -599,7 +598,7 @@ const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
 				return {
 					geoid,
 					zipURL: `${BASE}/${zipFile}`,
-					zipPath: path.join(EDGES_DIR, zipFile),
+					zipPath: join(EDGES_DIR, zipFile),
 				}
 			})
 
@@ -625,12 +624,15 @@ const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
 		// ── Step 3: determine which states have ≥1 county SHP ─────────────────
 		console.error("Step 3: building per-state shards")
 
-		// States from our target list that have at least one downloaded county SHP
+		// States from our target list that have at least one downloaded county SHP. The listing is materialized once
+		// so the filter callback stays synchronous.
+		const edgesEntries = await readDirectory(EDGES_DIR)
+
 		const availableStates = TARGET_STATES.filter((abbr) => {
 			const fips = STATE_FIPS[abbr]
 			const pattern = new RegExp(`tl_\\d+_${fips}\\d{3}_edges\\.shp$`)
 
-			return readDirectorySync(EDGES_DIR).some((f) => pattern.test(f))
+			return edgesEntries.some((f) => pattern.test(f))
 		})
 
 		if (!availableStates.length) {

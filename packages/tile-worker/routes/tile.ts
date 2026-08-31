@@ -8,11 +8,11 @@ import { parseTileCoordParams } from "@mailwoman/cartographer/tiles/coords"
 import { ResourceError } from "@mailwoman/core/errors"
 import { TileType } from "pmtiles"
 
-import { cacheResponse } from "../caching.ts"
-import { applyAccessControlAllowOrigin } from "../cors.ts"
-import { TileFileExtensionMap, type TileTypeFileExtension } from "../protomaps/files.ts"
-import { CloudflareWorkerPMTiles } from "../protomaps/index.ts"
-import { WorkerRoute } from "../routing.ts"
+import { cacheResponse } from "#caching"
+import { applyAccessControlAllowOrigin } from "#cors"
+import { TileFileExtensionMap, type TileTypeFileExtension } from "#protomaps/files"
+import { CloudflareWorkerPMTiles } from "#protomaps/index"
+import { WorkerRoute } from "#routing"
 
 //#region Tile Retrieval
 

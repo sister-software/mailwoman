@@ -8,6 +8,8 @@
  *   prefix of every place name in the gazetteer.
  */
 
+import type { PathBuilderLike } from "path-ts"
+
 export interface PlaceEntry {
 	wofID: number
 	placetype: PlacetypeID
@@ -129,7 +131,7 @@ export interface FSTProvenance {
 }
 
 export interface BuildFSTOpts {
-	dbPath: string
+	dbPath: PathBuilderLike
 	/**
 	 * Pre-computed identity of `dbPath` to stamp into provenance. Omit and the builder reads it via
 	 * `readWOFSourceIdentity` (sidecar-cached). Supply it when the digest is already in hand, or when the caller is

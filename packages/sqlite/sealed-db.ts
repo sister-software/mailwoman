@@ -16,12 +16,11 @@
  *   once in code should be a function.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
-import { changeMode, removePath } from "@mailwoman/core/fs/writers"
-import { movePathSync, removePathIfPresentSync } from "@mailwoman/core/fs/writers-sync"
-import { basename } from "@mailwoman/platform/path"
-import type { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { DatabaseSync } from "node:sqlite"
+
+import { pathExists, statPath } from "@mailwoman/core/fs/readers"
+import { changeMode, movePath, removePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { basename } from "path-ts"
 
 /**
  * The one capability {@link assertDatabaseIntegrity} needs. Narrowing to it rather than naming a handle type lets a
@@ -32,10 +31,10 @@ type IntegrityProbe = Pick<DatabaseSync, "prepare">
 /**
  * `node:sqlite` via {@link process.getBuiltinModule} — invisible to bundlers. A static import here would ride the
  * `@mailwoman/core/utils` barrel into every consumer, and the docs' plugin loader (which transpiles `docusaurus.config`
- * imports) can't resolve `node:sqlite` (CI: "Cannot find module 'sqlite'"). The builtin accessor keeps the functions
- * synchronous with zero resolve surface.
+ * imports) can't resolve `node:sqlite` (CI: "Cannot find module 'sqlite'"). The builtin accessor keeps `node:sqlite`
+ * out of the static import graph with zero resolve surface.
  */
-function sqlite(): typeof import("@mailwoman/platform/sqlite") {
+function sqlite(): typeof import("node:sqlite") {
 	return process.getBuiltinModule("node:sqlite")
 }
 
@@ -56,8 +55,8 @@ export class SealedArtifactError extends Error {
 /**
  * True when the artifact exists and carries no write bits (the sealed state {@link sealDatabase} leaves).
  */
-export function isSealed(path: string): boolean {
-	return pathExistsSync(path) && (statPathSync(path).mode & 0o222) === 0
+export async function isSealed(path: string): Promise<boolean> {
+	return (await pathExists(path)) && ((await statPath(path)).mode & 0o222) === 0
 }
 
 /**
@@ -66,7 +65,7 @@ export function isSealed(path: string): boolean {
  */
 export async function sealDatabase(path: string): Promise<void> {
 	// A previously sealed artifact needs the write bit back for the journal-mode switch.
-	if (isSealed(path)) {
+	if (await isSealed(path)) {
 		await changeMode(path, 0o644)
 	}
 
@@ -125,8 +124,8 @@ export function assertDatabaseIntegrity(db: IntegrityProbe, artifact: string): v
  *
  * @throws {SealedArtifactError} When `path` is sealed.
  */
-export function assertUnsealedForWrite(path: string): void {
-	if (isSealed(path)) throw new SealedArtifactError(path)
+export async function assertUnsealedForWrite(path: string): Promise<void> {
+	if (await isSealed(path)) throw new SealedArtifactError(path)
 }
 
 /**
@@ -140,32 +139,32 @@ export function assertUnsealedForWrite(path: string): void {
  * Sealing (`sealDatabase`) happens on the temp file BEFORE the swap: a sealed artifact is what gets published, and 0444
  * does not prevent a rename.
  */
-export function swapDatabaseIntoPlace(tmpPath: string, finalPath: string): void {
+export async function swapDatabaseIntoPlace(tmpPath: string, finalPath: string): Promise<void> {
 	const aside = `${finalPath}.old-${process.pid}`
 
-	if (pathExistsSync(finalPath)) {
-		movePathSync(finalPath, aside)
+	if (await pathExists(finalPath)) {
+		await movePath(finalPath, aside)
 	}
 
 	for (const sfx of ["-wal", "-shm"]) {
-		removePathIfPresentSync(finalPath + sfx)
+		await removePathIfPresent(finalPath + sfx)
 	}
 
 	try {
-		movePathSync(tmpPath, finalPath)
+		await movePath(tmpPath, finalPath)
 	} catch (error) {
 		// The prior version is already aside at this point — a failed forward rename must not leave
 		// the slot empty while a restorable artifact sits one rename away.
-		if (pathExistsSync(aside) && !pathExistsSync(finalPath)) {
-			movePathSync(aside, finalPath)
+		if ((await pathExists(aside)) && !(await pathExists(finalPath))) {
+			await movePath(aside, finalPath)
 		}
 
 		throw error
 	}
 
 	for (const sfx of ["-wal", "-shm"]) {
-		removePathIfPresentSync(tmpPath + sfx)
+		await removePathIfPresent(tmpPath + sfx)
 	}
 
-	removePathIfPresentSync(aside)
+	await removePathIfPresent(aside)
 }

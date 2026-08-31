@@ -59,16 +59,16 @@ beforeAll(async () => {
 afterAll(() => scratch[Symbol.asyncDispose]())
 
 describe("the tabular dictionary", () => {
-	it("maps a logical table to the file that actually holds it", () => {
-		const dictionary = readTabularDictionary(scratch.path)
+	it("maps a logical table to the file that actually holds it", async () => {
+		const dictionary = await readTabularDictionary(scratch.path)
 
 		expect(dictionary.files.get("widget")).toBe("widgetfile")
 		expect(dictionary.columns.get("widget")?.get("widget_name")).toBe(1)
 	})
 
-	it("reads a record whose column carries an embedded newline as ONE record", () => {
-		const dictionary = readTabularDictionary(scratch.path)
-		const table = readTable(scratch.path, dictionary, "widget", ["widget_key", "widget_name"])
+	it("reads a record whose column carries an embedded newline as ONE record", async () => {
+		const dictionary = await readTabularDictionary(scratch.path)
+		const table = await readTable(scratch.path, dictionary, "widget", ["widget_key", "widget_name"])
 
 		// The file holds three newline bytes and two records. A line-splitting reader would report three.
 		expect(table.recordCount).toBe(2)
@@ -76,24 +76,26 @@ describe("the tabular dictionary", () => {
 		expect(table.rows[1]!.widget_name).toContain("with a newline")
 	})
 
-	it("throws on a requested column the shipped dictionary does not declare", () => {
-		const dictionary = readTabularDictionary(scratch.path)
+	it("throws on a requested column the shipped dictionary does not declare", async () => {
+		const dictionary = await readTabularDictionary(scratch.path)
 
 		// The failure this refuses is the repo's worst measurement shape: a silently dropped column reads downstream as an
 		// empty world rather than as an error.
-		expect(() => readTable(scratch.path, dictionary, "widget", ["widget_key", "renamed_column"])).toThrow(
+		await expect(readTable(scratch.path, dictionary, "widget", ["widget_key", "renamed_column"])).rejects.toThrow(
 			/declares no column/u
 		)
 	})
 
-	it("throws on a table the archive's own file map does not name", () => {
-		const dictionary = readTabularDictionary(scratch.path)
+	it("throws on a table the archive's own file map does not name", async () => {
+		const dictionary = await readTabularDictionary(scratch.path)
 
-		expect(() => readTable(scratch.path, dictionary, "nosuchtable", ["x"])).toThrow(/declares no file for table/u)
+		await expect(readTable(scratch.path, dictionary, "nosuchtable", ["x"])).rejects.toThrow(
+			/declares no file for table/u
+		)
 	})
 
-	it("reads the authority's declared domains, definitions included", () => {
-		const domains = readDeclaredDomains(scratch.path)
+	it("reads the authority's declared domains, definitions included", async () => {
+		const domains = await readDeclaredDomains(scratch.path)
 
 		expect(domains.filter((member) => member.domain === "capability_class")).toHaveLength(2)
 		expect(domains.find((member) => member.code === "e")?.definition).toBe("erosion")

@@ -18,10 +18,11 @@ import type { BDCDatabase } from "@mailwoman/bdc/schema"
 import { buildBDCDatabase, geometryCentroid, peekProviderID, type BuildBDCResult } from "@mailwoman/bdc/sdk/build-bdc"
 import type { ProviderID } from "@mailwoman/bdc/sdk/common"
 import type { BDCAvailabilityRow } from "@mailwoman/bdc/sdk/parsing"
-import { pathExists, statPath, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath, readLocalBuffer, isFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import {
 	createFilerAttributeTable,
 	createFilerClusterTable,
@@ -36,7 +37,6 @@ import {
 	type FilerDatabase,
 } from "@mailwoman/filer"
 import { toFRN, type ProviderListRow } from "@mailwoman/filer/sdk"
-import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -290,7 +290,7 @@ describe("buildBDCDatabase", () => {
 		})
 
 		expect(nestedResult.rows).toBe(3)
-		expect((await statPath(nestedOut)).isFile()).toBe(true)
+		await expect(isFile(nestedOut)).resolves.toBe(true)
 	})
 
 	it("moves an existing artifact aside before the new build takes its place", async () => {
@@ -742,7 +742,11 @@ describe("buildBDCDatabase — malformed provider_id via csvPaths (the productio
 	// real filesystem-reading production path `readAvailabilityRowsFromCSVPaths` uses), not the `rows:` test seam,
 	// so it proves the guard is wired all the way from disk.
 	it("rejects the whole build, naming the malformed CSV, instead of silently absorbing its rows as deduped", async () => {
-		const malformedCSVPath = join(import.meta.dirname, "../../../test-fixtures/availability-malformed-provider.csv")
+		const malformedCSVPath = resolvePackagePath(
+			"@mailwoman/bdc",
+			"test-fixtures",
+			"availability-malformed-provider.csv"
+		)
 
 		let caught: unknown
 

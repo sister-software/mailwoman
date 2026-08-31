@@ -27,9 +27,9 @@
 
 import { tryStat, pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { basename, dirname, extname, join } from "@mailwoman/platform/path"
 import type { SQLInputValue } from "@mailwoman/sqlite/client"
 import type { Database } from "@mailwoman/sqlite/database-schema"
+import { basename, dirname, extname, join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 //#region Core: quote-aware CSV field splitting

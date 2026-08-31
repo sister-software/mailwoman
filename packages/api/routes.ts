@@ -25,7 +25,7 @@ import type { AddressTree } from "@mailwoman/core/decoder"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { canonicalKey, type ComponentDict, formatAddress, type FormatAddressOptions } from "@mailwoman/formatter"
 
-import type { MailwomanAPIEngine } from "./engine.ts"
+import type { MailwomanAPIEngine } from "#engine"
 import {
 	APIErrorSchema,
 	BatchRequestSchema,
@@ -40,7 +40,7 @@ import {
 	ResolveRequestSchema,
 	ResolveResponseSchema,
 	type GeocodeOutcome,
-} from "./schema.ts"
+} from "#schema"
 
 /**
  * Default `POST /v1/batch` row cap when {@link RegisterMailwomanAPIRoutesOptions.batchMax} is omitted. This is the
@@ -417,10 +417,10 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 		return c.json({ formatted, canonicalKey: canonicalKey(dict) }, 200)
 	})
 
-	app.openapi(healthRoute, (c) => {
+	app.openapi(healthRoute, async (c) => {
 		const uptimeSeconds = Math.round((Date.now() - startedAt) / 1000)
 
-		return c.json({ status: "ok", uptime_s: uptimeSeconds, ...engine.health?.() }, 200)
+		return c.json({ status: "ok", uptime_s: uptimeSeconds, ...(await engine.health?.()) }, 200)
 	})
 
 	app.openapi(metricsRoute, (c) => c.json(metricsSnapshot(), 200))

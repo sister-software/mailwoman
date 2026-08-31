@@ -43,12 +43,12 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
-import type { PostcodePlacement } from "../shard-recipes/scaffold.ts"
+import type { PostcodePlacement } from "#shard-recipes/scaffold"
 
 /**
  * One extracted tuple, in the shape `readTuples` yields and the recipe consumes.

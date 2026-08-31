@@ -12,19 +12,16 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath } from "@mailwoman/core/utils"
-import { execFile } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
 import { describe, expect, test } from "vitest"
-
-const exec = promisify(execFile)
 
 const cliBin = workspacePath("mailwoman", "out", "cli.js")
 
 describe("mailwoman openapi", () => {
 	test('prints a document starting exactly with {"openapi":"3.1.0" (default flavor, stdout, no model boot)', async () => {
-		const { stdout, stderr } = await exec("node", [cliBin, "openapi"], {
+		const { stdout, stderr } = await runFile("node", [cliBin, "openapi"], {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
@@ -41,7 +38,7 @@ describe("mailwoman openapi", () => {
 	}, 30_000)
 
 	test("--flavor 3.0 prints the 3.0.3 diet", async () => {
-		const { stdout } = await exec("node", [cliBin, "openapi", "--flavor", "3.0"], {
+		const { stdout } = await runFile("node", [cliBin, "openapi", "--flavor", "3.0"], {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})

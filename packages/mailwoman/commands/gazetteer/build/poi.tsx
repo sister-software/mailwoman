@@ -21,7 +21,8 @@
  *   below is UNTOUCHED and stays byte-identical when `--source` is omitted.
  */
 
-import { execFileSync } from "@mailwoman/platform/child_process"
+import { formatFileSize } from "@mailwoman/core/fs/readers"
+import { runFileSync } from "@mailwoman/core/process"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -86,13 +87,12 @@ function parseBBoxFlag(raw: string): BBox {
 
 const GazetteerBuildPOI: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { artifactSizeMB } = await import("#gazetteer-pipeline/admin/index")
 		const { LayerTier } = await import("@mailwoman/core/layers")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
 		const { bboxCoverageCells, buildPOIDatabase, ingestPlaces } = await import("#gazetteer-pipeline/poi/build-poi")
 
-		const buildSHA = execFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
+		const buildSHA = runFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
 
 		if (options.source === "osm") {
 			const { pbf, country: rawCountry, release, bbox: bboxFlag } = options
@@ -145,7 +145,7 @@ const GazetteerBuildPOI: ParsedCommandComponent<Options> = ({ options }) => {
 			})
 
 			return [
-				`poi.db (osm/${country}): ${out} (${await artifactSizeMB(out)} MB)`,
+				`poi.db (osm/${country}): ${out} (${await formatFileSize(out)})`,
 				`${result.rows.toLocaleString()} rows · ${result.categories} categories` +
 					` · ${result.skipped.toLocaleString()} skipped (non-finite coords) · ${result.coverageCells.toLocaleString()} coverage cells`,
 				`manifest: name=poi tier=build-local source=osm sourceVintage=${release} buildSHA=${buildSHA}`,
@@ -193,7 +193,7 @@ const GazetteerBuildPOI: ParsedCommandComponent<Options> = ({ options }) => {
 			.map(([cc, count]) => `  ${cc} ${count.toLocaleString()}`)
 
 		return [
-			`poi.db: ${out} (${await artifactSizeMB(out)} MB)`,
+			`poi.db: ${out} (${await formatFileSize(out)})`,
 			`${result.rows.toLocaleString()} rows · ${result.categories} categories · ${result.countries.size} countries` +
 				` · ${result.skipped.toLocaleString()} skipped (non-finite coords) · ${result.coverageCells.toLocaleString()} coverage cells`,
 			...countryLines,

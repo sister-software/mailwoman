@@ -16,7 +16,7 @@ import { isStreetDirectionalToken } from "@mailwoman/codex/us"
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/core/resolver"
 
-import { foldName } from "./fold-name.ts"
+import { foldName } from "#fold-name"
 
 /**
  * Street-name component tags that, with the street node itself, reconstruct the full street string.

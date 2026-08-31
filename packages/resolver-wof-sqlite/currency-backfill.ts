@@ -11,16 +11,16 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { isStrictlyFiner } from "@mailwoman/core/resources/whosonfirst"
-import { resolve } from "@mailwoman/platform/path"
 import { haversineKm } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import { resolvePath } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
-import type { loadImportanceIndex } from "./candidate-importance.ts"
-import type { CandidateDatabase } from "./candidate-schema.ts"
-import type { PlaceAttrs, StageRow } from "./candidate/place-attrs.ts"
-import type { WOFDatabase } from "./schema.ts"
-import { normalizeLocalityForKey } from "./street-normalize.ts"
+import type { loadImportanceIndex } from "#candidate-importance"
+import type { CandidateDatabase } from "#candidate-schema"
+import type { PlaceAttrs, StageRow } from "#candidate/place-attrs"
+import type { WOFDatabase } from "#schema"
+import { normalizeLocalityForKey } from "#street-normalize"
 
 /**
  * Corroboration radius for the currency backfill (#1737), km — both for the live-near blocker and the GeoNames
@@ -85,7 +85,7 @@ export async function resurrectCurrencyHoles(ctx: {
 
 	for (const country of ctx.countries) {
 		const cc = country.toUpperCase()
-		const dumpPath = resolve(ctx.geonamesDir, `${cc}.txt`)
+		const dumpPath = resolvePath(ctx.geonamesDir, `${cc}.txt`)
 
 		if (!(await pathExists(dumpPath))) {
 			ctx.progress("currency-backfill", `${cc}: no GeoNames dump at ${dumpPath} — holes stay dead`)

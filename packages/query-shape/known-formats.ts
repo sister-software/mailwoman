@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { KnownFormat, KnownFormatHit, TokenClass } from "./types.ts"
+import type { KnownFormat, KnownFormatHit, TokenClass } from "#types"
 
 /**
  * Universal postcode + PO-box patterns. Each entry is a regex that matches a token (or a small sequence of tokens

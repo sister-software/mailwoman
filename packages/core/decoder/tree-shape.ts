@@ -16,9 +16,9 @@
  *   and both behaviors are pinned by their consumers' boards.
  */
 
-import type { ComponentTag } from "../types/component.ts"
-import { flatten } from "./serialize-tuples.ts"
-import type { AddressNode, AddressTree } from "./types.ts"
+import { flatten } from "#decoder/serialize-tuples"
+import type { AddressNode, AddressTree } from "#decoder/types"
+import type { ComponentTag } from "#types/component"
 
 /**
  * True when every node in the tree either carries `tag` or bears no value — i.e. the only EVIDENCE in the parse is

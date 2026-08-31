@@ -64,7 +64,7 @@ interface Options {
 
 const ReleaseHF: ParsedCommandComponent<Options, [string]> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
-		const { publishReleaseToHF } = await import("../../release-tools/publish-hf.ts")
+		const { publishReleaseToHF } = await import("#release-tools/publish-hf")
 
 		return publishReleaseToHF({ ...options, version: args[0] })
 	})

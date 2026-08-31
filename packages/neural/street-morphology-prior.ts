@@ -22,8 +22,8 @@
  *   instance.
  */
 
-import { groupPiecesIntoWords, type FSTMatcherLike, type WordGroup } from "./fst-prior.ts"
-import type { TokenLike } from "./query-shape-prior.ts"
+import { groupPiecesIntoWords, type FSTMatcherLike, type WordGroup } from "#fst-prior"
+import type { TokenLike } from "#query-shape-prior"
 
 export interface StreetMorphologyPriorOpts {
 	/**

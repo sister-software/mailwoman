@@ -22,8 +22,8 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { componentMatches } from "mailwoman/eval-harness/gauntlet/check-case"
 import { JSONSpliterator } from "spliterator"
 
-import type { ResolvedInput } from "./input-sets.ts"
-import type { Observation } from "./reliability.ts"
+import type { ResolvedInput } from "#input-sets"
+import type { Observation } from "#reliability"
 
 /**
  * What to do with a produced component the truth row never mentions.

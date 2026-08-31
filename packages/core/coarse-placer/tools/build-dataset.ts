@@ -18,12 +18,12 @@
  *   `<repo>/data/coarse-placer/{train,val,test}.jsonl` (rows: {raw, country})
  */
 
-import * as path from "@mailwoman/platform/path"
+import { type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 
+import { COUNTRIES, IN_MAP_EU, NEW_EU } from "#coarse-placer/tools/country-sets"
+import { hashFNV1a } from "#coarse-placer/tools/fnv-hash"
 import { writeLocalTextFile, makeDirectories } from "#fs/writers"
 import { dataRootPath, repoRootPath } from "#utils"
-
-import { hashFNV1a } from "./fnv-hash.ts"
 
 interface DatasetRow {
 	raw: string
@@ -41,7 +41,7 @@ export interface BuildDatasetOptions {
 	/**
 	 * Dataset output dir. Default `<repo>/data/coarse-placer`.
 	 */
-	data?: string
+	data?: PathBuilderLike
 }
 
 /**
@@ -57,30 +57,15 @@ export interface BuildDatasetResult {
 const VAL_FRAC = 0.1
 const TEST_FRAC = 0.1
 
-const COUNTRIES = ["US", "FR", "GB", "CN", "NL", "IT", "DE", "JP", "ES", "KR", "TW"]
-
-/**
- * #743: the EU expansion. The v0.5.0 corpus carries zero rows for these locales, so they're drawn from the Overture
- * per-country addresses theme (the same source build-eu-eval-set.ts uses). They were previously OTHER outlier exposure
- * (PL/PT/CZ) or simply unrepresentable; here they become first-class in-map countries so the soft country prior can pin
- * them.
- */
-const NEW_EU = ["AT", "BE", "CH", "CZ", "DK", "EE", "FI", "HR", "LT", "LU", "LV", "NO", "PL", "PT", "SI", "SK"]
-/**
- * #743 in-map dilution fix: DE/ES/IT/NL are already in COUNTRIES (corpus format), but the eu-eval sets + every NEW_EU
- * country are Overture format. Without an Overture sample of their OWN, their Overture-format eval rows scatter to the
- * Overture-trained neighbours (measured: only 63% of ES eval rows routed ES, ~26% leaked to CH/PT/HR/IT/FR/CZ).
- * SUPPLEMENT their corpus rows with an Overture sample so each owns its own format shape; the format then stops being
- * discriminative and the model falls back to the linguistic n-grams. GB excluded — its Overture parquet is empty.
- */
-const IN_MAP_EU = ["DE", "ES", "IT", "NL"]
-
 // #743 EU expansion: draw the new in-map countries from the Overture per-country addresses theme.
 // The raw fields are formatted into native address strings with FORMAT VARIETY (4 templates picked
 // deterministically per row) so the model can't shortcut on a single template shape — it must use
 // the actual street-type words + locality n-grams (Finnish "katu/tie", Polish "ul.", Norwegian
 // "veien") that carry the country signal. Same 80/10/10 dedup split as the corpus path.
-function formatEu(street: unknown, number: unknown, postcode: unknown, loc: string, t: number): string {
+/**
+ * Format a (street, number, postcode, locality) quad into a native address string.
+ */
+function formatEU(street: unknown, number: unknown, postcode: unknown, loc: string, t: number): string {
 	const s = String(street).trim()
 	const num = number != null && String(number).trim() !== "" ? ` ${String(number).trim()}` : ""
 	const pc = postcode != null && String(postcode).trim() !== "" ? String(postcode).trim() : ""
@@ -105,7 +90,7 @@ export async function buildDataset(
 	report?: (line: string) => void
 ): Promise<BuildDatasetResult> {
 	const PER = options.perCountry ?? 50_000
-	const OUT_DIR = options.data || repoRootPath("data", "coarse-placer")
+	const OUT_DIR = resolvePathBuilder(options.data || repoRootPath("data", "coarse-placer"))
 
 	const TRAIN_GLOB = dataRootPath("corpus", "versioned", "v0.5.0", "corpus-v0.5.0", "train", "*.parquet")
 
@@ -127,6 +112,7 @@ export async function buildDataset(
 	// Heavy dep (devDependency — operator tooling), lazy-imported so loading the tools barrel stays cheap.
 	const { DuckDBInstance } = await import("@duckdb/node-api")
 	const duck = await (await DuckDBInstance.create()).connect()
+
 	await duck.run("SET memory_limit='4GB'; SET threads=4;")
 
 	const train: DatasetRow[] = [],
@@ -205,9 +191,11 @@ export async function buildDataset(
 			const loc = r.loc == null ? "" : String(r.loc).trim()
 
 			if (!loc) continue
-			const raw = formatEu(r.street, r.number, r.postcode, loc, hashFNV1a(`${r.street}|${loc}`) % 4)
+
+			const raw = formatEU(r.street, r.number, r.postcode, loc, hashFNV1a(`${r.street}|${loc}`) % 4)
 
 			if (!raw || seen.has(raw)) continue
+
 			seen.add(raw)
 			rows.push(raw)
 		}
@@ -238,10 +226,11 @@ export async function buildDataset(
 
 	for (const [name, rows] of splits) {
 		rows.sort((a, b) => hashFNV1a(a.raw + a.country) - hashFNV1a(b.raw + b.country)) // deterministic class-interleave
-		const p = path.join(OUT_DIR, `${name}.jsonl`)
+		const p = resolvePath(OUT_DIR, `${name}.jsonl`)
+
 		await writeLocalTextFile(rows.map((r) => JSON.stringify(r)).join("\n") + "\n", p)
 		report?.(`→ ${p}  (${rows.length} rows)`)
 	}
 
-	return { outDir: OUT_DIR, train: train.length, val: val.length, test: test.length }
+	return { outDir: resolvePath(OUT_DIR), train: train.length, val: val.length, test: test.length }
 }

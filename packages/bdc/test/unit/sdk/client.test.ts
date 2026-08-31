@@ -29,11 +29,11 @@ import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/
 // arrives via the post-reset dynamic import below; a `const` carries no type side, so the type position
 // needs its own static import. Type-only, so it never evaluates the mocked module chain.
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
+import { crc32 } from "@mailwoman/core/fs/compression"
 import { readLocalTextFile, readDirectory } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectoryExclusive } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
-import { crc32 } from "@mailwoman/platform/zlib"
+import { join } from "path-ts"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // `$private` (`@mailwoman/core/env`) is a LIVE getter over `{ ...dotEnv, ...process.env }` — `dotEnv` is
@@ -111,7 +111,7 @@ beforeEach(async () => {
 	// Created up front so "the cache is empty" is a readable directory rather than an ENOENT — the
 	// distinction the never-cached assertions below depend on.
 	await makeDirectoryExclusive(cacheDir)
-	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot.path)
+	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot.path.toString())
 })
 
 afterEach(() => {
