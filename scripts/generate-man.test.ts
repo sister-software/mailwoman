@@ -27,7 +27,7 @@ describe("the man page", () => {
 		async () => {
 			const committed = await readLocalTextFile(MAN_PAGE_PATH)
 
-			expect(committed).toBe(renderManPage())
+			expect(committed).toBe(await renderManPage())
 		}
 	)
 

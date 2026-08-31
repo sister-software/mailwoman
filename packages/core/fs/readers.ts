@@ -4,10 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file The asynchronous read surface. Every reader here takes a {@linkcode PathBuilderLike} and answers a promise.
  *
- *   `node:fs` is reached from this directory alone; the synchronous surface stays because a caller that is synchronous
- *   and not ours to change still needs one.
- *
- *   So the sync mirror stays, and this module is where a caller lands instead.
+ *   `node:fs` is reached from this directory alone, and every reader answers a promise: no executable repository
+ *   code makes a blocking filesystem call, and `repo-health.ts` counts any that appears.
  */
 
 import type { Dirent, Mode, Stats } from "node:fs"

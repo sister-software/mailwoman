@@ -5,5 +5,5 @@
 	"filterBoolean": 0,
 	"productionFilesOver1000Lines": 0,
 	"selfPackageImports": 0,
-	"synchronousFilesystemCalls": 1
+	"synchronousFilesystemCalls": 0
 }

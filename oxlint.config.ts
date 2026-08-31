@@ -252,17 +252,6 @@ export default {
 				"typescript/no-restricted-imports": "off",
 			},
 		},
-		{
-			// `@mailwoman/variant-aliases` does not depend on `@mailwoman/core`, so it reaches `node:fs` itself and says so
-			// at the call site, next to a `JSON.parse` that reaches for no wrapper for the same reason. The dependency
-			// is what the exemption buys back: `@mailwoman/core` ships ~9 MB of libpostal + WOF data under
-			// `packages/core/data/`, and npm installs a tarball whether or not a subpath import touches it — so adding it
-			// to a small alias table is a shipped-artifact cost, not a style one.
-			files: ["packages/variant-aliases/lookup.ts"],
-			rules: {
-				"typescript/no-restricted-imports": "off",
-			},
-		},
 	],
 	rules: {
 		...(config.rules as Record<string, unknown>),

@@ -9,7 +9,7 @@
  * failure disappear.
  */
 
-import { readLocalTextFile, readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { runFileSync } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"

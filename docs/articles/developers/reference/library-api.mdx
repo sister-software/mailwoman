@@ -240,10 +240,10 @@ the failure is silent — which is why this section exists rather than a note on
 
 Wire it from the path the classifier already resolved. `fstPath` is optional, because a locale
 overlay that ships no gazetteer index leaves it undefined, so guard it rather than reading it
-straight into `readFileSync`.
+straight into `readFile`.
 
 ```ts
-import { readFileSync } from "node:fs"
+import { readFile } from "node:fs/promises"
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
@@ -251,7 +251,7 @@ import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 
 // `fstPath` is optional — a locale overlay that ships no gazetteer index leaves it undefined.
-const fst = classifier.fstPath ? deserializeFST(readFileSync(classifier.fstPath)) : undefined
+const fst = classifier.fstPath ? deserializeFST(await readFile(classifier.fstPath)) : undefined
 
 for (const input of ["Hollywood", "big spring"]) {
 	console.log(input)
@@ -488,12 +488,12 @@ The table ships inside each weights package as `calibration.json`, and a per-cou
 `tables` entries to the bare-array form.
 
 ```ts
-import { readFileSync } from "node:fs"
+import { readFile } from "node:fs/promises"
 
 import { createCalibrator } from "@mailwoman/core/decoder"
 
 // Replace <WEIGHTS_DIR> with your node_modules/@mailwoman/neural-weights-en-us directory.
-const table = JSON.parse(readFileSync("<WEIGHTS_DIR>/calibration.json", "utf8"))
+const table = JSON.parse(await readFile("<WEIGHTS_DIR>/calibration.json", "utf8"))
 const calibrate = createCalibrator(table)
 
 for (const raw of [0, 0.25, 0.5, 0.75, 0.9, 0.99, 1]) {

@@ -5,8 +5,7 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { removePathIfPresentSync } from "@mailwoman/core/fs/writers-sync"
+import { removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import {
 	type GeocodeAddress,
 	type RawGeocode,
@@ -149,7 +148,7 @@ describe("streamRows (lazy delimited ingest)", () => {
 		return d
 	}
 
-	afterAll(() => dirs.forEach((d) => removePathIfPresentSync(d)))
+	afterAll(() => Promise.all(dirs.map((d) => removePathIfPresent(d))))
 
 	it("infers the delimiter from the extension", () => {
 		expect(delimiterFor("/x/data.tsv")).toBe("tab")

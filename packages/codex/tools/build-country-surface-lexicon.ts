@@ -40,7 +40,7 @@
  *   Regenerate: `node codex/tools/build-country-surface-lexicon.ts`
  */
 
-import { makeDirectoriesSync, writeLocalTextFileSync } from "@mailwoman/core/fs/writers-sync"
+import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { dirname } from "path-ts"
 
@@ -168,8 +168,8 @@ const lexicon = {
 	code_entries: Object.fromEntries([...codeEntries].toSorted(([a], [b]) => a.localeCompare(b))),
 }
 
-makeDirectoriesSync(dirname(OUTPUT))
-writeLocalTextFileSync(JSON.stringify(lexicon, null, 1) + "\n", OUTPUT)
+await makeDirectories(dirname(OUTPUT))
+await writeLocalTextFile(JSON.stringify(lexicon, null, 1) + "\n", OUTPUT)
 
 process.stderr.write(
 	`wrote ${OUTPUT}: ${entries.size} entries + ${codeEntries.size} code_entries, ` +
