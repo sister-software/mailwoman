@@ -8,10 +8,13 @@ import {
 	basename,
 	createPathBuilderResolver,
 	createPathResolver,
+	dirname,
 	type Join,
 	type PathBuilder,
 	resolvePath,
 } from "path-ts"
+
+import { fileURLToPath } from "#module/file-url"
 /**
  * Aliased path to the root of the repository.
  *
@@ -36,7 +39,9 @@ type PathReflection = typeof PathReflection
 /**
  * The directory path of the current file, post-compilation.
  */
-const __dirname = import.meta.dirname as Join<[RepoRootAlias, ...PathReflection], "/">
+// `import.meta.url`, not `import.meta.dirname`: the Docusaurus config loader (jiti 1.x, a CommonJS transform) rewrites
+// only `import.meta.url`, and this module sits on that loader's import path through `@mailwoman/core/utils`.
+const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias, ...PathReflection], "/">
 
 /**
  * The absolute path to the root of the repository.
