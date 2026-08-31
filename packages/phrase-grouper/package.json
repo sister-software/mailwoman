@@ -68,7 +68,6 @@
 		"@mailwoman/query-shape": "workspace:*"
 	},
 	"devDependencies": {
-		"@mailwoman/normalize": "workspace:*",
-		"@mailwoman/query-shape": "workspace:*"
+		"@mailwoman/normalize": "workspace:*"
 	}
 }

@@ -20,7 +20,7 @@ export const SHARD_STATS_SEP = ""
 /**
  * Nested tally: outer key → (inner key → count). Token → label counts, or bigram key → label-bigram counts.
  */
-export type CooccurrenceTable = Map<string, Map<string, number>>
+type CooccurrenceTable = Map<string, Map<string, number>>
 
 /**
  * The token + bigram co-occurrence tables one pass over labeled rows accumulates.

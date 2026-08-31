@@ -127,7 +127,7 @@ export function packTokenFeed(
  * `fixedSeqLen`. An `undefined` channel packs all zeros — the confidence=0 identity, the model's channel-off behavior
  * for a graph that declares the inputs as mandatory.
  */
-export function packChannelFeed(
+function packChannelFeed(
 	channel: InferChannel | undefined,
 	fixedSeqLen: number,
 	seqLen: number,

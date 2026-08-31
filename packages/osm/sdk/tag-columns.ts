@@ -47,7 +47,7 @@ export function tagSelectExpr(promotedKeysByLayer: PromotedKeysByLayer, layer: s
  * would otherwise close the `'...'` literal early and inject arbitrary OGRSQL. Rejecting outright is a stronger,
  * simpler guarantee than trying to enumerate escape rules for GDAL's OGRSQL dialect.
  */
-export const SAFE_TAG_TOKEN = /^[A-Za-z0-9_:.-]+$/
+const SAFE_TAG_TOKEN = /^[A-Za-z0-9_:.-]+$/
 
 /**
  * A tag-rule table entry as this module reads it: a conjunction (AND) of `[key, value]` pairs. OR across tags is

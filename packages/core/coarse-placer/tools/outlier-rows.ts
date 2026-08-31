@@ -14,13 +14,13 @@ import { hashFNV1a } from "#coarse-placer/fnv-hash"
 /**
  * Shortest raw string worth keeping as an outlier example; below it there is nothing to learn from.
  */
-export const MIN_OUTLIER_LENGTH = 6
+const MIN_OUTLIER_LENGTH = 6
 
 /**
  * Address parts are joined positionally; an absent field arrives as the empty string and must not become a stray
  * separator.
  */
-export const nonEmpty = (part: string): boolean => part.length > 0
+const nonEmpty = (part: string): boolean => part.length > 0
 
 /**
  * How {@link assembleOutlierRow} varies per source.

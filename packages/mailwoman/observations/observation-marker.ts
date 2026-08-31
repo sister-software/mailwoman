@@ -106,7 +106,7 @@ export function poiObservationKind(verdict: QueryKindResult): QueryKind | null {
  * The route-to-marker frame every designation layer shares: no route contributes nothing, a named silence contributes
  * nothing, and a fired observation becomes exactly one marker.
  */
-export function designationMarkers<Observation>(
+function designationMarkers<Observation>(
 	route:
 		| {
 				observe: (

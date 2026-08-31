@@ -92,9 +92,6 @@
 		"pbf": "^4.0.1",
 		"pmtiles": "^4.5.0"
 	},
-	"devDependencies": {
-		"@mailwoman/core": "workspace:*"
-	},
 	"engines": {
 		"node": ">=24.18.0"
 	}

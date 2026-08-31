@@ -71,8 +71,5 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*"
-	},
-	"devDependencies": {
-		"@mailwoman/query-shape": "workspace:*"
 	}
 }
