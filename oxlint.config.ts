@@ -202,9 +202,9 @@ export default {
 			},
 		},
 		{
-			// `core/scripting/arguments.ts` is the argv boundary (`parseArguments`, `cliArguments`) and `core/env/load.ts`
-			// the `.env` parser; each reaches `node:util` for the one builtin it wraps.
-			files: ["packages/core/scripting/arguments.ts", "packages/core/env/load.ts"],
+			// `core/scripting/arguments.ts` is the argv boundary (`parseArguments`, `cliArguments`) and reaches `node:util`
+			// for the one builtin it wraps.
+			files: ["packages/core/scripting/arguments.ts"],
 			rules: {
 				"typescript/no-restricted-imports": "off",
 			},
