@@ -1,21 +1,24 @@
 import { join } from "path-ts"
 import type { z } from "zod"
 
-import { loadEnvFile } from "#env/load"
 import { PrivateEnvSchema, PublicEnvSchema } from "#env/schema"
 
 export { DefaultMailwomanPaths } from "#env/paths"
 
 /**
- * The `.env` layer, resolved when this module is evaluated — process-startup semantics.
+ * The `.env` layer, folded into `process.env` when this module is evaluated — process-startup semantics.
  *
- * The load is asynchronous, so it cannot be deferred to the first property read: the views below expose synchronous
- * getters. Reading `process.cwd()` once, at module evaluation, keeps the `.env` half answering about the same moment as
- * the `process.env` half (which still re-parses on every get), and a property get costs a map lookup rather than a file
- * read.
+ * `process.loadEnvFile` is the runtime's own reader: synchronous, so the views below can expose synchronous getters
+ * without a top-level `await` (which the Docusaurus config loader cannot evaluate), and not a filesystem call made by
+ * repository code. A variable already in `process.env` wins over the file, which is the precedence the views always
+ * had. An absent `.env` is the common case and is not an error.
  */
-// oxlint-disable-next-line sister-software/no-process-globals -- this module is the typed process.env boundary
-const dotEnv: object = await loadEnvFile(join(process.cwd(), ".env"))
+try {
+	// oxlint-disable-next-line sister-software/no-process-globals -- this module is the typed process.env boundary
+	process.loadEnvFile(join(process.cwd(), ".env"))
+} catch {
+	// No `.env` beside the working directory — `process.env` alone is the environment.
+}
 
 function liveEnv<Shape extends z.ZodRawShape>(schema: z.ZodObject<Shape>): z.infer<z.ZodObject<Shape>> {
 	const view = {} as z.infer<z.ZodObject<Shape>>
@@ -24,7 +27,7 @@ function liveEnv<Shape extends z.ZodRawShape>(schema: z.ZodObject<Shape>): z.inf
 		Object.defineProperty(view, key, {
 			enumerable: true,
 			// oxlint-disable-next-line sister-software/no-process-globals -- this module is the typed process.env boundary
-			get: () => schema.parse({ ...dotEnv, ...process.env })[key as keyof z.infer<z.ZodObject<Shape>>],
+			get: () => schema.parse(process.env)[key as keyof z.infer<z.ZodObject<Shape>>],
 		})
 	}
 
