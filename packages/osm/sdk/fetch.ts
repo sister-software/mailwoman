@@ -20,6 +20,7 @@
  */
 
 import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
+import { movePath } from "@mailwoman/core/fs/writers"
 
 const GEOFABRIK_BASE = "https://download.geofabrik.de"
 
@@ -51,7 +52,12 @@ export async function downloadExtract(regionPath: string, destPath: string): Pro
 		},
 	})
 
-	await pipeline(Readable.fromWeb(res.body.pipeThrough(counter)), openWriteStream(destPath))
+	// Write to a `.tmp` sibling and rename, so an interrupted multi-gigabyte download never lands at
+	// the final path looking like a complete extract (the same discipline as tiger's downloadIfNeeded).
+	const tmpPath = destPath + ".tmp"
+
+	await pipeline(Readable.fromWeb(res.body.pipeThrough(counter)), openWriteStream(tmpPath))
+	await movePath(tmpPath, destPath)
 
 	return bytes
 }

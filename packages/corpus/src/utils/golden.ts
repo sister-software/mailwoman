@@ -20,6 +20,7 @@
  */
 
 import { readDirectory } from "@mailwoman/core/fs/readers"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
 import { reconcileComponents } from "@mailwoman/formatter"
 import { join } from "path-ts"
@@ -28,14 +29,28 @@ import { TextSpliterator } from "spliterator"
 const TAG_SET = new Set<string>(COMPONENT_TAGS as readonly string[])
 
 /**
- * One entry in a golden `.jsonl` file.
+ * A golden-set candidate row, as `golden-expand` writes and `golden-promote` reads.
+ *
+ * `source` names the producer (`expand-golden:<provider>`); the seed/provenance fields trace the candidate back to the
+ * corpus row and LLM call that produced it. A committed golden entry is the {@link GoldenEntry} narrowing.
  */
-export interface GoldenEntry {
+export interface GoldenCandidateEntry {
 	raw: string
 	components: Partial<Record<ComponentTag, string>>
 	country: string
-	source: "golden"
+	source: string
 	notes?: string
+	seed_source_id?: string
+	seed_source_adapter?: string
+	dropped_components?: string[]
+	provenance?: { provider: string; model: string }
+}
+
+/**
+ * One entry in a golden `.jsonl` file.
+ */
+export interface GoldenEntry extends GoldenCandidateEntry {
+	source: "golden"
 }
 
 /**
@@ -62,8 +77,7 @@ export interface GoldenReport {
 export function parseGoldenLine(line: string): GoldenEntry {
 	// The throw IS the result: `validateGoldenFile` catches it and records the message against the line
 	// number, so a tolerant parse would report a corrupt row as valid.
-	// oxlint-disable-next-line no-restricted-properties -- throw-on-corrupt is recorded against this JSONL line by the caller
-	const obj = JSON.parse(line) as Partial<GoldenEntry> & Record<string, unknown>
+	const obj = parseJSONStrict<Partial<GoldenEntry> & Record<string, unknown>>(line)
 
 	if (typeof obj.raw !== "string" || !obj.raw.length) {
 		throw new Error("missing/empty raw")

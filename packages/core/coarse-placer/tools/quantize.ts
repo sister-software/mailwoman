@@ -18,10 +18,10 @@
 
 import { type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 
-import type { CoarsePlacerMeta } from "#coarse-placer/coarse-placer"
-import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
+import { type CoarsePlacerMeta, readWeightsBin } from "#coarse-placer/coarse-placer"
+import { defaultInt8Dir, defaultModelDir } from "#coarse-placer/tools/paths"
+import { readLocalJSONFile } from "#fs/readers"
 import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "#fs/writers"
-import { dataRootPath } from "#utils"
 
 /**
  * Largest magnitude representable in the symmetric int8 range the weights quantize into.
@@ -60,13 +60,11 @@ export async function quantizeCoarsePlacer(
 	options: QuantizeCoarsePlacerOptions = {},
 	report?: (line: string) => void
 ): Promise<QuantizeCoarsePlacerResult> {
-	const inDir = resolvePathBuilder(options.in || dataRootPath("coarse-placer", "model"))
-	const outDir = resolvePathBuilder(options.out || dataRootPath("coarse-placer", "model-int8"))
+	const inDir = resolvePathBuilder(options.in || defaultModelDir())
+	const outDir = resolvePathBuilder(options.out || defaultInt8Dir())
 
 	const meta = await readLocalJSONFile<CoarsePlacerMeta>(resolvePath(inDir, "meta.json"))
-	const buf = await readLocalBuffer(resolvePath(inDir, "weights.bin"))
-	const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
-	const w = new Float32Array(ab)
+	const w = new Float32Array(await readWeightsBin(resolvePath(inDir)))
 	const C = meta.classes.length
 	const dim = meta.featureDim
 

@@ -20,23 +20,9 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { mulberry32 } from "@mailwoman/core/utils"
 
-/**
- * Deterministic stand-in for Math.random (mulberry32) — reruns must be byte-identical.
- */
-function mulberry32(seed: number): () => number {
-	let state = seed >>> 0
-
-	return () => {
-		state = (state + 0x6d_2b_79_f5) >>> 0
-		let t = state
-		t = Math.imul(t ^ (t >>> 15), t | 1)
-		t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-
-		return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296
-	}
-}
-
+// Deterministic stand-in for Math.random — reruns must be byte-identical.
 const random = mulberry32(20_260_712)
 const uniform = (low: number, high: number) => low + (high - low) * random()
 

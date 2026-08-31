@@ -15,6 +15,8 @@
  *   coarsely" tier.
  */
 
+import { hashFNV1a } from "#coarse-placer/fnv-hash"
+
 /**
  * The trained classes: the well-represented corpus countries, the #743 Overture-sourced EU expansion, and `OTHER` — the
  * explicit off-map class (milestone 2) trained on non-Latin/non-CJK scripts via outlier exposure, so the model learns
@@ -87,9 +89,12 @@ const SCRIPTS = [
 	"other",
 ] as const
 
-type Script = (typeof SCRIPTS)[number]
+export type Script = (typeof SCRIPTS)[number]
 
-function scriptOf(cp: number): Script {
+/**
+ * Coarse Unicode-script bucket of a codepoint — the strong prior the n-grams refine.
+ */
+export function scriptOf(cp: number): Script {
 	if (cp >= 0x30 && cp <= 0x39) return "digit"
 
 	if ((cp >= 0x41 && cp <= 0x5a) || (cp >= 0x61 && cp <= 0x7a) || (cp >= 0xc0 && cp <= 0x2_4f)) return "latin"
@@ -122,14 +127,7 @@ function scriptOf(cp: number): Script {
  * FNV-1a → a feature bucket in [0, FEATURE_DIM).
  */
 function bucket(s: string, salt: number): number {
-	let h = (2_166_136_261 ^ salt) >>> 0
-
-	for (let i = 0; i < s.length; i++) {
-		h ^= s.charCodeAt(i)
-		h = Math.imul(h, 16_777_619)
-	}
-
-	return (h >>> 0) % FEATURE_DIM
+	return hashFNV1a(s, (2_166_136_261 ^ salt) >>> 0) % FEATURE_DIM
 }
 
 /**

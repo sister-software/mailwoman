@@ -12,7 +12,7 @@
  *   without opening a database — mirrors `@mailwoman/osm`'s `street-locale.ts`.
  */
 
-import type { StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 export { normalizeStreetForKeyLocale, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
@@ -23,6 +23,11 @@ export { normalizeStreetForKeyLocale, type StreetLocale } from "@mailwoman/resol
  */
 const BAN_COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([["fr", "fr"]])
 
+const registry = createStreetLocaleRegistry(
+	BAN_COUNTRY_TO_STREET_LOCALE,
+	"Add it to BAN_COUNTRY_TO_STREET_LOCALE and add the matching branch in normalizeStreetForKeyLocale before building its shard."
+)
+
 /**
  * Resolve the street-normalization locale for a BAN country. Throws for an unsupported country rather than silently
  * folding with the wrong rules — a shard built with the wrong normalizer keys every street incorrectly and looks fine
@@ -30,21 +35,12 @@ const BAN_COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([["fr", "fr"]
  * `normalizeStreetForKeyLocale`) before building its shard.
  */
 export function streetLocaleForBANCountry(countryCode: string): StreetLocale {
-	const locale = BAN_COUNTRY_TO_STREET_LOCALE.get(countryCode.toLowerCase())
-
-	if (!locale) {
-		throw new Error(
-			`No BAN street-normalization locale registered for country "${countryCode}". ` +
-				`Add it to BAN_COUNTRY_TO_STREET_LOCALE and add the matching branch in normalizeStreetForKeyLocale before building its shard.`
-		)
-	}
-
-	return locale
+	return registry.localeFor(countryCode)
 }
 
 /**
  * The countries with a registered BAN street locale (for CLI validation / provider gating).
  */
 export function supportedBANCountries(): string[] {
-	return [...BAN_COUNTRY_TO_STREET_LOCALE.keys()]
+	return registry.supported()
 }

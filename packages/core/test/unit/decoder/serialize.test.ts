@@ -9,30 +9,13 @@ import { decodeAsJSON } from "@mailwoman/core/decoder/serialize-json"
 import { decodeAsTuples } from "@mailwoman/core/decoder/serialize-tuples"
 import { decodeAsXML } from "@mailwoman/core/decoder/serialize-xml"
 import type { DecoderToken } from "@mailwoman/core/decoder/types"
-import type { BIOLabel } from "@mailwoman/core/types/component"
 import { describe, expect, test } from "vitest"
 
-function tok(piece: string, start: number, end: number, label: BIOLabel, confidence = 1): DecoderToken {
-	return { piece, start, end, label, confidence }
-}
-
-const WHITE_HOUSE_RAW = "1600 Pennsylvania Avenue NW, Washington, DC 20500"
-
-const WHITE_HOUSE_TOKENS: DecoderToken[] = [
-	tok("1600", 0, 4, "B-house_number"),
-	tok("Pennsylvania", 5, 17, "B-street"),
-	tok("Avenue", 18, 24, "I-street"),
-	tok("NW", 25, 27, "I-street"),
-	tok(",", 27, 28, "O"),
-	tok("Washington", 29, 39, "B-locality"),
-	tok(",", 39, 40, "O"),
-	tok("DC", 41, 43, "B-region"),
-	tok("20500", 44, 49, "B-postcode"),
-]
+import { tok, WHITE_HOUSE_RAW, whiteHouseTokens } from "#test/unit/decoder/fixtures"
 
 describe("decodeAsJSON (libpostal-compat)", () => {
 	test("flattens to a tag→value map", () => {
-		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
 
 		expect(decodeAsJSON(tree)).toEqual({
 			house_number: "1600",
@@ -64,7 +47,7 @@ describe("decodeAsJSON (libpostal-compat)", () => {
 
 describe("decodeAsTuples (order-preserving)", () => {
 	test("returns spans in source order", () => {
-		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
 
 		expect(decodeAsTuples(tree)).toEqual([
 			["house_number", "1600"],
@@ -94,7 +77,7 @@ describe("decodeAsTuples (order-preserving)", () => {
 
 describe("decodeAsXML (nested mixed-content)", () => {
 	test("emits root <address> with @raw and nested components with @start/@end/@conf", () => {
-		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
 		const xml = decodeAsXML(tree)
 		// Root attribute carries the raw input.
 		expect(xml).toContain(`<address raw="1600 Pennsylvania Avenue NW, Washington, DC 20500">`)
@@ -126,7 +109,7 @@ describe("decodeAsXML (nested mixed-content)", () => {
 	})
 
 	test("respects opts: includeOffsets=false drops start/end attrs", () => {
-		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
 		const xml = decodeAsXML(tree, { includeOffsets: false })
 		expect(xml).not.toContain(`start=`)
 		expect(xml).not.toContain(`end=`)
@@ -134,21 +117,21 @@ describe("decodeAsXML (nested mixed-content)", () => {
 	})
 
 	test("respects opts: includeConf=false drops conf attrs", () => {
-		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
 		const xml = decodeAsXML(tree, { includeConf: false })
 		expect(xml).not.toContain(`conf=`)
 		expect(xml).toContain(`start=`)
 	})
 
 	test("opts: pretty=false emits a single line", () => {
-		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
 		const xml = decodeAsXML(tree, { pretty: false })
 		expect(xml).not.toContain("\n")
 		expect(xml).not.toContain("	")
 	})
 
 	test("well-formed: every opened tag closes", () => {
-		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
 		const xml = decodeAsXML(tree)
 		const openers = [...xml.matchAll(/<([a-z_]+)(?:\s[^>]*)?>/g)].map((m) => m[1])
 		const closers = [...xml.matchAll(/<\/([a-z_]+)>/g)].map((m) => m[1])
@@ -197,7 +180,7 @@ describe("decodeAsXML (nested mixed-content)", () => {
 	})
 
 	test("includeAlternatives is a no-op when node has no alternatives", () => {
-		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
 		const xml = decodeAsXML(tree, { includeAlternatives: true })
 		expect(xml).not.toContain("<alternative")
 		// Existing structure still well-formed.

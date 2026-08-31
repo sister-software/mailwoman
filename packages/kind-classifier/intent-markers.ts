@@ -50,6 +50,8 @@ export function deriveIntentMarkers(
 	const markers: QueryIntentMarker[] = []
 
 	if (fired.has("route_pair")) {
+		// Whitespace-only split, not `wordsOf`: `route_pair` inputs are comma-free by construction (a comma
+		// disqualifies the kind), and the tokens are re-joined verbatim into the message.
 		const tokens = ctx.input.normalized.trim().split(/\s+/)
 
 		markers.push({

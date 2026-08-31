@@ -15,13 +15,36 @@
 
 import type { SystemCode } from "@mailwoman/codex"
 
+import { LOCALE_COUNTRIES } from "#labels"
 import { softmax } from "#viterbi"
 
+// The pinned array lives in labels.ts beside the label vocabulary it mirrors; this module keeps its
+// historical export name.
+export { LOCALE_COUNTRIES } from "#labels"
+
 /**
- * Locale-head class order — MUST mirror `corpus-python/src/mailwoman_train/labels.py` `LOCALE_COUNTRIES` exactly (same
- * never-reorder/append-only discipline; a drift here silently mislabels every detection).
+ * The locale head's confident argmax over {@link LOCALE_COUNTRIES}, or null below the threshold — the shared core of
+ * {@link detectAddressSystem} and {@link confidentLocaleCountry}.
  */
-export const LOCALE_COUNTRIES = ["US", "FR", "DE", "CA", "GB", "JP", "ES", "IT", "NL"] as const
+function localeVerdict(
+	localeLogits: readonly number[] | undefined,
+	threshold: number
+): { country: (typeof LOCALE_COUNTRIES)[number]; confidence: number } | null {
+	if (!localeLogits || localeLogits.length !== LOCALE_COUNTRIES.length) return null
+	const probs = softmax(localeLogits)
+	let best = 0
+
+	for (let i = 1; i < probs.length; i++)
+		if (probs[i]! > probs[best]!) {
+			best = i
+		}
+
+	const confidence = probs[best]!
+
+	if (confidence < threshold) return null
+
+	return { country: LOCALE_COUNTRIES[best]!, confidence }
+}
 
 /**
  * ISO-2 country → codex address-system slice. Unmapped locales have no conventions yet.
@@ -52,24 +75,14 @@ export function detectAddressSystem(
 	localeLogits: readonly number[] | undefined,
 	threshold = 0.8
 ): DetectedSystem | null {
-	if (!localeLogits || localeLogits.length !== LOCALE_COUNTRIES.length) return null
-	const probs = softmax(localeLogits as number[])
-	let best = 0
+	const verdict = localeVerdict(localeLogits, threshold)
 
-	for (let i = 1; i < probs.length; i++)
-		if (probs[i]! > probs[best]!) {
-			best = i
-		}
-
-	const confidence = probs[best]!
-
-	if (confidence < threshold) return null
-	const country = LOCALE_COUNTRIES[best]!
-	const system = COUNTRY_TO_SYSTEM[country]
+	if (!verdict) return null
+	const system = COUNTRY_TO_SYSTEM[verdict.country]
 
 	if (!system) return null
 
-	return { system, country, confidence }
+	return { system, country: verdict.country, confidence: verdict.confidence }
 }
 
 /**
@@ -83,20 +96,7 @@ export function confidentLocaleCountry(
 	localeLogits: readonly number[] | undefined,
 	threshold = 0.8
 ): { country: (typeof LOCALE_COUNTRIES)[number]; confidence: number } | null {
-	if (!localeLogits || localeLogits.length !== LOCALE_COUNTRIES.length) return null
-	const probs = softmax(localeLogits as number[])
-	let best = 0
-
-	for (let i = 1; i < probs.length; i++)
-		if (probs[i]! > probs[best]!) {
-			best = i
-		}
-
-	const confidence = probs[best]!
-
-	if (confidence < threshold) return null
-
-	return { country: LOCALE_COUNTRIES[best]!, confidence }
+	return localeVerdict(localeLogits, threshold)
 }
 
 /**

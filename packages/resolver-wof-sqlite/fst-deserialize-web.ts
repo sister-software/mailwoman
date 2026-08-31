@@ -12,85 +12,25 @@
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
 
+import {
+	EDGE_ENTRY_SIZE,
+	ENCYCLOPEDIC_OFFSET,
+	FST_FORMAT_VERSION,
+	FST_MAGIC_BYTES,
+	HEADER_SIZE,
+	LEGACY_PLACE_ENTRY_SIZE,
+	NARROW_STATE_ENTRY_SIZE,
+	PLACE_FLAG_HAS_ENCYCLOPEDIC,
+	PLACETYPE_ORDER,
+	SPLIT_PLACE_ENTRY_SIZE,
+	VERSION_TWO_SCORE_SPLIT,
+	VERSION_WIDE_STATE_COUNTERS,
+	VERSION_WITH_METADATA,
+	WIDE_STATE_ENTRY_SIZE,
+} from "#fst-format"
 import type { FSTNode } from "#fst-matcher"
 import { FSTMatcher } from "#fst-matcher"
-import type { FSTProvenance, PlaceEntry, PlacetypeID } from "#fst-types"
-
-/**
- * Format version that widened the per-state edge and place counters from 16 to 32 bits, growing the state entry from 12
- * to 16 bytes. Readers branch on it to stay backward-compatible with v2/v3 files.
- */
-const VERSION_WIDE_STATE_COUNTERS = 4
-
-/**
- * State-table entry size in bytes at or above {@link VERSION_WIDE_STATE_COUNTERS}.
- */
-const WIDE_STATE_ENTRY_SIZE = 16
-
-/**
- * State-table entry size in bytes below {@link VERSION_WIDE_STATE_COUNTERS}.
- */
-const NARROW_STATE_ENTRY_SIZE = 12
-
-/**
- * First format version carrying the trailing metadata block; older files simply have none.
- */
-const VERSION_WITH_METADATA = 3
-
-const HEADER_SIZE = 32
-const EDGE_ENTRY_SIZE = 8
-
-/**
- * Format version that split the single `importance` float into `referential` + `encyclopedic` (ROAD_TO_V9 §2 R1),
- * growing the place entry from 56 to 60 bytes. Mirrors `fst-serialize.ts`'s constant of the same name.
- */
-const VERSION_TWO_SCORE_SPLIT = 5
-
-/**
- * Place-entry size in bytes at or above {@link VERSION_TWO_SCORE_SPLIT}.
- */
-const SPLIT_PLACE_ENTRY_SIZE = 60
-
-/**
- * Place-entry size in bytes below {@link VERSION_TWO_SCORE_SPLIT}.
- */
-const LEGACY_PLACE_ENTRY_SIZE = 56
-
-/**
- * Byte offset of the encyclopedic float inside a v5 place entry — immediately after the 8-slot parent chain.
- */
-const ENCYCLOPEDIC_OFFSET = 56
-
-/**
- * `placeFlags` bit 0 (byte `pp+7`, v5+): this place carries an encyclopedic score. Per-place because absence is the
- * common case; see `fst-serialize.ts`.
- */
-const PLACE_FLAG_HAS_ENCYCLOPEDIC = 1
-/**
- * "FST\0".
- */
-const MAGIC_BYTES = [0x46, 0x53, 0x54, 0x00]
-/**
- * Must track the serializer's VERSION (fst-serialize.ts, currently 5). The v3 provenance + v4 16-byte-state/u32-count
- * layout logic below already matches the Node deserializer; only this gate was left stale at 2, so the browser FST
- * loader rejected every real (v4) artifact. It was left stale again at 4 by the v5 two-score split until this line
- * moved with it — the gate is a SEPARATE number from the layout branches, which is exactly why it keeps drifting.
- */
-const MAX_VERSION = 5
-
-const PLACETYPE_ORDER: readonly PlacetypeID[] = [
-	"country",
-	"region",
-	"county",
-	"locality",
-	"localadmin",
-	"borough",
-	"neighbourhood",
-	"postalcode",
-	"campus",
-	"dependency",
-	"street_affix",
-]
+import type { FSTProvenance, PlaceEntry } from "#fst-types"
 
 export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 	const bytes = input instanceof ArrayBuffer ? new Uint8Array(input) : input
@@ -100,18 +40,18 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 	if (bytes.byteLength < HEADER_SIZE) throw new Error("FST buffer too small for header")
 
 	if (
-		bytes[0] !== MAGIC_BYTES[0] ||
-		bytes[1] !== MAGIC_BYTES[1] ||
-		bytes[2] !== MAGIC_BYTES[2] ||
-		bytes[3] !== MAGIC_BYTES[3]
+		bytes[0] !== FST_MAGIC_BYTES[0] ||
+		bytes[1] !== FST_MAGIC_BYTES[1] ||
+		bytes[2] !== FST_MAGIC_BYTES[2] ||
+		bytes[3] !== FST_MAGIC_BYTES[3]
 	) {
 		throw new Error("FST magic mismatch")
 	}
 
 	const version = view.getUint16(4, true)
 
-	if (version < 1 || version > MAX_VERSION) {
-		throw new Error(`FST version ${version} unsupported (expected 1..${MAX_VERSION})`)
+	if (version < 1 || version > FST_FORMAT_VERSION) {
+		throw new Error(`FST version ${version} unsupported (expected 1..${FST_FORMAT_VERSION})`)
 	}
 
 	const isV2 = version >= 2

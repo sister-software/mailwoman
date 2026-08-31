@@ -178,6 +178,102 @@ export function readZippedCSVRecords(archivePath: PathBuilderLike, entryName: st
 }
 
 /**
+ * License stamped on the synthetic tuple-derived shards (`po-box`, `no-street`, `house-venue`): the output is
+ * generated, but it inherits the terms of the real tuples it is derived from, so the attribution travels with it.
+ */
+export const SYNTHETIC_TUPLE_LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"
+
+/**
+ * The surface key shared by the Norwegian shards (`no-fragment`, `no-street-led`).
+ *
+ * MUST match the NO digit board's `norm_surface`: NFC, lowercase, collapse whitespace — and KEEP diacritics.
+ * fr-fragment's norm strips them (NFD + combining-mark removal), which is right for French but would collapse
+ * `Tømmerlien` → `tommerlien` here, so a shard's exclusion check would never match the board's reserved `tømmerlien`
+ * and the train/eval split would leak silently. Diacritic street heads (…vegen/…veien with ø/å/æ) are the whole point
+ * of those shards' boundary; folding them away is not an option.
+ */
+export const foldNOSurface = (value: string): string =>
+	value.normalize("NFC").toLowerCase().replaceAll(/\s+/g, " ").trim()
+
+/**
+ * A cached OpenAddresses extract: the zip and the CSV member.
+ */
+export interface OATupleSource {
+	zip: PathBuilderLike
+	csv: string
+}
+
+/**
+ * The four base fields every OA tuple reader extracts. `postcode` is `""` when the row carries none and
+ * {@link ReadOATuplesOptions.requirePostcode} is unset.
+ */
+export interface OATupleFields {
+	house_number: string
+	street: string
+	locality: string
+	postcode: string
+}
+
+export interface ReadOATuplesOptions<T> {
+	/**
+	 * Stop after this many distinct tuples — the `break` closes the reader and releases the archive, which is what the
+	 * GB-scale countrywide extracts need.
+	 */
+	limit?: number
+	/**
+	 * Drop rows without a postcode (reversed-order and balance readers, where the postcode drives the rendering).
+	 */
+	requirePostcode?: boolean
+	/**
+	 * Fold the postcode into the dedup key (`fr-order`'s key). The default key is
+	 * `${house_number}|${street}|${locality}`, lower-cased.
+	 */
+	dedupIncludesPostcode?: boolean
+	/**
+	 * Shape the recipe's tuple from the base fields, the raw record, and the (lower-cased) dedup key.
+	 */
+	extra: (fields: OATupleFields, row: CSVRecord, key: string) => T
+}
+
+/**
+ * Stream distinct tuples out of a cached OA zip — the reader the OA-skeleton recipes (`street-affix`, `unit`,
+ * `country-balanced`, `fr-order`) share. Field reads, filters, dedup keys and row order are exactly what each recipe's
+ * local copy did, so a recipe's shard stays byte-identical.
+ *
+ * @category CSV
+ */
+export async function readOATuples<T>(source: OATupleSource, options: ReadOATuplesOptions<T>): Promise<T[]> {
+	const tuples: T[] = []
+	const seen = new Set<string>()
+
+	for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
+		if (options.limit !== undefined && tuples.length >= options.limit) break
+
+		const street = row.street ?? ""
+		const locality = row.city ?? ""
+		const house_number = row.number ?? ""
+		const postcode = row.postcode ?? ""
+
+		if (!street || !locality || !house_number) continue
+
+		if (options.requirePostcode && !postcode) continue
+
+		const key = (
+			options.dedupIncludesPostcode
+				? `${house_number}|${street}|${locality}|${postcode}`
+				: `${house_number}|${street}|${locality}`
+		).toLowerCase()
+
+		if (seen.has(key)) continue
+		seen.add(key)
+
+		tuples.push(options.extra({ house_number, street, locality, postcode }, row, key))
+	}
+
+	return tuples
+}
+
+/**
  * Stream-parse a tuples JSONL file, yielding each parsed object (blank/invalid lines skipped).
  */
 export function readTuples(input: PathBuilderLike): AsyncSequence<ShardTuple> {

@@ -9,13 +9,11 @@
  */
 
 import { buildAddressTree } from "@mailwoman/core/decoder/build-tree"
-import type { AddressNode, BIOLabel, DecoderToken } from "@mailwoman/core/decoder/types"
+import type { AddressNode } from "@mailwoman/core/decoder/types"
 import { validateTree } from "@mailwoman/core/decoder/validate-tree"
 import { describe, expect, test } from "vitest"
 
-function tok(piece: string, start: number, end: number, label: BIOLabel): DecoderToken {
-	return { piece, start, end, label, confidence: 1 }
-}
+import { tok } from "#test/unit/decoder/fixtures"
 
 function node(tag: AddressNode["tag"], value: string, children: AddressNode[] = []): AddressNode {
 	return { tag, value, start: 0, end: value.length, confidence: 1, children }

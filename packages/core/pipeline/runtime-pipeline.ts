@@ -14,6 +14,7 @@
 
 import { isBareTreeOf } from "#decoder/tree-shape"
 import type { AddressNode, AddressTree } from "#decoder/types"
+import { errorMessage } from "#errors/schema"
 import { PipelineFaultStage, WORD_CONSISTENCY_SHIP_DEFAULT, deriveInputMode } from "#pipeline/types"
 import type {
 	AddressClassifier,
@@ -550,7 +551,7 @@ function recordFault(faults: PipelineFault[], stage: PipelineFaultStage, cause: 
 	faults.push({
 		stage,
 		name: cause instanceof Error ? cause.name : "Error",
-		message: cause instanceof Error ? cause.message : String(cause),
+		message: errorMessage(cause),
 		cause,
 	})
 }

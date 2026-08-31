@@ -78,7 +78,27 @@ export async function linkSoftFeedSibling(
 }
 
 /**
- * What one pair-index overlay has to say about itself. Everything else is shared.
+ * The calibrated pair-index emission bias every shipped artifact is built at today — the R5/R6/R9/R10/R11 bars were all
+ * measured at δ=10 (each linker's own docstring carries its locale's receipt).
+ */
+export const PAIR_INDEX_DELTA = 10
+
+/**
+ * The decoder transition-entry bonus (TRANSITION-BETA build, 2026-07-24 — operator-approved β=5 from the
+ * transition-level probe). en-nz deliberately builds WITHOUT one (unmeasured there): the two magnitudes are calibrated
+ * independently, and a locale earning one says nothing about the other.
+ */
+export const PAIR_INDEX_TRANSITION_BETA = 5
+
+/**
+ * The WHOLE-EDGE parent-bias magnitude (#46, default-on 2026-08-04) at the verdict's recommended δ=5 — see
+ * `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`. Only the measured locales (us/gb/nz/fr) pass it; the
+ * D-rule's answer to an unmeasured locale is a per-locale absence, not an inherited magnitude.
+ */
+export const PAIR_INDEX_PARENT_DELTA = 5
+
+/**
+ * What one pair-index build has to say about itself. Everything else is shared.
  */
 export interface PairIndexOverlay {
 	/**
@@ -92,10 +112,36 @@ export interface PairIndexOverlay {
 	country: string
 	/**
 	 * Calibrated magnitudes the locale's bars were measured at. Baked into the artifact's PIX1 header, which is how the
-	 * freshness check below notices a change to either.
+	 * freshness check notices a change to any of them. An ABSENT `transitionBeta`/`parentDelta` means the flag is not
+	 * passed and the header carries no such key — a real state, distinct from zero (see `PairIndexHeader.parentDelta`).
+	 * The whole calibration feeds both the build FLAGS and the staleness EXPECTATION, so the two cannot disagree.
 	 */
 	delta: number
-	transitionBeta: number
+	transitionBeta?: number
+	parentDelta?: number
+	/**
+	 * Source FILES whose md5s the build records, in the order `gazetteer pair-index` records them. The freshness guard
+	 * compares EVERY one against the existing header (#1734): a partial comparison leaves the guard blind to the rest,
+	 * and a stale artifact then keeps reporting itself fresh while the data it was built from has moved. Empty means the
+	 * build's source cannot be file-hashed (fr's BAN directory) and freshness rests on the magnitudes alone. Default: the
+	 * WOF admin DB.
+	 */
+	sources?: string[]
+	/**
+	 * Inputs that must exist before a build is attempted — a missing one warns and returns, because a fresh clone has no
+	 * data root and `yarn test` invokes the linkers to verify auto-resolve. Default: `sources`.
+	 */
+	inputs?: string[]
+	/**
+	 * Extra CLI args naming the build's sources (`--source`, `--borough-db`, `--pairs-jsonl`, `--ban-dir`). Default:
+	 * `--borough-db <admin db>`.
+	 */
+	extraArgs?: string[]
+	/**
+	 * Refuse to trust an existing artifact smaller than this. fr-fr's guard: a pair index built from the WRONG source can
+	 * carry matching magnitudes, and size is the one signal the header cannot fake.
+	 */
+	minimumPlausibleBytes?: number
 }
 
 /**
@@ -268,40 +314,152 @@ export async function warnIfFSTStale(fstPath: string, locale: string): Promise<v
 }
 
 /**
- * Build `pair-index-<country>.bin` into the overlay, skipping the work when the artifact on disk was already built at
- * these magnitudes FROM the admin database on disk.
- *
- * The skip requires both halves (#1734): the header magnitudes (`pairIndexStaleReason`) AND the header's `sourceMD5s`
- * against the current admin DB's md5. Magnitudes alone read a source change as "current" whenever pair counts happen
- * not to move the calibrated numbers — the R5 freshness-guard lesson, which resurfaced in the 2026-08-18 admin swap
- * when all four overlay locales skipped while the md5-checking base linkers rebuilt. This build's ONE source is the
- * admin DB it passes as `--borough-db`, so the comparison is exactly one md5; a linker with a different source list
- * (fr's BAN directory) owns its own guard and must never be pointed at this one.
- *
- * Exits non-zero on a failed build. Missing INPUTS (an unbuilt CLI, an absent WOF database) warn and return instead: a
- * fresh clone has neither, and `yarn test` invokes this to verify auto-resolve, so a hard failure there would be a
- * failure to have run a build yet rather than a real fault.
+ * Symlink the per-locale FST gazetteer (`fst-<locale>.bin`) from the shared build area
+ * (`$MAILWOMAN_DATA_ROOT/wof/fst-per-locale/`) into an overlay so `resolveWeights` surfaces `fstPath` in dev and the
+ * runtime pipeline can auto-wire the gazetteer + street-context gate, then run {@link warnIfFSTStale} on the linked
+ * artifact. The publish flow stages the real binary (release-sequenced).
  */
-export async function buildPairIndexOverlay({
-	packageDir,
-	country,
-	delta,
-	transitionBeta,
-}: PairIndexOverlay): Promise<void> {
+export async function linkLocaleFST(destDir: string, locale: string): Promise<void> {
+	const source = String(dataRootPath("wof", "fst-per-locale", `fst-${locale}.bin`))
+
+	const linked = await linkSoftFeedSibling(
+		source,
+		resolvePath(destDir, `fst-${locale}.bin`),
+		"the FST gazetteer default will resolve OFF for this locale."
+	)
+
+	if (linked) {
+		await warnIfFSTStale(source, locale)
+	}
+}
+
+/**
+ * Symlink the sealed locale-general street-morphology FST (`$MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin`,
+ * `mailwoman gazetteer build street-morphology`) into an overlay so `resolveWeights` surfaces `streetMorphologyPath` in
+ * dev and the street-context gate (#1315) deserializes the artifact instead of rebuilding from the libpostal
+ * dictionaries per process. Missing is non-fatal — the runtime loader's dictionary-build fallback covers it.
+ */
+export async function linkStreetMorphologyFST(destDir: string): Promise<void> {
+	await linkSoftFeedSibling(
+		String(dataRootPath("wof", "fst-street-morphology.bin")),
+		resolvePath(destDir, "fst-street-morphology.bin"),
+		"the street-context gate falls back to the per-process dictionary build."
+	)
+}
+
+/**
+ * Why an existing artifact may be TRUSTED without a rebuild, or `undefined` when it must be rebuilt (with the reason
+ * already printed). The skip requires both halves (#1734): the header magnitudes + format (`pairIndexStaleReason`) AND
+ * the header's `sourceMD5s` against the current sources' md5s. Magnitudes alone read a source change as "current"
+ * whenever pair counts happen not to move the calibrated numbers — the R5 freshness-guard lesson, which resurfaced in
+ * the 2026-08-18 admin swap. A source that is not on disk to re-hash leaves the magnitudes as the best available answer
+ * (the "missing source, can't build" branch below would fire anyway if a rebuild were needed).
+ */
+async function pairIndexIsFresh(
+	dest: string,
+	artifact: string,
+	expected: PairIndexCalibration,
+	sources: string[],
+	minimumPlausibleBytes: number | undefined
+): Promise<boolean> {
+	try {
+		const header = await peekPairIndexHeaderFields(dest)
+		const staleReason = pairIndexStaleReason(header, expected)
+
+		if (staleReason) {
+			console.log(`rebuilding ${artifact} — ${staleReason}`)
+
+			return false
+		}
+
+		if (minimumPlausibleBytes !== undefined && (await statPath(dest)).size < minimumPlausibleBytes) {
+			console.log(
+				`rebuilding ${artifact} — ${(await statPath(dest)).size.toLocaleString()} bytes is implausibly small ` +
+					`for this recipe (wrong-source clobber)`
+			)
+
+			return false
+		}
+
+		if (!sources.length) {
+			console.log(`skipped ${artifact} build — ${dest} is current (magnitudes match; no file-hashable source)`)
+
+			return true
+		}
+
+		for (const source of sources) {
+			if (!(await pathExists(source))) {
+				console.log(
+					`skipped ${artifact} build — ${dest} has matching header magnitudes (${source} absent, md5 freshness unverifiable)`
+				)
+
+				return true
+			}
+		}
+
+		if (header.sourceMD5s.length !== sources.length) {
+			console.log(
+				`rebuilding ${artifact} — header records ${header.sourceMD5s.length} source md5s ` +
+					`[${header.sourceMD5s.join(", ") || "(none recorded)"}], but this build reads ${sources.length}`
+			)
+
+			return false
+		}
+
+		const currentMD5s: string[] = []
+
+		for (const source of sources) {
+			currentMD5s.push(await md5FileWithSidecar(source))
+		}
+
+		if (currentMD5s.every((md5, i) => md5 === header.sourceMD5s[i])) {
+			console.log(
+				`skipped ${artifact} build — ${dest} is current (magnitudes + all ${sources.length} source md5s match)`
+			)
+
+			return true
+		}
+
+		console.log(
+			`rebuilding ${artifact} — header source md5s [${header.sourceMD5s.join(", ")}] != current [${currentMD5s.join(", ")}]`
+		)
+
+		return false
+	} catch (error) {
+		console.log(`rebuilding ${artifact} — freshness unverifiable (${(error as Error).message})`)
+
+		return false
+	}
+}
+
+/**
+ * Build `pair-index-<country>.bin` into the overlay, skipping the work when the artifact on disk was already built at
+ * these magnitudes FROM the sources on disk (see {@link pairIndexIsFresh}). The calibration object drives both the
+ * staleness expectation and the CLI flags, so a magnitude cannot be checked by the guard and dropped from the build.
+ *
+ * Exits non-zero on a failed build. Missing INPUTS (an unbuilt CLI, an absent source) warn and return instead: a fresh
+ * clone has neither, and `yarn test` invokes this to verify auto-resolve, so a hard failure there would be a failure to
+ * have run a build yet rather than a real fault.
+ */
+export async function buildPairIndexOverlay(overlay: PairIndexOverlay): Promise<void> {
+	const { packageDir, country, delta, transitionBeta, parentDelta } = overlay
 	const CLI = String(workspacePath("mailwoman", "out", "cli.js"))
 	const ARTIFACT = `pair-index-${country}.bin`
 	// Built into the data-root OVERLAY, not into the tracked package. The locale is recovered from the
 	// workspace name (`neural-weights-en-gb` → `en-gb`) so callers keep passing the one identifier they
-	// already had; the alternative was a second parameter every caller would have to keep in step with the
-	// first, which is the drift this whole rollout is removing.
+	// already had.
 	const PKG_DIR = String(weightsOverlayPath(packageDir.replace(/^neural-weights-/, "")))
 	const DEST = resolvePath(PKG_DIR, ARTIFACT)
 
 	await makeDirectories(PKG_DIR)
+
 	/**
-	 * Checked-in WOF-derived admin pairs — the same posture as the GB secondary sources.
+	 * Checked-in WOF-derived admin pairs — the default source, and the whole source list for the small overlays.
 	 */
 	const WOF_ADMIN_DB = String(dataRootPath("wof", "admin-global-priority.db"))
+	const sources = overlay.sources ?? [WOF_ADMIN_DB]
+	const inputs = overlay.inputs ?? sources
+	const extraArgs = overlay.extraArgs ?? ["--borough-db", WOF_ADMIN_DB]
 
 	if (!(await pathExists(CLI))) {
 		console.error(`WARNING: ${CLI} not built — run \`yarn compile\` first, then re-run for ${ARTIFACT}.`)
@@ -309,42 +467,27 @@ export async function buildPairIndexOverlay({
 		return
 	}
 
-	if (!(await pathExists(WOF_ADMIN_DB))) {
-		console.error(`WARNING: missing ${WOF_ADMIN_DB} — ${ARTIFACT} not built.`)
-
+	if (
+		(await pathExists(DEST)) &&
+		(await pairIndexIsFresh(
+			DEST,
+			ARTIFACT,
+			{ delta, transitionBeta, parentDelta },
+			sources,
+			overlay.minimumPlausibleBytes
+		))
+	) {
 		return
 	}
 
-	if (await pathExists(DEST)) {
-		try {
-			// No `parentDelta` in the expectation: the overlay locales (de/in/es/it) ship WITHOUT the whole-edge
-			// parent bias — unmeasured there, and the D-rule's answer to an unmeasured locale is a per-locale
-			// gate, not an inherited magnitude. `PairIndexOverlay` therefore has no `parentDelta` field to pass;
-			// adding one is a deliberate act that should arrive with a board.
-			const header = await peekPairIndexHeaderFields(DEST)
-			const reason = pairIndexStaleReason(header, { delta, transitionBeta })
+	for (const input of inputs) {
+		if (await pathExists(input)) continue
 
-			if (reason) {
-				console.log(`rebuilding ${ARTIFACT} — ${reason}`)
-			} else {
-				// The source-md5 half (#1734). This build reads exactly one source, so one md5; an artifact that
-				// recorded none, or a different count, predates the stamp and is stale by that fact alone.
-				const adminMD5 = await md5FileWithSidecar(WOF_ADMIN_DB)
+		console.error(
+			`WARNING: missing ${input} — ${ARTIFACT} not built; the placetype-pair prior stays inert for ${country.toUpperCase()}.`
+		)
 
-				if (header.sourceMD5s.length === 1 && header.sourceMD5s[0] === adminMD5) {
-					console.log(`skipped ${ARTIFACT} build — ${DEST} is current (magnitudes + source md5 match)`)
-
-					return
-				}
-
-				console.log(
-					`rebuilding ${ARTIFACT} — header source md5s [${header.sourceMD5s.join(", ") || "(none recorded)"}] != ` +
-						`current admin DB [${adminMD5}]`
-				)
-			}
-		} catch (error) {
-			console.log(`rebuilding ${ARTIFACT} — header unreadable (${(error as Error).message})`)
-		}
+		return
 	}
 
 	const result = spawnProcessSync(
@@ -359,10 +502,9 @@ export async function buildPairIndexOverlay({
 			country,
 			"--delta",
 			String(delta),
-			"--transition-beta",
-			String(transitionBeta),
-			"--borough-db",
-			WOF_ADMIN_DB,
+			...(transitionBeta === undefined ? [] : ["--transition-beta", String(transitionBeta)]),
+			...(parentDelta === undefined ? [] : ["--parent-delta", String(parentDelta)]),
+			...extraArgs,
 		],
 		{ stdio: "inherit" }
 	)
@@ -373,5 +515,5 @@ export async function buildPairIndexOverlay({
 		process.exit(1)
 	}
 
-	console.log(`built ${ARTIFACT} ← ${WOF_ADMIN_DB}`)
+	console.log(`built ${ARTIFACT}`)
 }

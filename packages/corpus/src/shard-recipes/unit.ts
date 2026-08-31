@@ -27,7 +27,8 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
-import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "#shard-recipes/scaffold"
+import { makeMulberry32, readOATuples, type ShardRecipe } from "#shard-recipes/scaffold"
+import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
@@ -116,31 +117,9 @@ interface UnitTuple {
  * Stream real US tuples (number/street/city/postcode + the bare OA unit id) out of a cached OA zip.
  */
 async function readTuples(source: UnitSource): Promise<UnitTuple[]> {
-	const tuples: UnitTuple[] = []
-	const seen = new Set<string>()
-
-	for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
-		const street = row.street ?? ""
-		const locality = row.city ?? ""
-		const house_number = row.number ?? ""
-
-		if (!street || !locality || !house_number) continue
-		const key = `${house_number}|${street}|${locality}`.toLowerCase()
-
-		if (seen.has(key)) continue
-		seen.add(key)
-
-		tuples.push({
-			house_number,
-			street,
-			locality,
-			region: source.region,
-			postcode: row.postcode ?? "",
-			oaUnit: row.unit ?? "",
-		})
-	}
-
-	return tuples
+	return readOATuples(source, {
+		extra: (fields, row) => ({ ...fields, region: source.region, oaUnit: row.unit ?? "" }),
+	})
 }
 
 /**
@@ -154,14 +133,13 @@ const title = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1).toLo
 function makeUnit(random: () => number, oaUnit: string): string {
 	const standalone = random() >= ID_WEIGHT
 	const pool = standalone ? STANDALONE_DESIGNATORS : ID_DESIGNATORS
-	const canonical = pool[Math.floor(random() * pool.length)]!
+	const canonical = pick(pool, random)
 	// Vary the surface form 50/50 (this is the #454 expand/abbreviate variety, baked into the shard).
 	const designator = random() < 0.5 ? title(canonical) : title(US_UNIT_DESIGNATOR_PREFERRED_ABBR[canonical])
 
 	if (standalone) return designator
 
-	const id =
-		oaUnit && oaUnit.length <= MAX_REAL_UNIT_ID_LENGTH ? oaUnit : SYNTH_IDS[Math.floor(random() * SYNTH_IDS.length)]!
+	const id = oaUnit && oaUnit.length <= MAX_REAL_UNIT_ID_LENGTH ? oaUnit : pick(SYNTH_IDS, random)
 
 	return `${designator} ${id}`
 }
@@ -234,7 +212,7 @@ function renderUnit(
 	if (r < BARE_FIRST_CUTOFF)
 		return { fmt: "bare-first", raw: `${unit} ${road}`, components: { house_number: hn, street, unit } }
 
-	const v = VENUES[Math.floor(random() * VENUES.length)]!
+	const v = pick(VENUES, random)
 
 	return { fmt: "venue", raw: `${v}, ${road} ${unit}, ${tail(loc, reg, pc)}`, components: { venue: v, ...full } }
 }

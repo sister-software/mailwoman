@@ -35,6 +35,7 @@ import { ResultPanel as DocsResultPanel } from "#components/ResultPanel/ResultPa
 import { useSiteConfig } from "#hooks/site"
 import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES } from "#shared/demo-helpers"
 import type { DemoResult } from "#shared/resources"
+import { sqljsBaseURL } from "#shared/resources"
 
 import { DemoCompare } from "./_compare.tsx"
 import { CalibrationToggle, DevModeToggle, GeoBiasRow } from "./_controls.tsx"
@@ -65,10 +66,9 @@ const DemoInner: React.FC<{ initialCenter: Coordinates2D; debugDefault?: boolean
 	debugDefault = false,
 }) => {
 	const { baseURL } = useSiteConfig()
-	const sqljsBaseURL = `${baseURL}mailwoman/sqljs`
 
 	const { runtime, releases, forceWASM, geoBias, calibrator, traceParse, supportsTrace } = useDemoMapRuntime({
-		sqljsBaseURL,
+		sqljsBaseURL: sqljsBaseURL(baseURL),
 		baseURL,
 		initialCenter,
 	})

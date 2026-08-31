@@ -51,8 +51,9 @@
  *   or first-write-wins at serialize time would hide a shard-build bug.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
+
+import { type ByteCursor, readFramedHeader, writeFramedHeader } from "#binary-frame"
 
 /**
  * Tags addressable by the single-byte index the pair table packs into.
@@ -260,9 +261,9 @@ export function serializePairIndex(header: PairIndexHeaderInput, entries: readon
 		return { child, parent, tagIdx, parentTagIdx }
 	})
 
-	const headerBytes = encoder.encode(JSON.stringify(fullHeader))
+	const frame = writeFramedHeader(MAGIC, fullHeader)
 
-	let size = 4 /* magic */ + 4 /* headerLen */ + headerBytes.length + 4
+	let size = frame.length + 4
 
 	/* pairCount */
 
@@ -273,13 +274,9 @@ export function serializePairIndex(header: PairIndexHeaderInput, entries: readon
 	const buf = new Uint8Array(size)
 	const view = new DataView(buf.buffer)
 
-	let o = 0
-	view.setUint32(o, MAGIC, true)
-	o += 4
-	view.setUint32(o, headerBytes.length, true)
-	o += 4
-	buf.set(headerBytes, o)
-	o += headerBytes.length
+	buf.set(frame, 0)
+
+	let o = frame.length
 	view.setUint32(o, encodedPairs.length, true)
 	o += 4
 
@@ -317,17 +314,8 @@ export function peekPairIndexHeader(bytes: Uint8Array): PairIndexHeader {
  * the two can never drift on what counts as a valid header. Returns the parsed header AND the byte offset immediately
  * following it, so the constructor can resume entry parsing from exactly where this left off without re-decoding.
  */
-function readHeaderBlock(bytes: Uint8Array): { header: PairIndexHeader; offset: number } {
-	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-
-	if (view.getUint32(0, true) !== MAGIC) throw new Error("pair index: bad magic")
-
-	let o = 4
-	const headerLen = view.getUint32(o, true)
-	o += 4
-	const decoder = new TextDecoder()
-	const header = parseJSONStrict<PairIndexHeader>(decoder.decode(bytes.subarray(o, o + headerLen)))
-	o += headerLen
+function readHeaderBlock(bytes: Uint8Array): { header: PairIndexHeader; cursor: ByteCursor } {
+	const { header, cursor } = readFramedHeader<PairIndexHeader>(MAGIC, bytes, "pair index: bad magic")
 
 	if (header.schemaVersion < KNOWN_SCHEMA_VERSION) {
 		throw new Error(
@@ -342,7 +330,7 @@ function readHeaderBlock(bytes: Uint8Array): { header: PairIndexHeader; offset: 
 		)
 	}
 
-	return { header, offset: o }
+	return { header, cursor }
 }
 
 /**
@@ -356,15 +344,11 @@ export class PairIndexResolver {
 	readonly #probeMap: ReadonlyMap<string, PairEdge>
 
 	constructor(bytes: Uint8Array) {
-		const { header, offset } = readHeaderBlock(bytes)
+		const { header, cursor } = readHeaderBlock(bytes)
 
 		this.header = header
 
-		const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-		let o = offset
-		const pairCount = view.getUint32(o, true)
-		o += 4
-
+		const pairCount = cursor.u32()
 		const decoder = new TextDecoder()
 		const map = new Map<string, PairEdge>()
 
@@ -392,16 +376,10 @@ export class PairIndexResolver {
 		}
 
 		for (let i = 0; i < pairCount; i++) {
-			const childLen = view.getUint16(o, true)
-			o += 2
-			const child = decoder.decode(bytes.subarray(o, o + childLen))
-			o += childLen
-			const parentLen = view.getUint16(o, true)
-			o += 2
-			const parent = decoder.decode(bytes.subarray(o, o + parentLen))
-			o += parentLen
-			const tagIdx = bytes[o++]!
-			const parentTagIdx = bytes[o++]!
+			const child = decoder.decode(cursor.bytes(cursor.u16()))
+			const parent = decoder.decode(cursor.bytes(cursor.u16()))
+			const tagIdx = cursor.u8()
+			const parentTagIdx = cursor.u8()
 			const edgeKey = `${tagIdx}:${parentTagIdx}`
 
 			let edge = edges.get(edgeKey)

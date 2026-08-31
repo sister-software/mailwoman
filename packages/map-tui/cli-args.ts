@@ -1,3 +1,4 @@
+import { errorMessage } from "@mailwoman/core/errors/schema"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 /**
  * @copyright Sister Software.
@@ -40,6 +41,9 @@ const MIN_ZOOM = 0
  */
 const MAX_ZOOM = 24
 
+// True geographic bounds, not Web-Mercator's ±85.05113: the flag accepts any real latitude, and the browser clamps
+// the CENTER to the projection's MERCATOR_LATITUDE_LIMIT itself (see ./browser.ts) — rejecting 87 here would refuse a
+// value the viewport handles fine.
 const MIN_LAT = -90
 const MAX_LAT = 90
 const MIN_LON = -180
@@ -194,9 +198,7 @@ function readFlags(argv: readonly string[]): ParsedFlags {
 
 		return values
 	} catch (error) {
-		const detail = error instanceof Error ? error.message : String(error)
-
-		throw new CLIArgsError(`${detail}\nRun \`map-tui --help\` for the supported flags.`)
+		throw new CLIArgsError(`${errorMessage(error)}\nRun \`map-tui --help\` for the supported flags.`)
 	}
 }
 

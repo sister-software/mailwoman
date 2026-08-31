@@ -22,23 +22,9 @@
 import DOMPurify, { type Config as DOMPurifyConfig } from "isomorphic-dompurify"
 import { trustedTypes } from "trusted-types"
 
-/**
- * The character escapes that render markup as literal text.
- */
-const HTML_ESCAPES: Record<string, string> = {
-	"&": "&amp;",
-	"<": "&lt;",
-	">": "&gt;",
-	'"': "&quot;",
-	"'": "&#39;",
-}
+import { escapeHTML } from "#strings/escape"
 
-/**
- * Escape a string so a sink renders it as literal text, markup included.
- */
-export function escapeHTML(text: string): string {
-	return text.replaceAll(/[&<>"']/gu, (character) => HTML_ESCAPES[character] ?? character)
-}
+export { escapeHTML } from "#strings/escape"
 
 /**
  * Untrusted HTML through DOMPurify's default allowlist: safe markup survives, scripts and event handlers do not.

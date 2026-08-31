@@ -4,34 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { ControlPosition, LngLat, MapGeoJSONFeature, MapLayerMouseEvent, Point } from "maplibre-gl"
+import type { LngLat, MapGeoJSONFeature, MapLayerMouseEvent, Point } from "maplibre-gl"
 
 import "maplibre-gl/dist/maplibre-gl.css"
 import { memo, useEffect, useState } from "react"
 import { createPortal } from "react-dom"
-import type { IControl, MapInstance } from "react-map-gl/maplibre"
 import { useControl, useMap } from "react-map-gl/maplibre"
 
-class DebugControlBase implements IControl {
-	public readonly container: HTMLElement
-
-	constructor() {
-		this.container = document.createElement("div")
-		this.container.classList.add("feature-targets")
-	}
-
-	public onAdd(_map: MapInstance): HTMLElement {
-		return this.container
-	}
-
-	public onRemove(_map: MapInstance): void {
-		this.container.remove()
-	}
-
-	public getDefaultPosition(): ControlPosition {
-		return "bottom-left"
-	}
-}
+import { DebugControlBase } from "./map-debug.ts"
 
 /**
  * Map overlay exposing tile and layer state, for diagnosing a render without opening devtools.
@@ -41,7 +21,7 @@ export const DebugControl: React.FC = memo(() => {
 	const [pointerCoords, setPointerCoords] = useState<LngLat>()
 	const [featureTargets, setFeatureTargets] = useState<MapGeoJSONFeature[]>()
 
-	const debugControl = useControl(() => new DebugControlBase())
+	const debugControl = useControl(() => new DebugControlBase({ className: "feature-targets" }))
 	const map = useMap()
 
 	useEffect(() => {

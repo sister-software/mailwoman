@@ -11,16 +11,14 @@
 import type { SystemCode } from "@mailwoman/codex"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 
-import { parseAnchorLookup, type AnchorLookup } from "#anchor-inference"
+import type { AnchorLookup } from "#anchor-inference"
 import { NeuralAddressClassifier } from "#classifier"
 import { parseCountryLexicon } from "#country-inference"
-import type { CountryLexicon } from "#country-inference"
 import { parseGazetteerLexicon } from "#gazetteer-inference"
 import type { GazetteerLexicon } from "#gazetteer-inference"
 import { DEFAULT_INTRA_OP_THREADS, ONNXRunner } from "#onnx-runner"
 import { peekPairIndexHeader, PairIndexResolver } from "#pair-index-resolver"
 import type { PlacetypePairPriorOpts } from "#placetype-pair-prior"
-import { PostcodeBinaryResolver } from "#postcode-binary-resolver"
 import { parseSemiCRFTransitions, type SemiCRFTransitions } from "#semi-markov-decode"
 import { MailwomanTokenizer } from "#tokenizer"
 import type { ResolvedWeights, ResolveWeightsOpts } from "#weights"
@@ -59,7 +57,14 @@ export async function loadClassifierFromWeights(
 	const [
 		{ $public },
 		{ resolveWeights, loadPlacetypeCensus },
-		{ readLabelsFromModelCard, readCRFTransitions, readRequiredChannels, unfedAnchorDetail, unfedChannelWarner },
+		{
+			readLabelsFromModelCard,
+			readCRFTransitions,
+			readRequiredChannels,
+			loadAnchorLookup,
+			unfedAnchorDetail,
+			unfedChannelWarner,
+		},
 	] = await Promise.all([
 		import(/* webpackIgnore: true */ "@mailwoman/core/env"),
 		import(/* webpackIgnore: true */ "#weights"),
@@ -130,11 +135,7 @@ export async function loadClassifierFromWeights(
 
 	if (!postcodeAnchorLookup && resolved.anchorLookupPath) {
 		try {
-			postcodeAnchorLookup = resolved.anchorLookupPath.binary
-				? new PostcodeBinaryResolver(
-						new Uint8Array(await readLocalBuffer(resolved.anchorLookupPath.path))
-					).toAnchorLookup()
-				: parseAnchorLookup(await readLocalJSONFile(resolved.anchorLookupPath.path))
+			postcodeAnchorLookup = await loadAnchorLookup(resolved.anchorLookupPath)
 		} catch (error) {
 			warnUnfedChannel("anchor", `failed to parse ${resolved.anchorLookupPath.path}: ${(error as Error).message}`)
 		}
@@ -152,71 +153,57 @@ export async function loadClassifierFromWeights(
 		warnUnfedChannel("anchor", anchorDetail)
 	}
 
-	let gazetteerLexicon: GazetteerLexicon | undefined
+	// One loop for the four lexicon channels — the gazetteer/country/street-type/locality-surface reads
+	// share one parse-and-warn shape (the two evidence lexicons reuse the gazetteer's JSON schema). The
+	// declared-required warning runs only for the channels whose artifact has a fixed name; the evidence
+	// channels' `requires`-declared enforcement arrives with the first bundle-trained card. Pocket tier is
+	// anchor-only: `resolveWeights` already withholds the gazetteer/country paths there, so a
+	// declared-required channel is EXPECTED to be unfed — don't warn.
+	const lexiconChannels: Array<{
+		channel: "gazetteer" | "country" | "street_type" | "locality_surface"
+		path: string | undefined
+		parse: typeof parseGazetteerLexicon
+		artifactName?: string
+	}> = [
+		{
+			channel: "gazetteer",
+			path: resolved.gazetteerLexiconPath,
+			parse: parseGazetteerLexicon,
+			artifactName: "anchor-lexicon-v1.json",
+		},
+		{
+			channel: "country",
+			path: resolved.countryLexiconPath,
+			parse: parseCountryLexicon,
+			artifactName: "country-surface-lexicon-v1.json",
+		},
+		{ channel: "street_type", path: resolved.streetTypeLexiconPath, parse: parseGazetteerLexicon },
+		{ channel: "locality_surface", path: resolved.localitySurfaceLexiconPath, parse: parseGazetteerLexicon },
+	]
 
-	if (resolved.gazetteerLexiconPath) {
-		try {
-			gazetteerLexicon = parseGazetteerLexicon(await readLocalJSONFile(resolved.gazetteerLexiconPath))
-		} catch (error) {
-			warnUnfedChannel("gazetteer", `failed to parse ${resolved.gazetteerLexiconPath}: ${(error as Error).message}`)
+	const lexicons: Partial<Record<(typeof lexiconChannels)[number]["channel"], GazetteerLexicon>> = {}
+
+	for (const { channel, path, parse, artifactName } of lexiconChannels) {
+		if (path) {
+			try {
+				lexicons[channel] = parse(await readLocalJSONFile(path))
+			} catch (error) {
+				warnUnfedChannel(channel, `failed to parse ${path}: ${(error as Error).message}`)
+			}
 		}
-	}
 
-	// Pocket tier is anchor-only: `resolveWeights` already withholds the gazetteer path, so a
-	// declared-required gazetteer is EXPECTED to be unfed there — don't warn. Otherwise warn.
-	if (declared?.gazetteer?.required && !gazetteerLexicon && opts.tier !== "pocket") {
-		warnUnfedChannel(
-			"gazetteer",
-			resolved.gazetteerLexiconPath
-				? `lexicon at ${resolved.gazetteerLexiconPath} could not be parsed`
-				: `no anchor-lexicon-v1.json found in the weights package`
-		)
-	}
-
-	// Country-lexicon channel (#1104): same soft-feed pattern. Ships with the server tier; pocket is anchor-only.
-	let countryLexicon: CountryLexicon | undefined
-
-	if (resolved.countryLexiconPath) {
-		try {
-			countryLexicon = parseCountryLexicon(await readLocalJSONFile(resolved.countryLexiconPath))
-		} catch (error) {
-			warnUnfedChannel("country", `failed to parse ${resolved.countryLexiconPath}: ${(error as Error).message}`)
-		}
-	}
-
-	if (declared?.country?.required && !countryLexicon && opts.tier !== "pocket") {
-		warnUnfedChannel(
-			"country",
-			resolved.countryLexiconPath
-				? `lexicon at ${resolved.countryLexiconPath} could not be parsed`
-				: `no country-surface-lexicon-v1.json found in the weights package`
-		)
-	}
-
-	// Evidence-bundle lexicons (Option-A, Phase 2): same soft-feed pattern; degrade-absent for every
-	// pre-bundle package. `requires`-declared enforcement arrives with the first bundle-trained card.
-	let streetTypeLexicon: GazetteerLexicon | undefined
-
-	if (resolved.streetTypeLexiconPath) {
-		try {
-			streetTypeLexicon = parseGazetteerLexicon(await readLocalJSONFile(resolved.streetTypeLexiconPath))
-		} catch (error) {
-			warnUnfedChannel("street_type", `failed to parse ${resolved.streetTypeLexiconPath}: ${(error as Error).message}`)
-		}
-	}
-
-	let localitySurfaceLexicon: GazetteerLexicon | undefined
-
-	if (resolved.localitySurfaceLexiconPath) {
-		try {
-			localitySurfaceLexicon = parseGazetteerLexicon(await readLocalJSONFile(resolved.localitySurfaceLexiconPath))
-		} catch (error) {
+		if (artifactName && declared?.[channel]?.required && !lexicons[channel] && opts.tier !== "pocket") {
 			warnUnfedChannel(
-				"locality_surface",
-				`failed to parse ${resolved.localitySurfaceLexiconPath}: ${(error as Error).message}`
+				channel,
+				path ? `lexicon at ${path} could not be parsed` : `no ${artifactName} found in the weights package`
 			)
 		}
 	}
+
+	const gazetteerLexicon = lexicons.gazetteer
+	const countryLexicon = lexicons.country
+	const streetTypeLexicon = lexicons.street_type
+	const localitySurfaceLexicon = lexicons.locality_surface
 
 	// Placetype-pair index sibling (placetype-pair-prior arc): construct a PairIndexResolver
 	// when the package shipped one for this country. HARD COUNTRY GATE — an index built for one

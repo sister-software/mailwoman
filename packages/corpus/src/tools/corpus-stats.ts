@@ -41,9 +41,8 @@ import { readDirectory, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { join } from "path-ts"
 
-import { ParquetReader } from "#parquet-wrapper/index"
+import { accumulateCooccurrences, createCooccurrenceStats, streamTokenLabelRows } from "#utils/shard-stats"
 
-const SEP = ""
 const MIN_BIGRAM_COUNT = 2
 
 export interface CorpusStatsOptions {
@@ -65,35 +64,13 @@ async function discoverShards(shardsArg: string): Promise<string[]> {
 	return [shardsArg]
 }
 
-/**
- * Stream a shard's `tokens`/`labels` columns.
- *
- * `limit` stops the iteration rather than filtering afterwards, so a capped run reads only the row groups it needs.
- */
-async function* streamShardRows(
-	shardPath: string,
-	limit?: number
-): AsyncIterable<{ tokens: string[]; labels: string[] }> {
-	await using reader = await ParquetReader.openFile<{ tokens: string[]; labels: string[] }>(shardPath)
-
-	let emitted = 0
-
-	for await (const row of reader.project("tokens", "labels")) {
-		if (limit !== undefined && emitted >= limit) break
-
-		yield row
-
-		emitted++
-	}
-}
-
 export async function buildCorpusStats(args: CorpusStatsOptions): Promise<void> {
 	const shardPaths = await discoverShards(args.shardsArg)
 
 	console.error(`Discovered ${shardPaths.length} parquet shard(s)`)
 
-	const tokenStats = new Map<string, Map<string, number>>()
-	const bigramStats = new Map<string, Map<string, number>>()
+	const stats = createCooccurrenceStats()
+	const { tokens: tokenStats, bigrams: bigramStats } = stats
 	let totalRows = 0
 
 	for (const path of shardPaths) {
@@ -101,37 +78,12 @@ export async function buildCorpusStats(args: CorpusStatsOptions): Promise<void> 
 
 		const before = totalRows
 
-		for await (const { tokens, labels } of streamShardRows(path, args.limitPerShard)) {
+		for await (const { tokens, labels } of streamTokenLabelRows(path, args.limitPerShard)) {
 			totalRows++
 
-			if (tokens.length !== labels.length) continue
+			if (tokens.length !== labels.length) continue // skip malformed
 
-			// skip malformed
-			for (let i = 0; i < tokens.length; i++) {
-				const tk = tokens[i]!
-				const lb = labels[i]!
-				let labelMap = tokenStats.get(tk)
-
-				if (!labelMap) {
-					labelMap = new Map()
-					tokenStats.set(tk, labelMap)
-				}
-
-				labelMap.set(lb, (labelMap.get(lb) ?? 0) + 1)
-
-				if (i + 1 < tokens.length) {
-					const bigramKey = tk + SEP + tokens[i + 1]!
-					const bigramLabel = lb + SEP + labels[i + 1]!
-					let bMap = bigramStats.get(bigramKey)
-
-					if (!bMap) {
-						bMap = new Map()
-						bigramStats.set(bigramKey, bMap)
-					}
-
-					bMap.set(bigramLabel, (bMap.get(bigramLabel) ?? 0) + 1)
-				}
-			}
+			accumulateCooccurrences(stats, tokens, labels)
 		}
 
 		console.error(

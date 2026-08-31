@@ -26,11 +26,7 @@ test.describe("Demo — production functional smoke @smoke", () => {
 		const { resolved, markerCount, parsedRows } = await demo.readResult()
 		expect(parsedRows.length, "parse produced no component rows").toBeGreaterThan(0)
 		expect(resolved["placetype"], "degraded off the street tier to admin — the #955 failure mode").toBe("address_point")
-		const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
-		expect(lat, `resolved lat ${lat} should be at the White House`).toBeGreaterThan(38.85)
-		expect(lat).toBeLessThan(38.95)
-		expect(lon).toBeGreaterThan(-77.1)
-		expect(lon).toBeLessThan(-77)
+		demo.expectNear(await demo.readCoords(), { lat: 38.9, lon: -77.05 }, 0.05)
 		expect(markerCount, "no marker rendered").toBeGreaterThan(0)
 		demo.console.assertNoFailEvents()
 	})
@@ -41,11 +37,7 @@ test.describe("Demo — production functional smoke @smoke", () => {
 
 		const { resolved, markerCount } = await demo.readResult()
 		expect(resolved["placetype"], "the WOF admin cascade returned no hit — the #957/#958 failure mode").toBe("locality")
-		const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
-		expect(lat, `resolved lat ${lat} should be in Slovenia`).toBeGreaterThan(45.4)
-		expect(lat).toBeLessThan(45.7)
-		expect(lon, `resolved lon ${lon} should be in Slovenia`).toBeGreaterThan(14.2)
-		expect(lon).toBeLessThan(14.5)
+		demo.expectNear(await demo.readCoords(), { lat: 45.55, lon: 14.35 }, 0.15)
 		expect(markerCount, "no marker rendered").toBeGreaterThan(0)
 		demo.console.assertNoFailEvents()
 	})
@@ -54,18 +46,10 @@ test.describe("Demo — production functional smoke @smoke", () => {
 		await demo.goto("1012 LG Amsterdam")
 		await demo.submit()
 
-		const { resolved, markerCount } = await demo.readResult()
-		const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
+		const { markerCount } = await demo.readResult()
 
 		// The tell: NL Amsterdam is ~52.37, 4.90; the pre-v5.4.0 mis-parse landed on Amsterdam, NY (~42.94, -74.19).
-		expect(
-			lat,
-			`resolved lat ${lat} should be in the Netherlands (v5.4.0 NL postcode fix), not Amsterdam NY`
-		).toBeGreaterThan(52.2)
-
-		expect(lat).toBeLessThan(52.5)
-		expect(lon, `resolved lon ${lon} should be in the Netherlands, not the US`).toBeGreaterThan(4.7)
-		expect(lon).toBeLessThan(5.1)
+		demo.expectNear(await demo.readCoords(), { lat: 52.35, lon: 4.9 }, 0.2)
 		expect(markerCount, "no marker rendered").toBeGreaterThan(0)
 		demo.console.assertNoFailEvents()
 	})

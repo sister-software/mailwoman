@@ -8,6 +8,8 @@ import { sleep } from "#utils/sleep"
  *
  *   This lives apart from `DataSourceCache` because both that module and `PlacetypeDataSource` need
  *   it, and each already imports the other — putting it in either one closes an import cycle.
+ *
+ *   Deferred move: the retry home is `#api/retry`; this helper stays only until its callers migrate there.
  */
 
 /**

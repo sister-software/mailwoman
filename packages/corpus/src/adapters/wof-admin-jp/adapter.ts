@@ -59,7 +59,9 @@ interface PlaceRow {
  * Walk parent chain up to 6 levels, over a place table already resident in memory.
  *
  * `resolve` is the override for a parent outside the preloaded set (a chain that leaves the country); it is a point
- * query, so keeping the common case out of it is the whole point.
+ * query, so keeping the common case out of it is the whole point. The GeoJSON adapters' in-memory analogue is
+ * `buildAncestryIndex` (`#utils`); the two stay separate because this one's rows come from SQLite and a chain can leave
+ * the preloaded country set.
  */
 function chainOf(
 	byID: Map<number, PlaceRow>,

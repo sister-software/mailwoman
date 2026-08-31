@@ -258,3 +258,36 @@ export async function loadCapitalIndex(opts: {
 
 	return new CapitalIndex(parsed.entries)
 }
+
+/**
+ * The WOF shard paths that exist on disk — `explicit` when given, else the data-root convention set. The empty answer
+ * is the caller's to interpret: a drop-in exits with the named-artifact message, a probe degrades.
+ */
+export async function existingWOFShardPaths(explicit?: readonly string[]): Promise<string[]> {
+	const candidates = explicit ?? wofShardPaths()
+	const existing: string[] = []
+
+	for (const shardPath of candidates) {
+		if (await pathExists(shardPath)) {
+			existing.push(shardPath)
+		}
+	}
+
+	return existing
+}
+
+/**
+ * The admin FTS database path a command requires: the explicit flag, else `$MAILWOMAN_WOF_DB`. Throws naming the build
+ * command when neither is set.
+ */
+export async function requireWOFPath(explicit?: string): Promise<string> {
+	const resolved = explicit ?? $public.MAILWOMAN_WOF_DB
+
+	if (!resolved) {
+		throw new Error(
+			"No WOF database configured. Pass --resolve-db or set $MAILWOMAN_WOF_DB (build one with `mailwoman gazetteer build fts`)."
+		)
+	}
+
+	return resolved
+}

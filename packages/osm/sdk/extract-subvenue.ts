@@ -58,13 +58,17 @@
  */
 
 import { openWriteStream } from "@mailwoman/core/fs/streams"
-import { tryParsingJSON } from "@mailwoman/core/objects"
-import { spawnProcess } from "@mailwoman/core/process"
+import { ogr2ogrGeoJSONSeq } from "@mailwoman/core/utils"
 import { once } from "@mailwoman/core/utils/events"
-import { TextSpliterator } from "spliterator"
 
 import { representativePoint } from "#sdk/representative-point"
-import { type PromotedKeysByLayer, tagAlias, tagSelectExpr } from "#sdk/tag-columns"
+import {
+	assertSafeTagRules,
+	distinctTagKeys,
+	type PromotedKeysByLayer,
+	tagAlias,
+	tagSelectExpr,
+} from "#sdk/tag-columns"
 
 /**
  * Which side of the containment relation a matched feature sits on.
@@ -160,48 +164,11 @@ export const PROMOTED_KEYS_BY_LAYER: PromotedKeysByLayer = {
 }
 
 /**
- * OSM tag key/value shape: letters, digits, underscore, colon, dot, hyphen. {@link buildSubVenueSQL} interpolates rule
- * keys/values directly into an OGRSQL string and `rules` is a public, caller-suppliable parameter, so every token is
- * checked against this allowlist first — same guard, same reasoning as `extract-poi.ts`'s `SAFE_TAG_TOKEN`. A hostile
- * value such as `a' OR 1=1 --` would otherwise close the `'...'` literal early and inject arbitrary OGRSQL.
- */
-const SAFE_TAG_TOKEN = /^[A-Za-z0-9_:.-]+$/
-
-/**
- * Throws if any rule carries a key or value outside {@link SAFE_TAG_TOKEN}.
- */
-function assertSafeTagRules(rules: readonly SubVenueTagRule[]): void {
-	for (const rule of rules) {
-		for (const [key, value] of rule.all) {
-			for (const [kind, token] of [
-				["key", key],
-				["value", value],
-			] as const) {
-				if (!SAFE_TAG_TOKEN.test(token)) {
-					throw new Error(
-						`buildSubVenueSQL: rule ${kind} ${JSON.stringify(token)} (designator ${JSON.stringify(rule.designatorID)}) ` +
-							`contains characters outside the OSM tag-token allowlist ${SAFE_TAG_TOKEN} — refusing to interpolate it ` +
-							`into OGRSQL`
-					)
-				}
-			}
-		}
-	}
-}
-
-/**
- * Distinct tag keys referenced across a rule table's `all` conjunctions, in first-seen order.
+ * Distinct tag keys referenced across a rule table's `all` conjunctions, in first-seen order — the shared
+ * {@link distinctTagKeys}, re-exported under this module's established name.
  */
 export function distinctSubVenueTagKeys(rules: readonly SubVenueTagRule[]): string[] {
-	const seen = new Set<string>()
-
-	for (const rule of rules) {
-		for (const [key] of rule.all) {
-			seen.add(key)
-		}
-	}
-
-	return [...seen]
+	return distinctTagKeys(rules)
 }
 
 /**
@@ -216,7 +183,7 @@ export function distinctSubVenueTagKeys(rules: readonly SubVenueTagRule[]): stri
  * Throws via the tag-token allowlist if `rules` carries a hostile key or value.
  */
 export function buildSubVenueSQL(layer: string, rules: readonly SubVenueTagRule[] = SUBVENUE_TAG_RULES): string {
-	assertSafeTagRules(rules)
+	assertSafeTagRules(rules, "buildSubVenueSQL")
 
 	const promoted = PROMOTED_KEYS_BY_LAYER[layer] ?? new Set<string>()
 	const cols = ["name"]
@@ -483,40 +450,17 @@ async function* runSubVenueLayer(
 	const tagKeys = distinctSubVenueTagKeys(rules)
 	const sql = buildSubVenueSQL(layer, rules)
 	const args = ["-f", "GeoJSONSeq", "/vsistdout/", "-dialect", "OGRSQL", "-sql", sql, pbfPath]
-	const proc = spawnProcess("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
-	let stderr = ""
 
-	proc.stderr.on("data", (d: Buffer) => {
-		stderr += d.toString()
-	})
-
-	const exit = new Promise<number>((resolve, reject) => {
-		proc.on("error", reject)
-		proc.on("close", resolve)
-	})
-
-	for await (const raw of TextSpliterator.fromAsync(proc.stdout)) {
-		const line = raw.trim()
-
-		if (!line) continue
-
-		const feature = tryParsingJSON<{
-			properties?: Record<string, unknown>
-			geometry?: { type?: string; coordinates?: unknown }
-		}>(line)
-
-		if (!feature) continue
-
+	for await (const feature of ogr2ogrGeoJSONSeq<{
+		properties?: Record<string, unknown>
+		geometry?: { type?: string; coordinates?: unknown }
+	}>(args, `osm sub-venue (${layer})`)) {
 		const row = toSubVenueSourceRow(feature, rules, tagKeys)
 
 		if (row) {
 			yield row
 		}
 	}
-
-	const code = await exit
-
-	if (code !== 0) throw new Error(`ogr2ogr (${layer}) exited ${code}: ${stderr.slice(-800)}`)
 }
 
 /**

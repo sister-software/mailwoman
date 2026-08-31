@@ -22,11 +22,15 @@
  *   but the fix is to run this first.
  */
 
-import { buildPairIndexOverlay } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import {
+	buildPairIndexOverlay,
+	PAIR_INDEX_DELTA,
+	PAIR_INDEX_TRANSITION_BETA,
+} from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 await buildPairIndexOverlay({
 	packageDir: "neural-weights-en-in",
 	country: "in",
-	delta: 10,
-	transitionBeta: 5,
+	delta: PAIR_INDEX_DELTA,
+	transitionBeta: PAIR_INDEX_TRANSITION_BETA,
 })

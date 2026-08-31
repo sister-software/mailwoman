@@ -10,6 +10,8 @@
  *   regex set per new locale, not 50K dictionary entries.
  */
 
+import { NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us/street-suffix"
+
 import type { NormalizedInputLite, QueryShapeLike } from "#types"
 
 /**
@@ -128,34 +130,25 @@ export function scoreLandmark(input: NormalizedInputLite, _shape: QueryShapeLike
 }
 
 /**
- * Street-suffix tokens that indicate an address, not a venue name. Shared with `intent-rules.ts` — the intent kinds
- * disqualify on the same vocabulary, and a second copy would drift.
+ * Split on whitespace + commas and drop empty words — the word grammar shared with `intent-rules.ts`. Dropping empties
+ * matters: a trailing comma or doubled separator otherwise yields an empty string that inflates the word count and
+ * falsifies every-word predicates like the proper-case check below.
  */
-export const STREET_SUFFIXES: ReadonlySet<string> = new Set([
-	"st",
-	"street",
-	"ave",
-	"avenue",
-	"blvd",
-	"boulevard",
-	"rd",
-	"road",
-	"dr",
-	"drive",
-	"ln",
-	"lane",
-	"ct",
-	"court",
-	"pl",
-	"place",
-	"way",
-	"pkwy",
-	"parkway",
-	"hwy",
-	"highway",
-	"cir",
-	"circle",
-])
+export function wordsOf(text: string): string[] {
+	return text.split(/[\s,]+/).filter((word) => word.length > 0)
+}
+
+/**
+ * True when a word is USPS street-suffix vocabulary that unambiguously signals an address — the full Pub-28 table via
+ * `@mailwoman/codex`, minus its curated name-prone canonicals (PARK, FIELD, HILL, LAKE, …). Those double as ordinary
+ * proper-name heads ("Wrigley Field", "Menlo Park"), and disqualifying on them would reject the very venue and place
+ * names the rules below exist to capture. Shared with `intent-rules.ts` so both gates read one definition.
+ */
+export function isDisqualifyingStreetSuffix(word: string): boolean {
+	const canonical = US_STREET_SUFFIX_LOOKUP.get(word.trim().toLowerCase())
+
+	return canonical !== undefined && !NAME_PRONE_US_SUFFIXES.has(canonical)
+}
 
 /**
  * `landmark` rule (venue/named-place variant): short capitalized input with no street suffixes, no postcode hits, and
@@ -181,11 +174,11 @@ export function scoreVenueLandmark(input: NormalizedInputLite, shape: QueryShape
 
 	if (segCount > 2) return 0
 
-	// Reject if any word is a street suffix.
-	const words = text.split(/[\s,]+/)
+	// Reject if any word is an unambiguous street suffix.
+	const words = wordsOf(text)
 
 	for (const w of words) {
-		if (STREET_SUFFIXES.has(w.toLowerCase())) return 0
+		if (isDisqualifyingStreetSuffix(w)) return 0
 	}
 
 	// Reject if the first token is a pure number (house-number-leading pattern).

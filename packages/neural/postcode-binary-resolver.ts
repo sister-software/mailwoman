@@ -35,8 +35,32 @@ const MAGIC = 0x31_42_43_50
  * CountryIdx(1) + latQ(2) + lonQ(2)
  */
 const REC_TAIL = 5
-const LAT_Q = 32_767 / 90
-const LON_Q = 32_767 / 180
+
+/**
+ * Latitude quantization scale — `latQ = round(lat / 90 × 32767)`, giving ~300 m resolution. The single home for the
+ * PCB1/PFX1 grid: `postcode-prefix-index.ts` imports these so the two formats decode coordinates identically.
+ */
+export const LAT_Q = 32_767 / 90
+
+/**
+ * Longitude quantization scale — the longitude half of the PCB1/PFX1 grid; see {@link LAT_Q}.
+ */
+export const LON_Q = 32_767 / 180
+
+/**
+ * Quantize a coordinate onto the i16 grid, clamped to the representable range so an out-of-range input can never
+ * overflow the record's i16 write.
+ */
+export function quantizeCoordinate(value: number, scale: number): number {
+	return Math.max(-32_767, Math.min(32_767, Math.round(value * scale)))
+}
+
+/**
+ * Decode a quantized i16 back to degrees.
+ */
+export function dequantizeCoordinate(quantized: number, scale: number): number {
+	return quantized / scale
+}
 
 export interface PostcodeBinaryEntry {
 	postcode: string
@@ -106,9 +130,9 @@ export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[])
 		encodeKey(e.postcode, keyWidth, buf, o)
 		o += keyWidth
 		buf[o++] = countryIdx.get(e.country)!
-		view.setInt16(o, Math.max(-32_767, Math.min(32_767, Math.round(e.lat * LAT_Q))), true)
+		view.setInt16(o, quantizeCoordinate(e.lat, LAT_Q), true)
 		o += 2
-		view.setInt16(o, Math.max(-32_767, Math.min(32_767, Math.round(e.lon * LON_Q))), true)
+		view.setInt16(o, quantizeCoordinate(e.lon, LON_Q), true)
 		o += 2
 	}
 
@@ -190,8 +214,8 @@ export class PostcodeBinaryResolver {
 
 			out.push({
 				country: this.#countries[this.#buf[base]!]!,
-				lat: this.#view.getInt16(base + 1, true) / LAT_Q,
-				lon: this.#view.getInt16(base + 3, true) / LON_Q,
+				lat: dequantizeCoordinate(this.#view.getInt16(base + 1, true), LAT_Q),
+				lon: dequantizeCoordinate(this.#view.getInt16(base + 3, true), LON_Q),
 			})
 		}
 
@@ -244,8 +268,8 @@ export class PostcodeBinaryResolver {
 				if (!same) break
 				const tail = base + this.#keyWidth
 				posterior[this.#countries[this.#buf[tail]!]!] = 1 // uniform — anchorFeatureVector renormalizes
-				const lat = this.#view.getInt16(tail + 1, true) / LAT_Q
-				const lon = this.#view.getInt16(tail + 3, true) / LON_Q
+				const lat = dequantizeCoordinate(this.#view.getInt16(tail + 1, true), LAT_Q)
+				const lon = dequantizeCoordinate(this.#view.getInt16(tail + 3, true), LON_Q)
 
 				if (lat !== 0 || lon !== 0) {
 					latSum += lat

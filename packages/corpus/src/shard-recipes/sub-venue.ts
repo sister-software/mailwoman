@@ -87,6 +87,7 @@ import {
 	titleCase,
 } from "#shard-recipes/sub-venue-sources"
 import type { LocaleBaseTuple } from "#synthesizers/german"
+import { pick } from "#synthesizers/utils"
 import type { SubVenueLexiconTable } from "#tools"
 import { alignRow } from "#utils"
 
@@ -488,7 +489,7 @@ export function buildSubVenueForm(
 	if (!promoted.length) return null
 
 	if (attested.length && random() < ATTESTED_FRACTION) {
-		const text = attested[Math.floor(random() * attested.length)]!
+		const text = pick(attested, random)
 
 		return { text, form: "attested", designatorID: "attested" }
 	}
@@ -497,8 +498,8 @@ export function buildSubVenueForm(
 	const useModifier = modifierCandidates.length > 0 && random() < ENGLISH_MODIFIER_FORM_FRACTION
 
 	if (useModifier) {
-		const promotedSurface = modifierCandidates[Math.floor(random() * modifierCandidates.length)]!
-		const modifier = modifiers[Math.floor(random() * modifiers.length)]!
+		const promotedSurface = pick(modifierCandidates, random)
+		const modifier = pick(modifiers, random)
 
 		return {
 			text: `${titleCase(modifier)} ${promotedSurface.surface}`,
@@ -507,7 +508,7 @@ export function buildSubVenueForm(
 		}
 	}
 
-	const promotedSurface = promoted[Math.floor(random() * promoted.length)]!
+	const promotedSurface = pick(promoted, random)
 	const identifier = sampleIdentifier(model, promotedSurface.designatorID, random)
 
 	if (!identifier) return null
@@ -706,8 +707,8 @@ function emitPositives(
 			continue
 		}
 
-		const tuple = pools.context[Math.floor(random() * pools.context.length)]!
-		const venue = pools.venues[Math.floor(random() * pools.venues.length)]!
+		const tuple = pick(pools.context, random)
+		const venue = pick(pools.venues, random)
 
 		// A venue name that CONTAINS the sub-venue string (or vice versa) makes the two spans
 		// unresolvable — alignment claims the longer one and quarantines the other — and the row would
@@ -763,7 +764,7 @@ function emitNegatives(
 
 	while (produced < target && guard++ < target * 8) {
 		if (!available.length || !pools.context.length) break
-		const negativeClass = available[Math.floor(random() * available.length)]!
+		const negativeClass = pick(available, random)
 		const register = sampleRegister(random)
 		let groups: Group[]
 
@@ -781,8 +782,8 @@ function emitNegatives(
 						? pools.longerNames
 						: pools.unpromotedShapes
 
-			const name = pool[Math.floor(random() * pool.length)]!
-			const tuple = pools.context[Math.floor(random() * pools.context.length)]!
+			const name = pick(pool, random)
+			const tuple = pick(pools.context, random)
 
 			groups = [
 				[{ text: name, tag: "venue" }],
@@ -806,7 +807,7 @@ function emitNegatives(
 }
 
 function pickTuple(pool: readonly LocaleBaseTuple[], random: () => number): LocaleBaseTuple {
-	return pool[Math.floor(random() * pool.length)]!
+	return pick(pool, random)
 }
 
 /**

@@ -48,12 +48,94 @@ export function selectNonOverlappingMatches<T extends SpanMatch>(candidates: rea
 	const accepted: T[] = []
 
 	for (const c of ordered) {
-		if (accepted.some((a) => c.start < a.end && a.start < c.end)) continue
+		if (accepted.some((a) => spansOverlap(c, a))) continue
 
 		accepted.push(c)
 	}
 
 	return accepted
+}
+
+/**
+ * Whether two half-open char ranges intersect. Touching ranges do not overlap.
+ */
+export function spansOverlap(a: { start: number; end: number }, b: { start: number; end: number }): boolean {
+	return a.start < b.end && b.start < a.end
+}
+
+/**
+ * A shape pattern a repair pass scans the raw text with. Passes carry extra fields on their entries (postcode-repair's
+ * `kind`); {@link collectMatchesFor} hands the matched pattern back so those fields survive onto the match.
+ */
+export interface SpanPattern {
+	re: RegExp
+}
+
+/**
+ * Run a priority-ordered pattern list over the raw text and resolve the hits to a non-overlapping set ({@link
+ * selectNonOverlappingMatches}). Pattern order IS the priority (lower = more specific).
+ */
+export function collectMatchesFor<P extends SpanPattern>(
+	patterns: readonly P[],
+	text: string
+): Array<SpanMatch & { pattern: P }> {
+	const candidates: Array<SpanMatch & { pattern: P }> = []
+
+	patterns.forEach((pattern, priority) => {
+		pattern.re.lastIndex = 0
+
+		for (let m = pattern.re.exec(text); m; m = pattern.re.exec(text)) {
+			candidates.push({ start: m.index, end: m.index + m[0].length, priority, pattern })
+		}
+	})
+
+	return selectNonOverlappingMatches(candidates)
+}
+
+/**
+ * Whether `label` is the B- or I- form of `tag`.
+ */
+export function isTagLabel(label: string, tag: string): boolean {
+	return label === `B-${tag}` || label === `I-${tag}`
+}
+
+/**
+ * The mutate-and-count label writer both passes thread through their repair loop: a no-op write (same label) does not
+ * count as a change.
+ */
+export function createLabelSetter(tokens: DecoderToken[]): {
+	setLabel: (i: number, label: DecoderToken["label"]) => void
+	changeCount: () => number
+} {
+	let changed = 0
+
+	return {
+		setLabel: (i, label) => {
+			if (tokens[i]!.label !== label) {
+				tokens[i]!.label = label
+
+				changed++
+			}
+		},
+		changeCount: () => changed,
+	}
+}
+
+/**
+ * The ADD-path safety check: a span may be created only over `O` tokens and the tags in `addOverTags` — never over a
+ * confident structural label. Each pass declares its own `addOverTags` set; that set is a lever and stays with the
+ * pass.
+ */
+export function isAddSafe(
+	tokens: readonly DecoderToken[],
+	overlap: readonly number[],
+	addOverTags: ReadonlySet<string>
+): boolean {
+	return overlap.every((i) => {
+		const tag = tagOf(tokens[i]!.label)
+
+		return tag === null || addOverTags.has(tag)
+	})
 }
 
 /**

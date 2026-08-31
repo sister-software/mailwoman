@@ -23,14 +23,13 @@ import { APIClient, pluckResponseData } from "@mailwoman/core/api"
    procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
-import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
 import { sleep } from "@mailwoman/core/utils/sleep"
 import { basename, join } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
-import { isTransientStatus, readManifest, writeManifest } from "#tools/fetch/download"
+import { readManifest, streamDownload, writeManifest } from "#tools/fetch/download"
 
 /**
  * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
@@ -72,49 +71,6 @@ interface CountyEntry {
 	filename: string
 	sha256: string
 	bytes: number
-}
-
-/**
- * Stream an HTTP download to disk, returning the final HTTP status (0 on network error after retries).
- *
- * NOTE(phase1): kept local instead of the shared `downloadToFile` — this one streams each county ZIP to disk (the
- * shared util buffers via `arrayBuffer()`) and returns the HTTP status instead of throwing, which the per-county result
- * collector consumes.
- */
-async function streamDownload(
-	url: string,
-	dest: string,
-	opts: { timeoutMs: number; retries: number; retryDelayMs: number }
-): Promise<number> {
-	for (let attempt = 0; attempt <= opts.retries; attempt++) {
-		try {
-			const res = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(opts.timeoutMs) })
-
-			if (res.ok && res.body) {
-				await pipeline(Readable.fromWeb(res.body), openWriteStream(dest))
-
-				return res.status
-			}
-
-			if (attempt < opts.retries && isTransientStatus(res.status)) {
-				await sleep(opts.retryDelayMs)
-
-				continue
-			}
-
-			return res.status
-		} catch {
-			if (attempt < opts.retries) {
-				await sleep(opts.retryDelayMs)
-
-				continue
-			}
-
-			return 0
-		}
-	}
-
-	return 0
 }
 
 /**

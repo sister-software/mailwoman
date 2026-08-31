@@ -12,26 +12,10 @@ import type { MachinePreferences } from "@mailwoman/core/pipeline"
 export type { LocaleHint, LocaleTag, MachinePreferences } from "@mailwoman/core/pipeline"
 
 /**
- * Minimal `NormalizedInput` shape consumed by `detectLocale`. Compatible with `@mailwoman/normalize`'s output.
+ * The minimal input shapes consumed by `detectLocale` come from `@mailwoman/query-shape` — one declaration shared by
+ * every Stage-2.x consumer. `QueryShapeLike` stays this package's public name for its narrow read-only view.
  */
-export interface NormalizedInputLite {
-	raw: string
-	normalized: string
-	appliedLocale?: string
-}
-
-/**
- * Minimal `QueryShape` shape consumed by `detectLocale`. Compatible with `@mailwoman/query-shape`'s output.
- */
-export interface QueryShapeLike {
-	knownFormats: ReadonlyArray<{
-		format: string
-		span: { start: number; end: number }
-		confidence: number
-	}>
-	characterClass?: string
-	totalLength?: number
-}
+export type { NormalizedInputLite, QueryShapeFormatsView as QueryShapeLike } from "@mailwoman/query-shape"
 
 export interface DetectLocaleOpts {
 	/**

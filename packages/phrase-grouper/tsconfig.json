@@ -8,5 +8,15 @@
 	},
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [{ "path": "../core" }]
+	"references": [
+		{
+			"path": "../codex"
+		},
+		{
+			"path": "../core"
+		},
+		{
+			"path": "../query-shape"
+		}
+	]
 }

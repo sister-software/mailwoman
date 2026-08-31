@@ -127,6 +127,28 @@ export class DemoFixture {
 	}
 
 	/**
+	 * Parse the resolved-place "coords" row into numbers. `NaN` components mean nothing resolved.
+	 */
+	async readCoords(): Promise<{ lat: number; lon: number }> {
+		const { resolved } = await this.readResult()
+		const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
+
+		return { lat, lon }
+	}
+
+	/**
+	 * Assert a coordinate lands within `tolDeg` degrees of `expected` on both axes.
+	 */
+	expectNear(coords: { lat: number; lon: number }, expected: { lat: number; lon: number }, tolDeg: number): void {
+		const label = `resolved ${coords.lat},${coords.lon} should be within ${tolDeg}° of ${expected.lat},${expected.lon}`
+		expect(Number.isFinite(coords.lat) && Number.isFinite(coords.lon), label).toBe(true)
+		expect(coords.lat, label).toBeGreaterThan(expected.lat - tolDeg)
+		expect(coords.lat, label).toBeLessThan(expected.lat + tolDeg)
+		expect(coords.lon, label).toBeGreaterThan(expected.lon - tolDeg)
+		expect(coords.lon, label).toBeLessThan(expected.lon + tolDeg)
+	}
+
+	/**
 	 * Force Docusaurus's data-theme attribute to a specific value.
 	 */
 	async setTheme(theme: "light" | "dark"): Promise<void> {

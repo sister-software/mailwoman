@@ -13,10 +13,8 @@
  *   accuracy falling). Validate accuracy on the points that DO have `addr:street` (ground truth) first.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/objects"
-import { spawnProcess } from "@mailwoman/core/process"
+import { ogr2ogrGeoJSONSeq } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
-import { TextSpliterator } from "spliterator"
 
 /**
  * ~330m grid cell.
@@ -127,38 +125,12 @@ export async function buildStreetRecoveryIndex(pbfPath: string): Promise<StreetR
 		pbfPath,
 	]
 
-	const proc = spawnProcess("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
-	let stderr = ""
-
-	proc.stderr.on("data", (d: Buffer) => {
-		stderr += d.toString()
-	})
-
-	const exit = new Promise<number>((resolve, reject) => {
-		proc.on("error", reject)
-		proc.on("close", resolve)
-	})
-
 	const index = new StreetRecoveryIndex()
 
-	// Keep the per-line `JSON.parse` try/catch so a malformed record is tolerated (skipped), not thrown.
-	for await (const raw of TextSpliterator.fromAsync(proc.stdout)) {
-		// Strip the RFC-8142 record separator (U+001E) GDAL's GeoJSONSeq MAY prefix records with —
-		// `.trim()` does NOT remove it (not whitespace), so an RS-framed record would fail JSON.parse
-		// and be silently skipped (all of them — an empty index). The strip had degraded to the no-op
-		// `replace(/^/, "")` (CodeQL js/identity-replacement, alert #13): harmless only because GDAL
-		// defaults to newline framing.
-		const line = (raw.charCodeAt(0) === 0x1e ? raw.slice(1) : raw).trim()
-
-		if (!line) continue
-
-		const f = tryParsingJSON<{
-			properties?: { name?: string }
-			geometry?: { type?: string; coordinates?: number[][] }
-		}>(line)
-
-		if (!f) continue
-
+	for await (const f of ogr2ogrGeoJSONSeq<{
+		properties?: { name?: string }
+		geometry?: { type?: string; coordinates?: number[][] }
+	}>(args, "osm highways")) {
 		const name = f.properties?.name
 
 		if (!name || f.geometry?.type !== "LineString" || !Array.isArray(f.geometry.coordinates)) continue
@@ -167,10 +139,6 @@ export async function buildStreetRecoveryIndex(pbfPath: string): Promise<StreetR
 			index.add(name, lon, lat)
 		}
 	}
-
-	const code = await exit
-
-	if (code !== 0) throw new Error(`ogr2ogr (highways) exited ${code}: ${stderr.slice(-400)}`)
 
 	return index
 }

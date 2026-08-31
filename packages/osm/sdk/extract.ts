@@ -15,9 +15,7 @@
  *   separate, confidence-gated tier (never synthesize a number line from scattered points).
  */
 
-import { tryParsingJSON } from "@mailwoman/core/objects"
-import { spawnProcess } from "@mailwoman/core/process"
-import { TextSpliterator } from "spliterator"
+import { ogr2ogrGeoJSONSeq } from "@mailwoman/core/utils"
 
 import { representativePoint } from "#sdk/representative-point"
 
@@ -87,42 +85,17 @@ function toRecord(feature: {
  */
 async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OSMAddrRecord> {
 	const args = ["-f", "GeoJSONSeq", "/vsistdout/", "-dialect", "OGRSQL", "-sql", addrSQL(layer), pbfPath]
-	const proc = spawnProcess("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
-	let stderr = ""
 
-	proc.stderr.on("data", (d: Buffer) => {
-		stderr += d.toString()
-	})
-
-	const exit = new Promise<number>((resolve, reject) => {
-		proc.on("error", reject)
-		proc.on("close", resolve)
-	})
-
-	// Per-line `tryParsingJSON` so a malformed record is tolerated (skipped), not thrown.
-	for await (const raw of TextSpliterator.fromAsync(proc.stdout)) {
-		// GeoJSONSeq is newline-delimited; some GDAL builds prefix each record with an RS (0x1e).
-		const line = raw.replace(/^/, "").trim()
-
-		if (!line) continue
-
-		const feature = tryParsingJSON<{
-			properties?: Record<string, unknown>
-			geometry?: { type?: string; coordinates?: unknown }
-		}>(line)
-
-		if (!feature) continue
-
+	for await (const feature of ogr2ogrGeoJSONSeq<{
+		properties?: Record<string, unknown>
+		geometry?: { type?: string; coordinates?: unknown }
+	}>(args, `osm addresses (${layer})`)) {
 		const rec = toRecord(feature)
 
 		if (rec) {
 			yield rec
 		}
 	}
-
-	const code = await exit
-
-	if (code !== 0) throw new Error(`ogr2ogr (${layer}) exited ${code}: ${stderr.slice(-800)}`)
 }
 
 /**

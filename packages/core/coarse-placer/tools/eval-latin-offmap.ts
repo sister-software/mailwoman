@@ -16,9 +16,9 @@
 import { basename, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
-import { CoarsePlacer, type CoarsePlacerMeta, type CoarsePrediction } from "#coarse-placer/coarse-placer"
-import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
-import { dataRootPath, repoRootPath, formatPercent } from "#utils"
+import { CoarsePlacer, isOffMapHandled } from "#coarse-placer/coarse-placer"
+import { defaultDataDir, defaultModelDir } from "#coarse-placer/tools/paths"
+import { formatPercent } from "#utils"
 
 /**
  * Samples a bucket needs before its off-map rate is reported rather than folded into the tail.
@@ -62,41 +62,16 @@ export interface EvalLatinOffmapResult {
  * Coarse-placer Latin off-map handling eval — see the module doc. Emits the report to stdout.
  */
 export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Promise<EvalLatinOffmapResult> {
-	const modelDir = resolvePathBuilder(options.model || dataRootPath("coarse-placer", "model"))
+	const modelDir = resolvePathBuilder(options.model || defaultModelDir())
 	const abstain = options.abstain ?? 0.5
-	const dataDir = options.data || repoRootPath("data", "coarse-placer")
+	const dataDir = options.data || defaultDataDir()
 
-	const meta = await readLocalJSONFile<CoarsePlacerMeta>(resolvePath(modelDir, "meta.json"))
-	const buf = await readLocalBuffer(resolvePath(modelDir, "weights.bin"))
-	const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
-	let weights: Float32Array
-
-	if (meta.quantization === "int8-per-row") {
-		const int8 = new Int8Array(ab)
-		const C = meta.classes.length
-		const dim = meta.featureDim
-		const scales = meta.scales!
-		weights = new Float32Array(C * dim)
-
-		for (let c = 0; c < C; c++) {
-			const s = scales[c]!
-			const base = c * dim
-
-			for (let i = 0; i < dim; i++) {
-				weights[base + i] = int8[base + i]! * s
-			}
-		}
-	} else {
-		weights = new Float32Array(ab)
-	}
-
-	const placer = new CoarsePlacer({ ...meta, weights }, { abstainBelow: abstain })
+	const placer = await CoarsePlacer.fromArtifactDir(resolvePath(modelDir), { abstainBelow: abstain })
 
 	const rows = await Array.fromAsync(
 		JSONSpliterator.fromAsync<OffMapRow>(resolvePath(dataDir, "test-latin-offmap.jsonl"))
 	)
 
-	const handled = (p: CoarsePrediction): boolean => p.abstained || p.country === "OTHER"
 	const by: Record<string, { n: number; ok: number }> = {} // key → {n, ok}
 	const missTo: Record<string, number> = {} // wrong country → count
 	const bump = (k: string): { n: number; ok: number } => (by[k] ??= { n: 0, ok: 0 })
@@ -106,7 +81,7 @@ export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Pro
 
 	for (const r of rows) {
 		const p = placer.predict(r.raw)
-		const h = handled(p)
+		const h = isOffMapHandled(p)
 
 		n++
 

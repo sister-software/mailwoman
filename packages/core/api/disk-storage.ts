@@ -26,6 +26,7 @@
 import { type AxiosStorage, buildStorage, type NotEmptyStorageValue, type StorageValue } from "axios-cache-interceptor"
 import { join, type PathBuilderLike } from "path-ts"
 
+import { errorMessage } from "#errors/schema"
 import { readLocalTextFile } from "#fs/readers"
 import { makeDirectories, movePath, removePath, removePathIfPresent, writeLocalFile } from "#fs/writers"
 import { ConsoleLogger, type IRuntimeLogger } from "#logging/index"
@@ -137,7 +138,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 
 			return JSON.stringify(value)
 		} catch (error) {
-			logger.warn(`Refusing to cache ${key}: ${error instanceof Error ? error.message : String(error)}`)
+			logger.warn(`Refusing to cache ${key}: ${errorMessage(error)}`)
 
 			return null
 		}
@@ -214,11 +215,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 				// a `0o500` parent, which also showed three concurrent gets yielding one rejection and two
 				// successes for the SAME response), `EMFILE` under a concurrent crawl, a rename race, a
 				// transient I/O error. Not being able to cache is a cache miss.
-				logger.warn(
-					`Could not persist ${key} (continuing as a cache miss): ${
-						error instanceof Error ? error.message : String(error)
-					}`
-				)
+				logger.warn(`Could not persist ${key} (continuing as a cache miss): ${errorMessage(error)}`)
 
 				// Best-effort cleanup of the temp file, if the failure came after it was created.
 				await removePath(buildingPath).catch(() => undefined)

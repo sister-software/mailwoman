@@ -182,7 +182,8 @@ export function matchPOISubject(
 
 		const subject = trimmed.slice(0, separator.index).trim()
 
-		// Subjects only grow as the scan moves right — once over budget, later splits are too.
+		// Subjects only grow as the scan moves right — once over budget, later splits are too. Whitespace-only
+		// split, not `wordsOf`: a comma inside a subject is real content here, not a separator to erase.
 		if (subject.split(/\s+/).length > MAX_SUBJECT_TOKENS) break
 
 		const hits = lookup(subject, locale)

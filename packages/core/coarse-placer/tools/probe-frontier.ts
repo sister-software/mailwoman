@@ -23,9 +23,10 @@ import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
 import { CoarsePlacer, type CoarsePlacerMeta } from "#coarse-placer/coarse-placer"
+import { shippedModelDir } from "#coarse-placer/tools/paths"
 import { readLocalJSONFile } from "#fs/readers"
 import { writeLocalTextFile } from "#fs/writers"
-import { dataRootPath, corePackagePath, median } from "#utils"
+import { dataRootPath, formatPercent, median } from "#utils"
 
 /**
  * False-positive rate above which the in-class frontier is judged to have degraded.
@@ -122,7 +123,8 @@ export async function probeFrontier(
 	options: ProbeFrontierOptions = {},
 	report?: (line: string) => void
 ): Promise<ProbeFrontierResult> {
-	const modelDir = options.model || corePackagePath("data", "coarse-placer")
+	// Deliberately the shipped bundle, not defaultModelDir(): the probe grades what the runtime loads.
+	const modelDir = options.model || shippedModelDir()
 	const maxN = options.n ?? 2000
 
 	// `@mailwoman/codex` is a devDependency of core (operator tooling) — lazy-imported inside the fn.
@@ -192,9 +194,6 @@ export async function probeFrontier(
 	const inClass = rows.reduce((t, r) => t + r.inClass, 0)
 	const top1 = rows.reduce((t, r) => t + r.top1Correct, 0)
 	const inClassCorrectProbs = rows.flatMap((r) => r.probs)
-	// NOTE(phase4b): `pct` stays local — core's formatPercent has no Math.max(1, b) zero-denominator
-	// guard (it renders "—") and appends its own "%", where this report composes the sign itself.
-	const pct = (a: number, b: number): string => ((100 * a) / Math.max(1, b)).toFixed(1)
 	const inClassFalseRate = 1 - inClass / N
 	const top1OfInClass = rows.reduce((t, r) => t + (classSet.has(r.cc) ? r.top1Correct : 0), 0)
 	const inClassN = rows.reduce((t, r) => t + r.inClass, 0)
@@ -214,9 +213,9 @@ export async function probeFrontier(
 		`_Model: \`${modelDir}\` (${meta.classes.length} classes). ${N} \`City, Country\` queries (shortest`,
 		`first) across ${RECOVERABLE.length} placer-recoverable countries. prob_1 vs HARD_PLACE_COUNTRY_MIN_CONF = 0.9._`,
 		"",
-		`- in_class_set: **${pct(inClass, N)}%** (${inClass}/${N}) — false rate **${(100 * inClassFalseRate).toFixed(1)}%**`,
-		`- top1_correct (all): **${pct(top1, N)}%** (${top1}/${N})`,
-		`- top1_correct (in-set only): **${pct(top1OfInClass, inClassN)}%** (${top1OfInClass}/${inClassN})`,
+		`- in_class_set: **${formatPercent(inClass, N, 1, { zero: "clamp" })}** (${inClass}/${N}) — false rate **${(100 * inClassFalseRate).toFixed(1)}%**`,
+		`- top1_correct (all): **${formatPercent(top1, N, 1, { zero: "clamp" })}** (${top1}/${N})`,
+		`- top1_correct (in-set only): **${formatPercent(top1OfInClass, inClassN, 1, { zero: "clamp" })}** (${top1OfInClass}/${inClassN})`,
 		`- median prob_1 (in-set correct): **${(median(inClassCorrectProbs) ?? 0).toFixed(3)}**`,
 		"",
 		`## Branch: ${branch}`,
@@ -229,7 +228,7 @@ export async function probeFrontier(
 
 	for (const r of rows) {
 		L.push(
-			`| ${ISO2_TO_NAME.get(r.cc) ?? r.cc} | ${r.cc} | ${classSet.has(r.cc) ? "✓" : "—"} | ${r.n} | ${pct(r.top1Correct, r.n)}% | ${(median(r.probs) ?? 0).toFixed(2)} |`
+			`| ${ISO2_TO_NAME.get(r.cc) ?? r.cc} | ${r.cc} | ${classSet.has(r.cc) ? "✓" : "—"} | ${r.n} | ${formatPercent(r.top1Correct, r.n, 1, { zero: "clamp" })} | ${(median(r.probs) ?? 0).toFixed(2)} |`
 		)
 	}
 

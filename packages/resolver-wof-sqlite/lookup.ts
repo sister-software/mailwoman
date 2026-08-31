@@ -40,7 +40,7 @@ import { normalizePlacetypes, sanitizeFTSQuery } from "#fts-query"
 import { cfNormalize, softNameScore } from "#name-score"
 import { encyclopedicClauses } from "#place-importance-schema"
 import type { WOFPostalCityAliasLookup } from "#postal-city-alias-lookup"
-import { DEFAULT_WEIGHTS, type RankingWeights } from "#ranking-weights"
+import { DEFAULT_WEIGHTS, populationScaleTerm, type RankingWeights } from "#ranking-weights"
 import type { WOFDatabase } from "#schema"
 import { fetchSearchRows, type RawSearchRow } from "#search-fetch"
 import {
@@ -751,7 +751,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 				: wofAliases
 
 			const sName = softNameScore(query.text, cand.name, aliases)
-			const sPop = cand.population && cand.population > 0 ? Math.min(1, Math.log10(1 + cand.population) / 6) : 0
+			const sPop = populationScaleTerm(cand.population, this.#weights)
 			scored.push({ ...cand, score: w.pc * sPc + w.name * sName + w.pop * sPop, exact: sName >= 1 })
 		}
 

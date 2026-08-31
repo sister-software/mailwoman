@@ -41,7 +41,14 @@ import { SubwordExplorer } from "#components/SubwordExplorer/SubwordExplorer"
 import { TimingPanel } from "#components/TimingPanel/TimingPanel"
 import { TreeView } from "#components/TreeView/TreeView"
 import { useDemoEmbed } from "#contexts/DemoEmbed"
-import { DEFAULT_ADDRESS, resolveDualRoles, runCascade, runClassifyStage } from "#shared/demo-helpers"
+import {
+	DEFAULT_ADDRESS,
+	parseStageLabelsFor,
+	projectCascadeHits,
+	resolveDualRoles,
+	runCascade,
+	runClassifyStage,
+} from "#shared/demo-helpers"
 
 import styles from "./styles.module.css"
 
@@ -79,9 +86,7 @@ function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels }
 	} = ctx
 
 	const runtime = useMemo<PipelineRuntime>(() => {
-		const parseStageLabels = lookup
-			? ["Analyzing input shape…", "Running neural classifier…", "Resolving in gazetteer…"]
-			: ["Analyzing input shape…", "Running neural classifier…"]
+		const parseStageLabels = parseStageLabelsFor(lookup != null)
 
 		return {
 			ready,
@@ -121,14 +126,7 @@ function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels }
 				const cascadeHits = await runCascade(lookup, tree, input)
 				const tResolve = performance.now()
 
-				const candidates: ResolvedPlaceView[] = cascadeHits.map((c) => ({
-					id: c.id,
-					name: c.name,
-					placetype: c.placetype,
-					lat: c.lat,
-					lon: c.lon,
-					score: c.score,
-				}))
+				const candidates: ResolvedPlaceView[] = projectCascadeHits(cascadeHits)
 
 				// Dual-role (#402), shared with the `/demo` map path.
 				const dualRoles = await resolveDualRoles(lookup, candidates[0])

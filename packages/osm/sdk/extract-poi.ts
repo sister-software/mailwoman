@@ -45,12 +45,16 @@
  *   before the rows reach `buildPOIDatabase`.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/objects"
-import { spawnProcess } from "@mailwoman/core/process"
-import { TextSpliterator } from "spliterator"
+import { ogr2ogrGeoJSONSeq } from "@mailwoman/core/utils"
 
 import { representativePoint } from "#sdk/representative-point"
-import { type PromotedKeysByLayer, tagAlias, tagSelectExpr } from "#sdk/tag-columns"
+import {
+	assertSafeTagRules,
+	distinctTagKeys,
+	type PromotedKeysByLayer,
+	tagAlias,
+	tagSelectExpr,
+} from "#sdk/tag-columns"
 
 /**
  * One Overture Places row, decoded to the flat shape `buildPOIDatabase`'s injected-rows seam consumes. Structurally
@@ -173,55 +177,11 @@ const PROMOTED_KEYS_BY_LAYER: PromotedKeysByLayer = {
 }
 
 /**
- * Distinct tag keys referenced across a rule table's `all` conjunctions, in first-seen order, `name` excluded (it's
- * always selected separately as the row's display name, never a rule predicate here).
+ * The shared {@link distinctTagKeys} minus `name` — always selected separately as the row's display name, never a rule
+ * predicate here.
  */
-function distinctTagKeys(rules: readonly OSMPOITagRule[]): string[] {
-	const seen = new Set<string>()
-
-	for (const rule of rules) {
-		for (const [key] of rule.all) {
-			if (key !== "name") {
-				seen.add(key)
-			}
-		}
-	}
-
-	return [...seen]
-}
-
-/**
- * OSM tag key/value shape: letters, digits, underscore, colon, dot, hyphen. `buildTelecomPOISQL` interpolates rule
- * keys/values directly into an OGRSQL string, and `rules` is a public, tested parameter (not just the hardcoded
- * {@link TELECOM_TAG_RULES} table) — so every key/value is checked against this allowlist before any of it reaches a
- * template string. A hostile value such as `a' OR 1=1 --` would otherwise close the `'...'` literal early and inject
- * arbitrary OGRSQL. Rejecting outright is a stronger, simpler guarantee than trying to enumerate escape rules for
- * GDAL's OGRSQL dialect.
- */
-const SAFE_TAG_TOKEN = /^[A-Za-z0-9_:.-]+$/
-
-/**
- * Throws if any rule in `rules` has a key or value outside {@link SAFE_TAG_TOKEN} — called at the top of
- * {@link buildTelecomPOISQL}, so both it and {@link extractOSMPOIs} (which builds its SQL through it) refuse a hostile
- * rule table before any string concatenation happens.
- */
-function assertSafeTagRules(rules: readonly OSMPOITagRule[]): void {
-	for (const rule of rules) {
-		for (const [key, value] of rule.all) {
-			for (const [kind, token] of [
-				["key", key],
-				["value", value],
-			] as const) {
-				if (!SAFE_TAG_TOKEN.test(token)) {
-					throw new Error(
-						`buildTelecomPOISQL: rule ${kind} ${JSON.stringify(token)} (category ${JSON.stringify(rule.categoryID)}) ` +
-							`contains characters outside the OSM tag-token allowlist ${SAFE_TAG_TOKEN} — refusing to interpolate ` +
-							`it into OGRSQL`
-					)
-				}
-			}
-		}
-	}
+function distinctPredicateKeys(rules: readonly OSMPOITagRule[]): string[] {
+	return distinctTagKeys(rules).filter((key) => key !== "name")
 }
 
 /**
@@ -236,9 +196,9 @@ function assertSafeTagRules(rules: readonly OSMPOITagRule[]): void {
  * hardcoded default table's shape.
  */
 export function buildTelecomPOISQL(layer: string, rules: readonly OSMPOITagRule[] = TELECOM_TAG_RULES): string {
-	assertSafeTagRules(rules)
+	assertSafeTagRules(rules, "buildTelecomPOISQL")
 
-	const tagCols = distinctTagKeys(rules).map(
+	const tagCols = distinctPredicateKeys(rules).map(
 		(key) => `${tagSelectExpr(PROMOTED_KEYS_BY_LAYER, layer, key)} AS ${tagAlias(key)}`
 	)
 
@@ -321,43 +281,20 @@ async function* runPOILayer(
 	layer: string,
 	rules: readonly OSMPOITagRule[]
 ): AsyncGenerator<POISourceRow> {
-	const tagKeys = distinctTagKeys(rules)
+	const tagKeys = distinctPredicateKeys(rules)
 	const sql = buildTelecomPOISQL(layer, rules)
 	const args = ["-f", "GeoJSONSeq", "/vsistdout/", "-dialect", "OGRSQL", "-sql", sql, pbfPath]
-	const proc = spawnProcess("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
-	let stderr = ""
 
-	proc.stderr.on("data", (d: Buffer) => {
-		stderr += d.toString()
-	})
-
-	const exit = new Promise<number>((resolve, reject) => {
-		proc.on("error", reject)
-		proc.on("close", resolve)
-	})
-
-	for await (const raw of TextSpliterator.fromAsync(proc.stdout)) {
-		const line = raw.trim()
-
-		if (!line) continue
-
-		const feature = tryParsingJSON<{
-			properties?: Record<string, unknown>
-			geometry?: { type?: string; coordinates?: unknown }
-		}>(line)
-
-		if (!feature) continue
-
+	for await (const feature of ogr2ogrGeoJSONSeq<{
+		properties?: Record<string, unknown>
+		geometry?: { type?: string; coordinates?: unknown }
+	}>(args, `osm poi (${layer})`)) {
 		const row = toPOISourceRow(feature, rules, tagKeys)
 
 		if (row) {
 			yield row
 		}
 	}
-
-	const code = await exit
-
-	if (code !== 0) throw new Error(`ogr2ogr (${layer}) exited ${code}: ${stderr.slice(-800)}`)
 }
 
 /**

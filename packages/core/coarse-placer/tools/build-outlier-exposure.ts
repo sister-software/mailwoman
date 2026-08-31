@@ -19,9 +19,11 @@
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
-import { hashFNV1a } from "#coarse-placer/tools/fnv-hash"
+import { scriptOf } from "#coarse-placer/featurize"
+import { hashFNV1a } from "#coarse-placer/fnv-hash"
+import { defaultDataDir } from "#coarse-placer/tools/paths"
 import { appendLocalTextFile } from "#fs/writers"
-import { dataRootPath, repoRootPath } from "#utils"
+import { dataRootPath } from "#utils"
 
 /**
  * Share of a bucket that must be off-map before it is treated as an exposure case rather than noise.
@@ -107,15 +109,9 @@ function isOffMapScript(s: string): boolean {
 
 		// punct/space/digits
 		total++
-		const latin = (cp >= 0x41 && cp <= 0x5a) || (cp >= 0x61 && cp <= 0x7a) || (cp >= 0xc0 && cp <= 0x2_4f)
+		const script = scriptOf(cp)
 
-		const cjk =
-			(cp >= 0x30_40 && cp <= 0x30_ff) ||
-			(cp >= 0x4e_00 && cp <= 0x9f_ff) ||
-			(cp >= 0xac_00 && cp <= 0xd7_af) ||
-			(cp >= 0x34_00 && cp <= 0x4d_bf)
-
-		if (!latin && !cjk && cp > 0x2_ff) {
+		if (script !== "latin" && script !== "cjk" && cp > 0x2_ff) {
 			off++
 		}
 	}
@@ -161,7 +157,7 @@ export async function buildOutlierExposure(
 ): Promise<BuildOutlierExposureResult> {
 	const PER = options.perLang ?? 2500
 	const wofPath = options.wof || dataRootPath("wof", "admin-global-priority.db")
-	const dataDir = options.data || repoRootPath("data", "coarse-placer")
+	const dataDir = options.data || defaultDataDir()
 
 	using db = new DatabaseClient<WOFNameRead>(wofPath, { readOnly: true })
 	const pool: string[] = []

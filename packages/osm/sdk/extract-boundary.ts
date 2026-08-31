@@ -20,10 +20,8 @@
  *   the driver happened to emit first — indistinguishable downstream from the region the caller meant.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/objects"
-import { spawnProcess } from "@mailwoman/core/process"
+import { ogr2ogrGeoJSONSeq } from "@mailwoman/core/utils"
 import type { ParsedGeometry } from "@mailwoman/spatial"
-import { TextSpliterator } from "spliterator"
 
 /**
  * The OSM driver layer administrative boundaries land in. Relations and closed ways both surface here.
@@ -98,31 +96,13 @@ export function buildBoundarySQL(query: OSMBoundaryQuery): string {
 export async function extractOSMBoundary(pbfPath: string, query: OSMBoundaryQuery): Promise<OSMBoundary> {
 	const sql = buildBoundarySQL(query)
 	const args = ["-f", "GeoJSONSeq", "/vsistdout/", "-dialect", "OGRSQL", "-sql", sql, pbfPath]
-	const proc = spawnProcess("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
-	let stderr = ""
-
-	proc.stderr.on("data", (d: Buffer) => {
-		stderr += d.toString()
-	})
-
-	const exit = new Promise<number>((resolve, reject) => {
-		proc.on("error", reject)
-		proc.on("close", resolve)
-	})
-
 	const matches: OSMBoundary[] = []
 
-	for await (const raw of TextSpliterator.fromAsync(proc.stdout)) {
-		const line = raw.trim()
-
-		if (!line) continue
-
-		const feature = tryParsingJSON<{
-			properties?: Record<string, unknown>
-			geometry?: ParsedGeometry
-		}>(line)
-
-		if (!feature?.geometry) continue
+	for await (const feature of ogr2ogrGeoJSONSeq<{
+		properties?: Record<string, unknown>
+		geometry?: ParsedGeometry
+	}>(args, "osm boundary")) {
+		if (!feature.geometry) continue
 
 		matches.push({
 			...query,
@@ -130,10 +110,6 @@ export async function extractOSMBoundary(pbfPath: string, query: OSMBoundaryQuer
 			osmID: String(feature.properties?.["osm_id"] ?? ""),
 		})
 	}
-
-	const code = await exit
-
-	if (code !== 0) throw new Error(`ogr2ogr (boundary) exited ${code}: ${stderr.slice(-800)}`)
 
 	if (matches.length !== 1) {
 		throw new Error(

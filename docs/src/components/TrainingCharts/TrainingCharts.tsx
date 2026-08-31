@@ -17,10 +17,10 @@
  */
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
+import { LoadingIndicator } from "@mailwoman/react"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
-import { LoadingIndicator } from "../LoadingIndicator/LoadingIndicator.tsx"
-
+import "@mailwoman/react/styles.css"
 import styles from "./styles.module.css"
 
 // ── Constants ───────────────────────────────────────────────────────────

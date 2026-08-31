@@ -19,11 +19,12 @@
  *   `useDemoEmbed()`. Spec: docs/superpowers/specs/2026-07-03-parse-trace-model-visualizer-design.md.
  */
 
+import { softmax } from "@mailwoman/neural/viterbi"
 import React, { useMemo, useState } from "react"
 
 import type { ParseTraceLike } from "#shared/resources"
 
-import { changedIndices, emissionColor, isMasked, matrixAbsMax, pieceDisplay, softmaxRow, stripBIO } from "./helpers.ts"
+import { changedIndices, emissionColor, isMasked, matrixAbsMax, pieceDisplay, stripBIO } from "./helpers.ts"
 
 import styles from "./styles.module.css"
 
@@ -46,7 +47,12 @@ export const ModelVisualizer = React.memo(function ModelVisualizer({ trace }: Mo
 	const [matrixMode, setMatrixMode] = useState<"logits" | "emissions">("emissions")
 	const matrix = matrixMode === "logits" ? trace.logits : trace.emissions
 	const absMax = useMemo(() => matrixAbsMax(matrix), [matrix])
-	const localeProbs = useMemo(() => (trace.localeLogits ? softmaxRow(trace.localeLogits) : null), [trace.localeLogits])
+
+	const localeProbs = useMemo(
+		() => (trace.localeLogits?.length ? softmax(trace.localeLogits) : null),
+		[trace.localeLogits]
+	)
+
 	// Stage-prefix rule: the model may emit fewer logits than the card's label list. Only the
 	// emittable prefix gets heatmap rows.
 	const emissionWidth = matrix[0]?.length ?? 0

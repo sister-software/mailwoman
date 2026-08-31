@@ -322,6 +322,7 @@ import {
 } from "#pair-prior-windows"
 import type { PlacetypeCensusLike } from "#placetype-census"
 import { collectMatches } from "#postcode-repair"
+import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
 import type { TokenLike } from "#query-shape-prior"
 
 /**
@@ -838,12 +839,8 @@ export function buildPlacetypePairPriors(
 ): PlacetypePairPriorResult {
 	const T = pieces.length
 	const L = labels.length
-	const matrix: number[][] = []
+	const matrix = emptyPriorMatrix(T, L)
 	const transitionAdjustments: TransitionAdjustment[] = []
-
-	for (let t = 0; t < T; t++) {
-		matrix.push(new Array<number>(L).fill(0))
-	}
 
 	if (!opts?.index) return { matrix, transitionAdjustments }
 
@@ -860,11 +857,7 @@ export function buildPlacetypePairPriors(
 	// here, above every early return that still probes, so the three probe paths share one recorder and one dedupe set.
 	const recordCensusParent = makeCensusParentRecorder(opts.census, opts.probeTrace)
 
-	const labelToCol = new Map<string, number>()
-
-	for (let k = 0; k < labels.length; k++) {
-		labelToCol.set(labels[k]!, k)
-	}
+	const labelToCol = labelColumnIndex(labels)
 
 	const wordGroups = groupPiecesIntoWords(pieces)
 	const nonEmptyGroups = wordGroups.filter((g) => g.fstToken !== "")

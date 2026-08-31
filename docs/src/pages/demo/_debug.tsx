@@ -4,35 +4,15 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { ControlPosition, LngLat, MapGeoJSONFeature, MapLayerMouseEvent, MapLibreMap, Point } from "maplibre-gl"
+import type { LngLat, MapGeoJSONFeature, MapLayerMouseEvent, MapLibreMap, Point } from "maplibre-gl"
 
 import "maplibre-gl/dist/maplibre-gl.css"
 import { Fragment, memo, useEffect, useState } from "react"
 import { createPortal } from "react-dom"
-import type { IControl, MapInstance } from "react-map-gl/maplibre"
+
+import { DebugControlBase } from "../../components/DashboardMap/map-debug.ts"
 
 import styles from "./_debug.module.css"
-
-class DebugControlBase implements IControl {
-	public readonly container: HTMLElement
-
-	constructor() {
-		this.container = document.createElement("div")
-		this.container.classList.add(styles.featureTargets)
-	}
-
-	public onAdd(_map: MapInstance): HTMLElement {
-		return this.container
-	}
-
-	public onRemove(_map: MapInstance): void {
-		this.container.remove()
-	}
-
-	public getDefaultPosition(): ControlPosition {
-		return "bottom-right"
-	}
-}
 
 export function useMapPointerInfo(map: MapLibreMap | null) {
 	const [_pointerPosition, setPointerPosition] = useState<Point>()
@@ -105,7 +85,9 @@ export interface DebugControlProps {
  * Demo-page debug panel — the same idea as the dashboard's, wired to the demo's own runtime.
  */
 export const DebugControl: React.FC<DebugControlProps> = memo(({ map }) => {
-	const [debugControl] = useState<DebugControlBase>(() => new DebugControlBase())
+	const [debugControl] = useState<DebugControlBase>(
+		() => new DebugControlBase({ className: styles.featureTargets, position: "bottom-right" })
+	)
 
 	useEffect(() => {
 		if (!map) return

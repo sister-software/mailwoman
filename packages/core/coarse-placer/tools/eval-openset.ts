@@ -36,11 +36,12 @@
 import { basename, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
-import type { CoarsePlacerMeta } from "#coarse-placer/coarse-placer"
+import { type CoarsePlacerMeta, readWeightsBin } from "#coarse-placer/coarse-placer"
 import { COARSE_CLASSES, featurize } from "#coarse-placer/featurize"
-import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
+import { logsumexp, softmaxInto } from "#coarse-placer/math"
+import { defaultDataDir, defaultModelDir } from "#coarse-placer/tools/paths"
+import { readLocalJSONFile } from "#fs/readers"
 import { writeLocalFile } from "#fs/writers"
-import { dataRootPath, repoRootPath } from "#utils"
 
 /**
  * Steps in the threshold sweep; finer than the reporting precision so the knee is not missed.
@@ -108,34 +109,6 @@ export interface EvalOpenSetResult {
 	markdown: string
 }
 
-function logsumexp(xs: number[]): number {
-	let m = -Infinity
-
-	for (const x of xs)
-		if (x > m) {
-			m = x
-		}
-
-	let s = 0
-
-	for (const x of xs) {
-		s += Math.exp(x - m)
-	}
-
-	return m + Math.log(s)
-}
-
-/**
- * Per-class softmax prob over ALL 12 classes.
- */
-function softmax(z: Float64Array): Float64Array {
-	const m = Math.max(...z)
-	const e = z.map((x) => Math.exp(x - m))
-	const s = e.reduce((a, b) => a + b, 0)
-
-	return e.map((x) => x / s)
-}
-
 /**
  * Invert a symmetric positive-definite matrix via Gauss-Jordan.
  */
@@ -189,20 +162,12 @@ export async function evalOpenSet(
 	options: EvalOpenSetOptions = {},
 	report?: (line: string) => void
 ): Promise<EvalOpenSetResult> {
-	const modelDir = resolvePathBuilder(options.model || dataRootPath("coarse-placer", "model"))
-	const dataDir = options.data || repoRootPath("data", "coarse-placer")
+	const modelDir = resolvePathBuilder(options.model || defaultModelDir())
+	const dataDir = options.data || defaultDataDir()
 	const fitPerClass = options.fitPerClass ?? 2000
 
 	const meta = await readLocalJSONFile<CoarsePlacerMeta>(resolvePath(modelDir, "meta.json"))
-	const weightBytes = await readLocalBuffer(resolvePath(modelDir, "weights.bin"))
-
-	// Read through the Buffer's own window: `readFileSync` serves files under 4 KiB out of a shared 8 KiB pool, so
-	// `.buffer` alone would start at the pool's origin and run its full length — the wrong floats, and 2048 of them.
-	const W = new Float32Array(
-		weightBytes.buffer,
-		weightBytes.byteOffset,
-		weightBytes.byteLength / Float32Array.BYTES_PER_ELEMENT
-	)
+	const W = new Float32Array(await readWeightsBin(resolvePath(modelDir)))
 
 	const bias = Float32Array.from(meta.bias)
 	const C = meta.classes.length
@@ -366,7 +331,9 @@ export async function evalOpenSet(
 	 */
 	function scoreRow(raw: string, trueCountry: string | undefined): ScoredRow {
 		const z = logits(raw)
-		const probs = softmax(z)
+		const probs = new Float64Array(C)
+
+		softmaxInto(z, probs)
 		const zin = inVec(z)
 
 		// argmax over in-map classes (the FIXED routing).
@@ -432,10 +399,8 @@ export async function evalOpenSet(
 	// For each score: KEEP (route in-map) iff score >= threshold; else REJECT (→ OTHER).
 	// in-map accuracy = keep & correctRoute. heldout caught = rejected.
 	function paretoFor(scoreKey: ScoreKey) {
-		const inVals = inmapScored.map((o) => ({ v: o.s[scoreKey], ok: o.correctRoute }))
-		const heldVals = heldoutScored.map((o) => o.s[scoreKey])
 		// Candidate thresholds: quantiles of the union of scores.
-		const all = [...inVals.map((x) => x.v), ...heldVals].toSorted((a, b) => a - b)
+		const all = [...inmapScored, ...heldoutScored].map((o) => o.s[scoreKey]).toSorted((a, b) => a - b)
 		const ts: number[] = []
 
 		for (let q = 0; q <= QUANTILE_SWEEP_STEPS; q++) {
@@ -443,26 +408,7 @@ export async function evalOpenSet(
 		}
 
 		const uniq = [...new Set(ts)]
-		const nInVals = inVals.length
-		const nHeld = heldVals.length
-
-		const pts: ParetoPoint[] = uniq.map((t) => {
-			let keepCorrect = 0
-
-			for (const x of inVals)
-				if (x.v >= t && x.ok) {
-					keepCorrect++
-				}
-
-			let caught = 0
-
-			for (const v of heldVals)
-				if (v < t) {
-					caught++
-				}
-
-			return { t, inMapAcc: (100 * keepCorrect) / nInVals, heldCaught: (100 * caught) / nHeld }
-		})
+		const pts: ParetoPoint[] = uniq.map((t) => pointAt(scoreKey, t, inmapScored, heldoutScored))
 
 		// Summaries.
 		let balanced: { val: number; pt: ParetoPoint | null } = { val: -1, pt: null } // max of min(inMapAcc, heldCaught) on the FULL probe

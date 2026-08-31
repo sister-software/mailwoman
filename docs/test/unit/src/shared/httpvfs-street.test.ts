@@ -15,45 +15,17 @@ import { resolveStreet } from "@mailwoman/docs/shared/demo-helpers"
 import { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "@mailwoman/docs/shared/httpvfs-street"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { aroundEach, describe, expect, test } from "vitest"
+import { describe, expect, test } from "vitest"
 
-/**
- * Wrap a node:sqlite DB as the minimal httpvfs worker handle (async exec, sql.js result shape).
- */
-function stubWorker(innerDB: DatabaseClient<AddressPointDatabase>) {
-	return {
-		db: {
-			async exec(sql: string) {
-				const rows = innerDB.prepare(sql).all() as Record<string, unknown>[]
+import { registerOpenDatabases, stubWorker, trackDatabase } from "./stub-worker.ts"
 
-				if (!rows.length) return []
-				const columns = Object.keys(rows[0]!)
-
-				return [{ columns, values: rows.map((r) => columns.map((c) => r[c])) }]
-			},
-		},
-	}
-}
-
-/**
- * Every connection this test's fixtures open. A DisposableStack disposes once and stays disposed, so each test gets a
- * fresh one rather than reusing the emptied stack.
- */
-let openDatabases: DisposableStack
-
-aroundEach(async (runTest) => {
-	using databases = new DisposableStack()
-
-	openDatabases = databases
-	await runTest()
-})
+registerOpenDatabases()
 
 function db(setup: (d: DatabaseClient<AddressPointDatabase>) => void): DatabaseClient<AddressPointDatabase> {
 	const d = DatabaseClient.temp<AddressPointDatabase>()
 	setup(d)
-	openDatabases.use(d)
 
-	return d
+	return trackDatabase(d)
 }
 
 function situsDB(): DatabaseClient<AddressPointDatabase> {

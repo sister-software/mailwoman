@@ -40,20 +40,23 @@
 import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import { emitWOFJSONRows, type WOFVariantSpec } from "#adapters/wof-json-rows"
+import {
+	COUNTRY_DISPLAY_NAME,
+	emitWOFJSONRows,
+	LOCALE_BY_COUNTRY,
+	nameSlotsFor as wofNameSlotsFor,
+	type WOFVariantSpec,
+} from "#adapters/wof-json-rows"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
-import { buildAncestryIndex, normalizeNameKey, walkFeatures, type WOFRecord } from "#utils"
+import { buildAncestryIndex, walkFeatures, type WOFRecord } from "#utils"
 
-const COUNTRY_DISPLAY_NAME: Record<string, string> = {
-	US: "United States of America",
-	FR: "France",
-}
-
-const LOCALE_BY_COUNTRY: Record<string, string> = {
-	US: "en-US",
-	FR: "fr-FR",
-}
-
+/**
+ * Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip.
+ *
+ * Per-adapter deliberately (the admin adapter carries its own): each table is a record FILTER for its adapter's
+ * emission set — this one keeps `postalcode` plus the ancestry placetypes its variants render — not a shared
+ * vocabulary.
+ */
 function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | undefined {
 	switch (placetype) {
 		case "country":
@@ -119,16 +122,7 @@ export function postcodeVariantsFor(row: WOFRecord, ancestry: WOFRecord[], selfN
  * come from `name:*` variants dedup'd against the default.
  */
 export function nameSlotsFor(rec: WOFRecord): Array<{ key: string; value: string }> {
-	const seen = new Set<string>([rec.name])
-	const slots: Array<{ key: string; value: string }> = [{ key: "default", value: rec.name }]
-
-	for (const [rawKey, value] of rec.nameVariants) {
-		if (seen.has(value)) continue
-		seen.add(value)
-		slots.push({ key: normalizeNameKey(rawKey), value })
-	}
-
-	return slots
+	return wofNameSlotsFor(rec)
 }
 
 /**

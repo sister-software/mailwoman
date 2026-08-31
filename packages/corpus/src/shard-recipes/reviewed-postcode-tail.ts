@@ -10,6 +10,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 
 import { alignAndWrite, type ShardRecipe, shardSourceID } from "#shard-recipes/scaffold"
 
@@ -111,7 +112,7 @@ export async function readReviewedPostcodeTuples(
 	return document.tuples
 }
 
-const foldAccents = (value: string): string => value.normalize("NFD").replaceAll(/\p{M}/gu, "").normalize("NFC")
+const foldAccents = (value: string): string => stripCombiningMarks(value).normalize("NFC")
 
 export function reviewedPostcodeTailVariants(tuple: ReviewedPostcodeTuple): Variant[] {
 	const tail = `${tuple.locality} ${tuple.postcode}, ${tuple.region}`

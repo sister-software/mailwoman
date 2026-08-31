@@ -23,21 +23,7 @@ import { foldStreetSurface, type StreetEvidenceScope, type StreetLocalityEvidenc
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { WOFDatabase } from "#schema"
-
-function hasTable(db: DatabaseClient<WOFDatabase>, table: string): boolean {
-	const row = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1").get(table)
-
-	return row !== undefined
-}
-
-function hasColumn(db: DatabaseClient<WOFDatabase>, table: string, column: string): boolean {
-	// `table` is a caller-controlled identifier (default `street_centroid`), not user input — safe to interpolate.
-	for (const row of db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>) {
-		if (row.name === column) return true
-	}
-
-	return false
-}
+import { hasColumn, hasTable } from "#sqlite-utils"
 
 export interface SQLiteStreetNameLookupOpts {
 	/**

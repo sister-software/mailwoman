@@ -14,12 +14,9 @@ import { decodeAsXML } from "@mailwoman/core/decoder/serialize-xml"
 import type { DecoderToken } from "@mailwoman/core/decoder/types"
 import { Span } from "@mailwoman/core/tokenization/Span"
 import type { ClassificationProposal } from "@mailwoman/core/types"
-import type { BIOLabel } from "@mailwoman/core/types/component"
 import { describe, expect, test } from "vitest"
 
-function tok(piece: string, start: number, end: number, label: BIOLabel, confidence = 1): DecoderToken {
-	return { piece, start, end, label, confidence }
-}
+import { tok } from "#test/unit/decoder/fixtures"
 
 function proposal(
 	body: string,

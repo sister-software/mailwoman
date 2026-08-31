@@ -7,6 +7,7 @@
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import { tableExists } from "@mailwoman/sqlite/introspection"
 
 import type { CandidateDatabase } from "#candidate-schema"
 import { isOwnNameVariant } from "#candidate/own-name"
@@ -95,8 +96,7 @@ export function stampNameRoles(ctx: {
 	const insRoleKey = out.prepare("INSERT OR IGNORE INTO role_key VALUES (?, ?)")
 
 	// Zero abbr stamps from a skipped detector is a different fact from zero variants found.
-	const hasSourceNames =
-		src.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='names'").get() !== undefined
+	const hasSourceNames = tableExists(src, "names")
 
 	if (hasSourceNames) {
 		out.exec("BEGIN")

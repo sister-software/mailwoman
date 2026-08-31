@@ -26,14 +26,13 @@
 
 import type { PathBuilderLike } from "path-ts"
 
+import { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
 import { collectMatches } from "#postcode-repair"
 import type { TokenizedPiece } from "#tokenizer"
 
-/**
- * The locale class order — MUST match Python `mailwoman_train/labels.py::LOCALE_COUNTRIES`. The posterior occupies
- * indices `[0, LOCALE_ORDER.length)`; the normalized centroid the last two. (Pinned by the test; do not reorder.)
- */
-export const LOCALE_ORDER = ["US", "FR", "DE", "CA", "GB", "JP", "ES", "IT", "NL"] as const
+// The pinned class order lives in labels.ts (`LOCALE_COUNTRIES`); this module keeps its historical
+// export name for the anchor feature layout that indexes it.
+export { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
 
 /**
  * Anchor feature width = posterior over the locale set + a 2-d centroid.

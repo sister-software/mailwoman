@@ -5,6 +5,7 @@
  */
 
 import {
+	hasUnitMarker,
 	scoreHyphenatedCompound,
 	scoreLocalityPhrase,
 	scoreNumeric,
@@ -16,6 +17,7 @@ import {
 	tokenizeSegment,
 } from "@mailwoman/phrase-grouper/rules"
 import type { PhraseProposal, QueryShapeLike } from "@mailwoman/phrase-grouper/types"
+import type { KnownFormat } from "@mailwoman/query-shape"
 import { expect, test } from "vitest"
 
 /**
@@ -25,7 +27,7 @@ import { expect, test } from "vitest"
  */
 const tokens = (segmentBody: string, segmentStart = 0): SegmentToken[] => tokenizeSegment(segmentBody, segmentStart)
 
-const fmt = (format: string, start: number, end: number, confidence = 0.9) => ({
+const fmt = (format: KnownFormat, start: number, end: number, confidence = 0.9) => ({
 	format,
 	span: { start, end },
 	confidence,
@@ -413,4 +415,40 @@ test("scoreVenuePhrase: venue-by-exclusion is blocked by a street suffix, house 
 test("scoreVenuePhrase: a single capitalized word with no marker is not enough for venue-by-exclusion", () => {
 	// run.length must be >= 2 for the exclusion branch.
 	expect(scoreVenuePhrase(tokens("Acme"), "Acme", true)).toEqual([])
+})
+
+// ───────────────────────── hasUnitMarker ─────────────────────────
+
+test("hasUnitMarker: every entry of the previous local marker set still matches", () => {
+	// The 20 entries the retired local UNIT_MARKERS set carried, now answered by the USPS Pub-28 C2 tables via
+	// @mailwoman/codex plus the "#" extension.
+	const legacyMarkers = [
+		"apt",
+		"apt.",
+		"apartment",
+		"unit",
+		"ste",
+		"ste.",
+		"suite",
+		"room",
+		"rm",
+		"rm.",
+		"floor",
+		"fl",
+		"fl.",
+		"bldg",
+		"bldg.",
+		"building",
+		"dept",
+		"dept.",
+		"department",
+		"#",
+	]
+
+	for (const marker of legacyMarkers) {
+		expect(hasUnitMarker(tokens(`${marker} 4B`)), marker).toBe(true)
+		expect(hasUnitMarker(tokens(`${marker.toUpperCase()} 4B`)), marker.toUpperCase()).toBe(true)
+	}
+
+	expect(hasUnitMarker(tokens("Grand Hotel"))).toBe(false)
 })

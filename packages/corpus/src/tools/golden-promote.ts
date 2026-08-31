@@ -38,6 +38,8 @@ import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { join } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
 
+import type { GoldenCandidateEntry as GoldenEntry } from "#utils/golden"
+
 // ── Types ──────────────────────────────────────────────────────────────────
 
 /**
@@ -54,18 +56,6 @@ const MIN_PROMOTABLE_COMPONENTS = 4
  * Quote-delimited segments above which the raw line is malformed rather than merely quoted.
  */
 const MAX_QUOTE_SEGMENTS = 3
-
-interface GoldenEntry {
-	raw: string
-	components: Record<string, string>
-	country: string
-	source: string
-	notes?: string
-	seed_source_id?: string
-	seed_source_adapter?: string
-	dropped_components?: string[]
-	provenance?: { provider: string; model: string }
-}
 
 export interface PromoteStats {
 	candidatesIn: number

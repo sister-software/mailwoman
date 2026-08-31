@@ -38,7 +38,12 @@
  *   docs/superpowers/plans/2026-07-14-country-lexicon-channel.md.
  */
 
-import { gazetteerCharPaint, parseGazetteerLexicon, type GazetteerLexicon } from "#gazetteer-inference"
+import {
+	gazetteerCharPaint,
+	parseGazetteerLexicon,
+	projectCharBitsToPieces,
+	type GazetteerLexicon,
+} from "#gazetteer-inference"
 import type { TokenizedPiece } from "#tokenizer"
 
 /**
@@ -92,21 +97,11 @@ export function buildCountryFeatures(
 	pieces: ReadonlyArray<TokenizedPiece>,
 	lexicon: CountryLexicon
 ): { features: number[][]; confidence: number[] } {
-	const charBits = gazetteerCharPaint(text, lexicon)
+	const pieceBits = projectCharBitsToPieces(text, pieces, gazetteerCharPaint(text, lexicon))
 	const features: number[][] = []
 	const confidence: number[] = []
 
-	for (const p of pieces) {
-		let bits = 0
-
-		for (let c = p.start; c < p.end; c++) {
-			if (c < text.length && !/\s/.test(text[c]!)) {
-				bits = charBits[c]!
-
-				break
-			}
-		}
-
+	for (const bits of pieceBits) {
 		const surface = bits & COUNTRY_SURFACE_BIT ? 1 : 0
 		const ambiguous = bits & COUNTRY_AMBIGUOUS_BIT ? 1 : 0
 		features.push([surface, ambiguous])

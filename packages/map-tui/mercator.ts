@@ -53,3 +53,23 @@ const EARTH_CIRCUMFERENCE_M = 40_075_016.686
 export function metersPerPixel(lat: number, zoom: number): number {
 	return (EARTH_CIRCUMFERENCE_M * Math.cos((lat * Math.PI) / 180)) / (TILE_SIZE * 2 ** zoom)
 }
+
+/**
+ * Wraps a longitude into [-180, 180) so panning past the antimeridian continues rather than running off the pyramid.
+ */
+export function wrapLongitude(lon: number): number {
+	const wrapped = (((lon + 180) % 360) + 360) % 360
+
+	return wrapped - 180
+}
+
+/**
+ * Subpixel dimensions of one braille cell — 2 columns wide, 4 rows tall. The unit every projection-to-cell conversion
+ * works in, shared by the renderer and the browser so both sides of the frame boundary agree on the grid.
+ */
+export const SUBPIXEL_COLUMNS_PER_CELL = 2
+
+/**
+ * See {@link SUBPIXEL_COLUMNS_PER_CELL} — the vertical half of the braille 2×4 subpixel grid.
+ */
+export const SUBPIXEL_ROWS_PER_CELL = 4

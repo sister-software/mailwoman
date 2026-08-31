@@ -27,12 +27,9 @@
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { extractZipEntries } from "@mailwoman/core/fs/zip"
-import { tryParsingJSON } from "@mailwoman/core/objects"
-import { spawnProcess } from "@mailwoman/core/process"
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
+import { mailwomanDataRoot, ogr2ogrGeoJSONSeq } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { dirname, join } from "path-ts"
-import { TextSpliterator } from "spliterator"
 
 import { downloadIfNeeded } from "#sdk/download"
 import type { TIGERBlockTable, TIGERDatabase, TIGERPlaceTable, TIGERStreetTable } from "#sdk/schema"
@@ -277,37 +274,21 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 			const shpPath = join(cacheDir, layer + ".shp")
 			yield { phase: "extract", file: layer + ".shp" }
 
-			const child = spawnProcess(
-				"ogr2ogr",
-				[
-					"-f",
-					"GeoJSONSeq",
-					"-t_srs",
-					"EPSG:4326",
-					"-sql",
-					selectSQL(level, layer, options.county),
-					"/vsistdout/",
-					shpPath,
-				],
-				{ stdio: ["ignore", "pipe", "pipe"] }
-			)
+			const args = [
+				"-f",
+				"GeoJSONSeq",
+				"-t_srs",
+				"EPSG:4326",
+				"-sql",
+				selectSQL(level, layer, options.county),
+				"/vsistdout/",
+				shpPath,
+			]
 
-			let stderr = ""
-			child.stderr.on("data", (d) => (stderr += d))
-
-			const exited = new Promise<number>((resolve) => {
-				child.on("close", (code) => resolve(code ?? 0))
-			})
-
-			// GeoJSONSeq is line-delimited; per-line `tryParsingJSON` so a malformed record is
-			// tolerated (skipped), not thrown.
-			for await (const line of TextSpliterator.fromAsync(child.stdout)) {
-				if (!line) continue
-
-				const feat = tryParsingJSON<{ properties?: Record<string, unknown>; geometry?: unknown }>(line)
-
-				if (!feat) continue
-
+			for await (const feat of ogr2ogrGeoJSONSeq<{ properties?: Record<string, unknown>; geometry?: unknown }>(
+				args,
+				layer
+			)) {
 				if (!feat.properties) continue
 
 				if (level === "tabblock20" && !feat.geometry) continue
@@ -320,10 +301,6 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 			}
 
 			await flush()
-
-			const code = await exited
-
-			if (code !== 0) throw new Error(`ogr2ogr exited ${code} on ${layer}: ${stderr.slice(0, 500)}`)
 			yield { phase: "load", inserted, total: 0 }
 		}
 

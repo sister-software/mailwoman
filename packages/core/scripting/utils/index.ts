@@ -6,9 +6,6 @@ import { ConsoleLogger } from "#logging"
 export { cliArguments, passThroughCLIArguments, scriptEntryPath } from "#scripting/arguments"
 
 /**
- * Logs an error that occurred while running a script.
- */
-/**
  * Print a message to stderr and exit non-zero. Typed `never`, so a caller gets definite-assignment narrowing after the
  * call.
  */
@@ -18,6 +15,9 @@ export function failScript(message: string): never {
 	process.exit(1)
 }
 
+/**
+ * Logs an error that occurred while running a script.
+ */
 export function logScriptError(error: unknown): void {
 	ConsoleLogger.error("An error occurred while running the script.")
 
@@ -28,7 +28,7 @@ export function logScriptError(error: unknown): void {
 	if (normalizedError.cause instanceof Error && normalizedError.cause.stack) {
 		ConsoleLogger.error("Stack via cause:\n" + normalizedError.cause.stack)
 	} else if (normalizedError.stack) {
-		ConsoleLogger.error("Stack via cause:\n" + normalizedError.stack)
+		ConsoleLogger.error("Stack:\n" + normalizedError.stack)
 	}
 }
 

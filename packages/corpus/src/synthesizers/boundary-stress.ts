@@ -49,6 +49,8 @@
  *   base-locale shard. `synthesizers/boundary-stress.test.ts` proves the alignments.
  */
 
+import type { DirectionalAbbreviation } from "@mailwoman/codex/us"
+
 import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
@@ -221,7 +223,9 @@ const SUFFIXES = [
 	"Walk",
 ] as const
 
-const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const
+// Vocabulary compile-checked against the codex; the ORDER stays this literal's. `Object.values(DirectionalAbbreviation)`
+// runs N,E,S,W,… — deriving the array from it would re-map every pick() draw and change shipped shard bytes.
+const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const satisfies readonly DirectionalAbbreviation[]
 
 /**
  * FR street-type prefixes + hyphenated honorific street names (the hyphen is incidental; the boundary stress is the

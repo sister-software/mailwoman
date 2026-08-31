@@ -36,6 +36,7 @@ import { CSVSpliterator } from "spliterator"
 import { stableSourceID } from "#adapters/utils"
 import { makeMulberry32, type ShardRecipe } from "#shard-recipes/scaffold"
 import { type LocaleBaseTuple, type SynthesizedLocaleRow, synthesizeLocaleRow } from "#synthesizers/german"
+import { pick } from "#synthesizers/utils"
 import { alignRow } from "#utils"
 
 /**
@@ -404,7 +405,7 @@ export function applyCountryAppend(
 			)
 		}
 
-		const form = forms[Math.floor(random() * forms.length)]!
+		const form = pick(forms, random)
 		synth.raw = `${synth.raw}, ${form}`
 		synth.components = { ...synth.components, country: form }
 	}

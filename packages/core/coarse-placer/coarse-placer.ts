@@ -85,6 +85,19 @@ export function dequantizeInt8Weights(
 	return out
 }
 
+/**
+ * Read an artifact directory's `weights.bin` into a fresh `ArrayBuffer` — fp32 or int8, the caller picks the view.
+ * Copies out of the (possibly pooled, possibly mis-aligned) Buffer: `readFile` serves small files out of a shared 8 KiB
+ * pool, so a typed-array view over `.buffer` alone would start at the pool's origin and run its full length — the wrong
+ * floats, and 2048 of them.
+ */
+export async function readWeightsBin(dir: string): Promise<ArrayBufferLike> {
+	const { join } = await import("path-ts")
+	const buf = await readLocalBuffer(join(dir, "weights.bin"))
+
+	return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
+}
+
 export interface CoarsePrediction {
 	/**
 	 * The predicted class, or `null` when the model abstained (confidence below the threshold).
@@ -99,6 +112,14 @@ export interface CoarsePrediction {
 	 * The full calibrated class distribution.
 	 */
 	probs: Record<string, number>
+}
+
+/**
+ * With the explicit OTHER class, an off-map input is HANDLED when the model routes it to OTHER or abstains — either way
+ * it is not a confident mis-placement onto a wrong (trained) country. The shared predicate of the off-map evals.
+ */
+export function isOffMapHandled(prediction: CoarsePrediction): boolean {
+	return prediction.abstained || prediction.country === "OTHER"
 }
 
 export interface CoarsePlacerOpts {
@@ -153,10 +174,7 @@ export class CoarsePlacer {
 	static async fromArtifactDir(dir: string, opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
 		const { join } = await import("path-ts")
 		const meta = await readLocalJSONFile<CoarsePlacerMeta>(join(dir, "meta.json"))
-		const buf = await readLocalBuffer(join(dir, "weights.bin"))
-		// Copy out of the (possibly pooled, possibly mis-aligned) Buffer into a fresh ArrayBuffer so the
-		// typed-array view is always validly aligned.
-		const bytes = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
+		const bytes = await readWeightsBin(dir)
 		let weights: Float32Array
 
 		if (meta.quantization === "int8-per-row") {
@@ -204,7 +222,9 @@ export class CoarsePlacer {
 			logits[c] = s / this.#temp
 		}
 
-		// Numerically-stable softmax.
+		// Numerically-stable softmax, kept INLINE rather than routed through `softmaxInto`: the fp32 `probs`
+		// buffer rounds each exponent before the lazy divide below, so `p` is `f32(exp)/f64(sum)` — a float
+		// path a normalizing helper cannot reproduce, and this is the inference path whose bytes are contract.
 		let maxLogit = -Infinity
 
 		for (let c = 0; c < C; c++)

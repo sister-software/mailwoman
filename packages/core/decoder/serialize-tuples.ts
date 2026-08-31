@@ -70,3 +70,22 @@ export function decodeAsTuples(
 
 	return entries.map((e) => e.tuple)
 }
+
+/**
+ * The tuple projection grouped by tag, in tuple order.
+ */
+export function groupTuplesByTag(tree: AddressTree): Map<string, string[]> {
+	const byTag = new Map<string, string[]>()
+
+	for (const [tag, value] of decodeAsTuples(tree)) {
+		const values = byTag.get(tag)
+
+		if (values) {
+			values.push(value)
+		} else {
+			byTag.set(tag, [value])
+		}
+	}
+
+	return byTag
+}

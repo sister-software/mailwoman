@@ -38,3 +38,13 @@ export function confidenceTier(confidence: number): ConfidenceTier {
 
 	return "low"
 }
+
+/**
+ * {@link confidenceTier} for a possibly-absent confidence: an unmeasured span is drawn as `mid` rather than `low`, so an
+ * older model that emits no confidence never reads as uniformly wrong.
+ */
+export function confidenceTierOrMid(confidence?: number): ConfidenceTier {
+	if (confidence == null) return "mid"
+
+	return confidenceTier(confidence)
+}

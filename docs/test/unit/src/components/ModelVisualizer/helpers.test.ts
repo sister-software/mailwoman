@@ -13,7 +13,6 @@ import {
 	emissionColor,
 	matrixAbsMax,
 	pieceDisplay,
-	softmaxRow,
 	stripBIO,
 } from "@mailwoman/docs/components/ModelVisualizer/helpers"
 import type { NeuralParseTrace } from "@mailwoman/neural"
@@ -28,15 +27,6 @@ const _traceMirrorAccepts: ParseTraceLike = {} as NeuralParseTrace
 void _traceMirrorAccepts
 
 describe("ModelVisualizer helpers", () => {
-	it("softmaxRow sums to 1 and preserves argmax", () => {
-		const probs = softmaxRow([1, 3, 2])
-		const sum = probs.reduce((a, b) => a + b, 0)
-
-		expect(sum).toBeCloseTo(1, 6)
-		expect(probs[1]).toBeGreaterThan(probs[2]!)
-		expect(probs[2]).toBeGreaterThan(probs[0]!)
-	})
-
 	it("matrixAbsMax ignores the conventions-mask sentinel", () => {
 		expect(
 			matrixAbsMax([

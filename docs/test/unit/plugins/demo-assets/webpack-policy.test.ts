@@ -22,12 +22,9 @@ describe("docs webpack policy", () => {
 	})
 
 	test("routes both public and private neural runner specifiers to the browser implementation for SSR", async () => {
-		const config = configureDemoWebpack(
-			{ cache: false },
-			docsDir,
-			await bundleAliases(true, resolvePath(docsDir, "src", "empty-shim.js")),
-			true
-		)
+		const emptyShim = resolvePath(docsDir, "src", "empty-shim.js")
+
+		const config = configureDemoWebpack({ cache: false }, emptyShim, await bundleAliases(true, emptyShim), true)
 
 		expect(config.externals).toEqual([{ "isomorphic-dompurify": "commonjs isomorphic-dompurify" }])
 

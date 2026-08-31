@@ -39,6 +39,8 @@ import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 
+import { connectDuckDB, type DuckDBConnection } from "#utils/parquet"
+
 /**
  * A column-projected base/shard row: parallel token + label lists plus the row's country.
  */
@@ -140,13 +142,6 @@ function bump(table: Map<string, Map<string, number>>, key: string, sub: string)
 
 	counter.set(sub, (counter.get(sub) ?? 0) + 1)
 }
-
-/**
- * The DuckDB connection type, without a static dependency on the optional-peer package.
- */
-type DuckDBConnection = Awaited<
-	ReturnType<Awaited<ReturnType<(typeof import("@duckdb/node-api"))["DuckDBInstance"]["create"]>>["connect"]>
->
 
 /**
  * Read a corpus parquet into rows, projecting only tokens/labels/country. The list columns ride out as JSON text
@@ -265,10 +260,7 @@ export async function lintShardVocab(options: LintShardVocabOptions): Promise<Li
 	const minCount = options.minCount ?? 50
 	const fraction = options.fraction ?? 1
 
-	// @duckdb/node-api is an optional peer — lazy import (the pipeline convention).
-	const { DuckDBInstance } = await import("@duckdb/node-api")
-	const instance = await DuckDBInstance.create()
-	const con = await instance.connect()
+	const con = await connectDuckDB()
 
 	// 1. the shard's own (token -> dominant tag) + the COUNTRIES it uses each token in
 	const shardRows = await readRows(con, options.shard)

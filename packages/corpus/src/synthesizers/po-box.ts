@@ -24,6 +24,7 @@
  *   - USPS DMM 508 §4.1.4 / §4.5.4 — PO Box and street-addressed PO Box
  */
 
+import { countryToLocale as baseCountryToLocale, pick, tieredNumber } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
 /**
@@ -125,7 +126,7 @@ export function maybeNoisifyBoxNumber(num: string, random: () => number): string
 		(s) => s.split("").join(" "),
 	]
 
-	const f = variants[Math.floor(random() * variants.length)]!
+	const f = pick(variants, random)
 
 	return f(num)
 }
@@ -163,18 +164,13 @@ export interface PoBoxSynthesisOpts {
 
 function defaultPickNumber(random: () => number): string {
 	// 70% of real PO boxes are 1-5 digits; long ones exist (USPS allows up to ~6 digits).
-	const r = random()
-
-	if (r < 0.3) return String(1 + Math.floor(random() * 99))
-
-	// 1-99
-	if (r < 0.7) return String(100 + Math.floor(random() * 900))
-
-	// 100-999
-	if (r < 0.95) return String(1000 + Math.floor(random() * 9000))
-
-	// 1000-9999
-	return String(10_000 + Math.floor(random() * 90_000)) // 10000-99999
+	// Bands: 1-99, 100-999, 1000-9999, 10000-99999 (span 90_000 — the street generator's 89_999 is its own).
+	return tieredNumber(random, [
+		{ cutoff: 0.3, base: 1, span: 99 },
+		{ cutoff: 0.7, base: 100, span: 900 },
+		{ cutoff: 0.95, base: 1000, span: 9000 },
+		{ base: 10_000, span: 90_000 },
+	])
 }
 
 /**
@@ -195,14 +191,14 @@ export function synthesizePoBoxRow(
 	if (!tpl) return null
 
 	const number = maybeNoisifyBoxNumber(pickNumber(random), random)
-	const leader = tpl.leaders[Math.floor(random() * tpl.leaders.length)]!
+	const leader = pick(tpl.leaders, random)
 	const poBoxPhrase = composePoBoxPhrase(leader, number)
 
 	// PMB variant: requires both a street and a PMB-supporting locale.
 	const wantPmb = base.street && tpl.pmb && random() < pmbRatio
 
 	if (wantPmb) {
-		const pmbLeader = tpl.pmb![Math.floor(random() * tpl.pmb!.length)]!
+		const pmbLeader = pick(tpl.pmb!, random)
 		const pmbPhrase = composePoBoxPhrase(pmbLeader, number)
 		const streetLine = base.houseNumber ? `${base.houseNumber} ${base.street}` : base.street!
 		const raw = `${streetLine}, ${pmbPhrase}, ${base.locality}, ${base.region} ${base.postcode}`
@@ -272,11 +268,11 @@ const MIL_REGION_ZIP: ReadonlyArray<{ region: string; zip: (r: () => number) => 
  */
 export function synthesizeMilitaryPoBoxRow(opts: PoBoxSynthesisOpts = {}): SynthesizedPoBoxRow {
 	const random = opts.random ?? Math.random
-	const unit = MIL_UNITS[Math.floor(random() * MIL_UNITS.length)]!
+	const unit = pick(MIL_UNITS, random)
 	const unitID = String(1 + Math.floor(random() * 9999))
-	const { region, zip } = MIL_REGION_ZIP[Math.floor(random() * MIL_REGION_ZIP.length)]!
+	const { region, zip } = pick(MIL_REGION_ZIP, random)
 	const zipStr = zip(random)
-	const po = MIL_PO_CODES[Math.floor(random() * MIL_PO_CODES.length)]!
+	const po = pick(MIL_PO_CODES, random)
 	const hasBox = unit.boxRequired || random() < 0.5
 	const unitLine = hasBox ? `${unit.code} ${unitID} Box ${1 + Math.floor(random() * 9999)}` : `${unit.code} ${unitID}`
 	const raw = `${unitLine}, ${po} ${region} ${zipStr}`
@@ -295,32 +291,20 @@ export function synthesizeMilitaryPoBoxRow(opts: PoBoxSynthesisOpts = {}): Synth
 	}
 }
 
+const PO_BOX_TEMPLATE_LOCALES: ReadonlySet<string> = new Set(PO_BOX_LOCALE_TEMPLATES.map((t) => t.locale))
+
 /**
  * Map a country code (ISO-3166-1 alpha-2 or alpha-3, or country display name) to the locale code we have a PO box
  * template for.
+ *
+ * TEMPLATE-SCOPED on top of the shared `#synthesizers/utils` map: a locale the shared map resolves but
+ * {@link PO_BOX_LOCALE_TEMPLATES} does not carry falls back to `en-US`, so `DE` (shared: `de-DE`, no PO-box template)
+ * keeps rendering the en-US box vocabulary here.
  */
 export function countryToLocale(country: string): string {
-	const c = country.trim().toUpperCase()
+	const locale = baseCountryToLocale(country)
 
-	if (c === "US" || c === "USA" || c === "UNITED STATES") return "en-US"
-
-	if (c === "CA" || c === "CAN" || c === "CANADA") return "en-CA"
-
-	if (c === "GB" || c === "UK" || c === "GBR" || c === "UNITED KINGDOM") return "en-GB"
-
-	if (c === "AU" || c === "AUS" || c === "AUSTRALIA") return "en-AU"
-
-	if (c === "NZ" || c === "NZL" || c === "NEW ZEALAND") return "en-NZ"
-
-	if (c === "FR" || c === "FRA" || c === "FRANCE") return "fr-FR"
-
-	if (c === "ES" || c === "ESP" || c === "SPAIN") return "es-ES"
-
-	if (c === "MX" || c === "MEX" || c === "MEXICO") return "es-MX"
-
-	if (c === "AR" || c === "ARG" || c === "ARGENTINA") return "es-AR"
-
-	return "en-US"
+	return PO_BOX_TEMPLATE_LOCALES.has(locale) ? locale : "en-US"
 }
 
 /**

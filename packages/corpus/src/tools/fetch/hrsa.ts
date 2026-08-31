@@ -17,7 +17,7 @@ import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
 import { downloadToFile, writeManifest } from "#tools/fetch/download"
 
 const SLUG = "usgov-hrsa-fqhc"
@@ -25,14 +25,6 @@ const FILENAME = "Health_Center_Service_Delivery_and_LookAlike_Sites.csv"
 const SOURCE_URL = `https://data.hrsa.gov/DataDownload/DD_Files/${FILENAME}`
 
 export type FetchHRSAOptions = BaseFetchOptions
-
-interface SourceManifest {
-	source_url: string
-	downloaded_at: string
-	filename: string
-	sha256: string
-	bytes: number
-}
 
 export async function fetchHRSA(options: FetchHRSAOptions, report?: (line: string) => void): Promise<FetchSummary> {
 	const destDir = join(options.outRoot, SLUG)

@@ -14,39 +14,11 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { WOFCandidateTableLookup } from "@mailwoman/docs/shared/httpvfs-resolver"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { aroundEach, describe, expect, test } from "vitest"
+import { describe, expect, test } from "vitest"
 
-/**
- * Wrap a node:sqlite DB as the minimal httpvfs worker handle (async exec, sql.js result shape).
- */
-function stubWorker(db: DatabaseClient<CandidateDatabase>) {
-	return {
-		db: {
-			async exec(sql: string) {
-				const rows = db.prepare(sql).all() as Record<string, unknown>[]
+import { registerOpenDatabases, stubWorker, trackDatabase } from "./stub-worker.ts"
 
-				if (!rows.length) return []
-				const columns = Object.keys(rows[0]!)
-
-				return [{ columns, values: rows.map((r) => columns.map((c) => r[c])) }]
-			},
-		},
-		bytesRead: async () => 0,
-	}
-}
-
-/**
- * Every connection this test's fixtures open. A DisposableStack disposes once and stays disposed, so each test gets a
- * fresh one rather than reusing the emptied stack.
- */
-let openDatabases: DisposableStack
-
-aroundEach(async (runTest) => {
-	using databases = new DisposableStack()
-
-	openDatabases = databases
-	await runTest()
-})
+registerOpenDatabases()
 
 function makeDB(withSideIndex: boolean): DatabaseClient<CandidateDatabase> {
 	const d = DatabaseClient.temp<CandidateDatabase>()
@@ -77,9 +49,7 @@ function makeDB(withSideIndex: boolean): DatabaseClient<CandidateDatabase> {
 		`)
 	}
 
-	openDatabases.use(d)
-
-	return d
+	return trackDatabase(d)
 }
 
 describe("browser WOFCandidateTableLookup postal-city side-index (#741)", () => {

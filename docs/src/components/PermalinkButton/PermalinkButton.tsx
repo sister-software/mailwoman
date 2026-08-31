@@ -1,14 +1,15 @@
-import { useCallback, useState } from "react"
+import { useClipboard } from "@mailwoman/react"
+import { useCallback } from "react"
 
 import styles from "./styles.module.css"
 
 /**
- * Copy a `https://mailwoman.ai/demo/?q=<encoded>` link to clipboard. Falls back to a transient textarea hack on older
- * browsers (Safari < 13.4 still misbehaves with the async Clipboard API in non-secure contexts). Visible feedback is a
- * 1.5s checkmark swap so the operator knows the click landed.
+ * Copy a `https://mailwoman.ai/demo/?q=<encoded>` link to clipboard via the shared `useClipboard` (async Clipboard API
+ * with a legacy `execCommand` fallback for older browsers). Visible feedback is a 1.5s checkmark swap so the operator
+ * knows the click landed.
  */
 export const PermalinkButton: React.FC<{ text: string }> = ({ text }) => {
-	const [copied, setCopied] = useState(false)
+	const { copied, copy } = useClipboard()
 
 	const onClick = useCallback(async () => {
 		if (globalThis.window === undefined) return
@@ -20,30 +21,8 @@ export const PermalinkButton: React.FC<{ text: string }> = ({ text }) => {
 			url.searchParams.delete("q")
 		}
 
-		const href = url.toString()
-
-		try {
-			await navigator.clipboard.writeText(href)
-		} catch {
-			const ta = document.createElement("textarea")
-			ta.value = href
-			ta.style.position = "fixed"
-			ta.style.opacity = "0"
-			document.body.appendChild(ta)
-			ta.select()
-
-			try {
-				document.execCommand("copy")
-			} catch {
-				/* nothing more we can do; user can copy from address bar */
-			}
-
-			document.body.removeChild(ta)
-		}
-
-		setCopied(true)
-		globalThis.setTimeout(() => setCopied(false), 1500)
-	}, [text])
+		await copy(url.toString())
+	}, [text, copy])
 
 	return (
 		<button

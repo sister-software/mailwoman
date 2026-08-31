@@ -20,6 +20,7 @@
  */
 
 import type { StreetCentroidHit, StreetCentroidLookup } from "@mailwoman/resolver"
+import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { hasTable, prepareGet, type PreparedGet } from "#sqlite-utils"
@@ -61,15 +62,7 @@ const AGG_SELECT =
  * Half the bbox diagonal, in METERS — an honest coarse radius for a street centroid.
  */
 function extentRadiusM(minLat: number, maxLat: number, minLon: number, maxLon: number): number {
-	const R = 6_371_000
-	const toRad = (d: number): number => (d * Math.PI) / 180
-	const dLat = toRad(maxLat - minLat)
-	const dLon = toRad(maxLon - minLon)
-	const midLat = toRad((minLat + maxLat) / 2)
-	const a = Math.sin(dLat / 2) ** 2 + Math.cos(midLat) ** 2 * Math.sin(dLon / 2) ** 2
-	const diag = 2 * R * Math.asin(Math.min(1, Math.sqrt(a)))
-
-	return Math.round(diag / 2)
+	return Math.round(haversineKm(minLat, minLon, maxLat, maxLon) * 500)
 }
 
 export class StreetCentroidSqliteLookup implements StreetCentroidLookup {

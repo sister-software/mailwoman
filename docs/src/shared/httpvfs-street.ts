@@ -28,7 +28,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { clampFraction, pointAlong } from "@mailwoman/spatial"
 
-import { rowsFromExec } from "./sqljs-rows.ts"
+import { memoizeResettable, rowsFromExec, tableExists } from "./sqljs-rows.ts"
 
 /**
  * The minimal worker handle the lookups need — the same shape `loadHTTPVFSDatabase` returns.
@@ -54,7 +54,10 @@ export interface StreetPointHit {
  */
 export class HTTPVFSAddressPointLookup {
 	#worker: HTTPVFSDB
-	#available: Promise<boolean> | undefined
+	/**
+	 * One memoized round trip to confirm the shard carries `address_point` (graceful on a tableless shard, #568).
+	 */
+	readonly #hasTable: () => Promise<boolean>
 	#locale: StreetLocale
 
 	/**
@@ -62,24 +65,8 @@ export class HTTPVFSAddressPointLookup {
 	 */
 	constructor(worker: HTTPVFSDB, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#worker = worker
+		this.#hasTable = memoizeResettable(() => tableExists(worker, "address_point"))
 		this.#locale = opts.streetLocale ?? "us"
-	}
-
-	/**
-	 * One round trip to confirm the shard carries `address_point` (graceful on a tableless shard, #568).
-	 */
-	#hasTable(): Promise<boolean> {
-		if (!this.#available) {
-			this.#available = this.#worker.db
-				.exec(`SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name='address_point'`)
-				.then((res) => Number(rowsFromExec(res)[0]?.n) > 0)
-
-			this.#available.catch(() => {
-				this.#available = undefined
-			})
-		}
-
-		return this.#available
 	}
 
 	async find(query: {
@@ -148,24 +135,14 @@ export interface StreetInterpHit {
  */
 export class HTTPVFSInterpolator {
 	#worker: HTTPVFSDB
-	#available: Promise<boolean> | undefined
+	/**
+	 * One memoized round trip to confirm the shard carries `street_segment`.
+	 */
+	readonly #hasTable: () => Promise<boolean>
 
 	constructor(worker: HTTPVFSDB) {
 		this.#worker = worker
-	}
-
-	#hasTable(): Promise<boolean> {
-		if (!this.#available) {
-			this.#available = this.#worker.db
-				.exec(`SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name='street_segment'`)
-				.then((res) => Number(rowsFromExec(res)[0]?.n) > 0)
-
-			this.#available.catch(() => {
-				this.#available = undefined
-			})
-		}
-
-		return this.#available
+		this.#hasTable = memoizeResettable(() => tableExists(worker, "street_segment"))
 	}
 
 	async find(query: { street: string; number: string; postcode?: string }): Promise<StreetInterpHit | null> {

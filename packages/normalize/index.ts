@@ -16,7 +16,7 @@
 export { type AbbreviationEntry, abbreviationDictionary, expandAbbreviations } from "#abbreviations"
 export { applyCjkNormalization, type CjkResult } from "#cjk"
 export { normalize } from "#compute"
-export { foldCaseWhitespace, stripCombiningMarks } from "#fold"
+export { foldCaseWhitespace, foldNFKCWhitespace, stripCombiningMarks } from "#fold"
 export { applyNFC } from "#nfc"
 export { composeMaps, identityMap } from "#offset-map"
 export { applyPunctuation } from "#punctuation"

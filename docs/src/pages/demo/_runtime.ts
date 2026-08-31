@@ -45,7 +45,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { ReleaseInfo, ResolveBias, StreetResolution } from "#shared/demo-helpers"
 import {
 	DEFAULT_LOCALE,
-	normalizeReleasesManifest,
+	fetchReleasesManifest,
+	parseStageLabelsFor,
+	projectCascadeHits,
 	resolveDualRoles,
 	resolveStreet,
 	runCascade,
@@ -173,15 +175,7 @@ export function useDemoMapRuntime({
 	initialCenter,
 }: UseDemoMapRuntimeOptions): UseDemoMapRuntime {
 	// ── Injected loaders ──────────────────────────────────────────────────────
-	const loadManifest = useCallback(async (): Promise<DemoManifest<ReleaseInfo> | null> => {
-		// `cache: "reload"` bypasses the (immutable-Cache-Control) HTTP cache for the version pointer so a
-		// returning visitor sees a defaultVersion bump — the same guard `_app.tsx` uses.
-		const res = await fetch(assetURL(DEFAULT_LOCALE, "", "releases.json").replace(/\/\/releases/, "/releases"), {
-			cache: "reload",
-		})
-
-		return res.ok ? normalizeReleasesManifest(await res.json()) : null
-	}, [])
+	const loadManifest = useCallback(async (): Promise<DemoManifest<ReleaseInfo> | null> => fetchReleasesManifest(), [])
 
 	// Delegates to the shared `loadDemoAssets` (the ONE docs-side loader, also used by the MDX-embed context) so the
 	// two demo entry points can't drift on the classifier/calibration/FST/WOF load sequence.
@@ -463,14 +457,7 @@ export function useDemoMapRuntime({
 				}
 			}
 
-			const candidates: ResolvedPlaceView[] = cascadeHits.map((c) => ({
-				id: c.id,
-				name: c.name,
-				placetype: c.placetype,
-				lat: c.lat,
-				lon: c.lon,
-				score: c.score,
-			}))
+			const candidates: ResolvedPlaceView[] = projectCascadeHits(cascadeHits)
 
 			// Stash the map-render extras (bbox) keyed by the candidate object.
 			cascadeHits.forEach((c, i) => {
@@ -638,10 +625,7 @@ export function useDemoMapRuntime({
 	)
 
 	const parseStageLabels = useMemo(
-		() =>
-			rt.selectedRelease?.hasWOFDB
-				? ["Analyzing input shape…", "Running neural classifier…", "Resolving in gazetteer…"]
-				: ["Analyzing input shape…", "Running neural classifier…"],
+		() => parseStageLabelsFor(rt.selectedRelease?.hasWOFDB ?? false),
 		[rt.selectedRelease]
 	)
 

@@ -3,21 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pure MapLibre helpers for the demo page — basemap source fetch, approximate-extent circle geometry,
- *   bbox math, and the crisp-polygon DB opener. Consumed by the docs runtime (`_runtime.ts`) that feeds
- *   `@mailwoman/react/map`'s declarative `<GeocoderDemo>` overlays, and unit-tested in
- *   `map-helpers.test.ts`.
+ *   Pure MapLibre helpers for the demo page — basemap source fetch and the crisp-polygon DB opener.
+ *   Consumed by the docs runtime (`_runtime.ts`) that feeds `@mailwoman/react/map`'s declarative
+ *   `<GeocoderDemo>` overlays. The resolved-place geometry math lives in `@mailwoman/react/map/geometry`.
  *
  *   None of these touch React — they compute geometry or open a range-loaded DB; the map itself is now
  *   driven declaratively by the package, so the old imperative source/layer drawing helpers are gone.
  */
 
 import type { VectorSourceSpecification } from "maplibre-gl"
-
-/**
- * Segments used to approximate a circle as a polygon ring.
- */
-const CIRCLE_SEGMENTS = 64
 
 /**
  * Origin of the tile worker serving basemap and overlay tiles. CORS-restricted to localhost and the docs domains.
@@ -34,83 +28,6 @@ export const BASEMAP_TILEJSON_URL = `${TILE_WORKER_URL}/basemap-v4.json`
 export type PlaceGeometry =
 	| { type: "Polygon"; coordinates: number[][][] }
 	| { type: "MultiPolygon"; coordinates: number[][][][] }
-
-/**
- * The 64-point approximate-extent ring for places without a crisp polygon: centered on the place point, radius from the
- * bbox half-diagonal (clamped 0.5–50 km), with latitude correction — visually a circle anywhere outside the poles.
- */
-export function approxCircleGeometry(
-	lat: number,
-	lon: number,
-	bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
-): PlaceGeometry {
-	const kmPerDegLat = 111.32
-	const kmPerDegLon = kmPerDegLat * Math.cos((lat * Math.PI) / 180)
-
-	const halfDiagKm = bbox
-		? Math.hypot((bbox.maxLat - bbox.minLat) * kmPerDegLat, (bbox.maxLon - bbox.minLon) * kmPerDegLon) / 2
-		: 3
-
-	// anchor-centroid postcodes carry no extent; ~ZIP-sized default
-	const radiusKM = Math.min(50, Math.max(0.5, halfDiagKm))
-	const ring: number[][] = []
-
-	for (let i = 0; i <= CIRCLE_SEGMENTS; i++) {
-		const theta = (2 * Math.PI * i) / 64
-		ring.push([lon + (radiusKM * Math.cos(theta)) / kmPerDegLon, lat + (radiusKM * Math.sin(theta)) / kmPerDegLat])
-	}
-
-	return { type: "Polygon", coordinates: [ring] }
-}
-
-/**
- * Bounding box of a Polygon / MultiPolygon, for fitBounds. Walks the nested coordinate arrays.
- */
-export function geomBounds(geometry: PlaceGeometry): {
-	minLon: number
-	minLat: number
-	maxLon: number
-	maxLat: number
-} {
-	let minLon = Infinity
-	let minLat = Infinity
-	let maxLon = -Infinity
-	let maxLat = -Infinity
-
-	const visit = (node: unknown): void => {
-		if (Array.isArray(node) && typeof node[0] === "number") {
-			const [lon, lat] = node as number[]
-
-			if (lon < minLon) {
-				minLon = lon
-			}
-
-			if (lon > maxLon) {
-				maxLon = lon
-			}
-
-			if (lat < minLat) {
-				minLat = lat
-			}
-
-			if (lat > maxLat) {
-				maxLat = lat
-			}
-
-			return
-		}
-
-		if (Array.isArray(node)) {
-			for (const child of node) {
-				visit(child)
-			}
-		}
-	}
-
-	visit(geometry.coordinates)
-
-	return { minLon, minLat, maxLon, maxLat }
-}
 
 /**
  * Id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`. Async (range-loaded).

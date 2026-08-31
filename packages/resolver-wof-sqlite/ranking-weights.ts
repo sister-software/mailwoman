@@ -146,3 +146,29 @@ export const DEFAULT_WEIGHTS: RankingWeights = {
 	officialNameExact: true,
 	officialNameExactFloor: 100_000,
 }
+
+/**
+ * The population contribution as a 0..1 fraction: `min(1, log10(1 + population) / populationScaleLog10)`. Zero for an
+ * absent or non-positive population — and zero for a non-positive scale, so a magnitude never carries its own absence.
+ * The coordinate-first locality path consumes this fraction directly; {@link populationBoostTerm} scales it.
+ */
+export function populationScaleTerm(
+	population: number | null | undefined,
+	weights: Pick<RankingWeights, "populationScaleLog10">
+): number {
+	if (population == null || population <= 0 || weights.populationScaleLog10 <= 0) return 0
+
+	return Math.min(1, Math.log10(1 + population) / weights.populationScaleLog10)
+}
+
+/**
+ * The additive population boost: `populationBoost * populationScaleTerm(...)`, capped at `populationBoost` magnitude at
+ * `10^populationScaleLog10` people. Missing population contributes 0 — never a penalty. The one formula behind the Node
+ * weighted sum and the WASM re-rank, so the two backends cannot drift.
+ */
+export function populationBoostTerm(
+	population: number | null | undefined,
+	weights: Pick<RankingWeights, "populationBoost" | "populationScaleLog10">
+): number {
+	return weights.populationBoost * populationScaleTerm(population, weights)
+}

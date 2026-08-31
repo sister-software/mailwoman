@@ -17,20 +17,19 @@ import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import ort from "onnxruntime-node"
 import type { PathBuilderLike } from "path-ts"
 
-import { ANCHOR_FEATURE_DIM } from "#anchor-inference"
-import { COUNTRY_FEATURE_DIM } from "#country-inference"
-import { GAZETTEER_FEATURE_DIM, LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "#gazetteer-inference"
+import {
+	decodeInferOutput,
+	packSoftChannelFeeds,
+	packTokenFeed,
+	type InferFunction,
+	type OutputTensor,
+} from "#ort-feeds"
 
 // Back-compat: the dims moved to gazetteer-inference.ts (browser-safe) so neural-web's runner can
 // import them without touching this node-only module.
 export { LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "#gazetteer-inference"
-
-/**
- * Evidence-bundle zero-fallback widths (Option-A; must match the trained model's channel dims).
- */
-/**
- * Channel width of the locality-surface evidence feature. Must match the trained model's input shape.
- */
+// Back-compat: the result type moved to ort-feeds.ts (pure, shared with the browser runner).
+export type { InferResult } from "#ort-feeds"
 
 export interface ONNXRunnerOpts {
 	/**
@@ -93,35 +92,11 @@ export const DEFAULT_FIXED_SEQ_LEN = 128
  */
 export const DEFAULT_INTRA_OP_THREADS = 2
 
-export interface InferResult {
-	/**
-	 * Logits per token per label, indexed as `logits[tokenIdx][labelIdx]`.
-	 */
-	logits: number[][]
-	/**
-	 * Number of label classes (the inner-dim of the logits tensor).
-	 */
-	numLabels: number
-	/**
-	 * Pooled locale-head posterior (`locale_logits` output, LOCALE_COUNTRIES order), when the model exports it (v1.1.0+,
-	 * #511 Tier A). Absent on older bundles — consumers must treat undefined as "no address-system detection available".
-	 */
-	localeLogits?: number[]
-	/**
-	 * #727 stage-2: per-span type scores from the semi-Markov span head (`span_scores` output, v3.x+). Indexed
-	 * `spanScores[tokenIdx][lengthIdx][segmentTypeIdx]` — the segment starting at `tokenIdx`, of length `lengthIdx + 1`
-	 * tokens, typed `SEGMENT_TYPES[segmentTypeIdx]` (that axis ships in the weights bundle's `semi-crf-transitions.json`,
-	 * never hardcoded — the PLACETYPE_ORDER class).
-	 *
-	 * Absent on every pre-v3 bundle, so consumers MUST treat undefined as "no span decode available" and fall back to the
-	 * BIO path. Fetching it costs ~0.75 ms (CPU, S=128); a runtime that never reads it pays nothing (ORT prunes the
-	 * unfetched branch) — measured in `docs/articles/evals/2026-07-15-v301-phase2-export.md`.
-	 */
-	spanScores?: number[][][]
-	/**
-	 * Max span length (the `L` axis of {@link spanScores}). Absent iff `spanScores` is.
-	 */
-	maxSpan?: number
+/**
+ * The `{data, dims}` view `decodeInferOutput` reads. The float32 dtype is the export contract's, not a runtime check.
+ */
+function outputTensor(tensor: ort.Tensor): OutputTensor {
+	return { data: tensor.data as Float32Array, dims: tensor.dims }
 }
 
 export class ONNXRunner {
@@ -216,241 +191,45 @@ export class ONNXRunner {
 	}
 
 	/**
-	 * Run inference on a single token id sequence.
+	 * Run inference on a single token id sequence — see {@link InferFunction} for the parameter contract.
 	 *
 	 * Pads to `fixedSeqLen` (default 128) with id 0 + mask 0; truncates if longer. Output is sliced back to the actual
-	 * input length.
-	 *
-	 * @param tokenIDs The id sequence produced by the tokenizer (no special tokens added).
-	 * @param anchor Optional postcode-anchor channel (#239/#240). When supplied (only for anchor models — exported with
-	 *   the `anchor_features`/`anchor_confidence` inputs), per-piece features `(seqLen × dim)` + confidence `(seqLen,)`
-	 *   are fed, zero-padded to `fixedSeqLen`. Omit for plain models, whose ONNX has no anchor inputs.
+	 * input length. Every soft-feed channel is present-conditional on the graph's declared inputs, with the zero-fill
+	 * confidence=0 identity for a declared-but-unsupplied channel (`packSoftChannelFeeds`).
 	 */
-	async infer(
-		tokenIDs: number[],
-		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
-		gazetteer?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
-		country?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
-		evidence?: {
-			streetType?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
-			localitySurface?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
-		}
-	): Promise<InferResult> {
+	infer: InferFunction = async (tokenIDs, anchor, gazetteer, country, evidence) => {
 		const session = await this.ensureSession()
-		const seqLen = Math.min(tokenIDs.length, this.fixedSeqLen)
-		const padded = new BigInt64Array(this.fixedSeqLen)
-		const mask = new BigInt64Array(this.fixedSeqLen)
-
-		for (let i = 0; i < seqLen; i++) {
-			padded[i] = BigInt(tokenIDs[i]!)
-			mask[i] = 1n
-		}
+		const { inputIDs, attentionMask, seqLen } = packTokenFeed(tokenIDs, this.fixedSeqLen)
 
 		const feeds: Record<string, ort.Tensor> = {
-			input_ids: new ort.Tensor("int64", padded, [1, this.fixedSeqLen]),
-			attention_mask: new ort.Tensor("int64", mask, [1, this.fixedSeqLen]),
+			input_ids: new ort.Tensor("int64", inputIDs.data, inputIDs.dims),
+			attention_mask: new ort.Tensor("int64", attentionMask.data, attentionMask.dims),
 		}
 
-		if (anchor) {
-			const dim = anchor.features[0]?.length ?? 0
-			const af = new Float32Array(this.fixedSeqLen * dim)
-			const ac = new Float32Array(this.fixedSeqLen)
+		const packed = packSoftChannelFeeds(
+			session.inputNames,
+			this.fixedSeqLen,
+			seqLen,
+			anchor,
+			gazetteer,
+			country,
+			evidence
+		)
 
-			for (let i = 0; i < seqLen; i++) {
-				ac[i] = anchor.confidence[i] ?? 0
-				const row = anchor.features[i]
-
-				if (row) {
-					for (let d = 0; d < dim; d++) {
-						af[i * dim + d] = row[d] ?? 0
-					}
-				}
-			}
-
-			feeds.anchor_features = new ort.Tensor("float32", af, [1, this.fixedSeqLen, dim])
-			feeds.anchor_confidence = new ort.Tensor("float32", ac, [1, this.fixedSeqLen])
-		} else if (session.inputNames.includes("anchor_features")) {
-			// Anchor-trained model (its ONNX declares the anchor inputs as mandatory) but no anchor data
-			// was supplied: feed zeros. That's the `confidence = 0` identity — the model's anchor-off
-			// behavior. Without it the session throws on the missing required inputs.
-			feeds.anchor_features = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen * ANCHOR_FEATURE_DIM), [
-				1,
-				this.fixedSeqLen,
-				ANCHOR_FEATURE_DIM,
-			])
-
-			feeds.anchor_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
-		}
-
-		// Gazetteer-anchor channel (#464): same feed contract as the postcode anchor. Feature width is
-		// read from the supplied rows (the lexicon's slot count); a gazetteer-trained model with no clue
-		// data supplied gets the confidence=0 identity (the model's gazetteer-off behavior).
-		if (gazetteer && session.inputNames.includes("gazetteer_features")) {
-			const dim = gazetteer.features[0]?.length ?? 0
-			const gf = new Float32Array(this.fixedSeqLen * dim)
-			const gc = new Float32Array(this.fixedSeqLen)
-
-			for (let i = 0; i < seqLen; i++) {
-				gc[i] = gazetteer.confidence[i] ?? 0
-				const row = gazetteer.features[i]
-
-				if (row) {
-					for (let d = 0; d < dim; d++) {
-						gf[i * dim + d] = row[d] ?? 0
-					}
-				}
-			}
-
-			feeds.gazetteer_features = new ort.Tensor("float32", gf, [1, this.fixedSeqLen, dim])
-			feeds.gazetteer_confidence = new ort.Tensor("float32", gc, [1, this.fixedSeqLen])
-		} else if (session.inputNames.includes("gazetteer_features")) {
-			feeds.gazetteer_features = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen * GAZETTEER_FEATURE_DIM), [
-				1,
-				this.fixedSeqLen,
-				GAZETTEER_FEATURE_DIM,
-			])
-
-			feeds.gazetteer_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
-		}
-
-		// Country-lexicon channel (#1104): same feed contract as the gazetteer. Feature width read from the supplied
-		// rows (COUNTRY_FEATURE_DIM); a country-trained model with no lexicon supplied gets the confidence=0 identity.
-		if (country && session.inputNames.includes("country_features")) {
-			const dim = country.features[0]?.length ?? 0
-			const cf = new Float32Array(this.fixedSeqLen * dim)
-			const cc = new Float32Array(this.fixedSeqLen)
-
-			for (let i = 0; i < seqLen; i++) {
-				cc[i] = country.confidence[i] ?? 0
-				const row = country.features[i]
-
-				if (row) {
-					for (let d = 0; d < dim; d++) {
-						cf[i * dim + d] = row[d] ?? 0
-					}
-				}
-			}
-
-			feeds.country_features = new ort.Tensor("float32", cf, [1, this.fixedSeqLen, dim])
-			feeds.country_confidence = new ort.Tensor("float32", cc, [1, this.fixedSeqLen])
-		} else if (session.inputNames.includes("country_features")) {
-			feeds.country_features = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen * COUNTRY_FEATURE_DIM), [
-				1,
-				this.fixedSeqLen,
-				COUNTRY_FEATURE_DIM,
-			])
-
-			feeds.country_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
-		}
-
-		// Evidence-bundle channels (Option-A, Phase 2): same feed contract as every soft channel —
-		// present-conditional on the graph's declared inputs, confidence=0 identity zero-fallback for a
-		// bundle-trained model run without lexicons. Inert against every pre-bundle model by construction.
-		const evidenceFeeds = [
-			{ prefix: "street_type", dim: STREET_TYPE_FEATURE_DIM, data: evidence?.streetType },
-			{ prefix: "locality_surface", dim: LOCALITY_SURFACE_FEATURE_DIM, data: evidence?.localitySurface },
-		] as const
-
-		for (const { prefix, dim: fallbackDim, data } of evidenceFeeds) {
-			if (!session.inputNames.includes(`${prefix}_features`)) continue
-
-			if (data) {
-				const dim = data.features[0]?.length ?? fallbackDim
-				const ef = new Float32Array(this.fixedSeqLen * dim)
-				const ec = new Float32Array(this.fixedSeqLen)
-
-				for (let i = 0; i < seqLen; i++) {
-					ec[i] = data.confidence[i] ?? 0
-					const row = data.features[i]
-
-					if (row) {
-						for (let d = 0; d < dim; d++) {
-							ef[i * dim + d] = row[d] ?? 0
-						}
-					}
-				}
-
-				feeds[`${prefix}_features`] = new ort.Tensor("float32", ef, [1, this.fixedSeqLen, dim])
-				feeds[`${prefix}_confidence`] = new ort.Tensor("float32", ec, [1, this.fixedSeqLen])
-			} else {
-				feeds[`${prefix}_features`] = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen * fallbackDim), [
-					1,
-					this.fixedSeqLen,
-					fallbackDim,
-				])
-
-				feeds[`${prefix}_confidence`] = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [
-					1,
-					this.fixedSeqLen,
-				])
-			}
+		for (const [name, feed] of packed) {
+			feeds[name] = new ort.Tensor("float32", feed.data, feed.dims)
 		}
 
 		const output = await session.run(feeds)
-		const logitsTensor = output.logits
 
-		if (!logitsTensor) throw new Error("ONNX model did not return a `logits` output")
-		const data = logitsTensor.data as Float32Array
-		// dims are [batch, sequence, labels].
-		const numLabels = (logitsTensor.dims as readonly [number, number, number])[2]
-
-		const logits: number[][] = []
-
-		for (let t = 0; t < seqLen; t++) {
-			const row: number[] = new Array(numLabels)
-			const base = t * numLabels
-
-			for (let l = 0; l < numLabels; l++) {
-				row[l] = data[base + l]!
-			}
-
-			logits.push(row)
-		}
-
-		// Locale head (#511 Tier A): present on v1.1.0+ exports, absent (and optional) before.
-		const localeTensor = output.locale_logits
-		const localeLogits = localeTensor ? Array.from(localeTensor.data as Float32Array) : undefined
-
-		// Span head (#727 stage-2): present on v3.x+ exports. Same optional contract as the locale head
-		// — a pre-v3 bundle simply has no `span_scores` output and the BIO path is unaffected.
-		const spanTensor = output.span_scores
-		let spanScores: number[][][] | undefined
-		let maxSpan: number | undefined
-
-		if (spanTensor) {
-			const spanData = spanTensor.data as Float32Array
-			// dims are [batch, sequence, span, type].
-			const spanDims = spanTensor.dims as readonly [number, number, number, number]
-			const spanLen = spanDims[2]
-			const numTypes = spanDims[3]
-			maxSpan = spanLen
-			spanScores = []
-
-			// Only the first `seqLen` token rows are real; the rest is the fixed-length pad tail.
-			for (let t = 0; t < seqLen; t++) {
-				const perLength: number[][] = new Array(spanLen)
-
-				for (let l = 0; l < spanLen; l++) {
-					const row: number[] = new Array(numTypes)
-					const base = (t * spanLen + l) * numTypes
-
-					for (let ty = 0; ty < numTypes; ty++) {
-						row[ty] = spanData[base + ty]!
-					}
-
-					perLength[l] = row
-				}
-
-				spanScores.push(perLength)
-			}
-		}
-
-		return {
-			logits,
-			numLabels,
-			...(localeLogits ? { localeLogits } : {}),
-			...(spanScores ? { spanScores, maxSpan } : {}),
-		}
+		return decodeInferOutput(
+			{
+				...(output.logits ? { logits: outputTensor(output.logits) } : {}),
+				...(output.locale_logits ? { localeLogits: outputTensor(output.locale_logits) } : {}),
+				...(output.span_scores ? { spanScores: outputTensor(output.span_scores) } : {}),
+			},
+			seqLen
+		)
 	}
 
 	/**

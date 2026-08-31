@@ -214,6 +214,10 @@ export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSigna
  *
  * Records whose ancestors aren't in `byID` (e.g. an FR locality whose region wasn't included in the cloned repo set)
  * get a shorter chain; the variant emission gracefully degrades.
+ *
+ * `wof-admin-jp`'s `chainOf` walks the same parent-child relation over SQLite `spr` rows with an
+ * outside-the-preloaded-set fallback query — a different substrate with a different escape hatch, kept separate on
+ * purpose.
  */
 export type AncestryIndex = Map<number, WOFRecord[]>
 

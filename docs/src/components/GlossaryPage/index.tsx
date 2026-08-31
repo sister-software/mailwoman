@@ -11,6 +11,7 @@
 
 import Link from "@docusaurus/Link"
 import useBrokenLinks from "@docusaurus/useBrokenLinks"
+import { escapeHTML } from "@mailwoman/core/strings/escape"
 import Layout from "@theme/Layout"
 import TOC from "@theme/TOC"
 import React, { useEffect, useMemo, useState } from "react"
@@ -35,14 +36,14 @@ interface GlossaryPageProps {
 }
 
 /**
- * Upstream anchor scheme — must not change or remark tooltip links break.
+ * Upstream anchor slug scheme — must not change or remark tooltip links break.
  */
-function termAnchor(term: TaggedGlossaryTerm): string {
-	return term.id || term.term.toLowerCase().replaceAll(/\s+/g, "-")
+function anchorSlug(text: string): string {
+	return text.toLowerCase().replaceAll(/\s+/g, "-")
 }
 
-function relatedAnchor(related: string): string {
-	return related.toLowerCase().replaceAll(/\s+/g, "-")
+function termAnchor(term: TaggedGlossaryTerm): string {
+	return term.id || anchorSlug(term.term)
 }
 
 export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: GlossaryPageProps): React.JSX.Element {
@@ -137,8 +138,6 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 	// TOC: a back-to-top "Glossary" entry, then categories (level 2) with their visible terms
 	// nested beneath (level 3). TOCItems renders `value` as HTML, so entity-escape the strings.
 	const toc = useMemo(() => {
-		const escapeHTML = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
-
 		return [
 			{ value: "Glossary", id: TOP_ANCHOR, level: 2 },
 			...sections.flatMap(({ tag, terms: sectionTerms }) => [
@@ -236,7 +235,7 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 															{term.relatedTerms.map((related, index) => (
 																<React.Fragment key={related}>
 																	{index > 0 ? ", " : null}
-																	<a href={`#${relatedAnchor(related)}`}>{related}</a>
+																	<a href={`#${anchorSlug(related)}`}>{related}</a>
 																</React.Fragment>
 															))}
 														</div>

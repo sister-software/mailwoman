@@ -19,6 +19,7 @@
  *   consumes the shape.
  */
 
+import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
 import type { TokenLike } from "#query-shape-prior"
 
 /**
@@ -374,17 +375,8 @@ export function buildFSTEmissionPriors(
 	// positive term too (`both`) measured strictly worse (US +26, FR −9). See docs/…/the-meaning-of-zero.
 	const lengthMode: ImportanceLengthScaleMode = opts.importanceLengthScaleMode ?? "suppression"
 	const tuning: BiasTuning = { biasScale, maxBias, suppressionScale, seenWOFIDs, lengthMode }
-	const matrix: number[][] = []
-
-	for (let t = 0; t < T; t++) {
-		matrix.push(new Array<number>(L).fill(0))
-	}
-
-	const labelToCol = new Map<string, number>()
-
-	for (let k = 0; k < labels.length; k++) {
-		labelToCol.set(labels[k]!, k)
-	}
+	const matrix = emptyPriorMatrix(T, L)
+	const labelToCol = labelColumnIndex(labels)
 
 	const wordGroups = groupPiecesIntoWords(pieces)
 

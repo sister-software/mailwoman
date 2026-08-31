@@ -73,6 +73,16 @@ export const ALIAS_SEPARATOR = "\uE000"
 const ALIAS_SEPARATOR_CODEPOINT = ALIAS_SEPARATOR.codePointAt(0) as number
 
 /**
+ * The query/name fold every exact-tier comparison uses: lowercase, trim, collapse internal whitespace. The `alt_names`
+ * bag is compared alias-by-alias against a query folded THIS way, so the fold lives beside the bag parser — every
+ * consumer (the Node resolver's exact tier, the WASM resolver, the name-exact sub-tier sort) folds through this one
+ * function.
+ */
+export function foldQueryText(input: string): string {
+	return input.toLowerCase().trim().replaceAll(/\s+/g, " ")
+}
+
+/**
  * Does any alias in an `alt_names` bag exactly equal the (already-normalized) query? The single shared implementation
  * of the exact-tier alias check for every consumer of the bag — the Node resolver's `#exactMatchIDs` fallback, the WASM
  * resolver, and the demo's httpvfs resolver — so the bag format and its parsers can't drift.
@@ -96,15 +106,14 @@ const ALIAS_SEPARATOR_CODEPOINT = ALIAS_SEPARATOR.codePointAt(0) as number
  */
 export function aliasBagExactMatch(altNames: string | null, normalizedQuery: string, anyStrictExact: boolean): boolean {
 	if (altNames === null || altNames === "" || !normalizedQuery) return false
-	const norm = (s: string): string => s.toLowerCase().trim().replaceAll(/\s+/g, " ")
 
 	if (altNames.includes(ALIAS_SEPARATOR)) {
-		return altNames.split(ALIAS_SEPARATOR).some((alias) => norm(alias) === normalizedQuery)
+		return altNames.split(ALIAS_SEPARATOR).some((alias) => foldQueryText(alias) === normalizedQuery)
 	}
 
 	if (anyStrictExact) return false
 
-	return ` ${norm(altNames)} `.includes(` ${normalizedQuery} `)
+	return ` ${foldQueryText(altNames)} `.includes(` ${normalizedQuery} `)
 }
 
 /**

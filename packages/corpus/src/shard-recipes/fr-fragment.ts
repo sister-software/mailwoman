@@ -72,6 +72,7 @@ import { TextSpliterator } from "spliterator"
 
 import { decomposeFrStreet } from "#adapters/ban/street-decompose"
 import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "#shard-recipes/scaffold"
+import { pick } from "#synthesizers/utils"
 
 /**
  * House numbers, weighted toward the small values that dominate real BAN rows.
@@ -86,6 +87,8 @@ const HOUSE_NUMBERS = [
  */
 const ALNUM_SUFFIXES = ["bis", "ter", "A", "B"]
 
+// Recipe-fidelity: this accent-STRIPPING fold is the surface key every committed fr-fragment shard and the fragment
+// board's reserved list were built with — not the diacritic-KEEPING `foldNOSurface` the Norwegian shards share.
 const norm = (value: string): string =>
 	value
 		.normalize("NFD")
@@ -247,9 +250,9 @@ export const frFragmentRecipe: ShardRecipe = {
 			let klass = DATEISH.test(street) ? "date-name" : PARTICLE.test(street) ? "street-particle" : "bare-street"
 
 			if (carriesNumber) {
-				const number = HOUSE_NUMBERS[Math.floor(random() * HOUSE_NUMBERS.length)]!
+				const number = pick(HOUSE_NUMBERS, random)
 				const alnum = random() < ALNUM_HOUSE_NUMBER_SHARE
-				const suffix = ALNUM_SUFFIXES[Math.floor(random() * ALNUM_SUFFIXES.length)]!
+				const suffix = pick(ALNUM_SUFFIXES, random)
 
 				const houseNumber = alnum
 					? suffix === "bis" || suffix === "ter"
@@ -296,7 +299,7 @@ export const frFragmentRecipe: ShardRecipe = {
 		for (let i = 0; i < wanted && pool.length; i++) {
 			// BAN gives `locality_base` normalized; restore the casing the fragment board also
 			// reconstructs, so train and eval show the model the same shape of French.
-			const name = frTitleCase(pool[Math.floor(random() * pool.length)]!)
+			const name = frTitleCase(pick(pool, random))
 			const sourceID = shardSourceID("synth-fr-fragment", { locality: name, v: `neg-${i}` })
 
 			if (

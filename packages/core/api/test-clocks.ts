@@ -55,10 +55,11 @@ export function drainMicrotasks(): Promise<void> {
 }
 
 /**
- * Yield the event loop for `ms` of REAL time. Used only by {@linkcode VirtualClock.runUntilSettled}'s idle backoff, to
- * let pending real I/O actually be serviced instead of competing with a `setImmediate` spin.
+ * Yield the event loop for `ms` of REAL time — a real macrotask no virtual clock drives. Used by
+ * {@linkcode VirtualClock.runUntilSettled}'s idle backoff (so pending real I/O is serviced instead of competing with a
+ * `setImmediate` spin), and by suites that need progress the clock cannot see.
  */
-function realDelay(ms: number): Promise<void> {
+export function realDelay(ms: number): Promise<void> {
 	return new Promise<void>((resolve) => {
 		setTimeout(resolve, ms)
 	})

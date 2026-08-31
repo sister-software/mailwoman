@@ -39,7 +39,13 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 
-import { ParquetReader } from "#parquet-wrapper/index"
+import {
+	accumulateCooccurrences,
+	createCooccurrenceStats,
+	SHARD_STATS_SEP as SEP,
+	streamTokenLabelRows,
+	type TokenLabelRow as ShardRow,
+} from "#utils/shard-stats"
 
 /**
  * Occurrences of a forbidden label before it is reported — one or two are noise, five is a pattern.
@@ -50,8 +56,6 @@ const FORBIDDEN_LABEL_REPORT_THRESHOLD = 5
  * Examples printed per finding before the list is truncated.
  */
 const MAX_LISTED_EXAMPLES = 20
-
-const SEP = ""
 
 /**
  * Calibrated thresholds (DeepSeek turn 9). These can be tuned over time if new failure modes surface that the current
@@ -121,26 +125,6 @@ interface LintRulesFile {
 	rules: LintRule[]
 }
 
-// The reader's `ParquetRecordLike` constraint is `Record<string, unknown>`, and TypeScript gives a type
-// alias an implicit index signature where an interface has none.
-// oxlint-disable-next-line typescript/consistent-type-definitions -- see above
-type ShardRow = {
-	tokens: string[]
-	labels: string[]
-}
-
-/**
- * Stream a shard's `tokens`/`labels` columns.
- *
- * Projected rather than read whole: parquet is columnar, so the twelve unused columns are never touched. The rows feed
- * straight into {@link statsFromShard} and are never all resident.
- */
-async function* streamShard(shardPath: string): AsyncIterable<ShardRow> {
-	await using reader = await ParquetReader.openFile<ShardRow>(shardPath)
-
-	yield* reader.project("tokens", "labels")
-}
-
 interface ShardStats {
 	rowCount: number
 	tokens: Map<string, Map<string, number>>
@@ -150,10 +134,12 @@ interface ShardStats {
 }
 
 async function statsFromShard(rows: AsyncIterable<ShardRow>): Promise<ShardStats> {
+	const co = createCooccurrenceStats()
+
 	const out: ShardStats = {
 		rowCount: 0,
-		tokens: new Map(),
-		bigrams: new Map(),
+		tokens: co.tokens,
+		bigrams: co.bigrams,
 		truncatedRows: 0,
 		allORows: 0,
 	}
@@ -171,31 +157,7 @@ async function statsFromShard(rows: AsyncIterable<ShardRow>): Promise<ShardStats
 			out.allORows++
 		}
 
-		for (let i = 0; i < row.tokens.length; i++) {
-			const tk = row.tokens[i]!
-			const lb = row.labels[i]!
-			let labelMap = out.tokens.get(tk)
-
-			if (!labelMap) {
-				labelMap = new Map()
-				out.tokens.set(tk, labelMap)
-			}
-
-			labelMap.set(lb, (labelMap.get(lb) ?? 0) + 1)
-
-			if (i + 1 < row.tokens.length) {
-				const bigramKey = tk + SEP + row.tokens[i + 1]!
-				const bigramLabel = lb + SEP + row.labels[i + 1]!
-				let bMap = out.bigrams.get(bigramKey)
-
-				if (!bMap) {
-					bMap = new Map()
-					out.bigrams.set(bigramKey, bMap)
-				}
-
-				bMap.set(bigramLabel, (bMap.get(bigramLabel) ?? 0) + 1)
-			}
-		}
+		accumulateCooccurrences(co, row.tokens, row.labels)
 	}
 
 	return out
@@ -481,7 +443,7 @@ export async function lintCorpusShard(
 
 	report?.(`Reading shard from ${options.shardPath}...`)
 
-	const shard = await statsFromShard(streamShard(options.shardPath))
+	const shard = await statsFromShard(streamTokenLabelRows(options.shardPath))
 
 	report?.(`  ${shard.rowCount} rows`)
 

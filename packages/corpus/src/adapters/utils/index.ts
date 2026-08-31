@@ -14,17 +14,22 @@
  *       source data has no native primary key (CSV, GeoJSON).
  *   - `HOUSE_NUMBER_PREFIX` + `splitStreetLine(line)`: the one house-number/street split every
  *       US CSV adapter uses.
+ *   - `composeRaw(parts)`: the envelope-style raw line every US CSV adapter renders.
  *   - `canonicalDedupKey(row)`: normalized signature used to drop near-identical rows during a run.
  *       Adapter-internal dedup; cross-adapter dedup is the runner's job.
  *   - `streamingSha256()`: thin wrapper around `node:crypto` so the runner can hash JSONL output as it
  *       streams (avoids re-reading the shard for the manifest checksum).
- *
- *   Everything here is pure (no I/O); side-effecting code goes in `./runner.ts`.
+ *   - `loadLibpostalDictionary(language, filename)`: the curated libpostal dictionary reader the
+ *       street-decompose modules share — the one read this module performs; everything else here is
+ *       pure, and other side-effecting code goes in `./runner.ts`.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { isPresent } from "@mailwoman/core/objects"
 import type { ComponentTag } from "@mailwoman/core/types"
-import { sha256Hex } from "@mailwoman/core/utils"
+import { resourceDictionaryPath, sha256Hex } from "@mailwoman/core/utils"
 import { createHash, type Hash } from "@mailwoman/core/utils/hash"
+import { TextSpliterator } from "spliterator"
 
 import type { CanonicalRow, CorpusAdapter } from "#types"
 
@@ -169,6 +174,76 @@ export function splitStreetLine(line: string): SplitStreetLine | null {
 	if (match) return { house_number: match[1], street: match[2]!.trim() }
 
 	return { street: trimmed }
+}
+
+/**
+ * Parts of the envelope-style raw line {@link composeRaw} renders. Every field is dropped when empty, so a caller only
+ * supplies what its source carries.
+ */
+export interface ComposeRawParts {
+	venue?: string
+	houseNumber?: string
+	street?: string
+	/**
+	 * A street line already joined by the caller (e.g. a PO-box phrase) — used INSTEAD of `houseNumber`/`street`/`unit`
+	 * when present.
+	 */
+	streetLine?: string
+	unit?: string
+	locality: string
+	region?: string
+	postcode: string
+}
+
+/**
+ * Compose the envelope-style raw address line the US CSV adapters share:
+ *
+ * `"<venue>, <house> <street> <unit>, <city>, <state> <postcode>"`
+ *
+ * The venue leads (US conventional addressee-then-address ordering) so a downstream model sees the
+ * venue-prefix-then-address shape users actually type into geocoders. Empty segments drop out rather than leaving a
+ * dangling separator.
+ */
+export function composeRaw(parts: ComposeRawParts): string {
+	const streetLine =
+		parts.streetLine ?? [parts.houseNumber, parts.street, parts.unit].filter(isPresent).join(" ").trim()
+
+	const tail = [parts.locality.trim(), [parts.region, parts.postcode].filter(isPresent).join(" ").trim()]
+		.filter(isPresent)
+		.join(", ")
+
+	return [parts.venue, streetLine || undefined, tail].filter(isPresent).join(", ")
+}
+
+/**
+ * Load one curated libpostal dictionary (`core/data/libpostal/dictionaries/<language>/<filename>`) as a lower-cased
+ * form set. libpostal format: `canonical|abbr|abbr|...` — every form is indexed.
+ *
+ * `resourceDictionaryPath` already resolves both layouts — `core/data/...` from source and from the packaged `out/`
+ * tree. The candidate list this replaced named it TWICE and then guessed a third path off `process.cwd()`, and
+ * swallowed every error while probing, so a corrupt dictionary reported as a missing one.
+ *
+ * The largest libpostal dictionary is 8.4 KB, and each caller runs this once per process at module load.
+ */
+export async function loadLibpostalDictionary(language: string, filename: string): Promise<Set<string>> {
+	const text = await readLocalTextFile(resourceDictionaryPath("libpostal", language, filename))
+	const set = new Set<string>()
+
+	for (const line of TextSpliterator.from(text)) {
+		const trimmed = line.trim()
+
+		if (!trimmed || trimmed.startsWith("#")) continue
+
+		for (const form of trimmed.split("|")) {
+			const f = form.trim().toLowerCase()
+
+			if (f) {
+				set.add(f)
+			}
+		}
+	}
+
+	return set
 }
 
 /**

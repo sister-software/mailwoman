@@ -20,6 +20,7 @@
  * that reason.
  */
 
+import { errorMessage } from "@mailwoman/core/errors/schema"
 import { createRequire } from "@mailwoman/core/module/resolvers"
 
 import { MapBrowser } from "#browser"
@@ -52,10 +53,8 @@ async function openTiles(path: string): Promise<TileSource> {
 	try {
 		return await TileSource.open(path)
 	} catch (error) {
-		const detail = error instanceof Error ? error.message : String(error)
-
 		throw new CLIArgsError(
-			`Could not open the tile archive at ${path}: ${detail}\n` +
+			`Could not open the tile archive at ${path}: ${errorMessage(error)}\n` +
 				"Pass --tiles <archive.pmtiles>, or download one from https://protomaps.com/downloads"
 		)
 	}
@@ -96,10 +95,9 @@ async function main(): Promise<number> {
 
 	try {
 		/**
-		 * This package takes no `@mailwoman` dependency by design (see ./mercator.ts), so the blessed readers are out of
-		 * reach: `@mailwoman/core/env` would pull core's shipped data behind a CLI whose whole premise is `npx`.
-		 * `parseCLIArgs` is the local equivalent — argv and the environment are read on this one line, and nowhere else in
-		 * the package.
+		 * `parseCLIArgs` keeps argv and the environment read on this one line, and nowhere else in the package —
+		 * `@mailwoman/core/env`'s typed readers would pull core's data-backed environment schema behind a CLI whose whole
+		 * premise is `npx`, so the bin passes the raw records to the pure parser instead.
 		 */
 		// oxlint-disable-next-line sister-software/no-process-globals -- see above.
 		args = parseCLIArgs(process.argv.slice(2), process.env)
@@ -130,7 +128,7 @@ async function main(): Promise<number> {
 	try {
 		opened = await openTiles(args.tiles)
 	} catch (error) {
-		process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`)
+		process.stderr.write(`${errorMessage(error)}\n`)
 
 		return EXIT_USAGE
 	}

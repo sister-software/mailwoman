@@ -6,6 +6,7 @@
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { tableExists } from "@mailwoman/sqlite/introspection"
 
 import type { CandidateDatabase } from "#candidate-schema"
 import type { PlaceAttrs, StageRow } from "#candidate/place-attrs"
@@ -104,7 +105,7 @@ export function foldShard(ctx: {
 	// alias, not a canonical postcode name), the row stays denormalized onto the POSTCODE's own
 	// spr_id/coords/bbox, and the display `name` stays the postcode — resolving "brooklyn" answers
 	// with place 11201, it does not rename the place to its delivery city.
-	const hasNames = pc.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='names'").get() !== undefined
+	const hasNames = tableExists(pc, "names")
 
 	if (hasNames) {
 		out.exec("BEGIN")

@@ -29,11 +29,10 @@
  *   terms.
  */
 
-import { isPresent } from "@mailwoman/core/objects"
 import { reconcileComponents } from "@mailwoman/formatter"
 import { CSVSpliterator } from "spliterator"
 
-import { splitStreetLine, stableSourceID } from "#adapters/utils"
+import { composeRaw, splitStreetLine, stableSourceID } from "#adapters/utils"
 import { lookupStateAbbreviation } from "#codex/us-fips-state"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
@@ -74,28 +73,6 @@ interface HRSASiteRow {
  * form intact in `street` preserves the adversarial training signal (the model learns that a trailing "Suite 4" is part
  * of the road line in this distribution).
  */
-
-/**
- * Compose the raw envelope-style address line. Format:
- *
- * "<Site Name>, <house> <street>, <city>, <state> <postcode>"
- *
- * The site name leads (US conventional addressee-then-address ordering) so a downstream model sees the
- * venue-prefix-then-address shape that HRSA users actually type into geocoders.
- */
-function composeRaw(
-	venue: string,
-	house: string | undefined,
-	street: string,
-	city: string,
-	state: string,
-	postcode: string
-): string {
-	const streetPart = [house, street].filter(isPresent).join(" ").trim()
-	const cityPart = [city.trim(), [state, postcode].filter(isPresent).join(" ").trim()].filter(isPresent).join(", ")
-
-	return [venue.trim(), streetPart, cityPart].filter(isPresent).join(", ")
-}
 
 export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 	return {
@@ -146,7 +123,14 @@ export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 					postcode,
 				}
 
-				const raw = composeRaw(venue, split.house_number, split.street, city, state.abbreviation, postcode)
+				const raw = composeRaw({
+					venue,
+					houseNumber: split.house_number,
+					street: split.street,
+					locality: city,
+					region: state.abbreviation,
+					postcode,
+				})
 
 				if (!raw) continue
 

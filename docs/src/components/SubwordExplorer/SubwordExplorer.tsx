@@ -15,8 +15,9 @@
 
 import type React from "react"
 
-import { confidenceTier } from "#shared/confidence-tiers"
+import { confidenceTierOrMid } from "#shared/confidence-tiers"
 import type { KindResult, ResultNode, StageTiming } from "#shared/resources"
+import { shortestSpanOwners, tokenizeWords, type WordToken } from "#shared/text-tokens"
 
 import styles from "./styles.module.css"
 
@@ -43,58 +44,6 @@ export interface SubwordExplorerProps {
 	 * Per-stage timing breakdown.
 	 */
 	timing?: StageTiming
-}
-
-//#endregion
-
-//#region Word tokenization (matches BIOHighlight's approach)
-
-interface WordToken {
-	/**
-	 * The word text as it appears in the input.
-	 */
-	text: string
-	/**
-	 * Leading whitespace before this word.
-	 */
-	whitespace: string
-	/**
-	 * Start offset in the input string.
-	 */
-	start: number
-	/**
-	 * End offset in the input string.
-	 */
-	end: number
-}
-
-/**
- * Tokenize the raw input into words, preserving leading whitespace for each token.
- */
-function tokenizeWords(input: string): WordToken[] {
-	const words: WordToken[] = []
-	let i = 0
-
-	while (i < input.length) {
-		let ws = ""
-
-		while (i < input.length && /\s/.test(input[i])) {
-			ws += input[i]
-
-			i++
-		}
-
-		if (i >= input.length) break
-		const start = i
-
-		while (i < input.length && !/\s/.test(input[i])) {
-			i++
-		}
-
-		words.push({ text: input.slice(start, i), start, end: i, whitespace: ws })
-	}
-
-	return words
 }
 
 //#endregion
@@ -146,25 +95,7 @@ function annotateWords(words: WordToken[], nodes: ResultNode[]): AnnotatedWord[]
 		.map((n) => ({ tag: n.tag, confidence: n.confidence, start: n.start, end: n.end, value: n.value }))
 
 	// Per-word: index of the shortest covering span.
-	const owner: number[] = new Array(words.length).fill(-1)
-
-	for (let w = 0; w < words.length; w++) {
-		const wStart = words[w].start
-		const wEnd = words[w].end
-		let best = -1
-		let bestLen = Infinity
-
-		for (let s = 0; s < spans.length; s++) {
-			const sp = spans[s]
-
-			if (wStart < sp.end && wEnd > sp.start && sp.end - sp.start < bestLen) {
-				bestLen = sp.end - sp.start
-				best = s
-			}
-		}
-
-		owner[w] = best
-	}
+	const owner = shortestSpanOwners(words, spans)
 
 	// Assign phrase groups: consecutive words with the same span index form a group.
 	let nextGroup = 0
@@ -209,16 +140,6 @@ function annotateWords(words: WordToken[], nodes: ResultNode[]): AnnotatedWord[]
 	}
 
 	return result
-}
-
-//#endregion
-
-//#region Confidence tier (mirrors SpanHighlight / ResultPanel)
-
-function tier(confidence?: number): "high" | "mid" | "low" {
-	if (confidence == null) return "mid"
-
-	return confidenceTier(confidence)
 }
 
 //#endregion
@@ -380,7 +301,7 @@ export const SubwordExplorer: React.FC<SubwordExplorerProps> = ({ input, nodes, 
 				</div>
 				<div className={styles.tokenRows}>
 					{annotated.map((aw, i) => {
-						const spanTier = aw.span ? tier(aw.span.confidence) : "none"
+						const spanTier = aw.span ? confidenceTierOrMid(aw.span.confidence) : "none"
 						const labelClass = aw.label === "O" ? styles.bioO : aw.label.startsWith("B-") ? styles.bioB : styles.bioI
 
 						return (

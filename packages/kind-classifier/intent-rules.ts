@@ -23,7 +23,7 @@
  *   ending "near me" is not a locality and answering it as one is the bug.
  */
 
-import { MAX_LOCALITY_ONLY_LENGTH, STREET_SUFFIXES } from "#rules"
+import { isDisqualifyingStreetSuffix, MAX_LOCALITY_ONLY_LENGTH, wordsOf } from "#rules"
 import type { NormalizedInputLite, QueryShapeLike } from "#types"
 
 /**
@@ -187,13 +187,6 @@ const DEICTIC_ADVERB_TAIL =
 	/\b(?:nearby|near\s?by|close\s+by|around\s+here|in\s+my\s+(?:area|neighborhood|neighbourhood))\s*$/
 
 /**
- * Split on whitespace + commas, the way the other rules in this package do.
- */
-function wordsOf(text: string): string[] {
-	return text.split(/[\s,]+/).filter((word) => word.length > 0)
-}
-
-/**
  * True when the input carries a deictic locator tail in EITHER form.
  */
 function hasDeicticTail(lowercased: string): boolean {
@@ -232,7 +225,7 @@ function bareNameWords(input: NormalizedInputLite, shape: QueryShapeLike): strin
 	if (!words.length || words.length > MAX_BARE_TOPONYM_WORDS) return null
 
 	for (const word of words) {
-		if (STREET_SUFFIXES.has(word.toLowerCase())) return null
+		if (isDisqualifyingStreetSuffix(word)) return null
 	}
 
 	return words

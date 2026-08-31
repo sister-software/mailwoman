@@ -6,9 +6,10 @@
 
 import { scoreByPostcode, scoreByScript, scoreFallback } from "@mailwoman/locale-gate/rules"
 import type { QueryShapeLike } from "@mailwoman/locale-gate/types"
+import type { KnownFormat } from "@mailwoman/query-shape"
 import { expect, test } from "vitest"
 
-const fmt = (format: string, confidence = 0.9, start = 0, end = 5) => ({
+const fmt = (format: KnownFormat, confidence = 0.9, start = 0, end = 5) => ({
 	format,
 	span: { start, end },
 	confidence,

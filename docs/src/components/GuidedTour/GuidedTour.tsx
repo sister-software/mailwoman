@@ -22,13 +22,12 @@
  *   The GuidedTour is rendered inside PipelineExplorer — no separate provider needed.
  */
 
+import { ConfidenceCell, LoadingIndicator } from "@mailwoman/react"
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
-import { LoadingIndicator } from "#components/LoadingIndicator/LoadingIndicator"
 import { SpanHighlight } from "#components/SpanHighlight/SpanHighlight"
 import { useDemoEmbed } from "#contexts/DemoEmbed"
-import { confidenceTier } from "#shared/confidence-tiers"
-import { flattenTree } from "#shared/demo-helpers"
+import { runClassifyStage } from "#shared/demo-helpers"
 import type { DemoResult } from "#shared/resources"
 
 import { TOUR_STOPS, type StatusBadge } from "./tour-stops.ts"
@@ -63,26 +62,6 @@ function statusBadgeClass(badge: StatusBadge): string {
 	}
 }
 
-function confTier(confidence?: number): "high" | "mid" | "low" {
-	if (confidence == null) return "mid"
-
-	return confidenceTier(confidence)
-}
-
-const ConfidenceMini: React.FC<{ confidence?: number }> = ({ confidence }) => {
-	if (confidence == null) return <span className={styles.tourConfValue}>—</span>
-	const pct = Math.max(0, Math.min(1, confidence)) * 100
-	const t = confTier(confidence)
-	const cls = t === "high" ? styles.tourConfHigh : t === "low" ? styles.tourConfLow : styles.tourConfMid
-
-	return (
-		<div className={styles.tourConfCell}>
-			<div className={`${styles.tourConfBar} ${cls}`} style={{ width: `${pct}%` }} />
-			<span className={styles.tourConfValue}>{confidence.toFixed(2)}</span>
-		</div>
-	)
-}
-
 //#endregion
 
 //#region State per stop
@@ -99,7 +78,8 @@ interface StopParseState {
 //#region Component
 
 export const GuidedTour: React.FC = () => {
-	const { classifier, ready, loadingProgress } = useDemoEmbed()
+	const { classifier, fstMatcher, fstProvenance, streetMorphologyMatcher, selectPairIndex, ready, loadingProgress } =
+		useDemoEmbed()
 
 	const [expanded, setExpanded] = useState(false)
 	const [currentIndex, setCurrentIndex] = useState(0)
@@ -143,28 +123,14 @@ export const GuidedTour: React.FC = () => {
 			})
 
 			try {
-				const [{ computeQueryShape }, { classifyKindSync }, { runPipeline }, { groupPhrases }] = await Promise.all([
-					import("@mailwoman/query-shape"),
-					import("@mailwoman/kind-classifier"),
-					import("@mailwoman/core/pipeline"),
-					import("@mailwoman/phrase-grouper"),
-				])
-
-				const tStart = performance.now()
-				const queryShape = computeQueryShape(state.address)
-				const kindResult = classifyKindSync({ raw: state.address, normalized: state.address }, queryShape)
-				const tShape = performance.now()
-
-				const pipelineResult = await runPipeline(state.address, {
-					computeQueryShape,
-					groupPhrases,
-					classifier: classifier as Parameters<typeof runPipeline>[1]["classifier"],
+				// The shared classify front-half (#861 / #1278) — threads the FST prior, the street-morphology
+				// matcher, and the placetype-pair selector exactly like the two demo parse paths.
+				const { tree, nodes, kindResult, timing } = await runClassifyStage(state.address, {
+					classifier,
+					fst: fstMatcher,
+					streetMorphology: streetMorphologyMatcher,
+					selectPairIndex,
 				})
-
-				const tClassify = performance.now()
-
-				const tree = pipelineResult.tree
-				const nodes = flattenTree(tree)
 
 				const result: DemoResult = {
 					input: state.address,
@@ -173,8 +139,9 @@ export const GuidedTour: React.FC = () => {
 					resolved: null,
 					candidates: [],
 					kindResult,
-					fstActive: false,
-					timing: { shape: tShape - tStart, classify: tClassify - tShape },
+					fstActive: fstMatcher != null,
+					fstProvenance,
+					timing,
 				}
 
 				setStopStates((prev) => {
@@ -196,7 +163,7 @@ export const GuidedTour: React.FC = () => {
 				})
 			}
 		},
-		[classifier, stopStates]
+		[classifier, fstMatcher, fstProvenance, streetMorphologyMatcher, selectPairIndex, stopStates]
 	)
 
 	// ---- Auto-parse first stop ----
@@ -371,7 +338,7 @@ export const GuidedTour: React.FC = () => {
 														<td>{n.tag}</td>
 														<td>{String(n.value ?? "")}</td>
 														<td>
-															<ConfidenceMini confidence={n.confidence} />
+															<ConfidenceCell confidence={n.confidence} />
 														</td>
 													</tr>
 												))}

@@ -20,10 +20,12 @@
 
 import { type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 
+import { hashFNV1a } from "#coarse-placer/fnv-hash"
 import { COUNTRIES, IN_MAP_EU, NEW_EU } from "#coarse-placer/tools/country-sets"
-import { hashFNV1a } from "#coarse-placer/tools/fnv-hash"
+import { defaultDataDir } from "#coarse-placer/tools/paths"
+import { errorMessage } from "#errors/schema"
 import { writeLocalTextFile, makeDirectories } from "#fs/writers"
-import { dataRootPath, repoRootPath } from "#utils"
+import { dataRootPath } from "#utils"
 
 interface DatasetRow {
 	raw: string
@@ -90,7 +92,7 @@ export async function buildDataset(
 	report?: (line: string) => void
 ): Promise<BuildDatasetResult> {
 	const PER = options.perCountry ?? 50_000
-	const OUT_DIR = resolvePathBuilder(options.data || repoRootPath("data", "coarse-placer"))
+	const OUT_DIR = resolvePathBuilder(options.data || defaultDataDir())
 
 	const TRAIN_GLOB = dataRootPath("corpus", "versioned", "v0.5.0", "corpus-v0.5.0", "train", "*.parquet")
 
@@ -178,7 +180,7 @@ export async function buildDataset(
 		try {
 			res = await duck.runAndReadAll(q)
 		} catch (error) {
-			report?.(`  ${country}: SKIPPED — ${(error as Error).message}`)
+			report?.(`  ${country}: SKIPPED — ${errorMessage(error)}`)
 
 			continue
 		}

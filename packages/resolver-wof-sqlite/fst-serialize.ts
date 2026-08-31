@@ -35,119 +35,38 @@
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
 
+import {
+	EDGE_ENTRY_SIZE,
+	ENCYCLOPEDIC_OFFSET,
+	FST_FORMAT_VERSION,
+	FST_MAGIC_BYTES,
+	HEADER_SIZE,
+	LEGACY_PLACE_ENTRY_SIZE,
+	NARROW_STATE_ENTRY_SIZE,
+	PLACE_FLAG_HAS_ENCYCLOPEDIC,
+	PLACETYPE_ORDER,
+	SPLIT_PLACE_ENTRY_SIZE,
+	VERSION_TWO_SCORE_SPLIT,
+	VERSION_WIDE_STATE_COUNTERS,
+	VERSION_WITH_METADATA,
+	WIDE_STATE_ENTRY_SIZE,
+} from "#fst-format"
 import type { FSTNode } from "#fst-matcher"
 import { FSTMatcher } from "#fst-matcher"
-import type { FSTProvenance, PlaceEntry, PlacetypeID } from "#fst-types"
+import type { FSTProvenance, PlaceEntry } from "#fst-types"
+
+export { FST_FORMAT_VERSION } from "#fst-format"
 
 /**
- * Format version that widened the per-state edge and place counters from 16 to 32 bits, growing the state entry from 12
- * to 16 bytes. Readers branch on it to stay backward-compatible with v2/v3 files.
+ * File magic as a Buffer, for the Node-side prefix comparison.
  */
-const VERSION_WIDE_STATE_COUNTERS = 4
-
-/**
- * State-table entry size in bytes at or above {@link VERSION_WIDE_STATE_COUNTERS}.
- */
-const WIDE_STATE_ENTRY_SIZE = 16
-
-/**
- * State-table entry size in bytes below {@link VERSION_WIDE_STATE_COUNTERS}.
- */
-const NARROW_STATE_ENTRY_SIZE = 12
-
-/**
- * First format version carrying the trailing metadata block; older files simply have none.
- */
-const VERSION_WITH_METADATA = 3
-
-/**
- * Format version that split the single `importance` float into `referential` + `encyclopedic`, growing the place entry
- * from 56 to 60 bytes and claiming the previously-reserved `pp+7` byte as {@link PLACE_FLAG_HAS_ENCYCLOPEDIC}.
- */
-const VERSION_TWO_SCORE_SPLIT = 5
-
-/**
- * Place-entry size in bytes at or above {@link VERSION_TWO_SCORE_SPLIT}.
- */
-const SPLIT_PLACE_ENTRY_SIZE = 60
-
-/**
- * Place-entry size in bytes below {@link VERSION_TWO_SCORE_SPLIT}.
- */
-const LEGACY_PLACE_ENTRY_SIZE = 56
-
-/**
- * Byte offset of the encyclopedic float inside a v5 place entry — immediately after the 8-slot parent chain.
- */
-const ENCYCLOPEDIC_OFFSET = 56
-
-/**
- * `placeFlags` bit 0 (byte `pp+7`, v5+): this place carries an encyclopedic score. Per-PLACE rather than per-file
- * because absence is the common case — roughly 89% of the 2026-08-05 gazetteer has no Wikipedia article — and a
- * file-level flag would force every one of those rows to claim a 0 it never had.
- */
-const PLACE_FLAG_HAS_ENCYCLOPEDIC = 1
-
-/**
- * File magic. A reader rejects anything not starting with these four bytes before parsing further.
- */
-const MAGIC = Buffer.from("FST\0", "ascii")
-
-/**
- * Format version this serializer emits. See {@link VERSION_WIDE_STATE_COUNTERS} for what each bump changed.
- */
-const VERSION = 5
-
-/**
- * The format version this tree WRITES, published so a freshness guard can call an older artifact format-stale without
- * re-typing the number. Mirrors `REQUIRED_PAIR_INDEX_SCHEMA`'s role for PIX1: one constant, so a version bump cannot be
- * noticed by some checkers and not others. See `fst-freshness.ts`.
- */
-export const FST_FORMAT_VERSION = VERSION
-
-/**
- * Fixed header size in bytes: magic, version, and the section offsets that follow it.
- */
-const HEADER_SIZE = 32
-
-/**
- * State-table entry: edge offset, place offset, and the two 32-bit counters (v4 widths).
- */
-const STATE_ENTRY_SIZE = 16
-
-/**
- * Edge-table entry: the transition label and the target state index.
- */
-const EDGE_ENTRY_SIZE = 8
-
-/**
- * Place-table entry at the version this tree WRITES: the place id, its placetype, coordinates, and both scores.
- */
-const PLACE_ENTRY_SIZE = SPLIT_PLACE_ENTRY_SIZE
+const MAGIC = Buffer.from(FST_MAGIC_BYTES)
 
 /**
  * Longest ancestry chain stored per place. Deeper hierarchies are truncated at the leaf end, since the specific end of
  * the chain is what disambiguates and the country end is recoverable anyway.
  */
 const MAX_CHAIN_LEN = 8
-
-/**
- * Placetypes in hierarchy order, largest first. The index into this array is what gets written into a place entry, so
- * REORDERING IT BREAKS EVERY EXISTING FILE — append instead, and bump the version.
- */
-const PLACETYPE_ORDER: readonly PlacetypeID[] = [
-	"country",
-	"region",
-	"county",
-	"locality",
-	"localadmin",
-	"borough",
-	"neighbourhood",
-	"postalcode",
-	"campus",
-	"dependency",
-	"street_affix",
-]
 
 const placetypeToIdx = new Map<string, number>()
 
@@ -198,9 +117,9 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 
 	// --- Allocate ---
 	const stringTableSize = (strings.length + 1) * 4 + stringBytes
-	const stateTableSize = nodes.length * STATE_ENTRY_SIZE
+	const stateTableSize = nodes.length * WIDE_STATE_ENTRY_SIZE
 	const edgeTableSize = totalEdges * EDGE_ENTRY_SIZE
-	const placeTableSize = totalPlaces * PLACE_ENTRY_SIZE
+	const placeTableSize = totalPlaces * SPLIT_PLACE_ENTRY_SIZE
 	const provenanceJson = provenance ? Buffer.from(JSON.stringify(provenance), "utf8") : null
 	const provenanceSize = provenanceJson ? 4 + provenanceJson.length : 0
 	const binarySize = HEADER_SIZE + stringTableSize + stateTableSize + edgeTableSize + placeTableSize
@@ -215,7 +134,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 	const hasAmbiguity = nodes.some((n) => n.places.some((p) => p.crossCountryBranches !== undefined))
 	MAGIC.copy(buf, pos)
 	pos += 4
-	buf.writeUInt16LE(VERSION, pos)
+	buf.writeUInt16LE(FST_FORMAT_VERSION, pos)
 	pos += 2
 	buf.writeUInt16LE(hasAmbiguity ? 1 : 0, pos)
 	pos += 2
@@ -261,7 +180,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 
 	for (let si = 0; si < nodes.length; si++) {
 		const node = nodes[si]!
-		const sp = stateTableStart + si * STATE_ENTRY_SIZE
+		const sp = stateTableStart + si * WIDE_STATE_ENTRY_SIZE
 
 		buf.writeUInt32LE(edgeIdx, sp)
 		buf.writeUInt32LE(placeIdx, sp + 4)
@@ -277,7 +196,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 		}
 
 		for (const place of node.places) {
-			const pp = placeTableStart + placeIdx * PLACE_ENTRY_SIZE
+			const pp = placeTableStart + placeIdx * SPLIT_PLACE_ENTRY_SIZE
 			// Filter out WOF sentinel parent IDs (negative values like -1, -4).
 			const validChain = place.parentChain.filter((id) => id > 0)
 			const chainLen = Math.min(validChain.length, MAX_CHAIN_LEN)
@@ -321,7 +240,10 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 	if (!buf.subarray(0, 4).equals(MAGIC)) throw new Error("FST magic mismatch")
 	const version = buf.readUInt16LE(4)
 
-	if (version < 1 || version > VERSION) throw new Error(`FST version ${version} unsupported (expected 1..${VERSION})`)
+	if (version < 1 || version > FST_FORMAT_VERSION) {
+		throw new Error(`FST version ${version} unsupported (expected 1..${FST_FORMAT_VERSION})`)
+	}
+
 	const isV2 = version >= 2
 	const isSplit = version >= VERSION_TWO_SCORE_SPLIT
 	// flags bit0 (survey #4): place rows carry surface-ambiguity data in the former _pad byte.

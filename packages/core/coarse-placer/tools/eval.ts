@@ -14,9 +14,11 @@
 import { type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
-import { CoarsePlacer, type CoarsePlacerMeta, type CoarsePrediction } from "#coarse-placer/coarse-placer"
-import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
-import { dataRootPath, repoRootPath } from "#utils"
+import { CoarsePlacer, type CoarsePlacerMeta, isOffMapHandled } from "#coarse-placer/coarse-placer"
+import { defaultDataDir, defaultModelDir } from "#coarse-placer/tools/paths"
+import { errorMessage } from "#errors/schema"
+import { readLocalJSONFile } from "#fs/readers"
+import { formatPercent, repoRootPath } from "#utils"
 
 /**
  * Confusions below this count are individually uninteresting and are summarised instead.
@@ -76,22 +78,12 @@ export interface EvalCoarsePlacerResult {
  * Coarse-placer in-distribution eval — see the module doc. Emits the report to stdout.
  */
 export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): Promise<EvalCoarsePlacerResult> {
-	const modelDir = resolvePathBuilder(options.model || dataRootPath("coarse-placer", "model"))
+	const modelDir = resolvePathBuilder(options.model || defaultModelDir())
 	const abstain = options.abstain ?? 0.5
-	const dataDir = options.data || repoRootPath("data", "coarse-placer")
+	const dataDir = options.data || defaultDataDir()
 
 	const meta = await readLocalJSONFile<CoarsePlacerMeta>(resolvePath(modelDir, "meta.json"))
-	const weightBytes = await readLocalBuffer(resolvePath(modelDir, "weights.bin"))
-
-	// Read through the Buffer's own window: `readFileSync` serves files under 4 KiB out of a shared 8 KiB pool, so
-	// `.buffer` alone would start at the pool's origin and run its full length — the wrong floats, and 2048 of them.
-	const weights = new Float32Array(
-		weightBytes.buffer,
-		weightBytes.byteOffset,
-		weightBytes.byteLength / Float32Array.BYTES_PER_ELEMENT
-	)
-
-	const placer = new CoarsePlacer({ ...meta, weights }, { abstainBelow: abstain })
+	const placer = await CoarsePlacer.fromArtifactDir(resolvePath(modelDir), { abstainBelow: abstain })
 
 	// --- In-distribution test: accuracy + per-class + ECE ---
 	let testN = 0
@@ -173,15 +165,12 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 
 	try {
 		const TRAINED_SCRIPTS = new Set(["latin", "cjk"]) // the only scripts among the 11 trained countries
-		// With the OTHER class, an off-map input is HANDLED if it routes to OTHER or abstains — either way
-		// it's not a confident mis-placement onto a wrong country.
-		const handled = (p: CoarsePrediction): boolean => p.abstained || p.country === "OTHER"
 
-		let msN = 0,
-			offN = 0,
-			offOk = 0,
-			missN = 0,
-			missOk = 0
+		let msN = 0
+		let offN = 0
+		let offOk = 0
+		let missN = 0
+		let missOk = 0
 
 		const offMiss: string[] = []
 
@@ -194,7 +183,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 			if (offMap) {
 				offN++
 
-				if (handled(p)) {
+				if (isOffMapHandled(p)) {
 					offOk++
 				} else if (offMiss.length < MAX_LISTED_MISSES) {
 					offMiss.push(
@@ -204,7 +193,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 			} else {
 				missN++
 
-				if (handled(p)) {
+				if (isOffMapHandled(p)) {
 					missOk++
 				} // a latin/cjk in-map input mis-routed to OTHER = a false abstention
 			}
@@ -212,10 +201,10 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 
 		console.log(`\nmulti-script off-map handling (n=${msN}):`)
 		console.log(
-			`  OFF-map scripts (Cyrillic/Arabic/Thai/…) routed to OTHER-or-abstain: ${offOk}/${offN} (${((100 * offOk) / Math.max(1, offN)).toFixed(0)}%) ← want HIGH`
+			`  OFF-map scripts (Cyrillic/Arabic/Thai/…) routed to OTHER-or-abstain: ${offOk}/${offN} (${formatPercent(offOk, offN, 0, { zero: "clamp" })}) ← want HIGH`
 		)
 		console.log(
-			`  ON-map scripts (latin/cjk) wrongly OTHER-or-abstain: ${missOk}/${missN} (${((100 * missOk) / Math.max(1, missN)).toFixed(0)}%) ← want LOW`
+			`  ON-map scripts (latin/cjk) wrongly OTHER-or-abstain: ${missOk}/${missN} (${formatPercent(missOk, missN, 0, { zero: "clamp" })}) ← want LOW`
 		)
 
 		if (offMiss.length) {
@@ -223,7 +212,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 			console.log(offMiss.join("\n"))
 		}
 	} catch (error) {
-		console.log(`\n(multi-script set not found at ${msPath}: ${(error as Error).message})`)
+		console.log(`\n(multi-script set not found at ${msPath}: ${errorMessage(error)})`)
 	}
 
 	return { n: testN, accuracy: (100 * correct) / testN, ece }

@@ -19,6 +19,8 @@
  *   US-idiomatic only (the harness intersection cases are US: "X & Y, City, ST ZIP").
  */
 
+import type { DirectionalAbbreviation } from "@mailwoman/codex/us"
+
 import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
@@ -85,7 +87,9 @@ const ORDINALS = [
 
 const SUFFIXES = ["St", "Ave", "Blvd", "Rd", "Dr", "Ln", "Way", "Pl", "Ct", "Pkwy", "Ter", "Cir"] as const
 
-const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const
+// Vocabulary compile-checked against the codex; the ORDER stays this literal's. `Object.values(DirectionalAbbreviation)`
+// runs N,E,S,W,… — deriving the array from it would re-map every pick() draw and change shipped shard bytes.
+const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const satisfies readonly DirectionalAbbreviation[]
 
 /**
  * Connectors between the two streets. Whitespace-padded forms keep tokens clean for alignment. `@` added in v0.7.2 —

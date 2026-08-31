@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Tests for {@linkcode APIClient} — pacing, the cooldown budget, bounded retry, and error mapping.
  *
- *   Every request is served by a stub Axios ADAPTER, so nothing here touches the network, and every
+ *   Every request is served by the shared `stubTransport` adapter, so nothing here touches the network, and every
  *   timing assertion runs against an injected clock, so nothing here sleeps on the wall clock.
  */
 
@@ -16,88 +16,11 @@ import {
 	maxCountInSlidingWindow,
 	VirtualClock,
 } from "@mailwoman/core/api/test-clocks"
+import { stubTransport } from "@mailwoman/core/api/test-transport"
 import { ResourceError } from "@mailwoman/core/errors/schema"
 import { AxiosError, type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig } from "axios"
 import { buildMemoryStorage, buildStorage } from "axios-cache-interceptor"
 import { describe, expect, it } from "vitest"
-
-/**
- * One scripted adapter outcome: an HTTP status (with an optional body/headers), or a thrown transport failure.
- */
-interface StubOutcome {
-	status?: number
-	statusText?: string
-	data?: unknown
-	headers?: Record<string, string>
-	/**
-	 * A transport-level failure — no HTTP response ever arrives. Mirrors a dropped socket or a timeout.
-	 */
-	throws?: { message: string; code: string }
-}
-
-interface StubAdapter {
-	adapter: (config: InternalAxiosRequestConfig) => Promise<AxiosResponse>
-	/**
-	 * The URL of every dispatch, in call order.
-	 */
-	calls: string[]
-	/**
-	 * The clock reading at each dispatch, when a clock is supplied.
-	 */
-	dispatchTimes: number[]
-}
-
-const HTTP_OK = 200
-const HTTP_MULTIPLE_CHOICES = 300
-
-/**
- * Build a stub Axios adapter that replays `outcomes` (holding on the last entry once exhausted). It reproduces what
- * Axios's real adapters do on a failing status — reject with an `AxiosError` carrying the response — because
- * `validateStatus` is applied by the adapter, not by the interceptor chain.
- */
-function stubAdapter(outcomes: StubOutcome[], clock?: { now(): number }): StubAdapter {
-	const calls: string[] = []
-	const dispatchTimes: number[] = []
-	let index = 0
-
-	const adapter = async (config: InternalAxiosRequestConfig): Promise<AxiosResponse> => {
-		calls.push(String(config.url))
-
-		if (clock) {
-			dispatchTimes.push(clock.now())
-		}
-
-		const outcome = outcomes[Math.min(index, outcomes.length - 1)]!
-
-		index++
-
-		if (outcome.throws) {
-			throw new AxiosError(outcome.throws.message, outcome.throws.code, config, {})
-		}
-
-		const status = outcome.status ?? HTTP_OK
-
-		const response: AxiosResponse = {
-			data: outcome.data ?? { ok: true },
-			status,
-			statusText: outcome.statusText ?? "OK",
-			headers: (outcome.headers ?? {}) as AxiosResponse["headers"],
-			config,
-		}
-
-		if (status >= HTTP_OK && status < HTTP_MULTIPLE_CHOICES) return response
-
-		throw new AxiosError(
-			`Request failed with status code ${status}`,
-			status >= 500 ? AxiosError.ERR_BAD_RESPONSE : AxiosError.ERR_BAD_REQUEST,
-			config,
-			{},
-			response
-		)
-	}
-
-	return { adapter, calls, dispatchTimes }
-}
 
 function get(url: string): AxiosRequestConfig {
 	return { url }
@@ -138,9 +61,9 @@ describe("APIClient: disposal", () => {
 
 describe("APIClient: unthrottled default (the shape TileAPI uses)", () => {
 	it("dispatches immediately, once, with no pacing, cooldown, or retry configured", async () => {
-		const { adapter, calls } = stubAdapter([{ data: { tiles: [] } }])
+		const { axios, calls } = stubTransport([{ body: { tiles: [] } }])
 
-		const client = new APIClient({ displayName: "tile-shape", axios: { adapter } })
+		const client = new APIClient({ displayName: "tile-shape", axios })
 
 		const response = await client.fetch<{ tiles: string[] }>(get("/basemap.json"))
 
@@ -149,12 +72,12 @@ describe("APIClient: unthrottled default (the shape TileAPI uses)", () => {
 	})
 
 	it("makes exactly ONE attempt on a 503 — retry is opt-in, not the default", async () => {
-		const { adapter, calls } = stubAdapter([{ status: 503, statusText: "Service Unavailable" }])
+		const { axios, calls } = stubTransport([{ status: 503, statusText: "Service Unavailable" }])
 
 		const client = new APIClient({
 			displayName: "no-retry-default",
 			clock: createFakeClock(),
-			axios: { adapter },
+			axios,
 		})
 
 		await expect(client.fetch(get("/flaky.json"))).rejects.toBeInstanceOf(ResourceError)
@@ -172,13 +95,13 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 		const FAN_OUT = 40
 
 		const clock = new VirtualClock()
-		const { adapter, calls } = stubAdapter([{ data: { ok: true } }], clock)
+		const { axios, calls } = stubTransport([{ body: { ok: true } }], { clock })
 
 		const client = new APIClient({
 			displayName: "cooldown-fanout",
 			requestsPerMinute: REQUESTS_PER_MINUTE,
 			clock,
-			axios: { adapter },
+			axios,
 		})
 
 		const pending = Array.from({ length: FAN_OUT }, (_, i) => client.fetch(get(`/item/${i}.json`)))
@@ -235,13 +158,13 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 		const COOLDOWN_MS = 60_000
 
 		const clock = new VirtualClock()
-		const { adapter, dispatchTimes } = stubAdapter([{ data: { ok: true } }], clock)
+		const { axios, dispatchTimes } = stubTransport([{ body: { ok: true } }], { clock })
 
 		const client = new APIClient({
 			displayName: "cooldown-serial",
 			requestsPerMinute: 2,
 			clock,
-			axios: { adapter },
+			axios,
 		})
 
 		await client.fetch(get("/serial/0.json"))
@@ -267,13 +190,13 @@ describe("APIClient: minRequestIntervalMs strict pacing (A2)", () => {
 		const EXPECTED_PER_SECOND = 10
 
 		const clock = new VirtualClock()
-		const { adapter, dispatchTimes } = stubAdapter([{ data: { ok: true } }], clock)
+		const { axios, dispatchTimes } = stubTransport([{ body: { ok: true } }], { clock })
 
 		const client = new APIClient({
 			displayName: "paced-fanout",
 			minRequestIntervalMs: INTERVAL_MS,
 			clock,
-			axios: { adapter },
+			axios,
 		})
 
 		const pending = Array.from({ length: FAN_OUT }, (_, i) => client.fetch(get(`/paced/${i}.json`)))
@@ -293,17 +216,17 @@ describe("APIClient: bounded retry (A3)", () => {
 	it("retries a transient 429 with exponential backoff and succeeds once the server recovers", async () => {
 		const clock = createFakeClock()
 
-		const { adapter, calls } = stubAdapter([
+		const { axios, calls } = stubTransport([
 			{ status: 429, statusText: "Too Many Requests" },
 			{ status: 429, statusText: "Too Many Requests" },
-			{ data: { ok: true } },
+			{ body: { ok: true } },
 		])
 
 		const client = new APIClient({
 			displayName: "retry-429",
 			retry: { maxAttempts: 3, baseDelayMs: 500 },
 			clock,
-			axios: { adapter },
+			axios,
 		})
 
 		const response = await client.fetch<{ ok: boolean }>(get("/retry.json"))
@@ -314,13 +237,13 @@ describe("APIClient: bounded retry (A3)", () => {
 	})
 
 	it("gives up after maxAttempts on a persistent 503 — bounded, not until it works", async () => {
-		const { adapter, calls } = stubAdapter([{ status: 503, statusText: "Service Unavailable" }])
+		const { axios, calls } = stubTransport([{ status: 503, statusText: "Service Unavailable" }])
 
 		const client = new APIClient({
 			displayName: "retry-ceiling",
 			retry: { maxAttempts: 2, baseDelayMs: 1 },
 			clock: createFakeClock(),
-			axios: { adapter },
+			axios,
 		})
 
 		const caught = await client.fetch(get("/down.json")).catch((error: unknown) => error)
@@ -332,13 +255,13 @@ describe("APIClient: bounded retry (A3)", () => {
 	})
 
 	it("NEVER retries a 403, even with retry enabled — one attempt, non-transient", async () => {
-		const { adapter, calls } = stubAdapter([{ status: 403, statusText: "Forbidden" }])
+		const { axios, calls } = stubTransport([{ status: 403, statusText: "Forbidden" }])
 
 		const client = new APIClient({
 			displayName: "retry-403",
 			retry: { maxAttempts: 5, baseDelayMs: 1 },
 			clock: createFakeClock(),
-			axios: { adapter },
+			axios,
 		})
 
 		const caught = await client.fetch(get("/forbidden.json")).catch((error: unknown) => error)
@@ -350,13 +273,13 @@ describe("APIClient: bounded retry (A3)", () => {
 	})
 
 	it("does not retry a 404 either, and maps it to a skippable ResourceError", async () => {
-		const { adapter, calls } = stubAdapter([{ status: 404, statusText: "Not Found" }])
+		const { axios, calls } = stubTransport([{ status: 404, statusText: "Not Found" }])
 
 		const client = new APIClient({
 			displayName: "retry-404",
 			retry: { maxAttempts: 5, baseDelayMs: 1 },
 			clock: createFakeClock(),
-			axios: { adapter },
+			axios,
 		})
 
 		const caught = await client.fetch(get("/missing.json")).catch((error: unknown) => error)
@@ -369,16 +292,16 @@ describe("APIClient: bounded retry (A3)", () => {
 	it("retries a transport-level failure — a dropped socket, not a status", async () => {
 		const clock = createFakeClock()
 
-		const { adapter, calls } = stubAdapter([
+		const { axios, calls } = stubTransport([
 			{ throws: { message: "socket hang up", code: AxiosError.ERR_NETWORK } },
-			{ data: { ok: true } },
+			{ body: { ok: true } },
 		])
 
 		const client = new APIClient({
 			displayName: "retry-network",
 			retry: { maxAttempts: 3, baseDelayMs: 500 },
 			clock,
-			axios: { adapter },
+			axios,
 		})
 
 		const response = await client.fetch<{ ok: boolean }>(get("/dropped.json"))
@@ -389,13 +312,13 @@ describe("APIClient: bounded retry (A3)", () => {
 	})
 
 	it("exhausts its budget on a persistent transport failure and still reports it as requeueable", async () => {
-		const { adapter, calls } = stubAdapter([{ throws: { message: "socket hang up", code: AxiosError.ERR_NETWORK } }])
+		const { axios, calls } = stubTransport([{ throws: { message: "socket hang up", code: AxiosError.ERR_NETWORK } }])
 
 		const client = new APIClient({
 			displayName: "retry-network-ceiling",
 			retry: { maxAttempts: 2, baseDelayMs: 1 },
 			clock: createFakeClock(),
-			axios: { adapter },
+			axios,
 		})
 
 		const caught = await client.fetch(get("/always-dropped.json")).catch((error: unknown) => error)
@@ -414,12 +337,12 @@ describe("APIClient: bounded retry (A3)", () => {
 		// above it ran first, and axios never attaches a `response` to a timeout, so a differential across
 		// 18 failure shapes found no case that ever resolved. (Reachable in principle with a hand-built
 		// error carrying both a `response` and `ECONNABORTED`, which no stock adapter produces.)
-		const { adapter } = stubAdapter([{ throws: { message: "timeout of 30000ms exceeded", code: "ECONNABORTED" } }])
+		const { axios } = stubTransport([{ throws: { message: "timeout of 30000ms exceeded", code: "ECONNABORTED" } }])
 
 		const client = new APIClient({
 			displayName: "timeout-map",
 			clock: createFakeClock(),
-			axios: { adapter },
+			axios,
 		})
 
 		const caught = await client.fetch(get("/slow.json")).catch((error: unknown) => error)
@@ -430,13 +353,13 @@ describe("APIClient: bounded retry (A3)", () => {
 	})
 
 	it("does not retry a caller-initiated cancel", async () => {
-		const { adapter, calls } = stubAdapter([{ throws: { message: "canceled", code: AxiosError.ERR_CANCELED } }])
+		const { axios, calls } = stubTransport([{ throws: { message: "canceled", code: AxiosError.ERR_CANCELED } }])
 
 		const client = new APIClient({
 			displayName: "cancel",
 			retry: { maxAttempts: 5, baseDelayMs: 1 },
 			clock: createFakeClock(),
-			axios: { adapter },
+			axios,
 		})
 
 		const caught = await client.fetch(get("/canceled.json")).catch((error: unknown) => error)
@@ -449,16 +372,16 @@ describe("APIClient: bounded retry (A3)", () => {
 	it("honors a numeric Retry-After over the exponential default", async () => {
 		const clock = createFakeClock()
 
-		const { adapter } = stubAdapter([
+		const { axios } = stubTransport([
 			{ status: 429, statusText: "Too Many Requests", headers: { "retry-after": "45" } },
-			{ data: { ok: true } },
+			{ body: { ok: true } },
 		])
 
 		const client = new APIClient({
 			displayName: "retry-after",
 			retry: { maxAttempts: 2, baseDelayMs: 500 },
 			clock,
-			axios: { adapter },
+			axios,
 		})
 
 		await client.fetch(get("/rate-limited.json"))
@@ -469,16 +392,16 @@ describe("APIClient: bounded retry (A3)", () => {
 	it("clamps an excessive Retry-After to the ceiling", async () => {
 		const clock = createFakeClock()
 
-		const { adapter } = stubAdapter([
+		const { axios } = stubTransport([
 			{ status: 429, statusText: "Too Many Requests", headers: { "retry-after": "999999" } },
-			{ data: { ok: true } },
+			{ body: { ok: true } },
 		])
 
 		const client = new APIClient({
 			displayName: "retry-after-clamp",
 			retry: { maxAttempts: 2, baseDelayMs: 500 },
 			clock,
-			axios: { adapter },
+			axios,
 		})
 
 		await client.fetch(get("/rate-limited.json"))
@@ -497,14 +420,14 @@ describe("APIClient: the pacing gate sits downstream of the cache (I2)", () => {
 		const REPEATS = 6
 
 		const clock = createFakeClock()
-		const { adapter, calls } = stubAdapter([{ data: { ok: true } }])
+		const { axios, calls } = stubTransport([{ body: { ok: true } }])
 
 		const client = new APIClient({
 			displayName: "cache-hit-pacing",
 			minRequestIntervalMs: 111,
 			caching: { storage: buildMemoryStorage() },
 			clock,
-			axios: { adapter },
+			axios,
 		})
 
 		for (let i = 0; i < REPEATS; i++) {
@@ -520,14 +443,14 @@ describe("APIClient: the pacing gate sits downstream of the cache (I2)", () => {
 
 	it("still paces the MISSES when the same client interleaves hits and misses", async () => {
 		const clock = createFakeClock()
-		const { adapter, calls, dispatchTimes } = stubAdapter([{ data: { ok: true } }], clock)
+		const { axios, calls, dispatchTimes } = stubTransport([{ body: { ok: true } }], { clock })
 
 		const client = new APIClient({
 			displayName: "mixed-pacing",
 			minRequestIntervalMs: 100,
 			caching: { storage: buildMemoryStorage() },
 			clock,
-			axios: { adapter },
+			axios,
 		})
 
 		await client.fetch(get("/a.json"))
@@ -553,13 +476,13 @@ describe("APIClient: every retry attempt takes its own pacer grant (I6/M-R)", ()
 
 		const clock = createFakeClock()
 
-		const { adapter, calls, dispatchTimes } = stubAdapter(
+		const { axios, calls, dispatchTimes } = stubTransport(
 			[
 				{ status: 503, statusText: "Service Unavailable" },
 				{ status: 503, statusText: "Service Unavailable" },
-				{ data: { ok: true } },
+				{ body: { ok: true } },
 			],
-			clock
+			{ clock }
 		)
 
 		const client = new APIClient({
@@ -569,7 +492,7 @@ describe("APIClient: every retry attempt takes its own pacer grant (I6/M-R)", ()
 			// produce the spacing — a test with a long backoff would pass with the pacer deleted.
 			retry: { maxAttempts: 3, baseDelayMs: 1 },
 			clock,
-			axios: { adapter },
+			axios,
 		})
 
 		await client.fetch(get("/flaky.json"))
@@ -593,14 +516,14 @@ describe("APIClient: the pacer and the cooldown compose (I4)", () => {
 		const FAN_OUT = 8
 
 		const clock = new VirtualClock()
-		const { adapter, dispatchTimes } = stubAdapter([{ data: { ok: true } }], clock)
+		const { axios, dispatchTimes } = stubTransport([{ body: { ok: true } }], { clock })
 
 		const client = new APIClient({
 			displayName: "both-gates",
 			minRequestIntervalMs: INTERVAL_MS,
 			requestsPerMinute: 2, // a 30s cooldown every 2 dispatches
 			clock,
-			axios: { adapter },
+			axios,
 		})
 
 		await clock.runUntilSettled(

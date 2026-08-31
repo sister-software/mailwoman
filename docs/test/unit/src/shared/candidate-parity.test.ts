@@ -15,35 +15,16 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import type { HTTPVFSWorker } from "@mailwoman/docs/shared/httpvfs-resolver"
 import { WOFCandidateTableLookup as BrowserCandidateLookup } from "@mailwoman/docs/shared/httpvfs-resolver"
 import { WOFCandidateTableLookup as NodeCandidateLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, describe, expect, test } from "vitest"
 
+import { stubWorker } from "./stub-worker.ts"
+
 const CANDIDATE_DB = dataRootPath("wof", "candidate.db")
 const present = await pathExists(CANDIDATE_DB)
-
-/**
- * The minimal httpvfs worker handle over node:sqlite (async exec, sql.js result shape) — the same stub
- * `httpvfs-resolver.test.ts` uses, pointed at the real artifact.
- */
-function stubWorker(db: DatabaseClient<CandidateDatabase>): HTTPVFSWorker {
-	return {
-		db: {
-			async exec(sql: string) {
-				const rows = db.prepare(sql).all() as Record<string, unknown>[]
-
-				if (!rows.length) return []
-				const columns = Object.keys(rows[0]!)
-
-				return [{ columns, values: rows.map((r) => columns.map((c) => r[c])) }]
-			},
-		},
-		bytesRead: async () => 0,
-	}
-}
 
 /**
  * The bare-name panel: every primary-preference contest the ranker's docstring names, the Zabiče production case the

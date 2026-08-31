@@ -206,7 +206,7 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 	 */
 	// 2026-08-10: grew 4 → 19 with the operator-supplied street-name-boundaries and
 	// world-structures boards (306 → 514 cases). The 15 additions are all bare famous-street
-	// rows ('Avenida Alvear', 'Savile Row', 'Gran Vía' …) — single street-name surfaces with no
+	// rows ('Avenida Alvear', 'Gran Vía' …) — single street-name surfaces with no
 	// structural anchor, exactly the declared-fork shape the marker exists for. Deliberate pin
 	// move, reviewed row-by-row; not silent growth.
 	// 2026-08-11: corpus 514 → 523 with the bare-foreign-postcode board (#1589) — 9 postcode
@@ -229,13 +229,9 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 		"Petaling Jaya",
 		"Rua Augusta",
 		"Rua Garrett",
-		"Rue Saint-Honoré",
-		"Rue Sainte-Catherine",
-		"Savile Row",
-		"Via Laietana",
 	]
 
-	test("the fork population over the corpus is the 19 rows structure cannot resolve", () => {
+	test("the fork population over the corpus is the 15 rows structure cannot resolve", () => {
 		const marked: Array<{ input: string; codes: string[]; kind: QueryKind }> = []
 
 		for (const raw of corpus) {
