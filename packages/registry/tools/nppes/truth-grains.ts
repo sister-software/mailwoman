@@ -6,6 +6,7 @@
  *   ways — the address string, a haversine co-location radius, and an H3 cell.
  */
 
+import { createUnionFind, type UnionFind } from "@mailwoman/core/utils"
 import { haversineKm, jaccard, type LatLon } from "@mailwoman/match"
 import { latLngToCell } from "h3-js"
 
@@ -21,46 +22,6 @@ export const COLOCATION_KM = 0.05
  * A truth labelling: the entity class a record belongs to.
  */
 export type TruthLabel = (rec: SourceRecord) => string
-
-interface UnionFind {
-	find: (x: string) => string
-	union: (a: string, b: string) => void
-}
-
-function createUnionFind(): UnionFind {
-	const parent = new Map<string, string>()
-
-	const find = (x: string): string => {
-		if (!parent.has(x)) {
-			parent.set(x, x)
-		}
-
-		let root = x
-
-		while (parent.get(root)! !== root) {
-			root = parent.get(root)!
-		}
-
-		while (parent.get(x)! !== root) {
-			const next = parent.get(x)!
-			parent.set(x, root)
-			x = next
-		}
-
-		return root
-	}
-
-	const union = (a: string, b: string) => {
-		const ra = find(a)
-		const rb = find(b)
-
-		if (ra !== rb) {
-			parent.set(ra, rb)
-		}
-	}
-
-	return { find, union }
-}
 
 /**
  * Union every pair in each block whose org names agree.

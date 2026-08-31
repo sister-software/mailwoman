@@ -25,8 +25,10 @@
  *   subpath, deliberately NOT re-exported through the barrel.
  */
 
+import { printOpenAPIDocument } from "@mailwoman/api-kit"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { failScript } from "@mailwoman/core/scripting/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 import { type FreshnessArtifact, type FreshnessReport, readFreshness } from "#freshness"
@@ -42,9 +44,7 @@ const GAZETTEER_DOCS_PATH = "/docs/developers/get-started/ten-minute-trial"
  * Print an error and exit non-zero. Typed `never` so callers get definite-assignment narrowing after the call.
  */
 function fail(message: string): never {
-	console.error(message)
-
-	process.exit(1)
+	return failScript(message)
 }
 
 /**
@@ -70,6 +70,24 @@ export function parseOpenAPIFlags(binaryName: string): { flavor?: string; out?: 
 	}
 
 	return values
+}
+
+/**
+ * A drop-in's `openapi` subcommand: print (or `--out`-write) the OpenAPI document for its surface.
+ *
+ * `createApp` receives a STUB engine, so the command is pure route-table introspection that never boots a classifier or
+ * opens a gazetteer and stays fast whatever the data-root holds. `--flavor 3.0` prints the 3.0.3 diet instead of the
+ * default 3.1.0.
+ */
+export function openAPICommand<Engine>(
+	binaryName: string,
+	createApp: (engine: Engine) => Parameters<typeof printOpenAPIDocument>[0],
+	docInfo: Parameters<typeof printOpenAPIDocument>[1],
+	stubEngine: Engine
+): () => Promise<void> {
+	return async () => {
+		await printOpenAPIDocument(createApp(stubEngine), docInfo, parseOpenAPIFlags(binaryName))
+	}
 }
 
 /**
@@ -205,7 +223,7 @@ export interface DropInCLI {
 	 */
 	usage: string[]
 	serve: () => Promise<void>
-	openapi: () => void
+	openapi: () => void | Promise<void>
 }
 
 /**
@@ -222,7 +240,7 @@ export async function runDropInCLI({ binaryName, openapi, serve, usage }: DropIn
 			await serve()
 			break
 		case "openapi":
-			openapi()
+			await openapi()
 			break
 		default:
 			console.error([`Usage: ${binaryName} <command>`, ...usage].join("\n"))

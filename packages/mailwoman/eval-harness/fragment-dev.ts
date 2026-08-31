@@ -17,6 +17,7 @@
 
 import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { JSONSpliterator } from "spliterator"
 
 export interface FragmentDevOptions {
@@ -35,8 +36,6 @@ interface DevRow {
 	span_ends: number[]
 	span_tags: string[]
 }
-
-const fold = (value: string): string => value.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 /**
  * Score fragment-dev; narrates the separator metrics and returns them for programmatic use.
@@ -76,9 +75,9 @@ export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 
 		for (const [tag, value] of gold) {
 			tagTotal++
-			const values = (byTag.get(tag) ?? []).map(fold)
+			const values = (byTag.get(tag) ?? []).map(foldCaseWhitespace)
 
-			if (values.includes(fold(value))) {
+			if (values.includes(foldCaseWhitespace(value))) {
 				tagHits++
 			} else {
 				exact = false
@@ -93,9 +92,9 @@ export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 
 		if (numberGold) {
 			numberRows++
-			const postcodeValues = (byTag.get("postcode") ?? []).map(fold)
+			const postcodeValues = (byTag.get("postcode") ?? []).map(foldCaseWhitespace)
 
-			if (postcodeValues.includes(fold(numberGold[1]))) {
+			if (postcodeValues.includes(foldCaseWhitespace(numberGold[1]))) {
 				numberAsPostcode++
 			}
 		}

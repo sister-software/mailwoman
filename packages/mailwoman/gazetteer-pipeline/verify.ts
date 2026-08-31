@@ -19,6 +19,7 @@
  *   land in the right country — border towns are the hard class by construction.
  */
 
+import { tableExists } from "@mailwoman/sqlite"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { DEFAULT_VERIFY_BASELINE } from "#gazetteer-pipeline/verify-baseline"
@@ -60,9 +61,6 @@ const EXTENT_SPOT_COUNTRIES = ["BE", "AT", "CH", "LU"] as const
  */
 export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline): VerifyResult {
 	const checks: VerifyCheckResult[] = []
-
-	const tableExists = (name: string): boolean =>
-		db.prepare("SELECT 1 FROM sqlite_master WHERE name = ?").get(name) !== undefined
 
 	// 1. node-census (#1026): every required (country, placetype) node exists.
 	{
@@ -116,7 +114,7 @@ export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline
 	{
 		const abbrCount = (db.prepare("SELECT COUNT(*) n FROM names WHERE language = 'abbr'").get() as { n: number }).n
 
-		const vt = tableExists("place_abbr")
+		const vt = tableExists(db, "place_abbr")
 			? (db
 					.prepare("SELECT s.name FROM place_abbr a JOIN spr s ON s.id = a.id WHERE a.abbr = 'VT' AND s.country = 'US'")
 					.get() as { name: string } | undefined)
@@ -133,7 +131,7 @@ export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline
 
 	// 4. place-abbr: the join table itself (missed entirely in the first #1015 swap).
 	{
-		const rows = tableExists("place_abbr")
+		const rows = tableExists(db, "place_abbr")
 			? (db.prepare("SELECT COUNT(*) n FROM place_abbr").get() as { n: number }).n
 			: 0
 
@@ -144,16 +142,16 @@ export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline
 	{
 		const sprCount = (db.prepare("SELECT COUNT(*) n FROM spr WHERE is_current != 0").get() as { n: number }).n
 
-		const bboxCount = tableExists("place_bbox")
+		const bboxCount = tableExists(db, "place_bbox")
 			? (db.prepare("SELECT COUNT(*) n FROM place_bbox").get() as { n: number }).n
 			: 0
 
-		const ok = tableExists("place_search") && bboxCount >= sprCount * 0.9
+		const ok = tableExists(db, "place_search") && bboxCount >= sprCount * 0.9
 
 		checks.push({
 			check: "fts-bbox",
 			ok,
-			detail: `place_search=${tableExists("place_search")}, place_bbox ${bboxCount.toLocaleString()} vs spr ${sprCount.toLocaleString()}`,
+			detail: `place_search=${tableExists(db, "place_search")}, place_bbox ${bboxCount.toLocaleString()} vs spr ${sprCount.toLocaleString()}`,
 		})
 	}
 

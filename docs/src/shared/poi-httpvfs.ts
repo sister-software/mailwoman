@@ -24,6 +24,7 @@ import { gridDisk, latLngToCell } from "h3-js"
 
 import { loadHTTPVFSDatabase, WOFCandidateTableLookup } from "./httpvfs-resolver.ts"
 import { adminGazetteerURL, poiLayerURL } from "./resources/index.ts"
+import { rowsFromExec } from "./sqljs-rows.ts"
 
 /**
  * Resolution the published `poi.db`'s `h3_cell` column is keyed at — MUST match the builder (poi-lookup.ts's
@@ -43,18 +44,6 @@ export type POIHTTPVFSWorker = Awaited<ReturnType<typeof loadHTTPVFSDatabase>>
  */
 export async function loadPOIWorker(sqljsBaseURL: string): Promise<POIHTTPVFSWorker> {
 	return loadHTTPVFSDatabase(poiLayerURL(), sqljsBaseURL)
-}
-
-/**
- * Sql.js exec result → row objects. Kept local — `httpvfs-resolver.ts`'s equivalent helper isn't exported.
- */
-function rowsFromExec<Row = Record<string, unknown>>(
-	res: Array<{ columns: string[]; values: unknown[][] }> | undefined
-): Row[] {
-	if (!res || !res.length) return []
-	const { columns, values } = res[0]!
-
-	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])) as Row)
 }
 
 const categoryCodesCache = new WeakMap<POIHTTPVFSWorker, Promise<Map<string, number>>>()

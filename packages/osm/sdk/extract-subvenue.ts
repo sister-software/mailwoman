@@ -36,9 +36,8 @@
  *   - `aeroway` is promoted on `multipolygons` but NOT on `points`.
  *   - `ref` is promoted on `points` but NOT on `multipolygons`.
  *
- *   `extract-poi.ts` gets away with one layer-independent `PROMOTED_KEYS` set because `name` and
- *   `man_made` happen to be promoted on both. That would be wrong here, so {@link PROMOTED_KEYS_BY_LAYER}
- *   is keyed by layer. Verified against the installed `osmconf.ini` and against a hand-authored `.osm`
+ *   So {@link PROMOTED_KEYS_BY_LAYER} is keyed by layer, and `tagSelectExpr` refuses a layer it has no list
+ *   for rather than emitting hstore SQL that runs and matches nothing. Verified against the installed `osmconf.ini` and against a hand-authored `.osm`
  *   XML fixture read with the system `ogr2ogr` (GDAL's OSM driver reads plain OSM XML the same way it
  *   reads `.pbf`), which is also what `extract-subvenue.test.ts` pins. A custom `OSM_CONFIG_FILE` that
  *   changes either `attributes=` line breaks the bare-column assumption; not a concern for the shipped
@@ -65,6 +64,7 @@ import { once } from "@mailwoman/core/utils/events"
 import { TextSpliterator } from "spliterator"
 
 import { representativePoint } from "#sdk/representative-point"
+import { type PromotedKeysByLayer, tagAlias, tagSelectExpr } from "#sdk/tag-columns"
 
 /**
  * Which side of the containment relation a matched feature sits on.
@@ -154,7 +154,7 @@ const SUBVENUE_LAYERS = ["points", "multipolygons"] as const
  * cannot be one flat set the way `extract-poi.ts`'s can. Only the keys this extractor reads are listed; the real
  * `attributes=` lines are longer.
  */
-export const PROMOTED_KEYS_BY_LAYER: Readonly<Record<string, ReadonlySet<string>>> = {
+export const PROMOTED_KEYS_BY_LAYER: PromotedKeysByLayer = {
 	points: new Set(["name", "ref", "place", "man_made"]),
 	multipolygons: new Set(["name", "aeroway", "amenity", "building", "place", "man_made"]),
 }
@@ -205,21 +205,6 @@ export function distinctSubVenueTagKeys(rules: readonly SubVenueTagRule[]): stri
 }
 
 /**
- * The SQL expression reading a tag's value on `layer`: a bare column when the layer promotes it, an `other_tags` hstore
- * lookup otherwise.
- */
-function tagSelectExpr(layer: string, key: string): string {
-	return PROMOTED_KEYS_BY_LAYER[layer]?.has(key) ? key : `hstore_get_value(other_tags,'${key}')`
-}
-
-/**
- * OGRSQL column aliases can't contain `:` — launder it the way GDAL's own `attribute_name_laundering` would.
- */
-function tagAlias(key: string): string {
-	return key.replaceAll(":", "_")
-}
-
-/**
  * Build the OGRSQL SELECT+WHERE for one layer.
  *
  * Selects `name` and `ref` (the identifier half of `Gate A12` lives in `ref` far more reliably than in `name`), every
@@ -243,13 +228,16 @@ export function buildSubVenueSQL(layer: string, rules: readonly SubVenueTagRule[
 	}
 
 	for (const key of distinctSubVenueTagKeys(rules)) {
-		cols.push(`${tagSelectExpr(layer, key)} AS ${tagAlias(key)}`)
+		cols.push(`${tagSelectExpr(PROMOTED_KEYS_BY_LAYER, layer, key)} AS ${tagAlias(key)}`)
 	}
 
 	cols.push("other_tags")
 
 	const whereGroups = rules.map(
-		(rule) => "(" + rule.all.map(([key, value]) => `${tagSelectExpr(layer, key)}='${value}'`).join(" AND ") + ")"
+		(rule) =>
+			"(" +
+			rule.all.map(([key, value]) => `${tagSelectExpr(PROMOTED_KEYS_BY_LAYER, layer, key)}='${value}'`).join(" AND ") +
+			")"
 	)
 
 	return `SELECT ${cols.join(", ")} FROM ${layer} WHERE ${whereGroups.join(" OR ")}`

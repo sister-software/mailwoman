@@ -321,7 +321,7 @@ export function resolveCIKCandidates(
  * {@linkcode accessionArchiveURL} below, whose archive paths use the UNPADDED form instead; both conventions are real
  * and both appear in this file.
  */
-function submissionsURL(cik: CIK): string {
+export function submissionsURL(cik: CIK): string {
 	return `https://data.sec.gov/submissions/CIK${cik}.json`
 }
 

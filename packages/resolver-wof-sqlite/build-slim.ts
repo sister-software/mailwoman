@@ -38,6 +38,7 @@
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { copyFileTo, removePath } from "@mailwoman/core/fs/writers"
+import { countRows } from "@mailwoman/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { sql } from "kysely"
@@ -404,10 +405,4 @@ async function copyFromSource(
 	} finally {
 		out.exec(`DETACH DATABASE src;`)
 	}
-}
-
-function countRows(db: DatabaseClient<BuildSchema>, table: string): number {
-	const row = db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n?: number } | undefined
-
-	return Number(row?.n ?? 0)
 }

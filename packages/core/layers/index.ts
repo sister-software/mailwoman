@@ -8,5 +8,6 @@
  *   docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md §2.1.
  */
 
+export * from "#layers/coverage"
 export * from "#layers/manifest"
 export * from "#layers/schema"

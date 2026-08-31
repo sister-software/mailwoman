@@ -12,6 +12,7 @@
 import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { JSONSpliterator } from "spliterator"
 
 import { CLIUsageError } from "#cli-kit"
@@ -20,9 +21,6 @@ import { CLIUsageError } from "#cli-kit"
  * Samples a bucket needs before its flip rate is worth reporting rather than noise.
  */
 const MIN_REPORTABLE_SAMPLES = 4
-
-// TODO: Use Tagged from type-fest to force type.
-const fold = (v: string) => v.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 const { positionals } = parseArguments({
 	allowPositionals: true,
@@ -75,15 +73,15 @@ for (const row of rows) {
 
 		if (!gold) continue
 
-		const baseHit = (base.get(tag) ?? []).some((v) => fold(v) === fold(gold))
-		const candHit = (cand.get(tag) ?? []).some((v) => fold(v) === fold(gold))
+		const baseHit = (base.get(tag) ?? []).some((v) => foldCaseWhitespace(v) === foldCaseWhitespace(gold))
+		const candHit = (cand.get(tag) ?? []).some((v) => foldCaseWhitespace(v) === foldCaseWhitespace(gold))
 
 		if (baseHit && !candHit) {
 			// Where did the gold text GO in the candidate parse?
 			let went = "dropped (no tag)"
 
 			for (const [t, values] of cand.entries()) {
-				if (t !== tag && values.some((v) => fold(v).includes(fold(gold)))) {
+				if (t !== tag && values.some((v) => foldCaseWhitespace(v).includes(foldCaseWhitespace(gold)))) {
 					went = `absorbed into ${t}`
 
 					break

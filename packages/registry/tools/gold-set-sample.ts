@@ -26,7 +26,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { jaccard } from "@mailwoman/match"
 
 import { addressFrequencyKey, streamRows } from "#index"
-import { norm } from "#tools/shared"
+import { norm, orgTokens } from "#tools/shared"
 
 /**
  * Options for {@linkcode goldSetSample}.
@@ -56,34 +56,6 @@ export interface GoldSetSampleOptions {
 	 * Write the sampled pairs here as JSONL (otherwise the first 10 print to stdout).
 	 */
 	outJSONL?: string
-}
-
-const STOP = new Set([
-	"llc",
-	"inc",
-	"incorporated",
-	"corp",
-	"corporation",
-	"co",
-	"ltd",
-	"pllc",
-	"pc",
-	"pa",
-	"lp",
-	"llp",
-	"the",
-	"of",
-	"and",
-])
-
-function orgTokens(s: string): Set<string> {
-	return new Set(
-		s
-			.toLowerCase()
-			.replaceAll(/[^a-z0-9 ]/g, " ")
-			.split(/\s+/)
-			.filter((t) => t && !STOP.has(t))
-	)
 }
 
 const C = {

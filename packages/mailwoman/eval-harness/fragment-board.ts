@@ -32,6 +32,7 @@
 
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { JSONSpliterator } from "spliterator"
 
@@ -73,8 +74,6 @@ export interface FragmentBoardOptions {
 export interface FragmentBoardOutcome {
 	exitCode: number
 }
-
-const fold = (value: string): string => value.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 /**
  * Wilson score interval — the reason this board exists. The normal approximation collapses at the extremes (it *
@@ -128,8 +127,8 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 		bucket.total++
 
 		const ok = fixture.expect_no_street
-			? fold(street) === ""
-			: fold(street) === fold((fixture.expect.street ?? []).join(" "))
+			? foldCaseWhitespace(street) === ""
+			: foldCaseWhitespace(street) === foldCaseWhitespace((fixture.expect.street ?? []).join(" "))
 
 		if (ok) {
 			bucket.hit++

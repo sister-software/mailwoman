@@ -45,7 +45,7 @@
 import { pathExists, readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { dataRootPath, md5File } from "@mailwoman/core/utils"
+import { dataRootPath, isoDate, md5File } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -179,13 +179,6 @@ export interface BuildPostcodeNIOSMResult {
 }
 
 /**
- * `YYYY-MM-DD` in UTC — the dated-artifact suffix.
- */
-function datestamp(now: Date): string {
-	return now.toISOString().slice(0, 10)
-}
-
-/**
  * What the shard records when a rebuild cannot recover a provenance field. A sentinel STRING rather than an empty one:
  * a consumer reading `retrieved_at: ""` cannot tell "no retrieval time exists" from "nobody looked".
  */
@@ -197,7 +190,7 @@ const UNKNOWN_PROVENANCE = "unknown (no acquisition.json beside the response)"
 export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}): Promise<BuildPostcodeNIOSMResult> {
 	const phase = options.onPhase ?? (() => {})
 	const now = options.now ?? new Date()
-	const stamp = datestamp(now)
+	const stamp = isoDate(now)
 	const sourceDir = options.sourceDir ?? String(dataRootPath("osm-ni-postcodes", stamp))
 	const out = options.out ?? String(dataRootPath("wof", `postalcode-ni-osm-${stamp}.db`))
 	const responsePath = String(join(sourceDir, "response.json"))

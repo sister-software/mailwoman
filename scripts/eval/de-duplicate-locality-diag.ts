@@ -27,6 +27,8 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
 import { JSONSpliterator } from "spliterator"
 
+import { norm, valueMatch } from "./value-match.ts"
+
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArguments({
 	options: {
@@ -52,28 +54,6 @@ const values = rawValues as {
 interface OaRow {
 	input: string
 	expected: { locality?: string; region?: string }
-}
-
-function norm(s: string): string {
-	return s
-		.toLowerCase()
-		.replaceAll(/[^\p{L}\p{N}]+/gu, " ")
-		.trim()
-		.replaceAll(/\s+/g, " ")
-}
-
-function valueMatch(pred: string, gold: string): boolean {
-	const a = norm(pred)
-	const b = norm(gold)
-
-	if (!a || !b) return false
-
-	if (a === b) return true
-	const aset = new Set(a.split(" "))
-	const bset = new Set(b.split(" "))
-	const subset = (xs: Set<string>, ys: Set<string>): boolean => [...xs].every((t) => ys.has(t))
-
-	return subset(aset, bset) || subset(bset, aset)
 }
 
 function firstByTag(tree: AddressTree, tag: string): AddressNode | undefined {

@@ -4,8 +4,15 @@
  * @author Teffen Ellis, et al.
  */
 
-import { flattenObject, isRecordLike, omitNullable, pick, tryParsingJSON } from "@mailwoman/core/objects"
-import { expect, test } from "vitest"
+import {
+	flattenObject,
+	isRecordLike,
+	omitNullable,
+	parseJSONArray,
+	pick,
+	tryParsingJSON,
+} from "@mailwoman/core/objects"
+import { describe, expect, it, test } from "vitest"
 
 test("pick: selects the listed keys from an array of keys", () => {
 	expect(pick({ a: 1, b: 2, c: 3 }, ["a", "c"])).toEqual({ a: 1, c: 3 })
@@ -110,4 +117,20 @@ test("flattenObject: a flat object is returned with single-segment keys", () => 
 test("flattenObject: a null leaf is preserved at its dotted path", () => {
 	// "null is also an object" — but a null *value* recurses to the else branch and is kept as a leaf.
 	expect(flattenObject({ a: { b: null } })).toEqual({ "a.b": null })
+})
+
+describe("parseJSONArray", () => {
+	it("answers [] for an absent field", () => {
+		expect(parseJSONArray(undefined, "test")).toEqual([])
+	})
+
+	it("returns the parsed array", () => {
+		expect(parseJSONArray<number>("[1, 2]", "test")).toEqual([1, 2])
+	})
+
+	it("refuses a non-array rather than coercing it", () => {
+		expect(() => parseJSONArray('{"a":1}', "coastal client")).toThrow(
+			"coastal client: expected a JSON array, got object"
+		)
+	})
 })

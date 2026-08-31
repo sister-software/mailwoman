@@ -15,6 +15,7 @@
  */
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import { tableExists } from "@mailwoman/sqlite/introspection"
 
 /**
  * Name of the FTS5 virtual table this module owns. Centralized so `WOFSQLitePlaceLookup` and the CLI can't drift apart.
@@ -348,12 +349,4 @@ export function placeBboxExists<DB>(db: DatabaseClient<DB>): boolean {
  */
 export function placePopulationExists<DB>(db: DatabaseClient<DB>): boolean {
 	return tableExists(db, PLACE_POPULATION_TABLE)
-}
-
-function tableExists<DB>(db: DatabaseClient<DB>, name: string): boolean {
-	const row = db.prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?`).get(name) as
-		| { name: string }
-		| undefined
-
-	return Boolean(row)
 }

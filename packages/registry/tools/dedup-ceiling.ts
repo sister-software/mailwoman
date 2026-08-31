@@ -35,7 +35,7 @@ import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
 import { jaccard } from "@mailwoman/match"
 
 import { addressFrequencyKey, streamRows } from "#index"
-import { norm } from "#tools/shared"
+import { norm, orgTokens } from "#tools/shared"
 
 /**
  * Similarity at or above which a pair is a near-miss worth inspecting rather than unrelated.
@@ -72,34 +72,6 @@ export interface DedupCeilingOptions {
  * Strip only corporate-form tokens + articles — KEEP domain words (health, medical, center…), which carry the
  * distinguishing signal between two co-located providers.
  */
-const STOP = new Set([
-	"llc",
-	"inc",
-	"incorporated",
-	"corp",
-	"corporation",
-	"co",
-	"ltd",
-	"pllc",
-	"pc",
-	"pa",
-	"lp",
-	"llp",
-	"the",
-	"of",
-	"and",
-])
-
-function orgTokens(s: string): Set<string> {
-	return new Set(
-		s
-			.toLowerCase()
-			.replaceAll(/[^a-z0-9 ]/g, " ")
-			.split(/\s+/)
-			.filter((t) => t && !STOP.has(t))
-	)
-}
-
 const normPhone = (p?: string): string => {
 	const d = (p ?? "").replaceAll(/\D/g, "")
 

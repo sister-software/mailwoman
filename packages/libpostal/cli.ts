@@ -13,10 +13,10 @@
  *   variants.
  */
 
-import { printOpenAPIDocument, serveNode } from "@mailwoman/api-kit"
+import { serveNode } from "@mailwoman/api-kit"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { expandAbbreviations, normalize } from "@mailwoman/normalize"
-import { corsBannerLine, loadClassifierOrExit, parseOpenAPIFlags, runDropInCLI } from "mailwoman/cli-kit/dropin"
+import { corsBannerLine, loadClassifierOrExit, openAPICommand, runDropInCLI } from "mailwoman/cli-kit/dropin"
 
 import { createLibpostalApp, LIBPOSTAL_DOC_INFO, type LibpostalEngine, treeToParseMatches } from "#index"
 
@@ -77,22 +77,11 @@ async function serve(): Promise<void> {
 	})
 }
 
-/**
- * `openapi` — print (or `--out`-write) the emitted OpenAPI document for this surface. Builds the app around a stub
- * engine (`parse` is the one required {@link LibpostalEngine} method — a no-op is enough) so this NEVER boots the real
- * neural parser: pure route-table introspection, fast regardless of data-root state. `--flavor 3.0` prints the 3.0.3
- * diet instead of the default 3.1.0.
- */
-function openapi(): void {
-	const stubEngine: LibpostalEngine = { parse: async () => [] }
-	const app = createLibpostalApp(stubEngine)
-
-	printOpenAPIDocument(app, LIBPOSTAL_DOC_INFO, parseOpenAPIFlags(BINARY_NAME))
-}
-
 await runDropInCLI({
 	binaryName: BINARY_NAME,
-	openapi,
+	openapi: openAPICommand(BINARY_NAME, createLibpostalApp, LIBPOSTAL_DOC_INFO, {
+		parse: async () => [],
+	} satisfies LibpostalEngine),
 	serve,
 	usage: ["  serve [--port 8081] [--host 0.0.0.0] [--no-cors]", "  openapi [--flavor 3.1|3.0] [--out <path>]"],
 })

@@ -55,6 +55,7 @@ import {
 	synthesizeMilitaryPoBoxRow,
 	type LocaleTemplate,
 } from "#synthesizers/po-box"
+import { pick } from "#synthesizers/utils"
 import { alignRow } from "#utils"
 
 // ── Base-skeleton sources ────────────────────────────────────────────────────────────────────────
@@ -541,8 +542,6 @@ function makeCaPostcode(random: () => number, fsaLetters: string[]): string {
 	return pc
 }
 
-const pick = <T>(random: () => number, arr: ReadonlyArray<T>): T => arr[Math.floor(random() * arr.length)]!
-
 // ── Per-class renderers — each returns { fmt, raw, components } ──────────────────────────────────
 
 // US layouts: 40% full (when the tuple has a postcode), 15% no-postcode, 20% bare, 15% venue, 10% label-nocomma.
@@ -565,7 +564,7 @@ function renderPoBoxUs(random: () => number, t: USTuple): Rendered {
 	if (r < US_BARE_CUTOFF) return { fmt: "bare", raw: phrase, components: { po_box: phrase } }
 
 	if (r < US_VENUE_CUTOFF) {
-		const v = pick(random, VENUES_EN)
+		const v = pick(VENUES_EN, random)
 
 		return {
 			fmt: "venue",
@@ -636,7 +635,7 @@ function renderBpFr(random: () => number, t: FRTuple): Rendered {
 		}
 	}
 
-	const v = pick(random, VENUES_FR)
+	const v = pick(VENUES_FR, random)
 
 	return {
 		fmt: "bp-venue",
@@ -670,7 +669,7 @@ function renderCedexFr(random: () => number, t: FRTuple): Rendered {
 	if (r < CEDEX_GOLDEN_ORDER_CUTOFF)
 		return { fmt: "cedex-golden-order", raw: `${pc} ${cedex} ${loc}`, components: line }
 
-	const v = pick(random, VENUES_FR)
+	const v = pick(VENUES_FR, random)
 
 	return { fmt: "cedex-venue", raw: `${v}, ${pc} ${loc} ${cedex}`, components: { venue: v, ...line } }
 }
@@ -693,7 +692,7 @@ function renderCaFr(random: () => number, loc: string): Rendered {
 	if (r < CA_FR_NATIVE_CUTOFF) return { fmt: "ca-fr-native", raw: `${phrase}, ${loc} QC ${pc}`, components }
 
 	if (r < CA_FR_BARE_CUTOFF) return { fmt: "ca-fr-bare", raw: phrase, components: { po_box: phrase } }
-	const v = pick(random, VENUES_FR)
+	const v = pick(VENUES_FR, random)
 
 	return { fmt: "ca-fr-venue", raw: `${v}, ${phrase}, ${loc} QC ${pc}`, components: { venue: v, ...components } }
 }
@@ -753,7 +752,7 @@ function renderAUPoBox(random: () => number, t: AUTuple): Rendered {
 		}
 
 	if (r < AU_BARE_CUTOFF) return { fmt: "au-bare", raw: phrase, components: { po_box: phrase } }
-	const v = pick(random, VENUES_EN)
+	const v = pick(VENUES_EN, random)
 
 	return { fmt: "au-venue", raw: `${v}, ${phrase}, ${loc} ${reg} ${pc}`, components: { venue: v, ...base } }
 }
@@ -776,7 +775,7 @@ function renderNZPoBox(random: () => number, t: NZTuple): Rendered {
 		return { fmt: "nz-no-postcode", raw: `${phrase}, ${locality}`, components: { po_box: phrase, locality } }
 
 	if (r < NZ_BARE_CUTOFF) return { fmt: "nz-bare", raw: phrase, components: { po_box: phrase } }
-	const v = pick(random, VENUES_EN)
+	const v = pick(VENUES_EN, random)
 
 	return { fmt: "nz-venue", raw: `${v}, ${phrase}, ${locality} ${pc}`, components: { venue: v, ...base } }
 }
@@ -881,34 +880,34 @@ export const poBoxCedexRecipe: ShardRecipe = {
 			let locale: string
 
 			if (cls === "po-box-us") {
-				rendered = renderPoBoxUs(random, pick(random, usPool))
+				rendered = renderPoBoxUs(random, pick(usPool, random))
 				country = "US"
 				locale = "en-US"
 			} else if (cls === "pmb-us") {
-				const t = pick(random, usPool)
+				const t = pick(usPool, random)
 
 				if (!t.postcode || !t.street || !t.house_number) continue
 				rendered = renderPmbUs(random, t)
 				country = "US"
 				locale = "en-US"
 			} else if (cls === "bp-fr") {
-				rendered = renderBpFr(random, pick(random, frPool))
+				rendered = renderBpFr(random, pick(frPool, random))
 				country = "FR"
 				locale = "fr-FR"
 			} else if (cls === "cedex-fr") {
-				rendered = renderCedexFr(random, pick(random, frPool))
+				rendered = renderCedexFr(random, pick(frPool, random))
 				country = "FR"
 				locale = "fr-FR"
 			} else if (cls === "cp-ca-fr") {
-				rendered = renderCaFr(random, pick(random, qcPool))
+				rendered = renderCaFr(random, pick(qcPool, random))
 				country = "CA"
 				locale = "fr-CA"
 			} else if (cls === "po-box-au") {
-				rendered = renderAUPoBox(random, pick(random, auPool))
+				rendered = renderAUPoBox(random, pick(auPool, random))
 				country = "AU"
 				locale = "en-AU"
 			} else if (cls === "po-box-nz") {
-				rendered = renderNZPoBox(random, pick(random, nzPool))
+				rendered = renderNZPoBox(random, pick(nzPool, random))
 				country = "NZ"
 				locale = "en-NZ"
 			} else if (cls === "po-box-us-military") {
@@ -920,7 +919,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 				country = "US"
 				locale = "en-US"
 			} else {
-				rendered = renderCaEn(random, pick(random, onPool))
+				rendered = renderCaEn(random, pick(onPool, random))
 				country = "CA"
 				locale = "en-CA"
 			}

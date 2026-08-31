@@ -15,7 +15,7 @@
  *   parse the last stdout line without a framing convention.
  */
 
-import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { FloodDatabase } from "#schema"
@@ -35,27 +35,25 @@ const { values } = parseArguments({
 	},
 })
 
-function required(name: string, value: string | undefined): string {
-	if (value === undefined) throw new Error(`flood ingest-chunk: --${name} is required`)
-
-	return value
-}
-
-using database = new DatabaseClient<FloodDatabase>(required("database", values.database))
+using database = new DatabaseClient<FloodDatabase>(requiredArgument("flood ingest-chunk", "database", values.database))
 
 database.exec("PRAGMA journal_mode = OFF")
 database.exec("PRAGMA synchronous = OFF")
 
 const result = await ingestFloodChunk(database, {
 	source: await createGeodatabaseFeatureSource({
-		geodatabasePath: required("gdb", values.gdb),
+		geodatabasePath: requiredArgument("flood ingest-chunk", "gdb", values.gdb),
 		...(values.layer ? { layer: values.layer } : {}),
-		objectIDFrom: Number(required("object-id-from", values["object-id-from"])),
-		objectIDTo: Number(required("object-id-to", values["object-id-to"])),
-		declaredFeatureCount: Number(required("declared-feature-count", values["declared-feature-count"])),
+		objectIDFrom: Number(requiredArgument("flood ingest-chunk", "object-id-from", values["object-id-from"])),
+		objectIDTo: Number(requiredArgument("flood ingest-chunk", "object-id-to", values["object-id-to"])),
+		declaredFeatureCount: Number(
+			requiredArgument("flood ingest-chunk", "declared-feature-count", values["declared-feature-count"])
+		),
 	}),
-	indexResolution: Number(required("index-resolution", values["index-resolution"])),
-	coverageResolution: Number(required("coverage-resolution", values["coverage-resolution"])),
+	indexResolution: Number(requiredArgument("flood ingest-chunk", "index-resolution", values["index-resolution"])),
+	coverageResolution: Number(
+		requiredArgument("flood ingest-chunk", "coverage-resolution", values["coverage-resolution"])
+	),
 	onProgress: (message) => console.error(`  [chunk] ${message}`),
 })
 

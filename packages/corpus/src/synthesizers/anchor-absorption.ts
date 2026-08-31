@@ -32,6 +32,8 @@
 
 import type { ComponentTag } from "@mailwoman/core/types"
 
+import { pick } from "#synthesizers/utils"
+
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
@@ -68,10 +70,6 @@ export interface SynthesizedAnchorAbsorptionRow {
 	components: Partial<Record<ComponentTag, string>>
 	locale: string
 	template: AnchorAbsorptionTemplate
-}
-
-function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
-	return arr[Math.floor(random() * arr.length)]!
 }
 
 /**

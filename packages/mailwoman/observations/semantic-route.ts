@@ -71,6 +71,7 @@ import {
 	readActivityLexicon,
 	resolveActivityPhraseLocale,
 } from "@mailwoman/activity-lexicon"
+import { compareByCodePoint } from "@mailwoman/core/utils"
 import type {
 	CompiledGeographicModel,
 	ConceptRecord,
@@ -218,21 +219,6 @@ export interface SemanticObservationRouteOptions {
 }
 
 /**
- * UTF-16 code point, ascending — the order the compiled artifact itself states.
- *
- * `String.prototype.localeCompare` is the trap this avoids: its answer depends on the machine's collation, so an order
- * built with it is reproducible only on the machine that built it. `@mailwoman/geographic-model` exports this same
- * comparator, and taking it would be a VALUE import of a package this one may only reference as a type.
- */
-function byCodePoint(left: string, right: string): number {
-	if (left < right) return -1
-
-	if (left > right) return 1
-
-	return 0
-}
-
-/**
  * One declared phrase, resolved all the way to the categories it can reach.
  */
 interface ResolvedPhrase {
@@ -286,7 +272,7 @@ function reachKinds(model: CompiledGeographicModel, activity: string): ReachedKi
 		}
 	}
 
-	return reached.toSorted((left, right) => byCodePoint(String(left.concept.id), String(right.concept.id)))
+	return reached.toSorted((left, right) => compareByCodePoint(String(left.concept.id), String(right.concept.id)))
 }
 
 /**
@@ -411,7 +397,8 @@ export async function createSemanticObservationRoute(
 	// Longest declared phrase first, so `pick up a prescription` beats the bare `prescription` it ends with. Ties break on
 	// the phrase itself, so the winner is a property of the lexicon rather than of the order it was written in.
 	const ordered = resolved.toSorted(
-		(left, right) => right.normalized.length - left.normalized.length || byCodePoint(left.normalized, right.normalized)
+		(left, right) =>
+			right.normalized.length - left.normalized.length || compareByCodePoint(left.normalized, right.normalized)
 	)
 
 	const recorded: SemanticObservation[] = []
@@ -504,7 +491,7 @@ export async function createSemanticObservationRoute(
 
 	const reachableCategoryIDs = [
 		...new Set(resolved.flatMap(({ reached }) => reached.map(({ mapping }) => String(mapping.externalID)))),
-	].toSorted(byCodePoint)
+	].toSorted(compareByCodePoint)
 
 	return {
 		lookup,

@@ -14,7 +14,7 @@
  *   the last stdout line without a framing convention.
  */
 
-import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { SoilDatabase } from "#schema"
@@ -34,24 +34,18 @@ const { values } = parseArguments({
 	},
 })
 
-function required(name: string, value: string | undefined): string {
-	if (value === undefined) throw new Error(`soil ingest-chunk: --${name} is required`)
-
-	return value
-}
-
-using database = new DatabaseClient<SoilDatabase>(required("database", values.database))
+using database = new DatabaseClient<SoilDatabase>(requiredArgument("soil ingest-chunk", "database", values.database))
 
 database.exec("PRAGMA journal_mode = OFF")
 database.exec("PRAGMA synchronous = OFF")
 
-const areaSymbol = required("area-symbol", values["area-symbol"])
-const fidFrom = Number(required("fid-from", values["fid-from"]))
-const fidTo = Number(required("fid-to", values["fid-to"]))
+const areaSymbol = requiredArgument("soil ingest-chunk", "area-symbol", values["area-symbol"])
+const fidFrom = Number(requiredArgument("soil ingest-chunk", "fid-from", values["fid-from"]))
+const fidTo = Number(requiredArgument("soil ingest-chunk", "fid-to", values["fid-to"]))
 
 const result = await ingestSoilChunk(database, {
 	source: await createShapefileFeatureSource({
-		shapefilePath: required("shapefile", values.shapefile),
+		shapefilePath: requiredArgument("soil ingest-chunk", "shapefile", values.shapefile),
 		areaSymbol,
 		fidFrom,
 		fidTo,
@@ -59,8 +53,10 @@ const result = await ingestSoilChunk(database, {
 		// the chunk asserts nothing about its size and the PARENT checks the per-area sum against the shapefile's.
 		declaredFeatureCount: 0,
 	}),
-	indexResolution: Number(required("index-resolution", values["index-resolution"])),
-	coverageResolution: Number(required("coverage-resolution", values["coverage-resolution"])),
+	indexResolution: Number(requiredArgument("soil ingest-chunk", "index-resolution", values["index-resolution"])),
+	coverageResolution: Number(
+		requiredArgument("soil ingest-chunk", "coverage-resolution", values["coverage-resolution"])
+	),
 	// An empty string is an empty set, not "every map unit": a build where nothing lacks soil mapping passes one, and
 	// `"".split(",")` yields one empty element that has to be dropped rather than joined against as a mukey.
 	noMappingMukeys: new Set((values["no-mapping-mukeys"] ?? "").split(",").filter((mukey) => mukey.length > 0)),

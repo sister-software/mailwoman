@@ -170,6 +170,44 @@ const GB_INWARD_LENGTH = 3
  * Cheap by construction: it stops at {@linkcode SHAPED_ONLY_KEY_SCAN_LIMIT} keys, because the caller only needs "any?"
  * and a magnitude to print, and a 1.7M-key Map is walked at every load.
  */
+/**
+ * Merge per-binary anchor lookups: union the country posteriors per postcode, mean the centroids. A `(0,0)` centroid is
+ * a placeholder and never averaged in.
+ */
+export function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
+	if (lookups.length === 1) return lookups[0]!
+	const merged: AnchorLookup = new Map()
+
+	for (const lookup of lookups) {
+		for (const [postcode, entry] of lookup) {
+			const existing = merged.get(postcode)
+
+			if (!existing) {
+				merged.set(postcode, { posterior: { ...entry.posterior }, lat: entry.lat, lon: entry.lon })
+
+				continue
+			}
+
+			for (const country of Object.keys(entry.posterior)) {
+				existing.posterior[country] = 1
+			}
+
+			// Average a real centroid in; ignore (0,0) placeholders.
+			if (entry.lat !== 0 || entry.lon !== 0) {
+				if (existing.lat === 0 && existing.lon === 0) {
+					existing.lat = entry.lat
+					existing.lon = entry.lon
+				} else {
+					existing.lat = (existing.lat + entry.lat) / 2
+					existing.lon = (existing.lon + entry.lon) / 2
+				}
+			}
+		}
+	}
+
+	return merged
+}
+
 export function countShapedOnlyKeys(lookup: AnchorLookup): number {
 	let count = 0
 

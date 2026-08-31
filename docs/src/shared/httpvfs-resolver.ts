@@ -47,6 +47,7 @@ import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/reso
 // one-normalizer discipline that keeps the candidate table's keys reachable by construction.
 
 import type { DualRole, MailwomanLookupLike } from "./resources"
+import { rowsFromExec } from "./sqljs-rows.ts"
 
 /**
  * The candidate columns this reader probes — a typed projection of the shared {@link CandidateTable}.
@@ -101,18 +102,6 @@ function sanitizeFTS(text: string): string {
 
 	// Phrase-quote so multi-word names match as a unit, matching the demo's locality lookups.
 	return prefix ? `"${cleaned}"*` : `"${cleaned}"`
-}
-
-/**
- * Sql.js exec result → row objects.
- */
-function rowsFromExec<Row = Record<string, unknown>>(
-	res: Array<{ columns: string[]; values: unknown[][] }> | undefined
-): Row[] {
-	if (!res || !res.length) return []
-	const { columns, values } = res[0]
-
-	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])) as Row)
 }
 
 export interface HTTPVFSWorker {

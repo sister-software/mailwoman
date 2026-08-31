@@ -44,6 +44,11 @@
 			"default": "./out/client.js",
 			"types": "./out/client.d.ts"
 		},
+		"./introspection": {
+			"node": "./introspection.ts",
+			"default": "./out/introspection.js",
+			"types": "./out/introspection.d.ts"
+		},
 		"./dialect": {
 			"node": "./dialect.ts",
 			"default": "./out/dialect.js",

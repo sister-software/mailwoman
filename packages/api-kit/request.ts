@@ -20,6 +20,14 @@ import type { Context } from "hono"
  * this shape rather than Hono's uniformly-array `queries()`. Built on a null-prototype object so a query key of
  * `__proto__` or `constructor` cannot reach `Object`'s prototype — these handlers take arbitrary internet input.
  */
+/**
+ * A non-empty string query value, else `undefined`. An empty `?q=` is treated as absent, since every drop-in reads it
+ * that way.
+ */
+export function asString(raw: unknown): string | undefined {
+	return typeof raw === "string" && raw.length ? raw : undefined
+}
+
 export function legacyQuery(c: Context): Record<string, string | string[]> {
 	const out: Record<string, string | string[]> = Object.create(null)
 

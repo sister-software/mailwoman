@@ -69,6 +69,8 @@ import { ResourceError } from "@mailwoman/core/errors"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
+import { canonicalHostname } from "#sdk/host"
+
 // Re-exported so a caller branching on this client's failures needs exactly one import.
 export { isTransientResourceError } from "@mailwoman/core/api"
 export { ResourceError } from "@mailwoman/core/errors"
@@ -187,15 +189,6 @@ export function isImmutableArchiveURL(url: URL): boolean {
  * those bypasses need no extra handling.
  */
 const SEC_ALLOWED_HOSTS = new Set(["www.sec.gov", "data.sec.gov", "sec.gov", "efts.sec.gov"])
-
-/**
- * A trailing dot makes a hostname fully qualified — `www.sec.gov.` and `www.sec.gov` reach the same server, but only
- * the latter is in the allowlist, and the WHATWG parser preserves the dot. Stripped before the lookup so the FQDN form
- * is admitted rather than rejected as an unknown host.
- */
-function canonicalHostname(url: URL): string {
-	return url.hostname.endsWith(".") ? url.hostname.slice(0, -1) : url.hostname
-}
 
 /**
  * Reject a URL this client must not send its User-Agent to. Throws a {@linkcode ResourceError} whose URN kind is

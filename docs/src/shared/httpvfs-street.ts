@@ -28,6 +28,8 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { clampFraction, pointAlong } from "@mailwoman/spatial"
 
+import { rowsFromExec } from "./sqljs-rows.ts"
+
 /**
  * The minimal worker handle the lookups need — the same shape `loadHTTPVFSDatabase` returns.
  */
@@ -39,16 +41,6 @@ export interface HTTPVFSDB {
  * Inline a string literal for SQL (we inline rather than bind — avoids param marshaling over Comlink).
  */
 const sqlStr = (s: string): string => `'${s.replaceAll("'", "''")}'`
-
-/**
- * Sql.js exec result → row objects.
- */
-function rowsFromExec(res: Array<{ columns: string[]; values: unknown[][] }> | undefined): Record<string, unknown>[] {
-	if (!res || !res.length) return []
-	const { columns, values } = res[0]!
-
-	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])))
-}
 
 export interface StreetPointHit {
 	lat: number

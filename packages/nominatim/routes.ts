@@ -9,7 +9,7 @@
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
-import { errorContent, legacyQuery } from "@mailwoman/api-kit"
+import { asString, errorContent, legacyQuery } from "@mailwoman/api-kit"
 
 import type {
 	NominatimEngine,
@@ -59,10 +59,6 @@ function parseFormat(raw: unknown): NominatimFormat {
 
 function parseBool(raw: unknown): boolean {
 	return raw === "1" || raw === "true"
-}
-
-function asString(raw: unknown): string | undefined {
-	return typeof raw === "string" && raw.length ? raw : undefined
 }
 
 /**

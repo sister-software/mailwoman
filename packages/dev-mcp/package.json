@@ -285,6 +285,7 @@
 		"@mailwoman/geocode-oracle": "workspace:*",
 		"@mailwoman/libpostal": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
+		"@mailwoman/normalize": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",

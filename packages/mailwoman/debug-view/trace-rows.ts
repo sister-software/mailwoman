@@ -18,6 +18,8 @@
  *   against a pane width without owning any of the vocabulary.
  */
 
+import { softmax } from "@mailwoman/neural/viterbi"
+
 import type { GeocodeTrace } from "#geocode-session"
 
 //#region Shared
@@ -36,22 +38,6 @@ const FIELD_GAP = "  "
 
 function fields(parts: Array<string | null>): string {
 	return parts.filter((part) => part != null && part.length > 0).join(FIELD_GAP)
-}
-
-/**
- * Numerically-stable softmax over one logit row.
- *
- * A local copy of `@mailwoman/neural`'s `softmax` ON PURPOSE, and the same trade `nuts-lookup`/`timezone-lookup` made
- * against `@mailwoman/spatial`: the shared one is reachable only through the `@mailwoman/neural` barrel (there is no
- * `./viterbi` subpath), which drags onnxruntime-node into a pure string-formatting module and into every test that
- * renders a frame. Six lines against a native-binding load in the component tests.
- */
-function softmax(row: readonly number[]): number[] {
-	const max = Math.max(...row)
-	const exps = row.map((value) => Math.exp(value - max))
-	const sum = exps.reduce((a, b) => a + b, 0)
-
-	return exps.map((value) => value / sum)
 }
 
 //#endregion

@@ -59,6 +59,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 
 import { decodeEntities, normalizeWhitespace, stripTags } from "#sdk/exhibit21"
 import { isFRN, type FRN } from "#sdk/frn"
+import { canonicalHostname } from "#sdk/host"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.
 export { isTransientResourceError } from "@mailwoman/core/api"
@@ -105,14 +106,6 @@ const DEFAULT_REQUEST_TIMEOUT_MS = 30_000
 const CORES_ALLOWED_HOSTS = new Set(["apps.fcc.gov"])
 
 const CORES_BASE_URL = "https://apps.fcc.gov"
-
-/**
- * A trailing dot makes a hostname fully qualified — `apps.fcc.gov.` reaches the same server but is not the allowlisted
- * string, and the WHATWG parser preserves the dot.
- */
-function canonicalHostname(url: URL): string {
-	return url.hostname.endsWith(".") ? url.hostname.slice(0, -1) : url.hostname
-}
 
 /**
  * Reject a URL this client must not send. Throws a {@linkcode ResourceError} whose URN kind is `request` — never

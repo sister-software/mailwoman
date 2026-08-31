@@ -57,7 +57,7 @@
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { escapeRegExp, repoRootPath } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
@@ -67,13 +67,6 @@ import { TextSpliterator } from "spliterator"
 const MIN_TABLE_CELLS = 3
 
 const repoRoot = repoRootPath()
-
-/**
- * Escape a version string for use as a literal inside a RegExp (the dots are the concern).
- */
-function escapeRegExp(literal: string): string {
-	return literal.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")
-}
 
 /**
  * A word-boundary matcher for an exact version token (so `6.5.0` does not match `6.5.01`).

@@ -36,6 +36,8 @@ import { parseJSONStrict } from "@mailwoman/core/objects"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
+import { escapeSQLString } from "#utils/parquet"
+
 const REQUIRED_COLUMNS = [
 	"raw",
 	"tokens",
@@ -136,13 +138,6 @@ function assertSpanTriple(row: Record<string, unknown>, lineNo: number): void {
 }
 
 /**
- * Escape a path for single-quoted SQL string literals.
- */
-function sqlString(value: string): string {
-	return value.replaceAll("'", "''")
-}
-
-/**
  * Convert a labeled-row JSONL to a v0.5.0-schema Parquet shard.
  */
 export async function jsonlToParquet(
@@ -202,12 +197,12 @@ export async function jsonlToParquet(
 	await db.run("SET preserve_insertion_order=true")
 
 	await db.run(
-		`COPY (SELECT ${selectList} FROM read_json('${sqlString(stagePath)}', ` +
+		`COPY (SELECT ${selectList} FROM read_json('${escapeSQLString(stagePath)}', ` +
 			`columns = ${columnsLiteral}, format = 'newline_delimited')) ` +
-			`TO '${sqlString(options.output)}' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE ${rowGroupSize})`
+			`TO '${escapeSQLString(options.output)}' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE ${rowGroupSize})`
 	)
 
-	const counted = await db.runAndReadAll(`SELECT count(*) AS n FROM read_parquet('${sqlString(options.output)}')`)
+	const counted = await db.runAndReadAll(`SELECT count(*) AS n FROM read_parquet('${escapeSQLString(options.output)}')`)
 	const written = Number(counted.getRowObjects()[0]!.n)
 	report?.(`Wrote ${written} rows to ${options.output}`)
 

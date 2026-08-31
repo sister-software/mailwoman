@@ -22,6 +22,7 @@
 import { isPresent } from "@mailwoman/core/objects"
 
 import { decomposeStreet } from "#adapters/tiger/street-decompose"
+import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
 // Hand-curated US street name pool. Real frequency-weighted street names — sampled
@@ -185,10 +186,6 @@ export interface StreetSynthesisOpts {
 	 * the bare-format analogue of the v0.7.x intersection-bare fix.
 	 */
 	bareProb?: number
-}
-
-function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
-	return arr[Math.floor(random() * arr.length)]!
 }
 
 function randomHouseNumber(random: () => number): string {

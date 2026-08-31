@@ -52,6 +52,13 @@ import type { SplitName } from "#utils/split"
 export const ROW_GROUP_SIZE = 50_000
 
 /**
+ * Escape `value` for a single-quoted SQL string literal; the caller supplies the quotes.
+ */
+export function escapeSQLString(value: string): string {
+	return value.replaceAll("'", "''")
+}
+
+/**
  * Snappy is the only zstd-equivalent codec available in @dsnp/parquetjs 1.7.0.
  */
 export const SHARD_COMPRESSION = "SNAPPY" as const

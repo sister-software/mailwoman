@@ -27,6 +27,7 @@
 
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { JSONSpliterator } from "spliterator"
 
@@ -71,7 +72,6 @@ export interface OracleKOutcome {
 	exitCode: number
 }
 
-const fold = (value: string): string => value.toLowerCase().replaceAll(/\s+/g, " ").trim()
 const PUNCTUATION_ONLY = /^[^\p{L}\p{N}]+$/u
 
 /**
@@ -99,10 +99,10 @@ export async function buildTransitionTable(goldenDir: string): Promise<(from: st
 
 		for (const row of goldenRows) {
 			if (!row.components || !row.raw) continue
-			const folded = fold(row.raw)
+			const folded = foldCaseWhitespace(row.raw)
 
 			const seq = Object.entries(row.components)
-				.map(([tag, value]) => ({ tag, idx: folded.indexOf(fold(String(value))) }))
+				.map(([tag, value]) => ({ tag, idx: folded.indexOf(foldCaseWhitespace(String(value))) }))
 				.filter((entry) => entry.idx >= 0)
 				.toSorted((a, b) => a.idx - b.idx)
 				.map((entry) => entry.tag)
@@ -382,19 +382,19 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 			const goldValues = fixture.expect![label]
 
 			if (!goldValues?.length) continue
-			const gold = fold(goldValues.join(" "))
+			const gold = foldCaseWhitespace(goldValues.join(" "))
 			const tally = tallies.get(label)!
 
 			tally.total++
 			const tagSet = new Set<string>(tags)
 			const baseActual = tags.flatMap((tag) => baseByTag.get(tag) ?? []).join(" ")
 
-			if (fold(baseActual) === gold) {
+			if (foldCaseWhitespace(baseActual) === gold) {
 				tally.base++
 			}
 
 			const surfaces = hypotheses.map((hypothesis) =>
-				fold(extractSurface(hypothesis, words, trace, (type) => tagSet.has(type)))
+				foldCaseWhitespace(extractSurface(hypothesis, words, trace, (type) => tagSet.has(type)))
 			)
 
 			if (surfaces[0] === gold) {

@@ -37,7 +37,7 @@
 
 import { pathExists, readDirectoryRecursive, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { pyRound } from "@mailwoman/core/utils"
+import { isoSecondsUTC, pyRound } from "@mailwoman/core/utils"
 import { geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -91,13 +91,6 @@ function pushTo<V>(m: Map<string, V[]>, k: string, v: V): void {
 	} else {
 		m.set(k, [v])
 	}
-}
-
-/**
- * UTC ISO-8601 to the second, matching Python `datetime.now(utc).isoformat(timespec="seconds")`.
- */
-function isoSeconds(): string {
-	return new Date().toISOString().replace(/\.\d{3}Z$/, "+00:00")
 }
 
 interface Locality {
@@ -161,7 +154,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 		["name", "mailwoman-postcode-locality"],
 		["description", "postcode → containing + nearby WOF locality candidates (coordinate-first resolution)"],
 		["schema_version", "1"],
-		["built_at", isoSeconds()],
+		["built_at", isoSecondsUTC()],
 		[
 			"source",
 			"Who's On First (whosonfirst.org) — admin locality polygons + postalcode centroids; built from source GeoJSON, not a prebuilt dump",

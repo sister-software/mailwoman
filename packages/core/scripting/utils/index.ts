@@ -8,6 +8,16 @@ export { cliArguments, passThroughCLIArguments, scriptEntryPath } from "#scripti
 /**
  * Logs an error that occurred while running a script.
  */
+/**
+ * Print a message to stderr and exit non-zero. Typed `never`, so a caller gets definite-assignment narrowing after the
+ * call.
+ */
+export function failScript(message: string): never {
+	process.stderr.write(`${message}\n`)
+
+	process.exit(1)
+}
+
 export function logScriptError(error: unknown): void {
 	ConsoleLogger.error("An error occurred while running the script.")
 

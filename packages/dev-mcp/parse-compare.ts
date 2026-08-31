@@ -30,6 +30,7 @@
 import { APIClient } from "@mailwoman/core/api"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { COMPONENT_TO_LIBPOSTAL, toLibpostalComponents, treeToParseMatches } from "@mailwoman/libpostal"
+import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 
 import { assertScorableEndpoint, EXTERNAL_ARM_MIN_REQUEST_INTERVAL_MS } from "#external-arm"
 
@@ -178,7 +179,7 @@ export function diffSpans(mailwoman: readonly LabelledSpan[], libpostal: readonl
 				? SpanVerdict.LibpostalOnly
 				: theirs === null
 					? SpanVerdict.MailwomanOnly
-					: fold(ours) === fold(theirs)
+					: foldCaseWhitespace(ours) === foldCaseWhitespace(theirs)
 						? SpanVerdict.Agree
 						: SpanVerdict.ValueDiffers
 
@@ -196,8 +197,4 @@ function join(spans: readonly LabelledSpan[], label: string): string | null {
 	const values = spans.filter((span) => span.label === label).map((span) => span.value)
 
 	return values.length ? values.join(" ") : null
-}
-
-function fold(value: string): string {
-	return value.toLowerCase().replaceAll(/\s+/gu, " ").trim()
 }

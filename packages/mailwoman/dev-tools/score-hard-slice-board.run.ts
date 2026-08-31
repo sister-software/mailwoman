@@ -48,17 +48,17 @@
  *   Usage: node packages/mailwoman/dev-tools/score-hard-slice-board.run.ts [--arms none,pop,imp] [--out-json <p>]
  */
 
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createWOFResolver, mostSpecificResolved } from "@mailwoman/resolver"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { type HardSliceCase, loadHardSliceBoard } from "#eval-harness/hard-slice-board"
+import { collectResolved, mostSpecific, type Resolved } from "#eval-harness/oa-resolver/tree-hits"
 import { createRuntimePipeline } from "#index"
 import { createResolverBackend } from "#resolver-backend"
 
@@ -149,77 +149,6 @@ for (const arm of arms) {
 //#endregion
 
 //#region Scoring
-
-interface Resolved {
-	id: number
-	name: string
-	value: string
-	placetype: string
-	lat: number
-	lon: number
-}
-
-/**
- * Every resolved node in the tree, including the multi-role INTERPRETATIONS a dual-role place carries on the same node
- * (#415/#416) — mirrors `oa-resolver-eval.ts`'s `collectResolved` so the two evals agree about what "the resolver
- * answered" means.
- */
-function collectResolved(tree: AddressTree): Resolved[] {
-	const out: Resolved[] = []
-
-	const visit = (n: AddressNode): void => {
-		const meta = n.metadata as Record<string, unknown> | undefined
-
-		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
-			out.push({
-				id: Number(n.placeID.slice(4)),
-				name: String(meta?.["resolver_name"] ?? n.value ?? ""),
-				value: String(n.value ?? ""),
-				placetype: String(n.sourceID ?? "").split(":")[0] ?? "",
-				lat: n.lat,
-				lon: n.lon,
-			})
-		}
-
-		for (const interp of (n.interpretations ?? []) as ReadonlyArray<{
-			tag: string
-			placeID?: string
-			sourceID?: string
-			lat?: number
-			lon?: number
-			metadata?: Record<string, unknown>
-		}>) {
-			if (interp.placeID?.startsWith("wof:") && interp.lat !== undefined && interp.lon !== undefined) {
-				out.push({
-					id: Number(interp.placeID.slice(4)),
-					name: String(interp.metadata?.["resolver_name"] ?? n.value ?? ""),
-					value: String(n.value ?? ""),
-					placetype: String(interp.sourceID ?? interp.tag).split(":")[0] ?? "",
-					lat: interp.lat,
-					lon: interp.lon,
-				})
-			}
-		}
-
-		for (const child of n.children ?? []) {
-			visit(child)
-		}
-	}
-
-	for (const root of tree.roots) {
-		visit(root)
-	}
-
-	return out
-}
-
-/**
- * The resolved place whose coordinate this board grades — `@mailwoman/resolver`'s ranking, the same one result assembly
- * walks, so a board score tracks what a caller is handed.
- */
-function mostSpecific(rs: Resolved[]): Resolved | null {
-	return mostSpecificResolved(rs, (r) => ({ placetype: r.placetype, value: r.value, resolverName: r.name }))
-}
 
 interface Outcome {
 	/**

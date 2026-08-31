@@ -53,6 +53,7 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { movePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
+import { isoSecondsUTC } from "@mailwoman/core/utils"
 import { geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -123,13 +124,6 @@ export function normEn(s: string): string {
 			.replaceAll(/\s+(district|township|city|county|village|islands?|qu|xiang|zhen)$/g, "")
 			.replaceAll(/[\s'’-]/g, "")
 	)
-}
-
-/**
- * UTC ISO-8601 to the second.
- */
-function isoSeconds(): string {
-	return new Date().toISOString().replace(/\.\d{3}Z$/, "+00:00")
 }
 
 export interface PostalDistrict {
@@ -658,7 +652,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 			["postcodes_by_tier", JSON.stringify(tierCounts)],
 			["match_rate", matchRate],
 			["unmatched", unmatched.join("|") || "(none)"],
-			["built_at", isoSeconds()],
+			["built_at", isoSecondsUTC()],
 		]
 
 		const insMeta = kdb.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")

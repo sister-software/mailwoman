@@ -43,6 +43,7 @@
 
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { JSONSpliterator } from "spliterator"
 
@@ -77,8 +78,6 @@ export interface DigitBoardOptions {
 export interface DigitBoardOutcome {
 	exitCode: number
 }
-
-const fold = (value: string): string => value.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 const tagText = (nodes: Array<{ tag: string; value: string; start: number }>, tag: string): string =>
 	nodes
@@ -121,8 +120,9 @@ export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<Di
 		// The negative class scores TWO things at once, because either failure is the same mistake:
 		// the postcode must survive AND no house_number may be invented from it.
 		const ok = fixture.expect_no_house_number
-			? fold(hn) === "" && fold(pc) === fold((fixture.expect.postcode ?? []).join(" "))
-			: fold(hn) === fold((fixture.expect.house_number ?? []).join(" "))
+			? foldCaseWhitespace(hn) === "" &&
+				foldCaseWhitespace(pc) === foldCaseWhitespace((fixture.expect.postcode ?? []).join(" "))
+			: foldCaseWhitespace(hn) === foldCaseWhitespace((fixture.expect.house_number ?? []).join(" "))
 
 		if (ok) {
 			bucket.hit++

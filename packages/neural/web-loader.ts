@@ -16,7 +16,7 @@
 import { detectLocaleSync } from "@mailwoman/locale-gate"
 import { computeQueryShape } from "@mailwoman/query-shape"
 
-import type { AnchorLookup } from "#anchor-inference"
+import { type AnchorLookup, mergeAnchorLookups } from "#anchor-inference"
 import { NeuralAddressClassifier, type NeuralAddressClassifierConfig } from "#classifier"
 import { type CountryLexicon, parseCountryLexicon } from "#country-inference"
 import { type GazetteerLexicon, parseGazetteerLexicon } from "#gazetteer-inference"
@@ -257,43 +257,6 @@ async function loadPostcodeAnchorLookup(
 	const lookups = settled.filter((lookup): lookup is AnchorLookup => lookup !== null)
 
 	return lookups.length ? mergeAnchorLookups(lookups) : undefined
-}
-
-/**
- * Merge per-binary anchor lookups: union the country posteriors per postcode, mean the centroids.
- */
-function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
-	if (lookups.length === 1) return lookups[0]!
-	const merged: AnchorLookup = new Map()
-
-	for (const lookup of lookups) {
-		for (const [postcode, entry] of lookup) {
-			const existing = merged.get(postcode)
-
-			if (!existing) {
-				merged.set(postcode, { posterior: { ...entry.posterior }, lat: entry.lat, lon: entry.lon })
-
-				continue
-			}
-
-			for (const country of Object.keys(entry.posterior)) {
-				existing.posterior[country] = 1
-			}
-
-			// Average a real centroid in; ignore (0,0) placeholders.
-			if (entry.lat !== 0 || entry.lon !== 0) {
-				if (existing.lat === 0 && existing.lon === 0) {
-					existing.lat = entry.lat
-					existing.lon = entry.lon
-				} else {
-					existing.lat = (existing.lat + entry.lat) / 2
-					existing.lon = (existing.lon + entry.lon) / 2
-				}
-			}
-		}
-	}
-
-	return merged
 }
 
 /**

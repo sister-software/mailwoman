@@ -25,6 +25,7 @@
  */
 
 import { $public } from "@mailwoman/core/env"
+import { clamp } from "@mailwoman/core/utils"
 import { lonLatToWorldPx, MapRenderer, TileSource, worldPxToLonLat, type MapFrame } from "@mailwoman/map-tui"
 import { Text, useApp, useInput, useStdout, type Key } from "ink"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
@@ -120,10 +121,6 @@ const FALLBACK_MAX_ZOOM = 22
 
 function messageOf(error: unknown): string {
 	return error instanceof Error ? error.message : String(error)
-}
-
-function clamp(value: number, min: number, max: number): number {
-	return Math.min(Math.max(value, min), max)
 }
 
 /**

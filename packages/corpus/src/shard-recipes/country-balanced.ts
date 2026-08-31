@@ -32,6 +32,7 @@ import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
 import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "#shard-recipes/scaffold"
+import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
@@ -334,7 +335,6 @@ const STREET_POOL: readonly string[] = [
 	"Maple Drive",
 ]
 
-const pick = <T>(random: () => number, arr: readonly T[]): T => arr[Math.floor(random() * arr.length)]!
 const houseNo = (random: () => number): string => String(1 + Math.floor(random() * 998))
 
 // Country-surface homograph rows: 60% carry a street line, 40% are a bare `city, surface`.
@@ -350,13 +350,13 @@ function renderHomograph(random: () => number): {
 	components: Partial<Record<ComponentTag, string>>
 	iso2: string
 } {
-	const h = pick(random, HOMOGRAPHS)
+	const h = pick(HOMOGRAPHS, random)
 
 	const hn = houseNo(random),
-		street = pick(random, STREET_POOL)
+		street = pick(STREET_POOL, random)
 
 	if (random() < 0.5) {
-		const city = pick(random, h.cities)
+		const city = pick(h.cities, random)
 		const withStreet = random() < HOMOGRAPH_WITH_STREET_SHARE
 		const raw = withStreet ? `${hn} ${street}, ${city}, ${h.surface}` : `${city}, ${h.surface}`
 
@@ -367,7 +367,7 @@ function renderHomograph(random: () => number): {
 		return { fmt: "homograph-country", raw, components, iso2: h.iso2 }
 	}
 
-	const pc = pick(random, h.us.postcodes)
+	const pc = pick(h.us.postcodes, random)
 
 	if (h.us.role === "region") {
 		// surface is the US STATE: "123 Oak Ave, Atlanta, Georgia 30309" → region, no country
@@ -397,12 +397,12 @@ function renderAbbrevRegion(random: () => number): {
 	components: Partial<Record<ComponentTag, string>>
 	iso2: string
 } {
-	const a = pick(random, ABBREV_REGIONS)
+	const a = pick(ABBREV_REGIONS, random)
 
 	const hn = houseNo(random),
-		street = pick(random, STREET_POOL),
-		locality = pick(random, a.localities),
-		postcode = pick(random, a.postcodes)
+		street = pick(STREET_POOL, random),
+		locality = pick(a.localities, random),
+		postcode = pick(a.postcodes, random)
 
 	return {
 		fmt: "abbrev-region",

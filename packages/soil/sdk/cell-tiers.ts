@@ -16,7 +16,7 @@
  *   build lost when a reader materialized instead of streaming.
  */
 
-import { expandH3Cell, shortCellToInt, type H3Cell, type H3CellShort } from "@mailwoman/spatial"
+import { expandShortCellInt, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { compactCells, getResolution } from "h3-js"
 
@@ -58,7 +58,7 @@ export function resolveCells(
 			.prepare("SELECT DISTINCT h3_cell FROM build_cell_touch WHERE area_id = ? AND resolution = ? AND is_full = 1")
 			.all(areaID, resolution) as Array<{ h3_cell: number }>
 
-		for (const cell of compactCells(whole.map((row) => shortCellToLong(row.h3_cell, resolution)))) {
+		for (const cell of compactCells(whole.map((row) => expandShortCellInt(row.h3_cell, resolution)))) {
 			const cellResolution = getResolution(cell)
 
 			resolutions.add(cellResolution)
@@ -180,10 +180,7 @@ export function reduceCells(
 	const flush = (): void => {
 		if (currentCell === undefined || !candidates.length) return
 
-		const cell = expandH3Cell(
-			currentCell.toString(16).padStart(SHORT_CELL_HEX_LENGTH, "0") as H3CellShort,
-			currentResolution
-		) as H3Cell
+		const cell = expandShortCellInt(currentCell, currentResolution)
 
 		const reducedCell = reduceCell(cell, currentResolution, candidates, profiles, currentCell)
 
@@ -265,11 +262,6 @@ export function reduceCells(
 	return { cells, sampled, topClassUnderHalf, classless, unsampled, candidatePairs }
 }
 
-/**
- * Number of hex characters in a stored short cell — 52 bits.
- */
-const SHORT_CELL_HEX_LENGTH = 13
-
 function insertRow(statement: ReturnType<DatabaseClient["prepare"]>, row: SoilCapabilityCellTable): void {
 	statement.run(
 		row.h3_cell,
@@ -317,14 +309,4 @@ function readMapUnitProfiles(database: DatabaseClient<SoilDatabase>): Map<string
 	}
 
 	return profiles
-}
-
-/**
- * The full H3 index for a short cell stored at `resolution`.
- *
- * Through `expandH3Cell` rather than a string concatenation, because it VALIDATES: a short cell that does not name a
- * valid cell at the stated resolution throws here instead of reaching `compactCells` as a plausible-looking index.
- */
-function shortCellToLong(shortCell: number, resolution: number): string {
-	return expandH3Cell(shortCell.toString(16).padStart(SHORT_CELL_HEX_LENGTH, "0") as H3CellShort, resolution)
 }

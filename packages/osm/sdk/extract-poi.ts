@@ -50,6 +50,7 @@ import { spawnProcess } from "@mailwoman/core/process"
 import { TextSpliterator } from "spliterator"
 
 import { representativePoint } from "#sdk/representative-point"
+import { type PromotedKeysByLayer, tagAlias, tagSelectExpr } from "#sdk/tag-columns"
 
 /**
  * One Overture Places row, decoded to the flat shape `buildPOIDatabase`'s injected-rows seam consumes. Structurally
@@ -143,7 +144,7 @@ const POI_LAYERS = ["points", "multipolygons"] as const
  * answered 178, against 3,130 from `points` — 5.4% of the class silently absent, in the direction that inflates a
  * completeness estimate.
  */
-const PROMOTED_KEYS_BY_LAYER: Readonly<Record<string, ReadonlySet<string>>> = {
+const PROMOTED_KEYS_BY_LAYER: PromotedKeysByLayer = {
 	points: new Set(["name", "barrier", "highway", "ref", "address", "is_in", "place", "man_made"]),
 	multipolygons: new Set([
 		"name",
@@ -169,34 +170,6 @@ const PROMOTED_KEYS_BY_LAYER: Readonly<Record<string, ReadonlySet<string>>> = {
 		"sport",
 		"tourism",
 	]),
-}
-
-/**
- * OGRSQL column aliases can't contain `:` — launder it the same way GDAL's own `attribute_name_laundering` would
- * (`tower:type` -> `tower_type`).
- */
-function tagAlias(key: string): string {
-	return key.replaceAll(":", "_")
-}
-
-/**
- * The SQL expression reading a tag's value on `layer`: a bare column when that layer promotes the key (see
- * {@link PROMOTED_KEYS_BY_LAYER}), an `other_tags` hstore lookup otherwise.
- *
- * Throws on a layer with no promoted-key list. Falling back to the hstore expression for an unknown layer would produce
- * SQL that runs and matches nothing, which is the failure this table exists to prevent.
- */
-function tagSelectExpr(layer: string, key: string): string {
-	const promoted = PROMOTED_KEYS_BY_LAYER[layer]
-
-	if (!promoted) {
-		throw new Error(
-			`buildTelecomPOISQL: no promoted-key list for OSM layer ${JSON.stringify(layer)} — known layers are ` +
-				`${Object.keys(PROMOTED_KEYS_BY_LAYER).join(", ")}`
-		)
-	}
-
-	return promoted.has(key) ? key : `hstore_get_value(other_tags,'${key}')`
 }
 
 /**
@@ -265,10 +238,15 @@ function assertSafeTagRules(rules: readonly OSMPOITagRule[]): void {
 export function buildTelecomPOISQL(layer: string, rules: readonly OSMPOITagRule[] = TELECOM_TAG_RULES): string {
 	assertSafeTagRules(rules)
 
-	const tagCols = distinctTagKeys(rules).map((key) => `${tagSelectExpr(layer, key)} AS ${tagAlias(key)}`)
+	const tagCols = distinctTagKeys(rules).map(
+		(key) => `${tagSelectExpr(PROMOTED_KEYS_BY_LAYER, layer, key)} AS ${tagAlias(key)}`
+	)
 
 	const whereGroups = rules.map(
-		(rule) => "(" + rule.all.map(([key, value]) => `${tagSelectExpr(layer, key)}='${value}'`).join(" AND ") + ")"
+		(rule) =>
+			"(" +
+			rule.all.map(([key, value]) => `${tagSelectExpr(PROMOTED_KEYS_BY_LAYER, layer, key)}='${value}'`).join(" AND ") +
+			")"
 	)
 
 	return `SELECT name, ${tagCols.join(", ")} FROM ${layer} WHERE ${whereGroups.join(" OR ")}`

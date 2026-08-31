@@ -26,6 +26,41 @@ export interface SourceSpec {
 export const norm = (s: string | undefined): string => (s ?? "").trim()
 
 /**
+ * Corporate-form suffixes and function words that carry no identity — dropped from an organization name before its
+ * tokens are compared.
+ */
+const ORGANIZATION_STOP_WORDS = new Set([
+	"llc",
+	"inc",
+	"incorporated",
+	"corp",
+	"corporation",
+	"co",
+	"ltd",
+	"pllc",
+	"pc",
+	"pa",
+	"lp",
+	"llp",
+	"the",
+	"of",
+	"and",
+])
+
+/**
+ * The token set of an organization name: lower-cased, non-alphanumerics folded to spaces, stop words removed.
+ */
+export function orgTokens(s: string): Set<string> {
+	return new Set(
+		s
+			.toLowerCase()
+			.replaceAll(/[^a-z0-9 ]/g, " ")
+			.split(/\s+/)
+			.filter((t) => t && !ORGANIZATION_STOP_WORDS.has(t))
+	)
+}
+
+/**
  * Join the four US address columns into one line, dropping blanks.
  */
 export const addr = (line: string, city: string, st: string, zip: string): string =>

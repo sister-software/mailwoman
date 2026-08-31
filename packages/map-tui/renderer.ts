@@ -15,6 +15,8 @@
  * requested marker always wins the cell.
  */
 
+import { clamp } from "@mailwoman/core/utils"
+
 import { type MapFrame, overlayText, rasterizeToFrame, rgbToPacked } from "#frame"
 import { lonLatToWorldPx, metersPerPixel, TILE_SIZE } from "#mercator"
 import type { DecodedFeature } from "#mvt"
@@ -107,10 +109,6 @@ interface ResolvedTile {
 	tileX: number
 	tileY: number
 	span: number
-}
-
-function clamp(value: number, min: number, max: number): number {
-	return Math.min(Math.max(value, min), max)
 }
 
 function projectPoint(projection: TileProjection, gx: number, gy: number): ProjectedPoint {

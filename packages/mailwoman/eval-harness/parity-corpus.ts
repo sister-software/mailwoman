@@ -17,6 +17,7 @@ import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { JSONSpliterator } from "spliterator"
@@ -95,8 +96,6 @@ export interface ParityEvalOptions {
 export interface ParityEvalOutcome {
 	exitCode: number
 }
-
-const fold = (value: string): string => value.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 function loadFixtures(path: string): Promise<ParityFixture[]> {
 	return Array.fromAsync(JSONSpliterator.fromAsync<ParityFixture>(path))
@@ -222,7 +221,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 			tally.total++
 			const actual = tags.flatMap((tag) => byTag.get(tag) ?? []).join(" ")
 
-			if (fold(actual) === fold(goldValues.join(" "))) {
+			if (foldCaseWhitespace(actual) === foldCaseWhitespace(goldValues.join(" "))) {
 				tally.hit++
 			} else {
 				caseAgrees = false
@@ -238,7 +237,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		for (const [tag, goldValues] of Object.entries(expect)) {
 			if (PARITY_FLOORS.some((f) => f.label === tag)) continue
 
-			if (fold((byTag.get(tag) ?? []).join(" ")) !== fold(goldValues.join(" "))) {
+			if (foldCaseWhitespace((byTag.get(tag) ?? []).join(" ")) !== foldCaseWhitespace(goldValues.join(" "))) {
 				caseAgrees = false
 			}
 		}

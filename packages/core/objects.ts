@@ -215,6 +215,25 @@ export class JSONParseError extends Error {
 }
 
 /**
+ * A JSON array carried inside a string field. `undefined` answers `[]`; a value that parses to anything but an array
+ * throws, because a non-array there is a schema change at the source rather than something to coerce — an empty array
+ * would read as "none", which is not what a differently-shaped value means.
+ *
+ * @param scope Names the reader in the error, e.g. `coastal client`.
+ */
+export function parseJSONArray<T>(raw: string | undefined, scope: string): T[] {
+	if (raw === undefined) return []
+
+	const parsed = parseJSONStrict<unknown>(raw)
+
+	if (!Array.isArray(parsed)) {
+		throw new TypeError(`${scope}: expected a JSON array, got ${typeof parsed}`)
+	}
+
+	return parsed as T[]
+}
+
+/**
  * Parses JSON input or throws a `JSONParseError` if parsing fails.
  *
  * @param input - The JSON input to parse.

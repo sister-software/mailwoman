@@ -23,7 +23,7 @@
 
 import { APIClient, type APIClientConfig, type ClockLike } from "@mailwoman/core/api"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONArray } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 import { EA_FLOOD_DATASET_ID, EA_FLOOD_LAYER } from "#vocabulary"
@@ -156,7 +156,7 @@ export class EAFloodClient extends APIClient<APIClientConfig> {
 			)
 		}
 
-		const dates = parseJSONArray<{ type: string; value: string }>(extras.get("dataset-reference-date"))
+		const dates = parseJSONArray<{ type: string; value: string }>(extras.get("dataset-reference-date"), "flood client")
 		const revision = dates.find((date) => date.type === "revision")?.value
 
 		if (!revision) {
@@ -165,7 +165,7 @@ export class EAFloodClient extends APIClient<APIClientConfig> {
 			)
 		}
 
-		const licences = parseJSONArray<string>(extras.get("licence"))
+		const licences = parseJSONArray<string>(extras.get("licence"), "flood client")
 
 		if (!licences.includes(EA_EXPECTED_CATALOGUE_LICENCE)) {
 			throw new Error(
@@ -245,25 +245,6 @@ export class EAFloodClient extends APIClient<APIClientConfig> {
 
 		return [bbox[0]!, bbox[1]!, bbox[2]!, bbox[3]!]
 	}
-}
-
-/**
- * A catalogue extra holding a JSON array, decoded defensively.
- *
- * These fields arrive as JSON-in-a-string, so a value that is not an array is a catalogue-schema change rather than
- * something to coerce: an empty array here would read as "the entry names no licence", which is not what a
- * differently-shaped value means.
- */
-function parseJSONArray<T>(raw: string | undefined): T[] {
-	if (raw === undefined) return []
-
-	const parsed = parseJSONStrict<unknown>(raw)
-
-	if (!Array.isArray(parsed)) {
-		throw new TypeError(`flood client: expected a JSON array in a catalogue extra, got ${typeof parsed}`)
-	}
-
-	return parsed as T[]
 }
 
 /**

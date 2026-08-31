@@ -19,6 +19,7 @@
  *   US-idiomatic only (the harness intersection cases are US: "X & Y, City, ST ZIP").
  */
 
+import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
 /**
@@ -110,10 +111,6 @@ export interface SynthesizedIntersectionRow {
 
 export interface IntersectionSynthesisOpts {
 	random?: () => number
-}
-
-function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
-	return arr[Math.floor(random() * arr.length)]!
 }
 
 /**
