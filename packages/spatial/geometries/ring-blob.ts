@@ -421,6 +421,64 @@ export function interiorPointOfEncodedRings(
 }
 
 /**
+ * Whether a stored polygon's precomputed bounding box contains the point — the ray cast's prefilter, so the blob is
+ * only pulled off disk for a polygon that could contain the point.
+ */
+export function bboxContains(
+	bounds: Pick<EncodedArea, "min_lat" | "min_lon" | "max_lat" | "max_lon">,
+	longitude: number,
+	latitude: number
+): boolean {
+	return (
+		longitude >= bounds.min_lon &&
+		longitude <= bounds.max_lon &&
+		latitude >= bounds.min_lat &&
+		latitude <= bounds.max_lat
+	)
+}
+
+/**
+ * A reproducible sample of interior points drawn by a deterministic STRIDE over a key list — the shape every polygon
+ * layer's verification sampler shares.
+ *
+ * The keys are chosen before any geometry is read: selecting them alone is an index-only walk over the primary key, and
+ * the rows they name are then fetched by key. The draw is deterministic rather than random, so a re-run compares the
+ * same points and a disagreement can be looked at rather than re-rolled.
+ *
+ * @param options.gridSteps The interior-point search depth, per {@link interiorPointOfEncodedRings} — part of a layer's
+ *   sampling receipt, so it is a caller's choice rather than a shared default nobody owns.
+ */
+export function strideSampleInteriorPoints<Area extends EncodedArea, Point>(
+	keys: readonly string[],
+	count: number,
+	options: {
+		fetch: (key: string) => Area | undefined
+		gridSteps: number
+		toPoint: (area: Area, interior: { latitude: number; longitude: number }) => Point
+	}
+): Point[] {
+	const points: Point[] = []
+
+	if (!keys.length) return points
+
+	const stride = Math.max(1, Math.floor(keys.length / Math.max(1, count)))
+
+	for (let index = 0; index < keys.length && points.length < count; index += stride) {
+		const area = options.fetch(keys[index]!)
+
+		if (!area) continue
+
+		const interior = interiorPointOfEncodedRings(area, options.gridSteps)
+
+		if (!interior) continue
+
+		points.push(options.toPoint(area, interior))
+	}
+
+	return points
+}
+
+/**
  * The bounding rectangle of one feature's rings, in degrees — a ray cast's prefilter, precomputed.
  */
 export function ringsBoundingBox(polygons: MultiPolygonRings): {

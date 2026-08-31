@@ -29,16 +29,15 @@
  *   --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db --n 200 --out /tmp/fr-split.md
  */
 
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { placetypeSpecificity } from "@mailwoman/core/resources/whosonfirst"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { allRows, dataRootPath, percentile } from "@mailwoman/core/utils"
+import { allRows, dataRootPath, mean, percentile } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { ClassificationRecord } from "mailwoman"
+import { collectResolved, mostSpecific } from "mailwoman/eval-harness/oa-resolver/tree-hits"
 import { v0RecordToTree } from "mailwoman/eval-harness/v0-tree-adapter"
 import { resolvePath } from "path-ts"
 
@@ -57,65 +56,12 @@ const { values: rawValues } = parseArguments({
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as { db?: string; n?: string; out?: string }
 
-/**
- * --- tiny helpers copied from oa-resolver-eval.ts (kept in lockstep, see that file) ----------------.
- *
- * The placetype ordering is no longer among them: it reads the shared `PLACETYPE_SPECIFICITY` scale, the same swap
- * `1540064dd` made on the two copies this one was cloned from. Note the sibling `fr-admin-split-gate.ts` deliberately
- * does NOT — it grades on the post-#945 locality-over-postcode convention, which that scale inverts.
- */
-interface Resolved {
-	id: number
-	name: string
-	placetype: string
-	lat: number
-	lon: number
-}
-
-function collectResolved(tree: AddressTree): Resolved[] {
-	const out: Resolved[] = []
-
-	const visit = (n: AddressNode): void => {
-		const meta = n.metadata as Record<string, unknown> | undefined
-
-		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
-			const placetype = String(n.sourceID ?? "").split(":")[0] ?? ""
-			const name = String(meta?.["resolver_name"] ?? n.value ?? "")
-			out.push({ id: Number(n.placeID.slice(4)), name, placetype, lat: n.lat, lon: n.lon })
-		}
-
-		for (const c of n.children) {
-			visit(c)
-		}
-	}
-
-	for (const r of tree.roots) {
-		visit(r)
-	}
-
-	return out
-}
-
-function mostSpecific(rs: Resolved[]): Resolved | null {
-	let best: Resolved | null = null
-
-	for (const r of rs) {
-		// NEGATIVE_INFINITY, not -1: the local table this replaced floored at `country: 0`, so -1 meant
-		// "unknown sorts below everything". The shared scale runs to `planet: -5`, where -1 would sort an
-		// unknown placetype ABOVE country.
-		if (
-			!best ||
-			(placetypeSpecificity(r.placetype) ?? Number.NEGATIVE_INFINITY) >
-				(placetypeSpecificity(best.placetype) ?? Number.NEGATIVE_INFINITY)
-		) {
-			best = r
-		}
-	}
-
-	return best
-}
-
-const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : Number.NaN)
+// The resolved-tree readers are the shared `mailwoman/eval-harness/oa-resolver/tree-hits` helpers —
+// the home the oa-resolver-eval copies moved to. `mostSpecific` there delegates to the production
+// resolver ladder (`mostSpecificResolved`), replacing the flat `placetypeSpecificity` sort this file
+// carried. Note the sibling `fr-admin-split-gate.ts` deliberately keeps its own flat ranking (the
+// post-#945 locality-over-postcode convention), which the shared ladder would not preserve on the
+// postcode-vs-locality axis.
 
 /**
  * --- args ----------------------------------------------------------------------------------------.
@@ -261,8 +207,9 @@ const uniqAgg = await runStratum("unique", unique)
 
 // --- report --------------------------------------------------------------------------------------
 const row = (label: string, a: StratumAgg): string => {
-	const dM = mean(a.dropped),
-		sM = mean(a.split)
+	const dM = mean(a.dropped) ?? Number.NaN
+	const mM = mean(a.merged) ?? Number.NaN
+	const sM = mean(a.split) ?? Number.NaN
 
 	const reduction = dM > 0 ? (100 * (dM - sM)) / dM : 0
 	const rr = (k: number): string => `${((100 * k) / a.n).toFixed(0)}%`
@@ -272,17 +219,18 @@ const row = (label: string, a: StratumAgg): string => {
 		"",
 		"| state | mean km | p50 | p90 | resolve-rate |",
 		"| --- | --: | --: | --: | --: |",
-		`| dropped (région→null) | ${mean(a.dropped).toFixed(1)} | ${(percentile(a.dropped, 50) ?? Number.NaN).toFixed(1)} | ${(percentile(a.dropped, 90) ?? Number.NaN).toFixed(1)} | ${rr(a.res.dropped)} |`,
-		`| merged (loc=commune+dept) | ${mean(a.merged).toFixed(1)} | ${(percentile(a.merged, 50) ?? Number.NaN).toFixed(1)} | ${(percentile(a.merged, 90) ?? Number.NaN).toFixed(1)} | ${rr(a.res.merged)} |`,
-		`| **split (corrected)** | **${mean(a.split).toFixed(1)}** | ${(percentile(a.split, 50) ?? Number.NaN).toFixed(1)} | ${(percentile(a.split, 90) ?? Number.NaN).toFixed(1)} | ${rr(a.res.split)} |`,
+		`| dropped (région→null) | ${dM.toFixed(1)} | ${(percentile(a.dropped, 50) ?? Number.NaN).toFixed(1)} | ${(percentile(a.dropped, 90) ?? Number.NaN).toFixed(1)} | ${rr(a.res.dropped)} |`,
+		`| merged (loc=commune+dept) | ${mM.toFixed(1)} | ${(percentile(a.merged, 50) ?? Number.NaN).toFixed(1)} | ${(percentile(a.merged, 90) ?? Number.NaN).toFixed(1)} | ${rr(a.res.merged)} |`,
+		`| **split (corrected)** | **${sM.toFixed(1)}** | ${(percentile(a.split, 50) ?? Number.NaN).toFixed(1)} | ${(percentile(a.split, 90) ?? Number.NaN).toFixed(1)} | ${rr(a.res.split)} |`,
 		"",
 		`**SPLIT vs DROPPED mean reduction: ${reduction.toFixed(1)}%** · split beats dropped by >2km on ${a.splitBeatsDroppedBy2km}/${a.n} rows`,
 		"",
 	].join("\n")
 }
 
-const collReduction =
-	mean(collAgg.dropped) > 0 ? (100 * (mean(collAgg.dropped) - mean(collAgg.split))) / mean(collAgg.dropped) : 0
+const collDroppedMean = mean(collAgg.dropped) ?? Number.NaN
+const collSplitMean = mean(collAgg.split) ?? Number.NaN
+const collReduction = collDroppedMean > 0 ? (100 * (collDroppedMean - collSplitMean)) / collDroppedMean : 0
 
 const verdict =
 	collReduction >= MIN_COLLISION_REDUCTION

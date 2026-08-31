@@ -22,6 +22,9 @@ import type { SubVenueSurface } from "#tools/sub-venue/table"
 
 /**
  * Diacritic-flattened ASCII fold, for comparing a Slavic or Turkish inflection against its Latin root.
+ *
+ * Deliberately `\p{Diacritic}` rather than `@mailwoman/normalize/fold`'s `stripCombiningMarks` (`\p{M}`): the two
+ * classes diverge outside plain diacritics, and {@link HEAD_NOUN_PREFIX_FLOOR} was calibrated against this exact fold.
  */
 function asciiFold(text: string): string {
 	return text

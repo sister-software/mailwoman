@@ -19,9 +19,9 @@ import { dirname } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
 
 import type { ParityCase } from "#dev-tools/parity-extract"
+import { PARITY_FIXTURES_V1_PATH, type ParityFixture } from "#eval-harness/parity-corpus"
 
 const IN_PATH = "packages/mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl"
-const OUT_PATH = "packages/mailwoman/eval-harness/fixtures/parity-corpus.jsonl"
 
 /**
  * Parity test file basename token → ISO-3166 alpha-2. Files without a country token score as ZZ.
@@ -55,35 +55,6 @@ function countryFor(file: string): string {
 	}
 
 	return "ZZ"
-}
-
-export interface ParityFixture {
-	/**
-	 * Stable id: `v1-<basename>-<index-within-file>`.
-	 */
-	id: string
-	input: string
-	country: string
-	/**
-	 * Provenance: the v1 parity file this assertion came from.
-	 */
-	source: string
-	/**
-	 * ComponentTag-keyed gold (top rules solution's hand-written expectation). Absent on tombstones.
-	 */
-	expect?: Record<string, string[]>
-	/**
-	 * Tombstone reason; the runner skips these rows but the provenance survives.
-	 */
-	dropped?: string
-	/**
-	 * Count of positional alternative records the v1 assertion carried beyond the gold.
-	 */
-	alternatives?: number
-	/**
-	 * Legacy tags in the gold that have no ComponentTag equivalent — dropped from `expect`, recorded here.
-	 */
-	droppedTags?: string[]
 }
 
 const cases = await Array.fromAsync(JSONSpliterator.fromAsync<ParityCase>(IN_PATH))
@@ -156,10 +127,10 @@ for (const parityCase of cases) {
 	fixtures.push(out)
 }
 
-await makeDirectories(dirname(OUT_PATH))
+await makeDirectories(dirname(PARITY_FIXTURES_V1_PATH))
 
 {
-	await using out = createNewlineWriter(OUT_PATH)
+	await using out = createNewlineWriter(PARITY_FIXTURES_V1_PATH)
 
 	for (const fixture of fixtures) {
 		await out.write(JSON.stringify(fixture))

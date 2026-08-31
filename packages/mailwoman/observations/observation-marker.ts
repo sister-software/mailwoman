@@ -32,11 +32,27 @@
 import { type QueryIntentMarker, QueryIntentCode, type QueryKind, type QueryKindResult } from "@mailwoman/core/pipeline"
 
 import type { AbsenceObservation } from "#observations/absence-route"
-import type { CoastalErosionObservation, CoastalErosionRoute } from "#observations/coastal-route"
-import type { AuthorityDesignationObservation, AuthorityDesignationRoute } from "#observations/flood-route"
+import {
+	coastalErosionAssignmentClause,
+	type CoastalErosionObservation,
+	type CoastalErosionRoute,
+} from "#observations/coastal-route"
+import {
+	floodZoneAssignmentClause,
+	type AuthorityDesignationObservation,
+	type AuthorityDesignationRoute,
+} from "#observations/flood-route"
 import type { SemanticObservation } from "#observations/semantic-route"
-import type { SoilCapabilityObservation, SoilCapabilityRoute } from "#observations/soil-route"
-import type { ZoningDesignationObservation, ZoningDesignationRoute } from "#observations/zoning-route"
+import {
+	soilCapabilityAssignmentClause,
+	type SoilCapabilityObservation,
+	type SoilCapabilityRoute,
+} from "#observations/soil-route"
+import {
+	zoningAssignmentClause,
+	type ZoningDesignationObservation,
+	type ZoningDesignationRoute,
+} from "#observations/zoning-route"
 
 /**
  * `family:rule` for a category chosen from an affordance assertion.
@@ -84,6 +100,31 @@ export function poiObservationKind(verdict: QueryKindResult): QueryKind | null {
 	if (POI_KINDS.has(verdict.kind)) return verdict.kind
 
 	return verdict.alternatives.find(({ kind }) => POI_KINDS.has(kind))?.kind ?? null
+}
+
+/**
+ * The route-to-marker frame every designation layer shares: no route contributes nothing, a named silence contributes
+ * nothing, and a fired observation becomes exactly one marker.
+ */
+function designationMarkers<Observation>(
+	route:
+		| {
+				observe: (
+					latitude: number | null | undefined,
+					longitude: number | null | undefined
+				) => { fired: true; observation: Observation } | { fired: false; refusal: string }
+		  }
+		| undefined,
+	latitude: number | null | undefined,
+	longitude: number | null | undefined,
+	verdict: QueryKindResult,
+	toMarker: (observation: Observation, verdict: QueryKindResult) => QueryIntentMarker
+): QueryIntentMarker[] {
+	if (!route) return []
+
+	const decision = route.observe(latitude, longitude)
+
+	return decision.fired ? [toMarker(decision.observation, verdict)] : []
 }
 
 /**
@@ -186,11 +227,7 @@ export function authorityDesignationMarkers(
 	longitude: number | null | undefined,
 	verdict: QueryKindResult
 ): QueryIntentMarker[] {
-	if (!route) return []
-
-	const decision = route.observe(latitude, longitude)
-
-	return decision.fired ? [authorityDesignationMarker(decision.observation, verdict)] : []
+	return designationMarkers(route, latitude, longitude, verdict, authorityDesignationMarker)
 }
 
 /**
@@ -200,16 +237,12 @@ export function authorityDesignationMarker(
 	observation: AuthorityDesignationObservation,
 	verdict: QueryKindResult
 ): QueryIntentMarker {
-	const assigned = observation.code
-		? `assigns ${observation.code}`
-		: `assigns no zone — which its own guidance defines as ${observation.definition?.label ?? "the absent case"}`
-
 	return {
 		kind: verdict.kind,
 		code: QueryIntentCode.AuthorityDesignation,
 		mechanism: FLOOD_ZONE_DESIGNATION_MECHANISM,
 		message:
-			`${observation.extent.authority}'s ${observation.layer.name} (${observation.layer.sourceVintage}) ${assigned} ` +
+			`${observation.extent.authority}'s ${observation.layer.name} (${observation.layer.sourceVintage}) ${floodZoneAssignmentClause(observation)} ` +
 			`at the resolved coordinate. This states what the authority's map assigns at a location, not whether a property will flood.`,
 		evidence: {
 			reading: observation.reading,
@@ -248,11 +281,7 @@ export function soilCapabilityMarkers(
 	longitude: number | null | undefined,
 	verdict: QueryKindResult
 ): QueryIntentMarker[] {
-	if (!route) return []
-
-	const decision = route.observe(latitude, longitude)
-
-	return decision.fired ? [soilCapabilityMarker(decision.observation, verdict)] : []
+	return designationMarkers(route, latitude, longitude, verdict, soilCapabilityMarker)
 }
 
 /**
@@ -262,16 +291,12 @@ export function soilCapabilityMarker(
 	observation: SoilCapabilityObservation,
 	verdict: QueryKindResult
 ): QueryIntentMarker {
-	const assigned = observation.topClass
-		? `assigns land capability class ${observation.topClass} over ${((observation.topClassShare ?? 0) * 100).toFixed(1)}% of the cell`
-		: "mapped this ground and rated no capability class here"
-
 	return {
 		kind: verdict.kind,
 		code: QueryIntentCode.AuthorityDesignation,
 		mechanism: SOIL_CAPABILITY_DESIGNATION_MECHANISM,
 		message:
-			`The USDA NRCS soil survey (${observation.layer.sourceVintage}) ${assigned} at the resolved coordinate. ` +
+			`The USDA NRCS soil survey (${observation.layer.sourceVintage}) ${soilCapabilityAssignmentClause(observation)} at the resolved coordinate. ` +
 			`This states what the survey assigns to the map unit covering a location, not whether the land can be farmed.`,
 		evidence: {
 			reading: observation.reading,
@@ -315,11 +340,7 @@ export function coastalErosionMarkers(
 	longitude: number | null | undefined,
 	verdict: QueryKindResult
 ): QueryIntentMarker[] {
-	if (!route) return []
-
-	const decision = route.observe(latitude, longitude)
-
-	return decision.fired ? [coastalErosionMarker(decision.observation, verdict)] : []
+	return designationMarkers(route, latitude, longitude, verdict, coastalErosionMarker)
 }
 
 /**
@@ -329,18 +350,12 @@ export function coastalErosionMarker(
 	observation: CoastalErosionObservation,
 	verdict: QueryKindResult
 ): QueryIntentMarker {
-	const first = observation.designations[0]
-
-	const assigned = first
-		? `places the resolved coordinate inside a coastal-erosion zone at ${first.distanceM} m of cumulative erosion`
-		: "places the resolved coordinate inside a coastal-erosion zone"
-
 	return {
 		kind: verdict.kind,
 		code: QueryIntentCode.AuthorityDesignation,
 		mechanism: COASTAL_EROSION_DESIGNATION_MECHANISM,
 		message:
-			`The Environment Agency's coastal erosion mapping (${observation.layer.sourceVintage}) ${assigned}, under scenario ` +
+			`The Environment Agency's coastal erosion mapping (${observation.layer.sourceVintage}) ${coastalErosionAssignmentClause(observation)}, under scenario ` +
 			`${observation.scenario.key} — ${observation.scenario.label}. This states what the authority's map assigns at a ` +
 			"location under one named scenario, not whether a property will erode.",
 		evidence: {
@@ -387,11 +402,7 @@ export function zoningDesignationMarkers(
 	longitude: number | null | undefined,
 	verdict: QueryKindResult
 ): QueryIntentMarker[] {
-	if (!route) return []
-
-	const decision = route.observe(latitude, longitude)
-
-	return decision.fired ? [zoningDesignationMarker(decision.observation, verdict)] : []
+	return designationMarkers(route, latitude, longitude, verdict, zoningDesignationMarker)
 }
 
 /**
@@ -401,21 +412,12 @@ export function zoningDesignationMarker(
 	observation: ZoningDesignationObservation,
 	verdict: QueryKindResult
 ): QueryIntentMarker {
-	const first = observation.designations[0]
-
-	const assigned = first
-		? `${first.jurisdiction.name} zones the resolved coordinate ${JSON.stringify(first.localCode)}` +
-			(first.localDescription ? ` (${first.localDescription})` : "") +
-			(first.crosswalk ? `, which it classifies ${first.crosswalk.scheme} ${first.crosswalk.code}` : "") +
-			`, under ${first.plan.name}`
-		: "an adopted plan zones the resolved coordinate"
-
 	return {
 		kind: verdict.kind,
 		code: QueryIntentCode.AuthorityDesignation,
 		mechanism: ZONING_DESIGNATION_MECHANISM,
 		message:
-			`${assigned}. This states what an adopted plan assigns at a location, in the authority's own vocabulary, ` +
+			`${zoningAssignmentClause(observation)}. This states what an adopted plan assigns at a location, in the authority's own vocabulary, ` +
 			"not what may be built there — the publisher states its data are not legal definitions and that original data " +
 			"should be sourced directly from the relevant Local Authority.",
 		evidence: {

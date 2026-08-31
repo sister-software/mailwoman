@@ -17,6 +17,8 @@
  *   {@link isFrenchStreetWord} matches a whole token rather than a suffix.
  */
 
+import { foldToken } from "#normalize"
+
 /**
  * Canonical French voie type → common written abbreviations. The leading word of a French street name. The first entry
  * of each list is the most common abbreviation where one exists.
@@ -65,19 +67,13 @@ export type FrenchVoieType = keyof typeof FR_VOIE_TYPES
  * matching. `Allée`/`allee`/`all` all resolve here.
  */
 const VOIE_TOKEN_SET: ReadonlySet<string> = (() => {
-	const fold = (s: string): string =>
-		s
-			.toLowerCase()
-			.normalize("NFD")
-			.replaceAll(/[\u0300-\u036F]/g, "")
-
 	const out = new Set<string>()
 
 	for (const canonical of Object.keys(FR_VOIE_TYPES) as FrenchVoieType[]) {
-		out.add(fold(canonical))
+		out.add(foldToken(canonical))
 
 		for (const abbr of FR_VOIE_TYPES[canonical]) {
-			out.add(fold(abbr))
+			out.add(foldToken(abbr))
 		}
 	}
 
@@ -92,11 +88,7 @@ const VOIE_TOKEN_SET: ReadonlySet<string> = (() => {
 export function isFrenchStreetWord(token: unknown): boolean {
 	if (typeof token !== "string") return false
 
-	const t = token
-		.toLowerCase()
-		.normalize("NFD")
-		.replaceAll(/[\u0300-\u036F]/g, "")
-		.replaceAll(/[^a-z-]/g, "")
+	const t = foldToken(token).replaceAll(/[^a-z-]/g, "")
 
 	return t.length > 0 && VOIE_TOKEN_SET.has(t)
 }

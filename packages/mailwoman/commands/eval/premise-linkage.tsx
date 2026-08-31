@@ -18,10 +18,15 @@
  *   is visible in the process table to every user on the host.
  */
 
-import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { Box, Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	readMailwomanVersion,
+	useCommandTask,
+} from "#cli-kit"
 
 export const description = "Grade a controlled premise-linkage evaluation across the open and authoritative arms."
 
@@ -130,7 +135,8 @@ const EvalPremiseLinkage: ParsedCommandComponent<Options> = ({ options }) => {
 		return { report, adapter: config.adapter.name, outPath: options.out }
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done")
+		return <CommandTaskResult state={state} running={<Text dimColor>Grading the premise-linkage arms…</Text>} />
 
 	if (state.status === "done") {
 		const { report } = state.result
@@ -165,7 +171,7 @@ const EvalPremiseLinkage: ParsedCommandComponent<Options> = ({ options }) => {
 		)
 	}
 
-	return <Text dimColor>Grading the premise-linkage arms…</Text>
+	return null
 }
 
 /**
@@ -194,21 +200,6 @@ async function loadSyntheticConfig() {
 		deps: syntheticFixtureDeps(),
 		authoritativeProvider: syntheticFixtureProvider(),
 	}
-}
-
-/**
- * The version stamped onto every result row, read from the package this command ships in.
- */
-async function readMailwomanVersion(): Promise<string> {
-	const manifestPath = resolvePackagePath("mailwoman", "package.json")
-
-	const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
-
-	const manifest = await readLocalJSONFile<{ version?: string }>(manifestPath)
-
-	if (typeof manifest.version !== "string") throw new TypeError(`Missing string version in ${manifestPath}`)
-
-	return manifest.version
 }
 
 export default EvalPremiseLinkage

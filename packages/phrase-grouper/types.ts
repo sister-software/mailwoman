@@ -15,32 +15,10 @@ export type { LocaleHint, PhraseGrouper, PhraseKind, PhraseProposal } from "@mai
 export type { Section } from "@mailwoman/core/types"
 
 /**
- * Minimal `NormalizedInput` shape consumed by `groupPhrases`. Compatible with `@mailwoman/normalize`'s output.
+ * The minimal input shapes consumed by `groupPhrases` come from `@mailwoman/query-shape` — one declaration shared by
+ * every Stage-2.x consumer. `QueryShapeLike` stays this package's public name for its narrow read-only view.
  */
-export interface NormalizedInputLite {
-	raw: string
-	normalized: string
-	appliedLocale?: string
-}
-
-/**
- * Minimal `QueryShape` shape consumed by `groupPhrases`. Compatible with `@mailwoman/query-shape`'s output.
- */
-export interface QueryShapeLike {
-	knownFormats: ReadonlyArray<{
-		format: string
-		span: { start: number; end: number }
-		confidence: number
-	}>
-	segments?: ReadonlyArray<{ body: string; index: number; span?: { start: number; end: number } }>
-	tokenClasses?: ReadonlyArray<{
-		span: { start: number; end: number; body: string }
-		class: string
-		length: number
-	}>
-	characterClass?: string
-	totalLength?: number
-}
+export type { NormalizedInputLite, QueryShapeTokensView as QueryShapeLike } from "@mailwoman/query-shape"
 
 export interface GroupPhrasesOpts {
 	/**

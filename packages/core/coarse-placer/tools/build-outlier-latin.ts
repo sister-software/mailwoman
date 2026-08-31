@@ -25,14 +25,12 @@
 
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
-import { hashFNV1a } from "#coarse-placer/tools/fnv-hash"
+import { hashFNV1a } from "#coarse-placer/fnv-hash"
+import { assembleOutlierRow, collectOutlierRows, otherRowsJSONL } from "#coarse-placer/tools/outlier-rows"
+import { defaultDataDir } from "#coarse-placer/tools/paths"
+import { errorMessage } from "#errors/schema"
 import { writeLocalTextFile, appendLocalTextFile } from "#fs/writers"
-import { dataRootPath, repoRootPath } from "#utils"
-
-/**
- * Shortest raw string worth keeping as an outlier example; below it there is nothing to learn from.
- */
-const MIN_OUTLIER_LENGTH = 6
+import { dataRootPath } from "#utils"
 
 interface LatinTestRow {
 	raw: string
@@ -102,34 +100,12 @@ function levelValues(al: unknown): string[] {
 }
 
 /**
- * Address parts are joined positionally; an absent field arrives as the empty string and must not become a stray
- * separator.
+ * Overture locality: `postal_city`, falling back to the last (then first) `address_levels` value.
  */
-const nonEmpty = (part: string): boolean => part.length > 0
-
-/**
- * Assemble a plausible address string from an Overture address row. Deterministic variant by hash.
- */
-function assemble(r: Record<string, unknown>): string | null {
-	const num = (r.number ?? "").toString().trim()
-	const street = (r.street ?? "").toString().trim()
-	const pc = (r.postcode ?? "").toString().trim()
+function overtureLocality(r: Record<string, unknown>): string {
 	const levels = levelValues(r.address_levels)
-	const locality = (r.postal_city ? String(r.postal_city) : "") || levels.at(-1) || levels[0] || ""
 
-	if (!street && !locality) return null // nothing distinctive
-	const head = [num, street].filter(nonEmpty).join(" ")
-	const tail = [pc, locality].filter(nonEmpty).join(" ")
-	const h = hashFNV1a(`${num}|${street}|${pc}|${locality}`)
-
-	switch (h % 3) {
-		case 0:
-			return [head, tail].filter(nonEmpty).join(", ")
-		case 1:
-			return [head, locality, pc].filter(nonEmpty).join(", ").trim()
-		default:
-			return [head, [locality, pc].filter(nonEmpty).join(" ")].filter(nonEmpty).join(", ")
-	}
+	return (r.postal_city ? String(r.postal_city) : "") || levels.at(-1) || levels[0] || ""
 }
 
 /**
@@ -141,7 +117,7 @@ export async function buildOutlierLatin(
 ): Promise<BuildOutlierLatinResult> {
 	const PER = options.perCountry ?? 6000
 	const overtureDir = options.overture || dataRootPath("overture", "2026-05-20.0")
-	const dataDir = options.data || repoRootPath("data", "coarse-placer")
+	const dataDir = options.data || defaultDataDir()
 
 	// Heavy dep (devDependency — operator tooling), lazy-imported so loading the tools barrel stays cheap.
 	const { DuckDBInstance } = await import("@duckdb/node-api")
@@ -157,23 +133,12 @@ export async function buildOutlierLatin(
 			)
 		} catch (error) {
 			// oxlint-disable-next-line mailwoman/prefer-spliterator -- An in-memory error message, not a file.
-			report?.(`  ${cc}: SKIP (${(error as Error).message.split("\n")[0]})`)
+			report?.(`  ${cc}: SKIP (${errorMessage(error).split("\n")[0]})`)
 
 			return []
 		}
 
-		const seen = new Set<string>()
-		const out: string[] = []
-
-		for (const r of res.getRowObjects()) {
-			const raw = assemble(r)
-
-			if (!raw || seen.has(raw) || raw.length < MIN_OUTLIER_LENGTH) continue
-			seen.add(raw)
-			out.push(raw)
-		}
-
-		return out
+		return collectOutlierRows(res.getRowObjects().map((r) => assembleOutlierRow(r, { locality: overtureLocality })))
 	}
 
 	const trainAppend: string[] = []
@@ -218,9 +183,8 @@ export async function buildOutlierLatin(
 	;(duck as { disconnect?: () => void }).disconnect?.()
 
 	// Append OTHER rows to train/val; write the dedicated Latin off-map test file.
-	const wr = (rows: string[]): string => rows.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
-	await appendLocalTextFile(wr(trainAppend), resolvePath(dataDir, "train.jsonl"))
-	await appendLocalTextFile(wr(valAppend), resolvePath(dataDir, "val.jsonl"))
+	await appendLocalTextFile(otherRowsJSONL(trainAppend), resolvePath(dataDir, "train.jsonl"))
+	await appendLocalTextFile(otherRowsJSONL(valAppend), resolvePath(dataDir, "val.jsonl"))
 
 	await writeLocalTextFile(
 		testRows.map((r) => JSON.stringify(r)).join("\n") + "\n",

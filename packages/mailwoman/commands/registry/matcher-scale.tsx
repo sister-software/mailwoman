@@ -10,7 +10,13 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	splitNumberList,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -43,10 +49,7 @@ const RegistryMatcherScale: ParsedCommandComponent<Options> = ({ options }) => {
 
 		return matcherScale(
 			{
-				sizes: options.sizes
-					.split(",")
-					.map((s) => Number(s.trim()))
-					.filter((n) => n > 0),
+				sizes: splitNumberList(options.sizes).filter((n) => n > 0),
 				dup: options.dup,
 				em: options.em,
 				outMd: options.outMd,
@@ -55,7 +58,7 @@ const RegistryMatcherScale: ParsedCommandComponent<Options> = ({ options }) => {
 		)
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") return <Text color="green">matcher-scale: report emitted</Text>
 

@@ -25,12 +25,14 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
-import { runFileSync } from "@mailwoman/core/process"
+import { repoRootPath } from "@mailwoman/core/utils"
+import { stripCombiningMarks } from "@mailwoman/normalize"
 import { H3_MAX_RESOLUTION } from "@mailwoman/spatial"
 import { Box, Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 import type { POISourceRow } from "#gazetteer-pipeline/poi/build-poi"
+import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
  * Coverage resolution. Res 6 matches what the rest of the POI pipeline writes, so a reader already keyed to poi.db's
@@ -84,9 +86,7 @@ interface Options {
  * Filesystem-safe form of a region name, for the default output path.
  */
 function slugify(value: string): string {
-	return value
-		.normalize("NFD")
-		.replaceAll(/\p{M}/gu, "")
+	return stripCombiningMarks(value)
 		.toLowerCase()
 		.replaceAll(/[^a-z0-9]+/g, "-")
 		.replaceAll(/^-|-$/g, "")
@@ -130,7 +130,7 @@ const GazetteerBuildPOICoverage: ParsedCommandComponent<Options> = ({ options })
 
 		const referencePath = options.reference ?? dataRootPath("poi", "poi.db")
 		const out = options.out ?? dataRootPath("poi", `poi-coverage-${options.category}-${slugify(region)}.db`)
-		const buildSHA = runFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
+		const buildSHA = resolveBuildSHA(String(repoRootPath()))
 
 		// DYNAMIC import, required: @mailwoman/osm is UNPUBLISHED (ODbL counsel sign-off pending —
 		// see osm/README.md), so a top-level import breaks the published CLI on a clean install. Same
@@ -212,7 +212,7 @@ const GazetteerBuildPOICoverage: ParsedCommandComponent<Options> = ({ options })
 		]
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

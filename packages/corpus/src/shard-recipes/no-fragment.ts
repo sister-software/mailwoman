@@ -37,14 +37,14 @@
 
 import { TextSpliterator } from "spliterator"
 
-import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "#shard-recipes/scaffold"
-
-/**
- * The surface key — MUST match the NO digit board's `norm_surface` and `no-street-led`'s `norm`: NFC, lowercase,
- * collapse whitespace, KEEP diacritics. Stripping them (fr-fragment's norm) would fold `Tømmerlien` -> `tommerlien`,
- * miss the board's reserved `tømmerlien`, and leak the surface.
- */
-const norm = (value: string): string => value.normalize("NFC").toLowerCase().replaceAll(/\s+/g, " ").trim()
+import {
+	alignAndWrite,
+	foldNOSurface,
+	makeMulberry32,
+	readTuples,
+	type ShardRecipe,
+	shardSourceID,
+} from "#shard-recipes/scaffold"
 
 /**
  * Title-case a Kartverket ALL-CAPS locality (HELLVIK -> Hellvik); #690, all-caps is OOD.
@@ -173,7 +173,7 @@ export const noFragmentRecipe: ShardRecipe = {
 			}
 
 			// THE SPLIT. A surface on the digit board never enters training.
-			if (excluded.has(norm(street))) {
+			if (excluded.has(foldNOSurface(street))) {
 				contaminated++
 
 				continue

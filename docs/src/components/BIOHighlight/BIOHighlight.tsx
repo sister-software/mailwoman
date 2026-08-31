@@ -10,6 +10,7 @@
  */
 
 import type { ResultNode } from "#shared/resources"
+import { shortestSpanOwners, tokenizeWords } from "#shared/text-tokens"
 
 import styles from "./styles.module.css"
 
@@ -44,38 +45,6 @@ interface BIOWord {
 }
 
 /**
- * Tokenize the raw input into words, preserving leading whitespace for each token.
- */
-function tokenizeWords(input: string): Array<{ text: string; start: number; end: number; whitespace: string }> {
-	const words: Array<{ text: string; start: number; end: number; whitespace: string }> = []
-	let i = 0
-
-	while (i < input.length) {
-		// Skip leading whitespace for this word.
-		let ws = ""
-
-		while (i < input.length && /\s/.test(input[i])) {
-			ws += input[i]
-
-			i++
-		}
-
-		if (i >= input.length) break
-
-		// Collect the word (non-whitespace run).
-		const start = i
-
-		while (i < input.length && !/\s/.test(input[i])) {
-			i++
-		}
-
-		words.push({ text: input.slice(start, i), start, end: i, whitespace: ws })
-	}
-
-	return words
-}
-
-/**
  * Assign BIO labels to each word based on span coverage.
  *
  * For each word we find the shortest covering span (same per-character shortest-span owner algorithm SpanHighlight
@@ -86,27 +55,8 @@ function assignBIOLabels(
 	words: ReturnType<typeof tokenizeWords>,
 	spans: Array<ResultNode & { start: number; end: number }>
 ): BIOWord[] {
-	// Per-word: index of the shortest covering span.
-	const owner: number[] = new Array(words.length).fill(-1)
-
-	for (let w = 0; w < words.length; w++) {
-		const wStart = words[w].start
-		const wEnd = words[w].end
-		let best = -1
-		let bestLen = Infinity
-
-		for (let s = 0; s < spans.length; s++) {
-			const sp = spans[s]
-
-			// The word is covered if any part of it falls within the span.
-			if (wStart < sp.end && wEnd > sp.start && sp.end - sp.start < bestLen) {
-				bestLen = sp.end - sp.start
-				best = s
-			}
-		}
-
-		owner[w] = best
-	}
+	// Per-word: index of the shortest covering span (a word is covered when any part of it falls within the span).
+	const owner = shortestSpanOwners(words, spans)
 
 	// Assign BIO labels.
 	const result: BIOWord[] = []

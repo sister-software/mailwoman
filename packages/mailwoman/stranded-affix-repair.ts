@@ -21,7 +21,7 @@
  *   nothing is left exactly as it is: this pass fixes a split, it does not delete evidence.
  */
 
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { type AddressNode, type AddressTree, collectNodes } from "@mailwoman/core/decoder"
 
 /**
  * Affix tags that cannot stand without a `street`. `house_number` is deliberately NOT here: a bare `12, London` is a
@@ -42,16 +42,6 @@ const STRANDED_AFFIX_TAGS: ReadonlySet<string> = new Set(["street_suffix", "stre
  */
 const ABSORBING_TAGS: ReadonlySet<string> = new Set(["locality", "venue", "dependent_locality"])
 
-function walk(nodes: readonly AddressNode[], visit: (node: AddressNode) => void): void {
-	for (const node of nodes) {
-		visit(node)
-
-		if (node.children?.length) {
-			walk(node.children, visit)
-		}
-	}
-}
-
 /**
  * Absorb a stranded street affix into the place name it abuts.
  *
@@ -59,9 +49,7 @@ function walk(nodes: readonly AddressNode[], visit: (node: AddressNode) => void)
  * post-decode repairs read the same way at the call site.
  */
 export function repairStrandedAffix(tree: AddressTree): boolean {
-	const all: AddressNode[] = []
-
-	walk(tree.roots, (node) => all.push(node))
+	const all = collectNodes(tree.roots, () => true)
 
 	// A `street` ANYWHERE means the affix has a legitimate owner, whether or not the tree builder attached it.
 	if (all.some((node) => node.tag === "street")) return false

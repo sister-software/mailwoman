@@ -20,11 +20,12 @@ import { type AnchorLookup, mergeAnchorLookups } from "#anchor-inference"
 import { NeuralAddressClassifier, type NeuralAddressClassifierConfig } from "#classifier"
 import { type CountryLexicon, parseCountryLexicon } from "#country-inference"
 import { type GazetteerLexicon, parseGazetteerLexicon } from "#gazetteer-inference"
+import { inferRequiredChannelsFromInputs } from "#ort-feeds"
 import { PairIndexResolver } from "#pair-index-resolver"
 import type { PlacetypePairPriorOpts } from "#placetype-pair-prior"
 import { PostcodeBinaryResolver } from "#postcode-binary-resolver"
 import { MailwomanTokenizer } from "#tokenizer"
-import { WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "#web-onnx-runner"
+import { fetchBytes, WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "#web-onnx-runner"
 
 export { type WebONNXRunnerDiagnostics } from "#web-onnx-runner"
 
@@ -550,97 +551,133 @@ function warnOnUnfedTrainedChannels(
 
 	if (!inputNames) return
 
-	if (inputNames.includes("country_features") && !fed.countryLexicon) {
-		console.error(
-			"[mailwoman/neural-web] This model is country-channel-trained (its ONNX declares `country_features`) " +
-				"but no country lexicon was loaded" +
-				(fed.countryLexiconURL
-					? ` — \`country-surface-lexicon-v1.json\` could not be fetched from ${fed.countryLexiconURL}. ` +
-						"Upload the lexicon next to model.onnx, or pass `countryLexiconURL` explicitly."
-					: " — `countryLexiconURL` was explicitly disabled (null). ") +
-				" Running with zero-filled country clues: country tagging will be degraded (train/inference mismatch)."
-		)
-	}
+	// The graph's declared inputs ARE the training-time channel requirements — the same inference the
+	// Node scorer's back-compat path runs (`inferRequiredChannelsFromInputs`).
+	const declared = inferRequiredChannelsFromInputs(inputNames)
 
-	if (inputNames.includes("gazetteer_features") && !fed.gazetteerLexicon) {
-		console.error(
-			"[mailwoman/neural-web] This model is gazetteer-anchor-trained (its ONNX declares `gazetteer_features`) " +
-				"but no gazetteer lexicon was loaded" +
-				(fed.gazetteerLexiconURL
-					? ` — \`anchor-lexicon-v1.json\` could not be fetched from ${fed.gazetteerLexiconURL}. ` +
-						"Upload the lexicon next to model.onnx, or pass `gazetteerLexiconURL` explicitly."
-					: " — `gazetteerLexiconURL` was explicitly disabled (null). ") +
-				" Running with zero-filled gazetteer clues: parses will be degraded (train/inference mismatch)."
-		)
-	}
+	const unfedLexiconMessage = (
+		trainedAs: string,
+		input: string,
+		noun: string,
+		fileName: string,
+		url: string | null,
+		urlOption: string,
+		degrade: string
+	): string =>
+		`[mailwoman/neural-web] This model is ${trainedAs} (its ONNX declares \`${input}\`) ` +
+		`but no ${noun} was loaded` +
+		(url
+			? ` — \`${fileName}\` could not be fetched from ${url}. ` +
+				`Upload the lexicon next to model.onnx, or pass \`${urlOption}\` explicitly.`
+			: ` — \`${urlOption}\` was explicitly disabled (null). `) +
+		` Running with zero-filled ${degrade}`
 
-	for (const [input, lexicon, url, name] of [
-		["street_type_features", fed.streetTypeLexicon, fed.streetTypeLexiconURL, "street-type-lexicon-v3.json"],
-		[
-			"locality_surface_features",
-			fed.localitySurfaceLexicon,
-			fed.localitySurfaceLexiconURL,
-			"locality-surface-lexicon-v6.json",
-		],
-	] as const) {
-		if (inputNames.includes(input) && !lexicon) {
-			console.error(
-				`[mailwoman/neural-web] This model is evidence-bundle-trained (its ONNX declares \`${input}\`) ` +
-					"but no evidence lexicon was loaded" +
-					(url
-						? ` — \`${name}\` could not be fetched from ${url}. Upload the lexicon next to model.onnx.`
-						: " — the URL was explicitly disabled (null).") +
-					" Fragmented-register parses run with this channel off (the trained absence identity — degraded fragment lift, structurally valid)."
-			)
+	const unfedEvidenceMessage = (input: string, fileName: string, url: string | null): string =>
+		`[mailwoman/neural-web] This model is evidence-bundle-trained (its ONNX declares \`${input}\`) ` +
+		"but no evidence lexicon was loaded" +
+		(url
+			? ` — \`${fileName}\` could not be fetched from ${url}. Upload the lexicon next to model.onnx.`
+			: " — the URL was explicitly disabled (null).") +
+		" Fragmented-register parses run with this channel off (the trained absence identity — degraded fragment lift, structurally valid)."
+
+	const channels: Array<{ required: boolean | undefined; fed: boolean; message: string }> = [
+		{
+			required: declared.country?.required,
+			fed: !!fed.countryLexicon,
+			message: unfedLexiconMessage(
+				"country-channel-trained",
+				"country_features",
+				"country lexicon",
+				"country-surface-lexicon-v1.json",
+				fed.countryLexiconURL,
+				"countryLexiconURL",
+				"country clues: country tagging will be degraded (train/inference mismatch)."
+			),
+		},
+		{
+			required: declared.gazetteer?.required,
+			fed: !!fed.gazetteerLexicon,
+			message: unfedLexiconMessage(
+				"gazetteer-anchor-trained",
+				"gazetteer_features",
+				"gazetteer lexicon",
+				"anchor-lexicon-v1.json",
+				fed.gazetteerLexiconURL,
+				"gazetteerLexiconURL",
+				"gazetteer clues: parses will be degraded (train/inference mismatch)."
+			),
+		},
+		{
+			required: declared.street_type?.required,
+			fed: !!fed.streetTypeLexicon,
+			message: unfedEvidenceMessage("street_type_features", "street-type-lexicon-v3.json", fed.streetTypeLexiconURL),
+		},
+		{
+			required: declared.locality_surface?.required,
+			fed: !!fed.localitySurfaceLexicon,
+			message: unfedEvidenceMessage(
+				"locality_surface_features",
+				"locality-surface-lexicon-v6.json",
+				fed.localitySurfaceLexiconURL
+			),
+		},
+		{
+			required: declared.anchor?.required,
+			fed: !!fed.postcodeAnchorLookup,
+			message:
+				"[mailwoman/neural-web] This model is postcode-anchor-trained (its ONNX declares `anchor_features`) " +
+				"but no `postcodeBinaryURLs` were provided (postcode-<cc>.bin). " +
+				"Running with zero-filled anchor features: the anchor-off identity, degraded vs the ship config.",
+		},
+	]
+
+	for (const channel of channels) {
+		if (channel.required && !channel.fed) {
+			console.error(channel.message)
 		}
 	}
-
-	if (inputNames.includes("anchor_features") && !fed.postcodeAnchorLookup) {
-		console.error(
-			"[mailwoman/neural-web] This model is postcode-anchor-trained (its ONNX declares `anchor_features`) " +
-				"but no `postcodeBinaryURLs` were provided (postcode-<cc>.bin). " +
-				"Running with zero-filled anchor features: the anchor-off identity, degraded vs the ship config."
-		)
-	}
 }
 
 /**
- * Fetch + parse `anchor-lexicon-v1.json`. A missing file (404 or network failure) returns null — the caller decides
- * whether that matters (it does iff the model declares the gazetteer inputs; see `warnOnUnfedTrainedChannels`). A
- * PRESENT-but-malformed lexicon throws loudly via `parseGazetteerLexicon`'s validation — never silently zero-fill off
- * bad data.
+ * Fetch + parse an optional JSON asset TOLERANTLY: a missing file (404, any non-OK status, or a network failure)
+ * returns null — the caller decides whether that matters. A PRESENT-but-malformed payload throws loudly via `parse` —
+ * never silently zero-fill off bad data.
+ */
+async function fetchTolerantJSON<T>(
+	url: string,
+	fetchImpl: typeof fetch,
+	parse: (raw: unknown) => T
+): Promise<T | null> {
+	let res: Response
+
+	try {
+		res = await fetchImpl(url)
+	} catch {
+		return null
+	}
+
+	if (!res.ok) return null
+
+	return parse(await res.json())
+}
+
+/**
+ * Fetch + parse `anchor-lexicon-v1.json` — missing matters iff the model declares the gazetteer inputs; see
+ * `warnOnUnfedTrainedChannels`.
  */
 async function fetchGazetteerLexicon(url: string, fetchImpl: typeof fetch): Promise<GazetteerLexicon | null> {
-	let res: Response
-
-	try {
-		res = await fetchImpl(url)
-	} catch {
-		return null
-	}
-
-	if (!res.ok) return null
-
-	return parseGazetteerLexicon((await res.json()) as Parameters<typeof parseGazetteerLexicon>[0])
+	return fetchTolerantJSON(url, fetchImpl, (raw) =>
+		parseGazetteerLexicon(raw as Parameters<typeof parseGazetteerLexicon>[0])
+	)
 }
 
 /**
- * Fetch + parse `country-surface-lexicon-v1.json` (#1104). Same contract as `fetchGazetteerLexicon`: a missing file
- * returns null (matters iff the model declares `country_features`); a present-but-malformed lexicon throws via
- * `parseCountryLexicon`'s validation.
+ * Fetch + parse `country-surface-lexicon-v1.json` (#1104) — same contract as `fetchGazetteerLexicon`.
  */
 async function fetchCountryLexicon(url: string, fetchImpl: typeof fetch): Promise<CountryLexicon | null> {
-	let res: Response
-
-	try {
-		res = await fetchImpl(url)
-	} catch {
-		return null
-	}
-
-	if (!res.ok) return null
-
-	return parseCountryLexicon((await res.json()) as Parameters<typeof parseCountryLexicon>[0])
+	return fetchTolerantJSON(url, fetchImpl, (raw) =>
+		parseCountryLexicon(raw as Parameters<typeof parseCountryLexicon>[0])
+	)
 }
 
 /**
@@ -676,14 +713,6 @@ function labelsFromModelCard(card: Record<string, unknown>, url: string): readon
 	}
 
 	return Object.freeze(labels.slice()) as readonly string[]
-}
-
-async function fetchBytes(url: string, fetchImpl: typeof fetch): Promise<Uint8Array> {
-	const res = await fetchImpl(url)
-
-	if (!res.ok) throw new Error(`fetch ${url} failed: ${res.status} ${res.statusText}`)
-
-	return new Uint8Array(await res.arrayBuffer())
 }
 
 /**

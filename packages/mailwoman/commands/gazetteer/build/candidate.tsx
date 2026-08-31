@@ -12,7 +12,14 @@
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	phaseReporter,
+	splitUpperList,
+	useCommandTask,
+} from "#cli-kit"
 import { DEFAULT_CANDIDATE_OUT, DEFAULT_FOLD_COUNTRIES, DEFAULT_IMPORTANCE_DB } from "#gazetteer-pipeline/defaults"
 
 /**
@@ -62,12 +69,7 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 		const adminIn = options.admin ?? join(wofDir(root), DEFAULT_ADMIN_DB)
 		const out = options.out ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
 
-		const countries = options.countries
-			? options.countries
-					.split(",")
-					.map((s) => s.trim().toUpperCase())
-					.filter((cc) => cc.length > 0)
-			: DEFAULT_FOLD_COUNTRIES
+		const countries = options.countries ? splitUpperList(options.countries) : DEFAULT_FOLD_COUNTRIES
 
 		let adminDB = adminIn
 
@@ -84,7 +86,7 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 					console.error(
 						`  ${e.country}: ${e.skipped ? "(dump missing — skipped)" : `${e.places.toLocaleString()} places`}`
 					),
-				onPhase: (p, d) => console.error(`  [${p}]${d ? ` ${d}` : ""}`),
+				onPhase: phaseReporter(),
 			})
 
 			console.error(
@@ -133,7 +135,7 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 		]
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

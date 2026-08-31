@@ -19,7 +19,13 @@ import type { AdapterOptions } from "@mailwoman/corpus/types"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
-import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "#cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * `--inputs` accepts either:
@@ -121,7 +127,7 @@ const CorpusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 		}
 	})
 
-	if (state.status === "error") return <Text color="red">{state.message}</Text>
+	if (state.status === "error") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		const done = state.result

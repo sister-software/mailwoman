@@ -48,7 +48,7 @@
  */
 
 import type { AddressNode, AddressTree, QueryIntentMarker, QueryKind } from "@mailwoman/core"
-import { haversineKm } from "@mailwoman/spatial"
+import { collectNodes } from "@mailwoman/core/decoder"
 
 import {
 	type AblationPlace,
@@ -56,6 +56,7 @@ import {
 	DECISIVE_MARGIN_LOG10,
 	dominanceMarginLog10,
 } from "#eval-harness/gauntlet/ablation-expectation"
+import { collapseCoincident } from "#eval-harness/gauntlet/ablation-gazetteer"
 
 /**
  * The subset of a resolver `ResolvedPlace` this module reads. Structural on purpose — `AddressNode.alternatives` is
@@ -110,37 +111,12 @@ function toAblationPlace(place: RankedPlaceLike, rank: number): AblationPlace | 
 }
 
 /**
- * Drop every place within {@linkcode COINCIDENT_PLACE_KM} of an already-kept, higher-ranked one. Those are the SAME
- * physical place under two placetypes, not namesakes — see the module docstring.
- */
-function collapseCoincident(places: readonly AblationPlace[]): AblationPlace[] {
-	const kept: AblationPlace[] = []
-
-	for (const place of places) {
-		if (kept.some((k) => haversineKm(k.lat, k.lon, place.lat, place.lon) <= COINCIDENT_PLACE_KM)) continue
-
-		kept.push(place)
-	}
-
-	return kept
-}
-
-/**
  * The node whose resolution the query is ABOUT — the deepest resolved node carrying a coordinate and the resolver's
  * name stamp, matching `extractGeocodeResult`'s own `primaryNode` selection so the marker and the returned candidate
  * list describe the same place.
  */
 function primaryResolvedNode(tree: AddressTree, lat: number | null, lon: number | null): AddressNode | null {
-	const all: AddressNode[] = []
-
-	const walk = (nodes: readonly AddressNode[]): void => {
-		for (const node of nodes) {
-			all.push(node)
-			walk(node.children)
-		}
-	}
-
-	walk(tree.roots)
+	const all = collectNodes(tree.roots, () => true)
 
 	return (
 		all.find((n) => n.metadata?.["resolver_name"] && n.lat === lat && n.lon === lon) ??

@@ -16,7 +16,12 @@
  *   (Stage 5) picks the best non-overlapping subset.
  */
 
+import { isFloorDesignatorToken } from "@mailwoman/codex/us/floor-designator"
+import { US_STATE_NAMES } from "@mailwoman/codex/us/state"
+import { isStreetSuffixToken } from "@mailwoman/codex/us/street-suffix"
+import { isUnitDesignatorToken } from "@mailwoman/codex/us/unit-designator"
 import { Span } from "@mailwoman/core/tokenization"
+import { isRegionAbbreviationToken } from "@mailwoman/query-shape"
 
 import type { PhraseProposal, QueryShapeLike } from "#types"
 
@@ -40,52 +45,20 @@ const WHITESPACE = /\s+/
  */
 const NEUTRAL_PROPOSAL_CONFIDENCE = 0.55
 
-const US_REGION_NAMES: ReadonlySet<string> = new Set([
-	"alabama",
-	"alaska",
-	"arizona",
-	"arkansas",
-	"california",
-	"colorado",
-	"connecticut",
-	"delaware",
-	"florida",
-	"georgia",
-	"hawaii",
-	"idaho",
-	"illinois",
-	"indiana",
-	"iowa",
-	"kansas",
-	"kentucky",
-	"louisiana",
-	"maine",
-	"maryland",
-	"massachusetts",
-	"michigan",
-	"minnesota",
-	"mississippi",
-	"missouri",
-	"montana",
-	"nebraska",
-	"nevada",
-	"ohio",
-	"oklahoma",
-	"oregon",
-	"pennsylvania",
-	"tennessee",
-	"texas",
-	"utah",
-	"vermont",
-	"virginia",
-	"washington",
-	"wisconsin",
-	"wyoming",
-])
+/**
+ * Single-token US state/territory names, derived from the codex roster. SINGLE-TOKEN scope on purpose: the non-tail
+ * region-name penalty below reads one token at a time, and a multi-word name ("New York", "North Carolina") can never
+ * match a single token — deriving only the single-token names keeps the set equal to what the check can ever see.
+ */
+const US_REGION_NAMES: ReadonlySet<string> = new Set(
+	US_STATE_NAMES.filter((name) => !name.includes(" ")).map((name) => name.toLowerCase())
+)
 
 /**
  * Split a segment body into whitespace-separated tokens. Offsets are absolute into the original input (caller supplies
- * the segment's `start` offset).
+ * the segment's `start` offset). Deliberately NOT `@mailwoman/query-shape`'s tokenizer: that one yields code-point
+ * CLASS runs for the whole input, while this one carries segment-relative → absolute span math for the proposal spans —
+ * the two disagree on what a token boundary is.
  */
 /**
  * Digit count above which a pure-numeric token stops being unambiguously a house number. 1-4 digits are clearly
@@ -169,10 +142,11 @@ function isAllDigit(s: string): boolean {
 }
 
 /**
- * True when token body is 2-3 uppercase Latin letters (US state, Canadian province abbreviation).
+ * Region-abbreviation SHAPE via the shared `@mailwoman/query-shape` predicate, widened to 3 letters (US states,
+ * Canadian provinces, and 3-letter codes like "TWN").
  */
 function isRegionAbbreviation(s: string): boolean {
-	return /^[A-Z]{2,3}$/.test(s)
+	return isRegionAbbreviationToken(s, { maxLetters: 3 })
 }
 
 /**
@@ -185,52 +159,11 @@ function startsCapitalized(s: string): boolean {
 }
 
 /**
- * Common street-type suffixes (en-US + en-GB + abbreviated forms). Match case-insensitively against the raw token body.
- * The set is intentionally short — coverage extension belongs in a future per-locale rule pack, not as a 500-entry
- * dictionary in this rule.
+ * Street-type suffix vocabulary — the full USPS Pub-28 table via `@mailwoman/codex`, replacing the short local set. The
+ * codex lookup carries no dotted variants ("St.", "Ave."), so one trailing period is stripped before the probe.
  */
-const STREET_SUFFIXES: ReadonlySet<string> = new Set([
-	"st",
-	"st.",
-	"street",
-	"ave",
-	"ave.",
-	"avenue",
-	"blvd",
-	"blvd.",
-	"boulevard",
-	"rd",
-	"rd.",
-	"road",
-	"ln",
-	"ln.",
-	"lane",
-	"dr",
-	"dr.",
-	"drive",
-	"way",
-	"pl",
-	"pl.",
-	"place",
-	"ct",
-	"ct.",
-	"court",
-	"pkwy",
-	"parkway",
-	"hwy",
-	"highway",
-	"ter",
-	"terrace",
-	"cir",
-	"circle",
-	"sq",
-	"square",
-	"trl",
-	"trail",
-])
-
 function isStreetSuffix(token: string): boolean {
-	return STREET_SUFFIXES.has(token.toLowerCase())
+	return isStreetSuffixToken(token.replace(/\.$/, ""))
 }
 
 /**
@@ -433,31 +366,21 @@ const VENUE_MARKERS: ReadonlyMap<string, number> = new Map([
 ])
 
 /**
- * Unit-designator tokens that gate the venue-by-exclusion heuristic. When any token in a segment matches one of these,
- * the segment is likely a unit/suite line, not a venue name.
+ * Unit-marker tokens outside the USPS tables. Pub-28 Appendix C2 (via `@mailwoman/codex`) covers the designator words
+ * themselves — APT/STE/RM/FL/BLDG/DEPT and their full forms — so the local extension carries only the bare "#" that
+ * introduces "#4B", which is not USPS vocabulary.
  */
-const UNIT_MARKERS: ReadonlySet<string> = new Set([
-	"apt",
-	"apt.",
-	"apartment",
-	"unit",
-	"ste",
-	"ste.",
-	"suite",
-	"room",
-	"rm",
-	"rm.",
-	"floor",
-	"fl",
-	"fl.",
-	"bldg",
-	"bldg.",
-	"building",
-	"dept",
-	"dept.",
-	"department",
-	"#",
-])
+const UNIT_MARKER_EXTENSIONS: ReadonlySet<string> = new Set(["#"])
+
+/**
+ * True when a token gates the venue-by-exclusion heuristic as a unit/suite/floor marker: any USPS secondary unit or
+ * floor-class designator (dotted abbreviations included — one trailing period is stripped), or a local extension.
+ */
+function isUnitMarker(token: string): boolean {
+	const bare = token.replace(/\.$/, "")
+
+	return UNIT_MARKER_EXTENSIONS.has(token) || isUnitDesignatorToken(bare) || isFloorDesignatorToken(bare)
+}
 
 function venueMarkerWeight(tokens: ReadonlyArray<SegmentToken>): number {
 	let maxWeight = 0
@@ -473,8 +396,8 @@ function venueMarkerWeight(tokens: ReadonlyArray<SegmentToken>): number {
 	return maxWeight
 }
 
-function hasUnitMarker(tokens: ReadonlyArray<SegmentToken>): boolean {
-	return tokens.some((t) => UNIT_MARKERS.has(t.body.toLowerCase()))
+export function hasUnitMarker(tokens: ReadonlyArray<SegmentToken>): boolean {
+	return tokens.some((t) => isUnitMarker(t.body))
 }
 
 /**

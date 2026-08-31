@@ -15,9 +15,7 @@
  *   inference-side parity fix — see the pipeline module docstring.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -50,21 +48,14 @@ const GazetteerBuildAnchorLookup: ParsedCommandComponent<Options> = ({ options }
 		const stats = await buildAnchorLookup({
 			output: options.output,
 			zcta: options.zcta,
-			include: options.include
-				?.split(",")
-				.map((c) => c.trim())
-				.filter((code) => code.length > 0),
+			include: options.include === undefined ? undefined : splitList(options.include),
 			gbOutward: options.gbOutward,
 		})
 
 		return `anchor lookup → ${options.output} (${stats.total} keys, ${stats.letterBearing} letter-bearing)`
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
-
-	if (state.status === "done") return <Text color="green">✓ {state.result}</Text>
-
-	return null
+	return <CommandTaskResult state={state} />
 }
 
 export default GazetteerBuildAnchorLookup

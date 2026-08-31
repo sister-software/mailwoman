@@ -6,22 +6,13 @@
  *   Deprecation shim — `mailwoman wof prepare` moved. One-minor-version courtesy redirect; remove after.
  */
 
-import { Text } from "ink"
+import type { CommandSpec } from "#cli-kit"
 
-import { type CommandSpec, useCommandTask } from "#cli-kit"
+import { createWOFShim } from "./_shim.tsx"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Kept literal (not factory-built) so the option-collision test can inspect it statically.
  */
 export const spec = { name: "prepare", description: "Show the replacement command" } as const satisfies CommandSpec
 
-const WofShim = () => {
-	useCommandTask(
-		async () => {},
-		() => 1
-	)
-
-	return <Text color="yellow">{"`mailwoman wof prepare` moved: use `mailwoman gazetteer build admin`"}</Text>
-}
-
-export default WofShim
+export default createWOFShim("prepare", "mailwoman gazetteer build admin")

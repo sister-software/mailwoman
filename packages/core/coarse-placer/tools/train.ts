@@ -16,8 +16,9 @@ import { type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { COARSE_CLASSES, FEATURE_DIM, featurize } from "#coarse-placer/featurize"
+import { logsumexp, softmaxInto } from "#coarse-placer/math"
+import { defaultDataDir, defaultModelDir } from "#coarse-placer/tools/paths"
 import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "#fs/writers"
-import { dataRootPath, repoRootPath } from "#utils"
 
 /**
  * Lowest calibration temperature swept.
@@ -86,8 +87,8 @@ export async function trainCoarsePlacer(
 	const epochs = options.epochs ?? 12
 	const lr0 = options.lr ?? 0.1
 	const l2 = options.l2 ?? 0.000001
-	const outDir = resolvePathBuilder(options.out || dataRootPath("coarse-placer", "model"))
-	const dataDir = options.data || repoRootPath("data", "coarse-placer")
+	const outDir = resolvePathBuilder(options.out || defaultModelDir())
+	const dataDir = options.data || defaultDataDir()
 
 	const C = COARSE_CLASSES.length
 	const D = FEATURE_DIM
@@ -148,24 +149,7 @@ export async function trainCoarsePlacer(
 			logits[c] = s
 		}
 
-		let mx = -Infinity
-
-		for (let c = 0; c < C; c++)
-			if (logits[c]! > mx) {
-				mx = logits[c]!
-			}
-
-		let sum = 0
-
-		for (let c = 0; c < C; c++) {
-			const e = Math.exp(logits[c]! - mx)
-			probs[c] = e
-			sum += e
-		}
-
-		for (let c = 0; c < C; c++) {
-			probs[c] = probs[c]! / sum
-		}
+		softmaxInto(logits, probs)
 	}
 
 	function accuracy(set: Sample[]): number {
@@ -231,20 +215,7 @@ export async function trainCoarsePlacer(
 				logits[c] = s / T
 			}
 
-			let mx = -Infinity
-
-			for (let c = 0; c < C; c++)
-				if (logits[c]! > mx) {
-					mx = logits[c]!
-				}
-
-			let sum = 0
-
-			for (let c = 0; c < C; c++) {
-				sum += Math.exp(logits[c]! - mx)
-			}
-
-			nll += -(logits[y]! - mx - Math.log(sum))
+			nll += -(logits[y]! - logsumexp(logits))
 		}
 
 		return nll / val.length

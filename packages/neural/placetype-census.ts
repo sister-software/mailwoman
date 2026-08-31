@@ -37,8 +37,9 @@
  *   uses — `foldVersion` in the header records which), so one query-time fold serves both artifacts.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
+
+import { readFramedHeader, writeFramedHeader } from "#binary-frame"
 
 /**
  * Tags addressable by the single-byte index the census packs.
@@ -130,7 +131,7 @@ export function serializePlacetypeCensus(header: PlacetypeCensusHeader, nodes: r
 
 	const sorted = nodes.toSorted((a, b) => (a.parent < b.parent ? -1 : a.parent > b.parent ? 1 : 0))
 	const encoder = new TextEncoder()
-	const headerBytes = encoder.encode(JSON.stringify(header))
+	const frame = writeFramedHeader(MAGIC, header)
 
 	const encoded = sorted.map((node) => {
 		const entries = Object.entries(node.counts)
@@ -146,21 +147,18 @@ export function serializePlacetypeCensus(header: PlacetypeCensusHeader, nodes: r
 		return { parent: encoder.encode(node.parent), entries }
 	})
 
-	let size = 4 + 4 + headerBytes.length + 4
+	let size = frame.length + 4
 
 	for (const { parent, entries } of encoded) {
 		size += 2 + parent.length + 1 + entries.length * 5
 	}
 
 	const buffer = Buffer.alloc(size)
-	let offset = 0
 
-	buffer.writeUInt32LE(MAGIC, offset)
-	offset += 4
-	buffer.writeUInt32LE(headerBytes.length, offset)
-	offset += 4
-	buffer.set(headerBytes, offset)
-	offset += headerBytes.length
+	buffer.set(frame, 0)
+
+	let offset = frame.length
+
 	buffer.writeUInt32LE(encoded.length, offset)
 	offset += 4
 
@@ -219,51 +217,40 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	readonly #nodes: Map<string, PlacetypeCensusNode>
 
 	constructor(bytes: Uint8Array) {
-		const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-		let offset = 0
+		const { header, cursor } = readFramedHeader<PlacetypeCensusHeader>(
+			MAGIC,
+			bytes,
+			"PlacetypeCensusResolver: bad magic — not a PCN1 artifact"
+		)
 
-		if (view.getUint32(offset, true) !== MAGIC) {
-			throw new Error("PlacetypeCensusResolver: bad magic — not a PCN1 artifact")
+		this.header = header
+
+		if (this.header.schemaVersion > KNOWN_SCHEMA_VERSION) {
+			throw new Error(
+				`PlacetypeCensusResolver: schemaVersion ${this.header.schemaVersion} is newer than this reader knows ` +
+					`(known up to ${KNOWN_SCHEMA_VERSION})`
+			)
 		}
-
-		offset += 4
-
-		const headerLen = view.getUint32(offset, true)
-		offset += 4
-
-		const decoder = new TextDecoder()
-
-		this.header = parseJSONStrict<PlacetypeCensusHeader>(decoder.decode(bytes.subarray(offset, offset + headerLen)))
-		offset += headerLen
 
 		if (this.header.schemaVersion !== KNOWN_SCHEMA_VERSION) {
 			throw new Error(`PlacetypeCensusResolver: unsupported schemaVersion ${this.header.schemaVersion}`)
 		}
 
-		const nodeCount = view.getUint32(offset, true)
-		offset += 4
+		const decoder = new TextDecoder()
+		const nodeCount = cursor.u32()
 
 		this.#nodes = new Map()
 
 		for (let i = 0; i < nodeCount; i++) {
-			const parentLen = view.getUint16(offset, true)
-			offset += 2
-
-			const parent = decoder.decode(bytes.subarray(offset, offset + parentLen))
-			offset += parentLen
-
-			const entryCount = view.getUint8(offset)
-			offset += 1
+			const parent = decoder.decode(cursor.bytes(cursor.u16()))
+			const entryCount = cursor.u8()
 
 			const counts: Partial<Record<ComponentTag, number>> = {}
 			let total = 0
 
 			for (let e = 0; e < entryCount; e++) {
-				const tag = COMPONENT_TAGS[view.getUint8(offset)]
-				offset += 1
-
-				const count = view.getUint32(offset, true)
-				offset += 4
+				const tag = COMPONENT_TAGS[cursor.u8()]
+				const count = cursor.u32()
 
 				if (tag) {
 					counts[tag] = count

@@ -41,43 +41,30 @@
  *   the Norwegian reading so a future AU intra-word-split shard cannot generalize over it unnoticed.
  */
 
-import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
-import { computeQueryShape } from "@mailwoman/query-shape"
-import { JSONSpliterator } from "spliterator"
 
-import { flattenNodes } from "#eval-harness/flatten-nodes"
-import { wilson } from "#eval-harness/fragment-board"
+import {
+	runSpanBoard,
+	type SpanBoardFixture,
+	type SpanBoardOptions,
+	type SpanBoardOutcome,
+} from "#eval-harness/span-board"
 
 /**
  * Fixture set backing the digit board — house-number and postcode ambiguity probes.
  */
 export const DIGIT_BOARD_FIXTURES = "packages/mailwoman/eval-harness/fixtures/no-digits.jsonl"
 
-export interface DigitFixture {
-	id: string
-	klass: string
-	input: string
-	expect: Record<string, string[]>
+export interface DigitFixture extends SpanBoardFixture {
 	/**
 	 * Present on the negative class: the parser must emit NO house_number, and MUST still emit the postcode.
 	 */
 	expect_no_house_number?: boolean
-	surface: string | null
-	source: string
 }
 
-export interface DigitBoardOptions {
-	locale?: string
-	weightsCacheRoot?: string
-	fixturesPath?: string
-	klass?: string
-}
+export type DigitBoardOptions = SpanBoardOptions
 
-export interface DigitBoardOutcome {
-	exitCode: number
-}
+export type DigitBoardOutcome = SpanBoardOutcome
 
 const tagText = (nodes: Array<{ tag: string; value: string; start: number }>, tag: string): string =>
 	nodes
@@ -87,91 +74,34 @@ const tagText = (nodes: Array<{ tag: string; value: string; start: number }>, ta
 		.join(" ")
 
 export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<DigitBoardOutcome> {
-	const fixtures = (
-		await Array.fromAsync(JSONSpliterator.fromAsync<DigitFixture>(options.fixturesPath ?? DIGIT_BOARD_FIXTURES))
-	).filter((fixture) => !options.klass || fixture.klass === options.klass)
+	return runSpanBoard<DigitFixture>(
+		{
+			name: "digit board",
+			defaultFixturesPath: DIGIT_BOARD_FIXTURES,
+			headerLines: (fixtureCount) => [
+				`\nNO digit-ownership board — ${fixtureCount} fixtures, Kartverket-derived, production config`,
+				`95% Wilson intervals. bare-pc scores the ABSENCE of a house_number AND a surviving postcode.`,
+				`bare-street-hn carries NO postcode — nothing competes for the digit.\n`,
+			],
+			grade: (fixture, nodes) => {
+				const hn = tagText(nodes, "house_number")
+				const pc = tagText(nodes, "postcode")
 
-	if (!fixtures.length) throw new Error(`digit board: no fixtures matched (klass=${options.klass ?? "*"})`)
+				// The negative class scores TWO things at once, because either failure is the same mistake:
+				// the postcode must survive AND no house_number may be invented from it.
+				const ok = fixture.expect_no_house_number
+					? foldCaseWhitespace(hn) === "" &&
+						foldCaseWhitespace(pc) === foldCaseWhitespace((fixture.expect.postcode ?? []).join(" "))
+					: foldCaseWhitespace(hn) === foldCaseWhitespace((fixture.expect.house_number ?? []).join(" "))
 
-	const classifier = await NeuralAddressClassifier.loadFromWeights({
-		locale: options.locale ?? "en-US",
-		cacheRoot: options.weightsCacheRoot,
-	})
-
-	const tally = new Map<string, { hit: number; total: number; misses: Array<DigitFixture & { got: string }> }>()
-
-	for (const fixture of fixtures) {
-		// Production config — the query-shape prior is fed on every path production parses on
-		// (safeClassify, and geocode-core since #981). See baselines.json $config.
-		const tree = await classifier.parse(fixture.input, {
-			postcodeRepair: true,
-			queryShape: computeQueryShape(fixture.input),
-			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
-		})
-
-		const nodes = flattenNodes(tree.roots)
-		const hn = tagText(nodes, "house_number")
-		const pc = tagText(nodes, "postcode")
-
-		const bucket = tally.get(fixture.klass) ?? { hit: 0, total: 0, misses: [] }
-
-		bucket.total++
-
-		// The negative class scores TWO things at once, because either failure is the same mistake:
-		// the postcode must survive AND no house_number may be invented from it.
-		const ok = fixture.expect_no_house_number
-			? foldCaseWhitespace(hn) === "" &&
-				foldCaseWhitespace(pc) === foldCaseWhitespace((fixture.expect.postcode ?? []).join(" "))
-			: foldCaseWhitespace(hn) === foldCaseWhitespace((fixture.expect.house_number ?? []).join(" "))
-
-		if (ok) {
-			bucket.hit++
-		} else {
-			bucket.misses.push({ ...fixture, got: fixture.expect_no_house_number ? `hn=${hn} pc=${pc}` : hn })
-		}
-
-		tally.set(fixture.klass, bucket)
-	}
-
-	console.log(`\nNO digit-ownership board — ${fixtures.length} fixtures, Kartverket-derived, production config`)
-	console.log(`95% Wilson intervals. bare-pc scores the ABSENCE of a house_number AND a surviving postcode.`)
-	console.log(`bare-street-hn carries NO postcode — nothing competes for the digit.\n`)
-	console.log(`  class                     n     rate    95% CI`)
-
-	let totalHit = 0
-	let totalN = 0
-
-	for (const [klass, bucket] of [...tally].toSorted()) {
-		totalHit += bucket.hit
-		totalN += bucket.total
-		const rate = bucket.hit / bucket.total
-		const ci = wilson(bucket.hit, bucket.total)
-
-		console.log(
-			`  ${klass.padEnd(22)} ${String(bucket.total).padStart(4)}   ${rate.toFixed(3)}   [${ci.low.toFixed(3)}, ${ci.high.toFixed(3)}]`
-		)
-	}
-
-	const overall = wilson(totalHit, totalN)
-
-	console.log(
-		`  ${"OVERALL".padEnd(22)} ${String(totalN).padStart(4)}   ${(totalHit / totalN).toFixed(3)}   [${overall.low.toFixed(3)}, ${overall.high.toFixed(3)}]`
+				return { ok, got: fixture.expect_no_house_number ? `hn=${hn} pc=${pc}` : hn }
+			},
+			describeWant: (miss) =>
+				miss.expect_no_house_number
+					? `hn=(none) pc=${(miss.expect.postcode ?? []).join(" ")}`
+					: (miss.expect.house_number ?? []).join(" "),
+			missSampleSize: 5,
+		},
+		options
 	)
-
-	for (const [klass, bucket] of [...tally].toSorted()) {
-		if (!bucket.misses.length) continue
-
-		console.log(`\n  --- ${klass}: ${bucket.misses.length} misses (first 5) ---`)
-
-		for (const miss of bucket.misses.slice(0, 5)) {
-			const want = miss.expect_no_house_number
-				? `hn=(none) pc=${(miss.expect.postcode ?? []).join(" ")}`
-				: (miss.expect.house_number ?? []).join(" ")
-
-			console.log(`    ${JSON.stringify(miss.input)}`)
-			console.log(`        want=${JSON.stringify(want)}  got=${JSON.stringify(miss.got)}`)
-		}
-	}
-
-	return { exitCode: 0 }
 }

@@ -10,7 +10,13 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	reportToStderr,
+	useCommandTask,
+} from "#cli-kit"
 
 export const description = "Train the coarse placer (#244) — SGD logistic regression, CPU-only"
 
@@ -37,19 +43,17 @@ interface Options {
 	data?: string
 }
 
-const report = (line: string): void => console.error(line)
-
 const PlacerTrain: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { trainCoarsePlacer } = await import("@mailwoman/core/coarse-placer/tools")
 
 		return trainCoarsePlacer(
 			{ epochs: options.epochs, lr: options.lr, l2: options.l2, out: options.out, data: options.data },
-			report
+			reportToStderr
 		)
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		const { outDir, trainRows, temperature } = state.result

@@ -18,7 +18,13 @@
 import { clamp } from "@mailwoman/core/utils"
 
 import { type MapFrame, overlayText, rasterizeToFrame, rgbToPacked } from "#frame"
-import { lonLatToWorldPx, metersPerPixel, TILE_SIZE } from "#mercator"
+import {
+	lonLatToWorldPx,
+	metersPerPixel,
+	SUBPIXEL_COLUMNS_PER_CELL,
+	SUBPIXEL_ROWS_PER_CELL,
+	TILE_SIZE,
+} from "#mercator"
 import type { DecodedFeature } from "#mvt"
 import { drawCircle, drawPolyline, fillPolygon, RGBAGrid } from "#raster"
 import { type LayerStyle, type RGB, styleForFeatureKind, stylesFor } from "#style"
@@ -47,12 +53,6 @@ export interface RingSpec {
 
 const DEFAULT_MARKER_CHAR = "●"
 const DEFAULT_MARKER_COLOR: RGB = [255, 80, 80]
-
-/**
- * Subpixel dimensions per braille cell: 2 columns wide, 4 rows tall.
- */
-const SUBPIXEL_COLUMNS_PER_CELL = 2
-const SUBPIXEL_ROWS_PER_CELL = 4
 
 /**
  * Minimum ring radius (in device pixels) worth drawing — smaller than this, the midpoint circle algorithm degenerates

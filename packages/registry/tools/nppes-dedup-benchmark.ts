@@ -57,6 +57,7 @@ import {
 	collectPrimaryCoordinates,
 	type TruthLabel,
 } from "#tools/nppes/truth-grains"
+import { stateOption } from "#tools/shared"
 
 /**
  * Options for {@linkcode nppesDedupBenchmark}.
@@ -129,7 +130,7 @@ export async function nppesDedupBenchmark(
 	report?: (line: string) => void
 ): Promise<{ markdown: string }> {
 	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
-	const STATE = (options.state || "TX").toUpperCase()
+	const STATE = stateOption(options)
 	const MAX_NPIS = options.maxNpis ?? 300
 	const OUT_MD = options.outMd || ""
 	const TRAIN_EM = options.trainEm ?? true

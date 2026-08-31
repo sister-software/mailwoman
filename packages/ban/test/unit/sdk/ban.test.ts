@@ -69,7 +69,7 @@ test("extract: yields the full tuple, folds rep to lower-case, skips coordinate-
 test("provider: FR-only, keys with the FR street locale, throws otherwise", () => {
 	expect(supportedBANCountries()).toEqual(["fr"])
 	expect(streetLocaleForBANCountry("FR")).toBe("fr")
-	expect(() => streetLocaleForBANCountry("de")).toThrow(/No BAN street-normalization locale/)
+	expect(() => streetLocaleForBANCountry("de")).toThrow(/Add it to BAN_COUNTRY_TO_STREET_LOCALE/)
 })
 
 // --- nom_ld (lieu-dit) — survey: .superpowers/sdd/deploc-world-survey.md, FR section ---

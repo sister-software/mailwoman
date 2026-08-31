@@ -81,7 +81,7 @@ function formatCoordinate(lat: number | null | undefined, lon: number | null | u
  * Milliseconds at one decimal — enough to tell a 3 ms decode from a 40 ms resolve without implying we measured
  * microseconds.
  */
-function formatMs(ms: number): string {
+function formatMsFixed(ms: number): string {
 	return `${ms.toFixed(1)} ms`
 }
 
@@ -178,7 +178,7 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 		lines.push({ kind: "heading", label: "timing" })
 
 		for (const [phase, ms] of Object.entries(timing)) {
-			lines.push({ kind: "field", label: `  ${phase}`, value: formatMs(ms) })
+			lines.push({ kind: "field", label: `  ${phase}`, value: formatMsFixed(ms) })
 		}
 	}
 

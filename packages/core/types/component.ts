@@ -77,3 +77,14 @@ export const BIO_LABELS = ["O", ...COMPONENT_TAGS.flatMap((tag) => [`B-${tag}`, 
  * Union of every BIO label.
  */
 export type BIOLabel = (typeof BIO_LABELS)[number]
+
+/**
+ * The street-name family in assembly order: prefix, particle, name, suffix. The order is part of the contract — a
+ * street surface is assembled by concatenating these tags' values in this order.
+ */
+export const STREET_FAMILY_TAGS = [
+	"street_prefix",
+	"street_prefix_particle",
+	"street",
+	"street_suffix",
+] as const satisfies readonly ComponentTag[]

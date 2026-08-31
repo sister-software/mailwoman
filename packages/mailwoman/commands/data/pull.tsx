@@ -12,7 +12,7 @@
  *   probe (`Content-Length`, and — for a bundle that ships one — the `.md5` sidecar text) goes
  *   through `APIClient` (paced, retried, mapped errors — the repo default for API requests). The
  *   artifact BODY itself — every one of these is tens of MB to several GB — is streamed straight to
- *   disk with raw `fetch`, exactly like `osm/sdk/fetch.ts`: response caching is nonsense at this
+ *   disk through the shared raw-`fetch` `streamToDisk` (`@mailwoman/core/utils`): response caching is nonsense at this
  *   size, there's nothing to pace on a one-shot GET, and axios buffers a non-stream response type in
  *   memory.
  *
@@ -37,10 +37,8 @@
 
 import type { APIClient } from "@mailwoman/core/api"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { pathExists } from "@mailwoman/core/fs/readers"
-import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { mailwomanDataRoot, md5File } from "@mailwoman/core/utils"
+import { mailwomanDataRoot, md5File, streamToDisk } from "@mailwoman/core/utils"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Text } from "ink"
 import { basename, dirname, resolvePath } from "path-ts"
@@ -50,6 +48,7 @@ import {
 	CheckList,
 	CommandError,
 	type CommandSpec,
+	CommandTaskResult,
 	type ParsedCommandComponent,
 	useCommandTask,
 } from "#cli-kit"
@@ -61,7 +60,7 @@ import {
 	type BundleArtifact,
 	type RemoteArtifactState,
 } from "#data-bundles"
-import { readReleaseManifest, resolveShardPath, type DataReleaseManifest } from "#data-release"
+import { existingLocalPath, readReleaseManifest } from "#data-release"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -111,23 +110,6 @@ interface Options {
 	force: boolean
 	dataRoot?: string
 	host?: string
-}
-
-/**
- * The path a `us`-family artifact ALREADY occupies on disk (versioned or legacy, via `resolveShardPath`), or the
- * artifact's own resolved path for a non-family artifact — `null` when nothing is there yet.
- */
-async function existingLocalPath(
-	dataRoot: string,
-	manifest: DataReleaseManifest | null,
-	artifact: BundleArtifact,
-	resolvedAbsPath: string
-): Promise<string | null> {
-	if (artifact.family && artifact.stateSlug) {
-		return await resolveShardPath(dataRoot, artifact.family, artifact.stateSlug, manifest)
-	}
-
-	return (await pathExists(resolvedAbsPath)) ? resolvedAbsPath : null
 }
 
 /**
@@ -181,9 +163,9 @@ async function probeRemote(
 }
 
 /**
- * Stream a GET straight to disk, counting bytes as they pass — the raw-`fetch` half of the networking split (see the
- * module docstring). Mirrors `osm/sdk/fetch.ts`'s `downloadExtract` almost exactly — the one addition is the `Range:
- * bytes=0-` header.
+ * Stream a GET straight to disk — the raw-`fetch` half of the networking split (see the module docstring), through the
+ * shared `streamToDisk` (`@mailwoman/core/utils`): `.part` + rename, so an interrupted transfer never presents as a
+ * complete artifact. The one addition over the shared transfer is the `Range: bytes=0-` header.
  *
  * MEASURED 2026-08-03 against the live bucket: a plain GET with no `Range` header on `street/us/nh/situs.db` returned
  * Cloudflare's own 403 "Attention Required" block page — reproduced identically with `curl`, native `fetch`, and
@@ -195,23 +177,12 @@ async function probeRemote(
  * while still asking for, and receiving, the whole file.
  */
 async function downloadToDisk(url: string, destPath: string): Promise<number> {
-	// Raw `fetch` for the TRANSFER; the HEAD probes above go through `APIClient`. The body streams to disk, so
-	// there is nothing to pace and nothing worth caching.
-	const res = await fetch(url, { headers: { range: "bytes=0-" } })
-
-	if (!res.ok || !res.body) throw new Error(`download failed (HTTP ${res.status}) for ${url}`)
-	let bytes = 0
-
-	const counter = new TransformStream<Uint8Array, Uint8Array>({
-		transform(chunk, controller) {
-			bytes += chunk.byteLength
-			controller.enqueue(chunk)
-		},
+	return await streamToDisk({
+		url,
+		destination: destPath,
+		context: "mailwoman data pull",
+		headers: { range: "bytes=0-" },
 	})
-
-	await pipeline(Readable.fromWeb(res.body.pipeThrough(counter)), openWriteStream(destPath))
-
-	return bytes
 }
 
 interface PullOutcome {
@@ -375,13 +346,13 @@ const DataPull: ParsedCommandComponent<Options> = ({ options, args }) => {
 		(result) => (result.ok ? 0 : 1)
 	)
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} running={<Text color="gray">pulling…</Text>} />
 
 	if (state.status === "done") {
 		return <CheckList checks={state.result.checks} verdict={state.result.ok} />
 	}
 
-	return <Text color="gray">pulling…</Text>
+	return null
 }
 
 export default DataPull

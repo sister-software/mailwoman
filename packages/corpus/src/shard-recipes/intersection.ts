@@ -44,8 +44,10 @@ import { JSONSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
 import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "#shard-recipes/scaffold"
+import { pick, weightedPick } from "#synthesizers/utils"
 import type { CanonicalRow, LabeledRow } from "#types"
 import { alignRow } from "#utils"
+import { connectDuckDB } from "#utils/parquet"
 
 interface County {
 	fips: string
@@ -149,19 +151,6 @@ const BAD_NAME = /[,&@/]|\b(and|at)\b/i
  * Punctuation a connector form may leave between spans (besides whitespace): `, & @ /`.
  */
 const CONNECTOR_PUNCT_RE = /^[\s,&@/]*$/
-
-function weightedPick<T extends { w: number }>(items: readonly T[], random: () => number): T {
-	const total = items.reduce((s, x) => s + x.w, 0)
-	let r = random() * total
-
-	for (const item of items) {
-		r -= item.w
-
-		if (r <= 0) return item
-	}
-
-	return items.at(-1)!
-}
 
 /**
  * Order-insensitive crossing key, for eval-leakage exclusion + pair dedup.
@@ -296,10 +285,10 @@ function renderRow(
 	crossing: Crossing,
 	zipCity: Map<string, string>
 ): { raw: string; components: Partial<Record<ComponentTag, string>>; formID: string; tailID: string; caseID: string } {
-	const form = weightedPick(FORMS, random)
+	const form = weightedPick(FORMS, random, (f) => f.w)
 	const body = form.render(crossing.a, crossing.b)
 
-	let tail = weightedPick(TAILS, random)
+	let tail = weightedPick(TAILS, random, (t) => t.w)
 	const city = crossing.zip ? (zipCity.get(crossing.zip) ?? null) : null
 
 	// Downgrade unsatisfiable tails (no ZIP on the edge / no city for the ZIP) to the region tail.
@@ -332,7 +321,7 @@ function renderRow(
 		components.postcode = crossing.zip!
 	}
 
-	const casing = weightedPick(CASES, random)
+	const casing = weightedPick(CASES, random, (c) => c.w)
 	raw = casing.apply(raw)
 
 	// Components keep their original case; alignRow matches case-insensitively and labels the
@@ -462,9 +451,7 @@ export const intersectionRecipe: ShardRecipe = {
 
 		console.error(`  eval exclusions: ${exclusions.nodes.size} nodes, ${exclusions.pairs.size} pairs`)
 
-		const { DuckDBInstance } = await import("@duckdb/node-api")
-		const instance = await DuckDBInstance.create()
-		const db = await instance.connect()
+		const db = await connectDuckDB()
 		await db.run("INSTALL spatial; LOAD spatial;")
 
 		// Pool real crossings: eval-excluded, connector-safe names, one crossing per distinct pair.
@@ -529,7 +516,7 @@ export const intersectionRecipe: ShardRecipe = {
 		const samples: Array<{ form: string; raw: string; tokens: readonly string[]; labels: readonly string[] }> = []
 
 		while (emitted < count && guard++ < count * 10) {
-			const crossing = pool[Math.floor(random() * pool.length)]!
+			const crossing = pick(pool, random)
 			const { raw, components, formID, tailID, caseID } = renderRow(random, crossing, zipCity)
 
 			if (seenRaw.has(raw)) {

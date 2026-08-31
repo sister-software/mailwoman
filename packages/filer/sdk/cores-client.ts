@@ -51,7 +51,13 @@
  *   `Lumen Technologies Inc.`, and the uniformly-cased guard is what stops it mangling `WOW!` or `IDT`.
  */
 
-import { APIClient, type APIClientConfig, type ClockLike } from "@mailwoman/core/api"
+import {
+	API_CLIENT_DEFAULTS,
+	APIClient,
+	assertAllowedHost,
+	type APIClientConfig,
+	type ClockLike,
+} from "@mailwoman/core/api"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { $private } from "@mailwoman/core/env"
 import { ResourceError } from "@mailwoman/core/errors"
@@ -59,7 +65,6 @@ import { dataRootPath } from "@mailwoman/core/utils"
 
 import { decodeEntities, normalizeWhitespace, stripTags } from "#sdk/exhibit21"
 import { isFRN, type FRN } from "#sdk/frn"
-import { canonicalHostname } from "#sdk/host"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.
 export { isTransientResourceError } from "@mailwoman/core/api"
@@ -94,10 +99,6 @@ const DEFAULT_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 const HTTP_OK = 200
 const HTTP_MULTIPLE_CHOICES = 300
 
-const DEFAULT_MAX_ATTEMPTS = 3
-const DEFAULT_BASE_RETRY_DELAY_MS = 500
-const DEFAULT_REQUEST_TIMEOUT_MS = 30_000
-
 /**
  * The only host this client will send a request to. Matching is EXACT (a `Set` lookup on the hostname), never a suffix
  * check — `apps.fcc.gov.attacker.example` must not match, and an `.endsWith(".fcc.gov")` test would admit it. Mirrors
@@ -112,29 +113,14 @@ const CORES_BASE_URL = "https://apps.fcc.gov"
  * transient, since re-issuing the identical URL fails identically.
  */
 function assertCORESHost(url: URL): void {
-	if (url.protocol !== "https:") {
-		throw ResourceError.from(
-			400,
-			`createCORESClient: refusing to request "${url}" over ${url.protocol.replace(":", "")} — this client only ` +
-				"sends requests over https, so the configured User-Agent (a contact address) is never sent in cleartext.",
-			"cores",
-			"request",
-			"insecure-scheme"
-		)
-	}
-
-	if (!CORES_ALLOWED_HOSTS.has(canonicalHostname(url))) {
-		throw ResourceError.from(
-			400,
-			`createCORESClient: refusing to request "${url}" — this client only sends requests to ` +
-				`${[...CORES_ALLOWED_HOSTS].join(", ")}. Note that data.fcc.gov is NOT on this list: its documented ` +
-				"FRN JSON API 403s at the Akamai edge from the lab host, which is why this client uses the " +
-				"apps.fcc.gov detail page instead.",
-			"cores",
-			"request",
-			"host-not-allowed"
-		)
-	}
+	assertAllowedHost(url, {
+		allowed: CORES_ALLOWED_HOSTS,
+		scope: "createCORESClient",
+		clientName: "cores",
+		hostNote:
+			"Note that data.fcc.gov is NOT on this list: its documented FRN JSON API 403s at the Akamai edge from the " +
+			"lab host, which is why this client uses the apps.fcc.gov detail page instead.",
+	})
 }
 
 /**
@@ -433,8 +419,8 @@ export function createCORESClient(options: CreateCORESClientOptions = {}): CORES
 		// the window boundary, and sub-millisecond jitter tips it inside.
 		minRequestIntervalMs: Math.ceil(MS_PER_SECOND / requestsPerSecond),
 		retry: {
-			maxAttempts: options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS,
-			baseDelayMs: options.baseRetryDelayMs ?? DEFAULT_BASE_RETRY_DELAY_MS,
+			maxAttempts: options.maxAttempts ?? API_CLIENT_DEFAULTS.maxAttempts,
+			baseDelayMs: options.baseRetryDelayMs ?? API_CLIENT_DEFAULTS.baseRetryDelayMs,
 		},
 		clock: options.clock,
 		caching: {
@@ -451,7 +437,7 @@ export function createCORESClient(options: CreateCORESClientOptions = {}): CORES
 				"User-Agent": userAgent,
 				"Accept-Encoding": "gzip, deflate",
 			},
-			timeout: options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS,
+			timeout: options.requestTimeoutMs ?? API_CLIENT_DEFAULTS.requestTimeoutMs,
 			responseType: "text",
 			...options.axios,
 		},

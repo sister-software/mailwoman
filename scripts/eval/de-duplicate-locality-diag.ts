@@ -21,10 +21,10 @@
  *   [--anchor-lookup $MAILWOMAN_DATA_ROOT/anchor/pilot-anchor-lookup.json]
  */
 
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { type AddressTree, firstNodeWhere } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, formatPercent, tempRootPath } from "@mailwoman/core/utils"
 import { JSONSpliterator } from "spliterator"
 
 import { norm, valueMatch } from "./value-match.ts"
@@ -54,28 +54,6 @@ const values = rawValues as {
 interface OaRow {
 	input: string
 	expected: { locality?: string; region?: string }
-}
-
-function firstByTag(tree: AddressTree, tag: string): AddressNode | undefined {
-	let found: AddressNode | undefined
-
-	const walk = (n: AddressNode): void => {
-		if (found) return
-
-		if (n.tag === tag) {
-			found = n
-		} else {
-			for (const c of n.children) {
-				walk(c)
-			}
-		}
-	}
-
-	for (const r of tree.roots) {
-		walk(r)
-	}
-
-	return found
 }
 
 async function main(): Promise<void> {
@@ -131,14 +109,15 @@ async function main(): Promise<void> {
 			continue
 		}
 
-		const pred = firstByTag(tree, "locality")
+		const pred = firstNodeWhere(tree.roots, (n) => n.tag === "locality")
 
 		if (pred && valueMatch(pred.value, loc)) {
 			bucket.ok++
 		}
 	}
 
-	const pct = (b: { ok: number; n: number }): string => (b.n ? ((100 * b.ok) / b.n).toFixed(1) : "0.0") + "%"
+	// Byte-identical to the retired local: an empty bucket has ok=0, so `zero: "clamp"` renders "0.0%".
+	const pct = (b: { ok: number; n: number }): string => formatPercent(b.ok, b.n, 1, { zero: "clamp" })
 
 	console.log(`# DE intl locality-parse — duplicate (locality==region) vs distinct`)
 	console.log(``)

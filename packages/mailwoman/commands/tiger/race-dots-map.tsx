@@ -13,7 +13,13 @@ import { tempRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	reportToStderr,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -50,8 +56,6 @@ interface Options {
 	port: number
 }
 
-const report = (line: string): void => console.error(line)
-
 const TIGERRaceDotsMap: ParsedCommandComponent<Options> = ({ options }) => {
 	const [serving, setServing] = useState<{ dir: string; port: number } | null>(null)
 
@@ -78,13 +82,13 @@ const TIGERRaceDotsMap: ParsedCommandComponent<Options> = ({ options }) => {
 				lat: options.lat,
 				zoom: options.zoom,
 			},
-			report
+			reportToStderr
 		)
 
 		if (options.serve) {
 			const { dirname } = await import("path-ts")
 			const dir = dirname(result.outPath)
-			await tools.serveWithRangeSupport({ dir, port: options.port }, report)
+			await tools.serveWithRangeSupport({ dir, port: options.port }, reportToStderr)
 			setServing({ dir, port: options.port })
 
 			// Long-running: mirror `mailwoman serve` — keep the task pending so useCommandTask never
@@ -95,7 +99,7 @@ const TIGERRaceDotsMap: ParsedCommandComponent<Options> = ({ options }) => {
 		return result
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (serving) {
 		return (

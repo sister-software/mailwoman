@@ -32,10 +32,12 @@
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
 import {
+	collectMatchesFor,
+	createLabelSetter,
+	isAddSafe,
+	isTagLabel,
 	type RepairResult,
-	selectNonOverlappingMatches,
 	type SpanMatch,
-	tagOf,
 	tokenIndicesOverlapping,
 } from "#span-repair"
 
@@ -87,25 +89,11 @@ const OUTSIDE = "O" as DecoderToken["label"]
  */
 const ADD_OVER_TAGS = new Set<string>(["locality", "dependent_locality"])
 
-function isUnitLabel(label: string): boolean {
-	return label === "B-unit" || label === "I-unit"
-}
-
 /**
  * Collect non-overlapping unit matches, preferring more-specific (earlier) patterns + longest.
  */
 function collectMatches(text: string): UnitMatch[] {
-	const candidates: UnitMatch[] = []
-
-	UNIT_PATTERNS.forEach((pat, priority) => {
-		pat.re.lastIndex = 0
-
-		for (let m = pat.re.exec(text); m; m = pat.re.exec(text)) {
-			candidates.push({ start: m.index, end: m.index + m[0].length, priority })
-		}
-	})
-
-	return selectNonOverlappingMatches(candidates)
+	return collectMatchesFor(UNIT_PATTERNS, text).map(({ start, end, priority }) => ({ start, end, priority }))
 }
 
 /**
@@ -118,49 +106,33 @@ export function repairUnitLabels(text: string, input: readonly DecoderToken[]): 
 
 	if (!matches.length) return { tokens, changed: 0 }
 
-	let changed = 0
-
-	const setLabel = (i: number, label: DecoderToken["label"]): void => {
-		if (tokens[i]!.label !== label) {
-			tokens[i]!.label = label
-
-			changed++
-		}
-	}
+	const { setLabel, changeCount } = createLabelSetter(tokens)
 
 	for (const m of matches) {
 		const overlap = tokenIndicesOverlapping(tokens, m.start, m.end)
 
 		if (!overlap.length) continue
 
-		const hasUnit = overlap.some((i) => isUnitLabel(tokens[i]!.label))
+		const hasUnit = overlap.some((i) => isTagLabel(tokens[i]!.label, "unit"))
 
-		if (!hasUnit) {
-			// ADD path — explicit designators are high-confidence, but only ever over O or a
-			// geographic-container tag (locality/dependent_locality — the tags the model
-			// mislabels bare units as). Never clobber a confident house_number/street/postcode/
-			// po_box/region/country/venue.
-			const safe = overlap.every((i) => {
-				const tag = tagOf(tokens[i]!.label)
-
-				return tag === null || ADD_OVER_TAGS.has(tag)
-			})
-
-			if (!safe) continue
-		}
+		// ADD path — explicit designators are high-confidence, but only ever over O or a
+		// geographic-container tag (locality/dependent_locality — the tags the model
+		// mislabels bare units as). Never clobber a confident house_number/street/postcode/
+		// po_box/region/country/venue.
+		if (!hasUnit && !isAddSafe(tokens, overlap, ADD_OVER_TAGS)) continue
 
 		// SNAP/ADD: relabel the matched run as a single unit span.
 		overlap.forEach((i, k) => setLabel(i, k === 0 ? UNIT_B : UNIT_I))
 
 		// Local smear clip: clear unit tokens immediately flanking the snapped run.
-		for (let j = overlap[0]! - 1; j >= 0 && isUnitLabel(tokens[j]!.label); j--) {
+		for (let j = overlap[0]! - 1; j >= 0 && isTagLabel(tokens[j]!.label, "unit"); j--) {
 			setLabel(j, OUTSIDE)
 		}
 
-		for (let j = overlap.at(-1)! + 1; j < tokens.length && isUnitLabel(tokens[j]!.label); j++) {
+		for (let j = overlap.at(-1)! + 1; j < tokens.length && isTagLabel(tokens[j]!.label, "unit"); j++) {
 			setLabel(j, OUTSIDE)
 		}
 	}
 
-	return { tokens, changed }
+	return { tokens, changed: changeCount() }
 }

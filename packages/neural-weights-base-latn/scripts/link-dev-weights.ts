@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import { $public } from "@mailwoman/core/env"
-import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 /**
@@ -8,7 +7,7 @@ import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@
  * packages, but ships only the shared model + tokenizer + calibration + lexicons; locale-specific data stays in each
  * overlay).
  */
-import { linkForce } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import { linkForce, linkSoftFeedSibling } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 import { resolvePath } from "path-ts"
 
 /**
@@ -52,41 +51,36 @@ await linkForce(SRC_TOKENIZER, TOKENIZER_DEST)
 console.log(`linked tokenizer.model ← ${SRC_TOKENIZER}`)
 
 /**
- * Soft-feed lexicons: same sources as en-us (codex-generated repo files)
+ * Soft-feed lexicons + shared metadata: same sources as en-us (codex-generated repo files, en-us's committed card and
+ * calibration pair). Each link takes the shared warn-and-continue miss semantics — the consequence line says which
+ * channel or metadata just resolved OFF for this overlay.
  */
-const SRC_GAZETTEER = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
-/**
- * Country-surface lexicon generated into the repo by the codex build.
- */
-const SRC_COUNTRY = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
-/**
- * Model card carrying the digests and training provenance this script verifies against.
- */
-const SRC_CARD = workspacePath("neural-weights-en-us", "model-card.json")
-/**
- * Global confidence calibration emitted by the training run.
- */
-const SRC_CALIBRATION = workspacePath("neural-weights-en-us", "calibration.json")
-/**
- * Per-locale confidence calibration, applied on top of the global one.
- */
-const SRC_CALIBRATION_PER_LOCALE = workspacePath("neural-weights-en-us", "calibration-per-locale.json")
-
-for (const [src, name] of [
-	[SRC_GAZETTEER, "anchor-lexicon-v1.json"],
-	[SRC_COUNTRY, "country-surface-lexicon-v1.json"],
-	[SRC_CARD, "model-card.json"],
-	[SRC_CALIBRATION, "calibration.json"],
-	[SRC_CALIBRATION_PER_LOCALE, "calibration-per-locale.json"],
+for (const [src, name, consequenceIfMissing] of [
+	[
+		repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json"),
+		"anchor-lexicon-v1.json",
+		"gazetteer channel will resolve OFF in this worktree.",
+	],
+	[
+		repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json"),
+		"country-surface-lexicon-v1.json",
+		"country channel will resolve OFF in this worktree.",
+	],
+	[
+		String(workspacePath("neural-weights-en-us", "model-card.json")),
+		"model-card.json",
+		"the base-latn overlay carries no model card (labels fall back to the compile-time default).",
+	],
+	[
+		String(workspacePath("neural-weights-en-us", "calibration.json")),
+		"calibration.json",
+		"confidence calibration will resolve OFF for this overlay.",
+	],
+	[
+		String(workspacePath("neural-weights-en-us", "calibration-per-locale.json")),
+		"calibration-per-locale.json",
+		"per-locale confidence calibration will resolve OFF for this overlay.",
+	],
 ] as const) {
-	if (!(await pathExists(src))) {
-		console.error(`MISSING ${src}`)
-
-		continue
-	}
-
-	const dest = resolvePath(DEST_DIR, name)
-	await linkForce(src, dest)
-
-	console.log(`linked ${name} ← ${src}`)
+	await linkSoftFeedSibling(src, resolvePath(DEST_DIR, name), consequenceIfMissing)
 }

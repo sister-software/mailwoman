@@ -9,10 +9,15 @@
  *   scripts/build-po-box-shard.mjs.
  */
 
-import { alignAndWrite, makeLcg, readTuples, shardSourceID, type ShardRecipe } from "#shard-recipes/scaffold"
+import {
+	alignAndWrite,
+	makeLcg,
+	readTuples,
+	shardSourceID,
+	SYNTHETIC_TUPLE_LICENSE as LICENSE,
+	type ShardRecipe,
+} from "#shard-recipes/scaffold"
 import { synthesizeMilitaryPoBoxRow, synthesizePoBoxRow, type PoBoxBaseTuple } from "#synthesizers/po-box"
-
-const LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"
 
 /**
  * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,

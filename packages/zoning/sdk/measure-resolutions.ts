@@ -22,25 +22,18 @@
  *   runs out of headroom runs the candidates in separate invocations.
  */
 
+import type { ResolutionMeasurementOptions } from "@mailwoman/core/layers"
+
 import { polyfillFindsNothing, ZoningCellIndex, classifyFeatureCells, type CellIndexMeasurement } from "#sdk/cells"
 import { readZoningFeatures, readZoningSourceIdentity, type ZoningIngestOptions } from "#sdk/ingest"
 
-export interface MeasureResolutionsOptions extends ZoningIngestOptions {
-	/**
-	 * The candidate resolutions to report.
-	 */
-	resolutions: readonly number[]
+export interface MeasureResolutionsOptions extends ZoningIngestOptions, ResolutionMeasurementOptions {
 	/**
 	 * Also run a centre-in-polygon polyfill per feature per resolution, to report what a polyfill-only index would have
 	 * dropped. On by default: it is the column the resolution is chosen on, and its cost is one extra h3 call per
 	 * feature.
 	 */
 	measurePolyfill?: boolean
-	onProgress?: (message: string) => void
-	/**
-	 * How often to report progress, in features.
-	 */
-	progressEvery?: number
 }
 
 export interface ResolutionMeasurementReport {

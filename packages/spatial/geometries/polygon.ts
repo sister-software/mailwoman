@@ -262,6 +262,22 @@ export function arealPolygons(geometry: ParsedGeometry | null | undefined): Mult
 }
 
 /**
+ * The polygons of a geometry that MUST be areal — {@linkcode arealPolygons} with the refusal every polygon ingest was
+ * writing for itself.
+ *
+ * @param subject Names the feature in the refusal, e.g. `feature 41209`.
+ * @param context Names the calling ingest, so a build log says which layer stopped.
+ * @throws {Error} When the geometry is neither a `Polygon` nor a `MultiPolygon`.
+ */
+export function requireArealPolygons(geometry: ParsedGeometry, subject: string, context: string): MultiPolygonRings {
+	const polygons = arealPolygons(geometry)
+
+	if (polygons) return polygons
+
+	throw new Error(`${context}: ${subject} is a ${geometry.type}, expected Polygon or MultiPolygon`)
+}
+
+/**
  * Does an areal GeoJSON geometry contain the point?
  *
  * The three-valued return is the point of the function. `null` means the geometry is NOT AREAL — a Point or a

@@ -26,13 +26,20 @@
  */
 
 import { Spinner } from "@inkjs/ui"
-import { pathExists } from "@mailwoman/core/fs/readers"
 import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
-import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import type { Resolver } from "@mailwoman/resolver"
 import { Text } from "ink"
 
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	loadClassifierTolerant,
+	type ParsedCommandComponent,
+	reportToStderr,
+	useCommandTask,
+	writeRawStdout,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -66,19 +73,6 @@ interface Options {
 }
 
 /**
- * Try to load the neural classifier; undefined lets the rule-based kind/fast-path stages still run.
- */
-async function tryLoadNeural(locale: string): Promise<NeuralAddressClassifier | undefined> {
-	try {
-		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-
-		return await NeuralAddressClassifier.loadFromWeights({ locale })
-	} catch {
-		return undefined
-	}
-}
-
-/**
  * Try to build the WOF resolver (same backend selector `geocode.tsx`/`parse.tsx --resolve` use), so an anchor remainder
  * resolves to lat/lon and `--db` category/brand queries can compute a search center. Lazy + optional: an absent
  * gazetteer or an unbuilt `@mailwoman/resolver-wof-sqlite` peer degrades to no resolver (today's pre-wiring behavior)
@@ -86,23 +80,12 @@ async function tryLoadNeural(locale: string): Promise<NeuralAddressClassifier | 
  * backend lookup.
  */
 async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver } & Disposable) | undefined> {
-	const { resolveCandidateDBPath, wofShardPaths } = await import("#resolver-backend")
-	const candidateDB = await resolveCandidateDBPath(options.candidateDB)
+	const { resolvePOIResolverPaths } = await import("#resolver-backend")
 
-	const wofPathCandidates = candidateDB
-		? []
-		: options.resolveDB
-			? options.resolveDB.split(",").map((p) => p.trim())
-			: wofShardPaths()
-
-	// Existence is probed sequentially so the filter callback can stay synchronous.
-	const wofPaths: string[] = []
-
-	for (const p of wofPathCandidates) {
-		if (await pathExists(p)) {
-			wofPaths.push(p)
-		}
-	}
+	const { candidateDB, wofPaths } = await resolvePOIResolverPaths({
+		candidateDB: options.candidateDB,
+		resolveDB: options.resolveDB,
+	})
 
 	if (!candidateDB && !wofPaths.length) {
 		console.error(
@@ -239,7 +222,9 @@ async function formatOutcome(outcome: POIIntentOutcome, options: Options): Promi
 async function runPOI(input: string, options: Options): Promise<string> {
 	const { createRuntimePipeline } = await import("#index")
 
-	const classifier = await tryLoadNeural(options.locale)
+	// #1108: an attempted-but-failed encoder load is never silent — absent weights get an install hint,
+	// a corrupt bundle surfaces its underlying error. Stderr only; stdout stays the probe output.
+	const classifier = await loadClassifierTolerant(options.locale, { onDegrade: reportToStderr })
 	const resolverHandle = await tryLoadResolver(options)
 
 	try {
@@ -277,12 +262,8 @@ const PoiCommand: ParsedCommandComponent<Options> = ({ options, args }) => {
 		return await runPOI(input.trim(), options)
 	})
 
-	if (state.status === "error") {
-		return <Text color="red">{state.message}</Text>
-	}
-
 	if (state.status !== "done") {
-		return <Spinner />
+		return <CommandTaskResult state={state} running={<Spinner />} />
 	}
 
 	// --json dumps raw JSON — bypass Ink's word-wrapping <Text> renderer, which corrupts long

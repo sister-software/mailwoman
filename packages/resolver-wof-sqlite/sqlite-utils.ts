@@ -8,6 +8,7 @@
 
 import { allRows, getRow } from "@mailwoman/core/utils"
 import type { DatabaseClient, SQLInputValue } from "@mailwoman/sqlite/client"
+import { hasColumn as columnExists, tableExists } from "@mailwoman/sqlite/introspection"
 
 // The row-shape assertion itself lives in `core` so the readers that cannot depend on this package reach the same
 // seam; re-exported here because this module is where this package's readers already look for it.
@@ -56,9 +57,7 @@ export function prepareAll<Parameters extends SQLInputValue[], Row, DB>(
  */
 export function hasTable<DB>(db: DatabaseClient<DB>, name: string): boolean {
 	try {
-		const row = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1").get(name)
-
-		return row !== undefined
+		return tableExists(db, name)
 	} catch {
 		return false
 	}
@@ -77,9 +76,7 @@ export function hasTable<DB>(db: DatabaseClient<DB>, name: string): boolean {
  */
 export function hasColumn<DB>(db: DatabaseClient<DB>, table: string, column: string): boolean {
 	try {
-		const rows = allRows<{ name: string }>(db.prepare(`PRAGMA table_info(${table})`))
-
-		return rows.some((r) => String(r.name) === column)
+		return columnExists(db, table, column)
 	} catch {
 		return false
 	}

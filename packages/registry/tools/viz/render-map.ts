@@ -9,8 +9,8 @@
  *
  *   Two house-stack constraints make this fiddlier than the Plotly/SVG renderers:
  *
- *   - MapLibre needs a real WebGL context → ANGLE's SwiftShader software rasterizer (the same flags the
- *       3D Plotly render uses).
+ *   - MapLibre needs a real WebGL context — the shared harness (`./browser.ts`) provides one through
+ *       SwiftShader.
  *   - The basemap tiles come from `tiles.mailwoman.ai`, which CORS-restricts to localhost + the docs
  *       domains — so the page MUST be SERVED OVER LOCALHOST, not opened as a file (a file:// page
  *       renders accurate markers on a blank basemap). Serve the output dir first, e.g. `python3 -m
@@ -18,10 +18,9 @@
  *
  *   The map paints asynchronously after the network settles; we wait for networkidle, then a fixed
  *   beat for the basemap tiles + marker layer to finish compositing.
- *
- *   Playwright (headless Chromium) is a heavy dev-only dependency — lazy-imported inside the entry
- *   fn (the corpus-tools lazy-import convention).
  */
+
+import { withChromiumPage } from "#tools/viz/browser"
 
 /**
  * Options for {@linkcode renderServedMapToPNG}.
@@ -44,24 +43,12 @@ export async function renderServedMapToPNG(
 	options: RenderMapOptions,
 	report?: (line: string) => void
 ): Promise<{ outPNG: string; consoleErrors: string[] }> {
-	// playwright + Chromium are heavy — lazy import (the pipeline convention).
-	const { chromium } = await import("playwright")
-
-	const browser = await chromium.launch({
-		args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
+	const { consoleErrors: errors } = await withChromiumPage({ viewport: { width: 1100, height: 760 } }, async (page) => {
+		await page.goto(options.url, { waitUntil: "networkidle", timeout: 30_000 })
+		// MapLibre composites tiles + the marker layer async after the network settles; give it a beat.
+		await page.waitForTimeout(4000)
+		await page.screenshot({ path: options.outPNG })
 	})
-
-	const page = await browser.newPage({ viewport: { width: 1100, height: 760 }, deviceScaleFactor: 2 })
-
-	const errors: string[] = []
-	page.on("console", (m) => m.type() === "error" && errors.push(m.text()))
-	page.on("pageerror", (e) => errors.push(String(e)))
-
-	await page.goto(options.url, { waitUntil: "networkidle", timeout: 30_000 })
-	// MapLibre composites tiles + the marker layer async after the network settles; give it a beat.
-	await page.waitForTimeout(4000)
-	await page.screenshot({ path: options.outPNG })
-	await browser[Symbol.asyncDispose]()
 
 	report?.(`[map-render] ${options.outPNG}; console errors=${errors.length}`)
 

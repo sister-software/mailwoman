@@ -7,9 +7,25 @@
  *   Every timing assertion runs against an injected clock; nothing here sleeps on the wall clock.
  */
 
+import type { ClockLike } from "@mailwoman/core/api"
 import { RequestPacer } from "@mailwoman/core/api/pacer"
-import { createFakeClock, maxCountInSlidingWindow, VirtualClock } from "@mailwoman/core/api/test-clocks"
+import {
+	createFakeClock,
+	drainMicrotasks,
+	maxCountInSlidingWindow,
+	VirtualClock,
+} from "@mailwoman/core/api/test-clocks"
 import { describe, expect, it } from "vitest"
+
+/**
+ * An `acquire()` that records the clock reading at each grant.
+ */
+function makeRecordedAcquire(pacer: RequestPacer, clock: ClockLike, grantTimes: number[]): () => Promise<void> {
+	return async () => {
+		await pacer.acquire()
+		grantTimes.push(clock.now())
+	}
+}
 
 describe("RequestPacer", () => {
 	it("rejects a zero or non-finite interval instead of silently not pacing", () => {
@@ -64,11 +80,7 @@ describe("RequestPacer", () => {
 		const clock = new VirtualClock()
 		const pacer = new RequestPacer(INTERVAL_MS, clock)
 		const grantTimes: number[] = []
-
-		async function recordedAcquire(): Promise<void> {
-			await pacer.acquire()
-			grantTimes.push(clock.now())
-		}
+		const recordedAcquire = makeRecordedAcquire(pacer, clock, grantTimes)
 
 		// `Array.from`'s mapper runs synchronously for every index — this genuinely fans out 40
 		// concurrent `acquire()` calls with no intervening async I/O.
@@ -77,9 +89,7 @@ describe("RequestPacer", () => {
 		// The first call resolves without sleeping, but awaiting an already-resolved promise still defers
 		// its `push` to the microtask queue. Flush it HERE, before driving the clock — otherwise
 		// `advance()`'s own first internal await would flush it, by which point `now()` has left t=0.
-		await new Promise<void>((resolve) => {
-			setImmediate(resolve)
-		})
+		await drainMicrotasks()
 
 		await clock.advance((TOTAL_CALLS - 1) * INTERVAL_MS)
 		await Promise.all(pending)
@@ -103,31 +113,22 @@ describe("RequestPacer", () => {
 		const clock = new VirtualClock()
 		const pacer = new RequestPacer(INTERVAL_MS, clock)
 		const grantTimes: number[] = []
-
-		async function recordedAcquire(): Promise<void> {
-			await pacer.acquire()
-			grantTimes.push(clock.now())
-		}
+		const recordedAcquire = makeRecordedAcquire(pacer, clock, grantTimes)
 
 		// `VirtualClock.advance` mutates `now()` before its first internal await flushes the microtask
 		// queue, so an already-resolved `acquire()` whose continuation is still queued would record the
 		// POST-advance time. Flush to quiescence first, at every point where that could happen.
-		const flush = () =>
-			new Promise<void>((resolve) => {
-				setImmediate(resolve)
-			})
-
 		for (let i = 0; i < SERIAL_CALLS; i++) {
 			const pending = recordedAcquire()
 
-			await flush()
+			await drainMicrotasks()
 			await clock.advance(INTERVAL_MS)
 			await pending
 		}
 
 		const fanout = Array.from({ length: FANOUT_CALLS }, () => recordedAcquire())
 
-		await flush()
+		await drainMicrotasks()
 		await clock.advance(FANOUT_CALLS * INTERVAL_MS)
 		await Promise.all(fanout)
 

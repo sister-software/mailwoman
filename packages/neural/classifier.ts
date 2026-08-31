@@ -36,9 +36,7 @@ import type {
 } from "#classifier-options"
 import { buildFSTEmissionPriors } from "#fst-prior"
 import { STAGE2_BIO_LABELS } from "#labels"
-// SELF-REFERENCE, not a relative path: export conditions do not apply to relative specifiers, so
-// `./onnx-runner.ts` bypasses the browser counterpart. The package name is what routes this.
-import type { InferResult } from "#onnx-runner"
+import type { InferFunction } from "#ort-feeds"
 import type { PlacetypeCensusLike } from "#placetype-census"
 import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "#placetype-pair-prior"
 import { repairPostcodeLabels } from "#postcode-repair"
@@ -53,7 +51,14 @@ import type { MailwomanTokenizer } from "#tokenizer"
 import { TRACE_PRIOR_KINDS } from "#trace"
 import type { NeuralParseTrace, TracePrior, TraceRepair, TraceRepairPass } from "#trace"
 import { repairUnitLabels } from "#unit-repair"
-import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, softmax, viterbi } from "#viterbi"
+import {
+	argmaxWithConfidence,
+	buildBIOEndMask,
+	buildBIOStartMask,
+	buildBIOTransitionMask,
+	softmax,
+	viterbi,
+} from "#viterbi"
 import { enforceWordConsistency } from "#word-consistency"
 
 export type {
@@ -66,19 +71,10 @@ export type {
 /**
  * Structural type the classifier needs from a runner. Lets callers swap the Node-side `ONNXRunner` for a browser-side
  * runner (e.g. `@mailwoman/neural-web`'s `WebONNXRunner`) without inheritance — the classifier only ever calls
- * `infer(ids)`.
+ * `infer(ids)`. The signature is {@link InferFunction}, the one contract both runners implement.
  */
 export interface NeuralRunner {
-	infer(
-		tokenIDs: number[],
-		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
-		gazetteer?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
-		country?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
-		evidence?: {
-			streetType?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
-			localitySurface?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
-		}
-	): Promise<InferResult>
+	infer: InferFunction
 }
 
 /**
@@ -621,7 +617,7 @@ export class NeuralAddressClassifier {
 						// argmax path has no transitions to adjust.
 						...(pairTransitionAdjustments ? { transitionAdjustments: pairTransitionAdjustments } : {}),
 					}).path
-				: emissions.map((row) => argmaxSoftmax(row).idx)
+				: emissions.map((row) => argmaxWithConfidence(row).idx)
 
 		// The trace's `path` is the DECODER's output — snapshot before the word-consistency healing
 		// below reassigns labelIndices (the healing itself is visible as a `wordConsistency` repair).
@@ -787,28 +783,6 @@ export class NeuralAddressClassifier {
 			)
 		}
 	}
-}
-
-function argmaxSoftmax(row: number[]): { idx: number; conf: number } {
-	let maxIdx = 0
-	let maxVal = row[0]!
-
-	for (let i = 1; i < row.length; i++) {
-		if (row[i]! > maxVal) {
-			maxVal = row[i]!
-			maxIdx = i
-		}
-	}
-
-	let sumExp = 0
-
-	for (const v of row) {
-		sumExp += Math.exp(v - maxVal)
-	}
-
-	const conf = 1 / sumExp
-
-	return { idx: maxIdx, conf }
 }
 
 /**

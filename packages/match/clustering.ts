@@ -113,6 +113,7 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 	const index = new Map<R, number>()
 	records.forEach((record, i) => index.set(record, i))
 
+	// Local by design: the shared union-find is `@mailwoman/core/utils/union-find`; match takes no core dependency (~11 MB).
 	const parent = records.map((_, i) => i)
 	const rank = new Array<number>(records.length).fill(0)
 

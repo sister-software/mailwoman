@@ -29,8 +29,9 @@
  */
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
+import { bboxAround, geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { tableExists } from "@mailwoman/sqlite/introspection"
 
 import { ancestorLineage, placetypeDepth } from "#ancestry"
 import { PLACE_BBOX_TABLE } from "#fts"
@@ -197,28 +198,18 @@ export class WOFReverseGeocoder implements Disposable {
 
 		// Fail loudly up front — the R*Tree is a build artifact, not part of the upstream WOF
 		// distribution, and a missing index would otherwise surface as an opaque SQL error per query.
-		const hasBbox = this.#admin
-			.prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?`)
-			.get(PLACE_BBOX_TABLE)
-
-		if (!hasBbox) {
+		if (!tableExists(this.#admin, PLACE_BBOX_TABLE)) {
 			throw new Error(
 				`WOFReverseGeocoder: the admin DB has no \`${PLACE_BBOX_TABLE}\` R*Tree. Build it with ` +
 					"`mailwoman gazetteer build fts <path-to-wof.db>` (see resolver-wof-sqlite/README.md)."
 			)
 		}
 
-		if (this.#polygons) {
-			const hasPolygons = this.#polygons
-				.prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'polygons'`)
-				.get()
-
-			if (!hasPolygons) {
-				throw new Error(
-					"WOFReverseGeocoder: the polygon DB has no `polygons` table. Expected a `wof-polygons.db` " +
-						"built by scripts/build-wof-polygons.mjs."
-				)
-			}
+		if (this.#polygons && !tableExists(this.#polygons, "polygons")) {
+			throw new Error(
+				"WOFReverseGeocoder: the polygon DB has no `polygons` table. Expected a `wof-polygons.db` " +
+					"built by scripts/build-wof-polygons.mjs."
+			)
 		}
 	}
 
@@ -416,7 +407,7 @@ export class WOFReverseGeocoder implements Disposable {
 		lon: number,
 		maxApproximateKm: number
 	): CandidateRow[] {
-		const windowDeg = (maxApproximateKm * 4) / 111
+		const window = bboxAround(lat, lon, maxApproximateKm * 4)
 
 		return allRows<CandidateRow>(
 			this.#admin.prepare(
@@ -428,10 +419,10 @@ export class WOFReverseGeocoder implements Disposable {
 			),
 			parentID,
 			placetype,
-			lat - windowDeg,
-			lat + windowDeg,
-			lon - windowDeg,
-			lon + windowDeg
+			window.minLat,
+			window.maxLat,
+			window.minLon,
+			window.maxLon
 		)
 	}
 

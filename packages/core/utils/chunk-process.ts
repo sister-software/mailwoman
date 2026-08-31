@@ -47,6 +47,33 @@ export interface RunChunkProcessOptions {
 }
 
 /**
+ * The argv every layer ingest-chunk process shares: the temp artifact the parent created, the caller's own flags, then
+ * the two resolutions.
+ *
+ * THE PARENT HOLDS NO HANDLE WHILE THE CHUNKS RUN — its caller closed one before the batched ingest and opens another
+ * after. Each child opens the same file and appends; chunks run one at a time, so there is exactly one writer at every
+ * instant and no locking to reason about. A chunk that exits non-zero, or prints no result line, throws in
+ * {@link runChunkProcess}: a chunk that died mid-range has written a partial set of rows, and continuing would seal an
+ * artifact missing features nobody could name.
+ */
+export function ingestChunkArguments(options: {
+	database: string
+	args?: readonly string[]
+	indexResolution: number
+	coverageResolution: number
+}): string[] {
+	return [
+		"--database",
+		options.database,
+		...(options.args ?? []),
+		"--index-resolution",
+		String(options.indexResolution),
+		"--coverage-resolution",
+		String(options.coverageResolution),
+	]
+}
+
+/**
  * Run one chunk process and parse its result line.
  *
  * @throws {Error} When the process fails to spawn, exits non-zero, or prints no result line.

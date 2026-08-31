@@ -6,17 +6,17 @@
  * Usage: node packages/mailwoman/dev-tools/score-street-name-boundaries.run.ts
  */
 
-import { type ComponentTag, decodeAsTuples } from "@mailwoman/core"
+import { groupTuplesByTag } from "@mailwoman/core"
+import { STREET_FAMILY_TAGS } from "@mailwoman/core/types"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 
 import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
 import { overlayLocale, routeCountry } from "#eval-harness/gauntlet/routing"
 import { createRuntimePipeline } from "#index"
 
 const SOURCE = "operator:street-name-audit-2026-08-09"
-const STREET_FAMILY = ["street_prefix", "street_prefix_particle", "street", "street_suffix"] as const
 
-const fold = (value: string): string => value.normalize("NFKC").toLocaleLowerCase().replaceAll(/\s+/gu, " ").trim()
 const fixtures = (await loadRegressionCases()).filter((row) => row.source === SOURCE)
 const classifiers = new Map<string, Awaited<ReturnType<typeof NeuralAddressClassifier.loadFromWeights>>>()
 const scores = new Map<string, { hit: number; total: number }>()
@@ -32,13 +32,9 @@ for (const row of fixtures) {
 	}
 
 	const result = await createRuntimePipeline({ classifier })(row.input, { locale })
-	const emitted = new Map<ComponentTag, string[]>()
+	const emitted = groupTuplesByTag(result.tree)
 
-	for (const [tag, value] of decodeAsTuples(result.tree)) {
-		emitted.set(tag, [...(emitted.get(tag) ?? []), value])
-	}
-
-	const parts = STREET_FAMILY.flatMap((tag) => emitted.get(tag) ?? [])
+	const parts = STREET_FAMILY_TAGS.flatMap((tag) => emitted.get(tag) ?? [])
 	const actual = parts.join(" ")
 	const expected = row.expectComponents?.street ?? row.input
 	const score = scores.get(row.country) ?? { hit: 0, total: 0 }
@@ -46,10 +42,10 @@ for (const row of fixtures) {
 	score.total++
 	scores.set(row.country, score)
 
-	if (fold(actual) === fold(expected)) {
+	if (foldNFKCWhitespace(actual) === foldNFKCWhitespace(expected)) {
 		score.hit++
 	} else {
-		const decomposition = STREET_FAMILY.flatMap((tag) =>
+		const decomposition = STREET_FAMILY_TAGS.flatMap((tag) =>
 			(emitted.get(tag) ?? []).map((value) => `${tag}=${JSON.stringify(value)}`)
 		).join(" · ")
 

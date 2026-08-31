@@ -1,9 +1,8 @@
 import { tryStat, readDirectoryEntries } from "@mailwoman/core/fs/readers"
-import { render } from "ink"
 import { createElement } from "react"
 import type { ComponentType } from "react"
 
-import { CLIUsageError, type CommandSpec, parseCommand, renderCommandHelp } from "#cli-native/spec"
+import { CLIUsageError, type CommandSpec, parseCommand, renderCommandHelp, renderInkCommand } from "#cli-native/spec"
 
 interface CommandModule {
 	spec?: CommandSpec
@@ -34,6 +33,19 @@ export function optionPropertyName(value: string): string {
 	)
 }
 
+/**
+ * Command names under one directory of the compiled tree — subdirectories plus `.js` files, `index.js` excluded.
+ */
+async function listCommandNames(directory: URL): Promise<string[]> {
+	const entries = await readDirectoryEntries(directory)
+
+	return entries
+		.filter(
+			(entry) => entry.isDirectory() || (entry.isFile() && entry.name.endsWith(".js") && entry.name !== "index.js")
+		)
+		.map((entry) => entry.name.replace(/\.js$/u, ""))
+}
+
 async function runCommand(module: CommandModule, commandPath: string, argv: readonly string[]): Promise<number> {
 	if (!module.spec) throw new TypeError(`Command ${commandPath} does not export a CommandSpec.`)
 
@@ -50,21 +62,11 @@ async function runCommand(module: CommandModule, commandPath: string, argv: read
 		Object.entries(parsed.values).map(([name, value]) => [optionPropertyName(name), value])
 	)
 
-	const instance = render(createElement(module.default, { options, args: parsed.positionals }))
-	await instance.waitUntilExit()
-
-	return typeof process.exitCode === "number" ? process.exitCode : 0
+	return await renderInkCommand(createElement(module.default, { options, args: parsed.positionals }))
 }
 
 async function groupHelp(parts: readonly string[]): Promise<number> {
-	const entries = await readDirectoryEntries(new URL(`${parts.join("/")}/`, COMMANDS_ROOT))
-
-	const commands = entries
-		.filter(
-			(entry) => entry.isDirectory() || (entry.isFile() && entry.name.endsWith(".js") && entry.name !== "index.js")
-		)
-		.map((entry) => entry.name.replace(/\.js$/u, ""))
-		.toSorted()
+	const commands = (await listCommandNames(new URL(`${parts.join("/")}/`, COMMANDS_ROOT))).toSorted()
 
 	process.stdout.write(`Usage: mw ${parts.join(" ")} <command> [options]\n\nCommands:\n`)
 
@@ -76,13 +78,7 @@ async function groupHelp(parts: readonly string[]): Promise<number> {
 }
 
 async function rootHelp(): Promise<number> {
-	const entries = await readDirectoryEntries(COMMANDS_ROOT)
-
-	const filesystemCommands = entries
-		.filter(
-			(entry) => entry.isDirectory() || (entry.isFile() && entry.name.endsWith(".js") && entry.name !== "index.js")
-		)
-		.map((entry) => entry.name.replace(/\.js$/u, ""))
+	const filesystemCommands = await listCommandNames(COMMANDS_ROOT)
 
 	const { nativeCommandRoutes } = await import("#cli-native/router")
 	const commands = new Map(filesystemCommands.map((name) => [name, ""]))

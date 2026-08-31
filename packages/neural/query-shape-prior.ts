@@ -34,6 +34,9 @@
  * Minimal subset of `QueryShape` this module consumes. Compatible with `@mailwoman/query-shape`'s exported `QueryShape`
  * type by shape — no import required.
  */
+import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
+import { spansOverlap } from "#span-repair"
+
 /**
  * Candidate count above which the shape prior is too diffuse to be worth applying.
  */
@@ -113,18 +116,8 @@ export function buildEmissionPriors(
 	const T = tokens.length
 	const L = labels.length
 	const biasScale = opts.biasScale ?? 1
-	const matrix: number[][] = []
-
-	for (let t = 0; t < T; t++) {
-		matrix.push(new Array<number>(L).fill(0))
-	}
-
-	// Index label → column for fast lookup.
-	const labelToCol = new Map<string, number>()
-
-	for (let k = 0; k < labels.length; k++) {
-		labelToCol.set(labels[k]!, k)
-	}
+	const matrix = emptyPriorMatrix(T, L)
+	const labelToCol = labelColumnIndex(labels)
 
 	if (!shape.knownFormats.length && !shape.regionAbbreviations?.length) {
 		return matrix
@@ -142,7 +135,7 @@ export function buildEmissionPriors(
 		for (let t = 0; t < T; t++) {
 			const tok = tokens[t]!
 
-			if (overlaps(tok, hit.span)) {
+			if (spansOverlap(tok, hit.span)) {
 				matrix[t]![col] = Math.max(matrix[t]![col]!, bias)
 			}
 		}
@@ -207,10 +200,6 @@ function applyScopedLocalityBias(
  * Log-odds bias for the scoped doubleton case — the retired version's strength, now reachable only by the doubleton.
  */
 const SCOPED_LOCALITY_BIAS = 2
-
-function overlaps(a: { start: number; end: number }, b: { start: number; end: number }): boolean {
-	return a.start < b.end && b.start < a.end
-}
 
 /**
  * Element-wise add two matrices of equal shape. Returns a new matrix.

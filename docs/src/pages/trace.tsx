@@ -14,11 +14,10 @@ import type React from "react"
 import { LiveModelVisualizer } from "../components/ModelVisualizer/LiveModelVisualizer.tsx"
 import { DemoEmbedProvider } from "../contexts/DemoEmbed.tsx"
 import { useSiteConfig } from "../hooks/site.ts"
+import { sqljsBaseURL } from "../shared/resources/index.ts"
 
 const TracePage: React.FC = () => {
 	const { baseURL } = useSiteConfig()
-
-	const sqljsBaseURL = `${baseURL}mailwoman/sqljs`
 
 	return (
 		<Layout title="Trace" description="Follow an address through the mailwoman neural decode path">
@@ -30,7 +29,7 @@ const TracePage: React.FC = () => {
 				</p>
 				<BrowserOnly fallback={<p>Loading…</p>}>
 					{() => (
-						<DemoEmbedProvider sqljsBaseURL={sqljsBaseURL}>
+						<DemoEmbedProvider sqljsBaseURL={sqljsBaseURL(baseURL)}>
 							<LiveModelVisualizer />
 						</DemoEmbedProvider>
 					)}

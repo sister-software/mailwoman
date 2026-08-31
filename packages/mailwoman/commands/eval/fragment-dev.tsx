@@ -7,9 +7,7 @@
  *   (span-exact vs tag-accuracy; trailing-number→postcode rate). See eval-harness/fragment-dev.ts.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Fragment-dev read-out — probe-1 separator metrics (span-exact vs tag accuracy)"
 
@@ -58,7 +56,7 @@ const EvalFragmentDev: ParsedCommandComponent<Options> = ({ options }) => {
 		return 0
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	return null
 }

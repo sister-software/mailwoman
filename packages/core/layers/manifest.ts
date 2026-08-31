@@ -278,6 +278,68 @@ export function assertCoverageLicensesNoExclusion(
 }
 
 /**
+ * The build options every polygon-layer manifest reads the same way.
+ */
+export interface PolygonLayerBuildStamp {
+	/**
+	 * The product vintage — `layer_manifest.version` AND `source_vintage`.
+	 */
+	sourceVintage: string
+	buildCmd: string
+	buildSHA: string
+	/**
+	 * ISO-8601, supplied by the caller. Never generated here: the contract says so, and a library-generated timestamp
+	 * makes two builds of the same inputs differ.
+	 */
+	createdAt: string
+	/**
+	 * The resolution the cell index was built at — the h3 spine key's resolution.
+	 */
+	indexResolution: number
+}
+
+/**
+ * The manifest every polygon layer stamps: the build's own options plus the product's identity, under the
+ * `versioned-refresh` freshness policy and an h3 spine key.
+ */
+export function polygonLayerManifest(
+	options: PolygonLayerBuildStamp,
+	product: {
+		name: string
+		schemaVersion: number
+		license: string
+		attribution: string
+		source: string
+		/**
+		 * The table-qualified cell column a consumer joins on.
+		 */
+		cellColumn: string
+		/**
+		 * Defaults to {@link LayerTier.Shipped}; a product whose licence holds it at `build-local` passes its own.
+		 */
+		tier?: LayerTier
+	}
+): LayerManifest {
+	return {
+		name: product.name,
+		version: options.sourceVintage,
+		schemaVersion: product.schemaVersion,
+		tier: product.tier ?? LayerTier.Shipped,
+		license: product.license,
+		attribution: product.attribution,
+		source: product.source,
+		sourceVintage: options.sourceVintage,
+		buildCmd: options.buildCmd,
+		buildSHA: options.buildSHA,
+		freshnessPolicy: LayerFreshnessPolicy.VersionedRefresh,
+		spineKeys: {
+			h3: { column: product.cellColumn, resolution: options.indexResolution },
+		},
+		createdAt: options.createdAt,
+	}
+}
+
+/**
  * Insert the single manifest row. Call exactly once, from the layer's build script.
  */
 export async function writeLayerManifest(db: LayerContractHandle, manifest: LayerManifest): Promise<void> {

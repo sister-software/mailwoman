@@ -271,6 +271,33 @@ export function perTokenArgmax(emissions: readonly number[][]): number[] {
 }
 
 /**
+ * Fused argmax + softmax-at-the-argmax over one logit row: the winning label index and its softmax probability, without
+ * materializing the full distribution. The argmax path's per-token decode (`NeuralAddressClassifier`'s `decode:
+ * "argmax"` mode) reads `.idx`; `.conf` is the winner's probability.
+ */
+export function argmaxWithConfidence(row: number[]): { idx: number; conf: number } {
+	let maxIdx = 0
+	let maxVal = row[0]!
+
+	for (let i = 1; i < row.length; i++) {
+		if (row[i]! > maxVal) {
+			maxVal = row[i]!
+			maxIdx = i
+		}
+	}
+
+	let sumExp = 0
+
+	for (const v of row) {
+		sumExp += Math.exp(v - maxVal)
+	}
+
+	const conf = 1 / sumExp
+
+	return { idx: maxIdx, conf }
+}
+
+/**
  * Softmax of a logit row (returns probabilities summing to 1).
  *
  * Used to compute per-token confidence after Viterbi picks the label sequence — the confidence is the softmax

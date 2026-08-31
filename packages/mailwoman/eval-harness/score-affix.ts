@@ -17,13 +17,15 @@
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { dataRootPath } from "@mailwoman/core/utils"
-import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
-import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
-import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { JSONSpliterator } from "spliterator"
+
+import {
+	createUnfoldedEvalClassifier,
+	type PerTagEvalRow,
+	perTagRates,
+	scorePerTagCounts,
+} from "#eval-harness/per-tag-f1"
 
 /**
  * Options for {@linkcode scoreAffix} — one field per flag the gate used to serialize into argv.
@@ -113,67 +115,25 @@ export async function scoreAffix(
 	options: ScoreAffixOptions = {},
 	report: (line: string) => void = console.log
 ): Promise<ScoreAffixResult> {
-	const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
-	const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 	const file = options.file || "data/eval/external/street-affix-real.jsonl"
 	const model = options.model || ""
-	const GAZ = options.gazetteerLexicon || ""
-	const suppressGaz = options.suppressGazNearPostcode ?? false
-	const WEIGHTS_CACHE = options.weightsCache || ""
 
-	const neural = WEIGHTS_CACHE
-		? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: WEIGHTS_CACHE })
-		: await (async () => {
-				const card = await readLocalJSONFile<{ labels: string[] }>("packages/neural-weights-en-us/model-card.json")
+	const neural = await createUnfoldedEvalClassifier({
+		model,
+		weightsCache: options.weightsCache || "",
+		gazetteerLexicon: options.gazetteerLexicon || "",
+		suppressGazNearPostcode: options.suppressGazNearPostcode ?? false,
+		...(options.conventions ? { conventions: options.conventions } : {}),
+		...(options.bridgeGaps ? { bridgeGaps: true } : {}),
+	})
 
-				const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(model)])
+	const rows = await Array.fromAsync(JSONSpliterator.fromAsync<PerTagEvalRow>(file))
 
-				return new NeuralAddressClassifier({
-					tokenizer,
-					runner,
-					labels: card.labels,
-					postcodeAnchorLookup: parseAnchorLookup(await readLocalJSONFile(LK)),
-					...(GAZ ? { gazetteerLexicon: parseGazetteerLexicon(await readLocalJSONFile(GAZ)) } : {}),
-					suppressGazetteerNearPostcode: suppressGaz,
-					// #511 Tier A: `conventions` auto|<system> enables the address-system conventions mask.
-					...(options.conventions ? { addressSystemConventions: options.conventions as "auto" } : {}),
-					// v4.4.0 corrective: `bridgeGaps` merges same-tag spans split at unlabeled punctuation.
-					...(options.bridgeGaps ? { bridgePunctuationGaps: true } : {}),
-				})
-			})()
-
-	const rows = await Array.fromAsync(
-		JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(file)
+	const stat = await scorePerTagCounts(
+		rows,
+		TAGS,
+		async (raw) => decodeAsJSON(await neural.parse(raw)) as Record<string, string>
 	)
-
-	const norm = (s?: string): string => (s ?? "").trim().toLowerCase()
-	const stat: Record<string, { tp: number; fp: number; fn: number }> = {}
-
-	for (const t of TAGS) {
-		stat[t] = { tp: 0, fp: 0, fn: 0 }
-	}
-
-	for (const row of rows) {
-		const got = decodeAsJSON(await neural.parse(row.raw)) as Record<string, string>
-		const exp = row.components as Record<string, string>
-
-		for (const t of TAGS) {
-			const e = norm(exp[t]),
-				g = norm(got[t])
-
-			if (e && g && e === g) {
-				stat[t]!.tp++
-			} else {
-				if (g) {
-					stat[t]!.fp++
-				}
-
-				if (e) {
-					stat[t]!.fn++
-				}
-			}
-		}
-	}
 
 	report(`# affix per-tag (unfolded) — ${model.split("/").slice(-2).join("/")} · n=${rows.length}`)
 	report("| tag | P | R | F1 | tp/fp/fn |\n| --- | --: | --: | --: | --- |")
@@ -182,9 +142,7 @@ export async function scoreAffix(
 
 	for (const t of TAGS) {
 		const { tp, fp, fn } = stat[t]!
-		const p = tp + fp ? tp / (tp + fp) : 0
-		const r = tp + fn ? tp / (tp + fn) : 0
-		const f1 = p + r ? (2 * p * r) / (p + r) : 0
+		const { p, r, f1 } = perTagRates(stat[t]!)
 		sidecar[t] = { p: +(100 * p).toFixed(1), r: +(100 * r).toFixed(1), f1: +(100 * f1).toFixed(1), tp, fp, fn }
 
 		report(

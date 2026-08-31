@@ -6,27 +6,12 @@
 
 import { buildAddressTree } from "@mailwoman/core/decoder/build-tree"
 import { createCalibrator, type CalibrationTable } from "@mailwoman/core/decoder/calibration"
-import type { AddressNode, DecoderToken } from "@mailwoman/core/decoder/types"
-import type { BIOLabel } from "@mailwoman/core/types/component"
+import type { DecoderToken } from "@mailwoman/core/decoder/types"
 import { describe, expect, test } from "vitest"
 
 import { readLocalJSONFile } from "#fs/readers"
+import { findByTag, tok } from "#test/unit/decoder/fixtures"
 import { repoRootPath } from "#utils"
-
-function tok(piece: string, start: number, end: number, label: BIOLabel, confidence = 1): DecoderToken {
-	return { piece, start, end, label, confidence }
-}
-
-function findByTag(nodes: AddressNode[], tag: string): AddressNode | undefined {
-	for (const n of nodes) {
-		if (n.tag === tag) return n
-		const c = findByTag(n.children, tag)
-
-		if (c) return c
-	}
-
-	return undefined
-}
 
 // A tiny monotone table: low confidence maps down, high maps up.
 const TABLE: CalibrationTable = {

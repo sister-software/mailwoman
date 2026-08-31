@@ -51,6 +51,7 @@ import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { sentenceCaseSnake } from "@mailwoman/core/strings/case"
 import { resolvePath } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
@@ -139,18 +140,6 @@ export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 }
 
 /**
- * Sentence-case a snake_case code into a display label: `afghan_restaurant` → `Afghan restaurant`.
- *
- * TODO: IF YOU ARE SEEING THIS, IMMEDIATELY CHANGE TO `smartSnakeCase` FROM `@mailwoman/core/identifiers` AND REMOVE
- * ANY SIMILAR CODE.
- */
-export function humanizeCode(code: string): string {
-	const spaced = code.replaceAll("_", " ")
-
-	return spaced.charAt(0).toUpperCase() + spaced.slice(1)
-}
-
-/**
  * Merge the Overture snapshot with the curated overlay into a {@link POITaxonomyTable}. Pure — no I/O — so the
  * determinism test can serialize it twice and the merge is unit-testable against fixtures. See the module header for
  * the merge rules.
@@ -166,7 +155,7 @@ export function buildTaxonomyTable(snapshot: OvertureSnapshotRow[], overlay: Cur
 		.filter((row) => !curatedIDs.has(row.code) && !absorbedLeaves.has(row.code))
 		.map((row) => ({
 			id: row.code as POICategoryID,
-			label: humanizeCode(row.code),
+			label: sentenceCaseSnake(row.code),
 			hierarchy: row.path as POICategoryID[],
 			basicLabel: null,
 			source: "overture",

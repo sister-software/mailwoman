@@ -21,10 +21,15 @@
  *   primary source that is actually readable.
  */
 
-import { APIClient, type APIClientConfig, type ClockLike } from "@mailwoman/core/api"
-import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
-import { parseJSONArray } from "@mailwoman/core/objects"
-import { dataRootPath } from "@mailwoman/core/utils"
+import {
+	APIClient,
+	readCKANPackageRecord,
+	readOGCCollectionBBox,
+	readWFSFeatureCount,
+	type APIClientConfig,
+	type CKANPackageRecord,
+} from "@mailwoman/core/api"
+import { createPacedCachedClient, type CreatePacedCachedClientOptions } from "@mailwoman/core/api/paced-client"
 
 import { EA_FLOOD_DATASET_ID, EA_FLOOD_LAYER } from "#vocabulary"
 
@@ -61,11 +66,7 @@ export const EA_MIN_REQUEST_INTERVAL_MS = 500
  */
 const EA_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 
-export interface CreateFloodClientOptions {
-	clock?: ClockLike
-	cacheDirectory?: string
-	minRequestIntervalMs?: number
-}
+export type CreateFloodClientOptions = CreatePacedCachedClientOptions
 
 /**
  * The data.gov.uk catalogue entry for the product — the readable primary source for its ISO reference dates, its
@@ -76,7 +77,7 @@ export const EA_CATALOGUE_PACKAGE_ID = "104434b0-5263-4c90-9b1e-e43b1d57c750"
 /**
  * The catalogue API the entry is read from.
  */
-export const CATALOGUE_API_BASE_URL = "https://ckan.publishing.service.gov.uk/api/3/action"
+export { CKAN_CATALOGUE_API_BASE_URL as CATALOGUE_API_BASE_URL } from "@mailwoman/core/api"
 
 /**
  * The licence value the catalogue entry must carry. A different value is a licence change, and a build that absorbed
@@ -87,32 +88,7 @@ export const EA_EXPECTED_CATALOGUE_LICENCE = "Open Government Licence"
 /**
  * What the catalogue says about the product.
  */
-export interface FloodCatalogueRecord {
-	/**
-	 * The dataset's own identifier, which must equal {@link EA_FLOOD_DATASET_ID}.
-	 */
-	datasetID: string
-	/**
-	 * The ISO `revision` reference date — the product vintage, and the freshness signal.
-	 */
-	revisionDate: string
-	publicationDate: string | null
-	creationDate: string | null
-	/**
-	 * The licence the catalogue names.
-	 */
-	licence: string
-	/**
-	 * Direct file URLs by resource name.
-	 */
-	files: Record<string, string>
-}
-
-/**
- * Ordinates in a CRS84 bounding box: `minLon, minLat, maxLon, maxLat`. A shorter array is a 3D extent this reader does
- * not understand, not a 2D one with something missing.
- */
-const BBOX_ORDINATES = 4
+export type FloodCatalogueRecord = CKANPackageRecord
 
 /**
  * A client for the EA's WFS / OGC API Features endpoints and the product's catalogue entry.
@@ -129,66 +105,12 @@ export class EAFloodClient extends APIClient<APIClientConfig> {
 	 *   other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
 	 */
 	public async readCatalogueRecord(): Promise<FloodCatalogueRecord> {
-		const { data } = await this.fetch<{
-			success?: boolean
-			result?: {
-				extras?: Array<{ key: string; value: string }>
-				resources?: Array<{ name?: string; url?: string }>
-			}
-		}>({
-			method: "GET",
-			url: `${CATALOGUE_API_BASE_URL}/package_show`,
-			params: { id: EA_CATALOGUE_PACKAGE_ID },
+		return readCKANPackageRecord(this, {
+			packageID: EA_CATALOGUE_PACKAGE_ID,
+			expectDatasetID: EA_FLOOD_DATASET_ID,
+			expectLicence: EA_EXPECTED_CATALOGUE_LICENCE,
+			context: "flood client",
 		})
-
-		const result = data.result
-
-		if (!data.success || !result) {
-			throw new Error(`flood client: the catalogue returned no record for ${EA_CATALOGUE_PACKAGE_ID}`)
-		}
-
-		const extras = new Map((result.extras ?? []).map((extra) => [extra.key, extra.value]))
-		const datasetID = extras.get("guid") ?? ""
-
-		if (datasetID !== EA_FLOOD_DATASET_ID) {
-			throw new Error(
-				`flood client: catalogue entry ${EA_CATALOGUE_PACKAGE_ID} names dataset ${JSON.stringify(datasetID)}, expected ${EA_FLOOD_DATASET_ID}`
-			)
-		}
-
-		const dates = parseJSONArray<{ type: string; value: string }>(extras.get("dataset-reference-date"), "flood client")
-		const revision = dates.find((date) => date.type === "revision")?.value
-
-		if (!revision) {
-			throw new Error(
-				"flood client: the catalogue entry carries no `revision` reference date — the product vintage cannot be read, and guessing it would stamp an artifact with a version that means nothing"
-			)
-		}
-
-		const licences = parseJSONArray<string>(extras.get("licence"), "flood client")
-
-		if (!licences.includes(EA_EXPECTED_CATALOGUE_LICENCE)) {
-			throw new Error(
-				`flood client: the catalogue entry names licence ${JSON.stringify(licences)}, expected ${JSON.stringify(EA_EXPECTED_CATALOGUE_LICENCE)} — a licence change decides whether this layer may be redistributed at all`
-			)
-		}
-
-		const files: Record<string, string> = {}
-
-		for (const resource of result.resources ?? []) {
-			if (resource.name && resource.url) {
-				files[resource.name] = resource.url
-			}
-		}
-
-		return {
-			datasetID,
-			revisionDate: revision,
-			publicationDate: dates.find((date) => date.type === "publication")?.value ?? null,
-			creationDate: dates.find((date) => date.type === "creation")?.value ?? null,
-			licence: EA_EXPECTED_CATALOGUE_LICENCE,
-			files,
-		}
 	}
 
 	/**
@@ -200,26 +122,11 @@ export class EAFloodClient extends APIClient<APIClientConfig> {
 	 * writing into a sealed artifact.
 	 */
 	public async readFeatureCount(): Promise<number> {
-		const { data } = await this.fetch<string>({
-			method: "GET",
-			url: `${EA_SPATIAL_BASE_URL}/wfs`,
-			responseType: "text",
-			params: {
-				service: "WFS",
-				version: "2.0.0",
-				request: "GetFeature",
-				typeNames: `dataset-${EA_FLOOD_DATASET_ID}:${EA_FLOOD_LAYER}`,
-				resultType: "hits",
-			},
+		return readWFSFeatureCount(this, {
+			wfsURL: `${EA_SPATIAL_BASE_URL}/wfs`,
+			typeNames: `dataset-${EA_FLOOD_DATASET_ID}:${EA_FLOOD_LAYER}`,
+			context: "flood client",
 		})
-
-		const matched = /numberMatched="(\d+)"/u.exec(data)
-
-		if (!matched) {
-			throw new Error("flood client: the WFS hits response carried no numberMatched attribute")
-		}
-
-		return Number(matched[1])
 	}
 
 	/**
@@ -229,21 +136,10 @@ export class EAFloodClient extends APIClient<APIClientConfig> {
 	 * asserts against offline, and this is the live value it is reconciled with when the network is available.
 	 */
 	public async readDeclaredBBox(): Promise<[number, number, number, number]> {
-		const { data } = await this.fetch<{
-			extent?: { spatial?: { bbox?: number[][] } }
-		}>({
-			method: "GET",
-			url: `${EA_SPATIAL_BASE_URL}/ogc/features/v1/collections/${EA_FLOOD_LAYER}`,
-			params: { f: "application/json" },
+		return readOGCCollectionBBox(this, {
+			collectionURL: `${EA_SPATIAL_BASE_URL}/ogc/features/v1/collections/${EA_FLOOD_LAYER}`,
+			context: "flood client",
 		})
-
-		const bbox = data.extent?.spatial?.bbox?.[0]
-
-		if (!bbox || bbox.length < BBOX_ORDINATES) {
-			throw new TypeError("flood client: the OGC collection carried no spatial extent")
-		}
-
-		return [bbox[0]!, bbox[1]!, bbox[2]!, bbox[3]!]
 	}
 }
 
@@ -251,18 +147,16 @@ export class EAFloodClient extends APIClient<APIClientConfig> {
  * Build an {@link EAFloodClient} with the disk cache and pacing this package's acquisition path expects.
  */
 export function createEAFloodClient(options: CreateFloodClientOptions = {}): EAFloodClient {
-	return new EAFloodClient({
-		displayName: "EAFlood",
-		minRequestIntervalMs: options.minRequestIntervalMs ?? EA_MIN_REQUEST_INTERVAL_MS,
-		retry: true,
-		...(options.clock ? { clock: options.clock } : {}),
-		caching: {
-			ttl: EA_CACHE_TTL_MS,
-			storage: buildDiskStorage({
-				directory: options.cacheDirectory ?? String(dataRootPath("flood", "cache", "http")),
-			}),
+	return createPacedCachedClient(
+		EAFloodClient,
+		{
+			displayName: "EAFlood",
+			minRequestIntervalMs: EA_MIN_REQUEST_INTERVAL_MS,
+			cacheTTLMs: EA_CACHE_TTL_MS,
+			cacheDirectory: ["flood", "cache", "http"],
 		},
-	})
+		options
+	)
 }
 
 /**
@@ -353,16 +247,14 @@ export class ONSBoundaryClient extends APIClient<APIClientConfig> {
  * vintage is a new service name rather than new content at this one.
  */
 export function createONSBoundaryClient(options: CreateFloodClientOptions = {}): ONSBoundaryClient {
-	return new ONSBoundaryClient({
-		displayName: "ONSBoundary",
-		minRequestIntervalMs: options.minRequestIntervalMs ?? EA_MIN_REQUEST_INTERVAL_MS,
-		retry: true,
-		...(options.clock ? { clock: options.clock } : {}),
-		caching: {
-			ttl: 365 * 24 * 60 * 60 * 1000,
-			storage: buildDiskStorage({
-				directory: options.cacheDirectory ?? String(dataRootPath("flood", "cache", "http")),
-			}),
+	return createPacedCachedClient(
+		ONSBoundaryClient,
+		{
+			displayName: "ONSBoundary",
+			minRequestIntervalMs: EA_MIN_REQUEST_INTERVAL_MS,
+			cacheTTLMs: 365 * 24 * 60 * 60 * 1000,
+			cacheDirectory: ["flood", "cache", "http"],
 		},
-	})
+		options
+	)
 }

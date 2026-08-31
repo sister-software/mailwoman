@@ -30,7 +30,7 @@ import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/utils"
 import { basename, join } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
 import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download"
 
 /**
@@ -45,14 +45,6 @@ const ZIP_URL = "https://www.imls.gov/sites/default/files/2025-08/pls_fy2023_csv
 const SLUG = "usgov-imls-pls"
 
 export type FetchIMLSPLSOptions = BaseFetchOptions
-
-interface SourceManifest {
-	source_url: string
-	downloaded_at: string
-	filename: string
-	sha256: string
-	bytes: number
-}
 
 export async function fetchIMLSPLS(
 	options: FetchIMLSPLSOptions,

@@ -1,4 +1,4 @@
-import { confidenceTier } from "#shared/confidence-tiers"
+import { confidenceTierOrMid } from "#shared/confidence-tiers"
 
 import styles from "./styles.module.css"
 
@@ -19,15 +19,6 @@ export interface TreeViewProps {
 	tree: unknown
 }
 
-/**
- * ConfidenceCell's tiers, verbatim.
- */
-function tier(confidence?: number): "high" | "mid" | "low" {
-	if (confidence == null) return "mid"
-
-	return confidenceTier(confidence)
-}
-
 function renderNode(node: TreeNode, path: string): React.ReactNode {
 	if (typeof node.tag !== "string") return null
 	const kids = Array.isArray(node.children) ? node.children : []
@@ -35,7 +26,7 @@ function renderNode(node: TreeNode, path: string): React.ReactNode {
 	return (
 		<li key={path} className={styles.node}>
 			<span className={styles.row}>
-				<span className={`${styles.tag} ${styles[tier(node.confidence)]}`}>{node.tag}</span>
+				<span className={`${styles.tag} ${styles[confidenceTierOrMid(node.confidence)]}`}>{node.tag}</span>
 				{node.value != null && String(node.value) !== "" ? (
 					<span className={styles.value}>{String(node.value)}</span>
 				) : null}

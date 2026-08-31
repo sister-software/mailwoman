@@ -29,7 +29,7 @@
 
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { dirname, join, type PathBuilderLike } from "path-ts"
+import { join, type PathBuilderLike } from "path-ts"
 
 import { canonicalDedupKey, streamingSha256, type AdapterRegistry, type StreamingHasher } from "#adapters/utils"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
@@ -290,9 +290,11 @@ function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 }
 
 /**
- * Promise-ify a single event emission. Used to await `drain` / `close` on the write stream.
+ * Promise-ify a single event emission. Used to await `drain` / `close` on the write stream. Exported for `build.ts`,
+ * whose stage streams await `close` the same way; unlike a bare two-listener race, the loser listener is detached so a
+ * long-lived stream does not accumulate one orphan handler per wait.
  */
-function once(emitter: WriteStream, event: "drain" | "close"): Promise<void> {
+export function once(emitter: WriteStream, event: "drain" | "close"): Promise<void> {
 	return new Promise((resolve, reject) => {
 		const onEvent = (): void => {
 			emitter.off("error", onError)
@@ -307,11 +309,4 @@ function once(emitter: WriteStream, event: "drain" | "close"): Promise<void> {
 		emitter.once(event, onEvent)
 		emitter.once("error", onError)
 	})
-}
-
-/**
- * Convenience: ensure the parent directory of `filePath` exists.
- */
-export async function ensureParentDir(filePath: string): Promise<void> {
-	await makeDirectories(dirname(filePath))
 }

@@ -34,6 +34,7 @@ import {
 import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { tableExists } from "@mailwoman/sqlite/introspection"
 import { basename, join, relative } from "path-ts"
 
 /**
@@ -138,11 +139,7 @@ export function probeManifest(path: string): { manifest?: LayerManifest; error?:
 	try {
 		db = new DatabaseClient<LayerContractDatabase>(path, { readOnly: true })
 
-		const present = db
-			.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'layer_manifest' LIMIT 1")
-			.get()
-
-		if (!present) return {}
+		if (!tableExists(db, "layer_manifest")) return {}
 
 		const row = getRow<LayerManifest>(db.prepare("SELECT * FROM layer_manifest LIMIT 1"))
 

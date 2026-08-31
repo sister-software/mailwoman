@@ -80,13 +80,17 @@ describe("aggregateChunks", () => {
 			chunk({ area: { sourceM2: 1_000_000, nestedM2: 990_000, allExteriorM2: 1_090_000 } }),
 		])
 
-		expect(result.area.sourceKM2).toBe(2)
-		expect(result.area.nestedKM2).toBe(1.99)
-		expect(result.area.relativeGap).toBeCloseTo(0.005, 6)
+		const { area } = result
+
+		if (area.witness !== "source") throw new Error("the summed area reading carries no source witness")
+
+		expect(area.sourceKM2).toBe(2)
+		expect(area.nestedKM2).toBe(1.99)
+		expect(area.relativeGap).toBeCloseTo(0.005, 6)
 	})
 
-	it("reports a zero gap rather than a NaN when the source reports no area", () => {
-		expect(aggregateChunks([chunk()]).area.relativeGap).toBe(0)
+	it("reports an ABSENT witness rather than a NaN when the source reports no area", () => {
+		expect(aggregateChunks([chunk()]).area.witness).toBe("absent")
 	})
 
 	it("pools the defence-type census and orders it by count", () => {

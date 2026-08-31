@@ -10,9 +10,7 @@
  *   per-locale FST dir. See `mailwoman/gazetteer-pipeline/street-morphology.ts` for the rationale.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -48,7 +46,7 @@ const GazetteerBuildStreetMorphology: ParsedCommandComponent<Options> = ({ optio
 
 		const built = await buildStreetMorphologyArtifact({
 			dictionariesDir: options.dictionaries,
-			locales: options.locales?.split(",").map((s) => s.trim()),
+			locales: options.locales === undefined ? undefined : splitList(options.locales),
 			output: options.output,
 			onProgress: (line) => console.error(line),
 		})
@@ -56,13 +54,7 @@ const GazetteerBuildStreetMorphology: ParsedCommandComponent<Options> = ({ optio
 		return `${built.path} (${(built.bytes / 1e3).toFixed(0)} kB, ${built.canonicalCount} canonicals, ${built.variantCount} variants, ${built.localeCount} locales)`
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
-
-	if (state.status === "done") {
-		return <Text color="green">✓ {state.result}</Text>
-	}
-
-	return null
+	return <CommandTaskResult state={state} />
 }
 
 export default GazetteerBuildStreetMorphology

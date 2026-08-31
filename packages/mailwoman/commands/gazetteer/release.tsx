@@ -14,7 +14,14 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	phaseReporter,
+	splitUpperList,
+	useCommandTask,
+} from "#cli-kit"
 import { DEFAULT_FOLD_COUNTRIES } from "#gazetteer-pipeline/defaults"
 
 /**
@@ -69,12 +76,7 @@ const GazetteerRelease: ParsedCommandComponent<Options> = ({ options }) => {
 		const adminIn = options.admin ?? join(wofDir(root), DEFAULT_ADMIN_DB)
 		const out = options.out ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
 
-		const countries = options.countries
-			? options.countries
-					.split(",")
-					.map((s) => s.trim().toUpperCase())
-					.filter((cc) => cc.length > 0)
-			: DEFAULT_FOLD_COUNTRIES
+		const countries = options.countries ? splitUpperList(options.countries) : DEFAULT_FOLD_COUNTRIES
 
 		const lines: string[] = []
 
@@ -91,7 +93,7 @@ const GazetteerRelease: ParsedCommandComponent<Options> = ({ options }) => {
 				countries,
 				onCountry: (e) =>
 					console.error(`  ${e.country}: ${e.skipped ? "(skipped)" : `${e.places.toLocaleString()} places`}`),
-				onPhase: (p, d) => console.error(`  [${p}]${d ? ` ${d}` : ""}`),
+				onPhase: phaseReporter(),
 			})
 
 			lines.push(`folded ${f.ingested.toLocaleString()} GeoNames places`)
@@ -130,7 +132,7 @@ const GazetteerRelease: ParsedCommandComponent<Options> = ({ options }) => {
 				stageDir: stage.path,
 				prefix: "mailwoman",
 				dryRun: options.dryRun,
-				onPhase: (ph, d) => console.error(`  [${ph}]${d ? ` ${d}` : ""}`),
+				onPhase: phaseReporter(),
 			})
 
 			lines.push(`published R2 ${p.key}${p.bumped ? ` + demo → ${version} (commit resources.tsx)` : ""}`)
@@ -139,7 +141,7 @@ const GazetteerRelease: ParsedCommandComponent<Options> = ({ options }) => {
 		return lines
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

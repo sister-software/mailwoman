@@ -23,6 +23,7 @@
  */
 
 import { groupPiecesIntoWords, type FSTMatcherLike, type WordGroup } from "#fst-prior"
+import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
 import type { TokenLike } from "#query-shape-prior"
 
 export interface StreetMorphologyPriorOpts {
@@ -67,17 +68,8 @@ export function buildStreetMorphologyEmissionPriors(
 	const maxNeighbourStreetBias = opts.maxNeighbourStreetBias ?? 2
 	const dependentLocalityPenalty = opts.dependentLocalityPenalty ?? 2
 
-	const matrix: number[][] = []
-
-	for (let t = 0; t < T; t++) {
-		matrix.push(new Array<number>(L).fill(0))
-	}
-
-	const labelToCol = new Map<string, number>()
-
-	for (let k = 0; k < labels.length; k++) {
-		labelToCol.set(labels[k]!, k)
-	}
+	const matrix = emptyPriorMatrix(T, L)
+	const labelToCol = labelColumnIndex(labels)
 
 	const bStreetPrefix = labelToCol.get("B-street_prefix")
 	const iStreetPrefix = labelToCol.get("I-street_prefix")

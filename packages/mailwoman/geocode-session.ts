@@ -28,6 +28,7 @@
 
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { firstNodeWhere } from "@mailwoman/core/decoder"
 import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
 import {
 	isBareLocalityTree,
@@ -63,6 +64,7 @@ import type { ZoningDesignationRoute } from "#observations/zoning-route"
 import { poiTaxonomyLookup } from "#poi-intent"
 import {
 	createResolverBackend,
+	existingWOFShardPaths,
 	loadCapitalIndex,
 	resolveCandidateDBPath,
 	resolveWOFShardPaths,
@@ -278,13 +280,7 @@ async function resolveWOFPath(options: Pick<GeocodeSessionOptions, "dataRoot" | 
 	// caller's own contract on top: filtered to what exists on disk — the same auto-attach the server and
 	// drop-ins use, so `mailwoman geocode` works out of the box on a standard data root — and a hard error
 	// when nothing survives, which is part of the CLI's construction-order contract.
-	const paths: string[] = []
-
-	for (const p of resolveWOFShardPaths(options.resolveDB, options.dataRoot)) {
-		if (await pathExists(p)) {
-			paths.push(p)
-		}
-	}
+	const paths = await existingWOFShardPaths(resolveWOFShardPaths(options.resolveDB, options.dataRoot))
 
 	if (!paths.length) {
 		throw new CommandError(
@@ -816,20 +812,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			const inferred = resolverDefaultCountry(options, !!candidateDB)
 
 			if (!inferred) return false
-			let postcodeValue: string | undefined
-			const stack = [...parsedTree.roots]
-
-			while (stack.length) {
-				const node = stack.pop()!
-
-				if (node.tag === "postcode") {
-					postcodeValue = node.value
-
-					break
-				}
-
-				stack.push(...node.children)
-			}
+			const postcodeValue = firstNodeWhere(parsedTree.roots, (node) => node.tag === "postcode")?.value
 
 			const implied = countriesFromPostcodeFormat(postcodeValue)
 

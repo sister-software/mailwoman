@@ -12,10 +12,15 @@
  *   support that no ladder could grade. A consumer that needs to tell them apart still can, in the JSON.
  */
 
-import { formatPercent, percentile } from "@mailwoman/core/utils"
+import { formatPercent } from "@mailwoman/core/utils"
 
 import { ABLATION_ABSENT } from "#eval-harness/gauntlet/ablation-expectation"
-import { ABLATABLE_COMPONENTS, type AblationCell, type AblationRowOutcome } from "#eval-harness/gauntlet/ablation-types"
+import {
+	ABLATABLE_COMPONENTS,
+	type AblationCell,
+	type AblationRowOutcome,
+	aggregateAblationComponents,
+} from "#eval-harness/gauntlet/ablation-types"
 
 export { ABLATION_ABSENT } from "#eval-harness/gauntlet/ablation-expectation"
 
@@ -97,21 +102,15 @@ export function renderAblationMarkdown(
 		`| --- | --: | --: | --: | --: | --: | --: | --: | --: |`,
 	]
 
-	for (const tag of components) {
-		const own = cells.filter((c) => c.component === tag)
-		const support = own.reduce((n, c) => n + c.support, 0)
-		const broken = own.reduce((n, c) => n + c.brokenCount, 0)
-		const tierDrop = own.reduce((n, c) => n + c.tierDropCount, 0)
-		const unresolved = own.reduce((n, c) => n + c.unresolvedCount, 0)
-		const substituted = own.reduce((n, c) => n + c.substitutedCount, 0)
-		const pooled = rows.filter((r) => r.component === tag && r.displacementKm != null).map((r) => r.displacementKm!)
-		const p50 = percentile(pooled, 50)
-		const p90 = percentile(pooled, 90)
+	const aggregates = aggregateAblationComponents(cells, rows)
+
+	for (const aggregate of aggregates) {
+		const { displacementKmP50: p50, displacementKmP90: p90 } = aggregate
 
 		lines.push(
-			`| ${tag} | ${support} | ${broken} | ${formatPercent(broken, support)} | ` +
+			`| ${aggregate.component} | ${aggregate.support} | ${aggregate.brokenCount} | ${formatPercent(aggregate.brokenCount, aggregate.support)} | ` +
 				`${p50 == null ? ABLATION_ABSENT : p50.toFixed(2)} | ${p90 == null ? ABLATION_ABSENT : p90.toFixed(2)} | ` +
-				`${tierDrop} | ${unresolved} | ${substituted} |`
+				`${aggregate.tierDropCount} | ${aggregate.unresolvedCount} | ${aggregate.substitutedCount} |`
 		)
 	}
 
@@ -125,25 +124,20 @@ export function renderAblationMarkdown(
 		`| --- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |`
 	)
 
-	for (const tag of components) {
-		const own = cells.filter((c) => c.component === tag)
-		const denominator = own.reduce((n, c) => n + c.ladderGradedCount, 0)
-		const sum = (pick: (c: AblationCell) => number): number => own.reduce((n, c) => n + pick(c), 0)
-		const ungraded = sum((c) => c.grades.ungraded)
+	for (const aggregate of aggregates) {
+		const { grades, ladderGradedCount: denominator, trueFailCount: trueFail } = aggregate
 
 		if (!denominator) {
-			lines.push(`| ${tag} |${` ${ABLATION_ABSENT} |`.repeat(13)} ${ungraded} |`)
+			lines.push(`| ${aggregate.component} |${` ${ABLATION_ABSENT} |`.repeat(13)} ${grades.ungraded} |`)
 
 			continue
 		}
 
-		const trueFail = sum((c) => c.trueFailCount)
-
 		lines.push(
-			`| ${tag} | ${denominator} | ${trueFail} | ${formatPercent(trueFail, denominator)} | ${sum((c) => c.grades.held)} | ` +
-				`${sum((c) => c.grades.degraded)} | ${sum((c) => c.grades.correctlyAbstained)} | ${sum((c) => c.grades.lost)} | ` +
-				`${sum((c) => c.grades.overconfident)} | ${sum((c) => c.grades.homonymTakeover)} | ${sum((c) => c.grades.coarser)} | ` +
-				`${sum((c) => c.grades.wrong)} | ${sum((c) => c.grades.substituted)} | ${sum((c) => c.unconstrainedCount)} | ${ungraded} |`
+			`| ${aggregate.component} | ${denominator} | ${trueFail} | ${formatPercent(trueFail, denominator)} | ${grades.held} | ` +
+				`${grades.degraded} | ${grades.correctlyAbstained} | ${grades.lost} | ` +
+				`${grades.overconfident} | ${grades.homonymTakeover} | ${grades.coarser} | ` +
+				`${grades.wrong} | ${grades.substituted} | ${aggregate.unconstrainedCount} | ${grades.ungraded} |`
 		)
 	}
 

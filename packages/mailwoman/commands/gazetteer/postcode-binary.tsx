@@ -44,7 +44,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 import type { GBGranularity, PostcodeShardRow } from "#gazetteer-pipeline/postcode/binary"
 
 interface LocaleSource {
@@ -178,7 +178,7 @@ const GazetteerPostcodeBinary: ParsedCommandComponent<Options> = ({ options }) =
 		return [`postcode binaries → ${outDir}`, `wrote ${written} of ${locales.length} locale binary(ies)`]
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

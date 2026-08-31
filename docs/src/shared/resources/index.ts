@@ -200,6 +200,20 @@ export function assetURL(locale: string, version: string, filename: string): str
 }
 
 /**
+ * The per-locale releases manifest (`releases.json`) — the version pointer beside the versioned asset directories.
+ */
+export function releasesManifestURL(locale: string): string {
+	return `${ASSET_BASE_URL}${locale}/releases.json`
+}
+
+/**
+ * Same-origin base for the staged sql.js-httpvfs runtime assets (UMD + worker + wasm), under the site's base URL.
+ */
+export function sqljsBaseURL(siteBaseURL: string): string {
+	return `${siteBaseURL}mailwoman/sqljs`
+}
+
+/**
  * Per-state street shard URL (#377). The situs (exact address points) + interp (TIGER ranges) DBs are hosted byte-range
  * at `mailwoman/street/us/<slug>/<kind>.db` — a lookup touches ~KB of a multi-GB shard, so they're loaded lazily by
  * parsed region, not bundled. Independent of the locale/version WOF asset layout (street shards are per-state, not

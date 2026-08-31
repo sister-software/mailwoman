@@ -18,12 +18,13 @@
 
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { allRows } from "@mailwoman/core/utils"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -92,10 +93,9 @@ const SitusAttributionManifest: ParsedCommandComponent<Options> = ({ options }) 
 			}
 
 			try {
-				const rows = db.prepare("SELECT source, count(*) AS n FROM address_point GROUP BY source").all() as Array<{
-					source: string
-					n: number
-				}>
+				const rows = allRows<{ source: string; n: number }>(
+					db.prepare("SELECT source, count(*) AS n FROM address_point GROUP BY source")
+				)
 
 				const datasets: Record<string, number> = {}
 				let points = 0
@@ -135,7 +135,7 @@ const SitusAttributionManifest: ParsedCommandComponent<Options> = ({ options }) 
 		return lines
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

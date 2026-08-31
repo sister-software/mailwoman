@@ -20,9 +20,12 @@
 
 import { expandPlacetypeFilter, type CoincidentLocality } from "@mailwoman/resolver"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "@mailwoman/resolver-wof-sqlite"
-// Browser-safe subpath import (fts.ts's only node:sqlite import is type-only) — the shared
-// alias-bag parser keeps this backend's exact tier byte-identical to the Node resolver's.
-import { aliasBagExactMatch } from "@mailwoman/resolver-wof-sqlite/fts"
+// Browser-safe subpath imports (fts.ts's only node:sqlite import is type-only) — the shared
+// alias-bag parser, query fold, FTS sanitizer, and ranking weights keep this backend
+// byte-identical to the Node resolver's exact tier and population re-rank.
+import { aliasBagExactMatch, foldQueryText } from "@mailwoman/resolver-wof-sqlite/fts"
+import { normalizePlacetypes, sanitizeFTSQuery } from "@mailwoman/resolver-wof-sqlite/fts-query"
+import { DEFAULT_WEIGHTS, populationBoostTerm } from "@mailwoman/resolver-wof-sqlite/ranking-weights"
 import type { Database } from "@sqlite.org/sqlite-wasm"
 
 import { disposeSlimWOFDatabase } from "#loader"
@@ -35,20 +38,10 @@ export interface WOFWasmPlaceLookupOpts {
 }
 
 /**
- * Population-boost tunables, mirroring `resolver-wof-sqlite/lookup.ts` defaults. The boost is `POPULATION_BOOST *
- * min(1, log10(1 + pop) / POPULATION_SCALE_LOG10)`, subtracted from bm25 (lower = better, matching SQLite's
- * convention). A 1M-population city earns the full boost — enough to surface the famous same-name place ("New York"
- * over "West New York") without steamrolling a clearly-better text match, because exact-name tiering is consulted
- * FIRST.
+ * One `sqlite_master` probe behind the lazy aux-table checks below.
  */
-const POPULATION_BOOST = 4
-const POPULATION_SCALE_LOG10 = 6
-
-/**
- * Normalize a name/query for exact-match tiering: lowercase, trim, collapse internal whitespace.
- */
-function normalizeName(s: string): string {
-	return s.toLowerCase().trim().replaceAll(/\s+/g, " ")
+function tableExists(db: Database, name: string): boolean {
+	return db.selectObjects(`SELECT 1 FROM sqlite_master WHERE type='table' AND name=? LIMIT 1`, [name]).length > 0
 }
 
 export class WOFWasmPlaceLookup implements PlaceLookup {
@@ -69,11 +62,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 	 */
 	#hasPopulation(): boolean {
 		if (this.#hasPopulationCache === undefined) {
-			const r = this.#db.selectObjects(
-				`SELECT 1 FROM sqlite_master WHERE type='table' AND name='place_population' LIMIT 1`
-			)
-
-			this.#hasPopulationCache = r.length > 0
+			this.#hasPopulationCache = tableExists(this.#db, "place_population")
 		}
 
 		return this.#hasPopulationCache
@@ -84,8 +73,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 	 */
 	#hasPlaceAbbr(): boolean {
 		if (this.#hasPlaceAbbrCache === undefined) {
-			const r = this.#db.selectObjects(`SELECT 1 FROM sqlite_master WHERE type='table' AND name='place_abbr' LIMIT 1`)
-			this.#hasPlaceAbbrCache = r.length > 0
+			this.#hasPlaceAbbrCache = tableExists(this.#db, "place_abbr")
 		}
 
 		return this.#hasPlaceAbbrCache
@@ -191,7 +179,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 			bm25: number
 		}>
 
-		const normQuery = normalizeName(text)
+		const normQuery = foldQueryText(text)
 		// Exact-abbreviation ids: region/state abbreviations live in the slim DB's `place_abbr` table
 		// (carried by build-slim before `names` is dropped). A candidate whose abbreviation equals the
 		// query is an EXACT match — same tier as an exact name match — so "VT" → Vermont outranks a
@@ -203,7 +191,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		// Strict exact = canonical name or region abbreviation equals the query. Computed for the whole
 		// pool FIRST because the ALIAS tier below only engages when no strict exact exists.
 		const strictExact = (row: { name: string; id: number }): boolean =>
-			normalizeName(row.name) === normQuery || abbrIDs.has(row.id)
+			foldQueryText(row.name) === normQuery || abbrIDs.has(row.id)
 
 		const anyStrictExact = rows.some(strictExact)
 
@@ -219,10 +207,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 				const aliasExact = aliasBagExactMatch(row.alt_names, normQuery, anyStrictExact)
 				const exactTier = strictExact(row) || aliasExact ? 0 : 1
 
-				const popBoost =
-					row.population && row.population > 0
-						? POPULATION_BOOST * Math.min(1, Math.log10(1 + row.population) / POPULATION_SCALE_LOG10)
-						: 0
+				const popBoost = populationBoostTerm(row.population, DEFAULT_WEIGHTS)
 
 				// Lower adjScore = better, matching SQLite's bm25 convention (more negative = better).
 				const adjScore = row.bm25 - popBoost
@@ -271,11 +256,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		if (!this.#coincidentRolesCache) {
 			const map = new Map<number, CoincidentLocality[]>()
 
-			const exists = this.#db.selectObjects(
-				`SELECT 1 FROM sqlite_master WHERE type='table' AND name='coincident_roles' LIMIT 1`
-			)
-
-			if (exists.length) {
+			if (tableExists(this.#db, "coincident_roles")) {
 				const rows = this.#db.selectObjects(
 					`SELECT cr.admin_id AS adminID, s.id AS id, s.name AS name, s.country AS country,
 						s.latitude AS lat, s.longitude AS lon, cr.relationship_type AS relationshipType,
@@ -326,49 +307,4 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 	[Symbol.dispose](): void {
 		disposeSlimWOFDatabase(this.#db)
 	}
-}
-
-/**
- * Trim raw user input into something FTS5 will accept. Preserves trailing `*` as the FTS5 prefix operator (matching the
- * resolver-wof-sqlite implementation). Strips characters FTS5 treats as punctuation or operators so a user typing
- * `Paris's` or `St. (Petersburg)` doesn't trigger an "fts5: syntax error" inside the WASM runtime.
- */
-function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string {
-	const out: string[] = []
-
-	for (const rawToken of text.normalize("NFKC").split(/\s+/u)) {
-		const trimmed = rawToken.trim()
-
-		if (!trimmed) continue
-		const hasPrefixStar = trimmed.endsWith("*")
-
-		// #920 name law (postcode-typed queries): delete intra-token punctuation and fuse.
-		if (opts?.fuseTokens) {
-			const body = trimmed.replaceAll(/[^\p{L}\p{N}]/gu, "")
-
-			if (!body) continue
-			out.push(hasPrefixStar ? `${body}*` : `"${body.replaceAll('"', '""')}"`)
-
-			continue
-		}
-
-		// Non-postcode queries SPLIT on intra-token punctuation — fusing made "Thiron-Gardais" an
-		// unmatchable single term while the FTS doc holds two (#945).
-		const parts = trimmed.split(/[^\p{L}\p{N}]+/u).filter((part) => part.length > 0)
-
-		for (let i = 0; i < parts.length; i++) {
-			const body = parts[i]!.replaceAll("*", "")
-
-			if (!body) continue
-			out.push(hasPrefixStar && i === parts.length - 1 ? `${body}*` : `"${body.replaceAll('"', '""')}"`)
-		}
-	}
-
-	return out.join(" ")
-}
-
-function normalizePlacetypes(input: FindPlaceQuery["placetype"]): WOFPlacetype[] | null {
-	if (!input) return null
-
-	return Array.isArray(input) ? input : [input]
 }

@@ -13,6 +13,7 @@
 
 import { Alpha3ToCountryRecord, CountryISO2 } from "#country/codes"
 import type { CountryName } from "#country/names"
+import { foldName } from "#normalize"
 
 export { Alpha3ToCountryRecord, CountryISO2, type CountryISO3 } from "#country/codes"
 
@@ -51,9 +52,11 @@ export const ISO2_TO_NAME: ReadonlyMap<string, CountryName> = new Map(
 )
 
 /**
- * Any recognized country surface form / canonical name / alpha-2 / alpha-3 → alpha-2 code. Built once at module load,
- * lowercase-keyed. Canonical names + codes from the ISO base, plus the curated surface forms (surface forms win on
- * collision — they're the address-facing spellings).
+ * Any recognized country surface form / canonical name / alpha-2 / alpha-3 → alpha-2 code. Built once at module load.
+ * Each surface contributes its lowercased key AND its {@link foldName}-folded key when the fold leaves anything — a
+ * non-Latin surface like `日本` survives only as its lowercased self — so accented and punctuated variants resolve.
+ * Canonical names + codes from the ISO base, plus the curated surface forms (surface forms win on collision — they're
+ * the address-facing spellings).
  */
 export const COUNTRY_LOOKUP: ReadonlyMap<string, string> = (() => {
 	const out = new Map<string, string>()
@@ -63,6 +66,12 @@ export const COUNTRY_LOOKUP: ReadonlyMap<string, string> = (() => {
 
 		if (key && !out.has(key)) {
 			out.set(key, iso2)
+		}
+
+		const folded = foldName(k)
+
+		if (folded && !out.has(folded)) {
+			out.set(folded, iso2)
 		}
 	}
 
@@ -88,11 +97,31 @@ export const COUNTRY_LOOKUP: ReadonlyMap<string, string> = (() => {
 	for (const [iso2, forms] of Object.entries(COUNTRY_SURFACE_FORMS)) {
 		for (const f of forms) {
 			out.set(f.trim().toLowerCase(), iso2)
+
+			const folded = foldName(f)
+
+			if (folded) {
+				out.set(folded, iso2)
+			}
 		}
 	}
 
 	return out
 })()
+
+/**
+ * Probe the lookup the way it is keyed: the lowercased surface first, then the {@link foldName} fold when it is
+ * non-empty.
+ */
+function probeCountry(token: string): string | undefined {
+	const direct = COUNTRY_LOOKUP.get(token.trim().toLowerCase())
+
+	if (direct) return direct
+
+	const folded = foldName(token)
+
+	return folded ? COUNTRY_LOOKUP.get(folded) : undefined
+}
 
 /**
  * Result of a country match: the alpha-2 code, the canonical English name, and the matched surface.
@@ -104,13 +133,13 @@ export interface CountryMatch {
 }
 
 /**
- * Resolve a token (surface form, canonical name, alpha-2, or alpha-3) to a country. Case-insensitive. Returns null if
- * unrecognized. Multi-word names ("United States", "Great Britain") must be passed as the whole phrase — the caller
- * decides the span; this matches it.
+ * Resolve a token (surface form, canonical name, alpha-2, or alpha-3) to a country. Case-, accent-, and
+ * punctuation-insensitive. Returns null if unrecognized. Multi-word names ("United States", "Great Britain") must be
+ * passed as the whole phrase — the caller decides the span; this matches it.
  */
 export function matchCountry(token: string | null | undefined): CountryMatch | null {
 	if (!token || typeof token !== "string") return null
-	const iso2 = COUNTRY_LOOKUP.get(token.trim().toLowerCase())
+	const iso2 = probeCountry(token)
 
 	if (!iso2) return null
 
@@ -121,7 +150,7 @@ export function matchCountry(token: string | null | undefined): CountryMatch | n
  * Case-insensitive check: is the token any recognized country form?
  */
 export function isCountryToken(token: unknown): boolean {
-	return typeof token === "string" && COUNTRY_LOOKUP.has(token.trim().toLowerCase())
+	return typeof token === "string" && probeCountry(token) !== undefined
 }
 
 /**

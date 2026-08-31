@@ -12,7 +12,7 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -60,7 +60,7 @@ const DevLintShardVocab: ParsedCommandComponent<Options> = ({ options }) => {
 		(summary) => (summary.errors > 0 ? 1 : 0)
 	)
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done" && state.result.errors > 0) {
 		return (

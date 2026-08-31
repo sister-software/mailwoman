@@ -23,6 +23,8 @@ import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { JSONSpliterator } from "spliterator"
 
+import { normLoose } from "./value-match.ts"
+
 /**
  * Longest suffix still likely an abbreviation when it carries no trailing period.
  */
@@ -134,19 +136,18 @@ const featureCounts = (rowsSubset: typeof rows) => {
 	return counts
 }
 
-const norm = (s?: string) => (s ?? "").trim().toLowerCase()
 const misses: Array<{ row: (typeof rows)[number]; tag: string; expected: string; got: string; street?: string }> = []
 
 for (const row of rows) {
 	const got = decodeAsJSON(await neural.parse(row.raw)) as Record<string, string>
 
 	for (const tag of ["street_prefix", "street_suffix"]) {
-		const e = norm(row.components[tag])
+		const e = normLoose(row.components[tag])
 
 		if (!e) continue
 
-		if (norm(got[tag]) !== e) {
-			misses.push({ row, tag, expected: e, got: norm(got[tag]) || "(nothing)", street: norm(got.street) })
+		if (normLoose(got[tag]) !== e) {
+			misses.push({ row, tag, expected: e, got: normLoose(got[tag]) || "(nothing)", street: normLoose(got.street) })
 		}
 	}
 }

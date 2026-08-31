@@ -9,7 +9,7 @@
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { aliasBagExactMatch } from "#fts"
+import { aliasBagExactMatch, foldQueryText } from "#fts"
 
 /**
  * Among `ids`, return the subset whose name OR any alias equals `text` case-insensitively — the exact-match tier for
@@ -49,11 +49,10 @@ export function exactMatchIDs<DB>(
 			.prepare(`SELECT wof_id AS id, name, alt_names FROM ${schemaName}.place_search WHERE wof_id IN (${placeholders})`)
 			.all(...ids) as Array<{ id: number; name: string | null; alt_names: string | null }>
 
-		const norm = (s: string): string => s.toLowerCase().trim().replaceAll(/\s+/g, " ")
-		const needle = norm(trimmed)
+		const needle = foldQueryText(trimmed)
 
 		for (const r of rows) {
-			if (r.name !== null && norm(r.name) === needle) {
+			if (r.name !== null && foldQueryText(r.name) === needle) {
 				out.add(r.id)
 			}
 		}

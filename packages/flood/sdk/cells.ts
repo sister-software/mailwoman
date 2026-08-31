@@ -19,8 +19,8 @@
  *   do not.
  */
 
-import { groupCellsByResolution, shortCellToInt, type FeatureCells, type H3Cell } from "@mailwoman/spatial"
-import { compactCells, getResolution } from "h3-js"
+import { compactAcrossResolutions, shortCellToInt, type FeatureCells, type H3Cell } from "@mailwoman/spatial"
+import { getResolution } from "h3-js"
 
 export {
 	addCoverageCells,
@@ -172,14 +172,7 @@ export class FloodCellIndex {
 		let compactedTotal = 0
 
 		for (const [zoneCode, zone] of [...this.#zones].toSorted(([left], [right]) => (left < right ? -1 : 1))) {
-			// `compactCells` takes one resolution at a time, and a coarsened feature's cells are at another — so the whole
-			// set is grouped before compaction rather than pooled. Pooling would throw; compacting the target-resolution
-			// group alone would silently drop every coarsened feature's interior.
-			const compacted: string[] = []
-
-			for (const group of groupCellsByResolution(zone.whole)) {
-				compacted.push(...compactCells(group))
-			}
+			const compacted = compactAcrossResolutions(zone.whole)
 
 			for (const cell of compacted) {
 				const resolution = getResolution(cell)

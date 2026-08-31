@@ -36,7 +36,7 @@
  *   | undecodable body                  | programmer bug   | `isTransientResourceError(error)` is false |
  */
 
-import { APIClient, type APIClientConfig, type ClockLike, systemClock } from "@mailwoman/core/api"
+import { API_CLIENT_DEFAULTS, APIClient, type APIClientConfig, type ClockLike, systemClock } from "@mailwoman/core/api"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { $private } from "@mailwoman/core/env"
 import { ResourceError } from "@mailwoman/core/errors"
@@ -102,21 +102,6 @@ const PERCENT = 100
  * is an index that can gain a revision, so ONE TTL covers all of them.
  */
 const DEFAULT_CACHE_TTL_MS = 24 * 60 * 60 * 1000
-
-/**
- * Total attempts (including the first) before giving up on a 429/5xx or a network-class failure.
- */
-const DEFAULT_MAX_ATTEMPTS = 3
-
-/**
- * Base delay for the exponential backoff between retry attempts, in milliseconds.
- */
-const DEFAULT_BASE_RETRY_DELAY_MS = 500
-
-/**
- * Per-attempt socket-inactivity timeout for a JSON request, in milliseconds.
- */
-const DEFAULT_REQUEST_TIMEOUT_MS = 30_000
 
 /**
  * Per-attempt socket-inactivity timeout for a zip download, in milliseconds — deliberately far longer than the JSON
@@ -578,8 +563,8 @@ export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient
 		requestsPerMinute,
 		minRequestIntervalMs: Math.ceil(MS_PER_MINUTE / requestsPerMinute),
 		retry: {
-			maxAttempts: options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS,
-			baseDelayMs: options.baseRetryDelayMs ?? DEFAULT_BASE_RETRY_DELAY_MS,
+			maxAttempts: options.maxAttempts ?? API_CLIENT_DEFAULTS.maxAttempts,
+			baseDelayMs: options.baseRetryDelayMs ?? API_CLIENT_DEFAULTS.baseRetryDelayMs,
 		},
 		clock: meter.clock,
 		caching: {
@@ -611,7 +596,7 @@ export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient
 				username,
 				hash_value: apiKey,
 			},
-			timeout: options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS,
+			timeout: options.requestTimeoutMs ?? API_CLIENT_DEFAULTS.requestTimeoutMs,
 			responseType: "json",
 			// `silentJSONParsing` defaults to TRUE, which makes Axios hand back the RAW STRING when a body
 			// fails to parse instead of raising. An upstream serving an HTML error page under a 200 would

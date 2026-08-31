@@ -16,6 +16,7 @@
  */
 
 import type { ComponentTag } from "@mailwoman/core/types"
+import { formatPercent } from "@mailwoman/core/utils"
 
 import { DEFAULT_WOF_PRIORITY_COUNTRIES } from "#gazetteer-pipeline/defaults"
 import { LADDER, type CountryGranularity, bottomsOutAt } from "#gazetteer-pipeline/granularity"
@@ -64,10 +65,6 @@ export interface GranularityReportMeta {
 	floor: number
 }
 
-function pct(value: number): string {
-	return `${(value * 100).toFixed(1)}%`
-}
-
 /**
  * One row's cell for a rung: node count, plus the Overture-backfilled share when any of it is backfilled.
  */
@@ -87,7 +84,7 @@ function rungCell(country: CountryGranularity, rung: ComponentTag): string {
 	// Overture, which mislabelled every GeoNames-only country in the first run of this report.
 	const label = measurement.geonamesBackfilled > measurement.overtureBackfilled ? "gn" : "ovt"
 
-	return `${measurement.nodes.toLocaleString()} (${pct(synthetic / measurement.nodes)} ${label})`
+	return `${measurement.nodes.toLocaleString()} (${formatPercent(synthetic / measurement.nodes, 1)} ${label})`
 }
 
 /**
@@ -116,7 +113,7 @@ child projecting onto that rung).
 
 - **Source:** \`${meta.sourcePath}\` (md5 \`${meta.sourceMD5}\`)
 - **Built:** ${meta.buildDate}
-- **Parent-coverage floor:** ${pct(meta.floor)} — a sub-locality rung counts as reached only above this.
+- **Parent-coverage floor:** ${formatPercent(meta.floor, 1)} — a sub-locality rung counts as reached only above this.
 - **Countries measured:** ${rows.length.toLocaleString()}
 - **Countries built from a cloned WOF repo:** ${fromWOFRepo.toLocaleString()} — the rest came from Overture divisions or the GeoNames alias fold.
 - **Countries reaching \`dependent_locality\`:** ${reached.toLocaleString()}

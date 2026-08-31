@@ -55,7 +55,7 @@ describe("npx mailwoman parse --resolve error paths", () => {
 				env: childEnv({ MAILWOMAN_WOF_DB: "", MAILWOMAN_CANDIDATE_DB: "none" }),
 			})
 		).rejects.toMatchObject({
-			stdout: expect.stringMatching(/needs a WOF SQLite path/),
+			stdout: expect.stringMatching(/No WOF database configured/),
 		})
 	})
 })

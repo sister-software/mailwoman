@@ -11,7 +11,13 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	reportToStderr,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -32,16 +38,17 @@ interface Options {
 	rowGroupSize: number
 }
 
-const report = (line: string): void => console.error(line)
-
 const DevJSONLToParquet: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { jsonlToParquet } = await import("@mailwoman/corpus/tools")
 
-		return jsonlToParquet({ input: options.input, output: options.output, rowGroupSize: options.rowGroupSize }, report)
+		return jsonlToParquet(
+			{ input: options.input, output: options.output, rowGroupSize: options.rowGroupSize },
+			reportToStderr
+		)
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

@@ -33,55 +33,14 @@
  *   Only a docs BUILD can verify a change to that, never a unit test.
  */
 
-import { $public } from "@mailwoman/core/env"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { pathExists, readLink, readLocalTextFile, statLink, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON } from "@mailwoman/core/objects"
-import { spawnProcessSync } from "@mailwoman/core/process"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { dirname, resolvePath } from "path-ts"
-
-import type { ReleaseInfo } from "#shared/demo-helpers"
 
 import { resolvePackagePath, resolvePackageSpecifier } from "./workspace-resolution.ts"
 
-//#region Model artifact resolution + validation
-
-/**
- * Read the model-card.json from the weights package to get version metadata.
- */
-export async function readModelCard(): Promise<ReleaseInfo | null> {
-	const cardPath = resolvePackagePath("@mailwoman/neural-weights-en-us", "model-card.json")
-
-	if (!cardPath || !(await pathExists(cardPath))) return null
-
-	// Both generics: with only <ReleaseInfo>, F defaults to T and the null fallback fails to type.
-	return tryParsingJSON<ReleaseInfo, null>(await readLocalTextFile(cardPath), null)
-}
-
-/**
- * Resolve a binary artifact from the weights package, dereferencing symlinks. Returns the real path to the file
- * (following symlinks from link-dev-weights.ts).
- *
- * @param filename - E.g. "model.onnx" or "tokenizer.model"
- */
-export async function resolveWeightsArtifact(filename: string): Promise<string | null> {
-	const filePath = resolvePackagePath("@mailwoman/neural-weights-en-us", filename)
-
-	if (!filePath || !(await pathExists(filePath))) return null
-
-	const st = await statLink(filePath)
-
-	if (st.isSymbolicLink()) {
-		const target = await readLink(filePath)
-		const resolved = resolvePath(dirname(filePath), target)
-
-		return (await pathExists(resolved)) ? resolved : null
-	}
-
-	return filePath
-}
+//#region Model artifact staging
 
 /**
  * Copy a file to the static directory, but only if it differs (by size) from what's already there.
@@ -148,17 +107,16 @@ export async function stageSQLJSHTTPVFS(destDir: string): Promise<boolean> {
 
 		const dest = resolvePath(destDir, f)
 
-		// Idempotent stage: skip when the destination already matches (by size). This runs in
-		// loadContent(), which the Docusaurus dev server (`yarn start`) re-invokes on reload — and
-		// `destDir` lives under the watched `static/` tree. An UNCONDITIONAL copyFileSync rewrites the
-		// file (fresh mtime) even when the bytes are identical, the watcher sees a "change" and reloads,
-		// loadContent() re-runs and re-copies… a reload LOOP that shows up as the /demo page flickering
-		// during `start`. Skipping the no-op copy breaks the cycle. (Prod `build` runs loadContent once,
-		// so the loop is a dev-server-only hazard.)
-		if ((await pathExists(dest)) && (await statPath(dest)).size === (await statPath(src)).size) continue
-		await copyFileTo(src, dest)
-
-		copied++
+		// Idempotent stage — syncArtifact skips a size-identical copy. This runs in loadContent(), which
+		// the Docusaurus dev server (`yarn start`) re-invokes on reload — and `destDir` lives under the
+		// watched `static/` tree. An UNCONDITIONAL copy rewrites the file (fresh mtime) even when the
+		// bytes are identical, the watcher sees a "change" and reloads, loadContent() re-runs and
+		// re-copies… a reload LOOP that shows up as the /demo page flickering during `start`. Skipping
+		// the no-op copy breaks the cycle. (Prod `build` runs loadContent once, so the loop is a
+		// dev-server-only hazard.)
+		if (await syncArtifact(src, dest, `sql.js-httpvfs ${f}`)) {
+			copied++
+		}
 	}
 
 	if (copied > 0) {
@@ -214,76 +172,15 @@ export async function stagePairIndexes(destDir: string): Promise<boolean> {
 
 		const dest = resolvePath(destDir, file)
 
-		// Idempotent stage (same reload-loop guard as stageSQLJSHTTPVFS): skip a byte-identical copy.
-		if ((await pathExists(dest)) && (await statPath(dest)).size === (await statPath(src)).size) continue
-		await copyFileTo(src, dest)
-
-		copied++
+		// Idempotent stage (same reload-loop guard as stageSQLJSHTTPVFS): syncArtifact skips a size-identical copy.
+		if (await syncArtifact(src, dest, `pair-index ${file}`)) {
+			copied++
+		}
 	}
 
 	if (copied > 0) {
 		console.log(`[demo-assets] pair-index: staged ${copied} index binary/binaries`)
 	}
-
-	return true
-}
-
-//#endregion
-
-//#region FST builder
-
-/**
- * Build the FST binary from the WOF admin SQLite database.
- *
- * @param fstPath - Destination path for the binary
- *
- * @returns True if built successfully
- */
-export async function buildFSTBinary(fstPath: string, opts: { repoRoot: string; wofDB?: string }): Promise<boolean> {
-	// Canonical custom-built gazetteer (never the off-the-shelf dumps — see feedback-custom-wof-db-only).
-	const globalDB = dataRootPath("wof", "admin-global-priority.db")
-	const wofDB = opts.wofDB ?? $public.PLAYPEN_WOF_ADMIN_DB ?? globalDB
-
-	if (!(await pathExists(wofDB))) {
-		console.warn(`[demo-assets] FST: WOF admin DB not found at ${wofDB} — skipping FST build`)
-
-		return false
-	}
-
-	const isGlobal = wofDB.includes("global")
-	const countries = isGlobal ? "['US', 'FR', 'JP', 'CN', 'KR', 'DE', 'GB']" : "['US']"
-	const languages = isGlobal ? "['*']" : "['eng', '']"
-
-	const script = `
-		import { buildFSTFromWOF } from '@mailwoman/resolver-wof-sqlite/fst-builder'
-		import { serializeFST } from '@mailwoman/resolver-wof-sqlite/fst-serialize'
-		import { writeFile } from 'node:fs/promises'
-		const { matcher, provenance } = buildFSTFromWOF({
-			dbPath: ${JSON.stringify(wofDB)},
-			countries: ${countries},
-			languages: ${languages},
-			onProgress: (phase, msg) => process.stderr.write(phase + ': ' + msg + '\\n'),
-		})
-		const buf = serializeFST(matcher, provenance)
-		await writeFile(${JSON.stringify(fstPath)}, buf)
-		process.stderr.write('FST binary: ' + (buf.length / 1024 / 1024).toFixed(2) + ' MB\\n')
-	`
-
-	console.log(`[demo-assets] FST: building from ${wofDB}`)
-
-	const result = spawnProcessSync("node", ["--input-type=module", "-e", script], {
-		cwd: opts.repoRoot,
-		stdio: ["pipe", "inherit", "inherit"],
-		timeout: 120_000,
-	})
-
-	if (result.status !== 0) {
-		console.warn(`[demo-assets] FST: build failed (exit ${result.status})`)
-
-		return false
-	}
-
-	console.log(`[demo-assets] FST: built successfully`)
 
 	return true
 }

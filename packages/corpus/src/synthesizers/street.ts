@@ -22,7 +22,7 @@
 import { isPresent } from "@mailwoman/core/objects"
 
 import { decomposeStreet } from "#adapters/tiger/street-decompose"
-import { pick } from "#synthesizers/utils"
+import { pick, tieredNumber } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
 // Hand-curated US street name pool. Real frequency-weighted street names — sampled
@@ -190,16 +190,14 @@ export interface StreetSynthesisOpts {
 
 function randomHouseNumber(random: () => number): string {
 	// US house number distribution: skewed low. 1-99 (30%), 100-999 (40%),
-	// 1000-9999 (25%), 10000+ (5%).
-	const r = random()
-
-	if (r < 0.3) return String(1 + Math.floor(random() * 99))
-
-	if (r < 0.7) return String(100 + Math.floor(random() * 900))
-
-	if (r < 0.95) return String(1000 + Math.floor(random() * 9000))
-
-	return String(10_000 + Math.floor(random() * 89_999))
+	// 1000-9999 (25%), 10000+ (5%). The last band's 89_999 span is this file's own
+	// (the PO-box generators use 90_000) and is baked into every shipped street shard.
+	return tieredNumber(random, [
+		{ cutoff: 0.3, base: 1, span: 99 },
+		{ cutoff: 0.7, base: 100, span: 900 },
+		{ cutoff: 0.95, base: 1000, span: 9000 },
+		{ base: 10_000, span: 89_999 },
+	])
 }
 
 /**

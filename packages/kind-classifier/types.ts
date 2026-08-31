@@ -11,24 +11,7 @@ export type { LocaleHint, QueryIntentMarker, QueryKind, QueryKindResult } from "
 export { QueryIntentCode } from "@mailwoman/core/pipeline"
 
 /**
- * Minimal `NormalizedInput` shape consumed by `classifyKind`. Compatible with `@mailwoman/normalize`'s output.
+ * The minimal input shapes consumed by `classifyKind` come from `@mailwoman/query-shape` — one declaration shared by
+ * every Stage-2.x consumer. `QueryShapeLike` stays this package's public name for its narrow read-only view.
  */
-export interface NormalizedInputLite {
-	raw: string
-	normalized: string
-	appliedLocale?: string
-}
-
-/**
- * Minimal `QueryShape` shape consumed by `classifyKind`. Compatible with `@mailwoman/query-shape`'s output.
- */
-export interface QueryShapeLike {
-	knownFormats: ReadonlyArray<{
-		format: string
-		span: { start: number; end: number }
-		confidence: number
-	}>
-	segments?: ReadonlyArray<{ body: string; index: number }>
-	characterClass?: string
-	totalLength?: number
-}
+export type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"

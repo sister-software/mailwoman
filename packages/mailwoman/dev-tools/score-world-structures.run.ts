@@ -16,8 +16,10 @@
  * Usage: node packages/mailwoman/dev-tools/score-world-structures.run.ts
  */
 
-import { type ComponentTag, decodeAsTuples } from "@mailwoman/core"
+import { type ComponentTag, groupTuplesByTag } from "@mailwoman/core"
+import { STREET_FAMILY_TAGS } from "@mailwoman/core/types"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 
 import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
 import { createRuntimePipeline } from "#index"
@@ -28,9 +30,6 @@ const SOURCE = "operator:world-structures-2026-08-10"
  * The street family is assembled before comparison for the same reason the sibling boards do it: a row asserts the
  * whole attested street name, and a correct parse may split it across prefix/particle/name/suffix spans.
  */
-const STREET_FAMILY = ["street_prefix", "street_prefix_particle", "street", "street_suffix"] as const
-
-const fold = (value: string): string => value.normalize("NFKC").toLocaleLowerCase().replaceAll(/\s+/gu, " ").trim()
 
 const fixtures = (await loadRegressionCases()).filter((row) => row.source === SOURCE)
 
@@ -45,11 +44,7 @@ const detail: string[] = []
 
 for (const row of fixtures) {
 	const result = await pipeline(row.input, { locale: "en-US" })
-	const emitted = new Map<ComponentTag, string[]>()
-
-	for (const [tag, value] of decodeAsTuples(result.tree)) {
-		emitted.set(tag, [...(emitted.get(tag) ?? []), value])
-	}
+	const emitted = groupTuplesByTag(result.tree)
 
 	let allHit = true
 	const misses: string[] = []
@@ -62,11 +57,11 @@ for (const row of fixtures) {
 
 		const actual = (
 			tag === "street"
-				? STREET_FAMILY.flatMap((part) => emitted.get(part) ?? [])
+				? STREET_FAMILY_TAGS.flatMap((part) => emitted.get(part) ?? [])
 				: (emitted.get(tag as ComponentTag) ?? [])
 		).join(" ")
 
-		if (fold(actual) === fold(expected)) {
+		if (foldNFKCWhitespace(actual) === foldNFKCWhitespace(expected)) {
 			bucket.hit++
 		} else {
 			allHit = false

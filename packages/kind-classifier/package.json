@@ -68,9 +68,8 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@mailwoman/core": "workspace:*"
-	},
-	"devDependencies": {
+		"@mailwoman/codex": "workspace:*",
+		"@mailwoman/core": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*"
 	}
 }

@@ -26,6 +26,7 @@
  */
 
 import { addCoverageCells, encodeRings, ringAreaReadings, ringsBoundingBox } from "@mailwoman/spatial"
+import { beginBatched } from "@mailwoman/sqlite/batched"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { CoastalDatabase } from "#schema"
@@ -123,7 +124,6 @@ export async function ingestCoastalChunk(
 
 	let erosionFeatures = 0
 	let instabilityFeatures = 0
-	let pending = 0
 	let coarsened = 0
 	let wholeCellRows = 0
 	let partialCellRows = 0
@@ -131,7 +131,7 @@ export async function ingestCoastalChunk(
 	let nestedArea = 0
 	let allExteriorArea = 0
 
-	database.exec("BEGIN")
+	const batch = beginBatched(database, { rowsPerCommit: INSERT_TRANSACTION_ROWS })
 
 	try {
 		for await (const feature of options.source.erosionFeatures()) {
@@ -216,14 +216,7 @@ export async function ingestCoastalChunk(
 
 			erosionFeatures++
 
-			pending++
-
-			if (pending >= INSERT_TRANSACTION_ROWS) {
-				database.exec("COMMIT")
-				database.exec("BEGIN")
-
-				pending = 0
-			}
+			batch.rowWritten()
 
 			if (erosionFeatures % PROGRESS_STRIDE === 0) {
 				options.onProgress?.(`${erosionFeatures.toLocaleString()} erosion features in this chunk`)
@@ -259,26 +252,12 @@ export async function ingestCoastalChunk(
 			// impossible for one to reach an erosion probe.
 			instabilityFeatures++
 
-			pending++
-
-			if (pending >= INSERT_TRANSACTION_ROWS) {
-				database.exec("COMMIT")
-				database.exec("BEGIN")
-
-				pending = 0
-			}
+			batch.rowWritten()
 		}
 
-		database.exec("COMMIT")
+		batch.commit()
 	} catch (error) {
-		// Best-effort, and it must never replace the real error: the build runs with the journal off (nothing here is ever
-		// published without the swap), so SQLite may refuse to unwind. What matters is that the caller sees WHY the ingest
-		// stopped, not that a scratch file was tidied.
-		try {
-			database.exec("ROLLBACK")
-		} catch {
-			// The temp artifact is discarded either way.
-		}
+		batch.rollbackQuietly()
 
 		throw error
 	}

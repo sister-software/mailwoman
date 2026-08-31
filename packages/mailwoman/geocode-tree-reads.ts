@@ -9,7 +9,7 @@
  *   absence means "the mechanism never spoke", and none of them ranks anything.
  */
 
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { type AddressNode, type AddressTree, firstNodeWhere, walkNodes } from "@mailwoman/core/decoder"
 import { countryFromPostcodeFormat } from "@mailwoman/core/resolver"
 
 /**
@@ -17,15 +17,10 @@ import { countryFromPostcodeFormat } from "@mailwoman/core/resolver"
  * resolved nodes), or undefined when nothing resolved with one. The rooftop second pass keys on this.
  */
 export function resolvedCountryOf(tree: AddressTree): string | undefined {
-	const stack: AddressNode[] = [...tree.roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
+	for (const n of walkNodes(tree.roots)) {
 		const c = (n.metadata?.["resolver_country"] as string | undefined)?.trim()
 
 		if (c) return c.toUpperCase()
-
-		stack.push(...n.children)
 	}
 
 	return undefined
@@ -36,17 +31,12 @@ export function resolvedCountryOf(tree: AddressTree): string | undefined {
  * `undefined` when no node's race was reordered by it.
  */
 export function capitalPromotionOf(tree: AddressTree): string | undefined {
-	const stack: AddressNode[] = [...tree.roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
+	for (const n of walkNodes(tree.roots)) {
 		const stamp = n.metadata?.["capital_promotion"]
 
 		if (typeof stamp === "string" && stamp.length) return stamp
 
 		if (stamp === true) return "unknown"
-
-		stack.push(...n.children)
 	}
 
 	return undefined
@@ -58,17 +48,7 @@ export function capitalPromotionOf(tree: AddressTree): string | undefined {
  * spoke: off, no variant row in any race, the variant lost, or a backend that never runs the ranker.
  */
 export function variantAliasExemptionOf(tree: AddressTree): true | undefined {
-	const stack: AddressNode[] = [...tree.roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
-		if (n.metadata?.["variant_alias_exemption"] === true) return true
-
-		stack.push(...n.children)
-	}
-
-	return undefined
+	return firstNodeWhere(tree.roots, (n) => n.metadata?.["variant_alias_exemption"] === true) ? true : undefined
 }
 
 /**
@@ -78,15 +58,10 @@ export function variantAliasExemptionOf(tree: AddressTree): true | undefined {
  * overridden.
  */
 export function postcodeCountryScopeOf(tree: AddressTree): string | undefined {
-	const stack: AddressNode[] = [...tree.roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
+	for (const n of walkNodes(tree.roots)) {
 		const scope = n.metadata?.["postcode_country_scope"] ?? n.metadata?.["explicit_country_scope"]
 
 		if (typeof scope === "string" && scope.length) return scope
-
-		stack.push(...n.children)
 	}
 
 	return undefined
@@ -96,17 +71,7 @@ export function postcodeCountryScopeOf(tree: AddressTree): string | undefined {
  * The first `postcode` node's value in a parsed tree, or undefined.
  */
 export function treePostcodeValue(tree: AddressTree): string | undefined {
-	const stack = [...tree.roots]
-
-	while (stack.length) {
-		const node = stack.pop()!
-
-		if (node.tag === "postcode") return node.value
-
-		stack.push(...node.children)
-	}
-
-	return undefined
+	return firstNodeWhere(tree.roots, (node) => node.tag === "postcode")?.value
 }
 
 /**
@@ -134,19 +99,14 @@ export function treePostcodeValue(tree: AddressTree): string | undefined {
  */
 export function recognizeBarePostcode(tree: AddressTree): AddressTree {
 	const valued: AddressNode[] = []
-	const stack = [...tree.roots]
 
-	while (stack.length) {
-		const n = stack.pop()!
-
+	for (const n of walkNodes(tree.roots)) {
 		// The parse already found a postcode — never second-guess it.
 		if (n.tag === "postcode") return tree
 
 		if (n.value.trim().length) {
 			valued.push(n)
 		}
-
-		stack.push(...n.children)
 	}
 
 	if (valued.length !== 1) return tree

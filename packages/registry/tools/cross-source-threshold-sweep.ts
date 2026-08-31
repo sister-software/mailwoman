@@ -39,6 +39,7 @@ import {
 	DEDUP_GBT_META,
 	DEDUP_GBT_MODEL,
 	ingestRows,
+	normalizePhoneStrict,
 	resolveEntities,
 	streamRows,
 	type GeocodeAddress,
@@ -46,7 +47,7 @@ import {
 	type SourceRecord,
 } from "#index"
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
-import { buildSpecs } from "#tools/shared"
+import { buildSpecs, stateOption } from "#tools/shared"
 
 /**
  * Independent sources that must agree before a cluster counts as cross-source corroborated.
@@ -91,16 +92,6 @@ const entitySources = (e: ResolvedEntity): Set<string> =>
 	new Set(e.records.map((r) => r.source).filter((s): s is string => !!s))
 
 /**
- * Last-10-digit phone key (drops formatting / country code).
- */
-const normPhone = (p?: string | null): string => {
-	if (!p) return ""
-	const d = p.replaceAll(/\D/g, "")
-
-	return d.length >= 10 ? d.slice(-10) : ""
-}
-
-/**
  * Label-free precision proxy: does this cross-source entity carry the SAME phone in records from two DIFFERENT sources?
  * (Phone isn't the join key, so a match is independent corroboration of same-facility.) Entities where no two
  * cross-source records both have a phone are "unknown" — we only count corroborated / contradicted among those that CAN
@@ -110,7 +101,7 @@ function phoneEvidence(e: ResolvedEntity): "corroborated" | "contradicted" | "un
 	const bySource = new Map<string, Set<string>>()
 
 	for (const r of e.records) {
-		const ph = normPhone(r.phone)
+		const ph = normalizePhoneStrict(r.phone)
 
 		if (!ph) continue
 		const s = r.source ?? "?"
@@ -201,7 +192,7 @@ export async function crossSourceThresholdSweep(
 ): Promise<{ markdown: string }> {
 	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
 	const CAP = options.cap ?? 2000
-	const STATE = (options.state || "TX").toUpperCase()
+	const STATE = stateOption(options)
 	const OUT_MD = options.outMd || ""
 	const CANDIDATE = options.candidate || ""
 	const SPECS = buildSpecs(`${SOURCES}`, STATE)

@@ -55,7 +55,7 @@ import {
 	synthesizeMilitaryPoBoxRow,
 	type LocaleTemplate,
 } from "#synthesizers/po-box"
-import { pick } from "#synthesizers/utils"
+import { pick, tieredNumber } from "#synthesizers/utils"
 import { alignRow } from "#utils"
 
 // ── Base-skeleton sources ────────────────────────────────────────────────────────────────────────
@@ -398,15 +398,12 @@ const BOX_FOUR_DIGIT_CUTOFF = 0.95
  * Box-number distribution (mirrors the corpus defaultPickNumber bands: 70% are 1-3 digits).
  */
 function pickBoxNumber(random: () => number): string {
-	const r = random()
-
-	if (r < BOX_TWO_DIGIT_CUTOFF) return String(1 + Math.floor(random() * 99))
-
-	if (r < BOX_THREE_DIGIT_CUTOFF) return String(100 + Math.floor(random() * 900))
-
-	if (r < BOX_FOUR_DIGIT_CUTOFF) return String(1000 + Math.floor(random() * 9000))
-
-	return String(10_000 + Math.floor(random() * 90_000))
+	return tieredNumber(random, [
+		{ cutoff: BOX_TWO_DIGIT_CUTOFF, base: 1, span: 99 },
+		{ cutoff: BOX_THREE_DIGIT_CUTOFF, base: 100, span: 900 },
+		{ cutoff: BOX_FOUR_DIGIT_CUTOFF, base: 1000, span: 9000 },
+		{ base: 10_000, span: 90_000 },
+	])
 }
 
 // Designator casing: 70% as templated, 22% UPPER, 8% lower.
@@ -445,10 +442,10 @@ function makePoBoxPhrase(
 	leaders: ReadonlyArray<string>,
 	rareLeaders?: ReadonlyArray<string>
 ): string {
-	let leader = leaders[Math.floor(random() * leaders.length)]!
+	let leader = pick(leaders, random)
 
 	if (rareLeaders && random() < RARE_LEADER_SHARE) {
-		leader = rareLeaders[Math.floor(random() * rareLeaders.length)]!
+		leader = pick(rareLeaders, random)
 	}
 
 	const num = maybeNoisifyBoxNumber(pickBoxNumber(random), random)
@@ -502,10 +499,10 @@ function makeAuNzPoBoxPhrase(
 	rareLeaders: ReadonlyArray<string>,
 	validate: (input: unknown) => boolean
 ): string {
-	let leader = leaders[Math.floor(random() * leaders.length)]!
+	let leader = pick(leaders, random)
 
 	if (rareLeaders && random() < RARE_LEADER_SHARE) {
-		leader = rareLeaders[Math.floor(random() * rareLeaders.length)]!
+		leader = pick(rareLeaders, random)
 	}
 
 	let num = maybeNoisifyBoxNumber(pickBoxNumber(random), random)
@@ -533,7 +530,7 @@ function makeAuNzPoBoxPhrase(
 function makeCaPostcode(random: () => number, fsaLetters: string[]): string {
 	const L = () => CA_INTERIOR_LETTERS[Math.floor(random() * CA_INTERIOR_LETTERS.length)]!
 	const D = () => String(Math.floor(random() * 10))
-	const first = fsaLetters[Math.floor(random() * fsaLetters.length)]!
+	const first = pick(fsaLetters, random)
 	const pc = `${first}${D()}${L()} ${D()}${L()}${D()}`
 
 	// The codex pattern is the contract — a generation bug should fail loud, not emit junk labels.

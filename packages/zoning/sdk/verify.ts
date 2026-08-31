@@ -34,7 +34,7 @@
  *   it reads, which is how a rendering difference gets reported as a conversion defect.
  */
 
-import { interiorPointOfEncodedRings, pointInEncodedRings, segmentDistanceMetres } from "@mailwoman/spatial"
+import { nearestRingEdgeMetres, pointInEncodedRings, strideSampleInteriorPoints } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { ZoningLookup, ZoningReadingKind, type ZoningReading } from "#index"
@@ -265,16 +265,10 @@ async function readServiceContainment(
 				? (geometry.coordinates as MultiPolygonRings)
 				: [geometry.coordinates as PolygonRings]
 
-		for (const rings of raw) {
-			for (const ring of rings) {
-				for (let index = 1; index < ring.length; index++) {
-					const distance = segmentDistanceMetres(longitude, latitude, ring[index - 1]!, ring[index]!)
+		const distance = nearestRingEdgeMetres(geometry, longitude, latitude)
 
-					if (distance < nearest) {
-						nearest = distance
-					}
-				}
-			}
+		if (distance < nearest) {
+			nearest = distance
 		}
 
 		// THE SERVICE'S RINGS GET THE SAME ROLE RESOLUTION THE INGEST GAVE THE ARCHIVE'S. The publisher uses one convention on
@@ -308,13 +302,9 @@ async function readServiceContainment(
  * authorities.
  *
  * SPREAD ACROSS AUTHORITIES RATHER THAN DRAWN FROM ONE, because 30 local authorities publish 581 distinct local codes
- * between them and a sample from one would verify one authority's conversion while reporting on all of them. The draw
- * is a deterministic stride over the primary key, not a random one, so a re-run compares the same points and a
- * disagreement can be looked at rather than re-rolled.
- *
- * THE KEYS ARE CHOSEN BEFORE ANY GEOMETRY IS READ. A `WHERE rowid % stride = 0` scan looks like the same thing and is
- * not: it walks the table itself, which means reading ring blobs to keep a few dozen of them. Selecting `area_id` alone
- * is an index-only walk over the primary key, and the rows it names are then fetched by key.
+ * between them and a sample from one would verify one authority's conversion while reporting on all of them. The stride
+ * discipline — keys chosen before any geometry is read, deterministic rather than random — is
+ * `strideSampleInteriorPoints`'s.
  */
 export function sampleAgreementPoints(
 	databasePath: string,
@@ -322,8 +312,6 @@ export function sampleAgreementPoints(
 ): Array<{ label: string; latitude: number; longitude: number; localCode: string }> {
 	const count = options.count ?? 48
 	using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
-
-	const points: Array<{ label: string; latitude: number; longitude: number; localCode: string }> = []
 
 	// ORDERED BY THE AUTHORITY FIRST, so a stride walks across the 30 of them rather than down one. A stride over
 	// `area_id` alone would follow the publisher's own feature numbering, which is grouped by authority — and would draw
@@ -334,40 +322,29 @@ export function sampleAgreementPoints(
 		}>
 	).map((row) => row.area_id)
 
-	if (!areaIDs.length) return points
-
-	const stride = Math.max(1, Math.floor(areaIDs.length / Math.max(1, count)))
-
 	const selectArea = database.prepare(
 		"SELECT area_id, jurisdiction_id, local_code, min_lat, min_lon, max_lat, max_lon, rings FROM zoning_area WHERE area_id = ?"
 	)
 
-	for (let index = 0; index < areaIDs.length && points.length < count; index += stride) {
-		const area = selectArea.get(areaIDs[index]!) as
-			| {
-					area_id: string
-					jurisdiction_id: string
-					local_code: string
-					min_lat: number
-					min_lon: number
-					max_lat: number
-					max_lon: number
-					rings: Uint8Array
-			  }
-			| undefined
-
-		if (!area) continue
-
-		const interior = interiorPointOfEncodedRings(area, 17)
-
-		if (!interior) continue
-
-		points.push({
+	return strideSampleInteriorPoints(areaIDs, count, {
+		fetch: (key) =>
+			selectArea.get(key) as
+				| {
+						area_id: string
+						jurisdiction_id: string
+						local_code: string
+						min_lat: number
+						min_lon: number
+						max_lat: number
+						max_lon: number
+						rings: Uint8Array
+				  }
+				| undefined,
+		gridSteps: 17,
+		toPoint: (area, interior) => ({
 			label: `${area.jurisdiction_id} ${JSON.stringify(area.local_code)} polygon ${area.area_id}`,
 			localCode: area.local_code,
 			...interior,
-		})
-	}
-
-	return points
+		}),
+	})
 }

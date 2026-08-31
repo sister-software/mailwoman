@@ -11,6 +11,8 @@
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 
+import { MERCATOR_LATITUDE_MAX, MERCATOR_LATITUDE_MIN } from "#coordinate-bounds"
+
 /**
  * Bits packed into each base-32 geohash character.
  */
@@ -67,7 +69,7 @@ const WEB_MERCATOR_R = 6_378_137
  * Web Mercator (EPSG:3857) projection of a coordinate.
  */
 export function toMercator(lat: number, lon: number): { x: number; y: number } {
-	const clampedLat = Math.max(-85.05112878, Math.min(85.05112878, lat))
+	const clampedLat = Math.max(MERCATOR_LATITUDE_MIN, Math.min(MERCATOR_LATITUDE_MAX, lat))
 
 	return {
 		x: WEB_MERCATOR_R * toRad(lon),

@@ -17,9 +17,13 @@
  *   faults without the optional `@mailwoman/resolver-wof-sqlite` peer.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "#cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -132,11 +136,7 @@ const GazetteerBuildPostcodeLocality: ParsedCommandComponent<Options> = ({ optio
 		return `postcode-locality (${options.recipe}): ${options.output} — sealed 0444`
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
-
-	if (state.status === "done") return <Text color="green">✓ {state.result}</Text>
-
-	return null // progress streams to stderr until the summary lands
+	return <CommandTaskResult state={state} />
 }
 
 export default GazetteerBuildPostcodeLocality

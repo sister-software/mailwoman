@@ -25,6 +25,7 @@
  *   Bucket labels render verbatim from the data, never editorialized.
  */
 
+import { escapeHTML } from "@mailwoman/core/strings/escape"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { layers, namedFlavor } from "@protomaps/basemaps"
 
@@ -97,13 +98,6 @@ const CROSS_COLOR = "#e8590c"
  */
 function safeJSONForScript(value: unknown): string {
 	return JSON.stringify(value).replaceAll("<", "\\u003c").replaceAll(">", "\\u003e").replaceAll("&", "\\u0026")
-}
-
-/**
- * Escape text for the HTML document body (title/heading), not the inlined script.
- */
-function escapeHTML(text: string): string {
-	return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;")
 }
 
 function sourceCount(props: MapFeatureData): number {

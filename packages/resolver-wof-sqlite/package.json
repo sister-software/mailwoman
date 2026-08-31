@@ -69,6 +69,11 @@
 			"default": "./out/fts-query.js",
 			"types": "./out/fts-query.d.ts"
 		},
+		"./ranking-weights": {
+			"node": "./ranking-weights.ts",
+			"default": "./out/ranking-weights.js",
+			"types": "./out/ranking-weights.d.ts"
+		},
 		"./primary-preference": {
 			"node": "./primary-preference.ts",
 			"default": "./out/primary-preference.js",
@@ -128,6 +133,11 @@
 			"node": "./fst-serialize.ts",
 			"default": "./out/fst-serialize.js",
 			"types": "./out/fst-serialize.d.ts"
+		},
+		"./fst-format": {
+			"node": "./fst-format.ts",
+			"default": "./out/fst-format.js",
+			"types": "./out/fst-format.d.ts"
 		},
 		"./fst-autocomplete": {
 			"node": "./fst-autocomplete.ts",

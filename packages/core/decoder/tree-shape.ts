@@ -142,3 +142,47 @@ export function flattenTreeNodes(tree?: AddressTree | null): FlatTreeNode[] {
 		}))
 		.toSorted((a, b) => a.start - b.start)
 }
+
+/**
+ * Every node of a forest, parent before children. The sibling order of the LIFO stack is reversed; use this for
+ * first-match and collect walks where order is immaterial, and a recursive document-order walk where it is not.
+ */
+export function* walkNodes(roots: readonly AddressNode[]): Generator<AddressNode> {
+	const stack = [...roots]
+
+	while (stack.length) {
+		const node = stack.pop()!
+
+		yield node
+		stack.push(...node.children)
+	}
+}
+
+/**
+ * Every node satisfying `predicate`, in {@link walkNodes} order.
+ */
+export function collectNodes(roots: readonly AddressNode[], predicate: (node: AddressNode) => boolean): AddressNode[] {
+	const matches: AddressNode[] = []
+
+	for (const node of walkNodes(roots)) {
+		if (predicate(node)) {
+			matches.push(node)
+		}
+	}
+
+	return matches
+}
+
+/**
+ * The first node satisfying `predicate`, or undefined.
+ */
+export function firstNodeWhere(
+	roots: readonly AddressNode[],
+	predicate: (node: AddressNode) => boolean
+): AddressNode | undefined {
+	for (const node of walkNodes(roots)) {
+		if (predicate(node)) return node
+	}
+
+	return undefined
+}

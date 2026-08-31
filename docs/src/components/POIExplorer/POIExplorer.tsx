@@ -34,6 +34,8 @@ import { useCallback } from "react"
 
 import "@mailwoman/react/styles.css"
 
+import { sqljsBaseURL } from "#shared/resources"
+
 import { useSiteConfig } from "../../hooks/site.ts"
 
 export interface POIExplorerProps {
@@ -45,7 +47,7 @@ export interface POIExplorerProps {
 
 export function POIExplorer({ defaultText }: POIExplorerProps) {
 	const { baseURL } = useSiteConfig()
-	const sqljsBaseURL = `${baseURL}mailwoman/sqljs`
+	const sqljsBase = sqljsBaseURL(baseURL)
 
 	// The live poi.db probe: resolve the anchor to a center, then k-ring search the published layer.
 	// Preserves the tester's two failure modes — anchor unplaceable vs layer unreachable.
@@ -53,12 +55,12 @@ export function POIExplorer({ defaultText }: POIExplorerProps) {
 		async ({ categoryID, overtureCategoryIDs, anchor }) => {
 			const { loadPOIWorker, resolveAnchorCenter, searchPOICategory } = await import("#shared/poi-httpvfs")
 
-			const center = await resolveAnchorCenter(sqljsBaseURL, anchor)
+			const center = await resolveAnchorCenter(sqljsBase, anchor)
 
 			if (!center) return { status: "unplaced", anchor }
 
 			try {
-				const worker = await loadPOIWorker(sqljsBaseURL)
+				const worker = await loadPOIWorker(sqljsBase)
 
 				const hits = await searchPOICategory(worker, {
 					categoryID,
@@ -73,7 +75,7 @@ export function POIExplorer({ defaultText }: POIExplorerProps) {
 				return { status: "unavailable" }
 			}
 		},
-		[sqljsBaseURL]
+		[sqljsBase]
 	)
 
 	return <ReactPOIExplorer defaultText={defaultText} runLiveSearch={runLiveSearch} />

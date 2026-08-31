@@ -100,6 +100,16 @@
 			"node": "./sdk/well-known-text.ts",
 			"default": "./out/sdk/well-known-text.js",
 			"types": "./out/sdk/well-known-text.d.ts"
+		},
+		"./sdk/ogr": {
+			"node": "./sdk/ogr.ts",
+			"default": "./out/sdk/ogr.js",
+			"types": "./out/sdk/ogr.d.ts"
+		},
+		"./h3/coverage": {
+			"node": "./h3/coverage.ts",
+			"default": "./out/h3/coverage.js",
+			"types": "./out/h3/coverage.d.ts"
 		}
 	},
 	"publishConfig": {

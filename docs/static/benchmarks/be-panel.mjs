@@ -163,7 +163,12 @@ function inBox(box, lat, lon) {
  * them into the workspace, and the symlink name says nothing about which checkpoint is behind it.
  */
 async function weightsStamp(locale) {
-	const resolved = resolveWeights({ locale })
+	const resolved = await resolveWeights({ locale })
+
+	// `resolveWeights` answers `undefined` when the bundle ships no card. The stamp is the point of this function, so a
+	// missing card is a failure to report rather than a field to omit.
+	if (!resolved.modelCardPath) throw new Error("be-panel: the resolved weights bundle carries no model card.")
+
 	// oxlint-disable-next-line no-restricted-properties -- shipped doc asset (no monorepo install); a throw on a corrupt model-card is the contract
 	const card = JSON.parse(await readFile(resolved.modelCardPath, "utf8"))
 

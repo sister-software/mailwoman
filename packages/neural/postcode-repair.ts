@@ -41,8 +41,11 @@
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
 import {
+	collectMatchesFor,
+	createLabelSetter,
+	isAddSafe,
+	isTagLabel,
 	type RepairResult,
-	selectNonOverlappingMatches,
 	type SpanMatch,
 	tagOf,
 	tokenIndicesOverlapping,
@@ -112,25 +115,16 @@ const LOCALITY_B = "B-locality" as DecoderToken["label"]
 const LOCALITY_I = "I-locality" as DecoderToken["label"]
 const OUTSIDE = "O" as DecoderToken["label"]
 
-function isPostcodeLabel(label: string): boolean {
-	return label === "B-postcode" || label === "I-postcode"
-}
-
 /**
  * Collect non-overlapping postcode matches, preferring more-specific (earlier) patterns.
  */
 export function collectMatches(text: string): PostcodeMatch[] {
-	const candidates: PostcodeMatch[] = []
-
-	POSTCODE_PATTERNS.forEach((pat, priority) => {
-		pat.re.lastIndex = 0
-
-		for (let m = pat.re.exec(text); m; m = pat.re.exec(text)) {
-			candidates.push({ start: m.index, end: m.index + m[0].length, kind: pat.kind, priority })
-		}
-	})
-
-	return selectNonOverlappingMatches(candidates)
+	return collectMatchesFor(POSTCODE_PATTERNS, text).map(({ start, end, priority, pattern }) => ({
+		start,
+		end,
+		kind: pattern.kind,
+		priority,
+	}))
 }
 
 /**
@@ -143,34 +137,20 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 
 	if (!matches.length) return { tokens, changed: 0 }
 
-	let changed = 0
-
-	const setLabel = (i: number, label: DecoderToken["label"]): void => {
-		if (tokens[i]!.label !== label) {
-			tokens[i]!.label = label
-
-			changed++
-		}
-	}
+	const { setLabel, changeCount } = createLabelSetter(tokens)
 
 	for (const m of matches) {
 		const overlap = tokenIndicesOverlapping(tokens, m.start, m.end)
 
 		if (!overlap.length) continue
 
-		const hasPostcode = overlap.some((i) => isPostcodeLabel(tokens[i]!.label))
+		const hasPostcode = overlap.some((i) => isTagLabel(tokens[i]!.label, "postcode"))
 
 		if (!hasPostcode) {
 			// ADD path — only for high-confidence alphanumeric shapes, only over safe labels.
 			if (m.kind !== "alnum") continue
 
-			const safe = overlap.every((i) => {
-				const tag = tagOf(tokens[i]!.label)
-
-				return tag === null || ADD_OVER_TAGS.has(tag)
-			})
-
-			if (!safe) continue
+			if (!isAddSafe(tokens, overlap, ADD_OVER_TAGS)) continue
 		}
 
 		// SNAP/ADD: relabel the matched run as a single postcode span.
@@ -178,7 +158,7 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 
 		// Leading smear clip: postcode tokens immediately BEFORE the snapped run are noise (e.g. a
 		// house-number digit the model over-labeled) — clear to O as before.
-		for (let j = overlap[0]! - 1; j >= 0 && isPostcodeLabel(tokens[j]!.label); j--) {
+		for (let j = overlap[0]! - 1; j >= 0 && isTagLabel(tokens[j]!.label, "postcode"); j--) {
 			setLabel(j, OUTSIDE)
 		}
 
@@ -194,7 +174,7 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 		// where the postcode sits at the end with nothing to trim).
 		const trailing: number[] = []
 
-		for (let j = overlap.at(-1)! + 1; j < tokens.length && isPostcodeLabel(tokens[j]!.label); j++) {
+		for (let j = overlap.at(-1)! + 1; j < tokens.length && isTagLabel(tokens[j]!.label, "postcode"); j++) {
 			trailing.push(j)
 		}
 
@@ -216,7 +196,7 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 		}
 	}
 
-	return { tokens, changed }
+	return { tokens, changed: changeCount() }
 }
 
 // repairLeadingHouseNumber (#723) was removed 2026-06-24. It RELABELLED a leading 5-digit postcode →

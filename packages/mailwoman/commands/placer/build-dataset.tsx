@@ -10,9 +10,13 @@
  *   outlier builders append to its splits.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	reportToStderr,
+	useCommandTask,
+} from "#cli-kit"
 
 export const description = "Assemble the coarse placer (#244) dataset (--outliers appends OTHER exposure)"
 
@@ -47,22 +51,23 @@ interface Options {
 	oaDir?: string
 }
 
-const report = (line: string): void => console.error(line)
-
 async function run(options: Options): Promise<string> {
 	const { buildDataset, buildOutlierExposure, buildOutlierLatin, buildOutlierOA } =
 		await import("@mailwoman/core/coarse-placer/tools")
 
 	switch (options.outliers) {
 		case "exposure": {
-			const res = await buildOutlierExposure({ perLang: options.perLang, wof: options.wof, data: options.data }, report)
+			const res = await buildOutlierExposure(
+				{ perLang: options.perLang, wof: options.wof, data: options.data },
+				reportToStderr
+			)
 
 			return `outliers exposure: ${res.total.toLocaleString()} OTHER rows appended across train/val/test`
 		}
 		case "latin": {
 			const res = await buildOutlierLatin(
 				{ perCountry: options.perCountry, overture: options.overture, data: options.data },
-				report
+				reportToStderr
 			)
 
 			return `outliers latin: train +${res.train}, val +${res.val}; test-latin-offmap ${res.test} rows`
@@ -70,13 +75,13 @@ async function run(options: Options): Promise<string> {
 		case "oa": {
 			const res = await buildOutlierOA(
 				{ oaDir: options.oaDir, perCountry: options.perCountry, data: options.data },
-				report
+				reportToStderr
 			)
 
 			return `outliers oa: train +${res.train}, val +${res.val}; test-latin-offmap ${res.test} rows (${res.trainCountries} train / ${res.heldoutCountries} heldout countries)`
 		}
 		case undefined: {
-			const res = await buildDataset({ perCountry: options.perCountry, data: options.data }, report)
+			const res = await buildDataset({ perCountry: options.perCountry, data: options.data }, reportToStderr)
 
 			return `dataset: train ${res.train.toLocaleString()} / val ${res.val.toLocaleString()} / test ${res.test.toLocaleString()} → ${res.outDir}`
 		}
@@ -86,11 +91,7 @@ async function run(options: Options): Promise<string> {
 const PlacerBuildDataset: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => run(options))
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
-
-	if (state.status === "done") return <Text color="green">{state.result}</Text>
-
-	return null
+	return <CommandTaskResult state={state} />
 }
 
 export default PlacerBuildDataset

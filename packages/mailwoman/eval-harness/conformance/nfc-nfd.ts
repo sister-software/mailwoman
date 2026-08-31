@@ -38,7 +38,13 @@
 
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 
-import type { ConformanceFixture } from "#eval-harness/conformance/fixture"
+import {
+	auditCommonFixtureFields,
+	type ConformanceFixture,
+	invarianceExpectProblem,
+	MISSING_CASE_COUNTRY_PROBLEM,
+	MISSING_ROW_REF_PROBLEM,
+} from "#eval-harness/conformance/fixture"
 
 /**
  * The law name every row in this suite carries.
@@ -297,33 +303,19 @@ export function describeCanonicalFormCoverage(
  * suite does NOT carry — a question no audit over the committed rows can pose.
  */
 export function auditCanonicalFormSuite(fixtures: readonly ConformanceFixture[]): string[] {
-	const problems: string[] = []
+	return auditCommonFixtureFields(fixtures, CANONICAL_FORM_LAW, (fixture, label, problems) => {
+		const expectation = invarianceExpectProblem(fixture, "canonical-form")
 
-	for (const fixture of fixtures) {
-		const label = `fixture "${fixture.id}"`
-
-		if (fixture.law !== CANONICAL_FORM_LAW) {
-			problems.push(`${label}: law is "${fixture.law}", not "${CANONICAL_FORM_LAW}"`)
-
-			continue
-		}
-
-		if (fixture.expect !== "equivalent") {
-			problems.push(
-				`${label}: expects "${fixture.expect}" — a canonical-form row states an INVARIANCE, so the only relation it can state is "equivalent"`
-			)
+		if (expectation) {
+			problems.push(`${label}: ${expectation}`)
 		}
 
 		if (!fixture.rowRef) {
-			problems.push(
-				`${label}: no rowRef — every base query is drawn from a committed row, so a row without one names no population`
-			)
+			problems.push(`${label}: ${MISSING_ROW_REF_PROBLEM}`)
 		}
 
 		if (!fixture.context?.caseCountry) {
-			problems.push(
-				`${label}: no context.caseCountry — it selects the weights overlay the row grades through, and without it the row is graded base-only against a locale that is not its own`
-			)
+			problems.push(`${label}: ${MISSING_CASE_COUNTRY_PROBLEM}`)
 		}
 
 		if (!classifyCanonicalTransformation(fixture.base, fixture.variant)) {
@@ -334,9 +326,7 @@ export function auditCanonicalFormSuite(fixtures: readonly ConformanceFixture[])
 						: `the pair is NOT canonically equivalent (decompositions ${JSON.stringify(canonicalFormKey(fixture.base))} ≠ ${JSON.stringify(canonicalFormKey(fixture.variant))}) — a compatibility rewrite, a removed accent or a case change is a different law`)
 			)
 		}
-	}
-
-	return problems
+	})
 }
 
 /**

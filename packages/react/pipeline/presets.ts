@@ -30,6 +30,7 @@ export const PIPELINE_PRESETS: ReadonlyArray<Preset> = [
 	{ label: "Space Needle", value: "400 Broad St, Seattle, WA 98109", country: "us" },
 	{ label: "ZIP only", value: "90210", country: "us" },
 	{ label: "Berlin (native order)", value: "Straußstraße 27, 12623 Berlin", country: "de" },
+	{ label: "Berlin city-state (int'l order)", value: "5 Hauptstraße, Berlin, Berlin 10115", country: "de" },
 	{ label: "Paris (street fall-through)", value: "181 Rue du Chevaleret, Paris", country: "fr" },
 	// GB dependent_locality (placetype-pair-prior arc) — "Henbury" flips to dependent_locality via the en-gb pair-index
 	// prior; the UK postcode is also structurally detectable (parity with docs EXAMPLE_ADDRESSES).

@@ -36,11 +36,11 @@ import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { spawnProcessSync } from "@mailwoman/core/process"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { childEnv } from "@mailwoman/core/scripting/utils"
 import { tempRootPath } from "@mailwoman/core/utils"
 import { basename } from "path-ts"
+
+import { runProcessOrFail, splitList } from "#cli-kit/shared"
 
 /**
  * The parseArgs option names of the required per-release artifacts.
@@ -120,13 +120,7 @@ function fail(msg: string): never {
 	throw new CommandError(msg)
 }
 
-function run(cmd: string, args: string[]) {
-	const r = spawnProcessSync(cmd, args, { stdio: "inherit", env: childEnv() })
-
-	if (r.status !== 0) {
-		fail(`${cmd} ${args.join(" ")} → exit ${r.status}`)
-	}
-}
+const run = (cmd: string, args: string[]): void => runProcessOrFail(cmd, args)
 
 /**
  * Hugging Face throttles, and this runs a HEAD per published artifact during a release verification sweep. Retry keeps
@@ -155,12 +149,7 @@ interface ReleaseManifest {
  * non-empty — a staged-but-truncated binary is a silent 404 at runtime, so it fails here instead.
  */
 async function stageBinaryList(spec: string | undefined, label: string): Promise<string[]> {
-	const paths = spec
-		? spec
-				.split(",")
-				.map((s: string) => s.trim())
-				.filter((path) => path.length > 0)
-		: []
+	const paths = splitList(spec)
 
 	for (const localPath of paths) {
 		if (!(await pathExists(localPath)) || !(await statPath(localPath)).size) {
@@ -446,7 +435,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		version: args.version,
 		label: args.label,
 		description: args.description,
-		modelSize: args.modelSize ?? `${Math.round((await statPath(args.model!)).size / 1024 / 1024)} MB`,
+		modelSize: args.modelSize ?? ByteFormatter.formatIEC((await statPath(args.model!)).size),
 		tokenizerVocab: 48_000,
 		steps: args.steps ?? 100_000,
 		hasFST: !!fstPath,

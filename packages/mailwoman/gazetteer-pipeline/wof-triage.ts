@@ -195,7 +195,9 @@ interface LiveRecord {
 /**
  * The shared fold for this pass: diacritic-stripped, lower-cased, whitespace-collapsed. Deliberately NOT
  * `normalizeLocalityForKey` — that is the RESOLVER's key discipline, and importing it here would tie a reporting pass
- * to a runtime contract it must be free to outlive.
+ * to a runtime contract it must be free to outlive. And deliberately NOT `@mailwoman/normalize`'s `stripCombiningMarks`
+ * either (NFD, no case/space fold): this fold decomposes under NFKD, so compatibility forms fold too, and the triage
+ * artifact was built under it.
  */
 function fold(value: string): string {
 	return value

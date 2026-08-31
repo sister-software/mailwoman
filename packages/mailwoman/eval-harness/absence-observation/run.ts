@@ -24,12 +24,9 @@
  *   read it says so in place rather than omitting the field.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
-import { resolveWeights } from "@mailwoman/neural/weights"
 
-import { type LayerManifest, probeManifest } from "#data-inventory"
 import {
 	type AbsenceCounts,
 	type AbsenceExpectedOutcome,
@@ -41,7 +38,8 @@ import {
 	decideAbsenceProbe,
 	loadAbsenceProbeDefinition,
 } from "#eval-harness/absence-observation/probe"
-import { createPOIBoardPipeline, type POIBoardOptions, type POIBoardResolverBackend } from "#eval-harness/poi-board"
+import { createPOIBoardPipeline, type POIBoardOptions } from "#eval-harness/poi-board"
+import { type PreregisteredArtifactIdentity, readArtifactIdentity } from "#eval-harness/preregistration"
 import { buildSHA } from "#gazetteer-pipeline/stamp-manifest"
 import {
 	type AbsenceObservation,
@@ -53,19 +51,7 @@ import {
 	type SemanticObservationRoute,
 } from "#observations/index"
 
-export interface AbsenceArtifactIdentity {
-	poiDatabasePath: string
-	/**
-	 * The database's own `layer_manifest` row, or the reason it could not be read. Never silently absent: an unstamped
-	 * artifact and an unreadable one are different findings, and both matter to a reproduction.
-	 */
-	poiLayerManifest?: LayerManifest
-	poiLayerManifestNote?: string
-	resolverBackend: POIBoardResolverBackend
-	weightsLocale: string
-	weightsModelPath: string
-	weightsVersion: string
-}
+export type AbsenceArtifactIdentity = PreregisteredArtifactIdentity
 
 /**
  * One recorded absence, addressed to the row it happened on.
@@ -115,46 +101,6 @@ export interface AbsenceProbeOptions extends POIBoardOptions {
 	 * Commit sha recorded in the receipt. Defaults to the checkout's own short HEAD.
 	 */
 	gitCommit?: string
-}
-
-interface ModelCard {
-	version: string
-}
-
-async function readWeightsIdentity(options: AbsenceProbeOptions): Promise<{
-	weightsLocale: string
-	weightsModelPath: string
-	weightsVersion: string
-}> {
-	const locale = options.locale ?? "en-US"
-	const resolved = await resolveWeights({ locale, cacheRoot: options.weightsCacheRoot })
-	const cardPath = resolved.modelCardPath ?? resolved.baseModelCardPath
-
-	if (!cardPath) {
-		return { weightsLocale: locale, weightsModelPath: resolved.modelPath, weightsVersion: "no model-card resolved" }
-	}
-
-	const card = await readLocalJSONFile<ModelCard>(cardPath)
-
-	return { weightsLocale: locale, weightsModelPath: resolved.modelPath, weightsVersion: card.version }
-}
-
-async function readArtifactIdentity(
-	db: string,
-	backend: POIBoardResolverBackend,
-	options: AbsenceProbeOptions
-): Promise<AbsenceArtifactIdentity> {
-	const probed = probeManifest(db)
-
-	return {
-		poiDatabasePath: db,
-		...(probed.manifest ? { poiLayerManifest: probed.manifest } : {}),
-		...(probed.manifest
-			? {}
-			: { poiLayerManifestNote: probed.error ?? "the database carries no layer_manifest table" }),
-		resolverBackend: backend,
-		...(await readWeightsIdentity(options)),
-	}
 }
 
 /**

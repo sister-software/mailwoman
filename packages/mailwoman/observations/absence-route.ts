@@ -66,7 +66,7 @@ import {
 	supportsExclusion,
 } from "@mailwoman/core/layers"
 import type { POIIntentOutcome } from "@mailwoman/core/pipeline"
-import { compareByCodePoint } from "@mailwoman/core/utils"
+import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import type {
 	CompiledGeographicModel,
 	ConceptRecord,
@@ -79,6 +79,7 @@ import { recoverShortCellResolution, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "h3-js"
 
+import { readCommittedModel } from "#observations/committed-model"
 import { resolvePOISearchCenter } from "#poi-executor"
 
 /**
@@ -557,14 +558,4 @@ export function describeAbsenceObservation(observation: AbsenceObservation): str
 		`coverage from ${coverage.layer.name} ${coverage.layer.version} (${coverage.layer.source} ${coverage.layer.sourceVintage}, ` +
 		`${coverage.layer.license}, build ${coverage.layer.buildSHA})`
 	)
-}
-
-/**
- * The committed compiled artifact, read through the package that owns it. Never the authoring records: the runtime side
- * of this program consumes an artifact, and traversing authoring JSON is what the boundary record excludes.
- */
-async function readCommittedModel(): Promise<CompiledGeographicModel> {
-	const { readCompiledGeographicModel } = await import("@mailwoman/geographic-model/scripts/build-artifact")
-
-	return await readCompiledGeographicModel()
 }

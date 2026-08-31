@@ -11,7 +11,13 @@
 import { tempRootPath } from "@mailwoman/core/utils"
 import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	reportToStderr,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -41,8 +47,6 @@ interface Options {
 	layer: string
 }
 
-const report = (line: string): void => console.error(line)
-
 const TIGERRaceDots: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		// Optional `@mailwoman/tiger` (operator census tooling) — lazy-imported so a geocoding-only
@@ -57,10 +61,10 @@ const TIGERRaceDots: ParsedCommandComponent<Options> = ({ options }) => {
 			)
 		}
 
-		return raceDots({ db: options.db, out: options.out, per: options.per, layer: options.layer }, report)
+		return raceDots({ db: options.db, out: options.out, per: options.per, layer: options.layer }, reportToStderr)
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		const { dots, blocks, skipped, outPath } = state.result

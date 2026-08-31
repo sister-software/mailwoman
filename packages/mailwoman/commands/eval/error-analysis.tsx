@@ -9,9 +9,7 @@
  *   `--no-strict` warns-and-continues for legacy pre-anchor models.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Categorized golden-set failure report (the pre-publish 2pp promote gate)"
 
@@ -60,7 +58,7 @@ const EvalErrorAnalysis: ParsedCommandComponent<Options> = ({ options }) => {
 		(exitCode) => exitCode
 	)
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	// The analysis prints its own markdown report on stdout.
 	return null

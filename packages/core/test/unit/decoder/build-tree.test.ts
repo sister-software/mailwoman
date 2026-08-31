@@ -6,38 +6,13 @@
 
 import { buildAddressTree } from "@mailwoman/core/decoder/build-tree"
 import type { AddressNode, DecoderToken } from "@mailwoman/core/decoder/types"
-import type { BIOLabel } from "@mailwoman/core/types/component"
 import { describe, expect, test } from "vitest"
 
-/**
- * Construct a DecoderToken — confidence defaults to 1.0 for fixture brevity.
- */
-function tok(piece: string, start: number, end: number, label: BIOLabel, confidence = 1): DecoderToken {
-	return { piece, start, end, label, confidence }
-}
-
-/**
- * "1600 Pennsylvania Avenue NW, Washington, DC 20500" 0 5 18 25 29 41 44
- */
-function whiteHouseTokens(): DecoderToken[] {
-	return [
-		tok("1600", 0, 4, "B-house_number"),
-		tok("Pennsylvania", 5, 17, "B-street"),
-		tok("Avenue", 18, 24, "I-street"),
-		tok("NW", 25, 27, "I-street"),
-		tok(",", 27, 28, "O"),
-		tok("Washington", 29, 39, "B-locality"),
-		tok(",", 39, 40, "O"),
-		tok("DC", 41, 43, "B-region"),
-		tok("20500", 44, 49, "B-postcode"),
-	]
-}
-
-const WHITE_HOUSE = "1600 Pennsylvania Avenue NW, Washington, DC 20500"
+import { findByTag, tok, WHITE_HOUSE_RAW, whiteHouseTokens } from "#test/unit/decoder/fixtures"
 
 describe("buildAddressTree", () => {
 	test("emits one span per B-/I- group, dropping O", () => {
-		const tree = buildAddressTree(WHITE_HOUSE, whiteHouseTokens())
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
 		// 5 spans: house_number, street, locality, region, postcode
 		const allTags: string[] = []
 
@@ -57,7 +32,7 @@ describe("buildAddressTree", () => {
 	})
 
 	test("groups B-street + I-street + I-street into one street span sliced from raw", () => {
-		const tree = buildAddressTree(WHITE_HOUSE, whiteHouseTokens())
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
 		const street = findByTag(tree.roots, "street")!
 		expect(street.value).toBe("Pennsylvania Avenue NW")
 		expect(street.start).toBe(5)
@@ -65,13 +40,13 @@ describe("buildAddressTree", () => {
 	})
 
 	test("nests house_number under street", () => {
-		const tree = buildAddressTree(WHITE_HOUSE, whiteHouseTokens())
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
 		const street = findByTag(tree.roots, "street")!
 		expect(street.children.map((c) => c.tag)).toContain("house_number")
 	})
 
 	test("nests street + postcode under locality (containment, not source order)", () => {
-		const tree = buildAddressTree(WHITE_HOUSE, whiteHouseTokens())
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
 		const locality = findByTag(tree.roots, "locality")!
 		const childTags = locality.children.map((c) => c.tag)
 		expect(childTags).toContain("street")
@@ -79,14 +54,14 @@ describe("buildAddressTree", () => {
 	})
 
 	test("nests locality under region; region is the only root", () => {
-		const tree = buildAddressTree(WHITE_HOUSE, whiteHouseTokens())
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
 		expect(tree.roots).toHaveLength(1)
 		expect(tree.roots[0]!.tag).toBe("region")
 		expect(tree.roots[0]!.children.map((c) => c.tag)).toEqual(["locality"])
 	})
 
 	test("source order preserved in sibling sort (street before postcode under locality)", () => {
-		const tree = buildAddressTree(WHITE_HOUSE, whiteHouseTokens())
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
 		const locality = findByTag(tree.roots, "locality")!
 		expect(locality.children.map((c) => c.tag)).toEqual(["street", "postcode"])
 	})
@@ -518,14 +493,3 @@ describe("buildAddressTree — dependent_locality/locality comma separation (spe
 		expect(localities.map((l) => l.value).toSorted()).toEqual(["Chicago", "Springfield"])
 	})
 })
-
-function findByTag(nodes: AddressNode[], tag: string): AddressNode | null {
-	for (const n of nodes) {
-		if (n.tag === tag) return n
-		const inChild = findByTag(n.children, tag)
-
-		if (inChild) return inChild
-	}
-
-	return null
-}

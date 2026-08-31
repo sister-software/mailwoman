@@ -22,7 +22,7 @@ import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download"
 import { downloadToFile, writeManifest } from "#tools/fetch/download"
 
 /**
@@ -75,14 +75,6 @@ const SOURCES: readonly Source[] = [
 		url: "https://data.hawaii.gov/api/views/cm7c-skav/rows.csv?accessType=DOWNLOAD",
 	},
 ]
-
-interface SourceManifest {
-	source_url: string
-	downloaded_at: string
-	filename: string
-	sha256: string
-	bytes: number
-}
 
 export async function fetchStateSources(
 	options: FetchStateSourcesOptions,

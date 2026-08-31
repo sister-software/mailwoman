@@ -21,11 +21,13 @@
  *     node packages/mailwoman/dev-tools/probe-comma-free-locality.run.ts --cache-root <dir> --label cand --country FR
  */
 
-import { decodeAsTuples } from "@mailwoman/core/decoder"
+import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { JSONSpliterator } from "spliterator"
 
+import { fold } from "#dev-tools/register-board"
+import { PARITY_FIXTURES_V1_PATH, type ParityFixture } from "#eval-harness/parity-corpus"
 import { createRuntimePipeline } from "#index"
 
 const { values } = parseArguments({
@@ -35,19 +37,12 @@ const { values } = parseArguments({
 		locale: { type: "string", default: "en-US" },
 		country: { type: "string" },
 		raw: { type: "boolean", default: false },
-		fixtures: { type: "string", default: "packages/mailwoman/eval-harness/fixtures/parity-corpus.jsonl" },
+		fixtures: { type: "string", default: PARITY_FIXTURES_V1_PATH },
 		verbose: { type: "boolean", default: false },
 	},
 })
 
-interface Row {
-	id: string
-	input: string
-	country: string
-	expect?: Record<string, string[]>
-}
-
-const rows = (await Array.fromAsync(JSONSpliterator.fromAsync<Row>(values.fixtures!)))
+const rows = (await Array.fromAsync(JSONSpliterator.fromAsync<ParityFixture>(values.fixtures!)))
 	.filter((r) => (values.country ? r.country === values.country : true))
 	// The shape the claim is about: a street AND a locality, separated by at least one comma.
 	.filter((r) => r.expect?.locality?.length && r.expect?.street?.length && r.input.includes(","))
@@ -58,17 +53,11 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({
 })
 
 const pipeline = createRuntimePipeline({ classifier })
-const fold = (v: string): string => v.toUpperCase().replaceAll(/\s+/gu, "")
 
 async function tagsFor(text: string): Promise<Map<string, string[]>> {
 	const tree = values.raw ? await classifier.parse(text) : (await pipeline(text, { locale: values.locale! })).tree
-	const byTag = new Map<string, string[]>()
 
-	for (const [tag, value] of decodeAsTuples(tree)) {
-		byTag.set(tag, [...(byTag.get(tag) ?? []), value])
-	}
-
-	return byTag
+	return groupTuplesByTag(tree)
 }
 
 let withComma = 0

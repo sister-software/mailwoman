@@ -15,9 +15,10 @@
  *   2. The docs release matrix (`docs/records/site-2026-08/releases.mdx` "(current)" row) vs the same npm
  *      version — the row went stale twice (v4.11.0 era, then again within hours of v5.1.0).
  *
- *   Run by `.github/workflows/version-parity.yml` (daily + manual dispatch). Zero workspace
- *   dependencies on purpose: plain built-ins, so CI needs no yarn install. `--warn-only`
- *   downgrades mismatches to warnings (useful mid-release, before the repoint lands).
+ *   Run by `.github/workflows/version-parity.yml` (daily + manual dispatch), AFTER its install step —
+ *   this file reaches four `@mailwoman/core` subpaths plus the shared releases-matrix parser in
+ *   `verify-release-metadata.ts`. `--warn-only` downgrades mismatches to warnings (useful
+ *   mid-release, before the repoint lands).
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
@@ -25,6 +26,8 @@ import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
+
+import { currentMatrixVersion } from "./verify-release-metadata.ts"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArguments({
@@ -42,12 +45,6 @@ const NPM_REGISTRY_URL = "https://registry.npmjs.org/mailwoman"
  */
 const DEMO_MANIFEST_URL = "https://public.mailwoman.ai/mailwoman/en-us/releases.json"
 
-/**
- * Zero-dependency path resolution (this file's contract: "no yarn install, just Node built-ins" — the version-parity
- * workflow runs it WITHOUT installing; a @mailwoman/core import here crashed every CI run with ERR_MODULE_NOT_FOUND
- * while local runs silently resolved via repo node_modules, which is how the 2026-07-2x dailies were red without anyone
- * seeing a version comparison at all).
- */
 const REPO_ROOT = repoRootPath()
 const RELEASES_MDX_PATH = resolvePath(REPO_ROOT, "docs", "records", "site-2026-08", "releases.mdx")
 const MODEL_CARD_PATH = resolvePath(REPO_ROOT, "packages", "neural-weights-en-us", "model-card.json")
@@ -109,7 +106,7 @@ async function readDemoDefaultVersion(): Promise<string> {
 
 async function readDocsCurrentVersion(): Promise<string> {
 	const mdx = await readLocalTextFile(RELEASES_MDX_PATH)
-	const version = mdx.match(/^\|\s*\*\*([\d.]+)\*\*\s*\(current\)/m)?.[1]
+	const version = currentMatrixVersion(mdx)
 
 	if (!version) throw new Error(`${RELEASES_MDX_PATH} has no "| **X.Y.Z** (current)" row`)
 

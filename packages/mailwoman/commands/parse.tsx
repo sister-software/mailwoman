@@ -6,6 +6,7 @@
 
 import { Spinner } from "@inkjs/ui"
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { errorMessage } from "@mailwoman/core/errors/schema"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { PolicyMode } from "@mailwoman/core/policy"
@@ -15,10 +16,18 @@ import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { weightsPackageName } from "@mailwoman/neural/weights"
 import type { Resolver } from "@mailwoman/resolver"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
-import { Text } from "ink"
 import type React from "react"
 
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	loadClassifierTolerant,
+	type ParsedCommandComponent,
+	reportToStderr,
+	useCommandTask,
+	writeRawStdout,
+} from "#cli-kit"
 import { WeightsGuard, type WeightsOutcome } from "#cli-kit/weights-guard"
 import { resolverDefaultCountry } from "#country-scope"
 import type { createRuntimePipeline } from "#index"
@@ -221,13 +230,7 @@ function ParseTask({
 		return runPipeline(input, options)
 	})
 
-	if (state.status === "error") {
-		return <Text color="red">{state.message}</Text>
-	}
-
-	if (state.status !== "done") {
-		return <Spinner />
-	}
+	if (state.status !== "done") return <CommandTaskResult state={state} running={<Spinner />} />
 
 	// Every parse format (json/tuple/xml) is machine-readable — bypass Ink's word-wrapping
 	// <Text> renderer, which corrupts long JSON lines at 80 cols when piped (see writeRawStdout).
@@ -235,18 +238,13 @@ function ParseTask({
 }
 
 async function resolveWOFPath(options: ParseOptions): Promise<string> {
-	const { $public } = await import("@mailwoman/core/env")
-	const path = options.resolveDB ?? $public.MAILWOMAN_WOF_DB
+	const { requireWOFPath } = await import("#resolver-backend")
 
-	if (!path) {
-		throw new CommandError(
-			"--resolve needs a WOF SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>. " +
-				"Download from https://data.geocode.earth/wof/dist/sqlite/ and pre-build the FTS5 index " +
-				"with `mailwoman gazetteer build fts <path>`."
-		)
+	try {
+		return await requireWOFPath(options.resolveDB)
+	} catch (error) {
+		throw new CommandError(errorMessage(error), { cause: error })
 	}
-
-	return path
 }
 
 async function tryBuildFST(options: ParseOptions): Promise<FSTMatcher | undefined> {
@@ -679,47 +677,16 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 }
 
 /**
- * Try to load the neural classifier. NEVER throws — on failure it emits a LOUD one-line stderr warning and returns
  * `undefined` so the caller degrades to the structural pipeline (postcode_only / locality_only fast-paths still
- * resolve; `npx mailwoman parse …` always produces output). Distinguishes two failure modes (#1108) so a consumer can't
- * attribute silently-degraded output to the neural parser:
- *
- * - Weights ABSENT (package not installed / carries no binaries) → an install hint, no scary error text.
- * - Weights present but the encoder FAILED to load (corrupt / partial bundle) → the underlying error is surfaced, not
- *   swallowed.
- *
- * The warning goes to STDERR, never STDOUT, so piped stdout parsing is unaffected.
+ * resolve; `npx mailwoman parse …` always produces output). The #1108 absent-vs-corrupt distinction lives in
+ * {@link loadClassifierTolerant}; the warning goes to STDERR, never STDOUT, so piped stdout parsing is unaffected.
  */
 async function tryLoadNeural(options: ParseOptions): Promise<NeuralAddressClassifier | undefined> {
-	try {
-		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-
-		return await NeuralAddressClassifier.loadFromWeights({
-			locale: options.locale,
-			modelPath: options.model,
-			tokenizerPath: options.tokenizer,
-		})
-	} catch (error) {
-		// Graceful degradation: pipeline runs normalize + queryShape + kind (+ resolver) only. The caller
-		// sees `tree.roots` populated from QueryShape fast-paths but nothing from the encoder — so we warn.
-		const message = error instanceof Error ? error.message : String(error)
-		// "Absent" = the weights package simply isn't installed (the resolver's not-found signal). Every OTHER
-		// failure means the weights DID resolve but the encoder couldn't load them — a partial/metadata-only
-		// bundle ("missing model files"), a bad explicit --model/--tokenizer path, or a corrupt artifact — so we
-		// surface the underlying error verbatim rather than mislabel it "not installed" and swallow the cause.
-		const absent = /Could not resolve/iu.test(message)
-
-		if (absent) {
-			console.error(
-				`⚠ neural weights not found — running a degraded structural parse; ` +
-					`install ${weightsPackageName(options.locale)} for full accuracy.`
-			)
-		} else {
-			console.error(`⚠ neural weights failed to load — running a degraded structural parse. Encoder error: ${message}`)
-		}
-
-		return undefined
-	}
+	return await loadClassifierTolerant(options.locale, {
+		modelPath: options.model,
+		tokenizerPath: options.tokenizer,
+		onDegrade: reportToStderr,
+	})
 }
 
 /**

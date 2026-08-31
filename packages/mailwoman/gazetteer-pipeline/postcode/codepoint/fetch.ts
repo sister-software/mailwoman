@@ -329,6 +329,8 @@ export async function downloadCodePointOpen(options: DownloadCodePointOptions): 
 	await makeDirectories(destDir)
 	const archivePath = String(join(destDir, download.fileName))
 
+	// Reuse-by-md5, near-verbatim in `uprn-layer.ts`'s `downloadOpenUPRN` — kept separate because that one
+	// (re)writes the acquisition sidecars on the reuse path and this one does not.
 	if (reuseExisting) {
 		const existing = await md5File(archivePath).catch(() => null)
 

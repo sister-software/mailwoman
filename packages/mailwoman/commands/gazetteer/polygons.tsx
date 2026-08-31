@@ -31,13 +31,20 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { wofIDPathSegments, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
-import { allRows, dataRootPath } from "@mailwoman/core/utils"
+import { allRows, dataRootPath, getRow } from "@mailwoman/core/utils"
 import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
 
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	splitUpperList,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Vertices below which a ring cannot be simplified further without collapsing it.
@@ -186,7 +193,7 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { createPolygonsTable } = await import("@mailwoman/resolver-wof-sqlite/polygon-schema")
-		const { isPresent, tryParsingJSON } = await import("@mailwoman/core/objects")
+		const { tryParsingJSON } = await import("@mailwoman/core/objects")
 
 		const out = options.out
 		const points = options.points ?? ""
@@ -202,12 +209,7 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 			throw new CommandError("provide exactly one source: --points <wof-hot.db> OR --admin <admin.db>")
 		}
 
-		const countries = options.countries
-			? options.countries
-					.split(",")
-					.map((c) => c.trim().toUpperCase())
-					.filter(isPresent)
-			: null
+		const countries = options.countries ? splitUpperList(options.countries) : null
 
 		const repos = options.repos
 		const tol = options.tol
@@ -282,10 +284,9 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 		kdb.exec("COMMIT")
 		kdb.exec("VACUUM")
 
-		const bytes = kdb.prepare(`SELECT count(*) n, sum(length(geom)) b FROM polygons`).get() as {
-			n: number
-			b: number | null
-		}
+		const bytes = getRow<{ n: number; b: number | null }>(
+			kdb.prepare(`SELECT count(*) n, sum(length(geom)) b FROM polygons`)
+		)!
 
 		await kdb.destroy() // closes the underlying `dbOut` handle
 
@@ -297,7 +298,7 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 		]
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

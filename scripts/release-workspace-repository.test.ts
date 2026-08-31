@@ -20,27 +20,12 @@ import { resolvePath } from "path-ts"
  */
 import { describe, expect, it } from "vitest"
 
+import { releaseWorkspaces } from "./release-stage.ts"
+
 const repoRoot = repoRootPath()
 const CANONICAL_URL = "https://github.com/sister-software/mailwoman.git"
 
-/**
- * The published workspace set — the single source of truth release-it iterates.
- */
-async function releaseWorkspaces(): Promise<string[]> {
-	const releaseIt = await readLocalJSONFile<{
-		plugins?: { "@release-it-plugins/workspaces"?: { workspaces?: unknown } }
-	}>(resolvePath(repoRoot, ".release-it.json"))
-
-	const ws = releaseIt?.plugins?.["@release-it-plugins/workspaces"]?.workspaces
-
-	if (!Array.isArray(ws) || !ws.length) {
-		throw new Error("could not read the workspaces array from .release-it.json")
-	}
-
-	return ws as string[]
-}
-
-const workspaces = await releaseWorkspaces()
+const workspaces = await releaseWorkspaces(repoRoot)
 
 describe("#757 release provenance: every published workspace declares its repository", () => {
 	it.each(workspaces)("%s/package.json has the canonical repository block", async (ws) => {

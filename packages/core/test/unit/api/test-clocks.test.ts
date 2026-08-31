@@ -24,18 +24,8 @@
  *   would hang exactly where it is supposed to report.
  */
 
-import { VirtualClock } from "@mailwoman/core/api/test-clocks"
+import { realDelay, VirtualClock } from "@mailwoman/core/api/test-clocks"
 import { describe, expect, it, vi } from "vitest"
-
-/**
- * Resolve after `ms` of REAL time, via a real macrotask the virtual clock does not drive. This is what a `readFile`
- * looks like to `runUntilSettled`: progress it cannot see and cannot schedule.
- */
-function realDelay(ms: number): Promise<void> {
-	return new Promise<void>((resolve) => {
-		setTimeout(resolve, ms)
-	})
-}
 
 describe("VirtualClock.runUntilSettled — the stuck-work guard", () => {
 	it("waits out real I/O that outlasts any turn budget", async () => {

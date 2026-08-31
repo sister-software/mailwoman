@@ -20,12 +20,19 @@
  * on is not a recoverable shell, so restore is the one operation that must survive any exit path.
  */
 
+import { errorMessage } from "@mailwoman/core/errors/schema"
 import { clamp } from "@mailwoman/core/utils"
 import { AsciifyTerminal, cursorTo, SGR_RESET } from "@sister.software/asciify/tui"
 
 import { blitFrame } from "#frame"
 import { decodeInputChunk, type MapTUIInput, MOUSE_DISABLE, MOUSE_ENABLE } from "#input"
-import { lonLatToWorldPx, worldPxToLonLat } from "#mercator"
+import {
+	lonLatToWorldPx,
+	SUBPIXEL_COLUMNS_PER_CELL,
+	SUBPIXEL_ROWS_PER_CELL,
+	worldPxToLonLat,
+	wrapLongitude,
+} from "#mercator"
 import { MapRenderer } from "#renderer"
 import type { TileSource } from "#tile-source"
 
@@ -36,12 +43,6 @@ const CURSOR_SHOW = "\u001B[?25h"
 const CLEAR_SCREEN = "\u001B[2J"
 const CLEAR_LINE = "\u001B[2K"
 const REVERSE_VIDEO = "\u001B[7m"
-
-/**
- * Subpixel dimensions of one braille cell — the unit every viewport-space conversion below works in.
- */
-const SUBPIXELS_PER_COLUMN = 2
-const SUBPIXELS_PER_ROW = 4
 
 /**
  * Rows reserved at the bottom of the terminal for the status bar.
@@ -115,15 +116,6 @@ interface DragAnchor {
 	centerLat: number
 	zoom: number
 	moved: boolean
-}
-
-/**
- * Wraps a longitude into [-180, 180) so panning past the antimeridian continues rather than running off the pyramid.
- */
-function wrapLongitude(lon: number): number {
-	const wrapped = (((lon + 180) % 360) + 360) % 360
-
-	return wrapped - 180
 }
 
 /**
@@ -308,8 +300,8 @@ export class MapBrowser {
 		const center = lonLatToWorldPx(this.centerLon, this.centerLat, this.zoom)
 
 		const next = worldPxToLonLat(
-			center.x + columns * SUBPIXELS_PER_COLUMN,
-			center.y + rows * SUBPIXELS_PER_ROW,
+			center.x + columns * SUBPIXEL_COLUMNS_PER_CELL,
+			center.y + rows * SUBPIXEL_ROWS_PER_CELL,
 			this.zoom
 		)
 
@@ -326,12 +318,12 @@ export class MapBrowser {
 	 */
 	private cellToLonLat(column: number, row: number): { lon: number; lat: number } {
 		const center = lonLatToWorldPx(this.centerLon, this.centerLat, this.zoom)
-		const originX = center.x - (this.columns * SUBPIXELS_PER_COLUMN) / 2
-		const originY = center.y - (this.paneRows * SUBPIXELS_PER_ROW) / 2
+		const originX = center.x - (this.columns * SUBPIXEL_COLUMNS_PER_CELL) / 2
+		const originY = center.y - (this.paneRows * SUBPIXEL_ROWS_PER_CELL) / 2
 
 		return worldPxToLonLat(
-			originX + column * SUBPIXELS_PER_COLUMN + SUBPIXELS_PER_COLUMN / 2,
-			originY + row * SUBPIXELS_PER_ROW + SUBPIXELS_PER_ROW / 2,
+			originX + column * SUBPIXEL_COLUMNS_PER_CELL + SUBPIXEL_COLUMNS_PER_CELL / 2,
+			originY + row * SUBPIXEL_ROWS_PER_CELL + SUBPIXEL_ROWS_PER_CELL / 2,
 			this.zoom
 		)
 	}
@@ -402,8 +394,8 @@ export class MapBrowser {
 		const center = lonLatToWorldPx(anchor.centerLon, anchor.centerLat, anchor.zoom)
 
 		const next = worldPxToLonLat(
-			center.x + (anchor.column - column) * SUBPIXELS_PER_COLUMN,
-			center.y + (anchor.row - row) * SUBPIXELS_PER_ROW,
+			center.x + (anchor.column - column) * SUBPIXEL_COLUMNS_PER_CELL,
+			center.y + (anchor.row - row) * SUBPIXEL_ROWS_PER_CELL,
 			anchor.zoom
 		)
 
@@ -500,7 +492,7 @@ export class MapBrowser {
 			this.terminal.flush()
 			this.drawStatusBar(frame.attribution)
 		} catch (error) {
-			this.error = error instanceof Error ? error.message : String(error)
+			this.error = errorMessage(error)
 
 			if (!this.restored) {
 				this.drawStatusBar("")

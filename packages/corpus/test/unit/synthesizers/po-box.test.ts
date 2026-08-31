@@ -227,6 +227,14 @@ describe("countryToLocale", () => {
 		expect(countryToLocale("ES")).toBe("es-ES")
 		expect(countryToLocale("Spain")).toBe("es-ES")
 	})
+
+	it("stays template-scoped: a locale without a PO-box template falls back to en-US", () => {
+		// The shared synthesizers/utils map resolves DE to de-DE, but PO_BOX_LOCALE_TEMPLATES carries no
+		// de-DE entry — the wrapper folds it back to en-US so DE tuples keep the en-US box vocabulary.
+		expect(supportedLocales()).not.toContain("de-DE")
+		expect(countryToLocale("DE")).toBe("en-US")
+		expect(countryToLocale("Germany")).toBe("en-US")
+	})
 })
 
 describe("supportedLocales", () => {

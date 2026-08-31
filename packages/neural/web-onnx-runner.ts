@@ -17,20 +17,21 @@
  *       but works everywhere onnxruntime-web does — including in Node, which is how the test
  *       harness exercises this file.
  *
- *   Tensor shape + I/O contract matches `ONNXRunner` exactly: fixed-length int64 inputs, padded with
- *   zeros + attention_mask, output is a `logits` tensor of shape `[batch, seq, num_labels]`. See
- *   `@mailwoman/neural/onnx-runner` for the full export contract this file mirrors.
+ *   Tensor shape + I/O contract matches `ONNXRunner` exactly: the packing and the output decode are
+ *   the SAME functions (`ort-feeds.ts`), so the two hosts cannot drift; only the `ort.Tensor`
+ *   construction is host-specific.
  */
 
 import * as ort from "onnxruntime-web/webgpu"
 
-import { ANCHOR_FEATURE_DIM } from "#anchor-inference"
 import type { NeuralRunner } from "#classifier"
-import { COUNTRY_FEATURE_DIM } from "#country-inference"
-import { GAZETTEER_FEATURE_DIM, LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "#gazetteer-inference"
-// Type-only, so it erases before any bundler sees it — the Node runner's `onnxruntime-node` never
-// enters this module's graph even though the specifier names it.
-import type { InferResult } from "#onnx-runner"
+import {
+	decodeInferOutput,
+	packSoftChannelFeeds,
+	packTokenFeed,
+	type InferFunction,
+	type OutputTensor,
+} from "#ort-feeds"
 
 export interface WebONNXRunnerOpts {
 	/**
@@ -59,6 +60,20 @@ export interface WebONNXRunnerOpts {
 export const DEFAULT_FIXED_SEQ_LEN = 128
 
 /**
+ * Fetch a URL into bytes, throwing on any non-OK status.
+ *
+ * Raw `fetch`: this is the BROWSER runtime. `APIClient` carries axios, which has no place in the client bundle, and the
+ * platform primitive is what the browser already has.
+ */
+export async function fetchBytes(url: string, fetchImpl: typeof fetch = fetch): Promise<Uint8Array> {
+	const res = await fetchImpl(url)
+
+	if (!res.ok) throw new Error(`fetch ${url} failed: ${res.status} ${res.statusText}`)
+
+	return new Uint8Array(await res.arrayBuffer())
+}
+
+/**
  * Apply `wasmPathsRoot` once at module init. Safe to call multiple times.
  */
 function configureWASMPaths(root: string | undefined): void {
@@ -66,6 +81,13 @@ function configureWASMPaths(root: string | undefined): void {
 	// onnxruntime-web ships this on `ort.env.wasm`. We assign directly rather than calling
 	// `setWASMPaths` so it works across the slightly different shapes the typings have had.
 	ort.env.wasm.wasmPaths = root
+}
+
+/**
+ * The `{data, dims}` view `decodeInferOutput` reads. The float32 dtype is the export contract's, not a runtime check.
+ */
+function outputTensor(tensor: ort.Tensor): OutputTensor {
+	return { data: tensor.data as Float32Array, dims: tensor.dims }
 }
 
 export interface WebONNXRunnerDiagnostics {
@@ -101,14 +123,7 @@ export class WebONNXRunner implements NeuralRunner {
 	 * Fetch the model from a URL and construct.
 	 */
 	static async fromURL(modelURL: string, opts: WebONNXRunnerOpts = {}): Promise<WebONNXRunner> {
-		// Raw `fetch`: this is the BROWSER runtime. `APIClient` carries axios, which has no place in the
-		// client bundle, and the platform primitive is what the browser already has.
-		const res = await fetch(modelURL)
-
-		if (!res.ok) throw new Error(`fetch ${modelURL} failed: ${res.status} ${res.statusText}`)
-		const bytes = new Uint8Array(await res.arrayBuffer())
-
-		return WebONNXRunner.fromBytes(bytes, opts)
+		return WebONNXRunner.fromBytes(await fetchBytes(modelURL), opts)
 	}
 
 	async #ensureSession(): Promise<ort.InferenceSession> {
@@ -159,236 +174,46 @@ export class WebONNXRunner implements NeuralRunner {
 		return this.#session?.inputNames ?? null
 	}
 
-	async infer(
-		tokenIDs: number[],
-		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
-		gazetteer?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
-		country?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
-		evidence?: {
-			streetType?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
-			localitySurface?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
-		}
-	): Promise<InferResult> {
+	/**
+	 * Mirror of the node `ONNXRunner.infer` — see {@link InferFunction}. Every soft-feed channel is present-conditional on
+	 * the graph's declared inputs, with the zero-fill confidence=0 identity for a declared-but-unsupplied channel, so the
+	 * session never throws on a missing required input (`packSoftChannelFeeds`).
+	 */
+	infer: InferFunction = async (tokenIDs, anchor, gazetteer, country, evidence) => {
 		const session = await this.#ensureSession()
-		const seqLen = Math.min(tokenIDs.length, this.fixedSeqLen)
-		const padded = new BigInt64Array(this.fixedSeqLen)
-		const mask = new BigInt64Array(this.fixedSeqLen)
-
-		for (let i = 0; i < seqLen; i++) {
-			padded[i] = BigInt(tokenIDs[i]!)
-			mask[i] = 1n
-		}
+		const { inputIDs, attentionMask, seqLen } = packTokenFeed(tokenIDs, this.fixedSeqLen)
 
 		const feeds: Record<string, ort.Tensor> = {
-			input_ids: new ort.Tensor("int64", padded, [1, this.fixedSeqLen]),
-			attention_mask: new ort.Tensor("int64", mask, [1, this.fixedSeqLen]),
+			input_ids: new ort.Tensor("int64", inputIDs.data, inputIDs.dims),
+			attention_mask: new ort.Tensor("int64", attentionMask.data, attentionMask.dims),
 		}
 
-		// Anchor channel (#239/#240) — mirror of the node ONNXRunner. Feed the per-piece anchor when the
-		// caller supplies it; otherwise, for anchor-trained models (whose ONNX declares the inputs as
-		// mandatory), feed zeros — the confidence=0 identity / anchor-off path. Without this the session
-		// throws on the missing required inputs.
-		if (anchor) {
-			const dim = anchor.features[0]?.length ?? 0
-			const af = new Float32Array(this.fixedSeqLen * dim)
-			const ac = new Float32Array(this.fixedSeqLen)
+		const packed = packSoftChannelFeeds(
+			session.inputNames,
+			this.fixedSeqLen,
+			seqLen,
+			anchor,
+			gazetteer,
+			country,
+			evidence
+		)
 
-			for (let i = 0; i < seqLen; i++) {
-				ac[i] = anchor.confidence[i] ?? 0
-				const row = anchor.features[i]
-
-				if (row) {
-					for (let d = 0; d < dim; d++) {
-						af[i * dim + d] = row[d] ?? 0
-					}
-				}
-			}
-
-			feeds.anchor_features = new ort.Tensor("float32", af, [1, this.fixedSeqLen, dim])
-			feeds.anchor_confidence = new ort.Tensor("float32", ac, [1, this.fixedSeqLen])
-		} else if (session.inputNames.includes("anchor_features")) {
-			feeds.anchor_features = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen * ANCHOR_FEATURE_DIM), [
-				1,
-				this.fixedSeqLen,
-				ANCHOR_FEATURE_DIM,
-			])
-
-			feeds.anchor_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
-		}
-
-		// Gazetteer-anchor channel (#464) — mirror of the node ONNXRunner. Feed the per-piece clue when
-		// the caller supplies it AND the graph declares the inputs; for gazetteer-trained models with no
-		// clue data, feed zeros (the confidence=0 identity — a structural fallback only; see the loader's
-		// loud warning) so the session doesn't throw `input 'gazetteer_features' is missing in 'feeds'`.
-		if (gazetteer && session.inputNames.includes("gazetteer_features")) {
-			const dim = gazetteer.features[0]?.length ?? 0
-			const gf = new Float32Array(this.fixedSeqLen * dim)
-			const gc = new Float32Array(this.fixedSeqLen)
-
-			for (let i = 0; i < seqLen; i++) {
-				gc[i] = gazetteer.confidence[i] ?? 0
-				const row = gazetteer.features[i]
-
-				if (row) {
-					for (let d = 0; d < dim; d++) {
-						gf[i * dim + d] = row[d] ?? 0
-					}
-				}
-			}
-
-			feeds.gazetteer_features = new ort.Tensor("float32", gf, [1, this.fixedSeqLen, dim])
-			feeds.gazetteer_confidence = new ort.Tensor("float32", gc, [1, this.fixedSeqLen])
-		} else if (session.inputNames.includes("gazetteer_features")) {
-			feeds.gazetteer_features = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen * GAZETTEER_FEATURE_DIM), [
-				1,
-				this.fixedSeqLen,
-				GAZETTEER_FEATURE_DIM,
-			])
-
-			feeds.gazetteer_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
-		}
-
-		// Country-lexicon channel (#1104) — mirror of the node ONNXRunner + the gazetteer branch above.
-		// Feed the per-piece country-surface clue when supplied AND the graph declares the inputs; for
-		// country-trained models (v6.2.0+) with no lexicon, feed zeros (confidence=0 identity) so the
-		// session doesn't throw `input 'country_features' is missing in 'feeds'` — the loader warns loudly.
-		if (country && session.inputNames.includes("country_features")) {
-			const dim = country.features[0]?.length ?? 0
-			const cf = new Float32Array(this.fixedSeqLen * dim)
-			const cc = new Float32Array(this.fixedSeqLen)
-
-			for (let i = 0; i < seqLen; i++) {
-				cc[i] = country.confidence[i] ?? 0
-				const row = country.features[i]
-
-				if (row) {
-					for (let d = 0; d < dim; d++) {
-						cf[i * dim + d] = row[d] ?? 0
-					}
-				}
-			}
-
-			feeds.country_features = new ort.Tensor("float32", cf, [1, this.fixedSeqLen, dim])
-			feeds.country_confidence = new ort.Tensor("float32", cc, [1, this.fixedSeqLen])
-		} else if (session.inputNames.includes("country_features")) {
-			feeds.country_features = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen * COUNTRY_FEATURE_DIM), [
-				1,
-				this.fixedSeqLen,
-				COUNTRY_FEATURE_DIM,
-			])
-
-			feeds.country_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
-		}
-
-		// Evidence-bundle channels (Option-A, 6.7.0-bundle) — the country pattern, once per channel.
-		// Feed when supplied AND declared; zero-fill (the confidence=0 trained-absence identity — ALSO
-		// the formatted-register/street-context-gate path, where withholding is deliberate) when the
-		// graph declares them but nothing was supplied, so the session never throws on a missing feed.
-		for (const [prefix, channel, dim] of [
-			["street_type", evidence?.streetType, STREET_TYPE_FEATURE_DIM],
-			["locality_surface", evidence?.localitySurface, LOCALITY_SURFACE_FEATURE_DIM],
-		] as const) {
-			const featuresName = `${prefix}_features`
-			const confidenceName = `${prefix}_confidence`
-
-			if (!session.inputNames.includes(featuresName)) continue
-
-			if (channel) {
-				const channelDim = channel.features[0]?.length ?? dim
-				const cf = new Float32Array(this.fixedSeqLen * channelDim)
-				const cc = new Float32Array(this.fixedSeqLen)
-
-				for (let i = 0; i < seqLen; i++) {
-					cc[i] = channel.confidence[i] ?? 0
-					const row = channel.features[i]
-
-					if (row) {
-						for (let d = 0; d < channelDim; d++) {
-							cf[i * channelDim + d] = row[d] ?? 0
-						}
-					}
-				}
-
-				feeds[featuresName] = new ort.Tensor("float32", cf, [1, this.fixedSeqLen, channelDim])
-				feeds[confidenceName] = new ort.Tensor("float32", cc, [1, this.fixedSeqLen])
-			} else {
-				feeds[featuresName] = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen * dim), [
-					1,
-					this.fixedSeqLen,
-					dim,
-				])
-
-				feeds[confidenceName] = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
-			}
+		for (const [name, feed] of packed) {
+			feeds[name] = new ort.Tensor("float32", feed.data, feed.dims)
 		}
 
 		const output = await session.run(feeds)
-		const logitsTensor = output["logits"]
+		const logits = output["logits"]
+		const localeLogits = output["locale_logits"]
+		const spanScores = output["span_scores"]
 
-		if (!logitsTensor) throw new Error("ONNX model did not return a `logits` output")
-		const data = logitsTensor.data as Float32Array
-		// dims are [batch, sequence, labels].
-		const numLabels = (logitsTensor.dims as readonly [number, number, number])[2]
-
-		const logits: number[][] = []
-
-		for (let t = 0; t < seqLen; t++) {
-			const row: number[] = new Array(numLabels)
-			const base = t * numLabels
-
-			for (let l = 0; l < numLabels; l++) {
-				row[l] = data[base + l]!
-			}
-
-			logits.push(row)
-		}
-
-		// Locale head (#511 Tier A): present on v1.1.0+ exports (shipped v4.3.0+), absent before.
-		// Mirrors the node ONNXRunner — `addressSystemConventions: "auto"` depends on this surfacing.
-		const localeTensor = output["locale_logits"]
-		const localeLogits = localeTensor ? Array.from(localeTensor.data as Float32Array) : undefined
-
-		// Span head (#727 stage-2): present on v3.x+ exports. Same optional contract as the locale head
-		// — a pre-v3 bundle has no `span_scores` output and this stays undefined, so the browser's BIO
-		// path is byte-unaffected. Mirrors the node ONNXRunner's read exactly (one decoder, two hosts:
-		// `neural/semi-markov-decode.ts` is pure TS with no ORT dependency and serves both).
-		const spanTensor = output["span_scores"]
-		let spanScores: number[][][] | undefined
-		let maxSpan: number | undefined
-
-		if (spanTensor) {
-			const spanData = spanTensor.data as Float32Array
-			// dims are [batch, sequence, span, type].
-			const spanDims = spanTensor.dims as readonly [number, number, number, number]
-			const spanLen = spanDims[2]
-			const numTypes = spanDims[3]
-			maxSpan = spanLen
-			spanScores = []
-
-			// Only the first `seqLen` token rows are real; the rest is the fixed-length pad tail.
-			for (let t = 0; t < seqLen; t++) {
-				const perLength: number[][] = new Array(spanLen)
-
-				for (let l = 0; l < spanLen; l++) {
-					const row: number[] = new Array(numTypes)
-					const base = (t * spanLen + l) * numTypes
-
-					for (let ty = 0; ty < numTypes; ty++) {
-						row[ty] = spanData[base + ty]!
-					}
-
-					perLength[l] = row
-				}
-
-				spanScores.push(perLength)
-			}
-		}
-
-		return {
-			logits,
-			numLabels,
-			...(localeLogits ? { localeLogits } : {}),
-			...(spanScores ? { spanScores, maxSpan } : {}),
-		}
+		return decodeInferOutput(
+			{
+				...(logits ? { logits: outputTensor(logits) } : {}),
+				...(localeLogits ? { localeLogits: outputTensor(localeLogits) } : {}),
+				...(spanScores ? { spanScores: outputTensor(spanScores) } : {}),
+			},
+			seqLen
+		)
 	}
 }

@@ -14,11 +14,15 @@
  *   first ("00184 Roma"), so a parent segment folds to a key no bare-comune entry matches.
  */
 
-import { buildPairIndexOverlay } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import {
+	buildPairIndexOverlay,
+	PAIR_INDEX_DELTA,
+	PAIR_INDEX_TRANSITION_BETA,
+} from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 await buildPairIndexOverlay({
 	packageDir: "neural-weights-it-it",
 	country: "it",
-	delta: 10,
-	transitionBeta: 5,
+	delta: PAIR_INDEX_DELTA,
+	transitionBeta: PAIR_INDEX_TRANSITION_BETA,
 })

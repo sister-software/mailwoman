@@ -53,6 +53,8 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { JSONSpliterator } from "spliterator"
 import zod from "zod"
 
+import type { MutuallyAssignable, SameShape } from "#eval-harness/shape-assertions"
+
 /**
  * What a row is testing. The tag is the reporting axis — per-class deltas are how an arm's effect is localized to a
  * register, rather than averaged into a single number that hides both wins and losses.
@@ -222,19 +224,6 @@ export const HardSliceCaseSchema = zod
 				"expectLat / expectLon / expectToleranceM are all-or-nothing — a coordinate without a declared tolerance would be graded against a bar nobody chose",
 		}
 	)
-
-type MutuallyAssignable<A, B> = [A] extends [B] ? ([B] extends [A] ? true : never) : never
-
-/**
- * `true` only when A and B have the SAME KEYS and the same value types — assignability alone is not enough, because an
- * OPTIONAL field added to one side keeps both sides mutually assignable. See `seed-case.ts`'s `SameShape` docstring for
- * the measurement that proved it.
- */
-type SameShape<A, B> = [keyof A] extends [keyof B]
-	? [keyof B] extends [keyof A]
-		? MutuallyAssignable<A, B>
-		: never
-	: never
 
 /**
  * The compile-time bridge: add a field to one of {@linkcode HardSliceCase} / {@linkcode HardSliceCaseSchema} and not the

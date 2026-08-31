@@ -10,7 +10,7 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, reportToStderr, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -20,16 +20,14 @@ export const spec = {
 	description: "Generate country population data",
 } as const satisfies CommandSpec
 
-const report = (line: string): void => console.error(line)
-
 const DevGenerateCountryPopulation = () => {
 	const state = useCommandTask(async () => {
 		const { generateCountryPopulation } = await import("@mailwoman/codex/tools")
 
-		return generateCountryPopulation({}, report)
+		return generateCountryPopulation({}, reportToStderr)
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

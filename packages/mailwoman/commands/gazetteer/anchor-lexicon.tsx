@@ -29,7 +29,7 @@ import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Homographs printed before the list is truncated.
@@ -184,7 +184,7 @@ const GazetteerAnchorLexicon: ParsedCommandComponent<Options> = ({ options }) =>
 		]
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

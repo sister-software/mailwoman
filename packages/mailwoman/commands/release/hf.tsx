@@ -4,9 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import type { PublishHFOptions } from "#release-tools/publish-hf"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -39,28 +38,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-interface Options {
-	locale?: string
-	label?: string
-	description?: string
-	model?: string
-	tokenizer?: string
-	modelCard?: string
-	fst?: string
-	modelSize?: string
-	steps?: number
-	postcodes?: string
-	pairIndexes?: string
-	fsts?: string
-	gazetteerLexicon?: string
-	countryLexicon?: string
-	streetTypeLexicon?: string
-	localitySurfaceLexicon?: string
-	polygons?: string
-	fisher?: string
-	setDefault: boolean
-	wofHot?: string
-}
+type Options = Omit<PublishHFOptions, "version">
 
 const ReleaseHF: ParsedCommandComponent<Options, [string]> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
@@ -69,7 +47,7 @@ const ReleaseHF: ParsedCommandComponent<Options, [string]> = ({ options, args })
 		return publishReleaseToHF({ ...options, version: args[0] })
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	return null
 }

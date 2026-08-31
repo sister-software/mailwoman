@@ -225,11 +225,15 @@ export function verifyTarball(tarballPath: string): TarballAudit {
 
 	return {
 		name,
-		literalFiles: (Array.isArray(manifest.files) ? manifest.files : []).filter(
-			(entry: unknown): entry is string =>
-				typeof entry === "string" && !entry.startsWith("!") && !GLOB_PATTERN.test(entry)
-		).length,
+		literalFiles: literalFilesEntries(manifest.files).length,
 		exportTargets: collectExportTargets(manifest.exports ?? {}).length,
 		binTargets: collectBinTargets(manifest.bin).length,
 	}
+}
+
+/**
+ * The audit receipt line every publish path prints — one spelling, so the three receipts read alike.
+ */
+export function formatTarballAudit(audit: Pick<TarballAudit, "literalFiles" | "exportTargets" | "binTargets">): string {
+	return `${audit.literalFiles} literal files, ${audit.exportTargets} export targets, ${audit.binTargets} bin targets`
 }

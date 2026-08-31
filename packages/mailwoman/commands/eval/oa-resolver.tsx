@@ -9,14 +9,15 @@
  *   for the two-tier metric and every arm's rationale.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	booleanOption,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 export const description = "OpenAddresses real-point resolver eval — non-circular, neural vs v0 (Pelias)"
-
-const booleanOption = (optionDescription: string) =>
-	({ type: "boolean", default: false, description: optionDescription }) as const
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -121,7 +122,7 @@ const EvalOAResolver: ParsedCommandComponent<Options> = ({ options }) => {
 		})
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	// The eval prints its own markdown report on stdout.
 	return null

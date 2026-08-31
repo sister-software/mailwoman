@@ -19,6 +19,7 @@
 import zod from "zod"
 
 import type { AddressKind, CaseStatus, ResolutionTier } from "#eval-harness/gauntlet/schema"
+import type { MutuallyAssignable, SameShape } from "#eval-harness/shape-assertions"
 
 /**
  * One row of the curated regression corpus, as committed under `cases/<cc>/*.jsonl`.
@@ -149,26 +150,6 @@ export const SeedCaseSchema = zod.strictObject({
 	note: zod.string().optional(),
 	ablationExpect: zod.record(zod.string(), zod.string()).optional(),
 })
-
-/**
- * Both directions of `extends`, as a `true`/`never` flag.
- */
-type MutuallyAssignable<A, B> = [A] extends [B] ? ([B] extends [A] ? true : never) : never
-
-/**
- * `true` only when A and B have the SAME KEYS and the same value types.
- *
- * Assignability alone is not enough, and the difference is exactly the drift a corpus schema suffers: an OPTIONAL field
- * added to one side and not the other keeps both sides mutually assignable (a value missing an optional key is still
- * assignable), so a pure `MutuallyAssignable` bridge compiles clean through the very change it exists to catch.
- * Measured 2026-08-05 by adding `driftProbe?: string` to {@linkcode SeedCase} — `tsc -b` passed. The key-set legs below
- * are what fails it. Every field on this type is optional but one, so this is not a hypothetical.
- */
-type SameShape<A, B> = [keyof A] extends [keyof B]
-	? [keyof B] extends [keyof A]
-		? MutuallyAssignable<A, B>
-		: never
-	: never
 
 /**
  * The compile-time bridge. If you add a field to {@linkcode SeedCase} and not to {@linkcode SeedCaseSchema} (or the other

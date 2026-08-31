@@ -17,8 +17,8 @@ import { useEffect, useState } from "react"
 
 import { VersionCompare } from "#components/VersionCompare/VersionCompare"
 import type { ReleaseInfo } from "#shared/demo-helpers"
-import { DEFAULT_LOCALE, flattenTree } from "#shared/demo-helpers"
-import type { DemoResult, MailwomanClassifierLike, ResultNode } from "#shared/resources"
+import { DEFAULT_LOCALE, runClassifyStage } from "#shared/demo-helpers"
+import type { DemoResult, MailwomanClassifierLike } from "#shared/resources"
 import { neuralClassifierLoadURLs } from "#shared/resources"
 
 export interface DemoCompareProps {
@@ -137,38 +137,21 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 
 		void (async () => {
 			try {
-				const [{ computeQueryShape }, { classifyKindSync }, { runPipeline }, { groupPhrases }] = await Promise.all([
-					import("@mailwoman/query-shape"),
-					import("@mailwoman/kind-classifier"),
-					import("@mailwoman/core/pipeline"),
-					import("@mailwoman/phrase-grouper"),
-				])
-
-				const cStart = performance.now()
-				const cQueryShape = computeQueryShape(primaryInput)
-				const cKindResult = classifyKindSync({ raw: primaryInput, normalized: primaryInput }, cQueryShape)
-				const cShapeTime = performance.now() - cStart
-
-				const cPipelineResult = await runPipeline(primaryInput, {
-					computeQueryShape,
-					groupPhrases,
-					classifier: cls as Parameters<typeof runPipeline>[1]["classifier"],
-				})
-
-				const cClassifyTime = performance.now() - cStart - cShapeTime
-				const cNodes = flattenTree(cPipelineResult.tree) as ResultNode[]
+				// The shared classify front-half — the compare arm loads only a classifier, so the FST /
+				// street-morphology / pair-index deps stay unset and the stage parses as a bare load.
+				const { tree, nodes, kindResult, timing } = await runClassifyStage(primaryInput, { classifier: cls })
 
 				if (cancelled) return
 
 				setCompareResult({
 					input: primaryInput,
-					tree: cPipelineResult.tree,
-					nodes: cNodes,
+					tree,
+					nodes,
 					resolved: null,
 					candidates: [],
-					kindResult: cKindResult,
+					kindResult,
 					fstActive: false,
-					timing: { shape: cShapeTime, classify: cClassifyTime },
+					timing,
 				})
 			} catch (caught) {
 				if (cancelled) return

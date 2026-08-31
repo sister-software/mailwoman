@@ -9,14 +9,14 @@
  * failure disappear.
  */
 
-import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { runFileSync } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { relative, resolvePath } from "path-ts"
-import { AsyncSequence } from "spliterator"
 import ts from "typescript"
+
+import { trackedSourcePaths } from "./tracked-sources.ts"
 
 interface DebtCounters {
 	asNever: number
@@ -226,33 +226,10 @@ const UNCOUNTED = [
 	"packages/core/fs/",
 ]
 
-/**
- * The TRACKED `.ts`/`.tsx` sources, which is what "repository debt" has to mean.
- *
- * Enumerated from the INDEX, not the filesystem. A counter read off the disk is not a property of the repository — it
- * is a property of whichever files happen to be sitting in that checkout. A tree carrying gitignored scratch scripts
- * under `scripts/diagnostic/` counted 166 `asNever` against a clean checkout's 85 at the SAME commit, and the gate
- * failed on files no commit contains. Two readers of this number must be able to reproduce each other.
- */
-function trackedSourcePaths(): string[] {
-	const listed = runFileSync("git", ["ls-files", "-z", "--", "*.ts", "*.tsx"], {
-		cwd: root,
-		encoding: "utf8",
-		maxBuffer: 64 * 1024 * 1024,
-	})
-
-	return listed
-		.split("\0")
-		.filter((relativePath) => relativePath.length > 0)
-		.filter((relativePath) => !UNCOUNTED.some((prefix) => relativePath.startsWith(prefix)))
-		.filter((relativePath) => !/(?:^|\/)(?:out|node_modules)\//.test(relativePath))
-		.filter((relativePath) => !relativePath.endsWith(".d.ts"))
-		.map((relativePath) => resolvePath(root, relativePath))
-}
-
-// A tracked path can be absent from the working tree (a deletion staged but not committed); skip it
-// rather than failing the whole gate on a file the next commit removes anyway.
-const paths = await AsyncSequence.from(trackedSourcePaths()).parallelFilter(pathExists).toArray()
+// `existingOnly`: a tracked path can be absent from the working tree (a deletion staged but not
+// committed); skip it rather than failing the whole gate on a file the next commit removes anyway.
+// The enumerate-the-index rationale lives on scripts/tracked-sources.ts.
+const paths = await trackedSourcePaths(root, { excludePrefixes: UNCOUNTED, existingOnly: true })
 
 const counters = emptyCounters()
 const rootManifest = await readLocalJSONFile<{ workspaces: string[] }>(resolvePath(root, "package.json"))

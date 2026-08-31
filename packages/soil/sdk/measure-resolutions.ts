@@ -17,20 +17,12 @@
  *   the number that describes the artifact is the one taken from the artifact.
  */
 
+import type { ResolutionMeasurementOptions } from "@mailwoman/core/layers"
+
 import { classifyDelineationCells, SoilCellIndex, type SoilCellIndexMeasurement } from "#sdk/cells"
 import { readSoilDelineations, readSoilSourceIdentity, type SoilIngestOptions } from "#sdk/ingest"
 
-export interface MeasureSoilResolutionsOptions extends SoilIngestOptions {
-	/**
-	 * The candidate resolutions to report.
-	 */
-	resolutions: readonly number[]
-	onProgress?: (message: string) => void
-	/**
-	 * How often to report progress, in delineations.
-	 */
-	progressEvery?: number
-}
+export interface MeasureSoilResolutionsOptions extends SoilIngestOptions, ResolutionMeasurementOptions {}
 
 export interface SoilResolutionReport {
 	delineations: number

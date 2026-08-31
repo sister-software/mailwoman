@@ -117,12 +117,72 @@ export interface QueryShape {
 }
 
 /**
- * Minimal shape that satisfies `computeQueryShape`'s input contract. The full `NormalizedInput` from
- * `@mailwoman/normalize` is structurally compatible — no import required.
+ * Minimal normalized-input shape shared by the Stage 2–2.7 consumers — `computeQueryShape` here, plus
+ * `@mailwoman/locale-gate`, `@mailwoman/kind-classifier`, and `@mailwoman/phrase-grouper`, which re-export it rather
+ * than re-declaring. The full `NormalizedInput` from `@mailwoman/normalize` is structurally compatible — no import
+ * required.
  */
 export interface NormalizedInputLite {
+	raw: string
 	normalized: string
 	appliedLocale?: string
+}
+
+/**
+ * Read-only view of one known-format hit — the narrow slice the downstream stages consume. `KnownFormatHit` satisfies
+ * it structurally (its `SpanRange` carries `body` as well).
+ *
+ * The `(string & {})` union arms keep these views assignable FROM the dependency-free pipeline contract
+ * (`@mailwoman/core/pipeline`'s `QueryShapeLite`, whose fields are plain strings) while the named union still drives
+ * editor completion at literal comparison sites.
+ */
+export interface KnownFormatHitView {
+	format: KnownFormat | (string & {})
+	span: { start: number; end: number }
+	confidence: number
+}
+
+/**
+ * Narrow read-only view of a `QueryShape` for consumers that read only the format hits and the whole-input class —
+ * `@mailwoman/locale-gate`'s input contract. The full `QueryShape` satisfies it structurally.
+ */
+export interface QueryShapeFormatsView {
+	knownFormats: ReadonlyArray<KnownFormatHitView>
+	characterClass?: CharacterClass | (string & {})
+	totalLength?: number
+}
+
+/**
+ * Read-only view of one segment. `Segment` satisfies it structurally; `span` stays optional so hand-built shapes
+ * without offsets remain valid.
+ */
+export interface SegmentView {
+	body: string
+	index: number
+	span?: { start: number; end: number }
+}
+
+/**
+ * `QueryShapeFormatsView` plus segmentation — `@mailwoman/kind-classifier`'s input contract.
+ */
+export interface QueryShapeSegmentsView extends QueryShapeFormatsView {
+	segments?: ReadonlyArray<SegmentView>
+}
+
+/**
+ * Read-only view of one token classification. `TokenClass` satisfies it structurally.
+ */
+export interface TokenClassView {
+	span: { start: number; end: number; body: string }
+	class: TokenCharacterClass | (string & {})
+	length: number
+}
+
+/**
+ * `QueryShapeSegmentsView` plus per-token classes — `@mailwoman/phrase-grouper`'s input contract.
+ */
+export interface QueryShapeTokensView extends QueryShapeSegmentsView {
+	tokenClasses?: ReadonlyArray<TokenClassView>
 }
 
 export interface ComputeQueryShapeOpts {

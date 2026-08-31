@@ -31,15 +31,13 @@
 
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
+import { hashFNV1a } from "#coarse-placer/fnv-hash"
 import { COUNTRIES } from "#coarse-placer/tools/country-sets"
-import { hashFNV1a } from "#coarse-placer/tools/fnv-hash"
+import { assembleOutlierRow, collectOutlierRows, otherRowsJSONL } from "#coarse-placer/tools/outlier-rows"
+import { defaultDataDir } from "#coarse-placer/tools/paths"
+import { errorMessage } from "#errors/schema"
 import { writeLocalTextFile, appendLocalTextFile } from "#fs/writers"
-import { dataRootPath, repoRootPath } from "#utils"
-
-/**
- * Shortest raw string worth keeping as an outlier example; below it there is nothing to learn from.
- */
-const MIN_OUTLIER_LENGTH = 6
+import { dataRootPath } from "#utils"
 
 interface OaTestRow {
 	raw: string
@@ -110,37 +108,9 @@ const FAMILIES: Record<string, string[]> = {
 const HELDOUT_FAMILIES = new Set(["baltic", "oceania", "middle_east"])
 
 /**
- * Address parts are joined positionally; an absent field arrives as the empty string and must not become a stray
- * separator.
+ * OA locality: the `city` column.
  */
-const nonEmpty = (part: string): boolean => part.length > 0
-
-/**
- * Assemble a plausible address string from an OA row — SAME shape variants as build-outlier-latin.
- */
-function assemble(r: Record<string, unknown>): string | null {
-	const num = (r.number ?? "").toString().trim()
-	const street = (r.street ?? "").toString().trim()
-	const pc = (r.postcode ?? "").toString().trim()
-	const locality = (r.city ?? "").toString().trim()
-
-	if (!street && !locality) return null
-
-	// nothing distinctive
-	// Drop raw-coord-only / PO-box-ish noise (DeepSeek failure mode): need a real street or locality token.
-	if (!street && !/[a-z]/i.test(locality)) return null
-	const head = [num, street].filter(nonEmpty).join(" ")
-	const h = hashFNV1a(`${num}|${street}|${pc}|${locality}`)
-
-	switch (h % 3) {
-		case 0:
-			return [head, [pc, locality].filter(nonEmpty).join(" ")].filter(nonEmpty).join(", ")
-		case 1:
-			return [head, locality, pc].filter(nonEmpty).join(", ").trim()
-		default:
-			return [head, [locality, pc].filter(nonEmpty).join(" ")].filter(nonEmpty).join(", ")
-	}
-}
+const oaLocality = (r: Record<string, unknown>): string => (r.city ?? "").toString().trim()
 
 /**
  * Coarse-placer OpenAddresses Latin-off-map outlier builder — see the module doc.
@@ -151,7 +121,7 @@ export async function buildOutlierOA(
 ): Promise<BuildOutlierOAResult> {
 	const oaDir = options.oaDir || dataRootPath("openaddresses", "extracted")
 	const PER = options.perCountry ?? 6000
-	const dataDir = options.data || repoRootPath("data", "coarse-placer")
+	const dataDir = options.data || defaultDataDir()
 
 	// Heavy dep (devDependency — operator tooling), lazy-imported so loading the tools barrel stays cheap.
 	const { DuckDBInstance } = await import("@duckdb/node-api")
@@ -175,30 +145,24 @@ export async function buildOutlierOA(
 			)
 		} catch (error) {
 			// oxlint-disable-next-line mailwoman/prefer-spliterator -- An in-memory error message, not a file.
-			report?.(`  ${cc}: SKIP (${(error as Error).message.split("\n")[0]})`)
+			report?.(`  ${cc}: SKIP (${errorMessage(error).split("\n")[0]})`)
 
 			return []
 		}
 
-		const seen = new Set<string>()
-		const out: string[] = []
+		const out = collectOutlierRows(
+			res.getRowObjects().map((r) => {
+				// COLUMNS() preserves source-case keys; normalize to lowercase access.
+				const row: Record<string, unknown> = {}
 
-		for (const r of res.getRowObjects()) {
-			// COLUMNS() preserves source-case keys; normalize to lowercase access.
-			const row: Record<string, unknown> = {}
+				for (const [k, v] of Object.entries(r)) {
+					row[k.toLowerCase()] = v
+				}
 
-			for (const [k, v] of Object.entries(r)) {
-				row[k.toLowerCase()] = v
-			}
-
-			const raw = assemble(row)
-
-			if (!raw || raw.length < MIN_OUTLIER_LENGTH || seen.has(raw)) continue
-			seen.add(raw)
-			out.push(raw)
-
-			if (out.length >= PER) break
-		}
+				return assembleOutlierRow(row, { locality: oaLocality, requireLetterLocality: true })
+			}),
+			PER
+		)
 
 		return out.toSorted((a, b) => hashFNV1a(a) - hashFNV1a(b))
 	}
@@ -249,9 +213,8 @@ export async function buildOutlierOA(
 
 	;(duck as { disconnect?: () => void }).disconnect?.()
 
-	const wr = (rows: string[]): string => rows.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
-	await appendLocalTextFile(wr(trainAppend), resolvePath(dataDir, "train.jsonl"))
-	await appendLocalTextFile(wr(valAppend), resolvePath(dataDir, "val.jsonl"))
+	await appendLocalTextFile(otherRowsJSONL(trainAppend), resolvePath(dataDir, "train.jsonl"))
+	await appendLocalTextFile(otherRowsJSONL(valAppend), resolvePath(dataDir, "val.jsonl"))
 
 	await writeLocalTextFile(
 		testRows.map((r) => JSON.stringify(r)).join("\n") + "\n",

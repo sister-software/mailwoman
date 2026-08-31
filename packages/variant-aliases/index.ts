@@ -16,6 +16,15 @@
  *       `kind=amenity` / `kind=brand` proposals, gated by locale-gate output).
  */
 
-export { VARIANT_ALIAS_VERSION, getAllAliases, lookupVariantAliases } from "#lookup"
+export { VARIANT_ALIAS_VERSION, getAllAliases, lookupVariantAliases, resolveLocaleScope } from "#lookup"
 
-export type { AliasLookupResult, AmenityAlias, BrandAlias, VariantAlias, VariantAliasTable, VariantKind } from "#types"
+export type {
+	AliasLookupResult,
+	AmenityAlias,
+	BrandAlias,
+	LocaleScope,
+	LocaleScopeMatch,
+	VariantAlias,
+	VariantAliasTable,
+	VariantKind,
+} from "#types"

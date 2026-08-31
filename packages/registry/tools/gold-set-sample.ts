@@ -10,23 +10,21 @@
  *   where NPI-truth and any programmatic rule disagree — exactly the pairs a frozen adjudicated
  *   gold set must cover.
  *
- *   This finds them (over the full TX registry, geocode-free — same implementation as `dedup-ceiling.ts`)
- *   and writes each as a JSONL row carrying BOTH records' fields (org name, address, authorized
- *   official, taxonomy, subpart/parent flags) plus the programmatic verdict, so an adjudicator
- *   (human or LLM-as-judge, flagged as such) can label "same real-world entity? yes/no" and we can
- *   MEASURE how often the programmatic truth matches judgment.
+ *   This finds them (over the full TX registry, geocode-free — the shared co-location scan
+ *   `dedup-ceiling.ts` also runs) and writes each as a JSONL row carrying BOTH records' fields (org
+ *   name, address, authorized official, taxonomy, subpart/parent flags) plus the programmatic
+ *   verdict, so an adjudicator (human or LLM-as-judge, flagged as such) can label "same real-world
+ *   entity? yes/no" and we can MEASURE how often the programmatic truth matches judgment.
  *
  *   Run: `mailwoman registry gold-set-sample [--cap 200000] [--state TX] [--tau 0.7] [--n 300]
  *   [--out-jsonl <path>]`
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { jaccard } from "@mailwoman/match"
 
-import { addressFrequencyKey, streamRows } from "#index"
-import { norm, orgTokens } from "#tools/shared"
+import { colocatedDistinctPairs, scanColocatedProviders, stateOption } from "#tools/shared"
 
 /**
  * Options for {@linkcode goldSetSample}.
@@ -58,31 +56,18 @@ export interface GoldSetSampleOptions {
 	outJSONL?: string
 }
 
-const C = {
-	npi: "NPI",
-	entityType: "Entity Type Code",
-	org: "Provider Organization Name (Legal Business Name)",
-	pAddr: "Provider First Line Business Practice Location Address",
-	pCity: "Provider Business Practice Location Address City Name",
-	pState: "Provider Business Practice Location Address State Name",
-	pZip: "Provider Business Practice Location Address Postcode",
-	authLast: "Authorized Official Last Name",
-	authFirst: "Authorized Official First Name",
-	taxonomy: "Healthcare Provider Taxonomy Code_1",
-	isSubpart: "Is Organization Subpart",
-	parentLBN: "Parent Organization LBN",
-	parentTIN: "Parent Organization TIN",
-}
-
-interface Prov {
-	npi: string
-	org: string
-	tokens: Set<string>
+interface HardPair {
+	npiA: string
+	npiB: string
+	orgA: string
+	orgB: string
 	address: string
-	auth: string
-	taxonomy: string
-	subpart: boolean
-	parent: string
+	nameJaccard: number
+	sameAuthorizedOfficial: boolean
+	sameTaxonomy: boolean
+	bothSubpartSameParent: boolean
+	programmaticVerdict: "same-entity" | "distinct"
+	adjudication: null // ← to be filled: "same-entity" | "distinct"
 }
 
 /**
@@ -94,114 +79,46 @@ export async function goldSetSample(
 ): Promise<{ hardPairs: number; sampled: number }> {
 	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
 	const CAP = options.cap ?? 200_000
-	const STATE = (options.state || "TX").toUpperCase()
+	const STATE = stateOption(options)
 	const TAU = options.tau ?? 0.7
 	const N = options.n ?? 300
 	const OUT = options.outJSONL || ""
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 
 	report?.(`[A] streaming ${STATE} org providers (cap ${CAP})…`)
-	const byAddr = new Map<string, Prov[]>()
-	let kept = 0
-
-	for await (const r of streamRows(REGISTRY)) {
-		if (norm(r[C.entityType]) !== "2") continue
-
-		if (norm(r[C.pState]).toUpperCase() !== STATE) continue
-		const org = norm(r[C.org])
-		const line1 = norm(r[C.pAddr])
-
-		if (!org || !line1) continue
-		const address = [line1, norm(r[C.pCity]), STATE, norm(r[C.pZip])].filter(isPresent).join(", ")
-		const addrKey = addressFrequencyKey(address)
-
-		if (!addrKey) continue
-
-		const p: Prov = {
-			npi: norm(r[C.npi]),
-			org,
-			tokens: orgTokens(org),
-			address,
-			auth: `${norm(r[C.authFirst])} ${norm(r[C.authLast])}`.toLowerCase().trim(),
-			taxonomy: norm(r[C.taxonomy]),
-			subpart: norm(r[C.isSubpart]).toUpperCase() === "Y",
-			parent: `${norm(r[C.parentLBN])}|${norm(r[C.parentTIN])}`.toLowerCase(),
-		}
-
-		if (!byAddr.has(addrKey)) {
-			byAddr.set(addrKey, [])
-		}
-
-		byAddr.get(addrKey)!.push(p)
-
-		kept++
-
-		if (kept >= CAP) break
-	}
-
+	const { byAddr, kept } = await scanColocatedProviders({ registryPath: REGISTRY, state: STATE, cap: CAP })
 	report?.(`    ${kept} providers at ${byAddr.size} addresses`)
 
 	// Hard pairs: co-located, name-similar (≥τ), DISTINCT NPIs that programmatic truth can't confidently
 	// collapse (NOT subparts of the same parent). Tag the programmatic verdict so adjudication can grade it.
-	interface HardPair {
-		npiA: string
-		npiB: string
-		orgA: string
-		orgB: string
-		address: string
-		nameJaccard: number
-		sameAuthorizedOfficial: boolean
-		sameTaxonomy: boolean
-		bothSubpartSameParent: boolean
-		programmaticVerdict: "same-entity" | "distinct"
-		adjudication: null // ← to be filled: "same-entity" | "distinct"
-	}
-
 	const hard: HardPair[] = []
 
-	for (const provs of byAddr.values()) {
-		const distinct = new Map<string, Prov>()
+	for (const { a, b } of colocatedDistinctPairs(byAddr)) {
+		const sim = jaccard(a.tokens, b.tokens)
 
-		for (const p of provs)
-			if (!distinct.has(p.npi)) {
-				distinct.set(p.npi, p)
-			}
+		if (sim < TAU) continue
+		const sameParent = a.subpart && b.subpart && a.parent === b.parent && a.parent !== "|"
 
-		const list = [...distinct.values()]
+		if (sameParent) continue // programmatic truth already collapses these — not the hard slice
+		const sameAuth = a.auth !== "" && a.auth === b.auth
+		const sameTax = a.taxonomy !== "" && a.taxonomy === b.taxonomy
 
-		if (list.length < 2) continue
-
-		for (let i = 0; i < list.length; i++) {
-			for (let j = i + 1; j < list.length; j++) {
-				const a = list[i]!
-				const b = list[j]!
-				const sim = jaccard(a.tokens, b.tokens)
-
-				if (sim < TAU) continue
-				const sameParent = a.subpart && b.subpart && a.parent === b.parent && a.parent !== "|"
-
-				if (sameParent) continue // programmatic truth already collapses these — not the hard slice
-				const sameAuth = a.auth !== "" && a.auth === b.auth
-				const sameTax = a.taxonomy !== "" && a.taxonomy === b.taxonomy
-
-				hard.push({
-					npiA: a.npi,
-					npiB: b.npi,
-					orgA: a.org,
-					orgB: b.org,
-					address: a.address,
-					nameJaccard: Number(sim.toFixed(3)),
-					sameAuthorizedOfficial: sameAuth,
-					sameTaxonomy: sameTax,
-					bothSubpartSameParent: false,
-					// Programmatic heuristic verdict (what an entity-level rule WOULD say, beyond the flagged
-					// subparts): same authorized official ⇒ likely one org; different official + different
-					// specialty ⇒ likely distinct. The whole point is to ADJUDICATE whether this is right.
-					programmaticVerdict: sameAuth ? "same-entity" : "distinct",
-					adjudication: null,
-				})
-			}
-		}
+		hard.push({
+			npiA: a.npi,
+			npiB: b.npi,
+			orgA: a.org,
+			orgB: b.org,
+			address: a.address,
+			nameJaccard: Number(sim.toFixed(3)),
+			sameAuthorizedOfficial: sameAuth,
+			sameTaxonomy: sameTax,
+			bothSubpartSameParent: false,
+			// Programmatic heuristic verdict (what an entity-level rule WOULD say, beyond the flagged
+			// subparts): same authorized official ⇒ likely one org; different official + different
+			// specialty ⇒ likely distinct. The whole point is to ADJUDICATE whether this is right.
+			programmaticVerdict: sameAuth ? "same-entity" : "distinct",
+			adjudication: null,
+		})
 	}
 
 	report?.(`    ${hard.length} hard co-located name-collision pairs (non-flagged-subpart)`)

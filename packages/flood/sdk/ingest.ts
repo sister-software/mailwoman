@@ -23,15 +23,13 @@
  *
  *   THE DATUM SHIFT NEEDS A GRID, AND ITS ABSENCE IS SILENT. OSGB36 to WGS84 is accurate to a metre only
  *   through the OSTN15 grid; without it PROJ substitutes a ballpark offset and produces coordinates that
- *   are metres wrong and indistinguishable from correct ones. {@linkcode assertDatumTransformationAvailable}
- *   refuses the build rather than letting the whole layer shift.
+ *   are metres wrong and indistinguishable from correct ones. The identity read refuses the build rather
+ *   than letting the whole layer shift.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { runFile, spawnProcess } from "@mailwoman/core/process"
-import { arealPolygons, assertRingsInsideExtent, type MultiPolygonRings } from "@mailwoman/spatial"
-import { assertDatumTransformationAvailable as assertDatumTransformation } from "@mailwoman/spatial/projection-transform"
-import { JSONSpliterator } from "spliterator"
+import { ogr2ogrGeoJSONSeq } from "@mailwoman/core/utils"
+import { assertRingsInsideExtent, requireArealPolygons, type MultiPolygonRings } from "@mailwoman/spatial"
+import { readOGRLayerIdentity } from "@mailwoman/spatial/sdk/ogr"
 
 import { EA_DECLARED_BBOX, EA_FLOOD_LAYER, EA_SOURCE_EPSG } from "#vocabulary"
 
@@ -116,51 +114,15 @@ const BBOX_MARGIN_DEGREES = 0.01
 export async function readFloodSourceIdentity(
 	options: FloodIngestOptions
 ): Promise<{ epsg: number; featureCount: number; layer: string }> {
-	const layer = options.layer ?? EA_FLOOD_LAYER
-	const expectEPSG = options.expectEPSG ?? EA_SOURCE_EPSG
+	const identity = await readOGRLayerIdentity({
+		path: options.geodatabasePath,
+		layer: options.layer ?? EA_FLOOD_LAYER,
+		expectEPSG: options.expectEPSG ?? EA_SOURCE_EPSG,
+		context: "flood ingest",
+		areaOfUse: "United Kingdom",
+	})
 
-	const { stdout } = await runFile(
-		"ogrinfo",
-		["-json", "-so", options.geodatabasePath, layer],
-		// A file geodatabase's summary is small; the ceiling only guards against a pathological driver.
-		{ maxBuffer: 32 * 1024 * 1024 }
-	)
-
-	const info = parseJSONStrict<{
-		layers?: Array<{
-			name?: string
-			featureCount?: number
-			geometryFields?: Array<{ coordinateSystem?: { projjson?: { id?: { code?: number } } } }>
-		}>
-	}>(stdout)
-
-	const described = info.layers?.[0]
-
-	if (!described || described.name !== layer) {
-		throw new Error(`flood ingest: ${options.geodatabasePath} does not carry a layer named ${JSON.stringify(layer)}`)
-	}
-
-	const code = described.geometryFields?.[0]?.coordinateSystem?.projjson?.id?.code
-
-	if (typeof code !== "number") {
-		throw new TypeError(
-			`flood ingest: ${layer} declares no EPSG authority code — the projection cannot be checked, and reading its metres as degrees is silent`
-		)
-	}
-
-	if (code !== expectEPSG) {
-		throw new Error(
-			`flood ingest: ${layer} declares EPSG:${code}, expected EPSG:${expectEPSG} — the source's projection changed, which is a product change rather than a variation to absorb`
-		)
-	}
-
-	if (typeof described.featureCount !== "number") {
-		throw new TypeError(`flood ingest: ${layer} reports no feature count`)
-	}
-
-	await assertDatumTransformation(code, { context: "flood ingest", areaOfUse: "United Kingdom" })
-
-	return { epsg: code, featureCount: described.featureCount, layer }
+	return { epsg: identity.epsg, featureCount: identity.featureCount, layer: identity.layer }
 }
 
 /**
@@ -220,49 +182,9 @@ export async function* readFloodSourceFeatures(options: FloodIngestOptions): Asy
 		options.geodatabasePath,
 	]
 
-	const child = spawnProcess("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
-	const stderr: string[] = []
-
-	child.stderr.setEncoding("utf8")
-
-	child.stderr.on("data", (chunk: string) => {
-		stderr.push(chunk)
-	})
-
-	let exitError: Error | undefined
-
-	const exited = new Promise<void>((resolve) => {
-		child.on("error", (error) => {
-			exitError = error
-			resolve()
-		})
-
-		child.on("close", (code) => {
-			if (code !== 0) {
-				exitError = new Error(
-					`flood ingest: ogr2ogr exited ${code}${stderr.length ? ` — ${stderr.join("").trim()}` : ""}`
-				)
-			}
-
-			resolve()
-		})
-	})
-
-	try {
-		for await (const raw of JSONSpliterator.fromAsync<RawFeature>(child.stdout)) {
-			yield toSourceFeature(raw, { minLon, minLat, maxLon, maxLat })
-		}
-	} finally {
-		if (child.exitCode === null && child.signalCode === null) {
-			child.kill()
-		}
+	for await (const raw of ogr2ogrGeoJSONSeq<RawFeature>(args, "flood ingest")) {
+		yield toSourceFeature(raw, { minLon, minLat, maxLon, maxLat })
 	}
-
-	await exited
-
-	// A truncated stream reads as a short but well-formed feature list, which is exactly the partial result that must
-	// throw rather than be reported as a smaller England.
-	if (exitError) throw exitError
 }
 
 /**
@@ -282,7 +204,7 @@ function toSourceFeature(
 		throw new Error(`flood ingest: feature ${properties.area_id} carries no flood_zone value`)
 	}
 
-	const polygons = normalizePolygons(geometry, String(properties.area_id))
+	const polygons = requireArealPolygons(geometry, `feature ${properties.area_id}`, "flood ingest")
 
 	assertRingsInsideExtent(polygons, `feature ${properties.area_id}`, extent, BBOX_MARGIN_DEGREES, "flood ingest")
 
@@ -336,17 +258,4 @@ export async function createGeodatabaseFeatureSource(
 		origin: options.geodatabasePath,
 		features: () => readFloodSourceFeatures(options),
 	}
-}
-
-/**
- * Lift a `Polygon` to the `MultiPolygon` shape the rest of this package works in.
- *
- * @throws {Error} When the geometry is neither.
- */
-function normalizePolygons(geometry: { type: string; coordinates: unknown }, areaID: string): MultiPolygonRings {
-	const polygons = arealPolygons(geometry)
-
-	if (polygons) return polygons
-
-	throw new Error(`flood ingest: feature ${areaID} is a ${geometry.type}, expected Polygon or MultiPolygon`)
 }

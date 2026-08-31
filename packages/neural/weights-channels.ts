@@ -7,11 +7,16 @@
  *   `weights.ts`, which answers the different question of WHERE the artifacts are.
  */
 
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
-import type { AnchorSpanMode } from "#anchor-inference"
+import { type AnchorLookup, type AnchorSpanMode, parseAnchorLookup } from "#anchor-inference"
+import { PostcodeBinaryResolver } from "#postcode-binary-resolver"
+
+// The graph-input inference lives in ort-feeds.ts (pure, so the browser loader shares it); re-exported
+// here because this module is where every other channel-requirement reader lives.
+export { inferRequiredChannelsFromInputs } from "#ort-feeds"
 
 /**
  * The structured `requires` block of a `model-card.json` (#718) — the declared SHIP-CONFIG the model was trained
@@ -139,6 +144,40 @@ export async function readDeclaredArtifactFile(
 }
 
 /**
+ * Read + parse a `model-card.json` into a plain object, or `undefined` when the card is absent, unreadable, or not an
+ * object — the shared DEFENSIVE preamble of every card reader below. Each reader keeps its own "present but corrupt"
+ * checks: a malformed declared contract is a loud artifact bug, not a silent re-default.
+ */
+async function readModelCardObject(
+	modelCardPath: PathBuilderLike | undefined
+): Promise<Record<string, unknown> | undefined> {
+	if (!modelCardPath || !(await pathExists(modelCardPath))) return undefined
+	let raw: string
+
+	try {
+		raw = await readLocalTextFile(modelCardPath)
+	} catch {
+		return undefined
+	}
+
+	const parsed = tryParsingJSON(raw)
+
+	if (typeof parsed !== "object" || parsed === null) return undefined
+
+	return parsed as Record<string, unknown>
+}
+
+/**
+ * Load an `AnchorLookup` from either a PCB1 binary or a JSON pilot lookup (#718 D1) — the two on-disk shapes a weights
+ * package's postcode→anchor artifact takes. Shared by the Node classifier loader and the ProductionScorer.
+ */
+export async function loadAnchorLookup(source: { path: PathBuilderLike; binary: boolean }): Promise<AnchorLookup> {
+	return source.binary
+		? new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(source.path))).toAnchorLookup()
+		: parseAnchorLookup(await readLocalJSONFile(source.path))
+}
+
+/**
  * A soft-feed channel `loadFromWeights` can find declared-but-unfed.
  */
 export type UnfedChannel = "anchor" | "gazetteer" | "country" | "street_type" | "locality_surface"
@@ -211,19 +250,10 @@ export async function unfedAnchorDetail(packageDir: PathBuilderLike | undefined)
 export async function readRequiredChannels(
 	modelCardPath: PathBuilderLike | undefined
 ): Promise<RequiredChannels | undefined> {
-	if (!modelCardPath || !(await pathExists(modelCardPath))) return undefined
-	let raw: string
+	const card = await readModelCardObject(modelCardPath)
 
-	try {
-		raw = await readLocalTextFile(modelCardPath)
-	} catch {
-		return undefined
-	}
-
-	const parsed = tryParsingJSON(raw)
-
-	if (typeof parsed !== "object" || parsed === null) return undefined
-	const requires = (parsed as { requires?: unknown }).requires
+	if (!card) return undefined
+	const requires = card.requires
 
 	if (requires === undefined) return undefined
 
@@ -298,26 +328,6 @@ export async function readRequiredChannels(
 }
 
 /**
- * Back-compat inference of the required soft-feature channels from an ONNX model's declared input names (#718). A model
- * that exports `anchor_features` / `gazetteer_features` declared those channels mandatory at train time — feeding zeros
- * is the channel-off identity, but a model TRAINED with the channel is OOD when scored without it. Cards without a
- * `requires` block (every pre-#718 bundle) route through here so the fail-closed guard still protects them.
- * Conventions/bridge are NOT graph-observable (no dedicated input), so they're left undeclared here — only the card
- * declares them.
- */
-export function inferRequiredChannelsFromInputs(inputNames: readonly string[]): RequiredChannels {
-	const names = new Set(inputNames)
-
-	return {
-		...(names.has("anchor_features") ? { anchor: { required: true } } : {}),
-		...(names.has("gazetteer_features") ? { gazetteer: { required: true } } : {}),
-		...(names.has("country_features") ? { country: { required: true } } : {}),
-		...(names.has("street_type_features") ? { street_type: { required: true } } : {}),
-		...(names.has("locality_surface_features") ? { locality_surface: { required: true } } : {}),
-	}
-}
-
-/**
  * One tag's certified capability under a (tier × address-system) cell of the capability manifest (#718/#719).
  * `maskOffF1` is the model's measured per-tag exact-match F1 with the conventions mask OFF; `maskOnF1` is the same with
  * the mask ON — recorded ONLY for tags some codex `forbiddenTags` row suppresses, because that's the only place the
@@ -355,19 +365,10 @@ export type CapabilityManifest = Record<string, Record<string, Record<string, Ta
 export async function readCapabilityManifest(
 	modelCardPath: PathBuilderLike | undefined
 ): Promise<CapabilityManifest | undefined> {
-	if (!modelCardPath || !(await pathExists(modelCardPath))) return undefined
-	let raw: string
+	const card = await readModelCardObject(modelCardPath)
 
-	try {
-		raw = await readLocalTextFile(modelCardPath)
-	} catch {
-		return undefined
-	}
-
-	const parsed = tryParsingJSON(raw)
-
-	if (typeof parsed !== "object" || parsed === null) return undefined
-	const capabilities = (parsed as { capabilities?: unknown }).capabilities
+	if (!card) return undefined
+	const capabilities = card.capabilities
 
 	if (capabilities === undefined) return undefined
 
@@ -457,19 +458,10 @@ export async function readCRFTransitions(crfPath: PathBuilderLike | undefined): 
 export async function readLabelsFromModelCard(
 	modelCardPath: PathBuilderLike | undefined
 ): Promise<readonly string[] | undefined> {
-	if (!modelCardPath || !(await pathExists(modelCardPath))) return undefined
-	let raw: string
+	const card = await readModelCardObject(modelCardPath)
 
-	try {
-		raw = await readLocalTextFile(modelCardPath)
-	} catch {
-		return undefined
-	}
-
-	const parsed = tryParsingJSON(raw)
-
-	if (typeof parsed !== "object" || parsed === null) return undefined
-	const labels = (parsed as { labels?: unknown }).labels
+	if (!card) return undefined
+	const labels = card.labels
 
 	if (labels === undefined) return undefined
 

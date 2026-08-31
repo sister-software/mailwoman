@@ -25,7 +25,7 @@ import { isPresent } from "@mailwoman/core/objects"
 import { reconcileComponents } from "@mailwoman/formatter"
 import { CSVSpliterator } from "spliterator"
 
-import { splitStreetLine, stableSourceID } from "#adapters/utils"
+import { composeRaw, splitStreetLine, stableSourceID } from "#adapters/utils"
 import { lookupStateAbbreviation } from "#codex/us-fips-state"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
@@ -51,21 +51,6 @@ interface NPPESRow {
 	"Provider Business Practice Location Address City Name": string
 	"Provider Business Practice Location Address State Name": string
 	"Provider Business Practice Location Address Postcode": string
-}
-
-function composeRaw(
-	venue: string | undefined,
-	house: string | undefined,
-	street: string,
-	city: string,
-	state: string,
-	postcode: string
-): string {
-	const streetPart = [house, street].filter(isPresent).join(" ").trim()
-
-	const cityPart = [city.trim(), [state, postcode].filter(isPresent).join(" ").trim()].filter(isPresent).join(", ")
-
-	return [venue, streetPart, cityPart].filter(isPresent).join(", ")
 }
 
 export function createUsgovNPPESAdapter(): CorpusAdapter {
@@ -126,7 +111,14 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 					postcode,
 				}
 
-				const raw = composeRaw(venue, split.house_number, split.street, city, state.abbreviation, postcode)
+				const raw = composeRaw({
+					venue,
+					houseNumber: split.house_number,
+					street: split.street,
+					locality: city,
+					region: state.abbreviation,
+					postcode,
+				})
 
 				if (!raw) continue
 

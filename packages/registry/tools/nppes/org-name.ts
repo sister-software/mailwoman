@@ -5,40 +5,7 @@
  * @file Org-name similarity primitives for the NPPES benchmark's org-name entity truth.
  */
 
-/**
- * Corporate-form words and articles stripped before two organization names are compared. The gold-set rule is "same
- * address + same org name ⇒ same entity", so the domain words carry the distinguishing signal while a legal-form suffix
- * would inflate agreement between unrelated co-located companies.
- */
-const ORG_STOP = new Set([
-	"llc",
-	"inc",
-	"incorporated",
-	"corp",
-	"corporation",
-	"co",
-	"ltd",
-	"pllc",
-	"pc",
-	"pa",
-	"lp",
-	"llp",
-	"the",
-	"of",
-	"and",
-])
-
-/**
- * The comparable token set of an organization name.
- */
-export const orgTokens = (s: string): Set<string> =>
-	new Set(
-		s
-			.toLowerCase()
-			.replaceAll(/[^a-z0-9 ]/g, " ")
-			.split(/\s+/)
-			.filter((t) => t && !ORG_STOP.has(t))
-	)
+export { orgTokens } from "#tools/shared"
 
 /**
  * Jaccard floor at or above which two {@linkcode orgTokens} sets count as the same organization — the gold-set

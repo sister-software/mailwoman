@@ -11,9 +11,7 @@
  *       `$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`, build-on-copy).
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Build the Gauntlet data artifacts (fdic-holdout, regression-db)"
 
@@ -52,11 +50,7 @@ const EvalGauntletBuild: ParsedCommandComponent<Record<string, never>, ["fdic-ho
 		}
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
-
-	if (state.status === "done") return <Text color="green">{state.result}</Text>
-
-	return null
+	return <CommandTaskResult state={state} />
 }
 
 export default EvalGauntletBuild

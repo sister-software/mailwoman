@@ -9,9 +9,13 @@
  *   exits 1 when any error-severity flag fires (warnings don't gate).
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	reportToStderr,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -36,8 +40,6 @@ interface Options {
 	outJSON?: string
 }
 
-const report = (line: string): void => console.error(line)
-
 const DevLintCorpusShard: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
@@ -51,13 +53,13 @@ const DevLintCorpusShard: ParsedCommandComponent<Options> = ({ options }) => {
 					outMd: options.outMd,
 					outJSON: options.outJSON,
 				},
-				report
+				reportToStderr
 			)
 		},
 		(summary) => (summary.errors > 0 ? 1 : 0)
 	)
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	// The tool writes its verdict to stderr, so the component has no additional result frame.
 	return null

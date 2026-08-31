@@ -8,11 +8,11 @@
  *   with confidence-delta annotations, and a unified diff of tag changes.
  */
 
+import { ConfidenceCell } from "@mailwoman/react"
 import { useMemo } from "react"
 
 import type { DemoResult, ResultNode } from "#shared/resources"
 
-import { ConfidenceCell } from "../ResultPanel/ResultPanel.tsx"
 import { SpanHighlight } from "../SpanHighlight/SpanHighlight.tsx"
 import { TimingPanel } from "../TimingPanel/TimingPanel.tsx"
 

@@ -12,7 +12,13 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	reportToStderr,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -29,16 +35,14 @@ export const spec = {
 	],
 } as const satisfies CommandSpec
 
-const report = (line: string): void => console.error(line)
-
 const DevGenerateTraceFixture: ParsedCommandComponent<Record<string, never>> = ({ args }) => {
 	const state = useCommandTask(async () => {
 		const { generateTraceFixture } = await import("#dev-tools/generate-trace-fixture")
 
-		return generateTraceFixture({ text: args[0] }, report)
+		return generateTraceFixture({ text: args[0] }, reportToStderr)
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

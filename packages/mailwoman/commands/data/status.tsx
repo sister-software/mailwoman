@@ -18,13 +18,20 @@
 
 import type { APIClient } from "@mailwoman/core/api"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { pathExists, statPath } from "@mailwoman/core/fs/readers"
+import { statPath } from "@mailwoman/core/fs/readers"
 import { Text } from "ink"
 import { resolvePath } from "path-ts"
 
-import { type Check, CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type Check,
+	CheckList,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 import { artifactURL, BUNDLES, needsDownload, resolveBundleArtifacts, type BundleArtifact } from "#data-bundles"
-import { readReleaseManifest, resolveShardPath, type DataReleaseManifest } from "#data-release"
+import { existingLocalPath, readReleaseManifest } from "#data-release"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -59,19 +66,6 @@ async function headContentLength(client: APIClient, artifact: BundleArtifact): P
 	} catch {
 		return undefined
 	}
-}
-
-async function existingLocalPath(
-	dataRoot: string,
-	manifest: DataReleaseManifest | null,
-	artifact: BundleArtifact,
-	resolvedAbsPath: string
-): Promise<string | null> {
-	if (artifact.family && artifact.stateSlug) {
-		return await resolveShardPath(dataRoot, artifact.family, artifact.stateSlug, manifest)
-	}
-
-	return (await pathExists(resolvedAbsPath)) ? resolvedAbsPath : null
 }
 
 async function statusForBundles(
@@ -163,13 +157,13 @@ const DataStatus: ParsedCommandComponent<Options> = ({ options, args }) => {
 		(result) => (result.ok ? 0 : 1)
 	)
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} running={<Text color="gray">checking…</Text>} />
 
 	if (state.status === "done") {
 		return <CheckList checks={state.result.checks} verdict={state.result.ok} />
 	}
 
-	return <Text color="gray">checking…</Text>
+	return null
 }
 
 export default DataStatus

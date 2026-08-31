@@ -11,7 +11,13 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	reportToStderr,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -24,19 +30,17 @@ export const spec = {
 	],
 } as const satisfies CommandSpec
 
-const report = (line: string): void => console.error(line)
-
 const DevLintMDXAngles: ParsedCommandComponent<Record<string, never>> = ({ args }) => {
 	const state = useCommandTask(
 		async () => {
 			const { lintMDXAngles } = await import("#dev-tools/lint-mdx-angles")
 
-			return await lintMDXAngles({ files: args }, report)
+			return await lintMDXAngles({ files: args }, reportToStderr)
 		},
 		(summary) => (summary.errors > 0 ? 1 : 0)
 	)
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done" && state.result.errors > 0) {
 		return (

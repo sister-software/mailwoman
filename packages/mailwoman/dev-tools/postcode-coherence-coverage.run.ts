@@ -23,16 +23,15 @@
  */
 
 import { candidateSystemsForPostcode } from "@mailwoman/codex"
-import { pathExists } from "@mailwoman/core/fs/readers"
 import type { ResolverBackend } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { findPostcodeCountryScope } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup, WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { conventionCandidateDBPath } from "#resolver-backend"
+import { conventionCandidateDBPath, existingWOFShardPaths } from "#resolver-backend"
 
 /**
  * One real pair per codex system — a postcode that exists and the locality it belongs to. The pass needs BOTH halves,
@@ -63,15 +62,7 @@ if (backendName !== "fts" && backendName !== "candidate") {
 
 const candidatePath = conventionCandidateDBPath()
 
-const wofPaths: string[] = []
-
-if (backendName === "fts") {
-	for (const shardPath of wofShardPaths()) {
-		if (await pathExists(shardPath)) {
-			wofPaths.push(shardPath)
-		}
-	}
-}
+const wofPaths: string[] = backendName === "fts" ? await existingWOFShardPaths() : []
 
 const backend: ResolverBackend =
 	backendName === "candidate"

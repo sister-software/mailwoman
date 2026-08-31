@@ -38,12 +38,11 @@
  *   preserving behavior.
  */
 
-import { isoSecondsUTC, pyFloat, pyRound } from "@mailwoman/core/utils"
-import { haversineKm } from "@mailwoman/spatial"
+import { isoSecondsUTC, pyRound } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { TSVSpliterator } from "spliterator"
+import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 
+import { ProximityGrid } from "#gazetteer-pipeline/postcode-locality/base"
 import {
 	createPostcodeLocalityIndex,
 	createPostcodeLocalityMetaTable,
@@ -52,6 +51,9 @@ import {
 	type PostcodeLocalityDatabase,
 	type PostcodeLocalityInsertValues,
 } from "#gazetteer-pipeline/postcode-locality/schema"
+import { geonamesPostalRows } from "#gazetteer-pipeline/postcode/geonames-postal"
+import { writeMetaRows } from "#gazetteer-pipeline/postcode/geonames-tail"
+import { finalizeSealedBuild } from "#gazetteer-pipeline/shard-lifecycle"
 
 /**
  * KR postcode points sit p50 ~1 km from the nearest locality; 20 km is a safe net.
@@ -94,20 +96,17 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 
 	const xy = new Map<number, [number, number]>()
 	const sprName = new Map<number, string>()
-	const grid = new Map<string, Array<{ pid: number; la: number; lo: number }>>()
+
+	const grid = new ProximityGrid<{ pid: number; la: number; lo: number }>({
+		cellOf: (lon, lat) => [pyRound(lon * 2), pyRound(lat * 2)],
+		positionOf: (entry) => [entry.la, entry.lo],
+		compare: (a, b) => a.pid - b.pid,
+	})
 
 	for (const { id, name, latitude, longitude } of loc) {
 		xy.set(id, [latitude, longitude])
 		sprName.set(id, name)
-		const key = `${pyRound(longitude * 2)}|${pyRound(latitude * 2)}`
-		const bucket = grid.get(key)
-		const entry = { pid: id, la: latitude, lo: longitude }
-
-		if (bucket) {
-			bucket.push(entry)
-		} else {
-			grid.set(key, [entry])
-		}
+		grid.add({ pid: id, la: latitude, lo: longitude })
 	}
 
 	// Hangul locality-name index (kor + Hangul-bearing und): bare-stem -> set(ids).
@@ -153,44 +152,17 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	 * (homonymous villages), so a Hangul name-match MUST be constrained to nearby candidates — matching globally then
 	 * taking the nearest homonym lands hundreds of km away.
 	 */
-	const nearby = (lat: number, lon: number): Array<{ d: number; pid: number }> => {
-		const cx = pyRound(lon * 2)
-		const cy = pyRound(lat * 2)
-		const out: Array<{ d: number; pid: number }> = []
-
-		for (const dx of [-1, 0, 1]) {
-			for (const dy of [-1, 0, 1]) {
-				for (const { pid, la, lo } of grid.get(`${cx + dx}|${cy + dy}`) ?? []) {
-					const d = haversineKm(lat, lon, la, lo)
-
-					if (d <= MATCH_RADIUS_KM) {
-						out.push({ d, pid })
-					}
-				}
-			}
-		}
-
-		out.sort((a, b) => a.d - b.d || a.pid - b.pid)
-
-		return out
-	}
+	const nearby = (lat: number, lon: number): Array<{ d: number; pid: number }> =>
+		grid.nearby(lat, lon, MATCH_RADIUS_KM).map(({ d, entry }) => ({ d, pid: entry.pid }))
 
 	// GeoNames postal KR: group by postcode (first row wins; multi-row postcodes cluster tightly).
 	const postal = new Map<string, [string, string, number, number]>()
 
-	// Streamed — `args.geonames` is a caller-supplied national dump. `header: false` is required:
-	// the GeoNames postal dump is headerless, so row 1 would be read as column names.
-	for await (const f of TSVSpliterator.fromAsync(args.geonames, { header: false })) {
-		if (f.length > 10 && f[1]) {
-			const lat = pyFloat(f[9])
-			const lon = pyFloat(f[10])
-
-			if (lat === null || lon === null) continue
-
-			// pc -> (place, admin1, lat, lon)
-			if (!postal.has(f[1]!)) {
-				postal.set(f[1]!, [f[2]!, f[3]!, lat, lon])
-			}
+	// Streamed — `args.geonames` is a caller-supplied national dump.
+	for await (const row of geonamesPostalRows(args.geonames)) {
+		// pc -> (place, admin1, lat, lon)
+		if (!postal.has(row.postcode)) {
+			postal.set(row.postcode, [row.placeName, row.admin1, row.latitude, row.longitude])
 		}
 	}
 
@@ -283,17 +255,9 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 			["built_at", isoSecondsUTC()],
 		]
 
-		const insMeta = kdb.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
+		writeMetaRows(kdb, meta)
 
-		for (const [k, v] of meta) {
-			insMeta.run(k, v)
-		}
-
-		kdb.exec("PRAGMA journal_mode=DELETE")
-		kdb.exec("ANALYZE")
-		assertDatabaseIntegrity(kdb, args.output)
-
-		kdb.exec("VACUUM")
+		finalizeSealedBuild(kdb, args.output)
 	}
 
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.

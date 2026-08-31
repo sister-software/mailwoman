@@ -4609,6 +4609,7 @@ __metadata:
   resolution: "@mailwoman/activity-lexicon@workspace:packages/activity-lexicon"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/variant-aliases": "workspace:*"
     path-ts: "npm:^2.3.0"
   languageName: unknown
   linkType: soft
@@ -4716,7 +4717,6 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.4"
-    spliterator: "npm:^6.4.1"
   languageName: unknown
   linkType: soft
 
@@ -4921,7 +4921,6 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.4"
-    spliterator: "npm:^6.4.1"
   languageName: unknown
   linkType: soft
 
@@ -4967,6 +4966,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/kind-classifier@workspace:packages/kind-classifier"
   dependencies:
+    "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
   languageName: unknown
@@ -4995,6 +4995,7 @@ __metadata:
   resolution: "@mailwoman/locale-gate@workspace:packages/locale-gate"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/query-shape": "workspace:*"
   languageName: unknown
   linkType: soft
 
@@ -5242,7 +5243,6 @@ __metadata:
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.4"
     path-ts: "npm:^2.3.0"
-    spliterator: "npm:^6.4.1"
   languageName: unknown
   linkType: soft
 
@@ -5273,6 +5273,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/phrase-grouper@workspace:packages/phrase-grouper"
   dependencies:
+    "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
@@ -5546,7 +5547,6 @@ __metadata:
   resolution: "@mailwoman/variant-aliases@workspace:packages/variant-aliases"
   dependencies:
     "@mailwoman/core": "workspace:*"
-    path-ts: "npm:^2.3.0"
   languageName: unknown
   linkType: soft
 

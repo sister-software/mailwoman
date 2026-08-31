@@ -55,7 +55,7 @@ import { join } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { defaultAdapterRegistry } from "#adapters/utils"
-import { runAdapter, type AdapterRunManifest } from "#runner"
+import { once, runAdapter, type AdapterRunManifest } from "#runner"
 import { defaultAugmentationsForCountry, synthesizeRow } from "#synthesizers/utils"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter, LabeledRow } from "#types"
 import { alignRow } from "#utils/align"
@@ -304,7 +304,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	}
 
 	quarantineStream.end()
-	await Promise.all([...Object.values(labeledStreams).map(streamEnd), streamEnd(quarantineStream)])
+	await Promise.all([...Object.values(labeledStreams).map((s) => once(s, "close")), once(quarantineStream, "close")])
 
 	// 4. Splits — manifest derived by streaming the per-split labeled files; no in-memory
 	// source-id arrays. `sort(1)` from coreutils produces the deterministic per-split .txt
@@ -375,11 +375,4 @@ async function* streamJSONL<T>(path: string): AsyncIterable<T> {
 	// lines are dropped at the row level) and throws SyntaxError on a malformed row —
 	// same fail-loud behavior as the prior readline + bare `JSON.parse`.
 	yield* JSONSpliterator.fromAsync<T>(path)
-}
-
-function streamEnd(s: WriteStream): Promise<void> {
-	return new Promise((resolve, reject) => {
-		s.once("close", resolve)
-		s.once("error", reject)
-	})
 }

@@ -145,14 +145,21 @@ export default function CalibrationShowcase({
 	)
 }
 
+//#region Chart frame
+
+/**
+ * Shared SVG frame math for the two charts: outer size, padding, and the resulting plot box.
+ */
+function chartFrame(W: number, H: number, pad: { l: number; r: number; t: number; b: number }) {
+	return { W, H, pad, plotW: W - pad.l - pad.r, plotH: H - pad.t - pad.b }
+}
+
+//#endregion
+
 //#region Reliability diagram
 
 function ReliabilityDiagram({ raw, cal }: { raw: ReliabilityBin[]; cal: ReliabilityBin[] }): React.ReactElement {
-	const W = 340
-	const H = 300
-	const pad = { l: 44, r: 12, t: 12, b: 40 }
-	const plotW = W - pad.l - pad.r
-	const plotH = H - pad.t - pad.b
+	const { W, H, pad, plotW, plotH } = chartFrame(340, 300, { l: 44, r: 12, t: 12, b: 40 })
 	// Zoom to [0.4, 1] — that's where the populated bins live; full [0,1] wastes 40% of the canvas.
 	const lo = 0.4
 	const x = (v: number) => pad.l + ((v - lo) / (1 - lo)) * plotW
@@ -247,11 +254,7 @@ function ReliabilityDiagram({ raw, cal }: { raw: ReliabilityBin[]; cal: Reliabil
 //#region Abstention curve
 
 function AbstentionCurve({ points }: { points: AbstentionPoint[] }): React.ReactElement {
-	const W = 340
-	const H = 300
-	const pad = { l: 44, r: 12, t: 12, b: 40 }
-	const plotW = W - pad.l - pad.r
-	const plotH = H - pad.t - pad.b
+	const { W, H, pad, plotW, plotH } = chartFrame(340, 300, { l: 44, r: 12, t: 12, b: 40 })
 	const tLo = Math.min(...points.map((p) => p.threshold))
 	const tHi = Math.max(...points.map((p) => p.threshold))
 	const x = (t: number) => pad.l + ((t - tLo) / (tHi - tLo)) * plotW

@@ -71,7 +71,7 @@ import {
 	readActivityLexicon,
 	resolveActivityPhraseLocale,
 } from "@mailwoman/activity-lexicon"
-import { compareByCodePoint } from "@mailwoman/core/utils"
+import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import type {
 	CompiledGeographicModel,
 	ConceptRecord,
@@ -82,6 +82,7 @@ import type {
 import type { POIPhraseLookup, POIPhraseMatch } from "@mailwoman/kind-classifier"
 
 import { localeToCountry } from "#country-scope"
+import { readCommittedModel } from "#observations/committed-model"
 
 /**
  * The relation the frozen vertical slice defines, and the only one this route reads. An assertion under any other
@@ -520,14 +521,4 @@ export async function createSemanticObservationRoute(
 			return drained
 		},
 	}
-}
-
-/**
- * The committed compiled artifact, read through the package that owns it. Never the authoring records: the runtime side
- * of this program consumes an artifact, and traversing authoring JSON is what the boundary record excludes.
- */
-async function readCommittedModel(): Promise<CompiledGeographicModel> {
-	const { readCompiledGeographicModel } = await import("@mailwoman/geographic-model/scripts/build-artifact")
-
-	return await readCompiledGeographicModel()
 }

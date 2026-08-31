@@ -31,7 +31,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
-import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "#shard-recipes/scaffold"
+import { makeMulberry32, readOATuples, type ShardRecipe } from "#shard-recipes/scaffold"
 import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
@@ -155,34 +155,15 @@ interface CountryTuple {
  * closes the reader, which releases the archive without inflating the rest of the member.
  */
 async function readTuples(source: CountrySource, limit: number): Promise<CountryTuple[]> {
-	const tuples: CountryTuple[] = []
-	const seen = new Set<string>()
-
-	for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
-		if (tuples.length >= limit) break
-
-		const street = row.street ?? "",
-			locality = row.city ?? "",
-			house_number = row.number ?? ""
-
-		if (!street || !locality || !house_number) continue
-		const key = `${house_number}|${street}|${locality}`.toLowerCase()
-
-		if (seen.has(key)) continue
-		seen.add(key)
-
-		tuples.push({
-			house_number,
-			street,
-			locality,
+	return readOATuples(source, {
+		limit,
+		extra: (fields, row) => ({
+			...fields,
 			region: row.region || source.region,
-			postcode: row.postcode ?? "",
 			iso2: source.iso2,
 			order: source.order,
-		})
-	}
-
-	return tuples
+		}),
+	})
 }
 
 // After the absent draw: 60% curated surface forms (endonym/abbrev variety), 40% broad ISO canonical names.
@@ -195,7 +176,7 @@ function pickCountry(random: () => number): string | null {
 	if (random() < COUNTRY_ABSENT_PROB) return null // negative — teaches "trailing token != always country"
 	const pool = random() < SURFACE_FORM_SHARE ? COUNTRY_FORM_POOL.surface : COUNTRY_FORM_POOL.names
 
-	return pool[Math.floor(random() * pool.length)]!
+	return pick(pool, random)
 }
 
 // Country-bearing rows: 80% full, 12% full-nl, 8% bare.

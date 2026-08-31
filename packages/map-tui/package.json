@@ -85,14 +85,12 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/core": "workspace:*",
 		"@mapbox/vector-tile": "^2.0.3",
 		"@sister.software/asciify": "^4.1.0",
 		"htmlparser2": "^10",
 		"pbf": "^4.0.1",
 		"pmtiles": "^4.5.0"
-	},
-	"devDependencies": {
-		"@mailwoman/core": "workspace:*"
 	},
 	"engines": {
 		"node": ">=24.18.0"

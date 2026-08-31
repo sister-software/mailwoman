@@ -30,10 +30,13 @@
  *   checked-in repo files symlinked in place; there's nothing to go stale.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { dataRootPath, repoRootPath, weightsOverlayPath } from "@mailwoman/core/utils"
-import { linkForce, removeIfPresent } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import { repoRootPath, weightsOverlayPath } from "@mailwoman/core/utils"
+import {
+	linkSoftFeedSibling,
+	linkStreetMorphologyFST,
+	removeIfPresent,
+} from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 import { resolvePath } from "path-ts"
 
 /**
@@ -52,34 +55,10 @@ await removeIfPresent(resolvePath(DEST_DIR, "tokenizer.model"))
 /**
  * --- soft-feed siblings (locale-owned; the fresh-worktree country-OFF gap) -----.
  */
+await linkSoftFeedSibling(
+	repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json"),
+	resolvePath(DEST_DIR, "country-surface-lexicon-v1.json"),
+	"country channel will resolve OFF in this worktree."
+)
 
-const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
-
-if (await pathExists(SRC_COUNTRY_LEXICON)) {
-	await linkForce(SRC_COUNTRY_LEXICON, resolvePath(DEST_DIR, "country-surface-lexicon-v1.json"))
-
-	console.log(`linked ${DEST_DIR}/country-surface-lexicon-v1.json`)
-} else {
-	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
-}
-
-/**
- * Street-morphology FST (static-index candidate 1, 2026-07-26): symlink the sealed locale-general artifact
- * ($MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin, `mailwoman gazetteer build street-morphology`) so
- * `resolveWeights` surfaces `streetMorphologyPath` in dev and the street-context gate (#1315) deserializes the artifact
- * instead of rebuilding from dictionaries. Missing is non-fatal — the runtime loader's dictionary-build fallback covers
- * it.
- */
-
-const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
-const MORPHOLOGY_DEST = resolvePath(DEST_DIR, "fst-street-morphology.bin")
-
-if (await pathExists(MORPHOLOGY_SRC)) {
-	await linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
-
-	console.log(`linked fst-street-morphology.bin ← ${MORPHOLOGY_SRC}`)
-} else {
-	console.error(
-		`WARNING: missing ${MORPHOLOGY_SRC} — the street-context gate falls back to the per-process dictionary build.`
-	)
-}
+await linkStreetMorphologyFST(DEST_DIR)

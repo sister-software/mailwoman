@@ -25,6 +25,7 @@
 
 import { medoidPoint, normalizePostcodeName, type PostcodePoint } from "@mailwoman/resolver-wof-sqlite/geonames-postal"
 
+import { normalizePostcodeDisplay } from "#gazetteer-pipeline/postcode/display-form"
 import type { OverpassElement, OverpassResponse } from "#gazetteer-pipeline/postcode/ni-osm/fetch"
 
 /**
@@ -127,12 +128,11 @@ export function createNIOSMParseStats(): NIOSMParseStats {
 }
 
 /**
- * Normalize an OSM `addr:postcode` value to the single-space display form. Uppercase because OSM carries both cases;
- * whitespace collapsed because `BT3 9QQ` and `BT3 9QQ` are the same postcode and would otherwise validate as one code
- * and one typo. Non-breaking spaces are folded too — they occur in hand-typed tags and are invisible in an editor.
+ * Normalize an OSM `addr:postcode` value to the single-space display form. Non-breaking spaces occur in hand-typed tags
+ * and are invisible in an editor; {@link normalizePostcodeDisplay} folds them too.
  */
 export function normalizeOSMPostcode(raw: string): string {
-	return raw.replaceAll(/\s+/gu, " ").trim().toUpperCase()
+	return normalizePostcodeDisplay(raw)
 }
 
 /**

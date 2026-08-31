@@ -13,10 +13,13 @@
  *   dependency set is `kysely`. That is what lets the leaf lookups use it.
  */
 
+export * from "#batched"
 export * from "#client"
 export * from "#database-schema"
 export * from "#dialect"
 export * from "#dialect-config"
 export * from "#introspection"
+export * from "#schema-columns"
 export * from "#sealed"
+export * from "#sealed-build"
 export * from "#sealed-db"

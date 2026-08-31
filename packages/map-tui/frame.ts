@@ -14,12 +14,10 @@
  * further asciify dependency; `blitFrame` is the seam back the other way, for callers driving a live terminal.
  */
 
-import { AsciifyTerminal } from "@sister.software/asciify/tui"
+import { AsciifyTerminal, SGR_RESET } from "@sister.software/asciify/tui"
 
 import type { RGBAGrid } from "#raster"
 import type { RGB } from "#style"
-
-const SGR_RESET = "\u001B[0m"
 
 /**
  * A rendered braille frame: one codepoint and one packed color per cell, row-major.

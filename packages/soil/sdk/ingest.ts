@@ -27,12 +27,10 @@
  *   a bounded chunk name the same features every time.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { runFile, spawnProcess } from "@mailwoman/core/process"
-import { arealPolygons, assertRingsInsideExtent, type MultiPolygonRings } from "@mailwoman/spatial"
-import { assertDatumTransformationAvailable } from "@mailwoman/spatial/projection-transform"
+import { ogr2ogrGeoJSONSeq } from "@mailwoman/core/utils"
+import { assertRingsInsideExtent, requireArealPolygons, type MultiPolygonRings } from "@mailwoman/spatial"
+import { readOGRLayerIdentity } from "@mailwoman/spatial/sdk/ogr"
 import { basename, join } from "path-ts"
-import { JSONSpliterator } from "spliterator"
 
 import { SSURGO_SOURCE_EPSG } from "#vocabulary"
 
@@ -50,12 +48,6 @@ const COORDINATE_PRECISION = 9
  * hemispheres away, still fails, and loose enough that a rounded declared extent is not brittle.
  */
 const BBOX_MARGIN_DEGREES = 0.1
-
-/**
- * Ordinates in a 2D extent: `minLon, minLat, maxLon, maxLat`. A shorter array is a 3D or degenerate extent this reader
- * does not understand, not a 2D one with something missing.
- */
-const EXTENT_ORDINATES = 4
 
 /**
  * The shapefile holding a survey area's map-unit polygons — the delineations this layer stores.
@@ -127,63 +119,20 @@ export interface SoilIngestOptions {
  *   reports no feature count.
  */
 export async function readSoilSourceIdentity(options: SoilIngestOptions): Promise<SoilSourceIdentity> {
-	const layer = options.layer ?? basename(options.shapefilePath, ".shp")
-	const expectEPSG = options.expectEPSG ?? SSURGO_SOURCE_EPSG
-
-	const { stdout } = await runFile("ogrinfo", ["-json", "-so", options.shapefilePath, layer], {
-		maxBuffer: 32 * 1024 * 1024,
+	const identity = await readOGRLayerIdentity({
+		path: options.shapefilePath,
+		layer: options.layer ?? basename(options.shapefilePath, ".shp"),
+		expectEPSG: options.expectEPSG ?? SSURGO_SOURCE_EPSG,
+		context: "soil ingest",
+		requireExtent: true,
+		messages: {
+			noAuthorityCode: "the projection cannot be checked, and reading one datum's coordinates as another's is silent",
+			epsgMismatch:
+				"SSURGO publishes geographic WGS84, so a different code is a product change rather than a variation to absorb",
+		},
 	})
 
-	const info = parseJSONStrict<{
-		layers?: Array<{
-			name?: string
-			featureCount?: number
-			geometryFields?: Array<{
-				extent?: number[]
-				coordinateSystem?: { projjson?: { id?: { code?: number } } }
-			}>
-		}>
-	}>(stdout)
-
-	const described = info.layers?.[0]
-
-	if (!described || described.name !== layer) {
-		throw new Error(`soil ingest: ${options.shapefilePath} does not carry a layer named ${JSON.stringify(layer)}`)
-	}
-
-	const geometry = described.geometryFields?.[0]
-	const code = geometry?.coordinateSystem?.projjson?.id?.code
-
-	if (typeof code !== "number") {
-		throw new TypeError(
-			`soil ingest: ${layer} declares no EPSG authority code — the projection cannot be checked, and reading one datum's coordinates as another's is silent`
-		)
-	}
-
-	if (code !== expectEPSG) {
-		throw new Error(
-			`soil ingest: ${layer} declares EPSG:${code}, expected EPSG:${expectEPSG} — SSURGO publishes geographic WGS84, so a different code is a product change rather than a variation to absorb`
-		)
-	}
-
-	if (typeof described.featureCount !== "number") {
-		throw new TypeError(`soil ingest: ${layer} reports no feature count`)
-	}
-
-	const extent = geometry?.extent
-
-	if (!extent || extent.length < EXTENT_ORDINATES) {
-		throw new TypeError(`soil ingest: ${layer} declares no extent, so a reprojected vertex could not be checked`)
-	}
-
-	await assertDatumTransformationAvailable(code, { context: "soil ingest" })
-
-	return {
-		epsg: code,
-		featureCount: described.featureCount,
-		layer,
-		bbox: [extent[0]!, extent[1]!, extent[2]!, extent[3]!],
-	}
+	return { epsg: identity.epsg, featureCount: identity.featureCount, layer: identity.layer, bbox: identity.extent! }
 }
 
 /**
@@ -238,49 +187,9 @@ export async function* readSoilDelineations(
 		options.shapefilePath,
 	]
 
-	const child = spawnProcess("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
-	const stderr: string[] = []
-
-	child.stderr.setEncoding("utf8")
-
-	child.stderr.on("data", (chunk: string) => {
-		stderr.push(chunk)
-	})
-
-	let exitError: Error | undefined
-
-	const exited = new Promise<void>((resolve) => {
-		child.on("error", (error) => {
-			exitError = error
-			resolve()
-		})
-
-		child.on("close", (code) => {
-			if (code !== 0) {
-				exitError = new Error(
-					`soil ingest: ogr2ogr exited ${code}${stderr.length ? ` — ${stderr.join("").trim()}` : ""}`
-				)
-			}
-
-			resolve()
-		})
-	})
-
-	try {
-		for await (const raw of JSONSpliterator.fromAsync<RawFeature>(child.stdout)) {
-			yield toDelineation(raw, { minLon, minLat, maxLon, maxLat })
-		}
-	} finally {
-		if (child.exitCode === null && child.signalCode === null) {
-			child.kill()
-		}
+	for await (const raw of ogr2ogrGeoJSONSeq<RawFeature>(args, "soil ingest")) {
+		yield toDelineation(raw, { minLon, minLat, maxLon, maxLat })
 	}
-
-	await exited
-
-	// A truncated stream reads as a short but well-formed feature list, which is exactly the partial result that must
-	// throw rather than be reported as a smaller county.
-	if (exitError) throw exitError
 }
 
 /**
@@ -306,7 +215,7 @@ function toDelineation(
 		throw new Error(`soil ingest: delineation ${properties.fid} carries no AREASYMBOL`)
 	}
 
-	const polygons = normalizePolygons(geometry, String(properties.fid))
+	const polygons = requireArealPolygons(geometry, `delineation ${properties.fid}`, "soil ingest")
 
 	assertRingsInsideExtent(polygons, `delineation ${properties.fid}`, extent, BBOX_MARGIN_DEGREES, "soil ingest")
 
@@ -316,19 +225,6 @@ function toDelineation(
 		areasymbol: properties.areasymbol,
 		polygons,
 	}
-}
-
-/**
- * Lift a `Polygon` to the `MultiPolygon` shape the rest of this package works in.
- *
- * @throws {Error} When the geometry is neither.
- */
-function normalizePolygons(geometry: { type: string; coordinates: unknown }, featureID: string): MultiPolygonRings {
-	const polygons = arealPolygons(geometry)
-
-	if (polygons) return polygons
-
-	throw new Error(`soil ingest: delineation ${featureID} is a ${geometry.type}, expected Polygon or MultiPolygon`)
 }
 
 /**

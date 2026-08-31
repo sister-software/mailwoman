@@ -88,11 +88,11 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/core": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
 		"type-fest": "^5.8.0"
 	},
 	"devDependencies": {
-		"@mailwoman/core": "workspace:*",
 		"path-ts": "^2.3.0"
 	},
 	"engines": {

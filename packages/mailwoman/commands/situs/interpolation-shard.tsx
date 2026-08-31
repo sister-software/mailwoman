@@ -33,7 +33,13 @@ import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Box, Text } from "ink"
 import { basename, dirname, resolvePath } from "path-ts"
 
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
@@ -362,7 +368,7 @@ const SitusInterpolationShard: ParsedCommandComponent<Options> = ({ options }) =
 		]
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

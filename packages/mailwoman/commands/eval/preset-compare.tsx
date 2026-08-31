@@ -8,9 +8,7 @@
  *   companion; `eval gate` captures the same report into `<out-dir>/presets.md`.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Compare the 6 demo presets between the shipped baseline and a candidate"
 
@@ -38,7 +36,7 @@ const EvalPresetCompare: ParsedCommandComponent<Options> = ({ options }) => {
 		return presetCompare(options)
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	// presetCompare prints each parse on stdout.
 	return null

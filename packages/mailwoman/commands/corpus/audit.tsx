@@ -7,9 +7,7 @@
  *   Pair with `--config` to weight the counts by a training YAML's source_weights block.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -42,7 +40,7 @@ const CorpusAudit: ParsedCommandComponent<Options, [string]> = ({ options, args 
 		audit({ corpusDir: args[0], configPath: options.config, sampleShardCount: options.sample })
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	return null
 }

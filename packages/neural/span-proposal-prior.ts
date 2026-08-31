@@ -28,7 +28,9 @@
 
 import type { ProposedSpan } from "@mailwoman/core/pipeline"
 
+import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
 import type { TokenLike } from "#query-shape-prior"
+import { spansOverlap } from "#span-repair"
 
 export interface SpanProposalPriorOpts {
 	/**
@@ -135,20 +137,11 @@ export function buildSpanProposalPriors(
 	const annotationBiasScale = opts.annotationBiasScale ?? 12
 	const annotationFloor = opts.annotationConfidenceFloor ?? 0.6
 
-	const matrix: number[][] = []
-
-	for (let t = 0; t < T; t++) {
-		matrix.push(Array.from<number>({ length: L }).fill(0))
-	}
+	const matrix = emptyPriorMatrix(T, L)
 
 	if (!proposals.length) return matrix
 
-	const labelToCol = new Map<string, number>()
-
-	for (let k = 0; k < labels.length; k++) {
-		labelToCol.set(labels[k]!, k)
-	}
-
+	const labelToCol = labelColumnIndex(labels)
 	const oCol = labelToCol.get("O")
 
 	for (const proposal of proposals) {
@@ -159,7 +152,7 @@ export function buildSpanProposalPriors(
 			const bias = proposal.confidence * annotationBiasScale
 
 			for (let t = 0; t < T; t++) {
-				if (overlaps(tokens[t]!, proposal)) {
+				if (spansOverlap(tokens[t]!, proposal)) {
 					matrix[t]![oCol] = Math.max(matrix[t]![oCol]!, bias)
 				}
 			}
@@ -180,7 +173,7 @@ export function buildSpanProposalPriors(
 		let first = true
 
 		for (let t = 0; t < T; t++) {
-			if (!overlaps(tokens[t]!, proposal)) continue
+			if (!spansOverlap(tokens[t]!, proposal)) continue
 			const col = first ? bCol : iCol
 			first = false
 
@@ -190,8 +183,4 @@ export function buildSpanProposalPriors(
 	}
 
 	return matrix
-}
-
-function overlaps(a: { start: number; end: number }, b: { start: number; end: number }): boolean {
-	return a.start < b.end && b.start < a.end
 }

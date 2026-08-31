@@ -9,7 +9,7 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { percentile } from "@mailwoman/core/utils"
+import { formatPercent, percentile } from "@mailwoman/core/utils"
 
 import type { Agg, AggPair, OAResolverEvalOptions } from "#eval-harness/oa-resolver-eval"
 
@@ -67,7 +67,6 @@ export async function renderOaResolverReport(input: OaReportInput): Promise<stri
 		options,
 	} = input
 
-	const pct = (x: number, n: number): string => (n ? `${((100 * x) / n).toFixed(1)}%` : "—")
 	const p = (xs: number[], q: number): string => percentile(xs, q)?.toFixed(1) ?? "—"
 
 	const lines: string[] = [
@@ -82,7 +81,7 @@ export async function renderOaResolverReport(input: OaReportInput): Promise<stri
 	]
 
 	const overallRow = (label: string, a: Agg): string =>
-		`| ${label} | ${pct(a.localityMatch, a.n)} | ${pct(a.regionMatch, a.n)} | ${pct(a.resolved, a.n)} | ${p(a.errs, 50)} | ${p(a.errs, 90)} | ${p(a.errs, 99)} |`
+		`| ${label} | ${formatPercent(a.localityMatch, a.n)} | ${formatPercent(a.regionMatch, a.n)} | ${formatPercent(a.resolved, a.n)} | ${p(a.errs, 50)} | ${p(a.errs, 90)} | ${p(a.errs, 99)} |`
 
 	lines.push(overallRow("**neural**", agg.neural.overall))
 
@@ -125,7 +124,7 @@ export async function renderOaResolverReport(input: OaReportInput): Promise<stri
 			lines.push("")
 
 			lines.push(
-				`**neural+cascade** is the PRODUCTION coordinate (mailwoman/geocode-core.ts: address_point > interpolated > admin, per-state shards) — what mailwoman actually ships, vs the admin-centroid **neural** row above. Tier share: address_point ${pct(addressPointHits, Nc)}, interpolated ${pct(interpHits, Nc)}, admin ${pct(adminTier, Nc)}. Within 100 m: ${within(100)} · within 1 km: ${within(1000)} (n=${cerrs.length}).`
+				`**neural+cascade** is the PRODUCTION coordinate (mailwoman/geocode-core.ts: address_point > interpolated > admin, per-state shards) — what mailwoman actually ships, vs the admin-centroid **neural** row above. Tier share: address_point ${formatPercent(addressPointHits, Nc)}, interpolated ${formatPercent(interpHits, Nc)}, admin ${formatPercent(adminTier, Nc)}. Within 100 m: ${within(100)} · within 1 km: ${within(1000)} (n=${cerrs.length}).`
 			)
 		}
 
@@ -183,7 +182,10 @@ export async function renderOaResolverReport(input: OaReportInput): Promise<stri
 		)
 
 		lines.push("")
-		lines.push(`- neural: ${pct(neuralPrecond, N)} · assembled: ${pct(asmPrecond, N)} (of ${N} rows)`)
+
+		lines.push(
+			`- neural: ${formatPercent(neuralPrecond, N)} · assembled: ${formatPercent(asmPrecond, N)} (of ${N} rows)`
+		)
 	}
 
 	lines.push("")
@@ -194,7 +196,10 @@ export async function renderOaResolverReport(input: OaReportInput): Promise<stri
 
 	for (const st of [...agg.neural.byState.keys()].toSorted()) {
 		const nn = agg.neural.byState.get(st)!
-		lines.push(`| ${st} | ${nn.n} | ${pct(nn.localityMatch, nn.n)} | ${pct(nn.regionMatch, nn.n)} |`)
+
+		lines.push(
+			`| ${st} | ${nn.n} | ${formatPercent(nn.localityMatch, nn.n)} | ${formatPercent(nn.regionMatch, nn.n)} |`
+		)
 	}
 
 	lines.push("")

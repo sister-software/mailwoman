@@ -39,17 +39,10 @@ import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
 import { agreementPattern, block, estimateParameters, gbtScore, scorePair, trainGBT } from "@mailwoman/match"
 
-import {
-	addressFrequencyKey,
-	buildDefaultModel,
-	defaultBlockingKeys,
-	ingestRows,
-	streamRows,
-	type ColumnMapping,
-	type SourceRecord,
-} from "#index"
+import { buildDefaultModel, createMatchFeaturizer, defaultBlockingKeys, ingestRows, type ColumnMapping } from "#index"
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
-import { addr, MIN_GROUP_SIZE, norm, NPPES_COLUMNS as C, TRAINING_EPOCHS } from "#tools/shared"
+import { buildNPPESSample } from "#tools/nppes/sample"
+import { mean, pct, sgn, stateOption, std, trainLogisticRegression } from "#tools/shared"
 
 /**
  * Smallest mean gap counted as a real difference rather than seed noise.
@@ -110,115 +103,6 @@ export interface ScorerPairwiseEvalOptions {
 	outMd?: string
 }
 
-interface MessyRow extends Record<string, string> {
-	npi: string
-	name: string
-	org: string
-	address: string
-}
-
-/**
- * The address-frequency table the collapsed-spatial model needs: how common each normalized address is.
- */
-interface AddressFrequency {
-	total: number
-	distinct: number
-	frequency: (v: string) => number
-}
-
-/**
- * One full registry pass: the NPI-keyed messy rows (primary name + every other-name alias + the mailing address when it
- * differs) and the address-frequency table, built together because both want the same scan. Same generation the dedup
- * benchmark uses — the two evals must see identical inputs to be comparable.
- */
-async function generateMessyRows(paths: {
-	registry: string
-	otherNames: string
-	state: string
-	npis: number
-	report?: (line: string) => void
-}): Promise<{ rows: MessyRow[]; keptNPIs: Set<string>; addressFrequency: AddressFrequency }> {
-	const { registry: REGISTRY, otherNames: OTHER_NAMES, state: STATE, npis: NPIS, report } = paths
-	report?.("[A] streaming other-names…")
-	const altNames = new Map<string, string[]>()
-
-	for await (const r of streamRows(OTHER_NAMES)) {
-		const npi = norm(r[C.npi])
-		const alt = norm(r[C.otherOrg])
-
-		if (!npi || !alt) continue
-		const list = altNames.get(npi) ?? []
-
-		if (list.length < MIN_GROUP_SIZE) {
-			list.push(alt)
-		}
-
-		altNames.set(npi, list)
-	}
-
-	report?.(`[B] full registry pass: address-frequency table + ${NPIS} ${STATE} sample…`)
-	const rows: MessyRow[] = []
-	const kept = new Set<string>()
-	const addrCounts = new Map<string, number>()
-	let addrTotal = 0
-	let scanned = 0
-
-	for await (const r of streamRows(REGISTRY)) {
-		if (++scanned % 1_000_000 === 0) {
-			report?.(`    scanned ${scanned / 1e6}M, kept ${kept.size}`)
-		}
-
-		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
-
-		if (practice) {
-			const k = addressFrequencyKey(practice)
-			addrCounts.set(k, (addrCounts.get(k) ?? 0) + 1)
-
-			addrTotal++
-		}
-
-		const npi = norm(r[C.npi])
-
-		if (
-			kept.size < NPIS &&
-			npi &&
-			!kept.has(npi) &&
-			altNames.has(npi) &&
-			practice &&
-			norm(r[C.pState]).toUpperCase() === STATE
-		) {
-			const isOrg = norm(r[C.entityType]) === "2"
-			const primaryName = isOrg ? norm(r[C.orgLegal]) : `${norm(r[C.first])} ${norm(r[C.last])}`.trim()
-
-			if (primaryName) {
-				const org = isOrg ? norm(r[C.orgLegal]) : ""
-				kept.add(npi)
-				rows.push({ npi, name: primaryName, org, address: practice })
-
-				for (const alt of altNames.get(npi)!) {
-					rows.push({ npi, name: alt, org: alt, address: practice })
-				}
-
-				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
-
-				if (mailing && mailing !== practice) {
-					rows.push({ npi, name: primaryName, org, address: mailing })
-				}
-			}
-		}
-	}
-
-	const addressFrequency = {
-		total: addrTotal,
-		distinct: addrCounts.size,
-		frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
-	}
-
-	report?.(`    ${kept.size} NPIs → ${rows.length} records`)
-
-	return { rows, keptNPIs: kept, addressFrequency }
-}
-
 /**
  * Learned-scorer pairwise probe (#603) — see the module doc. Emits the markdown report to stdout.
  */
@@ -227,7 +111,7 @@ export async function scorerPairwiseEval(
 	report?: (line: string) => void
 ): Promise<{ markdown: string }> {
 	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
-	const STATE = (options.state || "TX").toUpperCase()
+	const STATE = stateOption(options)
 	const NPIS = options.npis ?? 1500
 	const SEED = options.seed ?? 1
 	const OUT_MD = options.outMd || ""
@@ -235,18 +119,25 @@ export async function scorerPairwiseEval(
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 	const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
 
-	// --- Data-gen: same NPI-keyed records as the dedup benchmark. ---
-	const { rows, keptNPIs, addressFrequency } = await generateMessyRows({
-		registry: REGISTRY,
-		otherNames: OTHER_NAMES,
-		state: STATE,
-		npis: NPIS,
-		report,
-	})
+	// --- Data-gen: the same NPI-keyed records as the dedup benchmark (the SHARED sample builder). ---
+	const { rows, keptNpis, addressFrequency } = await buildNPPESSample(
+		{ registryPath: REGISTRY, otherNamesPath: OTHER_NAMES, state: STATE, maxNpis: NPIS },
+		report
+	)
 
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
-	const mapping: ColumnMapping = { id: "npi", name: "name", organization: "org", address: "address", source: "nppes" }
+
+	// `auth`/`taxonomy` ride as attributes so the SHARED featurizer's #625 roll-up features can read the
+	// authorized official; the FS arm ignores them (no discriminators configured).
+	const mapping: ColumnMapping = {
+		id: "npi",
+		name: "name",
+		organization: "org",
+		address: "address",
+		attributes: { authorizedOfficial: "auth", taxonomy: "taxonomy" },
+		source: "nppes",
+	}
 
 	const records = await ingestRows(rows, mapping, {
 		geocodeAddress: geocoder.seam,
@@ -262,44 +153,8 @@ export async function scorerPairwiseEval(
 	const patterns = pairs.map(([a, b]) => agreementPattern(model.comparisons, a, b))
 	const fsModel = estimateParameters(model, patterns).model
 
-	// Level counts per comparison (for one-hot). Index -1 (missing) → all-zero block.
-	const levelCounts = model.comparisons.map((c) => c.levels.length)
-	const compIndex = Object.fromEntries(model.comparisons.map((c, i) => [c.name, i]))
-	const spatialI = compIndex["spatial"]!
-	const givenI = compIndex["given"]!
-	const familyI = compIndex["family"]!
-	const orgI = compIndex["organization"]!
-	const lastLevel = (i: number) => levelCounts[i]! - 1
-
-	// the "different"/"far" catch-all level
-
-	/**
-	 * Feature vector for a pair: one-hot agreement levels + the over-merge interactions + address crowdedness.
-	 */
-	function features(pat: number[], a: SourceRecord): number[] {
-		const f: number[] = []
-
-		for (let i = 0; i < pat.length; i++) {
-			const lvl = pat[i]!
-
-			for (let l = 0; l < levelCounts[i]!; l++) {
-				f.push(lvl === l ? 1 : 0)
-			}
-		}
-
-		// Interaction: co-located (spatial exact = level 0) AND the names/org disagree (catch-all level).
-		const spatialExact = pat[spatialI] === 0 ? 1 : 0
-		const nameDisagree = pat[givenI] === lastLevel(givenI) && pat[familyI] === lastLevel(familyI) ? 1 : 0
-		const orgDisagree = pat[orgI] === lastLevel(orgI) ? 1 : 0
-		f.push(spatialExact * nameDisagree) // the over-merge signature: same place, names disagree
-		f.push(spatialExact * orgDisagree)
-		// Address crowdedness (how shared this address is) — high → "same address" is weak evidence.
-		const freq = a.address?.raw ? addressFrequency.frequency(a.address.raw) : 0
-		f.push(Math.min(1, freq * 1000))
-
-		// scale into a usable range
-		return f
-	}
+	// The SHARED production featurizer (createMatchFeaturizer) — train ≡ eval ≡ inference, one definition.
+	const featurize = createMatchFeaturizer({ comparisons: model.comparisons, addressFrequency })
 
 	interface Sample {
 		x: number[]
@@ -321,8 +176,6 @@ export async function scorerPairwiseEval(
 		gbtScored: Scored[]
 	}
 
-	const sigmoid = (z: number) => 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))))
-
 	/**
 	 * One train/test split (by NPI): train the L2 logistic regression on the train pairs, then score the held-out test
 	 * pairs with both the LR and the EM-fitted FS scorer. The FS model is seed-independent (fit unsupervised on ALL
@@ -332,14 +185,14 @@ export async function scorerPairwiseEval(
 		const rnd = makeLcg(seed || 1)
 		const npiSplit = new Map<string, "train" | "test">()
 
-		for (const npi of keptNPIs) {
+		for (const npi of keptNpis) {
 			npiSplit.set(npi, rnd() < TRAIN_SPLIT_FRACTION ? "train" : "test")
 		}
 
 		const train: Sample[] = []
 		const test: Sample[] = []
 
-		pairs.forEach(([a, b], i) => {
+		pairs.forEach(([a, b]) => {
 			const sa = npiSplit.get(a.id)
 			const sb = npiSplit.get(b.id)
 
@@ -347,7 +200,7 @@ export async function scorerPairwiseEval(
 
 			// cross-split or unknown → drop (no leakage)
 			const sample: Sample = {
-				x: features(patterns[i]!, a),
+				x: featurize(a, b),
 				y: a.id === b.id ? 1 : 0,
 				fs: scorePair(fsModel, a, b).weight,
 			}
@@ -355,58 +208,23 @@ export async function scorerPairwiseEval(
 		})
 
 		const dim = train[0]?.x.length ?? 0
-
-		// L2-regularized logistic regression (batch gradient descent), rare class up-weighted.
-		const w = new Array<number>(dim).fill(0)
-		let bias = 0
-		const lrate = 0.1
-		const l2 = 1e-3
 		const posWeight = train.filter((s) => s.y === 1).length / Math.max(1, train.length)
+		const sampleWeights = train.map((s) => (s.y === 1 ? 1 - posWeight : posWeight))
 
-		for (let epoch = 0; epoch < TRAINING_EPOCHS; epoch++) {
-			const gw = new Array<number>(dim).fill(0)
-			let gb = 0
-
-			for (const s of train) {
-				let z = bias
-
-				for (let j = 0; j < dim; j++) {
-					z += w[j]! * s.x[j]!
-				}
-
-				const p = sigmoid(z)
-				const sampleW = s.y === 1 ? 1 - posWeight : posWeight
-				const err = (p - s.y) * sampleW
-
-				for (let j = 0; j < dim; j++) {
-					gw[j]! += err * s.x[j]!
-				}
-
-				gb += err
-			}
-
-			for (let j = 0; j < dim; j++) {
-				w[j]! -= lrate * (gw[j]! / train.length + l2 * w[j]!)
-			}
-
-			bias -= lrate * (gb / train.length)
-		}
-
-		const lrScore = (x: number[]) => {
-			let z = bias
-
-			for (let j = 0; j < x.length; j++) {
-				z += w[j]! * x[j]!
-			}
-
-			return z
-		}
+		// L2-regularized logistic regression (batch gradient descent), rare class up-weighted — the
+		// SHARED trainer.
+		const lrScore = trainLogisticRegression(
+			train.map((s) => s.x),
+			train.map((s) => s.y),
+			sampleWeights,
+			dim
+		)
 
 		// Gradient-boosted trees on the SAME train pairs + class weights — the non-linear arm.
 		const gbt = trainGBT(
 			train.map((s) => s.x),
 			train.map((s) => s.y),
-			train.map((s) => (s.y === 1 ? 1 - posWeight : posWeight)),
+			sampleWeights,
 			{ rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
 		)
 
@@ -486,13 +304,6 @@ export async function scorerPairwiseEval(
 	report?.("[E] training across seeds…")
 	const SEEDS = options.seeds ?? 8
 	const splits = Array.from({ length: SEEDS }, (_, k) => runSplit(SEED + k))
-	const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length)
-
-	const std = (xs: number[]) => {
-		const m = mean(xs)
-
-		return Math.sqrt(mean(xs.map((x) => (x - m) ** 2)))
-	}
 
 	const fsAucs = splits.map((r) => auc(r.fsScored))
 	const lrAucs = splits.map((r) => auc(r.lrScored))
@@ -500,12 +311,12 @@ export async function scorerPairwiseEval(
 	const fsF1s = splits.map((r) => bestF1(r.fsScored).f1)
 	const lrF1s = splits.map((r) => bestF1(r.lrScored).f1)
 	const lrWins = deltas.filter((d) => d > 0).length
-	const meanDelta = mean(deltas)
-	const avgTestN = mean(splits.map((r) => r.testN))
-	const avgTestPos = mean(splits.map((r) => r.lrScored.filter((d) => d.y === 1).length))
+	const meanDelta = mean(deltas)!
+	const avgTestN = mean(splits.map((r) => r.testN))!
+	const avgTestPos = mean(splits.map((r) => r.lrScored.filter((d) => d.y === 1).length))!
 	const seMean = std(deltas) / Math.sqrt(SEEDS) // standard error of the mean ΔAUC
 	const zScore = seMean > 0 ? meanDelta / seMean : 0 // ΔAUC in standard errors above zero
-	const f1Delta = mean(lrF1s) - mean(fsF1s) // operating-point F1 gain (LR − FS)
+	const f1Delta = mean(lrF1s)! - mean(fsF1s)! // operating-point F1 gain (LR − FS)
 	const unanimous = lrWins === SEEDS
 	// GBT (non-linear) arm.
 	const gbtAucs = splits.map((r) => auc(r.gbtScored))
@@ -513,9 +324,9 @@ export async function scorerPairwiseEval(
 	const gbtVsFs = splits.map((_, i) => gbtAucs[i]! - fsAucs[i]!)
 	const gbtVsLr = splits.map((_, i) => gbtAucs[i]! - lrAucs[i]!)
 	const gbtBeatsLr = gbtVsLr.filter((d) => d > 0).length
-	const meanGbtVsFs = mean(gbtVsFs)
-	const meanGbtVsLr = mean(gbtVsLr)
-	const f1DeltaGbt = mean(gbtF1s) - mean(fsF1s)
+	const meanGbtVsFs = mean(gbtVsFs)!
+	const meanGbtVsLr = mean(gbtVsLr)!
+	const f1DeltaGbt = mean(gbtF1s)! - mean(fsF1s)!
 
 	// operating-point F1 gain (GBT − FS)
 	for (const r of splits) {
@@ -530,21 +341,17 @@ export async function scorerPairwiseEval(
 	}
 
 	report?.(
-		`    mean/${SEEDS} — FS ${mean(fsAucs).toFixed(4)}  LR ${mean(lrAucs).toFixed(4)} (Δ${meanDelta >= 0 ? "+" : ""}${meanDelta.toFixed(4)})  ` +
-			`GBT ${mean(gbtAucs).toFixed(4)} (Δ${meanGbtVsFs >= 0 ? "+" : ""}${meanGbtVsFs.toFixed(4)} vs FS, ` +
+		`    mean/${SEEDS} — FS ${mean(fsAucs)!.toFixed(4)}  LR ${mean(lrAucs)!.toFixed(4)} (Δ${meanDelta >= 0 ? "+" : ""}${meanDelta.toFixed(4)})  ` +
+			`GBT ${mean(gbtAucs)!.toFixed(4)} (Δ${meanGbtVsFs >= 0 ? "+" : ""}${meanGbtVsFs.toFixed(4)} vs FS, ` +
 			`${meanGbtVsLr >= 0 ? "+" : ""}${meanGbtVsLr.toFixed(4)} vs LR)`
 	)
 
-	// NOTE(phase4): local pct keeps the fraction-in/no-%-suffix shape — not core formatPercent's
-	// numerator/denominator contract (call sites append their own "%").
-	const pct = (x: number) => (100 * x).toFixed(1)
 	const f4 = (x: number) => x.toFixed(4)
-	const sgn = (x: number) => (x >= 0 ? "+" : "")
 
 	const lines: string[] = [
 		`# Learned-scorer probe (#603) — does a model beat Fellegi-Sunter on the FS feature vector?`,
 		"",
-		`_Generated by \`mailwoman registry scorer-eval pairwise\`. ${keptNPIs.size} ${STATE} NPIs → ${records.length} ` +
+		`_Generated by \`mailwoman registry scorer-eval pairwise\`. ${keptNpis.size} ${STATE} NPIs → ${records.length} ` +
 			`records, geocoded. Candidate pairs are split BY NPI into train/test (no NPI's records cross the split), repeated ` +
 			`over ${SEEDS} seeds to bound split variance. Two learned scorers over the FS agreement pattern + over-merge ` +
 			`interaction features (spatial-exact × name-disagree, spatial-exact × org-disagree, address crowdedness) — features ` +
@@ -557,15 +364,15 @@ export async function scorerPairwiseEval(
 		"",
 		`| scorer | ROC-AUC (mean±std) | ΔAUC vs FS | best F1 (mean) |`,
 		`|---|---:|---:|---:|`,
-		`| Fellegi-Sunter (EM-fit) | ${f4(mean(fsAucs))} ± ${f4(std(fsAucs))} | — | ${pct(mean(fsF1s))}% |`,
-		`| logistic regression (linear) | ${f4(mean(lrAucs))} ± ${f4(std(lrAucs))} | ${sgn(meanDelta)}${f4(meanDelta)} | ${pct(mean(lrF1s))}% |`,
-		`| **gradient-boosted trees** | **${f4(mean(gbtAucs))} ± ${f4(std(gbtAucs))}** | **${sgn(meanGbtVsFs)}${f4(meanGbtVsFs)}** | **${pct(mean(gbtF1s))}%** |`,
+		`| Fellegi-Sunter (EM-fit) | ${f4(mean(fsAucs)!)} ± ${f4(std(fsAucs))} | — | ${pct(mean(fsF1s)!)}% |`,
+		`| logistic regression (linear) | ${f4(mean(lrAucs)!)} ± ${f4(std(lrAucs))} | ${sgn(meanDelta)}${f4(meanDelta)} | ${pct(mean(lrF1s)!)}% |`,
+		`| **gradient-boosted trees** | **${f4(mean(gbtAucs)!)} ± ${f4(std(gbtAucs))}** | **${sgn(meanGbtVsFs)}${f4(meanGbtVsFs)}** | **${pct(mean(gbtF1s)!)}%** |`,
 		"",
 		`**ΔAUC (LR − FS): ${sgn(meanDelta)}${f4(meanDelta)} ± ${f4(std(deltas))}, LR > FS in ${lrWins}/${SEEDS} seeds.**`,
 		"",
 		`Robustness: the ΔAUC is small but **consistent** — std ${f4(std(deltas))} across seeds, SE ±${f4(seMean)} → ` +
 			`≈${zScore.toFixed(1)}σ above zero, ${lrWins}/${SEEDS} seeds in LR's favour. At the operating point the gap is ` +
-			`larger: **ΔF1 ${sgn(f1Delta * 100)}${(f1Delta * 100).toFixed(1)}pp** (${pct(mean(fsF1s))}% → ${pct(mean(lrF1s))}%), ` +
+			`larger: **ΔF1 ${sgn(f1Delta * 100)}${(f1Delta * 100).toFixed(1)}pp** (${pct(mean(fsF1s)!)}% → ${pct(mean(lrF1s)!)}%), ` +
 			`because the interaction features sharpen the hard co-located band near the decision boundary even where overall ` +
 			`ranking barely moves.`,
 		"",
@@ -607,8 +414,8 @@ export async function scorerPairwiseEval(
 	const verdict =
 		unanimous && (meanDelta > CLEAR_WIN_DELTA || f1Delta > CLEAR_WIN_F1_DELTA)
 			? `The LR beats FS **consistently** — it wins ${lrWins}/${SEEDS} seeds and lifts the operating-point F1 by ` +
-				`${sgn(f1Delta * 100)}${(f1Delta * 100).toFixed(1)}pp (${pct(mean(fsF1s))}% → ${pct(mean(lrF1s))}%). The ΔAUC is ` +
-				`small (+${f4(meanDelta)}) only because FS already ranks well (${f4(mean(fsAucs))}); the gain concentrates at the ` +
+				`${sgn(f1Delta * 100)}${(f1Delta * 100).toFixed(1)}pp (${pct(mean(fsF1s)!)}% → ${pct(mean(lrF1s)!)}%). The ΔAUC is ` +
+				`small (+${f4(meanDelta)}) only because FS already ranks well (${f4(mean(fsAucs)!)}); the gain concentrates at the ` +
 				`decision boundary, exactly where the interaction features (which FS structurally can't express) bite. ` +
 				`**This greenlights the #603 learned scorer:** a GBM — non-linear over the same features — is the principled ` +
 				`generalization of the hand-tuned #625 levers and should extend this linear gain. Honest framing: the linear ` +
@@ -634,7 +441,7 @@ export async function scorerPairwiseEval(
 	lines.push("")
 
 	lines.push(
-		`In-domain (${STATE} only), ${keptNPIs.size} NPIs, PAIRWISE ranking (not the assembled clustering metric the dedup ` +
+		`In-domain (${STATE} only), ${keptNpis.size} NPIs, PAIRWISE ranking (not the assembled clustering metric the dedup ` +
 			`benchmark reports against the 64.7% baseline — a better pairwise scorer need not translate 1:1 to cluster F1). The GBT ` +
 			`is a compact pure-Node implementation (120 boosting rounds, depth 3), a faithful stand-in for an offline ` +
 			`XGBoost/LightGBM but not tuned. The split is by NPI so there's no record-level leakage, but the address-frequency ` +

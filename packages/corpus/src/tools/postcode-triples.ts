@@ -48,7 +48,9 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
+import { GEONAMES_POSTAL_COLUMNS } from "#adapters/geonames-postal/adapter"
 import type { PostcodePlacement } from "#shard-recipes/scaffold"
+import { escapeSQLString } from "#utils/parquet"
 
 /**
  * One extracted tuple, in the shape `readTuples` yields and the recipe consumes.
@@ -189,7 +191,7 @@ export async function readTriplesFromParentJoin(
 
 	using db = new DatabaseClient<WOFDatabase>(adminDB, { readOnly: true })
 
-	db.exec(`ATTACH DATABASE '${postcodeDB.replaceAll("'", "''")}' AS pc`)
+	db.exec(`ATTACH DATABASE '${escapeSQLString(postcodeDB)}' AS pc`)
 
 	const statement = db.prepare(`
 		SELECT p.name AS postcode, a.name AS locality, r.name AS region, c.name AS country, p.country AS cc
@@ -227,11 +229,6 @@ export async function readTriplesFromParentJoin(
 
 	return out
 }
-
-/**
- * GeoNames postal columns (0-based), matching `@mailwoman/corpus`'s `geonames-postal` adapter.
- */
-const GEONAMES_COL = { country: 0, postcode: 1, place: 2, admin1: 3, admin2: 5 } as const
 
 /**
  * A predicate answering whether a name is a LOCALITY the admin gazetteer knows, for one country.
@@ -320,10 +317,10 @@ export async function readTriplesFromGeonames(
 	const seen = new Set<string>()
 
 	for await (const cells of TSVSpliterator.fromAsync(path, { header: false }) as AsyncIterable<string[]>) {
-		const postcode = (cells[GEONAMES_COL.postcode] ?? "").trim()
-		const dependentLocality = (cells[GEONAMES_COL.place] ?? "").trim()
-		const locality = (cells[GEONAMES_COL.admin2] ?? "").trim()
-		const region = (cells[GEONAMES_COL.admin1] ?? "").trim()
+		const postcode = (cells[GEONAMES_POSTAL_COLUMNS.postcode] ?? "").trim()
+		const dependentLocality = (cells[GEONAMES_POSTAL_COLUMNS.place] ?? "").trim()
+		const locality = (cells[GEONAMES_POSTAL_COLUMNS.admin2Name] ?? "").trim()
+		const region = (cells[GEONAMES_POSTAL_COLUMNS.admin1Name] ?? "").trim()
 
 		if (!postcode || !locality || !region) continue
 

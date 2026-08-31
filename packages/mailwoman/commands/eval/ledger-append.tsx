@@ -9,9 +9,7 @@
  *   mirror the retired script (0 appended, 1 refused, 2 usage).
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Append a promotion-gate run to evals/scores-by-version.json (#885)"
 
@@ -73,7 +71,7 @@ const EvalLedgerAppend: ParsedCommandComponent<Options> = ({ options }) => {
 		(exitCode) => exitCode
 	)
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	// ledgerAppend narrates its own ✓/✗ lines.
 	return null

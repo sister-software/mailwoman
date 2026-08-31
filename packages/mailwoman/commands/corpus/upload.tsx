@@ -28,7 +28,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
 
 const DEFAULT_BUCKET = "mailwoman-assets"
 
@@ -84,10 +84,7 @@ const CorpusUpload: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const corpusRoot = options.corpusDir ?? String(dataRootPath("corpus", "versioned"))
 
-		const versions = (options.corpusVersion ?? "")
-			.split(",")
-			.map((v) => v.trim())
-			.filter((version) => version.length > 0)
+		const versions = splitList(options.corpusVersion)
 
 		if (!versions.length && !options.tokenizer && !options.code) {
 			const available = (await pathExists(corpusRoot)) ? (await readDirectory(corpusRoot)).toSorted().slice(-6) : []
@@ -188,7 +185,7 @@ const CorpusUpload: ParsedCommandComponent<Options> = ({ options }) => {
 
 	// A thrown selection/credential error is the whole message here — rendering only the step list would
 	// print a bare header and look like a no-op.
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status === "error") return <CommandTaskResult state={state} />
 
 	return (
 		<Box flexDirection="column">

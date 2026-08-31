@@ -16,7 +16,14 @@ import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
 import { useState } from "react"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	splitList,
+	splitNumberList,
+	useCommandTask,
+} from "#cli-kit"
 
 const h3 = (description: string, defaultValue: number) =>
 	({
@@ -122,18 +129,12 @@ const CoverageBuild: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildCoverageTiles } = await import("#coverage-core")
 
-		const rollup = options.rollup
-			.split(",")
-			.map((s) => Number(s.trim()))
-			.filter((n) => Number.isInteger(n) && n < options.fineRes)
+		const rollup = splitNumberList(options.rollup).filter((n) => Number.isInteger(n) && n < options.fineRes)
 
 		return buildCoverageTiles(
 			{
 				states: options.states,
-				excludeStates: options.excludeStates
-					.split(",")
-					.map((s) => s.trim())
-					.filter((state) => state.length > 0),
+				excludeStates: splitList(options.excludeStates),
 				dataRoot: options.dataRoot,
 				interpRoot: options.interp ? options.interpRoot : null,
 				fineRes: options.fineRes,
@@ -147,10 +148,7 @@ const CoverageBuild: ParsedCommandComponent<Options> = ({ options }) => {
 				wofDB: options.postcode ? options.wofDB : null,
 				postcodeCeiling: options.postcodeCeiling,
 				salienceFloor: options.salienceFloor,
-				postcodeExcludeCountries: options.postcodeExclude
-					.split(",")
-					.map((s) => s.trim())
-					.filter((country) => country.length > 0),
+				postcodeExcludeCountries: splitList(options.postcodeExclude),
 				tileMaxZoom: options.maxZoom,
 				out: options.out,
 				keepNdjson: options.keepNdjson,
@@ -160,7 +158,7 @@ const CoverageBuild: ParsedCommandComponent<Options> = ({ options }) => {
 		)
 	})
 
-	if (state.status === "error") return <Text color="red">{state.message}</Text>
+	if (state.status === "error") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		const done = state.result

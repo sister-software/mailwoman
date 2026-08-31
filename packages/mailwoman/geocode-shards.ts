@@ -9,6 +9,7 @@
 
 import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { walkNodes } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/resolver"
 import { resolvePath, type PathBuilderLike } from "path-ts"
@@ -76,11 +77,8 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 	let regionValue: string | null = null
 	let regionResolverName: string | null = null
 	let resolvedCountry: string | null = null
-	const stack = [...tree.roots]
 
-	while (stack.length) {
-		const node = stack.pop()!
-
+	for (const node of walkNodes(tree.roots)) {
 		if (node.tag === "region" && !regionValue) {
 			regionValue = node.value.trim() || null
 			regionResolverName = (node.metadata?.["resolver_name"] as string | undefined) ?? null
@@ -93,8 +91,6 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 				resolvedCountry = stamped.toUpperCase()
 			}
 		}
-
-		stack.push(...node.children)
 	}
 
 	// A slug names a US shard and nothing else, but `regionToStateSlug` accepts ANY two-letter region, so a foreign

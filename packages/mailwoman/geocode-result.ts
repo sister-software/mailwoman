@@ -8,7 +8,13 @@
 
 import type { GeocodeOutcomeLike } from "@mailwoman/api"
 import type { ComponentTag } from "@mailwoman/core"
-import { decodeAsJSON, type AddressNode, type AddressTree, type DroppedSpan } from "@mailwoman/core/decoder"
+import {
+	collectNodes,
+	decodeAsJSON,
+	type AddressNode,
+	type AddressTree,
+	type DroppedSpan,
+} from "@mailwoman/core/decoder"
 import type { QueryIntentMarker } from "@mailwoman/core/pipeline"
 import { adminLadderForNodes } from "@mailwoman/resolver"
 
@@ -200,16 +206,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 	// parsed, mistagged `locality`, and deleted at this line, which is why no decode lever ever moved that class.
 	const projected = decodeAsJSON(tree, { includeDropped: true })
 	const { dropped, ...components } = projected
-	const allNodes: AddressNode[] = []
-
-	const flatten = (nodes: readonly AddressNode[]) => {
-		for (const n of nodes) {
-			allNodes.push(n)
-			flatten(n.children)
-		}
-	}
-
-	flatten(tree.roots)
+	const allNodes = collectNodes(tree.roots, () => true)
 
 	const streetNode = allNodes.find((n) => n.tag === "street")
 

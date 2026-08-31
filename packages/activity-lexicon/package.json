@@ -61,8 +61,11 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"devDependencies": {
+	"dependencies": {
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/variant-aliases": "workspace:*"
+	},
+	"devDependencies": {
 		"path-ts": "^2.3.0"
 	},
 	"engines": {

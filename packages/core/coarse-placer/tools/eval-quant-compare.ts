@@ -15,8 +15,8 @@ import { type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { CoarsePlacer, type CoarsePlacerMeta } from "#coarse-placer/coarse-placer"
-import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
-import { dataRootPath, repoRootPath } from "#utils"
+import { defaultDataDir, defaultInt8Dir, defaultModelDir } from "#coarse-placer/tools/paths"
+import { readLocalJSONFile } from "#fs/readers"
 
 interface TestRow {
 	raw: string
@@ -68,44 +68,13 @@ export interface EvalQuantCompareResult {
  * Coarse-placer int8-vs-fp32 comparison — see the module doc. Emits the report to stdout.
  */
 export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): Promise<EvalQuantCompareResult> {
-	const fp32Dir = resolvePathBuilder(options.fp32 || dataRootPath("coarse-placer", "model"))
-	const int8Dir = resolvePathBuilder(options.int8 || dataRootPath("coarse-placer", "model-int8"))
+	const fp32Dir = resolvePathBuilder(options.fp32 || defaultModelDir())
+	const int8Dir = resolvePathBuilder(options.int8 || defaultInt8Dir())
 	const abstainBelow = options.abstain ?? 0.5
-	const dataDir = options.data || repoRootPath("data", "coarse-placer")
+	const dataDir = options.data || defaultDataDir()
 
-	async function loadFp32(dir: PathBuilderLike): Promise<CoarsePlacer> {
-		const meta = await readLocalJSONFile<CoarsePlacerMeta>(resolvePath(dir, "meta.json"))
-		const buf = await readLocalBuffer(resolvePath(dir, "weights.bin"))
-		const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
-		const weights = new Float32Array(ab)
-
-		return new CoarsePlacer({ ...meta, weights }, { abstainBelow })
-	}
-
-	async function loadInt8(dir: PathBuilderLike): Promise<CoarsePlacer> {
-		const meta = await readLocalJSONFile<CoarsePlacerMeta>(resolvePath(dir, "meta.json"))
-		const buf = await readLocalBuffer(resolvePath(dir, "weights.bin"))
-		const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
-		const int8 = new Int8Array(ab)
-		const C = meta.classes.length
-		const dim = meta.featureDim
-		const scales = meta.scales!
-		const weights = new Float32Array(C * dim)
-
-		for (let c = 0; c < C; c++) {
-			const s = scales[c]!
-			const base = c * dim
-
-			for (let i = 0; i < dim; i++) {
-				weights[base + i] = int8[base + i]! * s
-			}
-		}
-
-		return new CoarsePlacer({ ...meta, weights }, { abstainBelow })
-	}
-
-	const fp32 = await loadFp32(fp32Dir)
-	const int8 = await loadInt8(int8Dir)
+	const fp32 = await CoarsePlacer.fromArtifactDir(resolvePath(fp32Dir), { abstainBelow })
+	const int8 = await CoarsePlacer.fromArtifactDir(resolvePath(int8Dir), { abstainBelow })
 
 	const test = await Array.fromAsync(JSONSpliterator.fromAsync<TestRow>(resolvePath(dataDir, "test.jsonl")))
 

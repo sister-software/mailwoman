@@ -14,16 +14,14 @@ import { ProgressBar } from "@inkjs/ui"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
-import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "#cli-kit"
-
-const positiveInteger = (description: string, defaultValue?: number) =>
-	({
-		type: "number",
-		...(defaultValue === undefined ? {} : { default: defaultValue }),
-		validate: (value: number) => Number.isInteger(value) && value > 0,
-		validationMessage: `${description} must be a positive integer.`,
-		description,
-	}) as const
+import {
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	positiveIntegerOption,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -41,9 +39,9 @@ export const spec = {
 			validationMessage: "--country must be an ISO alpha-2 code.",
 			description: "Country filter",
 		},
-		limit: positiveInteger("--limit"),
+		limit: positiveIntegerOption("--limit"),
 		"corpus-version": { type: "string", default: "0.1.0-dev", description: "Corpus version" },
-		"progress-every": positiveInteger("--progress-every", 1000),
+		"progress-every": positiveIntegerOption("--progress-every", 1000),
 	},
 } as const satisfies CommandSpec
 
@@ -96,9 +94,7 @@ const CorpusRun: ParsedCommandComponent<Options, [string]> = ({ options, args })
 		})
 	})
 
-	if (state.status === "error") {
-		return <Text color="red">{state.message}</Text>
-	}
+	if (state.status === "error") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		const manifest = state.result

@@ -16,25 +16,14 @@
  *   250-demo-street-tier`.
  */
 
+import { haversineKm } from "@mailwoman/spatial"
+
 import { expect, test } from "#e2e"
 
 const WHITE_HOUSE = { lat: 38.8977, lon: -77.0365 }
 const DC_SITUS_BYTES = 119_889_920
 
 // the full shard — a byte-ranged lookup must transfer a tiny fraction
-
-/**
- * Rough metres between two lat/lons (equirectangular; fine at city scale).
- */
-function metresBetween(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
-	const R = 6_371_000
-	const dLat = ((b.lat - a.lat) * Math.PI) / 180
-	const dLon = ((b.lon - a.lon) * Math.PI) / 180
-	const lat = ((a.lat + b.lat) / 2) * (Math.PI / 180)
-	const x = dLon * Math.cos(lat)
-
-	return Math.hypot(dLat, x) * R
-}
 
 const QUERY = "1600 Pennsylvania Avenue NW, Washington, DC 20500"
 
@@ -51,10 +40,9 @@ test.describe("Demo — street tier (#377)", () => {
 		expect(markerCount).toBeGreaterThan(0)
 
 		// The pin lands on the White House (within ~50 m of the known building point).
-		const [latStr, lonStr] = (resolved["coords"] ?? "").split(",").map((s) => s.trim())
-		const pin = { lat: Number(latStr), lon: Number(lonStr) }
+		const pin = await demo.readCoords()
 		expect(Number.isFinite(pin.lat) && Number.isFinite(pin.lon)).toBe(true)
-		expect(metresBetween(pin, WHITE_HOUSE)).toBeLessThan(50)
+		expect(haversineKm(pin.lat, pin.lon, WHITE_HOUSE.lat, WHITE_HOUSE.lon) * 1000).toBeLessThan(50)
 
 		demo.console.assertNoFailEvents()
 	})

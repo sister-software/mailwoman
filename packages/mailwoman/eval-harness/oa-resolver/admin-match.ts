@@ -17,6 +17,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { Resolved } from "#eval-harness/oa-resolver/tree-hits"
+import { normalizeComponent } from "#eval-harness/per-tag-f1"
 
 /**
  * Shortest token distinctive enough to carry matching weight; shorter ones are articles and directionals.
@@ -27,8 +28,6 @@ const MIN_DISTINCTIVE_TOKEN_LENGTH = 4
  * Shortest qualifier still meaningful when comparing an address's trailing parts.
  */
 const MIN_QUALIFIER_LENGTH = 3
-
-const norm = (s: string | undefined): string => (s ?? "").toLowerCase().trim()
 
 /**
  * Aggressive name normalization for gazetteer-alias locality matching. Lowercases, strips diacritics + punctuation,
@@ -72,7 +71,7 @@ const normName = (s: string | undefined): string => {
  * Marianas and American Samoa, whose rows could not match on region at all.
  */
 const STATE_NAME_TO_ABBR: Record<string, string> = Object.fromEntries(
-	Object.entries(US_STATE_BY_ABBREVIATION).map(([abbreviation, name]) => [norm(name), abbreviation])
+	Object.entries(US_STATE_BY_ABBREVIATION).map(([abbreviation, name]) => [normalizeComponent(name), abbreviation])
 )
 
 /**
@@ -94,8 +93,8 @@ const STATE_NAME_TO_ABBR: Record<string, string> = Object.fromEntries(
  */
 export function regionMatches(resolvedName: string | undefined, expected: string | undefined): boolean {
 	if (!resolvedName || !expected) return false
-	const exp = norm(expected)
-	const got = norm(resolvedName)
+	const exp = normalizeComponent(expected)
+	const got = normalizeComponent(resolvedName)
 
 	if (got === exp) return true
 

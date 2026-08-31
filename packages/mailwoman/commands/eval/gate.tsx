@@ -12,9 +12,7 @@
  *   the exit code.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Promotion gate (#479) — eval battery + gate-spec floors → verdict.json"
 
@@ -59,7 +57,7 @@ const EvalGate: ParsedCommandComponent<Options> = ({ options }) => {
 		(exitCode) => exitCode
 	)
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	// The gate narrates its own verdict lines — rendering anything here would pollute the captured report.
 	return null

@@ -14,6 +14,8 @@
  *   postcode is the thing that actually carries the geography.
  */
 
+import { foldName } from "#normalize"
+
 /**
  * Per-country record: ISO 3166-2:GB code (sans `GB-` prefix) + English name.
  */
@@ -50,16 +52,6 @@ const COUNTRY_CODE_SET: ReadonlySet<string> = new Set(Object.keys(GB_COUNTRIES))
  */
 export function isUkCountryCode(input: unknown): input is UkCountryCode {
 	return typeof input === "string" && COUNTRY_CODE_SET.has(input.toUpperCase())
-}
-
-/**
- * Lowercase + collapse non-alphanumerics so `Northern Ireland`, `northern-ireland` key alike.
- */
-function foldName(s: string): string {
-	return s
-		.toLowerCase()
-		.replaceAll(/[^a-z0-9]+/g, " ")
-		.trim()
 }
 
 /**

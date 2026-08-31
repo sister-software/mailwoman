@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The NPPES benchmark's input sample: the variation-rich multi-record set per NPI, plus the corpus-wide
- *   address-frequency table built in the same pass.
+ *   address-frequency table built in the same pass. One registry pass serves any number of states — the cross-state
+ *   eval samples two at once.
  */
 
 import { isPresent } from "@mailwoman/core/objects"
@@ -31,9 +32,9 @@ export interface MessyRow extends Record<string, string> {
 }
 
 /**
- * What the sample pass yields.
+ * One state's slice of the sample pass.
  */
-export interface NPPESSample {
+export interface NPPESStateSample {
 	rows: MessyRow[]
 	/**
 	 * The sampled NPIs — the true-entity count at the NPI grain.
@@ -43,6 +44,12 @@ export interface NPPESSample {
 	 * Per-NPI primary org name + practice address key, the basis for the org-name entity truths.
 	 */
 	npiPrimary: Map<string, NPIPrimary>
+}
+
+/**
+ * What the single-state sample pass yields.
+ */
+export interface NPPESSample extends NPPESStateSample {
 	/**
 	 * Corpus-wide address-frequency table — the inverse-frequency signal. Counted over EVERY practice address in the
 	 * registry, not just the sample, so the sharing structure is a corpus statistic rather than a slice artifact.
@@ -64,16 +71,30 @@ export interface NPPESSampleOptions {
 }
 
 /**
- * Build the benchmark's input records from the real registry.
+ * The multi-state shape of {@linkcode NPPESSampleOptions} — one registry pass fills every state's bucket.
+ */
+export interface NPPESMultiSampleOptions {
+	registryPath: string
+	otherNamesPath: string
+	/**
+	 * Already upper-cased; compared against the practice-location state column.
+	 */
+	states: readonly string[]
+	maxNpisPerState: number
+}
+
+/**
+ * Build the benchmark's input records from the real registry, one bucket per requested state.
  *
  * Two passes over two files, and the SECOND one cannot break early: the address-frequency table needs every registry
- * row even after the sample is full, so the `kept.size < maxNpis` test gates only the sample branch.
+ * row even after the sample is full, so the per-bucket `keptNpis.size < maxNpisPerState` test gates only the sample
+ * branch.
  */
-export async function buildNPPESSample(
-	options: NPPESSampleOptions,
+export async function buildNPPESStateSamples(
+	options: NPPESMultiSampleOptions,
 	report?: (line: string) => void
-): Promise<NPPESSample> {
-	const { registryPath, otherNamesPath, state, maxNpis } = options
+): Promise<{ byState: Map<string, NPPESStateSample>; addressFrequency: TermFrequencyTable }> {
+	const { registryPath, otherNamesPath, states, maxNpisPerState } = options
 
 	// --- Phase A: the variation set — NPIs that carry ≥1 alternate organization name. ---
 	report?.("[A] streaming other-names…")
@@ -97,19 +118,21 @@ export async function buildNPPESSample(
 	report?.(`    ${altNames.size} NPIs with ≥1 alternate name`)
 
 	// --- Phase B: ONE full registry pass — build the GLOBAL address-frequency table (every practice
-	// address, so the sharing structure is corpus-wide, not sample-biased) AND collect the sample. ---
-	report?.(`[B] full registry pass: address-frequency table + ${maxNpis} ${state} sample…`)
-	const rows: MessyRow[] = []
-	const kept = new Set<string>()
-	// Per-NPI primary org name + practice address key — the basis for the ORG-NAME entity-truth.
-	const npiPrimary = new Map<string, NPIPrimary>()
+	// address, so the sharing structure is corpus-wide, not sample-biased) AND collect every state's sample. ---
+	report?.(`[B] full registry pass: address-frequency table + ${maxNpisPerState} × ${states.join("/")} sample…`)
+
+	const byState = new Map<string, NPPESStateSample>(
+		states.map((state) => [state, { rows: [], keptNpis: new Set<string>(), npiPrimary: new Map<string, NPIPrimary>() }])
+	)
+
 	const addrCounts = new Map<string, number>()
 	let addrTotal = 0
 	let scanned = 0
+	let keptTotal = 0
 
 	for await (const r of streamRows(registryPath)) {
 		if (++scanned % 1_000_000 === 0) {
-			report?.(`    scanned ${scanned / 1e6}M rows, kept ${kept.size}`)
+			report?.(`    scanned ${scanned / 1e6}M rows, kept ${keptTotal}`)
 		}
 
 		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
@@ -122,16 +145,18 @@ export async function buildNPPESSample(
 			addrTotal++
 		}
 
-		// Sample: in-state NPIs with ≥1 alternate name, up to maxNpis — NO early break (the table needs the full pass).
+		// Sample: in-state NPIs with ≥1 alternate name, up to maxNpisPerState — NO early break (the table
+		// needs the full pass).
 		const npi = norm(r[C.npi])
+		const bucket = byState.get(norm(r[C.pState]).toUpperCase())
 
 		if (
-			kept.size < maxNpis &&
+			bucket &&
+			bucket.keptNpis.size < maxNpisPerState &&
 			npi &&
-			!kept.has(npi) &&
+			!bucket.keptNpis.has(npi) &&
 			altNames.has(npi) &&
-			practice &&
-			norm(r[C.pState]).toUpperCase() === state
+			practice
 		) {
 			const isOrg = norm(r[C.entityType]) === "2"
 			const primaryName = isOrg ? norm(r[C.orgLegal]) : `${norm(r[C.first])} ${norm(r[C.last])}`.trim()
@@ -160,22 +185,24 @@ export async function buildNPPESSample(
 				const eid = (a: string) => `${addressFrequencyKey(a)}|${orgKey}`
 
 				if (org) {
-					npiPrimary.set(npi, { tokens: orgTokens(org), addrKey: addressFrequencyKey(practice) })
+					bucket.npiPrimary.set(npi, { tokens: orgTokens(org), addrKey: addressFrequencyKey(practice) })
 				}
 
-				kept.add(npi)
-				rows.push({ npi, name: primaryName, org, address: practice, auth, taxonomy, entityID: eid(practice) })
+				bucket.keptNpis.add(npi)
+
+				keptTotal++
+				bucket.rows.push({ npi, name: primaryName, org, address: practice, auth, taxonomy, entityID: eid(practice) })
 
 				// primary
 				for (const alt of altNames.get(npi)!) {
-					rows.push({ npi, name: alt, org: alt, address: practice, auth, taxonomy, entityID: eid(practice) })
+					bucket.rows.push({ npi, name: alt, org: alt, address: practice, auth, taxonomy, entityID: eid(practice) })
 				}
 
 				// name drift
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
 
 				if (mailing && mailing !== practice) {
-					rows.push({ npi, name: primaryName, org, address: mailing, auth, taxonomy, entityID: eid(mailing) })
+					bucket.rows.push({ npi, name: primaryName, org, address: mailing, auth, taxonomy, entityID: eid(mailing) })
 				} // address variation
 			}
 		}
@@ -188,9 +215,31 @@ export async function buildNPPESSample(
 		frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
 	}
 
-	report?.(
-		`    ${kept.size} NPIs → ${rows.length} records; address table: ${addrCounts.size} distinct over ${addrTotal} rows`
+	for (const [state, bucket] of byState) {
+		report?.(`    ${state}: ${bucket.keptNpis.size} NPIs → ${bucket.rows.length} records`)
+	}
+
+	report?.(`    address table: ${addrCounts.size} distinct over ${addrTotal} rows`)
+
+	return { byState, addressFrequency }
+}
+
+/**
+ * Build one state's benchmark input records — {@linkcode buildNPPESStateSamples} with a single bucket.
+ */
+export async function buildNPPESSample(
+	options: NPPESSampleOptions,
+	report?: (line: string) => void
+): Promise<NPPESSample> {
+	const { byState, addressFrequency } = await buildNPPESStateSamples(
+		{
+			registryPath: options.registryPath,
+			otherNamesPath: options.otherNamesPath,
+			states: [options.state],
+			maxNpisPerState: options.maxNpis,
+		},
+		report
 	)
 
-	return { rows, keptNpis: kept, npiPrimary, addressFrequency }
+	return { ...byState.get(options.state)!, addressFrequency }
 }

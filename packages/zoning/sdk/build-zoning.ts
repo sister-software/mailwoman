@@ -36,24 +36,26 @@
  *   in every chunk that touches them — and merging them in the parent is what keeps the chunk append-only.
  */
 
-import { statPath } from "@mailwoman/core/fs/readers"
-import { removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { readFileSize } from "@mailwoman/core/fs/readers"
 import {
+	areaAgreementFrom,
+	assertNoNegativeClaim as assertCoverageNoNegativeClaim,
 	CoverageBasis,
 	createLayerCoverageTable,
 	createLayerManifestTable,
-	LayerFreshnessPolicy,
 	LayerTier,
-	supportsExclusion,
+	polygonLayerManifest,
 	sourcePresentCoverageCells,
 	writeLayerCoverage,
 	writeLayerManifest,
+	type AreaAgreementReading,
 	type CoverageCell,
 } from "@mailwoman/core/layers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
-import { runChunkProcess } from "@mailwoman/core/utils"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
+import { ingestChunkArguments, mergeCountsInto, runChunkProcess } from "@mailwoman/core/utils"
+import { M2_PER_KM2 } from "@mailwoman/spatial"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import { buildSealedArtifact } from "@mailwoman/sqlite/sealed-build"
 
 import { createZoningTables, type ZoningDatabase } from "#schema"
 import type { ZoningFeatureSource } from "#sdk/ingest"
@@ -211,24 +213,12 @@ export interface BuildZoningResult {
 		exteriorByMagnitude: number
 	}
 	/**
-	 * The three area totals, in square kilometres: what the publisher says, what the encoded rings say read with their
-	 * holes, and what they would say read without.
+	 * The area totals in square kilometres — what the publisher says, what the encoded rings say read with their holes,
+	 * and what they would say read without — with the witness stated, plus this product's own signed ring sum. The
+	 * publisher's figure is never defaulted to this build's own reading: a receipt printing "publisher 205.4 km², 0.000%
+	 * apart" when nobody asked the publisher is a check reporting itself as passed.
 	 */
-	area: {
-		/**
-		 * The publisher's own figure, in square kilometres — ABSENT where it was not read. Never defaulted to this build's
-		 * own reading: a receipt printing "publisher 205.4 km², 0.000% apart" when nobody asked the publisher is a check
-		 * reporting itself as passed.
-		 */
-		sourceKM2?: number
-		nestedKM2: number
-		allExteriorKM2: number
-		signedKM2: number
-		/**
-		 * `|nested − source| / source`. ABSENT where the publisher's figure was not read.
-		 */
-		relativeGap?: number
-	}
+	area: AreaAgreementReading & { signedKM2: number }
 	/**
 	 * The vocabulary census, per scheme: how many codes the artifact holds and how many of them the publisher never
 	 * declared.
@@ -248,11 +238,6 @@ export interface BuildZoningResult {
 	}
 	sizeBytes: number
 }
-
-/**
- * Square metres in a square kilometre.
- */
-const M2_PER_KM2 = 1_000_000
 
 /**
  * The relative gap between the two area readings that fails the build.
@@ -289,181 +274,142 @@ export async function buildZoningDatabase(options: BuildZoningOptions): Promise<
 		)
 	}
 
-	const declaredFeatureCount =
-		"batched" in options ? options.batched.declaredFeatureCount : options.source.declaredFeatureCount
+	const batched = "batched" in options ? options.batched : undefined
+	const source = "batched" in options ? undefined : options.source
+	const declaredFeatureCount = batched ? batched.declaredFeatureCount : source!.declaredFeatureCount
 
 	options.onProgress?.(
-		"batched" in options
-			? `source: ${options.batched.exportPath} · ${declaredFeatureCount.toLocaleString()} features`
-			: `source: EPSG:${options.source.epsg} · ${declaredFeatureCount.toLocaleString()} features · ${options.source.origin}`
+		batched
+			? `source: ${batched.exportPath} · ${declaredFeatureCount.toLocaleString()} features`
+			: `source: EPSG:${source!.epsg} · ${declaredFeatureCount.toLocaleString()} features · ${source!.origin}`
 	)
 
-	const tmpPath = `${options.out}.tmp-${process.pid}`
-
-	// THE INGEST AND THE WRITE-OUT PHASES USE SEPARATE HANDLES, ALWAYS — including the in-process path, which does not
-	// need them separated. The batched path DOES: its children open the same file, so the parent's handle has to be closed
-	// across them, and a single shared handle silently becomes a closed one afterwards. Doing it one way in both paths is
-	// what puts the fixture suites on the same sequence a national build takes.
-	let streamed: StreamResult
-
-	{
-		await using kdb = new DatabaseClient<ZoningDatabase>(tmpPath)
-
-		try {
-			kdb.exec("PRAGMA journal_mode = OFF")
-			kdb.exec("PRAGMA synchronous = OFF")
-
+	const built = await buildSealedArtifact<ZoningDatabase, StreamResult, Omit<BuildZoningResult, "sizeBytes">>({
+		out: options.out,
+		createTables: async (kdb) => {
 			await createZoningTables(kdb)
 			await createLayerManifestTable(kdb)
 			await createLayerCoverageTable(kdb)
+		},
+		ingest: async (kdb) => {
+			if (!source) return undefined
 
-			if (!("batched" in options)) {
-				streamed = aggregateChunks([
-					await ingestZoningChunk(kdb, {
-						source: options.source,
-						indexResolution: options.indexResolution,
-						coverageResolution: options.coverageResolution,
-						...(options.onProgress ? { onProgress: options.onProgress } : {}),
-					}),
-				])
-			}
-		} catch (error) {
-			await kdb.destroy().catch(() => undefined)
-			await removePathIfPresent(tmpPath)
+			return aggregateChunks([
+				await ingestZoningChunk(kdb, {
+					source,
+					indexResolution: options.indexResolution,
+					coverageResolution: options.coverageResolution,
+					...(options.onProgress ? { onProgress: options.onProgress } : {}),
+				}),
+			])
+		},
+		...(batched ? { batched: (tmpPath: string) => runBatchedIngest(tmpPath, options, batched) } : {}),
+		finish: async (kdb, ingested) => buildZoningResult(kdb, options, tier, declaredFeatureCount, ingested),
+	})
 
-			throw error
-		}
-	}
+	return { ...built, sizeBytes: await readFileSize(options.out) }
+}
 
-	if ("batched" in options) {
-		try {
-			streamed = await runBatchedIngest(tmpPath, options)
-		} catch (error) {
-			await removePathIfPresent(tmpPath)
-
-			throw error
-		}
-	}
-
-	const kdb = new DatabaseClient<ZoningDatabase>(tmpPath)
-
-	try {
-		kdb.exec("PRAGMA journal_mode = OFF")
-		kdb.exec("PRAGMA synchronous = OFF")
-
-		const ingested = streamed!
-
-		if (ingested.features !== declaredFeatureCount) {
-			throw new Error(
-				`zoning build: streamed ${ingested.features} features, the source declares ${declaredFeatureCount} — a short read builds a smaller country and reports success`
-			)
-		}
-
-		if (options.expectedFeatureCount !== undefined && ingested.features !== options.expectedFeatureCount) {
-			throw new Error(
-				`zoning build: streamed ${ingested.features} features and the live service reports ${options.expectedFeatureCount} — the archive is a different vintage from the one the service is publishing`
-			)
-		}
-
-		const area = assertAreaAgreement(ingested, options.expectedSourceAreaM2)
-
-		// THE CROSSWALK IS NOT A TABLE, AND THE BUILD CHECKS IT RATHER THAN ASSUMING IT. Writing no edges while the mapping
-		// happens not to be a function would be an accident; refusing to write them while it is not is a statement.
-		const nonFunctional = nonFunctionalPairs(ingested.crosswalkPairs)
-
-		assertCrosswalkIsNotATable(ingested.crosswalkPairs, 0)
-
-		options.onProgress?.(
-			`${ingested.features.toLocaleString()} zoning polygons written · ${ingested.rings.total.toLocaleString()} rings ` +
-				`(${ingested.rings.exteriors.toLocaleString()} exterior, ${ingested.rings.holes.toLocaleString()} hole)`
+/**
+ * The post-ingest half of the build, under the second handle: the assertions over what was streamed, then every
+ * artifact table beyond the truth tables.
+ */
+async function buildZoningResult(
+	kdb: DatabaseClient<ZoningDatabase>,
+	options: BuildZoningOptions,
+	tier: LayerTier,
+	declaredFeatureCount: number,
+	ingested: StreamResult
+): Promise<Omit<BuildZoningResult, "sizeBytes">> {
+	if (ingested.features !== declaredFeatureCount) {
+		throw new Error(
+			`zoning build: streamed ${ingested.features} features, the source declares ${declaredFeatureCount} — a short read builds a smaller country and reports success`
 		)
+	}
 
-		writeJurisdictionRows(kdb, ingested.jurisdictions)
-		writePlanRows(kdb, ingested.plans)
+	if (options.expectedFeatureCount !== undefined && ingested.features !== options.expectedFeatureCount) {
+		throw new Error(
+			`zoning build: streamed ${ingested.features} features and the live service reports ${options.expectedFeatureCount} — the archive is a different vintage from the one the service is publishing`
+		)
+	}
 
-		const vocabulary = writeVocabularyRows(kdb, ingested.vocabulary)
+	const area = assertAreaAgreement(ingested, options.expectedSourceAreaM2)
 
-		const coverage = sourcePresentCoverageCells(ingested.observedByCoverageCell)
+	// THE CROSSWALK IS NOT A TABLE, AND THE BUILD CHECKS IT RATHER THAN ASSUMING IT. Writing no edges while the mapping
+	// happens not to be a function would be an accident; refusing to write them while it is not is a statement.
+	const nonFunctional = nonFunctionalPairs(ingested.crosswalkPairs)
 
-		assertNoNegativeClaim(coverage)
+	assertCrosswalkIsNotATable(ingested.crosswalkPairs, 0)
 
-		await writeLayerCoverage(kdb, coverage)
+	options.onProgress?.(
+		`${ingested.features.toLocaleString()} zoning polygons written · ${ingested.rings.total.toLocaleString()} rings ` +
+			`(${ingested.rings.exteriors.toLocaleString()} exterior, ${ingested.rings.holes.toLocaleString()} hole)`
+	)
 
-		await writeLayerManifest(kdb, {
+	writeJurisdictionRows(kdb, ingested.jurisdictions)
+	writePlanRows(kdb, ingested.plans)
+
+	const vocabulary = writeVocabularyRows(kdb, ingested.vocabulary)
+
+	const coverage = sourcePresentCoverageCells(ingested.observedByCoverageCell)
+
+	assertNoNegativeClaim(coverage)
+
+	await writeLayerCoverage(kdb, coverage)
+
+	await writeLayerManifest(
+		kdb,
+		polygonLayerManifest(options, {
 			name: GZT_LAYER_NAME,
-			version: options.sourceVintage,
 			schemaVersion: ZONING_SCHEMA_VERSION,
-			tier,
 			license: GZT_LICENSE,
 			attribution: GZT_ATTRIBUTION,
 			source: `arcgis.com item ${GZT_ITEM_ID}`,
-			sourceVintage: options.sourceVintage,
-			buildCmd: options.buildCmd,
-			buildSHA: options.buildSHA,
-			freshnessPolicy: LayerFreshnessPolicy.VersionedRefresh,
-			spineKeys: {
-				h3: { column: "zoning_cell.h3_cell", resolution: options.indexResolution },
-			},
-			createdAt: options.createdAt,
-		})
-
-		const storedResolutions = (
-			kdb.prepare("SELECT DISTINCT resolution FROM zoning_cell ORDER BY resolution").all() as Array<{
-				resolution: number
-			}>
-		).map((row) => row.resolution)
-
-		// NO SECONDARY INDEXES, AND THAT IS A DECISION RATHER THAN AN OMISSION. Both probes this artifact serves are already
-		// primary-key probes: the cell table's `(h3_cell, area_id)` key answers `WHERE h3_cell = ?` as a range scan of a
-		// handful of rows, and the geometry table is probed by `area_id`, its own key. An index over a `WITHOUT ROWID` table
-		// carries the primary key in every entry, so it would roughly double the cell tier to serve a scan that is already
-		// short.
-		kdb.exec("VACUUM")
-
-		await kdb.destroy()
-
-		await sealDatabase(tmpPath)
-		await swapDatabaseIntoPlace(tmpPath, options.out)
-
-		const totalCellRows = ingested.wholeCellRows + ingested.partialCellRows
-
-		return {
-			out: options.out,
-			features: ingested.features,
-			jurisdictions: ingested.jurisdictions.length,
-			plans: ingested.plans.length,
-			indexResolution: options.indexResolution,
-			coverageResolution: options.coverageResolution,
-			wholeCellRows: ingested.wholeCellRows,
-			partialCellRows: ingested.partialCellRows,
-			storedPartialShare: totalCellRows ? ingested.partialCellRows / totalCellRows : 0,
-			coarsenedFeatures: ingested.coarsened,
-			storedResolutions,
-			coverageCells: coverage.length,
-			coverageBasis: CoverageBasis.SourcePresent,
+			cellColumn: "zoning_cell.h3_cell",
 			tier,
-			license: GZT_LICENSE,
-			rings: ingested.rings,
-			area,
-			vocabulary,
-			crosswalk: {
-				pairs: ingested.crosswalkPairs.length,
-				nonFunctionalPairs: nonFunctional.length,
-				worst: nonFunctional
-					.toSorted((left, right) => right[2].length - left[2].length)
-					.slice(0, WORST_PAIRS_REPORTED)
-					.map(([authorityCode, localCode, crosswalkCodes]) => ({ authorityCode, localCode, crosswalkCodes })),
-			},
-			sizeBytes: await sizeOf(options.out),
-		}
-	} catch (error) {
-		await kdb.destroy().catch(() => undefined)
+		})
+	)
 
-		// A failed build leaves a partial file whose name carries this process's pid, so nothing will ever pick it up again.
-		// Removing it is the difference between a retry loop that fails and one that fills a disk.
-		await removePathIfPresent(tmpPath)
+	const storedResolutions = (
+		kdb.prepare("SELECT DISTINCT resolution FROM zoning_cell ORDER BY resolution").all() as Array<{
+			resolution: number
+		}>
+	).map((row) => row.resolution)
 
-		throw error
+	// NO SECONDARY INDEXES, AND THAT IS A DECISION RATHER THAN AN OMISSION. Both probes this artifact serves are already
+	// primary-key probes: the cell table's `(h3_cell, area_id)` key answers `WHERE h3_cell = ?` as a range scan of a
+	// handful of rows, and the geometry table is probed by `area_id`, its own key. An index over a `WITHOUT ROWID` table
+	// carries the primary key in every entry, so it would roughly double the cell tier to serve a scan that is already
+	// short.
+	const totalCellRows = ingested.wholeCellRows + ingested.partialCellRows
+
+	return {
+		out: options.out,
+		features: ingested.features,
+		jurisdictions: ingested.jurisdictions.length,
+		plans: ingested.plans.length,
+		indexResolution: options.indexResolution,
+		coverageResolution: options.coverageResolution,
+		wholeCellRows: ingested.wholeCellRows,
+		partialCellRows: ingested.partialCellRows,
+		storedPartialShare: totalCellRows ? ingested.partialCellRows / totalCellRows : 0,
+		coarsenedFeatures: ingested.coarsened,
+		storedResolutions,
+		coverageCells: coverage.length,
+		coverageBasis: CoverageBasis.SourcePresent,
+		tier,
+		license: GZT_LICENSE,
+		rings: ingested.rings,
+		area,
+		vocabulary,
+		crosswalk: {
+			pairs: ingested.crosswalkPairs.length,
+			nonFunctionalPairs: nonFunctional.length,
+			worst: nonFunctional
+				.toSorted((left, right) => right[2].length - left[2].length)
+				.slice(0, WORST_PAIRS_REPORTED)
+				.map(([authorityCode, localCode, crosswalkCodes]) => ({ authorityCode, localCode, crosswalkCodes })),
+		},
 	}
 }
 
@@ -542,9 +488,7 @@ export function aggregateChunks(chunks: ReadonlyArray<ZoningChunkResult>): Strea
 
 		// A coverage cell straddles chunk boundaries, so the counts ADD rather than replace. Taking the last chunk's value
 		// would report a cell as holding only the last chunk's polygons.
-		for (const [cell, count] of chunk.observedByCoverageCell) {
-			observedByCoverageCell.set(cell, (observedByCoverageCell.get(cell) ?? 0) + count)
-		}
+		mergeCountsInto(observedByCoverageCell, chunk.observedByCoverageCell)
 
 		for (const [code, name] of chunk.jurisdictions) {
 			jurisdictions.set(code, name)
@@ -645,32 +589,24 @@ function assertAreaAgreement(
 	streamed: StreamResult,
 	expectedSourceAreaM2: number | undefined
 ): BuildZoningResult["area"] {
-	const nestedKM2 = streamed.area.nestedM2 / M2_PER_KM2
-	const allExteriorKM2 = streamed.area.allExteriorM2 / M2_PER_KM2
 	const signedKM2 = streamed.area.signedM2 / M2_PER_KM2
 
-	// THE PUBLISHER'S FIGURE IS ABSENT RATHER THAN DEFAULTED. Filling it with this build's own reading would make the
-	// receipt print "0.000% apart" for a check that never ran, which is the one shape a reader cannot tell from a pass.
-	if (expectedSourceAreaM2 === undefined) return { nestedKM2, allExteriorKM2, signedKM2 }
+	// THE PUBLISHER'S FIGURE IS ABSENT RATHER THAN DEFAULTED — the reading's own type says so. Filling it with this
+	// build's own reading would make the receipt print "0.000% apart" for a check that never ran, which is the one shape
+	// a reader cannot tell from a pass.
+	const reading = areaAgreementFrom(
+		{ nestedM2: streamed.area.nestedM2, allExteriorM2: streamed.area.allExteriorM2 },
+		expectedSourceAreaM2
+	)
 
-	const relativeGap = expectedSourceAreaM2
-		? Math.abs(streamed.area.nestedM2 - expectedSourceAreaM2) / expectedSourceAreaM2
-		: 0
+	const area: BuildZoningResult["area"] = { ...reading, signedKM2 }
 
-	const area: BuildZoningResult["area"] = {
-		sourceKM2: expectedSourceAreaM2 / M2_PER_KM2,
-		nestedKM2,
-		allExteriorKM2,
-		signedKM2,
-		relativeGap,
-	}
-
-	if (relativeGap <= AREA_TOLERANCE) return area
+	if (reading.witness === "absent" || reading.relativeGap <= AREA_TOLERANCE) return area
 
 	throw new Error(
-		`zoning build: the encoded rings total ${nestedKM2.toFixed(1)} km² against the publisher's ${(expectedSourceAreaM2 / M2_PER_KM2).toFixed(1)} km² ` +
-			`(${(relativeGap * 100).toFixed(2)}% apart, tolerance ${(AREA_TOLERANCE * 100).toFixed(0)}%). Read without their holes the same rings total ` +
-			`${allExteriorKM2.toFixed(1)} km², so compare the two: a hole-blind read answers "inside" for every point in a hole`
+		`zoning build: the encoded rings total ${reading.nestedKM2.toFixed(1)} km² against the publisher's ${reading.sourceKM2.toFixed(1)} km² ` +
+			`(${(reading.relativeGap * 100).toFixed(2)}% apart, tolerance ${(AREA_TOLERANCE * 100).toFixed(0)}%). Read without their holes the same rings total ` +
+			`${reading.allExteriorKM2.toFixed(1)} km², so compare the two: a hole-blind read answers "inside" for every point in a hole`
 	)
 }
 
@@ -686,9 +622,9 @@ function assertAreaAgreement(
  */
 async function runBatchedIngest(
 	tmpPath: string,
-	options: BuildZoningOptions & { batched: Extract<BuildZoningInput, { batched: unknown }>["batched"] }
+	options: BuildZoningOptions,
+	batched: Extract<BuildZoningInput, { batched: unknown }>["batched"]
 ): Promise<StreamResult> {
-	const { batched } = options
 	const chunkSize = batched.chunkSize ?? DEFAULT_CHUNK_SIZE
 	const script = resolveModulePath("@mailwoman/zoning/scripts/ingest-chunk")
 	const chunks: ZoningChunkResult[] = []
@@ -702,20 +638,16 @@ async function runBatchedIngest(
 
 		options.onProgress?.(`chunk OBJECTID ${from}–${to}`)
 
-		const result = await runChunk(script, [
-			"--database",
-			tmpPath,
-			"--export",
-			batched.exportPath,
-			"--object-id-from",
-			String(from),
-			"--object-id-to",
-			String(to),
-			"--index-resolution",
-			String(options.indexResolution),
-			"--coverage-resolution",
-			String(options.coverageResolution),
-		])
+		const result = await runChunkProcess<ZoningChunkResult>({
+			script,
+			context: "zoning build",
+			args: ingestChunkArguments({
+				database: tmpPath,
+				args: ["--export", batched.exportPath, "--object-id-from", String(from), "--object-id-to", String(to)],
+				indexResolution: options.indexResolution,
+				coverageResolution: options.coverageResolution,
+			}),
+		})
 
 		chunks.push(result)
 
@@ -728,17 +660,6 @@ async function runBatchedIngest(
 }
 
 /**
- * Run one chunk process and parse its result line.
- *
- * Progress is INHERITED rather than captured, so a long chunk reports as it goes and only the result line has to be
- * parsed. A non-zero exit throws: a chunk that died mid-range has already written part of its rows, and continuing
- * would seal an artifact missing features nobody could name.
- */
-async function runChunk(script: string, args: readonly string[]): Promise<ZoningChunkResult> {
-	return runChunkProcess<ZoningChunkResult>({ script, args, context: "zoning build" })
-}
-
-/**
  * Refuse a coverage row that would license a negative claim.
  *
  * THIS IS THE CHECK THE MEANING-OF-ZERO RULE TURNS ON, and it is a condition rather than a convention. The Department
@@ -748,14 +669,7 @@ async function runChunk(script: string, args: readonly string[]): Promise<Zoning
  * cannot get past it either.
  */
 export function assertNoNegativeClaim(cells: ReadonlyArray<CoverageCell>): void {
-	for (const cell of cells) {
-		if (supportsExclusion(cell)) {
-			throw new Error(
-				`zoning build: coverage cell ${cell.h3Cell} carries basis ${JSON.stringify(cell.basis)}, which supports an EXCLUSION. ` +
-					`${GZT_COVERAGE_LIMIT} Until a mapped-footprint source is settled, every row must read ${CoverageBasis.SourcePresent}`
-			)
-		}
-	}
+	assertCoverageNoNegativeClaim("zoning build", cells, GZT_COVERAGE_LIMIT)
 }
 
 /**
@@ -873,11 +787,4 @@ function writeVocabularyRows(
 	}
 
 	return [...bySchema].map(([scheme, census]) => ({ scheme, ...census }))
-}
-
-/**
- * The artifact's size on disk, read once for the receipt.
- */
-async function sizeOf(path: string): Promise<number> {
-	return (await statPath(path)).size
 }

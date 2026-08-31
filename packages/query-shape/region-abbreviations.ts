@@ -9,7 +9,25 @@
 
 import type { RegionAbbreviationHit, Segment, TokenClass } from "#types"
 
-const REGION_ABBREV_RE = /^[A-Z]{2}$/
+export interface RegionAbbreviationTokenOpts {
+	/**
+	 * Longest run of letters accepted. The detector's own "City, ST" pattern wants exactly 2 (the default);
+	 * `@mailwoman/phrase-grouper` widens to 3 to admit three-letter codes ("TWN").
+	 */
+	maxLetters?: number
+}
+
+/**
+ * True when a token is region-abbreviation SHAPED: 2..`maxLetters` uppercase ASCII letters. Shape only — no state
+ * table, so "SAN" and "DI" match at `maxLetters: 3`; suppressing those is the caller's context to apply.
+ */
+export function isRegionAbbreviationToken(token: string, options: RegionAbbreviationTokenOpts = {}): boolean {
+	const { maxLetters = 2 } = options
+
+	if (token.length < 2 || token.length > maxLetters) return false
+
+	return /^[A-Z]+$/.test(token)
+}
 
 /**
  * Find region abbreviation hits. A hit is a 2-letter all-uppercase token that appears after a comma-separated segment
@@ -46,7 +64,7 @@ export function detectRegionAbbreviations(
 
 			if (tok.class !== "alpha") continue
 
-			if (!REGION_ABBREV_RE.test(tok.span.body)) continue
+			if (!isRegionAbbreviationToken(tok.span.body)) continue
 
 			hits.push({ start: tok.span.start, span: tok.span.body })
 		}

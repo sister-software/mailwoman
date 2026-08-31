@@ -295,6 +295,27 @@ export function suppressGazetteerNearPostcode(
 }
 
 /**
+ * Project a per-char bitmask paint onto SP pieces by the SAME char→piece rule the labels use: a piece takes the bits of
+ * the first non-whitespace char it covers, `0` when it covers none. Shared by every channel built on
+ * {@link gazetteerCharPaint} so the projection cannot drift between them.
+ */
+export function projectCharBitsToPieces(
+	text: string,
+	pieces: ReadonlyArray<TokenizedPiece>,
+	charBits: ReadonlyArray<number>
+): number[] {
+	return pieces.map((p) => {
+		for (let c = p.start; c < p.end; c++) {
+			if (c < text.length && !/\s/.test(text[c]!)) {
+				return charBits[c]!
+			}
+		}
+
+		return 0
+	})
+}
+
+/**
  * Per-piece gazetteer features + confidence for `text`, projected onto its SP `pieces` by the SAME char→piece rule the
  * labels use (a piece takes the bits of the first non-whitespace char it covers). Returns `(pieces × featureDim)`
  * features + `(pieces,)` confidence (1.0 wherever any bit fires).
@@ -304,22 +325,12 @@ export function buildGazetteerFeatures(
 	pieces: ReadonlyArray<TokenizedPiece>,
 	lexicon: GazetteerLexicon
 ): { features: number[][]; confidence: number[] } {
-	const charBits = gazetteerCharPaint(text, lexicon)
+	const pieceBits = projectCharBitsToPieces(text, pieces, gazetteerCharPaint(text, lexicon))
 	const zero = () => new Array<number>(lexicon.featureDim).fill(0)
 	const features: number[][] = []
 	const confidence: number[] = []
 
-	for (const p of pieces) {
-		let bits = 0
-
-		for (let c = p.start; c < p.end; c++) {
-			if (c < text.length && !/\s/.test(text[c]!)) {
-				bits = charBits[c]!
-
-				break
-			}
-		}
-
+	for (const bits of pieceBits) {
 		features.push(bits ? bitsToRow(bits, lexicon) : zero())
 		confidence.push(bits ? 1 : 0)
 	}

@@ -29,13 +29,13 @@
  *   only fail one way is not a control set.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { sha256Hex } from "@mailwoman/core/utils"
-
 // The canonical-JSON encoder is IMPORTED rather than re-typed: two freeze records hashing the same content
-// through two encoders would drift at the first key ordering either one changed.
-import { canonicalJSON } from "#eval-harness/semantic-utility/probe"
+import {
+	definitionContentHash,
+	duplicateRowIDProblems,
+	loadFrozenDefinition,
+	preregistrationPath,
+} from "#eval-harness/preregistration"
 import { ABSENCE_REFUSALS } from "#observations/index"
 
 /**
@@ -114,26 +114,21 @@ export interface AbsenceProbeFreezeRecord {
 	note: string
 }
 
-function sourceRelative(name: string): string {
-	// `tsc` emits no `.json` into `out/`, so the file is named from the package root rather than from this module.
-	return resolvePackagePath("mailwoman", "eval-harness", "absence-observation", name)
-}
-
 /**
  * The committed pre-registration.
  */
-export const ABSENCE_PROBE_DEFINITION_PATH = sourceRelative("probe-definition.json")
+export const ABSENCE_PROBE_DEFINITION_PATH = preregistrationPath("absence-observation", "probe-definition.json")
 
 /**
  * The committed freeze record for it.
  */
-export const ABSENCE_PROBE_FREEZE_PATH = sourceRelative("probe-freeze.json")
+export const ABSENCE_PROBE_FREEZE_PATH = preregistrationPath("absence-observation", "probe-freeze.json")
 
 /**
  * The content hash of one definition.
  */
 export function absenceProbeDefinitionHash(definition: AbsenceProbeDefinition): string {
-	return sha256Hex(canonicalJSON(definition))
+	return definitionContentHash(definition)
 }
 
 /**
@@ -147,15 +142,9 @@ export function auditAbsenceProbeDefinition(definition: AbsenceProbeDefinition):
 		problems.push("rows is empty — a probe with no row measures nothing")
 	}
 
-	const seen = new Set<string>()
+	problems.push(...duplicateRowIDProblems(definition.rows))
 
 	for (const row of definition.rows) {
-		if (seen.has(row.id)) {
-			problems.push(`row id ${JSON.stringify(row.id)} is used twice — ids name rows in output`)
-		}
-
-		seen.add(row.id)
-
 		if (!(ABSENCE_ROW_GROUPS as readonly string[]).includes(row.group)) {
 			problems.push(`row ${row.id}: group ${JSON.stringify(row.group)} is not a registered group`)
 		}
@@ -212,38 +201,13 @@ export async function loadAbsenceProbeDefinition(
 	definitionPath: string = ABSENCE_PROBE_DEFINITION_PATH,
 	freezePath: string = ABSENCE_PROBE_FREEZE_PATH
 ): Promise<AbsenceProbeDefinition> {
-	const definition = await readLocalJSONFile<AbsenceProbeDefinition>(definitionPath)
-	const freeze = await readLocalJSONFile<AbsenceProbeFreezeRecord>(freezePath)
-
-	if (freeze.probeID !== definition.probeID) {
-		throw new Error(
-			`absence probe: freeze record names probe ${JSON.stringify(freeze.probeID)}, definition is ${JSON.stringify(definition.probeID)}`
-		)
-	}
-
-	if (freeze.version !== definition.version) {
-		throw new Error(
-			`absence probe: freeze record pins version ${freeze.version}, definition is ${definition.version} — a definition change bumps BOTH the version and the hash`
-		)
-	}
-
-	const observed = absenceProbeDefinitionHash(definition)
-
-	if (observed !== freeze.sha256) {
-		throw new Error(
-			`absence probe: definition content hash ${observed} !== frozen ${freeze.sha256} — the ruler moved. Restore it, or record a new version and hash in ${freeze.definition}`
-		)
-	}
-
-	const problems = auditAbsenceProbeDefinition(definition)
-
-	if (problems.length) {
-		throw new Error(
-			["absence probe: the pre-registration is not executable:", ...problems.map((p) => `  - ${p}`)].join("\n")
-		)
-	}
-
-	return definition
+	return loadFrozenDefinition({
+		definitionPath,
+		freezePath,
+		label: "absence probe",
+		idField: "probeID",
+		audit: auditAbsenceProbeDefinition,
+	})
 }
 
 /**

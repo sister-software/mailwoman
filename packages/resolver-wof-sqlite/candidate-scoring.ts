@@ -11,8 +11,9 @@ import { haversineKm } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { exactMatchIDs, officialNameIDs } from "#exact-match"
+import { foldQueryText } from "#fts"
 import { compareReferential, referentialFromPopulation } from "#place-importance-schema"
-import type { RankingWeights } from "#ranking-weights"
+import { populationBoostTerm, type RankingWeights } from "#ranking-weights"
 import type { RawSearchRow } from "#search-fetch"
 import type { FindPlaceQuery, PlaceCandidate, WOFPlacetype } from "#types"
 
@@ -94,14 +95,8 @@ export function candidateFromSearchRow(
 
 	// Population boost: capped at `populationBoost` magnitude at `10^populationScaleLog10`
 	// people. Missing population → no contribution. Never penalizes.
-	let popTerm = 0
-
-	if (row.population !== null && row.population > 0 && weights.populationScaleLog10 > 0) {
-		const popLog = Math.log10(1 + row.population)
-		const popFraction = Math.min(1, popLog / weights.populationScaleLog10)
-		popTerm = weights.populationBoost * popFraction
-		score += popTerm
-	}
+	const popTerm = populationBoostTerm(row.population, weights)
+	score += popTerm
 
 	// Combined prominence for the exact-tier sort when proximity hints are present: population
 	// and nearness in the SAME additive units, so the map view / the user's location can win a
@@ -203,8 +198,7 @@ export function rankCandidates<DB>(
 			// widen recall, not to tie primaries. ME→Maine is untouched: 'ME' name-exact-matches
 			// nothing, so the alias sub-tier still decides there. Population orders within each
 			// sub-tier as before.
-			const norm = (v: string): string => v.toLowerCase().trim().replaceAll(/\s+/g, " ")
-			const needle = norm(query.text)
+			const needle = foldQueryText(query.text)
 
 			// #936 option 3: an OFFICIAL name (preferred form in an official language of the place's
 			// country, `names.official = 1`) counts as the place's own name for the sub-tier — "Åbo" is
@@ -225,7 +219,7 @@ export function rankCandidates<DB>(
 			const kind = (c: PlaceCandidate): number => {
 				if (!exactIDs.has(c.id as number)) return 0
 
-				if (norm(String(c.name ?? "")) === needle) return 2
+				if (foldQueryText(String(c.name ?? "")) === needle) return 2
 
 				return officialIDs?.has(c.id as number) ? 2 : 1
 			}

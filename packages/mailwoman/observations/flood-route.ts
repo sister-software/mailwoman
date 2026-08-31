@@ -43,6 +43,9 @@ import {
 } from "@mailwoman/flood"
 
 import {
+	createDesignationRoute,
+	describeCoverage,
+	describeLayerProvenance,
 	observationCoverageRecord,
 	observationLayerRecord,
 	type ObservationCoverageRecord,
@@ -153,73 +156,61 @@ export interface AuthorityDesignationRouteOptions {
 export function createAuthorityDesignationRoute(options: AuthorityDesignationRouteOptions): AuthorityDesignationRoute {
 	const lookup = new FloodZoneLookup({ databasePath: options.databasePath })
 
-	return {
-		identity: lookup.identity,
-		observe: (latitude, longitude) => {
-			if (typeof latitude !== "number" || typeof longitude !== "number") {
-				return { fired: false, refusal: "no_coordinate" }
-			}
-
-			return decide(lookup.lookup(latitude, longitude), lookup.identity, latitude, longitude, options.databasePath)
-		},
-		[Symbol.dispose]: () => lookup[Symbol.dispose](),
-	}
+	return createDesignationRoute(lookup, {
+		read: (latitude, longitude) => lookup.lookup(latitude, longitude),
+		refusalFor: (reading) => (reading.kind === FloodReadingKind.Unknown ? "outside_authority_footprint" : undefined),
+		toObservation: (reading, latitude, longitude) =>
+			toObservation(reading, lookup.identity, latitude, longitude, options.databasePath),
+	})
 }
 
 /**
- * Turn one reading into a decision.
+ * Build the observation for a reading the refusal check let through.
  */
-function decide(
+function toObservation(
 	reading: FloodZoneReading,
 	identity: FloodLayerIdentity,
 	latitude: number,
 	longitude: number,
 	databasePath: string
-): DesignationDecision {
-	if (reading.kind === FloodReadingKind.Unknown) {
-		return { fired: false, refusal: "outside_authority_footprint" }
-	}
-
+): AuthorityDesignationObservation {
 	const { manifest, extent } = identity
 
 	return {
-		fired: true,
-		observation: {
-			reading: reading.kind,
-			...(reading.zoneCode ? { code: reading.zoneCode } : {}),
-			...(reading.definition ? { definition: reading.definition } : {}),
-			...(reading.areaID ? { areaID: reading.areaID } : {}),
-			containment: reading.containment,
-			...observationCoverageRecord(reading.coverage),
-			indexCellIndex: reading.indexCellIndex,
-			extent: {
-				authority: extent.authority,
-				statement: extent.statement,
-				statementURL: extent.statementURL,
-			},
-			limits: reading.limits,
-			layer: observationLayerRecord(manifest),
-			databasePath,
-			coordinate: { latitude, longitude },
+		reading: reading.kind,
+		...(reading.zoneCode ? { code: reading.zoneCode } : {}),
+		...(reading.definition ? { definition: reading.definition } : {}),
+		...(reading.areaID ? { areaID: reading.areaID } : {}),
+		containment: reading.containment,
+		...observationCoverageRecord(reading.coverage),
+		indexCellIndex: reading.indexCellIndex,
+		extent: {
+			authority: extent.authority,
+			statement: extent.statement,
+			statementURL: extent.statementURL,
 		},
+		limits: reading.limits,
+		layer: observationLayerRecord(manifest),
+		databasePath,
+		coordinate: { latitude, longitude },
 	}
+}
+
+/**
+ * What the authority's map assigns, in ONE wording — shared by the one-line description and the marker message.
+ */
+export function floodZoneAssignmentClause(observation: AuthorityDesignationObservation): string {
+	return observation.code
+		? `assigns ${observation.code}`
+		: `assigns no zone, which its own guidance defines as ${observation.definition?.label ?? "the absent case"}`
 }
 
 /**
  * One line a reader can check the claim from, with the authority and its vintage on it.
  */
 export function describeAuthorityDesignation(observation: AuthorityDesignationObservation): string {
-	const assigned = observation.code
-		? `assigns ${observation.code}`
-		: `assigns no zone, which its own guidance defines as ${observation.definition?.label ?? "the absent case"}`
-
-	const coverage = observation.coverage
-		? `coverage cell ${observation.coverage.h3CellIndex} (res ${observation.coverage.resolution}) on basis "${observation.coverage.basis}" at completeness ${observation.coverage.completeness.toFixed(4)}`
-		: "no coverage row"
-
 	return (
-		`${observation.extent.authority}'s map ${assigned} at ${observation.coordinate.latitude}, ${observation.coordinate.longitude} ` +
-		`(${observation.containment}); ${coverage}; from ${observation.layer.name} ${observation.layer.version} ` +
-		`(${observation.layer.source} ${observation.layer.sourceVintage}, ${observation.layer.license}, build ${observation.layer.buildSHA})`
+		`${observation.extent.authority}'s map ${floodZoneAssignmentClause(observation)} at ${observation.coordinate.latitude}, ${observation.coordinate.longitude} ` +
+		`(${observation.containment}); ${describeCoverage(observation.coverage, { completeness: true })}; ${describeLayerProvenance(observation.layer)}`
 	)
 }

@@ -18,7 +18,7 @@
  *   too; without it every ancestry chain still resolves, just `containment: "approximate"`
  *   (`WOFReverseGeocoder`'s own centroid-descent fallback).
  *
- *   Admin DB resolution mirrors `resolver-backend.ts`'s `wofShardPaths()` — the SAME default
+ *   Admin DB resolution mirrors `resolver-backend.ts`'s `existingWOFShardPaths()` — the SAME default
  *   `@mailwoman/photon`'s and `@mailwoman/nominatim`'s `serve` commands use for their own
  *   `WOFReverseGeocoder` (`photon/cli.ts`, `nominatim/cli.ts`): first existing shard in the list wins
  *   (`admin-global-priority.db` first). The polygon sidecar is read from `$MAILWOMAN_WOF_POLYGONS_DB` —
@@ -29,7 +29,7 @@ import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { WOFReverseGeocoder as WOFReverseGeocoderType } from "@mailwoman/resolver-wof-sqlite"
 
-import { wofShardPaths } from "#resolver-backend"
+import { existingWOFShardPaths } from "#resolver-backend"
 
 let cached: Promise<WOFReverseGeocoderType | null> | null = null
 
@@ -43,15 +43,7 @@ export function loadDefaultReverseGeocoder(): Promise<WOFReverseGeocoderType | n
 	if (!cached) {
 		cached = (async (): Promise<WOFReverseGeocoderType | null> => {
 			try {
-				let adminDBPath: string | undefined
-
-				for (const shardPath of wofShardPaths()) {
-					if (await pathExists(shardPath)) {
-						adminDBPath = shardPath
-
-						break
-					}
-				}
+				const [adminDBPath] = await existingWOFShardPaths()
 
 				if (!adminDBPath) return null
 				const { WOFReverseGeocoder } = await import("@mailwoman/resolver-wof-sqlite")

@@ -15,7 +15,13 @@ import { Spinner } from "@inkjs/ui"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
-import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "#cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -96,7 +102,7 @@ const TIGERFetch: ParsedCommandComponent<Options> = ({ options }) => {
 		return { inserted: next.value.inserted, outPath: next.value.outPath, table: next.value.table }
 	})
 
-	if (state.status === "error") return <Text color="red">{state.message}</Text>
+	if (state.status === "error") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

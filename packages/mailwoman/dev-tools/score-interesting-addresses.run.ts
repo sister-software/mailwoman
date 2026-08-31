@@ -8,9 +8,11 @@
  * candidate
  */
 
-import { type ComponentTag, decodeAsTuples } from "@mailwoman/core"
+import { type ComponentTag, groupTuplesByTag } from "@mailwoman/core"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { STREET_FAMILY_TAGS } from "@mailwoman/core/types"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { foldNFKCWhitespace } from "@mailwoman/normalize/fold"
 
 import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
 import { createRuntimePipeline } from "#index"
@@ -22,8 +24,6 @@ const { values } = parseArguments({
 		label: { type: "string", default: "candidate" },
 	},
 })
-
-const fold = (value: string): string => value.normalize("NFKC").toLocaleLowerCase().replaceAll(/\s+/gu, " ").trim()
 
 const fixtures = (await loadRegressionCases()).filter(
 	(row) => row.id.includes("-interesting-") && (!values.country || row.country === values.country.toUpperCase())
@@ -49,11 +49,7 @@ for (const locale of new Set(fixtures.map((row) => localeForCountry(row.country)
 
 	for (const row of fixtures.filter((fixture) => localeForCountry(fixture.country) === locale)) {
 		const result = await pipeline(row.input, { locale })
-		const emitted = new Map<ComponentTag, string[]>()
-
-		for (const [tag, value] of decodeAsTuples(result.tree)) {
-			emitted.set(tag, [...(emitted.get(tag) ?? []), value])
-		}
+		const emitted = groupTuplesByTag(result.tree)
 
 		let allHit = true
 
@@ -64,15 +60,11 @@ for (const locale of new Set(fixtures.map((row) => localeForCountry(row.country)
 			perTag.set(tag, bucket)
 
 			const actualValues =
-				tag === "street"
-					? ["street_prefix", "street_prefix_particle", "street", "street_suffix"].flatMap(
-							(part) => emitted.get(part as ComponentTag) ?? []
-						)
-					: (emitted.get(tag) ?? [])
+				tag === "street" ? STREET_FAMILY_TAGS.flatMap((part) => emitted.get(part) ?? []) : (emitted.get(tag) ?? [])
 
 			const actual = actualValues.join(" ")
 
-			if (fold(actual) === fold(expected)) {
+			if (foldNFKCWhitespace(actual) === foldNFKCWhitespace(expected)) {
 				bucket.hit++
 			} else {
 				allHit = false

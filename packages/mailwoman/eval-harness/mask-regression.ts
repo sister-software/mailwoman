@@ -46,13 +46,17 @@
  */
 
 import type { SystemCode } from "@mailwoman/codex"
-import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createScorer } from "@mailwoman/neural/scorer"
 
-import { loadPerTagEvalRows, rowsHaveTag, scorePerTagF1, UNFOLDED_ADDRESS_TAGS } from "#eval-harness/per-tag-f1"
+import {
+	loadPerTagEvalRows,
+	MASK_EVAL_LOCALES,
+	rowsHaveTag,
+	scoreConventionsMaskOffOn,
+	UNFOLDED_ADDRESS_TAGS,
+} from "#eval-harness/per-tag-f1"
 
 /**
  * Options for {@linkcode maskRegressionGate}.
@@ -91,27 +95,6 @@ export interface MaskRegressionOptions {
 }
 
 //#region Locale matrix (mirrors capability-manifest.ts)
-
-interface LocaleEvalSpec {
-	/**
-	 * The codex address-system this locale maps to (`us`, `fr`, …).
-	 */
-	system: SystemCode
-	/**
-	 * Eval JSONL files (raw + components). Multiple files are concatenated.
-	 */
-	files: string[]
-}
-
-/**
- * Same eval specs as the manifest generator. FR uses the dedicated street-prefix slice (`fr-street-prefix-real.jsonl`,
- * the #719 reproduction) so the essential affix capability is measurable — on the broad golden FR set the unfolded
- * `street_prefix` F1 is dominated by absent-gold rows and would under-measure the very capability this gate protects.
- */
-const LOCALES: LocaleEvalSpec[] = [
-	{ system: "us", files: ["data/eval/golden/v0.1.2/dev/us.jsonl"] },
-	{ system: "fr", files: ["data/eval/external/fr-street-prefix-real.jsonl"] },
-]
 
 /**
  * The per-tag vocabulary scored, UNFOLDED (street parts split — mirrors score-affix.ts / capability-manifest.ts). Every
@@ -164,36 +147,19 @@ export async function maskRegressionGate(
 
 	const deltas: Delta[] = []
 
-	for (const spec of LOCALES) {
+	for (const spec of MASK_EVAL_LOCALES) {
 		const rows = await loadPerTagEvalRows(spec.files)
 		report(`\n[${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
-		// Full SHIP-CONFIG otherwise (anchor-on + gazetteer-on — createScorer's defaults). Only the
-		// conventions channel toggles. `strict: true` fails closed if a declared channel can't be fed,
-		// so a stale/incomplete feed surfaces loudly rather than silently grading a handicapped model.
-		const base = {
+		// Default input mode ON PURPOSE — the capability-manifest generator's `inputMode: "formatted"`
+		// is a deliberate, score-relevant divergence (see `MaskOffOnOptions.inputMode`); this release
+		// check grades the default parse path.
+		const { off, on } = await scoreConventionsMaskOffOn(rows, TAGS, {
 			modelPath: MODEL,
 			tokenizerPath: TOKENIZER,
 			modelCardPath: MODEL_CARD,
 			anchorLookupPath: ANCHOR_LOOKUP,
 			gazetteerLexiconPath: GAZETTEER_LEXICON,
-			strict: true as const,
-		}
-
-		// mask-OFF: conventions disabled (the model's raw capability). createScorer warns about the
-		// declared-required override — expected.
-		const offScorer = await createScorer({ ...base, overrides: { conventions: false } })
-
-		const off = await scorePerTagF1(rows, TAGS, async (raw) => {
-			return decodeAsJSON(await offScorer.parse(raw)) as Record<string, string>
-		})
-
-		// mask-ON: conventions in `auto` mode (locale-head detection → the detected system's
-		// forbiddenTags applied as a hard emission mask). The SHIP behavior whose damage we measure.
-		const onScorer = await createScorer({ ...base, overrides: { conventions: "auto" } })
-
-		const on = await scorePerTagF1(rows, TAGS, async (raw) => {
-			return decodeAsJSON(await onScorer.parse(raw)) as Record<string, string>
 		})
 
 		for (const tag of TAGS) {
@@ -267,7 +233,7 @@ export async function maskRegressionGate(
 
 	report(
 		`\n✓ PASS — no tag regresses more than ${thresholdPp.toFixed(1)}pp under the conventions mask ` +
-			`(${LOCALES.length} locale(s), ${TAGS.length} tags each).`
+			`(${MASK_EVAL_LOCALES.length} locale(s), ${TAGS.length} tags each).`
 	)
 
 	return { pass: true, violations }

@@ -10,7 +10,7 @@
  *   re-exports the normalizer so the OSM SDK is a self-contained surface.
  */
 
-import type { StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 export {
 	normalizeStreetForKeyLocale,
@@ -52,6 +52,11 @@ const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	["pk", "en"],
 ])
 
+const registry = createStreetLocaleRegistry(
+	COUNTRY_TO_STREET_LOCALE,
+	"Add it to COUNTRY_TO_STREET_LOCALE and add the matching branch in normalizeStreetForKeyLocale before building its OSM rooftop shard."
+)
+
 /**
  * Resolve the street-normalization locale for a country. Throws for an unsupported country rather than silently folding
  * with the wrong rules — a shard built with the wrong normalizer keys every street incorrectly and looks fine until a
@@ -59,21 +64,12 @@ const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
  * before building its shard.
  */
 export function streetLocaleForCountry(countryCode: string): StreetLocale {
-	const locale = COUNTRY_TO_STREET_LOCALE.get(countryCode.toLowerCase())
-
-	if (!locale) {
-		throw new Error(
-			`No street-normalization locale registered for country "${countryCode}". ` +
-				`Add it to COUNTRY_TO_STREET_LOCALE and add the matching branch in normalizeStreetForKeyLocale before building its OSM rooftop shard.`
-		)
-	}
-
-	return locale
+	return registry.localeFor(countryCode)
 }
 
 /**
  * The countries with a registered OSM rooftop street locale (for CLI validation / help text).
  */
 export function supportedOSMCountries(): string[] {
-	return [...COUNTRY_TO_STREET_LOCALE.keys()]
+	return registry.supported()
 }

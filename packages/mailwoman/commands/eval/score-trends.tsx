@@ -10,7 +10,7 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Regenerate the per-tag score-trend page from evals/scores-by-version.json"
 
@@ -38,9 +38,7 @@ const EvalScoreTrends: ParsedCommandComponent<Options> = ({ options }) => {
 		return await buildScoreTrends(options)
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
-
-	if (state.status !== "done") return null
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	return (
 		<Text>

@@ -16,7 +16,8 @@
 export { classifyCodepoint, classifyToken, foldInputClass } from "#character-class"
 export { computeQueryShape } from "#compute"
 export { detectKnownFormats } from "#known-formats"
-export { detectRegionAbbreviations } from "#region-abbreviations"
+export { detectRegionAbbreviations, isRegionAbbreviationToken } from "#region-abbreviations"
+export type { RegionAbbreviationTokenOpts } from "#region-abbreviations"
 export { segment } from "#segmentation"
 
 export type {
@@ -24,13 +25,19 @@ export type {
 	ComputeQueryShapeOpts,
 	KnownFormat,
 	KnownFormatHit,
+	KnownFormatHitView,
 	NormalizedInputLite,
 	QueryShape,
+	QueryShapeFormatsView,
+	QueryShapeSegmentsView,
+	QueryShapeTokensView,
 	RegionAbbreviationHit,
 	Segment,
 	SegmentSeparator,
+	SegmentView,
 	SpanRange,
 	TokenCharacterClass,
 	TokenClass,
+	TokenClassView,
 	WhitespacePattern,
 } from "#types"

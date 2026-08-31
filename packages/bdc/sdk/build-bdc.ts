@@ -53,11 +53,11 @@
 import { pathExists, readDirectory, readFileRange } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent, movePath, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import {
-	CoverageBasis,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	LayerFreshnessPolicy,
 	LayerTier,
+	sourcePresentCoverageCells,
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
@@ -69,6 +69,7 @@ import type { FilerDatabase } from "@mailwoman/filer"
 // Only the TYPES are imported here; `import type` is fully erased.
 import type { FRN, ProviderListRow } from "@mailwoman/filer/sdk"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { beginBatched } from "@mailwoman/sqlite/batched"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
@@ -611,10 +612,10 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		)
 
 		let staged = 0
-		let batch = 0
 
 		progress("staging rows — raw prepared INSERT OR IGNORE on the natural key (the Redis-dedup replacement)")
-		db.exec("BEGIN")
+
+		const stageBatch = beginBatched(db, { rowsPerCommit: STAGE_BATCH_SIZE })
 
 		for await (const row of rowSource) {
 			insStage.run(
@@ -630,16 +631,10 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 
 			staged++
 
-			batch++
-
-			if (batch >= STAGE_BATCH_SIZE) {
-				db.exec("COMMIT")
-				db.exec("BEGIN")
-				batch = 0
-			}
+			stageBatch.rowWritten()
 		}
 
-		db.exec("COMMIT")
+		stageBatch.commit()
 
 		const stagedCountRow = db.prepare("SELECT COUNT(*) AS staged_count FROM bdc_stage").get() as {
 			staged_count: number
@@ -696,8 +691,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			"materializing bdc_availability — resolving block centroids to h3_cell (unknown geoids skipped, never guessed)"
 		)
 
-		db.exec("BEGIN")
-		batch = 0
+		const materializeBatch = beginBatched(db, { rowsPerCommit: STAGE_BATCH_SIZE })
 
 		for (const row of stageStmt.iterate() as IterableIterator<BDCStageRow>) {
 			let resolved = centroidCache.get(row.geoid)
@@ -753,16 +747,10 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			providers.add(row.provider_id)
 			coverage.set(resolved.coverageCell, (coverage.get(resolved.coverageCell) ?? 0) + 1)
 
-			batch++
-
-			if (batch >= STAGE_BATCH_SIZE) {
-				db.exec("COMMIT")
-				db.exec("BEGIN")
-				batch = 0
-			}
+			materializeBatch.rowWritten()
 		}
 
-		db.exec("COMMIT")
+		materializeBatch.commit()
 
 		progress(
 			`materialized ${inserted.toLocaleString()} row(s) across ${providers.size} provider(s) ` +
@@ -777,12 +765,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		// Coverage is SOURCE-LEVEL, not survey completeness — same convention build-poi.ts documents: a res-6 cell we
 		// have availability rows in is recorded at completeness 1.0. A cell absent from `layer_coverage` means no rows
 		// were observed there at all (the meaning-of-zero rule — missing = unknown, never `{completeness: 0}`).
-		const coverageCells = [...coverage.entries()].map(([h3Cell, observedRows]) => ({
-			h3Cell,
-			completeness: 1,
-			basis: CoverageBasis.SourcePresent,
-			observedRows,
-		}))
+		const coverageCells = sourcePresentCoverageCells(coverage)
 
 		await writeLayerCoverage(db, coverageCells)
 

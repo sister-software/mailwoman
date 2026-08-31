@@ -36,6 +36,7 @@ import { reconcileComponents } from "@mailwoman/formatter"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
+import { composeRaw } from "#adapters/utils"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
 /**
@@ -219,21 +220,6 @@ function composePostcode(r: NADRecord): string | undefined {
 	const plus4 = (r.Plus_4 ?? "").toString().trim()
 
 	return plus4 ? `${zip}-${plus4}` : zip
-}
-
-function composeRaw(parts: {
-	venue?: string
-	houseNumber?: string
-	street?: string
-	unit?: string
-	locality: string
-	region: string
-	postcode: string
-}): string {
-	const streetLine = [parts.houseNumber, parts.street, parts.unit].filter(isPresent).join(" ").trim()
-	const tail = `${parts.locality}, ${parts.region} ${parts.postcode}`
-
-	return [parts.venue, streetLine || undefined, tail].filter(isPresent).join(", ")
 }
 
 export function createUsgovNADAdapter(): CorpusAdapter {

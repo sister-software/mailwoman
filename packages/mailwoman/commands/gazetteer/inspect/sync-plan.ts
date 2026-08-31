@@ -13,6 +13,8 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { WOF_DATA_OWNER, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
+import { splitList } from "#cli-kit"
+
 /**
  * The GitHub organization holding the country data repositories.
  */
@@ -38,15 +40,6 @@ export interface DiscoveredRepo {
  * `whosonfirst-data` alone is excluded: that is the owner directory this command writes into, not a repository.
  */
 const REPO_NAME_PATTERN = /^whosonfirst(?:-data)?-[a-z0-9-]+$/
-
-function splitList(raw: string | undefined): string[] {
-	if (!raw) return []
-
-	return raw
-		.split(",")
-		.map((entry) => entry.trim())
-		.filter((entry) => entry.length > 0)
-}
 
 /**
  * Refuse a destination that is really a repository name.

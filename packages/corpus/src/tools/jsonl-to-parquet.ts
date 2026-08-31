@@ -36,7 +36,7 @@ import { parseJSONStrict } from "@mailwoman/core/objects"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { escapeSQLString } from "#utils/parquet"
+import { connectDuckDB, escapeSQLString } from "#utils/parquet"
 
 const REQUIRED_COLUMNS = [
 	"raw",
@@ -188,10 +188,7 @@ export async function jsonlToParquet(
 	const columnsLiteral = "{" + REQUIRED_COLUMNS.map((c) => `'${c}': '${COLUMN_TYPES[c]}'`).join(", ") + "}"
 	const selectList = REQUIRED_COLUMNS.join(", ")
 
-	// @duckdb/node-api is an optional peer — lazy import (the pipeline convention).
-	const { DuckDBInstance } = await import("@duckdb/node-api")
-	const instance = await DuckDBInstance.create()
-	const db = await instance.connect()
+	const db = await connectDuckDB()
 	// Row order is required: the overlay-manifest assembler records first/last source_id from
 	// shard order. `preserve_insertion_order` (DuckDB default) keeps output order = input order.
 	await db.run("SET preserve_insertion_order=true")

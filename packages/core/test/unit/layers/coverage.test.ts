@@ -24,7 +24,7 @@ describe("sourcePresentCoverageCells", () => {
 })
 
 describe("assertAreaAgreement", () => {
-	const area = { nestedKM2: 90, sourceKM2: 100, allExteriorKM2: 120, relativeGap: 0.1 }
+	const area = { witness: "source", nestedKM2: 90, sourceKM2: 100, allExteriorKM2: 120, relativeGap: 0.1 } as const
 
 	it("admits a gap within tolerance", () => {
 		expect(() => assertAreaAgreement("test build", area, 0.1)).not.toThrow()

@@ -28,7 +28,7 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/utils"
 import { basename, dirname, join } from "path-ts"
 
-import { escapeSQLString } from "#utils/parquet"
+import { connectDuckDB, escapeSQLString } from "#utils/parquet"
 
 interface ShardDescriptor {
 	split: string
@@ -59,10 +59,7 @@ async function descriptor(
 	split: string,
 	source: string
 ): Promise<ShardDescriptor> {
-	// @duckdb/node-api is an optional peer — lazy import (the pipeline convention).
-	const { DuckDBInstance } = await import("@duckdb/node-api")
-	const instance = await DuckDBInstance.create()
-	const db = await instance.connect()
+	const db = await connectDuckDB()
 	const result = await db.runAndReadAll(`SELECT source_id FROM read_parquet('${escapeSQLString(localPath)}')`)
 	const sids = result.getRowObjects().map((r) => r.source_id as string)
 

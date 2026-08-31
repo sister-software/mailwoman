@@ -59,6 +59,23 @@ export function escapeSQLString(value: string): string {
 }
 
 /**
+ * An open DuckDB connection, re-exported so consumers of {@link connectDuckDB} can name the type without their own
+ * static dependency on the optional peer.
+ */
+export type { DuckDBConnection } from "@duckdb/node-api"
+
+/**
+ * Open an in-memory DuckDB connection. `@duckdb/node-api` is an optional peer — lazy import (the pipeline convention),
+ * so the heavy native module loads only on the paths that read or write Parquet through DuckDB.
+ */
+export async function connectDuckDB(): Promise<import("@duckdb/node-api").DuckDBConnection> {
+	const { DuckDBInstance } = await import("@duckdb/node-api")
+	const instance = await DuckDBInstance.create()
+
+	return await instance.connect()
+}
+
+/**
  * Snappy is the only zstd-equivalent codec available in @dsnp/parquetjs 1.7.0.
  */
 export const SHARD_COMPRESSION = "SNAPPY" as const

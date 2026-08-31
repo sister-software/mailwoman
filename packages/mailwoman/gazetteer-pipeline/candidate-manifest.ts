@@ -24,8 +24,10 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { LayerFreshnessPolicy, type LayerManifest, LayerTier } from "@mailwoman/core/layers"
 import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
-import { getRow } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { tableExists } from "@mailwoman/sqlite/introspection"
+
+import { probeManifest } from "#data-inventory"
 
 /**
  * The ancestor's identity as this manifest records it.
@@ -36,26 +38,21 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 export async function ancestorIdentity(adminDBPath: string): Promise<string> {
 	if (!(await pathExists(adminDBPath))) return "unknown (admin gazetteer not found)"
 
-	let db: DatabaseClient<LayerContractDatabase> | undefined
+	const probed = probeManifest(adminDBPath)
 
+	if (probed.error) return `unknown (${probed.error})`
+
+	if (probed.manifest) return `${probed.manifest.name}@${probed.manifest.version}`
+
+	// `probeManifest` answers `{}` for a missing table and an empty one alike — tell those apart.
 	try {
-		db = new DatabaseClient<LayerContractDatabase>(adminDBPath, { readOnly: true })
+		using db = new DatabaseClient<LayerContractDatabase>(adminDBPath, { readOnly: true })
 
-		const present = db
-			.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'layer_manifest' LIMIT 1")
-			.get()
-
-		if (!present) return "unknown (admin gazetteer predates the layer contract)"
-
-		const row = getRow<{ name: string; version: string }>(
-			db.prepare("SELECT name, version FROM layer_manifest LIMIT 1")
-		)
-
-		return row ? `${row.name}@${row.version}` : "unknown (admin manifest is empty)"
+		return tableExists(db, "layer_manifest")
+			? "unknown (admin manifest is empty)"
+			: "unknown (admin gazetteer predates the layer contract)"
 	} catch (error) {
 		return `unknown (${(error as Error).message})`
-	} finally {
-		db?.destroy()
 	}
 }
 

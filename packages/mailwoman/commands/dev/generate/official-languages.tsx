@@ -10,7 +10,13 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	reportToStderr,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -36,16 +42,14 @@ interface Options {
 	cldrVersion: string
 }
 
-const report = (line: string): void => console.error(line)
-
 const DevGenerateOfficialLanguages: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { generateOfficialLanguages } = await import("@mailwoman/codex/tools")
 
-		return generateOfficialLanguages({ cldrDir: options.cldrDir, cldrVersion: options.cldrVersion }, report)
+		return generateOfficialLanguages({ cldrDir: options.cldrDir, cldrVersion: options.cldrVersion }, reportToStderr)
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

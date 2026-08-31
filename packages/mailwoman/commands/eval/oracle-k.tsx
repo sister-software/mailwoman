@@ -9,9 +9,7 @@
  *   model's emissions. Informational (always exits 0) — the standing floors stay on `eval parity`.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Largest useful hypothesis set for the bounded oracle probe.
@@ -79,7 +77,7 @@ const EvalOracleK: ParsedCommandComponent<Options> = ({ options }) => {
 		(exitCode) => exitCode
 	)
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	// The runner narrates its table on stdout.
 	return null

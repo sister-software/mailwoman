@@ -56,15 +56,14 @@ import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
 import { $private } from "@mailwoman/core/env"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
-import { openReadStream, openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
+import { openReadStream, openWriteStream, pipeline } from "@mailwoman/core/fs/streams"
 import { movePath, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { runFile, spawnProcess } from "@mailwoman/core/process"
 import { sha256File } from "@mailwoman/core/utils"
-import { sleep } from "@mailwoman/core/utils/sleep"
 import { join } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
-import { isTransientStatus, writeManifest } from "#tools/fetch/download"
+import { streamDownload, writeManifest } from "#tools/fetch/download"
 
 /**
  * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
@@ -124,57 +123,6 @@ async function countLines(path: string): Promise<number> {
 	}
 
 	return count
-}
-
-interface StreamDownloadOpts {
-	headers?: Record<string, string>
-	timeoutMs: number
-	retries: number
-	retryDelayMs: number
-}
-
-/**
- * Stream an HTTP download to disk, returning the final HTTP status (0 on network error after retries). Follows
- * redirects (the OA download endpoint 302s to a pre-signed S3 URL).
- *
- * NOTE(phase1): kept local instead of the shared `downloadToFile` — this one streams a multi-GB body to disk (the
- * shared util buffers via `arrayBuffer()`) and returns the HTTP status instead of throwing, which the caller needs for
- * its two-URL fallback ladder.
- */
-async function streamDownload(url: string, dest: string, opts: StreamDownloadOpts): Promise<number> {
-	for (let attempt = 0; attempt <= opts.retries; attempt++) {
-		try {
-			const res = await fetch(url, {
-				headers: opts.headers ?? {},
-				redirect: "follow",
-				signal: AbortSignal.timeout(opts.timeoutMs),
-			})
-
-			if (res.ok && res.body) {
-				await pipeline(Readable.fromWeb(res.body), openWriteStream(dest))
-
-				return res.status
-			}
-
-			if (attempt < opts.retries && isTransientStatus(res.status)) {
-				await sleep(opts.retryDelayMs)
-
-				continue
-			}
-
-			return res.status
-		} catch {
-			if (attempt < opts.retries) {
-				await sleep(opts.retryDelayMs)
-
-				continue
-			}
-
-			return 0
-		}
-	}
-
-	return 0
 }
 
 /**

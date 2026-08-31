@@ -24,21 +24,18 @@
  *   behind it, so the receipt states on whose authority each answered row's category was chosen.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { resolveWeights } from "@mailwoman/neural/weights"
 import { JSONSpliterator } from "spliterator"
 
-import { type LayerManifest, probeManifest } from "#data-inventory"
 import {
 	createPOIBoardPipeline,
 	POI_BOARD_FIXTURES,
 	type POIBoardFixture,
 	type POIBoardOptions,
 	type POIBoardOutcome,
-	type POIBoardResolverBackend,
 } from "#eval-harness/poi-board"
+import { type PreregisteredArtifactIdentity, readArtifactIdentity } from "#eval-harness/preregistration"
 import {
 	computeProbeCounts,
 	decideProbe,
@@ -65,19 +62,7 @@ import {
  */
 export type ProbeArm = string
 
-export interface ProbeArtifactIdentity {
-	poiDatabasePath: string
-	/**
-	 * The database's own `layer_manifest` row, or the reason it could not be read. Never silently absent: an unstamped
-	 * artifact and an unreadable one are different findings, and both matter to a reproduction.
-	 */
-	poiLayerManifest?: LayerManifest
-	poiLayerManifestNote?: string
-	resolverBackend: "candidate" | "wof-fts" | "none"
-	weightsLocale: string
-	weightsModelPath: string
-	weightsVersion: string
-}
+export type ProbeArtifactIdentity = PreregisteredArtifactIdentity
 
 /**
  * One recorded firing of the injected route, addressed to the row it happened on.
@@ -143,46 +128,6 @@ export interface SemanticProbeOptions extends POIBoardOptions {
 	 * `false` — the default — runs the un-injected pipeline, which is what the frozen baseline was measured against.
 	 */
 	semanticObservation?: boolean
-}
-
-interface ModelCard {
-	version: string
-}
-
-async function readWeightsIdentity(options: SemanticProbeOptions): Promise<{
-	weightsLocale: string
-	weightsModelPath: string
-	weightsVersion: string
-}> {
-	const locale = options.locale ?? "en-US"
-	const resolved = await resolveWeights({ locale, cacheRoot: options.weightsCacheRoot })
-	const cardPath = resolved.modelCardPath ?? resolved.baseModelCardPath
-
-	if (!cardPath) {
-		return { weightsLocale: locale, weightsModelPath: resolved.modelPath, weightsVersion: "no model-card resolved" }
-	}
-
-	const card = await readLocalJSONFile<ModelCard>(cardPath)
-
-	return { weightsLocale: locale, weightsModelPath: resolved.modelPath, weightsVersion: card.version }
-}
-
-async function readArtifactIdentity(
-	db: string,
-	backend: POIBoardResolverBackend,
-	options: SemanticProbeOptions
-): Promise<ProbeArtifactIdentity> {
-	const probed = probeManifest(db)
-
-	return {
-		poiDatabasePath: db,
-		...(probed.manifest ? { poiLayerManifest: probed.manifest } : {}),
-		...(probed.manifest
-			? {}
-			: { poiLayerManifestNote: probed.error ?? "the database carries no layer_manifest table" }),
-		resolverBackend: backend,
-		...(await readWeightsIdentity(options)),
-	}
 }
 
 /**

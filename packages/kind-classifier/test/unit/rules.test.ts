@@ -16,11 +16,12 @@ import {
 	scoreVenueLandmark,
 } from "@mailwoman/kind-classifier/rules"
 import type { NormalizedInputLite, QueryShapeLike } from "@mailwoman/kind-classifier/types"
+import type { KnownFormat } from "@mailwoman/query-shape"
 import { expect, test } from "vitest"
 
 const input = (normalized: string): NormalizedInputLite => ({ raw: normalized, normalized })
 
-const fmt = (format: string, start: number, end: number, confidence = 0.9) => ({
+const fmt = (format: KnownFormat, start: number, end: number, confidence = 0.9) => ({
 	format,
 	span: { start, end },
 	confidence,

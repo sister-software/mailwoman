@@ -24,6 +24,9 @@
  *   answer instead of three hand-typed URLs.
  */
 
+import { errorMessage } from "@mailwoman/core/errors/schema"
+import { runFile } from "@mailwoman/core/process"
+
 /**
  * The GitHub org that owns our forks.
  */
@@ -112,4 +115,43 @@ export async function resolveWOFRepoOrigin(repo: string, probe: ForkProbe): Prom
 			: `no ${FORK_ORG}/${repo} fork`
 
 	return { repo, org: UPSTREAM_ORG, url: repoURL(UPSTREAM_ORG, repo), source: "upstream", reason }
+}
+
+/**
+ * The `gh`-backed {@linkcode ForkProbe} the CLI passes — asks GitHub what our fork IS, not merely whether it exists.
+ * `compare` answers `ahead_by` — commits the fork holds that upstream does not — and that is the only thing that makes
+ * a fork worth preferring, since the fork org holds a fork of every WOF repo whether or not we have corrected it.
+ *
+ * A THROW is not "no fork": {@linkcode resolveWOFRepoOrigin} keeps that distinction, so a failed lookup is recorded as
+ * upstream-with-a-caveat rather than upstream-as-established-fact.
+ */
+export const githubForkProbe: ForkProbe = async (org, repo) => {
+	try {
+		await runFile("gh", ["api", `/repos/${org}/${repo}`, "--jq", ".name"])
+	} catch (error) {
+		const stderr = error instanceof Error && "stderr" in error && typeof error.stderr === "string" ? error.stderr : ""
+
+		// A 404 is a real answer: the fork does not exist. Anything else (no auth, no network, rate limit) is a
+		// failed lookup, and must reach the resolver as a throw so it is not recorded as absence.
+		if (/HTTP 404|Not Found/i.test(`${errorMessage(error)}${stderr}`)) {
+			return "absent"
+		}
+
+		throw error
+	}
+
+	try {
+		const { stdout } = await runFile("gh", [
+			"api",
+			`/repos/${org}/${repo}/compare/${UPSTREAM_ORG}:HEAD...${org}:HEAD`,
+			"--jq",
+			".ahead_by",
+		])
+
+		return Number(stdout.trim()) > 0 ? "diverged" : "clean"
+	} catch {
+		// The fork is known to exist; only the comparison failed. Calling that "diverged" would prefer a
+		// possibly-stale snapshot on no evidence.
+		return "clean"
+	}
 }

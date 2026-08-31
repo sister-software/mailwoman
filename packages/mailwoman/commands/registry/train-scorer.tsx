@@ -11,7 +11,13 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	reportToStderr,
+	useCommandTask,
+} from "#cli-kit"
 
 const variants = ["gbt", "cross-gbt", "org-cross-gbt"] as const
 
@@ -53,8 +59,6 @@ interface Options {
 
 type Variant = (typeof variants)[number]
 
-const report = (line: string): void => console.error(line)
-
 async function runVariant(variant: Variant, options: Options): Promise<{ out: string; pairs: number }> {
 	const { trainCrossSourceGBT, trainDedupGBT, trainOrgCrossSourceGBT } = await import("@mailwoman/registry/tools")
 	const { evalGeocoderFactory } = await import("#commands/registry/run")
@@ -71,7 +75,7 @@ async function runVariant(variant: Variant, options: Options): Promise<{ out: st
 		case "gbt":
 			return trainDedupGBT(
 				{ ...base, state: options.state, npis: options.npis, cost: options.cost, date: options.date },
-				report
+				reportToStderr
 			)
 		case "cross-gbt":
 			return trainCrossSourceGBT(
@@ -82,12 +86,12 @@ async function runVariant(variant: Variant, options: Options): Promise<{ out: st
 					precisionBar: options.precisionBar,
 					date: options.date,
 				},
-				report
+				reportToStderr
 			)
 		case "org-cross-gbt":
 			return trainOrgCrossSourceGBT(
 				{ ...base, cap: options.cap, precisionBar: options.precisionBar, date: options.date },
-				report
+				reportToStderr
 			)
 	}
 }
@@ -95,7 +99,7 @@ async function runVariant(variant: Variant, options: Options): Promise<{ out: st
 const RegistryTrainScorer: ParsedCommandComponent<Options, [Variant]> = ({ options, args }) => {
 	const state = useCommandTask(() => runVariant(args[0], options))
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

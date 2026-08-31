@@ -20,7 +20,7 @@ import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -52,12 +52,10 @@ const GazetteerAffixRelabel: ParsedCommandComponent<Options> = ({ options }) => 
 		// ("nw") and the de-spaced name ("northwest"), same surfaces matchLeadingDirectional accepts.
 		const directionals: Record<string, string> = {}
 
-		for (const [name, abbr] of DirectionalToAbbreviationMap) {
-			directionals[abbr.toLowerCase()] = abbr
-			directionals[name.replaceAll(/\s+/g, "").toLowerCase()] = abbr
-		}
-
-		for (const [abbr, name] of AbbreviationToDirectional) {
+		for (const [name, abbr] of [
+			...DirectionalToAbbreviationMap,
+			...[...AbbreviationToDirectional].map(([fromAbbr, fromName]): [string, string] => [fromName, fromAbbr]),
+		]) {
 			directionals[abbr.toLowerCase()] = abbr
 			directionals[name.replaceAll(/\s+/g, "").toLowerCase()] = abbr
 		}
@@ -91,7 +89,7 @@ const GazetteerAffixRelabel: ParsedCommandComponent<Options> = ({ options }) => 
 		]
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

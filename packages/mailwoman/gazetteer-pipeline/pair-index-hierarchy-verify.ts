@@ -43,6 +43,8 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 
+import { resolveHierarchyRunInputs } from "#gazetteer-pipeline/pair-index-hierarchy-probe"
+
 /**
  * Mirror of the builder's per-country WOF parent-placetype sets — restated here on purpose (see file header).
  */
@@ -167,8 +169,7 @@ async function main(): Promise<void> {
 		},
 	})
 
-	const countries = values.countries!.split(",").map((c) => c.trim().toLowerCase())
-	const dbPath = values.db ?? dataRootPath("wof", "admin-global-priority.db")
+	const { countries, dbPath } = resolveHierarchyRunInputs(values)
 	const dir = values.dir ?? dataRootPath("wof", "pair-index-hierarchy-probe")
 
 	using db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })

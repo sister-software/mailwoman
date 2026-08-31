@@ -47,7 +47,7 @@ import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/reso
 // one-normalizer discipline that keeps the candidate table's keys reachable by construction.
 
 import type { DualRole, MailwomanLookupLike } from "./resources"
-import { rowsFromExec } from "./sqljs-rows.ts"
+import { memoizeResettable, rowsFromExec, tableExists } from "./sqljs-rows.ts"
 
 /**
  * The candidate columns this reader probes — a typed projection of the shared {@link CandidateTable}.
@@ -220,8 +220,6 @@ interface SchemaFacts {
  */
 export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 	#worker: HTTPVFSWorker
-	#schemaProbe: Promise<SchemaFacts> | undefined
-	#dualRoles: Promise<Map<number, DualRole[]>> | undefined
 
 	constructor(worker: HTTPVFSWorker) {
 		this.#worker = worker
@@ -233,92 +231,74 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 	 * full network RTT. Memoized as the in-flight promise so concurrent callers share it; a rejection clears the memo so
 	 * a transient failure can retry.
 	 */
-	#schema(): Promise<SchemaFacts> {
-		if (!this.#schemaProbe) {
-			this.#schemaProbe = this.#worker.db
-				.exec(
-					`SELECT
-						(SELECT count(*) FROM sqlite_master WHERE type='table' AND name='place_population') AS has_pop,
-						(SELECT count(*) FROM sqlite_master WHERE type='table' AND name='place_abbr') AS has_abbr,
-						(SELECT count(*) FROM sqlite_master WHERE type='table' AND name='coincident_roles') AS has_roles`
-				)
-				.then((res) => {
-					const row = rowsFromExec(res)[0] ?? {}
+	readonly #schema = memoizeResettable(() =>
+		this.#worker.db
+			.exec(
+				`SELECT
+					(SELECT count(*) FROM sqlite_master WHERE type='table' AND name='place_population') AS has_pop,
+					(SELECT count(*) FROM sqlite_master WHERE type='table' AND name='place_abbr') AS has_abbr,
+					(SELECT count(*) FROM sqlite_master WHERE type='table' AND name='coincident_roles') AS has_roles`
+			)
+			.then((res): SchemaFacts => {
+				const row = rowsFromExec(res)[0] ?? {}
 
-					return {
-						hasPop: Number(row.has_pop) > 0,
-						hasAbbr: Number(row.has_abbr) > 0,
-						hasRoles: Number(row.has_roles) > 0,
-					}
-				})
-
-			this.#schemaProbe.catch(() => {
-				this.#schemaProbe = undefined
+				return {
+					hasPop: Number(row.has_pop) > 0,
+					hasAbbr: Number(row.has_abbr) > 0,
+					hasRoles: Number(row.has_roles) > 0,
+				}
 			})
-		}
-
-		return this.#schemaProbe
-	}
+	)
 
 	/**
 	 * The full dual-role relation, loaded once (in-flight-memoized; the relation is ~hundreds of rows).
 	 */
-	#dualRolesMap(): Promise<Map<number, DualRole[]>> {
-		if (!this.#dualRoles) {
-			this.#dualRoles = (async () => {
-				const map = new Map<number, DualRole[]>()
-				const { hasRoles } = await this.#schema()
+	readonly #dualRolesMap = memoizeResettable(async (): Promise<Map<number, DualRole[]>> => {
+		const map = new Map<number, DualRole[]>()
+		const { hasRoles } = await this.#schema()
 
-				if (!hasRoles) return map
+		if (!hasRoles) return map
 
-				const rows = rowsFromExec(
-					await this.#worker.db.exec(
-						`SELECT cr.admin_id AS adminID, cr.locality_id AS localityID, cr.relationship_type AS rel,
-							a.name AS adminName, a.placetype AS adminType, l.name AS locName, l.placetype AS locType
-						FROM coincident_roles cr JOIN spr a ON a.id = cr.admin_id JOIN spr l ON l.id = cr.locality_id`
-					)
-				)
+		const rows = rowsFromExec(
+			await this.#worker.db.exec(
+				`SELECT cr.admin_id AS adminID, cr.locality_id AS localityID, cr.relationship_type AS rel,
+					a.name AS adminName, a.placetype AS adminType, l.name AS locName, l.placetype AS locType
+				FROM coincident_roles cr JOIN spr a ON a.id = cr.admin_id JOIN spr l ON l.id = cr.locality_id`
+			)
+		)
 
-				const push = (key: number, role: DualRole): void => {
-					const arr = map.get(key) ?? []
-					arr.push(role)
-					map.set(key, arr)
-				}
+		const push = (key: number, role: DualRole): void => {
+			const arr = map.get(key) ?? []
+			arr.push(role)
+			map.set(key, arr)
+		}
 
-				for (const r of rows) {
-					const adminID = Number(r.adminID)
-					const localityID = Number(r.localityID)
-					const rel = String(r.rel)
+		for (const r of rows) {
+			const adminID = Number(r.adminID)
+			const localityID = Number(r.localityID)
+			const rel = String(r.rel)
 
-					// Resolved place is the locality → it ALSO acts as the region (the admin partner).
-					push(localityID, {
-						id: adminID,
-						name: String(r.adminName),
-						placetype: String(r.adminType),
-						relationshipType: rel,
-						role: "region",
-					})
+			// Resolved place is the locality → it ALSO acts as the region (the admin partner).
+			push(localityID, {
+				id: adminID,
+				name: String(r.adminName),
+				placetype: String(r.adminType),
+				relationshipType: rel,
+				role: "region",
+			})
 
-					// Resolved place is the admin → it ALSO acts as the locality.
-					push(adminID, {
-						id: localityID,
-						name: String(r.locName),
-						placetype: String(r.locType),
-						relationshipType: rel,
-						role: "locality",
-					})
-				}
-
-				return map
-			})()
-
-			this.#dualRoles.catch(() => {
-				this.#dualRoles = undefined
+			// Resolved place is the admin → it ALSO acts as the locality.
+			push(adminID, {
+				id: localityID,
+				name: String(r.locName),
+				placetype: String(r.locType),
+				relationshipType: rel,
+				role: "locality",
 			})
 		}
 
-		return this.#dualRoles
-	}
+		return map
+	})
 
 	/**
 	 * Dual-role lookup (#402): a city-state / capital-seat place holds two admin tiers under one name (Berlin is both a
@@ -513,19 +493,6 @@ interface CandidateCodeMaps {
  */
 export class WOFCandidateTableLookup implements MailwomanLookupLike {
 	#worker: HTTPVFSWorker
-	#codes: Promise<CandidateCodeMaps> | undefined
-	/**
-	 * Memoized presence of the #741 `postal_city_candidate` side-index (one worker round trip).
-	 */
-	#hasPostalCity: Promise<boolean> | undefined
-	/**
-	 * Memoized column set of the `candidate` table (one worker round trip). The reader must stay correct against EVERY
-	 * hosted artifact vintage — the live demo points at whatever `ADMIN_GAZETTEER_VERSION` names, which can trail this
-	 * code — so the probe SELECT names `population` / `is_primary` / `importance` only when the artifact carries them,
-	 * and each consumer degrades: no `is_primary` → the primary-preference re-rank no-ops (population order, today's
-	 * behavior); no `importance` → no fame prior. Mirrors the Node reader's `hasColumn` guard.
-	 */
-	#candidateColumns: Promise<Set<string>> | undefined
 
 	constructor(worker: HTTPVFSWorker) {
 		this.#worker = worker
@@ -536,68 +503,45 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 	 * the postal-city probe never fires, so resolution is byte-identical to pre-#741. Mirrors the Node
 	 * `WOFCandidateTableLookup`'s existence-gated probe.
 	 */
-	#postalCityPresent(): Promise<boolean> {
-		if (!this.#hasPostalCity) {
-			this.#hasPostalCity = this.#worker.db
-				.exec(`SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name='postal_city_candidate'`)
-				.then((res) => Number(rowsFromExec(res)[0]?.n ?? 0) > 0)
-
-			this.#hasPostalCity.catch(() => {
-				this.#hasPostalCity = undefined
-			})
-		}
-
-		return this.#hasPostalCity
-	}
+	readonly #postalCityPresent = memoizeResettable(() => tableExists(this.#worker, "postal_city_candidate"))
 
 	/**
-	 * The candidate table's column names, memoized.
+	 * Memoized column set of the `candidate` table (one worker round trip). The reader must stay correct against EVERY
+	 * hosted artifact vintage — the live demo points at whatever `ADMIN_GAZETTEER_VERSION` names, which can trail this
+	 * code — so the probe SELECT names `population` / `is_primary` / `importance` only when the artifact carries them,
+	 * and each consumer degrades: no `is_primary` → the primary-preference re-rank no-ops (population order, today's
+	 * behavior); no `importance` → no fame prior. Mirrors the Node reader's `hasColumn` guard.
 	 */
-	#columns(): Promise<Set<string>> {
-		if (!this.#candidateColumns) {
-			this.#candidateColumns = this.#worker.db
-				.exec(`SELECT name FROM pragma_table_info('candidate')`)
-				.then((res) => new Set(rowsFromExec(res).map((r) => String(r.name))))
+	readonly #columns = memoizeResettable(async (): Promise<Set<string>> => {
+		const res = await this.#worker.db.exec(`SELECT name FROM pragma_table_info('candidate')`)
 
-			this.#candidateColumns.catch(() => {
-				this.#candidateColumns = undefined
-			})
+		return new Set(rowsFromExec(res).map((r) => String(r.name)))
+	})
+
+	/**
+	 * Cached id↔text maps from the candidate DB's tiny code tables (one probe, memoized).
+	 */
+	readonly #codeMaps = memoizeResettable(async (): Promise<CandidateCodeMaps> => {
+		const cc = rowsFromExec(await this.#worker.db.exec("SELECT id, code FROM country_codes"))
+		const pt = rowsFromExec(await this.#worker.db.exec("SELECT id, placetype FROM placetype_codes"))
+		const countryToID = new Map<string, number>()
+		const idToCountry = new Map<number, string>()
+
+		for (const r of cc) {
+			countryToID.set(String(r.code).toUpperCase(), Number(r.id))
+			idToCountry.set(Number(r.id), String(r.code).toUpperCase())
 		}
 
-		return this.#candidateColumns
-	}
+		const placetypeToID = new Map<string, number>()
+		const idToPlacetype = new Map<number, string>()
 
-	#codeMaps(): Promise<CandidateCodeMaps> {
-		if (!this.#codes) {
-			this.#codes = (async () => {
-				const cc = rowsFromExec(await this.#worker.db.exec("SELECT id, code FROM country_codes"))
-				const pt = rowsFromExec(await this.#worker.db.exec("SELECT id, placetype FROM placetype_codes"))
-				const countryToID = new Map<string, number>()
-				const idToCountry = new Map<number, string>()
-
-				for (const r of cc) {
-					countryToID.set(String(r.code).toUpperCase(), Number(r.id))
-					idToCountry.set(Number(r.id), String(r.code).toUpperCase())
-				}
-
-				const placetypeToID = new Map<string, number>()
-				const idToPlacetype = new Map<number, string>()
-
-				for (const r of pt) {
-					placetypeToID.set(String(r.placetype), Number(r.id))
-					idToPlacetype.set(Number(r.id), String(r.placetype))
-				}
-
-				return { countryToID, idToCountry, placetypeToID, idToPlacetype }
-			})()
-
-			this.#codes.catch(() => {
-				this.#codes = undefined
-			})
+		for (const r of pt) {
+			placetypeToID.set(String(r.placetype), Number(r.id))
+			idToPlacetype.set(Number(r.id), String(r.placetype))
 		}
 
-		return this.#codes
-	}
+		return { countryToID, idToCountry, placetypeToID, idToPlacetype }
+	})
 
 	/**
 	 * Pull the code tables + a representative probe through the VFS during browser idle.

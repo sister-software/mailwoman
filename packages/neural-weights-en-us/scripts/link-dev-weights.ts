@@ -40,23 +40,22 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { readLocalTextFile, statPath, pathExists, readLocalJSONFile, readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { spawnProcessSync } from "@mailwoman/core/process"
-import { dataRootPath, md5File, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import { md5Hex } from "@mailwoman/core/utils/hash"
 import {
+	buildPairIndexOverlay,
 	linkForce,
-	pairIndexStaleReason,
-	peekPairIndexHeaderFields,
-	warnIfFSTStale,
+	linkLocaleFST,
+	linkSoftFeedSibling,
+	linkStreetMorphologyFST,
+	PAIR_INDEX_DELTA,
+	PAIR_INDEX_PARENT_DELTA,
+	PAIR_INDEX_TRANSITION_BETA,
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 import { resolvePath } from "path-ts"
-
-/**
- * Hex characters in an md5 digest.
- */
-const MD5_HEX_LENGTH = 32
 
 /**
  * --- current default -------------- 9.1.0 ships the v4.4.0-suffix-boundary-v2 step-60000 int8 (the suffix-boundary
@@ -201,52 +200,33 @@ if (!TOKENIZER_OVERRIDDEN) {
  * in place via the compiled `gazetteer postcode-binary` CLI (skip-if-exists — it rebuilds in seconds, and the shard is
  * versionless on disk, unlike en-gb's md5-guarded pair index).
  */
-const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
-/**
- * Country-surface lexicon generated into the repo by the codex build.
- */
-const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
+await linkSoftFeedSibling(
+	repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json"),
+	resolvePath(DEST_DIR, "anchor-lexicon-v1.json"),
+	"gazetteer channel will resolve OFF in this worktree."
+)
 
-if (await pathExists(SRC_GAZETTEER_LEXICON)) {
-	await linkForce(SRC_GAZETTEER_LEXICON, resolvePath(DEST_DIR, "anchor-lexicon-v1.json"))
-
-	console.log(`linked ${DEST_DIR}/anchor-lexicon-v1.json`)
-} else {
-	console.error(`WARNING: missing ${SRC_GAZETTEER_LEXICON} — gazetteer channel will resolve OFF in this worktree.`)
-}
-
-if (await pathExists(SRC_COUNTRY_LEXICON)) {
-	await linkForce(SRC_COUNTRY_LEXICON, resolvePath(DEST_DIR, "country-surface-lexicon-v1.json"))
-
-	console.log(`linked ${DEST_DIR}/country-surface-lexicon-v1.json`)
-} else {
-	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
-}
+await linkSoftFeedSibling(
+	repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json"),
+	resolvePath(DEST_DIR, "country-surface-lexicon-v1.json"),
+	"country channel will resolve OFF in this worktree."
+)
 
 // Evidence-bundle lexicons (Option-A, v3.23): street-type is a repo file; locality-surface lives in
 // the DATA ROOT (~7 MB, never in git) — a fresh worktree without $MAILWOMAN_DATA_ROOT parses with the
 // locality channel resolving OFF (degrade-absent for a card that doesn't require it; fail-closed once
 // the bundle card ships, which is the intended loud signal).
-const SRC_STREET_TYPE_LEXICON = repoRootPath("data", "gazetteer", "street-type-lexicon-v3.json")
-const SRC_LOCALITY_SURFACE_LEXICON = dataRootPath("gazetteer", "locality-surface-lexicon-v7.json")
+await linkSoftFeedSibling(
+	repoRootPath("data", "gazetteer", "street-type-lexicon-v3.json"),
+	resolvePath(DEST_DIR, "street-type-lexicon-v3.json"),
+	"street_type channel will resolve OFF in this worktree."
+)
 
-if (await pathExists(SRC_STREET_TYPE_LEXICON)) {
-	await linkForce(SRC_STREET_TYPE_LEXICON, resolvePath(DEST_DIR, "street-type-lexicon-v3.json"))
-
-	console.log(`linked ${DEST_DIR}/street-type-lexicon-v3.json`)
-} else {
-	console.error(`WARNING: missing ${SRC_STREET_TYPE_LEXICON} — street_type channel will resolve OFF in this worktree.`)
-}
-
-if (await pathExists(SRC_LOCALITY_SURFACE_LEXICON)) {
-	await linkForce(SRC_LOCALITY_SURFACE_LEXICON, resolvePath(DEST_DIR, "locality-surface-lexicon-v7.json"))
-
-	console.log(`linked ${DEST_DIR}/locality-surface-lexicon-v7.json`)
-} else {
-	console.error(
-		`WARNING: missing ${SRC_LOCALITY_SURFACE_LEXICON} — locality_surface channel will resolve OFF in this worktree.`
-	)
-}
+await linkSoftFeedSibling(
+	String(dataRootPath("gazetteer", "locality-surface-lexicon-v7.json")),
+	resolvePath(DEST_DIR, "locality-surface-lexicon-v7.json"),
+	"locality_surface channel will resolve OFF in this worktree."
+)
 
 /**
  * WOF postcode database the postcode binary is built from.
@@ -287,203 +267,26 @@ if (await pathExists(POSTCODE_BIN_DEST)) {
 	console.log(`built ${POSTCODE_BIN_DEST}`)
 }
 
-/**
- * Per-locale FST gazetteer (FST-distribution arc, 2026-07-25): symlink the shared build artifact
- * ($MAILWOMAN_DATA_ROOT/wof/fst-per-locale/) into the package so `resolveWeights` surfaces `fstPath` in dev and the
- * runtime pipeline can auto-wire the gazetteer + street-context gate. The publish flow stages the real binary
- * (release-sequenced).
- */
-const FST_SRC = dataRootPath("wof", "fst-per-locale", "fst-en-us.bin")
-/**
- * Where the locale FST is written — a soft-feed sibling, absent in a lean install.
- */
-const FST_DEST = resolvePath(DEST_DIR, "fst-en-us.bin")
-
-if (await pathExists(FST_SRC)) {
-	await linkForce(FST_SRC, FST_DEST)
-
-	console.log(`linked fst-en-us.bin ← ${FST_SRC}`)
-
-	await warnIfFSTStale(FST_SRC, "en-us")
-} else {
-	console.error(`WARNING: missing ${FST_SRC} — the FST gazetteer default will resolve OFF for this locale.`)
-}
-
-/**
- * Street-morphology FST (static-index candidate 1, 2026-07-26): symlink the sealed locale-general artifact
- * ($MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin, `mailwoman gazetteer build street-morphology`) so
- * `resolveWeights` surfaces `streetMorphologyPath` in dev and the street-context gate (#1315) deserializes the artifact
- * instead of rebuilding from dictionaries. Missing is non-fatal — the runtime loader's dictionary-build fallback covers
- * it.
- */
-const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
-/**
- * Where the street-morphology FST is written — a soft-feed sibling, absent in a lean install.
- */
-const MORPHOLOGY_DEST = resolvePath(DEST_DIR, "fst-street-morphology.bin")
-
-if (await pathExists(MORPHOLOGY_SRC)) {
-	await linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
-
-	console.log(`linked fst-street-morphology.bin ← ${MORPHOLOGY_SRC}`)
-} else {
-	console.error(
-		`WARNING: missing ${MORPHOLOGY_SRC} — the street-context gate falls back to the per-process dictionary build.`
-	)
-}
+await linkLocaleFST(DEST_DIR, "en-us")
+await linkStreetMorphologyFST(DEST_DIR)
 
 /**
  * Placetype-pair index (hierarchy campaign R5, 2026-08-01): build `pair-index-us.bin` from the WOF admin DB so
  * `resolveWeights` surfaces `pairIndexPath` in dev and the placetype-pair prior is live for en-us.
  *
  * Unlike en-gb there is NO source CSV — the US has no postal register carrying dependent localities (USPS routes
- * city/state/ZIP), so every pair comes from `--borough-db`. The command refuses a build with no source of any kind, so
- * dropping the flag fails loud rather than writing an empty index.
+ * city/state/ZIP), so every pair comes from `--borough-db` (the shared default source). The command refuses a build
+ * with no source of any kind, so dropping the flag fails loud rather than writing an empty index.
  *
- * Freshness guard: the test suite shells this script out on every run, so an unconditional rebuild would cost minutes
- * per `yarn test`. Peek the header instead and rebuild only when the FORMAT (`schemaVersion`), a calibrated magnitude,
- * or the source DB's md5 has moved. The format+magnitude half of that comparison lives in
- * `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`'s `pairIndexStaleReason` — shared with the other three base
- * linkers and every overlay, because when each script carried its own copy three of the four could not notice a schema
- * bump. The md5 half stays here: only this script knows which sources it passes. An ABSENT optional magnitude reads
- * `undefined` and forces the rebuild that stamps it in.
+ * Calibrated magnitudes: the SAME set the R5 bars were measured with (gauntlet unchanged, 0/60 venue-confound false
+ * positives, 60/60 tag-correct); `PAIR_INDEX_PARENT_DELTA` is the whole-edge parent bias (#46), default-on for US — see
+ * `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`. Freshness (magnitudes + source md5) lives in
+ * `buildPairIndexOverlay`, shared with every other linker.
  */
-const PAIR_INDEX_BIN_DEST = resolvePath(DEST_DIR, "pair-index-us.bin")
-/**
- * Calibrated soft-prior magnitudes — the SAME set the R5 bars were measured with (gauntlet unchanged, 0/60
- * venue-confound false positives, 60/60 tag-correct). Changing any of these numbers invalidates those receipts.
- *
- * `PAIR_INDEX_PARENT_DELTA` is the whole-edge parent bias (#46), default-on for US at the verdict's recommended δ=5 —
- * the smallest magnitude that saturates bar B-2's brooklyn-class sub-board (18.3% → 98.3% whole-edge), flat from there
- * to 20, with 0.00% parent-side false positives on B-3. See
- * `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`.
- */
-const PAIR_INDEX_DELTA = 10
-const PAIR_INDEX_TRANSITION_BETA = 5
-const PAIR_INDEX_PARENT_DELTA = 5
-const PAIR_INDEX_SOURCE_DB = dataRootPath("wof", "admin-global-priority.db")
-
-/**
- * Read or compute the md5 of a file, using a sidecar `.md5` cache so a multi-gigabyte source isn't re-hashed on every
- * `yarn test` (the borough DB is ~5 GB). The sidecar is written in standard md5sum format: `<hash> <filename>`. It is
- * trusted only while its mtime is at least the source's; an older sidecar is recomputed and rewritten. Mirrors the
- * en-gb/en-nz link scripts rather than importing theirs — each weights package's script stands alone.
- */
-async function md5FileWithSidecar(path: string): Promise<string> {
-	const sidecarPath = `${path}.md5`
-	const sourceStats = await statPath(path)
-
-	if (await pathExists(sidecarPath)) {
-		try {
-			const sidecarStats = await statPath(sidecarPath)
-
-			if (sidecarStats.mtime >= sourceStats.mtime) {
-				const sidecarContent = (await readLocalTextFile(sidecarPath)).trim()
-				const [hash] = sidecarContent.split(/\s+/)
-
-				if (hash && hash.length === MD5_HEX_LENGTH) {
-					console.log(`md5(${path}): read from sidecar`)
-
-					return hash
-				}
-			}
-		} catch {
-			// A missing or malformed sidecar is not an error — recompute below.
-		}
-	}
-
-	const hash = await md5File(path)
-	const filename = path.split(/[/\\]/).pop() || path
-
-	await writeLocalTextFile(`${hash}  ${filename}\n`, sidecarPath)
-
-	console.log(`md5(${path}): computed and cached in sidecar`)
-
-	return hash
-}
-
-if (!(await pathExists(CLI))) {
-	console.error(
-		`WARNING: ${CLI} not built — run \`yarn compile\` first, then re-run this script for pair-index-us.bin.`
-	)
-} else if (!(await pathExists(String(PAIR_INDEX_SOURCE_DB)))) {
-	console.error(
-		`WARNING: missing ${PAIR_INDEX_SOURCE_DB} — pair-index-us.bin not built; the placetype-pair prior stays inert for US.`
-	)
-} else {
-	let needsRebuild = true
-
-	if (await pathExists(PAIR_INDEX_BIN_DEST)) {
-		try {
-			const header = await peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
-			// EVERY md5 the header records has to match. A comparison that covers only some of them leaves the
-			// guard blind to the rest, and a stale artifact then keeps reporting itself fresh while the data it was
-			// built from has moved. The US build passes exactly one source (`--borough-db`; there is no register CSV
-			// and no `--pairs-jsonl`), so `gazetteer pair-index` records exactly one md5 and the comparison below IS
-			// the whole set — a header recording any other count cannot have come from this build, which is itself
-			// staleness. The hash is sidecar-cached, so re-reading it on every `yarn test` costs a stat.
-			const currentSourceMD5 = await md5FileWithSidecar(String(PAIR_INDEX_SOURCE_DB))
-			const [existingSourceMD5] = header.sourceMD5s
-
-			const staleReason = pairIndexStaleReason(header, {
-				delta: PAIR_INDEX_DELTA,
-				transitionBeta: PAIR_INDEX_TRANSITION_BETA,
-				parentDelta: PAIR_INDEX_PARENT_DELTA,
-			})
-
-			if (staleReason) {
-				console.log(`rebuilding pair-index-us.bin — ${staleReason}`)
-			} else if (header.sourceMD5s.length !== 1) {
-				console.log(
-					`rebuilding pair-index-us.bin — header records ${header.sourceMD5s.length} source md5s ` +
-						`[${header.sourceMD5s.join(", ") || "(none recorded)"}], but this build reads exactly one source ` +
-						`(${PAIR_INDEX_SOURCE_DB})`
-				)
-			} else if (existingSourceMD5 !== currentSourceMD5) {
-				console.log(
-					`rebuilding pair-index-us.bin — ${PAIR_INDEX_SOURCE_DB} md5 ${existingSourceMD5} → ${currentSourceMD5}`
-				)
-			} else {
-				needsRebuild = false
-			}
-		} catch (error) {
-			// Covers both an unreadable header and a source md5 that could not be computed: either way the
-			// artifact cannot be shown fresh, and an unverifiable index is treated as stale.
-			console.log(`rebuilding pair-index-us.bin — freshness unverifiable (${(error as Error).message})`)
-		}
-	}
-
-	if (!needsRebuild) {
-		console.log(`skipped pair-index-us.bin build — ${PAIR_INDEX_BIN_DEST} is current`)
-	} else {
-		const result = spawnProcessSync(
-			process.execPath,
-			[
-				CLI,
-				"gazetteer",
-				"pair-index",
-				"--out",
-				DEST_DIR,
-				"--country",
-				"us",
-				"--delta",
-				String(PAIR_INDEX_DELTA),
-				"--transition-beta",
-				String(PAIR_INDEX_TRANSITION_BETA),
-				"--parent-delta",
-				String(PAIR_INDEX_PARENT_DELTA),
-				"--borough-db",
-				String(PAIR_INDEX_SOURCE_DB),
-			],
-			{ stdio: "inherit" }
-		)
-
-		if (result.status !== 0 || !(await pathExists(PAIR_INDEX_BIN_DEST))) {
-			console.error(`FAILED: gazetteer pair-index --country us (exit ${result.status})`)
-
-			process.exit(1)
-		}
-
-		console.log(`built pair-index-us.bin ← ${PAIR_INDEX_SOURCE_DB}`)
-	}
-}
+await buildPairIndexOverlay({
+	packageDir: "neural-weights-en-us",
+	country: "us",
+	delta: PAIR_INDEX_DELTA,
+	transitionBeta: PAIR_INDEX_TRANSITION_BETA,
+	parentDelta: PAIR_INDEX_PARENT_DELTA,
+})

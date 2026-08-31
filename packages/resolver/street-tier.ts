@@ -302,7 +302,9 @@ const FR_VOIE_TYPES: ReadonlySet<string> = new Set([
 ])
 
 /**
- * Fold to lower-case, diacritic-stripped, punctuation-free tokens — mirrors `street-normalize.ts`'s `fold`.
+ * Fold to lower-case, diacritic-stripped, punctuation-free tokens — a deliberate local copy of
+ * `@mailwoman/resolver-wof-sqlite/street-normalize`'s `fold`: `@mailwoman/resolver` does not depend on that package, so
+ * the two are kept in step by hand.
  */
 function foldVoieTokens(s: string): string[] {
 	return s

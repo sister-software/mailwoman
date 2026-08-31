@@ -35,7 +35,8 @@ import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "#adapters/utils"
-import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "#shard-recipes/scaffold"
+import { makeMulberry32, readOATuples, type ShardRecipe } from "#shard-recipes/scaffold"
+import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
@@ -67,29 +68,16 @@ interface FrTuple {
 /**
  * Stream FR tuples out of the cached OA zip. The countrywide extract is GB-scale, so this reads only as far as `limit`
  * distinct tuples — the `break` closes the reader and releases the archive. Only keeps rows with a house_number (the
- * shard's core signal) and a postcode (required for reversed-order rendering to be meaningful).
+ * shard's core signal) and a postcode (required for reversed-order rendering to be meaningful; it is also part of this
+ * recipe's dedup key).
  */
 async function readTuples(limit: number): Promise<FrTuple[]> {
-	const tuples: FrTuple[] = []
-	const seen = new Set<string>()
-
-	for await (const row of readZippedCSVRecords(SOURCE.zip, SOURCE.csv)) {
-		if (tuples.length >= limit) break
-		const street = row.street ?? ""
-		const locality = row.city ?? ""
-		const house_number = row.number ?? ""
-		const postcode = row.postcode ?? ""
-
-		// Require all four fields: HN is the signal; postcode drives reversed-order variants.
-		if (!street || !locality || !house_number || !postcode) continue
-		const key = `${house_number}|${street}|${locality}|${postcode}`.toLowerCase()
-
-		if (seen.has(key)) continue
-		seen.add(key)
-		tuples.push({ house_number, street, locality, postcode })
-	}
-
-	return tuples
+	return readOATuples(SOURCE, {
+		limit,
+		requirePostcode: true,
+		dedupIncludesPostcode: true,
+		extra: (fields) => fields,
+	})
 }
 
 /**
@@ -98,7 +86,7 @@ async function readTuples(limit: number): Promise<FrTuple[]> {
  */
 function maybeAddOrdinal(random: () => number, house_number: string): string {
 	if (random() >= ORDINAL_PROB) return house_number
-	const suffix = ORDINAL_SUFFIXES[Math.floor(random() * ORDINAL_SUFFIXES.length)]!
+	const suffix = pick(ORDINAL_SUFFIXES, random)
 
 	// Vary suffix case: "bis" (lower) vs "BIS" (upper) — a real-world split in the golden.
 	return `${house_number} ${random() < 0.5 ? suffix : suffix.toUpperCase()}`

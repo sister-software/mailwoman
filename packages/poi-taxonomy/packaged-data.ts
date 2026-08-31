@@ -21,6 +21,9 @@ const moduleDir = import.meta.dirname
  * The probe tests for the FILE. Probing by attempting a parse, as the per-table loaders used to, folds two different
  * failures into one: a corrupt `taxonomy.json` throws, gets swallowed as "not this candidate", and the package reports
  * a missing table it is in fact looking straight at.
+ *
+ * A local copy of `@mailwoman/core/module/packaged-data`'s `resolvePackagedDataPath`, kept here to preserve this
+ * package's zero-dependency contract.
  */
 async function resolvePackagedDataPath(filename: string): Promise<string> {
 	const candidates = [resolvePath(moduleDir, "data", filename), resolvePath(moduleDir, "..", "data", filename)]

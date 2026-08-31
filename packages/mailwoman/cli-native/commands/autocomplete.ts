@@ -4,7 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
-import { CLIUsageError, type CommandSpec, parseCommand, renderCommandHelp } from "#cli-native/spec"
+import {
+	booleanValue,
+	CLIUsageError,
+	type CommandSpec,
+	numberValue,
+	runNativeCommand,
+	stringValue,
+} from "#cli-native/spec"
 
 /**
  * Native FST autocomplete command contract.
@@ -30,24 +37,18 @@ export const spec = {
  * Run `mw autocomplete` without React, Ink, or Zod.
  */
 export async function run(args: readonly string[]): Promise<number> {
-	const parsed = parseCommand(spec, args)
+	return await runNativeCommand(spec, args, async (parsed) => {
+		const prefix = parsed.positionals.join(" ").trim()
 
-	if (parsed.values.help) {
-		process.stdout.write(`${await renderCommandHelp(spec)}\n`)
+		if (!prefix) throw new CLIUsageError("autocomplete requires a prefix (for example mw autocomplete new yo).")
+
+		const { formatAutocomplete, resolveFSTPath, runAutocomplete } = await import("#autocomplete-core")
+		const fstPath = resolveFSTPath(stringValue(parsed.values, "fst"))
+		const entries = await runAutocomplete(prefix, { fstPath, limit: numberValue(parsed.values, "limit")! })
+		const output = booleanValue(parsed.values, "json") ? JSON.stringify(entries, null, 2) : formatAutocomplete(entries)
+
+		process.stdout.write(`${output}\n`)
 
 		return 0
-	}
-
-	const prefix = parsed.positionals.join(" ").trim()
-
-	if (!prefix) throw new CLIUsageError("autocomplete requires a prefix (for example mw autocomplete new yo).")
-
-	const { formatAutocomplete, resolveFSTPath, runAutocomplete } = await import("#autocomplete-core")
-	const fstPath = resolveFSTPath(typeof parsed.values.fst === "string" ? parsed.values.fst : undefined)
-	const entries = await runAutocomplete(prefix, { fstPath, limit: parsed.values.limit as number })
-	const output = parsed.values.json ? JSON.stringify(entries, null, 2) : formatAutocomplete(entries)
-
-	process.stdout.write(`${output}\n`)
-
-	return 0
+	})
 }

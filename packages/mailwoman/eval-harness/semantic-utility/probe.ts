@@ -32,10 +32,6 @@
  *   green. A control set that cannot fail is not a control set.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { sha256Hex } from "@mailwoman/core/utils"
-
 import {
 	type CaseGrade,
 	gradeCase,
@@ -43,6 +39,13 @@ import {
 	type POIBoardFixture,
 	type POIBoardOutcome,
 } from "#eval-harness/poi-board"
+import {
+	canonicalJSON,
+	definitionContentHash,
+	duplicateRowIDProblems,
+	loadFrozenDefinition,
+	preregistrationPath,
+} from "#eval-harness/preregistration"
 
 /**
  * The closed set of outcome shapes this probe reads, derived from `PipelineResult["path"]` and
@@ -263,49 +266,28 @@ export interface ProbeFreezeRecord {
 	note: string
 }
 
-function sourceRelative(name: string): string {
-	// `tsc` emits no `.json` into `out/`, so the file is named from the package root rather than from this module.
-	return resolvePackagePath("mailwoman", "eval-harness", "semantic-utility", name)
-}
-
 /**
  * The committed pre-registration.
  */
-export const PROBE_DEFINITION_PATH = sourceRelative("probe-definition.json")
+export const PROBE_DEFINITION_PATH = preregistrationPath("semantic-utility", "probe-definition.json")
 
 /**
  * The committed freeze record for it.
  */
-export const PROBE_FREEZE_PATH = sourceRelative("probe-freeze.json")
+export const PROBE_FREEZE_PATH = preregistrationPath("semantic-utility", "probe-freeze.json")
 
 /**
  * The committed baseline receipt — the pre-injection measurement the #1930 decision compares against.
  */
-export const PROBE_BASELINE_RECEIPT_PATH = sourceRelative("baseline-receipt.json")
+export const PROBE_BASELINE_RECEIPT_PATH = preregistrationPath("semantic-utility", "baseline-receipt.json")
 
-/**
- * Canonical JSON for hashing: keys sorted at every depth, array order preserved, no insignificant whitespace.
- *
- * The hash covers CONTENT rather than bytes so a formatter pass cannot break the freeze and a reordered key cannot slip
- * past it. Array order is meaningful — row order is reported order — so it is never sorted.
- */
-export function canonicalJSON(value: unknown): string {
-	if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null"
-
-	if (Array.isArray(value)) return `[${value.map((entry) => canonicalJSON(entry)).join(",")}]`
-
-	const entries = Object.entries(value as Record<string, unknown>)
-		.filter(([, entryValue]) => entryValue !== undefined)
-		.toSorted(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
-
-	return `{${entries.map(([key, entryValue]) => `${JSON.stringify(key)}:${canonicalJSON(entryValue)}`).join(",")}}`
-}
+export { canonicalJSON } from "#eval-harness/preregistration"
 
 /**
  * The content hash of one definition.
  */
 export function probeDefinitionHash(definition: SemanticProbeDefinition): string {
-	return sha256Hex(canonicalJSON(definition))
+	return definitionContentHash(definition)
 }
 
 /**
@@ -331,15 +313,7 @@ export function auditProbeDefinition(definition: SemanticProbeDefinition): strin
 		problems.push("controlRows is empty — an uncontrolled delta is a claim about nothing")
 	}
 
-	const seen = new Set<string>()
-
-	for (const row of [...definition.targetRows, ...definition.controlRows]) {
-		if (seen.has(row.id)) {
-			problems.push(`row id ${JSON.stringify(row.id)} is used twice — ids name rows in output`)
-		}
-
-		seen.add(row.id)
-	}
+	problems.push(...duplicateRowIDProblems([...definition.targetRows, ...definition.controlRows]))
 
 	for (const row of definition.targetRows) {
 		if (row.expect.kind !== "results") {
@@ -450,38 +424,13 @@ export async function loadProbeDefinition(
 	definitionPath: string = PROBE_DEFINITION_PATH,
 	freezePath: string = PROBE_FREEZE_PATH
 ): Promise<SemanticProbeDefinition> {
-	const definition = await readLocalJSONFile<SemanticProbeDefinition>(definitionPath)
-	const freeze = await readLocalJSONFile<ProbeFreezeRecord>(freezePath)
-
-	if (freeze.probeID !== definition.probeID) {
-		throw new Error(
-			`semantic-utility probe: freeze record names probe ${JSON.stringify(freeze.probeID)}, definition is ${JSON.stringify(definition.probeID)}`
-		)
-	}
-
-	if (freeze.version !== definition.version) {
-		throw new Error(
-			`semantic-utility probe: freeze record pins version ${freeze.version}, definition is ${definition.version} — a definition change bumps BOTH the version and the hash`
-		)
-	}
-
-	const observed = probeDefinitionHash(definition)
-
-	if (observed !== freeze.sha256) {
-		throw new Error(
-			`semantic-utility probe: definition content hash ${observed} !== frozen ${freeze.sha256} — the ruler moved. Restore it, or record a new version and hash in ${freeze.definition}`
-		)
-	}
-
-	const problems = auditProbeDefinition(definition)
-
-	if (problems.length) {
-		throw new Error(
-			["semantic-utility probe: the pre-registration is not executable:", ...problems.map((p) => `  - ${p}`)].join("\n")
-		)
-	}
-
-	return definition
+	return loadFrozenDefinition({
+		definitionPath,
+		freezePath,
+		label: "semantic-utility probe",
+		idField: "probeID",
+		audit: auditProbeDefinition,
+	})
 }
 
 /**

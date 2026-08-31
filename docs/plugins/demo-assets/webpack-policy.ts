@@ -6,7 +6,6 @@
  */
 
 import { md5Hex } from "@mailwoman/core/utils/hash"
-import { resolvePath } from "path-ts"
 import type { Configuration } from "webpack"
 import webpack from "webpack"
 
@@ -100,16 +99,14 @@ function fallbackMap(): NonNullable<NonNullable<Configuration["resolve"]>["fallb
 /**
  * Docusaurus calls `configureWebpack` SYNCHRONOUSLY, so the alias map is resolved by the caller — the plugin factory,
  * which Docusaurus does await — and handed in here. Resolving it at this point would return a promise the lifecycle
- * never unwraps.
+ * never unwraps. `emptyShim` is the caller's resolved `src/empty-shim.js` path, computed once beside the alias maps.
  */
 export function configureDemoWebpack(
 	config: Configuration,
-	docsDir: string,
+	emptyShim: string,
 	alias: Record<string, string>,
 	isServer: boolean
 ): Configuration {
-	const emptyShim = resolvePath(docsDir, "src", "empty-shim.js")
-
 	return {
 		...filesystemCache(config, alias),
 		// isomorphic-dompurify's Node build constructs a jsdom window at import, and jsdom cannot be webpack-bundled

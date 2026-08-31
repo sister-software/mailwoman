@@ -35,6 +35,7 @@ import { join, type PathBuilderLike } from "path-ts"
 import { decomposeFrStreet } from "#adapters/ban/street-decompose"
 import { stableSourceID } from "#adapters/utils"
 import { makeMulberry32, type ShardRecipe } from "#shard-recipes/scaffold"
+import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
@@ -254,7 +255,7 @@ export const frLieuditRecipe: ShardRecipe = {
 			// from `random`, so the byte-stream is unaffected when the flag is unset.
 			if (countryFraction > 0 && random() < countryFraction) {
 				const forms = COUNTRY_SURFACE_FORMS.FR
-				const form = forms[Math.floor(random() * forms.length)]!
+				const form = pick(forms, random)
 				raw = `${raw}, ${form}`
 				components.country = form
 

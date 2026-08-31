@@ -10,6 +10,7 @@
 
 import type { GeocodeOutcomeLike } from "@mailwoman/api"
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { firstNodeWhere } from "@mailwoman/core/decoder"
 import { decodePlusCode, isFullPlusCode, recoverNearestPlusCode } from "@mailwoman/spatial"
 
 /**
@@ -40,20 +41,14 @@ export function applyPlusCodeOverride(result: GeocodeOutcomeLike, input: string,
 	// answered a Floral Park NY point) or a coarse admin centroid (Ulaanbaatar's reference arrived
 	// ~2 degrees off) — both measured recovering into the wrong degree cell with perfect fractions.
 	// The resolved locality NODE is the reference the code was shortened against.
-	let reference: { lat: number; lon: number } | null = null
-	const stack = [...resolved.roots]
+	const referenceNode = firstNodeWhere(
+		resolved.roots,
+		(n) => (n.tag === "locality" || n.tag === "dependent_locality") && n.lat != null && n.lon != null
+	)
 
-	while (stack.length) {
-		const n = stack.pop()!
-
-		if ((n.tag === "locality" || n.tag === "dependent_locality") && n.lat != null && n.lon != null) {
-			reference = { lat: n.lat, lon: n.lon }
-
-			break
-		}
-
-		stack.push(...n.children)
-	}
+	let reference: { lat: number; lon: number } | null = referenceNode
+		? { lat: referenceNode.lat!, lon: referenceNode.lon! }
+		: null
 
 	if (!reference && result.lat != null && result.lon != null) {
 		reference = { lat: result.lat, lon: result.lon }

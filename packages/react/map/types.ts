@@ -18,15 +18,17 @@
 import type { ReactNode } from "react"
 import type { LayerSpecification, SourceSpecification } from "react-map-gl/maplibre"
 
-import type { ResolvedMapPlace } from "#map/place-render"
+import type { LngLat, ResolvedMapPlace } from "#map/place-render"
 import type { ParseResult, PipelineRuntime, ResolvedPlaceView } from "#pipeline/types"
 
 import type { DemoMapStyle } from "./DemoMap.tsx"
 
 /**
  * `[longitude, latitude]`.
+ *
+ * @deprecated Alias kept for existing imports — {@link LngLat} (from `@mailwoman/react/map`) is the canonical name.
  */
-export type LngLatTuple = [number, number]
+export type LngLatTuple = LngLat
 
 /**
  * A viewport bias handed to `runParse` — the map's current center (and optionally zoom) as a soft prior.
@@ -35,7 +37,7 @@ export interface MapBias {
 	/**
 	 * Map center as `[lon, lat]`, typically read from `map.getCenter()`.
 	 */
-	center: LngLatTuple
+	center: LngLat
 	/**
 	 * Current zoom, if the host wants distance-aware biasing.
 	 */
@@ -126,7 +128,7 @@ export interface DemoRuntime extends PipelineRuntime {
 	/**
 	 * Initial map center as `[lon, lat]` (the host's browser-geolocation result).
 	 */
-	initialCenter: LngLatTuple
+	initialCenter: LngLat
 	/**
 	 * Initial zoom for the first camera.
 	 */

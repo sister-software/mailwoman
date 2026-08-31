@@ -18,16 +18,14 @@
 
 import { TextSpliterator } from "spliterator"
 
-import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "#shard-recipes/scaffold"
-
-/**
- * The surface key. MUST match the NO digit board's `norm_surface` (scratchpad/build-no-board.py): NFC, lowercase,
- * collapse whitespace — and KEEP diacritics. fr-fragment's `norm` strips them (NFD + combining-mark removal), which is
- * right for French but would collapse `Tømmerlien` → `tommerlien` here, so the shard's exclusion check would never
- * match the board's reserved `tømmerlien` and the split would leak silently. Diacritic street heads (…vegen/…veien with
- * ø/å/æ) are the whole point of this shard's boundary; folding them away is not an option.
- */
-const norm = (value: string): string => value.normalize("NFC").toLowerCase().replaceAll(/\s+/g, " ").trim()
+import {
+	alignAndWrite,
+	foldNOSurface,
+	makeMulberry32,
+	readTuples,
+	type ShardRecipe,
+	shardSourceID,
+} from "#shard-recipes/scaffold"
 
 /**
  * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
@@ -93,7 +91,7 @@ export const noStreetLedRecipe: ShardRecipe = {
 			}
 
 			// A surface on the digit board never enters training.
-			if (excluded.has(norm(street))) {
+			if (excluded.has(foldNOSurface(street))) {
 				contaminated++
 
 				continue

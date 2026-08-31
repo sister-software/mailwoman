@@ -51,7 +51,7 @@
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
+import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
@@ -60,7 +60,7 @@ import { haversineKm } from "@mailwoman/spatial"
 import { type HardSliceCase, loadHardSliceBoard } from "#eval-harness/hard-slice-board"
 import { collectResolved, mostSpecific, type Resolved } from "#eval-harness/oa-resolver/tree-hits"
 import { createRuntimePipeline } from "#index"
-import { createResolverBackend } from "#resolver-backend"
+import { createResolverBackend, existingWOFShardPaths } from "#resolver-backend"
 
 const { values } = parseArguments({
 	options: {
@@ -95,13 +95,7 @@ console.error(`[board] ${board.length} rows, locales=[${locales.join(", ")}]`)
 //#region Resolver + pipelines
 
 const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-const wofPaths: string[] = []
-
-for (const shardPath of wofShardPaths()) {
-	if (await pathExists(shardPath)) {
-		wofPaths.push(shardPath)
-	}
-}
+const wofPaths = await existingWOFShardPaths()
 
 if (!wofPaths.length)
 	throw new Error("no WOF shards found — this board grades the RESOLVED place, so it needs the gazetteer")
@@ -171,6 +165,8 @@ interface Outcome {
 	pass: boolean
 }
 
+// NFKD + mark-strip on purpose — NOT `@mailwoman/normalize`'s `stripCombiningMarks` (NFD, no case fold):
+// this fold also folds compatibility forms, matching the board's frozen grading.
 const norm = (s: string): string =>
 	s
 		.toLowerCase()
@@ -263,8 +259,6 @@ for (const c of board) {
 
 //#region Report
 
-const pct = (n: number, d: number): string => (d === 0 ? "—" : `${((100 * n) / d).toFixed(1)}%`)
-
 function tally(rows: RowResult[], arm: string): { pass: number; total: number } {
 	return { pass: rows.filter((r) => r.byArm[arm]!.pass).length, total: rows.length }
 }
@@ -283,7 +277,7 @@ const emitRow = (label: string, rows: RowResult[]): void => {
 	const cells = arms.map((a) => {
 		const t = tally(rows, a)
 
-		return `${t.pass}/${t.total} (${pct(t.pass, t.total)})`
+		return `${t.pass}/${t.total} (${formatPercent(t.pass, t.total)})`
 	})
 
 	const base = arms.length > 1 ? tally(rows, arms[1]!).pass : 0

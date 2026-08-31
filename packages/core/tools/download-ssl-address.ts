@@ -101,6 +101,7 @@ export async function downloadSSLAddress(
 	let nextSlot = 0
 	let failures = 0
 
+	// Deferred move: the worker-pool home is spliterator's `parallelMap`; this hand-rolled pool predates it.
 	const workers = Array.from({ length: Math.min(concurrency, codes.length) }, async () => {
 		while (true) {
 			const slot = nextSlot++

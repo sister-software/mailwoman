@@ -56,26 +56,59 @@ export interface CanonicalKeyOptions {
 }
 
 /**
- * Normalize a single token for matching: Unicode-decompose and strip combining marks (so `é` → `e`), lowercase, replace
- * `&`/`+`/`/` with spaces, drop every non-alphanumeric character, and collapse whitespace. Deterministic and
- * reversible-free — the same input always yields the same output.
+ * Options for {@linkcode foldForKey} — the two points where the formatter's address-token fold and the record package's
+ * fragment fold legitimately differ.
  */
-export function normalizeAddressToken(input: string): string {
+export interface FoldForKeyOptions {
+	/**
+	 * How connective punctuation folds. `"space"` turns `&`, `+`, and `/` into word boundaries (`"A&B"` → `"a b"`);
+	 * `"and"` spells `&` and `+` out as the word `and` (`"AT&T"` → `"at and t"`), leaving `/` to the punctuation
+	 * catch-all (still a word boundary).
+	 */
+	ampersand: "space" | "and"
+	/**
+	 * Intra-token deletion set. When true, periods join the apostrophes as intra-token noise and are deleted (`"S.A."` →
+	 * `"sa"`), while a backtick falls to the punctuation catch-all. When false or omitted, backticks are deleted
+	 * alongside the apostrophes and periods become word boundaries (`"S.A."` → `"s a"`).
+	 */
+	dropPeriods?: boolean
+}
+
+/**
+ * The shared fold behind every match key: NFKD-decompose and strip combining marks (so `é` → `e`), lowercase, delete
+ * intra-token punctuation, expand or flatten connective punctuation per {@linkcode FoldForKeyOptions}, space every
+ * remaining non-alphanumeric, and collapse whitespace. Deterministic — the same input and options always yield the same
+ * output.
+ */
+export function foldForKey(input: string, options: FoldForKeyOptions): string {
+	const folded = input
+		.normalize("NFKD")
+		// strip combining marks (U+0300–U+036F) left by NFKD decomposition, so "é" → "e"
+		.replaceAll(/[\u0300-\u036F]/g, "")
+		.toLowerCase()
+		// apostrophes are intra-word (possessives, "O'Brien") — delete so the token stays whole
+		.replaceAll(options.dropPeriods ? /[.'’]/g : /['’`]/g, "")
+
+	const connected =
+		options.ampersand === "and"
+			? folded.replaceAll("&", " and ").replaceAll("+", " and ")
+			: folded.replaceAll(/[&+/]/g, " ")
+
 	return (
-		input
-			.normalize("NFKD")
-			// strip combining marks (U+0300–U+036F) left by NFKD decomposition, so "é" → "e"
-			.replaceAll(/[̀-ͯ]/g, "")
-			.toLowerCase()
-			// apostrophes are intra-word (possessives, "O'Brien") — delete so the token stays whole
-			.replaceAll(/['’`]/g, "")
-			// connective punctuation becomes a space rather than vanishing (so "A&B" → "a b", not "ab")
-			.replaceAll(/[&+/]/g, " ")
+		connected
 			// everything else non-alphanumeric (keep spaces) is noise
 			.replaceAll(/[^a-z0-9\s]/g, " ")
 			.replaceAll(/\s+/g, " ")
 			.trim()
 	)
+}
+
+/**
+ * Normalize a single token for matching: {@linkcode foldForKey} with connective punctuation flattened to spaces (so
+ * `"A&B"` → `"a b"`, not `"ab"`). Deterministic and reversible-free — the same input always yields the same output.
+ */
+export function normalizeAddressToken(input: string): string {
+	return foldForKey(input, { ampersand: "space" })
 }
 
 /**

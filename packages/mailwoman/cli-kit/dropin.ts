@@ -32,7 +32,12 @@ import { failScript } from "@mailwoman/core/scripting/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 import { type FreshnessArtifact, type FreshnessReport, readFreshness } from "#freshness"
-import { buildNoGazetteerMessage, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "#resolver-backend"
+import {
+	buildNoGazetteerMessage,
+	existingWOFShardPaths,
+	mailwomanDataRoot,
+	resolveCandidateDBPath,
+} from "#resolver-backend"
 
 /**
  * The docs page every drop-in's missing-gazetteer message points a stranger at (#1009). One constant so the three
@@ -136,13 +141,7 @@ export async function resolveGazetteerOrExit(candidateDBFlag: string | undefined
 		fail(`✗ --candidate-db not found: ${candidateDBFlag}`)
 	}
 
-	const wofPaths: string[] = []
-
-	for (const shardPath of wofShardPaths()) {
-		if (await pathExists(shardPath)) {
-			wofPaths.push(shardPath)
-		}
-	}
+	const wofPaths = await existingWOFShardPaths()
 
 	// Candidate gazetteer = worldwide resolution (population-first ranking + global coverage + the FTS5-trigram typo
 	// fallback). --candidate-db, else $MAILWOMAN_CANDIDATE_DB, else the `<data-root>/wof/candidate.db` convention

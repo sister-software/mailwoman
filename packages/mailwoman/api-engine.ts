@@ -35,11 +35,11 @@ import type {
 } from "@mailwoman/api"
 import { recordTimed } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
-import type { AddressTree } from "@mailwoman/core/decoder"
+import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
 import { pathExists, readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
-import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { deriveInputMode } from "@mailwoman/core/pipeline"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { computeQueryShape } from "@mailwoman/query-shape"
@@ -52,9 +52,9 @@ import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-c
 import {
 	buildNoGazetteerMessage,
 	createResolverBackend,
+	existingWOFShardPaths,
 	mailwomanDataRoot,
 	resolveCandidateDBPath,
-	wofShardPaths,
 } from "#resolver-backend"
 
 /**
@@ -78,21 +78,16 @@ interface GeocodeDepsBundle {
 async function wofPaths(): Promise<string[]> {
 	const env = $public.MAILWOMAN_WOF_DB
 
-	if (env)
-		return env
-			.split(",")
-			.map((p) => p.trim())
-			.filter(isPresent)
+	// The env override is comma-split and probed like the convention set: a listed shard that is not on
+	// disk is dropped here rather than handed to the resolver to fail on open.
+	const explicit = env
+		? env
+				.split(",")
+				.map((p) => p.trim())
+				.filter((p) => p.length > 0)
+		: undefined
 
-	const paths: string[] = []
-
-	for (const shardPath of wofShardPaths()) {
-		if (await pathExists(shardPath)) {
-			paths.push(shardPath)
-		}
-	}
-
-	return paths
+	return await existingWOFShardPaths(explicit)
 }
 
 /**
@@ -224,16 +219,13 @@ function collectStreetTier(
 ): Array<"address_point" | "interpolated" | "street" | "admin"> {
 	const out: Array<"address_point" | "interpolated" | "street" | "admin"> = []
 
-	if (node.tag === "street") {
-		const tier = node.metadata?.["resolution_tier"]
+	for (const n of walkNodes([node])) {
+		if (n.tag !== "street") continue
+		const tier = n.metadata?.["resolution_tier"]
 
 		if (tier === "address_point" || tier === "interpolated" || tier === "street") {
 			out.push(tier)
 		}
-	}
-
-	for (const child of node.children) {
-		out.push(...collectStreetTier(child))
 	}
 
 	return out

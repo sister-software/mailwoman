@@ -71,20 +71,16 @@
  *   family across two workspaces would buy one import and cost the single-file guarantee.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readFramedHeader, writeFramedHeader } from "#binary-frame"
+// Coordinate quantization identical to PCB1's — one grid for the family. A prefix prior whose own
+// p95 radius is measured in kilometres has nothing to gain from a finer grid.
+import { dequantizeCoordinate, LAT_Q, LON_Q, quantizeCoordinate } from "#postcode-binary-resolver"
 
 /**
  * "PFX1" little-endian (P=0x50 F=0x46 X=0x58 1=0x31)
  */
 const MAGIC = 0x31_58_46_50
 const KNOWN_SCHEMA_VERSION = 1
-
-/**
- * Coordinate quantization, identical to PCB1's — `latQ = round(lat / 90 × 32767)`, giving ~300 m. A prefix prior whose
- * own p95 radius is measured in kilometres has nothing to gain from a finer grid.
- */
-const LAT_Q = 32_767 / 90
-const LON_Q = 32_767 / 180
 
 const FLAG_HAS_COORDINATE = 0b0000_0001
 const FLAG_HAS_RADIUS = 0b0000_0010
@@ -261,7 +257,7 @@ export function serializePostcodePrefixIndex(
 	}
 
 	const encoder = new TextEncoder()
-	const headerBytes = encoder.encode(JSON.stringify(header))
+	const frame = writeFramedHeader(MAGIC, header)
 
 	// Ancestor dictionary, in first-seen order so the file is deterministic for a deterministic node order.
 	const ancestorIndex = new Map<string, number>()
@@ -315,7 +311,7 @@ export function serializePostcodePrefixIndex(
 		return { node, prefix, refs }
 	})
 
-	let size = 4 + 4 + headerBytes.length + 4
+	let size = frame.length + 4
 
 	for (const a of encodedAncestors) {
 		size += 1 + a.placetype.length + 8 + 1 + a.name.length
@@ -336,14 +332,10 @@ export function serializePostcodePrefixIndex(
 	}
 
 	const buffer = Buffer.alloc(size)
-	let offset = 0
 
-	buffer.writeUInt32LE(MAGIC, offset)
-	offset += 4
-	buffer.writeUInt32LE(headerBytes.length, offset)
-	offset += 4
-	buffer.set(headerBytes, offset)
-	offset += headerBytes.length
+	buffer.set(frame, 0)
+
+	let offset = frame.length
 
 	buffer.writeUInt32LE(encodedAncestors.length, offset)
 	offset += 4
@@ -385,9 +377,9 @@ export function serializePostcodePrefixIndex(
 		offset += 1
 
 		if (node.lat !== undefined && node.lon !== undefined) {
-			buffer.writeInt16LE(Math.round(node.lat * LAT_Q), offset)
+			buffer.writeInt16LE(quantizeCoordinate(node.lat, LAT_Q), offset)
 			offset += 2
-			buffer.writeInt16LE(Math.round(node.lon * LON_Q), offset)
+			buffer.writeInt16LE(quantizeCoordinate(node.lon, LON_Q), offset)
 			offset += 2
 		}
 
@@ -421,67 +413,50 @@ export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 	readonly #nodes: Map<string, PostcodePrefixNode>
 
 	constructor(bytes: Uint8Array) {
-		const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-		let offset = 0
+		const { header, cursor } = readFramedHeader<PostcodePrefixHeader>(
+			MAGIC,
+			bytes,
+			"PostcodePrefixIndexResolver: bad magic — not a PFX1 artifact"
+		)
 
-		if (view.getUint32(offset, true) !== MAGIC) {
-			throw new Error("PostcodePrefixIndexResolver: bad magic — not a PFX1 artifact")
+		this.header = header
+
+		if (this.header.schemaVersion > KNOWN_SCHEMA_VERSION) {
+			throw new Error(
+				`PostcodePrefixIndexResolver: schemaVersion ${this.header.schemaVersion} is newer than this reader knows ` +
+					`(known up to ${KNOWN_SCHEMA_VERSION})`
+			)
 		}
-
-		offset += 4
-
-		const headerLen = view.getUint32(offset, true)
-		offset += 4
-
-		const decoder = new TextDecoder()
-
-		this.header = parseJSONStrict<PostcodePrefixHeader>(decoder.decode(bytes.subarray(offset, offset + headerLen)))
-		offset += headerLen
 
 		if (this.header.schemaVersion !== KNOWN_SCHEMA_VERSION) {
 			throw new Error(`PostcodePrefixIndexResolver: unsupported schemaVersion ${this.header.schemaVersion}`)
 		}
 
-		const ancestorCount = view.getUint32(offset, true)
-		offset += 4
+		const decoder = new TextDecoder()
+		const ancestorCount = cursor.u32()
 
 		const ancestors: PostcodePrefixAncestor[] = []
 
 		for (let i = 0; i < ancestorCount; i++) {
-			const placetypeLen = view.getUint8(offset)
-			offset += 1
-			const placetype = decoder.decode(bytes.subarray(offset, offset + placetypeLen))
-			offset += placetypeLen
-			const wofID = view.getFloat64(offset, true)
-			offset += 8
-			const nameLen = view.getUint8(offset)
-			offset += 1
-			const name = decoder.decode(bytes.subarray(offset, offset + nameLen))
-			offset += nameLen
+			const placetype = decoder.decode(cursor.bytes(cursor.u8()))
+			const wofID = cursor.f64()
+			const name = decoder.decode(cursor.bytes(cursor.u8()))
 
 			ancestors.push({ placetype, wofID, name })
 		}
 
-		const nodeCount = view.getUint32(offset, true)
-		offset += 4
+		const nodeCount = cursor.u32()
 
 		this.#nodes = new Map()
 
 		for (let i = 0; i < nodeCount; i++) {
-			const prefixLen = view.getUint8(offset)
-			offset += 1
-			const prefix = decoder.decode(bytes.subarray(offset, offset + prefixLen))
-			offset += prefixLen
-
-			const refCount = view.getUint8(offset)
-			offset += 1
+			const prefix = decoder.decode(cursor.bytes(cursor.u8()))
+			const refCount = cursor.u8()
 
 			const nodeAncestors: PostcodePrefixAncestor[] = []
 
 			for (let r = 0; r < refCount; r++) {
-				const idx = view.getUint32(offset, true)
-				offset += 4
-
+				const idx = cursor.u32()
 				const ancestor = ancestors[idx]
 
 				if (!ancestor) {
@@ -491,25 +466,20 @@ export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 				nodeAncestors.push(ancestor)
 			}
 
-			const flags = view.getUint8(offset)
-			offset += 1
+			const flags = cursor.u8()
 
 			const node: PostcodePrefixNode = { prefix, ancestors: nodeAncestors, unitCount: 0 }
 
 			if (flags & FLAG_HAS_COORDINATE) {
-				node.lat = view.getInt16(offset, true) / LAT_Q
-				offset += 2
-				node.lon = view.getInt16(offset, true) / LON_Q
-				offset += 2
+				node.lat = dequantizeCoordinate(cursor.i16(), LAT_Q)
+				node.lon = dequantizeCoordinate(cursor.i16(), LON_Q)
 			}
 
 			if (flags & FLAG_HAS_RADIUS) {
-				node.radiusP95Km = view.getFloat32(offset, true)
-				offset += 4
+				node.radiusP95Km = cursor.f32()
 			}
 
-			node.unitCount = view.getUint32(offset, true)
-			offset += 4
+			node.unitCount = cursor.u32()
 
 			this.#nodes.set(prefix, node)
 		}

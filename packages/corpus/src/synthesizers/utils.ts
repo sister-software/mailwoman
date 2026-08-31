@@ -34,8 +34,9 @@ import {
 	matchTrailingSuffix,
 } from "@mailwoman/codex/us"
 import { isPresent } from "@mailwoman/core/objects"
+import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 import type { BIOLabel, ComponentTag } from "@mailwoman/core/types"
-import { escapeRegExp, mulberry32 } from "@mailwoman/core/utils"
+import { mulberry32 } from "@mailwoman/core/utils"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 
 import type { CanonicalRow, LabeledRow, QuarantinedRow } from "#types"
@@ -243,7 +244,7 @@ export const typoInject: Augmentation = (row) => {
 	)
 
 	if (!eligible.length) return null
-	const [tag, value] = eligible[Math.floor(rng() * eligible.length)]!
+	const [tag, value] = pick(eligible, rng)
 	// Interior alpha positions only — keep the first char (most real typos are interior) + a right neighbour.
 	const positions: number[] = []
 
@@ -253,7 +254,7 @@ export const typoInject: Augmentation = (row) => {
 		}
 
 	if (!positions.length) return null
-	const i = positions[Math.floor(rng() * positions.length)]!
+	const i = pick(positions, rng)
 	const ch = value[i]!
 	let typed: string
 
@@ -716,25 +717,93 @@ export function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
 }
 
 /**
- * The primary locale a synthesizer renders for an ISO-3166-1 alpha-2 country. Unknown countries render as `en-US`.
+ * One element of `items`, drawn with probability proportional to `weightOf(item)`.
+ *
+ * One `random()` draw per call. `inclusive` (the default) keeps an item whose cumulative weight lands exactly on the
+ * draw (`r <= 0` after subtraction); pass `inclusive: false` for the strict `r < 0` boundary — the two callers this
+ * consolidates disagreed on that float-exact edge, and each keeps its own reading so its draw stream is unchanged.
+ */
+export function weightedPick<T>(
+	items: readonly T[],
+	random: () => number,
+	weightOf: (item: T) => number,
+	options: { inclusive?: boolean } = {}
+): T {
+	const inclusive = options.inclusive ?? true
+	const total = items.reduce((sum, item) => sum + weightOf(item), 0)
+	let r = random() * total
+
+	for (const item of items) {
+		r -= weightOf(item)
+
+		if (inclusive ? r <= 0 : r < 0) return item
+	}
+
+	return items.at(-1)!
+}
+
+/**
+ * One band of a {@link tieredNumber} distribution: a tier draw below `cutoff` (the last band omits it) yields `base +
+ * floor(random() * span)`.
+ */
+export interface TieredNumberBand {
+	cutoff?: number
+	base: number
+	span: number
+}
+
+/**
+ * A number drawn from a tiered magnitude distribution — the house/box-number shape the synthesizers share.
+ *
+ * Exactly two `random()` draws per call, in the order every caller established: one tier draw, then one value draw
+ * inside the chosen band.
+ */
+export function tieredNumber(random: () => number, bands: readonly TieredNumberBand[]): string {
+	const r = random()
+	let chosen = bands.at(-1)!
+
+	for (const band of bands) {
+		if (band.cutoff === undefined || r < band.cutoff) {
+			chosen = band
+
+			break
+		}
+	}
+
+	return String(chosen.base + Math.floor(random() * chosen.span))
+}
+
+/**
+ * The primary locale a synthesizer renders for a country — ISO-3166-1 alpha-2, alpha-3, or the English display name,
+ * case- and whitespace-tolerant. Unknown countries render as `en-US`.
+ *
+ * The PO-box synthesizer keeps its own template-scoped `countryToLocale` on top of this one: it maps any locale WITHOUT
+ * a PO-box template back to `en-US` (so `DE` still renders the en-US box vocabulary there).
  */
 export function countryToLocale(country: string): string {
-	switch (country) {
-		case "US":
-			return "en-US"
-		case "CA":
-			return "en-CA"
-		case "GB":
-			return "en-GB"
-		case "AU":
-			return "en-AU"
-		case "FR":
-			return "fr-FR"
-		case "DE":
-			return "de-DE"
-		default:
-			return "en-US"
-	}
+	const c = country.trim().toUpperCase()
+
+	if (c === "US" || c === "USA" || c === "UNITED STATES") return "en-US"
+
+	if (c === "CA" || c === "CAN" || c === "CANADA") return "en-CA"
+
+	if (c === "GB" || c === "UK" || c === "GBR" || c === "UNITED KINGDOM") return "en-GB"
+
+	if (c === "AU" || c === "AUS" || c === "AUSTRALIA") return "en-AU"
+
+	if (c === "NZ" || c === "NZL" || c === "NEW ZEALAND") return "en-NZ"
+
+	if (c === "FR" || c === "FRA" || c === "FRANCE") return "fr-FR"
+
+	if (c === "DE" || c === "DEU" || c === "GERMANY") return "de-DE"
+
+	if (c === "ES" || c === "ESP" || c === "SPAIN") return "es-ES"
+
+	if (c === "MX" || c === "MEX" || c === "MEXICO") return "es-MX"
+
+	if (c === "AR" || c === "ARG" || c === "ARGENTINA") return "es-AR"
+
+	return "en-US"
 }
 
 // ===========================================================================

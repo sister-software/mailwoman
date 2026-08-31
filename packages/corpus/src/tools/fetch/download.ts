@@ -7,6 +7,7 @@
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { sleep } from "@mailwoman/core/utils/sleep"
@@ -58,6 +59,18 @@ export interface FetchSummary {
 	skipped: number
 	failed: number
 	failedCodes: string[]
+}
+
+/**
+ * The sibling `MANIFEST.json` shape the single-file fetch modules write: origin URL + fetch timestamp + byte count +
+ * sha256, so downstream adapters can verify provenance.
+ */
+export interface SourceManifest {
+	source_url: string
+	downloaded_at: string
+	filename: string
+	sha256: string
+	bytes: number
 }
 
 /**
@@ -161,6 +174,57 @@ export async function downloadToFile(options: DownloadOptions): Promise<{ bytes:
 	}
 
 	throw lastError instanceof Error ? lastError : new Error(String(lastError))
+}
+
+export interface StreamDownloadOptions {
+	headers?: Record<string, string>
+	timeoutMs: number
+	retries: number
+	retryDelayMs: number
+}
+
+/**
+ * Stream an HTTP download to disk, returning the final HTTP status (0 on network error after retries). Follows
+ * redirects (the Census and OpenAddresses endpoints both 302 to their real hosts).
+ *
+ * Kept separate from {@link downloadToFile} on purpose: this one streams a multi-GB body to disk (the buffered helper
+ * reads via `arrayBuffer()`) and returns the HTTP status instead of throwing, which the per-file result collectors and
+ * two-URL fallback ladders consume.
+ */
+export async function streamDownload(url: string, dest: string, opts: StreamDownloadOptions): Promise<number> {
+	for (let attempt = 0; attempt <= opts.retries; attempt++) {
+		try {
+			const res = await fetch(url, {
+				headers: opts.headers ?? {},
+				redirect: "follow",
+				signal: AbortSignal.timeout(opts.timeoutMs),
+			})
+
+			if (res.ok && res.body) {
+				await pipeline(Readable.fromWeb(res.body), openWriteStream(dest))
+
+				return res.status
+			}
+
+			if (attempt < opts.retries && isTransientStatus(res.status)) {
+				await sleep(opts.retryDelayMs)
+
+				continue
+			}
+
+			return res.status
+		} catch {
+			if (attempt < opts.retries) {
+				await sleep(opts.retryDelayMs)
+
+				continue
+			}
+
+			return 0
+		}
+	}
+
+	return 0
 }
 
 /**

@@ -40,7 +40,7 @@ import { tryParsingJSON } from "@mailwoman/core/objects"
 import { isoSecondsUTC, pyRound } from "@mailwoman/core/utils"
 import { geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
+import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { join } from "path-ts"
 
 import {
@@ -50,6 +50,8 @@ import {
 	POSTCODE_LOCALITY_INSERT_SQL,
 	type PostcodeLocalityDatabase,
 } from "#gazetteer-pipeline/postcode-locality/schema"
+import { writeMetaRows } from "#gazetteer-pipeline/postcode/geonames-tail"
+import { finalizeSealedBuild } from "#gazetteer-pipeline/shard-lifecycle"
 
 /**
  * Plus name:* / label:* props, gathered below.
@@ -90,6 +92,68 @@ function pushTo<V>(m: Map<string, V[]>, k: string, v: V): void {
 		a.push(v)
 	} else {
 		m.set(k, [v])
+	}
+}
+
+/**
+ * A fixed-cell proximity grid: entries bucketed by cell, neighbors gathered from the 3×3 block around a query
+ * coordinate, filtered by great-circle radius, and answered nearest-first under a caller-owned tie-break.
+ *
+ * THE CELL KEYING IS PART OF EACH BUILDER'S OUTPUT CONTRACT — `pyRound` vs `Math.round`, ×10 (0.1°) vs ×2 (0.5°) — so
+ * it is a constructor parameter rather than a convention, and a builder's keying must not be "fixed" to match a
+ * sibling's.
+ */
+export class ProximityGrid<Entry> {
+	readonly #cells = new Map<string, Entry[]>()
+	readonly #cellOf: (longitude: number, latitude: number) => readonly [number, number]
+	readonly #positionOf: (entry: Entry) => readonly [number, number]
+	readonly #compare: (left: Entry, right: Entry) => number
+
+	constructor(options: {
+		cellOf: (longitude: number, latitude: number) => readonly [number, number]
+		/**
+		 * `[latitude, longitude]` of one entry.
+		 */
+		positionOf: (entry: Entry) => readonly [number, number]
+		/**
+		 * Tie-break beyond ascending distance.
+		 */
+		compare: (left: Entry, right: Entry) => number
+	}) {
+		this.#cellOf = options.cellOf
+		this.#positionOf = options.positionOf
+		this.#compare = options.compare
+	}
+
+	add(entry: Entry): void {
+		const [latitude, longitude] = this.#positionOf(entry)
+		const [cx, cy] = this.#cellOf(longitude, latitude)
+		pushTo(this.#cells, `${cx}|${cy}`, entry)
+	}
+
+	/**
+	 * Entries within `radiusKM` of the coordinate, nearest-first.
+	 */
+	nearby(latitude: number, longitude: number, radiusKM: number): Array<{ d: number; entry: Entry }> {
+		const [cx, cy] = this.#cellOf(longitude, latitude)
+		const out: Array<{ d: number; entry: Entry }> = []
+
+		for (const dx of [-1, 0, 1]) {
+			for (const dy of [-1, 0, 1]) {
+				for (const entry of this.#cells.get(`${cx + dx}|${cy + dy}`) ?? []) {
+					const [entryLat, entryLon] = this.#positionOf(entry)
+					const d = haversineKm(latitude, longitude, entryLat, entryLon)
+
+					if (d <= radiusKM) {
+						out.push({ d, entry })
+					}
+				}
+			}
+		}
+
+		out.sort((a, b) => a.d - b.d || this.#compare(a.entry, b.entry))
+
+		return out
 	}
 }
 
@@ -168,17 +232,9 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 		["countries", countriesJson],
 	]
 
-	const insMeta = db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
+	writeMetaRows(db, meta)
 
-	for (const [k, v] of meta) {
-		insMeta.run(k, v)
-	}
-
-	db.exec("PRAGMA journal_mode = DELETE") // no -wal/-shm sidecar; the .db is self-contained
-	db.exec("ANALYZE")
-	assertDatabaseIntegrity(db, output)
-
-	db.exec("VACUUM")
+	finalizeSealedBuild(db, output)
 
 	// Python prints the dict repr (insertion order rows→containing, single quotes).
 	const summaryRepr =
@@ -263,12 +319,17 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 	// the containing-PIP, so it checks only the localities whose bbox could cover the point instead of a
 	// linear scan over all of them. At GB scale (2.7M postcodes × 11.7K localities) that's the
 	// difference between minutes and ~an hour.
-	const grid = new Map<string, number[]>()
+	const grid = new ProximityGrid<number>({
+		cellOf: (lon, lat) => [pyRound(lon * 10), pyRound(lat * 10)],
+		positionOf: (idx) => [locs[idx]!.clat, locs[idx]!.clon],
+		compare: (a, b) => a - b,
+	})
+
 	const bgrid = new Map<string, number[]>()
 
 	for (let idx = 0; idx < locs.length; idx++) {
 		const l = locs[idx]!
-		pushTo(grid, `${pyRound(l.clon * 10)}|${pyRound(l.clat * 10)}`, idx)
+		grid.add(idx)
 		const [minx, miny, maxx, maxy] = l.bbox
 
 		for (let cx = Math.floor(minx * 10); cx <= Math.floor(maxx * 10); cx++) {
@@ -330,23 +391,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 			}
 
 			// nearby candidates within radius (grid-limited) for the soft-scoring candidate set + abutting case
-			const cand: Array<{ d: number; idx: number }> = []
-			const gx = pyRound(plon * 10)
-			const gy = pyRound(plat * 10)
-
-			for (const dx of [-1, 0, 1]) {
-				for (const dy of [-1, 0, 1]) {
-					for (const idx of grid.get(`${gx + dx}|${gy + dy}`) ?? []) {
-						const d = haversineKm(plat, plon, locs[idx]!.clat, locs[idx]!.clon)
-
-						if (d <= radiusKM) {
-							cand.push({ d, idx })
-						}
-					}
-				}
-			}
-
-			cand.sort((a, b) => a.d - b.d || a.idx - b.idx)
+			const cand = grid.nearby(plat, plon, radiusKM).map(({ d, entry }) => ({ d, idx: entry }))
 
 			const chosen: Array<{ d: number; idx: number; isc: number }> = []
 

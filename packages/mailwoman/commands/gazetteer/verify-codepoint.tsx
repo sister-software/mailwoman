@@ -12,7 +12,13 @@
 
 import { Box, Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	phaseReporter,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -41,23 +47,23 @@ interface Options {
 
 const GazetteerVerifyPostcodeCodePoint: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { dataRootPath, isoDate } = await import("@mailwoman/core/utils")
 
 		const { runCodePointGate, formatCodePointGateReport } = await import("#gazetteer-pipeline/postcode/codepoint-gate")
 
-		const stamp = new Date().toISOString().slice(0, 10)
+		const stamp = isoDate()
 
 		const report = runCodePointGate({
 			codepointPath: options.codepoint ?? String(dataRootPath("wof", `postalcode-gb-codepoint-${stamp}.db`)),
 			incumbentPath:
 				options.incumbent ?? String(dataRootPath("wof", "frozen-backup-2026-08-04", "postalcode-geonames-tail.db")),
-			onPhase: (phase, detail) => console.error(`  [${phase}]${detail ? ` ${detail}` : ""}`),
+			onPhase: phaseReporter(),
 		})
 
 		return options.json ? [JSON.stringify(report, null, 2)] : formatCodePointGateReport(report)
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

@@ -49,7 +49,6 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@mailwoman/core": "workspace:*",
-		"path-ts": "^2.3.0"
+		"@mailwoman/core": "workspace:*"
 	}
 }

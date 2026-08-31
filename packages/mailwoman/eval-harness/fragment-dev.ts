@@ -15,7 +15,7 @@
  *   `--weights-cache` package-shaped dirs ONLY (#718 zero-fill trap).
  */
 
-import { decodeAsTuples } from "@mailwoman/core/decoder"
+import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { JSONSpliterator } from "spliterator"
@@ -62,12 +62,7 @@ export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 
 	for (const row of sample) {
 		const gold = row.span_tags.map((tag, i) => [tag, row.raw.slice(row.span_starts[i], row.span_ends[i])] as const)
-		const tuples = decodeAsTuples(await classifier.parse(row.raw, { postcodeRepair: true }))
-		const byTag = new Map<string, string[]>()
-
-		for (const [tag, value] of tuples) {
-			byTag.set(tag, [...(byTag.get(tag) ?? []), value])
-		}
+		const byTag = groupTuplesByTag(await classifier.parse(row.raw, { postcodeRepair: true }))
 
 		// Span-exact: every gold span present under its tag with the exact folded value, and no
 		// extra values under the gold tags.

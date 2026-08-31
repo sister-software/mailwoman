@@ -42,13 +42,8 @@ import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
 import { NAME_PRONE_US_SUFFIXES } from "#name-prone-us-suffixes"
-import {
-	makeMulberry32,
-	readCSVRecords,
-	readZippedCSVRecords,
-	shardSourceID,
-	type ShardRecipe,
-} from "#shard-recipes/scaffold"
+import { makeMulberry32, readCSVRecords, readOATuples, shardSourceID, type ShardRecipe } from "#shard-recipes/scaffold"
+import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
@@ -166,31 +161,13 @@ type Prefix = Pick<NonNullable<ReturnType<typeof matchLeadingDirectional>>, "can
  * Stream real US tuples (number/street/city/postcode) out of a cached OA zip.
  */
 async function readTuples(source: USSource): Promise<USTuple[]> {
-	const tuples: USTuple[] = []
-	const seen = new Set<string>()
-
-	for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
-		const street = row.street ?? ""
-		const locality = row.city ?? ""
-		const house_number = row.number ?? ""
-
-		if (!street || !locality || !house_number) continue
-		const key = `${house_number}|${street}|${locality}`.toLowerCase()
-
-		if (seen.has(key)) continue
-		seen.add(key)
-
-		tuples.push({
-			house_number,
-			street,
-			locality,
+	return readOATuples(source, {
+		extra: (fields, _row, key) => ({
+			...fields,
 			region: source.region,
-			postcode: row.postcode ?? "",
 			base_source_id: `openaddresses:${source.csv}:${key}`,
-		})
-	}
-
-	return tuples
+		}),
+	})
 }
 
 const title = (s: string): string =>
@@ -284,7 +261,7 @@ function renderStreet(
 	let prefix = parsed.prefix
 
 	if (!prefix && random() < INJECT_PREFIX_PROB) {
-		const m = lookupDirectional(DIRECTIONAL_ABBRS[Math.floor(random() * DIRECTIONAL_ABBRS.length)])!
+		const m = lookupDirectional(pick(DIRECTIONAL_ABBRS, random))!
 		prefix = { canonical: m.directional, abbreviation: m.abbreviation }
 	}
 
@@ -407,7 +384,7 @@ export function renderRow(
 	if (r < bareCut) return { fmt: "bare", raw: road, components: withRoad }
 
 	if (r < streetOnlyCut) return { fmt: "street-only", raw: street, components: { ...streetComponents } }
-	const v = venues[Math.floor(random() * venues.length)]!
+	const v = pick(venues, random)
 
 	return {
 		fmt: "venue",
@@ -422,35 +399,16 @@ export function renderRow(
  * that carry a POSTCODE.
  */
 async function readBalanceTuples(source: BalanceSource, limit: number): Promise<BalanceTuple[]> {
-	const tuples: BalanceTuple[] = []
-	const seen = new Set<string>()
-
-	for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
-		if (tuples.length >= limit) break
-
-		const street = row.street ?? "",
-			locality = row.city ?? "",
-			house_number = row.number ?? "",
-			postcode = row.postcode ?? ""
-
-		if (!street || !locality || !house_number || !postcode) continue // postcode is required for balance
-		const key = `${house_number}|${street}|${locality}`.toLowerCase()
-
-		if (seen.has(key)) continue
-		seen.add(key)
-
-		tuples.push({
-			house_number,
-			street,
-			locality,
+	return readOATuples(source, {
+		limit,
+		requirePostcode: true,
+		extra: (fields, row) => ({
+			...fields,
 			region: row.region || source.region,
-			postcode,
 			iso2: source.iso2,
 			order: source.order,
-		})
-	}
-
-	return tuples
+		}),
+	})
 }
 
 /**
@@ -800,7 +758,7 @@ export const suffixBoundaryRecipe: ShardRecipe = {
 						: "terminal-only"
 
 			const classPool = pool[rowClass]
-			const base = classPool[Math.floor(random() * classPool.length)]!
+			const base = pick(classPool, random)
 			const parsed = parseStreet(base.street, { allowNameProneTail: rowClass === "terminal-only" })
 
 			if (!parsed) {

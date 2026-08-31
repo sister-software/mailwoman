@@ -23,7 +23,7 @@ import { isPresent } from "@mailwoman/core/objects"
 import { reconcileComponents } from "@mailwoman/formatter"
 import { CSVSpliterator } from "spliterator"
 
-import { splitStreetLine, stableSourceID } from "#adapters/utils"
+import { composeRaw, splitStreetLine, stableSourceID } from "#adapters/utils"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
 /**
@@ -64,18 +64,6 @@ function splitStreetLineOrPOBox(street: string): { po_box: string } | { house_nu
 	if (PO_BOX.test(trimmed)) return { po_box: trimmed }
 
 	return splitStreetLine(trimmed)
-}
-
-function composeRaw(
-	venue: string | undefined,
-	streetPart: string,
-	city: string,
-	state: string,
-	postcode: string
-): string {
-	const cityPart = [city.trim(), [state, postcode].filter(isPresent).join(" ").trim()].filter(isPresent).join(", ")
-
-	return [venue, streetPart, cityPart].filter(isPresent).join(", ")
 }
 
 export function createUSGovIRSBMFAdapter(): CorpusAdapter {
@@ -130,7 +118,7 @@ export function createUSGovIRSBMFAdapter(): CorpusAdapter {
 					postcode,
 				}
 
-				const raw = composeRaw(venue, streetPart, city, state, postcode)
+				const raw = composeRaw({ venue, streetLine: streetPart, locality: city, region: state, postcode })
 
 				if (!raw) continue
 

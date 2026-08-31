@@ -19,6 +19,8 @@ import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { join } from "path-ts"
 
+import type { BundleArtifact } from "#data-bundles"
+
 /**
  * Family (shard subdir + filename prefix, e.g. `"address-points"`) → current version string.
  */
@@ -67,4 +69,22 @@ export async function resolveShardPath(
 	const legacy = join(dataRoot, family, `${family}-us-${slug}.db`)
 
 	return (await pathExists(legacy)) ? legacy : null
+}
+
+/**
+ * The path a `us`-family artifact ALREADY occupies on disk (versioned or legacy, via {@link resolveShardPath}), or the
+ * artifact's own resolved path for a non-family artifact — `null` when nothing is there yet. Shared by `data pull` and
+ * `data status`, so "already present" means the same thing to both.
+ */
+export async function existingLocalPath(
+	dataRoot: string,
+	manifest: DataReleaseManifest | null,
+	artifact: BundleArtifact,
+	resolvedAbsPath: string
+): Promise<string | null> {
+	if (artifact.family && artifact.stateSlug) {
+		return await resolveShardPath(dataRoot, artifact.family, artifact.stateSlug, manifest)
+	}
+
+	return (await pathExists(resolvedAbsPath)) ? resolvedAbsPath : null
 }

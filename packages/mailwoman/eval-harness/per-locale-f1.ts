@@ -60,6 +60,7 @@ import { $public } from "@mailwoman/core/env"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
+import { STREET_FAMILY_TAGS } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	NeuralAddressClassifier,
@@ -72,6 +73,8 @@ import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { basename, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
+
+import { normalizeComponent } from "#eval-harness/per-tag-f1"
 
 /**
  * Default anchor + gazetteer feed paths — the SAME ones `score-country-homograph.ts` and the verdict `oa-resolver-eval`
@@ -160,7 +163,7 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>, foldStree
 	const out: Record<string, string> = {}
 	const streetParts: string[] = []
 
-	for (const tag of ["street_prefix", "street_prefix_particle", "street", "street_suffix"] as const) {
+	for (const tag of STREET_FAMILY_TAGS) {
 		const v = flat[tag]
 
 		if (!v) continue
@@ -243,12 +246,10 @@ async function readStreetConvention(goldenDir: string): Promise<Record<string, s
 	return {}
 }
 
-const norm = (v: string | undefined): string => (v ?? "").trim().toLowerCase()
-
 function exactMatch(pred: Record<string, string>, gold: Record<string, string>): boolean {
 	const keys = new Set([...Object.keys(pred), ...Object.keys(gold)])
 
-	for (const k of keys) if (norm(pred[k]) !== norm(gold[k])) return false
+	for (const k of keys) if (normalizeComponent(pred[k]) !== normalizeComponent(gold[k])) return false
 
 	return true
 }
@@ -310,8 +311,8 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 			fn = 0
 
 		for (let i = 0; i < rows.length; i++) {
-			const pred = norm(preds[i]![tag]),
-				gold = norm(rows[i]!.components[tag])
+			const pred = normalizeComponent(preds[i]![tag]),
+				gold = normalizeComponent(rows[i]!.components[tag])
 
 			if (pred && gold && pred === gold) {
 				tp++

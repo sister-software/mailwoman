@@ -31,7 +31,11 @@
 
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 
-import type { ConformanceFixture } from "#eval-harness/conformance/fixture"
+import {
+	auditCommonFixtureFields,
+	type ConformanceFixture,
+	MISSING_CASE_COUNTRY_PROBLEM,
+} from "#eval-harness/conformance/fixture"
 
 /**
  * The law name every row in this suite carries.
@@ -288,51 +292,43 @@ export function describeRefinementCoverage(
  * instrument that was never pointed at the row's locale.
  */
 export function auditRefinementSuite(fixtures: readonly ConformanceFixture[]): string[] {
-	const problems: string[] = []
+	const problems = auditCommonFixtureFields(
+		fixtures,
+		REFINEMENT_MONOTONICITY_LAW,
+		(fixture, label, fixtureProblems) => {
+			if (fixture.outcomeComparator !== "candidate_admissibility") {
+				fixtureProblems.push(
+					`${label}: names "${fixture.outcomeComparator}" — this law is stated over the resolver's candidate tables, ` +
+						`so the only comparator that can read it is "candidate_admissibility"`
+				)
+			}
 
-	for (const fixture of fixtures) {
-		const label = `fixture "${fixture.id}"`
+			if (fixture.expect !== "refines") {
+				fixtureProblems.push(
+					`${label}: expects "${fixture.expect}" — a refinement row states that nothing admissible was lost, and the ` +
+						`comparator reports that as "refines"`
+				)
+			}
 
-		if (fixture.law !== REFINEMENT_MONOTONICITY_LAW) {
-			problems.push(`${label}: law is "${fixture.law}", not "${REFINEMENT_MONOTONICITY_LAW}"`)
+			if (!fixture.rowRef) {
+				fixtureProblems.push(
+					`${label}: no rowRef — every chain is derived from a committed row, and a row without one names no population`
+				)
+			}
 
-			continue
+			if (!fixture.context?.caseCountry) {
+				fixtureProblems.push(`${label}: ${MISSING_CASE_COUNTRY_PROBLEM}`)
+			}
+
+			if (!classifyRefinementStep(fixture.base, fixture.variant)) {
+				fixtureProblems.push(
+					`${label}: base is not a named coarsening of variant — ${JSON.stringify(fixture.base)} is not what any of ` +
+						`${REFINEMENT_STEPS.join(" / ")} produces from ${JSON.stringify(fixture.variant)}, so the pair's direction ` +
+						`is not reproducible from its own name`
+				)
+			}
 		}
-
-		if (fixture.outcomeComparator !== "candidate_admissibility") {
-			problems.push(
-				`${label}: names "${fixture.outcomeComparator}" — this law is stated over the resolver's candidate tables, ` +
-					`so the only comparator that can read it is "candidate_admissibility"`
-			)
-		}
-
-		if (fixture.expect !== "refines") {
-			problems.push(
-				`${label}: expects "${fixture.expect}" — a refinement row states that nothing admissible was lost, and the ` +
-					`comparator reports that as "refines"`
-			)
-		}
-
-		if (!fixture.rowRef) {
-			problems.push(
-				`${label}: no rowRef — every chain is derived from a committed row, and a row without one names no population`
-			)
-		}
-
-		if (!fixture.context?.caseCountry) {
-			problems.push(
-				`${label}: no context.caseCountry — it selects the weights overlay the row grades through, and without it the row is graded base-only against a locale that is not its own`
-			)
-		}
-
-		if (!classifyRefinementStep(fixture.base, fixture.variant)) {
-			problems.push(
-				`${label}: base is not a named coarsening of variant — ${JSON.stringify(fixture.base)} is not what any of ` +
-					`${REFINEMENT_STEPS.join(" / ")} produces from ${JSON.stringify(fixture.variant)}, so the pair's direction ` +
-					`is not reproducible from its own name`
-			)
-		}
-	}
+	)
 
 	for (const chain of refinementChains(fixtures)) {
 		const group = fixtures.filter((fixture) => (fixture.rowRef ?? "") === chain.rowRef)

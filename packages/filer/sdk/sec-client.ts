@@ -62,14 +62,18 @@
  *   `maxRedirects: 0` and re-validate the `Location` host per hop before following it.
  */
 
-import { APIClient, type APIClientConfig, type ClockLike } from "@mailwoman/core/api"
+import {
+	API_CLIENT_DEFAULTS,
+	APIClient,
+	assertAllowedHost,
+	type APIClientConfig,
+	type ClockLike,
+} from "@mailwoman/core/api"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { $private } from "@mailwoman/core/env"
 import { ResourceError } from "@mailwoman/core/errors"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
-
-import { canonicalHostname } from "#sdk/host"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.
 export { isTransientResourceError } from "@mailwoman/core/api"
@@ -142,21 +146,6 @@ const HTTP_FORBIDDEN = 403
 const HTTP_OK = 200
 const HTTP_MULTIPLE_CHOICES = 300
 
-/**
- * Total attempts (including the first) before giving up on a 429/5xx or a network-class failure.
- */
-const DEFAULT_MAX_ATTEMPTS = 3
-
-/**
- * Base delay for the exponential backoff between retry attempts, in milliseconds.
- */
-const DEFAULT_BASE_RETRY_DELAY_MS = 500
-
-/**
- * Per-attempt request timeout, in milliseconds.
- */
-const DEFAULT_REQUEST_TIMEOUT_MS = 30_000
-
 const SEC_ARCHIVE_PATH_PATTERN = /^\/Archives\/edgar\/data\//
 
 /**
@@ -195,28 +184,15 @@ const SEC_ALLOWED_HOSTS = new Set(["www.sec.gov", "data.sec.gov", "sec.gov", "ef
  * `request` — never transient, because re-issuing the identical URL can only fail identically.
  */
 function assertSECHost(url: URL): void {
-	if (url.protocol !== "https:") {
-		throw ResourceError.from(
-			400,
-			`createSECClient: refusing to request "${url}" over ${url.protocol.replace(":", "")} — this client only ` +
-				"sends requests over https, so the configured User-Agent (a contact address) is never sent in cleartext.",
-			"sec",
-			"request",
-			"insecure-scheme"
-		)
-	}
-
-	if (!SEC_ALLOWED_HOSTS.has(canonicalHostname(url))) {
-		throw ResourceError.from(
-			400,
-			`createSECClient: refusing to request "${url}" — this client only sends requests to SEC EDGAR hosts ` +
-				`(${[...SEC_ALLOWED_HOSTS].join(", ")}). Sending the configured User-Agent (a contact address) to an ` +
-				"arbitrary caller-supplied host would leak it outside SEC's fair-access program.",
-			"sec",
-			"request",
-			"host-not-allowed"
-		)
-	}
+	assertAllowedHost(url, {
+		allowed: SEC_ALLOWED_HOSTS,
+		scope: "createSECClient",
+		clientName: "sec",
+		hostsDescription: `SEC EDGAR hosts (${[...SEC_ALLOWED_HOSTS].join(", ")})`,
+		hostNote:
+			"Sending the configured User-Agent (a contact address) to an arbitrary caller-supplied host would leak it " +
+			"outside SEC's fair-access program.",
+	})
 }
 
 /**
@@ -445,8 +421,8 @@ export function createSECClient(options: CreateSECClientOptions = {}): SECClient
 		userAgent,
 		minRequestIntervalMs: Math.ceil(MS_PER_SECOND / requestsPerSecond),
 		retry: {
-			maxAttempts: options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS,
-			baseDelayMs: options.baseRetryDelayMs ?? DEFAULT_BASE_RETRY_DELAY_MS,
+			maxAttempts: options.maxAttempts ?? API_CLIENT_DEFAULTS.maxAttempts,
+			baseDelayMs: options.baseRetryDelayMs ?? API_CLIENT_DEFAULTS.baseRetryDelayMs,
 		},
 		clock: options.clock,
 		caching: {
@@ -471,7 +447,7 @@ export function createSECClient(options: CreateSECClientOptions = {}): SECClient
 				"User-Agent": userAgent,
 				"Accept-Encoding": "gzip, deflate",
 			},
-			timeout: options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS,
+			timeout: options.requestTimeoutMs ?? API_CLIENT_DEFAULTS.requestTimeoutMs,
 			responseType: "json",
 			// `silentJSONParsing` defaults to TRUE, which makes Axios hand back the RAW STRING when a body
 			// fails to parse instead of raising. SEC occasionally serves an HTML error page under a 200

@@ -35,6 +35,7 @@ import type { PathBuilderLike } from "path-ts"
 import { readTuples as readLocaleTuples, type LocalePart } from "#shard-recipes/locale"
 import { makeMulberry32, readTuples as readShardTuples } from "#shard-recipes/scaffold"
 import type { LocaleBaseTuple } from "#synthesizers/german"
+import { pick, weightedPick } from "#synthesizers/utils"
 import {
 	classifyIdentifier,
 	readSubVenueJSONL,
@@ -501,18 +502,11 @@ export function sampleIdentifier(model: IdentifierModel, designatorID: string, r
 	const buckets = ownTotal >= MIN_OWN_SHAPE_OBSERVATIONS ? own : model.pooled
 
 	if (!buckets.length) return null
-	const total = buckets.reduce((sum, b) => sum + b.observations, 0)
-	let r = random() * total
 
-	for (const bucket of buckets) {
-		r -= bucket.observations
+	// `inclusive: false` keeps this draw's original strict `r < 0` boundary, so the bucket stream is unchanged.
+	const bucket = weightedPick(buckets, random, (b) => b.observations, { inclusive: false })
 
-		if (r < 0) return bucket.examples[Math.floor(random() * bucket.examples.length)]!
-	}
-
-	const last = buckets.at(-1)!
-
-	return last.examples[Math.floor(random() * last.examples.length)]!
+	return pick(bucket.examples, random)
 }
 
 //#endregion

@@ -16,7 +16,13 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	phaseReporter,
+	useCommandTask,
+} from "#cli-kit"
 import { DEFAULT_CANDIDATE_OUT } from "#gazetteer-pipeline/defaults"
 
 /**
@@ -74,7 +80,7 @@ const GazetteerPublish: ParsedCommandComponent<Options> = ({ options, args }) =>
 			bucket: options.bucket,
 			prefix: options.prefix,
 			dryRun: options.dryRun,
-			onPhase: (p, d) => console.error(`  [${p}]${d ? ` ${d}` : ""}`),
+			onPhase: phaseReporter(),
 		})
 
 		return [
@@ -85,7 +91,7 @@ const GazetteerPublish: ParsedCommandComponent<Options> = ({ options, args }) =>
 		]
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

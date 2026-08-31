@@ -22,25 +22,20 @@
  */
 
 import { ADDRESS_SYSTEM_CONVENTIONS, type SystemCode } from "@mailwoman/codex"
-import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
-import {
-	parseAnchorLookup,
-	shapedKeyerObligationViolation,
-	type AnchorLookup,
-	type AnchorSpanMode,
-} from "#anchor-inference"
+import { shapedKeyerObligationViolation, type AnchorLookup, type AnchorSpanMode } from "#anchor-inference"
 import { NeuralAddressClassifier } from "#classifier"
 import { parseCountryLexicon, type CountryLexicon } from "#country-inference"
 import { parseGazetteerLexicon, type GazetteerLexicon } from "#gazetteer-inference"
 import { ONNXRunner } from "#onnx-runner"
-import { PostcodeBinaryResolver } from "#postcode-binary-resolver"
 import { MailwomanTokenizer } from "#tokenizer"
-import { resolveWeights } from "#weights"
+import { EVIDENCE_LEXICON_FAMILIES, resolveWeights, type ResolvedWeights } from "#weights"
 import {
 	inferRequiredChannelsFromInputs,
+	loadAnchorLookup,
 	lookupTagCapability,
 	readCapabilityManifest,
 	readLabelsFromModelCard,
@@ -72,6 +67,35 @@ export const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
 export const DEFAULT_COUNTRY_LEXICON = "data/gazetteer/country-surface-lexicon-v1.json"
 
 /**
+ * Memoized weights-package resolution for one scorer construction (#718 D1). The lexicon defaults and the anchor source
+ * each fall back to the resolved weights package; memoizing replaces up to five `resolveWeights` walks per
+ * `createScorer` call with at most one. A resolution failure memoizes as `null` — the same "no package" answer every
+ * ladder treated a throw as.
+ */
+function createWeightsMemo(locale: string | undefined): () => Promise<ResolvedWeights | null> {
+	let memo: Promise<ResolvedWeights | null> | undefined
+
+	return () => (memo ??= resolveWeights({ locale }).catch(() => null))
+}
+
+/**
+ * The default-lexicon ladder (#718 D1), shared by all four channels: prefer the repo-relative codex artifact when one
+ * is named and present (the eval default — unchanged when present), else the soft-feed sibling the weights package
+ * ships, so eval + serving read the SAME artifact. `undefined` when neither resolves.
+ */
+async function resolveDefaultLexicon(
+	weightsOnce: () => Promise<ResolvedWeights | null>,
+	repoCandidate: string | undefined,
+	pick: (weights: ResolvedWeights) => string | undefined
+): Promise<string | undefined> {
+	if (repoCandidate && (await pathExists(repoCandidate))) return repoCandidate
+
+	const resolved = await weightsOnce()
+
+	return resolved ? pick(resolved) : undefined
+}
+
+/**
  * Resolve the anchor lookup source the scorer feeds (#718 D1). A caller-pinned path wins; otherwise prefer the
  * operator's local pilot JSON (the eval's historical default — unchanged when present), else the soft-feed sibling the
  * weights package SHIPS (`postcode-<cc>.bin` / `anchor-lookup.json`), so eval + serving read the SAME artifact. Returns
@@ -81,7 +105,7 @@ export const DEFAULT_COUNTRY_LEXICON = "data/gazetteer/country-surface-lexicon-v
  */
 async function resolveAnchorSource(
 	pinned: PathBuilderLike | undefined,
-	locale: string | undefined,
+	weightsOnce: () => Promise<ResolvedWeights | null>,
 	spanMode: AnchorSpanMode | undefined
 ): Promise<{ path: PathBuilderLike; binary: boolean } | undefined> {
 	// A caller-pinned path wins, and its FORMAT is read off the extension: a `.bin` is PCB1, anything
@@ -99,66 +123,21 @@ async function resolveAnchorSource(
 		return { path: DEFAULT_ANCHOR_LOOKUP, binary: false }
 	}
 
-	try {
-		return (await resolveWeights({ locale })).anchorLookupPath ?? { path: DEFAULT_ANCHOR_LOOKUP, binary: false }
-	} catch {
-		return (await pathExists(DEFAULT_ANCHOR_LOOKUP)) ? { path: DEFAULT_ANCHOR_LOOKUP, binary: false } : undefined
-	}
+	const resolved = await weightsOnce()
+
+	if (resolved) return resolved.anchorLookupPath ?? { path: DEFAULT_ANCHOR_LOOKUP, binary: false }
+
+	return (await pathExists(DEFAULT_ANCHOR_LOOKUP)) ? { path: DEFAULT_ANCHOR_LOOKUP, binary: false } : undefined
 }
 
 /**
- * Resolve the gazetteer lexicon path the scorer feeds when the caller passes no `gazetteerLexiconPath` (#718 D1):
- * prefer the repo-relative codex lexicon (the eval default — unchanged when present), else the soft-feed sibling
- * shipped in the weights package.
+ * The card-scoped repo candidate for the street-type lexicon (#1510): the CARD-declared generation when the card names
+ * one, else the legacy literal (`data/gazetteer/` carries every generation side by side, so a bare "prefer the repo
+ * copy" rule would pin one filename and silently outrank the card). A module-level helper for the same reason as
+ * {@link fstPathEntry} — `createScorer` sits at the complexity ceiling.
  */
-async function defaultGazetteerLexicon(locale: string | undefined): Promise<string | undefined> {
-	if (await pathExists(DEFAULT_GAZETTEER_LEXICON)) return DEFAULT_GAZETTEER_LEXICON
-
-	try {
-		return (await resolveWeights({ locale })).gazetteerLexiconPath
-	} catch {
-		return undefined
-	}
-}
-
-/**
- * Resolve the country lexicon path the scorer feeds when the caller passes no `countryLexiconPath` (#1104): prefer the
- * repo-relative codex lexicon (the eval default), else the soft-feed sibling shipped in the weights package.
- */
-async function defaultCountryLexicon(locale: string | undefined): Promise<string | undefined> {
-	if (await pathExists(DEFAULT_COUNTRY_LEXICON)) return DEFAULT_COUNTRY_LEXICON
-
-	try {
-		return (await resolveWeights({ locale })).countryLexiconPath
-	} catch {
-		return undefined
-	}
-}
-
-/**
- * Resolve the evidence-bundle lexicon paths (Option-A Phase 3): street-type prefers the committed repo artifact; the
- * locality-surface lexicon (13 MB, never in git) resolves from the weights package only.
- *
- * The repo preference is CARD-SCOPED (#1510). `data/gazetteer/` carries every generation of the street-type lexicon
- * side by side (v1, v2, v3 today), so a bare "prefer the repo copy" rule pins whichever filename this function was
- * written against and silently outranks the card — the same train/serve downgrade `resolveWeights` just stopped doing.
- * So when the card names a generation, the repo candidate is THAT filename; only an undeclared card falls back to the
- * historical literal.
- */
-async function defaultStreetTypeLexicon(
-	locale: string | undefined,
-	modelCardPath: PathBuilderLike
-): Promise<string | undefined> {
-	const declared = (await readRequiredChannels(modelCardPath))?.street_type?.lexicon
-	const repoDefault = `data/gazetteer/${declared ?? "street-type-lexicon-v3.json"}`
-
-	if (await pathExists(repoDefault)) return repoDefault
-
-	try {
-		return (await resolveWeights({ locale })).streetTypeLexiconPath
-	} catch {
-		return undefined
-	}
+function streetTypeRepoCandidate(declared: RequiredChannels): string {
+	return `data/gazetteer/${declared.street_type?.lexicon ?? EVIDENCE_LEXICON_FAMILIES.street_type.legacy}`
 }
 
 /**
@@ -170,14 +149,6 @@ async function defaultStreetTypeLexicon(
  */
 function fstPathEntry(fstPath: PathBuilderLike | undefined): { fstPath?: PathBuilderLike } {
 	return fstPath ? { fstPath } : {}
-}
-
-async function defaultLocalitySurfaceLexicon(locale: string | undefined): Promise<string | undefined> {
-	try {
-		return (await resolveWeights({ locale })).localitySurfaceLexiconPath
-	} catch {
-		return undefined
-	}
 }
 
 /**
@@ -204,15 +175,6 @@ function assertShapedKeyerObligation(
 	if (violation) {
 		fail(strict, violation)
 	}
-}
-
-/**
- * Load an `AnchorLookup` from either a PCB1 binary or a JSON pilot lookup (#718 D1).
- */
-async function loadAnchorLookup(source: { path: PathBuilderLike; binary: boolean }): Promise<AnchorLookup> {
-	return source.binary
-		? new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(source.path))).toAnchorLookup()
-		: parseAnchorLookup(await readLocalJSONFile(source.path))
 }
 
 /**
@@ -469,7 +431,10 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	// operator pilot JSON or, failing that, the weights-package soft-feed sibling (PCB1 or JSON, #718).
 	const declaredSpanMode = declaredAnchorSpanMode(declared)
 
-	const anchorSource = await resolveAnchorSource(opts.anchorLookupPath, opts.locale, declaredSpanMode)
+	// One weights-package resolution serves the anchor source + all four lexicon ladders below.
+	const weightsOnce = createWeightsMemo(opts.locale)
+
+	const anchorSource = await resolveAnchorSource(opts.anchorLookupPath, weightsOnce, declaredSpanMode)
 
 	const anchorRequired = declared.anchor?.required ?? false
 	let postcodeAnchorLookup: AnchorLookup | undefined
@@ -501,7 +466,10 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	}
 
 	// --- Gazetteer channel ------------------------------------------------------------------------
-	const gazetteerLexiconPath = opts.gazetteerLexiconPath ?? (await defaultGazetteerLexicon(opts.locale))
+	const gazetteerLexiconPath =
+		opts.gazetteerLexiconPath ??
+		(await resolveDefaultLexicon(weightsOnce, DEFAULT_GAZETTEER_LEXICON, (weights) => weights.gazetteerLexiconPath))
+
 	const gazetteerRequired = declared.gazetteer?.required ?? false
 	let gazetteerLexicon: GazetteerLexicon | undefined
 
@@ -529,7 +497,10 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	}
 
 	// --- Country-lexicon channel (#1104) ----------------------------------------------------------
-	const countryLexiconPath = opts.countryLexiconPath ?? (await defaultCountryLexicon(opts.locale))
+	const countryLexiconPath =
+		opts.countryLexiconPath ??
+		(await resolveDefaultLexicon(weightsOnce, DEFAULT_COUNTRY_LEXICON, (weights) => weights.countryLexiconPath))
+
 	const countryRequired = declared.country?.required ?? false
 	let countryLexicon: CountryLexicon | undefined
 
@@ -559,8 +530,15 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	// --- Evidence-bundle channels (Option-A Phase 3) ------------------------------------------------
 	// Same load + fail-closed + declared-ablation pattern as the gazetteer; both lexicons share its
 	// JSON schema and parser. A bundle-trained card declares `street_type` + `locality_surface`.
+	// The repo preference is CARD-SCOPED — see {@link streetTypeRepoCandidate}. The locality-surface
+	// lexicon (13 MB, never in git) resolves from the weights package only.
 	const streetTypeLexiconPath =
-		opts.streetTypeLexiconPath ?? (await defaultStreetTypeLexicon(opts.locale, opts.modelCardPath))
+		opts.streetTypeLexiconPath ??
+		(await resolveDefaultLexicon(
+			weightsOnce,
+			streetTypeRepoCandidate(declared),
+			(weights) => weights.streetTypeLexiconPath
+		))
 
 	const streetTypeRequired = declared.street_type?.required ?? false
 	let streetTypeLexicon: GazetteerLexicon | undefined
@@ -589,7 +567,8 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	}
 
 	const localitySurfaceLexiconPath =
-		opts.localitySurfaceLexiconPath ?? (await defaultLocalitySurfaceLexicon(opts.locale))
+		opts.localitySurfaceLexiconPath ??
+		(await resolveDefaultLexicon(weightsOnce, undefined, (weights) => weights.localitySurfaceLexiconPath))
 
 	const localitySurfaceRequired = declared.locality_surface?.required ?? false
 	let localitySurfaceLexicon: GazetteerLexicon | undefined

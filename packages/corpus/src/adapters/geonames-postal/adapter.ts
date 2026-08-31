@@ -41,9 +41,12 @@ export const GEONAMES_POSTAL_ADAPTER_ID = "geonames-postal"
 export const GEONAMES_POSTAL_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
- * GeoNames postal-dump columns (0-based).
+ * GeoNames postal-dump columns (0-based): country, postcode, place, admin1_name, admin1_code, admin2_name, ….
+ *
+ * Shared with `tools/postcode-triples.ts`, which additionally reads `admin2Name` — the CITY for the IN/MX/PT-shaped
+ * exports whose `place` column is a street or colonia.
  */
-const COL = { country: 0, postcode: 1, place: 2, admin1Name: 3 } as const
+export const GEONAMES_POSTAL_COLUMNS = { country: 0, postcode: 1, place: 2, admin1Name: 3, admin2Name: 5 } as const
 
 export function createGeonamesPostalAdapter(): CorpusAdapter {
 	return {
@@ -64,17 +67,17 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				const cc = (rec[COL.country] ?? "").trim()
+				const cc = (rec[GEONAMES_POSTAL_COLUMNS.country] ?? "").trim()
 
 				if (!cc) continue
 
 				if (opts.country && cc !== opts.country) continue
 
-				const postcode = (rec[COL.postcode] ?? "").trim()
-				const locality = (rec[COL.place] ?? "").trim()
+				const postcode = (rec[GEONAMES_POSTAL_COLUMNS.postcode] ?? "").trim()
+				const locality = (rec[GEONAMES_POSTAL_COLUMNS.place] ?? "").trim()
 
 				if (!postcode || !locality) continue
-				const region = (rec[COL.admin1Name] ?? "").trim()
+				const region = (rec[GEONAMES_POSTAL_COLUMNS.admin1Name] ?? "").trim()
 
 				// Postcode-first (international) variants. Skip the region variant when admin1 just
 				// repeats the place (common for city-states / micro-admin) to avoid "X X" noise.

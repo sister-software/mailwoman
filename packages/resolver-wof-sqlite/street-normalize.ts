@@ -196,6 +196,31 @@ export function normalizeStreetForKey(street: string): StreetKey {
 export type StreetLocale = "us" | "en" | "fr" | "de" | "nl" | "pl" | "vn" | "id"
 
 /**
+ * Country → street-locale registry surface for the acquisition SDKs (BAN, OSM). Each SDK keeps its own map — membership
+ * is a per-register decision — and this factory owns the lookup discipline: throw for an unsupported country rather
+ * than silently folding with the wrong rules, because a shard built with the wrong normalizer keys every street
+ * incorrectly and looks fine until a probe misses. `label` is the SDK's own registration instructions, appended to the
+ * error verbatim.
+ */
+export function createStreetLocaleRegistry(
+	registry: ReadonlyMap<string, StreetLocale>,
+	label: string
+): { localeFor: (countryCode: string) => StreetLocale; supported: () => string[] } {
+	return {
+		localeFor: (countryCode) => {
+			const locale = registry.get(countryCode.toLowerCase())
+
+			if (!locale) {
+				throw new Error(`No street-normalization locale registered for country "${countryCode}". ${label}`)
+			}
+
+			return locale
+		},
+		supported: () => [...registry.keys()],
+	}
+}
+
+/**
  * French street-type abbreviations → canonical full form, applied per token after {@link fold}. French address types
  * LEAD the name ("Av. de…", "Bd …", "Pl. …") and "St"/"Ste" abbreviate Saint/Sainte inside names ("Rue St-Honoré" →
  * "rue saint honore"). fold() has already stripped the trailing period, so the keys are point-free ("av", "bd").

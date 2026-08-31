@@ -18,7 +18,7 @@ import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
 import type { TriageRow, TriageSummary } from "#gazetteer-pipeline/wof-triage"
 
 /**
@@ -46,24 +46,21 @@ interface Options {
 
 const GazetteerTriage: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { dataRootPath, isoDate } = await import("@mailwoman/core/utils")
 		const { CoverageVerdict, triageWOFCurrency } = await import("#gazetteer-pipeline/wof-triage")
 
 		const adminDB = options.admin ?? String(dataRootPath("wof", "admin-global-priority.db"))
 		const geonamesDir = options.geonames ?? String(dataRootPath("geonames"))
 
-		const countries = options.countries
-			?.split(",")
-			.map((cc) => cc.trim())
-			.filter((cc) => cc.length > 0)
+		const countries = splitList(options.countries)
 
-		const stamp = new Date().toISOString().slice(0, 10)
+		const stamp = isoDate()
 		const outPath = options.out ?? String(dataRootPath("wof", "triage", `currency-${stamp}.jsonl`))
 
 		const { rows, summary } = await triageWOFCurrency({
 			adminDB,
 			geonamesDir,
-			...(countries?.length ? { countries } : {}),
+			...(countries.length ? { countries } : {}),
 			onProgress: () => {},
 		})
 
@@ -82,9 +79,7 @@ const GazetteerTriage: ParsedCommandComponent<Options> = ({ options }) => {
 		return { outPath, emitted: emitted.length, total: rows.length, summary, queue }
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
-
-	if (state.status !== "done") return <Text>Triaging WOF currency…</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} running="Triaging WOF currency…" />
 
 	const { outPath, emitted, total, summary, queue } = state.result
 

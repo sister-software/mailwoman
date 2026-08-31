@@ -8,6 +8,7 @@
  *   Zero node imports, so it stays bundler-safe. Not exported via a subpath of its own.
  */
 
+import { compareByCodePoint, createPhraseIndex } from "#phrase-index"
 import type { BrandRecord, POIBrandTable } from "#types"
 
 export interface BrandMatch {
@@ -48,16 +49,7 @@ export function createBrandLookupCore(table: POIBrandTable): POIBrandLookup {
 	 * share a phrase (distinct QIDs happening to use the same display string) — `lookupPOIBrand` dedupes per brand and
 	 * sorts the survivors deterministically.
 	 */
-	const byPhrase: ReadonlyMap<string, ReadonlyArray<PhraseEntry>> = (() => {
-		const map = new Map<string, PhraseEntry[]>()
-
-		const add = (phrase: string, entry: PhraseEntry) => {
-			const key = phrase.toLowerCase()
-			const existing = map.get(key) ?? []
-			existing.push(entry)
-			map.set(key, existing)
-		}
-
+	const byPhrase: ReadonlyMap<string, ReadonlyArray<PhraseEntry>> = createPhraseIndex<PhraseEntry>((add) => {
 		for (const brand of table.brands) {
 			add(brand.name, { brand, phrase: brand.name })
 
@@ -65,13 +57,11 @@ export function createBrandLookupCore(table: POIBrandTable): POIBrandLookup {
 				add(alias, { brand, phrase: alias })
 			}
 		}
-
-		return map
-	})()
+	})
 
 	/**
 	 * Exact-phrase brand lookup. Deduplicated by brand (a QID can only appear once, keeping its first-seen matched
-	 * phrase), sorted by `rows` descending — ties broken by `wikidata` for determinism.
+	 * phrase), sorted by `rows` descending — ties broken by `wikidata` code-point order for determinism.
 	 */
 	function lookupPOIBrand(text: string): BrandMatch[] {
 		const norm = text.trim().toLowerCase()
@@ -91,7 +81,7 @@ export function createBrandLookupCore(table: POIBrandTable): POIBrandLookup {
 		}
 
 		return [...best.values()].toSorted(
-			(a, b) => b.brand.rows - a.brand.rows || a.brand.wikidata.localeCompare(b.brand.wikidata)
+			(a, b) => b.brand.rows - a.brand.rows || compareByCodePoint(a.brand.wikidata, b.brand.wikidata)
 		)
 	}
 

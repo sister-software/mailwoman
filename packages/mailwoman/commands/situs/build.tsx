@@ -36,15 +36,23 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { spawnProcess } from "@mailwoman/core/process"
+import { isoDate } from "@mailwoman/core/utils"
 import { availableParallelism } from "@mailwoman/core/utils/system"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { countRows, indexExists } from "@mailwoman/sqlite/introspection"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
-
-const positiveInteger = (v: number): boolean => Number.isInteger(v) && v > 0
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	positiveInteger,
+	splitUpperList,
+	stripAnsi,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -154,9 +162,7 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const outDir = options.outDir ?? dataRootPath("address-points")
 
-		const states = (
-			options.states ? options.states.split(",").map((s) => s.trim().toUpperCase()) : STATES_BY_COVERAGE
-		).filter((code) => code.length > 0)
+		const states = options.states ? splitUpperList(options.states) : [...STATES_BY_COVERAGE]
 
 		await makeDirectories(outDir)
 
@@ -167,8 +173,6 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 		// old `scripts/build-address-point-shard.ts` was migrated into the CLI). Re-invoke the SAME CLI
 		// entry this process was started from, so dev + published installs both resolve correctly.
 		const cliEntry = scriptEntryPath()
-		const ansiPattern = new RegExp(String.fromCharCode(27) + "\\[[0-9;?]*[A-Za-z]", "g")
-		const stripAnsi = (s: string) => s.replace(ansiPattern, "")
 
 		console.error(
 			`national situs build — ${states.length} states, concurrency=${concurrency}, ${threads} DuckDB threads/state (of ${cores} cores)`
@@ -185,15 +189,8 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 
 			try {
 				using db = new DatabaseClient<AddressPointDatabase>(dbPath, { readOnly: true })
-				const n = (db.prepare("SELECT count(*) AS n FROM address_point").get() as { n: number }).n
 
-				const idx = (
-					db
-						.prepare("SELECT count(*) AS n FROM sqlite_master WHERE type='index' AND name='idx_ap_streetkey'")
-						.get() as { n: number }
-				).n
-
-				return n > 0 && idx > 0
+				return countRows(db, "address_point") > 0 && indexExists(db, "idx_ap_streetkey")
 			} catch {
 				return false
 			}
@@ -305,7 +302,7 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 
 			console.error(`[ok]   ${r.state} — ${pts.toLocaleString()} points (${r.seconds}s)`)
 
-			manifest.builtAt = new Date(t0).toISOString().slice(0, 10)
+			manifest.builtAt = isoDate(new Date(t0))
 			await writeLocalJSONFile(manifest, attributionPath)
 		}
 
@@ -328,7 +325,7 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 		return lines
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

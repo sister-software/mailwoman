@@ -23,13 +23,9 @@ test.describe("Demo — FR national rooftop (BAN)", () => {
 		test(`${c.address} resolves to the BAN rooftop, not the commune centroid`, async ({ demo }) => {
 			await demo.goto(c.address)
 			await demo.submit()
-			const { resolved, markerCount } = await demo.readResult()
+			const { markerCount } = await demo.readResult()
 			expect(markerCount).toBeGreaterThan(0)
-			const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
-			expect(lat, `resolved lat ${lat} should be the rooftop (~${c.lat})`).toBeGreaterThan(c.lat - TOL)
-			expect(lat).toBeLessThan(c.lat + TOL)
-			expect(lon, `resolved lon ${lon} should be the rooftop (~${c.lon})`).toBeGreaterThan(c.lon - TOL)
-			expect(lon).toBeLessThan(c.lon + TOL)
+			demo.expectNear(await demo.readCoords(), { lat: c.lat, lon: c.lon }, TOL)
 			demo.console.assertNoFailEvents()
 		})
 	}

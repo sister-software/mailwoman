@@ -45,9 +45,10 @@ import { resolvePath } from "path-ts"
 import {
 	type Check,
 	CheckList,
-	type CommandSpec,
-	type ParsedCommandComponent,
 	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
 	useCommandTask,
 } from "#cli-kit"
 
@@ -117,13 +118,14 @@ const SkillInstall: ParsedCommandComponent<Options> = ({ options }) => {
 		(result) => (result.ok ? 0 : 1)
 	)
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done")
+		return <CommandTaskResult state={state} running={<Text color="gray">installing…</Text>} />
 
 	if (state.status === "done") {
 		return <CheckList checks={state.result.checks} verdict={state.result.ok} />
 	}
 
-	return <Text color="gray">installing…</Text>
+	return null
 }
 
 export default SkillInstall

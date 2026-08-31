@@ -51,3 +51,17 @@ export function wordNorm(s: string): string {
 export function wordNormLower(s: string): string {
 	return wordNorm(s).toLowerCase()
 }
+
+/**
+ * Fold a single token to its lowercase, diacritic-free form: lower-cased, NFD-decomposed, combining marks stripped —
+ * `"Côte"` → `"cote"`, `"Tōkyō"` → `"tokyo"`.
+ *
+ * The shared core of the per-country token matchers. Unlike {@link foldName} it does not touch punctuation or whitespace
+ * — each matcher layers its own character filtering (letters-only, hyphen-keeping, suffix-stripping) on top.
+ */
+export function foldToken(s: string): string {
+	return s
+		.toLowerCase()
+		.normalize("NFD")
+		.replaceAll(/[\u0300-\u036F]/g, "")
+}

@@ -16,13 +16,14 @@
  *   the holder's pid so a crashed worker's lock can be reclaimed rather than wedging the suite, and it always releases
  *   in a `finally` — a leaked test lock turns one failure into a whole-suite timeout.
  *
- *   The lock is async because every caller now awaits its spawn: acquisition sleeps on `setTimeout` rather than
+ *   The lock is async because every caller now awaits its spawn: acquisition sleeps between probes rather than
  *   blocking a thread.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectoryExclusive, removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { tempRootPath } from "@mailwoman/core/utils"
+import { sleep } from "@mailwoman/core/utils/sleep"
 import { join } from "path-ts"
 
 const LOCK_DIR = tempRootPath("mailwoman-cli-spawn.lock")
@@ -70,8 +71,8 @@ async function staleHolder(): Promise<boolean> {
 /**
  * Run `fn` with the CLI-spawn lock held. Always releases, including when `fn` throws.
  *
- * Async because every caller now awaits its spawn: acquisition sleeps on `setTimeout` rather than blocking a thread,
- * and the release is awaited in `finally`.
+ * Async because every caller now awaits its spawn: acquisition sleeps between probes rather than blocking a thread, and
+ * the release is awaited in `finally`.
  */
 export async function withCLISpawnLockAsync<T>(fn: () => Promise<T>): Promise<T> {
 	const deadline = Date.now() + ACQUIRE_TIMEOUT_MS
@@ -96,9 +97,7 @@ export async function withCLISpawnLockAsync<T>(fn: () => Promise<T>): Promise<T>
 				continue
 			}
 
-			await new Promise((resolve) => {
-				setTimeout(resolve, POLL_MS)
-			})
+			await sleep(POLL_MS)
 		}
 	}
 
