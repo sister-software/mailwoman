@@ -40,8 +40,8 @@
 
 import type { CoincidentLocality } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
-import { tableExists } from "@mailwoman/sqlite"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import { tableExists } from "@mailwoman/sqlite/introspection"
 
 import type { WOFDatabase } from "#schema"
 import { allRows } from "#sqlite-utils"
