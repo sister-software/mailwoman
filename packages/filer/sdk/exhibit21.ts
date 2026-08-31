@@ -9,6 +9,7 @@
  */
 
 import { isPresent } from "@mailwoman/core/objects"
+import { stripHTMLToText } from "@mailwoman/core/trust-policies"
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 
 /**
@@ -75,8 +76,9 @@ const TAG_PATTERN = /<[^>]*>/g
  * substring-invariant test can compute the same "normalized input" this module reasons about — see the module
  * docstring's invariant paragraph.
  *
- * This is text EXTRACTION in Node, not sanitization: the output never reaches an HTML sink, and the sink-side sanitizer
- * (`@mailwoman/core/trust-policies`, DOMPurify) needs a DOM to run at all.
+ * The table-cell path takes the shared DOM-backed extraction (`stripHTMLToText`) instead; this stays for the
+ * fixed-width plain-text and list strategies, whose column logic depends on the boundary-spacing rule above — a DOM
+ * reading concatenates adjacent block texts with nothing between them.
  */
 export function stripTags(html: string): string {
 	return html.replaceAll(TAG_PATTERN, (match: string, offset: number, whole: string) => {
@@ -103,7 +105,8 @@ const ENTITY_PATTERN = /&(#\d+|#x[0-9a-f]+|[a-z][a-z0-9]*);/gi
 
 /**
  * Decodes the handful of named entities Exhibit 21 documents actually use, plus numeric/hex character references.
- * Deliberately not exhaustive (no full HTML5 entity table) — matches this file's "no HTML-parser dependency" scope.
+ * Serves the fixed-width plain-text and list strategies beside {@linkcode stripTags}; the table-cell path decodes the
+ * full entity set through the shared sanitizer instead.
  */
 export function decodeEntities(text: string): string {
 	return text.replaceAll(ENTITY_PATTERN, (whole, code: string) => {
@@ -125,12 +128,13 @@ export function normalizeWhitespace(text: string): string {
 }
 
 /**
- * Cleans one TABLE CELL's raw inner HTML into comparable text: strip any stray inline tags, decode entities, collapse
- * whitespace, trim. Table cells are already column-separated by markup, so (unlike plain-text/list lines) there is no
- * fixed-width spacing worth preserving.
+ * Cleans one TABLE CELL's raw inner HTML into comparable text: tags gone, entities decoded (the full set, through the
+ * shared sanitizer), whitespace collapsed, trimmed. Table cells are already column-separated by markup, so (unlike
+ * plain-text/list lines) there is no fixed-width spacing worth preserving — which is why the cell path can take the
+ * DOM-backed extraction while the fixed-width strategies keep {@linkcode stripTags}.
  */
 function cleanCellText(rawHTML: string): string {
-	return normalizeWhitespace(decodeEntities(stripTags(rawHTML)))
+	return normalizeWhitespace(stripHTMLToText(rawHTML))
 }
 
 interface TableCell {

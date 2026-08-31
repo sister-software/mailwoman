@@ -44,7 +44,7 @@ export default async function demoAssetsPlugin(context: LoadContext): Promise<Pl
 		},
 
 		configureWebpack(config, isServer) {
-			return configureDemoWebpack(config, docsDir, isServer ? aliases.server : aliases.client)
+			return configureDemoWebpack(config, docsDir, isServer ? aliases.server : aliases.client, isServer)
 		},
 	}
 }

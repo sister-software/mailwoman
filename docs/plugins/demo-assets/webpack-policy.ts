@@ -105,12 +105,18 @@ function fallbackMap(): NonNullable<NonNullable<Configuration["resolve"]>["fallb
 export function configureDemoWebpack(
 	config: Configuration,
 	docsDir: string,
-	alias: Record<string, string>
+	alias: Record<string, string>,
+	isServer: boolean
 ): Configuration {
 	const emptyShim = resolvePath(docsDir, "src", "empty-shim.js")
 
 	return {
 		...filesystemCache(config, alias),
+		// isomorphic-dompurify's Node build constructs a jsdom window at import, and jsdom cannot be webpack-bundled
+		// (`__dirname is not defined` inside the SSR bundle). The server bundle requires the real package from
+		// node_modules at render time instead, so SSR sanitizes through the same jsdom-backed engine as any other Node
+		// process. The client bundle keeps bundling it — the package's `browser` build, plain DOMPurify.
+		...(isServer ? { externals: [{ "isomorphic-dompurify": "commonjs isomorphic-dompurify" }] } : {}),
 		plugins: [
 			new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {
 				const shim = NODE_BUILTIN_SHIMS[resource.request as keyof typeof NODE_BUILTIN_SHIMS]

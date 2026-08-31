@@ -7,7 +7,10 @@
 import {
 	escapeHTML,
 	escapeTrustPolicy,
+	sanitizeHTML,
 	sanitizeTrustPolicy,
+	stripHTML,
+	stripHTMLToText,
 	stripHTMLTrustPolicy,
 } from "@mailwoman/core/trust-policies"
 import { describe, expect, it } from "vitest"
@@ -19,15 +22,33 @@ describe("escapeHTML", () => {
 	})
 })
 
-describe("the sanitizer-backed policies outside a DOM", () => {
-	it("refuse with a named error rather than minting a passthrough", () => {
-		expect(() => sanitizeTrustPolicy()).toThrow(/DOMPurify is unsupported/)
-		expect(() => stripHTMLTrustPolicy()).toThrow(/DOMPurify is unsupported/)
+describe("the sanitizer in Node", () => {
+	it("sanitizeHTML removes scripts and event handlers, keeps safe markup", () => {
+		expect(sanitizeHTML('<b>ok</b><img src=x onerror="alert(1)"><script>bad()</script>')).toBe('<b>ok</b><img src="x">')
 	})
 
-	it("the escape policy needs no DOM and produces escaped output", () => {
-		const html = escapeTrustPolicy().createHTML("<b>x</b>")
+	it("stripHTML leaves only text content, entity-encoded for a sink", () => {
+		expect(stripHTML("<p>a &amp; b</p><script>bad()</script>")).toBe("a &amp; b")
+	})
 
-		expect(String(html)).toBe("&lt;b&gt;x&lt;/b&gt;")
+	it("stripHTMLToText decodes to plain text and survives hostile markup shapes", () => {
+		expect(stripHTMLToText("<p>a &amp; b</p>")).toBe("a & b")
+		expect(stripHTMLToText('<a title="1 < 2">link</a>')).toBe("link")
+		expect(stripHTMLToText("<p>before <b>bold")).toBe("before bold")
+		expect(stripHTMLToText("<style>p{color:red}</style>text<script>var a=1</script>")).toBe("text")
+	})
+})
+
+describe("the policies mint real trust in Node", () => {
+	it("mw-sanitize sanitizes rather than passing through", () => {
+		expect(String(sanitizeTrustPolicy().createHTML('<img src=x onerror="alert(1)">'))).toBe('<img src="x">')
+	})
+
+	it("mw-strip-html strips to text", () => {
+		expect(String(stripHTMLTrustPolicy().createHTML("<b>a</b> & <i>b</i>"))).toBe("a &amp; b")
+	})
+
+	it("mw-escape needs no DOM and produces escaped output", () => {
+		expect(String(escapeTrustPolicy().createHTML("<b>x</b>"))).toBe("&lt;b&gt;x&lt;/b&gt;")
 	})
 })

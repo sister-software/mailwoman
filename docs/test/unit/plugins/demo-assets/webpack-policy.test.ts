@@ -25,8 +25,11 @@ describe("docs webpack policy", () => {
 		const config = configureDemoWebpack(
 			{ cache: false },
 			docsDir,
-			await bundleAliases(true, resolvePath(docsDir, "src", "empty-shim.js"))
+			await bundleAliases(true, resolvePath(docsDir, "src", "empty-shim.js")),
+			true
 		)
+
+		expect(config.externals).toEqual([{ "isomorphic-dompurify": "commonjs isomorphic-dompurify" }])
 
 		const aliases = config.resolve?.alias as Record<string, string>
 

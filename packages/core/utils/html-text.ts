@@ -24,6 +24,10 @@ const NON_PROSE_ELEMENTS = new Set(["script", "style", "template"])
 /**
  * Extract the prose text of an HTML fragment: tags removed, entities decoded, whitespace collapsed to single spaces,
  * trimmed. Plain text passes through unchanged apart from whitespace collapse.
+ *
+ * `stripHTMLToText` (`@mailwoman/core/trust-policies`) answers the same question through the sanitizer engine, whose
+ * Node build constructs a jsdom window at import. This one stays on the event parser so the `core/utils` barrel — and
+ * every CLI that imports it — never pays that; reach for the sanitizer only from a module that already sanitizes.
  */
 export function htmlToText(html: string): string {
 	let text = ""
