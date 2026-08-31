@@ -9,7 +9,7 @@
  */
 
 import type { OpenAPIHono } from "@hono/zod-openapi"
-import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 
 type OpenAPISecurityRequirements = Parameters<OpenAPIHono["getOpenAPI31Document"]>[0]["security"]
 
@@ -94,12 +94,14 @@ export async function printOpenAPIDocument(
 	opts: { flavor?: string; out?: string } = {}
 ): Promise<void> {
 	const { v31, v30 } = emitOpenAPIDocuments(app, info)
-	const json = opts.flavor === "3.0" ? v30 : v31
+	// Compact JSON, one line, the same bytes to a file and to stdout — a consumer piping either into a diff or a
+	// generator sees one form.
+	const json = `${JSON.stringify(opts.flavor === "3.0" ? v30 : v31)}\n`
 
 	if (opts.out) {
-		await writeLocalJSONFile(json, opts.out)
+		await writeLocalTextFile(json, opts.out)
 	} else {
-		console.log(json)
+		process.stdout.write(json)
 	}
 }
 
