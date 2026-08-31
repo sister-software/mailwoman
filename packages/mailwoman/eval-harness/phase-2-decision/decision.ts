@@ -35,12 +35,12 @@
  *   the definition's `recordingNote` says so on the receipt.
  */
 
-import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { sha256Hex } from "@mailwoman/core/utils"
-import { fileURLToPath } from "@mailwoman/platform/url"
 
 // The canonical-JSON encoder is IMPORTED rather than re-typed, for the reason the absence probe imports it.
-import { canonicalJSON } from "../semantic-utility/probe.ts"
+import { canonicalJSON } from "#eval-harness/semantic-utility/probe"
 
 /**
  * The closed set of instruments a check may read. Adding one is a reviewed change to this file and to the runner that
@@ -359,13 +359,8 @@ export interface Phase2FreezeRecord {
 }
 
 function sourceRelative(name: string): string {
-	// `tsc` emits no `.json` into `out/`, so a compiled caller reads the source-tree copy — the same bridge the two
-	// earlier pre-registrations use.
-	const sibling = fileURLToPath(new URL(name, import.meta.url))
-
-	if (pathExistsSync(sibling)) return sibling
-
-	return fileURLToPath(new URL(`../../../eval-harness/phase-2-decision/${name}`, import.meta.url))
+	// `tsc` emits no `.json` into `out/`, so the file is named from the package root rather than from this module.
+	return resolvePackagePath("mailwoman", "eval-harness", "phase-2-decision", name)
 }
 
 /**
@@ -685,12 +680,12 @@ export function auditPhase2Definition(definition: Phase2DecisionDefinition): str
  * Three refusals, in order: the freeze record must name this definition and version, the definition's content hash must
  * equal the frozen hash, and the audit must be clean. A caller never receives a definition it may only partly trust.
  */
-export function loadPhase2Definition(
+export async function loadPhase2Definition(
 	definitionPath: string = PHASE2_DEFINITION_PATH,
 	freezePath: string = PHASE2_FREEZE_PATH
-): Phase2DecisionDefinition {
-	const definition = readLocalJSONFileSync<Phase2DecisionDefinition>(definitionPath)
-	const freeze = readLocalJSONFileSync<Phase2FreezeRecord>(freezePath)
+): Promise<Phase2DecisionDefinition> {
+	const definition = await readLocalJSONFile<Phase2DecisionDefinition>(definitionPath)
+	const freeze = await readLocalJSONFile<Phase2FreezeRecord>(freezePath)
 
 	if (freeze.decisionID !== definition.decisionID) {
 		throw new Error(

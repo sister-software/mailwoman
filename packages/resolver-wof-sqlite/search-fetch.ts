@@ -15,10 +15,10 @@
 import { bboxAround } from "@mailwoman/spatial"
 import type { DatabaseClient, SQLInputValue } from "@mailwoman/sqlite/client"
 
-import { PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE } from "./fts.ts"
-import type { RankingWeights } from "./ranking-weights.ts"
-import { allRows } from "./sqlite-utils.ts"
-import type { FindPlaceQuery, WOFPlacetype } from "./types.ts"
+import { PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE } from "#fts"
+import type { RankingWeights } from "#ranking-weights"
+import { allRows } from "#sqlite-utils"
+import type { FindPlaceQuery, WOFPlacetype } from "#types"
 
 /**
  * Query length at or below which the FTS window is widened. A two- or three-character query is almost always a region

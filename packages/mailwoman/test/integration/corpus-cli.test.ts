@@ -8,10 +8,9 @@
  *   there is to assert is the empty-registry messaging.
  */
 
+import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath } from "@mailwoman/core/utils"
-import { execFile } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { spec as runSpec } from "mailwoman/commands/corpus/run"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
@@ -40,7 +39,6 @@ const CLI_TEST_TIMEOUT_MS = 90_000
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
-const exec = promisify(execFile)
 const cliBin = workspacePath("mailwoman", "out", "cli.js")
 
 describe("corpus run option validation", () => {
@@ -83,7 +81,7 @@ describe("npx mailwoman corpus list", () => {
 			// punycode noise from a transitive dep on Node 22) that would
 			// otherwise pollute stderr and break the `stderr === ""` assertion.
 			const { stdout, stderr } = await withCLISpawnLockAsync(() =>
-				exec("node", [cliBin, "corpus", "list"], {
+				runFile("node", [cliBin, "corpus", "list"], {
 					timeout: CLI_SPAWN_TIMEOUT_MS,
 					env: childEnv({ NODE_NO_WARNINGS: "1" }),
 				})
@@ -103,7 +101,7 @@ describe("npx mailwoman corpus run <unknown> --input x --output y", () => {
 		async () => {
 			await expect(
 				withCLISpawnLockAsync(() =>
-					exec("node", [cliBin, "corpus", "run", "nope-not-real", "--input", "/tmp/x", "--output", "/tmp/y"], {
+					runFile("node", [cliBin, "corpus", "run", "nope-not-real", "--input", "/tmp/x", "--output", "/tmp/y"], {
 						timeout: CLI_SPAWN_TIMEOUT_MS,
 					})
 				)

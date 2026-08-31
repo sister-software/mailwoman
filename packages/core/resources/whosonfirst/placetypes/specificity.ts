@@ -30,7 +30,7 @@
  *   as the Gillingham defect above, one rung down.
  */
 
-import type { WhosOnFirstPlacetype } from "./definition.ts"
+import type { WhosOnFirstPlacetype } from "#resources/whosonfirst/placetypes/definition"
 
 /**
  * Higher is finer. Absent placetypes are UNRANKED and must be handled by the caller rather than defaulted — a missing

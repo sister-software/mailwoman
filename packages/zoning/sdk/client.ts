@@ -36,7 +36,7 @@ import { APIClient, type APIClientConfig, type ClockLike } from "@mailwoman/core
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { htmlToText, dataRootPath } from "@mailwoman/core/utils"
 
-import { GZT_ATTRIBUTION, GZT_ITEM_ID, GZT_SERVICE_URL, GZT_SOURCE_EPSG } from "../vocabulary.ts"
+import { GZT_ATTRIBUTION, GZT_ITEM_ID, GZT_SERVICE_URL, GZT_SOURCE_EPSG } from "#vocabulary"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.
 export { isTransientResourceError } from "@mailwoman/core/api"

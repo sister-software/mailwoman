@@ -25,7 +25,7 @@
 
 import { medoidPoint, normalizePostcodeName, type PostcodePoint } from "@mailwoman/resolver-wof-sqlite/geonames-postal"
 
-import type { OverpassElement, OverpassResponse } from "./fetch.ts"
+import type { OverpassElement, OverpassResponse } from "#gazetteer-pipeline/postcode/ni-osm/fetch"
 
 /**
  * A Northern Ireland unit postcode.

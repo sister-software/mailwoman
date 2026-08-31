@@ -20,7 +20,7 @@ import { getRow } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { AdminSource } from "./country-sources.ts"
+import { AdminSource } from "#gazetteer-pipeline/country-sources"
 
 /**
  * Synthetic-id band boundaries, duplicated from the folds that mint them ONLY as SQL literals — a query cannot import a

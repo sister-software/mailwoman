@@ -7,6 +7,7 @@
 import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { resolvePath } from "path-ts"
 
 /**
  * --tiles flag → $MAILWOMAN_TILES → dataRootPath("tiles", "planet.pmtiles") if it exists → null (degrade).
@@ -21,5 +22,5 @@ export async function resolveTilesPath(flagValue?: string): Promise<string | nul
 
 	const fallback = dataRootPath("tiles", "planet.pmtiles")
 
-	return (await pathExists(fallback)) ? fallback : null
+	return (await pathExists(fallback)) ? resolvePath(fallback) : null
 }

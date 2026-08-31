@@ -33,6 +33,7 @@ import { readDirectory, readLocalBuffer, readLocalJSONFile, readLocalTextFile } 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import type { ClassificationRecord } from "@mailwoman/core/types"
 import {
 	type AnchorLookup,
@@ -43,11 +44,10 @@ import {
 } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { basename, join } from "@mailwoman/platform/path"
-import { parseArgs as parseNodeArgs } from "@mailwoman/platform/util"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"
 import { createRuntimePipeline } from "mailwoman"
+import { basename, join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import ts from "typescript"
 
@@ -89,7 +89,7 @@ function parseArgs(): Args {
 	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated — including the
 	// retired `--symmetric-match` (only ever governed the deleted v0 arm's scoring) and the retired
 	// `--arbitrate` (#478 inc 3; the `arbitrate` PipelineOpt no longer exists)).
-	const { values } = parseNodeArgs({
+	const { values } = parseArguments({
 		options: {
 			"admin-fst": { type: "string" },
 			"anchor-lookup": { type: "string" },
@@ -766,7 +766,7 @@ async function main(): Promise<void> {
 		} else {
 			// Sealed-artifact-first (static-index candidate 1): the loader's shared ladder — data-root
 			// `fst-street-morphology.bin`, degrading to the per-process dictionary build this site used to inline.
-			const loaded = loadStreetMorphologyFST({ onWarn: (message) => console.error(`  WARN: ${message}`) })
+			const loaded = await loadStreetMorphologyFST({ onWarn: (message) => console.error(`  WARN: ${message}`) })
 			morphologyFST = loaded.matcher
 
 			console.error(

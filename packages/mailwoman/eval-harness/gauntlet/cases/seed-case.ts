@@ -18,7 +18,7 @@
 
 import zod from "zod"
 
-import type { AddressKind, CaseStatus, ResolutionTier } from "../schema.ts"
+import type { AddressKind, CaseStatus, ResolutionTier } from "#eval-harness/gauntlet/schema"
 
 /**
  * One row of the curated regression corpus, as committed under `cases/<cc>/*.jsonl`.

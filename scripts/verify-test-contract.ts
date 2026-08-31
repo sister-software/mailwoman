@@ -7,7 +7,7 @@
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { relative, resolve, sep } from "@mailwoman/platform/path"
+import { relative, resolvePath, sep } from "path-ts"
 import ts from "typescript"
 
 interface RootManifest {
@@ -15,7 +15,7 @@ interface RootManifest {
 }
 
 const root = String(repoRootPath())
-const manifest = await readLocalJSONFile<RootManifest>(resolve(root, "package.json"))
+const manifest = await readLocalJSONFile<RootManifest>(resolvePath(root, "package.json"))
 const failures: string[] = []
 const testPattern = /\.(?:test|spec)\.(?:ts|tsx)$/u
 const packageSuites = new Set(["full", "integration", "unit"])
@@ -50,7 +50,7 @@ async function moduleSpecifiers(filePath: string): Promise<string[]> {
 }
 
 for (const workspace of manifest.workspaces) {
-	const workspaceRoot = resolve(root, workspace)
+	const workspaceRoot = resolvePath(root, workspace)
 	const isDocs = workspace === "docs"
 	const allowedSuites = isDocs ? docsSuites : packageSuites
 

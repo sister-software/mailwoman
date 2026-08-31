@@ -10,11 +10,11 @@
 import { haversineKm } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { exactMatchIDs, officialNameIDs } from "./exact-match.ts"
-import { compareReferential, referentialFromPopulation } from "./place-importance-schema.ts"
-import type { RankingWeights } from "./ranking-weights.ts"
-import type { RawSearchRow } from "./search-fetch.ts"
-import type { FindPlaceQuery, PlaceCandidate, WOFPlacetype } from "./types.ts"
+import { exactMatchIDs, officialNameIDs } from "#exact-match"
+import { compareReferential, referentialFromPopulation } from "#place-importance-schema"
+import type { RankingWeights } from "#ranking-weights"
+import type { RawSearchRow } from "#search-fetch"
+import type { FindPlaceQuery, PlaceCandidate, WOFPlacetype } from "#types"
 
 /**
  * Score one raw FTS row into a `PlaceCandidate`: the weighted sum over the negated BM25 baseline, the placetype /

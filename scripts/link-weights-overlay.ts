@@ -25,28 +25,28 @@ import { $public } from "@mailwoman/core/env"
 import { pathExists, readLocalTextFile, statLink } from "@mailwoman/core/fs/readers"
 import { copyFileTo, createSymbolicLink, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { mailwomanDataRoot, md5File, repoRootPath, workspacePath } from "@mailwoman/core/utils"
-import { relative, resolve } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { dataRootPath, md5File, repoRootPathBuilder, workspacePath } from "@mailwoman/core/utils"
+import { type PathBuilderLike, relative, resolvePath } from "path-ts"
 
 import { readWeightsRecipe } from "./weights-recipe.ts"
 
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		plan: { type: "boolean", default: false },
 		locale: { type: "string" },
 	},
 })
 
-const repoRoot = String(repoRootPath())
-const dataRoot = String(mailwomanDataRoot())
+const repoRoot = repoRootPathBuilder()
+const dataRoot = dataRootPath()
 
 const recipe = await readWeightsRecipe(repoRoot, dataRoot, {
 	...($public.MAILWOMAN_DEV_MODEL ? { model: $public.MAILWOMAN_DEV_MODEL } : {}),
 	...($public.MAILWOMAN_DEV_TOKENIZER ? { tokenizer: $public.MAILWOMAN_DEV_TOKENIZER } : {}),
 })
 
-const overlayRoot = resolve(dataRoot, "weights")
+const overlayRoot = resolvePath(dataRoot, "weights")
 const locales = values.locale ? [values.locale.toLowerCase()] : recipe.locales
 
 /**
@@ -58,7 +58,7 @@ const locales = values.locale ? [values.locale.toLowerCase()] : recipe.locales
  * shared base binaries and is not defensible for the artifacts an overlay actually owns.
  */
 async function recordedDigests(locale: string): Promise<Record<string, string>> {
-	const card = resolve(String(workspacePath(`neural-weights-${locale}`)), "model-card.json")
+	const card = resolvePath(workspacePath(`neural-weights-${locale}`), "model-card.json")
 
 	if (!(await pathExists(card))) return {}
 
@@ -71,7 +71,7 @@ async function recordedDigests(locale: string): Promise<Record<string, string>> 
  * `rmSync` before `symlinkSync` rather than after a check: a dangling symlink fails `existsSync` (which follows the
  * link) while still occupying the name, so a check-then-create leaves the stale link in place and reports success.
  */
-async function linkForce(source: string, dest: string): Promise<void> {
+async function linkForce(source: PathBuilderLike, dest: string): Promise<void> {
 	try {
 		await statLink(dest)
 		await removePathIfPresent(dest)
@@ -88,21 +88,21 @@ let mismatched = 0
 let unrecorded = 0
 
 for (const locale of locales) {
-	const dir = resolve(overlayRoot, locale)
+	const dir = resolvePath(overlayRoot, locale)
 	const digests = await recordedDigests(locale)
 
 	if (!values.plan) {
 		await makeDirectories(dir)
 	}
 
-	process.stdout.write(`\n${locale}  →  ${relative(dataRoot, dir)}\n`)
+	process.stdout.write(`\n${locale}  →  ${relative(String(dataRoot), dir)}\n`)
 
 	// The model card is the one artifact that comes from the CHECKOUT rather than the data root: it is committed,
 	// and `resolveFromPackageDir` reads it from whichever directory answered. Without it in the overlay the loader
 	// falls back to STAGE2_BIO_LABELS (21) against a 33-logit model and the first parse throws in
 	// `assertEmissionWidth` — so its absence is not a lean install, it is a broken one. Linking it does couple the
 	// overlay to the checkout that wrote it; the writer is idempotent, so re-running from another checkout re-points it.
-	const cardSource = resolve(String(workspacePath(`neural-weights-${locale}`)), "model-card.json")
+	const cardSource = resolvePath(workspacePath(`neural-weights-${locale}`), "model-card.json")
 
 	// COPIED, not linked. Every other overlay entry points at the data root, which outlives any checkout; a
 	// symlink to the card would make the whole overlay depend on one working tree still existing at that
@@ -110,8 +110,8 @@ for (const locale of locales) {
 	// degrades to STAGE2_BIO_LABELS against a 33-logit model rather than to an error.
 	if ((await pathExists(cardSource)) && !values.plan) {
 		await makeDirectories(dir)
-		await removePathIfPresent(resolve(dir, "model-card.json"))
-		await copyFileTo(cardSource, resolve(dir, "model-card.json"))
+		await removePathIfPresent(resolvePath(dir, "model-card.json"))
+		await copyFileTo(cardSource, resolvePath(dir, "model-card.json"))
 	}
 
 	const artifacts = recipe.linkableFor(locale)
@@ -127,7 +127,7 @@ for (const locale of locales) {
 		const recorded = digests[shippedName]
 
 		if (recorded) {
-			const actual = await md5File(sourcePath)
+			const actual = await md5File(resolvePath(sourcePath))
 
 			if (actual !== recorded) {
 				mismatched++
@@ -140,7 +140,7 @@ for (const locale of locales) {
 		}
 
 		if (!values.plan) {
-			await linkForce(sourcePath, resolve(dir, shippedName))
+			await linkForce(sourcePath, resolvePath(dir, shippedName))
 		}
 
 		linked++
@@ -159,7 +159,7 @@ for (const locale of locales) {
 	// AGENTS.md documents for the publish path, reappearing one directory over. The per-locale
 	// `link-dev-weights.ts` scripts build these into the overlay directly; this only says whether they have.
 	for (const { shippedName, buildCommand, inputPath } of recipe.buildableFor(locale)) {
-		const present = await pathExists(resolve(dir, shippedName))
+		const present = await pathExists(resolvePath(dir, shippedName))
 
 		process.stdout.write(
 			present

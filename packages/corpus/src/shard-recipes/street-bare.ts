@@ -17,11 +17,10 @@
  *   reproduces the legacy run byte-for-byte.
  */
 
+import { makeMulberry32, shardSourceID, type CanonicalShardRow, type ShardRecipe } from "#shard-recipes/scaffold"
 import { DEFAULT_US_BASES } from "#synthesizers/intersection"
 import { synthesizeStreetRow, type StreetBaseTuple } from "#synthesizers/street"
 import { alignRow } from "#utils"
-
-import { makeMulberry32, shardSourceID, type CanonicalShardRow, type ShardRecipe } from "./scaffold.ts"
 
 /**
  * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,

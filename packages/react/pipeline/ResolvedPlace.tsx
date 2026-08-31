@@ -9,7 +9,7 @@
 
 import { Fragment, type ReactNode } from "react"
 
-import type { DualRoleView, ResolvedPlaceView } from "./types.ts"
+import type { DualRoleView, ResolvedPlaceView } from "#pipeline/types"
 
 export interface ResolvedPlaceProps {
 	place: ResolvedPlaceView

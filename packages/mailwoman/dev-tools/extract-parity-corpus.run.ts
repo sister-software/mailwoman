@@ -12,7 +12,7 @@ import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { join } from "path-ts"
 import { createNewlineWriter } from "spliterator"
 
-import { extractAssertCalls, type ParityCase } from "./parity-extract.ts"
+import { extractAssertCalls, type ParityCase } from "#dev-tools/parity-extract"
 
 const TEST_DIR = "packages/mailwoman/test"
 const OUT_PATH = "packages/mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl"

@@ -16,10 +16,10 @@
  */
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { spawn } from "@mailwoman/platform/child_process"
+import { spawnProcess } from "@mailwoman/core/process"
 import { TextSpliterator } from "spliterator"
 
-import { representativePoint } from "./representative-point.ts"
+import { representativePoint } from "#sdk/representative-point"
 
 /**
  * One OSM address feature, geometry already reduced to a single representative coordinate.
@@ -87,7 +87,7 @@ function toRecord(feature: {
  */
 async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OSMAddrRecord> {
 	const args = ["-f", "GeoJSONSeq", "/vsistdout/", "-dialect", "OGRSQL", "-sql", addrSQL(layer), pbfPath]
-	const proc = spawn("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
+	const proc = spawnProcess("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
 	let stderr = ""
 
 	proc.stderr.on("data", (d: Buffer) => {

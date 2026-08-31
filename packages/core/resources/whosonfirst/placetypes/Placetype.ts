@@ -10,15 +10,14 @@ import { parallelMap } from "spliterator"
 
 import { readLocalTextFile } from "#fs/readers"
 import { parseJSONStrict } from "#objects"
-
-import { prepareRepositoryDirectories, type RepositorySource } from "../../git.ts"
+import { prepareRepositoryDirectories, type RepositorySource } from "#resources/git"
 import {
 	normalizePlacetypeDefinition,
 	type PlacetypeDefinition,
 	type PlacetypeDefinitionInit,
 	type PlacetypeRole,
 	PlacetypeRoleOrder,
-} from "./definition.ts"
+} from "#resources/whosonfirst/placetypes/definition"
 
 /**
  * Upstream Who's On First placetypes repository the local definitions are generated from.

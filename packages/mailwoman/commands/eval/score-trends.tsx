@@ -33,7 +33,7 @@ interface Options {
 
 const EvalScoreTrends: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildScoreTrends } = await import("../../eval-harness/score-trends.ts")
+		const { buildScoreTrends } = await import("#eval-harness/score-trends")
 
 		return await buildScoreTrends(options)
 	})

@@ -21,7 +21,7 @@ import {
 	type AuthoritativeQuery,
 	type AuthoritativeResponse,
 	AuthoritativeResponseStatus,
-} from "./authoritative-provider.ts"
+} from "#resolver/authoritative-provider"
 
 /**
  * One fixture rule: when `matchOn` is found in the query's normalized form (case-insensitive substring), answer with

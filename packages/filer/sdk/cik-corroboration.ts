@@ -38,7 +38,7 @@
  *   not record them as negative facts.
  */
 
-import type { CIK } from "./edgar-filings.ts"
+import type { CIK } from "#sdk/edgar-filings"
 
 /**
  * SIC codes this gate accepts as corroborating a telecom identity — SEC's Office of Telecommunications range,

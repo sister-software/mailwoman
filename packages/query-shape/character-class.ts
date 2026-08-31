@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { CharacterClass, SpanRange, TokenCharacterClass, TokenClass } from "./types.ts"
+import type { CharacterClass, SpanRange, TokenCharacterClass, TokenClass } from "#types"
 
 /**
  * Codepoint-level character class.

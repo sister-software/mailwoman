@@ -15,8 +15,8 @@ import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 import { CAP_PATTERN } from "@mailwoman/codex/it"
 import { NZ_POSTCODE_PATTERN } from "@mailwoman/codex/nz"
 
-import type { WordGroup } from "./fst-prior.ts"
-import type { TokenLike } from "./query-shape-prior.ts"
+import type { WordGroup } from "#fst-prior"
+import type { TokenLike } from "#query-shape-prior"
 
 /**
  * P99 of the GB PPD `CITY` word-length distribution (measured 2026-07-22; see the module docstring's table). A

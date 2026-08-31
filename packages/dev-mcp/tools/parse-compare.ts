@@ -9,9 +9,9 @@
 
 import { z } from "zod"
 
-import { runParseCompare } from "../parse-compare-report.ts"
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
-import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "../tool-kit.ts"
+import { runParseCompare } from "#parse-compare-report"
+import type { DevTool, DevToolDeps } from "#tool-kit"
+import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#tool-kit"
 
 export const parseCompareTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_parse_compare",

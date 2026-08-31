@@ -46,21 +46,20 @@
 import { BANShardProvider } from "@mailwoman/ban/sdk"
 import { readLocalJSONFile, realPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { createRequire } from "@mailwoman/core/module/resolvers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { median, mulberry32, percentile } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { createRequire } from "@mailwoman/platform/module"
-import { basename, dirname, join, resolve } from "@mailwoman/platform/path"
-import { fileURLToPath } from "@mailwoman/platform/url"
-import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { geocodeAddress } from "mailwoman/geocode-core"
+import { basename, join, resolvePath } from "path-ts"
 
-const HERE = dirname(fileURLToPath(import.meta.url))
+const HERE = import.meta.dirname
 
 /**
  * The weights locale. The `fr-FR` package is a data-only overlay: it ships the French postcode, pair-index and FST
@@ -103,7 +102,7 @@ const EXACT_ROW_KM = 0.001
  */
 const ROUTING_KM = 15
 
-const { values: flags } = parseArgs({
+const { values: flags } = parseArguments({
 	options: {
 		"data-root": { type: "string" },
 		out: { type: "string", default: join(HERE, "fr-ban-results.json") },
@@ -284,7 +283,7 @@ async function resample(): Promise<void> {
  */
 async function versionStamp() {
 	const require = createRequire(import.meta.url)
-	const resolved = resolveWeights({ locale: LOCALE })
+	const resolved = await resolveWeights({ locale: LOCALE })
 
 	// `resolveWeights` answers `undefined` when the bundle ships no card. The stamp is the point of this function, so a
 	// missing card is a failure to report rather than a field to omit.
@@ -442,7 +441,7 @@ async function run() {
 		console.log(`${" ".repeat(10)} tiers ${JSON.stringify(summary.tiers)}`)
 	}
 
-	console.log(`wrote ${resolve(flags.out)}`)
+	console.log(`wrote ${resolvePath(flags.out)}`)
 }
 
 await (flags.resample ? resample() : run())

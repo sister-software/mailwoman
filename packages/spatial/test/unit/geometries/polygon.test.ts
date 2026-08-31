@@ -4,19 +4,18 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { LineStringPath } from "@mailwoman/spatial"
 import {
 	geometryContains,
 	isPolygonLiteral,
-	isResidentialElement,
 	isSolidPolygonPath,
-	pointInPolygonRings,
+	pointInPolygon,
 	pointInRing,
 	polygonToOSMFilter,
-	type GeojsonPosition,
 	type PolygonPath,
-	type OSMOverpassElement,
 	type PolygonLiteral,
 } from "@mailwoman/spatial/geometries/polygon"
+import { type OSMOverpassElement, isResidentialElement } from "@mailwoman/spatial/osm/utils"
 import { expect, test } from "vitest"
 
 const SOLID: PolygonLiteral = {
@@ -69,7 +68,7 @@ test("isResidentialElement: rejects commercial tags + restaurants, accepts a pla
 })
 
 // A unit square ring in [lon, lat], closed.
-const SQUARE: GeojsonPosition[] = [
+const SQUARE: LineStringPath = [
 	[0, 0],
 	[0, 1],
 	[1, 1],
@@ -84,8 +83,8 @@ test("pointInRing: inside vs outside a simple ring (ray-cast even-odd)", () => {
 	expect(pointInRing(0.5, 2, SQUARE)).toBe(false) // north of the ring
 })
 
-test("pointInPolygonRings: a hole punches a void (even-odd handles holes, no orientation rules)", () => {
-	const outer: GeojsonPosition[] = [
+test("pointInPolygon: a hole punches a void (even-odd handles holes, no orientation rules)", () => {
+	const outer: LineStringPath = [
 		[0, 0],
 		[0, 10],
 		[10, 10],
@@ -93,7 +92,7 @@ test("pointInPolygonRings: a hole punches a void (even-odd handles holes, no ori
 		[0, 0],
 	]
 
-	const hole: GeojsonPosition[] = [
+	const hole: LineStringPath = [
 		[4, 4],
 		[4, 6],
 		[6, 6],
@@ -102,11 +101,11 @@ test("pointInPolygonRings: a hole punches a void (even-odd handles holes, no ori
 	]
 
 	// inside outer, NOT in the hole → contained
-	expect(pointInPolygonRings(1, 1, [outer, hole])).toBe(true)
+	expect(pointInPolygon(1, 1, [outer, hole])).toBe(true)
 	// inside the hole → an odd-count void → NOT contained
-	expect(pointInPolygonRings(5, 5, [outer, hole])).toBe(false)
+	expect(pointInPolygon(5, 5, [outer, hole])).toBe(false)
 	// outside everything
-	expect(pointInPolygonRings(20, 20, [outer, hole])).toBe(false)
+	expect(pointInPolygon(20, 20, [outer, hole])).toBe(false)
 })
 
 test("geometryContains: Polygon / MultiPolygon test; non-areal and null geometry → null", () => {
@@ -126,7 +125,7 @@ test("geometryContains: Polygon / MultiPolygon test; non-areal and null geometry
 					[11, 11],
 					[11, 10],
 					[10, 10],
-				] as GeojsonPosition[],
+				] as LineStringPath,
 			],
 		],
 	}

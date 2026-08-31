@@ -5,8 +5,8 @@
  * @file FCC Broadband Data Collection System
  */
 
-import type { BuildingTypeCode } from "./buildings.ts"
-import type { BroadbandServicableLocationID } from "./location.ts"
+import type { BuildingTypeCode } from "#sdk/buildings"
+import type { BroadbandServicableLocationID } from "#sdk/location"
 
 /**
  * Snake_case identifier for a US State or Territory.

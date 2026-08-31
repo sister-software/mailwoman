@@ -15,8 +15,8 @@ import { COMPONENT_TAGS } from "@mailwoman/core"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { haversineKm } from "@mailwoman/spatial"
 
-import type { GauntletResult } from "./harness.ts"
-import type { GauntletCaseTable } from "./schema.ts"
+import type { GauntletResult } from "#eval-harness/gauntlet/harness"
+import type { GauntletCaseTable } from "#eval-harness/gauntlet/schema"
 
 /**
  * Great-circle tolerance applied when a case pins a coordinate but no `expect_tolerance_m`.

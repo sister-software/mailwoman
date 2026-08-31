@@ -54,14 +54,14 @@ import { ResourceError } from "@mailwoman/core/errors"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { GeoPoint, type GeoPointInput, isGooglePlaceID } from "@mailwoman/spatial"
 
-import type { OracleGeocodeResult } from "../result.ts"
-import { parseGoogleGeocodeResult } from "./google-parser.ts"
+import type { OracleGeocodeResult } from "#result"
+import { parseGoogleGeocodeResult } from "#sdk/google-parser"
 import {
 	type GoogleGeocodeResponse,
 	type GoogleGeocodeResult,
 	GoogleGeocoderStatus,
 	type GoogleLatLngLiteral,
-} from "./google-types.ts"
+} from "#sdk/google-types"
 
 /**
  * The Geocoding API endpoint every request in this file is issued against. Forward AND reverse geocoding and place-ID

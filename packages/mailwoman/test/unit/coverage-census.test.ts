@@ -13,7 +13,6 @@ import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
 import {
 	buildCorpusCensus,
 	normalizeArrowListColumn,
@@ -21,6 +20,7 @@ import {
 	readBoardCoverage,
 	readConfiguredCorpusVersion,
 } from "mailwoman/coverage-census"
+import { join } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -30,7 +30,7 @@ afterAll(() => fixtures.disposeAsync())
 let root: string
 
 beforeAll(async () => {
-	root = fixtures.use(await temporaryDirectory("mw-coverage-")).path
+	root = fixtures.use(await temporaryDirectory("mw-coverage-")).path.toString()
 })
 
 describe("normalizeArrowListColumn", () => {

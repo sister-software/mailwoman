@@ -5,9 +5,7 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { removePathIfPresentSync } from "@mailwoman/core/fs/writers-sync"
-import { join } from "@mailwoman/platform/path"
+import { removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import {
 	type GeocodeAddress,
 	type RawGeocode,
@@ -17,7 +15,8 @@ import {
 	ingestRows,
 	streamRows,
 } from "@mailwoman/registry/ingest"
-import { afterAll, describe, expect, it } from "vitest"
+import { join, type PathBuilderLike } from "path-ts"
+import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
 
@@ -91,8 +90,17 @@ describe("ingestRows", () => {
 		email: "email",
 	}
 
+	// `streamRows` reads a path, so the fixture goes to disk once for the block.
+	let csvPath: string
+
+	beforeAll(async () => {
+		csvPath = join(fixtures.use(await temporaryDirectory("mw-ingest-")).path, "rows.csv")
+
+		await writeLocalTextFile(CSV, csvPath)
+	})
+
 	it("normalizes each row: parsed name, canonical org, geocoded address, phone/email", async () => {
-		const [a, b] = await ingestRows(streamRows(CSV), mapping, { geocodeAddress: stubGeocode })
+		const [a, b] = await ingestRows(streamRows(csvPath), mapping, { geocodeAddress: stubGeocode })
 
 		expect(a!.id).toBe("c1")
 		expect(a!.name).toEqual({ prefix: "Dr.", given: "Robert", family: "Smith" })
@@ -110,34 +118,37 @@ describe("ingestRows", () => {
 	})
 
 	it("comma-joins a multi-column address by default, space when overridden (#694 flip)", async () => {
-		const [dflt] = await ingestRows(streamRows(CSV), mapping, { geocodeAddress: stubGeocode })
-		expect(dflt!.address?.formatted).toBe("123 Main St, Portland, OR, 97201") // default: comma-join (#694, validated)
-		const [space] = await ingestRows(streamRows(CSV), mapping, { geocodeAddress: stubGeocode, addressSeparator: " " })
-		expect(space!.address?.formatted).toBe("123 Main St Portland OR 97201") // override → legacy space-join (byte-stable A/B)
+		const [dflt] = await ingestRows(streamRows(csvPath), mapping, { geocodeAddress: stubGeocode })
+		// default: comma-join (#694, validated)
+		expect(dflt!.address?.formatted).toBe("123 Main St, Portland, OR, 97201")
+		const spaced = { geocodeAddress: stubGeocode, addressSeparator: " " }
+		const [space] = await ingestRows(streamRows(csvPath), mapping, spaced)
+		// override → legacy space-join (byte-stable A/B)
+		expect(space!.address?.formatted).toBe("123 Main St Portland OR 97201")
 	})
 
 	it("falls back to the row index when no id column maps", async () => {
-		const [first] = await ingestRows(streamRows(CSV), { name: "name" })
+		const [first] = await ingestRows(streamRows(csvPath), { name: "name" })
 		expect(first!.id).toBe("0")
 	})
 
 	it("leaves the address unresolved when no geocoder is injected", async () => {
-		const [first] = await ingestRows(streamRows(CSV), mapping)
+		const [first] = await ingestRows(streamRows(csvPath), mapping)
 		expect(first!.address).toBeUndefined()
 	})
 })
 
 describe("streamRows (lazy delimited ingest)", () => {
-	const dirs: string[] = []
+	const dirs: PathBuilderLike[] = []
 
-	const tmp = async (): Promise<string> => {
+	const tmp = async (): Promise<PathBuilderLike> => {
 		const d = fixtures.use(await temporaryDirectory("mw-stream-")).path
 		dirs.push(d)
 
 		return d
 	}
 
-	afterAll(() => dirs.forEach((d) => removePathIfPresentSync(d)))
+	afterAll(() => Promise.all(dirs.map((d) => removePathIfPresent(d))))
 
 	it("infers the delimiter from the extension", () => {
 		expect(delimiterFor("/x/data.tsv")).toBe("tab")

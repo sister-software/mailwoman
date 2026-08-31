@@ -29,8 +29,8 @@ import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { gridDisk, latLngToCell } from "h3-js"
 
-import type { POICategoryCodeTable, POIDatabase, POITable } from "./poi-schema.ts"
-import { allRows } from "./sqlite-utils.ts"
+import type { POICategoryCodeTable, POIDatabase, POITable } from "#poi-schema"
+import { allRows } from "#sqlite-utils"
 
 /**
  * Resolution the `poi` table's `h3_cell` column is keyed at — matches the builder (spec §3.4).

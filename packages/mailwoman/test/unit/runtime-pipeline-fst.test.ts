@@ -11,19 +11,19 @@
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
 import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { createRuntimePipeline } from "mailwoman/runtime-pipeline"
+import { join, type PathBuilderLike } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 /**
  * Build a minimal but REAL FST binary (one locality entry, "testville") via the actual builder + serializer — no
  * hand-rolled bytes. Returns the written file path.
  */
-async function writeTinyFST(dir: string): Promise<string> {
+async function writeTinyFST(dir: PathBuilderLike): Promise<string> {
 	const dbPath = join(dir, "tiny-wof.db")
 	using db = new DatabaseClient<WOFDatabase>(dbPath)
 

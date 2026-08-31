@@ -22,8 +22,8 @@
 
 import { FR_VOIE_TYPES } from "@mailwoman/codex/fr"
 
-import { decomposeFrStreet } from "../adapters/ban/street-decompose.ts"
-import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
+import { decomposeFrStreet } from "#adapters/ban/street-decompose"
+import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "#shard-recipes/scaffold"
 
 /**
  * Canonical voie type (lowercase, accent-kept) → its most common written abbreviation, from the codex table's first

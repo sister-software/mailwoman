@@ -24,8 +24,8 @@
  *   convention.
  */
 
-import type { AnchorLookup } from "./anchor-inference.ts"
-import type { PostcodePlace } from "./postcode-anchor.ts"
+import type { AnchorLookup } from "#anchor-inference"
+import type { PostcodePlace } from "#postcode-anchor"
 
 /**
  * "PCB1" little-endian (P=0x50 C=0x43 B=0x42 1=0x31)

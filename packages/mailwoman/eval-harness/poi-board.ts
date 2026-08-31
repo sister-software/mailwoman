@@ -51,17 +51,17 @@
  *   so the interval/distance math is tested against synthetic outcomes.
  */
 
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import type { PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/core/pipeline"
 import type { POIPhraseLookup } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { createRuntimePipeline } from "#index"
-
-import { createResolverBackend, dataRootPath, wofShardPaths } from "../resolver-backend.ts"
+import { createResolverBackend, dataRootPath, wofShardPaths } from "#resolver-backend"
 
 /**
  * Fixture set backing the POI query board.
@@ -436,7 +436,7 @@ export interface POIBoardOptions {
 	/**
 	 * Sealed poi.db to query. Defaults to the standard data-root layer path — see `gazetteer build poi`'s own default.
 	 */
-	db?: string
+	db?: PathBuilderLike
 	/**
 	 * WOF admin shard path(s) for anchor resolution — same semantics as `mailwoman poi --resolve-db`.
 	 */
@@ -481,11 +481,15 @@ export interface POIBoardOptions {
 async function loadResolver(
 	options: POIBoardOptions
 ): Promise<({ resolver: Resolver; backend: POIBoardResolverBackend } & Disposable) | undefined> {
-	const wofPaths = options.candidateDB
+	const wofCandidates = options.candidateDB
 		? []
-		: (options.resolveDB ? options.resolveDB.split(",").map((p) => p.trim()) : wofShardPaths()).filter((p) =>
-				pathExistsSync(p)
-			)
+		: options.resolveDB
+			? options.resolveDB.split(",").map((p) => p.trim())
+			: wofShardPaths()
+
+	const wofPaths = (await Promise.all(wofCandidates.map(async (path) => ({ path, exists: await pathExists(path) }))))
+		.filter((entry) => entry.exists)
+		.map((entry) => entry.path)
 
 	if (!options.candidateDB && !wofPaths.length) {
 		console.error(
@@ -498,7 +502,7 @@ async function loadResolver(
 
 	try {
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
-		const lookup = createResolverBackend(mod, { candidateDB: options.candidateDB, wofPaths })
+		const lookup = await createResolverBackend(mod, { candidateDB: options.candidateDB, wofPaths })
 
 		return {
 			resolver: createWOFResolver(lookup),
@@ -747,7 +751,7 @@ export interface POIBoardPipelineHandle extends Disposable {
  * what the probe measures while the grader stayed identical, and the difference would read as a pipeline result.
  */
 export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Promise<POIBoardPipelineHandle> {
-	const db = options.db ?? dataRootPath("poi", "poi.db")
+	const db = resolvePath(options.db ?? dataRootPath("poi", "poi.db"))
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
 		locale: options.locale ?? "en-US",

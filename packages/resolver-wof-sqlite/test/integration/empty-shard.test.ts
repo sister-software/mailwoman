@@ -9,13 +9,13 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { join } from "@mailwoman/platform/path"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite/address-point"
 import { AddressPointInterpolator } from "@mailwoman/resolver-wof-sqlite/address-point-interpolation"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { StreetInterpolator } from "@mailwoman/resolver-wof-sqlite/interpolation"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()

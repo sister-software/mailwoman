@@ -15,7 +15,6 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { resolve } from "@mailwoman/platform/path"
 import {
 	candidateSubjects,
 	type CensusVenue,
@@ -23,13 +22,14 @@ import {
 	type PhraseCollisionCensus,
 	runPhraseCollisionCensus,
 } from "mailwoman/eval-harness/activity-lexicon/phrase-collision-census"
+import { resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const COMMITTED_CENSUS = "packages/mailwoman/eval-harness/activity-lexicon/collision-census.json"
 
 const lexicon = await readActivityLexicon()
 
-const committedCensusPath = resolve(String(repoRootPath()), COMMITTED_CENSUS)
+const committedCensusPath = resolvePath(String(repoRootPath()), COMMITTED_CENSUS)
 const committed = await readLocalJSONFile<PhraseCollisionCensus>(committedCensusPath)
 
 /**

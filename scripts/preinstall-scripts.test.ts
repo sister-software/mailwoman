@@ -22,7 +22,7 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { dirname, join, relative, resolve } from "@mailwoman/platform/path"
+import { dirname, join, relative, resolvePath } from "path-ts"
 import ts from "typescript"
 import { describe, expect, test } from "vitest"
 
@@ -94,7 +94,7 @@ function collectSpecifiers(filePath: string, source: string): string[] {
 async function collectReachableExternals(entryPoint: string): Promise<Array<{ file: string; specifier: string }>> {
 	const externals: Array<{ file: string; specifier: string }> = []
 	const seen = new Set<string>()
-	const queue = [resolve(REPO_ROOT, entryPoint)]
+	const queue = [resolvePath(REPO_ROOT, entryPoint)]
 
 	while (queue.length) {
 		const filePath = queue.pop()!

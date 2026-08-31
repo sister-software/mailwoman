@@ -22,7 +22,7 @@
  *   and sanity- check that the recovered `m` exceeds `u` on the top agreement level.
  */
 
-import type { Comparison, FellegiSunterModel } from "./fellegi-sunter.ts"
+import type { Comparison, FellegiSunterModel } from "#fellegi-sunter"
 
 /**
  * Tiny floor mixed into the M-step so an unobserved level never produces a zero (→ infinite weight).

@@ -23,10 +23,10 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
 import { ablationBoardID } from "mailwoman/eval-harness/gauntlet/ablation"
 import { CorpusRowError, loadRegressionCases, regressionCorpusHash } from "mailwoman/eval-harness/gauntlet/cases/load"
 import { canonicalizeSeedCase, SeedCaseSchema } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -256,7 +256,7 @@ const SAMPLE = {
  * Write a throwaway corpus tree and return its root.
  */
 async function scratchCorpus(files: Record<string, string>): Promise<string> {
-	const root = fixtures.use(await temporaryDirectory("gauntlet-cases-")).path
+	const root = fixtures.use(await temporaryDirectory("gauntlet-cases-")).path.toString()
 
 	for (const [relative, body] of Object.entries(files)) {
 		const path = join(root, relative)

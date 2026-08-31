@@ -10,10 +10,10 @@
 
 import { z } from "zod"
 
-import { ARM_SPEC_SCHEMA } from "../arms.ts"
-import { runCompare } from "../compare.ts"
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
-import { INPUT_SET_SCHEMA } from "../tool-kit.ts"
+import { ARM_SPEC_SCHEMA } from "#arms"
+import { runCompare } from "#compare"
+import type { DevTool, DevToolDeps } from "#tool-kit"
+import { INPUT_SET_SCHEMA } from "#tool-kit"
 
 export const compareTool = async ({ registry }: DevToolDeps): Promise<DevTool> => ({
 	name: "mwdev_compare",

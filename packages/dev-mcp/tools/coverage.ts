@@ -8,12 +8,11 @@
  */
 
 import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
-import { statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { censusCoverage, type CountryCoverage, type CoverageReport } from "mailwoman/coverage-census"
 import { z } from "zod"
 
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
+import type { DevTool, DevToolDeps } from "#tool-kit"
 
 /**
  * The training config whose `country_weights` decides admission, chosen by MODIFICATION TIME.
@@ -31,10 +30,13 @@ async function newestConfig(repoRoot: string): Promise<string> {
 
 	if (!(await pathExists(dir))) return ""
 
-	const named = (await readDirectory(dir))
-		.filter((n) => n.endsWith(".yaml") && !n.includes("smoke"))
-		.map((n) => ({ n, at: statPathSync(`${dir}/${n}`).mtimeMs }))
-		.toSorted((a, b) => b.at - a.at)
+	const named = (
+		await Promise.all(
+			(await readDirectory(dir))
+				.filter((n) => n.endsWith(".yaml") && !n.includes("smoke"))
+				.map(async (n) => ({ n, at: (await statPath(`${dir}/${n}`)).mtimeMs }))
+		)
+	).toSorted((a, b) => b.at - a.at)
 
 	return named.length ? `${dir}/${named[0]!.n}` : ""
 }

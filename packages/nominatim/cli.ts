@@ -18,8 +18,8 @@ import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
 import { printOpenAPIDocument, serveNode } from "@mailwoman/api-kit"
 import { countryReferenceAnnotator, matchCountry } from "@mailwoman/codex/country"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { makeNUTSAnnotator, NUTSLookup } from "@mailwoman/nuts-lookup"
-import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"
@@ -37,6 +37,7 @@ import { geocodeAddress } from "mailwoman/geocode-core"
 import type { GeocodeResult } from "mailwoman/geocode-result"
 import { ShardProvider } from "mailwoman/geocode-shards"
 import { createResolverBackend, dataRootPath, mailwomanDataRoot } from "mailwoman/resolver-backend"
+import { resolvePath } from "path-ts"
 
 import {
 	createNominatimApp,
@@ -46,7 +47,7 @@ import {
 	NOMINATIM_DOC_INFO,
 	type ResolvedAddress,
 	toNominatimResult,
-} from "./index.ts"
+} from "#index"
 
 /**
  * WOF placetype → Nominatim address key.
@@ -109,7 +110,7 @@ function forwardToResolved(r: GeocodeResult): ResolvedAddress {
 }
 
 async function serve(): Promise<void> {
-	const { values } = parseArgs({
+	const { values } = parseArguments({
 		options: {
 			port: { type: "string", default: "8080" },
 			host: { type: "string", default: "0.0.0.0" },
@@ -130,13 +131,13 @@ async function serve(): Promise<void> {
 	const { adminDBPath, candidateDB, wofPaths } = gazetteer
 	const classifier = await loadClassifierOrExit()
 
-	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDB })
+	const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
 	const resolver = createWOFResolver(backend)
-	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
+	const shards = await ShardProvider.create(resolverMod, mailwomanDataRoot())
 	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse. A no-op
 	// when the shard isn't on disk (existsSync-gated inside the provider), so the endpoint degrades cleanly.
 	const { BANShardProvider } = await import("@mailwoman/ban/sdk")
-	const banShards = new BANShardProvider(mailwomanDataRoot())
+	const banShards = await BANShardProvider.create(mailwomanDataRoot())
 	// NOT a geocode country constraint. The default-on #244 placer already routes the query's country
 	// (Berlin→DE, Boston→US) and `defaultCountry` is a HARD override that beats it (geocode-core.ts:102),
 	// so forcing "US" resolved every non-US query to its US namesake (Berlin→Berlin NH). We let the
@@ -150,19 +151,19 @@ async function serve(): Promise<void> {
 	const tzDBPath = dataRootPath("timezone", "timezone.db")
 
 	if (await pathExists(tzDBPath)) {
-		annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: tzDBPath })))
+		annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: resolvePath(tzDBPath) })))
 	}
 
 	const ulDBPath = dataRootPath("un-locode", "un-locode.db")
 
 	if (await pathExists(ulDBPath)) {
-		annotators.push(makeUNLocodeAnnotator(new UNLocodeLookup({ databasePath: ulDBPath })))
+		annotators.push(makeUNLocodeAnnotator(new UNLocodeLookup({ databasePath: resolvePath(ulDBPath) })))
 	}
 
 	const nutsDBPath = dataRootPath("nuts", "nuts.db")
 
 	if (await pathExists(nutsDBPath)) {
-		annotators.push(makeNUTSAnnotator(new NUTSLookup({ databasePath: nutsDBPath })))
+		annotators.push(makeNUTSAnnotator(new NUTSLookup({ databasePath: resolvePath(nutsDBPath) })))
 	}
 
 	const annotate = composeAnnotators(annotators)
@@ -170,7 +171,7 @@ async function serve(): Promise<void> {
 	// Read once, at boot, from the artifacts THEMSELVES (#997). The handles above are held for the life of
 	// the process, so this describes what the endpoint is serving from for as long as it serves — and every
 	// artifact appears, including one carrying no manifest, which says so rather than being left out.
-	const status = nominatimStatus(gazetteerFreshness(gazetteer))
+	const status = nominatimStatus(await gazetteerFreshness(gazetteer))
 
 	const engine: NominatimEngine = {
 		async search(params) {

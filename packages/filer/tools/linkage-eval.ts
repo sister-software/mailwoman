@@ -10,16 +10,16 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { changeMode, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join } from "path-ts"
 
-import { FilerIdentifierType, FilerRelationship, type FilerDatabase } from "../schema.ts"
-import { buildFilerDatabase } from "../sdk/build-filer.ts"
-import { clusterFilers, type InferredClusterResult } from "../sdk/cluster-filers.ts"
-import { familyRollup } from "../sdk/family-rollup.ts"
-import type { Form499Row } from "../sdk/form499.ts"
-import type { FRN } from "../sdk/frn.ts"
-import type { ProviderListRow } from "../sdk/provider-list.ts"
+import { FilerIdentifierType, FilerRelationship, type FilerDatabase } from "#schema"
+import { buildFilerDatabase } from "#sdk/build-filer"
+import { clusterFilers, type InferredClusterResult } from "#sdk/cluster-filers"
+import { familyRollup } from "#sdk/family-rollup"
+import type { Form499Row } from "#sdk/form499"
+import type { FRN } from "#sdk/frn"
+import type { ProviderListRow } from "#sdk/provider-list"
 import {
 	buildControlEvalInputs,
 	buildFilteredEvalInputs,
@@ -30,8 +30,8 @@ import {
 	hashLinkageEvalInputs,
 	type LinkageEvalInputs,
 	type LinkageEvalRegistrant,
-} from "./linkage-corpus.ts"
-import { groupPredicateFromMap, scorePairwiseGrouping, type PairwiseGroupingScore } from "./linkage-metrics.ts"
+} from "#tools/linkage-corpus"
+import { groupPredicateFromMap, scorePairwiseGrouping, type PairwiseGroupingScore } from "#tools/linkage-metrics"
 
 /**
  * `sourceVintage`/`validFrom` for the eval's own `buildFilerDatabase`/`clusterFilers` calls — FIXED constants, never

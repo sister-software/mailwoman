@@ -23,10 +23,10 @@ import {
 import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { decorateNode, isResolvedWithCoord } from "./decorate-node.ts"
-import type { CoordinateOptionalPlace } from "./postcode-prefix.ts"
-import { isShapeExcludedPostcode } from "./postcode-shape-coherence.ts"
-import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "./span-rescore.ts"
+import { decorateNode, isResolvedWithCoord } from "#decorate-node"
+import type { CoordinateOptionalPlace } from "#postcode-prefix"
+import { isShapeExcludedPostcode } from "#postcode-shape-coherence"
+import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "#span-rescore"
 
 /**
  * Cap on candidates recorded per {@link ResolveNodeTrace} — the trace is a record, not a dump. The count past the cap is

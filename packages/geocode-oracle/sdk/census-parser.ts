@@ -19,8 +19,8 @@ import { createPostalAddressID } from "@mailwoman/address-id"
 import type { ComponentDict } from "@mailwoman/formatter"
 import { type AddressGeocode, type ResolutionTier, toPostalAddress, withGeocode } from "@mailwoman/record"
 
-import { OracleProvider, type OracleGeocodeResult, regionPrefix } from "../result.ts"
-import type { CensusAddressComponents, CensusAddressMatch } from "./census-types.ts"
+import { OracleProvider, type OracleGeocodeResult, regionPrefix } from "#result"
+import type { CensusAddressComponents, CensusAddressMatch } from "#sdk/census-types"
 
 /**
  * The tier every Census match carries, without exception.

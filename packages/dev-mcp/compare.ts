@@ -18,10 +18,10 @@
  */
 
 import { formatPercent } from "@mailwoman/core/utils"
-import { randomUUID } from "@mailwoman/platform/crypto"
 import { checkCase } from "mailwoman/eval-harness/gauntlet/check-case"
 import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	armLabel,
@@ -31,7 +31,7 @@ import {
 	type OracleArm,
 	type ArmRunner,
 	type RecordedArm,
-} from "./arms.ts"
+} from "#arms"
 import {
 	armsDiffered,
 	ARM_SEPARATION_THRESHOLD_KM,
@@ -41,10 +41,10 @@ import {
 	recordAnswers,
 	resolveGradeMode,
 	withheldVerdict,
-} from "./compare-helpers.ts"
-import { crossEngineReading, worktreePairReading, worktreeTreeDelta } from "./confound.ts"
-import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
-import { type ExternalAnswer, ExternalGeocoderClient, type ExternalArmIdentity } from "./external-arm.ts"
+} from "#compare-helpers"
+import { crossEngineReading, worktreePairReading, worktreeTreeDelta } from "#confound"
+import type { EngineConfig, EngineRegistryLike } from "#engine-registry"
+import { type ExternalAnswer, ExternalGeocoderClient, type ExternalArmIdentity } from "#external-arm"
 import {
 	DISTANCE_THRESHOLDS_KM,
 	distanceKm,
@@ -53,10 +53,10 @@ import {
 	thresholdKey,
 	thresholdTable,
 	tostEquivalence,
-} from "./geo-grade.ts"
-import { gradeRow, significance } from "./grade.ts"
-import { resolveInputSet, type InputSetRef, type ResolvedInput, type ResolvedInputSet } from "./input-sets.ts"
-import { prepareMailwomanArms } from "./mailwoman-comparison-arms.ts"
+} from "#geo-grade"
+import { gradeRow, significance } from "#grade"
+import { resolveInputSet, type InputSetRef, type ResolvedInput, type ResolvedInputSet } from "#input-sets"
+import { prepareMailwomanArms } from "#mailwoman-comparison-arms"
 import {
 	answerFromOracle,
 	createOracleClient,
@@ -66,8 +66,8 @@ import {
 	ORACLE_GRADE_MODE,
 	ORACLE_VERDICT_NOTE,
 	OracleProviderName,
-} from "./oracle-arm.ts"
-import { describeObservedRate } from "./power.ts"
+} from "#oracle-arm"
+import { describeObservedRate } from "#power"
 import {
 	getRun,
 	replayIndex,
@@ -77,7 +77,7 @@ import {
 	tryPutRun,
 	type StoredRun,
 	type RecordedAnswer,
-} from "./run-store.ts"
+} from "#run-store"
 import {
 	bucketRows,
 	type ComparedRow,
@@ -86,8 +86,8 @@ import {
 	provenanceFor,
 	stratify,
 	type StratumKey,
-} from "./tool-kit.ts"
-import { worktreeArmRunner } from "./worktree-runner.ts"
+} from "#tool-kit"
+import { worktreeArmRunner } from "#worktree-runner"
 
 /**
  * What the caller asked for on the grading axis. `auto` picks `truth` where the set has it — see spec §5.5: a diff is
@@ -148,7 +148,7 @@ export interface CompareDeps {
 	 * Where completed runs are written, and what to stamp them with. Injected so a test does not write into the
 	 * operator's store, and because `Date`/`randomUUID` are exactly what a deterministic replay cannot call.
 	 */
-	runStoreDir?: string
+	runStoreDir?: PathBuilderLike
 	now?: () => Date
 	newRunID?: () => string
 }
@@ -210,7 +210,7 @@ async function compareMailwomanArms(
 
 	const { geocodeA, geocodeB, provenanceA, provenanceB, comparisonEngineID, confounds } = arms
 
-	const fingerprint = registry.fingerprint()
+	const fingerprint = await registry.fingerprint()
 
 	const rows: ComparedRow[] = []
 	const errors: Array<{ id: string; input: string; arm: "a" | "b"; message: string }> = []
@@ -314,7 +314,7 @@ async function compareMailwomanArms(
 	// Both arms are recorded under distinct labels: they are two configurations of the same engine, so `mailwoman` alone
 	// would name whichever one was written last and a recorded arm would replay a config nobody asked for.
 	const run: StoredRun = {
-		run_id: (deps.newRunID ?? randomUUID)(),
+		run_id: (deps.newRunID ?? (() => crypto.randomUUID()))(),
 		tool: "mwdev_compare",
 		created_at: now(deps).toISOString(),
 		tree_fingerprint: fingerprint.digest,
@@ -469,7 +469,7 @@ function oracleRunner(
  * rows is still readable on the rest. How many were missing is counted BEFORE the run and warned about, not discovered
  * from the miss rate afterwards.
  */
-async function recordedRunner(spec: RecordedArm, set: ResolvedInputSet, dir: string): Promise<ArmRunner> {
+async function recordedRunner(spec: RecordedArm, set: ResolvedInputSet, dir: PathBuilderLike): Promise<ArmRunner> {
 	const run = await getRun(spec.runID, dir)
 
 	if (!run) {
@@ -570,7 +570,7 @@ async function compareAcrossEngines(
 ): Promise<unknown> {
 	const clients: AsyncDisposable[] = []
 	const identities: Record<string, ExternalArmIdentity | OracleArmIdentity> = {}
-	const meter = deps.oracleMeter ?? new OracleMeter()
+	const meter = deps.oracleMeter ?? (await OracleMeter.create())
 
 	const build = async (arm: ArmSpec, side: "a" | "b"): Promise<ArmRunner> => {
 		if (arm.kind === "mailwoman") return mailwomanRunner(registry, arm.config, set)
@@ -781,10 +781,10 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		.join(" ")
 
 	const run: StoredRun = {
-		run_id: (deps.newRunID ?? randomUUID)(),
+		run_id: (deps.newRunID ?? (() => crypto.randomUUID()))(),
 		tool: "mwdev_compare",
 		created_at: now(deps).toISOString(),
-		tree_fingerprint: registry.fingerprint().digest,
+		tree_fingerprint: (await registry.fingerprint()).digest,
 		engine_id: null,
 		input_set_id: set.setID,
 		answers: {

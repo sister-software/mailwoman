@@ -37,10 +37,9 @@ import {
 	writeLocalJSONFile,
 } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { execFileSync, spawn } from "@mailwoman/platform/child_process"
-import { join, resolve } from "@mailwoman/platform/path"
-import { fileURLToPath } from "@mailwoman/platform/url"
-import { parseArgs } from "@mailwoman/platform/util"
+import { runFileSync, spawnProcess } from "@mailwoman/core/process"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { join, resolvePath as resolve } from "path-ts"
 
 /**
  * How many stabilization passes the worker makes before giving up. Each pass costs two `gh` round trips (~2s), so five
@@ -114,7 +113,7 @@ async function hookMain(): Promise<void> {
 	await writeLocalJSONFile({ issue, todos }, pendingPath)
 	await movePath(pendingPath, payloadPath)
 
-	const child = spawn(process.execPath, [import.meta.filename, "--worker", "--cwd", cwd], {
+	const child = spawnProcess(process.execPath, [import.meta.filename, "--worker", "--cwd", cwd], {
 		detached: true,
 		stdio: "ignore",
 	})
@@ -185,7 +184,7 @@ export async function workerMain(
 }
 
 function syncIssue(issue: number, todos: TodoItem[], dryRun: boolean): void {
-	const body = execFileSync("gh", ["issue", "view", String(issue), "--json", "body", "-q", ".body"], {
+	const body = runFileSync("gh", ["issue", "view", String(issue), "--json", "body", "-q", ".body"], {
 		encoding: "utf8",
 		timeout: 30_000,
 	})
@@ -206,14 +205,14 @@ function syncIssue(issue: number, todos: TodoItem[], dryRun: boolean): void {
 		return
 	}
 
-	execFileSync("gh", ["issue", "edit", String(issue), "--body-file", "-"], {
+	runFileSync("gh", ["issue", "edit", String(issue), "--body-file", "-"], {
 		input: next,
 		timeout: 30_000,
 	})
 }
 
 async function main(): Promise<void> {
-	const { values } = parseArgs({
+	const { values } = parseArguments({
 		options: {
 			worker: { type: "boolean", default: false },
 			cwd: { type: "string" },
@@ -231,6 +230,6 @@ async function main(): Promise<void> {
 // oxlint-disable-next-line sister-software/no-process-globals -- executable-entry detection has no project helper.
 const entryPath = process.argv[1]
 
-if (entryPath && fileURLToPath(import.meta.url) === resolve(entryPath)) {
+if (entryPath && import.meta.filename === resolve(entryPath)) {
 	await main()
 }

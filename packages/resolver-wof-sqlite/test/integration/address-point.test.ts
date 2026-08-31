@@ -9,7 +9,6 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { join } from "@mailwoman/platform/path"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite/address-point"
 import {
 	ADDRESS_POINT_COLUMNS,
@@ -18,6 +17,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { normalizeStreetForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()

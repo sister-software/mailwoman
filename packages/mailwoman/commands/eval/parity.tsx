@@ -67,7 +67,7 @@ interface Options {
 const EvalParity: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { runParityEval } = await import("../../eval-harness/parity-corpus.ts")
+			const { runParityEval } = await import("#eval-harness/parity-corpus")
 
 			return (
 				await runParityEval({

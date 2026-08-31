@@ -15,13 +15,8 @@
  *   Emits warnings to stderr and the audit table to stdout; never throws on an empty corpus.
  */
 
-import {
-	pathExistsSync,
-	readDirectorySync,
-	readLocalBufferSync,
-	readLocalJSONFileSync,
-} from "@mailwoman/core/fs/readers-sync"
-import { basename, join } from "@mailwoman/platform/path"
+import { pathExists, readDirectory, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { basename, join, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 /**
@@ -36,7 +31,7 @@ const DOMINANT_SOURCE_SHARE = 0.4
 const MAX_TOP_TO_RUNNER_UP_RATIO = 1.5
 
 export interface AuditOpts {
-	corpusDir: string
+	corpusDir: PathBuilderLike
 	configPath?: string
 	/**
 	 * Sample at most N shards per split when counting sources. Default 100 for speed; bump to read the full set on a slow
@@ -70,13 +65,13 @@ interface ParsedConfig {
  * script — the syntax is so small that a regex over the source_weights block is sufficient + keeps the script
  * dep-free.
  */
-function parseConfig(configPath: string): ParsedConfig | null {
-	if (!pathExistsSync(configPath)) return null
+async function parseConfig(configPath: string): Promise<ParsedConfig | null> {
+	if (!(await pathExists(configPath))) return null
 	const weights: Record<string, number> = {}
 	let inBlock = false
 	let blockIndent = -1
 
-	for (const raw of TextSpliterator.from(readLocalBufferSync(configPath))) {
+	for (const raw of TextSpliterator.from(await readLocalBuffer(configPath))) {
 		const sourceWeightsMatch = raw.match(/^([\t ]*)source_weights:\s*$/)
 
 		if (sourceWeightsMatch) {
@@ -113,17 +108,15 @@ function parseConfig(configPath: string): ParsedConfig | null {
  * Scan a corpus directory's shards (typically under <corpus_dir>/train, /val, /test) and count shards per source per
  * split.
  */
-function scanShards(corpusDir: string, sampleCount: number): ShardStats {
+async function scanShards(corpusDir: PathBuilderLike, sampleCount: number): Promise<ShardStats> {
 	const stats: ShardStats = { bySplit: {}, totalShards: 0, totalFiles: 0 }
 
 	for (const split of ["train", "val", "test"]) {
 		const splitDir = join(corpusDir, split)
 
-		if (!pathExistsSync(splitDir)) continue
+		if (!(await pathExists(splitDir))) continue
 
-		const files = readDirectorySync(splitDir)
-			.filter((f) => f.endsWith(".parquet"))
-			.toSorted()
+		const files = (await readDirectory(splitDir)).filter((f) => f.endsWith(".parquet")).toSorted()
 
 		stats.totalFiles += files.length
 		const sampleEvery = Math.max(1, Math.floor(files.length / sampleCount))
@@ -216,12 +209,12 @@ function sourceFromID(sourceID: string, knownPrefixes: readonly string[]): strin
  * dep. For audit purposes the first-row approximation is accurate within ~5% for the corpus-v0.3.0 shape (most shards
  * are >95% one source).
  */
-function manifestScan(corpusDir: string, knownPrefixes: readonly string[]): ShardStats | null {
+async function manifestScan(corpusDir: PathBuilderLike, knownPrefixes: readonly string[]): Promise<ShardStats | null> {
 	const manifestPath = join(corpusDir, "MANIFEST.json")
 
-	if (!pathExistsSync(manifestPath)) return null
+	if (!(await pathExists(manifestPath))) return null
 
-	const manifest = readLocalJSONFileSync<{
+	const manifest = await readLocalJSONFile<{
 		shards?: Array<{ split: string; source?: string | null; first_source_id?: string | null }>
 	}>(manifestPath)
 
@@ -313,7 +306,12 @@ function formatPct(v: number | "—"): string {
 	return `${(v * 100).toFixed(1)}%`
 }
 
-function printReport(corpusDir: string, configPath: string | undefined, stats: ShardStats, rows: AuditRow[]): void {
+function printReport(
+	corpusDir: PathBuilderLike,
+	configPath: string | undefined,
+	stats: ShardStats,
+	rows: AuditRow[]
+): void {
 	console.log(`\nCorpus audit — ${corpusDir}`)
 
 	if (configPath) {
@@ -390,12 +388,15 @@ function printReport(corpusDir: string, configPath: string | undefined, stats: S
 	}
 }
 
-export function audit(opts: AuditOpts): void {
-	const config = opts.configPath ? parseConfig(opts.configPath) : null
+export async function audit(opts: AuditOpts): Promise<void> {
+	const config = opts.configPath ? await parseConfig(opts.configPath) : null
 	// Compose the known-prefix list from both the hardcoded set and any extra names in the config
 	// (forward-compat for future adapters added before this file is updated).
 	const prefixes = [...new Set([...KNOWN_SOURCE_PREFIXES, ...Object.keys(config?.sourceWeights ?? {})])]
-	const stats = manifestScan(opts.corpusDir, prefixes) ?? scanShards(opts.corpusDir, opts.sampleShardCount ?? 100)
+
+	const stats =
+		(await manifestScan(opts.corpusDir, prefixes)) ?? (await scanShards(opts.corpusDir, opts.sampleShardCount ?? 100))
+
 	const trainStats = stats.bySplit["train"] ?? {}
 	const rows = buildAuditRows(trainStats, config?.sourceWeights ?? {})
 	printReport(opts.corpusDir, opts.configPath, stats, rows)

@@ -20,7 +20,7 @@ import {
 } from "@mailwoman/activity-lexicon/lexicon"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { resolve } from "@mailwoman/platform/path"
+import { resolvePath } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const committed = await readActivityLexicon()
@@ -223,8 +223,9 @@ describe("the audit", () => {
 describe("the reader", () => {
 	it("throws rather than serving a lexicon the audit rejects", async () => {
 		await using directoryDirectory = await temporaryDirectory("activity-lexicon-")
+
 		const directory = directoryDirectory.path
-		const path = resolve(directory, "activity-lexicon.json")
+		const path = resolvePath(directory, "activity-lexicon.json")
 
 		await writeLocalJSONFile(lexicon([entry({ phrase: "x" }), entry({ phrase: "X" })]), path)
 

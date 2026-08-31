@@ -14,13 +14,10 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
-import { execFile } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
 import { describe, expect, test } from "vitest"
-
-const exec = promisify(execFile)
 
 const cliBin = workspacePath("mailwoman", "out", "cli.js")
 
@@ -56,7 +53,7 @@ const COUNTING_HOOK =
 
 describe.skipIf(!(await pathExists(cliBin)))("mailwoman --version module graph", () => {
 	test(`loads fewer than ${MODULE_COUNT_CEILING} modules`, async () => {
-		const { stdout, stderr } = await exec(process.execPath, ["--import", COUNTING_HOOK, cliBin, "--version"], {
+		const { stdout, stderr } = await runFile(process.execPath, ["--import", COUNTING_HOOK, cliBin, "--version"], {
 			cwd: repoRootPath(),
 			env: childEnv(),
 		})

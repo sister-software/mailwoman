@@ -29,14 +29,14 @@
  *   only fail one way is not a control set.
  */
 
-import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { sha256Hex } from "@mailwoman/core/utils"
-import { fileURLToPath } from "@mailwoman/platform/url"
 
-import { ABSENCE_REFUSALS } from "../../observations/index.ts"
 // The canonical-JSON encoder is IMPORTED rather than re-typed: two freeze records hashing the same content
 // through two encoders would drift at the first key ordering either one changed.
-import { canonicalJSON } from "../semantic-utility/probe.ts"
+import { canonicalJSON } from "#eval-harness/semantic-utility/probe"
+import { ABSENCE_REFUSALS } from "#observations/index"
 
 /**
  * The outcome a registered row must produce: the observation, or one named refusal.
@@ -115,13 +115,8 @@ export interface AbsenceProbeFreezeRecord {
 }
 
 function sourceRelative(name: string): string {
-	// `tsc` emits no `.json` into `out/`, so a compiled caller reads the source-tree copy — the same bridge
-	// the semantic-utility pre-registration uses.
-	const sibling = fileURLToPath(new URL(name, import.meta.url))
-
-	if (pathExistsSync(sibling)) return sibling
-
-	return fileURLToPath(new URL(`../../../eval-harness/absence-observation/${name}`, import.meta.url))
+	// `tsc` emits no `.json` into `out/`, so the file is named from the package root rather than from this module.
+	return resolvePackagePath("mailwoman", "eval-harness", "absence-observation", name)
 }
 
 /**
@@ -213,12 +208,12 @@ export function auditAbsenceProbeDefinition(definition: AbsenceProbeDefinition):
  * Three refusals, in order: the freeze record must name this definition and version, the definition's content hash must
  * equal the frozen hash, and the audit must be clean. A caller never receives a definition it may only partly trust.
  */
-export function loadAbsenceProbeDefinition(
+export async function loadAbsenceProbeDefinition(
 	definitionPath: string = ABSENCE_PROBE_DEFINITION_PATH,
 	freezePath: string = ABSENCE_PROBE_FREEZE_PATH
-): AbsenceProbeDefinition {
-	const definition = readLocalJSONFileSync<AbsenceProbeDefinition>(definitionPath)
-	const freeze = readLocalJSONFileSync<AbsenceProbeFreezeRecord>(freezePath)
+): Promise<AbsenceProbeDefinition> {
+	const definition = await readLocalJSONFile<AbsenceProbeDefinition>(definitionPath)
+	const freeze = await readLocalJSONFile<AbsenceProbeFreezeRecord>(freezePath)
 
 	if (freeze.probeID !== definition.probeID) {
 		throw new Error(

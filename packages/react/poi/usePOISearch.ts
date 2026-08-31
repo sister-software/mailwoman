@@ -15,9 +15,9 @@ import type { OverpassIntentLike } from "@mailwoman/poi-taxonomy/overpass"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { useCallback, useEffect, useEffectEvent, useState } from "react"
 
-import { useDebouncedValue } from "../common/useDebouncedValue.ts"
-import { loadPOIRuntime } from "./runtime.ts"
-import type { LiveSearchState, LoadPOIRuntime, POIExplorerResult, POILiveSearch, POIRuntime } from "./types.ts"
+import { useDebouncedValue } from "#common/useDebouncedValue"
+import { loadPOIRuntime } from "#poi/runtime"
+import type { LiveSearchState, LoadPOIRuntime, POIExplorerResult, POILiveSearch, POIRuntime } from "#poi/types"
 
 export interface UsePOISearchOptions {
 	/**

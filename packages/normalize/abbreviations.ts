@@ -12,7 +12,7 @@
  *   intentionally — refactoring sharing is a separate task.
  */
 
-import type { SpanRange } from "./types.ts"
+import type { SpanRange } from "#types"
 
 export interface AbbreviationEntry {
 	from: string // short form (case-insensitive match)

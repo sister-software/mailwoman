@@ -16,11 +16,11 @@ export {
 	isBareLocalityTree,
 	isBarePostcodeTree,
 	runPipeline,
-} from "./runtime-pipeline.ts"
+} from "#pipeline/runtime-pipeline"
 
-export { EMPTY_SPAN_PROPOSER_LEXICON, proposeSpans } from "./span-proposer.ts"
-export type { ProposedSpan, ProposedSpanKind, SpanProposerLexicon } from "./span-proposer.ts"
-export { deriveInputMode, PipelineFaultStage, QueryIntentCode, WORD_CONSISTENCY_SHIP_DEFAULT } from "./types.ts"
+export { EMPTY_SPAN_PROPOSER_LEXICON, proposeSpans } from "#pipeline/span-proposer"
+export type { ProposedSpan, ProposedSpanKind, SpanProposerLexicon } from "#pipeline/span-proposer"
+export { deriveInputMode, PipelineFaultStage, QueryIntentCode, WORD_CONSISTENCY_SHIP_DEFAULT } from "#pipeline/types"
 
 export type {
 	AddressClassifier,
@@ -48,4 +48,4 @@ export type {
 	QueryShapeLite,
 	RuntimePipelineStages,
 	UserLocation,
-} from "./types.ts"
+} from "#pipeline/types"

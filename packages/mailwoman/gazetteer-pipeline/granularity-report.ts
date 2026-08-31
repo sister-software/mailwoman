@@ -17,8 +17,8 @@
 
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import { DEFAULT_WOF_PRIORITY_COUNTRIES } from "./defaults.ts"
-import { LADDER, type CountryGranularity, bottomsOutAt } from "./granularity.ts"
+import { DEFAULT_WOF_PRIORITY_COUNTRIES } from "#gazetteer-pipeline/defaults"
+import { LADDER, type CountryGranularity, bottomsOutAt } from "#gazetteer-pipeline/granularity"
 
 /**
  * Which build path supplied a country's rows — the single most important column in this report.

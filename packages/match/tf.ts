@@ -18,7 +18,7 @@
  *   from the values you're matching, then attach it to a comparison with {@link withTermFrequency}.
  */
 
-import type { Comparison, TermFrequencyAdjustment } from "./fellegi-sunter.ts"
+import type { Comparison, TermFrequencyAdjustment } from "#fellegi-sunter"
 
 /**
  * A lookup of how common each value is, in (0, 1], built from a column of observed values.

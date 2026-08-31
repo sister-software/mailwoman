@@ -13,7 +13,7 @@
  *   assumes every locale has rule classifiers.
  */
 
-import type { LocaleProfile } from "../locale.ts"
+import type { LocaleProfile } from "#locale/locale"
 
 /**
  * Japanese locale profile. Note the reversed hierarchy: Japan addresses run largest-to-smallest.

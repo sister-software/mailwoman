@@ -23,9 +23,8 @@ import { Text } from "ink"
 import { resolvePath } from "path-ts"
 
 import { type Check, CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
-
-import { artifactURL, BUNDLES, needsDownload, resolveBundleArtifacts, type BundleArtifact } from "../../data-bundles.ts"
-import { readReleaseManifest, resolveShardPath, type DataReleaseManifest } from "../../data-release.ts"
+import { artifactURL, BUNDLES, needsDownload, resolveBundleArtifacts, type BundleArtifact } from "#data-bundles"
+import { readReleaseManifest, resolveShardPath, type DataReleaseManifest } from "#data-release"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -80,7 +79,7 @@ async function statusForBundles(
 	dataRoot: string,
 	checkRemote: boolean
 ): Promise<{ ok: boolean; checks: Check[] }> {
-	const manifest = readReleaseManifest(dataRoot)
+	const manifest = await readReleaseManifest(dataRoot)
 	const checks: Check[] = []
 	let ok = true
 

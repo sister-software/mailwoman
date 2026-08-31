@@ -15,7 +15,7 @@
  *   that is the one sanctioned adjustment (see the Task 11 brief).
  */
 
-import { Duplex } from "@mailwoman/platform/stream"
+import { Duplex } from "@mailwoman/core/fs/streams"
 import { render } from "ink"
 import type React from "react"
 
@@ -67,5 +67,6 @@ export async function renderInkToString(tree: React.ReactElement, columns: numbe
 
 	instance.unmount()
 
-	return frames.at(-1) ?? ""
+	// Ink ends a non-interactive render with an empty write on unmount; the frame is the last one with content.
+	return frames.findLast((frame) => frame.length > 0) ?? ""
 }

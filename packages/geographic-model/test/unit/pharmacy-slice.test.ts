@@ -69,13 +69,13 @@ const POI_CATEGORY = toPOICategoryID("pharmacy")
  */
 const DRUGSTORE_CATEGORY = toPOICategoryID("drugstore")
 
-function authoredDocument(): GeographicModelDocument {
-	return loadGeographicModelDirectory(packagedModelPaths().source)
+async function authoredDocument(): Promise<GeographicModelDocument> {
+	return loadGeographicModelDirectory((await packagedModelPaths()).source)
 }
 
 describe("the authored pharmacy records", () => {
-	it("loads and compiles", () => {
-		const model = compileAuthoredGeographicModel()
+	it("loads and compiles", async () => {
+		const model = await compileAuthoredGeographicModel()
 
 		expect(model.modelVersion).toBe("0.3.0")
 
@@ -94,8 +94,8 @@ describe("the authored pharmacy records", () => {
 	// assertions admit exceptions at all. Under `hard` semantics an exception is a defect in the record set, which is a
 	// claim only `necessary` and `prohibited` make — so a `strongly_expected` assertion had no defined reading beside a
 	// `necessary` one until this moved.
-	it("declares `affords` as a defeasible establishment→activity relation", () => {
-		const relation = compileAuthoredGeographicModel().relations.find((entry) => entry.id === AFFORDS)
+	it("declares `affords` as a defeasible establishment→activity relation", async () => {
+		const relation = (await compileAuthoredGeographicModel()).relations.find((entry) => entry.id === AFFORDS)
 
 		expect(relation).toBeDefined()
 		expect(relation?.domainKinds).toEqual(["establishment"])
@@ -105,8 +105,8 @@ describe("the authored pharmacy records", () => {
 		expect(relation?.semantics).toBe(RelationSemantics.Defeasible)
 	})
 
-	it("maps the concept onto a category `@mailwoman/poi-taxonomy` actually carries", () => {
-		const mapping = compileAuthoredGeographicModel().mappings.find((entry) => entry.concept === PHARMACY)
+	it("maps the concept onto a category `@mailwoman/poi-taxonomy` actually carries", async () => {
+		const mapping = (await compileAuthoredGeographicModel()).mappings.find((entry) => entry.concept === PHARMACY)
 
 		expect(mapping?.vocabulary).toBe(ExternalVocabulary.POITaxonomy)
 		expect(mapping?.externalID).toBe(POI_CATEGORY)
@@ -119,8 +119,8 @@ describe("the authored pharmacy records", () => {
 		expect(category?.hierarchy).toEqual(["health_and_medical", "pharmacy"])
 	})
 
-	it("refuses `activity affords establishment`", () => {
-		const document = structuredClone(authoredDocument())
+	it("refuses `activity affords establishment`", async () => {
+		const document = structuredClone(await authoredDocument())
 		const activity = document.concepts.find((concept) => concept.id === OBTAIN_MEDICATION)
 
 		expect(activity).toBeDefined()
@@ -145,8 +145,8 @@ describe("the authored pharmacy records", () => {
 		expect(codes).toContain(ValidationIssueCode.RangeKindMismatch)
 	})
 
-	it("compiles to the same bytes twice", () => {
-		const document = authoredDocument()
+	it("compiles to the same bytes twice", async () => {
+		const document = await authoredDocument()
 
 		expect(serializeCompiledModel(compileGeographicModel(document))).toBe(
 			serializeCompiledModel(compileGeographicModel(document))
@@ -159,14 +159,14 @@ describe("the committed artifact", () => {
 		expect(
 			await readCompiledGeographicModel(),
 			`stale artifact — regenerate with: ${REGENERATE_ARTIFACT_COMMAND}`
-		).toEqual(compileAuthoredGeographicModel())
+		).toEqual(await compileAuthoredGeographicModel())
 	})
 
 	it("is byte-identical to a fresh compile once both are canonically serialized", async () => {
 		expect(
 			serializeCompiledModel(await readCompiledGeographicModel()),
 			`stale artifact — regenerate with: ${REGENERATE_ARTIFACT_COMMAND}`
-		).toBe(serializeCompiledModel(compileAuthoredGeographicModel()))
+		).toBe(serializeCompiledModel(await compileAuthoredGeographicModel()))
 	})
 
 	it("carries the ancestry the slice states", async () => {
@@ -205,8 +205,8 @@ describe("the committed artifact", () => {
 })
 
 describe("the wave-1 records", () => {
-	it("carries the `drugstore` concept the amendment admits, with provenance naming the measured gap", () => {
-		const concept = compileAuthoredGeographicModel().concepts.find((entry) => entry.id === DRUGSTORE)
+	it("carries the `drugstore` concept the amendment admits, with provenance naming the measured gap", async () => {
+		const concept = (await compileAuthoredGeographicModel()).concepts.find((entry) => entry.id === DRUGSTORE)
 
 		expect(concept).toBeDefined()
 		expect(concept?.kind).toBe("establishment")
@@ -218,8 +218,8 @@ describe("the wave-1 records", () => {
 		expect(concept?.provenance.authoredAt).toBe("2026-08-27")
 	})
 
-	it("scopes the drugstore affordance to the US, at the strength the evidence carries", () => {
-		const concept = compileAuthoredGeographicModel().concepts.find((entry) => entry.id === DRUGSTORE)
+	it("scopes the drugstore affordance to the US, at the strength the evidence carries", async () => {
+		const concept = (await compileAuthoredGeographicModel()).concepts.find((entry) => entry.id === DRUGSTORE)
 		const assertion = concept?.assertions.find((entry) => entry.relation === AFFORDS)
 
 		expect(assertion?.id).toBe("drugstore-affords-obtain-medication")
@@ -236,8 +236,8 @@ describe("the wave-1 records", () => {
 		expect(assertion?.provenance.sourceRecord).toContain("curated-overlay.json")
 	})
 
-	it("maps it into the POI vocabulary, which is what makes the second afforded kind searchable", () => {
-		const model = compileAuthoredGeographicModel()
+	it("maps it into the POI vocabulary, which is what makes the second afforded kind searchable", async () => {
+		const model = await compileAuthoredGeographicModel()
 		const mapping = model.mappings.find((entry) => entry.concept === DRUGSTORE)
 
 		// The whole mapping table, so a mapping added anywhere trips this rather than only the two this test names.

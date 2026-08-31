@@ -4,6 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./locale.ts"
-export * from "./profiles/index.ts"
-export * from "./registry.ts"
+export * from "#locale/locale"
+export * from "#locale/profiles/index"
+export * from "#locale/registry"

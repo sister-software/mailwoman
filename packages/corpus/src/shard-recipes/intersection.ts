@@ -39,13 +39,13 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
+import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "#shard-recipes/scaffold"
 import type { CanonicalRow, LabeledRow } from "#types"
 import { alignRow } from "#utils"
-
-import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 interface County {
 	fips: string
@@ -204,7 +204,7 @@ async function readEvalExclusions(): Promise<{ nodes: Set<number>; pairs: Set<st
  */
 async function extractCrossings(
 	db: DuckDBConnection,
-	edgesDir: string,
+	edgesDir: PathBuilderLike,
 	county: County,
 	seed: number
 ): Promise<Crossing[]> {

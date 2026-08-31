@@ -29,10 +29,10 @@ import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/utils"
-import { basename, join } from "@mailwoman/platform/path"
+import { basename, join } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "./download.ts"
-import { downloadToFile, readManifest, writeManifest } from "./download.ts"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download"
 
 const INDEX_URL = "https://download.cms.gov/nppes/NPI_Files.html"
 const BASE_URL = "https://download.cms.gov/nppes"

@@ -18,7 +18,7 @@
 
 import { matchSubdivision, matchSubdivisionIn } from "@mailwoman/codex/country"
 
-import { normalizeLocalityForKey } from "./street-normalize.ts"
+import { normalizeLocalityForKey } from "#street-normalize"
 
 /**
  * The ancestry placetypes that answer for a parsed `region` qualifier — WOF's admin band between country and locality.

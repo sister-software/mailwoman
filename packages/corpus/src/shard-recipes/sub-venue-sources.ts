@@ -26,11 +26,14 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { fileURLToPath } from "@mailwoman/platform/url"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
+import { readTuples as readLocaleTuples, type LocalePart } from "#shard-recipes/locale"
+import { makeMulberry32, readTuples as readShardTuples } from "#shard-recipes/scaffold"
 import type { LocaleBaseTuple } from "#synthesizers/german"
 import {
 	classifyIdentifier,
@@ -40,16 +43,13 @@ import {
 	type SubVenuePromotion,
 } from "#tools"
 
-import { readTuples as readLocaleTuples, type LocalePart } from "./locale.ts"
-import { makeMulberry32, readTuples as readShardTuples } from "./scaffold.ts"
-
 //#region Lexicon
 
 /**
  * The committed lexicon, resolved through the package manifest.
  */
 export function defaultLexiconPath(): string {
-	return fileURLToPath(import.meta.resolve("@mailwoman/corpus/data/sub-venue-lexicon.json"))
+	return resolveModulePath("@mailwoman/corpus/data/sub-venue-lexicon.json")
 }
 
 /**
@@ -675,7 +675,7 @@ const POI_CONFOUND_CATEGORIES: readonly string[] = [
  * Poi.db is FOUR COUNTRIES — US 11,521,612 / CA 794,418 / FR 721,352 / MX 644,316 — so this is reachable for en-US and
  * fr-FR and nothing else, and a zero here is evidence of absence in four countries rather than in the world.
  */
-export function readPOIPools(dbPath: string, country: string, query: PoolQuery): NamePools {
+export function readPOIPools(dbPath: PathBuilderLike, country: string, query: PoolQuery): NamePools {
 	using db = new DatabaseClient<POIDatabase>(dbPath, { readOnly: true })
 
 	const codes = db.prepare("select id, category from poi_category_codes").all() as Array<{
@@ -771,7 +771,10 @@ const CONTEXT_PARTS: Readonly<Record<string, readonly LocalePart[]>> = {
  * rows the `synth-house-venue` shard is built from, so the two shards' address halves are drawn from one pool), DE and
  * ES streamed out of OpenAddresses.
  */
-export async function loadContextTuples(tuplesPath: string, seed: number): Promise<Map<string, LocaleBaseTuple[]>> {
+export async function loadContextTuples(
+	tuplesPath: PathBuilderLike,
+	seed: number
+): Promise<Map<string, LocaleBaseTuple[]>> {
 	const byCountry = new Map<string, LocaleBaseTuple[]>()
 
 	for await (const tuple of readShardTuples(tuplesPath)) {

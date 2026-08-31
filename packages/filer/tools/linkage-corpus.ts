@@ -11,13 +11,13 @@
  *   Nothing here imports `linkage-eval.ts`, so the dependency between the two stays one-directional.
  */
 
-import { createHash } from "@mailwoman/platform/crypto"
+import { createHash } from "@mailwoman/core/utils/hash"
 
-import { FilerIdentifierType } from "../schema.ts"
-import { mintFamilyID } from "../sdk/family-id.ts"
-import type { Form499Row } from "../sdk/form499.ts"
-import { toFRN, type FRN } from "../sdk/frn.ts"
-import type { ProviderListRow } from "../sdk/provider-list.ts"
+import { FilerIdentifierType } from "#schema"
+import { mintFamilyID } from "#sdk/family-id"
+import type { Form499Row } from "#sdk/form499"
+import { toFRN, type FRN } from "#sdk/frn"
+import type { ProviderListRow } from "#sdk/provider-list"
 
 /**
  * The date the committed scorecard (`docs/articles/evals/2026-07-31-filer-linkage.md`) was generated under. Exported so

@@ -16,7 +16,7 @@
  *   engine contract in `engine.ts`; the zod wire schemas in `schema.ts`.
  */
 
-export * from "./app.ts"
-export * from "./engine.ts"
-export * from "./routes.ts"
-export * from "./schema.ts"
+export * from "#app"
+export * from "#engine"
+export * from "#routes"
+export * from "#schema"

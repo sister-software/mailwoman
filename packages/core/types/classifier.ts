@@ -16,8 +16,8 @@
  *   `@mailwoman/classifiers` workspace; this contract now describes the neural path only.
  */
 
-import type { Span } from "../tokenization/index.ts"
-import type { ComponentTag } from "./component.ts"
+import type { Span } from "#tokenization/index"
+import type { ComponentTag } from "#types/component"
 
 /**
  * Sections in Mailwoman are sub-Spans of the tokenized input (split by boundary characters: commas, line breaks, etc.).

@@ -5,16 +5,16 @@
  * @file Scratch directories that remove themselves.
  *
  *   Rooted at `$MAILWOMAN_TEMP_ROOT` rather than the operating system's `tmpdir()`, which is why this lives in
- *   `@mailwoman/core` and not in `@mailwoman/platform`: the root comes from the typed public environment, and
- *   `@mailwoman/platform` sits below that and has no dependencies.
+ *   `@mailwoman/core`: the root comes from the typed public environment.
  */
 
-import { mkdtempDisposable } from "@mailwoman/platform/fs/promises"
-import { join } from "@mailwoman/platform/path"
+import { mkdtempDisposable } from "node:fs/promises"
+import { join } from "node:path"
+
+import { PathBuilder, resolvePath, type PathBuilderLike } from "path-ts"
 
 import { makeDirectories } from "#fs/writers"
-
-import { tempRootPath } from "../utils/data-root.ts"
+import { tempRootPath } from "#utils/data-root"
 
 /**
  * A temporary directory that removes itself when the owning scope ends, together with everything registered on it.
@@ -32,7 +32,7 @@ export interface TemporaryDirectory extends AsyncDisposable {
 	/**
 	 * The directory itself.
 	 */
-	readonly path: string
+	readonly path: PathBuilder
 	/**
 	 * A path inside the directory.
 	 */
@@ -53,13 +53,16 @@ export interface TemporaryDirectory extends AsyncDisposable {
 	moveWith<T extends object>(extras: T): TemporaryDirectory & T
 }
 
-function asTemporaryDirectory(path: string, resources: AsyncDisposableStack): TemporaryDirectory {
+function asTemporaryDirectory(_path: PathBuilderLike, resources: AsyncDisposableStack): TemporaryDirectory {
+	const pathBuilder = PathBuilder.from(_path)
+
 	return {
-		path,
-		resolve: (...segments: string[]) => join(path, ...segments),
+		path: pathBuilder,
+		resolve: (...segments: PathBuilderLike[]) =>
+			resolvePath(pathBuilder, ...segments.map((segment) => segment.toString())),
 		use: (resource) => resources.use(resource),
-		move: () => asTemporaryDirectory(path, resources.move()),
-		moveWith: (extras) => Object.assign(asTemporaryDirectory(path, resources.move()), extras),
+		move: () => asTemporaryDirectory(pathBuilder, resources.move()),
+		moveWith: (extras) => Object.assign(asTemporaryDirectory(pathBuilder, resources.move()), extras),
 		[Symbol.asyncDispose]: () => resources.disposeAsync(),
 	}
 }

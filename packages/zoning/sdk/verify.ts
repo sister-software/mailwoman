@@ -37,10 +37,10 @@
 import { interiorPointOfEncodedRings, pointInEncodedRings, segmentDistanceMetres } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { ZoningLookup, ZoningReadingKind, type ZoningReading } from "../index.ts"
-import { encodeRings, resolveRingRoles, type MultiPolygonRings, type PolygonRings } from "../rings.ts"
-import type { ZoningDatabase } from "../schema.ts"
-import type { GZTClient } from "./client.ts"
+import { ZoningLookup, ZoningReadingKind, type ZoningReading } from "#index"
+import { encodeRings, resolveRingRoles, type MultiPolygonRings, type PolygonRings } from "#rings"
+import type { ZoningDatabase } from "#schema"
+import type { GZTClient } from "#sdk/client"
 
 /**
  * One point, both verdicts, and whether they agree.

@@ -23,9 +23,9 @@ const DEFAULT_WOF_PATH = String(dataRootPath("wof", "admin-global-priority.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDB = await pathExists(wofPath)
 
-const hasWeights = (() => {
+const hasWeights = await (async () => {
 	try {
-		resolveWeights({ locale: "en-us" })
+		await resolveWeights({ locale: "en-us" })
 
 		return true
 	} catch {

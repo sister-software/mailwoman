@@ -11,11 +11,11 @@
  *   the number that matters: a violation the repairs already clean up costs a consumer nothing.
  */
 
-import { censusTrees, type ContractRow } from "./contract-census.ts"
-import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
-import { resolveInputSet, type InputSetRef } from "./input-sets.ts"
-import { describeObservedRate } from "./power.ts"
-import { provenanceFor } from "./tool-kit.ts"
+import { censusTrees, type ContractRow } from "#contract-census"
+import type { EngineConfig, EngineRegistryLike } from "#engine-registry"
+import { resolveInputSet, type InputSetRef } from "#input-sets"
+import { describeObservedRate } from "#power"
+import { provenanceFor } from "#tool-kit"
 
 export async function runContractCensus(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
 	const set = await resolveInputSet((args["inputs"] as InputSetRef | undefined) ?? { kind: "board" })

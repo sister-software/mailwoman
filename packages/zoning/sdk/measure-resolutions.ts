@@ -22,8 +22,8 @@
  *   runs out of headroom runs the candidates in separate invocations.
  */
 
-import { polyfillFindsNothing, ZoningCellIndex, classifyFeatureCells, type CellIndexMeasurement } from "./cells.ts"
-import { readZoningFeatures, readZoningSourceIdentity, type ZoningIngestOptions } from "./ingest.ts"
+import { polyfillFindsNothing, ZoningCellIndex, classifyFeatureCells, type CellIndexMeasurement } from "#sdk/cells"
+import { readZoningFeatures, readZoningSourceIdentity, type ZoningIngestOptions } from "#sdk/ingest"
 
 export interface MeasureResolutionsOptions extends ZoningIngestOptions {
 	/**
@@ -104,4 +104,4 @@ export async function measureZoningCellResolutions(
 	}
 }
 
-export { formatResolutionRows } from "./cells.ts"
+export { formatResolutionRows } from "#sdk/cells"

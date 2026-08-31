@@ -19,11 +19,11 @@
 import { $public } from "@mailwoman/core/env"
 import { WOFReverseGeocoder } from "@mailwoman/resolver-wof-sqlite/reverse"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { geometryContains, pointInPolygonRings, pointInRing, type GeojsonPosition } from "@mailwoman/spatial"
+import { geometryContains, pointInPolygon, pointInRing, type LineStringPath } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
-const square = (minX: number, minY: number, maxX: number, maxY: number): GeojsonPosition[] => [
+const square = (minX: number, minY: number, maxX: number, maxY: number): LineStringPath => [
 	[minX, minY],
 	[maxX, minY],
 	[maxX, maxY],
@@ -39,12 +39,12 @@ describe("point-in-polygon primitives", () => {
 		expect(pointInRing(-1, -1, ring)).toBe(false)
 	})
 
-	test("pointInPolygonRings — a hole excludes, an island within the hole includes again", () => {
+	test("pointInPolygon — a hole excludes, an island within the hole includes again", () => {
 		const rings = [square(0, 0, 10, 10), square(4, 4, 6, 6)]
-		expect(pointInPolygonRings(2, 2, rings)).toBe(true) // solid part
-		expect(pointInPolygonRings(5, 5, rings)).toBe(false) // inside the hole
+		expect(pointInPolygon(2, 2, rings)).toBe(true) // solid part
+		expect(pointInPolygon(5, 5, rings)).toBe(false) // inside the hole
 		// Even-odd: an island ring nested inside the hole flips back to inside.
-		expect(pointInPolygonRings(5, 5, [...rings, square(4.8, 4.8, 5.2, 5.2)])).toBe(true)
+		expect(pointInPolygon(5, 5, [...rings, square(4.8, 4.8, 5.2, 5.2)])).toBe(true)
 	})
 
 	test("geometryContains — Polygon, MultiPolygon, and non-areal geometry", () => {

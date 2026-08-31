@@ -22,7 +22,7 @@
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 
 const SOURCE = "https://download.geonames.org/export/dump/countryInfo.txt"
 
@@ -31,7 +31,7 @@ const SOURCE = "https://download.geonames.org/export/dump/countryInfo.txt"
  * `generate-country-reference.ts` for why this is `import.meta.url` rather than a `core` path helper (codex is
  * zero-runtime-dep and `core` already references `codex` — importing core here would cycle the project graph).
  */
-const DEFAULT_OUT = fileURLToPath(new URL("../country/population.ts", import.meta.url))
+const DEFAULT_OUT = resolvePackagePath("@mailwoman/codex", "country", "population.ts")
 
 /**
  * Tab positions this tool reads from `countryInfo.txt`'s 19-column rows. Named so the parse states which columns it

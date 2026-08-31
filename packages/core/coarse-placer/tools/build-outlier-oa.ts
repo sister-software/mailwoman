@@ -29,12 +29,12 @@
  *   6000]`
  */
 
-import * as path from "@mailwoman/platform/path"
+import { type PathBuilderLike, resolvePath } from "path-ts"
 
+import { COUNTRIES } from "#coarse-placer/tools/country-sets"
+import { hashFNV1a } from "#coarse-placer/tools/fnv-hash"
 import { writeLocalTextFile, appendLocalTextFile } from "#fs/writers"
 import { dataRootPath, repoRootPath } from "#utils"
-
-import { hashFNV1a } from "./fnv-hash.ts"
 
 /**
  * Shortest raw string worth keeping as an outlier example; below it there is nothing to learn from.
@@ -56,7 +56,7 @@ export interface BuildOutlierOAOptions {
 	/**
 	 * Extracted OpenAddresses root. Default `$MAILWOMAN_DATA_ROOT/openaddresses/extracted`.
 	 */
-	oaDir?: string
+	oaDir?: PathBuilderLike
 	/**
 	 * Row cap per off-map country. Default 6000.
 	 */
@@ -64,7 +64,7 @@ export interface BuildOutlierOAOptions {
 	/**
 	 * Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`.
 	 */
-	data?: string
+	data?: PathBuilderLike
 }
 
 /**
@@ -79,9 +79,9 @@ export interface BuildOutlierOAResult {
 }
 
 /**
- * The 11 IN-MAP countries the coarse-placer routes to — never appear in OTHER. (build-dataset.ts)
+ * The in-map countries the coarse-placer routes to — never appear in OTHER.
  */
-const IN_MAP = new Set(["US", "FR", "GB", "CN", "NL", "IT", "DE", "JP", "ES", "KR", "TW"])
+const IN_MAP = new Set<string>(COUNTRIES)
 
 /**
  * Language/region families for the leave-one-family-out split. Off-map countries OA's europe+asia zips plausibly carry;
@@ -164,7 +164,7 @@ export async function buildOutlierOA(
 		const lc = cc.toLowerCase()
 		// OA collected layout: `<cc>/[<region>/]<source>.csv` (country at root; `summary/` excluded by
 		// rooting the glob at <cc>). `**` matches zero-or-more dirs → handles both flat + region-nested.
-		const glob = path.join(oaDir, lc, "**", "*.csv")
+		const glob = resolvePath(oaDir, lc, "**", "*.csv")
 		let res
 
 		try {
@@ -250,12 +250,12 @@ export async function buildOutlierOA(
 	;(duck as { disconnect?: () => void }).disconnect?.()
 
 	const wr = (rows: string[]): string => rows.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
-	await appendLocalTextFile(wr(trainAppend), path.join(dataDir, "train.jsonl"))
-	await appendLocalTextFile(wr(valAppend), path.join(dataDir, "val.jsonl"))
+	await appendLocalTextFile(wr(trainAppend), resolvePath(dataDir, "train.jsonl"))
+	await appendLocalTextFile(wr(valAppend), resolvePath(dataDir, "val.jsonl"))
 
 	await writeLocalTextFile(
 		testRows.map((r) => JSON.stringify(r)).join("\n") + "\n",
-		path.join(dataDir, "test-latin-offmap.jsonl")
+		resolvePath(dataDir, "test-latin-offmap.jsonl")
 	)
 
 	report?.(`\nTRAIN countries: ${trainCC} · HELDOUT countries: ${heldCC}`)

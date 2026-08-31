@@ -30,13 +30,20 @@
  *   rather than silently served as current.
  */
 
-import { pathExists, readDirectory, readLocalJSONFile, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
+import {
+	isDirectory,
+	pathExists,
+	readDirectory,
+	readLocalJSONFile,
+	readLocalTextFile,
+} from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join } from "path-ts"
+import { TextSpliterator } from "spliterator"
 
 /**
  * How well a country can be geocoded, in the three tiers the resolution ladder actually has.
@@ -352,15 +359,14 @@ export async function readBoardCoverage(casesRoot: string): Promise<Map<string, 
 
 		const dirPath = join(casesRoot, dir)
 
-		if (!(await statPath(dirPath)).isDirectory()) continue
+		if (!(await isDirectory(dirPath))) continue
 
 		for (const file of await readDirectory(dirPath)) {
 			if (!file.endsWith(".jsonl")) continue
 
-			// One board case file: tens to hundreds of rows, and the whole 649-row board across every file is under a
-			// megabyte.
-			// oxlint-disable-next-line mailwoman/prefer-spliterator -- small, bounded, and sync by contract
-			for (const line of (await readLocalTextFile(join(dirPath, file))).split("\n")) {
+			// A line that does not parse is skipped rather than failing the census, so a hand-edited fixture never hides
+			// the rest of its file.
+			for await (const line of TextSpliterator.fromAsync(join(dirPath, file))) {
 				if (!line.trim()) continue
 
 				const row = tryParsingJSON<{ country?: string; status?: string }>(line)

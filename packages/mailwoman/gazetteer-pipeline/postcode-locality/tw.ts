@@ -53,7 +53,7 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { movePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
-import { geometryContains, haversineKm, type GeojsonGeometry } from "@mailwoman/spatial"
+import { geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { JSONSpliterator } from "spliterator"
@@ -65,7 +65,7 @@ import {
 	POSTCODE_LOCALITY_INSERT_SQL,
 	type PostcodeLocalityDatabase,
 	type PostcodeLocalityInsertValues,
-} from "./schema.ts"
+} from "#gazetteer-pipeline/postcode-locality/schema"
 
 /**
  * Shortest romanised stem still specific enough to match a Taiwanese place name.
@@ -200,7 +200,7 @@ export interface DivisionPolygon {
 	 * Wikidata QID from the joined `division` row — the principled WOF-concordance bridge.
 	 */
 	wikidata: string | null
-	geometry: GeojsonGeometry
+	geometry: ParsedGeometry
 	bbox: [number, number, number, number] // minLon, minLat, maxLon, maxLat
 }
 
@@ -215,14 +215,14 @@ export async function loadDistrictPolygons(path: string): Promise<DivisionPolygo
 		name: string
 		name_en?: string | null
 		wikidata?: string | null
-		geometry: string | GeojsonGeometry
+		geometry: string | ParsedGeometry
 	}
 
 	for await (const row of JSONSpliterator.fromAsync<DivisionRow>(path)) {
 		if (row.subtype !== "locality") continue
 
 		// DuckDB's JSON writer emits ST_AsGeoJSON output as a nested JSON object; tolerate a string too.
-		const geometry = typeof row.geometry === "string" ? parseJSONStrict<GeojsonGeometry>(row.geometry) : row.geometry
+		const geometry = typeof row.geometry === "string" ? parseJSONStrict<ParsedGeometry>(row.geometry) : row.geometry
 
 		let minLon = Infinity
 		let minLat = Infinity

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { CLIUsageError, type CommandSpec, parseCommand, renderCommandHelp } from "../spec.ts"
+import { CLIUsageError, type CommandSpec, parseCommand, renderCommandHelp } from "#cli-native/spec"
 
 /**
  * Native FST autocomplete command contract.

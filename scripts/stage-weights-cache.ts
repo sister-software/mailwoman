@@ -27,13 +27,13 @@
  *       --card /path/to/model-card-eval-en-gb.json
  */
 
-import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
+import { isFile, pathExists, readDirectory } from "@mailwoman/core/fs/readers"
 import { createSymbolicLink, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { basename, isAbsolute, join, resolve } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
+import { basename, isAbsolute, join, resolvePath } from "path-ts"
 
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		out: { type: "string" },
 		locale: { type: "string", default: "en-us" },
@@ -58,10 +58,10 @@ if (!values.out) throw new Error("--out <dir> is required")
 // The layout comes from the resolver's own `weightsCachePackageDir` rather than a re-typed literal
 // (2026-08-06 triage) — this script's whole contract is "lay out the directory `resolveWeights`'
 // cache rung finds", so the two must not be able to drift.
-const packageDir = weightsCachePackageDir(resolve(values.out), values.locale)
+const packageDir = weightsCachePackageDir(resolvePath(values.out), values.locale)
 
-if (values.clean && (await pathExists(resolve(values.out)))) {
-	await removePathIfPresent(resolve(values.out))
+if (values.clean && (await pathExists(resolvePath(values.out)))) {
+	await removePathIfPresent(resolvePath(values.out))
 }
 
 await makeDirectories(packageDir)
@@ -74,14 +74,14 @@ const omit = new Set(values.omit)
 const staged = new Map<string, string>()
 
 if (values.from) {
-	const fromDir = resolve(values.from)
+	const fromDir = resolvePath(values.from)
 
 	for (const entry of await readDirectory(fromDir)) {
 		const source = join(fromDir, entry)
 
 		// Files only: `scripts/` and any other directory in a workspace package is not part of the
 		// artifact set a loader reads, and symlinking a directory into the layout invites a stale walk.
-		if ((await statPath(source)).isFile()) {
+		if (await isFile(source)) {
 			staged.set(entry, source)
 		}
 	}
@@ -91,7 +91,7 @@ for (const spec of [...values.file, ...(values.card ? [`model-card.json=${values
 	const eq = spec.indexOf("=")
 	const [name, source] = eq === -1 ? [basename(spec), spec] : [spec.slice(0, eq), spec.slice(eq + 1)]
 
-	staged.set(name, isAbsolute(source) ? source : resolve(source))
+	staged.set(name, isAbsolute(source) ? source : resolvePath(source))
 }
 
 let linked = 0
@@ -111,7 +111,7 @@ for (const [name, source] of [...staged].toSorted()) {
 }
 
 console.log(`staged ${linked} artifact(s) → ${packageDir}`)
-console.log(`  cacheRoot: ${resolve(values.out)}`)
+console.log(`  cacheRoot: ${resolvePath(values.out)}`)
 
 for (const entry of [...staged.keys()].toSorted().filter((key) => !omit.has(key))) {
 	console.log(`  ${entry}`)

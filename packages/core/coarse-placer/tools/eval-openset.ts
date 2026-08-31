@@ -33,15 +33,14 @@
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
    procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
 
-import * as path from "@mailwoman/platform/path"
+import { basename, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import type { CoarsePlacerMeta } from "#coarse-placer/coarse-placer"
+import { COARSE_CLASSES, featurize } from "#coarse-placer/featurize"
 import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
 import { writeLocalFile } from "#fs/writers"
 import { dataRootPath, repoRootPath } from "#utils"
-
-import type { CoarsePlacerMeta } from "../coarse-placer.ts"
-import { COARSE_CLASSES, featurize } from "../featurize.ts"
 
 /**
  * Steps in the threshold sweep; finer than the reporting precision so the knee is not missed.
@@ -81,11 +80,11 @@ export interface EvalOpenSetOptions {
 	/**
 	 * Model artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
 	 */
-	model?: string
+	model?: PathBuilderLike
 	/**
 	 * Dataset dir. Default `<repo>/data/coarse-placer`.
 	 */
-	data?: string
+	data?: PathBuilderLike
 	/**
 	 * Mahalanobis fit rows per class. Default 2000.
 	 */
@@ -190,12 +189,12 @@ export async function evalOpenSet(
 	options: EvalOpenSetOptions = {},
 	report?: (line: string) => void
 ): Promise<EvalOpenSetResult> {
-	const modelDir = options.model || dataRootPath("coarse-placer", "model")
+	const modelDir = resolvePathBuilder(options.model || dataRootPath("coarse-placer", "model"))
 	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 	const fitPerClass = options.fitPerClass ?? 2000
 
-	const meta = await readLocalJSONFile<CoarsePlacerMeta>(path.join(modelDir, "meta.json"))
-	const weightBytes = await readLocalBuffer(path.join(modelDir, "weights.bin"))
+	const meta = await readLocalJSONFile<CoarsePlacerMeta>(resolvePath(modelDir, "meta.json"))
+	const weightBytes = await readLocalBuffer(resolvePath(modelDir, "weights.bin"))
 
 	// Read through the Buffer's own window: `readFileSync` serves files under 4 KiB out of a shared 8 KiB pool, so
 	// `.buffer` alone would start at the pool's origin and run its full length — the wrong floats, and 2048 of them.
@@ -241,7 +240,7 @@ export async function evalOpenSet(
 	const inVec = (z: Float64Array): number[] => IN.map((c) => z[c]!)
 
 	function load(file: string): Promise<DataRow[]> {
-		return Array.fromAsync(JSONSpliterator.fromAsync<DataRow>(path.join(dataDir, file)))
+		return Array.fromAsync(JSONSpliterator.fromAsync<DataRow>(resolvePath(dataDir, file)))
 	}
 
 	// Fit the Mahalanobis params on IN-MAP TRAIN logits (no test leak): per-class
@@ -514,7 +513,7 @@ export async function evalOpenSet(
 	const lines: string[] = [
 		`# Coarse-placer M2 Phase 1 — post-hoc open-set score comparison (#244)`,
 		"",
-		`_Frozen shipped model (\`${path.basename(modelDir)}\`), NO retrain. In-map test ${inmapTest.length} rows ` +
+		`_Frozen shipped model (\`${basename(modelDir)}\`), NO retrain. In-map test ${inmapTest.length} rows ` +
 			`(11 countries); off-map HELDOUT ${heldout.length} rows (never-trained families: baltic/oceania/middle-east). ` +
 			`Mahalanobis fit on ≤${fitPerClass}/class in-map train logits. The 11-way routing is fixed; each score only ` +
 			`changes the reject decision._`,

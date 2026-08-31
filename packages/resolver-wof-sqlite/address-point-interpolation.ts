@@ -37,10 +37,10 @@ import type { InterpolationLookup } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { AddressPointDatabase } from "./address-point-schema.ts"
-import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "./interpolation.ts"
-import { hasTable, prepareAll, type PreparedAll } from "./sqlite-utils.ts"
-import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "./street-normalize.ts"
+import type { AddressPointDatabase } from "#address-point-schema"
+import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "#interpolation"
+import { hasTable, prepareAll, type PreparedAll } from "#sqlite-utils"
+import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "#street-normalize"
 
 /**
  * Extrapolation cap for a single-sided bracket: at most one pair-span beyond the nearest known point (`t = 2`). Past

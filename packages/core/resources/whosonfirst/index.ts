@@ -4,6 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./PlacetypeDataSource.ts"
-export * from "./sharded-repo.ts"
-export * from "./placetypes/index.ts"
+export * from "#resources/whosonfirst/PlacetypeDataSource"
+export * from "#resources/whosonfirst/sharded-repo"
+export * from "#resources/whosonfirst/placetypes/index"

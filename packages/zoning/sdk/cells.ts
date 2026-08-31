@@ -30,7 +30,7 @@
 import { groupCellsByResolution, shortCellToInt, type FeatureCells, type H3Cell } from "@mailwoman/spatial"
 import { compactCells, polygonToCells } from "h3-js"
 
-import type { MultiPolygonRings } from "../rings.ts"
+import type { MultiPolygonRings } from "#rings"
 
 export {
 	addCoverageCells,

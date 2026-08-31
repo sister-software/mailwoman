@@ -23,9 +23,9 @@
 // product's geometry, and a second copy of it is a second place for a hole to stop being one.
 import { rectangleRing, reversedRing as holeRing } from "@mailwoman/spatial"
 
-import { ringAreaReadings } from "./rings.ts"
-import type { FloodFeatureSource, FloodSourceFeature, MultiPolygonRings } from "./sdk/ingest.ts"
-import { EA_FLOOD_LAYER, EA_SOURCE_EPSG } from "./vocabulary.ts"
+import { ringAreaReadings } from "#rings"
+import type { FloodFeatureSource, FloodSourceFeature, MultiPolygonRings } from "#sdk/ingest"
+import { EA_FLOOD_LAYER, EA_SOURCE_EPSG } from "#vocabulary"
 
 /**
  * Re-exported so a fixture in another workspace builds its rings the same way this one does.

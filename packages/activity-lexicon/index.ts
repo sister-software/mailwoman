@@ -17,6 +17,6 @@ export {
 	normalizeActivityPhrase,
 	readActivityLexicon,
 	resolveActivityPhraseLocale,
-} from "./lexicon.ts"
+} from "#lexicon"
 
-export type * from "./types.ts"
+export type * from "#types"

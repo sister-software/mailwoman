@@ -15,7 +15,7 @@
 
 import type { SystemCode } from "@mailwoman/codex"
 
-import { softmax } from "./viterbi.ts"
+import { softmax } from "#viterbi"
 
 /**
  * Locale-head class order — MUST mirror `corpus-python/src/mailwoman_train/labels.py` `LOCALE_COUNTRIES` exactly (same

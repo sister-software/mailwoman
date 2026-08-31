@@ -22,9 +22,9 @@
  *   survives the relay; a refusal only helps if the agent stays inside the tool.
  */
 
-import { execFileSync } from "@mailwoman/platform/child_process"
+import { runFileSync } from "@mailwoman/core/process"
 
-import { effectiveKeyFor } from "./engine-registry.ts"
+import { effectiveKeyFor } from "#engine-registry"
 
 /**
  * Whether the comparison's SETUP was clean — did exactly the declared keys differ between the two resolved configs.
@@ -254,13 +254,13 @@ export function worktreeTreeDelta(
 
 	try {
 		const commits = Number(
-			execFileSync("git", ["rev-list", "--count", `${commitA}...${commitB}`], {
+			runFileSync("git", ["rev-list", "--count", `${commitA}...${commitB}`], {
 				cwd: repoRoot,
 				encoding: "utf8",
 			}).trim()
 		)
 
-		const diff = execFileSync("git", ["diff", "--name-only", commitA, commitB], {
+		const diff = runFileSync("git", ["diff", "--name-only", commitA, commitB], {
 			cwd: repoRoot,
 			encoding: "utf8",
 		}).trim()

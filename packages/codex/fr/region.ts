@@ -13,7 +13,7 @@
  *   `code-postal.ts`).
  */
 
-import { foldName } from "../normalize.ts"
+import { foldName } from "#normalize"
 
 /**
  * Per-region record: ISO 3166-2:FR code (sans `FR-` prefix) + French name.

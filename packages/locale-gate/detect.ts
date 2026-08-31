@@ -11,8 +11,8 @@
  *   disagreement-detection metrics).
  */
 
-import { scoreByPostcode, scoreByScript, scoreFallback, type LocaleCandidate } from "./rules.ts"
-import type { DetectLocaleOpts, LocaleHint, NormalizedInputLite, QueryShapeLike } from "./types.ts"
+import { scoreByPostcode, scoreByScript, scoreFallback, type LocaleCandidate } from "#rules"
+import type { DetectLocaleOpts, LocaleHint, NormalizedInputLite, QueryShapeLike } from "#types"
 
 /**
  * Synchronous, pure rule-based implementation. The async wrapper matches the pipeline contract.

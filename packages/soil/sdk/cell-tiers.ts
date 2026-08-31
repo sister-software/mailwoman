@@ -20,8 +20,8 @@ import { expandH3Cell, shortCellToInt, type H3Cell, type H3CellShort } from "@ma
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { compactCells, getResolution } from "h3-js"
 
-import { SoilCellContainment, type SoilCapabilityCellTable, type SoilDatabase } from "../schema.ts"
-import { mapUnitProfile, reduceCell, type CellCandidate, type MapUnitProfile } from "./reduce.ts"
+import { SoilCellContainment, type SoilCapabilityCellTable, type SoilDatabase } from "#schema"
+import { mapUnitProfile, reduceCell, type CellCandidate, type MapUnitProfile } from "#sdk/reduce"
 
 /**
  * Resolve the touch table into the stored containment index.

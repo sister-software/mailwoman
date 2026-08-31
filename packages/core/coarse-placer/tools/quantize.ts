@@ -16,13 +16,12 @@
  *   Run: `mailwoman placer quantize [--in <fp32 dir>] [--out <int8 dir>]`
  */
 
-import * as path from "@mailwoman/platform/path"
+import { type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 
+import type { CoarsePlacerMeta } from "#coarse-placer/coarse-placer"
 import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
 import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "#fs/writers"
 import { dataRootPath } from "#utils"
-
-import type { CoarsePlacerMeta } from "../coarse-placer.ts"
 
 /**
  * Largest magnitude representable in the symmetric int8 range the weights quantize into.
@@ -36,11 +35,11 @@ export interface QuantizeCoarsePlacerOptions {
 	/**
 	 * Fp32 artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
 	 */
-	in?: string
+	in?: PathBuilderLike
 	/**
 	 * Int8 output dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model-int8`.
 	 */
-	out?: string
+	out?: PathBuilderLike
 }
 
 /**
@@ -61,11 +60,11 @@ export async function quantizeCoarsePlacer(
 	options: QuantizeCoarsePlacerOptions = {},
 	report?: (line: string) => void
 ): Promise<QuantizeCoarsePlacerResult> {
-	const inDir = options.in || dataRootPath("coarse-placer", "model")
-	const outDir = options.out || dataRootPath("coarse-placer", "model-int8")
+	const inDir = resolvePathBuilder(options.in || dataRootPath("coarse-placer", "model"))
+	const outDir = resolvePathBuilder(options.out || dataRootPath("coarse-placer", "model-int8"))
 
-	const meta = await readLocalJSONFile<CoarsePlacerMeta>(path.join(inDir, "meta.json"))
-	const buf = await readLocalBuffer(path.join(inDir, "weights.bin"))
+	const meta = await readLocalJSONFile<CoarsePlacerMeta>(resolvePath(inDir, "meta.json"))
+	const buf = await readLocalBuffer(resolvePath(inDir, "weights.bin"))
 	const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 	const w = new Float32Array(ab)
 	const C = meta.classes.length
@@ -115,9 +114,9 @@ export async function quantizeCoarsePlacer(
 	}
 
 	await makeDirectories(outDir)
-	await writeLocalBuffer(Buffer.from(int8.buffer), path.join(outDir, "weights.bin"))
+	await writeLocalBuffer(Buffer.from(int8.buffer), resolvePath(outDir, "weights.bin"))
 
-	await writeLocalJSONFile({ ...meta, quantization: "int8-per-row", scales }, path.join(outDir, "meta.json"))
+	await writeLocalJSONFile({ ...meta, quantization: "int8-per-row", scales }, resolvePath(outDir, "meta.json"))
 
 	const fp32Bytes = w.length * 4
 	const int8Bytes = int8.length
@@ -133,5 +132,5 @@ export async function quantizeCoarsePlacer(
 	report?.(`  per-class scales: [${scales.map((s) => s.toExponential(2)).join(", ")}]`)
 	report?.(`  weight reconstruction error: max ${maxAbsErr.toExponential(2)}, rmse ${rmse.toExponential(2)}`)
 
-	return { outDir, fp32Bytes, int8Bytes, maxAbsErr, rmse }
+	return { outDir: resolvePath(outDir), fp32Bytes, int8Bytes, maxAbsErr, rmse }
 }

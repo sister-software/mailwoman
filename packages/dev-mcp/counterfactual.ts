@@ -25,8 +25,8 @@ import { repoRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 import type { GeocodeSessionOptions } from "mailwoman/geocode-session"
 
-import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
-import { DISTANCE_THRESHOLDS_KM } from "./geo-grade.ts"
+import type { EngineConfig, EngineRegistryLike } from "#engine-registry"
+import { DISTANCE_THRESHOLDS_KM } from "#geo-grade"
 
 /**
  * The fixed lever space, in the CLI's own vocabulary — the same keys `EngineConfig` uses, so a flip a reader wants to

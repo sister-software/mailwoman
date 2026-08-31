@@ -33,7 +33,7 @@ const LOCALES = ["en-US", "en-GB", "fr-FR", "de-DE", "en-IN", "es-ES", "it-IT", 
 
 async function haveWeights(locale: string): Promise<boolean> {
 	try {
-		const w = resolveWeights({ locale })
+		const w = await resolveWeights({ locale })
 
 		return !!w.modelPath && (await pathExists(w.modelPath))
 	} catch {
@@ -48,7 +48,7 @@ for (const locale of LOCALES) {
 }
 
 const baseline = HAVE_WEIGHTS.get("en-US")
-	? readLabelsFromModelCard(resolveWeights({ locale: "en-US" }).modelCardPath)
+	? await readLabelsFromModelCard((await resolveWeights({ locale: "en-US" })).modelCardPath)
 	: undefined
 
 describe("weights overlays inherit their base's label vocabulary", () => {

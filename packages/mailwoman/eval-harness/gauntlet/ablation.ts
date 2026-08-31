@@ -60,9 +60,9 @@
 import { makeDirectories, writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, percentile, sha256Hex } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join } from "path-ts"
 
 import {
 	ABLATION_ABSENT,
@@ -76,11 +76,11 @@ import {
 	ladderComponentDisagreement,
 	PASSING_GRADES,
 	UNCONSTRAINED_RUNG,
-} from "./ablation-expectation.ts"
-import { AblationGazetteer } from "./ablation-gazetteer.ts"
+} from "#eval-harness/gauntlet/ablation-expectation"
+import { AblationGazetteer } from "#eval-harness/gauntlet/ablation-gazetteer"
 // The renderer and the data shapes moved out when the expectation model pushed this file past the 750-line cap. Both
 // are re-exported below, from their historical home, so every importer and every test keeps its path.
-import { renderAblationMarkdown } from "./ablation-report.ts"
+import { renderAblationMarkdown } from "#eval-harness/gauntlet/ablation-report"
 import {
 	ABLATABLE_COMPONENTS,
 	type AblatableComponent,
@@ -90,16 +90,21 @@ import {
 	type AblationVariant,
 	DEFAULT_ABLATION_TOLERANCE_KM,
 	type SlotOutcome,
-} from "./ablation-types.ts"
-import { loadRegressionCases } from "./cases/load.ts"
-import { componentOf } from "./check-case.ts"
-import { assertCorpusStampFresh } from "./corpus-stamp.ts"
-import { buildGauntletDeps, type GauntletResult, runOne } from "./harness.ts"
-import { type GauntletLayerOptions, layerDepsOptions } from "./regression.ts"
-import type { GauntletDatabase, ResolutionTier } from "./schema.ts"
+} from "#eval-harness/gauntlet/ablation-types"
+import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
+import { componentOf } from "#eval-harness/gauntlet/check-case"
+import { assertCorpusStampFresh } from "#eval-harness/gauntlet/corpus-stamp"
+import { buildGauntletDeps, type GauntletResult, runOne } from "#eval-harness/gauntlet/harness"
+import { type GauntletLayerOptions, layerDepsOptions } from "#eval-harness/gauntlet/regression"
+import type { GauntletDatabase, ResolutionTier } from "#eval-harness/gauntlet/schema"
 
-export { ABLATION_ABSENT } from "./ablation-expectation.ts"
-export { formatAblationCell, formatAblationLadderCell, renderAblationMarkdown } from "./ablation-report.ts"
+export { ABLATION_ABSENT } from "#eval-harness/gauntlet/ablation-expectation"
+
+export {
+	formatAblationCell,
+	formatAblationLadderCell,
+	renderAblationMarkdown,
+} from "#eval-harness/gauntlet/ablation-report"
 
 export {
 	ABLATABLE_COMPONENTS,
@@ -110,7 +115,7 @@ export {
 	type AblationSkip,
 	type AblationVariant,
 	type SlotOutcome,
-} from "./ablation-types.ts"
+} from "#eval-harness/gauntlet/ablation-types"
 
 /**
  * How many substitutions the console summary lists before it truncates. Purely a terminal-legibility cap — the full

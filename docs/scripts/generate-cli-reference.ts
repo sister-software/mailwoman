@@ -31,8 +31,9 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { dirname, join } from "@mailwoman/platform/path"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import { repoRootPath } from "@mailwoman/core/utils"
+import { dirname, join } from "path-ts"
 
 import { readCommands, type CommandNode, type OptionSpec } from "./cli-schema.ts"
 
@@ -277,7 +278,7 @@ function collectCommands(node: CommandNode, prefix: readonly string[], into: CLI
 	}
 }
 
-const packagePath = dirname(fileURLToPath(new URL(import.meta.resolve("mailwoman"), import.meta.url)))
+const packagePath = dirname(resolveModulePath("mailwoman"))
 
 /**
  * The compiled command tree this generator reads, resolved from this file rather than a working directory so the script
@@ -553,7 +554,7 @@ export function renderCLIReference(surface: CLISurface): string {
 /**
  * The page this generator owns.
  */
-export const OUTPUT_PATH = fileURLToPath(new URL("../articles/developers/reference/cli.mdx", import.meta.url))
+export const OUTPUT_PATH = repoRootPath("docs", "articles", "developers", "reference", "cli.mdx")
 
 /**
  * Render the page and write it. Returns the rendered text so a caller can compare rather than write.

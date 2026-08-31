@@ -24,27 +24,21 @@ import { Text } from "ink"
 import { resolvePath } from "path-ts"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
-
 import {
 	adminDBAvailable,
 	censusForCountry,
 	CHECKOUT_SIZE_RATIO,
 	planCountryMove,
 	servingSources,
-} from "../../gazetteer-pipeline/country-plan.ts"
-import {
-	AdminSource,
-	countrySourceMap,
-	sourceConflicts,
-	sourceSentence,
-} from "../../gazetteer-pipeline/country-sources.ts"
+} from "#gazetteer-pipeline/country-plan"
+import { AdminSource, countrySourceMap, sourceConflicts, sourceSentence } from "#gazetteer-pipeline/country-sources"
 import {
 	DEFAULT_GEONAMES_COUNTRIES,
 	DEFAULT_OVERTURE_COUNTRIES,
 	DEFAULT_WOF_PRIORITY_COUNTRIES,
-} from "../../gazetteer-pipeline/defaults.ts"
-import { addCountry, removeCountry } from "../../gazetteer-pipeline/recipe-edit.ts"
-import { auditReposRoot, clonedCountries, reposSentence } from "../../gazetteer-pipeline/repos-audit.ts"
+} from "#gazetteer-pipeline/defaults"
+import { addCountry, removeCountry } from "#gazetteer-pipeline/recipe-edit"
+import { auditReposRoot, clonedCountries, reposSentence } from "#gazetteer-pipeline/repos-audit"
 
 export const description =
 	"Report which source serves a country's admin coverage today, and every edit moving it would require. " +

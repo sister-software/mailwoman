@@ -11,6 +11,10 @@
 
 import { type ReactNode, useState } from "react"
 
+import { POI_DEFAULT_TEXT, POI_PRESETS } from "#poi/runtime"
+import type { LoadPOIRuntime, POILiveSearch } from "#poi/types"
+import { usePOISearch } from "#poi/usePOISearch"
+
 import { ClientOnly } from "../common/ClientOnly.tsx"
 import { KindBadge } from "../common/KindBadge.tsx"
 import { PresetChips, type Preset } from "../common/PresetChips.tsx"
@@ -18,10 +22,7 @@ import { AbstainPanel } from "./AbstainPanel.tsx"
 import { LiveResultsBlock } from "./LiveResultsBlock.tsx"
 import { OverpassBlock } from "./OverpassBlock.tsx"
 import { QueryInput } from "./QueryInput.tsx"
-import { POI_DEFAULT_TEXT, POI_PRESETS } from "./runtime.ts"
 import { SubjectPanel } from "./SubjectPanel.tsx"
-import type { LoadPOIRuntime, POILiveSearch } from "./types.ts"
-import { usePOISearch } from "./usePOISearch.ts"
 
 export interface POIExplorerProps {
 	/**

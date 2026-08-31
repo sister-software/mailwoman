@@ -7,14 +7,14 @@
 import type { SourceSpecification } from "@maplibre/maplibre-gl-style-spec"
 import type { LightSpecification, SkySpecification, StyleSpecification, TerrainSpecification } from "maplibre-gl"
 
+import { BaseLayers } from "#base/layers"
+import { createTerrainDEMSource, HillshadeTileSetID } from "#base/terrain"
 import {
 	LayerSpecificationList,
 	type LayerSpecificationListInput,
 	type LayerSpecificationListItem,
-} from "../styles/layers.ts"
-import type { TileSetSourceRecord } from "../styles/sources.ts"
-import { BaseLayers } from "./layers.ts"
-import { createTerrainDEMSource, HillshadeTileSetID } from "./terrain.ts"
+} from "#styles/layers"
+import type { TileSetSourceRecord } from "#styles/sources"
 
 //#endregion
 

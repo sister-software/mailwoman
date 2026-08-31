@@ -7,13 +7,13 @@
  *   (always) with case-fold + abbreviation expansion (opt-in).
  */
 
-import { expandAbbreviations } from "./abbreviations.ts"
-import { applyCjkNormalization } from "./cjk.ts"
-import { applyNFC } from "./nfc.ts"
-import { composeMaps, identityMap } from "./offset-map.ts"
-import { applyPunctuation } from "./punctuation.ts"
-import type { NormalizationTransform, NormalizedInput, NormalizeOpts } from "./types.ts"
-import { collapseWhitespace } from "./whitespace.ts"
+import { expandAbbreviations } from "#abbreviations"
+import { applyCjkNormalization } from "#cjk"
+import { applyNFC } from "#nfc"
+import { composeMaps, identityMap } from "#offset-map"
+import { applyPunctuation } from "#punctuation"
+import type { NormalizationTransform, NormalizedInput, NormalizeOpts } from "#types"
+import { collapseWhitespace } from "#whitespace"
 
 export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 	const transforms: NormalizationTransform[] = []

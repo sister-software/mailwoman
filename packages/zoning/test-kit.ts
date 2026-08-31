@@ -28,9 +28,9 @@
 
 import { rectangleRing as counterClockwiseRing, reversedRing as clockwiseRing } from "@mailwoman/spatial"
 
-import { resolveRingRoles, type MultiPolygonRings } from "./rings.ts"
-import type { ZoningFeatureSource, ZoningSourceFeature } from "./sdk/ingest.ts"
-import { GZT_SOURCE_EPSG, GZT_UNZONED_LOCAL_CODE } from "./vocabulary.ts"
+import { resolveRingRoles, type MultiPolygonRings } from "#rings"
+import type { ZoningFeatureSource, ZoningSourceFeature } from "#sdk/ingest"
+import { GZT_SOURCE_EPSG, GZT_UNZONED_LOCAL_CODE } from "#vocabulary"
 
 /**
  * The exterior ring builder, under THIS service's convention. Clockwise.

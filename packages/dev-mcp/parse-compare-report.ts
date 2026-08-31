@@ -13,8 +13,8 @@
  *   mailwoman against mailwoman and produces a beautifully high agreement rate.
  */
 
-import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
-import { resolveInputSet, type InputSetRef } from "./input-sets.ts"
+import type { EngineConfig, EngineRegistryLike } from "#engine-registry"
+import { resolveInputSet, type InputSetRef } from "#input-sets"
 import {
 	diffSpans,
 	libpostalClient,
@@ -22,9 +22,9 @@ import {
 	mailwomanSpans,
 	SpanVerdict,
 	type ParseComparisonRow,
-} from "./parse-compare.ts"
-import { describeObservedRate } from "./power.ts"
-import { inputSetProvenance } from "./tool-kit.ts"
+} from "#parse-compare"
+import { describeObservedRate } from "#power"
+import { inputSetProvenance } from "#tool-kit"
 
 export async function runParseCompare(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
 	const endpoint = args["endpoint"] as string | undefined

@@ -11,7 +11,7 @@
  *   {@link NON_SPACING_SCRIPT} and {@link nameContainsSurfaces}.
  */
 
-import type { SubVenueSurface } from "./table.ts"
+import type { SubVenueSurface } from "#tools/sub-venue/table"
 
 /**
  * Scripts whose case is meaningful to fold. Everything else is left as written — see {@link SubVenueSurface.phrase}.

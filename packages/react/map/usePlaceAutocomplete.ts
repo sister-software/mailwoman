@@ -17,8 +17,8 @@
 
 import { type KeyboardEvent, useCallback, useEffect, useState } from "react"
 
-import { useDebouncedValue } from "../common/useDebouncedValue.ts"
-import type { Suggestion } from "./types.ts"
+import { useDebouncedValue } from "#common/useDebouncedValue"
+import type { Suggestion } from "#map/types"
 
 export interface UsePlaceAutocompleteOptions {
 	/**

@@ -6,4 +6,4 @@
  *   Spanish (ES) address-system reference data.
  */
 
-export * from "./codigo-postal.ts"
+export * from "#es/codigo-postal"

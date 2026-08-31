@@ -70,17 +70,12 @@
 
 import { TextSpliterator } from "spliterator"
 
-import { decomposeFrStreet } from "../adapters/ban/street-decompose.ts"
-import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
+import { decomposeFrStreet } from "#adapters/ban/street-decompose"
+import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "#shard-recipes/scaffold"
 
 /**
  * House numbers, weighted toward the small values that dominate real BAN rows.
  */
-/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
-   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
-   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
-   extracted as named constants above. */
 
 const HOUSE_NUMBERS = [
 	1, 1, 2, 2, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 18, 20, 21, 24, 27, 30, 33, 42, 57, 68, 84, 102, 115, 140,
@@ -151,6 +146,9 @@ const PARTICLE = /\b(de la|de l'|du|des|de|d'|le|la|les)\b/i
  */
 const DATEISH =
 	/\b(1[0-9]|20)\d{2}\b|\b\d{1,2}\s+(janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[ûu]t|septembre|octobre|novembre|d[ée]cembre)\b/i
+
+// A quarter of house numbers carry an alphanumeric suffix (`8 bis`, `12B`).
+const ALNUM_HOUSE_NUMBER_SHARE = 0.25
 
 /**
  * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
@@ -250,7 +248,7 @@ export const frFragmentRecipe: ShardRecipe = {
 
 			if (carriesNumber) {
 				const number = HOUSE_NUMBERS[Math.floor(random() * HOUSE_NUMBERS.length)]!
-				const alnum = random() < 0.25
+				const alnum = random() < ALNUM_HOUSE_NUMBER_SHARE
 				const suffix = ALNUM_SUFFIXES[Math.floor(random() * ALNUM_SUFFIXES.length)]!
 
 				const houseNumber = alnum

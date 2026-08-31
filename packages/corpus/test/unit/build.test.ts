@@ -20,7 +20,7 @@ import { wofAdminAdapter } from "@mailwoman/corpus/adapters/wof-admin-json/adapt
 import { buildCorpus, type BuildStage } from "@mailwoman/corpus/build"
 import { ParquetReader } from "@mailwoman/corpus/parquet-wrapper"
 import type { ParquetRow } from "@mailwoman/corpus/utils/parquet"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 

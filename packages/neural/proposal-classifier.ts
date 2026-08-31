@@ -28,8 +28,8 @@ import type {
 	Section,
 } from "@mailwoman/core/types"
 
-import type { NeuralAddressClassifier } from "./classifier.ts"
-import { STAGE2_TAGS } from "./labels.ts"
+import type { NeuralAddressClassifier } from "#classifier"
+import { STAGE2_TAGS } from "#labels"
 
 export interface NeuralProposalClassifierConfig {
 	/**

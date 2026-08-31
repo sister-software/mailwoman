@@ -16,17 +16,17 @@
 import { detectLocaleSync } from "@mailwoman/locale-gate"
 import { computeQueryShape } from "@mailwoman/query-shape"
 
-import type { AnchorLookup } from "./anchor-inference.ts"
-import { NeuralAddressClassifier, type NeuralAddressClassifierConfig } from "./classifier.ts"
-import { type CountryLexicon, parseCountryLexicon } from "./country-inference.ts"
-import { type GazetteerLexicon, parseGazetteerLexicon } from "./gazetteer-inference.ts"
-import { PairIndexResolver } from "./pair-index-resolver.ts"
-import type { PlacetypePairPriorOpts } from "./placetype-pair-prior.ts"
-import { PostcodeBinaryResolver } from "./postcode-binary-resolver.ts"
-import { MailwomanTokenizer } from "./tokenizer.ts"
-import { WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "./web-onnx-runner.ts"
+import type { AnchorLookup } from "#anchor-inference"
+import { NeuralAddressClassifier, type NeuralAddressClassifierConfig } from "#classifier"
+import { type CountryLexicon, parseCountryLexicon } from "#country-inference"
+import { type GazetteerLexicon, parseGazetteerLexicon } from "#gazetteer-inference"
+import { PairIndexResolver } from "#pair-index-resolver"
+import type { PlacetypePairPriorOpts } from "#placetype-pair-prior"
+import { PostcodeBinaryResolver } from "#postcode-binary-resolver"
+import { MailwomanTokenizer } from "#tokenizer"
+import { WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "#web-onnx-runner"
 
-export { type WebONNXRunnerDiagnostics } from "./web-onnx-runner.ts"
+export { type WebONNXRunnerDiagnostics } from "#web-onnx-runner"
 
 /**
  * One fetched PIX1 placetype-pair index (placetype-pair-prior arc, #1278 browser wiring) as the loader retained it.

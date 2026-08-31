@@ -38,10 +38,9 @@ import { formatAddress, reconcileComponents } from "@mailwoman/formatter"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { TIGERDatabase } from "@mailwoman/tiger/sdk/schema"
 
+import { decomposeStreet } from "#adapters/tiger/street-decompose"
 import { lookupFipsState } from "#codex/us-fips-state"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
-
-import { decomposeStreet } from "./street-decompose.ts"
 
 /**
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset

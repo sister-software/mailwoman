@@ -24,7 +24,7 @@ import { readLocalTextFile, readStandardInputJSON } from "@mailwoman/core/fs/rea
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { TextSpliterator } from "spliterator"
 
-import { lintReply, renderVerdict } from "./vale-check-core.ts"
+import { lintReply, renderVerdict } from "#hooks/vale-check-core"
 
 /**
  * The reply text, preferring the payload's `last_assistant_message` and falling back to the transcript. The fallback

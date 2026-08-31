@@ -7,12 +7,12 @@
  */
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { perLocaleF1 } from "mailwoman/eval-harness/per-locale-f1"
 
 async function main(): Promise<void> {
 	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
-	const { values } = parseArgs({
+	const { values } = parseArguments({
 		options: {
 			"bridge-gaps": { type: "boolean" },
 			conventions: { type: "string" },

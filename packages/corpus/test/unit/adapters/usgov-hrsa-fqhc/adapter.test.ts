@@ -9,9 +9,9 @@ import { workspacePath } from "@mailwoman/core/utils"
 import {
 	USGOV_HRSA_FQHC_ADAPTER_ID,
 	USGOV_HRSA_FQHC_DEFAULT_LICENSE,
-	createUsgovHrsaFqhcAdapter,
+	createUSGovHRSAFQHCAdapter,
 } from "@mailwoman/corpus/adapters/usgov-hrsa-fqhc/adapter"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 import { runAdapter } from "#runner"
@@ -27,7 +27,7 @@ const fixtureCSV = workspacePath("corpus", "fixtures", "usgov-hrsa-fqhc", "sampl
 describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 	it("emits one row per valid CSV record + drops invalid ones", async () => {
 		const m = await runAdapter({
-			adapter: createUsgovHrsaFqhcAdapter(),
+			adapter: createUSGovHRSAFQHCAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
@@ -45,7 +45,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 
 	it("source_id uses HRSA Site ID when present", async () => {
 		await runAdapter({
-			adapter: createUsgovHrsaFqhcAdapter(),
+			adapter: createUSGovHRSAFQHCAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
@@ -67,7 +67,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 
 	it("composes a venue-prefixed envelope-style raw line", async () => {
 		await runAdapter({
-			adapter: createUsgovHrsaFqhcAdapter(),
+			adapter: createUSGovHRSAFQHCAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
@@ -80,7 +80,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 
 	it("kryptonite case: 'Buffalo Health Center' + 'Buffalo NY' aligns to disjoint spans (venue first)", async () => {
 		await runAdapter({
-			adapter: createUsgovHrsaFqhcAdapter(),
+			adapter: createUSGovHRSAFQHCAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
@@ -102,7 +102,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 
 	it("preserves Suite designators on the street component (no separate unit slot)", async () => {
 		await runAdapter({
-			adapter: createUsgovHrsaFqhcAdapter(),
+			adapter: createUSGovHRSAFQHCAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
@@ -115,7 +115,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 
 	it("PO Box surface form preserved verbatim in street (no false house-number split)", async () => {
 		await runAdapter({
-			adapter: createUsgovHrsaFqhcAdapter(),
+			adapter: createUSGovHRSAFQHCAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
@@ -129,7 +129,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 
 	it("hyphenated NYC-style house number splits cleanly", async () => {
 		await runAdapter({
-			adapter: createUsgovHrsaFqhcAdapter(),
+			adapter: createUSGovHRSAFQHCAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
@@ -143,7 +143,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 
 	it("drops rows whose state is not a recognized USPS abbreviation", async () => {
 		await runAdapter({
-			adapter: createUsgovHrsaFqhcAdapter(),
+			adapter: createUSGovHRSAFQHCAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
@@ -155,7 +155,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 
 	it("drops rows missing a venue (empty Site Name)", async () => {
 		await runAdapter({
-			adapter: createUsgovHrsaFqhcAdapter(),
+			adapter: createUSGovHRSAFQHCAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
@@ -168,7 +168,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 	it("rejects non-US --country", async () => {
 		await expect(
 			runAdapter({
-				adapter: createUsgovHrsaFqhcAdapter(),
+				adapter: createUSGovHRSAFQHCAdapter(),
 				adapterOptions: { inputPath: fixtureCSV, country: "FR" },
 				outputDir: scratch.path,
 				corpusVersion: "0.1.0",
@@ -178,7 +178,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 
 	it("honors --limit", async () => {
 		const m = await runAdapter({
-			adapter: createUsgovHrsaFqhcAdapter(),
+			adapter: createUSGovHRSAFQHCAdapter(),
 			adapterOptions: { inputPath: fixtureCSV, limit: 3 },
 			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
@@ -190,7 +190,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 
 	it("two runs against the same fixture produce identical sha256", async () => {
 		const a = await runAdapter({
-			adapter: createUsgovHrsaFqhcAdapter(),
+			adapter: createUSGovHRSAFQHCAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
@@ -199,7 +199,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 		await removePathIfPresent(join(scratch.path, USGOV_HRSA_FQHC_ADAPTER_ID))
 
 		const b = await runAdapter({
-			adapter: createUsgovHrsaFqhcAdapter(),
+			adapter: createUSGovHRSAFQHCAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
 			outputDir: scratch.path,
 			corpusVersion: "0.1.0",

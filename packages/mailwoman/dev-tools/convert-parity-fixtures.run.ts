@@ -18,7 +18,7 @@ import { legacyClassificationToComponentTag } from "@mailwoman/core/types"
 import { dirname } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
 
-import type { ParityCase } from "./parity-extract.ts"
+import type { ParityCase } from "#dev-tools/parity-extract"
 
 const IN_PATH = "packages/mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl"
 const OUT_PATH = "packages/mailwoman/eval-harness/fixtures/parity-corpus.jsonl"

@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./admin.ts"
-export * from "./definition.ts"
-export * from "./graph.ts"
-export * from "./mermaid.ts"
-export * from "./Placetype.ts"
-export * from "./specificity.ts"
-export * from "./tree.ts"
+export * from "#resources/whosonfirst/placetypes/admin"
+export * from "#resources/whosonfirst/placetypes/definition"
+export * from "#resources/whosonfirst/placetypes/graph"
+export * from "#resources/whosonfirst/placetypes/mermaid"
+export * from "#resources/whosonfirst/placetypes/Placetype"
+export * from "#resources/whosonfirst/placetypes/specificity"
+export * from "#resources/whosonfirst/placetypes/tree"

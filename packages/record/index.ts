@@ -11,6 +11,6 @@
  *   matcher.
  */
 
-export * from "./address.ts"
-export * from "./name.ts"
-export * from "./organization.ts"
+export * from "#address"
+export * from "#name"
+export * from "#organization"

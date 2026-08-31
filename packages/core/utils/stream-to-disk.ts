@@ -24,10 +24,7 @@
  *   on, and what to do with the bytes afterwards.
  */
 
-import { Readable } from "@mailwoman/platform/stream"
-import { pipeline } from "@mailwoman/platform/stream/promises"
-
-import { openWriteStream } from "#fs/streams"
+import { openWriteStream, pipeline, Readable } from "#fs/streams"
 import { movePath, removePathIfPresent } from "#fs/writers"
 
 /**

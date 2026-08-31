@@ -43,8 +43,7 @@ const GazetteerVerifyPostcodeCodePoint: ParsedCommandComponent<Options> = ({ opt
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
-		const { runCodePointGate, formatCodePointGateReport } =
-			await import("../../gazetteer-pipeline/postcode/codepoint-gate.ts")
+		const { runCodePointGate, formatCodePointGateReport } = await import("#gazetteer-pipeline/postcode/codepoint-gate")
 
 		const stamp = new Date().toISOString().slice(0, 10)
 

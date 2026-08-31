@@ -13,8 +13,8 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import type { GeoFeature, InferGeoFeatureCollection, MultiPolygonLiteral, PolygonLiteral } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { MultiPolygonCoords } from "./index.ts"
-import type { TimezoneDatabase } from "./schema.ts"
+import type { MultiPolygonCoords } from "#index"
+import type { TimezoneDatabase } from "#schema"
 
 export type TimezoneFeature = GeoFeature<PolygonLiteral | MultiPolygonLiteral, { tzid: string }>
 

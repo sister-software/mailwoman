@@ -13,13 +13,13 @@
  */
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { demoCascadeSmoke } from "../../mailwoman/eval-harness/demo-cascade-smoke.ts"
 
 async function main(): Promise<void> {
 	// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
-	const { values: rawValues } = parseArgs({
+	const { values: rawValues } = parseArguments({
 		options: {
 			card: { type: "string" },
 			db: { type: "string" },

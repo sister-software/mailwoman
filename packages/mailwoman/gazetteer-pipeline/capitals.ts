@@ -23,8 +23,8 @@ import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/objects"
 import { looksLikeGazetteerDump, parseCountryInfo } from "@mailwoman/corpus/tools"
-import { dirname, join } from "@mailwoman/platform/path"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { dirname, join, type PathBuilderLike } from "path-ts"
 
 /**
  * One capital or admin-1 seat. `latitude`/`longitude` are rounded to 4 decimals (~11 m) — the consumer matches at
@@ -170,7 +170,7 @@ export interface BuildCapitalsOptions {
 	/**
 	 * Directory holding `countryInfo.txt` + the `<CC>.txt` dumps (`mailwoman corpus fetch geonames-dump`).
 	 */
-	geonamesDir: string
+	geonamesDir: PathBuilderLike
 	outPath: string
 }
 

@@ -44,30 +44,31 @@ import { normalize } from "@mailwoman/normalize"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 import type { AddressPointLookup, PostcodePrefixIndexLike, ResolveOpts, Resolver } from "@mailwoman/resolver"
 
-import { authoritativeQueryFrom, consultAuthoritativeProvider } from "./authoritative.ts"
-import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.ts"
-import { applyEntityTiers } from "./fork-entity.ts"
-import { extractGeocodeResult } from "./geocode-result.ts"
-import { type ShardResolver, type StateShards, regionSlugFromTree } from "./geocode-shards.ts"
+import { authoritativeQueryFrom, consultAuthoritativeProvider } from "#authoritative"
+import { loadDefaultPlaceCountry, type PlaceCountryFn } from "#default-placer"
+import { applyEntityTiers } from "#fork-entity"
+import { extractGeocodeResult } from "#geocode-result"
+import { type ShardResolver, type StateShards, regionSlugFromTree } from "#geocode-shards"
 import {
 	postcodeCountryScopeOf,
 	recognizeBarePostcode,
 	resolvedCountryOf,
 	treePostcodeValue,
-} from "./geocode-tree-reads.ts"
-import { shouldDropInferredScope } from "./inferred-scope.ts"
-import { thingQueryRefusalMarkers } from "./intent-refusal.ts"
-import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.ts"
+} from "#geocode-tree-reads"
+import { shouldDropInferredScope } from "#inferred-scope"
+import { thingQueryRefusalMarkers } from "#intent-refusal"
+import { interpCalibrationForRegion, type InterpCalibrationTable } from "#interp-calibration"
 // Everything this file takes from the observation surface comes from its BARREL rather than from the individual
 // modules: the three route types are the same kind of thing here — an optional, already-open spatial layer — and the one
 // conversion that reads them takes all three, so a fourth layer costs no import at this call site.
-import { layerDesignationMarkers, type LayerDesignationRoutes } from "./observations/index.ts"
-import { applyPlusCodeOverride } from "./plus-code-override.ts"
-import { repairPostcodeContradiction } from "./postcode-repair.ts"
-import { declaredAmbiguityMarker } from "./query-intent.ts"
-import { recognizeUSRegions } from "./region-recognition.ts"
-import { repairStrandedAffix } from "./stranded-affix-repair.ts"
-import { applyStreetMissFallback } from "./street-miss-fallback.ts"
+import { layerDesignationMarkers, type LayerDesignationRoutes } from "#observations/index"
+import { applyPlusCodeOverride } from "#plus-code-override"
+import type { POIExecutorLookup } from "#poi-executor"
+import { repairPostcodeContradiction } from "#postcode-repair"
+import { declaredAmbiguityMarker } from "#query-intent"
+import { recognizeUSRegions } from "#region-recognition"
+import { repairStrandedAffix } from "#stranded-affix-repair"
+import { applyStreetMissFallback } from "#street-miss-fallback"
 
 export { isUnitGradePostcodeHit, UNIT_GRADE_POSTCODE } from "@mailwoman/codex"
 
@@ -109,7 +110,7 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 * Poi.db reader for the fork→entity probe (`fork-entity.ts`). Absent = the probe never runs (tolerate-and-degrade,
 	 * like every optional artifact). Both this AND {@link isStreetGeneric} are required for a probe.
 	 */
-	poiLookup?: import("./poi-executor.ts").POIExecutorLookup
+	poiLookup?: POIExecutorLookup
 	/**
 	 * OPT-IN venue tier (#1684's POI half): upgrade a venue-led address's admin/street answer to the poi.db entity
 	 * bearing the venue's exact name-key near the resolved anchor. Default OFF — the ceiling is measured (15 tracked

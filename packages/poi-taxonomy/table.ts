@@ -8,12 +8,12 @@
  *   tester imports `data/taxonomy.json`/`data/brands.json` via webpack and injects them here).
  */
 
-import { createBrandLookupCore } from "./brands-lookup-core.ts"
-import { createLookupCore } from "./lookup-core.ts"
-import type { POIBrandTable, POITaxonomyTable } from "./types.ts"
+import { createBrandLookupCore } from "#brands-lookup-core"
+import { createLookupCore } from "#lookup-core"
+import type { POIBrandTable, POITaxonomyTable } from "#types"
 
-export type { CategoryMatch, POITaxonomyLookup } from "./lookup-core.ts"
-export type { BrandMatch, POIBrandLookup } from "./brands-lookup-core.ts"
+export type { CategoryMatch, POITaxonomyLookup } from "#lookup-core"
+export type { BrandMatch, POIBrandLookup } from "#brands-lookup-core"
 
 /**
  * Builds a {@link POITaxonomyLookup} bound to `table`. Throws when a synonym's `categoryID` points at an unknown

@@ -6,8 +6,8 @@
 
 import type { MultiPolygonLiteral } from "@mailwoman/spatial"
 
-import type { TIGERProperty, TIGERPropertyRecord } from "./constants.ts"
-import type { GeoIDPart, FIPSBlockGeoID, ParsedGeoIDBlockLevel } from "./geoid.ts"
+import type { TIGERProperty, TIGERPropertyRecord } from "#constants"
+import type { GeoIDPart, FIPSBlockGeoID, ParsedGeoIDBlockLevel } from "#geoid"
 
 /**
  * The properties of a tabulated block from the TIGER/Line dataset.

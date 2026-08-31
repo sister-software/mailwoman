@@ -20,8 +20,7 @@
  *   Run: node scripts/eval/fr-parse-recall.ts
  */
 
-import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { allRows, dataRootPath, mailwomanDataRoot, workspacePath } from "@mailwoman/core/utils"
@@ -63,7 +62,8 @@ async function resolveWeightsSibling(fileName: string, weightsCache?: string): P
 		`${String(workspacePath("neural-weights-en-us"))}/${fileName}`,
 	]
 
-	const found = candidates.find((path) => pathExistsSync(path))
+	const existing = await Promise.all(candidates.map(async (path) => ({ path, exists: await pathExists(path) })))
+	const found = existing.find((entry) => entry.exists)?.path
 
 	if (!found) {
 		throw new Error(

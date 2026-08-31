@@ -88,9 +88,9 @@ Token normalization uses Unicode property escapes (`/[\p{P}\p{S}]/gu`) instead o
 
 ```js
 import { deserializeFst } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
-import { readFileSync } from "node:fs"
+import { readFile } from "node:fs/promises"
 
-const buf = readFileSync("./fst-en-us.bin")
+const buf = await readFile("./fst-en-us.bin")
 const matcher = deserializeFst(buf)
 const result = matcher.query("new york")
 // → { accepting: [{ placetype: "region", name: "New York", importance: 1.0 }, ...] }

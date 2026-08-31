@@ -42,8 +42,8 @@ import type { CoincidentLocality } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { WOFDatabase } from "./schema.ts"
-import { allRows } from "./sqlite-utils.ts"
+import type { WOFDatabase } from "#schema"
+import { allRows } from "#sqlite-utils"
 
 /**
  * Table of places that hold more than one admin role — a locality that is also its county seat. Written by the

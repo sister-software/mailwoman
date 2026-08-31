@@ -10,11 +10,11 @@
 
 import { z } from "zod"
 
-import type { EngineConfig } from "../engine-registry.ts"
-import { runLookup } from "../lookup-tool.ts"
-import { LookupSource } from "../lookup.ts"
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
-import { ENGINE_CONFIG_SCHEMA } from "../tool-kit.ts"
+import type { EngineConfig } from "#engine-registry"
+import { LookupSource } from "#lookup"
+import { runLookup } from "#lookup-tool"
+import type { DevTool, DevToolDeps } from "#tool-kit"
+import { ENGINE_CONFIG_SCHEMA } from "#tool-kit"
 
 export const lookupTool = async ({ registry }: DevToolDeps): Promise<DevTool> => ({
 	name: "mwdev_lookup",

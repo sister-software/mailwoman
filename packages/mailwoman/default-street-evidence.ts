@@ -17,6 +17,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { StreetLocalityEvidence } from "@mailwoman/resolver"
+import { resolvePath } from "path-ts"
 
 let cached: Promise<StreetLocalityEvidence | null> | null = null
 
@@ -35,7 +36,7 @@ export function loadDefaultStreetEvidence(): Promise<StreetLocalityEvidence | nu
 				if (!(await pathExists(dbPath))) return null
 				const { SQLiteStreetNameLookup } = await import("@mailwoman/resolver-wof-sqlite")
 
-				return new SQLiteStreetNameLookup(dbPath)
+				return new SQLiteStreetNameLookup(resolvePath(dbPath))
 			} catch {
 				return null
 			}

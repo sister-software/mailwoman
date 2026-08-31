@@ -20,11 +20,11 @@
  *   --model-card neural-weights-en-us/model-card.json --n 2660
  */
 
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
-const { values: args } = parseArgs({
+const { values: args } = parseArguments({
 	options: {
 		baseline: { type: "string" },
 		candidate: { type: "string" },

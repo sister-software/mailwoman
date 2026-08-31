@@ -29,8 +29,8 @@
  */
 
 import { writeLocalTextFile, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import * as path from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
+import { join } from "path-ts"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
@@ -127,7 +127,7 @@ const GazetteerOvertureIngest: ParsedCommandComponent<Options> = ({ options }) =
 		const countries = options.countries.split(",").map((c) => c.trim().toUpperCase())
 		const limit = options.limit ? Number.parseInt(options.limit, 10) : undefined
 		const outRoot = options.out ?? dataRootPath("overture")
-		const outDir = path.join(outRoot, release)
+		const outDir = join(outRoot, release)
 		await makeDirectories(outDir)
 
 		// @duckdb/node-api is an optional peer dep (this is a maintainer-only data command) — load
@@ -147,7 +147,7 @@ const GazetteerOvertureIngest: ParsedCommandComponent<Options> = ({ options }) =
 		await db.run("SET threads=4;")
 		await db.run("SET memory_limit='8GB';")
 
-		const countryParquet = (cc: string) => path.join(outDir, `addresses-${cc.toLowerCase()}.parquet`)
+		const countryParquet = (cc: string) => join(outDir, `addresses-${cc.toLowerCase()}.parquet`)
 
 		/**
 		 * Materialize one country into local Parquet. Column set preserves the Overture schema verbatim (nested `sources` +
@@ -192,7 +192,7 @@ const GazetteerOvertureIngest: ParsedCommandComponent<Options> = ({ options }) =
 		 */
 		const emitCorpusJSONL = async (cc: string): Promise<void> => {
 			const src = countryParquet(cc)
-			const dest = path.join(outDir, `overture-${cc.toLowerCase()}.corpus.jsonl`)
+			const dest = join(outDir, `overture-${cc.toLowerCase()}.corpus.jsonl`)
 
 			await db.run(`
 				COPY (
@@ -296,7 +296,7 @@ const GazetteerOvertureIngest: ParsedCommandComponent<Options> = ({ options }) =
 		await writeLocalJSONFile({ release, probes }, outDir, "fill-rates.json")
 		await writeLocalTextFile(renderMarkdown(release, probes), outDir, "fill-rates.md")
 
-		console.error(`[done] report -> ${path.join(outDir, "fill-rates.{json,md}")}`)
+		console.error(`[done] report -> ${join(outDir, "fill-rates.{json,md}")}`)
 
 		db.closeSync()
 

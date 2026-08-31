@@ -16,7 +16,7 @@
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 
 const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/countries.json"
 
@@ -26,7 +26,7 @@ const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/count
  * `import.meta.url` points at the source tree. (`@mailwoman/core`'s `repoRootPath` would also work, but codex is
  * zero-runtime-dep and `core` already references `codex` — importing core here would cycle the project graph.)
  */
-const DEFAULT_OUT = fileURLToPath(new URL("../country/reference-data.ts", import.meta.url))
+const DEFAULT_OUT = resolvePackagePath("@mailwoman/codex", "country", "reference-data.ts")
 
 /**
  * A single country record from mledoze/countries, narrowed to the fields this tool reads.

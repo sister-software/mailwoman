@@ -64,11 +64,6 @@
 	],
 	"type": "module",
 	"imports": {
-		"#doctor/*": {
-			"node": "./doctor/*.ts",
-			"default": "./out/doctor/*.js",
-			"types": "./out/doctor/*.d.ts"
-		},
 		"#doctor": {
 			"node": "./doctor/index.ts",
 			"default": "./out/doctor/index.js",
@@ -84,30 +79,15 @@
 			"default": "./out/cli-kit/index.js",
 			"types": "./out/cli-kit/index.d.ts"
 		},
-		"#dev-tools/*": {
-			"node": "./dev-tools/*.ts",
-			"default": "./out/dev-tools/*.js",
-			"types": "./out/dev-tools/*.d.ts"
-		},
 		"#gazetteer-pipeline": {
 			"node": "./gazetteer-pipeline/index.ts",
 			"default": "./out/gazetteer-pipeline/index.js",
 			"types": "./out/gazetteer-pipeline/index.d.ts"
 		},
-		"#gazetteer-pipeline/*": {
-			"node": "./gazetteer-pipeline/*.ts",
-			"default": "./out/gazetteer-pipeline/*.js",
-			"types": "./out/gazetteer-pipeline/*.d.ts"
-		},
 		"#index": {
 			"node": "./index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
-		},
-		"#observations/*": {
-			"node": "./observations/*.ts",
-			"default": "./out/observations/*.js",
-			"types": "./out/observations/*.d.ts"
 		},
 		"#cli-kit/weights-guard": {
 			"node": "./out/cli-kit/weights-guard.js",
@@ -133,6 +113,21 @@
 			"node": "./autocomplete-core.ts",
 			"default": "./out/autocomplete-core.js",
 			"types": "./out/autocomplete-core.d.ts"
+		},
+		"#commands/registry/run": {
+			"node": "./out/commands/registry/run.js",
+			"default": "./out/commands/registry/run.js",
+			"types": "./out/commands/registry/run.d.ts"
+		},
+		"#debug-view/command": {
+			"node": "./out/debug-view/command.js",
+			"default": "./out/debug-view/command.js",
+			"types": "./out/debug-view/command.d.ts"
+		},
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
 		}
 	},
 	"exports": {
@@ -441,7 +436,6 @@
 		"@mailwoman/neural-weights-en-us": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
 		"@mailwoman/phrase-grouper": "workspace:*",
-		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/registry": "workspace:*",
@@ -460,9 +454,9 @@
 		"ink": "^7.1.1",
 		"kysely": "^0.29.4",
 		"onnxruntime-node": "^1.26.0",
-		"path-ts": "^2.1.0",
+		"path-ts": "^2.3.0",
 		"react": "^19.2.8",
-		"spliterator": "^6.3.1",
+		"spliterator": "^6.4.1",
 		"zod": "^4.4.3",
 		"zx": "^8.8.5"
 	},

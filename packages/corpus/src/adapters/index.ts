@@ -19,28 +19,27 @@
  *   implementations; the registered ids are unchanged).
  */
 
+import { banAdapter } from "#adapters/ban/adapter"
+import { fccBdcAdapter } from "#adapters/fcc-bdc/adapter"
+import { geonamesPostalAdapter } from "#adapters/geonames-postal/adapter"
+import { geonamesAdapter } from "#adapters/geonames/adapter"
+import { gnafAdapter } from "#adapters/gnaf/adapter"
+import { openaddressesAdapter } from "#adapters/openaddresses/adapter"
+import { overtureAdapter } from "#adapters/overture/adapter"
+import { stateHiSchoolsAdapter } from "#adapters/state-hi-schools/adapter"
+import { stateIaContractorsAdapter } from "#adapters/state-ia-contractors/adapter"
+import { stateNyNotariesAdapter } from "#adapters/state-ny-notaries/adapter"
+import { stateTxNotariesAdapter } from "#adapters/state-tx-notaries/adapter"
+import { tigerAdapter } from "#adapters/tiger/adapter"
+import { usgovHrsaFqhcAdapter } from "#adapters/usgov-hrsa-fqhc/adapter"
+import { usgovImlsPlsAdapter } from "#adapters/usgov-imls-pls/adapter"
+import { USGovIRSBMFAdapter } from "#adapters/usgov-irs-bmf/adapter"
+import { usgovNADAdapter } from "#adapters/usgov-nad/adapter"
+import { usgovNPPESAdapter } from "#adapters/usgov-nppes/adapter"
 import { defaultAdapterRegistry } from "#adapters/utils"
+import { wofAdminAdapter } from "#adapters/wof-admin-json/adapter"
+import { wofPostalcodeAdapter } from "#adapters/wof-postalcode-json/adapter"
 import type { CorpusAdapter } from "#types"
-
-import { banAdapter } from "./ban/adapter.ts"
-import { fccBdcAdapter } from "./fcc-bdc/adapter.ts"
-import { geonamesPostalAdapter } from "./geonames-postal/adapter.ts"
-import { geonamesAdapter } from "./geonames/adapter.ts"
-import { gnafAdapter } from "./gnaf/adapter.ts"
-import { openaddressesAdapter } from "./openaddresses/adapter.ts"
-import { overtureAdapter } from "./overture/adapter.ts"
-import { stateHiSchoolsAdapter } from "./state-hi-schools/adapter.ts"
-import { stateIaContractorsAdapter } from "./state-ia-contractors/adapter.ts"
-import { stateNyNotariesAdapter } from "./state-ny-notaries/adapter.ts"
-import { stateTxNotariesAdapter } from "./state-tx-notaries/adapter.ts"
-import { tigerAdapter } from "./tiger/adapter.ts"
-import { usgovHrsaFqhcAdapter } from "./usgov-hrsa-fqhc/adapter.ts"
-import { usgovImlsPlsAdapter } from "./usgov-imls-pls/adapter.ts"
-import { usgovIrsBmfAdapter } from "./usgov-irs-bmf/adapter.ts"
-import { usgovNADAdapter } from "./usgov-nad/adapter.ts"
-import { usgovNPPESAdapter } from "./usgov-nppes/adapter.ts"
-import { wofAdminAdapter } from "./wof-admin-json/adapter.ts"
-import { wofPostalcodeAdapter } from "./wof-postalcode-json/adapter.ts"
 
 /**
  * Built-in adapters. Order is significant: `corpus build` iterates this list to drive every adapter in turn.
@@ -67,7 +66,7 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	usgovNPPESAdapter,
 	usgovNADAdapter,
 	usgovImlsPlsAdapter,
-	usgovIrsBmfAdapter,
+	USGovIRSBMFAdapter,
 	stateIaContractorsAdapter,
 	stateTxNotariesAdapter,
 	stateNyNotariesAdapter,
@@ -80,70 +79,75 @@ for (const adapter of BUILTIN_ADAPTERS) {
 	}
 }
 
-export { BAN_ADAPTER_ID, banAdapter } from "./ban/adapter.ts"
-export { FCC_BDC_ADAPTER_ID, FCC_BDC_DEFAULT_LICENSE, fccBdcAdapter } from "./fcc-bdc/adapter.ts"
+export { BAN_ADAPTER_ID, banAdapter } from "#adapters/ban/adapter"
+export { FCC_BDC_ADAPTER_ID, FCC_BDC_DEFAULT_LICENSE, fccBdcAdapter } from "#adapters/fcc-bdc/adapter"
 
 export {
 	GEONAMES_POSTAL_ADAPTER_ID,
 	GEONAMES_POSTAL_DEFAULT_LICENSE,
 	geonamesPostalAdapter,
-} from "./geonames-postal/adapter.ts"
+} from "#adapters/geonames-postal/adapter"
 
-export { GEONAMES_ADAPTER_ID, GEONAMES_DEFAULT_LICENSE, geonamesAdapter } from "./geonames/adapter.ts"
+export { GEONAMES_ADAPTER_ID, GEONAMES_DEFAULT_LICENSE, geonamesAdapter } from "#adapters/geonames/adapter"
 
 export {
 	OPENADDRESSES_ADAPTER_ID,
 	OPENADDRESSES_DEFAULT_LICENSE,
 	openaddressesAdapter,
-} from "./openaddresses/adapter.ts"
+} from "#adapters/openaddresses/adapter"
 
 export {
 	STATE_HI_SCHOOLS_ADAPTER_ID,
 	STATE_HI_SCHOOLS_DEFAULT_LICENSE,
 	stateHiSchoolsAdapter,
-} from "./state-hi-schools/adapter.ts"
+} from "#adapters/state-hi-schools/adapter"
 
 export {
 	STATE_IA_CONTRACTORS_ADAPTER_ID,
 	STATE_IA_CONTRACTORS_DEFAULT_LICENSE,
 	stateIaContractorsAdapter,
-} from "./state-ia-contractors/adapter.ts"
+} from "#adapters/state-ia-contractors/adapter"
 
 export {
 	STATE_NY_NOTARIES_ADAPTER_ID,
 	STATE_NY_NOTARIES_DEFAULT_LICENSE,
 	stateNyNotariesAdapter,
-} from "./state-ny-notaries/adapter.ts"
+} from "#adapters/state-ny-notaries/adapter"
 
 export {
 	STATE_TX_NOTARIES_ADAPTER_ID,
 	STATE_TX_NOTARIES_DEFAULT_LICENSE,
 	stateTxNotariesAdapter,
-} from "./state-tx-notaries/adapter.ts"
+} from "#adapters/state-tx-notaries/adapter"
 
-export { TIGER_ADAPTER_ID, TIGER_DEFAULT_LICENSE, tigerAdapter } from "./tiger/adapter.ts"
+export { TIGER_ADAPTER_ID, TIGER_DEFAULT_LICENSE, tigerAdapter } from "#adapters/tiger/adapter"
 
 export {
 	USGOV_HRSA_FQHC_ADAPTER_ID,
 	USGOV_HRSA_FQHC_DEFAULT_LICENSE,
 	usgovHrsaFqhcAdapter,
-} from "./usgov-hrsa-fqhc/adapter.ts"
+} from "#adapters/usgov-hrsa-fqhc/adapter"
 
 export {
 	USGOV_IMLS_PLS_ADAPTER_ID,
 	USGOV_IMLS_PLS_DEFAULT_LICENSE,
 	usgovImlsPlsAdapter,
-} from "./usgov-imls-pls/adapter.ts"
+} from "#adapters/usgov-imls-pls/adapter"
 
-export { USGOV_IRS_BMF_ADAPTER_ID, USGOV_IRS_BMF_DEFAULT_LICENSE, usgovIrsBmfAdapter } from "./usgov-irs-bmf/adapter.ts"
-export { USGOV_NAD_ADAPTER_ID, USGOV_NAD_DEFAULT_LICENSE, usgovNADAdapter } from "./usgov-nad/adapter.ts"
-export { USGOV_NPPES_ADAPTER_ID, USGOV_NPPES_DEFAULT_LICENSE, usgovNPPESAdapter } from "./usgov-nppes/adapter.ts"
+export {
+	USGOV_IRS_BMF_ADAPTER_ID,
+	USGOV_IRS_BMF_DEFAULT_LICENSE,
+	USGovIRSBMFAdapter,
+} from "#adapters/usgov-irs-bmf/adapter"
+
+export { USGOV_NAD_ADAPTER_ID, USGOV_NAD_DEFAULT_LICENSE, usgovNADAdapter } from "#adapters/usgov-nad/adapter"
+export { USGOV_NPPES_ADAPTER_ID, USGOV_NPPES_DEFAULT_LICENSE, usgovNPPESAdapter } from "#adapters/usgov-nppes/adapter"
 
 export {
 	USGOV_SAMHSA_ADAPTER_ID,
 	USGOV_SAMHSA_DEFAULT_LICENSE,
 	usgovSamhsaTreatmentLocatorAdapter,
-} from "./usgov-samhsa-treatment-locator/adapter.ts"
+} from "#adapters/usgov-samhsa-treatment-locator/adapter"
 
-export { WOF_ADMIN_ADAPTER_ID, wofAdminAdapter } from "./wof-admin-json/adapter.ts"
-export { WOF_POSTALCODE_ADAPTER_ID, wofPostalcodeAdapter } from "./wof-postalcode-json/adapter.ts"
+export { WOF_ADMIN_ADAPTER_ID, wofAdminAdapter } from "#adapters/wof-admin-json/adapter"
+export { WOF_POSTALCODE_ADAPTER_ID, wofPostalcodeAdapter } from "#adapters/wof-postalcode-json/adapter"

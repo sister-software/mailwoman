@@ -49,12 +49,12 @@ import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent, latLngToCell } from "h3-js"
 
-import { pointInEncodedRings } from "./rings.ts"
-import type { FloodDatabase } from "./schema.ts"
-import { FloodCellContainment } from "./schema.ts"
-import { EA_FLOOD_LAYER_NAME, EA_PRODUCT_LIMITS, FLOOD_ZONE_1, type FloodZoneDefinition } from "./vocabulary.ts"
+import { pointInEncodedRings } from "#rings"
+import type { FloodDatabase } from "#schema"
+import { FloodCellContainment } from "#schema"
+import { EA_FLOOD_LAYER_NAME, EA_PRODUCT_LIMITS, FLOOD_ZONE_1, type FloodZoneDefinition } from "#vocabulary"
 
-export { FLOOD_ZONE_1, type FloodZoneDefinition } from "./vocabulary.ts"
+export { FLOOD_ZONE_1, type FloodZoneDefinition } from "#vocabulary"
 
 /**
  * What the layer can say about a coordinate.

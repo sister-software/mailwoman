@@ -7,5 +7,5 @@
  *   directly (custom transport, alternate deps) instead of running `mailwoman-mcp` as a subprocess.
  */
 
-export * from "./server.ts"
-export * from "./tools.ts"
+export * from "#server"
+export * from "#tools"

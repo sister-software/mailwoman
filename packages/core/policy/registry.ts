@@ -10,10 +10,9 @@
  *   per-locale overrides at startup. Look-up and `apply` are pure.
  */
 
+import { buildDefaultPolicies, defaultPolicyFor } from "#policy/defaults"
+import type { ClassifierPolicy, PolicyMode, PolicyRegistry } from "#policy/policy"
 import type { ClassificationProposal, ComponentTag } from "#types"
-
-import { buildDefaultPolicies, defaultPolicyFor } from "./defaults.ts"
-import type { ClassifierPolicy, PolicyMode, PolicyRegistry } from "./policy.ts"
 
 const GLOBAL_LOCALE_KEY = "*"
 

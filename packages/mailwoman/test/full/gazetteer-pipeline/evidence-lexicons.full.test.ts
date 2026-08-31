@@ -22,8 +22,7 @@
  */
 
 import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
-import { dataRootPath } from "@mailwoman/core/utils"
-import { tmpdir } from "@mailwoman/platform/os"
+import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
 const ADMIN_DB = String(dataRootPath("wof", "admin-global-priority.db"))
@@ -31,7 +30,7 @@ const ADMIN_DB = String(dataRootPath("wof", "admin-global-priority.db"))
 describe.skipIf(!(await pathExists(ADMIN_DB)))("locality-surface build — integration (admin DB)", () => {
 	it("applies all three laws end to end", async () => {
 		const { buildLocalitySurfaceLexicon } = await import("mailwoman/gazetteer-pipeline/evidence-lexicons")
-		const tmp = `${tmpdir()}/locality-surface-lexicon-test.json`
+		const tmp = tempRootPath(`locality-surface-lexicon-test.json`)
 
 		// v3-parity placetypes for run-to-run comparability with the probe chain's numbers.
 		const built = await buildLocalitySurfaceLexicon({
@@ -54,7 +53,7 @@ describe.skipIf(!(await pathExists(ADMIN_DB)))("locality-surface build — integ
 
 	it("v5: the census flip families are out, the legitimate entries stay", async () => {
 		const { buildLocalitySurfaceLexicon } = await import("mailwoman/gazetteer-pipeline/evidence-lexicons")
-		const tmp = `${tmpdir()}/locality-surface-lexicon-v5-us-test.json`
+		const tmp = tempRootPath(`locality-surface-lexicon-v5-us-test.json`)
 
 		const built = await buildLocalitySurfaceLexicon({
 			countries: ["US"],

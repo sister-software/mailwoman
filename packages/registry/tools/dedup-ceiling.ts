@@ -35,8 +35,7 @@ import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
 import { jaccard } from "@mailwoman/match"
 
 import { addressFrequencyKey, streamRows } from "#index"
-
-import { norm } from "./shared.ts"
+import { norm } from "#tools/shared"
 
 /**
  * Similarity at or above which a pair is a near-miss worth inspecting rather than unrelated.

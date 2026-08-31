@@ -39,9 +39,9 @@
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { readDirectory, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 
-import { ParquetReader } from "../parquet-wrapper/index.ts"
+import { ParquetReader } from "#parquet-wrapper/index"
 
 const SEP = ""
 const MIN_BIGRAM_COUNT = 2

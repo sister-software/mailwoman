@@ -28,15 +28,15 @@
 import { addCoverageCells, encodeRings, ringAreaReadings, ringsBoundingBox } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { CoastalDatabase } from "../schema.ts"
+import type { CoastalDatabase } from "#schema"
+import { classifyFeatureCells, featureCellRows } from "#sdk/cells"
+import type { CoastalFeatureSource, CoastalSourceFeature } from "#sdk/ingest"
 import {
 	foldDefenceType,
 	NCERM_DEFENCE_TYPES_FOLDED,
 	NCERM_POLICY_INTERPRETATION_VALUES,
 	NCERM_POLICY_VALUES,
-} from "../vocabulary.ts"
-import { classifyFeatureCells, featureCellRows } from "./cells.ts"
-import type { CoastalFeatureSource, CoastalSourceFeature } from "./ingest.ts"
+} from "#vocabulary"
 
 /**
  * Rows per bulk-insert transaction. Chosen for the geometry table, whose rows carry a blob: a larger transaction grows

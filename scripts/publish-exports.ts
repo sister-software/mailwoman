@@ -19,11 +19,11 @@ export function isTypeScriptSource(path: string): boolean {
 /**
  * Rewrite the packed manifest's `exports` for consumers, in place inside the tarball.
  *
- * The dev map points at `.ts` source wherever the repo runs source directly (`node` everywhere, plus `browser` and
- * `worker` in `@mailwoman/platform`, whose runtime-specific entry points are source too); published packages ship only
- * `out/`. This rewrites EVERY such condition to its emitted JavaScript counterpart, reorders each entry `types`-first,
- * and strips any legacy `publishConfig.exports`. Keeping the conditions themselves is significant for
- * `@mailwoman/platform`, whose Node target and unsupported-runtime target are different files.
+ * The dev map points at `.ts` source wherever the repo runs source directly (`node` everywhere, and any `browser` or
+ * `worker` condition that names a source file); published packages ship only `out/`. This rewrites EVERY such condition
+ * to its emitted JavaScript counterpart, reorders each entry `types`-first, and strips any legacy
+ * `publishConfig.exports`. The conditions themselves are kept: a Node target and a browser target may be different
+ * files.
  *
  * The rewrite is keyed on the TARGET being TypeScript source, not on the condition name — a condition-name rule only
  * covers the conditions someone thought of. {@link assertNoSourceTargets} refuses whatever this misses.

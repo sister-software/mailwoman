@@ -4,12 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
+import { createServer, type Server } from "node:http"
+import type { AddressInfo } from "node:net"
+
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { fetchStateHISchools } from "@mailwoman/corpus/tools"
-import { createServer, type Server } from "@mailwoman/platform/http"
-import type { AddressInfo } from "@mailwoman/platform/net"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 import writeXlsxFile, { type SheetData } from "write-excel-file/node"
 

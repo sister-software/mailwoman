@@ -32,7 +32,7 @@ import {
 	type TermFrequencyTable,
 } from "@mailwoman/match"
 
-import type { SourceRecord } from "./types.ts"
+import type { SourceRecord } from "#types"
 
 /**
  * Similarity at which two official names count as the same organisation. Set high because the feature is a near-exact

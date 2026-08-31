@@ -38,8 +38,8 @@
  *   docs/superpowers/plans/2026-07-14-country-lexicon-channel.md.
  */
 
-import { gazetteerCharPaint, parseGazetteerLexicon, type GazetteerLexicon } from "./gazetteer-inference.ts"
-import type { TokenizedPiece } from "./tokenizer.ts"
+import { gazetteerCharPaint, parseGazetteerLexicon, type GazetteerLexicon } from "#gazetteer-inference"
+import type { TokenizedPiece } from "#tokenizer"
 
 /**
  * The country feature width. The emitted per-piece row is `[country_surface, country_ambiguous]`. Used for the ONNX

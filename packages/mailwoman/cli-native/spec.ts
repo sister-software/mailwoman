@@ -7,8 +7,8 @@
  * Parsing never imports the help renderer; `@isaacs/cliui` is reached only from {@link renderCommandHelp}.
  */
 
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { parseArgs } from "@mailwoman/platform/util"
 
 type OptionValue = boolean | number | string | boolean[] | number[] | string[]
 
@@ -162,10 +162,10 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 		}
 	}
 
-	let parsed: ReturnType<typeof parseArgs>
+	let parsed: ReturnType<typeof parseArguments>
 
 	try {
-		parsed = parseArgs({
+		parsed = parseArguments({
 			args: protectedNumbers.args,
 			allowNegative: true,
 			allowPositionals: true,

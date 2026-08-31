@@ -9,8 +9,8 @@
  *   streams to stderr; the final summary is on stdout. See RELEASING.md Step 5.
  */
 
-import { join } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
+import { join } from "path-ts"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 import { DEFAULT_CANDIDATE_OUT, DEFAULT_FOLD_COUNTRIES, DEFAULT_IMPORTANCE_DB } from "#gazetteer-pipeline/defaults"

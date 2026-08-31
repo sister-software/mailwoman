@@ -86,6 +86,7 @@ import { createWOFResolver, finestResolvedCoordinate, isImplausibleResolution } 
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 import { v0RecordToTree } from "mailwoman/eval-harness/v0-tree-adapter"
+import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, test } from "vitest"
 
@@ -147,7 +148,7 @@ async function weightsPresent(): Promise<boolean> {
 		// does not fail, it SKIPS, so the suite disappears from the run reporting success. The repo has already
 		// paid for this once: the workspace regroup left this literal behind and both this suite and
 		// `api-engine.test.ts` went quiet until someone counted the skips.
-		return await pathExists(resolveWeights({ locale: "en-us" }).modelPath)
+		return await pathExists((await resolveWeights({ locale: "en-us" })).modelPath)
 	} catch {
 		return false
 	}
@@ -213,7 +214,7 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 		test("neural resolution is coordinate-safe and the garbage tail is bounded by the plausibility guard", async () => {
 			const rulesGolden = await loadRulesGolden()
 			const neural = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-			using backend = new WOFSQLitePlaceLookup({ databasePath: [ADMIN_DB, POSTCODE_DB] })
+			using backend = new WOFSQLitePlaceLookup({ databasePath: [resolvePath(ADMIN_DB), resolvePath(POSTCODE_DB)] })
 			const resolver = createWOFResolver(backend)
 
 			const fixtures = (

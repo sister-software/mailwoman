@@ -7,12 +7,12 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { LocaleHint, PipelineResult } from "@mailwoman/core/pipeline"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
-import { join } from "@mailwoman/platform/path"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { loadDefaultReverseGeocoder } from "mailwoman/default-reverse-geocoder"
 import { createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "mailwoman/poi-intent"
 import { createRuntimePipeline } from "mailwoman/runtime-pipeline"
+import { join } from "path-ts"
 import { describe, expect, it, vi } from "vitest"
 
 const LOCALE: LocaleHint = { locale: "en-US", confidence: 1, alternatives: [], source: "caller" }

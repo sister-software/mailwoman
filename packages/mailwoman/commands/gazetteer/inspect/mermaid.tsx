@@ -15,7 +15,7 @@ import { Spinner } from "@inkjs/ui"
 import type { InterpolateColorCallback, PlacetypeRole } from "@mailwoman/core"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { PlacetypeRoles } from "@mailwoman/core/placetypes"
-import { availableParallelism } from "@mailwoman/platform/os"
+import { availableParallelism } from "@mailwoman/core/utils/system"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 

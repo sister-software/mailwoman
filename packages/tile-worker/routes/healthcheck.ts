@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { CloudflareWorkerPMTiles } from "../protomaps/index.ts"
-import { WorkerRoute } from "../routing.ts"
+import { CloudflareWorkerPMTiles } from "#protomaps/index"
+import { WorkerRoute } from "#routing"
 
 /**
  * Root route — a plain identifying response, so hitting the worker's origin is not a 404.

@@ -25,6 +25,8 @@
  *   and the seal.
  */
 
+import { formatFileSize } from "@mailwoman/core/fs/readers"
+import { runFileSync } from "@mailwoman/core/process"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -124,9 +126,6 @@ async function runVerification(
 
 const GazetteerBuildSoil: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { execFileSync } = await import("@mailwoman/platform/child_process")
-
-		const { artifactSizeMB } = await import("#gazetteer-pipeline/admin/index")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
 		const {
@@ -199,7 +198,7 @@ const GazetteerBuildSoil: ParsedCommandComponent<Options> = ({ options }) => {
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
 		const out = options.out ?? String(dataRootPath("soil", "soil.db"))
-		const buildSHA = execFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
+		const buildSHA = runFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
 
 		const buildCmd =
 			`mailwoman gazetteer build soil ${options.area ? `--area ${options.area}` : `--region ${prefix}`} ` +
@@ -220,7 +219,7 @@ const GazetteerBuildSoil: ParsedCommandComponent<Options> = ({ options }) => {
 		})
 
 		const lines = [
-			`soil.db: ${out} (${await artifactSizeMB(out)} MB)`,
+			`soil.db: ${out} (${await formatFileSize(out)})`,
 			`${result.surveyAreas} survey area(s) · ${result.delineations.toLocaleString()} delineations · ` +
 				`${result.mapUnits.toLocaleString()} map units · ${result.components.toLocaleString()} components`,
 			`index: ${result.wholeCellRows.toLocaleString()} whole (compacted) · ${result.partialCellRows.toLocaleString()} partial ` +

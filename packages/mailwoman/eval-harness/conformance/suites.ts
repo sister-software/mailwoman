@@ -15,41 +15,41 @@
  *   the neural runtime and the resolver behind it. The register itself needs neither.
  */
 
-import { dirname } from "@mailwoman/platform/path"
+import { dirname } from "path-ts"
 
 import {
 	auditCaseFoldingSuite,
 	CASE_FOLDING_LAW,
 	CASE_FOLDING_SUITE_PATH,
 	describeCaseTransformation,
-} from "./case-folding.ts"
-import type { ConformanceFixture } from "./fixture.ts"
+} from "#eval-harness/conformance/case-folding"
+import type { ConformanceFixture } from "#eval-harness/conformance/fixture"
 import {
 	auditCanonicalFormSuite,
 	CANONICAL_FORM_LAW,
 	describeCanonicalFormCoverage,
 	describeCanonicalTransformation,
 	NFC_NFD_SUITE_PATH,
-} from "./nfc-nfd.ts"
+} from "#eval-harness/conformance/nfc-nfd"
 import {
 	auditPunctuationSuite,
 	describePunctuationTransformation,
 	PUNCTUATION_LAW,
 	PUNCTUATION_SUITE_PATH,
-} from "./punctuation.ts"
+} from "#eval-harness/conformance/punctuation"
 import {
 	auditRefinementSuite,
 	describeRefinementCoverage,
 	describeRefinementStep,
 	REFINEMENT_MONOTONICITY_LAW,
 	REFINEMENT_MONOTONICITY_SUITE_PATH,
-} from "./refinement-monotonicity.ts"
+} from "#eval-harness/conformance/refinement-monotonicity"
 import {
 	auditWhitespaceSuite,
 	describeWhitespaceTransformation,
 	WHITESPACE_LAW,
 	WHITESPACE_SUITE_PATH,
-} from "./whitespace.ts"
+} from "#eval-harness/conformance/whitespace"
 
 /**
  * One committed law suite: where its rows live, what refuses a row that does not state its law, and the law-specific

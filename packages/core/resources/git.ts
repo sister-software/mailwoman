@@ -4,14 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
-import { execFile } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { tryStat } from "#fs/readers"
 import { makeDirectories } from "#fs/writers"
-
-const execFileAsync = promisify(execFile)
+import { runFile } from "#process"
 
 /**
  * Metadata for a repository source.
@@ -56,12 +53,12 @@ export async function synchronizeRepo(
 	const { ownerDirectory, repoDirectory, exists } = await prepareRepositoryDirectories(source, localRepoDirectory)
 
 	if (exists) {
-		await execFileAsync("git", ["pull"], { cwd: repoDirectory.toString() })
+		await runFile("git", ["pull"], { cwd: repoDirectory.toString() })
 
 		return "pulled"
 	}
 
-	await execFileAsync("git", ["clone", "--depth=1", source.url], { cwd: ownerDirectory.toString() })
+	await runFile("git", ["clone", "--depth=1", source.url], { cwd: ownerDirectory.toString() })
 
 	return "cloned"
 }

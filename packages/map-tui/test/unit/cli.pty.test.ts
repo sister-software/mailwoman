@@ -16,8 +16,8 @@
  */
 
 import { isExecutable } from "@mailwoman/core/fs/readers"
-import { spawn } from "@mailwoman/platform/child_process"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { spawnProcess } from "@mailwoman/core/process"
 import { describe, expect, it } from "vitest"
 
 const ESC = "\u001B"
@@ -36,8 +36,8 @@ const BRAILLE_PATTERN = /[⠀-⣿]/u
  */
 const STATUS_PATTERN = /-?\d+\.\d{4},-?\d+\.\d{4} z\d+/g
 
-const CLI = fileURLToPath(new URL("../../cli.ts", import.meta.url))
-const FIXTURE = fileURLToPath(new URL("../fixtures/portland.pmtiles", import.meta.url))
+const CLI = resolvePackagePath("@mailwoman/map-tui", "cli.ts")
+const FIXTURE = resolvePackagePath("@mailwoman/map-tui", "test", "fixtures", "portland.pmtiles")
 
 const PTY_COLUMNS = 100
 const PTY_ROWS = 30
@@ -78,7 +78,7 @@ async function driveMap(keys: string[]): Promise<PTYRun> {
 		`node '${CLI}' --tiles '${FIXTURE}' --lat 45.5034 --lon=-122.6023 --zoom 12`,
 	].join("; ")
 
-	const child = spawn("script", ["-q", "-e", "-c", command, "/dev/null"], { stdio: ["pipe", "pipe", "pipe"] })
+	const child = spawnProcess("script", ["-q", "-e", "-c", command, "/dev/null"], { stdio: ["pipe", "pipe", "pipe"] })
 
 	let output = ""
 

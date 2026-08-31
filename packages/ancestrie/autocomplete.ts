@@ -28,7 +28,7 @@ import type {
 	AutocompleteOptions,
 	AutocompleteResult,
 	JSONValue,
-} from "./types.ts"
+} from "#types"
 
 /**
  * Default cap on returned suggestions.
@@ -67,9 +67,8 @@ interface BFSItem {
 
 /**
  * Autocomplete from the current token prefix. Returns suggestions ranked rank-descending, each with its full token path
- * and its ancestor chain. Takes any {@link AncestrieReaderLike} — a sealed {@link import("./reader.ts").Ancestrie} or a
- * consumer's adapter over its own storage; the order contracts the algorithm relies on are documented on the
- * interface.
+ * and its ancestor chain. Takes any {@link AncestrieReaderLike} — a sealed {@link Ancestrie} or a consumer's adapter over
+ * its own storage; the order contracts the algorithm relies on are documented on the interface.
  */
 export function autocomplete<TPayload = Uint8Array | JSONValue>(
 	trie: AncestrieReaderLike<TPayload>,

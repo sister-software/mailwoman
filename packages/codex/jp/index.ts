@@ -8,6 +8,6 @@
  *   in for the street names Japan does not use.
  */
 
-export * from "./address-unit.ts"
-export * from "./postal-code.ts"
-export * from "./prefecture.ts"
+export * from "#jp/address-unit"
+export * from "#jp/postal-code"
+export * from "#jp/prefecture"

@@ -9,8 +9,8 @@
 
 import type { ReactNode } from "react"
 
-import { cx } from "../common/cx.ts"
-import type { ResolvedPlaceView } from "./types.ts"
+import { cx } from "#common/cx"
+import type { ResolvedPlaceView } from "#pipeline/types"
 
 export interface CandidatePickerProps {
 	candidates: ResolvedPlaceView[]

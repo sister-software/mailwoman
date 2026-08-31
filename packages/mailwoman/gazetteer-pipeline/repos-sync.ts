@@ -27,9 +27,9 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { execFileSync } from "@mailwoman/platform/child_process"
+import { runFileSync } from "@mailwoman/core/process"
 
-import { type ForkProbe, type RepoOrigin, resolveWOFRepoOrigin } from "./wof-repo-origin.ts"
+import { type ForkProbe, type RepoOrigin, resolveWOFRepoOrigin } from "#gazetteer-pipeline/wof-repo-origin"
 
 /**
  * What the sync would do to one repo. Every value except {@link SyncAction.Clone} and {@link SyncAction.FastForward}
@@ -174,7 +174,7 @@ export function planRepoSync(origin: RepoOrigin, directory: string, state: Clone
 }
 
 function git(cwd: string, args: string[]): string {
-	return execFileSync("git", args, { cwd, encoding: "utf8", stdio: "pipe" }).trim()
+	return runFileSync("git", args, { cwd, encoding: "utf8", stdio: "pipe" }).trim()
 }
 
 /**

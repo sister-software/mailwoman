@@ -14,8 +14,8 @@
 import { readLink, readLocalJSONFile, readLocalTextFile, tryStatLink } from "@mailwoman/core/fs/readers"
 import { copyFileTo, removePath, writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { spawnSync } from "@mailwoman/platform/child_process"
-import { dirname, resolve } from "@mailwoman/platform/path"
+import { spawnProcessSync } from "@mailwoman/core/process"
+import { dirname, resolvePath } from "path-ts"
 
 import { assertNoSourceTargets, transformExportsForPublish, transformImportsForPublish } from "./publish-exports.ts"
 
@@ -28,16 +28,16 @@ import { assertNoSourceTargets, transformExportsForPublish, transformImportsForP
  * `smoke-clean-install.ts` inherits it through `packWorkspaceForPublish` below.
  */
 export async function dereferenceWorkspaceSymlinks(workspaceDir: string): Promise<void> {
-	const pkg = await readLocalJSONFile<{ files?: unknown[] }>(resolve(workspaceDir, "package.json"))
+	const pkg = await readLocalJSONFile<{ files?: unknown[] }>(resolvePath(workspaceDir, "package.json"))
 
 	for (const entry of pkg.files ?? []) {
 		if (typeof entry !== "string" || /[*?[{]/.test(entry)) continue // skip globs
-		const target = resolve(workspaceDir, entry)
+		const target = resolvePath(workspaceDir, entry)
 		const st = await tryStatLink(target)
 
 		if (!st?.isSymbolicLink()) continue
 		const linkDest = await readLink(target)
-		const resolved = resolve(dirname(target), linkDest)
+		const resolved = resolvePath(dirname(target), linkDest)
 		await removePath(target)
 		await copyFileTo(resolved, target)
 
@@ -51,7 +51,7 @@ export async function dereferenceWorkspaceSymlinks(workspaceDir: string): Promis
  * {@link dereferenceWorkspaceSymlinks}).
  */
 export async function packWorkspaceForPublish(workspaceDir: string, outFile: string): Promise<void> {
-	const manifestPath = resolve(workspaceDir, "package.json")
+	const manifestPath = resolvePath(workspaceDir, "package.json")
 	const originalManifest = await readLocalTextFile(manifestPath)
 
 	await dereferenceWorkspaceSymlinks(workspaceDir)
@@ -79,7 +79,10 @@ export async function packWorkspaceForPublish(workspaceDir: string, outFile: str
 			await writeLocalJSONFile(manifest, manifestPath)
 		}
 
-		const result = spawnSync("yarn", ["pack", "-o", outFile], { cwd: workspaceDir, stdio: ["ignore", "pipe", "pipe"] })
+		const result = spawnProcessSync("yarn", ["pack", "-o", outFile], {
+			cwd: workspaceDir,
+			stdio: ["ignore", "pipe", "pipe"],
+		})
 
 		if (result.status !== 0) {
 			throw new Error(`pack-workspace: yarn pack failed for ${workspaceDir} (exit ${result.status}): ${result.stderr}`)

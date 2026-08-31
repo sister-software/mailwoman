@@ -42,7 +42,7 @@ interface Options {
 
 const EvalESPostcodeCentroids: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildESPostcodeCentroids } = await import("../../eval-harness/es-postcode-centroids.ts")
+		const { buildESPostcodeCentroids } = await import("#eval-harness/es-postcode-centroids")
 
 		return buildESPostcodeCentroids(options)
 	})

@@ -27,10 +27,10 @@
 // (#690, default-ON in `parse`). Re-implementing either is the one thing that must not drift, so this
 // repo-local diagnostic imports the modules directly.
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { normalizeInputCase } from "@mailwoman/neural/case-normalize"
 import { PostcodeBinaryResolver } from "@mailwoman/neural/postcode-binary-resolver"
 import { collectMatches } from "@mailwoman/neural/postcode-repair"
-import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
 /**
@@ -39,7 +39,7 @@ import { JSONSpliterator } from "spliterator"
 const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
 const GB_INWARD_LENGTH = 3
 
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		bin: { type: "string" },
 		fixtures: { type: "string", default: "packages/mailwoman/eval-harness/fixtures/gb-golden.jsonl" },

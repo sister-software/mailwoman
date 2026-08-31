@@ -25,6 +25,17 @@ export { APIErrorSchema } from "@mailwoman/api-kit"
  * `POST /v1/parse` request body.
  */
 /**
+ * One node of the decoded address tree. The decoder's `AddressNode` is a recursive union the OpenAPI generator cannot
+ * derive a schema for on its own, so it is registered as an open object; the shape is documented by the type.
+ */
+export const AddressNodeSchema = z.custom<AddressNode>().openapi("AddressNode", {
+	type: "object",
+	additionalProperties: true,
+	description:
+		"A decoded address-tree node: a tag, its span, and its children. See `AddressNode` in `@mailwoman/core/decoder`.",
+})
+
+/**
  * The input register (Decision A / GTM B10): `fragmented` = the map-search register (evidence-bundle channels feed);
  * `formatted` = the validation/record register (channels off). Unset → the engine derives it from the input's shape.
  * `/v1/batch` defaults to `formatted` (batch rows are the record register by nature).
@@ -71,7 +82,7 @@ export const ParseOutcomeSchema = z
 	.object({
 		input: z.string(),
 		components: z.array(ParseComponentSchema),
-		tree: z.looseObject({ raw: z.string(), roots: z.array(z.custom<AddressNode>()) }),
+		tree: z.looseObject({ raw: z.string(), roots: z.array(AddressNodeSchema) }),
 		debug: z.string().optional(),
 	})
 	.openapi("ParseOutcome")
@@ -377,7 +388,7 @@ export const BatchResponseSchema = z
  */
 export const ResolveRequestSchema = z
 	.object({
-		tree: z.looseObject({ raw: z.string(), roots: z.array(z.custom<AddressNode>()) }),
+		tree: z.looseObject({ raw: z.string(), roots: z.array(AddressNodeSchema) }),
 		opts: z.looseObject({}).optional(),
 	})
 	.openapi("ResolveRequest")
@@ -387,7 +398,7 @@ export const ResolveRequestSchema = z
  */
 export const ResolveResponseSchema = z
 	.object({
-		tree: z.looseObject({ raw: z.string(), roots: z.array(z.custom<AddressNode>()) }),
+		tree: z.looseObject({ raw: z.string(), roots: z.array(AddressNodeSchema) }),
 	})
 	.openapi("ResolveResponse")
 

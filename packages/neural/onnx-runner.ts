@@ -15,14 +15,15 @@
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import ort from "onnxruntime-node"
+import type { PathBuilderLike } from "path-ts"
 
-import { ANCHOR_FEATURE_DIM } from "./anchor-inference.ts"
-import { COUNTRY_FEATURE_DIM } from "./country-inference.ts"
-import { GAZETTEER_FEATURE_DIM, LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "./gazetteer-inference.ts"
+import { ANCHOR_FEATURE_DIM } from "#anchor-inference"
+import { COUNTRY_FEATURE_DIM } from "#country-inference"
+import { GAZETTEER_FEATURE_DIM, LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "#gazetteer-inference"
 
 // Back-compat: the dims moved to gazetteer-inference.ts (browser-safe) so neural-web's runner can
 // import them without touching this node-only module.
-export { LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "./gazetteer-inference.ts"
+export { LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "#gazetteer-inference"
 
 /**
  * Evidence-bundle zero-fallback widths (Option-A; must match the trained model's channel dims).
@@ -130,10 +131,10 @@ export class ONNXRunner {
 
 	private readonly executionProviders: string[]
 	private readonly intraOpNumThreads: number | undefined
-	private readonly modelPath: string
+	private readonly modelPath: PathBuilderLike
 	private readonly modelBytes: Uint8Array | null
 
-	private constructor(modelPath: string, modelBytes: Uint8Array | null, opts: ONNXRunnerOpts) {
+	private constructor(modelPath: PathBuilderLike, modelBytes: Uint8Array | null, opts: ONNXRunnerOpts) {
 		this.modelPath = modelPath
 		this.modelBytes = modelBytes
 		this.fixedSeqLen = opts.fixedSeqLen ?? DEFAULT_FIXED_SEQ_LEN
@@ -146,7 +147,7 @@ export class ONNXRunner {
 	/**
 	 * Load by path. Reads the model lazily unless `warmup` is true.
 	 */
-	static async create(modelPath: string, opts: ONNXRunnerOpts = {}): Promise<ONNXRunner> {
+	static async create(modelPath: PathBuilderLike, opts: ONNXRunnerOpts = {}): Promise<ONNXRunner> {
 		const runner = new ONNXRunner(modelPath, null, opts)
 
 		if (opts.warmup) {

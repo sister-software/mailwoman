@@ -85,7 +85,7 @@ const EvalGauntlet: ParsedCommandComponent<Options> = ({ options }) => {
 
 	const state = useCommandTask(
 		async () => {
-			const { runGauntlet } = await import("../../eval-harness/gauntlet/run.ts")
+			const { runGauntlet } = await import("#eval-harness/gauntlet/run")
 
 			return (
 				await runGauntlet({

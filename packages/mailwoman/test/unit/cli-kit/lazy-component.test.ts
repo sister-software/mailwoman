@@ -17,13 +17,10 @@
  *   empty stderr is proof it went through Ink's `<Text color="red">` frame instead.
  */
 
+import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { execFile } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
 import { describe, expect, test } from "vitest"
-
-const exec = promisify(execFile)
 
 /**
  * Render a `lazyComponent` whose loader rejects with `thrown`, through a real interactive-mode Ink instance.
@@ -44,7 +41,7 @@ function harness(thrown: string): string {
 
 async function runHarness(thrown: string): Promise<{ code: number | undefined; stdout: string; stderr: string }> {
 	try {
-		const result = await exec(process.execPath, ["--input-type=module", "-e", harness(thrown)], {
+		const result = await runFile(process.execPath, ["--input-type=module", "-e", harness(thrown)], {
 			cwd: repoRootPath(),
 			env: childEnv(),
 		})

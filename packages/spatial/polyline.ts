@@ -12,7 +12,7 @@
  *   The geometry never differed between them; only the I/O around it did.
  */
 
-import { haversineKm } from "./distance.ts"
+import { haversineKm } from "#distance"
 
 /**
  * Clamp a fraction into `[0, 1]`.

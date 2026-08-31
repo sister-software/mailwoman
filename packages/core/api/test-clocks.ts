@@ -10,7 +10,7 @@
  *   testing how concurrent waiters interleave needs the deadline-ordered one.
  */
 
-import type { ClockLike } from "./clock.ts"
+import type { ClockLike } from "#api/clock"
 
 /**
  * How much REAL time {@linkcode VirtualClock.runUntilSettled} tolerates with nothing pending before declaring the work

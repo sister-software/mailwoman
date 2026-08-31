@@ -21,7 +21,7 @@
 
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import type { ComponentDict } from "./format.ts"
+import type { ComponentDict } from "#format"
 
 /**
  * The address-identifying components, in canonical key order. Venue / attention are intentionally excluded — those

@@ -12,13 +12,13 @@ import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mai
 import type { GeocodeRun } from "mailwoman/geocode-session"
 import { z } from "zod"
 
-import type { EngineRegistryLike } from "./engine-registry.ts"
-import type { GateReport } from "./gate-report.ts"
-import { summarizeGateReport } from "./gate-report.ts"
-import { summarizeGauntletReport, type GauntletReport } from "./gauntlet-report.ts"
-import type { RowGrade } from "./grade.ts"
-import { HOLDOUT_DEFAULT_N, HOLDOUT_SOURCES, type ResolvedInputSet } from "./input-sets.ts"
-import type { JobRegistry } from "./jobs.ts"
+import type { EngineRegistryLike } from "#engine-registry"
+import type { GateReport } from "#gate-report"
+import { summarizeGateReport } from "#gate-report"
+import { summarizeGauntletReport, type GauntletReport } from "#gauntlet-report"
+import type { RowGrade } from "#grade"
+import { HOLDOUT_DEFAULT_N, HOLDOUT_SOURCES, type ResolvedInputSet } from "#input-sets"
+import type { JobRegistry } from "#jobs"
 
 /**
  * On every result of every tool. What produced this number, under what source, with what actually fed.

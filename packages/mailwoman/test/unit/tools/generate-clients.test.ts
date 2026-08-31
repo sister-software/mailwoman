@@ -71,8 +71,8 @@ test("rustLibRs declares a generate_api! module + a *_local() constructor for ev
 })
 
 test("emitterCLIPath resolves every surface inside its real workspace, from repository root", async () => {
-	const { sep } = await import("@mailwoman/platform/path")
-	const { dirname, join } = await import("@mailwoman/platform/path")
+	const { sep } = await import("path-ts")
+	const { dirname, join } = await import("path-ts")
 	const { emitterCLIPath } = await import("mailwoman/tools/generate-clients")
 
 	for (const surface of CLIENT_SURFACES) {

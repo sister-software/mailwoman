@@ -11,5 +11,5 @@
  *       blocking stage).
  */
 
-export * from "./format.ts"
-export * from "./key.ts"
+export * from "#format"
+export * from "#key"

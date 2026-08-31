@@ -11,12 +11,12 @@
  *   Internal helper module — no standalone command.
  */
 
-import type { Stats } from "@mailwoman/core/fs/readers"
-import { statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
+
+import { statPath, type Stats } from "@mailwoman/core/fs/readers"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { mailwomanTempRoot } from "@mailwoman/core/utils"
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from "@mailwoman/platform/http"
-import { extname, join, normalize } from "@mailwoman/platform/path"
+import { extname, join, normalize } from "path-ts"
 
 /**
  * Options for {@linkcode serveWithRangeSupport}.
@@ -60,13 +60,13 @@ export async function serveWithRangeSupport(
 	const dir = options.dir || String(mailwomanTempRoot())
 	const port = options.port ?? 8899
 
-	const server = createServer((req: IncomingMessage, res: ServerResponse) => {
+	const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
 		const rel = normalize(decodeURIComponent((req.url || "/").split("?")[0]!)).replace(/^(\.\.[/\\])+/, "")
 		const path = join(dir, rel)
 		let st: Stats
 
 		try {
-			st = statPathSync(path)
+			st = await statPath(path)
 		} catch {
 			res.writeHead(404)
 

@@ -15,7 +15,6 @@
 import { readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { AuthoritativeResponseStatus, type AuthoritativeQuery } from "@mailwoman/core/resolver"
-import { join } from "@mailwoman/platform/path"
 import {
 	syntheticFixtureAdapter,
 	syntheticFixtureDeps,
@@ -49,6 +48,7 @@ import {
 	type PremiseLinkageRates,
 	type PremiseLinkageReport,
 } from "mailwoman/eval-harness/premise-linkage/schema"
+import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const SALT = "0123456789abcdef0123456789abcdef"

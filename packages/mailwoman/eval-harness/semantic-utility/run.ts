@@ -30,14 +30,7 @@ import { repoRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { JSONSpliterator } from "spliterator"
 
-import { type LayerManifest, probeManifest } from "../../data-inventory.ts"
-import { buildSHA } from "../../gazetteer-pipeline/stamp-manifest.ts"
-import {
-	createSemanticObservationRoute,
-	type SemanticObservation,
-	type SemanticObservationRoute,
-	type SemanticRouteIdentity,
-} from "../../observations/index.ts"
+import { type LayerManifest, probeManifest } from "#data-inventory"
 import {
 	createPOIBoardPipeline,
 	POI_BOARD_FIXTURES,
@@ -45,7 +38,7 @@ import {
 	type POIBoardOptions,
 	type POIBoardOutcome,
 	type POIBoardResolverBackend,
-} from "../poi-board.ts"
+} from "#eval-harness/poi-board"
 import {
 	computeProbeCounts,
 	decideProbe,
@@ -58,7 +51,14 @@ import {
 	probeDefinitionHash,
 	resolveControlRows,
 	type SemanticProbeDefinition,
-} from "./probe.ts"
+} from "#eval-harness/semantic-utility/probe"
+import { buildSHA } from "#gazetteer-pipeline/stamp-manifest"
+import {
+	createSemanticObservationRoute,
+	type SemanticObservation,
+	type SemanticObservationRoute,
+	type SemanticRouteIdentity,
+} from "#observations/index"
 
 /**
  * Which arm produced a receipt. `baseline` is the pre-injection run this pre-registration commits; #1929 names its own.
@@ -155,7 +155,7 @@ async function readWeightsIdentity(options: SemanticProbeOptions): Promise<{
 	weightsVersion: string
 }> {
 	const locale = options.locale ?? "en-US"
-	const resolved = resolveWeights({ locale, cacheRoot: options.weightsCacheRoot })
+	const resolved = await resolveWeights({ locale, cacheRoot: options.weightsCacheRoot })
 	const cardPath = resolved.modelCardPath ?? resolved.baseModelCardPath
 
 	if (!cardPath) {
@@ -192,7 +192,7 @@ async function readArtifactIdentity(
  * a control that has been edited on the board stops the run instead of quietly grading a different row.
  */
 export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}): Promise<ProbeReceipt> {
-	const definition = loadProbeDefinition(options.definitionPath, options.freezePath)
+	const definition = await loadProbeDefinition(options.definitionPath, options.freezePath)
 	const boardPath = options.boardFixturesPath ?? POI_BOARD_FIXTURES
 	const committed = await Array.fromAsync(JSONSpliterator.fromAsync<POIBoardFixture>(boardPath))
 	const controls = resolveControlRows(definition, committed)

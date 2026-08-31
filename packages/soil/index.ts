@@ -52,10 +52,10 @@ import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent, latLngToCell } from "h3-js"
 
-import type { SoilDatabase } from "./schema.ts"
-import { SOIL_LAYER_NAME_PREFIX, SSURGO_PRODUCT_LIMITS } from "./vocabulary.ts"
+import type { SoilDatabase } from "#schema"
+import { SOIL_LAYER_NAME_PREFIX, SSURGO_PRODUCT_LIMITS } from "#vocabulary"
 
-export { FarmlandScope, farmlandScope, SSURGO_PRODUCT_LIMITS } from "./vocabulary.ts"
+export { FarmlandScope, farmlandScope, SSURGO_PRODUCT_LIMITS } from "#vocabulary"
 
 /**
  * What the layer can say about a coordinate.

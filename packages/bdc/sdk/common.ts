@@ -8,7 +8,7 @@
 
 import type { Tagged } from "type-fest"
 
-import type { BroadbandTechnologyCode } from "./technologies.ts"
+import type { BroadbandTechnologyCode } from "#sdk/technologies"
 
 /**
  * Unique identifier for an FCC BDC broadband provider.

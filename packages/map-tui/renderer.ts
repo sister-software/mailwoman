@@ -15,12 +15,12 @@
  * requested marker always wins the cell.
  */
 
-import { type MapFrame, overlayText, rasterizeToFrame, rgbToPacked } from "./frame.ts"
-import { lonLatToWorldPx, metersPerPixel, TILE_SIZE } from "./mercator.ts"
-import type { DecodedFeature } from "./mvt.ts"
-import { drawCircle, drawPolyline, fillPolygon, RGBAGrid } from "./raster.ts"
-import { type LayerStyle, type RGB, styleForFeatureKind, stylesFor } from "./style.ts"
-import type { DecodedTile, TileProvider } from "./tile-source.ts"
+import { type MapFrame, overlayText, rasterizeToFrame, rgbToPacked } from "#frame"
+import { lonLatToWorldPx, metersPerPixel, TILE_SIZE } from "#mercator"
+import type { DecodedFeature } from "#mvt"
+import { drawCircle, drawPolyline, fillPolygon, RGBAGrid } from "#raster"
+import { type LayerStyle, type RGB, styleForFeatureKind, stylesFor } from "#style"
+import type { DecodedTile, TileProvider } from "#tile-source"
 
 export interface Viewport {
 	centerLon: number

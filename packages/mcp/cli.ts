@@ -49,11 +49,11 @@
  */
 
 import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { familyRollup, filerLookup, toFRN, type FRN } from "@mailwoman/filer/sdk"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { parseArgs } from "@mailwoman/platform/util"
 import { getPOICategory } from "@mailwoman/poi-taxonomy"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -75,11 +75,11 @@ import {
 	openBDCDatabaseIfPresent,
 	openFilerDatabaseIfPresent,
 	openPlausibilityPOIDeps,
-} from "./layer-guards.ts"
-import { createMCPServer } from "./server.ts"
-import type { MCPToolDeps } from "./tools.ts"
+} from "#layer-guards"
+import { createMCPServer } from "#server"
+import type { MCPToolDeps } from "#tools"
 
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		"poi-db": { type: "string" },
 	},
@@ -114,8 +114,15 @@ const CORE_FREE_TOOLS =
 function loadCore(): Promise<{ classifier: NeuralAddressClassifier; resolver: Resolver; shards: ShardProvider }> {
 	corePromise ??= (async () => {
 		const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-		const wofPaths = wofShardPaths().filter(pathExistsSync)
-		const candidateDB = resolveCandidateDBPath()
+		const wofPaths: string[] = []
+
+		for (const shardPath of wofShardPaths()) {
+			if (await pathExists(shardPath)) {
+				wofPaths.push(shardPath)
+			}
+		}
+
+		const candidateDB = await resolveCandidateDBPath()
 
 		// #1009 friendly-failure discipline, the MCP shape of it. `server.ts` turns a thrown Error into an
 		// `isError` tool result carrying `error.message`, so the message an agent reads IS whatever is thrown
@@ -134,7 +141,7 @@ function loadCore(): Promise<{ classifier: NeuralAddressClassifier; resolver: Re
 			)
 		}
 
-		const backend = createResolverBackend(resolverMod, { wofPaths, candidateDB })
+		const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
 		const resolver = createWOFResolver(backend)
 
 		// Same discipline for the model weights. `@mailwoman/neural-weights-en-us` is a declared dependency of
@@ -153,7 +160,7 @@ function loadCore(): Promise<{ classifier: NeuralAddressClassifier; resolver: Re
 			)
 		}
 
-		const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
+		const shards = await ShardProvider.create(resolverMod, mailwomanDataRoot())
 
 		return { classifier, resolver, shards }
 	})()

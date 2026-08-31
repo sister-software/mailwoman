@@ -23,12 +23,11 @@
  *   $MAILWOMAN_DATA_ROOT/overture/2026-05-20.0]`
  */
 
-import * as path from "@mailwoman/platform/path"
+import { type PathBuilderLike, resolvePath } from "path-ts"
 
+import { hashFNV1a } from "#coarse-placer/tools/fnv-hash"
 import { writeLocalTextFile, appendLocalTextFile } from "#fs/writers"
 import { dataRootPath, repoRootPath } from "#utils"
-
-import { hashFNV1a } from "./fnv-hash.ts"
 
 /**
  * Shortest raw string worth keeping as an outlier example; below it there is nothing to learn from.
@@ -53,11 +52,11 @@ export interface BuildOutlierLatinOptions {
 	/**
 	 * Overture release dir. Default `$MAILWOMAN_DATA_ROOT/overture/2026-05-20.0`.
 	 */
-	overture?: string
+	overture?: PathBuilderLike
 	/**
 	 * Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`.
 	 */
-	data?: string
+	data?: PathBuilderLike
 }
 
 /**
@@ -149,7 +148,7 @@ export async function buildOutlierLatin(
 	const duck = await (await DuckDBInstance.create()).connect()
 
 	async function rowsFor(cc: string): Promise<string[]> {
-		const f = path.join(overtureDir, `addresses-${cc.toLowerCase()}.parquet`)
+		const f = resolvePath(overtureDir, `addresses-${cc.toLowerCase()}.parquet`)
 		let res
 
 		try {
@@ -220,12 +219,12 @@ export async function buildOutlierLatin(
 
 	// Append OTHER rows to train/val; write the dedicated Latin off-map test file.
 	const wr = (rows: string[]): string => rows.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
-	await appendLocalTextFile(wr(trainAppend), path.join(dataDir, "train.jsonl"))
-	await appendLocalTextFile(wr(valAppend), path.join(dataDir, "val.jsonl"))
+	await appendLocalTextFile(wr(trainAppend), resolvePath(dataDir, "train.jsonl"))
+	await appendLocalTextFile(wr(valAppend), resolvePath(dataDir, "val.jsonl"))
 
 	await writeLocalTextFile(
 		testRows.map((r) => JSON.stringify(r)).join("\n") + "\n",
-		path.join(dataDir, "test-latin-offmap.jsonl")
+		resolvePath(dataDir, "test-latin-offmap.jsonl")
 	)
 
 	report?.(`\nappended OTHER → train +${trainAppend.length}, val +${valAppend.length}`)

@@ -23,9 +23,9 @@
 import { addCoverageCells, encodeRings, ringAreaReadings, ringsBoundingBox, shortCellToInt } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { SoilDatabase } from "../schema.ts"
-import { classifyDelineationCells } from "./cells.ts"
-import type { SoilFeatureSource } from "./ingest.ts"
+import type { SoilDatabase } from "#schema"
+import { classifyDelineationCells } from "#sdk/cells"
+import type { SoilFeatureSource } from "#sdk/ingest"
 
 /**
  * Rows per bulk-insert transaction. Chosen for the geometry table, whose rows carry a blob: a larger transaction grows

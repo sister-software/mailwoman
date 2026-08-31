@@ -20,10 +20,10 @@
  *   not have, so the agent weighs them.
  */
 
+import { createRequire } from "@mailwoman/core/module/resolvers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { spawnSync } from "@mailwoman/platform/child_process"
-import { createRequire } from "@mailwoman/platform/module"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { spawnProcessSync } from "@mailwoman/core/process"
+import { repoRootPath } from "@mailwoman/core/utils"
 
 const MAX_MATCHES_PER_RULE = 8
 
@@ -43,11 +43,11 @@ export interface ProseVerdict {
 export function lintReply(reply: string): ValeAlert[] {
 	const require = createRequire(import.meta.url)
 	const valeBin = require.resolve("@vvago/vale/bin/vale")
-	const configPath = fileURLToPath(new URL("../../../docs/.vale-chat.ini", import.meta.url))
+	const configPath = repoRootPath("docs", ".vale-chat.ini")
 
 	// Vale exits 1 when error-severity alerts exist, so the exit code carries no failure signal —
 	// an unparseable stdout is the failure, and that reads as "no findings" per the silence contract.
-	const result = spawnSync(valeBin, ["--config", configPath, "--output=JSON", "--ext=.md"], {
+	const result = spawnProcessSync(valeBin, ["--config", configPath, "--output=JSON", "--ext=.md"], {
 		input: reply,
 		encoding: "utf8",
 		timeout: 20_000,

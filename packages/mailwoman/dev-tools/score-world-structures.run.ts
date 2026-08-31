@@ -19,9 +19,8 @@
 import { type ComponentTag, decodeAsTuples } from "@mailwoman/core"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
+import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
 import { createRuntimePipeline } from "#index"
-
-import { loadRegressionCases } from "../eval-harness/gauntlet/cases/load.ts"
 
 const SOURCE = "operator:world-structures-2026-08-10"
 

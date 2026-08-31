@@ -12,11 +12,11 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { ingestWOF } from "mailwoman/gazetteer-pipeline/admin/ingest-wof"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const ROOT = await temporaryDirectory("mw-ingest-wof-")
@@ -66,7 +66,7 @@ describe("ingestWOF centroids (#1726)", () => {
 		await using db = DatabaseClient.temp<WOFDatabase>()
 
 		await createUnifiedSchema(db)
-		await ingestWOF(db, { dataDir: ROOT.path })
+		await ingestWOF(db, { dataDir: ROOT.path.toString() })
 
 		const rows = db.prepare("SELECT id, latitude, longitude FROM spr ORDER BY id").all() as Array<{
 			id: number
@@ -85,7 +85,7 @@ describe("ingestWOF centroids (#1726)", () => {
 describe("ingestWOF label-point adjudication (#1905)", () => {
 	it("a Washington-shaped record stores the geometric point when the anchor overrides, and reports the count", async () => {
 		await using rootDirectory = await temporaryDirectory("mw-ingest-anchor-")
-		const root = rootDirectory.path
+		const root = rootDirectory.path.toString()
 		const dataDir = join(root, "whosonfirst-data-admin-us", "data", "000", "000")
 
 		await makeDirectories(dataDir)
@@ -109,7 +109,7 @@ describe("ingestWOF label-point adjudication (#1905)", () => {
 
 		const result = await ingestWOF(db, {
 			dataDir: root,
-			anchorLookup: (country, gnID) =>
+			anchorLookup: async (country, gnID) =>
 				country === "US" && String(gnID) === "4140963" ? { latitude: 38.89511, longitude: -77.03637 } : undefined,
 		})
 
@@ -127,7 +127,7 @@ describe("ingestWOF label-point adjudication (#1905)", () => {
 
 		await createUnifiedSchema(db)
 
-		const result = await ingestWOF(db, { dataDir: ROOT.path })
+		const result = await ingestWOF(db, { dataDir: ROOT.path.toString() })
 
 		expect(result.labelPointOverrides).toBe(0)
 	})
@@ -136,7 +136,7 @@ describe("ingestWOF label-point adjudication (#1905)", () => {
 describe("ingestWOF adjudication scope (#1905)", () => {
 	it("a REGION with an anchor near its geometric centroid keeps the label point — the Texas shape", async () => {
 		await using rootDirectory = await temporaryDirectory("mw-ingest-region-")
-		const root = rootDirectory.path
+		const root = rootDirectory.path.toString()
 		const dataDir = join(root, "whosonfirst-data-admin-us", "data", "000", "000")
 
 		await makeDirectories(dataDir)
@@ -162,7 +162,7 @@ describe("ingestWOF adjudication scope (#1905)", () => {
 
 		const result = await ingestWOF(db, {
 			dataDir: root,
-			anchorLookup: () => ({ latitude: 31.25, longitude: -99.25 }),
+			anchorLookup: async () => ({ latitude: 31.25, longitude: -99.25 }),
 		})
 
 		const row = db.prepare("SELECT latitude, longitude FROM spr WHERE id = 8").get() as {

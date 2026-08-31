@@ -16,9 +16,9 @@
  *   inform the markers without moving the routing decision.
  */
 
-import { deriveIntentMarkers } from "./intent-markers.ts"
-import { scoreBareToponym, scoreNearMe, scoreRoutePair } from "./intent-rules.ts"
-import { createScorePOICategory, createScorePOIQuery, type POIPhraseLookup } from "./poi.ts"
+import { deriveIntentMarkers } from "#intent-markers"
+import { scoreBareToponym, scoreNearMe, scoreRoutePair } from "#intent-rules"
+import { createScorePOICategory, createScorePOIQuery, type POIPhraseLookup } from "#poi"
 import {
 	scoreIntersection,
 	scoreLandmark,
@@ -28,7 +28,7 @@ import {
 	scoreStructuredAddress,
 	scoreVague,
 	scoreVenueLandmark,
-} from "./rules.ts"
+} from "#rules"
 import type {
 	LocaleHint,
 	NormalizedInputLite,
@@ -36,7 +36,7 @@ import type {
 	QueryKind,
 	QueryKindResult,
 	QueryShapeLike,
-} from "./types.ts"
+} from "#types"
 
 interface KindScorer {
 	kind: QueryKind

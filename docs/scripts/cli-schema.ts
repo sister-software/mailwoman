@@ -3,8 +3,8 @@
  */
 
 import { isDirectory, readDirectory } from "@mailwoman/core/fs/readers"
-import { join } from "@mailwoman/platform/path"
-import { pathToFileURL } from "@mailwoman/platform/url"
+import { pathToFileURL } from "@mailwoman/core/module/file-url"
+import { join } from "path-ts"
 
 export interface OptionSpec {
 	type: "boolean" | "string" | "number"

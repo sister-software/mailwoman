@@ -11,7 +11,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js"
 
-import { buildToolTable, type MCPToolDeps } from "./tools.ts"
+import { buildToolTable, type MCPToolDeps } from "#tools"
 
 /**
  * The advertised server version — keep in lockstep with `package.json`'s `version` (not read from it dynamically: a

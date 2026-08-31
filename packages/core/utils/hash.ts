@@ -6,7 +6,7 @@
  *   File and content hashing utilities.
  */
 
-import { createHash } from "@mailwoman/platform/crypto"
+import { createHash } from "node:crypto"
 
 import { openReadStream } from "#fs/streams"
 
@@ -58,3 +58,9 @@ export async function md5File(path: string): Promise<string> {
 export function md5Hex(data: string | NodeJS.ArrayBufferView): string {
 	return createHash("md5").update(data).digest("hex")
 }
+
+/**
+ * The incremental hasher, for input that arrives in pieces — a row at a time, a chunk at a time. For a whole value,
+ * {@linkcode sha256Hex} and {@linkcode md5Hex} say which digest in their name.
+ */
+export { createHash, type Hash } from "node:crypto"

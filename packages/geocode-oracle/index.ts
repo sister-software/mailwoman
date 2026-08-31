@@ -45,5 +45,5 @@
  * ```
  */
 
-export * from "./result.ts"
-export * from "./sdk/index.ts"
+export * from "#result"
+export * from "#sdk/index"

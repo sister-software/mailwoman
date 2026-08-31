@@ -9,10 +9,9 @@
 import type { TermFrequencyTable } from "@mailwoman/match"
 
 import type { ResolveResult } from "#index"
-
-import { ORG_TAU } from "./org-name.ts"
-import type { Score } from "./scoring.ts"
-import { COLOCATION_KM } from "./truth-grains.ts"
+import { ORG_TAU } from "#tools/nppes/org-name"
+import type { Score } from "#tools/nppes/scoring"
+import { COLOCATION_KM } from "#tools/nppes/truth-grains"
 
 /**
  * F1 gap within which two blocking strategies are treated as equivalent.

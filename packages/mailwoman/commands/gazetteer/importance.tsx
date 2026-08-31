@@ -32,19 +32,19 @@
  *   which is what they had before Wikipedia importance existed.
  */
 
+import { get as httpsGet } from "node:https"
+
+import { gunzipChunks } from "@mailwoman/core/fs/compression"
 import { tryStat } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalBuffer } from "@mailwoman/core/fs/writers"
 import { allRows, cacheRootPath, getRow } from "@mailwoman/core/utils"
-import { gunzipChunks } from "@mailwoman/platform/compression"
-import { get as httpsGet } from "@mailwoman/platform/https"
-import { dirname } from "@mailwoman/platform/path"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { Box, Text } from "ink"
+import { dirname } from "path-ts"
 import { createReadStream } from "spliterator/node/fs"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
-
-import type { FanoutCandidate } from "../../gazetteer-pipeline/importance-fanout.ts"
+import type { FanoutCandidate } from "#gazetteer-pipeline/importance-fanout"
 
 /**
  * Permanent redirect.
@@ -129,7 +129,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 		const { TextSpliterator } = await import("spliterator")
 
 		const { emptyFanoutStats, recordFanout, resolveConcordanceFanout } =
-			await import("../../gazetteer-pipeline/importance-fanout.ts")
+			await import("#gazetteer-pipeline/importance-fanout")
 
 		const dbPath = options.db
 		const tsvPath = options.tsv

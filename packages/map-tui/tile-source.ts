@@ -12,11 +12,11 @@
  * same viewport don't re-decode.
  */
 
-import { type FileHandle, open } from "@mailwoman/platform/fs/promises"
+import { type FileHandle, open } from "@mailwoman/core/fs/readers"
 import { Parser } from "htmlparser2"
 import { PMTiles, type RangeResponse, type Source } from "pmtiles"
 
-import { type DecodedLayer, decodeMVT } from "./mvt.ts"
+import { type DecodedLayer, decodeMVT } from "#mvt"
 
 export interface DecodedTile {
 	layers: DecodedLayer[]

@@ -23,10 +23,10 @@
  *   exposes as attributes.
  */
 
-import type { BIOLabel, ComponentTag } from "../types/component.ts"
-import type { Calibrator } from "./calibration.ts"
-import { containmentFor } from "./containment.ts"
-import type { AddressNode, AddressSystem, AddressTree, DecoderToken } from "./types.ts"
+import type { Calibrator } from "#decoder/calibration"
+import { containmentFor } from "#decoder/containment"
+import type { AddressNode, AddressSystem, AddressTree, DecoderToken } from "#decoder/types"
+import type { BIOLabel, ComponentTag } from "#types/component"
 
 /**
  * Optional caller-supplied attribution stamped on every emitted node. The BIO stream comes from a single model, so

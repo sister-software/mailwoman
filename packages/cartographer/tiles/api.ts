@@ -7,8 +7,8 @@
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import type { VectorSourceSpecification } from "maplibre-gl"
 
-import type { TileSetSourceID, TileSetSourceRecord } from "../styles/sources.ts"
-import type { TileJSON } from "./schema.ts"
+import type { TileSetSourceID, TileSetSourceRecord } from "#styles/sources"
+import type { TileJSON } from "#tiles/schema"
 
 /**
  * API Client for fetching Protomap tile data.

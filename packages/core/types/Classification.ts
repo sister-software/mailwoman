@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { Displayable } from "../resources/debugging.ts"
-import type { Alpha3bLanguageCode } from "../resources/languages/index.ts"
-import type { LibPostalLanguageCode } from "../resources/libpostal.ts"
+import type { Displayable } from "#resources/debugging"
+import type { Alpha3bLanguageCode } from "#resources/languages/index"
+import type { LibPostalLanguageCode } from "#resources/libpostal"
 
 /**
  * Classification recognized by Mailwoman.

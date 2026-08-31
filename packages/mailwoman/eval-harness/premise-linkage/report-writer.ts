@@ -29,8 +29,8 @@
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 
-import type { PremiseLinkageReport, PremiseLinkageResultRow } from "./schema.ts"
-import { PREMISE_LINKAGE_SHAPE_CLASSES } from "./schema.ts"
+import type { PremiseLinkageReport, PremiseLinkageResultRow } from "#eval-harness/premise-linkage/schema"
+import { PREMISE_LINKAGE_SHAPE_CLASSES } from "#eval-harness/premise-linkage/schema"
 
 /**
  * Why the writer refused. A closed set, so a caller can branch on the reason without reading the message.

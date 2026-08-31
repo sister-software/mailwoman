@@ -27,10 +27,10 @@
 
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
-import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
-import { resolveInputSet, type InputSetRef } from "./input-sets.ts"
-import { openSealedArtifact } from "./lookup.ts"
-import { provenanceFor, type Provenance } from "./tool-kit.ts"
+import type { EngineConfig, EngineRegistryLike } from "#engine-registry"
+import { resolveInputSet, type InputSetRef } from "#input-sets"
+import { openSealedArtifact } from "#lookup"
+import { provenanceFor, type Provenance } from "#tool-kit"
 
 /**
  * One lookup that resolved nothing, with the constraint that was in force and what the gazetteer holds regardless.

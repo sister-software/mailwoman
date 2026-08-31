@@ -14,9 +14,8 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
+import { runFileSync } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import { execFileSync } from "@mailwoman/platform/child_process"
-import { join } from "@mailwoman/platform/path"
 import {
 	auditReposRoot,
 	CloneLayout,
@@ -24,6 +23,7 @@ import {
 	parseRepoName,
 	reposSentence,
 } from "mailwoman/gazetteer-pipeline/repos-audit"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -31,7 +31,7 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 async function reposRoot(): Promise<string> {
-	const root = fixtures.use(await temporaryDirectory("mw-repos-audit-")).path
+	const root = fixtures.use(await temporaryDirectory("mw-repos-audit-")).path.toString()
 
 	return root
 }
@@ -52,11 +52,11 @@ async function clone(dir: string, marker: string): Promise<void> {
 
 	await makeDirectories(dir)
 	await writeLocalFile(marker, join(dir, "README.md"))
-	execFileSync("git", ["init", "-q", "-b", "main"], { cwd: dir })
-	execFileSync("git", ["config", "user.email", "t@example.com"], { cwd: dir })
-	execFileSync("git", ["config", "user.name", "T"], { cwd: dir })
-	execFileSync("git", ["add", "-A"], { cwd: dir })
-	execFileSync("git", ["commit", "-qm", marker], { cwd: dir, env })
+	runFileSync("git", ["init", "-q", "-b", "main"], { cwd: dir })
+	runFileSync("git", ["config", "user.email", "t@example.com"], { cwd: dir })
+	runFileSync("git", ["config", "user.name", "T"], { cwd: dir })
+	runFileSync("git", ["add", "-A"], { cwd: dir })
+	runFileSync("git", ["commit", "-qm", marker], { cwd: dir, env })
 }
 
 describe("auditReposRoot — layouts", () => {

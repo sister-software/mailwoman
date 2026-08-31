@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { RouteContext } from "./routing.ts"
+import type { RouteContext } from "#routing"
 
 const CACHE_NAME = "2026-26-15-00-00-00"
 

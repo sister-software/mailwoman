@@ -43,8 +43,8 @@ import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { sql } from "kysely"
 import type { Kysely } from "kysely"
 
-import { buildPlaceSearchFTS, PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE, PLACE_SEARCH_TABLE } from "./fts.ts"
-import type { NamesTable, SprTable, WOFDatabase } from "./schema.ts"
+import { buildPlaceSearchFTS, PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE, PLACE_SEARCH_TABLE } from "#fts"
+import type { NamesTable, SprTable, WOFDatabase } from "#schema"
 
 export interface BuildSlimOptions {
 	/**

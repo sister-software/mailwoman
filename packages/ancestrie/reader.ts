@@ -19,7 +19,7 @@
  *       interval encoding and the DAG-canonicalization rule.
  */
 
-import type { AncestrieHeader, AncestrieSections } from "./format.ts"
+import type { AncestrieHeader, AncestrieSections } from "#format"
 import {
 	computeSections,
 	EDGE_ENTRY_SIZE,
@@ -30,8 +30,8 @@ import {
 	ID_INDEX_ENTRY_SIZE,
 	readHeader,
 	STATE_ENTRY_SIZE,
-} from "./format.ts"
-import type { AncestrieContinuation, AncestrieMatch, AncestrieReaderLike, AncestrieRecord, JSONValue } from "./types.ts"
+} from "#format"
+import type { AncestrieContinuation, AncestrieMatch, AncestrieReaderLike, AncestrieRecord, JSONValue } from "#types"
 
 const UTF8_DECODER = new TextDecoder()
 

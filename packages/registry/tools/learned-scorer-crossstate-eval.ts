@@ -39,8 +39,7 @@ import {
 	type ResolvedEntity,
 	type SourceRecord,
 } from "#index"
-
-import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
+import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
 import {
 	addr,
 	MIN_GROUP_SIZE,
@@ -49,7 +48,7 @@ import {
 	NPPES_COLUMNS as C,
 	sigmoid,
 	TRAINING_EPOCHS,
-} from "./shared.ts"
+} from "#tools/shared"
 
 /**
  * Highest k swept when scanning cluster counts.

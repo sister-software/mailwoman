@@ -10,14 +10,22 @@
 
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { errorResponse, attachOpenAPIDocs, type OpenAPIDocInfo } from "@mailwoman/api-kit"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { bodyLimit } from "hono/body-limit"
 import { cors } from "hono/cors"
 
-import packageJson from "#package.json" with { type: "json" }
+import type { MailwomanAPIEngine } from "#engine"
+import { DEFAULT_BATCH_MAX, registerMailwomanAPIRoutes } from "#routes"
+import type { GeocodeOutcomeLike } from "#schema"
 
-import type { MailwomanAPIEngine } from "./engine.ts"
-import { DEFAULT_BATCH_MAX, registerMailwomanAPIRoutes } from "./routes.ts"
-import type { GeocodeOutcomeLike } from "./schema.ts"
+/**
+ * This package's own manifest, read at load rather than imported as a module: a JSON import makes `tsc` copy the file
+ * into `out/`, where it becomes the package scope for the compiled tree and breaks every `#` import in it.
+ */
+const packageJson = await readLocalJSONFile<{ name: string; version: string; description: string }>(
+	resolvePackagePath("@mailwoman/api", "package.json")
+)
 
 /**
  * 2 MiB — carried from the express server's `express.json({ limit: "2mb" })` (`mailwoman/server/index.ts`).

@@ -28,21 +28,16 @@ import { COUNTRY_SURFACE_FORMS, CountryNames } from "@mailwoman/codex/country"
 import { isPresent } from "@mailwoman/core/objects"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
+import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
+import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "#shard-recipes/scaffold"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
-
-import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 // v2: the country TOKEN is decoupled from the skeleton's locale and drawn from a BROAD pool — every
 // ISO canonical name + every curated surface form (endonyms/abbrevs). Surface forms are over-weighted
 // so endonyms/abbrevs ("Deutschland","USA","NL") get strong signal.
-/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
-   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
-   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
-   extracted as named constants above. */
 
 const COUNTRY_FORM_POOL = (() => {
 	const surface = Object.values(COUNTRY_SURFACE_FORMS).flat() // endonyms + abbrevs + canonical (curated)
@@ -61,7 +56,7 @@ const COUNTRY_ABSENT_PROB = 0.3
  * A cached OpenAddresses extract + the implied iso2/region/render-order.
  */
 interface CountrySource {
-	zip: string
+	zip: PathBuilderLike
 	csv: string
 	iso2: string
 	region: string
@@ -189,16 +184,22 @@ async function readTuples(source: CountrySource, limit: number): Promise<Country
 	return tuples
 }
 
+// After the absent draw: 60% curated surface forms (endonym/abbrev variety), 40% broad ISO canonical names.
+const SURFACE_FORM_SHARE = 0.6
+
 /**
  * Pick a country token from the BROAD pool, or null (a country-absent negative). v2.
  */
 function pickCountry(random: () => number): string | null {
 	if (random() < COUNTRY_ABSENT_PROB) return null // negative — teaches "trailing token != always country"
-	// 60% curated surface forms (endonym/abbrev variety), 40% broad ISO canonical names (coverage).
-	const pool = random() < 0.6 ? COUNTRY_FORM_POOL.surface : COUNTRY_FORM_POOL.names
+	const pool = random() < SURFACE_FORM_SHARE ? COUNTRY_FORM_POOL.surface : COUNTRY_FORM_POOL.names
 
 	return pool[Math.floor(random() * pool.length)]!
 }
+
+// Country-bearing rows: 80% full, 12% full-nl, 8% bare.
+const FULL_CUTOFF = 0.8
+const FULL_NEWLINE_CUTOFF = 0.92
 
 /**
  * Render the address body in native-ish order. `country` null → a country-ABSENT negative row.
@@ -242,9 +243,9 @@ function renderCountry(
 	const withC: Partial<Record<ComponentTag, string>> = { ...components, country }
 	const r = random()
 
-	if (r < 0.8) return { fmt: "full", raw: `${body}, ${country}`, components: withC }
+	if (r < FULL_CUTOFF) return { fmt: "full", raw: `${body}, ${country}`, components: withC }
 
-	if (r < 0.92) return { fmt: "full-nl", raw: `${body}\n${country}`, components: withC }
+	if (r < FULL_NEWLINE_CUTOFF) return { fmt: "full-nl", raw: `${body}\n${country}`, components: withC }
 	const bareBody = order === "us" || order === "fr" ? `${hn} ${street}, ${loc}` : `${street} ${hn}, ${loc}`
 
 	return {
@@ -336,6 +337,9 @@ const STREET_POOL: readonly string[] = [
 const pick = <T>(random: () => number, arr: readonly T[]): T => arr[Math.floor(random() * arr.length)]!
 const houseNo = (random: () => number): string => String(1 + Math.floor(random() * 998))
 
+// Country-surface homograph rows: 60% carry a street line, 40% are a bare `city, surface`.
+const HOMOGRAPH_WITH_STREET_SHARE = 0.6
+
 /**
  * A homograph CONTRAST row: ~half render the surface as `country` (foreign city), half as the US `region`/`locality`
  * (US ZIP, NO country). Returns iso2 for provenance.
@@ -353,7 +357,7 @@ function renderHomograph(random: () => number): {
 
 	if (random() < 0.5) {
 		const city = pick(random, h.cities)
-		const withStreet = random() < 0.6
+		const withStreet = random() < HOMOGRAPH_WITH_STREET_SHARE
 		const raw = withStreet ? `${hn} ${street}, ${city}, ${h.surface}` : `${city}, ${h.surface}`
 
 		const components: Partial<Record<ComponentTag, string>> = withStreet

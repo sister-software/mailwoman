@@ -41,22 +41,27 @@ import {
 	writeLayerManifest,
 	type CoverageCell,
 } from "@mailwoman/core/layers"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { runChunkProcess } from "@mailwoman/core/utils"
-import { fileURLToPath } from "@mailwoman/platform/url"
 import {
 	geometryContains,
 	interiorCoverageCells,
 	shortCellToInt,
-	type GeojsonGeometry,
-	type GeojsonMultiPolygon,
-	type GeojsonPolygon,
-	type GeojsonPosition,
+	arealPolygons,
+	type MultiPolygonRings,
+	type ParsedGeometry,
 } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { cellToLatLng } from "h3-js"
 
-import { createSoilTables, type SoilDatabase, type SoilSurveyAreaTable } from "../schema.ts"
+import { createSoilTables, type SoilDatabase, type SoilSurveyAreaTable } from "#schema"
+import { reduceCells, resolveCells } from "#sdk/cell-tiers"
+import type { SoilFeatureSource } from "#sdk/ingest"
+import type { SoilChunkResult } from "#sdk/ingest-chunk"
+import { ingestSoilChunk } from "#sdk/ingest-chunk"
+import { WEIGHT_LATTICE_DEPTH } from "#sdk/reduce"
+import type { SurveyAreaAttributes } from "#sdk/survey-area"
 import {
 	SOIL_SHARE_WEIGHTING,
 	SOIL_SHARE_WEIGHTING_DESCRIPTION,
@@ -64,13 +69,7 @@ import {
 	SSURGO_ATTRIBUTION,
 	SSURGO_LICENSE,
 	SSURGO_SOURCE,
-} from "../vocabulary.ts"
-import { reduceCells, resolveCells } from "./cell-tiers.ts"
-import type { SoilChunkResult } from "./ingest-chunk.ts"
-import { ingestSoilChunk } from "./ingest-chunk.ts"
-import type { SoilFeatureSource } from "./ingest.ts"
-import { WEIGHT_LATTICE_DEPTH } from "./reduce.ts"
-import type { SurveyAreaAttributes } from "./survey-area.ts"
+} from "#vocabulary"
 
 /**
  * Schema version of the domain tables. Bumped when a column changes meaning, never for an added column a reader can
@@ -121,7 +120,7 @@ export interface SurveyAreaInput {
 	/**
 	 * The survey area's own outline, already read.
 	 */
-	outline: GeojsonGeometry
+	outline: ParsedGeometry
 	/**
 	 * An in-process feature source. Correct for a fixture and for anything small; the batched path builds one of these
 	 * per chunk, so the two share one implementation.
@@ -620,7 +619,7 @@ async function ingestInProcess(
  */
 async function runBatchedIngest(tmpPath: string, options: BuildSoilOptions): Promise<SoilChunkResult[]> {
 	const chunkSize = options.chunkSize ?? DEFAULT_CHUNK_SIZE
-	const script = fileURLToPath(import.meta.resolve("@mailwoman/soil/scripts/ingest-chunk"))
+	const script = resolveModulePath("@mailwoman/soil/scripts/ingest-chunk")
 	const noMapping = [...noMappingMukeys(options.areas)]
 	const chunks: SoilChunkResult[] = []
 
@@ -691,7 +690,7 @@ function buildCoverageCells(
 	options: BuildSoilOptions,
 	streamed: StreamResult
 ): { cells: CoverageCell[]; cellsByArea: Map<string, number>; withoutMapping: number } {
-	const footprint: GeojsonGeometry = {
+	const footprint: ParsedGeometry = {
 		type: "MultiPolygon",
 		coordinates: options.areas.flatMap((input) => outlinePolygons(input.outline)),
 	}
@@ -747,10 +746,10 @@ function buildCoverageCells(
  * @throws {TypeError} When the outline is not areal. A survey area whose footprint cannot be read would silently
  *   contribute nothing to the union, and the coverage over it would simply be absent.
  */
-function outlinePolygons(outline: GeojsonGeometry): GeojsonPosition[][][] {
-	if (outline.type === "MultiPolygon") return (outline as GeojsonMultiPolygon).coordinates
+function outlinePolygons(outline: ParsedGeometry): MultiPolygonRings {
+	const polygons = arealPolygons(outline)
 
-	if (outline.type === "Polygon") return [(outline as GeojsonPolygon).coordinates]
+	if (polygons) return polygons
 
 	throw new TypeError(
 		`soil build: a survey-area outline is a ${outline.type}, which bounds no area — its coverage would be silently absent rather than refused`

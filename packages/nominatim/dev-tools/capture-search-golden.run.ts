@@ -11,7 +11,7 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { spawn } from "@mailwoman/platform/child_process"
+import { spawnProcess } from "@mailwoman/core/process"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 
 const PORT = 8199
@@ -40,7 +40,7 @@ const syntheticInputs = (await Array.fromAsync(TextSpliterator.fromAsync(SYNTHET
 
 const queries = [...new Set([...withHouseNumber.slice(0, 172), ...syntheticInputs])]
 
-const child = spawn("node", ["packages/nominatim/out/cli.js", "serve", "--port", String(PORT)], {
+const child = spawnProcess("node", ["packages/nominatim/out/cli.js", "serve", "--port", String(PORT)], {
 	stdio: ["ignore", "inherit", "inherit"],
 })
 

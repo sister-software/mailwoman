@@ -24,8 +24,9 @@
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { decodeEntities, normalizeWhitespace, parseExhibit21, stripTags } from "@mailwoman/filer/sdk/exhibit21"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 interface ExpectedSubsidiary {
@@ -37,7 +38,7 @@ interface ExpectedFixtures {
 	fixtures: Record<string, { subsidiaries: ExpectedSubsidiary[] }>
 }
 
-const FIXTURE_DIRECTORY = join(import.meta.dirname, "../../../test-fixtures/edgar")
+const FIXTURE_DIRECTORY = resolvePackagePath("@mailwoman/filer", "test-fixtures", "edgar")
 
 // parseJSONStrict, not tryParsingJSON: a corrupt expected.json must fail the suite loudly rather than
 // degrade to a fallback, since it IS the contract every assertion below is measured against.

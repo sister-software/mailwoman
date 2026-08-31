@@ -6,7 +6,7 @@
  *   lowest-level math never reaches back through its public barrel.
  */
 
-import { GeoPoint, type GeoPointInput } from "./geometries/point.ts"
+import { GeoPoint, type GeoPointInput } from "#geometries/point"
 
 /**
  * Conversion factors for converting between degrees and radians.

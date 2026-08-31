@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./align.ts"
-export * from "../build.ts"
-export * from "./golden.ts"
-export * from "./parquet.ts"
-export * from "./license.ts"
-export * from "./split.ts"
-export * from "./tokenize.ts"
-export * from "./wof-json.ts"
+export * from "#utils/align"
+export * from "#build"
+export * from "#utils/golden"
+export * from "#utils/parquet"
+export * from "#utils/license"
+export * from "#utils/split"
+export * from "#utils/tokenize"
+export * from "#utils/wof-json"

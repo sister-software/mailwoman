@@ -16,12 +16,11 @@
  */
 
 import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { dirname } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
+import { dirname } from "path-ts"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
-
-import { DEFAULT_COVERAGE_FLOOR } from "../../gazetteer-pipeline/defaults.ts"
+import { DEFAULT_COVERAGE_FLOOR } from "#gazetteer-pipeline/defaults"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -49,8 +48,8 @@ interface Options {
 const GazetteerGranularity: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath, md5File } = await import("@mailwoman/core/utils")
-		const { bottomsOutAt, buildGranularityLadder } = await import("../../gazetteer-pipeline/granularity.ts")
-		const { renderGranularityReport } = await import("../../gazetteer-pipeline/granularity-report.ts")
+		const { bottomsOutAt, buildGranularityLadder } = await import("#gazetteer-pipeline/granularity")
+		const { renderGranularityReport } = await import("#gazetteer-pipeline/granularity-report")
 
 		const sourcePath = options.source ?? String(dataRootPath("wof", "admin-global-priority.db"))
 		const rows = buildGranularityLadder(sourcePath)

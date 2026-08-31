@@ -35,11 +35,11 @@
  *   [--out-json /tmp/lint-report.json]
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 
-import { ParquetReader } from "../parquet-wrapper/index.ts"
+import { ParquetReader } from "#parquet-wrapper/index"
 
 /**
  * Occurrences of a forbidden label before it is reported — one or two are noise, five is a pattern.
@@ -71,12 +71,8 @@ const ALL_O_RATIO_CEILING = 0.9
  * corpus/src/tools/). In-repo the `node` exports condition loads this module from source anyway, so the sibling URL is
  * the common path.
  */
-async function defaultRulesPath(): Promise<string> {
-	const sibling = new URL("./lint-rules.json", import.meta.url)
-
-	if (await pathExists(sibling)) return fileURLToPath(sibling)
-
-	return fileURLToPath(new URL("../../../src/tools/lint-rules.json", import.meta.url))
+function defaultRulesPath(): string {
+	return resolvePackagePath("@mailwoman/corpus", "src", "tools", "lint-rules.json")
 }
 
 /**
@@ -475,7 +471,7 @@ export async function lintCorpusShard(
 	options: LintCorpusShardOptions,
 	report?: (line: string) => void
 ): Promise<LintCorpusShardSummary> {
-	const rulesPath = options.rulesPath ?? (await defaultRulesPath())
+	const rulesPath = options.rulesPath ?? defaultRulesPath()
 	report?.(`Reading corpus stats from ${options.statsPath}...`)
 	const corpus = await readLocalJSONFile<CorpusStats>(options.statsPath)
 

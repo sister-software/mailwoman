@@ -14,33 +14,33 @@
  *   a recipe; the recipe is `../defaults.ts`).
  */
 
-import { pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { removePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { md5File, repoRootPath } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
+import { join } from "path-ts"
 
-import { dataRootPath } from "../../resolver-backend.ts"
+import { enrichAdmin } from "#gazetteer-pipeline/admin/enrich"
+import { foldGeonames, type FoldGeonamesResult } from "#gazetteer-pipeline/admin/fold-geonames"
+import { ingestOvertureDivisions } from "#gazetteer-pipeline/admin/fold-overture"
+import { freezeAdmin } from "#gazetteer-pipeline/admin/freeze"
+import { ingestWOF, type IngestWOFResult } from "#gazetteer-pipeline/admin/ingest-wof"
+import { createGeoNamesAnchorLookup } from "#gazetteer-pipeline/admin/label-point-adjudicator"
+import { adminLayerManifest } from "#gazetteer-pipeline/admin/manifest"
 import {
 	DEFAULT_ADMIN_STAGING_SUFFIX,
 	DEFAULT_GEONAMES_COUNTRIES,
 	DEFAULT_OVERTURE_COUNTRIES,
 	DEFAULT_OVERTURE_RELEASE,
 	geonamesAdminGapCountries,
-} from "../defaults.ts"
-import { buildFTS, type BuildFTSResult } from "../fts.ts"
-import { checkOvertureRelease } from "../overture-release.ts"
-import { buildSHA, stampLayerManifest } from "../stamp-manifest.ts"
-import { loadDefaultBaseline, verifyAdmin, verifyReversePanel, type VerifyResult } from "../verify.ts"
-import { enrichAdmin } from "./enrich.ts"
-import { foldGeonames, type FoldGeonamesResult } from "./fold-geonames.ts"
-import { ingestOvertureDivisions } from "./fold-overture.ts"
-import { freezeAdmin } from "./freeze.ts"
-import { ingestWOF, type IngestWOFResult } from "./ingest-wof.ts"
-import { createGeoNamesAnchorLookup } from "./label-point-adjudicator.ts"
-import { adminLayerManifest } from "./manifest.ts"
+} from "#gazetteer-pipeline/defaults"
+import { buildFTS, type BuildFTSResult } from "#gazetteer-pipeline/fts"
+import { checkOvertureRelease } from "#gazetteer-pipeline/overture-release"
+import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
+import { loadDefaultBaseline, verifyAdmin, verifyReversePanel, type VerifyResult } from "#gazetteer-pipeline/verify"
+import { dataRootPath } from "#resolver-backend"
 
 export interface BuildAdminOptions {
 	/**
@@ -277,22 +277,8 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 }
 
 // Re-export the step functions so `gazetteer-pipeline/admin` is a complete surface on its own.
-export * from "./enrich.ts"
-export * from "./fold-geonames.ts"
-export * from "./fold-overture.ts"
-export * from "./freeze.ts"
-export * from "./ingest-wof.ts"
-
-/**
- * Byte-size of the built artifact — a convenience for command summaries.
- *
- * TODO: IF YOU ARE SEEING THIS, IMMEDIATELY USE `ByteFormatter.formatIEC` FROM `@mailwoman/core/fs/formatters` AND
- * REMOVE ANY SIMILAR CODE. THIS IS VERY COMMON.
- *
- * THIS LIKELY NEEDS SOMETHNIG like a `readFileSize(pathLike, formatter = ByteFormatter.shared)` in core/fs.
- *
- * @deprecated use `ByteFormatter.formatIEC` from `@mailwoman/core/fs/formatters` instead.
- */
-export async function artifactSizeMB(path: string): Promise<number> {
-	return Math.round(((await statPath(path)).size / 1024 / 1024) * 10) / 10
-}
+export * from "#gazetteer-pipeline/admin/enrich"
+export * from "#gazetteer-pipeline/admin/fold-geonames"
+export * from "#gazetteer-pipeline/admin/fold-overture"
+export * from "#gazetteer-pipeline/admin/freeze"
+export * from "#gazetteer-pipeline/admin/ingest-wof"

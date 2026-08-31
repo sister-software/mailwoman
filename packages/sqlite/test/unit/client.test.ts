@@ -11,7 +11,8 @@
  *   inside `node:sqlite`, which typechecks perfectly and breaks every caller that passes only a path.
  */
 
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseSync } from "node:sqlite"
+
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 

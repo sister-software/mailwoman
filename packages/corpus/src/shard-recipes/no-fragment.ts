@@ -37,7 +37,7 @@
 
 import { TextSpliterator } from "spliterator"
 
-import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
+import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "#shard-recipes/scaffold"
 
 /**
  * The surface key — MUST match the NO digit board's `norm_surface` and `no-street-led`'s `norm`: NFC, lowercase,

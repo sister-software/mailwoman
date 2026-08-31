@@ -26,7 +26,7 @@ import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import { EA_FLOOD_DATASET_ID, EA_FLOOD_LAYER } from "../vocabulary.ts"
+import { EA_FLOOD_DATASET_ID, EA_FLOOD_LAYER } from "#vocabulary"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.
 export { isTransientResourceError } from "@mailwoman/core/api"

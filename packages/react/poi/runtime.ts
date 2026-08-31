@@ -13,7 +13,7 @@ import { createKindClassifier } from "@mailwoman/kind-classifier"
 import type { POIPhraseLookup } from "@mailwoman/kind-classifier"
 import { createPOIBrandLookup, createPOITaxonomyLookup } from "@mailwoman/poi-taxonomy/table"
 
-import type { POIRuntime } from "./types.ts"
+import type { POIRuntime } from "#poi/types"
 
 /**
  * Build the POI runtime, dynamically importing the taxonomy + brand JSON so the tables land in their own chunk. A

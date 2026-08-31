@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./adapters/utils/index.ts"
-export * from "./adapters/gnaf/assemble.ts"
-export * from "./adapters/index.ts"
-export * from "./build.ts"
-export * from "./runner.ts"
-export * from "./parquet-wrapper/index.ts"
-export * from "./shard-recipes/index.ts"
+export * from "#adapters/utils/index"
+export * from "#adapters/gnaf/assemble"
+export * from "#adapters/index"
+export * from "#build"
+export * from "#runner"
+export * from "#parquet-wrapper/index"
+export * from "#shard-recipes/index"
 export * from "#types"

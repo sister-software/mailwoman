@@ -38,10 +38,10 @@
 import { pathExists, readDirectoryRecursive, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { pyRound } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
-import { geometryContains, haversineKm, type GeojsonGeometry } from "@mailwoman/spatial"
+import { geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
+import { join } from "path-ts"
 
 import {
 	createPostcodeLocalityIndex,
@@ -49,7 +49,7 @@ import {
 	createPostcodeLocalityTable,
 	POSTCODE_LOCALITY_INSERT_SQL,
 	type PostcodeLocalityDatabase,
-} from "./schema.ts"
+} from "#gazetteer-pipeline/postcode-locality/schema"
 
 /**
  * Plus name:* / label:* props, gathered below.
@@ -107,7 +107,7 @@ interface Locality {
 	clat: number
 	clon: number
 	bbox: [number, number, number, number]
-	geom: GeojsonGeometry
+	geom: ParsedGeometry
 }
 
 export interface PostcodeLocalityBaseOptions {
@@ -216,7 +216,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 
 	for (const fp of await geojsonFiles(join(adminRepo!, "data"))) {
 		try {
-			const g = tryParsingJSON<{ properties?: Record<string, unknown>; geometry?: GeojsonGeometry }>(
+			const g = tryParsingJSON<{ properties?: Record<string, unknown>; geometry?: ParsedGeometry }>(
 				await readLocalTextFile(fp)
 			)
 

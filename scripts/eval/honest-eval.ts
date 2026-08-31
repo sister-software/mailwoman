@@ -33,8 +33,8 @@
 import { readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, appendLocalTextFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
-import { parseArgs } from "@mailwoman/platform/util"
 import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
 
@@ -51,11 +51,10 @@ async function main() {
 	let OUT = ""
 	let TMP = tempRootPath("honest")
 
-	// STRICT parseArgs — the original switch errored on unknown args; parity preserved.
 	let cliValues: Record<string, string | boolean | undefined>
 
 	try {
-		cliValues = parseArgs({
+		cliValues = parseArguments({
 			options: {
 				card: { type: "string" },
 				label: { type: "string" },

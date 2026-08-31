@@ -6,18 +6,18 @@
  *   Coarse-placer (#244) operator tools — the `run()`-style modules behind `mailwoman placer …`
  *   commands. No argv, no `process.exit`: commands own
  *   parsing, rendering, and exit codes. Heavy deps that are core devDependencies
- *   (`@duckdb/node-api`, `@mailwoman/codex`) are lazy-imported inside their entry fns. `fnv-hash.ts`
- *   is deliberately NOT re-exported — it's internal to the dataset builders.
+ *   (`@duckdb/node-api`, `@mailwoman/codex`) are lazy-imported inside their entry fns. `fnv-hash.ts` and
+ *   `country-sets.ts` are deliberately NOT re-exported — they are internal to the dataset builders.
  */
 
-export * from "./build-dataset.ts"
-export * from "./build-outlier-exposure.ts"
-export * from "./build-outlier-latin.ts"
-export * from "./build-outlier-oa.ts"
-export * from "./eval.ts"
-export * from "./eval-latin-offmap.ts"
-export * from "./eval-openset.ts"
-export * from "./eval-quant-compare.ts"
-export * from "./probe-frontier.ts"
-export * from "./quantize.ts"
-export * from "./train.ts"
+export * from "#coarse-placer/tools/build-dataset"
+export * from "#coarse-placer/tools/build-outlier-exposure"
+export * from "#coarse-placer/tools/build-outlier-latin"
+export * from "#coarse-placer/tools/build-outlier-oa"
+export * from "#coarse-placer/tools/eval"
+export * from "#coarse-placer/tools/eval-latin-offmap"
+export * from "#coarse-placer/tools/eval-openset"
+export * from "#coarse-placer/tools/eval-quant-compare"
+export * from "#coarse-placer/tools/probe-frontier"
+export * from "#coarse-placer/tools/quantize"
+export * from "#coarse-placer/tools/train"

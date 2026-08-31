@@ -28,9 +28,9 @@ import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/
 import { makeDirectories, removePathIfPresent, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { md5Hex, repoRootPath } from "@mailwoman/core/utils"
-import { resolve } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
+import { resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
 
@@ -131,7 +131,7 @@ const bucketClient = new APIClient({ displayName: "release-hf-weights", retry: t
  * Read a workspace's `package.json`.
  */
 async function readWorkspaceManifest(repoRoot: string, workspace: string): Promise<{ files?: unknown }> {
-	const manifestPath = resolve(repoRoot, workspace, "package.json")
+	const manifestPath = resolvePath(repoRoot, workspace, "package.json")
 
 	return readLocalJSONFile<{ files?: unknown }>(manifestPath)
 }
@@ -166,7 +166,7 @@ async function declaredChecksums(repoRoot: string, workspaces: readonly string[]
 	const declared = new Map<string, string>()
 
 	for (const workspace of workspaces) {
-		const cardPath = resolve(repoRoot, workspace, "model-card.json")
+		const cardPath = resolvePath(repoRoot, workspace, "model-card.json")
 
 		if (!(await pathExists(cardPath))) continue
 
@@ -224,7 +224,7 @@ async function resolveBaseLocale(repoRoot: string, locales: readonly string[]): 
 export async function readBaseModelVersion(repoRoot: string): Promise<string> {
 	const config = await readReleaseConfig(repoRoot)
 	const baseLocale = await resolveBaseLocale(repoRoot, config.locales)
-	const cardPath = resolve(repoRoot, weightsWorkspace(baseLocale), "model-card.json")
+	const cardPath = resolvePath(repoRoot, weightsWorkspace(baseLocale), "model-card.json")
 	const card = await readLocalJSONFile<{ version?: unknown }>(cardPath)
 
 	if (typeof card.version !== "string") {
@@ -244,7 +244,7 @@ export async function readBaseModelVersion(repoRoot: string): Promise<string> {
  * the YAML this replaces checked only `file`, and a declared sidecar that never uploaded would have passed.
  */
 async function distributionOnlyRemoteNames(repoRoot: string, baseLocale: string): Promise<string[]> {
-	const cardPath = resolve(repoRoot, weightsWorkspace(baseLocale), "model-card.json")
+	const cardPath = resolvePath(repoRoot, weightsWorkspace(baseLocale), "model-card.json")
 
 	const card = await readLocalJSONFile<{ fisher_artifact?: { file?: unknown; sidecar?: unknown } }>(cardPath)
 
@@ -358,7 +358,7 @@ async function downloadRemote(url: string): Promise<Buffer> {
  * `copy-weights.ts`; see AGENTS.md "symlinks in the publish tarball".
  */
 async function writeArtifact(destination: string, bytes: Buffer): Promise<void> {
-	await makeDirectories(resolve(destination, ".."))
+	await makeDirectories(resolvePath(destination, ".."))
 	await removePathIfPresent(destination)
 	await writeLocalFile(bytes, destination)
 }
@@ -480,7 +480,7 @@ export async function fetchHFWeights(
 				undeclared.add(plan.filename)
 			}
 
-			await writeArtifact(resolve(destRoot, plan.workspace, plan.filename), bytes)
+			await writeArtifact(resolvePath(destRoot, plan.workspace, plan.filename), bytes)
 			report.written += 1
 		}
 
@@ -507,7 +507,7 @@ export async function fetchHFWeights(
 			undeclared.add(plan.filename)
 		}
 
-		await writeArtifact(resolve(destRoot, plan.workspace, plan.filename), bytes)
+		await writeArtifact(resolvePath(destRoot, plan.workspace, plan.filename), bytes)
 		report.written += 1
 		report.bytes += bytes.byteLength
 	}
@@ -537,7 +537,7 @@ export function reportHFMaterialization(report: HFMaterializationReport): void {
 }
 
 async function main(): Promise<void> {
-	const { values } = parseArgs({
+	const { values } = parseArguments({
 		options: {
 			into: { type: "string" },
 			version: { type: "string" },
@@ -545,7 +545,7 @@ async function main(): Promise<void> {
 	})
 
 	const repoRoot = String(repoRootPath())
-	const destRoot = values.into ? resolve(repoRoot, values.into) : repoRoot
+	const destRoot = values.into ? resolvePath(repoRoot, values.into) : repoRoot
 	const report = await fetchHFWeights(destRoot, { repoRoot, ...(values.version ? { version: values.version } : {}) })
 
 	reportHFMaterialization(report)

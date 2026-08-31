@@ -9,7 +9,7 @@
  *   `poiQueryKind` flag (default-ON since 2026-07-20). Spec §3.1.
  */
 
-import type { NormalizedInputLite, QueryShapeLike } from "./types.ts"
+import type { NormalizedInputLite, QueryShapeLike } from "#types"
 
 /**
  * Comma-segment ceiling for a POI-led query. Past it the input is a venue plus a full address (`X, 350 5th Ave, New

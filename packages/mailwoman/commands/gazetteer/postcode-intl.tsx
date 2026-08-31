@@ -40,7 +40,9 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
+import { GeoPoint } from "@mailwoman/spatial"
 import { Box, Text } from "ink"
+import type { PathBuilderLike } from "path-ts"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
@@ -95,7 +97,7 @@ interface PostcodeAcc {
 /**
  * Stream the GeoNames postal TSV, accumulating centroid + bbox per (country, postcode).
  */
-async function readGeonames(file: string, want: Set<string>): Promise<Map<string, PostcodeAcc>> {
+async function readGeonames(file: PathBuilderLike, want: Set<string>): Promise<Map<string, PostcodeAcc>> {
 	const { TSVSpliterator } = await import("spliterator")
 
 	const acc = new Map<string, PostcodeAcc>()
@@ -108,18 +110,12 @@ async function readGeonames(file: string, want: Set<string>): Promise<Map<string
 
 		if (!countryCode || !want.has(countryCode)) continue
 		const postalCode = fields[1]
-		const latitude = Number(fields[9])
-		const longitude = Number(fields[10])
+		// `GeoPoint.from` answers null for a coordinate off the globe and for Null Island, the dump's placeholder.
+		const point = GeoPoint.from([Number(fields[10]), Number(fields[9])])
 
-		// TODO: use spatial point helpers.
-		if (
-			!postalCode ||
-			!Number.isFinite(latitude) ||
-			!Number.isFinite(longitude) ||
-			(latitude === 0 && longitude === 0)
-		) {
-			continue
-		}
+		if (!postalCode || !point) continue
+
+		const { latitude, longitude } = point
 
 		const key = `${countryCode}\t${postalCode}`
 		const cur = acc.get(key)
@@ -207,7 +203,11 @@ const SPR_COLUMNS = [
 	"lastmodified",
 ] as const
 
-async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normalizeKey: NormalizeKey): Promise<number> {
+async function buildShard(
+	acc: Map<string, PostcodeAcc>,
+	outPath: PathBuilderLike,
+	normalizeKey: NormalizeKey
+): Promise<number> {
 	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 
 	if (await pathExists(outPath)) {
@@ -273,9 +273,9 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normal
  * to a demo-ready DB without a full rebuild.
  */
 async function foldIntoCandidate(
-	shardPath: string,
-	srcPath: string,
-	dstPath: string,
+	shardPath: PathBuilderLike,
+	srcPath: PathBuilderLike,
+	dstPath: PathBuilderLike,
 	normalizeKey: NormalizeKey
 ): Promise<number> {
 	await copyFileTo(srcPath, dstPath)

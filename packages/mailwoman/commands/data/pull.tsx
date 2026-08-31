@@ -38,15 +38,12 @@
 import type { APIClient } from "@mailwoman/core/api"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { mailwomanDataRoot, md5File } from "@mailwoman/core/utils"
-import { basename, dirname } from "@mailwoman/platform/path"
-import { Readable } from "@mailwoman/platform/stream"
-import { pipeline } from "@mailwoman/platform/stream/promises"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Text } from "ink"
-import { resolvePath } from "path-ts"
+import { basename, dirname, resolvePath } from "path-ts"
 
 import {
 	type Check,
@@ -56,7 +53,6 @@ import {
 	type ParsedCommandComponent,
 	useCommandTask,
 } from "#cli-kit"
-
 import {
 	artifactURL,
 	BUNDLES,
@@ -64,8 +60,8 @@ import {
 	resolveBundleArtifacts,
 	type BundleArtifact,
 	type RemoteArtifactState,
-} from "../../data-bundles.ts"
-import { readReleaseManifest, resolveShardPath, type DataReleaseManifest } from "../../data-release.ts"
+} from "#data-bundles"
+import { readReleaseManifest, resolveShardPath, type DataReleaseManifest } from "#data-release"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -229,7 +225,7 @@ async function pullBundles(
 	opts: { dryRun: boolean; only?: string; force: boolean; dataRoot: string; host?: string }
 ): Promise<PullOutcome> {
 	const { dataRoot } = opts
-	const manifest = readReleaseManifest(dataRoot)
+	const manifest = await readReleaseManifest(dataRoot)
 	const checks: Check[] = []
 	let ok = true
 	let pulledCandidate = false

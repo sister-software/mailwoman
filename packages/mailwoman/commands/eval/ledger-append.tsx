@@ -66,7 +66,7 @@ interface Options {
 const EvalLedgerAppend: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { ledgerAppend } = await import("../../eval-harness/ledger-append.ts")
+			const { ledgerAppend } = await import("#eval-harness/ledger-append")
 
 			return await ledgerAppend(options)
 		},

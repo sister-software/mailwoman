@@ -25,7 +25,7 @@
  */
 
 import { Spinner } from "@inkjs/ui"
-import { statPath, pathExists } from "@mailwoman/core/fs/readers"
+import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers"
 import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "#cli-kit"
@@ -64,11 +64,11 @@ async function publishTiles(options: Options): Promise<string> {
 	if (!options.file.endsWith(".pmtiles")) throw new CommandError(`--file must be a .pmtiles archive: ${options.file}`)
 
 	const key = `${options.prefix}/${options.tileset}.pmtiles`
-	const sizeMb = (await statPath(options.file)).size / 1024 / 1024
+	const size = await formatFileSize(options.file)
 	const servedAt = `https://tiles.mailwoman.ai/${options.tileset}.json`
 
 	if (options.dryRun) {
-		return `[dry-run] ${options.file} (${sizeMb.toFixed(1)} MB) → ${options.bucket}/${key}\n[dry-run] would serve at ${servedAt}`
+		return `[dry-run] ${options.file} (${size}) → ${options.bucket}/${key}\n[dry-run] would serve at ${servedAt}`
 	}
 
 	const missing = REQUIRED_ENV.filter((v) => !$private[v])
@@ -87,7 +87,7 @@ async function publishTiles(options: Options): Promise<string> {
 		throw new CommandError(`rclone exited ${result.exitCode}: ${result.stderr.slice(-400)}`)
 	}
 
-	return `✓ ${options.bucket}/${key} (${sizeMb.toFixed(1)} MB)\n  served at ${servedAt}`
+	return `✓ ${options.bucket}/${key} (${size})\n  served at ${servedAt}`
 }
 
 const TilesPublish: ParsedCommandComponent<Options> = ({ options }) => {

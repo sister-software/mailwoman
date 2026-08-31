@@ -36,16 +36,9 @@ import { tempRootPath } from "@mailwoman/core/utils"
 import { CSVSpliterator, Delimiters } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
+import { makeMulberry32, type ShardRecipe } from "#shard-recipes/scaffold"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
-
-import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
-
-/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
-   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
-   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
-   extracted as named constants above. */
 
 const DEFAULT_COMMUNES = tempRootPath("reg", "fr-communes.tsv")
 const LICENSE = "BAN (Base Adresse Nationale) commune+postcode tuples, rendered admin-split — see ingest SOURCE"
@@ -95,6 +88,16 @@ async function readCommunes(path: string): Promise<CommuneRow[]> {
 	return rows
 }
 
+// 10% of communes render upper-case.
+const UPPER_LOCALITY_SHARE = 0.1
+// Layouts: 25% bare-comma, 25% bare-comma-pc, 20% space-pc, 15% canonical-pc-first, 15% commune-pc.
+const BARE_COMMA_CUTOFF = 0.25
+const BARE_COMMA_PC_CUTOFF = 0.5
+const SPACE_PC_CUTOFF = 0.7
+const CANONICAL_PC_FIRST_CUTOFF = 0.85
+// 20% of rows append an explicit "France" + a `country` component.
+const APPEND_COUNTRY_SHARE = 0.2
+
 /**
  * Render one admin-split variant. The CORE teaching signal: the département, even as a full word after a comma or a
  * space, is `region` — never folded into `locality`. Variants 1-3 are the failure class; 4-5 are canonical-FR
@@ -102,25 +105,25 @@ async function readCommunes(path: string): Promise<CommuneRow[]> {
  */
 function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 	const r = random()
-	const loc = random() < 0.1 ? c.commune.toUpperCase() : c.commune
+	const loc = random() < UPPER_LOCALITY_SHARE ? c.commune.toUpperCase() : c.commune
 	const dep = c.departement
 	const pc = c.postcode
 	let out: AdminSplitVariant
 
-	if (r < 0.25) {
+	if (r < BARE_COMMA_CUTOFF) {
 		// 1. bare comma, NO postcode — the Thauron/#727 shape (anchor off)
 		out = { raw: `${loc}, ${dep}`, components: { locality: loc, region: dep }, order: "bare-comma" }
-	} else if (r < 0.5) {
+	} else if (r < BARE_COMMA_PC_CUTOFF) {
 		// 2. bare comma + postcode — anchor ON
 		out = {
 			raw: `${loc}, ${dep} ${pc}`,
 			components: { locality: loc, region: dep, postcode: pc },
 			order: "bare-comma-pc",
 		}
-	} else if (r < 0.7) {
+	} else if (r < SPACE_PC_CUTOFF) {
 		// 3. space-delimited admin (the AU `CANBERRA ACT` fuse applied to FR) — anchor ON
 		out = { raw: `${loc} ${dep} ${pc}`, components: { locality: loc, region: dep, postcode: pc }, order: "space-pc" }
-	} else if (r < 0.85) {
+	} else if (r < CANONICAL_PC_FIRST_CUTOFF) {
 		// 4. canonical FR postcode-first (NO département) — preservation, anchor ON
 		out = { raw: `${pc} ${loc}`, components: { postcode: pc, locality: loc }, order: "canonical-pc-first" }
 	} else {
@@ -132,7 +135,7 @@ function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 	// token, so the model under-emitted country on FR (fr.country −3.5pp). ~20% of rows now append an
 	// explicit "France" + a `country` component — the model relearns to emit country WHEN the token is
 	// present without over-firing it on the (still-majority) country-less rows. Substring invariant holds.
-	if (random() < 0.2) {
+	if (random() < APPEND_COUNTRY_SHARE) {
 		out = {
 			raw: `${out.raw}, France`,
 			components: { ...out.components, country: "France" },

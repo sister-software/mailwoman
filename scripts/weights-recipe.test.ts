@@ -14,7 +14,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
+import { join, type PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 import { readWeightsRecipe } from "./weights-recipe.ts"
@@ -23,7 +23,7 @@ const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-async function fixture(config: unknown): Promise<{ repoRoot: string; dataRoot: string }> {
+async function fixture(config: unknown): Promise<{ repoRoot: PathBuilder; dataRoot: PathBuilder }> {
 	const repoRoot = fixtures.use(await temporaryDirectory("mw-recipe-repo-")).path
 	const dataRoot = fixtures.use(await temporaryDirectory("mw-recipe-data-")).path
 
@@ -62,8 +62,10 @@ describe("readWeightsRecipe — the base directory is per key", () => {
 			(await readWeightsRecipe(repoRoot, dataRoot)).linkableFor("en-us").map((a) => [a.shippedName, a])
 		)
 
+		const repoRootString = repoRoot.toString()
+
 		for (const name of ["anchor-lexicon-v1.json", "country-surface-lexicon-v1.json", "street-type-lexicon-v3.json"]) {
-			expect(by.get(name)?.sourcePath.startsWith(repoRoot), `${name} must be repo-relative`).toBe(true)
+			expect(by.get(name)?.sourcePath.startsWith(repoRootString), `${name} must be repo-relative`).toBe(true)
 		}
 	})
 

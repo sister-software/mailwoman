@@ -18,9 +18,10 @@
 import type { ReactNode } from "react"
 import type { LayerSpecification, SourceSpecification } from "react-map-gl/maplibre"
 
-import type { ParseResult, PipelineRuntime, ResolvedPlaceView } from "../pipeline/types.ts"
+import type { ResolvedMapPlace } from "#map/place-render"
+import type { ParseResult, PipelineRuntime, ResolvedPlaceView } from "#pipeline/types"
+
 import type { DemoMapStyle } from "./DemoMap.tsx"
-import type { ResolvedMapPlace } from "./place-render.ts"
 
 /**
  * `[longitude, latitude]`.

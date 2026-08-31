@@ -26,8 +26,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { jaccard } from "@mailwoman/match"
 
 import { addressFrequencyKey, streamRows } from "#index"
-
-import { norm } from "./shared.ts"
+import { norm } from "#tools/shared"
 
 /**
  * Options for {@linkcode goldSetSample}.

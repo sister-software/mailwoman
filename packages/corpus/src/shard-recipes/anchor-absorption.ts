@@ -14,11 +14,11 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
+import type { PathBuilderLike } from "path-ts"
 
+import { makeLcg, shardSourceID, type ShardRecipe } from "#shard-recipes/scaffold"
 import { synthesizeAnchorAbsorptionRow } from "#synthesizers/anchor-absorption"
 import { alignRow } from "#utils"
-
-import { makeLcg, shardSourceID, type ShardRecipe } from "./scaffold.ts"
 
 /**
  * The leading-5-digit source: the real US ZIPs in the postcode anchor's pilot lookup. Resolved through the data-root
@@ -29,7 +29,7 @@ const ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")
 /**
  * The real US ZIPs in the anchor lookup (entries whose value is a `[{ US: … }]` candidate list).
  */
-async function loadRealUsZips(path: string): Promise<string[]> {
+async function loadRealUsZips(path: PathBuilderLike): Promise<string[]> {
 	const d = await readLocalJSONFile<Record<string, unknown>>(path)
 	const zips: string[] = []
 

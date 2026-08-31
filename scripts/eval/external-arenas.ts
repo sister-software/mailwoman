@@ -10,12 +10,12 @@
  */
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { externalArenas } from "mailwoman/eval-harness/external-arenas"
 
 async function main(): Promise<void> {
 	// Flags replace the bash-era env contract (MODEL=… TOKENIZER=… → --model … --tokenizer …).
-	const { values: cli } = parseArgs({
+	const { values: cli } = parseArguments({
 		options: {
 			"out-dir": { type: "string" },
 			model: { type: "string" },

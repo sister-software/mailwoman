@@ -15,7 +15,7 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 
-import type { ShardRecipeOpts } from "../src/shard-recipes/scaffold.ts"
+import type { ShardRecipeOpts } from "#shard-recipes/scaffold"
 
 /**
  * The fields a shard-recipe assertion reads off an emitted row.

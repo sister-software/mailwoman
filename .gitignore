@@ -208,5 +208,3 @@ nightshift
 ## Subagent-driven-development scratch (ledgers, briefs, review packages) — per-plan, never committed
 .superpowers/
 
-## Codemod CLI update-check cache — machine-local, never a repository fact.
-.claude/codemod/

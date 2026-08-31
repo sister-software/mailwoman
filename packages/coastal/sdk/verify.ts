@@ -30,13 +30,13 @@
  *   it reads, which is how a rendering difference gets reported as a conversion defect.
  */
 
-import { interiorPointOfEncodedRings, pointInPolygonRings, segmentDistanceMetres } from "@mailwoman/spatial"
+import { interiorPointOfEncodedRings, pointInPolygon, segmentDistanceMetres } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { CoastalErosionLookup, CoastalReadingKind, type CoastalErosionReading } from "../index.ts"
-import type { CoastalDatabase } from "../schema.ts"
-import { NCERM_SCENARIOS_BY_KEY } from "../vocabulary.ts"
-import { EA_NCERM_SPATIAL_BASE_URL, type EANCERMClient } from "./client.ts"
+import { CoastalErosionLookup, CoastalReadingKind, type CoastalErosionReading } from "#index"
+import type { CoastalDatabase } from "#schema"
+import { EA_NCERM_SPATIAL_BASE_URL, type EANCERMClient } from "#sdk/client"
+import { NCERM_SCENARIOS_BY_KEY } from "#vocabulary"
 
 /**
  * One point, both verdicts, and whether they agree.
@@ -300,7 +300,7 @@ async function readServiceContainment(
 				}
 			}
 
-			if (!inside && pointInPolygonRings(longitude, latitude, rings as [number, number][][])) {
+			if (!inside && pointInPolygon(longitude, latitude, rings)) {
 				inside = true
 			}
 		}

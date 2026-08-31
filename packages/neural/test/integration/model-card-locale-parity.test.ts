@@ -16,7 +16,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { describe, expect, test } from "vitest"
 
 /**
@@ -49,9 +49,7 @@ interface EvidenceChannel {
 }
 
 const readCard = async (locale: string) =>
-	await readLocalJSONFile<ModelCard>(
-		fileURLToPath(import.meta.resolve(`@mailwoman/neural-weights-${locale}/model-card.json`))
-	)
+	await readLocalJSONFile<ModelCard>(resolveModulePath(`@mailwoman/neural-weights-${locale}/model-card.json`))
 
 const enUs = await readCard("en-us")
 const frFr = await readCard("fr-fr")

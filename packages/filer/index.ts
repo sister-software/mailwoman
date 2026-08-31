@@ -1,2 +1,2 @@
-export * from "./schema.ts"
-export * from "./sdk/index.ts"
+export * from "#schema"
+export * from "#sdk/index"

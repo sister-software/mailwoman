@@ -10,8 +10,8 @@
 
 import { z } from "zod"
 
-import { runProvenance } from "../provenance.ts"
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
+import { runProvenance } from "#provenance"
+import type { DevTool, DevToolDeps } from "#tool-kit"
 
 export const provenanceTool = (_deps: DevToolDeps): DevTool => ({
 	name: "mwdev_provenance",

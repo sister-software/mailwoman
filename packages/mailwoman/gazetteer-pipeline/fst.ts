@@ -28,16 +28,17 @@
  *   operator-gated after the battery.
  */
 
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
-import { join, resolve } from "@mailwoman/platform/path"
 import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
 import { fstStaleReason, peekFSTStampFields, readWOFSourceIdentity } from "@mailwoman/resolver-wof-sqlite/fst-freshness"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join, resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 /**
@@ -417,7 +418,7 @@ export interface BuiltLocaleFST {
 export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<BuiltLocaleFST[]> {
 	const locales = opts.locales ?? [...FST_LOCALES.keys()]
 	const dbPath = opts.dbPath ?? String(dataRootPath("wof", "admin-global-priority.db"))
-	const outputDir = resolve(opts.outputDir ?? String(dataRootPath("wof", "fst-per-locale-curated")))
+	const outputDir = resolvePath(opts.outputDir ?? String(dataRootPath("wof", "fst-per-locale-curated")))
 	const progress = opts.onProgress ?? (() => {})
 
 	const exclusion = opts.uncurated ? undefined : await loadDegenerateSurfaces()
@@ -474,7 +475,7 @@ export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<B
 		})
 
 		progress(
-			`  wrote ${outPath} (${(bytes.length / 1e6).toFixed(1)} MB, ${provenance.nameInsertions} insertions, ${provenance.excludedInsertions ?? 0} excluded)`
+			`  wrote ${outPath} (${ByteFormatter.formatIEC(bytes.length)}, ${provenance.nameInsertions} insertions, ${provenance.excludedInsertions ?? 0} excluded)`
 		)
 	}
 

@@ -24,7 +24,7 @@
 
 import type { CircleLayerSpecification, VectorSourceSpecification } from "@maplibre/maplibre-gl-style-spec"
 
-import { TileSetSourceID } from "../styles/sources.ts"
+import { TileSetSourceID } from "#styles/sources"
 
 /**
  * Tile set id for the dot-density race layer, one dot per N people (see `tiger/tools/race-dots.ts`).

@@ -18,8 +18,8 @@ import { tryParsingJSON } from "@mailwoman/core/objects"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { Kysely } from "kysely"
 
-import type { CapitalPoint } from "./capitals.ts"
-import { hasTable } from "./sqlite-utils.ts"
+import type { CapitalPoint } from "#capitals"
+import { hasTable } from "#sqlite-utils"
 
 /**
  * The table name the builder writes and the reader probes — one word, singular, matching the artifact's other reference

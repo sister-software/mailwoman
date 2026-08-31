@@ -16,7 +16,7 @@
 import type { ReactNode } from "react"
 import { Layer, Source } from "react-map-gl/maplibre"
 
-import type { PlaceGeometry } from "./geometry.ts"
+import type { PlaceGeometry } from "#map/geometry"
 
 /**
  * The house pink, matched to {@link PlaceMarker}.

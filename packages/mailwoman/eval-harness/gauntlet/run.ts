@@ -38,11 +38,11 @@
  *   Wire into the release flow as a `before:release` gate (RELEASING.md): a non-zero exit blocks the ship.
  */
 
-import { type AblationLayerOptions, runAblationLayer } from "./ablation.ts"
-import { describeResolverLevers, type GauntletResolverLevers } from "./harness.ts"
-import { runHoldoutLayer } from "./holdout.ts"
-import { runMetamorphicLayer } from "./metamorphic.ts"
-import { type GauntletLayerOptions, runRegressionLayer } from "./regression.ts"
+import { type AblationLayerOptions, runAblationLayer } from "#eval-harness/gauntlet/ablation"
+import { describeResolverLevers, type GauntletResolverLevers } from "#eval-harness/gauntlet/harness"
+import { runHoldoutLayer } from "#eval-harness/gauntlet/holdout"
+import { runMetamorphicLayer } from "#eval-harness/gauntlet/metamorphic"
+import { type GauntletLayerOptions, runRegressionLayer } from "#eval-harness/gauntlet/regression"
 
 /**
  * The Gauntlet layers. The first three are GATES and make up the combined verdict; `ablation` is a MEASUREMENT layer —

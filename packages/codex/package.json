@@ -26,6 +26,13 @@
 		"!test/**"
 	],
 	"type": "module",
+	"imports": {
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
@@ -303,11 +310,11 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@mailwoman/platform": "workspace:*",
 		"type-fest": "^5.8.0"
 	},
 	"devDependencies": {
 		"@mailwoman/annotations": "workspace:*",
-		"@mailwoman/core": "workspace:*"
+		"@mailwoman/core": "workspace:*",
+		"path-ts": "^2.3.0"
 	}
 }

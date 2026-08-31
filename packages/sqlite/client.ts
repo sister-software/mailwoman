@@ -11,12 +11,14 @@ import {
 	type SQLInputValue,
 	type SQLOutputValue,
 	type StatementSync,
-} from "@mailwoman/platform/sqlite"
-import { Kysely, type KyselyConfig } from "kysely"
+} from "node:sqlite"
 
-import type { Database } from "./database-schema.ts"
-import type { SqliteDialectConfig } from "./dialect-config.ts"
-import { SqliteDialect } from "./dialect.ts"
+import { Kysely, type KyselyConfig } from "kysely"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
+
+import type { Database } from "#database-schema"
+import { SqliteDialect } from "#dialect"
+import type { SqliteDialectConfig } from "#dialect-config"
 
 /**
  * A SQLite client for one database file: a Kysely query builder over `node:sqlite`, plus the two raw statements Kysely
@@ -55,21 +57,22 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 
 	readonly #database: DatabaseSync
 
-	constructor(location: string, options?: DatabaseSyncOptions, config?: Partial<KyselyConfig>)
+	constructor(location: PathBuilderLike, options?: DatabaseSyncOptions, config?: Partial<KyselyConfig>)
 	constructor(database: DatabaseSync, config?: Partial<KyselyConfig>)
 	constructor(dialectConfig: SqliteDialectConfig, config?: Partial<KyselyConfig>)
 	constructor(
-		source: string | DatabaseSync | SqliteDialectConfig,
+		source: PathBuilderLike | DatabaseSync | SqliteDialectConfig,
 		optionsOrConfig?: DatabaseSyncOptions | Partial<KyselyConfig>,
 		config?: Partial<KyselyConfig>
 	) {
 		let database: DatabaseSync
 		let kyselyConfig: Partial<KyselyConfig> | undefined
 
-		if (typeof source === "string") {
+		if (typeof source === "string" || source instanceof PathBuilder) {
+			const location = source.toString()
 			const options = optionsOrConfig as DatabaseSyncOptions | undefined
 			// node:sqlite checks the argument count, not the value: `new DatabaseSync(path, undefined)` throws.
-			const openArgs: [string, DatabaseSyncOptions?] = options ? [source, options] : [source]
+			const openArgs: [string, DatabaseSyncOptions?] = options ? [location, options] : [location]
 
 			database = new DatabaseSync(...openArgs)
 			kyselyConfig = config
@@ -157,4 +160,4 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
  * The `node:sqlite` types a caller needs when it holds a statement or binds a value. Re-exported so nothing has to
  * reach past this package for them.
  */
-export type { DatabaseSyncOptions, SQLInputValue, SQLOutputValue, StatementSync } from "@mailwoman/platform/sqlite"
+export type { DatabaseSyncOptions, SQLInputValue, SQLOutputValue, StatementSync } from "node:sqlite"

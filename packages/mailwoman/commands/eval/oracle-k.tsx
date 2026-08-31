@@ -63,7 +63,7 @@ interface Options {
 const EvalOracleK: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { runOracleK } = await import("../../eval-harness/oracle-k.ts")
+			const { runOracleK } = await import("#eval-harness/oracle-k")
 
 			return (
 				await runOracleK({

@@ -6,10 +6,10 @@
  *   GeoJSON Geometry Collection
  */
 
-import type { GeoObjectLiteral } from "../objects.ts"
-import type { LineStringLiteral, MultiLineStringLiteral } from "./line-string.ts"
-import type { MultiPointLiteral, PointLiteral } from "./point.ts"
-import type { MultiPolygonLiteral, PolygonLiteral } from "./polygon.ts"
+import type { LineStringLiteral, MultiLineStringLiteral } from "#geometries/line-string"
+import type { MultiPointLiteral, PointLiteral } from "#geometries/point"
+import type { MultiPolygonLiteral, PolygonLiteral } from "#geometries/polygon"
+import type { GeoObjectLiteral } from "#objects"
 
 /**
  * Union of the GeoJSON geometry types.

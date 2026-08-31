@@ -32,9 +32,9 @@
  *   green. A control set that cannot fail is not a control set.
  */
 
-import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { sha256Hex } from "@mailwoman/core/utils"
-import { fileURLToPath } from "@mailwoman/platform/url"
 
 import {
 	type CaseGrade,
@@ -42,7 +42,7 @@ import {
 	type POIBoardExpect,
 	type POIBoardFixture,
 	type POIBoardOutcome,
-} from "../poi-board.ts"
+} from "#eval-harness/poi-board"
 
 /**
  * The closed set of outcome shapes this probe reads, derived from `PipelineResult["path"]` and
@@ -264,13 +264,8 @@ export interface ProbeFreezeRecord {
 }
 
 function sourceRelative(name: string): string {
-	// `tsc` emits no `.json` into `out/`, so a compiled caller reads the source-tree copy — the same bridge
-	// `conformance/case-folding.ts` uses for its `.jsonl`.
-	const sibling = fileURLToPath(new URL(name, import.meta.url))
-
-	if (pathExistsSync(sibling)) return sibling
-
-	return fileURLToPath(new URL(`../../../eval-harness/semantic-utility/${name}`, import.meta.url))
+	// `tsc` emits no `.json` into `out/`, so the file is named from the package root rather than from this module.
+	return resolvePackagePath("mailwoman", "eval-harness", "semantic-utility", name)
 }
 
 /**
@@ -451,12 +446,12 @@ function auditThresholds(definition: SemanticProbeDefinition): string[] {
  * Three refusals, in order: the freeze record must name this definition and version, the definition's content hash must
  * equal the frozen hash, and the audit must be clean. A caller never receives a definition it may only partly trust.
  */
-export function loadProbeDefinition(
+export async function loadProbeDefinition(
 	definitionPath: string = PROBE_DEFINITION_PATH,
 	freezePath: string = PROBE_FREEZE_PATH
-): SemanticProbeDefinition {
-	const definition = readLocalJSONFileSync<SemanticProbeDefinition>(definitionPath)
-	const freeze = readLocalJSONFileSync<ProbeFreezeRecord>(freezePath)
+): Promise<SemanticProbeDefinition> {
+	const definition = await readLocalJSONFile<SemanticProbeDefinition>(definitionPath)
+	const freeze = await readLocalJSONFile<ProbeFreezeRecord>(freezePath)
 
 	if (freeze.probeID !== definition.probeID) {
 		throw new Error(

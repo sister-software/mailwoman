@@ -33,13 +33,13 @@ import { createPostalAddressID } from "@mailwoman/address-id"
 import type { ComponentDict } from "@mailwoman/formatter"
 import { type AddressGeocode, type ResolutionTier, toPostalAddress, withGeocode } from "@mailwoman/record"
 
-import { OracleProvider, type OracleGeocodeResult, regionPrefix } from "../result.ts"
+import { OracleProvider, type OracleGeocodeResult, regionPrefix } from "#result"
 import {
 	type GoogleAddressComponent,
 	type GoogleGeocodeResult,
 	GoogleLocationType,
 	type GoogleLatLngLiteral,
-} from "./google-types.ts"
+} from "#sdk/google-types"
 
 /**
  * Which half of a component to take: Google's expanded text or its abbreviation.

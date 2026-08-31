@@ -12,8 +12,8 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, setTimestamps, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
 import { md5FileWithSidecar } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()

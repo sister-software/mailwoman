@@ -7,7 +7,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, makeDirectoryExclusive, removePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { renderTaskList, workerMain, type TodoItem } from "@mailwoman/dev-mcp/hooks/todo-issue-sync"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { afterEach, describe, expect, it } from "vitest"
 
 /**
@@ -16,7 +16,7 @@ import { afterEach, describe, expect, it } from "vitest"
 let fixtures = new AsyncDisposableStack()
 
 async function fixture(): Promise<{ cwd: string; dir: string; lock: string; payload: string }> {
-	const cwd = fixtures.use(await temporaryDirectory("mw-todo-sync-")).path
+	const cwd = String(fixtures.use(await temporaryDirectory("mw-todo-sync-")).path)
 	const dir = join(cwd, ".claude", "state", "todo-sync")
 
 	await makeDirectories(dir)

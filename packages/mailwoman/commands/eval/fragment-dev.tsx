@@ -46,7 +46,7 @@ interface Options {
 
 const EvalFragmentDev: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { runFragmentDev } = await import("../../eval-harness/fragment-dev.ts")
+		const { runFragmentDev } = await import("#eval-harness/fragment-dev")
 
 		await runFragmentDev({
 			locale: options.locale,

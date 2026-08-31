@@ -15,7 +15,7 @@
  *   Sources street types from `core/data/libpostal/dictionaries/fr/street_types.txt`.
  */
 
-import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { resourceDictionaryPath } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
@@ -24,12 +24,12 @@ import { TextSpliterator } from "spliterator"
  */
 const MIN_TOKENS_FOR_DECOMPOSE = 3
 
-function loadDictionary(filename: string): Set<string> {
+async function loadDictionary(filename: string): Promise<Set<string>> {
 	// `resourceDictionaryPath` already resolves both layouts — `core/data/...` from source and from the
 	// packaged `out/` tree. The candidate list this replaced named it TWICE and then guessed a third path
 	// off `process.cwd()`, and swallowed every error while probing, so a corrupt dictionary reported as a
 	// missing one.
-	const text = readLocalTextFileSync(resourceDictionaryPath("libpostal", "fr", filename))
+	const text = await readLocalTextFile(resourceDictionaryPath("libpostal", "fr", filename))
 	const set = new Set<string>()
 
 	// The largest libpostal dictionary is 8.4 KB, and this runs once per process at module load.
@@ -51,7 +51,7 @@ function loadDictionary(filename: string): Set<string> {
 	return set
 }
 
-const STREET_TYPES_FR = loadDictionary("street_types.txt")
+const STREET_TYPES_FR = await loadDictionary("street_types.txt")
 
 export interface DecomposedFrStreet {
 	prefix: string | null

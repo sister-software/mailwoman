@@ -30,17 +30,22 @@
 		"!test/**"
 	],
 	"type": "module",
+	"imports": {
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
 	"exports": {
 		"./*": "./*"
 	},
 	"publishConfig": {
 		"access": "public"
 	},
-	"dependencies": {
-		"@mailwoman/platform": "workspace:*"
-	},
 	"devDependencies": {
 		"@mailwoman/core": "workspace:*",
-		"@mailwoman/resolver-wof-sqlite": "workspace:*"
+		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"path-ts": "^2.3.0"
 	}
 }

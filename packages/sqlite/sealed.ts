@@ -12,9 +12,9 @@
  *   seal check against the filesystem before the handle is constructed.
  */
 
-import { DatabaseClient } from "./client.ts"
-import type { Database } from "./database-schema.ts"
-import { assertUnsealedForWrite } from "./sealed-db.ts"
+import { DatabaseClient } from "#client"
+import type { Database } from "#database-schema"
+import { assertUnsealedForWrite } from "#sealed-db"
 
 /**
  * Open a built data artifact. Read-only by default; `write: true` is for builders working on UNsealed staging, and

@@ -14,8 +14,8 @@
 
 import type { ReactNode } from "react"
 
-import { cx } from "../common/cx.ts"
-import type { Suggestion } from "./types.ts"
+import { cx } from "#common/cx"
+import type { Suggestion } from "#map/types"
 
 export interface PlaceAutocompleteProps {
 	/**

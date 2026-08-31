@@ -8,7 +8,7 @@
  *   ground the source never saw.
  */
 
-import type { GeojsonGeometry, GeojsonPosition } from "@mailwoman/spatial"
+import type { LineStringPath, ParsedGeometry, PolygonRings } from "@mailwoman/spatial"
 import { geometryContains } from "@mailwoman/spatial"
 import { cellToBoundary } from "h3-js"
 import { describe, expect, it } from "vitest"
@@ -23,8 +23,8 @@ import {
 /**
  * A lon/lat square, counter-clockwise and closed.
  */
-function square(minLon: number, minLat: number, size: number): GeojsonGeometry {
-	const ring: GeojsonPosition[] = [
+function square(minLon: number, minLat: number, size: number): ParsedGeometry {
+	const ring: LineStringPath = [
 		[minLon, minLat],
 		[minLon + size, minLat],
 		[minLon + size, minLat + size],
@@ -52,8 +52,8 @@ describe("regionCoverageCells", () => {
 			{
 				type: "MultiPolygon",
 				coordinates: [
-					(square(2, 48.5, 0.3) as { coordinates: GeojsonPosition[][] }).coordinates,
-					(square(6, 48.5, 0.3) as { coordinates: GeojsonPosition[][] }).coordinates,
+					(square(2, 48.5, 0.3) as { coordinates: PolygonRings }).coordinates,
+					(square(6, 48.5, 0.3) as { coordinates: PolygonRings }).coordinates,
 				],
 			},
 			6
@@ -63,7 +63,7 @@ describe("regionCoverageCells", () => {
 	})
 
 	it("refuses a geometry that is not a polygon", () => {
-		const point: GeojsonGeometry = { type: "Point", coordinates: [2, 48] }
+		const point: ParsedGeometry = { type: "Point", coordinates: [2, 48] }
 
 		expect(() => regionCoverageCells(point, 6)).toThrow(/Polygon or MultiPolygon/)
 	})
@@ -92,9 +92,9 @@ describe("interiorCoverageCells", () => {
 	})
 
 	it("keeps a hole out of the interior", () => {
-		const outer = (square(2, 48.5, 1) as { coordinates: GeojsonPosition[][] }).coordinates[0]!
-		const hole = (square(2.4, 48.9, 0.2) as { coordinates: GeojsonPosition[][] }).coordinates[0]!
-		const holed: GeojsonGeometry = { type: "Polygon", coordinates: [outer, hole] }
+		const outer = (square(2, 48.5, 1) as { coordinates: PolygonRings }).coordinates[0]!
+		const hole = (square(2.4, 48.9, 0.2) as { coordinates: PolygonRings }).coordinates[0]!
+		const holed: ParsedGeometry = { type: "Polygon", coordinates: [outer, hole] }
 		const solid = new Set(interiorCoverageCells(REGION, 6))
 		const punched = new Set(interiorCoverageCells(holed, 6))
 
@@ -120,11 +120,11 @@ describe("geometryBBox", () => {
 	})
 
 	it("spans every polygon of a MultiPolygon", () => {
-		const multi: GeojsonGeometry = {
+		const multi: ParsedGeometry = {
 			type: "MultiPolygon",
 			coordinates: [
-				(square(2, 48.5, 0.3) as { coordinates: GeojsonPosition[][] }).coordinates,
-				(square(6, 50, 0.3) as { coordinates: GeojsonPosition[][] }).coordinates,
+				(square(2, 48.5, 0.3) as { coordinates: PolygonRings }).coordinates,
+				(square(6, 50, 0.3) as { coordinates: PolygonRings }).coordinates,
 			],
 		}
 

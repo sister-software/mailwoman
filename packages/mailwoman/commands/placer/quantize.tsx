@@ -7,6 +7,7 @@
  *   symmetric scales, 4× smaller). Verify the accuracy cost with `placer eval quant-compare`.
  */
 
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -46,7 +47,7 @@ const PlacerQuantize: ParsedCommandComponent<Options> = ({ options }) => {
 
 		return (
 			<Text color="green">
-				{(fp32Bytes / 1e6).toFixed(2)} MB fp32 → {(int8Bytes / 1e6).toFixed(2)} MB int8 → {outDir}
+				{`${ByteFormatter.formatIEC(fp32Bytes)} fp32 → ${ByteFormatter.formatIEC(int8Bytes)} int8 → ${outDir}`}
 			</Text>
 		)
 	}

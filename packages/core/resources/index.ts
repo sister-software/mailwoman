@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./debugging.ts"
-export * from "./git.ts"
-export * from "./languages/index.ts"
-export * from "./libpostal.ts"
-export * from "./locale.ts"
-export * from "./set.ts"
-export * from "./whosonfirst/index.ts"
+export * from "#resources/debugging"
+export * from "#resources/git"
+export * from "#resources/languages/index"
+export * from "#resources/libpostal"
+export * from "#resources/locale"
+export * from "#resources/set"
+export * from "#resources/whosonfirst/index"

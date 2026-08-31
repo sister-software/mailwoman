@@ -10,7 +10,7 @@
  */
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { deOrderEval } from "mailwoman/eval-harness/de-order-eval"
 
 async function main(): Promise<void> {
@@ -18,7 +18,7 @@ async function main(): Promise<void> {
 	let values: Record<string, string | boolean | undefined>
 
 	try {
-		values = parseArgs({
+		values = parseArguments({
 			options: {
 				"anchor-lookup": { type: "string" },
 				card: { type: "string" },

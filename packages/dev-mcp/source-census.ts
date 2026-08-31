@@ -25,12 +25,11 @@
  *   returned nothing" and "we never looked there" are the two facts this file exists to keep apart.
  */
 
-import { pathExists, readDirectory } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join, type PathBuilderLike } from "path-ts"
 
 /**
  * What a shard can be joined THROUGH, which decides what a corpus builder can extract from it.
@@ -78,14 +77,14 @@ function tableNames(db: DatabaseClient<WOFDatabase>): string[] {
 /**
  * Census one SQLite artifact. Never throws — an unreadable file is a finding, not an error.
  */
-export function censusArtifact(path: string, countries?: readonly string[]): SourceCensusRow {
+export async function censusArtifact(path: string, countries?: readonly string[]): Promise<SourceCensusRow> {
 	const artifact = path.split("/").pop() ?? path
 
-	if (!pathExistsSync(path)) {
+	if (!(await pathExists(path))) {
 		return { artifact, bytes: 0, tables: 0, join: [], readable: false, reason: "not on disk" }
 	}
 
-	const bytes = statPathSync(path).size
+	const bytes = (await statPath(path)).size
 
 	let db: DatabaseClient<WOFDatabase>
 
@@ -161,8 +160,8 @@ export function censusArtifact(path: string, countries?: readonly string[]): Sou
  * `.prev`, `.bak` and journal siblings are excluded: they are on disk on purpose and censusing them reports the same
  * country twice under names nobody can act on.
  */
-export async function gazetteerArtifacts(dataRoot?: string): Promise<string[]> {
-	const wof = join(dataRoot ?? String(mailwomanDataRoot()), "wof")
+export async function gazetteerArtifacts(dataRoot?: PathBuilderLike): Promise<string[]> {
+	const wof = join(dataRoot ?? mailwomanDataRoot(), "wof")
 
 	if (!(await pathExists(wof))) return []
 

@@ -19,16 +19,16 @@ import { describe, expect, it } from "vitest"
 const DICTIONARIES_DIR = resourceDictionaryPath("libpostal")
 
 describe("buildStreetMorphologyFST", () => {
-	it("ingests the libpostal street_types dictionaries", () => {
-		const result = buildStreetMorphologyFST({ dictionariesDir: DICTIONARIES_DIR })
+	it("ingests the libpostal street_types dictionaries", async () => {
+		const result = await buildStreetMorphologyFST({ dictionariesDir: DICTIONARIES_DIR })
 
 		expect(result.locales.length).toBeGreaterThan(40)
 		expect(result.canonicalCount).toBeGreaterThan(500)
 		expect(result.insertCount).toBeGreaterThan(result.canonicalCount)
 	})
 
-	it("recognises the English canonical 'avenue' and its variants", () => {
-		const { matcher } = buildStreetMorphologyFST({ dictionariesDir: DICTIONARIES_DIR, locales: ["en"] })
+	it("recognises the English canonical 'avenue' and its variants", async () => {
+		const { matcher } = await buildStreetMorphologyFST({ dictionariesDir: DICTIONARIES_DIR, locales: ["en"] })
 
 		const avenue = matcher.query("avenue")
 		expect(avenue.accepting.length).toBeGreaterThan(0)
@@ -48,8 +48,8 @@ describe("buildStreetMorphologyFST", () => {
 		expect(av.accepting).toHaveLength(0)
 	})
 
-	it("recognises French 'rue' and German 'straße' canonicals", () => {
-		const { matcher } = buildStreetMorphologyFST({ dictionariesDir: DICTIONARIES_DIR, locales: ["fr", "de"] })
+	it("recognises French 'rue' and German 'straße' canonicals", async () => {
+		const { matcher } = await buildStreetMorphologyFST({ dictionariesDir: DICTIONARIES_DIR, locales: ["fr", "de"] })
 
 		const rue = matcher.query("rue")
 		expect(rue.accepting.some((e) => e.name === "rue" && e.placetype === "street_affix")).toBe(true)
@@ -59,8 +59,8 @@ describe("buildStreetMorphologyFST", () => {
 		expect(strasse.accepting.some((e) => e.placetype === "street_affix")).toBe(true)
 	})
 
-	it("round-trips through serialize + deserialize", () => {
-		const { matcher, provenance } = buildStreetMorphologyFST({
+	it("round-trips through serialize + deserialize", async () => {
+		const { matcher, provenance } = await buildStreetMorphologyFST({
 			dictionariesDir: DICTIONARIES_DIR,
 			locales: ["en"],
 		})

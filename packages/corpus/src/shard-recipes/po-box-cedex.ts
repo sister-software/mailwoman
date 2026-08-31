@@ -38,15 +38,8 @@ import { isPOBox } from "@mailwoman/codex/us"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { dataRootPath } from "@mailwoman/core/utils"
+import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator, TSVSpliterator } from "spliterator"
-
-import {
-	maybeNoisifyBoxNumber,
-	PO_BOX_LOCALE_TEMPLATES,
-	synthesizeMilitaryPoBoxRow,
-	type LocaleTemplate,
-} from "#synthesizers/po-box"
-import { alignRow } from "#utils"
 
 import {
 	makeMulberry32,
@@ -55,17 +48,19 @@ import {
 	shardSourceID,
 	type CanonicalShardRow,
 	type ShardRecipe,
-} from "./scaffold.ts"
+} from "#shard-recipes/scaffold"
+import {
+	maybeNoisifyBoxNumber,
+	PO_BOX_LOCALE_TEMPLATES,
+	synthesizeMilitaryPoBoxRow,
+	type LocaleTemplate,
+} from "#synthesizers/po-box"
+import { alignRow } from "#utils"
 
 // ── Base-skeleton sources ────────────────────────────────────────────────────────────────────────
 // Same OA cache as the unit/affix shards. US train = every NON-Vermont state; US eval = Vermont (the
 // corpus defaultHoldout). FR comes from the BAN-derived countrywide extract (stride-sampled — the
 // file is 2.5 GB and insee-ordered, so a head-only read would be all département 01).
-/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
-   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
-   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
-   extracted as named constants above. */
 
 const US_TRAIN_SOURCES = [
 	{ zip: dataRootPath("oa-cache", "us__ca__berkeley.zip"), csv: "us/ca/berkeley.csv", region: "CA" },
@@ -241,7 +236,7 @@ const cleanLocality = (loc: string) =>
 /**
  * Stream real US tuples (number/street/city/postcode) out of a cached OA zip.
  */
-async function readUsTuples(source: { zip: string; csv: string; region: string }): Promise<USTuple[]> {
+async function readUsTuples(source: { zip: PathBuilderLike; csv: string; region: string }): Promise<USTuple[]> {
 	const tuples: USTuple[] = []
 	const seen = new Set<string>()
 
@@ -359,7 +354,7 @@ async function readCaLocalities(admin1: string): Promise<string[]> {
  * label.
  */
 async function readPostalTuples(
-	source: { zip: string; txt: string },
+	source: { zip: PathBuilderLike; txt: string },
 	opts: { withState: boolean }
 ): Promise<Array<AUTuple | NZTuple>> {
 	if (!(await pathExists(source.zip))) {
@@ -393,20 +388,29 @@ async function readPostalTuples(
 
 // ── Rendering helpers ────────────────────────────────────────────────────────────────────────────
 
+// Box-number bands: 30% 1–2 digits, 40% 3 digits, 25% 4 digits, 5% 5 digits.
+const BOX_TWO_DIGIT_CUTOFF = 0.3
+const BOX_THREE_DIGIT_CUTOFF = 0.7
+const BOX_FOUR_DIGIT_CUTOFF = 0.95
+
 /**
  * Box-number distribution (mirrors the corpus defaultPickNumber bands: 70% are 1-3 digits).
  */
 function pickBoxNumber(random: () => number): string {
 	const r = random()
 
-	if (r < 0.3) return String(1 + Math.floor(random() * 99))
+	if (r < BOX_TWO_DIGIT_CUTOFF) return String(1 + Math.floor(random() * 99))
 
-	if (r < 0.7) return String(100 + Math.floor(random() * 900))
+	if (r < BOX_THREE_DIGIT_CUTOFF) return String(100 + Math.floor(random() * 900))
 
-	if (r < 0.95) return String(1000 + Math.floor(random() * 9000))
+	if (r < BOX_FOUR_DIGIT_CUTOFF) return String(1000 + Math.floor(random() * 9000))
 
 	return String(10_000 + Math.floor(random() * 90_000))
 }
+
+// Designator casing: 70% as templated, 22% UPPER, 8% lower.
+const TEMPLATE_CASE_CUTOFF = 0.7
+const UPPER_CASE_CUTOFF = 0.92
 
 /**
  * Case dial for the designator phrase: mostly template casing, sometimes UPPER, rarely lower.
@@ -414,9 +418,9 @@ function pickBoxNumber(random: () => number): string {
 function caseDial(random: () => number, s: string): string {
 	const r = random()
 
-	if (r < 0.7) return s
+	if (r < TEMPLATE_CASE_CUTOFF) return s
 
-	if (r < 0.92) return s.toUpperCase()
+	if (r < UPPER_CASE_CUTOFF) return s.toUpperCase()
 
 	return s.toLowerCase()
 }
@@ -429,6 +433,9 @@ const CODEX_COVERED_LEADERS = new Set(
 	["PO Box", "P.O. Box", "P.O.Box", "PO BOX", "Post Office Box", "Box", ...US_LEADERS_RARE].map((l) => l.toLowerCase())
 )
 
+// One leader in ten comes from the rare list when the caller supplies one (shared with the AU/NZ composer).
+const RARE_LEADER_SHARE = 0.1
+
 /**
  * Compose a po_box phrase. "#" joins without a space ("#500", the golden PMB variant).
  */
@@ -439,7 +446,7 @@ function makePoBoxPhrase(
 ): string {
 	let leader = leaders[Math.floor(random() * leaders.length)]!
 
-	if (rareLeaders && random() < 0.1) {
+	if (rareLeaders && random() < RARE_LEADER_SHARE) {
 		leader = rareLeaders[Math.floor(random() * rareLeaders.length)]!
 	}
 
@@ -456,16 +463,21 @@ function makePoBoxPhrase(
 	return phrase
 }
 
+// CEDEX word casing: 60% CEDEX, 30% Cedex, 10% cedex; one office in five is un-numbered.
+const CEDEX_UPPER_CUTOFF = 0.6
+const CEDEX_TITLE_CUTOFF = 0.9
+const CEDEX_UNNUMBERED_SHARE = 0.2
+
 /**
  * A CEDEX designation: "CEDEX 08" / "Cedex 8" / bare "CEDEX". Shape contract = codex fr/cedex — every emitted phrase
  * must satisfy isCedex, loud.
  */
 function makeCedex(random: () => number): string {
 	const r = random()
-	const word = r < 0.6 ? "CEDEX" : r < 0.9 ? "Cedex" : "cedex"
+	const word = r < CEDEX_UPPER_CUTOFF ? "CEDEX" : r < CEDEX_TITLE_CUTOFF ? "Cedex" : "cedex"
 
 	const phrase = (() => {
-		if (random() < 0.2) return word // "33077 BORDEAUX CEDEX" — un-numbered offices are common
+		if (random() < CEDEX_UNNUMBERED_SHARE) return word // "33077 BORDEAUX CEDEX" — un-numbered offices are common
 		const n = 1 + Math.floor(random() * 20)
 		const id = random() < 0.5 ? String(n).padStart(2, "0") : String(n)
 
@@ -491,7 +503,7 @@ function makeAuNzPoBoxPhrase(
 ): string {
 	let leader = leaders[Math.floor(random() * leaders.length)]!
 
-	if (rareLeaders && random() < 0.1) {
+	if (rareLeaders && random() < RARE_LEADER_SHARE) {
 		leader = rareLeaders[Math.floor(random() * rareLeaders.length)]!
 	}
 
@@ -533,20 +545,26 @@ const pick = <T>(random: () => number, arr: ReadonlyArray<T>): T => arr[Math.flo
 
 // ── Per-class renderers — each returns { fmt, raw, components } ──────────────────────────────────
 
+// US layouts: 40% full (when the tuple has a postcode), 15% no-postcode, 20% bare, 15% venue, 10% label-nocomma.
+const US_FULL_CUTOFF = 0.4
+const US_NO_POSTCODE_CUTOFF = 0.55
+const US_BARE_CUTOFF = 0.75
+const US_VENUE_CUTOFF = 0.9
+
 function renderPoBoxUs(random: () => number, t: USTuple): Rendered {
 	const phrase = makePoBoxPhrase(random, US_LEADERS_COMMON, US_LEADERS_RARE)
 	const { locality: loc, region: reg, postcode: pc } = t
 	const base = { po_box: phrase, locality: loc, region: reg }
 	const r = random()
 
-	if (r < 0.4 && pc)
+	if (r < US_FULL_CUTOFF && pc)
 		return { fmt: "full", raw: `${phrase}, ${loc}, ${reg} ${pc}`, components: { ...base, postcode: pc } }
 
-	if (r < 0.55) return { fmt: "no-postcode", raw: `${phrase}, ${loc}, ${reg}`, components: base }
+	if (r < US_NO_POSTCODE_CUTOFF) return { fmt: "no-postcode", raw: `${phrase}, ${loc}, ${reg}`, components: base }
 
-	if (r < 0.75) return { fmt: "bare", raw: phrase, components: { po_box: phrase } }
+	if (r < US_BARE_CUTOFF) return { fmt: "bare", raw: phrase, components: { po_box: phrase } }
 
-	if (r < 0.9) {
+	if (r < US_VENUE_CUTOFF) {
 		const v = pick(random, VENUES_EN)
 
 		return {
@@ -566,6 +584,10 @@ function renderPoBoxUs(random: () => number, t: USTuple): Rendered {
 	}
 }
 
+// PMB layouts: 50% pmb-after-street, 35% pmb-comma, 15% pmb-bare.
+const PMB_AFTER_STREET_CUTOFF = 0.5
+const PMB_COMMA_CUTOFF = 0.85
+
 function renderPmbUs(random: () => number, t: USTuple): Rendered {
 	const phrase = makePoBoxPhrase(random, US_PMB_LEADERS)
 	const { house_number: hn, street, locality: loc, region: reg, postcode: pc } = t
@@ -573,12 +595,18 @@ function renderPmbUs(random: () => number, t: USTuple): Rendered {
 	const components = { house_number: hn, street, po_box: phrase, locality: loc, region: reg, postcode: pc }
 	const r = random()
 
-	if (r < 0.5) return { fmt: "pmb-after-street", raw: `${road} ${phrase}, ${loc}, ${reg} ${pc}`, components }
+	if (r < PMB_AFTER_STREET_CUTOFF)
+		return { fmt: "pmb-after-street", raw: `${road} ${phrase}, ${loc}, ${reg} ${pc}`, components }
 
-	if (r < 0.85) return { fmt: "pmb-comma", raw: `${road}, ${phrase}, ${loc}, ${reg} ${pc}`, components }
+	if (r < PMB_COMMA_CUTOFF) return { fmt: "pmb-comma", raw: `${road}, ${phrase}, ${loc}, ${reg} ${pc}`, components }
 
 	return { fmt: "pmb-bare", raw: `${road} ${phrase}`, components: { house_number: hn, street, po_box: phrase } }
 }
+
+// BP layouts: 45% bp-tail, 15% bp-bare, 20% bp-cedex, 20% bp-venue.
+const BP_TAIL_CUTOFF = 0.45
+const BP_BARE_CUTOFF = 0.6
+const BP_CEDEX_CUTOFF = 0.8
 
 function renderBpFr(random: () => number, t: FRTuple): Rendered {
 	const phrase = makePoBoxPhrase(random, FR_LEADERS)
@@ -587,16 +615,16 @@ function renderBpFr(random: () => number, t: FRTuple): Rendered {
 	const loc = upper ? locality.toUpperCase() : locality
 	const r = random()
 
-	if (r < 0.45)
+	if (r < BP_TAIL_CUTOFF)
 		return {
 			fmt: "bp-tail",
 			raw: `${phrase}, ${pc} ${loc}`,
 			components: { po_box: phrase, postcode: pc, locality: loc },
 		}
 
-	if (r < 0.6) return { fmt: "bp-bare", raw: phrase, components: { po_box: phrase } }
+	if (r < BP_BARE_CUTOFF) return { fmt: "bp-bare", raw: phrase, components: { po_box: phrase } }
 
-	if (r < 0.8) {
+	if (r < BP_CEDEX_CUTOFF) {
 		// The institutional combo line — a BP and a CEDEX routing on the same last line.
 		const cedex = makeCedex(random)
 		const locUp = locality.toUpperCase()
@@ -617,27 +645,40 @@ function renderBpFr(random: () => number, t: FRTuple): Rendered {
 	}
 }
 
+// 60% upper-case the locality. Layouts: 40% cedex-line, 35% cedex-full, 10% cedex-golden-order, 15% cedex-venue.
+const CEDEX_UPPER_LOCALITY_SHARE = 0.6
+const CEDEX_LINE_CUTOFF = 0.4
+const CEDEX_FULL_CUTOFF = 0.75
+const CEDEX_GOLDEN_ORDER_CUTOFF = 0.85
+
 function renderCedexFr(random: () => number, t: FRTuple): Rendered {
 	const cedex = makeCedex(random)
 	const { house_number: hn, street, locality, postcode: pc } = t
-	const loc = random() < 0.6 ? locality.toUpperCase() : locality
+	const loc = random() < CEDEX_UPPER_LOCALITY_SHARE ? locality.toUpperCase() : locality
 	const line = { postcode: pc, locality: loc, cedex }
 	const r = random()
 
-	if (r < 0.4) return { fmt: "cedex-line", raw: `${pc} ${loc} ${cedex}`, components: line }
+	if (r < CEDEX_LINE_CUTOFF) return { fmt: "cedex-line", raw: `${pc} ${loc} ${cedex}`, components: line }
 
-	if (r < 0.75)
+	if (r < CEDEX_FULL_CUTOFF)
 		return {
 			fmt: "cedex-full",
 			raw: `${hn} ${street}, ${pc} ${loc} ${cedex}`,
 			components: { house_number: hn, street, ...line },
 		}
 
-	if (r < 0.85) return { fmt: "cedex-golden-order", raw: `${pc} ${cedex} ${loc}`, components: line }
+	if (r < CEDEX_GOLDEN_ORDER_CUTOFF)
+		return { fmt: "cedex-golden-order", raw: `${pc} ${cedex} ${loc}`, components: line }
+
 	const v = pick(random, VENUES_FR)
 
 	return { fmt: "cedex-venue", raw: `${v}, ${pc} ${loc} ${cedex}`, components: { venue: v, ...line } }
 }
+
+// CA-FR layouts: 40% golden-order, 30% native, 15% bare, 15% venue.
+const CA_FR_GOLDEN_ORDER_CUTOFF = 0.4
+const CA_FR_NATIVE_CUTOFF = 0.7
+const CA_FR_BARE_CUTOFF = 0.85
 
 function renderCaFr(random: () => number, loc: string): Rendered {
 	const phrase = makePoBoxPhrase(random, CA_FR_LEADERS)
@@ -646,15 +687,20 @@ function renderCaFr(random: () => number, loc: string): Rendered {
 	const r = random()
 
 	// The #511 golden order: postcode BEFORE locality, region trailing.
-	if (r < 0.4) return { fmt: "ca-fr-golden-order", raw: `${phrase}, ${pc} ${loc}, QC`, components }
+	if (r < CA_FR_GOLDEN_ORDER_CUTOFF)
+		return { fmt: "ca-fr-golden-order", raw: `${phrase}, ${pc} ${loc}, QC`, components }
 
-	if (r < 0.7) return { fmt: "ca-fr-native", raw: `${phrase}, ${loc} QC ${pc}`, components }
+	if (r < CA_FR_NATIVE_CUTOFF) return { fmt: "ca-fr-native", raw: `${phrase}, ${loc} QC ${pc}`, components }
 
-	if (r < 0.85) return { fmt: "ca-fr-bare", raw: phrase, components: { po_box: phrase } }
+	if (r < CA_FR_BARE_CUTOFF) return { fmt: "ca-fr-bare", raw: phrase, components: { po_box: phrase } }
 	const v = pick(random, VENUES_FR)
 
 	return { fmt: "ca-fr-venue", raw: `${v}, ${phrase}, ${loc} QC ${pc}`, components: { venue: v, ...components } }
 }
+
+// CA-EN layouts: 50% standard, 30% golden-order, 20% bare.
+const CA_EN_STANDARD_CUTOFF = 0.5
+const CA_EN_GOLDEN_ORDER_CUTOFF = 0.8
 
 function renderCaEn(random: () => number, loc: string): Rendered {
 	const phrase = makePoBoxPhrase(random, CA_EN_LEADERS)
@@ -662,24 +708,33 @@ function renderCaEn(random: () => number, loc: string): Rendered {
 	const components = { po_box: phrase, locality: loc, region: "ON", postcode: pc }
 	const r = random()
 
-	if (r < 0.5) return { fmt: "ca-en-standard", raw: `${phrase}, ${loc}, ON ${pc}`, components }
+	if (r < CA_EN_STANDARD_CUTOFF) return { fmt: "ca-en-standard", raw: `${phrase}, ${loc}, ON ${pc}`, components }
 
-	if (r < 0.8) return { fmt: "ca-en-golden-order", raw: `${phrase}, ${pc} ${loc}, ON`, components }
+	if (r < CA_EN_GOLDEN_ORDER_CUTOFF)
+		return { fmt: "ca-en-golden-order", raw: `${phrase}, ${pc} ${loc}, ON`, components }
 
 	return { fmt: "ca-en-bare", raw: phrase, components: { po_box: phrase } }
 }
+
+// One draw decides casing and layout: the lower 60% upper-case the locality; layouts are 45% au-standard,
+// 15% au-label-nocomma, 15% au-no-postcode, 13% au-bare, 12% au-venue.
+const AU_UPPER_LOCALITY_CUTOFF = 0.6
+const AU_STANDARD_CUTOFF = 0.45
+const AU_LABEL_CUTOFF = 0.6
+const AU_NO_POSTCODE_CUTOFF = 0.75
+const AU_BARE_CUTOFF = 0.88
 
 function renderAUPoBox(random: () => number, t: AUTuple): Rendered {
 	const phrase = makeAuNzPoBoxPhrase(random, AU_LEADERS_CURRENT, AU_LEADERS_LEGACY, isAuDeliveryService)
 	const { locality, region: reg, postcode: pc } = t
 	const r = random()
 	// The guideline last line is capitals ("SYDNEY NSW 2000"); mixed case rides as a softer variant.
-	const loc = r < 0.6 ? locality.toUpperCase() : locality
+	const loc = r < AU_UPPER_LOCALITY_CUTOFF ? locality.toUpperCase() : locality
 	const base = { po_box: phrase, locality: loc, region: reg, postcode: pc }
 
-	if (r < 0.45) return { fmt: "au-standard", raw: `${phrase}, ${loc} ${reg} ${pc}`, components: base }
+	if (r < AU_STANDARD_CUTOFF) return { fmt: "au-standard", raw: `${phrase}, ${loc} ${reg} ${pc}`, components: base }
 
-	if (r < 0.6) {
+	if (r < AU_LABEL_CUTOFF) {
 		// The envelope label form: comma-less, designator upper-cased ("GPO BOX 123 SYDNEY NSW 2001").
 		const up = phrase.toUpperCase()
 
@@ -690,18 +745,23 @@ function renderAUPoBox(random: () => number, t: AUTuple): Rendered {
 		}
 	}
 
-	if (r < 0.75)
+	if (r < AU_NO_POSTCODE_CUTOFF)
 		return {
 			fmt: "au-no-postcode",
 			raw: `${phrase}, ${loc} ${reg}`,
 			components: { po_box: phrase, locality: loc, region: reg },
 		}
 
-	if (r < 0.88) return { fmt: "au-bare", raw: phrase, components: { po_box: phrase } }
+	if (r < AU_BARE_CUTOFF) return { fmt: "au-bare", raw: phrase, components: { po_box: phrase } }
 	const v = pick(random, VENUES_EN)
 
 	return { fmt: "au-venue", raw: `${v}, ${phrase}, ${loc} ${reg} ${pc}`, components: { venue: v, ...base } }
 }
+
+// NZ layouts: 55% nz-standard, 15% nz-no-postcode, 15% nz-bare, 15% nz-venue.
+const NZ_STANDARD_CUTOFF = 0.55
+const NZ_NO_POSTCODE_CUTOFF = 0.7
+const NZ_BARE_CUTOFF = 0.85
 
 function renderNZPoBox(random: () => number, t: NZTuple): Rendered {
 	const phrase = makeAuNzPoBoxPhrase(random, NZ_LEADERS_COMMON, NZ_LEADERS_RARE, isNZDeliveryService)
@@ -710,11 +770,12 @@ function renderNZPoBox(random: () => number, t: NZTuple): Rendered {
 	const base = { po_box: phrase, locality, postcode: pc }
 	const r = random()
 
-	if (r < 0.55) return { fmt: "nz-standard", raw: `${phrase}, ${locality} ${pc}`, components: base }
+	if (r < NZ_STANDARD_CUTOFF) return { fmt: "nz-standard", raw: `${phrase}, ${locality} ${pc}`, components: base }
 
-	if (r < 0.7) return { fmt: "nz-no-postcode", raw: `${phrase}, ${locality}`, components: { po_box: phrase, locality } }
+	if (r < NZ_NO_POSTCODE_CUTOFF)
+		return { fmt: "nz-no-postcode", raw: `${phrase}, ${locality}`, components: { po_box: phrase, locality } }
 
-	if (r < 0.85) return { fmt: "nz-bare", raw: phrase, components: { po_box: phrase } }
+	if (r < NZ_BARE_CUTOFF) return { fmt: "nz-bare", raw: phrase, components: { po_box: phrase } }
 	const v = pick(random, VENUES_EN)
 
 	return { fmt: "nz-venue", raw: `${v}, ${phrase}, ${locality} ${pc}`, components: { venue: v, ...base } }
