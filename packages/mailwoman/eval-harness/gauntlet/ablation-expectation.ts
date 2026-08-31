@@ -11,6 +11,8 @@
 
 import { haversineKm } from "@mailwoman/spatial"
 
+import type { AblationGrade } from "#eval-harness/gauntlet/ablation-grades"
+
 /**
  * A place as this model needs it: a centroid, a placetype, and either a real bbox or an honest `null`.
  */
@@ -952,23 +954,4 @@ function describeExpected(
  */
 export function describeLadder(ladder: AblationLadder): string[] {
 	return ladder.rungs.map((r) => `${r.depth}:${r.kind} ${r.name} ±${r.radiusKM.toFixed(2)}km (${r.radiusSource})`)
-}
-
-/**
- * The empty verdict histogram — every {@linkcode AblationGrade} present at zero. Built fresh per cell so no two cells
- * share a mutable map.
- */
-export function emptyGrades(): Record<AblationGrade, number> {
-	return {
-		held: 0,
-		degraded: 0,
-		correctlyAbstained: 0,
-		lost: 0,
-		overconfident: 0,
-		homonymTakeover: 0,
-		coarser: 0,
-		wrong: 0,
-		substituted: 0,
-		ungraded: 0,
-	}
 }

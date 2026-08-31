@@ -50,3 +50,22 @@ export const PASSING_GRADES: ReadonlySet<AblationGrade> = new Set<AblationGrade>
 	"degraded",
 	"correctlyAbstained",
 ])
+
+/**
+ * The empty verdict histogram — every {@linkcode AblationGrade} present at zero. Built fresh per cell so no two cells
+ * share a mutable map.
+ */
+export function emptyGrades(): Record<AblationGrade, number> {
+	return {
+		held: 0,
+		degraded: 0,
+		correctlyAbstained: 0,
+		lost: 0,
+		overconfident: 0,
+		homonymTakeover: 0,
+		coarser: 0,
+		wrong: 0,
+		substituted: 0,
+		ungraded: 0,
+	}
+}
