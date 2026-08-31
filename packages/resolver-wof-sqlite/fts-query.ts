@@ -8,7 +8,7 @@
  *   an unescaped quote or a bare `*` is a syntax error, not an empty result.
  */
 
-import type { FindPlaceQuery, WOFPlacetype } from "./types.ts"
+import type { FindPlaceQuery, WOFPlacetype } from "#types"
 
 export function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WOFPlacetype[] | null {
 	if (!p) return null

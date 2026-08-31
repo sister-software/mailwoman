@@ -46,6 +46,11 @@
 			"node": "./map/index.ts",
 			"default": "./out/map/index.js",
 			"types": "./out/map/index.d.ts"
+		},
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
 		}
 	},
 	"exports": {

@@ -31,11 +31,10 @@
  *   native dependency on end users who only ever run parse/geocode.
  */
 
-import { readDirectory, statPath } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
-import * as path from "@mailwoman/platform/path"
+import { dirname, join } from "path-ts"
 import { $ } from "zx"
 
 /**
@@ -168,20 +167,22 @@ async function resolveStates(opts: CoverageBuildOptions): Promise<StateShard[]> 
 	const slugs =
 		opts.states.toLowerCase() === "all" ? [...bySlug.keys()] : opts.states.split(",").map((s) => s.trim().toLowerCase())
 
-	return slugs
-		.filter((slug) => !exclude.has(slug.toUpperCase()))
-		.map((slug) => {
-			const file = bySlug.get(slug)
+	const out: StateShard[] = []
 
-			if (!file) throw new Error(`no address-point shard for state '${slug}' under ${opts.dataRoot}`)
-			const interpFile = opts.interpRoot ? path.join(opts.interpRoot, `interpolation-us-${slug}.db`) : ""
+	for (const slug of slugs.filter((candidate) => !exclude.has(candidate.toUpperCase()))) {
+		const file = bySlug.get(slug)
 
-			return {
-				slug,
-				file: path.join(opts.dataRoot, file),
-				interp: opts.interpRoot && pathExistsSync(interpFile) ? interpFile : null,
-			}
+		if (!file) throw new Error(`no address-point shard for state '${slug}' under ${opts.dataRoot}`)
+		const interpFile = opts.interpRoot ? join(opts.interpRoot, `interpolation-us-${slug}.db`) : ""
+
+		out.push({
+			slug,
+			file: join(opts.dataRoot, file),
+			interp: opts.interpRoot && (await pathExists(interpFile)) ? interpFile : null,
 		})
+	}
+
+	return out
 }
 
 /**
@@ -345,7 +346,7 @@ export async function buildCoverageTiles(
 	)
 
 	// --- Stream features to NDJSON ---
-	await makeDirectories(path.dirname(opts.out))
+	await makeDirectories(dirname(opts.out))
 	const ndjsonPath = opts.out.replace(/\.pmtiles$/, "") + ".ndjson"
 	const sink = openWriteStream(ndjsonPath)
 	let featureCount = 0

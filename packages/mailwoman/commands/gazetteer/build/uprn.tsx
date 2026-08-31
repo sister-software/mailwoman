@@ -18,6 +18,7 @@
  *   `@mailwoman/resolver-wof-sqlite` peer.
  */
 
+import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -44,7 +45,6 @@ interface Options {
 const GazetteerBuildUPRN: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { repoRootPath } = await import("@mailwoman/core/utils")
-		const { artifactSizeMB } = await import("#gazetteer-pipeline")
 		const { buildSHA } = await import("#gazetteer/stamp-manifest")
 		const { buildUPRNLayer, OPEN_UPRN_COVERAGE_NOTE } = await import("#gazetteer/uprn-layer")
 
@@ -57,7 +57,7 @@ const GazetteerBuildUPRN: ParsedCommandComponent<Options> = ({ options }) => {
 		})
 
 		return [
-			`uprn layer: ${result.out} (${await artifactSizeMB(result.out)} MB)`,
+			`uprn layer: ${result.out} (${await formatFileSize(result.out)})`,
 			`${result.inserted.toLocaleString()} UPRN points — OS release ${result.osVersion}`,
 			`read ${result.read.toLocaleString()} · malformed ${result.skippedMalformed.toLocaleString()} · duplicate ${result.skippedDuplicate.toLocaleString()} (both expected zero)`,
 			`coverage ${result.coverageCells.toLocaleString()} res-6 cells (basis: designated)`,

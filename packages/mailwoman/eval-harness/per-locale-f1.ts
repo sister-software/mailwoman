@@ -69,8 +69,8 @@ import {
 } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { basename, resolve } from "@mailwoman/platform/path"
 import { computeQueryShape } from "@mailwoman/query-shape"
+import { basename, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 /**
@@ -230,7 +230,7 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>, foldStree
  * answer keys and nothing about replaying an old out-dir changes.
  */
 async function readStreetConvention(goldenDir: string): Promise<Record<string, string>> {
-	for (const candidate of [resolve(goldenDir, "MANIFEST.json"), resolve(goldenDir, "..", "MANIFEST.json")]) {
+	for (const candidate of [resolvePath(goldenDir, "MANIFEST.json"), resolvePath(goldenDir, "..", "MANIFEST.json")]) {
 		if (!(await pathExists(candidate))) continue
 
 		const manifest = await readLocalJSONFile<{ convention?: { street_convention?: Record<string, string> } }>(candidate)
@@ -472,7 +472,7 @@ export async function perLocaleF1(
 	const reports: FileReport[] = []
 
 	for (const file of args.files) {
-		const path = resolve(args.goldenDir, file)
+		const path = resolvePath(args.goldenDir, file)
 
 		// Checked before the read: the spliterator reports a missing path as "invalid async data
 		// resource", which is accurate about its argument and useless about the file.

@@ -46,8 +46,8 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { JSONSpliterator } from "spliterator"
 
-import { flattenNodes } from "./flatten-nodes.ts"
-import { wilson } from "./fragment-board.ts"
+import { flattenNodes } from "#eval-harness/flatten-nodes"
+import { wilson } from "#eval-harness/fragment-board"
 
 /**
  * Fixture set backing the digit board — house-number and postcode ambiguity probes.

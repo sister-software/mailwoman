@@ -4,5 +4,5 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./layers.ts"
-export * from "./sources.ts"
+export * from "#styles/layers"
+export * from "#styles/sources"

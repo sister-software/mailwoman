@@ -9,9 +9,9 @@
  *   2026-07-12 design spec's anti-meta guardrails).
  */
 
-export * from "./error.ts"
-export * from "./geo.ts"
-export * from "./metrics.ts"
-export * from "./openapi.ts"
-export * from "./request.ts"
-export * from "./serve.ts"
+export * from "#error"
+export * from "#geo"
+export * from "#metrics"
+export * from "#openapi"
+export * from "#request"
+export * from "#serve"

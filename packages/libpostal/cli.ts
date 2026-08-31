@@ -14,16 +14,16 @@
  */
 
 import { printOpenAPIDocument, serveNode } from "@mailwoman/api-kit"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { expandAbbreviations, normalize } from "@mailwoman/normalize"
-import { parseArgs } from "@mailwoman/platform/util"
 import { corsBannerLine, loadClassifierOrExit, parseOpenAPIFlags, runDropInCLI } from "mailwoman/cli-kit/dropin"
 
-import { createLibpostalApp, LIBPOSTAL_DOC_INFO, type LibpostalEngine, treeToParseMatches } from "./index.ts"
+import { createLibpostalApp, LIBPOSTAL_DOC_INFO, type LibpostalEngine, treeToParseMatches } from "#index"
 
 const BINARY_NAME = "mailwoman-libpostal"
 
 async function serve(): Promise<void> {
-	const { values } = parseArgs({
+	const { values } = parseArguments({
 		options: {
 			port: { type: "string", default: "8081" },
 			host: { type: "string", default: "0.0.0.0" },

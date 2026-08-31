@@ -18,11 +18,16 @@
 import { dataRootPath } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { checkCase } from "./check-case.ts"
-import { assertCorpusStampFresh } from "./corpus-stamp.ts"
-import { buildGauntletDeps, type GauntletDepsOptions, type GauntletResolverLevers, runOne } from "./harness.ts"
-import { routeCountry } from "./routing.ts"
-import type { GauntletDatabase } from "./schema.ts"
+import { checkCase } from "#eval-harness/gauntlet/check-case"
+import { assertCorpusStampFresh } from "#eval-harness/gauntlet/corpus-stamp"
+import {
+	buildGauntletDeps,
+	type GauntletDepsOptions,
+	type GauntletResolverLevers,
+	runOne,
+} from "#eval-harness/gauntlet/harness"
+import { routeCountry } from "#eval-harness/gauntlet/routing"
+import type { GauntletDatabase } from "#eval-harness/gauntlet/schema"
 
 /**
  * Candidate-model selection shared by the regression + metamorphic layers.

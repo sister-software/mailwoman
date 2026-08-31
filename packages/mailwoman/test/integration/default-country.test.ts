@@ -1,5 +1,6 @@
 import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 /**
@@ -22,8 +23,6 @@ import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
  *   The unit tests (the locale→country inference + the override precedence) are CI-safe. The
  *   end-to-end resolution check needs the GLOBAL admin DB, so it skips when that DB is absent.
  */
-import { execFile } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { localeToCountry, resolverDefaultCountry, spec as parseSpec } from "mailwoman/commands/parse"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
@@ -42,13 +41,12 @@ const CLI_TEST_TIMEOUT_MS = 120_000
  * Vitest's per-test budget for this whole file.
  *
  * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs seconds before any
- * assertion runs and then queues behind {@link withCLISpawnLock}. A per-test annotation has to be remembered on each new
- * test, and the one that forgets inherits the global 15s — which kills the test before the thing being measured can
- * report, surfacing as a bare timeout with no attribution.
+ * assertion runs and then queues behind {@link withCLISpawnLockAsync}. A per-test annotation has to be remembered on
+ * each new test, and the one that forgets inherits the global 15s — which kills the test before the thing being
+ * measured can report, surfacing as a bare timeout with no attribution.
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
-const exec = promisify(execFile)
 const cliBin = workspacePath("mailwoman", "out", "cli.js")
 const GLOBAL_WOF = $public.MAILWOMAN_WOF_GLOBAL_DB ?? String(dataRootPath("wof", "admin-global-priority.db"))
 
@@ -133,7 +131,7 @@ const describeIfGlobal = describe.skipIf(!(await pathExists(GLOBAL_WOF)))
 describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () => {
 	const run = (address: string, extra: string[] = []) =>
 		withCLISpawnLockAsync(() =>
-			exec(
+			runFile(
 				"node",
 				[cliBin, "parse", "--neural", "--resolve", "--resolve-db", GLOBAL_WOF, "--format", "xml", ...extra, address],
 				{

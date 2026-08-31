@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./defaults.ts"
-export * from "./policy.ts"
-export * from "./proposal-collection.ts"
-export * from "./registry.ts"
+export * from "#policy/defaults"
+export * from "#policy/policy"
+export * from "#policy/proposal-collection"
+export * from "#policy/registry"

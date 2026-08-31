@@ -42,7 +42,6 @@
 				"packages/nuts-lookup",
 				"packages/photon",
 				"packages/phrase-grouper",
-				"packages/platform",
 				"packages/poi-taxonomy",
 				"packages/query-shape",
 				"packages/react",
@@ -78,7 +77,7 @@
 	},
 	"hooks": {
 		"before:init": [
-			"echo 'Pre-flight: compile + copy-weights (tests skipped \u2014 PR CI already validated)'",
+			"echo 'Pre-flight: compile + copy-weights (tests skipped — PR CI already validated)'",
 			"yarn compile",
 			"node scripts/copy-weights.ts"
 		],

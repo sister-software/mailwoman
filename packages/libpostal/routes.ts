@@ -12,14 +12,14 @@ import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
 import { errorContent } from "@mailwoman/api-kit"
 import type { Context, MiddlewareHandler } from "hono"
 
-import { type LibpostalEngine, toLibpostalComponents } from "./engine.ts"
+import { type LibpostalEngine, toLibpostalComponents } from "#engine"
 import {
 	ErrorSchema,
 	ExpandRequestSchema,
 	ExpandResponseSchema,
 	ParseRequestSchema,
 	ParseResponseSchema,
-} from "./schema.ts"
+} from "#schema"
 
 /**
  * A friendly HTML landing page for `GET /` (#1022). libpostal's own REST server has no root page, so there's no wire

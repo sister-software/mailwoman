@@ -52,6 +52,53 @@ const GB_INWARD_LENGTH = 3
 export type GBGranularity = "unit" | "outward"
 
 /**
+ * One country's PCB1 source: the WOF postcode shard its rows are read from, and the coarsest key set a browser bundle
+ * can carry when the train-faithful set cannot.
+ */
+export interface PostcodeBinarySource {
+	/**
+	 * ISO 3166-1 alpha-2, upper-case — the `country` the shard's `spr` rows are filtered on.
+	 */
+	country: string
+	/**
+	 * Shard filename under `<data-root>/wof/`.
+	 */
+	shard: string
+	/**
+	 * The granularity a browser asset dir should hold, when the train-faithful build is too large for one. Absent for a
+	 * country whose full key set already fits — the size note the command prints is keyed on this, not on the country.
+	 */
+	browserGranularity?: GBGranularity
+}
+
+/**
+ * The per-country sources `mailwoman gazetteer postcode-binary` builds by default, in emission order. Shared with the
+ * `--locale <CC>:<db>` override path only through {@linkcode PostcodeBinarySource.browserGranularity}: an override
+ * replaces the SHARD, never the country's browser rule.
+ *
+ * Every shard here is a member of `DEFAULT_POSTCODE_SHARDS` (`gazetteer-pipeline/index.ts`), and the key floors in
+ * {@linkcode POSTCODE_BINARY_KEY_FLOORS} were measured against these same files — a country added to one table without
+ * a row in the other floors at 1 and refuses only a zero-key build.
+ */
+export const POSTCODE_BINARY_SOURCES: readonly PostcodeBinarySource[] = [
+	{ country: "US", shard: "postalcode-us.db" },
+	{ country: "NL", shard: "postalcode-intl.db" },
+	{ country: "FR", shard: "postalcode-intl.db" },
+	{ country: "DE", shard: "postalcode-intl.db" },
+	{ country: "ES", shard: "postalcode-intl.db" },
+	{ country: "IT", shard: "postalcode-intl.db" },
+	// Code-Point Open (OGL v3.0): the unit set is train-faithful and 20 MB; only the districts fit a browser bundle.
+	{ country: "GB", shard: "postalcode-gb-codepoint.db", browserGranularity: "outward" },
+]
+
+/**
+ * The browser granularity registered for a country, or `undefined` when its full key set ships as-is.
+ */
+export function browserGranularityFor(country: string): GBGranularity | undefined {
+	return POSTCODE_BINARY_SOURCES.find((source) => source.country === country.toUpperCase())?.browserGranularity
+}
+
+/**
  * A raw shard row, as the command's `SELECT name, latitude, longitude` returns it.
  */
 export interface PostcodeShardRow {

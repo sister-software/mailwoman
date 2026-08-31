@@ -10,12 +10,13 @@
  *   gauntlet evidence for the `«locality» «postcode»` defect comes from.
  */
 
+import { createServer, type Server } from "node:http"
+import type { AddressInfo } from "node:net"
+
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { fetchGeonamesPostal } from "@mailwoman/corpus/tools"
-import { createServer, type Server } from "@mailwoman/platform/http"
-import type { AddressInfo } from "@mailwoman/platform/net"
-import { join } from "@mailwoman/platform/path"
+import { join, type PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -24,7 +25,7 @@ afterAll(() => fixtures.disposeAsync())
 
 let server: Server
 let baseURL: string
-let outRoot: string
+let outRoot: PathBuilderLike
 
 /**
  * The manifest as written. `parseJSONStrict` rather than a tolerant parse: a corrupt manifest here is a test failure,

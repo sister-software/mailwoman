@@ -13,7 +13,7 @@ import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 
-import { decorateNode, isResolvedWithCoord } from "./decorate-node.ts"
+import { decorateNode, isResolvedWithCoord } from "#decorate-node"
 
 /**
  * Admin descendant-consistency (#263) — the joint-consistency resolve, scoped to the admin assignment. The greedy walk

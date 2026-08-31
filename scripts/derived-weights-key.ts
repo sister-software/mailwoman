@@ -18,12 +18,11 @@
  *   `expected 47878 to be 49033`. The generating code is part of the input, not context around it.
  */
 
-import { readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, readDirectorySync, readLocalBufferSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readDirectory, readLocalBuffer, statPath } from "@mailwoman/core/fs/readers"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
-import { createHash } from "@mailwoman/platform/crypto"
-import { join, relative, resolve } from "@mailwoman/platform/path"
+import { createHash } from "@mailwoman/core/utils/hash"
 import { POSTCODE_BINARY_KEY_FLOORS } from "mailwoman/gazetteer-pipeline/postcode/binary"
+import { join, relative, resolvePath } from "path-ts"
 
 /**
  * Repo-relative files the derived binaries are a function of, beyond the `data/gazetteer` payload enumerated by
@@ -58,12 +57,12 @@ export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
  * rather than hardcoded so a new shard is picked up without a code change — the opposite trade from
  * {@link DERIVED_WEIGHTS_INPUTS}, where an explicit list is the point.
  */
-function gazetteerDataPaths(): string[] {
-	const dir = resolve(repoRootPath(), "data", "gazetteer")
+async function gazetteerDataPaths(): Promise<string[]> {
+	const dir = resolvePath(repoRootPath(), "data", "gazetteer")
 
-	if (!pathExistsSync(dir)) return []
+	if (!(await pathExists(dir))) return []
 
-	return readDirectorySync(dir)
+	return (await readDirectory(dir))
 		.filter((name) => name.endsWith(".json") || name.endsWith(".jsonl"))
 		.map((name) => join(dir, name))
 }
@@ -73,23 +72,27 @@ function gazetteerDataPaths(): string[] {
  * payload so a new module joins the key without a code change. The #1527 fix lived HERE, one import below the command
  * module the explicit list carried, which is how the stale build escaped the key.
  */
-function postcodePipelinePaths(): string[] {
+async function postcodePipelinePaths(): Promise<string[]> {
 	const root = repoRootPath()
 
 	const dirs = [
-		resolve(root, "packages/mailwoman/gazetteer-pipeline/postcode"),
-		resolve(root, "packages/mailwoman/out/gazetteer-pipeline/postcode"),
+		resolvePath(root, "packages/mailwoman/gazetteer-pipeline/postcode"),
+		resolvePath(root, "packages/mailwoman/out/gazetteer-pipeline/postcode"),
 	]
 
-	return dirs.flatMap((dir) => {
-		if (!pathExistsSync(dir)) return []
+	const paths: string[] = []
 
-		return readDirectorySync(dir)
-			.filter(
-				(name) => (name.endsWith(".ts") || name.endsWith(".js")) && !name.includes(".test.") && !name.endsWith(".map")
-			)
-			.map((name) => join(dir, name))
-	})
+	for (const dir of dirs) {
+		if (!(await pathExists(dir))) continue
+
+		for (const name of await readDirectory(dir)) {
+			if ((name.endsWith(".ts") || name.endsWith(".js")) && !name.includes(".test.") && !name.endsWith(".map")) {
+				paths.push(join(dir, name))
+			}
+		}
+	}
+
+	return paths
 }
 
 /**
@@ -109,13 +112,14 @@ export interface DerivedWeightsInput {
 /**
  * Every input this checkout's key is computed over, named repo-relatively.
  */
-export function derivedWeightsInputs(): DerivedWeightsInput[] {
+export async function derivedWeightsInputs(): Promise<DerivedWeightsInput[]> {
 	const root = repoRootPath()
+	const [gazetteerData, postcodePipeline] = await Promise.all([gazetteerDataPaths(), postcodePipelinePaths()])
 
 	return [
-		...DERIVED_WEIGHTS_INPUTS.map((name) => ({ name, path: resolve(root, name) })),
-		...gazetteerDataPaths().map((path) => ({ name: relative(root, path), path })),
-		...postcodePipelinePaths().map((path) => ({ name: relative(root, path), path })),
+		...DERIVED_WEIGHTS_INPUTS.map((name) => ({ name, path: resolvePath(root, name) })),
+		...gazetteerData.map((path) => ({ name: relative(root, path), path })),
+		...postcodePipeline.map((path) => ({ name: relative(root, path), path })),
 	]
 }
 
@@ -133,7 +137,7 @@ export function derivedWeightsInputs(): DerivedWeightsInput[] {
  * A missing input contributes a `\0absent` marker rather than nothing — "the file is gone" and "the file is empty" must
  * not collide.
  */
-export function derivedWeightsKeyFrom(inputs: readonly DerivedWeightsInput[]): string {
+export async function derivedWeightsKeyFrom(inputs: readonly DerivedWeightsInput[]): Promise<string> {
 	const hash = createHash("sha256")
 
 	for (const { name, path } of inputs.toSorted((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))) {
@@ -141,8 +145,8 @@ export function derivedWeightsKeyFrom(inputs: readonly DerivedWeightsInput[]): s
 		hash.update("\0")
 
 		try {
-			statPathSync(path)
-			hash.update(readLocalBufferSync(path))
+			await statPath(path)
+			hash.update(await readLocalBuffer(path))
 		} catch {
 			hash.update("\0absent")
 		}
@@ -157,8 +161,8 @@ export function derivedWeightsKeyFrom(inputs: readonly DerivedWeightsInput[]): s
  * The key for this checkout's derived weights. Identical across checkouts with identical input CONTENT, wherever they
  * live on disk — that invariance is the whole point of the store.
  */
-export function derivedWeightsKey(): string {
-	return derivedWeightsKeyFrom(derivedWeightsInputs())
+export async function derivedWeightsKey(): Promise<string> {
+	return derivedWeightsKeyFrom(await derivedWeightsInputs())
 }
 
 /**

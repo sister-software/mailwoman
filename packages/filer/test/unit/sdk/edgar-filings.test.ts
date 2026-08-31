@@ -13,7 +13,8 @@
  *   this manifest, a real-EDGAR quirk this suite counts rather than papers over).
  */
 
-import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import {
 	accessionArchiveURL,
 	fetchCompanyTickers,
@@ -32,7 +33,6 @@ import {
 	type SECGetClient,
 } from "@mailwoman/filer/sdk/edgar-filings"
 import type { SECDocumentClient } from "@mailwoman/filer/sdk/exhibit21"
-import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 describe("isCIK / toCIK", () => {
@@ -317,11 +317,11 @@ describe("fetchTenKFilings", () => {
 	})
 })
 
-describe("Exhibit 21 document discovery", () => {
-	const headerHTML = readLocalTextFileSync(
-		join(import.meta.dirname, "../../../test-fixtures/edgar/lumen-2025-index-headers.html")
-	)
+const headerHTML = await readLocalTextFile(
+	resolvePackagePath("@mailwoman/filer", "test-fixtures", "edgar", "lumen-2025-index-headers.html")
+)
 
+describe("Exhibit 21 document discovery", () => {
 	const LUMEN_CIK = "0000018926" as CIK
 
 	it("builds an accession archive URL with an UNPADDED cik and an undashed accession", () => {

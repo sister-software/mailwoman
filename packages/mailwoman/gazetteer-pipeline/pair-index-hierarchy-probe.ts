@@ -54,6 +54,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows, dataRootPath, md5File } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import {
@@ -62,10 +63,9 @@ import {
 	type PairIndexEntry,
 	type PairIndexHeaderInput,
 } from "@mailwoman/neural/pair-index-resolver"
-import { basename, join } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { basename, join, resolvePath } from "path-ts"
 
 /**
  * The (locality, region) edge spec per country — ComponentTag space on the artifact side, WOF placetype space on the
@@ -174,7 +174,7 @@ function collectSurfaces(
 }
 
 async function main(): Promise<void> {
-	const { values } = parseArgs({
+	const { values } = parseArguments({
 		options: {
 			countries: { type: "string", default: "us,fr" },
 			db: { type: "string" },
@@ -184,8 +184,8 @@ async function main(): Promise<void> {
 	})
 
 	const countries = values.countries!.split(",").map((c) => c.trim().toLowerCase())
-	const dbPath = values.db ?? dataRootPath("wof", "admin-global-priority.db")
-	const outDir = values.out ?? dataRootPath("wof", "pair-index-hierarchy-probe")
+	const dbPath = resolvePath(values.db ?? dataRootPath("wof", "admin-global-priority.db"))
+	const outDir = resolvePath(values.out ?? dataRootPath("wof", "pair-index-hierarchy-probe"))
 
 	if (!(await pathExists(dbPath))) {
 		throw new Error(`pair-index-hierarchy-probe: WOF admin DB not found: ${dbPath}`)

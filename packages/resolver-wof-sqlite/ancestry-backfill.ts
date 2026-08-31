@@ -48,9 +48,9 @@
 import { readDirectoryEntries } from "@mailwoman/core/fs/readers"
 import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import { join, resolvePath, type PathBuilderLike } from "path-ts"
 
-import type { WOFDatabase } from "./schema.ts"
+import type { WOFDatabase } from "#schema"
 
 /**
  * Genuinely top-level placetypes — they never have (or need) an ancestor, so skip them.
@@ -79,7 +79,7 @@ export interface AncestryBackfillResult {
  * the nested lab layout (a `whosonfirst-data` group dir holding the admin repos) and a flat layout (admin repos
  * directly under the root); searches at most two directory levels deep.
  */
-export async function discoverAdminDataRoots(reposRoot: string): Promise<string[]> {
+export async function discoverAdminDataRoots(reposRoot: PathBuilderLike): Promise<string[]> {
 	const roots: string[] = []
 
 	const visit = async (dir: string, depth: number): Promise<void> => {
@@ -104,7 +104,7 @@ export async function discoverAdminDataRoots(reposRoot: string): Promise<string[
 		}
 	}
 
-	await visit(reposRoot, 0)
+	await visit(resolvePath(reposRoot), 0)
 
 	return roots
 }
@@ -193,7 +193,7 @@ export async function backfillAncestorsFromHierarchy(
 
 	for (const { id, placetype } of candidates) {
 		if (placetype && TOP_PLACETYPES.has(placetype)) continue
-		const gj = readWOFFeature(id, geojsonRoots)
+		const gj = await readWOFFeature(id, geojsonRoots)
 		const hierarchy = gj?.properties?.["wof:hierarchy"]
 
 		if (!hierarchy || !hierarchy.length) {

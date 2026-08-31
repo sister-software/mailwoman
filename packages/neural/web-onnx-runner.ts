@@ -24,13 +24,13 @@
 
 import * as ort from "onnxruntime-web/webgpu"
 
-import { ANCHOR_FEATURE_DIM } from "./anchor-inference.ts"
-import type { NeuralRunner } from "./classifier.ts"
-import { COUNTRY_FEATURE_DIM } from "./country-inference.ts"
-import { GAZETTEER_FEATURE_DIM, LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "./gazetteer-inference.ts"
+import { ANCHOR_FEATURE_DIM } from "#anchor-inference"
+import type { NeuralRunner } from "#classifier"
+import { COUNTRY_FEATURE_DIM } from "#country-inference"
+import { GAZETTEER_FEATURE_DIM, LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "#gazetteer-inference"
 // Type-only, so it erases before any bundler sees it — the Node runner's `onnxruntime-node` never
 // enters this module's graph even though the specifier names it.
-import type { InferResult } from "./onnx-runner.ts"
+import type { InferResult } from "#onnx-runner"
 
 export interface WebONNXRunnerOpts {
 	/**

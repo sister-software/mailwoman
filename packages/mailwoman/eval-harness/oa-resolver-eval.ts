@@ -58,26 +58,30 @@ import { writeLocalJSONFile, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { renderOaResolverReport } from "./oa-resolver-report.ts"
-import { dumpAggPair, newAggPair, recordInto, stateBucket } from "./oa-resolver/aggregate.ts"
-import { buildAssembledArm } from "./oa-resolver/assembled-arm.ts"
-import type { AnchorSources } from "./oa-resolver/coordinate-tiers.ts"
-import { anchorCoordinateFor, anchorCountryPosteriorFor, buildCoordinateTiers } from "./oa-resolver/coordinate-tiers.ts"
-import type { OAResolverEvalOptions } from "./oa-resolver/options.ts"
-import { buildParseRig } from "./oa-resolver/parse-rig.ts"
-import { scoreResolvedRow } from "./oa-resolver/row-score.ts"
-import { readOARows } from "./oa-resolver/rows.ts"
-import type { Resolved } from "./oa-resolver/tree-hits.ts"
+import { renderOaResolverReport } from "#eval-harness/oa-resolver-report"
+import { dumpAggPair, newAggPair, recordInto, stateBucket } from "#eval-harness/oa-resolver/aggregate"
+import { buildAssembledArm } from "#eval-harness/oa-resolver/assembled-arm"
+import type { AnchorSources } from "#eval-harness/oa-resolver/coordinate-tiers"
+import {
+	anchorCoordinateFor,
+	anchorCountryPosteriorFor,
+	buildCoordinateTiers,
+} from "#eval-harness/oa-resolver/coordinate-tiers"
+import type { OAResolverEvalOptions } from "#eval-harness/oa-resolver/options"
+import { buildParseRig } from "#eval-harness/oa-resolver/parse-rig"
+import { scoreResolvedRow } from "#eval-harness/oa-resolver/row-score"
+import { readOARows } from "#eval-harness/oa-resolver/rows"
+import type { Resolved } from "#eval-harness/oa-resolver/tree-hits"
 import {
 	collectResolved,
 	findAddressPointHit,
 	findInterpolatedHit,
 	findInterpolationSpans,
 	hasStreetHouseNumber,
-} from "./oa-resolver/tree-hits.ts"
+} from "#eval-harness/oa-resolver/tree-hits"
 
-export type { Agg, AggPair } from "./oa-resolver/aggregate.ts"
-export type { OAResolverEvalOptions } from "./oa-resolver/options.ts"
+export type { Agg, AggPair } from "#eval-harness/oa-resolver/aggregate"
+export type { OAResolverEvalOptions } from "#eval-harness/oa-resolver/options"
 
 /**
  * Misses retained for diagnostics before the harness stops accumulating, to bound memory on a full run.

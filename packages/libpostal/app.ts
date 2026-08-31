@@ -9,13 +9,21 @@
 
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { attachOpenAPIDocs, type OpenAPIDocInfo } from "@mailwoman/api-kit"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { bodyLimit } from "hono/body-limit"
 import { cors } from "hono/cors"
 
-import packageJson from "#package.json" with { type: "json" }
+import type { LibpostalEngine } from "#engine"
+import { registerLibpostalRoutes } from "#routes"
 
-import type { LibpostalEngine } from "./engine.ts"
-import { registerLibpostalRoutes } from "./routes.ts"
+/**
+ * This package's own manifest, read at load rather than imported as a module: a JSON import makes `tsc` copy the file
+ * into `out/`, where it becomes the package scope for the compiled tree and breaks every `#` import in it.
+ */
+const packageJson = await readLocalJSONFile<{ name: string; version: string; description: string }>(
+	resolvePackagePath("@mailwoman/libpostal", "package.json")
+)
 
 /**
  * 100 KiB — express.json's default cap, the closest thing to a legacy precedent for this endpoint. There is no legacy

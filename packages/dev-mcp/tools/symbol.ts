@@ -14,8 +14,8 @@
 import { repoRootPath } from "@mailwoman/core/utils"
 import { z } from "zod"
 
-import { searchDeclarations } from "../symbol-index.ts"
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
+import { searchDeclarations } from "#symbol-index"
+import type { DevTool, DevToolDeps } from "#tool-kit"
 
 /**
  * What the sweep does not read. Stated on every result, including the empty ones: a zero here means "no declaration in

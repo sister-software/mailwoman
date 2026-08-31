@@ -10,6 +10,7 @@ import { $public } from "@mailwoman/core/env"
 import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { dataRootPath } from "@mailwoman/core/utils"
+import type { PathBuilderLike } from "path-ts"
 
 /**
  * Resolve the FST artifact from an explicit flag, environment, or the application data directory.
@@ -18,7 +19,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
  * (`gazetteer-pipeline/fst.ts`'s artifact list). A `fst-en-US.bin` default resolves to nothing on every machine, and
  * the command reports it as a missing artifact rather than as a name it got wrong.
  */
-export function resolveFSTPath(explicitPath?: string): string {
+export function resolveFSTPath(explicitPath?: string): PathBuilderLike {
 	return explicitPath ?? $public.MAILWOMAN_FST_BIN ?? dataRootPath("wof", "fst-per-locale", "fst-en-us.bin")
 }
 
@@ -39,7 +40,7 @@ export interface AutocompleteEntry {
  */
 export async function runAutocomplete(
 	prefix: string,
-	opts: { fstPath: string; limit?: number }
+	opts: { fstPath: PathBuilderLike; limit?: number }
 ): Promise<AutocompleteEntry[]> {
 	if (!(await pathExists(opts.fstPath))) {
 		throw new CommandError(

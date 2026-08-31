@@ -10,7 +10,7 @@
  *   regex set per new locale, not 50K dictionary entries.
  */
 
-import type { NormalizedInputLite, QueryShapeLike } from "./types.ts"
+import type { NormalizedInputLite, QueryShapeLike } from "#types"
 
 /**
  * Longest input still plausible as a bare venue or landmark name. Beyond it the query is carrying an address as well,

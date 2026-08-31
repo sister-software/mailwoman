@@ -31,4 +31,4 @@ export {
 	type PolygonRings,
 } from "@mailwoman/spatial"
 
-export { resolveRingRoles, type ResolvedRingRoles } from "./ring-roles.ts"
+export { resolveRingRoles, type ResolvedRingRoles } from "#ring-roles"

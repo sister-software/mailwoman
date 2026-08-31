@@ -58,7 +58,7 @@ interface Options {
 const EvalPhase2Decision: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { printPhase2Receipt, runPhase2Decision } = await import("../../eval-harness/phase-2-decision/run.ts")
+			const { printPhase2Receipt, runPhase2Decision } = await import("#eval-harness/phase-2-decision/run")
 
 			const receipt = await runPhase2Decision({
 				locale: options.locale,

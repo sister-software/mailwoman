@@ -24,6 +24,7 @@ import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
 import { normalize } from "@mailwoman/normalize"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 /**
  * Sources a lookup can address. Each answers a different "does it know this?" and they are not interchangeable — a
@@ -233,7 +234,7 @@ export async function openSealedArtifact<DB>(
  * Load an FST artifact, reporting a missing file as unavailable rather than as a source that knows nothing.
  */
 export async function loadFSTArtifact(
-	path: string | undefined,
+	path: PathBuilderLike | undefined,
 	deserialize: (buffer: Buffer) => FSTLike
 ): Promise<{ fst: FSTLike } | { unavailable: string }> {
 	if (!path) return { unavailable: "No artifact path was resolved for this source." }

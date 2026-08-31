@@ -89,9 +89,9 @@
  *   pass.
  */
 
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
-import { buildGauntletDeps } from "../eval-harness/gauntlet/harness.ts"
+import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"
 
 /**
  * The default board: the hard-slice `bare_namesake` + `fst_out_of_reach` surfaces (the populations ROAD_TO_V9 §3
@@ -129,7 +129,7 @@ const DEFAULT_BOARD = [
 	"gas station near me",
 ]
 
-const { positionals } = parseArgs({ allowPositionals: true })
+const { positionals } = parseArguments({ allowPositionals: true })
 const board = positionals.length ? positionals : DEFAULT_BOARD
 const deps = await buildGauntletDeps()
 

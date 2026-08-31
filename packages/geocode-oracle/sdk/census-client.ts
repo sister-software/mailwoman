@@ -41,15 +41,15 @@ import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { ResourceError } from "@mailwoman/core/errors"
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import type { OracleGeocodeResult } from "../result.ts"
-import { parseCensusAddressMatch } from "./census-parser.ts"
+import type { OracleGeocodeResult } from "#result"
+import { parseCensusAddressMatch } from "#sdk/census-parser"
 import {
 	CensusBenchmarkName,
 	type CensusAddressMatch,
 	type CensusGeocodeResponse,
 	type CensusGeographyMatch,
 	CensusVintageName,
-} from "./census-types.ts"
+} from "#sdk/census-types"
 
 /**
  * The geocoder's base URL. Every path below is appended to it.

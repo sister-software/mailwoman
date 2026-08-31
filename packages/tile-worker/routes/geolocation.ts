@@ -8,8 +8,8 @@ import { ResourceError } from "@mailwoman/core/errors"
 import { prettyJSON } from "@mailwoman/core/objects"
 import type { GeoFeature, PointLiteral } from "@mailwoman/spatial"
 
-import { applyAccessControlAllowOrigin } from "../cors.ts"
-import { WorkerRoute } from "../routing.ts"
+import { applyAccessControlAllowOrigin } from "#cors"
+import { WorkerRoute } from "#routing"
 
 const CFGeolocationProperties = [
 	"country",

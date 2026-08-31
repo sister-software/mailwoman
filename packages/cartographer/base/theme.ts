@@ -6,7 +6,7 @@
 
 import { type Flavor, namedFlavor } from "@protomaps/basemaps"
 
-import { TileSetSourceID } from "../styles/sources.ts"
+import { TileSetSourceID } from "#styles/sources"
 
 /**
  * Identifier for the Mailwoman base tileset. Matches the R2 object basename (`nexus-assets/tiles/basemap-v4.pmtiles`) —

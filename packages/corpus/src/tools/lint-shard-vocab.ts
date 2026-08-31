@@ -37,7 +37,7 @@
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 
 /**
  * A column-projected base/shard row: parallel token + label lists plus the row's country.

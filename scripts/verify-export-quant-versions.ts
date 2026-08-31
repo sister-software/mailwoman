@@ -16,9 +16,8 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { pathExists } from "@mailwoman/core/fs/readers"
-import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
-import { execFileSync } from "@mailwoman/platform/child_process"
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { runFileSync } from "@mailwoman/core/process"
 
 const PYTHON = $public.PYTHON ?? "corpus-python/.venv/bin/python"
 const TRAIN_REMOTE = "corpus-python/modal/train_remote.py"
@@ -39,8 +38,8 @@ const QUANT_PKGS = new Set(["onnx", "onnxruntime"])
 /**
  * Read the pinned `"pkg==1.2.3"` literals straight out of the Modal training-image source of truth.
  */
-function pinnedVersions(): Array<[string, string]> {
-	const src = readLocalTextFileSync(TRAIN_REMOTE)
+async function pinnedVersions(): Promise<Array<[string, string]>> {
+	const src = await readLocalTextFile(TRAIN_REMOTE)
 	const matches = src.matchAll(/"(torch|transformers|onnx|onnxruntime|onnxscript)==([0-9.]+)"/g)
 
 	return [...matches].map((m) => [m[1], m[2]] as [string, string])
@@ -50,7 +49,7 @@ function installedVersion(pkg: string): string {
 	try {
 		// stderr → "ignore" mirrors the bash `2>/dev/null`: a not-installed package throws
 		// PackageNotFoundError with a noisy traceback we deliberately swallow (it's the MISSING path).
-		return execFileSync(PYTHON, ["-c", `import importlib.metadata as m; print(m.version('${pkg}'))`], {
+		return runFileSync(PYTHON, ["-c", `import importlib.metadata as m; print(m.version('${pkg}'))`], {
 			encoding: "utf8",
 			stdio: ["ignore", "pipe", "ignore"],
 		}).trim()
@@ -61,7 +60,7 @@ function installedVersion(pkg: string): string {
 
 let fail = false
 
-for (const [pkg, pinned] of pinnedVersions()) {
+for (const [pkg, pinned] of await pinnedVersions()) {
 	const actual = installedVersion(pkg)
 
 	if (actual === pinned) {

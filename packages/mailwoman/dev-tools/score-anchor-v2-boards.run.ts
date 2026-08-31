@@ -34,9 +34,9 @@
 
 import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { sha256Hex } from "@mailwoman/core/utils/hash"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createHash } from "@mailwoman/platform/crypto"
-import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
 import { createRuntimePipeline } from "#index"
@@ -45,7 +45,7 @@ const REGISTERS = ["asis", "lower", "upper"] as const
 
 type Register = (typeof REGISTERS)[number]
 
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		board: { type: "string", default: "gb" },
 		locale: { type: "string" },
@@ -271,18 +271,14 @@ if (board === "gb") {
 	console.log(`${"ALL TAGS".padEnd(34)} ${`${hit}/${total}`.padStart(9)}`)
 
 	console.log(
-		`span serialization sha256: ${createHash("sha256").update(serialization.join("\n")).digest("hex")}  ` +
-			`(${rows.length * REGISTERS.length} parses)`
+		`span serialization sha256: ${sha256Hex(serialization.join("\n"))}  ` + `(${rows.length * REGISTERS.length} parses)`
 	)
 }
 
 if (values["dump-spans"]) {
 	await writeLocalTextFile(spans.join("\n") + "\n", values["dump-spans"])
 
-	console.log(
-		`spans → ${values["dump-spans"]} (${spans.length} parses, sha256 ` +
-			`${createHash("sha256").update(spans.join("\n")).digest("hex")})`
-	)
+	console.log(`spans → ${values["dump-spans"]} (${spans.length} parses, sha256 ` + `${sha256Hex(spans.join("\n"))})`)
 }
 
 if (values["dump-misses"]) {

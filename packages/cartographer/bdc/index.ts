@@ -15,8 +15,8 @@ import type {
 } from "@maplibre/maplibre-gl-style-spec"
 import { interpolateTurbo } from "d3-scale-chromatic"
 
-import type { LayerSpecificationListInput } from "../styles/layers.ts"
-import { TileSetSourceID } from "../styles/sources.ts"
+import type { LayerSpecificationListInput } from "#styles/layers"
+import { TileSetSourceID } from "#styles/sources"
 
 /**
  * Identifier for the Broadband Data Collection tile set.

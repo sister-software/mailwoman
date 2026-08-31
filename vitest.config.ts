@@ -14,9 +14,9 @@
 
 /// <reference types="vitest/config" />
 
-import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
-import { resolve } from "@mailwoman/platform/path"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import { resolvePath } from "path-ts"
 import type { Alias } from "vite"
 import { defineConfig } from "vite"
 
@@ -44,20 +44,20 @@ const escapeRegExp = (input: string): string => input.replaceAll(/[.*+?^${}()|[\
  * `parseJSONStrict` lives behind the very aliases {@link workspaceAliases} generates, so importing it here would make
  * the config depend on its own output. A malformed manifest should abort the run, which is what a bare throw does.
  */
-function readManifest<T>(path: string): T {
+async function readManifest<T>(path: string): Promise<T> {
 	// oxlint-disable-next-line no-restricted-properties -- see above.
-	return readLocalJSONFileSync<T>(path)
+	return await readLocalJSONFile<T>(path)
 }
 
-function workspaceAliases(): Alias[] {
-	const root = readManifest<{ workspaces: string[] }>(resolve(here, "package.json"))
+async function workspaceAliases(): Promise<Alias[]> {
+	const root = await readManifest<{ workspaces: string[] }>(resolvePath(here, "package.json"))
 	const aliases: Array<Alias & { specificity: number; wildcard: boolean }> = []
 
 	for (const workspace of root.workspaces) {
-		const manifest = readManifest<{
+		const manifest = await readManifest<{
 			name?: string
 			exports?: Record<string, string | Record<string, string>>
-		}>(resolve(here, workspace, "package.json"))
+		}>(resolvePath(here, workspace, "package.json"))
 
 		if (!manifest.name || !manifest.exports) continue
 
@@ -72,7 +72,7 @@ function workspaceAliases(): Alias[] {
 
 			aliases.push({
 				find: new RegExp(`^${specifier.split("*").map(escapeRegExp).join("(.+)")}$`),
-				replacement: resolve(here, workspace, file).replace("*", "$1"),
+				replacement: resolvePath(here, workspace, file).replace("*", "$1"),
 				specificity: specifier.length,
 				wildcard,
 			})
@@ -87,7 +87,7 @@ function workspaceAliases(): Alias[] {
 export default defineConfig({
 	resolve: {
 		alias: [
-			...workspaceAliases(),
+			...(await workspaceAliases()),
 			// onnxruntime-web's `/webgpu` subpath ships browser-only bundles: under Node they fetch()
 			// their Emscripten loader as a file:// URL (undici rejects the scheme) and then import() a
 			// blob: URL (Node's ESM loader rejects that too). The root export carries a `node`
@@ -96,7 +96,7 @@ export default defineConfig({
 			// module graph, where WebGPU is unavailable anyway.
 			//
 			// ASK THE PACKAGE, don't hand-assemble the dist path (2026-08-06 triage). This read
-			// `resolve(here, "node_modules/onnxruntime-web/dist/ort.node.min.mjs")` — a literal that
+			// `resolvePath(here, "node_modules/onnxruntime-web/dist/ort.node.min.mjs")` — a literal that
 			// says the same thing the comment above says, except it says it in a form the package
 			// cannot correct. `import.meta.resolve("onnxruntime-web")` applies the `node` condition of
 			// the exports map the comment is describing, so an ORT upgrade that renames or relocates
@@ -106,7 +106,7 @@ export default defineConfig({
 			// the only one that reaches it.
 			{
 				find: /^onnxruntime-web\/webgpu$/,
-				replacement: fileURLToPath(import.meta.resolve("onnxruntime-web")),
+				replacement: resolveModulePath("onnxruntime-web"),
 			},
 		],
 	},

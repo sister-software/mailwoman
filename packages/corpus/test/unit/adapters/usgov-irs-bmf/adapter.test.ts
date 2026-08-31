@@ -6,11 +6,11 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
-	createUsgovIrsBmfAdapter,
+	createUSGovIRSBMFAdapter,
 	USGOV_IRS_BMF_ADAPTER_ID,
 	USGOV_IRS_BMF_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/adapters/usgov-irs-bmf/adapter"
-import { join } from "@mailwoman/platform/path"
+import { join, type PathBuilderLike } from "path-ts"
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
 
 import { writeDelimitedFixture } from "#test-kit"
@@ -22,7 +22,7 @@ afterAll(() => fixtures.disposeAsync())
 
 const HEADER = "EIN,NAME,STREET,CITY,STATE,ZIP"
 
-let scratch: string
+let scratch: PathBuilderLike
 
 beforeEach(async () => {
 	scratch = fixtures.use(await temporaryDirectory("mailwoman-irsbmf-")).path
@@ -35,7 +35,7 @@ function writeCSV(...lines: string[]): Promise<string> {
 async function collect(p: string, extra?: Record<string, unknown>): Promise<CanonicalRow[]> {
 	const out: CanonicalRow[] = []
 
-	for await (const r of createUsgovIrsBmfAdapter().rows({ inputPath: p, ...extra })) {
+	for await (const r of createUSGovIRSBMFAdapter().rows({ inputPath: p, ...extra })) {
 		out.push(r)
 	}
 
@@ -44,7 +44,7 @@ async function collect(p: string, extra?: Record<string, unknown>): Promise<Cano
 
 describe("usgov-irs-bmf adapter", () => {
 	it("has the expected id and license", () => {
-		const a = createUsgovIrsBmfAdapter()
+		const a = createUSGovIRSBMFAdapter()
 		expect(a.id).toBe(USGOV_IRS_BMF_ADAPTER_ID)
 		expect(a.defaultLicense).toBe(USGOV_IRS_BMF_DEFAULT_LICENSE)
 	})
@@ -116,7 +116,7 @@ describe("usgov-irs-bmf adapter", () => {
 		const p = await writeCSV("1,A,PO BOX 1,SAN JUAN,PR,00901")
 
 		await expect(async () => {
-			for await (const _ of createUsgovIrsBmfAdapter().rows({ inputPath: p, country: "FR" })) {
+			for await (const _ of createUSGovIRSBMFAdapter().rows({ inputPath: p, country: "FR" })) {
 				void _
 			}
 		}).rejects.toThrow(/only US/)

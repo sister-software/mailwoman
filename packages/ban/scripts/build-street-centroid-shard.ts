@@ -29,9 +29,8 @@ import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/read
 import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
-import { dirname } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
 import { foldStreetSurface } from "@mailwoman/resolver"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import {
@@ -43,9 +42,10 @@ import {
 import { type NameKey, stripArrondissement } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
+import { dirname, resolvePath } from "path-ts"
 
-import { BAN_ATTRIBUTION, BAN_CSV_BASE, BAN_LICENSE } from "../sdk/fetch.ts"
-import { streetLocaleForBANCountry } from "../sdk/street-locale.ts"
+import { BAN_ATTRIBUTION, BAN_CSV_BASE, BAN_LICENSE } from "#sdk/fetch"
+import { streetLocaleForBANCountry } from "#sdk/street-locale"
 
 interface BuildArgs {
 	country: string
@@ -55,7 +55,7 @@ interface BuildArgs {
 }
 
 async function parse(): Promise<BuildArgs> {
-	const { values } = parseArgs({
+	const { values } = parseArguments({
 		options: {
 			country: { type: "string" },
 			source: { type: "string" },
@@ -67,13 +67,13 @@ async function parse(): Promise<BuildArgs> {
 	const country = (values.country ?? "fr").toLowerCase()
 	// Throws for an unsupported country — fail loud, never derive a tier keyed with the wrong locale rules.
 	streetLocaleForBANCountry(country)
-	const source = values.source ?? dataRootPath("ban", `address-points-${country}.db`)
+	const source = resolvePath(values.source ?? dataRootPath("ban", `address-points-${country}.db`))
 
 	if (!(await pathExists(source)))
 		throw new Error(`sealed BAN rooftop shard not found: ${source} (build it via #1012 first)`)
 
 	const release = values.release ?? "2026-05-18"
-	const output = values.out ?? dataRootPath("ban", `street-centroids-${country}.db`)
+	const output = resolvePath(values.out ?? dataRootPath("ban", `street-centroids-${country}.db`))
 
 	return { country, source, release, output }
 }
@@ -202,7 +202,7 @@ async function main(): Promise<void> {
 		kdb.exec("ANALYZE")
 	}
 
-	swapDatabaseIntoPlace(tmp, args.output)
+	await swapDatabaseIntoPlace(tmp, args.output)
 	await sealDatabase(args.output)
 
 	const md5 = await md5File(args.output)

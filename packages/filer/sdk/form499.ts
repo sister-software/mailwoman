@@ -34,11 +34,12 @@
  *   design, not by oversight.
  */
 
-import { openReadStream } from "@mailwoman/core/fs/streams"
-import { createInterface } from "@mailwoman/platform/readline"
+import { createInterface } from "node:readline"
 
-import type { Form499Lifecycle } from "./form499-notes.ts"
-import { toFRN, type FRN } from "./frn.ts"
+import { openReadStream } from "@mailwoman/core/fs/streams"
+
+import type { Form499Lifecycle } from "#sdk/form499-notes"
+import { toFRN, type FRN } from "#sdk/frn"
 
 /**
  * The Form 499 filer TSV's 17 columns, in file order — ported verbatim from Nexus's `RawFCCForm499FilingColumns`

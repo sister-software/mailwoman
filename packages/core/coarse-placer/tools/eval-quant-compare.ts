@@ -11,13 +11,12 @@
  *   Run: `mailwoman placer eval quant-compare [--fp32 <dir>] [--int8 <dir>] [--abstain 0.5]`
  */
 
-import * as path from "@mailwoman/platform/path"
+import { type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { CoarsePlacer, type CoarsePlacerMeta } from "#coarse-placer/coarse-placer"
 import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
 import { dataRootPath, repoRootPath } from "#utils"
-
-import { CoarsePlacer, type CoarsePlacerMeta } from "../coarse-placer.ts"
 
 interface TestRow {
 	raw: string
@@ -31,11 +30,11 @@ export interface EvalQuantCompareOptions {
 	/**
 	 * Fp32 artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
 	 */
-	fp32?: string
+	fp32?: PathBuilderLike
 	/**
 	 * Int8 artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model-int8`.
 	 */
-	int8?: string
+	int8?: PathBuilderLike
 	/**
 	 * Abstention threshold. Default 0.5.
 	 */
@@ -43,7 +42,7 @@ export interface EvalQuantCompareOptions {
 	/**
 	 * Dataset dir (`test.jsonl`). Default `<repo>/data/coarse-placer`.
 	 */
-	data?: string
+	data?: PathBuilderLike
 }
 
 /**
@@ -69,23 +68,23 @@ export interface EvalQuantCompareResult {
  * Coarse-placer int8-vs-fp32 comparison — see the module doc. Emits the report to stdout.
  */
 export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): Promise<EvalQuantCompareResult> {
-	const fp32Dir = options.fp32 || dataRootPath("coarse-placer", "model")
-	const int8Dir = options.int8 || dataRootPath("coarse-placer", "model-int8")
+	const fp32Dir = resolvePathBuilder(options.fp32 || dataRootPath("coarse-placer", "model"))
+	const int8Dir = resolvePathBuilder(options.int8 || dataRootPath("coarse-placer", "model-int8"))
 	const abstainBelow = options.abstain ?? 0.5
 	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 
-	async function loadFp32(dir: string): Promise<CoarsePlacer> {
-		const meta = await readLocalJSONFile<CoarsePlacerMeta>(path.join(dir, "meta.json"))
-		const buf = await readLocalBuffer(path.join(dir, "weights.bin"))
+	async function loadFp32(dir: PathBuilderLike): Promise<CoarsePlacer> {
+		const meta = await readLocalJSONFile<CoarsePlacerMeta>(resolvePath(dir, "meta.json"))
+		const buf = await readLocalBuffer(resolvePath(dir, "weights.bin"))
 		const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 		const weights = new Float32Array(ab)
 
 		return new CoarsePlacer({ ...meta, weights }, { abstainBelow })
 	}
 
-	async function loadInt8(dir: string): Promise<CoarsePlacer> {
-		const meta = await readLocalJSONFile<CoarsePlacerMeta>(path.join(dir, "meta.json"))
-		const buf = await readLocalBuffer(path.join(dir, "weights.bin"))
+	async function loadInt8(dir: PathBuilderLike): Promise<CoarsePlacer> {
+		const meta = await readLocalJSONFile<CoarsePlacerMeta>(resolvePath(dir, "meta.json"))
+		const buf = await readLocalBuffer(resolvePath(dir, "weights.bin"))
 		const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 		const int8 = new Int8Array(ab)
 		const C = meta.classes.length
@@ -108,9 +107,9 @@ export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): P
 	const fp32 = await loadFp32(fp32Dir)
 	const int8 = await loadInt8(int8Dir)
 
-	const test = await Array.fromAsync(JSONSpliterator.fromAsync<TestRow>(path.join(dataDir, "test.jsonl")))
+	const test = await Array.fromAsync(JSONSpliterator.fromAsync<TestRow>(resolvePath(dataDir, "test.jsonl")))
 
-	const classes = (await readLocalJSONFile<CoarsePlacerMeta>(path.join(fp32Dir, "meta.json"))).classes
+	const classes = (await readLocalJSONFile<CoarsePlacerMeta>(resolvePath(fp32Dir, "meta.json"))).classes
 	let okF = 0
 	let okI = 0
 	let agree = 0

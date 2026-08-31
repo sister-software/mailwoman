@@ -7,7 +7,7 @@
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { placetypeDepth } from "../ancestry.ts"
+import { placetypeDepth } from "#ancestry"
 import {
 	CANDIDATE_ANCESTOR_COLUMNS,
 	CANDIDATE_ANCESTOR_TABLE,
@@ -15,10 +15,10 @@ import {
 	createCandidateAncestorTable,
 	createCandidateIntervalTable,
 	MAX_ANCESTOR_DEPTH,
-} from "../candidate-ancestors-schema.ts"
-import type { CandidateDatabase } from "../candidate-schema.ts"
-import type { WOFDatabase } from "../schema.ts"
-import type { PlaceAttrs } from "./place-attrs.ts"
+} from "#candidate-ancestors-schema"
+import type { CandidateDatabase } from "#candidate-schema"
+import type { PlaceAttrs } from "#candidate/place-attrs"
+import type { WOFDatabase } from "#schema"
 
 /**
  * Pass 3b — the ancestors sidecar: closure rows + interval labels (candidate-ancestors-schema.ts owns the encoding

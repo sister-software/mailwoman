@@ -20,10 +20,10 @@
 import { BYTES_PER_KIB } from "@mailwoman/core/fs/formatters"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "./download.ts"
-import { downloadToFile, writeManifest } from "./download.ts"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { downloadToFile, writeManifest } from "#tools/fetch/download"
 
 /**
  * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather

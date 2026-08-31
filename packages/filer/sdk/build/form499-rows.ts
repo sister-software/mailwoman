@@ -11,11 +11,11 @@
 
 import type { StatementSync } from "@mailwoman/sqlite/client"
 
-import { FilerEdgeAssertion, FilerIdentifierType, FilerRelationship } from "../../schema.ts"
-import type { Form499Lifecycle } from "../form499-notes.ts"
-import type { Form499Row } from "../form499.ts"
-import { insertFamilyMembership } from "./family-membership.ts"
-import { mintFRNNodeID, mintHoldingCompanyNodeID, mintManagementCompanyNodeID } from "./node-ids.ts"
+import { FilerEdgeAssertion, FilerIdentifierType, FilerRelationship } from "#schema"
+import { insertFamilyMembership } from "#sdk/build/family-membership"
+import { mintFRNNodeID, mintHoldingCompanyNodeID, mintManagementCompanyNodeID } from "#sdk/build/node-ids"
+import type { Form499Row } from "#sdk/form499"
+import type { Form499Lifecycle } from "#sdk/form499-notes"
 
 /**
  * The cessation date to close a relationship window at, or `null` when closing it would assert something incoherent.

@@ -7,12 +7,12 @@
  */
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { oaResolverEval } from "mailwoman/eval-harness/oa-resolver-eval"
 
 async function main(): Promise<void> {
 	// Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-	const { values: rawValues } = parseArgs({
+	const { values: rawValues } = parseArguments({
 		options: {
 			"ablate-to-anchor": { type: "boolean" },
 			"address-points": { type: "string" },

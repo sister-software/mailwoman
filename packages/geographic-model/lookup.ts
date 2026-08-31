@@ -20,7 +20,7 @@
 
 import type { POICategoryID } from "@mailwoman/poi-taxonomy/types"
 
-import { type CompiledGeographicModel, compareIdentifiers } from "./artifact.ts"
+import { type CompiledGeographicModel, compareIdentifiers } from "#artifact"
 import type {
 	ConceptID,
 	ConceptRecord,
@@ -28,7 +28,7 @@ import type {
 	ExternalVocabulary,
 	RelationID,
 	RelationRecord,
-} from "./schema.ts"
+} from "#schema"
 
 /**
  * Lookups over one compiled artifact.

@@ -9,19 +9,23 @@
  *   wholesale (measured: the single-line `locales` array expands to eleven lines).
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { resolve } from "@mailwoman/platform/path"
-import { describe, expect, it } from "vitest"
+import { resolvePath } from "path-ts"
+import { beforeAll, describe, expect, it } from "vitest"
 
 import { bumpReleaseConfigVersion } from "./release-config-version.ts"
 
 describe("release.config.json under the prepare bump", () => {
-	const path = resolve(String(repoRootPath()), "release.config.json")
-	const original = readLocalTextFileSync(path)
-	const currentVersion = parseJSONStrict<{ version: string }>(original).version
+	const path = resolvePath(String(repoRootPath()), "release.config.json")
+	let original: string
+	let currentVersion: string
+
+	beforeAll(async () => {
+		original = await readLocalTextFile(path)
+		currentVersion = parseJSONStrict<{ version: string }>(original).version
+	})
 
 	it("a bump changes exactly one line and leaves the weights block byte-equivalent", () => {
 		const bumped = bumpReleaseConfigVersion(original, currentVersion, "999.0.0")
@@ -43,7 +47,7 @@ describe("release.config.json under the prepare bump", () => {
 	})
 
 	it("carries the current release number, not a lagged one", async () => {
-		const rootManifestPath = resolve(String(repoRootPath()), "package.json")
+		const rootManifestPath = resolvePath(String(repoRootPath()), "package.json")
 		const root = await readLocalJSONFile<{ version: string }>(rootManifestPath)
 
 		// The v9.2.0 incident: the root moved and this file did not. The prepare bump now writes both,

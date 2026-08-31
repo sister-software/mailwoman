@@ -25,7 +25,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { parseArgs as parseNodeArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 interface Args {
 	harnessPath: string
@@ -39,7 +39,7 @@ function parseArgs(): Args {
 	const out: Partial<Args> = { backoffMs: 3000 }
 
 	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
-	const { values } = parseNodeArgs({
+	const { values } = parseArguments({
 		options: {
 			"backoff-ms": { type: "string" },
 			"geocode-earth-key": { type: "string" },

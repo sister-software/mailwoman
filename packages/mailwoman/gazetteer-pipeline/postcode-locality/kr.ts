@@ -51,7 +51,7 @@ import {
 	POSTCODE_LOCALITY_INSERT_SQL,
 	type PostcodeLocalityDatabase,
 	type PostcodeLocalityInsertValues,
-} from "./schema.ts"
+} from "#gazetteer-pipeline/postcode-locality/schema"
 
 /**
  * KR postcode points sit p50 ~1 km from the nearest locality; 20 km is a safe net.

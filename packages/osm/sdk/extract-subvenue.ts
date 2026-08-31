@@ -60,11 +60,11 @@
 
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { spawn } from "@mailwoman/platform/child_process"
-import { once } from "@mailwoman/platform/events"
+import { spawnProcess } from "@mailwoman/core/process"
+import { once } from "@mailwoman/core/utils/events"
 import { TextSpliterator } from "spliterator"
 
-import { representativePoint } from "./representative-point.ts"
+import { representativePoint } from "#sdk/representative-point"
 
 /**
  * Which side of the containment relation a matched feature sits on.
@@ -495,7 +495,7 @@ async function* runSubVenueLayer(
 	const tagKeys = distinctSubVenueTagKeys(rules)
 	const sql = buildSubVenueSQL(layer, rules)
 	const args = ["-f", "GeoJSONSeq", "/vsistdout/", "-dialect", "OGRSQL", "-sql", sql, pbfPath]
-	const proc = spawn("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
+	const proc = spawnProcess("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
 	let stderr = ""
 
 	proc.stderr.on("data", (d: Buffer) => {

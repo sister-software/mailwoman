@@ -19,7 +19,7 @@
  *   consumes the shape.
  */
 
-import type { TokenLike } from "./query-shape-prior.ts"
+import type { TokenLike } from "#query-shape-prior"
 
 /**
  * Confidence scaling by matched-token count. A one- or two-token FST hit is far likelier to be coincidental than a

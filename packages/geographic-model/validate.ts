@@ -37,7 +37,7 @@ import {
 	type GeographicModelDocument,
 	Modality,
 	RelationSemantics,
-} from "./schema.ts"
+} from "#schema"
 import {
 	add,
 	checkFieldNames,
@@ -50,9 +50,9 @@ import {
 	readVocabularyValue,
 	type ValidationIssue,
 	ValidationIssueCode,
-} from "./validation-issues.ts"
+} from "#validation-issues"
 
-export { type ValidationIssue, ValidationIssueCode } from "./validation-issues.ts"
+export { type ValidationIssue, ValidationIssueCode } from "#validation-issues"
 
 /**
  * The whole document, or every reason it is not one.

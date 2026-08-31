@@ -40,12 +40,12 @@
 
 import { readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { basename, join } from "@mailwoman/platform/path"
+import { basename, join } from "path-ts"
 
-import { SUBVENUE_PROMOTIONS, type SubVenuePromotion } from "./sub-venue-promotions.ts"
-import { extractAttestedPhrases, readSubVenueJSONL, type SubVenueHarvestRow } from "./sub-venue/harvest.ts"
-import { deriveHeadNounSurfaces } from "./sub-venue/head-nouns.ts"
-import { buildSurfaceIndex } from "./sub-venue/surfaces.ts"
+import { SUBVENUE_PROMOTIONS, type SubVenuePromotion } from "#tools/sub-venue-promotions"
+import { extractAttestedPhrases, readSubVenueJSONL, type SubVenueHarvestRow } from "#tools/sub-venue/harvest"
+import { deriveHeadNounSurfaces } from "#tools/sub-venue/head-nouns"
+import { buildSurfaceIndex } from "#tools/sub-venue/surfaces"
 import {
 	CONCEPT_QIDS,
 	type IdentifierShape,
@@ -59,14 +59,14 @@ import {
 	type SubVenueModifier,
 	type SubVenueSurface,
 	SUBVENUE_LEXICON_VERSION,
-} from "./sub-venue/table.ts"
-import { surfacesFromWikidata } from "./sub-venue/wikidata.ts"
+} from "#tools/sub-venue/table"
+import { surfacesFromWikidata } from "#tools/sub-venue/wikidata"
 
-export * from "./sub-venue/harvest.ts"
-export * from "./sub-venue/head-nouns.ts"
-export * from "./sub-venue/surfaces.ts"
-export * from "./sub-venue/table.ts"
-export * from "./sub-venue/wikidata.ts"
+export * from "#tools/sub-venue/harvest"
+export * from "#tools/sub-venue/head-nouns"
+export * from "#tools/sub-venue/surfaces"
+export * from "#tools/sub-venue/table"
+export * from "#tools/sub-venue/wikidata"
 
 /**
  * Apply the curation decisions to a surface list, IN PLACE on a copy.

@@ -18,11 +18,11 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { pyFixed } from "@mailwoman/core/utils"
-import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
-const { positionals } = parseArgs({ allowPositionals: true, strict: false })
+const { positionals } = parseArguments({ allowPositionals: true, strict: false })
 
 interface Result {
 	neural_pass: boolean

@@ -26,10 +26,13 @@ module.exports = {
 		},
 		{
 			name: "no-circular-dependencies",
-			comment: "Keep the workspace dependency graph acyclic.",
+			comment:
+				"Keep the workspace dependency graph acyclic. A cycle that closes only through a dynamic `import()` or a " +
+				"type-only edge is not an evaluation cycle — a lazy import is how a module keeps a Node-only loader out of " +
+				"the browser graph while still offering a one-call factory — so those edges do not count.",
 			severity: "error",
 			from: { path: "^(?:packages|scripts)/" },
-			to: { circular: true },
+			to: { circular: true, viaOnly: { dependencyTypesNot: ["dynamic-import", "type-only"] } },
 		},
 	],
 	options: {

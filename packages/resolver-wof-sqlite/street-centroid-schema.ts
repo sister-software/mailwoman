@@ -22,7 +22,7 @@
 
 import type { Kysely } from "kysely"
 
-import type { NameKey, StreetKey } from "./street-normalize.ts"
+import type { NameKey, StreetKey } from "#street-normalize"
 
 /**
  * One street roll-up. `(street_norm, postcode, locality_base)` is unique. `lat`/`lon` are the UNWEIGHTED mean of the

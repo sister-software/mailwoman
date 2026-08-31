@@ -9,8 +9,8 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { jaccard, type TermFrequencyTable } from "@mailwoman/match"
-import { join } from "@mailwoman/platform/path"
 import type { ResolvedEntity, SourceRecord } from "@mailwoman/registry/types"
+import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 import { buildLevers } from "#tools/nppes/levers"

@@ -13,13 +13,13 @@
  *   See `docs/engineering/reference/STAGES.md` § Stage 2.5 for the contract.
  */
 
-export { classifyKind, classifyKindSync, createKindClassifier } from "./classify.ts"
-export type { KindClassifierOpts } from "./classify.ts"
-export { deriveIntentMarkers } from "./intent-markers.ts"
-export type { IntentMarkerContext } from "./intent-markers.ts"
-export { nearMeSubject, scoreBareToponym, scoreNearMe, scoreRoutePair } from "./intent-rules.ts"
-export { matchPOICategory, matchPOISubject } from "./poi.ts"
-export type { POIPhraseMatch, POIPhraseLookup, POIQuerySpan, POISpatialRelation, POISubjectMatch } from "./poi.ts"
+export { classifyKind, classifyKindSync, createKindClassifier } from "#classify"
+export type { KindClassifierOpts } from "#classify"
+export { deriveIntentMarkers } from "#intent-markers"
+export type { IntentMarkerContext } from "#intent-markers"
+export { nearMeSubject, scoreBareToponym, scoreNearMe, scoreRoutePair } from "#intent-rules"
+export { matchPOICategory, matchPOISubject } from "#poi"
+export type { POIPhraseMatch, POIPhraseLookup, POIQuerySpan, POISpatialRelation, POISubjectMatch } from "#poi"
 
 export {
 	scoreIntersection,
@@ -30,9 +30,9 @@ export {
 	scoreStructuredAddress,
 	scoreVague,
 	scoreVenueLandmark,
-} from "./rules.ts"
+} from "#rules"
 
-export { QueryIntentCode } from "./types.ts"
+export { QueryIntentCode } from "#types"
 
 export type {
 	LocaleHint,
@@ -41,4 +41,4 @@ export type {
 	QueryKind,
 	QueryKindResult,
 	QueryShapeLike,
-} from "./types.ts"
+} from "#types"

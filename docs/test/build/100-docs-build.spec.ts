@@ -13,14 +13,11 @@
  *   specs. Skipped automatically in remote-smoke mode (`MAILWOMAN_DEMO_URL` set).
  */
 
-import { execFile } from "@mailwoman/platform/child_process"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join, resolve } from "@mailwoman/platform/path"
-import { promisify } from "@mailwoman/platform/util"
+import { runFile } from "@mailwoman/core/process"
+import { tempRootPath } from "@mailwoman/core/utils"
 import { expect, test } from "@playwright/test"
+import { resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
-
-const execFileAsync = promisify(execFile)
 
 /**
  * Docs/ workspace root — this file lives at docs/test/build/.
@@ -28,7 +25,7 @@ const execFileAsync = promisify(execFile)
 // `__dirname`, not `import.meta.url`: Playwright transpiles these specs for a package with no
 // `"type": "module"`, so import.meta is a syntax error at load time. This was masked while the whole
 // config failed to load — the file never got far enough to be parsed.
-const DOCS_ROOT = resolve(__dirname, "../..")
+const DOCS_ROOT = resolvePath(__dirname, "../..")
 
 // Not `childEnv` from @mailwoman/core: importing workspace TypeScript pulls Playwright's loader into
 // the module graph, and it handles neither `.ts`-extension imports nor the project references behind
@@ -40,7 +37,7 @@ const processEnv = process.env
  * Build into a throwaway dir, not the workspace `build/`. The Playwright webServer serves `build/` for the browser
  * specs; building the health check there too would clobber the served site.
  */
-const CHECK_OUT_DIR = join(tmpdir(), "mailwoman-docs-build-check")
+const CHECK_OUT_DIR = tempRootPath("mailwoman-docs-build-check")
 
 /**
  * Lines Docusaurus prints for genuine problems. We scan combined stdout+stderr for these markers rather than relying
@@ -60,7 +57,7 @@ test.describe("docs build", () => {
 		let failed = false
 
 		try {
-			const result = await execFileAsync("yarn", ["build", "--out-dir", CHECK_OUT_DIR], {
+			const result = await runFile("yarn", ["build", "--out-dir", CHECK_OUT_DIR], {
 				cwd: DOCS_ROOT,
 				maxBuffer: 64 * 1024 * 1024,
 				env: { ...processEnv, CI: "true" },

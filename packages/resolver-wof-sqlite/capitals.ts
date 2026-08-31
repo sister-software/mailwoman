@@ -21,7 +21,7 @@
 
 import { haversineKm } from "@mailwoman/spatial"
 
-import { normalizeLocalityForKey } from "./street-normalize.ts"
+import { normalizeLocalityForKey } from "#street-normalize"
 
 /**
  * Capital status of one candidate: national capital, admin-1 seat, or neither. Numeric so the resolver's promotion can

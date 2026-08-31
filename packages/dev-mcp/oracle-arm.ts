@@ -21,7 +21,7 @@
  *   spending money; the operator has to have written it down first.
  */
 
-import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	createCensusGeocoderClient,
@@ -29,7 +29,7 @@ import {
 	type OracleGeocodeResult,
 } from "@mailwoman/geocode-oracle"
 
-import type { ExternalAnswer } from "./external-arm.ts"
+import type { ExternalAnswer } from "#external-arm"
 
 /**
  * Reference geocoders this arm can address.
@@ -73,11 +73,11 @@ export interface OracleConfig {
  */
 export const DEFAULT_GOOGLE_CALL_CAP = 500
 
-export function readOracleConfig(path: string = ORACLE_CONFIG_PATH): OracleConfig {
-	if (!pathExistsSync(path)) return {}
+export async function readOracleConfig(path: string = ORACLE_CONFIG_PATH): Promise<OracleConfig> {
+	if (!(await pathExists(path))) return {}
 
 	try {
-		return readLocalJSONFileSync<OracleConfig>(path)
+		return await readLocalJSONFile<OracleConfig>(path)
 	} catch {
 		// A malformed config must not read as "enabled". Absence and garbage both mean off.
 		return {}
@@ -106,8 +106,16 @@ export class OracleMeter {
 	#googleCalls = 0
 	readonly #config: OracleConfig
 
-	constructor(config: OracleConfig = readOracleConfig()) {
+	constructor(config: OracleConfig) {
 		this.#config = config
+	}
+
+	/**
+	 * Build a meter over the daemon's config file. The constructor cannot await the config read, so this static factory
+	 * does it; callers that already hold an {@linkcode OracleConfig} may keep using the constructor.
+	 */
+	static async create(config?: OracleConfig): Promise<OracleMeter> {
+		return new OracleMeter(config ?? (await readOracleConfig()))
 	}
 
 	get googleCallsUsed(): number {

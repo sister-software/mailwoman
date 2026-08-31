@@ -9,10 +9,9 @@
 import { type ComponentTag, decodeAsTuples } from "@mailwoman/core"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
+import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
+import { overlayLocale, routeCountry } from "#eval-harness/gauntlet/routing"
 import { createRuntimePipeline } from "#index"
-
-import { loadRegressionCases } from "../eval-harness/gauntlet/cases/load.ts"
-import { overlayLocale, routeCountry } from "../eval-harness/gauntlet/routing.ts"
 
 const SOURCE = "operator:street-name-audit-2026-08-09"
 const STREET_FAMILY = ["street_prefix", "street_prefix_particle", "street", "street_suffix"] as const

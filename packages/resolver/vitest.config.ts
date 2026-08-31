@@ -12,22 +12,22 @@
  *   more-specific alias FIRST.
  */
 
-import { resolve } from "@mailwoman/platform/path"
+import { resolvePath } from "path-ts"
 import { defineConfig } from "vitest/config"
 
 const here = import.meta.dirname
-const out = (pkg: string, sub: string) => resolve(here, `../${pkg}/out/${sub}`)
+const out = (pkg: string, sub: string) => resolvePath(here, `../${pkg}/out/${sub}`)
 
 export default defineConfig({
 	resolve: {
 		alias: [
 			// Order matters — file-subpaths (objects.ts → objects.js) before the directory regex.
 			{ find: /^@mailwoman\/core\/objects$/, replacement: out("core", "objects.js") },
-			{ find: /^@mailwoman\/core\/(.+)$/, replacement: resolve(here, "../core/out/$1/index.js") },
+			{ find: /^@mailwoman\/core\/(.+)$/, replacement: resolvePath(here, "../core/out/$1/index.js") },
 			{ find: /^@mailwoman\/core$/, replacement: out("core", "index.js") },
-			{ find: /^@mailwoman\/spatial\/(.+)$/, replacement: resolve(here, "../spatial/out/$1/index.js") },
+			{ find: /^@mailwoman\/spatial\/(.+)$/, replacement: resolvePath(here, "../spatial/out/$1/index.js") },
 			{ find: /^@mailwoman\/spatial$/, replacement: out("spatial", "index.js") },
-			{ find: /^@mailwoman\/codex\/(.+)$/, replacement: resolve(here, "../codex/out/$1/index.js") },
+			{ find: /^@mailwoman\/codex\/(.+)$/, replacement: resolvePath(here, "../codex/out/$1/index.js") },
 			{ find: /^@mailwoman\/codex$/, replacement: out("codex", "index.js") },
 		],
 	},

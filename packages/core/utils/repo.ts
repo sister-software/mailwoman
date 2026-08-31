@@ -4,10 +4,17 @@
  * @author Teffen Ellis, et al.
  */
 
-import { basename, dirname, resolve } from "@mailwoman/platform/path"
-import { fileURLToPath } from "@mailwoman/platform/url"
-import { createPathBuilderResolver, createPathResolver, type Join, type PathBuilder } from "path-ts"
+import {
+	basename,
+	createPathBuilderResolver,
+	createPathResolver,
+	dirname,
+	type Join,
+	type PathBuilder,
+	resolvePath,
+} from "path-ts"
 
+import { fileURLToPath } from "#module/file-url"
 /**
  * Aliased path to the root of the repository.
  *
@@ -32,6 +39,8 @@ type PathReflection = typeof PathReflection
 /**
  * The directory path of the current file, post-compilation.
  */
+// `import.meta.url`, not `import.meta.dirname`: the Docusaurus config loader (jiti 1.x, a CommonJS transform) rewrites
+// only `import.meta.url`, and this module sits on that loader's import path through `@mailwoman/core/utils`.
 const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias, ...PathReflection], "/">
 
 /**
@@ -39,10 +48,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias
  *
  * In compiled mode this file lives at `core/out/utils/repo.js` (so the PARENT of `utils` is `out/`) and in source mode
  * at `core/utils/repo.ts` (the parent is `core/`). Detect the mode by checking whether the parent directory
- * (`resolve("..")`) is `out/` — uses `basename` on the resolved path rather than a substring match on `__dirname`, so
- * it survives symlinks and output-directory renames.
+ * (`resolvePath("..")`) is `out/` — uses `basename` on the resolved path rather than a substring match on `__dirname`,
+ * so it survives symlinks and output-directory renames.
  *
- * (Earlier this checked `resolve("..", "..")`, which overshoots `out/` to `core/` and so was always false — the
+ * (Earlier this checked `resolvePath("..", "..")`, which overshoots `out/` to `core/` and so was always false — the
  * compiled tree then resolved `CorePackageAbsolutePath` to `core/out` instead of `core/`, landing dictionary reads at
  * the nonexistent `core/out/data` and requiring an external symlink bridge to find `core/data`. #481.)
  *
@@ -64,10 +73,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias
  * module top level rather than a resolution error someone sees. The current code takes only what already survives that
  * treatment. Keep the string arithmetic.
  */
-const __isCompiledTree = basename(resolve(__dirname, "..")) === OutDirectoryName
+const __isCompiledTree = basename(resolvePath(__dirname, "..")) === OutDirectoryName
 const __upCount = __isCompiledTree ? PathReflection.length : PathReflection.length - 1
-const RepoRootAbsolutePath = resolve(__dirname, ...Array.from({ length: __upCount }, () => ".."))
-const PackagesAbsolutePath = resolve(RepoRootAbsolutePath, "packages")
+const RepoRootAbsolutePath = resolvePath(__dirname, ...Array.from({ length: __upCount }, () => ".."))
+const PackagesAbsolutePath = resolvePath(RepoRootAbsolutePath, "packages")
 
 type RepoRootAbsolutePath = RepoRootAlias
 
@@ -101,7 +110,7 @@ export const workspacePath = createPathResolver<RepoRootAlias>(PackagesAbsoluteP
  * live under the workspace root, NOT the repo root — so that `npm install @mailwoman/core` ships those assets alongside
  * the JS without any post-install copy step.
  */
-const CorePackageAbsolutePath = resolve(__dirname, "..", __isCompiledTree ? ".." : "")
+const CorePackageAbsolutePath = resolvePath(__dirname, "..", __isCompiledTree ? ".." : "")
 /**
  * Path builder rooted at `@mailwoman/core`, so data under `core/data/` resolves the same in source and compiled trees.
  * See the `__isCompiledTree` note in this file before reaching across that boundary.

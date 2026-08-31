@@ -38,7 +38,7 @@ const keyOf = (entries: PlaceEntry[]) => entries.map((e) => [e.wofID, e.placetyp
 
 const tempDir = await temporaryDirectory("morphology-fst-loader-")
 const artifactPath = tempDir.resolve("fst-street-morphology.bin")
-const built = buildStreetMorphologyFST({ dictionariesDir: DICTIONARIES_DIR })
+const built = await buildStreetMorphologyFST({ dictionariesDir: DICTIONARIES_DIR })
 
 await writeLocalFile(serializeFST(built.matcher, built.provenance), artifactPath)
 // The sealed posture `mailwoman gazetteer build street-morphology` leaves.
@@ -47,8 +47,8 @@ await changeMode(artifactPath, 0o444)
 afterAll(() => tempDir[Symbol.asyncDispose]())
 
 describe("loadStreetMorphologyFST", () => {
-	it("loads the sealed artifact and matches the in-process build on street-type probes", () => {
-		const loaded = loadStreetMorphologyFST({ artifactPath })
+	it("loads the sealed artifact and matches the in-process build on street-type probes", async () => {
+		const loaded = await loadStreetMorphologyFST({ artifactPath })
 
 		expect(loaded.source).toBe("artifact")
 		expect(loaded.path).toBe(artifactPath)
@@ -63,8 +63,8 @@ describe("loadStreetMorphologyFST", () => {
 		}
 	})
 
-	it("carries the build provenance through the artifact trailer", () => {
-		const loaded = loadStreetMorphologyFST({ artifactPath })
+	it("carries the build provenance through the artifact trailer", async () => {
+		const loaded = await loadStreetMorphologyFST({ artifactPath })
 
 		expect(loaded.provenance?.placeCount).toBe(built.provenance.placeCount)
 		expect(loaded.provenance?.nameInsertions).toBe(built.provenance.nameInsertions)
@@ -80,8 +80,8 @@ describe("loadStreetMorphologyFST", () => {
 		}
 	})
 
-	it("falls back to the dictionary build when the explicit artifact is missing", () => {
-		const loaded = loadStreetMorphologyFST({
+	it("falls back to the dictionary build when the explicit artifact is missing", async () => {
+		const loaded = await loadStreetMorphologyFST({
 			artifactPath: tempDir.resolve("does-not-exist.bin"),
 			dictionariesDir: DICTIONARIES_DIR,
 		})
@@ -97,7 +97,7 @@ describe("loadStreetMorphologyFST", () => {
 		await writeLocalBuffer(Buffer.from("not an FST artifact"), corruptPath)
 		const warnings: string[] = []
 
-		const loaded = loadStreetMorphologyFST({
+		const loaded = await loadStreetMorphologyFST({
 			artifactPath: corruptPath,
 			dictionariesDir: DICTIONARIES_DIR,
 			onWarn: (message) => warnings.push(message),

@@ -6,8 +6,8 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { runFileSync } from "@mailwoman/core/process"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { execFileSync } from "@mailwoman/platform/child_process"
 
 interface KnipSymbol {
 	name: string
@@ -44,7 +44,7 @@ function duplicateKey(file: string, symbols: KnipSymbol[]): string {
 		.join(",")}`
 }
 
-const output = execFileSync("yarn", ["knip", "--exports", "--reporter", "json", "--no-exit-code"], {
+const output = runFileSync("yarn", ["knip", "--exports", "--reporter", "json", "--no-exit-code"], {
 	cwd: String(repoRootPath()),
 	encoding: "utf8",
 	maxBuffer: 16 * 1024 * 1024,

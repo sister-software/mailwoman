@@ -24,15 +24,15 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath, makeDirectories } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { dirname } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
 import { createAddressPointIndexes } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { canonicalizeRouteKey, normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { latLngToCell } from "h3-js"
+import { dirname, resolvePath } from "path-ts"
 
 import {
 	createOSMAddressPointIndexes,
@@ -40,10 +40,10 @@ import {
 	OSM_ADDRESS_H3_RESOLUTION,
 	OSM_ADDRESS_POINT_COLUMNS,
 	type OSMAddressPointDatabase,
-} from "../sdk/address-point-schema.ts"
-import { extractAddrPoints } from "../sdk/extract.ts"
-import { normalizeStreetForKeyLocale, streetLocaleForCountry, streetLocaleForSurface } from "../sdk/street-locale.ts"
-import { buildStreetRecoveryIndex } from "../sdk/street-recovery.ts"
+} from "#sdk/address-point-schema"
+import { extractAddrPoints } from "#sdk/extract"
+import { normalizeStreetForKeyLocale, streetLocaleForCountry, streetLocaleForSurface } from "#sdk/street-locale"
+import { buildStreetRecoveryIndex } from "#sdk/street-recovery"
 
 interface BuildArgs {
 	country: string
@@ -61,7 +61,7 @@ interface BuildArgs {
 }
 
 async function parse(): Promise<BuildArgs> {
-	const { values } = parseArgs({
+	const { values } = parseArguments({
 		options: {
 			country: { type: "string" },
 			slug: { type: "string" },
@@ -98,7 +98,7 @@ async function parse(): Promise<BuildArgs> {
 	}
 
 	if (!buildSHA) throw new Error("required: --build-sha <git-sha>")
-	const output = values.out || dataRootPath("osm", `address-points-${country}-${slug}.db`)
+	const output = resolvePath(values.out || dataRootPath("osm", `address-points-${country}-${slug}.db`))
 	const recover = Boolean(values.recover)
 	const recoverRadiusKm = Number(values["recover-radius-m"] ?? "30") / 1000
 
@@ -249,7 +249,7 @@ async function main(): Promise<void> {
 	}
 
 	// Build-on-copy: only now swap the freshly-built shard into place.
-	swapDatabaseIntoPlace(tmp, args.output)
+	await swapDatabaseIntoPlace(tmp, args.output)
 	await sealDatabase(args.output)
 
 	const gap = total > 0 ? ((noStreet / total) * 100).toFixed(1) : "0.0"

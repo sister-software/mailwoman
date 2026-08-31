@@ -138,6 +138,8 @@ function toRecord(header: readonly string[], cells: readonly string[]): CSVRecor
  *
  * A source at or below the spliterator's 128 KiB bulk threshold is read whole and parsed by the synchronous engine, so
  * this is also the right reader for small sources — there is no buffered variant to reach for.
+ *
+ * @category CSV
  */
 export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): AsyncSequence<CSVRecord> {
 	let header: string[] | null = null
@@ -160,6 +162,8 @@ export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): 
  * built, so a recipe naming ten sources routinely finds three, and the `unzip -p` subprocesses these replaced behaved
  * the same way by accident — a non-zero exit warned and returned no rows. A recipe that ends up with NO tuples at all
  * still throws; that is the case where the cache, not the recipe, is the problem.
+ *
+ * @category CSV
  */
 export function readZippedCSVRecords(archivePath: PathBuilderLike, entryName: string): AsyncSequence<CSVRecord> {
 	return AsyncSequence.from<CSVRecord>(async () => {
@@ -176,7 +180,7 @@ export function readZippedCSVRecords(archivePath: PathBuilderLike, entryName: st
 /**
  * Stream-parse a tuples JSONL file, yielding each parsed object (blank/invalid lines skipped).
  */
-export function readTuples(input: string): AsyncSequence<ShardTuple> {
+export function readTuples(input: PathBuilderLike): AsyncSequence<ShardTuple> {
 	// TextSpliterator (not JSONSpliterator) keeps the reader's established tolerance: malformed lines are skipped rather
 	// than rejecting the sequence. These operators fuse into the source's pull loop instead of adding an async-generator
 	// frame per tuple.

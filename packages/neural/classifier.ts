@@ -24,44 +24,44 @@ import {
 	type UnknownSpan,
 } from "@mailwoman/core/decoder"
 import { proposeSpans, type ProposedSpan, WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
+import type { PathBuilderLike } from "path-ts"
 
-// SELF-REFERENCE, not a relative path: export conditions do not apply to relative specifiers, so
-// `./onnx-runner.ts` bypasses the browser counterpart. The package name is what routes this.
-import type { InferResult } from "#onnx-runner"
-
-import { confidentLocaleCountry, LOCALE_COUNTRIES, resolveSystemVerdict } from "./address-system.ts"
-import { normalizeInputCase } from "./case-normalize.ts"
+import { confidentLocaleCountry, LOCALE_COUNTRIES, resolveSystemVerdict } from "#address-system"
+import { normalizeInputCase } from "#case-normalize"
 import type {
 	NeuralAddressClassifierConfig,
 	ParseOpts,
 	ParseWithLogitsResult,
 	SpanProposerConfig,
-} from "./classifier-options.ts"
-import { buildFSTEmissionPriors } from "./fst-prior.ts"
-import { STAGE2_BIO_LABELS } from "./labels.ts"
-import type { PlacetypeCensusLike } from "./placetype-census.ts"
-import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "./placetype-pair-prior.ts"
-import { repairPostcodeLabels } from "./postcode-repair.ts"
-import { addEmissionMatrix, buildEmissionPriors } from "./query-shape-prior.ts"
-import type { SemiCRFTransitions } from "./semi-markov-decode.ts"
-import { buildSoftFeatures, type SoftFeatureChannel } from "./soft-features.ts"
-import { bridgePunctuationGaps } from "./span-bridge.ts"
-import { buildSpanProposalPriors } from "./span-proposal-prior.ts"
-import { buildCodexSpanLexicon } from "./span-proposer-lexicon.ts"
-import { buildStreetMorphologyEmissionPriors } from "./street-morphology-prior.ts"
-import type { MailwomanTokenizer } from "./tokenizer.ts"
-import { TRACE_PRIOR_KINDS } from "./trace.ts"
-import type { NeuralParseTrace, TracePrior, TraceRepair, TraceRepairPass } from "./trace.ts"
-import { repairUnitLabels } from "./unit-repair.ts"
-import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, softmax, viterbi } from "./viterbi.ts"
-import { enforceWordConsistency } from "./word-consistency.ts"
+} from "#classifier-options"
+import { buildFSTEmissionPriors } from "#fst-prior"
+import { STAGE2_BIO_LABELS } from "#labels"
+// SELF-REFERENCE, not a relative path: export conditions do not apply to relative specifiers, so
+// `./onnx-runner.ts` bypasses the browser counterpart. The package name is what routes this.
+import type { InferResult } from "#onnx-runner"
+import type { PlacetypeCensusLike } from "#placetype-census"
+import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "#placetype-pair-prior"
+import { repairPostcodeLabels } from "#postcode-repair"
+import { addEmissionMatrix, buildEmissionPriors } from "#query-shape-prior"
+import type { SemiCRFTransitions } from "#semi-markov-decode"
+import { buildSoftFeatures, type SoftFeatureChannel } from "#soft-features"
+import { bridgePunctuationGaps } from "#span-bridge"
+import { buildSpanProposalPriors } from "#span-proposal-prior"
+import { buildCodexSpanLexicon } from "#span-proposer-lexicon"
+import { buildStreetMorphologyEmissionPriors } from "#street-morphology-prior"
+import type { MailwomanTokenizer } from "#tokenizer"
+import { TRACE_PRIOR_KINDS } from "#trace"
+import type { NeuralParseTrace, TracePrior, TraceRepair, TraceRepairPass } from "#trace"
+import { repairUnitLabels } from "#unit-repair"
+import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, softmax, viterbi } from "#viterbi"
+import { enforceWordConsistency } from "#word-consistency"
 
 export type {
 	NeuralAddressClassifierConfig,
 	ParseOpts,
 	ParseWithLogitsResult,
 	SpanProposerConfig,
-} from "./classifier-options.ts"
+} from "#classifier-options"
 
 /**
  * Structural type the classifier needs from a runner. Lets callers swap the Node-side `ONNXRunner` for a browser-side
@@ -141,7 +141,7 @@ export class NeuralAddressClassifier {
 	 * else `undefined`. The runtime pipeline deserializes + auto-wires it as the default `opts.fst` (opt out with `fst:
 	 * false` at pipeline construction); direct `classifier.parse` callers can do the same or pass their own.
 	 */
-	get fstPath(): string | undefined {
+	get fstPath(): PathBuilderLike | undefined {
 		return this.cfg.fstPath
 	}
 
@@ -184,9 +184,9 @@ export class NeuralAddressClassifier {
 	 * runtime. Browser callers use `loadNeuralClassifierFromURLs`.
 	 */
 	static async loadFromWeights(
-		...args: Parameters<typeof import("./classifier-loader.ts").loadClassifierFromWeights>
+		...args: Parameters<typeof import("#classifier-loader").loadClassifierFromWeights>
 	): Promise<NeuralAddressClassifier> {
-		const { loadClassifierFromWeights } = await import(/* webpackIgnore: true */ "./classifier-loader.ts")
+		const { loadClassifierFromWeights } = await import(/* webpackIgnore: true */ "#classifier-loader")
 
 		return loadClassifierFromWeights(...args)
 	}

@@ -19,15 +19,15 @@
  *   six months behind produces a plausible artifact and no complaint.
  */
 
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { dirname } from "@mailwoman/platform/path"
+import { runFile } from "@mailwoman/core/process"
 import { Box, Text } from "ink"
+import { dirname } from "path-ts"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
-
-import type { RepoSyncPlan } from "../../gazetteer-pipeline/repos-sync.ts"
-import type { ForkState } from "../../gazetteer-pipeline/wof-repo-origin.ts"
+import type { RepoSyncPlan } from "#gazetteer-pipeline/repos-sync"
+import type { ForkState } from "#gazetteer-pipeline/wof-repo-origin"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -64,16 +64,12 @@ const ACTION_MARK: Record<string, string> = {
 
 const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { execFile } = await import("@mailwoman/platform/child_process")
-		const { promisify } = await import("@mailwoman/platform/util")
-
-		const { join } = await import("@mailwoman/platform/path")
+		const { join } = await import("path-ts")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
-		const { auditReposRoot } = await import("../../gazetteer-pipeline/repos-audit.ts")
-		const { planReposSync, SyncAction, syncSentence } = await import("../../gazetteer-pipeline/repos-sync.ts")
-		const { UPSTREAM_ORG } = await import("../../gazetteer-pipeline/wof-repo-origin.ts")
+		const { auditReposRoot } = await import("#gazetteer-pipeline/repos-audit")
+		const { planReposSync, SyncAction, syncSentence } = await import("#gazetteer-pipeline/repos-sync")
+		const { UPSTREAM_ORG } = await import("#gazetteer-pipeline/wof-repo-origin")
 
-		const exec = promisify(execFile)
 		const root = options.root ?? String(dataRootPath("wof", "repos"))
 
 		const requested = (options.countries ?? "")
@@ -94,7 +90,7 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 		 */
 		const forkProbe = async (org: string, repo: string): Promise<ForkState> => {
 			try {
-				await exec("gh", ["api", `/repos/${org}/${repo}`, "--jq", ".name"])
+				await runFile("gh", ["api", `/repos/${org}/${repo}`, "--jq", ".name"])
 			} catch (error) {
 				// A 404 is a real answer: the fork does not exist. Anything else (no auth, no network, rate limit) is a
 				// failed lookup, and must reach the resolver as a throw so it is not recorded as absence.
@@ -106,7 +102,7 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 			}
 
 			try {
-				const { stdout } = await exec("gh", [
+				const { stdout } = await runFile("gh", [
 					"api",
 					`/repos/${org}/${repo}/compare/${UPSTREAM_ORG}:HEAD...${org}:HEAD`,
 					"--jq",
@@ -121,21 +117,28 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 			}
 		}
 
+		// Existing clones live under `<root>/<owner>/<name>` when nested; prefer wherever the repo already is. The
+		// existence probes are materialized up front because `planReposSync`'s `directoryFor` is a synchronous callback.
+		const directories = new Map<string, string>()
+
+		for (const repo of repos) {
+			const nested = join(root, UPSTREAM_ORG, repo)
+			const flat = join(root, repo)
+
+			if (await pathExists(nested)) {
+				directories.set(repo, nested)
+			} else if (await pathExists(flat)) {
+				directories.set(repo, flat)
+			} else {
+				directories.set(repo, nested)
+			}
+		}
+
 		const plans = await planReposSync({
 			root,
 			repos,
 			probe: forkProbe,
-			// Existing clones live under `<root>/<owner>/<name>` when nested; prefer wherever the repo already is.
-			directoryFor: (repo) => {
-				const nested = join(root, UPSTREAM_ORG, repo)
-				const flat = join(root, repo)
-
-				if (pathExistsSync(nested)) return nested
-
-				if (pathExistsSync(flat)) return flat
-
-				return nested
-			},
+			directoryFor: (repo) => directories.get(repo)!,
 			fetchFirst: !options.offline,
 		})
 
@@ -146,27 +149,27 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 				try {
 					if (plan.action === SyncAction.Clone) {
 						await makeDirectories(dirname(plan.directory))
-						await exec("git", ["clone", "--depth", "1", plan.origin.url, plan.directory])
+						await runFile("git", ["clone", "--depth", "1", plan.origin.url, plan.directory])
 						performed.push(`cloned ${plan.repo} from ${plan.origin.source}`)
 					} else if (plan.action === SyncAction.FastForward) {
-						await exec("git", ["-C", plan.directory, "merge", "--ff-only", "origin/HEAD"])
+						await runFile("git", ["-C", plan.directory, "merge", "--ff-only", "origin/HEAD"])
 						performed.push(`fast-forwarded ${plan.repo}`)
 					} else if (plan.action === SyncAction.RepointRequired && options.repoint) {
 						// The previous remote is KEPT as `upstream`. Losing the address of the repo we fork from would make
 						// the next upstream sync a guess.
-						await exec("git", ["-C", plan.directory, "remote", "rename", "origin", "upstream"])
-						await exec("git", ["-C", plan.directory, "remote", "add", "origin", plan.origin.url])
-						await exec("git", ["-C", plan.directory, "fetch", "--quiet", "origin"])
+						await runFile("git", ["-C", plan.directory, "remote", "rename", "origin", "upstream"])
+						await runFile("git", ["-C", plan.directory, "remote", "add", "origin", plan.origin.url])
+						await runFile("git", ["-C", plan.directory, "fetch", "--quiet", "origin"])
 
 						// The rename carried `branch.<name>.remote` along with it, so the branch now tracks the remote we
 						// just moved away from. Re-point the tracking too, or the next `git pull` here pulls upstream over
 						// the corrections this whole command exists to preserve.
 						const branch = (
-							await exec("git", ["-C", plan.directory, "rev-parse", "--abbrev-ref", "HEAD"])
+							await runFile("git", ["-C", plan.directory, "rev-parse", "--abbrev-ref", "HEAD"])
 						).stdout.trim()
 
 						if (branch && branch !== "HEAD") {
-							await exec("git", ["-C", plan.directory, "branch", `--set-upstream-to=origin/${branch}`, branch])
+							await runFile("git", ["-C", plan.directory, "branch", `--set-upstream-to=origin/${branch}`, branch])
 						}
 
 						performed.push(`re-pointed ${plan.repo} at ${plan.origin.org} (previous remote kept as upstream)`)

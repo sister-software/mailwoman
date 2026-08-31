@@ -20,7 +20,6 @@
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
 import {
 	buildCandidateTable,
 	type PlaceAttrs,
@@ -31,6 +30,7 @@ import { ALIAS_SEPARATOR } from "@mailwoman/resolver-wof-sqlite/fts"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { allRows } from "#sqlite-utils"

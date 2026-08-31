@@ -65,7 +65,7 @@ interface Options {
 const EvalInvariance: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { runInvarianceCommand } = await import("../../eval-harness/invariance/command.ts")
+			const { runInvarianceCommand } = await import("#eval-harness/invariance/command")
 
 			return await runInvarianceCommand(options)
 		},

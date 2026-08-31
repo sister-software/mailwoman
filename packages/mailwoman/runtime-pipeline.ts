@@ -40,13 +40,14 @@ import type { StreetLocalityEvidence } from "@mailwoman/resolver"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 
-import { loadDefaultPlaceCountry } from "./default-placer.ts"
-import { loadDefaultReverseGeocoder } from "./default-reverse-geocoder.ts"
-import { loadDefaultStreetEvidence } from "./default-street-evidence.ts"
-import { rerankByStreetEvidence } from "./kbest-street-rerank.ts"
-import { createPOIExecutor, type POIAncestryEntry } from "./poi-executor.ts"
-import { createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "./poi-intent.ts"
+import { loadDefaultPlaceCountry } from "#default-placer"
+import { loadDefaultReverseGeocoder } from "#default-reverse-geocoder"
+import { loadDefaultStreetEvidence } from "#default-street-evidence"
+import { rerankByStreetEvidence } from "#kbest-street-rerank"
+import { createPOIExecutor, type POIAncestryEntry } from "#poi-executor"
+import { createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "#poi-intent"
 
 /**
  * Structural shape of a `WOFReverseGeocoder`'s sync core — just what {@link buildSyncReverseGeocode} calls.
@@ -199,7 +200,7 @@ export interface CreateRuntimePipelineOpts {
 	 *   executor, so a matched intent comes back with `results` attached (or an `anchor_required` abstain).
 	 * - `false` — disabled: the pipeline is byte-identical to pre-flag builds.
 	 */
-	poiQueryKind?: boolean | { poiDatabasePath?: string }
+	poiQueryKind?: boolean | { poiDatabasePath?: PathBuilderLike }
 	/**
 	 * An ADDITIONAL positive-evidence phrase rung, consulted only after the committed category lexicon and the POI name
 	 * lookup have both returned nothing. Absent — the default everywhere — leaves the subject lookup exactly the two
@@ -295,17 +296,21 @@ async function autoLoadWeightsFST(
  * per-process build from core's bundled libpostal dictionaries — the pre-artifact behavior kept as the degrade path.
  * Failures degrade to `undefined` (gate off, byte-stable).
  */
-function autoLoadStreetMorphology(classifier: CreateRuntimePipelineOpts["classifier"]): FSTMatcher | undefined {
+async function autoLoadStreetMorphology(
+	classifier: CreateRuntimePipelineOpts["classifier"]
+): Promise<FSTMatcher | undefined> {
 	const artifactPath =
 		classifier && typeof classifier === "object" && "streetMorphologyPath" in classifier
 			? (classifier as { streetMorphologyPath?: string }).streetMorphologyPath
 			: undefined
 
 	try {
-		return loadStreetMorphologyFST({
+		const loaded = await loadStreetMorphologyFST({
 			...(artifactPath ? { artifactPath } : {}),
 			onWarn: (message) => console.warn(`[mailwoman] ${message}`),
-		}).matcher
+		})
+
+		return loaded.matcher
 	} catch (error) {
 		console.warn(`[mailwoman] failed to load the street-morphology FST: ${(error as Error).message} — gate off`)
 
@@ -480,7 +485,7 @@ export function createRuntimePipeline(
 				// poi.db-missing catch below).
 				const reverseGeocoder = await loadDefaultReverseGeocoder()
 
-				const lookup = new POILookup({ databasePath: poiDatabasePath })
+				const lookup = new POILookup({ databasePath: resolvePath(poiDatabasePath) })
 				poiNameLookup = createPOINameLookup(lookup)
 
 				poiExecute = createPOIExecutor({
@@ -522,7 +527,7 @@ export function createRuntimePipeline(
 
 			// The gate needs BOTH matchers — skip the load when there's no gazetteer for it to gate.
 			if (stages.fst) {
-				const morph = autoLoadStreetMorphology(opts.classifier)
+				const morph = await autoLoadStreetMorphology(opts.classifier)
 
 				if (morph) {
 					stages.streetMorphology = morph

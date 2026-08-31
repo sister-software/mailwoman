@@ -10,6 +10,7 @@
  *   steps now. GeoNames-sourced rows are CC-BY 4.0 (attribute "GeoNames (CC-BY 4.0)").
  */
 
+import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -45,7 +46,7 @@ interface Options {
 
 const GazetteerBuildPostcodeShard: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { artifactSizeMB, buildPostcodeShard } = await import("#gazetteer-pipeline")
+		const { buildPostcodeShard } = await import("#gazetteer-pipeline")
 
 		const result = await buildPostcodeShard({
 			country: options.country,
@@ -58,7 +59,7 @@ const GazetteerBuildPostcodeShard: ParsedCommandComponent<Options> = ({ options 
 		})
 
 		return [
-			`postcode shard: ${result.out} (${await artifactSizeMB(result.out)} MB)`,
+			`postcode shard: ${result.out} (${await formatFileSize(result.out)})`,
 			`${result.postcodesIngested.toLocaleString()} postcodes; placed ${result.fills.placedBefore.toLocaleString()} → ${result.fills.placedAfter.toLocaleString()} of ${result.fills.total.toLocaleString()}` +
 				(result.zctaFilled
 					? ` (zcta ${result.zctaFilled.toLocaleString()}` +

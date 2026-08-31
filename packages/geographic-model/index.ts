@@ -44,8 +44,8 @@
  *   Program parent: #1916.
  */
 
-export * from "./artifact.ts"
-export * from "./compile.ts"
-export * from "./lookup.ts"
-export * from "./schema.ts"
-export * from "./validate.ts"
+export * from "#artifact"
+export * from "#compile"
+export * from "#lookup"
+export * from "#schema"
+export * from "#validate"

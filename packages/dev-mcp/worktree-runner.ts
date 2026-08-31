@@ -13,10 +13,10 @@
  *   cycle through `arms.ts`.
  */
 
-import type { ArmRunner, WorktreeArm } from "./arms.ts"
-import { type EffectiveConfig, type EngineRegistryLike, resolveConfig } from "./engine-registry.ts"
-import type { ResolvedInputSet } from "./input-sets.ts"
-import { runWorktreeArm } from "./worktree-arm.ts"
+import type { ArmRunner, WorktreeArm } from "#arms"
+import { type EffectiveConfig, type EngineRegistryLike, resolveConfig } from "#engine-registry"
+import type { ResolvedInputSet } from "#input-sets"
+import { runWorktreeArm } from "#worktree-arm"
 
 /**
  * A mailwoman arm running another version of the source, batched in a child process.

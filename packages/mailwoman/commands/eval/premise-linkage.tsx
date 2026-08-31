@@ -18,6 +18,7 @@
  *   is visible in the process table to every user on the host.
  */
 
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -75,11 +76,11 @@ const EvalPremiseLinkage: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const [{ runPremiseLinkage, resolvePremiseLinkageConfig }, { publishableReport, writePremiseLinkageReport }] =
 			await Promise.all([
-				import("../../eval-harness/premise-linkage/run.ts"),
-				import("../../eval-harness/premise-linkage/report-writer.ts"),
+				import("#eval-harness/premise-linkage/run"),
+				import("#eval-harness/premise-linkage/report-writer"),
 			])
 
-		const { PremiseLinkageMode, PremiseLinkagePolicy } = await import("../../eval-harness/premise-linkage/schema.ts")
+		const { PremiseLinkageMode, PremiseLinkagePolicy } = await import("#eval-harness/premise-linkage/schema")
 		const { $private } = await import("@mailwoman/core/env")
 
 		const controlled = typeof options.config === "string" && options.config.length > 0
@@ -100,7 +101,7 @@ const EvalPremiseLinkage: ParsedCommandComponent<Options> = ({ options }) => {
 		}
 
 		const salt =
-			declaredSalt ?? (await import("@mailwoman/platform/crypto")).randomBytes(GENERATED_SALT_BYTES).toString("hex")
+			declaredSalt ?? Buffer.from(crypto.getRandomValues(new Uint8Array(GENERATED_SALT_BYTES))).toString("hex")
 
 		const minCellSize = options.minCellSize ?? SYNTHETIC_MIN_CELL_SIZE
 
@@ -186,7 +187,7 @@ async function loadControlledConfig<T>(
  */
 async function loadSyntheticConfig() {
 	const { syntheticFixtureAdapter, syntheticFixtureDeps, syntheticFixtureProvider } =
-		await import("../../eval-harness/premise-linkage/adapter.ts")
+		await import("#eval-harness/premise-linkage/adapter")
 
 	return {
 		adapter: syntheticFixtureAdapter(),
@@ -199,10 +200,7 @@ async function loadSyntheticConfig() {
  * The version stamped onto every result row, read from the package this command ships in.
  */
 async function readMailwomanVersion(): Promise<string> {
-	const { findPackageJSON } = await import("@mailwoman/platform/module")
-	const manifestPath = findPackageJSON(import.meta.url)
-
-	if (!manifestPath) throw new Error("premise-linkage: could not locate the mailwoman package manifest.")
+	const manifestPath = resolvePackagePath("mailwoman", "package.json")
 
 	const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
 

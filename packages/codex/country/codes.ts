@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { CountryName } from "./names.ts"
+import type { CountryName } from "#country/names"
 
 /**
  * @category Country

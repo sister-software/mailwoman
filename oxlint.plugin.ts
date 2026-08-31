@@ -11,6 +11,15 @@
  *   where an `await` is already legal on the same line. The rule fires ONLY in that position — a sync call inside a
  *   sync function is a cascade, not a defect, and the rule stays silent there.
  *
+ *   `no-relative-dynamic-import`: `import("./x.ts")` names a module by the importer's location; the package's
+ *   `imports` map names it once.
+ *
+ *   `no-import-meta-dirname-walk`: `resolvePath(import.meta.dirname, "../..")` counts directories; a package's own
+ *   file is `resolvePackagePath`, a repository file is `repoRootPath`.
+ *
+ *   `no-import-meta-resolve`: `fileURLToPath(import.meta.resolve(…))` has a typed home in
+ *   `@mailwoman/core/module/resolvers`.
+ *
  *   `prefer-spliterator`: `text.split("\n")` (or `"\t"`) materializes every segment into one array
  *   before the first is read — the whole-buffer parse the spliterator library exists to avoid (the
  *   quadratic-CSV episode in AGENTS.md started exactly there). The rule warns on those two literal
@@ -31,6 +40,8 @@ interface AstNode {
 	callee?: AstNode
 	object?: AstNode
 	property?: AstNode
+	source?: AstNode
+	meta?: AstNode
 	arguments?: AstNode[]
 	expression?: AstNode
 	typeAnnotation?: AstNode
@@ -406,11 +417,120 @@ const noSyncFSInAsyncRule: Rule = {
 	},
 }
 
+/**
+ * A dynamic `import("./x.ts")` names a file by where the importer sits, so it breaks the moment either side moves and
+ * says nothing about which package boundary it crosses. The package's `imports` map (`#eval-harness/promotion-gate`)
+ * names the module once, resolves `.ts` under `node` and `out/*.js` everywhere else, and is what a static import of the
+ * same module already uses.
+ */
+const noRelativeDynamicImportRule: Rule = {
+	meta: {
+		name: "no-relative-dynamic-import",
+		type: "suggestion",
+		schema: [],
+	},
+	create(context: RuleContext) {
+		return {
+			ImportExpression(node: AstNode) {
+				const specifier = literalDelimiter(node.source)
+
+				if (specifier === null || !/^\.\.?\//.test(specifier)) return
+
+				context.report({
+					node,
+					message:
+						`import(${JSON.stringify(specifier)}) names a module by the importer's location. Use the package's ` +
+						"`imports` map instead (`#<path-from-package-root>`, no extension) — it resolves `.ts` under `node` and " +
+						"`out/*.js` everywhere else, and moves with the file.",
+				})
+			},
+		}
+	},
+}
+
+/**
+ * `fileURLToPath(import.meta.resolve(…))` is string plumbing around a question with a typed answer.
+ * `@mailwoman/core/module/resolvers` owns it: `resolveModulePath` for a file a specifier names,
+ * `resolvePackageDirectory` for a package's root; a module's own neighbours are `resolvePath(import.meta.dirname, …)`.
+ */
+const noImportMetaResolveRule: Rule = {
+	meta: {
+		name: "no-import-meta-resolve",
+		type: "suggestion",
+		schema: [],
+	},
+	create(context: RuleContext) {
+		return {
+			CallExpression(node: AstNode) {
+				const callee = node.callee
+
+				if (!callee || (callee.type !== "MemberExpression" && callee.type !== "StaticMemberExpression")) return
+
+				if (callee.property?.type !== "Identifier" || callee.property.name !== "resolve") return
+
+				const object = callee.object
+
+				if (object?.type !== "MetaProperty" || object.meta?.name !== "import" || object.property?.name !== "meta") {
+					return
+				}
+
+				context.report({
+					node,
+					message:
+						"`import.meta.resolve` answers a `file:` URL string. Use `resolveModulePath(specifier)` or " +
+						"`resolvePackageDirectory(name)` from `@mailwoman/core/module/resolvers`, or " +
+						"`resolvePath(import.meta.dirname, …)` for a sibling of this module.",
+				})
+			},
+		}
+	},
+}
+
+/**
+ * `resolvePath(import.meta.dirname, "../../x")` names a file by counting directories up from wherever this module sits
+ * — a count that changes when the module moves and differs between the source tree and `out/`. A package's own file is
+ * `resolvePackagePath("<package>", …)`; a repository file is `repoRootPath(…)`. Descending from the module's own
+ * directory (`"fixtures/x.json"`) is not the problem and stays.
+ */
+const noImportMetaDirnameWalkRule: Rule = {
+	meta: {
+		name: "no-import-meta-dirname-walk",
+		type: "suggestion",
+		schema: [],
+	},
+	create(context: RuleContext) {
+		return {
+			CallExpression(node: AstNode) {
+				const [anchor, segment] = node.arguments ?? []
+
+				if (!anchor || (anchor.type !== "MemberExpression" && anchor.type !== "StaticMemberExpression")) return
+
+				if (anchor.object?.type !== "MetaProperty" || anchor.property?.name !== "dirname") return
+
+				const text = literalDelimiter(segment)
+
+				if (text === null || !text.startsWith("..")) return
+
+				context.report({
+					node,
+					message:
+						`${JSON.stringify(text)} counts directories up from this module. Use ` +
+						'`resolvePackagePath("<package>", …)` from `@mailwoman/core/module/resolvers` for a file in this ' +
+						"package, or `repoRootPath(…)` from `@mailwoman/core/utils` for a repository file.",
+				})
+			},
+		}
+	},
+}
+
 const mailwomanPlugin: Plugin = {
 	meta: { name: "mailwoman" },
 	rules: {
 		"no-database-boundary-cast": noDatabaseBoundaryCastRule,
 		"no-database-handle-cast": noDatabaseHandleCastRule,
+		"no-import-meta-dirname-walk": noImportMetaDirnameWalkRule,
+		"no-import-meta-resolve": noImportMetaResolveRule,
+		"no-relative-dynamic-import": noRelativeDynamicImportRule,
 		"no-sync-fs-in-async": noSyncFSInAsyncRule,
 		"prefer-spliterator": preferSpliteratorRule,
 		"require-database-schema-argument": requireDatabaseSchemaArgumentRule,

@@ -26,7 +26,11 @@
 	],
 	"type": "module",
 	"imports": {
-		"#package.json": "./package.json"
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
 	},
 	"exports": {
 		"./package.json": "./package.json",

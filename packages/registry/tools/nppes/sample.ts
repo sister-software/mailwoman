@@ -10,9 +10,8 @@ import { isPresent } from "@mailwoman/core/objects"
 import type { TermFrequencyTable } from "@mailwoman/match"
 
 import { addressFrequencyKey, streamRows } from "#index"
-
-import { addr, MIN_GROUP_SIZE, norm, NPPES_COLUMNS as C } from "../shared.ts"
-import { orgTokens, type NPIPrimary } from "./org-name.ts"
+import { orgTokens, type NPIPrimary } from "#tools/nppes/org-name"
+import { addr, MIN_GROUP_SIZE, norm, NPPES_COLUMNS as C } from "#tools/shared"
 
 /**
  * One synthetic input row for the matcher; `npi` is the hidden NPI-level truth, `entityID` the site-level entity-level

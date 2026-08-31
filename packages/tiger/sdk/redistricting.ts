@@ -19,13 +19,13 @@
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { extractZipEntries } from "@mailwoman/core/fs/zip"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
-import { dirname, join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { dirname, join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { AdminLevel1CodeToAbbreviation, StateName, type AdminLevel1Code } from "../state.ts"
-import { downloadIfNeeded } from "./download.ts"
-import { initializeTIGERSchema, TIGER_PRAGMAS, type PLBlockTable, type TIGERDatabase } from "./schema.ts"
+import { downloadIfNeeded } from "#sdk/download"
+import { initializeTIGERSchema, TIGER_PRAGMAS, type PLBlockTable, type TIGERDatabase } from "#sdk/schema"
+import { AdminLevel1CodeToAbbreviation, StateName, type AdminLevel1Code } from "#state"
 
 const REDISTRICTING_BASE =
 	"https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171"

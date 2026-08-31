@@ -15,7 +15,6 @@
  */
 
 import { readDirectory } from "@mailwoman/core/fs/readers"
-import { basename } from "@mailwoman/platform/path"
 import { type ConformanceFixture, loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
 import {
 	CONFORMANCE_SUITE_DIR,
@@ -23,6 +22,7 @@ import {
 	describeLaw,
 	suiteForLaw,
 } from "mailwoman/eval-harness/conformance/suites"
+import { basename } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 describe("the conformance suite register", () => {

@@ -8,7 +8,7 @@
  *   node imports, so it stays bundler-safe. Not exported via a subpath of its own.
  */
 
-import type { CategoryRecord, POITaxonomyTable, SynonymEntry } from "./types.ts"
+import type { CategoryRecord, POITaxonomyTable, SynonymEntry } from "#types"
 
 export interface CategoryMatch {
 	category: CategoryRecord

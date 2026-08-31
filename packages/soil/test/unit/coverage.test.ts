@@ -20,7 +20,6 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
-import { join } from "@mailwoman/platform/path"
 import { SoilCapabilityLookup, SoilReadingKind } from "@mailwoman/soil"
 import { buildSoilDatabase, type SurveyAreaInput } from "@mailwoman/soil/sdk/build-soil"
 import type { SoilDelineation } from "@mailwoman/soil/sdk/ingest"
@@ -33,6 +32,7 @@ import {
 	rectangleRing,
 } from "@mailwoman/soil/test-kit"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()

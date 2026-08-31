@@ -24,7 +24,7 @@
  *   trailing «V» = locality (the binding the resolver needs).
  */
 
-import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
+import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "#shard-recipes/scaffold"
 
 /**
  * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,

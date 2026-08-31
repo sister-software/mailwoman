@@ -10,9 +10,9 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { toCIK, type CompanyTickerEntry } from "@mailwoman/filer/sdk/edgar-filings"
 import { collectEdgarSubsidiaryRows, EdgarSkipReason, type SECIngestClient } from "@mailwoman/filer/sdk/edgar-ingest"
-import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 const CABLE_ONE = toCIK("0001632127")!
@@ -24,7 +24,7 @@ const TICKERS: CompanyTickerEntry[] = [
 ]
 
 async function exhibit(name: string): Promise<string> {
-	return await readLocalTextFile(join(import.meta.dirname, "../../../test-fixtures/edgar", name))
+	return await readLocalTextFile(resolvePackagePath("@mailwoman/filer", "test-fixtures", "edgar", name))
 }
 
 const CABLE_ONE_HEADERS = `

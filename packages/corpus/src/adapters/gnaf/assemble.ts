@@ -29,7 +29,7 @@
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { PSVSpliterator, TextSpliterator } from "spliterator"
 
 export interface GNAFAssembleOptions {

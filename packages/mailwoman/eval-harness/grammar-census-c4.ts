@@ -13,7 +13,7 @@ import type { PhraseProposal } from "@mailwoman/core/pipeline"
 import type { FSTAcceptedMatch } from "@mailwoman/neural/fst-prior"
 import type { QueryShape } from "@mailwoman/query-shape"
 
-import type { CensusSpan } from "./grammar-census.ts"
+import type { CensusSpan } from "#eval-harness/grammar-census"
 
 export interface CensusPiece {
 	start: number

@@ -31,10 +31,10 @@
  */
 
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { pathToFileURL } from "@mailwoman/core/module/file-url"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { GBT } from "@mailwoman/match"
-import { resolve as resolvePath } from "@mailwoman/platform/path"
-import { pathToFileURL } from "@mailwoman/platform/url"
+import { resolvePath } from "path-ts"
 
 import {
 	ingestRows,
@@ -44,20 +44,19 @@ import {
 	type ResolvedEntity,
 	type SourceRecord,
 } from "#index"
-
-import type { EvalGeocodeStream, EvalGeocoderFactory } from "./eval-geocoder.ts"
-import { buildLevers } from "./nppes/levers.ts"
-import { writeOvermergePacket } from "./nppes/overmerge-packet.ts"
-import { renderNPPESDedupReport, type SweepArm } from "./nppes/report.ts"
-import { buildNPPESSample } from "./nppes/sample.ts"
-import { scoreEntities, type Score } from "./nppes/scoring.ts"
+import type { EvalGeocodeStream, EvalGeocoderFactory } from "#tools/eval-geocoder"
+import { buildLevers } from "#tools/nppes/levers"
+import { writeOvermergePacket } from "#tools/nppes/overmerge-packet"
+import { renderNPPESDedupReport, type SweepArm } from "#tools/nppes/report"
+import { buildNPPESSample } from "#tools/nppes/sample"
+import { scoreEntities, type Score } from "#tools/nppes/scoring"
 import {
 	buildOrgNameCoordGrain,
 	buildOrgNameGrain,
 	buildOrgNameH3Grain,
 	collectPrimaryCoordinates,
 	type TruthLabel,
-} from "./nppes/truth-grains.ts"
+} from "#tools/nppes/truth-grains"
 
 /**
  * Options for {@linkcode nppesDedupBenchmark}.

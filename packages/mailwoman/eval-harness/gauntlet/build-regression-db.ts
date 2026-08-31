@@ -18,20 +18,25 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { dirname } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
+import { dirname, resolvePath, type PathBuilderLike } from "path-ts"
 
-import { CASES_DIR, loadRegressionCases, regressionCorpusHash } from "./cases/load.ts"
-import { assertCorpusIsNonEmpty, writeCorpusStamp } from "./corpus-stamp.ts"
-import { createGauntletMetaTable, createGauntletTable, GAUNTLET_CASE_COLUMNS, type GauntletDatabase } from "./schema.ts"
+import { CASES_DIR, loadRegressionCases, regressionCorpusHash } from "#eval-harness/gauntlet/cases/load"
+import { assertCorpusIsNonEmpty, writeCorpusStamp } from "#eval-harness/gauntlet/corpus-stamp"
+import {
+	createGauntletMetaTable,
+	createGauntletTable,
+	GAUNTLET_CASE_COLUMNS,
+	type GauntletDatabase,
+} from "#eval-harness/gauntlet/schema"
 
 /**
  * Where to read the corpus from and where to write the DB. Both default to the real ones; a test overrides them to
  * build a fixture-scale artifact without going near `$MAILWOMAN_DATA_ROOT`.
  */
 export interface BuildRegressionDBOptions {
-	casesDir?: string
+	casesDir?: PathBuilderLike
 	output?: string
 }
 
@@ -47,7 +52,7 @@ export async function buildRegressionDB(options: BuildRegressionDBOptions = {}):
 
 	assertCorpusIsNonEmpty(cases, casesDir)
 
-	const output = options.output ?? dataRootPath("gauntlet", "regression.db")
+	const output = resolvePath(options.output ?? dataRootPath("gauntlet", "regression.db"))
 	const tmp = `${output}.tmp-${process.pid}`
 
 	await makeDirectories(dirname(output))
@@ -95,7 +100,7 @@ export async function buildRegressionDB(options: BuildRegressionDBOptions = {}):
 		await writeCorpusStamp(kdb, cases)
 	}
 
-	swapDatabaseIntoPlace(tmp, output)
+	await swapDatabaseIntoPlace(tmp, output)
 
 	console.log(`[gauntlet] built ${output} — ${cases.length} cases (corpus ${regressionCorpusHash(cases).slice(0, 12)})`)
 

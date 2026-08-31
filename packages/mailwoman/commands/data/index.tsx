@@ -19,8 +19,7 @@ import { Text } from "ink"
 import { resolvePath } from "path-ts"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
-
-import { BUNDLES, PUBLIC_BUCKET_BASE_URL } from "../../data-bundles.ts"
+import { BUNDLES, PUBLIC_BUCKET_BASE_URL } from "#data-bundles"
 
 /**
  * Shown at the top of `mailwoman data --help`. Commander reuses it in the root command listing, so it is held to two

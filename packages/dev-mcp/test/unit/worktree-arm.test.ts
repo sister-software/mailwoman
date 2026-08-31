@@ -14,9 +14,9 @@
 import { readDirectory, pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { runFileSync } from "@mailwoman/core/process"
 import { runWorktreeArm, WORKING_TREE_REF } from "@mailwoman/dev-mcp/worktree-arm"
-import { execFileSync } from "@mailwoman/platform/child_process"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -31,7 +31,7 @@ afterAll(() => fixtures.disposeAsync())
  * subprocess, and the engine is exercised for real by the tools that call this.
  */
 async function fakeRepo(marker: string): Promise<string> {
-	const root = fixtures.use(await temporaryDirectory("mwdev-wt-test-")).path
+	const root = String(fixtures.use(await temporaryDirectory("mwdev-wt-test-")).path)
 
 	await makeDirectories(join(root, "packages", "mailwoman"))
 	await writeLocalJSONFile({ name: "root", workspaces: ["packages/mailwoman"] }, join(root, "package.json"))
@@ -63,11 +63,11 @@ async function fakeRepo(marker: string): Promise<string> {
 	// status rather than to one this helper dirtied.
 	await writeLocalTextFile("node_modules\n", join(root, ".gitignore"))
 
-	execFileSync("git", ["init", "-q", "-b", "main"], { cwd: root })
-	execFileSync("git", ["config", "user.email", "t@example.com"], { cwd: root })
-	execFileSync("git", ["config", "user.name", "T"], { cwd: root })
-	execFileSync("git", ["add", "-A"], { cwd: root })
-	execFileSync("git", ["commit", "-qm", "initial"], { cwd: root })
+	runFileSync("git", ["init", "-q", "-b", "main"], { cwd: root })
+	runFileSync("git", ["config", "user.email", "t@example.com"], { cwd: root })
+	runFileSync("git", ["config", "user.name", "T"], { cwd: root })
+	runFileSync("git", ["add", "-A"], { cwd: root })
+	runFileSync("git", ["commit", "-qm", "initial"], { cwd: root })
 
 	return root
 }
@@ -146,7 +146,7 @@ describe("runWorktreeArm — cleanup", () => {
 
 		await runWorktreeArm({ repoRoot: root, ref: "HEAD", inputs: ["x"], options: OPTIONS })
 
-		const listed = execFileSync("git", ["worktree", "list"], { cwd: root, encoding: "utf8" })
+		const listed = runFileSync("git", ["worktree", "list"], { cwd: root, encoding: "utf8" })
 
 		// The main checkout is always listed; a leaked worktree would be a second line.
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- the test creates at most one extra worktree
@@ -155,13 +155,13 @@ describe("runWorktreeArm — cleanup", () => {
 
 	it("does not touch the caller's HEAD or working tree", async () => {
 		const root = await fakeRepo("committed")
-		const before = execFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" })
-		const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })
+		const before = runFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" })
+		const head = runFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })
 
 		await runWorktreeArm({ repoRoot: root, ref: "HEAD", inputs: ["x"], options: OPTIONS })
 
-		expect(execFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" })).toBe(before)
-		expect(execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })).toBe(head)
+		expect(runFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" })).toBe(before)
+		expect(runFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })).toBe(head)
 		// A stash-based arm would have moved these; a worktree cannot, which is why it is a worktree.
 		expect(await readDirectory(root)).toContain("packages")
 	})

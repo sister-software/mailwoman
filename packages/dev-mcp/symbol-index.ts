@@ -1,3 +1,4 @@
+import { runFileSync } from "@mailwoman/core/process"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -5,8 +6,6 @@
  *
  *   Does this symbol already have a home in the monorepo?
  */
-
-import { execFileSync } from "@mailwoman/platform/child_process"
 
 /**
  * Both patterns anchor to column zero: indentation means a nested scope, and a symbol nobody outside the enclosing
@@ -207,7 +206,7 @@ function runRipgrep(
 	]
 
 	try {
-		return execFileSync(binary, args, { cwd, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 })
+		return runFileSync(binary, args, { cwd, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 })
 	} catch (error) {
 		if ((error as { status?: number }).status === RIPGREP_NO_MATCH) return ""
 

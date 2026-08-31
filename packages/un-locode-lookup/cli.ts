@@ -16,12 +16,12 @@
  *   coordinate form is the nearest-code lookup, formerly `--near`).
  */
 
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
-import { buildUNLocodeDB } from "./build.ts"
-import { UNLocodeLookup } from "./index.ts"
+import { buildUNLocodeDB } from "#build"
+import { UNLocodeLookup } from "#index"
 
-const { values, positionals } = parseArgs({
+const { values, positionals } = parseArguments({
 	options: {
 		csv: { type: "string" },
 		out: { type: "string" },

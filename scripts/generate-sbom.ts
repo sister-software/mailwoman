@@ -42,13 +42,14 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile, movePath } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { execFileSync } from "@mailwoman/platform/child_process"
-import { dirname, join, resolve } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
+import { runFileSync } from "@mailwoman/core/process"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { repoRootPath } from "@mailwoman/core/utils"
+import { dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 
-const repoRoot = resolve(import.meta.dirname, "..")
+const repoRoot = repoRootPath()
 
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		version: { type: "string" },
 		out: { type: "string" },
@@ -59,10 +60,15 @@ const version =
 	values.version ??
 	(await readLocalJSONFile<{ version: string }>(join(repoRoot, "packages", "mailwoman", "package.json"))).version
 
-const outDir = values.out ? resolve(values.out) : join(repoRoot, "docs", "static", "sbom")
+const outDir = values.out ? resolvePath(values.out) : join(repoRoot, "docs", "static", "sbom")
 
-const run = (cmd: string, args: string[], cwd: string): string =>
-	execFileSync(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8", maxBuffer: 64 * 1024 * 1024 })
+const run = (cmd: string, args: string[], cwd: PathBuilderLike): string =>
+	runFileSync(cmd, args, {
+		cwd: resolvePath(cwd),
+		stdio: ["ignore", "pipe", "pipe"],
+		encoding: "utf8",
+		maxBuffer: 64 * 1024 * 1024,
+	})
 
 /**
  * SPDX restricts the SPDXID charset to letters, numbers, `.` and `-`; npm emits `_` from package names.
@@ -129,7 +135,7 @@ console.log("[sbom] installing the production dependency closure…")
 
 run("npm", ["install", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"], pkgDir)
 
-execFileSync("mkdir", ["-p", outDir])
+runFileSync("mkdir", ["-p", outDir])
 
 console.log("[sbom] generating SPDX 2.3…")
 

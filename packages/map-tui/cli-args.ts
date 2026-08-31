@@ -1,3 +1,4 @@
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 /**
  * @copyright Sister Software.
  * @license AGPL-3.0
@@ -11,8 +12,6 @@
  * (`help` / `version` / `browse`) or throws {@link CLIArgsError}. Reading `process.argv` / `process.env` is the bin's
  * job (./cli.ts), which keeps every rejection path testable without a subprocess.
  */
-
-import { parseArgs } from "@mailwoman/platform/util"
 
 /**
  * Center longitude when `--lon` is omitted — the world view mapscii opens on.
@@ -179,7 +178,7 @@ interface ParsedFlags {
  */
 function readFlags(argv: readonly string[]): ParsedFlags {
 	try {
-		const { values } = parseArgs({
+		const { values } = parseArguments({
 			args: joinNegativeNumbers(argv),
 			options: {
 				tiles: { type: "string" },

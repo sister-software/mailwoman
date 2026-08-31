@@ -20,7 +20,7 @@
  *       is usually in the en-us gazetteer. See `hard-slice-board.ts` on why that is the interesting part.
  */
 
-import type { HardSliceClass } from "../eval-harness/hard-slice-board.ts"
+import type { HardSliceClass } from "#eval-harness/hard-slice-board"
 
 /**
  * Sweep rows lifted VERBATIM. `class` is assigned by the curator; everything else — input, coordinate, tolerance —

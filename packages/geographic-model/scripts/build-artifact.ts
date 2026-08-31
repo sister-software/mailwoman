@@ -22,14 +22,14 @@
  *   dependency graph.
  */
 
-import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { resolve } from "@mailwoman/platform/path"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { resolvePath } from "path-ts"
 
-import { type CompiledGeographicModel, parseCompiledGeographicModel } from "../artifact.ts"
-import { compileGeographicModel } from "../compile.ts"
-import { loadGeographicModelDirectory } from "../load.ts"
+import { type CompiledGeographicModel, parseCompiledGeographicModel } from "#artifact"
+import { compileGeographicModel } from "#compile"
+import { loadGeographicModelDirectory } from "#load"
 
 /**
  * The command that rewrites the committed artifact. Stated once, and quoted by the freshness test's failure message, so
@@ -45,23 +45,31 @@ export const REGENERATE_ARTIFACT_COMMAND =
  * up, and `out/scripts/` in a published tarball, where it is two. Probing for the file distinguishes those from a
  * genuinely missing `data/`, which throws with both paths named.
  */
-export function packagedModelPaths(): { source: string; artifact: string } {
-	const candidates = [resolve(import.meta.dirname, "../data"), resolve(import.meta.dirname, "../../data")]
-	const found = candidates.find((candidate) => pathExistsSync(resolve(candidate, "model/model.json")))
+export async function packagedModelPaths(): Promise<{ source: string; artifact: string }> {
+	const candidates = [resolvePackagePath("@mailwoman/geographic-model", "data")]
+	const probes: Array<[string, boolean]> = []
+
+	for (const candidate of candidates) {
+		probes.push([candidate, await pathExists(resolvePath(candidate, "model/model.json"))])
+	}
+
+	const found = probes.find(([, exists]) => exists)?.[0]
 
 	if (!found) {
 		throw new Error(`geographic-model: could not find data/model — looked in ${candidates.join(", ")}`)
 	}
 
-	return { source: resolve(found, "model"), artifact: resolve(found, "geographic-model.json") }
+	return { source: resolvePath(found, "model"), artifact: resolvePath(found, "geographic-model.json") }
 }
 
 /**
  * Load the authored records and compile them. Throws with every violation if they do not load, and with every reason if
  * they load but do not compile; nothing partial is returned.
  */
-export function compileAuthoredGeographicModel(): CompiledGeographicModel {
-	return compileGeographicModel(loadGeographicModelDirectory(packagedModelPaths().source))
+export async function compileAuthoredGeographicModel(): Promise<CompiledGeographicModel> {
+	const { source } = await packagedModelPaths()
+
+	return compileGeographicModel(await loadGeographicModelDirectory(source))
 }
 
 /**
@@ -69,7 +77,7 @@ export function compileAuthoredGeographicModel(): CompiledGeographicModel {
  * validated on the way in.
  */
 export async function readCompiledGeographicModel(): Promise<CompiledGeographicModel> {
-	const text = await readLocalTextFile(packagedModelPaths().artifact)
+	const text = await readLocalTextFile((await packagedModelPaths()).artifact)
 
 	// A corrupt committed artifact is a broken build, and the `SyntaxError` names the offset. The package's parse
 	// wrappers live in `@mailwoman/core`, which this package deliberately does not depend on.
@@ -77,11 +85,11 @@ export async function readCompiledGeographicModel(): Promise<CompiledGeographicM
 	return parseCompiledGeographicModel(JSON.parse(text))
 }
 
-function main(): void {
-	const { artifact } = packagedModelPaths()
-	const model = compileAuthoredGeographicModel()
+async function main(): Promise<void> {
+	const { artifact } = await packagedModelPaths()
+	const model = await compileAuthoredGeographicModel()
 
-	writeLocalJSONFile(model, artifact)
+	await writeLocalJSONFile(model, artifact)
 
 	console.log(
 		`wrote ${artifact}: ${model.concepts.length} concepts, ${model.relations.length} relations, ${model.mappings.length} mappings, ${model.observations.length} observations, ${model.derivedFacts.length} derived facts (model ${model.modelVersion})`
@@ -91,5 +99,5 @@ function main(): void {
 // `import.meta.main` is undefined under a Vite/vitest module graph, so importing this module from a test stays
 // side-effect-free and never rewrites the committed artifact.
 if (import.meta.main) {
-	main()
+	await main()
 }

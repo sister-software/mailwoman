@@ -32,8 +32,8 @@ import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/pla
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { LookupRow } from "./lookup.ts"
-import { type PlaceIDProvenance, placeIDProvenance } from "./place-id-provenance.ts"
+import type { LookupRow } from "#lookup"
+import { type PlaceIDProvenance, placeIDProvenance } from "#place-id-provenance"
 
 /**
  * How many rows a probe returns per query before it stops.

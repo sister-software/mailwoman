@@ -71,8 +71,8 @@ beforeAll(async () => {
 afterAll(() => root[Symbol.asyncDispose]())
 
 describe("censusArtifact", () => {
-	it("reports rows AND what the shard can be joined through", () => {
-		const row = censusArtifact(root.resolve("wof", "postalcode-intl.db"))
+	it("reports rows AND what the shard can be joined through", async () => {
+		const row = await censusArtifact(root.resolve("wof", "postalcode-intl.db"))
 
 		expect(row.readable).toBe(true)
 		expect(row.countries).toEqual({ FR: 3, DE: 2 })
@@ -80,38 +80,38 @@ describe("censusArtifact", () => {
 		expect(row.parentLinked).toBe(true)
 	})
 
-	it("separates COUNTABLE from JOINABLE — the distinction a row count hides", () => {
+	it("separates COUNTABLE from JOINABLE — the distinction a row count hides", async () => {
 		// 395,544 PT postcodes in a shard with no ancestry table is not 395,544 usable triples. This is the exact
 		// shape that made a real config declare PT unbuildable while the rows were sitting there.
-		const row = censusArtifact(root.resolve("wof", "postalcode-geonames-intl.db"))
+		const row = await censusArtifact(root.resolve("wof", "postalcode-geonames-intl.db"))
 
 		expect(row.readable).toBe(true)
 		expect(row.countries).toEqual({ PT: 5 })
 		expect(row.join).toEqual([])
 	})
 
-	it("reports parent_id being the -1 sentinel, which no row count can show", () => {
-		expect(censusArtifact(root.resolve("wof", "postalcode-geonames-intl.db")).parentLinked).toBe(false)
+	it("reports parent_id being the -1 sentinel, which no row count can show", async () => {
+		expect((await censusArtifact(root.resolve("wof", "postalcode-geonames-intl.db"))).parentLinked).toBe(false)
 	})
 
-	it("reports a country asked for and ABSENT as a zero, not a missing key", () => {
+	it("reports a country asked for and ABSENT as a zero, not a missing key", async () => {
 		// A missing key reads as "not measured". The caller is deciding whether to go and acquire data, and those are
 		// opposite conclusions.
-		const row = censusArtifact(root.resolve("wof", "postalcode-intl.db"), ["FR", "VE"])
+		const row = await censusArtifact(root.resolve("wof", "postalcode-intl.db"), ["FR", "VE"])
 
 		expect(row.countries).toEqual({ FR: 3, VE: 0 })
 	})
 
-	it("treats a zero-byte shard as a FINDING, not an exception", () => {
-		const row = censusArtifact(root.resolve("wof", "postalcode-fr.db"))
+	it("treats a zero-byte shard as a FINDING, not an exception", async () => {
+		const row = await censusArtifact(root.resolve("wof", "postalcode-fr.db"))
 
 		expect(row.readable).toBe(false)
 		expect(row.reason).toMatch(/zero bytes/)
 		expect(row.bytes).toBe(0)
 	})
 
-	it("reports a file that is not there rather than throwing", () => {
-		const row = censusArtifact(root.resolve("wof", "nothing-here.db"))
+	it("reports a file that is not there rather than throwing", async () => {
+		const row = await censusArtifact(root.resolve("wof", "nothing-here.db"))
 
 		expect(row.readable).toBe(false)
 		expect(row.reason).toBe("not on disk")

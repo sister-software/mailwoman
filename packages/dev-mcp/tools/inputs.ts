@@ -10,9 +10,9 @@
 
 import { z } from "zod"
 
-import { resolveInputSet, type InputSetRef } from "../input-sets.ts"
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
-import { INPUT_SET_SCHEMA } from "../tool-kit.ts"
+import { resolveInputSet, type InputSetRef } from "#input-sets"
+import type { DevTool, DevToolDeps } from "#tool-kit"
+import { INPUT_SET_SCHEMA } from "#tool-kit"
 
 export const inputsTool = (_deps: DevToolDeps): DevTool => ({
 	name: "mwdev_inputs",

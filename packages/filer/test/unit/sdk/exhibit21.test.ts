@@ -18,6 +18,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import {
 	decodeEntities,
 	fetchExhibit21,
@@ -26,11 +27,10 @@ import {
 	type SECDocumentClient,
 	stripTags,
 } from "@mailwoman/filer/sdk/exhibit21"
-import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 async function fixture(name: string): Promise<string> {
-	return await readLocalTextFile(join(import.meta.dirname, "../../../test-fixtures", name))
+	return await readLocalTextFile(resolvePackagePath("@mailwoman/filer", "test-fixtures", name))
 }
 
 describe("parseExhibit21 — gate 3 (decision 6: abstain, never guess)", () => {

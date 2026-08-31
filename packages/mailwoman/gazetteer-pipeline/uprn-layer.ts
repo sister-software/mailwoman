@@ -48,7 +48,7 @@
  */
 
 import { tryStat, pathExists, readDirectory, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { removePath, makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
 import {
@@ -62,9 +62,6 @@ import {
 } from "@mailwoman/core/layers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
-import { dirname } from "@mailwoman/platform/path"
-import { Readable } from "@mailwoman/platform/stream"
-import { pipeline } from "@mailwoman/platform/stream/promises"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn-schema"
 import {
 	LATITUDE_MAX,
@@ -77,10 +74,10 @@ import {
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { cellToParent } from "h3-js"
-import { join } from "path-ts"
+import { dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { createOSDownloadsClient, OS_DOWNLOADS_API_BASE } from "./postcode/codepoint/fetch.ts"
+import { createOSDownloadsClient, OS_DOWNLOADS_API_BASE } from "#gazetteer-pipeline/postcode/codepoint/fetch"
 
 /**
  * The OS Data Hub product id for Open UPRN.
@@ -449,7 +446,7 @@ export interface BuildUPRNLayerOptions {
 	 * Acquisition directory holding (or to hold) the archive and its `extracted/` tree. Default
 	 * `<data-root>/os-uprn/<YYYY-MM-DD>` — a NEW dated directory per acquisition.
 	 */
-	sourceDir?: string
+	sourceDir?: PathBuilderLike
 	/**
 	 * Output artifact. Default `<data-root>/uprn/uprn.db`. Built to a staging path and atomically swapped into place.
 	 */
@@ -557,7 +554,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	const started = Date.now()
 	const now = options.now ?? new Date()
 	const stamp = datestamp(now)
-	const sourceDir = options.sourceDir ?? String(dataRootPath("os-uprn", stamp))
+	const sourceDir = resolvePath(options.sourceDir ?? dataRootPath("os-uprn", stamp))
 	const out = options.out ?? String(dataRootPath("uprn", "uprn.db"))
 	const minimumPlausibleRows = options.minimumPlausibleRows ?? OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS
 
@@ -810,7 +807,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 
 	phase("seal", out)
 	await sealDatabase(ingestPath)
-	swapDatabaseIntoPlace(ingestPath, out)
+	await swapDatabaseIntoPlace(ingestPath, out)
 
 	return {
 		out,

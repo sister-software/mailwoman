@@ -18,8 +18,8 @@
  */
 
 import { decodeAsTuples } from "@mailwoman/core/decoder"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { parseArgs } from "@mailwoman/platform/util"
 import { TextSpliterator } from "spliterator"
 
 import { createRuntimePipeline } from "#index"
@@ -28,7 +28,7 @@ const REGISTERS = ["asis", "lower", "upper", "comma-drop"] as const
 
 type Register = (typeof REGISTERS)[number]
 
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		rows: { type: "string" },
 		"cache-root": { type: "string" },

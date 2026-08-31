@@ -67,13 +67,13 @@ import {
 	runCounterfactuals,
 	type CounterfactualTarget,
 	type RowCounterfactuals,
-} from "./counterfactual.ts"
-import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
-import { evidenceCensus, priorSignals, type ChannelReading, type EvidenceCensus } from "./evidence.ts"
-import { caseCarriesTruth, seedToCaseTable } from "./grade.ts"
-import { resolveInputSet, type InputSetRef, type ResolvedInput } from "./input-sets.ts"
-import { describeObservedRate } from "./power.ts"
-import { inputSetProvenance, provenanceFor } from "./tool-kit.ts"
+} from "#counterfactual"
+import type { EngineConfig, EngineRegistryLike } from "#engine-registry"
+import { evidenceCensus, priorSignals, type ChannelReading, type EvidenceCensus } from "#evidence"
+import { caseCarriesTruth, seedToCaseTable } from "#grade"
+import { resolveInputSet, type InputSetRef, type ResolvedInput } from "#input-sets"
+import { describeObservedRate } from "#power"
+import { inputSetProvenance, provenanceFor } from "#tool-kit"
 
 /**
  * The confidence at which a known-format hit is treated as a structural assertion worth contradicting.

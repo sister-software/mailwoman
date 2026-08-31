@@ -302,8 +302,8 @@
 
 import type { ComponentTag } from "@mailwoman/core/types"
 
-import { groupPiecesIntoWords, type WordGroup } from "./fst-prior.ts"
-import type { PairEdge, PairIndexLike } from "./pair-index-resolver.ts"
+import { groupPiecesIntoWords, type WordGroup } from "#fst-prior"
+import type { PairEdge, PairIndexLike } from "#pair-index-resolver"
 import {
 	ANCHORED_CHILD_MAX_WORDS,
 	segmentParentPostcodeShape,
@@ -319,10 +319,10 @@ import {
 	sharesFoldForm,
 	STRUCTURAL_MARKER_WORDS,
 	WINDOW_MAX_WORDS,
-} from "./pair-prior-windows.ts"
-import type { PlacetypeCensusLike } from "./placetype-census.ts"
-import { collectMatches } from "./postcode-repair.ts"
-import type { TokenLike } from "./query-shape-prior.ts"
+} from "#pair-prior-windows"
+import type { PlacetypeCensusLike } from "#placetype-census"
+import { collectMatches } from "#postcode-repair"
+import type { TokenLike } from "#query-shape-prior"
 
 /**
  * /** `probeMode` selects the candidate-building strategy — see the module docstring's "Probe mode" section for the

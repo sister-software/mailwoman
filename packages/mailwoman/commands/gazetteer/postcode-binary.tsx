@@ -28,23 +28,24 @@
  *   Every locale's key count is checked against a documented floor before anything is written; a build
  *   below it exits NONZERO with a named reason rather than shipping a valid, empty binary.
  *
- *   Defaults to US + NL/FR/DE/ES/IT (postalcode-intl.db) + GB (postalcode-gb-codepoint.db, the
- *   licence-clean OGL v3.0 source). Each `.bin` is written DIRECTLY to `--out` (the original
+ *   Defaults to `POSTCODE_BINARY_SOURCES` (`gazetteer-pipeline/postcode/binary.ts`): US, NL/FR/DE/ES/IT
+ *   from `postalcode-intl.db`, and GB from `postalcode-gb-codepoint.db` (the licence-clean OGL v3.0
+ *   source). Each `.bin` is written DIRECTLY to `--out` (the original
  *   `scripts/build-postcode-binary.ts` behavior). Per-locale progress streams to stderr; the roll-up
  *   lands on stdout.
  */
 
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { allRows } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
+import { join } from "path-ts"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
-
-import type { GBGranularity, PostcodeShardRow } from "../../gazetteer-pipeline/postcode/binary.ts"
+import type { GBGranularity, PostcodeShardRow } from "#gazetteer-pipeline/postcode/binary"
 
 interface LocaleSource {
 	country: string
@@ -89,8 +90,8 @@ const GazetteerPostcodeBinary: ParsedCommandComponent<Options> = ({ options }) =
 		// type-only, so this load costs a file read rather than the ONNX runtime the package name suggests.
 		const { serializePostcodeBinary } = await import("@mailwoman/neural/postcode-binary-resolver")
 
-		const { buildPostcodeBinaryEntries, keyFloorViolation } =
-			await import("../../gazetteer-pipeline/postcode/binary.ts")
+		const { browserGranularityFor, buildPostcodeBinaryEntries, keyFloorViolation, POSTCODE_BINARY_SOURCES } =
+			await import("#gazetteer-pipeline/postcode/binary")
 
 		const wof = dataRootPath("wof")
 		const outDir = options.out
@@ -106,16 +107,7 @@ const GazetteerPostcodeBinary: ParsedCommandComponent<Options> = ({ options }) =
 		}
 
 		if (!locales.length) {
-			//.TODO: should have this in a JSON file somewhere to avoid drift.
-			locales.push(
-				{ country: "US", db: join(wof, "postalcode-us.db") },
-				{ country: "NL", db: join(wof, "postalcode-intl.db") },
-				{ country: "FR", db: join(wof, "postalcode-intl.db") },
-				{ country: "DE", db: join(wof, "postalcode-intl.db") },
-				{ country: "ES", db: join(wof, "postalcode-intl.db") },
-				{ country: "IT", db: join(wof, "postalcode-intl.db") },
-				{ country: "GB", db: join(wof, "postalcode-gb-codepoint.db") }
-			)
+			locales.push(...POSTCODE_BINARY_SOURCES.map(({ country, shard }) => ({ country, db: join(wof, shard) })))
 		}
 
 		const granularity: GBGranularity = options.gbGranularity
@@ -164,19 +156,21 @@ const GazetteerPostcodeBinary: ParsedCommandComponent<Options> = ({ options }) =
 				`${country}: ${entries.length.toLocaleString()} codes (${placed.toLocaleString()} placed` +
 					(outwardKeys ? `, ${outwardKeys.toLocaleString()} outward districts` : "") +
 					(skipped ? `, ${skipped.toLocaleString()} rows skipped as non-unit-shaped` : "") +
-					`) → ${outPath} (${(bytes.length / 1024 / 1024).toFixed(2)} MB)`
+					`) → ${outPath} (${ByteFormatter.formatIEC(bytes.length)})`
 			)
 
 			// The GB default is `unit` because that is what the anchor-v2 model was TRAINED against, and a
 			// serving bundle shipping anything coarser feeds the channel a different distribution than
 			// training painted. But this command's default `--out` is the BROWSER asset dir, where 20 MB is
 			// not a postcode binary, it is the whole page budget. The size is printed either way; this names
-			// the lever rather than deciding for the operator.
-			// TODO: Should not be a hardcoded country code but somewhere in a config.
-			if (country.toUpperCase() === "GB" && granularity === "unit" && bytes.length > BROWSER_BUDGET_BYTES) {
+			// the setting rather than deciding for the operator. Which countries carry a browser granularity is
+			// the source table's to say.
+			const browserGranularity = browserGranularityFor(country)
+
+			if (browserGranularity && granularity !== browserGranularity && bytes.length > BROWSER_BUDGET_BYTES) {
 				console.error(
-					`  NOTE: that is the TRAIN-FAITHFUL unit key set, sized for a serving weights package. ` +
-						`For a browser bundle pass --gb-granularity outward (2,863 keys, 0.02 MB).`
+					`  NOTE: that is the TRAIN-FAITHFUL ${granularity} key set, sized for a serving weights package. ` +
+						`For a browser bundle pass --gb-granularity ${browserGranularity} (2,863 keys, 0.02 MB).`
 				)
 			}
 		}

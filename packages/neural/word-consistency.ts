@@ -48,8 +48,8 @@
  *   correctly) — it exists as an opt, unused by the ship default.
  */
 
-import { SPACE_SENTINEL } from "./tokenizer.ts"
-import { softmax } from "./viterbi.ts"
+import { SPACE_SENTINEL } from "#tokenizer"
+import { softmax } from "#viterbi"
 
 export interface WordConsistencyOpts {
 	/**

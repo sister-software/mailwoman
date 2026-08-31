@@ -53,7 +53,7 @@ interface Options {
 const EvalErrorAnalysis: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { evalErrorAnalysis } = await import("../../eval-harness/error-analysis.ts")
+			const { evalErrorAnalysis } = await import("#eval-harness/error-analysis")
 
 			return evalErrorAnalysis(options)
 		},

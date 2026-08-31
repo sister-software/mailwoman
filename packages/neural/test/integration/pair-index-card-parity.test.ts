@@ -22,8 +22,7 @@
  *   by each package's `link-dev-weights.ts`, so a lean checkout legitimately has none.
  */
 
-import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalBuffer, readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
@@ -46,6 +45,12 @@ const PACKAGES = [
 	{ pkg: "neural-weights-it-it", country: "it", cardKeys: ["it_artifacts", "pair_index_it_bin"] },
 	{ pkg: "neural-weights-en-nz", country: "nz", cardKeys: ["nz_artifacts", "pair_index_nz_bin"] },
 ] as const
+
+const BIN_EXISTS = new Map<string, boolean>()
+
+for (const { pkg, country } of PACKAGES) {
+	BIN_EXISTS.set(pkg, await pathExists(String(repoRootPath(pkg, `pair-index-${country}.bin`))))
+}
 
 interface PairIndexFacts {
 	pairs: number
@@ -89,7 +94,7 @@ describe("pair-index ↔ model-card parity", () => {
 		const binPath = String(repoRootPath(pkg, `pair-index-${country}.bin`))
 		const cardPath = String(repoRootPath(pkg, "model-card.json"))
 
-		test.skipIf(!pathExistsSync(binPath))(`${pkg}: the card describes the artifact on disk`, async () => {
+		test.skipIf(!BIN_EXISTS.get(pkg))(`${pkg}: the card describes the artifact on disk`, async () => {
 			const card = await readLocalJSONFile<Record<string, unknown>>(cardPath)
 			const [outerKey, innerKey] = cardKeys
 			const outer = card[outerKey] as Record<string, unknown> | undefined

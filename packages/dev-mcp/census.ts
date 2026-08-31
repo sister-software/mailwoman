@@ -29,11 +29,11 @@
 
 import { TRACE_PRIOR_KINDS, type NeuralParseTrace, type TracePriorKind } from "@mailwoman/neural"
 
-import type { EngineRegistryLike } from "./engine-registry.ts"
-import { evidenceCensus, priorSignals, type ChannelReading } from "./evidence.ts"
-import { resolveInputSet, type InputSetRef } from "./input-sets.ts"
-import { describeObservedRate } from "./power.ts"
-import { inputSetProvenance, provenanceFor } from "./tool-kit.ts"
+import type { EngineRegistryLike } from "#engine-registry"
+import { evidenceCensus, priorSignals, type ChannelReading } from "#evidence"
+import { resolveInputSet, type InputSetRef } from "#input-sets"
+import { describeObservedRate } from "#power"
+import { inputSetProvenance, provenanceFor } from "#tool-kit"
 
 /**
  * Mechanisms whose L1 zero is EXPECTED, each with the reason a reader can check. The census reports them as

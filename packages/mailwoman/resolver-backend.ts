@@ -20,9 +20,8 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { mailwomanDataRoot, repoRootPathBuilder, wofShardPaths } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
 import type {
 	PlaceLookup,
 	WOFCandidateTableLookup,
@@ -33,13 +32,13 @@ import { readCapitalPoints } from "@mailwoman/resolver-wof-sqlite/capital-schema
 import { CapitalIndex, type CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { resolvePath } from "path-ts"
+import { join, resolvePath, type PathBuilderLike } from "path-ts"
 
 /**
  * The candidate gazetteer's conventional home — where `mailwoman data pull candidate` writes it, and where every caller
  * looks when nothing points somewhere else.
  */
-export function conventionCandidateDBPath(dataRoot: string = mailwomanDataRoot()): string {
+export function conventionCandidateDBPath(dataRoot: PathBuilderLike = mailwomanDataRoot()): string {
 	return resolvePath(dataRoot, "wof", "candidate.db")
 }
 
@@ -51,16 +50,19 @@ export function conventionCandidateDBPath(dataRoot: string = mailwomanDataRoot()
  * docs/engineering/reference/resolver-backends.mdx for the tier-1 measurement behind that default, the named residuals,
  * and the 2×2 any comparison between the two backends has to run.
  */
-export function resolveCandidateDBPath(explicit?: string, dataRoot: string = mailwomanDataRoot()): string | undefined {
+export async function resolveCandidateDBPath(
+	explicit?: string,
+	dataRoot: PathBuilderLike = mailwomanDataRoot()
+): Promise<string | undefined> {
 	const pinned = explicit ?? $public.MAILWOMAN_CANDIDATE_DB
 
 	if (pinned === "none") return undefined
 
-	if (pinned) return pathExistsSync(pinned) ? pinned : undefined
+	if (pinned) return (await pathExists(pinned)) ? pinned : undefined
 
 	const convention = conventionCandidateDBPath(dataRoot)
 
-	return pathExistsSync(convention) ? convention : undefined
+	return (await pathExists(convention)) ? convention : undefined
 }
 
 /**
@@ -68,12 +70,12 @@ export function resolveCandidateDBPath(explicit?: string, dataRoot: string = mai
  * HealthRouter multi-shard convention), else {@link wofShardPaths}'s default set.
  *
  * Returned UNFILTERED — whether a missing path is a degradation or an error is the caller's contract, not this
- * function's. `createGeocodeSession` filters with `existsSync` and throws when nothing survives; `mailwoman doctor`
+ * function's. `createGeocodeSession` filters with `pathExists` and throws when nothing survives; `mailwoman doctor`
  * reports each absence; a probe wants to say which shard it could not open. Sharing the SELECTION is the point: a
  * caller that reads only `wofShardPaths` silently probes different shards than the runtime on any box where the env is
  * set, which is the exact class of wrong answer a data-source probe exists to rule out.
  */
-export function resolveWOFShardPaths(explicit?: string, dataRoot: string = mailwomanDataRoot()): string[] {
+export function resolveWOFShardPaths(explicit?: string, dataRoot: PathBuilderLike = mailwomanDataRoot()): string[] {
 	const raw = explicit ?? $public.MAILWOMAN_WOF_DB
 
 	if (raw) {
@@ -91,10 +93,10 @@ export function resolveWOFShardPaths(explicit?: string, dataRoot: string = mailw
  * undefined if unset or missing. Only consulted on the FTS backend (the candidate backend folds aliases at build time,
  * not at query time).
  */
-export function resolvePostalCityAliasDBPath(explicit?: string): string | undefined {
+export async function resolvePostalCityAliasDBPath(explicit?: string): Promise<string | undefined> {
 	const p = explicit ?? $public.MAILWOMAN_POSTAL_CITY_ALIAS_DB
 
-	return p && pathExistsSync(p) ? p : undefined
+	return p && (await pathExists(p)) ? p : undefined
 }
 
 export { dataRootPath, mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/utils"
@@ -146,11 +148,11 @@ interface ResolverLookupModule {
  * (#475) is attached so a postal city resolves to its geographic locality — opt-in, default-off (unset env →
  * byte-identical FTS path).
  */
-export function createResolverBackend(
+export async function createResolverBackend(
 	mod: ResolverLookupModule,
 	opts: {
 		candidateDB?: string
-		dataRoot?: string
+		dataRoot?: PathBuilderLike
 		wofPaths: string | string[]
 		postalCityAliasDB?: string
 		/**
@@ -160,8 +162,8 @@ export function createResolverBackend(
 		 */
 		variantAliasExemption?: boolean
 	}
-): PlaceLookup {
-	const candidate = resolveCandidateDBPath(opts.candidateDB, opts.dataRoot)
+): Promise<PlaceLookup> {
+	const candidate = await resolveCandidateDBPath(opts.candidateDB, opts.dataRoot)
 
 	if (candidate) {
 		console.error(`[resolver] candidate-table backend (demo-parity, population-first): ${candidate}`)
@@ -173,7 +175,7 @@ export function createResolverBackend(
 	}
 
 	const wp = opts.wofPaths
-	const aliasDB = resolvePostalCityAliasDBPath(opts.postalCityAliasDB)
+	const aliasDB = await resolvePostalCityAliasDBPath(opts.postalCityAliasDB)
 	const postalCityAliases = aliasDB ? new mod.WOFPostalCityAliasLookup({ databasePath: aliasDB }) : undefined
 
 	if (postalCityAliases) {
@@ -206,12 +208,12 @@ export function conventionCapitalsPath(): string {
  * with no capital promotion rather than failing at session construction (positive evidence only). A reference that
  * EXISTS but is malformed throws under both modes — a corrupt file is a defect, never an absence.
  */
-export function loadCapitalIndex(opts: {
+export async function loadCapitalIndex(opts: {
 	candidateDB?: string
 	path?: string
 	missing?: "throw" | "degrade"
-}): CapitalIndex | undefined {
-	if (opts.candidateDB && pathExistsSync(opts.candidateDB)) {
+}): Promise<CapitalIndex | undefined> {
+	if (opts.candidateDB && (await pathExists(opts.candidateDB))) {
 		using db = new DatabaseClient<WOFDatabase>(opts.candidateDB, { readOnly: true })
 
 		const points = readCapitalPoints(db)
@@ -227,7 +229,7 @@ export function loadCapitalIndex(opts: {
 
 	const path = opts.path ?? conventionCapitalsPath()
 
-	if (!pathExistsSync(path)) {
+	if (!(await pathExists(path))) {
 		if (opts.missing === "degrade") {
 			console.error(
 				`[resolver] capital reference: none in the candidate artifact or at ${path} — capital promotion degrades to a no-op`
@@ -242,7 +244,7 @@ export function loadCapitalIndex(opts: {
 		)
 	}
 
-	const parsed = readLocalJSONFileSync<{ version?: number; entries?: CapitalPoint[] }>(path)
+	const parsed = await readLocalJSONFile<{ version?: number; entries?: CapitalPoint[] }>(path)
 
 	if (parsed.version !== 1 || !Array.isArray(parsed.entries)) {
 		throw new Error(`${path} is not a v1 capitals reference — rebuild with \`mailwoman gazetteer capitals\``)

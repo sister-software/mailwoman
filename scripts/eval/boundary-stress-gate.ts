@@ -30,6 +30,7 @@
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { mulberry32 } from "@mailwoman/core/utils"
 import {
 	type BoundaryStressTemplate,
@@ -37,9 +38,8 @@ import {
 } from "@mailwoman/corpus/synthesizers/boundary-stress"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { parseArgs } from "@mailwoman/platform/util"
 
-const { values: args } = parseArgs({
+const { values: args } = parseArguments({
 	options: {
 		model: { type: "string" },
 		tokenizer: { type: "string" },
@@ -81,7 +81,7 @@ if (args.model && !args["model-card"])
 // model/tokenizer/model-card paths instead of the symlink auto-resolve.
 const resolved = args.model
 	? { modelPath: args.model, tokenizerPath: args.tokenizer!, modelCardPath: args["model-card"]! }
-	: resolveWeights({ locale: "en-us" })
+	: await resolveWeights({ locale: "en-us" })
 
 if (!resolved.modelPath || !resolved.tokenizerPath || !resolved.modelCardPath)
 	throw new Error("createScorer needs model + tokenizer + model-card paths; resolveWeights returned incomplete paths")

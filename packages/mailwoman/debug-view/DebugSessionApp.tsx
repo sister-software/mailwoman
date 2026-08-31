@@ -30,15 +30,15 @@ import { Text, useApp, useInput, useStdout, type Key } from "ink"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { CommandError } from "#cli-kit"
+import { outputLines } from "#debug-view/output-lines"
+import { QueryInput, type InputState } from "#debug-view/QueryInput"
+import { resolveTilesPath } from "#debug-view/tiles"
+import { assertDebugFormatSanity, debugSizeFloorViolation, initialZoomForTier } from "#debug-view/view-policy"
+import type { GeocodeCommandOptions } from "#geocode-command-options"
+import type { GeocodeResult } from "#geocode-result"
+import { createGeocodeSession, type GeocodeRun, type GeocodeSession } from "#geocode-session"
 
-import type { GeocodeCommandOptions } from "../geocode-command-options.ts"
-import type { GeocodeResult } from "../geocode-result.ts"
-import { createGeocodeSession, type GeocodeRun, type GeocodeSession } from "../geocode-session.ts"
 import { DebugFrame, mapPaneCellSize, outputPaneCapacity, type DebugData, type DebugPane } from "./DebugFrame.tsx"
-import { outputLines } from "./output-lines.ts"
-import { QueryInput, type InputState } from "./QueryInput.ts"
-import { resolveTilesPath } from "./tiles.ts"
-import { assertDebugFormatSanity, debugSizeFloorViolation, initialZoomForTier } from "./view-policy.ts"
 
 //#region Contract
 

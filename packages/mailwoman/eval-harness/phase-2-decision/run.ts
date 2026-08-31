@@ -29,14 +29,10 @@ import { readActivityLexicon } from "@mailwoman/activity-lexicon/lexicon"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { QueryIntentCode } from "@mailwoman/core/pipeline"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { basename } from "@mailwoman/platform/path"
+import { basename } from "path-ts"
 
-import { buildSHA } from "../../gazetteer-pipeline/stamp-manifest.ts"
-import { createSemanticObservationRoute, semanticObservationMarkers } from "../../observations/index.ts"
-import { runAbsenceObservationProbe } from "../absence-observation/run.ts"
-import { measureConformance } from "../conformance/command.ts"
-import { createPOIBoardPipeline, type POIBoardOptions, runPOIBoard } from "../poi-board.ts"
-import { runSemanticUtilityProbe } from "../semantic-utility/run.ts"
+import { runAbsenceObservationProbe } from "#eval-harness/absence-observation/run"
+import { measureConformance } from "#eval-harness/conformance/command"
 import {
 	decidePhase2,
 	evaluatePhase2Checks,
@@ -51,7 +47,11 @@ import {
 	type Phase2Verdict,
 	phase2DefinitionHash,
 	instrumentFor,
-} from "./decision.ts"
+} from "#eval-harness/phase-2-decision/decision"
+import { createPOIBoardPipeline, type POIBoardOptions, runPOIBoard } from "#eval-harness/poi-board"
+import { runSemanticUtilityProbe } from "#eval-harness/semantic-utility/run"
+import { buildSHA } from "#gazetteer-pipeline/stamp-manifest"
+import { createSemanticObservationRoute, semanticObservationMarkers } from "#observations/index"
 
 /**
  * The committed collision census the recognition lane's control checks read.
@@ -632,7 +632,7 @@ async function measureMarker(
  * Run the phase-2 decision ruler and emit a receipt.
  */
 export async function runPhase2Decision(options: Phase2RunOptions = {}): Promise<Phase2Receipt> {
-	const definition = loadPhase2Definition(options.definitionPath, options.freezePath)
+	const definition = await loadPhase2Definition(options.definitionPath, options.freezePath)
 	const { readings, instruments, artifact, deviations } = await measure(definition, options)
 	const byMeasurement = new Map(readings.map((reading) => [reading.measurement, reading]))
 	const checks = evaluatePhase2Checks(definition, byMeasurement)

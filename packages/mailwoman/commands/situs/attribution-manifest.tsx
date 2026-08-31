@@ -18,10 +18,10 @@
 
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import * as path from "@mailwoman/platform/path"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
+import { join } from "path-ts"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
@@ -84,7 +84,7 @@ const SitusAttributionManifest: ParsedCommandComponent<Options> = ({ options }) 
 			let db: DatabaseClient<AddressPointDatabase>
 
 			try {
-				db = new DatabaseClient<AddressPointDatabase>(path.join(outDir, file), { readOnly: true })
+				db = new DatabaseClient<AddressPointDatabase>(join(outDir, file), { readOnly: true })
 			} catch {
 				manifest.states[slug] = { ok: false, error: "unreadable" }
 
@@ -119,7 +119,7 @@ const SitusAttributionManifest: ParsedCommandComponent<Options> = ({ options }) 
 		// Sort datasetTotals descending for readability.
 		manifest.datasetTotals = Object.fromEntries(Object.entries(manifest.datasetTotals).toSorted((a, b) => b[1] - a[1]))
 
-		const attributionPath = path.join(outDir, "ATTRIBUTION.json")
+		const attributionPath = join(outDir, "ATTRIBUTION.json")
 		await writeLocalJSONFile(manifest, attributionPath)
 
 		const lines = [

@@ -9,7 +9,8 @@
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { setTimeout as sleep } from "@mailwoman/platform/timers/promises"
+import { sleep } from "@mailwoman/core/utils/sleep"
+import type { PathBuilderLike } from "path-ts"
 
 /**
  * Rate limited — retryable, the server is asking us to back off.
@@ -38,7 +39,7 @@ export interface BaseFetchOptions {
 	/**
 	 * Destination root for downloaded source data. Each source writes its own subdirectory.
 	 */
-	outRoot: string
+	outRoot: PathBuilderLike
 	/**
 	 * Pause between transfer retries, in milliseconds. Defaults to {@linkcode DEFAULT_RETRY_DELAY_MS}.
 	 *

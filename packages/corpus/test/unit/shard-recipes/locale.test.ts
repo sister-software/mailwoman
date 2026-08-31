@@ -13,8 +13,7 @@
 
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { removePathIfPresentSync } from "@mailwoman/core/fs/writers-sync"
+import { removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import {
 	applyCountryAppend,
 	applyDistrictAsLocalityOverride,
@@ -25,7 +24,7 @@ import {
 	resolveLocaleParts,
 } from "@mailwoman/corpus/shard-recipes/locale"
 import { makeMulberry32 } from "@mailwoman/corpus/shard-recipes/scaffold"
-import { join } from "@mailwoman/platform/path"
+import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 import type { SynthesizedLocaleRow } from "#synthesizers/german"
@@ -78,13 +77,13 @@ describe("readTuples (OA CSV parse)", () => {
 	const dirs: string[] = []
 
 	const tmp = async (): Promise<string> => {
-		const d = fixtures.use(await temporaryDirectory("mw-locale-")).path
+		const d = resolvePath(fixtures.use(await temporaryDirectory("mw-locale-")).path)
 		dirs.push(d)
 
 		return d
 	}
 
-	afterAll(() => dirs.forEach((d) => removePathIfPresentSync(d)))
+	afterAll(() => Promise.all(dirs.map((d) => removePathIfPresent(d))))
 
 	// A tiny OA slice exercising exactly what the CSVSpliterator migration touches: a CRLF terminator
 	// (the real OA files are CRLF), a quoted field with an embedded comma, an empty REGION cell that

@@ -19,7 +19,6 @@ import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
 import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
-
 import {
 	buildCommandGaps,
 	inventorySentence,
@@ -27,7 +26,7 @@ import {
 	Provenance,
 	rebuildHint,
 	takeInventory,
-} from "../../data-inventory.ts"
+} from "#data-inventory"
 
 export const description =
 	"Report every database in the data root and whether it records how it was built. `layer_manifest` is " +
@@ -119,10 +118,13 @@ const InventoryCommand: ParsedCommandComponent<Options> = ({ options }) => {
 		// because these artifacts PASS every "has a manifest" check.
 		const repoRoot = String(repoRootPath())
 
-		const broken = report.entries
-			.filter((e) => e.provenance === Provenance.Manifested)
-			.map((e) => ({ entry: e, gaps: buildCommandGaps(e.manifest!.build_cmd, repoRoot) }))
-			.filter(({ gaps }) => gaps.length > 0)
+		const manifested = report.entries.filter((e) => e.provenance === Provenance.Manifested)
+
+		const broken = (
+			await Promise.all(
+				manifested.map(async (e) => ({ entry: e, gaps: await buildCommandGaps(e.manifest!.build_cmd, repoRoot) }))
+			)
+		).filter(({ gaps }) => gaps.length > 0)
 
 		if (broken.length) {
 			lines.push(

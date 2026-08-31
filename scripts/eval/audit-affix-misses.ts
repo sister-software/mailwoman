@@ -16,11 +16,11 @@
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
 /**
@@ -31,7 +31,7 @@ const MAX_ABBREVIATED_SUFFIX = 4
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 
-const { values: args } = parseArgs({
+const { values: args } = parseArguments({
 	options: {
 		model: { type: "string" },
 		file: { type: "string", default: "data/eval/external/street-affix-real.jsonl" },

@@ -17,8 +17,8 @@
  *   pays for it.
  */
 
-import { resolve } from "@mailwoman/platform/path"
-import { pathToFileURL } from "@mailwoman/platform/url"
+import { pathToFileURL } from "@mailwoman/core/module/file-url"
+import { resolvePath as resolve } from "path-ts"
 
 /**
  * Options for {@linkcode renderPlotlyHTMLToPNG}.

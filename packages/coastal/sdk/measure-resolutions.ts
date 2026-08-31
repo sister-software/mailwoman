@@ -22,9 +22,9 @@
  *   that runs out of headroom runs the candidates in separate invocations.
  */
 
-import { NCERM_SCENARIOS_BY_KEY } from "../vocabulary.ts"
-import { classifyFeatureCells, CoastalCellIndex, type CellIndexMeasurement } from "./cells.ts"
-import { readCoastalScenarioFeatures, readCoastalSourceIdentity, type CoastalIngestOptions } from "./ingest.ts"
+import { classifyFeatureCells, CoastalCellIndex, type CellIndexMeasurement } from "#sdk/cells"
+import { readCoastalScenarioFeatures, readCoastalSourceIdentity, type CoastalIngestOptions } from "#sdk/ingest"
+import { NCERM_SCENARIOS_BY_KEY } from "#vocabulary"
 
 export interface MeasureResolutionsOptions extends CoastalIngestOptions {
 	/**
@@ -115,4 +115,4 @@ export async function measureCoastalCellResolutions(
 	}
 }
 
-export { formatResolutionTotalRows, formatScenarioMeasurementRows } from "./cells.ts"
+export { formatResolutionTotalRows, formatScenarioMeasurementRows } from "#sdk/cells"

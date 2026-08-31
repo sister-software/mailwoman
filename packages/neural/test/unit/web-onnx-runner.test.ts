@@ -17,8 +17,7 @@
  *       output shape, no API divergence.
  */
 
-import { readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { WebONNXRunner } from "@mailwoman/neural/web-onnx-runner"
@@ -30,11 +29,11 @@ import { describe, expect, test } from "vitest"
 // `scripts/link-dev-weights.ts` after a training run. Skip the real-model tests when the weights
 // package's `model.onnx` isn't on disk; the runner's structural behavior still gets exercised by
 // `web-onnx-runner.unit.test.ts`, which mocks the runtime and needs no model.
-function probeWeights(): { modelPath: string; tokenizerPath: string; modelCardPath?: string } | null {
+async function probeWeights(): Promise<{ modelPath: string; tokenizerPath: string; modelCardPath?: string } | null> {
 	try {
-		const r = resolveWeights({})
+		const r = await resolveWeights({})
 
-		if (!pathExistsSync(r.modelPath) || !pathExistsSync(r.tokenizerPath)) return null
+		if (!(await pathExists(r.modelPath)) || !(await pathExists(r.tokenizerPath))) return null
 
 		return r
 	} catch {
@@ -42,7 +41,7 @@ function probeWeights(): { modelPath: string; tokenizerPath: string; modelCardPa
 	}
 }
 
-const weights = probeWeights()
+const weights = await probeWeights()
 const haveWeights = weights !== null
 
 describe.skipIf(!haveWeights)("WebONNXRunner", () => {
@@ -75,7 +74,7 @@ describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 		// Thread the trained label vocabulary from the model card, same as loadFromWeights — the
 		// dev-linked weights are a Stage 3 bundle whose emission width exceeds the compile-time
 		// STAGE2_BIO_LABELS default.
-		const labels = readLabelsFromModelCard(weights!.modelCardPath)
+		const labels = await readLabelsFromModelCard(weights!.modelCardPath)
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner, labels })
 
 		const tree = await classifier.parse("123 Main St, Springfield, IL 62704")

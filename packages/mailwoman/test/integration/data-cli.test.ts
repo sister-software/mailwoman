@@ -16,14 +16,11 @@
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath } from "@mailwoman/core/utils"
-import { execFile } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
 import { BUNDLES } from "mailwoman/data-bundles"
 import { afterAll, describe, expect, test } from "vitest"
-
-const exec = promisify(execFile)
 
 const cliBin = workspacePath("mailwoman", "out", "cli.js")
 
@@ -32,13 +29,14 @@ const cliBin = workspacePath("mailwoman", "out", "cli.js")
  * appearing installed.
  */
 const emptyDataRoot = await temporaryDirectory("mw-data-cli-")
+const emptyDataRootPath = emptyDataRoot.path.toString()
 
 afterAll(() => emptyDataRoot[Symbol.asyncDispose]())
 
 describe.skipIf(!(await pathExists(cliBin)))("mailwoman data (group landing page)", () => {
 	test("bare `data` explains why the command exists and points at pull / status / doctor", async () => {
-		const { stdout } = await exec("node", [cliBin, "data"], {
-			env: childEnv({ NODE_NO_WARNINGS: "1", MAILWOMAN_DATA_ROOT: emptyDataRoot.path }),
+		const { stdout } = await runFile("node", [cliBin, "data"], {
+			env: childEnv({ NODE_NO_WARNINGS: "1", MAILWOMAN_DATA_ROOT: emptyDataRootPath }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
 
@@ -46,12 +44,12 @@ describe.skipIf(!(await pathExists(cliBin)))("mailwoman data (group landing page
 		expect(stdout).toMatch(/mailwoman data status/)
 		// The #1577 ask: the landing page has to hand the reader off to doctor.
 		expect(stdout).toMatch(/mailwoman doctor/)
-		expect(stdout).toContain(emptyDataRoot.path)
+		expect(stdout).toContain(emptyDataRootPath)
 	}, 60_000)
 
 	test("--list names every registered bundle, its size, and where it lands", async () => {
-		const { stdout } = await exec("node", [cliBin, "data", "--list"], {
-			env: childEnv({ NODE_NO_WARNINGS: "1", MAILWOMAN_DATA_ROOT: emptyDataRoot.path }),
+		const { stdout } = await runFile("node", [cliBin, "data", "--list"], {
+			env: childEnv({ NODE_NO_WARNINGS: "1", MAILWOMAN_DATA_ROOT: emptyDataRootPath }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
 
@@ -61,11 +59,11 @@ describe.skipIf(!(await pathExists(cliBin)))("mailwoman data (group landing page
 
 		// Sizes read in GB at this scale — "41261.8 MB" was the pre-fix rendering and is unreadable.
 		expect(stdout).toMatch(/41\.3 GB/)
-		expect(stdout).toContain(emptyDataRoot.path)
+		expect(stdout).toContain(emptyDataRootPath)
 	}, 60_000)
 
 	test("the subcommands survive the group's own index command", async () => {
-		const { stdout } = await exec("node", [cliBin, "data", "--help"], {
+		const { stdout } = await runFile("node", [cliBin, "data", "--help"], {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,
 		})

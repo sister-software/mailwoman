@@ -29,13 +29,12 @@
 
 import { pathExists, readStandardInputJSON } from "@mailwoman/core/fs/readers"
 import { removePath, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { tempRootPath } from "@mailwoman/core/utils"
 
-import { lintReply, renderVerdict } from "./vale-check-core.ts"
+import { lintReply, renderVerdict } from "#hooks/vale-check-core"
 
 function markerPath(sessionID: string): string {
-	return join(tmpdir(), `mailwoman-vale-codex-${sessionID.replaceAll(/[^\w-]/g, "")}`)
+	return tempRootPath(`mailwoman-vale-codex-${sessionID.replaceAll(/[^\w-]/g, "")}`)
 }
 
 async function main(): Promise<void> {

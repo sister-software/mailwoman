@@ -76,16 +76,16 @@
 import { $public } from "@mailwoman/core/env"
 import { readLocalTextFile, statPath, pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
+import { spawnProcessSync } from "@mailwoman/core/process"
 import { dataRootPath, md5File, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
-import { spawnSync } from "@mailwoman/platform/child_process"
-import { createHash } from "@mailwoman/platform/crypto"
-import { resolve } from "@mailwoman/platform/path"
+import { md5Hex } from "@mailwoman/core/utils/hash"
 import {
 	linkForce,
 	pairIndexStaleReason,
 	peekPairIndexHeaderFields,
 	warnIfFSTStale,
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import { resolvePath } from "path-ts"
 
 /**
  * Hex characters in an md5 digest.
@@ -177,10 +177,10 @@ async function md5FileWithSidecar(path: string): Promise<string> {
  * The BASE package's card, read from the checkout because it is committed. Not from `DEST_DIR` — walking up from the
  * overlay lands in the data root, which is where an earlier version of this migration pointed it.
  */
-const BASE_CARD_PATH = resolve(String(workspacePath("neural-weights-en-us")), "model-card.json")
+const BASE_CARD_PATH = resolvePath(String(workspacePath("neural-weights-en-us")), "model-card.json")
 
-linkForce(SRC_MODEL, resolve(DEST_DIR, "model.onnx"))
-linkForce(SRC_TOKENIZER, resolve(DEST_DIR, "tokenizer.model"))
+await linkForce(SRC_MODEL, resolvePath(DEST_DIR, "model.onnx"))
+await linkForce(SRC_TOKENIZER, resolvePath(DEST_DIR, "tokenizer.model"))
 
 console.log(`linked ${DEST_DIR}/{model.onnx,tokenizer.model}`)
 
@@ -191,8 +191,8 @@ if (!$public.MAILWOMAN_DEV_MODEL || !$public.MAILWOMAN_DEV_TOKENIZER) {
 	const enUSCard = await readLocalJSONFile<{ files_md5?: Record<string, string> }>(BASE_CARD_PATH)
 
 	const checks: Array<[string, string, string | undefined]> = [
-		["model", resolve(DEST_DIR, "model.onnx"), enUSCard.files_md5?.["model.onnx"]],
-		["tokenizer", resolve(DEST_DIR, "tokenizer.model"), enUSCard.files_md5?.["tokenizer.model"]],
+		["model", resolvePath(DEST_DIR, "model.onnx"), enUSCard.files_md5?.["model.onnx"]],
+		["tokenizer", resolvePath(DEST_DIR, "tokenizer.model"), enUSCard.files_md5?.["tokenizer.model"]],
 	]
 
 	for (const [label, path, expected] of checks) {
@@ -210,9 +210,7 @@ if (!$public.MAILWOMAN_DEV_MODEL || !$public.MAILWOMAN_DEV_TOKENIZER) {
 			process.exit(1)
 		}
 
-		const actual = createHash("md5")
-			.update(await readLocalBuffer(path))
-			.digest("hex")
+		const actual = md5Hex(await readLocalBuffer(path))
 
 		if (actual !== expected) {
 			console.error(
@@ -239,7 +237,7 @@ const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 if (await pathExists(SRC_GAZETTEER_LEXICON)) {
-	linkForce(SRC_GAZETTEER_LEXICON, resolve(DEST_DIR, "anchor-lexicon-v1.json"))
+	await linkForce(SRC_GAZETTEER_LEXICON, resolvePath(DEST_DIR, "anchor-lexicon-v1.json"))
 
 	console.log(`linked ${DEST_DIR}/anchor-lexicon-v1.json`)
 } else {
@@ -247,7 +245,7 @@ if (await pathExists(SRC_GAZETTEER_LEXICON)) {
 }
 
 if (await pathExists(SRC_COUNTRY_LEXICON)) {
-	linkForce(SRC_COUNTRY_LEXICON, resolve(DEST_DIR, "country-surface-lexicon-v1.json"))
+	await linkForce(SRC_COUNTRY_LEXICON, resolvePath(DEST_DIR, "country-surface-lexicon-v1.json"))
 
 	console.log(`linked ${DEST_DIR}/country-surface-lexicon-v1.json`)
 } else {
@@ -276,7 +274,7 @@ const EVIDENCE_LEXICONS: Array<{ channel: "street_type" | "locality_surface"; so
 	{ channel: "locality_surface", source: (name) => String(dataRootPath("gazetteer", name)) },
 ]
 
-const CARD = (await readLocalJSONFile(resolve(PKG_DIR, "model-card.json"))) as {
+const CARD = (await readLocalJSONFile(resolvePath(PKG_DIR, "model-card.json"))) as {
 	requires?: Record<string, { lexicon?: string; span_mode?: string } | undefined>
 }
 
@@ -292,7 +290,7 @@ for (const { channel, source } of EVIDENCE_LEXICONS) {
 	const src = source(declared)
 
 	if (await pathExists(src)) {
-		linkForce(src, resolve(DEST_DIR, declared))
+		await linkForce(src, resolvePath(DEST_DIR, declared))
 
 		console.log(`linked ${DEST_DIR}/${declared}`)
 	} else {
@@ -331,7 +329,7 @@ const CLI = workspacePath("mailwoman", "out", "cli.js")
 /**
  * Where the GB anchor binary lives when the card earns it.
  */
-const POSTCODE_BIN_DEST = resolve(DEST_DIR, "postcode-gb.bin")
+const POSTCODE_BIN_DEST = resolvePath(DEST_DIR, "postcode-gb.bin")
 
 /**
  * The licence-clean GB postcode source: Ordnance Survey Code-Point Open (OGL v3.0), 1,746,976 units, every one placed.
@@ -353,7 +351,7 @@ if (CARD.requires?.anchor?.span_mode === "shaped") {
 			`(${GB_POSTCODE_BIN_KEYS.toLocaleString()} keys expected from ${GB_POSTCODE_SHARD})`
 	)
 
-	const built = spawnSync(
+	const built = spawnProcessSync(
 		process.execPath,
 		[CLI, "gazetteer", "postcode-binary", "--out", DEST_DIR, "--locale", `GB:${GB_POSTCODE_SHARD}`],
 		{ stdio: "inherit" }
@@ -388,7 +386,7 @@ const PPD_SOURCE_CSV = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
 /**
  * Where the placetype pair index is written — a soft-feed sibling, absent in a lean install.
  */
-const PAIR_INDEX_BIN_DEST = resolve(DEST_DIR, "pair-index-gb.bin")
+const PAIR_INDEX_BIN_DEST = resolvePath(DEST_DIR, "pair-index-gb.bin")
 /**
  * Decoder pair-index bonus baked into this artifact. Held in lockstep with the shipped binary's header — a mismatch
  * forces a loud rebuild rather than silently shipping a stale index.
@@ -502,7 +500,7 @@ if (pairIndexIsFresh) {
 		`WARNING: missing ${PPD_SOURCE_CSV} — pair-index-gb.bin not built; the placetype-pair prior default will resolve OFF for GB.`
 	)
 } else {
-	const result = spawnSync(
+	const result = spawnProcessSync(
 		process.execPath,
 		[
 			CLI,
@@ -549,10 +547,10 @@ const FST_SRC = dataRootPath("wof", "fst-per-locale", "fst-en-gb.bin")
 /**
  * Where the locale FST is written — a soft-feed sibling, absent in a lean install.
  */
-const FST_DEST = resolve(DEST_DIR, "fst-en-gb.bin")
+const FST_DEST = resolvePath(DEST_DIR, "fst-en-gb.bin")
 
 if (await pathExists(FST_SRC)) {
-	linkForce(FST_SRC, FST_DEST)
+	await linkForce(FST_SRC, FST_DEST)
 
 	console.log(`linked fst-en-gb.bin ← ${FST_SRC}`)
 
@@ -572,10 +570,10 @@ const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
 /**
  * Where the street-morphology FST is written — a soft-feed sibling, absent in a lean install.
  */
-const MORPHOLOGY_DEST = resolve(DEST_DIR, "fst-street-morphology.bin")
+const MORPHOLOGY_DEST = resolvePath(DEST_DIR, "fst-street-morphology.bin")
 
 if (await pathExists(MORPHOLOGY_SRC)) {
-	linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
+	await linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
 
 	console.log(`linked fst-street-morphology.bin ← ${MORPHOLOGY_SRC}`)
 } else {

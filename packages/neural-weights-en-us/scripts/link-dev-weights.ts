@@ -42,16 +42,16 @@
 import { $public } from "@mailwoman/core/env"
 import { readLocalTextFile, statPath, pathExists, readLocalJSONFile, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { spawnProcessSync } from "@mailwoman/core/process"
 import { dataRootPath, md5File, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
-import { spawnSync } from "@mailwoman/platform/child_process"
-import { createHash } from "@mailwoman/platform/crypto"
-import { resolve } from "@mailwoman/platform/path"
+import { md5Hex } from "@mailwoman/core/utils/hash"
 import {
 	linkForce,
 	pairIndexStaleReason,
 	peekPairIndexHeaderFields,
 	warnIfFSTStale,
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import { resolvePath } from "path-ts"
 
 /**
  * Hex characters in an md5 digest.
@@ -91,7 +91,7 @@ await makeDirectories(DEST_DIR)
  */
 const CARD = await readLocalJSONFile<{
 	files_md5?: Record<string, string>
-}>(resolve(PKG_DIR, "model-card.json"))
+}>(resolvePath(PKG_DIR, "model-card.json"))
 
 /**
  * Expected model digest from the model card, checked so a stale or truncated link is caught here rather than at
@@ -147,14 +147,14 @@ if (!(await pathExists(SRC_TOKENIZER))) {
 /**
  * Where `model.onnx` is linked. `@mailwoman/neural` auto-resolves this path.
  */
-const MODEL_DEST = resolve(DEST_DIR, "model.onnx")
+const MODEL_DEST = resolvePath(DEST_DIR, "model.onnx")
 /**
  * Where `tokenizer.model` is linked. `@mailwoman/neural` auto-resolves this path.
  */
-const TOKENIZER_DEST = resolve(DEST_DIR, "tokenizer.model")
+const TOKENIZER_DEST = resolvePath(DEST_DIR, "tokenizer.model")
 
-linkForce(SRC_MODEL, MODEL_DEST)
-linkForce(SRC_TOKENIZER, TOKENIZER_DEST)
+await linkForce(SRC_MODEL, MODEL_DEST)
+await linkForce(SRC_TOKENIZER, TOKENIZER_DEST)
 
 console.log("linked:")
 console.log(`  ${MODEL_DEST} → ${SRC_MODEL}`)
@@ -162,9 +162,7 @@ console.log(`  ${TOKENIZER_DEST} → ${SRC_TOKENIZER}`)
 
 // --- #397 drift guard: assert default bytes match what the demo serves ------
 async function assertMd5(label: string, path: string, expected: string): Promise<void> {
-	const actual = createHash("md5")
-		.update(await readLocalBuffer(path))
-		.digest("hex")
+	const actual = md5Hex(await readLocalBuffer(path))
 
 	if (actual !== expected) {
 		console.error("")
@@ -210,7 +208,7 @@ const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 if (await pathExists(SRC_GAZETTEER_LEXICON)) {
-	linkForce(SRC_GAZETTEER_LEXICON, resolve(DEST_DIR, "anchor-lexicon-v1.json"))
+	await linkForce(SRC_GAZETTEER_LEXICON, resolvePath(DEST_DIR, "anchor-lexicon-v1.json"))
 
 	console.log(`linked ${DEST_DIR}/anchor-lexicon-v1.json`)
 } else {
@@ -218,7 +216,7 @@ if (await pathExists(SRC_GAZETTEER_LEXICON)) {
 }
 
 if (await pathExists(SRC_COUNTRY_LEXICON)) {
-	linkForce(SRC_COUNTRY_LEXICON, resolve(DEST_DIR, "country-surface-lexicon-v1.json"))
+	await linkForce(SRC_COUNTRY_LEXICON, resolvePath(DEST_DIR, "country-surface-lexicon-v1.json"))
 
 	console.log(`linked ${DEST_DIR}/country-surface-lexicon-v1.json`)
 } else {
@@ -233,7 +231,7 @@ const SRC_STREET_TYPE_LEXICON = repoRootPath("data", "gazetteer", "street-type-l
 const SRC_LOCALITY_SURFACE_LEXICON = dataRootPath("gazetteer", "locality-surface-lexicon-v7.json")
 
 if (await pathExists(SRC_STREET_TYPE_LEXICON)) {
-	linkForce(SRC_STREET_TYPE_LEXICON, resolve(DEST_DIR, "street-type-lexicon-v3.json"))
+	await linkForce(SRC_STREET_TYPE_LEXICON, resolvePath(DEST_DIR, "street-type-lexicon-v3.json"))
 
 	console.log(`linked ${DEST_DIR}/street-type-lexicon-v3.json`)
 } else {
@@ -241,7 +239,7 @@ if (await pathExists(SRC_STREET_TYPE_LEXICON)) {
 }
 
 if (await pathExists(SRC_LOCALITY_SURFACE_LEXICON)) {
-	linkForce(SRC_LOCALITY_SURFACE_LEXICON, resolve(DEST_DIR, "locality-surface-lexicon-v7.json"))
+	await linkForce(SRC_LOCALITY_SURFACE_LEXICON, resolvePath(DEST_DIR, "locality-surface-lexicon-v7.json"))
 
 	console.log(`linked ${DEST_DIR}/locality-surface-lexicon-v7.json`)
 } else {
@@ -261,7 +259,7 @@ const CLI = workspacePath("mailwoman", "out", "cli.js")
 /**
  * Where the postcode binary is written — a soft-feed sibling, absent in a lean install.
  */
-const POSTCODE_BIN_DEST = resolve(DEST_DIR, "postcode-us.bin")
+const POSTCODE_BIN_DEST = resolvePath(DEST_DIR, "postcode-us.bin")
 
 if (await pathExists(POSTCODE_BIN_DEST)) {
 	console.log(`skipped postcode-us.bin build — ${POSTCODE_BIN_DEST} already present`)
@@ -274,7 +272,7 @@ if (await pathExists(POSTCODE_BIN_DEST)) {
 		`WARNING: missing ${US_WOF_DB} — postcode-us.bin not built; the anchor channel will resolve OFF for US.`
 	)
 } else {
-	const result = spawnSync(
+	const result = spawnProcessSync(
 		process.execPath,
 		[CLI, "gazetteer", "postcode-binary", "--out", DEST_DIR, "--locale", `US:${US_WOF_DB}`],
 		{ stdio: "inherit" }
@@ -299,10 +297,10 @@ const FST_SRC = dataRootPath("wof", "fst-per-locale", "fst-en-us.bin")
 /**
  * Where the locale FST is written — a soft-feed sibling, absent in a lean install.
  */
-const FST_DEST = resolve(DEST_DIR, "fst-en-us.bin")
+const FST_DEST = resolvePath(DEST_DIR, "fst-en-us.bin")
 
 if (await pathExists(FST_SRC)) {
-	linkForce(FST_SRC, FST_DEST)
+	await linkForce(FST_SRC, FST_DEST)
 
 	console.log(`linked fst-en-us.bin ← ${FST_SRC}`)
 
@@ -322,10 +320,10 @@ const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
 /**
  * Where the street-morphology FST is written — a soft-feed sibling, absent in a lean install.
  */
-const MORPHOLOGY_DEST = resolve(DEST_DIR, "fst-street-morphology.bin")
+const MORPHOLOGY_DEST = resolvePath(DEST_DIR, "fst-street-morphology.bin")
 
 if (await pathExists(MORPHOLOGY_SRC)) {
-	linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
+	await linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
 
 	console.log(`linked fst-street-morphology.bin ← ${MORPHOLOGY_SRC}`)
 } else {
@@ -350,7 +348,7 @@ if (await pathExists(MORPHOLOGY_SRC)) {
  * bump. The md5 half stays here: only this script knows which sources it passes. An ABSENT optional magnitude reads
  * `undefined` and forces the rebuild that stamps it in.
  */
-const PAIR_INDEX_BIN_DEST = resolve(DEST_DIR, "pair-index-us.bin")
+const PAIR_INDEX_BIN_DEST = resolvePath(DEST_DIR, "pair-index-us.bin")
 /**
  * Calibrated soft-prior magnitudes — the SAME set the R5 bars were measured with (gauntlet unchanged, 0/60
  * venue-confound false positives, 60/60 tag-correct). Changing any of these numbers invalidates those receipts.
@@ -458,7 +456,7 @@ if (!(await pathExists(CLI))) {
 	if (!needsRebuild) {
 		console.log(`skipped pair-index-us.bin build — ${PAIR_INDEX_BIN_DEST} is current`)
 	} else {
-		const result = spawnSync(
+		const result = spawnProcessSync(
 			process.execPath,
 			[
 				CLI,

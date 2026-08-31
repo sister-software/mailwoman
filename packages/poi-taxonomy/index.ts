@@ -4,6 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./brands.ts"
-export * from "./lookup.ts"
-export * from "./types.ts"
+export * from "#brands"
+export * from "#lookup"
+export * from "#types"

@@ -2,7 +2,7 @@
 // `registry/tools/index.ts`'s convention). No argv, no `process.exit`: commands own parsing, rendering,
 // and exit codes.
 
-export * from "./linkage-corpus.ts"
-export * from "./linkage-eval.ts"
-export * from "./edgar-ingest.ts"
-export * from "./linkage-metrics.ts"
+export * from "#tools/linkage-corpus"
+export * from "#tools/linkage-eval"
+export * from "#tools/edgar-ingest"
+export * from "#tools/linkage-metrics"

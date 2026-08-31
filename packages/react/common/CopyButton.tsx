@@ -9,7 +9,7 @@
 
 import type { ReactNode } from "react"
 
-import { useClipboard } from "./useClipboard.ts"
+import { useClipboard } from "#common/useClipboard"
 
 export interface CopyButtonProps {
 	/**

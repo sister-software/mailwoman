@@ -63,7 +63,7 @@ const EvalAbsenceObservationProbe: ParsedCommandComponent<Options> = ({ options 
 	const state = useCommandTask(
 		async () => {
 			const { printAbsenceProbeReceipt, runAbsenceObservationProbe } =
-				await import("../../eval-harness/absence-observation/run.ts")
+				await import("#eval-harness/absence-observation/run")
 
 			const receipt = await runAbsenceObservationProbe({
 				locale: options.locale,

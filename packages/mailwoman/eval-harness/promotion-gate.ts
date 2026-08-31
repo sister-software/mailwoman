@@ -68,25 +68,31 @@
  *       (whose fold reports 0 even on a perfect split).
  */
 
-import { pathExists, readLocalJSONFile, statPath, readDirectory, readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { readDirectoryEntriesSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import {
+	pathExists,
+	readDirectory,
+	readDirectoryEntries,
+	readLocalBuffer,
+	readLocalJSONFile,
+	statPath,
+} from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { basename, dirname, join, resolve } from "@mailwoman/platform/path"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { basename, dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 
-import { deOrderEval } from "./de-order-eval.ts"
-import { demoCascadeSmoke } from "./demo-cascade-smoke.ts"
-import { externalArenas } from "./external-arenas.ts"
-import { frParseRecall } from "./fr-parse-recall.ts"
-import { maskRegressionGate } from "./mask-regression.ts"
-import { perLocaleF1 } from "./per-locale-f1.ts"
-import { presetCompare } from "./preset-compare.ts"
-import { assemblePromotionVerdict } from "./promotion-gate-verdict.ts"
-import { scoreAffix, type ScoreAffixOptions } from "./score-affix.ts"
-import { scoreCountryHomograph } from "./score-country-homograph.ts"
-import { resolveWOFHotDB } from "./wof-hot-db.ts"
+import { deOrderEval } from "#eval-harness/de-order-eval"
+import { demoCascadeSmoke } from "#eval-harness/demo-cascade-smoke"
+import { externalArenas } from "#eval-harness/external-arenas"
+import { frParseRecall } from "#eval-harness/fr-parse-recall"
+import { maskRegressionGate } from "#eval-harness/mask-regression"
+import { perLocaleF1 } from "#eval-harness/per-locale-f1"
+import { presetCompare } from "#eval-harness/preset-compare"
+import { assemblePromotionVerdict } from "#eval-harness/promotion-gate-verdict"
+import { scoreAffix, type ScoreAffixOptions } from "#eval-harness/score-affix"
+import { scoreCountryHomograph } from "#eval-harness/score-country-homograph"
+import { resolveWOFHotDB } from "#eval-harness/wof-hot-db"
 
 /**
  * Render captured sink lines the way a child process's stdout arrived: one trailing newline per `report()` call. Every
@@ -167,7 +173,7 @@ export interface PromotionGateOptions {
 	/**
 	 * Battery output dir. Default `/tmp/gate-<label>-<hhmm>`.
 	 */
-	outDir?: string
+	outDir?: PathBuilderLike
 }
 
 /**
@@ -181,19 +187,21 @@ export interface PromotionGateOptions {
  * type. Before that was true, `--gate v5.3.0-family` fell through to `readFileSync("v5.3.0-family")` and died on a bare
  * ENOENT naming a file nobody asked for — which is how it read on 2026-07-16.
  */
+/**
+ * The gate specs, beside this module in the SOURCE tree — tsc emits no `.json`, so the directory is named from the
+ * package root.
+ */
+const GATES_DIR = resolvePackagePath("mailwoman", "eval-harness", "gates")
+
 export async function resolveGateSpecPath(gate: string): Promise<string> {
 	if (await pathExists(gate)) return gate
 
 	const name = basename(gate)
 
 	for (const candidate of name.endsWith(".json") ? [name] : [name, `${name}.json`]) {
-		const sibling = new URL(`./gates/${candidate}`, import.meta.url)
+		const spec = resolvePath(GATES_DIR, candidate)
 
-		if (await pathExists(sibling)) return fileURLToPath(sibling)
-
-		const sourceTree = new URL(`../../eval-harness/gates/${candidate}`, import.meta.url)
-
-		if (await pathExists(sourceTree)) return fileURLToPath(sourceTree)
+		if (await pathExists(spec)) return spec
 	}
 
 	throw new Error(`Gate spec not found: "${gate}". Known specs: ${(await listGateSpecs()).join(", ") || "(none)"}`)
@@ -203,10 +211,8 @@ export async function resolveGateSpecPath(gate: string): Promise<string> {
  * Every gate spec shipped beside this module, newest-looking last. For `--gate` errors and tooling.
  */
 export async function listGateSpecs(): Promise<string[]> {
-	for (const dir of [new URL("./gates/", import.meta.url), new URL("../../eval-harness/gates/", import.meta.url)]) {
-		if (!(await pathExists(dir))) continue
-
-		return (await readDirectory(fileURLToPath(dir))).filter((file) => file.endsWith(".json")).toSorted()
+	if (await pathExists(GATES_DIR)) {
+		return (await readDirectory(GATES_DIR)).filter((file) => file.endsWith(".json")).toSorted()
 	}
 
 	return []
@@ -227,7 +233,7 @@ async function runLoreGuards(env: {
 	MODEL: string
 	INT8: string
 	TOK: string
-	OUT_DIR: string
+	OUT_DIR: PathBuilderLike
 	card: ModelCard
 }): Promise<number | null> {
 	const { WC, WC_MODEL, WC8_MODEL, MODEL, INT8, TOK, OUT_DIR, card } = env
@@ -251,23 +257,23 @@ async function runLoreGuards(env: {
 	if (await pathExists("packages/core/out")) {
 		const reference = (await statPath("packages/core/out")).mtimeMs
 
-		const staleSource = ((): string | undefined => {
-			for (const depth1 of readDirectoryEntriesSync("packages/core")) {
+		const staleSource = await (async (): Promise<string | undefined> => {
+			for (const depth1 of await readDirectoryEntries("packages/core")) {
 				const path1 = join("packages/core", depth1.name)
 
 				if (depth1.isFile()) {
-					if (depth1.name.endsWith(".ts") && statPathSync(path1).mtimeMs > reference) return path1
+					if (depth1.name.endsWith(".ts") && (await statPath(path1)).mtimeMs > reference) return path1
 
 					continue
 				}
 
 				if (!depth1.isDirectory()) continue
 
-				for (const depth2 of readDirectoryEntriesSync(path1)) {
+				for (const depth2 of await readDirectoryEntries(path1)) {
 					if (!depth2.isFile() || !depth2.name.endsWith(".ts")) continue
 					const path2 = join(path1, depth2.name)
 
-					if (statPathSync(path2).mtimeMs > reference) return path2
+					if ((await statPath(path2)).mtimeMs > reference) return path2
 				}
 			}
 
@@ -416,7 +422,7 @@ async function runLoreGuards(env: {
  * leg's behavior changed in the lift.
  */
 async function runDemoCascadeLeg(env: {
-	outDir: string
+	outDir: PathBuilderLike
 	shipModel: string
 	tokenizer: string
 	card: string
@@ -503,14 +509,14 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	// the directory keeps the failure an ENOENT in the provenance guard's md5 read, three lines down.
 	const WC = options.weightsCache ?? ""
 	const WC_PACKAGE = WC ? weightsCachePackageDir(WC, "en-us") : ""
-	const WC_MODEL = WC ? resolve(WC_PACKAGE, "model.onnx") : ""
-	const EFF_TOK = WC ? resolve(WC_PACKAGE, "tokenizer.model") : TOK
-	const EFF_CARD = WC ? resolve(WC_PACKAGE, "model-card.json") : CARD
+	const WC_MODEL = WC ? resolvePath(WC_PACKAGE, "model.onnx") : ""
+	const EFF_TOK = WC ? resolvePath(WC_PACKAGE, "tokenizer.model") : TOK
+	const EFF_CARD = WC ? resolvePath(WC_PACKAGE, "model-card.json") : CARD
 
 	// The int8 arm of a package-shaped pair (#47) — same layout, resolved the same deliberate way.
 	const WC8 = options.int8WeightsCache ?? ""
 	const WC8_PACKAGE = WC8 ? weightsCachePackageDir(WC8, "en-us") : ""
-	const WC8_MODEL = WC8 ? resolve(WC8_PACKAGE, "model.onnx") : ""
+	const WC8_MODEL = WC8 ? resolvePath(WC8_PACKAGE, "model.onnx") : ""
 
 	if (!GATE || (!MODEL && !WC)) {
 		console.error("✗ --gate and one of --model / --weights-cache required")
@@ -604,8 +610,8 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		// The de-order watch lens takes explicit paths, so it names the ARM's own siblings — a paired
 		// int8 arm must not be decoded under the fp32 arm's card if the two bundles ever diverge.
 		const armPackage = wc ? weightsCachePackageDir(wc, "en-us") : ""
-		const armTok = wc ? resolve(armPackage, "tokenizer.model") : EFF_TOK
-		const armCard = wc ? resolve(armPackage, "model-card.json") : EFF_CARD
+		const armTok = wc ? resolvePath(armPackage, "tokenizer.model") : EFF_TOK
+		const armCard = wc ? resolvePath(armPackage, "model-card.json") : EFF_CARD
 
 		// Each leg below captured a child's stdout into one `.md`. In-process the sink collects the same
 		// lines and `renderLines` re-adds the newline console.log would have. A bare `$` THREW on a

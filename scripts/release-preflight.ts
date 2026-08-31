@@ -21,8 +21,8 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { parseArgs } from "@mailwoman/platform/util"
 
 import { copyWeights } from "./copy-weights.ts"
 import { fetchHFWeights, reportHFMaterialization } from "./fetch-hf-weights.ts"
@@ -50,7 +50,7 @@ function assertWeightsSource(source: string): asserts source is WeightsSource {
 }
 
 async function releasePreflight(): Promise<void> {
-	const { values } = parseArgs({
+	const { values } = parseArguments({
 		options: {
 			source: { type: "string", default: "repo" },
 			version: { type: "string" },
@@ -83,7 +83,7 @@ async function releasePreflight(): Promise<void> {
 			resources.use(scratch)
 		}
 
-		stagingRoot = scratch.path
+		stagingRoot = String(scratch.path)
 	}
 
 	// 1. The named-absence identity — every workspace outside the release list must be sanctioned by name.
@@ -125,7 +125,7 @@ async function releasePreflight(): Promise<void> {
 		reportHFMaterialization(materialization)
 	}
 
-	const results = await auditStagedWorkspaces(stagingRoot, releaseWorkspaces(repoRoot))
+	const results = await auditStagedWorkspaces(stagingRoot, await releaseWorkspaces(repoRoot))
 	const failed = results.filter((result) => !result.ok)
 
 	for (const result of results) {

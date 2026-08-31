@@ -19,7 +19,7 @@
  *   test rather than passing silently.
  */
 
-import type { SubVenuePromotion } from "../sub-venue-promotions.ts"
+import type { SubVenuePromotion } from "#tools/sub-venue-promotions"
 
 /**
  * This table's own data version. Bump when the source vintages or the build semantics change.

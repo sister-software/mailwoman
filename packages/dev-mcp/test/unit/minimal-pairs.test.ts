@@ -15,7 +15,7 @@ import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
 import { runMinimalPairs } from "@mailwoman/dev-mcp/minimal-pairs"
 import { describe, expect, it } from "vitest"
 
-import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
+import { stubEngine, stubEngineRegistry } from "#test/stub-registry"
 
 interface FakeResult {
 	components: Record<string, string>

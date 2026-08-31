@@ -15,12 +15,12 @@
  */
 
 import { prettyJSON } from "@mailwoman/core/objects"
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
-import { buildNUTSDB } from "./build.ts"
-import { NUTSLookup } from "./index.ts"
+import { buildNUTSDB } from "#build"
+import { NUTSLookup } from "#index"
 
-const { values, positionals } = parseArgs({
+const { values, positionals } = parseArguments({
 	options: {
 		geojson: { type: "string" },
 		out: { type: "string" },

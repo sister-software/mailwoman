@@ -33,7 +33,7 @@
 import { isPlainObject } from "@mailwoman/core/objects"
 import { JSONSpliterator } from "spliterator"
 
-import type { GauntletGeocodeOpts } from "../gauntlet/harness.ts"
+import type { GauntletGeocodeOpts } from "#eval-harness/gauntlet/harness"
 
 /**
  * The closed set of outcome comparators. Each names an observable contract a law can preserve; adding one is a reviewed

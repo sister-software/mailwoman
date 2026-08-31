@@ -28,8 +28,9 @@
  *   Run: `node mailwoman/gazetteer-pipeline/pair-index-hierarchy-verify.ts [--countries us,fr] [--db <path>] [--dir <dir>]`
  */
 
-import { readLocalBufferSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows, dataRootPath } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import {
@@ -38,10 +39,9 @@ import {
 	PairIndexResolver,
 	peekPairIndexHeader,
 } from "@mailwoman/neural/pair-index-resolver"
-import { join } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join } from "path-ts"
 
 /**
  * Mirror of the builder's per-country WOF parent-placetype sets — restated here on purpose (see file header).
@@ -158,8 +158,8 @@ function expectedPairSet(
 	return folded
 }
 
-function main(): void {
-	const { values } = parseArgs({
+async function main(): Promise<void> {
+	const { values } = parseArguments({
 		options: {
 			countries: { type: "string", default: "us,fr" },
 			db: { type: "string" },
@@ -182,7 +182,7 @@ function main(): void {
 
 	for (const country of countries) {
 		const artifactPath = join(dir, `pair-index-locality-region-${country}.bin`)
-		const bytes = new Uint8Array(readLocalBufferSync(artifactPath))
+		const bytes = new Uint8Array(await readLocalBuffer(artifactPath))
 		const header = peekPairIndexHeader(bytes)
 		const parentPlacetypes = PARENT_PLACETYPES_BY_COUNTRY[country]
 		const namedProbes = NAMED_PROBES_BY_COUNTRY[country]

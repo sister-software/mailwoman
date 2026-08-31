@@ -30,7 +30,7 @@ import { pathExists, readDirectory, readLocalJSONFile, readLocalTextFile } from 
 import { makeDirectories, removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
+import { join, type PathBuilderLike } from "path-ts"
 
 /**
  * Where runs land. Under the data root, never the repo — see the module docstring on cache-versus-record.
@@ -111,14 +111,14 @@ export interface RunSummary {
 	fingerprint_matches_now: boolean | null
 }
 
-function runPath(runID: string, dir: string): string {
+function runPath(runID: string, dir: PathBuilderLike): string {
 	return join(dir, `${runID}.json`)
 }
 
 /**
  * Persist a run and return its id.
  */
-export async function putRun(run: StoredRun, dir: string = RUN_STORE_DIR): Promise<string> {
+export async function putRun(run: StoredRun, dir: PathBuilderLike = RUN_STORE_DIR): Promise<string> {
 	await makeDirectories(dir)
 	await writeLocalJSONFile(run, runPath(run.run_id, dir))
 
@@ -133,7 +133,7 @@ export async function putRun(run: StoredRun, dir: string = RUN_STORE_DIR): Promi
  * cost more than the cache is worth. The caller carries the returned sentence into its warnings, so the loss is
  * reported rather than discovered later as a run_id that "was pruned".
  */
-export async function tryPutRun(run: StoredRun, dir: string, now: Date): Promise<string | null> {
+export async function tryPutRun(run: StoredRun, dir: PathBuilderLike, now: Date): Promise<string | null> {
 	try {
 		await putRun(run, dir)
 		await pruneRuns(now, dir)
@@ -153,7 +153,7 @@ export async function tryPutRun(run: StoredRun, dir: string, now: Date): Promise
  * `undefined` here means pruned or never stored, and those are not distinguishable after the fact — which is why
  * {@link RETENTION_DAYS} is documented rather than silent. A caller that finds nothing has to re-measure.
  */
-export async function getRun(runID: string, dir: string = RUN_STORE_DIR): Promise<StoredRun | undefined> {
+export async function getRun(runID: string, dir: PathBuilderLike = RUN_STORE_DIR): Promise<StoredRun | undefined> {
 	const path = runPath(runID, dir)
 
 	if (!(await pathExists(path))) return undefined
@@ -189,7 +189,7 @@ export function replayIndex(run: StoredRun, arm: string): Map<string, RecordedAn
 	return new Map(answers.map((answer) => [answer.id, answer]))
 }
 
-async function readAll(dir: string): Promise<Array<{ run: StoredRun; bytes: number; file: string }>> {
+async function readAll(dir: PathBuilderLike): Promise<Array<{ run: StoredRun; bytes: number; file: string }>> {
 	if (!(await pathExists(dir))) return []
 
 	const out: Array<{ run: StoredRun; bytes: number; file: string }> = []
@@ -210,7 +210,10 @@ async function readAll(dir: string): Promise<Array<{ run: StoredRun; bytes: numb
 	return out.toSorted((a, b) => b.run.created_at.localeCompare(a.run.created_at))
 }
 
-export async function listRuns(dir: string = RUN_STORE_DIR, currentFingerprint?: string): Promise<RunSummary[]> {
+export async function listRuns(
+	dir: PathBuilderLike = RUN_STORE_DIR,
+	currentFingerprint?: string
+): Promise<RunSummary[]> {
 	return (await readAll(dir)).map(({ run, bytes }) => ({
 		run_id: run.run_id,
 		tool: run.tool,
@@ -238,7 +241,7 @@ export interface PruneReport {
  */
 export async function pruneRuns(
 	now: Date,
-	dir: string = RUN_STORE_DIR,
+	dir: PathBuilderLike = RUN_STORE_DIR,
 	keep: number = RETENTION_MAX_RUNS
 ): Promise<PruneReport> {
 	const all = await readAll(dir)

@@ -21,7 +21,7 @@ import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors
 import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectoryExclusive } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // `$private` is a LIVE getter over `{ ...dotEnv, ...process.env }`, and `dotEnv` is read from the repo's
@@ -98,7 +98,7 @@ beforeEach(async () => {
 	cacheDir = dataRoot.resolve("http-cache")
 
 	await makeDirectoryExclusive(cacheDir)
-	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot.path)
+	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot.path.toString())
 })
 
 afterEach(() => {

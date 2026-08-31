@@ -11,11 +11,9 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import type { POIIntent, POIResult } from "@mailwoman/core/pipeline"
-import { join } from "@mailwoman/platform/path"
 import { POI_BOARD_FIXTURES, type POIBoardFixture, type POIBoardOutcome } from "mailwoman/eval-harness/poi-board"
 import {
 	auditProbeDefinition,
@@ -38,6 +36,7 @@ import {
 	resolveControlRows,
 	type SemanticProbeDefinition,
 } from "mailwoman/eval-harness/semantic-utility/probe"
+import { join } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -46,7 +45,7 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 const committed = await Array.fromAsync(JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES))
-const definition = loadProbeDefinition()
+const definition = await loadProbeDefinition()
 const freeze = await readLocalJSONFile<ProbeFreezeRecord>(PROBE_FREEZE_PATH)
 
 interface BaselineReceipt {
@@ -58,6 +57,8 @@ interface BaselineReceipt {
 	rows: ProbeRowOutcome[]
 	verdict: { decision: string }
 }
+
+const receipt = await readLocalJSONFile<BaselineReceipt>(PROBE_BASELINE_RECEIPT_PATH)
 
 /**
  * Write a definition + freeze pair into a scratch directory, so a refusal can be provoked without touching the
@@ -161,7 +162,7 @@ describe("the freeze mechanism", () => {
 			copy.thresholds.minimumPrimaryNumerator = 1
 		})
 
-		expect(() => loadProbeDefinition(paths.definitionPath, paths.freezePath)).toThrow(/content hash/u)
+		await expect(loadProbeDefinition(paths.definitionPath, paths.freezePath)).rejects.toThrow(/content hash/u)
 	})
 
 	it("refuses a row edit just as loudly as a threshold edit", async () => {
@@ -169,7 +170,7 @@ describe("the freeze mechanism", () => {
 			copy.targetRows[0]!.query = "where can i pick up a prescription near Boulder CO"
 		})
 
-		expect(() => loadProbeDefinition(paths.definitionPath, paths.freezePath)).toThrow(/content hash/u)
+		await expect(loadProbeDefinition(paths.definitionPath, paths.freezePath)).rejects.toThrow(/content hash/u)
 	})
 
 	it("refuses a version bump that does not carry a new hash", async () => {
@@ -177,13 +178,13 @@ describe("the freeze mechanism", () => {
 			copy.version = "1.1.0"
 		})
 
-		expect(() => loadProbeDefinition(paths.definitionPath, paths.freezePath)).toThrow(/pins version/u)
+		await expect(loadProbeDefinition(paths.definitionPath, paths.freezePath)).rejects.toThrow(/pins version/u)
 	})
 
 	it("refuses a freeze record that names another probe", async () => {
 		const paths = await scratchPair(() => undefined, { probeID: "some-other-probe" })
 
-		expect(() => loadProbeDefinition(paths.definitionPath, paths.freezePath)).toThrow(/names probe/u)
+		await expect(loadProbeDefinition(paths.definitionPath, paths.freezePath)).rejects.toThrow(/names probe/u)
 	})
 })
 
@@ -365,8 +366,6 @@ describe("the decision", () => {
 })
 
 describe("the committed baseline receipt", () => {
-	const receipt = readLocalJSONFileSync<BaselineReceipt>(PROBE_BASELINE_RECEIPT_PATH)
-
 	it("was measured against this version of the pre-registration", async () => {
 		expect(receipt.probeID).toBe(definition.probeID)
 		expect(receipt.definitionVersion).toBe(definition.version)

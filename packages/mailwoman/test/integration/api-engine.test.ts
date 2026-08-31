@@ -30,9 +30,9 @@ import { createMailwomanAPI } from "@mailwoman/api"
 import { metricsSnapshot, resetMetricsForTest, serveNode } from "@mailwoman/api-kit"
 import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { fileURLToPath } from "@mailwoman/platform/url"
 import { createServeEngine } from "mailwoman/api-engine"
 import { beforeAll, beforeEach, describe, expect, test } from "vitest"
 
@@ -52,7 +52,7 @@ async function weightsPresent(): Promise<boolean> {
 		// does not fail, it SKIPS, so the suite disappears from the run reporting success. The repo has already
 		// paid for this once: the workspace regroup left this literal behind and both this suite and
 		// `api-engine.test.ts` went quiet until someone counted the skips.
-		return await pathExists(resolveWeights({ locale: "en-us" }).modelPath)
+		return await pathExists((await resolveWeights({ locale: "en-us" })).modelPath)
 	} catch {
 		return false
 	}
@@ -125,7 +125,7 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 	// (`neural-weights-en-us/model-card.json`) which happens to exist when the suite runs from the repo root, so the
 	// /health assertion below would survive a broken resolution. This one would not.
 	test("the weights card resolves through the package graph, not the CWD-relative dev fallback", () => {
-		expect(fileURLToPath(import.meta.resolve("@mailwoman/neural-weights-en-us/model-card.json"))).toBe(
+		expect(resolveModulePath("@mailwoman/neural-weights-en-us/model-card.json")).toBe(
 			workspacePath("neural-weights-en-us", "model-card.json")
 		)
 	})

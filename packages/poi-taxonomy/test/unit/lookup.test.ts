@@ -5,8 +5,8 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { prettyJSON } from "@mailwoman/core/objects"
-import { resolve } from "@mailwoman/platform/path"
 import {
 	getAllCategories,
 	getPOICategory,
@@ -212,7 +212,7 @@ describe("full Overture snapshot + curated overlay", () => {
 		// The committed taxonomy.json is the generator's output run through oxfmt (repo law: committed JSON is
 		// oxfmt-clean — short arrays inline — which `JSON.stringify` can't reproduce byte-for-byte). So the committed
 		// file is compared by PARSED content, not raw bytes: same data, formatting aside.
-		const committed = await readLocalJSONFile(resolve(import.meta.dirname, "../../data/taxonomy.json"))
+		const committed = await readLocalJSONFile(resolvePackagePath("@mailwoman/poi-taxonomy", "data", "taxonomy.json"))
 
 		expect(committed).toEqual(await generateTaxonomyTable())
 	})
@@ -220,28 +220,28 @@ describe("full Overture snapshot + curated overlay", () => {
 
 describe("taxonomy integrity — malformed table", () => {
 	afterEach(() => {
-		vi.doUnmock("@mailwoman/platform/fs")
+		vi.doUnmock("@mailwoman/core/fs/readers")
 		vi.resetModules()
 	})
 
 	it("throws at module init when a synonym's categoryID points at a nonexistent category", async () => {
 		vi.resetModules()
 
-		vi.doMock("@mailwoman/platform/fs", async () => {
-			const actual = await vi.importActual<typeof import("@mailwoman/platform/fs")>("@mailwoman/platform/fs")
+		vi.doMock("@mailwoman/core/fs/readers", async () => {
+			const actual = await vi.importActual<typeof import("@mailwoman/core/fs/readers")>("@mailwoman/core/fs/readers")
 
-			const malformed = JSON.stringify({
+			const malformed = {
 				version: "0.0.0",
 				overtureRelease: null,
 				categories: [
 					{ id: "hospital", label: "Hospital", hierarchy: ["hospital"], basicLabel: null, source: "overture" },
 				],
 				synonyms: [{ phrase: "x", categoryID: "nope" }],
-			})
+			}
 
 			return {
 				...actual,
-				readFileSync: () => malformed,
+				readLocalJSONFile: async () => malformed,
 			}
 		})
 

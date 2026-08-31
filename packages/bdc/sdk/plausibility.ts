@@ -118,7 +118,7 @@ import { shortCellToInt, type H3Cell, type PointLiteral } from "@mailwoman/spati
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "h3-js"
 
-import { BDC_H3_RESOLUTION, type BDCDatabase } from "../schema.ts"
+import { BDC_H3_RESOLUTION, type BDCDatabase } from "#schema"
 import {
 	BDC_SPEED_BUCKET_100_1000,
 	BDC_SPEED_BUCKET_25_100,
@@ -128,13 +128,13 @@ import {
 	res9ShortCellToRes6Parent,
 	speedBucketForDownloadSpeed,
 	type ProviderFilingSummary,
-} from "./filing-landscape.ts"
-import { nearestInfrastructure, type InfrastructureHit } from "./nearest-infrastructure.ts"
+} from "#sdk/filing-landscape"
+import { nearestInfrastructure, type InfrastructureHit } from "#sdk/nearest-infrastructure"
 import {
 	BroadbandTechnologyCategory,
 	BroadbandTechnologyCategoryToCodeSet,
 	BroadbandTechnologyCode,
-} from "./technologies.ts"
+} from "#sdk/technologies"
 
 /**
  * The three fixed-wireless codes (unlicensed/licensed/licensed-by-rule), read off

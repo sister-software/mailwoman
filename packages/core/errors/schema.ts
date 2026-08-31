@@ -2,8 +2,9 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ *
+ *   Utilities for working with errors.
  */
-
 import type { StatusCodes } from "http-status-codes"
 
 /**

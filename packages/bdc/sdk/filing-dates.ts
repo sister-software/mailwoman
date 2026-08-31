@@ -18,8 +18,8 @@
  *   per-request cache bypass with the same meaning it always had.
  */
 
-import type { BDCClient } from "./client.ts"
-import type { BDCFilingDataType } from "./common.ts"
+import type { BDCClient } from "#sdk/client"
+import type { BDCFilingDataType } from "#sdk/common"
 
 /**
  * One entry from the FCC BDC's `/map/listAsOfDates` endpoint.

@@ -20,11 +20,11 @@
  * that reason.
  */
 
-import { createRequire } from "@mailwoman/platform/module"
+import { createRequire } from "@mailwoman/core/module/resolvers"
 
-import { MapBrowser } from "./browser.ts"
-import { type CLIArgs, CLIArgsError, HELP_TEXT, parseCLIArgs } from "./cli-args.ts"
-import { TileSource } from "./tile-source.ts"
+import { MapBrowser } from "#browser"
+import { type CLIArgs, CLIArgsError, HELP_TEXT, parseCLIArgs } from "#cli-args"
+import { TileSource } from "#tile-source"
 
 /**
  * Exit code for a command line that could not be parsed.

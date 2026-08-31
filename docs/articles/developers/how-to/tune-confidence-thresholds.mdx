@@ -66,7 +66,7 @@ and you turn it on per call by passing `calibrate` to `parse`.
 The table ships inside the weights package:
 
 ```js
-import { readFileSync } from "node:fs"
+import { readFile } from "node:fs/promises"
 import { createRequire } from "node:module"
 
 import { createCalibrator } from "@mailwoman/core/decoder"
@@ -74,7 +74,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 // The isotonic table ships inside the weights package; resolve it the same way Node resolves the package itself.
 const require = createRequire(import.meta.url)
-const table = JSON.parse(readFileSync(require.resolve("@mailwoman/neural-weights-en-us/calibration.json"), "utf8"))
+const table = JSON.parse(await readFile(require.resolve("@mailwoman/neural-weights-en-us/calibration.json"), "utf8"))
 const calibrate = createCalibrator(table)
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })

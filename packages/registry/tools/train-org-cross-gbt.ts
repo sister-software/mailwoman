@@ -28,7 +28,7 @@
 import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
-import { dirname } from "@mailwoman/platform/path"
+import { dirname } from "path-ts"
 
 import {
 	addressFrequencyKey,
@@ -40,9 +40,8 @@ import {
 	type ColumnMapping,
 	type SourceRecord,
 } from "#index"
-
-import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
-import { addr, norm, uniqueQuantiles } from "./shared.ts"
+import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
+import { addr, norm, uniqueQuantiles } from "#tools/shared"
 
 /**
  * Share of entities assigned to fit; the rest are held out.

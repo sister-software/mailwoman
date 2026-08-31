@@ -14,14 +14,14 @@
  *   the last stdout line without a framing convention.
  */
 
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { ZoningDatabase } from "../schema.ts"
-import { ingestZoningChunk } from "../sdk/ingest-chunk.ts"
-import { createExportFeatureSource } from "../sdk/ingest.ts"
+import type { ZoningDatabase } from "#schema"
+import { createExportFeatureSource } from "#sdk/ingest"
+import { ingestZoningChunk } from "#sdk/ingest-chunk"
 
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		database: { type: "string" },
 		export: { type: "string" },

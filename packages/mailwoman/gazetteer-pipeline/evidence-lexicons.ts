@@ -54,16 +54,15 @@ import { wordNorm } from "@mailwoman/codex"
 import { DE_BUNDESLAENDER, DE_STATE_NAME_TO_CODE, type GermanStateCode } from "@mailwoman/codex/de"
 import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "@mailwoman/codex/us"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, repoRootPathBuilder, resourceDictionaryPath } from "@mailwoman/core/utils"
-import { dirname, join } from "@mailwoman/platform/path"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { dirname, join, resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { computeSurfaceCountryCounts, CURATION_LANGUAGES, loadDegenerateSurfaces } from "./fst.ts"
+import { computeSurfaceCountryCounts, CURATION_LANGUAGES, loadDegenerateSurfaces } from "#gazetteer-pipeline/fst"
 
 /**
  * Letters at or below which a token reads as an abbreviation rather than a word.
@@ -238,8 +237,8 @@ export function isSubPhraseAlias(alt: readonly string[], primary: readonly strin
 /**
  * Load the 1-token person-name surface set (libpostal given_names + surnames + personal_titles).
  */
-export function loadPersonNameSurfaces(): Set<string> {
-	personNameSurfacesMemo ??= scanPersonNameSurfaces()
+export async function loadPersonNameSurfaces(): Promise<Set<string>> {
+	personNameSurfacesMemo ??= await scanPersonNameSurfaces()
 
 	return personNameSurfacesMemo
 }
@@ -256,9 +255,13 @@ export function loadPersonNameSurfaces(): Set<string> {
  */
 let personNameSurfacesMemo: Set<string> | undefined
 
-function scanPersonNameSurfaces(): Set<string> {
+async function scanPersonNameSurfaces(): Promise<Set<string>> {
 	const dictionariesDir = resourceDictionaryPath("libpostal")
-	const files = [join(dictionariesDir, "all", "given_names.txt"), join(dictionariesDir, "all", "surnames.txt")]
+
+	const files: string[] = [
+		join(dictionariesDir, "all", "given_names.txt"),
+		join(dictionariesDir, "all", "surnames.txt"),
+	]
 
 	for (const lang of CURATION_LANGUAGES) {
 		files.push(join(dictionariesDir, lang, "personal_titles.txt"))
@@ -267,9 +270,9 @@ function scanPersonNameSurfaces(): Set<string> {
 	const names = new Set<string>()
 
 	for (const f of files) {
-		if (!pathExistsSync(f)) continue
+		if (!(await pathExists(f))) continue
 
-		for (const line of TextSpliterator.from(readLocalTextFileSync(f))) {
+		for (const line of TextSpliterator.from(await readLocalTextFile(f))) {
 			for (const surface of line.split("|")) {
 				const tokens = painterFold(surface)
 
@@ -345,7 +348,7 @@ export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexi
 	const countries = opts.countries ?? ["US", "FR"]
 	const placetypes = opts.placetypes ?? ["locality", "localadmin", "neighbourhood"]
 	const dbPath = opts.dbPath ?? String(dataRootPath("wof", "admin-global-priority.db"))
-	const output = opts.output ?? dataRootPath("gazetteer", "locality-surface-lexicon-v6.json")
+	const output = resolvePath(opts.output ?? dataRootPath("gazetteer", "locality-surface-lexicon-v6.json"))
 	const progress = opts.onProgress ?? (() => {})
 
 	progress("loading curation + ambiguity + person-name inputs…")
@@ -377,7 +380,7 @@ export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexi
 	}
 
 	const countryCounts = await computeSurfaceCountryCounts(dbPath)
-	const personNames = loadPersonNameSurfaces()
+	const personNames = await loadPersonNameSurfaces()
 
 	using db = new DatabaseClient<WOFDatabase>(dbPath, { open: true })
 	const importanceByID = new Map<number, number>()

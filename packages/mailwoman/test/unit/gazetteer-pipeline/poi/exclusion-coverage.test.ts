@@ -16,7 +16,7 @@ import {
 	writeLayerCoverage,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
-import { type GeojsonGeometry, type GeojsonPosition, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { type LineStringPath, type ParsedGeometry, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToBoundary, latLngToCell } from "h3-js"
 import { describe, expect, it } from "vitest"
@@ -27,8 +27,8 @@ import { buildExclusionCoverage } from "#gazetteer-pipeline/poi/exclusion-covera
 
 const RESOLUTION = 6
 
-function square(minLon: number, minLat: number, size: number): GeojsonGeometry {
-	const ring: GeojsonPosition[] = [
+function square(minLon: number, minLat: number, size: number): ParsedGeometry {
+	const ring: LineStringPath = [
 		[minLon, minLat],
 		[minLon + size, minLat],
 		[minLon + size, minLat + size],

@@ -30,14 +30,11 @@
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { runFile } from "@mailwoman/core/process"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { execFile } from "@mailwoman/platform/child_process"
-import { join, relative } from "@mailwoman/platform/path"
-import { promisify } from "@mailwoman/platform/util"
+import { join, relative } from "path-ts"
 import ts from "typescript"
 import { describe, expect, test } from "vitest"
-
-const execFileAsync = promisify(execFile)
 
 const REPO_ROOT = repoRootPath()
 
@@ -55,11 +52,6 @@ const PATH_BUILDERS = new Set(["join", "resolve", "resolvePath", "resolvePathBui
  * repo-relative path; add an entry only with a comment that survives review.
  */
 const ALLOWED: Record<string, string> = {
-	// THE ONE HOME. `weightsCachePackageDir` is the inverse of a resolution, not a substitute for one: the directory
-	// does not exist yet when the layout is needed (`npm install --prefix <cacheRoot>` is about to create it, or
-	// `stage-weights-cache.ts` is about to write a candidate bundle into it), so there is nothing to resolve. Every
-	// other site in the tree now calls this.
-	"packages/neural/weights.ts": "weightsCachePackageDir — the single home for the npm-prefix cache layout",
 	// The ORACLE for that layout. A fixture built with the implementation's own helper cannot fail when the
 	// implementation is wrong, so this file spells the path out independently and ties the helper back to it.
 	"packages/neural/test/integration/weights-cache.test.ts":
@@ -84,6 +76,11 @@ const ALLOWED: Record<string, string> = {
 	// needs the project context there, and the link target is the checkout root's own directory, not another
 	// package's install dir. Same principle as worktree-arm: nothing package-owned is being addressed by hand.
 	"scripts/release-stage.ts": "symlinks the checkout's node_modules into the staging tree; not a package lookup",
+	// THE ONE HOME. `weightsCachePackageDir` is the inverse of a resolution, not a substitute for one: the directory
+	// does not exist yet when the layout is needed (`npm install --prefix <cacheRoot>` is about to create it, or
+	// `stage-weights-cache.ts` is about to write a candidate bundle into it), so there is nothing to resolve. Every
+	// other site in the tree now calls this.
+	"packages/neural/weights.ts": "weightsCachePackageDir — the single home for the npm-prefix cache layout",
 }
 
 /**
@@ -98,7 +95,7 @@ const ALLOWED: Record<string, string> = {
  * `node_modules`, `.yarn` and the rest are already ignored.
  */
 async function listCandidateSources(): Promise<string[]> {
-	const { stdout } = await execFileAsync("git", ["ls-files", "-z", "*.ts", "*.tsx"], {
+	const { stdout } = await runFile("git", ["ls-files", "-z", "*.ts", "*.tsx"], {
 		cwd: REPO_ROOT,
 		maxBuffer: 32 * 1024 * 1024,
 	})
@@ -116,7 +113,7 @@ async function listCandidateSources(): Promise<string[]> {
 		})
 	)
 
-	return found.filter((path): path is string => path !== null).toSorted()
+	return found.filter((path): path is NonNullable<typeof path> => path !== null).toSorted()
 }
 
 /**
@@ -153,7 +150,19 @@ function findReachArounds(source: string, fileName: string): string[] {
 					? node.expression.text
 					: undefined
 
-			if (callee && PATH_BUILDERS.has(callee)) {
+			// A `PathBuilder` is invoked as a bare function (`dir("node_modules", pkg)`), so a descent through
+			// `node_modules` has no callee name to match — the leading segment is the tell there. Property calls
+			// are left out: `.includes("node_modules")` is a string test, not a path.
+			const firstArgument = node.arguments[0]
+
+			const descendsIntoNodeModules =
+				ts.isIdentifier(node.expression) &&
+				firstArgument !== undefined &&
+				argumentText(firstArgument) === "node_modules"
+
+			const buildsPath = (callee !== undefined && PATH_BUILDERS.has(callee)) || descendsIntoNodeModules
+
+			if (buildsPath) {
 				for (const argument of node.arguments) {
 					const text = argumentText(argument)
 

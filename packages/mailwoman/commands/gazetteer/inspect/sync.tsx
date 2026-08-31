@@ -20,6 +20,7 @@
 import { ProgressBar } from "@inkjs/ui"
 import type { RepositorySource, SynchronizeAction } from "@mailwoman/core"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { runFile } from "@mailwoman/core/process"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
@@ -34,15 +35,14 @@ import {
 	type ParsedCommandComponent,
 	useCommandTask,
 } from "#cli-kit"
-import type { ForkState } from "#gazetteer/wof-repo-origin"
-
 import {
 	assertDestinationNotARepoName,
 	selectRepos,
 	WOF_REPO_OWNER,
 	type DiscoveredRepo,
 	type RepoSelection,
-} from "./sync-plan.ts"
+} from "#commands/gazetteer/inspect/sync-plan"
+import type { ForkState } from "#gazetteer/wof-repo-origin"
 
 /**
  * Concurrency for the clone fan-out.
@@ -142,10 +142,6 @@ const WOFSync: ParsedCommandComponent<Options, [string?]> = ({ options, args }) 
 			// clones are NOT re-pointed here: `synchronizeRepo` pulls in place and never rewrites a remote, so this fixes
 			// new clones only. `gazetteer repos-sync` reports and re-points the existing ones.
 			const { resolveWOFRepoOrigin, UPSTREAM_ORG } = await import("#gazetteer/wof-repo-origin")
-			const { execFile } = await import("@mailwoman/platform/child_process")
-			const { promisify } = await import("@mailwoman/platform/util")
-
-			const run = promisify(execFile)
 
 			/**
 			 * Ask GitHub what our fork IS, not merely whether it exists. `compare` answers `ahead_by` — commits the fork
@@ -155,7 +151,7 @@ const WOFSync: ParsedCommandComponent<Options, [string?]> = ({ options, args }) 
 			 */
 			const forkProbe = async (org: string, repo: string): Promise<ForkState> => {
 				try {
-					await run("gh", ["api", `/repos/${org}/${repo}`, "--jq", ".name"])
+					await runFile("gh", ["api", `/repos/${org}/${repo}`, "--jq", ".name"])
 				} catch (error) {
 					if (/HTTP 404|Not Found/i.test(`${(error as Error).message}${(error as { stderr?: string }).stderr ?? ""}`)) {
 						return "absent"
@@ -167,7 +163,7 @@ const WOFSync: ParsedCommandComponent<Options, [string?]> = ({ options, args }) 
 				}
 
 				try {
-					const { stdout } = await run("gh", [
+					const { stdout } = await runFile("gh", [
 						"api",
 						`/repos/${org}/${repo}/compare/${UPSTREAM_ORG}:HEAD...${org}:HEAD`,
 						"--jq",

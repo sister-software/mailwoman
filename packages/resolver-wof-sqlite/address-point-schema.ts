@@ -18,7 +18,7 @@
 
 import type { Kysely } from "kysely"
 
-import type { NameKey, RouteKey, StreetKey } from "./street-normalize.ts"
+import type { NameKey, RouteKey, StreetKey } from "#street-normalize"
 
 /**
  * One rooftop address point. `(street_norm, number)` within a `postcode` (preferred) or `locality_norm` scope is the

@@ -35,10 +35,9 @@ import { isPresent } from "@mailwoman/core/objects"
 import { reconcileComponents } from "@mailwoman/formatter"
 import { CSVSpliterator } from "spliterator"
 
+import { decomposeFrStreet } from "#adapters/ban/street-decompose"
 import { stableSourceID } from "#adapters/utils"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
-
-import { decomposeFrStreet } from "./street-decompose.ts"
 
 /**
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset

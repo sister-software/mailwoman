@@ -13,7 +13,7 @@ import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { UNLocodeDatabase } from "./schema.ts"
+import type { UNLocodeDatabase } from "#schema"
 
 /**
  * Fold a place name to its match key: strip diacritics, lowercase, collapse whitespace.

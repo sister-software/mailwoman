@@ -5,5 +5,5 @@
  */
 
 export * from "@mailwoman/core"
-export * from "./runtime-pipeline.ts"
-export * from "./default-placer.ts"
+export * from "#runtime-pipeline"
+export * from "#default-placer"

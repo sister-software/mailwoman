@@ -11,6 +11,7 @@
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import type { Form499Row } from "@mailwoman/filer/sdk/form499"
 import {
 	assertWorkbookHeader,
@@ -19,10 +20,9 @@ import {
 	readOperatingStates,
 	toISOFilingDate,
 } from "@mailwoman/filer/sdk/form499-workbook"
-import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
-const WORKBOOK_PATH = join(import.meta.dirname, "../../../test-fixtures/form499/filer-db-sample.xlsx")
+const WORKBOOK_PATH = resolvePackagePath("@mailwoman/filer", "test-fixtures", "form499", "filer-db-sample.xlsx")
 
 async function readFixture(): Promise<Form499Row[]> {
 	const rows: Form499Row[] = []
@@ -140,7 +140,9 @@ describe("assertWorkbookHeader", () => {
 
 	it("refuses a file that is not a workbook rather than yielding empty rows", async () => {
 		await expect(async () => {
-			for await (const _row of parseForm499Workbook(join(import.meta.dirname, "../../../sdk/form499-workbook.ts"))) {
+			for await (const _row of parseForm499Workbook(
+				resolvePackagePath("@mailwoman/filer", "sdk", "form499-workbook.ts")
+			)) {
 				// Not reached — the reader throws before yielding.
 			}
 		}).rejects.toThrow(/./)

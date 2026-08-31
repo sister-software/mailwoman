@@ -16,8 +16,8 @@ import {
 	type QueryCompiler,
 } from "kysely"
 
-import type { SqliteDialectConfig } from "./dialect-config.ts"
-import { SqliteDriver } from "./driver.ts"
+import type { SqliteDialectConfig } from "#dialect-config"
+import { SqliteDriver } from "#driver"
 
 /**
  * SQLite dialect that uses the [`node:sqlite`](https://nodejs.org/api/sqlite.html) library.
@@ -25,7 +25,7 @@ import { SqliteDriver } from "./driver.ts"
  * The constructor takes an instance of {@link SqliteDialectConfig}.
  *
  * ```ts
- * import { DatabaseSync } from "@mailwoman/platform/sqlite"
+ * import { DatabaseSync } from "node:sqlite"
  *
  * new SqliteDialect({
  * 	database: new DatabaseSync("db.sqlite"),
@@ -35,7 +35,7 @@ import { SqliteDriver } from "./driver.ts"
  * If you want the pool to only be created once it's first used, `database` can be a function:
  *
  * ```ts
- * import { DatabaseSync } from "@mailwoman/platform/sqlite"
+ * import { DatabaseSync } from "node:sqlite"
  *
  * new SqliteDialect({
  * 	database: async () => new DatabaseSync("db.sqlite"),

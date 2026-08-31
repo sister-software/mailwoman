@@ -20,11 +20,11 @@
  */
 
 import { isPresent } from "@mailwoman/core/objects"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
-const { values: args } = parseArgs({
+const { values: args } = parseArguments({
 	options: {
 		baseline: { type: "string" },
 		candidate: { type: "string" },

@@ -18,7 +18,7 @@
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { dirname } from "@mailwoman/platform/path"
+import { dirname } from "path-ts"
 
 const DEFAULT_OUT = String(
 	repoRootPathBuilder("docs", "src", "components", "ModelVisualizer", "fixtures", "white-house.trace.json")

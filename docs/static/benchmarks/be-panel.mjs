@@ -52,14 +52,19 @@
 // `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from
 // <DATA_ROOT>/wof/candidate.db. No other artifact is needed — that is the point of the panel.
 
-import { readLocalJSONFileSync, realPathSync } from "@mailwoman/core/fs/readers-sync"
-import { writeLocalTextFileSync } from "@mailwoman/core/fs/writers-sync"
+// oxlint-disable-next-line typescript/no-restricted-imports -- shipped doc asset (node builtins only; runs in a reader's project)
+import { mkdir, readFile, realpath, writeFile } from "node:fs/promises"
+// oxlint-disable-next-line typescript/no-restricted-imports -- shipped doc asset (node builtins only; runs in a reader's project)
+import { createRequire } from "node:module"
+// oxlint-disable-next-line typescript/no-restricted-imports -- shipped doc asset (node builtins only; runs in a reader's project)
+import { basename, dirname, join, resolve } from "node:path"
+// oxlint-disable-next-line typescript/no-restricted-imports -- shipped doc asset (node builtins only; runs in a reader's project)
+import { fileURLToPath } from "node:url"
+// oxlint-disable-next-line typescript/no-restricted-imports -- shipped doc asset (node builtins only; runs in a reader's project)
+import { parseArgs } from "node:util"
+
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { createRequire } from "@mailwoman/platform/module"
-import { basename, dirname, join, resolve } from "@mailwoman/platform/path"
-import { fileURLToPath } from "@mailwoman/platform/url"
-import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
@@ -157,13 +162,14 @@ function inBox(box, lat, lon) {
  * fallback an overlay locale takes for its `model.onnx`. Paths are dereferenced because a development checkout symlinks
  * them into the workspace, and the symlink name says nothing about which checkpoint is behind it.
  */
-function weightsStamp(locale) {
+async function weightsStamp(locale) {
 	const resolved = resolveWeights({ locale })
-	const card = readLocalJSONFileSync(resolved.modelCardPath)
+	// oxlint-disable-next-line no-restricted-properties -- shipped doc asset (no monorepo install); a throw on a corrupt model-card is the contract
+	const card = JSON.parse(await readFile(resolved.modelCardPath, "utf8"))
 
 	return {
 		locale,
-		model: basename(realPathSync(resolved.modelPath)),
+		model: basename(await realpath(resolved.modelPath)),
 		modelCard: `${card.name}@${card.version}`,
 		source: resolved.source,
 	}
@@ -174,15 +180,15 @@ function weightsStamp(locale) {
  * Without them a reader whose numbers disagree with the published ones cannot tell data drift from code drift, which is
  * the whole value of publishing the result file next to the script.
  */
-function versionStamp() {
+async function versionStamp() {
 	const require = createRequire(import.meta.url)
-	const base = weightsStamp(ARMS[0].locale)
+	const base = await weightsStamp(ARMS[0].locale)
 
 	return {
 		mailwoman: require("mailwoman/package.json").version,
 		model: base.model,
 		modelCard: base.modelCard,
-		gazetteer: basename(realPathSync(candidatePath)),
+		gazetteer: basename(await realpath(candidatePath)),
 	}
 }
 
@@ -297,7 +303,7 @@ async function runArm(arm, panel) {
 			localityParsed: records.filter((r) => r.localityParsed).length,
 			localityNameMatched: records.filter((r) => r.localityNameMatched).length,
 			localityResolved: records.filter((r) => r.localityResolved).length,
-			weights: weightsStamp(arm.locale),
+			weights: await weightsStamp(arm.locale),
 			tiers,
 			pairsDeclared: pairs.length,
 			pairsComparable: pairs.filter((p) => p.comparable).length,
@@ -311,7 +317,8 @@ async function runArm(arm, panel) {
 	}
 }
 
-const panel = readLocalJSONFileSync(flags.panel)
+// oxlint-disable-next-line no-restricted-properties -- shipped doc asset (no monorepo install); a throw on a corrupt committed panel is the contract
+const panel = JSON.parse(await readFile(flags.panel, "utf8"))
 const startedAt = Date.now()
 const results = {}
 
@@ -326,7 +333,7 @@ const report = {
 	panel: { rows: panel.rows.length, bbox: panel.bbox },
 	// The panel carries no data release because there is no Belgian register to carry one from — the
 	// only reference artifact is the gazetteer, and it is stamped below.
-	versions: versionStamp(),
+	versions: await versionStamp(),
 	config: {
 		gazetteer: "candidate.db",
 		nationalTier: "none — no Belgian rooftop register ships",
@@ -337,7 +344,9 @@ const report = {
 	records: Object.fromEntries(Object.entries(results).map(([name, arm]) => [name, arm.records])),
 }
 
-writeLocalTextFileSync(`${JSON.stringify(report, null, "\t")}\n`, flags.out)
+// The previous write helper created the parent directory first — keep that contract.
+await mkdir(dirname(flags.out), { recursive: true })
+await writeFile(flags.out, `${JSON.stringify(report, null, "\t")}\n`)
 
 for (const [name, summary] of Object.entries(report.arms)) {
 	console.log(

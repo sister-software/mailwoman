@@ -30,7 +30,7 @@
 import { isPresent } from "@mailwoman/core/objects"
 import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 
-import type { EntityGeoData, ReconciliationBucket, ResolvedEntity } from "./types.ts"
+import type { EntityGeoData, ReconciliationBucket, ResolvedEntity } from "#types"
 
 /**
  * Which source labels denote eligibility vs funding/enrollment.

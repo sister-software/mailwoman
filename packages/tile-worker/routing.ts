@@ -6,8 +6,8 @@
 
 import { type URLPatternPathParameters, URLRoutePattern } from "@mailwoman/core/routing"
 
-import { retrieveCachedResponse } from "./caching.ts"
-import { applyAccessControlAllowOrigin } from "./cors.ts"
+import { retrieveCachedResponse } from "#caching"
+import { applyAccessControlAllowOrigin } from "#cors"
 
 /**
  * Environment bindings associated with the API service.

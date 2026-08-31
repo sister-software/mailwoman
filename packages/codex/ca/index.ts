@@ -7,6 +7,6 @@
  *   postcodes, and the provinces and territories.
  */
 
-export * from "./postal-code.ts"
-export * from "./province.ts"
-export * from "./street-type.ts"
+export * from "#ca/postal-code"
+export * from "#ca/province"
+export * from "#ca/street-type"

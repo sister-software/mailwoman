@@ -32,6 +32,7 @@ import {
 } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	CANDIDATE_ANCESTOR_TABLE,
@@ -39,27 +40,27 @@ import {
 	intervalContains,
 	type CandidateAncestorTable,
 	type IntervalLabel,
-} from "./candidate-ancestors-schema.ts"
-import { CANDIDATE_FTS_TABLE } from "./candidate-fts.ts"
-import type { CandidateDatabase, CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "./candidate-schema.ts"
-import { readGazetteerCoverageManifest } from "./coverage-manifest-schema.ts"
-import { referentialFromPopulation } from "./place-importance-schema.ts"
-import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "./postal-city-candidate-schema.ts"
-import { rankByPrimaryPreference, type RankedRow, RERANK_FETCH } from "./primary-preference.ts"
-import { applyProximityRerank } from "./proximity-rerank.ts"
-import { REGION_CLASS_PLACETYPES, regionQualifierProbeKeys } from "./region-keys.ts"
-import { allRows, hasColumn, hasTable } from "./sqlite-utils.ts"
-import { type NameKey, normalizeLocalityForKey, stripLocalityQualifier } from "./street-normalize.ts"
-import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.ts"
+} from "#candidate-ancestors-schema"
+import { CANDIDATE_FTS_TABLE } from "#candidate-fts"
+import type { CandidateDatabase, CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "#candidate-schema"
+import { readGazetteerCoverageManifest } from "#coverage-manifest-schema"
+import { referentialFromPopulation } from "#place-importance-schema"
+import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "#postal-city-candidate-schema"
+import { rankByPrimaryPreference, type RankedRow, RERANK_FETCH } from "#primary-preference"
+import { applyProximityRerank } from "#proximity-rerank"
+import { REGION_CLASS_PLACETYPES, regionQualifierProbeKeys } from "#region-keys"
+import { allRows, hasColumn, hasTable } from "#sqlite-utils"
+import { type NameKey, normalizeLocalityForKey, stripLocalityQualifier } from "#street-normalize"
+import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#types"
 
-export { rankByPrimaryPreference } from "./primary-preference.ts"
-export type { RankedRow } from "./primary-preference.ts"
+export { rankByPrimaryPreference } from "#primary-preference"
+export type { RankedRow } from "#primary-preference"
 
 export interface WOFCandidateTableLookupOpts {
 	/**
 	 * Path to a `candidate.db` built by `build-candidate.ts`. Opened read-only.
 	 */
-	databasePath?: string
+	databasePath?: PathBuilderLike
 	/**
 	 * Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`.
 	 */

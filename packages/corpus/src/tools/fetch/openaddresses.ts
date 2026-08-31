@@ -1,3 +1,4 @@
+import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -50,26 +51,20 @@
  *   mailwoman corpus fetch openaddresses --country ca
  *   ```
  */
-
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
    procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
-
-import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
 import { $private } from "@mailwoman/core/env"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
-import { openReadStream, openWriteStream } from "@mailwoman/core/fs/streams"
+import { openReadStream, openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { movePath, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
+import { runFile, spawnProcess } from "@mailwoman/core/process"
 import { sha256File } from "@mailwoman/core/utils"
-import { execFile, spawn } from "@mailwoman/platform/child_process"
-import { join } from "@mailwoman/platform/path"
-import { Readable } from "@mailwoman/platform/stream"
-import { pipeline } from "@mailwoman/platform/stream/promises"
-import { setTimeout as sleep } from "@mailwoman/platform/timers/promises"
-import { promisify } from "@mailwoman/platform/util"
+import { sleep } from "@mailwoman/core/utils/sleep"
+import { join } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "./download.ts"
-import { isTransientStatus, writeManifest } from "./download.ts"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { isTransientStatus, writeManifest } from "#tools/fetch/download"
 
 /**
  * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
@@ -84,8 +79,6 @@ const HTTP_OK = 200
  * Smallest plausible OpenAddresses shard. Below 10 KiB the file is a stub or an error body.
  */
 const MIN_PLAUSIBLE_SHARD_BYTES = 10_240
-
-const execFileAsync = promisify(execFile)
 
 const OA_BASE = "https://batch.openaddresses.io"
 
@@ -188,7 +181,7 @@ async function streamDownload(url: string, dest: string, opts: StreamDownloadOpt
  * Decompress `src` → `dest` with the same deprioritized subprocess the old fetcher used.
  */
 async function gunzipToFile(src: string, dest: string): Promise<void> {
-	const child = spawn("nice", ["-n", "15", "ionice", "-c", "3", "gunzip", "-c", src], {
+	const child = spawnProcess("nice", ["-n", "15", "ionice", "-c", "3", "gunzip", "-c", src], {
 		stdio: ["ignore", "pipe", "inherit"],
 	})
 
@@ -340,7 +333,7 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 
 	// MARK: Decompress if the downloaded file is gzipped
 
-	const fileMagic = (await execFileAsync("file", ["--brief", tmpGz]).catch(() => ({ stdout: "" }))).stdout
+	const fileMagic = (await runFile("file", ["--brief", tmpGz]).catch(() => ({ stdout: "" }))).stdout
 
 	if (/gzip|compressed/i.test(fileMagic)) {
 		report?.(`  Decompressing gzip archive...`)

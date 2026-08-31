@@ -18,7 +18,6 @@
  */
 
 import { pathExists, readLocalJSONFile, readLocalTextFile, statLink } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import {
 	changeMode,
 	copyFileTo,
@@ -28,9 +27,8 @@ import {
 	removePathIfPresent,
 	writeLocalFile,
 } from "@mailwoman/core/fs/writers"
+import { runFileSync } from "@mailwoman/core/process"
 import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
-import { execFileSync } from "@mailwoman/platform/child_process"
-import { join } from "@mailwoman/platform/path"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
 // DYNAMICALLY inside the functions (the geocode.tsx convention), NOT at module load, so that merely
 // loading these commands (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault
@@ -41,18 +39,18 @@ import type { CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { resolvePath } from "path-ts"
+import { join, resolvePath, type PathBuilderLike } from "path-ts"
 
-import { mailwomanDataRoot } from "../resolver-backend.ts"
-import { candidateLayerManifest } from "./candidate-manifest.ts"
-import { emitCoverageManifest } from "./coverage-manifest.ts"
+import { candidateLayerManifest } from "#gazetteer-pipeline/candidate-manifest"
+import { emitCoverageManifest } from "#gazetteer-pipeline/coverage-manifest"
 import {
 	DEFAULT_FOLD_COUNTRIES,
 	DEFAULT_IMPORTANCE_DB,
 	DEFAULT_WOF_PRIORITY_COUNTRIES,
 	geonamesAdminGapCountries,
-} from "./defaults.ts"
-import { buildSHA, stampLayerManifest } from "./stamp-manifest.ts"
+} from "#gazetteer-pipeline/defaults"
+import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
+import { mailwomanDataRoot } from "#resolver-backend"
 
 /**
  * The canonical postcode-shard set (filenames under `<data-root>/wof/`): US + the WOF intl shard (NL/FR/DE/ES/IT) + the
@@ -61,7 +59,7 @@ import { buildSHA, stampLayerManifest } from "./stamp-manifest.ts"
  * not fatal.
  *
  * That skip is not merely tolerant — it is the **build-local tier's mechanism**. `postalcode-ni-osm.db` is ODbL and is
- * never published, so on every machine but the one that built it the `existsSync` filter in
+ * never published, so on every machine but the one that built it the `pathExists` filter in
  * {@link resolvePostcodeShards} removes it and the set degrades to the permissive shards alone. Nothing else enforces
  * the tier, and nothing else needs to.
  *
@@ -93,7 +91,7 @@ export const DEFAULT_POSTCODE_SHARDS = [
 	//
 	// BUILD-LOCAL TIER — ODbL 1.0 is share-alike on a Derived Database, so this artifact is never
 	// published to npm, R2 or the demo. It is present only on a machine that built it, and the
-	// `existsSync` filter in `resolvePostcodeShards` IS that tier's mechanism: a deployment without the
+	// `pathExists` filter in `resolvePostcodeShards` IS that tier's mechanism: a deployment without the
 	// file simply has no NI coverage, exactly as before.
 	// Rebuild: `mailwoman gazetteer build postcode-ni-osm` (add `--offline` to rebuild from the saved
 	// Overpass response rather than re-querying a volunteer endpoint).
@@ -150,7 +148,17 @@ export async function resolvePostcodeShards(
 	shards: readonly string[] = DEFAULT_POSTCODE_SHARDS,
 	dataRoot: string = mailwomanDataRoot()
 ): Promise<string[]> {
-	return shards.map((s) => resolvePath(wofDir(dataRoot), s)).filter((p) => pathExistsSync(p))
+	const paths: string[] = []
+
+	for (const shard of shards) {
+		const path = resolvePath(wofDir(dataRoot), shard)
+
+		if (await pathExists(path)) {
+			paths.push(path)
+		}
+	}
+
+	return paths
 }
 
 /**
@@ -173,7 +181,17 @@ export async function resolveLocalityShards(
 	shards: readonly string[] = DEFAULT_LOCALITY_SHARDS,
 	dataRoot: string = mailwomanDataRoot()
 ): Promise<string[]> {
-	return shards.map((s) => resolvePath(wofDir(dataRoot), s)).filter((p) => pathExistsSync(p))
+	const paths: string[] = []
+
+	for (const shard of shards) {
+		const path = resolvePath(wofDir(dataRoot), shard)
+
+		if (await pathExists(path)) {
+			paths.push(path)
+		}
+	}
+
+	return paths
 }
 
 /**
@@ -299,7 +317,7 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 	}
 
 	opts.onPhase?.("copy", `copying admin DB → ${opts.adminOut}`)
-	// The admin source is sealed 0444 (sealDatabase is every builder's last step), and copyFileSync
+	// The admin source is sealed 0444 (sealDatabase is every builder's last step), and copyFileTo
 	// stamps the source mode onto a fresh copy — or writes THROUGH an existing destination keeping
 	// ITS mode. Remove any stale copy, then restore the write bit: the copy is fold staging, not the
 	// sealed artifact (2026-08-04: first candidate build against a sealed admin died on this).
@@ -470,7 +488,7 @@ export interface PublishOptions {
 	/**
 	 * A staging dir; the candidate is symlinked under `<stageDir>/gazetteer/<version>/candidate.db`.
 	 */
-	stageDir: string
+	stageDir: PathBuilderLike
 	/**
 	 * `docs/src/shared/resources/index.ts` to bump `ADMIN_GAZETTEER_VERSION`; omit to skip the demo bump.
 	 */
@@ -517,7 +535,7 @@ export async function publishGazetteer(opts: PublishOptions): Promise<PublishRes
 
 	const key = `${prefix}/gazetteer/${opts.version}/candidate.db`
 	opts.onPhase?.("upload", `R2 ${key}${opts.dryRun ? " (dry-run)" : ""}`)
-	const args = [opts.uploadScript, "--src", opts.stageDir, "--prefix", prefix]
+	const args = [opts.uploadScript, "--src", resolvePath(opts.stageDir), "--prefix", prefix]
 
 	if (opts.bucket) {
 		args.push("--bucket", opts.bucket)
@@ -527,7 +545,7 @@ export async function publishGazetteer(opts: PublishOptions): Promise<PublishRes
 		args.push("--dry-run")
 	}
 
-	execFileSync("python3", args, { stdio: "inherit" })
+	runFileSync("python3", args, { stdio: "inherit" })
 
 	let bumped = false
 
@@ -557,9 +575,9 @@ export function defaultGazetteerVersion(now: Date, suffix = "a"): string {
 	return `${y}-${m}-${d}${suffix}`
 }
 
-export * from "./coverage-manifest.ts"
-export * from "./defaults.ts"
-export * from "./fts.ts"
-export * from "./verify.ts"
-export * from "./admin/index.ts"
-export * from "./postcode/index.ts"
+export * from "#gazetteer-pipeline/coverage-manifest"
+export * from "#gazetteer-pipeline/defaults"
+export * from "#gazetteer-pipeline/fts"
+export * from "#gazetteer-pipeline/verify"
+export * from "#gazetteer-pipeline/admin/index"
+export * from "#gazetteer-pipeline/postcode/index"

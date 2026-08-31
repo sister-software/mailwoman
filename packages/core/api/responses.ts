@@ -9,8 +9,8 @@
 import { AxiosError, HttpStatusCode, isAxiosError } from "axios"
 import type { StatusCodes } from "http-status-codes"
 
-import { ResourceError } from "../errors/schema.ts"
-import { isRetryableStatus } from "./retry.ts"
+import { isRetryableStatus } from "#api/retry"
+import { ResourceError } from "#errors/schema"
 
 /**
  * Whether an HTTP status is a 2xx success.

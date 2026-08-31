@@ -19,13 +19,13 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { join } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
+import { join } from "path-ts"
 
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		locale: { type: "string", default: "en-gb" },
 		"cache-root": { type: "string" },
@@ -34,7 +34,7 @@ const { values } = parseArgs({
 
 const locale = values.locale!
 const cacheRoot = values["cache-root"]
-const resolved = resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })
+const resolved = await resolveWeights({ locale, cacheRoot })
 
 console.log(`card    ${resolved.modelCardPath}`)
 console.log(`anchor  ${resolved.anchorLookupPath?.path ?? "(none)"}`)

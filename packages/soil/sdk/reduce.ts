@@ -40,8 +40,8 @@ import { parseJSONStrict } from "@mailwoman/core/objects"
 import { pointInEncodedRings, type H3Cell } from "@mailwoman/spatial"
 import { cellToChildren, cellToLatLng } from "h3-js"
 
-import type { SoilCapabilityCellTable, SoilComponentTable, SoilMapUnitTable } from "../schema.ts"
-import { SOIL_SHARE_WEIGHTING } from "../vocabulary.ts"
+import type { SoilCapabilityCellTable, SoilComponentTable, SoilMapUnitTable } from "#schema"
+import { SOIL_SHARE_WEIGHTING } from "#vocabulary"
 
 /**
  * How many resolution levels finer than the index the weighting lattice runs.

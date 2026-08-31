@@ -4,9 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
-import { Alpha2LabelMap, Alpha2LanguageCode, Alpha3bLabelMap, type Alpha3bLanguageCode } from "./types.gen.ts"
+import {
+	Alpha2LabelMap,
+	Alpha2LanguageCode,
+	Alpha3bLabelMap,
+	type Alpha3bLanguageCode,
+} from "#resources/languages/types.gen"
 
-export * from "./types.gen.ts"
+export * from "#resources/languages/types.gen"
 
 /**
  * Prefixed languages are those which use a street prefix instead of a suffix.

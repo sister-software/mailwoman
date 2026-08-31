@@ -21,17 +21,17 @@ export { ClientOnly } from "./common/ClientOnly.tsx"
 export type { ClientOnlyProps } from "./common/ClientOnly.tsx"
 export { CopyButton } from "./common/CopyButton.tsx"
 export type { CopyButtonProps } from "./common/CopyButton.tsx"
-export { cx } from "./common/cx.ts"
-export type { ClassValue } from "./common/cx.ts"
+export { cx } from "#common/cx"
+export type { ClassValue } from "#common/cx"
 export { KindBadge } from "./common/KindBadge.tsx"
 export type { KindBadgeProps, KindBadgeResult } from "./common/KindBadge.tsx"
 export { LoadingIndicator } from "./common/LoadingIndicator.tsx"
 export type { LoadingIndicatorProps, LoadingMode } from "./common/LoadingIndicator.tsx"
 export { PresetChips } from "./common/PresetChips.tsx"
 export type { Preset, PresetChipsProps } from "./common/PresetChips.tsx"
-export { useClipboard } from "./common/useClipboard.ts"
-export type { UseClipboard } from "./common/useClipboard.ts"
-export { useDebouncedValue } from "./common/useDebouncedValue.ts"
+export { useClipboard } from "#common/useClipboard"
+export type { UseClipboard } from "#common/useClipboard"
+export { useDebouncedValue } from "#common/useDebouncedValue"
 
 // ── POI explorer ───────────────────────────────────────────────────────────
 export { AbstainPanel } from "./poi/AbstainPanel.tsx"
@@ -44,7 +44,7 @@ export { POIExplorer } from "./poi/POIExplorer.tsx"
 export type { POIExplorerProps } from "./poi/POIExplorer.tsx"
 export { QueryInput } from "./poi/QueryInput.tsx"
 export type { QueryInputProps } from "./poi/QueryInput.tsx"
-export { formatDistance, loadPOIRuntime, POI_DEFAULT_TEXT, POI_PRESETS } from "./poi/runtime.ts"
+export { formatDistance, loadPOIRuntime, POI_DEFAULT_TEXT, POI_PRESETS } from "#poi/runtime"
 export { SubjectPanel } from "./poi/SubjectPanel.tsx"
 export type { SubjectPanelProps } from "./poi/SubjectPanel.tsx"
 
@@ -62,10 +62,10 @@ export type {
 	POISubject,
 	POISubjectBase,
 	TaxonomyLookup,
-} from "./poi/types.ts"
+} from "#poi/types"
 
-export { usePOISearch } from "./poi/usePOISearch.ts"
-export type { UsePOISearch, UsePOISearchOptions } from "./poi/usePOISearch.ts"
+export { usePOISearch } from "#poi/usePOISearch"
+export type { UsePOISearch, UsePOISearchOptions } from "#poi/usePOISearch"
 
 // ── Pipeline explorer ──────────────────────────────────────────────────────
 export { CandidatePicker } from "./pipeline/CandidatePicker.tsx"
@@ -74,8 +74,8 @@ export { ComponentTable } from "./pipeline/ComponentTable.tsx"
 export type { ComponentTableProps } from "./pipeline/ComponentTable.tsx"
 export { ConfidenceCell } from "./pipeline/ConfidenceCell.tsx"
 export type { ConfidenceCellProps } from "./pipeline/ConfidenceCell.tsx"
-export { buildParsePayload } from "./pipeline/copy.ts"
-export { PIPELINE_DEFAULT_ADDRESS, PIPELINE_PRESETS } from "./pipeline/presets.ts"
+export { buildParsePayload } from "#pipeline/copy"
+export { PIPELINE_DEFAULT_ADDRESS, PIPELINE_PRESETS } from "#pipeline/presets"
 export { PipelineExplorer } from "./pipeline/PipelineExplorer.tsx"
 export type { PipelineExplorerProps } from "./pipeline/PipelineExplorer.tsx"
 export { QueryForm } from "./pipeline/QueryForm.tsx"
@@ -93,13 +93,13 @@ export type {
 	PipelineRuntime,
 	ResolvedPlaceView,
 	StageTiming,
-} from "./pipeline/types.ts"
+} from "#pipeline/types"
 
-export { useParsePipeline } from "./pipeline/useParsePipeline.ts"
-export type { UseParsePipeline, UseParsePipelineOptions } from "./pipeline/useParsePipeline.ts"
+export { useParsePipeline } from "#pipeline/useParsePipeline"
+export type { UseParsePipeline, UseParsePipelineOptions } from "#pipeline/useParsePipeline"
 
 // ── Demo runtime (shared load orchestration; node-safe — no onnx/httpvfs/maplibre) ──
-export { useDemoRuntime } from "./runtime/useDemoRuntime.ts"
+export { useDemoRuntime } from "#runtime/useDemoRuntime"
 
 export type {
 	DemoAssetsLoadContext,
@@ -107,7 +107,7 @@ export type {
 	DemoManifest,
 	DemoReleaseBase,
 	DemoRuntimeConfig,
-} from "./runtime/useDemoRuntime.ts"
+} from "#runtime/useDemoRuntime"
 
 // ── Map (types only from root) ──────────────────────────────────────────────
 // The demo-map SURFACE lives behind the `@mailwoman/react/map` subpath so `maplibre-gl` / `react-map-gl`
@@ -125,4 +125,4 @@ export type {
 	MapBias,
 	OverlaySpec,
 	Suggestion,
-} from "./map/index.ts"
+} from "#map/index"

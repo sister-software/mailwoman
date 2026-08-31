@@ -5,6 +5,7 @@
  */
 
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
+import type { PathBuilderLike } from "path-ts"
 
 export interface GeocodeCommandOptions {
 	locale: string
@@ -13,7 +14,7 @@ export interface GeocodeCommandOptions {
 	countryScope: "auto" | "locale" | "none"
 	resolveDB?: string
 	candidateDB?: string
-	dataRoot: string
+	dataRoot: PathBuilderLike
 	addressPointsDB?: string
 	interpolationDB?: string
 	interpCalibration?: number

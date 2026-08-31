@@ -87,13 +87,13 @@ too.
 
 ```bash
 # Query smoke on a staged artifact
-node -e "
-import { readFileSync } from 'node:fs'
+node --input-type=module -e "
+import { readFile } from 'node:fs/promises'
 import { deserializeFST } from '@mailwoman/resolver-wof-sqlite/fst-serialize'
 import { peekFSTStampFields } from '@mailwoman/resolver-wof-sqlite/fst-freshness'
 const path = process.env.FST
-console.log('stamp:', JSON.stringify(peekFSTStampFields(path)?.provenance))
-const matcher = deserializeFST(readFileSync(path))
+console.log('stamp:', JSON.stringify((await peekFSTStampFields(path))?.provenance))
+const matcher = deserializeFST(await readFile(path))
 console.log('States:', matcher.stateCount, 'Places:', matcher.placeCount)
 const r = matcher.query('new york')
 console.log('New York:', r.accepting.length, 'interpretations')

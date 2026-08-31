@@ -57,22 +57,21 @@ Three functions, all on deep subpaths of `@mailwoman/resolver-wof-sqlite`. They 
 the package root, so import them by subpath:
 
 ```js
-import { readFileSync } from "node:fs"
+import { readFile } from "node:fs/promises"
 
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { autocomplete } from "@mailwoman/resolver-wof-sqlite/fst-autocomplete"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 
 // resolveWeights finds the installed weights package, so you never hard-code a node_modules path.
-// It is synchronous — there is nothing to await.
-const { fstPath } = resolveWeights({ locale: "en-US" })
+const { fstPath } = await resolveWeights({ locale: "en-US" })
 
 // fstPath is optional: it is only set when the index file is actually present in the resolved
 // package, so a weights bundle without one gives you `undefined` rather than an error.
 if (!fstPath) throw new Error("no FST index in the resolved weights package — autocomplete is unavailable")
 
 // Deserialize once, at startup. The returned object IS the matcher — do not wrap it.
-const fst = deserializeFST(readFileSync(fstPath))
+const fst = deserializeFST(await readFile(fstPath))
 
 export function suggest(query) {
 	return autocomplete(fst, query, { maxSuggestions: 10, dedupeByName: true }).suggestions

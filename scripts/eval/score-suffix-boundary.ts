@@ -8,9 +8,9 @@
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { classifySuffixBoundaryStreet } from "@mailwoman/corpus/shard-recipes/street-affix"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { parseArgs } from "@mailwoman/platform/util"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { JSONSpliterator } from "spliterator"
 
@@ -142,7 +142,7 @@ export async function scoreSuffixBoundary(weightsCache: string): Promise<SuffixB
 }
 
 async function main(): Promise<void> {
-	const { values } = parseArgs({
+	const { values } = parseArguments({
 		options: {
 			"weights-cache": { type: "string" },
 			json: { type: "string" },

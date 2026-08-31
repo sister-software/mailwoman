@@ -15,18 +15,18 @@
  *   caller fetches each lexicon alongside the model and feeds it.
  */
 
-export * from "./anchor-inference.ts"
-export * from "./classifier.ts"
-export * from "./country-inference.ts"
-export * from "./gazetteer-inference.ts"
-export * from "./labels.ts"
+export * from "#anchor-inference"
+export * from "#classifier"
+export * from "#country-inference"
+export * from "#gazetteer-inference"
+export * from "#labels"
 // Resolution, not curation: the `browser` condition on this subpath serves a counterpart whose every
 // entry point throws, so the value exports below are safe to name from a bundle.
 export * from "#onnx-runner"
-export * from "./pair-index-resolver.ts"
-export * from "./postcode-binary-resolver.ts"
-export * from "./soft-features.ts"
-export * from "./tokenizer.ts"
+export * from "#pair-index-resolver"
+export * from "#postcode-binary-resolver"
+export * from "#soft-features"
+export * from "#tokenizer"
 // `./placetype-pair-prior.ts` is reached only through the classifier's decode, so callers need the
 // option shape and not the module. A `type` re-export is fully erased.
-export type { PlacetypePairPriorOpts, PlacetypePairPriorResult } from "./placetype-pair-prior.ts"
+export type { PlacetypePairPriorOpts, PlacetypePairPriorResult } from "#placetype-pair-prior"

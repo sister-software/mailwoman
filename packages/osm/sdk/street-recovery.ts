@@ -14,7 +14,7 @@
  */
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { spawn } from "@mailwoman/platform/child_process"
+import { spawnProcess } from "@mailwoman/core/process"
 import { haversineKm } from "@mailwoman/spatial"
 import { TextSpliterator } from "spliterator"
 
@@ -127,7 +127,7 @@ export async function buildStreetRecoveryIndex(pbfPath: string): Promise<StreetR
 		pbfPath,
 	]
 
-	const proc = spawn("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
+	const proc = spawnProcess("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
 	let stderr = ""
 
 	proc.stderr.on("data", (d: Buffer) => {

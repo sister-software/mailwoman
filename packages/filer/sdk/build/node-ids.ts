@@ -16,8 +16,8 @@
  *   non-ISO one matches nothing.
  */
 
-import { FilerIdentifierType } from "../../schema.ts"
-import { assertISODate } from "../guards.ts"
+import { FilerIdentifierType } from "#schema"
+import { assertISODate } from "#sdk/guards"
 
 /**
  * Mints the `frn:` node id, throwing when `frn` is blank — the same "malformed input is loud" discipline as

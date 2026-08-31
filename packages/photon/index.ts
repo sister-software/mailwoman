@@ -19,7 +19,7 @@
  *   `schema.ts`.
  */
 
-export * from "./app.ts"
-export * from "./engine.ts"
-export * from "./projection.ts"
-export * from "./schema.ts"
+export * from "#app"
+export * from "#engine"
+export * from "#projection"
+export * from "#schema"

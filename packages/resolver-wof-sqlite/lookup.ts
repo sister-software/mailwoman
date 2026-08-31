@@ -15,9 +15,9 @@ import { haversineKm } from "@mailwoman/spatial"
 import type { SQLInputValue } from "@mailwoman/sqlite/client"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { ancestorLineage } from "./ancestry.ts"
-import { candidateFromSearchRow, rankCandidates } from "./candidate-scoring.ts"
-import { loadCoincidentLocalities } from "./coincident-roles.ts"
+import { ancestorLineage } from "#ancestry"
+import { candidateFromSearchRow, rankCandidates } from "#candidate-scoring"
+import { loadCoincidentLocalities } from "#coincident-roles"
 import {
 	ADDRESS_CONVENTION_TABLE,
 	resolveConvention,
@@ -26,8 +26,7 @@ import {
 	type ConventionSource,
 	type ResolvedConvention,
 	type Strategy,
-} from "./convention.ts"
-import { normalizePlacetypes, sanitizeFTSQuery } from "./fts-query.ts"
+} from "#convention"
 import {
 	buildPlaceSearchFTS,
 	PLACE_BBOX_TABLE,
@@ -36,23 +35,24 @@ import {
 	placeBboxExists,
 	placePopulationExists,
 	placeSearchFTSExists,
-} from "./fts.ts"
-import { cfNormalize, softNameScore } from "./name-score.ts"
-import { encyclopedicClauses } from "./place-importance-schema.ts"
-import type { WOFPostalCityAliasLookup } from "./postal-city-alias-lookup.ts"
-import { DEFAULT_WEIGHTS, type RankingWeights } from "./ranking-weights.ts"
-import type { WOFDatabase } from "./schema.ts"
-import { fetchSearchRows, type RawSearchRow } from "./search-fetch.ts"
+} from "#fts"
+import { normalizePlacetypes, sanitizeFTSQuery } from "#fts-query"
+import { cfNormalize, softNameScore } from "#name-score"
+import { encyclopedicClauses } from "#place-importance-schema"
+import type { WOFPostalCityAliasLookup } from "#postal-city-alias-lookup"
+import { DEFAULT_WEIGHTS, type RankingWeights } from "#ranking-weights"
+import type { WOFDatabase } from "#schema"
+import { fetchSearchRows, type RawSearchRow } from "#search-fetch"
 import {
 	pickShardForPlacetype,
 	pickShardsForPlacetype,
 	resolveShards,
 	type ResolvedShard,
 	type ShardConfig,
-} from "./sharding.ts"
-import { SqliteConventionSource } from "./sqlite-convention-source.ts"
-import { allRows } from "./sqlite-utils.ts"
-import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.ts"
+} from "#sharding"
+import { SqliteConventionSource } from "#sqlite-convention-source"
+import { allRows } from "#sqlite-utils"
+import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#types"
 
 export interface WOFSQLitePlaceLookupOpts {
 	/**
@@ -857,4 +857,4 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 	}
 }
 
-export type { RankingWeights } from "./ranking-weights.ts"
+export type { RankingWeights } from "#ranking-weights"

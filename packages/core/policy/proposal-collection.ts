@@ -16,9 +16,9 @@
  *   Pure module: no resource imports, no top-level await. Safe to import from anywhere.
  */
 
-import type { Section } from "../types/classifier.ts"
-import type { ClassificationProposal, ClassifierContext, ProposalClassifier } from "../types/index.ts"
-import type { PolicyRegistry } from "./policy.ts"
+import type { PolicyRegistry } from "#policy/policy"
+import type { Section } from "#types/classifier"
+import type { ClassificationProposal, ClassifierContext, ProposalClassifier } from "#types/index"
 
 /**
  * Run every classifier against every section, concatenate the results.

@@ -22,10 +22,10 @@
  *   failure. The same applies to a chunk that exits cleanly having printed nothing.
  */
 
-import { spawn } from "@mailwoman/platform/child_process"
 import { TextSpliterator } from "spliterator"
 
-import { parseJSONStrict } from "../objects.ts"
+import { parseJSONStrict } from "#objects"
+import { spawnProcess } from "#process"
 
 export interface RunChunkProcessOptions {
 	/**
@@ -53,7 +53,7 @@ export interface RunChunkProcessOptions {
  */
 export async function runChunkProcess<T>(options: RunChunkProcessOptions): Promise<T> {
 	const stdout = await new Promise<string>((resolve, reject) => {
-		const child = spawn(process.execPath, [options.script, ...options.args], {
+		const child = spawnProcess(process.execPath, [options.script, ...options.args], {
 			stdio: ["ignore", "pipe", "inherit"],
 		})
 

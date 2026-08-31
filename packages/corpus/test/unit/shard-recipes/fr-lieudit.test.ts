@@ -9,13 +9,13 @@
  *   determinism under a fixed seed, and the `--country-fraction` append.
  */
 
+import { gzip } from "@mailwoman/core/fs/compression"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { frLieuditRecipe } from "@mailwoman/corpus/shard-recipes/fr-lieudit"
 import type { ShardRecipeOpts } from "@mailwoman/corpus/shard-recipes/scaffold"
-import { gzip } from "@mailwoman/platform/compression"
-import { join } from "@mailwoman/platform/path"
+import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 import type { ShardRow } from "#test-kit/shard-recipe"
@@ -32,7 +32,7 @@ function row(id: string, numero: string, street: string, postcode: string, commu
 }
 
 async function fixtureBanDir(files: Record<string, string[]>): Promise<string> {
-	const dir = fixtures.use(await temporaryDirectory("mw-fr-lieudit-")).path
+	const dir = resolvePath(fixtures.use(await temporaryDirectory("mw-fr-lieudit-")).path)
 
 	for (const [dept, rows] of Object.entries(files)) {
 		await writeLocalTextFile([HEADER, ...rows].join("\n") + "\n", join(dir, `adresses-${dept}.csv`))

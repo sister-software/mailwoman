@@ -26,9 +26,9 @@
  *   essential.
  */
 
-import type { BIOLabel, ComponentTag } from "../types/component.ts"
+import type { BIOLabel, ComponentTag } from "#types/component"
 
-export { type BIOLabel, type ComponentTag } from "../types/component.ts"
+export { type BIOLabel, type ComponentTag } from "#types/component"
 
 /**
  * A single token emitted by the model, paired with its predicted label and confidence.

@@ -33,9 +33,9 @@ import { globPaths } from "@mailwoman/core/fs/readers"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { pyFloat, pyJSONDumps, SeededRandom } from "@mailwoman/core/utils"
-import { dirname } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
+import { dirname } from "path-ts"
 import { CSVSpliterator, type CSVSpliteratorInit } from "spliterator"
 
 //#region CSV source
@@ -248,7 +248,7 @@ function toEvalRows(buckets: Map<string, Address[]>, country: string): Record<st
 
 //#endregion
 
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		country: { type: "string" },
 		zip: { type: "string" },

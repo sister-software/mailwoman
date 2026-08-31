@@ -18,9 +18,9 @@
  *   by the caller) — an undetected system parses exactly as before.
  */
 
-import { CODE_POSTAL_PATTERN } from "./fr/code-postal.ts"
-import { UK_POSTCODE_PATTERN } from "./gb/postcode.ts"
-import type { SystemCode } from "./postcode-systems.ts"
+import { CODE_POSTAL_PATTERN } from "#fr/code-postal"
+import { UK_POSTCODE_PATTERN } from "#gb/postcode"
+import type { SystemCode } from "#postcode-systems"
 
 export interface AddressSystemConventions {
 	/**

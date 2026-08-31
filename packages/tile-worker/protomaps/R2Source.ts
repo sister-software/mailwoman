@@ -7,7 +7,7 @@
 import { ResourceError } from "@mailwoman/core/errors"
 import { EtagMismatch, type RangeResponse, type Source } from "pmtiles"
 
-import { assertR2KeyMatch, assertR2ObjectBody } from "../storage.ts"
+import { assertR2KeyMatch, assertR2ObjectBody } from "#storage"
 
 export interface R2SourceConfig {
 	bucket: R2Bucket

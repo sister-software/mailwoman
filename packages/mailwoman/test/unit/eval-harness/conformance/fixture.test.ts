@@ -14,7 +14,6 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
 import {
 	CONFORMANCE_RELATIONS,
 	type ConformanceFixture,
@@ -23,6 +22,7 @@ import {
 	parseConformanceFixture,
 	RELATIONS_BY_COMPARATOR,
 } from "mailwoman/eval-harness/conformance/fixture"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 /**

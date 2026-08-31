@@ -16,7 +16,7 @@
 import { Fragment, type ReactNode } from "react"
 import { Layer, Source } from "react-map-gl/maplibre"
 
-import type { OverlaySpec } from "./types.ts"
+import type { OverlaySpec } from "#map/types"
 
 export interface OverlayLayersProps {
 	/**

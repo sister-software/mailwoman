@@ -18,7 +18,7 @@
  *   against a pane width without owning any of the vocabulary.
  */
 
-import type { GeocodeTrace } from "../geocode-session.ts"
+import type { GeocodeTrace } from "#geocode-session"
 
 //#region Shared
 

@@ -10,8 +10,7 @@ import { haversineKm, jaccard, type LatLon } from "@mailwoman/match"
 import { latLngToCell } from "h3-js"
 
 import type { SourceRecord } from "#index"
-
-import { ORG_TAU, type NPIPrimary } from "./org-name.ts"
+import { ORG_TAU, type NPIPrimary } from "#tools/nppes/org-name"
 
 /**
  * Same-building distance for the coordinate grain — the `DEFAULT_DISTANCE_LEVELS` grain.

@@ -62,18 +62,18 @@ import { recoverShortCellResolution, shortCellToInt, type H3Cell } from "@mailwo
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent, latLngToCell } from "h3-js"
 
-import { pointInEncodedRings } from "./rings.ts"
-import type { ZoningDatabase } from "./schema.ts"
-import { ZoningCellContainment } from "./schema.ts"
+import { pointInEncodedRings } from "#rings"
+import type { ZoningDatabase } from "#schema"
+import { ZoningCellContainment } from "#schema"
 import {
 	GZT_COVERAGE_LIMIT,
 	GZT_CROSSWALK_SCHEME,
 	GZT_LAYER_NAME,
 	GZT_PRODUCT_LIMITS,
 	GZT_UNZONED_LOCAL_CODE,
-} from "./vocabulary.ts"
+} from "#vocabulary"
 
-export { GZT_LAYER_NAME, ProvenanceGrade } from "./vocabulary.ts"
+export { GZT_LAYER_NAME, ProvenanceGrade } from "#vocabulary"
 
 /**
  * What the layer can say about a coordinate.

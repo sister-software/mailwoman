@@ -48,11 +48,12 @@
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { resolve } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { resolvePath } from "path-ts"
 
-import type { CategoryRecord, POICategoryID, POITaxonomyTable, SynonymEntry } from "../types.ts"
+import type { CategoryRecord, POICategoryID, POITaxonomyTable, SynonymEntry } from "#types"
 
 /**
  * The Overture schema release the committed `overture-categories.csv` snapshot was taken from.
@@ -190,12 +191,12 @@ export function buildTaxonomyTable(snapshot: OvertureSnapshotRow[], overlay: Cur
  * `@mailwoman/core` would add an undeclared dependency to this zero-runtime-dep package).
  */
 export function taxonomyPaths() {
-	const dataDir = resolve(import.meta.dirname, "../data")
+	const dataDir = resolvePackagePath("@mailwoman/poi-taxonomy", "data")
 
 	return {
-		csv: resolve(dataDir, "overture-categories.csv"),
-		overlay: resolve(dataDir, "curated-overlay.json"),
-		out: resolve(dataDir, "taxonomy.json"),
+		csv: resolvePath(dataDir, "overture-categories.csv"),
+		overlay: resolvePath(dataDir, "curated-overlay.json"),
+		out: resolvePath(dataDir, "taxonomy.json"),
 	}
 }
 
@@ -211,7 +212,7 @@ export async function generateTaxonomyTable(): Promise<POITaxonomyTable> {
 }
 
 async function main(): Promise<void> {
-	const { values } = parseArgs({ options: { fetch: { type: "boolean", default: false } } })
+	const { values } = parseArguments({ options: { fetch: { type: "boolean", default: false } } })
 	const paths = taxonomyPaths()
 
 	if (values.fetch) {

@@ -9,8 +9,8 @@
 import type { ScorerOverrides } from "@mailwoman/neural/scorer"
 import { createWOFResolver } from "@mailwoman/resolver"
 
-import { buildLocalityMatcher } from "./admin-match.ts"
-import type { OAResolverEvalOptions } from "./options.ts"
+import { buildLocalityMatcher } from "#eval-harness/oa-resolver/admin-match"
+import type { OAResolverEvalOptions } from "#eval-harness/oa-resolver/options"
 
 /**
  * Assemble the scorer, the gazetteer-backed resolver and the per-call option bags one run parses and resolves every row

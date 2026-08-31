@@ -27,12 +27,12 @@
  *   matter; it is not needed to test whether a warm engine changes which panel gets measured.
  */
 
-import { createHash } from "@mailwoman/platform/crypto"
+import { sha256Hex } from "@mailwoman/core/utils/hash"
 import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
 import { createGeocodeSession, type GeocodeSession, type GeocodeSessionOptions } from "mailwoman/geocode-session"
 
-import { missingWeightsCacheArtifacts } from "./gate-report.ts"
-import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "./tree-fingerprint.ts"
+import { missingWeightsCacheArtifacts } from "#gate-report"
+import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "#tree-fingerprint"
 
 /**
  * Every lever a caller can set, in the CLI's own vocabulary.
@@ -212,8 +212,8 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
  * @throws When the root is wrong-shaped (no binaries) or under-staged (binaries present, but siblings its own card
  *   declares are missing — the #1516 shape, which degrades a channel silently and reads as a model regression).
  */
-export function assertWeightsCacheStaged(cacheRoot: string, locale = "en-us"): void {
-	const { kind, paths } = missingWeightsCacheArtifacts(cacheRoot, locale)
+export async function assertWeightsCacheStaged(cacheRoot: string, locale = "en-us"): Promise<void> {
+	const { kind, paths } = await missingWeightsCacheArtifacts(cacheRoot, locale)
 
 	if (kind === "ok") return
 
@@ -233,7 +233,7 @@ export function engineID(effective: EffectiveConfig, fingerprint: TreeFingerprin
 		Object.fromEntries(Object.entries(effective).toSorted(([a], [b]) => a.localeCompare(b)))
 	)
 
-	return createHash("sha256").update(`${canonical}\n${fingerprint.digest}`).digest("hex").slice(0, 16)
+	return sha256Hex(`${canonical}\n${fingerprint.digest}`).slice(0, 16)
 }
 
 export interface Engine {
@@ -283,10 +283,16 @@ export interface EngineSummary {
 export interface EngineRegistryLike {
 	readonly repoRoot: string
 	readonly bootFingerprint: TreeFingerprint
-	readonly sourceMoved: boolean
 	readonly size: number
 	readonly maxResident: number
-	fingerprint(): TreeFingerprint
+	/**
+	 * Whether the working tree has moved since this process imported its modules.
+	 */
+	sourceMoved(): Promise<boolean>
+	/**
+	 * The working tree's fingerprint RIGHT NOW — recomputed on every call, never cached.
+	 */
+	fingerprint(): Promise<TreeFingerprint>
 	acquire(config: EngineConfig): Promise<Engine>
 	evict(id: string): boolean
 	evictAll(): number
@@ -299,14 +305,20 @@ export class EngineRegistry implements EngineRegistryLike {
 	readonly #repoRoot: string
 	readonly #bootFingerprint: TreeFingerprint
 
-	constructor(repoRoot: string, maxResident = 2) {
+	/**
+	 * Compute the boot fingerprint, then construct. The boot fingerprint is the tree the PROCESS imported — not the tree
+	 * any individual engine was built from. Those differ after a reload, and the difference is required: a registry with
+	 * no resident engine has nothing stale to compare against, so without this the first call after a reload builds and
+	 * stamps the NEW fingerprint onto answers produced by the OLD modules.
+	 */
+	static async create(repoRoot: string, maxResident = 2): Promise<EngineRegistry> {
+		return new EngineRegistry(repoRoot, maxResident, await computeTreeFingerprint(repoRoot))
+	}
+
+	constructor(repoRoot: string, maxResident: number, bootFingerprint: TreeFingerprint) {
 		this.#repoRoot = repoRoot
 		this.#maxResident = maxResident
-		// Captured once, at construction, because this is the tree the PROCESS imported — not the tree any
-		// individual engine was built from. Those differ after a reload, and the difference is required: a
-		// registry with no resident engine has nothing stale to compare against, so without this the first call
-		// after a reload builds and stamps the NEW fingerprint onto answers produced by the OLD modules.
-		this.#bootFingerprint = computeTreeFingerprint(repoRoot)
+		this.#bootFingerprint = bootFingerprint
 	}
 
 	get repoRoot(): string {
@@ -325,11 +337,11 @@ export class EngineRegistry implements EngineRegistryLike {
 	 * Whether the working tree has moved since this process imported its modules. When true, every engine — resident or
 	 * not yet built — can only serve the old code, and no in-process action can change that.
 	 */
-	get sourceMoved(): boolean {
-		return this.fingerprint().digest !== this.#bootFingerprint.digest
+	async sourceMoved(): Promise<boolean> {
+		return (await this.fingerprint()).digest !== this.#bootFingerprint.digest
 	}
 
-	fingerprint(): TreeFingerprint {
+	fingerprint(): Promise<TreeFingerprint> {
 		return computeTreeFingerprint(this.#repoRoot)
 	}
 
@@ -341,7 +353,7 @@ export class EngineRegistry implements EngineRegistryLike {
 	 *   whole surface exists to prevent.
 	 */
 	async acquire(config: EngineConfig): Promise<Engine> {
-		const current = this.fingerprint()
+		const current = await this.fingerprint()
 		const effective = resolveConfig(config)
 		const id = engineID(effective, current)
 		const existing = this.#engines.get(id)
@@ -365,7 +377,7 @@ export class EngineRegistry implements EngineRegistryLike {
 		// After the stale-tree refusal (a moved tree invalidates every answer, candidate or not) and before the build,
 		// so a mis-staged candidate costs a stat rather than a construction.
 		if (effective.weightsCacheRoot) {
-			assertWeightsCacheStaged(effective.weightsCacheRoot, effective.locale)
+			await assertWeightsCacheStaged(effective.weightsCacheRoot, effective.locale)
 		}
 
 		const startedAt = Date.now()

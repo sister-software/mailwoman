@@ -10,8 +10,8 @@
 
 import { z } from "zod"
 
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
-import { runVocabulary } from "../vocabulary.ts"
+import type { DevTool, DevToolDeps } from "#tool-kit"
+import { runVocabulary } from "#vocabulary"
 
 export const vocabTool = (_deps: DevToolDeps): DevTool => ({
 	name: "mwdev_vocab",

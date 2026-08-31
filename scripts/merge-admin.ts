@@ -19,7 +19,7 @@
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { $ } from "zx"
 
 /**
@@ -33,7 +33,7 @@ const BOARD_PIN_PATHS = [
 ]
 
 async function mergeAdmin(): Promise<void> {
-	const { values, positionals } = parseArgs({
+	const { values, positionals } = parseArguments({
 		allowPositionals: true,
 		options: {
 			method: { type: "string", default: "merge" },

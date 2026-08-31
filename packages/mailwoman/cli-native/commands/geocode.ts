@@ -8,9 +8,9 @@
 
 import type { PipelineTiming } from "@mailwoman/core/pipeline"
 
-import type { GeocodeCommandOptions } from "../../geocode-command-options.ts"
-import type { GeocodeResult } from "../../geocode-result.ts"
-import { CLIUsageError, type CommandSpec, parseCommand, renderCommandHelp } from "../spec.ts"
+import { CLIUsageError, type CommandSpec, parseCommand, renderCommandHelp } from "#cli-native/spec"
+import type { GeocodeCommandOptions } from "#geocode-command-options"
+import type { GeocodeResult } from "#geocode-result"
 
 const localePattern = /^[a-z]{2}(-[A-Z]{2})?$/u
 const debugSizePattern = /^\d+x\d+$/u
@@ -374,7 +374,7 @@ async function runStdin(options: GeocodeOptions): Promise<void> {
 		throw new CLIUsageError("--stdin emits one record per line; use --json or --jsonld, not --text.")
 	}
 
-	const { createInterface } = await import("@mailwoman/platform/readline")
+	const { createInterface } = await import("node:readline")
 	const session = await openSession(options)
 	let index = 0
 
@@ -419,7 +419,7 @@ export async function run(args: readonly string[]): Promise<number> {
 			import("ink"),
 			import("react"),
 			// TODO: Do not use dynamic relative imports.
-			import("../../debug-view/command.tsx"),
+			import("#debug-view/command"),
 		])
 
 		const instance = render(createElement(GeocodeDebugCommand, { input, options }))

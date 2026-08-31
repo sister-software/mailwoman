@@ -61,10 +61,9 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { finished, openWriteStream } from "@mailwoman/core/fs/streams"
 import { dataRootPath, pyFloat, pyRound } from "@mailwoman/core/utils"
-import { once } from "@mailwoman/platform/events"
-import { finished } from "@mailwoman/platform/stream/promises"
+import { once } from "@mailwoman/core/utils/events"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TSVSpliterator } from "spliterator"

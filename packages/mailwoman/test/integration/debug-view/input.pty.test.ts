@@ -22,9 +22,9 @@
  *   PATH, exactly like `map-tui/cli.pty.test.ts`, which this harness is modelled on.
  */
 
-import { isExecutableSync } from "@mailwoman/core/fs/readers-sync"
-import { spawn } from "@mailwoman/platform/child_process"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { isExecutable } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { spawnProcess } from "@mailwoman/core/process"
 import { describe, expect, it } from "vitest"
 
 const ESC = "\u001B"
@@ -39,7 +39,7 @@ const META_BACKSPACE = `${ESC}\u007F`
  */
 const CTRL_W = "\u0017"
 
-const PROBE = fileURLToPath(new URL("../../../debug-view/test/input-probe.ts", import.meta.url))
+const PROBE = resolvePackagePath("mailwoman", "debug-view", "test", "input-probe.ts")
 
 const PTY_COLUMNS = 100
 const PTY_ROWS = 30
@@ -48,11 +48,13 @@ const READY_TIMEOUT_MS = 20_000
 const KEYSTROKE_GAP_MS = 250
 const TEST_TIMEOUT_MS = 60_000
 
-function hasLinuxScript(): boolean {
+async function hasLinuxScript(): Promise<boolean> {
 	if (process.platform !== "linux") return false
 
-	return isExecutableSync("/usr/bin/script")
+	return await isExecutable("/usr/bin/script")
 }
+
+const HAS_LINUX_SCRIPT = await hasLinuxScript()
 
 function delay(ms: number): Promise<void> {
 	return new Promise((resolve) => {
@@ -65,7 +67,7 @@ function delay(ms: number): Promise<void> {
  */
 async function driveInput(keys: string[]): Promise<string> {
 	const command = [`stty cols ${PTY_COLUMNS} rows ${PTY_ROWS}`, `node '${PROBE}'`].join("; ")
-	const child = spawn("script", ["-q", "-e", "-c", command, "/dev/null"], { stdio: ["pipe", "pipe", "pipe"] })
+	const child = spawnProcess("script", ["-q", "-e", "-c", command, "/dev/null"], { stdio: ["pipe", "pipe", "pipe"] })
 
 	let output = ""
 
@@ -111,7 +113,7 @@ function valueSamples(output: string): string[] {
 	return output.replaceAll(/\u001B\[[\d;?]*[a-zA-Z]/gu, "").match(/VALUE=\[[^\]]*\]/gu) ?? []
 }
 
-describe.skipIf(!hasLinuxScript())("debug-view input field (pty)", () => {
+describe.skipIf(!HAS_LINUX_SCRIPT)("debug-view input field (pty)", () => {
 	it(
 		"deletes the word before the cursor on meta+backspace and on ctrl+W, inserting nothing",
 		async () => {

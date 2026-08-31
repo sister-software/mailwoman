@@ -41,12 +41,16 @@
 // standalone on purpose (node builtins only, no monorepo install), so the PRNG and haversine are
 // local copies of the shared implementations.
 
-import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { spawn } from "@mailwoman/platform/child_process"
-import { dirname, join } from "@mailwoman/platform/path"
-import { fileURLToPath } from "@mailwoman/platform/url"
-import { parseArgs } from "@mailwoman/platform/util"
+// oxlint-disable-next-line typescript/no-restricted-imports -- standalone script (node builtins only, no monorepo install)
+import { spawn } from "node:child_process"
+// oxlint-disable-next-line typescript/no-restricted-imports -- standalone script (node builtins only, no monorepo install)
+import { mkdir, readFile, writeFile } from "node:fs/promises"
+// oxlint-disable-next-line typescript/no-restricted-imports -- standalone script (node builtins only, no monorepo install)
+import { dirname, join } from "node:path"
+// oxlint-disable-next-line typescript/no-restricted-imports -- standalone script (node builtins only, no monorepo install)
+import { fileURLToPath } from "node:url"
+// oxlint-disable-next-line typescript/no-restricted-imports -- standalone script (node builtins only, no monorepo install)
+import { parseArgs } from "node:util"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 
@@ -96,9 +100,9 @@ function mulberry32(a) {
 	}
 }
 
-function readJSONL(path) {
+async function readJSONL(path) {
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- standalone script; the committed panel is small and bounded
-	const rawLines = readLocalTextFileSync(path).trim().split("\n")
+	const rawLines = (await readFile(path, "utf8")).trim().split("\n")
 
 	// oxlint-disable-next-line no-restricted-properties -- standalone script (no monorepo install); a throw on a corrupt committed file is the contract
 	return rawLines.map((l) => JSON.parse(l))
@@ -108,8 +112,8 @@ const isHit = (d, t) => typeof d === "number" && d <= t
 
 //#region Score mode — recompute the record's tables
 
-function score() {
-	const rows = readJSONL(flags.results)
+async function score() {
+	const rows = await readJSONL(flags.results)
 	const lanes = [...new Set(rows.map((r) => r.locale))].toSorted()
 	const lines = []
 
@@ -315,7 +319,7 @@ async function run() {
 		process.exit(1)
 	}
 
-	const rows = readJSONL(flags.panel)
+	const rows = await readJSONL(flags.panel)
 	const results = new Array(rows.length)
 	const concurrency = Number(flags.concurrency)
 	let cursor = 0
@@ -360,7 +364,9 @@ async function run() {
 
 	await Promise.all(Array.from({ length: concurrency }, () => worker()))
 
-	await writeLocalTextFile(results.map((r) => JSON.stringify(r)).join("\n") + "\n", flags.out)
+	// The writers helper this replaced created the parent directory first — keep that contract.
+	await mkdir(dirname(flags.out), { recursive: true })
+	await writeFile(flags.out, results.map((r) => JSON.stringify(r)).join("\n") + "\n")
 
 	process.stderr.write(
 		`wrote ${rows.length} rows -> ${flags.out}\nscore them: node open-truth-three-arm.mjs --results ${flags.out}\n`
@@ -369,8 +375,4 @@ async function run() {
 
 //#endregion
 
-if (flags.run) {
-	await run()
-} else {
-	score()
-}
+await (flags.run ? run() : score())

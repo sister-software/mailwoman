@@ -39,8 +39,7 @@ import { mulberry32 } from "@mailwoman/core/utils"
 
 import type { CanonicalRow, LabeledRow, QuarantinedRow } from "#types"
 import { alignRow, assertSpanInvariants, type ComponentSpan } from "#utils/align"
-
-import { whitespaceTokenizer, type Tokenizer } from "../utils/tokenize.ts"
+import { whitespaceTokenizer, type Tokenizer } from "#utils/tokenize"
 
 /**
  * An augmentation transforms a single row. Return `null` if the augmentation doesn't apply (e.g. accent-strip on a row

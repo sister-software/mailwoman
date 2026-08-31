@@ -25,18 +25,9 @@ const DIRECTORY_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: 
 	["@mailwoman/cartographer", "base"],
 	["@mailwoman/cartographer", "styles"],
 	["@mailwoman/cartographer", "coverage"],
-	...[
-		"decoder",
-		"classification",
-		"tokenization",
-		"parser",
-		"solver",
-		"formatter",
-		"types",
-		"resources",
-		"pipeline",
-		"errors",
-	].map((subpath) => ["@mailwoman/core", subpath] as const),
+	...["decoder", "tokenization", "types", "resources", "pipeline"].map(
+		(subpath) => ["@mailwoman/core", subpath] as const
+	),
 ]
 
 const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: string]> = [
@@ -45,7 +36,6 @@ const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: strin
 	),
 	["@mailwoman/neural", "web-loader"],
 	["@mailwoman/core", "objects"],
-	["@mailwoman/core", "environment/load"],
 	["@mailwoman/core", "kysley/dialect"],
 	["@mailwoman/resolver", "span-rescore"],
 	["@mailwoman/resolver", "resolve"],
@@ -80,6 +70,8 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 	for (const [packageName, subpath] of FILE_SUBPATHS) {
 		setAlias(`${packageName}/${subpath}`, await resolvePackageFile(packageName, subpath))
 	}
+
+	setAlias("@mailwoman/core/errors", await resolvePackageFile("@mailwoman/core", "errors/schema"))
 
 	for (const [packageName, subpath] of DIRECTORY_SUBPATHS) {
 		setAlias(`${packageName}/${subpath}`, await resolvePackageDirectoryEntry(packageName, subpath))

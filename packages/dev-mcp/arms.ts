@@ -18,11 +18,11 @@
 
 import { z } from "zod"
 
-import type { EngineConfig } from "./engine-registry.ts"
-import { type ExternalAnswer, ExternalEngine } from "./external-arm.ts"
-import { OracleProviderName } from "./oracle-arm.ts"
-import { ENGINE_CONFIG_SCHEMA } from "./tool-kit.ts"
-import { WORKING_TREE_REF } from "./worktree-arm.ts"
+import type { EngineConfig } from "#engine-registry"
+import { type ExternalAnswer, ExternalEngine } from "#external-arm"
+import { OracleProviderName } from "#oracle-arm"
+import { ENGINE_CONFIG_SCHEMA } from "#tool-kit"
+import { WORKING_TREE_REF } from "#worktree-arm"
 
 /**
  * How one arm answers one raw query string, whichever kind of arm it is.

@@ -35,16 +35,9 @@ import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "#adapters/utils"
+import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "#shard-recipes/scaffold"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
-
-import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "./scaffold.ts"
-
-/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
-   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
-   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
-   extracted as named constants above. */
 
 const SOURCE = { zip: dataRootPath("oa-cache", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }
 
@@ -125,6 +118,12 @@ function renderCanonical(
 	return { raw, components: { house_number: hn, street, postcode, locality } }
 }
 
+// Reversed layouts, a quarter each: A postcode+city then HN+street; B city, postcode, HN+street; C run-together;
+// D postcode, HN+street, city.
+const REVERSED_VARIANT_A_CUTOFF = 0.25
+const REVERSED_VARIANT_B_CUTOFF = 0.5
+const REVERSED_VARIANT_C_CUTOFF = 0.75
+
 /**
  * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
  * and `description` below for the surface form it generates.
@@ -176,13 +175,13 @@ export const frOrderRecipe: ShardRecipe = {
 				const variantRoll = random()
 				let raw: string
 
-				if (variantRoll < 0.25) {
+				if (variantRoll < REVERSED_VARIANT_A_CUTOFF) {
 					// Variant A: postcode+city as a unit, then HN+street
 					raw = `${postcode} ${locality}, ${house_number} ${street}`
-				} else if (variantRoll < 0.5) {
+				} else if (variantRoll < REVERSED_VARIANT_B_CUTOFF) {
 					// Variant B: city, then postcode, then HN+street (comma-separated, postcode isolated)
 					raw = `${locality}, ${postcode}, ${house_number} ${street}`
-				} else if (variantRoll < 0.75) {
+				} else if (variantRoll < REVERSED_VARIANT_C_CUTOFF) {
 					// Variant C: no commas — locality HN street postcode (the "run-together" format)
 					raw = `${locality} ${house_number} ${street} ${postcode}`
 				} else {

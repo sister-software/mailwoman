@@ -11,7 +11,7 @@
 
 import { useCallback, useState } from "react"
 
-import type { ParseResult, PipelineRuntime, ResolvedPlaceView } from "./types.ts"
+import type { ParseResult, PipelineRuntime, ResolvedPlaceView } from "#pipeline/types"
 
 export interface UseParsePipelineOptions {
 	runtime: PipelineRuntime

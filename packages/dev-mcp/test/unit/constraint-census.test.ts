@@ -13,7 +13,7 @@
 import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
 import { describe, expect, it } from "vitest"
 
-import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
+import { stubEngine, stubEngineRegistry } from "#test/stub-registry"
 
 interface FakeLookup {
 	tag: string

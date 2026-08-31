@@ -25,11 +25,10 @@
  *   `arbitrate` shape — not to grade the quality of the coverage it finds.
  */
 
-import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
-import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { isDirectory, pathExists, readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
-import { describe, expect, it } from "vitest"
+import { join } from "path-ts"
+import { beforeAll, describe, expect, it } from "vitest"
 
 const REGISTER = String(repoRootPath("docs", "engineering", "reference", "runtime-flags.mdx"))
 
@@ -68,7 +67,7 @@ async function testFilesUnder(directory: string, found: string[] = []): Promise<
 
 		const full = join(directory, entry)
 
-		if ((await statPath(full)).isDirectory()) {
+		if (await isDirectory(full)) {
 			await testFilesUnder(full, found)
 		} else if (/\.test\.tsx?$/.test(entry)) {
 			found.push(full)
@@ -79,8 +78,11 @@ async function testFilesUnder(directory: string, found: string[] = []): Promise<
 }
 
 describe("runtime-flag register", () => {
-	const markdown = readLocalTextFileSync(REGISTER)
-	const flags = registerFlags(markdown)
+	let flags: string[]
+
+	beforeAll(async () => {
+		flags = registerFlags(await readLocalTextFile(REGISTER))
+	})
 
 	it("parses a plausible number of flags out of the register", () => {
 		// A parser that silently matched nothing would make every assertion below vacuously true.
@@ -88,7 +90,9 @@ describe("runtime-flag register", () => {
 	})
 
 	it("every registered flag is touched by at least one test — removal or missing coverage, never neither", async () => {
-		const corpus = (await testFilesUnder(String(repoRootPath("packages")))).map((path) => readLocalTextFileSync(path))
+		const corpus = await Promise.all(
+			(await testFilesUnder(String(repoRootPath("packages")))).map((path) => readLocalTextFile(path))
+		)
 
 		const uncovered = flags.filter((flag) => {
 			const pattern = new RegExp(`\\b${flag}\\b`)
@@ -107,7 +111,9 @@ describe("runtime-flag register", () => {
 	})
 
 	it("the allowlist carries no flag that has since gained coverage, or left the register", async () => {
-		const corpus = (await testFilesUnder(String(repoRootPath("packages")))).map((path) => readLocalTextFileSync(path))
+		const corpus = await Promise.all(
+			(await testFilesUnder(String(repoRootPath("packages")))).map((path) => readLocalTextFile(path))
+		)
 
 		for (const flag of Object.keys(UNCOVERED_ALLOWLIST)) {
 			const covered = corpus.some((source) => new RegExp(`\\b${flag}\\b`).test(source))

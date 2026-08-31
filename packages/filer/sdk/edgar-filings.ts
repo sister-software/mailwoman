@@ -45,7 +45,7 @@ import { nameSimilarity } from "@mailwoman/match"
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 import type { Tagged } from "type-fest"
 
-import type { SECDocumentClient } from "./exhibit21.ts"
+import type { SECDocumentClient } from "#sdk/exhibit21"
 
 /**
  * SEC EDGAR's Central Index Key: always a zero-padded 10-digit string. Branded over `string`, mirroring

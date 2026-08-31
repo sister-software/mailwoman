@@ -34,8 +34,8 @@
  *   decision about one registrant's identity is a stronger signal than a name score.
  */
 
-import type { EdgarSubsidiaryRow } from "./build-filer.ts"
-import { corroborateCIK, type CIKCorroborationOptions } from "./cik-corroboration.ts"
+import type { EdgarSubsidiaryRow } from "#sdk/build-filer"
+import { corroborateCIK, type CIKCorroborationOptions } from "#sdk/cik-corroboration"
 import {
 	fetchExhibit21Documents,
 	parseTenKFilings,
@@ -43,8 +43,8 @@ import {
 	type CIK,
 	type CompanyTickerEntry,
 	type TenKFiling,
-} from "./edgar-filings.ts"
-import { parseExhibit21 } from "./exhibit21.ts"
+} from "#sdk/edgar-filings"
+import { parseExhibit21 } from "#sdk/exhibit21"
 
 /**
  * The slice of `SECClient` this module needs — JSON reads plus raw document reads. A real `createSECClient()` satisfies

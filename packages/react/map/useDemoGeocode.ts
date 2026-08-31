@@ -20,10 +20,10 @@
 
 import { useMemo } from "react"
 
-import type { PipelineRuntime } from "../pipeline/types.ts"
-import { useParsePipeline, type UseParsePipeline } from "../pipeline/useParsePipeline.ts"
-import type { ResolvedMapPlace } from "./place-render.ts"
-import type { DemoRuntime, MapBias } from "./types.ts"
+import type { ResolvedMapPlace } from "#map/place-render"
+import type { DemoRuntime, MapBias } from "#map/types"
+import type { PipelineRuntime } from "#pipeline/types"
+import { useParsePipeline, type UseParsePipeline } from "#pipeline/useParsePipeline"
 
 export interface UseDemoGeocodeOptions {
 	/**

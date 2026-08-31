@@ -21,7 +21,7 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { JSONSpliterator } from "spliterator"
 
-import type { ParityFixture } from "../dev-tools/convert-parity-fixtures.run.ts"
+import type { ParityFixture } from "#dev-tools/convert-parity-fixtures.run"
 
 /**
  * Default gate corpus. RATIFIED 2026-07-13 to the triaged set (321 live / 55 tombstones): the 22 rules-era no-solution
@@ -147,7 +147,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		// `fst-street-morphology.bin`, degrading to the per-process dictionary build this site used to
 		// inline (with a cwd-relative dictionaries path, no less).
 		const { loadStreetMorphologyFST } = await import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader")
-		const loaded = loadStreetMorphologyFST({ onWarn: (message) => console.warn(message) })
+		const loaded = await loadStreetMorphologyFST({ onWarn: (message) => console.warn(message) })
 		fstStreetMorphology = loaded.matcher
 
 		console.log(

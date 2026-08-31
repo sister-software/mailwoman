@@ -7,10 +7,10 @@
 import { layers } from "@protomaps/basemaps"
 import type { LayerSpecification } from "maplibre-gl"
 
-import { MailwomanBaseFlavor, MailwomanBaseTileSetID } from "../base/theme.ts"
-import { LayerID } from "../styles/layers.ts"
-import { BuildingLayers } from "./buildings.ts"
-import { HillshadeTileSetID } from "./terrain.ts"
+import { BuildingLayers } from "#base/buildings"
+import { HillshadeTileSetID } from "#base/terrain"
+import { MailwomanBaseFlavor, MailwomanBaseTileSetID } from "#base/theme"
+import { LayerID } from "#styles/layers"
 
 /**
  * Layer id for the hillshade raster, referenced by style definitions that draw terrain beneath the base map.

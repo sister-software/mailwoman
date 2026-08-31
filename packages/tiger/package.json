@@ -42,6 +42,11 @@
 			"node": "./index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
+		},
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
 		}
 	},
 	"exports": {
@@ -75,12 +80,12 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
-		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"@turf/boolean-contains": "^7.3.5",
 		"kysely": "^0.29.4",
-		"spliterator": "^6.3.1",
+		"path-ts": "^2.3.0",
+		"spliterator": "^6.4.1",
 		"type-fest": "^5.8.0"
 	},
 	"devDependencies": {

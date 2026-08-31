@@ -23,8 +23,7 @@
  *   middle of someone else's build.
  */
 
-import { pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, readLinkSync, statLinkSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readLink, readLocalJSONFile, statLink, statPath } from "@mailwoman/core/fs/readers"
 
 interface ArtifactState {
 	name: string
@@ -73,13 +72,13 @@ export interface ProvenanceReport {
 	notes: string[]
 }
 
-function artifactState(name: string, path: string): ArtifactState {
-	if (!pathExistsSync(path)) {
+async function artifactState(name: string, path: string): Promise<ArtifactState> {
+	if (!(await pathExists(path))) {
 		return { name, path, exists: false, bytes: null, modified: null, linkTarget: null, sealed: null }
 	}
 
-	const link = statLinkSync(path)
-	const stat = statPathSync(path)
+	const link = await statLink(path)
+	const stat = await statPath(path)
 
 	return {
 		name,
@@ -87,7 +86,7 @@ function artifactState(name: string, path: string): ArtifactState {
 		exists: true,
 		bytes: stat.size,
 		modified: stat.mtime.toISOString(),
-		linkTarget: link.isSymbolicLink() ? readLinkSync(path) : null,
+		linkTarget: link.isSymbolicLink() ? await readLink(path) : null,
 		// The house convention seals a finished database 0444. Owner-write means it is not finished.
 		sealed: (stat.mode & 0o200) === 0,
 	}
@@ -123,8 +122,8 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 	]
 
 	const artifacts = [
-		...standard.map(([name, path]) => artifactState(name, path)),
-		...(options.extra ?? []).map((path) => artifactState("extra", path)),
+		...(await Promise.all(standard.map(async ([name, path]) => artifactState(name, path)))),
+		...(await Promise.all((options.extra ?? []).map(async (path) => artifactState("extra", path)))),
 	]
 
 	const reposStampPath = String(dataRootPath("wof", "repos-vintage.json"))

@@ -27,6 +27,13 @@
 		"directory": "packages/geocode-oracle"
 	},
 	"type": "module",
+	"imports": {
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		"./sdk": {
@@ -83,13 +90,13 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/formatter": "workspace:*",
-		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/tiger": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": ">=26.1.2"
+		"@types/node": ">=26.1.2",
+		"path-ts": "^2.3.0"
 	},
 	"engines": {
 		"node": ">=24.18.0"

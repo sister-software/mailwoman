@@ -13,12 +13,12 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildRegressionDB } from "mailwoman/eval-harness/gauntlet/build-regression-db"
 import { loadRegressionCases } from "mailwoman/eval-harness/gauntlet/cases/load"
 import { assertCorpusStampFresh, readCorpusStamp } from "mailwoman/eval-harness/gauntlet/corpus-stamp"
 import { createGauntletTable, type GauntletDatabase } from "mailwoman/eval-harness/gauntlet/schema"
+import { join } from "path-ts"
 import { afterAll, afterEach, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -49,7 +49,7 @@ function row(id: string, input: string): string {
  * Write a throwaway corpus tree (one `xx/regression.jsonl`) and return its root.
  */
 async function scratchCorpus(...rows: string[]): Promise<string> {
-	const root = fixtures.use(await temporaryDirectory("gauntlet-stamp-")).path
+	const root = fixtures.use(await temporaryDirectory("gauntlet-stamp-")).path.toString()
 
 	await makeDirectories(join(root, "xx"))
 	await writeLocalTextFile(`${rows.join("\n")}\n`, join(root, "xx", "regression.jsonl"))
@@ -134,7 +134,7 @@ describe("the build stamp", () => {
 describe("the emptiness guard", () => {
 	it("refuses to build from a corpus directory with no country dirs", async () => {
 		await using emptyDirectory = await temporaryDirectory("gauntlet-empty-")
-		const empty = emptyDirectory.path
+		const empty = emptyDirectory.path.toString()
 
 		await expect(buildRegressionDB({ casesDir: empty, output: await scratchDB() })).rejects.toThrow(
 			/resolved ZERO cases[\s\S]*refusing to build an empty regression\.db/
@@ -143,7 +143,7 @@ describe("the emptiness guard", () => {
 
 	it("names the directory it read, so the diagnosis is not a guess", async () => {
 		await using emptyDirectory = await temporaryDirectory("gauntlet-empty-")
-		const empty = emptyDirectory.path
+		const empty = emptyDirectory.path.toString()
 
 		const error = await buildRegressionDB({ casesDir: empty, output: await scratchDB() }).catch(
 			(caught: Error) => caught

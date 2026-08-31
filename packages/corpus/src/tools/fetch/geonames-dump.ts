@@ -21,10 +21,10 @@ import { pathExists, readFileHead, readLocalBuffer, readLocalTextFile } from "@m
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "./download.ts"
-import { downloadToFile, HTTPStatusError, writeManifest } from "./download.ts"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { downloadToFile, HTTPStatusError, writeManifest } from "#tools/fetch/download"
 
 /**
  * The one status that means "the source does not publish this country" rather than "the transfer failed".

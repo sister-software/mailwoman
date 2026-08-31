@@ -36,6 +36,11 @@
 			"node": "./weights.ts",
 			"default": "./out/weights.js",
 			"types": "./out/weights.d.ts"
+		},
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
 		}
 	},
 	"exports": {
@@ -249,10 +254,10 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/locale-gate": "workspace:*",
-		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/sentencepiece-wasm": "workspace:*",
-		"spliterator": "^6.3.1"
+		"path-ts": "^2.3.0",
+		"spliterator": "^6.4.1"
 	},
 	"devDependencies": {
 		"esbuild": "0.28.1",

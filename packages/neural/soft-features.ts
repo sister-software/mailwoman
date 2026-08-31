@@ -23,10 +23,10 @@ import {
 	type AnchorSpanMode,
 	buildAnchorFeatures,
 	warnShapedKeyerObligationOnce,
-} from "./anchor-inference.ts"
-import { buildCountryFeatures, type CountryLexicon } from "./country-inference.ts"
-import { buildGazetteerFeatures, suppressGazetteerNearPostcode, type GazetteerLexicon } from "./gazetteer-inference.ts"
-import type { TokenizedPiece } from "./tokenizer.ts"
+} from "#anchor-inference"
+import { buildCountryFeatures, type CountryLexicon } from "#country-inference"
+import { buildGazetteerFeatures, suppressGazetteerNearPostcode, type GazetteerLexicon } from "#gazetteer-inference"
+import type { TokenizedPiece } from "#tokenizer"
 
 /**
  * A built soft-feature channel: per-piece feature rows + per-piece confidence.

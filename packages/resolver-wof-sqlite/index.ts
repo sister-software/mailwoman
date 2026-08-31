@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-export type { FindPlaceQuery, GeoBbox, GeoPoint, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.ts"
+export type { FindPlaceQuery, GeoBbox, GeoPoint, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#types"
 
 export type {
 	AncestorsTable,
@@ -17,9 +17,9 @@ export type {
 	PlaceSearchTable,
 	SprTable,
 	WOFDatabase,
-} from "./schema.ts"
+} from "#schema"
 
-export { WOFSQLitePlaceLookup, type RankingWeights, type WOFSQLitePlaceLookupOpts } from "./lookup.ts"
+export { WOFSQLitePlaceLookup, type RankingWeights, type WOFSQLitePlaceLookupOpts } from "#lookup"
 
 export {
 	CANDIDATE_ANCESTOR_COLUMNS,
@@ -29,25 +29,25 @@ export {
 	createCandidateIntervalTable,
 	intervalContains,
 	MAX_ANCESTOR_DEPTH,
-} from "./candidate-ancestors-schema.ts"
+} from "#candidate-ancestors-schema"
 
 export type {
 	CandidateAncestorsDatabase,
 	CandidateAncestorTable,
 	CandidateIntervalTable,
 	IntervalLabel,
-} from "./candidate-ancestors-schema.ts"
+} from "#candidate-ancestors-schema"
 
-export { CANDIDATE_FTS_TABLE, createCandidateFTS } from "./candidate-fts.ts"
+export { CANDIDATE_FTS_TABLE, createCandidateFTS } from "#candidate-fts"
 
 export {
 	ImportanceIndex,
 	IMPORTANCE_JOIN_GATE_KM,
 	type ImportanceIndexStats,
 	loadImportanceIndex,
-} from "./candidate-importance.ts"
+} from "#candidate-importance"
 
-export { WOFCandidateTableLookup, type WOFCandidateTableLookupOpts } from "./candidate-lookup.ts"
+export { WOFCandidateTableLookup, type WOFCandidateTableLookupOpts } from "#candidate-lookup"
 
 export {
 	COUNTRY_BBOX_TABLE,
@@ -56,38 +56,38 @@ export {
 	createCountryCoverageTable,
 	readGazetteerCoverageManifest,
 	writeGazetteerCoverageManifest,
-} from "./coverage-manifest-schema.ts"
+} from "#coverage-manifest-schema"
 
-export type { CountryBBoxTable, CountryCoverageTable, GazetteerCoverageDatabase } from "./coverage-manifest-schema.ts"
-export { SQLiteStreetNameLookup, type SQLiteStreetNameLookupOpts } from "./street-name-lookup.ts"
+export type { CountryBBoxTable, CountryCoverageTable, GazetteerCoverageDatabase } from "#coverage-manifest-schema"
+export { SQLiteStreetNameLookup, type SQLiteStreetNameLookupOpts } from "#street-name-lookup"
 
 export {
 	GEONAMES_ID_BASE,
 	type GeonamesIngestProgress,
 	ingestGeonamesAliases,
 	purgeGeonamesAliasRange,
-} from "./geonames-aliases.ts"
+} from "#geonames-aliases"
 
-export { GEONAMES_POSTAL_ID_BASE } from "./geonames-postal.ts"
+export { GEONAMES_POSTAL_ID_BASE } from "#geonames-postal"
 
-export { ADDRESS_POINT_COLUMNS, createAddressPointIndexes, createAddressPointTable } from "./address-point-schema.ts"
-export type { AddressPointDatabase, AddressPointTable } from "./address-point-schema.ts"
+export { ADDRESS_POINT_COLUMNS, createAddressPointIndexes, createAddressPointTable } from "#address-point-schema"
+export type { AddressPointDatabase, AddressPointTable } from "#address-point-schema"
 
 export {
 	WOFPostalCityAliasLookup,
 	type PostalCityAlias,
 	type WOFPostalCityAliasLookupOpts,
-} from "./postal-city-alias-lookup.ts"
+} from "#postal-city-alias-lookup"
 
-export type { PostalCityAliasDatabase, PostalCityAliasTable } from "./postal-city-alias-schema.ts"
+export type { PostalCityAliasDatabase, PostalCityAliasTable } from "#postal-city-alias-schema"
 
 export {
 	POSTAL_CITY_CANDIDATE_COLUMNS,
 	POSTAL_CITY_CANDIDATE_TABLE,
 	createPostalCityCandidateTable,
-} from "./postal-city-candidate-schema.ts"
+} from "#postal-city-candidate-schema"
 
-export type { PostalCityCandidateDatabase, PostalCityCandidateTable } from "./postal-city-candidate-schema.ts"
+export type { PostalCityCandidateDatabase, PostalCityCandidateTable } from "#postal-city-candidate-schema"
 
 export {
 	ADDRESS_CONVENTION_TABLE,
@@ -101,11 +101,11 @@ export {
 	type ResolvedConvention,
 	type ScoringWeights,
 	type Strategy,
-} from "./convention.ts"
+} from "#convention"
 
-export { SqliteConventionSource } from "./sqlite-convention-source.ts"
+export { SqliteConventionSource } from "#sqlite-convention-source"
 
-export { WOFPostcodeLookup, type PostcodePlace } from "./postcode-point-lookup.ts"
+export { WOFPostcodeLookup, type PostcodePlace } from "#postcode-point-lookup"
 
 export {
 	PLACE_BBOX_TABLE,
@@ -115,9 +115,9 @@ export {
 	placeSearchFTSExists,
 	type BuildPlaceSearchFTSOpts,
 	type BuildPlaceSearchFTSResult,
-} from "./fts.ts"
+} from "#fts"
 
-export { PLACETYPE_DEPTH, ancestorLineage, placetypeDepth, type AncestorPlaceRow } from "./ancestry.ts"
+export { PLACETYPE_DEPTH, ancestorLineage, placetypeDepth, type AncestorPlaceRow } from "#ancestry"
 
 export {
 	WOFReverseGeocoder,
@@ -125,31 +125,25 @@ export {
 	type ReverseGeocodeOpts,
 	type ReverseGeocodeResult,
 	type WOFReverseGeocoderOpts,
-} from "./reverse.ts"
+} from "#reverse"
 
-export { AddressPointInterpolator } from "./address-point-interpolation.ts"
-export { AddressPointSqliteLookup } from "./address-point.ts"
+export { AddressPointInterpolator } from "#address-point-interpolation"
+export { AddressPointSqliteLookup } from "#address-point"
 
 export {
 	STREET_CENTROID_COLUMNS,
 	createStreetCentroidIndexes,
 	createStreetCentroidTable,
-} from "./street-centroid-schema.ts"
+} from "#street-centroid-schema"
 
-export type { StreetCentroidDatabase, StreetCentroidTable } from "./street-centroid-schema.ts"
-export { StreetCentroidSqliteLookup } from "./street-centroid.ts"
+export type { StreetCentroidDatabase, StreetCentroidTable } from "#street-centroid-schema"
+export { StreetCentroidSqliteLookup } from "#street-centroid"
 
 export {
 	StreetInterpolator,
 	type InterpolatedHit,
 	type InterpolationMethod,
 	type InterpolationQuery,
-} from "./interpolation.ts"
+} from "#interpolation"
 
-export {
-	deriveSchemaName,
-	pickShardForPlacetype,
-	resolveShards,
-	type ResolvedShard,
-	type ShardConfig,
-} from "./sharding.ts"
+export { deriveSchemaName, pickShardForPlacetype, resolveShards, type ResolvedShard, type ShardConfig } from "#sharding"

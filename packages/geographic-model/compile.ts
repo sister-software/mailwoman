@@ -36,7 +36,7 @@ import {
 	type CompiledGeographicModel,
 	compareIdentifiers,
 	type InheritanceClosureEntry,
-} from "./artifact.ts"
+} from "#artifact"
 import {
 	type ConceptID,
 	type ConceptRecord,
@@ -48,8 +48,8 @@ import {
 	type RelationRecord,
 	toConceptID,
 	toDerivedFactID,
-} from "./schema.ts"
-import { parseGeographicModelDocument } from "./validate.ts"
+} from "#schema"
+import { parseGeographicModelDocument } from "#validate"
 
 /**
  * The name a fact derived by `isA` inheritance carries in its `derivation` field. A consumer branches on this rather

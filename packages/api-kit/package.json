@@ -25,6 +25,13 @@
 		"!test/**"
 	],
 	"type": "module",
+	"imports": {
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
@@ -44,7 +51,7 @@
 	"dependencies": {
 		"@hono/node-server": "^2.0.12",
 		"@hono/zod-openapi": "^1.5.1",
-		"@mailwoman/platform": "workspace:*",
+		"@mailwoman/core": "workspace:*",
 		"hono": "^4.13.0",
 		"zod": "^4.4.3"
 	}

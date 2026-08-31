@@ -33,7 +33,7 @@
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 const REQUIRED_COLUMNS = [

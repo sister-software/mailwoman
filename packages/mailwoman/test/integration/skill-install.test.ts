@@ -14,10 +14,10 @@
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { runFile } from "@mailwoman/core/process"
 import { workspacePath } from "@mailwoman/core/utils"
-import { execFileSync } from "@mailwoman/platform/child_process"
-import { join } from "@mailwoman/platform/path"
-import { withCLISpawnLock } from "mailwoman/test-kit/cli-spawn-lock"
+import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
+import { join } from "path-ts"
 import { afterAll, describe, expect, test, vi } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -42,9 +42,9 @@ const CLI_TEST_TIMEOUT_MS = 120_000
  * Vitest's per-test budget for this whole file.
  *
  * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs seconds before any
- * assertion runs and then queues behind {@link withCLISpawnLock}. A per-test annotation has to be remembered on each new
- * test, and the one that forgets inherits the global 15s — which kills the test before the thing being measured can
- * report, surfacing as a bare timeout with no attribution.
+ * assertion runs and then queues behind {@link withCLISpawnLockAsync}. A per-test annotation has to be remembered on
+ * each new test, and the one that forgets inherits the global 15s — which kills the test before the thing being
+ * measured can report, surfacing as a bare timeout with no attribution.
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
@@ -52,7 +52,7 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 	const tempDirs: string[] = []
 
 	async function makeTempDir(prefix: string): Promise<string> {
-		const dir = fixtures.use(await temporaryDirectory(prefix)).path
+		const dir = fixtures.use(await temporaryDirectory(prefix)).path.toString()
 
 		tempDirs.push(dir)
 
@@ -62,8 +62,8 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 	test("installs into <cwd>/.claude/skills/mailwoman/SKILL.md by default", async () => {
 		const cwd = await makeTempDir("mw-skill-install-")
 
-		withCLISpawnLock(() =>
-			execFileSync(process.execPath, [CLI_PATH, "skill", "install"], {
+		await withCLISpawnLockAsync(() =>
+			runFile(process.execPath, [CLI_PATH, "skill", "install"], {
 				cwd,
 				encoding: "utf8",
 				timeout: CLI_SPAWN_TIMEOUT_MS,
@@ -80,16 +80,19 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 		const cwd = await makeTempDir("mw-skill-install-idempotent-")
 
 		const spawn = () =>
-			withCLISpawnLock(() =>
-				execFileSync(process.execPath, [CLI_PATH, "skill", "install"], {
+			withCLISpawnLockAsync(() =>
+				runFile(process.execPath, [CLI_PATH, "skill", "install"], {
 					cwd,
 					encoding: "utf8",
 					timeout: CLI_SPAWN_TIMEOUT_MS,
 				})
 			)
 
-		spawn()
-		expect(spawn).not.toThrow()
+		// The old sync form ran `spawn()` and then re-ran it inside `expect(spawn).not.toThrow()` — the second run IS
+		// the idempotence assertion. An async rejection is invisible to that form, so await both runs: either one
+		// failing rejects this test.
+		await spawn()
+		await spawn()
 
 		const skillPath = join(cwd, ".claude", "skills", "mailwoman", "SKILL.md")
 
@@ -100,8 +103,8 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 		const cwd = await makeTempDir("mw-skill-install-cwd-")
 		const dest = await makeTempDir("mw-skill-install-dest-")
 
-		withCLISpawnLock(() =>
-			execFileSync(process.execPath, [CLI_PATH, "skill", "install", "--dest", dest], {
+		await withCLISpawnLockAsync(() =>
+			runFile(process.execPath, [CLI_PATH, "skill", "install", "--dest", dest], {
 				cwd,
 				encoding: "utf8",
 				timeout: CLI_SPAWN_TIMEOUT_MS,
@@ -122,8 +125,8 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 		await makeDirectories(skillDir)
 		await writeLocalTextFile("belongs to an older skill version; must not survive a reinstall", staleFile)
 
-		withCLISpawnLock(() =>
-			execFileSync(process.execPath, [CLI_PATH, "skill", "install"], {
+		await withCLISpawnLockAsync(() =>
+			runFile(process.execPath, [CLI_PATH, "skill", "install"], {
 				cwd,
 				encoding: "utf8",
 				timeout: CLI_SPAWN_TIMEOUT_MS,

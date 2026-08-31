@@ -20,7 +20,7 @@
  *   {@link cleanLieuDit} (`.superpowers/sdd/deploc-world-survey.md`, FR section, 2026-07-22).
  */
 
-import { gunzipChunks } from "@mailwoman/platform/compression"
+import { gunzipChunks } from "@mailwoman/core/fs/compression"
 import { CSVSpliterator } from "spliterator"
 import { createReadStream } from "spliterator/node/fs"
 

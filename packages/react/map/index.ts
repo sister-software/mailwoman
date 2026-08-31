@@ -26,14 +26,14 @@ export type {
 	MapBias,
 	OverlaySpec,
 	Suggestion,
-} from "./types.ts"
+} from "#map/types"
 
 // ── Pure geometry + render spec (node-safe; no react-map-gl at runtime) ──────
-export { approxCircleGeometry, bboxToBounds, geomBounds, radiusCircleGeometry } from "./geometry.ts"
-export type { BoundsTuple, PlaceBBox, PlaceGeometry } from "./geometry.ts"
-export { cameraToViewState, computeMapPlaceRenderSpec } from "./place-render.ts"
-export type { LngLat, MapCameraTarget, MapPlaceRenderSpec, PlaceTier, ResolvedMapPlace } from "./place-render.ts"
-export { useMapPlaceRender } from "./useMapPlaceRender.ts"
+export { approxCircleGeometry, bboxToBounds, geomBounds, radiusCircleGeometry } from "#map/geometry"
+export type { BoundsTuple, PlaceBBox, PlaceGeometry } from "#map/geometry"
+export { cameraToViewState, computeMapPlaceRenderSpec } from "#map/place-render"
+export type { LngLat, MapCameraTarget, MapPlaceRenderSpec, PlaceTier, ResolvedMapPlace } from "#map/place-render"
+export { useMapPlaceRender } from "#map/useMapPlaceRender"
 
 // ── Declarative overlays (react-map-gl `<Marker>`/`<Source>`/`<Layer>`) ──────
 export { OverlayLayers } from "./OverlayLayers.tsx"
@@ -60,17 +60,17 @@ export { PlaceAutocomplete } from "./PlaceAutocomplete.tsx"
 export type { PlaceAutocompleteProps } from "./PlaceAutocomplete.tsx"
 export { ResultPanel } from "./ResultPanel.tsx"
 export type { ResultPanelProps } from "./ResultPanel.tsx"
-export { useCompareState } from "./useCompareState.ts"
-export type { UseCompareState } from "./useCompareState.ts"
-export { useDemoGeocode } from "./useDemoGeocode.ts"
-export type { UseDemoGeocode, UseDemoGeocodeOptions } from "./useDemoGeocode.ts"
-export { usePlaceAutocomplete } from "./usePlaceAutocomplete.ts"
+export { useCompareState } from "#map/useCompareState"
+export type { UseCompareState } from "#map/useCompareState"
+export { useDemoGeocode } from "#map/useDemoGeocode"
+export type { UseDemoGeocode, UseDemoGeocodeOptions } from "#map/useDemoGeocode"
+export { usePlaceAutocomplete } from "#map/usePlaceAutocomplete"
 
 export type {
 	AutocompleteInputProps,
 	UsePlaceAutocomplete,
 	UsePlaceAutocompleteOptions,
-} from "./usePlaceAutocomplete.ts"
+} from "#map/usePlaceAutocomplete"
 
 export { VersionPicker } from "./VersionPicker.tsx"
 export type { VersionPickerProps } from "./VersionPicker.tsx"

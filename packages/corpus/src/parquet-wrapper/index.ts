@@ -4,6 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./reader.ts"
-export * from "./schema.ts"
-export * from "./writer.ts"
+export * from "#parquet-wrapper/reader"
+export * from "#parquet-wrapper/schema"
+export * from "#parquet-wrapper/writer"

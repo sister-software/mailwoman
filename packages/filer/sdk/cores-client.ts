@@ -57,8 +57,8 @@ import { $private } from "@mailwoman/core/env"
 import { ResourceError } from "@mailwoman/core/errors"
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import { decodeEntities, normalizeWhitespace, stripTags } from "./exhibit21.ts"
-import { isFRN, type FRN } from "./frn.ts"
+import { decodeEntities, normalizeWhitespace, stripTags } from "#sdk/exhibit21"
+import { isFRN, type FRN } from "#sdk/frn"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.
 export { isTransientResourceError } from "@mailwoman/core/api"

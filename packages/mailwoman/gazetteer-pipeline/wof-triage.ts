@@ -33,10 +33,10 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { resolve } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
 /**
@@ -166,7 +166,7 @@ export interface TriageOptions {
 	/**
 	 * Per-country GeoNames dump directory. Countries without a `<CC>.txt` are reported `unmeasured`.
 	 */
-	geonamesDir?: string
+	geonamesDir?: PathBuilderLike
 	/**
 	 * Restrict to these ISO-3166 alpha-2 countries. Omit for every country the artifact holds.
 	 */
@@ -379,7 +379,7 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 
 		// Attestation is looked up only for names under review, and only where a dump exists.
 		const keys = new Set(dead.map((r) => fold(String(r["name"] ?? ""))).filter((key) => key.length > 0))
-		const dumpPath = opts.geonamesDir ? resolve(opts.geonamesDir, `${country}.txt`) : undefined
+		const dumpPath = opts.geonamesDir ? resolvePath(opts.geonamesDir, `${country}.txt`) : undefined
 		const attestors = dumpPath && (await pathExists(dumpPath)) ? await loadAttestors(dumpPath, keys) : undefined
 
 		if (!attestors) {

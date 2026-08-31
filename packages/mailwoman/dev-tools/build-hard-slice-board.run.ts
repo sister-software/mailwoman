@@ -24,25 +24,21 @@
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath, getRow } from "@mailwoman/core/utils"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
-import { parseArgs } from "@mailwoman/platform/util"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { JSONSpliterator } from "spliterator"
 
-import {
-	canonicalizeHardSliceCase,
-	type HardSliceCase,
-	HARD_SLICE_BOARD_PATH,
-} from "../eval-harness/hard-slice-board.ts"
-import { TOPONYM_ROWS } from "./hard-slice-rows-toponym.ts"
-import { FRAGMENT_ROWS } from "./hard-slice-rows.ts"
-import { SWEEP_ROWS } from "./hard-slice-sweep-rows.ts"
+import { FRAGMENT_ROWS } from "#dev-tools/hard-slice-rows"
+import { TOPONYM_ROWS } from "#dev-tools/hard-slice-rows-toponym"
+import { SWEEP_ROWS } from "#dev-tools/hard-slice-sweep-rows"
+import { canonicalizeHardSliceCase, type HardSliceCase, HARD_SLICE_BOARD_PATH } from "#eval-harness/hard-slice-board"
 
-const { values } = parseArgs({ options: { out: { type: "string" } } })
+const { values } = parseArguments({ options: { out: { type: "string" } } })
 const OUT = values.out ?? HARD_SLICE_BOARD_PATH
 
 const ADDED_AT = "2026-08-06"

@@ -14,7 +14,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
+import { join, type PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 import { readWeightsRecipe } from "./weights-recipe.ts"
@@ -23,7 +23,7 @@ const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-async function fixture(config: unknown): Promise<{ repoRoot: string; dataRoot: string }> {
+async function fixture(config: unknown): Promise<{ repoRoot: PathBuilder; dataRoot: PathBuilder }> {
 	const repoRoot = fixtures.use(await temporaryDirectory("mw-recipe-repo-")).path
 	const dataRoot = fixtures.use(await temporaryDirectory("mw-recipe-data-")).path
 
@@ -49,7 +49,7 @@ const CONFIG = {
 describe("readWeightsRecipe — the base directory is per key", () => {
 	it("resolves the model and tokenizer against the DATA root", async () => {
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
-		const recipe = readWeightsRecipe(repoRoot, dataRoot)
+		const recipe = await readWeightsRecipe(repoRoot, dataRoot)
 
 		expect(recipe.model).toBe(join(dataRoot, "models/quantized/m.onnx"))
 		expect(recipe.tokenizer).toBe(join(dataRoot, "models/tokenizer/t.model"))
@@ -59,13 +59,13 @@ describe("readWeightsRecipe — the base directory is per key", () => {
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
 
 		const by = new Map(
-			readWeightsRecipe(repoRoot, dataRoot)
-				.linkableFor("en-us")
-				.map((a) => [a.shippedName, a])
+			(await readWeightsRecipe(repoRoot, dataRoot)).linkableFor("en-us").map((a) => [a.shippedName, a])
 		)
 
+		const repoRootString = repoRoot.toString()
+
 		for (const name of ["anchor-lexicon-v1.json", "country-surface-lexicon-v1.json", "street-type-lexicon-v3.json"]) {
-			expect(by.get(name)?.sourcePath.startsWith(repoRoot), `${name} must be repo-relative`).toBe(true)
+			expect(by.get(name)?.sourcePath.startsWith(repoRootString), `${name} must be repo-relative`).toBe(true)
 		}
 	})
 
@@ -74,9 +74,7 @@ describe("readWeightsRecipe — the base directory is per key", () => {
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
 
 		const by = new Map(
-			readWeightsRecipe(repoRoot, dataRoot)
-				.linkableFor("en-us")
-				.map((a) => [a.shippedName, a])
+			(await readWeightsRecipe(repoRoot, dataRoot)).linkableFor("en-us").map((a) => [a.shippedName, a])
 		)
 
 		expect(by.get("locality-surface-lexicon-v7.json")?.sourcePath).toBe(
@@ -90,7 +88,7 @@ describe("readWeightsRecipe — the base directory is per key", () => {
 			softFeed: { ...CONFIG.softFeed, postcodeDBByCountry: { us: "/elsewhere/postalcode-us.db" } },
 		})
 
-		const buildable = readWeightsRecipe(repoRoot, dataRoot).buildableFor("en-us")
+		const buildable = (await readWeightsRecipe(repoRoot, dataRoot)).buildableFor("en-us")
 
 		expect(buildable.find((a) => a.shippedName === "postcode-us.bin")?.inputPath).toBe("/elsewhere/postalcode-us.db")
 	})
@@ -99,7 +97,7 @@ describe("readWeightsRecipe — the base directory is per key", () => {
 describe("readWeightsRecipe — buildable is not linkable", () => {
 	it("reports the postcode BINARY as buildable from the shard, never as a linkable file", async () => {
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
-		const recipe = readWeightsRecipe(repoRoot, dataRoot)
+		const recipe = await readWeightsRecipe(repoRoot, dataRoot)
 
 		// The config names `postalcode-us.db`; the resolver looks for `postcode-us.bin`. Treating the entry as
 		// linkable would place a DATABASE under the binary's name, and every sibling degrades to `undefined`, so
@@ -115,7 +113,7 @@ describe("readWeightsRecipe — buildable is not linkable", () => {
 		// `us` carries `boroughDB` and `gb` carries `source`; neither has a `db` key. An earlier draft read `db`
 		// and therefore reported NO pair index for any country — silently, since the artifact merely stayed absent.
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
-		const recipe = readWeightsRecipe(repoRoot, dataRoot)
+		const recipe = await readWeightsRecipe(repoRoot, dataRoot)
 
 		expect(recipe.buildableFor("en-us").some((a) => a.shippedName === "pair-index-us.bin")).toBe(true)
 		expect(recipe.buildableFor("en-gb").some((a) => a.shippedName === "pair-index-gb.bin")).toBe(true)
@@ -124,7 +122,7 @@ describe("readWeightsRecipe — buildable is not linkable", () => {
 	it("names no pair index for a country the config omits", async () => {
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
 
-		expect(readWeightsRecipe(repoRoot, dataRoot).buildableFor("fr-fr")).toHaveLength(0)
+		expect((await readWeightsRecipe(repoRoot, dataRoot)).buildableFor("fr-fr")).toHaveLength(0)
 	})
 })
 
@@ -134,9 +132,7 @@ describe("readWeightsRecipe — the dev-only FSTs", () => {
 		// put them there — and their absence resolves the gazetteer and street-context priors OFF with no error.
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
 
-		const names = readWeightsRecipe(repoRoot, dataRoot)
-			.linkableFor("en-gb")
-			.map((a) => a.shippedName)
+		const names = (await readWeightsRecipe(repoRoot, dataRoot)).linkableFor("en-gb").map((a) => a.shippedName)
 
 		expect(names).toContain("fst-en-gb.bin")
 		expect(names).toContain("fst-street-morphology.bin")
@@ -146,7 +142,7 @@ describe("readWeightsRecipe — the dev-only FSTs", () => {
 describe("readWeightsRecipe — overrides", () => {
 	it("takes the model override outright, so callers cannot disagree about precedence", async () => {
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
-		const recipe = readWeightsRecipe(repoRoot, dataRoot, { model: "/tmp/experiment.onnx" })
+		const recipe = await readWeightsRecipe(repoRoot, dataRoot, { model: "/tmp/experiment.onnx" })
 
 		expect(recipe.model).toBe("/tmp/experiment.onnx")
 		expect(recipe.tokenizer).toBe(join(dataRoot, "models/tokenizer/t.model"))

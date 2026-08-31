@@ -47,7 +47,7 @@ interface ImlsOutletRow {
 	FSCSKEY: string
 }
 
-export function createUsgovImlsPlsAdapter(): CorpusAdapter {
+export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 	return {
 		id: USGOV_IMLS_PLS_ADAPTER_ID,
 		defaultLicense: USGOV_IMLS_PLS_DEFAULT_LICENSE,
@@ -140,4 +140,4 @@ export function createUsgovImlsPlsAdapter(): CorpusAdapter {
 /**
  * The configured adapter instance registered with the corpus builder.
  */
-export const usgovImlsPlsAdapter = createUsgovImlsPlsAdapter()
+export const usgovImlsPlsAdapter = createUSGovIMLSPLSAdapter()

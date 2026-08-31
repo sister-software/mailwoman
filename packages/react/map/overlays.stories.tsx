@@ -13,11 +13,12 @@
 import type { Meta, StoryObj } from "@storybook/react-vite"
 import type { ReactNode } from "react"
 
+import { computeMapPlaceRenderSpec, type ResolvedMapPlace } from "#map/place-render"
+import type { OverlaySpec } from "#map/types"
+
 import { DemoMap, type DemoMapStyle } from "./DemoMap.tsx"
 import { OverlayLayers } from "./OverlayLayers.tsx"
-import { computeMapPlaceRenderSpec, type ResolvedMapPlace } from "./place-render.ts"
 import { ResolvedPlaceLayers } from "./ResolvedPlaceLayers.tsx"
-import type { OverlaySpec } from "./types.ts"
 
 const STUB_STYLE: DemoMapStyle = {
 	version: 8,

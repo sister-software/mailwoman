@@ -7,7 +7,7 @@
  *   `ComponentTag`s the US locale actually uses.
  */
 
-import type { LocaleProfile } from "../locale.ts"
+import type { LocaleProfile } from "#locale/locale"
 
 /**
  * US English locale profile — the component ordering, casing and separators the formatter renders with.

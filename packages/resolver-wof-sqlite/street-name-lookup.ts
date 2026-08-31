@@ -22,7 +22,7 @@
 import { foldStreetSurface, type StreetEvidenceScope, type StreetLocalityEvidence } from "@mailwoman/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { WOFDatabase } from "./schema.ts"
+import type { WOFDatabase } from "#schema"
 
 function hasTable(db: DatabaseClient<WOFDatabase>, table: string): boolean {
 	const row = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1").get(table)

@@ -21,7 +21,7 @@
  *   source).
  */
 
-import type { FindPlaceQuery, PlaceCandidate } from "./types.ts"
+import type { FindPlaceQuery, PlaceCandidate } from "#types"
 
 /**
  * Soft-scoring weights for the `postcode_area_resolution` strategy: `pc·S_pc + name·S_name + pop·S_pop`.

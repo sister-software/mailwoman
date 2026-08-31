@@ -17,8 +17,8 @@
  */
 
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { dirname } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
+import { dirname } from "path-ts"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 

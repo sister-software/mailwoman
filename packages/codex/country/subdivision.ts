@@ -26,10 +26,10 @@
  *   re-keys those two existing tables into one subdivision→country view.
  */
 
-import { AU_STATE_ABBREVIATIONS } from "../au/state.ts"
-import { CA_PROVINCES } from "../ca/province.ts"
-import { foldName } from "../normalize.ts"
-import { US_STATE_BY_ABBREVIATION } from "../us/state.ts"
+import { AU_STATE_ABBREVIATIONS } from "#au/state"
+import { CA_PROVINCES } from "#ca/province"
+import { foldName } from "#normalize"
+import { US_STATE_BY_ABBREVIATION } from "#us/state"
 
 /**
  * A resolved subdivision: its ISO 3166-2 code (sans country prefix), canonical English name, and ISO 3166-1 country.

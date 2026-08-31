@@ -51,8 +51,8 @@
  *   scripts/verify-shard-acks.ts --manifest /tmp/MANIFEST.json
  */
 
-import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
-import { parseArgs as parseNodeArgs } from "@mailwoman/platform/util"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 interface ShardEntry {
 	path: string
@@ -76,7 +76,7 @@ function parseArgs(): Args {
 	const out: Partial<Args> = { verbose: false }
 
 	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
-	const { values } = parseNodeArgs({
+	const { values } = parseArguments({
 		options: { manifest: { type: "string" }, verbose: { type: "boolean", short: "v" } },
 		strict: false,
 		allowPositionals: true,
@@ -99,9 +99,9 @@ function parseArgs(): Args {
 	return out as Args
 }
 
-function main(): void {
+async function main(): Promise<void> {
 	const args = parseArgs()
-	const m = readLocalJSONFileSync<Manifest>(args.manifestPath)
+	const m = await readLocalJSONFile<Manifest>(args.manifestPath)
 	const shards = m.shards ?? []
 
 	const unacknowledged: ShardEntry[] = []
@@ -179,4 +179,4 @@ function main(): void {
 	console.error("VERIFY PASSED.")
 }
 
-main()
+await main()

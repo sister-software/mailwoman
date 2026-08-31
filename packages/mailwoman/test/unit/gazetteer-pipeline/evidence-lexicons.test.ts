@@ -9,7 +9,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { tmpdir } from "@mailwoman/platform/os"
+import { tempRootPath } from "@mailwoman/core/utils"
 import {
 	buildStreetTypeLexicon,
 	clearsProminenceFloor,
@@ -25,9 +25,9 @@ import {
 import { loadDegenerateSurfaces } from "mailwoman/gazetteer-pipeline/fst"
 import { describe, expect, it } from "vitest"
 
-describe("three-law selectivity — pure units", () => {
-	const personNames = loadPersonNameSurfaces()
+const personNames = await loadPersonNameSurfaces()
 
+describe("three-law selectivity — pure units", () => {
 	it("law 3: person-name surfaces exist and carry the flip-row names", () => {
 		// The v3.17→v3.18 flip rows: given names that are prominent-place homographs.
 		for (const name of ["joseph", "pierre", "louis", "thomas"]) {
@@ -161,7 +161,7 @@ interface StreetTypeLexicon {
 
 describe("street-type lexicon build", () => {
 	it("canonical lowercase words in entries, short abbreviations uppercase-gated", async () => {
-		const tmp = `${tmpdir()}/street-type-lexicon-test.json`
+		const tmp = tempRootPath(`street-type-lexicon-test.json`)
 		const built = await buildStreetTypeLexicon({ output: tmp })
 
 		expect(built.entries).toBeGreaterThan(400)
@@ -176,7 +176,7 @@ describe("street-type lexicon build", () => {
 	})
 
 	it("v2 / census family F1: US-state-homograph codes withheld, directionals kept", async () => {
-		const tmp = `${tmpdir()}/street-type-lexicon-v2-test.json`
+		const tmp = tempRootPath(`street-type-lexicon-v2-test.json`)
 		const built = await buildStreetTypeLexicon({ output: tmp })
 
 		expect(built.skippedRegionVocabulary).toBeGreaterThanOrEqual(4)

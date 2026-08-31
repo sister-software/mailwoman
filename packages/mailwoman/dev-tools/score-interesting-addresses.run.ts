@@ -9,14 +9,13 @@
  */
 
 import { type ComponentTag, decodeAsTuples } from "@mailwoman/core"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { parseArgs } from "@mailwoman/platform/util"
 
+import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
 import { createRuntimePipeline } from "#index"
 
-import { loadRegressionCases } from "../eval-harness/gauntlet/cases/load.ts"
-
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		country: { type: "string" },
 		"cache-root": { type: "string" },

@@ -21,16 +21,12 @@
  *   an extraction. What stays with each caller is where the URL came from and what the two names are.
  */
 
-import { execFile } from "@mailwoman/platform/child_process"
-import { join } from "@mailwoman/platform/path"
-import { promisify } from "@mailwoman/platform/util"
+import { join } from "path-ts"
 
 import { tryStat } from "#fs/readers"
 import { makeDirectories } from "#fs/writers"
-
-import { streamToDisk } from "./stream-to-disk.ts"
-
-const execFileAsync = promisify(execFile)
+import { runFile } from "#process"
+import { streamToDisk } from "#utils/stream-to-disk"
 
 export interface DownloadZippedGeodatabaseOptions {
 	/**
@@ -95,7 +91,7 @@ export async function downloadZippedGeodatabase(options: DownloadZippedGeodataba
 	options.onProgress?.("unzipping")
 
 	await makeDirectories(geodatabasePath)
-	await execFileAsync("unzip", ["-o", "-q", archivePath, "-d", geodatabasePath])
+	await runFile("unzip", ["-o", "-q", archivePath, "-d", geodatabasePath])
 
 	return geodatabasePath
 }

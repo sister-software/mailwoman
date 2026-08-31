@@ -24,9 +24,9 @@ import { type AddressNode, type AddressTree, decodeAsJSON } from "@mailwoman/cor
 import { $public } from "@mailwoman/core/env"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath, percentile, tempRootPath } from "@mailwoman/core/utils"
 import { parseWordConsistencyEnv } from "@mailwoman/neural"
-import { parseArgs } from "@mailwoman/platform/util"
 import { haversineKm } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
 
@@ -36,7 +36,7 @@ import { JSONSpliterator } from "spliterator"
  */
 const MAX_REGION_CODE_LENGTH = 4
 
-const { values: rawStringArgs } = parseArgs({
+const { values: rawStringArgs } = parseArguments({
 	options: {
 		"anchor-lookup": { type: "string" },
 		"default-country": { type: "string" },
@@ -168,7 +168,7 @@ async function main() {
 	const label = stringArgs["label"] || "model"
 	// Comma-separated multi-shard support (night-31): postcodeConsistency needs a resolvable postcode
 	// node, which needs a postalcode shard attached alongside the admin DB.
-	const wofDBArg = stringArgs["wof-db"] || dataRootPath("wof", "admin-global-priority.db")
+	const wofDBArg = String(stringArgs["wof-db"] || dataRootPath("wof", "admin-global-priority.db"))
 	const wofDB = wofDBArg.includes(",") ? wofDBArg.split(",") : wofDBArg
 
 	const rows = await Array.fromAsync(
@@ -204,7 +204,7 @@ async function main() {
 	// #895/#718 discipline: the tri-state pins keep gate legs reproducible against pre-flip baselines —
 	// the positive flag pins ON, the `--no-*`/inverse flag pins OFF (the historical config), no flag =
 	// the current library default. Pin explicitly in pre-registered legs.
-	const { values: pins } = parseArgs({
+	const { values: pins } = parseArguments({
 		options: {
 			// #936: official-language names join the name-exact sub-tier (library default ON since 2026-07-03).
 			"official-name-exact": { type: "boolean" },

@@ -27,8 +27,8 @@
  *   its answer but lost 0.3 of confidence on the deciding span is a row about to flip, and an aggregate cannot say so.
  */
 
-import { flattenTreeNodes } from "./tree-shape.ts"
-import type { AddressTree } from "./types.ts"
+import { flattenTreeNodes } from "#decoder/tree-shape"
+import type { AddressTree } from "#decoder/types"
 
 /**
  * What happened to one span between the two arms.

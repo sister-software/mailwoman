@@ -14,7 +14,7 @@
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { WOFDatabase } from "./schema.ts"
+import type { WOFDatabase } from "#schema"
 
 export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Promise<void> {
 	// PRAGMAs stay raw — not Kysely-modelled, and these tune the bulk build.

@@ -18,22 +18,23 @@
  *   same binary consumers run).
  */
 
-import { makeDirectoriesSync, writeLocalFileSync } from "@mailwoman/core/fs/writers-sync"
+import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
+import { runFile } from "@mailwoman/core/process"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { execFileSync } from "@mailwoman/platform/child_process"
-import { dirname, resolve } from "@mailwoman/platform/path"
+import { repoRootPath } from "@mailwoman/core/utils"
+import { dirname, resolvePath } from "path-ts"
 
-const REPO_ROOT = resolve(import.meta.dirname, "..")
+const REPO_ROOT = repoRootPath()
 
 /**
  * The committed artifact this script maintains — also read by the freshness test.
  */
-export const MAN_PAGE_PATH = resolve(REPO_ROOT, "packages/mailwoman/man/mailwoman.1")
+export const MAN_PAGE_PATH = resolvePath(REPO_ROOT, "packages/mailwoman/man/mailwoman.1")
 
 /**
  * The compiled CLI the page derives from — the same binary consumers run.
  */
-export const CLI_PATH = resolve(REPO_ROOT, "packages/mailwoman/out/cli.js")
+export const CLI_PATH = resolvePath(REPO_ROOT, "packages/mailwoman/out/cli.js")
 
 /**
  * The user-facing commands a man reader cares about. `dev`, `clients`, and the model-work groups (`corpus`, `eval`,
@@ -42,8 +43,8 @@ export const CLI_PATH = resolve(REPO_ROOT, "packages/mailwoman/out/cli.js")
  */
 const USER_COMMANDS = ["parse", "geocode", "autocomplete", "doctor", "data", "serve"] as const
 
-function help(cliPath: string, args: string[]): string {
-	return execFileSync("node", [cliPath, ...args, "--help"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] })
+async function help(cliPath: string, args: string[]): Promise<string> {
+	return (await runFile("node", [cliPath, ...args, "--help"])).stdout
 }
 
 /**
@@ -74,8 +75,8 @@ function preformatted(text: string): string {
  * Render the whole page from a CLI binary's help tree. Pure with respect to the filesystem — the write happens only in
  * the script entrypoint below, so the freshness test can render and compare without touching the tree.
  */
-export function renderManPage(cliPath: string = CLI_PATH): string {
-	const version = execFileSync("node", [cliPath, "--version"], { encoding: "utf8" }).trim()
+export async function renderManPage(cliPath: string = CLI_PATH): Promise<string> {
+	const version = (await runFile("node", [cliPath, "--version"])).stdout.trim()
 
 	const sections: string[] = [
 		// No date field on purpose: the page regenerates from the help tree, and a wall-clock stamp
@@ -101,12 +102,12 @@ export function renderManPage(cliPath: string = CLI_PATH): string {
 		"runs directly. Maintainer surfaces (corpus, eval, gazetteer, release) are documented",
 		"in the repository.",
 		".SH COMMANDS",
-		preformatted(help(cliPath, [])),
+		preformatted(await help(cliPath, [])),
 	]
 
 	for (const command of USER_COMMANDS) {
 		try {
-			sections.push(`.SH ${command.toUpperCase()}`, preformatted(help(cliPath, [command])))
+			sections.push(`.SH ${command.toUpperCase()}`, preformatted(await help(cliPath, [command])))
 		} catch {
 			// A command absent from this build simply gets no section.
 		}
@@ -128,11 +129,11 @@ export function renderManPage(cliPath: string = CLI_PATH): string {
 	return sections.join("\n") + "\n"
 }
 
-runIfScript(import.meta, () => {
-	const page = renderManPage()
+runIfScript(import.meta, async () => {
+	const page = await renderManPage()
 
-	makeDirectoriesSync(dirname(MAN_PAGE_PATH))
-	writeLocalFileSync(page, MAN_PAGE_PATH)
+	await makeDirectories(dirname(MAN_PAGE_PATH))
+	await writeLocalFile(page, MAN_PAGE_PATH)
 
 	console.log(`wrote ${MAN_PAGE_PATH}`)
 })

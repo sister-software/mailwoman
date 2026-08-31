@@ -22,11 +22,10 @@
 import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
+import { CoarsePlacer, type CoarsePlacerMeta } from "#coarse-placer/coarse-placer"
 import { readLocalJSONFile } from "#fs/readers"
 import { writeLocalTextFile } from "#fs/writers"
 import { dataRootPath, corePackagePath, median } from "#utils"
-
-import { CoarsePlacer, type CoarsePlacerMeta } from "../coarse-placer.ts"
 
 /**
  * False-positive rate above which the in-class frontier is judged to have degraded.

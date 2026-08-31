@@ -14,21 +14,17 @@
  *   so siblings resolve through their built `.d.ts`. This runs them all and reports per workspace.
  */
 
-import { readDirectoryEntries } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readDirectoryEntries } from "@mailwoman/core/fs/readers"
+import { runFile } from "@mailwoman/core/process"
 import { repoRootPath, workspacePath } from "@mailwoman/core/utils"
-import { execFile } from "@mailwoman/platform/child_process"
-import { cpus } from "@mailwoman/platform/os"
-import { join, relative } from "@mailwoman/platform/path"
-import { promisify } from "@mailwoman/platform/util"
+import { cpuCount } from "@mailwoman/core/utils/system"
+import { join, relative } from "path-ts"
 import { TextSpliterator } from "spliterator"
-
-const run = promisify(execFile)
 
 /**
  * How many `tsc` invocations to keep in flight. Each is single-threaded and mostly CPU-bound.
  */
-const CONCURRENCY = Math.max(2, Math.min(8, cpus().length - 2))
+const CONCURRENCY = Math.max(2, Math.min(8, cpuCount() - 2))
 
 /**
  * One workspace's result: its name, and the diagnostic lines `tsc` produced.
@@ -46,7 +42,7 @@ async function check(workspace: string, repoRoot: string): Promise<Result> {
 	const config = join(workspace, "tsconfig.test.json")
 
 	try {
-		await run("./node_modules/.bin/tsc", ["-p", config, "--noEmit", "--pretty", "false"], { cwd: repoRoot })
+		await runFile("./node_modules/.bin/tsc", ["-p", config, "--noEmit", "--pretty", "false"], { cwd: repoRoot })
 
 		return { workspace, errors: [] }
 	} catch (error) {
@@ -63,10 +59,18 @@ const workspaces = (
 	await Promise.all(
 		workspaceDirectories.map(async (directory) => {
 			const entries = await readDirectoryEntries(directory)
+			const subdirectories = entries.filter((entry) => entry.isDirectory())
 
-			return entries
-				.filter((entry) => entry.isDirectory() && pathExistsSync(join(directory, entry.name, "tsconfig.test.json")))
-				.map((entry) => relative(repoRoot, join(directory, entry.name)))
+			const withTestConfig = await Promise.all(
+				subdirectories.map(async (entry) => ({
+					entry,
+					hasTestConfig: await pathExists(join(directory, entry.name, "tsconfig.test.json")),
+				}))
+			)
+
+			return withTestConfig
+				.filter(({ hasTestConfig }) => hasTestConfig)
+				.map(({ entry }) => relative(repoRoot, join(directory, entry.name)))
 		})
 	)
 )

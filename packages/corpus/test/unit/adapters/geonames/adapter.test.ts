@@ -11,7 +11,7 @@ import {
 	GEONAMES_ADAPTER_ID,
 	GEONAMES_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/adapters/geonames/adapter"
-import { join } from "@mailwoman/platform/path"
+import { join, type PathBuilderLike } from "path-ts"
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
 
 import type { CanonicalRow } from "#types"
@@ -20,7 +20,7 @@ const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-let scratch: string
+let scratch: PathBuilderLike
 
 beforeEach(async () => {
 	scratch = fixtures.use(await temporaryDirectory("mailwoman-geonames-")).path

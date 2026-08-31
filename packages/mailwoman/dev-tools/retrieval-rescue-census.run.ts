@@ -7,17 +7,17 @@
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
-import { parseArgs } from "@mailwoman/platform/util"
 
-import { loadRegressionCases } from "../eval-harness/gauntlet/cases/load.ts"
-import { buildGauntletDeps } from "../eval-harness/gauntlet/harness.ts"
-import { routeCountry } from "../eval-harness/gauntlet/routing.ts"
-import { classifyRescueRow, type RescueRowReport, summarizeRescue } from "../eval-harness/retrieval-rescue-census.ts"
-import { probeForkEntity } from "../fork-entity.ts"
-import { loadForkEntityDeps } from "../geocode-session.ts"
+import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
+import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"
+import { routeCountry } from "#eval-harness/gauntlet/routing"
+import { classifyRescueRow, type RescueRowReport, summarizeRescue } from "#eval-harness/retrieval-rescue-census"
+import { probeForkEntity } from "#fork-entity"
+import { loadForkEntityDeps } from "#geocode-session"
 
-const { values } = parseArgs({ options: { "out-json": { type: "string" } } })
+const { values } = parseArguments({ options: { "out-json": { type: "string" } } })
 
 const cases = await loadRegressionCases()
 const deps = await buildGauntletDeps()

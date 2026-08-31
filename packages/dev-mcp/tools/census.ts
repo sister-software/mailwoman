@@ -10,9 +10,9 @@
 
 import { z } from "zod"
 
-import { runCensus } from "../census.ts"
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
-import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "../tool-kit.ts"
+import { runCensus } from "#census"
+import type { DevTool, DevToolDeps } from "#tool-kit"
+import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#tool-kit"
 
 export const censusTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_census",

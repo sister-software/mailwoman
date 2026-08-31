@@ -19,11 +19,11 @@
  *   field-survey date, which is the number a currency claim actually turns on.
  */
 
-import type { SurveyAreaInput } from "./build-soil.ts"
-import type { SoilDataAccessClient, SurveyAreaCatalogEntry } from "./client.ts"
-import { downloadSurveyArea, type SurveyAreaArchive } from "./download.ts"
-import { mapUnitShapefile, readSoilSourceIdentity, surveyAreaShapefile } from "./ingest.ts"
-import { readSurveyAreaAttributes, readSurveyAreaOutline } from "./survey-area.ts"
+import type { SurveyAreaInput } from "#sdk/build-soil"
+import type { SoilDataAccessClient, SurveyAreaCatalogEntry } from "#sdk/client"
+import { downloadSurveyArea, type SurveyAreaArchive } from "#sdk/download"
+import { mapUnitShapefile, readSoilSourceIdentity, surveyAreaShapefile } from "#sdk/ingest"
+import { readSurveyAreaAttributes, readSurveyAreaOutline } from "#sdk/survey-area"
 
 export interface AcquireRegionOptions {
 	client: SoilDataAccessClient
@@ -94,7 +94,7 @@ export async function acquireRegion(options: AcquireRegionOptions): Promise<Acqu
 
 		archives.push(archive)
 
-		const attributes = readSurveyAreaAttributes(archive.tabularDirectory, entry.areasymbol)
+		const attributes = await readSurveyAreaAttributes(archive.tabularDirectory, entry.areasymbol)
 		const shapefilePath = mapUnitShapefile(archive.spatialDirectory, entry.areasymbol)
 		const identity = await readSoilSourceIdentity({ shapefilePath })
 		const outline = await readSurveyAreaOutline(surveyAreaShapefile(archive.spatialDirectory, entry.areasymbol))

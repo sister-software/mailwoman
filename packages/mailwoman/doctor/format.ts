@@ -6,8 +6,8 @@
 
 import chalk from "chalk"
 
-import { CheckStatus, type DoctorCheck, type DoctorReport } from "./checks.ts"
-import type { EnvironmentEntry } from "./runner.ts"
+import { CheckStatus, type DoctorCheck, type DoctorReport } from "#doctor/checks"
+import type { EnvironmentEntry } from "#doctor/runner"
 
 function statusStyle(status: CheckStatus): { glyph: string; paint: (text: string) => string } {
 	switch (status) {

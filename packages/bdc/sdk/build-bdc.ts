@@ -50,7 +50,7 @@
  *      the house rule exists for.
  */
 
-import { readDirectory, pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists, readDirectory, readFileRange } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent, movePath, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import {
 	CoverageBasis,
@@ -65,17 +65,16 @@ import { tryParsingJSON } from "@mailwoman/core/objects"
 import type { FilerDatabase } from "@mailwoman/filer"
 // `pickPrimaryFRN`/`readFRNFilingCandidates` are loaded via a LAZY `await import("@mailwoman/filer/sdk")`
 // inside `populateBDCProviderTable`, not a top-level runtime import — see that function's docstring
-//. Only the TYPES are imported here; `import type` is fully erased, so
-// this line has zero runtime cost for every `@mailwoman/bdc` consumer that never populates providers.
+//
+// Only the TYPES are imported here; `import type` is fully erased.
 import type { FRN, ProviderListRow } from "@mailwoman/filer/sdk"
-import { open } from "@mailwoman/platform/fs/promises"
-import { basename, dirname, join } from "@mailwoman/platform/path"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { cellToParent, latLngToCell } from "h3-js"
 import type { Insertable, Kysely } from "kysely"
+import { basename, dirname, join } from "path-ts"
 
 import {
 	BDC_COVERAGE_H3_RESOLUTION,
@@ -85,9 +84,9 @@ import {
 	createBDCProviderTable,
 	type BDCDatabase,
 	type BDCProviderTable,
-} from "../schema.ts"
-import type { ProviderID } from "./common.ts"
-import { readAvailabilityRows, type BDCAvailabilityRow } from "./parsing.ts"
+} from "#schema"
+import type { ProviderID } from "#sdk/common"
+import { readAvailabilityRows, type BDCAvailabilityRow } from "#sdk/parsing"
 
 /**
  * Rows committed per `BEGIN`/`COMMIT` batch during both the staging load and the materialize pass — matches
@@ -300,28 +299,11 @@ export function peekProviderID(csvBuffer: Buffer, csvPath?: string): ProviderID 
  * Bytes read to peek the `provider_id`. Only the header row plus the first data row are needed and an FCC availability
  * row is ~110 bytes, so this is three orders of magnitude of slack. A file shorter than this simply reads short —
  * {@linkcode peekProviderID} already reports a header-only or empty file by message.
+ *
+ * `provider_id` is a constant per file, so establishing it needs the first data row and nothing else; a whole-file read
+ * was resident-loading 920 MB (one state × technology) to read one column of one row.
  */
 const PROVIDER_ID_PEEK_BYTES = 64 * 1024
-
-/**
- * Read the head of a CSV, for {@linkcode peekProviderID}.
- *
- * The point is what it does NOT do. `provider_id` is a constant per file, so establishing it needs the first data row
- * and nothing else; `readFile(csvPath)` was resident-loading the entire file to read one column of one row. The
- * measured file that motivated this is 920 MB for a single state × technology.
- */
-async function readCSVHead(csvPath: string): Promise<Buffer> {
-	const handle = await open(csvPath)
-
-	try {
-		const buffer = Buffer.allocUnsafe(PROVIDER_ID_PEEK_BYTES)
-		const { bytesRead } = await handle.read(buffer, 0, PROVIDER_ID_PEEK_BYTES, 0)
-
-		return buffer.subarray(0, bytesRead)
-	} finally {
-		await handle.close()
-	}
-}
 
 /**
  * Peeks each file's `provider_id` off its head ({@linkcode peekProviderID}, passing the path through so a malformed
@@ -331,7 +313,7 @@ async function readCSVHead(csvPath: string): Promise<Buffer> {
  */
 async function* readAvailabilityRowsFromCSVPaths(csvPaths: readonly string[]): AsyncIterable<BDCAvailabilityRow> {
 	for (const csvPath of csvPaths) {
-		const providerID = peekProviderID(await readCSVHead(csvPath), csvPath)
+		const providerID = peekProviderID(await readFileRange(csvPath, 0, PROVIDER_ID_PEEK_BYTES), csvPath)
 
 		yield* readAvailabilityRows(csvPath, providerID)
 	}
@@ -432,16 +414,17 @@ export function geometryCentroid(geometryJSON: string | null): { lat: number; lo
 
 /**
  * The production `blockCentroids` supplier: opens the TIGER blocks database READ-ONLY and probes `tabblock20.GEOID`
- * (uppercase) per lookup, decoding its GeoJSON `geometry` column via {@linkcode geometryCentroid}. Kept synchronous —
- * `BuildBDCOptions.blockCentroids` is a plain sync function (the same sync-by-interface discipline AGENTS.md documents
- * for the resolver ladder), so this uses `node:sqlite`'s raw `.prepare()`/`.get()` directly rather than Kysely. The
- * connection is left open for the caller's process lifetime (a read-path lookup, not a build) — same lifecycle as the
- * resolver-wof-sqlite lookups.
+ * (uppercase) per lookup, decoding its GeoJSON `geometry` column via {@linkcode geometryCentroid}. The factory awaits
+ * its read-only open; the per-lookup probe and the `BuildBDCOptions.blockCentroids` interface stay synchronous — a
+ * plain sync function (the same sync-by-interface discipline AGENTS.md documents for the resolver ladder), so the
+ * returned closure uses `node:sqlite`'s raw `.prepare()`/`.get()` directly rather than Kysely. The connection is left
+ * open for the caller's process lifetime (a read-path lookup, not a build) — same lifecycle as the resolver-wof-sqlite
+ * lookups.
  */
-export function createTIGERBlockCentroidLookup(
+export async function createTIGERBlockCentroidLookup(
 	tigerDBPath: string
-): (geoid: string) => { lat: number; lon: number } | undefined {
-	const db = openBuiltClient(tigerDBPath)
+): Promise<(geoid: string) => { lat: number; lon: number } | undefined> {
+	const db = await openBuiltClient(tigerDBPath)
 	const stmt = db.prepare("SELECT geometry FROM tabblock20 WHERE GEOID = ?")
 
 	return (geoid: string) => {
@@ -876,7 +859,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 
 	// Atomic move-into-place via the shared helper (the AGENTS.md database house rule): prior
 	// version aside first, forward rename restored on failure so the slot is never left empty.
-	swapDatabaseIntoPlace(buildingPath, options.out)
+	await swapDatabaseIntoPlace(buildingPath, options.out)
 
 	return result
 }

@@ -17,10 +17,10 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { resolve } from "@mailwoman/platform/path"
+import { resolvePath } from "path-ts"
 
-import { ablationBoardID } from "../ablation.ts"
-import { loadRegressionCases, regressionCorpusHash } from "./load.ts"
+import { ablationBoardID } from "#eval-harness/gauntlet/ablation"
+import { loadRegressionCases, regressionCorpusHash } from "#eval-harness/gauntlet/cases/load"
 
 /**
  * The three values `load.test.ts` pins, under the names it pins them as.
@@ -105,7 +105,7 @@ export interface PinCheck {
  */
 export async function checkBoardPins(): Promise<PinCheck> {
 	const measured = await measureBoardPins()
-	const testPath = resolve(String(repoRootPath()), PIN_TEST_PATH)
+	const testPath = resolvePath(String(repoRootPath()), PIN_TEST_PATH)
 	const committed = readCommittedPins(await readLocalTextFile(testPath))
 	const stale = (Object.keys(measured) as Array<keyof BoardPins>).filter((key) => measured[key] !== committed[key])
 
@@ -117,7 +117,7 @@ export async function checkBoardPins(): Promise<PinCheck> {
  * must be empty — a non-empty result after an update means the file reshaped under us.
  */
 export async function updateBoardPins(): Promise<PinCheck> {
-	const path = resolve(String(repoRootPath()), PIN_TEST_PATH)
+	const path = resolvePath(String(repoRootPath()), PIN_TEST_PATH)
 	const measured = await measureBoardPins()
 
 	await writeLocalFile(writeCommittedPins(await readLocalTextFile(path), measured), path)

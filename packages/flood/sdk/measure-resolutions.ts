@@ -17,8 +17,8 @@
  *   A caller that runs out of headroom runs the candidates in separate invocations.
  */
 
-import { classifyFeatureCells, FloodCellIndex, type CellIndexMeasurement } from "./cells.ts"
-import { readFloodSourceFeatures, readFloodSourceIdentity, type FloodIngestOptions } from "./ingest.ts"
+import { classifyFeatureCells, FloodCellIndex, type CellIndexMeasurement } from "#sdk/cells"
+import { readFloodSourceFeatures, readFloodSourceIdentity, type FloodIngestOptions } from "#sdk/ingest"
 
 export interface MeasureResolutionsOptions extends FloodIngestOptions {
 	/**

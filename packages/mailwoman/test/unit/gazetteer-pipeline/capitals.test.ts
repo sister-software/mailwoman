@@ -10,8 +10,8 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
 import { buildCapitalsReference, type CapitalsReference, parseCapitalRows } from "mailwoman/gazetteer-pipeline/capitals"
+import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 function dumpRow(id: number, name: string, fclass: string, fcode: string, country: string, alternates = ""): string {
@@ -66,7 +66,7 @@ describe("parseCapitalRows", () => {
 describe("buildCapitalsReference", () => {
 	it("grades coverage against the catalog: wrong-format files are named, never counted as scanned", async () => {
 		await using dirDirectory = await temporaryDirectory("mw-capitals-")
-		const dir = dirDirectory.path
+		const dir = dirDirectory.path.toString()
 
 		await writeLocalTextFile(
 			[
@@ -114,7 +114,7 @@ describe("buildCapitalsReference", () => {
 
 	it("throws without countryInfo.txt — no catalog, no coverage denominator", async () => {
 		await using dirDirectory = await temporaryDirectory("mw-capitals-")
-		const dir = dirDirectory.path
+		const dir = dirDirectory.path.toString()
 
 		await expect(buildCapitalsReference({ geonamesDir: dir, outPath: join(dir, "out.json") })).rejects.toThrow(
 			/countryInfo/

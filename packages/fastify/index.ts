@@ -22,12 +22,20 @@
  */
 
 import type { decodeAsTuples } from "@mailwoman/core/decoder"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify"
 import fp from "fastify-plugin"
 import type { AddressTree, PipelineOpts, PipelineResult, POIIntentOutcome } from "mailwoman"
 import type { extractGeocodeResult, GeocodeResult } from "mailwoman/geocode-result"
 
-import packageJson from "#package.json" with { type: "json" }
+/**
+ * This package's own manifest, read at load rather than imported as a module: a JSON import makes `tsc` copy the file
+ * into `out/`, where it becomes the package scope for the compiled tree and breaks every `#` import in it.
+ */
+const packageJson = await readLocalJSONFile<{ name: string; version: string; description: string }>(
+	resolvePackagePath("@mailwoman/fastify", "package.json")
+)
 
 /**
  * Structural shape of the runtime pipeline (`createRuntimePipeline`'s return value): a function from raw input +
@@ -172,7 +180,7 @@ async function buildPipeline(opts: MailwomanFastifyOptions, locale: string): Pro
 			import("mailwoman/resolver-backend"),
 		])
 
-		const backend = createResolverBackend(resolverMod, { wofPaths: opts.resolveDatabasePath })
+		const backend = await createResolverBackend(resolverMod, { wofPaths: opts.resolveDatabasePath })
 		resolver = createWOFResolver(backend)
 	}
 

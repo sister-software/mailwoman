@@ -22,7 +22,7 @@
  *     package; these shapes are what every adapter maps INTO.
  */
 
-import type { ComponentTag } from "../types/component.ts"
+import type { ComponentTag } from "#types/component"
 
 /**
  * One parsed component as the provider receives it: the tag, the surface text, and where in the normalized query it

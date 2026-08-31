@@ -13,9 +13,8 @@
  *   task-3 follow-up in DECISIONS.md).
  */
 
+import type { ClassifierPolicy } from "#policy/policy"
 import type { ComponentTag } from "#types"
-
-import type { ClassifierPolicy } from "../policy/policy.ts"
 
 export interface LocaleProfile {
 	/**

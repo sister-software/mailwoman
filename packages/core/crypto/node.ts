@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { createHash } from "@mailwoman/platform/crypto"
+import { createHash } from "node:crypto"
 
-import { isPresent } from "../objects.ts"
+import { isPresent } from "#objects"
 
 /**
  * A value that can be used as input to {@link simpleSHA3}.

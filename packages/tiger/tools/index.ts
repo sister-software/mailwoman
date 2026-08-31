@@ -6,6 +6,6 @@
  *   TIGER operator tool exports.
  */
 
-export * from "./race-dots.ts"
-export * from "./race-dots-map.ts"
-export * from "./serve-range.ts"
+export * from "#tools/race-dots"
+export * from "#tools/race-dots-map"
+export * from "#tools/serve-range"
