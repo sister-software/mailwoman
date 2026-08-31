@@ -184,9 +184,9 @@
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/registry": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"kysely": "^0.29.4",
+		"kysely": "^0.29.5",
 		"path-ts": "^2.3.0",
-		"read-excel-file": "^9.3.5",
+		"read-excel-file": "^9.3.10",
 		"spliterator": "^6.4.1",
 		"type-fest": "^5.8.0"
 	},

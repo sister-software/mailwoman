@@ -82,8 +82,8 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"@turf/boolean-contains": "^7.3.5",
-		"kysely": "^0.29.4",
+		"@turf/boolean-contains": "^7.4.0",
+		"kysely": "^0.29.5",
 		"path-ts": "^2.3.0",
 		"spliterator": "^6.4.1",
 		"type-fest": "^5.8.0"
