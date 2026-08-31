@@ -115,51 +115,12 @@ export type ExpectedRung =
  */
 export const UNCONSTRAINED_RUNG = "unconstrained" as const
 
-/**
- * The verdict for one deletion variant under the expectation model.
- *
- * `held` / `degraded` / `correctlyAbstained` are PASSES; the rest are failures, kept as distinct classes because they
- * ask the operator for different things. `lost` is a recall bug, `overconfident` is a calibration bug, `coarser` is a
- * precision bug (it stayed on the ladder but gave up more than the surviving evidence justified), `wrong` is a
- * resolution bug (it left the ladder — a different place), `substituted` is a slot-hazard bug, and `homonymTakeover` is
- * arguably not a bug at all: the remaining text genuinely names a different place.
- */
-export type AblationGrade =
-	| "held"
-	| "degraded"
-	| "correctlyAbstained"
-	| "lost"
-	| "overconfident"
-	| "homonymTakeover"
-	| "coarser"
-	| "wrong"
-	| "substituted"
-	| "ungraded"
-
-/**
- * Every {@linkcode AblationGrade}, as data — the histogram-iteration order the reports print in.
- */
-export const ABLATION_GRADES = [
-	"held",
-	"degraded",
-	"correctlyAbstained",
-	"lost",
-	"overconfident",
-	"homonymTakeover",
-	"coarser",
-	"wrong",
-	"substituted",
-	"ungraded",
-] as const satisfies readonly AblationGrade[]
-
-/**
- * The grades that count as the pipeline behaving correctly.
- */
-export const PASSING_GRADES: ReadonlySet<AblationGrade> = new Set<AblationGrade>([
-	"held",
-	"degraded",
-	"correctlyAbstained",
-])
+export {
+	ABLATION_GRADES,
+	type AblationGrade,
+	emptyGrades,
+	PASSING_GRADES,
+} from "#eval-harness/gauntlet/ablation-grades"
 
 /**
  * Placetype → fallback rung radius (km): that placetype's MEASURED p90 bbox radius in `admin-global-priority.db`
