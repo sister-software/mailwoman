@@ -104,3 +104,12 @@ export function pyTitle(input: string): string {
 export function titlecaseIfUpper(input: string): string {
 	return pyIsUpper(input) ? pyTitle(input) : input
 }
+
+/**
+ * Sentence-case a snake_case code into a display label: `afghan_restaurant` → `Afghan restaurant`.
+ */
+export function sentenceCaseSnake(code: string): string {
+	const spaced = code.replaceAll("_", " ")
+
+	return spaced.charAt(0).toUpperCase() + spaced.slice(1)
+}

@@ -34,8 +34,9 @@ import {
 	matchTrailingSuffix,
 } from "@mailwoman/codex/us"
 import { isPresent } from "@mailwoman/core/objects"
+import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 import type { BIOLabel, ComponentTag } from "@mailwoman/core/types"
-import { escapeRegExp, mulberry32 } from "@mailwoman/core/utils"
+import { mulberry32 } from "@mailwoman/core/utils"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 
 import type { CanonicalRow, LabeledRow, QuarantinedRow } from "#types"

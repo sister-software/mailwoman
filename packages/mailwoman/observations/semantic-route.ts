@@ -71,7 +71,7 @@ import {
 	readActivityLexicon,
 	resolveActivityPhraseLocale,
 } from "@mailwoman/activity-lexicon"
-import { compareByCodePoint } from "@mailwoman/core/utils"
+import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import type {
 	CompiledGeographicModel,
 	ConceptRecord,

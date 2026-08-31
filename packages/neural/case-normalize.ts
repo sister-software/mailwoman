@@ -11,7 +11,7 @@
  *
  *   Detection is deliberately STRICT — only a fully-shouting input qualifies — so mixed-case input is
  *   never touched (the caller's byte-stable path). Distinct from the identifier-casing all-caps
- *   idiom in `core/identifiers.ts` (`smartSnakeCase`/`smartCamelCase`): those skip _case
+ *   idiom in `core/strings/case.ts` (`smartSnakeCase`/`smartCamelCase`): those skip _case
  *   conversion_ when a name is already uppercase; this _applies_ a title-case to address TEXT for
  *   the model.
  */

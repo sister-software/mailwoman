@@ -275,10 +275,10 @@
 			"default": "./out/tools/index.js",
 			"types": "./out/tools/index.d.ts"
 		},
-		"./identifiers": {
-			"node": "./identifiers.ts",
-			"default": "./out/identifiers.js",
-			"types": "./out/identifiers.d.ts"
+		"./strings/*": {
+			"node": "./strings/*.ts",
+			"default": "./out/strings/*.js",
+			"types": "./out/strings/*.d.ts"
 		},
 		"./trust-policies": {
 			"node": "./trust-policies.ts",

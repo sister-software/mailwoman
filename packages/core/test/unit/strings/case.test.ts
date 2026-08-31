@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { isUniformlyCased, smartCamelCase, smartCapitalCase, smartSnakeCase } from "@mailwoman/core/identifiers"
+import { isUniformlyCased, smartCamelCase, smartCapitalCase, smartSnakeCase } from "@mailwoman/core/strings/case"
 import { expect, test } from "vitest"
 
 test("smartSnakeCase: snake-cases mixed-case names", () => {

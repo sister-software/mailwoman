@@ -66,7 +66,7 @@ import {
 	supportsExclusion,
 } from "@mailwoman/core/layers"
 import type { POIIntentOutcome } from "@mailwoman/core/pipeline"
-import { compareByCodePoint } from "@mailwoman/core/utils"
+import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import type {
 	CompiledGeographicModel,
 	ConceptRecord,
