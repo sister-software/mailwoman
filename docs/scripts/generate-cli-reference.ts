@@ -174,7 +174,7 @@ function renderFlag(name: string, option: OptionSpec): string {
 /**
  * The `Default` column. Absolute paths are suppressed: `geocode --data-root` defaults to the resolved data root, so
  * printing the value would bake the generating machine's filesystem into a published page. Each such flag's description
- * already names the variable it reads.
+ * already states which variable it reads.
  */
 export function renderDefault(value: unknown): string {
 	if (value === undefined) return "—"
@@ -468,7 +468,7 @@ export function renderCLIReference(surface: CLISurface): string {
 		"",
 		"- A flag written `--no-<name>` is on by default. Pass it to turn the behavior off.",
 		"- A default shown as `environment-dependent` resolves from the environment at run time. The flag's",
-		"  description names the variable it reads.",
+		"  description states which variable it reads.",
 		"- A value in angle brackets in a synopsis is required. A value in square brackets is optional.",
 		"",
 		"Commands are shown here, not run. For executed invocations with their real output, follow the",
