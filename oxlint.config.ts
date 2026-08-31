@@ -80,9 +80,6 @@ const config = createOxlintConfig({
 		"**/*.egg-info/**",
 		// Emscripten-generated single-file artifact (rebuilt by sentencepiece-wasm/build.sh).
 		"packages/sentencepiece-wasm/sentencepiece.mjs",
-		// A codemod's fixtures ARE the shape it rewrites, so they are data rather than source. Linting the forbidden
-		// form out of an `input.ts` would leave the codemod asserting a transformation nothing still needs.
-		"codemods/*/tests/**",
 	],
 })
 
@@ -256,15 +253,6 @@ export default {
 			},
 		},
 		{
-			// The codemod fixtures spell relative dynamic imports and raw builtins on purpose — they are the INPUT under test.
-			files: ["codemods/**/*.ts"],
-			rules: {
-				"mailwoman/no-import-meta-dirname-walk": "off",
-				"mailwoman/no-import-meta-resolve": "off",
-				"mailwoman/no-relative-dynamic-import": "off",
-			},
-		},
-		{
 			// `@mailwoman/variant-aliases` does not depend on `@mailwoman/core`, so it reaches `node:fs` itself and says so
 			// at the call site, next to a `JSON.parse` that reaches for no wrapper for the same reason. The dependency
 			// is what the exemption buys back: `@mailwoman/core` ships ~9 MB of libpostal + WOF data under
@@ -273,14 +261,6 @@ export default {
 			files: ["packages/variant-aliases/lookup.ts"],
 			rules: {
 				"typescript/no-restricted-imports": "off",
-			},
-		},
-		{
-			// A codemod reads argument COUNTS to tell one builtin overload from another. `args.length === 3` is an arity,
-			// not a tuned threshold, and naming each one costs a constant per overload and explains nothing.
-			files: ["codemods/**/*.ts"],
-			rules: {
-				"sister-software/no-unnamed-threshold": "off",
 			},
 		},
 	],

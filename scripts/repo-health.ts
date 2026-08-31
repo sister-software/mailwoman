@@ -217,20 +217,13 @@ function visit(
 /**
  * Paths whose sources DO NOT count toward repository debt, and why each is excluded.
  *
- * The counters used to enumerate three roots — `packages/`, `scripts/`, `docs/src/` — which quietly excluded
- * `codemods/`, `corpus-python/`, `docker/`, everything in `docs/` outside `src/`, and the root-level configs. That is a
- * denominator, and a count reported without one says less than it appears to: `synchronousFilesystemCalls` read 7 while
- * `corpus-python/scripts/train_with_resume.ts` held an eighth call the walk never opened. The set is now every tracked
- * `.ts`/`.tsx`, minus what is listed here.
+ * The set is every tracked `.ts`/`.tsx` minus what is listed here — the denominator a count is reported against, and a
+ * count reported without one says less than it appears to.
  */
 const UNCOUNTED = [
 	// The runtime mirror and the idiom over it call the builtins on purpose; counting them would measure the
 	// implementation rather than its callers.
 	"packages/core/fs/",
-	// A codemod fixture is an INPUT. `tests/*/input.ts` holds the synchronous shapes the transform consumes and
-	// `expected.ts` holds the ones it deliberately refuses to touch, so both must keep calls this check dislikes.
-	// The codemod's own `scripts/` are NOT excluded.
-	"codemods/sync-fs-to-async/tests/",
 ]
 
 /**

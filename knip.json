@@ -10,8 +10,7 @@
 		"docs/build/**",
 		"packages/mailwoman/commands/**/*.tsx",
 		"packages/sentencepiece-wasm/sentencepiece.mjs",
-		"packages/*/out/**",
-		"codemods/**"
+		"packages/*/out/**"
 	],
 	"ignoreBinaries": ["ogr2ogr", "rg", "script", "uvx"],
 	"ignoreDependencies": ["@duckdb/node-api", "ts-morph", "onnxruntime-web"],
