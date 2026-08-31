@@ -5,8 +5,11 @@
  * @file Package-aware source resolution for the docs webpack build.
  */
 
+// `node:module` directly: the Docusaurus config loader evaluates this file through a CommonJS transform that cannot
+// parse `import.meta.resolve`, which `@mailwoman/core/module/resolvers` carries.
+import { createRequire } from "node:module"
+
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { createRequire } from "@mailwoman/core/module/resolvers"
 import { dirname, join } from "path-ts"
 
 const requireFromPlugin = createRequire(import.meta.url)
