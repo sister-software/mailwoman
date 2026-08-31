@@ -238,12 +238,18 @@ function asTarget(path: PathBuilderLike | URL): URL | string {
  * @throws ENOENT when the file does not exist.
  */
 export async function readFileHead(path: PathBuilderLike, byteSize: number): Promise<string> {
-	await using handle = await open(path, "r")
+	// `try`/`finally` rather than `await using`: this module is on the Docusaurus config loader's import path, and its
+	// transform does not parse explicit resource management.
+	const handle = await open(path, "r")
 
-	const buffer = Buffer.alloc(byteSize)
-	const { bytesRead } = await handle.read(buffer, 0, byteSize, 0)
+	try {
+		const buffer = Buffer.alloc(byteSize)
+		const { bytesRead } = await handle.read(buffer, 0, byteSize, 0)
 
-	return buffer.subarray(0, bytesRead).toString("utf8")
+		return buffer.subarray(0, bytesRead).toString("utf8")
+	} finally {
+		await handle.close()
+	}
 }
 
 /**
