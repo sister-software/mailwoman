@@ -52,6 +52,7 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { resolvePath } from "path-ts"
+import { CSVSpliterator } from "spliterator"
 
 import type { CategoryRecord, POICategoryID, POITaxonomyTable, SynonymEntry } from "#types"
 
@@ -94,35 +95,32 @@ export interface CuratedOverlay {
  * category code the db actually stores; for those the code is APPENDED as the true leaf so the invariant `lookup.ts`'s
  * integrity test relies on (`hierarchy.at(-1) === id`) holds while the display ancestry is preserved. Throws only on a
  * structurally broken row (no code / empty path) or a repeated code.
- *
- * TODO: IF YOU ARE SEEING THIS, IMMEDIATELY PORT THIS TO `CSVSpliterator` AND REMOVE ANY SIMILAR CODE.
  */
 export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
-	const lines = csvText.replace(/^﻿/, "").split(/\r?\n/)
 	const rows: OvertureSnapshotRow[] = []
 	const seen = new Set<string>()
+	// The header is row 1; the first emitted record is row 2.
+	let rowNumber = 1
 
-	for (let i = 1; i < lines.length; i++) {
-		const line = lines[i]!.trim()
+	for (const fields of CSVSpliterator.from<string[]>(csvText.replace(/^\uFEFF/, ""), {
+		mode: "array",
+		columnDelimiter: ";",
+	})) {
+		rowNumber++
 
-		if (!line) continue
+		const [rawCode, rawPath, ...rest] = fields
 
-		const semi = line.indexOf(";")
+		if (rawCode === undefined || rawPath === undefined || rest.length) {
+			throw new Error(`generate-taxonomy: malformed CSV row ${rowNumber}: ${JSON.stringify(fields.join(";"))}`)
+		}
 
-		if (semi === -1) throw new Error(`generate-taxonomy: malformed CSV row ${i + 1}: ${JSON.stringify(line)}`)
-
-		const code = line.slice(0, semi).trim()
-
-		const pathText = line
-			.slice(semi + 1)
-			.trim()
-			.replaceAll(/^\[|\]$/g, "")
-
+		const code = rawCode.trim()
+		const pathText = rawPath.trim().replaceAll(/^\[|\]$/g, "")
 		const path = pathText.split(",").map((p) => p.trim())
 
 		if (!code || !path.length || path.some((p) => !p)) {
 			throw new Error(
-				`generate-taxonomy: malformed CSV row ${i + 1}: code ${JSON.stringify(code)} path ${JSON.stringify(pathText)}`
+				`generate-taxonomy: malformed CSV row ${rowNumber}: code ${JSON.stringify(code)} path ${JSON.stringify(pathText)}`
 			)
 		}
 

@@ -89,6 +89,7 @@
 		"path-ts": "^2.3.0"
 	},
 	"devDependencies": {
-		"@mailwoman/core": "workspace:*"
+		"@mailwoman/core": "workspace:*",
+		"spliterator": "^6.4.1"
 	}
 }

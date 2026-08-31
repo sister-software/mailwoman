@@ -9,7 +9,7 @@ import {
 	escapeTrustPolicy,
 	sanitizeTrustPolicy,
 	stripHTMLTrustPolicy,
-} from "@mailwoman/react/trust-policies"
+} from "@mailwoman/core/trust-policies"
 import { describe, expect, it } from "vitest"
 
 describe("escapeHTML", () => {

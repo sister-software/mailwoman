@@ -24,7 +24,11 @@ export const spec = {
 		"bump-to": { type: "string", required: true, description: "Target golden version dir (e.g. v0.1.1)" },
 		prior: { type: "string", default: "v0.1.0", description: "Previous version to forward-copy + dedup against" },
 		"golden-root": { type: "string", default: "data/eval/golden", description: "Golden dir root" },
-		"no-filters": { type: "boolean", default: false, description: "Skip the human-typed-likelihood filters" },
+		filters: {
+			type: "boolean",
+			default: true,
+			description: "Apply the human-typed-likelihood filters; pass --no-filters to skip them",
+		},
 		"dry-run": { type: "boolean", default: false, description: "Report what would be written but don't touch disk" },
 	},
 } as const satisfies CommandSpec
@@ -34,7 +38,7 @@ interface Options {
 	bumpTo: string
 	prior: string
 	goldenRoot: string
-	noFilters: boolean
+	filters: boolean
 	dryRun: boolean
 }
 
@@ -48,7 +52,7 @@ const CorpusGoldenPromote: ParsedCommandComponent<Options> = ({ options }) => {
 				bumpTo: options.bumpTo,
 				prior: options.prior,
 				goldenRoot: options.goldenRoot,
-				noFilters: options.noFilters,
+				noFilters: !options.filters,
 				dryRun: options.dryRun,
 			},
 			(line) => console.error(line)

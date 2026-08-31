@@ -99,6 +99,12 @@ export function nutsFromID(id: string): NUTS {
 }
 
 /**
+ * How many parsed regions {@link NUTSLookup} keeps. 256 covers every region a bounded-area workload touches while
+ * holding a small fraction of the table.
+ */
+const GEOMETRY_CACHE_LIMIT = 256
+
+/**
  * A NUTS lookup over a built `node:sqlite` polygon table.
  */
 export class NUTSLookup implements Disposable {
@@ -109,6 +115,12 @@ export class NUTSLookup implements Disposable {
 	 */
 	readonly #ownedDatabase?: DatabaseClient<NUTSDatabase>
 	#byLevelBox: ReturnType<DatabaseClient["prepare"]>
+	/**
+	 * Parsed geometry by NUTS id, most recently used last. The table is read-only, so an entry never goes stale; the
+	 * cache is bounded because the shipped `nuts.db` carries 14.3 MB of geometry JSON over 2,010 regions, and a lookup
+	 * service that answers points across the whole EU would otherwise hold every region parsed.
+	 */
+	readonly #geometryCache = new Map<string, MultiPolygonCoords>()
 
 	constructor(opts: { databasePath: string } | { database: DatabaseClient<NUTSDatabase> }) {
 		this.#ownedDatabase =
@@ -133,16 +145,34 @@ export class NUTSLookup implements Disposable {
 			const rows = this.#byLevelBox.all(level, lat, lat, lon, lon) as Array<{ nutsID: string; geom: string }>
 
 			for (const row of rows) {
-				// TODO: Consider caching this.
-				const multiPolygonCoords = parseJSONStrict<MultiPolygonCoords>(row.geom)
-
-				if (pointInMultiPolygon(lon, lat, multiPolygonCoords)) {
+				if (pointInMultiPolygon(lon, lat, this.#geometry(row))) {
 					return nutsFromID(row.nutsID)
 				}
 			}
 		}
 
 		return null
+	}
+
+	#geometry(row: { nutsID: string; geom: string }): MultiPolygonCoords {
+		const cached = this.#geometryCache.get(row.nutsID)
+
+		if (cached) {
+			this.#geometryCache.delete(row.nutsID)
+			this.#geometryCache.set(row.nutsID, cached)
+
+			return cached
+		}
+
+		const parsed = parseJSONStrict<MultiPolygonCoords>(row.geom)
+
+		this.#geometryCache.set(row.nutsID, parsed)
+
+		if (this.#geometryCache.size > GEOMETRY_CACHE_LIMIT) {
+			this.#geometryCache.delete(this.#geometryCache.keys().next().value!)
+		}
+
+		return parsed
 	}
 
 	[Symbol.dispose](): void {
