@@ -31,9 +31,9 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { dirname, join } from "path-ts"
+import { join } from "path-ts"
 
 import { readCommands, type CommandNode, type OptionSpec } from "./cli-schema.ts"
 
@@ -278,7 +278,10 @@ function collectCommands(node: CommandNode, prefix: readonly string[], into: CLI
 	}
 }
 
-const packagePath = dirname(resolveModulePath("mailwoman"))
+// The PACKAGE ROOT, not the directory of the package's entry file. `dirname(resolveModulePath("mailwoman"))`
+// answered the same thing only while the entry sat at the package root; once source moved under `lib/` it started
+// answering `mailwoman/lib`, and the `out/` joins below silently became `mailwoman/lib/out/…`.
+const packagePath = resolvePackageDirectory("mailwoman")
 
 /**
  * The compiled command tree this generator reads, resolved from this file rather than a working directory so the script
@@ -487,7 +490,7 @@ export function renderCLIReference(surface: CLISurface): string {
 	sections.push(
 		"## Exit codes",
 		"",
-		"Every command shares one exit-code contract, owned by `useCommandTask` in `packages/mailwoman/cli-kit`.",
+		"Every command shares one exit-code contract, owned by `useCommandTask` in `packages/mailwoman/lib/cli-kit`.",
 		"",
 		renderTable(
 			["Code", "Meaning", "Next step"],

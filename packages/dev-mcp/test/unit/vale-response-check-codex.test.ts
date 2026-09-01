@@ -9,7 +9,7 @@ import { parseJSONStrict } from "@mailwoman/core/objects"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { describe, expect, it } from "vitest"
 
-const HOOK_PATH = resolvePackagePath("@mailwoman/dev-mcp", "hooks", "vale-response-check-codex.ts")
+const HOOK_PATH = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "vale-response-check-codex.ts")
 
 function runHook(lastAssistantMessage: string): string {
 	const result = spawnProcessSync(process.execPath, [HOOK_PATH], {

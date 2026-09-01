@@ -1,13 +1,21 @@
 {
 	"extends": "@sister.software/tsconfig/node",
 	"compilerOptions": {
+		"rootDir": "./lib",
 		"outDir": "./out",
 		"emitDeclarationOnly": false,
 		"rewriteRelativeImportExtensions": true,
 		"erasableSyntaxOnly": true
 	},
-	"include": ["./src/**/*"],
-	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./fixtures/**/*", "./test-kit/**/*"],
+	"include": ["./lib/**/*"],
+	"exclude": [
+		"./out/**/*",
+		"./test/**/*",
+		"./**/*.test.ts",
+		"./**/*.test.tsx",
+		"./fixtures/**/*",
+		"./lib/test-kit/**/*"
+	],
 	"references": [
 		{ "path": "../bdc" },
 		{ "path": "../sqlite" },

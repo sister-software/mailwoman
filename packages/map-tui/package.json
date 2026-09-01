@@ -22,13 +22,13 @@
 		"!*.test.ts",
 		"!**/*.test.ts",
 		"!test/",
-		"!scripts/",
+		"!lib/scripts/",
 		"!__snapshots__/"
 	],
 	"type": "module",
 	"imports": {
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -36,47 +36,47 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./cli-args": {
-			"node": "./cli-args.ts",
+			"node": "./lib/cli-args.ts",
 			"default": "./out/cli-args.js",
 			"types": "./out/cli-args.d.ts"
 		},
 		"./frame": {
-			"node": "./frame.ts",
+			"node": "./lib/frame.ts",
 			"default": "./out/frame.js",
 			"types": "./out/frame.d.ts"
 		},
 		"./raster": {
-			"node": "./raster.ts",
+			"node": "./lib/raster.ts",
 			"default": "./out/raster.js",
 			"types": "./out/raster.d.ts"
 		},
 		"./input": {
-			"node": "./input.ts",
+			"node": "./lib/input.ts",
 			"default": "./out/input.js",
 			"types": "./out/input.d.ts"
 		},
 		"./mercator": {
-			"node": "./mercator.ts",
+			"node": "./lib/mercator.ts",
 			"default": "./out/mercator.js",
 			"types": "./out/mercator.d.ts"
 		},
 		"./renderer": {
-			"node": "./renderer.ts",
+			"node": "./lib/renderer.ts",
 			"default": "./out/renderer.js",
 			"types": "./out/renderer.d.ts"
 		},
 		"./tile-source": {
-			"node": "./tile-source.ts",
+			"node": "./lib/tile-source.ts",
 			"default": "./out/tile-source.js",
 			"types": "./out/tile-source.d.ts"
 		},
 		"./style": {
-			"node": "./style.ts",
+			"node": "./lib/style.ts",
 			"default": "./out/style.js",
 			"types": "./out/style.d.ts"
 		}

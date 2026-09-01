@@ -27,48 +27,49 @@
 	],
 	"type": "module",
 	"imports": {
+		"#test/*": "./test/*.ts",
 		"#utils": {
-			"node": "./utils/index.ts",
+			"node": "./lib/utils/index.ts",
 			"default": "./out/utils/index.js",
 			"types": "./out/utils/index.d.ts"
 		},
 		"#tokenization": {
-			"node": "./tokenization/index.ts",
+			"node": "./lib/tokenization/index.ts",
 			"default": "./out/tokenization/index.js",
 			"types": "./out/tokenization/index.d.ts"
 		},
 		"#types": {
-			"node": "./types/index.ts",
+			"node": "./lib/types/index.ts",
 			"default": "./out/types/index.js",
 			"types": "./out/types/index.d.ts"
 		},
 		"#logging": {
-			"node": "./logging/index.ts",
+			"node": "./lib/logging/index.ts",
 			"default": "./out/logging/index.js",
 			"types": "./out/logging/index.d.ts"
 		},
 		"#resources": {
-			"node": "./resources/index.ts",
+			"node": "./lib/resources/index.ts",
 			"default": "./out/resources/index.js",
 			"types": "./out/resources/index.d.ts"
 		},
 		"#resources/languages": {
-			"node": "./resources/languages/index.ts",
+			"node": "./lib/resources/languages/index.ts",
 			"default": "./out/resources/languages/index.js",
 			"types": "./out/resources/languages/index.d.ts"
 		},
 		"#env": {
-			"node": "./env/index.ts",
+			"node": "./lib/env/index.ts",
 			"default": "./out/env/index.js",
 			"types": "./out/env/index.d.ts"
 		},
 		"#scripting/utils": {
-			"node": "./scripting/utils/index.ts",
+			"node": "./lib/scripting/utils/index.ts",
 			"default": "./out/scripting/utils/index.js",
 			"types": "./out/scripting/utils/index.d.ts"
 		},
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -76,407 +77,407 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./coarse-placer": {
-			"node": "./coarse-placer/coarse-placer.ts",
+			"node": "./lib/coarse-placer/coarse-placer.ts",
 			"default": "./out/coarse-placer/coarse-placer.js",
 			"types": "./out/coarse-placer/coarse-placer.d.ts"
 		},
 		"./coarse-placer/tools": {
-			"node": "./coarse-placer/tools/index.ts",
+			"node": "./lib/coarse-placer/tools/index.ts",
 			"default": "./out/coarse-placer/tools/index.js",
 			"types": "./out/coarse-placer/tools/index.d.ts"
 		},
 		"./crypto": {
-			"node": "./crypto/node.ts",
+			"node": "./lib/crypto/node.ts",
 			"default": "./out/crypto/node.js",
 			"types": "./out/crypto/node.d.ts"
 		},
 		"./tokenization": {
-			"node": "./tokenization/index.ts",
+			"node": "./lib/tokenization/index.ts",
 			"default": "./out/tokenization/index.js",
 			"types": "./out/tokenization/index.d.ts"
 		},
 		"./types": {
-			"node": "./types/index.ts",
+			"node": "./lib/types/index.ts",
 			"default": "./out/types/index.js",
 			"types": "./out/types/index.d.ts"
 		},
 		"./decoder": {
-			"node": "./decoder/index.ts",
+			"node": "./lib/decoder/index.ts",
 			"default": "./out/decoder/index.js",
 			"types": "./out/decoder/index.d.ts"
 		},
 		"./env": {
-			"node": "./env/index.ts",
+			"node": "./lib/env/index.ts",
 			"default": "./out/env/index.js",
 			"types": "./out/env/index.d.ts"
 		},
 		"./layers": {
-			"node": "./layers/index.ts",
+			"node": "./lib/layers/index.ts",
 			"default": "./out/layers/index.js",
 			"types": "./out/layers/index.d.ts"
 		},
 		"./resources": {
-			"node": "./resources/index.ts",
+			"node": "./lib/resources/index.ts",
 			"default": "./out/resources/index.js",
 			"types": "./out/resources/index.d.ts"
 		},
 		"./resources/locale": {
-			"node": "./resources/locale.ts",
+			"node": "./lib/resources/locale.ts",
 			"default": "./out/resources/locale.js",
 			"types": "./out/resources/locale.d.ts"
 		},
 		"./resources/languages": {
-			"node": "./resources/languages/index.ts",
+			"node": "./lib/resources/languages/index.ts",
 			"default": "./out/resources/languages/index.js",
 			"types": "./out/resources/languages/index.d.ts"
 		},
 		"./resources/whosonfirst": {
-			"node": "./resources/whosonfirst/index.ts",
+			"node": "./lib/resources/whosonfirst/index.ts",
 			"default": "./out/resources/whosonfirst/index.js",
 			"types": "./out/resources/whosonfirst/index.d.ts"
 		},
 		"./resources/whosonfirst/specificity": {
-			"node": "./resources/whosonfirst/placetypes/specificity.ts",
+			"node": "./lib/resources/whosonfirst/placetypes/specificity.ts",
 			"default": "./out/resources/whosonfirst/placetypes/specificity.js",
 			"types": "./out/resources/whosonfirst/placetypes/specificity.d.ts"
 		},
 		"./placetypes": {
-			"node": "./resources/whosonfirst/placetypes/definition.ts",
+			"node": "./lib/resources/whosonfirst/placetypes/definition.ts",
 			"default": "./out/resources/whosonfirst/placetypes/definition.js",
 			"types": "./out/resources/whosonfirst/placetypes/definition.d.ts"
 		},
 		"./utils": {
-			"node": "./utils/index.ts",
+			"node": "./lib/utils/index.ts",
 			"default": "./out/utils/index.js",
 			"types": "./out/utils/index.d.ts"
 		},
 		"./utils/system": {
-			"node": "./utils/system.ts",
+			"node": "./lib/utils/system.ts",
 			"default": "./out/utils/system.js",
 			"types": "./out/utils/system.d.ts"
 		},
 		"./utils/sleep": {
-			"node": "./utils/sleep.ts",
+			"node": "./lib/utils/sleep.ts",
 			"default": "./out/utils/sleep.js",
 			"types": "./out/utils/sleep.d.ts"
 		},
 		"./utils/events": {
-			"node": "./utils/events.ts",
+			"node": "./lib/utils/events.ts",
 			"default": "./out/utils/events.js",
 			"types": "./out/utils/events.d.ts"
 		},
 		"./fs/*": {
-			"node": "./fs/*.ts",
+			"node": "./lib/fs/*.ts",
 			"default": "./out/fs/*.js",
 			"types": "./out/fs/*.d.ts"
 		},
 		"./module/*": {
-			"node": "./module/*.ts",
+			"node": "./lib/module/*.ts",
 			"default": "./out/module/*.js",
 			"types": "./out/module/*.d.ts"
 		},
 		"./process": {
-			"node": "./process.ts",
+			"node": "./lib/process.ts",
 			"default": "./out/process.js",
 			"types": "./out/process.d.ts"
 		},
 		"./scripting": {
-			"node": "./scripting/index.ts",
+			"node": "./lib/scripting/index.ts",
 			"default": "./out/scripting/index.js",
 			"types": "./out/scripting/index.d.ts"
 		},
 		"./scripting/ingest-chunk-script": {
-			"node": "./scripting/ingest-chunk-script.ts",
+			"node": "./lib/scripting/ingest-chunk-script.ts",
 			"default": "./out/scripting/ingest-chunk-script.js",
 			"types": "./out/scripting/ingest-chunk-script.d.ts"
 		},
 		"./scripting/arguments": {
-			"node": "./scripting/arguments.ts",
+			"node": "./lib/scripting/arguments.ts",
 			"default": "./out/scripting/arguments.js",
 			"types": "./out/scripting/arguments.d.ts"
 		},
 		"./scripting/command": {
-			"node": "./scripting/command.ts",
+			"node": "./lib/scripting/command.ts",
 			"default": "./out/scripting/command.js",
 			"types": "./out/scripting/command.d.ts"
 		},
 		"./scripting/utils": {
-			"node": "./scripting/utils/index.ts",
+			"node": "./lib/scripting/utils/index.ts",
 			"default": "./out/scripting/utils/index.js",
 			"types": "./out/scripting/utils/index.d.ts"
 		},
 		"./objects": {
-			"node": "./objects.ts",
+			"node": "./lib/objects.ts",
 			"default": "./out/objects.js",
 			"types": "./out/objects.d.ts"
 		},
 		"./locale": {
-			"node": "./locale/index.ts",
+			"node": "./lib/locale/index.ts",
 			"default": "./out/locale/index.js",
 			"types": "./out/locale/index.d.ts"
 		},
 		"./api": {
-			"node": "./api/index.ts",
+			"node": "./lib/api/index.ts",
 			"default": "./out/api/index.js",
 			"types": "./out/api/index.d.ts"
 		},
 		"./api/disk-storage": {
-			"node": "./api/disk-storage.ts",
+			"node": "./lib/api/disk-storage.ts",
 			"default": "./out/api/disk-storage.js",
 			"types": "./out/api/disk-storage.d.ts"
 		},
 		"./api/paced-client": {
-			"node": "./api/paced-client.ts",
+			"node": "./lib/api/paced-client.ts",
 			"default": "./out/api/paced-client.js",
 			"types": "./out/api/paced-client.d.ts"
 		},
 		"./api/test-clocks": {
-			"node": "./api/test-clocks.ts",
+			"node": "./lib/api/test-clocks.ts",
 			"default": "./out/api/test-clocks.js",
 			"types": "./out/api/test-clocks.d.ts"
 		},
 		"./api/test-transport": {
-			"node": "./api/test-transport.ts",
+			"node": "./lib/api/test-transport.ts",
 			"default": "./out/api/test-transport.js",
 			"types": "./out/api/test-transport.d.ts"
 		},
 		"./logging": {
-			"node": "./logging/index.ts",
+			"node": "./lib/logging/index.ts",
 			"default": "./out/logging/index.js",
 			"types": "./out/logging/index.d.ts"
 		},
 		"./policy": {
-			"node": "./policy/index.ts",
+			"node": "./lib/policy/index.ts",
 			"default": "./out/policy/index.js",
 			"types": "./out/policy/index.d.ts"
 		},
 		"./pipeline": {
-			"node": "./pipeline/index.ts",
+			"node": "./lib/pipeline/index.ts",
 			"default": "./out/pipeline/index.js",
 			"types": "./out/pipeline/index.d.ts"
 		},
 		"./resolver": {
-			"node": "./resolver/index.ts",
+			"node": "./lib/resolver/index.ts",
 			"default": "./out/resolver/index.js",
 			"types": "./out/resolver/index.d.ts"
 		},
 		"./errors": {
-			"node": "./errors/schema.ts",
+			"node": "./lib/errors/schema.ts",
 			"default": "./out/errors/schema.js",
 			"types": "./out/errors/schema.d.ts"
 		},
 		"./routing": {
-			"node": "./routing/index.ts",
+			"node": "./lib/routing/index.ts",
 			"default": "./out/routing/index.js",
 			"types": "./out/routing/index.d.ts"
 		},
 		"./filters/*": {
-			"node": "./filters/*.ts",
+			"node": "./lib/filters/*.ts",
 			"default": "./out/filters/*.js",
 			"types": "./out/filters/*.d.ts"
 		},
 		"./tools": {
-			"node": "./tools/index.ts",
+			"node": "./lib/tools/index.ts",
 			"default": "./out/tools/index.js",
 			"types": "./out/tools/index.d.ts"
 		},
 		"./strings/*": {
-			"node": "./strings/*.ts",
+			"node": "./lib/strings/*.ts",
 			"default": "./out/strings/*.js",
 			"types": "./out/strings/*.d.ts"
 		},
 		"./trust-policies": {
-			"node": "./trust-policies.ts",
+			"node": "./lib/trust-policies.ts",
 			"default": "./out/trust-policies.js",
 			"types": "./out/trust-policies.d.ts"
 		},
 		"./errors/schema": {
-			"node": "./errors/schema.ts",
+			"node": "./lib/errors/schema.ts",
 			"default": "./out/errors/schema.js",
 			"types": "./out/errors/schema.d.ts"
 		},
 		"./api/APIClient": {
-			"node": "./api/APIClient.ts",
+			"node": "./lib/api/APIClient.ts",
 			"default": "./out/api/APIClient.js",
 			"types": "./out/api/APIClient.d.ts"
 		},
 		"./api/responses": {
-			"node": "./api/responses.ts",
+			"node": "./lib/api/responses.ts",
 			"default": "./out/api/responses.js",
 			"types": "./out/api/responses.d.ts"
 		},
 		"./api/pacer": {
-			"node": "./api/pacer.ts",
+			"node": "./lib/api/pacer.ts",
 			"default": "./out/api/pacer.js",
 			"types": "./out/api/pacer.d.ts"
 		},
 		"./api/retry": {
-			"node": "./api/retry.ts",
+			"node": "./lib/api/retry.ts",
 			"default": "./out/api/retry.js",
 			"types": "./out/api/retry.d.ts"
 		},
 		"./types/component": {
-			"node": "./types/component.ts",
+			"node": "./lib/types/component.ts",
 			"default": "./out/types/component.js",
 			"types": "./out/types/component.d.ts"
 		},
 		"./decoder/parse-diff": {
-			"node": "./decoder/parse-diff.ts",
+			"node": "./lib/decoder/parse-diff.ts",
 			"default": "./out/decoder/parse-diff.js",
 			"types": "./out/decoder/parse-diff.d.ts"
 		},
 		"./decoder/build-tree": {
-			"node": "./decoder/build-tree.ts",
+			"node": "./lib/decoder/build-tree.ts",
 			"default": "./out/decoder/build-tree.js",
 			"types": "./out/decoder/build-tree.d.ts"
 		},
 		"./decoder/types": {
-			"node": "./decoder/types.ts",
+			"node": "./lib/decoder/types.ts",
 			"default": "./out/decoder/types.js",
 			"types": "./out/decoder/types.d.ts"
 		},
 		"./decoder/calibration": {
-			"node": "./decoder/calibration.ts",
+			"node": "./lib/decoder/calibration.ts",
 			"default": "./out/decoder/calibration.js",
 			"types": "./out/decoder/calibration.d.ts"
 		},
 		"./decoder/proposals-to-tree": {
-			"node": "./decoder/proposals-to-tree.ts",
+			"node": "./lib/decoder/proposals-to-tree.ts",
 			"default": "./out/decoder/proposals-to-tree.js",
 			"types": "./out/decoder/proposals-to-tree.d.ts"
 		},
 		"./tokenization/Span": {
-			"node": "./tokenization/Span.ts",
+			"node": "./lib/tokenization/Span.ts",
 			"default": "./out/tokenization/Span.js",
 			"types": "./out/tokenization/Span.d.ts"
 		},
 		"./decoder/serialize-json": {
-			"node": "./decoder/serialize-json.ts",
+			"node": "./lib/decoder/serialize-json.ts",
 			"default": "./out/decoder/serialize-json.js",
 			"types": "./out/decoder/serialize-json.d.ts"
 		},
 		"./decoder/serialize-tuples": {
-			"node": "./decoder/serialize-tuples.ts",
+			"node": "./lib/decoder/serialize-tuples.ts",
 			"default": "./out/decoder/serialize-tuples.js",
 			"types": "./out/decoder/serialize-tuples.d.ts"
 		},
 		"./decoder/serialize-xml": {
-			"node": "./decoder/serialize-xml.ts",
+			"node": "./lib/decoder/serialize-xml.ts",
 			"default": "./out/decoder/serialize-xml.js",
 			"types": "./out/decoder/serialize-xml.d.ts"
 		},
 		"./decoder/resolve-proposal-overlaps": {
-			"node": "./decoder/resolve-proposal-overlaps.ts",
+			"node": "./lib/decoder/resolve-proposal-overlaps.ts",
 			"default": "./out/decoder/resolve-proposal-overlaps.js",
 			"types": "./out/decoder/resolve-proposal-overlaps.d.ts"
 		},
 		"./decoder/containment": {
-			"node": "./decoder/containment.ts",
+			"node": "./lib/decoder/containment.ts",
 			"default": "./out/decoder/containment.js",
 			"types": "./out/decoder/containment.d.ts"
 		},
 		"./decoder/validate-tree": {
-			"node": "./decoder/validate-tree.ts",
+			"node": "./lib/decoder/validate-tree.ts",
 			"default": "./out/decoder/validate-tree.js",
 			"types": "./out/decoder/validate-tree.d.ts"
 		},
 		"./decoder/unknown-spans": {
-			"node": "./decoder/unknown-spans.ts",
+			"node": "./lib/decoder/unknown-spans.ts",
 			"default": "./out/decoder/unknown-spans.js",
 			"types": "./out/decoder/unknown-spans.d.ts"
 		},
 		"./env/schema": {
-			"node": "./env/schema.ts",
+			"node": "./lib/env/schema.ts",
 			"default": "./out/env/schema.js",
 			"types": "./out/env/schema.d.ts"
 		},
 		"./layers/manifest": {
-			"node": "./layers/manifest.ts",
+			"node": "./lib/layers/manifest.ts",
 			"default": "./out/layers/manifest.js",
 			"types": "./out/layers/manifest.d.ts"
 		},
 		"./layers/schema": {
-			"node": "./layers/schema.ts",
+			"node": "./lib/layers/schema.ts",
 			"default": "./out/layers/schema.js",
 			"types": "./out/layers/schema.d.ts"
 		},
 		"./locale/profiles": {
-			"node": "./locale/profiles/index.ts",
+			"node": "./lib/locale/profiles/index.ts",
 			"default": "./out/locale/profiles/index.js",
 			"types": "./out/locale/profiles/index.d.ts"
 		},
 		"./locale/registry": {
-			"node": "./locale/registry.ts",
+			"node": "./lib/locale/registry.ts",
 			"default": "./out/locale/registry.js",
 			"types": "./out/locale/registry.d.ts"
 		},
 		"./pipeline/runtime-pipeline": {
-			"node": "./pipeline/runtime-pipeline.ts",
+			"node": "./lib/pipeline/runtime-pipeline.ts",
 			"default": "./out/pipeline/runtime-pipeline.js",
 			"types": "./out/pipeline/runtime-pipeline.d.ts"
 		},
 		"./pipeline/types": {
-			"node": "./pipeline/types.ts",
+			"node": "./lib/pipeline/types.ts",
 			"default": "./out/pipeline/types.js",
 			"types": "./out/pipeline/types.d.ts"
 		},
 		"./resolver/types": {
-			"node": "./resolver/types.ts",
+			"node": "./lib/resolver/types.ts",
 			"default": "./out/resolver/types.js",
 			"types": "./out/resolver/types.d.ts"
 		},
 		"./pipeline/span-proposer": {
-			"node": "./pipeline/span-proposer.ts",
+			"node": "./lib/pipeline/span-proposer.ts",
 			"default": "./out/pipeline/span-proposer.js",
 			"types": "./out/pipeline/span-proposer.d.ts"
 		},
 		"./policy/defaults": {
-			"node": "./policy/defaults.ts",
+			"node": "./lib/policy/defaults.ts",
 			"default": "./out/policy/defaults.js",
 			"types": "./out/policy/defaults.d.ts"
 		},
 		"./policy/registry": {
-			"node": "./policy/registry.ts",
+			"node": "./lib/policy/registry.ts",
 			"default": "./out/policy/registry.js",
 			"types": "./out/policy/registry.d.ts"
 		},
 		"./resources/whosonfirst/sharded-repo": {
-			"node": "./resources/whosonfirst/sharded-repo.ts",
+			"node": "./lib/resources/whosonfirst/sharded-repo.ts",
 			"default": "./out/resources/whosonfirst/sharded-repo.js",
 			"types": "./out/resources/whosonfirst/sharded-repo.d.ts"
 		},
 		"./resources/whosonfirst/placetypes/admin": {
-			"node": "./resources/whosonfirst/placetypes/admin.ts",
+			"node": "./lib/resources/whosonfirst/placetypes/admin.ts",
 			"default": "./out/resources/whosonfirst/placetypes/admin.js",
 			"types": "./out/resources/whosonfirst/placetypes/admin.d.ts"
 		},
 		"./tokenization/normalizer": {
-			"node": "./tokenization/normalizer.ts",
+			"node": "./lib/tokenization/normalizer.ts",
 			"default": "./out/tokenization/normalizer.js",
 			"types": "./out/tokenization/normalizer.d.ts"
 		},
 		"./types/mapping": {
-			"node": "./types/mapping.ts",
+			"node": "./lib/types/mapping.ts",
 			"default": "./out/types/mapping.js",
 			"types": "./out/types/mapping.d.ts"
 		},
 		"./utils/hash": {
-			"node": "./utils/hash.ts",
+			"node": "./lib/utils/hash.ts",
 			"default": "./out/utils/hash.js",
 			"types": "./out/utils/hash.d.ts"
 		},
 		"./utils/jsonl": {
-			"node": "./utils/jsonl.ts",
+			"node": "./lib/utils/jsonl.ts",
 			"default": "./out/utils/jsonl.js",
 			"types": "./out/utils/jsonl.d.ts"
 		},
 		"./utils/stats": {
-			"node": "./utils/stats.ts",
+			"node": "./lib/utils/stats.ts",
 			"default": "./out/utils/stats.js",
 			"types": "./out/utils/stats.d.ts"
 		}

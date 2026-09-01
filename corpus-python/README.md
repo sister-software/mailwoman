@@ -13,7 +13,7 @@ Two Python responsibilities now live here:
    for the Stage 1 coarse token-classification model.
 
 The JSONL → Parquet conversion that lived here in Phase 1 was deleted alongside the JS-native
-Parquet writer (`@dsnp/parquetjs`-based) that landed in `packages/corpus/src/parquet.ts` —
+Parquet writer (`@dsnp/parquetjs`-based) that landed in `packages/corpus/lib/parquet.ts` —
 `mailwoman corpus build` now writes `.parquet` shards directly with no Python in the loop.
 
 ## Install

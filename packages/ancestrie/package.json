@@ -31,7 +31,7 @@
 	"type": "module",
 	"imports": {
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -39,32 +39,32 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./autocomplete": {
-			"node": "./autocomplete.ts",
+			"node": "./lib/autocomplete.ts",
 			"default": "./out/autocomplete.js",
 			"types": "./out/autocomplete.d.ts"
 		},
 		"./builder": {
-			"node": "./builder.ts",
+			"node": "./lib/builder.ts",
 			"default": "./out/builder.js",
 			"types": "./out/builder.d.ts"
 		},
 		"./reader": {
-			"node": "./reader.ts",
+			"node": "./lib/reader.ts",
 			"default": "./out/reader.js",
 			"types": "./out/reader.d.ts"
 		},
 		"./types": {
-			"node": "./types.ts",
+			"node": "./lib/types.ts",
 			"default": "./out/types.js",
 			"types": "./out/types.d.ts"
 		},
 		"./format": {
-			"node": "./format.ts",
+			"node": "./lib/format.ts",
 			"default": "./out/format.js",
 			"types": "./out/format.d.ts"
 		}

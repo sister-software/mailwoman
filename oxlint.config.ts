@@ -97,18 +97,18 @@ const config = createOxlintConfig({
  * No node-side check catches a violation: `yarn compile`, the test legs and the gauntlet never bundle. Only the
  * separate docs-build workflow does, which is minutes later and in another run.
  */
-const BROWSER_REACHABLE_NEURAL_FILES = ["packages/neural/*.ts"]
+const BROWSER_REACHABLE_NEURAL_FILES = ["packages/neural/lib/*.ts"]
 
 /**
  * The Node tier, exempt from the rule below. `index.ts` is the Node entry and re-exports the other three as values;
  * `test/**` and the nested directories fall outside the single-segment glob above on their own.
  */
 const NODE_TIER_NEURAL_FILES = [
-	"packages/neural/index.ts",
-	"packages/neural/onnx-runner.ts",
-	"packages/neural/scorer.ts",
-	"packages/neural/weights.ts",
-	"packages/neural/*.test.ts",
+	"packages/neural/lib/index.ts",
+	"packages/neural/lib/onnx-runner.ts",
+	"packages/neural/lib/scorer.ts",
+	"packages/neural/lib/weights.ts",
+	"packages/neural/lib/*.test.ts",
 	"packages/neural/vitest.config.ts",
 ]
 
@@ -178,25 +178,25 @@ export default {
 			},
 		},
 		{
-			// `packages/core/fs/*` IS the idiom the redirects below point AT, so it is the one place that reaches
+			// `packages/core/lib/fs/*` IS the idiom the redirects below point AT, so it is the one place that reaches
 			// `node:fs` directly.
-			files: ["packages/core/fs/**/*.ts"],
+			files: ["packages/core/lib/fs/**/*.ts"],
 			rules: {
 				"typescript/no-restricted-imports": "off",
 			},
 		},
 		{
-			// `packages/core/module/*` owns ESM plumbing — package-directory resolution and `file:` URL conversion — and
+			// `packages/core/lib/module/*` owns ESM plumbing — package-directory resolution and `file:` URL conversion — and
 			// is the one place `node:url` is reached for it.
-			files: ["packages/core/module/**/*.ts"],
+			files: ["packages/core/lib/module/**/*.ts"],
 			rules: {
 				"typescript/no-restricted-imports": "off",
 				"mailwoman/no-import-meta-resolve": "off",
 			},
 		},
 		{
-			// `packages/core/process.ts` is the child-process idiom and the one place `node:child_process` is reached.
-			files: ["packages/core/process.ts"],
+			// `packages/core/lib/process.ts` is the child-process idiom and the one place `node:child_process` is reached.
+			files: ["packages/core/lib/process.ts"],
 			rules: {
 				"typescript/no-restricted-imports": "off",
 			},
@@ -204,7 +204,7 @@ export default {
 		{
 			// `core/scripting/arguments.ts` is the argv boundary (`parseArguments`, `cliArguments`) and reaches `node:util`
 			// for the one builtin it wraps.
-			files: ["packages/core/scripting/arguments.ts"],
+			files: ["packages/core/lib/scripting/arguments.ts"],
 			rules: {
 				"typescript/no-restricted-imports": "off",
 			},
@@ -214,12 +214,12 @@ export default {
 			// (`node:timers/promises`), an emitter's next event (`node:events`), digests (`node:crypto`), the compile
 			// cache (`node:module`).
 			files: [
-				"packages/core/utils/system.ts",
-				"packages/core/utils/sleep.ts",
-				"packages/core/utils/events.ts",
-				"packages/core/utils/hash.ts",
-				"packages/core/module/runtime.ts",
-				"packages/core/crypto/**/*.ts",
+				"packages/core/lib/utils/system.ts",
+				"packages/core/lib/utils/sleep.ts",
+				"packages/core/lib/utils/events.ts",
+				"packages/core/lib/utils/hash.ts",
+				"packages/core/lib/module/runtime.ts",
+				"packages/core/lib/crypto/**/*.ts",
 			],
 			rules: {
 				"typescript/no-restricted-imports": "off",
@@ -234,20 +234,20 @@ export default {
 				"packages/corpus/test/unit/tools/fetch/geonames-dump.test.ts",
 				"packages/corpus/test/unit/tools/fetch/geonames-postal.test.ts",
 				"packages/corpus/test/unit/tools/fetch/state-hi-schools.test.ts",
-				"packages/filer/sdk/form499.ts",
-				"packages/filer/sdk/provider-list.ts",
-				"packages/mailwoman/cli-native/commands/geocode.ts",
-				"packages/mailwoman/commands/gazetteer/importance.tsx",
-				"packages/mailwoman/commands/serve.tsx",
-				"packages/mailwoman/commands/situs/interpolation.tsx",
-				"packages/mailwoman/geocode-worker.ts",
-				"packages/mailwoman/test-fixtures/fake-geocode-worker.js",
+				"packages/filer/lib/sdk/form499.ts",
+				"packages/filer/lib/sdk/provider-list.ts",
+				"packages/mailwoman/lib/cli-native/commands/geocode.ts",
+				"packages/mailwoman/lib/commands/gazetteer/importance.tsx",
+				"packages/mailwoman/lib/commands/serve.tsx",
+				"packages/mailwoman/lib/commands/situs/interpolation.tsx",
+				"packages/mailwoman/lib/geocode-worker.ts",
+				"packages/mailwoman/lib/test-fixtures/fake-geocode-worker.js",
 				"docs/static/examples/mailwoman-server.mjs",
 				"docs/plugins/demo-assets/workspace-resolution.ts",
 				"packages/map-tui/test/unit/tile-source.test.ts",
 				"packages/neural/test/integration/browser-slo.test.ts",
 				"packages/resolver-wof-sqlite/test/integration/lookup-readonly-open.test.ts",
-				"packages/tiger/tools/serve-range.ts",
+				"packages/tiger/lib/tools/serve-range.ts",
 			],
 			rules: {
 				"typescript/no-restricted-imports": "off",

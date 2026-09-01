@@ -123,7 +123,7 @@ match.)
 Spend was $29 of the $40 Modal budget. (EconomyMetaphor: a real dollar
 figure with its budget named is not a metaphor.)
 
-The recipe sits in `packages/corpus/src/shard-recipes/` as
+The recipe sits in `packages/corpus/lib/shard-recipes/` as
 `synth-suffix-boundary`. (ProjectShorthand and AmbiguousShorthand: backticked
 artifact names are exempt — that is the replacement both rules ask for.)
 

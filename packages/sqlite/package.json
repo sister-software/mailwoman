@@ -27,7 +27,7 @@
 	"type": "module",
 	"imports": {
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -35,57 +35,57 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./client": {
-			"node": "./client.ts",
+			"node": "./lib/client.ts",
 			"default": "./out/client.js",
 			"types": "./out/client.d.ts"
 		},
 		"./introspection": {
-			"node": "./introspection.ts",
+			"node": "./lib/introspection.ts",
 			"default": "./out/introspection.js",
 			"types": "./out/introspection.d.ts"
 		},
 		"./dialect": {
-			"node": "./dialect.ts",
+			"node": "./lib/dialect.ts",
 			"default": "./out/dialect.js",
 			"types": "./out/dialect.d.ts"
 		},
 		"./dialect-config": {
-			"node": "./dialect-config.ts",
+			"node": "./lib/dialect-config.ts",
 			"default": "./out/dialect-config.js",
 			"types": "./out/dialect-config.d.ts"
 		},
 		"./sealed": {
-			"node": "./sealed.ts",
+			"node": "./lib/sealed.ts",
 			"default": "./out/sealed.js",
 			"types": "./out/sealed.d.ts"
 		},
 		"./sealed-db": {
-			"node": "./sealed-db.ts",
+			"node": "./lib/sealed-db.ts",
 			"default": "./out/sealed-db.js",
 			"types": "./out/sealed-db.d.ts"
 		},
 		"./database-schema": {
-			"node": "./database-schema.ts",
+			"node": "./lib/database-schema.ts",
 			"default": "./out/database-schema.js",
 			"types": "./out/database-schema.d.ts"
 		},
 		"./batched": {
-			"node": "./batched.ts",
+			"node": "./lib/batched.ts",
 			"default": "./out/batched.js",
 			"types": "./out/batched.d.ts"
 		},
 		"./schema-columns": {
-			"node": "./schema-columns.ts",
+			"node": "./lib/schema-columns.ts",
 			"default": "./out/schema-columns.js",
 			"types": "./out/schema-columns.d.ts"
 		},
 		"./sealed-build": {
-			"node": "./sealed-build.ts",
+			"node": "./lib/sealed-build.ts",
 			"default": "./out/sealed-build.js",
 			"types": "./out/sealed-build.d.ts"
 		}

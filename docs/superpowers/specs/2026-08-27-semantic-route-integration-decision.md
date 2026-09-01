@@ -198,7 +198,7 @@ been typed. That property is what keeps the integration point one optional argum
 branch, and this record keeps it.
 
 **One move is required before the surface is supported.** The builder lives at
-`packages/mailwoman/eval-harness/semantic-utility/observation-route.ts`. A consumer must not reach
+`packages/mailwoman/lib/eval-harness/semantic-utility/observation-route.ts`. A consumer must not reach
 into an eval harness for a runtime capability, so the builder moves into the `mailwoman` runtime
 tree with a real export subpath, and the harness imports it from there. The probe's frozen
 definition and freeze record are untouched by that move — they must show an empty diff, the same
@@ -377,7 +377,7 @@ structured diagnostic threshold, the admissible outcome is **the observation sur
 recognition change**, and this record names it now so it is not invented under pressure later.
 
 Today the provenance the whole program is built around does not reach a caller.
-`semanticObservations[]` appears only under `packages/mailwoman/eval-harness/semantic-utility/`; the
+`semanticObservations[]` appears only under `packages/mailwoman/lib/eval-harness/semantic-utility/`; the
 route hands them out through a `takeObservations()` drain the harness owns, and
 `POIIntentOutcome` has no field for them. A consumer of `createRuntimePipeline` gets the category
 and none of the authority behind it.
@@ -509,7 +509,7 @@ after the run; each is short enough to rebuild from this description, and §5 ro
 one permanent.
 
 **The false-claim census.** Every distinct string in every committed `.jsonl` under
-`packages/mailwoman/eval-harness/gauntlet/cases/`, `…/conformance/` (both `base` and `variant`) and
+`packages/mailwoman/lib/eval-harness/gauntlet/cases/`, `…/conformance/` (both `base` and `variant`) and
 `…/fixtures/` — 9,324 distinct inputs: 915 gauntlet cases, 182 conformance, 8,227 fixtures
 (BAN FR fragments 2,800, Overture DE fragments 2,404, `no-digits` 2,400, the parity corpora, the
 golden sets, the venue confounds, the 51-row POI board). Each was passed to `matchPOISubject` twice

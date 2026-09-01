@@ -27,27 +27,27 @@
 	"type": "module",
 	"imports": {
 		"#candidate/alias-bags": {
-			"node": "./candidate/alias-bags.ts",
+			"node": "./lib/candidate/alias-bags.ts",
 			"default": "./out/candidate/alias-bags.js",
 			"types": "./out/candidate/alias-bags.d.ts"
 		},
 		"#candidate/name-roles": {
-			"node": "./candidate/name-roles.ts",
+			"node": "./lib/candidate/name-roles.ts",
 			"default": "./out/candidate/name-roles.js",
 			"types": "./out/candidate/name-roles.d.ts"
 		},
 		"#candidate/place-attrs": {
-			"node": "./candidate/place-attrs.ts",
+			"node": "./lib/candidate/place-attrs.ts",
 			"default": "./out/candidate/place-attrs.js",
 			"types": "./out/candidate/place-attrs.d.ts"
 		},
 		"#sqlite-utils": {
-			"node": "./sqlite-utils.ts",
+			"node": "./lib/sqlite-utils.ts",
 			"default": "./out/sqlite-utils.js",
 			"types": "./out/sqlite-utils.d.ts"
 		},
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -55,307 +55,307 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./fts": {
-			"node": "./fts.ts",
+			"node": "./lib/fts.ts",
 			"default": "./out/fts.js",
 			"types": "./out/fts.d.ts"
 		},
 		"./fts-query": {
-			"node": "./fts-query.ts",
+			"node": "./lib/fts-query.ts",
 			"default": "./out/fts-query.js",
 			"types": "./out/fts-query.d.ts"
 		},
 		"./ranking-weights": {
-			"node": "./ranking-weights.ts",
+			"node": "./lib/ranking-weights.ts",
 			"default": "./out/ranking-weights.js",
 			"types": "./out/ranking-weights.d.ts"
 		},
 		"./primary-preference": {
-			"node": "./primary-preference.ts",
+			"node": "./lib/primary-preference.ts",
 			"default": "./out/primary-preference.js",
 			"types": "./out/primary-preference.d.ts"
 		},
 		"./capitals": {
-			"node": "./capitals.ts",
+			"node": "./lib/capitals.ts",
 			"default": "./out/capitals.js",
 			"types": "./out/capitals.d.ts"
 		},
 		"./capital-schema": {
-			"node": "./capital-schema.ts",
+			"node": "./lib/capital-schema.ts",
 			"default": "./out/capital-schema.js",
 			"types": "./out/capital-schema.d.ts"
 		},
 		"./candidate/own-name": {
-			"node": "./candidate/own-name.ts",
+			"node": "./lib/candidate/own-name.ts",
 			"default": "./out/candidate/own-name.js",
 			"types": "./out/candidate/own-name.d.ts"
 		},
 		"./proximity-rerank": {
-			"node": "./proximity-rerank.ts",
+			"node": "./lib/proximity-rerank.ts",
 			"default": "./out/proximity-rerank.js",
 			"types": "./out/proximity-rerank.d.ts"
 		},
 		"./build-slim": {
-			"node": "./build-slim.ts",
+			"node": "./lib/build-slim.ts",
 			"default": "./out/build-slim.js",
 			"types": "./out/build-slim.d.ts"
 		},
 		"./fst-builder": {
-			"node": "./fst-builder.ts",
+			"node": "./lib/fst-builder.ts",
 			"default": "./out/fst-builder.js",
 			"types": "./out/fst-builder.d.ts"
 		},
 		"./street-morphology-fst-builder": {
-			"node": "./street-morphology-fst-builder.ts",
+			"node": "./lib/street-morphology-fst-builder.ts",
 			"default": "./out/street-morphology-fst-builder.js",
 			"types": "./out/street-morphology-fst-builder.d.ts"
 		},
 		"./street-morphology-fst-loader": {
-			"node": "./street-morphology-fst-loader.ts",
+			"node": "./lib/street-morphology-fst-loader.ts",
 			"default": "./out/street-morphology-fst-loader.js",
 			"types": "./out/street-morphology-fst-loader.d.ts"
 		},
 		"./fst-matcher": {
-			"node": "./fst-matcher.ts",
+			"node": "./lib/fst-matcher.ts",
 			"default": "./out/fst-matcher.js",
 			"types": "./out/fst-matcher.d.ts"
 		},
 		"./fst-freshness": {
-			"node": "./fst-freshness.ts",
+			"node": "./lib/fst-freshness.ts",
 			"default": "./out/fst-freshness.js",
 			"types": "./out/fst-freshness.d.ts"
 		},
 		"./fst-serialize": {
-			"node": "./fst-serialize.ts",
+			"node": "./lib/fst-serialize.ts",
 			"default": "./out/fst-serialize.js",
 			"types": "./out/fst-serialize.d.ts"
 		},
 		"./fst-format": {
-			"node": "./fst-format.ts",
+			"node": "./lib/fst-format.ts",
 			"default": "./out/fst-format.js",
 			"types": "./out/fst-format.d.ts"
 		},
 		"./fst-autocomplete": {
-			"node": "./fst-autocomplete.ts",
+			"node": "./lib/fst-autocomplete.ts",
 			"default": "./out/fst-autocomplete.js",
 			"types": "./out/fst-autocomplete.d.ts"
 		},
 		"./fst-types": {
-			"node": "./fst-types.ts",
+			"node": "./lib/fst-types.ts",
 			"default": "./out/fst-types.js",
 			"types": "./out/fst-types.d.ts"
 		},
 		"./fst-deserialize-web": {
-			"node": "./fst-deserialize-web.ts",
+			"node": "./lib/fst-deserialize-web.ts",
 			"default": "./out/fst-deserialize-web.js",
 			"types": "./out/fst-deserialize-web.d.ts"
 		},
 		"./place-importance-schema": {
-			"node": "./place-importance-schema.ts",
+			"node": "./lib/place-importance-schema.ts",
 			"default": "./out/place-importance-schema.js",
 			"types": "./out/place-importance-schema.d.ts"
 		},
 		"./unified-schema": {
-			"node": "./unified-schema.ts",
+			"node": "./lib/unified-schema.ts",
 			"default": "./out/unified-schema.js",
 			"types": "./out/unified-schema.d.ts"
 		},
 		"./ancestry-backfill": {
-			"node": "./ancestry-backfill.ts",
+			"node": "./lib/ancestry-backfill.ts",
 			"default": "./out/ancestry-backfill.js",
 			"types": "./out/ancestry-backfill.d.ts"
 		},
 		"./coincident-roles": {
-			"node": "./coincident-roles.ts",
+			"node": "./lib/coincident-roles.ts",
 			"default": "./out/coincident-roles.js",
 			"types": "./out/coincident-roles.d.ts"
 		},
 		"./geonames-aliases": {
-			"node": "./geonames-aliases.ts",
+			"node": "./lib/geonames-aliases.ts",
 			"default": "./out/geonames-aliases.js",
 			"types": "./out/geonames-aliases.d.ts"
 		},
 		"./geonames-postal": {
-			"node": "./geonames-postal.ts",
+			"node": "./lib/geonames-postal.ts",
 			"default": "./out/geonames-postal.js",
 			"types": "./out/geonames-postal.d.ts"
 		},
 		"./street-normalize": {
-			"node": "./street-normalize.ts",
+			"node": "./lib/street-normalize.ts",
 			"default": "./out/street-normalize.js",
 			"types": "./out/street-normalize.d.ts"
 		},
 		"./region-keys": {
-			"node": "./region-keys.ts",
+			"node": "./lib/region-keys.ts",
 			"default": "./out/region-keys.js",
 			"types": "./out/region-keys.d.ts"
 		},
 		"./build-candidate": {
-			"node": "./build-candidate.ts",
+			"node": "./lib/build-candidate.ts",
 			"default": "./out/build-candidate.js",
 			"types": "./out/build-candidate.d.ts"
 		},
 		"./candidate-ancestors-schema": {
-			"node": "./candidate-ancestors-schema.ts",
+			"node": "./lib/candidate-ancestors-schema.ts",
 			"default": "./out/candidate-ancestors-schema.js",
 			"types": "./out/candidate-ancestors-schema.d.ts"
 		},
 		"./candidate-schema": {
-			"node": "./candidate-schema.ts",
+			"node": "./lib/candidate-schema.ts",
 			"default": "./out/candidate-schema.js",
 			"types": "./out/candidate-schema.d.ts"
 		},
 		"./postal-city-alias-schema": {
-			"node": "./postal-city-alias-schema.ts",
+			"node": "./lib/postal-city-alias-schema.ts",
 			"default": "./out/postal-city-alias-schema.js",
 			"types": "./out/postal-city-alias-schema.d.ts"
 		},
 		"./address-point-schema": {
-			"node": "./address-point-schema.ts",
+			"node": "./lib/address-point-schema.ts",
 			"default": "./out/address-point-schema.js",
 			"types": "./out/address-point-schema.d.ts"
 		},
 		"./street-centroid-schema": {
-			"node": "./street-centroid-schema.ts",
+			"node": "./lib/street-centroid-schema.ts",
 			"default": "./out/street-centroid-schema.js",
 			"types": "./out/street-centroid-schema.d.ts"
 		},
 		"./street-segment-schema": {
-			"node": "./street-segment-schema.ts",
+			"node": "./lib/street-segment-schema.ts",
 			"default": "./out/street-segment-schema.js",
 			"types": "./out/street-segment-schema.d.ts"
 		},
 		"./poi-schema": {
-			"node": "./poi-schema.ts",
+			"node": "./lib/poi-schema.ts",
 			"default": "./out/poi-schema.js",
 			"types": "./out/poi-schema.d.ts"
 		},
 		"./poi-lookup": {
-			"node": "./poi-lookup.ts",
+			"node": "./lib/poi-lookup.ts",
 			"default": "./out/poi-lookup.js",
 			"types": "./out/poi-lookup.d.ts"
 		},
 		"./uprn-schema": {
-			"node": "./uprn-schema.ts",
+			"node": "./lib/uprn-schema.ts",
 			"default": "./out/uprn-schema.js",
 			"types": "./out/uprn-schema.d.ts"
 		},
 		"./uprn-lookup": {
-			"node": "./uprn-lookup.ts",
+			"node": "./lib/uprn-lookup.ts",
 			"default": "./out/uprn-lookup.js",
 			"types": "./out/uprn-lookup.d.ts"
 		},
 		"./weights-overlay-linker": {
-			"node": "./weights-overlay-linker.ts",
+			"node": "./lib/weights-overlay-linker.ts",
 			"default": "./out/weights-overlay-linker.js",
 			"types": "./out/weights-overlay-linker.d.ts"
 		},
 		"./address-point-interpolation": {
-			"node": "./address-point-interpolation.ts",
+			"node": "./lib/address-point-interpolation.ts",
 			"default": "./out/address-point-interpolation.js",
 			"types": "./out/address-point-interpolation.d.ts"
 		},
 		"./interpolation": {
-			"node": "./interpolation.ts",
+			"node": "./lib/interpolation.ts",
 			"default": "./out/interpolation.js",
 			"types": "./out/interpolation.d.ts"
 		},
 		"./address-point": {
-			"node": "./address-point.ts",
+			"node": "./lib/address-point.ts",
 			"default": "./out/address-point.js",
 			"types": "./out/address-point.d.ts"
 		},
 		"./ancestry": {
-			"node": "./ancestry.ts",
+			"node": "./lib/ancestry.ts",
 			"default": "./out/ancestry.js",
 			"types": "./out/ancestry.d.ts"
 		},
 		"./candidate-lookup": {
-			"node": "./candidate-lookup.ts",
+			"node": "./lib/candidate-lookup.ts",
 			"default": "./out/candidate-lookup.js",
 			"types": "./out/candidate-lookup.d.ts"
 		},
 		"./candidate-importance": {
-			"node": "./candidate-importance.ts",
+			"node": "./lib/candidate-importance.ts",
 			"default": "./out/candidate-importance.js",
 			"types": "./out/candidate-importance.d.ts"
 		},
 		"./types": {
-			"node": "./types.ts",
+			"node": "./lib/types.ts",
 			"default": "./out/types.js",
 			"types": "./out/types.d.ts"
 		},
 		"./lookup": {
-			"node": "./lookup.ts",
+			"node": "./lib/lookup.ts",
 			"default": "./out/lookup.js",
 			"types": "./out/lookup.d.ts"
 		},
 		"./convention": {
-			"node": "./convention.ts",
+			"node": "./lib/convention.ts",
 			"default": "./out/convention.js",
 			"types": "./out/convention.d.ts"
 		},
 		"./postal-city-alias-lookup": {
-			"node": "./postal-city-alias-lookup.ts",
+			"node": "./lib/postal-city-alias-lookup.ts",
 			"default": "./out/postal-city-alias-lookup.js",
 			"types": "./out/postal-city-alias-lookup.d.ts"
 		},
 		"./postal-city-candidate-schema": {
-			"node": "./postal-city-candidate-schema.ts",
+			"node": "./lib/postal-city-candidate-schema.ts",
 			"default": "./out/postal-city-candidate-schema.js",
 			"types": "./out/postal-city-candidate-schema.d.ts"
 		},
 		"./postcode-point-lookup": {
-			"node": "./postcode-point-lookup.ts",
+			"node": "./lib/postcode-point-lookup.ts",
 			"default": "./out/postcode-point-lookup.js",
 			"types": "./out/postcode-point-lookup.d.ts"
 		},
 		"./reverse": {
-			"node": "./reverse.ts",
+			"node": "./lib/reverse.ts",
 			"default": "./out/reverse.js",
 			"types": "./out/reverse.d.ts"
 		},
 		"./sharding": {
-			"node": "./sharding.ts",
+			"node": "./lib/sharding.ts",
 			"default": "./out/sharding.js",
 			"types": "./out/sharding.d.ts"
 		},
 		"./sqlite-convention-source": {
-			"node": "./sqlite-convention-source.ts",
+			"node": "./lib/sqlite-convention-source.ts",
 			"default": "./out/sqlite-convention-source.js",
 			"types": "./out/sqlite-convention-source.d.ts"
 		},
 		"./street-centroid": {
-			"node": "./street-centroid.ts",
+			"node": "./lib/street-centroid.ts",
 			"default": "./out/street-centroid.js",
 			"types": "./out/street-centroid.d.ts"
 		},
 		"./street-name-lookup": {
-			"node": "./street-name-lookup.ts",
+			"node": "./lib/street-name-lookup.ts",
 			"default": "./out/street-name-lookup.js",
 			"types": "./out/street-name-lookup.d.ts"
 		},
 		"./convention-schema": {
-			"node": "./convention-schema.ts",
+			"node": "./lib/convention-schema.ts",
 			"default": "./out/convention-schema.js",
 			"types": "./out/convention-schema.d.ts"
 		},
 		"./polygon-schema": {
-			"node": "./polygon-schema.ts",
+			"node": "./lib/polygon-schema.ts",
 			"default": "./out/polygon-schema.js",
 			"types": "./out/polygon-schema.d.ts"
 		},
 		"./schema": {
-			"node": "./schema.ts",
+			"node": "./lib/schema.ts",
 			"default": "./out/schema.js",
 			"types": "./out/schema.d.ts"
 		},
 		"./coverage-manifest-schema": {
-			"node": "./coverage-manifest-schema.ts",
+			"node": "./lib/coverage-manifest-schema.ts",
 			"default": "./out/coverage-manifest-schema.js",
 			"types": "./out/coverage-manifest-schema.d.ts"
 		}

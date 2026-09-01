@@ -28,17 +28,17 @@
 	"imports": {
 		"#onnx-runner": {
 			"browser": "./out/onnx-runner-browser.js",
-			"node": "./onnx-runner.ts",
+			"node": "./lib/onnx-runner.ts",
 			"default": "./out/onnx-runner.js",
 			"types": "./out/onnx-runner.d.ts"
 		},
 		"#weights": {
-			"node": "./weights.ts",
+			"node": "./lib/weights.ts",
 			"default": "./out/weights.js",
 			"types": "./out/weights.d.ts"
 		},
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -46,203 +46,203 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./postcode-anchor": {
-			"node": "./postcode-anchor.ts",
+			"node": "./lib/postcode-anchor.ts",
 			"default": "./out/postcode-anchor.js",
 			"types": "./out/postcode-anchor.d.ts"
 		},
 		"./postcode-binary-resolver": {
-			"node": "./postcode-binary-resolver.ts",
+			"node": "./lib/postcode-binary-resolver.ts",
 			"default": "./out/postcode-binary-resolver.js",
 			"types": "./out/postcode-binary-resolver.d.ts"
 		},
 		"./postcode-repair": {
-			"node": "./postcode-repair.ts",
+			"node": "./lib/postcode-repair.ts",
 			"default": "./out/postcode-repair.js",
 			"types": "./out/postcode-repair.d.ts"
 		},
 		"./anchor-inference": {
-			"node": "./anchor-inference.ts",
+			"node": "./lib/anchor-inference.ts",
 			"default": "./out/anchor-inference.js",
 			"types": "./out/anchor-inference.d.ts"
 		},
 		"./case-normalize": {
-			"node": "./case-normalize.ts",
+			"node": "./lib/case-normalize.ts",
 			"default": "./out/case-normalize.js",
 			"types": "./out/case-normalize.d.ts"
 		},
 		"./pair-index-resolver": {
-			"node": "./pair-index-resolver.ts",
+			"node": "./lib/pair-index-resolver.ts",
 			"default": "./out/pair-index-resolver.js",
 			"types": "./out/pair-index-resolver.d.ts"
 		},
 		"./postcode-prefix-index": {
-			"node": "./postcode-prefix-index.ts",
+			"node": "./lib/postcode-prefix-index.ts",
 			"default": "./out/postcode-prefix-index.js",
 			"types": "./out/postcode-prefix-index.d.ts"
 		},
 		"./placetype-census": {
-			"node": "./placetype-census.ts",
+			"node": "./lib/placetype-census.ts",
 			"default": "./out/placetype-census.js",
 			"types": "./out/placetype-census.d.ts"
 		},
 		"./fst-prior": {
-			"node": "./fst-prior.ts",
+			"node": "./lib/fst-prior.ts",
 			"default": "./out/fst-prior.js",
 			"types": "./out/fst-prior.d.ts"
 		},
 		"./soft-features": {
-			"node": "./soft-features.ts",
+			"node": "./lib/soft-features.ts",
 			"default": "./out/soft-features.js",
 			"types": "./out/soft-features.d.ts"
 		},
 		"./scorer": {
-			"node": "./scorer.ts",
+			"node": "./lib/scorer.ts",
 			"default": "./out/scorer.js",
 			"types": "./out/scorer.d.ts"
 		},
 		"./tokenizer": {
-			"node": "./tokenizer.ts",
+			"node": "./lib/tokenizer.ts",
 			"default": "./out/tokenizer.js",
 			"types": "./out/tokenizer.d.ts"
 		},
 		"./onnx-runner": {
 			"types": "./out/onnx-runner.d.ts",
 			"browser": "./out/onnx-runner-browser.js",
-			"node": "./onnx-runner.ts",
+			"node": "./lib/onnx-runner.ts",
 			"default": "./out/onnx-runner.js"
 		},
 		"./web-onnx-runner": {
-			"node": "./web-onnx-runner.ts",
+			"node": "./lib/web-onnx-runner.ts",
 			"default": "./out/web-onnx-runner.js",
 			"types": "./out/web-onnx-runner.d.ts"
 		},
 		"./web-loader": {
-			"node": "./web-loader.ts",
+			"node": "./lib/web-loader.ts",
 			"default": "./out/web-loader.js",
 			"types": "./out/web-loader.d.ts"
 		},
 		"./weights": {
-			"node": "./weights.ts",
+			"node": "./lib/weights.ts",
 			"default": "./out/weights.js",
 			"types": "./out/weights.d.ts"
 		},
 		"./browser": {
-			"node": "./browser.ts",
+			"node": "./lib/browser.ts",
 			"default": "./out/browser.js",
 			"types": "./out/browser.d.ts"
 		},
 		"./classifier": {
-			"node": "./classifier.ts",
+			"node": "./lib/classifier.ts",
 			"default": "./out/classifier.js",
 			"types": "./out/classifier.d.ts"
 		},
 		"./labels": {
-			"node": "./labels.ts",
+			"node": "./lib/labels.ts",
 			"default": "./out/labels.js",
 			"types": "./out/labels.d.ts"
 		},
 		"./query-shape-prior": {
-			"node": "./query-shape-prior.ts",
+			"node": "./lib/query-shape-prior.ts",
 			"default": "./out/query-shape-prior.js",
 			"types": "./out/query-shape-prior.d.ts"
 		},
 		"./proposal-classifier": {
-			"node": "./proposal-classifier.ts",
+			"node": "./lib/proposal-classifier.ts",
 			"default": "./out/proposal-classifier.js",
 			"types": "./out/proposal-classifier.d.ts"
 		},
 		"./gazetteer-inference": {
-			"node": "./gazetteer-inference.ts",
+			"node": "./lib/gazetteer-inference.ts",
 			"default": "./out/gazetteer-inference.js",
 			"types": "./out/gazetteer-inference.d.ts"
 		},
 		"./span-proposal-prior": {
-			"node": "./span-proposal-prior.ts",
+			"node": "./lib/span-proposal-prior.ts",
 			"default": "./out/span-proposal-prior.js",
 			"types": "./out/span-proposal-prior.d.ts"
 		},
 		"./span-proposer-lexicon": {
-			"node": "./span-proposer-lexicon.ts",
+			"node": "./lib/span-proposer-lexicon.ts",
 			"default": "./out/span-proposer-lexicon.js",
 			"types": "./out/span-proposer-lexicon.d.ts"
 		},
 		"./trace": {
-			"node": "./trace.ts",
+			"node": "./lib/trace.ts",
 			"default": "./out/trace.js",
 			"types": "./out/trace.d.ts"
 		},
 		"./address-system": {
-			"node": "./address-system.ts",
+			"node": "./lib/address-system.ts",
 			"default": "./out/address-system.js",
 			"types": "./out/address-system.d.ts"
 		},
 		"./country-inference": {
-			"node": "./country-inference.ts",
+			"node": "./lib/country-inference.ts",
 			"default": "./out/country-inference.js",
 			"types": "./out/country-inference.d.ts"
 		},
 		"./placetype-pair-prior": {
-			"node": "./placetype-pair-prior.ts",
+			"node": "./lib/placetype-pair-prior.ts",
 			"default": "./out/placetype-pair-prior.js",
 			"types": "./out/placetype-pair-prior.d.ts"
 		},
 		"./semi-markov-decode": {
-			"node": "./semi-markov-decode.ts",
+			"node": "./lib/semi-markov-decode.ts",
 			"default": "./out/semi-markov-decode.js",
 			"types": "./out/semi-markov-decode.d.ts"
 		},
 		"./span-bridge": {
-			"node": "./span-bridge.ts",
+			"node": "./lib/span-bridge.ts",
 			"default": "./out/span-bridge.js",
 			"types": "./out/span-bridge.d.ts"
 		},
 		"./venue-structure": {
-			"node": "./venue-structure.ts",
+			"node": "./lib/venue-structure.ts",
 			"default": "./out/venue-structure.js",
 			"types": "./out/venue-structure.d.ts"
 		},
 		"./span-repair": {
-			"node": "./span-repair.ts",
+			"node": "./lib/span-repair.ts",
 			"default": "./out/span-repair.js",
 			"types": "./out/span-repair.d.ts"
 		},
 		"./street-morphology-prior": {
-			"node": "./street-morphology-prior.ts",
+			"node": "./lib/street-morphology-prior.ts",
 			"default": "./out/street-morphology-prior.js",
 			"types": "./out/street-morphology-prior.d.ts"
 		},
 		"./unit-repair": {
-			"node": "./unit-repair.ts",
+			"node": "./lib/unit-repair.ts",
 			"default": "./out/unit-repair.js",
 			"types": "./out/unit-repair.d.ts"
 		},
 		"./viterbi": {
-			"node": "./viterbi.ts",
+			"node": "./lib/viterbi.ts",
 			"default": "./out/viterbi.js",
 			"types": "./out/viterbi.d.ts"
 		},
 		"./word-consistency": {
-			"node": "./word-consistency.ts",
+			"node": "./lib/word-consistency.ts",
 			"default": "./out/word-consistency.js",
 			"types": "./out/word-consistency.d.ts"
 		},
 		"./weights-channels": {
-			"node": "./weights-channels.ts",
+			"node": "./lib/weights-channels.ts",
 			"default": "./out/weights-channels.js",
 			"types": "./out/weights-channels.d.ts"
 		},
 		"./classifier-loader": {
-			"node": "./classifier-loader.ts",
+			"node": "./lib/classifier-loader.ts",
 			"default": "./out/classifier-loader.js",
 			"types": "./out/classifier-loader.d.ts"
 		},
 		"./pair-prior-windows": {
-			"node": "./pair-prior-windows.ts",
+			"node": "./lib/pair-prior-windows.ts",
 			"default": "./out/pair-prior-windows.js",
 			"types": "./out/pair-prior-windows.d.ts"
 		}

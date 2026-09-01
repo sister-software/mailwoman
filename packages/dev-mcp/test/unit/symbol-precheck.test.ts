@@ -10,7 +10,7 @@ import { runFileSync } from "@mailwoman/core/process"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
-const HOOK = resolvePackagePath("@mailwoman/dev-mcp", "hooks", "symbol-precheck.ts")
+const HOOK = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "symbol-precheck.ts")
 const REPO_ROOT = repoRootPath()
 
 interface HookOutput {
@@ -46,7 +46,7 @@ describe("symbol-precheck hook", () => {
 		})
 
 		expect(output.hookSpecificOutput?.hookEventName).toBe("PreToolUse")
-		expect(output.hookSpecificOutput?.additionalContext).toContain("packages/core/utils/stats.ts")
+		expect(output.hookSpecificOutput?.additionalContext).toContain("packages/core/lib/utils/stats.ts")
 	})
 
 	it("stays silent when the symbol has no exported home", () => {

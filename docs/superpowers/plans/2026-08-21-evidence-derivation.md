@@ -31,7 +31,7 @@
 **Files:**
 
 - Create: `scratchpad/2026-08-21-coverage-miss-decomposition.md` (the verdict — a record, not code)
-- Read only: `packages/dev-mcp/constraint-census.ts`
+- Read only: `packages/dev-mcp/lib/constraint-census.ts`
 
 **Interfaces:**
 
@@ -471,8 +471,8 @@ rule into the type system for callers who build a link outside a database."
 
 - Create: `packages/evidence/coverage.ts`
 - Create: `packages/evidence/coverage.test.ts`
-- Modify: `packages/core/layers/schema.ts` (delete the `CoverageBasis` definition, import + re-export from evidence)
-- Modify: `packages/core/layers/manifest.ts` (delete `supportsExclusion`, re-export from evidence)
+- Modify: `packages/core/lib/layers/schema.ts` (delete the `CoverageBasis` definition, import + re-export from evidence)
+- Modify: `packages/core/lib/layers/manifest.ts` (delete `supportsExclusion`, re-export from evidence)
 - Modify: `packages/core/package.json` (add the dependency)
 - Modify: `packages/core/tsconfig.json` (add the reference)
 
@@ -488,7 +488,7 @@ rule into the type system for callers who build a link outside a database."
   - `interface Exclusion { kind: "exclusion"; source: string; vintage: string; scope: CoverageScope }`
   - `function requireExclusionBasis(input: RequireExclusionInput): Exclusion | null`
 
-**Also in this task:** move `res9ShortCellToRes6Parent` from `packages/bdc/sdk/filing-landscape.ts` to
+**Also in this task:** move `res9ShortCellToRes6Parent` from `packages/bdc/lib/sdk/filing-landscape.ts` to
 `@mailwoman/spatial/h3/cell`, generalized over its two resolutions. It currently closes over
 `BDC_H3_RESOLUTION` / `BDC_COVERAGE_H3_RESOLUTION`, and Task 5 needs the identical derivation inside
 `resolver-wof-sqlite` — importing it from `@mailwoman/bdc` would be the wrong dependency direction. Same
@@ -714,7 +714,7 @@ Expected: PASS, 6 tests.
 
 - [ ] **Step 6: Move core's definitions to re-exports**
 
-In `packages/core/layers/schema.ts`, delete the `CoverageBasis` const and type declarations (the block beginning `export const CoverageBasis = {`) and replace with:
+In `packages/core/lib/layers/schema.ts`, delete the `CoverageBasis` const and type declarations (the block beginning `export const CoverageBasis = {`) and replace with:
 
 ```ts
 // Owned by @mailwoman/evidence so bdc, resolver and filer can gate on the SAME FUNCTION rather than on
@@ -722,7 +722,7 @@ In `packages/core/layers/schema.ts`, delete the `CoverageBasis` const and type d
 export { CoverageBasis } from "@mailwoman/evidence"
 ```
 
-In `packages/core/layers/manifest.ts`, delete the `supportsExclusion` function body and replace with:
+In `packages/core/lib/layers/manifest.ts`, delete the `supportsExclusion` function body and replace with:
 
 ```ts
 export { requireExclusionBasis, supportsExclusion } from "@mailwoman/evidence"
@@ -749,10 +749,10 @@ In `packages/core/tsconfig.json`, add to `references`:
 ```bash
 yarn install
 yarn compile
-yarn vitest run packages/core/layers
+yarn vitest run packages/core/lib/layers
 ```
 
-Expected: PASS. `packages/core/layers/schema.test.ts` already asserts `supportsExclusion` admits `Designated`/`Surveyed` and refuses `SourcePresent`/absent — those assertions must still pass unchanged, now against the moved implementation.
+Expected: PASS. `packages/core/lib/layers/schema.test.ts` already asserts `supportsExclusion` admits `Designated`/`Surveyed` and refuses `SourcePresent`/absent — those assertions must still pass unchanged, now against the moved implementation.
 
 - [ ] **Step 9: Add `foldIdentity` — a fold is identified by what it computes, not what it is called**
 
@@ -853,7 +853,7 @@ Expected: PASS, 9 tests.
 
 - [ ] **Step 11: Move `res9ShortCellToRes6Parent` to `@mailwoman/spatial`**
 
-Add to `packages/spatial/h3/cell.ts`, generalized over both resolutions:
+Add to `packages/spatial/lib/h3/cell.ts`, generalized over both resolutions:
 
 ```ts
 /**
@@ -873,7 +873,7 @@ export function shortCellToParentInt(h3CellShortInt: number, from: number, to: n
 }
 ```
 
-In `packages/bdc/sdk/filing-landscape.ts`, replace the body of `res9ShortCellToRes6Parent` with a call and
+In `packages/bdc/lib/sdk/filing-landscape.ts`, replace the body of `res9ShortCellToRes6Parent` with a call and
 keep the export — its callers (`nearest-infrastructure.ts`, `plausibility.ts`, and its own parity test)
 should not have to change in this task:
 
@@ -897,7 +897,7 @@ be edited.
 - [ ] **Step 13: Commit**
 
 ```bash
-git add packages/evidence packages/core/layers packages/core/package.json packages/core/tsconfig.json packages/spatial packages/bdc/sdk/filing-landscape.ts yarn.lock
+git add packages/evidence packages/core/lib/layers packages/core/package.json packages/core/tsconfig.json packages/spatial packages/bdc/lib/sdk/filing-landscape.ts yarn.lock
 git commit -m "evidence: own CoverageBasis, and refuse an exclusion whose fold does not match the layer's
 
 Duplicating the three basis strings across core and evidence would have matched
@@ -914,10 +914,10 @@ and Sao Paulo - SP both read as coverage misses on the board and both are real."
 
 **Files:**
 
-- Modify: `packages/bdc/sdk/plausibility.ts`
+- Modify: `packages/bdc/lib/sdk/plausibility.ts`
 - Modify: `packages/bdc/package.json`
 - Modify: `packages/bdc/tsconfig.json`
-- Test: `packages/bdc/sdk/plausibility.test.ts` (**must pass unchanged — do not edit it**)
+- Test: `packages/bdc/lib/sdk/plausibility.test.ts` (**must pass unchanged — do not edit it**)
 
 **Interfaces:**
 
@@ -928,7 +928,7 @@ and Sao Paulo - SP both read as coverage misses on the board and both are real."
 
 ```bash
 yarn compile
-yarn vitest run packages/bdc/sdk/plausibility.test.ts
+yarn vitest run packages/bdc/lib/sdk/plausibility.test.ts
 ```
 
 Expected: PASS. Record the test count — it must be identical after the change. **The whole acceptance criterion of this task is that this file's assertions never change.**
@@ -940,7 +940,7 @@ In `packages/bdc/tsconfig.json` `references`, add `{ "path": "../evidence" }`.
 
 - [ ] **Step 3: Re-express the evidence union**
 
-In `packages/bdc/sdk/plausibility.ts`, change the union so each existing variant also satisfies the shared shape. Keep every existing property name — consumers read `.filing`, `.hit` and `.reason`:
+In `packages/bdc/lib/sdk/plausibility.ts`, change the union so each existing variant also satisfies the shared shape. Keep every existing property name — consumers read `.filing`, `.hit` and `.reason`:
 
 ```ts
 import type { Evidence } from "@mailwoman/evidence"
@@ -978,7 +978,7 @@ Find each place the module pushes into `evidence` and add `kind`, `source` and (
 
 ```bash
 yarn compile
-yarn vitest run packages/bdc/sdk/plausibility.test.ts
+yarn vitest run packages/bdc/lib/sdk/plausibility.test.ts
 ```
 
 Expected: PASS with the same test count as Step 1, and **zero edits to the test file**. If a test needed changing, the re-expression changed behaviour and must be redone.
@@ -1000,7 +1000,7 @@ reason, and coverage_confidence already carries that."
 
 **Gated on Task 1 returning PROCEED.**
 
-The probe already exists. `packages/resolver-wof-sqlite/uprn-lookup.ts` ships `UPRNLookup` with
+The probe already exists. `packages/resolver-wof-sqlite/lib/uprn-lookup.ts` ships `UPRNLookup` with
 `coordinateOf(uprn)` and `nearestUPRN(latitude, longitude, radiusM)` — a bounded ring-walk over the res-9
 `h3_cell` index whose rings "stop as soon as geometry proves no unprobed cell could beat the best hit",
 capped at `UPRN_MAX_NEAREST_RADIUS_M = 10_000`, with an integration test. Its own docstring already states
@@ -1209,7 +1209,7 @@ a null there is unknown and must never become evidence of absence."
 
 **Files:**
 
-- Modify: `packages/resolver/street-evidence.ts`
+- Modify: `packages/resolver/lib/street-evidence.ts`
 - Modify: `packages/resolver/package.json`
 - Modify: `packages/resolver/tsconfig.json`
 - Test: `packages/resolver/street-evidence.test.ts`
@@ -1296,7 +1296,7 @@ In `packages/resolver/tsconfig.json` `references`, add `{ "path": "../evidence" 
 
 - [ ] **Step 4: Implement the demotion**
 
-In `packages/resolver/street-evidence.ts`:
+In `packages/resolver/lib/street-evidence.ts`:
 
 Add to `PickByStreetEvidenceOpts`:
 
@@ -1349,7 +1349,7 @@ at 10,000 km; an engine that fails at 2 km is the one we called worse."
 
 **Files:**
 
-- Modify: `packages/mailwoman/geocode-core.ts`
+- Modify: `packages/mailwoman/lib/geocode-core.ts`
 - Test: `packages/mailwoman/geocode-core.test.ts`
 
 **Interfaces:**
@@ -1396,7 +1396,7 @@ Expected: FAIL — `epistemic_status` is undefined.
 
 - [ ] **Step 3: Add the field and its derivation**
 
-In `packages/mailwoman/geocode-core.ts`, add to `GeocodeResult` immediately after `resolution_tier`:
+In `packages/mailwoman/lib/geocode-core.ts`, add to `GeocodeResult` immediately after `resolution_tier`:
 
 ```ts
 /**
@@ -1430,7 +1430,7 @@ Expected: PASS. A new required field on `GeocodeResult` reaches every drop-in's 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add packages/mailwoman/geocode-core.ts packages/mailwoman/geocode-core.test.ts
+git add packages/mailwoman/lib/geocode-core.ts packages/mailwoman/geocode-core.test.ts
 git commit -m "geocode: report what the evidence permits, beside how the coordinate was made
 
 resolution_tier was answering two questions. A UPRN rooftop and an OSM rooftop
@@ -1446,7 +1446,7 @@ are both address_point and only one of them was assigned by an authority."
 - Create: `packages/evidence/derivation.ts`
 - Create: `packages/evidence/derivation.test.ts`
 - Modify: `packages/evidence/index.ts`
-- Modify: `packages/mailwoman/geocode-core.ts`
+- Modify: `packages/mailwoman/lib/geocode-core.ts`
 
 **Interfaces:**
 
@@ -1520,7 +1520,7 @@ Expected: PASS, 2 tests.
 
 - [ ] **Step 5: Wire the opt-in field**
 
-In `packages/mailwoman/geocode-core.ts`, add to `GeocodeResult`:
+In `packages/mailwoman/lib/geocode-core.ts`, add to `GeocodeResult`:
 
 ```ts
 	/**
@@ -1559,7 +1559,7 @@ Expected: PASS.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add packages/evidence packages/mailwoman/geocode-core.ts packages/resolver/resolve-trace.test.ts
+git add packages/evidence packages/mailwoman/lib/geocode-core.ts packages/resolver/resolve-trace.test.ts
 git commit -m "evidence: project the derivation from the trace we already record
 
 #1721 records the candidates, the per-stage ranks and every gate, with no sink
@@ -1573,9 +1573,9 @@ answer cannot be reported as a retrieved one without the record disagreeing."
 
 **Files:**
 
-- Modify: `packages/tiger/sdk/schema.ts` (three columns on `PLBlockTable` and its DDL)
-- Modify: `packages/tiger/sdk/redistricting.ts` (read segment 2)
-- Test: `packages/tiger/sdk/redistricting.test.ts`
+- Modify: `packages/tiger/lib/sdk/schema.ts` (three columns on `PLBlockTable` and its DDL)
+- Modify: `packages/tiger/lib/sdk/redistricting.ts` (read segment 2)
+- Test: `packages/tiger/lib/sdk/redistricting.test.ts`
 
 **Interfaces:**
 
@@ -1584,7 +1584,7 @@ answer cannot be reported as a retrieved one without the record disagreeing."
 
 - [ ] **Step 1: Write the failing test**
 
-Create or append to `packages/tiger/sdk/redistricting.test.ts`. Test the field-offset parsing against a synthetic segment-2 line rather than downloading a state:
+Create or append to `packages/tiger/lib/sdk/redistricting.test.ts`. Test the field-offset parsing against a synthetic segment-2 line rather than downloading a state:
 
 ```ts
 import { describe, expect, it } from "vitest"
@@ -1621,12 +1621,12 @@ describe("H1 field offsets", () => {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `yarn vitest run packages/tiger/sdk/redistricting.test.ts`
+Run: `yarn vitest run packages/tiger/lib/sdk/redistricting.test.ts`
 Expected: FAIL — `parseH1` is not exported.
 
 - [ ] **Step 3: Add the columns**
 
-In `packages/tiger/sdk/schema.ts`, add to `PLBlockTable`:
+In `packages/tiger/lib/sdk/schema.ts`, add to `PLBlockTable`:
 
 ```ts
 /** P.L. 94-171 table H1 — total housing units in the block. */
@@ -1647,7 +1647,7 @@ And to the `createTable("pl_block")` chain, before `.modifyEnd(...)`:
 
 - [ ] **Step 4: Read segment 2**
 
-In `packages/tiger/sdk/redistricting.ts`, add beside the existing offset constants:
+In `packages/tiger/lib/sdk/redistricting.ts`, add beside the existing offset constants:
 
 ```ts
 /**
@@ -1674,7 +1674,7 @@ Extract `seg2Path` beside `seg1Path` (`${fileAbbr}00002${vintage}.pl`), then add
 
 - [ ] **Step 5: Run the test to verify it passes**
 
-Run: `yarn compile && yarn vitest run packages/tiger/sdk/redistricting.test.ts`
+Run: `yarn compile && yarn vitest run packages/tiger/lib/sdk/redistricting.test.ts`
 Expected: PASS, 2 tests.
 
 - [ ] **Step 6: Verify against the real file at county scale**
@@ -1694,7 +1694,7 @@ Expected: `{ bad: 0 }`.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add packages/tiger/sdk/schema.ts packages/tiger/sdk/redistricting.ts packages/tiger/sdk/redistricting.test.ts
+git add packages/tiger/lib/sdk/schema.ts packages/tiger/lib/sdk/redistricting.ts packages/tiger/lib/sdk/redistricting.test.ts
 git commit -m "tiger: carry H1 housing units beside the P2 race counts
 
 The US has no public designated address register, so a US coverage basis has
@@ -1728,7 +1728,7 @@ Expected, at the `ban:fr` release `2026-05-18` shard: `{ streets: 2195655, commu
 
 - [ ] **Step 2: Find whether BAN publishes a per-commune completeness signal**
 
-Read `packages/ban/sdk/fetch.ts` and `packages/ban/sdk/extract.ts` for fields carried and dropped at ingest. Then check the upstream BAN distribution for a per-commune certification or source field (communes publishing a certified Base Adresse Locale versus communes backfilled from other sources).
+Read `packages/ban/lib/sdk/fetch.ts` and `packages/ban/lib/sdk/extract.ts` for fields carried and dropped at ingest. Then check the upstream BAN distribution for a per-commune certification or source field (communes publishing a certified Base Adresse Locale versus communes backfilled from other sources).
 
 - [ ] **Step 3: Write the verdict**
 
@@ -1766,7 +1766,7 @@ already exists in `bdc/sdk/filing-landscape.ts` and moves rather than being re-d
 `eval-harness/fragment-board.ts` is the board falsifier 2 will run on. `match/fellegi-sunter.ts` supplies
 `scorePair` / `decide` for the relation side when a later slice needs them.
 
-**Out of scope, found during the same survey.** `packages/resolver/fold-name.ts`'s `foldName` claims to be
+**Out of scope, found during the same survey.** `packages/resolver/lib/fold-name.ts`'s `foldName` claims to be
 diacritic-insensitive and is not — it maps each combining mark to a space, so 6 of 9 French commune pairs
 fail the comparison it exists to perform, and its one live call site (`street-tier.ts:516`) DELETES the
 locality node on a false mismatch. Separate issue, separate fix; do not fold it into a task here.

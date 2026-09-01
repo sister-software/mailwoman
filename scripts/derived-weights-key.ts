@@ -42,10 +42,10 @@ import { join, relative, resolvePath } from "path-ts"
  */
 export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
 	"release.config.json",
-	"packages/mailwoman/gazetteer-pipeline/borough-pairs.ts",
-	"packages/mailwoman/gazetteer-pipeline/lieudit-pairs.ts",
-	"packages/mailwoman/commands/gazetteer/pair-index.tsx",
-	"packages/mailwoman/commands/gazetteer/postcode-binary.tsx",
+	"packages/mailwoman/lib/gazetteer-pipeline/borough-pairs.ts",
+	"packages/mailwoman/lib/gazetteer-pipeline/lieudit-pairs.ts",
+	"packages/mailwoman/lib/commands/gazetteer/pair-index.tsx",
+	"packages/mailwoman/lib/commands/gazetteer/postcode-binary.tsx",
 	"packages/mailwoman/out/gazetteer-pipeline/borough-pairs.js",
 	"packages/mailwoman/out/gazetteer-pipeline/lieudit-pairs.js",
 	"packages/mailwoman/out/commands/gazetteer/pair-index.js",
@@ -76,7 +76,7 @@ async function postcodePipelinePaths(): Promise<string[]> {
 	const root = repoRootPath()
 
 	const dirs = [
-		resolvePath(root, "packages/mailwoman/gazetteer-pipeline/postcode"),
+		resolvePath(root, "packages/mailwoman/lib/gazetteer-pipeline/postcode"),
 		resolvePath(root, "packages/mailwoman/out/gazetteer-pipeline/postcode"),
 	]
 

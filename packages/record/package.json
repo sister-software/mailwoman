@@ -26,7 +26,7 @@
 	"type": "module",
 	"imports": {
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -34,22 +34,22 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./address": {
-			"node": "./address.ts",
+			"node": "./lib/address.ts",
 			"default": "./out/address.js",
 			"types": "./out/address.d.ts"
 		},
 		"./name": {
-			"node": "./name.ts",
+			"node": "./lib/name.ts",
 			"default": "./out/name.js",
 			"types": "./out/name.d.ts"
 		},
 		"./organization": {
-			"node": "./organization.ts",
+			"node": "./lib/organization.ts",
 			"default": "./out/organization.js",
 			"types": "./out/organization.d.ts"
 		}

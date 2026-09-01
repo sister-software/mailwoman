@@ -27,7 +27,7 @@
 	"imports": {
 		"#test/backend-name-key": "./test/helpers/backend-name-key.ts",
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -35,82 +35,82 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./resolve": {
-			"node": "./resolve.ts",
+			"node": "./lib/resolve.ts",
 			"default": "./out/resolve.js",
 			"types": "./out/resolve.d.ts"
 		},
 		"./postcode-country-coherence": {
-			"node": "./postcode-country-coherence.ts",
+			"node": "./lib/postcode-country-coherence.ts",
 			"default": "./out/postcode-country-coherence.js",
 			"types": "./out/postcode-country-coherence.d.ts"
 		},
 		"./span-rescore": {
-			"node": "./span-rescore.ts",
+			"node": "./lib/span-rescore.ts",
 			"default": "./out/span-rescore.js",
 			"types": "./out/span-rescore.d.ts"
 		},
 		"./backend-capabilities": {
-			"node": "./backend-capabilities.ts",
+			"node": "./lib/backend-capabilities.ts",
 			"default": "./out/backend-capabilities.js",
 			"types": "./out/backend-capabilities.d.ts"
 		},
 		"./admin-containment": {
-			"node": "./admin-containment.ts",
+			"node": "./lib/admin-containment.ts",
 			"default": "./out/admin-containment.js",
 			"types": "./out/admin-containment.d.ts"
 		},
 		"./admin-winner": {
-			"node": "./admin-winner.ts",
+			"node": "./lib/admin-winner.ts",
 			"default": "./out/admin-winner.js",
 			"types": "./out/admin-winner.d.ts"
 		},
 		"./decorate-node": {
-			"node": "./decorate-node.ts",
+			"node": "./lib/decorate-node.ts",
 			"default": "./out/decorate-node.js",
 			"types": "./out/decorate-node.d.ts"
 		},
 		"./plausibility": {
-			"node": "./plausibility.ts",
+			"node": "./lib/plausibility.ts",
 			"default": "./out/plausibility.js",
 			"types": "./out/plausibility.d.ts"
 		},
 		"./postcode-prefix": {
-			"node": "./postcode-prefix.ts",
+			"node": "./lib/postcode-prefix.ts",
 			"default": "./out/postcode-prefix.js",
 			"types": "./out/postcode-prefix.d.ts"
 		},
 		"./postcode-shape-coherence": {
-			"node": "./postcode-shape-coherence.ts",
+			"node": "./lib/postcode-shape-coherence.ts",
 			"default": "./out/postcode-shape-coherence.js",
 			"types": "./out/postcode-shape-coherence.d.ts"
 		},
 		"./remote-resolver": {
-			"node": "./remote-resolver.ts",
+			"node": "./lib/remote-resolver.ts",
 			"default": "./out/remote-resolver.js",
 			"types": "./out/remote-resolver.d.ts"
 		},
 		"./rerank": {
-			"node": "./rerank.ts",
+			"node": "./lib/rerank.ts",
 			"default": "./out/rerank.js",
 			"types": "./out/rerank.d.ts"
 		},
 		"./street-evidence": {
-			"node": "./street-evidence.ts",
+			"node": "./lib/street-evidence.ts",
 			"default": "./out/street-evidence.js",
 			"types": "./out/street-evidence.d.ts"
 		},
 		"./toponym-prior": {
-			"node": "./toponym-prior.ts",
+			"node": "./lib/toponym-prior.ts",
 			"default": "./out/toponym-prior.js",
 			"types": "./out/toponym-prior.d.ts"
 		},
 		"./resolve-passes": {
-			"node": "./resolve-passes.ts",
+			"node": "./lib/resolve-passes.ts",
 			"default": "./out/resolve-passes.js",
 			"types": "./out/resolve-passes.d.ts"
 		}

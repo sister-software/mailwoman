@@ -71,7 +71,7 @@ poi-taxonomy pharmacy  → the pharmacy concept
 [`data/geographic-model.json`](./data/geographic-model.json) is the committed compilation. **Do not hand-edit it** — regenerate:
 
 ```bash
-node packages/geographic-model/scripts/build-artifact.ts && npx oxfmt packages/geographic-model/data/geographic-model.json
+node packages/geographic-model/lib/scripts/build-artifact.ts && npx oxfmt packages/geographic-model/data/geographic-model.json
 ```
 
 [`data/PROVENANCE.md`](./data/PROVENANCE.md) records what each file states and where each external category id was read from. A reviewed amendment admitted a first breadth wave — a `drugstore` concept, a US-scoped `affords` assertion on it, and a second `poi-taxonomy` mapping — and all three are authored, under the same provenance discipline. One activity therefore reaches two establishment classes, which is what the schema was shaped to express and what the POI branch searches as a union.

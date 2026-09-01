@@ -126,7 +126,7 @@ describe("the id-band literals in country-plan.ts", () => {
 		// This is what stops that duplication from drifting: a fold that moves its base moves this test.
 		const { OVERTURE_ID_BASE } = await import("mailwoman/gazetteer-pipeline/admin/fold-overture")
 		const { GEONAMES_ID_BASE } = await import("@mailwoman/resolver-wof-sqlite/geonames-aliases")
-		const source = await readLocalTextFile(new URL("../../../gazetteer-pipeline/country-plan.ts", import.meta.url))
+		const source = await readLocalTextFile(new URL("../../../lib/gazetteer-pipeline/country-plan.ts", import.meta.url))
 
 		expect(source).toContain(
 			`const OVERTURE_BAND_START = ${OVERTURE_ID_BASE.toLocaleString("en-US").replaceAll(",", "_")}`

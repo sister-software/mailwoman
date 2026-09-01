@@ -30,7 +30,7 @@
 	"type": "module",
 	"imports": {
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -38,17 +38,17 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./layer-guards": {
-			"node": "./layer-guards.ts",
+			"node": "./lib/layer-guards.ts",
 			"default": "./out/layer-guards.js",
 			"types": "./out/layer-guards.d.ts"
 		},
 		"./tools": {
-			"node": "./tools.ts",
+			"node": "./lib/tools.ts",
 			"default": "./out/tools.js",
 			"types": "./out/tools.d.ts"
 		}

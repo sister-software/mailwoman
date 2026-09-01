@@ -1,8 +1,8 @@
 # Semantic-utility probe — pre-registration and baseline (#1928)
 
 **Date:** 2026-08-26. **Command:** `mailwoman eval semantic-utility-probe --arm baseline --out
-packages/mailwoman/eval-harness/semantic-utility/baseline-receipt.json`. **Pre-registration:**
-`packages/mailwoman/eval-harness/semantic-utility/probe-definition.json` v1.0.0, content hash
+packages/mailwoman/lib/eval-harness/semantic-utility/baseline-receipt.json`. **Pre-registration:**
+`packages/mailwoman/lib/eval-harness/semantic-utility/probe-definition.json` v1.0.0, content hash
 `df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c`. **DB:**
 `$MAILWOMAN_DATA_ROOT/poi/poi.db`, `layer_manifest` `poi 2026-07-22.0` (vintage 2026-07-22.0).
 **Weights:** en-US 9.1.0. **Resolver:** candidate-table backend. **Tree:** working tree at
@@ -34,7 +34,7 @@ board family for a GO decision.
 ## The frozen definition
 
 **Comparator:** `poi_board_assembled_answer` — `gradeCase` from
-`packages/mailwoman/eval-harness/poi-board.ts`, unchanged. The top result's `categoryID` and the
+`packages/mailwoman/lib/eval-harness/poi-board.ts`, unchanged. The top result's `categoryID` and the
 nearest returned coordinate against the row's committed anchor. Outcomes only.
 
 **Target rows (4).** Each pairs an activity phrase attested in §5.1 with an anchor taken byte-for-byte
@@ -136,6 +136,6 @@ node packages/mailwoman/out/cli.js eval semantic-utility-probe --arm baseline --
 ```
 
 The loader refuses the pre-registration if its content hash has moved from
-`packages/mailwoman/eval-harness/semantic-utility/probe-freeze.json`, so a run that produces a
+`packages/mailwoman/lib/eval-harness/semantic-utility/probe-freeze.json`, so a run that produces a
 receipt has provably read the ruler recorded here. `packages/mailwoman/test/unit/eval-harness/semantic-utility-probe.test.ts`
 holds the freeze, the refusals, the arithmetic, and this receipt's agreement with the frozen numbers.

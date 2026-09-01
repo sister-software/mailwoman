@@ -303,7 +303,7 @@ Department MAPPED, plus its geometry.
 
 ## Consumer
 
-`packages/mailwoman/observations/zoning-route.ts` reads a finished coordinate and records what an adopted plan
+`packages/mailwoman/lib/observations/zoning-route.ts` reads a finished coordinate and records what an adopted plan
 assigns there, as one additive `authority_designation` marker with `mechanism: layer:zoning`. **Default off, and
 the switch is the presence of `$MAILWOMAN_DATA_ROOT/zoning/zoning-ireland.db`** rather than a boolean. No layer
 file, no route, and the geocode result is byte-identical to a build without the field.

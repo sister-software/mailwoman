@@ -60,7 +60,7 @@ fi
 # touches the command surface. The generator reads the COMPILED tree (packages/mailwoman/out/commands — the
 # commands are TSX, which node cannot type-strip), so a stale out/ would silently regenerate WRONG
 # bytes; the mtime guard turns that into an instruction instead.
-if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailwoman/(commands|cli-kit)/'; then
+if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailwoman/lib/(commands|cli-kit)/'; then
 	if [ -f packages/mailwoman/out/cli.js ]; then
 		# Freshness reference: the tsbuildinfo, not cli.js — an incremental `tsc -b` that finds
 		# cli.js byte-identical does not rewrite it, so an mtime check against cli.js blocks
@@ -68,7 +68,7 @@ if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailw
 		# tsc always touches the buildinfo when it runs; fall back to cli.js on trees without one.
 		REF=packages/mailwoman/out/tsconfig.tsbuildinfo
 		[ -f "$REF" ] || REF=packages/mailwoman/out/cli.js
-		NEWEST_SRC=$(find packages/mailwoman/commands packages/mailwoman/cli-kit \( -name '*.tsx' -o -name '*.ts' \) -newer "$REF" -print -quit 2>/dev/null)
+		NEWEST_SRC=$(find packages/mailwoman/lib/commands packages/mailwoman/lib/cli-kit \( -name '*.tsx' -o -name '*.ts' \) -newer "$REF" -print -quit 2>/dev/null)
 		if [ -n "$NEWEST_SRC" ]; then
 			echo "pre-commit: $NEWEST_SRC is newer than the compiled CLI — run 'yarn compile' so the CLI reference regenerates from what you actually changed" >&2
 			exit 1

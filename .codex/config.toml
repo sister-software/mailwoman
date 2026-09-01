@@ -1,5 +1,5 @@
 [mcp_servers]
 [mcp_servers.mailwoman-dev]
 command = "node"
-args = ["packages/dev-mcp/cli.ts"]
+args = ["packages/dev-mcp/lib/cli.ts"]
 

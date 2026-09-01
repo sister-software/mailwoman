@@ -126,7 +126,7 @@ def whitespace_spans(raw: str, tokens: Sequence[str]) -> list[tuple[int, int]]:
     """Return the (char_begin, char_end) span of each whitespace token in ``raw``.
 
     Scans left-to-right; for each token, finds it at-or-after the previous end. The corpus
-    tokens come from ``packages/corpus/src/tokenize.ts`` (whitespace split + Unicode-aware),
+    tokens come from ``packages/corpus/lib/tokenize.ts`` (whitespace split + Unicode-aware),
     so the surface forms are guaranteed to be substrings of ``raw`` in order.
     """
     spans: list[tuple[int, int]] = []

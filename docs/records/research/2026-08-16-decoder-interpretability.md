@@ -8,7 +8,7 @@ diagnosis vocabulary?
 
 Grounding read: `docs/records/site-2026-08/concepts/what-mailwoman-is.mdx` (calibrated,
 retrieval-augmented sequence labeler; channels are soft features, never overrides) and
-`packages/neural/soft-features.ts` (the channel choreography: anchor, gazetteer, country,
+`packages/neural/lib/soft-features.ts` (the channel choreography: anchor, gazetteer, country,
 street-type channels, each `features[][]` + `confidence[]`, fed alongside `input_ids`; the
 ProductionScorer already asserts _which_ channels were fed). The Weimar case in this memo's terms:
 every channel row was zero, the token-embedding pathway alone produced the (correct) labels, and

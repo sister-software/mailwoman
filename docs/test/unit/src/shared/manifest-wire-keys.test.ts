@@ -71,7 +71,7 @@ describe("no consumer reads raw legacy wire keys outside the boundary", () => {
 	for (const rel of [
 		"../../../../src/pages/demo/_runtime.ts",
 		"../../../../src/contexts/DemoEmbed.tsx",
-		"../../../../../packages/mailwoman/release-tools/publish-hf.ts",
+		"../../../../../packages/mailwoman/lib/release-tools/publish-hf.ts",
 	]) {
 		test(`${rel} is house-cased only`, async () => {
 			const src = await readLocalTextFile(new URL(rel, import.meta.url))

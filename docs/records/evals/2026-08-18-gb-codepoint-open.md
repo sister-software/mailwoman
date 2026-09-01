@@ -38,7 +38,7 @@ Licence v3, acquisition 2026-08-05).
 - **Configurations:** the shipped pipeline (`mailwoman` 9.1.0, model v4.4.0) at production
   defaults under two locales — `en-US` (the out-of-the-box default) and `en-GB`.
 - **Grading:** haversine distance to the Code-Point centroid; a no-result is a miss at every
-  threshold. Harness: `packages/mailwoman/eval-harness/gb-codepoint-eval.ts` (seeded, re-runnable;
+  threshold. Harness: `packages/mailwoman/lib/eval-harness/gb-codepoint-eval.ts` (seeded, re-runnable;
   results JSONL committed to the lab eval store).
 
 ## Results
@@ -85,7 +85,7 @@ kept as the record of what the eval found; finding it was this record's purpose.
 ## Re-run
 
 ```
-node packages/mailwoman/eval-harness/gb-codepoint-eval.ts --stamp 2026-08-05 --per-area 5 --seed 20260818
+node packages/mailwoman/lib/eval-harness/gb-codepoint-eval.ts --stamp 2026-08-05 --per-area 5 --seed 20260818
 ```
 
 Requires a Code-Point Open acquisition under `$MAILWOMAN_DATA_ROOT/codepoint/<stamp>/` (the

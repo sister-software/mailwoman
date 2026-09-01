@@ -14,7 +14,7 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { runFileSync } from "@mailwoman/core/process"
 import { describe, expect, it } from "vitest"
 
-const CLI = resolvePackagePath("mailwoman", "cli.ts")
+const CLI = resolvePackagePath("mailwoman", "lib", "cli.ts")
 
 /**
  * Combined stdout+stderr, whatever the exit code — a launcher crash is the thing under test.

@@ -20,11 +20,11 @@ and has never been called.
 Three packages independently invented a way to say "here is what we know and how well we know it."
 None of them can talk to the others.
 
-| Home                                   | Vocabulary                                | Confidence / status axis                                                             |
-| -------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------ |
-| `packages/bdc/sdk/plausibility.ts`     | `filing` \| `physical_plant` \| `abstain` | `coverage_confidence: high \| low \| insufficient_survey_data`, plus per-axis detail |
-| `packages/resolver/street-evidence.ts` | one bit — `hasStreetName`                 | none; fails open unconditionally                                                     |
-| `packages/filer/` (`filer.db`)         | `filer_edge.relationship`                 | `assertion: authoritative \| inferred`, with a DB check constraint                   |
+| Home                                       | Vocabulary                                | Confidence / status axis                                                             |
+| ------------------------------------------ | ----------------------------------------- | ------------------------------------------------------------------------------------ |
+| `packages/bdc/lib/sdk/plausibility.ts`     | `filing` \| `physical_plant` \| `abstain` | `coverage_confidence: high \| low \| insufficient_survey_data`, plus per-axis detail |
+| `packages/resolver/lib/street-evidence.ts` | one bit — `hasStreetName`                 | none; fails open unconditionally                                                     |
+| `packages/filer/` (`filer.db`)             | `filer_edge.relationship`                 | `assertion: authoritative \| inferred`, with a DB check constraint                   |
 
 `filer.db`'s is the most disciplined of the three, and it is enforced in SQL:
 
@@ -48,7 +48,7 @@ found the shared tool" but "there was no shared tool to find."
 
 ### 1.2 The gate is built and has never been called
 
-#1685 landed `CoverageBasis` and `supportsExclusion()` in `packages/core/layers/`. A grep for
+#1685 landed `CoverageBasis` and `supportsExclusion()` in `packages/core/lib/layers/`. A grep for
 consumers finds the definition and its own unit test, and nothing else.
 
 One layer has already earned the right to use it:
@@ -73,7 +73,7 @@ So the blocking condition is not a missing layer. It is an unwired one.
 
 ### 1.3 The positive half is built and measured
 
-`packages/resolver/street-evidence.ts` (#727 phase 4c) is the positive counterpart, with a receipt:
+`packages/resolver/lib/street-evidence.ts` (#727 phase 4c) is the positive counterpart, with a receipt:
 **+6.0 pp street@1 (0.791 → 0.851), 96 fixes / 3 breaks, 32:1**, the value concentrated on the FR
 date-name class. Its docstring states the exact assumption that designated coverage retires:
 
@@ -87,7 +87,7 @@ therefore a coverage-qualified mode on an interface that already exists, not a n
 
 ## 2. The three states — reachability, coverage, fold failure
 
-`packages/dev-mcp/constraint-census.ts` already separates two of the three, and its own docstring
+`packages/dev-mcp/lib/constraint-census.ts` already separates two of the three, and its own docstring
 states why they must never be summed: a key held in another band is a retrieval fix, a key held
 nowhere is a data fact, and both reach a caller as `null`.
 
@@ -247,7 +247,7 @@ reference. That reference is Census PL 94-171 table H1, verified:
   matches published CA 2020 figures exactly
 ```
 
-`packages/tiger/sdk/redistricting.ts` already ingests PL 94-171 into `pl_block`, keyed on the same
+`packages/tiger/lib/sdk/redistricting.ts` already ingests PL 94-171 into `pl_block`, keyed on the same
 15-char GEOID as `tabblock20`, with field offsets "verified against the real files." It reads
 **segment 1** (P1 + P2, race). H1 is the tail of **segment 2**. Proven end-to-end at county scale:
 

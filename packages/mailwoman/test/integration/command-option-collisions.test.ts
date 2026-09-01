@@ -10,7 +10,11 @@ import { describe, expect, test } from "vitest"
 
 const RESERVED_FLAGS = new Set(["version", "help"])
 const RESERVED_ALIASES = new Set(["v", "h"])
-const COMMAND_ROOTS = [workspacePath("mailwoman", "commands"), workspacePath("mailwoman", "cli-native", "commands")]
+
+const COMMAND_ROOTS = [
+	workspacePath("mailwoman", "lib", "commands"),
+	workspacePath("mailwoman", "lib", "cli-native", "commands"),
+]
 
 async function listCommandModules(): Promise<string[]> {
 	const files: string[] = []

@@ -30,13 +30,13 @@
 		"**/*.ts",
 		"!*.test.ts",
 		"!**/*.test.ts",
-		"!scripts/**",
+		"!lib/scripts/**",
 		"!test/**"
 	],
 	"type": "module",
 	"imports": {
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -44,42 +44,42 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./artifact": {
-			"node": "./artifact.ts",
+			"node": "./lib/artifact.ts",
 			"default": "./out/artifact.js",
 			"types": "./out/artifact.d.ts"
 		},
 		"./compile": {
-			"node": "./compile.ts",
+			"node": "./lib/compile.ts",
 			"default": "./out/compile.js",
 			"types": "./out/compile.d.ts"
 		},
 		"./load": {
-			"node": "./load.ts",
+			"node": "./lib/load.ts",
 			"default": "./out/load.js",
 			"types": "./out/load.d.ts"
 		},
 		"./lookup": {
-			"node": "./lookup.ts",
+			"node": "./lib/lookup.ts",
 			"default": "./out/lookup.js",
 			"types": "./out/lookup.d.ts"
 		},
 		"./scripts/build-artifact": {
-			"node": "./scripts/build-artifact.ts",
+			"node": "./lib/scripts/build-artifact.ts",
 			"default": "./out/scripts/build-artifact.js",
 			"types": "./out/scripts/build-artifact.d.ts"
 		},
 		"./schema": {
-			"node": "./schema.ts",
+			"node": "./lib/schema.ts",
 			"default": "./out/schema.js",
 			"types": "./out/schema.d.ts"
 		},
 		"./validate": {
-			"node": "./validate.ts",
+			"node": "./lib/validate.ts",
 			"default": "./out/validate.js",
 			"types": "./out/validate.d.ts"
 		}

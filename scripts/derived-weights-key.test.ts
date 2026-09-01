@@ -133,7 +133,7 @@ describe("derivedWeightsKeyFrom", () => {
 
 		const inputsFor = (root: string) => [
 			at(join(root, "release.config.json"), "release.config.json"),
-			at(join(root, "pair-index.tsx"), "packages/mailwoman/commands/gazetteer/pair-index.tsx"),
+			at(join(root, "pair-index.tsx"), "packages/mailwoman/lib/commands/gazetteer/pair-index.tsx"),
 		]
 
 		expect(await derivedWeightsKeyFrom(inputsFor(checkoutA))).toBe(await derivedWeightsKeyFrom(inputsFor(checkoutB)))
@@ -152,8 +152,8 @@ describe("derivedWeightsKey", () => {
 	it("names the generating CLI modules, not just the config and data", () => {
 		// The whole point of the rewrite. If someone trims this list back to config+data, the
 		// currency-filter class of stale artifact comes straight back.
-		expect(DERIVED_WEIGHTS_INPUTS).toContain("packages/mailwoman/commands/gazetteer/pair-index.tsx")
-		expect(DERIVED_WEIGHTS_INPUTS).toContain("packages/mailwoman/commands/gazetteer/postcode-binary.tsx")
+		expect(DERIVED_WEIGHTS_INPUTS).toContain("packages/mailwoman/lib/commands/gazetteer/pair-index.tsx")
+		expect(DERIVED_WEIGHTS_INPUTS).toContain("packages/mailwoman/lib/commands/gazetteer/postcode-binary.tsx")
 	})
 })
 

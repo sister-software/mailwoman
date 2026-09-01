@@ -55,7 +55,7 @@ interface Row {
 }
 
 async function boardRows(): Promise<Row[]> {
-	const root = String(repoRootPath("packages", "mailwoman", "eval-harness", "gauntlet", "cases"))
+	const root = String(repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases"))
 	const rows: Row[] = []
 
 	for (const entry of await readDirectory(root)) {

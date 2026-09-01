@@ -42,7 +42,7 @@ const GB_INWARD_LENGTH = 3
 const { values } = parseArguments({
 	options: {
 		bin: { type: "string" },
-		fixtures: { type: "string", default: "packages/mailwoman/eval-harness/fixtures/gb-golden.jsonl" },
+		fixtures: { type: "string", default: "packages/mailwoman/lib/eval-harness/fixtures/gb-golden.jsonl" },
 	},
 })
 

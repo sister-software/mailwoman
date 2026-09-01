@@ -13,15 +13,18 @@ import {
 	transformImportsForPublish,
 } from "./publish-exports.ts"
 
+// Source lives under `lib/`, so a real dev map's `node` condition names `./lib/…` while its `default`/`types`
+// name `./out/…` WITHOUT that segment — `rootDir: "./lib"` strips it from the emit. The expectations below are
+// therefore also the assertion that the segment is dropped rather than carried through.
 const DEV_MAP = {
 	"./package.json": "./package.json",
 	".": {
-		node: "./index.ts",
+		node: "./lib/index.ts",
 		default: "./out/index.js",
 		types: "./out/index.d.ts",
 	},
 	"./table": {
-		node: "./table.ts",
+		node: "./lib/table.ts",
 		default: "./out/table.js",
 		types: "./out/table.d.ts",
 	},
@@ -52,6 +55,17 @@ describe("transformExportsForPublish", () => {
 
 		expect(result["./package.json"]).toBe("./package.json")
 		expect(result["./data/*.json"]).toBe("./data/*.json")
+	})
+
+	it("drops the lib/ segment, because rootDir strips it from the emit", () => {
+		// A map that carried the segment through would name ./out/lib/deep/thing.js — well-formed JavaScript at an
+		// address no tarball contains, which assertNoSourceTargets cannot catch because it is no longer TypeScript.
+		const result = transformExportsForPublish({
+			"./deep": { node: "./lib/deep/thing.ts", default: "./out/deep/thing.js" },
+		}) as Record<string, Record<string, string>>
+
+		expect(result["./deep"]!["node"]).toBe("./out/deep/thing.js")
+		expect(result["./deep"]!["node"]).not.toContain("/lib/")
 	})
 
 	it("keeps a node condition that already targets compiled output", () => {
