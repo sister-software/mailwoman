@@ -38,8 +38,8 @@ import { createInterface } from "node:readline"
 
 import { openReadStream } from "@mailwoman/core/fs/streams"
 
+import { toFRN, type FRN } from "#frn"
 import type { Form499Lifecycle } from "#sdk/form499-notes"
-import { toFRN, type FRN } from "#sdk/frn"
 
 /**
  * The Form 499 filer TSV's 17 columns, in file order — ported verbatim from Nexus's `RawFCCForm499FilingColumns`

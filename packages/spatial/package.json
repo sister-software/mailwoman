@@ -46,11 +46,6 @@
 			"default": "./out/coordinate-bounds.js",
 			"types": "./out/coordinate-bounds.d.ts"
 		},
-		"./sdk": {
-			"node": "./lib/sdk/index.ts",
-			"default": "./out/sdk/index.js",
-			"types": "./out/sdk/index.d.ts"
-		},
 		".": {
 			"node": "./lib/index.ts",
 			"default": "./out/index.js",
@@ -96,15 +91,15 @@
 			"default": "./out/osm/*.js",
 			"types": "./out/osm/*.d.ts"
 		},
-		"./sdk/well-known-text": {
-			"node": "./lib/sdk/well-known-text.ts",
-			"default": "./out/sdk/well-known-text.js",
-			"types": "./out/sdk/well-known-text.d.ts"
+		"./well-known-text": {
+			"node": "./lib/well-known-text.ts",
+			"default": "./out/well-known-text.js",
+			"types": "./out/well-known-text.d.ts"
 		},
-		"./sdk/ogr": {
-			"node": "./lib/sdk/ogr.ts",
-			"default": "./out/sdk/ogr.js",
-			"types": "./out/sdk/ogr.d.ts"
+		"./tools/ogr": {
+			"node": "./lib/tools/ogr.ts",
+			"default": "./out/tools/ogr.js",
+			"types": "./out/tools/ogr.d.ts"
 		},
 		"./h3/coverage": {
 			"node": "./lib/h3/coverage.ts",

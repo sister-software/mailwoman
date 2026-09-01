@@ -13,8 +13,8 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { toFRN } from "@mailwoman/filer/frn"
 import { FilerEdgeAssertion, FilerRelationship, type FilerDatabase } from "@mailwoman/filer/schema"
-import { toFRN } from "@mailwoman/filer/sdk/frn"
 import {
 	buildControlEvalInputs,
 	buildFilteredEvalInputs,

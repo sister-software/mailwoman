@@ -11,6 +11,7 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { toFRN, type FRN } from "@mailwoman/filer/frn"
 import {
 	coresDetailURL,
 	fetchCORESRegistration,
@@ -18,7 +19,6 @@ import {
 	recaseUniform,
 	type CORESDocumentClient,
 } from "@mailwoman/filer/sdk/cores-client"
-import { toFRN, type FRN } from "@mailwoman/filer/sdk/frn"
 import { describe, expect, it } from "vitest"
 
 async function fixture(name: string): Promise<string> {

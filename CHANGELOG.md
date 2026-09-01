@@ -16,6 +16,40 @@ matters to consumers. The format follows [Keep a Changelog](https://keepachangel
 loosely and [Semantic Versioning](https://semver.org); the public API is still
 settling, so treat `4.x` as pre-stable.
 
+## Unreleased
+
+### Breaking — `@mailwoman/spatial` drops its `./sdk` subpaths
+
+`@mailwoman/spatial/sdk`, `@mailwoman/spatial/sdk/ogr` and `@mailwoman/spatial/sdk/well-known-text` are **removed
+outright**, with no deprecated re-export. Replacements:
+
+| Removed                                  | Use                                  |
+| ---------------------------------------- | ------------------------------------ |
+| `@mailwoman/spatial/sdk/well-known-text` | `@mailwoman/spatial/well-known-text` |
+| `@mailwoman/spatial/sdk/ogr`             | `@mailwoman/spatial/tools/ogr`       |
+| `@mailwoman/spatial/sdk` (barrel)        | import the module you want, by name  |
+
+`sdk/` in this repository means **data acquisition** (`AGENTS.md`), and neither module acquires anything: one is a
+pure WKT/WKB codec, the other shells out to `ogrinfo` to read what a source declares about itself. The barrel is not
+replaced by a combined entry on purpose — `@mailwoman/spatial` is imported by browser-facing packages, the root
+barrel deliberately excludes both modules, and a combined subpath would put a `node:child_process` reach one
+`export *` away from a browser graph.
+
+### Breaking — `@mailwoman/filer` moves three domain modules out of `./sdk/`
+
+`@mailwoman/filer/sdk/frn`, `@mailwoman/filer/sdk/family-rollup` and `@mailwoman/filer/sdk/filer-lookup` become
+`@mailwoman/filer/frn`, `@mailwoman/filer/family-rollup` and `@mailwoman/filer/filer-lookup`. No shims. All three
+are also re-exported from the package root, so `@mailwoman/filer` itself keeps resolving them.
+
+They are identity and corporate-family readers, not acquisition — and they were exactly the symbols a request path
+needed: `@mailwoman/mcp`'s CLI imported `familyRollup`, `filerLookup`, `toFRN` and `FRN` from the `./sdk` barrel,
+which `export *`s seventeen modules, so an MCP request path carried the SEC and CORES HTTP clients and the EDGAR
+ingest along to reach three functions. That import now names the three modules, and `dependency-cruiser`'s
+`no-serve-package-to-build-tooling` counts `mcp` as a serve package so the edge cannot come back.
+
+The rest of `filer/lib/sdk/` and all of `bdc/lib/sdk/` are unchanged: no serve path reaches them, and renaming them
+would spend published subpaths on a naming preference rather than a measured violation.
+
 ## Notable releases
 
 ### 4.15.0 — postcode-anchor fix (`v1.9.3a3-anchor-absorption`)

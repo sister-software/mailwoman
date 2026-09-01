@@ -73,7 +73,7 @@ function stubDeps(): MCPToolDeps {
 				}
 			}
 		),
-		// Mirrors the real `filerLookup`'s (`@mailwoman/filer/sdk/filer-lookup.ts`) own XOR throw so the dispatch
+		// Mirrors the real `filerLookup`'s (`@mailwoman/filer/filer-lookup.ts`) own XOR throw so the dispatch
 		// tests below can exercise "the handler propagates a deps-level rejection" without reaching for a real filer.db.
 		filerLookup: vi.fn(
 			async (query: {
@@ -103,7 +103,7 @@ function stubDeps(): MCPToolDeps {
 				}
 			}
 		),
-		// Mirrors the real `familyRollup`'s (`@mailwoman/filer/sdk/family-rollup.ts`) own XOR throw AND its
+		// Mirrors the real `familyRollup`'s (`@mailwoman/filer/family-rollup.ts`) own XOR throw AND its
 		// always-array return shape (never `null`, never a bare object) so the dispatch tests below can exercise
 		// both without reaching for a real filer.db.
 		filerFamily: vi.fn(async (query: { databasePath: string; familyID?: string; nodeID?: string; asOf?: string }) => {

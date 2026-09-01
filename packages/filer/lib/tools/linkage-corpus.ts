@@ -14,10 +14,10 @@
 import { createUnionFind } from "@mailwoman/core/utils"
 import { createHash } from "@mailwoman/core/utils/hash"
 
+import { toFRN, type FRN } from "#frn"
 import { FilerIdentifierType } from "#schema"
 import { mintFamilyID } from "#sdk/family-id"
 import type { Form499Row } from "#sdk/form499"
-import { toFRN, type FRN } from "#sdk/frn"
 import type { ProviderListRow } from "#sdk/provider-list"
 
 /**

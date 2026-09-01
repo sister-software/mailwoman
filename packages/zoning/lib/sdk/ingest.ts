@@ -42,8 +42,8 @@
 
 import { spawnOGR2OGR } from "@mailwoman/core/utils"
 import { assertRingsInsideExtent, requireArealPolygons } from "@mailwoman/spatial"
-import { readOGRLayerIdentity } from "@mailwoman/spatial/sdk/ogr"
-import { wellKnownGeometryToGeoJSON } from "@mailwoman/spatial/sdk/well-known-text"
+import { readOGRLayerIdentity } from "@mailwoman/spatial/tools/ogr"
+import { wellKnownGeometryToGeoJSON } from "@mailwoman/spatial/well-known-text"
 import { CSVSpliterator } from "spliterator"
 
 import { resolveRingRoles, type MultiPolygonRings, type ResolvedRingRoles } from "#rings"

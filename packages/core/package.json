@@ -471,11 +471,6 @@
 			"default": "./out/utils/hash.js",
 			"types": "./out/utils/hash.d.ts"
 		},
-		"./utils/jsonl": {
-			"node": "./lib/utils/jsonl.ts",
-			"default": "./out/utils/jsonl.js",
-			"types": "./out/utils/jsonl.d.ts"
-		},
 		"./utils/stats": {
 			"node": "./lib/utils/stats.ts",
 			"default": "./out/utils/stats.js",

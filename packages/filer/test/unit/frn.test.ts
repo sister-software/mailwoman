@@ -6,7 +6,7 @@
  *   (decision 3: NOT the Nexus `Tagged<number>` shape, which silently drops leading zeros).
  */
 
-import { isFRN, toFRN } from "@mailwoman/filer/sdk/frn"
+import { isFRN, toFRN } from "@mailwoman/filer/frn"
 import { describe, expect, it } from "vitest"
 
 describe("toFRN", () => {
