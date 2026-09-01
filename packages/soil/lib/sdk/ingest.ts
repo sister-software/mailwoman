@@ -27,9 +27,9 @@
  *   a bounded chunk name the same features every time.
  */
 
-import { ogr2ogrGeoJSONSeq } from "@mailwoman/core/utils"
 import { assertRingsInsideExtent, requireArealPolygons, type MultiPolygonRings } from "@mailwoman/spatial"
 import { readOGRLayerIdentity } from "@mailwoman/spatial/tools/ogr"
+import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
 import { basename, join } from "path-ts"
 
 import { SSURGO_SOURCE_EPSG } from "#vocabulary"

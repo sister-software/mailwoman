@@ -101,6 +101,11 @@
 			"node": "./lib/h3/coverage.ts",
 			"default": "./out/h3/coverage.js",
 			"types": "./out/h3/coverage.d.ts"
+		},
+		"./tools/ogr-stream": {
+			"node": "./lib/tools/ogr-stream.ts",
+			"default": "./out/tools/ogr-stream.js",
+			"types": "./out/tools/ogr-stream.d.ts"
 		}
 	},
 	"publishConfig": {

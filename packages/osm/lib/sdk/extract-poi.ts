@@ -45,7 +45,7 @@
  *   before the rows reach `buildPOIDatabase`.
  */
 
-import { ogr2ogrGeoJSONSeq } from "@mailwoman/core/utils"
+import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
 
 import { representativePoint } from "#sdk/representative-point"
 import {

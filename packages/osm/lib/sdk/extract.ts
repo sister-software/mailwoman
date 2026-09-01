@@ -15,7 +15,7 @@
  *   separate, confidence-gated tier (never synthesize a number line from scattered points).
  */
 
-import { ogr2ogrGeoJSONSeq } from "@mailwoman/core/utils"
+import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
 
 import { representativePoint } from "#sdk/representative-point"
 

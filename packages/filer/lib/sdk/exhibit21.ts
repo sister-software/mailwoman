@@ -171,8 +171,9 @@ const TABLE_TAG_PATTERN = /<table[^>]*>|<\/table>/gi
  * `echostar-2025.htm` 5, `atn-international-2025.htm` 7, and the unvendored Comcast filing 33 — and only the first
  * carries a header row.
  *
- * @deprecated Move to `@mailwoman/core/html` and use a DOM parser to read the table structure.
- * @todo Use cheerio or a DOM parser to read the table structure.
+ * @deprecated Move to `@mailwoman/core/html/tables` and use a DOM parser to read the table structure.
+ * @todo In desperate need of `htmlparser2`'s ecosystem. Extract repeatable aspects into `@mailwoman/core/html/tables`
+ *   and keep what remains here, if anything at all.
  */
 function extractTopLevelTableHTML(html: string): string[] {
 	const tables: string[] = []
@@ -213,8 +214,9 @@ function extractTopLevelTableHTML(html: string): string[] {
  * browser would: implicitly closed by the next `<td>`/`<th>`, or by the row's end when there is no later cell. A
  * trailing `</td>`/`</th>`, if present, is just another stray tag `cleanCellText` strips.
  *
- * @deprecated Move to `@mailwoman/core/html` and use a DOM parser to read the table structure.
- * @todo Use cheerio or a DOM parser to read the table structure.
+ * @deprecated Move to `@mailwoman/core/html/tables` and use a DOM parser to read the table structure.
+ * @todo In desperate need of `htmlparser2`'s ecosystem. Extract repeatable aspects into `@mailwoman/core/html/tables`
+ *   and keep what remains here, if anything at all.
  */
 function extractRowCells(rowHTML: string): TableCell[] {
 	const starts: Array<{ tag: "td" | "th"; index: number; contentStart: number }> = []
@@ -240,8 +242,9 @@ function extractRowCells(rowHTML: string): TableCell[] {
  * falls through to the list/plain-text strategies). A row is `[]` when it has no `<td>`/`<th>` cells at all (formatting
  * cruft — an empty `<tr></tr>`), never `null`.
  *
- * @deprecated Move to `@mailwoman/core/html` and use a DOM parser to read the table structure.
- * @todo Use cheerio or a DOM parser to read the table structure.
+ * @deprecated Move to `@mailwoman/core/html/tables` and use a DOM parser to read the table structure.
+ * @todo In desperate need of `htmlparser2`'s ecosystem. Extract repeatable aspects into `@mailwoman/core/html/tables`
+ *   and keep what remains here, if anything at all.
  */
 function extractTableRows(html: string): TableCell[][][] | null {
 	const tables = extractTopLevelTableHTML(html)
@@ -270,7 +273,8 @@ function extractTableRows(html: string): TableCell[][][] | null {
  * shape the 3+-column rule abstains on) and yielding zero subsidiaries each.
  *
  * @deprecated Move to `@mailwoman/core/html/tables` and use a DOM parser to read the table structure.
- * @todo Use cheerio or a DOM parser to read the table structure.
+ * @todo In desperate need of `htmlparser2`'s ecosystem. Extract repeatable aspects into `@mailwoman/core/html/tables`
+ *   and keep what remains here, if anything at all.
  */
 function widestRow(rows: readonly TableCell[][]): number {
 	let width = 0
@@ -284,7 +288,8 @@ function widestRow(rows: readonly TableCell[][]): number {
 
 /**
  * @deprecated Move to `@mailwoman/core/html/tables` and use a DOM parser to read the table structure.
- * @todo Use cheerio or a DOM parser to read the table structure.
+ * @todo In desperate need of `htmlparser2`'s ecosystem. Extract repeatable aspects into `@mailwoman/core/html/tables`
+ *   and keep what remains here, if anything at all.
  */
 function padAndDropBlankColumns(rows: readonly TableCell[][]): TableCell[][] {
 	const width = widestRow(rows)
@@ -780,7 +785,8 @@ const BLOCK_BREAK_PATTERN =
  * otherwise-unrelated paragraphs. See the module docstring's tag-stripping paragraph.
  *
  * @deprecated Move to `@mailwoman/core/html` and use a DOM parser to read the table structure.
- * @todo Use cheerio or a DOM parser to read the table structure.
+ * @todo In desperate need of `htmlparser2`'s ecosystem. Extract repeatable aspects into `@mailwoman/core/html/extract`
+ *   and keep what remains here, if anything at all.
  */
 function extractPlainTextLines(html: string): string[] {
 	const withLineBreaks = html.replaceAll(BLOCK_BREAK_PATTERN, "\n")
