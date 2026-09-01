@@ -6,7 +6,7 @@
 # regression is Canadian alphanumeric-postcode rows (box number stolen as postcode; 93-vs-9
 # asymmetric), diluted by +22u of probe-era source mass; (2) us.street losses are ALL
 # trailing-directional cuts ("74TH ST SE"→"74TH ST") — the GB boundary habit from synth-gb 10.0,
-# a shard weighted for the FALSIFIED dep-loc resurrection arc. Punct-drop was tested and
+# a slice weighted for the FALSIFIED dep-loc resurrection arc. Punct-drop was tested and
 # exonerated (control fails comma-intact rows too). The deploc feed was probe tooling inherited
 # for comparability; production owes it nothing.
 #
@@ -22,7 +22,7 @@
 #   G1 fragment bars (fed, P0 grid --lexicon v5 --street-lexicon v2, every save): homonym ON−OFF
 #      ≥ +0.050 asis and ≥ +0.25 lower+heal; house-number classes ≥ −0.020 asis raw; lowercase-heal
 #      ALL ≥ +0.015. NAMED RISK: bare-locality classes lose the es-pedania/fr-lieudit feeders —
-#      if a bare-locality bar alone misses, add back JUST those two shards as one named delta.
+#      if a bare-locality bar alone misses, add back JUST those two slices as one named delta.
 #   G2 ablation: OFF column vs the v385 same-grader reference ONLY (the feed control is
 #      deploc-specific and retires with the feed).
 #   G3 invariance (int8, --baseline v385): zero new classes.
@@ -71,7 +71,7 @@ data:
     CA: 1.0 # NEW (Overture) — live locality, sidesteps NZ's dead dependent_locality
     MX: 1.0 # NEW (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
   source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the ONE new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
-    overture-latam: 6.0 # NEW — CA/MX/BR Overture shards. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
+    overture-latam: 6.0 # NEW — CA/MX/BR Overture slices. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -100,7 +100,7 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the

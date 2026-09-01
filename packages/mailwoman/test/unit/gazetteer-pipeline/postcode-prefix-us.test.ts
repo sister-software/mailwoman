@@ -6,7 +6,7 @@
  *
  *   Every rule here was earned by a row in `postalcode-us.db`, not by anticipation: six place names sitting in a
  *   postcode table (one with a real New Mexico coordinate), 414 units on null island, 1,662 sharing a coordinate with a
- *   different sectional centre, and 25 prefixes spanning more than one state. The fixture is the smallest shard that
+ *   different sectional centre, and 25 prefixes spanning more than one state. The fixture is the smallest database that
  *   reproduces all four.
  */
 
@@ -54,7 +54,7 @@ beforeAll(async () => {
 
 	using source = new DatabaseClient<WOFDatabase>(sourcePath)
 
-	// Deliberately NO `meta` table — the real shard has none, and the coordinate-tier rule must not read a declaration
+	// Deliberately NO `meta` table — the real database has none, and the coordinate-tier rule must not read a declaration
 	// out of its absence.
 	source.exec(`
 		CREATE TABLE spr (

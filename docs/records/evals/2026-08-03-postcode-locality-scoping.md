@@ -36,7 +36,7 @@ output coordinate.
    returns FR for `(75001, Paris)` at 0.8 km and US for `(75001, Addison)` at 0.3 km. Over 800 real
    pairs (400 US ZIP+city, 400 FR CP+commune) it crossed a border **zero** times.
 
-5. **A second-order finding, verified twice:** once the postal shards are attached — which is what
+5. **A second-order finding, verified twice:** once the postal extracts are attached — which is what
    `mailwoman geocode` does by default — `defaultCountry=US` makes the answer _worse_, not merely
    wrong. `mailwoman geocode "12 Rue de Rivoli, 75001 Paris"` returns **32.960001, -96.838499 —
    Addison, Texas**, because postcode-consistency falls the locality back to the ZIP-75001 point.
@@ -62,18 +62,18 @@ locality lookup see it; `#lookupAndPick` (lines 981-983) attaches it to any `loc
 It is the **backend** that drops it. `WOFSQLitePlaceLookup.findPlace` dispatches the resolved
 convention's strategies in order — `[postcode_area_resolution, fallback_fuzzy_name_match]`:
 
-- `#postcodeAreaResolution` (`lookup.ts:528`) is gated on `this.#postcodeLocalityShard`. The repro
+- `#postcodeAreaResolution` (`lookup.ts:528`) is gated on `this.#postcodeLocalityExtract`. The repro
   attaches one database, `admin-global-priority.db`, and it has no `postcode_locality` table.
   Probed directly: `SELECT name FROM sqlite_master WHERE name='postcode_locality'` → **no row**.
   The strategy returns `null` before touching the postcode.
 - `#fuzzyNameMatch` then runs and terminates the chain. Read its 400 lines: `query.postcode` is
   never referenced. The field is carried into the backend and thrown away.
 
-**The country filter starves that evidence a second time, even when the shard is present.** Attach
+**The country filter starves that evidence a second time, even when the extract is present.** Attach
 `postcode-locality-intl.db` and the coordinate-first SQL is
-`WHERE postcode = ? AND country = ?` (`lookup.ts:1034`). That shard covers `IT,JP,FR,ES,DE,NL,GB`
+`WHERE postcode = ? AND country = ?` (`lookup.ts:1034`). That extract covers `IT,JP,FR,ES,DE,NL,GB`
 and holds `75001` for DE (×5) and FR (×5) — but the query asks for `country = 'US'`, gets zero rows,
-returns `null`, and falls through to the same name-match. Measured, same shard attached:
+returns `null`, and falls through to the same name-match. Measured, same extract attached:
 
 | query                                                   | top candidates                                             |
 | ------------------------------------------------------- | ---------------------------------------------------------- |
@@ -137,7 +137,7 @@ this right is already wired; one locale-derived default is standing on it.
 
 ### The worse-than-wrong case
 
-`mailwoman geocode` loads the full shard set via `wofShardPaths`, so the postcode resolves. Under
+`mailwoman geocode` loads the full extract set via `wofExtractPaths`, so the postcode resolves. Under
 `defaultCountry=US` it resolves to the _US_ row — ZIP 75001, Addison TX, 32.960,-96.838. Then
 `applyPostcodeConsistency` (default-ON since 2026-07-04) measures the gap to the chosen locality and
 finds no reconciling alternative inside the 50 km gate:
@@ -172,9 +172,9 @@ own docstring (`codex/postcode-systems.ts:17-21`) states the case: a bare `68161
 the US, German and French 5-digit shapes, and "the shape alone cannot split the numeric-postcode
 systems."
 
-**The gazetteer says so.** The literal string `75001`, per shard:
+**The gazetteer says so.** The literal string `75001`, per extract:
 
-| shard                         | row                                                            |
+| extract                       | row                                                            |
 | ----------------------------- | -------------------------------------------------------------- |
 | `postalcode-us.db`            | `#554744141 US 32.960,-96.838` — ZIP 75001, **Addison, Texas** |
 | `postalcode-intl.db`          | `#421307175 FR 48.863,2.336` — Paris 1er                       |
@@ -272,8 +272,8 @@ Two of those rows hide separate defects that this investigation surfaced and did
 
 Yes, and it is cheap. Cost is at most `|candidateSystems|` (≤3 for a 5-digit code) postcode lookups
 plus the same number of locality lookups, and only for trees carrying both a postcode and a
-locality. It reuses #920 country-aware shard routing, so each country-scoped query already lands on
-the right shard — no cross-shard BM25 union, which `sharding.ts` forbids for good reason.
+locality. It reuses #920 country-aware extract routing, so each country-scoped query already lands on
+the right extract — no cross-extract BM25 union, which `extract routing.ts` forbids for good reason.
 
 Two things make it a decision rather than a patch:
 
@@ -284,10 +284,10 @@ precedence chain; `geocode-core`'s `!opts.defaultCountry` gate on the #928 prior
 precedence is the real decision, and it is the _same_ decision the coarse placer already lost with
 a 0.99999-confidence FR call. Whatever rule is written should cover both.
 
-**(b) It needs the postal shards attached.** `parse --resolve --resolve-db <one.db>` attaches only
+**(b) It needs the postal extracts attached.** `parse --resolve --resolve-db <one.db>` attaches only
 the admin database, where the postcode resolves to nothing whatsoever — no evidence to be coherent
-with. `mailwoman geocode` and `mailwoman serve` load the full set via `wofShardPaths`. A pass gated
-on postcode evidence is silently inert in the single-shard configuration, which is exactly the
+with. `mailwoman geocode` and `mailwoman serve` load the full set via `wofExtractPaths`. A pass gated
+on postcode evidence is silently inert in the single-extract configuration, which is exactly the
 configuration the bug was reported against. The gate needs to say so out loud rather than no-op.
 
 ### A cheaper intermediate, for comparison
@@ -321,7 +321,7 @@ node mailwoman/out/cli.js parse "12 Rue de Rivoli, 75001 Paris" \
   --resolve --resolve-db "$WOF" --default-country none --format xml
 #   lat="48.856599" lon="2.342841"     ← Paris, FR
 
-# the worse-than-wrong case (full shard set, postcode resolves)
+# the worse-than-wrong case (full extract set, postcode resolves)
 node mailwoman/out/cli.js geocode "12 Rue de Rivoli, 75001 Paris"
 #   "lat": 32.960001, "lon": -96.838499  ← Addison, TX (postcode_fallback)
 

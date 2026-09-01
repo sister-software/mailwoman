@@ -34,12 +34,12 @@ FAIL, 6 of 12 checks:
 NOT promoted. Artifacts banked: int8 md5 `33527afae87526f667c7e83453a723e6` (43 MB —
 the size alone disqualifies it as a ship default). The intersection rider
 (`synth-intersection: 2.0`) was a data no-op: the v0.4.12 manifest carries zero
-intersection-named shards, so the weight sampled nothing. Recorded on #487.
+intersection-named extracts, so the weight sampled nothing. Recorded on #487.
 
 ## The audit (`scripts/eval/audit-affix-misses.ts`)
 
-Hypothesis: misses are out-of-distribution surface forms the shard builder never varies.
-**Refuted.** Misses spread evenly across the shard's bread-and-butter forms (prefix-abbr
+Hypothesis: misses are out-of-distribution surface forms the extract builder never varies.
+**Refuted.** Misses spread evenly across the extract's bread-and-butter forms (prefix-abbr
 65% missed, prefix-full 38%, suffix-abbr 56%, suffix-full 57% — `1 W Pratt St` is a miss).
 No form feature separates hits from misses.
 
@@ -49,18 +49,18 @@ affix confidently — the other way.
 
 ## The other way is what the corpus teaches
 
-Sampled 1M rows across 5 base shards (v0.3.0 train):
+Sampled 1M rows across 5 base extracts (v0.3.0 train):
 
 - **69.4%** of street-bearing rows label an affix surface monolithically
   (30.8% start with a directional, 64.5% end with a common suffix —
   `South County Road 175 West` is all `B/I-street`).
-- Effective gradient mass: ~467M contradictory examples vs 90K × 5.0 = 450K shard-weighted
+- Effective gradient mass: ~467M contradictory examples vs 90K × 5.0 = 450K extract-weighted
   split examples. **At least 1,039:1**, flooring base source-weights at 1.0.
 - The loader amplifies it: `augment.py::_expand_token` label inheritance plus
   `augment_directional_prob: 0.3` mints fresh monolithic variants every epoch.
 
 One mechanism explains every observation in the ladder: the 64.9 equilibrium is the mixing
-ratio (architecture-independent by construction); the transient decay is early shard
+ratio (architecture-independent by construction); the transient decay is early extract
 exposure being reabsorbed; P=100 because the base never splits, so the model never falsely
 splits; the frozen head's R≈25 because contradictory supervision collapsed the
 representation distinction the head would have needed.

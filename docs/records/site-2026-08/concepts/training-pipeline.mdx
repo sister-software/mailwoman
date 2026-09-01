@@ -19,7 +19,7 @@ flowchart LR
     A[Raw sources<br>WOF, BAN, TIGER, NPPES, ...] --> B[Adapters<br>per-source TS code]
     B --> C[Aligned rows<br>NDJSON]
     C --> D[Splits<br>train/val/test]
-    D --> E[Parquet shards<br>~1M rows each]
+    D --> E[Parquet extracts<br>~1M rows each]
     E --> F[Training<br>~6h GPU]
     F --> G[Checkpoint]
     G --> H[Eval<br>vs golden set]
@@ -76,11 +76,11 @@ The split is **locality-aware**: rows that share a locality stay in the same spl
 
 The split assignment is written to `SPLIT_MANIFEST.json` so any later step can reproduce which rows went where.
 
-## Stage 4 — Sharding
+## Stage 4 — Extracting
 
-Once split, rows are written to **Parquet** files at 1 million rows per shard. Parquet is a columnar format that streams well: the training data loader can read row groups one at a time without loading the whole file into memory.
+Once split, rows are written to **Parquet** files at 1 million rows per extract. Parquet is a columnar format that streams well: the training data loader can read row groups one at a time without loading the whole file into memory.
 
-A v0.3.0 build produces about 30 train shards plus 1 val shard plus 1 test shard. Total size ~30 GB. The `intermediate/` directory (per-adapter raw NDJSON dumps, useful for debugging) takes another ~400 GB but gets garbage-collected after the next training run.
+A v0.3.0 build produces about 30 train extracts plus 1 val extract plus 1 test extract. Total size ~30 GB. The `intermediate/` directory (per-adapter raw NDJSON dumps, useful for debugging) takes another ~400 GB but gets garbage-collected after the next training run.
 
 ## Stage 5 — Training
 
@@ -88,11 +88,11 @@ Training runs in Python on the lab's GPU (AMD Radeon 780M). The training script:
 
 1. Loads the tokenizer (`tokenizer.model`).
 2. Builds the model architecture (`MailwomanCoarseEncoder` + `LinearChainCRF`).
-3. Streams batches from the train shards (one Parquet row group at a time, 32 examples per batch, 4 gradient accumulation steps → effective batch 128).
+3. Streams batches from the train extracts (one Parquet row group at a time, 32 examples per batch, 4 gradient accumulation steps → effective batch 128).
 4. Forward pass: encoder produces per-token emissions → CRF computes negative log-likelihood of gold sequence → loss is `CE(emissions, gold) + 0.05 × CRF_NLL`.
 5. Backward pass: gradients flow through CRF + encoder + tokenizer embeddings.
 6. Optimizer step (AdamW, learning rate 1.5e-4, cosine decay with 1,000-step warmup).
-7. Every 250 steps: evaluate on the val shard, log val loss + macro F1.
+7. Every 250 steps: evaluate on the val extract, log val loss + macro F1.
 8. Every 100 steps: save a full checkpoint (model + optimizer + scheduler + RNG state).
 
 Save-every-100 is a defensive measure for the lab's GPU: it has a firmware quirk that fires a `GPU Hang` exception every 30–60 minutes under sustained load. The `train_with_resume.ts` wrapper auto-restarts on hang and resumes from the latest checkpoint. With this in place, training is robust to multiple hangs per session.

@@ -12,8 +12,8 @@
  *   by hand — KEEP THOSE IN LOCKSTEP (the same contract the WOF resolvers hold). The polyline
  *   geometry no longer needs it: both now call `pointAlong` from `@mailwoman/spatial`.
  *
- *   These power the demo's street tier against byte-ranged per-state situs/interp shards: a lookup
- *   touches ~KB of a multi-GB shard (measured, see the spec), so the file size is irrelevant to
+ *   These power the demo's street tier against byte-ranged per-state situs/interp databases: a lookup
+ *   touches ~KB of a multi-GB extract (measured, see the spec), so the file size is irrelevant to
  *   query cost.
  */
 
@@ -55,13 +55,13 @@ export interface StreetPointHit {
 export class HTTPVFSAddressPointLookup {
 	#worker: HTTPVFSDB
 	/**
-	 * One memoized round trip to confirm the shard carries `address_point` (graceful on a tableless shard, #568).
+	 * One memoized round trip to confirm the extract carries `address_point` (graceful on a tableless extract, #568).
 	 */
 	readonly #hasTable: () => Promise<boolean>
 	#locale: StreetLocale
 
 	/**
-	 * `streetLocale` must match the shard's build locale (the node class's contract) — default "us".
+	 * `streetLocale` must match the extract's build locale (the node class's contract) — default "us".
 	 */
 	constructor(worker: HTTPVFSDB, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#worker = worker
@@ -99,7 +99,7 @@ export class HTTPVFSAddressPointLookup {
 		}
 
 		if (!rows.length && query.locality) {
-			// FR shards fold arrondissement communes to the base city on both sides (the node class +
+			// FR extracts fold arrondissement communes to the base city on both sides (the node class +
 			// BAN builder discipline) — mirror it here so the twins stay in lockstep.
 			const localityKey =
 				this.#locale === "fr"
@@ -136,7 +136,7 @@ export interface StreetInterpHit {
 export class HTTPVFSInterpolator {
 	#worker: HTTPVFSDB
 	/**
-	 * One memoized round trip to confirm the shard carries `street_segment`.
+	 * One memoized round trip to confirm the extract carries `street_segment`.
 	 */
 	readonly #hasTable: () => Promise<boolean>
 

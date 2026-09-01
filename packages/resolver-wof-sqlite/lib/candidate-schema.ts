@@ -24,7 +24,7 @@ import type { NameKey } from "#street-normalize"
 /**
  * One candidate row. `name_key` + the four small int keys + `neg_rank` + `spr_id` form the clustered primary key; the
  * rest is denormalized so a resolve is one probe (no join to `spr`). Coordinates + bbox + name are nullable at the SQL
- * level (a postcode shard row may lack a bbox).
+ * level (a postcode extract row may lack a bbox).
  */
 export interface CandidateTable {
 	/**

@@ -49,7 +49,7 @@ export type ConventionSchemaHandle = Pick<Kysely<ConventionDatabase>, "schema">
 
 /**
  * Create `address_convention`. The table name comes from {@link ADDRESS_CONVENTION_TABLE} so the build script, the
- * runtime source, and the shard auto-detect cannot drift apart.
+ * runtime source, and the extract auto-detect cannot drift apart.
  */
 export async function createAddressConventionTable(db: ConventionSchemaHandle): Promise<void> {
 	await db.schema

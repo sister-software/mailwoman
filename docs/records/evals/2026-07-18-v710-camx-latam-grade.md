@@ -1,6 +1,6 @@
 # v7.1.0 candidate — CA/MX Overture locale add (v385 latam 8k)
 
-**Date:** 2026-07-18 (night). **Model:** `output-v384-latam-probe-s42/step-008000` (int8 `model-v385-latam8k-int8.onnx`). **Recipe:** `v3.8.5-latam-8k.yaml` — init_from shipped v381, `+CA/MX` in `country_weights`, `overture-latam:6.0` source (dedicated, doesn't dilute the trained EU `overture` rows), 8k (2k probe → 8k resume, constant LR). **Corpus:** `v0.13.0-latam` overlay (base v0.11.0-no-fragment + a 456k-row `overture-latam` shard, CA 299,809 + MX 156,421).
+**Date:** 2026-07-18 (night). **Model:** `output-v384-latam-probe-s42/step-008000` (int8 `model-v385-latam8k-int8.onnx`). **Recipe:** `v3.8.5-latam-8k.yaml` — init_from shipped v381, `+CA/MX` in `country_weights`, `overture-latam:6.0` source (dedicated, doesn't dilute the trained EU `overture` rows), 8k (2k probe → 8k resume, constant LR). **Corpus:** `v0.13.0-latam` overlay (base v0.11.0-no-fragment + a 456k-row `overture-latam` extract, CA 299,809 + MX 156,421).
 
 **Status: PROMOTABLE — all guards pass. Promote is the operator's call (HF upload + npm release, staged not shipped).**
 

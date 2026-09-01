@@ -52,15 +52,15 @@ describe("runLookup", () => {
 		expect(result.notes.join(" ")).toContain("would read as absence for every query")
 	})
 
-	it("treats an unopenable WOF shard set as unavailable, not as a gazetteer with nothing in it", async () => {
+	it("treats an unopenable WOF extract set as unavailable, not as a gazetteer with nothing in it", async () => {
 		const result = await runLookup(noRegistry, {
 			source: "wof",
 			queries: ["Vaduz"],
-			config: { resolve_db: emptyRoot.resolve("no-such-shard.db") },
+			config: { resolve_db: emptyRoot.resolve("no-such-extract.db") },
 		})
 
 		expect(result.rows).toEqual([])
-		expect(result.unavailable_reason).toContain("No WOF shard could be opened")
+		expect(result.unavailable_reason).toContain("No WOF extract could be opened")
 	})
 
 	it("says a locale ships no anchor artifact instead of answering no for every postcode", async () => {

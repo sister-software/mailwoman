@@ -45,10 +45,10 @@ then `chmod 0444`. Updates are full rebuilds. Nothing here is a live database yo
 | [Admin gazetteer](#admin-gazetteer--candidatedb) (`candidate.db`)                                   | name → place, worldwide                  | shipped       | permissive mix (see entry)  |
 | [WOF source gazetteer](#wof-source-gazetteer--admin-global-prioritydb) (`admin-global-priority.db`) | the build input behind the above         | internal      | permissive mix              |
 | [POI layer](#poi-layer--poidb) (`poi.db`)                                                           | "coffee near X", category + brand search | shipped       | CDLA-Permissive-2.0         |
-| [US situs shards](#us-situs-shards--address-points-us-stdb)                                         | US address → rooftop coordinate          | shipped       | public domain + open data   |
-| [US interpolation shards](#us-interpolation-shards--interpolation-us-stdb)                          | US address → estimated coordinate        | shipped       | public domain               |
-| [FR situs shard](#fr-situs-shard--address-points-frdb) (BAN)                                        | French address → rooftop coordinate      | shipped       | Licence Ouverte 2.0         |
-| [OSM rooftop shards](#osm-rooftop-shards--address-points-cc-slugdb)                                 | non-US address → rooftop coordinate      | build-local   | ODbL                        |
+| [US situs extracts](#us-situs-extracts--address-points-us-stdb)                                     | US address → rooftop coordinate          | shipped       | public domain + open data   |
+| [US interpolation extracts](#us-interpolation-extracts--interpolation-us-stdb)                      | US address → estimated coordinate        | shipped       | public domain               |
+| [FR situs extract](#fr-situs-extract--address-points-frdb) (BAN)                                    | French address → rooftop coordinate      | shipped       | Licence Ouverte 2.0         |
+| [OSM rooftop extracts](#osm-rooftop-extracts--address-points-cc-slugdb)                             | non-US address → rooftop coordinate      | build-local   | ODbL                        |
 | [Timezone lookup](#timezone-lookup--timezonedb) (`timezone.db`)                                     | coordinate → IANA timezone               | build-local   | ODbL                        |
 | [UN/LOCODE lookup](#unlocode-lookup--un-locodedb) (`un-locode.db`)                                  | place → trade-location code              | build-local   | public domain               |
 | [NUTS lookup](#nuts-lookup--nutsdb) (`nuts.db`)                                                     | EU coordinate → statistical region       | build-local   | undetermined                |
@@ -179,14 +179,14 @@ shipped `poi.db` is not it. Queries that need infrastructure abstain with
 
 ---
 
-## US situs shards — `address-points-us-<st>.db`
+## US situs extracts — `address-points-us-<st>.db`
 
 The precision tier for the United States: an exact building coordinate, not a street estimate and
 not a city centroid.
 
 **Contents.** One `address_point` table per state, carrying normalized and raw street, house
 number, unit, postcode, normalized locality, coordinate, and — the part that matters for licensing
-— a per-row `source` string and source release. 124.9 million points across 50 per-state shards.
+— a per-row `source` string and source release. 124.9 million points across 50 per-state extracts.
 
 **Upstream sources.** Overture's Addresses theme, which for the US is the National Address Database
 (68%, US public domain) plus OpenAddresses (32%, government open data). A 2026-06-14 measurement
@@ -195,7 +195,7 @@ filter by default. Per-row provenance is stamped `overture:<dataset>` or `openad
 
 **Obligation.** Attribution. NAD is public domain and asks nothing; the named OpenAddresses sources
 want credit. `mailwoman situs attribution-manifest` regenerates an `ATTRIBUTION.json` from the
-shards on disk, which is the document you hand downstream.
+extracts on disk, which is the document you hand downstream.
 
 **Tier:** shipped. Hosted byte-range on R2 at
 `https://public.mailwoman.ai/mailwoman/street/us/<slug>/situs.db` for 52 slugs — all 50 states
@@ -217,7 +217,7 @@ the national fan-out.
 
 ---
 
-## US interpolation shards — `interpolation-us-<st>.db`
+## US interpolation extracts — `interpolation-us-<st>.db`
 
 The fallback under the situs tier: where no rooftop point exists, estimate the coordinate from the
 street segment's house-number range. An exact situs point always wins; interpolation never
@@ -233,12 +233,12 @@ and the segment geometry as GeoJSON text. Built across all 3,143 counties of the
 **Tier:** shipped. Hosted at
 `https://public.mailwoman.ai/mailwoman/street/us/<slug>/interp.db`.
 
-**Version / cadence.** Release `TIGER2023`. TIGER publishes annually; the shards are rebuilt when
+**Version / cadence.** Release `TIGER2023`. TIGER publishes annually; the extracts are rebuilt when
 we take a new vintage.
 
 **Approximate size.** Not recorded per state in this repository.
 
-**Build.** `mailwoman situs interpolation-shard --state VT`, or `mailwoman situs interpolation` for
+**Build.** `mailwoman situs interpolation-extract --state VT`, or `mailwoman situs interpolation` for
 the national download-and-build driver.
 
 **Related.** The `@mailwoman/tiger` workspace also builds `tiger.db` — tabulation blocks, places,
@@ -248,9 +248,9 @@ input rather than a resolver artifact. Build-local, public domain,
 
 ---
 
-## FR situs shard — `address-points-fr.db`
+## FR situs extract — `address-points-fr.db`
 
-France's national address register, on the same situs schema as the US shards, so the resolver
+France's national address register, on the same situs schema as the US extracts, so the resolver
 reads it with no code change.
 
 **Contents.** 26 million address points across 101 départements. A companion
@@ -260,7 +260,7 @@ bounding box, and member-point count, for street-only queries.
 **Upstream source.** Base Adresse Nationale, from `adresse.data.gouv.fr`, release 2026-05-18.
 
 **License.** **Licence Ouverte / Open Licence 2.0 (Etalab)** — attribution only, **no share-alike**.
-BAN is dual-licensed and we elect the permissive option, which is why the shard ships under the same
+BAN is dual-licensed and we elect the permissive option, which is why the extract ships under the same
 terms as the permissive core and needed no counsel gate.
 
 **Attribution.** "© les contributeurs de la Base Adresse Nationale (adresse.data.gouv.fr)", carried
@@ -273,15 +273,15 @@ row count, and md5 at build time.
 
 **Approximate size.** 6.9 GB sealed.
 
-**Build.** `node ban/out/scripts/build-address-point-shard.js --csv-dir <dir> --release 2026-05-18`.
+**Build.** `node ban/out/scripts/build-address-point-extract.js --csv-dir <dir> --release 2026-05-18`.
 A `--depts` flag builds a transient sample for validation first.
 
-**Not included.** No interpolation shard exists for France. The exact-point tier covers the win;
+**Not included.** No interpolation extract exists for France. The exact-point tier covers the win;
 house numbers BAN does not carry are simply not interpolated.
 
 ---
 
-## OSM rooftop shards — `address-points-<cc>-<slug>.db`
+## OSM rooftop extracts — `address-points-<cc>-<slug>.db`
 
 Rooftop coverage for countries with no permissive national register. Complete, benchmarked, and
 **not distributed by us**.
@@ -291,9 +291,9 @@ coordinate from a node, or a building polygon's centroid. Interpolation is delib
 we read only OSM's explicit `addr:interpolation` ways and never synthesize a house-number line from
 scattered points. Street locales exist for FR, DE, and NL.
 
-Measured shards, from the 2026-06-29 build session:
+Measured extracts, from the 2026-06-29 build session:
 
-| Shard                              | Points       | Size         | Street-association gap |
+| Extract                            | Points       | Size         | Street-association gap |
 | ---------------------------------- | ------------ | ------------ | ---------------------- |
 | DE / Berlin                        | 450,900      | 108 MB       | 0.3%                   |
 | NL / national                      | 9,919,996    | 2.3 GB       | 0.0%                   |
@@ -302,7 +302,7 @@ Measured shards, from the 2026-06-29 build session:
 **Upstream source.** Geofabrik PBF extracts of OpenStreetMap. **License:** ODbL — attribution
 **and** share-alike on a Derivative Database.
 
-**Tier:** build-local, and specifically **publish-blocked**. No OSM shard ships to npm, R2, or the
+**Tier:** build-local, and specifically **publish-blocked**. No OSM extract ships to npm, R2, or the
 public demo until counsel has reviewed how ODbL share-alike applies to this distribution model. The
 `@mailwoman/osm` workspace is **code only** — it contains no OSM data, so depending on it carries no
 obligation. Building and benchmarking locally is fine today; publishing is not.
@@ -310,7 +310,7 @@ obligation. Building and benchmarking locally is fine today; publishing is not.
 The three open questions, and the four structural mechanisms that keep ODbL data out of the
 permissive core, are on [data licensing & provenance](./data-provenance.md#the-odbl-boundary).
 
-**Build.** `node osm/out/scripts/build-rooftop-shard.js --country fr --slug idf --release <tag>
+**Build.** `node osm/out/scripts/build-rooftop-extract.js --country fr --slug idf --release <tag>
 --pbf <file>`. Needs GDAL's `ogr2ogr` on PATH.
 
 ---
@@ -463,7 +463,7 @@ work happens at public block granularity plus the address spine we already own.
 
 ## What is not on this shelf
 
-- **Build inputs.** Postcode shards, `tiger.db`, the durable GeoNames alias fold, and the raw
+- **Build inputs.** Postcode extracts, `tiger.db`, the durable GeoNames alias fold, and the raw
   Overture parquet slices are intermediates that feed the artifacts above. They are documented
   in the build runbooks, not here.
 - **Demo assets.** The map-highlight polygons and the address-coverage tile overlay exist to make

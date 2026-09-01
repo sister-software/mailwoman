@@ -2,7 +2,7 @@
 #
 # THE FOURTH SHAPE, AND THE FIRST THAT CONTAINS ITS OWN ALTERNATIVES.
 #
-# Four trailing-region runs graded DO-NOT-SHIP because the shard carried ONLY admin segments and so
+# Four trailing-region runs graded DO-NOT-SHIP because the slice carried ONLY admin segments and so
 # damaged whichever class occupied the position it taught:
 #
 #   v4.8.0   9.4%   7/25 regressed, 12 venue-led   "Ye Three Lords, 27 Minories, London EC3N 1DE"
@@ -10,14 +10,14 @@
 #   v4.9.0   9.4%  11/31 regressed, 15 venue-led   binding moved to dependent_locality; bare streets broke
 #   v4.10.0  3.1%   9/22 regressed,  9 venue-led   damage scales with dose, sub-linearly, and does not vanish
 #
-# `house-venue` was already emitting the surface those shards were built to teach. Its default tail is
+# `house-venue` was already emitting the surface those slices were built to teach. Its default tail is
 # `${locality}, ${region} ${postcode}` — `Springfield, IL 02101` and `Bengaluru, Karnataka 560038` are
 # the same shape — and EVERY row it emits carries a venue, a street AND a house number. The surface is
 # taught with its alternatives present rather than against them.
 #
 # WHAT IS ADDED: 18,000 rows, IN/PT/MX, REAL (postcode, locality, region) triples from the GeoNames
 # postal exports with the corrected column mapping (admin2 is the city; column 3 is a street or a
-# colonia and becomes the dependent locality). Measured on the emitted shard: venue 100%, street 100%,
+# colonia and becomes the dependent locality). Measured on the emitted slice: venue 100%, street 100%,
 # house_number 100%.
 #
 #   Bob's Pizza, 9 Lake Dr, Srikakulam, Andhra Pradesh 532001
@@ -178,7 +178,7 @@ data:
   source_weights:
     # DOSE-FIRST (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
     # 6 reps/row x 17,908 rows against 155.0 total over 8,000 x 128 = 1,024,000 samples -> 18.17,
-    # a 10.5% share. Parity with the bare trailing-region shards, measured at 7.7 and 5.2 reps/row.
+    # a 10.5% share. Parity with the bare trailing-region slices, measured at 7.7 and 5.2 reps/row.
     # For contrast, the weight that collapsed v4.6.0 was 1.0 and bought 165 reps/row.
     synth-house-venue: 2.0
     overture-latam: 6.0

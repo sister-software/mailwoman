@@ -134,7 +134,7 @@ interface ParityFixture {
 const STREET_TAGS = ["street_prefix", "street", "street_prefix_particle", "street_suffix"]
 
 /**
- * WOF shards the receipt harness resolved against (`admin-global-priority.db` + `postcode-locality-intl.db`).
+ * WOF databases the receipt harness resolved against (`admin-global-priority.db` + `postcode-locality-intl.db`).
  */
 const ADMIN_DB = dataRootPath("wof", "admin-global-priority.db")
 const POSTCODE_DB = dataRootPath("wof", "postcode-locality-intl.db")

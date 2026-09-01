@@ -19,7 +19,7 @@ the flaw in pricing them alone: a perpetual grant against a one-time build.
 
 The recurring cost is the **data**. Rebuilding the admin gazetteer is a ten-minute build on top
 of a multi-hour ingest, a verify gate, a swap, and a publish; poi.db is a four-country DuckDB
-pass over a 13.68M-row Overture release; the situs shards are a 50-state ingest. Somebody has to
+pass over a 13.68M-row Overture release; the situs extracts are a 50-state ingest. Somebody has to
 run those, grade them, and eat the R2 bill. That work is periodic, so a subscription is the
 honest shape for it.
 
@@ -103,7 +103,7 @@ on everything already published is irrevocable and the pricing page publishes th
   invisible until they file an issue. This is the entire GeoLite mechanic: MaxMind's free tier
   is a lead list that also happens to be a useful product.
 - **Volume and shape.** Which artifacts, which versions, how often, roughly how many
-  distinct downloaders. Enough to answer "is anyone actually using the FR shard" without
+  distinct downloaders. Enough to answer "is anyone actually using the FR extract" without
   instrumenting anyone's runtime.
 - **A notification channel.** When an artifact is rebuilt because the previous one had a bug
   (the #1015 class), we currently have no way to tell anyone.
@@ -197,9 +197,9 @@ terms not ours to set, so gating it would be both unenforceable and misleading.
 | ------------------------------------------ | ---------------------------------------------- | -------------------------------------------------------------------- |
 | Admin/candidate gazetteer (`candidate.db`) | WOF, Overture divisions, GeoNames, Census ZCTA | CC0-or-CC-BY (see L4), CDLA-Permissive-2.0, CC-BY 4.0, public domain |
 | `poi.db`                                   | Overture Places                                | CDLA-Permissive-2.0 (attribution)                                    |
-| US situs shards                            | Overture addresses, OpenAddresses              | CDLA-Permissive-2.0; OA is per-source — see the caveat below         |
-| US interpolation shards                    | Census TIGER/Line                              | public domain                                                        |
-| FR situs shard                             | BAN                                            | Licence Ouverte 2.0 (we elect this over BAN's dual ODbL)             |
+| US situs extracts                          | Overture addresses, OpenAddresses              | CDLA-Permissive-2.0; OA is per-source — see the caveat below         |
+| US interpolation extracts                  | Census TIGER/Line                              | public domain                                                        |
+| FR situs extract                           | BAN                                            | Licence Ouverte 2.0 (we elect this over BAN's dual ODbL)             |
 | `un-locode.db`                             | UNECE UN/LOCODE code list                      | public domain                                                        |
 | Neural weights bundles                     | corpus filtered with `--exclude-share-alike`   | permissive by construction                                           |
 | `bdc.db` (planned)                         | FCC BDC availability filings                   | US government public record                                          |
@@ -211,7 +211,7 @@ Two caveats that are not optional:
   2026-06-14 audit found the US Overture address set to be NAD (68%, US public domain) plus
   OpenAddresses (32%, government open data) with **zero** ODbL rows, which is why the build
   applies no license filter. A measurement is the right basis for a decision and the wrong basis
-  for a standing product. Before the US situs shards enter the line, that audit becomes a
+  for a standing product. Before the US situs extracts enter the line, that audit becomes a
   build-time filter over the per-row `source` column, with a test, so a future Overture release
   that quietly adds an ODbL contributor fails the build rather than the gate.
 - **The corpus filter is the precedent to copy.** `SHARE_ALIKE_PATTERN` /
@@ -223,7 +223,7 @@ Two caveats that are not optional:
 
 | Artifact                              | Why                                                                                                                                   |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| OSM rooftop shards (`osm/`)           | ODbL. Already publish-blocked pending counsel; a paid channel would be the wrong direction of travel.                                 |
+| OSM rooftop extracts (`osm/`)         | ODbL. Already publish-blocked pending counsel; a paid channel would be the wrong direction of travel.                                 |
 | OSM-derived POI/infrastructure layers | ODbL. The layer contract already puts these at `build-local`: we ship the builder, the user builds on their own disk.                 |
 | Overture `base`-theme derivatives     | ODbL. Overture does not launder OSM's license.                                                                                        |
 | `timezone.db`                         | timezone-boundary-builder is ODbL; attribution and share-alike apply to the built database. The builder ships; the database does not. |
@@ -276,7 +276,7 @@ make the later claims true.
    policy touching the gazetteer.
 2. **Publish the catalog page (D2).** Already drafted alongside this doc. The Lite line is
    meaningless without a public inventory naming each artifact and its tier.
-3. **Build the share-alike filter for situs shards.** Per-row `source`-column filter with a
+3. **Build the share-alike filter for situs extracts.** Per-row `source`-column filter with a
    test, mirroring the corpus-side `--exclude-share-alike`. Until it lands, the US situs line
    stays out of §5.1.
 4. **Put the artifact builds on a schedule.** A cadence claim needs a scheduled build behind it.

@@ -38,7 +38,7 @@ reproducibility, and #483/#484/#485 carry the resolver/service table-stakes work
 The shipped release is 4.3.0. `docs/articles/status.mdx` has been refreshed to that release and
 the 2026-06-11 parity scorecard exists. The active v4.4.0 candidate is
 `v1.3.0-boundary-consolidation`, with three probe-passed levers in the config header:
-glue augmentation, real-TIGER intersection rows, and the rebuilt po_box/cedex shard.
+glue augmentation, real-TIGER intersection rows, and the rebuilt po_box/cedex extract.
 
 The night-shift plan is coherent: it starts from the v4.4.0 verdict fork, allows publication on a
 clean gate pass, and constrains further GPU work with the single-variable and DeepSeek-consult
@@ -62,12 +62,12 @@ spend time re-checking work that already landed.
 
 ### 2. #480 improved, but the "all missing manifest falls back to glob" case still preserves the old trap
 
-`REPRODUCIBILITY.md` is a useful clone-and-train recipe, and `_shard_paths()` now raises on
+`REPRODUCIBILITY.md` is a useful clone-and-train recipe, and `_extract_paths()` now raises on
 partial manifest resolution. That closes a large part of Claude's reproducibility concern.
 
-The remaining edge is explicit in `corpus-python/src/mailwoman_train/test_shard_paths.py`:
+The remaining edge is explicit in `corpus-python/src/mailwoman_train/test_extract_paths.py`:
 `test_all_missing_falls_through_to_glob` enshrines a fallback where a manifest can resolve zero
-declared shards and still train from `corpus_dir/<split>/*.parquet`. That may be needed for legacy
+declared extracts and still train from `corpus_dir/<split>/*.parquet`. That may be needed for legacy
 corpora, but for versioned overlay corpora it is exactly the shape of "measured the wrong data."
 The fix does not have to be a big-bang removal. Add an explicit manifest mode or config flag:
 legacy glob is allowed only when the manifest says it is legacy, or when no manifest exists.
@@ -123,7 +123,7 @@ The intersection lever looks comparatively clean: #487 now has real rows, the re
 `intersection-real`/VT watch material, and the config header reports 100/100 probe behavior with
 zero false fires. The floor is conservative at 50.
 
-po_box is more delicate. The v4.4.0 config says the rebuilt shard passed cedex but the po_box probe
+po_box is more delicate. The v4.4.0 config says the rebuilt extract passed cedex but the po_box probe
 was still 57.5 because of punctuation truncation, and the full run is expected to answer that with
 more exposure. That is a reasonable experiment, but it should be treated as an experiment. If
 po_box misses the 70 floor, do not reinterpret it as "close enough" just because cedex passed; it
@@ -155,7 +155,7 @@ known unfixed regression.
 
 - Update #481 to mark completed items and leave only `core/utils/repo.ts`, gazetteer schema
   validation, and the grouper constant if those are still desired.
-- Tighten #480's shard resolver semantics so all-missing manifests cannot silently glob for new
+- Tighten #480's extract resolver semantics so all-missing manifests cannot silently glob for new
   versioned corpora.
 - Update status/API/STAGES docs for joint reconcile's actual default behavior.
 - Point `status.mdx` at `parity-scorecard-2026-06-11.md` and reconcile the int8 size number.

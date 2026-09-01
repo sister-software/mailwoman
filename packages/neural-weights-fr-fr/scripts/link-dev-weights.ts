@@ -21,7 +21,7 @@
  *
  *   - `anchor-lexicon-v1.json` / `country-surface-lexicon-v1.json` — checked-in repo files,
  *       symlinked from `data/gazetteer/`.
- *   - `postcode-fr.bin` — derived from the WOF intl postcode shard
+ *   - `postcode-fr.bin` — derived from the WOF intl postcode extract
  *       (`softFeed.postcodeDBByCountry.fr` = postalcode-intl.db), built in place via the compiled
  *       `gazetteer postcode-binary` CLI (skip-if-exists; rebuilds in seconds). Without it a fresh
  *       worktree parses anchor-OFF — see the en-us script's section comment for the CI failure

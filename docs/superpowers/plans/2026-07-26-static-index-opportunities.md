@@ -74,7 +74,7 @@ Two hand-maintained tables in source re-derive what the gazetteer build already 
   the runtime recomputes hierarchical consistency piecemeal: `adminCoherence` joint re-picks,
   `region-country-coherence`, `hierarchyCompletion` ancestry walks
   (`resolver-wof-sqlite/ancestry.ts:58` `ancestorLineage`, `PLACETYPE_DEPTH:25`).
-- **Artifact:** per-country pair shards for the REST of the hierarchy — `(locality, region)`,
+- **Artifact:** per-country pair extracts for the REST of the hierarchy — `(locality, region)`,
   `(neighbourhood, locality)`, `(locality, country)` — built from WOF ancestry (+ registers where
   they exist), same PIX1 format, loader, and per-country calibration discipline. WOF's `ancestors`
   table is precisely the source; this is the "hierarchy is under-leveraged" claim made concrete.
@@ -151,4 +151,4 @@ Two hand-maintained tables in source re-derive what the gazetteer build already 
 1 + 5 + 6 are small and independent; 6 rides the in-flight FST rebuild. 2 lands with the next
 gazetteer rebuild cycle. 3 and 4 are the strategic pair — both feed Track 2's Option-A evidence
 bundle, so their builders should be designed once, together (same WOF ancestry pass emits pair
-shards AND ambiguity classes).
+extracts AND ambiguity classes).

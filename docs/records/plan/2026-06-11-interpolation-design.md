@@ -59,8 +59,8 @@ TIGER conventions that shape the schema:
 
 ## Segment table schema
 
-One SQLite DB per state, built by `scripts/build-interpolation-shard.ts` (the
-`build-address-point-shard.ts` pattern: idempotent rebuild, provenance per row, THE shared
+One SQLite DB per state, built by `scripts/build-interpolation-extract.ts` (the
+`build-address-point-extract.ts` pattern: idempotent rebuild, provenance per row, THE shared
 street normalizer):
 
 ```sql
@@ -84,12 +84,12 @@ CREATE INDEX idx_seg_street   ON street_segment (street_norm, min_hn);
 ```
 
 Keying reuses `resolver-wof-sqlite/street-normalize.ts` — the SAME function the
-address-point shard and lookup use (one normalizer, never two; the PLACETYPE_ORDER
+address-point extract and lookup use (one normalizer, never two; the PLACETYPE_ORDER
 lesson) — plus `canonicalizeRouteKey`, a route-designator fold applied by BOTH the
 builder and the lookup. Measured need: TIGER spells routes `State Rte 100` / `US Hwy 5`
 where E911/Overture say `VT ROUTE 100` / `US ROUTE 5` — the single largest street-name
 miss class in the VT eval (+3.1pp coverage from the fold alone, no tail cost). The
-address-point tier does not apply the fold yet; adopting it there needs a #476 shard
+address-point tier does not apply the fold yet; adopting it there needs a #476 extract
 rebuild (follow-up). Geometry is a plain JSON polyline: segments are short, the per-row
 cost is small at state scale, and it keeps the reader dependency-free — revisit encoding
 only if a national build makes size hurt.
@@ -150,7 +150,7 @@ lands.
 ## Eval — honest-eval pattern at street grain
 
 `scripts/eval/interpolation-eval.ts`, self-reporting. The gold is the #476 address-point
-shard (`address-points-us-vt.db`, Overture 2026-05-20.0 — NAD/E911-lineage situs
+extract (`address-points-us-vt.db`, Overture 2026-05-20.0 — NAD/E911-lineage situs
 points): an independent source from TIGER, so grading against it is non-circular. For a
 deterministic held-out sample of Vermont points:
 
@@ -186,8 +186,8 @@ truth is unknowable; measuring on known points is the only honest proxy.
 ## Density characterization (2026-06-12, resolution-ladder Phase 1 step 1)
 
 Same eval, same gate, same seed-42 5000-key sampling, on a dense county: Cook County IL
-(FIPS 17031; TIGER2023 EDGES + a county-scoped #476 shard — Overture carries no county
-field, so the point shard is PIP-filtered against the TIGER2023 COUNTY polygon via the
+(FIPS 17031; TIGER2023 EDGES + a county-scoped #476 extract — Overture carries no county
+field, so the point extract is PIP-filtered against the TIGER2023 COUNTY polygon via the
 builder's new `--county-fips` flag; 1,460,216 points, 231 ZIPs).
 
 | county                  | coverage |  p50 |   p90 | gate (≤50 / ≤150)    |
@@ -206,8 +206,8 @@ an operator sign-off, not made here.
 ## Method 2 — address-point interpolation (2026-06-12, resolution-ladder Phase 1 step 2)
 
 `resolver-wof-sqlite/address-point-interpolation.ts` (`AddressPointInterpolator`): bracket the
-query number with REAL neighbor points from the #476 shard on the same route-folded street key
-(`street_key`, a new shard column — the fold adoption the pilot deferred), interpolate linearly
+query number with REAL neighbor points from the #476 extract on the same route-folded street key
+(`street_key`, a new extract column — the fold adoption the pilot deferred), interpolate linearly
 in house-number space between the bracket's centroids; single-sided bracket = extrapolation
 along the two nearest same-side numbers, capped at one pair-span (`t ≤ 2`), with an explicitly
 larger `uncertaintyM`; no bracket = fall through to TIGER range interpolation. Hits carry
@@ -216,7 +216,7 @@ larger `uncertaintyM`; no bracket = fall through to TIGER range interpolation. H
 **Non-circularity:** the lookup excludes every row at the queried house number by construction —
 a held-out key is only ever interpolated from non-held-out neighbor numbers. (This is also
 production-faithful: an on-file number is the exact tier's answer, never this tier's.) The
-prior eval had no shard-side holdout to lean on, so the guarantee lives in the lookup, not the
+prior eval had no extract-side holdout to lean on, so the guarantee lives in the lookup, not the
 sampler.
 
 Same eval (`--mode ladder`), same gate, same seed-42 samples. Pre-registered question: does
@@ -258,7 +258,7 @@ Method 2 clear the gate on its bracketed stratum?
    state, revisit before national rollout.
 3. **Locality scope.** TIGER carries ZIPs, not locality names. A locality-only query
    (no postcode) currently rides the statewide fallback + abstention. Joining ZIP →
-   locality via the postcode shard (or place ancestry) would restore locality scoping —
+   locality via the postcode extract (or place ancestry) would restore locality scoping —
    follow-up, not pilot.
 4. **ZIP+4 snapping** — deferred to #525 (needs the ZCTA work as a prior), per scoping.
 5. **EU rollout** — OSM Karlsruhe-schema `addr:interpolation` ways, with the ODbL

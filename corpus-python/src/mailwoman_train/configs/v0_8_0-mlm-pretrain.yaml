@@ -23,7 +23,7 @@
 #     --config v0_8_0-mlm-pretrain.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 
-  # v0.3.0 (674 train shards) NOT v0.4.0 (12 synth-overlay shards): MLM wants broad,
+  # v0.3.0 (674 train slices) NOT v0.4.0 (12 synth-overlay slices): MLM wants broad,
   # representative text coverage, and v0.4.0 is a thin synth overlay meant to be used WITH
   # source-weighting (which we drop here). v0.3.0 is also the version train_remote.py
   # verifies on the volume.

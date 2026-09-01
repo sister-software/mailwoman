@@ -24,9 +24,9 @@ two Modal training runs, both killed by their own pre-registered gates.
 - **#919** — SCOPE truth fix: the NO-tail caps hypothesis I wrote earlier the same night was
   read-falsified (0/208 offenders caps) and corrected to the namesake/coverage family.
 - Plus the night's harness additions on the campaign branch (`--postcode-consistency` pin,
-  multi-shard `--wof-db`, `si-bare-village` recipe + exporter, v1.9.8/v1.9.9 configs, sync fns).
+  multi-extract `--wof-db`, `si-bare-village` recipe + exporter, v1.9.8/v1.9.9 configs, sync fns).
 
-**Flagged for operator review (not merged):** **#914** (ES/IT/NL order shards + goldens +
+**Flagged for operator review (not merged):** **#914** (ES/IT/NL order extracts + goldens +
 format-diversity findings — agent), **#916** (the missing multi-service recipe + recipes nav —
 voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
 
@@ -44,7 +44,7 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
   probe FAILED as registered (SI lost-rows 0→19/37, bar 30; mechanism works, under-converged).
   ONE bounded extension to 6k, bars unchanged, kill explicit: **SI regressed 19→13/37 — kill
   fired.** Two compositions, one knob, no resolution → treadmill-guard shape → **fork posted to
-  #901** (weight grid / drop the shard / unified bare-name-comma family across FR+SI+CZ / fold
+  #901** (weight grid / drop the extract / unified bare-name-comma family across FR+SI+CZ / fold
   into a day campaign with #914). Recommendation: the unified family — the mechanism is identical
   in all three, only the leading name's referent differs.
 - US stayed byte-identical through every checkpoint of both runs. Notable historical correction:
@@ -62,9 +62,9 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
    needs a RESOLVED postcode node, and `postalcode-intl.db` covers **NL/DE/FR/ES/IT only** — zero
    rows for every namesake-heavy locale. → **#920** filed.
 4. **#920's experiment leg executed the same night** (scope re-derived once the clock was read
-   right; EXPERIMENT-labeled shard from GeoNames postal FI+CZ, control leg added to the
+   right; EXPERIMENT-labeled extract from GeoNames postal FI+CZ, control leg added to the
    registration before measuring). Verdict: **the lever hypothesis is falsified — and the control
-   is the discovery.** `postcodeConsistency` is inert (ctrl≡pcc byte-identical); **postcode-shard
+   is the discovery.** `postcodeConsistency` is inert (ctrl≡pcc byte-identical); **postcode-extract
    COVERAGE alone collapses the tail: FI namesake 300→1 (unresolved 13→0), CZ 131→4 (12→2), ni
    PASS everywhere** — a resolvable postcode feeds the existing coordinate-first candidate
    injection; the binding implementation existed all along. Format normalization is required
@@ -87,7 +87,7 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
 - **Agents compounding:** four dispatched, four delivered (OA fetch ×5 countries incl. a
   city-less-trap dodge; #914 with real format-audit findings; #473 at gate with two WOF-TW data
   findings; #916 which verify-before-verdicted its own issue and then caught the live demo bug).
-- Salvage-first: the night's biggest lever candidate was an existing flag; the SI shard rode the
+- Salvage-first: the night's biggest lever candidate was an existing flag; the SI extract rode the
   existing recipe scaffold; DK/FI panels rode the existing R-tree.
 
 ## What could've gone better
@@ -121,10 +121,10 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
 
 ## Open questions for the operator
 
-1. **The #901 fork** — recommendation: option 3 (unified bare-name-comma shard family), weighed
+1. **The #901 fork** — recommendation: option 3 (unified bare-name-comma extract family), weighed
    against the taxonomy finding that the resolver-side #920 lever likely dominates it on impact.
 2. **#920 as next-night primary?** The full arc is pre-registered and CPU-only.
-3. Review queue, in merge order: **#918** (TW/JP data + convention row), **#914** (run-2 shards),
+3. Review queue, in merge order: **#918** (TW/JP data + convention row), **#914** (run-2 extracts),
    **#916** (voice pass on one recipe).
 4. **#912 direction** (placer abstention on bare single-locality inputs + exact-tier placetype
    prominence + CLI locale-defaultCountry) — needs a gate design.
@@ -133,7 +133,7 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
 
 ## Concrete next steps
 
-- #920: GeoNames-postal shard extension → re-run the FI/CZ pre-registration → default-flip eval.
+- #920: GeoNames-postal extract extension → re-run the FI/CZ pre-registration → default-flip eval.
 - #901 fork decision → run 3 design (if option 3: one recipe over FR/SI/CZ with balanced polarity,
   probe gate includes ALL graded locales at reduced n).
 - #294 is unblocked by #918's TW table (after review/merge).

@@ -6,7 +6,7 @@
 # Reasoned deltas vs v1.0.0-consolidation:
 #   - use_affix_head: true (the #492 head + gaz skip — keep at width; checkpoint contract carries it)
 #   - synth-affix 2.0 -> 5.0 (Run A's level; 20x was a 29M workaround, not a recipe)
-#   - synth-intersection 0.2 -> 2.0 (the #487 rider — EXISTING shard formats only; the real eval's
+#   - synth-intersection 0.2 -> 2.0 (the #487 rider — EXISTING slice formats only; the real eval's
 #     gap forms (corner-of/intersection-of/unpadded) may lag — REPORT, not gate, on intersection)
 # PRE-REGISTERED GATE (canonical bars; stability read at 2k AND 20k AND 40k — the transient lesson):
 #   affix >=78/67 STABLE; US street >=80.4; country >=83.3; US postcode >=97; unit >=92;
@@ -15,23 +15,23 @@
 #
 # === v1.0.0-consolidation (#466) — the v0-PARITY FLAG-PLANT ======================================
 # ONE model carrying every PROVEN parity lever, at a LARGER step budget (the cumulative-dilution
-# lesson: never stack N shards into a fixed 20k budget — give them room). This is NOT a single-variable
+# lesson: never stack N slices into a fixed 20k budget — give them room). This is NOT a single-variable
 # experiment; it's the integration run. Levers folded in:
 #   - unit          (shipped v4.1.0)                      → synth-unit 1.5
 #   - affix         (multi-locale reroll, #469)           → synth-affix 2.0  (corpus v0.4.11-affix-ml)
-#   - country       (balanced shard, #464)                → synth-country 2.0 (corpus v0.4.10-country-bal)
+#   - country       (balanced slice, #464)                → synth-country 2.0 (corpus v0.4.10-country-bal)
 #   - gazetteer anchor (#464, knowledge-ladder rung 3.2)  → use_gazetteer_anchor + lexicon
 #   - choreography  (#468, the v0.9.12 US-postcode fix)   → data.gazetteer_choreography (FIRST trained here)
-# po_box/cedex DEFERRED (matcher-proven 100%; coverage shards are a follow-up, not in this flag-plant).
+# po_box/cedex DEFERRED (matcher-proven 100%; coverage slices are a follow-up, not in this flag-plant).
 #
-# Corpus v0.4.12-consolidation = v0.4.11-affix-ml shards (base+unit+german+deepseek+MULTI-LOCALE affix)
-# + the v0.4.10-country-bal balanced country shard, referenced verbatim (pure manifest concat; every
+# Corpus v0.4.12-consolidation = v0.4.11-affix-ml slices (base+unit+german+deepseek+MULTI-LOCALE affix)
+# + the v0.4.10-country-bal balanced country slice, referenced verbatim (pure manifest concat; every
 # parquet already on the volume). Recipe inherits v0.9.13 (gazetteer anchor + country class-weight 3.5).
 #
 # TWO deliberate changes vs v0.9.13:
 #   1. max_steps 20k → 40k. The solo affix reroll (v0.9.14) showed fixed-budget dilution (FR
 #      house_number 92→87, US street 80.4→79.0) when 40K balance rows competed for 20k steps. A larger
-#      budget is the prescribed fix; 40k ≈ 2x exposure per shard.
+#      budget is the prescribed fix; 40k ≈ 2x exposure per slice.
 #   2. gazetteer_curriculum OFF, gazetteer_choreography ON. The curriculum (random clue zero-out) only
 #      recovered +0.6 of the −3.7 US-postcode dip in v0.9.13. The choreography (zero the clue on tokens
 #      ADJACENT to a postcode-anchor hit, train+inference paired) is the targeted, DeepSeek-diagnosed
@@ -48,15 +48,15 @@
 #   - US spine (street/locality/region/house_number) ≥ v0.9.8; DE native-order locality ≥ 83.8.
 #   DECISION: all hold → v0-parity FLAG-PLANT; ship candidate (int8 → v4.2.0). Any tag short → the
 #     dilution isn't budget-bound; fall back to weight-merge (#466's titled approach) or raise that
-#     shard's weight/budget. Measure: score-country-homograph.ts + score-affix.ts (incl. unit) +
+#     slice's weight/budget. Measure: score-country-homograph.ts + score-affix.ts (incl. unit) +
 #     per-locale-f1.ts (US/FR, --tokenizer + --model-anchor-lookup + --gazetteer-lexicon) +
 #     de-order-eval.ts, all fp32.
 #
 # REQUIRES on the volume (synced before launch): the #468 choreography modules (gazetteer_anchor.py
 # suppress_gazetteer_near_postcode + tokenizer/config/data_loader threading), the gazetteer lexicon at
 # /data/gazetteer/anchor-lexicon-v1.json, and corpus v0.4.12-consolidation. Repro of the corpus:
-#   (build the multi-locale affix + balanced country shards per #469 / #464, then assemble the manifest:
-#    affix-ml shards + the v0.4.10-country-bal synth-country train shard.)
+#   (build the multi-locale affix + balanced country slices per #469 / #464, then assemble the manifest:
+#    affix-ml slices + the v0.4.10-country-bal synth-country train slice.)
 # Launch:
 #   modal run -d scripts/modal/train_remote.py \
 #     --config v1.0.0-consolidation.yaml --resume none \

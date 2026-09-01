@@ -3,20 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build `localities-cz-districts.db` — the Prague municipal-district locality shard (the `Praha 9`
+ *   Build `localities-cz-districts.db` — the Prague municipal-district locality database (the `Praha 9`
  *   class the #42 coherence pass names as unrepresentable: the pair rung needs a LOCALITY row to
  *   cohere with, and WOF carries essentially none of Prague's městské části — one row, measured
- *   2026-08-12, before this shard).
+ *   2026-08-12, before this database).
  *
  *   SOURCE + LICENSE: the GeoNames CZ places file (`<data-root>/geonames/CZ.txt`, CC-BY 4.0,
  *   attribution GeoNames) — rows whose name matches `Praha \d+` (the 22 administrative districts),
  *   the A-feature (administrative-division) row preferred per name. Same unified-schema shape as the
- *   LINZ NZ shard (#1617), so the candidate build's `localities` fold consumes it as-is; same
- *   provenance discipline (`shard_meta` + source md5).
+ *   LINZ NZ database (#1617), so the candidate build's `localities` fold consumes it as-is; same
+ *   provenance discipline (`database_meta` + source md5).
  *
  *   Verified against the eu-mixed panel (2026-08-12 test rebuild): `Chabeřická 585, 19016 Praha 9`
  *   moved from a 6,733 km US answer to CZ at ~400 m — the postcode row was ALWAYS in the artifact;
- *   this shard supplies the locality half the pair rung needed.
+ *   this database supplies the locality half the pair rung needed.
  *
  *   Run: mailwoman gazetteer build cz-districts [--source <CZ.txt>] [--out <localities-cz-districts.db>]
  */
@@ -41,16 +41,16 @@ export interface BuildCZDistrictsOptions {
 	 */
 	sourcePath?: string
 	/**
-	 * Output shard. Default `<data-root>/wof/localities-cz-districts.db`.
+	 * Output database. Default `<data-root>/wof/localities-cz-districts.db`.
 	 */
 	out?: string
 }
 
 /**
- * Build the sealed CZ-districts shard. NOT re-exported from a barrel — the command lazy-imports it (optional-peer
+ * Build the sealed CZ-districts database. NOT re-exported from a barrel — the command lazy-imports it (optional-peer
  * discipline, same as the NL PC6 and NZ builders).
  */
-export async function buildCZDistrictsShard(
+export async function buildCZDistrictsDatabase(
 	opts: BuildCZDistrictsOptions = {}
 ): Promise<{ out: string; inserted: number; sourceMD5: string }> {
 	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
@@ -94,8 +94,8 @@ export async function buildCZDistrictsShard(
 		db.exec("PRAGMA synchronous = OFF")
 		await createUnifiedSchema(db)
 
-		db.exec(`CREATE TABLE shard_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID`)
-		const meta = db.prepare(`INSERT INTO shard_meta VALUES (?, ?)`)
+		db.exec(`CREATE TABLE database_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID`)
+		const meta = db.prepare(`INSERT INTO database_meta VALUES (?, ?)`)
 		meta.run("source", "GeoNames CZ places file (Praha district rows)")
 		meta.run("license", "CC-BY-4.0, attribution GeoNames")
 		meta.run("source_md5", sourceMD5)

@@ -2,13 +2,13 @@
 # The v1.1.0 ship recipe from scratch on corpus v0.4.15-boundary, carrying the THREE PROBE-PASSED
 # levers (solo probes 2026-06-11, each single-variable vs v1.1.0):
 #   1. glue augmentation 0.25 (PR #514) — probe: fused-row region 52->93 / postcode 57->97, affix flat.
-#   2. intersection shard @ 1.0 (PR #515) — probe: intersection-real 100/100, VT golden 94.9/96.1, zero false fires.
-#   3. po_box/cedex shard v2 @ 1.5 (PR #516, REBUILT minus the '#' template — probe measured it
+#   2. intersection slice @ 1.0 (PR #515) — probe: intersection-real 100/100, VT golden 94.9/96.1, zero false fires.
+#   3. po_box/cedex slice v2 @ 1.5 (PR #516, REBUILT minus the '#' template — probe measured it
 #      colliding with the shipped unit convention) — probe: cedex 94.6 PASS; po_box 57.5 was the
 #      punctuation-truncation class at +4k exposure; this run's 10x exposure answers it UNDER the
 #      gate's po_box floor. Bonus banked: the cedex layouts fixed the FR digit-split in-weights (6->2).
 # STATED config decisions (no silent drift):
-#   - synth-po-box (the OLD fixed-layout shard) RETIRED — key removed, its rows drop (source filter).
+#   - synth-po-box (the OLD fixed-layout slice) RETIRED — key removed, its rows drop (source filter).
 #     po_box mass now comes from one provenanced source; double-counting was the alternative.
 #   - Train-time conventions pairing DEFERRED: designed but UNPROBED — it does not ride a
 #     consolidation on theory (the discipline that caught Run B's confound). Its own probe next.
@@ -59,7 +59,7 @@ data:
   # The v0.9.12 US-postcode fix (#468): zero the gazetteer clue on tokens adjacent to a postcode-anchor
   # hit, at train time (paired with classifier.suppressGazetteerNearPostcode at inference). First trained here.
   gazetteer_choreography: true
-  # THE #511 lever: end the base-vs-shard affix label contradiction (probe-validated v1.0.6).
+  # THE #511 lever: end the base-vs-slice affix label contradiction (probe-validated v1.0.6).
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
 
 model:

@@ -163,21 +163,21 @@ git commit -m "fix(scripting): runScript exits 1 on error and respects process.e
 
 ---
 
-### Task 2: corpus shard builders → parseArgs
+### Task 2: corpus extract builders → parseArgs
 
 **Files:**
 
-- Modify: `corpus/scripts/build-kryptonite-shard.ts:1,26-27,32-83,120`
-- Modify: `corpus/scripts/build-transliteration-shard.ts:1,39-40,53-110,235`
+- Modify: `corpus/scripts/build-kryptonite-extract.ts:1,26-27,32-83,120`
+- Modify: `corpus/scripts/build-transliteration-extract.ts:1,39-40,53-110,235`
 
 **Interfaces:**
 
 - Consumes: nothing from other tasks.
-- Produces: local `parseShardArgs(): Args` in each script (renamed from `parseArgs` to avoid shadowing the node:util import).
+- Produces: local `parseExtractArgs(): Args` in each script (renamed from `parseArgs` to avoid shadowing the node:util import).
 
-- [ ] **Step 1: build-kryptonite-shard.ts**
+- [ ] **Step 1: build-kryptonite-extract.ts**
 
-Shebang line 1: `#!/usr/bin/env npx tsx` → `#!/usr/bin/env node`. In the docstring usage block, `npx tsx corpus/scripts/build-kryptonite-shard.ts` → `node corpus/scripts/build-kryptonite-shard.ts`.
+Shebang line 1: `#!/usr/bin/env npx tsx` → `#!/usr/bin/env node`. In the docstring usage block, `npx tsx corpus/scripts/build-kryptonite-extract.ts` → `node corpus/scripts/build-kryptonite-extract.ts`.
 
 Imports: drop `import { cliArguments } from "@mailwoman/core/scripting/utils"`, add `import { parseArgs } from "node:util"` (node-builtin group, alongside `node:fs` imports).
 
@@ -192,7 +192,7 @@ interface Args {
 	source: string
 }
 
-function parseShardArgs(): Args {
+function parseExtractArgs(): Args {
 	const { values } = parseArgs({
 		options: {
 			jsonl: { type: "string" },
@@ -219,12 +219,12 @@ function parseShardArgs(): Args {
 }
 ```
 
-Line 120: `const args = parseArgs(cliArguments())` → `const args = parseShardArgs()`.
+Line 120: `const args = parseArgs(cliArguments())` → `const args = parseExtractArgs()`.
 
-- [ ] **Step 2: build-transliteration-shard.ts** — same treatment. Shebang + usage text. Replace its `parseArgs` fn:
+- [ ] **Step 2: build-transliteration-extract.ts** — same treatment. Shebang + usage text. Replace its `parseArgs` fn:
 
 ```ts
-function parseShardArgs(): Args {
+function parseExtractArgs(): Args {
 	const { values } = parseArgs({
 		options: {
 			jsonl: { type: "string" },
@@ -253,21 +253,21 @@ function parseShardArgs(): Args {
 }
 ```
 
-Call site: `const args = parseShardArgs()`.
+Call site: `const args = parseExtractArgs()`.
 
 - [ ] **Step 3: Verify**
 
-Run: `node corpus/scripts/build-kryptonite-shard.ts; echo "exit=$?"`
+Run: `node corpus/scripts/build-kryptonite-extract.ts; echo "exit=$?"`
 Expected: logged `--jsonl required` error, `exit=1` (Task 1's fix).
-Run: `node corpus/scripts/build-kryptonite-shard.ts --bogus x; echo "exit=$?"`
+Run: `node corpus/scripts/build-kryptonite-extract.ts --bogus x; echo "exit=$?"`
 Expected: parseArgs unknown-option error, `exit=1`.
-Same two probes for `build-transliteration-shard.ts`.
+Same two probes for `build-transliteration-extract.ts`.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add corpus/scripts/build-kryptonite-shard.ts corpus/scripts/build-transliteration-shard.ts
-git commit -m "refactor(corpus): shard builders parse argv with node:util parseArgs"
+git add corpus/scripts/build-kryptonite-extract.ts corpus/scripts/build-transliteration-extract.ts
+git commit -m "refactor(corpus): extract builders parse argv with node:util parseArgs"
 ```
 
 ---
@@ -305,7 +305,7 @@ function parseArgv(): AuditOpts {
 	return {
 		corpusDir,
 		configPath: values.config,
-		sampleShardCount: values.sample ? parseInt(values.sample, 10) : undefined,
+		sampleExtractCount: values.sample ? parseInt(values.sample, 10) : undefined,
 	}
 }
 
@@ -315,7 +315,7 @@ runIfScript(import.meta, () => audit(parseArgv()))
 - [ ] **Step 2: Verify**
 
 Run: `node corpus/scripts/audit.ts; echo "exit=$?"` → usage line, `exit=2`.
-Run: `node corpus/scripts/audit.ts /nonexistent-dir; echo "exit=$?"` → report with `Total shards: 0`, exit 0.
+Run: `node corpus/scripts/audit.ts /nonexistent-dir; echo "exit=$?"` → report with `Total databases: 0`, exit 0.
 Run: `yarn vitest run corpus/scripts/audit.test.ts` (from repo root; use the corpus workspace's test command if defined) → PASS.
 
 - [ ] **Step 3: Commit**
@@ -433,13 +433,13 @@ git commit -m "chore(corpus): drop dead cliArguments import from fetch-ban-full"
 
 ---
 
-### Task 6: extract-tuples.ts — shards become positionals
+### Task 6: extract-tuples.ts — extracts become positionals
 
 **Files:**
 
 - Modify: `scripts/eval/extract-tuples.ts:17-22,28,311-343`
 
-Grammar change: argparse-style greedy `--shards a b c` → variadic positionals (`node scripts/eval/extract-tuples.ts --output out.jsonl [--sqlite wof.db] [--limit N] <shard.parquet>...`). No live callers (only historical docs reference the `.py` ancestor); the sibling `extract-tuples-de-gb.ts` is a separate script.
+Grammar change: argparse-style greedy `--extracts a b c` → variadic positionals (`node scripts/eval/extract-tuples.ts --output out.jsonl [--sqlite wof.db] [--limit N] <extract.parquet>...`). No live callers (only historical docs reference the `.py` ancestor); the sibling `extract-tuples-de-gb.ts` is a separate script.
 
 - [ ] **Step 1: Edit**
 
@@ -450,10 +450,10 @@ Docstring: fix stale path + grammar + delete the DELIBERATE line:
  *   --output /tmp/tuples.jsonl\
  *   [--sqlite /mnt/playpen/mailwoman-data/wof/admin-global-priority.db]\
  *   [--limit 50000]\
- *   <shard.parquet>...
+ *   <extract.parquet>...
 ```
 
-(The old example passed a WOF SQLite DB to `--shards` — wrong slot; the DB belongs to `--sqlite`.)
+(The old example passed a WOF SQLite DB to `--extracts` — wrong slot; the DB belongs to `--sqlite`.)
 
 Imports: drop `cliArguments`; add `import { parseArgs } from "node:util"`.
 
@@ -471,7 +471,7 @@ function parseCLIArgs(): Args {
 	})
 
 	return {
-		shards: positionals,
+		databases: positionals,
 		sqlite: values.sqlite,
 		output: values.output,
 		limit: values.limit ? parseInt(values.limit, 10) : undefined,
@@ -490,7 +490,7 @@ Run: `node scripts/eval/extract-tuples.ts --output /tmp/claude-scratch-tuples.js
 
 ```bash
 git add scripts/eval/extract-tuples.ts
-git commit -m "refactor(eval): extract-tuples takes shards as positionals via parseArgs"
+git commit -m "refactor(eval): extract-tuples takes extracts as positionals via parseArgs"
 ```
 
 ---
@@ -677,7 +677,7 @@ function parseCLIArgs(argv: readonly string[] | undefined): CLIArgs {
 		printUsageAndExit(0)
 	}
 
-	// Callers pass `--in ""` for a shard (e.g. a custom postcode DB) that isn't built yet — keep
+	// Callers pass `--in ""` for a extract (e.g. a custom postcode DB) that isn't built yet — keep
 	// only non-empty paths; build-slim skips the rest.
 	const inputs = parsed.values.in.filter(Boolean)
 	const output = parsed.values.out

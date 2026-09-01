@@ -74,7 +74,7 @@ export interface AncestryBackfillResult {
 }
 
 /**
- * Discover the `data` directories under a WOF repos root that hold sharded geojson, e.g.
+ * Discover the `data` directories under a WOF repos root that hold attached geojson, e.g.
  * `<root>/whosonfirst-data/whosonfirst-data-admin-us/data`. Resolves an id to its geojson via these roots. Accepts both
  * the nested lab layout (a `whosonfirst-data` group dir holding the admin repos) and a flat layout (admin repos
  * directly under the root); searches at most two directory levels deep.

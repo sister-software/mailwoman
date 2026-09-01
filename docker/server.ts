@@ -12,8 +12,8 @@
  *   degraded (parse+health only)" — so `docker run` with no data volume still answers `/v1/parse`.
  *
  *   The wiring MIRRORS `mailwoman/api-engine.ts` (`createServeEngine`) using only that package's own
- *   exported building blocks — `mailwoman/geocode-core` (`geocodeAddress`, `ShardProvider`) and
- *   `mailwoman/resolver-backend` (`createResolverBackend`, `resolveCandidateDBPath`, `wofShardPaths`,
+ *   exported building blocks — `mailwoman/geocode-core` (`geocodeAddress`, `RegionDatabaseProvider`) and
+ *   `mailwoman/resolver-backend` (`createResolverBackend`, `resolveCandidateDBPath`, `wofExtractPaths`,
  *   `mailwomanDataRoot`) — so the geocode path does not drift from the real server. Model WEIGHTS ship
  *   IN the image via `@mailwoman/neural-weights-en-us`; the gazetteer / resolver DBs are volume-mounted
  *   read-only at `$MAILWOMAN_DATA_ROOT` (the image sets it to `/data`).
@@ -21,8 +21,8 @@
  *   Boot policy:
  *     - `parse` + `health` are ALWAYS wired (weights-only, no gazetteer needed).
  *     - `geocode` + `batch` are wired ONLY when a gazetteer is resolvable (a candidate.db under
- *       `$MAILWOMAN_DATA_ROOT/wof`, an explicit `$MAILWOMAN_CANDIDATE_DB`, or FTS admin shards via
- *       `$MAILWOMAN_WOF_DB` / the conventional `wof/` shard paths). Absent → `@mailwoman/api` answers
+ *       `$MAILWOMAN_DATA_ROOT/wof`, an explicit `$MAILWOMAN_CANDIDATE_DB`, or FTS admin extracts via
+ *       `$MAILWOMAN_WOF_DB` / the conventional `wof/` extract paths). Absent → `@mailwoman/api` answers
  *       `503` on `/v1/geocode` + `/v1/batch` (a clean degrade, not a crash).
  *     - When the weights themselves are unresolvable, `parse` is absent and `/v1/parse` answers `501`.
  *
@@ -40,12 +40,12 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { geocodeAddress } from "mailwoman/geocode-core"
-import { ShardProvider } from "mailwoman/geocode-shards"
+import { RegionDatabaseProvider } from "mailwoman/geocode-regions"
 import {
 	createResolverBackend,
 	mailwomanDataRoot,
 	resolveCandidateDBPath,
-	resolveWOFShardPaths,
+	resolveWOFDatabasePaths,
 } from "mailwoman/resolver-backend"
 import { AsyncSequence } from "spliterator"
 
@@ -54,12 +54,12 @@ const HOST = "0.0.0.0"
 const DATA_ROOT = mailwomanDataRoot()
 
 /**
- * The WOF shard set to attach: {@link resolveWOFShardPaths} selects it (the `$MAILWOMAN_WOF_DB` comma-separated
- * override, else the conventional per-shard `wof/` paths). An explicit list is the operator's statement and passes
- * through unfiltered; the conventional set is probed, so a deployment missing a shard degrades to what is present.
+ * The WOF extract set to attach: {@link resolveWOFDatabasePaths} selects it (the `$MAILWOMAN_WOF_DB` comma-separated
+ * override, else the conventional per-extract `wof/` paths). An explicit list is the operator's statement and passes
+ * through unfiltered; the conventional set is probed, so a deployment missing a extract degrades to what is present.
  */
 function wofPaths(): Promise<string[]> {
-	const paths = resolveWOFShardPaths()
+	const paths = resolveWOFDatabasePaths()
 
 	if ($public.MAILWOMAN_WOF_DB) return Promise.resolve(paths)
 
@@ -113,12 +113,12 @@ async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() 
 				const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 				const backend = await createResolverBackend(resolverMod, { wofPaths: paths })
 				const resolver = createWOFResolver(backend)
-				const shards = await ShardProvider.create(resolverMod, DATA_ROOT)
+				const extracts = await RegionDatabaseProvider.create(resolverMod, DATA_ROOT)
 				// Candidate backend → country-agnostic (population-first, demo parity); FTS backend keeps US.
 				const defaultCountry = candidateDB ? undefined : "US"
 
 				const oneGeocode: GeocodeCallback<T> = (address: string) =>
-					geocodeAddress(address, { classifier, resolver, shards: shards.for, defaultCountry }) as Promise<T>
+					geocodeAddress(address, { classifier, resolver, databases: extracts.for, defaultCountry }) as Promise<T>
 
 				engine.geocode = async (address) => oneGeocode(address)
 

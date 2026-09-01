@@ -204,10 +204,10 @@ export type ImportanceSplitSource = (typeof IMPORTANCE_SPLIT_SOURCES)[keyof type
  *
  * There is deliberately no ORDER BY counterpart, and there should never be one: §2's policy is that this score is
  * carried and never ranked on. Without the column the select degrades to a literal `NULL` and the join is the empty
- * string, so a pre-split shard's query plan is byte-identical to what it was before the split. No shipped gazetteer
+ * string, so a pre-split extract's query plan is byte-identical to what it was before the split. No shipped gazetteer
  * carries the column yet, so today that degraded form is the only one anything builds.
  *
- * Call it ONCE per shard and cache the result — it runs a `PRAGMA`, and the callers are per-keystroke hot.
+ * Call it ONCE per extract and cache the result — it runs a `PRAGMA`, and the callers are per-keystroke hot.
  */
 export function encyclopedicClauses<DB>(db: DatabaseClient<DB>, schemaName: string): { select: string; join: string } {
 	let present: boolean

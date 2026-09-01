@@ -6,13 +6,13 @@
  *   Address-point interpolation — "Method 2" of the resolution ladder (#483, Phase 1 of
  *   `docs/articles/plan/2026-06-11-resolution-ladder.md`): when the exact address-point tier (#476)
  *   misses a house number, bracket the number with REAL neighbor points on the same street from the
- *   same #476 shard and interpolate linearly in house-number space between them. Real occupancy
+ *   same #476 extract and interpolate linearly in house-number space between them. Real occupancy
  *   replaces TIGER's uniform-spacing assumption — the dominant error term of the TIGER pilot's gate
  *   miss; TIGER range interpolation (`StreetInterpolator`) demotes to the fallback for streets too
  *   sparse to bracket.
  *
  *   Matching key is `street_key` — THE shared normalizer plus the route fold
- *   (`canonicalizeRouteKey`), identical at build time (`scripts/build-address-point-shard.ts`) and
+ *   (`canonicalizeRouteKey`), identical at build time (`scripts/build-address-point-extract.ts`) and
  *   query time, by construction. Scope is postcode-first like the segment tier; a query without a
  *   postcode goes straight to the fallback (which carries its own statewide-ambiguity abstention).
  *
@@ -20,7 +20,7 @@
  *
  *   - Neighbor candidates NEVER include the queried number itself (any unit/duplicate row of it) — in
  *       production the exact tier would already have answered an on-file number, and in the eval
- *       this is what makes grading against the same shard non-circular by construction.
+ *       this is what makes grading against the same extract non-circular by construction.
  *   - Both-sided bracket (`bracket: "both"`): linear interpolation between the nearest known number
  *       below and above; `uncertaintyM` = half the distance between them.
  *   - Single-sided (`bracket: "single"`): linear extrapolation along the two nearest known numbers on
@@ -90,7 +90,7 @@ export class AddressPointInterpolator<
 
 		this.#fallback = opts.fallback
 
-		// Degrade gracefully on an empty/tableless shard (#568): with no `address_point` table this tier
+		// Degrade gracefully on an empty/tableless extract (#568): with no `address_point` table this tier
 		// is skipped, deferring to the segment fallback rather than crashing at construction.
 		if (hasTable(this.#db, "address_point")) {
 			// Strictly-numeric neighbor numbers on the route-folded street key within the ZIP. The
@@ -112,7 +112,7 @@ export class AddressPointInterpolator<
 		if (!/^\d+$/.test(numberRaw)) return null
 		const n = Number(numberRaw)
 
-		// No own table (empty shard) or no postcode → defer to the segment fallback rather than query.
+		// No own table (empty extract) or no postcode → defer to the segment fallback rather than query.
 		if (!this.#byPostcode || !query.postcode) return this.#fallback?.find(query) ?? null
 
 		// Key-variant ladder (see `streetKeyVariants`) — same probe order as the exact-point reader.

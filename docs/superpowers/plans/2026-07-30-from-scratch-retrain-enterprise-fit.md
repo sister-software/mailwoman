@@ -59,7 +59,7 @@ harness becomes the per-customer acceptance battery.
 1. **Pre-work (no GPU, this week if desired):** the char-encoder decision memo (CharCNN vs
    byte-fallback status quo — the v8 design notes in the scratchpad archive carry the candidates);
    the base-recipe assembly (v385's feed + the bundle channels + all curricula + ordinal/directional
-   augmentation + JP/KR shards behind the encoder decision); Fisher-capture design (~1 day of
+   augmentation + JP/KR extracts behind the encoder decision); Fisher-capture design (~1 day of
    training-code work).
 2. **The run itself:** materially bigger than the arc's fine-tunes (from-scratch, larger step
    budget, possibly the encoder change) — plan in agent-nights with the full G1–G7 ladder plus

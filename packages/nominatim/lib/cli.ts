@@ -34,8 +34,8 @@ import {
 	runDropInCLI,
 } from "mailwoman/cli-kit/dropin"
 import { geocodeAddress } from "mailwoman/geocode-core"
+import { RegionDatabaseProvider } from "mailwoman/geocode-regions"
 import type { GeocodeResult } from "mailwoman/geocode-result"
-import { ShardProvider } from "mailwoman/geocode-shards"
 import { createResolverBackend, dataRootPath, mailwomanDataRoot } from "mailwoman/resolver-backend"
 import { resolvePath } from "path-ts"
 
@@ -133,11 +133,11 @@ async function serve(): Promise<void> {
 
 	const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
 	const resolver = createWOFResolver(backend)
-	const shards = await ShardProvider.create(resolverMod, mailwomanDataRoot())
+	const extracts = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
 	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse. A no-op
-	// when the shard isn't on disk (existsSync-gated inside the provider), so the endpoint degrades cleanly.
-	const { BANShardProvider } = await import("@mailwoman/ban/sdk")
-	const banShards = await BANShardProvider.create(mailwomanDataRoot())
+	// when the extract isn't on disk (existsSync-gated inside the provider), so the endpoint degrades cleanly.
+	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
+	const banExtracts = await BANRegionDatabaseProvider.create(mailwomanDataRoot())
 	// NOT a geocode country constraint. The default-on #244 placer already routes the query's country
 	// (Berlin→DE, Boston→US) and `defaultCountry` is a HARD override that beats it (geocode-core.ts:102),
 	// so forcing "US" resolved every non-US query to its US namesake (Berlin→Berlin NH). We let the
@@ -190,8 +190,8 @@ async function serve(): Promise<void> {
 			const result = await geocodeAddress(query, {
 				classifier,
 				resolver,
-				shards: shards.for,
-				nationalShards: banShards.for,
+				databases: extracts.for,
+				nationalDatabases: banExtracts.for,
 				defaultCountry: userCountry,
 			})
 

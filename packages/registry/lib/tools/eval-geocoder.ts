@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The injected-geocoder contract for the record-matcher tools. The registry package deliberately
- *   never imports the heavy runtime (neural parser, WOF resolver, per-state shards) — `mailwoman`
+ *   never imports the heavy runtime (neural parser, WOF resolver, per-state extracts) — `mailwoman`
  *   depends on `@mailwoman/registry`, so the reverse import would cycle the workspace graph. Instead
  *   each tool takes an {@linkcode EvalGeocoderFactory} the CLI command constructs from
  *   `mailwoman/geocode-core` (see `mailwoman/commands/registry/run.tsx`), mirroring the matcher's own
@@ -38,7 +38,7 @@ export interface EvalGeocoder extends Disposable {
 	 */
 	geocode: (address: string) => Promise<EvalGeocodeResult>
 	/**
-	 * Release the DB handles (shards + WOF lookup).
+	 * Release the DB handles (extracts + WOF lookup).
 	 */
 }
 

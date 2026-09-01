@@ -15,7 +15,7 @@ export interface OAResolverEvalOptions {
 	 */
 	ablateToAnchor?: boolean
 	/**
-	 * #476 street-level exact-point shard (single-state).
+	 * #476 street-level exact-point database (single-state).
 	 */
 	addressPoints?: string
 	/**
@@ -53,11 +53,11 @@ export interface OAResolverEvalOptions {
 	 */
 	candidateDB?: string
 	/**
-	 * #718 situs-eval: grade the production coordinate cascade (per-state shards).
+	 * #718 situs-eval: grade the production coordinate cascade (per-state databases).
 	 */
 	cascade?: boolean
 	/**
-	 * Shard root for `cascade`. Default `$MAILWOMAN_DATA_ROOT`.
+	 * Database root for `cascade`. Default `$MAILWOMAN_DATA_ROOT`.
 	 */
 	dataRoot?: string
 	/**
@@ -77,7 +77,7 @@ export interface OAResolverEvalOptions {
 	 */
 	hierarchyCompletion?: boolean
 	/**
-	 * #483 house-number interpolation shard (single-state).
+	 * #483 house-number interpolation database (single-state).
 	 */
 	interpolation?: string
 	/**
@@ -152,9 +152,9 @@ export interface OAResolverEvalOptions {
 	 */
 	postcodeAnchor?: boolean
 	/**
-	 * Postcode shards for the anchor rows (comma-separated).
+	 * Postcode databases for the anchor rows (comma-separated).
 	 */
-	postcodeShards?: string
+	postcodeDatabases?: string
 	/**
 	 * #690/#895 tri-state pin: force normalizeCase OFF.
 	 */
@@ -164,7 +164,7 @@ export interface OAResolverEvalOptions {
 	 */
 	tokenizer?: string
 	/**
-	 * WOF shard list (comma-separated). Default admin + postcode-locality-intl.
+	 * WOF database list (comma-separated). Default admin + postcode-locality-intl.
 	 */
 	wof?: string
 }

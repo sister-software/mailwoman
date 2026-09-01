@@ -8,7 +8,7 @@
  *   `mailwoman data inventory` measured the gap this closes: 10 of 210 databases in the data root carry a
  *   manifest, and `wof/` — 79 databases, 74 GB, read by every geocode — carried none. The contract already
  *   existed (`docs/engineering/reference/layer-contract.mdx`); it had simply never been rolled out past
- *   `poi.db` and four OSM shards.
+ *   `poi.db` and four OSM databases.
  *
  *   DERIVED FROM THE RUN, NOT FROM THE RECIPE. `source` is composed from the rows each fold ACTUALLY
  *   ingested, so a build that reads no Overture rows does not claim Overture as a source. That is the

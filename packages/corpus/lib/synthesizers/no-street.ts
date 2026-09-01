@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   No-street address synthesizer — the counter-distribution that v0.6.1's synth-street shard is
+ *   No-street address synthesizer — the counter-distribution that v0.6.1's synth-street slice is
  *   missing. Generates BIO-labelable rows where there is NO street, NO house_number, NO
  *   street_prefix, NO street_suffix, NO intersection — only some subset of {venue, locality,
  *   region, postcode, country}.
@@ -117,7 +117,7 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
  * **No leading digit+ordinal venues** (e.g. "5th Avenue Theatre", "7th Street Bistro"). The v0.6.2 2026-05-29 step-20K
  * eval showed that synthesized rows starting with `<digits><ordinal>` confused the model about house_number recognition
  * — tokens like "5th" (which should be `B-house_number` in real addresses) were being labeled `B-venue` because
- * adversarial venues placed them in venue position. v0.6.3 omits these patterns; the `synth-house-venue` shard
+ * adversarial venues placed them in venue position. v0.6.3 omits these patterns; the `synth-house-venue` slice
  * separately teaches that house_number and venue coexist.
  */
 const ADVERSARIAL_VENUES: ReadonlyArray<string> = [

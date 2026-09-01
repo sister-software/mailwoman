@@ -1,7 +1,7 @@
 # === v4.1.2-gb-venue-l1e6-2k — #1366 GB venue increment (lambda probe 1.0e6) ===
 # The FIRST B11 fine-tune-template exercise: init_from model 7.0.0 (v4.0.1 step-060000, fresh
 # optimizer) + the Fisher/EWC brake (fisher-diag-v1, captured on the base's final 2k) on the
-# v0.15.1-gb-venue feed — the v0.15.0-venue feed with the house-venue shard REBUILT from v3
+# v0.15.1-gb-venue feed — the v0.15.0-venue feed with the house-venue slice REBUILT from v3
 # tuples (FR 60k + US 56.5k + GB 60k: the GB locality-postcode tail, GB venue pool incl.
 # directional-led names, 15% range numbers). Pre-registration:
 # docs/superpowers/plans/2026-08-01-gb-venue-finetune-preregistration.md

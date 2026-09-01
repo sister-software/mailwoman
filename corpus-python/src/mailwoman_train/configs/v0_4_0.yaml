@@ -21,7 +21,7 @@
 data:
   # Reuses corpus-v0.3.0 — issue #116 §6 confirms the corpus need not be rebuilt
   # unless §4 source weights change significantly. Source weights HAVE changed, but
-  # the underlying shards are unchanged; the loader's source_weights filter does
+  # the underlying slices are unchanged; the loader's source_weights filter does
   # the rebalancing at sampling time.
   corpus_dir: /data/corpus/versioned/v0.3.0/corpus-v0.3.0
   tokenizer_dir: /data/models/tokenizer/v0.1.0

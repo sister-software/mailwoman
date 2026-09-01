@@ -182,7 +182,7 @@ export function lookupDirectional(input: unknown): DirectionalMatch | null {
 	return null
 }
 
-// ── Codex shard-facing helpers (mirror street-suffix's matchTrailingSuffix) ───────────────────────
+// ── Codex extract-facing helpers (mirror street-suffix's matchTrailingSuffix) ───────────────────────
 
 /**
  * If the FIRST whitespace-separated word of `street` is a known USPS directional (abbrev or name), return the canonical

@@ -10,7 +10,7 @@
  *   the tags, because the corpus has NO intersection training signal (no generator, and real-data
  *   adapters don't emit intersection-formatted rows). Intersections are 65 of the 376 harness
  *   assertions (17%), all 0% neural. This generator produces the missing signal as a small targeted
- *   supplement shard (synthesis-as-supplement discipline: weight < 0.25, one-and-done).
+ *   supplement slice (synthesis-as-supplement discipline: weight < 0.25, one-and-done).
  *
  *   Output is a `CanonicalRow` ({raw, components}); the corpus aligner turns it into BIO labels
  *   (B-/I-intersection_a, O on the connector, B-/I-intersection_b). Surface forms of both streets
@@ -88,7 +88,7 @@ const ORDINALS = [
 const SUFFIXES = ["St", "Ave", "Blvd", "Rd", "Dr", "Ln", "Way", "Pl", "Ct", "Pkwy", "Ter", "Cir"] as const
 
 // Vocabulary compile-checked against the codex; the ORDER stays this literal's. `Object.values(DirectionalAbbreviation)`
-// runs N,E,S,W,… — deriving the array from it would re-map every pick() draw and change shipped shard bytes.
+// runs N,E,S,W,… — deriving the array from it would re-map every pick() draw and change shipped slice bytes.
 const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const satisfies readonly DirectionalAbbreviation[]
 
 /**
@@ -193,7 +193,7 @@ export function synthesizeIntersectionRow(
 }
 
 /**
- * A small built-in US city/region/zip pool for standalone shard generation + tests.
+ * A small built-in US city/region/zip pool for standalone slice generation + tests.
  */
 export const DEFAULT_US_BASES: ReadonlyArray<IntersectionBaseTuple> = [
 	{ locality: "New York", region: "NY", postcode: "10036", country: "US" },

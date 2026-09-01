@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   House-number + venue + street co-occurrence synthesizer. The v0.6.3 corrective shard.
+ *   House-number + venue + street co-occurrence synthesizer. The v0.6.3 corrective slice.
  *
  *   The v0.6.2 step-20K diagnostic showed that adding synth-no-street counter-distribution regressed
  *   house_number recall by ~4-5pp. DeepSeek's turn-8 root-cause:
@@ -17,7 +17,7 @@
  *
  *   This synthesizer fixes #2 directly. Each emitted row has ALL of: house_number, street, venue,
  *   locality, region, postcode — a counter-example to "house_number is rare." Used as a companion
- *   shard to synth-no-street; the v0.6.3 config weights synth-no-street at 0.5 and
+ *   slice to synth-no-street; the v0.6.3 config weights synth-no-street at 0.5 and
  *   synth-house-venue at 1.0 to recover the lost house_number signal.
  *
  *   Real-world shape: business cards, mailing labels, store directories — `"123 Main St, Sunrise
@@ -61,7 +61,7 @@ export interface SynthesizedHouseVenueRow {
 //#region Venue pool
 
 /**
- * PLAIN venue names, carrying no street-typing tokens. This shard teaches house_number + venue coexistence, NOT
+ * PLAIN venue names, carrying no street-typing tokens. This slice teaches house_number + venue coexistence, NOT
  * decompose-mode pressure — adversarial venue names live in `no-street.ts`.
  */
 const PLAIN_VENUES: ReadonlyArray<string> = [
@@ -222,7 +222,7 @@ export function synthesizeHouseVenueRow(
 	// FR renders postcode-before-locality with NO region ("MR & MRS CRAB, 20 Rue de la Huchette,
 	// 75005 Paris" — the v4.0.0 gauntlet's venue-led failure family, the run-2 contingency's exact
 	// target shape). GB (#1366) renders locality-then-postcode with NO region and NO comma between
-	// them ("Ye Three Lords, 27 Minories, London EC3N 1DE" — the third tail the shard must teach).
+	// them ("Ye Three Lords, 27 Minories, London EC3N 1DE" — the third tail the slice must teach).
 	// VE (#1821) renders locality-then-postcode and KEEPS the region after it. Every other country
 	// keeps the original US-order tail, which is itself the `after_region` surface — `Springfield, IL
 	// 02101` and `Bengaluru, Karnataka 560038` are the same shape.
@@ -232,7 +232,7 @@ export function synthesizeHouseVenueRow(
 	// Venezuela`, the four `ve_city_postcode_trailing_state` board rows. That is neither GB's form (which drops the
 	// region) nor the default (which puts the region before the code), so it needs its own branch.
 	//
-	// It belongs HERE rather than in a standalone admin shard, and that is measured: three trailing-region shards
+	// It belongs HERE rather than in a standalone admin slice, and that is measured: three trailing-region slices
 	// carrying only admin segments all graded DO-NOT-SHIP, and the way they failed was by damaging the classes they did
 	// not contain — v4.8.0 turned `Ye Three Lords, 27 Minories, London EC3N 1DE` into `locality: "Ye Three Lords"`,
 	// losing the venue and the street. Every row this synthesizer emits carries a venue, a street AND a house number,

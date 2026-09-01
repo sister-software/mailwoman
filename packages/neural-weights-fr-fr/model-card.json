@@ -1,12 +1,12 @@
 {
 	"name": "neural-weights-fr-fr",
 	"version": "6.5.0",
-	"model_lineage": "Ships the en-us v310 (v3.1.0-fr-fragment, #1143 T2) model — init_from v264 plus the synth-fr-fragment BAN shard @ 12.0; tokenizer v0.9.0-multisplice (73,143) UNCHANGED. One model serves both locales; see the en-us card for the full lineage + grade. NOTE for this locale specifically: the shard is BAN-derived (Base Adresse Nationale, Licence Ouverte 2.0) and the gains are measured on French — bare-street 0.215→0.715, street-particle 0.273→0.855, admin-street-homonym 0.087→0.517, with the bare-locality counter-guard holding exactly. This is the largest FR-facing model change since 5.9.0.",
+	"model_lineage": "Ships the en-us v310 (v3.1.0-fr-fragment, #1143 T2) model — init_from v264 plus the synth-fr-fragment BAN extract @ 12.0; tokenizer v0.9.0-multisplice (73,143) UNCHANGED. One model serves both locales; see the en-us card for the full lineage + grade. NOTE for this locale specifically: the extract is BAN-derived (Base Adresse Nationale, Licence Ouverte 2.0) and the gains are measured on French — bare-street 0.215→0.715, street-particle 0.273→0.855, admin-street-homonym 0.087→0.517, with the bare-locality counter-guard holding exactly. This is the largest FR-facing model change since 5.9.0.",
 	"phase": "Stage 3 — multi-locale (FR served by the shared en-us v310 model, shipped as 6.4.0)",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"locale": "fr-fr",
 	"training": {
-		"corpus_version": "v257 fragment-campaign corpus (shard-v5) re-tokenized through v0.9.0-multisplice; span-boundary aux head from BIO labels.",
+		"corpus_version": "v257 fragment-campaign corpus (extract-v5) re-tokenized through v0.9.0-multisplice; span-boundary aux head from BIO labels.",
 		"tokenizer_version": "0.9.0-multisplice",
 		"steps": 8000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
@@ -266,7 +266,7 @@
 		"tokenizer": "tokenizer.model",
 		"model_card": "model-card.json",
 		"pair_index": "pair-index-fr.bin",
-		"$comment_postcode_anchor": "Added 2026-08-06 (#1516), same reason as the en-us card: the overlay has always shipped this binary (release.config.json softFeed.postcodeDBByCountry.fr, built from the WOF intl postcode shard) and never declared it. `readDeclaredArtifactFile` reads this key to tell a broken package (declared, missing) from a package that deliberately ships none.",
+		"$comment_postcode_anchor": "Added 2026-08-06 (#1516), same reason as the en-us card: the overlay has always shipped this binary (release.config.json softFeed.postcodeDBByCountry.fr, built from the WOF intl postcode extract) and never declared it. `readDeclaredArtifactFile` reads this key to tell a broken package (declared, missing) from a package that deliberately ships none.",
 		"postcode_anchor": "postcode-fr.bin"
 	},
 	"base_relpath": "/data/models/checkpoints/v0_4_0-stableLR-source-only/step-002200",

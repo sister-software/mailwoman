@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The five data sources behind `mwdev_lookup` that are not the FST: the candidate gazetteer, the WOF admin shards,
+ *   The five data sources behind `mwdev_lookup` that are not the FST: the candidate gazetteer, the WOF admin extracts,
  *   `poi.db`, the codex reference tables, and the postcode-anchor artifact the model is fed. `lookup.ts` owns the
  *   contract these all answer under; this file owns the probes.
  *
@@ -14,7 +14,7 @@
  *     time. Probing `name` instead reports three places as missing from the gazetteer that are all present:
  *     `Porto Petro` is stored under `porto petro`, `Illes Balears` under `illes balears` (whose stored `name` is
  *     "Balearic Islands"), `St. Margaret's Hope` under `st margarets hope`.
- *   - the WOF shards answer through an FTS5 index over `name` AND `alt_names`, so a hit may be an alias or a postcode
+ *   - the WOF extracts answer through an FTS5 index over `name` AND `alt_names`, so a hit may be an alias or a postcode
  *     row's parent locality — and that index is BUILT with the `is_current`/`is_deprecated` filter already applied, so
  *     seeing a deprecated record at all takes a second route.
  *   - the postcode anchor keys `span.replace(" ", "").toUpperCase()`, the train painter's normalization, so `SW1A 2AA`
@@ -38,8 +38,8 @@ import { type PlaceIDProvenance, placeIDProvenance } from "#place-id-provenance"
 /**
  * How many rows a probe returns per query before it stops.
  *
- * PER PROBE, not per query: a source that reads several shards on several routes binds this to each one, so a set of
- * six shards on two routes can return up to twelve times this number. Every probe therefore reports `returned` beside
+ * PER PROBE, not per query: a source that reads several extracts on several routes binds this to each one, so a set of
+ * six extracts on two routes can return up to twelve times this number. Every probe therefore reports `returned` beside
  * `matched` — the count the source actually holds, measured by its own COUNT rather than inferred from the list —
  * because a truncated list whose length is presented as a total reads as coverage it does not have.
  */
@@ -449,11 +449,11 @@ export function diffCandidateRows(rowsA: LookupRow[], rowsB: LookupRow[]): Candi
 }
 
 /**
- * One opened WOF admin/postcode shard.
+ * One opened WOF admin/postcode extract.
  */
-export interface WOFShard<DB> {
+export interface WOFExtract<DB> {
 	/**
-	 * How the shard is named in output — its basename, which is how every runbook refers to it.
+	 * How the extract is named in output — its basename, which is how every runbook refers to it.
 	 */
 	name: string
 	db: DatabaseClient<DB>
@@ -462,10 +462,10 @@ export interface WOFShard<DB> {
 /**
  * Which index reached a WOF record.
  *
- * The two answer different questions and only together cover the shard. `fts` is what the RESOLVER can reach; the FTS5
- * content is built with `is_current != 0 AND is_deprecated = 0` applied, so a deprecated record is not merely filtered
- * at query time — it was never indexed. `names-exact` is the byte-exact probe on the indexed `names` table, which
- * carries deprecated records and is the only cheap way to see them.
+ * The two answer different questions and only together cover the extract. `fts` is what the RESOLVER can reach; the
+ * FTS5 content is built with `is_current != 0 AND is_deprecated = 0` applied, so a deprecated record is not merely
+ * filtered at query time — it was never indexed. `names-exact` is the byte-exact probe on the indexed `names` table,
+ * which carries deprecated records and is the only cheap way to see them.
  */
 const WOFRoute = {
 	Fts: "fts",
@@ -476,7 +476,7 @@ type WOFRoute = (typeof WOFRoute)[keyof typeof WOFRoute]
 
 interface WOFEntry extends PlaceIDProvenance {
 	route: WOFRoute
-	shard: string
+	extract: string
 	id: number
 	name: string
 	placetype: string
@@ -503,7 +503,7 @@ interface WOFEntry extends PlaceIDProvenance {
  * One row as {@link SPR_COLUMNS} projects it: a {@link WOFEntry} minus the fields the probe adds, plus the two currency
  * flags the caller filters on and then drops.
  */
-type WOFRow = Omit<WOFEntry, "route" | "shard" | keyof PlaceIDProvenance> & {
+type WOFRow = Omit<WOFEntry, "route" | "extract" | keyof PlaceIDProvenance> & {
 	is_current: number
 	is_deprecated: number
 }
@@ -514,7 +514,7 @@ const SPR_COLUMNS =
 
 /**
  * LEFT, not INNER: a place with no `place_population` row must still appear, carrying `population: null`. An inner join
- * would drop it and the miss would read as the shard not holding the place at all.
+ * would drop it and the miss would read as the extract not holding the place at all.
  */
 const SPR_JOINS = "LEFT JOIN place_population pop ON pop.id = spr.id"
 
@@ -538,7 +538,7 @@ function wofStatements(from: string, order: string, scoped: boolean): { rows: st
 }
 
 /**
- * Probe the WOF admin + postcode shards — the source data behind the FTS backend, and behind `candidate.db`'s build.
+ * Probe the WOF admin + postcode extracts — the source data behind the FTS backend, and behind `candidate.db`'s build.
  *
  * Read this next to `candidate`: a string the candidate table misses and this one holds is a BUILD gap, not a data gap.
  * `Sultan Qaboos` is the worked example — absent from `candidate.db`, reached here through the FTS index's `alt_names`
@@ -549,12 +549,12 @@ function wofStatements(from: string, order: string, scoped: boolean): { rows: st
  * table can, and is indexed. Rows the resolver cannot see are counted and named but kept OUT of `entries`, so a name
  * whose every record is deprecated reports the third state — known to WOF, nothing downstream.
  *
- * The FTS route ANDs tokens over `name` and `alt_names`, so a match is not a claim that the shard stores this exact
+ * The FTS route ANDs tokens over `name` and `alt_names`, so a match is not a claim that the extract stores this exact
  * string; read the returned `name`. The `names` route is byte-exact under the index's binary collation, so case and
  * punctuation matter there — which is why a double miss says what was checked rather than "WOF does not have it".
  */
 export function lookupWOF<DB>(
-	shards: WOFShard<DB>[],
+	extracts: WOFExtract<DB>[],
 	queries: string[],
 	options: { limit?: number; country?: string } = {}
 ): LookupRow[] {
@@ -571,12 +571,12 @@ export function lookupWOF<DB>(
 		const seen = new Set<number>()
 		const suppressed: string[] = []
 		const failed: string[] = []
-		// Summed across shards and routes, then de-duplicated below. The same place reached by BOTH routes is one
+		// Summed across extracts and routes, then de-duplicated below. The same place reached by BOTH routes is one
 		// record, so the raw sum overstates; `matched` reports the de-duplicated figure and `scanned` the sum.
 		let scanned = 0
 
 		const collect = (
-			shard: WOFShard<DB>,
+			extract: WOFExtract<DB>,
 			route: WOFRoute,
 			statements: { rows: string; count: string },
 			bind: string
@@ -586,10 +586,10 @@ export function lookupWOF<DB>(
 			let rows: WOFRow[]
 
 			try {
-				rows = allRows<WOFRow>(shard.db.prepare(statements.rows), ...params, limit)
-				scanned += Number(getRow<{ n: number }>(shard.db.prepare(statements.count), ...params)?.n ?? 0)
+				rows = allRows<WOFRow>(extract.db.prepare(statements.rows), ...params, limit)
+				scanned += Number(getRow<{ n: number }>(extract.db.prepare(statements.count), ...params)?.n ?? 0)
 			} catch (error) {
-				failed.push(`${shard.name} (${route}): ${(error as Error).message}`)
+				failed.push(`${extract.name} (${route}): ${(error as Error).message}`)
 
 				return
 			}
@@ -600,25 +600,25 @@ export function lookupWOF<DB>(
 				if (is_current !== 0 && is_deprecated === 0) {
 					if (seen.has(record.id)) continue
 					seen.add(record.id)
-					entries.push({ route, shard: shard.name, ...record, ...placeIDProvenance(record.id) })
+					entries.push({ route, extract: extract.name, ...record, ...placeIDProvenance(record.id) })
 				} else {
 					suppressed.push(
-						`${shard.name}#${record.id} ${JSON.stringify(record.name)}` +
+						`${extract.name}#${record.id} ${JSON.stringify(record.name)}` +
 							` (is_current=${is_current}, is_deprecated=${is_deprecated})`
 					)
 				}
 			}
 		}
 
-		for (const shard of shards) {
+		for (const extract of extracts) {
 			if (match) {
-				collect(shard, WOFRoute.Fts, fts, match)
+				collect(extract, WOFRoute.Fts, fts, match)
 			}
 
-			collect(shard, WOFRoute.NamesExact, names, query.trim())
+			collect(extract, WOFRoute.NamesExact, names, query.trim())
 		}
 
-		const shardNote = failed.length ? ` ${failed.length} probe(s) failed: ${failed.join("; ")}.` : ""
+		const extractNote = failed.length ? ` ${failed.length} probe(s) failed: ${failed.join("; ")}.` : ""
 		const scopeNote = country ? ` Scoped to country ${country}: a key held only outside it reads as 0 here.` : ""
 
 		// `scanned` counts a place once per route that reaches it, so it is an upper bound on distinct records and
@@ -628,16 +628,16 @@ export function lookupWOF<DB>(
 
 		const denominator = truncated
 			? `Returned ${entries.length} of up to ${scanned} row-hits (a record reached by both routes is counted once ` +
-				`here and once per route there); raise \`limit\` — it binds PER SHARD PER ROUTE, not per query.`
+				`here and once per route there); raise \`limit\` — it binds PER EXTRACT PER ROUTE, not per query.`
 			: `Returned all ${entries.length}.`
 
 		const checked =
-			`Checked ${shards.length} shard(s) on two routes: the FTS5 index the resolver reads ` +
+			`Checked ${extracts.length} extract(s) on two routes: the FTS5 index the resolver reads ` +
 			(match ? `(matching ${JSON.stringify(match)}, token-AND over name + alt_names)` : "(skipped — sanitizes empty)") +
 			" and a byte-exact probe on the indexed `names` table, which is case- and punctuation-sensitive."
 
 		if (!entries.length && !suppressed.length) {
-			return { query, hit: false, entries: null, note: `ABSENCE.${scopeNote} ${checked}${shardNote}` }
+			return { query, hit: false, entries: null, note: `ABSENCE.${scopeNote} ${checked}${extractNote}` }
 		}
 
 		if (!entries.length) {
@@ -649,7 +649,7 @@ export function lookupWOF<DB>(
 					`${suppressed.length} record(s) exist and EVERY one is deprecated or not current. The FTS5 content the ` +
 					"resolver queries is built with that filter already applied, so it receives NOTHING from this surface " +
 					`— known to WOF, invisible downstream, and different from absence. Suppressed: ${suppressed.join("; ")}. ` +
-					`${checked}${shardNote}${scopeNote}`,
+					`${checked}${extractNote}${scopeNote}`,
 			}
 		}
 
@@ -662,7 +662,7 @@ export function lookupWOF<DB>(
 				(suppressed.length
 					? ` Plus ${suppressed.length} deprecated/not-current and therefore unindexed (${suppressed.join("; ")}).`
 					: "") +
-				`${scopeNote} ${checked}${shardNote}`,
+				`${scopeNote} ${checked}${extractNote}`,
 		}
 	})
 }

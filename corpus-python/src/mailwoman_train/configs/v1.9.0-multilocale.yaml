@@ -1,12 +1,12 @@
 # === v1.9.0-multilocale (the multi-locale parse-recall lever, #148) ============================
 # Clone of v1.8.0-fr-admin-split (production-default lineage) with ONE added lever: the
-# `overture-multilocale` shard — ~150k real Overture address rows EACH across 20 EU locales
+# `overture-multilocale` slice — ~150k real Overture address rows EACH across 20 EU locales
 # (ES/IT/NL/PT/BE/PL/DE/AT/CH/CZ/DK/NO/SE/FI/IE/GB/SK/SI/HR/HU), ~3M rows total. The model is
 # en-us/fr-trained and never saw non-en/fr street + locality formats; the 8-locale assembled-
 # COORDINATE panel (docs/articles/evals/2026-06-22-fr-eval-coverage-scorecard.md) showed RESOLVE
 # RATE tracks training representation — FR/IT (trained) ~80%, vs mid-tier PT/PL/AT/CZ ~50% — and
 # root-caused the gap to PARSE (the model fails to emit a resolvable locality), not gazetteer
-# coverage. This shard feeds the missing locales.
+# coverage. This slice feeds the missing locales.
 #
 # CRITICAL (data_loader.py:244): country_weights.get(country) is None -> the row is EXCLUDED. The
 # v1.8.0 config listed only US/FR/DE, which would silently drop every EU overture row. ALL 22
@@ -68,7 +68,7 @@ data:
     synth-po-box-cedex: 1.5
     synth-affix: 2.0
     synth-country: 2.0
-    # #148 lever: the multi-locale EU shard. Weight 3.0 — solid EU exposure (each locale's ~150k rows
+    # #148 lever: the multi-locale EU slice. Weight 3.0 — solid EU exposure (each locale's ~150k rows
     # get comparable weighted mass to fr-admin-split's 60k*6.0) without dominating the US-heavy base;
     # the step-2000 diagnostic gate adjudicates dilution (lower if US/FR regress, raise if mid-tier flat).
     overture: 3.0

@@ -10,7 +10,7 @@ Our failure taxonomy finally has a line at the very top: of everything wrong wit
 boundary instability is the one worth fixing first. So we spent a night building the training
 data to fix it. And then we didn't retrain. Three separate gates each caught a step that looked
 completely reasonable and was wrong underneath, and that's the story worth telling, more than the
-shard ever was. Those gates are the only reason you can move fast on your worst weakness without
+extract ever was. Those gates are the only reason you can move fast on your worst weakness without
 shipping a fix that looks great on the headline and rots underneath.
 
 {/* truncate */}
@@ -31,12 +31,12 @@ time. One weakness, a dozen faces.
 
 ## The plan
 
-Build a synthetic shard that drops the gold boundary exactly where the model wobbles, spread
+Build a synthetic extract that drops the gold boundary exactly where the model wobbles, spread
 across a wide enough range of real-looking addresses that a retrain learns the boundary from
 context instead of memorizing the strings. Generate it, baseline the current model so we know
 how big the hole is, write the recipe, wire it into the corpus. Routine, on paper.
 
-## Gate one: the shard that graded on a curve
+## Gate one: the extract that graded on a curve
 
 The first version pulled from a thin vocabulary: sixteen street names and a handful of cities.
 Twenty thousand rows out of sixteen streets means the model sees `Country Club Rd` a thousand
@@ -52,31 +52,31 @@ sitting next to the warning.
 
 ## Gate two: the postcode that was already a house number
 
-To teach the Australian slash convention, where `4/2A` means unit 4, number 2A, the shard
+To teach the Australian slash convention, where `4/2A` means unit 4, number 2A, the extract
 reached for Australian addresses. The base-consistency lint stopped it cold. In our training
 corpus the token `3000` shows up thousands of times, every one of them a US house number, and
-the shard wanted to teach it as an Australian postcode. A coverage shard can't outvote the base
+the extract wanted to teach it as an Australian postcode. A coverage extract can't outvote the base
 corpus it sits on top of. It can only pick a fight with it and lose, slowly, over a release or
 three, and we still have the scars from the last time. The lint caught the collision before
-we'd burned a single GPU-hour on it. Australia came back out, the shard is base-locales-only
+we'd burned a single GPU-hour on it. Australia came back out, the extract is base-locales-only
 now, and the slash convention got filed as its own job, the kind that has to bring its own base
 coverage to the table.
 
 ## Gate three: the city that was usually a street
 
-Even with the shard confined to the locales we actually train on, the lint wasn't done with us.
+Even with the extract confined to the locales we actually train on, the lint wasn't done with us.
 Paris. Springfield. Burlington. In our corpus those tokens are overwhelmingly streets, the Paris
-Avenues and Springfield Streets of the world, and only rarely cities. Our shard labels them as
+Avenues and Springfield Streets of the world, and only rarely cities. Our extract labels them as
 localities. Both readings are true depending on where the token lands, and the model is
 context-aware enough that it might well sort it out on its own. The lint's job is to not take
 that on faith. It flagged the minority sense, because the last time we waved this exact thing
-through, a theatre on 5th Avenue talked a shard into believing `5th Avenue` was a venue. So the
-retrain will watch this number, and a cleaner shard draws its cities from names the corpus
+through, a theatre on 5th Avenue talked a extract into believing `5th Avenue` was a venue. So the
+retrain will watch this number, and a cleaner extract draws its cities from names the corpus
 already agrees are cities.
 
 ## Why we didn't retrain
 
-Here's where the night actually ended. The shard is built. The baseline is measured. The recipe
+Here's where the night actually ended. The extract is built. The baseline is measured. The recipe
 is written and signed off, the corpus is assembled, and the manifest is tested against the real
 base. By every box on the checklist it's ready, sitting on the shelf one command short of a
 training run. And we left it there on purpose.

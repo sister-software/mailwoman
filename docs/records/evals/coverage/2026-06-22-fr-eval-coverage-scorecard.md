@@ -62,7 +62,7 @@ OA carries truth coordinates, so held-out sets for eight locales (150 rows each,
 | locale | resolve rate | n resolved | p50 (resolved) | p90 (resolved) | tier                                      |
 | ------ | -----------: | ---------: | -------------: | -------------: | ----------------------------------------- |
 | FR     |      **80%** |  120 / 150 |         1.3 km |         191 km | top (trained)                             |
-| IT     |      **79%** |  119 / 150 |         2.1 km |         272 km | top (in #149 EU shards)                   |
+| IT     |      **79%** |  119 / 150 |         2.1 km |         272 km | top (in #149 EU extracts)                   |
 | LU     |      **57%** |   86 / 150 |         0.3 km |           2 km | mid (small dense country — rooftop-tight) |
 | PL     |      **53%** |   79 / 150 |         5.8 km |         405 km | mid                                       |
 | PT     |      **52%** |   78 / 150 |         1.2 km |         216 km | mid                                       |
@@ -77,7 +77,7 @@ _8 resolvable locales — the panel is ~complete for postcode-bearing OA. Tiers:
 **This is the night's required finding — two axes, and it reframes #148.**
 
 - **Precision is good where it resolves (EU).** A resolved EU address lands city-accurate (p50 1–6 km) — so the parse + resolution quality, _conditional on resolving_, is fine. This is why label-F1 misleads: the model gets `locality` + `postcode` right enough to geocode the right city even when it mis-tags street boundaries, and label-F1 charges those boundary errors while the coordinate doesn't. (The #566 / v1.7.0 "grade the coordinate" lesson, confirmed on non-US with hard coordinate truth.)
-- **The real gap is resolve RATE (recall), and it tracks TRAINING REPRESENTATION.** The split is clean: **FR 80% / IT 79%** (the trained / well-represented locales — FR is v1.8.0's home turf, IT rode the #149 EU shards) resolve at ~80% with city-tight coords, while **PT/PL ~52%** (present but under-represented) and **AU 28%** (barely represented, + cross-state name collisions like Windsor) fall off. The model fails to produce a resolvable parse for ~half of mid-tier EU addresses and ~72% of AU. So the gap is _coverage of the training distribution_, exactly the #148 lever.
+- **The real gap is resolve RATE (recall), and it tracks TRAINING REPRESENTATION.** The split is clean: **FR 80% / IT 79%** (the trained / well-represented locales — FR is v1.8.0's home turf, IT rode the #149 EU extracts) resolve at ~80% with city-tight coords, while **PT/PL ~52%** (present but under-represented) and **AU 28%** (barely represented, + cross-state name collisions like Windsor) fall off. The model fails to produce a resolvable parse for ~half of mid-tier EU addresses and ~72% of AU. So the gap is _coverage of the training distribution_, exactly the #148 lever.
 
 So the #148 multi-locale retrain's value is **lifting parse recall on the non-IT locales** (+ AU collision handling), **not** fixing coordinate precision — a more precise, cheaper-to-justify target than "the model can't do non-US," now quantified across four real locales.
 
@@ -91,14 +91,14 @@ Artifacts: `scripts/eval/build-oa-coord-golden.py`, `data/eval/external/oa-{it,p
 | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | FR région (43.3 = adversarial-stress; real-FR unmeasured) | **eval-non-representativeness** — the 219 rows are synthetic multi-script + order permutations; real-FR région is unmeasured (in-dist = 99.6% gamed) | a representative real-FR région held-out set (natural orders, Latin) — the prerequisite to even state the gap |
 | FR country (precision 43%)                                | **model** — over-emission; but coordinate-invisible                                                                                                  | precision lever (suppress country-without-token) — low priority, label-only                                   |
-| FR venue (n=1)                                            | **eval-thinness + coverage** — no FR venue truth, no FR venue training                                                                               | fetch FR POIs → held-out venue set + a venue training shard                                                   |
+| FR venue (n=1)                                            | **eval-thinness + coverage** — no FR venue truth, no FR venue training                                                                               | fetch FR POIs → held-out venue set + a venue training extract                                                   |
 | FR unit (n=0)                                             | **eval-thinness + coverage** (global)                                                                                                                | fetch unit-bearing addresses (FR + thicken US)                                                                |
 
 ## Data-acquisition plan (the real Phase-A unblock)
 
 ⚠ **Correction (verify-before-verdict, my own miss): FR address data is NOT blocked.** `fr/countrywide.csv` (BAN) is in `openaddresses/europe.zip` all along — I checked only the empty `/tmp/oa-cache` and wrongly called it gone. The FR **coordinate** eval is now built from it (`oa-fr-coord-150.jsonl`, FR 80% / p50 1.3 km — top tier). The genuinely-blocked FR strata are narrower: **venue/unit** (no POI/unit source — OA carries neither) and a **real-FR `region`** stratum (the OA-FR `REGION` column is empty, unlike OA-IT). For those, the next shift fetches, via the mailwoman CLI (never ad-hoc duckdb — the Overture OOM lesson):
 
-- **FR venue** → Overture **places** theme for FR (POI name + address) or OSM FR POIs → render `Venue, NN Street, PPPPP City`, venue = POI name. Unblocks both the held-out venue set **and** the T2 venue training shard.
+- **FR venue** → Overture **places** theme for FR (POI name + address) or OSM FR POIs → render `Venue, NN Street, PPPPP City`, venue = POI name. Unblocks both the held-out venue set **and** the T2 venue training extract.
 - **FR OOD région** → re-fetch OA FR (BAN) and render `département` in the varied real-world orders the model misses (NOT the in-distribution admin-split format, which would game the floor to ~96%).
 - **FR/US unit** → a real unit-bearing source (`unit-real-designators.jsonl` exists for US as an _external_ eval; fold it into the golden + find an FR analogue).
 
@@ -107,6 +107,6 @@ Artifacts: `scripts/eval/build-oa-coord-golden.py`, `data/eval/external/oa-{it,p
 Both planned GPU-stretch levers fail their bar on inspection:
 
 - **T1 (fr.country precision) — HELD: coordinate-invisible.** The gap is real but the resolver never reads the model's country tag (placer-sourced in eval + prod). Per "grade the assembled coordinate, never label-F1," a label-only fix doesn't justify GPU — the same logic that correctly shipped v1.8.0 _despite_ fr.country −3.5.
-- **T2 (FR venue) — HELD: data-blocked.** Coordinate-relevant, but the training shard needs FR venue strings we don't have on disk. Blocked on the same fetch as the venue eval set.
+- **T2 (FR venue) — HELD: data-blocked.** Coordinate-relevant, but the training extract needs FR venue strings we don't have on disk. Blocked on the same fetch as the venue eval set.
 
 No lever clears the coordinate bar with on-disk data, so the disciplined call is **no GPU**. The substantive build pivots to the on-disk, coordinate-relevant coverage win (#734 AT/SK bilingual depth) — keeping the week's zero-GPU, real-data, coordinate-graded throughline.

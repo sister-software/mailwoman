@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman corpus golden expand` — generate golden-set candidate entries by LLM-driven
- *   surface-form synthesis from verified-label seeds in a corpus test shard. Candidates land in
+ *   surface-form synthesis from verified-label seeds in a corpus test slice. Candidates land in
  *   `data/eval/golden/candidates/` for operator review; promote with `corpus golden promote`.
  *   Requires `DEEPSEEK_API_KEY` (or `ANTHROPIC_API_KEY` with `--provider anthropic`).
  */
@@ -22,7 +22,7 @@ export const spec = {
 	options: {
 		corpus: {
 			type: "string",
-			description: "Corpus test shard path(s), comma-separated (default: the v0.2.0 test shard under the data root)",
+			description: "Corpus test slice path(s), comma-separated (default: the v0.2.0 test slice under the data root)",
 		},
 		count: { type: "number", default: 100, description: "Total seeds to process" },
 		variants: { type: "number", default: 5, description: "Variants requested per seed" },

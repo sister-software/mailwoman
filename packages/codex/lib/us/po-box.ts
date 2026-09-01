@@ -62,7 +62,7 @@ export interface PoBoxMatch {
 
 /**
  * If `input` is a PO-box phrase ("PO Box 123", "P.O. Box 12-A", "Post Office Box 7"), return the designator phrase and
- * the id. Null otherwise. Useful for the corpus po_box shard (split the designator from the number) and for
+ * the id. Null otherwise. Useful for the corpus po_box extract (split the designator from the number) and for
  * resolver/parsing reuse.
  */
 export function matchPOBox(input: unknown): PoBoxMatch | null {

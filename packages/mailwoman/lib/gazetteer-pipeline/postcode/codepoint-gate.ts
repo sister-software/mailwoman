@@ -3,19 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The promotion gate for the Code-Point Open GB shard: compare it against the incumbent GeoNames
- *   `GB_full` rows before anything swaps in `DEFAULT_POSTCODE_SHARDS`.
+ *   The promotion gate for the Code-Point Open GB database: compare it against the incumbent GeoNames
+ *   `GB_full` rows before anything swaps in `DEFAULT_POSTCODE_DATABASES`.
  *
  *   This exists because the swap is a DATA-SOURCE change, not a refresh. The two sources disagree on
  *   which postcodes exist and on where each one is, and both kinds of disagreement have to be looked at
- *   before the shipped shard moves. What this tool does NOT do is decide: a large coordinate delta is a
+ *   before the shipped database moves. What this tool does NOT do is decide: a large coordinate delta is a
  *   FINDING, and the finding usually indicts GeoNames (whose GB provenance is the muddled one — see
  *   `geonames-tail.ts`'s `GB_LICENSE_NOTE`), not Code-Point Open, which is the authoritative upstream
  *   both datasets ultimately derive from.
  *
  *   Three questions, three sections of {@link CodePointGateReport}:
  *
- *   1. **Which postcodes are in one and not the other.** The join key is `spr.name`, which both shards
+ *   1. **Which postcodes are in one and not the other.** The join key is `spr.name`, which both databases
  *      store in the #920 sanitized form (`SW1A1AA`), so the comparison is exact rather than fuzzy.
  *   2. **How far apart the shared ones are.** Haversine metres per joined postcode, reported as a
  *      distribution rather than a mean — the mean of a bimodal disagreement is a number that describes
@@ -36,9 +36,9 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 const M_PER_KM = 1000
 
 /**
- * A postcode present in one shard and absent from the other, summarized by postcode AREA rather than listed. The full
- * list runs to six figures; the area histogram is what tells you whether a gap is structural (a whole area missing) or
- * diffuse (churn spread across all of them).
+ * A postcode present in one database and absent from the other, summarized by postcode AREA rather than listed. The
+ * full list runs to six figures; the area histogram is what tells you whether a gap is structural (a whole area
+ * missing) or diffuse (churn spread across all of them).
  */
 export interface AreaHistogram {
 	total: number
@@ -49,7 +49,7 @@ export interface AreaHistogram {
 }
 
 /**
- * The coordinate-disagreement distribution over postcodes present in BOTH shards, in metres.
+ * The coordinate-disagreement distribution over postcodes present in BOTH databases, in metres.
  */
 export interface DeltaDistribution {
 	joined: number
@@ -152,7 +152,7 @@ const CROWN_DEPENDENCY_AREAS = ["IM", "GY", "JE"] as const
  * coordinate extremes of the join. `expected` is the landmark's own position; a Code-Point centroid is the postcode
  * unit's mean delivery point, so tens of metres of offset is correct behaviour and not error. The looser entries (the
  * three city-centre probes near 500-900 m) are loose because the LANDMARK coordinate is a district rather than a door —
- * both shards agree with each other there to within 3 m, which is the comparison this list is actually making.
+ * both databases agree with each other there to within 3 m, which is the comparison this list is actually making.
  *
  * The Senedd probe is `CF99 1SN` and that is not a typo. It was originally `CF99 1NA`, which the first gate run
  * reported ABSENT from Code-Point Open and present in the incumbent. Chasing it found the real story rather than a bug:
@@ -174,8 +174,8 @@ export const CODEPOINT_PROBES = [
 ] as const
 
 /**
- * The #920 sanitized form — every non-letter/number stripped. Both shards store this as `spr.name`, so it is the join
- * key. Duplicated from `resolver-wof-sqlite/geonames-postal.ts` rather than imported because that package is an
+ * The #920 sanitized form — every non-letter/number stripped. Both databases store this as `spr.name`, so it is the
+ * join key. Duplicated from `resolver-wof-sqlite/geonames-postal.ts` rather than imported because that package is an
  * OPTIONAL peer and this gate must run without it.
  */
 function normalizeName(raw: string): string {
@@ -191,7 +191,7 @@ function areaOf(name: string): string {
 
 export interface RunCodePointGateOptions {
 	/**
-	 * The candidate shard, e.g. `<data-root>/wof/postalcode-gb-codepoint-<date>.db`.
+	 * The candidate database, e.g. `<data-root>/wof/postalcode-gb-codepoint-<date>.db`.
 	 */
 	codepointPath: string
 	/**

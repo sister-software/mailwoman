@@ -165,7 +165,7 @@ for (const [i, row] of results.entries()) {
 
 **Batch size** caps at 1 000 addresses (`MAILWOMAN_BATCH_MAX`); send more in one body and you get a `413`. Chunk your ten thousand into ten requests. It's an environment override, so you set it for your box rather than recompiling.
 
-Sorting helps, though: the first address in a given US state warms that state's shard cache, so a batch that keeps same-state rows together resolves the tail of them almost for free. If your data is already grouped by region, you're getting that win without doing anything.
+Sorting helps, though: the first address in a given US state warms that state's extract cache, so a batch that keeps same-state rows together resolves the tail of them almost for free. If your data is already grouped by region, you're getting that win without doing anything.
 
 What won't help is asking the server to work on several rows at once. A batch is geocoded one row at a time, and we left that knob out on purpose. A second row can't make progress while the first is in the model, because ONNX Runtime's Node binding holds the JavaScript thread for the duration of an inference, and the gazetteer reads are synchronous too. We shipped a `MAILWOMAN_BATCH_CONCURRENCY` worker pool until we measured it: 1.00x, flat, from one worker to sixteen. It's gone as of 2026-07-16.
 
@@ -177,7 +177,7 @@ If the CSV is already on the machine that has the gazetteer, HTTP is a tax. Both
 
 ### Parsing only, with no gazetteer
 
-When you want components rather than coordinates (deduping a mailing list, normalizing a column before a join), skip the resolver. There's no database, so this needs no data root and no shards:
+When you want components rather than coordinates (deduping a mailing list, normalizing a column before a join), skip the resolver. There's no database, so this needs no data root and no databases:
 
 ```ts
 import { decodeAsTuples } from "@mailwoman/core/decoder"
@@ -214,7 +214,7 @@ This loop is single-threaded, and on one core it's already at about 300 addresse
 
 ### Full geocoding, across worker threads
 
-Coordinates need the gazetteer, and that's the ms-scale per-row work worth putting on threads. [`geocodeStream`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/geocode-stream.ts) wraps spliterator's `parallelMap`: it normalizes on the main thread and hands each row to a worker that rebuilds its own classifier, resolver, and shards.
+Coordinates need the gazetteer, and that's the ms-scale per-row work worth putting on threads. [`geocodeStream`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/geocode-stream.ts) wraps spliterator's `parallelMap`: it normalizes on the main thread and hands each row to a worker that rebuilds its own classifier, resolver, and extracts.
 
 ```ts
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"

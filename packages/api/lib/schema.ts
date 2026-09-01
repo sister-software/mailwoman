@@ -268,7 +268,7 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	countryCode: z.string().nullable(),
 	hierarchy: z.array(GeocodeHierarchyEntrySchema),
 	candidates: z.array(GeocodeCandidateSchema),
-	// The register row's OWN scope tags when the address_point tier answered and its shard carries
+	// The register row's OWN scope tags when the address_point tier answered and its extract carries
 	// them (normalized locality key + postcode of the ROOFTOP) — see geocode-core's GeocodeResult.rooftop.
 	rooftop: z
 		.object({

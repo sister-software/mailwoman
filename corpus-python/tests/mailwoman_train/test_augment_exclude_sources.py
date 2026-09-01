@@ -1,7 +1,7 @@
 """Augmentation-pool exclusion (2026-08-10 recipe review, lever 12).
 
 Augmented copies fill 25.5% of the emitted row budget (full-epoch mixture audit), and copies
-of an OVERSAMPLED synthetic shard are near-duplicates that compound its repetition dose while
+of an OVERSAMPLED synthetic slice are near-duplicates that compound its repetition dose while
 adding none of the diversity that moves OOD boards (Hernandez 2022 × Chen 2024). Contract:
 ``augment_exclude_sources`` lists sources whose rows pass through the augmentation stage
 untouched — original emitted exactly once, no copies — while every other source keeps the
@@ -47,7 +47,7 @@ def _write_corpus(tmp_path: Path) -> Path:
     corpus = tmp_path / "corpus"
     (corpus / "train").mkdir(parents=True)
     for name, rows in (
-        ("part-shard.parquet", _rows("synth-suffix-boundary", 8)),
+        ("part-slice.parquet", _rows("synth-suffix-boundary", 8)),
         ("part-a.parquet", _rows("tiger", 8)),
     ):
         pq.write_table(pa.Table.from_pylist(rows, schema=LEGACY_SCHEMA), corpus / "train" / name)
@@ -70,11 +70,11 @@ def _emit(corpus: Path, **overrides) -> list[dict]:
 def test_excluded_source_rows_are_never_augmented(tmp_path: Path) -> None:
     out = _emit(_write_corpus(tmp_path), augment_exclude_sources=["synth-suffix-boundary"])
 
-    shard_rows = [r for r in out if r["source"] == "synth-suffix-boundary"]
+    slice_rows = [r for r in out if r["source"] == "synth-suffix-boundary"]
     other_rows = [r for r in out if r["source"] == "tiger"]
 
-    assert shard_rows, "sanity: the excluded source must still be sampled"
-    assert all(r["raw"] == r["raw"].lower() for r in shard_rows), "an upper-cased copy leaked from the excluded source"
+    assert slice_rows, "sanity: the excluded source must still be sampled"
+    assert all(r["raw"] == r["raw"].lower() for r in slice_rows), "an upper-cased copy leaked from the excluded source"
     # The non-excluded source keeps the policy: at prob 1.0 every draw yields an upper twin.
     assert any(r["raw"] != r["raw"].lower() for r in other_rows)
 

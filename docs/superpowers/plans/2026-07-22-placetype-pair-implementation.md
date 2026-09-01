@@ -62,7 +62,7 @@ TDD: round-trip test (serialize → construct → probe hits/misses), bad-magic 
 
 **Files:** Create `mailwoman/commands/gazetteer/pair-index.tsx` (template: `postcode-binary.tsx` — zod `options` export, `useCommandTask`, `dataRootPath`, value-import `serializePairIndex` from the resolver subpath). Options: `--out` (default `docs/static/mailwoman`), `--country` (default gb), `--source` (default the PPD tuples path), `--delta` (REQUIRED, no default — calibration task supplies it; refuse to default silently).
 
-Behavior: stream the tuples CSV (CSVSpliterator idiom from `shard-recipes/locale.ts`), fold child=CITY/parent=DISTRICT via `normalizeFSTToken`, skip empty-CITY rows, dedupe pairs, count; print the **CITY word-length distribution percentiles** (sets window N for Task 4 — record p99 in the output and the report); write `pair-index-gb.bin` with provenance header (source md5 via existing hash utils). Run it for real (expect ≈19,431 pairs — the rung-3 number is the cross-check; mismatch = STOP). Tests: builder unit on fixture CSV (dedupe, fold, empty-CITY skip). Commit incl. the real-run stats line.
+Behavior: stream the tuples CSV (CSVSpliterator idiom from `extract-recipes/locale.ts`), fold child=CITY/parent=DISTRICT via `normalizeFSTToken`, skip empty-CITY rows, dedupe pairs, count; print the **CITY word-length distribution percentiles** (sets window N for Task 4 — record p99 in the output and the report); write `pair-index-gb.bin` with provenance header (source md5 via existing hash utils). Run it for real (expect ≈19,431 pairs — the rung-3 number is the cross-check; mismatch = STOP). Tests: builder unit on fixture CSV (dedupe, fold, empty-CITY skip). Commit incl. the real-run stats line.
 
 ### Task 4: The prior module (sixth emission prior)
 

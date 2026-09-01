@@ -145,14 +145,14 @@ export interface SubVenueSurface {
  *
  * Derived from OSM `ref` values, NOT from names, and that is why the artifact has a section for it at all. Every one of
  * Berlin's 26 `aeroway=gate` features is unnamed and carries only a `ref`: `13`, `6`, `0/1`, `14/15`, `16-18`. So `Gate
- * A12` is a RENDERING (`<designator> <ref>`) rather than a string anyone has written down, and a shard that wants to
+ * A12` is a RENDERING (`<designator> <ref>`) rather than a string anyone has written down, and a slice that wants to
  * generate the designator+identifier form needs the identifier DISTRIBUTION, not a list of phrases.
  */
 export interface IdentifierShape {
 	designatorID: string
 	/**
 	 * ISO 3166-1 alpha-2 of the extract this distribution was measured in. Per-region because the shapes differ: GB gates
-	 * are 70% bare digits, Japanese platform refs are overwhelmingly bare digits with a different range, and a shard that
+	 * are 70% bare digits, Japanese platform refs are overwhelmingly bare digits with a different range, and a slice that
 	 * generates `Gate <ref>` for a French address should sample France's distribution.
 	 */
 	region: string
@@ -163,7 +163,7 @@ export interface IdentifierShape {
 	shape: string
 	observations: number
 	/**
-	 * Up to eight real values, sorted, so a shard author can see what the class actually contains.
+	 * Up to eight real values, sorted, so a slice author can see what the class actually contains.
 	 */
 	examples: string[]
 }
@@ -246,7 +246,7 @@ export const SHIPPED_MODIFIER_SEED: readonly string[] = [
  * vocabulary the corpus line needs. `hall` and `satellite` come from Wikidata concepts and from
  * `wof-osm-placetype-map.mdx`'s own "plausible additions" note, which lists `hall` explicitly. `pier` joins them in
  * wave 2 on 282 Overture attestations in the `pier` category plus 162 in the GB extract — the corpus task names `Pier
- * C` as a target shape, so the record has to exist before a shard can generate it.
+ * C` as a target shape, so the record has to exist before a slice can generate it.
  *
  * None is `modifierEligible`: that claim needs a confound board per term AND per locale, and `sub-venue-promotions.ts`
  * is where those live. A promotion marks a SURFACE usable; it does not widen the modifier grammar.

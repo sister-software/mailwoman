@@ -24,7 +24,7 @@
 #     the mechanism and B4c is refuted (a big finding — it would point back to the head/decoder).
 #
 # THE 2k PROBE PASSED THE MECHANISM TEST: board 3 bare-street-hn 0.693 -> 0.825 (+13.2pp, 8x the
-# fr-fragment shard's +1.7pp); the PL defect row `aleja Wojska Polskiego 178` FIXED (postcode ->
+# fr-fragment slice's +1.7pp); the PL defect row `aleja Wojska Polskiego 178` FIXED (postcode ->
 # house_number); US 5-digit postcodes + all 6 demo presets HELD. The only regression was the board-3
 # Norwegian CONTEXTFUL classes (city-first/pc-first/street-led, -5..-8.5pp) — US contextful held, so
 # it is under-convergence of the fresh tokenizer, not a trade. This 8k gives the model time to
@@ -62,7 +62,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay shard.
+  source_weights: # VERBATIM v2.4.1 + the one new assay slice.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -91,7 +91,7 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the

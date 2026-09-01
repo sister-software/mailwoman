@@ -6,7 +6,7 @@ not explain — and that explains why B4's probe barely moved.
 **Finding: the intra-word digit incoherence B0 measured on Norwegian is the same defect on
 correctly-parsed Polish streets that are in-corpus and admitted by the filter. It is not coverage, it
 is not the street→locality leak, and it is length-conditioned — the model reproduces a real corpus
-prior on long digit-run continuations. A targeted fragment shard fights that prior uphill, which is
+prior on long digit-run continuations. A targeted fragment extract fights that prior uphill, which is
 why B4 (weight 12, 2k steps) moved the target only +1.7pp.**
 
 ---
@@ -61,22 +61,22 @@ Three measurements, one mechanism:
 ## Why B4 barely moved — this is the reason, not just the ratio
 
 B4's verdict named `--bare-street-prob 0.30` as the likely reason its target moved only +1.7pp. This
-probe adds the deeper reason: **a fragment shard is fighting a real, strong, length-conditioned
+probe adds the deeper reason: **a fragment extract is fighting a real, strong, length-conditioned
 corpus prior.** At 3+ digits the corpus itself pushes continuations toward postcode with mass up to
 0.879. A targeted signal at weight 12 for 2k steps dents that; it does not overturn it. That is why
-the guards held (no harm) but the target barely moved — the shard and the prior are pulling against
+the guards held (no harm) but the target barely moved — the extract and the prior are pulling against
 each other on the same pieces.
 
 **Two implications for B4b, both to be pre-registered not spun tonight:**
 
 1. **Oversample long house numbers.** The defect is worst at 3+ digits, where the postcode prior is
-   strongest. A shard drawn from real NO/PL numbers is mostly 2–3 digits; deliberately weighting
+   strongest. A extract drawn from real NO/PL numbers is mostly 2–3 digits; deliberately weighting
    3–4-digit house numbers aims the signal where the prior is hardest to beat.
 2. **The representation direction is the real lever.** The #727 research says a lower-fertility vocab
    is upstream of any head, and this is the digit-specific evidence: a 3-digit number is 3 pieces
    with 2 postcode-leaning continuations _because_ digits tokenize one-per-character. A vocab where
    `178` is one piece removes the continuation-postcode mass entirely. That is a bigger change than a
-   shard, and it is the operator's call whether Track B justifies re-opening the vocab work.
+   extract, and it is the operator's call whether Track B justifies re-opening the vocab work.
 
 ## The vocab lever, quantified
 
@@ -106,12 +106,12 @@ continuation-count as its only length discriminator.
 
 **Cost, stated honestly:** a splice grows the vocab and the embedding table; the new rows need
 gradient (the init_from fine-tune path the multisplice used). It is a bigger, coordinated change than
-a shard — a tokenizer + model bump, not a corpus edit — so whether Track B justifies it is squarely
-the operator's call. But it attacks the root the shard only dents.
+a extract — a tokenizer + model bump, not a corpus edit — so whether Track B justifies it is squarely
+the operator's call. But it attacks the root the extract only dents.
 
 ## What this does NOT change
 
-- **The fix is still a shard OR the vocab — not a validator.** The house rule holds: this is
+- **The fix is still a extract OR the vocab — not a validator.** The house rule holds: this is
   positive evidence and representation, never a hard postcode veto. The model's first-piece
   `B-house_number` is usually _right_; the fix is to stop the continuations from overriding it, not
   to forbid postcodes.

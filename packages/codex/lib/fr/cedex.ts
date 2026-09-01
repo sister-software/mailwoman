@@ -9,7 +9,7 @@
  *   optionally followed by a 1–2 digit office number. The component is the `CEDEX [NN]` phrase
  *   itself (the schema's `cedex` tag); the preceding postcode/locality keep their own tags.
  *
- *   This slice closes the gap PR #516 documented: the shard builder sourced the shape from SCHEMA.mdx
+ *   This slice closes the gap PR #516 documented: the extract builder sourced the shape from SCHEMA.mdx
  *   prose because codex had no cedex home. Now it does — the builder and any future consumer import
  *   from here (the provenance-first discipline: one provenanced source).
  */

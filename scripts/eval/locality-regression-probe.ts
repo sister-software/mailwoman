@@ -5,7 +5,7 @@
  *
  *   #375 locality-REGRESSION probe — the v1.6.0 floors ship-blocker (us.locality 66.2 vs 72.9). The
  *   synthetic comma-less probe showed the locality START is clean; this asks the real question on
- *   the held-out US golden set: comparing the shard's BASE (v1.5.1) to v1.6.0, which rows had
+ *   the held-out US golden set: comparing the extract's BASE (v1.5.1) to v1.6.0, which rows had
  *   locality RIGHT before and WRONG after — and where did the locality text GO? The hypothesis is
  *   that the comma-less shape taught the model to over-extend street past where a comma normally
  *   stops it, so on real (comma'd) US addresses street now eats the locality. We confirm or refute

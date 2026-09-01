@@ -29,9 +29,9 @@
  *   (both derive purely from `spr` + `names` — see `fts.ts`). That means `WOFSQLitePlaceLookup`
  *   opens the slim DB without any code change — it sees a smaller universe, nothing more.
  *
- *   Multi-shard inputs (e.g. admin + postcode) are processed in sequence; selected rows accumulate
- *   into the single output DB. The postcode shard contributes only postcodes; admin contributes
- *   everything else. Empty / missing input paths are skipped (callers pass `""` when a shard, such
+ *   Multi-extract inputs (e.g. admin + postcode) are processed in sequence; selected rows accumulate
+ *   into the single output DB. The postcode extract contributes only postcodes; admin contributes
+ *   everything else. Empty / missing input paths are skipped (callers pass `""` when a extract, such
  *   as a custom postcode DB, isn't built yet).
  */
 
@@ -69,7 +69,7 @@ export interface BuildSlimOptions {
 	 * external `content=`), so once it's built `names` is only the build-time source — the resolver queries
 	 * `place_search` + `spr` + `place_population` + `coincident_roles` and never reads `names` at runtime. Dropping it is
 	 * the single biggest size win (~2/3 of the file for a multi-locale build; see #359). A future consumer that needs raw
-	 * alt-names at runtime should ship a SEPARATE shard rather than re-bloat the hot DB.
+	 * alt-names at runtime should ship a SEPARATE extract rather than re-bloat the hot DB.
 	 */
 	dropNames?: boolean
 	/**
@@ -149,7 +149,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 	const topLocalities = opts.topLocalitiesPerCountry ?? 1000
 	const progress = opts.onProgress ?? (() => {})
 
-	// Callers pass `""` for shards that don't exist yet (e.g. a not-yet-built custom postcode DB).
+	// Callers pass `""` for extracts that don't exist yet (e.g. a not-yet-built custom postcode DB).
 	// Skip empties up front; require every remaining path to exist.
 	const inputs = opts.inputs.filter((p) => p.length > 0)
 
@@ -292,8 +292,8 @@ async function copyFromSource(
 	out.exec(`ATTACH DATABASE '${scratchPath.replaceAll("'", "''")}' AS src;`)
 
 	try {
-		// Does this shard carry the pre-built population aux table? The admin source does; a bare
-		// postcode shard might not. The locality ranking + population copy below adapt accordingly.
+		// Does this extract carry the pre-built population aux table? The admin source does; a bare
+		// postcode extract might not. The locality ranking + population copy below adapt accordingly.
 		const srcHasPopulation = Boolean(
 			out.prepare(`SELECT 1 FROM src.sqlite_master WHERE type = 'table' AND name = '${PLACE_POPULATION_TABLE}'`).get()
 		)
@@ -323,7 +323,7 @@ async function copyFromSource(
 
 		// 2. Top-K localities by population. Population lives in the pre-built `place_population`
 		// aux table — left-join it so localities without a population row still qualify (sorted
-		// last). If the shard has no population table, fall back to a deterministic id ordering.
+		// last). If the extract has no population table, fall back to a deterministic id ordering.
 		progress("locality", `${inputPath}: top-${topLocalities} localities by population`)
 
 		await kysely

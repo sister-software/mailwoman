@@ -4,21 +4,21 @@
  * @author Teffen Ellis, et al.
  *
  *   Assemble a corpus OVERLAY MANIFEST — generalized from assemble-fr-admin-split-overlay-manifest.
- *   ADDS one shard parquet to a base corpus, keeping every base shard VERBATIM (pure overlay ADD),
- *   and re-roots base paths to /data (the Modal volume). Parameterized by --shard-parquet +
- *   --source so it works for any overlay shard (the fr-admin-split one is the original; #148's
+ *   ADDS one slice parquet to a base corpus, keeping every base slice VERBATIM (pure overlay ADD),
+ *   and re-roots base paths to /data (the Modal volume). Parameterized by --slice-parquet +
+ *   --source so it works for any overlay slice (the fr-admin-split one is the original; #148's
  *   overture-multilocale is the second user).
  *
- *   Ported faithfully from scripts/assemble-overlay-manifest.py. The new shard's source_id column is
+ *   Ported faithfully from scripts/assemble-overlay-manifest.py. The new slice's source_id column is
  *   read through DuckDB (`@duckdb/node-api`) instead of PyArrow; everything else is pure JSON.
  *
  *   Pipeline (the recipe rides the result): node scripts/build-overture-multilocale-canonical.mjs
- *   --cap 150000 --out /tmp/ovl/overture-ml.canonical.jsonl node scripts/align-canonical-shard.ts
+ *   --cap 150000 --out /tmp/ovl/overture-ml.canonical.jsonl node scripts/align-canonical-slice.ts
  *   --input <canonical> --output <labeled> --corpus-version 0.5.0 mailwoman dev jsonl-to-parquet
- *   --input <labeled> --output <NEW>/train/<shard-parquet> node
+ *   --input <labeled> --output <NEW>/train/<slice-parquet> node
  *   scripts/assemble-overlay-manifest.ts --base <BASE>/MANIFEST.json --new-dir <NEW>\
  *   --modal-root /data/corpus/versioned/<ver>/<dir> --version <ver>\
- *   --shard-parquet <shard-parquet> --source <source> --note "..."
+ *   --slice-parquet <slice-parquet> --source <source> --note "..."
  *
  *   # then push the overlay to R2 + sync + `modal run -d ... --config <recipe>.yaml --resume none`.
  */
@@ -30,7 +30,7 @@ import { basename, dirname, join } from "path-ts"
 
 import { connectDuckDB, escapeSQLString } from "#utils/parquet"
 
-interface ShardDescriptor {
+interface SliceDescriptor {
 	split: string
 	path: string
 	format: "parquet"
@@ -46,9 +46,9 @@ interface ShardDescriptor {
 interface BaseManifest {
 	corpus_version?: string
 	schema: unknown
-	rows_per_shard: unknown
+	rows_per_slice: unknown
 	row_group_size: unknown
-	shards: Array<Record<string, unknown> & { path: string; source?: string }>
+	slices: Array<Record<string, unknown> & { path: string; source?: string }>
 	counts: { train: number; val: number; test: number }
 	total_rows: number
 }
@@ -58,7 +58,7 @@ async function descriptor(
 	modalPath: string,
 	split: string,
 	source: string
-): Promise<ShardDescriptor> {
+): Promise<SliceDescriptor> {
 	const db = await connectDuckDB()
 	const result = await db.runAndReadAll(`SELECT source_id FROM read_parquet('${escapeSQLString(localPath)}')`)
 	const sids = result.getRowObjects().map((r) => r.source_id as string)
@@ -82,15 +82,15 @@ export interface OverlayManifestOptions {
 	newDir: string
 	modalRoot: string
 	version: string
-	shardParquet: string
+	sliceParquet: string
 	source: string
 	note: string
 }
 
 /**
- * Resolve a base manifest's shard path to the mounted corpus tree used by Modal.
+ * Resolve a base manifest's slice path to the mounted corpus tree used by Modal.
  */
-export function rerootBaseShardPath(path: string, baseManifestPath: string): string {
+export function rerootBaseSlicePath(path: string, baseManifestPath: string): string {
 	const versionedIndex = path.indexOf("/corpus/versioned/")
 
 	if (versionedIndex !== -1) return "/data" + path.slice(versionedIndex)
@@ -108,15 +108,15 @@ export function rerootBaseShardPath(path: string, baseManifestPath: string): str
 export async function assembleOverlayManifest(args: OverlayManifestOptions): Promise<void> {
 	const base = await readLocalJSONFile<BaseManifest>(args.base)
 
-	if (base.shards.some((s) => s.source === args.source)) {
+	if (base.slices.some((s) => s.source === args.source)) {
 		console.log(`WARN: base already contains source '${args.source}' — is this the right base?`)
 	}
 
-	const kept = base.shards.map((s) => ({ ...s, path: rerootBaseShardPath(s.path, args.base) }))
+	const kept = base.slices.map((s) => ({ ...s, path: rerootBaseSlicePath(s.path, args.base) }))
 
 	const newTrain = await descriptor(
-		join(args.newDir, "train", args.shardParquet),
-		`${args.modalRoot}/train/${args.shardParquet}`,
+		join(args.newDir, "train", args.sliceParquet),
+		`${args.modalRoot}/train/${args.sliceParquet}`,
 		"train",
 		args.source
 	)
@@ -125,11 +125,11 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		corpus_version: args.version,
 		overlay_base: base.corpus_version ?? null,
 		note:
-			args.note || `${base.corpus_version} shards (all kept verbatim) + the ${args.source} shard. Pure overlay add.`,
+			args.note || `${base.corpus_version} slices (all kept verbatim) + the ${args.source} slice. Pure overlay add.`,
 		schema: base.schema,
-		rows_per_shard: base.rows_per_shard,
+		rows_per_slice: base.rows_per_slice,
 		row_group_size: base.row_group_size,
-		shards: [...kept, newTrain],
+		slices: [...kept, newTrain],
 		counts: {
 			train: base.counts.train + newTrain.rows,
 			val: base.counts.val,
@@ -142,7 +142,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 	await writeLocalJSONFile(manifest, out)
 
 	console.log(`wrote ${out}`)
-	console.log(`  shards: ${manifest.shards.length} (${kept.length} base kept, +1 ${args.source})`)
+	console.log(`  slices: ${manifest.slices.length} (${kept.length} base kept, +1 ${args.source})`)
 	console.log(`  counts: ${JSON.stringify(manifest.counts)}  total: ${manifest.total_rows}`)
 	console.log(`  ${args.source} train: ${newTrain.rows} rows (${newTrain.bytes} bytes)`)
 }

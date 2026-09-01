@@ -26,6 +26,21 @@ interface DebtCounters {
 	productionFilesOver1000Lines: number
 	selfPackageImports: number
 	synchronousFilesystemCalls: number
+	/**
+	 * Occurrences of the word `extract` in any spelling, anywhere in tracked source — identifiers, comments and string
+	 * literals alike.
+	 *
+	 * The vocabulary is being removed because the word stood for FOUR different things (corpus recipes, per-country
+	 * postcode databases, WOF extracts, and the providers' region databases), so there is no replacement synonym — each
+	 * site takes the noun for the thing it actually names. The target is ZERO, and this counter is the finish line:
+	 * ratcheted down per PR, it can only fall.
+	 *
+	 * COUNTED HERE RATHER THAN WITH `grep` ON PURPOSE. Five tracked sources carry raw NUL bytes (#2018), which `grep`
+	 * treats as binary and skips SILENTLY — no error, no count. Measured 2026-09-01: 3,481 occurrences with `grep -a`
+	 * against 3,427 without, so a `grep`-based ratchet would hide 54 occurrences and could certify zero while they
+	 * remained. `readLocalTextFile` has no such blind spot.
+	 */
+	bannedVocabulary: number
 }
 
 const root = String(repoRootPath())
@@ -40,6 +55,7 @@ function emptyCounters(): DebtCounters {
 		productionFilesOver1000Lines: 0,
 		selfPackageImports: 0,
 		synchronousFilesystemCalls: 0,
+		bannedVocabulary: 0,
 	}
 }
 
@@ -224,7 +240,21 @@ const UNCOUNTED = [
 	// The runtime mirror and the idiom over it call the builtins on purpose; counting them would measure the
 	// implementation rather than its callers.
 	"packages/core/lib/fs/",
+	// THIS FILE COUNTS ITSELF OTHERWISE, and the count could never reach zero: {@link BANNED_VOCABULARY} has to
+	// spell the word it bans. Excluded for the same reason as the line above — the implementation is not a caller.
+	"scripts/repo-health.ts",
 ]
+
+/**
+ * The word being removed from the codebase, and the pattern {@link DebtCounters.bannedVocabulary} counts.
+ *
+ * KEEP THE COUNTER'S NAME FREE OF THE WORD. This ratchet is written in the language it polices, so the vocabulary sweep
+ * it exists to drive rewrote it: a case-preserving `shard` → `extract` pass over `scripts/` renamed `shardVocabulary`
+ * to `extractVocabulary` AND rewrote this very pattern, so the gate began measuring the REPLACEMENT word while still
+ * reporting a falling number. It stayed green throughout. A neutral counter name and a single pattern constant are what
+ * make that impossible to repeat.
+ */
+const BANNED_VOCABULARY = /\b[A-Za-z_]*shard[A-Za-z_]*\b/giu
 
 // `existingOnly`: a tracked path can be absent from the working tree (a deletion staged but not
 // committed); skip it rather than failing the whole gate on a file the next commit removes anyway.
@@ -266,6 +296,9 @@ for (const path of paths) {
 	if (!generated && !/[.]test[.]tsx?$/.test(path) && lineCount > 1000) {
 		counters.productionFilesOver1000Lines++
 	}
+
+	// Textual, not AST: the word is being removed from comments and string literals as well as identifiers.
+	counters.bannedVocabulary += text.match(BANNED_VOCABULARY)?.length ?? 0
 }
 
 // The key IS the flag text parseArgs matches, so it must stay kebab-case: `package.json`'s `health:debt:update`

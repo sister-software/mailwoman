@@ -1,4 +1,4 @@
-# === v3.1.0-fr-fragment — #727 T2. ONE variable vs the SHIPPED v264: the synth-fr-fragment shard. ===
+# === v3.1.0-fr-fragment — #727 T2. ONE variable vs the SHIPPED v264: the synth-fr-fragment slice. ===
 #
 # THE MEASURED PROBLEM (T1c, docs/articles/evals/2026-07-16-t1c-fragment-board-verdict.md; the FR
 # fragment board, n=400/class, 95% Wilson):
@@ -16,15 +16,15 @@
 #
 # THE ONE CHANGE: source_weights + synth-fr-fragment: 12.0 (the targeted-fix precedent —
 # synth-fr-bare-street / synth-si-bare-village / synth-no-street-led are all 12.0), and corpus_dir ->
-# the v0.10.9 overlay (v0.10.6-fragment-v5's 700 base refs VERBATIM + the one new shard). Model,
+# the v0.10.9 overlay (v0.10.6-fragment-v5's 700 base refs VERBATIM + the one new slice). Model,
 # tokenizer, anchor knobs, class_weights, country_weights, every other source_weight, LR and schedule
 # are IDENTICAL to v264. Clean attribution.
 #
-# WHY THE EXISTING SHARD DOESN'T COVER IT: synth-fr-bare-street (#251) mints "<n> Rue <name>, <City>"
+# WHY THE EXISTING SLICE DOESN'T COVER IT: synth-fr-bare-street (#251) mints "<n> Rue <name>, <City>"
 # — the bare COMMA form, targeting postcode-anchoring imbalance. Every row it emits still carries a
 # house number AND a locality, so it never shows the model a street standing alone. Different lever.
 #
-# THE SHARD (144,865 rows, corpus/src/shard-recipes/fr-fragment.ts): bare-street 14.3%,
+# THE SLICE (144,865 rows, corpus/src/slice-recipes/fr-fragment.ts): bare-street 14.3%,
 # street-particle 37.3%, date-name 0.5% (BAN's ceiling — only 1,418 such streets exist),
 # street-housenumber 21.0% + alnum-housenumber 7.0% (the ANCHOR, so the licence is not UNLEARNED),
 # and bare-locality 20.0% — the COUNTER-DISTRIBUTION, which is not optional. T1c's standing
@@ -33,18 +33,18 @@
 # lets it satisfy every row by flipping that default — trading one broken prior for another. Both
 # bare forms must appear so the DESIGNATOR is the discriminating evidence.
 #
-# THE SPLIT: the shard excludes all 2,400 street surfaces reserved by the fragment board
+# THE SPLIT: the slice excludes all 2,400 street surfaces reserved by the fragment board
 # (mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt) — source-disjoint by normalized
 # street SURFACE, not by record row. Verified: 0 of 144,865 emitted rows carry a board surface. The
-# recipe THROWS without the list rather than mint a shard that trains on its own eval set.
+# recipe THROWS without the list rather than mint a slice that trains on its own eval set.
 #
 # THE GATE (pre-registered; baselines.json profile fragment-fr-v264, registered against the SHIPPED
 # model at commit e45e0255):
 #   MOVE  : bare-street 0.215 · street-particle 0.273 · admin-street-homonym 0.087 · date-name 0.055
-#   GUARD : street-housenumber 0.925 · alnum-housenumber 0.925  (contextful — a shard that fixes
+#   GUARD : street-housenumber 0.925 · alnum-housenumber 0.925  (contextful — a slice that fixes
 #           fragments by degrading full addresses has MOVED the failure, not fixed it)
 #   GUARD : bare-locality 0.980 — THE ONE TO WATCH. It may fall BY DESIGN. If it collapses while the
-#           bare classes rise, the shard traded one default for another instead of teaching the
+#           bare classes rise, the slice traded one default for another instead of teaching the
 #           distinction, and the counter-distribution ratio (--bare-prob) is the knob.
 #   GUARD : the global parity floor (mailwoman eval parity). Board 2 moving is not a verdict alone.
 #   ALSO  : parity.street.hallucination_rate@v301-span 0.352 should FALL if T1c's diagnosis holds.
@@ -52,10 +52,10 @@
 #
 # NOT A PROMOTE GATE. The standing floors and the 2pp golden gate are untouched; this checkpoint
 # ships nowhere on its own. If the bare classes are FLAT: do NOT bump the weight and re-run — that is
-# the treadmill. One diagnostic (did the shard rows actually reach the loader? check the manifest
+# the treadmill. One diagnostic (did the slice rows actually reach the loader? check the manifest
 # read), then fork to the operator.
 #
-# ⚠ conventions loss-mask: this shard TEACHES FR street_prefix. The mask forbids it for FR and would
+# ⚠ conventions loss-mask: this slice TEACHES FR street_prefix. The mask forbids it for FR and would
 # -inf these gold labels (the v1.6.0 ~7M-loss blow-up). It is OFF in this lineage already (v264
 # inherits v193a3, and synth-fr-admin-split/synth-fr-bare-street already teach FR street_prefix), so
 # no action — but do not turn it on for this run.
@@ -93,7 +93,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay shard.
+  source_weights: # VERBATIM v2.4.1 + the one new assay slice.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -122,7 +122,7 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the

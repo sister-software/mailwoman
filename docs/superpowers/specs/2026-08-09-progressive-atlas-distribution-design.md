@@ -23,7 +23,7 @@ adding more databases:
 3. Where do country-specific address systems live when the atlas is globally partitioned?
 4. How does the CLI explain, plan, fetch, verify, and diagnose the resulting installation?
 
-This design answers those questions. It does not choose the physical H3 shard resolution, publish a
+This design answers those questions. It does not choose the physical H3 extract resolution, publish a
 new catalog, or estimate final artifact sizes. Those require measured build prototypes.
 
 ## Decision
@@ -170,7 +170,7 @@ npx mw data pull --area gb --detail address
 Profiles provide progressive disclosure. `starter`, `standard`, `local`, and `complete` are named
 catalog queries, not frozen bundles with bespoke loaders.
 
-## Area selection and physical shards
+## Area selection and physical extracts
 
 The public CLI accepts several area selectors:
 
@@ -184,7 +184,7 @@ named administrative entity after the global core is installed
 
 The catalog expands an area selector into immutable spatial artifacts. A fixed coarse global grid is
 the leading physical layout because every spatial layer already declares an H3 spine. The exact
-resolution remains a prototype decision: dense cities and sparse rural regions need measured shard
+resolution remains a prototype decision: dense cities and sparse rural regions need measured extract
 size and open-file behavior before we freeze it.
 
 A country request remains pleasant:
@@ -196,11 +196,11 @@ mw data pull --area nz --detail address
 Internally it selects the intersecting address artifacts. A border query may select cells from two
 countries without inventing a special cross-border database.
 
-The build assigns an entity to one canonical home shard and records cross-shard references by stable
-ID. Geometry that crosses shard boundaries needs an explicit fragmentation or indirection rule; the
+The build assigns an entity to one canonical home extract and records cross-extract references by stable
+ID. Geometry that crosses extract boundaries needs an explicit fragmentation or indirection rule; the
 prototype must prove that rule before publication.
 
-SQLite's attachment limit rules out attaching a planet of tiny files. The runtime needs a shard
+SQLite's attachment limit rules out attaching a planet of tiny files. The runtime needs a extract
 broker that:
 
 1. maps the query or candidate region to artifact IDs;
@@ -240,8 +240,8 @@ Catalog releases are immutable and content-addressed. Installation writes a loca
 every artifact is downloaded, hashed, sealed, and atomically moved. A failed multi-artifact pull
 leaves the prior installation usable.
 
-Dependencies are explicit. An address shard may depend on a global identity version and a street
-schema version without requiring every other address shard from the same country.
+Dependencies are explicit. An address extract may depend on a global identity version and a street
+schema version without requiring every other address extract from the same country.
 
 ## CLI contract from issue #1577
 
@@ -322,7 +322,7 @@ The layer contract's three tiers remain:
 - `build-local`: ODbL or other restricted inputs built on the consumer's machine;
 - `private`: customer and internal layers that never leave their environment.
 
-All three register through the same local catalog and shard broker. A country may combine BAN,
+All three register through the same local catalog and extract broker. A country may combine BAN,
 OpenAddresses, OSM, and private address facts while provenance remains attached to each row and
 artifact. The resolver's precedence policy must preserve those sources rather than flattening them
 into an unexplained winner.
@@ -338,7 +338,7 @@ data pull fr         → area=fr, detail=address
 data pull poi        → layer=poi at its published coverage
 ```
 
-The old conventional paths continue to resolve while the shard broker lands. `doctor --verbose`
+The old conventional paths continue to resolve while the extract broker lands. `doctor --verbose`
 reports legacy artifacts and the equivalent catalog request. Migration never rewrites or deletes a
 legacy database automatically; `data prune` requires an explicit selection and prints what becomes
 unavailable.
@@ -350,9 +350,9 @@ No distribution migration begins until a prototype answers these with receipts:
 1. Size by projection: global core, locality facts, primary names, basic aliases, full aliases.
 2. Lookup quality against the current `candidate.db`, stratified by country, placetype, script, and
    primary-name versus alias query.
-3. Node lookup latency, cold-open cost, and bounded-cache behavior across realistic shard counts.
+3. Node lookup latency, cold-open cost, and bounded-cache behavior across realistic extract counts.
 4. Browser byte-range behavior for normalized and denormalized projections.
-5. Cross-border queries and cross-shard graph edges.
+5. Cross-border queries and cross-extract graph edges.
 6. Fallback correctness when locality, postcode, street, or address layers are absent.
 7. Path portability on Linux, macOS, Windows, containers, and a custom `MAILWOMAN_DATA_ROOT`.
 8. Catalog tamper, traversal, partial-download, stale-version, and dependency-failure tests.
@@ -366,7 +366,7 @@ No distribution migration begins until a prototype answers these with receipts:
 2. Produce normalized global-core and locality prototypes beside the current candidate artifact.
 3. Add a catalog schema and `data plan`; keep `data pull` on the current registry during this step.
 4. Implement path resolution and env-path defaults from issue #1577.
-5. Build the shard broker over a small two-region address pilot, including a border case.
+5. Build the extract broker over a small two-region address pilot, including a border case.
 6. Re-run candidate parity, the geocoder panel, and cold-start documentation tests.
 7. Publish `starter` as an opt-in profile. Preserve the current candidate path as default until the
    acceptance battery clears.

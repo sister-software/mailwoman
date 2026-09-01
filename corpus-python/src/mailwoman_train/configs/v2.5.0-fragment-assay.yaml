@@ -1,14 +1,14 @@
-# v2.5.0-fragment-assay — PROBE 1 of the parity campaign (night-1, 2026-07-13): the fragment-shard
+# v2.5.0-fragment-assay — PROBE 1 of the parity campaign (night-1, 2026-07-13): the fragment-slice
 # ASSAY, not a ship candidate. Refutes-or-confirms "data alone closes the fragment gap" on the
 # current architecture; the pre-registered read-out separator (campaign runbook) is:
 #   token-F1 up + span-exact-match lag + trailing-number→postcode persisting  ⇒  #727 span-head
 #   ceiling CONFIRMED → redirect budget to the structured-span-head arc; do NOT ship this.
 #
-# RECIPE = v2.4.1-fr-nsplice-ft VERBATIM, with EXACTLY these deltas (one lever: the shard):
-#   1. corpus_dir → v0.10.2-fragment-assay overlay (v0.10.1's 699 shards verbatim via manifest
+# RECIPE = v2.4.1-fr-nsplice-ft VERBATIM, with EXACTLY these deltas (one lever: the slice):
+#   1. corpus_dir → v0.10.2-fragment-assay overlay (v0.10.1's 699 slices verbatim via manifest
 #      cross-dir refs + part-fragment.parquet: 123,272 rows, 16 OA locales + tiger-block US streets,
 #      BALANCED POLARITY — bare-street/street+trailing-number rows AND bare-locality twins; the
-#      #511 spread-scan measured shard street surfaces ~46% street-family / ~54% admin in the base,
+#      #511 spread-scan measured slice street surfaces ~46% street-family / ~54% admin in the base,
 #      so street-only rows would have taught "context-free name = street").
 #   2. source_weights += synth-fragment: 6.0 (the synth-nl-postcode moderate precedent, NOT the 12.0
 #      targeted-fix weight — an assay must not outvote the base).
@@ -51,7 +51,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay shard.
+  source_weights: # VERBATIM v2.4.1 + the one new assay slice.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -80,7 +80,7 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

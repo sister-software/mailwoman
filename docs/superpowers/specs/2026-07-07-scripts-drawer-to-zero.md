@@ -61,11 +61,11 @@ Everything else either moves into a package (as a module), becomes an Ink comman
 
 These are addressed in `docs/superpowers/specs/2026-07-07-scripts-cleanup-gazetteer-cli-design.md`. The spec is approved; implementation is pending (3 PRs). The items below are listed for completeness — their fate is already decided.
 
-| Script(s)                                                                                                                                                                                                                                                                                                                                                                                   | Fate                                                      | Details                                                                                      |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Gazetter builders (build-unified-wof, add-region-abbrevs, add-ancestors, backfill-ancestors-from-hierarchy, augment-admin-_, build-admin-geonames-fold, build-coverage-expansion, backfill-postcode-centroids, fill-zcta-centroids, build-postcode-locality_, build-postalcode-nl-pc6, audit-po-box-cedex-shard, build-supplemental-gazetteer, build-pilot-anchor-lookup, reverse-eu-panel) | **Migrate → `mailwoman/gazetteer-pipeline/`** then delete | Subsumed by `mailwoman gazetteer build [admin\|candidate\|postcode\|polygons]`. See spec §5. |
-| `wof-build-manifest.json`                                                                                                                                                                                                                                                                                                                                                                   | Becomes auto-appended build log                           | Written by the command, not a recipe store.                                                  |
-| `scripts/data/county-population-ranked.json`                                                                                                                                                                                                                                                                                                                                                | Moves into the pipeline module as a constant or data file |                                                                                              |
+| Script(s)                                                                                                                                                                                                                                                                                                                                                                                     | Fate                                                      | Details                                                                                      |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Gazetter builders (build-unified-wof, add-region-abbrevs, add-ancestors, backfill-ancestors-from-hierarchy, augment-admin-_, build-admin-geonames-fold, build-coverage-expansion, backfill-postcode-centroids, fill-zcta-centroids, build-postcode-locality_, build-postalcode-nl-pc6, audit-po-box-cedex-extract, build-supplemental-gazetteer, build-pilot-anchor-lookup, reverse-eu-panel) | **Migrate → `mailwoman/gazetteer-pipeline/`** then delete | Subsumed by `mailwoman gazetteer build [admin\|candidate\|postcode\|polygons]`. See spec §5. |
+| `wof-build-manifest.json`                                                                                                                                                                                                                                                                                                                                                                     | Becomes auto-appended build log                           | Written by the command, not a recipe store.                                                  |
+| `scripts/data/county-population-ranked.json`                                                                                                                                                                                                                                                                                                                                                  | Moves into the pipeline module as a constant or data file |                                                                                              |
 
 ### ▸ Phase 1 — The `lib/` dissolution (low-hanging fruit, highest duplication payoff)
 
@@ -155,10 +155,10 @@ These are tooling scripts — not builders, not eval, not release. They belong i
 | `generate-trace-fixture.ts`      | **Stay**, candidate for `mailwoman dev generate-trace-fixture`      | Trace fixture generator. Uses `parseArgs` correctly already. |
 | `generate.ts`                    | **Stay**                                                            | Unknown purpose — evaluate during Phase 6. May be dead.      |
 | `jsonl-to-parquet.ts`            | **Stay**, candidate for `mailwoman dev jsonl-to-parquet`            | Simple conversion utility.                                   |
-| `lint-corpus-shard.ts`           | **Stay**, candidate for `mailwoman corpus lint`                     | Corpus shard linter — should live with corpus commands.      |
+| `lint-corpus-extract.ts`         | **Stay**, candidate for `mailwoman corpus lint`                     | Corpus extract linter — should live with corpus commands.    |
 | `lint-mdx-angles.ts`             | **Stay**, candidate for `mailwoman dev lint-mdx`                    | MDX angle-bracket linter.                                    |
-| `lint-shard-vocab.ts`            | **Stay**, candidate for `mailwoman corpus lint-vocab`               | Shard vocabulary linter.                                     |
-| `lint-rules.json`                | **Stay**                                                            | The rules config for lint-corpus-shard. Moves with it.       |
+| `lint-extract-vocab.ts`          | **Stay**, candidate for `mailwoman corpus lint-vocab`               | Extract vocabulary linter.                                   |
+| `lint-rules.json`                | **Stay**                                                            | The rules config for lint-corpus-extract. Moves with it.     |
 
 ### ▸ Phase 7 — Release tooling (legitimate permanent residents)
 
@@ -174,20 +174,20 @@ These are invoked by `.release-it.json` hooks, CI, or the operator at release ti
 | `check-release-parity.ts`              | **Stay**                            | Verifies all workspace versions match the release tag.                                                     |
 | `rewrite-workspace-imports.ts`         | **Stay**                            | Post-release import rewriting.                                                                             |
 | `release-workspace-repository.test.ts` | **Stay**                            | Test for the release flow.                                                                                 |
-| `verify-shard-acks.ts`                 | **Stay**                            | Verifies shard acknowledgements.                                                                           |
+| `verify-extract-acks.ts`               | **Stay**                            | Verifies extract acknowledgements.                                                                         |
 | `verify-export-quant-versions.ts`      | **Stay**                            | Verifies quantized model version exports.                                                                  |
 | `smoke-clean-install.ts`               | **Stay**                            | CI smoke test — clean install from npm.                                                                    |
 | `smoke-resolve.ts`                     | **Stay**                            | CI smoke test — resolution check.                                                                          |
 
 ### ▸ Phase 8 — Config & docs files (staying)
 
-| File                            | Fate                                        | Rationale                                                                                   |
-| ------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `AGENTS.md`                     | **Stay**                                    | Agent instructions for the scripts directory. Update to reflect the new slimmed-down world. |
-| `CLAUDE.md`                     | **Stay** (symlink to AGENTS.md)             | Already just `@AGENTS.md`.                                                                  |
-| `tsconfig.json`                 | **Stay**                                    | TypeScript config for `yarn typecheck:scripts`.                                             |
-| `v062-model-card-template.json` | **Stay** or move to `neural-weights-en-us/` | Model card template. Belongs with the model metadata, not scripts.                          |
-| `lint-rules.json`               | **Stay** (moves with lint-corpus-shard.ts)  | See Phase 6.                                                                                |
+| File                            | Fate                                         | Rationale                                                                                   |
+| ------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `AGENTS.md`                     | **Stay**                                     | Agent instructions for the scripts directory. Update to reflect the new slimmed-down world. |
+| `CLAUDE.md`                     | **Stay** (symlink to AGENTS.md)              | Already just `@AGENTS.md`.                                                                  |
+| `tsconfig.json`                 | **Stay**                                     | TypeScript config for `yarn typecheck:scripts`.                                             |
+| `v062-model-card-template.json` | **Stay** or move to `neural-weights-en-us/`  | Model card template. Belongs with the model metadata, not scripts.                          |
+| `lint-rules.json`               | **Stay** (moves with lint-corpus-extract.ts) | See Phase 6.                                                                                |
 
 ### ▸ Phase 9 — Eval harness (legitimate permanent resident)
 
@@ -199,12 +199,12 @@ The 166 tracked files in `scripts/eval/` (plus the 2 gitignored), plus the 55 di
 
 ### ▸ Phase 10 — The lone `.mjs` and stale references
 
-| File                                                                                   | Fate                           | Rationale                                                    |
-| -------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------ |
-| `scripts/diagnostic/gate-nl-postcode.mjs`                                              | **Convert to `.ts` or delete** | The ONLY surviving `.mjs`. AGENTS.md explicitly bans `.mjs`. |
-| 11 `.mjs` references in docstrings/comments                                            | **Update comments**            | Stale references to scripts that no longer exist as `.mjs`.  |
-| `scripts/lib/zip-csv.ts:15` references `ingest-openaddresses.mjs`                      | **Fix during Phase 1**         | Stale reference.                                             |
-| `scripts/eval/audit-po-box-cedex-shard.ts:8` references `build-po-box-cedex-shard.mjs` | **Fix during Phase 0**         | Handled by gazetteer spec.                                   |
+| File                                                                                       | Fate                           | Rationale                                                    |
+| ------------------------------------------------------------------------------------------ | ------------------------------ | ------------------------------------------------------------ |
+| `scripts/diagnostic/gate-nl-postcode.mjs`                                                  | **Convert to `.ts` or delete** | The ONLY surviving `.mjs`. AGENTS.md explicitly bans `.mjs`. |
+| 11 `.mjs` references in docstrings/comments                                                | **Update comments**            | Stale references to scripts that no longer exist as `.mjs`.  |
+| `scripts/lib/zip-csv.ts:15` references `ingest-openaddresses.mjs`                          | **Fix during Phase 1**         | Stale reference.                                             |
+| `scripts/eval/audit-po-box-cedex-extract.ts:8` references `build-po-box-cedex-extract.mjs` | **Fix during Phase 0**         | Handled by gazetteer spec.                                   |
 
 ---
 

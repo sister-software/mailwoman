@@ -7,7 +7,7 @@ average. The interesting part is why.
 
 ## What we set out to do
 
-#825 was filed as a retrain: add an OpenAddresses Slavic-diacritic shard so the model stops tagging
+#825 was filed as a retrain: add an OpenAddresses Slavic-diacritic extract so the model stops tagging
 `č ř ž ą ł` tokens as `O`. The hypothesis was that Czech/Polish street and locality names were fragmenting
 because the model had never seen them with house-number/street context — a training-data gap.
 
@@ -16,13 +16,13 @@ because the model had never seen them with house-number/street context — a tra
 **We built the ship candidate carefully — and caught a trap doing it.** The obvious move was to grade the
 running probe (`v1.9.3-slavic-diacritic`). But that recipe was copied from `v1.9.2-multilocale-au` (v4.14.0),
 which predates the #723 anchor-absorption fix. Grading it against v4.15.0 would have confounded the Slavic
-shard with a reverted #723 — and #723 is coordinate-invisible, so the coord gate would never have caught it.
-So we forked a clean candidate, **v196-slavic-anchor** = v4.15.0's recipe verbatim + the one new shard, off
-the v4.15.0 corpus so it keeps #723. One variable. (Lesson banked: a shard recipe copied from vN-1 silently
+extract with a reverted #723 — and #723 is coordinate-invisible, so the coord gate would never have caught it.
+So we forked a clean candidate, **v196-slavic-anchor** = v4.15.0's recipe verbatim + the one new extract, off
+the v4.15.0 corpus so it keeps #723. One variable. (Lesson banked: a extract recipe copied from vN-1 silently
 inherits vN-1's bugs.)
 
 **The mid-train read (40k) said US was untouched and CZ/PL was flat.** US coord p50 diff −0.002km,
-CI [−0.02, 0]. CZ/PL wrong-city rate unchanged. The shard was proving genuinely US-safe but not moving the
+CI [−0.02, 0]. CZ/PL wrong-city rate unchanged. The extract was proving genuinely US-safe but not moving the
 coordinate.
 
 **The coverage detour, and the eyeball that overturned our own aggregate.** The operator asked us to scope
@@ -38,11 +38,11 @@ has the diacritic _characters_ but no multi-char _subwords_ containing them, so 
 own piece — CZ localities at 3.3× English fertility. This is the documented "tokenizer fertility tax." Four
 parallel SOTA agents + a DeepSeek consult mapped the fix space: vocabulary expansion (byte-identical English
 by construction), byte/char-level models (universal but latency-heavy), and a CharCNN front-end (cheap +
-universal). The fix was tokenizer-side; the shard was the wrong lever.
+universal). The fix was tokenizer-side; the extract was the wrong lever.
 
 **The 80k gate confirmed it — and then some.** v196 at full convergence: US held (p50 3.31, zero dilution),
 PL flat, but **CZ regressed** — resolved-p50 5.24 → 82.89km, wrong-city 44 → 58%. At 40k CZ was flat; the
-extra 40k steps at constant LR overfit the shard and broke the Czech parses. NO-PROMOTE. The retrain didn't
+extra 40k steps at constant LR overfit the extract and broke the Czech parses. NO-PROMOTE. The retrain didn't
 just fail to help — at scale it did harm. We only know because we graded the assembled coordinate; on
 label-F1 the content-gap went 100→17% and the model looked fixed.
 
@@ -107,7 +107,7 @@ wrong-city 44→28), PL improvement (p50 −0.85, wrong-city 30→11), functiona
 
 ## Lessons
 
-1. **Fragmentation, not data.** For diacritic-heavy scripts, a data shard at a frozen tokenizer cannot fix
+1. **Fragmentation, not data.** For diacritic-heavy scripts, a data extract at a frozen tokenizer cannot fix
    span boundaries — the tokenizer decides the boundaries. Fix the tokenizer.
 2. **The cheapest falsifier goes first.** The tokenizer fertility probe was $0 and decisive; it should have
    preceded the GPU spend, not followed it.

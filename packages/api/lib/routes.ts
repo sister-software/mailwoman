@@ -114,7 +114,7 @@ const resolveResponses = {
 
 const reloadResponses = {
 	200: {
-		description: "Versioned data switchover result — the new per-shard version map.",
+		description: "Versioned data switchover result — the new per-extract version map.",
 		content: {
 			"application/json": { schema: z.looseObject({ reloaded: z.boolean(), versions: z.unknown() }) },
 		},
@@ -198,7 +198,7 @@ const reloadRoute = createRoute({
 	method: "post",
 	path: "/v1/reload",
 	operationId: "reload",
-	summary: "Reload versioned data shards (deploy-only; gate at ingress)",
+	summary: "Reload versioned data extracts (deploy-only; gate at ingress)",
 	tags: ["meta"],
 	responses: reloadResponses,
 })

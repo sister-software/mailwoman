@@ -4,15 +4,15 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman situs attribution-manifest` — regenerate a COMPLETE situs attribution manifest from
- *   the address-point shards on disk. The national build driver (`mailwoman situs build`) only
+ *   the address-point databases on disk. The national build driver (`mailwoman situs build`) only
  *   records the states it built in a given run, so after incremental / resumed builds its
  *   `ATTRIBUTION.json` undercounts. This reads every `address-points-us-*.db` in the directory and
  *   aggregates the per-row `source` (`overture:<dataset>`) provenance into a full ledger — the
  *   document we owe consumers for the OpenAddresses attribution obligation (NAD is US public
  *   domain; the named OA sources want credit).
  *
- *   This regenerates a small JSON manifest from read-only shards (it builds no large DB), so — as in
- *   the original script — `ATTRIBUTION.json` is written directly in place. Per-shard progress
+ *   This regenerates a small JSON manifest from read-only databases (it builds no large DB), so — as in
+ *   the original script — `ATTRIBUTION.json` is written directly in place. Per-database progress
  *   streams to stderr; the summary lands on stdout.
  */
 
@@ -35,7 +35,7 @@ export const spec = {
 	options: {
 		"out-dir": {
 			type: "string",
-			description: "Directory holding the address-points-us-<st>.db shards. Default <data-root>/address-points",
+			description: "Directory holding the address-points-us-<st>.db databases. Default <data-root>/address-points",
 		},
 		release: { type: "string", default: "2026-05-20.0", description: "Overture release tag stamped into the manifest" },
 	},
@@ -59,28 +59,28 @@ const SitusAttributionManifest: ParsedCommandComponent<Options> = ({ options }) 
 
 		const outDir = options.outDir ?? dataRootPath("address-points")
 
-		// Canonical per-state shards only: address-points-us-<2-letter-slug>.db. Excludes county-scoped
-		// dev artifacts (e.g. address-points-us-il-cook.db) that overlap a state shard and the CLI never
+		// Canonical per-state databases only: address-points-us-<2-letter-slug>.db. Excludes county-scoped
+		// dev artifacts (e.g. address-points-us-il-cook.db) that overlap a state database and the CLI never
 		// selects.
-		const shardFiles = (await readDirectory(outDir))
+		const databaseFiles = (await readDirectory(outDir))
 			.filter((f) => /^address-points-us-[a-z]{2}\.db$/.test(f))
 			.toSorted()
 
 		const manifest: {
 			release: string
-			regeneratedFromShards: number
+			regeneratedFromDatabases: number
 			totalPoints: number
 			datasetTotals: Record<string, number>
 			states: Record<string, StateLedger>
 		} = {
 			release: options.release,
-			regeneratedFromShards: shardFiles.length,
+			regeneratedFromDatabases: databaseFiles.length,
 			totalPoints: 0,
 			datasetTotals: {},
 			states: {},
 		}
 
-		for (const file of shardFiles) {
+		for (const file of databaseFiles) {
 			const slug = file.replace(/^address-points-us-/, "").replace(/\.db$/, "")
 			let db: DatabaseClient<AddressPointDatabase>
 
@@ -124,7 +124,7 @@ const SitusAttributionManifest: ParsedCommandComponent<Options> = ({ options }) 
 
 		const lines = [
 			`attribution: ${attributionPath}`,
-			`${shardFiles.length} shards · ${manifest.totalPoints.toLocaleString()} total points`,
+			`${databaseFiles.length} databases · ${manifest.totalPoints.toLocaleString()} total points`,
 			`top sources:`,
 		]
 

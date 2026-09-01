@@ -17,7 +17,7 @@
  *
  *   The `street` surface carries the locale's street keyword verbatim (`"CALLE JULAN"`, `"VIA
  *   ROMA"`). We map it to `street` whole and let the downstream affix-relabel split `street_prefix`
- *   — the same path every other source rides. This shard exists because the model was
+ *   — the same path every other source rides. This slice exists because the model was
  *   en-us/fr-trained and never saw non-en/fr street formats (the 2026-06-19 EU parse-blocker
  *   measured loc-correct ES 21% / IT 59% / NL 64% vs FR/US ~98%).
  *

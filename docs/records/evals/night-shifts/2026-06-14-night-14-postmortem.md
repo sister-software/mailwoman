@@ -17,16 +17,16 @@ All six merged to `main`:
   not the assembled pipeline. Flipped the default to argmax; filed the grouper root cause as #565.
 - **#567 — National situs.** 124,928,159 address points, 50 states, 29 GB, 0 failures, from the pinned
   Overture parquet. Driver `build-national-situs.mjs`.
-- **National interpolation** (shipped under the #569 arc, no separate PR — data artifacts). 52 shards,
+- **National interpolation** (shipped under the #569 arc, no separate PR — data artifacts). 52 extracts,
   11 GB, all 3144 TIGER counties. Fills the situs-miss tail including NH + HI (zero Overture situs).
 - **#569 — Conformal-calibrated interpolation radius.** The raw half-segment radius covers only 71.9% of
   true errors; **×Q̂=1.70 → 91.5%** (target 90%). Opt-in `ResolveOpts.interpolationRadiusCalibration`,
   on-by-default in the geocode CLI.
-- **#570 — Empty-shard graceful degradation (#568).** A tableless shard crashed a whole state; now it's a
+- **#570 — Empty-extract graceful degradation (#568).** A tableless extract crashed a whole state; now it's a
   no-op miss. Shared `hasTable()` guard across all three lookups.
 - **#571 — Street-level `/api/geocode` + `/api/batch` (#485 pt 1).** Extracted the cascade into
   `geocode-core.ts` (shared by CLI + server), added batch with bounded concurrency + per-row error
-  isolation + a per-state shard cache.
+  isolation + a per-state extract cache.
 - **#572 — Observability `/health` + `/metrics` (#485 pt 2).** "What's deployed in one curl" +
   per-tier counts and latency percentiles.
 
@@ -92,15 +92,15 @@ All six merged to `main`:
 
 ## Numbers
 
-| Metric               | Value                                                                                        |
-| -------------------- | -------------------------------------------------------------------------------------------- |
-| PRs merged           | 6 (#566, #567, #569, #570, #571, #572)                                                       |
-| PRs open             | 0 (RemoteResolver in flight)                                                                 |
-| National data builds | 2 — situs (124.9M pts, 29 GB), interpolation (52 shards, 11 GB)                              |
-| Tests added          | ~17 (reconcile audit ×2, empty-shard 3, geocode-router 5, health-router 4, + recorder units) |
-| Issues filed         | 3 (#565 grouper, #568 empty-shard→fixed, audit findings)                                     |
-| Modal GPU time       | 0 (no training — resolver/data/service night)                                                |
-| NaN incidents        | 0                                                                                            |
-| Heat peak            | 92.8 °C (operator-waived)                                                                    |
-| Parallel situs build | 40 states in 4.2 min (concurrency 4)                                                         |
-| DoD checkpoint       | 98.8% within 100m (Travis, non-circular); interp-only 79.5% hit / 52.7m median               |
+| Metric               | Value                                                                                          |
+| -------------------- | ---------------------------------------------------------------------------------------------- |
+| PRs merged           | 6 (#566, #567, #569, #570, #571, #572)                                                         |
+| PRs open             | 0 (RemoteResolver in flight)                                                                   |
+| National data builds | 2 — situs (124.9M pts, 29 GB), interpolation (52 extracts, 11 GB)                              |
+| Tests added          | ~17 (reconcile audit ×2, empty-extract 3, geocode-router 5, health-router 4, + recorder units) |
+| Issues filed         | 3 (#565 grouper, #568 empty-extract→fixed, audit findings)                                     |
+| Modal GPU time       | 0 (no training — resolver/data/service night)                                                  |
+| NaN incidents        | 0                                                                                              |
+| Heat peak            | 92.8 °C (operator-waived)                                                                      |
+| Parallel situs build | 40 states in 4.2 min (concurrency 4)                                                           |
+| DoD checkpoint       | 98.8% within 100m (Travis, non-circular); interp-only 79.5% hit / 52.7m median                 |

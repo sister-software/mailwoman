@@ -36,7 +36,7 @@ house number because in French BAN (canonical, street-first) the house number al
 This is a textbook **shortcut** (Geirhos et al. 2020): a cue that aces the training distribution and
 fails under shift. The mechanistic match is Yu et al. (NeurIPS 2025): **low positional diversity →
 the transformer learns a positional shortcut rather than a content-based rule, and it's data
-_diversity_, not _volume_, that flips it.** Our synthetic shard adds diversity, which is why it
+_diversity_, not _volume_, that flips it.** Our synthetic extract adds diversity, which is why it
 helped (+32.9pp) — but synthetic diversity has a ceiling.
 
 Why more weight made it _worse_, with a new failure (postcode fragmentation):
@@ -44,7 +44,7 @@ Why more weight made it _worse_, with a new failure (postcode fragmentation):
 - **Synthetic-realism / distribution gap.** Augmentation gains are regime-dependent and plateau (Chen
   et al., TACL 2023); past an optimal ratio, an overweighted augmentation _shifts the training
   distribution away from real data and decreases performance_ (Wu et al. 2022, "On-the-fly Denoising").
-  At weight 6.0 the synthetic shard overwhelms real BAN and the model fits the generator's caricature
+  At weight 6.0 the synthetic extract overwhelms real BAN and the model fits the generator's caricature
   of reordered French, not the real eval distribution.
 - **Simplicity-bias fallback (the fragmentation mechanism).** When weight 6.0 corrupts the dominant
   "leading-token = house*number" shortcut \_without* installing a robust discriminator, the model falls
@@ -53,9 +53,9 @@ Why more weight made it _worse_, with a new failure (postcode fragmentation):
   number (`4`) out of the front of the postcode (`47110`), leaving `7110`. This is the piece pure
   position-bias doesn't explain on its own, and it's the clearest signal that _more of the same
   synthetic data is the wrong direction._
-- **One thing to verify (cheap):** does the synthetic shard itself carry any token-level label noise
+- **One thing to verify (cheap):** does the synthetic extract itself carry any token-level label noise
   at the postcode/house_number boundary? Even 2–3% of rows splitting a label at a digit boundary
-  would also produce fragmentation. Worth a check of the shard's span emission before the next run.
+  would also produce fragmentation. Worth a check of the extract's span emission before the next run.
 
 Why the German precedent didn't transfer: German house numbers are always **last** — one position to
 learn, so more practice sharpens the aim. FR postcode-first puts a 5-digit and a 1–4-digit number in

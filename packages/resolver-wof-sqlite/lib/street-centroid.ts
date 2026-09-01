@@ -8,7 +8,7 @@
  *   number) plus a postcode/commune scope, it returns the street's CENTROID + an honest extent-derived
  *   uncertainty from the derived `street-centroids-<cc>.db` roll-up.
  *
- *   Query-side normalization is THE shared normalizer (`street-normalize.ts`), selected per the shard's
+ *   Query-side normalization is THE shared normalizer (`street-normalize.ts`), selected per the extract's
  *   `streetLocale`, so build-side and probe-side keys agree by construction. The commune scope folds
  *   through `normalizeLocalityForKey` + `stripArrondissement` (BAN names Paris/Lyon/Marseille per
  *   arrondissement; a query names the base commune).
@@ -72,15 +72,15 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 	readonly #byLocality: PreparedGet<[locality: NameKey, street: StreetKey], AggRow> | undefined
 
 	/**
-	 * @param dbPath Shard path.
-	 * @param opts.streetLocale The street-normalization locale this shard was BUILT with — must match, or every key
+	 * @param dbPath Extract path.
+	 * @param opts.streetLocale The street-normalization locale this extract was BUILT with — must match, or every key
 	 *   misses. Defaults to `"fr"` (BAN is the French national register; the tier is FR-only today).
 	 */
 	constructor(dbPath: string, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#db = new DatabaseClient<StreetCentroidDatabase>(dbPath, { readOnly: true })
 		this.#locale = opts.streetLocale ?? "fr"
 
-		// Degrade gracefully on an empty/tableless shard (interrupted build, stray 0-byte file): with no
+		// Degrade gracefully on an empty/tableless extract (interrupted build, stray 0-byte file): with no
 		// `street_centroid` table this lookup is a no-op miss, not a crash (mirrors the address-point reader).
 		if (hasTable(this.#db, "street_centroid")) {
 			this.#byPostcode = prepareGet(

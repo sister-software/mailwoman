@@ -105,7 +105,7 @@ const POISearchInputSchema = z.object({
 	poiDatabasePath: z
 		.string()
 		.optional()
-		.describe("Path to a specific poi.db shard to search. Omit to use the server's configured default (if any)."),
+		.describe("Path to a specific poi.db extract to search. Omit to use the server's configured default (if any)."),
 })
 
 const OverpassExportInputSchema = z.object({
@@ -119,7 +119,7 @@ const LayerManifestInputSchema = z.object({
 	databasePath: z
 		.string()
 		.min(1)
-		.describe("Path to a mailwoman spatial-layer database (poi.db, an address-points shard, etc.)."),
+		.describe("Path to a mailwoman spatial-layer database (poi.db, an address-points extract, etc.)."),
 })
 
 const BDCFilingLandscapeInputSchema = z.object({
@@ -314,7 +314,7 @@ export function buildToolTable(deps: MCPToolDeps): MCPToolDef[] {
 		{
 			name: "mailwoman_layer_manifest",
 			description:
-				"Inspect a mailwoman spatial-layer database (poi.db, an address-points shard, etc.): read its provenance " +
+				"Inspect a mailwoman spatial-layer database (poi.db, an address-points extract, etc.): read its provenance " +
 				"and licensing manifest (source, vintage, build command, license) plus a coverage summary (how many H3 " +
 				"cells were surveyed, average completeness, total observed rows). Use this to check what a layer " +
 				"actually covers before relying on it.",

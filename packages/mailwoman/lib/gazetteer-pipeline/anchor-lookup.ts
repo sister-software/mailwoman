@@ -18,7 +18,7 @@
  *       collapse-relevant European rows get a European centroid on a collision. The centroid is the
  *       secondary signal (the posterior + the categorical anchor cue do the work).
  *   - **source** (#525, the provenance-first rule): names the dataset the centroid came from — `wof`
- *       (our WOF postcode shards, which may carry provenanced backfills; see the `centroid_source`
+ *       (our WOF postcode databases, which may carry provenanced backfills; see the `centroid_source`
  *       table), `census-zcta-2024` (Census ZCTA Gazetteer fill, either already in the DB or joined
  *       here via `--zcta`), or `null` for a placeholder (membership only).
  *
@@ -48,7 +48,7 @@
  *   KEY NORMALIZATION IS THE CONTRACT. `mailwoman_train/tokenizer.py::_paint_anchor_chars` looks up
  *   `raw[begin:end].replace(" ", "").upper()`. So every key here is the SPACE-STRIPPED, UPPERCASE
  *   surface: GB `SW1A 2AA` → `SW1A2AA`, NL `1012 LG` → `1012LG`. A key with a space in it can never be
- *   read. The shards already store exactly that form (`#920`'s sanitized-query token shape), so the
+ *   read. The databases already store exactly that form (`#920`'s sanitized-query token shape), so the
  *   loaders below pass `name` through unchanged.
  *
  *   PORT NOTE (from scripts/build-pilot-anchor-lookup.py): faithful TypeScript port. The output is a
@@ -167,7 +167,7 @@ const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
 const GB_INWARD_LENGTH = 3
 
 /**
- * An NL PC6 key: four digits glued to two letters (`1012LG`). The CBS shard stores the normalized form as `name` and
+ * An NL PC6 key: four digits glued to two letters (`1012LG`). The CBS database stores the normalized form as `name` and
  * the display form (`1012 LG`) as an alt `names` row; the painter only ever sees the normalized one.
  */
 const NL_PC6_KEY = /^\d{4}[A-Z]{2}$/
@@ -187,10 +187,10 @@ const NL_SOURCE = "cbs-pc6"
 
 /**
  * GB unit postcodes → centroid from `postalcode-gb-codepoint.db` (Ordnance Survey Code-Point Open, OGL v3.0 — 1,746,976
- * units, every one placed; the shard's `meta` carries the full attribution string that must accompany any
+ * units, every one placed; the database's `meta` carries the full attribution string that must accompany any
  * redistribution). This is the LICENCE-CLEAN GB source: the retired GeoNames GB rows are not it, and Overture has no GB
  * postcodes at all. Coverage gap, measured not assumed: ZERO Northern Ireland (BT) codes — Code-Point Open is
- * England/Scotland/Wales only, and NI postcode geography is LPS-licensed (see the shard's
+ * England/Scotland/Wales only, and NI postcode geography is LPS-licensed (see the database's
  * `coverage_gap_northern_ireland_options`).
  */
 function loadGBCodePoint(): Map<string, Centroid> {
@@ -253,8 +253,8 @@ function addGBOutwardKeys(units: Map<string, Centroid>): number {
 
 /**
  * NL PC6 postcodes → centroid from `postalcode-nl-pc6.db` (CBS "Postcode6 statistieken" via PDOK, CC-BY 4.0 — 464,964
- * codes, every one placed). WOF carries no NL `postalcode` tier at all, which is why this is a separate shard;
- * `postalcode-intl.db` also holds 371,628 GeoNames-lineage NL rows, and the CBS shard is both larger and built from
+ * codes, every one placed). WOF carries no NL `postalcode` tier at all, which is why this is a separate database;
+ * `postalcode-intl.db` also holds 371,628 GeoNames-lineage NL rows, and the CBS database is both larger and built from
  * polygon centroids, so it wins.
  */
 function loadNLPC6(): Map<string, Centroid> {

@@ -24,7 +24,7 @@ export interface AddressPointHit {
 	 */
 	release: string
 	/**
-	 * The point's OWN scope tags, when the shard row carries them — the register's locality (normalized key form) and
+	 * The point's OWN scope tags, when the extract row carries them — the register's locality (normalized key form) and
 	 * postcode. A rooftop answer can then be DECORATED with the commune/postcode the register attests, which a query that
 	 * never named them cannot supply. Optional: not every source carries both, and existing readers/consumers predate the
 	 * fields.
@@ -34,7 +34,7 @@ export interface AddressPointHit {
 }
 
 /**
- * Street-level exact-point lookup (#476). Implementations own their normalization — both the shard build and this
+ * Street-level exact-point lookup (#476). Implementations own their normalization — both the extract build and this
  * lookup must apply the SAME normalizer (see `resolver-wof-sqlite/street-normalize.ts`). Core depends only on this
  * contract.
  */
@@ -45,9 +45,10 @@ export interface AddressPointLookup {
 		postcode?: string
 		locality?: string
 		/**
-		 * Optional bbox scope (`minLat`/`maxLat`/`minLon`/`maxLon`), tried AFTER postcode/locality. For shards whose points
-		 * carry no postcode/locality of their own (OSM addr nodes often don't) but DO carry a coordinate — the resolved
-		 * locality's bounding box scopes the `(street, number)` probe instead. US situs never passes it (byte-stable).
+		 * Optional bbox scope (`minLat`/`maxLat`/`minLon`/`maxLon`), tried AFTER postcode/locality. For extracts whose
+		 * points carry no postcode/locality of their own (OSM addr nodes often don't) but DO carry a coordinate — the
+		 * resolved locality's bounding box scopes the `(street, number)` probe instead. US situs never passes it
+		 * (byte-stable).
 		 */
 		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 	}): AddressPointHit | null
@@ -98,11 +99,11 @@ export interface InterpolationLookup {
 		near?: { lat: number; lon: number }
 	}): InterpolatedPointHit | null
 	/**
-	 * The ARTIFACT's own conformal radius multiplier for `uncertaintyM` (#374), read from the shard's
+	 * The ARTIFACT's own conformal radius multiplier for `uncertaintyM` (#374), read from the extract's
 	 * `interp_calibration` metadata table at open time (the pair-index δ/transitionBeta header precedent): the multiplier
 	 * is a property of the calibration set the artifact was built against, so it ships in the artifact, not in caller
 	 * code. The resolver applies it as the DEFAULT whenever `ResolveOpts.interpolationRadiusCalibration` is absent.
-	 * `undefined` (or an implementation without the property) = the artifact carries none — shards built before the
+	 * `undefined` (or an implementation without the property) = the artifact carries none — extracts built before the
 	 * metadata table existed; behavior is then exactly the pre-artifact ladder (caller-supplied factor or raw).
 	 * Implementations must read this at OPEN time (constructor/factory), never per-lookup — `find()` is synchronous by
 	 * design.

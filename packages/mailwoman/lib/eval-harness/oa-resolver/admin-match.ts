@@ -120,18 +120,18 @@ export type LocalityMatcher = (expected: string | undefined, locNode: Resolved |
  * match the place's OWN ancestry (#386: `Plauen Vogtl` → Plauen, whose county is Vogtlandkreis). Different WOF ids
  * carry disjoint name sets, so Saint Albans never matches St. Johnsbury.
  *
- * The admin shard is opened read-only and both lookups are cached behind a near-miss, so the cost is negligible. The
+ * The admin database is opened read-only and both lookups are cached behind a near-miss, so the cost is negligible. The
  * handle lives as long as the eval — the process exit closes it.
  */
-export function buildLocalityMatcher(adminShardPath: string): LocalityMatcher {
+export function buildLocalityMatcher(adminDatabasePath: string): LocalityMatcher {
 	// Gazetteer-alias locality matching. A resolved place counts as a locality match if OA's
 	// expected name equals ANY of that place's WOF `names` rows (normalized) — not just its
 	// single canonical name. This credits forms WOF records as the SAME place (Butte ↔
 	// Butte-Silver Bow, Saint ↔ St. Johnsbury, Mt ↔ Mount Pleasant) WITHOUT loosening genuine
 	// wrong-place misses: different WOF ids carry disjoint name sets, so Saint Albans never
-	// matches St. Johnsbury. The admin db (shard 0) is opened read-only; `names` is indexed on
+	// matches St. Johnsbury. The admin db (database 0) is opened read-only; `names` is indexed on
 	// id, and lookups are cached + only fire on a near-miss, so the cost is negligible.
-	const adminDB = new DatabaseClient<WOFDatabase>(adminShardPath, { readOnly: true })
+	const adminDB = new DatabaseClient<WOFDatabase>(adminDatabasePath, { readOnly: true })
 	const namesStmt = adminDB.prepare("SELECT name FROM names WHERE id = ?")
 	const altCache = new Map<number, Set<string>>()
 

@@ -34,7 +34,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { type FreshnessArtifact, type FreshnessReport, readFreshness } from "#freshness"
 import {
 	buildNoGazetteerMessage,
-	existingWOFShardPaths,
+	existingWOFDatabasePaths,
 	mailwomanDataRoot,
 	resolveCandidateDBPath,
 } from "#resolver-backend"
@@ -119,11 +119,11 @@ export interface GazetteerPaths {
 	 */
 	candidateDB: string | undefined
 	/**
-	 * The WOF admin FTS shards that exist on disk.
+	 * The WOF admin FTS databases that exist on disk.
 	 */
 	wofPaths: string[]
 	/**
-	 * The first shard — the admin DB the reverse geocoder opens. `undefined` when there are no shards.
+	 * The first database — the admin DB the reverse geocoder opens. `undefined` when there are no databases.
 	 */
 	adminDBPath: string | undefined
 }
@@ -133,19 +133,19 @@ export interface GazetteerPaths {
  *
  * - An EXPLICIT `--candidate-db` that does not exist errors loudly. It must never silently fall back to whatever ambient
  *   data-root file happens to be present — a typo'd path would otherwise serve the wrong gazetteer without a word.
- * - No candidate DB AND no shards prints the named-artifact message with the one command that fixes it, instead of
- *   letting the resolver throw its internal "resolveShards: at least one shard is required".
+ * - No candidate DB AND no databases prints the named-artifact message with the one command that fixes it, instead of
+ *   letting the resolver throw its internal "resolveExtracts: at least one database is required".
  */
 export async function resolveGazetteerOrExit(candidateDBFlag: string | undefined): Promise<GazetteerPaths> {
 	if (candidateDBFlag && !(await pathExists(candidateDBFlag))) {
 		fail(`✗ --candidate-db not found: ${candidateDBFlag}`)
 	}
 
-	const wofPaths = await existingWOFShardPaths()
+	const wofPaths = await existingWOFDatabasePaths()
 
 	// Candidate gazetteer = worldwide resolution (population-first ranking + global coverage + the FTS5-trigram typo
 	// fallback). --candidate-db, else $MAILWOMAN_CANDIDATE_DB, else the `<data-root>/wof/candidate.db` convention
-	// path. Absent → the admin FTS shards.
+	// path. Absent → the admin FTS databases.
 	const candidateDB = await resolveCandidateDBPath(candidateDBFlag)
 
 	if (!candidateDB && !wofPaths.length) {
@@ -180,8 +180,8 @@ export function gazetteerBannerLines({ adminDBPath, candidateDB }: GazetteerPath
  *
  * The set is derived from the same {@link GazetteerPaths} the banner prints, and it follows the backend selection rather
  * than the search order: `createResolverBackend` opens the candidate gazetteer ALONE when one is resolved, so listing
- * the admin shards beside it would name databases this process never read. The reverse geocoder is the exception — it
- * opens the first admin shard whatever the forward path chose, which can be a different build, so it is reported
+ * the admin databases beside it would name databases this process never read. The reverse geocoder is the exception —
+ * it opens the first admin database whatever the forward path chose, which can be a different build, so it is reported
  * separately unless it is already in the list.
  *
  * Call once at boot: a server holds its handles for its whole life, so the artifact it serves from is the one it opened
@@ -198,7 +198,7 @@ export async function gazetteerFreshness({
 		artifacts.push({ name: "gazetteer", path: candidateDB })
 	} else {
 		for (const [index, path] of wofPaths.entries()) {
-			artifacts.push({ name: `gazetteer-shard-${index}`, path })
+			artifacts.push({ name: `gazetteer-database-${index}`, path })
 		}
 	}
 

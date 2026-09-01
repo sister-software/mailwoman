@@ -48,8 +48,8 @@ aren't lost.
 #    https://download.geofabrik.de/europe/france/ile-de-france-latest.osm.pbf
 #    → $MAILWOMAN_DATA_ROOT/osm/geofabrik/
 
-# 2. Build the shard (writes $MAILWOMAN_DATA_ROOT/osm/address-points-fr-idf.db):
-node osm/out/scripts/build-rooftop-shard.js \
+# 2. Build the extract (writes $MAILWOMAN_DATA_ROOT/osm/address-points-fr-idf.db):
+node osm/out/scripts/build-rooftop-extract.js \
   --country fr --slug idf --release 260627 \
   --created-at 2026-06-27T00:00:00.000Z \
   --build-sha "$(git rev-parse HEAD)" \
@@ -98,7 +98,7 @@ rooftop. Each country still needs a source-composition census and a held-out pre
 
 The first local NZ build (Geofabrik source vintage 2026-08-06) contains 2,325,228 directly tagged address
 points; only 548 housenumber features lacked a usable street. On the repaired panel, through the production
-`OSMShardProvider` path, it moved Mailwoman from 3/20/30 to 56/58/59 at 1/5/25 km, produced 56
+`OSMRegionDatabaseProvider` path, it moved Mailwoman from 3/20/30 to 56/58/59 at 1/5/25 km, produced 56
 `address_point` results, eliminated all 17 no-results, and caused no regression. Photon remains stronger at
 1 km (60/60); Mailwoman with the locally built database exceeds the frozen Pelias NZ arm (45/45/46). This is a
 build-local result, not a shipped-data claim.

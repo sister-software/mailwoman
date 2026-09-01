@@ -3,7 +3,7 @@
 Background. The en-heavy 48k SentencePiece unigram vocab has the diacritic *characters* but no multi-char
 *subwords* containing them, so every diacritic isolates into its own piece — "Vysoká" -> [▁V, ys, ok, á],
 CZ/PL localities at ~3.3x English fertility. That fragmentation breaks span boundaries and geocodes the
-address to the WRONG CITY (measured: ~44% of Czech, ~30% of Polish rows land >20km off). A data shard at
+address to the WRONG CITY (measured: ~44% of Czech, ~30% of Polish rows land >20km off). A data slice at
 the frozen tokenizer can't fix it (a unigram model physically cannot emit a subword absent from its piece
 table); v196-slavic-anchor confirmed this the expensive way — it REGRESSED CZ at 80k.
 

@@ -53,7 +53,7 @@ The policy registry and component-by-component migration are conservative in the
 
 ### 5. The corpus pipeline is a moat
 
-11 TypeScript adapters (WOF admin/postcode, BAN, TIGER, NAD, NPPES, HRSA, IMLS, three state sources), ~677M aligned rows at a 0.03% quarantine rate, locality-aware splits, Parquet shards with license tags, SNAPPY compression. The `CanonicalRow` → alignment → BIO labeling → Parquet sharding pipeline is industrial-scale data engineering. Reproducing it from scratch takes months.
+11 TypeScript adapters (WOF admin/postcode, BAN, TIGER, NAD, NPPES, HRSA, IMLS, three state sources), ~677M aligned rows at a 0.03% quarantine rate, locality-aware splits, Parquet extracts with license tags, SNAPPY compression. The `CanonicalRow` → alignment → BIO labeling → Parquet extract routing pipeline is industrial-scale data engineering. Reproducing it from scratch takes months.
 
 ### 6. Diagnostics improved materially
 

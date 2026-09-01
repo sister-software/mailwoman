@@ -32,8 +32,8 @@ result as `node:readline` while adding:
 
 | File | Pattern | Spliterator replacement |
 | -------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ----- |
-| `corpus/scripts/build-kryptonite-shard.ts:87` | `createInterface({ input: createReadStream(jsonl, "utf8"), crlfDelay: Infinity })` | `TextSpliterator.fromAsync(jsonl)` |
-| `corpus/scripts/build-transliteration-shard.ts:116` | same shape | `TextSpliterator.fromAsync(jsonl)` |
+| `corpus/scripts/build-kryptonite-extract.ts:87` | `createInterface({ input: createReadStream(jsonl, "utf8"), crlfDelay: Infinity })` | `TextSpliterator.fromAsync(jsonl)` |
+| `corpus/scripts/build-transliteration-extract.ts:116` | same shape | `TextSpliterator.fromAsync(jsonl)` |
 | `corpus/scripts/ingest-csv.ts:206,311` | CSV ingest — two passes | `CSVSpliterator.fromAsync(path, { mode: "array" })` ⚠️ |
 | `corpus/src/build.ts:338` | `streamJsonl<T>` helper | `JSONSpliterator.fromAsync<T>(path)` |
 | `corpus/src/split.ts:219` | shuffle-split of labeled JSONL | `JSONSpliterator.fromAsync(labeledJsonlPath)` (read phase only; write needs `createWriteStream`) |
@@ -41,15 +41,15 @@ result as `node:readline` while adding:
 | `corpus/src/adapters/openaddresses/adapter.ts:142` | OA GeoJSONL | `JSONSpliterator.fromAsync(adapterOpts.inputPath)` |
 | `corpus/src/adapters/overture/adapter.ts:81` | Overture JSONL | `JSONSpliterator.fromAsync(opts.inputPath)` |
 | `corpus/src/adapters/synth-po-box/adapter.ts:94` | synthetic PO box JSONL | `JSONSpliterator.fromAsync(options.inputPath)` |
-| `corpus/src/adapters/usgov-nad/adapter.ts:252` | NAD GeoJSON | `JSONSpliterator.fromAsync(join(opts.inputPath, shard))` |
-| `corpus/src/shard-recipes/fr-admin-split.ts:66` | `readCommunes` CSV | `CSVSpliterator.fromAsync(path, { mode: "object" })` |
-| `corpus/src/shard-recipes/locale.ts:220` | OA CSV reservoir sample | `CSVSpliterator.fromAsync(input, { mode: "array" })` |
-| `corpus/src/shard-recipes/scaffold.ts:71` | tuple JSONL → `ShardTuple` | `JSONSpliterator.fromAsync<ShardTuple>(input)` |
+| `corpus/src/adapters/usgov-nad/adapter.ts:252` | NAD GeoJSON | `JSONSpliterator.fromAsync(join(opts.inputPath, extract))` |
+| `corpus/src/extract-recipes/fr-admin-split.ts:66` | `readCommunes` CSV | `CSVSpliterator.fromAsync(path, { mode: "object" })` |
+| `corpus/src/extract-recipes/locale.ts:220` | OA CSV reservoir sample | `CSVSpliterator.fromAsync(input, { mode: "array" })` |
+| `corpus/src/extract-recipes/scaffold.ts:71` | tuple JSONL → `ExtractTuple` | `JSONSpliterator.fromAsync<ExtractTuple>(input)` |
 | `mailwoman/commands/gazetteer/importance.tsx:131` | gzipped TSV via `createInterface({ input: fileStream.pipe(gunzip) })` | `TextSpliterator.fromAsync(fileStream.pipe(gunzip), { delimiter: Delimiters.Tab })` |
 | `mailwoman/commands/gazetteer/postcode-intl.tsx:89` | GeoNames TSV | `TSVSpliterator.fromAsync(file)` |
-| `mailwoman/corpus-tools/align-shard.ts:40` | canonicalize JSONL + rewrite | `JSONSpliterator.fromAsync(args.input)` (read phase) |
+| `mailwoman/corpus-tools/align-extract.ts:40` | canonicalize JSONL + rewrite | `JSONSpliterator.fromAsync(args.input)` (read phase) |
 | `scripts/jsonl-to-parquet.ts:159` | validate JSONL → DuckDB | `JSONSpliterator.fromAsync(args.input)` |
-| `scripts/eval/audit-po-box-cedex-shard.ts:156` | JSONL audit | `JSONSpliterator.fromAsync(opts.input)` |
+| `scripts/eval/audit-po-box-cedex-extract.ts:156` | JSONL audit | `JSONSpliterator.fromAsync(opts.input)` |
 | `scripts/eval/reverse-geocode-eval.ts:105` | JSONL eval rows | `JSONSpliterator.fromAsync(args.eval)` |
 | `scripts/eval/gauntlet/holdout.ts:101` | JSONL reservoir sample | `JSONSpliterator.fromAsync(src.file)` |
 | `scripts/eval/record-matcher/train-cross-gbt.ts:146` | CSV with manual quote handling | `CSVSpliterator.fromAsync(path, { mode: "object", enableQuoteHandling: true })` |
@@ -96,8 +96,8 @@ for await (const row of JSONSpliterator.fromAsync<MyType>(path)) {
 
 **Affected files (11):** `build.ts`, `split.ts`, `openaddresses/adapter.ts`,
 `overture/adapter.ts`, `synth-po-box/adapter.ts`, `usgov-nad/adapter.ts`,
-`scaffold.ts`, `align-shard.ts`, `jsonl-to-parquet.ts`,
-`audit-po-box-cedex-shard.ts`, `reverse-geocode-eval.ts`, `holdout.ts`
+`scaffold.ts`, `align-extract.ts`, `jsonl-to-parquet.ts`,
+`audit-po-box-cedex-extract.ts`, `reverse-geocode-eval.ts`, `holdout.ts`
 
 ### Pattern B: CSV (`for await (const line …)` + `line.split(",")` or manual split)
 
@@ -229,18 +229,18 @@ for await (const line of TextSpliterator.fromAsync(jsonl)) {
 }
 ```
 
-**Affected files (2):** `build-kryptonite-shard.ts`, `build-transliteration-shard.ts`
+**Affected files (2):** `build-kryptonite-extract.ts`, `build-transliteration-extract.ts`
 
 ## Migration order
 
-| Phase | Files                                                                                                                                                                                  | Notes                                                                                                             |
-| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| **1** | `scripts/jsonl-to-parquet.ts`, `corpus/src/build.ts` (JSONL → `JSONSpliterator`)                                                                                                       | Lowest risk — JSON has no delimiter ambiguity. These are the most exercised paths (every corpus build hits them). |
-| **2** | All adapter JSONL call sites: `openaddresses/adapter.ts`, `overture/adapter.ts`, `synth-po-box/adapter.ts`, `usgov-nad/adapter.ts`, `gnaf/adapter.ts`, `scaffold.ts`, `align-shard.ts` | All JSONL. Same shape as Phase 1.                                                                                 |
-| **3** | `scripts/eval/` call sites: `audit-po-box-cedex-shard.ts`, `reverse-geocode-eval.ts`, `holdout.ts`, `train-cross-gbt.ts`, `train-org-cross-gbt.ts`                                     | JSONL + CSV. Eval scripts — low blast radius for regressions.                                                     |
-| **4** | CSV sites: `fr-admin-split.ts`, `locale.ts`, `ingest-csv.ts`                                                                                                                           | ⚠️ `skipEmpty` caveat — verify column counts match before landing.                                                |
-| **5** | Pipe/TSV sites: `importance.tsx`, `postcode-intl.tsx`, `redistricting.ts`, `build-kryptonite-shard.ts`, `build-transliteration-shard.ts`                                               | Straightforward delimiter substitution.                                                                           |
-| **6** | Child-process stdout sites: `tiger/sdk/fetch.ts`, `osm/sdk/extract.ts`, `osm/sdk/street-recovery.ts`, `locale.ts:218`                                                                  | ⚠️ Highest risk — external process pipelines. Test with real data.                                                |
+| Phase | Files                                                                                                                                                                                    | Notes                                                                                                             |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **1** | `scripts/jsonl-to-parquet.ts`, `corpus/src/build.ts` (JSONL → `JSONSpliterator`)                                                                                                         | Lowest risk — JSON has no delimiter ambiguity. These are the most exercised paths (every corpus build hits them). |
+| **2** | All adapter JSONL call sites: `openaddresses/adapter.ts`, `overture/adapter.ts`, `synth-po-box/adapter.ts`, `usgov-nad/adapter.ts`, `gnaf/adapter.ts`, `scaffold.ts`, `align-extract.ts` | All JSONL. Same shape as Phase 1.                                                                                 |
+| **3** | `scripts/eval/` call sites: `audit-po-box-cedex-extract.ts`, `reverse-geocode-eval.ts`, `holdout.ts`, `train-cross-gbt.ts`, `train-org-cross-gbt.ts`                                     | JSONL + CSV. Eval scripts — low blast radius for regressions.                                                     |
+| **4** | CSV sites: `fr-admin-split.ts`, `locale.ts`, `ingest-csv.ts`                                                                                                                             | ⚠️ `skipEmpty` caveat — verify column counts match before landing.                                                |
+| **5** | Pipe/TSV sites: `importance.tsx`, `postcode-intl.tsx`, `redistricting.ts`, `build-kryptonite-extract.ts`, `build-transliteration-extract.ts`                                             | Straightforward delimiter substitution.                                                                           |
+| **6** | Child-process stdout sites: `tiger/sdk/fetch.ts`, `osm/sdk/extract.ts`, `osm/sdk/street-recovery.ts`, `locale.ts:218`                                                                    | ⚠️ Highest risk — external process pipelines. Test with real data.                                                |
 
 ## Risks
 

@@ -8,8 +8,8 @@
  *
  *   These exist because the gazetteer pipeline was ported from Python and its outputs have to match
  *   the originals bit for bit: a postcode centroid that rounds differently is a different centroid,
- *   and the shard it lands in is a different shard. Divergence here never throws — it surfaces as a
- *   shard that quietly disagrees with the reference.
+ *   and the extract it lands in is a different extract. Divergence here never throws — it surfaces as a
+ *   extract that quietly disagrees with the reference.
  */
 
 /**

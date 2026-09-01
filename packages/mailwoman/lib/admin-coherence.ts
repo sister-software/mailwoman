@@ -47,10 +47,10 @@
  *
  *   The winner's checkable ancestry arrives as the resolver's `metadata.ancestors` stamp (#404 —
  *   the geocode path opts in by default, and both backends serve it when their artifact carries an
- *   ancestors table: the FTS shard's `ancestors`, candidate.db's `candidate_ancestor` sidecar),
+ *   ancestors table: the FTS database's `ancestors`, candidate.db's `candidate_ancestor` sidecar),
  *   while country-class ancestry is nearly always available via the `resolver_country` stamp.
  *   `unverifiable` remains the faithful verdict wherever the stamp is absent — an artifact
- *   predating the sidecar, a shard-fed winner with no recorded ancestry, or a caller that opted
+ *   predating the sidecar, a database-fed winner with no recorded ancestry, or a caller that opted
  *   out.
  */
 

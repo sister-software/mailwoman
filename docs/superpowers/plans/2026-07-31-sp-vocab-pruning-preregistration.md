@@ -8,7 +8,7 @@ behavior change** on every input whose segmentation never used a pruned piece.
 ## Mechanism (decided before measuring)
 
 1. **Fired-set measurement over the FULL v0.15.0-venue feed** (684,103,970 rows, all 704 train
-   shards — no sampling: a sampled fired-set risks pruning a rare-but-practiced piece, the exact
+   extracts — no sampling: a sampled fired-set risks pruning a rare-but-practiced piece, the exact
    tail this probe exists to keep) plus every eval surface (eval-harness fixtures, golden sets,
    gauntlet cases, P0 boards). Counted at the unit the model reads: `encode()` output ids.
 2. **Keep set** `K` = specials (pad/unk/bos/eos) ∪ all 256 byte-fallback pieces ∪ every

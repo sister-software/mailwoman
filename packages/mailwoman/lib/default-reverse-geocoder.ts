@@ -18,9 +18,9 @@
  *   too; without it every ancestry chain still resolves, just `containment: "approximate"`
  *   (`WOFReverseGeocoder`'s own centroid-descent fallback).
  *
- *   Admin DB resolution mirrors `resolver-backend.ts`'s `existingWOFShardPaths()` — the SAME default
+ *   Admin DB resolution mirrors `resolver-backend.ts`'s `existingWOFDatabasePaths()` — the SAME default
  *   `@mailwoman/photon`'s and `@mailwoman/nominatim`'s `serve` commands use for their own
- *   `WOFReverseGeocoder` (`photon/cli.ts`, `nominatim/cli.ts`): first existing shard in the list wins
+ *   `WOFReverseGeocoder` (`photon/cli.ts`, `nominatim/cli.ts`): first existing database in the list wins
  *   (`admin-global-priority.db` first). The polygon sidecar is read from `$MAILWOMAN_WOF_POLYGONS_DB` —
  *   the same env var `mailwoman reverse` reads.
  */
@@ -29,13 +29,13 @@ import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { WOFReverseGeocoder as WOFReverseGeocoderType } from "@mailwoman/resolver-wof-sqlite"
 
-import { existingWOFShardPaths } from "#resolver-backend"
+import { existingWOFDatabasePaths } from "#resolver-backend"
 
 let cached: Promise<WOFReverseGeocoderType | null> | null = null
 
 /**
- * Lazy-load + cache the default `WOFReverseGeocoder`. `null` when no admin shard with a `place_bbox` R*Tree is on disk,
- * or `@mailwoman/resolver-wof-sqlite` can't be resolved (stripped install) — the pipeline then wires no
+ * Lazy-load + cache the default `WOFReverseGeocoder`. `null` when no admin database with a `place_bbox` R*Tree is on
+ * disk, or `@mailwoman/resolver-wof-sqlite` can't be resolved (stripped install) — the pipeline then wires no
  * `reverseGeocode` fn at all, so POI results degrade to no `ancestry` (byte-stable pre-feature behavior). Cached for
  * the process lifetime (one handle, reused).
  */
@@ -43,7 +43,7 @@ export function loadDefaultReverseGeocoder(): Promise<WOFReverseGeocoderType | n
 	if (!cached) {
 		cached = (async (): Promise<WOFReverseGeocoderType | null> => {
 			try {
-				const [adminDBPath] = await existingWOFShardPaths()
+				const [adminDBPath] = await existingWOFDatabasePaths()
 
 				if (!adminDBPath) return null
 				const { WOFReverseGeocoder } = await import("@mailwoman/resolver-wof-sqlite")

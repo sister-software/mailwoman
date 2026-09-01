@@ -25,15 +25,15 @@ import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 import type { AdminCoherenceReport } from "#admin-coherence"
 import { OVERLAY_LOCALE_BY_COUNTRY } from "#eval-harness/gauntlet/routing"
 import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode-core"
+import { RegionDatabaseProvider } from "#geocode-regions"
 import type { GeocodeResult } from "#geocode-result"
-import { ShardProvider } from "#geocode-shards"
 import { poiTaxonomyLookup } from "#poi-intent"
 import {
 	createResolverBackend,
 	loadCapitalIndex,
 	mailwomanDataRoot,
 	resolveCandidateDBPath,
-	wofShardPaths,
+	wofExtractPaths,
 } from "#resolver-backend"
 
 export interface GauntletDeps extends Disposable {
@@ -145,7 +145,7 @@ export interface GauntletResolverLevers {
 
 /**
  * The geocode deps a lever set turns into — spread into every {@linkcode geocodeAddress} call the run makes. Pure and
- * exported so the "the pin reaches the pipeline" contract is testable without building the ~9 GB shard set.
+ * exported so the "the pin reaches the pipeline" contract is testable without building the ~9 GB database set.
  */
 export function resolverLeverDeps(levers: GauntletResolverLevers | undefined): {
 	postcodeCountryCoherence?: boolean
@@ -267,7 +267,7 @@ async function assertShippedModelMatchesCard(materializedMd5: string): Promise<v
  *
  * EXPECTATIONS COME FROM EACH PACKAGE'S OWN CARD (`files.postcode_anchor`), never from a list kept here. en-gb
  * deliberately ships no binary under the #1476 mitigation until the A4 assembly lands, and en-nz has no WOF NZ postcode
- * shard to build one from; a hardcoded list would call both of those supported states broken, and would need editing
+ * database to build one from; a hardcoded list would call both of those supported states broken, and would need editing
  * every time a locale's posture changed — which is the same drift the card exists to prevent.
  *
  * A package that does not RESOLVE at all is not this guard's business: that is `classifierFor`'s loud base-only
@@ -442,17 +442,17 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	const poiKindClassifier: NonNullable<GeocodeDeps["classifyKind"]> = (input, shape) =>
 		kindClassifierWithLexicon(input, shape, { locale: "en-US", confidence: 1, alternatives: [], source: "caller" })
 
-	// The shard set is the paths that EXIST. Presence is materialized up front so the keep-test below stays a plain,
+	// The database set is the paths that EXIST. Presence is materialized up front so the keep-test below stays a plain,
 	// synchronous filter over facts already read.
-	const wofShardPresence = await Promise.all(
-		wofShardPaths().map(async (path) => ({ path, present: await pathExists(path) }))
+	const wofDatabasePresence = await Promise.all(
+		wofExtractPaths().map(async (path) => ({ path, present: await pathExists(path) }))
 	)
 
-	const presentWofShards = wofShardPresence.filter((entry) => entry.present).map((entry) => entry.path)
+	const presentWofDatabases = wofDatabasePresence.filter((entry) => entry.present).map((entry) => entry.path)
 
 	const resolver = createWOFResolver(
 		await createResolverBackend(resolverMod, {
-			wofPaths: presentWofShards,
+			wofPaths: presentWofDatabases,
 			...(opts.candidateDB ? { candidateDB: opts.candidateDB } : {}),
 			...(opts.levers?.variantAliasExemption === false ? { variantAliasExemption: false } : {}),
 		})
@@ -475,18 +475,18 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				capitalIndex.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: undefined
 
-	const shardProvider = await ShardProvider.create(resolverMod, mailwomanDataRoot())
+	const regionDatabaseProvider = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
 	// Lazy like the resolver module above: `@mailwoman/osm` is an in-repo (unpublished) workspace, and
 	// A static import here would break the
 	// published `mailwoman` CLI outright rather than only this maintainer-run gate.
-	const { OSMShardProvider } = await import("@mailwoman/osm/sdk")
-	const osmProvider = await OSMShardProvider.create(mailwomanDataRoot())
+	const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/sdk")
+	const osmProvider = await OSMRegionDatabaseProvider.create(mailwomanDataRoot())
 	// The BAN national-register tier (#1012) sits AHEAD of OSM in production (geocode.tsx wires it the
 	// same way) — without it here the gauntlet graded an OSM-first cascade production never runs, and
 	// the fr-chevaleret-bare pin silently guarded the wrong tier (caught 2026-07-10 when the BAN tier's
 	// missing bbox fall-through regressed the bare form in production while this gate stayed green).
-	const { BANShardProvider } = await import("@mailwoman/ban/sdk")
-	const banProvider = await BANShardProvider.create(mailwomanDataRoot())
+	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
+	const banProvider = await BANRegionDatabaseProvider.create(mailwomanDataRoot())
 
 	const leverDeps = resolverLeverDeps(opts.levers)
 
@@ -595,9 +595,9 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			// #1649: same lexicon-aware kind classifier the CLI session wires — the harness grades the user's path.
 			classifyKind: poiKindClassifier,
 			resolver,
-			shards: shardProvider.for,
-			nationalShards: banProvider.for,
-			osmShards: osmProvider.for,
+			databases: regionDatabaseProvider.for,
+			nationalDatabases: banProvider.for,
+			osmDatabases: osmProvider.for,
 			...leverDeps,
 			...(capitalLevel ? { capitalLevel } : {}),
 			...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
@@ -630,7 +630,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			return { result, resolver: resolverTrace }
 		},
 		[Symbol.dispose]: () => {
-			shardProvider[Symbol.dispose]()
+			regionDatabaseProvider[Symbol.dispose]()
 			banProvider[Symbol.dispose]()
 			osmProvider[Symbol.dispose]()
 		},

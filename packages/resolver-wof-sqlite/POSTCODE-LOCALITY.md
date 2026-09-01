@@ -8,7 +8,7 @@ under-indexed small town — see [`docs/articles/plan/2026-06-04-coordinate-firs
 It's built like our other WOF tables: **from source GeoJSON, never a prebuilt dump**, and frozen into
 a distributable artifact (a `meta` provenance/license table, `journal_mode=DELETE` so there's no
 `-wal`/`-shm` sidecar, `ANALYZE`, an integrity check, and `VACUUM`). You can hand the single `.db` to
-anyone and attach it as a resolver shard.
+anyone and attach it as a resolver extract.
 
 ## Schema
 
@@ -21,7 +21,7 @@ postcode_locality(
 meta(key TEXT, value TEXT)               -- name/source/license/attribution/built_at/countries
 ```
 
-The resolver attaches a **single** `postcode_locality` shard and country-filters at query time, so all
+The resolver attaches a **single** `postcode_locality` extract and country-filters at query time, so all
 locales live in one DB.
 
 ## Build recipe (per locale, then finalize)

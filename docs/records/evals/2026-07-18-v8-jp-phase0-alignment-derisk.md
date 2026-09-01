@@ -35,7 +35,7 @@ Beyond the alignment concept, the actual corpus aligner `corpus/src/align.ts::al
 
 ## One schema decision to make (not a blocker)
 
-The JP `number` is frequently **multi-part** (`2-3-16` = 2丁目3番16号 = chōme-banchi-go). Decide: map the whole `2-3-16` to `house_number`, or split into the declared `sub_block` (banchi) + a go component. This is a schema/label choice for the JP model's vocab — decide it when building the JP shard, not before.
+The JP `number` is frequently **multi-part** (`2-3-16` = 2丁目3番16号 = chōme-banchi-go). Decide: map the whole `2-3-16` to `house_number`, or split into the declared `sub_block` (banchi) + a go component. This is a schema/label choice for the JP model's vocab — decide it when building the JP extract, not before.
 
 ## Recommendation
 

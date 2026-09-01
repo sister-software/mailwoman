@@ -23,7 +23,7 @@ substantially eaten.
   data; the consolidation's gains are real.
 - **Address-point tier (#476, closed via #497):** VT prototype. **Coord p50/p90 3.4/7.4 km
   → 0.0/0.0 km, p99 277 → 6.2 km, 93.1% hit rate**; admin attribution untouched by
-  construction. The 6.9% misses are #483's interpolation population; the shard is its gold.
+  construction. The 6.9% misses are #483's interpolation population; the extract is its gold.
 - **postal_city alias table (#475 asset, via #499):** built (19,880 pairs, 51.3%
   divergent) — and its measurement REFUTED my own published attribution (below).
 - **Parser hardening part 1 (#481, via #500):** one `#decode` (a third drift surface had

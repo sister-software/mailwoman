@@ -1,10 +1,10 @@
-"""Affix-split relabel pass (#511): make the base corpus agree with the affix shard.
+"""Affix-split relabel pass (#511): make the base corpus agree with the affix slice.
 
 The #492 probe ladder found the affix ceiling is contradictory labels: 69.4% of base-corpus
 street rows label affix surfaces monolithically (``South County Road 175 West`` = all
-``B/I-street``) while the affix shard labels the same surfaces split — at >=1,000:1 effective
-gradient mass against the shard. This pass relabels street spans at load time with EXACTLY the
-shard builder's split semantics (``scripts/build-street-affix-shard.mjs::parseStreet``), so the
+``B/I-street``) while the affix slice labels the same surfaces split — at >=1,000:1 effective
+gradient mass against the slice. This pass relabels street spans at load time with EXACTLY the
+slice builder's split semantics (``scripts/build-street-affix-slice.mjs::parseStreet``), so the
 whole mix makes one consistent claim:
 
 - Trailing USPS Pub-28 suffix -> ``B-street_suffix``   (REQUIRED for any split)
@@ -110,7 +110,7 @@ def split_street_span(words: list[str], lex: AffixRelabelLexicon) -> tuple[int, 
 
     Returns ``(prefix_count, suffix_count)`` — how many leading tokens become street_prefix
     (0 or 1) and trailing tokens become street_suffix (0 or 1) — or None for no relabel.
-    Mirrors build-street-affix-shard.mjs::parseStreet exactly; see module docstring.
+    Mirrors build-street-affix-slice.mjs::parseStreet exactly; see module docstring.
     """
     if len(words) < 2:
         return None
@@ -147,7 +147,7 @@ def relabel_row(row: dict, lex: AffixRelabelLexicon) -> bool:
     char-offset span arrays when the row carries them — #519).
 
     Returns True if any span was split. Rows whose street spans don't meet the builder's
-    split contract are left untouched (the shard makes no claim about them either).
+    split contract are left untouched (the slice makes no claim about them either).
     """
     labels = row["labels"]
     tokens = row["tokens"]
@@ -256,7 +256,7 @@ def _audit(lexicon_path: str, corpus_dir: str, rows: int, sample: int) -> None:
     lex = AffixRelabelLexicon.load(lexicon_path)
     files = sorted(Path(corpus_dir).glob("*.parquet"))
     if not files:
-        raise FileNotFoundError(f"no parquet shards under {corpus_dir}")
+        raise FileNotFoundError(f"no parquet slices under {corpus_dir}")
     rng = random.Random(42)
     table = pq.read_table(rng.choice(files), columns=["raw", "tokens", "labels"]).slice(0, rows)
     total = with_street = split_count = prefix_count = 0
@@ -294,7 +294,7 @@ if __name__ == "__main__":
 
     ap = argparse.ArgumentParser(description="Audit the affix-split relabel pass on a corpus sample.")
     ap.add_argument("--lexicon", required=True)
-    ap.add_argument("--corpus-dir", required=True, help="directory of parquet shards (e.g. .../train)")
+    ap.add_argument("--corpus-dir", required=True, help="directory of parquet slices (e.g. .../train)")
     ap.add_argument("--rows", type=int, default=10_000)
     ap.add_argument("--sample", type=int, default=25)
     args = ap.parse_args()

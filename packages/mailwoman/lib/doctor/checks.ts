@@ -264,7 +264,7 @@ export function dataRootCheck(o: DataRootObservation): DoctorCheck {
 /**
  * Facts about the admin gazetteer discovery, mirroring exactly what the TOOLS pick up. `resolveCandidateDBPath` reads
  * an explicit option, then `$MAILWOMAN_CANDIDATE_DB`, then the `<data-root>/wof/candidate.db` convention path, and
- * falls back to the WOF FTS shards only when none of the three is on disk.
+ * falls back to the WOF FTS databases only when none of the three is on disk.
  */
 export interface GazetteerObservation {
 	/**
@@ -279,9 +279,9 @@ export interface GazetteerObservation {
 	 */
 	conventionCandidate?: string
 	/**
-	 * A WOF admin shard on disk — the FTS backend the tools fall back to when no candidate.db is reachable. Green.
+	 * A WOF admin database on disk — the FTS backend the tools fall back to when no candidate.db is reachable. Green.
 	 */
-	wofShard?: { path: string; sizeBytes?: number }
+	wofDatabase?: { path: string; sizeBytes?: number }
 	/**
 	 * The paths probed, for the not-found detail.
 	 */
@@ -300,22 +300,22 @@ export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
 		return { ...base, status: CheckStatus.OK, detail: `candidate.db · ${o.envCandidate.path}${size}` }
 	}
 
-	// Ahead of the WOF shard, because that is the precedence `resolveCandidateDBPath` applies: a convention-path
-	// candidate.db wins over the FTS fallback, so reporting the shard here would name a backend the tools won't use.
+	// Ahead of the WOF database, because that is the precedence `resolveCandidateDBPath` applies: a convention-path
+	// candidate.db wins over the FTS fallback, so reporting the database here would name a backend the tools won't use.
 	if (o.conventionCandidate) {
 		return { ...base, status: CheckStatus.OK, detail: `candidate.db · ${o.conventionCandidate} (convention path)` }
 	}
 
-	if (o.wofShard) {
-		const size = o.wofShard.sizeBytes ? ` (${ByteFormatter.formatSI(o.wofShard.sizeBytes)})` : ""
+	if (o.wofDatabase) {
+		const size = o.wofDatabase.sizeBytes ? ` (${ByteFormatter.formatSI(o.wofDatabase.sizeBytes)})` : ""
 
-		return { ...base, status: CheckStatus.OK, detail: `WOF admin shard · ${o.wofShard.path}${size}` }
+		return { ...base, status: CheckStatus.OK, detail: `WOF admin database · ${o.wofDatabase.path}${size}` }
 	}
 
 	return {
 		...base,
 		status: CheckStatus.Missing,
-		detail: `no candidate.db or WOF shard found (probed ${o.probed.length} path${o.probed.length === 1 ? "" : "s"})`,
+		detail: `no candidate.db or WOF database found (probed ${o.probed.length} path${o.probed.length === 1 ? "" : "s"})`,
 		consequence:
 			"Nothing can be turned into a coordinate. `mailwoman parse` still labels an address, but " +
 			"`mailwoman geocode` has no gazetteer to look a place up in, so it errors instead of answering.",

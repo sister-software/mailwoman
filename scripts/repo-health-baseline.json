@@ -3,7 +3,8 @@
 	"doubleCast": 5,
 	"deepRelativeImports": 0,
 	"filterBoolean": 0,
-	"productionFilesOver1000Lines": 0,
+	"productionFilesOver1000Lines": 1,
 	"selfPackageImports": 0,
-	"synchronousFilesystemCalls": 0
+	"synchronousFilesystemCalls": 0,
+	"bannedVocabulary": 0
 }

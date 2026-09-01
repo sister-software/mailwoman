@@ -18,7 +18,7 @@
  *   - `canonicalDedupKey(row)`: normalized signature used to drop near-identical rows during a run.
  *       Adapter-internal dedup; cross-adapter dedup is the runner's job.
  *   - `streamingSha256()`: thin wrapper around `node:crypto` so the runner can hash JSONL output as it
- *       streams (avoids re-reading the shard for the manifest checksum).
+ *       streams (avoids re-reading the slice for the manifest checksum).
  *   - `loadLibpostalDictionary(language, filename)`: the curated libpostal dictionary reader the
  *       street-decompose modules share — the one read this module performs; everything else here is
  *       pure, and other side-effecting code goes in `./runner.ts`.
@@ -123,7 +123,7 @@ export function stableSourceIDFromParts(
 	const sortedKeys = Object.keys(parts).toSorted()
 	const payload = sortedKeys.map((k) => `${k}=${parts[k] ?? ""}`).join("\u001F")
 	// One `update` over the joined string, not three chained ones — identical byte stream either way,
-	// but the separator has to stay inline or every id in every shard changes.
+	// but the separator has to stay inline or every id in every slice changes.
 	const digest = sha256Hex(`${adapterID}\u001E${payload}`)
 
 	return `${adapterID}-${digest.slice(0, 12)}`
@@ -268,8 +268,8 @@ export function canonicalDedupKey(row: CanonicalRow): string {
 /**
  * Streaming SHA-256 hasher.
  *
- * The runner feeds every JSONL line into one of these so the per-shard checksum can be recorded in `MANIFEST.json`
- * without a second pass over the shard. Implementation is a one-line wrapper, but giving it a name keeps the runner's
+ * The runner feeds every JSONL line into one of these so the per-slice checksum can be recorded in `MANIFEST.json`
+ * without a second pass over the slice. Implementation is a one-line wrapper, but giving it a name keeps the runner's
  * hash-tracking intent obvious.
  */
 export interface StreamingHasher {

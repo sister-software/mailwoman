@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the house-number interpolation tier (#483). Seeds an in-memory `street_segment` fixture
- *   (the schema `scripts/build-interpolation-shard.ts` builds), then asserts parity-aware matching,
+ *   (the schema `scripts/build-interpolation-extract.ts` builds), then asserts parity-aware matching,
  *   boundary/descending-range interpolation, postcode scoping + the no-scope abstention, and the
  *   no-match fall-through.
  */
@@ -275,13 +275,13 @@ describe("StreetInterpolator", () => {
 })
 
 // #374 doctrine: the conformal radius multiplier is a property of the calibration set the ARTIFACT was
-// built against, so it ships in the shard's `interp_calibration` metadata table and is read ONCE at open
-// time. A shard predating the table (the shipped fleet) reads `undefined` — never a throw, never a guess.
+// built against, so it ships in the extract's `interp_calibration` metadata table and is read ONCE at open
+// time. A extract predating the table (the shipped fleet) reads `undefined` — never a throw, never a guess.
 describe("StreetInterpolator — artifact-carried radius calibration (#374)", () => {
-	it("reads the shard's baked multiplier at open time", async () => {
+	it("reads the extract's baked multiplier at open time", async () => {
 		await using kdb = DatabaseClient.temp<StreetSegmentDatabase>()
 		seed(kdb, [MAIN_EVEN])
-		// The SAME producer the shard builder runs (`writeInterpCalibration`), so the fixture can't
+		// The SAME producer the extract builder runs (`writeInterpCalibration`), so the fixture can't
 		// drift from the production shape.
 
 		await writeInterpCalibration(kdb, { radius_multiplier: 1.7, method: "split-conformal:2026-06-14", region: "TX" })
@@ -297,7 +297,7 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
 		calibrated[Symbol.dispose]()
 	})
 
-	it("reports undefined for a shard predating the metadata table", () => {
+	it("reports undefined for a extract predating the metadata table", () => {
 		// The main fixture DB deliberately has no `interp_calibration` table — the shipped-fleet shape.
 		expect(interpolator.radiusCalibration).toBeUndefined()
 	})

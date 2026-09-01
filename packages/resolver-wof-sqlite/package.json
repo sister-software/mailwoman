@@ -319,10 +319,10 @@
 			"default": "./out/reverse.js",
 			"types": "./out/reverse.d.ts"
 		},
-		"./sharding": {
-			"node": "./lib/sharding.ts",
-			"default": "./out/sharding.js",
-			"types": "./out/sharding.d.ts"
+		"./extracts": {
+			"node": "./lib/extracts.ts",
+			"default": "./out/extracts.js",
+			"types": "./out/extracts.d.ts"
 		},
 		"./sqlite-convention-source": {
 			"node": "./lib/sqlite-convention-source.ts",

@@ -42,6 +42,7 @@ import { isoSecondsUTC, pyRound } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 
+import { finalizeSealedBuild } from "#gazetteer-pipeline/database-lifecycle"
 import { ProximityGrid } from "#gazetteer-pipeline/postcode-locality/base"
 import {
 	createPostcodeLocalityIndex,
@@ -53,7 +54,6 @@ import {
 } from "#gazetteer-pipeline/postcode-locality/schema"
 import { geonamesPostalRows } from "#gazetteer-pipeline/postcode/geonames-postal"
 import { writeMetaRows } from "#gazetteer-pipeline/postcode/geonames-tail"
-import { finalizeSealedBuild } from "#gazetteer-pipeline/shard-lifecycle"
 
 /**
  * KR postcode points sit p50 ~1 km from the nearest locality; 20 km is a safe net.

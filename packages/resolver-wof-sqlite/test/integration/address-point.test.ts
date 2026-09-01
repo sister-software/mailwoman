@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The address-point reader's probe contract, pinned over a fixture shard — the scope ladder and
+ *   The address-point reader's probe contract, pinned over a fixture extract — the scope ladder and
  *   the range-surface fallback ("385-387 Esplanade" keys the register's `385`; an exact range key,
  *   where a source carries one verbatim, is never second-guessed).
  */

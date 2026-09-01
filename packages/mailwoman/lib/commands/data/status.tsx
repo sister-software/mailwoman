@@ -7,8 +7,8 @@
  *   read-only sibling of `data pull`. With no bundle names given, reports on every bundle in
  *   `data-bundles.ts`'s registry.
  *
- *   OFFLINE BY DEFAULT: an artifact already on disk (`resolveShardPath` for a versioned `us`
- *   per-state shard, `existsSync` otherwise) is reported "present" against the SURVEYED size baked
+ *   OFFLINE BY DEFAULT: an artifact already on disk (`resolveDatabasePath` for a versioned `us`
+ *   per-state database, `existsSync` otherwise) is reported "present" against the SURVEYED size baked
  *   into the registry (`BundleArtifact.approxBytes`) — a local size-only integrity check (catches a
  *   truncated/corrupt file), not a live version comparison. `--check-remote` upgrades this to a real
  *   HEAD `Content-Length` probe via `APIClient` (one small paced request per artifact THAT'S ALREADY

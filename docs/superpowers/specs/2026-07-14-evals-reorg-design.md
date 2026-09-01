@@ -42,7 +42,7 @@ Sidebar order (top → bottom) via `_category_.json` `position`:
 |   5 | `matcher-dedup/`                   |      24 | record matcher, nppes-dedup, learned-scorer, cross-source/dataset, adjudication       |
 |   6 | `calibration/`                     |      11 | isotonic, conformal, per-locale, confidence-precision, interp-radius                  |
 |   7 | `coverage/`                        |       5 | overture fill-rates, multi-locale/DE/FR coverage                                      |
-|   8 | `experiments/`                     |      21 | one-off probes/stress/shards/feasibility/SLO                                          |
+|   8 | `experiments/`                     |      21 | one-off probes/stress/extracts/feasibility/SLO                                        |
 |   9 | `night-shifts/`                    |      34 | every night-N / night session log                                                     |
 |   — | `eval-gate.mdx`, `score-trends.md` |       2 | cross-cutting, stay at root                                                           |
 |   — | `data/`, `charts/`                 |       — | already exist; + 2 loose `.json/.jsonl` move into `data/`                             |

@@ -31,7 +31,7 @@ function leg(label: string, improved: number, regressed: number, extra: Partial<
 describe("decideArc", () => {
 	it("subtracts the NULL, because the fine-tune tax is not the lever's fault", () => {
 		// The arc's actual numbers: v4.11.0 read -13 against shipped while the null read -5. Eight of those thirteen
-		// were the cost of touching the base, and reporting thirteen sent two more runs chasing a shard that was
+		// were the cost of touching the base, and reporting thirteen sent two more runs chasing a extract that was
 		// responsible for five.
 		const arc = decideArc(leg("control", 0, 0, { differed: 0 }), leg("null", 5, 10), leg("candidate", 5, 18))
 

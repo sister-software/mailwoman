@@ -501,7 +501,7 @@ export interface ResolveOpts {
 	 */
 	addressPoints?: AddressPointLookup
 	/**
-	 * Pass the resolved locality's BBOX to the address-point lookup as a final scope (#247). For shards whose points
+	 * Pass the resolved locality's BBOX to the address-point lookup as a final scope (#247). For extracts whose points
 	 * carry no postcode/locality of their own (OSM addr nodes often don't), the postcode/locality probes miss and the
 	 * lookup falls through to a `(street, number)` probe within the box. OFF by default — US situs never sets it, so the
 	 * bbox arg is simply never supplied and its postcode/locality probes are byte-identical.
@@ -524,12 +524,12 @@ export interface ResolveOpts {
 	 * `uncertainty_m = round(raw × factor)` and preserves the raw value under `uncertainty_raw_m`.
 	 *
 	 * The factor is a property of the CALIBRATION SET the artifact was built against, so it ships IN the artifact:
-	 * {@link InterpolationLookup.radiusCalibration} (the shard's `interp_calibration` metadata table, read at open time)
-	 * is the default whenever this option is absent. Absent + artifact-silent = raw heuristic (byte-stable — shards
-	 * predating the metadata table; production callers fall back to their in-code per-region table for those). Report:
-	 * docs/articles/evals/calibration/2026-06-14-interp-radius-calibration.md.
+	 * {@link InterpolationLookup.radiusCalibration} (the extract's `interp_calibration` metadata table, read at open
+	 * time) is the default whenever this option is absent. Absent + artifact-silent = raw heuristic (byte-stable —
+	 * extracts predating the metadata table; production callers fall back to their in-code per-region table for those).
+	 * Report: docs/articles/evals/calibration/2026-06-14-interp-radius-calibration.md.
 	 *
-	 * @internal Instrument knob (D3) — measurement decomposition + legacy-shard fallback only; the artifact header IS
+	 * @internal Instrument knob (D3) — measurement decomposition + legacy-extract fallback only; the artifact header IS
 	 *   the shipped calibration. Set it only to override the artifact's value.
 	 */
 	interpolationRadiusCalibration?: number
@@ -616,7 +616,7 @@ export interface ResolveOpts {
 	 * `12 Rue de Rivoli, 75001 Paris` under the en-US locale resolves to Paris, **Texas**: the locale's region subtag
 	 * becomes `defaultCountry: "US"`, the backend turns that into a hard `spr.country = 'US'` filter, and the candidate
 	 * pool is all-US before ranking begins — so a coarse placer that called the address FR at confidence 0.9999908844 has
-	 * nothing to promote (a soft re-rank downstream of a hard filter is inert by construction). With the postal shards
+	 * nothing to promote (a soft re-rank downstream of a hard filter is inert by construction). With the postal extracts
 	 * attached it degrades further: the postcode resolves to ZIP 75001 (Addison TX) and {@link postcodeConsistency} then
 	 * drags the locality onto that point.
 	 *
@@ -640,8 +640,8 @@ export interface ResolveOpts {
 	 * opt out (byte-stable then). Costs 2 lookups on the byte-stable path, at most 8 when it fires.
 	 *
 	 * Reach is bounded by codex's `candidateSystemsForPostcode` and the attached gazetteer: measured 2026-08-05 it can
-	 * speak for US/DE/FR/GB on the production FTS shard set and additionally CA/AU on the candidate table; JP and NZ have
-	 * a codex slice with no postcode rows behind it, so the pass abstains there at the cost of its two lookups.
+	 * speak for US/DE/FR/GB on the production FTS extract set and additionally CA/AU on the candidate table; JP and NZ
+	 * have a codex slice with no postcode rows behind it, so the pass abstains there at the cost of its two lookups.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**

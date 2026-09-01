@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   SQLite implementation of core's `AddressPointLookup` (#476): exact `(street, number)` within a
- *   postcode (preferred), locality, or — for shards whose points carry no scope tag (OSM, #247) —
+ *   postcode (preferred), locality, or — for extracts whose points carry no scope tag (OSM, #247) —
  *   the resolved locality's BBOX. Query-side normalization is THE shared normalizer
- *   (`street-normalize.ts`), selected per the shard's `streetLocale` so build-side and probe-side
+ *   (`street-normalize.ts`), selected per the extract's `streetLocale` so build-side and probe-side
  *   stay identical by construction (US delegates to the USPS pipeline; FR/DE/NL use the locale rules).
  *
  *   Matching is exact-after-normalization only — no fuzzy street matching in this tier (measure how
@@ -32,7 +32,7 @@ import {
 
 /**
  * The columns this lookup projects — a typed slice of the SHARED {@link AddressPointTable}, so a column rename in
- * `build-address-point-shard.ts` (the writer) is a compile error here (the reader).
+ * `build-address-point-extract.ts` (the writer) is a compile error here (the reader).
  */
 type AddressPointRow = Pick<AddressPointTable, "lat" | "lon" | "source" | "release" | "locality_norm" | "postcode">
 
@@ -57,15 +57,15 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		| undefined
 
 	/**
-	 * @param dbPath Shard path.
-	 * @param opts.streetLocale The street-normalization locale this shard was BUILT with — must match, or every key
+	 * @param dbPath Extract path.
+	 * @param opts.streetLocale The street-normalization locale this extract was BUILT with — must match, or every key
 	 *   misses. Defaults to `"us"` (the situs tier), so existing callers are unchanged.
 	 */
 	constructor(dbPath: string, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#db = new DatabaseClient<DB>(dbPath, { readOnly: true })
 		this.#locale = opts.streetLocale ?? "us"
 
-		// Degrade gracefully on an empty/tableless shard (interrupted build, stray 0-byte file): with no
+		// Degrade gracefully on an empty/tableless extract (interrupted build, stray 0-byte file): with no
 		// `address_point` table this lookup is a no-op miss, not a crash that loses the whole state (#568).
 		if (hasTable(this.#db, "address_point")) {
 			this.#byPostcode = prepareGet(
@@ -192,9 +192,9 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		}
 
 		if (!row && query.locality) {
-			// FR shards key arrondissement communes at the base city (both-sides fold, see the BAN
+			// FR extracts key arrondissement communes at the base city (both-sides fold, see the BAN
 			// builder + stripArrondissement) — fold the probe too so "Paris 13e Arrondissement" and
-			// "Paris" both hit. No-op for "us" shards and every non-arrondissement commune.
+			// "Paris" both hit. No-op for "us" extracts and every non-arrondissement commune.
 			const localityKey =
 				this.#locale === "fr"
 					? stripArrondissement(normalizeLocalityForKey(query.locality))

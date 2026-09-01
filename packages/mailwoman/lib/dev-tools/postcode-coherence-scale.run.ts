@@ -47,7 +47,7 @@ import { findPostcodeCountryScope } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup, WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { JSONSpliterator } from "spliterator"
 
-import { conventionCandidateDBPath, existingWOFShardPaths } from "#resolver-backend"
+import { conventionCandidateDBPath, existingWOFDatabasePaths } from "#resolver-backend"
 
 /**
  * A panel row reduced to the only two fields the pass reads.
@@ -134,11 +134,11 @@ async function makeBackend(): Promise<ResolverBackend> {
 		return new WOFCandidateTableLookup({ databasePath: path })
 	}
 
-	// The PRODUCTION shard set, exactly as `wofShardPaths()` orders it — the point of the FTS leg is to measure what a
-	// default-on mechanism would see in production, not what a hand-picked shard list can be made to show.
-	const paths = await existingWOFShardPaths()
+	// The PRODUCTION database set, exactly as `wofExtractPaths()` orders it — the point of the FTS leg is to measure what a
+	// default-on mechanism would see in production, not what a hand-picked database list can be made to show.
+	const paths = await existingWOFDatabasePaths()
 
-	console.error(`[probe] FTS backend over ${paths.length} shards: ${paths.join(", ")}`)
+	console.error(`[probe] FTS backend over ${paths.length} databases: ${paths.join(", ")}`)
 
 	return new WOFSQLitePlaceLookup({ databasePath: paths })
 }

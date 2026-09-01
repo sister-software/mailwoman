@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Which admin place CONTAINS this point — a build-time point-in-polygon locator over a WOF polygon shard.
+ * @file Which admin place CONTAINS this point — a build-time point-in-polygon locator over a WOF polygon database.
  *
  *   Built for the question a gazetteer join answers badly. Asking WOF which region a US postcode's `parent_id` leads to
  *   contradicts the ZIP numbering plan on 8.46% of placed codes; asking which region POLYGON contains the code's own

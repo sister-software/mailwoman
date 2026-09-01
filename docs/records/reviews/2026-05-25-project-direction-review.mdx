@@ -34,7 +34,7 @@ Shipping the entire parser (25MB model + 35MB gazetteer) as an in-browser demo w
 
 ### The training infrastructure is industrial-scale
 
-The corpus pipeline — 11 TypeScript adapters, 677M aligned rows, 0.03% quarantine rate, locality-aware splits, Parquet shards with license tags, source-weight balancing — is serious data engineering. The decision to train in Python (HuggingFace + PyTorch) and export to ONNX for TypeScript inference uses each ecosystem for what it's best at. The `operational-status` block in `plan/README.md` is the right framing for iteration cadence.
+The corpus pipeline — 11 TypeScript adapters, 677M aligned rows, 0.03% quarantine rate, locality-aware splits, Parquet extracts with license tags, source-weight balancing — is serious data engineering. The decision to train in Python (HuggingFace + PyTorch) and export to ONNX for TypeScript inference uses each ecosystem for what it's best at. The `operational-status` block in `plan/README.md` is the right framing for iteration cadence.
 
 ### The retrospective and diagnostic culture is strong
 

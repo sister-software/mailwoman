@@ -5,8 +5,8 @@
  *
  *   BAN dump URLs + provenance constants. The Base Adresse Nationale publishes per-département and
  *   national CSV exports at adresse.data.gouv.fr under the Licence Ouverte / Etalab 2.0. We pull the
- *   per-département dumps (`adresses-<dept>.csv.gz`) — the ecosystem's default shard unit — and assemble
- *   the national FR shard from them. These constants keep the build reproducible + the provenance
+ *   per-département dumps (`adresses-<dept>.csv.gz`) — the ecosystem's default extract unit — and assemble
+ *   the national FR extract from them. These constants keep the build reproducible + the provenance
  *   record honest (the source URL, the license, the required attribution string).
  */
 

@@ -67,7 +67,7 @@ data:
     synth-german: 6.0
     # Retained from v4.1.0 — keep the shipped unit win.
     synth-unit: 1.5
-    # The balanced country shard (homograph contrast + code-as-region negatives + breadth).
+    # The balanced country slice (homograph contrast + code-as-region negatives + breadth).
     synth-country: 2.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

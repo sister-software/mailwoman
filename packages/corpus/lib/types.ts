@@ -163,7 +163,7 @@ export interface QuarantinedRow {
 /**
  * Per-invocation knobs handed to an adapter by the runner.
  *
- * `inputPath` is interpreted by the adapter — it might be a single file path, a directory of shards, or even an HTTPS
+ * `inputPath` is interpreted by the adapter — it might be a single file path, a directory of slices, or even an HTTPS
  * URL. Each adapter documents its own expected shape in its README.
  *
  * `country` filters to a single ISO 3166-1 alpha-2 country _at the adapter level_. Adapters that hold multi-country

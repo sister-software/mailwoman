@@ -1,14 +1,14 @@
-# v0.7.2 — intersection retrain v2 (bare-format shard).
+# v0.7.2 — intersection retrain v2 (bare-format slice).
 #
 # v0.7.1 PROVED the coverage hypothesis: the model went from never emitting
 # intersection_a/b (~0.0001 prob) to confidently + correctly parsing them (0.99)
-# — BUT only on the format it trained on. The v0.7.1 synth shard always appended
+# — BUT only on the format it trained on. The v0.7.1 synth slice always appended
 # a ", City, ST" tail, so the model learned "intersection followed by a locality"
 # and fumbled the harness's BARE "X & Y" cases (mislabeling the second street as a
 # locality). It had also never seen the "@" connector. Harness intersections moved
 # 0/65 → 4/65 (functionally much better than that number; metric under-reported).
 #
-# SINGLE VARIABLE vs v0_7_1-intersection.yaml: the synth-intersection shard content
+# SINGLE VARIABLE vs v0_7_1-intersection.yaml: the synth-intersection slice content
 # (part-intersection.parquet on the volume) is regenerated to ~58% BARE (no tail) +
 # the "@" connector + more connector variety. Weight held at 0.2 (the model already
 # learned intersections at 0.2 — format was the gap, not weight; and 0.2 keeps the

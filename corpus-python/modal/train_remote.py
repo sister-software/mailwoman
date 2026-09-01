@@ -199,9 +199,9 @@ def sync_assets(
 
         :s3:{BUCKET}/corpus/<version>/  ->  {VOL_MOUNT}/corpus/versioned/<version>/corpus-<version>/
 
-    An overlay corpus ships only its own new shards; its MANIFEST names the base version's shards by
+    An overlay corpus ships only its own new slices; its MANIFEST names the base version's slices by
     absolute ``/data/...`` path, so the base must already be on the volume. This function does not
-    check that -- ``audit_epoch_mixture`` does, and reports which shard is missing.
+    check that -- ``audit_epoch_mixture`` does, and reports which slice is missing.
 
     Args:
         corpus_versions: comma-separated version names, e.g. ``v0.24.0-trailing-region-structured``.
@@ -263,7 +263,7 @@ def sync_assets(
             print(result.stdout[-300:])
 
         # rclone EXITS 0 WHEN THE SOURCE PREFIX IS EMPTY. Without this the caller reads a clean run and
-        # a training job then fails much later on a missing shard, with nothing pointing back here.
+        # a training job then fails much later on a missing slice, with nothing pointing back here.
         landed = sum(len(files) for _, _, files in os.walk(dest))
 
         if landed == 0:
@@ -373,7 +373,7 @@ def sync_v050():
 
     tdir = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train"
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.4.0-charoffset.yaml"
-    print("  v0.5.0 train shards:", len(os.listdir(tdir)) if os.path.isdir(tdir) else "MISSING")
+    print("  v0.5.0 train slices:", len(os.listdir(tdir)) if os.path.isdir(tdir) else "MISSING")
     print("  v1.4.0 config present:", os.path.isfile(cfg))
     print(
         "  loader has astral-skip:",
@@ -484,8 +484,8 @@ def sync_street_type():
 )
 def sync_v060():
     """Pull the latest training code (configs incl. v1.6.0-boundary-stress) + the v0.6.0-boundary-stress
-    OVERLAY (manifest + boundary shard) from R2, container-side. The v0.5.0 base + the v0.6.0-a0 tokenizer
-    are already on the volume from prior syncs; the overlay manifest references base shards at their /data
+    OVERLAY (manifest + boundary slice) from R2, container-side. The v0.5.0 base + the v0.6.0-a0 tokenizer
+    are already on the volume from prior syncs; the overlay manifest references base slices at their /data
     v0.5.0 paths (re-rooted by the assembler), so only the overlay + the new config need pulling."""
     import shutil
     import subprocess
@@ -518,9 +518,9 @@ def sync_v060():
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.6.0-boundary-stress.yaml"
     print("  v1.6.0 config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
-    print("  boundary shard present:", os.path.isfile(f"{cdir}/train/part-boundary-stress-train.parquet"))
+    print("  boundary slice present:", os.path.isfile(f"{cdir}/train/part-boundary-stress-train.parquet"))
     base0 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
-    print("  sample re-rooted base shard on volume:", os.path.isfile(base0))
+    print("  sample re-rooted base slice on volume:", os.path.isfile(base0))
 
 
 @app.function(
@@ -530,9 +530,9 @@ def sync_v060():
     timeout=3600,
 )
 def sync_v061():
-    """Pull the v0.6.1-boundary-stress OVERLAY (the BALANCED shard + manifest) + latest code (configs incl.
+    """Pull the v0.6.1-boundary-stress OVERLAY (the BALANCED slice + manifest) + latest code (configs incl.
     v1.7.0-boundary-stress) from R2, container-side. The v0.5.0 base + the v0.6.0-a0 tokenizer persist on the
-    volume; the overlay manifest re-roots base shards to their /data v0.5.0 paths, so only the overlay + the
+    volume; the overlay manifest re-roots base slices to their /data v0.5.0 paths, so only the overlay + the
     new config need pulling. Mirror of sync_v060 (night shift 2026-06-18 — the v1.7.0 corrective retrain)."""
     import shutil
     import subprocess
@@ -565,9 +565,9 @@ def sync_v061():
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.7.0-boundary-stress.yaml"
     print("  v1.7.0 config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
-    print("  boundary shard present:", os.path.isfile(f"{cdir}/train/part-boundary-stress-train.parquet"))
+    print("  boundary slice present:", os.path.isfile(f"{cdir}/train/part-boundary-stress-train.parquet"))
     base0 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
-    print("  sample re-rooted base shard on volume:", os.path.isfile(base0))
+    print("  sample re-rooted base slice on volume:", os.path.isfile(base0))
 
 
 @app.function(
@@ -755,8 +755,8 @@ def sync_src_727_stage2():
     timeout=1200,
 )
 def sync_v6():
-    """Pull the v0.10.7-fragment-v6 OVERLAY (#1104 country-counterweight fragment shard) + latest src from
-    R2. The 699 base shards persist on the volume from prior runs (the overlay MANIFEST re-roots them to
+    """Pull the v0.10.7-fragment-v6 OVERLAY (#1104 country-counterweight fragment slice) + latest src from
+    R2. The 699 base slices persist on the volume from prior runs (the overlay MANIFEST re-roots them to
     /data/v0.5.0 paths), so only the overlay dir + the config need pulling. Clears pycache, commits,
     verifies the overlay + config landed before returning."""
     import shutil
@@ -788,7 +788,7 @@ def sync_v6():
     frag = os.path.isfile(f"{overlay}/train/part-fragment.parquet")
     base0 = os.path.isfile(f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/test/part-0000.parquet")
     print(
-        f"  overlay MANIFEST: {manifest} | fragment shard: {frag} | v2.9.0 config: {os.path.isfile(cfg)} | base shard: {base0}"
+        f"  overlay MANIFEST: {manifest} | fragment slice: {frag} | v2.9.0 config: {os.path.isfile(cfg)} | base slice: {base0}"
     )
     if not (manifest and frag and os.path.isfile(cfg) and base0):
         raise RuntimeError("sync verify FAILED — overlay/config/base missing on volume; do NOT launch")
@@ -802,8 +802,8 @@ def sync_v6():
     timeout=1200,
 )
 def sync_v7():
-    """Pull the v0.10.8-fragment-v7 OVERLAY (#1104 country-counterweight fragment shard) + latest src from
-    R2. The 699 base shards persist on the volume from prior runs (the overlay MANIFEST re-roots them to
+    """Pull the v0.10.8-fragment-v7 OVERLAY (#1104 country-counterweight fragment slice) + latest src from
+    R2. The 699 base slices persist on the volume from prior runs (the overlay MANIFEST re-roots them to
     /data/v0.5.0 paths), so only the overlay dir + the config need pulling. Clears pycache, commits,
     verifies the overlay + config landed before returning."""
     import shutil
@@ -835,7 +835,7 @@ def sync_v7():
     frag = os.path.isfile(f"{overlay}/train/part-fragment.parquet")
     base0 = os.path.isfile(f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/test/part-0000.parquet")
     print(
-        f"  overlay MANIFEST: {manifest} | fragment shard: {frag} | v2.9.0 config: {os.path.isfile(cfg)} | base shard: {base0}"
+        f"  overlay MANIFEST: {manifest} | fragment slice: {frag} | v2.9.0 config: {os.path.isfile(cfg)} | base slice: {base0}"
     )
     if not (manifest and frag and os.path.isfile(cfg) and base0):
         raise RuntimeError("sync verify FAILED — overlay/config/base missing on volume; do NOT launch")
@@ -852,7 +852,7 @@ def sync_country_channel():
     """Pull the #1104 country-lexicon CHANNEL activation: latest src (the channel code + the new
     v2.6.3-country-channel config) + the country-surface lexicon into /data/gazetteer/. The corpus is
     UNCHANGED from v261 (v0.10.6-fragment-v5, already on the volume — the channel paints features on
-    existing rows from the lexicon at encode time, no new shard), and the init_from checkpoint
+    existing rows from the lexicon at encode time, no new slice), and the init_from checkpoint
     (output-v261-span-boundary-full-s42/step-008000) persists from the v261 run. So only src + the one
     lexicon need pulling. Clears pycache, commits, verifies config + lexicon + init_from + base corpus."""
     import shutil
@@ -947,9 +947,9 @@ def sync_country_softguard():
     timeout=3600,
 )
 def sync_v080():
-    """Pull the v0.8.0-fr-admin-split OVERLAY (the FR admin-split shard + manifest) + latest code (configs
+    """Pull the v0.8.0-fr-admin-split OVERLAY (the FR admin-split slice + manifest) + latest code (configs
     incl. v1.8.0-fr-admin-split) from R2, container-side. The v0.5.0 base + the v0.6.0-a0 tokenizer persist on
-    the volume; the overlay manifest re-roots base shards to their /data v0.5.0 paths, so only the overlay +
+    the volume; the overlay manifest re-roots base slices to their /data v0.5.0 paths, so only the overlay +
     the new config need pulling. Mirror of sync_v061 (night shift 2026-06-19 — the surpass-v1.5.0 run)."""
     import shutil
     import subprocess
@@ -982,9 +982,9 @@ def sync_v080():
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.8.0-fr-admin-split.yaml"
     print("  v1.8.0 config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
-    print("  fr-admin-split shard present:", os.path.isfile(f"{cdir}/train/part-fr-admin-split-train.parquet"))
+    print("  fr-admin-split slice present:", os.path.isfile(f"{cdir}/train/part-fr-admin-split-train.parquet"))
     base0 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
-    print("  sample re-rooted base shard on volume:", os.path.isfile(base0))
+    print("  sample re-rooted base slice on volume:", os.path.isfile(base0))
 
 
 @app.function(
@@ -994,7 +994,7 @@ def sync_v080():
     timeout=3600,
 )
 def sync_v081():
-    """Pull the v0.8.1-fr-admin-split OVERLAY (the country-bearing shard — the v1.8.0 fr.country fix +
+    """Pull the v0.8.1-fr-admin-split OVERLAY (the country-bearing slice — the v1.8.0 fr.country fix +
     manifest) + latest code (configs incl. v1.8.1-fr-admin-split) from R2, container-side. Mirror of
     sync_v080 (night shift 2026-06-19 — the v1.8.1 fr.country refinement, ready to launch on operator GO)."""
     import shutil
@@ -1028,9 +1028,9 @@ def sync_v081():
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.8.1-fr-admin-split.yaml"
     print("  v1.8.1 config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
-    print("  fr-admin-split shard present:", os.path.isfile(f"{cdir}/train/part-fr-admin-split-train.parquet"))
+    print("  fr-admin-split slice present:", os.path.isfile(f"{cdir}/train/part-fr-admin-split-train.parquet"))
     base0 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
-    print("  sample re-rooted base shard on volume:", os.path.isfile(base0))
+    print("  sample re-rooted base slice on volume:", os.path.isfile(base0))
 
 
 @app.function(
@@ -1040,9 +1040,9 @@ def sync_v081():
     timeout=3600,
 )
 def sync_v090():
-    """Pull the v0.9.0-multilocale OVERLAY (#148 multi-locale parse-recall shard: 2.4M real Overture
+    """Pull the v0.9.0-multilocale OVERLAY (#148 multi-locale parse-recall slice: 2.4M real Overture
     address rows across ~19 EU locales) + latest code (configs incl. v1.9.0-multilocale) from R2,
-    container-side. Mirror of sync_v081. The base v0.5.0 + v0.8.0-fr-admin-split shards the overlay
+    container-side. Mirror of sync_v081. The base v0.5.0 + v0.8.0-fr-admin-split slices the overlay
     manifest references already persist on the volume from prior runs (verified below)."""
     import shutil
     import subprocess
@@ -1075,11 +1075,11 @@ def sync_v090():
     cfg9 = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.0-multilocale.yaml"
     print("  v1.9.0 config present:", os.path.isfile(cfg9))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir9}/MANIFEST.json"))
-    print("  overture shard present:", os.path.isfile(f"{cdir9}/train/part-overture-multilocale-train.parquet"))
+    print("  overture slice present:", os.path.isfile(f"{cdir9}/train/part-overture-multilocale-train.parquet"))
     base09 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
     base89 = f"{VOL_MOUNT}/corpus/versioned/v0.8.0-fr-admin-split/corpus-v0.8.0-fr-admin-split/train/part-fr-admin-split-train.parquet"
-    print("  base v0.5.0 shard on volume:", os.path.isfile(base09))
-    print("  base v0.8.0 fr-admin-split shard on volume:", os.path.isfile(base89))
+    print("  base v0.5.0 slice on volume:", os.path.isfile(base09))
+    print("  base v0.8.0 fr-admin-split slice on volume:", os.path.isfile(base89))
     print("  tokenizer v0.6.0-a0 on volume:", os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.6.0-a0/tokenizer.model"))
 
 
@@ -1093,7 +1093,7 @@ def sync_v091():
     """Pull the v0.9.1-multilocale OVERLAY (#148 v1.9.1 — the ORDER-OVERFIT FIX: the SAME 2.4M Overture
     rows as v0.9.0 but re-rendered in 3 natural orders (canonical/pc-first/city-first), so the model can
     no longer learn the "locality = last token-group" shortcut that sank v1.9.0). Mirror of sync_v090;
-    base v0.5.0 + v0.8.0-fr-admin-split shards persist on the volume from prior runs (verified below)."""
+    base v0.5.0 + v0.8.0-fr-admin-split slices persist on the volume from prior runs (verified below)."""
     import shutil
     import subprocess
 
@@ -1126,13 +1126,13 @@ def sync_v091():
     print("  v1.9.1 config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
     print(
-        "  3-order overture shard present:",
+        "  3-order overture slice present:",
         os.path.isfile(f"{cdir}/train/part-overture-multilocale-3order-train.parquet"),
     )
     base09 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
     base89 = f"{VOL_MOUNT}/corpus/versioned/v0.8.0-fr-admin-split/corpus-v0.8.0-fr-admin-split/train/part-fr-admin-split-train.parquet"
-    print("  base v0.5.0 shard on volume:", os.path.isfile(base09))
-    print("  base v0.8.0 fr-admin-split shard on volume:", os.path.isfile(base89))
+    print("  base v0.5.0 slice on volume:", os.path.isfile(base09))
+    print("  base v0.8.0 fr-admin-split slice on volume:", os.path.isfile(base89))
     print("  tokenizer v0.6.0-a0 on volume:", os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.6.0-a0/tokenizer.model"))
 
 
@@ -1144,7 +1144,7 @@ def sync_v091():
 )
 def sync_nz():
     """NZ locale add (task #58, Deepparse parity #1) — pull the v0.12.0-nz overlay (base v0.11.0-no-fragment
-    + the one new synth-nz LINZ shard) + latest code/config from R2 (container-side). The 702 base refs
+    + the one new synth-nz LINZ slice) + latest code/config from R2 (container-side). The 702 base refs
     persist on the volume from prior runs; only the synth-nz parquet + MANIFEST + the new config are new.
     Mirror of sync_no_fragment_b4b."""
     import shutil
@@ -1178,11 +1178,11 @@ def sync_nz():
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v3.8.2-nz-locale-probe.yaml"
     print("  v3.8.2-nz config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
-    print("  synth-nz shard present:", os.path.isfile(f"{cdir}/train/part-nz.parquet"))
+    print("  synth-nz slice present:", os.path.isfile(f"{cdir}/train/part-nz.parquet"))
     base = f"{VOL_MOUNT}/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment/MANIFEST.json"
     print("  base v0.11.0-no-fragment on volume:", os.path.isfile(base))
     base5 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0000.parquet"
-    print("  base v0.5.0 shard on volume (manifest-referenced):", os.path.isfile(base5))
+    print("  base v0.5.0 slice on volume (manifest-referenced):", os.path.isfile(base5))
     print(
         "  init_from v381 step-008000 on volume:",
         os.path.isdir(f"{VOL_MOUNT}/output-v381-punct-fix-full-s42/checkpoints/step-008000"),
@@ -1201,7 +1201,7 @@ def sync_nz():
 )
 def sync_latam():
     """CA/MX locale add (Overture) — pull the v0.13.0-latam overlay (base v0.11.0-no-fragment + the one new
-    overture-latam shard) + latest code/config from R2 (container-side). Mirror of sync_nz. NZ is NOT here
+    overture-latam slice) + latest code/config from R2 (container-side). Mirror of sync_nz. NZ is NOT here
     (it stays forked on the dead-tag problem); this is the clean live-locality v7.1.0 path."""
     import shutil
     import subprocess
@@ -1234,11 +1234,11 @@ def sync_latam():
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v3.8.4-latam-probe.yaml"
     print("  v3.8.4-latam config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
-    print("  overture-latam shard present:", os.path.isfile(f"{cdir}/train/part-latam.parquet"))
+    print("  overture-latam slice present:", os.path.isfile(f"{cdir}/train/part-latam.parquet"))
     base = f"{VOL_MOUNT}/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment/MANIFEST.json"
     print("  base v0.11.0-no-fragment on volume:", os.path.isfile(base))
     base5 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0000.parquet"
-    print("  base v0.5.0 shard on volume (manifest-referenced):", os.path.isfile(base5))
+    print("  base v0.5.0 slice on volume (manifest-referenced):", os.path.isfile(base5))
     print(
         "  init_from v381 step-008000 on volume:",
         os.path.isdir(f"{VOL_MOUNT}/output-v381-punct-fix-full-s42/checkpoints/step-008000"),
@@ -1257,8 +1257,8 @@ def sync_latam():
 )
 def sync_latam_br():
     """CA/MX/BR full-LATAM add (Overture, v7.2 candidate) — pull the v0.14.0-latam-br overlay (base
-    v0.11.0-no-fragment + the CA/MX overture-latam shard @ v0.13.0-latam + the new BR shard) + code/config
-    from R2. The CA/MX shard persists from sync_latam; only the BR shard + config are new. Mirror of sync_latam."""
+    v0.11.0-no-fragment + the CA/MX overture-latam slice @ v0.13.0-latam + the new BR slice) + code/config
+    from R2. The CA/MX slice persists from sync_latam; only the BR slice + config are new. Mirror of sync_latam."""
     import shutil
     import subprocess
 
@@ -1291,8 +1291,8 @@ def sync_latam_br():
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v3.8.6-latam-br-8k.yaml"
     print("  v3.8.6-latam-br config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
-    print("  BR shard present:", os.path.isfile(f"{cdir}/train/part-br.parquet"))
-    print("  CA/MX shard (from sync_latam) present:", os.path.isfile(latam))
+    print("  BR slice present:", os.path.isfile(f"{cdir}/train/part-br.parquet"))
+    print("  CA/MX slice (from sync_latam) present:", os.path.isfile(latam))
     base = f"{VOL_MOUNT}/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment/MANIFEST.json"
     print("  base v0.11.0-no-fragment on volume:", os.path.isfile(base))
     print(
@@ -1313,8 +1313,8 @@ def sync_latam_br():
 )
 def sync_gb():
     """GB locale add (Task 7, dependent_locality dead-tag resurrection probe) — pull the v0.14.0-gb
-    overlay (base v0.13.0-latam + the one new synth-gb-v1 shard, 800k rows) + latest code/config from
-    R2 (container-side). The v0.13.0-latam base (703 shards, itself an overlay over
+    overlay (base v0.13.0-latam + the one new synth-gb-v1 slice, 800k rows) + latest code/config from
+    R2 (container-side). The v0.13.0-latam base (703 slices, itself an overlay over
     v0.11.0-no-fragment) persists on the volume from sync_latam; only the synth-gb parquet + MANIFEST
     + the new v3.10.0-gb-probe config are new. Mirror of sync_latam."""
     import shutil
@@ -1349,8 +1349,8 @@ def sync_gb():
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v3.10.0-gb-probe.yaml"
     print("  v3.10.0-gb-probe config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
-    print("  synth-gb shard present:", os.path.isfile(f"{cdir}/train/part-gb.parquet"))
-    print("  v0.13.0-latam base shard (from sync_latam) present:", os.path.isfile(latam))
+    print("  synth-gb slice present:", os.path.isfile(f"{cdir}/train/part-gb.parquet"))
+    print("  v0.13.0-latam base slice (from sync_latam) present:", os.path.isfile(latam))
     base = f"{VOL_MOUNT}/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment/MANIFEST.json"
     print("  base v0.11.0-no-fragment on volume:", os.path.isfile(base))
     print(
@@ -1371,10 +1371,10 @@ def sync_gb():
 )
 def sync_deploc():
     """dependent_locality FEED run (v3.11.0-deploc-feed) — pull the v0.15.0-deploc overlay
-    (base v0.14.0-gb + THREE new shards: synth-nz-v2, synth-es-pedania-v1, synth-fr-lieudit-v1,
+    (base v0.14.0-gb + THREE new slices: synth-nz-v2, synth-es-pedania-v1, synth-fr-lieudit-v1,
     ~2.4M rows combined) + latest code/config from R2 (container-side). The v0.14.0-gb base (704
-    shards, itself an overlay over v0.13.0-latam) persists on the volume from sync_gb; only the
-    three new parquet shards + MANIFEST + the new v3.11.0-deploc-feed config are new. Mirror of
+    slices, itself an overlay over v0.13.0-latam) persists on the volume from sync_gb; only the
+    three new parquet slices + MANIFEST + the new v3.11.0-deploc-feed config are new. Mirror of
     sync_gb."""
     import shutil
     import subprocess
@@ -1409,10 +1409,10 @@ def sync_deploc():
     manifest_path = f"{cdir}/MANIFEST.json"
     print("  v3.11.0-deploc-feed config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(manifest_path))
-    print("  synth-nz shard present:", os.path.isfile(f"{cdir}/train/part-nz.parquet"))
-    print("  synth-es-pedania shard present:", os.path.isfile(f"{cdir}/train/part-es-pedania.parquet"))
-    print("  synth-fr-lieudit shard present:", os.path.isfile(f"{cdir}/train/part-fr-lieudit.parquet"))
-    print("  v0.14.0-gb base shard (from sync_gb) present:", os.path.isfile(gb_base))
+    print("  synth-nz slice present:", os.path.isfile(f"{cdir}/train/part-nz.parquet"))
+    print("  synth-es-pedania slice present:", os.path.isfile(f"{cdir}/train/part-es-pedania.parquet"))
+    print("  synth-fr-lieudit slice present:", os.path.isfile(f"{cdir}/train/part-fr-lieudit.parquet"))
+    print("  v0.14.0-gb base slice (from sync_gb) present:", os.path.isfile(gb_base))
     print(
         "  init_from v385 (output-v384-latam-probe-s42) step-008000 on volume:",
         os.path.isdir(f"{VOL_MOUNT}/output-v384-latam-probe-s42/checkpoints/step-008000"),
@@ -1426,7 +1426,7 @@ def sync_deploc():
         import json
 
         manifest = json.loads(open(manifest_path).read())
-        sources_in_manifest = {s.get("source") for s in manifest.get("shards", [])}
+        sources_in_manifest = {s.get("source") for s in manifest.get("slices", [])}
         for expected in ("synth-nz", "synth-es-pedania", "synth-fr-lieudit"):
             print(f"  manifest contains source={expected!r}:", expected in sources_in_manifest)
         print("  configs dir has v3.11.0-deploc-feed.yaml:", os.path.isfile(cfg))
@@ -1522,7 +1522,7 @@ def sync_no_fragment_b4b():
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v3.6.0-no-fragment-b4b.yaml"
     print("  v3.6.0 config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
-    print("  synth-no-fragment shard present:", os.path.isfile(f"{cdir}/train/part-no-fragment.parquet"))
+    print("  synth-no-fragment slice present:", os.path.isfile(f"{cdir}/train/part-no-fragment.parquet"))
     base = f"{VOL_MOUNT}/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment/MANIFEST.json"
     print("  base v0.10.9-fr-fragment on volume (manifest-referenced):", os.path.isfile(base))
     print(
@@ -1539,8 +1539,8 @@ def sync_no_fragment_b4b():
 )
 def sync_v092():
     """Pull the v0.9.2-multilocale-au OVERLAY (#208 — ADD AUSTRALIA to v1.9.1's proven 3-order recipe).
-    The gnaf G-NAF AU 3-order shard layered on v0.9.1-multilocale (overture 3-order + v0.5.0 base, both
-    referenced verbatim by the manifest). Mirror of sync_v091; the base v0.5.0 + v0.9.1 overture shards
+    The gnaf G-NAF AU 3-order slice layered on v0.9.1-multilocale (overture 3-order + v0.5.0 base, both
+    referenced verbatim by the manifest). Mirror of sync_v091; the base v0.5.0 + v0.9.1 overture slices
     persist on the volume from the v1.9.1 run (verified below — only the 16 MB gnaf overlay is new)."""
     import shutil
     import subprocess
@@ -1573,11 +1573,11 @@ def sync_v092():
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.2-multilocale-au.yaml"
     print("  v1.9.2 config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
-    print("  gnaf AU 3-order shard present:", os.path.isfile(f"{cdir}/train/part-gnaf-au-train.parquet"))
+    print("  gnaf AU 3-order slice present:", os.path.isfile(f"{cdir}/train/part-gnaf-au-train.parquet"))
     ovl91 = f"{VOL_MOUNT}/corpus/versioned/v0.9.1-multilocale/corpus-v0.9.1-multilocale/train/part-overture-multilocale-3order-train.parquet"
     base05 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
-    print("  base v0.5.0 shard on volume (manifest-referenced):", os.path.isfile(base05))
-    print("  v0.9.1 overture 3-order shard on volume (manifest-referenced):", os.path.isfile(ovl91))
+    print("  base v0.5.0 slice on volume (manifest-referenced):", os.path.isfile(base05))
+    print("  v0.9.1 overture 3-order slice on volume (manifest-referenced):", os.path.isfile(ovl91))
     print("  tokenizer v0.6.0-a0 on volume:", os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.6.0-a0/tokenizer.model"))
 
 
@@ -1589,11 +1589,11 @@ def sync_v092():
 )
 def sync_v196_slavic():
     """#825 SHIP candidate. Pull the v0.9.6-slavic-anchor OVERLAY (= v0.9.3a3-anchor-absorption, v4.15.0's
-    694 base shards referenced verbatim + already on the volume from the v4.15.0 run) + the one new
-    oa-slavic street-level diacritic shard (89837 rows, CZ/PL/SK/SI real OpenAddresses). Mirror of
-    sync_v092. The base v0.9.3a3 shards — incl synth-anchor-absorption, the #723 fix — persist on the
+    694 base slices referenced verbatim + already on the volume from the v4.15.0 run) + the one new
+    oa-slavic street-level diacritic slice (89837 rows, CZ/PL/SK/SI real OpenAddresses). Mirror of
+    sync_v092. The base v0.9.3a3 slices — incl synth-anchor-absorption, the #723 fix — persist on the
     volume; only the ~3.5 MB oa-slavic overlay is new. Train is `--resume none` (from scratch, 80k) so
-    #723 is re-learned from the corpus (paint_mode=shaped + absorption shard both in the recipe), keeping
+    #723 is re-learned from the corpus (paint_mode=shaped + absorption slice both in the recipe), keeping
     the comparison to v4.15.0 a clean one-variable — only oa-slavic differs."""
     import shutil
     import subprocess
@@ -1627,10 +1627,10 @@ def sync_v196_slavic():
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.6-slavic-anchor.yaml"
     print("  v1.9.6 config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
-    print("  oa-slavic shard present:", os.path.isfile(f"{cdir}/train/part-oa-slavic-diacritic-train.parquet"))
+    print("  oa-slavic slice present:", os.path.isfile(f"{cdir}/train/part-oa-slavic-diacritic-train.parquet"))
     print("  base v0.9.3a3 MANIFEST on volume (manifest-referenced):", os.path.isfile(f"{base}/MANIFEST.json"))
     print(
-        "  synth-anchor-absorption shard on volume (#723 fix):",
+        "  synth-anchor-absorption slice on volume (#723 fix):",
         os.path.isfile(f"{base}/train/part-anchor-absorption-train.parquet"),
     )
     print("  tokenizer v0.6.0-a0 on volume:", os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.6.0-a0/tokenizer.model"))
@@ -1646,7 +1646,7 @@ def sync_v197_bsplice():
     """#825 B-splice fine-tune. Pulls the code+config + the SPLICED tokenizer (v0.6.0-bsplice = v0.6.0-a0's
     48000 pieces + 10,582 diacritic pieces) + the EXPANDED v4.15.0 checkpoint (token_embeddings 48000 ->
     58582, the new rows mean-initialized from their old-tokenizer constituents). The v0.9.6-slavic-anchor
-    corpus + base shards persist on the volume from the v196 run — only the tokenizer (~1.3 MB) and the
+    corpus + base slices persist on the volume from the v196 run — only the tokenizer (~1.3 MB) and the
     expanded checkpoint (~112 MB) are new. The fine-tune is init_from (fresh optimizer), resume=none."""
     import shutil
     import subprocess
@@ -1749,9 +1749,9 @@ def sync_v193():
     timeout=1800,
 )
 def sync_v193a1():
-    """#220/#723 Probe A1 (anchor-absorption + the synth-anchor-absorption counter-aug shard). Unlike A0,
-    A1 has a NEW corpus (the v0.9.3-anchor-absorption OVERLAY = v0.9.2-multilocale-au's 693 base shards
-    VERBATIM + the 1 counter-aug shard), so this pulls that overlay (small — base shards persist on the
+    """#220/#723 Probe A1 (anchor-absorption + the synth-anchor-absorption counter-aug slice). Unlike A0,
+    A1 has a NEW corpus (the v0.9.3-anchor-absorption OVERLAY = v0.9.2-multilocale-au's 693 base slices
+    VERBATIM + the 1 counter-aug slice), so this pulls that overlay (small — base slices persist on the
     volume, referenced by the re-rooted manifest) + the code+config, then pre-seeds v192 step-040000 into
     the v193a1 output dir for `--resume auto` (RESUME, not init_from). Heavy CASE-P (35%) to stop the A0
     default-flip; gate = SLICE-H recovered AND postcode guardrail held."""
@@ -1797,12 +1797,12 @@ def sync_v193a1():
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.3a1-anchor-absorption.yaml"
     print("  v1.9.3a1 config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
-    print("  counter-aug shard present:", os.path.isfile(f"{cdir}/train/part-anchor-absorption-train.parquet"))
-    # A re-rooted BASE shard must resolve on the volume (the v1.6.0 re-root failure mode — fail loud here, not at train).
+    print("  counter-aug slice present:", os.path.isfile(f"{cdir}/train/part-anchor-absorption-train.parquet"))
+    # A re-rooted BASE slice must resolve on the volume (the v1.6.0 re-root failure mode — fail loud here, not at train).
     base05 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
     gnaf = f"{VOL_MOUNT}/corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au/train/part-gnaf-au-train.parquet"
-    print("  base v0.5.0 shard on volume (manifest-referenced):", os.path.isfile(base05))
-    print("  gnaf AU shard on volume (manifest-referenced):", os.path.isfile(gnaf))
+    print("  base v0.5.0 slice on volume (manifest-referenced):", os.path.isfile(base05))
+    print("  gnaf AU slice on volume (manifest-referenced):", os.path.isfile(gnaf))
     print("  v193a1 pre-seed ckpt files:", sorted(os.listdir(dst)) if os.path.isdir(dst) else "MISSING")
 
 
@@ -1813,9 +1813,9 @@ def sync_v193a1():
     timeout=1800,
 )
 def sync_v193a2():
-    """#220/#723 Probe A1 (anchor-absorption + the synth-anchor-absorption counter-aug shard). Unlike A0,
-    A1 has a NEW corpus (the v0.9.3a2-anchor-absorption OVERLAY = v0.9.2-multilocale-au's 693 base shards
-    VERBATIM + the 1 counter-aug shard), so this pulls that overlay (small — base shards persist on the
+    """#220/#723 Probe A1 (anchor-absorption + the synth-anchor-absorption counter-aug slice). Unlike A0,
+    A1 has a NEW corpus (the v0.9.3a2-anchor-absorption OVERLAY = v0.9.2-multilocale-au's 693 base slices
+    VERBATIM + the 1 counter-aug slice), so this pulls that overlay (small — base slices persist on the
     volume, referenced by the re-rooted manifest) + the code+config, then pre-seeds v192 step-040000 into
     the v193a2 output dir for `--resume auto` (RESUME, not init_from). Heavy CASE-P (35%) to stop the A0
     default-flip; gate = SLICE-H recovered AND postcode guardrail held."""
@@ -1861,12 +1861,12 @@ def sync_v193a2():
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.3a2-anchor-absorption.yaml"
     print("  v1.9.3a2 config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
-    print("  counter-aug shard present:", os.path.isfile(f"{cdir}/train/part-anchor-absorption-train.parquet"))
-    # A re-rooted BASE shard must resolve on the volume (the v1.6.0 re-root failure mode — fail loud here, not at train).
+    print("  counter-aug slice present:", os.path.isfile(f"{cdir}/train/part-anchor-absorption-train.parquet"))
+    # A re-rooted BASE slice must resolve on the volume (the v1.6.0 re-root failure mode — fail loud here, not at train).
     base05 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
     gnaf = f"{VOL_MOUNT}/corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au/train/part-gnaf-au-train.parquet"
-    print("  base v0.5.0 shard on volume (manifest-referenced):", os.path.isfile(base05))
-    print("  gnaf AU shard on volume (manifest-referenced):", os.path.isfile(gnaf))
+    print("  base v0.5.0 slice on volume (manifest-referenced):", os.path.isfile(base05))
+    print("  gnaf AU slice on volume (manifest-referenced):", os.path.isfile(gnaf))
     print("  v193a2 pre-seed ckpt files:", sorted(os.listdir(dst)) if os.path.isdir(dst) else "MISSING")
 
 
@@ -1877,9 +1877,9 @@ def sync_v193a2():
     timeout=1800,
 )
 def sync_v193a3():
-    """#220/#723 Probe A1 (anchor-absorption + the synth-anchor-absorption counter-aug shard). Unlike A0,
-    A1 has a NEW corpus (the v0.9.3a3-anchor-absorption OVERLAY = v0.9.2-multilocale-au's 693 base shards
-    VERBATIM + the 1 counter-aug shard), so this pulls that overlay (small — base shards persist on the
+    """#220/#723 Probe A1 (anchor-absorption + the synth-anchor-absorption counter-aug slice). Unlike A0,
+    A1 has a NEW corpus (the v0.9.3a3-anchor-absorption OVERLAY = v0.9.2-multilocale-au's 693 base slices
+    VERBATIM + the 1 counter-aug slice), so this pulls that overlay (small — base slices persist on the
     volume, referenced by the re-rooted manifest) + the code+config, then pre-seeds v192 step-040000 into
     the v193a3 output dir for `--resume auto` (RESUME, not init_from). Heavy CASE-P (35%) to stop the A0
     default-flip; gate = SLICE-H recovered AND postcode guardrail held."""
@@ -1925,12 +1925,12 @@ def sync_v193a3():
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.3a3-anchor-absorption.yaml"
     print("  v1.9.3a3 config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
-    print("  counter-aug shard present:", os.path.isfile(f"{cdir}/train/part-anchor-absorption-train.parquet"))
-    # A re-rooted BASE shard must resolve on the volume (the v1.6.0 re-root failure mode — fail loud here, not at train).
+    print("  counter-aug slice present:", os.path.isfile(f"{cdir}/train/part-anchor-absorption-train.parquet"))
+    # A re-rooted BASE slice must resolve on the volume (the v1.6.0 re-root failure mode — fail loud here, not at train).
     base05 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
     gnaf = f"{VOL_MOUNT}/corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au/train/part-gnaf-au-train.parquet"
-    print("  base v0.5.0 shard on volume (manifest-referenced):", os.path.isfile(base05))
-    print("  gnaf AU shard on volume (manifest-referenced):", os.path.isfile(gnaf))
+    print("  base v0.5.0 slice on volume (manifest-referenced):", os.path.isfile(base05))
+    print("  gnaf AU slice on volume (manifest-referenced):", os.path.isfile(gnaf))
     print("  v193a3 pre-seed ckpt files:", sorted(os.listdir(dst)) if os.path.isdir(dst) else "MISSING")
 
 
@@ -1941,9 +1941,9 @@ def sync_v193a3():
     timeout=1800,
 )
 def sync_v094_fr_bare():
-    """#251/#148 fr-bare-street probe. The v0.9.4 overlay = v0.9.3a3's 694 shards VERBATIM (re-rooted to
-    /data) + the 1 fr-bare-street shard (BAN-sourced bare-no-postcode FR streets — the postcode-anchoring
-    lever). Pulls that overlay (small; base shards persist on the volume, referenced by the re-rooted
+    """#251/#148 fr-bare-street probe. The v0.9.4 overlay = v0.9.3a3's 694 slices VERBATIM (re-rooted to
+    /data) + the 1 fr-bare-street slice (BAN-sourced bare-no-postcode FR streets — the postcode-anchoring
+    lever). Pulls that overlay (small; base slices persist on the volume, referenced by the re-rooted
     manifest) + code/config, then pre-seeds the v193a3 step-080000 ckpt into the v194 output dir for
     `--resume auto` (RESUME — continue growing the FR street→locality boundary, NOT init_from)."""
     import shutil
@@ -1988,9 +1988,9 @@ def sync_v094_fr_bare():
     cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.4-fr-bare-street.yaml"
     print("  v1.9.4 config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
-    print("  fr-bare-street shard present:", os.path.isfile(f"{cdir}/train/part-fr-bare-street-train.parquet"))
+    print("  fr-bare-street slice present:", os.path.isfile(f"{cdir}/train/part-fr-bare-street-train.parquet"))
     base05 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
-    print("  base v0.5.0 shard on volume (manifest-referenced):", os.path.isfile(base05))
+    print("  base v0.5.0 slice on volume (manifest-referenced):", os.path.isfile(base05))
     print("  v194 pre-seed ckpt files:", sorted(os.listdir(dst)) if os.path.isdir(dst) else "MISSING")
 
 
@@ -2002,7 +2002,7 @@ def sync_v094_fr_bare():
 )
 def sync_v095_case():
     """#261 surface-augmentation (case) probe. Pulls ONLY code+config from R2 — the v0.9.4 corpus + base
-    shards persist on the volume from v194 (the case augmentation is a TRAINING-TIME transform; no new
+    slices persist on the volume from v194 (the case augmentation is a TRAINING-TIME transform; no new
     corpus). Copies the v194 step-092000 ckpt into a FRESH v195 output dir for `--resume auto` (RESUME —
     grow case-robustness from v194, NOT init_from), leaving the shipped v194 output dir untouched."""
     import shutil
@@ -2144,8 +2144,8 @@ def _train_gpu(
     import torch
 
     # Fetch the latest committed volume state. Without this, a container mounts a stale
-    # snapshot and never sees shards added via `modal volume put` after deploy — which silently
-    # trains on the old corpus (the v0.7.1 intersection-shard trap, night-3 2026-05-29).
+    # snapshot and never sees slices added via `modal volume put` after deploy — which silently
+    # trains on the old corpus (the v0.7.1 intersection-slice trap, night-3 2026-05-29).
     vol.reload()
 
     # Add training code to path
@@ -2186,8 +2186,8 @@ def _train_gpu(
             f"Corpus not found at {train_dir} (cfg.data.corpus_dir={cfg.data.corpus_dir}). "
             "Stage it with `modal volume put` or run sync_corpus first."
         )
-    shard_count = len([f for f in os.listdir(train_dir) if f.endswith(".parquet")])
-    print(f"Corpus: {cfg.data.corpus_dir} ({shard_count} train shards)")
+    slice_count = len([f for f in os.listdir(train_dir) if f.endswith(".parquet")])
+    print(f"Corpus: {cfg.data.corpus_dir} ({slice_count} train slices)")
 
     if cfg.data.required_corpus_receipts:
         from pathlib import Path
@@ -2396,7 +2396,7 @@ def debug_volume(config_name: str = "v1.4.0-charoffset.yaml"):
         print(
             "  v0.5.0 train dir exists:",
             os.path.isdir(ctrain),
-            "shards:",
+            "slices:",
             len(os.listdir(ctrain)) if os.path.isdir(ctrain) else 0,
         )
 
@@ -2488,7 +2488,7 @@ def sync_nsplice():
 )
 def sync_v210():
     """#901 re-scoped: v2.1.0-boundary-family — the v0.10.0 overlay (v0.9.4 base VERBATIM + the
-    three new family shards si/no/cz; fr-bare-street already in the base) + code/configs. The
+    three new family slices si/no/cz; fr-bare-street already in the base) + code/configs. The
     nsplice-v2-expanded init ckpt and the v0.7.1-nsplice tokenizer are already on the volume from
     the v5.2.0 staging chain."""
     import shutil
@@ -2804,13 +2804,13 @@ def diagnose_corpus(
     verify_country: str = "",
     verify_source: str = "",
 ):
-    """Check which corpus shards the data loader actually sees on the Modal volume.
+    """Check which corpus slices the data loader actually sees on the Modal volume.
 
     Pass ``--corpus-dir`` to point at an overlay (e.g. the v0.4.1-de pilot corpus). Pass
     ``--verify-country DE --verify-source synth-german`` to additionally PULL a few rows through the
-    real filter and confirm they survive — the night-4 trap was a German shard whose rows were all
+    real filter and confirm they survive — the night-4 trap was a German slice whose rows were all
     filtered out, so the run trained on nothing. This is the pre-launch "verify the loader sees the
-    shard, THEN launch" gate.
+    slice, THEN launch" gate.
     """
     import json
     import random
@@ -2818,7 +2818,7 @@ def diagnose_corpus(
     from collections import Counter
     from pathlib import Path
 
-    vol.reload()  # see shards added via `modal volume put` after deploy
+    vol.reload()  # see slices added via `modal volume put` after deploy
     sys.path.insert(0, "/data/corpus-python/src")
 
     corpus_dir = Path(corpus_dir)
@@ -2829,22 +2829,22 @@ def diagnose_corpus(
 
     if manifest.exists():
         data = json.loads(manifest.read_text())
-        train_shards = [s for s in data.get("shards", []) if s.get("split") == "train"]
-        print(f"MANIFEST: {len(train_shards)} train shards, {sum(s['rows'] for s in train_shards):,} rows")
+        train_slices = [s for s in data.get("slices", []) if s.get("split") == "train"]
+        print(f"MANIFEST: {len(train_slices)} train slices, {sum(s['rows'] for s in train_slices):,} rows")
 
-        existing = sum(1 for s in train_shards if Path(s["path"]).exists())
-        missing = len(train_shards) - existing
-        print(f"Train shard files: {existing} exist, {missing} missing")
+        existing = sum(1 for s in train_slices if Path(s["path"]).exists())
+        missing = len(train_slices) - existing
+        print(f"Train slice files: {existing} exist, {missing} missing")
         if missing > 0:
-            for s in train_shards:
+            for s in train_slices:
                 if not Path(s["path"]).exists():
                     print(f"  MISSING: {s['path']}")
                     break
 
-    from mailwoman_train.data_loader import _shard_first_source, _shard_paths
+    from mailwoman_train.data_loader import _slice_first_source, _slice_paths
 
-    paths = _shard_paths(corpus_dir, "train")
-    print(f"\n_shard_paths returned {len(paths)} train shards")
+    paths = _slice_paths(corpus_dir, "train")
+    print(f"\n_slice_paths returned {len(paths)} train slices")
 
     by_source: Counter[str] = Counter()
     errors = 0
@@ -2853,7 +2853,7 @@ def diagnose_corpus(
             errors += 1
             continue
         try:
-            src = _shard_first_source(p)
+            src = _slice_first_source(p)
             by_source[src] += 1
         except Exception as exc:
             errors += 1
@@ -2862,7 +2862,7 @@ def diagnose_corpus(
 
     print(f"\nSource index ({errors} errors, {sum(by_source.values())} readable):")
     for src, count in by_source.most_common():
-        print(f"  {src:35s} {count:4d} shards")
+        print(f"  {src:35s} {count:4d} slices")
 
     # Pre-launch verification: do rows of the target country/source actually survive the filter?
     if verify_country or verify_source:
@@ -2985,8 +2985,8 @@ def digit_prior(
 
     The question is whether the model's `39A -> postcode` habit contradicts its training prior or
     reflects it. A previous count said P(house_number | bare digit)=0.810 vs P(postcode|·)=0.101 —
-    but that was ONE synthetic shard, read off disk, unweighted. The prior the model actually sees
-    is the WEIGHTED multinomial over ~700 shard refs, after the country filter, the coarse filter,
+    but that was ONE synthetic slice, read off disk, unweighted. The prior the model actually sees
+    is the WEIGHTED multinomial over ~700 slice refs, after the country filter, the coarse filter,
     and the augmentations. Those are not decorations: `augment_glue_prob` alone rewrites token
     boundaries, which is the thing under investigation.
 
@@ -3312,7 +3312,7 @@ def country_census_raw(
         if weight is None or weight <= 0: continue
 
     and every Norwegian row is silently dropped. That is mechanical and confirmed. What is NOT yet
-    established is whether it MATTERS: if the shards hold no Norwegian rows, quoting the key is a
+    established is whether it MATTERS: if the slices hold no Norwegian rows, quoting the key is a
     no-op and the Norwegian parse failures are a genuine data-acquisition gap instead.
 
     So this counts countries in the RAW parquet, BEFORE any filter — scanning the country column
@@ -3329,15 +3329,15 @@ def country_census_raw(
     vol.reload()
     sys.path.insert(0, "/data/corpus-python/src")
 
-    from mailwoman_train.data_loader import _shard_paths
+    from mailwoman_train.data_loader import _slice_paths
 
-    shards = _shard_paths(Path(corpus_dir), "train")
-    print(f"train shards: {len(shards)}")
+    slices = _slice_paths(Path(corpus_dir), "train")
+    print(f"train slices: {len(slices)}")
 
     counts = Counter()
     by_source = {}
     seen = 0
-    for sh in shards:
+    for sh in slices:
         pf = pq.ParquetFile(sh)
         for batch in pf.iter_batches(batch_size=8192, columns=["country", "source"]):
             cc = batch.column("country").to_pylist()
@@ -3919,7 +3919,7 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
 )
 def sync_gb_venue():
     """#1366 GB venue increment: sync the v0.15.1-gb-venue overlay (manifest + the rebuilt
-    house-venue parquet; the 703 base shards resolve into v0.13.0-latam, already on the volume)
+    house-venue parquet; the 703 base slices resolve into v0.13.0-latam, already on the volume)
     + latest training code (the v4.1.x configs) from R2. Clears stale pyc."""
     import shutil
     import subprocess
@@ -3972,8 +3972,8 @@ def sync_jp_probe():
         f"rclone copy :s3:{BUCKET}/corpus/v8-leg2/ {VOL_MOUNT}/corpus/versioned/v8-leg2/ {R}",
         # v8.3.0 base retrain: the v7 locality lexicon (the DE fold, #1355).
         f"rclone copy :s3:{BUCKET}/gazetteer/locality-surface-lexicon-v7.json {VOL_MOUNT}/gazetteer/ {R}",
-        # Run-2 venue contingency: the v0.15.0-venue overlay (manifest + the one shard parquet; the
-        # 703 base shards resolve into v0.13.0-latam, which persists on the volume).
+        # Run-2 venue contingency: the v0.15.0-venue overlay (manifest + the one slice parquet; the
+        # 703 base slices resolve into v0.13.0-latam, which persists on the volume).
         f"rclone copy :s3:{BUCKET}/corpus/v0.15.0-venue/ {VOL_MOUNT}/corpus/versioned/v0.15.0-venue/ {R}",
         # G8: the DE fragment board for the run-2 ladder.
         f"rclone copy :s3:{BUCKET}/eval/fixtures/overture-fragments-de.jsonl {VOL_MOUNT}/eval/fixtures/ {R}",
@@ -3997,8 +3997,8 @@ def sync_jp_probe():
     print("  v8-jp-probe config present:", os.path.isfile(f"{src}/configs/v8-jp-probe.yaml"))
     print("  char path in data_loader:", "char_mode" in open(f"{src}/data_loader.py").read())
     print("  encode_row_units present:", "encode_row_units" in open(f"{src}/char_tokenizer.py").read())
-    print("  train shard present:", os.path.isfile(f"{corpus}/train/part-0000.parquet"))
-    print("  val shard present:", os.path.isfile(f"{corpus}/val/part-0000.parquet"))
+    print("  train slice present:", os.path.isfile(f"{corpus}/train/part-0000.parquet"))
+    print("  val slice present:", os.path.isfile(f"{corpus}/val/part-0000.parquet"))
     print("  char vocab present:", os.path.isfile(f"{corpus}/char-vocab-jp-v1.json"))
     print("  board present:", os.path.isfile(f"{corpus}/jp-probe-board.jsonl"))
     print(
@@ -4019,7 +4019,7 @@ def sync_jp_probe():
 def sync_jp_full():
     """v8 CJK Phase 3/4: sync the char-path training code + the v8-jp-full-2026-08-04 corpus.
 
-    The shard (#1458) is 2,000,000 train / 20,000 val / 20,000 board span-triple parquet plus the
+    The slice (#1458) is 2,000,000 train / 20,000 val / 20,000 board span-triple parquet plus the
     sealed 2,237-char train-split vocab — 138 MB, glob-layout (train/ + val/, no MANIFEST), so no
     re-rooting concerns. It carries the JP-native 47-label surface (``label_set: stage3-jp``), which
     is why this is a SEPARATE corpus dir from v8-jp-probe rather than an overlay: the probe's
@@ -4029,7 +4029,7 @@ def sync_jp_full():
     is keyed on raw kanji ``pref|muni`` and was built from the FULL Overture-JP parquet, so it is
     label-set independent and the board scorer reuses it unchanged across both boards.
 
-    Prerequisite: the shard must be in R2 at ``corpus/v8-jp-full-2026-08-04/`` — upload it from the
+    Prerequisite: the slice must be in R2 at ``corpus/v8-jp-full-2026-08-04/`` — upload it from the
     lab first (the CLI-write path to this volume is broken; container-side rclone only, see
     ``sync_v050``'s note). Clears stale pyc.
     """
@@ -4068,7 +4068,7 @@ def sync_jp_full():
     print("  stage3-jp label set present:", "STAGE3_JP_BIO_LABELS" in open(f"{src}/labels.py").read())
     print("  train part-0000 present:", os.path.isfile(f"{corpus}/train/part-0000.parquet"))
     print("  train part-0007 present:", os.path.isfile(f"{corpus}/train/part-0007.parquet"))
-    print("  val shard present:", os.path.isfile(f"{corpus}/val/part-0000.parquet"))
+    print("  val slice present:", os.path.isfile(f"{corpus}/val/part-0000.parquet"))
     print("  char vocab present:", os.path.isfile(f"{corpus}/char-vocab-jp-full.json"))
     print("  board present:", os.path.isfile(f"{corpus}/jp-board.jsonl"))
     print("  build report present:", os.path.isfile(f"{corpus}/build-report.json"))
@@ -4088,10 +4088,10 @@ def sync_v420_batch():
     """Run B (v4.2.0-base-anchor-v2): sync the training code + the v0.17.0-batch corpus overlay +
     the anchor-lookup v2 artifact.
 
-    The overlay corpus is MANIFEST-driven: v0.17.0-batch keeps every v0.15.0-venue shard VERBATIM
+    The overlay corpus is MANIFEST-driven: v0.17.0-batch keeps every v0.15.0-venue slice VERBATIM
     (those parquets are already on this volume at their original paths) and adds exactly two —
     ``part-sub-venue.parquet`` (120k rows, #1486) and ``part-gb.parquet`` (800k rows, the
-    v0.14.0-gb shard re-rooted). Only the manifest and the two new parquets transfer.
+    v0.14.0-gb slice re-rooted). Only the manifest and the two new parquets transfer.
 
     The anchor lookup v2 (2,286,339 keys / 2,214,803 letter-bearing, 145 MB JSON) is THE named
     delta of the run — the launch checklist's smoke count runs against the volume copy this
@@ -4136,7 +4136,7 @@ def sync_v420_batch():
     print("  anchor lookup v2 present:", os.path.isfile(f"{VOL_MOUNT}/anchor/pilot-anchor-lookup-v2-2026-08-05.json"))
     # The base corpus this overlay rides — already volume-resident from the v4.0.x runs.
     print(
-        "  base venue shard present:",
+        "  base venue slice present:",
         os.path.isfile(
             f"{VOL_MOUNT}/corpus/versioned/v0.15.0-venue/corpus-v0.15.0-venue/train/part-house-venue.parquet"
         ),
@@ -4152,8 +4152,8 @@ def sync_v420_batch():
 def sync_v431_suffix_boundary():
     """Sync the corrected #1569 target-dose corpus and v4.3.1 training code from R2.
 
-    The overlay manifest retains the 706 v0.17.0-batch shards at their existing volume paths and
-    adds one 30k-row shard: 24k terminal-only targets plus 6k terminal-contrast guards. As with the
+    The overlay manifest retains the 706 v0.17.0-batch slices at their existing volume paths and
+    adds one 30k-row slice: 24k terminal-only targets plus 6k terminal-contrast guards. As with the
     earlier corpus syncs, transfer is container-side because direct Modal Volume writes are unsafe.
     """
     import shutil
@@ -4186,8 +4186,8 @@ def sync_v431_suffix_boundary():
     checks = {
         "v4.3.1 config": os.path.isfile(f"{package}/configs/v4.3.1-suffix-boundary-target-dose-8k.yaml"),
         "overlay MANIFEST": os.path.isfile(f"{corpus}/MANIFEST.json"),
-        "suffix-boundary shard": os.path.isfile(f"{corpus}/train/part-suffix-boundary.parquet"),
-        "re-rooted base shard": os.path.isfile(
+        "suffix-boundary slice": os.path.isfile(f"{corpus}/train/part-suffix-boundary.parquet"),
+        "re-rooted base slice": os.path.isfile(
             f"{VOL_MOUNT}/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch/train/part-sub-venue.parquet"
         ),
         "init checkpoint": os.path.isfile(
@@ -4356,7 +4356,7 @@ def audit_suffix_feed(
 def sync_v440():
     """Sync the v4.4.0 corrected-contract run inputs from R2.
 
-    Corpus v0.19.0 overlay (suffix-boundary shard v2: real venue shell, stem-pair contrasts;
+    Corpus v0.19.0 overlay (suffix-boundary slice v2: real venue shell, stem-pair contrasts;
     A/B byte-identical, sha256 d939a762…) + the current training code + config. The v2 affix
     lexicon is synced by sync_substrate_repairs and verified again here — the run's four
     deltas all ride data/config, so every input is checked before a dollar of GPU.
@@ -4391,10 +4391,10 @@ def sync_v440():
     checks = {
         "v4.4.0 config": os.path.isfile(f"{package}/configs/v4.4.0-suffix-boundary-v2-base-60k.yaml"),
         "overlay MANIFEST": os.path.isfile(f"{corpus}/MANIFEST.json"),
-        "v2 shard parquet": os.path.isfile(f"{corpus}/train/part-suffix-boundary-v2.parquet"),
+        "v2 slice parquet": os.path.isfile(f"{corpus}/train/part-suffix-boundary-v2.parquet"),
         "v2 affix lexicon": os.path.isfile(f"{VOL_MOUNT}/gazetteer/affix-relabel-lexicon-v2.json"),
         "augment exclusion in loader": _file_contains(f"{package}/data_loader.py", "augment_exclude_sources"),
-        "base shard reachable": os.path.isfile(
+        "base slice reachable": os.path.isfile(
             f"{VOL_MOUNT}/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch/train/part-sub-venue.parquet"
         ),
         "tokenizer": os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
@@ -4415,7 +4415,7 @@ def sync_v440():
 def sync_v450():
     """Sync the v4.5.0 psc-frsurfaces probe inputs from R2.
 
-    Corpus v0.20.0 overlay (v0.19.0 base VERBATIM + the two regenerated surface shards, old
+    Corpus v0.20.0 overlay (v0.19.0 base VERBATIM + the two regenerated surface slices, old
     vintages zeroed in the config: cz-pcfirst v20 spaced-PSC #1640, fr-bare-street v20
     three-surface #1641) + the current training code + config. Every input verified before a
     dollar of GPU, including the v4.4.0 init checkpoint + its Fisher (the B11 brake).
@@ -4453,7 +4453,7 @@ def sync_v450():
         "overlay MANIFEST": os.path.isfile(f"{corpus}/MANIFEST.json"),
         "cz v20 parquet": os.path.isfile(f"{corpus}/train/part-cz-pcfirst-v20.parquet"),
         "fr v20 parquet": os.path.isfile(f"{corpus}/train/part-fr-bare-street-v20.parquet"),
-        "base shard reachable": os.path.isfile(
+        "base slice reachable": os.path.isfile(
             f"{VOL_MOUNT}/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch/train/part-sub-venue.parquet"
         ),
         "v4.4.0 init checkpoint": os.path.isfile(f"{ckpt}/pytorch_model.bin"),
@@ -4476,7 +4476,7 @@ def sync_v450():
 def sync_v451():
     """Sync the v4.5.1 psc-frsurfaces probe inputs from R2.
 
-    Corpus v0.20.0 overlay (v0.19.0 base VERBATIM + the two regenerated surface shards, old
+    Corpus v0.20.0 overlay (v0.19.0 base VERBATIM + the two regenerated surface slices, old
     vintages zeroed in the config: cz-pcfirst v20 spaced-PSC #1640, fr-bare-street v20
     three-surface #1641) + the current training code + config. Every input verified before a
     dollar of GPU, including the v4.4.0 init checkpoint + its Fisher (the B11 brake).
@@ -4514,7 +4514,7 @@ def sync_v451():
         "overlay MANIFEST": os.path.isfile(f"{corpus}/MANIFEST.json"),
         "cz v20 parquet": os.path.isfile(f"{corpus}/train/part-cz-pcfirst-v21.parquet"),
         "fr v20 parquet": os.path.isfile(f"{corpus}/train/part-fr-bare-street-v21.parquet"),
-        "base shard reachable": os.path.isfile(
+        "base slice reachable": os.path.isfile(
             f"{VOL_MOUNT}/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch/train/part-sub-venue.parquet"
         ),
         "v4.4.0 init checkpoint": os.path.isfile(f"{ckpt}/pytorch_model.bin"),
@@ -4537,7 +4537,7 @@ def sync_v451():
 def sync_v452():
     """Sync the v4.5.2 psc-frsurfaces probe inputs from R2.
 
-    Corpus v0.20.0 overlay (v0.19.0 base VERBATIM + the two regenerated surface shards, old
+    Corpus v0.20.0 overlay (v0.19.0 base VERBATIM + the two regenerated surface slices, old
     vintages zeroed in the config: cz-pcfirst v20 spaced-PSC #1640, fr-bare-street v20
     three-surface #1641) + the current training code + config. Every input verified before a
     dollar of GPU, including the v4.4.0 init checkpoint + its Fisher (the B11 brake).
@@ -4575,7 +4575,7 @@ def sync_v452():
         "overlay MANIFEST": os.path.isfile(f"{corpus}/MANIFEST.json"),
         "cz v20 parquet": os.path.isfile(f"{corpus}/train/part-cz-pcfirst-v21.parquet"),
         "fr v20 parquet": os.path.isfile(f"{corpus}/train/part-fr-bare-street-v22.parquet"),
-        "base shard reachable": os.path.isfile(
+        "base slice reachable": os.path.isfile(
             f"{VOL_MOUNT}/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch/train/part-sub-venue.parquet"
         ),
         "v4.4.0 init checkpoint": os.path.isfile(f"{ckpt}/pytorch_model.bin"),
@@ -4599,7 +4599,7 @@ def sync_v460():
     """Sync the v4.6.0 admin-surfaces BASE-run inputs from R2.
 
     Corpus v0.23.0-admin-surfaces (the v0.22 overlay VERBATIM + bare-country v23 + the two
-    trailing-region v23 shards) + the training code + config. From scratch — no init checkpoint or
+    trailing-region v23 slices) + the training code + config. From scratch — no init checkpoint or
     Fisher to verify (that is the whole point after the v4.5.x fine-tune falsification). Every input
     verified before a dollar of GPU.
     """
@@ -4639,7 +4639,7 @@ def sync_v460():
         "trailing-region gb v23 parquet": os.path.isfile(f"{corpus}/train/part-trailing-region-gb-v23.parquet"),
         "v22 fr parquet reachable": os.path.isfile(f"{v22}/train/part-fr-bare-street-v22.parquet"),
         "v22 cz parquet reachable": os.path.isfile(f"{v22}/train/part-cz-pcfirst-v21.parquet"),
-        "base shard reachable": os.path.isfile(
+        "base slice reachable": os.path.isfile(
             f"{VOL_MOUNT}/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch/train/part-sub-venue.parquet"
         ),
         "tokenizer": os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
@@ -4684,7 +4684,7 @@ def sync_v530_reviewed_postcode_tail():
     checks = {
         "v5.3 treatment config": os.path.isfile(f"{package}/configs/v5.3.0-reviewed-ve-postcode-tail-60k.yaml"),
         "overlay manifest": os.path.isfile(f"{corpus}/MANIFEST.json"),
-        "reviewed shard": os.path.isfile(f"{corpus}/train/reviewed-postcode-tail-00000.parquet"),
+        "reviewed slice": os.path.isfile(f"{corpus}/train/reviewed-postcode-tail-00000.parquet"),
         "v0.27 base manifest": os.path.isfile(
             f"{VOL_MOUNT}/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl/MANIFEST.json"
         ),

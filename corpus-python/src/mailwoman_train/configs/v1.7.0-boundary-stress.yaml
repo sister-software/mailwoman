@@ -1,27 +1,27 @@
 # === v1.7.0-boundary-stress (night shift 2026-06-18) =============================================
-# The corrective retrain after v1.6.0 gated NO-PROMOTE. v1.6.0 added the boundary shard at weight 1.0 and
+# The corrective retrain after v1.6.0 gated NO-PROMOTE. v1.6.0 added the boundary slice at weight 1.0 and
 # LIFTED the boundaries (fr-prefix 55→99.7) but was a NARROW distribution — every row a clean full address
 # — so the model over-fit it and regressed on OOD real rows (held-out us.locality 66.3→58.2%; 84% of the
 # regression was DROPPED locality on bare "City, STATE" rows). Diagnosed via three probes + a DeepSeek consult.
-# THE HEADLINE VARIABLE: the BALANCED shard (corpus v0.6.1-boundary-stress) — two new shapes widen the
+# THE HEADLINE VARIABLE: the BALANCED slice (corpus v0.6.1-boundary-stress) — two new shapes widen the
 # distribution: bare-locality (~11%, the ship-blocker fix; VENUES #511-linted) + house-number-before-street
 # (7:3 before:after, the confounding mirror for the order-bias). Co-change (hygiene): lr constant→cosine.
 #
 # BUNDLE (DeepSeek-validated 2026-06-17 — the rule is "one CONFOUNDING variable per run, each change its
-# own gate row"). The boundary shard is the headline data-mix variable. Riding alongside it, NON-confounding
-# because they don't shift the distribution the shard trains on, three additions, each gated below:
+# own gate row"). The boundary slice is the headline data-mix variable. Riding alongside it, NON-confounding
+# because they don't shift the distribution the slice trains on, three additions, each gated below:
 #   (a) use_conventions_loss_mask — ❌ DISABLED 2026-06-18. The "non-confounding, different axis" call was
-#       WRONG: the FR convention forbids street_prefix/street_suffix, but the boundary shard's fr-prefix
+#       WRONG: the FR convention forbids street_prefix/street_suffix, but the boundary slice's fr-prefix
 #       shape TEACHES FR street_prefix ("Rue"). The mask -inf'd the gold label → train_loss ~7M, broken
 #       run killed at step 2000. v1.5.1 trained fine without it. Off until the table↔FR-data are reconciled.
-#   (c) an EXPANDED gate grading the FR/DE composition wins the shard already trains for free
+#   (c) an EXPANDED gate grading the FR/DE composition wins the slice already trains for free
 #       (fr.house_number #564, FR street_prefix, number-after-street #435). READY NOW (gate rows below).
 #   (b) [NOT ride-ready — a focused #517 corpus task, do it first if you want it this run] extend
 #       synth-po-box for NZ + military. It's more than leaders: the synthesizer needs an en-NZ template +
 #       `countryToLocale` NZ→en-NZ + a NEW military template (CMR/PSC/Unit + Box, APO/FPO/DPO + AE/AP/AA —
-#       which the leader-based model doesn't fit), and the shard builder needs NZ/military base tuples +
+#       which the leader-based model doesn't fit), and the slice builder needs NZ/military base tuples +
 #       a rebuild. Low-confounding (additive on the po_box tag) once built, but it isn't built yet.
-# Competing new shards (typo-inject, non-Latin) are deliberately NOT bundled — same-axis capacity
+# Competing new slices (typo-inject, non-Latin) are deliberately NOT bundled — same-axis capacity
 # competition is the v4.2.0 trap (affix 78→27). DeepSeek also flagged a per-locale CRF transition penalty
 # (street→cedex) as a clean future rider; it needs wiring (crf_loss_weight is 0.0) so it's a later run.
 #
@@ -30,11 +30,11 @@
 # (docs/articles/evals/2026-06-17-boundary-stress-baseline.md) measured the current model at 38.7–70%
 # on these boundaries vs ~95%+ on clean canonical:
 #   (diverse-pool baseline, BASE-LOCALES-ONLY US/FR/DE — the #511 lint flagged an AU-bearing draft as a
-#   real contradiction, so AU/NZ/UK + the slash shape are deferred to a separate AU-coverage shard):
+#   real contradiction, so AU/NZ/UK + the slash shape are deferred to a separate AU-coverage slice):
 #   street-eats-affix street_suffix 40.7 / street 38 | comma-less(US) street 46 / locality 91 |
 #   fr-prefix prefix 47.7 / street 43 | house-number-after-street house_number 50.7 / street 49.
 #   The STREET span is the common casualty (38-49% across all four shapes).
-# The shard puts the gold boundary on diverse realizations of exactly these 4 shapes (alignRow-clean,
+# The slice puts the gold boundary on diverse realizations of exactly these 4 shapes (alignRow-clean,
 # 0% quarantine). It ALSO reinforces fr.house_number (the number-after-street shape).
 #
 # PRE-REGISTERED GATE (DeepSeek-signed targets; per-shape via scripts/eval/boundary-stress-baseline.ts):
@@ -46,32 +46,32 @@
 #     83.3) PLUS two NEW v1.7.0 guards — us.bare_locality (the 84%-drop surface; re-probe v1.5.1, floor just
 #     below) and us.street_recall_full (street recall where gold has BOTH street+locality — DeepSeek's
 #     blind-spot: bare-locality emphasis can eat the street on full addresses; >1% drop below v1.5.1 = STOP).
-#   WATCH (DeepSeek): street_suffix OVER-fire (its gate target vs the floor — a boundary shard can push
+#   WATCH (DeepSeek): street_suffix OVER-fire (its gate target vs the floor — a boundary slice can push
 #     suffix onto non-suffix tokens) ; affix CRF transition stability (prefix↔street↔suffix) — a relabel
 #     bug presents as boundary noise, not dilution. If slash/comma-less land short at 1.0, sweep the
 #     weight UP (1.5) — one variable, do not stack other changes.
 #   DECISION: targets move up + floors hold → ship candidate. Spine regression → STOP, re-audit the
-#     shard's alignment before any weight surgery.
+#     slice's alignment before any weight surgery.
 #
 #   BUNDLE GATE ROWS (each rider attributable on its own):
 #   - conventions loss-mask: ❌ removed (rider a disabled — it conflicts with the FR street_prefix the
-#     shard teaches; see the header). No gate row needed.
+#     slice teaches; see the header). No gate row needed.
 #   - po_box NZ + military [ONLY IF rider (b) is built first]: the postal arena po_box class 0/4 → >0 (and
 #     military 0/3 → >0), with NO US/FR/CA po_box regression (existing synth-po-box rows only extended).
-#   - FREE-RIDER MEASURES (the shard trains these — grade as wins, not just floors): fr.house_number holds
+#   - FREE-RIDER MEASURES (the slice trains these — grade as wins, not just floors): fr.house_number holds
 #     ≥87 AND targets the plateau-break >87 (#564) ; FR street_prefix (the fr-prefix shape) up ;
 #     number-after-street house_number (the hn-after shape, #435/#444) up. A lift is a free win; a DROP
-#     means the shard's FR/DE shapes are fighting the native-order shards — STOP and re-audit.
+#     means the slice's FR/DE shapes are fighting the native-order slices — STOP and re-audit.
 #
-# CORPUS PREREQUISITE: the shard JSONL→parquet + the overlay manifest are BUILT (a v0.6.0-boundary-stress
+# CORPUS PREREQUISITE: the slice JSONL→parquet + the overlay manifest are BUILT (a v0.6.0-boundary-stress
 # corpus is staged at /mnt/playpen/.../corpus/versioned/v0.6.0-boundary-stress/ — assembled via
 # scripts/assemble-boundary-stress-overlay-manifest.py against the v0.5.0 base, schema-matched).
 #
 # #511 locality/street overlap — INVESTIGATED + RESOLVED (no longer a pre-retrain blocker). A targeted
-# base scan (label distribution per shard-locality) found the original US vocab was a real contradiction
+# base scan (label distribution per slice-locality) found the original US vocab was a real contradiction
 # (Madison 96% street, Portland 95%, Springfield-IL 84% — the "5th Avenue Theatre" class). FIXED: the US
 # vocab is now DERIVED + verified locality-dominant (Albuquerque 258584:8, Indianapolis 219700:29, …). The
-# FR flag was a SAMPLING artifact (the all-shard scan undersampled the FR ban block; the FR-block scan
+# FR flag was a SAMPLING artifact (the all-slice scan undersampled the FR ban block; the FR-block scan
 # shows Paris/Marseille/Lyon 95–99% locality in FR data) → familiar dept-diverse FR cities kept. DE dropped
 # (street-dominated too; synth-german covers its native order). Re-baselined: street_suffix 41.7, comma-less
 # 47, fr-prefix 55, hn-after 51.3. Affix-tag lint flags are train-time-relabel artifacts (lexicon-verified).
@@ -106,7 +106,7 @@ data:
     synth-po-box-cedex: 1.5
     synth-affix: 2.0
     synth-country: 2.0
-    # THE #375 #1-lever variable (DeepSeek-signed 2026-06-17): the boundary-instability stress shard.
+    # THE #375 #1-lever variable (DeepSeek-signed 2026-06-17): the boundary-instability stress slice.
     # Conservative 1.0 start (prevents street_suffix over-fire); sweep to 1.5 if slash/comma-less land
     # short. ONE change vs v1.5.1 — nothing else moves.
     synth-boundary-stress: 1.0
@@ -136,9 +136,9 @@ model:
   label_smoothing: 0.1
   use_locale_conditioning: true
   locale_loss_weight: 0.3
-  # conventions loss-mask rider (a) — DISABLED 2026-06-18. It DIRECTLY CONFLICTS with the boundary shard:
-  # CONVENTIONS_FORBIDDEN_TAGS forbids FR street_prefix/street_suffix, but the shard's fr-prefix shape
-  # labels exactly that ("Rue" -> street_prefix). Enabling it -inf'd the gold label the shard teaches and
+  # conventions loss-mask rider (a) — DISABLED 2026-06-18. It DIRECTLY CONFLICTS with the boundary slice:
+  # CONVENTIONS_FORBIDDEN_TAGS forbids FR street_prefix/street_suffix, but the slice's fr-prefix shape
+  # labels exactly that ("Rue" -> street_prefix). Enabling it -inf'd the gold label the slice teaches and
   # exploded train_loss to ~7M (a broken run, killed at step 2000). v1.5.1 trained fine WITHOUT it. The
   # "non-confounding, different axis" call (DeepSeek + me) was wrong — the FR convention is inconsistent
   # with the FR training data. Revisit only after reconciling the conventions table with the FR labels.

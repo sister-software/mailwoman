@@ -26,7 +26,7 @@ const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_part
 /**
  * Reassemble the full street string from the street node's subtree (#483 coverage fix). The parser nests the
  * directional/suffix as `street_prefix`/`street_suffix` CHILDREN of `street` (containment.ts), so `street.value` alone
- * is the bare base name ("Sheldon" for "East Sheldon Rd") — which misses the coordinate shards keyed on the FULL
+ * is the bare base name ("Sheldon" for "East Sheldon Rd") — which misses the coordinate extracts keyed on the FULL
  * normalized name. Collect street + its prefix/particle/suffix descendants (NOT house_number/unit, which also nest
  * under street), order by span offset, and join.
  */
@@ -46,7 +46,7 @@ function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressN
 
 	// #718 admin-tail: a directional quadrant the model mis-tagged `unit` ("1532 Taylor Street NE" →
 	// [unit] "NE") folds back into the street key by span order, so the situs/interp lookup matches the
-	// shard's "taylor street northeast" (the lookup normalizer expands the abbreviation). Lookup-key
+	// extract's "taylor street northeast" (the lookup normalizer expands the abbreviation). Lookup-key
 	// only — the parse output and admin resolution are untouched. Byte-stable when absent (undefined).
 	if (directionalUnit && directionalUnit.value.trim()) {
 		parts.push(directionalUnit)
@@ -61,7 +61,7 @@ function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressN
  * Directional quadrant values the model sometimes emits as a `unit` node instead of inside the street subtree (#718
  * admin-tail diagnostic: ~19% of the admin-fallback tail, 83% of DC). Folded into the street lookup key by
  * {@link assembleStreetValue}; the situs/interp lookup normalizer expands the abbreviation ("ne" → "northeast") so the
- * shard's full street name matches.
+ * extract's full street name matches.
  */
 // The 8 USPS cardinals/intercardinals (abbrev or name) — @codex/us owns the canonical table (#215).
 const isDirectionalUnit = (value: string): boolean => isStreetDirectionalToken(value.replaceAll(".", ""))
@@ -119,7 +119,7 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 
 	if (street.metadata?.["resolution_tier"] === "address_point") return
 
-	// #247 OSM bbox fall-through: when enabled (an OSM shard is wired) and the locality resolved to a
+	// #247 OSM bbox fall-through: when enabled (an OSM extract is wired) and the locality resolved to a
 	// coordinate, scope a final `(street, number)` probe by the locality's box — recovering OSM points that
 	// carry no postcode/locality tag of their own. US situs never enables it, so its probes are byte-identical.
 	let bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | undefined
@@ -223,9 +223,9 @@ export function applyInterpolation(
 
 	if (!hit) return
 	// Conformal-calibrated radius (#374): the raw half-segment heuristic underestimates the true spread
-	// (~72% coverage on Travis); ×1.70 → a 90% bound. The ARTIFACT's own multiplier (read from the shard's
+	// (~72% coverage on Travis); ×1.70 → a 90% bound. The ARTIFACT's own multiplier (read from the extract's
 	// `interp_calibration` metadata table at open time — `lookup.radiusCalibration`) is the default; an
-	// explicit caller factor is the @internal instrument override. Neither present (shards predating the
+	// explicit caller factor is the @internal instrument override. Neither present (extracts predating the
 	// metadata table, no caller factor) keeps the raw value, byte-stable. Preserve the raw radius for
 	// transparency.
 	const factor = radiusCalibration ?? lookup.radiusCalibration

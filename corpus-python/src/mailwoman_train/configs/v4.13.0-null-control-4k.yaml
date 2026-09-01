@@ -1,11 +1,11 @@
 # v4.13.0 — THE NULL CONTROL (#1748 / #1821)
 #
-# No added shard. The v0.22.0 base corpus, unchanged, fine-tuned for the same 4,000 steps at the same
+# No added slice. The v0.22.0 base corpus, unchanged, fine-tuned for the same 4,000 steps at the same
 # seed and the same EWC brake as v4.11.0. The treatment is removed; everything else is held.
 #
 # WHY THIS EXISTS. Five runs varied the treatment and never measured the placebo:
 #
-#   v4.8.0    admin shard @ 9.4%                     net -18   12 venue-led
+#   v4.8.0    admin slice @ 9.4%                     net -18   12 venue-led
 #   v4.9.0    + dependent locality                   net -20   15 venue-led
 #   v4.10.0   dose -> 3.1%                           net -13    9 venue-led
 #   v4.11.0   venue-bearing, no new source or dose   net -13    9 venue-led
@@ -17,7 +17,7 @@
 # base moves those rows on its own, whatever it is fed.
 #
 # WHAT IT DECIDES:
-#   - the nine still regress with NO new data  -> the arc measured the wrong thing. Every shard-side
+#   - the nine still regress with NO new data  -> the arc measured the wrong thing. Every slice-side
 #     conclusion is void, the right baseline for a candidate is this run rather than the shipped model,
 #     and the question becomes whether fine-tuning this base is viable at all.
 #   - the nine hold                            -> the data is implicated after all and the floor is a
@@ -166,7 +166,7 @@ data:
   source_weights:
     # DOSE-FIRST (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
     # 6 reps/row x 17,908 rows against 155.0 total over 8,000 x 128 = 1,024,000 samples -> 18.17,
-    # a 10.5% share. Parity with the bare trailing-region shards, measured at 7.7 and 5.2 reps/row.
+    # a 10.5% share. Parity with the bare trailing-region slices, measured at 7.7 and 5.2 reps/row.
     # For contrast, the weight that collapsed v4.6.0 was 1.0 and bought 165 reps/row.
     synth-house-venue: 2.0
     overture-latam: 6.0

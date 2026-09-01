@@ -21,14 +21,14 @@ there, not the coordinate. The trouble is we then carried the 3.3 km admin numbe
 head-to-head, the model card, and the docs as if it were the coordinate the product delivers.
 
 It isn't. The `geocode` CLI and the `/api/geocode` service both run `geocodeAddress`, which reads
-the parsed region, picks that state's situs + interpolation shards, and resolves through a coordinate
+the parsed region, picks that state's situs + interpolation extracts, and resolves through a coordinate
 cascade: an exact address-point (rooftop/parcel) when the house number is on file, a house-number
 interpolation along the street segment otherwise, and the admin centroid only when neither exists.
-The eval simply called `resolveTree` with no shard options, so every row landed at the admin tier.
-`copy-weights` is skipped on CI and the per-state shards are multi-GB, so nobody noticed the eval was
+The eval simply called `resolveTree` with no extract options, so every row landed at the admin tier.
+`copy-weights` is skipped on CI and the per-state extracts are multi-GB, so nobody noticed the eval was
 running a different, blunter path than production.
 
-`--cascade` closes that: it builds a multi-state `ShardProvider` (per-row state selection), routes
+`--cascade` closes that: it builds a multi-state `RegionDatabaseProvider` (per-row state selection), routes
 the neural resolve through the same `address_point > interpolated > admin` cascade the geocoder
 ships, and reports it as the `neural+cascade` arm. The default (no flag) stays byte-identical — the
 admin-centroid headline is unchanged, so this adds the shipped coordinate beside it rather than
@@ -44,7 +44,7 @@ rewriting history.
 | **neural+cascade (SHIPPED coord)** |          98.0% |       100.0% |   100.0% |          0.0 |          1.0 |   18.3 |
 
 `neural+cascade` is the production coordinate (`geocode-core.ts`: address_point > interpolated >
-admin, per-state shards). **Tier share: address_point 79.8%, interpolated 8.2%, admin 12.0%. Within
+admin, per-state extracts). **Tier share: address_point 79.8%, interpolated 8.2%, admin 12.0%. Within
 100 m: 85.9% · within 1 km: 90.0% (n=10,000).** The entire residual coordinate error lives in the
 12% admin tail — rows in places with no situs/interpolation point coverage, where the centroid is
 the honest best estimate.
@@ -53,10 +53,10 @@ the honest best estimate.
 recoverable with no new data, and two fixes from this diagnostic's follow-up landed it on the same
 10k rows — the directional-quadrant street-key fold (`d1b8bcbe`: a quadrant the model mis-tagged
 `unit`, "Taylor Street NE") and the US-gated 5-digit-house-number-as-ZIP relabel (`5977ce4d`:
-"24588 Outback Trl" → house_number, with the FR reversed-order #560 shard left untouched, gate-
+"24588 Outback Trl" → house_number, with the FR reversed-order #560 extract left untouched, gate-
 verified `fr.house_number` flat). Re-measured: **address_point 79.8 → 83.5%, interpolated 8.2 →
 9.7%, admin 12.0 → 6.8%; within 100 m 85.9 → 90.0%, within 1 km 90.0 → 94.8%, cascade p99 18.3 →
-10.9 km.** The admin tail is now under 7%, and the remaining bulk is a situs shard theme-reselect
+10.9 km.** The admin tail is now under 7%, and the remaining bulk is a situs extract theme-reselect
 (the SD/IL holes are in Overture's OpenAddresses theme, not the sparser NAD theme we ingested), not
 a coverage gap — #723.
 
@@ -81,8 +81,8 @@ retrain and not more gazetteer breadth.
 
 - **The cascade needs the data layer.** The bare `@mailwoman/neural-weights-*` weights plus the admin
   gazetteer give the admin centroid; the meter-grade coordinate requires the per-state situs +
-  interpolation shards wired in (the server's `ShardProvider`, the CLI's `--address-points` /
-  `--interpolation`, or `--cascade` here). The shards are not in the npm package — they are the data
+  interpolation extracts wired in (the server's `RegionDatabaseProvider`, the CLI's `--address-points` /
+  `--interpolation`, or `--cascade` here). The extracts are not in the npm package — they are the data
   release the geocoder consumes.
 - **Ship-config parity is partial.** The eval feeds the postcode **anchor** (the dominant channel for
   admin recovery, which reproduces the 98.0% headline) but builds the classifier manually, so it does

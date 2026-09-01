@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship en-GB parsing (with the `dependent_locality` dead-tag resurrection) end to end: PPD-derived corpus shard → 2k probe → resolver artifacts → `@mailwoman/neural-weights-en-gb` overlay package.
+**Goal:** Ship en-GB parsing (with the `dependent_locality` dead-tag resurrection) end to end: PPD-derived corpus extract → 2k probe → resolver artifacts → `@mailwoman/neural-weights-en-gb` overlay package.
 
-**Architecture:** PPD (31.3M rows, on disk) is preprocessed into an OA-shaped tuples CSV consumed by the existing `locale` shard recipe via `districtAsLocality` (the NZ mechanism: DISTRICT→locality, CITY→dependent_locality). The training probe clones the v3.8.5 recipe and adds two NEW mechanisms: `reinit_label_rows` (neutral re-init of classifier rows 7/8 after `init_from`) and `classifier_learning_rate` (a `classifier.`-prefix param group, #727 precedent). Resolver/packaging reuse existing GB scaffolding (`gazetteer postcode-binary` already has GB wired; `uk_postcode` already recognized).
+**Architecture:** PPD (31.3M rows, on disk) is preprocessed into an OA-shaped tuples CSV consumed by the existing `locale` extract recipe via `districtAsLocality` (the NZ mechanism: DISTRICT→locality, CITY→dependent_locality). The training probe clones the v3.8.5 recipe and adds two NEW mechanisms: `reinit_label_rows` (neutral re-init of classifier rows 7/8 after `init_from`) and `classifier_learning_rate` (a `classifier.`-prefix param group, #727 precedent). Resolver/packaging reuse existing GB scaffolding (`gazetteer postcode-binary` already has GB wired; `uk_postcode` already recognized).
 
 **Tech Stack:** TypeScript (node type-stripping, vitest), Python (torch/Modal), Kysely-free (no DB work in this arc), Pastel CLI.
 
@@ -253,10 +253,10 @@ Expected: FAIL — `Cannot find module './ppd.ts'`
 
 ```ts
 /**
- * HM Land Registry Price Paid Data → OA-shaped GB tuples CSV for the `locale` shard recipe.
+ * HM Land Registry Price Paid Data → OA-shaped GB tuples CSV for the `locale` extract recipe.
  *
  * PPD is E&W-only, ALL-CAPS, and column-structured (no header row). We emit the exact
- * OA header `readTuples` (shard-recipes/locale.ts) indexes by name, mapped for
+ * OA header `readTuples` (extract-recipes/locale.ts) indexes by name, mapped for
  * `districtAsLocality: true`: CITY = PPD locality (dependent locality; blank when it
  * merely repeats the town — 1995-era rows pad locality=town), DISTRICT = PPD post town,
  * REGION = county. SAON (flat/unit) rows and building-name PAONs are skipped in v1 and
@@ -348,7 +348,7 @@ if (import.meta.main) {
 }
 ```
 
-Note for the implementer: check how `corpus/src/tools/fetch/ban.ts` guards its entrypoint and imports CSV streaming — mirror its exact idioms (`import.meta.main` availability, the CSVSpliterator import specifier) rather than inventing new ones. If `spliterator` exposes a different module path in this workspace, copy the import from `corpus/src/shard-recipes/locale.ts:188` (`readTuples` uses the same class).
+Note for the implementer: check how `corpus/src/tools/fetch/ban.ts` guards its entrypoint and imports CSV streaming — mirror its exact idioms (`import.meta.main` availability, the CSVSpliterator import specifier) rather than inventing new ones. If `spliterator` exposes a different module path in this workspace, copy the import from `corpus/src/extract-recipes/locale.ts:188` (`readTuples` uses the same class).
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -377,8 +377,8 @@ git commit -m "feat(corpus): PPD extractor — 31.3M Price Paid rows → OA-shap
 
 **Files:**
 
-- Modify: `corpus/src/shard-recipes/locale.ts` (the `COUNTRY_SOURCES` map, ~L94; the emit loop for the country fraction)
-- Test: `corpus/src/shard-recipes/locale.test.ts`
+- Modify: `corpus/src/extract-recipes/locale.ts` (the `COUNTRY_SOURCES` map, ~L94; the emit loop for the country fraction)
+- Test: `corpus/src/extract-recipes/locale.test.ts`
 
 **Interfaces:**
 
@@ -387,7 +387,7 @@ git commit -m "feat(corpus): PPD extractor — 31.3M Price Paid rows → OA-shap
 
 - [ ] **Step 1: Write the failing tests**
 
-Add to `corpus/src/shard-recipes/locale.test.ts` (follow the NZ `districtAsLocality` test at L95-121 as the template):
+Add to `corpus/src/extract-recipes/locale.test.ts` (follow the NZ `districtAsLocality` test at L95-121 as the template):
 
 ```ts
 it("GB tuples: CITY→dependent_locality, DISTRICT→locality via districtAsLocality", async () => {
@@ -418,12 +418,12 @@ it("GB tuples: CITY→dependent_locality, DISTRICT→locality via districtAsLoca
 
 - [ ] **Step 2: Run to verify the new test passes already or fails only on fixture plumbing**
 
-Run: `yarn vitest run corpus/src/shard-recipes/locale.test.ts`
+Run: `yarn vitest run corpus/src/extract-recipes/locale.test.ts`
 Expected: the GB test should PASS with no production change (`readTuples` is source-agnostic) — it locks the mapping. If it fails, fix the test fixture, not `readTuples`.
 
 - [ ] **Step 3: Add the `COUNTRY_SOURCES.GB` entry**
 
-In `corpus/src/shard-recipes/locale.ts`, after the NZ entry:
+In `corpus/src/extract-recipes/locale.ts`, after the NZ entry:
 
 ```ts
 	GB: {
@@ -437,7 +437,7 @@ In `corpus/src/shard-recipes/locale.ts`, after the NZ entry:
 
 - [ ] **Step 4: Add the country-append fraction**
 
-First VERIFY current behavior: read `synthesizeLocaleRow` in `corpus/src/synthesize-german.ts` and check whether `intlFraction` rows already append a country surface form. If they do, this step is config only (set the fraction when building the GB shard) — record the finding and skip the code change. If not, add the fr-admin-split pattern (fr-admin-split.ts L122-128) to the locale recipe's emit loop, gated on a new `LocalePart`-level or recipe-level option so existing locales are byte-identical:
+First VERIFY current behavior: read `synthesizeLocaleRow` in `corpus/src/synthesize-german.ts` and check whether `intlFraction` rows already append a country surface form. If they do, this step is config only (set the fraction when building the GB extract) — record the finding and skip the code change. If not, add the fr-admin-split pattern (fr-admin-split.ts L122-128) to the locale recipe's emit loop, gated on a new `LocalePart`-level or recipe-level option so existing locales are byte-identical:
 
 ```ts
 // In the run loop, after `const synth = synthesizeLocaleRow(...)`:
@@ -451,7 +451,7 @@ if (countryFraction > 0 && random() < countryFraction) {
 }
 ```
 
-with `countryFraction` sourced from a new `--country-fraction` recipe option (zod flag in `mailwoman/commands/corpus/shard/index.tsx`, threaded through `ShardRecipeOpts` like `intlFraction`), default `0`. Import `COUNTRY_SURFACE_FORMS` from `@mailwoman/codex` (it already has GB: `["United Kingdom", "UK", "Great Britain", "Britain", "England", "GB", "U.K."]`).
+with `countryFraction` sourced from a new `--country-fraction` recipe option (zod flag in `mailwoman/commands/corpus/extract/index.tsx`, threaded through `ExtractRecipeOpts` like `intlFraction`), default `0`. Import `COUNTRY_SURFACE_FORMS` from `@mailwoman/codex` (it already has GB: `["United Kingdom", "UK", "Great Britain", "Britain", "England", "GB", "U.K."]`).
 
 Add a test: with `countryFraction: 1` every emitted row ends with a GB surface form and carries `components.country`; with the option absent, output is byte-identical to before (snapshot two rows with a fixed seed).
 
@@ -463,51 +463,51 @@ Expected: PASS, zero regressions.
 - [ ] **Step 6: Format + commit**
 
 ```bash
-npx oxfmt corpus/src/shard-recipes/locale.ts corpus/src/shard-recipes/locale.test.ts mailwoman/commands/corpus/shard/index.tsx
-git add -A corpus/src/shard-recipes mailwoman/commands/corpus/shard
+npx oxfmt corpus/src/extract-recipes/locale.ts corpus/src/extract-recipes/locale.test.ts mailwoman/commands/corpus/extract/index.tsx
+git add -A corpus/src/extract-recipes mailwoman/commands/corpus/extract
 git commit -m "feat(corpus): GB locale source (PPD tuples) + country-append fraction on the locale recipe"
 ```
 
 ---
 
-### Task 4: Build the GB shard + golden boards
+### Task 4: Build the GB extract + golden boards
 
 **Files:**
 
 - Create: `mailwoman/eval-harness/fixtures/gb-golden.jsonl` (~120 rows)
 - Create: `mailwoman/eval-harness/fixtures/nz-suburb-golden.jsonl` (promoted from `scratchpad/nz-golden-v383/nz.jsonl`, 300 rows / 246 suburb rows — the resurrection read board must be a committed artifact, not scratchpad)
-- Output (data, not committed): GB shard JSONL under the corpus build area
+- Output (data, not committed): GB extract JSONL under the corpus build area
 
 **Interfaces:**
 
 - Consumes: Task 3's recipe registration; the compiled CLI.
-- Produces: the shard file for Task 7's overlay; both boards in the NZ-board row shape: `{"raw": "...", "components": {...}, "country": "GB", "source": "golden"}`.
+- Produces: the extract file for Task 7's overlay; both boards in the NZ-board row shape: `{"raw": "...", "components": {...}, "country": "GB", "source": "golden"}`.
 
-- [ ] **Step 1: Compile and build the shard**
+- [ ] **Step 1: Compile and build the extract**
 
 ```bash
 yarn compile
-node mailwoman/out/cli.js corpus shard locale --country GB --count 800000 --seed 42 \
+node mailwoman/out/cli.js corpus extract locale --country GB --count 800000 --seed 42 \
   --country-fraction 0.2 --intl-fraction 0.1 \
-  --output "$MAILWOMAN_DATA_ROOT/corpus/shards/synth-gb-v1.jsonl"
+  --output "$MAILWOMAN_DATA_ROOT/corpus/extracts/synth-gb-v1.jsonl"
 ```
 
-Expected: shard stats printed; row count 800000. (Match `--count`/flags to what the CA/MX shard build used if the recipe's own docs give a different convention — check the config header in `corpus-python/.../v3.8.4-latam-probe.yaml` for the latam shard's provenance line.)
+Expected: extract stats printed; row count 800000. (Match `--count`/flags to what the CA/MX extract build used if the recipe's own docs give a different convention — check the config header in `corpus-python/.../v3.8.4-latam-probe.yaml` for the latam extract's provenance line.)
 
 - [ ] **Step 2: Formatter + shape verification (acceptance criterion 1)**
 
 Spot-check 20 random rows: every row parses as JSON, `raw` reads as a plausible GB address in `number street, [dependent locality,] Town, [County,] POSTCODE` order with natural casing, ~20% end in a GB country form, rows with `dependent_locality` in components show it in `raw`. Verify BIO `labels` cover `B-dependent_locality` on those rows:
 
 ```bash
-shuf -n 20 "$MAILWOMAN_DATA_ROOT/corpus/shards/synth-gb-v1.jsonl" | python3 -c "import json,sys; [print(json.loads(l)['raw']) for l in sys.stdin]"
-grep -c 'B-dependent_locality' "$MAILWOMAN_DATA_ROOT/corpus/shards/synth-gb-v1.jsonl"
+shuf -n 20 "$MAILWOMAN_DATA_ROOT/corpus/extracts/synth-gb-v1.jsonl" | python3 -c "import json,sys; [print(json.loads(l)['raw']) for l in sys.stdin]"
+grep -c 'B-dependent_locality' "$MAILWOMAN_DATA_ROOT/corpus/extracts/synth-gb-v1.jsonl"
 ```
 
-Expected: dependent_locality present on a substantial fraction (PPD profile says ~35-38% of source rows carry a distinct locality). If `raw` shows ALL-CAPS or `locality==dependent_locality` duplicates, stop and fix Task 2/3 — do not train on a malformed shard.
+Expected: dependent_locality present on a substantial fraction (PPD profile says ~35-38% of source rows carry a distinct locality). If `raw` shows ALL-CAPS or `locality==dependent_locality` duplicates, stop and fix Task 2/3 — do not train on a malformed extract.
 
 - [ ] **Step 3: Build the GB golden board**
 
-Generate 120 rows from the PPD tail (held-out modern rows, NOT rows used in the shard — use `tail -1000000` sampling with a different seed), stratified: 60 with dependent_locality, 40 without, 20 with a country suffix. Same row shape as the NZ board. Hand-eyeball all 120 before committing (the operator reviews this file in the task's PR).
+Generate 120 rows from the PPD tail (held-out modern rows, NOT rows used in the extract — use `tail -1000000` sampling with a different seed), stratified: 60 with dependent_locality, 40 without, 20 with a country suffix. Same row shape as the NZ board. Hand-eyeball all 120 before committing (the operator reviews this file in the task's PR).
 
 - [ ] **Step 4: Promote the NZ board**
 
@@ -746,7 +746,7 @@ After launch (Task 8) the FIRST verification is the startup census: GB rows DRAW
 
 ```bash
 git add corpus-python/src/mailwoman_train/configs/v3.10.0-gb-probe.yaml
-git commit -m "feat(train): v3.10.0-gb-probe config — GB shard + dependent_locality resurrection (re-init + classifier LR + class-weight 1.0)"
+git commit -m "feat(train): v3.10.0-gb-probe config — GB extract + dependent_locality resurrection (re-init + classifier LR + class-weight 1.0)"
 ```
 
 ---

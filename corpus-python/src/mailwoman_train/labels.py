@@ -108,7 +108,7 @@ STAGE3_BIO_LABELS: Final[tuple[str, ...]] = (
 # an output-head expansion) AND a same-commit extension of the JS ``COMPONENT_TAGS`` union in
 # ``core/types/component.ts`` (the decoder maps model indices → labels through it — they must move
 # together). Until then ACTIVE stays STAGE3 and these tags collapse to ``O`` at load, so defining them
-# now is inert for live models and lets the parser shard emit them.
+# now is inert for live models and lets the parser slice emit them.
 STAGE4_FINE_TAGS: Final[tuple[str, ...]] = (
     "unit_designator",
     "level_designator",

@@ -5,8 +5,8 @@
  *
  *   Diagnose the FR street parse-recall gap (#148): the en-US model fragments a French street when no
  *   postcode anchors it ("Rue du Chevaleret, Paris" → street="Rue du", locality="Chevaleret"). Sample
- *   real FR addresses from the OSM shard, parse each BARE ("<n> <street>, <city>") and ANCHORED
- *   ("<n> <street>, <pc> <city>"), assemble the street key (FR locale) and check it matches the shard's
+ *   real FR addresses from the OSM database, parse each BARE ("<n> <street>, <city>") and ANCHORED
+ *   ("<n> <street>, <pc> <city>"), assemble the street key (FR locale) and check it matches the database's
  *   street_norm. The bare-vs-anchored match-rate delta IS the gap, and isolates whether the model only
  *   learned FR structure in the postcode-anchored context.
  *
@@ -99,12 +99,12 @@ export interface FRParseRecallOptions {
 	label?: string
 	/**
 	 * Gate-leg mode (#949): the FROZEN 40-row sample, so the bare-street floor is reproducible anywhere (incl. CI, which
-	 * has no shard). Default `scripts/eval/fixtures/fr-bare-street-40.jsonl`.
+	 * has no database). Default `scripts/eval/fixtures/fr-bare-street-40.jsonl`.
 	 */
 	fixture?: string
 	/**
-	 * Re-derive from the live OSM shard instead of the fixture — the ONLY way the fixture should ever change, and it must
-	 * be committed deliberately (the "pin the golden" discipline; a moving sample is a flaky floor).
+	 * Re-derive from the live OSM database instead of the fixture — the ONLY way the fixture should ever change, and it
+	 * must be committed deliberately (the "pin the golden" discipline; a moving sample is a flaky floor).
 	 */
 	fromDB?: boolean
 	/**
@@ -196,7 +196,7 @@ export async function frParseRecall(
 				})
 
 				// Distinct streets with a city + postcode, sampled across the table (not one street repeated).
-				// DETERMINISTIC (GROUP BY + ORDER BY, no RANDOM) — the same shard yields the same 40 rows.
+				// DETERMINISTIC (GROUP BY + ORDER BY, no RANDOM) — the same database yields the same 40 rows.
 				return allRows<FRRow>(
 					db.prepare(
 						`SELECT street_raw, number, locality_norm, postcode FROM address_point
@@ -284,7 +284,7 @@ export async function frParseRecall(
 
 	const bareRate = (bareOk / rows.length) * 100
 	const anchoredRate = (anchoredOk / rows.length) * 100
-	const source = args.fromDB ? "live-shard" : args.fixture
+	const source = args.fromDB ? "live-database" : args.fixture
 
 	if (args.json) {
 		// snake_case wire keys, 2-space indent, trailing newline — the sidecar shape is a contract with

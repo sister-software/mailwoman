@@ -99,37 +99,37 @@ export function cacheRootPath(...segments: string[]): string {
 }
 
 /**
- * The default WOF shard list the FTS backend probes when no single `--wof-db` is given: the global admin-priority shard
- * plus the postcode shards, with country-aware routing in `pickShardForPlacetype` sending each postcode query to the
- * shard that claims its country (#920). All under `dataRoot` (defaults to the configured {@link mailwomanDataRoot};
- * callers thread a `--data-root` option through). A fresh array each call; callers filter with `existsSync`, so a
- * deployment missing any of them degrades to whatever is present.
+ * The default WOF extract list the FTS backend probes when no single `--wof-db` is given: the global admin-priority
+ * extract plus the postcode extracts, with country-aware routing in `pickExtractForPlacetype` sending each postcode
+ * query to the extract that claims its country (#920). All under `dataRoot` (defaults to the configured
+ * {@link mailwomanDataRoot}; callers thread a `--data-root` option through). A fresh array each call; callers filter
+ * with `existsSync`, so a deployment missing any of them degrades to whatever is present.
  *
- * This list is DELIBERATELY SMALLER than `DEFAULT_POSTCODE_SHARDS` (`mailwoman/gazetteer-pipeline/index.ts`), which is
- * the set the candidate gazetteer is BUILT from — twenty-odd shards including the 876 MB Code-Point Open GB one. These
- * are attached live per query, so the cost of a member is paid at every boot rather than once at build time; membership
- * here is earned by a shard the runtime cannot resolve its locales without.
+ * This list is DELIBERATELY SMALLER than `DEFAULT_POSTCODE_EXTRACTS` (`mailwoman/gazetteer-pipeline/index.ts`), which
+ * is the set the candidate gazetteer is BUILT from — twenty-odd extracts including the 876 MB Code-Point Open GB one.
+ * These are attached live per query, so the cost of a member is paid at every boot rather than once at build time;
+ * membership here is earned by a extract the runtime cannot resolve its locales without.
  *
  * Two notes on specific members, because both look like mistakes and are not:
  *
- * - The tail shard's own contents moved on 2026-08-05. It carried GB (1,839,678 of 1,895,753 rows, ~946 MB) until
+ * - The tail extract's own contents moved on 2026-08-05. It carried GB (1,839,678 of 1,895,753 rows, ~946 MB) until
  *   Code-Point Open replaced those rows under a clean licence; it is now the nine-country namesake set
  *   FI/CZ/SK/SI/DK/NO/HR/PL/SE at 26 MB. Rebuild: `mailwoman gazetteer build postcode-geonames`.
  * - `postalcode-ni-osm.db` is **build-local**: OSM `addr:postcode` under ODbL, never published, so on any machine that
  *   did not build it the `existsSync` filter simply drops it and GB postcode queries behave as they did before. It is
  *   listed rather than special-cased because that filter IS the tier's enforcement. It is also the only GB-claiming
- *   shard in this list — the Code-Point Open shard is not here — so nothing competes with it for `BT` routing.
+ *   extract in this list — the Code-Point Open extract is not here — so nothing competes with it for `BT` routing.
  */
-export function wofShardPaths(dataRoot: PathBuilderLike = mailwomanDataRoot()): string[] {
-	return Object.values(wofShardPathsByName(dataRoot))
+export function wofExtractPaths(dataRoot: PathBuilderLike = mailwomanDataRoot()): string[] {
+	return Object.values(wofExtractPathsByName(dataRoot))
 }
 
 /**
- * The shard set {@link wofShardPaths} lists, keyed by role so a caller can name one without indexing a tuple.
+ * The extract set {@link wofExtractPaths} lists, keyed by role so a caller can name one without indexing a tuple.
  */
-export interface WOFShardPaths {
+export interface WOFExtractPaths {
 	/**
-	 * The global admin-priority shard — every admin lookup starts here.
+	 * The global admin-priority extract — every admin lookup starts here.
 	 */
 	adminGlobalPriority: string
 	/**
@@ -137,31 +137,31 @@ export interface WOFShardPaths {
 	 */
 	postalcodeUS: string
 	/**
-	 * The nine-country namesake set FI/CZ/SK/SI/DK/NO/HR/PL/SE (see {@link wofShardPaths}).
+	 * The nine-country namesake set FI/CZ/SK/SI/DK/NO/HR/PL/SE (see {@link wofExtractPaths}).
 	 */
 	postalcodeGeonamesTail: string
 	/**
-	 * The international postcode shard (FR/DE/ES/IT/NL, and the others `pickShardForPlacetype` routes here).
+	 * The international postcode extract (FR/DE/ES/IT/NL, and the others `pickExtractForPlacetype` routes here).
 	 */
 	postalcodeIntl: string
 	/**
-	 * The NL PC6 full-postcode shard (CBS via PDOK; `scripts/build-postalcode-nl-pc6.ts`) — the data the lookup's NL PC6
-	 * ladder ("1012 LG" → joined "1012LG" → 4-digit stem) resolves against (#977).
+	 * The NL PC6 full-postcode extract (CBS via PDOK; `scripts/build-postalcode-nl-pc6.ts`) — the data the lookup's NL
+	 * PC6 ladder ("1012 LG" → joined "1012LG" → 4-digit stem) resolves against (#977).
 	 */
 	postalcodeNLPC6: string
 	/**
 	 * Northern Ireland (BT) from OpenStreetMap — 4,757 of 50,032 live NI postcodes (9.5 %), the only coverage that exists
 	 * for the hole Code-Point Open leaves. ODbL, build-local, 2.5 MB. A miss on a BT code means NOT ATTESTED IN OSM; an
-	 * unknown postcode abstains (#1480), so the shard is strictly additive. Rebuild: `mailwoman gazetteer build
+	 * unknown postcode abstains (#1480), so the extract is strictly additive. Rebuild: `mailwoman gazetteer build
 	 * postcode-ni-osm`.
 	 */
 	postalcodeNIOSM: string
 }
 
 /**
- * {@link wofShardPaths} as a named record, in the same order the runtime attaches them.
+ * {@link wofExtractPaths} as a named record, in the same order the runtime attaches them.
  */
-export function wofShardPathsByName(dataRoot: PathBuilderLike = mailwomanDataRoot()): WOFShardPaths {
+export function wofExtractPathsByName(dataRoot: PathBuilderLike = mailwomanDataRoot()): WOFExtractPaths {
 	const wof = resolvePathBuilder(dataRoot, "wof")
 
 	return {

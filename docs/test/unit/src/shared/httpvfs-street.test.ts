@@ -6,8 +6,8 @@
  *   Unit tests for the demo's street tier: the httpvfs situs/interp lookups
  *   (HTTPVFSAddressPointLookup, HTTPVFSInterpolator) against a node:sqlite-backed stub worker that
  *   mimics sql.js-httpvfs's `db.exec` contract ([] on no rows, else [{columns, values}]), plus
- *   `resolveStreet`'s tier ordering with stub lookups. Synthetic in-memory shards — no /mnt/playpen
- *   dependency, CI-safe. Integration against real shards is the `verify-httpvfs-street` probe in
+ *   `resolveStreet`'s tier ordering with stub lookups. Synthetic in-memory extracts — no /mnt/playpen
+ *   dependency, CI-safe. Integration against real extracts is the `verify-httpvfs-street` probe in
  *   the geocoder-demo spec.
  */
 
@@ -79,7 +79,7 @@ describe("HTTPVFSAddressPointLookup", () => {
 		expect(hit?.lat).toBe(40.75)
 	})
 
-	test("returns null on a miss and on a tableless shard", async () => {
+	test("returns null on a miss and on a tableless extract", async () => {
 		const lk = new HTTPVFSAddressPointLookup(stubWorker(situsDB()))
 		expect(await lk.find({ street: "Main St", number: "999", postcode: "10001" })).toBeNull()
 		const empty = new HTTPVFSAddressPointLookup(stubWorker(db((d) => d.exec("CREATE TABLE _x(a)"))))
@@ -100,7 +100,7 @@ describe("HTTPVFSInterpolator", () => {
 		expect(hit!.uncertaintyM).toBeGreaterThan(0)
 	})
 
-	test("rejects non-numeric house numbers and tableless shards", async () => {
+	test("rejects non-numeric house numbers and tableless extracts", async () => {
 		const lk = new HTTPVFSInterpolator(stubWorker(interpDB()))
 		expect(await lk.find({ street: "Main St", number: "12B", postcode: "10001" })).toBeNull()
 		const empty = new HTTPVFSInterpolator(stubWorker(db((d) => d.exec("CREATE TABLE _x(a)"))))

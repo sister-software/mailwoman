@@ -195,7 +195,7 @@ question (§7); not in the 2a–2c scope.
 
 Favor existing packages. The Phase-1 scope guard holds: verticals are agent workflows over the
 spine, not new ML product lines. But BDC needs a **data-acquisition provider** (fetch, parse,
-shard, ingest) exactly like `ban/` and `osm/`, so one new workspace is justified:
+extract, ingest) exactly like `ban/` and `osm/`, so one new workspace is justified:
 
 **`@mailwoman/bdc`** (new workspace, mirrors `ban`/`osm`): `bdc/sdk` (the public-API client,
 file listing, vintage resolution, CSV parsing, ingest to the staging DB), the bdc.db Kysely

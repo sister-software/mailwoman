@@ -411,7 +411,7 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Umak/AK bug)", () => {
 	it("a short region value does not claim the inside of an earlier word", () => {
 		// Pre-fix, leftmost-substring let region "AK" (case-insensitive) match inside "Umak",
-		// scrambling every later span — 0.088% of the pilot shard, 46 natural rows.
+		// scrambling every later span — 0.088% of the pilot slice, 46 natural rows.
 		const result = alignRow(
 			baseRow({
 				raw: "Umak Cir, AK 99546",

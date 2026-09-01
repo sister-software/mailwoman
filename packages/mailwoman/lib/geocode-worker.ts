@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  * Runs inside a worker thread (spawned by `geocodeStream` via `spliterator.parallelMap`). Top-level
- * code is per-worker init: rebuild the classifier, WOF SQLite lookup, resolver, and geometry shards
+ * code is per-worker init: rebuild the classifier, WOF SQLite lookup, resolver, and geometry databases
  * from the serializable `workerData.userData` config (paths + locale), then assemble the same geocode
  * seam the CLI builds. Each dispatched record is geocoded by `makeGeocodeHandler`.
  */
@@ -17,7 +17,7 @@ import { type ColumnMapping, geocodeAddressVia, makeGeocodeHandler } from "@mail
 import { createWOFResolver } from "@mailwoman/resolver"
 
 import { geocodeAddress, parseForGeocode } from "#geocode-core"
-import { ShardProvider } from "#geocode-shards"
+import { RegionDatabaseProvider } from "#geocode-regions"
 import type { GeocodeStreamConfig } from "#geocode-stream"
 import { createResolverBackend } from "#resolver-backend"
 
@@ -32,12 +32,12 @@ const wof = await import("@mailwoman/resolver-wof-sqlite")
 // drop-in servers do, or a row geocoded in bulk answers differently from the same row geocoded singly.
 const lookup = await createResolverBackend(wof, { dataRoot: cfg.dataRoot, wofPaths: cfg.wofDBPath })
 const resolver = createWOFResolver(lookup)
-const shards = await ShardProvider.create(wof, cfg.dataRoot)
+const databases = await RegionDatabaseProvider.create(wof, cfg.dataRoot)
 
 const geoDeps = {
 	classifier,
 	resolver,
-	shards: shards.for,
+	databases: databases.for,
 	defaultCountry: cfg.country ?? "US",
 	placeCountry: false,
 } as const

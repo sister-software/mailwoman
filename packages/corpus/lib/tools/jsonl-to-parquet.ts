@@ -3,19 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Convert a JSONL of LabeledRow objects to a Parquet shard matching the v0.5.0 schema.
+ *   Convert a JSONL of LabeledRow objects to a Parquet slice matching the v0.5.0 schema.
  *
  *   Ported faithfully from scripts/jsonl-to-parquet.py. The Python original wrote Parquet through
  *   PyArrow; this writes it through DuckDB (`@duckdb/node-api`) — `read_json` with an EXPLICIT
  *   `columns` type map projects the validated rows to the v0.5.0 schema, then `COPY … TO … (FORMAT
- *   PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE …)` emits the shard. DuckDB reproduces the exact
+ *   PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE …)` emits the slice. DuckDB reproduces the exact
  *   logical schema PyArrow did — `VARCHAR` (UTF8) scalars, `VARCHAR[]` (LIST<UTF8>) for the string
  *   arrays, and `INTEGER[]` (LIST<INT32>) for the span offsets — in the exact column order below.
  *   Verified field-for-field against the PyArrow original (same column order, same logical types,
  *   same `list<element: …>` child naming, same values), so a PyArrow reader sees an identical
- *   table. The trainer in any case reads shards by column name (`pq.read_table(...).to_pylist()`),
+ *   table. The trainer in any case reads slices by column name (`pq.read_table(...).to_pylist()`),
  *   which is blind to physical layout. INT32 matches the corpus's native TS writer
- *   (`@mailwoman/corpus` `LABELED_ROW_SCHEMA`), which already writes the base shards this overlay
+ *   (`@mailwoman/corpus` `LABELED_ROW_SCHEMA`), which already writes the base slices this overlay
  *   rides alongside.
  *
  *   Schema: raw, tokens, labels, span_starts, span_ends, span_tags, country, locale, source,
@@ -23,7 +23,7 @@
  *
  *   The span triple (#519, v0.5.0 char-offset labels) is REQUIRED on every row: `alignRow` emits it
  *   on every labeled row, so a row arriving without it came from a producer that hasn't migrated —
- *   writing it would silently drop the v0.5.0 labels from the shard. Loud failure, naming the row
+ *   writing it would silently drop the v0.5.0 labels from the slice. Loud failure, naming the row
  *   number, instead.
  *
  *   Usage: mailwoman dev jsonl-to-parquet --input /tmp/po-box-labeled.jsonl --output
@@ -91,7 +91,7 @@ export interface JSONLToParquetOptions {
 	 */
 	input: string
 	/**
-	 * The parquet shard to write.
+	 * The parquet slice to write.
 	 */
 	output: string
 	/**
@@ -122,7 +122,7 @@ function assertSpanTriple(row: Record<string, unknown>, lineNo: number): void {
 		throw new Error(
 			`line ${lineNo}: row is missing the char-offset span triple (#519): ` +
 				`missing ${JSON.stringify(missing)} (source_id=${JSON.stringify(row.source_id ?? null)}). Every parquet-bound row ` +
-				"must carry span_starts/span_ends/span_tags; re-emit this shard through alignRow."
+				"must carry span_starts/span_ends/span_tags; re-emit this slice through alignRow."
 		)
 	}
 
@@ -138,7 +138,7 @@ function assertSpanTriple(row: Record<string, unknown>, lineNo: number): void {
 }
 
 /**
- * Convert a labeled-row JSONL to a v0.5.0-schema Parquet shard.
+ * Convert a labeled-row JSONL to a v0.5.0-schema Parquet slice.
  */
 export async function jsonlToParquet(
 	options: JSONLToParquetOptions,
@@ -190,7 +190,7 @@ export async function jsonlToParquet(
 
 	const db = await connectDuckDB()
 	// Row order is required: the overlay-manifest assembler records first/last source_id from
-	// shard order. `preserve_insertion_order` (DuckDB default) keeps output order = input order.
+	// slice order. `preserve_insertion_order` (DuckDB default) keeps output order = input order.
 	await db.run("SET preserve_insertion_order=true")
 
 	await db.run(

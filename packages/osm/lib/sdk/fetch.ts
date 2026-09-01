@@ -6,7 +6,7 @@
  *   Geofabrik extract URLs + a streaming downloader. Geofabrik is the OSM ecosystem's de-facto
  *   regional-extract host: a cascade of continent → country → sub-region `.osm.pbf` files
  *   (`europe/france/ile-de-france-latest.osm.pbf`). We pull per-COUNTRY extracts (the ecosystem's
- *   default shard unit — matching Photon's per-country dumps and our own per-locale weights), and a
+ *   default extract unit — matching Photon's per-country dumps and our own per-locale weights), and a
  *   smaller sub-region extract when we only need to smoke a build (Île-de-France for the Paris
  *   acceptance). The bytes are ODbL OpenStreetMap data — see `osm/README.md`.
  *

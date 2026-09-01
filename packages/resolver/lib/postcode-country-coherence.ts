@@ -11,7 +11,7 @@
  *   turns THAT into a hard `spr.country = 'US'` WHERE clause. The candidate pool is all-US before
  *   ranking begins, so a coarse placer that already called this address FR at confidence
  *   0.9999908844 has nothing to promote — a soft re-rank downstream of a hard filter is inert by
- *   construction. Population then picks Paris, Texas (pop 24,969). With the postal shards attached
+ *   construction. Population then picks Paris, Texas (pop 24,969). With the postal extracts attached
  *   the answer gets WORSE, not merely wrong: the postcode resolves to the US row (ZIP 75001,
  *   Addison TX), `applyPostcodeConsistency` finds no Paris within its 50 km gate (the nearest is
  *   143.8 km), and falls the locality coordinate back to the ZIP point. See

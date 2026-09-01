@@ -88,9 +88,9 @@ export interface SubVenuePromotion {
  *
  * ── A rejection of a SHIPPED designator is ADVISORY ──────────────────────────────────────────────
  * `neural/venue-structure.ts` ships `wing`, `terminal`, `concourse` and six more as a FLAT English vocabulary with no
- * locale gate. Nothing in this table can un-ship them: the `wing` / en-US rejection below tells a shard author which
+ * locale gate. Nothing in this table can un-ship them: the `wing` / en-US rejection below tells a slice author which
  * locale to exclude from a generated line, and does not stop the span proposer from firing on "Red Wing". Giving the
- * shipped vocabulary a per-locale gate is the largest thing the shard will want that does not exist yet.
+ * shipped vocabulary a per-locale gate is the largest thing the slice will want that does not exist yet.
  */
 export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 	// ── wing ────────────────────────────────────────────────────────────────────────────────────────
@@ -271,7 +271,7 @@ export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 
 	// ── terminal ────────────────────────────────────────────────────────────────────────────────────
 	// The English surface already ships. These promote the LOCALIZED forms, which is what a non-English
-	// shard line needs and what wave 1 had none of.
+	// slice line needs and what wave 1 had none of.
 	{
 		designatorID: "terminal",
 		phrase: "terminal",

@@ -115,7 +115,7 @@ readable through `@mailwoman/core/layers` beside the existing manifest.
    from silently-wrong to honestly-empty before any new data ships. (The transport shipped as the
    #1585 fuzzy-tier country restriction; today it abstains by candidate absence, without a named
    reason.)
-2. **The NZ locality shard lands honest**: ~7.6k rows (LINZ for the permissive tier; the OSM copy
+2. **The NZ locality extract lands honest**: ~7.6k rows (LINZ for the permissive tier; the OSM copy
    stays build-local under the ODbL posture), with `surveyed_complete` asserted from the
    authority's own coverage statement — the first layer whose register is honest from birth.
 3. **Falsifier 1 becomes re-runnable with teeth**: negative evidence scoped to

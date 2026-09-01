@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build `osm/address-points-au-au.db` — the AU rooftop shard from Geoscape G-NAF, on the SHARED
- *   situs schema + OSM H3 spine so the existing `OSMShardProvider` / `AddressPointSqliteLookup`
+ *   Build `osm/address-points-au-au.db` — the AU rooftop database from Geoscape G-NAF, on the SHARED
+ *   situs schema + OSM H3 spine so the existing `OSMRegionDatabaseProvider` / `AddressPointSqliteLookup`
  *   serve it with zero runtime changes.
  *
  *   WHY G-NAF and not OSM for AU: the panel's en-AU misses were uniformly `tier=admin` at 1–6 km —
@@ -21,7 +21,7 @@
  *   rural class the parser reads as unit + house_number). Street rendering: `STREET_NAME` +
  *   `STREET_TYPE_CODE` + suffix, with the directional suffix CODES expanded to words (the register
  *   stores types as full words but suffixes as codes); keys via the shared `en` normalizer — the
- *   same branch the GB/NZ shards use.
+ *   same branch the GB/NZ databases use.
  *
  *   G-NAF PSV is CRLF-terminated and quote-free: the trailing `\r` must be stripped at the reader
  *   boundary or the LAST column's name and every last-field value carry it — the geocode file's
@@ -77,7 +77,7 @@ export interface GNAFRooftopOptions {
 	 */
 	standardDir?: string
 	/**
-	 * Output shard path. Default: `<data-root>/osm/address-points-au-au.db` (the `OSMShardProvider` home).
+	 * Output database path. Default: `<data-root>/osm/address-points-au-au.db` (the `OSMRegionDatabaseProvider` home).
 	 */
 	out?: string
 	/**
@@ -155,7 +155,7 @@ async function loadMap(
 	return map
 }
 
-export async function buildGNAFRooftopShard(options: GNAFRooftopOptions): Promise<GNAFRooftopResult> {
+export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Promise<GNAFRooftopResult> {
 	const release = options.release ?? "may26-gda2020"
 
 	const standardDir =

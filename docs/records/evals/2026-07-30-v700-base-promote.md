@@ -8,10 +8,10 @@ whose locality evidence channel actually trained (#1349).
 
 - **Run 1 (v4.0.0)**: 16/17 golden; fr.cedex 90.5 (the named watch retired); gauntlet regression
   failed 3 FR venue-led fixtures + si-sentinel. Root cause of the venue family: the feed NEVER
-  admitted a venue shard — the shipped lineage's venue competence was inheritance from ancestral
+  admitted a venue extract — the shipped lineage's venue competence was inheritance from ancestral
   feeds, which from-scratch X-rayed away.
 - **Run 2 (v4.0.1, the pre-registered single-delta contingency)**: the FR-order-aware
-  synth-house-venue shard (116,244 real BAN+situs tuples) folded at 2.0. All three venue
+  synth-house-venue extract (116,244 real BAN+situs tuples) folded at 2.0. All three venue
   must-clears CLEARED; three tracked venue cases promoted to pass; every other class within noise
   of run 1 (several floors up); P0 grid flat 40k→60k in both registers.
 
@@ -60,4 +60,4 @@ whose locality evidence channel actually trained (#1349).
 ## Follow-ups riding the release train
 
 #1366 GB venue increment · tasks #25/#26 (SP vocab pruning probe; SP 0.2.2 WASM) · λ calibration
-on the first post-base fine-tune · CJK Phase 3 (the JP full shard).
+on the first post-base fine-tune · CJK Phase 3 (the JP full extract).

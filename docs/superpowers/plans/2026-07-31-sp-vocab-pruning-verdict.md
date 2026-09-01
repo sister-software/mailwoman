@@ -6,7 +6,7 @@ step 1, before any bar ran.
 
 ## The measurement
 
-Full v0.15.0-venue feed — **all 699 train shards, 684,103,970 rows, no sampling** — encoded with
+Full v0.15.0-venue feed — **all 699 train extracts, 684,103,970 rows, no sampling** — encoded with
 the shipped v0.9.0-multisplice tokenizer, counted at the unit the model reads (`encode()` ids;
 instrument: `corpus-python/scripts/measure_vocab_utilization.py`, ~12 min on 13 workers after the
 bincount fix). Eval surface separately: 69,452 distinct texts → 13,348 fired ids.

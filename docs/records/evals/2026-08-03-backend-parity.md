@@ -286,7 +286,7 @@ Distinct places, `admin-global-priority.db` `spr` vs `candidate-global-1026.db` 
 | country        |       237 |           237 |              0 |
 | **postalcode** |     **0** | **3,661,017** | **+3,661,017** |
 
-Candidate carries 3.66M postcodes the FTS shard has none of — which is why the candidate arm of the
+Candidate carries 3.66M postcodes the FTS extract has none of — which is why the candidate arm of the
 Paris reproduction also resolves `75001` to `wof:421307175` while FTS leaves it bare — and drops
 ~873k admin places, mostly thin-tail localities and neighbourhoods. I did **not** determine whether
 those dropped rows are deprecated/superseded WOF records (a cleanup) or real coverage loss. Nothing

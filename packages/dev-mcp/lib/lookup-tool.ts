@@ -7,7 +7,7 @@
  *   the probe, close it.
  *
  *   Resolution is the part worth reading. Every path here comes from the function the running system uses —
- *   `resolveCandidateDBPath`, `resolveWOFShardPaths`, `resolveWeights` — never from a literal assembled here. A probe
+ *   `resolveCandidateDBPath`, `resolveWOFDatabasePaths`, `resolveWeights` — never from a literal assembled here. A probe
  *   that reads a different `candidate.db` than the session does answers a question nobody asked, and the failure is
  *   invisible: it looks exactly like the gazetteer being wrong.
  *
@@ -27,7 +27,7 @@ import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { resolveCandidateDBPath, resolveWOFShardPaths } from "mailwoman/resolver-backend"
+import { resolveCandidateDBPath, resolveWOFDatabasePaths } from "mailwoman/resolver-backend"
 import { basename, resolvePath } from "path-ts"
 
 import type { EngineConfig, EngineRegistryLike } from "#engine-registry"
@@ -50,7 +50,7 @@ import {
 	lookupPostcodeAnchor,
 	lookupWOF,
 	type PostcodeAnchorResolver,
-	type WOFShard,
+	type WOFExtract,
 } from "#lookup-sources"
 import { syntheticIDNote } from "#place-id-provenance"
 
@@ -303,12 +303,12 @@ const UNAVAILABLE_NOTE =
 	"absence for every query rather than as an unavailable source."
 
 /**
- * The WOF shards, opened as a set. Unavailable only when NO shard opens; a partial set is reported in the notes,
- * because "three of six shards" is a different reading of a miss than "all six".
+ * The WOF extracts, opened as a set. Unavailable only when NO extract opens; a partial set is reported in the notes,
+ * because "three of six extracts" is a different reading of a miss than "all six".
  */
 async function runWOFLookup(args: LookupArgs, dataRoot: string): Promise<LookupResult> {
-	const paths = resolveWOFShardPaths(args.config?.resolve_db, dataRoot)
-	const shards: WOFShard<WOFDatabase>[] = []
+	const paths = resolveWOFDatabasePaths(args.config?.resolve_db, dataRoot)
+	const extracts: WOFExtract<WOFDatabase>[] = []
 	const skipped: string[] = []
 
 	for (const path of paths) {
@@ -320,20 +320,20 @@ async function runWOFLookup(args: LookupArgs, dataRoot: string): Promise<LookupR
 			continue
 		}
 
-		shards.push({ name: basename(path), db: opened.db })
+		extracts.push({ name: basename(path), db: opened.db })
 	}
 
-	if (!shards.length) {
+	if (!extracts.length) {
 		return {
 			source: LookupSource.WOF,
 			rows: [],
-			unavailable_reason: `No WOF shard could be opened. ${skipped.join(" ")}`,
+			unavailable_reason: `No WOF extract could be opened. ${skipped.join(" ")}`,
 			notes: [UNAVAILABLE_NOTE],
 		}
 	}
 
 	try {
-		const rows = lookupWOF(shards, args.queries, {
+		const rows = lookupWOF(extracts, args.queries, {
 			...(args.country ? { country: args.country } : {}),
 			...(args.limit ? { limit: args.limit } : {}),
 		})
@@ -344,21 +344,21 @@ async function runWOFLookup(args: LookupArgs, dataRoot: string): Promise<LookupR
 
 		return {
 			source: LookupSource.WOF,
-			provenance: { artifact: shards.map((shard) => shard.name).join(", ") },
+			provenance: { artifact: extracts.map((extract) => extract.name).join(", ") },
 			rows,
 			notes: [
-				`Probed ${shards.length} of ${paths.length} shard(s) in the runtime's own set.`,
+				`Probed ${extracts.length} of ${paths.length} extract(s) in the runtime's own set.`,
 				...(skipped.length ? [`Not opened: ${skipped.join(" ")}`] : []),
 				"Read this against `candidate`: a string this source holds and the candidate table misses is a BUILD gap.",
 				"Deprecated and not-current records are named in the row note and kept OUT of `entries` — the FTS5 content " +
-					"the resolver reads is built with that filter already applied, so they exist in the shard and reach " +
+					"the resolver reads is built with that filter already applied, so they exist in the extract and reach " +
 					"nothing downstream.",
 				...(idNote ? [idNote] : []),
 			],
 		}
 	} finally {
-		for (const shard of shards) {
-			shard.db.destroy()
+		for (const extract of extracts) {
+			extract.db.destroy()
 		}
 	}
 }

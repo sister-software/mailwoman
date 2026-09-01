@@ -170,7 +170,7 @@ export async function matcherScale(
 	lines.push(
 		`RSS is the shared-process high-water mark across the sweep (each size reuses the heap), so it is an upper ` +
 			`bound, not a per-N working set. The largest size that fits is bounded by the record objects + the link array; ` +
-			`beyond that, shard by geography (each cell is independent) — the same partition the blocking already implies.`
+			`beyond that, extract by geography (each cell is independent) — the same partition the blocking already implies.`
 	)
 
 	lines.push("")

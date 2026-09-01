@@ -23,7 +23,7 @@
  *
  *   Output: component tuples as JSONL, consumed by the `gnaf` corpus adapter (which renders them in
  *   multiple orders + the corpus aligner BIO-labels them). An optional held-out eval set is
- *   excluded by (street, locality, postcode) so the training shard never overlaps the benchmark.
+ *   excluded by (street, locality, postcode) so the training slice never overlaps the benchmark.
  */
 
 import { readDirectory } from "@mailwoman/core/fs/readers"

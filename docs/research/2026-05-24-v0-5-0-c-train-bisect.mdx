@@ -94,7 +94,7 @@ Both are real architectural changes from v0.4.0. Either could plausibly produce 
 
 The cheapest next bisect is **phrase priors OFF** (revert PR #128's input-layer features, keep A1 tokenizer). One YAML knob change, ~15min smoke + a partial train if smoke passes. That isolates whether the destabilizer is the phrase-prior projection or the new tokenizer's interaction.
 
-If phrase-priors-off ALSO diverges, the next bisect is the A1 tokenizer itself: revert to v0.1.0's sentencepiece weights against the same corpus + recipe + h256. At that point we're back to v0.4.0's proven-stable shipping configuration; if even that diverges, the destabilizer is in `corpus-v0.4.0`'s composition (the transliteration shards' distribution might be the issue, not the tokenizer trained on them).
+If phrase-priors-off ALSO diverges, the next bisect is the A1 tokenizer itself: revert to v0.1.0's sentencepiece weights against the same corpus + recipe + h256. At that point we're back to v0.4.0's proven-stable shipping configuration; if even that diverges, the destabilizer is in `corpus-v0.4.0`'s composition (the transliteration extracts' distribution might be the issue, not the tokenizer trained on them).
 
 ## A discipline lesson worth keeping
 

@@ -17,7 +17,7 @@ the pre-registered gates).
 
 ## The v3.12.0 verdict — stop rule executed (second time)
 
-The run itself was flawless mechanically (all startup gates green: 702 shards, init_from
+The run itself was flawless mechanically (all startup gates green: 702 extracts, init_from
 missing=0, reinit rows [7,8], classifier LR group 12,705 params @ 0.001). Graded per the
 pre-registration — all 8 checkpoints, invariance suite in `--baseline v385` mode + gauntlet per
 checkpoint:

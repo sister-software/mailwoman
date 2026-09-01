@@ -17,7 +17,7 @@ evidence rate: 9/267 (3.4%) — tier census: 1308 admin / 25 address_point / 2 s
 ```
 
 **The rerank collected NOTHING — because it is evidence-starved, not wrong.** The failing class is
-context-free fragments, and a fragment cannot reach the rooftop layers (no locality/postcode to shard
+context-free fragments, and a fragment cannot reach the rooftop layers (no locality/postcode to extract
 on), so every hypothesis ties at admin tier and the arbiter has nothing to prefer. Full-geocode tier
 is structurally blind exactly where the headroom lives.
 

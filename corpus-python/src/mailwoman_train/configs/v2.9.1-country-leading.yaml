@@ -1,7 +1,7 @@
 # v2.9.1-country-leading — #1104 iter. Adds LEADING-position country rows + non-Latin localities to the
 # v290 counterweight (v290 recovered country only +0.9pp; the residual was all leading-position + non-Latin).
 # COUNTRY-ending rows (full address + a codex country surface tail, comma'd + comma-free) so the
-# country-sparse fine-tune stops eroding country recall (88.6%→82.0% on v257; bisected to the shard,
+# country-sparse fine-tune stops eroding country recall (88.6%→82.0% on v257; bisected to the slice,
 # NOT the tokenizer, via v242). Same recipe as v2.5.7 (init_from multisplice-expanded, 8k, gentle
 # lr 1e-5); only the corpus overlay changes (v0.10.6-fragment-v5 → v0.10.8-fragment-v7). Grade: golden
 # country recall recovers toward 88.6% (2pp gate), parity floors hold, flip census + gauntlet stable.
@@ -33,7 +33,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay shard.
+  source_weights: # VERBATIM v2.4.1 + the one new assay slice.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -62,7 +62,7 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

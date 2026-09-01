@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   THE street normalizer for the address-point tier (#476). One function, used by BOTH the shard
- *   builder (`scripts/build-address-point-shard.ts`) and the lookup tier (`address-point.ts`) —
+ *   THE street normalizer for the address-point tier (#476). One function, used by BOTH the extract
+ *   builder (`scripts/build-address-point-extract.ts`) and the lookup tier (`address-point.ts`) —
  *   never two implementations (the PLACETYPE_ORDER lesson: parallel copies silently corrupt).
  *
  *   Normalization contract (deliberately aggressive — both sides apply the same function, so
@@ -27,8 +27,8 @@ import type { Tagged } from "type-fest"
 
 /**
  * A place name folded by {@link normalizeLocalityForKey} — the value stored in, and required to probe, every
- * `name_key`-style column: the candidate gazetteer, the postal-city side-index, the street-centroid shard, an ancestor
- * chain's `parent_name_key`, and the address-point locality scope.
+ * `name_key`-style column: the candidate gazetteer, the postal-city side-index, the street-centroid extract, an
+ * ancestor chain's `parent_name_key`, and the address-point locality scope.
  *
  * The brand is here because the fold is applied at BUILD time and is therefore mandatory at QUERY time, while a
  * near-miss approximation of it (`toLowerCase()`, `trim()`) is still a `string`: it binds to the parameter, returns
@@ -64,8 +64,8 @@ const MIN_TOKENS_FOR_TAIL_MERGE = 3
 /**
  * Spelled ordinal street names → their digit-ordinal form ("tenth" → "10th"), applied ONLY when a street-type suffix
  * follows (#723 admin-tail) — so the ordinal cross-streets common in grid cities ("Tenth Street", "Fifth Avenue") match
- * the shards' digit keys, WITHOUT rewriting ordinal-WORD names where the next token is not a suffix ("First National
- * Bank Rd" stays "first national …"). Digit-source shards are unaffected (a digit token isn't in this map), so the
+ * the extracts' digit keys, WITHOUT rewriting ordinal-WORD names where the next token is not a suffix ("First National
+ * Bank Rd" stays "first national …"). Digit-source extracts are unaffected (a digit token isn't in this map), so the
  * existing keys need no rebuild; a future rebuild folds any spelled-source key the same way (the one-function
  * discipline).
  */
@@ -198,7 +198,7 @@ export type StreetLocale = "us" | "en" | "fr" | "de" | "nl" | "pl" | "vn" | "id"
 /**
  * Country → street-locale registry surface for the acquisition SDKs (BAN, OSM). Each SDK keeps its own map — membership
  * is a per-register decision — and this factory owns the lookup discipline: throw for an unsupported country rather
- * than silently folding with the wrong rules, because a shard built with the wrong normalizer keys every street
+ * than silently folding with the wrong rules, because a extract built with the wrong normalizer keys every street
  * incorrectly and looks fine until a probe misses. `label` is the SDK's own registration instructions, appended to the
  * error verbatim.
  */
@@ -248,7 +248,7 @@ const FR_STREET_ABBREV = new Map<string, string>([
 ])
 
 /**
- * Polish leading street-type tokens, STRIPPED rather than expanded. Measured on the 5.56M-row PL OSM shard
+ * Polish leading street-type tokens, STRIPPED rather than expanded. Measured on the 5.56M-row PL OSM extract
  * (2026-08-19): OSM Poland tags `addr:street` BARE — `ulica%` covers 22 rows and `ul.%` eight, so an EXPANSION rule
  * makes a typed query ("ul. Świętokrzyska" → "ulica swietokrzyska") miss the 3,846 bare "swietokrzyska" rows. Stripping
  * the leading type on BOTH sides keys typed and bare surfaces identically. The full words are stripped too: the
@@ -280,7 +280,7 @@ const ID_STREET_ABBREV = new Map<string, string>([
  *   {@link PL_LEADING_TYPE} for the measured reason expansion was wrong for this source.
  * - **vn** — fold + đ→d AND ð→d (both non-decomposing, and OSM mixes the two codepoints inside single values — see the
  *   branch comment). Deliberately NO type-abbreviation map yet: the common abbreviation is the single letter "Đ." for
- *   Đường, and expanding a bare folded "d" token would rewrite initials — measure the miss rate on the built shard
+ *   Đường, and expanding a bare folded "d" token would rewrite initials — measure the miss rate on the built extract
  *   before adding anything.
  * - **id** — fold + expand leading type abbreviations (jl/jln→jalan, gg→gang); Indonesian street surfaces are otherwise
  *   ASCII-clean.
@@ -293,7 +293,7 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 	// robustness. It also splits a hyphenated abbreviation ("St-Honoré" → "st honore") into tokens the
 	// per-locale type/Saint map can see. Letter maps for non-decomposing letters (ß, ł, đ) live in the
 	// per-locale branches, NEVER here: widening the shared pipeline would silently change keys under
-	// every already-built shard of the other locales.
+	// every already-built extract of the other locales.
 	const tokens = fold(street)
 		.replaceAll("ß", "ss")
 		.replaceAll("-", " ")
@@ -342,7 +342,7 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 			break
 		case "vn":
 			// đ (U+0111, d-with-stroke) AND ð (U+00F0, eth): OSM Vietnamese data mixes the two visually
-			// identical codepoints inside single values — the 2026-08-19 shard measured `Đường Trần Hưng
+			// identical codepoints inside single values — the 2026-08-19 extract measured `Đường Trần Hưng
 			// Đạo` carrying d-with-stroke at the front and ETH in `Đạo`, splitting the country's most
 			// common street into two keys with the MAJORITY variant (630 vs 421 rows) unreachable by a
 			// correctly-typed query. No abbreviation map — see the locale table.
@@ -372,7 +372,7 @@ const FRENCH_LEAD_TYPE =
 	/^(?:rue|ruelle|av|ave|avenue|boul|bd|boulevard|ch|che|chemin|all[ée]e|imp|impasse|mont[ée]e|c[ôo]te|pl|place|prom|promenade|rang|rte|route|autoroute|carr[eé]|croissant|terrasse|sentier)(?=[\s.-]|$)/i
 
 /**
- * Surface-driven street-locale ROUTER for bilingual shards — the Québec finishing move on the CA rooftop shard.
+ * Surface-driven street-locale ROUTER for bilingual extracts — the Québec finishing move on the CA rooftop extract.
  *
  * A country registers ONE street locale, but Canada's street surfaces are two languages: under the `en` rules a French
  * surface passes through mostly unchanged (both sides fold identically, so those rows stay reachable), and what breaks
@@ -380,11 +380,11 @@ const FRENCH_LEAD_TYPE =
  * misses a full-word row and vice versa. Routing on the SURFACE (not the province) also carries bilingual NB and the
  * French street names outside Québec for free.
  *
- * ONE function, called by the shard BUILDER and the query PROBE alike — the #861 discipline: routing is part of the
+ * ONE function, called by the extract BUILDER and the query PROBE alike — the #861 discipline: routing is part of the
  * fold contract, and two transcriptions of this predicate would diverge exactly where it matters. Only an `en` base
- * re-routes: a `fr`/`de`/`nl` shard already speaks its own rules, and the US pipeline stays untouched.
+ * re-routes: a `fr`/`de`/`nl` extract already speaks its own rules, and the US pipeline stays untouched.
  *
- * Measured basis (CA shard, 2026-08-19): 183,963 distinct surfaces, 43,762 French-lead; 29,682 fold differently under
+ * Measured basis (CA extract, 2026-08-19): 183,963 distinct surfaces, 43,762 French-lead; 29,682 fold differently under
  * fr-vs-en (888,265 rows), and the non-French half of those are English surfaces this router keeps on `en` unchanged.
  */
 export function streetLocaleForSurface(street: string, base: StreetLocale): StreetLocale {
@@ -478,9 +478,9 @@ export function stripLocalityQualifier(locality: string): string {
  * (the state abbreviation form) fold to `state route N…`. Only digit-leading route numbers fold — `State Street` and
  * friends never match.
  *
- * Used by BOTH the segment-shard builder (`scripts/build-interpolation-shard.ts`) and the interpolation lookup — same
- * one-function discipline as {@link normalizeStreetForKey}. The address-point tier (#476) does NOT apply it yet:
- * adopting it there requires a shard rebuild (noted on #483).
+ * Used by BOTH the segment-extract builder (`scripts/build-interpolation-extract.ts`) and the interpolation lookup —
+ * same one-function discipline as {@link normalizeStreetForKey}. The address-point tier (#476) does NOT apply it yet:
+ * adopting it there requires a extract rebuild (noted on #483).
  *
  * A same-numbered US and state route stay DISTINCT keys (`us route 5` vs `state route 5`); only the BARE `route N` form
  * is ambiguous (designator unknown) and it stays unfolded — a bare-route query therefore misses rather than guessing a

@@ -1,6 +1,6 @@
 # v4.10.0 — trailing-region LOW DOSE (#1748 / #1821)
 #
-# THE THIRD SHARD SHAPE AT ~10% SHARE, AND THE THIRD FAILURE. Graded on the 649-row board:
+# THE THIRD SLICE SHAPE AT ~10% SHARE, AND THE THIRD FAILURE. Graded on the 649-row board:
 #
 #   v4.7.0  17,908 rows, 10.5% share   DO-NOT-SHIP (370/383)
 #   v4.8.0  32,125 rows,  9.4% share   7 improved / 25 regressed — 12 venue-led
@@ -12,17 +12,17 @@
 # `dependent_locality`, so bare-street rows started reading as dependent localities (`Calle de Alcala`,
 # `Corso Vittorio Emanuele II`, `Madison Square West`) while the venue class did not recover.
 #
-# The shard contains ONLY admin segments. No venue, no street. At ~9% of the stream it will damage
+# The slice contains ONLY admin segments. No venue, no street. At ~9% of the stream it will damage
 # whichever class occupies the position it teaches, whatever that position is, because it cannot teach
 # the alternatives. Three shapes have now demonstrated that.
 #
 # So this run changes the ONE variable those three held constant: dose. 1 rep/row instead of 3, a 3.1%
-# share at weight 5.02, against v4.9.0's 9.4% at 15.93. The shard is byte-identical to v4.9.0's —
+# share at weight 5.02, against v4.9.0's 9.4% at 15.93. The slice is byte-identical to v4.9.0's —
 # corpus v0.26.0 unchanged — so a difference here is attributable to dose alone.
 #
 # WHAT THIS RUN CAN CONCLUDE. If the regressions scale down and IN's two improvements survive, the
-# shard is shippable at a low dose. If the regressions persist at a third the exposure, dose is not the
-# lever and the shard needs venue/street rows before it can ship at all — which is a corpus-authoring
+# slice is shippable at a low dose. If the regressions persist at a third the exposure, dose is not the
+# lever and the slice needs venue/street rows before it can ship at all — which is a corpus-authoring
 # task, not a dose sweep, and the right place to stop.
 #
 # WHY v4.8.0 FAILED, measured rather than guessed. It graded 7 improved / 25 regressed on the 649-row
@@ -36,7 +36,7 @@
 #     candidate locality "Le Colimacon"
 #
 # Cause: every one of v4.8.0's 32,125 rows began with the locality — `01445 Radebeul, Saxony` and
-# `Sawai, Andaman & Nicobar Islands 744301` alike — and the shard contained no venue, no street and no
+# `Sawai, Andaman & Nicobar Islands 744301` alike — and the slice contained no venue, no street and no
 # dependent locality. At a 9.4%% share that taught "the first named segment IS the locality". Even the
 # IN row it targeted regressed, `locality` sliding from Bengaluru to Indiranagar. The house-number
 # prefix is not a counter-distribution: a NUMBER before the locality does not teach that a NAME can
@@ -60,10 +60,10 @@
 #   3. net improved-minus-regressed >= 0 on the full board;
 #   4. the 4 ve_city_postcode_trailing_state rows remain the IMPROVEMENT metric, not the gate.
 #
-# WHAT v4.7.0 GOT WRONG, and it was not the dose. Its shard emitted the postcode only at the HEAD
+# WHAT v4.7.0 GOT WRONG, and it was not the dose. Its slice emitted the postcode only at the HEAD
 # (`const head = ... ${postcode} `), so every one of its 17,908 rows was postcode-LEADING. That was
 # correct for its four source countries — FR, DE, ES and IT all write the code first — and it silently
-# decided which countries the shard could teach, because the same digits change TAG with position.
+# decided which countries the slice could teach, because the same digits change TAG with position.
 #
 # Measured on the shipped model, one row moved one slot:
 #
@@ -92,7 +92,7 @@
 # "learned after_region" from "learned India" using the trailing arm alone. The VE rows separate them.
 #
 # EXTRACTION is committed now (packages/corpus/lib/tools/postcode-triples.ts); v0.24.0's was a one-off
-# that never landed, which is why the shard was unbuildable for a new country. Route notes in its
+# that never landed, which is why the slice was unbuildable for a new country. Route notes in its
 # docstring: parent_id joins for FR/DE/ES/IT/NL only, GeoNames carries the triple inline for PT/MX/IN,
 # and nearest-locality-centroid was measured (13.5-81.1% agreement) and REJECTED.
 #
@@ -113,11 +113,11 @@
 #
 # 101 of the 134 codes have ZERO rows in the corpus. They admit nothing today and are declarations of
 # intent; train_remote.py's completeness audit reports them as "0 rows seen", which is correct and not
-# a failure. The two that matter and are NOT inert: IN (this shard's 16,000 rows) and NZ (11,957).
+# a failure. The two that matter and are NOT inert: IN (this slice's 16,000 rows) and NZ (11,957).
 #
 # ADMITTED FOR THE FIRST TIME, with rows: CN 11,357,947 | JP 2,092,821 | KR 1,083,156 | TW 678,660 |
 # NZ 11,957 | TR 1,124 | LB 1,117 | JO 1,101 | GE 1,071 | AS 5. All are 0.0% street-level wof-admin
-# toponyms. This is NOT the JP work: #296 and the v8-jp-full shard teach JP block structure under the
+# toponyms. This is NOT the JP work: #296 and the v8-jp-full slice teach JP block structure under the
 # 47-label `stage3-jp` set (STAGE3_TAGS + JP_FINE_TAGS), which needs a wider head and an additive
 # fine-tune. Admitting JP here teaches toponym recognition only.
 #
@@ -274,7 +274,7 @@ data:
   source_weights:
     # DOSE-FIRST (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
     # 6 reps/row x 17,908 rows against 155.0 total over 8,000 x 128 = 1,024,000 samples -> 18.17,
-    # a 10.5% share. Parity with the bare trailing-region shards, measured at 7.7 and 5.2 reps/row.
+    # a 10.5% share. Parity with the bare trailing-region slices, measured at 7.7 and 5.2 reps/row.
     # For contrast, the weight that collapsed v4.6.0 was 1.0 and bought 165 reps/row.
     synth-trailing-region-structured: 5.02
     synth-house-venue: 2.0

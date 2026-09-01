@@ -12,7 +12,7 @@
  *   city), but the FTS resolver ranks by bm25 + exact-match tiering, so a bare homonym goes to
  *   whichever same-name place bm25 floats up (often a small US township). The candidate table also
  *   carries 3.66 M postcodes and the exonym aliases that map `Munich` onto `München`, neither of
- *   which the FTS admin shard stocks.
+ *   which the FTS admin database stocks.
  *
  *   The candidate table is the DEFAULT: {@link resolveCandidateDBPath} falls back to the convention
  *   path, so a pulled gazetteer is picked up with nothing exported. `MAILWOMAN_CANDIDATE_DB=none`
@@ -21,7 +21,7 @@
 
 import { $public } from "@mailwoman/core/env"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { mailwomanDataRoot, repoRootPathBuilder, wofShardPaths } from "@mailwoman/core/utils"
+import { mailwomanDataRoot, repoRootPathBuilder, wofExtractPaths } from "@mailwoman/core/utils"
 import type {
 	PlaceLookup,
 	WOFCandidateTableLookup,
@@ -66,16 +66,16 @@ export async function resolveCandidateDBPath(
 }
 
 /**
- * The WOF admin shard set a caller should probe: an explicit comma-separated list, then `$MAILWOMAN_WOF_DB` (the
- * HealthRouter multi-shard convention), else {@link wofShardPaths}'s default set.
+ * The WOF admin database set a caller should probe: an explicit comma-separated list, then `$MAILWOMAN_WOF_DB` (the
+ * HealthRouter multi-database convention), else {@link wofExtractPaths}'s default set.
  *
  * Returned UNFILTERED — whether a missing path is a degradation or an error is the caller's contract, not this
  * function's. `createGeocodeSession` filters with `pathExists` and throws when nothing survives; `mailwoman doctor`
- * reports each absence; a probe wants to say which shard it could not open. Sharing the SELECTION is the point: a
- * caller that reads only `wofShardPaths` silently probes different shards than the runtime on any box where the env is
- * set, which is the exact class of wrong answer a data-source probe exists to rule out.
+ * reports each absence; a probe wants to say which database it could not open. Sharing the SELECTION is the point: a
+ * caller that reads only `wofExtractPaths` silently probes different databases than the runtime on any box where the
+ * env is set, which is the exact class of wrong answer a data-source probe exists to rule out.
  */
-export function resolveWOFShardPaths(explicit?: string, dataRoot: PathBuilderLike = mailwomanDataRoot()): string[] {
+export function resolveWOFDatabasePaths(explicit?: string, dataRoot: PathBuilderLike = mailwomanDataRoot()): string[] {
 	const raw = explicit ?? $public.MAILWOMAN_WOF_DB
 
 	if (raw) {
@@ -85,7 +85,7 @@ export function resolveWOFShardPaths(explicit?: string, dataRoot: PathBuilderLik
 			.filter((path) => path.length > 0)
 	}
 
-	return [...wofShardPaths(dataRoot)]
+	return [...wofExtractPaths(dataRoot)]
 }
 
 /**
@@ -99,7 +99,7 @@ export async function resolvePostalCityAliasDBPath(explicit?: string): Promise<s
 	return p && (await pathExists(p)) ? p : undefined
 }
 
-export { dataRootPath, mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/utils"
+export { dataRootPath, mailwomanDataRoot, wofExtractPaths } from "@mailwoman/core/utils"
 
 /**
  * The #1009 "no gazetteer data found" preflight message, shared by every caller that gates on a candidate/WOF resolver
@@ -144,8 +144,8 @@ interface ResolverLookupModule {
 
 /**
  * Build the resolver backend. `candidateDB` (explicit or env) → candidate-table lookup (demo-parity); otherwise the FTS
- * lookup over `wofPaths` (single path or admin+postcode shard list). On the FTS path, a configured postal-city-alias db
- * (#475) is attached so a postal city resolves to its geographic locality — opt-in, default-off (unset env →
+ * lookup over `wofPaths` (single path or admin+postcode database list). On the FTS path, a configured postal-city-alias
+ * db (#475) is attached so a postal city resolves to its geographic locality — opt-in, default-off (unset env →
  * byte-identical FTS path).
  */
 export async function createResolverBackend(
@@ -260,16 +260,16 @@ export async function loadCapitalIndex(opts: {
 }
 
 /**
- * The WOF shard paths that exist on disk — `explicit` when given, else the data-root convention set. The empty answer
- * is the caller's to interpret: a drop-in exits with the named-artifact message, a probe degrades.
+ * The WOF database paths that exist on disk — `explicit` when given, else the data-root convention set. The empty
+ * answer is the caller's to interpret: a drop-in exits with the named-artifact message, a probe degrades.
  */
-export async function existingWOFShardPaths(explicit?: readonly string[]): Promise<string[]> {
-	const candidates = explicit ?? wofShardPaths()
+export async function existingWOFDatabasePaths(explicit?: readonly string[]): Promise<string[]> {
+	const candidates = explicit ?? wofExtractPaths()
 	const existing: string[] = []
 
-	for (const shardPath of candidates) {
-		if (await pathExists(shardPath)) {
-			existing.push(shardPath)
+	for (const databasePath of candidates) {
+		if (await pathExists(databasePath)) {
+			existing.push(databasePath)
 		}
 	}
 
@@ -278,8 +278,9 @@ export async function existingWOFShardPaths(explicit?: readonly string[]): Promi
 
 /**
  * Resolver artifact selection for the POI probe path: the candidate gazetteer when one resolves (worldwide, no WOF
- * shard needed), else the WOF shard set that exists on disk — an explicit comma-separated `--resolve-db` list first,
- * then the convention set. The empty answer is the caller's to interpret: `mailwoman poi` degrades with a stderr note.
+ * database needed), else the WOF database set that exists on disk — an explicit comma-separated `--resolve-db` list
+ * first, then the convention set. The empty answer is the caller's to interpret: `mailwoman poi` degrades with a stderr
+ * note.
  */
 export async function resolvePOIResolverPaths(options: {
 	candidateDB?: string
@@ -296,7 +297,7 @@ export async function resolvePOIResolverPaths(options: {
 				.filter((path) => path.length > 0)
 		: undefined
 
-	return { candidateDB, wofPaths: await existingWOFShardPaths(explicit) }
+	return { candidateDB, wofPaths: await existingWOFDatabasePaths(explicit) }
 }
 
 /**

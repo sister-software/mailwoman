@@ -5,7 +5,7 @@
  *
  *   Tests for the #1042 street-centroid tier: the shared `stripArrondissement` folder and the
  *   `StreetCentroidSqliteLookup` reader. Seeds a temp-file `street_centroid` fixture (the schema the
- *   `ban/scripts/build-street-centroid-shard.ts` roll-up writes) and asserts postcode-scope probing,
+ *   `ban/scripts/build-street-centroid-extract.ts` roll-up writes) and asserts postcode-scope probing,
  *   base-commune probing, arrondissement folding, the cross-row WEIGHTED centroid aggregate, the
  *   extent-derived uncertainty, and the exact-match miss.
  */
@@ -34,18 +34,18 @@ interface Seed {
 }
 
 /**
- * A seeded `street_centroid` shard, owned by the CALLER: the reader opens it by path, so the directory has to outlive
+ * A seeded `street_centroid` extract, owned by the CALLER: the reader opens it by path, so the directory has to outlive
  * this function.
  */
-type StreetCentroidFixture = TemporaryDirectory & { shardPath: string }
+type StreetCentroidFixture = TemporaryDirectory & { extractPath: string }
 
 /**
- * Seed a temp-file `street_centroid` shard and hand its directory to the caller.
+ * Seed a temp-file `street_centroid` extract and hand its directory to the caller.
  */
-async function seedShard(rows: Seed[]): Promise<StreetCentroidFixture> {
+async function seedExtract(rows: Seed[]): Promise<StreetCentroidFixture> {
 	const scratch = await temporaryDirectory("sc-test-")
-	const shardPath = scratch.resolve("street-centroids.db")
-	await using kdb = new DatabaseClient<StreetCentroidDatabase>(shardPath)
+	const extractPath = scratch.resolve("street-centroids.db")
+	await using kdb = new DatabaseClient<StreetCentroidDatabase>(extractPath)
 	await createStreetCentroidTable(kdb)
 
 	const ins = kdb.prepare(
@@ -71,7 +71,7 @@ async function seedShard(rows: Seed[]): Promise<StreetCentroidFixture> {
 		)
 	}
 
-	return scratch.moveWith({ shardPath })
+	return scratch.moveWith({ extractPath })
 }
 
 describe("stripArrondissement", () => {
@@ -97,7 +97,7 @@ describe("StreetCentroidSqliteLookup", () => {
 	afterAll(() => fixture[Symbol.asyncDispose]())
 
 	beforeAll(async () => {
-		fixture = await seedShard([
+		fixture = await seedExtract([
 			// "Place Bellecour" split across two arrondissement/postcode rows, both base-commune "lyon". The
 			// weighted centroid over the two rows weights by point_count (10 @ lon 4.83, 30 @ lon 4.85).
 			{
@@ -139,7 +139,7 @@ describe("StreetCentroidSqliteLookup", () => {
 			},
 		])
 
-		lookup = new StreetCentroidSqliteLookup(fixture.shardPath, { streetLocale: "fr" })
+		lookup = new StreetCentroidSqliteLookup(fixture.extractPath, { streetLocale: "fr" })
 	})
 
 	afterAll(() => {

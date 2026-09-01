@@ -1,10 +1,10 @@
-# The span decode's ship case is refuted — by the shard, on the span decode's own target class
+# The span decode's ship case is refuted — by the extract, on the span decode's own target class
 
 **Question:** with T2 landed, would we still ship the span decode behind a flag, as §6 of the
 [review follow-up](./2026-07-16-span-head-arc-review-follow-up.md) unanimously recommended?
 
 **Answer: no — and not for the reason we pre-registered.** The flag rested on one number, and a plain
-token decode on the shard-trained model beats that number by 8 fixtures.
+token decode on the extract-trained model beats that number by 8 fixtures.
 
 ---
 
@@ -12,16 +12,16 @@ token decode on the shard-trained model beats that number by 8 fixtures.
 
 Paris target class, n=63, production config, int8 against int8:
 
-|                                              |                   | 95% Wilson     |
-| -------------------------------------------- | ----------------: | -------------- |
-| v264 `token@1` (shipped)                     |     33/63 = 0.524 | [0.403, 0.642] |
-| v301 `seg@1` — **the flag's entire case**    |     48/63 = 0.762 | [0.644, 0.850] |
-| v310 `token@1` — **the shard, no span head** | 56/63 = **0.889** | [0.788, 0.945] |
+|                                                |                   | 95% Wilson     |
+| ---------------------------------------------- | ----------------: | -------------- |
+| v264 `token@1` (shipped)                       |     33/63 = 0.524 | [0.403, 0.642] |
+| v301 `seg@1` — **the flag's entire case**      |     48/63 = 0.762 | [0.644, 0.850] |
+| v310 `token@1` — **the extract, no span head** | 56/63 = **0.889** | [0.788, 0.945] |
 
 ```
 the flag's claim : v264 token -> v301 seg   = +23.8pp
-the shard alone  : v264 token -> v310 token = +36.5pp
-span decode's MARGINAL value over the shard : -12.7pp
+the extract alone  : v264 token -> v310 token = +36.5pp
+span decode's MARGINAL value over the extract : -12.7pp
 ```
 
 §6 valued the flag "for the list and the target class (+23.8pp Paris)". On that target class the
@@ -68,7 +68,7 @@ teaches bare streets, because **no span head has ever been trained on one**. Tha
 `v3.2.0-fragment-span` (run `ap-jcRsH8TNQny84vVeOWLG8f`), one variable off v310: the head.
 
 Pre-registered kill shot: **`seg@1` must beat v310's `token@1` = 56/63 (0.889)** — the bar the flag
-failed by 12.7pp. If a shard-trained span head cannot beat a shard-trained plain decode on the target
+failed by 12.7pp. If a extract-trained span head cannot beat a extract-trained plain decode on the target
 class, the span head has no case **at any weight**, and the arc closes. No `span_loss_weight` tuning,
 no re-run: that is the treadmill the arc's own guard forbids.
 
@@ -81,7 +81,7 @@ What it produced instead is the reason the fix exists at all. `oracle@k` and the
 the instruments that made the headroom **visible** (oracle@10 0.775 against a 0.577 rank-1 — a gap
 nobody could see when every gate scored top-1). That gap is what motivated T1a's cross-tab, which
 found the digit-eating and forced the hallucination check, which motivated T1c's board, which found
-the licence, which built T2's shard, which fixed the class.
+the licence, which built T2's extract, which fixed the class.
 
 The arc asked "can a better decode find the right answer?" The reply turned out to be: the right
 answer was never in the list to be found — it wasn't in the training data. **The instrument

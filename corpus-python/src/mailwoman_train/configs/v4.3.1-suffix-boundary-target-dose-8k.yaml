@@ -14,7 +14,7 @@
 #
 # ORIGINAL PRE-RUN BASE CONSISTENCY CLAIM (superseded): existing affix rows label terminal contrasts correctly;
 # the target terminal-only class was believed sparse/absent. OA source pools before sampling:
-# 163,606 terminal-only and 11,734 terminal-contrast. The emitted shard is exactly 24,000/6,000
+# 163,606 terminal-only and 11,734 terminal-contrast. The emitted slice is exactly 24,000/6,000
 # (80%/20%) after alignment, seed 1569, JSONL sha256
 # f3c4948ed446800390fb5ac7c59063ea9ed57d6b0c358f2f620286003e23e9f5.
 #

@@ -246,8 +246,8 @@ def main() -> None:
         manifest_path = corpus_dir / "MANIFEST.json"
         if mappings and manifest_path.exists():
             manifest = json.loads(manifest_path.read_text())
-            for shard in manifest.get("shards", []):
-                shard["path"] = _remap(shard["path"], mappings)
+            for slice in manifest.get("slices", []):
+                slice["path"] = _remap(slice["path"], mappings)
             stream_dir = Path(temp)
             (stream_dir / "MANIFEST.json").write_text(json.dumps(manifest))
 

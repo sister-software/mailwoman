@@ -2,16 +2,16 @@
 
 Two defects pinned here:
 
-1. **Mixed-source shards lose rows.** The loader identifies a shard's source from its FIRST
-   row, buckets the whole shard under it, then filters every row to that source — so in a
-   mixed-source validation shard every later-source row is silently discarded. "3 val shards"
+1. **Mixed-source slices lose rows.** The loader identifies a slice's source from its FIRST
+   row, buckets the whole slice under it, then filters every row to that source — so in a
+   mixed-source validation slice every later-source row is silently discarded. "3 val slices"
    was never a coverage receipt.
 2. **Training policy leaks into validation.** ``iter_rows`` applies the same augmentation
    probabilities, affix-relabel pass, and source weights regardless of split, so the headline
    validation metric scores an augmented, training-filtered slice, not held-out data.
 
 Contract pinned here (the repair): for any split other than ``"train"``, ``iter_rows``
-yields EVERY row of every shard exactly as authored — no source bucketing/filtering, no
+yields EVERY row of every slice exactly as authored — no source bucketing/filtering, no
 source weighting, no augmentation, no online label mutation.
 """
 
@@ -48,9 +48,9 @@ def _row(raw: str, source: str, labels: list[str] | None = None) -> dict:
     }
 
 
-def _write_split(corpus: Path, split: str, shards: dict[str, list[dict]]) -> None:
+def _write_split(corpus: Path, split: str, slices: dict[str, list[dict]]) -> None:
     (corpus / split).mkdir(parents=True, exist_ok=True)
-    for name, rows in shards.items():
+    for name, rows in slices.items():
         pq.write_table(pa.Table.from_pylist(rows, schema=LEGACY_SCHEMA), corpus / split / name)
 
 
@@ -65,15 +65,15 @@ def _val_rows(corpus: Path, **overrides) -> list[dict]:
     return list(iter_rows(corpus, "val", **kwargs))
 
 
-def test_val_yields_every_row_of_a_mixed_source_shard(tmp_path: Path) -> None:
-    """One shard, source flips from 'a' to 'b' mid-shard: all 10 rows must come out.
-    Today the shard is bucketed under 'a' (row 0's source) and the 5 'b' rows vanish."""
+def test_val_yields_every_row_of_a_mixed_source_slice(tmp_path: Path) -> None:
+    """One slice, source flips from 'a' to 'b' mid-slice: all 10 rows must come out.
+    Today the slice is bucketed under 'a' (row 0's source) and the 5 'b' rows vanish."""
     corpus = tmp_path / "corpus"
     rows = [_row(f"{i} Alpha St", "a") for i in range(5)] + [_row(f"{i} Beta St", "b") for i in range(5)]
     _write_split(corpus, "val", {"part-mixed.parquet": rows})
 
     out = _val_rows(corpus)
-    assert len(out) == 10, f"expected all 10 rows of the mixed-source shard, got {len(out)}"
+    assert len(out) == 10, f"expected all 10 rows of the mixed-source slice, got {len(out)}"
     assert {r["source"] for r in out} == {"a", "b"}
 
 

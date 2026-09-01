@@ -74,7 +74,7 @@ to preserve. The measured payoff was concrete: TX HHSC locality recall went from
 
 The last layer isn't a pass at all. It's the corpus. The parser learns to shrug off
 surface variation because the training data contains it: casing permutations
-(`corpus/src/shard-recipes/intersection.ts`, `locale.ts`), abbreviation variants in
+(`corpus/src/extract-recipes/intersection.ts`, `locale.ts`), abbreviation variants in
 both directions (`street-affix.ts`, the `unit.ts` designators from #454,
 `fr-bare-street.ts`). This is where `Ave` and `Avenue` both become the same street
 to the model. No rule rewrote one into the other; the model saw both forms

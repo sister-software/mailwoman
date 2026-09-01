@@ -30,7 +30,7 @@ Mercator, geohash, qibla, sun, callingcode, currency, flag, timezone, NUTS, UN_L
   it as the country constraint (Nominatim restriction semantics), which doubles as the manual escape for
   the #822 placer frontier: `?q=Sydney&countrycodes=au` lands in Australia.
 
-**Street-level addressdetails** — the situs shards resolve to rooftop / interpolation, but `/search`
+**Street-level addressdetails** — the situs extracts resolve to rooftop / interpolation, but `/search`
 was dropping house_number + road. Recover them from a parse and backfill country/country_code; the
 White House query now returns the full address at the rooftop coordinate.
 

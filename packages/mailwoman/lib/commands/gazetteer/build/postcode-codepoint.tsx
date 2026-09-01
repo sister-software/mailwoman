@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer build postcode-codepoint` — the GB unit-postcode shard from Ordnance Survey
+ *   `mailwoman gazetteer build postcode-codepoint` — the GB unit-postcode database from Ordnance Survey
  *   Code-Point Open (OGL v3). Acquires the archive from the open OS Downloads API, verifies it against
- *   OS's published md5, converts OSGB36 eastings/northings to WGS84, and writes a sealed shard to a NEW
- *   DATED path. Promotion into `DEFAULT_POSTCODE_SHARDS` is a separate, deliberate step.
+ *   OS's published md5, converts OSGB36 eastings/northings to WGS84, and writes a sealed database to a NEW
+ *   DATED path. Promotion into `DEFAULT_POSTCODE_DATABASES` is a separate, deliberate step.
  *
- *   Coverage is England, Scotland and Wales. Northern Ireland is NOT in this product and the shard says
+ *   Coverage is England, Scotland and Wales. Northern Ireland is NOT in this product and the database says
  *   so in its own `meta`; see the pipeline module for the licensing reason.
  *
  *   The pipeline module is lazy-imported so `--help` never faults without the optional
@@ -31,7 +31,7 @@ import {
  */
 export const spec = {
 	name: "postcode-codepoint",
-	description: "Build the GB Code-Point Open unit-postcode shard.",
+	description: "Build the GB Code-Point Open unit-postcode database.",
 	options: {
 		"source-dir": { type: "string", description: "Acquisition dir for codepo_gb.zip and extracted CSVs" },
 		out: {
@@ -50,7 +50,7 @@ interface Options {
 
 const GazetteerBuildPostcodeCodePoint: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildPostcodeCodePoint } = await import("#gazetteer/postcode/codepoint-shard")
+		const { buildPostcodeCodePoint } = await import("#gazetteer/postcode/codepoint-database")
 
 		const result = await buildPostcodeCodePoint({
 			sourceDir: options.sourceDir,
@@ -75,7 +75,7 @@ const GazetteerBuildPostcodeCodePoint: ParsedCommandComponent<Options> = ({ opti
 			"coverage: England/Scotland/Wales only — ZERO Northern Ireland (BT) postcodes, by product definition",
 			"licence + full OGL v3 attribution block in the `meta` table",
 			"sealed 0444",
-			"next: gate vs the incumbent GeoNames GB rows, THEN swap DEFAULT_POSTCODE_SHARDS deliberately",
+			"next: gate vs the incumbent GeoNames GB rows, THEN swap DEFAULT_POSTCODE_DATABASES deliberately",
 		]
 	})
 

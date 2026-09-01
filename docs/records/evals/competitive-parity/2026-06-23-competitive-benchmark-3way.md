@@ -1,7 +1,7 @@
 # Competitive benchmark — mailwoman vs Nominatim vs Pelias (2026-06-23)
 
 Same-harness, three-system comparison on real held-out OpenAddresses coordinates, run after the
-#193 GeoNames postcode shard landed PL/CZ coverage in the candidate gazetteer (`candidate-global-20i.db`).
+#193 GeoNames postcode extract landed PL/CZ coverage in the candidate gazetteer (`candidate-global-20i.db`).
 This supersedes the night's two-system (mailwoman vs Nominatim) e2e numbers, which used a different
 grader (`span-rescore-e2e.ts`, tag-rank `bestCoord`) on `-20h` and so weren't directly comparable to the
 incumbents.

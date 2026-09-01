@@ -37,7 +37,7 @@ what made it worth probing.
 
 ### What the sources say
 
-**WOF shards** (`source: "wof"`), unscoped: two exact-name rows, plus a long tail of names merely
+**WOF extracts** (`source: "wof"`), unscoped: two exact-name rows, plus a long tail of names merely
 _containing_ the token — `City of Port of Spain`, `Isle of Grain`, `Municipality of the County of Kings`,
 17 US postcodes matching on `alt_names`, and `The place of impact of the spear` (IR), which is a genuine
 WOF row.
@@ -54,7 +54,7 @@ matching — **not a build gap.**
 |               | WOF source                               | Candidate              |
 | ------------- | ---------------------------------------- | ---------------------- |
 | Route         | FTS5 token-AND over `name` + `alt_names` | exact `name_key` probe |
-| Rows for `Of` | 66 row-hits across 6 shards              | 2                      |
+| Rows for `Of` | 66 row-hits across 6 extracts            | 2                      |
 
 ### The finding: a tie the ranker cannot break
 
@@ -120,7 +120,7 @@ cross-_country_ name collisions, since `name_key` groups globally. The two probl
 
 ### The FTS route: the stopword problem, larger
 
-`to` returns **976 row-hits** across the shards. Same mechanism as `Of`, more of it. The rows that come back
+`to` returns **976 row-hits** across the extracts. Same mechanism as `Of`, more of it. The rows that come back
 first are genuine — `Tô` (BF), `Tó` (PT), `To` (NO ×3) — so bm25 ranks exact-ish matches sensibly; the 976
 is the tail.
 

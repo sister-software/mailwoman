@@ -20,7 +20,7 @@
  *       a missing `map_location` in `from_pretrained()` and piece-concatenation welding words
  *       ("5thAve"). The number was reported before the cause was found.
  *   - Phase 4a measured a resolver rerank while the resolver reached street tier 0/267 times —
- *       no street shards were wired. The instrument was dark and the report read as a finding.
+ *       no street databases were wired. The instrument was dark and the report read as a finding.
  *       The verdict was VOID; see `2026-07-16-phase4a-rerank-invalid-measurement.md`.
  *
  *   A registered baseline covers BOTH shapes, because instrument-health preconditions register the

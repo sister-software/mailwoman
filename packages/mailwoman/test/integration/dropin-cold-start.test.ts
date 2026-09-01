@@ -21,7 +21,7 @@
  *   - `mcp` speaks JSON-RPC over stdio rather than HTTP, and loads its deps LAZILY, so its cold start fails
  *     inside a tool call rather than at boot: the server must still connect and list its tools with no data at
  *     all, and the first model-backed tool call must answer with the same `mailwoman data pull` fix as a tool
- *     error — not the internal `resolveShards: at least one shard is required`, which is what it said before
+ *     error — not the internal `resolveExtracts: at least one database is required`, which is what it said before
  *     Task 14. A second, network-free test asserts `@mailwoman/mcp` DECLARES `@mailwoman/neural-weights-en-us`;
  *     it did not until 2026-08-03, so a standalone `npm install @mailwoman/mcp` could never load the model
  *     (measured against the published 8.6.0 — the same defect Task 7 fixed in `@mailwoman/libpostal`). Nothing
@@ -439,10 +439,10 @@ describe("mailwoman-mcp — cold start over stdio, no data", () => {
 				expect(list.tools.map((t) => t.name)).toContain("mailwoman_parse")
 				expect(list.tools.map((t) => t.name)).toContain("mailwoman_layer_manifest")
 
-				// Calling one does, and the failure has to name the fix rather than the internal shard error.
+				// Calling one does, and the failure has to name the fix rather than the internal database error.
 				expect(call.isError).toBe(true)
 				expect(call.content[0]!.text).toContain("mailwoman data pull candidate")
-				expect(call.content[0]!.text).not.toContain("resolveShards")
+				expect(call.content[0]!.text).not.toContain("resolveExtracts")
 			})
 		},
 		TEST_TIMEOUT_MS

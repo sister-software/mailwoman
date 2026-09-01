@@ -43,6 +43,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { join } from "path-ts"
 
+import { finalizeSealedBuild } from "#gazetteer-pipeline/database-lifecycle"
 import {
 	createPostcodeLocalityIndex,
 	createPostcodeLocalityMetaTable,
@@ -51,7 +52,6 @@ import {
 	type PostcodeLocalityDatabase,
 } from "#gazetteer-pipeline/postcode-locality/schema"
 import { writeMetaRows } from "#gazetteer-pipeline/postcode/geonames-tail"
-import { finalizeSealedBuild } from "#gazetteer-pipeline/shard-lifecycle"
 
 /**
  * Plus name:* / label:* props, gathered below.
@@ -352,7 +352,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 
 	{
 		using db = new DatabaseClient<PostcodeLocalityDatabase>(output)
-		// Accumulate per country into one shared DB (the resolver attaches a SINGLE postcode_locality shard
+		// Accumulate per country into one shared DB (the resolver attaches a SINGLE postcode_locality database
 		// and country-filters at query time). CREATE-IF-NOT-EXISTS + DELETE-this-country makes each --country
 		// run idempotent, so `--output postcode-locality-intl.db` can be filled DE, FR, … in turn.
 

@@ -74,17 +74,17 @@ Both, and naming the layers is the fix.
 
 The "collapse" headline is a measurement bug, premodel, living in the eval. We render German in an order it doesn't use, then grade the model down for it. Point the eval at native order (ideally both) and most of the collapse evaporates: 83.8%, beating Pelias.
 
-Order _robustness_ is a training problem. A production geocoder really does see German both ways: native from German sources, US-ish from international feeds like the OpenAddresses dump we eval on. The fix is data. Render the German training shard in both orders for the same components, so the model learns a German address can land either way. No new architecture, no anchor required for this part. The German synthesizer (`synthesizeLocaleRow`) now takes an `order: "native" | "international"` switch and the shard builder mixes the two.
+Order _robustness_ is a training problem. A production geocoder really does see German both ways: native from German sources, US-ish from international feeds like the OpenAddresses dump we eval on. The fix is data. Render the German training extract in both orders for the same components, so the model learns a German address can land either way. No new architecture, no anchor required for this part. The German synthesizer (`synthesizeLocaleRow`) now takes an `order: "native" | "international"` switch and the extract builder mixes the two.
 
-Cheapest first: fix the eval (done, that's the table above), then ship the both-order shard and retrain. Measuring first is what kept us from scaling an anchor to chase a number that was partly a rendering artifact of our own making.
+Cheapest first: fix the eval (done, that's the table above), then ship the both-order extract and retrain. Measuring first is what kept us from scaling an anchor to chase a number that was partly a rendering artifact of our own making.
 
 ### What it means for multi-locale
 
-It un-blocks it. The German "wall" that survived three retrains — the order-shard collapse, two self-conditioning attempts, and this anchor pilot — was substantially a mirror: our eval reflecting a layout we built. The parser reads native German better than Pelias, which is the target, hit in the locale we'd written off as our worst. The caveat is that native order is the easy direction; international-order German, the out-of-distribution case, is still 45%, and the both-order retrain is what closes it. The ceiling sits far higher than the collapse let us see.
+It un-blocks it. The German "wall" that survived three retrains — the order-extract collapse, two self-conditioning attempts, and this anchor pilot — was substantially a mirror: our eval reflecting a layout we built. The parser reads native German better than Pelias, which is the target, hit in the locale we'd written off as our worst. The caveat is that native order is the easy direction; international-order German, the out-of-distribution case, is still 45%, and the both-order retrain is what closes it. The ceiling sits far higher than the collapse let us see.
 
 ## Next levers
 
-- **Fix the eval, then retrain on both orders** — the de-sample renders German US-style; test native order (the Correction table) and most of the collapse is gone. Then ship the both-order shard (`synthesizeLocaleRow({ order })`) and retrain so the model handles either layout. This is the real fix; the items below are now secondary.
+- **Fix the eval, then retrain on both orders** — the de-sample renders German US-style; test native order (the Correction table) and most of the collapse is gone. Then ship the both-order extract (`synthesizeLocaleRow({ order })`) and retrain so the model handles either layout. This is the real fix; the items below are now secondary.
 - **Re-isolate the anchor on a correct eval** — the +9.9pp was measured on US-order German. Run native-order anchor-off vs anchor-on to learn what the anchor is worth once the eval isn't rendering the language wrong.
 - **Strategic check** — the resolver already does German at ~83% (v0 parse → resolver), and the neural parser now beats it in native order. The parser-anchor (multi-locale universal parser) and the resolver-side centroid (already cut coord p99 330 → 46 km) remain separable bets.
 

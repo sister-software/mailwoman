@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the SQLite-backed postcode lookup (#240). Seeds throwaway `spr` shards in tmp dirs (the
+ *   Tests for the SQLite-backed postcode lookup (#240). Seeds throwaway `spr` extracts in tmp dirs (the
  *   real `postalcode-*.db` artifacts live on the data volume, not in CI), then asserts exact-match,
- *   the `is_current` filter, coordinate-less membership, and the cross-shard union.
+ *   the `is_current` filter, coordinate-less membership, and the cross-extract union.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -15,9 +15,9 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**
- * Create a minimal postcode shard with the columns the lookup reads.
+ * Create a minimal postcode extract with the columns the lookup reads.
  */
-function seedShard(path: string, rows: Array<[number, string, string, string, number, number, number]>): void {
+function seedExtract(path: string, rows: Array<[number, string, string, string, number, number, number]>): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(
@@ -41,7 +41,7 @@ beforeAll(async () => {
 	const intl = dir.resolve("postalcode-intl.db")
 	const us = dir.resolve("postalcode-us.db")
 
-	seedShard(intl, [
+	seedExtract(intl, [
 		[1, "75008", "postalcode", "FR", 48.873, 2.313, 1],
 		[2, "18540", "postalcode", "DE", 53.093, 14.259, 1], // backfilled centroid
 		[3, "80144", "postalcode", "IT", 0, 0, 1], // coord-less membership
@@ -49,7 +49,7 @@ beforeAll(async () => {
 		[5, "Zippendorf", "postalcode", "DE", 0, 0, 0], // deprecated place-name junk → filtered
 	])
 
-	seedShard(us, [
+	seedExtract(us, [
 		[10, "75008", "postalcode", "US", 35.9, -90.7, 1], // collides with FR 75008
 		[11, "94105", "postalcode", "US", 37.789, -122.396, 1],
 	])
@@ -79,7 +79,7 @@ describe("WOFPostcodeLookup", () => {
 		expect(lookup.lookup("00000")).toEqual([])
 	})
 
-	it("unions the same string across shards (FR + US both own 75008)", () => {
+	it("unions the same string across extracts (FR + US both own 75008)", () => {
 		const countries = lookup
 			.lookup("75008")
 			.map((p) => p.country)

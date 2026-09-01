@@ -42,7 +42,7 @@ const RESOLVER = new FakeResolver({
 	],
 	// known postcode with NO centroid (admin parent absent) — membership only
 	"80144": [{ country: "IT", lat: 0, lon: 0 }],
-	// German code (would be backfilled in the real shard)
+	// German code (would be backfilled in the real extract)
 	"68161": [{ country: "DE", lat: 49.48, lon: 8.46 }],
 })
 

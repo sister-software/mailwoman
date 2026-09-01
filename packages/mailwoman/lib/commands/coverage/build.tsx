@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman coverage build` — bake the demo map's "fog of war" address-coverage H3 hexbin tileset
- *   (PMTiles) from the per-state address-point (+ interpolation) shards. See `coverage-core.ts` for the
+ *   (PMTiles) from the per-state address-point (+ interpolation) databases. See `coverage-core.ts` for the
  *   pipeline + fog model. Publish the result with `mailwoman tiles publish`.
  *
- *   Maintainer-only: needs the local shards + `tippecanoe` on PATH + the @duckdb/node-api dev dep.
+ *   Maintainer-only: needs the local databases + `tippecanoe` on PATH + the @duckdb/node-api dev dep.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"

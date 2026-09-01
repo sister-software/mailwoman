@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #920 — fold GeoNames POSTAL codes into a WOF/unified postcode shard as first-class
+ *   #920 — fold GeoNames POSTAL codes into a WOF/unified postcode extract as first-class
  *   `postalcode` places, for the countries whose WOF postalcode repos don't exist (the
  *   namesake-tail locales: FI/CZ/SK/SI/DK/NO/HR/PL and any future gap).
  *
  *   Why: the night-31 taxonomy measured the cross-locale resolve tail as NAMESAKE COLLISION
- *   (FI 300/1k … PL 75/1k offender rows), and the controlled experiment showed postcode-shard
+ *   (FI 300/1k … PL 75/1k offender rows), and the controlled experiment showed postcode-extract
  *   coverage alone collapses it (FI 300→1, CZ 131→4): a resolvable postcode node feeds the
  *   resolver's coordinate-first sibling-postcode candidate injection, which binds the locality
  *   pick to its postcode neighborhood. The implementation already ships; it was coverage-starved.
@@ -30,7 +30,7 @@
  *   --geonames-postal-countries`, any standalone fold, and the `mailwoman gazetteer` commands
  *   share ONE implementation. GeoNames postal dump = `download.geonames.org/export/zip/<CC>.zip`
  *   → `<CC>.txt` (TSV: country, postcode, place, admin1, code1, admin2, code2, admin3, code3,
- *   lat, lon, accuracy). License CC BY 4.0 — attribution rides the shard's `meta` provenance and
+ *   lat, lon, accuracy). License CC BY 4.0 — attribution rides the extract's `meta` provenance and
  *   the model card like the existing GeoNames alias fold.
  */
 
@@ -78,7 +78,7 @@ export type PostcodePoint = readonly [number, number]
  *
  * Distance is squared-Euclidean in DEGREES, not haversine. At the scale a postcode spans, the ranking the two produce
  * is the same, and this one carries no trig into a per-group inner loop. Ties go to the earliest member, which makes
- * the result a pure function of the input order — the property a rebuilt shard's ids depend on.
+ * the result a pure function of the input order — the property a rebuilt extract's ids depend on.
  *
  * Exported (rather than inlined at each ingest) because it is the second half of the #920 pair: every postcode source
  * that groups member points — GeoNames postal, OSM `addr:postcode` — owes the same law, and a second hand-rolled copy

@@ -1,7 +1,7 @@
 # T1c — the FR fragment board: the house number is a licence, not a hint
 
 **Deliverable (2026-07-16 review, Tier 1c):** replace the n=63 Paris anecdote with a BAN-sampled board
-carrying confidence intervals per phenomenon class, and make it the grading set for the T2 shard.
+carrying confidence intervals per phenomenon class, and make it the grading set for the T2 extract.
 
 **Built, and its first read reframes the arc.** With a house number the shipped model scores **92.5%**;
 without one, **21.5%** on the same streets. The gap is not a difficulty gradient. The model has learned
@@ -90,27 +90,27 @@ belongs to a street name from a digit that is a house number — surfacing from 
 
 ## 4. Pre-registered targets for T2
 
-The board is the grading set. Registered as baselines; the shard is graded against these exact cells.
+The board is the grading set. Registered as baselines; the extract is graded against these exact cells.
 
 **Must move** (the thesis): `bare-street` 0.215 · `street-particle` 0.273 · `admin-street-homonym`
 0.087 · `date-name` 0.055.
 
 **Must not regress** (the guards):
 
-- `street-housenumber` 0.925 and `alnum-housenumber` 0.925 — the contextful guard. A shard that fixes
+- `street-housenumber` 0.925 and `alnum-housenumber` 0.925 — the contextful guard. A extract that fixes
   fragments by degrading normal addresses has moved the failure, not fixed it.
 - `bare-locality` 0.980 — **the one to watch**, per §3. If it falls while the bare classes rise, the
-  shard traded one default for another rather than teaching the distinction.
+  extract traded one default for another rather than teaching the distinction.
 - The global parity floor (`eval parity`) must hold. Board 2 moving is not a verdict alone.
 
 **Split discipline:** the board reserves its 2,400 street surfaces in `ban-fragments-fr.surfaces.txt`.
-The T2 shard MUST exclude every one — source-disjoint by normalized **surface**, never by record row.
+The T2 extract MUST exclude every one — source-disjoint by normalized **surface**, never by record row.
 Row-disjoint leaks the surface across the boundary and measures memorization of `Rue de Rivoli` while
 claiming generalization to unseen streets.
 
 ## 5. Known limitation
 
-BAN's sharded DBs retain only `locality_norm` / `locality_base`, so the negative class is
+BAN's attached DBs retain only `locality_norm` / `locality_base`, so the negative class is
 accent-stripped (`Amelie-les-Bains-Palalda`). French title-casing is reconstructed; the accents cannot
 be. This makes `bare-locality` mildly out-of-distribution and may inflate its absolute difficulty — it
 does not affect the comparison the board exists for, since every model sees the identical input. Source

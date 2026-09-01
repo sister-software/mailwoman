@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  *
  *   Versioned data switchover (#485 piece 4): manifest read + path resolution, and the
- *   ShardProvider's zero-downtime atomic reload (version flip + one-generation grace on old
+ *   RegionDatabaseProvider's zero-downtime atomic reload (version flip + one-generation grace on old
  *   handles). Uses a fake lookup factory + on-disk touch files — no WOF / weights needed.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { readReleaseManifest, resolveShardPath } from "mailwoman/data-release"
-import { ShardProvider } from "mailwoman/geocode-shards"
+import { readReleaseManifest, resolveDatabasePath } from "mailwoman/data-release"
+import { RegionDatabaseProvider } from "mailwoman/geocode-regions"
 import { join } from "path-ts"
 import { afterAll, describe, expect, test } from "vitest"
 
@@ -89,42 +89,42 @@ describe("readReleaseManifest", () => {
 	})
 })
 
-describe("resolveShardPath", () => {
+describe("resolveDatabasePath", () => {
 	test("prefers the versioned name; falls back to legacy; null if neither", async () => {
 		const root = tmp()
 		const apDir = await dirEnsure(join(await root, "address-points"))
 		// legacy only
 		await writeLocalTextFile("", join(apDir, "address-points-us-tx.db"))
 
-		expect(await resolveShardPath(await root, "address-points", "tx", null)).toBe(
+		expect(await resolveDatabasePath(await root, "address-points", "tx", null)).toBe(
 			join(apDir, "address-points-us-tx.db")
 		)
 
 		// versioned present + pinned → wins
 		await writeLocalTextFile("", join(apDir, "address-points-us-tx-v2.db"))
 
-		expect(await resolveShardPath(await root, "address-points", "tx", { "address-points": "v2" })).toBe(
+		expect(await resolveDatabasePath(await root, "address-points", "tx", { "address-points": "v2" })).toBe(
 			join(apDir, "address-points-us-tx-v2.db")
 		)
 
 		// pinned version with no file → legacy fallback
-		expect(await resolveShardPath(await root, "address-points", "tx", { "address-points": "v9" })).toBe(
+		expect(await resolveDatabasePath(await root, "address-points", "tx", { "address-points": "v9" })).toBe(
 			join(apDir, "address-points-us-tx.db")
 		)
 
 		// nothing for an unknown slug
-		expect(await resolveShardPath(await root, "address-points", "zz", null)).toBeNull()
+		expect(await resolveDatabasePath(await root, "address-points", "zz", null)).toBeNull()
 	})
 })
 
-describe("ShardProvider atomic switchover", () => {
+describe("RegionDatabaseProvider atomic switchover", () => {
 	test("reload() flips to the new version + retires the old handle with one-gen grace", async () => {
 		const root = tmp()
 		const apDir = await dirEnsure(join(await root, "address-points"))
 		await writeLocalTextFile("", join(apDir, "address-points-us-tx-v1.db"))
 		await writeLocalJSONFile({ "address-points": "v1" }, join(await root, "releases.json"))
 
-		const provider = await ShardProvider.create(factory, await root)
+		const provider = await RegionDatabaseProvider.create(factory, await root)
 		const v1 = provider.for("tx").addressPoints as FakeAddressPoints
 		expect(v1.dbPath).toContain("address-points-us-tx-v1.db")
 		expect(provider.versions()).toEqual({ "address-points": "v1" })
@@ -154,7 +154,7 @@ describe("ShardProvider atomic switchover", () => {
 		await writeLocalTextFile("", join(apDir, "address-points-us-tx-v1.db"))
 		await writeLocalJSONFile({ "address-points": "v1" }, join(await root, "releases.json"))
 
-		await using provider = await ShardProvider.create(factory, await root)
+		await using provider = await RegionDatabaseProvider.create(factory, await root)
 
 		const first = provider.for("tx").addressPoints
 		await provider.reload()

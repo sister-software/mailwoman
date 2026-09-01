@@ -196,9 +196,9 @@ if (!TOKENIZER_OVERRIDDEN) {
  * (train/inference mismatch, visibly degraded parses: the 2026-07-23 CI unit-leg failure was "Paris, TX" resolving to
  * Paris FRANCE on the self-hosted runners' fresh checkouts for exactly this reason). The two lexicons are checked-in
  * repo files (`data/gazetteer/…` — the same source `release.config.json`'s `softFeed.*` names and
- * `scripts/copy-weights.ts` copies at publish time); `postcode-us.bin` is derived from the WOF US postcode shard, built
- * in place via the compiled `gazetteer postcode-binary` CLI (skip-if-exists — it rebuilds in seconds, and the shard is
- * versionless on disk, unlike en-gb's md5-guarded pair index).
+ * `scripts/copy-weights.ts` copies at publish time); `postcode-us.bin` is derived from the WOF US postcode extract,
+ * built in place via the compiled `gazetteer postcode-binary` CLI (skip-if-exists — it rebuilds in seconds, and the
+ * extract is versionless on disk, unlike en-gb's md5-guarded pair index).
  */
 await linkSoftFeedSibling(
 	repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json"),

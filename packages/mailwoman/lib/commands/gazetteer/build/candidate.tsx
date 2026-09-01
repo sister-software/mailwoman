@@ -5,7 +5,7 @@
  *
  *   `mailwoman gazetteer build` — the durable GeoNames-alias upstream fold + the byte-range candidate
  *   build (FTS5-trigram fuzzy index baked in), in one command. Every decision the 2026-06-27 manual
- *   rebuild needed (which countries fold, which postcode shards, FTS) is a default here. Progress
+ *   rebuild needed (which countries fold, which postcode databases, FTS) is a default here. Progress
  *   streams to stderr; the final summary is on stdout. See RELEASING.md Step 5.
  */
 
@@ -61,7 +61,7 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 			DEFAULT_ADMIN_DB,
 			foldGeonamesIntoAdmin,
 			resolveImportanceDB,
-			resolvePostcodeShards,
+			resolvePostcodeDatabases,
 			wofDir,
 		} = await import("#gazetteer-pipeline")
 
@@ -96,13 +96,13 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 			adminDB = foldOut
 		}
 
-		const shards = await resolvePostcodeShards(undefined, root)
+		const databases = await resolvePostcodeDatabases(undefined, root)
 
 		const importanceDB = options.skipImportance
 			? false
 			: (options.importance ?? (await resolveImportanceDB(undefined, root)))
 
-		console.error(`▸ candidate build ← ${adminDB} (${shards.length} postcode shards; FTS baked in)`)
+		console.error(`▸ candidate build ← ${adminDB} (${databases.length} postcode databases; FTS baked in)`)
 
 		if (importanceDB) {
 			console.error(`  importance ← ${importanceDB}`)
@@ -119,7 +119,7 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 		const r = await buildCandidate({
 			adminDB,
 			out,
-			postcodeShards: shards,
+			postcodeDatabases: databases,
 			importanceDB,
 			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
 		})

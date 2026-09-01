@@ -76,10 +76,10 @@ infrastructure layer that v0.7 will sit on top of:
   SVG line-chart generator, no dependencies. Made "same noise pattern
   across runs" visually rigorous instead of impressionistic.
 - **Corpus linter v1**
-  ([`scripts/lint-corpus-shard.ts`](https://github.com/sister-software/mailwoman))
+  ([`scripts/lint-corpus-slice.ts`](https://github.com/sister-software/mailwoman))
   — distribution outliers, label-vacuum, bigram collisions, anti-pattern
   rules. Designed to prevent the "5th Avenue Theatre" class of
-  poisoning, where a synthetic-shard rule emits venue templates that
+  poisoning, where a synthetic-extract rule emits venue templates that
   accidentally teach the model to label ordinal-prefixed street names
   as venues.
 - **Postcode-only harness**
@@ -97,7 +97,7 @@ oscillating trade-offs. Every weight change addressed one regression at
 the cost of another. The pattern is reproducible:
 
 - v0.6.2 dropped `synth-street` weight and added a `synth-no-street`
-  counter-example shard at 1.0 weight. dep_loc returned to 0;
+  counter-example extract at 1.0 weight. dep_loc returned to 0;
   house_number dropped to 74%.
 - v0.6.3 added `synth-house-venue` at 1.0 while keeping `synth-no-street`
   at 0.5. The anti-decompose:companion ratio dropped from 1.0:0 (v0.6.2)
@@ -136,7 +136,7 @@ crisis-level — the model is decisively wrong, not uncertain. Two
 implications:
 
 - **It explains v0.6.x fragility.** An overconfident model amplifies
-  small distributional shifts (a new synth shard) into large prediction
+  small distributional shifts (a new synth extract) into large prediction
   swings, because the model commits hard to whatever it learned most
   recently. The recipe-tuning whack-a-mole pattern is the direct
   consequence.
@@ -264,7 +264,7 @@ This is the entry point for v0.8's system-multiplicity work
 - **Held-out test set methodology.** v0.1.2 split 90/10 dev/test. Test
   read exactly once per release. Closes decision-side test-set leakage.
 - **Synthesis-as-supplement, not synthesis-as-primary.** Small targeted
-  shards, weight < 0.25, one-and-done. Real data is the primary fix for
+  extracts, weight < 0.25, one-and-done. Real data is the primary fix for
   distributional gaps. v0.6.x's 100K+ row synthesis was the wrong
   philosophy.
 

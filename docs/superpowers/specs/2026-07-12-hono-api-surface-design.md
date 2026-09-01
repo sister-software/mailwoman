@@ -89,7 +89,7 @@ The native surface, `mailwoman/server/`'s successor:
 - `POST /v1/format` — `@mailwoman/formatter` called directly (`formatAddress` / `canonicalKey`).
 - `GET /health`.
 - **(2026-07-12 amendment, Task 3 — not in the original sketch):** `POST /v1/batch` — batch geocode over an `addresses` array, rows trimmed, bounded by `$public.MAILWOMAN_BATCH_CONCURRENCY`/`MAILWOMAN_BATCH_MAX`.
-- **(2026-07-12 amendment, Task 3 — not in the original sketch):** `POST /v1/reload` — reload the shard provider.
+- **(2026-07-12 amendment, Task 3 — not in the original sketch):** `POST /v1/reload` — reload the extract provider.
 - **(2026-07-12 amendment, Task 3 — not in the original sketch):** `GET /metrics` — api-kit request-timing metrics.
 
 Native responses use the api-kit error envelope and camelCase field conventions — this surface is ours; vendor constraints do not apply.

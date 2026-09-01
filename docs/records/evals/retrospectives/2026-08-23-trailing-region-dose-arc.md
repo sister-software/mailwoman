@@ -1,4 +1,4 @@
-# The trailing-region arc: three shard shapes, three failures, one measured cause
+# The trailing-region arc: three extract shapes, three failures, one measured cause
 
 **2026-08-23.** Closing out #1748 / #1821. Nothing from this arc shipped, and the reason is worth more
 than the model would have been.
@@ -29,21 +29,21 @@ touches it. Corpus lane, confirmed before spending a GPU.
 
 Cause found: `trailing-region.ts` built every one of its 17,908 structured rows postcode-LEADING
 (`const head = … ${postcode} `). Correct for its four source countries — FR, DE, ES, IT all write the
-code first — and it silently decided which countries the shard could teach.
+code first — and it silently decided which countries the extract could teach.
 
 ## The three runs
 
 All fine-tunes off the v4.4.0 base (60k steps), 8,000 steps, EWC λ=1e4, A100-40GB, ~30 min each.
 
-| run     | shard                 |   rows | share | board verdict                  |
+| run     | extract               |   rows | share | board verdict                  |
 | ------- | --------------------- | -----: | ----: | ------------------------------ |
 | v4.7.0  | leading only          | 17,908 | 10.5% | DO-NOT-SHIP, 370/383           |
 | v4.8.0  | + `after_region` (IN) | 32,125 |  9.4% | **7 improved / 25 regressed**  |
 | v4.9.0  | + dependent locality  | 31,815 |  9.4% | **11 improved / 31 regressed** |
-| v4.10.0 | v4.9.0 shard, 1 rep   | 31,815 |  3.1% | **9 improved / 22 regressed**  |
+| v4.10.0 | v4.9.0 extract, 1 rep | 31,815 |  3.1% | **9 improved / 22 regressed**  |
 | v4.11.0 | house-venue INTL      | 18,000 |   n/a | **5 improved / 18 regressed**  |
 
-### v4.8.0 — the shard taught "the first named segment is the locality"
+### v4.8.0 — the extract taught "the first named segment is the locality"
 
 Eleven of the twenty-five regressions were venue-led rows, across seven countries:
 
@@ -57,13 +57,13 @@ Le Colimaçon, 44 Rue Vieille du Temple, 75004 Paris, France
   candidate locality "Le Colimaçon"
 ```
 
-Every row in that shard began with the locality — `01445 Radebeul, Saxony` and `Sawai, Andaman &
+Every row in that extract began with the locality — `01445 Radebeul, Saxony` and `Sawai, Andaman &
 Nicobar Islands 744301` alike — and it contained no venue, no street, no dependent locality. Even the
 IN row it targeted regressed, `locality` sliding from `Bengaluru` to `Indiranagar`.
 
 The house-number prefix on every fourth row is **not** a counter-distribution. A NUMBER before the
 locality does not teach that a NAME can precede one. `no-fragment.ts`'s header records the same trap
-from the other side; it was quoted in v4.8.0's own config header while both of that shard's arms
+from the other side; it was quoted in v4.8.0's own config header while both of that extract's arms
 shared the defect.
 
 ### v4.9.0 — a real data fix, a worse board
@@ -94,7 +94,7 @@ recover.
 
 ### v4.10.0 — dose is a lever, not a fix
 
-Same shard as v4.9.0, byte-identical, at a third the exposure. One variable.
+Same extract as v4.9.0, byte-identical, at a third the exposure. One variable.
 
 | run         |    share | improved | regressed |     net | venue-led regressions |
 | ----------- | -------: | -------: | --------: | ------: | --------------------: |
@@ -104,21 +104,21 @@ Same shard as v4.9.0, byte-identical, at a third the exposure. One variable.
 
 The damage scales with dose and does not vanish with it. A 3× cut bought back 7 net rows and 6 venue
 rows, and the arm is still net −13, still FR −3 / GB −5 / IE −3. Regressions fall sub-linearly (25 → 22
-for a 3× cut) because what remains is not over-exposure — it is that the shard's signal is wrong for
+for a 3× cut) because what remains is not over-exposure — it is that the extract's signal is wrong for
 the classes it does not contain, at any exposure that teaches anything.
 
 **All four runs are DO-NOT-SHIP. Nothing was promoted or published.**
 
 ### v4.11.0 — the composition hypothesis, tested and eliminated
 
-The conclusion below was that an admin-only shard damages the classes it does not contain. v4.11.0
+The conclusion below was that an admin-only extract damages the classes it does not contain. v4.11.0
 tested it directly by putting the same surface into rows that DO contain them.
 
 `house-venue` was already emitting the target tail — `Springfield, IL 02101` and `Bengaluru,
 Karnataka 560038` are the same locality-region-postcode shape — and every row it emits carries a
 venue, a street AND a house number. 18,000 IN/PT/MX rows with real
 postcodes were emitted under the EXISTING `synth-house-venue` source, so they took a share of a bucket
-that has shipped at weight 2.0 rather than claiming a new dose. Measured on the shard: venue 100%,
+that has shipped at weight 2.0 rather than claiming a new dose. Measured on the extract: venue 100%,
 street 100%, house_number 100%.
 
     Bob's Pizza, 9 Lake Dr, Srikakulam, Andhra Pradesh 532001
@@ -127,7 +127,7 @@ street 100%, house_number 100%.
 **5 improved / 18 regressed, net −13. FR −3, GB −5, IE −3. Nine venue-led regressions.**
 
 No new source, no new dose, the alternatives present in every row — and the same countries lost the
-same classes. So the cause is NOT the shard's internal composition, and it is not exposure:
+same classes. So the cause is NOT the extract's internal composition, and it is not exposure:
 
 | run         | new source? | own dose? | venue/street present? |     net | venue-led |
 | ----------- | ----------- | --------- | --------------------- | ------: | --------: |
@@ -150,7 +150,7 @@ brake moved the net by one row and the venue class by none.
 
 | run     | lever changed                                  | net | venue-led |
 | ------- | ---------------------------------------------- | --: | --------: |
-| v4.8.0  | admin shard @ 9.4%                             | -18 |        12 |
+| v4.8.0  | admin extract @ 9.4%                           | -18 |        12 |
 | v4.9.0  | + dependent locality                           | -20 |        15 |
 | v4.10.0 | dose -> 3.1%                                   | -13 |     **9** |
 | v4.11.0 | venue-bearing rows, no new source, no new dose | -13 |     **9** |
@@ -162,7 +162,7 @@ them.
 
 ### The control, RUN — and it splits the ledger
 
-**v4.13.0: the v0.22.0 base corpus, no added shard, same 4,000 steps, same seed, same brake.**
+**v4.13.0: the v0.22.0 base corpus, no added extract, same 4,000 steps, same seed, same brake.**
 
     5 improved / 10 regressed, net -5. Five of the ten venue-led.
 
@@ -177,8 +177,8 @@ ten also appears in v4.11.0's eighteen and v4.12.0's nineteen, so the cost separ
 
 Both readings matter and neither was available before:
 
-1. **The arc over-attributed.** A third of every "regression" charged to these shards was the price of
-   fine-tuning at all. Five runs of shard-blame were measuring a mixture.
+1. **The arc over-attributed.** A third of every "regression" charged to these extracts was the price of
+   fine-tuning at all. Five runs of extract-blame were measuring a mixture.
 2. **The arc was not wrong.** Eight to nine rows ARE the data's doing, and they are the right ones —
    `gb-venue-ye-three-lords`, `gb-lex-cafe-st-marys`, `gb-op2-four-seasons-cjk` appear only in the
    treated arms. The venue diagnosis holds for that subset.
@@ -195,7 +195,7 @@ wrong denominator.
 
 It also sets a floor on what a fine-tune can deliver: **it must buy back five net rows before it breaks
 even**, because that is what 4,000 steps against this base costs on its own. None of the six came
-close, and no shard-side change can, since the tax is charged before the shard is read.
+close, and no extract-side change can, since the tax is charged before the extract is read.
 
 That is the real argument for a from-scratch base over a fine-tune, and it is now a measured one
 rather than a preference.
@@ -203,14 +203,14 @@ rather than a preference.
 ### The control as originally specified (kept — the reasoning stands)
 
 If the same nine rows regress under every intervention, the next question is whether they regress
-under NO intervention: **fine-tune the base corpus with no added shard at all, same steps, same seed.**
+under NO intervention: **fine-tune the base corpus with no added extract at all, same steps, same seed.**
 
 - If those nine still move, the arc's entire premise is wrong. The regressions are an artifact of
-  fine-tuning this base for 4,000 steps, not of the data, and every conclusion above about shards is
+  fine-tuning this base for 4,000 steps, not of the data, and every conclusion above about extracts is
   measuring the wrong thing.
 - If they hold, the data is implicated after all and the floor is a real interaction.
 
-It is one 4,000-step run, ~13 minutes and ~$1. **Run it before any further shard work.** Nothing in
+It is one 4,000-step run, ~13 minutes and ~$1. **Run it before any further extract work.** Nothing in
 this arc should be trusted until it is answered, including the sections above.
 
 ### v4.14.0 — steps is not the lever, and the tax is IMMEDIATE
@@ -220,7 +220,7 @@ should cost fewer. One variable against v4.11.0, `max_steps` 4000 -> 1000.
 
 **4 improved / 10 regressed, net -6.**
 
-Regressions fell 18 -> 10. But ten IS the null's tax, so the shard now costs nothing beyond it — and
+Regressions fell 18 -> 10. But ten IS the null's tax, so the extract now costs nothing beyond it — and
 buys nothing either, the improvements falling 5 -> 4. `gb-venue-ye-three-lords` holds at this
 distance; `gb-lex-cafe-st-marys` and `gb-op2-four-seasons-cjk` do not.
 
@@ -234,7 +234,7 @@ Eight runs. Every lever that exists for an additive fine-tune, each isolated:
 
 | run         | lever                                | net vs shipped | regressed |
 | ----------- | ------------------------------------ | -------------: | --------: |
-| v4.8.0      | admin shard @ 9.4%                   |            -18 |        25 |
+| v4.8.0      | admin extract @ 9.4%                 |            -18 |        25 |
 | v4.9.0      | + dependent locality                 |            -20 |        31 |
 | v4.10.0     | dose -> 3.1%                         |            -13 |        22 |
 | v4.11.0     | venue-bearing, no new source or dose |            -13 |        18 |
@@ -246,7 +246,7 @@ The null is the best of them. Every arm that adds data is worse than adding none
 data most cautiously converges on the null rather than beating it.
 
 **No fine-tune of this base can ship an additive surface.** The tax is fixed, immediate, and larger
-than anything an additive shard has been able to buy back. That is not a judgement about these shards;
+than anything an additive extract has been able to buy back. That is not a judgement about these extracts;
 it is a property of the starting point, and it holds across exposure, composition, regularization and
 distance.
 
@@ -256,23 +256,23 @@ learned rather than grafted. That is a different order of commitment and should 
 ## The cause, stated once
 
 **PROVISIONAL, pending the null-run control described above.** Adding non-US/FR admin tails to this
-model regresses FR/GB/IE venue parsing, and neither composition, dose, nor the EWC brake removes it. Five runs: three admin-only shards at three doses, one dose cut on
-a byte-identical shard, and one that carried venue+street+house_number in every row inside an
+model regresses FR/GB/IE venue parsing, and neither composition, dose, nor the EWC brake removes it. Five runs: three admin-only extracts at three doses, one dose cut on
+a byte-identical extract, and one that carried venue+street+house_number in every row inside an
 already-shipping bucket. All five net-negative, all five losing the same classes in the same
 countries. Composition and dose modulate the size of the shift; the shift itself tracks the data.
 
 That points past the corpus at the model: a 39.3M-param encoder fine-tuned with an EWC brake against a
 US/FR base may not have capacity to hold a new tail convention without moving an old one. The next
-experiment is therefore NOT another shard — it is the same data against a different training shape
+experiment is therefore NOT another extract — it is the same data against a different training shape
 (no EWC brake, or a longer run, or a from-scratch base that sees all the tails at once). That is a
 larger commitment than a fine-tune and should be scoped as one.
 
 ## What this does and does not license
 
-- **Dose is not the remedy, and that is now measured rather than argued.** v4.10.0 held the shard
+- **Dose is not the remedy, and that is now measured rather than argued.** v4.10.0 held the extract
   byte-identical and cut exposure 3×; net went −20 → −13 and stopped there. Extrapolating the observed
   sub-linear fall, the dose that stops hurting is below the dose that teaches.
-- **It does license the corpus-authoring task**: this shard needs rows where a venue or a street
+- **It does license the corpus-authoring task**: this extract needs rows where a venue or a street
   precedes the locality before it can carry a meaningful dose. That is authoring, not tuning.
 - **VE remains unmoved and unmovable from here.** GeoNames does not publish Venezuela and nothing on
   disk carries a VE postcode. IN's `after_region` rows were the proxy and they did not generalize to
@@ -285,7 +285,7 @@ source this project consumes was checked on 2026-08-23:
 
 | source                                                                               | VE postcodes                                       |
 | ------------------------------------------------------------------------------------ | -------------------------------------------------- |
-| WOF — every `postalcode-*.db` shard in the data root                                 | none                                               |
+| WOF — every `postalcode-*.db` extract in the data root                               | none                                               |
 | GeoNames postal (`download.geonames.org/export/zip/VE.zip`)                          | **HTTP 404** — not published                       |
 | OpenAddresses (`results.openaddresses.io/latest/run/ve/{countrywide,statewide}.zip`) | **HTTP 404**                                       |
 | Overture, local snapshot                                                             | `places` theme only; no addresses theme downloaded |
@@ -323,9 +323,9 @@ candidate of any arc, not follow the eighth.
 - **Grade the board, not the val loss.** All three runs reported `macro_f1` between 0.9203 and 0.9212
   and `cross_pollution=0.00%`. Every one of them was a do-not-ship. The val split cannot see the venue
   class the board is built to see.
-- **A smoke run proves the config loads, not that the shard is reached.** The mixed shard's leading
+- **A smoke run proves the config loads, not that the extract is reached.** The mixed extract's leading
   arm keeps the zero-rows guard from firing even when the whole trailing arm is dropped. The check
-  that mattered was reading the shard through the loader's own gate before launching.
+  that mattered was reading the extract through the loader's own gate before launching.
 - **A false negative in the measuring tool looks exactly like a real absence.** Corpus `labels` is a
   nested Arrow column (`{list:[{element:…}]}`); `Array.isArray` on it is false, so a street-label
   count silently returns zero for every country. It produced a confident wrong claim that GB has no

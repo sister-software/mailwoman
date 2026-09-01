@@ -50,7 +50,7 @@
  *   "contained along the canonical hierarchy", never "not contained at all".
  *
  *   ABSENCE SEMANTICS (meaning-of-zero): a place with no `candidate_interval` row has no recorded
- *   ancestry in the source (shard-fed postcodes and localities, isolated places, cycle-skipped
+ *   ancestry in the source (extract-fed postcodes and localities, isolated places, cycle-skipped
  *   rows). Absence is UNVERIFIABLE, never a containment verdict.
  */
 

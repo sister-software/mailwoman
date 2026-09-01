@@ -43,7 +43,7 @@
 			"types": "./out/synthesizers/utils.d.ts"
 		},
 		"#test-kit": "./lib/test-kit/index.ts",
-		"#test-kit/shard-recipe": "./lib/test-kit/shard-recipe.ts",
+		"#test-kit/corpus-recipe": "./lib/test-kit/corpus-recipe.ts",
 		"#types": {
 			"node": "./lib/types.ts",
 			"default": "./out/types.js",
@@ -108,10 +108,10 @@
 			"default": "./out/synthesizers/*.js",
 			"types": "./out/synthesizers/*.d.ts"
 		},
-		"./shard-recipes/*": {
-			"node": "./lib/shard-recipes/*.ts",
-			"default": "./out/shard-recipes/*.js",
-			"types": "./out/shard-recipes/*.d.ts"
+		"./recipes/*": {
+			"node": "./lib/recipes/*.ts",
+			"default": "./out/recipes/*.js",
+			"types": "./out/recipes/*.d.ts"
 		},
 		"./adapters/utils": {
 			"node": "./lib/adapters/utils/index.ts",

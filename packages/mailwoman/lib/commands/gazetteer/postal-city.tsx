@@ -10,7 +10,7 @@
  *   postcode)`.
  *
  *   Bridge (no admin-DB join): for each DIVERGENT `(postcode, postal_city)` in the alias DB, the
- *   `postcode_locality` shard gives the postcode's CONTAINING `locality_id`; that locality's
+ *   `postcode_locality` database gives the postcode's CONTAINING `locality_id`; that locality's
  *   coordinate and name come straight from the candidate table's own row for that `spr_id`. So a
  *   postal-city query with the postcode resolves to exactly the geographic locality the FTS
  *   coordinate-first path would pick — but via one exact probe, no population/region ranking.
@@ -147,7 +147,7 @@ const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
 		const summary = [
 			`postal_city_candidate built → ${candidateDB}`,
 			`${inserted.toLocaleString()} edges inserted`,
-			`${noLocality.toLocaleString()} skipped — postcode has no containing locality in the postcode_locality shard`,
+			`${noLocality.toLocaleString()} skipped — postcode has no containing locality in the postcode_locality database`,
 			`${noCoord.toLocaleString()} skipped — locality not in candidate table`,
 		]
 

@@ -2,11 +2,11 @@
 
 Pins the loader-side contract:
 
-1. Rows from a span-schema shard stream the triple end-to-end — ``iter_rows`` carries it,
+1. Rows from a span-schema slice stream the triple end-to-end — ``iter_rows`` carries it,
    ``iter_encoded`` hands it to ``encode_row`` (which trains FROM the spans).
-2. Frozen pre-v0.5.0 shards (no span columns) ride the legacy token path: no span keys appear.
-3. Corruption is LOUD, never a silent fallback: a shard with a partial span-column set raises,
-   and a null span value inside a span-schema shard raises naming the row.
+2. Frozen pre-v0.5.0 slices (no span columns) ride the legacy token path: no span keys appear.
+3. Corruption is LOUD, never a silent fallback: a slice with a partial span-column set raises,
+   and a null span value inside a span-schema slice raises naming the row.
 """
 
 from __future__ import annotations
@@ -75,7 +75,7 @@ def _iter(corpus: Path) -> list[dict]:
     )
 
 
-def test_span_shard_rows_carry_the_triple(tmp_path: Path) -> None:
+def test_span_slice_rows_carry_the_triple(tmp_path: Path) -> None:
     corpus = _write_corpus(tmp_path, [_row()])
     rows = _iter(corpus)
     assert len(rows) == 1
@@ -84,7 +84,7 @@ def test_span_shard_rows_carry_the_triple(tmp_path: Path) -> None:
     assert rows[0]["span_tags"] == ["po_box", "locality", "region", "postcode"]
 
 
-def test_legacy_shard_rows_have_no_span_keys(tmp_path: Path) -> None:
+def test_legacy_slice_rows_have_no_span_keys(tmp_path: Path) -> None:
     corpus = _write_corpus(tmp_path, [_row()], drop_columns=("span_starts", "span_ends", "span_tags"))
     rows = _iter(corpus)
     assert len(rows) == 1
@@ -97,7 +97,7 @@ def test_partial_span_columns_raise(tmp_path: Path) -> None:
         _iter(corpus)
 
 
-def test_null_span_value_in_span_shard_raises(tmp_path: Path) -> None:
+def test_null_span_value_in_span_slice_raises(tmp_path: Path) -> None:
     corpus = _write_corpus(tmp_path, [_row(), _row(raw="123 Main St", span_starts=None)])
     with pytest.raises(ValueError, match="null span column"):
         _iter(corpus)
@@ -123,7 +123,7 @@ def test_empty_triple_is_a_valid_all_o_row(tmp_path: Path) -> None:
 
 def test_positive_weight_for_absent_source_raises(tmp_path: Path) -> None:
     corpus = _write_corpus(tmp_path, [_row()])
-    with pytest.raises(ValueError, match="positive source_weights entries have no shards"):
+    with pytest.raises(ValueError, match="positive source_weights entries have no slices"):
         list(
             iter_rows(
                 corpus,

@@ -33,7 +33,7 @@ the composition every golden floor was cut against — **plus**:
 
 **Deploc passengers stay out** (synth-gb 10.0 / nz / es-pedania / fr-lieudit, punct_drop 0.6).
 Each re-enters only with its own promotion case — the v3.22 feed attribution is the receipt
-(GB street-boundary transfer, CA po-box dilution). The fragment classes those shards fed are
+(GB street-boundary transfer, CA po-box dilution). The fragment classes those extracts fed are
 covered by the bundle channels now; if a G1 bare-locality bar misses, es-pedania/fr-lieudit are
 the named first re-entrants (the v3.22 pre-registration's own contingency).
 

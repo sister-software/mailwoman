@@ -870,7 +870,7 @@
       "SPDXID": "SPDXRef-Package-mailwoman.ban-9.2.0",
       "versionInfo": "9.2.0",
       "packageFileName": "node_modules/@mailwoman/ban",
-      "description": "Base Adresse Nationale (France) rooftop address-point ingestion — builds the national FR precision shard on the situs address-point schema.",
+      "description": "Base Adresse Nationale (France) rooftop address-point ingestion — builds the national FR precision extract on the situs address-point schema.",
       "downloadLocation": "https://registry.npmjs.org/@mailwoman/ban/-/ban-9.2.0.tgz",
       "filesAnalyzed": false,
       "homepage": "https://github.com/sister-software/mailwoman",

@@ -64,7 +64,7 @@ Properties:
 
 ## What this change touches (the full list)
 
-1. **Corpus schema + every shard builder** (affix, unit, intersection, po_box/cedex, country,
+1. **Corpus schema + every extract builder** (affix, unit, intersection, po_box/cedex, country,
    german, base adapters): emit spans instead of token labels. Mechanical per builder; the
    `synth` ancestry stamping is untouched.
 2. **`encode_row` + augmentations + the relabel pass + choreography** (corpus-python): the glue

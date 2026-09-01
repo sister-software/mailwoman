@@ -478,8 +478,8 @@ export async function findRescoreCandidate(
 	// CLI's en-US default scoped both the anchor and the village probe to US, so the SI floor never
 	// fired through geocode-core while the same rows resolved 25/25 on the resolver harness. When the
 	// scoped pass finds nothing and a postcode is present, re-probe the spans UNSCOPED (the admin
-	// gazetteer is one shard, all countries), then verify each exact candidate against the postcode's
-	// code subset resolved in the CANDIDATE's own country (postcode shards route by country). A
+	// gazetteer is one extract, all countries), then verify each exact candidate against the postcode's
+	// code subset resolved in the CANDIDATE's own country (postcode extracts route by country). A
 	// cross-country promotion is accepted ONLY postcode-verified within the gate — never ungated —
 	// so a US-shaped query can't wander abroad on a name coincidence (the 48026 guard: resolved
 	// trees never reach this code, and unresolved ones must pass the joint postcode check).

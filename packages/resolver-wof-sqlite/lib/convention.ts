@@ -76,7 +76,7 @@ export const WORLD_DEFAULT: ResolvedConvention = {
 export const BUILTIN_STRATEGY_NAMES = ["postcode_area_resolution", "fallback_fuzzy_name_match"] as const
 
 /**
- * Table name for the convention asset (#290). Carried here so the build script, the runtime source, and the shard
+ * Table name for the convention asset (#290). Carried here so the build script, the runtime source, and the extract
  * auto-detect all agree.
  */
 export const ADDRESS_CONVENTION_TABLE = "address_convention"

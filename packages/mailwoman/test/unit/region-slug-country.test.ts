@@ -2,16 +2,16 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file #1787 — a state slug names a US shard, so a tree the resolver placed elsewhere must not produce one.
+ * @file #1787 — a state slug names a US database, so a tree the resolver placed elsewhere must not produce one.
  *
- *   `regionToStateSlug` accepts ANY two-letter region, and the rooftop shards are `address-points-us-<slug>.db`. Eight
- *   of sixteen Italian province codes reach a real US shard that way, five of five Spanish, six of twelve Brazilian,
+ *   `regionToStateSlug` accepts ANY two-letter region, and the rooftop databases are `address-points-us-<slug>.db`. Eight
+ *   of sixteen Italian province codes reach a real US database that way, five of five Spanish, six of twelve Brazilian,
  *   and Australia's WA→Washington. Nothing wrong comes back today only because Milano's 20xxx does not collide with
  *   Michigan's 48xxx, which is a coincidence of numbering rather than a guarantee.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { regionSlugFromTree, regionToStateSlug } from "mailwoman/geocode-shards"
+import { regionSlugFromTree, regionToStateSlug } from "mailwoman/geocode-regions"
 import { describe, expect, it } from "vitest"
 
 const node = (over: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode => ({
@@ -45,7 +45,7 @@ describe("regionSlugFromTree country gate", () => {
 	})
 
 	it("yields NOTHING for a tree the resolver placed outside the US", () => {
-		// Every one of these selects a real shard on disk without the gate.
+		// Every one of these selects a real database on disk without the gate.
 		for (const [region, country] of [
 			["MI", "IT"],
 			["CO", "IT"],

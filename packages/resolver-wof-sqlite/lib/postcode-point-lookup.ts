@@ -4,19 +4,19 @@
  * @author Teffen Ellis, et al.
  *
  *   SQLite-backed postcode lookup for the postcode anchor (#240). A thin exact-match resolver over
- *   one or more `postalcode-*.db` shards (the `spr` schema built by `build-unified-wof --placetypes
+ *   one or more `postalcode-*.db` extracts (the `spr` schema built by `build-unified-wof --placetypes
  *   postalcode`, then centroid-backfilled by `scripts/backfill-postcode-centroids.ts`).
  *
  *   This is the production implementation of the `PostcodeResolver` interface consumed by
  *   `@mailwoman/neural`'s `extractPostcodeAnchors`. It is deliberately dumb: an indexed exact-match
- *   on the postcode string across every shard, unioned. No FTS, no ranking, no proximity — the
+ *   on the postcode string across every extract, unioned. No FTS, no ranking, no proximity — the
  *   anchor only needs "does this string exist as a postcode, in which countries, near where". A
  *   future WASM build swaps this for an FST-backed resolver behind the same `lookup()` seam.
  *
- *   Why multiple shards instead of the multi-shard `WOFSQLitePlaceLookup`: that resolver routes a
- *   query to ONE shard by placetype, but every postcode shard shares `placetype='postalcode'`, so a
- *   single query could only ever hit one country's shard. The anchor needs the union across
- *   countries to build its country posterior, so it queries each shard directly.
+ *   Why multiple extracts instead of the multi-extract `WOFSQLitePlaceLookup`: that resolver routes a
+ *   query to ONE extract by placetype, but every postcode extract shares `placetype='postalcode'`, so a
+ *   single query could only ever hit one country's extract. The anchor needs the union across
+ *   countries to build its country posterior, so it queries each extract directly.
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -40,7 +40,7 @@ export class WOFPostcodeLookup {
 	readonly #stmts: ReturnType<DatabaseClient["prepare"]>[]
 
 	/**
-	 * Open each shard read-only and prepare its exact-match statement.
+	 * Open each extract read-only and prepare its exact-match statement.
 	 */
 	constructor(dbPaths: readonly string[]) {
 		this.#dbs = dbPaths.map((p) => new DatabaseClient<WOFDatabase>(p, { readOnly: true }))
@@ -48,7 +48,7 @@ export class WOFPostcodeLookup {
 	}
 
 	/**
-	 * Exact-match the postcode across every shard and union the rows.
+	 * Exact-match the postcode across every extract and union the rows.
 	 */
 	lookup(postcode: string): PostcodePlace[] {
 		const out: PostcodePlace[] = []

@@ -5,7 +5,7 @@
  *
  *   Regression guard for the OPEN MODE `WOFSQLitePlaceLookup` chooses on the `databasePath` branch: read-only by
  *   default (every serve/query path), read-write ONLY when `buildFTS` is requested (the FTS5 index build — the sole
- *   writer). Shipped shards are sealed 0444 and Docker `:ro` mounts forbid write-mode opens (#1213).
+ *   writer). Shipped extracts are sealed 0444 and Docker `:ro` mounts forbid write-mode opens (#1213).
  *
  *   Why this needs a construction spy rather than a plain 0444 open: SQLite silently DOWNGRADES a write-mode open to
  *   read-only on an owned read-only file, so a 0444 open succeeds under the old `readOnly: false` too and cannot
@@ -88,7 +88,7 @@ function seedFixture(path: string): void {
 }
 
 /**
- * The readOnly option recorded for the main-shard open of `path` (asserts exactly one such open).
+ * The readOnly option recorded for the main-extract open of `path` (asserts exactly one such open).
  */
 function readOnlyForOpenOf(path: string): boolean | undefined {
 	const opens = spy.opens.filter((o) => o.path === path)
@@ -118,15 +118,15 @@ describe("WOFSQLitePlaceLookup open mode (databasePath branch)", () => {
 		spy.opens.length = 0
 	})
 
-	test("buildFTS: true opens the main shard READ-WRITE (the FTS5 index build must write)", () => {
+	test("buildFTS: true opens the main extract READ-WRITE (the FTS5 index build must write)", () => {
 		spy.opens.length = 0
 		using _lookup = new WOFSQLitePlaceLookup({ databasePath: dbPath, buildFTS: true })
 
 		expect(readOnlyForOpenOf(dbPath)).toBe(false)
 	})
 
-	test("buildFTS omitted opens the main shard READ-ONLY, even against a sealed 0444 file, and still queries", async () => {
-		// Build the FTS index first (read-write), then seal the file 0444 to mimic a shipped shard.
+	test("buildFTS omitted opens the main extract READ-ONLY, even against a sealed 0444 file, and still queries", async () => {
+		// Build the FTS index first (read-write), then seal the file 0444 to mimic a shipped extract.
 		new WOFSQLitePlaceLookup({ databasePath: dbPath, buildFTS: true })[Symbol.dispose]()
 		await changeMode(dbPath, 0o444)
 

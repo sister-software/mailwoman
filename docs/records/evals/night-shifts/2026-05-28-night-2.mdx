@@ -16,10 +16,10 @@ Locale-aware PO box generator covering en-US/CA/GB/AU, fr-FR/CA, es-ES/MX/AR.
 - `corpus/src/synthesize-po-box.ts` — per-locale leader templates, number-format noise (10%), PMB variant logic
 - `corpus/src/adapters/synth-po-box/adapter.ts` — JSONL tuples → CanonicalRows
 - `scripts/extract-tuples.py` — pulls (locality, region, postcode, country) from WOF SQLite via locality→county→region join + state-prefix-to-ZIP synthesis
-- `scripts/build-po-box-shard.mjs` — runs synthesizer + alignRow, writes LabeledRow JSONL
+- `scripts/build-po-box-extract.mjs` — runs synthesizer + alignRow, writes LabeledRow JSONL
 - `scripts/jsonl-to-parquet.py` — converts to v0.4.0 parquet schema
 
-Produced: 50K labeled rows / 3 MB parquet shard. Sample:
+Produced: 50K labeled rows / 3 MB parquet extract. Sample:
 
 ```
 P.O. Box 9, Bancroft, ID 83603
@@ -46,7 +46,7 @@ ACTIVE_TAGS = STAGE2_TAGS  # 10 tags, 21 BIO labels
 ACTIVE_TAGS = STAGE3_TAGS  # 16 tags, 33 BIO labels
 ```
 
-STAGE3 appends to STAGE2 without reordering — IDs are preserved. Existing v0.4.0 shards work unchanged. Models trained on STAGE2 IDs decode correctly against STAGE3; the new logit slots just never get argmax'd.
+STAGE3 appends to STAGE2 without reordering — IDs are preserved. Existing v0.4.0 extracts work unchanged. Models trained on STAGE2 IDs decode correctly against STAGE3; the new logit slots just never get argmax'd.
 
 ### Golden eval expansion
 

@@ -14,7 +14,7 @@
  *
  *   RECIPE (DeepSeek scope, #374):
  *
- *   1. Run the full cascade (parser → resolver with situs + interp shards) on a holdout set. For each
+ *   1. Run the full cascade (parser → resolver with situs + interp extracts) on a holdout set. For each
  *        RESOLVED street-level row capture: (a) coordinate error in METERS (haversine to the true
  *        lat/lon) (b) claimed radius in METERS (uncertainty_m for interp hits; 10 m fixed floor for
  *        situs hits)

@@ -279,7 +279,7 @@ describe("lookupWOF", () => {
 		const [row] = lookupWOF([{ name: "admin.db", db }], ["Porto Petro"])
 
 		expect(row).toMatchObject({ hit: true })
-		expect(row!.entries).toMatchObject([{ route: "fts", name: "Porto Petro", shard: "admin.db" }])
+		expect(row!.entries).toMatchObject([{ route: "fts", name: "Porto Petro", extract: "admin.db" }])
 	})
 
 	it("reports a deprecated-only name as the THIRD state, not as absence", async () => {
@@ -303,7 +303,7 @@ describe("lookupWOF", () => {
 		expect(row!.note).toContain("case- and punctuation-sensitive")
 	})
 
-	it("names a shard it could not query instead of counting it as a miss", async () => {
+	it("names a extract it could not query instead of counting it as a miss", async () => {
 		const broken = memoryDatabase<POIDatabase>()
 		const [row] = lookupWOF([{ name: "broken.db", db: broken }], ["Vaduz"])
 

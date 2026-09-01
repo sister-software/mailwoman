@@ -21,7 +21,7 @@
 #      steps, eval/save every 2000. NOT v230's same-vocab lr 1e-5 (that fine-tune had no new rows to
 #      move); the new FR rows must overcome the inherited O-signal, and 5e-5 is THE splice-adaptation LR.
 #   4. output_dir/run name → v241 (FRESH dir; init_from READS v230's checkpoints, never overwrites).
-# Everything else — the v0.10.1-nl-postcode corpus (699 shards), all source/country weights, the model
+# Everything else — the v0.10.1-nl-postcode corpus (699 slices), all source/country weights, the model
 # config (crf_loss_weight 0.0; conventions loss-mask absent=OFF), anchor/gaz knobs, class_weights, seed
 # 42, batch 128, bf16 — is v230-VERBATIM, so the SPLICED VOCAB + its gradient steps are the only variable.
 #
@@ -31,7 +31,7 @@
 # new rows dormant); non-FR byte-stability. NaN protocol: if the first checkpoints are NaN/inf, stop.
 data:
   # v230's corpus VERBATIM (v0.10.1-nl-postcode = the v0.10.0 boundary-family base + synth-nl-postcode,
-  # 699 shards). Stored as raw text + char-offset spans → RE-TOKENIZED through the spliced tokenizer at
+  # 699 slices). Stored as raw text + char-offset spans → RE-TOKENIZED through the spliced tokenizer at
   # load, so the FR diacritic pieces actually fire and receive gradient. No corpus rebuild needed.
   corpus_dir: /data/corpus/versioned/v0.10.1-nl-postcode/corpus-v0.10.1-nl-postcode
   tokenizer_dir: /data/models/tokenizer/v0.8.0-fr-nsplice
@@ -60,7 +60,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM from v1.9.3a3 + the one new fr-bare-street shard.
+  source_weights: # VERBATIM from v1.9.3a3 + the one new fr-bare-street slice.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -84,7 +84,7 @@ data:
     overture: 3.0
     gnaf: 6.0
     synth-anchor-absorption: 6.0
-    # #251 NEW: the bare-no-postcode FR street shard. 6.0 = targeted-fix precedent.
+    # #251 NEW: the bare-no-postcode FR street slice. 6.0 = targeted-fix precedent.
     synth-fr-bare-street: 12.0
     synth-si-bare-village: 12.0 # the family, balanced polarity
     synth-no-street-led: 12.0

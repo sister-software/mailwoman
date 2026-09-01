@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   #375 street-recall-on-FULL-addresses probe — DeepSeek's blind-spot guard (consult 2026-06-18) for
- *   the v1.7.0 balanced shard. Emphasizing `bare-locality` ("City, STATE" with no street) risks the
+ *   the v1.7.0 balanced extract. Emphasizing `bare-locality` ("City, STATE" with no street) risks the
  *   model over-emitting locality and EATING the street's leading tokens on FULL addresses — a
  *   regression moderate enough to clear the coarse `us.street` floor while breaking the
  *   highest-traffic case. This measures street exact-match on the held-out US golden subset where

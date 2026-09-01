@@ -98,7 +98,7 @@
 
 ### 2. Data loading
 
-- [ ] `data_loader.py` — load Parquet shards via `datasets.load_dataset('parquet', ...)`. Lazy, streaming, memory-stable.
+- [ ] `data_loader.py` — load Parquet extracts via `datasets.load_dataset('parquet', ...)`. Lazy, streaming, memory-stable.
 - [ ] Stratified sampling: per-country weights to prevent imbalance. Configurable in YAML.
 - [ ] Length filtering: drop rows where token count > 128. Address text is short by nature; long rows are usually adapter bugs.
 - [ ] Verify tokenizer alignment: load `tokenizer-v0.1.0`, re-tokenize a sample of `raw` strings, assert the tokenization matches the stored `tokens` field. If it doesn't, the corpus is corrupt — stop and investigate.

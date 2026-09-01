@@ -1,5 +1,5 @@
-# v2.5.2-fragment-v2 — shard-v2 iteration off the v251 consolidation. ONE variable: the fragment
-# shard gains the two classes the v251 read-out named (AU compact units from OA UNIT; locality+
+# v2.5.2-fragment-v2 — slice-v2 iteration off the v251 consolidation. ONE variable: the fragment
+# slice gains the two classes the v251 read-out named (AU compact units from OA UNIT; locality+
 # postcode polarity rows = the "Eight Mile Plains 4113" regression class). Same tokenizer
 # (v0.9.0-multisplice), same init (multisplice-expanded), same LR — v251 dynamics showed peak-early
 # drift, so 8000 steps (eval/save 2000). Gate bars: v251-best non-regression (street >= .5467 @12k,
@@ -32,7 +32,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay shard.
+  source_weights: # VERBATIM v2.4.1 + the one new assay slice.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -61,7 +61,7 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

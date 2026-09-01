@@ -1,7 +1,7 @@
 # v4.7.0 — trailing-region STRUCTURED (#1748)
 #
-# WHY: the shard written to fix `es-op3-southeast-portopetro` never contained the row's shape. Measured
-# over both built v23 shards: 88,904 rows, two surfaces, ZERO postcodes. The model learned the bare
+# WHY: the slice written to fix `es-op3-southeast-portopetro` never contained the row's shape. Measured
+# over both built v23 slices: 88,904 rows, two surfaces, ZERO postcodes. The model learned the bare
 # admin tail correctly and had never seen `«postcode» «locality», «region»`, which is why no decode
 # lever moved it. Corpus absence, not a decode defect.
 #
@@ -61,7 +61,7 @@ data:
   source_weights:
     # DOSE-FIRST (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
     # 6 reps/row x 17,908 rows against 155.0 total over 8,000 x 128 = 1,024,000 samples -> 18.17,
-    # a 10.5% share. Parity with the bare trailing-region shards, measured at 7.7 and 5.2 reps/row.
+    # a 10.5% share. Parity with the bare trailing-region slices, measured at 7.7 and 5.2 reps/row.
     # For contrast, the weight that collapsed v4.6.0 was 1.0 and bought 165 reps/row.
     synth-trailing-region-structured: 18.17
     synth-house-venue: 2.0

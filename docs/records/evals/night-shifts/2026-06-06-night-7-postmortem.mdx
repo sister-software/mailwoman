@@ -7,7 +7,7 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
 ## What shipped
 
 - **#323 — both-order German corpus** (merged). `synthesizeLocaleRow({ order })` renders German in native
-  AND international layout; `build-german-shard.mjs --intl-fraction`; a reproducible native-order eval
+  AND international layout; `build-german-extract.mjs --intl-fraction`; a reproducible native-order eval
   asset. The fix the whole shift is built on.
 - **#324 — `parse --default-country`** (merged). The CLI resolved globally, so a bare `NY` hit a Scottish
   homonym (`IL`→France, `WA`→Spain); now inferred from `--locale` (the demo already passed `country:"US"`).
@@ -47,10 +47,10 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
   multi-locale plan — the anchor's direction is _learned per locale_ from the dominant training order, so the
   next thread is a **country-conditioned anchor vector**, not another tuning pass. Decision record in
   `2026-06-06-v0.9.2-eval.md` §"accept the asymmetry".
-- **Multi-locale tooling (#332 / #333 / #335)** — `build-locale-shard.mjs` rebuilt registry-driven, with a
+- **Multi-locale tooling (#332 / #333 / #335)** — `build-locale-extract.mjs` rebuilt registry-driven, with a
   streaming Algorithm-R reservoir so FR/US-scale OA CSVs (2.5 GB+) sample without OOM; NL postcode
   normalization; and **Italy + Spain OA data acquired** (IT 468 MB, ES 451 MB, durable backups on
-  `$MAILWOMAN_DATA_ROOT`). **DE / NL / FR / IT / ES are all shard-ready.** _(Correction: an earlier note here called ES
+  `$MAILWOMAN_DATA_ROOT`). **DE / NL / FR / IT / ES are all extract-ready.** _(Correction: an earlier note here called ES
   "no clean countrywide aggregate." That was wrong — I'd only checked the `results.../latest/run/es` path, which
   404s. The `es/countrywide` source points to a cached upstream CSV on `data.openaddresses.io` that downloads
   fine; it's the raw CNIG schema rather than OA-conformed, so the builder gained a per-part `conform` map —
@@ -80,7 +80,7 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
 - **Measure-first paid off twice.** The whole shift exists because we re-measured German in its native
   order and found the "collapse" was largely an eval artifact. Tonight's S1 probe (below) did the same to
   the anchor's role.
-- **The corpus pipeline mirrored v0.4.1-de exactly** — overlay manifest, base shards by reference, no
+- **The corpus pipeline mirrored v0.4.1-de exactly** — overlay manifest, base extracts by reference, no
   rebuild of 677M rows. Clean, fast, verified on the volume before launch.
 - **Pivoting cleanly when GPU was called off.** DeepSeek's "(b), no more GPU" verdict could have read as a dead
   end; instead it freed the back half for the demo tier the operator had explicitly asked for. Three small
@@ -110,7 +110,7 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
 - **Did NOT bump the critical dependabot alert (vitest, dev-scoped).** The exploit needs the Vitest UI
   server listening (never run); bumping the test runner mid-shift risked destabilizing the CI gate I depend
   on. Logged for the operator instead. _(Alternative: bump it — rejected as higher-risk-than-reward.)_
-- **Held `build-locale-shard.mjs`** rather than ship a generalizer that doesn't yet beat the German builder.
+- **Held `build-locale-extract.mjs`** rather than ship a generalizer that doesn't yet beat the German builder.
 - **Reused the pilot model card** (33 labels, identical schema) for the v0.9.2 eval rather than block on a
   fresh card export.
 
@@ -169,11 +169,11 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
 - **Country-conditioned anchor (#327):** a per-locale anchor direction (DE specializes on postcode-before-city,
   US on postcode-after-city), so no shared vector is forced to compromise. Its own gate via `de-order-eval.sh`.
   The interim no-GPU lever (order-check → `c=0` route) is the cheap first move.
-- **Multi-locale shards:** DE / NL / FR / IT / **ES** are all shard-ready via `build-locale-shard.mjs` (ES via
+- **Multi-locale databases:** DE / NL / FR / IT / **ES** are all extract-ready via `build-locale-extract.mjs` (ES via
   a per-part `conform` map on the raw CNIG upstream). The gate before any retrain is the country-conditioned
   anchor (#327), not the data.
 - **Demo S38 — service-worker precache** for the ~60 MB bundle, keyed by `selectedVersion` (see above).
-- **FR (#330):** assemble a venue+region FR shard (real OSM/WOF POIs + FR région forms), measure with
+- **FR (#330):** assemble a venue+region FR extract (real OSM/WOF POIs + FR région forms), measure with
   `per-locale-f1.ts`.
 
 ## Numbers
@@ -186,7 +186,7 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
 | Models trained          | 3 (v0.9.2 both-order, v0.9.3 region-tail, v0.9.4 dual-injection — all 20k, all negative)          |
 | Modal spend             | ~$12 of $15 _(3 runs; GPU called off after v0.9.4)_                                               |
 | DeepSeek consults       | 1 session, 3 turns (turn 3 = the delegated-authority decision) + the posterior diagnostic         |
-| Data acquired           | Italy (468 MB) + Spain (451 MB) OA countrywide; **DE/NL/FR/IT/ES all shard-ready**                |
+| Data acquired           | Italy (468 MB) + Spain (451 MB) OA countrywide; **DE/NL/FR/IT/ES all extract-ready**              |
 | NaN incidents           | 0                                                                                                 |
 | CI failures             | 0                                                                                                 |
 | Demo regressions        | 0 (v0.9.x research line + additive demo tier; v0.6.0 production untouched)                        |

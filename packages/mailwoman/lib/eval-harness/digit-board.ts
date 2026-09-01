@@ -15,7 +15,7 @@
  *   order-sensitive decode, and built `synth-no-street-led` at source weight 12.0 — the maximum
  *   targeted-fix tier — to close it. The YAML Norway problem (`NO:` resolves to the boolean `false`
  *   under YAML 1.1, so `country_weights.get("NO")` misses and the loader drops every row) meant that
- *   shard never contributed a single row to any run since v1.9.0. The fix is #1145.
+ *   database never contributed a single row to any run since v1.9.0. The fix is #1145.
  *
  *   That makes the baseline unusually clean: SHIPPED v310 has never seen one Norwegian address, so
  *   this board's v310 arm is a TRUE ZERO-KNOWLEDGE reading, not a weak-prior one. Register it before
@@ -38,7 +38,7 @@
  *
  *   SLASH HAZARD: Norwegian `124/1` is ONE component (cadastral gnr/bnr); Australian `12/345` is TWO
  *   (unit 12 + house_number 345). Identical surface shape, opposite correct answers. `slash-hn` pins
- *   the Norwegian reading so a future AU intra-word-split shard cannot generalize over it unnoticed.
+ *   the Norwegian reading so a future AU intra-word-split database cannot generalize over it unnoticed.
  */
 
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"

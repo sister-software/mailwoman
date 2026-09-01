@@ -6,7 +6,7 @@
 
 ## Overview
 
-This branch carries a cluster of work that takes mailwoman from "the US champion" to "competitive in Europe." It ships ~925 lines across 11 files: two resolver levers (span-rescore recovery + postcode-consistency disambiguation), a GGeonames-to-SQLite postcode shard builder, a 3-way competitive benchmark harness (mailwoman vs Nominatim vs Pelias), a failure-mode classifier, an AU word-order probe, and the blog post + demo wiring that makes the levers visible.
+This branch carries a cluster of work that takes mailwoman from "the US champion" to "competitive in Europe." It ships ~925 lines across 11 files: two resolver levers (span-rescore recovery + postcode-consistency disambiguation), a GGeonames-to-SQLite postcode extract builder, a 3-way competitive benchmark harness (mailwoman vs Nominatim vs Pelias), a failure-mode classifier, an AU word-order probe, and the blog post + demo wiring that makes the levers visible.
 
 The headline: with both levers active, mailwoman leads Nominatim and Pelias on the @25km right-area metric across a 7-locale EU+AU panel (90.0%), from a 30 MB browser model with no Elasticsearch. The star is Europe: mailwoman 94.2% vs Nominatim 78%, Pelias 89%. Australia is the open problem (65% vs Nominatim 97%), now characterized as a word-order training-data gap, not a capability deficit.
 
@@ -14,9 +14,9 @@ The headline: with both levers active, mailwoman leads Nominatim and Pelias on t
 
 ## What's on this branch (6 commits)
 
-### 1. `#193` — GeoNames-sourced postcode shard for WOF-gap countries
+### 1. `#193` — GeoNames-sourced postcode extract for WOF-gap countries
 
-**`23d866f5`** — `scripts/build-geonames-postcode-shard.ts` (291 lines)
+**`23d866f5`** — `scripts/build-geonames-postcode-extract.ts` (291 lines)
 
 The backbone of the EU postcode coverage push. WOF ships postcode entities for US/NL/FR/DE/IT/ES but zero rows for PL, CZ, PT, AU, AT, and others. The existing `backfill-postcode-centroids` pipeline treats GeoNames as a COORDINATE source keyed onto existing WOF records — useless where WOF has nothing to key onto.
 
@@ -84,7 +84,7 @@ This is the most architecturally disciplined piece on the branch.
 
 **`7190ad4c`**
 
-Extends the `#193` shard builder to PT, AU, AT. The benchmark's failure dump showed that Italy hit ceiling (Lever A alone fixed all its same-name-town misses) but PT/AU/AT still had the postcode-coverage gap — Lever A can't fire without a resolved postcode anchor. With both levers: AU 35→65 (+30pp), PT 78→88 (+10pp), AT 73→87 (+14pp).
+Extends the `#193` extract builder to PT, AU, AT. The benchmark's failure dump showed that Italy hit ceiling (Lever A alone fixed all its same-name-town misses) but PT/AU/AT still had the postcode-coverage gap — Lever A can't fire without a resolved postcode anchor. With both levers: AU 35→65 (+30pp), PT 78→88 (+10pp), AT 73→87 (+14pp).
 
 ### 6. AU word-order diagnosis
 
@@ -187,9 +187,9 @@ Five copies across core and scripts. Consolidate to `core/spatial/haversine.ts` 
 
 `classify()` returns `WRONG_locality_postcode-AVAILABLE` when a postcode resolved AND the best coordinate came from a non-postcode placetype. But this bucket includes both "Lever A would fix this" (wrong locality instance, postcode anchor present) and "coordinate is from a street/address but wrong" (postcode is present but the error is elsewhere). Splitting this into `WRONG_locality_postcode-AVAILABLE` (locality-placed, far from postcode) and `WRONG_non-locality_postcode-AVAILABLE` (street/address-placed, postcode present but not the error) would make the lever targeting even sharper. Low priority; the current classifier is already good enough to drive lever decisions.
 
-### 7. The GeoNames shard builder has no test but follows the repo convention
+### 7. The GeoNames extract builder has no test but follows the repo convention
 
-`scripts/build-geonames-postcode-shard.ts` is untested beyond manual invocation. This is consistent with other build scripts in the repo (none have unit tests). The validation path is the downstream eval score — which is the right validation for a data artifact. A future hardening pass could add a smoke test (build a tiny shard from a 5-line fixture, verify row count + synthetic IDs + name variants).
+`scripts/build-geonames-postcode-extract.ts` is untested beyond manual invocation. This is consistent with other build scripts in the repo (none have unit tests). The validation path is the downstream eval score — which is the right validation for a data artifact. A future hardening pass could add a smoke test (build a tiny extract from a 5-line fixture, verify row count + synthetic IDs + name variants).
 
 ---
 

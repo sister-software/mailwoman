@@ -39,7 +39,7 @@ GB: 0 codes (0 placed) → postcode-gb.bin (0.00 MB)
 
 Its GB branch (`aggregateGbOutward` → `gbOutward`) derives the outward district by splitting `name` on a
 SPACE, because it was written against `postalcode-gb.db`, whose `name` carries the spaced display form.
-The licence-clean Code-Point Open shard stores `name` already space-stripped (`AB101AB`), so the split
+The licence-clean Code-Point Open extract stores `name` already space-stripped (`AB101AB`), so the split
 returns null on all 1,746,976 rows. It also aggregates to outward codes only, which is the wrong
 granularity for a model trained against `pilot-anchor-lookup-v2` (unit keys with unit centroids).
 
@@ -280,7 +280,7 @@ structure). Every head carries nonzero mass.
 
 ## Assembly gaps found
 
-1. **`mailwoman gazetteer postcode-binary` cannot build a GB bin from the licence-clean shard, and fails
+1. **`mailwoman gazetteer postcode-binary` cannot build a GB bin from the licence-clean extract, and fails
    silently.** Space-split outward derivation vs a space-stripped `name` column → 0 codes, exit 0, a valid
    empty PCB1 written. Also outward-only, which is the wrong granularity for an anchor-v2-trained model.
 2. **`resolveWeights` hard-codes `locality-surface-lexicon-v6.json`.** Both v4.0.1 and v4.2.0 train against

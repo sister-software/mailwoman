@@ -15,7 +15,7 @@ export interface SplashScreenProps extends React.HTMLAttributes<HTMLDivElement> 
 }
 
 /**
- * First-paint splash shown while the demo's WASM runtime and gazetteer shards load.
+ * First-paint splash shown while the demo's WASM runtime and gazetteer extracts load.
  */
 export const SplashScreen = memo<SplashScreenProps>(({ children = "Loading...", graceTime = 2000 }) => {
 	const [visible, setVisible] = useState(false)

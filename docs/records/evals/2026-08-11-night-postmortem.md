@@ -68,7 +68,7 @@ prod e2e cascade at 8/9 (the one red is pre-existing, filed #1589).
 
 - **#1585** — the fuzzy typo-corrector crosses country scope under an explicit locale hint
   (`Stanmore Bay` --locale en-NZ → "Banmore", IN; five-whys verified: no candidate key, no WOF
-  row, unscoped fuzzy tier). Sizing comment: mechanism fix + ~7.6k-row NZ locality shard buys
+  row, unscoped fuzzy tier). Sizing comment: mechanism fix + ~7.6k-row NZ locality extract buys
   3/60 → ~55+/60.
 - **#1589** — a bare non-US postcode never probes the postcode tier (`100 00` → nothing while
   candidate.db holds Prague at 50.077/14.466; parse correct, ladder abstains).
@@ -102,7 +102,7 @@ Six issues resolved, three advanced with receipts:
 - **#1371 closed** (PR #1597) — bdc build robustness, with the crash window fixed in the SHARED
   `swapDatabaseIntoPlace` (restore-on-failed-forward-rename, two new tests) so every sealed-artifact
   builder inherits it; bdc migrated onto the helper + heals an orphaned aside at build start.
-- **#1559 closed** — both awk-translated shard readers verified BYTE-IDENTICAL against the real
+- **#1559 closed** — both awk-translated extract readers verified BYTE-IDENTICAL against the real
   sources (FR stride: 501 lines; GeoNames CA admin1=10/08: 483/572 localities, the numeric-coercion
   seam included). `fr__countrywide.zip` (609 MB) + `geonames/CA.zip` now cached on the host.
 - **#1507 closed** — verified already wired (check-case grades place identity; 7 world-capital
@@ -140,7 +140,7 @@ The migrated suite was driven to a fully-dispositioned state against the live de
   bypasses the fixture).
 - **#1602 filed (NEW model-boundary finding)**: `1502 A Cage Street, Houston, TX 77020` misses the
   situs tier on prod AND the Node path — v4.4.0 parses `street="Cage"`, `house_number="1502 A"`
-  while the TX shard keys `street_norm="a cage street"`, `number="1502"`; either mismatch kills
+  while the TX extract keys `street_norm="a cage street"`, `number="1502"`; either mismatch kills
   the keyed probe. The #48 (identifier/unit boundary) family, now with a live resolver-visible
   receipt and two lever shapes (a leading-letter-street board slice; a self-validating probe
   retry).
@@ -210,7 +210,7 @@ The migrated suite was driven to a fully-dispositioned state against the live de
 3. **#1585 fix shape**: hint-scoped fuzzy + abstain-on-empty — approve for its own board?
 4. **Panel v2's four defective DE rows** (board #31): panel v3 with re-pin, or annotate as an
    input-defect stratum?
-5. **The NZ locality shard source**: LINZ (permissive, candidate-table-eligible) vs OSM
+5. **The NZ locality extract source**: LINZ (permissive, candidate-table-eligible) vs OSM
    (build-local only under the ODbL posture).
 
 ## Concrete next steps

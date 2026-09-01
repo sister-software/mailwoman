@@ -5,7 +5,7 @@
  * @file `fetchGeonamesPostal` — and specifically what it does with a country GeoNames does not publish.
  *
  *   That is the behaviour worth a test. GeoNames covers ~80 countries, not all of them, so a caller planning a postcode
- *   shard needs "this country does not exist upstream" kept apart from "the transfer failed" — the first is an
+ *   slice needs "this country does not exist upstream" kept apart from "the transfer failed" — the first is an
  *   acquisition question and the second is a retry. Venezuela is the live instance: it 404s and the country the
  *   gauntlet evidence for the `«locality» «postcode»` defect comes from.
  */

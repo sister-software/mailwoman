@@ -26,7 +26,7 @@
  *   compound, and date material included. `12 bis Rue X` ⇒ house_number "12 bis", street "Rue X".
  *
  *   SPLIT: the fixture's street surfaces are reserved in `ban-fragments-fr.surfaces.txt`. A training
- *   shard MUST exclude them — source-disjoint by normalized street SURFACE, never by record row.
+ *   database MUST exclude them — source-disjoint by normalized street SURFACE, never by record row.
  *   Row-disjoint leaks the surface across the boundary and measures memorization.
  */
 

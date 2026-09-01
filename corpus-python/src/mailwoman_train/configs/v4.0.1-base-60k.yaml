@@ -1,5 +1,5 @@
 # === v4.0.1-base-60k — RUN 2 OF THE ENVELOPE (the venue contingency; ROAD_TO §10 item 1). ===
-# ONE NAMED DELTA vs v4.0.0-base-60k: the synth-house-venue shard folded into the feed —
+# ONE NAMED DELTA vs v4.0.0-base-60k: the synth-house-venue slice folded into the feed —
 # corpus v0.15.0-venue (v0.13.0-latam + 116,244 house-venue rows, FR-ORDER AWARE: the FR tail
 # "VENUE, 20 Rue de la Huchette, 75005 Paris" is the v4.0.0 gauntlet's exact failure family) +
 # source_weights synth-house-venue: 2.0. Everything else BYTE-IDENTICAL to v4.0.0 incl.
@@ -7,7 +7,7 @@
 #
 # WHY (the run-1 verdict): gauntlet regression layer failed 3 fixtures, all one family — FR
 # venue-led full addresses dropping to admin/street tier. Mechanism proven register-invariant
-# (not evidence painting); root cause = the feed NEVER admitted a venue shard (source_weights
+# (not evidence painting); root cause = the feed NEVER admitted a venue slice (source_weights
 # drops unlisted sources; synth-house-venue existed as a recipe but was in NO corpus) — the
 # shipped model's venue competence was lineage inheritance, which from-scratch X-rayed away.
 #
@@ -17,12 +17,12 @@
 #     status in the same cut).
 #   - us.street_prefix graded against the SUPPORT-AWARE recut floor (the recorded disposition:
 #     the 96.0 floor used the 2.0pp fallback margin on an n=25 metric; the spec-rule floor ≈ 86).
-#   - No other class may drop below its run-1 reading by more than noise (the delta is one shard
+#   - No other class may drop below its run-1 reading by more than noise (the delta is one slice
 #     at ~1.4% mass; a wider movement means the delta did more than its name).
 #   STOP RULE: this is the envelope's LAST run. Any miss => operator conversation, no third launch.
 #
 # Launch checklist: the v0.15.0-venue overlay synced (R2 corpus/v0.15.0-venue/ -> /data/corpus/
-# versioned/v0.15.0-venue/; base shards resolve into v0.13.0-latam which persists on the volume).
+# versioned/v0.15.0-venue/; base slices resolve into v0.13.0-latam which persists on the volume).
 #   modal run -d corpus-python/modal/train_remote.py --config v4.0.1-base-60k.yaml --resume none
 #
 data:
@@ -56,7 +56,7 @@ data:
     CA: 1.0 # Overture — live locality.
     MX: 1.0 # Overture — BR stays out (0% OA-lineage + SN-garbage numbers).
   source_weights: # VERBATIM v3.24 EXCEPT synth-po-box-cedex (the D2 revert).
-    synth-house-venue: 2.0 # RUN-2 DELTA (the ONE variable): the FR-order-aware venue shard.
+    synth-house-venue: 2.0 # RUN-2 DELTA (the ONE variable): the FR-order-aware venue slice.
     overture-latam: 6.0
     wof-admin: 2.0
     wof-postalcode: 2.0

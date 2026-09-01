@@ -6,7 +6,7 @@
  *   Placetype-pair emission bias — the sixth emission prior (placetype-pair-prior arc). The
  *   retrieval-augmented complement to the encoder's own judgment: probes contiguous word windows of
  *   the input against a PIX1 pair index (`pair-index-resolver.ts`) of (child, parent) place-name
- *   pairs harvested from a real address register (the GB shard: PPD `CITY`/`DISTRICT`), and
+ *   pairs harvested from a real address register (the GB extract: PPD `CITY`/`DISTRICT`), and
  *   nudges the matching BIO label when a window resolves.
  *
  *   Same additive-matrix contract as every other prior in this file (`fst-prior.ts`,

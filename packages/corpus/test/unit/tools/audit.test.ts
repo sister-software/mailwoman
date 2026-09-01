@@ -52,12 +52,12 @@ describe("audit — config parser", () => {
 	it("parses source_weights block without bleeding into sibling keys (val_rows etc.)", async () => {
 		// White-box: re-import the parser via dynamic import + grep on stdout would couple us to
 		// printer formatting. Instead, write a small config + call audit() against an empty corpus
-		// dir; we verify the warning-output for "no shards" mentions the right sources (proving the
+		// dir; we verify the warning-output for "no slices" mentions the right sources (proving the
 		// parser found exactly the configured ones and not val_rows).
 		await using tmpDirectory = await temporaryDirectory("audit-parser-test-")
 		const tmp = tmpDirectory.path
 		// Empty train/ subdir so the printer enters the per-source report block + emits the
-		// "weighted in config but no shards" warning where we can inspect what the parser saw.
+		// "weighted in config but no slices" warning where we can inspect what the parser saw.
 		await makeDirectoryExclusive(join(tmp, "train"))
 		const configPath = join(tmp, "test.yaml")
 
@@ -93,7 +93,7 @@ describe("audit — config parser", () => {
 
 		const errOutput = errLines.join("\n")
 		const logOutput = logLines.join("\n")
-		// Configured sources should appear as warnings (no shards present).
+		// Configured sources should appear as warnings (no slices present).
 		expect(errOutput + logOutput).toContain("wof-admin")
 		expect(errOutput + logOutput).toContain("ban")
 		// Non-source keys must NOT appear — val_rows / train_rows_per_epoch / coarse_filter /

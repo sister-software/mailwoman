@@ -2,7 +2,7 @@
 
 **Headline: the operator authorized the German train mid-shift, it ran to step-140000, and the eval is
 in. The verdict is REVERT, do not promote.** The order hypothesis came out _validated_: a 5,000-row
-order shard roughly doubled German street (19.1→41.2) and house_number (14.6→30.9). But the
+order extract roughly doubled German street (19.1→41.2) and house_number (14.6→30.9). But the
 continue-train recipe destabilized span boundaries. German locality and postcode collapsed, the resolver
 fell with them, and US/FR slipped just past the 1pp regression check. The recipe is rejected; the mechanism it
 exposed is the prize. Details below.
@@ -35,7 +35,7 @@ useful, so replicating it would replicate the damage.
 
 A side-by-side raw-span dump (baseline vs v0.8.0 on five real German addresses, via a German-flavored
 `scripts/diag-saintalbans.ts`) shows the same Saint Paul span-fragmentation pathology we have seen
-before, re-triggered at end-of-string by the order shard. The cities were not forgotten; their span
+before, re-triggered at end-of-string by the order extract. The cities were not forgotten; their span
 boundaries came apart:
 
 - **The order signal lands.** `Prenzlauer Allee 36, 10405 Berlin` → baseline mis-tags `36` as
@@ -52,7 +52,7 @@ boundaries came apart:
 
 So the lever is real, and the failure is a known, nameable boundary bug rather than a dead end. The next
 attempt needs the order signal _without_ the boundary damage. Candidates: (a) the Saint-Albans span-merge
-decoder fix applied to house_number/locality spans, (b) a larger/cleaner shard so the model sees complete
+decoder fix applied to house_number/locality spans, (b) a larger/cleaner extract so the model sees complete
 multi-digit house numbers and complete trailing city names, (c) train fresh-with-German rather than
 continue-train (the continue-train is what destabilized the boundaries). That decision is the operator's;
 this shift stops at the diagnosis rather than spending more GPU on a rejected recipe.
@@ -63,11 +63,11 @@ this shift stops at the diagnosis rather than spending more GPU on a rejected re
    tokenizer round-trips German orthography losslessly (10/10 samples; `ß` gets its own piece next to
    its street stem). So `Straußstraße → Strau` is the out-of-distribution model exiting at the
    ß-piece boundary, not a tokenizer ceiling. Coverage is the fix. (commit `97d1ec4`)
-2. **DE-1/DE-2 — German synthesizer + shard.** `corpus/src/synthesize-german.ts` (+ 3 passing tests)
+2. **DE-1/DE-2 — German synthesizer + extract.** `corpus/src/synthesize-german.ts` (+ 3 passing tests)
    renders REAL OpenAddresses Berlin/Saxony tuples in idiomatic German order via the OpenCage `DE`
-   template, teaching house-number-after-street + postcode-before-city. `build-german-shard.mjs`
-   pools 1.2M real DE tuples → a 5,000-row labeled shard. (commit `08f85f1`)
-3. **DE-3 — config + shard (staged, then run on approval).** `v0_8_0-german.yaml` continue-trained
+   template, teaching house-number-after-street + postcode-before-city. `build-german-extract.mjs`
+   pools 1.2M real DE tuples → a 5,000-row labeled extract. (commit `08f85f1`)
+3. **DE-3 — config + extract (staged, then run on approval).** `v0_8_0-german.yaml` continue-trained
    v0.7.2 (+40k → step-140000, `synth-german: 0.2`, `DE: 1.0`). The parquet went to the volume. (commit
    `ac571ca`)
 4. **DE-4/5 — eval harness + held-out golden.** `scripts/eval-de-coverage.sh` runs the whole
@@ -85,14 +85,14 @@ authorization to mutate shared training infra. The MANIFEST entry was staged at 
 (and re-derivable). The launch sequence, once you approved it, was:
 
 ```bash
-# 1. register the shard (the gated step):
+# 1. register the extract (the gated step):
 modal volume put mailwoman-training /tmp/MANIFEST.json \
   corpus/versioned/v0.4.0/corpus-v0.4.0/MANIFEST.json --force
 # 2. ship the config to the volume:
 modal volume put mailwoman-training \
   corpus-python/src/mailwoman_train/configs/v0_8_0-german.yaml \
   corpus-python/src/mailwoman_train/configs/v0_8_0-german.yaml --force
-# 3. verify the loader sees the shard, THEN launch (~$3, ~12 min A100):
+# 3. verify the loader sees the extract, THEN launch (~$3, ~12 min A100):
 modal run scripts/modal/train_remote.py::diagnose_corpus   # expect part-german.parquet, 5000 rows
 modal run -d scripts/modal/train_remote.py --config v0_8_0-german.yaml --resume auto
 # 4. after: export step-140000 → int8, modal volume get, then:
@@ -110,7 +110,7 @@ resolver: neural locality 77.4%, coord p50 10.0 km.
 
 - **Keep** if street + house_number climb materially AND US/FR stay within ~1pp AND German resolver
   coord holds.
-- **Revert** (pull the shard) if any existing locale drops > 1pp. You don't get to hope a locale is
+- **Revert** (pull the extract) if any existing locale drops > 1pp. You don't get to hope a locale is
   free; measure whether it was.
 
 ## What went well
@@ -121,14 +121,14 @@ resolver: neural locality 77.4%, coord p50 10.0 km.
   row whose country isn't weighted, so without `DE: 1.0` every German row would have been silently
   filtered out and the run would have taught the model nothing. That's a ~$3 + 12-minute mistake that
   never happened.
-- Real OA tuples + the OpenCage DE template means the shard carries correct German morphology and
+- Real OA tuples + the OpenCage DE template means the extract carries correct German morphology and
   order for free, with no hand-faked street names.
 
 ## What could have gone better
 
 - I reached for the wrong tool earlier in the session (the remote `/schedule` skill) before realizing
   the night shift is a local workflow. Corrected, memory written.
-- The German shard inherits some noise from the OA `CITY` column (e.g. `Rabenau Sachs`,
+- The German extract inherits some noise from the OA `CITY` column (e.g. `Rabenau Sachs`,
   `Weißwasser /O.L.`, where Kreis/region suffixes are glued to the city). It leaves the order signal
   (street/house position) intact but dirties locality labels. A `CITY`-cleaning pass is a cheap follow-up.
 
@@ -138,7 +138,7 @@ resolver: neural locality 77.4%, coord p50 10.0 km.
   step-100000 stays immutable. Cost: the v0.7.2 output dir now would hold step-140000 too (named
   clearly). Alternative was a clean separate dir, which `train_remote` can't init-from without a
   volume-side checkpoint copy.
-- **Sourced the shard from real OA tuples, not synthesized German streets.** German morphology is too
+- **Sourced the extract from real OA tuples, not synthesized German streets.** German morphology is too
   easy to fake wrong.
 - **Stopped at the MANIFEST gate rather than working around it.** The denial was correct.
 
@@ -147,7 +147,7 @@ resolver: neural locality 77.4%, coord p50 10.0 km.
 1. **Which fix for the next German attempt?** The order signal works; the boundary fragmentation is
    the blocker. Three candidates, in rough cost order: (a) span-merge decoder fix (cheap, no GPU, though
    it's the "one more rule" lever you've pushed back on; here it's a decode-time span join rather than a
-   hand-written parse rule); (b) bigger/cleaner shard + retrain; (c) fresh-with-German run instead of
+   hand-written parse rule); (b) bigger/cleaner extract + retrain; (c) fresh-with-German run instead of
    continue-train. My read: (c) is the cleanest test of whether continue-train caused the boundary
    damage, though it's the most GPU. Your call before any more spend.
 2. Merge `eval/multi-locale-de` to main? It's tested + linted; the German config trained inert and is
@@ -163,7 +163,7 @@ resolver: neural locality 77.4%, coord p50 10.0 km.
   filled in → REVERT. Artifacts at `/tmp/v080-de/` (model + both eval logs); not promoted.
 - (held) ES/IT/NL extension: same recipe would replicate the boundary damage; gated behind the German
   round-2 fix landing.
-- (cheap follow-up, still valid) CITY-column cleaning in `build-german-shard.mjs`: the OA `CITY`
+- (cheap follow-up, still valid) CITY-column cleaning in `build-german-extract.mjs`: the OA `CITY`
   noise (`Rabenau Sachs`) dirties locality labels and may have widened the locality collapse.
 
 ## Numbers
@@ -171,7 +171,7 @@ resolver: neural locality 77.4%, coord p50 10.0 km.
 |                      |                                                         |
 | -------------------- | ------------------------------------------------------- |
 | shift window         | 03:19 UTC → 14:00 UTC                                   |
-| models trained       | 1 (v0.7.2 → step-140000, German order shard)            |
+| models trained       | 1 (v0.7.2 → step-140000, German order extract)          |
 | Modal spend          | ~$3-4 (40k continue-train + fp32 export, A100)          |
 | model promoted       | 0 (REVERT verdict, recipe rejected)                     |
 | NaN incidents        | 0                                                       |

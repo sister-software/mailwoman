@@ -62,7 +62,7 @@ export class ParquetReader<T extends ParquetRecordLike> extends BaseParquetReade
 	/**
 	 * Iterate a subset of the columns, narrowed to the keys asked for.
 	 *
-	 * Parquet is columnar, so a projection is read avoided rather than read-then-discarded: on a 14-column corpus shard,
+	 * Parquet is columnar, so a projection is read avoided rather than read-then-discarded: on a 14-column corpus slice,
 	 * two columns cost 93 ms against 253 ms for the whole row. The default iterator reads every column, which is what a
 	 * caller wanting the whole record should use.
 	 */

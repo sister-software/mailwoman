@@ -52,7 +52,7 @@ Failing B-R6.1 or B-R6.2 stops the ship regardless of B-R6.3.
 
 The artifact built clean on the first try: **199,282 distinct (lieu-dit, commune) pairs**, 5,839,518
 bytes, from 1,684,844 BAN rows carrying a lieu-dit that survives `cleanLieuDit` (101 départements —
-matching the training shard's ~1.69M figure, as it must, since both read the same filter). Both
+matching the training extract's ~1.69M figure, as it must, since both read the same filter). Both
 self-check probes hit.
 
 And it changed nothing. The board stayed at **0/80**, with 100% of its pairs present in the index.

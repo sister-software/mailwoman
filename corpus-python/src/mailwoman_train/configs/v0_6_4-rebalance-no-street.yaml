@@ -85,11 +85,11 @@ data:
     synth-street: 0.5
     # synth-no-street-v063 at 0.75 (bumped from v0.6.3's 0.5 — counters dilution
     # per the 20K diagnostic). Source name distinct from v0.6.2's
-    # `synth-no-street` so the two shards coexist on the volume — the v062
+    # `synth-no-street` so the two slices coexist on the volume — the v062
     # source is intentionally omitted from source_weights → dropped per
     # data_loader's inclusion semantics.
     synth-no-street-v063: 0.75
-    # NEW: 32K-row companion shard with house_number + venue + street ALL
+    # NEW: 32K-row companion slice with house_number + venue + street ALL
     # coexisting. Recovers the house_number signal that synth-no-street's
     # distributional shift cost in v0.6.2. Weight 1.0 = full inclusion.
     synth-house-venue-v063: 1.0

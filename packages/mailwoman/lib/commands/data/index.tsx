@@ -78,7 +78,7 @@ function listBundles(dataRoot: string): string {
 		"",
 		"  mailwoman data status            what is already on disk",
 		"  mailwoman data pull candidate    the smallest useful bundle — admin resolution everywhere",
-		"  mailwoman data pull us --only nh one state's rooftop shards instead of the whole tier",
+		"  mailwoman data pull us --only nh one state's rooftop databases instead of the whole tier",
 		"  mailwoman doctor                 which bundle the thing you just ran was missing"
 	)
 
@@ -95,7 +95,7 @@ function overview(dataRoot: string): string {
 		"",
 		"The parser ships with its model, but coordinates do not come from the model. They come from data that is far",
 		"too large to put in an npm package: the admin gazetteer that resolves place names, the POI layer that resolves",
-		"businesses and landmarks, and the per-country rooftop and interpolation shards that put a house number on the",
+		"businesses and landmarks, and the per-country rooftop and interpolation databases that put a house number on the",
 		"right side of the street. Nothing here is required to PARSE an address — only to place one.",
 		"",
 		`Data root: ${dataRoot}`,

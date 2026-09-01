@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer build postcode-geonames` — the GeoNames-postal tail shard (#920): the
+ *   `mailwoman gazetteer build postcode-geonames` — the GeoNames-postal tail database (#920): the
  *   postcode coverage for countries with no `whosonfirst-data-postalcode-<cc>` repo, GB included.
  *   Ingest the `<CC>.txt` dumps → self-ancestors → indexes → provenance `meta` → FTS → SEAL.
  *
  *   This is the reproducer for `postalcode-geonames-tail.db`, an artifact that spent a year with no
  *   way to rebuild it after #1027 deleted its `build-unified-wof` Phase-2d builder. It writes to a
- *   NEW DATED path and swaps nothing; promotion over the shipped shard is a separate, deliberate
+ *   NEW DATED path and swaps nothing; promotion over the shipped database is a separate, deliberate
  *   step. GeoNames postal is CC-BY 4.0 and the GB rows carry an additional OGL v3 / Crown-copyright
  *   obligation from Ordnance Survey Code-Point Open — both ride in the artifact's `meta` table.
  */
@@ -32,7 +32,7 @@ import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
  */
 export const spec = {
 	name: "postcode-geonames",
-	description: "Build the GeoNames postal tail shard.",
+	description: "Build the GeoNames postal tail database.",
 	options: {
 		countries: {
 			type: "string",
@@ -74,7 +74,7 @@ const GazetteerBuildPostcodeGeonames: ParsedCommandComponent<Options> = ({ optio
 			result.missing.length ? `MISSING dumps (skipped): ${result.missing.join(",")}` : "all requested dumps present",
 			"provenance + licence in the `meta` table (GeoNames CC-BY 4.0; GB also OGL v3 / OS Code-Point Open)",
 			"sealed 0444",
-			"next: gate on per-country parity vs the frozen shard, THEN swap deliberately (wofShardPaths)",
+			"next: gate on per-country parity vs the frozen database, THEN swap deliberately (wofExtractPaths)",
 		]
 	})
 

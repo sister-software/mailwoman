@@ -13,8 +13,8 @@ import { aliasBagExactMatch, foldQueryText } from "#fts"
 
 /**
  * Among `ids`, return the subset whose name OR any alias equals `text` case-insensitively — the exact-match tier for
- * ranking. One indexed query over `<schema>.names`. When the shard has no `names` table (a slim DB built with
- * `dropNames`, or a postcode-only shard), fall back to the self-contained `place_search` FTS content: its `alt_names`
+ * ranking. One indexed query over `<schema>.names`. When the extract has no `names` table (a slim DB built with
+ * `dropNames`, or a postcode-only extract), fall back to the self-contained `place_search` FTS content: its `alt_names`
  * column is the same alias set joined on the boundary-preserving `ALIAS_SEPARATOR` (#523), so `aliasBagExactMatch`
  * recovers the exact alias tier ("New York City" → New York) that the dropped `names` table used to provide.
  */
@@ -41,7 +41,7 @@ export function exactMatchIDs<DB>(
 
 		return out
 	} catch {
-		// No `names` table on this shard — fall through to the place_search alias bag.
+		// No `names` table on this extract — fall through to the place_search alias bag.
 	}
 
 	try {
@@ -71,7 +71,7 @@ export function exactMatchIDs<DB>(
 			}
 		}
 	} catch {
-		// Shard without place_search either → no exact-match tier. Falls back to weighted-sum order.
+		// Extract without place_search either → no exact-match tier. Falls back to weighted-sum order.
 	}
 
 	return out
@@ -106,7 +106,7 @@ export function officialNameIDs<DB>(
 			out.add(r.id)
 		}
 	} catch {
-		// Pre-#940 gazetteer (no `official` column) or a names-less slim shard — feature inert.
+		// Pre-#940 gazetteer (no `official` column) or a names-less slim extract — feature inert.
 	}
 
 	return out

@@ -36,7 +36,7 @@ Where does the next coordinate-moving cycle go?
 1. **Learned resolver reranker** (GeoNorm / GBM-over-candidates) — lifts every already-covered match.
 2. **Coverage expansion** — US-rural gazetteer completeness (SD 62%, VT 31% locality resolution) and/or
    multi-locale gazetteer ingest (AU/ES/IT = zero rows in `admin-global-priority.db` today).
-3. **Multi-locale parser shards** — generalize the FR-admin-split win to ES/IT/AU.
+3. **Multi-locale parser extracts** — generalize the FR-admin-split win to ES/IT/AU.
 
 These are not equivalent in cost or in who they serve, and the bottleneck differs per locale. **We do
 not guess — we route on a measurement.**
@@ -73,18 +73,18 @@ flat, the candidate is buried and retrieval needs a different strategy, not a wi
 **The zero-DB trick (measure a locale we can't yet resolve, with NO gazetteer):** for AU/ES/IT, run the
 parser on public samples (OpenAddresses / OSM / synthetic) and compute the **admin-split detection
 rate** — does the parser emit a locality token and an adjacent admin token when the ground truth has
-both? That isolates "the parser is the blocker (admin-split shard, like FR)" from "the gazetteer is the
+both? That isolates "the parser is the blocker (admin-split extract, like FR)" from "the gazetteer is the
 blocker (WOF ingest)" without doing the ingest first.
 
 ### Routing thresholds
 
-| condition                                                 | route                                       |
-| --------------------------------------------------------- | ------------------------------------------- |
-| `coverage_gap_pct` > 0.20 AND `query_volume_share` > 0.05 | **Coverage expansion** (data ingest)        |
-| `ranking_gap_pct` > 0.10 AND `coverage_gap_pct` < 0.20    | **Reranker** (learned ranking)              |
-| `recall_gap_pct` > 0.15 AND `coverage_gap_pct` < 0.20     | **Retrieval fix** (raise k / relax FTS)     |
-| `parse_blocker_pct` > 0.30 (zero-DB locale)               | **Parser shard** (admin-split, FR template) |
-| `coverage_blocker_pct` > 0.70 (zero-DB locale)            | **Coverage expansion** (WOF ingest)         |
+| condition                                                 | route                                         |
+| --------------------------------------------------------- | --------------------------------------------- |
+| `coverage_gap_pct` > 0.20 AND `query_volume_share` > 0.05 | **Coverage expansion** (data ingest)          |
+| `ranking_gap_pct` > 0.10 AND `coverage_gap_pct` < 0.20    | **Reranker** (learned ranking)                |
+| `recall_gap_pct` > 0.15 AND `coverage_gap_pct` < 0.20     | **Retrieval fix** (raise k / relax FTS)       |
+| `parse_blocker_pct` > 0.30 (zero-DB locale)               | **Parser extract** (admin-split, FR template) |
+| `coverage_blocker_pct` > 0.70 (zero-DB locale)            | **Coverage expansion** (WOF ingest)           |
 
 **Run US first** — highest volume, widest coverage variation (urban vs rural), fastest to compute, and
 the most informative single routing signal.
@@ -107,7 +107,7 @@ numbers the diagnostic exists to check.
 ### Workstream A — RESULT (US, 2026-06-19)
 
 Ran `scripts/eval/three-gap-matrix.ts` on 10,000 OA-US rows. Faithful query (region `parentId` +
-postcode + parent-fallback, two-shard admin + postcode-locality), coordinate/name bucketing (rank of
+postcode + parent-fallback, two-extract admin + postcode-locality), coordinate/name bucketing (rank of
 the right PLACE, not a specific WOF id — the first pass over-counted ranking gaps because WOF carries
 duplicate ids for one place).
 
@@ -159,7 +159,7 @@ split). Corrected:
 | locale | region-in-input     | admin-split (when in input) | **loc-emit → loc-correct** | route                           |
 | ------ | ------------------- | --------------------------- | -------------------------- | ------------------------------- |
 | FR     | n/a (OA omits dépt) | — (v1.8.0 BAN gate: 99.6%)  | 100% → **97.7%**           | done                            |
-| DE     | **100%**            | **32.7%** (drops 67%)       | 66% → **36.3%**            | **PARSER_SHARD**                |
+| DE     | **100%**            | **32.7%** (drops 67%)       | 66% → **36.3%**            | **PARSER_EXTRACT**              |
 | ES     | 8.6%                | —                           | 98% → **21.3%**            | parser (locality) then coverage |
 | IT     | 1.9%                | —                           | 100% → **58.7%**           | coverage + parser polish        |
 | NL     | 2.9%                | —                           | 99% → **64.0%**            | coverage + parser polish        |
@@ -167,12 +167,12 @@ split). Corrected:
 **The finding overturns the simple "coverage wins for EU" narrative — and DeepSeek's "just ingest WOF"
 bet. The binding EU constraint is the PARSER, not (yet) coverage.** The model emits a locality almost
 always (98%+) but gets it _right_ only 21–64% outside FR (vs FR 97.7%, US ~98%). It's en-us-centric;
-only FR got a dedicated shard. Per locale:
+only FR got a dedicated extract. Per locale:
 
 - **DE — parser, and it's the cleanest next FR-style win.** The region is always in the input
   (`Mülsen, Sachsen`; `Berlin, Berlin`) and the parser drops it 67% of the time _and_ drops the
   locality on the city-state / `City, Region PLZ` format (loc-correct 36%). Crucially **DE is already in
-  the resolver DB** (US/DE/FR) — so a DE admin-split / `City,Region` shard (the FR template) moves the
+  the resolver DB** (US/DE/FR) — so a DE admin-split / `City,Region` extract (the FR template) moves the
   DE coordinate immediately, no ingest required. Overlaps the known German city-state work.
 - **ES — a specific, likely-cheap parser bug.** loc-correct 21% because the Spanish street keyword
   `CALLE` isn't recognized and bleeds into the locality (`CALLE HUERTA…` → locality `ALLE CA`). ES is
@@ -186,7 +186,7 @@ trustworthy signal, not the absolute floors. OA samples are clean-ish; real traf
 
 **Routing implication:** the EU multi-locale bet is a bigger, more parser-shaped lift than "ingest WOF"
 — per-locale parser readiness gates the coordinate before coverage can pay off. The lowest-friction
-EU coordinate win is a **DE admin-split shard** (resolver already covers DE; clear, measured parse
+EU coordinate win is a **DE admin-split extract** (resolver already covers DE; clear, measured parse
 gap), directly reusing the FR-admin-split template.
 
 ## The strategic fork (operator's call — surfaced, not assumed)
@@ -217,8 +217,8 @@ scars):
   (log-pop, feature-type, Jaro-Winkler, hierarchy-match) — no GPU. If a shallow model can't beat the
   hand-tuned resolver on the ranking-gap subset, a transformer won't either.
 
-If it's **coverage expansion** or a **multi-locale shard**, that's a separate scoping (WOF ingest
-pipeline per the existing national-situs / Overture work; or the FR-admin-split shard template).
+If it's **coverage expansion** or a **multi-locale extract**, that's a separate scoping (WOF ingest
+pipeline per the existing national-situs / Overture work; or the FR-admin-split extract template).
 
 ## Out of scope / parked
 

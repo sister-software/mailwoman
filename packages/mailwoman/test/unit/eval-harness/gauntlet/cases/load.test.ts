@@ -86,9 +86,9 @@ const CORPUS_SIZE = 651
  * Moved 2026-08-11 (fifth) — → this — by the #1585 MECHANISM landing: the sacremento row flips improvement_target →
  * pass with its measured receipt. Row count and every `id`+`input` untouched, so the board id stays.
  *
- * Moved 2026-08-11 (sixth) — → this — by the NZ re-pins after the LINZ shard promote (#1617): the two Stanmore Bay rows
- * flip improvement_target → pass with the shard's real coordinates replacing their pre-shard abstain pins. Row count
- * and every `id`+`input` untouched, so the board id stays.
+ * Moved 2026-08-11 (sixth) — → this — by the NZ re-pins after the LINZ database promote (#1617): the two Stanmore Bay
+ * rows flip improvement_target → pass with the database's real coordinates replacing their pre-database abstain pins.
+ * Row count and every `id`+`input` untouched, so the board id stays.
  *
  * Moved 2026-08-11 (seventh) — → this — by the 2-row `fork_entity` board (the declared_fork → entity-probe wire's
  * freeze): the COMER primary (poi.db holds the worldwide-unique entity 6 m from truth; the fork abstains with no
@@ -119,7 +119,7 @@ const CORPUS_SIZE = 651
  * board id moves too.
  *
  * Moved 2026-08-12 (fifth) — → this — by the 2-row `au_rooftop` board riding the G-NAF lane: the WA state-slug
- * collision witness ('47 Renegade Way, Kingsley WA 6026' — the parsed region 'WA' opened the US Washington shard and
+ * collision witness ('47 Renegade Way, Kingsley WA 6026' — the parsed region 'WA' opened the US Washington database and
  * starved the AU rooftop until the non-US pre-resolve country learned to outrank the state-slug match) and the rural
  * LOT class ('LOT 373 Clifton Street, Sandstone WA 6639'). Both land status=pass with register-point receipts. 535 →
  * 537, so the board id moves too.
@@ -145,7 +145,7 @@ const CORPUS_SIZE = 651
  * Moved again the same day — by the label-centroid swap (#1726): nine bare-country/region tolerances tighten to the
  * label-point era (fr 700→100 km, jp 1000→50 km, de 500→100 km, cn 1500→600 km, tx/ca/ga), and `us-athens-ga-30601`
  * re-pins its expectation to the Athens label centroid at city scale — the old expectation was the artifact's own math
- * centroid, and no rooftop is coverable (the GA shard holds no `1 Broad St`). Tolerance and note edits only, so the
+ * centroid, and no rooftop is coverable (the GA database holds no `1 Broad St`). Tolerance and note edits only, so the
  * board id holds — content-addressing working as intended.
  *
  * Moved 2026-08-18 evening — by the promotion sweep: the two board-flagged newly-passing rows promote to status=pass,

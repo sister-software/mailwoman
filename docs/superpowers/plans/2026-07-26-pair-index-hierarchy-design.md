@@ -180,7 +180,7 @@ boards, δ swept, value shipped in the header.
 **Measurement plan for the decode probe (named held-out populations, pre-registered):**
 
 1. **Target population:** comma-free US "street city state [zip]" rows — the US analogue of the GB
-   comma-free dep-loc misses. Source: held-out national-situs/OA rows NOT in any training shard;
+   comma-free dep-loc misses. Source: held-out national-situs/OA rows NOT in any training extract;
    the existing `applyPairIndexHoldout` (10%, seed 42) additionally withholds pairs from the index
    itself so in-index lift and coverage are measured separately (the Kimi-#1 leaked-ceiling
    correction, kept).

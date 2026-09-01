@@ -12,7 +12,7 @@
  *   missing design, which is why the answer is a scoreboard rather than a new mechanism.
  *
  *   DATABASES ARE THE UNIT, because `layer_manifest` is a table: provenance lives inside SQLite artifacts
- *   and nowhere else, so a walk that reported every file would count parquet shards and tiles it could
+ *   and nowhere else, so a walk that reported every file would count parquet databases and tiles it could
  *   never classify. The report says what it did not look at rather than implying coverage it lacks.
  *
  *   IT DOES NOT SIZE THE ROOT. `du` over ~744 GB takes minutes and answers a different question — disk
@@ -275,10 +275,10 @@ export function inventorySentence(report: InventoryReport): string {
  * Whether a recorded `build_cmd` names something that still exists in THIS repo.
  *
  * A manifest is only worth as much as its build command, and two ways of being worthless were measured on the shipped
- * artifacts. `osm/address-points-{de,gb,nz}-*.db` record `node osm/out/scripts/build-rooftop-shard.js`, a path the
+ * artifacts. `osm/address-points-{de,gb,nz}-*.db` record `node osm/out/scripts/build-rooftop-database.js`, a path the
  * workspace regroup moved to `packages/osm/...` — the literal survived the move inside a built database, where no lint
- * can reach it. And `osm/address-points-au-au.db` records `node scratchpad/build-gnaf-rooftop-shard.ts`, which exists
- * on the machine that built it and nowhere else, because `scratchpad/` is gitignored.
+ * can reach it. And `osm/address-points-au-au.db` records `node scratchpad/build-gnaf-rooftop-database.ts`, which
+ * exists on the machine that built it and nowhere else, because `scratchpad/` is gitignored.
  *
  * Both artifacts pass every "has a manifest" check and neither can be rebuilt from what it says. So presence of a
  * manifest is not the property worth counting on its own.

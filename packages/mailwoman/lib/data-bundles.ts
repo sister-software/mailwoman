@@ -21,9 +21,9 @@
  *     demo's `POI_LAYER_VERSION`): 3,889,184,768 bytes.
  *   - `street/us/<slug>/{situs,interp}.db` — the 50-state + DC + VI national street tier, 52 slugs,
  *     103 files, 41,261,826,048 bytes total. `vi` ships `situs.db` only (no TIGER interpolation
- *     shard for the territory — a real gap, not an omission here). Sizes recorded per-slug below.
- *   - `street/fr/2026-07-10/situs.db` — the FR national BAN rooftop shard (situs-only, no
- *     interpolation tier; matches the demo's `NATIONAL_STREET_SHARD_VERSION`), 6,952,509,440 bytes.
+ *     database for the territory — a real gap, not an omission here). Sizes recorded per-slug below.
+ *   - `street/fr/2026-07-10/situs.db` — the FR national BAN rooftop database (situs-only, no
+ *     interpolation tier; matches the demo's `NATIONAL_STREET_DATABASE_VERSION`), 6,952,509,440 bytes.
  *     `street/fr/national/situs.db` also exists (an older, pre-dated-convention upload) but nothing
  *     current points at it — not registered here.
  *   - `en-us/<version>/*` — the MODEL release assets (weights, tokenizer, FST, postcode binaries).
@@ -48,18 +48,18 @@
  *   - `poi`: `<dataRoot>/poi/poi.db` — `doctor/runner.ts`'s `poiPath()`.
  *   - `us`: `<dataRoot>/address-points/address-points-us-<slug>.db` and
  *     `<dataRoot>/interpolation/interpolation-us-<slug>.db` — `geocode-core.ts`'s
- *     `selectAddressPointsDB`/`selectInterpolationDB`, the SAME convention `resolveShardPath`
+ *     `selectAddressPointsDB`/`selectInterpolationDB`, the SAME convention `resolveDatabasePath`
  *     (`data-release.ts`) understands for the `"address-points"`/`"interpolation"` families. A
  *     `releases.json` pinning either family to a version routes the download to the VERSIONED
  *     filename (`resolveBundleArtifacts`, below) so a later `mailwoman geocode` run resolves it.
- *   - `fr`: `<dataRoot>/ban/address-points-fr.db` — `ban/scripts/build-address-point-shard.ts`'s own
+ *   - `fr`: `<dataRoot>/ban/address-points-fr.db` — `ban/scripts/build-address-point-database.ts`'s own
  *     default `--out` (`dataRootPath("ban", "address-points-fr.db")`), which is also where
- *     `BANShardProvider` looks. `mailwoman geocode` wires that provider (`commands/geocode.tsx`
- *     imports `@mailwoman/ban/sdk` and passes `nationalShards`), so pulling this bundle is sufficient
+ *     `BANRegionDatabaseProvider` looks. `mailwoman geocode` wires that provider (`commands/geocode.tsx`
+ *     imports `@mailwoman/ban/sdk` and passes `nationalDatabases`), so pulling this bundle is sufficient
  *     — a French address resolves to the `address_point` tier with no further configuration
  *     (re-verified 2026-08-04 on four Paris addresses, uncertainty 1 m). What FR still lacks is the
  *     INTERPOLATION tier: a BAN miss falls straight through to admin rather than estimating along the
- *     street, because no French interpolation shard is built.
+ *     street, because no French interpolation database is built.
  */
 
 import type { DataReleaseManifest } from "#data-release"
@@ -100,7 +100,7 @@ export interface BundleArtifact {
 	approxBytes: number
 	/**
 	 * The `data-release.ts` family this artifact belongs to (`"address-points"` | `"interpolation"`), for the `us`
-	 * bundle's per-state shards only. Absent for every other bundle (candidate/poi/fr are single fixed-path artifacts
+	 * bundle's per-state databases only. Absent for every other bundle (candidate/poi/fr are single fixed-path artifacts
 	 * with no local version-pinning story).
 	 */
 	family?: "address-points" | "interpolation"
@@ -122,9 +122,9 @@ export interface DataBundle {
 /**
  * Per-state hosted street-tier sizes (bytes), from the 2026-08-03 bucket survey — the source table
  * {@link usStreetArtifacts} expands into `BundleArtifact` entries. `interp` is absent for `vi` (no TIGER interpolation
- * shard hosted for the territory — a real, confirmed gap, not a table-entry someone forgot).
+ * database hosted for the territory — a real, confirmed gap, not a table-entry someone forgot).
  */
-const US_STREET_SHARD_SIZES: Record<string, { situs: number; interp?: number }> = {
+const US_STREET_DATABASE_SIZES: Record<string, { situs: number; interp?: number }> = {
 	ak: { situs: 78_602_240, interp: 26_771_456 },
 	al: { situs: 660_025_344, interp: 256_548_864 },
 	ar: { situs: 396_853_248, interp: 201_338_880 },
@@ -180,14 +180,14 @@ const US_STREET_SHARD_SIZES: Record<string, { situs: number; interp?: number }> 
 }
 
 /**
- * Expand {@link US_STREET_SHARD_SIZES} into the `us` bundle's artifact list: `remotePath` mirrors the bucket's
+ * Expand {@link US_STREET_DATABASE_SIZES} into the `us` bundle's artifact list: `remotePath` mirrors the bucket's
  * `street/us/<slug>/{situs,interp}.db` layout; `localPath` mirrors `geocode-core.ts`'s
  * `address-points-us-<slug>.db`/`interpolation-us-<slug>.db` legacy (unversioned) convention.
  */
 function usStreetArtifacts(): BundleArtifact[] {
 	const artifacts: BundleArtifact[] = []
 
-	for (const [slug, sizes] of Object.entries(US_STREET_SHARD_SIZES)) {
+	for (const [slug, sizes] of Object.entries(US_STREET_DATABASE_SIZES)) {
 		artifacts.push({
 			remotePath: `street/us/${slug}/situs.db`,
 			localPath: `address-points/address-points-us-${slug}.db`,
@@ -245,7 +245,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 	},
 	fr: {
 		name: "fr",
-		description: "French national rooftop address-point shard (BAN) — situs-only, no interpolation tier (~6.95 GB).",
+		description: "French national rooftop address-point database (BAN) — situs-only, no interpolation tier (~6.95 GB).",
 		artifacts: [
 			{
 				remotePath: "street/fr/2026-07-10/situs.db",
@@ -258,7 +258,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 	us: {
 		name: "us",
 		description:
-			"US national street tier — per-state rooftop address-point (situs) + TIGER interpolation shards, " +
+			"US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, " +
 			"50 states + DC + VI (103 files, ~41.3 GB total). Use --only <slug> to pull a single state.",
 		artifacts: usStreetArtifacts(),
 	},
@@ -278,15 +278,16 @@ export function artifactURL(artifact: BundleArtifact, baseURL: string = PUBLIC_B
 
 /**
  * Map a bundle's artifacts against a (possibly `null`) local `releases.json` manifest, resolving each `family`-tagged
- * artifact's {@link BundleArtifact.localPath} to the VERSIONED filename (`resolveShardPath`'s naming convention:
+ * artifact's {@link BundleArtifact.localPath} to the VERSIONED filename (`resolveDatabasePath`'s naming convention:
  * `<family>/<family>-us-<slug>-<version>.db`) when the manifest pins that family to a version — so a download lands
- * exactly where `resolveShardPath` (`data-release.ts`) will find it on the next `mailwoman geocode` run. Artifacts with
- * no `family` (candidate/poi/fr — single fixed-path downloads) pass through unchanged; a family artifact with no
- * matching manifest entry also passes through unchanged (the legacy unversioned path, `resolveShardPath`'s fallback).
+ * exactly where `resolveDatabasePath` (`data-release.ts`) will find it on the next `mailwoman geocode` run. Artifacts
+ * with no `family` (candidate/poi/fr — single fixed-path downloads) pass through unchanged; a family artifact with no
+ * matching manifest entry also passes through unchanged (the legacy unversioned path, `resolveDatabasePath`'s
+ * fallback).
  *
  * Pure: no filesystem access. This computes the intended DESTINATION path; whether something already exists there (or
- * at a differently-versioned path `resolveShardPath` would also accept) is the caller's `existsSync`/
- * `resolveShardPath` check, not this function's.
+ * at a differently-versioned path `resolveDatabasePath` would also accept) is the caller's `existsSync`/
+ * `resolveDatabasePath` check, not this function's.
  */
 export function resolveBundleArtifacts(bundle: DataBundle, manifest: DataReleaseManifest | null): BundleArtifact[] {
 	return bundle.artifacts.map((artifact) => {

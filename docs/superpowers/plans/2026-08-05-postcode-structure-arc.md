@@ -86,7 +86,7 @@ Accessors: `departementOfCodePostal` (`codex/fr/code-postal.ts:82`), `regionForC
 **FR is the only country with a fine-grained table** (101 départements, exact by
 construction). Every other country ships a first-letter or first-digit table, which M-3 below shows
 is close to useless as a spatial prior. The FR table is also the only one wired into a corpus recipe
-(`corpus/src/shard-recipes/fr-admin-split.ts:85`).
+(`corpus/src/extract-recipes/fr-admin-split.ts:85`).
 
 ### A.3 Runtime coherence levers (direction 2)
 

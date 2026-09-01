@@ -11,14 +11,14 @@
  *
  *   The columns are chosen from what those hand-rolls kept having to re-discover:
  *
- *   - **`join`** — a postcode shard with rows and no `ancestors` table cannot yield a (postcode, locality, region)
+ *   - **`join`** — a postcode extract with rows and no `ancestors` table cannot yield a (postcode, locality, region)
  *     triple, so a row count alone is a misleading yes. `postalcode-geonames-intl.db` holds 395,544 PT postcodes and
  *     is `spr`-only; `postalcode-intl.db` holds 27,119 FR and has the ancestry tables. Same verb, different answer.
  *   - **`parentLinked`** — and even an `ancestors` table is not enough on its own. Measured on `postalcode-intl.db`:
  *     `parent_id` is `-1` on EVERY postcode row, and the ancestry chain for `75002` is a single SELF-reference at
  *     placetype `postalcode`. So neither column reaches a locality, and a builder that assumes either produces zero
  *     rows and reads as a coverage gap.
- *   - **`bytes` / `tables`** — a zero-byte or table-less shard is a real on-disk state (see #1791), and it looks
+ *   - **`bytes` / `tables`** — a zero-byte or table-less extract is a real on-disk state (see #1791), and it looks
  *     identical to "this country has no data" from a row count.
  *
  *   ABSENCE IS REPORTED, NOT OMITTED. A country asked for and not found gets a row saying so, because "the query
@@ -32,7 +32,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join, type PathBuilderLike } from "path-ts"
 
 /**
- * What a shard can be joined THROUGH, which decides what a corpus builder can extract from it.
+ * What a extract can be joined THROUGH, which decides what a corpus builder can extract from it.
  *
  * `ancestry` does not promise the chain reaches a locality — only that the table exists. The header records why that
  * distinction cost a measurement.
@@ -54,14 +54,14 @@ export interface SourceCensusRow {
 	bytes: number
 	tables: number
 	/**
-	 * Present only when the artifact carries an `spr` table — the shape every gazetteer shard shares. A file without one
-	 * is reported with `readable: false` and a reason rather than a zero.
+	 * Present only when the artifact carries an `spr` table — the shape every gazetteer extract shares. A file without
+	 * one is reported with `readable: false` and a reason rather than a zero.
 	 */
 	countries?: Record<string, number>
 	join: JoinCapability[]
 	/**
-	 * Whether ANY row carries a usable `parent_id`. A shard whose every row reads `-1` cannot be walked upward, and that
-	 * is invisible from a row count.
+	 * Whether ANY row carries a usable `parent_id`. A extract whose every row reads `-1` cannot be walked upward, and
+	 * that is invisible from a row count.
 	 */
 	parentLinked?: boolean
 	readable: boolean

@@ -8,14 +8,14 @@
  *   monolithic `street`). Mirrors the PO box synthesizer pattern.
  *
  *   Why this exists: TIGER/NAD/BAN adapter changes (committed earlier tonight) emit decomposed
- *   components from raw source data, but the v0.4.0 parquet shards on Modal were built BEFORE those
+ *   components from raw source data, but the v0.4.0 parquet slices on Modal were built BEFORE those
  *   changes. Rebuilding the full corpus requires downloading raw TIGER/NAD/BAN data and re-running
  *   adapters end-to-end — out of scope for a single night shift. This synthesizer takes (locality,
  *   region, postcode) tuples and produces freshly-decomposed Stage 3 training rows, same shape as
  *   the PO box pipeline.
  *
  *   Note: uses the SAME decomposition logic as TIGER's `decomposeStreet()` so the synthetic
- *   distribution matches what the model would see if/when TIGER shards are rebuilt with the new
+ *   distribution matches what the model would see if/when TIGER slices are rebuilt with the new
  *   adapter.
  */
 
@@ -191,7 +191,7 @@ export interface StreetSynthesisOpts {
 function randomHouseNumber(random: () => number): string {
 	// US house number distribution: skewed low. 1-99 (30%), 100-999 (40%),
 	// 1000-9999 (25%), 10000+ (5%). The last band's 89_999 span is this file's own
-	// (the PO-box generators use 90_000) and is baked into every shipped street shard.
+	// (the PO-box generators use 90_000) and is baked into every shipped street slice.
 	return tieredNumber(random, [
 		{ cutoff: 0.3, base: 1, span: 99 },
 		{ cutoff: 0.7, base: 100, span: 900 },

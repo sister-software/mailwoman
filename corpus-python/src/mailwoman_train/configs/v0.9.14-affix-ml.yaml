@@ -1,6 +1,6 @@
 # === v0.9.14-affix-ml (#466 step 1) — the AFFIX MULTI-LOCALE REROLL ==============================
-# ONE conceptual variable vs v0.9.8-affix (the gated affix lever): the affix shard is now MULTI-LOCALE.
-# Corpus v0.4.11-affix-ml = v0.4.6-affix with the US-only synth-affix shard SWAPPED for a multi-locale
+# ONE conceptual variable vs v0.9.8-affix (the gated affix lever): the affix slice is now MULTI-LOCALE.
+# Corpus v0.4.11-affix-ml = v0.4.6-affix with the US-only synth-affix slice SWAPPED for a multi-locale
 # one (50K US affix splits — identical dose to v0.9.8 — PLUS 40K native-order FR/DE/IT/NL balance rows,
 # no affix split, no annotation). Everything else is held EXACTLY at v0.9.8: same recipe (postcode
 # anchor ON, self-cond ON, phrase priors ON), same source_weights (synth-affix 2.0), seed 42, 20k steps.
@@ -8,10 +8,10 @@
 # SOLO A/B: does multi-locale balance clear the FR-postcode dilution WITHOUT losing the affix win?
 #
 # WHY. v0.9.8 cleared the affix gate (street_prefix 0→78, street_suffix 0→67, P100; US street +2.1
-# negative-space) but its ONE blemish was FR postcode −3.9 — a US-ONLY shard (every row "City, ST ZIP")
+# negative-space) but its ONE blemish was FR postcode −3.9 — a US-ONLY slice (every row "City, ST ZIP")
 # strengthened the US postcode-after-region pattern and diluted FR's postcode-BEFORE-locality order.
 # The night-9 cumulative country run PROVED the recovery: its multi-locale rows lifted FR postcode
-# 95.6→99.5. This reroll folds that exact fix into the affix shard itself (see the postmortem
+# 95.6→99.5. This reroll folds that exact fix into the affix slice itself (see the postmortem
 # 2026-06-09, and docs/articles/plan/2026-06-09-parity-endgame.mdx move 2). The US affix EXPOSURE is
 # unchanged (50K US rows at weight 2.0 = same weighted mass as v0.9.8); the balance rows are additive.
 #
@@ -31,8 +31,8 @@
 #   (the UNFOLDED affix scorer — per-locale-f1's foldToComponents joins affixes into `street` and can't
 #   measure the split) + the street-affix-real + unit-real-designators evals + de-order-eval.ts.
 #
-# CORPUS: v0.4.11-affix-ml (shard swap, no base rebuild). Reproduce:
-#   node scripts/build-street-affix-shard.mjs --output /tmp/affix-ml-train.jsonl --count 50000 --multilocale-count 40000 --seed 42
+# CORPUS: v0.4.11-affix-ml (slice swap, no base rebuild). Reproduce:
+#   node scripts/build-street-affix-slice.mjs --output /tmp/affix-ml-train.jsonl --count 50000 --multilocale-count 40000 --seed 42
 #   python3 scripts/jsonl-to-parquet.py --input /tmp/affix-ml-train.jsonl --output <NEW>/train/part-affix-ml-train.parquet
 #   python3 scripts/assemble-affix-ml-overlay-manifest.py --base <v0.4.6-affix MANIFEST.json> \
 #       --new-dir <NEW> --modal-root /data/.../corpus-v0.4.11-affix-ml --version v0.4.11-affix-ml
@@ -69,7 +69,7 @@ data:
     synth-german: 6.0
     # retained from v4.1.0 (v0.9.7-unit-v3) — keep the secondary-unit win.
     synth-unit: 1.5
-    # the multi-locale affix shard. 2.0 keeps the US affix EXPOSURE identical to v0.9.8 (50K US rows at
+    # the multi-locale affix slice. 2.0 keeps the US affix EXPOSURE identical to v0.9.8 (50K US rows at
     # 2.0); the 40K FR/DE/IT/NL balance rows ride the same weight (additive, postcode-order signal).
     synth-affix: 2.0
   train_rows_per_epoch: 1000000

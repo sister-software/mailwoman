@@ -6,7 +6,7 @@
  *   `mailwoman registry <csv>` — the geocode-first record matcher, end to end (#613).
  *
  *   This is the integration that runs `@mailwoman/registry`'s cascade on real data: it constructs the
- *   heavy geocoder (neural parser + WOF resolver + per-state situs/interp shards — the same wiring
+ *   heavy geocoder (neural parser + WOF resolver + per-state situs/interp databases — the same wiring
  *   as `geocode`) and injects it into the matcher's `GeocodeAddress` seam, so the registry package
  *   itself never imports the runtime. Then:
  *
@@ -15,7 +15,7 @@
  *
  *   The thesis it grades: two rows reading `123 Main St` and `123 Main Street Apt 2` — different
  *   strings — collapse to one entity because they resolve to the same place. Blocking is
- *   geographic, not textual. Needs the weights + shards in hand, so the real run is
+ *   geographic, not textual. Needs the weights + databases in hand, so the real run is
  *   operator-verifiable (not CI).
  */
 
@@ -39,7 +39,7 @@ import {
 	useCommandTask,
 } from "#cli-kit"
 import { resolverDefaultCountry } from "#country-scope"
-import type { ShardResolver } from "#geocode-shards"
+import type { RegionDatabaseResolver } from "#geocode-regions"
 
 /**
  * Bare `mailwoman registry <csv>` stays the end-to-end matcher now that `registry/` hosts subcommands.
@@ -151,7 +151,7 @@ async function resolveWOFPath(options: Options): Promise<string> {
 }
 
 /**
- * Construct the heavy geocoder once (neural parser + WOF resolver + per-state shards) and wire it into the matcher's
+ * Construct the heavy geocoder once (neural parser + WOF resolver + per-state databases) and wire it into the matcher's
  * {@link GeocodeAddress} seam. Returns the seam plus a disposal hook for the database handles. Shared by the single-CSV
  * and multi-source paths.
  */
@@ -161,9 +161,9 @@ async function buildGeocoder(options: Options): Promise<{ seam: GeocodeAddress }
 	const { geocodeAddressVia } = await import("@mailwoman/registry")
 	const { createWOFResolver } = await import("@mailwoman/resolver")
 
-	const [{ geocodeAddress }, { ShardProvider }] = await Promise.all([
+	const [{ geocodeAddress }, { RegionDatabaseProvider }] = await Promise.all([
 		import("#geocode-core"),
-		import("#geocode-shards"),
+		import("#geocode-regions"),
 	])
 
 	const { INTERP_RADIUS_CALIBRATION } = await import("#interp-calibration")
@@ -191,8 +191,8 @@ async function buildGeocoder(options: Options): Promise<{ seam: GeocodeAddress }
 
 	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend; else FTS over wofPath.
 	const lookup = await createResolverBackend(mod, { wofPaths: wofPath })
-	const shardProvider = await ShardProvider.create(mod, options.dataRoot)
-	const shards: ShardResolver = shardProvider.for
+	const regionDatabaseProvider = await RegionDatabaseProvider.create(mod, options.dataRoot)
+	const databases: RegionDatabaseResolver = regionDatabaseProvider.for
 	const defaultCountry = resolverDefaultCountry(options, !!(await resolveCandidateDBPath())) || undefined
 	const resolver = createWOFResolver(lookup)
 
@@ -202,7 +202,7 @@ async function buildGeocoder(options: Options): Promise<{ seam: GeocodeAddress }
 			geocodeAddress(raw, {
 				classifier,
 				resolver,
-				shards,
+				databases,
 				defaultCountry,
 				interpCalibration: INTERP_RADIUS_CALIBRATION,
 				...(options.placeCountry ? {} : { placeCountry: false }),
@@ -213,7 +213,7 @@ async function buildGeocoder(options: Options): Promise<{ seam: GeocodeAddress }
 	return {
 		seam,
 		[Symbol.dispose]: () => {
-			shardProvider[Symbol.dispose]()
+			regionDatabaseProvider[Symbol.dispose]()
 			lookup[Symbol.dispose]()
 		},
 	}
@@ -228,7 +228,7 @@ export interface EvalGeocoderFlags {
 	 */
 	wof?: string
 	/**
-	 * Per-state shard root. Default `$MAILWOMAN_DATA_ROOT`.
+	 * Per-state database root. Default `$MAILWOMAN_DATA_ROOT`.
 	 */
 	dataRoot?: string
 	/**
@@ -258,9 +258,9 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 		const { geocodeAddressVia } = await import("@mailwoman/registry")
 		const { createWOFResolver } = await import("@mailwoman/resolver")
 
-		const [{ geocodeAddress }, { ShardProvider }] = await Promise.all([
+		const [{ geocodeAddress }, { RegionDatabaseProvider }] = await Promise.all([
 			import("#geocode-core"),
-			import("#geocode-shards"),
+			import("#geocode-regions"),
 		])
 
 		const wof = flags.wof || String(dataRootPath("wof", "admin-global-priority.db"))
@@ -276,13 +276,13 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
 		const lookup = new mod.WOFSQLitePlaceLookup({ databasePath: wof })
 		const resolver = createWOFResolver(lookup)
-		const shardProvider = await ShardProvider.create(mod, dataRoot)
+		const regionDatabaseProvider = await RegionDatabaseProvider.create(mod, dataRoot)
 
 		const geocode = (raw: string) =>
 			geocodeAddress(raw, {
 				classifier,
 				resolver,
-				shards: shardProvider.for,
+				databases: regionDatabaseProvider.for,
 				defaultCountry: "US",
 				placeCountry: false,
 				...(init?.normalizeCase !== undefined ? { normalizeCase: init.normalizeCase } : {}),
@@ -298,7 +298,7 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 			seam,
 			geocode,
 			[Symbol.dispose]: () => {
-				shardProvider[Symbol.dispose]()
+				regionDatabaseProvider[Symbol.dispose]()
 				lookup[Symbol.dispose]()
 			},
 		}

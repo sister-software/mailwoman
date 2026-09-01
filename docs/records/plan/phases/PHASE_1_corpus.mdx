@@ -1,6 +1,6 @@
 # Phase 1 — Corpus Pipeline
 
-**Goal:** build a reproducible, versioned dataset pipeline. End state is `corpus-v0.1.0` on disk, containing aligned BIO-labeled Parquet shards for US + FR, with a hand-labeled golden eval set.
+**Goal:** build a reproducible, versioned dataset pipeline. End state is `corpus-v0.1.0` on disk, containing aligned BIO-labeled Parquet extracts for US + FR, with a hand-labeled golden eval set.
 
 **Duration estimate:** 2 weeks.
 
@@ -141,7 +141,7 @@ The tokenizer is trained on the corpus, not picked off the shelf.
 
 ### 7. Parquet output
 
-- [ ] `packages/corpus/lib/parquet.ts` — write labeled rows to Parquet shards, ~1M rows per shard
+- [ ] `packages/corpus/lib/parquet.ts` — write labeled rows to Parquet extracts, ~1M rows per extract
 - [ ] Schema: `raw: string, tokens: list<string>, labels: list<string>, country: string, locale: string, source: string, source_id: string, corpus_version: string, license: string, synth_method: string?, synth_base_id: string?`
 - [ ] Use `@dsnp/parquetjs` or, if that proves limiting, write JSONL and convert via a tiny Python script (PyArrow). Either is acceptable.
 - [ ] Output path: `/data/corpus/versioned/corpus-v0.1.0/`
@@ -176,8 +176,8 @@ The tokenizer is trained on the corpus, not picked off the shelf.
 
 ## Success criteria checklist
 
-- [ ] `corpus-v0.1.0/` exists on disk with Parquet shards
-- [ ] MANIFEST.json has checksums for every shard
+- [ ] `corpus-v0.1.0/` exists on disk with Parquet extracts
+- [ ] MANIFEST.json has checksums for every extract
 - [ ] At least 5M labeled rows (coarse + street where available)
 - [ ] Eval split manifests in git
 - [ ] Golden set in git: 1000 hand-labeled entries
@@ -197,4 +197,4 @@ The tokenizer is trained on the corpus, not picked off the shelf.
 
 ## When to call this phase done
 
-When you can run `npx mailwoman corpus build --version 0.1.0` from a clean state, get a complete corpus on disk, and run a small Python script that loads a shard and prints `(tokens, labels)` pairs that look obviously correct.
+When you can run `npx mailwoman corpus build --version 0.1.0` from a clean state, get a complete corpus on disk, and run a small Python script that loads a extract and prints `(tokens, labels)` pairs that look obviously correct.

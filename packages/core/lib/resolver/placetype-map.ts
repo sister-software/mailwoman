@@ -20,9 +20,9 @@ export type PlacetypeMap = Partial<Record<ComponentTag, string>>
 /**
  * The map used when a backend does not supply its own.
  *
- * `street` and `house_number` are absent because WOF admin has no rows for them — they resolve through the situs shards
- * instead, which are keyed by street, not by placetype. Locale-specific tiers (JP-style prefecture subdivisions) are
- * absent for the same reason: a different shard entirely.
+ * `street` and `house_number` are absent because WOF admin has no rows for them — they resolve through the situs
+ * extracts instead, which are keyed by street, not by placetype. Locale-specific tiers (JP-style prefecture
+ * subdivisions) are absent for the same reason: a different extract entirely.
  */
 export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
 	country: "country",
@@ -31,8 +31,8 @@ export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
 	dependent_locality: "locality",
 	subregion: "county",
 	// `postcode` (mailwoman tag) maps to WOF's `postalcode` placetype. Resolves only when the
-	// backend has the postcode shard available — `WOFSQLitePlaceLookup` auto-routes `postalcode`
-	// queries to a `postalcode_us` (or similarly-named) shard, falling back to main if absent.
+	// backend has the postcode extract available — `WOFSQLitePlaceLookup` auto-routes `postalcode`
+	// queries to a `postalcode_us` (or similarly-named) extract, falling back to main if absent.
 	postcode: "postalcode",
 }
 
@@ -42,7 +42,7 @@ export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
  * unreachable, so a fuzzy same-name place in the wrong tier wins instead.
  *
  * Three tiers are affected (the value of each entry is the set the SQL filter should accept; the FIRST entry is the
- * canonical/requested type, which shard routing keys off):
+ * canonical/requested type, which extract routing keys off):
  *
  * - **`locality`** — `locality` (most cities), `borough` (Brooklyn, the Paris arrondissements, the London boroughs), and
  *   `localadmin` (FR communes, US towns/townships in New England). Without the group, Brooklyn-the-borough (pop 2.5M)
@@ -72,7 +72,7 @@ export const PLACETYPE_FILTER_GROUPS: Readonly<Record<string, readonly string[]>
 
 /**
  * Expand a placetype filter through {@link PLACETYPE_FILTER_GROUPS}, deduplicated and order-preserving (the first entry
- * stays first — shard routing keys off it). `null`/`undefined` (no filter) passes through untouched.
+ * stays first — extract routing keys off it). `null`/`undefined` (no filter) passes through untouched.
  */
 export function expandPlacetypeFilter(placetypes: null): null
 export function expandPlacetypeFilter(placetypes: readonly string[]): string[]

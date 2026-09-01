@@ -1,7 +1,7 @@
 """Contract tests for the affix-split relabel pass (#511).
 
 The critical property is BUILDER PARITY: split_street_span must agree with
-build-street-affix-shard.mjs::parseStreet on every case, or the pass introduces a third
+build-street-affix-slice.mjs::parseStreet on every case, or the pass introduces a third
 labeling and re-creates the contradiction it exists to cure.
 """
 

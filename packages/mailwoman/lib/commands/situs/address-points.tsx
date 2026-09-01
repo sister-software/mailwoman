@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman situs address-points --state VT` — build a per-state ADDRESS-POINT shard (#476) from
+ *   `mailwoman situs address-points --state VT` — build a per-state ADDRESS-POINT database (#476) from
  *   the pinned-release Overture Parquet: exact `(street, number)` within a `(postcode | locality)`
  *   scope → exact point. The geocoder's street-level opening move — when the point exists you look
- *   it up; you interpolate (#483) only on miss. This shard is also the gold standard the future
+ *   it up; you interpolate (#483) only on miss. This database is also the gold standard the future
  *   TIGER interpolation is graded against.
  *
  *   Keying uses THE shared normalizer (`@mailwoman/resolver-wof-sqlite/street-normalize`) — the same
@@ -15,7 +15,7 @@
  *
  *   County scoping (#483 density characterization): Overture carries no county field, so an optional
  *   --county-fips filter does a point-in-polygon against the TIGER COUNTY boundary shapefile
- *   (--county-boundary, same TIGER vintage as the EDGES the interpolation shard reads) — keeps a
+ *   (--county-boundary, same TIGER vintage as the EDGES the interpolation database reads) — keeps a
  *   county-scoped gold comparable to a county-scoped segment table.
  *
  *   Alternate source: --oa-csv builds from OpenAddresses conformed CSV(s) instead of the Overture
@@ -46,7 +46,7 @@ import {
  */
 export const spec = {
 	name: "address-points",
-	description: "Build a state address-point shard",
+	description: "Build a state address-point database",
 	options: {
 		state: { type: "string", required: true, description: "US state abbreviation" },
 		release: { type: "string", default: "2026-05-20.0", description: "Overture release" },
@@ -271,7 +271,7 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 			)
 			.get() as Record<string, number>
 
-		// --- Provenance summary --- always emitted so the operator can audit which licenses a shard carries.
+		// --- Provenance summary --- always emitted so the operator can audit which licenses a database carries.
 		const lines: string[] = [
 			`${kept} points → ${finalOut}`,
 			`${totalReturned} ${STATE} rows from ${OA_MODE ? "OpenAddresses" : basename(PARQUET)}`,
@@ -309,7 +309,7 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 
 		await kdb.destroy() // closes the underlying `db` handle
 
-		// Stamped on the TEMP file, before the swap, for the same reason the interpolation shard is: the swap
+		// Stamped on the TEMP file, before the swap, for the same reason the interpolation database is: the swap
 		// is the moment the artifact becomes live.
 		const { buildSHA, stampLayerManifest } = await import("#gazetteer-pipeline/stamp-manifest")
 		const { LayerFreshnessPolicy, LayerTier } = await import("@mailwoman/core/layers")
@@ -320,7 +320,7 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 			version: options.release,
 			schemaVersion: 1,
 			tier: LayerTier.BuildLocal,
-			// The dataset allow-list this build applied is the licence claim — a shard built with a different
+			// The dataset allow-list this build applied is the licence claim — a database built with a different
 			// filter carries different terms, and the filter is reported in the build output but was recorded
 			// nowhere in the artifact.
 			license: "see attribution; per-dataset, filtered at build time",

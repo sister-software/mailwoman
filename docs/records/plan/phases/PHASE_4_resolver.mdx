@@ -106,13 +106,13 @@ interface PlaceLookup {
 }
 ```
 
-FTS5 over `wof.name` + `wof.name_alts`. Score = FTS5 BM25 + boosts for placetype + country match. Distribution-versioning piggy-backs on the existing `neural-weights-*` pattern: `@mailwoman/wof-sqlite-<region>` packages, one per geographic shard, pulled on demand.
+FTS5 over `wof.name` + `wof.name_alts`. Score = FTS5 BM25 + boosts for placetype + country match. Distribution-versioning piggy-backs on the existing `neural-weights-*` pattern: `@mailwoman/wof-sqlite-<region>` packages, one per geographic extract, pulled on demand.
 
 Decisions deferred to 4.2:
 
 - Sync (`better-sqlite3`) vs async (`node:sqlite` + `Worker`) — depends on what `onnxruntime-node` already does and whether resolver lookups end up in a hot loop.
 - Whether to fold into `@mailwoman/neural` or split — split is cleaner but means another package to publish.
-- Region sharding strategy (US-only first vs full planet vs admin-2 shards).
+- Region extract routing strategy (US-only first vs full planet vs admin-2 extracts).
 
 ## Phase 4.3 — Resolver integration (sketch)
 

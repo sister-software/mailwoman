@@ -120,7 +120,7 @@ export const coverageTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 			.optional()
 			.describe(
 				"Recount the corpus instead of reading the cache. Exact, and costs minutes — a full read of every train " +
-					"shard. Do this after building a new corpus version, not routinely."
+					"extract. Do this after building a new corpus version, not routinely."
 			),
 		config: z
 			.string()

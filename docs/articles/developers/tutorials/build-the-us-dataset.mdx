@@ -178,7 +178,7 @@ npx mailwoman situs interpolation --states VT
 ```
 
 ```
-=== National TIGER interpolation shard build ===
+=== National TIGER interpolation extract build ===
 states:      VT
 edges-dir:   /tmp/mw-us-build/census/tiger2023-edges
 out-dir:     /tmp/mw-us-build/interpolation
@@ -192,7 +192,7 @@ Step 1: county population ranking
 Step 2: downloading TIGER EDGES ZIPs (concurrency=12)
   downloaded: 14, skipped (already present): 0, failed: 0
 
-Step 3: building per-state shards
+Step 3: building per-state extracts
   1 states with available SHPs: VT
 
 Building VT…
@@ -234,7 +234,7 @@ npx mailwoman situs attribution-manifest --release 2026-06-17.0
 ```
 vt            333,610 points · 1 sources
 ✓ attribution: /tmp/mw-us-build/address-points/ATTRIBUTION.json
-  1 shards · 333,610 total points
+  1 extracts · 333,610 total points
   top sources:
     NAD                                      333,610
 ```

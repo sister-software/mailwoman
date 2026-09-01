@@ -89,7 +89,7 @@ you can make — each with my recommendation:
    that base. So #825 is the _incremental_ push beyond v4.13.0, and its next lever is campaign-gated, not a
    cheap probe: more eval-safe data (#477's recipe, a parity-scorecard decision) or a representation change —
    and **weight is a falsified lever** here (the v1.9.1 postmortem: "only the RENDERING fixes it"). So a
-   "resume v194 + upweight the shard, 2k probe" has no falsifiable upside. **Rec: hold the budget; the further
+   "resume v194 + upweight the extract, 2k probe" has no falsifiable upside. **Rec: hold the budget; the further
    push is a campaign-strategy + data call, not an overnight GPU run.** (Budget untouched.) Details on #825.
 2. **#378 in-browser P95 trace.** The cold-path SLO + budget shipped (#857), but the live P95 — the SLO's
    real gate, which also gates #372 flatbush — needs a Chrome box (the lab has none). **Rec: run the
@@ -143,16 +143,16 @@ The diagnostic-first discipline earned its keep — all three are GPU/schema/cov
 next cycle), not three implementations:
 
 - **#305** (proximity-gate the exact-name tier) — the gate needs the postcode anchor's _coordinate_, which
-  lives at the resolver layer; the JP/EU postcode shards exist on disk but aren't wired into the default
+  lives at the resolver layer; the JP/EU postcode extracts exist on disk but aren't wired into the default
   geocode path; and `applyPostcodeConsistency` (#370, shipped _after_ #305) already does this proximity test
-  post-walk but isn't wired into `geocode-core`. Re-scoped to: wire the non-US postcode shards, then fold the
+  post-walk but isn't wired into `geocode-core`. Re-scoped to: wire the non-US postcode extracts, then fold the
   exact-tier demote into the existing #370 pass — no second gate on the hot per-keystroke path.
 - **#435** (number-after-street mis-tag) — re-probed the shipped model: **quirk 2 (street-prefix dropped) is
   FIXED** by v4.16.0 (`Rue` now tags `street_prefix`); **quirk 1 still broken** (+ a `ß` tokenization split).
   A decode-time relabel would re-classify a token, which #723's repair-discipline forbids → rides the #825
   retrain eval. Narrowed the issue.
 - **#456** (unit_designator/unit_id split) — schema change (ComponentTag + BIO + retrain). Infra is ready
-  (`codex/us/unit-designator.ts` + `build-unit-shard`); the open fork is `unit`-subsplit vs `locator[]`
+  (`codex/us/unit-designator.ts` + `build-unit-extract`); the open fork is `unit`-subsplit vs `locator[]`
   (#295). Assess-only, deferred to the unit-recognition retrain.
 
 ## Lever F — quantify the coverage win (the #822 before/after)
@@ -196,8 +196,8 @@ js-yaml is all 4.2.0 (above the vuln range); the one cleanly-safe fix was **http
 
 ## Lever I — #480 reproducibility (PR #856): #4 shipped, the rest already done
 
-Most of #480 was already shipped (verify-before-verdict again): REPRODUCIBILITY.md, the strict shard
-resolution + `test_shard_paths.py` (deliverable 2), the quantize value_info/opset docstring. The open
+Most of #480 was already shipped (verify-before-verdict again): REPRODUCIBILITY.md, the strict extract
+resolution + `test_extract_paths.py` (deliverable 2), the quantize value_info/opset docstring. The open
 deliverable I closed is **#4 — a toolchain pin-consistency verifier** (`verify_toolchain.py`): asserts the
 export/quant pins agree across pyproject ↔ the Modal image ↔ the export opset (the exact drift that broke
 mobile-Safari int8 in 2026-06-09), wired into `lint:python` + a 3-test pytest. Deliverables 3 (curriculum
@@ -228,8 +228,8 @@ already name the cold bottleneck: **the 29 MB model download**, not compute — 
 ## Backlog triage — the contained CPU work is delivered; verify-before-verdict kept paying
 
 After the plan's levers landed, I worked down the rest of the backlog and kept hitting **already-shipped**
-(checked before re-implementing, the cleanup's lesson held all night): #480 deliverable 2 (strict shard
-resolution + `test_shard_paths.py`), #480's REPRODUCIBILITY.md, #718's "fix boundary-stress-gate.ts first"
+(checked before re-implementing, the cleanup's lesson held all night): #480 deliverable 2 (strict extract
+resolution + `test_extract_paths.py`), #480's REPRODUCIBILITY.md, #718's "fix boundary-stress-gate.ts first"
 (already routes through the canonical `createScorer` in strict mode), #435 quirk 2 (the v4.16.0 model fixed
 the street-prefix drop), and the NPPES dedup yardstick (already measured anchor-on, the
 `2026-06-22-nppes-dedup-lever-ladder.md` report — #718's "anchor-off 68.0" concern was resolved by

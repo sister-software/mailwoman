@@ -53,28 +53,28 @@ import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest
 import { mailwomanDataRoot } from "#resolver-backend"
 
 /**
- * The canonical postcode-shard set (filenames under `<data-root>/wof/`): US + the WOF intl shard (NL/FR/DE/ES/IT) + the
- * GeoNames intl shard (PT/AU) + the OS Code-Point Open GB shard + the OSM Northern Ireland shard + the GeoNames-postal
- * tail shard (nine countries) + Overture postcode centroids (CA + the EU-coverage locales). Missing shards are skipped,
- * not fatal.
+ * The canonical postcode-database set (filenames under `<data-root>/wof/`): US + the WOF intl database (NL/FR/DE/ES/IT)
+ * + the GeoNames intl database (PT/AU) + the OS Code-Point Open GB database + the OSM Northern Ireland database + the
+ * GeoNames-postal tail database (nine countries) + Overture postcode centroids (CA + the EU-coverage locales). Missing
+ * databases are skipped, not fatal.
  *
  * That skip is not merely tolerant — it is the **build-local tier's mechanism**. `postalcode-ni-osm.db` is ODbL and is
  * never published, so on every machine but the one that built it the `pathExists` filter in
- * {@link resolvePostcodeShards} removes it and the set degrades to the permissive shards alone. Nothing else enforces
- * the tier, and nothing else needs to.
+ * {@link resolvePostcodeDatabases} removes it and the set degrades to the permissive databases alone. Nothing else
+ * enforces the tier, and nothing else needs to.
  *
  * What is left out: the WOF **`postalcode-gb.db`** (2,719,772 rows, 694 MB — superseded by Code-Point Open, the same
  * underlying survey under a clean licence) and **`postalcode-jp.db`** (142,604 rows, 37 MB).
  *
  * Every member is spelled `postalcode-`, and that is a routing contract rather than a house style. `deriveSchemaName`
- * (`resolver-wof-sqlite/sharding.ts`) turns the filename into the attached SQL schema name, and
- * `pickShardsForPlacetype` selects by testing that name against the placetype — which is `postalcode`. A shard added
- * here as `postcode-<cc>.db` builds the candidate table fine (the builders read `spr` directly) and is then unreachable
- * to any `findPlace({ placetype: "postalcode" })`, returning zero hits rather than an error. The
+ * (`resolver-wof-sqlite/extracts.ts`) turns the filename into the attached SQL schema name, and
+ * `pickExtractsForPlacetype` selects by testing that name against the placetype — which is `postalcode`. A database
+ * added here as `postcode-<cc>.db` builds the candidate table fine (the builders read `spr` directly) and is then
+ * unreachable to any `findPlace({ placetype: "postalcode" })`, returning zero hits rather than an error. The
  * `postcode-locality-<cc>.db` family is the deliberate exception and is NOT a member of this list: those hold a
- * `postcode_locality` relation table and no `spr`, so they are never routed as place shards at all.
+ * `postcode_locality` relation table and no `spr`, so they are never routed as place databases at all.
  */
-export const DEFAULT_POSTCODE_SHARDS = [
+export const DEFAULT_POSTCODE_DATABASES = [
 	"postalcode-us.db",
 	"postalcode-intl.db",
 	"postalcode-geonames-intl.db",
@@ -87,18 +87,18 @@ export const DEFAULT_POSTCODE_SHARDS = [
 	// Northern Ireland (BT), the hole Code-Point Open leaves — 4,757 of 50,032 live NI postcodes (9.5 %),
 	// 250/886 sectors, 80/80 districts, from OpenStreetMap `addr:postcode` (2026-08-05 cut). A miss on a
 	// BT code means NOT ATTESTED IN OSM, not that the code does not exist; since #1480 an unknown postcode
-	// abstains, so the partial shard is strictly additive.
+	// abstains, so the partial database is strictly additive.
 	//
 	// BUILD-LOCAL TIER — ODbL 1.0 is share-alike on a Derived Database, so this artifact is never
 	// published to npm, R2 or the demo. It is present only on a machine that built it, and the
-	// `pathExists` filter in `resolvePostcodeShards` IS that tier's mechanism: a deployment without the
+	// `pathExists` filter in `resolvePostcodeDatabases` IS that tier's mechanism: a deployment without the
 	// file simply has no NI coverage, exactly as before.
 	// Rebuild: `mailwoman gazetteer build postcode-ni-osm` (add `--offline` to rebuild from the saved
 	// Overpass response rather than re-querying a volunteer endpoint).
 	"postalcode-ni-osm.db",
-	// #920: the GeoNames-postal tail shard — TEN countries in ingest order FI/CZ/SK/SI/DK/NO/HR/PL/SE/BE
+	// #920: the GeoNames-postal tail database — TEN countries in ingest order FI/CZ/SK/SI/DK/NO/HR/PL/SE/BE
 	// (57,221 rows; BE joined 2026-08-12 with 1,146 codes after the Overture BE parquet measured too thin —
-	// 203 codes, none of the eu-mixed panel's). GB rode in this shard 2026-07-03 → 2026-08-05 and moved to
+	// 203 codes, none of the eu-mixed panel's). GB rode in this database 2026-07-03 → 2026-08-05 and moved to
 	// Code-Point Open above. The swap is parity-gated: the nine prior countries re-joined byte-identical
 	// (56,075 rows, worst coordinate delta 0).
 	// Rebuild: `mailwoman gazetteer build postcode-geonames --countries FI,CZ,SK,SI,DK,NO,HR,PL,SE,BE`.
@@ -115,13 +115,13 @@ export const DEFAULT_POSTCODE_SHARDS = [
 export const DEFAULT_ADMIN_DB = "admin-global-priority.db"
 
 /**
- * `<data-root>/wof`, where the admin DB, candidate DB, postcode shards, and the convention symlink live.
+ * `<data-root>/wof`, where the admin DB, candidate DB, postcode databases, and the convention symlink live.
  *
  * This helper and its two siblings below compose with path-ts's `resolvePath`, not `node:path`'s `join` — the same
- * builder `wofShardPaths` (`core/utils/data-root.ts`) uses for the identical shape, a caller-supplied root plus a fixed
- * subdirectory. It also makes the return ABSOLUTE, which the docstrings above have always claimed: the default root is
- * absolute, so `join` only differed for a caller that passed a relative `--data-root`, and for that caller it silently
- * produced a cwd-relative path the sealed-artifact swap would then resolve somewhere else.
+ * builder `wofExtractPaths` (`core/utils/data-root.ts`) uses for the identical shape, a caller-supplied root plus a
+ * fixed subdirectory. It also makes the return ABSOLUTE, which the docstrings above have always claimed: the default
+ * root is absolute, so `join` only differed for a caller that passed a relative `--data-root`, and for that caller it
+ * silently produced a cwd-relative path the sealed-artifact swap would then resolve somewhere else.
  */
 export function wofDir(dataRoot: string = mailwomanDataRoot()): string {
 	return resolvePath(dataRoot, "wof")
@@ -142,16 +142,16 @@ export function geonamesAlternateDir(dataRoot: string = mailwomanDataRoot()): st
 }
 
 /**
- * Resolve the canonical postcode-shard filenames to absolute paths, keeping only those present.
+ * Resolve the canonical postcode-database filenames to absolute paths, keeping only those present.
  */
-export async function resolvePostcodeShards(
-	shards: readonly string[] = DEFAULT_POSTCODE_SHARDS,
+export async function resolvePostcodeDatabases(
+	databases: readonly string[] = DEFAULT_POSTCODE_DATABASES,
 	dataRoot: string = mailwomanDataRoot()
 ): Promise<string[]> {
 	const paths: string[] = []
 
-	for (const shard of shards) {
-		const path = resolvePath(wofDir(dataRoot), shard)
+	for (const database of databases) {
+		const path = resolvePath(wofDir(dataRoot), database)
 
 		if (await pathExists(path)) {
 			paths.push(path)
@@ -162,11 +162,11 @@ export async function resolvePostcodeShards(
 }
 
 /**
- * Locality shards folded into the candidate build by default, existence-filtered like the postcode set — today the
- * LINZ-derived NZ suburb shard (#1564; `gazetteer build nz-localities`). A machine without the shard builds without it,
- * and the artifact's NZ locality namespace stays exactly as thin as the sources that fed it.
+ * Locality databases folded into the candidate build by default, existence-filtered like the postcode set — today the
+ * LINZ-derived NZ suburb database (#1564; `gazetteer build nz-localities`). A machine without the database builds
+ * without it, and the artifact's NZ locality namespace stays exactly as thin as the sources that fed it.
  */
-export const DEFAULT_LOCALITY_SHARDS: readonly string[] = [
+export const DEFAULT_LOCALITY_DATABASES: readonly string[] = [
 	"localities-nz-linz.db",
 	// The Prague municipal districts (`Praha 9` — the #42 pair rung's missing locality half; 22 rows
 	// from GeoNames CZ, `gazetteer build cz-districts`). Verified 2026-08-12: the Chabeřická panel row
@@ -175,16 +175,16 @@ export const DEFAULT_LOCALITY_SHARDS: readonly string[] = [
 ]
 
 /**
- * Resolve the conventional locality shards present on this machine.
+ * Resolve the conventional locality databases present on this machine.
  */
-export async function resolveLocalityShards(
-	shards: readonly string[] = DEFAULT_LOCALITY_SHARDS,
+export async function resolveLocalityDatabases(
+	databases: readonly string[] = DEFAULT_LOCALITY_DATABASES,
 	dataRoot: string = mailwomanDataRoot()
 ): Promise<string[]> {
 	const paths: string[] = []
 
-	for (const shard of shards) {
-		const path = resolvePath(wofDir(dataRoot), shard)
+	for (const database of databases) {
+		const path = resolvePath(wofDir(dataRoot), database)
 
 		if (await pathExists(path)) {
 			paths.push(path)
@@ -197,7 +197,7 @@ export async function resolveLocalityShards(
 /**
  * Resolve the conventional score source, or `undefined` when this machine has none.
  *
- * Same tolerate-and-degrade shape as {@link resolvePostcodeShards}, and the same reason: the scores are a build-local
+ * Same tolerate-and-degrade shape as {@link resolvePostcodeDatabases}, and the same reason: the scores are a build-local
  * artifact on the machine that derived them, and a deployment without the file must build a candidate DB with an empty
  * `importance` column rather than fail. Absent is UNMEASURED, which is what the consumer already handles.
  */
@@ -355,14 +355,14 @@ export interface BuildOptions {
 	 */
 	out: string
 	/**
-	 * Absolute postcode-shard paths to fold in (default {@link resolvePostcodeShards}).
+	 * Absolute postcode-database paths to fold in (default {@link resolvePostcodeDatabases}).
 	 */
-	postcodeShards?: readonly string[]
+	postcodeDatabases?: readonly string[]
 	/**
-	 * Absolute LOCALITY-shard paths to fold in (default {@link resolveLocalityShards} — today the LINZ-derived NZ suburb
-	 * shard, when the machine holds it). Same tolerate-and-degrade shape as the postcode shards.
+	 * Absolute LOCALITY-database paths to fold in (default {@link resolveLocalityDatabases} — today the LINZ-derived NZ
+	 * suburb database, when the machine holds it). Same tolerate-and-degrade shape as the postcode databases.
 	 */
-	localityShards?: readonly string[]
+	localityDatabases?: readonly string[]
 	/**
 	 * Score source for the `importance` column (default {@link resolveImportanceDB}). Pass `false` to build the column
 	 * empty on purpose.
@@ -379,9 +379,9 @@ export interface BuildOptions {
 }
 
 /**
- * Build the byte-range candidate gazetteer from an admin DB + postcode shards. The FTS5-trigram fuzzy index is baked in
- * by `buildCandidateTable`; the coverage manifest (survey candidate #2 — the artifact's own hard-filter coverage record
- * + guard-B bboxes, see `coverage-manifest.ts`) is baked in before the seal.
+ * Build the byte-range candidate gazetteer from an admin DB + postcode databases. The FTS5-trigram fuzzy index is baked
+ * in by `buildCandidateTable`; the coverage manifest (survey candidate #2 — the artifact's own hard-filter coverage
+ * record + guard-B bboxes, see `coverage-manifest.ts`) is baked in before the seal.
  */
 export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidateResult> {
 	const { buildCandidateTable } = await import("@mailwoman/resolver-wof-sqlite/build-candidate")
@@ -409,8 +409,8 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 	const result = await buildCandidateTable({
 		input: opts.adminDB,
 		output: opts.out,
-		postcodes: [...(opts.postcodeShards ?? (await resolvePostcodeShards()))],
-		localities: [...(opts.localityShards ?? (await resolveLocalityShards()))],
+		postcodes: [...(opts.postcodeDatabases ?? (await resolvePostcodeDatabases()))],
+		localities: [...(opts.localityDatabases ?? (await resolveLocalityDatabases()))],
 		...(importance ? { importance } : {}),
 		...(backfillCountries ? { currencyBackfill: { geonamesDir: geonamesDir(), countries: backfillCountries } } : {}),
 		...(capitals?.length ? { capitals } : {}),
@@ -433,9 +433,9 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 		opts.out,
 		await candidateLayerManifest({
 			adminDBPath: opts.adminDB,
-			shardCounts: {
-				postcodes: (opts.postcodeShards ?? (await resolvePostcodeShards())).length,
-				localities: (opts.localityShards ?? (await resolveLocalityShards())).length,
+			databaseCounts: {
+				postcodes: (opts.postcodeDatabases ?? (await resolvePostcodeDatabases())).length,
+				localities: (opts.localityDatabases ?? (await resolveLocalityDatabases())).length,
 			},
 			importance: Boolean(importance),
 			buildSHA: sha,

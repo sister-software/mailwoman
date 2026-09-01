@@ -4,7 +4,7 @@
 # scratchpad/run-digit-board.run.ts, package-shaped int8, vs the registered SHIPPED-v310 baselines in
 # baselines.json profile digit-board-no-v310).
 #
-# THE ONE VARIABLE vs v310: the synth-no-fragment shard @ 12.0. (synth-no-street-led is ZEROED — its
+# THE ONE VARIABLE vs v310: the synth-no-fragment slice @ 12.0. (synth-no-street-led is ZEROED — its
 # on-disk part predates its own --exclude-surfaces and is contaminated vs the board; keeping it would
 # leak reserved surfaces into training and inflate the read. Rebuild-excluded is a follow-up.)
 #
@@ -14,16 +14,16 @@
 #     street-led-hn    "<st> <n>, <pc> <city>" 0.968                 <- already at ceiling (do-no-harm)
 # The failure is the licence: `Hallingrudveien 32` -> locality + postcode, while the same row WITH a
 # postcode+city parses perfectly. The street loses its street reading and the digit loses its anchor
-# together. The shard teaches the street WITHOUT its partners — the fr-fragment fix, in Norwegian.
+# together. The slice teaches the street WITHOUT its partners — the fr-fragment fix, in Norwegian.
 #
 # MOVE  : bare-street-hn rises materially (fr-fragment moved its analogue +50pp; a 2k probe should
 #         show clear motion, not the full gain). This is the falsifier: if bare-street-hn does NOT
 #         move at 2k, the licence-transfer hypothesis is wrong and a full run is not warranted.
 # GUARD : bare-pc (the negative class) HOLDS at 1.000 — the model must not stop emitting postcode to
-#         win the digit. If it falls while bare-street-hn rises, the shard traded one default for
+#         win the digit. If it falls while bare-street-hn rises, the slice traded one default for
 #         another and --counter-prob is the knob.
 # GUARD : street-led-hn / city-first-hn / pc-first-hn do NOT regress from 0.94-0.968 (do-no-harm on
-#         the classes the OLD shard covers).
+#         the classes the OLD slice covers).
 # GUARD : the FR fragment board (board 2) and the global parity floor (board 1) — the fr-fragment win
 #         and the broad corpus must not be traded for the Norwegian one.
 #
@@ -92,7 +92,7 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the

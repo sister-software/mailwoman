@@ -51,9 +51,9 @@ export function prepareAll<Parameters extends SQLInputValue[], Row, DB>(
 
 /**
  * True when `name` is a table in the open database. The street-level lookups use this to degrade gracefully on an
- * empty/tableless shard — an interrupted `build-*-shard.ts`, or a stray 0-byte file (e.g. `sqlite3 <missing>.db "…"`
- * CREATES one) — rather than throwing `no such table` at construction and taking down a whole state's geocode (#568). A
- * missing table makes the lookup a no-op miss.
+ * empty/tableless extract — an interrupted `build-*-extract.ts`, or a stray 0-byte file (e.g. `sqlite3 <missing>.db
+ * "…"` CREATES one) — rather than throwing `no such table` at construction and taking down a whole state's geocode
+ * (#568). A missing table makes the lookup a no-op miss.
  */
 export function hasTable<DB>(db: DatabaseClient<DB>, name: string): boolean {
 	try {

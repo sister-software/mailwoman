@@ -24,7 +24,7 @@ beforeAll(async () => {
 	dbPath = dir.resolve("street-centroids-fr.db")
 	using seed = new DatabaseClient<StreetCentroidDatabase>(dbPath)
 
-	// The real shard shape: the geocoding `street_norm` PLUS the #727 phase-4c `name_key` (contract fold). The reader must
+	// The real extract shape: the geocoding `street_norm` PLUS the #727 phase-4c `name_key` (contract fold). The reader must
 	// prefer `name_key`; each row carries a DELIBERATELY WRONG street_norm, so a passing lookup proves it read name_key.
 	seed.exec(
 		"CREATE TABLE street_centroid (street_norm TEXT NOT NULL, postcode TEXT, locality_base TEXT NOT NULL, name_key TEXT NOT NULL)"
@@ -92,7 +92,7 @@ describe("SQLiteStreetNameLookup", () => {
 		expect(lk.hasStreetName("   ")).toBe(false)
 	})
 
-	test("legacy shard (no name_key column) falls back to street_norm", () => {
+	test("legacy extract (no name_key column) falls back to street_norm", () => {
 		const legacyPath = dir.resolve("legacy.db")
 		using legacy = new DatabaseClient<StreetCentroidDatabase>(legacyPath)
 		legacy.exec("CREATE TABLE street_centroid (street_norm TEXT NOT NULL, postcode TEXT, locality_base TEXT NOT NULL)")

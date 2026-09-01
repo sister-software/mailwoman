@@ -6,7 +6,7 @@
 # [country_surface, country_ambiguous] additive feature with its OWN projection + confidence — immune to
 # suppress_gazetteer_near_postcode, unlike the shared gazetteer country slot (the #1104 signal-salience
 # gap). Corpus UNCHANGED from v261 (the feature is painted on existing rows from the lexicon at encode
-# time — no new shard). GATE (docs/superpowers/plans/2026-07-14-country-lexicon-channel.md): golden
+# time — no new slice). GATE (docs/superpowers/plans/2026-07-14-country-lexicon-channel.md): golden
 # country recall recovers toward the 88.6% shipped bar on WOF-admin rows WHILE real-postal recall stays
 # 3/4 + hallucination 0.7%; US/FR coord + parity street/hn/postcode flat vs v261; mask-regression PASS;
 # zero NaN. Grade PACKAGE-SHAPED (--weights-cache), never --model alone (#718 country-OFF trap).
@@ -38,7 +38,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay shard.
+  source_weights: # VERBATIM v2.4.1 + the one new assay slice.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -67,7 +67,7 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

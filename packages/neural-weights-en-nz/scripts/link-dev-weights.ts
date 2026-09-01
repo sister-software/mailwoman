@@ -30,9 +30,9 @@
  *       moved 230/246 → 246/246 whole-edge, identical at δ 4/6/8/20 — see
  *       `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`.
  *
- *   UNLIKE en-gb there is NO postcode binary to build: no WOF NZ postcode shard exists
+ *   UNLIKE en-gb there is NO postcode binary to build: no WOF NZ postcode extract exists
  *   (release.config.json's softFeed.postcodeDBByCountry has no `nz` entry), so the anchor channel
- *   resolves OFF for en-nz until that shard is built — the tracked follow-up in this package's
+ *   resolves OFF for en-nz until that extract is built — the tracked follow-up in this package's
  *   model-card.json (`nz_artifacts.no_postcode_bin`).
  */
 

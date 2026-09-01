@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Unit tests for the `registry` command's pure pieces (#613). The full cascade is
- *   operator-verifiable (it needs the weights + shards), so here we only pin the column-mapping
+ *   operator-verifiable (it needs the weights + databases), so here we only pin the column-mapping
  *   resolution — the one bit of command-specific logic that doesn't touch the heavy runtime.
  */
 

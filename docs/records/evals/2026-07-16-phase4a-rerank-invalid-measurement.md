@@ -48,9 +48,9 @@ Both results are explained by the confound, not by the thesis:
   wrong parse (`Rue Montmartre` → locality). It fired 44 times and broke 18 by _rewarding the failure
   mode the arc exists to fix_.
 
-The shards exist locally and I simply did not wire them: `/mnt/playpen/mailwoman-data/interpolation/`
+The extracts exist locally and I simply did not wire them: `/mnt/playpen/mailwoman-data/interpolation/`
 (per-state US), `/ban/` (FR rooftop), `/osm/`. A valid test runs the **geocode cascade**
-(`geocodeAddress` / `parseForGeocode` + a `ShardResolver`), not the bare WOF admin resolver.
+(`geocodeAddress` / `parseForGeocode` + a `RegionDatabaseResolver`), not the bare WOF admin resolver.
 
 ## What IS supported
 
@@ -67,7 +67,7 @@ The shards exist locally and I simply did not wire them: `/mnt/playpen/mailwoman
 
 ## What Phase 4a still owes
 
-1. **Re-run on the geocode cascade with street-level shards.** Until then there is no evidence either
+1. **Re-run on the geocode cascade with street-level extracts.** Until then there is no evidence either
    way about resolution reranking. The headroom (seg@1 0.577 → oracle@5 0.723) is measured and real;
    whether _this_ signal collects it is untested.
 2. Expect the answer to be **locale-split**: the US has situs/TIGER street coverage, so the resolver

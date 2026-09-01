@@ -54,7 +54,7 @@ export function variantAliasExemptionOf(tree: AddressTree): true | undefined {
 /**
  * The country #42's postcode-country coherence pass scoped the walk to, read back off the resolved tree's
  * `postcode_country_scope` stamp — or the #1735 explicit-country pre-scope, whose receipt exists precisely so a tree
- * that was right from the start still gets its country's rooftop shard loaded. `undefined` whenever nothing was
+ * that was right from the start still gets its country's rooftop database loaded. `undefined` whenever nothing was
  * overridden.
  */
 export function postcodeCountryScopeOf(tree: AddressTree): string | undefined {

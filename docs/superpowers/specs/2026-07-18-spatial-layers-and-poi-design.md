@@ -110,7 +110,7 @@ vertical before expanding.)
 ## 3. Phase 1 — the POI arc (implementable now)
 
 Extends the Fable exotic-POI spec (scratchpad/fable-exotic-poi-design.md); its Phases 0–2
-(coordinate kind, venue gazetteer shard, venue-fragment retrain) proceed as written. This spec
+(coordinate kind, venue gazetteer extract, venue-fragment retrain) proceed as written. This spec
 adds the amenity/brand/intent half and re-homes venue data as layer #1.
 
 ### 3.1 Pipeline: `poi_query` kind
@@ -196,7 +196,7 @@ then "requires the locally-built OSM layer," not a mangled parse.
 - Full-address venue (class 2) non-regression.
 - Runtime-flag register rows for the new stage + scorer (invariant 5); flag-off = byte-identical.
 - Demo presets stay green; Pier 39 resolving to the pier (not SF centroid) is the acceptance
-  probe once the venue shard lands.
+  probe once the venue extract lands.
 
 ## 4. Phase 2 — BDC plausibility (proving-ground vertical; separate spec)
 
@@ -275,4 +275,4 @@ situs 124.9M points × ACS income × along-network distance × BDC competitors) 
   key range (few range requests, no joins) — the same access pattern as the candidate
   gazetteer. `layer_coverage` cells sit at res 6 (epistemics, not lookups).
 
-Remaining open: when the demo pocket gets a slim POI shard (budget review at Phase-1 exit).
+Remaining open: when the demo pocket gets a slim POI extract (budget review at Phase-1 exit).

@@ -82,7 +82,7 @@ describeIfWOF(`WOFSQLitePlaceLookup integration against ${wofPath}`, () => {
 			}
 		})
 
-		test("country: 'FR' filter returns empty against the US-only admin shard", async () => {
+		test("country: 'FR' filter returns empty against the US-only admin extract", async () => {
 			const candidates = await lookup.findPlace({ text: "Paris", country: "FR" })
 			expect(candidates).toEqual([])
 		})
@@ -142,7 +142,7 @@ describeIfWOF(`WOFSQLitePlaceLookup integration against ${wofPath}`, () => {
 	})
 
 	describe("performance budget", () => {
-		test("`findPlace` against the full US admin shard returns in <250ms", async () => {
+		test("`findPlace` against the full US admin extract returns in <250ms", async () => {
 			const start = Date.now()
 			await lookup.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })
 			const elapsed = Date.now() - start

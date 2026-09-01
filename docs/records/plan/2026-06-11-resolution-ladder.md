@@ -39,7 +39,7 @@ layer is FTS5 + the FST + the typo-tolerant retrieval tier now scoped in #531; o
 layer is the R\*Tree + ray-cast PIP that #484 shipped. The musings' fuzzy-matching section is
 #531 in different words; its autocomplete section is #190. Both were already queued.
 
-Likewise "avoid full reindexing": our artifacts are immutable provenance-tracked shards rebuilt
+Likewise "avoid full reindexing": our artifacts are immutable provenance-tracked extracts rebuilt
 per source vintage (TIGER yearly, Overture monthly). That cadence is the update story; we do
 not take on incremental index mutation.
 
@@ -52,7 +52,7 @@ segments. Two correctives were on the table; review collapsed them into one deci
 **Method 2 — address-point interpolation — is the primary corrective, promoted from "Phase 5"
 to now.** Segment-subdivision-at-anchors and address-point interpolation are nearly the same
 computation (bracket the query number with known points, interpolate between them), but Method
-2 is the simpler of the two: it needs no TIGER at all — the #476 Overture shard alone supplies
+2 is the simpler of the two: it needs no TIGER at all — the #476 Overture extract alone supplies
 the known points — and it replaces theoretical capacity ranges with real occupancy, which is
 precisely the failed gate's error term. TIGER range interpolation demotes to what it should
 always have been: the fallback for streets too sparse to bracket.
@@ -81,14 +81,14 @@ The gate does not move except by stated decision. A second miss is a second post
   the first entry rather than a special case. We have two tiers today and a ladder of nine
   above — per-tier opts members do not scale.
 - **Workspace: split.** `@mailwoman/resolver-interpolation` as its own workspace — TIGER/Overture
-  vintage lifecycle vs WOF continuous, national shard size (hundreds of MB) vs the 9 MB
+  vintage lifecycle vs WOF continuous, national extract size (hundreds of MB) vs the 9 MB
   gazetteer, independent versioning. The shared street normalizer stays the single
   build-time/query-time function it already is. Do the split before national builds so they
   land in the right home.
 
 ## Phase 3 — nationalize
 
-Multi-state TIGER + Overture shard orchestration (the builders are per-state already);
+Multi-state TIGER + Overture extract orchestration (the builders are per-state already);
 ZIP→locality scoping so "123 Main St Springfield" works without a postcode (build-time join of
 segment ZIPs to locality names via WOF ancestry); OSM interpolation ways for EU coverage only
 after #26 resolves ODbL treatment. The interpolation module stays source-agnostic — TIGER edges
@@ -106,7 +106,7 @@ centroids where a point is missing. Parcels stay deferred behind this.
 The musings proposed static weights (rooftop 0.95, interpolated 0.50, …). We keep the _ordering_
 as a prior and reject the constants: this project has a calibration discipline (the isotonic
 work), and tier confidence should be **measured** — P(error < X m) per tier per density
-stratum, fitted from the evals we already run, recalibrated when shards rebuild. Hand-assigned
+stratum, fitted from the evals we already run, recalibrated when extracts rebuild. Hand-assigned
 constants are make-or-break trivia in number form. Provenance extends to a structured chain
 (dataset, release, tier, fallback flag) — the fields already exist per row; the chain is
 assembly.

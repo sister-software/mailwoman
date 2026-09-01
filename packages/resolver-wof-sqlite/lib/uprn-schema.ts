@@ -22,7 +22,7 @@
  *   The layer contract requires every domain row to be addressable by at least one spine key —
  *   `writeLayerManifest` throws on a manifest that declares none — and UPRN is its own id space, not
  *   H3/WOF/address-id/street. The res-9 short cell (`shortCellToInt`, the same packing as poi.db and
- *   the OSM situs shards) is the spine that fits a point table, and its index doubles as the
+ *   the OSM situs extracts) is the spine that fits a point table, and its index doubles as the
  *   `nearestUPRN` ring probe.
  *
  *   The DB also embeds the layer-contract tables from `@mailwoman/core/layers`; the builder
@@ -37,7 +37,7 @@ import type { Kysely } from "kysely"
 
 /**
  * Resolution the `uprn` table's `h3_cell` column is keyed at — the shared layer-spine resolution (poi.db, the OSM situs
- * shards).
+ * extracts).
  */
 export const UPRN_H3_RESOLUTION = 9
 

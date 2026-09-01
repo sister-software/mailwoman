@@ -480,7 +480,7 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 		expect(() => new WOFSQLitePlaceLookup({ database: db, buildFTS: false })).toThrow(/place_search/)
 	})
 
-	test("SMOKE: a sealed 0444 on-disk shard opens and still answers FTS queries end-to-end", async () => {
+	test("SMOKE: a sealed 0444 on-disk extract opens and still answers FTS queries end-to-end", async () => {
 		// SMOKE test, not the regression guard: SQLite silently downgrades a write-mode open to read-only on
 		// an owned 0444 file, so this passes under the old `readOnly: false` too — it does NOT distinguish old
 		// from new code. It proves a genuinely sealed file resolves end-to-end. The real invariant (the open
@@ -490,7 +490,7 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 		const dir = dirDirectory.path
 		const dbPath = join(dir, "admin-fixture.db")
 
-		// Build the fixture ON DISK with its FTS index, then seal the file 0444 to mimic a shipped shard.
+		// Build the fixture ON DISK with its FTS index, then seal the file 0444 to mimic a shipped extract.
 		{
 			await using disk = buildFixtureDB(dbPath)
 			const builder = new WOFSQLitePlaceLookup({ database: disk, buildFTS: true })

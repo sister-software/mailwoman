@@ -86,7 +86,7 @@ admin-global-priority.db               0 postalcode rows
 ancestor edges whose CHILD is a postalcode:  0
 ```
 
-Postcodes live in separate shards, outside the admin hierarchy. A containment relation does exist,
+Postcodes live in separate extracts, outside the admin hierarchy. A containment relation does exist,
 purpose-built, in `postcode-locality-intl.db` — `is_containing` and `distance_km` per pair, 7.6M
 pairs for GB — and nothing in either grader consults it.
 
@@ -201,7 +201,7 @@ result tier:  address_point 8,434   interpolated 989   admin 577
 ```
 
 So only 577 panel rows reach an admin decision at all, and they are the rows no rooftop or
-interpolation shard could place: rural, sparsely covered, exactly where a locality centroid sits close
+interpolation extract could place: rural, sparsely covered, exactly where a locality centroid sits close
 and a ZIP zone is wide. Graded over all 10,000 the US reads as a postcode-first country (2.41 vs
 3.63 km) — **a selection effect, measured on a population production never sends to the ladder.**
 
@@ -232,9 +232,9 @@ looks like a uniform win and is not one. Gating on the character beats promoting
 _measurably_ — the shipped result now beats blanket postcode-first on every percentile (p90 1.88 km
 vs 3.26, ≤1 km 86.2% vs 82.3%), because rural keeps the locality.
 
-### 9. `0,0` is a shard population, not an edge case
+### 9. `0,0` is a extract population, not an edge case
 
-144,715 rows across four shipped shards sit on null island — **48,216 of 142,604 JP postcodes, one in
+144,715 rows across four shipped extracts sit on null island — **48,216 of 142,604 JP postcodes, one in
 three** — and `decorateNode` was copying that onto the node, where every `lat != null` guard
 downstream accepts it. Thirteen hand-written `(lat !== 0 || lon !== 0)` comparisons existed to work
 around it, including one three lines above the assignment. Fixed at the seam (#1786): the place still
@@ -244,14 +244,14 @@ No shipped CLI path produced a `0,0` answer — the cascade's country-bbox check
 was a latent hazard with a live mechanism. Where it did cost something is evals: two DE panel rows
 graded **5,776 km** from their own address, moving the panel mean by 3.85 km on both arms.
 
-### 10. A shard named `postcode-*.db` cannot serve `postalcode` queries
+### 10. A extract named `postcode-*.db` cannot serve `postalcode` queries
 
 `deriveSchemaName` yields `postcode_ca_overture`; the routing tests `startsWith("postalcode_")`.
-"postcode" ≠ "postalcode", so seventeen shards holding 877,397 codes silently return zero hits, and
+"postcode" ≠ "postalcode", so seventeen extracts holding 877,397 codes silently return zero hits, and
 `postalcode-geonames-intl.db` — which routes, being spelled right, but carries only `spr` — throws
 mid-query instead. Neither is live (these are build inputs, and the candidate table has all 843,739 CA
 codes at placetype 11), but the first CA measurement of this run reported _"974 of 1,000 rows resolve
-no postcode node"_, which reads as a coverage catastrophe and was a shard-selection artifact. #1791.
+no postcode node"_, which reads as a coverage catastrophe and was a extract-selection artifact. #1791.
 
 ### 11. The currency flags are not empty, they are CONSTANT
 
@@ -270,17 +270,17 @@ is_ceased       1 → 42,319
 Every one is single-valued, so every one carries zero bits. `is_ceased = 1` on every row is the tell
 — read literally it says every US ZIP has ceased.
 
-**The proof that these are builder artifacts rather than data is the disagreement between shards:**
+**The proof that these are builder artifacts rather than data is the disagreement between databases:**
 
-| shard                        |      rows | `is_current` | `is_deprecated` | `is_ceased` |
+| extract                      |      rows | `is_current` | `is_deprecated` | `is_ceased` |
 | ---------------------------- | --------: | -----------: | --------------: | ----------: |
 | `postalcode-us.db`           |    42,319 |        all 1 |           all 0 |   **all 1** |
 | `postalcode-intl.db`         |   444,727 |      444,708 |          **19** |   **all 1** |
 | `postalcode-gb-codepoint.db` | 1,746,976 |        all 1 |           all 0 |   **all 0** |
 | `postalcode-nl-pc6.db`       |   464,964 |        all 1 |           all 0 |   **all 0** |
 
-`is_ceased` is 1 everywhere in two shards and 0 everywhere in the other two. The value tells you which
-builder wrote the file, not anything about the code. Nineteen `is_deprecated` rows in the intl shard
+`is_ceased` is 1 everywhere in two extracts and 0 everywhere in the other two. The value tells you which
+builder wrote the file, not anything about the code. Nineteen `is_deprecated` rows in the intl extract
 are the only postal-currency information in any of them.
 
 So `10048` — the World Trade Center ZIP, retired in 2001 — sits at `0,0` flagged `is_current = 1`, and
@@ -289,11 +289,11 @@ which carry the same three flags and differ only in having a coordinate.
 
 **The one real signal is `lastmodified`**, which is genuinely varied — 6,665 distinct values. But it
 answers a different question (when the upstream record was last touched) and it stops at
-**2021-01-21**, so the shard's provenance is four and a half years old.
+**2021-01-21**, so the extract's provenance is four and a half years old.
 
 #### Why the obvious free substitute does not work
 
-Census ZCTAs are the free, permissive approximation of ZIP areas, and the shard already carries a
+Census ZCTAs are the free, permissive approximation of ZIP areas, and the extract already carries a
 `centroid_source` table with **979 rows stamped `census-zcta-2024`** — so someone has already reached
 for exactly that. Two facts kill it as a currency source:
 
@@ -345,7 +345,7 @@ still stand for whatever comes after it.
 
 ### Decision 1 — id width
 
-`PostcodePrefixAncestor.wofID` is an `f64` because WOF ids exceed 2^32; the NI shard's synthetic
+`PostcodePrefixAncestor.wofID` is an `f64` because WOF ids exceed 2^32; the NI extract's synthetic
 postcode ids start at 9.8e12. `AncestrieRecord.id` is a `u32`. **These cannot both be right if the
 postcode appliance returns WOF ancestry through ancestrie.**
 
@@ -388,7 +388,7 @@ version, section table, source-md5 stamp. The per-file discipline stays for the 
 
 ## Open questions
 
-- ~~**ZIP currency is unanswerable from the shipped shard.**~~ **ANSWERED, and the answer is worse than
+- ~~**ZIP currency is unanswerable from the shipped extract.**~~ **ANSWERED, and the answer is worse than
   "unrecorded" — see [finding 11](#11-the-currency-flags-are-not-empty-they-are-constant).**
 - **The numbering plan is a first-digit witness**, so it catches only cross-band errors. The 0.69%
   PIP disagreement is a floor on the error, not the error.
@@ -441,5 +441,5 @@ All under `scripts/diagnostic/` (gitignored), run against
 
 `ladder-arm-ab.ts` is the one to reach for first. Two flags matter and both change the conclusion
 rather than the precision: `--cascade` decides whether you are measuring the ladder's own population
-or the whole panel (finding 7), and `--candidate-db` decides whether non-FTS shards are reachable at
+or the whole panel (finding 7), and `--candidate-db` decides whether non-FTS extracts are reachable at
 all (finding 10).

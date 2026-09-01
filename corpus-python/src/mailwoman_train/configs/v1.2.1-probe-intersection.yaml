@@ -1,10 +1,10 @@
 # === v1.2.1-probe-intersection (#487 solo probe) ================================================
 # SINGLE-VARIABLE vs the shipped v1.1.0: corpus v0.4.12 -> v0.4.13-intersection (the REAL-TIGER
-# intersection shard, PR #515, 40K rows verbatim-overlaid) + synth-intersection weight 0.2 -> 1.0
-# (the shard exists now; 1.0 per the builder's recommendation — over-fire is the risk, not
+# intersection slice, PR #515, 40K rows verbatim-overlaid) + synth-intersection weight 0.2 -> 1.0
+# (the slice exists now; 1.0 per the builder's recommendation — over-fire is the risk, not
 # starvation). Resume v1.1.0 step-040000, +4k. PRE-REGISTERED READ: intersection_a/b alive on
 # intersection-real (P >= 90 — zero venue false fires is the bar that matters) AND spine flat
-# (street/locality/postcode within 1pp). Fail -> hard-negative sub-shard before any re-probe.
+# (street/locality/postcode within 1pp). Fail -> hard-negative sub-slice before any re-probe.
 # Launch: modal run -d scripts/modal/train_remote.py --config v1.2.1-probe-intersection.yaml --resume auto
 data:
   corpus_dir: /data/corpus/versioned/v0.4.13-intersection
@@ -28,7 +28,7 @@ data:
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
     synth-po-box: 1.5
-    # THE single variable (#487): the shard exists now — weight from the builder's data-derived rec.
+    # THE single variable (#487): the slice exists now — weight from the builder's data-derived rec.
     synth-intersection: 1.0
     synth-german: 6.0
     # Every proven lever rides at its solo-validated weight.
@@ -45,7 +45,7 @@ data:
   # The v0.9.12 US-postcode fix (#468): zero the gazetteer clue on tokens adjacent to a postcode-anchor
   # hit, at train time (paired with classifier.suppressGazetteerNearPostcode at inference). First trained here.
   gazetteer_choreography: true
-  # THE #511 lever: end the base-vs-shard affix label contradiction (probe-validated v1.0.6).
+  # THE #511 lever: end the base-vs-slice affix label contradiction (probe-validated v1.0.6).
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
 
 model:

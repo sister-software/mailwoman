@@ -5,12 +5,12 @@
  *
  *   The warm half of `mailwoman geocode`: everything the command used to assemble inline, hoisted behind a
  *   session so a caller that geocodes more than once — the interactive debug view, a REPL, a batch loop —
- *   pays for the classifier, the gazetteer backend and the shard handles ONCE.
+ *   pays for the classifier, the gazetteer backend and the database handles ONCE.
  *
  *   {@linkcode createGeocodeSession} runs the one-time loads in the order the CLI's error contract depends
  *   on, and each step's failure message IS that contract:
  *
- *   1. The gazetteer path (a candidate.db, else the WOF admin shards) — the most common missing prerequisite
+ *   1. The gazetteer path (a candidate.db, else the WOF admin databases) — the most common missing prerequisite
  *        and the cheapest to check, so it reports before the multi-second weights load.
  *   2. The neural weights.
  *   3. `@mailwoman/resolver-wof-sqlite`, the optional peer carrying the SQLite backends.
@@ -54,8 +54,8 @@ import {
 	parseForGeocode,
 	type GeocodeDeps,
 } from "#geocode-core"
+import { RegionDatabaseProvider, type RegionDatabaseResolver, type RegionDatabases } from "#geocode-regions"
 import type { GeocodeResult } from "#geocode-result"
-import { ShardProvider, type ShardResolver, type StateShards } from "#geocode-shards"
 import { INTERP_RADIUS_CALIBRATION } from "#interp-calibration"
 import type { CoastalErosionRoute } from "#observations/coastal-route"
 import type { AuthorityDesignationRoute } from "#observations/flood-route"
@@ -64,10 +64,10 @@ import type { ZoningDesignationRoute } from "#observations/zoning-route"
 import { poiTaxonomyLookup } from "#poi-intent"
 import {
 	createResolverBackend,
-	existingWOFShardPaths,
+	existingWOFDatabasePaths,
 	loadCapitalIndex,
 	resolveCandidateDBPath,
-	resolveWOFShardPaths,
+	resolveWOFDatabasePaths,
 } from "#resolver-backend"
 
 //#region Contract
@@ -241,7 +241,7 @@ export interface GeocodeRun {
 }
 
 /**
- * A warm geocoder over one set of options. Dispose it when done — the gazetteer, shard, OSM and poi.db handles stay
+ * A warm geocoder over one set of options. Dispose it when done — the gazetteer, database, OSM and poi.db handles stay
  * open for the session's whole life, and disposal releases every one of them.
  */
 export interface GeocodeSession extends Disposable {
@@ -276,11 +276,11 @@ export interface GeocodeSession extends Disposable {
 //#region Path + flag helpers
 
 async function resolveWOFPath(options: Pick<GeocodeSessionOptions, "dataRoot" | "resolveDB">): Promise<string[]> {
-	// The shared shard SELECTION (explicit list, then $MAILWOMAN_WOF_DB, then the default set) with this
+	// The shared database SELECTION (explicit list, then $MAILWOMAN_WOF_DB, then the default set) with this
 	// caller's own contract on top: filtered to what exists on disk — the same auto-attach the server and
 	// drop-ins use, so `mailwoman geocode` works out of the box on a standard data root — and a hard error
 	// when nothing survives, which is part of the CLI's construction-order contract.
-	const paths = await existingWOFShardPaths(resolveWOFShardPaths(options.resolveDB, options.dataRoot))
+	const paths = await existingWOFDatabasePaths(resolveWOFDatabasePaths(options.resolveDB, options.dataRoot))
 
 	if (!paths.length) {
 		throw new CommandError(
@@ -557,7 +557,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	const weightsLoadedAt = performance.now()
 
-	// Open the WOF admin resolver + the situs/interpolation shard provider.
+	// Open the WOF admin resolver + the situs/interpolation database provider.
 	progress("Opening resolver…")
 
 	let mod: typeof import("@mailwoman/resolver-wof-sqlite")
@@ -594,11 +594,11 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 				capitals.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: undefined
 
-	const shardProvider = await ShardProvider.create(mod, options.dataRoot)
+	const regionDatabaseProvider = await RegionDatabaseProvider.create(mod, options.dataRoot)
 	// Explicit --address-points-db / --interpolation-db flags override per-state selection (testing a
-	// specific file); an unset tier still falls back to the region-derived per-state shard. The street-key
-	// locale follows --locale's region (fr-FR → "fr") — the shard's keys were built with its country's
-	// normalizer, and a "us"-keyed probe against an FR shard silently misses wherever the rules diverge.
+	// specific file); an unset tier still falls back to the region-derived per-state database. The street-key
+	// locale follows --locale's region (fr-FR → "fr") — the database's keys were built with its country's
+	// normalizer, and a "us"-keyed probe against an FR database silently misses wherever the rules diverge.
 	const explicitApLocale = options.locale.split("-")[1]?.toLowerCase() === "fr" ? ("fr" as const) : ("us" as const)
 
 	const explicitAp = options.addressPointsDB
@@ -609,38 +609,38 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		? new mod.StreetInterpolator({ dbPath: options.interpolationDB })
 		: undefined
 
-	const shards: ShardResolver =
+	const databases: RegionDatabaseResolver =
 		explicitAp || explicitIp
 			? (slug) => {
-					const base = explicitAp && explicitIp ? {} : shardProvider.for(slug)
+					const base = explicitAp && explicitIp ? {} : regionDatabaseProvider.for(slug)
 
 					return { addressPoints: explicitAp ?? base.addressPoints, interpolation: explicitIp ?? base.interpolation }
 				}
-			: shardProvider.for
+			: regionDatabaseProvider.for
 
 	const backendsOpenedAt = performance.now()
 	progress("Loading optional data providers…")
 
 	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse. Optional
 	// like the resolver backend above — absent `@mailwoman/ban` ⇒ no national tier (admin/OSM path unchanged),
-	// and the provider itself is a no-op when the shard isn't on disk. Keeps the CLI backend-agnostic.
-	let nationalShards: ((country: string) => StateShards) | undefined
+	// and the provider itself is a no-op when the database isn't on disk. Keeps the CLI backend-agnostic.
+	let nationalDatabases: ((country: string) => RegionDatabases) | undefined
 
 	try {
-		const { BANShardProvider } = await import("@mailwoman/ban/sdk")
-		nationalShards = (await BANShardProvider.create(resolvePath(options.dataRoot))).for
+		const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
+		nationalDatabases = (await BANRegionDatabaseProvider.create(resolvePath(options.dataRoot))).for
 	} catch {
-		nationalShards = undefined
+		nationalDatabases = undefined
 	}
 
-	// Build-local OSM rooftop tier (#247), behind the package + on-disk-shard boundary. The provider
+	// Build-local OSM rooftop tier (#247), behind the package + on-disk-database boundary. The provider
 	// applies the country's street normalizer and enables the resolver's locality-bbox fall-through;
-	// an absent unpublished @mailwoman/osm package or absent shard remains an admin-only no-op.
-	let osmProvider: ({ for: (country: string) => StateShards } & Disposable) | undefined
+	// an absent unpublished @mailwoman/osm package or absent database remains an admin-only no-op.
+	let osmProvider: ({ for: (country: string) => RegionDatabases } & Disposable) | undefined
 
 	try {
-		const { OSMShardProvider } = await import("@mailwoman/osm/sdk")
-		osmProvider = await OSMShardProvider.create(resolvePath(options.dataRoot))
+		const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/sdk")
+		osmProvider = await OSMRegionDatabaseProvider.create(resolvePath(options.dataRoot))
 	} catch {
 		osmProvider = undefined
 	}
@@ -664,7 +664,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	const dispose = (): void => {
 		disposeQuietly(explicitAp)
 		disposeQuietly(explicitIp)
-		disposeQuietly(shardProvider)
+		disposeQuietly(regionDatabaseProvider)
 		disposeQuietly(osmProvider)
 		disposeQuietly(lookup)
 		disposeQuietly(poiHandle)
@@ -832,9 +832,9 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			...(fst ? { fst } : {}),
 			...(streetMorphology ? { streetMorphology } : {}),
 			resolver,
-			shards,
-			...(nationalShards ? { nationalShards } : {}),
-			...(osmProvider ? { osmShards: osmProvider.for } : {}),
+			databases,
+			...(nationalDatabases ? { nationalDatabases } : {}),
+			...(osmProvider ? { osmDatabases: osmProvider.for } : {}),
 			parsedTree,
 			...(bias.length ? { bias } : {}),
 			defaultCountry: (inferredScopeOK && resolverDefaultCountry(options, !!candidateDB)) || undefined,

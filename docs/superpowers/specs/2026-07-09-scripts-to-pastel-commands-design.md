@@ -19,31 +19,31 @@ Every table row = one thin `.tsx` in `mailwoman/commands/…` wrapping a `run()`
 
 ### `mailwoman corpus` (existing group, gains)
 
-| Command                   | Source script                                                                                                                              | Logic lands in                                                          |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
-| `corpus audit`            | `corpus/scripts/audit.ts`                                                                                                                  | `corpus/tools/audit.ts`                                                 |
-| `corpus ingest-csv`       | `corpus/scripts/ingest-csv.ts`                                                                                                             | `corpus/tools/ingest-csv.ts`                                            |
-| `corpus fetch <source>`   | `corpus/scripts/fetch-nad.ts` + `fetch-sources/*` (ban, hrsa, imls-pls, nppes, openaddresses, state-sources, state-hi-schools, tiger-full) | `corpus/tools/fetch/<source>.ts` over one shared fetch util (§3)        |
-| `corpus shard kryptonite` | `corpus/scripts/build-kryptonite-shard.ts`                                                                                                 | `corpus/tools/shard-kryptonite.ts`                                      |
-| `corpus shard translit`   | `corpus/scripts/build-transliteration-shard.ts`                                                                                            | `corpus/tools/shard-translit.ts`                                        |
-| `corpus golden expand`    | `corpus/scripts/expand-golden.ts`                                                                                                          | `corpus/tools/golden-expand.ts`                                         |
-| `corpus golden promote`   | `corpus/scripts/promote-golden.ts`                                                                                                         | `corpus/tools/golden-promote.ts`                                        |
-| — (fold)                  | `corpus/scripts/run-corpus-build.ts`                                                                                                       | duplicate of existing `corpus run` (`runAdapter`) — verify, then delete |
+| Command                     | Source script                                                                                                                              | Logic lands in                                                          |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| `corpus audit`              | `corpus/scripts/audit.ts`                                                                                                                  | `corpus/tools/audit.ts`                                                 |
+| `corpus ingest-csv`         | `corpus/scripts/ingest-csv.ts`                                                                                                             | `corpus/tools/ingest-csv.ts`                                            |
+| `corpus fetch <source>`     | `corpus/scripts/fetch-nad.ts` + `fetch-sources/*` (ban, hrsa, imls-pls, nppes, openaddresses, state-sources, state-hi-schools, tiger-full) | `corpus/tools/fetch/<source>.ts` over one shared fetch util (§3)        |
+| `corpus extract kryptonite` | `corpus/scripts/build-kryptonite-extract.ts`                                                                                               | `corpus/tools/extract-kryptonite.ts`                                    |
+| `corpus extract translit`   | `corpus/scripts/build-transliteration-extract.ts`                                                                                          | `corpus/tools/extract-translit.ts`                                      |
+| `corpus golden expand`      | `corpus/scripts/expand-golden.ts`                                                                                                          | `corpus/tools/golden-expand.ts`                                         |
+| `corpus golden promote`     | `corpus/scripts/promote-golden.ts`                                                                                                         | `corpus/tools/golden-promote.ts`                                        |
+| — (fold)                    | `corpus/scripts/run-corpus-build.ts`                                                                                                       | duplicate of existing `corpus run` (`runAdapter`) — verify, then delete |
 
-The source enum makes `fetch` one command, not nine. Existing `mailwoman/corpus-tools/` (3 files backing align-shard/stats/overlay-manifest commands) migrates into `corpus/tools/` in the same phase so the corpus workspace owns all corpus logic — commands repoint, `mailwoman` already depends on `@mailwoman/corpus`.
+The source enum makes `fetch` one command, not nine. Existing `mailwoman/corpus-tools/` (3 files backing align-extract/stats/overlay-manifest commands) migrates into `corpus/tools/` in the same phase so the corpus workspace owns all corpus logic — commands repoint, `mailwoman` already depends on `@mailwoman/corpus`.
 
 ### `mailwoman dev` (new group)
 
-| Command                           | Source script                                        | Logic lands in                                                                   |
-| --------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `dev generate country-reference`  | `scripts/generate-country-reference.ts`              | `codex/tools/generate-country-reference.ts`                                      |
-| `dev generate official-languages` | `scripts/generate-official-languages.ts`             | `codex/tools/generate-official-languages.ts`                                     |
-| `dev generate language-types`     | `scripts/generate-language-types.ts`                 | `core/tools/generate-language-types.ts` (generates core types)                   |
-| `dev generate trace-fixture`      | `scripts/generate-trace-fixture.ts`                  | `mailwoman/dev-tools/` (fixture for the docs visualizer; no better owner)        |
-| `dev lint corpus-shard`           | `scripts/lint-corpus-shard.ts` (+ `lint-rules.json`) | `corpus/tools/lint-shard.ts` (rules JSON moves with it)                          |
-| `dev lint shard-vocab`            | `scripts/lint-shard-vocab.ts`                        | `corpus/tools/lint-shard-vocab.ts`                                               |
-| `dev lint mdx-angles`             | `scripts/lint-mdx-angles.ts`                         | `mailwoman/dev-tools/` (docs tooling; docs workspace is private, can't be a dep) |
-| `dev jsonl-to-parquet`            | `scripts/jsonl-to-parquet.ts`                        | `corpus/tools/jsonl-to-parquet.ts` (it writes corpus shards)                     |
+| Command                           | Source script                                          | Logic lands in                                                                   |
+| --------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| `dev generate country-reference`  | `scripts/generate-country-reference.ts`                | `codex/tools/generate-country-reference.ts`                                      |
+| `dev generate official-languages` | `scripts/generate-official-languages.ts`               | `codex/tools/generate-official-languages.ts`                                     |
+| `dev generate language-types`     | `scripts/generate-language-types.ts`                   | `core/tools/generate-language-types.ts` (generates core types)                   |
+| `dev generate trace-fixture`      | `scripts/generate-trace-fixture.ts`                    | `mailwoman/dev-tools/` (fixture for the docs visualizer; no better owner)        |
+| `dev lint corpus-extract`         | `scripts/lint-corpus-extract.ts` (+ `lint-rules.json`) | `corpus/tools/lint-extract.ts` (rules JSON moves with it)                        |
+| `dev lint extract-vocab`          | `scripts/lint-extract-vocab.ts`                        | `corpus/tools/lint-extract-vocab.ts`                                             |
+| `dev lint mdx-angles`             | `scripts/lint-mdx-angles.ts`                           | `mailwoman/dev-tools/` (docs tooling; docs workspace is private, can't be a dep) |
+| `dev jsonl-to-parquet`            | `scripts/jsonl-to-parquet.ts`                          | `corpus/tools/jsonl-to-parquet.ts` (it writes corpus extracts)                   |
 
 ### `mailwoman eval` (new group)
 
@@ -120,15 +120,15 @@ All four `bin` entries leave `resolver-wof-sqlite/package.json`. `build-fts-cli.
 
 New core helpers follow the acronym-casing convention (`readJSONL`, not `readJsonl`) so they don't join the #875 debt. Phase 0 lands the core helpers; later phases consume them as each script migrates — **no big-bang rewrite of untouched scripts**; a script's dedupe happens when it migrates (probes headed for `diagnostic/` are not rewritten).
 
-| #   | Concern                                                       | Sites                     | Destination                                                                                      |
-| --- | ------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------ |
-| 1   | JSONL read/write/iterate (`split("\n")` + `JSON.parse` idiom) | ~88 files                 | `core/utils`: `readJSONL`/`writeJSONL`/`iterateJSONL`                                            |
-| 2   | `percentile`/`median`/`quantile` + `formatPercent`            | ~15 + ~40                 | `core/utils` stats module                                                                        |
-| 3   | `sha256OfFile` clones                                         | ~12                       | `core/utils`: `sha256File()`                                                                     |
-| 4   | `downloadToFile` + `isTransientStatus` + MANIFEST read/write  | ~9 files each, same files | `corpus/tools/fetch/shared.ts` (owning package — corpus-fetch-specific shape)                    |
-| 5   | local `mulberry32`/`shuffle` re-rolls                         | 4                         | delete; use `SeededRandom` (`core/utils`, exists)                                                |
-| 6   | hardcoded `/mnt/playpen`/`/data` literals                     | ~13                       | `dataRootPath()` (exists) — excludes `build-transliteration-shard`'s deliberate rewrite prefixes |
-| 7   | coarse-placer FNV-1a `hash`                                   | 4                         | `core/coarse-placer/tools/shared.ts`                                                             |
+| #   | Concern                                                       | Sites                     | Destination                                                                                        |
+| --- | ------------------------------------------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------- |
+| 1   | JSONL read/write/iterate (`split("\n")` + `JSON.parse` idiom) | ~88 files                 | `core/utils`: `readJSONL`/`writeJSONL`/`iterateJSONL`                                              |
+| 2   | `percentile`/`median`/`quantile` + `formatPercent`            | ~15 + ~40                 | `core/utils` stats module                                                                          |
+| 3   | `sha256OfFile` clones                                         | ~12                       | `core/utils`: `sha256File()`                                                                       |
+| 4   | `downloadToFile` + `isTransientStatus` + MANIFEST read/write  | ~9 files each, same files | `corpus/tools/fetch/shared.ts` (owning package — corpus-fetch-specific shape)                      |
+| 5   | local `mulberry32`/`shuffle` re-rolls                         | 4                         | delete; use `SeededRandom` (`core/utils`, exists)                                                  |
+| 6   | hardcoded `/mnt/playpen`/`/data` literals                     | ~13                       | `dataRootPath()` (exists) — excludes `build-transliteration-extract`'s deliberate rewrite prefixes |
+| 7   | coarse-placer FNV-1a `hash`                                   | 4                         | `core/coarse-placer/tools/shared.ts`                                                               |
 
 **Deliberately left:** byte-size formatting (1 file), CSV parsing (`ingest-csv`'s is deliberate), exec wrappers (three styles, no shared shape), padEnd table grids (37 bespoke), progress ticks (bespoke phrasing).
 

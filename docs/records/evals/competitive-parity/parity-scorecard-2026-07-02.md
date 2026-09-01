@@ -89,7 +89,7 @@ any floor.
 
 The perturb arena — floored at 71 since v4.4.0 because the v4.3.0 dip was a real regression —
 clears its floor by 7pp (64 → 78 since v4.3.0). The postal (edge-format) arena nearly doubled
-(13 → 24%): the po_box/cedex/intersection shards reach whole-parse strictness too. **The
+(13 → 24%): the po_box/cedex/intersection extracts reach whole-parse strictness too. **The
 libpostal (clean/canonical) arena dipped 36 → 30%** — the neural parser now edges v0 there
 (30 vs 29) but the whole-parse-strict rate on canonical inputs drifted down across the
 multi-locale releases. Unfloored, flagged-not-gated (the same hygiene as the 06-11 perturb note):

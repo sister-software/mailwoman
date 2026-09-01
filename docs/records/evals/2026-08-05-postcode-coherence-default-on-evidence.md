@@ -43,7 +43,7 @@ Three properties are deliberate:
 
 Tests: `mailwoman/eval-harness/gauntlet/lever-pin.test.ts`, 16 assertions over the mapping
 `run options → layer options → geocode deps`, including every model-selection ladder and the unpinned control. They
-assert a mapping on purpose — the gate itself needs the shard set and a loaded ONNX, and the failure this surface
+assert a mapping on purpose — the gate itself needs the extract set and a loaded ONNX, and the failure this surface
 exists to prevent is silent: a dropped pin does not throw, it produces a gate log identical to the unpinned one.
 
 ### 1.2 The first run, and why the pin alone was not enough
@@ -194,7 +194,7 @@ Same panels as the landing record (OpenAddresses US 10,000 · OpenAddresses FR 3
 same regime classifier, re-run through one probe pointed at either backend so the two tables are comparable line for
 line: `mailwoman/dev-tools/postcode-coherence-scale.run.ts <panel> <fts|candidate>`.
 
-The FTS leg uses the PRODUCTION shard set — `wofShardPaths()`, the five shards a shipped default would see — not a
+The FTS leg uses the PRODUCTION extract set — `wofExtractPaths()`, the five extracts a shipped default would see — not a
 hand-picked list.
 
 ### 2.1 Domestic leg — the address's own country as the default. Any override is a border crossing.
@@ -267,8 +267,8 @@ universe:
 `SW1A 2AA`/London, `M5V 3L9`/Toronto, `2000`/Sydney, `100-0001`/Chiyoda, `6011`/Wellington), with the distance it
 measured.
 
-**So the mechanism can speak for four countries on the production shard set and six on the candidate table.** The
-M5V 3L9 abstention the landing record recorded is the CA row here, and it is a shard-set fact: the FTS set carries zero
+**So the mechanism can speak for four countries on the production extract set and six on the candidate table.** The
+M5V 3L9 abstention the landing record recorded is the CA row here, and it is a extract-set fact: the FTS set carries zero
 CA postcode rows while the candidate table carries 843,739. JP and NZ are unreachable on both — a codex slice with no
 postcode data behind it.
 

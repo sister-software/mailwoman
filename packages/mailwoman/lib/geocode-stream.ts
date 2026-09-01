@@ -15,7 +15,7 @@
  * for await (const rec of geocodeStream(normalized, { mapping, geocode })) sink.write(rec)
  * ```
  *
- * Each worker rebuilds the classifier / WOF lookup / resolver / shards from {@link GeocodeStreamConfig}
+ * Each worker rebuilds the classifier / WOF lookup / resolver / databases from {@link GeocodeStreamConfig}
  * (paths + locale) at startup — nothing but config crosses out, only the enriched record crosses back.
  * Records arrive in completion order. Worth threading only because geocoding is ms-scale per row
  * (~23ms measured) — far above the cross-thread cost; for light normalization, stop after normalizeCSV.
@@ -45,7 +45,7 @@ export interface GeocodeStreamConfig {
 	 */
 	wofDBPath: string
 	/**
-	 * Mailwoman data root (geometry shards live under here).
+	 * Mailwoman data root (geometry databases live under here).
 	 */
 	dataRoot: string
 	/**

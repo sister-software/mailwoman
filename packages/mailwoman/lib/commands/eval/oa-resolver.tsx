@@ -32,7 +32,7 @@ export const spec = {
 		tokenizer: { type: "string", description: "Candidate tokenizer" },
 		"model-card": { type: "string", description: "Candidate model card" },
 		"model-anchor-lookup": { type: "string", description: "Anchor lookup" },
-		wof: { type: "string", description: "WOF shards" },
+		wof: { type: "string", description: "WOF databases" },
 		"default-country": { type: "string", description: "Default country" },
 		"ablate-to-anchor": booleanOption("Disable gazetteer and conventions"),
 		"anchor-off": booleanOption("Disable anchor input"),
@@ -44,13 +44,13 @@ export const spec = {
 		"postcode-country-coherence-off": booleanOption("Force postcode-country coherence off"),
 		"hierarchy-completion": booleanOption("Enable hierarchy completion"),
 		"postcode-anchor": booleanOption("Add anchor-coordinate arm"),
-		"postcode-shards": { type: "string", description: "Postcode shards" },
+		"postcode-databases": { type: "string", description: "Postcode databases" },
 		"anchor-min-conf": { type: "number", description: "Anchor trust floor" },
 		"anchor-rerank": booleanOption("Enable anchor rerank"),
-		"address-points": { type: "string", description: "Address-point shard" },
-		interpolation: { type: "string", description: "Interpolation shard" },
+		"address-points": { type: "string", description: "Address-point database" },
+		interpolation: { type: "string", description: "Interpolation database" },
 		cascade: booleanOption("Grade coordinate cascade"),
-		"data-root": { type: "string", description: "Shard root" },
+		"data-root": { type: "string", description: "Database root" },
 		"candidate-db": { type: "string", description: "Candidate backend" },
 		"postal-city-alias-db": { type: "string", description: "Postal-city alias database" },
 		assembled: booleanOption("Add assembled arms"),
@@ -85,7 +85,7 @@ interface Options {
 	postcodeCountryCoherenceOff: boolean
 	hierarchyCompletion: boolean
 	postcodeAnchor: boolean
-	postcodeShards?: string
+	postcodeDatabases?: string
 	anchorMinConf?: number
 	anchorRerank: boolean
 	addressPoints?: string

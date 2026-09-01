@@ -44,13 +44,13 @@ corpus-v0.4.0/kryptonite/canonical-kryptonite.jsonl     (canonical rows)
 corpus-v0.4.0/kryptonite/raw-deepseek-kryptonite.jsonl  (raw API responses)
 corpus-v0.4.0/kryptonite/.kryptonite-checkpoint.json    (resumable batches)
   │
-  │  corpus/scripts/build-kryptonite-shard.ts
-  │    streams JSONL → alignRow (BIO labels) → parquet shard
-  │    composes MANIFEST = v0.3.0.shards + new shard
+  │  corpus/scripts/build-kryptonite-extract.ts
+  │    streams JSONL → alignRow (BIO labels) → parquet extract
+  │    composes MANIFEST = v0.3.0.extracts + new extract
   ▼
 $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.4.0/corpus-v0.4.0/
   ├── MANIFEST.json
-  └── train/part-0000.parquet          ← new kryptonite shard
+  └── train/part-0000.parquet          ← new kryptonite extract
 ```
 
 ## Generator (`corpus-python/scripts/generate_deepseek_corpus.py`)
@@ -131,7 +131,7 @@ The substring-match invariant (every component value must appear verbatim in `ra
 enforced in the system prompt **and** revalidated locally before the row is committed
 to the canonical JSONL. Failure rate observed on production run: ~0.02%.
 
-## Builder (`corpus/scripts/build-kryptonite-shard.ts`)
+## Builder (`corpus/scripts/build-kryptonite-extract.ts`)
 
 Streams the canonical JSONL through `alignRow` (corpus/src/align.ts) to produce
 `tokens` + `labels`, writes a single parquet file under `train/`, and emits the
@@ -248,11 +248,11 @@ rows fit comfortably.
 ### What Thread B2 adds
 
 1. Runs the transliteration generator end-to-end against the full seed pool.
-2. New `build-transliteration-shard.ts` (now `corpus/src/tools/shard-translit.ts`)
-   mirroring `build-kryptonite-shard.ts` — buckets canonical rows by `source` and emits
+2. New `build-transliteration-extract.ts` (now `corpus/src/tools/extract-translit.ts`)
+   mirroring `build-kryptonite-extract.ts` — buckets canonical rows by `source` and emits
    one parquet file per script (`train/part-translit-<slug>.parquet`).
-3. Composes the new MANIFEST as `(v0.3.0 base shards) + (Thread B kryptonite shard) +
-(Thread B2 translit-<slug> shards)`.
+3. Composes the new MANIFEST as `(v0.3.0 base extracts) + (Thread B kryptonite extract) +
+(Thread B2 translit-<slug> extracts)`.
 4. Migrates v0.3.0 parquet descriptors in MANIFEST from `$MAILWOMAN_DATA_ROOT/...`
    to `/data/...`, the form that container loaders resolve at training time. The on-disk
    bytes are unchanged; only the path strings in MANIFEST move. (Thread B's MANIFEST mixed

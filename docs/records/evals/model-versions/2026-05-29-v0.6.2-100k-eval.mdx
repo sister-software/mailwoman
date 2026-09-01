@@ -16,7 +16,7 @@ addresses the only remaining regression.
 
 - **Model:** v0.6.2 step 100K (`model.onnx` from `/data/output-v062/checkpoints/step-100000`)
 - **Training:** A100 80GB PCIe, ~16 steps/s, ~104 min wall-clock for 100K steps. No NaN.
-- **Corpus changes from v0.6.0:** synth-street weight 2.0 → 0.5, synth-no-street shard added
+- **Corpus changes from v0.6.0:** synth-street weight 2.0 → 0.5, synth-no-street extract added
   at weight 1.0 (122K rows: 112K US + 10K DE/GB, 35% venue-adversarial)
 - **Tokenizer:** v0.6.0-a0 (unchanged)
 - **Inference:** admin FST `fst-en-us.bin` + morphology FST (length-3-filtered, 1,707
@@ -118,10 +118,10 @@ shouldn't be admin spans.
 
 v0.6.3 (pre-staged on Modal as of 2026-05-29) ships both mechanism fixes:
 
-- `synth-no-street-v063` (the rebuilt shard) removes `5th Avenue Theatre` and `7th Street
+- `synth-no-street-v063` (the rebuilt extract) removes `5th Avenue Theatre` and `7th Street
 Bistro` from `ADVERSARIAL_VENUES`. A module-load-time assertion now rejects any future
   digit+ordinal venue addition.
-- `synth-house-venue-v063` (new shard, 32K rows) teaches house_number + venue coexistence
+- `synth-house-venue-v063` (new extract, 32K rows) teaches house_number + venue coexistence
   via patterns like `"123 Main St, Sunrise Bakery, Springfield, IL 62701"`.
 
 ### Harness: essentially tied
@@ -153,7 +153,7 @@ to downstream users.
 ## What this means for v0.6.3
 
 v0.6.3 is the targeted fix. Its yaml `v0_6_3-house-venue.yaml` is on the Modal volume; its
-parquet shards (`part-no-street-v063.parquet`, `part-house-venue-v063.parquet`) are too;
+parquet extracts (`part-no-street-v063.parquet`, `part-house-venue-v063.parquet`) are too;
 MANIFEST is updated. Launching it took one `modal run` command.
 
 Expected v0.6.3 outcome:
@@ -165,7 +165,7 @@ Expected v0.6.3 outcome:
 If v0.6.3 passes the gate AND beats the harness baseline, it promotes. If it passes the gate
 but doesn't move the harness needle, it ships as experimental. If the house_number fix
 doesn't materialize, the linter design (see `project-corpus-poisoning-vulnerability` memory)
-becomes the priority — we need preventative checks before the next synth shard goes in.
+becomes the priority — we need preventative checks before the next synth extract goes in.
 
 ## Reproducing
 

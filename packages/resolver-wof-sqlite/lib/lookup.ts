@@ -28,6 +28,13 @@ import {
 	type Strategy,
 } from "#convention"
 import {
+	pickExtractForPlacetype,
+	pickExtractsForPlacetype,
+	resolveExtracts,
+	type ResolvedExtract,
+	type ExtractConfig,
+} from "#extracts"
+import {
 	buildPlaceSearchFTS,
 	PLACE_BBOX_TABLE,
 	PLACE_POPULATION_TABLE,
@@ -43,13 +50,6 @@ import type { WOFPostalCityAliasLookup } from "#postal-city-alias-lookup"
 import { DEFAULT_WEIGHTS, populationScaleTerm, type RankingWeights } from "#ranking-weights"
 import type { WOFDatabase } from "#schema"
 import { fetchSearchRows, type RawSearchRow } from "#search-fetch"
-import {
-	pickShardForPlacetype,
-	pickShardsForPlacetype,
-	resolveShards,
-	type ResolvedShard,
-	type ShardConfig,
-} from "#sharding"
 import { SqliteConventionSource } from "#sqlite-convention-source"
 import { allRows } from "#sqlite-utils"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#types"
@@ -58,21 +58,21 @@ export interface WOFSQLitePlaceLookupOpts {
 	/**
 	 * Path to the WOF SQLite distribution on disk. Mutually exclusive with `database`.
 	 *
-	 * **Single string** — opens that one DB as the main shard.
+	 * **Single string** — opens that one DB as the main extract.
 	 *
 	 * **Array** — opens the first entry as main, then ATTACHes each subsequent entry as a separate SQLite schema. Schema
 	 * names are derived from the filename (`whosonfirst-data-postalcode- us-latest.db` → `postalcode_us`); override with
-	 * `ShardConfig.schemaName` when the filename doesn't follow WOF convention. See `sharding.ts` for the derivation
+	 * `ExtractConfig.schemaName` when the filename doesn't follow WOF convention. See `extracts.ts` for the derivation
 	 * rules.
 	 *
-	 * Routing: queries with a `placetype` matching a shard's name (or explicit `placetypes` hint) are sent to that shard;
-	 * everything else hits main. Cross-shard UNION is NOT done — BM25 isn't comparable across separately-indexed
-	 * corpora.
+	 * Routing: queries with a `placetype` matching a extract's name (or explicit `placetypes` hint) are sent to that
+	 * extract; everything else hits main. Cross-extract UNION is NOT done — BM25 isn't comparable across
+	 * separately-indexed corpora.
 	 */
-	databasePath?: string | ReadonlyArray<string | ShardConfig>
+	databasePath?: string | ReadonlyArray<string | ExtractConfig>
 	/**
 	 * Pre-opened connection — primarily for tests against an inline fixture DB. Mutually exclusive with `databasePath`.
-	 * Multi-shard requires `databasePath` (so the lookup owns the ATTACH).
+	 * Multi-extract requires `databasePath` (so the lookup owns the ATTACH).
 	 */
 	database?: DatabaseClient<WOFDatabase>
 	/**
@@ -81,8 +81,8 @@ export interface WOFSQLitePlaceLookupOpts {
 	 * operator-side CLI documented in the README. Default false — the resolver assumes the index already exists and
 	 * errors loudly if it doesn't.
 	 *
-	 * With multi-shard, `buildFTS: true` builds the index on the **main** shard only. Other shards must be pre-built via
-	 * `mailwoman gazetteer build fts` — operator script for predictable cost.
+	 * With multi-extract, `buildFTS: true` builds the index on the **main** extract only. Other extracts must be
+	 * pre-built via `mailwoman gazetteer build fts` — operator script for predictable cost.
 	 */
 	buildFTS?: boolean
 	/**
@@ -107,9 +107,9 @@ export interface WOFSQLitePlaceLookupOpts {
  * - Nearby localities with WOF alt-name aliases.
  */
 /**
- * The placetypes `pickShardsForPlacetype`'s substring rule can route by name. Not every WOF placetype — only the ones a
- * purpose-built shard is ever named for — so the diagnostic below can say "this name routes nowhere" without claiming
- * to enumerate the gazetteer.
+ * The placetypes `pickExtractsForPlacetype`'s substring rule can route by name. Not every WOF placetype — only the ones
+ * a purpose-built extract is ever named for — so the diagnostic below can say "this name routes nowhere" without
+ * claiming to enumerate the gazetteer.
  */
 const KNOWN_ROUTED_PLACETYPES: ReadonlyArray<string> = [
 	"postalcode",
@@ -149,35 +149,35 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 	 * fall back to no-filter when this is false, preserving compatibility with DBs that were FTS-built before the R*Tree
 	 * shipped.
 	 *
-	 * Per-shard: a shard is only considered to have the bbox index if its own R*Tree table exists.
+	 * Per-extract: a extract is only considered to have the bbox index if its own R*Tree table exists.
 	 */
 	readonly #hasBboxIndex: Map<string, boolean>
 	/**
-	 * Per-shard probe for the `place_population` aux table. When false, the LEFT JOIN is omitted from the SELECT and
+	 * Per-extract probe for the `place_population` aux table. When false, the LEFT JOIN is omitted from the SELECT and
 	 * population boost is 0 for every row — preserves compatibility with DBs built before this feature shipped.
 	 */
 	readonly #hasPopulationIndex: Map<string, boolean>
 	/**
-	 * Per-shard SELECT term + LEFT JOIN for the two-score split's `encyclopedic` carry (ROAD_TO_V9 §2 R1), probed and
-	 * built once at construction. Degrades to `NULL AS encyclopedic` with no join on a pre-split shard — every shipped
-	 * shard today. See {@link encyclopedicClauses} for why the probe is a column and not a table.
+	 * Per-extract SELECT term + LEFT JOIN for the two-score split's `encyclopedic` carry (ROAD_TO_V9 §2 R1), probed and
+	 * built once at construction. Degrades to `NULL AS encyclopedic` with no join on a pre-split extract — every shipped
+	 * extract today. See {@link encyclopedicClauses} for why the probe is a column and not a table.
 	 */
 	readonly #encyclopedicClauses: Map<string, { select: string; join: string }>
 	/**
-	 * Per-shard probe for the `postcode_locality` table (the coordinate-first candidate table, built by
+	 * Per-extract probe for the `postcode_locality` table (the coordinate-first candidate table, built by
 	 * scripts/build-postcode-locality.ts). Cached at construction; null'd out when absent so the coord-first path
 	 * silently no-ops on a deployment that didn't ship the table.
 	 */
-	readonly #postcodeLocalityShard: string | null
+	readonly #postcodeLocalityExtract: string | null
 	/**
-	 * Resolved shard list. Always at least one entry; first is `main`. Multi-shard adds extras with their own derived (or
-	 * override) schema names.
+	 * Resolved extract list. Always at least one entry; first is `main`. Multi-extract adds extras with their own derived
+	 * (or override) schema names.
 	 */
-	readonly #shards: ResolvedShard[]
+	readonly #extracts: ResolvedExtract[]
 	/**
-	 * #920: per-schema probed country sets for country-aware shard routing (non-main shards only).
+	 * #920: per-schema probed country sets for country-aware extract routing (non-main extracts only).
 	 */
-	readonly #shardCountries: Map<string, ReadonlySet<string>>
+	readonly #extractCountries: Map<string, ReadonlySet<string>>
 	/**
 	 * The Geographic Rule Engine (Direction E, #289). `#conventionSource` supplies per-WOF-polygon resolution profiles;
 	 * `#strategies` is the named-primitive registry the merged convention dispatches. Empty source → every query resolves
@@ -217,21 +217,21 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 
 		if (opts.database) {
 			this.#db = opts.database
-			this.#shards = [{ path: ":memory:", schemaName: "main", placetypes: [] }]
+			this.#extracts = [{ path: ":memory:", schemaName: "main", placetypes: [] }]
 		} else {
-			const shards = resolveShards(opts.databasePath!)
-			this.#shards = shards
-			// Read-only by default — shipped gazetteer shards are sealed 0444 and Docker `:ro` mounts
+			const extracts = resolveExtracts(opts.databasePath!)
+			this.#extracts = extracts
+			// Read-only by default — shipped gazetteer extracts are sealed 0444 and Docker `:ro` mounts
 			// forbid write-mode opens, so a writable open fails there. The only code path that writes to
-			// the main shard is `#ensureFTS()` (FTS5 index build), gated on `opts.buildFTS`; open writable
+			// the main extract is `#ensureFTS()` (FTS5 index build), gated on `opts.buildFTS`; open writable
 			// ONLY when that build was explicitly requested. Every read query (FTS5 MATCH, the aux-table
 			// SELECTs, ATTACH, and the `busy_timeout` PRAGMA) works read-only. See the docker read-only
 			// mount limitation (#1213).
-			this.#db = this.#resources.use(new DatabaseClient<WOFDatabase>(shards[0]!.path, { readOnly: !opts.buildFTS }))
+			this.#db = this.#resources.use(new DatabaseClient<WOFDatabase>(extracts[0]!.path, { readOnly: !opts.buildFTS }))
 
-			// ATTACH each non-main shard. Schema names were validated by resolveShards, so safe to
+			// ATTACH each non-main extract. Schema names were validated by resolveExtracts, so safe to
 			// interpolate directly (SQLite ATTACH doesn't accept parameters for the schema name).
-			for (const s of shards.slice(1)) {
+			for (const s of extracts.slice(1)) {
 				this.#db.exec(`ATTACH DATABASE '${s.path.replaceAll("'", "''")}' AS ${s.schemaName}`)
 			}
 		}
@@ -247,50 +247,50 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 
 		this.#weights = { ...DEFAULT_WEIGHTS, ...weights }
 
-		// Probe each shard's aux-table presence — driven by per-shard table existence in
+		// Probe each extract's aux-table presence — driven by per-extract table existence in
 		// sqlite_master. Cached at construction so findPlace doesn't query sqlite_master per call.
 		this.#hasBboxIndex = new Map()
 		this.#hasPopulationIndex = new Map()
 		this.#encyclopedicClauses = new Map()
 
-		for (const s of this.#shards) {
-			this.#hasBboxIndex.set(s.schemaName, this.#shardHasTable(s.schemaName, PLACE_BBOX_TABLE))
-			this.#hasPopulationIndex.set(s.schemaName, this.#shardHasTable(s.schemaName, PLACE_POPULATION_TABLE))
+		for (const s of this.#extracts) {
+			this.#hasBboxIndex.set(s.schemaName, this.#extractHasTable(s.schemaName, PLACE_BBOX_TABLE))
+			this.#hasPopulationIndex.set(s.schemaName, this.#extractHasTable(s.schemaName, PLACE_POPULATION_TABLE))
 			this.#encyclopedicClauses.set(s.schemaName, encyclopedicClauses(this.#db, s.schemaName))
 		}
 
-		// Every lookup path here reaches `place_search`, and a shard without it fails in one of two ways
+		// Every lookup path here reaches `place_search`, and a extract without it fails in one of two ways
 		// that are both hard to read: an unroutable name returns zero hits (indistinguishable from "this
 		// country has no places") and a routable one throws mid-query from deep inside a SELECT. The
-		// unroutable half is the worse of the two — a shard reaches routing only through the name
+		// unroutable half is the worse of the two — a extract reaches routing only through the name
 		// `deriveSchemaName` derives from its FILENAME, so a file spelled one letter off the placetype it
 		// serves answers with nothing while holding every row that was asked for.
 		//
-		// Two independent things bring a shard under the guard, and it needs both. Carrying `spr` is a
-		// CLAIM to be a place shard. Carrying a name that routes is an INVITATION to be queried as one, and
+		// Two independent things bring a extract under the guard, and it needs both. Carrying `spr` is a
+		// CLAIM to be a place extract. Carrying a name that routes is an INVITATION to be queried as one, and
 		// it is made by the filename alone — so a database with no tables at all still gets picked, still
 		// answers no query, and still dies inside a SELECT. Testing only the claim lets an empty or
 		// truncated file past construction; testing only the name would exempt a correctly-named build
-		// input. A shard needs to fail neither test to be exempt.
+		// input. A extract needs to fail neither test to be exempt.
 		//
 		// Exempt by design: `postcode-locality-<cc>.db` carries a relation table and nothing else, matches
-		// no routed placetype, and is part of the documented default shard list.
-		for (const s of this.#shards) {
+		// no routed placetype, and is part of the documented default extract list.
+		for (const s of this.#extracts) {
 			if (s.schemaName === "main") continue
 
 			const routes = KNOWN_ROUTED_PLACETYPES.some(
 				(pt) => s.schemaName === pt || s.schemaName.startsWith(`${pt}_`) || s.schemaName.endsWith(`_${pt}`)
 			)
 
-			const claimsPlaceShard = this.#shardHasTable(s.schemaName, "spr")
+			const claimsPlaceExtract = this.#extractHasTable(s.schemaName, "spr")
 
-			if (!routes && !claimsPlaceShard) continue
+			if (!routes && !claimsPlaceExtract) continue
 
-			if (this.#shardHasTable(s.schemaName, PLACE_SEARCH_TABLE)) continue
+			if (this.#extractHasTable(s.schemaName, PLACE_SEARCH_TABLE)) continue
 
 			throw new Error(
 				`WOFSQLitePlaceLookup: ${s.path} ` +
-					(claimsPlaceShard
+					(claimsPlaceExtract
 						? `carries "spr" but no "${PLACE_SEARCH_TABLE}" table, so it cannot serve a lookup.`
 						: `is named for a routed placetype but carries neither "spr" nor "${PLACE_SEARCH_TABLE}", so every ` +
 							`query routed to it would die mid-SELECT. An empty or truncated file reads exactly like this.`) +
@@ -302,14 +302,14 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 			)
 		}
 
-		// #920 country-aware shard routing: probe each NON-MAIN shard's country set once at
-		// construction (they're small, purpose-built shards — postcode/locality slices; main is the
+		// #920 country-aware extract routing: probe each NON-MAIN extract's country set once at
+		// construction (they're small, purpose-built extracts — postcode/locality slices; main is the
 		// multi-GB admin DB and is the fallback anyway, so it is deliberately NOT scanned). Feeds
-		// pickShardForPlacetype so two postcode shards (postalcode-us + postalcode-geonames-tail)
-		// route by the query's country instead of first-match starving the second shard.
-		this.#shardCountries = new Map()
+		// pickExtractForPlacetype so two postcode extracts (postalcode-us + postalcode-geonames-tail)
+		// route by the query's country instead of first-match starving the second extract.
+		this.#extractCountries = new Map()
 
-		for (const sh of this.#shards) {
+		for (const sh of this.#extracts) {
 			if (sh.schemaName === "main") continue
 
 			try {
@@ -317,16 +317,16 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 					.prepare(`SELECT DISTINCT country FROM ${sh.schemaName}.spr WHERE country != ''`)
 					.all() as Array<{ country: string }>
 
-				this.#shardCountries.set(sh.schemaName, new Set(rows.map((r) => r.country)))
+				this.#extractCountries.set(sh.schemaName, new Set(rows.map((r) => r.country)))
 			} catch {
-				// A shard without spr (or an attach oddity) just doesn't participate in country routing.
+				// A extract without spr (or an attach oddity) just doesn't participate in country routing.
 			}
 		}
 
-		// The postcode_locality table can live on any attached shard (typically its own
-		// `postcode-locality-<cc>.db`). Find the first shard that has it; null = coord-first disabled.
-		this.#postcodeLocalityShard =
-			this.#shards.find((s) => this.#shardHasTable(s.schemaName, POSTCODE_LOCALITY_TABLE))?.schemaName ?? null
+		// The postcode_locality table can live on any attached extract (typically its own
+		// `postcode-locality-<cc>.db`). Find the first extract that has it; null = coord-first disabled.
+		this.#postcodeLocalityExtract =
+			this.#extracts.find((s) => this.#extractHasTable(s.schemaName, POSTCODE_LOCALITY_TABLE))?.schemaName ?? null
 
 		// Opt-in postal-city alias reader (#475). Construction-time present-or-not is the gate: null
 		// keeps the coordinate-first scorer byte-identical to pre-#475.
@@ -334,19 +334,19 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 
 		// The Geographic Rule Engine convention source. Precedence: an explicit `opts.conventions`
 		// (a ready source or a seed map) wins; else the build-from-source convention asset if one is
-		// attached (auto-detected, like the postcode_locality shard — adding conventions.db to
+		// attached (auto-detected, like the postcode_locality extract — adding conventions.db to
 		// databasePath enables it; queried on demand, not paged into memory); else empty, so EU rides
 		// WORLD_DEFAULT. The registry binds strategy NAMES to the SQL-bound primitives — adding a
 		// strategy is registering it here.
-		const conventionShard =
-			this.#shards.find((s) => this.#shardHasTable(s.schemaName, ADDRESS_CONVENTION_TABLE))?.schemaName ?? null
+		const conventionExtract =
+			this.#extracts.find((s) => this.#extractHasTable(s.schemaName, ADDRESS_CONVENTION_TABLE))?.schemaName ?? null
 
 		this.#conventionSource = opts.conventions
 			? "get" in opts.conventions && typeof opts.conventions.get === "function"
 				? opts.conventions
 				: new SeedConventionSource(opts.conventions as Record<number, Convention>)
-			: conventionShard
-				? new SqliteConventionSource(this.#db, conventionShard)
+			: conventionExtract
+				? new SqliteConventionSource(this.#db, conventionExtract)
 				: new SeedConventionSource()
 
 		this.#strategies = new Map<string, Strategy>([
@@ -355,8 +355,8 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		])
 	}
 
-	#shardHasTable(schemaName: string, tableName: string): boolean {
-		// For main, the existing helpers work directly. For attached shards we have to ask via the
+	#extractHasTable(schemaName: string, tableName: string): boolean {
+		// For main, the existing helpers work directly. For attached extracts we have to ask via the
 		// schema-qualified `sqlite_master` view.
 		if (schemaName === "main") {
 			if (tableName === PLACE_BBOX_TABLE) return placeBboxExists(this.#db)
@@ -405,7 +405,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		// #924: NL postcode retry ladder. The WOF NL postalcode repo stores full codes UNSPACED
 		// ('1012LG') plus 4-digit stems ('1012'), while Dutch addresses carry the spaced form
 		// ('1012 LG') — two FTS tokens that can never match the one-token doc (the #920 name law,
-		// resurfacing in a WOF-built shard). On a postcode-typed NL-shape miss, retry ONCE with the
+		// resurfacing in a WOF-built extract). On a postcode-typed NL-shape miss, retry ONCE with the
 		// whitespace-joined form (block-level precision when the full-code row exists), then the
 		// 4-digit stem (area-level). Country-gated to NL — the same digits+letters shape elsewhere
 		// must not silently coarsen to a different system's code. Each retry only fires when its
@@ -502,25 +502,25 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 	 * candidate set.
 	 */
 	#postcodeAreaResolution(query: FindPlaceQuery, convention: ResolvedConvention): Promise<PlaceCandidate[] | null> {
-		if (!(query.postcode && this.#postcodeLocalityShard && this.#isLocalityQuery(query))) {
+		if (!(query.postcode && this.#postcodeLocalityExtract && this.#isLocalityQuery(query))) {
 			return Promise.resolve(null)
 		}
 
-		return this.#findLocalityCoordFirst(query, this.#postcodeLocalityShard, convention)
+		return this.#findLocalityCoordFirst(query, this.#postcodeLocalityExtract, convention)
 	}
 
 	/**
 	 * Strategy `fallback_fuzzy_name_match` — the BM25 FTS name-match over the gazetteer, the universal fallback. Always
 	 * returns an array (never null), so it terminates the dispatch chain.
 	 */
-	async #fuzzyNameMatch(query: FindPlaceQuery, forceShard?: ResolvedShard): Promise<PlaceCandidate[]> {
+	async #fuzzyNameMatch(query: FindPlaceQuery, forceExtract?: ResolvedExtract): Promise<PlaceCandidate[]> {
 		const limit = query.limit ?? 10
 
 		// Expand the placetype filter through the shared equivalence table (core/resolver): a
 		// `locality` query must also reach `borough` / `localadmin` rows — Brooklyn-the-borough
 		// (pop 2.5M) is a borough, not a locality, and a strict filter made it unreachable so the
 		// fuzzy "Brooklyn Park, MN" won instead. Order-preserving: the FIRST entry stays the
-		// requested placetype, which is what shard routing keys off below.
+		// requested placetype, which is what extract routing keys off below.
 		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WOFPlacetype[] | null
 		// Postcode-typed queries keep the #920 fused name-law shape; everything else splits on
 		// intra-token punctuation so hyphenated names reach the FTS as their real terms (#945).
@@ -528,20 +528,20 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 
 		if (!ftsQuery) return []
 
-		// Pick the shard for this query. Multi-shard routing is placetype-driven; a query without
-		// `placetype` always goes to main. (Mixed-placetype queries with multiple shards aren't
+		// Pick the extract for this query. Multi-extract routing is placetype-driven; a query without
+		// `placetype` always goes to main. (Mixed-placetype queries with multiple extracts aren't
 		// supported in v1 — caller can issue two findPlace calls and merge in TS if needed.)
 		const firstPlacetype = placetypes?.[0]
 
 		// Bias fan-out (#58/proximity-bias): a country-less query WITH proximity hints must see the
-		// cross-shard ambiguity the hints exist to resolve — "48026" lives in postalcode-us AND
-		// postalcode-intl, and single-shard routing would hide one side. Query every matching shard
-		// (self-recursion with a shard pin), merge by id, and re-sort by the same (exact, prominence)
-		// keys the per-shard tier sort used. Bounded: hints + no country + >1 matching shard only.
+		// cross-extract ambiguity the hints exist to resolve — "48026" lives in postalcode-us AND
+		// postalcode-intl, and single-extract routing would hide one side. Query every matching extract
+		// (self-recursion with a extract pin), merge by id, and re-sort by the same (exact, prominence)
+		// keys the per-extract tier sort used. Bounded: hints + no country + >1 matching extract only.
 		const hasBiasHints = !!query.near || (query.bias?.length ?? 0) > 0
 
-		if (!forceShard && hasBiasHints && !query.country) {
-			const matching = pickShardsForPlacetype(this.#shards, firstPlacetype)
+		if (!forceExtract && hasBiasHints && !query.country) {
+			const matching = pickExtractsForPlacetype(this.#extracts, firstPlacetype)
 
 			if (matching.length > 1) {
 				const pools: PlaceCandidate[][] = []
@@ -571,15 +571,15 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 			}
 		}
 
-		const shard =
-			forceShard ??
-			pickShardForPlacetype(this.#shards, firstPlacetype, {
+		const extract =
+			forceExtract ??
+			pickExtractForPlacetype(this.#extracts, firstPlacetype, {
 				country: query.country,
-				countriesBySchema: this.#shardCountries,
+				countriesBySchema: this.#extractCountries,
 			})
 
 		// bare schema name; safe to interpolate (validated at construction)
-		const sch = shard.schemaName
+		const sch = extract.schemaName
 
 		const rawRows = fetchSearchRows({
 			db: this.#db,

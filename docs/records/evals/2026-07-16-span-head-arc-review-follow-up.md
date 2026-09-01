@@ -107,10 +107,10 @@ caught by it.
   hyphenated compound, and date-name material (`Rue de`, `Avenue des`, `11-Novembre-1918`, etc.).
 - **(d) Consensus-MBR@1** over the existing k-best, formulation in §1 above.
 
-**Tier 2 — the BAN bare-street training shard.** 5–10% mix, short schedule, graded on the Tier-1c
+**Tier 2 — the BAN bare-street training extract.** 5–10% mix, short schedule, graded on the Tier-1c
 eval set. The same extraction script may produce both train and eval, but the split must be
 source-disjoint by normalized street surface before sampling, not merely row-disjoint. Add a
-full-address/contextful regression guard alongside the bare-fragment read; the shard only ships if
+full-address/contextful regression guard alongside the bare-fragment read; the extract only ships if
 it improves fragments without degrading normal addresses. _Pre-registered read: if the 17
 locality-refusals flip to street, the training-distribution hypothesis holds and option C becomes
 reinforcement, not rescue. If they don't move, the hypothesis is falsified and option C is

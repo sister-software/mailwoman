@@ -48,7 +48,7 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 
 > #901 knife-edge sentinels (added 2026-07-03): the four SI short-village rows + the Učakar
 > digit-split form. The four-probe attribution proved these are knife-edge outputs of the
-> shipped encoder — ANY 2k init_from fine-tune of a surgery-lineage base tips them (zero-shard
+> shipped encoder — ANY 2k init_from fine-tune of a surgery-lineage base tips them (zero-database
 > control: 4/4 row-identity; embedding-freeze: still breaks). They are the v2.2.0 full
 > retrain's acceptance rows and the permanent early-warning sentinel for partial-update
 > damage. Coordinates = the OA SI gold for each address; Učakar expects the street WHOLE.
@@ -199,7 +199,7 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 > weren't in it — absence-of-failure read as pass, the JSON-hides-gaps class). True intake: the
 > three bare directional rows pass on BOTH shipped and the 7.0.0 candidate; ALL SIX venue-led
 > rows fail on BOTH (venue null — the GB tail shape 'London EC3N 1DE' was never in the venue
-> shard's FR/US templates), so they enter as improvement_target for the GB venue increment. Parse-only cases — no coordinate asserted.
+> database's FR/US templates), so they enter as improvement_target for the GB venue increment. Parse-only cases — no coordinate asserted.
 
 <details><summary>Rows</summary>
 
@@ -567,7 +567,7 @@ Heathrow Airport` collapses to locality="Terminal" + house_number=5 with the air
 > batch itself.
 >
 > The WARNING was wrong, not the grading. Those overlays ship no binary on purpose (en-gb under the #1476
-> mitigation; en-nz has no WOF NZ postcode shard to build one from), and the warning fired on
+> mitigation; en-nz has no WOF NZ postcode database to build one from), and the warning fired on
 > `requires.anchor.required` — a statement about the shared ENCODER that every overlay inherits — once per
 > PROCESS, naming no package. So one overlay's deliberate absence printed a line that reads as the PRIMARY
 > locale's `postcode-us.bin` having gone missing while it was present and feeding on every US row. The

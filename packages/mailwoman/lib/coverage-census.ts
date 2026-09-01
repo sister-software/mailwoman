@@ -23,7 +23,7 @@
  *
  *   ## The corpus census is CACHED, and says when it was taken
  *
- *   Counting rows means reading every train shard. Measured on 681M rows across 705 shards: ~6 minutes projecting
+ *   Counting rows means reading every train database. Measured on 681M rows across 705 databases: ~6 minutes projecting
  *   `country` alone, and ~19 minutes once `labels` comes too — and `labels` cannot be dropped, because the street count
  *   is the column that separates "we taught this country's addresses" from "we taught its name". Exact and far too slow
  *   for a tool call, so it is cached to the data root and refreshed on request. A stale cache is reported with its age
@@ -185,7 +185,7 @@ const STREET_LABEL = /(^|-)street($|_)|house_number/
 /**
  * Count every train row in the corpus, per country, and how many carry a street span.
  *
- * Exact rather than sampled: shards are grouped by SOURCE, so a stride over them reads a handful of families and
+ * Exact rather than sampled: databases are grouped by SOURCE, so a stride over them reads a handful of families and
  * reports their countries as the corpus's. Column projection keeps the full read affordable.
  */
 export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCensus> {
@@ -195,10 +195,10 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 
 	const manifest = await readLocalJSONFile<{
 		corpus_version?: string
-		shards?: Array<{ split?: string; path?: string }>
+		databases?: Array<{ split?: string; path?: string }>
 	}>(manifestPath)
 
-	const shards = (manifest.shards ?? [])
+	const databases = (manifest.databases ?? [])
 		.filter((s) => s.split === "train" && s.path)
 		.map((s) => s.path!.replace("/data/", `${String(dataRootPath())}/`))
 
@@ -206,8 +206,8 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 	const streetRows: Record<string, number> = {}
 	let total = 0
 
-	for (const path of shards) {
-		for await (const record of readShardRecords(path, (shardPath) => ParquetReader.openFile(shardPath))) {
+	for (const path of databases) {
+		for await (const record of readDatabaseRecords(path, (databasePath) => ParquetReader.openFile(databasePath))) {
 			total++
 
 			const country = String(record["country"] ?? "").toUpperCase() || "??"
@@ -235,16 +235,16 @@ interface ParquetLike extends AsyncDisposable {
 }
 
 /**
- * Every record of one shard, or nothing at all when the file will not open.
+ * Every record of one database, or nothing at all when the file will not open.
  *
- * Column projection is what makes a full read affordable, and on SOME shards it silently drops `labels` rather than
+ * Column projection is what makes a full read affordable, and on SOME databases it silently drops `labels` rather than
  * erroring: the overlay family written by one writer era returns `{country}` alone for `getCursor(["country",
  * "labels"])`, while the base returns both. A dropped label column reads as "this country has no street rows", which is
  * indistinguishable from the truth and is exactly the mistake this file exists to prevent — it reported 4 countries
  * with street data where an unprojected read finds GB alone at 1,519 of 2,000 rows. So the first record decides: when
- * it arrives without `labels`, the shard is read again with no projection at all.
+ * it arrives without `labels`, the database is read again with no projection at all.
  */
-async function* readShardRecords(
+async function* readDatabaseRecords(
 	path: string,
 	open: (path: string) => Promise<ParquetLike>
 ): AsyncGenerator<Record<string, unknown>> {
@@ -433,8 +433,9 @@ export async function readGazetteerCoverage(dbPath: string): Promise<Map<string,
 /**
  * Countries whose rooftop address points a CONSUMER can actually obtain.
  *
- * `data-bundles.ts` is the authority and it has four entries — candidate, poi, us, fr. Every other rooftop shard on a
- * lab machine is ODbL `build-local` and cannot be shipped, which reads identically to published from inside the repo.
+ * `data-bundles.ts` is the authority and it has four entries — candidate, poi, us, fr. Every other rooftop database on
+ * a lab machine is ODbL `build-local` and cannot be shipped, which reads identically to published from inside the
+ * repo.
  */
 export const ROOFTOP_PUBLISHED = new Set(["US", "FR"])
 
@@ -561,7 +562,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 			"`country_weights` is a HARD admission filter (data_loader.py: `weight is None -> continue`). A country " +
 				"absent from it trains on nothing regardless of how many corpus rows exist — the Norway bug's mechanism.",
 			"Rooftop geocoding is `published` for US and FR only. `data-bundles.ts` has four entries and every other " +
-				"rooftop shard is ODbL build-local, which looks identical from inside the repo and is unobtainable outside it.",
+				"rooftop database is ODbL build-local, which looks identical from inside the repo and is unobtainable outside it.",
 			"A board row that is not `status: pass` tracks rather than gates, so `boardGatedRows: 0` means nothing about " +
 				"that country is verified.",
 		],

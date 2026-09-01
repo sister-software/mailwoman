@@ -324,7 +324,7 @@ Both near-misses had the same signature: **a number that couldn't reproduce some
   soft channels, plus a bug welding words together (`▁5|th|▁|Ave` → `"5thAve"` — it dropped the
   `O`-labelled separator). Nearly published as an architecture verdict.
 - Phase 4a's first rerank showed one signal inert and another −16. Cause: the harness resolver had no
-  street shards and reached street tier **0 times in 267 fixtures**. Nearly published as _"resolution
+  street extracts and reached street tier **0 times in 267 fixtures**. Nearly published as _"resolution
   evidence can't work."_
 
 Both times the tell was there before the conclusion. Check the instrument before the hypothesis.

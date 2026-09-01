@@ -1,6 +1,6 @@
 """Parquet round-trip gate for the v0.5.0 span columns (#519, rebuild-plan step 1).
 
-The shard pipeline is JSONL (builders, via ``alignRow``) → converter →
+The slice pipeline is JSONL (builders, via ``alignRow``) → converter →
 parquet → this package's PyArrow readers. JSONL has carried the span triple since #527; this
 test pins the two properties the parquet leg must now hold:
 

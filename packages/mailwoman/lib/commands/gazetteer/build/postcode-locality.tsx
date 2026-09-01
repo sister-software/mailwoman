@@ -36,7 +36,7 @@ export const spec = {
 		output: { type: "string", required: true, description: "Output database" },
 		country: { type: "string", description: "ISO-2 country" },
 		"admin-repo": { type: "string", description: "WOF admin repo" },
-		"postcode-db": { type: "string", description: "Postcode shard" },
+		"postcode-db": { type: "string", description: "Postcode database" },
 		"radius-km": { type: "number", description: "Candidate radius km" },
 		"max-candidates": { type: "number", description: "Candidates per postcode" },
 		finalize: { type: "boolean", default: false, description: "Freeze the table" },

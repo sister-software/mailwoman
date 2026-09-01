@@ -16,8 +16,8 @@ only.
   Norway. `country_weights: { NO: 1.0 }` parses to `{False: 1.0}` under YAML 1.1, so
   `country_weights.get("NO")` misses and the loader drops every Norwegian row. Live since
   v1.9.0-multilocale, through the shipped v264 (6.3.0) and v310 (6.4.0). **25,126 corpus rows
-  reaching the model zero times — 12,000 of them from `synth-no-street-led`, a Norwegian shard at
-  source weight 12.0, the maximum targeted-fix tier.** Someone built a shard to fix a Norwegian
+  reaching the model zero times — 12,000 of them from `synth-no-street-led`, a Norwegian extract at
+  source weight 12.0, the maximum targeted-fix tier.** Someone built a extract to fix a Norwegian
   defect and it has never run. Fix proven end-to-end: `NO: 0` → `NO: 23,519` bare digit tokens
   (4.19% of the corpus). Two-part fix — quote the key in 44 configs, plus a `__post_init__` guard
   that rejects any non-string country key, because a config-only fix rots the moment someone adds a
@@ -26,10 +26,10 @@ only.
   classes, Wilson CIs, baselines registered against shipped v310 — a **true zero-knowledge arm**,
   since v310 has never seen a Norwegian address. **Its first act was to veto the obvious next
   move.** `synth-no-street-led` emits three forms, all with postcode+city, and v310 already reads all
-  three at **0.940–0.968** with zero Norwegian data. The 12,000-row shard the YAML bug has been
+  three at **0.940–0.968** with zero Norwegian data. The 12,000-row extract the YAML bug has been
   dropping aims at classes _at ceiling_; un-dropping it and retraining would teach the model what it
   already knows. The headroom is elsewhere: `bare-street-hn` 0.693 and `slash-hn` 0.650 — forms the
-  shard never emits. **A don't-launch verdict from a board, before any GPU.**
+  extract never emits. **A don't-launch verdict from a board, before any GPU.**
 - **`d9e76e75` + `11881e69` — the v3.3.0-no-fragment 2k probe (B4).** init_from v310, ONE variable
   (synth-no-fragment @ 12.0), synth-no-street-led zeroed (contaminated part). Overlay verified through
   the real loader: Norway rows now survive the filter. Trained clean — `init_from missing=0`, no NaN.
@@ -38,7 +38,7 @@ only.
   −1.7pp overall). Per my own pre-registration the 8k is not auto-warranted, and I did not relax the
   bar to launch it. Verdict: `docs/articles/evals/2026-07-16-b4-no-fragment-probe-verdict.md`. The
   named next move (B4b) is raising `--bare-street-prob` from 0.30.
-- **`863a64ae` — the `no-fragment` recipe.** The shard itself (see §6/§7).
+- **`863a64ae` — the `no-fragment` recipe.** The extract itself (see §6/§7).
 - **`80d86130` — `no-street-led` now requires `--exclude-surfaces`.** The B4 blocker. Board 3
   reserves 1,952 surfaces; this recipe trained on all 10,697 with no split, so a Norway retrain would
   grade memorization. Ports fr-fragment's discipline — with its OWN diacritic-keeping normalizer,
@@ -51,9 +51,9 @@ only.
 ## 2. What went well
 
 - **B1 was the right first move and it cost one Modal run.** The night's plan put the cheapest
-  measurement first — "is Norway absent or mis-taught?" — ahead of the shard it was meant to inform.
+  measurement first — "is Norway absent or mis-taught?" — ahead of the extract it was meant to inform.
   It answered a question nobody had asked (absent, and for a _mechanical_ reason) and made B2, B4 and
-  most of Track B either moot or unaskable-as-designed. A shard built on the pre-B1 theory would have
+  most of Track B either moot or unaskable-as-designed. A extract built on the pre-B1 theory would have
   been a fix for a defect that does not exist.
 - **The absence-vs-zero discipline paid immediately.** The census block prints the per-country row
   count _before_ the conditional table specifically so a missing row reads "no data" rather than
@@ -65,7 +65,7 @@ only.
   real loader. A grep-based fix would have "passed" against the broken file.
 - **Board 3 paid for itself before a single GPU-second.** Finding the Norway bug made "fix it and
   retrain" feel obvious and urgent. The board — built _first_, per the standing rule — showed the
-  shard aims at classes already at 0.94–0.968. Building the instrument before the fix converted a
+  extract aims at classes already at 0.94–0.968. Building the instrument before the fix converted a
   plausible day of A100 into a two-line table.
 - **The completeness audit bounded the bug class.** After Norway, the obvious question is "what else
   is silently dropped?" A raw-corpus country census (2M rows) vs the config filter, cross-referenced
@@ -78,7 +78,7 @@ only.
   coverage bug (#1145) → the one non-coverage case (PL) → the piece-level incoherence mechanism (B0,
   cross-lingual) → its root (the tokenizer has 2 multi-digit pieces, so digit fertility ≡ digit
   count, so the model's only length signal is the continuation count where the postcode mass lives).
-  The fix options are now concrete and scoped: a fragment shard (dents it — B4b), or a number-piece
+  The fix options are now concrete and scoped: a fragment extract (dents it — B4b), or a number-piece
   vocab splice (removes the continuations — B4c, the root fix). Both the operator's call; neither a
   validator.
 - **The one row coverage couldn't explain turned into the finding that unified the track.** After B1
@@ -87,10 +87,10 @@ Polskiego 178`). Tracing its piece-level posterior showed B0's exact signature o
   correctly-parsed, in-corpus Polish street — B-house_number on the first digit piece, I-postcode on
   the continuations, length-conditioned (2-digit correct, 3-digit fails). H3 + B0 + this are one
   mechanism: the model faithfully reproducing a corpus prior that says long digit-run continuations
-  are postcode. It also explains why B4 barely moved — a shard fights that prior uphill.
+  are postcode. It also explains why B4 barely moved — a extract fights that prior uphill.
   `docs/articles/evals/2026-07-16-digit-incoherence-is-cross-lingual.md`.
 - **The 2k probe did its job — it stopped an 8k run I would otherwise have wanted.** The instrument
-  and shard were correct; the read was clean; the target missed its pre-registered bar and the French
+  and extract were correct; the read was clean; the target missed its pre-registered bar and the French
   guard drifted, so the expensive run does not happen on a hunch. ~$1-2 of A100 to avoid ~$8. And I
   held my own bar rather than relaxing it once the number disappointed — the discipline cuts both
   ways or it is not discipline.
@@ -123,7 +123,7 @@ Polskiego 178`). Tracing its piece-level posterior showed B0's exact signature o
 1. **The v6.4.0 publish.** Metadata is on main; npm + HF are untouched. Dispatch is yours.
 2. **G-NAF EULA (blocks B5 if it ships).** `.notes/data-sources.md` records G-NAF as CC-BY with a
    **no-mail-compilation clause**. Training a parser is not compiling a mailing list, but G-NAF-derived
-   weights are a licensing call, not a 3am one. B5's shard design names G-NAF as the tier-A source for
+   weights are a licensing call, not a 3am one. B5's extract design names G-NAF as the tier-A source for
    the AU `12/345` split because it carries `flat_number`/`number_first` as separate columns — i.e. the
    gold split, for free. NZ LINZ is the fallback (attribution + registration).
 3. **#1141's ordering flag** — the span head was built and closed _before_ the vocab work the research
@@ -147,15 +147,15 @@ B0 (day shift, `5ab73894`) answered the architecture question and **reframed the
 **One defect, three components.** The model will not read a component without its co-occurring
 partner — it learned the joint distribution and not the marginals:
 
-| #   | licence                                                | consequence                   | status                        |
-| --- | ------------------------------------------------------ | ----------------------------- | ----------------------------- |
-| 1   | a **digit** licenses the _street_ reading              | `Rue Montmartre` → locality   | **fixed** — v310 shard, +50pp |
-| 2   | a **known street** licenses the _house_number_ reading | `Øvste Skogen 121` → postcode | open (B2)                     |
-| 3   | a **designator** licenses the _intra-word split_       | `12/345` → one span           | open (B5)                     |
+| #   | licence                                                | consequence                   | status                          |
+| --- | ------------------------------------------------------ | ----------------------------- | ------------------------------- |
+| 1   | a **digit** licenses the _street_ reading              | `Rue Montmartre` → locality   | **fixed** — v310 extract, +50pp |
+| 2   | a **known street** licenses the _house_number_ reading | `Øvste Skogen 121` → postcode | open (B2)                       |
+| 3   | a **designator** licenses the _intra-word split_       | `12/345` → one span           | open (B5)                       |
 
 That is a **training-data property, not an architecture property**, and instance 1 was fixed with a
-phenomenon shard plus a counter-distribution without touching the architecture. It is why the night's
-plan is measure → shard, not measure → rearchitect.
+phenomenon extract plus a counter-distribution without touching the architecture. It is why the night's
+plan is measure → extract, not measure → rearchitect.
 
 Per-piece tagging is vindicated on a representational argument, not a score: `Unit 12/345 Main St` →
 `unit 12` + `house_number 345` is **not in a word-unit tagger's output space at any confidence**. The
@@ -178,16 +178,16 @@ pre-registered probes for a future shift.
   by B0) needs the unit/number decomposition, which the on-disk assembled AU data does not carry
   (it's flattened to `house_number`). Re-deriving from raw G-NAF (which has the columns) is gated on
   the G-NAF EULA — a licensing call, not mine. NZ LINZ is the license-clean fallback.
-- **The Norway retrain** — warranted (Norway 0% → 4.19%) but B4 showed the _existing_ shard aims at
-  ceiling and a fragment shard at 0.30 barely moves the target. So the retrain is really B4b: a
-  higher-ratio fragment shard, pre-registered against board 3, operator-approved.
+- **The Norway retrain** — warranted (Norway 0% → 4.19%) but B4 showed the _existing_ extract aims at
+  ceiling and a fragment extract at 0.30 barely moves the target. So the retrain is really B4b: a
+  higher-ratio fragment extract, pre-registered against board 3, operator-approved.
 - **B2 — CLOSED.** The street-familiarity lead was confounded with the Norway coverage gap. The one
   PL row that survives coverage (`aleja Wojska Polskiego 178`) was traced to B0's exact piece-level
   signature — cross-lingual, coverage-independent, length-conditioned — closing B2 into the unified
   mechanism, not a separate lead.
 - **B4c — the root fix, an operator call.** The number-piece vocab splice (the tokenizer has 2
   multi-digit pieces, so `178` is 3 pieces with 2 postcode-leaning continuations). Removes the
-  continuations the shard only dents. A tokenizer+model bump, bigger than a shard.
+  continuations the extract only dents. A tokenizer+model bump, bigger than a extract.
 
 ## 8. Where things stand (a status, not a wind-down)
 

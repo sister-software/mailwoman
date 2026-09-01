@@ -166,10 +166,11 @@ export function isUnitGradePostcodeHit(parsed: string, resolverName: string | un
  *
  * **The US row is measured on the population production actually sends to the ladder.** Its rooftop cascade is US-only
  * by construction (`selectAddressPointsDB` composes `address-points-us-<slug>.db`), and it serves 94.2% of US queries,
- * so only 577 of 10,000 panel rows reach an admin decision at all. Those are the rows no rooftop or interpolation shard
- * could place, which skews rural — exactly where a locality centroid sits close and a ZIP zone is wide. Measured over
- * all 10,000 rows instead, the US looks like a postcode-first country (2.41 km vs 3.63); that is a selection effect,
- * and it is why this table reports 577 rows for the US and full panels for the others, which have no such cascade.
+ * so only 577 of 10,000 panel rows reach an admin decision at all. Those are the rows no rooftop or interpolation
+ * extract could place, which skews rural — exactly where a locality centroid sits close and a ZIP zone is wide.
+ * Measured over all 10,000 rows instead, the US looks like a postcode-first country (2.41 km vs 3.63); that is a
+ * selection effect, and it is why this table reports 577 rows for the US and full panels for the others, which have no
+ * such cascade.
  */
 export const AREA_POSTCODE_FINER_THAN_LOCALITY: ReadonlySet<string> = new Set(["DE"])
 

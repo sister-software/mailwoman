@@ -13,7 +13,7 @@
  *   The output JSONL is the input to the `gnaf` corpus adapter (`mailwoman corpus build`), which
  *   renders each tuple in multiple word orders to teach the model AU's postcode-first layout
  *   (#208). `--holdout` excludes the benchmark addresses by (street, locality, postcode) so the
- *   training shard never overlaps the eval. Open G-NAF licence — attribute "Geoscape Australia".
+ *   training database never overlaps the eval. Open G-NAF licence — attribute "Geoscape Australia".
  */
 
 import { Box, Text } from "ink"
@@ -37,7 +37,7 @@ export const spec = {
 			description: "Sample size",
 		},
 		out: { type: "string", required: true, description: "Output JSONL path" },
-		holdout: { type: "string", description: "Eval JSONL excluded from the training shard" },
+		holdout: { type: "string", description: "Eval JSONL excluded from the training database" },
 	},
 } as const satisfies CommandSpec
 

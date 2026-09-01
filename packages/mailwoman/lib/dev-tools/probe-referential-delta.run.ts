@@ -41,7 +41,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { loadHardSliceBoard } from "#eval-harness/hard-slice-board"
-import { existingWOFShardPaths } from "#resolver-backend"
+import { existingWOFDatabasePaths } from "#resolver-backend"
 
 const { values } = parseArguments({ options: { board: { type: "string" } } })
 
@@ -113,12 +113,12 @@ const preSplitKey = (a: PlaceCandidate, b: PlaceCandidate): number =>
  */
 const postSplitKey = (a: PlaceCandidate, b: PlaceCandidate): number => compareReferential(a, b) || b.score - a.score
 
-const wofPaths = await existingWOFShardPaths()
+const wofPaths = await existingWOFDatabasePaths()
 
 console.log(`### 2. Live query replay\n`)
 
 if (!wofPaths.length) {
-	console.log(`- no WOF shards found — replay skipped\n`)
+	console.log(`- no WOF databases found — replay skipped\n`)
 } else {
 	const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	using lookup = new WOFSQLitePlaceLookup({ databasePath: wofPaths })

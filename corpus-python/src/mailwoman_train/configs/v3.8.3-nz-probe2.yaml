@@ -4,7 +4,7 @@
 # class_weights.{B,I}-dependent_locality 0.3->2.0, synth-nz 6.0->12.0. Confirm dependent_locality EMERGES
 # (off zero) at 2k on the held-out NZ board, THEN 8k. init_from shipped v381 (fresh optimizer).
 # init_from the SHIPPED v381 (v7.0.0/6.5.0 weights), fresh optimizer, LR 1e-5 constant, warmup 500, 2000
-# steps. The ONE new variable: the synth-nz LINZ locale shard (v0.12.0-nz overlay) + NZ:1.0 in
+# steps. The ONE new variable: the synth-nz LINZ locale slice (v0.12.0-nz overlay) + NZ:1.0 in
 # country_weights (the allowlist key that admits it) + synth-nz:6.0 (4.2% of the source multinomial).
 #
 # WHY (task #58, Deepparse parity #1): NZ was untrained (country_weights allowlist dropped it). The
@@ -22,7 +22,7 @@
 #     gradient most plausibly erodes) + the NO digit board (bare-street-hn 0.733, bare-pc 1.000).
 #   GUARD: gauntlet PASS; metamorphic INV[comma-drop] holds.
 #   FORGETTING: source_weights is the knob (exact multinomial); synth-nz 4.2% is inside the ≤5-8% safe band.
-#   SILENT-DROP CHECK: confirm the shard-index log shows synth-nz with nonzero pulls in the first steps
+#   SILENT-DROP CHECK: confirm the slice-index log shows synth-nz with nonzero pulls in the first steps
 #     (a country/source-key mismatch drops every NZ row and the run "passes" having trained on nothing new).
 #
 # ESCALATION: clean 2k -> 8k -> full promote battery -> ship as v7.1.0 (first post-v7 model). Promote = operator.
@@ -57,7 +57,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-    NZ: 1.0 # NEW — the 24th trained country. Allowlist key (data_loader.py:249): absent → dropped, so this is what admits the synth-nz shard.
+    NZ: 1.0 # NEW — the 24th trained country. Allowlist key (data_loader.py:249): absent → dropped, so this is what admits the synth-nz slice.
   source_weights: # v3.1.0 weights + synth-no-fragment; + synth-nz (the ONE new source this run — NZ locale, 4.2% multinomial share, ≈ synth-german's).
     synth-nz: 12.0 # FIX: 6.0->12.0 (targeted-fix tier, ≈ fr-fragment/si-bare-village). 12/142.5 ≈ 8.4% share — at Fable's upper band, justified for a from-zero new locale.
     wof-admin: 2.0
@@ -88,7 +88,7 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
@@ -185,7 +185,7 @@ model: # VERBATIM v2.4.1.
 
 train: # NZ locale probe — init_from the SHIPPED v381 (v7.0.0/6.5.0 weights), fresh optimizer, fresh
   # output_dir (--resume none honors init_from, weights only). The ONE new variable is the synth-nz
-  # shard + NZ:1.0; the encoder keeps v381's grammar and fine-tunes NZ in at constant LR 1e-5. 2k probe.
+  # slice + NZ:1.0; the encoder keeps v381's grammar and fine-tunes NZ in at constant LR 1e-5. 2k probe.
   output_dir: /data/output-v383-nz-probe2-s42/checkpoints
   seed: 42
   init_from: /data/output-v381-punct-fix-full-s42/checkpoints/step-008000

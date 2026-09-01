@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   @file Build the sub-venue designator lexicon (#35) — the vocabulary a corpus shard and, eventually,
+ *   @file Build the sub-venue designator lexicon (#35) — the vocabulary a corpus slice and, eventually,
  *   the span proposer read to recognize `Terminal 5`, `North Terminal`, `Concourse B`, `ターミナル1` as
  *   venue-INTERIOR structure. This is the assembly: the record schema lives in `sub-venue/table.ts`, the
  *   implementation in its siblings, and the curation decisions in `sub-venue-promotions.ts`.

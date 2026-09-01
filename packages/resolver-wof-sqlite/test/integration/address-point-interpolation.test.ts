@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for address-point interpolation — Method 2 of the resolution ladder (#483). Seeds an
- *   in-memory `address_point` fixture (the schema `scripts/build-address-point-shard.ts` builds,
+ *   in-memory `address_point` fixture (the schema `scripts/build-address-point-extract.ts` builds,
  *   with the `street_key` route-fold column), then asserts both-sided bracketing, self-number
  *   exclusion (the non-circularity guarantee), unit-sibling centroids, single-sided extrapolation +
  *   its cap, route-key folding, and the no-bracket fall-through to the TIGER segment fallback.
@@ -26,7 +26,7 @@ interface SeedPoint {
 }
 
 async function seedPoints(db: DatabaseClient<AddressPointDatabase>, points: SeedPoint[]): Promise<void> {
-	// Shared table builder (the same `scripts/build-address-point-shard.ts` uses) so this fixture can't
+	// Shared table builder (the same `scripts/build-address-point-extract.ts` uses) so this fixture can't
 	// drift from the production shape. `kdb` wraps `db` for the DDL; the test owns `db`'s lifecycle
 	// (closed in afterAll), so we don't destroy `kdb`.
 	const kdb = db

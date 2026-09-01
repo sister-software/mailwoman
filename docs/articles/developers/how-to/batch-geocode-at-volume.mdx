@@ -39,7 +39,7 @@ Before any pool, get the number you are trying to beat. This script builds the g
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { AddressPointSqliteLookup, StreetInterpolator, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
-import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
+import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode-core"
 import { mailwomanDataRoot, resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import { CSVSpliterator } from "spliterator"
 
@@ -56,16 +56,16 @@ const t0 = performance.now()
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 using lookup = new WOFCandidateTableLookup({ databasePath: resolveCandidateDBPath() })
 const resolver = createWOFResolver(lookup)
-using shards = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, mailwomanDataRoot())
+using extracts = new RegionDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, mailwomanDataRoot())
 const startupMs = performance.now() - t0
 
 // Warm the session: the first few inferences pay one-time allocation the steady-state rate should not carry.
 for (const q of rows.slice(0, 5))
-	await geocodeAddress(q, { classifier, resolver, shards: shards.for, defaultCountry: "US" })
+	await geocodeAddress(q, { classifier, resolver, databases: extracts.for, defaultCountry: "US" })
 
 const t1 = performance.now()
 for (const q of queries) {
-	await geocodeAddress(q, { classifier, resolver, shards: shards.for, defaultCountry: "US" })
+	await geocodeAddress(q, { classifier, resolver, databases: extracts.for, defaultCountry: "US" })
 }
 const runMs = performance.now() - t1
 
@@ -137,14 +137,14 @@ import { parentPort, workerData } from "node:worker_threads"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { AddressPointSqliteLookup, StreetInterpolator, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
-import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
+import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode-core"
 
-// Per-worker init, paid once: its own model session, its own read-only DB handle, its own shards.
+// Per-worker init, paid once: its own model session, its own read-only DB handle, its own extracts.
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: workerData.locale })
 using lookup = new WOFCandidateTableLookup({ databasePath: workerData.candidateDB })
 const resolver = createWOFResolver(lookup)
-using shards = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, workerData.dataRoot)
-const deps = { classifier, resolver, shards: shards.for, defaultCountry: workerData.country }
+using extracts = new RegionDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, workerData.dataRoot)
+const deps = { classifier, resolver, databases: extracts.for, defaultCountry: workerData.country }
 
 parentPort.on("message", async (batch) => {
 	const out = []

@@ -334,7 +334,7 @@ export async function collectCLISurface(commandsDirectory = COMMANDS_DIRECTORY):
 			collectCommands(child, [name], commands)
 		}
 
-		// A group whose own index.tsx is a command (`corpus shard`) contributes it too.
+		// A group whose own index.tsx is a command (`corpus extract`) contributes it too.
 		if (node.component) {
 			collectCommands({ ...node, commands: undefined }, [], commands)
 		}

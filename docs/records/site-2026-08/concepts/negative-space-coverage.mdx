@@ -76,14 +76,14 @@ the authority for both**; the difference is only what kind of help it needs.
 
 - **Open-vocabulary, boundary-defined tags** — `unit`, `street_prefix`,
   `street_suffix`, `locality`. Their members are open-ended and their extent depends
-  on context, so the model has to _learn the boundary_. A balanced coverage shard is
+  on context, so the model has to _learn the boundary_. A balanced coverage extract is
   the whole fix, and this is where the negative-space effect compounds: covering
   `unit` (0 → 92%) lifted US `street` by about three points.
 - **Closed-vocabulary tags** — `country`, `po_box`, `cedex`. A finite, enumerable
   surface set in a predictable slot. The tempting shortcut is a deterministic
   lookup, and an early pass took it. That was wrong, for an instructive reason.
 
-A first attempt trained `country` on a shard that was almost entirely
+A first attempt trained `country` on a extract that was almost entirely
 _trailing-country_ rows, so the model over-learned the cheap correlation "trailing
 token ⇒ country" and started promoting cities and regions to nationhood (49 F1, 23%
 precision). A flat lookup scored 100 — but **only on an eval with no homographs**.
@@ -95,7 +95,7 @@ mirage measured on the easy cases.
 
 The corrected rule: **cover every starved tag by training; let the lexicon _inform_
 the model, never _override_ it.** Open-vocab and closed-vocab-without-homographs
-(`po_box`, `cedex`) just need a balanced coverage shard. A closed-vocab tag with a
+(`po_box`, `cedex`) just need a balanced coverage extract. A closed-vocab tag with a
 large set and homographs (`country`) additionally gets the gazetteer as a **soft
 anchor feature** — a match flag plus a "known-homograph" bit — fed into the model
 the same way the postcode anchor is, so the model decides with the lexicon as

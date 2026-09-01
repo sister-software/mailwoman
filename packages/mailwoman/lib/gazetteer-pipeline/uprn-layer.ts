@@ -76,8 +76,8 @@ import { cellToParent } from "h3-js"
 import { dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
+import { readAcquisitionSidecar, UNKNOWN_PROVENANCE } from "#gazetteer-pipeline/database-lifecycle"
 import { createOSDownloadsClient, OS_DOWNLOADS_API_BASE } from "#gazetteer-pipeline/postcode/codepoint/fetch"
-import { readAcquisitionSidecar, UNKNOWN_PROVENANCE } from "#gazetteer-pipeline/shard-lifecycle"
 
 /**
  * The OS Data Hub product id for Open UPRN.

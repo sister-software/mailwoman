@@ -41,7 +41,7 @@ The **global holes layer** is decoupled from the US rooftop pipeline (its own Du
 | `scripts/build-importance.ts`                                   | Builds `place_importance` (Wikipedia importance + population fallback) — the holes-layer salience source.           |
 | `docs/src/pages/demo/index.tsx`                                 | Demo wiring — registers the coverage source + adds the default-off layers on map load.                              |
 | `docs/src/components/LayerToggleControl/LayerToggleControl.tsx` | The toggle-group patterns (`coverage-opt`, `coverage-honest`).                                                      |
-| `scripts/build-address-point-shard.ts`                          | Per-state situs address-point DB builder. `--oa-csv` mode reads OpenAddresses for states Overture omits (HI).       |
+| `scripts/build-address-point-extract.ts`                        | Per-state situs address-point DB builder. `--oa-csv` mode reads OpenAddresses for states Overture omits (HI).       |
 
 Source data (NOT in git): the per-state US rooftop databases `$MAILWOMAN_DATA_ROOT/address-points/address-points-us-<st>.db` (124.9M points) + `…/interpolation/interpolation-us-<st>.db` (TIGER segments); the global postcode signal `…/geonames/allCountries-postal.txt` (GeoNames postal, 121 countries); and the civilization backdrop `…/wof/admin-global-priority-importance.db` (WOF `spr` + `place_importance`, built by `scripts/build-importance.ts`).
 
@@ -91,12 +91,12 @@ mailwoman tiles publish --file $MAILWOMAN_DATA_ROOT/coverage/coverage-global-v5.
 
 | State group         | Source                            | Notes                                                                                                                                                                                                                            |
 | ------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 48 states + DC + VI | Overture addresses `2026-05-20.0` | `build-address-point-shard.ts` (default).                                                                                                                                                                                        |
-| **HI**              | **OpenAddresses**                 | Overture omits Hawaii entirely (verified at the S3 source — 0 rows in both releases). Built via `build-address-point-shard.ts --oa-csv <4 county CSVs>` → 348K rooftop points.                                                   |
+| 48 states + DC + VI | Overture addresses `2026-05-20.0` | `build-address-point-extract.ts` (default).                                                                                                                                                                                      |
+| **HI**              | **OpenAddresses**                 | Overture omits Hawaii entirely (verified at the S3 source — 0 rows in both releases). Built via `build-address-point-extract.ts --oa-csv <4 county CSVs>` → 348K rooftop points.                                                 |
 | **NH**              | TIGER interpolation only          | No rooftop source exists — OA's only NH run is coordinate-only (0 usable of 610K), Overture absent. NH renders **street-level** (visibly a less-covered region — honest). Real NH rooftop points = **NH GRANIT** (not yet done). |
 | AK                  | _excluded_                        | Antimeridian: `h3_cell_to_boundary_wkt` emits unwrapped lon for Aleutian cells. Needs antimeridian splitting before inclusion.                                                                                                   |
 
-To add an Overture-gap state from OpenAddresses: download the OA conformed CSV(s) from `results.openaddresses.io/latest/run/us/<st>/<source>.zip`, then `build-address-point-shard.ts --state <ST> --oa-csv <csv1>,<csv2>,…`. The new state database is picked up automatically on the next `coverage build`.
+To add an Overture-gap state from OpenAddresses: download the OA conformed CSV(s) from `results.openaddresses.io/latest/run/us/<st>/<source>.zip`, then `build-address-point-extract.ts --state <ST> --oa-csv <csv1>,<csv2>,…`. The new state database is picked up automatically on the next `coverage build`.
 
 ## Tuning knobs (`coverage build`)
 

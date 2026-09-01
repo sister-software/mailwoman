@@ -13,7 +13,7 @@ import {
 	conventionCandidateDBPath,
 	mailwomanDataRoot,
 	resolveCandidateDBPath,
-	wofShardPaths,
+	wofExtractPaths,
 } from "mailwoman/resolver-backend"
 import { join } from "path-ts"
 import { afterEach, expect, test, vi } from "vitest"
@@ -29,8 +29,8 @@ afterEach(() => {
 	vi.unstubAllEnvs()
 })
 
-test("wofShardPaths: builds the admin + postcode + tail + intl + NL-PC6 + NI-OSM shard paths under a data root (#920/#977)", () => {
-	expect(wofShardPaths("/data")).toEqual([
+test("wofExtractPaths: builds the admin + postcode + tail + intl + NL-PC6 + NI-OSM database paths under a data root (#920/#977)", () => {
+	expect(wofExtractPaths("/data")).toEqual([
 		"/data/wof/admin-global-priority.db",
 		"/data/wof/postalcode-us.db",
 		"/data/wof/postalcode-geonames-tail.db",
@@ -42,10 +42,10 @@ test("wofShardPaths: builds the admin + postcode + tail + intl + NL-PC6 + NI-OSM
 	])
 })
 
-test("mailwomanDataRoot: honors MAILWOMAN_DATA_ROOT and threads it into wofShardPaths", () => {
+test("mailwomanDataRoot: honors MAILWOMAN_DATA_ROOT and threads it into wofExtractPaths", () => {
 	setEnv("MAILWOMAN_DATA_ROOT", "/custom/root")
 	expect(mailwomanDataRoot()).toBe("/custom/root")
-	expect(wofShardPaths()[0]).toBe("/custom/root/wof/admin-global-priority.db") // default arg uses the env
+	expect(wofExtractPaths()[0]).toBe("/custom/root/wof/admin-global-priority.db") // default arg uses the env
 
 	setEnv("MAILWOMAN_DATA_ROOT", DefaultMailwomanPaths.data)
 	expect(mailwomanDataRoot()).toBe(DefaultMailwomanPaths.data)

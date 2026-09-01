@@ -344,7 +344,7 @@ export function harvestLocalizedNames(tags: Readonly<Record<string, string | und
 }
 
 /**
- * One extracted transport structure. The shape a sub-venue lexicon build and a corpus shard both read.
+ * One extracted transport structure. The shape a sub-venue lexicon build and a corpus extract both read.
  */
 export interface SubVenueSourceRow {
 	/**
@@ -469,7 +469,7 @@ async function* runSubVenueLayer(
  *
  * A feature mapped as both a node and an area (common for large terminals) yields TWICE, once per layer, with different
  * coordinates. De-duplication is the consumer's call — the lexicon build counts distinct surfaces and does not care,
- * while a corpus shard would.
+ * while a corpus extract would.
  */
 export async function* extractOSMSubVenues(
 	pbfPath: string,

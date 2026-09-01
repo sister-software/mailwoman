@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Typed schema for the TIGER STREET-SEGMENT interpolation shards (`street-segments-<cc>-<st>.db`,
- *   built by `scripts/build-interpolation-shard.ts` from TIGER EDGES) — the #483 Method-3 fallback
+ *   Typed schema for the TIGER STREET-SEGMENT interpolation extracts (`street-segments-<cc>-<st>.db`,
+ *   built by `scripts/build-interpolation-extract.ts` from TIGER EDGES) — the #483 Method-3 fallback
  *   the resolver drops to when the address-point tier (Method 2) can't bracket. Single source of
  *   truth for the columns the BUILDER writes and the READER ({@link StreetInterpolator}) probes, so
  *   a column rename in one is a compile error in the other.
@@ -74,11 +74,11 @@ export interface StreetSegmentTable {
 }
 
 /**
- * The shard's single-row calibration metadata (#374 doctrine, 2026-07-26): the conformal radius multiplier is a
+ * The extract's single-row calibration metadata (#374 doctrine, 2026-07-26): the conformal radius multiplier is a
  * property of the CALIBRATION SET the artifact was built against — so it ships IN the artifact (the pair-index δ
  * precedent, `neural/pair-index-resolver.ts`), not in caller code. Written once by the builder; read at open time by
- * {@link StreetInterpolator}. Shards built before this table exists simply lack it — the reader degrades to `undefined`
- * and callers fall back to the in-code per-region table (never patch shipped DBs — rebuild).
+ * {@link StreetInterpolator}. Extracts built before this table exists simply lack it — the reader degrades to
+ * `undefined` and callers fall back to the in-code per-region table (never patch shipped DBs — rebuild).
  */
 export interface InterpCalibrationRow {
 	/**
@@ -147,7 +147,7 @@ export async function createStreetSegmentTable(db: Kysely<StreetSegmentDatabase>
 
 /**
  * Create + populate the single-row `interp_calibration` metadata table (see {@link InterpCalibrationRow}) — called once
- * by the shard builder, after the value is selected from the calibration source of record. Build-time only (async
+ * by the extract builder, after the value is selected from the calibration source of record. Build-time only (async
  * Kysely is fine here); the READ side is the raw sync probe in {@link StreetInterpolator}'s constructor, per the
  * sync-by-interface doctrine.
  */

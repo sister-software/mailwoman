@@ -1,7 +1,7 @@
 # AGENTS.md — `@mailwoman/corpus`
 
 Scope notes for the training-corpus pipeline. The repo-wide rules live in the root `AGENTS.md`; this
-file covers what is specific to acquiring source data and turning it into shards, and it exists
+file covers what is specific to acquiring source data and turning it into slices, and it exists
 because each item below cost a real investigation to establish.
 
 ## Acquiring OpenAddresses data
@@ -30,7 +30,7 @@ and has been proposed for refresh on that basis. It is not stale: `fr/countrywid
 `de/berlin.csv` and `de/sn/statewide.csv` are **byte-identical** to what OA's current run serves
 (`bf624492…`, `9903d438…`, `623b099b…`). The date records when someone downloaded the archive.
 
-Before proposing a source refresh — which changes shard bytes and therefore lands in retrain
+Before proposing a source refresh — which changes slice bytes and therefore lands in retrain
 territory — `md5sum` the member against the current run. It costs one command and has already
 prevented one retrain proposed over a file timestamp.
 
@@ -53,7 +53,7 @@ Two consequences worth not rediscovering:
   `\r\n` rather than `\s`. The quote-blind splitter it replaced was acting as an accidental newline
   sanitizer — those IA records used to split in two and get dropped by the field checks. Widening the
   collapse to `\s+` also rewrites `NORTH   MAIN STREET` on rows with no line break at all, silently
-  changing values in every shard. `scaffold.test.ts` pins both directions.
+  changing values in every slice. `scaffold.test.ts` pins both directions.
 - **Line-based pre-filters run BEFORE the parser and can cut a record in half.** `po-box-cedex`'s
   `awk 'NR%211==3'` stride and the `head -n` caps elsewhere count PHYSICAL lines. The parse cannot
   repair what the pre-filter already cut; a halved record fails the field checks and drops. This is a
@@ -73,16 +73,16 @@ they were chunk-bounded; only a whole-buffer `.from()` exposed it.
 Note that `normalizeKeys` does NOT lowercase: `smartSnakeCase` leaves ALL CAPS alone, and OA ships
 `LON,LAT,NUMBER,STREET`. That is why `readCSVRecords` owns the lower-casing itself.
 
-## Before claiming a built shard needs rebuilding
+## Before claiming a built slice needs rebuilding
 
-Shards are build outputs under `$MAILWOMAN_DATA_ROOT/corpus/shards/`, not committed artifacts. Two
+Slices are build outputs under `$MAILWOMAN_DATA_ROOT/corpus/slices/`, not committed artifacts. Two
 checks, one command each, before asserting that a code change invalidates one:
 
 1. **Is that reader on the changed path?** Several recipes read the same source through different
    readers. `locale.ts` has its own `CSVSpliterator` reader and is not among `readCSVRecords`' callers.
-2. **Does the artifact predate the fix?** Compare the shard's mtime against the commit date of the
-   change. A shard built after a fix already contains it.
+2. **Does the artifact predate the fix?** Compare the slice's mtime against the commit date of the
+   change. A slice built after a fix already contains it.
 
 Skipping both once produced a claim that `synth-es-pedania-v1.jsonl` needed re-pinning. Its reader
-had migrated on 2026-07-08 and the shard was built 2026-07-22 — the work was already done, and acting
+had migrated on 2026-07-08 and the slice was built 2026-07-22 — the work was already done, and acting
 on the claim would have cost an 800,000-row rebuild to find that out.
