@@ -4814,7 +4814,7 @@ __metadata:
     spliterator: "npm:^6.4.1"
     zod: "npm:^4.4.3"
   bin:
-    mwdev-mcp: ./cli.ts
+    mwdev-mcp: ./lib/cli.ts
   languageName: unknown
   linkType: soft
 
