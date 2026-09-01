@@ -37,7 +37,7 @@
 #    recorded in a model card identifies the build.
 #
 # 3. Duplicate (child, parent) pairs are forbidden. Serializers must refuse them rather than
-#    last-write-win — a duplicate is a shard-build bug, not a merge decision.
+#    last-write-win — a duplicate is an extract-build bug, not a merge decision.
 #
 # 4. child and parent are stored ALREADY FOLDED (see foldVersion). A probe with unfolded text will
 #    miss; the fold is not part of this format, it is a contract with the consumer.

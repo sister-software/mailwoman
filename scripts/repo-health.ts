@@ -256,6 +256,39 @@ const UNCOUNTED = [
  */
 const BANNED_VOCABULARY = /\b[A-Za-z_]*shard[A-Za-z_]*\b/giu
 
+/**
+ * Where the banned word is allowed to survive, and why each one earns it.
+ *
+ * THE COUNT IS OVER EVERY TRACKED TEXT FILE, not just `.ts`/`.tsx`. The first version of this counter scanned only
+ * TypeScript, reported zero, and left 125 occurrences standing in prose, config, dictionaries and eval rows — including
+ * three sentences in `AGENTS.md` that still told the next agent the old names were current. A vocabulary an agent reads
+ * is a vocabulary an agent writes, so prose is in scope.
+ */
+const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason: string]> = [
+	["scripts/repo-health.ts", "the pattern above has to spell the word it bans"],
+	["docs/styles/", "the Vale rules that REFUSE the word must name it"],
+	[".claude/output-styles/", "the same refusal list, mirrored for agent replies"],
+	["AGENTS.md", "carries that refusal list, plus the note recording that this family reached zero"],
+	// Records describe a state the repository was in. Rewriting one falsifies it — the rule that kept the
+	// frozen pre-registrations out of the #2050 path sweep.
+	["CHANGELOG.md", "records the rename itself"],
+	["docs/records/", "dated records"],
+	["docs/superpowers/specs/", "dated specs, including the two that proposed this removal"],
+	["evals/scores-by-version.json", "per-version eval history"],
+	[".claude/skills/", "archived consult transcripts"],
+	[".agents/skills/", "archived consult transcripts"],
+	["release.config.json", "the `lineage` string is training-run provenance for a shipped version"],
+	// CONTENT, not vocabulary. `shardza`, `sechshard` and `shykshard` are transliterated place names;
+	// `Bosshardt` and `Rashard` are real people's names; the eval rows are dated notes on committed board
+	// cases. Renaming any of them would corrupt data to satisfy a style rule.
+	["packages/core/data/", "libpostal dictionaries — real given names and surnames"],
+	["data/gazetteer/", "gazetteer place names"],
+	["data/eval/", "external eval fixtures"],
+	["packages/mailwoman/lib/eval-harness/gauntlet/cases/", "dated notes inside committed board rows"],
+	["packages/mailwoman/lib/eval-harness/fixtures/", "committed eval surfaces"],
+	[".yarn/", "vendored third-party release"],
+]
+
 // `existingOnly`: a tracked path can be absent from the working tree (a deletion staged but not
 // committed); skip it rather than failing the whole gate on a file the next commit removes anyway.
 // The enumerate-the-index rationale lives on scripts/tracked-sources.ts.
@@ -296,8 +329,23 @@ for (const path of paths) {
 	if (!generated && !/[.]test[.]tsx?$/.test(path) && lineCount > 1000) {
 		counters.productionFilesOver1000Lines++
 	}
+}
 
-	// Textual, not AST: the word is being removed from comments and string literals as well as identifiers.
+// The banned vocabulary is counted over EVERY tracked text file rather than the TypeScript-only set above:
+// prose an agent reads is prose an agent copies. Binary blobs are skipped by the read failing, not by a list.
+for (const trackedPath of await trackedSourcePaths(root, { globs: ["*"], existingOnly: true })) {
+	const relativePath = relative(root, trackedPath)
+
+	if (BANNED_VOCABULARY_ALLOWED.some(([prefix]) => relativePath.startsWith(prefix))) continue
+
+	let text: string
+
+	try {
+		text = await readLocalTextFile(trackedPath)
+	} catch {
+		continue
+	}
+
 	counters.bannedVocabulary += text.match(BANNED_VOCABULARY)?.length ?? 0
 }
 

@@ -85,7 +85,7 @@ record-matching:
 
 corpus:
   label: Corpus pipeline
-  description: The training-data pipeline — adapters, alignment, synthesis, Parquet shards.
+  description: The training-data pipeline — adapters, alignment, synthesis, Parquet slices.
 
 training:
   label: Model training

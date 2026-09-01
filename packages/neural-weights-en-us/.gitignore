@@ -6,7 +6,7 @@
 
 # Soft-feed artifacts materialized at publish time by scripts/copy-weights.ts (#718 D1):
 # the compact PCB1 postcode-anchor binary + the gazetteer-anchor lexicon. Built from the
-# WOF postcode shard + data/gazetteer/, not committed (mirrors model.onnx/tokenizer.model).
+# WOF postcode extract + data/gazetteer/, not committed (mirrors model.onnx/tokenizer.model).
 /postcode-*.bin
 /anchor-lexicon-v1.json
 
