@@ -10,7 +10,7 @@
  *   The golden answer key and the training corpus disagreed about ONE thing, and the v9.0.0
  *   promotion gate read the disagreement as a model regression (`us.street` 87.4 vs a floor of
  *   87.8). The corpus SPLITS a US street into `street` + `street_suffix` — TIGER's adapter
- *   decomposes at `corpus/src/adapters/tiger/street-decompose.ts`, the `street-affix` shard recipe
+ *   decomposes at `corpus/src/adapters/tiger/street-decompose.ts`, the `street-affix` slice recipe
  *   teaches it from USPS Pub-28, and `ComponentTag` carries `street_suffix` as a first-class tag.
  *   The golden set FOLDED it: 2,216 US rows carry a `street`, and exactly 2 of them label a
  *   `street_suffix`. Operator ruling, 2026-08-06: **the split is canonical**; the golden is the
@@ -19,7 +19,7 @@
  *   ## The instrument
  *
  *   `matchTrailingSuffix` from `@mailwoman/codex/us` — the USPS Pub-28 Appendix C table, which is
- *   also what the corpus shard recipe splits on. The table is NOT re-implemented here, and the
+ *   also what the corpus slice recipe splits on. The table is NOT re-implemented here, and the
  *   libpostal dictionary TIGER reads is deliberately not used: measured on this golden set the two
  *   disagree on 51 US rows, and the disagreements run in the codex table's favour (libpostal's
  *   `directionals.txt` lists `center|c`, so TIGER reads the `C` of "C STREET" as a directional

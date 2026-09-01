@@ -79,7 +79,7 @@ export interface ArtifactFreshness {
 	/**
 	 * What it was built FROM: the manifest's `source` then its `source_vintage`. Two entries rather than one string
 	 * because the candidate gazetteer's source is a CHAIN (it names its ancestor admin build) and the vintage carries the
-	 * shard counts that make one candidate build different from another.
+	 * database counts that make one candidate build different from another.
 	 */
 	sources?: string[]
 }

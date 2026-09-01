@@ -8,7 +8,7 @@
  *   so a refactor that breaks the cascade fails in CI before it ships. Two addresses, chosen to light up all three
  *   tiers at once:
  *
- *   - 1600 Pennsylvania Ave NW → the STREET tier (situs/interp shards) + an address_point rooftop.
+ *   - 1600 Pennsylvania Ave NW → the STREET tier (situs/interp extracts) + an address_point rooftop.
  *   - Zabiče 8, 6250 Zabiče → the WOF admin cascade AND the #942/#961 postal-compound floor. If either regresses to
  *     admin-only (or drops its marker), a tier is dead — exactly what shipped silently before.
  *   - 1012 LG Amsterdam → the #924 NL digits-first postcode fix (v5.4.0). If the model regresses to parsing `1012` as a

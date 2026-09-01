@@ -99,7 +99,7 @@ bottom-right. Tiles are never shipped with any package; the path always comes fr
 
 Extract `runGeocode`'s dependency assembly (`mailwoman/commands/geocode.tsx`) into
 `createGeocodeSession(options)`, a sibling of `geocode-core.ts`. The session loads the
-classifier, opens the resolver backend, shard providers, placer, and poi deps once, and returns
+classifier, opens the resolver backend, extract providers, placer, and poi deps once, and returns
 `{geocode(input), close()}`. `geocode(input)` returns the flat `GeocodeResult` **plus** the
 parsed tree and the classifier's labeled char spans (the sentencepiece native-offsets path
 carries offsets end to end; the exact accessor is plan-time verification item 1).

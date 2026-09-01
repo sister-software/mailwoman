@@ -17,7 +17,7 @@ browser-safe; the artifact is 2.9 MB fp32 today (quantizes to ~720 KB int8 — a
   40k/5k/5k train/val/test **per country**, balanced (a flat sample is 94% US+FR). Classes: US, FR, GB,
   CN, NL, IT, DE, JP, ES, KR, TW (the corpus's well-represented set; the long tail is held for outlier
   exposure). Two corpus gotchas handled: DuckDB `USING SAMPLE` samples the table-then-filters (so we
-  filter-then-sample), and the val/test shards only carry US/FR/DE (so all splits are drawn from train
+  filter-then-sample), and the val/test extracts only carry US/FR/DE (so all splits are drawn from train
   with our own per-country 80/10/10).
 - **Train** (`scripts/coarse-placer/train.mjs`): multinomial logistic regression, plain SGD, ~minutes on
   CPU. Temperature fit on val by NLL minimization.
@@ -81,7 +81,7 @@ numeric/punctuation n-grams in a real address otherwise pull an off-map input to
    mis-place — they share the script with the in-map European 11 and the OTHER training is non-Latin. The
    fix is full off-map _addresses_ (OpenAddresses for more countries), not place names.
 2. **Script/continent heads** — the design wants (script, continent, coarse-region); script is
-   deterministic, continent is a grouping, coarse-region routes shard loading.
+   deterministic, continent is a grouping, coarse-region routes extract loading.
 3. **Shrink + ship** — int8-quantize (≈720 KB), wire as the first pipeline stage + the #243 query-type
    router (bare-landmark → skip parser; address → parse).
 

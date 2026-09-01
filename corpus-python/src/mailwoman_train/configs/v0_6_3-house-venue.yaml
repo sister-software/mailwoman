@@ -19,7 +19,7 @@
 #        digit+ordinal venue addition (mechanism (a) fix).
 #
 #   2. NEW synth-house-venue-v063 at weight 1.0 (32K rows)
-#      - Companion shard with house_number + venue + street ALL coexisting.
+#      - Companion slice with house_number + venue + street ALL coexisting.
 #      - Two templates: "123 Main St, Sunrise Bakery, ..." and
 #        "Sunrise Bakery, 123 Main St, ..." (50/50). Plain venue pool only.
 #      - Teaches the model that house_number and venue are not mutually
@@ -27,7 +27,7 @@
 #
 #   3. v0.6.2 sources (synth-no-street, synth-house-venue) ARE NOT WEIGHTED.
 #      Per data_loader source_weights inclusion semantics, sources missing
-#      from this dict are dropped. The v062 shards remain on the volume for
+#      from this dict are dropped. The v062 slices remain on the volume for
 #      reproducibility but are inactive in v0.6.3 training.
 #
 #   4. synth-street stays at weight 0.5 (v0.6.2's value, preserved). The
@@ -90,11 +90,11 @@ data:
     synth-street: 0.5
     # synth-no-street-v063 at half weight (v0.6.2b's setting; better trade-off
     # per the 20K diagnostic). Source name distinct from v0.6.2's
-    # `synth-no-street` so the two shards coexist on the volume — the v062
+    # `synth-no-street` so the two slices coexist on the volume — the v062
     # source is intentionally omitted from source_weights → dropped per
     # data_loader's inclusion semantics.
     synth-no-street-v063: 0.5
-    # NEW: 32K-row companion shard with house_number + venue + street ALL
+    # NEW: 32K-row companion slice with house_number + venue + street ALL
     # coexisting. Recovers the house_number signal that synth-no-street's
     # distributional shift cost in v0.6.2. Weight 1.0 = full inclusion.
     synth-house-venue-v063: 1.0

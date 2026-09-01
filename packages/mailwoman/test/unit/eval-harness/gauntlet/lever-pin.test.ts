@@ -7,7 +7,7 @@
  *   configuration, not just a model.
  *
  *   These assert a mapping, deliberately: `run options → layer options → geocode deps`. The gate itself needs the ~9 GB
- *   shard set and a loaded ONNX, so a test that ran it would be an integration run, not a check — and the failure mode
+ *   database set and a loaded ONNX, so a test that ran it would be an integration run, not a check — and the failure mode
  *   this surface exists to prevent is silent. A dropped pin does not throw; it produces a gate log identical to the
  *   unpinned one, which reads exactly like "the lever changed nothing". Every hop is therefore pinned here.
  */

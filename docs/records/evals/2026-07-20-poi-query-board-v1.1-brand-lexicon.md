@@ -4,7 +4,7 @@
 `mailwoman/eval-harness/fixtures/poi-board.jsonl` (51 cases, committed — v1's 45 + 6 new brand
 cases). **DB:** `/mnt/playpen/mailwoman-data/poi/poi-full.db` (the full 4-country build,
 release 2026-05-20.0; regenerated `poi-taxonomy/data/brands.json` against this same db — see
-below). **Resolver:** default FTS admin shard (`admin-global-priority.db`).
+below). **Resolver:** default FTS admin extract (`admin-global-priority.db`).
 
 **Status: still report-only.** No floors this round either — the brand-lexicon wiring is new
 enough (this PR) that a floor would just be laundering today's numbers. Floors remain a

@@ -6,7 +6,7 @@
  *   Load the curated regression corpus from `cases/<cc>/*.jsonl`.
  *
  *   The corpus was one 3,530-line TS array until 2026-08-05. It is now one JSONL file per ISO-3166 alpha-2
- *   country dir — the per-`cc` layout the gazetteer shard set already uses (`postalcode-<cc>-overture.db`) —
+ *   country dir — the per-`cc` layout the gazetteer database set already uses (`postalcode-<cc>-overture.db`) —
  *   because the array had reached the size where "does GB assert dependent_locality anywhere?" was a scroll
  *   rather than a listing.
  *

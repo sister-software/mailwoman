@@ -40,19 +40,19 @@ when the neural parser is out of distribution on a locale, a structured signal c
   spot-check caught bad source data: 73% of WOF IT postcodes are orphans with no parent, and some of the
   rest link to the wrong place — Milan's `20121` points at Riomaggiore, a Cinque Terre village 150 km away
   in Liguria. IT stays membership-only; placement is blocked on WOF data quality, not on our pipeline. The
-  experiment was reverted (the shard is back to the clean DE/FR state; nothing IT-related reached a PR).
+  experiment was reverted (the extract is back to the clean DE/FR state; nothing IT-related reached a PR).
 
 ## What went well
 
 - The gazetteer was nearly free. `build-unified-wof` already accepted `--placetypes postalcode`, and the
-  resolver already resolved postcodes for the US shard. Most of the anchor was assembly, not invention.
+  resolver already resolved postcodes for the US extract. Most of the anchor was assembly, not invention.
 - Probing the data before building saved a wasted afternoon. A first look at the cloned DE repo showed
   coordinate-less stubs, so the centroid-backfill design existed before any code did, rather than as a
   patch after a useless gazetteer shipped.
 - DeepSeek's call to keep the posterior uniform got validated by real data on the first run: `94105`
   resolves to US, French dept 94, and German PLZ 94xxx all at once. Count-weighting would have confidently
   picked the wrong country; the soft posterior leaves the disambiguation to the parser's city tokens.
-- The tests seed their own fixture shards, so the suite runs in CI without the data volume.
+- The tests seed their own fixture extracts, so the suite runs in CI without the data volume.
 - A functional spot-check, not an aggregate metric, caught the bad IT data. The `27% placed` number alone
   looked merely low; eyeballing three Italian cities showed Milan resolving to Liguria, which is what
   turned "ship IT at low coverage" into "do not ship IT." Functional tests over metrics, again.

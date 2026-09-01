@@ -91,7 +91,7 @@ Mailwoman is benchmarked against Nominatim, Pelias, and libpostal on the coordin
 
 **On input shapes the corpus never taught.** Multi-script and transliterated addresses are a known limitation, kept in a separately-reported adversarial slice rather than mixed into headline numbers: deltas there measure whether the limitation got fixed, not whether a release regressed. The characteristic parse failures (boundary slips, fragmented multi-word names, lookalike digit strings) are described in [the parsing walkthrough](./how-mailwoman-parses-an-address.mdx).
 
-**Where the fine-grained data ends.** Wherever a rooftop shard exists, accuracy is a property of the data. The gap is coverage: on a 1,172-address Texas facility panel, the rooftop tier fired on 47% of rows and interpolation on a further 12.5%, leaving roughly 40% at town centroids. The result says so itself (`resolution_tier: "admin"`), and the [demo map](https://mailwoman.ai/demo)'s coverage overlay fogs exactly the places the resolver can't yet pin.
+**Where the fine-grained data ends.** Wherever a rooftop extract exists, accuracy is a property of the data. The gap is coverage: on a 1,172-address Texas facility panel, the rooftop tier fired on 47% of rows and interpolation on a further 12.5%, leaving roughly 40% at town centroids. The result says so itself (`resolution_tier: "admin"`), and the [demo map](https://mailwoman.ai/demo)'s coverage overlay fogs exactly the places the resolver can't yet pin.
 
 ## Checking your own workload
 

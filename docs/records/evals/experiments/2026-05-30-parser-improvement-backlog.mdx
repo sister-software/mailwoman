@@ -86,7 +86,7 @@ failure modes, not one:
    (`MAIN ST NW STE 12`) gets swallowed into the `street` span. A regex repair
    **cannot** safely carve a unit out of a confident street span — that's a
    **coverage** gap (units underrepresented in training), the same lesson as
-   intersections. The fix is a unit-bearing synth shard (a B-list item), not a
+   intersections. The fix is a unit-bearing synth extract (a B-list item), not a
    post-decode pass.
 
 Net: the repair patches the locality-mislabel half cleanly and safely; the
@@ -109,14 +109,14 @@ motivates it strongly:** trailing `AUSTRALIA` → `locality`, and `country` reca
 failure — _last-line-only_ addresses (`NEW YORK NY 10025`, `CANBERRA ACT 2614`,
 `SYDNEY NSW`) mislabel the leading locality as **street** when no street is
 present. That's neither unit nor country; it's a coverage gap (the model rarely
-sees street-less addresses). Folds into the same coverage shard as B5.
+sees street-less addresses). Folds into the same coverage extract as B5.
 
 ## Sequencing
 
 1. ✅ B1 unit-repair — built + measured (+2/8 postal unit-tag, 0 regressions,
    locality-mislabel half). Street-absorption half is coverage (see B3'). Opt-in.
 2. B2 country-repair — now well-motivated by v0.7.2; build next (post-decode).
-3. **B3' unit + street-less coverage shard** — synth units mid/post-street
+3. **B3' unit + street-less coverage extract** — synth units mid/post-street
    (`STE 12`) and street-less last-lines; folds with B5 real-data coverage. This
    is the half post-decode repair can't reach.
 4. B4 street-overspan — the one true model/decoder change; its own investigation.

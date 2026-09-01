@@ -214,24 +214,24 @@ export function sqljsBaseURL(siteBaseURL: string): string {
 }
 
 /**
- * Per-state street shard URL (#377). The situs (exact address points) + interp (TIGER ranges) DBs are hosted byte-range
- * at `mailwoman/street/us/<slug>/<kind>.db` — a lookup touches ~KB of a multi-GB shard, so they're loaded lazily by
- * parsed region, not bundled. Independent of the locale/version WOF asset layout (street shards are per-state, not
- * per-model-version).
+ * Per-state street extract URL (#377). The situs (exact address points) + interp (TIGER ranges) DBs are hosted
+ * byte-range at `mailwoman/street/us/<slug>/<kind>.db` — a lookup touches ~KB of a multi-GB extract, so they're loaded
+ * lazily by parsed region, not bundled. Independent of the locale/version WOF asset layout (street extracts are
+ * per-state, not per-model-version).
  */
-export function streetShardURL(slug: string, kind: "situs" | "interp"): string {
-	// National (non-US) shards live under their country at a DATED path (immutable Cache-Control means
-	// a rebuilt shard needs a fresh URL — the admin-gazetteer discipline); US shards keep the
+export function streetExtractURL(slug: string, kind: "situs" | "interp"): string {
+	// National (non-US) extracts live under their country at a DATED path (immutable Cache-Control means
+	// a rebuilt extract needs a fresh URL — the admin-gazetteer discipline); US extracts keep the
 	// per-state layout. Bump the version when the BAN artifact is rebuilt + re-uploaded.
 	if (NATIONAL_STREET_SLUGS.has(slug)) {
-		return `${ASSET_BASE_URL}street/${slug}/${NATIONAL_STREET_SHARD_VERSION}/${kind}.db`
+		return `${ASSET_BASE_URL}street/${slug}/${NATIONAL_STREET_EXTRACT_VERSION}/${kind}.db`
 	}
 
 	return `${ASSET_BASE_URL}street/us/${slug}/${kind}.db`
 }
 
 /**
- * Country-level national street shards (#1012 BAN-FR): one situs DB per country, no interpolation shard. The demo's
+ * Country-level national street extracts (#1012 BAN-FR): one situs DB per country, no interpolation extract. The demo's
  * street tier tries these when the US per-state path doesn't claim the query — safe because the keyed (street, number,
  * postcode/locality) probes are self-validating against the register (a wrong-country probe is a cheap ~KB miss, never
  * a false hit).
@@ -239,9 +239,9 @@ export function streetShardURL(slug: string, kind: "situs" | "interp"): string {
 export const NATIONAL_STREET_SLUGS = new Set(["fr"])
 
 /**
- * Dated national-shard release (2026-07-10: the #1044 quote-fix + arrondissement-fold rebuild, md5 bc387335).
+ * Dated national-extract release (2026-07-10: the #1044 quote-fix + arrondissement-fold rebuild, md5 bc387335).
  */
-export const NATIONAL_STREET_SHARD_VERSION = "2026-07-10"
+export const NATIONAL_STREET_EXTRACT_VERSION = "2026-07-10"
 
 /**
  * The single national slug the demo's street tier falls back to when no hosted US state claims the query.
@@ -264,7 +264,7 @@ export const ADMIN_GAZETTEER_VERSION = "2026-08-25b"
  * GLOBAL coverage and no `SLIM_COUNTRIES` upkeep. It now also carries a co-located FTS5-trigram fuzzy index, consulted
  * ONLY on an exact-name miss (typo tolerance, e.g. Manchestr→Manchester) so the contiguous fast path is untouched.
  * Resolved by {@link WOFCandidateTableLookup} (build-candidate.ts). Hosted at
- * `mailwoman/gazetteer/<date>/candidate.db`, version-independent like the street shards.
+ * `mailwoman/gazetteer/<date>/candidate.db`, version-independent like the street extracts.
  */
 export function adminGazetteerURL(): string {
 	return `${ASSET_BASE_URL}gazetteer/${ADMIN_GAZETTEER_VERSION}/candidate.db`
@@ -284,11 +284,11 @@ export function poiLayerURL(): string {
 }
 
 /**
- * Slugs we host street shards for (byte-range on R2). A state not in this set falls through to the WOF admin centroid.
- * National rollout (#735, 2026-06-21): the 50-state situs (#476/#567, 124.9M US address points) + TIGER interp shards
- * are hosted, so any US address resolves to its building (`address_point`, ≤10 m) or a calibrated interp estimate — not
- * a city centroid. `vi` = US Virgin Islands. (`il` is the whole state incl. Cook; the separate `il-cook` build shard is
- * not hosted.)
+ * Slugs we host street extracts for (byte-range on R2). A state not in this set falls through to the WOF admin
+ * centroid. National rollout (#735, 2026-06-21): the 50-state situs (#476/#567, 124.9M US address points) + TIGER
+ * interp extracts are hosted, so any US address resolves to its building (`address_point`, ≤10 m) or a calibrated
+ * interp estimate — not a city centroid. `vi` = US Virgin Islands. (`il` is the whole state incl. Cook; the separate
+ * `il-cook` build extract is not hosted.)
  */
 export const HOSTED_STREET_SLUGS = new Set([
 	"ak",
@@ -400,7 +400,7 @@ const US_STATE_NAME_TO_SLUG: Record<string, string> = {
 }
 
 /**
- * US state/territory name OR abbreviation → 2-letter shard slug, or null if not a US region we recognize.
+ * US state/territory name OR abbreviation → 2-letter extract slug, or null if not a US region we recognize.
  */
 export function regionToStateSlug(region: string | undefined): string | null {
 	if (!region) return null
@@ -456,7 +456,7 @@ export const PAIR_INDEX_COUNTRIES = ["gb", "nz"] as const
  *
  * The binaries carry the same `public, max-age=604800, immutable` Cache-Control as every other bucket object, so a
  * rebuilt index needs a FRESH URL — the discipline {@link ADMIN_GAZETTEER_VERSION}, {@link POI_LAYER_VERSION} and
- * {@link NATIONAL_STREET_SHARD_VERSION} already follow. Bump this the same commit the binaries are re-cut and
+ * {@link NATIONAL_STREET_EXTRACT_VERSION} already follow. Bump this the same commit the binaries are re-cut and
  * re-uploaded; the mutable pointer is this constant inside the (revalidated) Pages bundle, never the binaries.
  *
  * Why a site-side constant rather than a `releases.json` field: the PIX reader that consumes these binaries

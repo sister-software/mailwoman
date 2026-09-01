@@ -13,7 +13,7 @@
  *        `@mailwoman/record` (parse the person name, canonicalize the org). This is deterministic
  *        and testable with no heavy runtime.
  *   2. **Geocoding** (the heavy part) is an injected seam — a {@link GeocodeAddress} the caller provides.
- *        Ingest never imports the neural parser, the resolver, or the shards; it just calls the
+ *        Ingest never imports the neural parser, the resolver, or the extracts; it just calls the
  *        seam per address. {@link geocodeAddressVia} builds that seam from mailwoman's real parse +
  *        geocode primitives (which the CLI constructs with the model + data in hand), so the wiring
  *        is concrete and testable without pinning the heavy runtime into this package.
@@ -337,8 +337,8 @@ export type GeocodeAddressViaDeps = TwoStepGeocodeDeps | OneStepGeocodeDeps
 
 /**
  * Build a {@link GeocodeAddress} from mailwoman's real parse + geocode primitives (injected — the CLI constructs the
- * neural parser, resolver, and shards and passes them in). Parse → components → {@link toPostalAddress} (which fills the
- * canonical key + formatted form) → attach the resolved coordinate. When geocoding can't place the address, the
+ * neural parser, resolver, and extracts and passes them in). Parse → components → {@link toPostalAddress} (which fills
+ * the canonical key + formatted form) → attach the resolved coordinate. When geocoding can't place the address, the
  * parsed-but-unlocated address is still returned.
  */
 export function geocodeAddressVia(deps: GeocodeAddressViaDeps): GeocodeAddress {

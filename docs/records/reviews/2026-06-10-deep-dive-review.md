@@ -29,7 +29,7 @@ One calibration note from the research: the incumbent moved. Senzing retrained l
 | No version↔capability matrix | Nothing maps npm versions → model lineage → features (anchors, unit coverage, calibration). The model-version vs npm-version split confuses every reader.                                                   |
 | No operational runbooks      | 92 eval reports but no "to evaluate your change, run X"; corpus/training docs scattered across 4 files with no retrain runbook; the gazetteer-anchor implementation isn't cross-linked from its design doc. |
 
-**Top doc fixes by ROI:** (1) fix AGENTS.md paths (30 min), (2) versions/capabilities matrix page, (3) refresh `status.mdx` + link the parity scorecard as the live truth, (4) a CONTRIBUTING_MODEL_WORK runbook (eval harness + lever taxonomy + shard recipe), (5) cross-link gazetteer-anchor design ↔ implementation.
+**Top doc fixes by ROI:** (1) fix AGENTS.md paths (30 min), (2) versions/capabilities matrix page, (3) refresh `status.mdx` + link the parity scorecard as the live truth, (4) a CONTRIBUTING_MODEL_WORK runbook (eval harness + lever taxonomy + extract recipe), (5) cross-link gazetteer-anchor design ↔ implementation.
 
 ---
 
@@ -54,10 +54,10 @@ One calibration note from the research: the incumbent moved. Senzing retrained l
 
 **The five risks, ranked:**
 
-1. **No clone-and-train path.** Corpus shards, tokenizer, anchor/gazetteer lookups all live on R2/Modal/`$MAILWOMAN_DATA_ROOT` with hardcoded paths. A fresh agent cannot reproduce v0.9.12 from the repo. → `REPRODUCIBILITY.md` + publish corpus snapshots beside model releases.
+1. **No clone-and-train path.** Corpus extracts, tokenizer, anchor/gazetteer lookups all live on R2/Modal/`$MAILWOMAN_DATA_ROOT` with hardcoded paths. A fresh agent cannot reproduce v0.9.12 from the repo. → `REPRODUCIBILITY.md` + publish corpus snapshots beside model releases.
 2. **Gate scatter.** Each config carries its own pre-registered gate comment; execution is manual night-shift discipline, not CI. One `promotion-gate.sh` that parses the config's gate block and runs the listed scripts would turn lore into enforcement — and auto-append to the ledger on pass.
 3. **Curriculum state unlogged.** Anchor/gazetteer confidence ramps are step-aware; a resume mid-ramp silently changes training dynamics and nothing records which curriculum a checkpoint saw. Stamp curriculum state into the model card; assert on resume.
-4. **Overlay shard resolution fails silently.** Overlay manifests cross-reference base corpora by absolute path; the loader's glob fallback means a moved base corpus trains on the wrong data without erroring (the v0.7.1 trap, still open). Add strict mode + explicit `base_corpus_version` lineage.
+4. **Overlay extract resolution fails silently.** Overlay manifests cross-reference base corpora by absolute path; the loader's glob fallback means a moved base corpus trains on the wrong data without erroring (the v0.7.1 trap, still open). Add strict mode + explicit `base_corpus_version` lineage.
 5. **Int8 toolchain pinning is undocumented.** The value_info-strip fix and the Safari-WebGPU opset≤17 invariant live in code comments; a well-meaning dep bump re-breaks iOS undetected. Add a version-verification script + a toy export/quant CI check.
 
 Eval-hygiene lore (tokenizer-F1 incomparability, name-match vs coordinate truth, German native-order rendering) is _partially_ encoded in tooling (`--tokenizer` flag, `de-order-eval.sh`, honest-eval) — better than memory-only, but the promotion-gate consolidation is what makes it survivable.
@@ -88,9 +88,9 @@ Capability checklist (evidence-based, from the resolver/data-layer pass):
 
 ## 5. Recommended roadmap
 
-**Phase A — Consolidate the parser win (now → ~2 weeks).** Land #466/#468 (affix-ml shard + gazetteer choreography) into the consolidation retrain; re-benchmark the arenas against Senzing's retrained libpostal; cut the v1.0-parity model. This finishes the campaign already in flight — don't start geocoder work mid-retrain.
+**Phase A — Consolidate the parser win (now → ~2 weeks).** Land #466/#468 (affix-ml extract + gazetteer choreography) into the consolidation retrain; re-benchmark the arenas against Senzing's retrained libpostal; cut the v1.0-parity model. This finishes the campaign already in flight — don't start geocoder work mid-retrain.
 
-**Phase B — Hygiene sprint (~1 week, parallelizable).** AGENTS.md links + status.mdx + version matrix; `promotion-gate.sh` + ledger auto-append; REPRODUCIBILITY.md; strict shard resolution; `buildTokens()` dedup + libpostal TLA removal. Cheap, and everything after gets safer.
+**Phase B — Hygiene sprint (~1 week, parallelizable).** AGENTS.md links + status.mdx + version matrix; `promotion-gate.sh` + ledger auto-append; REPRODUCIBILITY.md; strict extract resolution; `buildTokens()` dedup + libpostal TLA removal. Cheap, and everything after gets safer.
 
 **Phase C — Geocoder table stakes (~6–8 weeks).** In order of leverage: (1) house-number interpolation off TIGER (biggest coverage win, gate on honest-eval coord p50 dropping from ~10 km admin-centroid toward street-level), (2) reverse geocoding off wof-polygons.db (symmetric tree output), (3) autocomplete endpoint wiring the existing FST tier with parser engagement past a token threshold. Add batch as a thin layer over all three.
 

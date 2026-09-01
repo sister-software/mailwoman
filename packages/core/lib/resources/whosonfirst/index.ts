@@ -5,5 +5,5 @@
  */
 
 export * from "#resources/whosonfirst/PlacetypeDataSource"
-export * from "#resources/whosonfirst/sharded-repo"
+export * from "#resources/whosonfirst/extract-repo"
 export * from "#resources/whosonfirst/placetypes/index"

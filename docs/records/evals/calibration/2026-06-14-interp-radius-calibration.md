@@ -17,7 +17,7 @@ truth ~90% of the time, not 72%. Otherwise the number is decoration.
 
 Split-conformal prediction (`scripts/eval/conformal-calibrate.ts`, #374) over the **interpolation tier
 in isolation** — situs forced off (an empty-but-valid address-point db) so every resolved row falls
-through to interpolation, on the full national TX interp shard (254 counties):
+through to interpolation, on the full national TX interp extract (254 counties):
 
 ```
 holdout  : Travis County E-911 (1965 rows)

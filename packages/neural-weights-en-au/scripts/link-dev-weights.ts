@@ -20,7 +20,7 @@
  *   - `country-surface-lexicon-v1.json` — checked-in repo file, symlinked from `data/gazetteer/`.
  *     The country channel loads this to constrain the resolver.
  *
- *   en-au is INITIAL (2026-08-08): NO postcode-au.bin (no WOF AU postcode shard exists), NO
+ *   en-au is INITIAL (2026-08-08): NO postcode-au.bin (no WOF AU postcode extract exists), NO
  *   pair-index-au.bin (PIX1 not yet calibrated for AU), NO anchor-lexicon (anchor channel OFF).
  *   The overlay exists so `--locale en-AU` resolves and the resolver's country scope constrains
  *   the candidate lookup — that alone fixes the WA→Washington-State homonym class diagnosed in the

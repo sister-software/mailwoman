@@ -1,5 +1,5 @@
 # v2.1.1 mass-reduction probe (#901 fork knob (a)): the ONE variable vs v2.1.0 is the family's
-# synthetic mass — 4 shards x 6.0 = 4x the falsified v1.9.8 run's synthetic gradient was never
+# synthetic mass — 4 slices x 6.0 = 4x the falsified v1.9.8 run's synthetic gradient was never
 # tested at lower pressure. Same lessons, quarter the gradient: all four family weights 6.0 -> 1.5.
 # v2.1.0-boundary-family — #901 re-scoped: the four-orthography leading-name-boundary family,
 # trained as ONE variable on the SHIPPED v5.2.0 base (nsplice-v2-expanded, tokenizer v0.7.1-nsplice).
@@ -15,7 +15,7 @@
 # no optimizer state). Probe 2k FIRST; the probe gate covers EVERY graded locale at reduced n
 # (the run-1 lesson). Pre-registration in gate-v193/RESULTS.md before any grade.
 data:
-  # v0.9.4 overlay = v0.9.3a3's 694 shards VERBATIM (re-rooted to /data) + the 1 fr-bare-street shard.
+  # v0.9.4 overlay = v0.9.3a3's 694 slices VERBATIM (re-rooted to /data) + the 1 fr-bare-street slice.
   corpus_dir: /data/corpus/versioned/v0.10.0-boundary-family/corpus-v0.10.0-boundary-family
   tokenizer_dir: /data/models/tokenizer/v0.7.1-nsplice
   max_length: 128
@@ -43,7 +43,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM from v1.9.3a3 + the one new fr-bare-street shard.
+  source_weights: # VERBATIM from v1.9.3a3 + the one new fr-bare-street slice.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -67,7 +67,7 @@ data:
     overture: 3.0
     gnaf: 6.0
     synth-anchor-absorption: 6.0
-    # #251 NEW: the bare-no-postcode FR street shard. 6.0 = targeted-fix precedent.
+    # #251 NEW: the bare-no-postcode FR street slice. 6.0 = targeted-fix precedent.
     synth-fr-bare-street: 1.5
     synth-si-bare-village: 1.5 # the family, balanced polarity
     synth-no-street-led: 1.5

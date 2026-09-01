@@ -17,7 +17,7 @@ graded.
 **Panel countries:** US, FR, DE, GB, AU, NZ + AT/CH/CZ/DK/BE/NL (city-level EU panel). Forward
 geocoding only.
 
-**Services:** Elasticsearch (heap pinned 4 GB, `number_of_shards: 1`, `number_of_replicas: 0`) +
+**Services:** Elasticsearch (heap pinned 4 GB, `number_of_extracts: 1`, `number_of_replicas: 0`) +
 schema (one-shot), api, libpostal, placeholder (importers consult it for admin hierarchy — keeping
 it is cheaper than proving they don't), interpolation (**required**: street-centroid fallback would
 deflate the exact @1km metric under comparison). PIP omitted (no reverse). One custom project, one

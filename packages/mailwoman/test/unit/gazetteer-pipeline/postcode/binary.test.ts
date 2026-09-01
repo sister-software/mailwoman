@@ -5,7 +5,7 @@
  *
  *   #1509 — the two defects `mailwoman gazetteer postcode-binary` shipped, pinned as tests.
  *
- *   1. The GB outward derivation split `name` on a SPACE, so the licence-clean Code-Point Open shard
+ *   1. The GB outward derivation split `name` on a SPACE, so the licence-clean Code-Point Open database
  *      (`postalcode-gb-codepoint.db`, names stored space-stripped as `AB101AB`) yielded null on every
  *      one of its 1,746,976 rows.
  *   2. The command wrote the resulting ZERO-key binary and exited 0 — a valid, empty, silently-fed
@@ -23,11 +23,11 @@ import {
 import { describe, expect, it } from "vitest"
 
 describe("gbOutwardFromKey — shape, not space-split (#1509)", () => {
-	it("derives the outward from the SPACE-STRIPPED form both shards can produce", () => {
-		// Code-Point Open's storage form (the shard the defect was found against) …
+	it("derives the outward from the SPACE-STRIPPED form both databases can produce", () => {
+		// Code-Point Open's storage form (the database the defect was found against) …
 		expect(gbOutwardFromKey("AB101AB")).toBe("AB10")
 		expect(gbOutwardFromKey("SW1A2AA")).toBe("SW1A")
-		// … and the retired GeoNames-lineage shard's spaced display form, keyed identically.
+		// … and the retired GeoNames-lineage database's spaced display form, keyed identically.
 		expect(gbOutwardFromKey("SW1A 2AA")).toBe("SW1A")
 		expect(gbOutwardFromKey("so4 3rx")).toBe("SO4")
 	})
@@ -45,7 +45,7 @@ describe("postcodeBinaryKey", () => {
 		expect(postcodeBinaryKey("GB", " sw1a 2aa ")).toBe("SW1A2AA")
 	})
 
-	it("leaves every other country's shard name verbatim but uppercased", () => {
+	it("leaves every other country's database name verbatim but uppercased", () => {
 		expect(postcodeBinaryKey("NL", "1012lm")).toBe("1012LM")
 		expect(postcodeBinaryKey("US", "94105")).toBe("94105")
 	})

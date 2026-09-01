@@ -95,7 +95,7 @@ describe("readWeightsRecipe — the base directory is per key", () => {
 })
 
 describe("readWeightsRecipe — buildable is not linkable", () => {
-	it("reports the postcode BINARY as buildable from the shard, never as a linkable file", async () => {
+	it("reports the postcode BINARY as buildable from the extract, never as a linkable file", async () => {
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
 		const recipe = await readWeightsRecipe(repoRoot, dataRoot)
 

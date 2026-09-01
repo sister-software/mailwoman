@@ -446,10 +446,10 @@
 			"default": "./out/policy/registry.js",
 			"types": "./out/policy/registry.d.ts"
 		},
-		"./resources/whosonfirst/sharded-repo": {
-			"node": "./lib/resources/whosonfirst/sharded-repo.ts",
-			"default": "./out/resources/whosonfirst/sharded-repo.js",
-			"types": "./out/resources/whosonfirst/sharded-repo.d.ts"
+		"./resources/whosonfirst/extract-repo": {
+			"node": "./lib/resources/whosonfirst/extract-repo.ts",
+			"default": "./out/resources/whosonfirst/extract-repo.js",
+			"types": "./out/resources/whosonfirst/extract-repo.d.ts"
 		},
 		"./resources/whosonfirst/placetypes/admin": {
 			"node": "./lib/resources/whosonfirst/placetypes/admin.ts",

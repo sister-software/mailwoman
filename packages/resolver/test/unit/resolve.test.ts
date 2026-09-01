@@ -1043,7 +1043,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		}
 
 		// The model often tags the trailing quadrant of a directional street as `unit` ("Taylor Street
-		// NE" → [unit] "NE"), so the bare key misses the shard's "taylor street northeast". The
+		// NE" → [unit] "NE"), so the bare key misses the extract's "taylor street northeast". The
 		// directional unit folds back into the key by span order; the lookup normalizer expands "Ne".
 		const dirTree = tree("1532 Taylor Street Ne 20018", [
 			node("house_number", "1532", 0, 4),
@@ -1099,7 +1099,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 
 	// #374 doctrine (2026-07-26): the conformal multiplier is a property of the calibration set the ARTIFACT
 	// was built against — an artifact carrying it in its header (`InterpolationLookup.radiusCalibration`,
-	// read at shard open) must produce EXACTLY what the legacy caller-supplied path produced.
+	// read at extract open) must produce EXACTLY what the legacy caller-supplied path produced.
 	test("artifact-carried radiusCalibration is byte-identical to the caller-supplied factor (#374)", async () => {
 		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
 		const artifactInterp: InterpolationLookup = { find: fakeInterp.find, radiusCalibration: 1.7 }
@@ -1110,7 +1110,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 			interpolationRadiusCalibration: 1.7,
 		})
 
-		// Artifact path: the shard carries the same factor; the caller passes nothing.
+		// Artifact path: the extract carries the same factor; the caller passes nothing.
 		const viaArtifact = await resolver.resolveTree(addrTree(), { interpolation: artifactInterp })
 
 		// Byte-identical: the full serialized trees match, not just the headline fields.

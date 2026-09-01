@@ -8,7 +8,7 @@
  */
 
 /**
- * The in-map countries the coarse-placer routes to, drawn from the v0.5.0 corpus `train` shards.
+ * The in-map countries the coarse-placer routes to, drawn from the v0.5.0 corpus `train` extracts.
  */
 export const COUNTRIES = ["US", "FR", "GB", "CN", "NL", "IT", "DE", "JP", "ES", "KR", "TW"] as const
 

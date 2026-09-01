@@ -106,7 +106,7 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 	const anc = db.prepare("SELECT COUNT(*) AS n FROM ancestors").get() as { n: number }
 	expect(anc.n).toBe(3)
 
-	// Provenance travels IN the artifact — the licence obligation the frozen shard never carried.
+	// Provenance travels IN the artifact — the licence obligation the frozen database never carried.
 	const meta = new Map(
 		(db.prepare("SELECT key, value FROM meta").all() as Array<{ key: string; value: string }>).map((r) => [
 			r.key,
@@ -122,7 +122,7 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 })
 
 test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the frozen artifact's ten, in its ingest order", () => {
-	// Order is recovered from the frozen shard's per-country spr.id ranges and is what makes a rebuild
+	// Order is recovered from the frozen database's per-country spr.id ranges and is what makes a rebuild
 	// id-comparable to it. GB last, and PRESENT — the docstrings that said eight or nine were wrong.
 	expect([...DEFAULT_GEONAMES_TAIL_COUNTRIES]).toEqual(["FI", "CZ", "SK", "SI", "DK", "NO", "HR", "PL", "SE", "BE"])
 })

@@ -3,7 +3,7 @@
 ``_raw_row_stream`` samples sources by weighted multinomial, but when a source's finite
 iterator exhausts it DELETES the source and renormalizes the remaining mixture. So
 ``source_weights`` is only the OPENING distribution: a small oversampled source (the #1569
-30k-row suffix shard at weight 12.0) is live for the first ~3,330 optimizer steps of each
+30k-row suffix slice at weight 12.0) is live for the first ~3,330 optimizer steps of each
 ~7,812-step epoch and silent afterwards. The v4.3.3 B1 board oscillated in lockstep with
 those exposure windows.
 
@@ -49,10 +49,10 @@ def _rows(source: str, n: int, country: str = "US") -> list[dict]:
     ]
 
 
-def _write_corpus(tmp_path: Path, shards: dict[str, list[dict]]) -> Path:
+def _write_corpus(tmp_path: Path, slices: dict[str, list[dict]]) -> Path:
     corpus = tmp_path / "corpus"
     (corpus / "train").mkdir(parents=True)
-    for name, rows in shards.items():
+    for name, rows in slices.items():
         table = pa.Table.from_pylist(rows, schema=LEGACY_SCHEMA)
         pq.write_table(table, corpus / "train" / name)
     return corpus

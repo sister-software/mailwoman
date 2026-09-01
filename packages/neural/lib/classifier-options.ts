@@ -371,7 +371,7 @@ export interface ParseOpts {
 	 * `false` here wins over any config default.
 	 *
 	 * Placetype-pair emission bias (placetype-pair-prior arc). When provided, candidates are probed against a PIX1 pair
-	 * index of (child, parent) place-name pairs harvested from a real address register (the GB shard: PPD
+	 * index of (child, parent) place-name pairs harvested from a real address register (the GB extract: PPD
 	 * `CITY`/`DISTRICT`). A candidate that resolves against some OTHER, disjoint candidate anywhere in the input gets an
 	 * additive bias toward the pair's resolved `ComponentTag` — e.g. "Shoreditch" biased toward `dependent_locality` when
 	 * "London" also appears in the input, because the index has recorded ("shoreditch", "london") →

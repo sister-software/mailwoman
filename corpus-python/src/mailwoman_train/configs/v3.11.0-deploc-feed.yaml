@@ -6,7 +6,7 @@
 # across FOUR locales (GB 6.1% + NZ 2.4% + ES 3.0% + FR-lieudit 1.8% stream; densities .328/.792/.303/1.00)
 # — combined dep-loc 6.66% ≈ probe-2's 6.6% EXACTLY (one variable = diversity), max single-locale share 20.2% → 6.1%. Same resurrection levers as the probes (reinit rows 7/8 +
 # classifier group 1e-3, init_from v385) — this is the properly-fed retrain of the confirmed mechanism.
-# Roster final 2026-07-22 ~05:5x UTC: all four shards landed + gate-checked (synth-fr-lieudit @ 100% dep-loc).
+# Roster final 2026-07-22 ~05:5x UTC: all four slices landed + gate-checked (synth-fr-lieudit @ 100% dep-loc).
 #
 # PRE-REGISTERED READ (written before the numbers exist; operator-approved task list 2026-07-22):
 #   PRIMARY  : decode-layer dependent_locality emission MATERIALLY above probe-2 floors (NZ > 3/246,
@@ -39,9 +39,9 @@
 # truth). Probe 1's real confound was positive-mass starvation + decode-layer scoring.
 #
 # THE VARIABLES (three, bundled because each alone is a known no-op — #456/#1100 dead-tag history):
-#   1. data.corpus_dir -> v0.14.0-gb (v0.13.0-latam base + the new synth-gb-v1 shard, 800k rows,
+#   1. data.corpus_dir -> v0.14.0-gb (v0.13.0-latam base + the new synth-gb-v1 slice, 800k rows,
 #      32.8% B-dependent_locality) + data.source_weights.synth-gb (36.0 in THIS probe-2 file; the
-#      probe-1 value was 6.0 — see probe-2 header above; other locale-add shards unchanged).
+#      probe-1 value was 6.0 — see probe-2 header above; other locale-add slices unchanged).
 #   2. model.class_weights B-/I-dependent_locality 0.3 -> 1.0. Task 4a's fix made GB actually EMIT
 #      the tag in the corpus; a 0.3 downweight on top of a near-zero classifier row is the THIRD
 #      suppressor and would mute the very signal this probe is testing.
@@ -107,7 +107,7 @@ data:
     CA: 1.0 # NEW (Overture) — live locality, sidesteps NZ's dead dependent_locality
     MX: 1.0 # NEW (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
   source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the ONE new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
-    overture-latam: 6.0 # NEW — CA/MX/BR Overture shards. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
+    overture-latam: 6.0 # NEW — CA/MX/BR Overture slices. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -136,7 +136,7 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
@@ -146,7 +146,7 @@ data:
     # (matches fr-fragment). Bare streets + street+number with NO postcode partner, + counters.
     synth-no-fragment: 12.0
     synth-gb: 10.0 # FEED: 6.1% stream × .328 dep-loc (probe-2 had this at 20.2% — the skew culprit)
-    synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k; key also covers the old 2,990-row po-box shard — harmless, same country)
+    synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k; key also covers the old 2,990-row po-box slice — harmless, same country)
     synth-es-pedania: 5.0 # FEED NEW: 3.0% stream × .303 (post-4b formatter fix)
     synth-fr-lieudit: 3.0 # FEED NEW: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a; directly feeds the bare-locality regression class)
   train_rows_per_epoch: 1000000

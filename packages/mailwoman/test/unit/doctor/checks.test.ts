@@ -139,10 +139,10 @@ describe("gazetteerCheck (optional)", () => {
 		expect(c.detail).toContain(ByteFormatter.formatSI(1_400_000_000))
 	})
 
-	it("ok on a discovered WOF shard", () => {
-		const c = gazetteerCheck({ wofShard: { path: "/wof/admin.db" }, probed: ["/wof/admin.db"] })
+	it("ok on a discovered WOF database", () => {
+		const c = gazetteerCheck({ wofDatabase: { path: "/wof/admin.db" }, probed: ["/wof/admin.db"] })
 		expect(c.status).toBe(CheckStatus.OK)
-		expect(c.detail).toContain("WOF admin shard")
+		expect(c.detail).toContain("WOF admin database")
 	})
 
 	it("ok on a convention-path candidate.db with no env set", () => {
@@ -160,16 +160,16 @@ describe("gazetteerCheck (optional)", () => {
 		expect(c.fix).toBeUndefined()
 	})
 
-	it("prefers a convention-path candidate.db over a WOF shard, matching resolution precedence", () => {
+	it("prefers a convention-path candidate.db over a WOF database, matching resolution precedence", () => {
 		const c = gazetteerCheck({
 			conventionCandidate: "/data/wof/candidate.db",
-			wofShard: { path: "/data/wof/admin.db" },
+			wofDatabase: { path: "/data/wof/admin.db" },
 			probed: ["/data/wof/admin.db", "/data/wof/candidate.db"],
 		})
 
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.detail).toContain("candidate.db")
-		expect(c.detail).not.toContain("WOF admin shard")
+		expect(c.detail).not.toContain("WOF admin database")
 	})
 
 	it("missing with the data-pull hint when nothing found", () => {

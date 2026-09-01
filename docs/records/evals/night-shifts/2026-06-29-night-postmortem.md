@@ -60,12 +60,12 @@ v194`. Net: #831 was a false finding (fixed on the demo); #832/#833 are model-in
 ## D9 — #250 association recovery (DEPLOYED as the FR default; `--recover`, code `763e51d8`)
 
 Nearest-named-highway recovery: validated **88% precision / 95% coverage** on FR ground truth; cuts the
-association gap **58% → 1.3%** (648k points, shard 477k → 1.13M). **Deployed as the FR default OSM shard.**
+association gap **58% → 1.3%** (648k points, extract 477k → 1.13M). **Deployed as the FR default OSM extract.**
 
 **The verdict flipped on a measurement fix — a verify-before-verdict catch worth remembering.** The first
-held-out A/B drew from ALL of France, but the OSM shard only covers Île-de-France, so most sampled
+held-out A/B drew from ALL of France, but the OSM extract only covers Île-de-France, so most sampled
 addresses had no OSM coverage either way → the recovery's win diluted to noise (rooftop +2, looked
-marginal → I'd committed it default-off). Re-running the A/B drawn **IdF-only** (the region the shard
+marginal → I'd committed it default-off). Re-running the A/B drawn **IdF-only** (the region the extract
 actually covers):
 
 | ≤tol            | current | recovery        |
@@ -78,23 +78,23 @@ actually covers):
 A coverage-limited tier MUST be gated on a draw from the COVERED region — the all-France draw nearly
 killed a doubling of rooftop coverage. **This is a Gauntlet held-out improvement (C6): make the draw
 region-aware.** The `--recover` flag stays explicit (validate per-locale before enabling); hosted
-deployment of the shard is gated on B3 (browser tier) + #249 (ODbL legal). The local FR shard is ready.
+deployment of the extract is gated on B3 (browser tier) + #249 (ODbL legal). The local FR extract is ready.
 
-## D10 — DE/NL rooftop shards (built + validated, auto-routed)
+## D10 — DE/NL rooftop extracts (built + validated, auto-routed)
 
 OSM rooftop tier extended to DE + NL with the existing pipeline (no code change — `de`/`nl` were already in
-`COUNTRY_TO_STREET_LOCALE`, so `supportedOsmCountries()` + the provider routed them once the shards existed):
+`COUNTRY_TO_STREET_LOCALE`, so `supportedOsmCountries()` + the provider routed them once the extracts existed):
 
-| shard              | points    | size   | assoc. gap | acceptance                                 |
+| extract            | points    | size   | assoc. gap | acceptance                                 |
 | ------------------ | --------- | ------ | ---------- | ------------------------------------------ |
 | DE / Berlin        | 450,900   | 108 MB | **0.3%**   | Unter den Linden #1 → (52.5172, 13.3978) ✓ |
 | NL / whole country | 9,919,996 | 2.3 GB | **0.0%**   | Damrak #1 → (52.3770, 4.8979) ✓            |
 
 **Finding: the association gap is import-specific, not universal.** FR/IdF's 58% gap was a cadastre-style
 import (addr:housenumber nodes with no addr:street); DE-Berlin and NL (BAG) tag streets, so `--recover` is
-an FR-specific lever, not a blanket pass. Measure the gap before reaching for recovery. The shards are local
+an FR-specific lever, not a blanket pass. Measure the gap before reaching for recovery. The extracts are local
 artifacts; public deployment is gated on B3 (browser tier) + #249 (ODbL legal). NL at 2.3 GB is too big for
-browser httpvfs as-is — a sub-region (Amsterdam) would be the demo shard.
+browser httpvfs as-is — a sub-region (Amsterdam) would be the demo extract.
 
 ## C — Gauntlet Phase-2 hardening
 
@@ -110,7 +110,7 @@ browser httpvfs as-is — a sub-region (Amsterdam) would be the demo shard.
   multi-source (`--source us|fr`), and the pool doubles as the fast draw (77k CSV vs streaming the 5 GB BAN).
   Smoke (n=200, v194 vs prod): **rooftop 61.5%, street 74%, locality 92.5%, 100% resolved, z=0.19 PASS** —
   an independent validation of the national situs tier on a source it never trained on. The region-aware
-  lesson (D9) applies to coverage-limited comparisons (the shard A/B), not the nationwide locality gate.
+  lesson (D9) applies to coverage-limited comparisons (the extract A/B), not the nationwide locality gate.
 - **C8b: regression runner + the unified gate** (`17c32518`). The regression layer had cases + a DB builder
   but no runner — built it (status-aware: gates `status=pass`, tracks `known_fail`/`improvement_target`
   non-blocking, flags any tracked case that starts passing). `run.ts` runs all three layers in isolated
@@ -180,7 +180,7 @@ regression + a stale Paris opt-out) but **skipped in CI** (they need the WOF DB)
       DIRECTION is confirmed — the operator launches the full retrain knowing it works, not on faith. DeepSeek
       scoreboard (session 019f1223): structural 1/1 (surface-augmentation predicted-and-held).
 - The three findings above are the headline operator follow-ups (model/ranking/gazetteer fixes).
-- **B3** (browser OSM rooftop tier) + **R2-deploy the shards** — the demo's visible rooftop; double-gated on
+- **B3** (browser OSM rooftop tier) + **R2-deploy the extracts** — the demo's visible rooftop; double-gated on
   the browser build + **#249** (ODbL legal sign-off, counsel's call).
 - **A2** — the npm-side v4.16.0 release (HF stage + `@mailwoman/osm` trusted-publishing); non-urgent.
 - **E** — data ingestion (SIRENE/GLEIF) for the record-matcher; the held-out gate is well-covered (FR+US).

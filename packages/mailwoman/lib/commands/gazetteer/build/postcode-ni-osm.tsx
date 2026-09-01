@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer build postcode-ni-osm` — the Northern Ireland `BT` unit-postcode shard from
+ *   `mailwoman gazetteer build postcode-ni-osm` — the Northern Ireland `BT` unit-postcode database from
  *   OpenStreetMap. Runs ONE Overpass query, saves the response as the reproducibility artifact, and
- *   writes a sealed shard to a NEW DATED path.
+ *   writes a sealed database to a NEW DATED path.
  *
  *   **BUILD-LOCAL TIER.** OSM is ODbL 1.0 and share-alike binds a Derived Database, so this artifact is
  *   never published — not to npm, not to R2, not to the demo. It reaches the resolver only because
- *   `DEFAULT_POSTCODE_SHARDS` is `existsSync`-filtered on the machine that built it.
+ *   `DEFAULT_POSTCODE_DATABASES` is `existsSync`-filtered on the machine that built it.
  *
  *   Coverage is PARTIAL by construction — roughly 9.5 % of live NI postcodes — and that is the point of
- *   shipping it: since #1480 an unknown postcode abstains, so every code the shard carries is a new
+ *   shipping it: since #1480 an unknown postcode abstains, so every code the database carries is a new
  *   answer and every code it lacks behaves exactly as it did before.
  *
  *   The pipeline module is lazy-imported so `--help` never faults without the optional
@@ -35,7 +35,7 @@ import {
  */
 export const spec = {
 	name: "postcode-ni-osm",
-	description: "Build the local Northern Ireland OSM postcode shard.",
+	description: "Build the local Northern Ireland OSM postcode database.",
 	options: {
 		"source-dir": { type: "string", description: "Acquisition directory" },
 		out: { type: "string", description: "Output path" },
@@ -52,7 +52,7 @@ interface Options {
 const GazetteerBuildPostcodeNIOSM: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildPostcodeNIOSM, NI_LIVE_POSTCODES, NI_TOTAL_DISTRICTS, NI_TOTAL_SECTORS } =
-			await import("#gazetteer/postcode/ni-osm-shard")
+			await import("#gazetteer/postcode/ni-osm-database")
 
 		const result = await buildPostcodeNIOSM({
 			sourceDir: options.sourceDir,
@@ -88,7 +88,7 @@ const GazetteerBuildPostcodeNIOSM: ParsedCommandComponent<Options> = ({ options 
 			"a miss on a BT code means NOT ATTESTED IN OSM — not that the postcode does not exist (see meta.coverage_meaning_of_zero)",
 			"licence: ODbL 1.0 — BUILD-LOCAL, never published to npm/R2/demo; attribution in the `meta` table",
 			"sealed 0444",
-			"next: copy to <data-root>/wof/postalcode-ni-osm.db to activate it (DEFAULT_POSTCODE_SHARDS is existsSync-filtered)",
+			"next: copy to <data-root>/wof/postalcode-ni-osm.db to activate it (DEFAULT_POSTCODE_DATABASES is existsSync-filtered)",
 		]
 	})
 

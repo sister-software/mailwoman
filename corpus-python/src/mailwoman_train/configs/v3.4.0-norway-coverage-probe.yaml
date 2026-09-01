@@ -4,7 +4,7 @@
 # v1.9.0) trained on ZERO Norwegian rows — `country_weights: NO: 1.0` parsed to the YAML boolean
 # `false`, so `country_weights.get("NO")` missed and the loader dropped all 25k Norwegian rows
 # (#1145). This config is v310's EXACT recipe with that key now quoted (fixed on main), so Norway
-# flows: ~4.2% of the corpus, including the synth-no-street-led shard (weight 12.0) that has never
+# flows: ~4.2% of the corpus, including the synth-no-street-led slice (weight 12.0) that has never
 # contributed a row. init_from v310, 2k, to see if coverage alone moves the needle fast.
 #
 # WHY IT MATTERS: the deepparse rematch (scratchpad/deepparse-cmp/REMATCH-after-trackb.md) showed two
@@ -60,7 +60,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay shard.
+  source_weights: # VERBATIM v2.4.1 + the one new assay slice.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -89,7 +89,7 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the

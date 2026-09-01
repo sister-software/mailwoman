@@ -5,7 +5,7 @@ never committed). It streams the exact selectable feed — source multinomial + 
 filtering, no augmentation — classifies every street-family group, applies the load-time
 relabel pass under a chosen lexicon, and reports carrier correctness per class and source.
 
-Definitions mirror ``classifySuffixBoundaryStreet`` (corpus/src/shard-recipes/street-affix.ts),
+Definitions mirror ``classifySuffixBoundaryStreet`` (corpus/src/recipes/street-affix.ts),
 evaluated with the CLASSIFY lexicon's vocabulary (use the v2 artifact — it carries
 ``name_prone``):
 

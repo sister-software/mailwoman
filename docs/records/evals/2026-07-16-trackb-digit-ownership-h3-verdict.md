@@ -17,8 +17,8 @@ The claim: the model calls `39A` a postcode because its corpus says digit-bearin
 postcodes.
 
 The first count said the opposite (`P(house_number | bare digit) = 0.810` vs `postcode 0.101`) and
-was **unusable anyway**: it read one synthetic shard (`fragment-v8`) off disk, unweighted. Training
-draws from a weighted multinomial over ~700 shard refs (`source_weights`), after a country filter, a
+was **unusable anyway**: it read one synthetic extract (`fragment-v8`) off disk, unweighted. Training
+draws from a weighted multinomial over ~700 extract refs (`source_weights`), after a country filter, a
 coarse filter, and five augmentations.
 
 `digit_prior` re-counts through `iter_rows` — the same entry point `train.py` calls, with the
@@ -27,7 +27,7 @@ doesn't.
 
 |                                | house_number |   postcode |
 | ------------------------------ | -----------: | ---------: |
-| the old single-shard count     |        0.810 |      0.101 |
+| the old single-extract count   |        0.810 |      0.101 |
 | **the real weighted marginal** |   **0.4765** | **0.4453** |
 
 The real aggregate is a coin flip. It is also **meaningless** — the signal is entirely in the shape
@@ -148,12 +148,12 @@ reading_, so a street with no number read as a locality. The Track B lead is its
 street licenses the house_number reading_, so a number after an unknown street reads as a postcode.
 
 Both are the model refusing to read one component without its co-occurring partner. If that holds,
-they are one defect seen twice, and the fix that worked on the first half — a phenomenon shard
+they are one defect seen twice, and the fix that worked on the first half — a phenomenon extract
 teaching the component **without** its partner, plus a counter-distribution so the model learns the
 distinction instead of flipping its default — is the same shape as the fix for the second.
 
 That is a hypothesis with a strong prior and no measurement. It gets tested, not assumed. The
-registry tiers say the shard would be BAN/BAG-sourced (tier A) with OSM (tier D) only as an
+registry tiers say the extract would be BAN/BAG-sourced (tier A) with OSM (tier D) only as an
 experiment, and it stays **positive evidence only** — no validator, no veto.
 
 ## 7. What this does not touch

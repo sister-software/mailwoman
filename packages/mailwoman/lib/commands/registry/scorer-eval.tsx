@@ -9,7 +9,7 @@
  *   also its own `registry dedup-ceiling` command), `nppes-benchmark` (#617), and the cross-dataset
  *   family (`coverage-reconciliation`, `cross-dataset`, `threshold-sweep`) plus the geocoder probes
  *   (`namesake-probe`, `vs-provided-coords`). Every kind emits its report to stdout; most need the
- *   record-matcher source files + weights + WOF/shard data locally — operator-run, not CI.
+ *   record-matcher source files + weights + WOF/database data locally — operator-run, not CI.
  */
 
 import type { EvalGeocodeStream } from "@mailwoman/registry/tools"

@@ -63,10 +63,10 @@ export interface GeocodeResult {
 	 */
 	entity?: { name: string; categoryID: string | null; confidence: number; country: string }
 	/**
-	 * The register row's OWN scope tags when the `address_point` tier answered and its shard carries them: the attested
-	 * locality (normalized key form) and postcode of the ROOFTOP, independent of what the query named. Consumers may
-	 * decorate an answer with the register's commune/postcode (the Photon drop-in's `city` slot); never a filter, absent
-	 * on every other tier.
+	 * The register row's OWN scope tags when the `address_point` tier answered and its database carries them: the
+	 * attested locality (normalized key form) and postcode of the ROOFTOP, independent of what the query named. Consumers
+	 * may decorate an answer with the register's commune/postcode (the Photon drop-in's `city` slot); never a filter,
+	 * absent on every other tier.
 	 */
 	rooftop?: { localityNorm?: string; postcode?: string }
 	/**
@@ -147,7 +147,7 @@ export interface GeocodeResult {
 	 * This is the FIRING RECEIPT, and it exists because the alternative is unreadable evidence. A gate run with the lever
 	 * OFF and one with it ON can come back identical for two opposite reasons: the mechanism ran on every row and changed
 	 * nothing (the result worth having), or it never ran at all (the 2026-08-04 oa-resolver trap, where an identical 1.94
-	 * MB dump turned out to mean the eval's shard set carried no US postcodes). A magnitude never carries its own
+	 * MB dump turned out to mean the eval's database set carried no US postcodes). A magnitude never carries its own
 	 * absence, so the pass reports its own count instead of leaving the reader to infer it.
 	 */
 	postcode_country_scope: string | null

@@ -6,7 +6,7 @@
  *   Fetch the multilingual sub-venue designator vocabulary from Wikidata (#35 wave 1).
  *
  *   Source : https://query.wikidata.org/sparql (the Wikidata Query Service).
- *   License: CC0. Wikidata's data is public-domain dedicated, so nothing rides on a derived shard.
+ *   License: CC0. Wikidata's data is public-domain dedicated, so nothing rides on a derived slice.
  *            Tier A.
  *
  *   ## The pull is CLASS labels, not instance names — and that inversion is the whole design

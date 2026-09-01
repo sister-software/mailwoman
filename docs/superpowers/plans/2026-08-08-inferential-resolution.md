@@ -222,7 +222,7 @@ it reports the remaining public evidence and abstains where that evidence is ins
 an inferred or derived relationship never acquires the designation status of an authority merely
 because it agrees with one.
 
-This is the same architectural boundary already used for ODbL shards: isolate inputs by legal
+This is the same architectural boundary already used for ODbL databases: isolate inputs by legal
 posture, keep source assertions plural, and make distributability an artifact-manifest property
 rather than an assumption embedded in application code.
 
@@ -234,7 +234,7 @@ contract is:
 ```text
 acquire snapshot/replication sequence
   → bounded pilot and resource projection
-  → independent resumable shards
+  → independent resumable extracts
   → structural + geographic + licence validation
   → seal manifest and coverage assertions
   → immutable publish
@@ -246,7 +246,7 @@ replication sequence, source URL/hash, builder version, region, timestamps and O
 Current state and history are separate products. Deletes and redactions are events, not missing
 rows silently forgotten by a rebuild.
 
-Coverage is a first-class output distinct from row count. A shard may assert `observed_no_match` in
+Coverage is a first-class output distinct from row count. A extract may assert `observed_no_match` in
 a processed cell, `unsurveyed` outside its extract, or `layer_missing` when the artifact was not
 loaded; only a separately justified completeness claim can power hard negative evidence. OSM's
 crowdsourced absence almost never supplies that completeness by itself.
@@ -257,7 +257,7 @@ authoritative row. Reconciliation happens in the derivation graph. Users consume
 and verified deltas rather than running the acquisition pipeline, while the build recipe remains
 reproducible subject to the source licence and the existing ODbL counsel gate on `@mailwoman/osm`.
 
-The current rooftop builder already has four sound foundations: it quarantines ODbL shards from the
+The current rooftop builder already has four sound foundations: it quarantines ODbL extracts from the
 permissive gazetteer, keeps countries independent, measures rather than guesses the street-association
 gap, and builds on a temporary database before atomic replacement. Before full-scale ingestion it
 still needs:

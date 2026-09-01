@@ -48,7 +48,7 @@ async function stamped(path: string, createdAt: string): Promise<string> {
 		tier: "build-local",
 		license: "ODbL-1.0",
 		source: "admin-global-priority@2026-08-17",
-		sourceVintage: "postcode-shards=24",
+		sourceVintage: "postcode-extracts=24",
 		buildCmd: "mailwoman gazetteer build candidate",
 		buildSHA: "abc1234",
 		freshnessPolicy: "sealed",

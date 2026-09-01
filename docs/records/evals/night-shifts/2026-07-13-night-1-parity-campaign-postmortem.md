@@ -28,7 +28,7 @@ are unmodified).
 - **Characterize-before-fix paid three times.** Each closed lever cost minutes and produced a
   mechanism, not just a number: the router can't name fragments; morphology bias trades AU units
   for marginal street recall; a base-corpus sequence prior actively entrenches full-address order
-  against the fragment distribution — which is positive evidence FOR the fragment-shard training
+  against the fragment distribution — which is positive evidence FOR the fragment-extract training
   thesis (the distribution mismatch is real and sequence-level).
 - The `--weights-cache` grading path (PR #1099) made candidate A/B cycles trivial and
   channel-honest all night.
@@ -46,11 +46,11 @@ are unmodified).
 
 ## Decisions made autonomously
 
-- **Did NOT launch the GPU fragment-shard assay (probe 1).** The runbook allowed it; I held it.
-  Reasons: shard synthesis + the #511 base-consistency scan deserve unhurried care (the scars are
-  all about hasty shards), and every zero-training result tonight strengthened the case that the
+- **Did NOT launch the GPU fragment-extract assay (probe 1).** The runbook allowed it; I held it.
+  Reasons: extract synthesis + the #511 base-consistency scan deserve unhurried care (the scars are
+  all about hasty extracts), and every zero-training result tonight strengthened the case that the
   assay's job is confirmation of the span-head ceiling, not a hail-mary — it loses nothing by
-  running early next session. Alternative was launching a rushed shard tonight; rejected.
+  running early next session. Alternative was launching a rushed extract tonight; rejected.
 - Treadmill-guard adjacent: stopped transition-scale exploration after two same-direction failures
   (raw, centered) rather than hunting a third temperature.
 
@@ -65,7 +65,7 @@ are unmodified).
 
 ## Concrete next steps
 
-1. Fragment shard synthesis (`corpus/` recipe: bare streets from dictionaries/FST by construction,
+1. Fragment extract synthesis (`corpus/` recipe: bare streets from dictionaries/FST by construction,
    street+trailing-number locale formats, truncations of existing gold) + the #511 source-scoped
    base-consistency scan — CPU, careful work, next session's opener.
 2. Probe 1 GPU assay per runbook (short decaying schedule, eval every 500 steps, parity floors as
@@ -73,11 +73,11 @@ are unmodified).
 3. If ceiling confirmed → #727 arc (GLiNER-lite span loss first), with variant-B (fragment-mixed)
    transitions refit available at train time via the committed fitter.
 
-## Probe 1 — the fragment-shard assay (UPDATE, ~06:00 UTC)
+## Probe 1 — the fragment-extract assay (UPDATE, ~06:00 UTC)
 
 Launched after the operator's course-correction ("the shift runs to 15:00 — complete the task"):
 `v2.5.0-fragment-assay` on Modal (init_from the SHIPPED v241 step-012000, one lever = the
-123,272-row balanced-polarity fragment shard at weight 6.0, lr 1e-5 constant, 6k steps, ~2h A100).
+123,272-row balanced-polarity fragment extract at weight 6.0, lr 1e-5 constant, 6k steps, ~2h A100).
 
 **Verdict: the data lever is REAL on the current architecture — DeepSeek prediction 2 FALSIFIED.**
 All separators moved together (no span-exact lag): fragment-dev span-exact 0.142→0.481,
@@ -85,7 +85,7 @@ tag-accuracy 0.241→0.537, trailing-number→postcode 0.218→**0.084**. Parity
 0.4033→**0.5333** (+13pp), house_number 0.7273→0.7532, postcode held 0.9861; FR full-agree
 20→39%, NO 0→44%, DE 29→41%, **US held 41%**. Saturated at step 2000; NO late overfit through
 6000 (the v196 scar did not reproduce at 1e-5/6k). Regression: AU 55→40% (the compact lot/unit
-class the shard deliberately excluded — shard-v2 material).
+class the extract deliberately excluded — extract-v2 material).
 
 Residual street failures after the assay are ~all mangle-class (offset bleed after diacritics),
 i.e. exactly what the splice lever removes → **the consolidation run launched**:
@@ -95,8 +95,8 @@ standard gate set follow when it lands.
 
 Data-integrity scar worth its own line: **zipping multiple pyarrow ChunkedArrays is not
 row-aligned.** It silently fabricated the first #511 scan and biased the first transition fit to
-the wof-admin block (base shards are source-homogeneous+ordered). Everything re-ran on
-`iter_batches().to_pylist()`; `build_fragment_shard.py` carries the warning comment.
+the wof-admin block (base extracts are source-homogeneous+ordered). Everything re-ran on
+`iter_batches().to_pylist()`; `build_fragment_extract.py` carries the warning comment.
 
 Scoreboard (session 019f590a): prediction 1 HELD, prediction 3 PARTIALLY HELD, prediction 2
 **FALSIFIED** — structural 2/3. The falsification is the good kind: the cheap lever sufficed where
@@ -104,17 +104,17 @@ the consult predicted architecture work.
 
 ## The training arc (UPDATE 2, shift close): four runs, a gauntlet-green candidate
 
-| run                        | one variable                         | parity (hn / pc / street)         | verdict                                                        |
-| -------------------------- | ------------------------------------ | --------------------------------- | -------------------------------------------------------------- |
-| shipped v241               | —                                    | .7013 / .9861 / .3967             | baseline                                                       |
-| v2.5.0 assay (6k)          | fragment shard v1                    | .7532 / .9861 / .5333             | data lever CONFIRMED; pred-2 falsified                         |
-| v2.5.1 consolidation (12k) | + multisplice tokenizer (mean-init)  | .7922@2k / .9444 / .5467@12k      | mangle cured at char level; pc regression classed (loc+pc gap) |
-| v2.5.2 (8k)                | shard-v2: AU units + loc+pc polarity | .7597 / **.9861 PASS** / .5500@2k | pc restored; gauntlet FAIL: global-dublin-bare                 |
-| v2.5.3 (8k)                | shard-v3: +11k global locality twins | .7403 / **.9861 PASS** / .5233    | **FULL GAUNTLET PASS** — staged, not promoted                  |
+| run                        | one variable                           | parity (hn / pc / street)         | verdict                                                        |
+| -------------------------- | -------------------------------------- | --------------------------------- | -------------------------------------------------------------- |
+| shipped v241               | —                                      | .7013 / .9861 / .3967             | baseline                                                       |
+| v2.5.0 assay (6k)          | fragment extract v1                    | .7532 / .9861 / .5333             | data lever CONFIRMED; pred-2 falsified                         |
+| v2.5.1 consolidation (12k) | + multisplice tokenizer (mean-init)    | .7922@2k / .9444 / .5467@12k      | mangle cured at char level; pc regression classed (loc+pc gap) |
+| v2.5.2 (8k)                | extract-v2: AU units + loc+pc polarity | .7597 / **.9861 PASS** / .5500@2k | pc restored; gauntlet FAIL: global-dublin-bare                 |
+| v2.5.3 (8k)                | extract-v3: +11k global locality twins | .7403 / **.9861 PASS** / .5233    | **FULL GAUNTLET PASS** — staged, not promoted                  |
 
 Iteration discipline held: each run changed one named lever answering the previous read-out's
 classed failure — no knob oscillated (treadmill guard never fired). The Dublin→Melbourne
-whack-a-mole exposed the durable design for shard-v4: DETERMINISTIC twins from the gazetteer's
+whack-a-mole exposed the durable design for extract-v4: DETERMINISTIC twins from the gazetteer's
 top-population localities, closing the famous-city class instead of sampling instances.
 
 Candidates staged with MANIFESTs: `models/candidates/v252-fragment-v2` (do-not-promote, Dublin

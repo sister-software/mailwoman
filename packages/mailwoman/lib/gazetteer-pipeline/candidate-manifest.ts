@@ -6,7 +6,7 @@
  *   The candidate gazetteer's `layer_manifest` — the artifact every geocode actually reads.
  *
  *   THE CANDIDATE IS DERIVED, so its manifest names its INPUT rather than restating the input's sources.
- *   `buildCandidateTable` reads an admin gazetteer plus postcode and locality shards; it ingests nothing
+ *   `buildCandidateTable` reads an admin gazetteer plus postcode and locality databases; it ingests nothing
  *   from WOF, Overture or GeoNames directly. A manifest that repeated "whosonfirst+overture+geonames" here
  *   would be true of the ancestor and unfalsifiable of this file — it could not tell you WHICH admin build
  *   this came from, which is the only question a reproduction actually asks.
@@ -62,10 +62,10 @@ export interface CandidateManifestInput {
 	 */
 	adminDBPath: string
 	/**
-	 * How many postcode and locality shards contributed. Recorded because a candidate built with no shards is a different
-	 * artifact from one built with twenty-four, and nothing else in the file says which it is.
+	 * How many postcode and locality databases contributed. Recorded because a candidate built with no databases is a
+	 * different artifact from one built with twenty-four, and nothing else in the file says which it is.
 	 */
-	shardCounts: { postcodes: number; localities: number }
+	databaseCounts: { postcodes: number; localities: number }
 	/**
 	 * Whether an importance database was folded in. A candidate without it ranks differently, and the difference is
 	 * invisible from the schema.
@@ -93,8 +93,8 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 		attribution: "derived from the mailwoman admin gazetteer; see that layer's manifest for source terms",
 		source: ancestor,
 		sourceVintage:
-			`admin=${ancestor} postcode-shards=${input.shardCounts.postcodes} ` +
-			`locality-shards=${input.shardCounts.localities} importance=${input.importance ? "yes" : "no"}`,
+			`admin=${ancestor} postcode-databases=${input.databaseCounts.postcodes} ` +
+			`locality-databases=${input.databaseCounts.localities} importance=${input.importance ? "yes" : "no"}`,
 		buildCmd: "mailwoman gazetteer build candidate",
 		buildSHA: input.buildSHA,
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,

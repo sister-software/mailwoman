@@ -3,12 +3,12 @@
 # PRE-REGISTERED READ (written before the numbers exist; graded on the NO digit board, board 3,
 # scratchpad/run-digit-board.run.ts, package-shaped int8, vs the registered SHIPPED-v310 baselines).
 #
-# THE ONE VARIABLE vs v3.3.0: the synth-no-fragment shard's --bare-street-prob 0.30 -> 0.70. Config,
-# weight (12.0), tokenizer, init base — ALL identical to v3.3.0. Only the shard COMPOSITION changed:
-# bare-street rows 21% -> 49% of the shard (measured, scratchpad/build-no-fragment-b4b.run.ts).
+# THE ONE VARIABLE vs v3.3.0: the synth-no-fragment slice's --bare-street-prob 0.30 -> 0.70. Config,
+# weight (12.0), tokenizer, init base — ALL identical to v3.3.0. Only the slice COMPOSITION changed:
+# bare-street rows 21% -> 49% of the slice (measured, scratchpad/build-no-fragment-b4b.run.ts).
 #
 # WHY. v3.3.0 (bare-street-prob 0.30) moved the target only +1.7pp (overlapping CIs, bar NOT cleared).
-# Its own verdict named the cause: "only 30% of signal rows are pure bare streets; the shard spends
+# Its own verdict named the cause: "only 30% of signal rows are pure bare streets; the slice spends
 # most of its weight on {street}{number}, a form the model mostly already handles." The fix (B0's
 # mechanism): the street is mistagged as a LOCALITY and the digit follows it; teach bare-street !=
 # bare-locality, which requires the street WITHOUT a number so the model can't lean on the digit. This
@@ -94,7 +94,7 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the

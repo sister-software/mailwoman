@@ -26,7 +26,7 @@
 - `corpus/scripts/audit.ts` → `corpus/src/tools/audit.ts`: keep `audit(opts)` + internals; drop `parseArgv`/`runIfScript`/shebang. `audit.test.ts` moves alongside, import updated.
 - `corpus/src/tools/index.ts` barrel + `./tools` subpath in both corpus exports maps.
 - New `mailwoman/commands/corpus/audit.tsx`: zod options `{dir (positional via args tuple), config?, sample?}` → calls `audit()` via `useCommandTask`.
-- Verify: `node mailwoman/out/cli.js corpus audit /nonexistent` prints the zero-shard report, exit 0; moved test passes.
+- Verify: `node mailwoman/out/cli.js corpus audit /nonexistent` prints the zero-extract report, exit 0; moved test passes.
 
 ### Task 3: fetch family (mechanical replication of the exemplar pattern — delegable)
 
@@ -38,20 +38,20 @@ For each of ban-full→`ban`, nad, hrsa, imls-pls, nppes, openaddresses, state-s
 - `mailwoman/commands/corpus/fetch.tsx`: `args = zod.tuple([zod.enum(Object.keys(FETCH_SOURCES))])`, options `{outRoot: zod.string().default("data/corpus/sources")}` (+ the union of source-specific options, each optional and documented per source); exit 1 when `failed > 0`.
 - `fetch-sources/README.md` content moves to a docstring in `fetch/index.ts`.
 
-### Task 4: shard + golden
+### Task 4: extract + golden
 
-- `build-kryptonite-shard.ts` → `tools/shard-kryptonite.ts` (`run(options)` = old `main` minus parse; parquet + manifest composition unchanged); `build-transliteration-shard.ts` → `tools/shard-translit.ts` likewise (local `readJsonl`/`hashFile` replaced by core `iterateJSONL`/`sha256File`).
-- Existing `commands/corpus/shard.tsx` → `commands/corpus/shard/index.tsx` with `isDefault = true` (bare `corpus shard` unchanged); new `shard/kryptonite.tsx` + `shard/translit.tsx`.
+- `build-kryptonite-extract.ts` → `tools/extract-kryptonite.ts` (`run(options)` = old `main` minus parse; parquet + manifest composition unchanged); `build-transliteration-extract.ts` → `tools/extract-translit.ts` likewise (local `readJsonl`/`hashFile` replaced by core `iterateJSONL`/`sha256File`).
+- Existing `commands/corpus/extract.tsx` → `commands/corpus/extract/index.tsx` with `isDefault = true` (bare `corpus extract` unchanged); new `extract/kryptonite.tsx` + `extract/translit.tsx`.
 - `expand-golden.ts` → `tools/golden-expand.ts`; `promote-golden.ts` → `tools/golden-promote.ts` (its local `readJsonl`/`writeJsonl`/inline sha256 → core helpers); commands `golden/expand.tsx` + `golden/promote.tsx`.
 
 ### Task 5: corpus-tools absorption + deletions
 
-- `mailwoman/corpus-tools/{align-shard,corpus-stats,overlay-manifest}.ts` → `corpus/src/tools/` (overlay-manifest's inline `createHash` → core `sha256Hex`); repoint `commands/corpus/{align-shard,stats,overlay-manifest}.tsx`; delete `mailwoman/corpus-tools/`.
+- `mailwoman/corpus-tools/{align-extract,corpus-stats,overlay-manifest}.ts` → `corpus/src/tools/` (overlay-manifest's inline `createHash` → core `sha256Hex`); repoint `commands/corpus/{align-extract,stats,overlay-manifest}.tsx`; delete `mailwoman/corpus-tools/`.
 - Delete `corpus/scripts/` entirely — `run-corpus-build.ts` is a hardcoded v0.3.0 recipe of `mailwoman corpus build --inputs` (verified: build.tsx drives `buildCorpus` with arbitrary adapter inputs).
 
 ### Task 6: phase gate
 
 - `yarn lint`, `yarn compile`, `yarn typecheck:scripts` clean; corpus + mailwoman vitest green.
-- Smokes: `corpus audit` real run; `corpus fetch --help`; `corpus fetch imls-pls --out-root <scratch>` (the smallest real source, one file) end-to-end including manifest + sha; `corpus shard kryptonite` / `golden promote` `--help` + missing-required error paths.
+- Smokes: `corpus audit` real run; `corpus fetch --help`; `corpus fetch imls-pls --out-root <scratch>` (the smallest real source, one file) end-to-end including manifest + sha; `corpus extract kryptonite` / `golden promote` `--help` + missing-required error paths.
 - `grep -rn 'corpus/scripts' --include='*.ts*' .` → zero live references (docs/history excluded).
 - Merge to main (local), delete branch.

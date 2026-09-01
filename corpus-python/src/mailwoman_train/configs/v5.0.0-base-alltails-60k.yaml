@@ -7,7 +7,7 @@
 # against it on the 649-row board. Every lever an additive fine-tune has was isolated:
 #
 #   run       lever                                  net    regressed
-#   v4.8.0    admin shard @ 9.4%                     -18    25
+#   v4.8.0    admin slice @ 9.4%                     -18    25
 #   v4.9.0    + dependent locality                   -20    31
 #   v4.10.0   dose -> 3.1%                           -13    22
 #   v4.11.0   venue-bearing, no new source or dose   -13    18
@@ -17,8 +17,8 @@
 #
 # The NULL is the best arm. A plain fine-tune of that base costs ten rows before any data is involved,
 # and the tax is paid in the first 1,000 steps and flat to 4,000 — it is not proportional to distance
-# travelled, it is a fixed cost of touching the base. It is charged BEFORE the shard is read, so no
-# shard-side change can avoid it, and every arm that adds data is worse than adding none.
+# travelled, it is a fixed cost of touching the base. It is charged BEFORE the slice is read, so no
+# slice-side change can avoid it, and every arm that adds data is worse than adding none.
 #
 # The harness was verified before trusting any of that: the shipped model staged through the identical
 # candidate path and graded against itself gave 0 of 649 rows differing, upper bound 0.5%. The
@@ -47,7 +47,7 @@
 #
 # A from-scratch run is not guaranteed to beat a tuned production model, and this one has ONE seed and
 # no hyperparameter search. If it grades negative, the finding is that the recipe needs work the
-# corpus cannot supply, and that is a scoping answer rather than another shard.
+# corpus cannot supply, and that is a scoping answer rather than another slice.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl

@@ -63,7 +63,7 @@ import {
 	NATIONAL_STREET_FALLBACK_SLUG,
 	NATIONAL_STREET_SLUGS,
 	regionToStateSlug,
-	streetShardURL,
+	streetExtractURL,
 } from "#shared/resources"
 import type { ParseTraceLike, ResolvedHit } from "#shared/resources"
 
@@ -87,7 +87,7 @@ const INTERP_RADIUS_DEFAULT = 1.95
 const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
 
 /**
- * The per-state street lookups, loaded together (lazy by region). National (country) shards carry no interp.
+ * The per-state street lookups, loaded together (lazy by region). National (country) extracts carry no interp.
  */
 interface StreetLookups {
 	situs: HTTPVFSAddressPointLookup
@@ -276,7 +276,7 @@ export function useDemoMapRuntime({
 		setPolygonCache(new Map())
 	}, [rt.selectedVersion])
 
-	// Lazy-load (and cache) the situs + interp httpvfs lookups for a parsed region's state shard. Ported from `_app.tsx`.
+	// Lazy-load (and cache) the situs + interp httpvfs lookups for a parsed region's state extract. Ported from `_app.tsx`.
 	const ensureStreetLookups = useCallback(
 		async (slug: string): Promise<StreetLookups | null> => {
 			let p = streetLookupsRef.current.get(slug)
@@ -288,14 +288,14 @@ export function useDemoMapRuntime({
 					const { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } = await import("#shared/httpvfs-street")
 
 					if (NATIONAL_STREET_SLUGS.has(slug)) {
-						const situsW = await loadHTTPVFSDatabase(streetShardURL(slug, "situs"), sqljsBaseURL)
+						const situsW = await loadHTTPVFSDatabase(streetExtractURL(slug, "situs"), sqljsBaseURL)
 
 						return { situs: new HTTPVFSAddressPointLookup(situsW, { streetLocale: slug as "fr" }), interp: undefined }
 					}
 
 					const [situsW, interpW] = await Promise.all([
-						loadHTTPVFSDatabase(streetShardURL(slug, "situs"), sqljsBaseURL),
-						loadHTTPVFSDatabase(streetShardURL(slug, "interp"), sqljsBaseURL),
+						loadHTTPVFSDatabase(streetExtractURL(slug, "situs"), sqljsBaseURL),
+						loadHTTPVFSDatabase(streetExtractURL(slug, "interp"), sqljsBaseURL),
 					])
 
 					return { situs: new HTTPVFSAddressPointLookup(situsW), interp: new HTTPVFSInterpolator(interpW) }

@@ -68,7 +68,7 @@ data:
     MX: 1.0 # NEW (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
     NZ: 1.0 # v3.12 COMPANION BUG FIX (not the variable): the allowlist lacked NZ through the whole v3.11.x lineage — synth-nz drew ZERO rows (step-0 measured; the documented v3.8.2-era allowlist trap re-triggered). Restores the recipe's DECLARED 4-locale intent.
   source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the ONE new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
-    overture-latam: 6.0 # NEW — CA/MX/BR Overture shards. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
+    overture-latam: 6.0 # NEW — CA/MX/BR Overture slices. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -97,7 +97,7 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
@@ -107,7 +107,7 @@ data:
     # (matches fr-fragment). Bare streets + street+number with NO postcode partner, + counters.
     synth-no-fragment: 12.0
     synth-gb: 10.0 # FEED: 6.1% stream × .328 dep-loc (probe-2 had this at 20.2% — the skew culprit)
-    synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k; key also covers the old 2,990-row po-box shard — harmless, same country)
+    synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k; key also covers the old 2,990-row po-box slice — harmless, same country)
     synth-es-pedania: 5.0 # FEED NEW: 3.0% stream × .303 (post-4b formatter fix)
     synth-fr-lieudit: 3.0 # FEED NEW: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a; directly feeds the bare-locality regression class)
   train_rows_per_epoch: 1000000

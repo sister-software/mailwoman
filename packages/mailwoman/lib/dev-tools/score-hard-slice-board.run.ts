@@ -60,7 +60,7 @@ import { haversineKm } from "@mailwoman/spatial"
 import { type HardSliceCase, loadHardSliceBoard } from "#eval-harness/hard-slice-board"
 import { collectResolved, mostSpecific, type Resolved } from "#eval-harness/oa-resolver/tree-hits"
 import { createRuntimePipeline } from "#index"
-import { createResolverBackend, existingWOFShardPaths } from "#resolver-backend"
+import { createResolverBackend, existingWOFDatabasePaths } from "#resolver-backend"
 
 const { values } = parseArguments({
 	options: {
@@ -95,10 +95,10 @@ console.error(`[board] ${board.length} rows, locales=[${locales.join(", ")}]`)
 //#region Resolver + pipelines
 
 const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-const wofPaths = await existingWOFShardPaths()
+const wofPaths = await existingWOFDatabasePaths()
 
 if (!wofPaths.length)
-	throw new Error("no WOF shards found — this board grades the RESOLVED place, so it needs the gazetteer")
+	throw new Error("no WOF databases found — this board grades the RESOLVED place, so it needs the gazetteer")
 
 const resolver = createWOFResolver(await createResolverBackend(resolverMod, { wofPaths }))
 

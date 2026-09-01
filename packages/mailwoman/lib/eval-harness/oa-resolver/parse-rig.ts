@@ -14,7 +14,7 @@ import type { OAResolverEvalOptions } from "#eval-harness/oa-resolver/options"
 
 /**
  * Assemble the scorer, the gazetteer-backed resolver and the per-call option bags one run parses and resolves every row
- * through. `wofPaths` is threaded in rather than re-derived: shard 0 is BOTH the resolver's admin gazetteer and the
+ * through. `wofPaths` is threaded in rather than re-derived: database 0 is BOTH the resolver's admin gazetteer and the
  * locality matcher's altname/ancestry source, and the two must be the same file for a name-match allowance to mean
  * anything.
  *

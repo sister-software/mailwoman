@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Typed schema for the `postcode_locality` shards (`postcode-locality-<cc>.db`) — the postcode →
+ *   Typed schema for the `postcode_locality` databases (`postcode-locality-<cc>.db`) — the postcode →
  *   candidate-locality table the resolver's `postcode_area_resolution` strategy attaches.
  *
  *   ONE table, several builds: the European point-in-polygon build and the CJK name/point-match
  *   builds (JP, KR, TW) all emit this shape, which is what lets a single resolver strategy consume
- *   every shard. The DDL therefore lives here rather than in any one builder, so a column added to
+ *   every database. The DDL therefore lives here rather than in any one builder, so a column added to
  *   the row interface is a compile error against the builder that fills it.
  *
  *   The builders' bulk INSERT stays a POSITIONAL prepared statement for throughput — but its column
@@ -37,7 +37,8 @@ export interface PostcodeLocalityTable {
 }
 
 /**
- * Provenance / license / build-statistics key-value pairs. Every shard carries one, and its contents are per-builder.
+ * Provenance / license / build-statistics key-value pairs. Every database carries one, and its contents are
+ * per-builder.
  */
 export interface PostcodeLocalityMetaTable {
 	key: string
@@ -45,7 +46,7 @@ export interface PostcodeLocalityMetaTable {
 }
 
 /**
- * The shard schema for `new DatabaseClient<PostcodeLocalityDatabase>(…)`.
+ * The database schema for `new DatabaseClient<PostcodeLocalityDatabase>(…)`.
  */
 export interface PostcodeLocalityDatabase {
 	postcode_locality: PostcodeLocalityTable
@@ -60,10 +61,10 @@ export type PostcodeLocalitySchemaHandle = Pick<Kysely<PostcodeLocalityDatabase>
 /**
  * Whether the statement carries `IF NOT EXISTS`.
  *
- * Required, not defaulted: the shards divide into ACCUMULATIVE builds, where one shared database is filled country by
- * country in successive runs and the second run must find the table already there, and single-country REBUILDS, which
- * drop and recreate. Silently defaulting either way turns a mismatched call site into a wrong artifact instead of a
- * compile error.
+ * Required, not defaulted: the databases divide into ACCUMULATIVE builds, where one shared database is filled country
+ * by country in successive runs and the second run must find the table already there, and single-country REBUILDS,
+ * which drop and recreate. Silently defaulting either way turns a mismatched call site into a wrong artifact instead of
+ * a compile error.
  */
 export interface PostcodeLocalityDDLOptions {
 	ifNotExists: boolean
@@ -128,7 +129,7 @@ export async function createPostcodeLocalityTable(
 }
 
 /**
- * Create the `(postcode, country)` probe index — the resolver attaches a single shard and country-filters at query
+ * Create the `(postcode, country)` probe index — the resolver attaches a single database and country-filters at query
  * time, so both columns lead.
  */
 export async function createPostcodeLocalityIndex(

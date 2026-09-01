@@ -1,9 +1,9 @@
 # v0.8.0 candidate — bare-street harness lever.
 #
-# SINGLE VARIABLE vs v0_7_2-intersection-bare.yaml: add the synth-street-bare shard (weight 0.2).
+# SINGLE VARIABLE vs v0_7_2-intersection-bare.yaml: add the synth-street-bare slice (weight 0.2).
 # The harness functional.test.ts cluster (32/34 fail on v0.7.2) is bare street names ("10th Ave",
 # "Main St", "1 Main Pl") mislabeled as `locality` — because synthesizeStreetRow only ever emitted
-# streets WITH a ", City, ST ZIP" tail. The new shard (scripts/build-street-bare-shard.mjs, ~65% bare)
+# streets WITH a ", City, ST ZIP" tail. The new slice (scripts/build-street-bare-slice.mjs, ~65% bare)
 # teaches bare streets → street, the bare-format analogue of the intersection-bare fix. SAFE: US,
 # in-distribution, no German-collapse risk (does not touch multi-locale).
 #

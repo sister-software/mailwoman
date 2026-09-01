@@ -117,7 +117,7 @@ absent from `.release-it.json` — see §7.4 for the workspace accounting that i
 
 `packages/mailwoman/lib/geocode-session.ts:269` is the closest thing to the daemon today, and its header
 (`:6-27`) states the purpose in the same terms: "a caller that geocodes more than once … pays for the
-classifier, the gazetteer backend and the shard handles ONCE."
+classifier, the gazetteer backend and the extract handles ONCE."
 
 It returns `GeocodeSession { initTiming, geocode(input): Promise<GeocodeRun>, close() }` (`:172-179`),
 where `GeocodeRun` carries `result`, the `AddressTree` it resolved from, a `PipelineTiming`, and an
@@ -213,7 +213,7 @@ zero. The two are different facts and the output keeps them apart.").
 ```
 
 **Why the MCP process is not the daemon.** MCP stdio servers live and die with the agent process. The
-state being amortized — a 1.0 s ONNX load, a 2.0 GB `candidate.db` handle, the shard providers — must
+state being amortized — a 1.0 s ONNX load, a 2.0 GB `candidate.db` handle, the extract providers — must
 outlive agent restarts, context compactions and subagent spawns, and must be shared between them. The
 MCP shim holds no engine state; it forwards, and it is cheap to restart.
 
@@ -402,10 +402,10 @@ in:  { action: "status" | "reload" | "evict" | "stop", engine_id?: string }
 out: { pid, uptime_s, socket, tree_fingerprint, git_head, dirty_files: string[],
        engines: [{ engine_id, config_summary, resident_mb, last_used, pinned, build_ms }],
        memory: { budget_mb, used_mb },
-       artifacts: { candidate_db: {path, size, mtime} | null, wof_shards: […],
+       artifacts: { candidate_db: {path, size, mtime} | null, wof_extracts: […],
                     weights: [{locale, package_dir, model_md5, card_version, declared_artifacts_present: bool}],
                     board: { rows, corpus_hash, stamp_matches: bool },
-                    poi_db, ban_shards, osm_shards, panels: […] },
+                    poi_db, ban_extracts, osm_extracts, panels: […] },
        warnings: string[] }
 ```
 
@@ -709,7 +709,7 @@ equivalence bound of **±5 pp @ 25 km** (§2.4), not an eyeball on two percentag
 Three refusals, all drawn from `docs/engineering/reference/resolver-backends.mdx`:
 
 - **Named tier.** Refuse "the deepest coordinated node" as a grading target. The candidate table
-  carries 3.66 M postcodes the FTS admin shard has none of, so "deepest" silently means _postcode_ on
+  carries 3.66 M postcodes the FTS admin extract has none of, so "deepest" silently means _postcode_ on
   one arm and _locality_ on the other; grading that way once reported a 54-row sub-kilometre collapse
   that was a commune centroid compared against a postcode-area centroid (`:111-127`).
 - **Stratum.** Panel results are reported per `truth_type`, never blended — the benchmark plan's own
@@ -961,7 +961,7 @@ These need a decision from the operator; each is a real fork, not a detail.
    or keep the boundary clean?
 
 2. **What is the memory budget, and is a two-gazetteer comparison affordable at all?** `candidate.db`
-   is 2.0 GB and the FTS admin shard is 5.0 GB. Two resident engines with different gazetteers is 4–10
+   is 2.0 GB and the FTS admin extract is 5.0 GB. Two resident engines with different gazetteers is 4–10
    GB before the ONNX sessions. On a 29 GB host that is survivable; alongside a running Pelias with a
    4 GB ES heap and a Photon JVM it may not be. Does `compare` across gazetteers run **sequentially by
    default** (rebuild between arms, slower but small) or **concurrently** (fast, and occasionally the

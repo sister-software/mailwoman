@@ -3,20 +3,20 @@
 # HYPOTHESIS: the v4.3.3 B1 plateau (72-85/128 across 5k-46k incl. the completed-schedule
 # cooldown branch) was caused by a CONTRADICTORY feed — ~78% of ordinary-source terminal-only
 # carriers taught "absorb the suffix" (the relabel guard refused name-prone splits) while the
-# synthetic shard taught "split", and the model learned the context discrimination instead
+# synthetic slice taught "split", and the model learned the context discrimination instead
 # (rich rows 5/43 vs bare 53/65). This run trains the same geometry from scratch with the
 # contradiction removed and the dose/diversity levers corrected.
 #
 # EFFECTIVE DELTAS vs v4.3.3 (each carries its own receipt in scratchpad/SUFFIX_BOUNDARY_TRAINING.md):
 #   1. affix lexicon v2 — positional licensing: ordinary terminal-only carriers 21.0% -> 94.0%
 #      correct (250k feed audit, contrast classes unchanged). The absorb signal is gone.
-#   2. corpus v0.19.0 — suffix shard v2: real 16,432-name venue shell at 30% (was 6 template
+#   2. corpus v0.19.0 — suffix slice v2: real 16,432-name venue shell at 30% (was 6 template
 #      strings; the failing context), 3,694 stem-pair hard negatives ('Menlo Park Road' +
 #      'Menlo Park' sharing a stem), A/B byte-identical at seed 1569 (sha256 d939a762...).
 #   3. dose: source weight 12.0 -> 2.5 = ~1.55% of draws = ~4.0 effective passes over the 30k
-#      shard per 60k run (the published repetition knee; was ~18 passes/row, ~140 per unique span).
-#   4. augment_exclude_sources: the shard bypasses augmentation (copies of an oversampled
-#      template shard compound repetition without adding diversity; augmented rows measured at
+#      slice per 60k run (the published repetition knee; was ~18 passes/row, ~140 per unique span).
+#   4. augment_exclude_sources: the slice bypasses augmentation (copies of an oversampled
+#      template slice compound repetition without adding diversity; augmented rows measured at
 #      25.5% of the emitted budget).
 # TRAINING SEMANTICS otherwise verbatim v4.3.3: from scratch, no init_from, no EWC, LR 5e-4,
 # warmup 1,000, 60k cosine, batch 128, bf16, Fisher capture over the final 2k steps, seed 42.

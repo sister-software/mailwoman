@@ -22,8 +22,8 @@
  *       a silent regression, and these are the two assertions that make it loud.
  *   - The en-nz case is the same base-overlay dedup, and since the en-gb mitigation the two locales
  *       carry the SAME postcode-less posture for two DIFFERENT reasons — worth keeping straight. en-nz
- *       ships no `postcode-nz.bin` because no WOF NZ postcode shard exists to build one from (a data
- *       gap, see that overlay's `no_postcode_bin` follow-up); en-gb ships none because the shard exists
+ *       ships no `postcode-nz.bin` because no WOF NZ postcode extract exists to build one from (a data
+ *       gap, see that overlay's `no_postcode_bin` follow-up); en-gb ships none because the extract exists
  *       and feeding it makes GB parses worse (a training gap). Same `anchorLookupPath === undefined`
  *       assertion, opposite repair.
  *   - The placetype-pair-prior block is the arc's end-to-end smoke: en-gb resolves
@@ -105,14 +105,14 @@ function ensureDevWeightsLinked(...locales: readonly string[]): void {
 // helpers, never a hardcoded path.
 //
 // There is deliberately NO `haveGBWofDB` guard any more (2026-08-05): en-gb stopped building
-// postcode-gb.bin, so the GB WOF postcode shard is no longer a precondition for any test here — and
+// postcode-gb.bin, so the GB WOF postcode extract is no longer a precondition for any test here — and
 // a guard that names a file nothing reads skips tests for a reason that no longer exists.
 const CLI_PATH = workspacePath("mailwoman", "out", "cli.js")
 const haveCLI = await pathExists(CLI_PATH)
 
 // The en-gb smoke's link-dev-weights run ALSO shells out to `gazetteer pair-index` to build
 // pair-index-gb.bin from the PPD tuples CSV (see that script's header) — needs the source CSV on disk
-// same as the postcode-binary build needs the WOF shard above.
+// same as the postcode-binary build needs the WOF extract above.
 const PPD_SOURCE_CSV_PATH = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
 const havePPDSource = await pathExists(String(PPD_SOURCE_CSV_PATH))
 
@@ -319,13 +319,13 @@ describe("resolveWeights — package auto-resolve", () => {
 
 	// Base-overlay dedup, en-nz form: model/tokenizer/lexicon-less resolution details are all shared
 	// with the en-gb case above — what's NEW here is the postcode-less posture. en-nz ships NO
-	// postcode-nz.bin (no WOF NZ postcode shard exists — the overlay's model-card `no_postcode_bin`
+	// postcode-nz.bin (no WOF NZ postcode extract exists — the overlay's model-card `no_postcode_bin`
 	// follow-up), so `anchorLookupPath` must come back undefined while `pair-index-nz.bin` and the
 	// overlay-local model-card still resolve from the package dir. Wiring-only, one test — the
 	// prior/country-gate behavior itself is generic implementation already covered by the en-gb prior
 	// block below and the mispackaging gate at the bottom of this file.
 	test.skipIf(!haveModel || !haveCLI || !haveNZSource)(
-		"en-nz resolves model/tokenizer from the en-us base + pair-index-nz.bin locally, with NO anchor lookup (no NZ postcode shard), and parses",
+		"en-nz resolves model/tokenizer from the en-us base + pair-index-nz.bin locally, with NO anchor lookup (no NZ postcode extract), and parses",
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-nz")
 

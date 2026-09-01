@@ -38,7 +38,7 @@
  *   Nodes are sorted by `prefix` in UTF-16 code-unit order. Ancestors live in a shared DICTIONARY
  *   because a country's prefixes assert a handful of distinct admin surfaces between them — GB's
  *   2,863 outward codes reference five entries — so per-node inlining would be almost all repetition.
- *   `wofID` is an f64 rather than a u32 because WOF IDs are not bounded by 2^32 (the NI shard's own
+ *   `wofID` is an f64 rather than a u32 because WOF IDs are not bounded by 2^32 (the NI extract's own
  *   synthetic postcode IDs start at 9.8e12); f64 is exact to 2^53 and the serializer asserts it.
  *
  *   ## Three properties, each earned by a measurement, each enforced here rather than documented

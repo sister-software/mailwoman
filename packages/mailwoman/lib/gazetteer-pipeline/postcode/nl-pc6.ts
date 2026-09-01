@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build `postalcode-nl-pc6.db` — the NL full-postcode (PC6) shard, #977 tier 2. WOF NL carries NO
+ *   Build `postalcode-nl-pc6.db` — the NL full-postcode (PC6) database, #977 tier 2. WOF NL carries NO
  *   `postalcode` tier at all, so `1012 LG` could only resolve to the Amsterdam locality centroid.
  *   Source: the CBS "Postcode6 statistieken" GeoPackage via PDOK (CC-BY 4.0 — provenance in `meta`),
  *   pre-extracted to a centroid CSV with ogr2ogr:
@@ -41,16 +41,16 @@ export interface BuildNLPC6Options {
 	 */
 	csvPath?: string
 	/**
-	 * Output shard. Default `<data-root>/wof/postalcode-nl-pc6.db`.
+	 * Output database. Default `<data-root>/wof/postalcode-nl-pc6.db`.
 	 */
 	out?: string
 }
 
 /**
- * Build the sealed NL PC6 shard (#977 tier 2). NOT re-exported from the postcode barrel — the command lazy-imports it
- * (optional-peer discipline).
+ * Build the sealed NL PC6 database (#977 tier 2). NOT re-exported from the postcode barrel — the command lazy-imports
+ * it (optional-peer discipline).
  */
-export async function buildNLPC6Shard(
+export async function buildNLPC6Database(
 	opts: BuildNLPC6Options = {}
 ): Promise<{ out: string; inserted: number; skipped: number }> {
 	// resolver-wof-sqlite is an OPTIONAL peer — lazy import (the gazetteer-pipeline convention).

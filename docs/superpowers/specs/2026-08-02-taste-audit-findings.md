@@ -237,8 +237,8 @@ a re-fetch), **low** for the one-shot tools.
 
 ```
 address-id/index.ts
-ban/scripts/build-address-point-shard.ts      ┐ fileMD5 cloned between these two
-ban/scripts/build-street-centroid-shard.ts    ┘
+ban/scripts/build-address-point-extract.ts      ┐ fileMD5 cloned between these two
+ban/scripts/build-street-centroid-extract.ts    ┘
 corpus/src/{adapter,parquet,split}.ts
 filer/tools/linkage-corpus.ts
 mailwoman/eval-harness/gauntlet/harness.ts
@@ -253,7 +253,7 @@ digest construction may be deliberate.
 ### A6. JSONL — `core/utils/jsonl.ts` exists; 10 files hand-roll split-and-parse
 
 Nine files import `readJSONL`/`writeJSONL`/`iterateJSONL` correctly. Ten do not:
-`corpus/src/golden.ts`, `corpus/src/shard-recipes/intersection.ts`,
+`corpus/src/golden.ts`, `corpus/src/extract-recipes/intersection.ts`,
 `mailwoman/dev-tools/failure-report.run.ts`, `poi-taxonomy/scripts/generate-taxonomy.ts`,
 `scripts/eval/postcode-anchor-accuracy.ts`, and five `corpus/src/**/*.test.ts` files.
 
@@ -270,13 +270,13 @@ reference `$MAILWOMAN_DATA_ROOT`, not the literal."
 
 121 files use `dataRootPath`/`mailwomanDataRoot` — the discipline mostly holds. The leaks:
 
-| kind      | site                                                                                                                                                                                                                        |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **code**  | `corpus/src/tools/shard-translit.ts:56,167`; `mailwoman/commands/corpus/shard/translit.tsx:26`                                                                                                                              |
-| **tests** | `mailwoman/commands/geocode.test.ts:40,41`; `neural/fst-prior.test.ts:28`; `neural/placetype-pair-prior.test.ts:51`; `neural/test/capability-gate.test.ts:36,37`                                                            |
-| **prose** | `corpus/src/tools/corpus-stats.ts:35`; `corpus/src/tools/fetch/{index.ts:68,nad.ts:29,openaddresses.ts:47}`; `mailwoman/gazetteer-pipeline/postcode/zcta-centroids.ts:23`; `mailwoman/commands/corpus/shard/translit.tsx:9` |
+| kind      | site                                                                                                                                                                                                                          |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **code**  | `corpus/src/tools/extract-translit.ts:56,167`; `mailwoman/commands/corpus/extract/translit.tsx:26`                                                                                                                            |
+| **tests** | `mailwoman/commands/geocode.test.ts:40,41`; `neural/fst-prior.test.ts:28`; `neural/placetype-pair-prior.test.ts:51`; `neural/test/capability-gate.test.ts:36,37`                                                              |
+| **prose** | `corpus/src/tools/corpus-stats.ts:35`; `corpus/src/tools/fetch/{index.ts:68,nad.ts:29,openaddresses.ts:47}`; `mailwoman/gazetteer-pipeline/postcode/zcta-centroids.ts:23`; `mailwoman/commands/corpus/extract/translit.tsx:9` |
 
-The `shard-translit` pair is the one that matters: the literal is a **runtime default value**
+The `extract-translit` pair is the one that matters: the literal is a **runtime default value**
 (`options.legacyPathPrefix ?? "/mnt/playpen/mailwoman-data/"`), so a lab with a different data root
 gets a silently wrong path rewrite.
 
@@ -369,25 +369,25 @@ pyFloat            ×3   …/anchor-lookup.ts:150, postcode-locality/{jp:150,kr:
 that lives in `core/utils`.
 
 **Cost of leaving it: medium** — these exist to match a Python original bit-for-bit. Four copies
-means four chances to drift from the reference, and the drift is invisible until a shard differs.
+means four chances to drift from the reference, and the drift is invisible until a extract differs.
 **Cost of fixing it: low.** **Proposed home:** `core/utils/python-numeric.ts`, beside its siblings.
 
-### B4. `splitCSV` ×6 in corpus shard recipes
+### B4. `splitCSV` ×6 in corpus extract recipes
 
 Two variants, four copies and two copies:
 
 ```
-corpus/src/shard-recipes/{fr-order:76, intersection:162, street-affix:137, unit:120}.ts   (variant 1)
-corpus/src/shard-recipes/{german:47, po-box-cedex:220}.ts                                 (variant 2)
+corpus/src/extract-recipes/{fr-order:76, intersection:162, street-affix:137, unit:120}.ts   (variant 1)
+corpus/src/extract-recipes/{german:47, po-box-cedex:220}.ts                                 (variant 2)
 ```
 
-**Proposed home:** `corpus/src/shard-recipes/csv.ts`. Reconcile the two variants first — the split is
+**Proposed home:** `corpus/src/extract-recipes/csv.ts`. Reconcile the two variants first — the split is
 where the difference is hiding.
 **Cost of leaving it: low-medium.** **Cost of fixing it: low.**
 
 ### B5. `swapDatabaseIntoPlace` ×2 — this is the documented build-then-swap rule
 
-`mailwoman/commands/situs/address-points.tsx:85` and `…/interpolation-shard.tsx:148`, identical:
+`mailwoman/commands/situs/address-points.tsx:85` and `…/interpolation-extract.tsx:148`, identical:
 rename the live DB aside, clear `-wal`/`-shm`, rename the new one in, drop the aside.
 
 This is `AGENTS.md`'s database rule implemented in code:
@@ -654,11 +654,11 @@ them.
 
 ## Appendix: the embedded-newline census (2026-08-03)
 
-The CSV parse fix only changes shard bytes for a source that actually carries a newline inside a
+The CSV parse fix only changes extract bytes for a source that actually carries a newline inside a
 quoted field. That is measurable rather than arguable, so it was measured — every OpenAddresses
 member reachable on the lab host, scanned for lines with an odd number of quotes:
 
-| source            | member                |      lines | odd-quote | shard effect                            |
+| source            | member                |      lines | odd-quote | extract effect                          |
 | ----------------- | --------------------- | ---------: | --------: | --------------------------------------- |
 | `europe.zip`      | `fr/countrywide.csv`  | 25,414,422 |         2 | none — stride skips it                  |
 | `europe.zip`      | `de/berlin.csv`       |    375,341 |         0 | none                                    |
@@ -673,7 +673,7 @@ Two findings worth keeping.
 
 **FR has exactly one such record** — `14ter,"Route de la Foret⏎route de la Foret",Biard,86580`, at
 physical lines 22,849,586–87. Neither is `≡ 3 (mod 211)`, so `readFrTuples`' stride steps over both
-halves and the shard is unchanged. That is luck, not design, and the reason the pre-filter hazard is
+halves and the extract is unchanged. That is luck, not design, and the reason the pre-filter hazard is
 documented in place at `po-box-cedex.ts` rather than fixed: a halved record fails the field checks
 and drops, so the failure mode is a lost row, not a corrupt one.
 
@@ -689,10 +689,10 @@ postcode:
 A quote-blind splitter turns each into two rows, the second with `16210` sitting a column off. But
 `locale.ts` — the only reader that touches `es_addresses.csv` — moved onto `CSVSpliterator` in
 `1d7b1bd1` on **2026-07-08**, which is already on main, and `synth-es-pedania-v1.jsonl` was built
-**2026-07-22**. The shard postdates the fix by two weeks, so it already holds the corrected rows. No
+**2026-07-22**. The extract postdates the fix by two weeks, so it already holds the corrected rows. No
 rebuild, no re-pin.
 
-**The corrected conclusion: no shard changes anywhere in the checkable set.** An earlier revision of
+**The corrected conclusion: no extract changes anywhere in the checkable set.** An earlier revision of
 this appendix claimed ES needed re-pinning. That was reached by finding which file reads the ES CSV
 and stopping there — without checking whether that reader was on the changed code path (it is not;
 the eight `readCSVRecords` callers name no ES source) or whether the artifact predated the fix (it
@@ -706,4 +706,4 @@ one-liner closes them:
 unzip -p <zip> <csv> | awk '{n=gsub(/"/,"&"); if(n%2==1) odd++} END{print FILENAME, NR, odd+0}'
 ```
 
-Zero means that recipe's shards are untouched and need no attention. Nonzero means re-pin it.
+Zero means that recipe's extracts are untouched and need no attention. Nonzero means re-pin it.

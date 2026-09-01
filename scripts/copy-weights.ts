@@ -22,7 +22,7 @@
  *   the anchor + gazetteer channels the trained model expects (without these, the package's default
  *   load path serves the model anchor-OFF — the #566/#685 OOD crater):
  *
- *   - `postcode-<cc>.bin` — the compact PCB1 postcode-anchor binary, built from the WOF postcode shard
+ *   - `postcode-<cc>.bin` — the compact PCB1 postcode-anchor binary, built from the WOF postcode extract
  *       (`softFeed.postcodeDBByCountry[<cc>]`) via `mailwoman gazetteer postcode-binary`.
  *   - `anchor-lexicon-v1.json` — the codex-generated gazetteer-anchor lexicon
  *       (`softFeed.gazetteerLexicon`).
@@ -259,7 +259,7 @@ async function materializeStreetMorphology(workspace: string, dir: string) {
 
 /**
  * Materialize the #718 D1 soft-feed artifacts into a weights workspace: the gazetteer-anchor lexicon (a verbatim copy)
- * + the per-country PCB1 postcode-anchor binary (built fresh from the WOF shard). Both `removeIfPresent` first — same
+ * + the per-country PCB1 postcode-anchor binary (built fresh from the WOF extract). Both `removeIfPresent` first — same
  * symlink-in-tarball trap the model/tokenizer copy guards against.
  */
 async function materializeSoftFeed(workspace: string, dir: string) {
@@ -293,7 +293,7 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 		process.stderr.write(`copied soft-feed → ${workspace}/locality-surface-lexicon-v7.json\n`)
 	}
 
-	// PCB1 postcode-anchor binary (#240) — built from the locale's WOF postcode shard. The locale's
+	// PCB1 postcode-anchor binary (#240) — built from the locale's WOF postcode extract. The locale's
 	// region subtag (`en-us` → `us`) names both the binary and the postcodeDBByCountry source entry.
 	const country = workspace.replace(/^packages\/neural-weights-[a-z]+-/, "")
 	const dbRel = SOFT_FEED.postcodeDBByCountry?.[country]
@@ -310,7 +310,7 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 
 	if (!(await pathExists(db))) {
 		throw new Error(
-			`Missing postcode shard for ${country}: ${db}\nSet MAILWOMAN_DATA_ROOT or softFeed.postcodeDBByCountry.`
+			`Missing postcode extract for ${country}: ${db}\nSet MAILWOMAN_DATA_ROOT or softFeed.postcodeDBByCountry.`
 		)
 	}
 

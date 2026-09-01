@@ -8,7 +8,7 @@
 #      street decomposition. Counter-distribution comes from #2, not from
 #      depressing the synth-street signal further.
 #
-#   2. NEW synth-no-street shard at weight 1.0 (122K rows)
+#   2. NEW synth-no-street slice at weight 1.0 (122K rows)
 #      Counter-example training data: 112K US + 10K DE/GB rows where every
 #      address has venue + admin tags but NO street-side BIO labels. 35% are
 #      "venue-adversarial" (Wall Street Industries, 5th Avenue Theatre,
@@ -17,7 +17,7 @@
 #      via decompose-mode. The bilingual slice gives a whisper of non-US
 #      anti-decompose signal without committing to full v0.7 locale expansion.
 #      Build pipeline: corpus/src/synthesize-no-street.ts +
-#      scripts/build-no-street-shard.mjs + scripts/extract-tuples-de-gb.py +
+#      scripts/build-no-street-slice.mjs + scripts/extract-tuples-de-gb.py +
 #      scripts/jsonl-to-parquet.py.
 #
 #   3. CRF stays disabled (CE-only) per NaN protocol's "one variable at a time"
@@ -80,7 +80,7 @@ data:
     # street decomposition entirely. The 4:1 anti-decompose ratio that would
     # come from 0.25 here would overcorrect (per DeepSeek turn 7).
     synth-street: 0.5
-    # NEW. 122K-row counter-example shard. Weight 1.0 paired with synth-street
+    # NEW. 122K-row counter-example slice. Weight 1.0 paired with synth-street
     # at 0.5 gives a 2:1 anti-decompose-to-decompose ratio after the
     # row-count-weighted contribution shakes out (100K × 1.0 ≈ 100K effective
     # steps vs 100K × 0.5 = 50K).

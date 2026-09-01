@@ -76,7 +76,7 @@ When the resolver does NOT match a node (no candidate above `minWinningScore`, o
 </address>
 ```
 
-`postcode` keeps its classifier-derived `src` because the resolver doesn't ship a postcode lookup yet (would need the postalcode WOF shard — Phase 4.3.x follow-up).
+`postcode` keeps its classifier-derived `src` because the resolver doesn't ship a postcode lookup yet (would need the postalcode WOF extract — Phase 4.3.x follow-up).
 
 ## Walk strategy
 
@@ -101,7 +101,7 @@ mailwoman parse --resolve --resolve-db /path/to/wof.db --format xml "..."
 
 ## What's NOT in Phase 4.3
 
-- Postcode resolution — separate `wof-postalcode` shard, opt-in via `--resolve-postcodes` (Phase 4.3.x).
+- Postcode resolution — separate `wof-postalcode` extract, opt-in via `--resolve-postcodes` (Phase 4.3.x).
 - Street-level / address-level resolution — WOF doesn't go that deep; would need OSM / OpenAddresses gazetteers, license-checked. Phase 4.4 candidate.
 - Resolver feedback into parsing (the loop where resolver disagreement triggers re-classification) — Phase 4.4+.
 - Multiple resolver implementations composed in priority order — for v1, one `Resolver` per parse. Composition lands when there's a second resolver to compose with.

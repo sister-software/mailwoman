@@ -14,7 +14,7 @@ and Python enforces nothing, so the loader's
 dropped every Norwegian row. Silently, in 44 configs, from v1.9.0-multilocale through the shipped
 v264 (6.3.0) and v310 (6.4.0). Measured cost at the time of the fix: 25,126 Norwegian rows present
 in the corpus and reaching the model zero times — 12,000 of them from ``synth-no-street-led``, a
-Norwegian phenomenon shard carrying source weight 12.0, the maximum targeted-fix tier. A shard built
+Norwegian phenomenon slice carrying source weight 12.0, the maximum targeted-fix tier. A slice built
 to fix a Norwegian defect had never contributed a single row.
 
 ``NO`` is the only ISO-3166-1 alpha-2 code that collides with a YAML 1.1 boolean, which is exactly

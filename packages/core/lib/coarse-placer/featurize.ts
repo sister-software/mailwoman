@@ -62,7 +62,7 @@ export const COARSE_CLASSES = [
 	"SK",
 	// #244/#928 AU expansion (2026-07-06): AU was unrepresentable (not in-map) AND its 4-digit postcode
 	// is format-ambiguous, so no #928 format-prior lever applies — the placer is AU's only country
-	// signal. Trained from the v0.9.2 G-NAF corpus shard (150k real Australian addresses).
+	// signal. Trained from the v0.9.2 G-NAF corpus extract (150k real Australian addresses).
 	"AU",
 	"OTHER",
 ] as const

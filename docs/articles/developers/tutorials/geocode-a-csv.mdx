@@ -72,8 +72,8 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-U
 // The same search the CLI runs: --candidate-db, then $MAILWOMAN_CANDIDATE_DB, then <data root>/wof/candidate.db.
 using lookup = new WOFCandidateTableLookup({ databasePath: resolveCandidateDBPath() })
 const resolver = createWOFResolver(lookup)
-// Street shards, when any are on disk under $MAILWOMAN_DATA_ROOT. Absent ones degrade to admin.
-using shards = new RegionDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, mailwomanDataRoot())
+// Street extracts, when any are on disk under $MAILWOMAN_DATA_ROOT. Absent ones degrade to admin.
+using extracts = new RegionDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, mailwomanDataRoot())
 
 const out = createWriteStream("customers.geocoded.jsonl")
 const counts = { matched: 0, mismatched: 0, skipped: 0 }
@@ -87,7 +87,7 @@ for await (const row of CSVSpliterator.fromAsync("customers.csv", { mode: "objec
 	}
 
 	const query = [row.street, row.city, row.state, row.postal_code].filter(Boolean).join(", ")
-	const result = await geocodeAddress(query, { classifier, resolver, shards: shards.for, defaultCountry: "US" })
+	const result = await geocodeAddress(query, { classifier, resolver, databases: extracts.for, defaultCountry: "US" })
 	// hierarchy[].name is what the gazetteer matched; row.city is what you sent. Compare them.
 	const matched = result.hierarchy.find((node) => node.tag === "locality")
 
@@ -128,7 +128,7 @@ Five decisions in there are worth naming.
 Loading the model is the expensive part of a geocode, and hoisting it out is why the row count barely
 moves the clock: the same script over one row runs in 1.35 s and over twenty in 1.53 s.
 
-**`shards: shards.for` is what lets this script get more precise later.** `RegionDatabaseProvider` resolves the
+**`databases: extracts.for` is what lets this script get more precise later.** `RegionDatabaseProvider` resolves the
 per-state rooftop and interpolation databases by filename under `$MAILWOMAN_DATA_ROOT`, opens each one
 once, and returns nothing for a state you have not downloaded. Omit it and the loop is pinned to city
 centroids no matter what you pull. Step 6 is the proof.

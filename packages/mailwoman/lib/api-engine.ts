@@ -52,33 +52,34 @@ import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-c
 import {
 	buildNoGazetteerMessage,
 	createResolverBackend,
-	existingWOFShardPaths,
+	existingWOFDatabasePaths,
 	mailwomanDataRoot,
 	resolveCandidateDBPath,
 } from "#resolver-backend"
 
 /**
- * Default per-state shard root + interp calibration — mirrors the express server's defaults (`GeocodeRouter.ts`).
+ * Default per-state database root + interp calibration — mirrors the express server's defaults (`GeocodeRouter.ts`).
  */
 const DATA_ROOT = mailwomanDataRoot()
 
 /**
- * The classifier/resolver/shard bundle `geocode`/`batch`/`resolveTree`/`reload` close over.
+ * The classifier/resolver/database bundle `geocode`/`batch`/`resolveTree`/`reload` close over.
  */
 interface GeocodeDepsBundle {
 	classifier: GeocodeClassifier
 	resolver: Resolver
-	shards: RegionDatabaseProvider
+	databases: RegionDatabaseProvider
 	defaultCountry?: string
 }
 
 /**
- * Same WOF-path resolution as the express `GeocodeRouter`/`HealthRouter` (env override, else the conventional shards).
+ * Same WOF-path resolution as the express `GeocodeRouter`/`HealthRouter` (env override, else the conventional
+ * databases).
  */
 async function wofPaths(): Promise<string[]> {
 	const env = $public.MAILWOMAN_WOF_DB
 
-	// The env override is comma-split and probed like the convention set: a listed shard that is not on
+	// The env override is comma-split and probed like the convention set: a listed database that is not on
 	// disk is dropped here rather than handed to the resolver to fail on open.
 	const explicit = env
 		? env
@@ -87,7 +88,7 @@ async function wofPaths(): Promise<string[]> {
 				.filter((p) => p.length > 0)
 		: undefined
 
-	return await existingWOFShardPaths(explicit)
+	return await existingWOFDatabasePaths(explicit)
 }
 
 /**
@@ -142,10 +143,10 @@ async function readModelCard(): Promise<Record<string, unknown> | null> {
 }
 
 /**
- * Count canonical per-state shards (`<prefix>-us-<2-letter>.db`) in a data subdir; 0 if absent. Ported from
+ * Count canonical per-state databases (`<prefix>-us-<2-letter>.db`) in a data subdir; 0 if absent. Ported from
  * `HealthRouter`.
  */
-async function countShards(subdir: string, prefix: string): Promise<number> {
+async function countDatabases(subdir: string, prefix: string): Promise<number> {
 	try {
 		const re = new RegExp(`^${prefix}-us-[a-z]{2}\\.db$`)
 
@@ -187,8 +188,8 @@ async function buildHealthData(): Promise<HealthData> {
 			// Versioned-switchover provenance (#485): the releases.json pin, or null in legacy mode.
 			versions: await readReleaseManifest(DATA_ROOT),
 			wof_dbs: wofDBs,
-			situs_states: await countShards("address-points", "address-points"),
-			interpolation_states: await countShards("interpolation", "interpolation"),
+			situs_states: await countDatabases("address-points", "address-points"),
+			interpolation_states: await countDatabases("interpolation", "interpolation"),
 		},
 	}
 }
@@ -204,7 +205,7 @@ function oneGeocode(
 	return geocodeAddress(address, {
 		classifier: deps.classifier,
 		resolver: deps.resolver,
-		shards: deps.shards.for,
+		databases: deps.databases.for,
 		defaultCountry: deps.defaultCountry,
 		interpCalibration: INTERP_RADIUS_CALIBRATION,
 		inputMode,
@@ -302,7 +303,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 
 	const paths = await wofPaths()
 	// Candidate backend → country-agnostic default (demo's global, population-first behavior); a per-request `country`
-	// still scopes. FTS backend keeps the US default. (#170) A candidate DB alone (no WOF admin shard) is a valid boot
+	// still scopes. FTS backend keeps the US default. (#170) A candidate DB alone (no WOF admin database) is a valid boot
 	// configuration — `createResolverBackend` prefers it over `wofPaths` — so the preflight gate below checks BOTH,
 	// mirroring the drop-ins' `!candidateDB && wofPaths.length === 0` gate rather than `GeocodeRouter`'s WOF-only check.
 	// This gate governs geocode/batch/resolveTree/reload ONLY — `parse` is already wired above and unaffected.
@@ -316,8 +317,8 @@ export async function createServeEngine(): Promise<ServeEngine> {
 
 	const backend = await createResolverBackend(resolverMod, { wofPaths: paths })
 	const resolver = createWOFResolver(backend)
-	const shards = await RegionDatabaseProvider.create(resolverMod, DATA_ROOT)
-	const deps: GeocodeDepsBundle = { classifier, resolver, shards, defaultCountry: candidateDB ? undefined : "US" }
+	const databases = await RegionDatabaseProvider.create(resolverMod, DATA_ROOT)
+	const deps: GeocodeDepsBundle = { classifier, resolver, databases, defaultCountry: candidateDB ? undefined : "US" }
 
 	// Route records the whole-call metric already (`@mailwoman/api`'s `routes.ts`) — the engine records nothing extra
 	// here. Ported from `GeocodeRouter`'s `singleHandler`. The cast mirrors `@mailwoman/api/routes.ts`'s established
@@ -365,15 +366,15 @@ export async function createServeEngine(): Promise<ServeEngine> {
 
 		try {
 			const slug = regionSlugFromTree(tree)
-			const { addressPoints, interpolation } = deps.shards.for(slug)
+			const { addressPoints, interpolation } = deps.databases.for(slug)
 
 			const opts: ResolveOpts = {
 				...incomingOpts,
 				defaultCountry: incomingOpts.defaultCountry ?? deps.defaultCountry,
 				...(addressPoints ? { addressPoints } : {}),
 				// #374 calibration ladder: explicit incoming factor (instrument override, survives the spread) →
-				// the artifact's own header value (`interpolation.radiusCalibration`, read at shard open — the
-				// resolver consumes it directly, nothing passed here) → the in-code per-region table for shards
+				// the artifact's own header value (`interpolation.radiusCalibration`, read at database open — the
+				// resolver consumes it directly, nothing passed here) → the in-code per-region table for databases
 				// predating the `interp_calibration` metadata table.
 				...(interpolation
 					? {
@@ -401,7 +402,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 
 	// Ported from `GeocodeRouter`'s `reloadHandler`.
 	const reload: MailwomanAPIEngine["reload"] = async () => {
-		const versions = await deps.shards.reload()
+		const versions = await deps.databases.reload()
 
 		return { reloaded: true, versions }
 	}

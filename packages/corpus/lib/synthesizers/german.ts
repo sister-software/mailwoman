@@ -13,7 +13,7 @@
  *   postcode-BEFORE-city). DE-0 confirmed the tokenizer round-trips German orthography cleanly, so
  *   this is a coverage gap, not a tokenizer ceiling.
  *
- *   This generator produces the missing signal as a small targeted supplement shard
+ *   This generator produces the missing signal as a small targeted supplement slice
  *   (synthesis-as-supplement discipline: weight < 0.25, one-and-done). It does NOT synthesize
  *   German street names (German morphology is hard to fake) — it takes REAL German component tuples
  *   (from OpenAddresses Berlin/Saxony) and renders them in idiomatic German order via the OpenCage
@@ -89,7 +89,7 @@ export interface LocaleSynthesisOpts {
 	 * — the official Spanish convention); OA-derived feeds and our ES eval space-join (`CALLE MAYOR 12`, the observed
 	 * form on all 3,000 eval rows). `"template"` (default) keeps the template's own join; `"space"` collapses `<street>,
 	 * <house_number>` → `<street> <house_number>` after rendering. Countries whose template already space-joins
-	 * (DE/IT/NL) render identically under both. Mixing both stops an ES shard from teaching the comma as THE street→house
+	 * (DE/IT/NL) render identically under both. Mixing both stops an ES slice from teaching the comma as THE street→house
 	 * boundary signal (#241 format-diversity audit). International order ignores this (the US template is already
 	 * house-first space-joined).
 	 */
@@ -241,7 +241,7 @@ export function synthesizeLocaleRow(
 }
 
 /**
- * German wrapper over {@link synthesizeLocaleRow}. Kept for the build-german-shard caller + tests.
+ * German wrapper over {@link synthesizeLocaleRow}. Kept for the build-german-slice caller + tests.
  */
 export function synthesizeGermanRow(
 	base: LocaleBaseTuple,

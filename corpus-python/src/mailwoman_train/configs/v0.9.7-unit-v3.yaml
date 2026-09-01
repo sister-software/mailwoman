@@ -1,11 +1,11 @@
 # === v0.9.7-unit-v3 (#451 v3) — LOWER unit weight, the v0.9.6-v2 regression check fix. ============
-# v0.9.6-v2 (format-diverse unit shard @ synth-unit 2.5) DECISIVELY won the real-designator gate
+# v0.9.6-v2 (format-diverse unit slice @ synth-unit 2.5) DECISIVELY won the real-designator gate
 # (unit F1 0→95.4%, street +8pp negative-space) but BREACHED the no-regression gate: US
 # house_number 83.1→79.6 (-3.5, floor was -1pp; clean fp32 v1→v2 delta -1.5) and FR street/postcode/
 # locality -3..-4 (confounded by int8-vs-fp32 + FR noise; v1 did not hurt FR). DeepSeek's prescribed
 # remedy for a tripped regression check: lower synth-unit 2.5 -> 1.5, hold everything else. v3 changes EXACTLY
 # ONE variable vs v2 — the weight. Same FORMAT-DIVERSE corpus (v0.4.5-unit-v2), same base/recipe/seed.
-# HYPOTHESIS: starving the unit shard less aggressively trims the house_number/FR collateral while
+# HYPOTHESIS: starving the unit slice less aggressively trims the house_number/FR collateral while
 # keeping most of the 95% unit win (unit gate floor is 20% — huge headroom to give back). If v3 keeps
 # unit >=~80% AND clears house_number >=82 / FR floors, PROMOTE v3. If unit collapses toward v1's 60%
 # without recovering house_number, the trade is real and intrinsic — escalate to operator (accept v2's
@@ -22,7 +22,7 @@
 # street precision) held: golden US street 73.2→81.2. v3 tunes the dosage to bank the win without the
 # collateral. See docs/articles/concepts/negative-space-coverage.md.
 #
-# SHARD PROVENANCE (eval-honesty): identical corpus to v2 — train shard is real non-Vermont US OA
+# SLICE PROVENANCE (eval-honesty): identical corpus to v2 — train slice is real non-Vermont US OA
 # skeletons with designators INJECTED in diverse formats; the real-in-the-wild designator gate is
 # data/eval/external/unit-real-designators.jsonl (34 curated OOD cases, the TRUSTWORTHY lens — the VT
 # in-distribution number was a v1 mirage). Read the arena, not the VT number, at the gate.
@@ -67,7 +67,7 @@ data:
     synth-po-box: 1.5
     synth-intersection: 0.2
     synth-german: 6.0
-    # v3 (#451): unit-coverage shard LOWERED 2.5 -> 1.5 to trim the v2 house_number/FR collateral
+    # v3 (#451): unit-coverage slice LOWERED 2.5 -> 1.5 to trim the v2 house_number/FR collateral
     # (DeepSeek-prescribed regression check remedy). Same format-diverse corpus; only the dosage changes.
     synth-unit: 1.5
   train_rows_per_epoch: 1000000

@@ -9,7 +9,7 @@
  *   encoder's own judgment, following the same PCB1 single-file writer+reader pattern as
  *   `postcode-binary-resolver.ts` so the layout can never drift between the two ends.
  *
- *   This file owns BOTH ends of the format — `serializePairIndex` (run in Node by the shard-build
+ *   This file owns BOTH ends of the format — `serializePairIndex` (run in Node by the extract-build
  *   tooling) and `PairIndexResolver` (run in the browser and server alike) — with zero Node imports
  *   in the reader path.
  *
@@ -46,9 +46,9 @@
  *   fold the entries were built against, so a consumer can detect a stale index if the fold changes.
  *
  *   Duplicate-tolerance is explicitly NOT a serializer concern: `serializePairIndex` asserts its
- *   input is already deduped by (child, parent) and throws otherwise. Building the shard is where
+ *   input is already deduped by (child, parent) and throws otherwise. Building the extract is where
  *   duplicates should be resolved (e.g. picking the higher-confidence tag) — silently last-write-wins
- *   or first-write-wins at serialize time would hide a shard-build bug.
+ *   or first-write-wins at serialize time would hide a extract-build bug.
  */
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
@@ -120,7 +120,7 @@ export interface PairEdge {
 
 export interface PairIndexHeader {
 	/**
-	 * ISO country code this shard was built for.
+	 * ISO country code this extract was built for.
 	 */
 	country: string
 	/**
@@ -142,11 +142,11 @@ export interface PairIndexHeader {
 	 */
 	foldVersion: 1
 	/**
-	 * MD5s of the source file(s) this shard was built from, for provenance.
+	 * MD5s of the source file(s) this extract was built from, for provenance.
 	 */
 	sourceMD5s: string[]
 	/**
-	 * ISO date the shard was built.
+	 * ISO date the extract was built.
 	 */
 	buildDate: string
 	/**

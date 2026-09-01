@@ -4,18 +4,18 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer postcode-binary` — build per-country browser postcode binaries (#240) from
- *   the SQLite shards. Emits one `postcode-<cc>.bin` per locale into the `--out` dir (default
+ *   the SQLite databases. Emits one `postcode-<cc>.bin` per locale into the `--out` dir (default
  *   `docs/static/mailwoman/`, alongside `fst-en-US.bin`), each loadable by `@mailwoman/neural`'s
  *   `PostcodeBinaryResolver` in the WASM/browser parser. Per-country so the browser fetches only
  *   the locale it needs (the tiered-loading story in the design doc).
  *
- *   The shard `name` is already the normalized postcode key (DE/FR `68161`/`75008`, NL space-less
+ *   The database `name` is already the normalized postcode key (DE/FR `68161`/`75008`, NL space-less
  *   `1012LM`, US `94105`), which is exactly what the anchor queries, so it serializes verbatim.
  *
  *   **GB is special**, and it is where this command shipped two defects (#1509 — the derivation and
  *   the refusal both live in `gazetteer-pipeline/postcode/binary.ts`, with the reproduction). The
  *   outward district is now derived by SHAPE (the inward code is the trailing three characters of the
- *   space-stripped form), so the same rule reads the spaced GeoNames-lineage shard and the
+ *   space-stripped form), so the same rule reads the spaced GeoNames-lineage database and the
  *   space-stripped Code-Point Open one. `--gb-granularity` picks the key set:
  *
  *   - `unit` (DEFAULT) — every unit PLUS its outward district: 1,749,839 keys / 20.0 MB from
@@ -45,7 +45,7 @@ import { Box, Text } from "ink"
 import { join } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
-import type { GBGranularity, PostcodeShardRow } from "#gazetteer-pipeline/postcode/binary"
+import type { GBGranularity, PostcodeDatabaseRow } from "#gazetteer-pipeline/postcode/binary"
 
 interface LocaleSource {
 	country: string
@@ -107,7 +107,7 @@ const GazetteerPostcodeBinary: ParsedCommandComponent<Options> = ({ options }) =
 		}
 
 		if (!locales.length) {
-			locales.push(...POSTCODE_BINARY_SOURCES.map(({ country, shard }) => ({ country, db: join(wof, shard) })))
+			locales.push(...POSTCODE_BINARY_SOURCES.map(({ country, database }) => ({ country, db: join(wof, database) })))
 		}
 
 		const granularity: GBGranularity = options.gbGranularity
@@ -122,7 +122,7 @@ const GazetteerPostcodeBinary: ParsedCommandComponent<Options> = ({ options }) =
 
 			using conn = new DatabaseClient<WOFDatabase>(db, { readOnly: true })
 
-			const rows = allRows<PostcodeShardRow>(
+			const rows = allRows<PostcodeDatabaseRow>(
 				conn.prepare(
 					`SELECT name, latitude AS lat, longitude AS lon FROM spr
 					 WHERE placetype='postalcode' AND is_current!=0 AND country=?`

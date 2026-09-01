@@ -36,7 +36,7 @@ export const spec = {
 		"weights-cache": { type: "string", description: "Candidate weights dir" },
 		fixtures: { type: "string", description: "Fixture JSONL override" },
 		db: { type: "string", description: "Sealed poi.db" },
-		"resolve-db": { type: "string", description: "WOF admin shards" },
+		"resolve-db": { type: "string", description: "WOF admin databases" },
 		"candidate-db": { type: "string", description: "Byte-range candidate.db" },
 		"semantic-observation": {
 			type: "boolean",

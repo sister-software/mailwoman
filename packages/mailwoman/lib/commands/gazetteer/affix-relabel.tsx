@@ -7,7 +7,7 @@
  *   Pub-28 street suffixes) as a JSON lexicon for the Python training loader's affix-split relabel
  *   pass (#511). Same one-source-of-truth pattern as `gazetteer anchor-lexicon`: the TS codex
  *   matchers stay canonical; Python consumes a dumb variant→canonical map so the relabel pass
- *   agrees with the affix shard builder (which calls the codex matchers directly) by construction.
+ *   agrees with the affix database builder (which calls the codex matchers directly) by construction.
  *
  *   v2 (2026-08-10, #1569 five-whys): adds `name_prone` — the codex name-prone canonicals
  *   (PARK/HILL/CREEK…) that license the positional split of e.g. `Menlo Park | Road` in the

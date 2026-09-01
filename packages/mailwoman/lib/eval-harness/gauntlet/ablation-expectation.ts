@@ -469,7 +469,7 @@ export function deriveExpectedRung(
 	// Evidence this model cannot evaluate. Three kinds, one consequence — it may not demand abstention:
 	//
 	//  - No index here. A venue resolves from `poi.db` (build-local, not a dependency of this layer) and a street from
-	//    the address-point / street-centroid shards.
+	//    the address-point / street-centroid databases.
 	//  - A constraint that did not resolve. `cr-op3-san-jose` asserts the region as "San José Province" and WOF calls it
 	//    "San José", so the region lookup misses; the surviving region is real evidence the pipeline will use, and
 	//    demanding abstention because THIS model could not look it up would be scoring the model's gap as the parser's.

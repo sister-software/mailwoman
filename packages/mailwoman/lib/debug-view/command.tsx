@@ -44,7 +44,7 @@ import { DebugSessionApp } from "./DebugSessionApp.tsx"
 
 /**
  * Geocode `input` once and render exactly one {@link DebugFrame} to a string — the whole non-TTY `--debug` answer. The
- * tile archive is opened independently of the geocode session (the session owns the gazetteer/shard handles; the
+ * tile archive is opened independently of the geocode session (the session owns the gazetteer/database handles; the
  * archive is a debug-view-only concern) and both are released in `finally`, so a mid-render throw — a corrupt tiles
  * archive, say — still closes every handle.
  *

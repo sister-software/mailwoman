@@ -15,7 +15,7 @@
  *   instead of its behaviour, leaving a signature that pointed readers hunting the
  *   `postalcode-geonames-tail.db` builder at the wrong module. Deleted. The postal tail's real home
  *   is `gazetteer-pipeline/postcode/geonames-tail.ts` (`mailwoman gazetteer build postcode-geonames`),
- *   which builds a STANDALONE shard — the admin gazetteer never wanted postcode rows folded into it.
+ *   which builds a STANDALONE database — the admin gazetteer never wanted postcode rows folded into it.
  */
 
 import { dataRootPath } from "@mailwoman/core/utils"

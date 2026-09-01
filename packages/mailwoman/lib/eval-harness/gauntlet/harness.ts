@@ -33,7 +33,7 @@ import {
 	loadCapitalIndex,
 	mailwomanDataRoot,
 	resolveCandidateDBPath,
-	wofShardPaths,
+	wofExtractPaths,
 } from "#resolver-backend"
 
 export interface GauntletDeps extends Disposable {
@@ -145,7 +145,7 @@ export interface GauntletResolverLevers {
 
 /**
  * The geocode deps a lever set turns into — spread into every {@linkcode geocodeAddress} call the run makes. Pure and
- * exported so the "the pin reaches the pipeline" contract is testable without building the ~9 GB shard set.
+ * exported so the "the pin reaches the pipeline" contract is testable without building the ~9 GB database set.
  */
 export function resolverLeverDeps(levers: GauntletResolverLevers | undefined): {
 	postcodeCountryCoherence?: boolean
@@ -267,7 +267,7 @@ async function assertShippedModelMatchesCard(materializedMd5: string): Promise<v
  *
  * EXPECTATIONS COME FROM EACH PACKAGE'S OWN CARD (`files.postcode_anchor`), never from a list kept here. en-gb
  * deliberately ships no binary under the #1476 mitigation until the A4 assembly lands, and en-nz has no WOF NZ postcode
- * shard to build one from; a hardcoded list would call both of those supported states broken, and would need editing
+ * database to build one from; a hardcoded list would call both of those supported states broken, and would need editing
  * every time a locale's posture changed — which is the same drift the card exists to prevent.
  *
  * A package that does not RESOLVE at all is not this guard's business: that is `classifierFor`'s loud base-only
@@ -442,17 +442,17 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	const poiKindClassifier: NonNullable<GeocodeDeps["classifyKind"]> = (input, shape) =>
 		kindClassifierWithLexicon(input, shape, { locale: "en-US", confidence: 1, alternatives: [], source: "caller" })
 
-	// The shard set is the paths that EXIST. Presence is materialized up front so the keep-test below stays a plain,
+	// The database set is the paths that EXIST. Presence is materialized up front so the keep-test below stays a plain,
 	// synchronous filter over facts already read.
-	const wofShardPresence = await Promise.all(
-		wofShardPaths().map(async (path) => ({ path, present: await pathExists(path) }))
+	const wofDatabasePresence = await Promise.all(
+		wofExtractPaths().map(async (path) => ({ path, present: await pathExists(path) }))
 	)
 
-	const presentWofShards = wofShardPresence.filter((entry) => entry.present).map((entry) => entry.path)
+	const presentWofDatabases = wofDatabasePresence.filter((entry) => entry.present).map((entry) => entry.path)
 
 	const resolver = createWOFResolver(
 		await createResolverBackend(resolverMod, {
-			wofPaths: presentWofShards,
+			wofPaths: presentWofDatabases,
 			...(opts.candidateDB ? { candidateDB: opts.candidateDB } : {}),
 			...(opts.levers?.variantAliasExemption === false ? { variantAliasExemption: false } : {}),
 		})
@@ -595,9 +595,9 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			// #1649: same lexicon-aware kind classifier the CLI session wires — the harness grades the user's path.
 			classifyKind: poiKindClassifier,
 			resolver,
-			shards: regionDatabaseProvider.for,
-			nationalShards: banProvider.for,
-			osmShards: osmProvider.for,
+			databases: regionDatabaseProvider.for,
+			nationalDatabases: banProvider.for,
+			osmDatabases: osmProvider.for,
 			...leverDeps,
 			...(capitalLevel ? { capitalLevel } : {}),
 			...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),

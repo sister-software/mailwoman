@@ -16,7 +16,7 @@ It wasn't, and it took three probes to prove it. The same model that scored high
 
 Mailwoman's biggest measured weakness is _boundary instability_: the model wobbling on where one part of an address ends and the next begins. A street suffix swallowed into the street name. A French house number that trails the street instead of leading it. The kind of thing that's invisible on a clean "123 Main St, Springfield, IL 62701" and falls apart the moment the punctuation goes missing.
 
-So we built a synthetic training shard that puts the gold boundary on exactly those hard cases, mixed it in at a conservative weight, and retrained. It worked — on the boundaries. French street-prefix recognition went from a coin flip (55%) to essentially perfect (99.7%). Every boundary shape moved up. The macro-F1 rose. We had the release notes half-written.
+So we built a synthetic training extract that puts the gold boundary on exactly those hard cases, mixed it in at a conservative weight, and retrained. It worked — on the boundaries. French street-prefix recognition went from a coin flip (55%) to essentially perfect (99.7%). Every boundary shape moved up. The macro-F1 rose. We had the release notes half-written.
 
 ## The catch
 
@@ -36,11 +36,11 @@ The second probe went after the locality drop directly. It took the model _befor
 
 We expected the street to be eating it. It wasn't. That was 3% of the damage. **84% of the regression was the model dropping the locality entirely** on short, bare rows: "LaMoure, ND." "Frannie, Wyoming." "Buckhorn, Wyoming." A town and a state, nothing else, and the model now returned _nothing_ for the town.
 
-The mechanism, once you see it, is almost funny. Every example in our hard-case shard had a street before the city — that's what made the boundary hard. So the model learned, a little too well, that _a city is the thing that comes after a street._ Take the street away, hand it a bare "LaMoure, ND," and it no longer recognized LaMoure as a place at all. We didn't teach it a new skill so much as we taught it a superstition.
+The mechanism, once you see it, is almost funny. Every example in our hard-case extract had a street before the city — that's what made the boundary hard. So the model learned, a little too well, that _a city is the thing that comes after a street._ Take the street away, hand it a bare "LaMoure, ND," and it no longer recognized LaMoure as a place at all. We didn't teach it a new skill so much as we taught it a superstition.
 
 ## The lesson we keep re-learning
 
-The boundary shard's labels were sound; the trouble was that it only ever showed them in one shape. Every row was a clean, full, structured address, so the model over-fit that shape and fell off the moment the input stopped matching it. The fix is to surround the hard cases with the ordinary ones they need to be told apart from. Teach the bare "City, STATE" next to the full address. Teach the house number before the street as well as after, so position stops being a shortcut the model can lean on.
+The boundary extract's labels were sound; the trouble was that it only ever showed them in one shape. Every row was a clean, full, structured address, so the model over-fit that shape and fell off the moment the input stopped matching it. The fix is to surround the hard cases with the ordinary ones they need to be told apart from. Teach the bare "City, STATE" next to the full address. Teach the house number before the street as well as after, so position stops being a shortcut the model can lean on.
 
 But the deeper lesson is the one about the number we started with. The macro-F1 went up. The model got worse at its most common real-world input. Both of those things were true at the same time, and only one of them mattered. If you're tuning a model on an aggregate score, the aggregate is the first thing that will lie to you — and it will do it while pointing at a bigger number and smiling. Grade the thing your user actually receives. We had to be told twice.
 

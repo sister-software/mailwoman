@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   codex → corpus-python bridge: emit the authoritative country surface forms as JSON so the Python
- *   shard generators can synthesize address tails ("…, USA" / "…, United States of America") without
+ *   extract generators can synthesize address tails ("…, USA" / "…, United States of America") without
  *   re-deriving the country name/alias data. `@mailwoman/codex` stays the single source of truth
  *   (COUNTRY_SURFACE_FORMS + ISO2_TO_NAME, salvaged from isp-nexus spatial/countries); this writes a
  *   snapshot the language boundary can't import directly.

@@ -45,7 +45,7 @@ describe("BUNDLES registry", () => {
 		expect(ca.map((a) => a.family).toSorted()).toEqual(["address-points", "interpolation"])
 	})
 
-	it("vi (US Virgin Islands) ships situs only — no interpolation shard hosted for the territory", () => {
+	it("vi (US Virgin Islands) ships situs only — no interpolation database hosted for the territory", () => {
 		const us = BUNDLES.us!
 		const vi = us.artifacts.filter((a) => a.stateSlug === "vi")
 

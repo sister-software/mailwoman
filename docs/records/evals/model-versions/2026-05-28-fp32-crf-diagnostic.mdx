@@ -100,7 +100,7 @@ runs in bf16 for throughput as before.
    attempts is now within reach.
 
 2. **v0.6.2 stays CE-only.** Per the NaN protocol's "one variable at a time" rule: v0.6.2
-   already changes corpus composition (synth-street weight + new synth-no-street shard).
+   already changes corpus composition (synth-street weight + new synth-no-street extract).
    Adding CRF activation in the same release confounds attribution. Defer to v0.6.3.
 
 3. **fp32-CRF throughput cost is minimal.** The diagnostic ran at ~6 steps/s on an

@@ -16,7 +16,7 @@
 	"nz_artifacts": {
 		"pair_index_nz_bin": {
 			"format": "PIX1 placetype-pair index — a retrieval-augmented (child, parent) dependent_locality prior, e.g. (\"Plimmerton\", \"Porirua\")",
-			"source": "LINZ-derived OpenAddresses NZ countrywide CSV (the census the synth-nz-v2 shard was built from), $MAILWOMAN_DATA_ROOT/openaddresses/extracted/nz/countrywide.csv, source md5 fa79e586de96fe54c17b6763a9ea97c6, 2,123,054 rows kept / 137 skipped (empty CITY)",
+			"source": "LINZ-derived OpenAddresses NZ countrywide CSV (the census the synth-nz-v2 extract was built from), $MAILWOMAN_DATA_ROOT/openaddresses/extracted/nz/countrywide.csv, source md5 fa79e586de96fe54c17b6763a9ea97c6, 2,123,054 rows kept / 137 skipped (empty CITY)",
 			"pairs": 3134,
 			"bytes": 58960,
 			"md5": "(staged at release time — a PIX1 header embeds buildDate, so a rebuild from identical sources produces different bytes)",
@@ -27,7 +27,7 @@
 			"not_committed": "derived artifact, .gitignore'd (same posture as en-gb's pair-index-gb.bin) — rebuilt via `mailwoman gazetteer pair-index --out neural-weights-en-nz --country nz --source <linz-countrywide-csv> --delta 10`",
 			"": "Ship bytes (2026-07-24 rebuild off the identical census, sourceMD5 fa79e586de96fe54c17b6763a9ea97c6, delta 10, 3,134 pairs). The battery graded a buildDate-differentiated build of the same pairs (7a0cd02b…, unrecoverable session tmp); bars 1-3 re-verified verbatim on THESE bytes — see the en-nz battery postscript in the task-8 report."
 		},
-		"no_postcode_bin": "FOLLOW-UP: this overlay ships NO postcode-nz.bin — no WOF NZ postcode shard exists on disk or in release.config.json's softFeed.postcodeDBByCountry (unlike us/fr/gb). Until one is built, the postcode-anchor channel resolves OFF for en-nz loads (loud single warning via warnUnfedChannel, parse still works — the tolerant-loader contract). Building the NZ shard + wiring postcodeDBByCountry.nz is the tracked follow-up for a later bundle revision."
+		"no_postcode_bin": "FOLLOW-UP: this overlay ships NO postcode-nz.bin — no WOF NZ postcode extract exists on disk or in release.config.json's softFeed.postcodeDBByCountry (unlike us/fr/gb). Until one is built, the postcode-anchor channel resolves OFF for en-nz loads (loud single warning via warnUnfedChannel, parse still works — the tolerant-loader contract). Building the NZ extract + wiring postcodeDBByCountry.nz is the tracked follow-up for a later bundle revision."
 	},
 	"architecture": {
 		"$comment": "Verbatim copy of the base card's architecture — same encoder, no NZ-specific change.",

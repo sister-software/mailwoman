@@ -88,6 +88,8 @@ coverage
 !/packages/cartographer/lib/coverage/**
 !/docs/articles/evals/coverage/
 !/docs/articles/evals/coverage/**
+!/docs/records/evals/coverage/
+!/docs/records/evals/coverage/**
 playwright-report
 playwright-traces
 test-results

@@ -7,12 +7,12 @@
  *   run without licensed data, and the measurement's own limits stated up front:
  *
  *   1. **The truth and the gazetteer share a source.** Our GB postcode tier is built FROM Code-Point Open
- *      (`codepoint-shard.ts`), so grading against Code-Point centroids does not measure independent coordinate
+ *      (`codepoint-database.ts`), so grading against Code-Point centroids does not measure independent coordinate
  *      accuracy. What it DOES measure is the pipeline end-to-end: does a messy, real-shaped postcode string come back
  *      as the right unit-postcode point through parse → retrieval → resolution? That is the engine's claim; the
  *      data's accuracy is Ordnance Survey's.
  *   2. **The coordinate conversion cancels.** Truth is converted OSGB36 → WGS84 by the same `@mailwoman/spatial`
- *      routine the shard build uses, so a systematic conversion bias would be invisible here. The conversion is
+ *      routine the database build uses, so a systematic conversion bias would be invisible here. The conversion is
  *      pinned against the OSTN15 test set in its own suite; this eval adds nothing to that claim.
  *   3. **Premise-level accuracy is out of reach.** A unit postcode is tens of houses; there is no open GB register
  *      to grade a rooftop answer against. The distance thresholds below are therefore postcode-scale (≤1 km) rather
@@ -20,7 +20,7 @@
  *
  *   Sample: a seeded, stratified draw across every Code-Point area file (every area contributes equally, so London
  *   does not drown Orkney). Rows with positional-quality 90 (no coordinate available) are skipped, matching the
- *   shard build. Each sampled postcode runs THREE input legs — as published ("SW10 0AA"), lowercased and unspaced
+ *   database build. Each sampled postcode runs THREE input legs — as published ("SW10 0AA"), lowercased and unspaced
  *   ("sw100aa", the user register), and country-suffixed ("SW10 0AA, UK") — under TWO locales: the production
  *   default and en-GB.
  *
@@ -58,7 +58,7 @@ interface LegResult {
 const THRESHOLDS_KM = [1, 5, 25] as const
 
 /**
- * Positional-quality value meaning "no coordinate available" — dropped, matching `codepoint-shard.ts`.
+ * Positional-quality value meaning "no coordinate available" — dropped, matching `codepoint-database.ts`.
  */
 const PQ_NO_COORDINATE = 90
 

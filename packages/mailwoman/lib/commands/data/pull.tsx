@@ -24,7 +24,7 @@
  *   install (`core/utils/sealed-db.ts`'s discipline, applied to a download instead of a local build).
  *
  *   `--dry-run` prints the plan with ZERO network calls: existing-file detection is a plain
- *   filesystem stat (`resolveShardPath` for the versioned `us` per-state shards, `existsSync`
+ *   filesystem stat (`resolveDatabasePath` for the versioned `us` per-state databases, `existsSync`
  *   otherwise), never a HEAD. `--only <substring>` narrows a bundle to matching artifacts (e.g.
  *   `data pull us --only nh` for one state instead of the whole ~41 GB tier).
  *

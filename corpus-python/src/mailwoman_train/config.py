@@ -74,8 +74,8 @@ class DataConfig:
     augment_upper_case_prob: float = 0.0
     # Augmentation-pool exclusion (2026-08-10 recipe review): sources whose rows bypass the
     # augmentation stage entirely (original emitted exactly once). Augmented copies of an
-    # OVERSAMPLED synthetic shard are near-duplicates that compound its repetition dose while
-    # adding none of the diversity that moves OOD boards; list that shard here. The affix
+    # OVERSAMPLED synthetic slice are near-duplicates that compound its repetition dose while
+    # adding none of the diversity that moves OOD boards; list that slice here. The affix
     # relabel still applies — label policy and augmentation policy are independent.
     augment_exclude_sources: list[str] = field(default_factory=list)
     # Postcode-anchor lookup (#239/#240). Path to the JSON {postcode: [posterior, lat, lon]} table
@@ -110,7 +110,7 @@ class DataConfig:
     # W = composition window. "off" (default) = the SentencePiece path, byte-identical to every prior
     # recipe. "word" = one unit per whitespace token (the #825 Latin char-word probe). "char" = one
     # unit per character (the v8 JP probe; char_ctx=3 → W=7). Both non-off modes skip SentencePiece
-    # entirely, REQUIRE span-schema shards (#519), and are channel-free — the anchor/gazetteer/
+    # entirely, REQUIRE span-schema slices (#519), and are channel-free — the anchor/gazetteer/
     # country/street/locality channels project per SP-piece and re-align per-unit post-probe, so the
     # loader raises if any channel path is configured alongside. Pairs with model.use_char_embed.
     char_mode: str = "off"
@@ -131,9 +131,9 @@ class DataConfig:
     label_set: str = "stage3"
     # Affix-split relabel pass (#511). Path to the codex-generated relabel lexicon (built by
     # scripts/build-affix-relabel-lexicon.mjs). When set, every street span in every loaded row is
-    # relabeled with the affix shard builder's exact split semantics (trailing USPS suffix ->
+    # relabeled with the affix slice builder's exact split semantics (trailing USPS suffix ->
     # street_suffix, leading directional -> street_prefix), AFTER augmentation — ending the
-    # base-vs-shard label contradiction the #492 ladder measured at >=1,000:1. None -> off.
+    # base-vs-slice label contradiction the #492 ladder measured at >=1,000:1. None -> off.
     affix_relabel_lexicon_path: str | None = None
     # --- #220/#723 anchor-absorption knobs. Defaults preserve v1.9.2 behavior exactly. ---
     # WHERE the postcode anchor is painted at TRAINING:
@@ -439,9 +439,9 @@ class TrainConfig:
     # sees only head params. Distinguishes encoder-representation sufficiency from output-head
     # competition — see issue #492's pre-registered ladder.
     freeze_encoder: bool = False
-    # #901 v2.1.3: freeze the token-embedding table during fine-tune. The zero-shard control
+    # #901 v2.1.3: freeze the token-embedding table during fine-tune. The zero-slice control
     # proved ANY 2k init_from fine-tune of a mean-init surgery base breaks the same SI short-
-    # village rows (4/4 casualty row-identity, no shards attached) — gradient through the
+    # village rows (4/4 casualty row-identity, no slices attached) — gradient through the
     # never-trained mean-init rows is the mechanism. Freezing removes it while the encoder
     # layers learn the boundary rules (the multi-word wins were encoder-layer learning).
     freeze_token_embeddings: bool = False

@@ -1,9 +1,9 @@
 ---
 sidebar_position: 37
-title: "2026-05-28 No-street counter-example corpus shard"
+title: "2026-05-28 No-street counter-example corpus extract"
 ---
 
-# No-street counter-example corpus shard — 2026-05-28
+# No-street counter-example corpus extract — 2026-05-28
 
 The corpus-side fix for v0.6.1's `dependent_locality` regression. Per the
 2026-05-28 night-2 postmortem and the
@@ -14,7 +14,7 @@ DeepSeek's turn 2 consult is to add explicit counter-distribution training data:
 addresses where the model should NOT emit street labels at all.
 
 This eval doc captures the new synthesizer + pipeline glue that produces that
-counter-distribution shard.
+counter-distribution extract.
 
 ## What lands
 
@@ -33,9 +33,9 @@ counter-distribution shard.
 - `corpus/src/synthesize-no-street.test.ts` — 8 unit tests covering each
   template, including a 500-iteration "never emits any street-side tag"
   contract check and a 1000-iteration template-distribution sanity check.
-- `scripts/build-no-street-shard.mjs` — mirrors `build-po-box-shard.mjs`:
+- `scripts/build-no-street-extract.mjs` — mirrors `build-po-box-extract.mjs`:
   reads `{locality, region, postcode, country}` tuples from JSONL stdin and
-  emits aligned `LabeledRow` JSONL ready for the parquet sharding step.
+  emits aligned `LabeledRow` JSONL ready for the parquet extract routing step.
 - `corpus/src/index.ts` — exports the new synthesizer.
 
 ## Verified end-to-end
@@ -77,11 +77,11 @@ this surrounding context.
 
 ## v0.6.2 recipe (proposed)
 
-With this shard landed, the full v0.6.2 retrain recipe per DeepSeek turn 2 is
+With this extract landed, the full v0.6.2 retrain recipe per DeepSeek turn 2 is
 runnable:
 
 1. **Reduce synth-street weight** 2.0 → 0.5
-2. **Add synth-no-street shard** at weight 1.0, 50K–100K rows, US-primary with
+2. **Add synth-no-street extract** at weight 1.0, 50K–100K rows, US-primary with
    FR + DE + GB locales sprinkled in proportion to the base tuple availability.
 3. **Enable Layer 1 morphology FST at inference** (infrastructure already
    landed). Provides additive anchoring on top of the corpus-side fix.
@@ -94,7 +94,7 @@ runnable:
 ## What this doesn't fix
 
 - **Non-US locale gap.** The harness showed neural at 0% on most non-US/non-FR
-  locales. This shard helps with US/FR/DE/GB venue-vs-street confusion but does
+  locales. This extract helps with US/FR/DE/GB venue-vs-street confusion but does
   not fix the locale-distribution gap. Per-locale corpus expansion is a v0.7+
   topic.
 - **Unit designator schema gap.** The Australian unit-notation tests
@@ -107,7 +107,7 @@ runnable:
 ## See also
 
 - [v0-vs-neural harness eval](../model-versions/2026-05-28-v0-vs-neural-harness.mdx) — establishes
-  the failure clusters this shard addresses
+  the failure clusters this extract addresses
 - [Layer 1 morphology FST eval](./2026-05-28-layer-1-morphology-fst.mdx) — proves
   the decoder-only fix is insufficient and the corpus side is required
 - 2026-05-28 night-2 postmortem — original

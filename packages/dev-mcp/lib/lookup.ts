@@ -48,7 +48,7 @@ export const LookupSource = {
 	 */
 	Candidate: "candidate",
 	/**
-	 * The WOF admin + postcode shards behind the FTS backend. Answers what the SOURCE data holds, including the
+	 * The WOF admin + postcode extracts behind the FTS backend. Answers what the SOURCE data holds, including the
 	 * deprecated records the resolver's own query filters out.
 	 */
 	WOF: "wof",

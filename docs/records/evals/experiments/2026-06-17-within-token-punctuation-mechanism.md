@@ -51,7 +51,7 @@ punctuation-specific fix. It decomposes into:
 
 So three of the four are closed by levers already prioritized — fixing boundary instability + delimited
 input would lift the apostrophe/hyphen classes without touching punctuation. The slash class needs the
-AU/UK unit-convention specifically (a training-shard or a decode rule for `digit/alnum` between a unit
+AU/UK unit-convention specifically (a training-extract or a decode rule for `digit/alnum` between a unit
 designator and a street number). **Taxonomy update: re-label the "within-token punctuation" row as a
 symptom of the boundary-instability + #694 + #690 families, plus the AU/UK slash convention.**
 

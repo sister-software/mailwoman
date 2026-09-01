@@ -215,7 +215,7 @@
 			"term": "boundary instability",
 			"definition": "A class of parser errors where the model wobbles on where one address component ends and the next begins — a street suffix swallowed into the street name, a French house number that trails instead of leads. Mailwoman's #1 weakness as of v1.5.0.",
 			"tags": ["evals", "neural"],
-			"relatedTerms": ["parity campaign", "boundary stress shard", "phrase grouper"]
+			"relatedTerms": ["parity campaign", "boundary stress extract", "phrase grouper"]
 		},
 		{
 			"term": "byte fallback",
@@ -412,9 +412,9 @@
 		},
 		{
 			"term": "corpus",
-			"definition": "The BIO-labeled training data used to train Mailwoman's neural classifier. Assembled from real sources (OpenAddresses, National Address Database) and synthetic shards (boundary stress, order variants, negative space). Managed by @mailwoman/corpus.",
+			"definition": "The BIO-labeled training data used to train Mailwoman's neural classifier. Assembled from real sources (OpenAddresses, National Address Database) and synthetic extracts (boundary stress, order variants, negative space). Managed by @mailwoman/corpus.",
 			"tags": ["corpus"],
-			"relatedTerms": ["BIO tagging", "synthetic shard", "expand golden"]
+			"relatedTerms": ["BIO tagging", "synthetic extract", "expand golden"]
 		},
 		{
 			"term": "country",
@@ -458,9 +458,9 @@
 		},
 		{
 			"term": "cumulative dilution",
-			"definition": "The effect where stacking many synthetic shards into one run spreads the step budget thin and weakens each shard's target tag. Shards are best proven solo, then consolidated with a larger step budget.",
+			"definition": "The effect where stacking many synthetic extracts into one run spreads the step budget thin and weakens each extract's target tag. Extracts are best proven solo, then consolidated with a larger step budget.",
 			"tags": ["training", "corpus"],
-			"relatedTerms": ["synthetic shard", "source weighting", "parity campaign"]
+			"relatedTerms": ["synthetic extract", "source weighting", "parity campaign"]
 		},
 		{
 			"term": "D-rule",
@@ -1109,9 +1109,9 @@
 		},
 		{
 			"term": "label vacuum",
-			"definition": "A (token, label) pairing introduced by a synthetic shard with zero support in the existing corpus — a corpus-poisoning risk, since the model has no other evidence to anchor it.",
+			"definition": "A (token, label) pairing introduced by a synthetic extract with zero support in the existing corpus — a corpus-poisoning risk, since the model has no other evidence to anchor it.",
 			"tags": ["corpus", "training"],
-			"relatedTerms": ["synthetic shard", "corpus", "starved"]
+			"relatedTerms": ["synthetic extract", "corpus", "starved"]
 		},
 		{
 			"term": "language model",
@@ -1157,9 +1157,9 @@
 		},
 		{
 			"term": "lever-shape taxonomy",
-			"definition": "A classification of parity-gap fixes by mechanism: distributional tags (street_prefix, unit, locality) need synthetic shards plus retraining; closed-vocab tags (country, po_box, cedex) respond better to deterministic matchers as proposal sources.",
+			"definition": "A classification of parity-gap fixes by mechanism: distributional tags (street_prefix, unit, locality) need synthetic extracts plus retraining; closed-vocab tags (country, po_box, cedex) respond better to deterministic matchers as proposal sources.",
 			"tags": ["training", "evals"],
-			"relatedTerms": ["parity campaign", "synthetic shard", "country"]
+			"relatedTerms": ["parity campaign", "synthetic extract", "country"]
 		},
 		{
 			"term": "libpostal",
@@ -1171,7 +1171,7 @@
 			"term": "LLM-as-corpus-generator",
 			"definition": "Using a large language model to synthesize annotated training rows for low-data or multilingual cases, gated by alignment validation that rejects rows whose components don't substring-match the surface.",
 			"tags": ["corpus"],
-			"relatedTerms": ["synthetic shard", "reject rate", "alignment"]
+			"relatedTerms": ["synthetic extract", "reject rate", "alignment"]
 		},
 		{
 			"term": "locale",
@@ -1286,7 +1286,7 @@
 			"term": "multi-order training",
 			"definition": "Synthesizing the same address in multiple word orders — native postcode-first vs international house-number-first — so the model learns to read both layouts rather than overfitting one direction.",
 			"tags": ["corpus", "training"],
-			"relatedTerms": ["self-conditioning", "synthetic shard", "boundary instability"]
+			"relatedTerms": ["self-conditioning", "synthetic extract", "boundary instability"]
 		},
 		{
 			"term": "n-gram",
@@ -1335,9 +1335,9 @@
 		},
 		{
 			"term": "negative space",
-			"definition": "Address formats the neural model was never trained on because they're absent from the base training corpus — PO boxes, CEDEX, intersections, units. The parity campaign targets negative space through synthetic shards and corpus augmentation.",
+			"definition": "Address formats the neural model was never trained on because they're absent from the base training corpus — PO boxes, CEDEX, intersections, units. The parity campaign targets negative space through synthetic extracts and corpus augmentation.",
 			"tags": ["corpus", "evals"],
-			"relatedTerms": ["parity campaign", "corpus", "synthetic shard"]
+			"relatedTerms": ["parity campaign", "corpus", "synthetic extract"]
 		},
 		{
 			"term": "neural classifier",
@@ -1530,9 +1530,9 @@
 		},
 		{
 			"term": "Parquet",
-			"definition": "The open columnar file format the corpus is written and streamed in. The training pipeline reads shards row-by-row from Parquet.",
+			"definition": "The open columnar file format the corpus is written and streamed in. The training pipeline reads extracts row-by-row from Parquet.",
 			"tags": ["corpus", "infrastructure"],
-			"relatedTerms": ["shard", "corpus"]
+			"relatedTerms": ["extract", "corpus"]
 		},
 		{
 			"term": "parse tree",
@@ -1814,10 +1814,10 @@
 			"relatedTerms": ["gazetteer anchor", "anchor inference", "soft features"]
 		},
 		{
-			"term": "shard",
-			"definition": "A partial output file of the corpus build, written in Parquet format. The training pipeline streams shards row by row.",
+			"term": "extract",
+			"definition": "A partial output file of the corpus build, written in Parquet format. The training pipeline streams extracts row by row.",
 			"tags": ["corpus"],
-			"relatedTerms": ["corpus", "synthetic shard"]
+			"relatedTerms": ["corpus", "synthetic extract"]
 		},
 		{
 			"term": "Ship of Theseus",
@@ -1866,7 +1866,7 @@
 			"term": "source weighting",
 			"definition": "Multiplicative per-source weights applied during training to oversample underrepresented corpus sources, balancing a corpus dominated by a few large datasets.",
 			"tags": ["corpus", "training"],
-			"relatedTerms": ["corpus", "shard", "synthetic shard"]
+			"relatedTerms": ["corpus", "extract", "synthetic extract"]
 		},
 		{
 			"term": "span",
@@ -1898,7 +1898,7 @@
 			"term": "starved",
 			"definition": "A tag with too little training representation to learn — near-zero F1 — because the corpus adapter never emits examples of it (intersection tags sat at 0% until an intersection synthesizer existed).",
 			"tags": ["training", "corpus"],
-			"relatedTerms": ["negative space", "synthetic shard", "intersection"]
+			"relatedTerms": ["negative space", "synthetic extract", "intersection"]
 		},
 		{
 			"term": "station entrance",
@@ -1958,7 +1958,7 @@
 			"relatedTerms": ["canonicalization", "homonymy", "canonical key"]
 		},
 		{
-			"term": "synthetic shard",
+			"term": "synthetic extract",
 			"definition": "A machine-generated training dataset that augments the real-address corpus with targeted variations — reversed word order, missing punctuation, all-caps, boundary-stress patterns. Teaches the model to handle edge cases not present in the reference data.",
 			"tags": ["corpus"],
 			"relatedTerms": ["corpus", "parity campaign", "boundary instability"]
@@ -2024,7 +2024,7 @@
 			"definition": "Converting a name from one writing system to another while preserving pronunciation (Cyrillic → Latin, for instance). Needed for multilingual address handling and corpus synthesis.",
 			"tags": ["multilingual", "non-latin"],
 			"aliases": ["script conversion"],
-			"relatedTerms": ["diacritic", "byte fallback", "synthetic shard"]
+			"relatedTerms": ["diacritic", "byte fallback", "synthetic extract"]
 		},
 		{
 			"term": "tree projection",

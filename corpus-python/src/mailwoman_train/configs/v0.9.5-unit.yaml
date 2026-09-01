@@ -1,21 +1,21 @@
 # Unit-coverage retrain — v0.9.5 (#451, the v0-parity `unit` gap). ONE variable vs v0.9.3-de-regiontail:
-# the corpus adds a 50K synth-unit shard (US secondary-unit designators) and `synth-unit: 2.5` to
+# the corpus adds a 50K synth-unit slice (US secondary-unit designators) and `synth-unit: 2.5` to
 # source_weights. Everything else held — same v0.9.3 recipe (anchor ON, self-cond ON, region-tail
-# German, v0.7.2 base, seed 42). This is the "continue from v0.9.3 + unit shard" the DeepSeek recipe
+# German, v0.7.2 base, seed 42). This is the "continue from v0.9.3 + unit slice" the DeepSeek recipe
 # consult (2026-06-08, 2 turns) signed off.
 #
 # WHY. The v0-parity assessment found `unit` at ~0% F1 — a corpus-COVERAGE gap (NAD carries units at
 # weight 1.0, but the tag is too rare + had no synth variety). #454 added the unit-designator synth
-# augmentation (USPS Pub-28 C2 codex); this run raises PREVALENCE with the unit-heavy shard. The
+# augmentation (USPS Pub-28 C2 codex); this run raises PREVALENCE with the unit-heavy slice. The
 # hypothesis is "negative space": giving the model the `unit` category should also REDUCE `street`
 # over-prediction (street currently swallows "Apt 456"), i.e. covering unit should RAISE street
 # precision. See docs/articles/concepts/negative-space-coverage.md.
 #
-# SINGLE VARIABLE: identical to v0.9.3-de-regiontail EXCEPT corpus v0.4.4-unit (= v0.4.3 base shards
-# referenced verbatim + the synth-unit overlay shard) and `synth-unit: 2.5` in source_weights. The
+# SINGLE VARIABLE: identical to v0.9.3-de-regiontail EXCEPT corpus v0.4.4-unit (= v0.4.3 base slices
+# referenced verbatim + the synth-unit overlay slice) and `synth-unit: 2.5` in source_weights. The
 # B-unit/I-unit class weights were already 1.5; no schema/model/anchor change.
 #
-# SHARD PROVENANCE (eval-honesty): the train shard is real non-Vermont US OpenAddresses skeletons with
+# SLICE PROVENANCE (eval-honesty): the train slice is real non-Vermont US OpenAddresses skeletons with
 # USPS Pub-28 C2 designators INJECTED (OA carries bare unit ids only); the held-out unit eval is real
 # VERMONT OA rows (the corpus defaultHoldout, never trained), measured separately via per-locale-f1 on
 # /tmp/unit-val.jsonl. Geographic split = no leakage. NOTE: designators are injected in both, so the VT
@@ -33,11 +33,11 @@
 # Measure: per-locale-f1.ts (US/FR + the VT unit eval) + external-arenas.ts (real-designator arenas) +
 #   de-order-eval.ts (the DE native/intl × anchor 2x2 regression check).
 #
-# CORPUS: v0.4.4-unit — v0.4.3-de-regiontail base (686 shards) + 1 synth-unit shard (50K). Reproduce:
-#   node scripts/build-unit-shard.mjs --output /tmp/unit-train.jsonl --count 50000 --seed 42
-#   node scripts/build-unit-shard.mjs --output /tmp/unit-val.jsonl  --golden --count 2000 --seed 99
+# CORPUS: v0.4.4-unit — v0.4.3-de-regiontail base (686 slices) + 1 synth-unit slice (50K). Reproduce:
+#   node scripts/build-unit-slice.mjs --output /tmp/unit-train.jsonl --count 50000 --seed 42
+#   node scripts/build-unit-slice.mjs --output /tmp/unit-val.jsonl  --golden --count 2000 --seed 99
 #   python3 scripts/jsonl-to-parquet.py --input /tmp/unit-train.jsonl --output /tmp/part-unit-train.parquet
-#   # assemble overlay MANIFEST (v0.4.3 base + the unit shard), then:
+#   # assemble overlay MANIFEST (v0.4.3 base + the unit slice), then:
 #   modal volume put mailwoman-training /tmp/part-unit-train.parquet corpus/versioned/v0.4.4-unit/corpus-v0.4.4-unit/train/part-unit-train.parquet
 #   modal volume put mailwoman-training <MANIFEST.json>              corpus/versioned/v0.4.4-unit/corpus-v0.4.4-unit/MANIFEST.json
 #
@@ -70,7 +70,7 @@ data:
     synth-po-box: 1.5
     synth-intersection: 0.2
     synth-german: 6.0
-    # NEW (#451): the unit-coverage shard. 2.5 ≈ ~7% of the epoch (DeepSeek-signed 2–3; ≤3 to avoid
+    # NEW (#451): the unit-coverage slice. 2.5 ≈ ~7% of the epoch (DeepSeek-signed 2–3; ≤3 to avoid
     # starving other tags). Lower to 1.5 if a US/FR/DE regression check trips on street recall.
     synth-unit: 2.5
   train_rows_per_epoch: 1000000

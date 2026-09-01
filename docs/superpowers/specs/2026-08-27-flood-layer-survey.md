@@ -631,7 +631,7 @@ reports the number at each resolution it tries and picks from the measurement.
 
 The contract requires every domain row to be addressable by at least one spine key, and a polygon is
 not: it spans many cells. `SpineKeys` has already grown once for precisely this reason — the situs
-shards carry no cell, no WOF id and no address-id, so `street` was added rather than naming a column
+extracts carry no cell, no WOF id and no address-id, so `street` was added rather than naming a column
 that does not exist. A cell-indexed geometry layer is the same kind of event, and this record does not
 establishes the result.
 

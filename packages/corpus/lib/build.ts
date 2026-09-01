@@ -8,7 +8,7 @@
  *   `buildCorpus(opts)` orchestrates every stage of the pipeline:
  *
  *   1. **Adapter runs** — drives every adapter in turn (via `runAdapter`), writing
- *        `<intermediate>/<adapter.id>/canonical.jsonl` shards.
+ *        `<intermediate>/<adapter.id>/canonical.jsonl` slices.
  *   2. **Synthesis** — optional. For each canonical row, every applicable augmentation in the row's
  *        country-default policy emits an augmented row alongside the original.
  *   3. **Alignment** — every row (original + augmented) is aligned via `alignRow`. Successes go to
@@ -16,9 +16,9 @@
  *   4. **Splits** — `splitRows` partitions labeled `source_id`s into train/val/test by locality holdout.
  *        Manifest written to `splits/SPLIT_MANIFEST.json` + per-split `train.txt` / `val.txt` /
  *        `test.txt`.
- *   5. **Parquet shards** — `writeShards` streams labeled rows into 1M-row `.parquet` shards per split
+ *   5. **Parquet slices** — `writeSlices` streams labeled rows into 1M-row `.parquet` slices per split
  *        under `corpus-v<version>/{train,val,test}/part-NNNN.parquet` (SNAPPY-compressed, 50k-row
- *        row groups), with per-shard checksums + per-stage manifest in
+ *        row groups), with per-slice checksums + per-stage manifest in
  *        `corpus-v<version>/MANIFEST.json`.
  *   6. **Top-level manifest** — `<outputDir>/MANIFEST.json` ties every per-stage manifest together with
  *        a top-level corpus_version, built_at, and aggregate counts.
@@ -30,7 +30,7 @@
  *   MANIFEST.json
  *   intermediate/
  *     <adapter.id>/canonical.jsonl   # one per adapter
- *     labeled.jsonl                  # post-alignment, pre-shard
+ *     labeled.jsonl                  # post-alignment, pre-slice
  *     quarantine.jsonl               # rows that failed alignment
  *   splits/
  *     SPLIT_MANIFEST.json
@@ -42,7 +42,7 @@
  *     test/part-NNNN.parquet
  * ```
  *
- *   The intermediate files live alongside the final shards for reproducibility + debugging. Operators
+ *   The intermediate files live alongside the final slices for reproducibility + debugging. Operators
  *   can `rm -rf intermediate/` after the build if disk is tight; the final `corpus-v<version>/` is
  *   self-contained.
  */
@@ -60,7 +60,7 @@ import { defaultAugmentationsForCountry, synthesizeRow } from "#synthesizers/uti
 import type { AdapterOptions, CanonicalRow, CorpusAdapter, LabeledRow } from "#types"
 import { alignRow } from "#utils/align"
 import { licenseExcluded } from "#utils/license"
-import { writeShards, type ShardManifest } from "#utils/parquet"
+import { writeSlices, type SliceManifest } from "#utils/parquet"
 import {
 	defaultHoldouts,
 	splitForRow,
@@ -72,7 +72,7 @@ import {
 /**
  * Stage tags surfaced to `onProgress`.
  */
-export type BuildStage = "adapter-run" | "align" | "split" | "shard" | "manifest"
+export type BuildStage = "adapter-run" | "align" | "split" | "slice" | "manifest"
 
 /**
  * Per-invocation options for `buildCorpus`.
@@ -106,9 +106,9 @@ export interface BuildCorpusOptions {
 	synthesize?: boolean
 
 	/**
-	 * Forwarded to `writeShards`. Default 1_000_000.
+	 * Forwarded to `writeSlices`. Default 1_000_000.
 	 */
-	rowsPerShard?: number
+	rowsPerSlice?: number
 
 	/**
 	 * Progress hook. Errors thrown abort the build.
@@ -133,7 +133,7 @@ export interface BuildCorpusManifest {
 	adapters: AdapterRunManifest[]
 	skipped_adapters: string[]
 	splits: { counts: SplitManifest["counts"]; holdouts: SplitManifest["holdouts"] }
-	shards: { counts: ShardManifest["counts"]; total_rows: number }
+	slices: { counts: SliceManifest["counts"]; total_rows: number }
 	quarantine_count: number
 	total_aligned_rows: number
 	/**
@@ -147,14 +147,14 @@ export interface BuildCorpusManifest {
 /**
  * Drive the full corpus build to completion.
  *
- * Memory profile: the function maintains an in-memory `Map<source_id, SplitName>` to bridge the align → shard hand-off.
+ * Memory profile: the function maintains an in-memory `Map<source_id, SplitName>` to bridge the align → slice hand-off.
  * For Phase 1 fixture-scale runs (≤ 10⁴ rows) this is trivial. For real 5M+ runs, the map fits comfortably in a few
  * hundred MB; the canonical.jsonl and labeled.jsonl payloads stream and never sit in memory.
  */
 export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpusManifest> {
 	const adapters = opts.adapters ?? defaultAdapterRegistry.list()
 	const synthesize = opts.synthesize ?? true
-	const rowsPerShard = opts.rowsPerShard ?? 1_000_000
+	const rowsPerSlice = opts.rowsPerSlice ?? 1_000_000
 	const built_at = new Date().toISOString()
 
 	await makeDirectories(opts.outputDir)
@@ -320,11 +320,11 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		holdouts,
 	})
 
-	// 5. Parquet shards — per-split labeled JSONL streams in, sharded `.parquet` out. The prior
+	// 5. Parquet slices — per-split labeled JSONL streams in, sliced `.parquet` out. The prior
 	// `splitFor(source_id)` callback (and the `Map<source_id, SplitName>` behind it) is gone.
-	opts.onProgress?.("shard", "writing parquet shards")
+	opts.onProgress?.("slice", "writing parquet slices")
 
-	const shardManifest = await writeShards(
+	const sliceManifest = await writeSlices(
 		{
 			train: streamJSONL<LabeledRow>(labeledPaths.train),
 			val: streamJSONL<LabeledRow>(labeledPaths.val),
@@ -333,7 +333,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		{
 			outputDir: opts.outputDir,
 			corpusVersion: opts.corpusVersion,
-			rowsPerShard,
+			rowsPerSlice,
 		}
 	)
 
@@ -358,7 +358,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		adapters: adapterRuns,
 		skipped_adapters: skipped,
 		splits: { counts: splitCounts, holdouts },
-		shards: { counts: shardManifest.counts, total_rows: shardManifest.total_rows },
+		slices: { counts: sliceManifest.counts, total_rows: sliceManifest.total_rows },
 		quarantine_count: quarantined,
 		total_aligned_rows: aligned,
 		licenses: Object.fromEntries(licenseSummary),

@@ -28,13 +28,13 @@
 #     design (order-conditioned anchor), operator's call.
 # Measure with scripts/eval/de-order-eval.ts (the 2×2 native/intl × anchor on/off + US/FR harness).
 #
-# CORPUS: v0.4.3-de-regiontail — v0.4.0 (US/FR) base overlaid with a BOTH-ORDER synth-german shard
+# CORPUS: v0.4.3-de-regiontail — v0.4.0 (US/FR) base overlaid with a BOTH-ORDER synth-german slice
 # (200K train + 4K val, real OpenAddresses Berlin/Saxony tuples). Reproduce + deploy to the Modal volume:
-#   node scripts/build-german-shard.mjs --output /tmp/german-train.jsonl --count 200000 --seed 42 --intl-fraction 0.4
-#   node scripts/build-german-shard.mjs --output /tmp/german-val.jsonl   --count 4000   --seed 99 --intl-fraction 0.4
+#   node scripts/build-german-slice.mjs --output /tmp/german-train.jsonl --count 200000 --seed 42 --intl-fraction 0.4
+#   node scripts/build-german-slice.mjs --output /tmp/german-val.jsonl   --count 4000   --seed 99 --intl-fraction 0.4
 #   python3 scripts/jsonl-to-parquet.py --input /tmp/german-train.jsonl --output /tmp/part-german-train.parquet
 #   python3 scripts/jsonl-to-parquet.py --input /tmp/german-val.jsonl   --output /tmp/part-german-val.parquet
-#   # Assemble the overlay MANIFEST (v0.4.0 shards + the 2 German shards) — mirror v0.4.1-de via
+#   # Assemble the overlay MANIFEST (v0.4.0 slices + the 2 German slices) — mirror v0.4.1-de via
 #   # scripts/assemble-de-overlay-manifest.py (point it at v0.4.3-de-regiontail), then:
 #   modal volume put mailwoman-training /tmp/part-german-train.parquet corpus/versioned/v0.4.3-de-regiontail/corpus-v0.4.3-de-regiontail/train/part-german-train.parquet
 #   modal volume put mailwoman-training /tmp/part-german-val.parquet   corpus/versioned/v0.4.3-de-regiontail/corpus-v0.4.3-de-regiontail/val/part-german-val.parquet
@@ -68,7 +68,7 @@ data:
     deepseek-kryptonite: 3.0
     synth-po-box: 1.5
     synth-intersection: 0.2
-    # German at ~18% of the mix — same weight as v0.9.1; the ONLY change is the shard now carries both
+    # German at ~18% of the mix — same weight as v0.9.1; the ONLY change is the slice now carries both
     # orders. THE key tunable if a gate lags: raise for more DE, lower if US/FR slip the 1pp regression check.
     synth-german: 6.0
   train_rows_per_epoch: 1000000

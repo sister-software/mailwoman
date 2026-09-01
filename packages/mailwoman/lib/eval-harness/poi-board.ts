@@ -61,7 +61,7 @@ import { resolvePath, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { createRuntimePipeline } from "#index"
-import { createResolverBackend, dataRootPath, wofShardPaths } from "#resolver-backend"
+import { createResolverBackend, dataRootPath, wofExtractPaths } from "#resolver-backend"
 
 /**
  * Fixture set backing the POI query board.
@@ -438,7 +438,7 @@ export interface POIBoardOptions {
 	 */
 	db?: PathBuilderLike
 	/**
-	 * WOF admin shard path(s) for anchor resolution — same semantics as `mailwoman poi --resolve-db`.
+	 * WOF admin database path(s) for anchor resolution — same semantics as `mailwoman poi --resolve-db`.
 	 */
 	resolveDB?: string
 	/**
@@ -475,7 +475,7 @@ export interface POIBoardOptions {
 
 /**
  * Build the WOF resolver, mirroring `commands/poi.tsx`'s `tryLoadResolver`: candidate-table backend when configured,
- * else the FTS admin shard set, else no resolver at all (anchored category cases then abstain `anchor_required`,
+ * else the FTS admin database set, else no resolver at all (anchored category cases then abstain `anchor_required`,
  * exactly like the CLI probe degrades). Caller owns closing the returned handle.
  */
 async function loadResolver(
@@ -485,7 +485,7 @@ async function loadResolver(
 		? []
 		: options.resolveDB
 			? options.resolveDB.split(",").map((p) => p.trim())
-			: wofShardPaths()
+			: wofExtractPaths()
 
 	const wofPaths = (await Promise.all(wofCandidates.map(async (path) => ({ path, exists: await pathExists(path) }))))
 		.filter((entry) => entry.exists)

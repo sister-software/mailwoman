@@ -62,8 +62,8 @@ interface Options {
  * One line per directory: how many of its databases carry a manifest, and how much disk they hold.
  *
  * The rollup is the actionable view and the flat list is not. The 2026-08-17 first run found 210 databases of which 53
- * were per-state address-point shards from ONE builder — so a per-artifact list reads as 53 problems where the rollup
- * reads as one, which is also how many code changes it takes to fix.
+ * were per-state address-point databases from ONE builder — so a per-artifact list reads as 53 problems where the
+ * rollup reads as one, which is also how many code changes it takes to fix.
  */
 function rollup(entries: readonly InventoryEntry[]): string[] {
 	const by = new Map<string, { total: number; manifested: number; bytes: number }>()

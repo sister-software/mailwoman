@@ -466,7 +466,7 @@ const GazetteerVerify: CommandComponent<typeof OptionsSchema> = ({ options }) =>
 
 (imports become `import { type CommandComponent, CheckList, useCommandTask } from "../../cli-kit/index.ts"`; drop the now-unused `Box`/`useEffect`/`useState` imports.)
 
-- [ ] **Step 6: AGENTS.md** — add to the "Workspace + test conventions" bullet list: `- **\`sdk/\` submodules mean data acquisition\*\* (fetch/extract/shard-provider — see \`ban/sdk\`, \`osm/sdk\`, \`tiger/sdk\`). CLI helpers live in \`mailwoman/cli-kit/\`, the parser test harness in \`mailwoman/test-kit/\` — do not grow a new \`sdk/cli\`.`
+- [ ] **Step 6: AGENTS.md** — add to the "Workspace + test conventions" bullet list: `- **\`sdk/\` submodules mean data acquisition\*\* (fetch/extract/extract-provider — see \`ban/sdk\`, \`osm/sdk\`, \`tiger/sdk\`). CLI helpers live in \`mailwoman/cli-kit/\`, the parser test harness in \`mailwoman/test-kit/\` — do not grow a new \`sdk/cli\`.`
 
 - [ ] **Step 7: Verify** — `yarn compile` clean; `node mailwoman/out/cli.js gazetteer verify --help` prints usage exit 0; `grep -rn 'sdk/cli' mailwoman --include='*.tsx' | grep -v out/` → only the shim.
 

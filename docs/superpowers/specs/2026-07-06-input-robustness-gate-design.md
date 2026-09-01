@@ -29,8 +29,8 @@ Three absorption layers sit upstream of the gate:
    abbreviation handling is deliberately the model's job.
 2. **Model-side case normalization** (`neural/case-normalize.ts`) — #690 all-caps title-casing +
    #829 all-lowercase restore, on by default, offset-stable.
-3. **Trained-in variation** via corpus shard augmentation — casing
-   (`corpus/src/shard-recipes/intersection.ts`, `locale.ts`), abbreviation variants
+3. **Trained-in variation** via corpus extract augmentation — casing
+   (`corpus/src/extract-recipes/intersection.ts`, `locale.ts`), abbreviation variants
    (`street-affix.ts`, `unit.ts` #454, `fr-bare-street.ts`).
 
 Gates:

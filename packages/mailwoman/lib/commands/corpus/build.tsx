@@ -8,7 +8,7 @@
  *
  *   End-to-end corpus build. Drives every registered adapter (or the filtered subset) per `--inputs`,
  *   runs synthesis + alignment, computes the locality-holdout split, and writes the final JSONL
- *   shards + per-stage manifests under `<output>/corpus-v<version>/`.
+ *   slices + per-stage manifests under `<output>/corpus-v<version>/`.
  *
  *   Adapters whose id is missing from `--inputs` are skipped (and noted in the manifest); this is how
  *   the CLI handles partial builds during development.
@@ -44,12 +44,12 @@ export const spec = {
 		output: { type: "string", required: true, description: "Output root" },
 		inputs: { type: "string", required: true, description: "Adapter input JSON map" },
 		synthesize: { type: "boolean", default: true, description: "Enable augmentation" },
-		"rows-per-shard": {
+		"rows-per-slice": {
 			type: "number",
 			default: 1_000_000,
 			validate: (value) => Number.isInteger(value) && value > 0,
-			validationMessage: "--rows-per-shard must be a positive integer.",
-			description: "Max rows per shard",
+			validationMessage: "--rows-per-slice must be a positive integer.",
+			description: "Max rows per slice",
 		},
 	},
 } as const satisfies CommandSpec
@@ -59,7 +59,7 @@ interface Options {
 	output: string
 	inputs: string
 	synthesize: boolean
-	rowsPerShard: number
+	rowsPerSlice: number
 }
 
 type AdapterInput = string | AdapterOptions
@@ -115,12 +115,12 @@ const CorpusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 			adapters,
 			adapterInputs,
 			synthesize: options.synthesize,
-			rowsPerShard: options.rowsPerShard,
+			rowsPerSlice: options.rowsPerSlice,
 			onProgress: (name, message) => setStage({ name, message }),
 		})
 
 		return {
-			total: m.shards.total_rows,
+			total: m.slices.total_rows,
 			aligned: m.total_aligned_rows,
 			quarantined: m.quarantine_count,
 			adapters: m.adapters.length,

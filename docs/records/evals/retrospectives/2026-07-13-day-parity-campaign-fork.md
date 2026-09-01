@@ -12,15 +12,15 @@ rules-idiosyncratic tombstones, proposal published as `2026-07-13-parity-gold-tr
 default gate remains v1 until operator ratifies); the pre-publish 2pp error-analysis gate (the
 NPM-promote bar); the full gauntlet.
 
-| run             | one variable                        | parity triaged (hn/pc/street) | US recall delta (region/locality) | gauntlet                                   |
-| --------------- | ----------------------------------- | ----------------------------- | --------------------------------- | ------------------------------------------ |
-| v253 (shard-v3) | +global locality twins              | .74/.99/.52                   | −2.3 / −3.2                       | **PASS**                                   |
-| v254 (shard-v4) | +comma-free context, +famous twins  | .76/.99/.588                  | −2.5 / −2.5                       | **PASS**                                   |
-| v255 (shard-v5) | +US admin pairs, +directional twins | .78/.96/**.5955**@2k          | flips 63→21 / 46→20 (repaired)    | **FAIL** (Dublin pin re-broke, both ckpts) |
+| run               | one variable                        | parity triaged (hn/pc/street) | US recall delta (region/locality) | gauntlet                                   |
+| ----------------- | ----------------------------------- | ----------------------------- | --------------------------------- | ------------------------------------------ |
+| v253 (extract-v3) | +global locality twins              | .74/.99/.52                   | −2.3 / −3.2                       | **PASS**                                   |
+| v254 (extract-v4) | +comma-free context, +famous twins  | .76/.99/.588                  | −2.5 / −2.5                       | **PASS**                                   |
+| v255 (extract-v5) | +US admin pairs, +directional twins | .78/.96/**.5955**@2k          | flips 63→21 / 46→20 (repaired)    | **FAIL** (Dublin pin re-broke, both ckpts) |
 
 The oscillation — twins fix bare-locality robustness and erode US admin recall; the counterweight
 repairs US recall and re-breaks bare-locality — is a capacity/stability constraint at 29M params
-under the 5e-5/8k fine-tune idiom, not a shard-composition problem. Per the treadmill guard: no
+under the 5e-5/8k fine-tune idiom, not a extract-composition problem. Per the treadmill guard: no
 seventh solo run; the fork goes to the operator (documented on #1102):
 (a) dynamics probe (v255 composition, gentler LR/warmup, 2k steps), (b) ship v254 experimental
 (the only gauntlet-green candidate; default blocked by the 2pp gate), (c) the #727 span-head arc,

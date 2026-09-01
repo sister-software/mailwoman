@@ -1,7 +1,7 @@
-// National US rooftop rollout (#735) gate: with the 50-state situs/interp shards hosted, an address
+// National US rooftop rollout (#735) gate: with the 50-state situs/interp extracts hosted, an address
 // in a newly-rolled state must resolve to its BUILDING (the situs `address_point` coord), not the
-// WOF admin city-centroid (km away). Each case is a real row pulled from that state's situs shard, so
-// the truth coord IS the shard's coord; we grade the assembled coordinate within ~500 m (tight enough
+// WOF admin city-centroid (km away). Each case is a real row pulled from that state's situs extract, so
+// the truth coord IS the extract's coord; we grade the assembled coordinate within ~500 m (tight enough
 // to distinguish rooftop from a centroid fallback, loose enough for any normalization). Representative
 // spread: TX/GA/WA urban + MT rural.
 import { expect, test } from "#e2e"

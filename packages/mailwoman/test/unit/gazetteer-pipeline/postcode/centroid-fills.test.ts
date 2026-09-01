@@ -13,14 +13,14 @@ import { join } from "path-ts"
 import { expect, test } from "vitest"
 
 test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordinates untouched", async () => {
-	// The staging shard: two postcodes — one placeholder (parented), one already placed.
+	// The staging database: two postcodes — one placeholder (parented), one already placed.
 	await using dirDirectory = await temporaryDirectory("centroid-fills-")
 	const dir = dirDirectory.path
-	const shardPath = join(dir, "postalcode-tl.db")
-	using shard = new DatabaseClient<WOFDatabase>(shardPath)
-	await createUnifiedSchema(shard)
+	const databasePath = join(dir, "postalcode-tl.db")
+	using database = new DatabaseClient<WOFDatabase>(databasePath)
+	await createUnifiedSchema(database)
 
-	const ins = shard.prepare(
+	const ins = database.prepare(
 		"INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)"
 	)
 
@@ -38,7 +38,7 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 		)
 		.run()
 
-	await using db = new DatabaseClient<WOFDatabase>(shardPath)
+	await using db = new DatabaseClient<WOFDatabase>(databasePath)
 	const r = await fillPostcodeCentroids(db, { adminPath })
 	expect(r.placedBefore).toBe(1)
 	expect(r.placedAfter).toBe(2)
@@ -64,12 +64,12 @@ test("GeoNames postal names each postcode's delivery city, including territories
 	// and Queens uses neighbourhood names rather than the borough. Both shapes are here on purpose.
 	await using dirDirectory = await temporaryDirectory("centroid-names-")
 	const dir = dirDirectory.path
-	const shardPath = join(dir, "postalcode-us.db")
-	using shard = new DatabaseClient<WOFDatabase>(shardPath)
+	const databasePath = join(dir, "postalcode-us.db")
+	using database = new DatabaseClient<WOFDatabase>(databasePath)
 
-	await createUnifiedSchema(shard)
+	await createUnifiedSchema(database)
 
-	const ins = shard.prepare(
+	const ins = database.prepare(
 		"INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)"
 	)
 
@@ -77,7 +77,7 @@ test("GeoNames postal names each postcode's delivery city, including territories
 	ins.run(2, -1, "11375", "postalcode", "US", 40.72, -73.85) // Queens: a neighbourhood delivery city
 	ins.run(3, -1, "00601", "postalcode", "US", 0, 0) // Puerto Rico, filed as US in WOF
 
-	// GeoNames files a US territory under PR, not US. The shard files it under US. Reading only `US`
+	// GeoNames files a US territory under PR, not US. The database files it under US. Reading only `US`
 	// rows leaves every territory postcode unnamed — 149 of them against the 2024 Census ZCTA list.
 	const geonamesDir = join(dir, "geonames-postal")
 
@@ -92,7 +92,7 @@ test("GeoNames postal names each postcode's delivery city, including territories
 		join(geonamesDir, "US.txt")
 	)
 
-	await using db = new DatabaseClient<WOFDatabase>(shardPath)
+	await using db = new DatabaseClient<WOFDatabase>(databasePath)
 
 	const r = await fillPostcodeCentroids(db, { geonamesDir })
 
@@ -122,12 +122,12 @@ test("falls back to the combined dump for a country the per-country directory ha
 	// without this branch the whole GeoNames pass short-circuits on existsSync and writes nothing.
 	await using dirDirectory = await temporaryDirectory("centroid-combined-")
 	const dir = dirDirectory.path
-	const shardPath = join(dir, "postalcode-us.db")
-	using shard = new DatabaseClient<WOFDatabase>(shardPath)
+	const databasePath = join(dir, "postalcode-us.db")
+	using database = new DatabaseClient<WOFDatabase>(databasePath)
 
-	await createUnifiedSchema(shard)
+	await createUnifiedSchema(database)
 
-	shard
+	database
 		.prepare(
 			"INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (1, -1, '11201', 'postalcode', 'US', 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)"
 		)
@@ -147,7 +147,7 @@ test("falls back to the combined dump for a country the per-country directory ha
 		geonamesCombined
 	)
 
-	await using db = new DatabaseClient<WOFDatabase>(shardPath)
+	await using db = new DatabaseClient<WOFDatabase>(databasePath)
 
 	const r = await fillPostcodeCentroids(db, { geonamesDir, geonamesCombined })
 

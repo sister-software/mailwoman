@@ -42,6 +42,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { TextSpliterator } from "spliterator"
 
+import { finalizeSealedBuild } from "#gazetteer-pipeline/database-lifecycle"
 import { ProximityGrid } from "#gazetteer-pipeline/postcode-locality/base"
 import {
 	createPostcodeLocalityIndex,
@@ -53,7 +54,6 @@ import {
 } from "#gazetteer-pipeline/postcode-locality/schema"
 import { geonamesPostalRows } from "#gazetteer-pipeline/postcode/geonames-postal"
 import { writeMetaRows } from "#gazetteer-pipeline/postcode/geonames-tail"
-import { finalizeSealedBuild } from "#gazetteer-pipeline/shard-lifecycle"
 
 /**
  * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward

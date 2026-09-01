@@ -23,8 +23,8 @@ export const spec = {
 			description: "Modal volume root the manifest paths are relative to",
 		},
 		"corpus-version": { type: "string", required: true, description: "New corpus version" },
-		"shard-parquet": { type: "string", required: true, description: "The ONE shard parquet to add" },
-		source: { type: "string", required: true, description: "Shard source label" },
+		"slice-parquet": { type: "string", required: true, description: "The ONE slice parquet to add" },
+		source: { type: "string", required: true, description: "Slice source label" },
 		note: { type: "string", required: true, description: "Manifest note" },
 	},
 } as const satisfies CommandSpec
@@ -34,7 +34,7 @@ interface Options {
 	newDir: string
 	modalRoot: string
 	corpusVersion: string
-	shardParquet: string
+	sliceParquet: string
 	source: string
 	note: string
 }
@@ -48,7 +48,7 @@ const Cmd: ParsedCommandComponent<Options> = ({ options }) => {
 			newDir: options.newDir,
 			modalRoot: options.modalRoot,
 			version: options.corpusVersion,
-			shardParquet: options.shardParquet,
+			sliceParquet: options.sliceParquet,
 			source: options.source,
 			note: options.note,
 		})

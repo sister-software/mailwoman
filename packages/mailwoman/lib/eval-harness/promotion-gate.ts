@@ -670,7 +670,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 		await writeLocalFile(renderLines(countryLines), `${OUT_DIR}/${tag}-country.md`)
 
-		// v4.4.0 floors: po_box/cedex (the coverage-shard val) + intersections (real TIGER crossings).
+		// v4.4.0 floors: po_box/cedex (the coverage-database val) + intersections (real TIGER crossings).
 		await runAffix(`${tag}-pobox.md`, {
 			file: "data/eval/external/po-box-cedex-val.jsonl",
 			json: `${OUT_DIR}/${tag}-pobox.json`,
@@ -801,7 +801,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 	// FR bare-street floor (#949) — the class v5.2.0 silently regressed (34/40 → 16/40) because no
 	// standing leg measured FR street parsing WITHOUT a postcode anchor. Reads a FROZEN 40-row OSM
-	// sample (committed fixture, no live shard needed), parses each bare + anchored, and fails if the
+	// sample (committed fixture, no live database needed), parses each bare + anchored, and fails if the
 	// bare-intact rate drops below the spec floor. The leg self-reports its verdict + exits non-zero.
 	const bareStreetFloor = (gate.floors ?? {})["fr.bare_street_intact"]
 

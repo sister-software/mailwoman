@@ -20,13 +20,13 @@ export {
 
 /**
  * ISO-3166 alpha-2 (lowercase) → the street-normalization locale. Deliberately small: only the countries we actually
- * ship an OSM rooftop shard for. Adding a country is a one-line entry PLUS the matching per-locale branch in
+ * ship an OSM rooftop extract for. Adding a country is a one-line entry PLUS the matching per-locale branch in
  * `normalizeStreetForKeyLocale` — keep them in lockstep.
  */
 const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	["gb", "en"],
 	["nz", "en"],
-	// AU's shard is G-NAF-sourced (CC-BY, not OSM), but lives in this provider's home and keys with
+	// AU's extract is G-NAF-sourced (CC-BY, not OSM), but lives in this provider's home and keys with
 	// the same `en` rules — G-NAF stores street types as full words ("STREET", "CLOSE"), which is
 	// exactly the surface the `en` normalizer folds.
 	["au", "en"],
@@ -34,9 +34,9 @@ const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	["de", "de"],
 	["nl", "nl"],
 	// CA keys with the `en` BASE, and `streetLocaleForSurface` routes each French-lead surface to the
-	// fr rules per row — at build AND at probe, one shared function (the #861 discipline). A shard
+	// fr rules per row — at build AND at probe, one shared function (the #861 discipline). A extract
 	// built before the router keys its French-lead rows under the en fold, so the router's fr keys
-	// only match a shard built with it: rebuild the CA shard when adopting. The measured gap the
+	// only match a extract built with it: rebuild the CA extract when adopting. The measured gap the
 	// router closes is abbreviation variance (~3,115 rows: "boul"/"Ste-" cannot fold to the full
 	// French word under en); the bulk of French surfaces passed through the en fold unchanged on both
 	// sides and were already reachable (889,341 QC-bbox "rue " rows answered their own key).
@@ -54,14 +54,14 @@ const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 
 const registry = createStreetLocaleRegistry(
 	COUNTRY_TO_STREET_LOCALE,
-	"Add it to COUNTRY_TO_STREET_LOCALE and add the matching branch in normalizeStreetForKeyLocale before building its OSM rooftop shard."
+	"Add it to COUNTRY_TO_STREET_LOCALE and add the matching branch in normalizeStreetForKeyLocale before building its OSM rooftop extract."
 )
 
 /**
  * Resolve the street-normalization locale for a country. Throws for an unsupported country rather than silently folding
- * with the wrong rules — a shard built with the wrong normalizer keys every street incorrectly and looks fine until a
+ * with the wrong rules — a extract built with the wrong normalizer keys every street incorrectly and looks fine until a
  * probe misses. Add the country to {@link COUNTRY_TO_STREET_LOCALE} (and a branch in `normalizeStreetForKeyLocale`)
- * before building its shard.
+ * before building its extract.
  */
 export function streetLocaleForCountry(countryCode: string): StreetLocale {
 	return registry.localeFor(countryCode)

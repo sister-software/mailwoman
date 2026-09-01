@@ -39,7 +39,7 @@ function manifested(path: string, name: string, version: string): void {
 }
 
 const BASE = {
-	shardCounts: { postcodes: 24, localities: 3 },
+	databaseCounts: { postcodes: 24, localities: 3 },
 	importance: true,
 	buildSHA: "abc1234",
 	version: "2026-08-17",
@@ -102,11 +102,11 @@ describe("candidateLayerManifest", () => {
 		expect(manifest.source).not.toContain("whosonfirst+")
 	})
 
-	it("records the shard counts, which nothing else in the artifact says", async () => {
+	it("records the database counts, which nothing else in the artifact says", async () => {
 		const manifest = await candidateLayerManifest({ ...BASE, adminDBPath: join(await scratch(), "nope.db") })
 
-		expect(manifest.sourceVintage).toContain("postcode-shards=24")
-		expect(manifest.sourceVintage).toContain("locality-shards=3")
+		expect(manifest.sourceVintage).toContain("postcode-databases=24")
+		expect(manifest.sourceVintage).toContain("locality-databases=3")
 		expect(manifest.sourceVintage).toContain("importance=yes")
 	})
 

@@ -1,7 +1,7 @@
 # v0.8.0 candidate — label_smoothing calibration fork.
 #
 # SINGLE VARIABLE vs v0_7_2-intersection-bare.yaml (the current default): label_smoothing
-# 0.0 → 0.05. Everything else (corpus, weights, intersection-bare shard, CRF-off) is held.
+# 0.0 → 0.05. Everything else (corpus, weights, intersection-bare slice, CRF-off) is held.
 #
 # Why 0.05, not 0.1: v0.7.0 calibration at ls=0.1 cut overconfidence 86→67% but left the
 # harness pass rate FLAT and dropped house_number ~6pp (NOT promoted — see

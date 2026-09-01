@@ -5,7 +5,7 @@
 //
 // WHAT THIS MEASURES, AND WHAT IT DOES NOT
 //
-// The French rooftop tier IS the Base Adresse Nationale. `mailwoman data pull fr` downloads a shard
+// The French rooftop tier IS the Base Adresse Nationale. `mailwoman data pull fr` downloads a extract
 // built from BAN, and this panel grades Mailwoman's answer against the same register the answer was
 // looked up in. That is circular, and it is stated on the published page beside every number it
 // touches. What survives the circularity is still worth measuring: whether the pipeline PARSES the
@@ -25,7 +25,7 @@
 // DETERMINISM
 //
 // The panel is a committed file (`fr-ban-sample.json`), not a fresh draw, so two runs on two machines
-// grade the same 100 rows. `--resample` regenerates it from a local BAN shard using the seed below;
+// grade the same 100 rows. `--resample` regenerates it from a local BAN extract using the seed below;
 // the draw is a seeded pass over rowids, so the same seed against the same BAN release reproduces the
 // same panel byte for byte. A different BAN release renumbers the rows and will produce a different
 // panel — which is why the sample is committed rather than drawn at run time.
@@ -41,7 +41,7 @@
 //   node fr-ban-panel.mjs --resample --data-root <DATA_ROOT>   # regenerate fr-ban-sample.json
 //
 // `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from
-// <DATA_ROOT>/wof/candidate.db and the BAN shard from <DATA_ROOT>/ban/address-points-fr.db.
+// <DATA_ROOT>/wof/candidate.db and the BAN extract from <DATA_ROOT>/ban/address-points-fr.db.
 
 import { BANRegionDatabaseProvider } from "@mailwoman/ban/sdk"
 import { readLocalJSONFile, realPath } from "@mailwoman/core/fs/readers"
@@ -173,7 +173,7 @@ interface GradedRecord {
 //#region Address rendering
 
 /**
- * Title-case a BAN `locality_norm` value. The column is lowercased and accent-stripped by the shard builder, so
+ * Title-case a BAN `locality_norm` value. The column is lowercased and accent-stripped by the extract builder, so
  * `orleans` renders as `Orleans` and never as `Orléans`. That loss is real and the published page carries it as a
  * caveat: every panel row asks the pipeline for an unaccented commune.
  */
@@ -296,7 +296,7 @@ async function versionStamp() {
 		model: basename(await realPath(resolved.modelPath)),
 		modelCard: `${card.name}@${card.version}`,
 		gazetteer: basename(await realPath(candidatePath)),
-		nationalShard: basename(await realPath(banPath)),
+		nationalExtract: basename(await realPath(banPath)),
 	}
 }
 
@@ -343,7 +343,7 @@ async function run() {
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: LOCALE })
 	using lookup = new WOFCandidateTableLookup({ databasePath: candidatePath })
 	const resolver = createWOFResolver(lookup)
-	const banShards = new BANRegionDatabaseProvider(DATA_ROOT)
+	const banExtracts = new BANRegionDatabaseProvider(DATA_ROOT)
 
 	const arms: Record<string, (row: PanelRow) => string> = { clean: cleanForm, reordered: reorderedForm }
 	const results: Record<string, { summary: ReturnType<typeof summarize>; records: GradedRecord[] }> = {}
@@ -360,7 +360,7 @@ async function run() {
 				result = await geocodeAddress(input, {
 					classifier,
 					resolver,
-					nationalShards: banShards.for,
+					nationalDatabases: banExtracts.for,
 					// Pinned: this panel is a French dataset run through a French pipeline, so it measures
 					// resolution INSIDE France and makes no claim about country disambiguation.
 					defaultCountry: "FR",
@@ -422,7 +422,7 @@ async function run() {
 			locale: LOCALE,
 			defaultCountry: "FR",
 			gazetteer: "candidate.db",
-			nationalTier: "BAN FR rooftop shard",
+			nationalTier: "BAN FR rooftop extract",
 			routingRadiusKm: ROUTING_KM,
 		},
 		arms: Object.fromEntries(Object.entries(results).map(([arm, r]) => [arm, r.summary])),

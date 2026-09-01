@@ -54,7 +54,7 @@ export interface SubVenueHarvestRow {
 	designatorID: string
 	/**
 	 * `venue` (station, airport, campus) or `sub_venue`, when the source's rule assigns one. The harvest itself does not
-	 * read it; the sub-venue shard recipe fills its venue slot from it.
+	 * read it; the sub-venue slice recipe fills its venue slot from it.
 	 */
 	tier?: string
 	name?: string | null
@@ -88,7 +88,7 @@ export function classifyIdentifier(ref: string): string {
 /**
  * How many real `ref` values each {@link IdentifierShape} keeps.
  *
- * Eight, not "all" and not one. The field exists so a shard author can see what a class actually CONTAINS — GB's
+ * Eight, not "all" and not one. The field exists so a slice author can see what a class actually CONTAINS — GB's
  * `other` class turned out to be semicolon multi-values (`1;2;3`, `13;14`), which one example would have hidden and
  * which the class name does not say. Eight fits a terminal line and covers the variety inside every class the GB
  * extract produced. The COUNT lives in `observations`; this is a sample, not a census.

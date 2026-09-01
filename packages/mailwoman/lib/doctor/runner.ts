@@ -37,7 +37,7 @@ import {
 	type POIObservation,
 	type WeightsObservation,
 } from "#doctor/checks"
-import { conventionCandidateDBPath, resolveCandidateDBPath, resolveWOFShardPaths } from "#resolver-backend"
+import { conventionCandidateDBPath, resolveCandidateDBPath, resolveWOFDatabasePaths } from "#resolver-backend"
 
 /**
  * The resolved-weights shape the runner needs — a structural subset of `@mailwoman/neural`'s `ResolvedWeights`.
@@ -86,9 +86,9 @@ export interface DoctorDeps {
 	 */
 	conventionCandidatePath(): Promise<string | undefined>
 	/**
-	 * The WOF admin shard paths to probe ($MAILWOMAN_WOF_DB split, else the default shard set).
+	 * The WOF admin database paths to probe ($MAILWOMAN_WOF_DB split, else the default database set).
 	 */
-	wofShardPaths(): string[]
+	wofExtractPaths(): string[]
 	/**
 	 * The default POI layer path (`gazetteer build poi`'s own default).
 	 */
@@ -181,7 +181,7 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 		envCandidatePath: async () =>
 			$public.MAILWOMAN_CANDIDATE_DB ? await resolveCandidateDBPath(undefined, dataRoot) : undefined,
 		conventionCandidatePath: () => defaultConventionCandidatePath(dataRoot),
-		wofShardPaths: () => resolveWOFShardPaths(undefined, dataRoot),
+		wofExtractPaths: () => resolveWOFDatabasePaths(undefined, dataRoot),
 		poiPath: () => resolvePath(dataRoot, "poi", "poi.db"),
 		readPOIManifest,
 		loadONNX: async () => {
@@ -210,8 +210,8 @@ async function gatherWeights(deps: DoctorDeps): Promise<WeightsObservation> {
 }
 
 async function gatherGazetteer(deps: DoctorDeps): Promise<GazetteerObservation> {
-	// Same precedence the tools apply: explicit/env candidate.db → convention-path candidate.db → WOF FTS shards.
-	// The convention probe must come BEFORE the shards, or a machine holding both reports the FTS shard while every
+	// Same precedence the tools apply: explicit/env candidate.db → convention-path candidate.db → WOF FTS databases.
+	// The convention probe must come BEFORE the databases, or a machine holding both reports the FTS database while every
 	// tool on it uses the candidate table — doctor's one job is to name the backend actually in use.
 	const envCandidate = await deps.envCandidatePath()
 
@@ -223,16 +223,16 @@ async function gatherGazetteer(deps: DoctorDeps): Promise<GazetteerObservation> 
 	}
 
 	const convention = await deps.conventionCandidatePath()
-	const shards = deps.wofShardPaths()
+	const databases = deps.wofExtractPaths()
 
 	if (convention) {
-		return { conventionCandidate: convention, probed: [convention, ...shards] }
+		return { conventionCandidate: convention, probed: [convention, ...databases] }
 	}
 
 	// Existence is materialized before the first-hit search so the search loop can await directly.
 	let existing: string | undefined
 
-	for (const p of shards) {
+	for (const p of databases) {
 		if (await deps.exists(p)) {
 			existing = p
 
@@ -241,10 +241,10 @@ async function gatherGazetteer(deps: DoctorDeps): Promise<GazetteerObservation> 
 	}
 
 	if (existing) {
-		return { wofShard: { path: existing, sizeBytes: await deps.fileSize(existing) }, probed: shards }
+		return { wofDatabase: { path: existing, sizeBytes: await deps.fileSize(existing) }, probed: databases }
 	}
 
-	return { probed: shards }
+	return { probed: databases }
 }
 
 async function gatherPOI(deps: DoctorDeps): Promise<POIObservation> {
@@ -360,11 +360,11 @@ export async function describeEnvironment(overrides?: Partial<DoctorDeps>): Prom
 		{ key: "POI layer", value: deps.poiPath(), source: "derived" },
 	]
 
-	for (const [index, shard] of deps.wofShardPaths().entries()) {
+	for (const [index, database] of deps.wofExtractPaths().entries()) {
 		entries.push({
-			key: `WOF shard [${index}]`,
-			value: shard,
-			source: (await deps.exists(shard)) ? "on disk" : "absent",
+			key: `WOF database [${index}]`,
+			value: database,
+			source: (await deps.exists(database)) ? "on disk" : "absent",
 		})
 	}
 

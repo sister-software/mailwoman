@@ -46,7 +46,7 @@ so there is no trade, but there is also no target win.
 
 Every French class drifted down. The CIs overlap, so no single cell is a clean violation, but the
 _consistency_ of the drift is the concern — 2k of extra fine-tuning is mildly eroding the fr-fragment
-win the shard is required to protect. A full 8k run would have more room to amplify that.
+win the extract is required to protect. A full 8k run would have more room to amplify that.
 
 **Deconfounded (2026-07-16, same session):** re-reading board 2 on **shipped v310** in the same
 session, same harness, same int8 export gives `0.733` overall — **identical to the T2 verdict**, cell
@@ -77,12 +77,12 @@ and the digit follows it (`Hallingrudveien 32` → locality + postcode). The fix
 as the French bare-street polarity fix: teach that a **bare street is not a bare locality** — which
 requires the street to appear _without a number at all_, so the model cannot lean on the number.
 
-This shard's `--bare-street-prob` defaults to **0.30**: only 30% of its signal rows are pure bare
+This extract's `--bare-street-prob` defaults to **0.30**: only 30% of its signal rows are pure bare
 streets; the other 70% are `{street} {number}`, a form the model mostly already handles (board 3's
-bare-street-hn is already 0.693, not 0.215 like French was). So the shard spends most of its weight
+bare-street-hn is already 0.693, not 0.215 like French was). So the extract spends most of its weight
 on a class that is not broken and little on the one that is.
 
-**The testable next move is to raise the bare-street ratio** so the shard hits the street→locality
+**The testable next move is to raise the bare-street ratio** so the extract hits the street→locality
 confusion directly, the way fr-fragment did. That is one config knob. Per the treadmill guard I am
 not spinning it solo at 2k — it is a hypothesis for the operator or the next shift, to be
 pre-registered and probed, not tuned in the dark.
@@ -92,7 +92,7 @@ pre-registered and probed, not tuned in the dark.
 - The instrument (board 3) and the recipe (`no-fragment`, tested, split-disciplined) are correct and
   reusable. The probe _worked_ — it gave a clean, cheap read that stopped an unjustified 8k run.
 - `bare-pc` holding at 1.000 confirms the counter-distribution does its job: the model did not learn
-  to stop emitting postcode to chase the digit. The shard's shape is sound; its ratio is the lever.
+  to stop emitting postcode to chase the digit. The extract's shape is sound; its ratio is the lever.
 - The Norway YAML fix (#1145) is the required result of the night regardless of this probe —
   Norway now trains at all, and this probe is the first read that could ever have measured it.
 

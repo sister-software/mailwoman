@@ -77,7 +77,7 @@ const CorpusDownload: ParsedCommandComponent<Options> = ({ options }) => {
 			return
 		}
 
-		// Step 1: Download v0.4.0 adapter shards
+		// Step 1: Download v0.4.0 adapter slices
 		updateStep(1, { status: "running" })
 
 		try {

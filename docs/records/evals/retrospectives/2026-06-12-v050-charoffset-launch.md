@@ -36,19 +36,19 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
 - **The corpus was completed.** The from-source build was BASE-ONLY (11 adapters); the shippable
   corpus also needs the 7 parity overlays. Re-emitted all 7 (synth-affix/german/country/unit/
   po-box-cedex/intersection + deepseek-kryptonite, ~485k rows) through the current span-native
-  aligner so they carry the char-offset triple, merged into the v0.5.0 MANIFEST (689 shards, 676.6M
+  aligner so they carry the char-offset triple, merged into the v0.5.0 MANIFEST (689 extracts, 676.6M
   train), re-validated: 18/18 weighted sources present, 0 out-of-bounds spans, 0 golden-in-val.
 - **PR #559** — config (`v1.4.0-charoffset.yaml`), bridge-retirement gate (`v0.5.0-bridge.json`),
-  `align-canonical-shard.mjs`, and the `train_remote.py` reroute (`sync_v050` + launcher fix).
+  `align-canonical-extract.mjs`, and the `train_remote.py` reroute (`sync_v050` + launcher fix).
 - **DeepSeek re-align plan** drafted (`.agents/skills/deepseek-consult/plan-2026-06-12-codepoint-realign.md`)
   for the UTF-16→code-point offset fix (the lasting fix behind the #558 astral-skip stopgap).
 
 ## What went well
 
 - **Verify-before-assert paid off repeatedly.** The "overlay gap" alarm was real, but I confirmed the
-  mechanism (loader buckets shards by parquet `source`; an unweighted source's rows train but at the
+  mechanism (loader buckets extracts by parquet `source`; an unweighted source's rows train but at the
   wrong sampling weight) before crying wolf. The "2 base adapters missing" alarm was a FALSE alarm —
-  they were packed into mixed tail shards, present and training, same as v4.4.0. Both checks took
+  they were packed into mixed tail extracts, present and training, same as v4.4.0. Both checks took
   minutes and prevented wrong conclusions.
 - **The R2 reroute used the architecture's own grain.** Once CLI `volume put` proved container-blind,
   the fix was `sync_corpus`'s existing pattern (R2 → container-side rclone), not a bespoke hack.
@@ -58,7 +58,7 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
 ## What could've gone better
 
 - **The overlay gap should have been caught at build time.** The rebuild plan's step 5 said "+ the
-  v0.4.x overlay shards re-emitted natively"; the prior session did the from-source half, validated
+  v0.4.x overlay extracts re-emitted natively"; the prior session did the from-source half, validated
   it, and reported "train-ready" without the overlays. A base-only corpus would have regressed every
   parity tag and made the bridge-retirement gate untestable. The validation report graded the build
   in isolation, not against the training config's `source_weights` — that cross-check is the fix.
@@ -113,16 +113,16 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
 
 ## Numbers
 
-|                           |                                                                                                                                                            |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Shift focus               | complete corpus + launch first char-offset training                                                                                                        |
-| Overlay shards re-emitted | 7 (~485k train rows)                                                                                                                                       |
-| Corpus                    | 689 shards, 676.6M train / 1.89M val / 1.89M test                                                                                                          |
-| Models trained            | 1 (v1.4.0-charoffset, completed 40k steps)                                                                                                                 |
-| A100 spend before launch  | 0 (held on the volume issue)                                                                                                                               |
-| Training rate             | warmed to ~5 steps/s (num_workers:0 loader); ~3.5h total                                                                                                   |
-| Gate verdict              | FAIL (1 floor: fr.house_number 89.6/91 — but −8.1pp vs v4.4.0 actual 97.7). bridge-retirement PASS (po_box 90 bridge-off, intrinsic > v4.4.0 bridged 89.1) |
-| Bridge                    | confirmed no-op (bridge-on == bridge-off on every tag) → retire                                                                                            |
-| Infra incidents           | 1 (Modal volume CLI-write blindness, both directions; rerouted via R2)                                                                                     |
-| NaN incidents             | 0                                                                                                                                                          |
-| PRs / issues              | PR #559 · issue #560                                                                                                                                       |
+|                             |                                                                                                                                                            |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Shift focus                 | complete corpus + launch first char-offset training                                                                                                        |
+| Overlay extracts re-emitted | 7 (~485k train rows)                                                                                                                                       |
+| Corpus                      | 689 extracts, 676.6M train / 1.89M val / 1.89M test                                                                                                        |
+| Models trained              | 1 (v1.4.0-charoffset, completed 40k steps)                                                                                                                 |
+| A100 spend before launch    | 0 (held on the volume issue)                                                                                                                               |
+| Training rate               | warmed to ~5 steps/s (num_workers:0 loader); ~3.5h total                                                                                                   |
+| Gate verdict                | FAIL (1 floor: fr.house_number 89.6/91 — but −8.1pp vs v4.4.0 actual 97.7). bridge-retirement PASS (po_box 90 bridge-off, intrinsic > v4.4.0 bridged 89.1) |
+| Bridge                      | confirmed no-op (bridge-on == bridge-off on every tag) → retire                                                                                            |
+| Infra incidents             | 1 (Modal volume CLI-write blindness, both directions; rerouted via R2)                                                                                     |
+| NaN incidents               | 0                                                                                                                                                          |
+| PRs / issues                | PR #559 · issue #560                                                                                                                                       |

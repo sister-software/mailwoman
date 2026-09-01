@@ -6,7 +6,7 @@
  *   `mailwoman gazetteer pair-index` — build the PIX1 placetype-pair index (placetype-pair-prior
  *   arc) from the HM Land Registry PPD tuples CSV (`corpus/src/tools/fetch/ppd.ts`'s
  *   `gb-tuples.csv`; columns `NUMBER,STREET,CITY,DISTRICT,REGION,POSTCODE`). Streams the CSV
- *   (CSVSpliterator, the `corpus/src/shard-recipes/locale.ts` `readTuples` idiom), folds
+ *   (CSVSpliterator, the `corpus/src/database-recipes/locale.ts` `readTuples` idiom), folds
  *   child=CITY/parent=DISTRICT through `normalizeFSTToken` and tags every pair `dependent_locality`
  *   (`PairIndexBuilder`, `gazetteer-pipeline/pair-index.ts` — the extracted, unit-tested fold/dedupe/
  *   skip logic), then writes `pair-index-<country>.bin` via `serializePairIndex`.
@@ -128,7 +128,7 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
  * rather than deriving it from the child's, so every source has to name the slot it read. The evidence for each:
  *
  * - `registerDistrict` — the `--source` CSV's `DISTRICT` column. On GB's PPD tuples that is the POST TOWN
- *   (`corpus/src/shard-recipes/locale.ts`'s `districtAsLocality` gate reads it as the locality line); on the NZ
+ *   (`corpus/src/database-recipes/locale.ts`'s `districtAsLocality` gate reads it as the locality line); on the NZ
  *   LINZ/OpenAddresses countrywide export it is the town/city above the suburb in `CITY`. Both are the locality slot.
  * - `secondaryPairsJSONL` — the `--pairs-jsonl` files. All three shipped ones pair a neighbourhood-class child with a
  *   town: `london-pairs-v2.jsonl` (966 London wards ∪ neighbourhoods under "London", R3/R4b), `ni-pairs-v1.jsonl` (87
@@ -229,7 +229,7 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 		let cityIx = -1
 		let districtIx = -1
 
-		// Same CSVSpliterator idiom as `corpus/src/shard-recipes/locale.ts`'s `readTuples`: array mode, no header
+		// Same CSVSpliterator idiom as `corpus/src/database-recipes/locale.ts`'s `readTuples`: array mode, no header
 		// row consumed by the parser (`header: false`), so we build the column index off the first yielded row
 		// ourselves and skip forward from there.
 		if (sourcePath) {

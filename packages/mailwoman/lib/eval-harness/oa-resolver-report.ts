@@ -72,7 +72,7 @@ export async function renderOaResolverReport(input: OaReportInput): Promise<stri
 	const lines: string[] = [
 		`# OpenAddresses real-point resolver eval (${agg.neural.overall.n} rows, non-circular)`,
 		"",
-		`Model: ${options.model || "(shipped weights)"} | WOF shards: ${wofPaths.length}`,
+		`Model: ${options.model || "(shipped weights)"} | WOF databases: ${wofPaths.length}`,
 		"",
 		`## Resolver eval — neural parser through the WOF resolver`,
 		"",
@@ -124,7 +124,7 @@ export async function renderOaResolverReport(input: OaReportInput): Promise<stri
 			lines.push("")
 
 			lines.push(
-				`**neural+cascade** is the PRODUCTION coordinate (mailwoman/geocode-core.ts: address_point > interpolated > admin, per-state shards) — what mailwoman actually ships, vs the admin-centroid **neural** row above. Tier share: address_point ${formatPercent(addressPointHits, Nc)}, interpolated ${formatPercent(interpHits, Nc)}, admin ${formatPercent(adminTier, Nc)}. Within 100 m: ${within(100)} · within 1 km: ${within(1000)} (n=${cerrs.length}).`
+				`**neural+cascade** is the PRODUCTION coordinate (mailwoman/geocode-core.ts: address_point > interpolated > admin, per-state databases) — what mailwoman actually ships, vs the admin-centroid **neural** row above. Tier share: address_point ${formatPercent(addressPointHits, Nc)}, interpolated ${formatPercent(interpHits, Nc)}, admin ${formatPercent(adminTier, Nc)}. Within 100 m: ${within(100)} · within 1 km: ${within(1000)} (n=${cerrs.length}).`
 			)
 		}
 
@@ -138,7 +138,7 @@ export async function renderOaResolverReport(input: OaReportInput): Promise<stri
 			)
 
 			lines.push(
-				`- precondition met + exact missed + interp MISS (genuine find() miss = shard/normalization gap): ${interpFullParseMiss}`
+				`- precondition met + exact missed + interp MISS (genuine find() miss = database/normalization gap): ${interpFullParseMiss}`
 			)
 
 			lines.push(
@@ -156,8 +156,8 @@ export async function renderOaResolverReport(input: OaReportInput): Promise<stri
 				lines.push(`  ≤ ${m} m: ${((100 * within) / Math.max(1, ierrs.length)).toFixed(1)}%`)
 			}
 
-			// Dump ALL full-parse misses for the standalone shard-membership categorization (segment-not-found
-			// vs in-shard-range-miss vs normalization). Bump cap done at collection site.
+			// Dump ALL full-parse misses for the standalone database-membership categorization (segment-not-found
+			// vs in-database-range-miss vs normalization). Bump cap done at collection site.
 			if (diagMisses.length) {
 				await writeLocalTextFile(diagMisses.join("\n"), "/tmp/interp-misses.txt")
 				lines.push("")

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer verify-codepoint` — the promotion gate for the Code-Point Open GB
- *   shard. Compares it against the incumbent GeoNames `GB_full` rows on row membership, coordinate
+ *   database. Compares it against the incumbent GeoNames `GB_full` rows on row membership, coordinate
  *   agreement, Northern Ireland coverage, and ten hand-checked landmark probes.
  *
  *   Reports; does not decide. Both databases are opened read-only.
@@ -25,15 +25,15 @@ import {
  */
 export const spec = {
 	name: "verify-codepoint",
-	description: "Compare a Code-Point Open shard against its incumbent.",
+	description: "Compare a Code-Point Open database against its incumbent.",
 	options: {
 		codepoint: {
 			type: "string",
-			description: "Candidate shard. Default <data-root>/wof/postalcode-gb-codepoint-<YYYY-MM-DD>.db",
+			description: "Candidate database. Default <data-root>/wof/postalcode-gb-codepoint-<YYYY-MM-DD>.db",
 		},
 		incumbent: {
 			type: "string",
-			description: "Incumbent shard. Default <data-root>/wof/frozen-backup-2026-08-04/postalcode-geonames-tail.db",
+			description: "Incumbent database. Default <data-root>/wof/frozen-backup-2026-08-04/postalcode-geonames-tail.db",
 		},
 		json: { type: "boolean", description: "Emit the raw report as JSON instead of the rendered table" },
 	},

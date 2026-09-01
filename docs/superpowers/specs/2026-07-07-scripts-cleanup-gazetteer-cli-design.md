@@ -40,7 +40,7 @@ export function openBuiltDatabase(path: string, opts?: { write?: boolean }): Dat
 
 - `sealDatabase` also removes `-wal`/`-shm` sidecars and verifies `journal_mode=delete` on a reopen.
 - Writable staging is the builder's private temp (`<out>.ingest`); the seal happens on the final artifact only, after verify passes. Unseal is deliberate and manual (`chmod u+w`), never programmatic.
-- Every existing builder (the 13 `build-*` scripts and their successors) ends with `sealDatabase`. Applied to: admin, candidate, postcode shards, situs/interp shards, timezone/UN-LOCODE/NUTS, conventions, polygons.
+- Every existing builder (the 13 `build-*` scripts and their successors) ends with `sealDatabase`. Applied to: admin, candidate, postcode extracts, situs/interp extracts, timezone/UN-LOCODE/NUTS, conventions, polygons.
 - The live production DBs get sealed as they are next rebuilt/promoted (the admin DB already is, since #1015).
 
 ### 2. The taxonomy: one `gazetteer` namespace, artifact→verb
@@ -52,7 +52,7 @@ mailwoman gazetteer
                        #   → geonames → freeze(ancestors closure + −4 backfill + coincident_roles)
                        #   → region-abbrevs → place_abbr → FTS(place_search + place_bbox) → VERIFY → SEAL
   build candidate      # the byte-range candidate table (current `gazetteer build`, renamed intent intact)
-  build postcode --country <CC>   # postcode shards (NL PC6, CJK, KR, TW, GB… — one command, per-country recipes)
+  build postcode --country <CC>   # postcode extracts (NL PC6, CJK, KR, TW, GB… — one command, per-country recipes)
   build polygons       # wof-polygons sidecar
   verify [--db <path>] # the promotion gate (see §4)
   promote / publish / release     # unchanged (already exist)
@@ -100,7 +100,7 @@ The baseline JSON is updated deliberately (a reviewed diff) when coverage intent
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `build-unified-wof.ts`, `add-region-abbrevs.ts`, `add-ancestors.ts`, `backfill-ancestors-from-hierarchy.ts`                                                                           | **delete** — subsumed by `gazetteer build admin`                                                                                                 |
 | `augment-admin-overture.ts`, `augment-admin-official-names.ts`, `build-admin-geonames-fold.ts`, `build-coverage-expansion.ts`                                                         | **fold** their deltas into `build admin` steps (this is the #1026 cure path: their effects join the recipe), then **delete**                     |
-| `backfill-postcode-centroids.ts`, `fill-zcta-centroids.ts`, `build-postcode-locality*.ts` (4), `build-postalcode-nl-pc6.ts`, `audit-po-box-cedex-shard.ts`                            | → `gazetteer build postcode --country …` recipes; mutators folded; **delete**                                                                    |
+| `backfill-postcode-centroids.ts`, `fill-zcta-centroids.ts`, `build-postcode-locality*.ts` (4), `build-postalcode-nl-pc6.ts`, `audit-po-box-cedex-extract.ts`                          | → `gazetteer build postcode --country …` recipes; mutators folded; **delete**                                                                    |
 | `build-supplemental-gazetteer.ts`, `build-pilot-anchor-lookup.ts`, `build-country-reference.ts`, `build-official-languages.ts`                                                        | → `gazetteer build <artifact>` or (for pure codegen: country-reference, official-languages) `generate-*` retained as codegen with sealed outputs |
 | `reverse-eu-panel.ts`                                                                                                                                                                 | → `gazetteer verify` (delete script)                                                                                                             |
 | `diag-*.ts` (6), `eval-*.ts` (5), `harness-*.ts` (2), `extract-tuples*.ts`, `log-scale-chart.ts`, `training-chart.ts`, `parse-training-log.ts`                                        | → `scripts/eval/` & `scripts/diagnostic/` (gitignored per scripts/AGENTS.md) or **delete if stale** — triaged one by one in the plan             |

@@ -25,8 +25,8 @@ the operator-only decisions, and the non-negotiable discipline.
 ## The mission
 
 Cut **v8.0.0**. Per roadmap §4 there are three gates: **Track F** (done), **Track A** (breaking batch),
-**Track B** (sharding skeleton). Per §1: _"v8.0.0 cuts when the breaking batch is staged AND the
-sharding skeleton (Track B) is real."_ So your critical path is **A + B**. Everything else either
+**Track B** (extract routing skeleton). Per §1: _"v8.0.0 cuts when the breaking batch is staged AND the
+extract routing skeleton (Track B) is real."_ So your critical path is **A + B**. Everything else either
 rides v8.x minors or gates itself.
 
 ---
@@ -53,7 +53,7 @@ tarball verification run unchanged — behavior must not move in this track). Th
 
 **Gate:** the batch is one PR train with per-item migration notes; behavior does not move.
 
-## Gate 2 — Track B: weights-sharding skeleton (epic #1177) — THE CRITICAL PATH
+## Gate 2 — Track B: weights-extract routing skeleton (epic #1177) — THE CRITICAL PATH
 
 This is the pole that sets the cut date. The overlay _mechanism_ is shipped and battle-tested (the
 en-gb/en-nz overlays; the fr-fr→en-us base). What's **unbuilt** is the _formalization_:
@@ -61,15 +61,15 @@ en-gb/en-nz overlays; the fr-fr→en-us base). What's **unbuilt** is the _formal
 - **base-latn + overlays:** dedupe the per-locale weight packages onto one base Latin model with
   per-country overlay bundles. Work = packaging, card schema, and release-train wiring (the lockstep
   freshness guards generalize).
-- **Script-routed shard router** — the non-Latin future (Track C) hangs off this; the router decides
+- **Script-routed extract router** — the non-Latin future (Track C) hangs off this; the router decides
   by script, not by locale guess.
 - **The calibration runbook, first-class** — the per-country recipe (pair-index build + self-check
   probes, δ-sweep, β decision, venue-confound + golden boards, comma-drop metamorphic, invariance,
   card + ledger rows) currently lives as tribal knowledge in `task-8-report.md`; v8 makes it a doc
   in `CONTRIBUTING_MODEL_WORK` so country N+1 is a recipe, not an arc.
 
-**Gate:** one existing overlay country re-cut onto the sharded layout with **byte-identical parse
-output on its golden boards**, and the release train publishes the sharded family green. Scope it as
+**Gate:** one existing overlay country re-cut onto the attached layout with **byte-identical parse
+output on its golden boards**, and the release train publishes the attached family green. Scope it as
 a proper arc — the runbook exists, the packaging/release engineering doesn't.
 
 ## Explicitly NOT gating v8.0.0 (do not block the cut on these)

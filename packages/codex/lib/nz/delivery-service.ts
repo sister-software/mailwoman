@@ -33,7 +33,7 @@
  *   mail, accessed 2026-06-11) name only the six types above. However, real NZ mail and the postal
  *   arena's gold rows carry "Private Box" as a colloquial synonym for a numbered PO Box (same
  *   numbered format, different label). Operator ruling 2026-06-11: "Private Box = recognize-as-used
- *   — codex documents it unofficial/colloquial WITH the 'officially invalid' citation; the shard
+ *   — codex documents it unofficial/colloquial WITH the 'officially invalid' citation; the extract
  *   teaches recognition (validity and recognition are separate disciplines, same as the AU legacy
  *   flags)." This is encoded in {@link NZ_PRIVATE_BOX_ALIAS} — a distinct export from
  *   {@link NZ_DELIVERY_SERVICE_TYPES} so callers can choose whether to include the unofficial form.

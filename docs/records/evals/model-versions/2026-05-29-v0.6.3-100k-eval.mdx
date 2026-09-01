@@ -16,7 +16,7 @@ and the predicted dilution failure mode materialized.
 - **Training:** A100-SXM4-40GB, ~12.8 steps/s, ~130 min wall-clock. No NaN.
 - **Corpus changes from v0.6.2:** filtered venue pool (removed
   `5th Avenue Theatre`, `7th Street Bistro`); ADDED `synth-house-venue-v063`
-  shard at weight 1.0 (32K rows of house_number + venue + street
+  extract at weight 1.0 (32K rows of house_number + venue + street
   coexistence); dropped synth-no-street weight 1.0 → 0.5 (kept v0.6.2b's
   setting).
 - **Tokenizer:** v0.6.0-a0 (unchanged)
@@ -39,7 +39,7 @@ and the predicted dilution failure mode materialized.
 ## What worked
 
 - **`house_number` recovered by +3pp vs v0.6.2** (74.0% → 77.0%). The
-  `synth-house-venue` companion shard did exactly what it was designed to do
+  `synth-house-venue` companion extract did exactly what it was designed to do
   — taught the model that house_number and venue coexist, recovering most of
   the regression from v0.6.2.
 - **`street` recall improved** (27.1% → 29.2%, +1.5pp vs v0.6.2). The
@@ -57,7 +57,7 @@ golden set; the model emitted 844 hallucinations).
 This was DeepSeek's turn 10 dilution
 diagnosis: dropping
 synth-no-street weight 1.0 → 0.5 AND adding 32K rows of synth-house-venue at
-weight 1.0 changed the anti-decompose:companion-shard ratio from v0.6.2's
+weight 1.0 changed the anti-decompose:companion-extract ratio from v0.6.2's
 1.0:0 to v0.6.3's 0.5:1.0. The anti-decompose signal got proportionally
 weaker. Decompose mode came back over the 20K → 100K window.
 

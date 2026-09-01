@@ -34,7 +34,7 @@
  *
  *   Source of truth: `@mailwoman/codex` (COUNTRY_SURFACE_FORMS + ISO2_TO_NAME) — the SAME data the
  *   corpus-python bridge `country-surfaces.json` is generated from (export-country-surfaces.ts), so
- *   the channel and the corpus shard synthesizer cannot diverge on what a country surface IS.
+ *   the channel and the corpus extract synthesizer cannot diverge on what a country surface IS.
  *
  *   Output: data/gazetteer/country-surface-lexicon-v1.json (small, committed, provenance-tracked).
  *   Regenerate: `node codex/tools/build-country-surface-lexicon.ts`

@@ -20,7 +20,7 @@ the _ratio_ of true error to segment length (what Q̂ captures) may differ too.
 
 ## Method — non-circular, by construction
 
-For each state: synthesize a `{input, lat, lon}` holdout from the state's **situs** shard (OA/NAD
+For each state: synthesize a `{input, lat, lon}` holdout from the state's **situs** extract (OA/NAD
 address points — the ground-truth coordinates), then run `conformal-calibrate.ts` **interp-only** (the
 situs tier no-op'd via the #568 tableless guard) so every resolved row is a TIGER **interpolation**,
 scored against the true situs coordinate. TIGER (Census street ranges) and OA/NAD (address points) are
@@ -97,7 +97,7 @@ that it under-covers rural geocodes.
 ## Reproduce
 
 ```bash
-node scripts/eval/build-situs-holdout.mjs --shard <state-situs.db> --region <ABBR> --n 2000
+node scripts/eval/build-situs-holdout.mjs --extract <state-situs.db> --region <ABBR> --n 2000
 node scripts/eval/conformal-calibrate.ts \
   --holdout /tmp/<abbr>-situs-holdout.jsonl \
   --address-points /tmp/empty-situs.db \   # tableless → situs no-op → interp-only (#568)

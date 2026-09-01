@@ -12,13 +12,13 @@
  *   1. RAW neural parse (`classifier.parse`, postcodeRepair). NOT the runtime pipeline — its reconcile
  *        stage merges street INTO house_number, dropping the street node the coordinate tiers need
  *        (#566).
- *   2. Read the parsed region → pick the per-state situs + interpolation shards.
- *   3. `resolveTree` with the coordinate tiers wired (additive; admin-only when shards absent).
+ *   2. Read the parsed region → pick the per-state situs + interpolation databases.
+ *   3. `resolveTree` with the coordinate tiers wired (additive; admin-only when databases absent).
  *   4. Extract the best coordinate + resolution tier (address_point > interpolated > admin).
  *
  *   The cascade depends on a {@link RegionDatabaseResolver} — a `(stateSlug) => { addressPoints?,
  *   interpolation? }` function — so the CLI (honoring its explicit `--address-points-db` flags) and
- *   the server (a cached {@link RegionDatabaseProvider}) supply shards their own way without the core knowing
+ *   the server (a cached {@link RegionDatabaseProvider}) supply databases their own way without the core knowing
  *   how.
  */
 
@@ -159,24 +159,24 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	inputMode?: InputMode
 	/**
-	 * Per-state shard resolver. Omit for admin-only geocoding.
+	 * Per-state database resolver. Omit for admin-only geocoding.
 	 */
-	shards?: RegionDatabaseResolver
+	databases?: RegionDatabaseResolver
 	/**
-	 * Authoritative national open-register rooftop shards keyed by ISO-3166 alpha-2 country (#1012) — the government
-	 * address registers (BAN-FR today, 26M points). Consulted ONLY when no US per-state situs shard matched (a non-US
-	 * parse), and AHEAD of {@link osmShards}: a national register is denser + coordinate-authoritative, so it outranks the
-	 * community OSM fallback. Inject from `@mailwoman/ban`'s `BANRegionDatabaseProvider`; absent = no national tier.
+	 * Authoritative national open-register rooftop databases keyed by ISO-3166 alpha-2 country (#1012) — the government
+	 * address registers (BAN-FR today, 26M points). Consulted ONLY when no US per-state situs database matched (a non-US
+	 * parse), and AHEAD of {@link osmDatabases}: a national register is denser + coordinate-authoritative, so it outranks
+	 * the community OSM fallback. Inject from `@mailwoman/ban`'s `BANRegionDatabaseProvider`; absent = no national tier.
 	 * Licence Ouverte/Etalab (permissive) — see `ban/README.md`. The shape generalises to other national registers.
 	 */
-	nationalShards?: (country: string) => RegionDatabases
+	nationalDatabases?: (country: string) => RegionDatabases
 	/**
-	 * OSM rooftop shards keyed by ISO-3166 alpha-2 country (#247) — the opt-in international precision tier. Consulted
-	 * ONLY when no US per-state situs shard matched (a non-US parse) AND no {@link nationalShards} register covered the
-	 * country, so the US path is untouched and BAN wins where it exists. Inject from `@mailwoman/osm`'s
+	 * OSM rooftop databases keyed by ISO-3166 alpha-2 country (#247) — the opt-in international precision tier. Consulted
+	 * ONLY when no US per-state situs database matched (a non-US parse) AND no {@link nationalDatabases} register covered
+	 * the country, so the US path is untouched and BAN wins where it exists. Inject from `@mailwoman/osm`'s
 	 * `OSMRegionDatabaseProvider`; absent = no OSM tier. ODbL — see `osm/README.md`.
 	 */
-	osmShards?: (country: string) => RegionDatabases
+	osmDatabases?: (country: string) => RegionDatabases
 	/**
 	 * A configured authoritative provider (#1901) — OS Places, an OS NGD-backed service, or any adapter implementing
 	 * `@mailwoman/core/resolver`'s contract. Absent = the geocode result is byte-identical to a run without the field
@@ -243,13 +243,13 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	parsedTree?: AddressTree
 	/**
 	 * Interpolation-radius conformal calibration (#374) so reported radii are an honest ~90% bound. The multiplier is a
-	 * property of the calibration set the ARTIFACT was built against, so a shard that carries one in its
-	 * `interp_calibration` metadata table is self-calibrating (`InterpolationLookup.radiusCalibration`, read at shard
+	 * property of the calibration set the ARTIFACT was built against, so a database that carries one in its
+	 * `interp_calibration` metadata table is self-calibrating (`InterpolationLookup.radiusCalibration`, read at database
 	 * open — the pair-index δ precedent) and this option is not consulted for it. The two remaining roles:
 	 *
-	 * - A per-region {@link InterpCalibrationTable} — the LEGACY-SHARD fallback, selected by the parsed region (DC 1.44 …
-	 *   AZ 3.12, `default` otherwise, #584), applied only when the shard predates the metadata table (the artifact is
-	 *   silent).
+	 * - A per-region {@link InterpCalibrationTable} — the LEGACY-DATABASE fallback, selected by the parsed region (DC 1.44
+	 *   … AZ 3.12, `default` otherwise, #584), applied only when the database predates the metadata table (the artifact
+	 *   is silent).
 	 * - A single number — an explicit instrument override forced everywhere, artifact value included (the CLI's
 	 *   `--interp-calibration`). `1` or `undefined` + artifact-silent keeps the raw half-segment heuristic.
 	 *
@@ -323,15 +323,15 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	/**
 	 * Postcode-country coherence (#42, `ResolveOpts.postcodeCountryCoherence`) — let a (postcode, locality) pair that is
 	 * geographically consistent in exactly ONE country override a wrong {@link defaultCountry}. `12 Rue de Rivoli, 75001
-	 * Paris` under the en-US locale otherwise lands in Texas, and with the postal shards attached in Addison. **Default
-	 * ON** (operator-promoted 2026-08-05 — gauntlet zero newly-failing gated cases pinned either way, 56,000 pair
-	 * evaluations across both backends at zero false positives; see
+	 * Paris` under the en-US locale otherwise lands in Texas, and with the postal databases attached in Addison.
+	 * **Default ON** (operator-promoted 2026-08-05 — gauntlet zero newly-failing gated cases pinned either way, 56,000
+	 * pair evaluations across both backends at zero false positives; see
 	 * `docs/records/evals/2026-08-05-postcode-coherence-default-on-evidence.md`). Pass `false` to opt out.
 	 *
-	 * On this path it also re-selects the rooftop tier. Shard selection happens BEFORE the resolve and keys off
-	 * `defaultCountry ?? placedCountry`, so a US-scoped call would pick no national/OSM shard and leave the corrected FR
-	 * address at its commune centroid. When the resolver reports an override (the `postcode_country_scope` stamp), the
-	 * rooftop/street shards are re-selected for the corrected country and the tree is resolved ONCE more. Self-gating:
+	 * On this path it also re-selects the rooftop tier. Database selection happens BEFORE the resolve and keys off
+	 * `defaultCountry ?? placedCountry`, so a US-scoped call would pick no national/OSM database and leave the corrected
+	 * FR address at its commune centroid. When the resolver reports an override (the `postcode_country_scope` stamp), the
+	 * rooftop/street databases are re-selected for the corrected country and the tree is resolved ONCE more. Self-gating:
 	 * the second pass costs nothing unless an override actually fired.
 	 */
 	postcodeCountryCoherence?: boolean
@@ -497,7 +497,7 @@ export async function parseForGeocode(
 
 /**
  * Run the full street-level cascade on one address and return the structured geocode result. Always returns a result
- * (admin tier even with no coordinate shards). Throws only on a fatal parse/resolve error — callers doing batch work
+ * (admin tier even with no coordinate databases). Throws only on a fatal parse/resolve error — callers doing batch work
  * should catch per-row.
  */
 export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeOutcomeLike> {
@@ -614,9 +614,9 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
 	const queryShape = computeQueryShape(parseInput)
 	const stateSlug = regionSlugFromTree(tree)
-	const usShards = deps.shards?.(stateSlug) ?? {}
-	let addressPoints = usShards.addressPoints
-	const interpolation = usShards.interpolation
+	const usDatabases = deps.databases?.(stateSlug) ?? {}
+	let addressPoints = usDatabases.addressPoints
+	const interpolation = usDatabases.interpolation
 
 	const opts: ResolveOpts = {
 		// Admin descendant-consistency (#263) — joint-consistency resolve over the gazetteer's containment
@@ -646,7 +646,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	const placeCountry: PlaceCountryFn | null =
 		deps.placeCountry === false ? null : (deps.placeCountry ?? (await loadDefaultPlaceCountry()))
 
-	// The placer's country (in-map, non-OTHER) — reused below to select an OSM rooftop shard for a non-US parse.
+	// The placer's country (in-map, non-OTHER) — reused below to select an OSM rooftop database for a non-US parse.
 	let placedCountry: string | null = null
 
 	// The placer's prediction, computed ONCE and UNGATED (so it's available even for a bare-locality tree, where the
@@ -774,7 +774,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// Bbox fall-through is ON for both: the rows carry postcode + commune but the QUERY often doesn't ("181 Rue du
 	// Chevaleret, Paris" — no postcode, and BAN communes are INSEE-arrondissement-granular so the locality probe keys
 	// "paris" ≠ "paris 13e arrondissement"). The resolved locality's box then scopes the (street, number) probe;
-	// measured safe — zero ambiguous (street, number) pairs across Paris arrondissements in the 2026-05-18 BAN shard.
+	// measured safe — zero ambiguous (street, number) pairs across Paris arrondissements in the 2026-05-18 BAN database.
 	//
 	// Factored into a function because #42's postcode-country coherence can correct the country AFTER the resolve, and
 	// the corrected country then needs the same selection re-run (see the second pass at the bottom).
@@ -782,15 +782,15 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		if (!country || country.toLowerCase() === "us") return undefined
 		const slug = country.toLowerCase()
 
-		return deps.nationalShards?.(slug)?.addressPoints ?? deps.osmShards?.(slug)?.addressPoints
+		return deps.nationalDatabases?.(slug)?.addressPoints ?? deps.osmDatabases?.(slug)?.addressPoints
 	}
 
 	// An explicit defaultCountry wins; otherwise the coarse placer's country.
 	const preResolveCountry = (deps.defaultCountry ?? placedCountry)?.toLowerCase()
 
-	// A NON-US pre-resolve country outranks a US state-slug shard match. The state-slug selection
+	// A NON-US pre-resolve country outranks a US state-slug database match. The state-slug selection
 	// above is country-blind, and AU state codes collide with US postal states — 'Kingsley WA 6026'
-	// under an AU scope reads region 'WA' and opens the Washington shard, which can only miss.
+	// under an AU scope reads region 'WA' and opens the Washington database, which can only miss.
 	// `rooftopFor` returns nothing for `us` or no-evidence, so the US path is byte-stable.
 	{
 		const rooftop = rooftopFor(preResolveCountry)
@@ -810,11 +810,11 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// street-level coordinate instead of the commune centroid. The resolver's applyStreetCentroid self-gates on
 	// no-house-number (a numbered query is byte-identical) and unions these hints with the RESOLVED-tree countries,
 	// because the pre-resolution country of a bare thoroughfare is unreliable (bare-locality tree / placer mis-route).
-	// US never supplies a street shard, so `provider("us")` is undefined and the US path stays byte-stable.
+	// US never supplies a street database, so `provider("us")` is undefined and the US path stays byte-stable.
 	const streetHints: string[] = []
 
-	if (deps.nationalShards) {
-		const provider = deps.nationalShards
+	if (deps.nationalDatabases) {
+		const provider = deps.nationalDatabases
 
 		opts.streetCentroids = (country: string) => provider(country).streetCentroids
 
@@ -831,12 +831,12 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	if (interpolation) {
 		opts.interpolation = interpolation
-		// #374 doctrine: a shard that carries its own conformal multiplier (the `interp_calibration`
+		// #374 doctrine: a database that carries its own conformal multiplier (the `interp_calibration`
 		// metadata table, read at open — `radiusCalibration`) is self-calibrating; the resolver reads it
 		// directly and this path passes nothing. Two carve-outs preserve the ladder:
 		//   1. an explicit caller NUMBER (`deps.interpCalibration` — the CLI's --interp-calibration
 		//      instrument flag) still overrides the artifact, and
-		//   2. a shard predating the metadata table (the shipped fleet) falls back to the in-code
+		//   2. a database predating the metadata table (the shipped fleet) falls back to the in-code
 		//      per-region table selected by the parsed region (`stateSlug`) — byte-identical to before.
 		const explicit = typeof deps.interpCalibration === "number" ? deps.interpCalibration : undefined
 
@@ -888,18 +888,18 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	let resolved = await deps.resolver.resolveTree(tree, opts)
 
-	// Second pass, whenever the RESOLVE settled a different country than the shards were selected for. Rooftop +
-	// street-centroid shards are selected BEFORE the resolve (they have to be — they're resolver inputs), off a
+	// Second pass, whenever the RESOLVE settled a different country than the databases were selected for. Rooftop +
+	// street-centroid databases are selected BEFORE the resolve (they have to be — they're resolver inputs), off a
 	// country that can be corrected by any of several mechanisms mid-resolve: the #42 coherence override and the
 	// #1735 explicit pre-scope stamp receipts, but the placer and the #1684 dropped-scope worldwide race do not —
 	// `92 Laurell Road, Gander, NL A1V 0A9` resolved Gander CA with no receipt and sat at the city centroid while
-	// the CA rooftop shard held the exact point. So the trigger is the resolved tree's OWN country, with the
+	// the CA rooftop database held the exact point. So the trigger is the resolved tree's OWN country, with the
 	// receipt kept as the fallback for trees whose scope changed without a resolved carrier node.
 	// `opts.defaultCountry` is deliberately left alone so a receipt-driven verdict re-derives identically and
 	// survives onto the returned tree. Bounded at one extra resolve.
 	const scopeCountry = resolvedCountryOf(resolved) ?? postcodeCountryScopeOf(resolved)
 
-	if (scopeCountry && scopeCountry.toLowerCase() !== preResolveCountry && !usShards.addressPoints) {
+	if (scopeCountry && scopeCountry.toLowerCase() !== preResolveCountry && !usDatabases.addressPoints) {
 		const rooftop = rooftopFor(scopeCountry)
 		let changed = false
 

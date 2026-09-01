@@ -7,11 +7,11 @@ The mandate: recover the one regression v4.5.0 shipped with — fr.house_number 
 ## What shipped
 
 - **Wave A — all three delegated, verified, merged** (each a single-concern Sonnet contract in a worktree):
-  - **#561** — `scripts/build-fr-order-shard.mjs` (`synth-fr-order`): reversed-order FR shard mirroring the German both-order shape. Verified: 0 oob spans, 199/199 reversed-order span check PASS.
+  - **#561** — `scripts/build-fr-order-extract.mjs` (`synth-fr-order`): reversed-order FR extract mirroring the German both-order shape. Verified: 0 oob spans, 199/199 reversed-order span check PASS.
   - **#562** — NZ "Private Box" colloquial codex alias (#517), `officiallyInvalid` citation per operator ruling. In-scope, CI-green.
   - **#563** — FR golden diversification: +150 OA-sourced rows across 56 localities + both orders, diluting the Sainte-Livrade share 98.8% → 78.8%. Verified: 0 components-not-in-raw.
-- **v1.5.0-fr-order retrain**: v0.5.0 corpus + `synth-fr-order` shard (685 train shards, weight 3.0). 40K steps, healthy (step-2000 macro_f1=0.626, 0 NaN).
-- **v1.5.1-fr-order retrain** (launched ~05:00 UTC): same corpus + shard, weight bumped 3.0 → 6.0 (German precedent). Running on app `ap-1PoHJlr1GfFwoeoJgzO0up`.
+- **v1.5.0-fr-order retrain**: v0.5.0 corpus + `synth-fr-order` extract (685 train extracts, weight 3.0). 40K steps, healthy (step-2000 macro_f1=0.626, 0 NaN).
+- **v1.5.1-fr-order retrain** (launched ~05:00 UTC): same corpus + extract, weight bumped 3.0 → 6.0 (German precedent). Running on app `ap-1PoHJlr1GfFwoeoJgzO0up`.
 
 ### v1.5.0 re-gate result: ❌ DOES NOT PASS (but large improvement)
 
@@ -32,13 +32,13 @@ The gate ran on the diversified golden (n=1546, 56 localities, both orders). Key
 
 **Net: +32.9pp fr.house_number improvement** (54.5% → 87.4% on same golden). Direction correct. Gate MISS by 3.6pp.
 
-**Miss diagnosis (MAILWOMAN_DUMP_MISS_TAG=house_number):** Every single one of the 93 FR misses is the `47110 Sainte-Livrade-sur-Lot, <HN> <street>` format — the model still predicts `47110` (postcode) as house_number. The BAN canonical-order prior at weight=3.0 dominates. The shard is correct; the signal is just too weak.
+**Miss diagnosis (MAILWOMAN_DUMP_MISS_TAG=house_number):** Every single one of the 93 FR misses is the `47110 Sainte-Livrade-sur-Lot, <HN> <street>` format — the model still predicts `47110` (postcode) as house_number. The BAN canonical-order prior at weight=3.0 dominates. The extract is correct; the signal is just too weak.
 
 Bridge retirement HOLDS (po_box 90.3%), German order HOLDS (native+anchor 90.8%). The rest of the US/FR guardrail is clean.
 
 ### v1.5.1 launch decision (autonomous)
 
-Weight 3.0 → 6.0 matches the proven `synth-german` weight (which fully worked). Shard is already on the volume, no re-upload needed. Config committed as `728b67b`, pushed via R2 → sync_v050, training started. Re-gate runbook: `build-logs/v151-regate-runbook.sh`.
+Weight 3.0 → 6.0 matches the proven `synth-german` weight (which fully worked). Extract is already on the volume, no re-upload needed. Config committed as `728b67b`, pushed via R2 → sync_v050, training started. Re-gate runbook: `build-logs/v151-regate-runbook.sh`.
 
 ### v1.5.1 re-gate result: ❌ WORSE — weight is NOT the lever (REJECTED)
 
@@ -50,7 +50,7 @@ The weight-bump hypothesis is **falsified**. v1.5.1 (weight 6.0) scored fr.house
 | v1.5.0        |                   3.0 |                     **87.4%** ← best |
 | v1.5.1        |                   6.0 |                                84.7% |
 
-**And it introduced a NEW failure mode: postcode fragmentation.** The v1.5.0 misses were clean ("47110 …" → predict `47110` as house*number — wrong span, intact tokens). v1.5.1's miss dump shows the model now \_splits the postcode*: `47110` → house*number `4` + postcode `7110`, and sometimes \_merges* it (`pred="47110 85"`). Over-weighting the both-order synth shard pushed the model to over-eagerly hunt for a leading house number, destabilizing the postcode boundary itself. Strictly worse.
+**And it introduced a NEW failure mode: postcode fragmentation.** The v1.5.0 misses were clean ("47110 …" → predict `47110` as house*number — wrong span, intact tokens). v1.5.1's miss dump shows the model now \_splits the postcode*: `47110` → house*number `4` + postcode `7110`, and sometimes \_merges* it (`pred="47110 85"`). Over-weighting the both-order synth extract pushed the model to over-eagerly hunt for a leading house number, destabilizing the postcode boundary itself. Strictly worse.
 
 **Conclusion — the both-order synth recipe plateaus at ~87% on this golden, and louder weight is actively harmful.** Likely mechanism: the generated synth distribution diverges from the real OA golden's reversed-order distribution; overweighting fits synth quirks at the expense of real rows. The German precedent (6.0) did NOT transfer — German's number is always _last_ (one position to learn); FR postcode-first makes the house_number position ambiguous (it can collide with the leading postcode), so more synth mass amplifies the collision.
 
@@ -106,11 +106,11 @@ The orchestrator session became unresponsive (network) mid-shift after launching
 - **synth-fr-order weight = 3.0** (initial, overriding agent's suggested 0.2; German precedent is 6.0). First-pass; documented in config as "bump if eval shows weak signal."
 - **Drove the sequential merge chain.** Confirmed the extended-trust merge grant by merging #561 first, watching it land. Then #562/#563.
 - **Actual-vs-actual grading on the diversified golden.** The gate floor (91.0) was set before #563; on the new harder golden, v4.5.0 scores 54.5% — the floor understates the regression direction.
-- **v1.5.1 launch (autonomous, ~05:00 UTC).** Weight bump 3.0 → 6.0 based on: (a) all 93 misses are same postcode-first pattern, (b) shard verified correct, (c) German precedent at 6.0 fully worked, (d) 2.5h headroom before 15:00 UTC shift end. This decision is within the shift mandate (recover fr.house_number) and the extended-trust grant.
+- **v1.5.1 launch (autonomous, ~05:00 UTC).** Weight bump 3.0 → 6.0 based on: (a) all 93 misses are same postcode-first pattern, (b) extract verified correct, (c) German precedent at 6.0 fully worked, (d) 2.5h headroom before 15:00 UTC shift end. This decision is within the shift mandate (recover fr.house_number) and the extended-trust grant.
 
 ## Open questions
 
-- **What recovers fr.house_number past the ~87% plateau, if not weight?** Falsified: weight (6.0 < 3.0). Untested candidates, for the operator to prioritize: (a) more _real_ reversed-order data from BAN rather than synth (the synth↔real distribution gap is the leading suspect); (b) a postcode-anchor / position-aware signal that protects the postcode span from being raided for a leading house number; (c) accept ~87% as the honest intrinsic floor and re-baseline the gate. **Do NOT bump shard mass blindly** — v1.5.1 shows the synth shard can actively destabilize; more of it is not obviously safe.
+- **What recovers fr.house_number past the ~87% plateau, if not weight?** Falsified: weight (6.0 < 3.0). Untested candidates, for the operator to prioritize: (a) more _real_ reversed-order data from BAN rather than synth (the synth↔real distribution gap is the leading suspect); (b) a postcode-anchor / position-aware signal that protects the postcode span from being raided for a leading house number; (c) accept ~87% as the honest intrinsic floor and re-baseline the gate. **Do NOT bump extract mass blindly** — v1.5.1 shows the synth extract can actively destabilize; more of it is not obviously safe.
 - **Ship v1.5.0 (87.4%) as v4.6.0, or hold v4.5.0?** It misses the 91 floor by 3.6pp but is +32.9pp over the shipped model on the hard golden. Operator's explicit call (re-baseline-and-ship vs hold). See "Ship decision" above.
 - **`__isCompiledTree` off-by-one?** The gate-integrity fix bridged `core/out/data` locally; the deeper question (does repo.ts's compiled-tree detection resolve FALSE when it should be TRUE?) is critical and deferred to daylight review (#481).
 

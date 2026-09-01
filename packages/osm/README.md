@@ -48,8 +48,8 @@ aren't lost.
 #    https://download.geofabrik.de/europe/france/ile-de-france-latest.osm.pbf
 #    → $MAILWOMAN_DATA_ROOT/osm/geofabrik/
 
-# 2. Build the shard (writes $MAILWOMAN_DATA_ROOT/osm/address-points-fr-idf.db):
-node osm/out/scripts/build-rooftop-shard.js \
+# 2. Build the extract (writes $MAILWOMAN_DATA_ROOT/osm/address-points-fr-idf.db):
+node osm/out/scripts/build-rooftop-extract.js \
   --country fr --slug idf --release 260627 \
   --created-at 2026-06-27T00:00:00.000Z \
   --build-sha "$(git rev-parse HEAD)" \

@@ -277,12 +277,12 @@ one requires answering a question first, and the question is empirical:
 
 > **Probe:** does BAN's own data support a per-commune designation claim?
 
-Our shard holds 32,539 communes against roughly 34,900 in France, and BAN aggregates per-commune
+Our extract holds 32,539 communes against roughly 34,900 in France, and BAN aggregates per-commune
 Base Adresse Locale publications of varying completeness. A blanket `designated` would be false. The
 probe's output is a per-commune basis assignment or a decision that BAN supports only
 `source_present`, in which case this arm does not ship.
 
-**Do not write coverage for this shard before the probe returns.**
+**Do not write coverage for this extract before the probe returns.**
 
 ---
 

@@ -1,6 +1,6 @@
 """Task #25 (SP vocab-pruning probe) — fired-set measurement over the full training feed.
 
-Walks every train shard of a corpus manifest, encodes each `raw` with the shipped tokenizer, and
+Walks every train slice of a corpus manifest, encodes each `raw` with the shipped tokenizer, and
 accumulates per-id fire counts. Counted at the unit the model reads: `encode()` output ids
 (feedback-count-at-the-unit-the-model-reads). Full feed, no sampling — the pre-registration
 (docs/superpowers/plans/2026-07-31-sp-vocab-pruning-preregistration.md) explains why a sampled
@@ -40,14 +40,14 @@ def _init_worker(tokenizer_path: str) -> None:
     _TOKENIZER_PATH = tokenizer_path
 
 
-def _count_shard(shard_path: str, vocab_size: int) -> np.ndarray:
-    """Encode every `raw` in one parquet shard; return int64 fire counts."""
+def _count_slice(slice_path: str, vocab_size: int) -> np.ndarray:
+    """Encode every `raw` in one parquet slice; return int64 fire counts."""
     from itertools import chain
 
     import pyarrow.parquet as pq
 
     counts = np.zeros(vocab_size, dtype=np.int64)
-    pf = pq.ParquetFile(shard_path)
+    pf = pq.ParquetFile(slice_path)
 
     for batch in pf.iter_batches(columns=["raw"], batch_size=65536):
         raws = batch.column(0).to_pylist()
@@ -69,7 +69,7 @@ def main() -> None:
     parser.add_argument(
         "--data-root-remap",
         default="/data:" + os.environ.get("MAILWOMAN_DATA_ROOT", "/mnt/playpen/mailwoman-data"),
-        help="colon-separated FROM:TO prefix remap for manifest shard paths",
+        help="colon-separated FROM:TO prefix remap for manifest slice paths",
     )
     args = parser.parse_args()
 
@@ -81,31 +81,31 @@ def main() -> None:
 
     manifest = json.loads(Path(args.manifest).read_text())
     src, dst = args.data_root_remap.split(":", 1)
-    shards = [s["path"].replace(src, dst, 1) for s in manifest["shards"] if s["split"] == "train"]
-    missing = [s for s in shards if not os.path.exists(s)]
+    slices = [s["path"].replace(src, dst, 1) for s in manifest["slices"] if s["split"] == "train"]
+    missing = [s for s in slices if not os.path.exists(s)]
 
     if missing:
-        raise SystemExit(f"{len(missing)} shard paths missing locally, first: {missing[0]}")
+        raise SystemExit(f"{len(missing)} slice paths missing locally, first: {missing[0]}")
 
     total_rows = manifest.get("total_rows")
-    print(f"[utilization] {len(shards)} train shards, {total_rows:,} rows, vocab {vocab_size}, workers {args.workers}")
+    print(f"[utilization] {len(slices)} train slices, {total_rows:,} rows, vocab {vocab_size}, workers {args.workers}")
 
     counts = np.zeros(vocab_size, dtype=np.int64)
     t0 = time.time()
     done = 0
 
     with ProcessPoolExecutor(max_workers=args.workers, initializer=_init_worker, initargs=(args.tokenizer,)) as pool:
-        futures = {pool.submit(_count_shard, s, vocab_size): s for s in shards}
+        futures = {pool.submit(_count_slice, s, vocab_size): s for s in slices}
 
         for future in as_completed(futures):
             counts += future.result()
             done += 1
 
-            if done % 25 == 0 or done == len(shards):
+            if done % 25 == 0 or done == len(slices):
                 fired = int((counts > 0).sum())
                 rate = done / (time.time() - t0)
                 print(
-                    f"[utilization] {done}/{len(shards)} shards ({rate:.1f}/s) — fired {fired}/{vocab_size} "
+                    f"[utilization] {done}/{len(slices)} slices ({rate:.1f}/s) — fired {fired}/{vocab_size} "
                     f"({100 * fired / vocab_size:.1f}%)",
                     flush=True,
                 )
@@ -118,7 +118,7 @@ def main() -> None:
         "corpus_version": manifest.get("corpus_version"),
         "tokenizer": args.tokenizer,
         "vocab_size": vocab_size,
-        "train_shards": len(shards),
+        "train_slices": len(slices),
         "total_rows": total_rows,
         "fired": int((counts > 0).sum()),
         "elapsed_s": round(time.time() - t0, 1),

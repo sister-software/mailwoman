@@ -42,7 +42,7 @@ data:
     CA: 1.0 # NEW (Overture) — live locality, sidesteps NZ's dead dependent_locality
     MX: 1.0 # NEW (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
   source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the ONE new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
-    overture-latam: 6.0 # NEW — CA/MX/BR Overture shards. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
+    overture-latam: 6.0 # NEW — CA/MX/BR Overture slices. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -71,7 +71,7 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the

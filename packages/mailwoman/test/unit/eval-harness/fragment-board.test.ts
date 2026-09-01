@@ -133,7 +133,7 @@ describe("the FR fragment board fixture", () => {
 		}
 	})
 
-	it("reserves every street surface it uses, so a shard can exclude them", async () => {
+	it("reserves every street surface it uses, so a database can exclude them", async () => {
 		const reserved = new Set(
 			[
 				...TextSpliterator.from(

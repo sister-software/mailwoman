@@ -77,7 +77,7 @@ Two claims I made and then corrected under review — **do not carry these forwa
 
 - **"The model overfit the US template" — [retracted].** The evidence cuts against it. The non-US
   forms were well-fed, several above US weight (`gnaf` AU 6.0, `synth-german` 6.0,
-  `synth-fr-admin-split` 6.0 vs `tiger` US 4.0), and the targeted bare-street shards ride at 12.0.
+  `synth-fr-admin-split` 6.0 vs `tiger` US 4.0), and the targeted bare-street extracts ride at 12.0.
   Under-exposure would have been fixed by that; it wasn't. Part of the failure (per-digit number
   fragmentation) is country-independent, and US highway/rural addresses fail too. The defensible read
   is **structural difficulty / capacity under flat BIO**, which is what the #727 runbook already
@@ -133,8 +133,8 @@ fragment/edge-case-heavy, so the tail is smaller on real drop-in traffic than th
 - **#727 stage-2 (FSemi-CRF span head).** The runbook's confirmed next model arc for the boundary
   class; stage-1 (aux head) plateaued at 5→2 flips. Explicitly a multi-night architecture build (new
   export path, #378 SLO, capability rework) — a fresh dedicated workstream, not a tail-end launch.
-- **29M shard campaign.** Deprioritized — the v250→v257 campaign already threw 12.0-weight targeted
-  shards and plateaued; more re-plateaus. [concluded]
+- **29M extract campaign.** Deprioritized — the v250→v257 campaign already threw 12.0-weight targeted
+  extracts and plateaued; more re-plateaus. [concluded]
 
 ## Open decisions for you (in priority order)
 

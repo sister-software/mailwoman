@@ -250,7 +250,7 @@ _(PR A can be cut here if the operator wants the invariant shipped independently
 
 **Interfaces:**
 
-- Produces: the module directory later tasks add files into. All existing exports (`buildCandidate`, `foldGeonamesIntoAdmin`, `DEFAULT_FOLD_COUNTRIES`, `promoteCandidate`, `publishGazetteer`, `resolvePostcodeShards`, `wofDir`, …) unchanged, now via `gazetteer-pipeline/index.js`.
+- Produces: the module directory later tasks add files into. All existing exports (`buildCandidate`, `foldGeonamesIntoAdmin`, `DEFAULT_FOLD_COUNTRIES`, `promoteCandidate`, `publishGazetteer`, `resolvePostcodeExtracts`, `wofDir`, …) unchanged, now via `gazetteer-pipeline/index.js`.
 
 - [ ] **Step 1: Move** — `git mv mailwoman/gazetteer-pipeline.ts mailwoman/gazetteer-pipeline/index.ts`
 - [ ] **Step 2: Fix importers** — `rg -l "gazetteer-pipeline.js" mailwoman | xargs sed -i 's#gazetteer-pipeline.js#gazetteer-pipeline/index.js#g'`; then inspect `git diff` (expect only import-path lines).

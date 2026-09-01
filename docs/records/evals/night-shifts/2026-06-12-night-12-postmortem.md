@@ -2,7 +2,7 @@
 
 Opus-orchestrated, Sonnet-executed shift. Conn taken ~01:49 CEST, ends 15:00 UTC. The headline:
 six wave-A agents merged clean, then the v0.5.0 full build crashed ~2.5h in and was recovered
-(see the #519 NFC section) — it finished its emit + align and is writing parquet shards to
+(see the #519 NFC section) — it finished its emit + align and is writing parquet extracts to
 completion as this is filed.
 
 ## What shipped
@@ -87,7 +87,7 @@ it just cost more than a clean smoke would have.
 - **Task 2 wiring:** re-evaluate the AU-level span-proposer lexicon (the "L" false-positive risk) with a clean A/B before wiring it; codex tables already shipped.
 - **GeoNames `US.txt`** sourcing to actually run the #525 backfill (#549 infra is ready).
 - **2 ambiguous-gold rows** on #550 (126 FR date-street slash — ruled keep; 177 unbalanced-vs-quoted-venue class — noted).
-- The build **crashed once and was recovered** (#554 — the #519 NFC decision written up above) and is in its final parquet-shard phase, likely completing ~shift-end or just after. It's detached; on completion the watcher writes `build-logs/v0.5.0-validation-report.md` (manifest + quarantine breakdown + holdout verification). The model-based validation (DE honest-eval) + first new-format train are next-session (gated). To resume a build crash without re-emitting: `MAILWOMAN_RESUME=1`.
+- The build **crashed once and was recovered** (#554 — the #519 NFC decision written up above) and is in its final parquet-extract phase, likely completing ~shift-end or just after. It's detached; on completion the watcher writes `build-logs/v0.5.0-validation-report.md` (manifest + quarantine breakdown + holdout verification). The model-based validation (DE honest-eval) + first new-format train are next-session (gated). To resume a build crash without re-emitting: `MAILWOMAN_RESUME=1`.
 
 ## Concrete next steps (big-model / next session)
 
@@ -98,15 +98,15 @@ it just cost more than a clean smoke would have.
 
 ## Numbers (running)
 
-| metric                | value                                                                                                                                               |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| shift window          | 01:49 CEST → 15:00 UTC                                                                                                                              |
-| Sonnet agents         | 6 (all completed)                                                                                                                                   |
-| PRs merged            | 7 (#548/549/550/551/553/554) + Task 5 artifact                                                                                                      |
-| issues filed          | #552 (imls subregion), #555 (locateSpan combining-mark)                                                                                             |
-| full build            | launched → crashed ~2.5h in (NFC, wof-admin Bengali variant) → recovered via #554 + `MAILWOMAN_RESUME=1` → final shard-write, completing ~shift-end |
-| build crash incidents | 1 (NFC throw + locateSpan over-run; recovered, ~1h, no emit lost)                                                                                   |
-| final quarantine      | 351K (346K component-not-found routine, 4.9K non-Latin span-oob → #555)                                                                             |
-| peak heat / governed  | 92°C; high-water governor (93/88), 0 pauses; iGPU high→low helped                                                                                   |
-| NaN incidents         | 0 (no training this shift)                                                                                                                          |
-| CI failures           | 0                                                                                                                                                   |
+| metric                | value                                                                                                                                                 |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| shift window          | 01:49 CEST → 15:00 UTC                                                                                                                                |
+| Sonnet agents         | 6 (all completed)                                                                                                                                     |
+| PRs merged            | 7 (#548/549/550/551/553/554) + Task 5 artifact                                                                                                        |
+| issues filed          | #552 (imls subregion), #555 (locateSpan combining-mark)                                                                                               |
+| full build            | launched → crashed ~2.5h in (NFC, wof-admin Bengali variant) → recovered via #554 + `MAILWOMAN_RESUME=1` → final extract-write, completing ~shift-end |
+| build crash incidents | 1 (NFC throw + locateSpan over-run; recovered, ~1h, no emit lost)                                                                                     |
+| final quarantine      | 351K (346K component-not-found routine, 4.9K non-Latin span-oob → #555)                                                                               |
+| peak heat / governed  | 92°C; high-water governor (93/88), 0 pauses; iGPU high→low helped                                                                                     |
+| NaN incidents         | 0 (no training this shift)                                                                                                                            |
+| CI failures           | 0                                                                                                                                                     |

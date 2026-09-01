@@ -58,7 +58,7 @@ export const sourcesTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 			.optional()
 			.describe(
 				"Substring filter on the artifact filename — e.g. `postalcode` for the postcode family. Omit to census " +
-					"every gazetteer shard under the data root."
+					"every gazetteer extract under the data root."
 			),
 	}),
 	handler: async (args) => {
@@ -129,7 +129,7 @@ export const sourcesTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 					"present is necessary and not sufficient.",
 				"`.prev`, `.bak` and journal siblings are excluded — they are on disk on purpose and would report the same " +
 					"country twice under a name nobody can act on.",
-				"Counts are `spr` rows, which for a postcode shard is postcodes and for an admin shard is places. Compare " +
+				"Counts are `spr` rows, which for a postcode extract is postcodes and for an admin extract is places. Compare " +
 					"across artifacts of the same family, never across families.",
 			],
 		}

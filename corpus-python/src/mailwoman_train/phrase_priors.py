@@ -18,7 +18,7 @@ This module defines:
   Total width = ``len(_BIE) + len(PHRASE_KINDS) = 3 + 7 = 10``.
 
 Why mirror the TS taxonomy here instead of importing? The classifier trains in Python
-on parquet shards that don't carry the TS-side ``PhraseProposal`` value type. The corpus
+on parquet slices that don't carry the TS-side ``PhraseProposal`` value type. The corpus
 build (forthcoming, alongside corpus-v0.4.0) is what produces per-token feature tensors;
 its bridge to the TS-side phrase grouper lives there, not here. This file is just the
 shared vocabulary.

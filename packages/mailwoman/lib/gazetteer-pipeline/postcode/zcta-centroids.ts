@@ -24,7 +24,7 @@
  *   download.geonames.org/export/zip/US.zip (GeoNames; CC-BY 4.0, attribute "GeoNames (CC-BY
  *   4.0)").
  *
- *   This module owns the parse + fill logic; `gazetteer build postcode-shard` runs these fills;
+ *   This module owns the parse + fill logic; `gazetteer build postcode-database` runs these fills;
  *   `scripts/build-pilot-anchor-lookup.ts` mirrors the same join for lookup-build-time fills.
  *   Tested by the sibling `zcta-centroids.test.ts`.
  */
@@ -78,9 +78,9 @@ export function parseZCTACentroids(text: string): Map<string, ZCTACentroid> {
 }
 
 /**
- * Fill `(0,0)`-placeholder US postcode rows in a WOF postcode shard's `spr` table from the ZCTA centroid map, recording
- * per-row provenance in `centroid_source`. Rows with a real coordinate are never touched; placeholders without a ZCTA
- * stay placeholder (and get no provenance row). Idempotent. Returns the number of rows filled.
+ * Fill `(0,0)`-placeholder US postcode rows in a WOF postcode database's `spr` table from the ZCTA centroid map,
+ * recording per-row provenance in `centroid_source`. Rows with a real coordinate are never touched; placeholders
+ * without a ZCTA stay placeholder (and get no provenance row). Idempotent. Returns the number of rows filled.
  */
 export function fillPlaceholderCentroids(
 	db: DatabaseClient<WOFDatabase>,
@@ -137,7 +137,7 @@ export function fillPlaceholderCentroids(
  *
  * DELIBERATELY NOT `geonames-postal.ts`'s `geonamesPostalRows`: this reader is synchronous over an in-memory string
  * (its tests call it directly), and its `Number` + `(0, 0)`-skip validity rules differ from that iterator's `pyFloat`
- * port — swapping either would move the shard's mean centroids.
+ * port — swapping either would move the database's mean centroids.
  */
 export function parseGeonamesCentroids(text: string): Map<string, ZCTACentroid> {
 	const acc = new Map<string, { lat: number; lon: number; n: number }>()

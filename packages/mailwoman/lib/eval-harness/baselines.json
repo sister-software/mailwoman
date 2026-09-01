@@ -1,6 +1,6 @@
 {
 	"$comment": "Registered harness baselines (#727 stage-2, Tier 0). Read by baseline-assert.ts, which REFUSES to let a harness print a report when a reading deviates from its row. This is not a promotion gate — gates/*.json ask 'is the model good enough to ship' and are one-sided; these ask 'is the instrument reading correctly' and are TWO-SIDED. A metric 40% above its baseline is as loud as 40% below, because the usual cause is that the number changed meaning.",
-	"$why": "Two verdicts nearly went out wrong in one arc, both from a harness reporting confidently on a broken instrument. Phase 1 read street token@1 0.348 against a v264 known-good of 0.573 (-39%; a missing map_location plus piece-concatenation welding '5thAve'). Phase 4a measured a resolver rerank while the resolver reached street tier 0/267 — no street shards wired, instrument dark, report read as a finding (VOID; see 2026-07-16-phase4a-rerank-invalid-measurement.md). Every row below is a number one of those incidents would have tripped over.",
+	"$why": "Two verdicts nearly went out wrong in one arc, both from a harness reporting confidently on a broken instrument. Phase 1 read street token@1 0.348 against a v264 known-good of 0.573 (-39%; a missing map_location plus piece-concatenation welding '5thAve'). Phase 4a measured a resolver rerank while the resolver reached street tier 0/267 — no street databases wired, instrument dark, report read as a finding (VOID; see 2026-07-16-phase4a-rerank-invalid-measurement.md). Every row below is a number one of those incidents would have tripped over.",
 	"$registering": "A row demands a commit, a command, and a note. A baseline you cannot reproduce from its own row is a rumor, not a baseline. When a number legitimately moves (new fixture, new tokenizer, a real model change) RE-REGISTER with a fresh row and a reason — never widen tolerance to make a deviation quiet. That is silent gate drift wearing a different hat.",
 	"$harness_comparability": "NEVER register two harnesses' numbers under one id. The `harness` field exists so they can never be compared by accident. Three live JS harnesses, three different systems, all correct: (1) `js-ship-config` — the real BIO argmax decode under production config; (2) `js-summed-bio-segdecode` — oracle-k, whose segment decode scores spans as summed B-/I- log-probs and NEVER reads the learned span head, so its seg@1 is the untrained STAND-IN on whatever model you hand it; (3) `js-span-decode` — the learned span head via trace.spanScores + decodeSegmentationsKBest. The Python probe (scripts/eval_seg_at_1.py) is a fourth: it feeds NONE of the production soft channels and reads token@1 0.4906 where the JS harness reads 0.573 on the same weights (the #718 trap).",
 	"$this_rule_has_already_been_violated": "On 2026-07-16 the first cut of this file gave oracle-k a `v301` profile mapping its seg@1 reading to `parity.street.seg_at_1@v301` — a LEARNED-span-decode number (0.5768). oracle-k computes the summed-BIO stand-in, which reads 0.449 on those same v301 weights. The profile compared two harnesses through one id, which is the exact thing the paragraph above forbids, written one section above the violation. It was caught by running it, not by reading it. A profile's rows must carry the `harness` the profile is consumed by.",
@@ -320,7 +320,7 @@
 			"registered_at": "2026-07-16",
 			"commit": "c064e240",
 			"command": "node scratchpad/t1a-regression-crosstab.mjs",
-			"note": "19/54 vs the shipped decode's 12/54 — 11 new hallucinations, 4 removed, net +7. STATISTICAL CAVEAT (corrected after first publication): at n=54 the Wilson intervals OVERLAP ([0.132,0.349] vs [0.238,0.485]) and McNemar on the paired discordants gives two-sided p=0.12, so the RATE DIFFERENCE IS NOT ESTABLISHED. What is established is that the 11 new hallucinations are real, individually inspectable failures ('New York, NY' -> street='new york'), and the pre-registered kill condition turns on the failure CLASS existing rather than on its rate. Registered as EVIDENCE, not as a target: this is what keeps the span decode behind an off-by-default flag. The rate question is settled by the T1c fragment board's bare-locality class at n=400 (+/-4.0pp), not by this row. Not a grammar defect (the exported grammar has start/end transitions and an O segment type at index 0, so an all-O parse is representable and cheap) — it is learned miscalibration, the same thin-corpus prior that makes the BIO head read bare toponyms as locality, seen from the opposite side. If a BAN bare-street shard (T2) works, THIS ROW SHOULD FALL. It is the cleanest single number for grading that shard."
+			"note": "19/54 vs the shipped decode's 12/54 — 11 new hallucinations, 4 removed, net +7. STATISTICAL CAVEAT (corrected after first publication): at n=54 the Wilson intervals OVERLAP ([0.132,0.349] vs [0.238,0.485]) and McNemar on the paired discordants gives two-sided p=0.12, so the RATE DIFFERENCE IS NOT ESTABLISHED. What is established is that the 11 new hallucinations are real, individually inspectable failures ('New York, NY' -> street='new york'), and the pre-registered kill condition turns on the failure CLASS existing rather than on its rate. Registered as EVIDENCE, not as a target: this is what keeps the span decode behind an off-by-default flag. The rate question is settled by the T1c fragment board's bare-locality class at n=400 (+/-4.0pp), not by this row. Not a grammar defect (the exported grammar has start/end transitions and an O segment type at index 0, so an all-O parse is representable and cheap) — it is learned miscalibration, the same thin-corpus prior that makes the BIO head read bare toponyms as locality, seen from the opposite side. If a BAN bare-street database (T2) works, THIS ROW SHOULD FALL. It is the cleanest single number for grading that database."
 		},
 		{
 			"id": "fragment-fr.street_housenumber@v264",
@@ -333,7 +333,7 @@
 			"registered_at": "2026-07-16",
 			"commit": "e45e0255",
 			"command": "mailwoman eval fragment-board --weights-cache <dir> --klass street-housenumber",
-			"note": "GUARD (contextful). With a clean house number the model is excellent — 370/400. This is the number a shard must not buy its fragment gains with."
+			"note": "GUARD (contextful). With a clean house number the model is excellent — 370/400. This is the number a database must not buy its fragment gains with."
 		},
 		{
 			"id": "fragment-fr.alnum_housenumber@v264",
@@ -411,7 +411,7 @@
 			"registered_at": "2026-07-16",
 			"commit": "e45e0255",
 			"command": "mailwoman eval fragment-board --weights-cache <dir> --klass bare-locality",
-			"note": "GUARD, AND THE ONE TO WATCH. Scores the ABSENCE of a street on 400 bare communes — the class every other street harness drops entirely. It passes for the WRONG REASON: the model calls everything without a house number a locality, and on bare localities that is accidentally correct. PREDICTION: if T2 teaches bare streets, THIS MAY REGRESS, because the class free-rides on the same broken default the shard is there to fix. A fall here alongside a rise in the bare classes means the shard traded one default for another instead of teaching the distinction."
+			"note": "GUARD, AND THE ONE TO WATCH. Scores the ABSENCE of a street on 400 bare communes — the class every other street harness drops entirely. It passes for the WRONG REASON: the model calls everything without a house number a locality, and on bare localities that is accidentally correct. PREDICTION: if T2 teaches bare streets, THIS MAY REGRESS, because the class free-rides on the same broken default the database is there to fix. A fall here alongside a rise in the bare classes means the database traded one default for another instead of teaching the distinction."
 		},
 		{
 			"id": "paris.street.token_at_1@v264",
@@ -438,32 +438,32 @@
 			"registered_at": "2026-07-16",
 			"commit": "b549ef14",
 			"command": "mailwoman eval oa-resolver --resolve-db <admin + postcode + ban/street-centroids-fr.db>",
-			"note": "THE Phase-4a catcher, registered for what it is: with ban/street-centroids-fr.db wired and loaded, 314 hypothesis geocodes produce street 1, admin 314 — an evidence rate of 1.6%. A reading of 0.000 means the street shards did not load and the resolver is dark; that is the exact state Phase 4a's VOID measurement was taken in (street tier 0/267). Absolute tolerance, not relative: at a count of 1 the relative band is meaningless. Note the deeper finding this row encodes — 1.6% is nearly as blind as 0%, because a bare fragment has no house number for the address-point tier and no locality to scope a street lookup. The resolver cannot arbitrate the class the arc targets."
+			"note": "THE Phase-4a catcher, registered for what it is: with ban/street-centroids-fr.db wired and loaded, 314 hypothesis geocodes produce street 1, admin 314 — an evidence rate of 1.6%. A reading of 0.000 means the street databases did not load and the resolver is dark; that is the exact state Phase 4a's VOID measurement was taken in (street tier 0/267). Absolute tolerance, not relative: at a count of 1 the relative band is meaningless. Note the deeper finding this row encodes — 1.6% is nearly as blind as 0%, because a bare fragment has no house number for the address-point tier and no locality to scope a street lookup. The resolver cannot arbitrate the class the arc targets."
 		},
 		{
-			"id": "parity.resolver.street_evidence_rate.nl@wired-shards",
+			"id": "parity.resolver.street_evidence_rate.nl@wired-databases",
 			"harness": "js-resolver-rerank",
 			"metric": "share of NL fixtures where ANY k-best hypothesis reached street-level resolution",
 			"model": "resolver config, model-independent",
 			"fixture": "mailwoman/eval-harness/fixtures/parity-corpus.triaged.jsonl, NL subset (n=18)",
-			"config": "admin + postcode + street shards",
+			"config": "admin + postcode + street databases",
 			"value": 0.22,
 			"registered_at": "2026-07-16",
 			"commit": "b549ef14",
-			"command": "mailwoman eval oa-resolver --resolve-db <admin + postcode + street shards>",
-			"note": "NL and DE are the two locales with enough street evidence to be canaries rather than knife-edges — everywhere else the rate is 0.00-0.03. If NL reads 0.00, the street shards are not loaded and no rerank result from this run is admissible."
+			"command": "mailwoman eval oa-resolver --resolve-db <admin + postcode + street databases>",
+			"note": "NL and DE are the two locales with enough street evidence to be canaries rather than knife-edges — everywhere else the rate is 0.00-0.03. If NL reads 0.00, the street databases are not loaded and no rerank result from this run is admissible."
 		},
 		{
-			"id": "parity.resolver.street_evidence_rate.de@wired-shards",
+			"id": "parity.resolver.street_evidence_rate.de@wired-databases",
 			"harness": "js-resolver-rerank",
 			"metric": "share of DE fixtures where ANY k-best hypothesis reached street-level resolution",
 			"model": "resolver config, model-independent",
 			"fixture": "mailwoman/eval-harness/fixtures/parity-corpus.triaged.jsonl, DE subset (n=13)",
-			"config": "admin + postcode + street shards",
+			"config": "admin + postcode + street databases",
 			"value": 0.23,
 			"registered_at": "2026-07-16",
 			"commit": "b549ef14",
-			"command": "mailwoman eval oa-resolver --resolve-db <admin + postcode + street shards>",
+			"command": "mailwoman eval oa-resolver --resolve-db <admin + postcode + street databases>",
 			"note": "See the NL row. US reads 0.01, FR 0.03, ZZ/NZ/AU/NO/PT/PL/RO all 0.00 — those are too sparse to distinguish 'dark instrument' from 'sparse data', which is precisely how Phase 4a's first measurement passed unnoticed."
 		},
 		{
@@ -509,7 +509,7 @@
 			"value": 0.953,
 			"$ci95": [0.927, 0.969],
 			"$n": 400,
-			"note": "shard form 2 (`{city}, {pc}, {street} {number}`) — already at ceiling with ZERO Norwegian training data."
+			"note": "database form 2 (`{city}, {pc}, {street} {number}`) — already at ceiling with ZERO Norwegian training data."
 		},
 		{
 			"command": "node scratchpad/run-digit-board.run.ts   (board: mailwoman/eval-harness/digit-board.ts)",
@@ -524,7 +524,7 @@
 			"value": 0.94,
 			"$ci95": [0.912, 0.959],
 			"$n": 400,
-			"note": "shard form 3 (`{pc} {city}, {street} {number}`) — #901 called this the 7% floor; it reads 6.0% failure."
+			"note": "database form 3 (`{pc} {city}, {street} {number}`) — #901 called this the 7% floor; it reads 6.0% failure."
 		},
 		{
 			"command": "node scratchpad/run-digit-board.run.ts   (board: mailwoman/eval-harness/digit-board.ts)",
@@ -539,7 +539,7 @@
 			"value": 0.65,
 			"$ci95": [0.602, 0.695],
 			"$n": 400,
-			"note": "THE OTHER HEADROOM. NO `124/1` is ONE component (cadastral gnr/bnr); AU `12/345` is TWO (unit + house_number). Identical surface shape, opposite correct answers — this cell pins the Norwegian reading so a future AU intra-word-split shard (B5) cannot generalize over it unnoticed."
+			"note": "THE OTHER HEADROOM. NO `124/1` is ONE component (cadastral gnr/bnr); AU `12/345` is TWO (unit + house_number). Identical surface shape, opposite correct answers — this cell pins the Norwegian reading so a future AU intra-word-split database (B5) cannot generalize over it unnoticed."
 		},
 		{
 			"command": "node scratchpad/run-digit-board.run.ts   (board: mailwoman/eval-harness/digit-board.ts)",
@@ -554,7 +554,7 @@
 			"value": 0.968,
 			"$ci95": [0.945, 0.981],
 			"$n": 400,
-			"note": "shard form 1 (`{street} {number}, {pc} {city}`) — the class #901 measured a 30% residual on and built synth-no-street-led at weight 12.0 to fix. It reads 3.2% failure, BETTER than pc-first, which #901 called the floor. Different metric than #901's, so not a like-for-like refutation — but the shard aimed here, and here is at ceiling."
+			"note": "database form 1 (`{street} {number}, {pc} {city}`) — the class #901 measured a 30% residual on and built synth-no-street-led at weight 12.0 to fix. It reads 3.2% failure, BETTER than pc-first, which #901 called the floor. Different metric than #901's, so not a like-for-like refutation — but the database aimed here, and here is at ceiling."
 		},
 		{
 			"command": "node scratchpad/run-digit-board.run.ts   (board: mailwoman/eval-harness/digit-board.ts)",
@@ -572,6 +572,6 @@
 			"note": "Reported for completeness and NOT a verdict: it blends two ceiling classes with two 0.65-0.69 classes. Read the cells."
 		}
 	],
-	"$fragment_board": "The fragment board (T1c) is the grading set for the BAN shard (T2). Its first read on the shipped model: with a house number 0.925, without one 0.215 — the house number LICENSES the street reading rather than merely helping it. Targets = bare-street/street-particle/admin-street-homonym/date-name. Guards = street-housenumber/alnum-housenumber (contextful) and bare-locality (hallucination). See 2026-07-16-t1c-fragment-board-verdict.md.",
-	"$digit_board": "Board 3 — the NO digit-ownership board (digit-board.ts), registered against SHIPPED v310 BEFORE any Norway-inclusive candidate exists. A TRUE ZERO-KNOWLEDGE arm: the YAML Norway problem (#1145) meant v310 — and every model since v1.9.0 — trained on exactly zero Norwegian rows. WHAT IT ALREADY SHOWS, and why it is registered BEFORE a retrain: synth-no-street-led emits three forms, all carrying postcode+city, and v310 already reads those three classes at 0.940-0.968 with no Norwegian data at all. The 12,000-row shard the YAML bug has been dropping since v1.9.0 targets classes at ceiling; un-dropping it should move them ~0. The headroom is bare-street-hn (0.693 — a form the shard NEVER emits, no postcode present) and slash-hn (0.650, cadastral gnr/bnr). A retrain on the un-dropped shard is NOT the fix; a FRAGMENT shard is, mirroring fr-fragment. DO-NO-HARM vs v264 (one variable: the fr-fragment shard): OVERALL 0.859 -> 0.867, every cell's CI overlapping — the FR shard neither helped nor harmed Norwegian. That is NOT a cross-lingual transfer test: the FR board's bare-street class is street-ONLY (`Rue Montmartre`) while every positive class here carries a house number. Different classes."
+	"$fragment_board": "The fragment board (T1c) is the grading set for the BAN database (T2). Its first read on the shipped model: with a house number 0.925, without one 0.215 — the house number LICENSES the street reading rather than merely helping it. Targets = bare-street/street-particle/admin-street-homonym/date-name. Guards = street-housenumber/alnum-housenumber (contextful) and bare-locality (hallucination). See 2026-07-16-t1c-fragment-board-verdict.md.",
+	"$digit_board": "Board 3 — the NO digit-ownership board (digit-board.ts), registered against SHIPPED v310 BEFORE any Norway-inclusive candidate exists. A TRUE ZERO-KNOWLEDGE arm: the YAML Norway problem (#1145) meant v310 — and every model since v1.9.0 — trained on exactly zero Norwegian rows. WHAT IT ALREADY SHOWS, and why it is registered BEFORE a retrain: synth-no-street-led emits three forms, all carrying postcode+city, and v310 already reads those three classes at 0.940-0.968 with no Norwegian data at all. The 12,000-row database the YAML bug has been dropping since v1.9.0 targets classes at ceiling; un-dropping it should move them ~0. The headroom is bare-street-hn (0.693 — a form the database NEVER emits, no postcode present) and slash-hn (0.650, cadastral gnr/bnr). A retrain on the un-dropped database is NOT the fix; a FRAGMENT database is, mirroring fr-fragment. DO-NO-HARM vs v264 (one variable: the fr-fragment database): OVERALL 0.859 -> 0.867, every cell's CI overlapping — the FR database neither helped nor harmed Norwegian. That is NOT a cross-lingual transfer test: the FR board's bare-street class is street-ONLY (`Rue Montmartre`) while every positive class here carries a house number. Different classes."
 }

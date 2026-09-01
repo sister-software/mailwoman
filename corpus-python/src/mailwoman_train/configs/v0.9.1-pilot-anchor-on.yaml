@@ -21,15 +21,15 @@
 # If the gate holds, a follow-up extends to a full 100k run; if it fails, stop and diagnose ONE
 # knob (NaN protocol).
 #
-# CORPUS: v0.4.1-de — the v0.4.0 (US/FR) base overlaid with a German synth-german shard (200K train
-# + 4K val rows, real OpenAddresses Berlin/Saxony tuples rendered German-order via build-german-shard.mjs,
+# CORPUS: v0.4.1-de — the v0.4.0 (US/FR) base overlaid with a German synth-german slice (200K train
+# + 4K val rows, real OpenAddresses Berlin/Saxony tuples rendered German-order via build-german-slice.mjs,
 # 40x the v0.8.0 continue-train supplement so a FROM-SCRATCH model can actually learn German). Assembled
 # 2026-06-04. Reproduce + deploy to the Modal volume:
-#   node scripts/build-german-shard.mjs --output /tmp/german-train.jsonl --count 200000 --seed 42
-#   node scripts/build-german-shard.mjs --output /tmp/german-val.jsonl   --count 4000   --seed 99
+#   node scripts/build-german-slice.mjs --output /tmp/german-train.jsonl --count 200000 --seed 42
+#   node scripts/build-german-slice.mjs --output /tmp/german-val.jsonl   --count 4000   --seed 99
 #   python3 scripts/jsonl-to-parquet.py --input /tmp/german-train.jsonl --output /tmp/part-german-train.parquet
 #   python3 scripts/jsonl-to-parquet.py --input /tmp/german-val.jsonl   --output /tmp/part-german-val.parquet
-#   # then the overlay MANIFEST (v0.4.0 shards + the 2 German shards) — see the build-log doc — and:
+#   # then the overlay MANIFEST (v0.4.0 slices + the 2 German slices) — see the build-log doc — and:
 #   modal volume put mailwoman-training /tmp/part-german-train.parquet corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/train/part-german-train.parquet
 #   modal volume put mailwoman-training /tmp/part-german-val.parquet   corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/val/part-german-val.parquet
 #   modal volume put mailwoman-training <MANIFEST.json>                corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/MANIFEST.json
@@ -70,7 +70,7 @@ data:
     # locality F1 lags the 70% gate, lower it if US/FR slip past the 1pp regression check.
     synth-german: 6.0
   train_rows_per_epoch: 1000000
-  val_rows: 4096 # the per-locale cross_pollution regression check now has DE val support (the 4K German val shard)
+  val_rows: 4096 # the per-locale cross_pollution regression check now has DE val support (the 4K German val slice)
   coarse_filter: true
   augment_directional_prob: 0.3
   augment_region_prob: 0.3

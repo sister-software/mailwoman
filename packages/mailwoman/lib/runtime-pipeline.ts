@@ -177,7 +177,7 @@ export interface CreateRuntimePipelineOpts {
 	 *
 	 * - `undefined` (default) → **default-on**: when the classifier ships a span grammar (a v3+ span-head bundle), the
 	 *   bundled FR index ({@link loadDefaultStreetEvidence}, `street-centroids-fr.db`) is lazy-loaded on the first call
-	 *   and the Stage-3 classifier reranks the street. A pre-v3 (span-less) classifier, or a missing shard, → no-op
+	 *   and the Stage-3 classifier reranks the street. A pre-v3 (span-less) classifier, or a missing database, → no-op
 	 *   (byte-stable): the rerank can only ADD an atlas-confirmed street, never remove a model call.
 	 * - A `StreetLocalityEvidence` → use it (a custom / multi-country index).
 	 * - `false` → disabled (no rerank).

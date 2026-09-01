@@ -35,7 +35,7 @@ the regression we set out to fix.
 ## Eighty-seven percent and a wall
 
 The fix looked obvious. German addresses have the same any-order problem, and we'd
-already beaten it with a synthetic shard that teaches both word orders. So we built the
+already beaten it with a synthetic extract that teaches both word orders. So we built the
 French version: real street and city data, half the rows flipped into the postcode-first
 shapes the model keeps tripping on, every house number labeled correctly wherever it
 landed. Then we retrained and re-measured against a French eval we'd just widened from
@@ -43,7 +43,7 @@ one town to fifty-six.
 
 It worked, mostly. On that harder eval the shipped model scores 54.5%. It's blind to
 every reordered row. The retrain came back at **87.4%**. A thirty-two point swing from a
-single shard is the kind of number that makes you want to ship before coffee.
+single extract is the kind of number that makes you want to ship before coffee.
 
 Except the bar was 91, and 87.4 is not 91. Every miss was the same shape, too: `47110
 Sainte-Livrade-sur-Lot, 69 …` with `47110` labeled as the house number. The model had
@@ -52,8 +52,8 @@ postcode out front. The signal was there and slightly too quiet.
 
 ## So we turned it up
 
-If a shard at weight 3 gets you to 87, a shard at weight 6 gets you the rest of the way.
-That was the bet, and it's the same weight the German shard runs at, so we had
+If a extract at weight 3 gets you to 87, a extract at weight 6 gets you the rest of the way.
+That was the bet, and it's the same weight the German extract runs at, so we had
 precedent. We doubled it and retrained.
 
 It came back at **84.7%**. Lower. And when we dumped the misses, the model wasn't just
@@ -75,7 +75,7 @@ the model is willing to cut a postcode in half to satisfy the craving.
 
 Two days ago we wrote that you can't fix a representation gap with more data. Last night's
 lesson is its cousin: you can't fix a data-realism gap by turning up the weight. The
-synthetic shard taught the model a caricature of reordered French: useful enough for a
+synthetic extract taught the model a caricature of reordered French: useful enough for a
 thirty-two point jump, too coarse to close the last stretch, and actively harmful past a
 point, because more exposure just deepened the caricature. The plateau isn't a quantity
 problem we can outspend. The model needs reordered examples that look like the real thing,

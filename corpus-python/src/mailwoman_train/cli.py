@@ -10,7 +10,7 @@ Subcommands:
 - ``smoke`` — run the entire pipeline at tiny scale on CPU. Validates the wiring; does
   NOT produce shippable weights.
 - ``verify-tokenizer`` — re-tokenize a sample of corpus rows and assert the SP encoder works.
-- ``tokenizer`` — train a versioned SentencePiece tokenizer from a corpus shard tree, with
+- ``tokenizer`` — train a versioned SentencePiece tokenizer from a corpus slice tree, with
   byte-fallback measurement + model card. v0.5.0 Thread A harness.
 """
 
@@ -366,7 +366,7 @@ _CORPUS_VERSIONED_ROOT = Path("/data/corpus/versioned")
 
 
 def _resolve_corpus_dir(spec: str) -> Path:
-    """Resolve a ``--corpus`` argument into a concrete shard-tree path.
+    """Resolve a ``--corpus`` argument into a concrete slice-tree path.
 
     Accepts three forms:
 
@@ -553,7 +553,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--corpus",
         required=True,
         help='Corpus to train on. Accepts "v0.3.0" / "0.3.0" (resolves under '
-        "/data/corpus/versioned/vX.Y.Z/corpus-vX.Y.Z/) or an explicit shard-tree path "
+        "/data/corpus/versioned/vX.Y.Z/corpus-vX.Y.Z/) or an explicit slice-tree path "
         "(parent of train/, val/, test/).",
     )
     p.add_argument(

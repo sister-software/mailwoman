@@ -5,7 +5,7 @@
  *
  *   Unit tests for the coarse-placer soft-prior wiring in `geocodeAddress` (#244, M1 step C). Fakes
  *   the classifier + resolver so the test captures the `ResolveOpts` the cascade hands the resolver
- *   — no WOF / weights / shards needed. Pins the contract: a confident in-map guess injects an
+ *   — no WOF / weights / databases needed. Pins the contract: a confident in-map guess injects an
  *   `anchorPosterior`; abstain / off-map / no-stage are byte-stable no-ops; an explicit
  *   `defaultCountry` still flows alongside.
  */
@@ -16,7 +16,7 @@ import { geocodeAddress, type GeocodeClassifier } from "mailwoman/geocode-core"
 import { describe, expect, test, vi } from "vitest"
 
 /**
- * A classifier that returns a fixed tree (no region → admin-only path, no shards needed).
+ * A classifier that returns a fixed tree (no region → admin-only path, no databases needed).
  */
 function fakeClassifier(tree: AddressTree): GeocodeClassifier {
 	return { parse: vi.fn(async () => tree) }

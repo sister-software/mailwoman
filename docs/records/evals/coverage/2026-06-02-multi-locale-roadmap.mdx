@@ -1,6 +1,6 @@
 # Which locales need the German treatment, and which don't (2026-06-02)
 
-The German coverage shard taught the model one thing: addresses where the house number comes after
+The German coverage extract taught the model one thing: addresses where the house number comes after
 the street and the postcode comes before the city. Before generalizing that recipe to more locales,
 it's worth knowing which locales actually have that problem, because "the parser is bad at European
 addresses" is not one bug. A spot-check of the v0.7.2 parser against a handful of native-order
@@ -10,10 +10,10 @@ addresses per locale sorts them into three groups.
 
 | locale | convention                                          | what the parser does                                                                                                                    | the fix                                             |
 | ------ | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| DE     | house after street, postcode before city            | `Hauptstraße 5` → street=`Hauptstraße 5` (house swallowed)                                                                              | order shard (done)                                  |
-| ES     | house after street, postcode before city            | `Calle Mayor 12` → street=`Calle Mayor 12`                                                                                              | **same order shard**                                |
-| IT     | house after street, postcode before city            | `Via Roma 12` → street=`Via Roma 12`                                                                                                    | **same order shard**                                |
-| NL     | house after street, `1012 LM` postcode before city  | `Damrak 70, 1012 LM Amsterdam` → street tagged venue, `locality: "LM Amsterdam"`                                                        | order shard + Dutch postcode                        |
+| DE     | house after street, postcode before city            | `Hauptstraße 5` → street=`Hauptstraße 5` (house swallowed)                                                                              | order extract (done)                                  |
+| ES     | house after street, postcode before city            | `Calle Mayor 12` → street=`Calle Mayor 12`                                                                                              | **same order extract**                                |
+| IT     | house after street, postcode before city            | `Via Roma 12` → street=`Via Roma 12`                                                                                                    | **same order extract**                                |
+| NL     | house after street, `1012 LM` postcode before city  | `Damrak 70, 1012 LM Amsterdam` → street tagged venue, `locality: "LM Amsterdam"`                                                        | order extract + Dutch postcode                        |
 | GB     | house **first**, alphanumeric postcode last         | `10 Downing Street, London SW1A 2AA` → house+street correct, `locality: "London SW1A 2AA"`                                              | postcode coverage, **not** order                    |
 | FR     | house first, postcode before city (already trained) | region/venue/po_box weak, but the failing rows are multi-script (`Шом, Creuse`) + coarse `région, France` queries, not street addresses | multi-script + coarse-query coverage, **not** order |
 
@@ -33,9 +33,9 @@ in the eval.
 
 GB is the one that does not fit. British addresses already run house-number-first, which is what the
 model was trained on, so it tags house and street correctly. What it cannot do is recognize
-`SW1A 2AA` as a postcode, so the postcode lands inside the locality. An order shard would do nothing
+`SW1A 2AA` as a postcode, so the postcode lands inside the locality. An order extract would do nothing
 for GB. It needs postcode coverage, which is closer to the existing postcode-repair work than to the
-German order shard.
+German order extract.
 
 FR is already in the model's training and mostly works on canonical street addresses, so it is not a
 recipe candidate at all. Its weak tags (region 28%, venue and po_box near zero) come from the eval's
@@ -43,7 +43,7 @@ harder rows rather than from order: checking the FR golden, every expected field
 raw, but the rows that carry a region are coarse `Île-de-France, France` queries and multi-script
 kryptonite (`Шом, Creuse`, permuted to `France, Шом, Creuse`). So the FR lever is the broader
 multi-script and permutation robustness plus coarse region+country queries, and the German order
-shard touches none of it.
+extract touches none of it.
 
 ## The tokenizer is not the wall, for any script
 
@@ -68,7 +68,7 @@ necessary than it looked, since the vocabulary is already multilingual enough to
 Hold all of this behind the German result. If the German train lifts street and house_number without
 costing US or French accuracy, the recipe is proven and ES, IT, and NL follow on the same rails. If
 German shows interference instead, that same interference would hit the others, and pre-building them
-would just be three more shards to pull back out. So this is a map, not a backlog. Measure the first
+would just be three more extracts to pull back out. So this is a map, not a backlog. Measure the first
 one before you commit to the rest.
 
 The spot-check is directional (a few hand-written addresses per locale, not a labeled set); treat the

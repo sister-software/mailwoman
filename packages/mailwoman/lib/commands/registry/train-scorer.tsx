@@ -6,7 +6,7 @@
  *   `mailwoman registry train-scorer <variant>` — train + emit a committed learned-scorer model:
  *   `gbt` (the production dedup GBT, #603), `cross-gbt` (the NPI-anchored cross-source link scorer,
  *   #655 option 2), or `org-cross-gbt` (the CCN-anchored org-level cross-source scorer). Needs the
- *   record-matcher source files, weights, and WOF/shard data locally — operator-run, not CI.
+ *   record-matcher source files, weights, and WOF/database data locally — operator-run, not CI.
  */
 
 import { Text } from "ink"

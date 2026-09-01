@@ -38,7 +38,7 @@ export const spec = {
 		locale: { type: "string", default: "en-US", description: "Weights package locale" },
 		"weights-cache": { type: "string", description: "Candidate weights dir" },
 		db: { type: "string", description: "Sealed poi.db" },
-		"resolve-db": { type: "string", description: "WOF admin shards" },
+		"resolve-db": { type: "string", description: "WOF admin databases" },
 		"candidate-db": { type: "string", description: "Byte-range candidate.db" },
 		arm: { type: "string", default: "baseline", description: "Arm label written into the receipt" },
 		"semantic-observation": {

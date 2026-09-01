@@ -64,7 +64,7 @@ The candidate-search step is where the indexes pay off. Mailwoman's WOF distribu
 - A **FTS5 full-text index** on names with prefix-query support ("New Yo\*" matches "New York").
 - An **R\*Tree spatial index** for proximity queries (which places are near these coordinates?).
 - A **column index on `wof:population`** for population-weighted ranking.
-- **Multi-shard support** so different subsets (postcodes, localities, countries) can live in separate database files.
+- **Multi-extract support** so different subsets (postcodes, localities, countries) can live in separate database files.
 
 These were shipped through Phase 4 of the implementation plan; see [PHASE_4_resolver.md](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/phases/PHASE_4_resolver.mdx) and its subphase files for the details.
 
@@ -91,7 +91,7 @@ Mailwoman's resolver drops any candidate whose coordinates are `(0, 0)` from res
 
 ## What the resolver does not do
 
-- **Rooftop precision outside the covered registers.** Where an address-point shard exists, the resolver returns the exact address point, not a locality centroid, at 1 m reported uncertainty: the US situs layer (~125M points, built from NAD and OpenAddresses) and the French BAN register (26M points) are the two live shards today. Outside that coverage, the ladder falls back to interpolation, then a street or admin centroid. [How Mailwoman resolves a place](./how-mailwoman-resolves-a-place.mdx) walks the full precision ladder and what each rung promises.
+- **Rooftop precision outside the covered registers.** Where an address-point extract exists, the resolver returns the exact address point, not a locality centroid, at 1 m reported uncertainty: the US situs layer (~125M points, built from NAD and OpenAddresses) and the French BAN register (26M points) are the two live extracts today. Outside that coverage, the ladder falls back to interpolation, then a street or admin centroid. [How Mailwoman resolves a place](./how-mailwoman-resolves-a-place.mdx) walks the full precision ladder and what each rung promises.
 - **Reverse geocoding.** "What place is at coordinates (40.7128, -74.0060)?" is a separate query shape. The R\*Tree index supports it but the public Mailwoman API does not expose a reverse-geocode endpoint today.
 - **Routing.** "How do I get from A to B?" is a graph problem on the road network, not a gazetteer query.
 

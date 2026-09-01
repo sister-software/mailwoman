@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman situs interpolation` — national TIGER EDGES download + interpolation-shard build
+ *   `mailwoman situs interpolation` — national TIGER EDGES download + interpolation-database build
  *   driver (#483 follow-on).
  *
- *   Orchestrates the per-state `mailwoman situs interpolation-shard` command across every county in
+ *   Orchestrates the per-state `mailwoman situs interpolation-database` command across every county in
  *   the contiguous US (3,143 counties) without running them all at once. Downloads county-level
  *   EDGES ZIPs from https://www2.census.gov/geo/tiger/TIGER2023/EDGES/ in parallel (capped at
- *   `--concurrency`, default 12), retrying on 5xx / network errors, then builds one shard DB per
+ *   `--concurrency`, default 12), retrying on 5xx / network errors, then builds one database DB per
  *   state via that sibling command.
  *
  *   Population-ranked download order: the driver reads `mailwoman/data/county-population-ranked.json`
@@ -17,11 +17,11 @@
  *   counties are downloaded and built first, giving maximum address coverage in minimum wall-clock
  *   time if you kill the run early.
  *
- *   Idempotency: ZIPs already present in `--edges-dir` are skipped (size-verified). State shard DBs
+ *   Idempotency: ZIPs already present in `--edges-dir` are skipped (size-verified). State database DBs
  *   already present in `--out-dir` are skipped unless `--force` is passed. The per-state CHILD owns
  *   its own DB's write; this driver only orchestrates downloads + child builds and writes the small
  *   ranked-county cache, so there is no national-DB temp-then-rename here — large-artifact
- *   atomicity lives one level down in the shard builder. Progress streams to stderr; the summary
+ *   atomicity lives one level down in the database builder. Progress streams to stderr; the summary
  *   lands on stdout.
  */
 
@@ -73,19 +73,19 @@ const MAX_LISTED_FAILURES = 20
  */
 export const spec = {
 	name: "interpolation",
-	description: "Download TIGER EDGES and build interpolation shards",
+	description: "Download TIGER EDGES and build interpolation databases",
 	options: {
 		"edges-dir": {
 			type: "string",
 			default: resolvePath(dataRootPath("census", "tiger2023-edges")),
 			description: "TIGER download directory",
 		},
-		"out-dir": { type: "string", description: "Shard output directory" },
+		"out-dir": { type: "string", description: "Database output directory" },
 		release: { type: "string", default: "TIGER2023", description: "TIGER vintage" },
 		states: { type: "string", description: "Comma-separated states" },
 		"top-counties": { type: "number", validate: positiveInteger, description: "Most-populated county limit" },
 		concurrency: { type: "number", default: 12, validate: positiveInteger, description: "Parallel downloads" },
-		force: { type: "boolean", default: false, description: "Rebuild existing shards" },
+		force: { type: "boolean", default: false, description: "Rebuild existing databases" },
 		"download-only": { type: "boolean", default: false, description: "Only download and unpack" },
 		"build-only": { type: "boolean", default: false, description: "Only build existing downloads" },
 	},
@@ -166,8 +166,8 @@ const STATE_FIPS: Record<string, string> = {
 const RANKED_FILE = String(repoRootPathBuilder("mailwoman", "data", "county-population-ranked.json"))
 
 /**
- * The per-state STREET-SEGMENT builder is now the sibling `situs interpolation-shard` command (the old
- * `scripts/build-interpolation-shard.ts` was migrated into the CLI). Re-invoke the SAME CLI entry this process was
+ * The per-state STREET-SEGMENT builder is now the sibling `situs interpolation-database` command (the old
+ * `scripts/build-interpolation-database.ts` was migrated into the CLI). Re-invoke the SAME CLI entry this process was
  * started from, so dev + published installs both resolve correctly.
  */
 const CLI_ENTRY = scriptEntryPath()
@@ -377,29 +377,29 @@ async function downloadParallel(
 
 //#endregion
 
-//#region Shard build (per state)
+//#region Database build (per state)
 
-interface ShardBuildResult {
+interface DatabaseBuildResult {
 	wallMs: number
 	segments: number
 	counties: number
 }
 
 /**
- * Build one state's interpolation shard DB. Returns wall-clock ms + segment count from the script's stdout, or `null`
- * when the shard already exists and `--force` was not passed.
+ * Build one state's interpolation database DB. Returns wall-clock ms + segment count from the script's stdout, or
+ * `null` when the database already exists and `--force` was not passed.
  */
-async function buildStateShard(
+async function buildStateDatabase(
 	stateAbbr: string,
 	edgesDir: PathBuilderLike,
 	outDir: PathBuilderLike,
 	release: string,
 	force: boolean
-): Promise<ShardBuildResult | null> {
+): Promise<DatabaseBuildResult | null> {
 	const outDB = join(outDir, `interpolation-us-${stateAbbr.toLowerCase()}.db`)
 
 	if ((await pathExists(outDB)) && !force) {
-		console.error(`  [skip] ${stateAbbr}: shard already exists at ${outDB} (--force to rebuild)`)
+		console.error(`  [skip] ${stateAbbr}: database already exists at ${outDB} (--force to rebuild)`)
 
 		return null
 	}
@@ -412,7 +412,7 @@ async function buildStateShard(
 		[
 			CLI_ENTRY,
 			"situs",
-			"interpolation-shard",
+			"interpolation-database",
 			"--state",
 			stateAbbr,
 			"--edges-dir",
@@ -431,7 +431,7 @@ async function buildStateShard(
 	const wallMs = Date.now() - t0
 
 	if (result.status !== 0) {
-		console.error(`  [fail] ${stateAbbr}: situs interpolation-shard exited ${result.status}`)
+		console.error(`  [fail] ${stateAbbr}: situs interpolation-database exited ${result.status}`)
 		console.error(stripAnsi(result.stderr ?? "").trim())
 
 		return { wallMs, segments: 0, counties: 0 }
@@ -492,7 +492,7 @@ const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
 			throw new CommandError("No valid states specified. Check --states values against the STATE_FIPS map.")
 		}
 
-		console.error("=== National TIGER interpolation shard build ===")
+		console.error("=== National TIGER interpolation database build ===")
 		console.error(`states:      ${TARGET_STATES.join(", ")}`)
 		console.error(`edges-dir:   ${EDGES_DIR}`)
 		console.error(`out-dir:     ${OUT_DIR}`)
@@ -500,7 +500,7 @@ const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
 		console.error(`release:     ${RELEASE}`)
 
 		if (FORCE) {
-			console.error("force:       true (re-building existing shards)")
+			console.error("force:       true (re-building existing databases)")
 		}
 
 		console.error("")
@@ -568,7 +568,7 @@ const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
 		}
 
 		// ── Step 3: determine which states have ≥1 county SHP ─────────────────
-		console.error("Step 3: building per-state shards")
+		console.error("Step 3: building per-state databases")
 
 		// States from our target list that have at least one downloaded county SHP. The listing is materialized once
 		// so the filter callback stays synchronous.
@@ -588,8 +588,8 @@ const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
 		console.error(`  ${availableStates.length} states with available SHPs: ${availableStates.join(", ")}`)
 		console.error("")
 
-		// ── Step 4: build shards sequentially ─────────────────────────────────
-		// Sequential (not parallel): each shard script uses DuckDB + SQLite; they're already
+		// ── Step 4: build databases sequentially ─────────────────────────────────
+		// Sequential (not parallel): each database script uses DuckDB + SQLite; they're already
 		// I/O + DuckDB-parallel internally. Running states concurrently risks memory OOM on the
 		// 32K-row state builds and complicates progress reporting.
 		const wallStart = Date.now()
@@ -600,7 +600,7 @@ const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
 		for (const abbr of availableStates) {
 			console.error(`Building ${abbr}…`)
 
-			const result = await buildStateShard(abbr, EDGES_DIR, OUT_DIR, RELEASE, FORCE)
+			const result = await buildStateDatabase(abbr, EDGES_DIR, OUT_DIR, RELEASE, FORCE)
 
 			if (result === null) {
 				// skipped (already exists, no --force)

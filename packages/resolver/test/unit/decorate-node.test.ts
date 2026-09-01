@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  * @file `0,0` is the gazetteer's unlocated sentinel, and a node must express it as absence.
  *
- *   The shipped shards carry a great deal of it — 48,216 of 142,604 JP postcodes, 86,377 GB, 9,708 intl, 414 US — and
+ *   The shipped extracts carry a great deal of it — 48,216 of 142,604 JP postcodes, 86,377 GB, 9,708 intl, 414 US — and
  *   a stamped `0,0` answers "yes" to every `lat != null` guard downstream, including the admin ladder's in
- *   `extractGeocodeResult`. `51349` is the worked case: a real Iowa ZIP the shard cannot place, which graded 10,450 km
+ *   `extractGeocodeResult`. `51349` is the worked case: a real Iowa ZIP the extract cannot place, which graded 10,450 km
  *   from its own address because the Gulf of Guinea passed a null check.
  */
 
@@ -56,7 +56,7 @@ describe("decorateNode and the unlocated sentinel", () => {
 		expect(n.lat).toBeUndefined()
 		expect(n.lon).toBeUndefined()
 		// The place is resolved — it simply cannot say where it is. Dropping the identity too would lose the one thing
-		// the shard does know.
+		// the extract does know.
 		expect(n.placeID).toBe("wof:538966645")
 		expect(n.metadata?.["resolver_name"]).toBe("51349")
 		expect(isResolvedWithCoord(n)).toBe(false)

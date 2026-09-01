@@ -355,13 +355,13 @@ export const DEFAULT_IMPORTANCE_DB = "admin-global-priority-importance.db"
  * 9500000000000 … GB @ 9500000056075). The first nine are the #920 namesake-tail set the original
  * `--geonames-postal-countries` flag carried; GB was appended in a later pass from the `GB_full` dump and is 97 % of
  * the artifact (1,839,678 of 1,895,753 rows, ~946 MB). Keep the order: it is what makes a rebuild id-comparable to the
- * frozen shard.
+ * frozen database.
  */
 /**
- * The tail shard's country set, in the frozen artifact's own ingest order. GB left for Code-Point Open 2026-08-05; BE
- * joined 2026-08-12 (the eu-mixed lane — the Overture BE parquet measured too thin at 203 codes, none of the panel's,
- * while GeoNames carries the full 1,146). A change here re-freezes the artifact: rebuild, run the parity gate against
- * the prior shard, and swap under the .prev rotation.
+ * The tail database's country set, in the frozen artifact's own ingest order. GB left for Code-Point Open 2026-08-05;
+ * BE joined 2026-08-12 (the eu-mixed lane — the Overture BE parquet measured too thin at 203 codes, none of the
+ * panel's, while GeoNames carries the full 1,146). A change here re-freezes the artifact: rebuild, run the parity gate
+ * against the prior database, and swap under the .prev rotation.
  */
 export const DEFAULT_GEONAMES_TAIL_COUNTRIES = ["FI", "CZ", "SK", "SI", "DK", "NO", "HR", "PL", "SE", "BE"] as const
 

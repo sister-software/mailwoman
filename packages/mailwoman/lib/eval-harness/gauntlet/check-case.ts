@@ -6,7 +6,7 @@
  *   The Gauntlet's per-case grader: one stored case + one assembled result → the list of mismatches.
  *
  *   PURE, and its own module for exactly that reason. It lived inside `runRegressionLayer`'s closure until
- *   2026-08-06, where the only way to exercise it was to build the ~9 GB shard set and run 306 addresses
+ *   2026-08-06, where the only way to exercise it was to build the ~9 GB database set and run 306 addresses
  *   end-to-end — so the assertions this file makes had never been unit-tested, and #1507's finding (two stored
  *   expectation columns that no branch here ever read) survived every review of the layer that calls it.
  */

@@ -22,8 +22,8 @@
  *   express's per-request lazy `getDeps()`, `createServeEngine()` does the (slow: model + SQLite)
  *   setup work eagerly, so paying that cost once per file (not once per test) matters. Error-path
  *   assertions run unconditionally: the validation-layer 400s never reach the engine, so they pass
- *   whether or not real WOF + shard data is present on this host. Success-path assertions gate on
- *   real WOF + TX shards being present (`describeIfStack`), same as the express predecessor.
+ *   whether or not real WOF + database data is present on this host. Success-path assertions gate on
+ *   real WOF + TX databases being present (`describeIfStack`), same as the express predecessor.
  */
 
 import { createMailwomanAPI } from "@mailwoman/api"
@@ -176,9 +176,9 @@ describeIfWeights(
 	60_000
 )
 
-// MARK: Success paths — real WOF + TX shards
+// MARK: Success paths — real WOF + TX databases
 
-describeIfStack("api-engine — success path against real WOF + TX shards", () => {
+describeIfStack("api-engine — success path against real WOF + TX databases", () => {
 	test("POST /v1/geocode: resolves a TX address to a street-level coordinate", async () => {
 		const r = await postJSON("/v1/geocode", { address: "3075 Hill Street, Round Rock, TX 78664" })
 		expect(r.status).toBe(200)
@@ -258,7 +258,7 @@ describeIfStack("api-engine — success path against real WOF + TX shards", () =
 
 		resolved.roots.forEach(walk)
 		const street = flat.find((n) => n.tag === "street")
-		// The resolver service wired its own shards → the street node carries a coordinate tier.
+		// The resolver service wired its own databases → the street node carries a coordinate tier.
 		expect(street?.metadata?.["resolution_tier"]).toBeDefined()
 	}, 60_000)
 })

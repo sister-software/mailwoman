@@ -74,8 +74,8 @@ Perfect. Got it! Understood, the fix landed. Excellent, all tests pass.
 
 The null and the cure differ on one lever; the three-leg comparison decides.
 
-The seam between the two runs is where the shard was cut, and the gate read it;
-the seams are what sharding produced, the gates fire on the sharded rows, and
+The seam between the two runs is where the extract was cut, and the gate read it;
+the seams are what extract routing produced, the gates fire on the attached rows, and
 cutting the run short left the gated step gating nothing.
 
 The fine-tune tax means the run pays the tax twice; yesterday paid the tax,
@@ -123,7 +123,7 @@ match.)
 Spend was $29 of the $40 Modal budget. (EconomyMetaphor: a real dollar
 figure with its budget named is not a metaphor.)
 
-The recipe sits in `packages/corpus/lib/shard-recipes/` as
+The recipe sits in `packages/corpus/lib/extract-recipes/` as
 `synth-suffix-boundary`. (ProjectShorthand and AmbiguousShorthand: backticked
 artifact names are exempt — that is the replacement both rules ask for.)
 

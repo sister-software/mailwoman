@@ -41,7 +41,7 @@ interface Options {
 
 const GazetteerBuild: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeShards, wofDir } =
+		const { buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeDatabases, wofDir } =
 			await import("#gazetteer-pipeline")
 
 		console.error("▸ build admin (staging)")
@@ -56,12 +56,12 @@ const GazetteerBuild: ParsedCommandComponent<Options> = ({ options }) => {
 
 		console.error(`▸ build candidate ← ${admin.out}`)
 
-		const shards = await resolvePostcodeShards()
+		const databases = await resolvePostcodeDatabases()
 
 		const candidate = await buildCandidate({
 			adminDB: admin.out,
 			out: candidateOut,
-			postcodeShards: shards,
+			postcodeDatabases: databases,
 			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
 		})
 

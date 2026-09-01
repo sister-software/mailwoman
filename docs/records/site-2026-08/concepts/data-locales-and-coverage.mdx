@@ -82,13 +82,13 @@ Everything the resolver consults is a read-only SQLite artifact, sealed at build
 
 - **The admin base layer.** Derived from [WhosOnFirst](./resolver-and-wof.mdx): 4.09 million places across 244 countries, each with alternate names, population, bounding box, and ancestor chain. This is the layer that exists nearly everywhere, and it is what "resolves to a centroid" means.
 - **Postcode layers.** US postcode centroids, Dutch PC6 codes at street-block grain, and a GeoNames-derived tail for much of the rest of the world, folded onto WOF-keyed entries.
-- **Rooftop registers.** The precision tier. The US situs layer: 124.9 million address points across 50 per-state shards, built from the National Address Database and OpenAddresses (release 2026-05-20.0). The French BAN layer: 26.0 million points across 101 départements (release 2026-05-18). These two are why Tier 1 reports 1 m uncertainties and Tier 2 does not.
+- **Rooftop registers.** The precision tier. The US situs layer: 124.9 million address points across 50 per-state extracts, built from the National Address Database and OpenAddresses (release 2026-05-20.0). The French BAN layer: 26.0 million points across 101 départements (release 2026-05-18). These two are why Tier 1 reports 1 m uncertainties and Tier 2 does not.
 - **Interpolation and street data.** US TIGER street segments for house-number ranges; BAN street centroids for French street-only queries.
 - **Reference data in the packages.** [`@mailwoman/codex`](https://www.npmjs.com/package/@mailwoman/codex) (per-address-system facts: USPS suffixes, ZIP shapes), locale-gated variant aliases, and the bundled libpostal dictionaries and libaddressinput format rules.
 
 The full source catalog, with per-source notes and the licensing gradient, is [the address-data-sources reference](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/address-data-sources.mdx).
 
-Provenance is a design constraint. The shipped core is built entirely from permissive sources (WOF is CC0, TIGER and NAD are public domain, Overture is CDLA-Permissive, GeoNames is CC-BY, BAN is Licence Ouverte), so a resolved coordinate carries no copyleft. An OpenStreetMap-derived rooftop tier exists in code for countries without an open register, but OSM's ODbL is share-alike, so those shards are quarantined behind a structural boundary and are not enabled in any published artifact pending legal review. [The data licensing page](../licensing/data-provenance.md) walks the whole boundary.
+Provenance is a design constraint. The shipped core is built entirely from permissive sources (WOF is CC0, TIGER and NAD are public domain, Overture is CDLA-Permissive, GeoNames is CC-BY, BAN is Licence Ouverte), so a resolved coordinate carries no copyleft. An OpenStreetMap-derived rooftop tier exists in code for countries without an open register, but OSM's ODbL is share-alike, so those extracts are quarantined behind a structural boundary and are not enabled in any published artifact pending legal review. [The data licensing page](../licensing/data-provenance.md) walks the whole boundary.
 
 ## Where coverage runs out
 
@@ -109,7 +109,7 @@ The visual evidence for all of this is on [the demo map](https://mailwoman.ai/de
 
 ## Where the parser's knowledge comes from
 
-The model's side of "supported" is the training corpus: open, field-structured address records — national registers, state GIS address points, federal facility directories — aligned to BIO labels by per-source adapters and frozen into named corpus versions. The counts change with every rebuild, so they live with the pipeline docs rather than here: [corpus construction](./corpus-construction.mdx) covers the sources and alignment, [the training pipeline](./training-pipeline.mdx) the path from rows to shipped weights. One rule from that pipeline shows up on this page's map: a license filter excludes share-alike sources from training shards, and the usable open data for Britain and Ireland is share-alike. That is why GB sits in the blocked row — a licensing gate with a check-back owner, not a modeling failure.
+The model's side of "supported" is the training corpus: open, field-structured address records — national registers, state GIS address points, federal facility directories — aligned to BIO labels by per-source adapters and frozen into named corpus versions. The counts change with every rebuild, so they live with the pipeline docs rather than here: [corpus construction](./corpus-construction.mdx) covers the sources and alignment, [the training pipeline](./training-pipeline.mdx) the path from rows to shipped weights. One rule from that pipeline shows up on this page's map: a license filter excludes share-alike sources from training extracts, and the usable open data for Britain and Ireland is share-alike. That is why GB sits in the blocked row — a licensing gate with a check-back owner, not a modeling failure.
 
 ## Checking your own area
 

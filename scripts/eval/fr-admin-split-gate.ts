@@ -131,8 +131,8 @@ const FR_CENTROID = { lat: 46.6, lon: 2.5 }
 async function main() {
 	const goldenPath = stringArgs["golden"] || tempRootPath("reg", "fr-admin-split-golden.jsonl")
 	const label = stringArgs["label"] || "model"
-	// Comma-separated multi-shard support (night-31): postcodeConsistency needs a resolvable postcode
-	// node, which needs a postalcode shard attached alongside the admin DB.
+	// Comma-separated multi-extract support (night-31): postcodeConsistency needs a resolvable postcode
+	// node, which needs a postalcode extract attached alongside the admin DB.
 	const wofDBArg = String(stringArgs["wof-db"] || dataRootPath("wof", "admin-global-priority.db"))
 	const wofDB = wofDBArg.includes(",") ? wofDBArg.split(",") : wofDBArg
 

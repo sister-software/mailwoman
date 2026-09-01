@@ -56,16 +56,16 @@ const t0 = performance.now()
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 using lookup = new WOFCandidateTableLookup({ databasePath: resolveCandidateDBPath() })
 const resolver = createWOFResolver(lookup)
-using shards = new RegionDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, mailwomanDataRoot())
+using extracts = new RegionDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, mailwomanDataRoot())
 const startupMs = performance.now() - t0
 
 // Warm the session: the first few inferences pay one-time allocation the steady-state rate should not carry.
 for (const q of rows.slice(0, 5))
-	await geocodeAddress(q, { classifier, resolver, shards: shards.for, defaultCountry: "US" })
+	await geocodeAddress(q, { classifier, resolver, databases: extracts.for, defaultCountry: "US" })
 
 const t1 = performance.now()
 for (const q of queries) {
-	await geocodeAddress(q, { classifier, resolver, shards: shards.for, defaultCountry: "US" })
+	await geocodeAddress(q, { classifier, resolver, databases: extracts.for, defaultCountry: "US" })
 }
 const runMs = performance.now() - t1
 
@@ -139,12 +139,12 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { AddressPointSqliteLookup, StreetInterpolator, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode-core"
 
-// Per-worker init, paid once: its own model session, its own read-only DB handle, its own shards.
+// Per-worker init, paid once: its own model session, its own read-only DB handle, its own extracts.
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: workerData.locale })
 using lookup = new WOFCandidateTableLookup({ databasePath: workerData.candidateDB })
 const resolver = createWOFResolver(lookup)
-using shards = new RegionDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, workerData.dataRoot)
-const deps = { classifier, resolver, shards: shards.for, defaultCountry: workerData.country }
+using extracts = new RegionDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, workerData.dataRoot)
+const deps = { classifier, resolver, databases: extracts.for, defaultCountry: workerData.country }
 
 parentPort.on("message", async (batch) => {
 	const out = []

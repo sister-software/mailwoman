@@ -1,5 +1,5 @@
 # === v1.9.2-multilocale-au (#208/#148 — ADD AUSTRALIA to the proven 3-order recipe) =============
-# v1.9.1 (shipped v4.13.0) fixed v1.9.0's order-overfit by re-rendering the overture EU shard in 3
+# v1.9.1 (shipped v4.13.0) fixed v1.9.0's order-overfit by re-rendering the overture EU slice in 3
 # orders (rotated i%3) so locality+postcode appear in every position. It worked (EU +9..+31pp, US/FR
 # held) — but AU was NEVER in it: country_weights lists US + 21 EU locales, no AU, and data_loader
 # EXCLUDES any row whose country isn't listed. So v4.13.0 reads AU's native postcode-first format
@@ -9,11 +9,11 @@
 #
 # THE ONE NEW VARIABLE: add AU. Everything else is v1.9.1 VERBATIM. Two lines change:
 #   - country_weights: + AU: 1.0  (so the gnaf AU rows aren't excluded — the data_loader.py gate).
-#   - source_weights:  + gnaf: 6.0  (the gnaf G-NAF AU 3-order shard, #208). 6.0 matches the TARGETED-
+#   - source_weights:  + gnaf: 6.0  (the gnaf G-NAF AU 3-order slice, #208). 6.0 matches the TARGETED-
 #     FIX precedent — synth-german (6.0) and synth-fr-admin-split (6.0) are single-concept format fixes,
 #     exactly gnaf's role; overture's 3.0 was for BROAD 16-locale exposure, a different job. The
 #     step-2000 gate adjudicates dilution: lower if US/EU regress, raise if AU flat.
-# The gnaf shard is the SAME 3-order rotation (canonical/pc-first/city-first, i%3) overture used; built
+# The gnaf slice is the SAME 3-order rotation (canonical/pc-first/city-first, i%3) overture used; built
 # by `mailwoman gnaf assemble` (G-NAF PSV join, 150k held-out from the AU eval) + the `gnaf` corpus
 # adapter. Pure overlay ADD onto corpus-v0.9.1-multilocale (scripts/assemble-overlay-manifest.py).
 #
@@ -21,7 +21,7 @@
 #
 # GOAL / GATE: grade the ASSEMBLED coordinate, never label-F1. Diagnostic-first: at step-2000/4000 run
 # scripts/eval/nonus-coord-panel.ts + the AU coord panel — AU @25km must LIFT toward the 87% ceiling,
-# AND the EU in-shard locales (PT/PL/AT/CZ/IT) + US per-locale-F1 must HOLD (not worse >1pp) + FR
+# AND the EU in-slice locales (PT/PL/AT/CZ/IT) + US per-locale-F1 must HOLD (not worse >1pp) + FR
 # centroid flat. If AU is flat OR US/EU regress at 2-4k, KILL (overfit/dilution — the #148 failure mode).
 # NOT promoted without operator GO (model swap).
 # CORPUS: corpus-v0.9.1-multilocale (verbatim) + gnaf-AU 3-order overlay -> R2 -> sync. (#208)
@@ -75,11 +75,11 @@ data:
     synth-po-box-cedex: 1.5
     synth-affix: 2.0
     synth-country: 2.0
-    # #148 lever: the multi-locale EU shard. Weight 3.0 — solid EU exposure (each locale's ~150k rows
+    # #148 lever: the multi-locale EU slice. Weight 3.0 — solid EU exposure (each locale's ~150k rows
     # get comparable weighted mass to fr-admin-split's 60k*6.0) without dominating the US-heavy base;
     # the step-2000 diagnostic gate adjudicates dilution (lower if US/FR regress, raise if mid-tier flat).
     overture: 3.0
-    # #208 lever: the gnaf G-NAF AU 3-order shard (150k rows, 1 locale). Weight 6.0 matches the
+    # #208 lever: the gnaf G-NAF AU 3-order slice (150k rows, 1 locale). Weight 6.0 matches the
     # TARGETED-FIX precedent (synth-german 6.0, synth-fr-admin-split 6.0 — single-concept format fixes),
     # NOT overture's 3.0 (broad 16-locale exposure). The step-2000 gate adjudicates: lower if US/EU
     # regress, raise if AU flat.

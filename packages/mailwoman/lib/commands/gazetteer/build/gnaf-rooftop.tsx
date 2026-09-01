@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer build gnaf-rooftop` — the AU rooftop address-point shard from Geoscape
+ *   `mailwoman gazetteer build gnaf-rooftop` — the AU rooftop address-point database from Geoscape
  *   G-NAF (CC-BY-4.0, attribution Geoscape Australia), emitted into the `OSMRegionDatabaseProvider` home so
  *   the situs tier serves AU with zero runtime changes. Sealed 0444. The pipeline module is
  *   lazy-imported so `--help` never faults without the optional `@mailwoman/osm` /
@@ -17,13 +17,13 @@ import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, split
  */
 export const spec = {
 	name: "gnaf-rooftop",
-	description: "Build the Australian G-NAF rooftop address-point shard.",
+	description: "Build the Australian G-NAF rooftop address-point database.",
 	options: {
 		"standard-dir": {
 			type: "string",
 			description: "Extracted G-NAF Standard/ PSV directory. Default <data-root>/gnaf/may26/extracted/…/Standard",
 		},
-		out: { type: "string", description: "Output shard. Default <data-root>/osm/address-points-au-au.db" },
+		out: { type: "string", description: "Output database. Default <data-root>/osm/address-points-au-au.db" },
 		states: {
 			type: "string",
 			description: "Comma-separated state prefixes (e.g. ACT,NSW) — the smoke rung. Default all",
@@ -49,9 +49,9 @@ interface Options {
 
 const GazetteerBuildGNAFRooftop: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildGNAFRooftopShard } = await import("#gazetteer/gnaf-rooftop")
+		const { buildGNAFRooftopDatabase } = await import("#gazetteer/gnaf-rooftop")
 
-		const r = await buildGNAFRooftopShard({
+		const r = await buildGNAFRooftopDatabase({
 			standardDir: options.standardDir,
 			out: options.out,
 			states: options.states === undefined ? undefined : splitList(options.states),

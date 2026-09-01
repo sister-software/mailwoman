@@ -199,10 +199,10 @@ export async function geocoderVsProvidedCoords(
 	lines.push(
 		`Two regimes. **Street-tier placement is excellent** (the address_point + interpolated rows above) — ` +
 			`rooftop-to-segment medians, the precision that makes geo-first blocking and the distance evidence ` +
-			`trustworthy. The **admin (centroid) tier** is where no street shard covered the address: accuracy is ` +
+			`trustworthy. The **admin (centroid) tier** is where no street extract covered the address: accuracy is ` +
 			`necessarily km-scale, and it carries a catastrophic tail (the p90/p99/max above) from wrong-region admin ` +
 			`resolutions and/or malformed provided coordinates — NOT street-tier error. Those extremes are a signal to ` +
-			`inspect, and they motivate wider street-shard coverage for rural TX plus an admin-tier sanity bound. The ` +
+			`inspect, and they motivate wider street-extract coverage for rural TX plus an admin-tier sanity bound. The ` +
 			`self-reported-vs-independent coordinate discrepancy is itself a data-quality column the reconciliation ` +
 			`surfaces (#621).`
 	)

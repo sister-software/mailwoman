@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Integration test for `npx mailwoman corpus list` + `corpus run`. Spawns the compiled CLI binary
- *   and verifies exit codes + output shape. While the shard registry ships empty, the only behavior
+ *   and verifies exit codes + output shape. While the database registry ships empty, the only behavior
  *   there is to assert is the empty-registry messaging.
  */
 

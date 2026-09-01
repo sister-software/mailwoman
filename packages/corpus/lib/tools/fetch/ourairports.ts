@@ -8,7 +8,7 @@
  *   Source : https://davidmegginson.github.io/ourairports-data/ (the project's own GitHub Pages
  *            mirror of the nightly export; `ourairports.com/data/` redirects here).
  *   License: PUBLIC DOMAIN. OurAirports places its data in the public domain and asks only for a
- *            courtesy credit — no attribution obligation rides on a derived shard, which makes this
+ *            courtesy credit — no attribution obligation rides on a derived slice, which makes this
  *            the one transport source in the arc with no licensing question at all. Tier A.
  *
  *   ## What it is good for, and what it is not
@@ -59,7 +59,7 @@ const BASE_URL = "https://davidmegginson.github.io/ourairports-data"
  * `regions.csv` expand `iso_country`/`iso_region` into names (a corpus line needs "Germany", not "DE"), and
  * `runways.csv` is the only file carrying per-airport sub-structure of any kind — runway designators, which are NOT
  * sub-venue designators (nobody addresses mail to a runway) but are worth having on disk as the negative class if the
- * shard ever needs one.
+ * slice ever needs one.
  */
 const FILES = ["airports.csv", "countries.csv", "regions.csv", "runways.csv"] as const
 

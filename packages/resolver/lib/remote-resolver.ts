@@ -5,11 +5,11 @@
  *
  *   `RemoteResolver` — the `Resolver` interface (`resolveTree`) over HTTP. The adapter the interface
  *   docstring anticipated (Phase 4.4): a client POSTs a parsed `AddressTree` + the serializable
- *   `ResolveOpts` to a resolver service, which owns the gazetteer + situs/interpolation shards,
+ *   `ResolveOpts` to a resolver service, which owns the gazetteer + situs/interpolation extracts,
  *   runs the cascade, and returns the resolved tree. Two payoffs:
  *
  *   1. **Multi-instance** — stateless parser nodes (the ~30 MB ONNX model) talk to ONE resolver service
- *        (the multi-GB gazetteer + shards). `parse` locally, `new RemoteResolver(...).resolveTree`
+ *        (the multi-GB gazetteer + extracts). `parse` locally, `new RemoteResolver(...).resolveTree`
  *        remotely — same interface the in-process `WOFResolver` satisfies, so it's a drop-in.
  *   2. **Canary** — point it at a second resolver build (or an adapter fronting Pelias/Nominatim/BAN)
  *        and diff the resolved trees through the identical contract.

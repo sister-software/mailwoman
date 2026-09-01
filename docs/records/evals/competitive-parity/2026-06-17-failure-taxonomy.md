@@ -49,13 +49,13 @@ not another loss-mask or weight bump.
 
 ## 3. Format failures (po_box, intersection, unit, delimiters)
 
-| class                           | measured                                                 | engine | status       | lever / root cause                                                                                                | source                         |
-| ------------------------------- | -------------------------------------------------------- | ------ | ------------ | ----------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| po_box (dotted leader)          | 60% fail → 87% (span bridge) → 89% (separator exclusion) | neural | fixed        | tokenizer dropped standalone punctuation; corrected at decode                                                     | 2026-06-11-v4.4.0-ship-gate    |
-| intersection (real TIGER shard) | 100% (real-OOD) vs 82% templated                         | neural | fixed        | a real shard beats synthetic templates                                                                            | 2026-06-11-v4.4.0-ship-gate    |
-| po_box / unit vs v0             | neural 100% / 100%; v0 **0% / 0%**                       | v0     | fixed-neural | v0 has no `po_box`/`unit` tag — the negative-space win                                                            | 2026-06-17-per-type-headtohead |
-| cedex (FR real)                 | 96% (v4.4.0)                                             | neural | fixed        | deterministic regex path moved into the model                                                                     | 2026-06-11-v4.4.0-ship-gate    |
-| paired-delimiter span proposer  | −3.9pp vs 77% baseline                                   | neural | rejected     | the Stage 2.7 proposer's annotation bias has the wrong sign (merges where it should strip) — did not earn revival | 2026-06-14-punctuation-stress  |
+| class                             | measured                                                 | engine | status       | lever / root cause                                                                                                | source                         |
+| --------------------------------- | -------------------------------------------------------- | ------ | ------------ | ----------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| po_box (dotted leader)            | 60% fail → 87% (span bridge) → 89% (separator exclusion) | neural | fixed        | tokenizer dropped standalone punctuation; corrected at decode                                                     | 2026-06-11-v4.4.0-ship-gate    |
+| intersection (real TIGER extract) | 100% (real-OOD) vs 82% templated                         | neural | fixed        | a real extract beats synthetic templates                                                                          | 2026-06-11-v4.4.0-ship-gate    |
+| po_box / unit vs v0               | neural 100% / 100%; v0 **0% / 0%**                       | v0     | fixed-neural | v0 has no `po_box`/`unit` tag — the negative-space win                                                            | 2026-06-17-per-type-headtohead |
+| cedex (FR real)                   | 96% (v4.4.0)                                             | neural | fixed        | deterministic regex path moved into the model                                                                     | 2026-06-11-v4.4.0-ship-gate    |
+| paired-delimiter span proposer    | −3.9pp vs 77% baseline                                   | neural | rejected     | the Stage 2.7 proposer's annotation bias has the wrong sign (merges where it should strip) — did not earn revival | 2026-06-14-punctuation-stress  |
 
 This is Mailwoman's strongest quadrant: the structured types (po_box, unit, intersection, cedex) are
 either fixed or a rout against the rules engine. The one rejected fix (paired-delimiter proposer) is a
@@ -63,17 +63,17 @@ useful negative result — the eval gate stopped a plausible-but-wrong revival.
 
 ## 4. Geocoder coverage / accuracy
 
-| class                        | measured                                                                              | engine   | status         | lever / root cause                                                             | source                                  |
-| ---------------------------- | ------------------------------------------------------------------------------------- | -------- | -------------- | ------------------------------------------------------------------------------ | --------------------------------------- |
-| admin-centroid fallback      | ~40% of TX facilities fall back (p50 3.4 km, p99 catastrophic)                        | resolver | open           | **coverage**, not precision — no rooftop/interp shard hit on the parsed street | 2026-06-17-geocoder-vs-provided-coords  |
-| rooftop (address_point) tier | fires 47%; **0.7 km** p50 where it fires                                              | resolver | open           | coverage is the frontier — accuracy is solved when a shard has the point       | 2026-06-17-geocoder-vs-provided-coords  |
-| interpolation (street) tier  | fires 12.5%; **0.1 km** p50; raw radius covered only 72% → ×1.70 for a true 90% bound | resolver | fixed (radius) | a radius is decoration unless calibrated (#374)                                | 2026-06-14-interp-radius-calibration    |
-| off-map country routing      | 88→ clears 90/90 (decision rule, no retrain)                                          | resolver | fixed          | `1 − P(OTHER)` in-map mass beats softmax argmax                                | 2026-06-14-coarse-placer-arc-postmortem |
-| in-map wrong-region misroute | **0 / 2000** across 10 countries                                                      | resolver | fixed          | the soft prior re-rank never misroutes (tier-safe)                             | 2026-06-14-coarse-placer-arc-postmortem |
+| class                        | measured                                                                              | engine   | status         | lever / root cause                                                               | source                                  |
+| ---------------------------- | ------------------------------------------------------------------------------------- | -------- | -------------- | -------------------------------------------------------------------------------- | --------------------------------------- |
+| admin-centroid fallback      | ~40% of TX facilities fall back (p50 3.4 km, p99 catastrophic)                        | resolver | open           | **coverage**, not precision — no rooftop/interp extract hit on the parsed street | 2026-06-17-geocoder-vs-provided-coords  |
+| rooftop (address_point) tier | fires 47%; **0.7 km** p50 where it fires                                              | resolver | open           | coverage is the frontier — accuracy is solved when a extract has the point       | 2026-06-17-geocoder-vs-provided-coords  |
+| interpolation (street) tier  | fires 12.5%; **0.1 km** p50; raw radius covered only 72% → ×1.70 for a true 90% bound | resolver | fixed (radius) | a radius is decoration unless calibrated (#374)                                  | 2026-06-14-interp-radius-calibration    |
+| off-map country routing      | 88→ clears 90/90 (decision rule, no retrain)                                          | resolver | fixed          | `1 − P(OTHER)` in-map mass beats softmax argmax                                  | 2026-06-14-coarse-placer-arc-postmortem |
+| in-map wrong-region misroute | **0 / 2000** across 10 countries                                                      | resolver | fixed          | the soft prior re-rank never misroutes (tier-safe)                               | 2026-06-14-coarse-placer-arc-postmortem |
 
 The headline: where the finer tiers fire, the geocoder is rooftop-accurate (0.1–0.7 km, calibrated). The
-open problem is **coverage** — ~40% fall back to a city centroid for lack of a shard. That's a data lever
-(more situs/interpolation shards), not a model one. See the companion concept note on coordinate
+open problem is **coverage** — ~40% fall back to a city centroid for lack of a extract. That's a data lever
+(more situs/interpolation extracts), not a model one. See the companion concept note on coordinate
 sufficiency ("How close is close enough?") for what these tiers are _worth_ per use-case.
 
 ## 5. Parity gaps & boundary instability
@@ -114,7 +114,7 @@ gap.
 ## What the table says about the roadmap
 
 1. **Boundary instability is the highest-leverage parser lever** — it's one family (§1 dotted, §5 street/glue, §6 within-token) under many names; a boundary-aware decode would move several rows at once.
-2. **Geocoder accuracy is solved; coverage is the frontier** — the ~40% admin fallback is a shard-data problem, not a model one (§4).
+2. **Geocoder accuracy is solved; coverage is the frontier** — the ~40% admin fallback is a extract-data problem, not a model one (§4).
 3. **Locale is a data problem, not a weight problem** — fr.house_number falsified weight tuning; real reordered/native data is the only remaining lever (§2).
 4. **The eval gate earns its keep** — the rejected paired-delimiter proposer (§3) and the deferred geocoder wiring (§4, #694) are both cases where a plausible change was stopped by a measured regression. Keep grading the assembled output, not label-F1 (the #566 discipline).
 

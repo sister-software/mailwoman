@@ -11,7 +11,7 @@
 # 19,294 carriers (7.72%), not a sparse/absent class. Fix relabel idempotence and re-audit first.
 # ORIGINAL PRE-RUN BASE CONSISTENCY CLAIM (superseded): existing affix rows label terminal contrasts correctly;
 # the target terminal-only class was believed sparse/absent. OA source pools before sampling:
-# 163,606 terminal-only and 11,734 terminal-contrast. The emitted shard is exactly 12,000/18,000
+# 163,606 terminal-only and 11,734 terminal-contrast. The emitted slice is exactly 12,000/18,000
 # (40%/60%) after alignment, seed 1569, JSONL sha256
 # 16e4cb5ca86beb1f3e50bf5d9c65d86690f79972454be379d63d77133c6a8057.
 #

@@ -59,6 +59,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { JSONSpliterator } from "spliterator"
 
+import { finalizeSealedBuild } from "#gazetteer-pipeline/database-lifecycle"
 import { ProximityGrid } from "#gazetteer-pipeline/postcode-locality/base"
 import {
 	createPostcodeLocalityIndex,
@@ -69,7 +70,6 @@ import {
 	type PostcodeLocalityInsertValues,
 } from "#gazetteer-pipeline/postcode-locality/schema"
 import { writeMetaRows } from "#gazetteer-pipeline/postcode/geonames-tail"
-import { finalizeSealedBuild } from "#gazetteer-pipeline/shard-lifecycle"
 
 /**
  * Shortest romanised stem still specific enough to match a Taiwanese place name.

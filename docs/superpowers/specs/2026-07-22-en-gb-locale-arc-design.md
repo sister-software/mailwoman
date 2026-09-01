@@ -23,12 +23,12 @@
 
 ### Phase 1 — corpus
 
-- GB enters via the locale-recipe pattern verified by the NZ arc: `COUNTRY_SOURCES` (`corpus/src/shard-recipes/locale.ts`) + `LOCALE_TAG` `GB:"en-GB"`.
+- GB enters via the locale-recipe pattern verified by the NZ arc: `COUNTRY_SOURCES` (`corpus/src/extract-recipes/locale.ts`) + `LOCALE_TAG` `GB:"en-GB"`.
 - New **PPD adapter** (PPD is not OpenAddresses-schema): SAON→unit, PAON→house_number/building, street→street, locality→**dependent_locality**, town→post town (locality), district/county→admin, postcode joined to ONSPD for coords.
 - Trap sweep (each has bitten before):
   - `COUNTRY_SURFACE_FORMS` must gain GB/UK forms (BR was missing).
   - `countryAppendFraction` on the adapter — PPD rows are country-less.
-  - Formatter must render GB order (number street, locality, POST TOWN, POSTCODE) — verify before sharding, as with NZ.
+  - Formatter must render GB order (number street, locality, POST TOWN, POSTCODE) — verify before extract routing, as with NZ.
   - PPD all-caps fields — case-normalize per #690 before the model sees them.
 
 ### Phase 2 — training
@@ -60,7 +60,7 @@
 
 ## Acceptance criteria
 
-1. GB shard built from PPD with provenance manifest; formatter-verified before training.
+1. GB extract built from PPD with provenance manifest; formatter-verified before training.
 2. Probe reads reported against pre-registration; fork outcome (resurrected vs locality-mapped) recorded in the ledger.
 3. 8k candidate passes the full gate battery + gauntlet before any promote (promotion is the operator's act).
 4. `postcode-gb.bin` shipped; GB postcode anchors verified in the pipeline.

@@ -24,10 +24,10 @@ honest-eval harness inverts almost for free. **Open question:** placetype granul
 **Shape:** "123 Main St" where no address point exists → estimate between known points. The
 biggest forward-geocoding coverage lever (admin-centroid answers become street-accurate).
 
-**Data:** the address-point shard work (#475-era `build-address-point-shard.ts` +
+**Data:** the address-point extract work (#475-era `build-address-point-extract.ts` +
 `AddressPointLookup` in `core/resolver/types.ts`) already gives exact-point hits; interpolation
 fills BETWEEN them. TIGER EDGES carries from/to house-number ranges per street segment (the same
-files the intersection shard reads — already on disk) — the classic Pelias/libpostal approach,
+files the intersection extract reads — already on disk) — the classic Pelias/libpostal approach,
 and our intersection extraction already parses the geometry. **Plan shape:** (1) segment table
 keyed by normalized street name + side-aware ranges (TIGER LFROMADD/LTOADD etc.) → (2) linear
 interpolation along segment geometry → (3) resolver tier between exact-point and

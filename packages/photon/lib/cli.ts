@@ -87,12 +87,12 @@ async function serve(): Promise<void> {
 
 	const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
 	const resolver = createWOFResolver(backend)
-	const shards = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
+	const extracts = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
 	const postcodeOfLocality = await createLocalityPostcodeLookup()
 	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse. A no-op
-	// when the shard isn't on disk (existsSync-gated inside the provider), so the endpoint degrades cleanly.
+	// when the extract isn't on disk (existsSync-gated inside the provider), so the endpoint degrades cleanly.
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
-	const banShards = await BANRegionDatabaseProvider.create(mailwomanDataRoot())
+	const banExtracts = await BANRegionDatabaseProvider.create(mailwomanDataRoot())
 	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
 
 	const engine: PhotonEngine = {
@@ -111,8 +111,8 @@ async function serve(): Promise<void> {
 			const result = await geocodeAddress(query, {
 				classifier,
 				resolver,
-				shards: shards.for,
-				nationalShards: banShards.for,
+				databases: extracts.for,
+				nationalDatabases: banExtracts.for,
 				bias,
 				// Decision A endpoint default: Photon is an autocomplete front — a human typing fragments.
 				inputMode: "fragmented",
@@ -141,11 +141,11 @@ async function serve(): Promise<void> {
 			// hierarchy carries no locality/postcode — the register ATTESTS the rooftop's commune and
 			// postcode even when the query never named them, and #1014's decorate-from-the-resolved-place
 			// doctrine covers register attestations exactly as it covers gazetteer rows. The key form is
-			// normalized; title-case it for display (the shards store no display-cased locality).
+			// normalized; title-case it for display (the extracts store no display-cased locality).
 			const places = result.hierarchy.map((h) => ({ tag: h.tag, name: h.name }))
 
 			if (result.rooftop?.localityNorm && !places.some((p) => p.tag === "locality")) {
-				// The key form is normalized lowercase (the shards store no display-cased locality);
+				// The key form is normalized lowercase (the extracts store no display-cased locality);
 				// pyTitle display-cases it particle-and-apostrophe-aware.
 				places.push({ tag: "locality", name: pyTitle(result.rooftop.localityNorm) })
 			}

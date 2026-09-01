@@ -58,8 +58,8 @@ export interface LocaleTemplate {
 }
 
 /**
- * The per-locale PO-box designator vocabulary (DeepSeek-signed list, see the header). Exported so shard builders
- * (scripts/build-po-box-cedex-shard.mjs) can reuse THIS list as the single source of truth for non-US leaders instead
+ * The per-locale PO-box designator vocabulary (DeepSeek-signed list, see the header). Exported so slice builders
+ * (scripts/build-po-box-cedex-slice.mjs) can reuse THIS list as the single source of truth for non-US leaders instead
  * of re-deriving it — the US slice additionally has `@mailwoman/codex/us` `US_PO_BOX_DESIGNATORS`/`isPOBox` as its
  * matcher-side truth.
  */

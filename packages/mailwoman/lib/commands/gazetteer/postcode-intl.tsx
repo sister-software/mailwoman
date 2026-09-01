@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer postcode-intl` — build a postcode → point shard from GeoNames postal data,
+ *   `mailwoman gazetteer postcode-intl` — build a postcode → point database from GeoNames postal data,
  *   for countries WhosOnFirst does not cover (#193). The existing pipeline
  *   (`scripts/backfill-postcode-centroids.ts`) treats GeoNames as a COORDINATE source keyed by
  *   string onto WOF-sourced postcode _records_. That works wherever WOF ships the postcode entities
@@ -11,7 +11,7 @@
  *   records — there's nothing to backfill onto — so GeoNames must supply the RECORD too, not just
  *   the coordinate.
  *
- *   This emits a standalone `spr` shard in the exact schema `build-candidate`'s `--postcodes` pass
+ *   This emits a standalone `spr` database in the exact schema `build-candidate`'s `--postcodes` pass
  *   consumes (placetype='postalcode', real centroid + bbox), so it drops into a candidate rebuild
  *   alongside `postalcode-intl.db` with no other change.
  *
@@ -24,16 +24,16 @@
  *   matches whichever form the parse emits — PL writes "26-300" (hyphen), CZ writes "58001" (no
  *   space) though GeoNames stores "580 01".
  *
- *   Optionally folds the shard straight into a COPY of an existing candidate gazetteer (`--fold-into
+ *   Optionally folds the database straight into a COPY of an existing candidate gazetteer (`--fold-into
  *   <src> --fold-out <dst>`), mirroring `build-candidate` pass-4's row construction, so a
- *   demo-ready DB falls out without a full rebuild. The shard itself is the durable artifact for
+ *   demo-ready DB falls out without a full rebuild. The database itself is the durable artifact for
  *   the canonical rebuild; the fold is the fast path to verify + stage.
  *
  *   Progress streams to stderr; the final summary is on stdout.
  *
- *   NOTE: the shard `--out` DB is written DIRECTLY (the table is dropped + recreated in place on
+ *   NOTE: the database `--out` DB is written DIRECTLY (the table is dropped + recreated in place on
  *   re-run), and `--fold-out` is a build-on-copy of `--fold-into` — neither uses an atomic
- *   temp-swap. This preserves the original `scripts/build-geonames-postcode-shard.ts` behavior
+ *   temp-swap. This preserves the original `scripts/build-geonames-postcode-database.ts` behavior
  *   verbatim.
  */
 
@@ -59,11 +59,11 @@ import {
  */
 export const spec = {
 	name: "postcode-intl",
-	description: "Build international GeoNames postcode shards",
+	description: "Build international GeoNames postcode databases",
 	options: {
 		geonames: { type: "string", description: "GeoNames postal TSV" },
 		countries: { type: "string", description: "Comma-separated ISO codes" },
-		out: { type: "string", description: "Shard output path" },
+		out: { type: "string", description: "Database output path" },
 		"fold-into": { type: "string", description: "Candidate DB to fold" },
 		"fold-out": { type: "string", description: "Folded candidate destination" },
 	},
@@ -211,7 +211,7 @@ const SPR_COLUMNS = [
 	"lastmodified",
 ] as const
 
-async function buildShard(
+async function buildDatabase(
 	acc: Map<string, PostcodeAcc>,
 	outPath: PathBuilderLike,
 	normalizeKey: NormalizeKey
@@ -276,12 +276,12 @@ async function buildShard(
 }
 
 /**
- * Fold the freshly-built shard into a COPY of an existing candidate gazetteer, mirroring `build-candidate` pass-4's row
- * construction (placetype_id=9, region_id=0, neg_rank=0, is_primary=1, bbox falls back to the centroid). The fast path
- * to a demo-ready DB without a full rebuild.
+ * Fold the freshly-built database into a COPY of an existing candidate gazetteer, mirroring `build-candidate` pass-4's
+ * row construction (placetype_id=9, region_id=0, neg_rank=0, is_primary=1, bbox falls back to the centroid). The fast
+ * path to a demo-ready DB without a full rebuild.
  */
 async function foldIntoCandidate(
-	shardPath: PathBuilderLike,
+	databasePath: PathBuilderLike,
 	srcPath: PathBuilderLike,
 	dstPath: PathBuilderLike,
 	normalizeKey: NormalizeKey
@@ -290,7 +290,7 @@ async function foldIntoCandidate(
 
 	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 	await using out = new DatabaseClient<WOFDatabase>(dstPath)
-	using shard = new DatabaseClient<WOFDatabase>(shardPath, { readOnly: true })
+	using database = new DatabaseClient<WOFDatabase>(databasePath, { readOnly: true })
 
 	const ptRow = getRow<{ id: number }>(out.prepare("SELECT id FROM placetype_codes WHERE placetype='postalcode'"))
 
@@ -331,7 +331,7 @@ async function foldIntoCandidate(
 	let n = 0
 	out.exec("BEGIN")
 
-	for (const r of shard
+	for (const r of database
 		.prepare(
 			"SELECT id, name, country, latitude, longitude, min_latitude AS mnlat, min_longitude AS mnlon, max_latitude AS mxlat, max_longitude AS mxlon " +
 				"FROM spr WHERE placetype='postalcode' AND latitude != 0 AND longitude != 0"
@@ -404,12 +404,12 @@ const GazetteerPostcodeIntl: ParsedCommandComponent<Options> = ({ options }) => 
 
 		console.error(`  unique postcodes: ${[...byCc].map(([c, n]) => `${c}=${n}`).join(" ")}  (total ${acc.size})`)
 
-		const rows = await buildShard(acc, out, normalizeLocalityForKey)
+		const rows = await buildDatabase(acc, out, normalizeLocalityForKey)
 
 		console.error(`Wrote ${rows} spr rows (both separator variants) → ${out}`)
 
 		const lines = [
-			`postcode shard: ${out}`,
+			`postcode database: ${out}`,
 			`${rows.toLocaleString()} spr rows — ${[...byCc].map(([c, n]) => `${c}=${n}`).join(" ")} (total ${acc.size})`,
 		]
 
@@ -418,7 +418,7 @@ const GazetteerPostcodeIntl: ParsedCommandComponent<Options> = ({ options }) => 
 				throw new CommandError(`Missing --fold-into candidate DB: ${foldInto}`)
 			}
 
-			console.error(`Folding shard into a copy of ${foldInto} → ${foldOut} (VACUUM after) …`)
+			console.error(`Folding database into a copy of ${foldInto} → ${foldOut} (VACUUM after) …`)
 
 			const n = await foldIntoCandidate(out, foldInto, foldOut, normalizeLocalityForKey)
 
@@ -427,10 +427,10 @@ const GazetteerPostcodeIntl: ParsedCommandComponent<Options> = ({ options }) => 
 			lines.push(`folded ${n.toLocaleString()} postcode candidate rows → ${foldOut}`)
 		} else {
 			console.error(
-				`(no --fold-into/--fold-out: shard only — feed it to build-candidate via --postcodes for the canonical rebuild)`
+				`(no --fold-into/--fold-out: database only — feed it to build-candidate via --postcodes for the canonical rebuild)`
 			)
 
-			lines.push(`shard only — feed it to build-candidate via --postcodes for the canonical rebuild`)
+			lines.push(`database only — feed it to build-candidate via --postcodes for the canonical rebuild`)
 		}
 
 		return lines

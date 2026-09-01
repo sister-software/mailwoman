@@ -10,7 +10,7 @@
  *   never remove a model call (golden-safe: 0.000 golden regression, +16.9pp FR fragment street).
  *
  *   Loaded LAZILY + cached once per process. `@mailwoman/resolver-wof-sqlite` is an OPTIONAL peer dep, so
- *   the import is dynamic — a stripped install that lacks it (or the shard) yields `null` and the pipeline
+ *   the import is dynamic — a stripped install that lacks it (or the database) yields `null` and the pipeline
  *   runs rerank-OFF (byte-stable) instead of throwing. The SQLite handle is `readOnly` + memory-mapped, so
  *   "loading" is a cheap file-open + prepared statements, not a 563 MB read.
  */
@@ -23,7 +23,7 @@ let cached: Promise<StreetLocalityEvidence | null> | null = null
 
 /**
  * Lazy-load + cache the bundled FR street-name index. Returns `null` when `@mailwoman/resolver-wof-sqlite` or the
- * `street-centroids-fr.db` shard can't be resolved — the pipeline then reranks nothing (byte-stable). Cached for the
+ * `street-centroids-fr.db` database can't be resolved — the pipeline then reranks nothing (byte-stable). Cached for the
  * process lifetime (one handle, reused).
  */
 export function loadDefaultStreetEvidence(): Promise<StreetLocalityEvidence | null> {

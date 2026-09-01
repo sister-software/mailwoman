@@ -54,7 +54,7 @@ construction). Re-running this eval with `--normalize-case`:
 
 The fix doesn't just close the gap — it **overtakes** v0 on locality (99.7 vs 96.8) and collapses the
 catastrophic-miss tail (p99 487 → 21 km), because correct localities resolve to the right place and the
-parsed street/number then hits the rooftop shard more often (47% → 62%). The one cost: region dips
+parsed street/number then hits the rooftop extract more often (47% → 62%). The one cost: region dips
 **100.0% → 98.0%** — title-casing the 2-letter state (`TX`→`Tx`) trips ~2% of region resolutions, a
 small, fixable artifact (preserve all-caps 2-letter state codes) against a large net win. Ships
 **default-OFF** behind the `normalizeCase` opt.
@@ -66,7 +66,7 @@ small, fixable artifact (preserve all-caps 2-letter state codes) against a large
   seed (#619's other half) lets us skip re-geocoding where the source already carries an authoritative
   point; this validation is what justifies trusting our own coordinate where it doesn't.
 - **Coverage, not precision, is the frontier.** ~40% of these facilities fall back to the city centroid
-  for lack of a TX rooftop/interp hit on the parsed street — the address-point shard coverage is the
+  for lack of a TX rooftop/interp hit on the parsed street — the address-point extract coverage is the
   lever, not the tier math.
 - **Case robustness is a measurable neural gap.** All-caps compliance/registry data is common, and we
   lose 6.7pp of locality there vs the rules parser. Cheap to fix, worth fixing.

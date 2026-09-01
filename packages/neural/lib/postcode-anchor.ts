@@ -47,12 +47,12 @@ export interface PostcodePlace {
 
 /**
  * The minimal surface the anchor needs from a gazetteer. Implementations: an in-memory fake (tests) or a SQLite-backed
- * lookup over the `postalcode-*.db` shards (`@mailwoman/resolver-wof-sqlite`). Keeping the seam this narrow lets a
+ * lookup over the `postalcode-*.db` extracts (`@mailwoman/resolver-wof-sqlite`). Keeping the seam this narrow lets a
  * future FST/WASM resolver drop in without touching the anchor logic.
  */
 export interface PostcodeResolver {
 	/**
-	 * Exact-match lookup of a normalized postcode string across every country shard.
+	 * Exact-match lookup of a normalized postcode string across every country extract.
 	 */
 	lookup(postcode: string): PostcodePlace[]
 }
@@ -154,7 +154,7 @@ export function editDistance1Variants(s: string): string[] {
 
 /**
  * Normalize a shaped span to the canonical gazetteer key: uppercase, collapse internal whitespace to a single space,
- * and strip the German `D-` courtesy prefix (the shards store `68161`, not `D-68161`).
+ * and strip the German `D-` courtesy prefix (the extracts store `68161`, not `D-68161`).
  */
 export function normalizePostcode(raw: string): string {
 	let s = raw.trim().toUpperCase().replaceAll(/\s+/g, " ")

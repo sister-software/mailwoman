@@ -205,7 +205,7 @@ Three findings:
    universal constant.
 2. **The cure worked, on exactly its target class.** Candidate minus null: net +2, regressions −3 —
    and the three healed rows are `Passeig de Gràcia`, `Passeig de Sant Joan`, and the
-   `…Queen St Unit 1…` unit-swallow: the street-prefix/boundary class the suffix-boundary shard
+   `…Queen St Unit 1…` unit-swallow: the street-prefix/boundary class the suffix-boundary extract
    teaches. Mechanism-consistent, small, and honestly attributed. (Null↔cure share the same base
    init, seed, and steps, so the treatment comparison is not confounded by the separate country-admission change.)
 3. **The D-rule core is base-inherited and dose-immune.** FR 2 / GB 4 / DE 1 are identical across

@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The WOF postcode-shard build (`postalcode-<cc>.db`) — ingest the country's
+ *   The WOF postcode-database build (`postalcode-<cc>.db`) — ingest the country's
  *   `whosonfirst-data-postalcode-<cc>` repo, fill the `(0,0)` placeholder centroids (US: Census ZCTA +
  *   GeoNames; all: GeoNames postal → admin parent-borrow → hierarchy-ancestor fallback), FTS, SEAL.
  *   Replaces the reopen-and-mutate pair (`fill-zcta-centroids.ts` / `backfill-postcode-centroids.ts`)
- *   that patched shipped shards after the fact — the fills are build steps now, and the artifact is
+ *   that patched shipped databases after the fact — the fills are build steps now, and the artifact is
  *   read-only from the moment it exists.
  */
 
@@ -30,7 +30,7 @@ import {
 } from "#gazetteer-pipeline/postcode/zcta-centroids"
 import { dataRootPath } from "#resolver-backend"
 
-export interface BuildPostcodeShardOptions {
+export interface BuildPostcodeDatabaseOptions {
 	/**
 	 * ISO-2 country whose `whosonfirst-data-postalcode-<cc>` repo to ingest.
 	 */
@@ -58,7 +58,7 @@ export interface BuildPostcodeShardOptions {
 	onPhase?: (phase: string, detail?: string) => void
 }
 
-export interface BuildPostcodeShardResult {
+export interface BuildPostcodeDatabaseResult {
 	out: string
 	postcodesIngested: number
 	zctaFilled: number
@@ -68,9 +68,9 @@ export interface BuildPostcodeShardResult {
 }
 
 /**
- * Build one country's sealed postcode shard. See the module docstring for the fill ladder.
+ * Build one country's sealed postcode database. See the module docstring for the fill ladder.
  */
-export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promise<BuildPostcodeShardResult> {
+export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions): Promise<BuildPostcodeDatabaseResult> {
 	const phase = opts.onPhase ?? (() => {})
 	const cc = opts.country.toLowerCase()
 	const wofDir = dataRootPath("wof")
@@ -81,7 +81,7 @@ export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promi
 
 	if (!repoDir) {
 		throw new Error(
-			`buildPostcodeShard: no ${repoName} under ${reposDir} — ` +
+			`buildPostcodeDatabase: no ${repoName} under ${reposDir} — ` +
 				`clone it with \`mailwoman gazetteer inspect sync --countries ${cc}\``
 		)
 	}

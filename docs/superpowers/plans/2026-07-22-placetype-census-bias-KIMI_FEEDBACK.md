@@ -18,7 +18,7 @@
 
 ### 1. The rung-3 evidence is circular — pre-register a pair-holdout eval
 
-The four dep-loc boards were built to validate the synth-gb/synth-nz shards, which were built from the same PPD/LINZ registers the census is built from. The report says this ("every gold pair is by construction a real entry in the register it was drawn from"), and the plan's acceptance bar — "≥ rung-3 −5pp" — is anchored to that leaked ceiling. Because absence-is-neutral means coverage misses degrade toward the _unbiased_ baseline (which is ~0% correct on dep-loc), production correct-rate ≈ coverage × in-census lift, and production coverage is currently **unmeasured**.
+The four dep-loc boards were built to validate the synth-gb/synth-nz extracts, which were built from the same PPD/LINZ registers the census is built from. The report says this ("every gold pair is by construction a real entry in the register it was drawn from"), and the plan's acceptance bar — "≥ rung-3 −5pp" — is anchored to that leaked ceiling. Because absence-is-neutral means coverage misses degrade toward the _unbiased_ baseline (which is ~0% correct on dep-loc), production correct-rate ≈ coverage × in-census lift, and production coverage is currently **unmeasured**.
 
 Required before task 4 (calibration + battery):
 

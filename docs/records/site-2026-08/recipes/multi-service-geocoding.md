@@ -79,4 +79,4 @@ A paid answer you fetch twice is a bug. Key a cache on the input address (run it
 
 ## What "free" actually costs
 
-Name both sides. The first pass isn't free to stand up: you're hosting a server and its data bundles (the gazetteer, plus per-state address-point shards if you want US rooftop answers), which means a multi-gigabyte download and a box with some RAM. Free per row, not free to run. If you geocode a few hundred addresses a month, skip all of this and use a hosted API directly; the cascade earns its moving parts when volume times refresh rate makes the per-row meter the thing you're optimizing.
+Name both sides. The first pass isn't free to stand up: you're hosting a server and its data bundles (the gazetteer, plus per-state address-point extracts if you want US rooftop answers), which means a multi-gigabyte download and a box with some RAM. Free per row, not free to run. If you geocode a few hundred addresses a month, skip all of this and use a hosted API directly; the cascade earns its moving parts when volume times refresh rate makes the per-row meter the thing you're optimizing.

@@ -11,8 +11,8 @@
  *
  *   - DuckDB `USING SAMPLE n ROWS` samples the TABLE, then WHERE filters the sample — so we
  *       filter-THEN-sample in a subquery to get a true per-country sample.
- *   - The corpus val/test shards only carry US/FR/DE, so we draw ALL splits from the rich `train`
- *       shards and do our OWN per-country 80/10/10 split (dedup on raw → no row crosses splits).
+ *   - The corpus val/test extracts only carry US/FR/DE, so we draw ALL splits from the rich `train`
+ *       extracts and do our OWN per-country 80/10/10 split (dedup on raw → no row crosses splits).
  *
  *   Run: `mailwoman placer build-dataset [--per-country 50000]` Output:
  *   `<repo>/data/coarse-placer/{train,val,test}.jsonl` (rows: {raw, country})
@@ -96,7 +96,7 @@ export async function buildDataset(
 
 	const TRAIN_GLOB = dataRootPath("corpus", "versioned", "v0.5.0", "corpus-v0.5.0", "train", "*.parquet")
 
-	// #244/#928 AU expansion: the v0.5.0 pin carries only ~5.9k AU rows; the v0.9.2 G-NAF shard carries
+	// #244/#928 AU expansion: the v0.5.0 pin carries only ~5.9k AU rows; the v0.9.2 G-NAF extract carries
 	// 150k real Australian addresses. AU rides the SAME corpus sampling path as COUNTRIES, just from its
 	// own glob — the (country, glob) pairs below unify the two.
 	const AU_GLOB = dataRootPath(

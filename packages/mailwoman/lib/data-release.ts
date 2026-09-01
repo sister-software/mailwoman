@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Versioned data-artifact addressing + atomic switchover (#485 piece 4). Shard DBs are addressed as
+ *   Versioned data-artifact addressing + atomic switchover (#485 piece 4). Database DBs are addressed as
  *   `<family>/<family>-us-<slug>-<version>.db`, with a `releases.json` manifest at the data root
  *   pinning each family to its current version. So a new build publishes ALONGSIDE the old,
  *   flipping the manifest (one atomic file write) cuts traffic over, and the build provenance (the
@@ -22,7 +22,7 @@ import { join } from "path-ts"
 import type { BundleArtifact } from "#data-bundles"
 
 /**
- * Family (shard subdir + filename prefix, e.g. `"address-points"`) → current version string.
+ * Family (database subdir + filename prefix, e.g. `"address-points"`) → current version string.
  */
 export type DataReleaseManifest = Record<string, string>
 
@@ -49,10 +49,10 @@ export async function readReleaseManifest(dataRoot: string): Promise<DataRelease
 }
 
 /**
- * Resolve a shard's on-disk path: the manifest-pinned `<family>-us-<slug>-<version>.db` when present, else the legacy
- * unversioned `<family>-us-<slug>.db`, else null if neither exists.
+ * Resolve a database's on-disk path: the manifest-pinned `<family>-us-<slug>-<version>.db` when present, else the
+ * legacy unversioned `<family>-us-<slug>.db`, else null if neither exists.
  */
-export async function resolveShardPath(
+export async function resolveDatabasePath(
 	dataRoot: string,
 	family: string,
 	slug: string,
@@ -72,9 +72,9 @@ export async function resolveShardPath(
 }
 
 /**
- * The path a `us`-family artifact ALREADY occupies on disk (versioned or legacy, via {@link resolveShardPath}), or the
- * artifact's own resolved path for a non-family artifact — `null` when nothing is there yet. Shared by `data pull` and
- * `data status`, so "already present" means the same thing to both.
+ * The path a `us`-family artifact ALREADY occupies on disk (versioned or legacy, via {@link resolveDatabasePath}), or
+ * the artifact's own resolved path for a non-family artifact — `null` when nothing is there yet. Shared by `data pull`
+ * and `data status`, so "already present" means the same thing to both.
  */
 export async function existingLocalPath(
 	dataRoot: string,
@@ -83,7 +83,7 @@ export async function existingLocalPath(
 	resolvedAbsPath: string
 ): Promise<string | null> {
 	if (artifact.family && artifact.stateSlug) {
-		return await resolveShardPath(dataRoot, artifact.family, artifact.stateSlug, manifest)
+		return await resolveDatabasePath(dataRoot, artifact.family, artifact.stateSlug, manifest)
 	}
 
 	return (await pathExists(resolvedAbsPath)) ? resolvedAbsPath : null

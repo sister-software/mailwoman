@@ -5,7 +5,7 @@
  * Sibling of `score-street-name-boundaries.run.ts` and `score-interesting-addresses.run.ts`, and deliberately the same
  * shape: exact per-tag span recall over the gauntlet rows selected by `source`, through `createRuntimePipeline`. This
  * measures the PARSE only. The coordinate, tier and place-identity gates those rows also carry are graded by the full
- * gauntlet runner against the ~9 GB shard set; nothing here touches them, so a clean score in this report is not a
+ * gauntlet runner against the ~9 GB database set; nothing here touches them, so a clean score in this report is not a
  * claim that the row resolves.
  *
  * Every country in this batch grades through the en-US base model — none of the eleven has a shipped locale overlay.

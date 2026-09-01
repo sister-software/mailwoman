@@ -97,7 +97,7 @@ describe("readDeclaredArtifactFile", () => {
 		// edit that dropped either one would leave every fixture test above green. en-gb moved to the
 		// declaring column 2026-08-06 (9.0.0, ROAD_TO_V9 A4): the v4.2.0 base trained the GB anchor slot,
 		// so postcode-gb.bin returned — the #1467-era "declares none" posture now lives only on en-nz
-		// (no NZ postcode shard exists).
+		// (no NZ postcode extract exists).
 		expect(await readDeclaredArtifactFile(workspacePath("neural-weights-en-us"))).toMatchObject({
 			file: "postcode-us.bin",
 		})

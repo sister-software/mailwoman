@@ -232,7 +232,7 @@ export function synthesizeAnchorAbsorptionRow(
 	if (template === "h-no-trailing-locality") {
 		// The A3 fix (#220): the common US format "{house#} {street}, {locality}, {STATE}" with NO trailing
 		// postcode → the leading number is the HOUSE NUMBER. The CONTRAST to p-us-rural (same no-trailing,
-		// state-bearing shape) is the LOCALITY: present here, absent there. The A2 shard lacked this slice,
+		// state-bearing shape) is the LOCALITY: present here, absent there. The A2 slice lacked this slice,
 		// so p-us-rural's "leading-number + STATE → postcode" rule over-generalized to 98 golden house#
 		// rows ("36 Oxbow Dr, Bradford, VT" → postcode). The house# spans 1-4 digits AND real 5-digit ZIPs
 		// (the hard case: 5-digit + locality is STILL a house number, distinct from p-us-rural's no-locality).
@@ -269,12 +269,12 @@ export function synthesizeAnchorAbsorptionRow(
 // (~98) but cost house_number (95.8->92.8), and the A2 mix-rebalance did NOT move it — so it was never a
 // CASE-P-quantity problem. The row-by-row v192-vs-A2 diff (hn-regression-diff.ts) pinned it: 132/132 house#
 // regressions were house#->POSTCODE on "{house#} {street}, {locality}, {STATE}" no-trailing rows — the
-// p-us-rural rule ("leading-number + STATE + no-trailing -> postcode") OVER-GENERALIZED because the shard
+// p-us-rural rule ("leading-number + STATE + no-trailing -> postcode") OVER-GENERALIZED because the slice
 // had NO counter-slice for the common locality-bearing house# case. A3 ADDS h-no-trailing-locality (15%)
 // to teach the LOCALITY discriminator (present -> house#, absent + 5-digit -> postcode = p-us-rural) and
 // trims p-us-rural 16->13. Goal: house_number recovers WITHOUT re-eroding postcode/SLICE-H. CASE-P = 26%.
 /**
- * Every anchor-absorption template, in one list for the shard runner to sample from. Each covers a way a venue or
+ * Every anchor-absorption template, in one list for the slice runner to sample from. Each covers a way a venue or
  * landmark name can swallow the street token that follows it.
  */
 export const ALL_TEMPLATES: ReadonlyArray<AnchorAbsorptionTemplate> = [

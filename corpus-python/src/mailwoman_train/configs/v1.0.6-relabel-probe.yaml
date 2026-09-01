@@ -6,9 +6,9 @@
 #
 # HYPOTHESIS UNDER TEST (the #492 ladder's terminal finding, DeepSeek-concurred 2026-06-10): the
 # affix transient decay is CONTRADICTORY LABELS — 69.4% of base street rows label affix surfaces
-# monolithically (~467M rows, >=1,039:1 against the shard's effective 450K), and the directional
+# monolithically (~467M rows, >=1,039:1 against the slice's effective 450K), and the directional
 # augmentation (label-inheriting, p=0.3) mints more every epoch. The relabel pass
-# (mailwoman_train/relabel.py, exact shard-builder split semantics, runs AFTER augmentation) makes
+# (mailwoman_train/relabel.py, exact slice-builder split semantics, runs AFTER augmentation) makes
 # the whole mix agree: trailing USPS suffix -> street_suffix, leading directional -> street_prefix.
 #
 # PRE-REGISTERED READ (decay-vs-hold, score-affix on real-affix eval, fp32, SAME scorer flags as
@@ -63,7 +63,7 @@ data:
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
   gazetteer_choreography: false
-  # THE single variable vs probe 0 (#511): end the base-vs-shard affix label contradiction.
+  # THE single variable vs probe 0 (#511): end the base-vs-slice affix label contradiction.
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
 
 model:

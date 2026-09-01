@@ -15,7 +15,7 @@ without operator GO (merge wall)._
 >
 > **Morning wrap (2026-06-19 ~12:53 UTC):** operator GO — the 7 night commits rebased + pushed to
 > main (`00ae8f56`, Test + Docs CI green), and **v1.8.1 launched** (`ap-K2x5hDTbABeEhdaW3i5WUS`,
-> the country-bearing shard that closes fr.country; loss-abort passed). On v1.8.1's completion: gate
+> the country-bearing extract that closes fr.country; loss-abort passed). On v1.8.1's completion: gate
 > (FR centroid + US/FR guardrails) → test → publish the chosen candidate. v1.8.0 stays the fallback.
 
 ## The arc (how we got here)
@@ -25,7 +25,7 @@ without operator GO (merge wall)._
    data-bound (meter-grade via the situs cascade for ~90%). A US-parse retrain risks another label
    win that never reaches the coordinate.
 2. **4-turn DeepSeek-Pro consult** (`surpass-v150`) reframed: only parse decisions that change the
-   admin polygon matter. **International** is the headroom (no situs shards → the coordinate IS the
+   admin polygon matter. **International** is the headroom (no situs extracts → the coordinate IS the
    admin centroid). The arena confirmed the class: postal-standards 68% both-fail, intl-format 29%
    v0-only; the unifying failure is "fails to split locality from the adjacent admin token."
 3. **The anchor-positional unlock:** the v0.9.2 "intl washes anchor-on" scar was _positional_
@@ -37,17 +37,17 @@ without operator GO (merge wall)._
 
 ## What shipped (code, committed)
 
-- `scripts/build-fr-admin-split-shard.mjs` — renders bare/space/comma FR place rows with the locality
+- `scripts/build-fr-admin-split-extract.mjs` — renders bare/space/comma FR place rows with the locality
   split from the département (`region`), from **real BAN** commune+postcode tuples; département
   derived via codex `departementForCodePostal`. Anchor-ON by construction (99.9% postcode-landing).
-- `scripts/assemble-fr-admin-split-overlay-manifest.py` — overlay manifest (corpus-v0.5.0 690 shards
-  verbatim + the shard), re-rooted to `/data` (0 `/mnt` paths).
+- `scripts/assemble-fr-admin-split-overlay-manifest.py` — overlay manifest (corpus-v0.5.0 690 extracts
+  verbatim + the extract), re-rooted to `/data` (0 `/mnt` paths).
 - `scripts/eval/fr-admin-split-gate.ts` — the live centroid gate (ship-config parse → resolve →
   coord on the held-out golden; coord error + région-emit-rate + #727 diacritic break).
 - `scripts/eval/fr-admin-split-selfvalidation.ts` + `docs/.../2026-06-19-fr-admin-split-prevalidation.md`
   — the pre-GPU gate (committed day session).
 - `corpus-python/.../configs/v1.8.0-fr-admin-split.yaml` + `train_remote.py::sync_v080`.
-- Issue **#727** filed (the `Lozère → ère` diacritic decode bug; rides the shard fix).
+- Issue **#727** filed (the `Lozère → ère` diacritic decode bug; rides the extract fix).
 
 ## The numbers (filled as they land)
 
@@ -110,7 +110,7 @@ guardrail, complementing the custom centroid golden):
 | **country**  |   62.7 |   59.2 | **−3.5** ⚠ |
 
 Net FR improvement (incl. `fr.house_number` held at 99.5 — v1.5.0's raison d'être) **except
-fr.country −3.5pp**. Likely mechanism: the shard's bare `Commune, Département` rows carry
+fr.country −3.5pp**. Likely mechanism: the extract's bare `Commune, Département` rows carry
 `country: FR` metadata but **no country token in the text**, so the model learns to emit country less
 often on FR. Coordinate-invisible for the FR coord eval (which is given `--default-country FR`), but
 over the 2pp gate — a clean v1.8.1 refinement is to mix in FR rows that DO carry "France".
@@ -132,12 +132,12 @@ the trade, operator promotes" path, not an experimental-as-cover ship.
 
 **Residual:** #727 diacritic is only _partially_ fixed — the break rate among emitted régions halved
 (2.8%→1.1%) but ~24 absolute cases remain; the residual is likely tokenizer-level (the accent strands
-a subword) and wants a separate decode/tokenizer look, not more shard data.
+a subword) and wants a separate decode/tokenizer look, not more extract data.
 
 ## What went well
 
 - **Salvage-first paid off:** codex `departementForCodePostal`/`FR_DEPARTEMENTS`, AU `state.ts`, and
-  the `build-fr-order-shard.mjs` template meant zero re-derived reference data and a fast build.
+  the `build-fr-order-extract.mjs` template meant zero re-derived reference data and a fast build.
 - **Pre-GPU falsification:** the self-validation gate turned "plausible lever" into "evidence-backed
   ceiling" before the GPU spend — the discipline the whole day's campaign was about.
 - **Real data throughout** (BAN, 27M rows → 35k distinct communes), anchor landing 99.9%.
@@ -150,7 +150,7 @@ a subword) and wants a separate decode/tokenizer look, not more shard data.
 - **A `grep + 2>/dev/null` pipe on the first US eval discarded the whole table** (and I ran the 10k
   default instead of `--limit 2000`), costing a re-run. Don't filter+silence an eval you haven't seen
   the shape of; run it visible first, then filter.
-- **#727 only partially fixed by the shard** — the diacritic break is tokenizer-level, so more shard
+- **#727 only partially fixed by the extract** — the diacritic break is tokenizer-level, so more extract
   data couldn't fully close it (diagnosis after the fact, not before).
 
 ## Decisions made autonomously
@@ -158,9 +158,9 @@ a subword) and wants a separate decode/tokenizer look, not more shard data.
 - **FR-only first build** (the min-viable cut): AU + venue-leading deferred to a second run. FR has
   hard coordinate truth and a closed département set; the space-delimited shape is covered via FR's
   own space variant. Lower-risk first GPU spend.
-- **Shard weight 6.0** (matching synth-german, the other intl coverage shard) — strong signal,
+- **Extract weight 6.0** (matching synth-german, the other intl coverage extract) — strong signal,
   modest enough that the ~90%-US base corpus still dominates the batch (the #375 narrowing guard).
-- **Cloned v1.5.0-fr-order verbatim** except the one added shard (one headline variable).
+- **Cloned v1.5.0-fr-order verbatim** except the one added extract (one headline variable).
 - **AU iteration deferred — and now known to be BLOCKED:** the resolver DB (`admin-global-priority.db`)
   has **zero AU rows** (US+DE+FR only), so AU places can't be resolved → no AU coordinate gate is
   possible without first expanding the resolver DB to AU. FR-only wasn't just the min-viable cut, it
@@ -177,11 +177,11 @@ a subword) and wants a separate decode/tokenizer look, not more shard data.
   GO: the standard release flow (releases.json + HF/R2 publish; the int8 is
   `/data/models/quantized/model-v180-step-40000-int8.onnx` + `./out/v180/model.onnx`).
 - **#727 diacritic follow-up** — tokenizer/decode-level (the accent strands a subword as its own
-  span); not a shard-data fix. A decode-side span-merge or a tokenizer look.
+  span); not a extract-data fix. A decode-side span-merge or a tokenizer look.
 - **AU iteration is blocked** until the resolver DB (`admin-global-priority.db`) gains AU rows — scope
-  an AU WOF ingest if AU coverage is wanted (then the AU admin-split shard is a fast follow on the FR
+  an AU WOF ingest if AU coverage is wanted (then the AU admin-split extract is a fast follow on the FR
   template).
-- **The shard + gate are reusable** — `build-fr-admin-split-shard.mjs` + `fr-admin-split-gate.ts` +
+- **The extract + gate are reusable** — `build-fr-admin-split-extract.mjs` + `fr-admin-split-gate.ts` +
   `fr-admin-split-selfvalidation.ts` generalize to other locales with trailing postcodes (ES/IT) once
   their resolver coverage exists.
 

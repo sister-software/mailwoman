@@ -15,16 +15,16 @@ export const spec = {
 	name: "stats",
 	description: "Build corpus statistics.",
 	options: {
-		shards: { type: "string", required: true, description: "Comma-separated parquet shard paths or a directory" },
+		slices: { type: "string", required: true, description: "Comma-separated parquet slice paths or a directory" },
 		output: { type: "string", required: true, description: "Output corpus-stats.json path" },
-		"limit-per-shard": { type: "number", description: "Row cap per shard (debug)" },
+		"limit-per-slice": { type: "number", description: "Row cap per slice (debug)" },
 	},
 } as const satisfies CommandSpec
 
 interface Options {
-	shards: string
+	slices: string
 	output: string
-	limitPerShard?: number
+	limitPerSlice?: number
 }
 
 const Cmd: ParsedCommandComponent<Options> = ({ options }) => {
@@ -32,9 +32,9 @@ const Cmd: ParsedCommandComponent<Options> = ({ options }) => {
 		const { buildCorpusStats } = await import("@mailwoman/corpus/tools")
 
 		await buildCorpusStats({
-			shardsArg: options.shards,
+			slicesArg: options.slices,
 			outputPath: options.output,
-			limitPerShard: options.limitPerShard,
+			limitPerSlice: options.limitPerSlice,
 		})
 
 		return "done"

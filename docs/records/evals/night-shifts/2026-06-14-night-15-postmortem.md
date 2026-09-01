@@ -61,7 +61,7 @@ remains, deferred to **#587**.
 **E — the marquee: client-side street geocoder (#583 spec + #585 working demo):** **Shipped working and
 browser-verified.** Type a US address → exact building coordinate, fully in the browser, no server.
 
-- Spec (#583): byte-range proven on the **3.3 GB CA shard** (~24 KB/lookup, index B-tree depth 4); the
+- Spec (#583): byte-range proven on the **3.3 GB CA extract** (~24 KB/lookup, index B-tree depth 4); the
   sync/async architecture resolved (the demo's cascade is already async, so no worker needed for
   correctness).
 - Implementation (#585): async httpvfs situs/interp lookups (twins of the node tiers, lockstep) +
@@ -69,7 +69,7 @@ browser-verified.** Type a US address → exact building coordinate, fully in th
   (≤10 m)" / "≈ interpolated · ±N m"). Hosted the **full launch trio NY/MI/CA + DC** on R2 byte-range.
 - **Verified in-browser (Playwright/run-docs) on all four** — each resolves to its exact `address_point`,
   fully client-side, zero console errors: DC (the White House, 38.8977/-77.0365, 8.3 s), MI (4.8 s), NY
-  (5.8 s, 1.4 GB shard), and **CA (5.5 s on the 3.3 GB stress shard)** — closing the spec's go-wide
+  (5.8 s, 1.4 GB extract), and **CA (5.5 s on the 3.3 GB stress extract)** — closing the spec's go-wide
   latency question. Fixed a street-assembly bug CA exposed (the model splits `street`+`street_suffix`;
   now assembled in source order). The #377 UX cluster (span-highlight, hierarchy, candidates, timing) was
   already built; this shift added the live street tier + precision caption on top.
@@ -189,7 +189,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
     branched off pre-#579 `main`, so each needs an "Update branch"/rebase to pick up the lockfile before
     its own CI can pass — that's expected, not a per-PR problem.
 - **E go-wide:** finish hosting NY + CA (uploading), add them to `HOSTED_STREET_SLUGS`, verify a CA
-  address in-browser (closes the spec's go-wide latency decision on the real 3.3 GB shard).
+  address in-browser (closes the spec's go-wide latency decision on the real 3.3 GB extract).
 - **E UX (#377):** tier caption ("exact" / "±N m") and place-level autocomplete typeahead are shipped;
   remaining is span-highlight, the resolved-hierarchy tree, the address-level (street-prefix) typeahead
   (#587), then lifting the cascade into a Web Worker + the capped Service Worker cache.
@@ -198,17 +198,17 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
 
 ## Numbers
 
-| metric                  | value                                                                                                          |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------- |
-| shift window            | 2026-06-14 03:47 → ~13:00 UTC (operator closed early)                                                          |
-| PRs opened              | 11 (#579–#591: 579/580/581/583/584/585/586/588/589/590/591) + #582/#587 filed                                  |
-| issues closed           | 6 (#483, #484, #523, #560, #397, #190) + #421/#374/#481/#368 triaged                                           |
-| models trained          | 1 (coarse-placer M3 retrain, 34 s CPU)                                                                         |
-| Modal / GPU time        | 0 (CPU-only shift, as planned)                                                                                 |
-| marquee verification    | 4 states in-browser (DC/MI/NY/CA), all exact, zero errors                                                      |
-| R2 hosted street shards | DC + MI + NY + CA (the full launch trio + DC), all verified                                                    |
-| evals run               | reconcile re-gate, 12-state conformal, coarse-placer quant, 200-row punctuation-stress (v0/neural/+SP)         |
-| NaN incidents           | 0                                                                                                              |
-| self-merges to main     | 0 (PR-and-flag throughout)                                                                                     |
-| CI status               | Test: rescued 0 → 224/231 (#579) → 225/225 with #589. docs-build: red, needs #579 + #585-config (#590-finding) |
-| peak heat               | 92 °C (sweep; killed per the 85 °C rule)                                                                       |
+| metric                    | value                                                                                                          |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| shift window              | 2026-06-14 03:47 → ~13:00 UTC (operator closed early)                                                          |
+| PRs opened                | 11 (#579–#591: 579/580/581/583/584/585/586/588/589/590/591) + #582/#587 filed                                  |
+| issues closed             | 6 (#483, #484, #523, #560, #397, #190) + #421/#374/#481/#368 triaged                                           |
+| models trained            | 1 (coarse-placer M3 retrain, 34 s CPU)                                                                         |
+| Modal / GPU time          | 0 (CPU-only shift, as planned)                                                                                 |
+| marquee verification      | 4 states in-browser (DC/MI/NY/CA), all exact, zero errors                                                      |
+| R2 hosted street extracts | DC + MI + NY + CA (the full launch trio + DC), all verified                                                    |
+| evals run                 | reconcile re-gate, 12-state conformal, coarse-placer quant, 200-row punctuation-stress (v0/neural/+SP)         |
+| NaN incidents             | 0                                                                                                              |
+| self-merges to main       | 0 (PR-and-flag throughout)                                                                                     |
+| CI status                 | Test: rescued 0 → 224/231 (#579) → 225/225 with #589. docs-build: red, needs #579 + #585-config (#590-finding) |
+| peak heat                 | 92 °C (sweep; killed per the 85 °C rule)                                                                       |

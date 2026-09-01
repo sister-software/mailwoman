@@ -4,7 +4,7 @@
 swap floors on the rescued parity corpus (street ≥0.90, house_number ≥0.97). The just-shipped
 **v264** (6.3.0) sits at **street 0.543, hn 0.767, postcode 0.986** — the same place v257 sat one
 country-channel and one span-head ago. This note is the diagnosis behind that number: what the
-failures _are_, why more of the v250→v257 shard campaign is unlikely to move it, and the strategic
+failures _are_, why more of the v250→v257 extract campaign is unlikely to move it, and the strategic
 fork that follows.
 
 ## Measurement
@@ -58,9 +58,9 @@ model parses it correctly, and the rules parser was purpose-built for the bare-a
 distribution. The "boundary" class (39%) is **#727**. It persists with full context because it is a
 decode-segmentation error at the street↔house_number boundary, not a missing-context error.
 
-## Why "more shard" is unlikely to break the plateau
+## Why "more extract" is unlikely to break the plateau
 
-The v257 recipe **already** carries targeted bare-street shards at the campaign's highest source
+The v257 recipe **already** carries targeted bare-street extracts at the campaign's highest source
 weight (12.0): `synth-no-street-led`, `synth-cz-pcfirst-preposition`, `synth-fr-bare-street`,
 `synth-si-bare-village`, plus `synth-fragment` at 6.0. Heavy targeted data on the exact locales that
 still fail, and it plateaued at 0.54. The bare-fragment mis-segmentation and the #727 boundary class
@@ -143,7 +143,7 @@ a permanent substitute for the model work.
 
 This unblocks v7 without a model campaign that re-plateaus and without shipping the tail a pure
 coordinate re-gate would. **#727 stage-2 (FSemi-CRF span head)** stays the model lever for the ~39%
-boundary class and shrinks the fallback further. A **29M shard campaign is not recommended as the
+boundary class and shrinks the fallback further. A **29M extract campaign is not recommended as the
 lead**: the plateau evidence says it re-plateaus.
 
 ## Reproduction

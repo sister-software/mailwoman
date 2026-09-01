@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Final output sharder for the corpus pipeline.
+ *   Final output sliceer for the corpus pipeline.
  *
- *   Phase 1 (#9) shipped JSONL shards + a Python (PyArrow) converter as the path to binary Parquet —
+ *   Phase 1 (#9) shipped JSONL slices + a Python (PyArrow) converter as the path to binary Parquet —
  *   bridging until the JS toolchain caught up. Phase 1.5 (#18 §4) replaced that with a native JS
  *   writer. The build pipeline no longer touches Python at all in its hot path; the only remaining
  *   Python is the one-shot `train_tokenizer.py` SentencePiece step.
@@ -31,9 +31,9 @@
  *     part-0000.parquet
  * ```
  *
- *   Each shard caps at `rowsPerShard` (default 1_000_000); within a shard, parquetjs flushes row
+ *   Each slice caps at `rowsPerSlice` (default 1_000_000); within a slice, parquetjs flushes row
  *   groups every `ROW_GROUP_SIZE` (50_000) rows per the issue spec. The MANIFEST captures every
- *   shard's path, row count, byte size, and SHA-256 (computed by re-reading the shard once after
+ *   slice's path, row count, byte size, and SHA-256 (computed by re-reading the slice once after
  *   close — cheap relative to writing it).
  */
 
@@ -47,7 +47,7 @@ import type { LabeledRow } from "#types"
 import type { SplitName } from "#utils/split"
 
 /**
- * Row groups flush at this many rows (parquetjs internal cadence within a shard).
+ * Row groups flush at this many rows (parquetjs internal cadence within a slice).
  */
 export const ROW_GROUP_SIZE = 50_000
 
@@ -78,7 +78,7 @@ export async function connectDuckDB(): Promise<import("@duckdb/node-api").DuckDB
 /**
  * Snappy is the only zstd-equivalent codec available in @dsnp/parquetjs 1.7.0.
  */
-export const SHARD_COMPRESSION = "SNAPPY" as const
+export const SLICE_COMPRESSION = "SNAPPY" as const
 
 /**
  * A single Parquet-style row shape. The `[key: string]: unknown` index signature is required for compatibility with
@@ -107,7 +107,7 @@ export interface ParquetRow {
 }
 
 /**
- * Column names emitted into every shard. Matches `ParquetRow`.
+ * Column names emitted into every slice. Matches `ParquetRow`.
  */
 export const PARQUET_COLUMNS = [
 	"raw",
@@ -135,56 +135,56 @@ export const PARQUET_COLUMNS = [
  * tokens/labels arrays. Compression is per-column SNAPPY.
  */
 export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
-	raw: { type: "UTF8", compression: SHARD_COMPRESSION },
-	tokens: { type: "UTF8", repeated: true, compression: SHARD_COMPRESSION },
-	labels: { type: "UTF8", repeated: true, compression: SHARD_COMPRESSION },
+	raw: { type: "UTF8", compression: SLICE_COMPRESSION },
+	tokens: { type: "UTF8", repeated: true, compression: SLICE_COMPRESSION },
+	labels: { type: "UTF8", repeated: true, compression: SLICE_COMPRESSION },
 	// v0.5.0 char-offset label spans (#519): parallel arrays over `raw` (UTF-16 code units,
 	// [start, end) exclusive-end, sorted, non-overlapping). INT32 — raw is a short address string,
 	// and INT32 round-trips as `number` where parquetjs INT64 would surface bigint.
-	span_starts: { type: "INT32", repeated: true, compression: SHARD_COMPRESSION },
-	span_ends: { type: "INT32", repeated: true, compression: SHARD_COMPRESSION },
-	span_tags: { type: "UTF8", repeated: true, compression: SHARD_COMPRESSION },
-	country: { type: "UTF8", compression: SHARD_COMPRESSION },
-	locale: { type: "UTF8", compression: SHARD_COMPRESSION, optional: true },
-	source: { type: "UTF8", compression: SHARD_COMPRESSION },
-	source_id: { type: "UTF8", compression: SHARD_COMPRESSION },
-	corpus_version: { type: "UTF8", compression: SHARD_COMPRESSION },
-	license: { type: "UTF8", compression: SHARD_COMPRESSION },
-	synth_method: { type: "UTF8", compression: SHARD_COMPRESSION, optional: true },
-	synth_base_id: { type: "UTF8", compression: SHARD_COMPRESSION, optional: true },
+	span_starts: { type: "INT32", repeated: true, compression: SLICE_COMPRESSION },
+	span_ends: { type: "INT32", repeated: true, compression: SLICE_COMPRESSION },
+	span_tags: { type: "UTF8", repeated: true, compression: SLICE_COMPRESSION },
+	country: { type: "UTF8", compression: SLICE_COMPRESSION },
+	locale: { type: "UTF8", compression: SLICE_COMPRESSION, optional: true },
+	source: { type: "UTF8", compression: SLICE_COMPRESSION },
+	source_id: { type: "UTF8", compression: SLICE_COMPRESSION },
+	corpus_version: { type: "UTF8", compression: SLICE_COMPRESSION },
+	license: { type: "UTF8", compression: SLICE_COMPRESSION },
+	synth_method: { type: "UTF8", compression: SLICE_COMPRESSION, optional: true },
+	synth_base_id: { type: "UTF8", compression: SLICE_COMPRESSION, optional: true },
 }
 
 /**
- * Per-shard metadata captured in `MANIFEST.json`.
+ * Per-slice metadata captured in `MANIFEST.json`.
  */
-export interface ShardDescriptor {
+export interface SliceDescriptor {
 	split: SplitName
 	path: string
 	format: "parquet"
-	compression: typeof SHARD_COMPRESSION
+	compression: typeof SLICE_COMPRESSION
 	rows: number
 	bytes: number
 	sha256: string
 	first_source_id: string
 	last_source_id: string
 	/**
-	 * The shard's corpus source slug, when the writer knows it. `audit.ts` prefers this over inferring the source from
-	 * `first_source_id`'s prefix; `writeShards` itself writes multi-source shards and leaves it unset.
+	 * The slice's corpus source slug, when the writer knows it. `audit.ts` prefers this over inferring the source from
+	 * `first_source_id`'s prefix; `writeSlices` itself writes multi-source slices and leaves it unset.
 	 */
 	source?: string
 }
 
-export interface ShardManifest {
+export interface SliceManifest {
 	corpus_version: string
 	schema: readonly string[]
-	rows_per_shard: number
+	rows_per_slice: number
 	row_group_size: number
-	shards: ShardDescriptor[]
+	slices: SliceDescriptor[]
 	counts: Record<SplitName, number>
 	total_rows: number
 }
 
-export interface WriteShardsOptions {
+export interface WriteSlicesOptions {
 	/**
 	 * Root output directory; corpus version dir is created beneath.
 	 */
@@ -196,9 +196,9 @@ export interface WriteShardsOptions {
 	corpusVersion: string
 
 	/**
-	 * Max rows per `.parquet` shard. Default 1_000_000 per the Phase 1 plan.
+	 * Max rows per `.parquet` slice. Default 1_000_000 per the Phase 1 plan.
 	 */
-	rowsPerShard?: number
+	rowsPerSlice?: number
 }
 
 /**
@@ -206,7 +206,7 @@ export interface WriteShardsOptions {
  * time via `splitForRow` and route rows to the matching stream, eliminating the prior `Map<source_id, SplitName>` O(n)
  * lookup table.
  *
- * Splits with no rows can be omitted (or passed as an empty iterable); `writeShards` skips them.
+ * Splits with no rows can be omitted (or passed as an empty iterable); `writeSlices` skips them.
  */
 export type PerSplitRows = Partial<Record<SplitName, AsyncIterable<LabeledRow>>>
 
@@ -214,7 +214,7 @@ export type PerSplitRows = Partial<Record<SplitName, AsyncIterable<LabeledRow>>>
  * Project a labeled row to the Parquet schema.
  *
  * The span triple is REQUIRED here (#519): `alignRow` emits it on every labeled row, so a row arriving without it came
- * from a producer that hasn't migrated — writing it would silently drop the v0.5.0 labels from the shard (the "builders
+ * from a producer that hasn't migrated — writing it would silently drop the v0.5.0 labels from the slice (the "builders
  * before parquet = silent loss" hazard). Loud failure, naming the row, instead.
  */
 export function rowToParquet(row: LabeledRow): ParquetRow {
@@ -296,20 +296,20 @@ export function appendShape(row: ParquetRow): ParquetRow {
 }
 
 /**
- * Stream labeled rows into `.parquet` shards, one set of shards per split. Splits are processed sequentially so that
- * only one shard writer is open at a time — memory cost is bounded by the parquetjs row-group buffer (~`ROW_GROUP_SIZE
+ * Stream labeled rows into `.parquet` slices, one set of slices per split. Splits are processed sequentially so that
+ * only one slice writer is open at a time — memory cost is bounded by the parquetjs row-group buffer (~`ROW_GROUP_SIZE
  * × row_size`), not by the labeled-row count.
  *
  * Callers pass per-split `AsyncIterable<LabeledRow>` (`PerSplitRows`); the prior `splitFor(sourceID)` callback is gone
  * because pre-partitioning at the caller eliminates the O(n) `Map<source_id, SplitName>` it required. See `buildCorpus`
  * for the new wire-up.
  */
-export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptions): Promise<ShardManifest> {
-	const rowsPerShard = opts.rowsPerShard ?? 1_000_000
+export async function writeSlices(perSplit: PerSplitRows, opts: WriteSlicesOptions): Promise<SliceManifest> {
+	const rowsPerSlice = opts.rowsPerSlice ?? 1_000_000
 	const corpusDir = join(opts.outputDir, `corpus-v${opts.corpusVersion}`)
 	await makeDirectories(corpusDir)
 
-	const shards: ShardDescriptor[] = []
+	const slices: SliceDescriptor[] = []
 	const counts: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
 	let totalRows = 0
 
@@ -318,17 +318,17 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 
 		if (!rows) continue
 
-		let shardIndex = 0
+		let sliceIndex = 0
 		let writer: ParquetWriter<ParquetRow> | null = null
 		let path = ""
-		let shardRows = 0
+		let sliceRows = 0
 		let firstSourceID = ""
 		let lastSourceID = ""
 
-		const openShard = async (): Promise<void> => {
+		const openSlice = async (): Promise<void> => {
 			const splitDir = join(corpusDir, split)
 			await makeDirectories(splitDir)
-			path = join(splitDir, `part-${String(shardIndex).padStart(4, "0")}.parquet`)
+			path = join(splitDir, `part-${String(sliceIndex).padStart(4, "0")}.parquet`)
 
 			writer = await ParquetWriter.openFile<ParquetRow>(LABELED_ROW_SCHEMA, path, {
 				rowGroupSize: ROW_GROUP_SIZE,
@@ -336,26 +336,26 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 
 			writer.setMetadata("mailwoman.corpus_version", opts.corpusVersion)
 			writer.setMetadata("mailwoman.split", split)
-			writer.setMetadata("mailwoman.shard_index", String(shardIndex))
-			shardRows = 0
+			writer.setMetadata("mailwoman.slice_index", String(sliceIndex))
+			sliceRows = 0
 			firstSourceID = ""
 			lastSourceID = ""
 		}
 
-		const closeShard = async (): Promise<void> => {
+		const closeSlice = async (): Promise<void> => {
 			if (!writer) return
 			await writer[Symbol.asyncDispose]()
 
-			if (shardRows > 0) {
+			if (sliceRows > 0) {
 				const fileStat = await tryStat(path)
 				const sha256 = await sha256File(path)
 
-				shards.push({
+				slices.push({
 					split,
 					path,
 					format: "parquet",
-					compression: SHARD_COMPRESSION,
-					rows: shardRows,
+					compression: SLICE_COMPRESSION,
+					rows: sliceRows,
 					bytes: fileStat?.size ?? 0,
 					sha256,
 					first_source_id: firstSourceID,
@@ -368,42 +368,42 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 
 		for await (const row of rows) {
 			if (!writer) {
-				await openShard()
+				await openSlice()
 			}
 
 			const pq = rowToParquet(row)
 			await writer!.appendRow(appendShape(pq))
 
-			if (shardRows === 0) {
+			if (sliceRows === 0) {
 				firstSourceID = row.source_id
 			}
 
 			lastSourceID = row.source_id
 
-			shardRows++
+			sliceRows++
 
 			counts[split]++
 
 			totalRows++
 
-			if (shardRows >= rowsPerShard) {
-				await closeShard()
+			if (sliceRows >= rowsPerSlice) {
+				await closeSlice()
 
-				shardIndex++
+				sliceIndex++
 			}
 		}
 
-		await closeShard()
+		await closeSlice()
 	}
 
-	shards.sort((a, b) => (a.split === b.split ? a.path.localeCompare(b.path) : a.split.localeCompare(b.split)))
+	slices.sort((a, b) => (a.split === b.split ? a.path.localeCompare(b.path) : a.split.localeCompare(b.split)))
 
-	const manifest: ShardManifest = {
+	const manifest: SliceManifest = {
 		corpus_version: opts.corpusVersion,
 		schema: PARQUET_COLUMNS,
-		rows_per_shard: rowsPerShard,
+		rows_per_slice: rowsPerSlice,
 		row_group_size: ROW_GROUP_SIZE,
-		shards,
+		slices,
 		counts,
 		total_rows: totalRows,
 	}

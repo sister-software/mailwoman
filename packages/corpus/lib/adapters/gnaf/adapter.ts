@@ -16,7 +16,7 @@
  *   So this adapter renders each assembled G-NAF tuple (from {@link ./assemble}) in one of three real
  *   AU layouts — real-AU canonical (number-first, postcode-trailing), postcode-first,
  *   locality-first — ROTATED by row index (`i % 3`), so the locality + postcode each land in every
- *   position across the shard. This is the exact mechanism that fixed #148's v1.9.0 order-overfit
+ *   position across the slice. This is the exact mechanism that fixed #148's v1.9.0 order-overfit
  *   for the 16 EU locales (`scripts/rerender-overture-multiorder.mjs`, v1.9.1 → shipped v4.13.0);
  *   AU was simply never in that train (`country_weights` had no AU, and `data_loader.py` excludes
  *   unlisted countries). Rotating one order per row (rather than emitting all three) keeps this a

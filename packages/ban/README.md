@@ -33,12 +33,12 @@ set.
 #    https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-<dept>.csv.gz
 #    → $MAILWOMAN_DATA_ROOT/ban/sources/   (or reuse an existing corpus/sources/ban)
 
-# 2. Build the national shard (writes $MAILWOMAN_DATA_ROOT/ban/address-points-fr.db, sealed 0444):
-node ban/out/scripts/build-address-point-shard.js \
+# 2. Build the national extract (writes $MAILWOMAN_DATA_ROOT/ban/address-points-fr.db, sealed 0444):
+node ban/out/scripts/build-address-point-extract.js \
   --csv-dir $MAILWOMAN_DATA_ROOT/corpus/sources/ban --release 2026-05-18
 
 # Validate on a few départements first (transient; skips the provenance rewrite):
-node ban/out/scripts/build-address-point-shard.js --depts 48,2A,05 --out /tmp/ban-sample.db
+node ban/out/scripts/build-address-point-extract.js --depts 48,2A,05 --out /tmp/ban-sample.db
 ```
 
 The build records provenance (source URL, license, release, row count, md5) in `ban/ATTRIBUTION.json` at
@@ -47,8 +47,8 @@ file and never touches the OSM database beside it.
 
 ## The resolution tier
 
-`BANRegionDatabaseProvider.for(country)` is wired into `GeocodeDeps.nationalShards`, consulted **ahead of** the OSM
-`osmShards` tier (a national authoritative register outranks the community fallback) and only for a non-US
+`BANRegionDatabaseProvider.for(country)` is wired into `GeocodeDeps.nationalExtracts`, consulted **ahead of** the OSM
+`osmExtracts` tier (a national authoritative register outranks the community fallback) and only for a non-US
 parse. BAN rows carry their own postcode + commune, so the lookup keys on the scoped
 (`postcode` → `locality`) probes; no bbox fall-through is needed. Interpolation for house numbers BAN
 doesn't carry is not built yet — the exact-point tier is the whole win here (BAN's density is the point).

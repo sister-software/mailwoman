@@ -202,7 +202,7 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 
 	// The resolved place is the DEEPEST decorated node — `hierarchy` is ordered most-specific-first, so its head is
 	// the finest place the gazetteer actually confirmed. Deliberately not `candidates[0]`: that is the resolver's
-	// PRIMARY node for the candidate ranking, and on a rooftop tier (where the coordinate came from a shard, not a
+	// PRIMARY node for the candidate ranking, and on a rooftop tier (where the coordinate came from a database, not a
 	// place row) it falls back to the first resolved admin node — the region, which is not what a reader means by
 	// "resolved place". The candidate head still shows up below when it differs.
 	const place = result.hierarchy.at(0)

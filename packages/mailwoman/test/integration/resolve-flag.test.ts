@@ -46,7 +46,7 @@ describe("npx mailwoman parse --resolve error paths", () => {
 	test("--resolve with no gazetteer at all exits non-zero with a clear message", async () => {
 		// As of the pipeline-default flip, --resolve works without --neural — the runtime pipeline
 		// handles classification + resolution end-to-end. The remaining error path is "no gazetteer
-		// available", which means BOTH backends unreachable: no WOF shard AND no candidate.db.
+		// available", which means BOTH backends unreachable: no WOF database AND no candidate.db.
 		// `MAILWOMAN_CANDIDATE_DB=none` is what pins the second one off — leaving it unset lets the
 		// convention path answer, and on any machine that has run `data pull candidate` the command
 		// then succeeds and this test's premise is gone.

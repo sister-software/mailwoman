@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Adapter runner — drives a `CorpusAdapter` to completion and writes intermediate JSONL + a
- *   per-shard manifest.
+ *   per-slice manifest.
  *
  *   Output layout under `outputDir`:
  *
@@ -23,8 +23,8 @@
  *   - Counting + emitting periodic progress to an optional callback.
  *   - Honoring `signal` (delegates to adapter's iteration boundary).
  *
- *   The runner does NOT perform alignment, tokenization, synthesis, or sharding into Parquet. Those
- *   steps run later, consuming the JSONL shards this writes.
+ *   The runner does NOT perform alignment, tokenization, synthesis, or slicing into Parquet. Those
+ *   steps run later, consuming the JSONL slices this writes.
  */
 
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"

@@ -2,10 +2,10 @@
 # FULL RUN (probe GREEN: 2k-step step-082000 gave bare-FR street-intact 89→92%, demo "Rue du Chevaleret,
 # Paris" FIXED, US 4/4 tag-identical → imbalance confirmed, not modeling deficit). Continue from the probe's
 # step-082000 (--resume auto) to step-092000 (+10k); eval every 2k → gate each checkpoint (US per-tag floors)
-# and ship the FR-up/US-held sweet spot. SAME single variable (the fr-bare-street shard) — clean attribution.
+# and ship the FR-up/US-held sweet spot. SAME single variable (the fr-bare-street slice) — clean attribution.
 # v1.9.3a3 (shipped v4.16.x) is verbatim below EXCEPT: corpus_dir → the v0.9.4 overlay, and ONE new
 # source_weight (synth-fr-bare-street). Everything else — model, anchor knobs, class_weights, country_weights,
-# the other source_weights, LR/schedule — is IDENTICAL to v193a3, so the SINGLE variable is the new shard
+# the other source_weights, LR/schedule — is IDENTICAL to v193a3, so the SINGLE variable is the new slice
 # (clean attribution).
 #
 # ROOT MECHANISM (DeepSeek Pro 019f1097 + libpostal's own documented practice, both independent): every
@@ -15,10 +15,10 @@
 # locality="Cassin"). Measured: 90% FR streets intact, a ~10% bare-no-postcode tail that owns the demo
 # address. NOT data absence (BAN is in the corpus) — postcode-anchoring DISTRIBUTION imbalance.
 #
-# THE CHANGE (ONE variable): the synth-fr-bare-street shard — 10.8k real BAN (street, number, city) tuples
+# THE CHANGE (ONE variable): the synth-fr-bare-street slice — 10.8k real BAN (street, number, city) tuples
 # rendered as the MISSING distribution: bare comma form "<n> Rue <proper-noun name>, <City>", NO postcode.
 # BAN-sourced (Licence Ouverte / permissive) on purpose — the model must stay clean of the ODbL OSM data
-# (that is quarantined to the opt-in rooftop shards). Weight 6.0 = the targeted-fix precedent
+# (that is quarantined to the opt-in rooftop slices). Weight 6.0 = the targeted-fix precedent
 # (synth-german / synth-fr-admin-split / gnaf all 6.0).
 #
 # GATE (the probe — falsifies coverage-imbalance vs modeling-deficit, per DeepSeek): re-run
@@ -29,7 +29,7 @@
 # v1.6.0 ~7M-loss mask blow-up does NOT apply here. NOT promoted without operator GO + the gate.
 # Launch: modal run -d scripts/modal/train_remote.py --config v1.9.4-fr-bare-street.yaml --resume auto
 data:
-  # v0.9.4 overlay = v0.9.3a3's 694 shards VERBATIM (re-rooted to /data) + the 1 fr-bare-street shard.
+  # v0.9.4 overlay = v0.9.3a3's 694 slices VERBATIM (re-rooted to /data) + the 1 fr-bare-street slice.
   corpus_dir: /data/corpus/versioned/v0.9.4-fr-bare-street/corpus-v0.9.4-fr-bare-street
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
   max_length: 128
@@ -57,7 +57,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM from v1.9.3a3 + the one new fr-bare-street shard.
+  source_weights: # VERBATIM from v1.9.3a3 + the one new fr-bare-street slice.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -81,7 +81,7 @@ data:
     overture: 3.0
     gnaf: 6.0
     synth-anchor-absorption: 6.0
-    # #251 NEW: the bare-no-postcode FR street shard. 6.0 = targeted-fix precedent.
+    # #251 NEW: the bare-no-postcode FR street slice. 6.0 = targeted-fix precedent.
     synth-fr-bare-street: 6.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

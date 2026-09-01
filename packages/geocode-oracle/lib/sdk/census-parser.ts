@@ -45,7 +45,7 @@ export const CENSUS_RESOLUTION_TIER: ResolutionTier = "interpolated"
  * training-corpus pipeline behind it — for one regular expression, into a package whose entire job is to make two HTTP
  * calls. The dependency is what is wrong, not the sharing.
  *
- * The shapes also differ. The corpus regex is tuned for US CSV shard rows with hand-entry drift, so it admits a
+ * The shapes also differ. The corpus regex is tuned for US CSV extract rows with hand-entry drift, so it admits a
  * trailing letter and a hyphenated half (`123A`, `40-12`). A Census `matchedAddress` is machine-normalized USPS output
  * where the number is a plain digit run; this pattern matches that and nothing else, which is the right strictness for
  * a value that is about to be asserted on. If a third caller ever needs the loose form here, take the dependency then.

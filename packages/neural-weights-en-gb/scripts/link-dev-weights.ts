@@ -31,7 +31,7 @@
  *   full reasoning sits at the build step below. Short version: the binary helps only a model whose
  *   encoder actually trained on letter-bearing GB anchor keys, and the card says whether this is one
  *   (`requires.anchor.span_mode === "shaped"`). Declared → build it from the licence-clean Code-Point
- *   Open shard. Not declared → remove any stale copy, because a leftover from an older checkout is
+ *   Open extract. Not declared → remove any stale copy, because a leftover from an older checkout is
  *   found package-dir-relative and silently restores a measured 24-postcode regression with no
  *   warning. Receipts: `docs/records/evals/2026-08-05-en-gb-anchor-off.md` (anchor-OFF mitigation,
  *   #1467) and `docs/records/evals/2026-08-05-v420-base-anchor-v2-run-b.md` (the retrain that earns it
@@ -252,7 +252,7 @@ const POSTCODE_BIN_DEST = resolvePath(DEST_DIR, "postcode-gb.bin")
  * The retired GeoNames-lineage `postalcode-gb.db` is NOT it. Coverage gap, measured: zero Northern Ireland (`BT`) codes
  * — the shaped keyer's outward fallback is what carries those rows.
  */
-const GB_POSTCODE_SHARD = "postalcode-gb-codepoint.db"
+const GB_POSTCODE_EXTRACT = "postalcode-gb-codepoint.db"
 
 /**
  * Keys the built binary must carry (1,746,976 units + 2,863 outward districts) — the GB half of the training lookup
@@ -264,12 +264,12 @@ const GB_POSTCODE_BIN_KEYS = 1_749_839
 if (CARD.requires?.anchor?.span_mode === "shaped") {
 	console.log(
 		`model-card declares requires.anchor.span_mode "shaped" — building postcode-gb.bin ` +
-			`(${GB_POSTCODE_BIN_KEYS.toLocaleString()} keys expected from ${GB_POSTCODE_SHARD})`
+			`(${GB_POSTCODE_BIN_KEYS.toLocaleString()} keys expected from ${GB_POSTCODE_EXTRACT})`
 	)
 
 	const built = spawnProcessSync(
 		process.execPath,
-		[CLI, "gazetteer", "postcode-binary", "--out", DEST_DIR, "--locale", `GB:${GB_POSTCODE_SHARD}`],
+		[CLI, "gazetteer", "postcode-binary", "--out", DEST_DIR, "--locale", `GB:${GB_POSTCODE_EXTRACT}`],
 		{ stdio: "inherit" }
 	)
 

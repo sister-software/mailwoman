@@ -41,7 +41,7 @@ export const arcTool = async ({ registry }: DevToolDeps): Promise<DevTool> => ({
 			.string()
 			.optional()
 			.describe(
-				"The null arm: same base, same steps, same seed, same brake, NO added shard. This is the placebo, and " +
+				"The null arm: same base, same steps, same seed, same brake, NO added extract. This is the placebo, and " +
 					"it is what makes a regression count attributable. One ~13-minute run amortises over every candidate " +
 					"on that base. Omitting it marks the candidate's regressions as a GROSS upper bound."
 			),

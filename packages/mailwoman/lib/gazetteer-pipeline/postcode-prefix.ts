@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a PFX1 postcode-prefix index (postcode-structure arc, B3-1) from a postcode SHARD. The
+ *   Build a PFX1 postcode-prefix index (postcode-structure arc, B3-1) from a postcode DATABASE. The
  *   format — writer and reader both — lives in `@mailwoman/neural/postcode-prefix-index`; this
- *   module is only the extraction: group a shard's unit postcodes by prefix, measure each group's
+ *   module is only the extraction: group a database's unit postcodes by prefix, measure each group's
  *   dispersion, and attach the admin ancestry the prefix asserts.
  *
  *   ## The prefix rule, and the trap it walks around
@@ -18,16 +18,16 @@
  *
  *   ## Why the coordinate policy is DERIVED, not passed in
  *
- *   A prefix centroid is only honest when the shard enumerates that prefix's units COMPLETELY.
- *   Over a partial shard the centroid and its `radiusP95Km` describe the SAMPLE — and the sample is
+ *   A prefix centroid is only honest when the database enumerates that prefix's units COMPLETELY.
+ *   Over a partial database the centroid and its `radiusP95Km` describe the SAMPLE — and the sample is
  *   whatever a volunteer mapper happened to attest, which is not a random draw from the district.
  *   The receipt is Northern Ireland: `postalcode-ni-osm.db` covers 9.5% of live NI postcodes, and its
  *   thinnest districts land BT68 at 4 observed units with a sampled p95 radius of 0.27 km — a number
  *   that would tell a consumer the whole district fits in a 270 m circle.
  *
- *   So the builder reads the shard's OWN coverage declaration rather than trusting a flag: a shard
+ *   So the builder reads the database's OWN coverage declaration rather than trusting a flag: a database
  *   that publishes a `coverage_meaning_of_zero` meta key is declaring itself partial (that key is the
- *   repo's marker for "a miss here means NOT ATTESTED"), and a partial shard gets the ANCESTRY-ONLY
+ *   repo's marker for "a miss here means NOT ATTESTED"), and a partial database gets the ANCESTRY-ONLY
  *   tier — nodes with ancestors, `unitCount`, and no coordinate at all. `postalcode-gb-codepoint.db`
  *   carries no such key (it is one row per unit postcode, straight off the register), so it gets
  *   centroids. There is deliberately no option to override this either way: the tier is a property of
@@ -35,7 +35,7 @@
  *
  *   ## Ancestry
  *
- *   Neither postcode shard carries admin ancestry — `spr.parent_id` is `-1` and the `ancestors` table
+ *   Neither postcode database carries admin ancestry — `spr.parent_id` is `-1` and the `ancestors` table
  *   holds a self-row only, in BOTH. GB ancestry therefore comes from the Royal Mail AREA→constituent
  *   country table in `@mailwoman/codex/gb` joined to the WOF admin DB for the IDs. The two areas the
  *   codex documents as majority calls across a national border (TD, SY —
@@ -46,7 +46,7 @@
  *
  *   `postalcode-us.db` has NO `meta` table, so the coverage rule above cannot run — and inferring
  *   "complete" from a table that does not exist is the meaning-of-zero error the rule was written to
- *   avoid. The US arm therefore never consults it. Its shard is a per-unit enumeration (42,318
+ *   avoid. The US arm therefore never consults it. Its database is a per-unit enumeration (42,318
  *   distinct names over 42,319 rows), so thin sampling is not the failure mode; contaminated
  *   COORDINATES are, and unlike thin sampling they have a computable signature:
  *
@@ -74,7 +74,7 @@
  *   GB's border-straddle rule under a different name: 25 SCFs span two or three states and assert the
  *   country alone. Twenty-four of those pair adjacent states (035 ME/NH, 205 DC/MD/VA, 576 ND/SD);
  *   the twenty-fifth, 602, splits IL/NY on the strength of one unit — `60290`, a Chicago code the
- *   shard places near Rochester. The unanimity rule catches it without knowing why, which is the
+ *   database places near Rochester. The unanimity rule catches it without knowing why, which is the
  *   point of preferring a rule that needs no exception list.
  */
 
@@ -102,7 +102,7 @@ export type PostcodePrefixCoordinateTier = "centroid" | "ancestry-only"
 
 export interface BuildPostcodePrefixOptions {
 	/**
-	 * Postcode shard to read — one row per unit postcode in `spr` with `placetype = 'postalcode'`.
+	 * Postcode database to read — one row per unit postcode in `spr` with `placetype = 'postalcode'`.
 	 */
 	sourcePath: string
 	/**
@@ -124,8 +124,8 @@ export interface BuildPostcodePrefixOptions {
 export interface BuildPostcodePrefixResult {
 	nodes: PostcodePrefixNode[]
 	/**
-	 * The shard's `meta` table, verbatim — the command reads `source`, `attribution`, `tier` and the coverage keys out of
-	 * it rather than re-deriving prose the shard already wrote about itself.
+	 * The database's `meta` table, verbatim — the command reads `source`, `attribution`, `tier` and the coverage keys out
+	 * of it rather than re-deriving prose the database already wrote about itself.
 	 */
 	meta: Record<string, string>
 	/**
@@ -142,7 +142,7 @@ export interface BuildPostcodePrefixResult {
 	 */
 	coordinateTierReason: string
 	/**
-	 * True when the shard declares itself a partial enumeration (`coverage_meaning_of_zero` present).
+	 * True when the database declares itself a partial enumeration (`coverage_meaning_of_zero` present).
 	 */
 	partialSource: boolean
 	/**
@@ -247,14 +247,14 @@ function resolveGBAncestry(adminPath: string): {
 }
 
 /**
- * Read a shard's `meta` table into a plain record.
+ * Read a database's `meta` table into a plain record.
  */
 function readMeta(db: DatabaseClient<WOFDatabase>): Record<string, string> {
 	const hasMeta =
 		db.prepare(`select name from sqlite_master where type = 'table' and name = 'meta'`).get() !== undefined
 
-	// A shard with no `meta` table has made no declaration, which is NOT the same as declaring itself complete. The GB
-	// coverage rule keys off the ABSENCE of one specific key, so it can only be applied to a shard that has the table to
+	// A database with no `meta` table has made no declaration, which is NOT the same as declaring itself complete. The GB
+	// coverage rule keys off the ABSENCE of one specific key, so it can only be applied to a database that has the table to
 	// be missing a key from; `postalcode-us.db` does not, and the US arm never asks.
 	if (!hasMeta) return {}
 
@@ -271,7 +271,7 @@ function readMeta(db: DatabaseClient<WOFDatabase>): Record<string, string> {
 }
 
 /**
- * Group a postcode shard's units by prefix and build the PFX1 node table.
+ * Group a postcode database's units by prefix and build the PFX1 node table.
  */
 export function buildPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildPostcodePrefixResult {
 	const { sourcePath, adminPath, country, level } = options
@@ -281,7 +281,7 @@ export function buildPostcodePrefixIndex(options: BuildPostcodePrefixOptions): B
 	if (country !== "gb") {
 		throw new Error(
 			`postcode-prefix: no ancestry rule for country "${country}". GB and US are implemented; a new one needs a ` +
-				`stated rule for what a prefix may assert, not just a shard.`
+				`stated rule for what a prefix may assert, not just a database.`
 		)
 	}
 
@@ -497,7 +497,7 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 	let skippedShort = 0
 
 	for (const row of rows) {
-		// The shape guard, not a length check: six rows in the shipped shard are PLACE NAMES that reached a postcode
+		// The shape guard, not a length check: six rows in the shipped database are PLACE NAMES that reached a postcode
 		// table, and one of them ("Lea County-Zip Franklin Memorial Airport") carries a real coordinate.
 		if (!isZipCode(row.name)) {
 			excluded.notAPostcode++
@@ -585,7 +585,7 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 		skippedShort,
 		coordinateTier: "centroid",
 		coordinateTierReason:
-			`the shard declares no coverage (it carries no meta table), so the declaration rule cannot be applied and is ` +
+			`the database declares no coverage (it carries no meta table), so the declaration rule cannot be applied and is ` +
 			`not guessed at; instead ${(excluded.nullIsland + excluded.placeholderCoordinate).toLocaleString()} units whose ` +
 			`coordinate is demonstrably not a location were excluded, and ${withCoordinate} of ${nodes.length} prefixes ` +
 			`carry a centroid priced by its own radiusP95Km`,

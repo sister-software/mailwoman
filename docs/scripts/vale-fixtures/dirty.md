@@ -67,12 +67,12 @@ normalised, and the batch job normalises everything else; the licences were lice
 and the rows were labelled during labelling, which is a capitalisation problem we
 capitalise, capitalised and capitalises around.
 
-The seam between the two modules is where a shard of the corpus is cut, and the eval
-gate reads it; the seams are what sharding produced, and the gates fire on the shards
-that were sharded, cutting the run short before the gated step ever gating cuts.
+The seam between the two modules is where a extract of the corpus is cut, and the eval
+gate reads it; the seams are what extract routing produced, and the gates fire on the extracts
+that were attached, cutting the run short before the gated step ever gating cuts.
 
 Three negative assertions for AmbiguousShorthand live below, and each must stay quiet:
-`promotion-gate.ts`, `packages/corpus/lib/shard-recipes/` and `mailwoman eval gate` are
+`promotion-gate.ts`, `packages/corpus/lib/extract-recipes/` and `mailwoman eval gate` are
 backticked, so the markdown parser hands none of them to the rule — that is how a
 contract-bearing name survives the ban without being renamed.
 

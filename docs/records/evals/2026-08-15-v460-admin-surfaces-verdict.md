@@ -2,7 +2,7 @@
 
 **Recommendation: DO NOT PROMOTE. The run trades a real +11.0 pp gain on US `country` for the
 collapse of the bare-toponym class — 21 net new gated board failures, several placing the answer
-thousands of kilometres out. The cause is identified and the shard is worth rebuilding, but this
+thousands of kilometres out. The cause is identified and the extract is worth rebuilding, but this
 artifact should not ship in any posture.**
 
 **DECIDED 2026-08-15: NOT PROMOTED.** The operator accepted the recommendation. v4.4.0 remains the
@@ -18,10 +18,10 @@ the comparison arm is worth keeping.
 Both, together. Either alone fails for the reason the other one causes.
 
 1. **#1677 — re-dose `synth-bare-country-v23`.** Weight 1.0 gave its 277 rows **165 repetitions each**
-   against 5× for the 53,078-row Spanish shard weighted six times higher. 0.030 puts it at parity.
+   against 5× for the 53,078-row Spanish extract weighted six times higher. 0.030 puts it at parity.
    The sampler allocates by weight normalised across sources and ignores row count, so weight is not
    dose and nothing in the config or launch output displays the number anyone reasons in.
-2. **#1673 — re-cut the ES shard on official-language names.** It teaches English exonyms:
+2. **#1673 — re-cut the ES extract on official-language names.** It teaches English exonyms:
    461 `Balearic Islands` rows against **4** containing `Illes`, and zero `Portopetro`. `spr.name` is
    the wrong column for any non-English locale.
 
@@ -147,18 +147,18 @@ badly negative.
 | `intl-beirut-lebanon`       | —                      |   9,211 km |
 | `bare-region-georgia`       | —                      |  10,089 km |
 
-### The likely cause is the shard that produced the headline win
+### The likely cause is the extract that produced the headline win
 
 `synth-bare-country-v23` is 277 rows at dose 1.0, and the sampler allocates draw share **by weight
 normalised over sources, not by rows × weight** — so those 277 surfaces repeat roughly twenty times
-an epoch. The shard teaches exactly one lesson: _a bare capitalised name is a `country`._
+an epoch. The extract teaches exactly one lesson: _a bare capitalised name is a `country`._
 
 US `country` +11.0 pp and the collapse of the bare-locality and bare-street classes are the same
 event seen from two sides. The model learned the lesson too well and generalised it over every bare
 toponym. `bare-region-georgia` landing 10,089 km out is the tell — the row the bare-country work was
 supposed to help.
 
-This is the base-consistency lesson (#511) in a new costume: a small shard at high effective dose
+This is the base-consistency lesson (#511) in a new costume: a small extract at high effective dose
 outvoting a much larger base, and the visible win arriving with an invisible bill.
 
 ## What the corpus additions bought
@@ -201,20 +201,20 @@ v4.6.0   locality "Portopetro" ✓    street "Southeast"    region — ✗      
 ```
 
 **The locality moved and the region did not appear** — verbatim the partial-credit case registered as
-a failure. The shard taught the tail without teaching the boundary. v4.6.0 additionally drops
+a failure. The extract taught the tail without teaching the boundary. v4.6.0 additionally drops
 `country: "Spain"` and mislabels the venue as street on this row.
 
-The cause is already filed as **#1673**: the ES shard teaches **English exonyms**. It contains 461
+The cause is already filed as **#1673**: the ES extract teaches **English exonyms**. It contains 461
 `Balearic Islands` rows and **4** containing `Illes`, and zero `Portopetro`. The model was asked to
 recognise a region surface it had effectively never seen. This is a fixable extraction defect, not a
-failed hypothesis about the trailing-region shard.
+failed hypothesis about the trailing-region extract.
 
 ## Recommendation
 
 1. **Do not promote, in any posture.** This is not a D-rule gating question. 21 gated board
    failures with multi-thousand-kilometre coordinate errors on bare city names is not a regression
    to gate behind a flag; it is an artifact to rebuild.
-2. **Fix #1673 and re-cut the ES shard on official-language names**, then rerun. The acceptance row
+2. **Fix #1673 and re-cut the ES extract on official-language names**, then rerun. The acceptance row
    is one surface away, and the mechanism is understood.
 3. **File the `arena.perturb` floor for its own gate revision.** It fails the shipped model; leaving
    it stale means every future candidate carries a phantom failure.

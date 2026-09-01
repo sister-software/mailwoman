@@ -68,7 +68,7 @@ const GazetteerRelease: ParsedCommandComponent<Options> = ({ options }) => {
 			foldGeonamesIntoAdmin,
 			promoteCandidate,
 			publishGazetteer,
-			resolvePostcodeShards,
+			resolvePostcodeDatabases,
 			wofDir,
 		} = await import("#gazetteer-pipeline")
 
@@ -100,14 +100,14 @@ const GazetteerRelease: ParsedCommandComponent<Options> = ({ options }) => {
 			adminDB = foldOut
 		}
 
-		const shards = await resolvePostcodeShards(undefined, root)
+		const databases = await resolvePostcodeDatabases(undefined, root)
 
-		console.error(`▸ build ← ${adminDB} (${shards.length} postcode shards; FTS baked in)`)
+		console.error(`▸ build ← ${adminDB} (${databases.length} postcode databases; FTS baked in)`)
 
 		const r = await buildCandidate({
 			adminDB,
 			out,
-			postcodeShards: shards,
+			postcodeDatabases: databases,
 			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
 		})
 

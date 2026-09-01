@@ -7,32 +7,32 @@ import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/addres
  * @author Teffen Ellis, et al.
  *
  *   Build a {input, lat, lon} holdout for conformal interp calibration (#374/C) from a per-state
- *   situs shard. The situs address points (OA/NAD) are the GROUND TRUTH; running
+ *   situs extract. The situs address points (OA/NAD) are the GROUND TRUTH; running
  *   conformal-calibrate.ts interp-only against them measures the TIGER interpolation tier's error —
  *   and TIGER is an INDEPENDENT source from OA/NAD, so this is a non-circular holdout for any state
  *   (the same provenance separation the TX/Travis calibration relied on, available 50× over).
  *
- *   Usage: node scripts/eval/build-situs-holdout.ts --shard <situs.db> --region <ABBR> [--n 2500]
+ *   Usage: node scripts/eval/build-situs-holdout.ts --extract <situs.db> --region <ABBR> [--n 2500]
  *   [--out /tmp/<region>-situs-holdout.jsonl]
  */
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 const { values: a } = parseArguments({
 	options: {
-		shard: { type: "string" },
+		extract: { type: "string" },
 		region: { type: "string", default: "" },
 		n: { type: "string", default: "2500" },
 		out: { type: "string", default: "" },
 	},
 })
 
-if (!a.shard) throw new Error("--shard <situs.db> required")
+if (!a.extract) throw new Error("--extract <situs.db> required")
 const N = Number(a.n)
 const region = a.region!.toUpperCase()
 const out = a.out || `/tmp/${region.toLowerCase() || "x"}-situs-holdout.jsonl`
 
-using db = new DatabaseClient<AddressPointDatabase>(a.shard, { readOnly: true })
-// Even, deterministic spread across the shard (not the first N clustered rows): sample by rowid modulo.
+using db = new DatabaseClient<AddressPointDatabase>(a.extract, { readOnly: true })
+// Even, deterministic spread across the extract (not the first N clustered rows): sample by rowid modulo.
 const total = (db.prepare("SELECT count(*) c FROM address_point").get() as { c: number }).c
 const stride = Math.max(1, Math.floor(total / (N * 1.4)))
 
@@ -71,6 +71,6 @@ for (const r of rows) {
 await writeLocalTextFile(lines.join("\n") + "\n", out)
 
 console.log(
-	`${region || a.shard}: ${lines.length} holdout rows (of ${total.toLocaleString()} situs points, stride ${stride}) → ${out}`
+	`${region || a.extract}: ${lines.length} holdout rows (of ${total.toLocaleString()} situs points, stride ${stride}) → ${out}`
 )
 console.log(`sample: ${lines[0]}`)

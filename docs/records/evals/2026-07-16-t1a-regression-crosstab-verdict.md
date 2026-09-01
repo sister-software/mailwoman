@@ -170,12 +170,12 @@ now this), and the pattern is the same every time: _the harness could not see th
 `baselines.json` cannot catch it either — a baseline over a filtered corpus is self-consistent forever.
 The two-board structure (#43) needs a third question: **what does the board not score?**
 
-**For T2 (the BAN shard) — this is the strongest evidence yet.** The hallucination and the bare-fragment
+**For T2 (the BAN extract) — this is the strongest evidence yet.** The hallucination and the bare-fragment
 failure are the same miscalibration seen from opposite sides. The corpus is thin on bare street fragments
 and thick on bare localities; the BIO head learned "bare toponym → locality" (the §2 prior that starts the
 arc), and the span head, trained on the same corpus, learned an over-eager street segment that fires on
 bare toponyms **regardless of whether one is there**. Both heads are miscalibrated on the same axis, in
-opposite directions, from the same missing data. A shard carrying real bare streets and real bare
+opposite directions, from the same missing data. A extract carrying real bare streets and real bare
 localities is the one intervention that speaks to both.
 
 ---

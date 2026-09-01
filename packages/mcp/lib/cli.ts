@@ -68,7 +68,7 @@ import {
 	createResolverBackend,
 	mailwomanDataRoot,
 	resolveCandidateDBPath,
-	wofShardPaths,
+	wofExtractPaths,
 } from "mailwoman/resolver-backend"
 
 import {
@@ -97,11 +97,11 @@ const poiDatabasePath = values["poi-db"]
 /**
  * The shared classifier + resolver, built exactly once on the first call that needs them (see the module header).
  * `NeuralAddressClassifier.loadFromWeights` auto-resolves the bundled `en-US` weights; the resolver backend prefers a
- * configured candidate gazetteer (`$MAILWOMAN_CANDIDATE_DB`) and otherwise falls back to the admin-only WOF shards
+ * configured candidate gazetteer (`$MAILWOMAN_CANDIDATE_DB`) and otherwise falls back to the admin-only WOF extracts
  * already on the data root — same selection `nominatim`/`photon`'s CLIs make.
  */
 let corePromise:
-	| Promise<{ classifier: NeuralAddressClassifier; resolver: Resolver; shards: RegionDatabaseProvider }>
+	| Promise<{ classifier: NeuralAddressClassifier; resolver: Resolver; databases: RegionDatabaseProvider }>
 	| undefined
 
 /**
@@ -118,15 +118,15 @@ const CORE_FREE_TOOLS =
 function loadCore(): Promise<{
 	classifier: NeuralAddressClassifier
 	resolver: Resolver
-	shards: RegionDatabaseProvider
+	databases: RegionDatabaseProvider
 }> {
 	corePromise ??= (async () => {
 		const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 		const wofPaths: string[] = []
 
-		for (const shardPath of wofShardPaths()) {
-			if (await pathExists(shardPath)) {
-				wofPaths.push(shardPath)
+		for (const extractPath of wofExtractPaths()) {
+			if (await pathExists(extractPath)) {
+				wofPaths.push(extractPath)
 			}
 		}
 
@@ -134,7 +134,7 @@ function loadCore(): Promise<{
 
 		// #1009 friendly-failure discipline, the MCP shape of it. `server.ts` turns a thrown Error into an
 		// `isError` tool result carrying `error.message`, so the message an agent reads IS whatever is thrown
-		// here — which made the raw internal `resolveExtracts: at least one shard is required` the first thing a
+		// here — which made the raw internal `resolveExtracts: at least one extract is required` the first thing a
 		// stranger saw from `mailwoman_parse` on a fresh install (measured 2026-08-03 against a standalone
 		// `npm install @mailwoman/mcp`). Same preflight as `photon`/`nominatim`/`mailwoman serve`, and the same
 		// discovery: #1444 moved the `<data-root>/wof/candidate.db` convention fallback INTO
@@ -168,9 +168,9 @@ function loadCore(): Promise<{
 			)
 		}
 
-		const shards = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
+		const databases = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
 
-		return { classifier, resolver, shards }
+		return { classifier, resolver, databases }
 	})()
 
 	return corePromise
@@ -221,9 +221,9 @@ async function getPoiPipeline(dbPath: string | undefined): Promise<Pipeline> {
  * structurally assignable to `plausibility.ts`'s minimal `GeocodeLike` — no adapter needed.
  */
 async function resolveGeocode(address: string) {
-	const { classifier, resolver, shards } = await loadCore()
+	const { classifier, resolver, databases } = await loadCore()
 
-	return geocodeAddress(address, { classifier, resolver, shards: shards.for })
+	return geocodeAddress(address, { classifier, resolver, databases: databases.for })
 }
 
 const deps: MCPToolDeps = {

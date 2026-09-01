@@ -10,7 +10,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { readReleaseManifest, resolveShardPath } from "mailwoman/data-release"
+import { readReleaseManifest, resolveDatabasePath } from "mailwoman/data-release"
 import { RegionDatabaseProvider } from "mailwoman/geocode-regions"
 import { join } from "path-ts"
 import { afterAll, describe, expect, test } from "vitest"
@@ -89,31 +89,31 @@ describe("readReleaseManifest", () => {
 	})
 })
 
-describe("resolveShardPath", () => {
+describe("resolveDatabasePath", () => {
 	test("prefers the versioned name; falls back to legacy; null if neither", async () => {
 		const root = tmp()
 		const apDir = await dirEnsure(join(await root, "address-points"))
 		// legacy only
 		await writeLocalTextFile("", join(apDir, "address-points-us-tx.db"))
 
-		expect(await resolveShardPath(await root, "address-points", "tx", null)).toBe(
+		expect(await resolveDatabasePath(await root, "address-points", "tx", null)).toBe(
 			join(apDir, "address-points-us-tx.db")
 		)
 
 		// versioned present + pinned → wins
 		await writeLocalTextFile("", join(apDir, "address-points-us-tx-v2.db"))
 
-		expect(await resolveShardPath(await root, "address-points", "tx", { "address-points": "v2" })).toBe(
+		expect(await resolveDatabasePath(await root, "address-points", "tx", { "address-points": "v2" })).toBe(
 			join(apDir, "address-points-us-tx-v2.db")
 		)
 
 		// pinned version with no file → legacy fallback
-		expect(await resolveShardPath(await root, "address-points", "tx", { "address-points": "v9" })).toBe(
+		expect(await resolveDatabasePath(await root, "address-points", "tx", { "address-points": "v9" })).toBe(
 			join(apDir, "address-points-us-tx.db")
 		)
 
 		// nothing for an unknown slug
-		expect(await resolveShardPath(await root, "address-points", "zz", null)).toBeNull()
+		expect(await resolveDatabasePath(await root, "address-points", "zz", null)).toBeNull()
 	})
 })
 

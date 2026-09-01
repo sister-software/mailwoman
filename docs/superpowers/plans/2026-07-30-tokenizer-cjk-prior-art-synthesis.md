@@ -69,7 +69,7 @@ required finding. Verdicts first, receipts after.
   class folds only U+FF0D — **U+2212 (IME minus), U+30FC (prolonged-sound mark typed as hyphen),
   U+2010/2015/FE63/FF70 all survive** into real JP input. A hyphen-equivalence class is
   mandatory.
-- The JP char vocab must be rebuilt from the FULL Phase-3 shard (probe vocab 1,918 vs 2,640
+- The JP char vocab must be rebuilt from the FULL Phase-3 extract (probe vocab 1,918 vs 2,640
   distinct kanji in full MLIT data; the tail is proper-noun kanji — the class an address parser
   exists for). Alternative under consideration: hash-bucket OOV fallback.
 - Non-BMP correctness: 49.5% of Japan's official administrative character set is outside the
@@ -155,7 +155,7 @@ KR rooftop = gated.
 
 1. G1 counsel agenda += the juso export question + HK ALS adaptation + (already there) ODbL.
 2. CJK Phase 6 provisionally re-pointed KR → TW pending the juso answer (operator call).
-3. Phase-3 shard build: full-shard vocab rebuild + the normalization steal-list; Phase-5 runtime:
+3. Phase-3 extract build: full-extract vocab rebuild + the normalization steal-list; Phase-5 runtime:
    code-point-native decode + the cjk.ts folding fixes.
 4. v9 unification pre-registration must name the channels-attached condition.
 5. Vocab pruning + SP 0.2.2 WASM: banked as v8.4-class Latin levers (not this arc).

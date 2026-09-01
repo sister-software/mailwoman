@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the Gauntlet ABLATION layer at fixture scale. Everything here is pure — variant generation, slot
- *   classification, cell aggregation, rendering — because the layer's own run needs the ~9 GB shard set and a loaded
+ *   classification, cell aggregation, rendering — because the layer's own run needs the ~9 GB database set and a loaded
  *   ONNX, and because every one of these three has a silent failure mode:
  *
  *   - a deletion that carves a span out of its NEIGHBOUR still produces a number, and the number looks like evidence

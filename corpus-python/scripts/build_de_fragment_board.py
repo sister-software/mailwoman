@@ -16,10 +16,10 @@ with the class rules translated to German surface reality:
 - `bare-street`, `bare-locality` (expect_no_street — the negative class is the point).
 
 SPLIT DISCIPLINE (recorded, weaker than FR's): the training feed's only DE street data is the
-synth-german shard (OA Berlin + Sachsen), so the board excludes state codes BE and SN entirely —
+synth-german slice (OA Berlin + Sachsen), so the board excludes state codes BE and SN entirely —
 GEOGRAPHIC disjointness. Ubiquitous street vocabulary (Hauptstraße) still repeats across Länder;
 the board therefore measures class behavior over shared vocabulary with held-out compositions,
-not FR-grade surface disjointness. The reserved-surface list is still emitted for future shard
+not FR-grade surface disjointness. The reserved-surface list is still emitted for future slice
 builders.
 
 Usage:

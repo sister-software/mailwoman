@@ -39,7 +39,7 @@ function healthyDeps(): DoctorDeps {
 		dataRoot: () => ({ path: "/data", fromEnv: true }),
 		envCandidatePath: async () => "/data/wof/candidate.db",
 		conventionCandidatePath: async () => "/data/wof/candidate.db",
-		wofShardPaths: () => ["/data/wof/admin.db"],
+		wofExtractPaths: () => ["/data/wof/admin.db"],
 		poiPath: () => "/data/poi/poi.db",
 		readPOIManifest: async () => ({ name: "poi", version: "2026-07-20a", sourceVintage: "2026-07" }),
 		loadONNX: async () => {},
@@ -109,7 +109,7 @@ describe("runDoctor (injected seams)", () => {
 		expect(byID(report.checks, "onnxruntime").status).toBe(CheckStatus.Degraded)
 	})
 
-	it("gazetteer discovery falls back to a WOF shard only when NO candidate.db is reachable", async () => {
+	it("gazetteer discovery falls back to a WOF database only when NO candidate.db is reachable", async () => {
 		const report = await runDoctor({
 			...healthyDeps(),
 			envCandidatePath: async () => undefined,
@@ -119,13 +119,13 @@ describe("runDoctor (injected seams)", () => {
 
 		const gaz = byID(report.checks, "gazetteer")
 		expect(gaz.status).toBe(CheckStatus.OK)
-		expect(gaz.detail).toContain("WOF admin shard")
+		expect(gaz.detail).toContain("WOF admin database")
 	})
 
 	it("candidate.db at the convention path with no env set → ok (the trap this used to report is closed)", async () => {
 		const report = await runDoctor({
 			...healthyDeps(),
-			// Env resolves nothing (no $MAILWOMAN_CANDIDATE_DB), no WOF shard exists, the file sits at the convention path.
+			// Env resolves nothing (no $MAILWOMAN_CANDIDATE_DB), no WOF database exists, the file sits at the convention path.
 			envCandidatePath: async () => undefined,
 			exists: async () => false,
 			conventionCandidatePath: async () => "/data/wof/candidate.db",
@@ -195,8 +195,13 @@ describe("describeEnvironment (--verbose)", () => {
 		expect(byKey.get("weights model.onnx")?.value).toBe("/w/en-us/model.onnx")
 		expect(byKey.get("weights tokenizer.model")?.value).toBe("/w/en-us/tokenizer.model")
 		expect(byKey.get("node")?.value).toBe("v24.18.0")
-		// Every shard the gazetteer check probed is listed, tagged on-disk or absent.
-		expect(byKey.get("WOF shard [0]")).toEqual({ key: "WOF shard [0]", value: "/data/wof/admin.db", source: "on disk" })
+
+		// Every database the gazetteer check probed is listed, tagged on-disk or absent.
+		expect(byKey.get("WOF database [0]")).toEqual({
+			key: "WOF database [0]",
+			value: "/data/wof/admin.db",
+			source: "on disk",
+		})
 	})
 
 	it("keys with no value are present and marked, never dropped", async () => {

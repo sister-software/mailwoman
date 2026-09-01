@@ -8,16 +8,16 @@
 
 ## Mapping
 
-| Command                           | Source script                                                | Tool module                                                      | Exported fn                 |
-| --------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------- | --------------------------- |
-| `dev generate country-reference`  | `scripts/generate-country-reference.ts`                      | `codex/tools/generate-country-reference.ts`                      | `generateCountryReference`  |
-| `dev generate official-languages` | `scripts/generate-official-languages.ts`                     | `codex/tools/generate-official-languages.ts`                     | `generateOfficialLanguages` |
-| `dev generate language-types`     | `scripts/generate-language-types.ts`                         | `core/tools/generate-language-types.ts`                          | `generateLanguageTypes`     |
-| `dev generate trace-fixture`      | `scripts/generate-trace-fixture.ts`                          | `mailwoman/dev-tools/generate-trace-fixture.ts`                  | `generateTraceFixture`      |
-| `dev lint mdx-angles`             | `scripts/lint-mdx-angles.ts`                                 | `mailwoman/dev-tools/lint-mdx-angles.ts`                         | `lintMDXAngles`             |
-| `dev lint corpus-shard`           | `scripts/lint-corpus-shard.ts` (+ `scripts/lint-rules.json`) | `corpus/src/tools/lint-shard.ts` (+ `lint-rules.json` beside it) | `lintCorpusShard`           |
-| `dev lint shard-vocab`            | `scripts/lint-shard-vocab.ts`                                | `corpus/src/tools/lint-shard-vocab.ts`                           | `lintShardVocab`            |
-| `dev jsonl-to-parquet`            | `scripts/jsonl-to-parquet.ts`                                | `corpus/src/tools/jsonl-to-parquet.ts`                           | `jsonlToParquet`            |
+| Command                           | Source script                                                  | Tool module                                                        | Exported fn                 |
+| --------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------------- |
+| `dev generate country-reference`  | `scripts/generate-country-reference.ts`                        | `codex/tools/generate-country-reference.ts`                        | `generateCountryReference`  |
+| `dev generate official-languages` | `scripts/generate-official-languages.ts`                       | `codex/tools/generate-official-languages.ts`                       | `generateOfficialLanguages` |
+| `dev generate language-types`     | `scripts/generate-language-types.ts`                           | `core/tools/generate-language-types.ts`                            | `generateLanguageTypes`     |
+| `dev generate trace-fixture`      | `scripts/generate-trace-fixture.ts`                            | `mailwoman/dev-tools/generate-trace-fixture.ts`                    | `generateTraceFixture`      |
+| `dev lint mdx-angles`             | `scripts/lint-mdx-angles.ts`                                   | `mailwoman/dev-tools/lint-mdx-angles.ts`                           | `lintMDXAngles`             |
+| `dev lint corpus-extract`         | `scripts/lint-corpus-extract.ts` (+ `scripts/lint-rules.json`) | `corpus/src/tools/lint-extract.ts` (+ `lint-rules.json` beside it) | `lintCorpusExtract`         |
+| `dev lint extract-vocab`          | `scripts/lint-extract-vocab.ts`                                | `corpus/src/tools/lint-extract-vocab.ts`                           | `lintExtractVocab`          |
+| `dev jsonl-to-parquet`            | `scripts/jsonl-to-parquet.ts`                                  | `corpus/src/tools/jsonl-to-parquet.ts`                             | `jsonlToParquet`            |
 
 Lint tools return a findings summary (`{errors: number, warnings: number, findings: …}`); commands exit 1 when `errors > 0` — preserve each script's current exit semantics exactly.
 

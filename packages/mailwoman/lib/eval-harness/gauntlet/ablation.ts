@@ -315,7 +315,7 @@ export function isTierDrop(anchor: ResolutionTier, ablated: ResolutionTier): boo
 
 /**
  * Score one deletion against its own anchor. Pure: the two {@linkcode GauntletResult}s are the only inputs, so the
- * scoring rule is testable without the ~9 GB shard set.
+ * scoring rule is testable without the ~9 GB database set.
  */
 export function scoreAblation(
 	anchor: GauntletResult,

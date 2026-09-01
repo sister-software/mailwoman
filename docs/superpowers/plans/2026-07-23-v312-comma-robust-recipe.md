@@ -1,14 +1,14 @@
 # v3.12 — comma-robust dep-loc recipe (pre-registered proposal, OPERATOR-GATED)
 
-**Date:** 2026-07-23 · **Status:** proposal, NOT launched · **Context:** the v3.11.x lineage is closed for shipping (stop rule executed): no checkpoint passes the gauntlet metamorphic layer; the terminal break — comma-free US address → total resolution loss — is byte-stable under damped consolidation (8k ≡ 10k), i.e. a learned behavior, not churn. Five-whys record: the dep-loc shards are ~100% comma-structured; commas were promoted toward required boundary evidence; comma-free robustness paid the bill.
+**Date:** 2026-07-23 · **Status:** proposal, NOT launched · **Context:** the v3.11.x lineage is closed for shipping (stop rule executed): no checkpoint passes the gauntlet metamorphic layer; the terminal break — comma-free US address → total resolution loss — is byte-stable under damped consolidation (8k ≡ 10k), i.e. a learned behavior, not churn. Five-whys record: the dep-loc extracts are ~100% comma-structured; commas were promoted toward required boundary evidence; comma-free robustness paid the bill.
 
 ## Step 0 — the why-3 verification (BEFORE any recipe is written; ~1 hour, zero GPU)
 
-The base recipe inherits v381's punct-drop augmentation. Unknown: does it apply to the four NEW locale shards, and at what effective share? Verify by (a) reading the augmentation keys' source-scoping in `data_loader.py`/config, (b) sampling ~2k rows of the v0.15.0 stream as the loader draws them and counting comma-free variants per source. The answer picks the fix:
+The base recipe inherits v381's punct-drop augmentation. Unknown: does it apply to the four NEW locale extracts, and at what effective share? Verify by (a) reading the augmentation keys' source-scoping in `data_loader.py`/config, (b) sampling ~2k rows of the v0.15.0 stream as the loader draws them and counting comma-free variants per source. The answer picks the fix:
 
-- **Aug doesn't reach the new shards** → Fix A: extend it to them (config-only).
+- **Aug doesn't reach the new extracts** → Fix A: extend it to them (config-only).
 - **Aug reaches them but share too small vs the new mass** → Fix B: raise the share (one knob, pre-registered).
-- **Aug reaches them adequately** (falsifies the why-3 hypothesis) → STOP; the comma-uniformity theory is wrong; re-diagnose before spending GPU (candidate alternate: the 7850–7950 anomaly is data-order-specific — investigate the shard-pool re-index event first).
+- **Aug reaches them adequately** (falsifies the why-3 hypothesis) → STOP; the comma-uniformity theory is wrong; re-diagnose before spending GPU (candidate alternate: the 7850–7950 anomaly is data-order-specific — investigate the extract-pool re-index event first).
 
 ## The run (after Step 0 picks A or B)
 

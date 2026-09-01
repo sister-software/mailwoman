@@ -5,7 +5,7 @@
  *
  *   Postcode-centroid fills (#240/#525), ported from the standalone `backfill-postcode-centroids.ts` /
  *   `fill-zcta-centroids.ts` mutators into BUILD steps — they now run on the STAGING db inside
- *   `buildPostcodeShard`, never against a shipped artifact (the sealed-artifact invariant).
+ *   `buildPostcodeDatabase`, never against a shipped artifact (the sealed-artifact invariant).
  *
  *   Fill priority (each pass touches only rows still `(0,0)`; a placeholder never overwrites a real
  *   coordinate; all passes are idempotent):
@@ -52,7 +52,7 @@ export interface CentroidFillOptions {
 export interface CentroidFillResult {
 	geonamesFixed: number
 	/**
-	 * Delivery-city name rows written from GeoNames postal. Zero means the shard's postcodes are nameless — the state
+	 * Delivery-city name rows written from GeoNames postal. Zero means the database's postcodes are nameless — the state
 	 * `postalcode-us.db` shipped in.
 	 */
 	geonamesNames: number
@@ -160,7 +160,7 @@ async function readGeonamesPostal(
 }
 
 /**
- * Attach each postcode's GeoNames delivery-city name(s) to the shard's `names` table.
+ * Attach each postcode's GeoNames delivery-city name(s) to the database's `names` table.
  *
  * Separate from the centroid pass because the two select different rows: a centroid is only wanted where one is
  * MISSING, while a name is wanted on every postcode — 11201 has had a Census ZCTA coordinate all along and no name at
@@ -191,7 +191,7 @@ async function geonamesNameFill(
 
 		if (!acc.size) continue
 
-		// One query, not one per postcode: the US shard carries 42,318 of them.
+		// One query, not one per postcode: the US database carries 42,318 of them.
 		const byPostcode = new Map<string, number>()
 
 		for (const row of await kdb

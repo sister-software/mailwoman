@@ -1,11 +1,11 @@
 # === v1.9.1-multilocale-3order (#148 — the ORDER-OVERFIT FIX) ==================================
-# v1.9.0 FAILED: it added the overture-multilocale shard (150k real Overture rows each across 16 EU
-# locales, ~2.4M total) but the shard was 100% CANONICAL order ("STREET HN, PC TOWN" — town always
+# v1.9.0 FAILED: it added the overture-multilocale slice (150k real Overture rows each across 16 EU
+# locales, ~2.4M total) but the slice was 100% CANONICAL order ("STREET HN, PC TOWN" — town always
 # LAST). overture is the SOLE EU-format teacher (base = US sources + ban=FR + synth-german=DE +
 # synth-fr-*=FR; WOF teaches place NAMES, not full-address FORMAT), so the model learned the positional
 # shortcut "locality = last token-group" and emitted the STREET as locality on the eval's pc-first /
-# city-first orders. Resolve rate REGRESSED on every in-shard locale (PT 52->35, PL 53->39, AT 50->45,
-# CZ 43->31, IT 79->63; FR held 80->81, not in shard). Diagnosed via scripts/eval/locality-emit-diff.ts
+# city-first orders. Resolve rate REGRESSED on every in-slice locale (PT 52->35, PL 53->39, AT 50->45,
+# CZ 43->31, IT 79->63; FR held 80->81, not in slice). Diagnosed via scripts/eval/locality-emit-diff.ts
 # (dump-and-read). NOT a grain mismatch; NOT a weight problem — source_weights is a MULTINOMIAL over
 # SOURCES (5.7% of rows at weight 3.0 regardless of row count), so only the RENDERING fixes it.
 #
@@ -18,9 +18,9 @@
 # countries listed below at 1.0 (acceptance filter relative to max_weight, NOT a 1/N split).
 #
 # GOAL / GATE: grade the ASSEMBLED coordinate, never label-F1. Diagnostic-first: at step-2000/4000 run
-# scripts/eval/nonus-coord-panel.ts — the in-shard locales (PT/PL/AT/CZ/IT) resolve rate must RECOVER
+# scripts/eval/nonus-coord-panel.ts — the in-slice locales (PT/PL/AT/CZ/IT) resolve rate must RECOVER
 # toward / above the v1.8.0 baseline (PT 52, PL 53, AT 50, CZ 43, IT 79), AND the US per-locale-F1
-# guardrail must hold (not worse >1pp) + FR centroid flat. If in-shard resolve is still BELOW v1.8.0 at
+# guardrail must hold (not worse >1pp) + FR centroid flat. If in-slice resolve is still BELOW v1.8.0 at
 # 2-4k, KILL (the order fix didn't take). NOT promoted without operator GO (model swap).
 # CORPUS: corpus-v0.8.0 base (verbatim) + overture-multilocale 3-ORDER overlay -> R2 -> sync_v091.
 # Launch: modal run -d scripts/modal/train_remote.py --config v1.9.1-multilocale-3order.yaml --resume none
@@ -72,7 +72,7 @@ data:
     synth-po-box-cedex: 1.5
     synth-affix: 2.0
     synth-country: 2.0
-    # #148 lever: the multi-locale EU shard. Weight 3.0 — solid EU exposure (each locale's ~150k rows
+    # #148 lever: the multi-locale EU slice. Weight 3.0 — solid EU exposure (each locale's ~150k rows
     # get comparable weighted mass to fr-admin-split's 60k*6.0) without dominating the US-heavy base;
     # the step-2000 diagnostic gate adjudicates dilution (lower if US/FR regress, raise if mid-tier flat).
     overture: 3.0

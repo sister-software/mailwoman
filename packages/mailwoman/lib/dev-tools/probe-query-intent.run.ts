@@ -10,7 +10,7 @@
  *   answer the question that decides whether `declared_ambiguity` is worth shipping: on live
  *   gazetteer data, does the 0.5-log10 cut separate the names that need a warning from the ones that
  *   do not? That is a property of the candidate table's populations, not of any code in this repo,
- *   so it needs the ~9 GB shard set and cannot live in CI.
+ *   so it needs the ~9 GB database set and cannot live in CI.
  *
  *   Reads `$MAILWOMAN_DATA_ROOT` read-only. Needs the dev weights linked
  *   (`node neural-weights-en-us/scripts/link-dev-weights.ts`, after `yarn compile`).

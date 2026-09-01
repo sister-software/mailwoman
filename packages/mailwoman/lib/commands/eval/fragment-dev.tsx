@@ -23,7 +23,7 @@ export const spec = {
 		fixtures: {
 			type: "string",
 			required: true,
-			description: "fragment-dev.jsonl path (held-out split from build_fragment_shard)",
+			description: "fragment-dev.jsonl path (held-out split from build_fragment_database)",
 		},
 		limit: {
 			type: "number",

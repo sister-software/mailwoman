@@ -9,11 +9,11 @@
 # postmortem §0c-§0d.
 #
 # SINGLE CHANGE vs v0_6_0-stage3.yaml (the clean base — no label smoothing, the
-# calibration verdict was "not the lever"): add the new synth-intersection shard
+# calibration verdict was "not the lever"): add the new synth-intersection slice
 # at weight 0.2 (synthesis-as-supplement discipline: small, targeted, < 0.25,
 # one-and-done). Tokenizer v0.6.0-a0 (unchanged → comparisons valid).
 #
-# Shard: scripts/build-intersection-shard.mjs → jsonl-to-parquet.py → 2000 rows,
+# Slice: scripts/build-intersection-slice.mjs → jsonl-to-parquet.py → 2000 rows,
 # source=synth-intersection, dropped into the v0.4.0 train dir (operator-authorized).
 #
 # Success criterion (DeepSeek): harness pass rate WITH the #35 postcode repair

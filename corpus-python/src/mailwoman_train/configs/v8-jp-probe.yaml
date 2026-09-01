@@ -5,13 +5,13 @@
 # locality channels (channel re-alignment is per-unit, post-probe), no CRF, no locale conditioning.
 #
 # Corpus: v8-jp-probe (200k train / 4k val), rendered native large-to-small space-free from
-# Overture-JP 2026-06-17.0 (MLIT lineage) by corpus-python/scripts/build_jp_probe_shard.py —
+# Overture-JP 2026-06-17.0 (MLIT lineage) by corpus-python/scripts/build_jp_probe_slice.py —
 # stratified per-prefecture reservoirs, compact numbers as whole-span house_number (D4), 〒 fraction
 # 0.30 joined from KEN_ALL, municipality-bucket board held out (never in train/val).
 #
 # PRE-REGISTERED GATE (2026-07-18-v8-jp-char-encoder-design §d, committed before any GPU):
 #   PASS = JP coordinate-acceptability >= 0.70 on the held-out municipality board (the bare-Latin
-#   substrate floor). PASS → Phases 2-5 (JP-seven activation, full shard, channels, ship).
+#   substrate floor). PASS → Phases 2-5 (JP-seven activation, full slice, channels, ship).
 #   FAIL → the written ladder: per-tag split → boundary audit → collapse check. A FAIL indicts ONLY
 #   "bare char CharCNN alone reaches the floor" — never alignment (Phase 0 retired 1,560/1,560).
 #   Leg 2 (unification bake-off, char-word vs SP on Latin) runs in the same session, gates v9 only.

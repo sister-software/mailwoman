@@ -4,8 +4,8 @@
 # target class (n=63, production config, int8):
 #     v264 token@1 (shipped)              33/63 = 0.524
 #     v301 seg@1   (the flag's whole case) 48/63 = 0.762   <- "+23.8pp", the reason to ship a flag
-#     v310 token@1 (the SHARD, no span head) 56/63 = 0.889 <- a PLAIN decode, +36.5pp
-# The span decode is 12.7pp WORSE on its own target class than the shard's plain token decode. So the
+#     v310 token@1 (the SLICE, no span head) 56/63 = 0.889 <- a PLAIN decode, +36.5pp
+# The span decode is 12.7pp WORSE on its own target class than the slice's plain token decode. So the
 # flag ships nothing: an opt-in path that loses to the default is not a feature. §6 of the review
 # (2026-07-16-span-head-arc-review-follow-up.md) said "ship behind a flag" on the belief that the
 # span decode owned that class. T1c + T2 falsified the belief.
@@ -26,7 +26,7 @@
 #
 # THE GATE (pre-registered, and the bar is HIGHER than the flag ever had to clear):
 #   1. PARIS, THE KILL SHOT: seg@1 must beat v310's token@1 = 56/63 (0.889). This is the bar the flag
-#      FAILED. If a shard-trained span head cannot beat a shard-trained plain decode on the target
+#      FAILED. If a slice-trained span head cannot beat a slice-trained plain decode on the target
 #      class, the span head has no case at any weight and the arc closes.
 #   2. HALLUCINATION: parity.street.hallucination_rate on the 54 street-free rows must fall from
 #      v301-span's 0.352 toward v264's 0.222. T1a's falsifier. Note the rate was never ESTABLISHED
@@ -43,7 +43,7 @@
 # themselves: oracle@k and the k-best decode are the instruments that REVEALED the headroom and drove
 # T1a -> T1c -> T2. The arc found the answer; the answer was data.
 #
-# ⚠ conventions loss-mask: OFF in this lineage (inherited). Do not turn it on — the shard teaches FR
+# ⚠ conventions loss-mask: OFF in this lineage (inherited). Do not turn it on — the slice teaches FR
 # street_prefix and the mask would -inf those labels (the v1.6.0 ~7M-loss blow-up).
 #
 # fp32 partition math is enforced inside span_scorer.py regardless of autocast (the v0.5.0 bf16 CRF
@@ -78,7 +78,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay shard.
+  source_weights: # VERBATIM v2.4.1 + the one new assay slice.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -107,7 +107,7 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete shard (assay weight — moderate precedent).
+    # PROBE 1: the fragment/autocomplete slice (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the

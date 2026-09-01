@@ -3,7 +3,7 @@
 **Direction D.** Some tokens in an address carry far more geographic information than others. The
 postcode is the clearest case, with distinctive streets and landmarks close behind. Treat those as
 _first-class structured anchors_ that condition (or bypass) the neural parser, rather than flattening
-them into just-another-BIO-tag. Around that sits a single self-conditioned model per **script** shard, a
+them into just-another-BIO-tag. Around that sits a single self-conditioned model per **script** extract, a
 tiny always-resident coarse placer for graceful abstention, and a strict soft-prior discipline that
 keeps anchors from laundering errors. DeepSeek-signed across two consults (German conditioning:
 `.agents/skills/deepseek-consult/session-notes-2026-06-02-german-conditioning.md`; resolver routing:
@@ -11,8 +11,8 @@ keeps anchors from laundering errors. DeepSeek-signed across two consults (Germa
 
 ## Why now
 
-The v0.8.0 German order-shard experiment (postmortem)
-taught two things at once. The order _is_ learnable cheaply: a 5,000-row shard roughly doubled German
+The v0.8.0 German order-extract experiment (postmortem)
+taught two things at once. The order _is_ learnable cheaply: a 5,000-row extract roughly doubled German
 street and house-number F1. But the continue-train re-triggered the Saint-Albans span-fragmentation bug
 at end-of-string. The model bled the postcode span into the adjacent city (`München` → `chen`, `Berlin`
 → absorbed into the postcode run), which collapsed locality and postcode and dragged the resolver down
@@ -102,12 +102,12 @@ Routing has to be cheap _and_ reliable, and **script** is both: a Unicode-block 
 Address-system similarity is the _right_ clustering for the model's job (UK and US share a script but
 differ in system; DE and AT share a system across a language border), yet it is **not detectable
 pre-parse**, since knowing the system is most of the parse, which makes routing on it circular. So the
-Pareto-optimal point is to **route by script and specialize by address-system inside each shard via
-conditioning.** One Latin shard (US, UK, DE, FR, ES, IT, NL, BR, MX… as conditioned locales), one CJK+
-shard (JP/KR/CN share descending-locality structure), one Arabic, one Indic. Awkward cases (UK,
-tri-lingual CH, ES-Spain vs ES-LatAm) are locales _within_ the Latin shard.
+Pareto-optimal point is to **route by script and specialize by address-system inside each extract via
+conditioning.** One Latin extract (US, UK, DE, FR, ES, IT, NL, BR, MX… as conditioned locales), one CJK+
+extract (JP/KR/CN share descending-locality structure), one Arabic, one Indic. Awkward cases (UK,
+tri-lingual CH, ES-Spain vs ES-LatAm) are locales _within_ the Latin extract.
 
-The two axes have different jobs: **script routes; address-system subdivides a shard only on capacity
+The two axes have different jobs: **script routes; address-system subdivides a extract only on capacity
 overflow** (see the cross-pollution metric). That is why both came up. They operate at different layers.
 
 ### Self-conditioning over a hard locale token
@@ -128,14 +128,14 @@ few hundred KB) predicts (script, continent, coarse-region) with a **temperature
 trained with a little outlier exposure (unseen scripts as an "other" class) so it knows the edge of its
 own competence. Below threshold it **abstains**, returning "probably East Asian, off my loaded map"
 instead of a confident mis-parse. It runs first, gives an instant coarse answer, and decides which script
-shard to download. That is the selective-geography product story: ship ~28 MB that places the planet
+extract to download. That is the selective-geography product story: ship ~28 MB that places the planet
 coarsely, then fetch the region you care about for street-level detail (tiered loading, no permanent
 whole-world footprint).
 
 ### Does conditioning really isolate, or just paper over?
 
 A conditioned shared model is modulated, not hard-isolated: its FFN and attention weights are shared. The
-DeepSeek read is that conditioning _functionally_ specializes up to ~20-30 locales per shard at ≥300-dim
+DeepSeek read is that conditioning _functionally_ specializes up to ~20-30 locales per extract at ≥300-dim
 hidden (we have 384), so our 15-20 target sits inside the safe regime, and the German collapse was a
 training-schedule artifact rather than a shared-weights limit. **Treat the capacity numbers as directional
 estimates, not gospel** (the same source over-called the tokenizer wall, which our own
@@ -150,7 +150,7 @@ estimates, not gospel** (the same source over-called the tokenizer wall, which o
   adding a locale drops an existing one's resolver utility by more than 2pp (the 77→43 collapse).
 - **Cross-pollution / capacity regression check:** per-locale, the rate of city-start tokens mis-tagged as
   postcode must fall below 1% by 20k steps with balanced data and conditioning present. If it will not
-  clear 1%, that shard has hit its interference ceiling, and we split it **by address-system** (not by
+  clear 1%, that extract has hit its interference ceiling, and we split it **by address-system** (not by
   more script).
 - **Coarse placer:** abstain below the calibrated confidence threshold rather than emit a confident wrong
   placement.
@@ -163,7 +163,7 @@ estimates, not gospel** (the same source over-called the tokenizer wall, which o
    region + centroid gazetteer for the target locales from OpenAddresses (US already exists:
    `postalcode-us.db`, 42,319 codes; the global admin DB currently has _zero_ postcodes), and (b) the
    regex + fuzzy extractor with calibrated confidence. It helps the resolver _today_ and becomes the
-   parser's strongest conditioning channel. In parallel: stage ES/IT/NL order shards (same
+   parser's strongest conditioning channel. In parallel: stage ES/IT/NL order extracts (same
    synth-from-real-OA recipe) and clean the OpenAddresses CITY noise.
 
    **Status (2026-06-03): the anchor shipped for US, NL, FR, and DE** (PRs #247-#250). The gazetteer came
@@ -179,13 +179,13 @@ estimates, not gospel** (the same source over-called the tokenizer wall, which o
    any scale spend. Test the postcode anchor and self-conditioning _together_.
 4. **Real run.** One from-scratch, balanced, self-conditioned run once the pilot passes and 4-5 locales
    are staged.
-5. **Global.** Script-shard collection + the coarse-placer tier; the generalized place-anchor gazetteer
-   for distinctive streets / landmarks; subdivide a shard by address-system only if its 20k regression check
+5. **Global.** Script-extract collection + the coarse-placer tier; the generalized place-anchor gazetteer
+   for distinctive streets / landmarks; subdivide a extract by address-system only if its 20k regression check
    refuses to clear.
 
 ## Related
 
-- German order-shard postmortem — the failure that motivated
+- German order-extract postmortem — the failure that motivated
   this.
 - [Resolver routing plan](./2026-05-30-resolver-routing-plan.mdx) — Direction C; the router this builds on.
 - [Exotic-POI understanding docs](../understanding/exotic-poi/landmark-queries.mdx) — the landmark /

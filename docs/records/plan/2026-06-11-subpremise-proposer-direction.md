@@ -12,7 +12,7 @@ provenance-tracked across `codex/us|fr|ca|au|nz`) followed by a short id with pe
 shape rules. Addressing standards treat them as one family too (USPS "secondary unit
 designators"; AU's subpremise forms in the same AMAS table the #517 slices mined; NZ Post's
 delivery-service types). The model currently learns each tag's instances separately
-(`unit` shard, `po_box/cedex` shard) and shares nothing across the family.
+(`unit` extract, `po_box/cedex` extract) and shares nothing across the family.
 
 ## Why pre-tagging-as-OVERRIDE stays rejected
 

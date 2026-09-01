@@ -35,7 +35,7 @@ export function sha256Hex(data: string | NodeJS.ArrayBufferView | string[]): str
 /**
  * Streaming MD5 of a file, hex-encoded. MD5 (not SHA-256) is used for build-provenance fingerprints that follow an
  * existing convention — the HM Land Registry PPD snapshot ships an `.md5` sibling, and
- * `gazetteer-pipeline/admin/index.ts`'s build-log fingerprint is MD5 — so a shard/artifact header recording a source
+ * `gazetteer-pipeline/admin/index.ts`'s build-log fingerprint is MD5 — so a extract/artifact header recording a source
  * checksum matches the surrounding provenance chain rather than mixing algorithms. Not a security primitive; only ever
  * used for accidental-corruption / drift detection.
  */

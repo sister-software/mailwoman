@@ -9,13 +9,13 @@ Licence v3, acquisition 2026-08-05).
 ## What this measures, and what it cannot
 
 1. **The truth and the gazetteer share a source.** Mailwoman's GB postcode tier is built from
-   Code-Point Open (`codepoint-shard.ts`), so grading answers against Code-Point centroids does not
+   Code-Point Open (`codepoint-extract.ts`), so grading answers against Code-Point centroids does not
    measure independent coordinate accuracy — it measures the **pipeline end to end**: does a messy,
    real-shaped postcode string come back as the right unit-postcode point through
    parse → retrieval → resolution? That is the engine's claim. The coordinates' accuracy is
    Ordnance Survey's.
 2. **The OSGB36 → WGS84 conversion cancels.** Truth is converted by the same `@mailwoman/spatial`
-   routine the shard build uses (pinned against the OSTN15 test set in its own suite), so a
+   routine the extract build uses (pinned against the OSTN15 test set in its own suite), so a
    systematic conversion bias would be invisible here.
 3. **Premise-level accuracy is out of reach.** A unit postcode covers tens of properties and no
    open GB register grades a rooftop answer. Thresholds are postcode-scale. This is the boundary
@@ -26,7 +26,7 @@ Licence v3, acquisition 2026-08-05).
 
 - **Sample:** 600 unit postcodes — a seeded draw (`mulberry32(20260818)`), 5 from each of the 120
   Code-Point area files, so London does not drown Orkney. Positional-quality-90 rows (no
-  coordinate available) are excluded, matching the shard build. Northern Ireland is not in
+  coordinate available) are excluded, matching the extract build. Northern Ireland is not in
   Code-Point Open and is therefore not in this record.
 - **Legs per postcode:** as published (`SW10 0AA`); lowercased and unspaced (`sw100aa` — the user
   register); country-suffixed (`SW10 0AA, UK`); and a **typo leg** — the final letter stepped to
@@ -89,4 +89,4 @@ node packages/mailwoman/lib/eval-harness/gb-codepoint-eval.ts --stamp 2026-08-05
 ```
 
 Requires a Code-Point Open acquisition under `$MAILWOMAN_DATA_ROOT/codepoint/<stamp>/` (the
-acquisition tooling records its own manifest and checksum) and the shipped GB postcode shard.
+acquisition tooling records its own manifest and checksum) and the shipped GB postcode extract.

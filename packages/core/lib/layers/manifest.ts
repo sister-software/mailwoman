@@ -25,10 +25,10 @@ export interface SpineKeys {
 	 */
 	addressID?: string
 	/**
-	 * The normalized-street column a shard is probed by, for layers keyed by STREET rather than by cell or id.
+	 * The normalized-street column a extract is probed by, for layers keyed by STREET rather than by cell or id.
 	 *
 	 * Added because the contract's first three keys describe the two layer shapes that existed when it was written — a
-	 * cellular one (`poi.db`, H3) and an id-joined one — and the situs shards are a third. `address_point` and
+	 * cellular one (`poi.db`, H3) and an id-joined one — and the situs extracts are a third. `address_point` and
 	 * `street_segment` carry no H3 cell, no WOF id and no address-id; they are probed on `(postcode | locality,
 	 * street_norm, number)`. Declaring one of the other three for them would name a column that does not exist, in the
 	 * field a consumer uses to join.

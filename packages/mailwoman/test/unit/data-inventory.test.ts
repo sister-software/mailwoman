@@ -193,13 +193,13 @@ describe("rebuildHint", () => {
 
 describe("buildCommandGaps — a manifest is only worth its build command", () => {
 	it("flags a path the workspace regroup moved", async () => {
-		// Measured on the shipped osm shards: they record `node osm/out/scripts/build-rooftop-shard.js`, which
+		// Measured on the shipped osm databases: they record `node osm/out/scripts/build-rooftop-database.js`, which
 		// now lives under `packages/osm/`. The literal survived the move INSIDE a built database, where no lint
 		// reaches it, and the artifact still passes every "has a manifest" check.
 		const root = await dataRoot()
 
-		expect(await buildCommandGaps("node osm/out/scripts/build-rooftop-shard.js", root)).toEqual([
-			"osm/out/scripts/build-rooftop-shard.js",
+		expect(await buildCommandGaps("node osm/out/scripts/build-rooftop-database.js", root)).toEqual([
+			"osm/out/scripts/build-rooftop-database.js",
 		])
 	})
 

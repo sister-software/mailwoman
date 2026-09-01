@@ -1,12 +1,12 @@
-# === v1.9.9-bare-street-si (#901 run 2 — fr-bare-street + the SI no-street counter-shard) ===
+# === v1.9.9-bare-street-si (#901 run 2 — fr-bare-street + the SI no-street counter-slice) ===
 # NIGHT-31. v1.9.8 was FALSIFIED at its full gate: US/CZ/PL/SK ni PASS but SI ni FAIL at 6k AND 10k
 # (resolve -3.4pp; 37 rows lost, all the Slovenian no-street "Village N, Postcode Village" form —
 # "Apače 108" split into street "Apače 10" + house "8"). The bare-street boundary lesson generalizes
 # onto a form where the leading name must keep its number whole and the trailing mention must stay
-# locality-bound. Per the falsified-lever rule nothing from v1.9.8 ships; THIS run pairs the shard
+# locality-bound. Per the falsified-lever rule nothing from v1.9.8 ships; THIS run pairs the slice
 # with its counter-distribution: synth-si-bare-village (6,285 real OA SI village tuples, 3 orders,
 # gold = street:V / house_number:n / postcode:pc / locality:V-trailing).
-# ONE compositional change vs v1.9.8 (corpus overlay v0.9.9 = v0.9.4 + the SI shard, weight 6.0).
+# ONE compositional change vs v1.9.8 (corpus overlay v0.9.9 = v0.9.4 + the SI slice, weight 6.0).
 #
 # PROBE GATE (2k, pre-registered in gate-v193/RESULTS.md BEFORE launch — now WITH the failure slice,
 # the run-1 lesson): (a) FR bare-intact >= 92% (n=40 fr-parse-recall); (b) the 37 v1.9.8-lost SI rows
@@ -16,11 +16,11 @@
 # Launch: modal run -d scripts/modal/train_remote.py --config v1.9.9-bare-street-si.yaml --resume none
 #
 # --- v1.9.8 header below for the record ---
-# === v1.9.8-bare-street-bsplice (#901 run 1 — the fr-bare-street shard on the SHIPPED spliced base) ===
+# === v1.9.8-bare-street-bsplice (#901 run 1 — the fr-bare-street slice on the SHIPPED spliced base) ===
 # NIGHT-31 (2026-07-02, $30 cap). Restores the v4.16.0-demo-only fr-bare-street capability that the v5.1.0
 # repoint traded away — now trained ON the spliced vocab so it ships in the main line. ONE variable vs the
-# shipped v5.1.0 model: the synth-fr-bare-street shard (the corpus + weights below are v1.9.4 VERBATIM,
-# which is v1.9.3a3 + that one shard).
+# shipped v5.1.0 model: the synth-fr-bare-street slice (the corpus + weights below are v1.9.4 VERBATIM,
+# which is v1.9.3a3 + that one slice).
 #
 # CASE-AUG DELIBERATELY EXCLUDED (schedule adjustment vs the night plan): v1.9.6-surface-aug-full was
 # SHELVED 2026-06-30 (#261) — the metamorphic layer introduced 2 casing/whitespace regressions, and the
@@ -38,15 +38,15 @@
 # max_steps bumped to 12000 (the +10k full-run precedent from v1.9.4). Full gate = the night plan table.
 # Launch: modal run -d scripts/modal/train_remote.py --config v1.9.8-bare-street-bsplice.yaml
 #
-# --- v1.9.4 header (the shard's rationale) kept below for the record ---
+# --- v1.9.4 header (the slice's rationale) kept below for the record ---
 # === v1.9.4-fr-bare-street (#251/#148 — teach the FR street→locality boundary WITHOUT a postcode anchor) ===
 # FULL RUN (probe GREEN: 2k-step step-082000 gave bare-FR street-intact 89→92%, demo "Rue du Chevaleret,
 # Paris" FIXED, US 4/4 tag-identical → imbalance confirmed, not modeling deficit). Continue from the probe's
 # step-082000 (--resume auto) to step-092000 (+10k); eval every 2k → gate each checkpoint (US per-tag floors)
-# and ship the FR-up/US-held sweet spot. SAME single variable (the fr-bare-street shard) — clean attribution.
+# and ship the FR-up/US-held sweet spot. SAME single variable (the fr-bare-street slice) — clean attribution.
 # v1.9.3a3 (shipped v4.16.x) is verbatim below EXCEPT: corpus_dir → the v0.9.4 overlay, and ONE new
 # source_weight (synth-fr-bare-street). Everything else — model, anchor knobs, class_weights, country_weights,
-# the other source_weights, LR/schedule — is IDENTICAL to v193a3, so the SINGLE variable is the new shard
+# the other source_weights, LR/schedule — is IDENTICAL to v193a3, so the SINGLE variable is the new slice
 # (clean attribution).
 #
 # ROOT MECHANISM (DeepSeek Pro 019f1097 + libpostal's own documented practice, both independent): every
@@ -56,10 +56,10 @@
 # locality="Cassin"). Measured: 90% FR streets intact, a ~10% bare-no-postcode tail that owns the demo
 # address. NOT data absence (BAN is in the corpus) — postcode-anchoring DISTRIBUTION imbalance.
 #
-# THE CHANGE (ONE variable): the synth-fr-bare-street shard — 10.8k real BAN (street, number, city) tuples
+# THE CHANGE (ONE variable): the synth-fr-bare-street slice — 10.8k real BAN (street, number, city) tuples
 # rendered as the MISSING distribution: bare comma form "<n> Rue <proper-noun name>, <City>", NO postcode.
 # BAN-sourced (Licence Ouverte / permissive) on purpose — the model must stay clean of the ODbL OSM data
-# (that is quarantined to the opt-in rooftop shards). Weight 6.0 = the targeted-fix precedent
+# (that is quarantined to the opt-in rooftop slices). Weight 6.0 = the targeted-fix precedent
 # (synth-german / synth-fr-admin-split / gnaf all 6.0).
 #
 # GATE (the probe — falsifies coverage-imbalance vs modeling-deficit, per DeepSeek): re-run
@@ -70,7 +70,7 @@
 # v1.6.0 ~7M-loss mask blow-up does NOT apply here. NOT promoted without operator GO + the gate.
 # Launch: modal run -d scripts/modal/train_remote.py --config v1.9.4-fr-bare-street.yaml --resume auto
 data:
-  # v0.9.4 overlay = v0.9.3a3's 694 shards VERBATIM (re-rooted to /data) + the 1 fr-bare-street shard.
+  # v0.9.4 overlay = v0.9.3a3's 694 slices VERBATIM (re-rooted to /data) + the 1 fr-bare-street slice.
   corpus_dir: /data/corpus/versioned/v0.9.9-si-bare-village/corpus-v0.9.9-si-bare-village
   tokenizer_dir: /data/models/tokenizer/v0.6.0-bsplice
   max_length: 128
@@ -98,7 +98,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM from v1.9.3a3 + the one new fr-bare-street shard.
+  source_weights: # VERBATIM from v1.9.3a3 + the one new fr-bare-street slice.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -122,9 +122,9 @@ data:
     overture: 3.0
     gnaf: 6.0
     synth-anchor-absorption: 6.0
-    # #251 NEW: the bare-no-postcode FR street shard. 6.0 = targeted-fix precedent.
+    # #251 NEW: the bare-no-postcode FR street slice. 6.0 = targeted-fix precedent.
     synth-fr-bare-street: 6.0
-    synth-si-bare-village: 6.0 # run-2 counter-shard (see header)
+    synth-si-bare-village: 6.0 # run-2 counter-slice (see header)
   train_rows_per_epoch: 1000000
   val_rows: 4096
   coarse_filter: true

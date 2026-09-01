@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The GeoNames-postal tail shard (`postalcode-geonames-tail-<date>.db`) — postcode coverage for the
+ *   The GeoNames-postal tail database (`postalcode-geonames-tail-<date>.db`) — postcode coverage for the
  *   countries whose WOF `whosonfirst-data-postalcode-<cc>` repos don't exist (#920: FI/CZ/SK/SI/DK/
  *   NO/HR/PL/SE, plus GB from the `GB_full` dump). Ingest the GeoNames postal dumps → self-ancestors
  *   → indexes → provenance `meta` → VACUUM → FTS/bbox → SEAL.
@@ -40,15 +40,15 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { join } from "path-ts"
 
-import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
-import type { BuildFTSResult } from "#gazetteer-pipeline/fts"
 import {
 	applyStagingPragmas,
-	buildShardFTS,
+	buildDatabaseFTS,
 	freezeStagingDatabase,
 	removeStagingArtifacts,
-	vacuumShardInto,
-} from "#gazetteer-pipeline/shard-lifecycle"
+	vacuumDatabaseInto,
+} from "#gazetteer-pipeline/database-lifecycle"
+import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
+import type { BuildFTSResult } from "#gazetteer-pipeline/fts"
 
 export { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
 
@@ -60,17 +60,17 @@ export { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
 export type { ExtractMetaTable } from "@mailwoman/resolver-wof-sqlite/schema"
 
 /**
- * Kysely read/write contract for the shard's provenance table.
+ * Kysely read/write contract for the database's provenance table.
  */
-export interface ShardMetaDatabase {
+export interface DatabaseMetaDatabase {
 	meta: ExtractMetaTable
 }
 
 /**
- * Create the provenance `meta` table. Co-located with {@link ShardMetaDatabase} per the schema-module convention: a
+ * Create the provenance `meta` table. Co-located with {@link DatabaseMetaDatabase} per the schema-module convention: a
  * column added to one is a compile error against the other.
  */
-export async function createShardMetaTable<DB extends ShardMetaDatabase>(db: DatabaseClient<DB>): Promise<void> {
+export async function createDatabaseMetaTable<DB extends DatabaseMetaDatabase>(db: DatabaseClient<DB>): Promise<void> {
 	const kdb = db
 
 	await kdb.schema
@@ -82,7 +82,7 @@ export async function createShardMetaTable<DB extends ShardMetaDatabase>(db: Dat
 }
 
 /**
- * Upsert provenance rows into a `meta` table the caller has already created. One implementation for every shard and
+ * Upsert provenance rows into a `meta` table the caller has already created. One implementation for every database and
  * postcode-locality builder — the column-list form, which is byte-equivalent to the bare `VALUES (?,?)` some builders
  * used against the same two-column table.
  */
@@ -139,8 +139,8 @@ export interface BuildPostcodeGeonamesTailResult {
 	inserted: number
 	byCountry: Record<string, number>
 	/**
-	 * Countries whose `<CC>.txt` was absent — reported, not fatal (a partial shard is still a valid shard; the parity
-	 * gate is what decides whether it may be promoted).
+	 * Countries whose `<CC>.txt` was absent — reported, not fatal (a partial database is still a valid database; the
+	 * parity gate is what decides whether it may be promoted).
 	 */
 	missing: string[]
 	sources: GeonamesPostalSourceFact[]
@@ -151,7 +151,7 @@ export interface BuildPostcodeGeonamesTailResult {
 }
 
 /**
- * Build the sealed GeoNames-postal tail shard. See the module docstring for what this reproduces and why the country
+ * Build the sealed GeoNames-postal tail database. See the module docstring for what this reproduces and why the country
  * order matters.
  */
 export async function buildPostcodeGeonamesTail(
@@ -210,20 +210,24 @@ export async function buildPostcodeGeonamesTail(
 
 		phase("meta")
 		sources = await collectSourceFacts(countries, postalDir, ingest.byCountry)
-		await writeShardMeta(db, { now, countries, sources, inserted: ingest.inserted })
+		await writeDatabaseMeta(db, { now, countries, sources, inserted: ingest.inserted })
 
 		phase("freeze")
 		freezeStagingDatabase(db)
 
 		phase("vacuum", out)
-		await vacuumShardInto(db, out)
+		await vacuumDatabaseInto(db, out)
 	}
 
 	await removeStagingArtifacts(ingestPath)
 
 	phase("fts")
 
-	const fts: BuildFTSResult = await buildShardFTS(out, (path) => new DatabaseClient<ShardMetaDatabase>(path), phase)
+	const fts: BuildFTSResult = await buildDatabaseFTS(
+		out,
+		(path) => new DatabaseClient<DatabaseMetaDatabase>(path),
+		phase
+	)
 
 	phase("seal")
 	await sealDatabase(out)
@@ -305,7 +309,7 @@ const GB_LICENSE_NOTE =
 	"documented provenance; ONS's OGL grant for postcode products excludes Northern Ireland data and commercial NI " +
 	"use requires a separate Land & Property Services licence. Counsel sign-off pending, as with @mailwoman/osm."
 
-interface ShardMetaInput {
+interface DatabaseMetaInput {
 	now: Date
 	countries: readonly string[]
 	sources: readonly GeonamesPostalSourceFact[]
@@ -316,11 +320,11 @@ interface ShardMetaInput {
  * Bake the provenance record into the staging DB (pre-VACUUM, pre-seal — a shipped DB is never patched). `sources` is
  * stored as JSON so the per-file md5s stay machine-readable.
  */
-async function writeShardMeta<DB extends ShardMetaDatabase>(
+async function writeDatabaseMeta<DB extends DatabaseMetaDatabase>(
 	db: DatabaseClient<DB>,
-	input: ShardMetaInput
+	input: DatabaseMetaInput
 ): Promise<void> {
-	await createShardMetaTable(db)
+	await createDatabaseMetaTable(db)
 
 	const rows: Array<[string, string]> = [
 		["name", "mailwoman-postalcode-geonames-tail"],

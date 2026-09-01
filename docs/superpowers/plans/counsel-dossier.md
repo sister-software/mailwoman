@@ -9,12 +9,12 @@ scattered plan docs.
 
 ## 1. ODbL — the osm/ workspace publish-block + OSM-derived corpus quarantine
 
-**The question:** does publishing `@mailwoman/osm` (fetch/shard tooling for OSM rooftop points)
+**The question:** does publishing `@mailwoman/osm` (fetch/extract tooling for OSM rooftop points)
 and/or shipping OSM-derived training corpora make our artifacts (npm packages, trained weights,
 built databases) ODbL derivative databases subject to share-alike?
 
 **Facts:** the osm/ workspace is complete but publish-blocked (its README records the posture);
-OSM-derived corpus shards are quarantined into their own license bucket at build time
+OSM-derived corpus extracts are quarantined into their own license bucket at build time
 (`.notes/data-sources.md` build sheet); poi.db ships ODbL-attributed as a **build-local** artifact
 on the layer contract's tiers.
 
@@ -132,5 +132,5 @@ on the free channel) and marks every point where an instrument would be needed.
    (item 1's quarantine mechanisms); this asks counsel to confirm rather than discover.
 
 **Interim posture:** nothing ships on the Lite line. The prerequisites that need no lawyer (L4
-and L5 fact-finding, the share-alike build filter for the US situs shards, and putting the
+and L5 fact-finding, the share-alike build filter for the US situs extracts, and putting the
 artifact builds on a schedule) proceed independently.

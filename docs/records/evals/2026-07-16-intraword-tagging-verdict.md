@@ -81,15 +81,15 @@ Deepparse, for the record, splits neither — it cannot.
 
 That is the same shape as the two defects already on the board:
 
-| #   | licence                                                | consequence                   | status                            |
-| --- | ------------------------------------------------------ | ----------------------------- | --------------------------------- |
-| 1   | a **digit** licenses the _street_ reading              | `Rue Montmartre` → locality   | **fixed** by v310's shard (+50pp) |
-| 2   | a **known street** licenses the _house_number_ reading | `Øvste Skogen 121` → postcode | open (Track B)                    |
-| 3   | a **designator word** licenses the _intra-word split_  | `12/345` → one span           | open (this page)                  |
+| #   | licence                                                | consequence                   | status                              |
+| --- | ------------------------------------------------------ | ----------------------------- | ----------------------------------- |
+| 1   | a **digit** licenses the _street_ reading              | `Rue Montmartre` → locality   | **fixed** by v310's extract (+50pp) |
+| 2   | a **known street** licenses the _house_number_ reading | `Øvste Skogen 121` → postcode | open (Track B)                      |
+| 3   | a **designator word** licenses the _intra-word split_  | `12/345` → one span           | open (this page)                    |
 
 **One defect, three components: the model will not read a component without its co-occurring
 partner.** It has learned the joint distribution and not the marginals. That is a training-data
-property, not an architecture property — and instance 1 was fixed with a phenomenon shard plus a
+property, not an architecture property — and instance 1 was fixed with a phenomenon extract plus a
 counter-distribution, without touching the architecture at all.
 
 ## What this means for the architecture
@@ -118,7 +118,7 @@ counter-distribution, without touching the architecture at all.
 **Not settled here:** the arc's own research says a lower-fertility vocab is _upstream_ of any span
 head, and the span head was built and closed first — a conditional verdict flagged on its parked PR.
 Nothing on this page re-opens it. But note the direction: if the licence defect is a data property
-and the shard fixes it, the vocab work is an optimization, not a prerequisite.
+and the extract fixes it, the vocab work is an optimization, not a prerequisite.
 
 ## Caveats
 

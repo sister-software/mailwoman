@@ -54,7 +54,7 @@ export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
 
 /**
  * The `data/gazetteer` payload, matched the way the retired workflow key matched it (`*.json` + `*.jsonl`). Enumerated
- * rather than hardcoded so a new shard is picked up without a code change — the opposite trade from
+ * rather than hardcoded so a new extract is picked up without a code change — the opposite trade from
  * {@link DERIVED_WEIGHTS_INPUTS}, where an explicit list is the point.
  */
 async function gazetteerDataPaths(): Promise<string[]> {

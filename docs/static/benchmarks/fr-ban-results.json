@@ -13,13 +13,13 @@
 		"model": "model.onnx",
 		"modelCard": "neural-weights-fr-fr@6.5.0",
 		"gazetteer": "candidate-global-1026.db",
-		"nationalShard": "address-points-fr.db"
+		"nationalExtract": "address-points-fr.db"
 	},
 	"config": {
 		"locale": "fr-FR",
 		"defaultCountry": "FR",
 		"gazetteer": "candidate.db",
-		"nationalTier": "BAN FR rooftop shard",
+		"nationalTier": "BAN FR rooftop extract",
 		"routingRadiusKm": 15
 	},
 	"arms": {

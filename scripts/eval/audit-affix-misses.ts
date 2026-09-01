@@ -6,7 +6,7 @@
  *   Affix miss-form audit (#492 endgame): the width run falsified the capacity hypothesis (48M lands
  *   at exactly 29M's 64.9-prefix equilibrium at matched density, P=100/R≈48 on both), which points
  *   the ladder's last finger at the DATA. This script classifies every real-affix-eval miss by
- *   surface-form features and compares them against what the shard builder actually varies
+ *   surface-form features and compares them against what the extract builder actually varies
  *   (abbr/full per affix, Title-case, four layouts) — the #487 audit method, applied to affix.
  *
  *   Usage: node scripts/eval/audit-affix-misses.ts\
@@ -178,5 +178,5 @@ for (const f of features) {
 }
 
 console.log(
-	"\nShard variation surface (build-street-affix-shard.mjs): abbr/full per affix (50/50), Title-case ONLY, 4 layouts (full/bare/street-only/venue), comma-tailed. NOT varied: ALL-CAPS, periods ('S.'/'Dr.'), rare suffixes beyond the parse source's natural mix."
+	"\nExtract variation surface (build-street-affix-extract.mjs): abbr/full per affix (50/50), Title-case ONLY, 4 layouts (full/bare/street-only/venue), comma-tailed. NOT varied: ALL-CAPS, periods ('S.'/'Dr.'), rare suffixes beyond the parse source's natural mix."
 )

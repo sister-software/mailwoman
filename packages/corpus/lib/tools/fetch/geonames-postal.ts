@@ -11,12 +11,12 @@
  *
  *   ## Why this source and not a join
  *
- *   A postcode shard is only useful to the corpus if a postcode reaches a locality and a region. Two routes exist and
+ *   A postcode slice is only useful to the corpus if a postcode reaches a locality and a region. Two routes exist and
  *   only one of them works everywhere:
  *
  *   - **`parent_id`** — `postalcode-intl.db` carries a real parent that resolves in the admin gazetteer (measured: NL
  *     97.5% of rows linked, FR 90.7%, DE 66.1%, ES 34.9%, IT 27.4%, and 93.8–100% of those resolve to a
- *     `locality`/`localadmin`). It is also the ONLY shard that does: `postalcode-geonames-intl.db` and every
+ *     `locality`/`localadmin`). It is also the ONLY slice that does: `postalcode-geonames-intl.db` and every
  *     `postalcode-<cc>-overture.db` carry `parent_id = 0` on every row, so five countries have this route and the rest
  *     have none.
  *   - **Nearest locality centroid** — the obvious fallback, and it does not work. Scored against the `parent_id` truth
@@ -29,15 +29,15 @@
  *
  *   ## Coverage is not universal, and the gap is the point
  *
- *   GeoNames publishes ~80 countries, NOT all of them. Venezuela returns 404 — so a VE postcode shard cannot be built
+ *   GeoNames publishes ~80 countries, NOT all of them. Venezuela returns 404 — so a VE postcode slice cannot be built
  *   from this source at any effort, and that is an acquisition question rather than a build one. Ask for a country
  *   before assuming it is there; an absent country fails as one entry, never as the whole run.
  *
  *   ## Row counts from this source overstate, for some countries by exactly 2×
  *
  *   Countries whose postcode format contains a hyphen are published TWICE — once `3750-000`, once `3750000`. Measured
- *   on the shard built from this source: PT 395,544 rows over 197,772 distinct codes and PL 40,598 over 20,299, both
- *   exactly 2.00×, while AU, CZ and AT (no hyphen in the format) are 1.00×. A consumer sizing a shard from the row
+ *   on the slice built from this source: PT 395,544 rows over 197,772 distinct codes and PL 40,598 over 20,299, both
+ *   exactly 2.00×, while AU, CZ and AT (no hyphen in the format) are 1.00×. A consumer sizing a slice from the row
  *   count doubles its estimate for those countries.
  *
  *   ## Why `downloadToFile` and not `APIClient`
@@ -148,7 +148,7 @@ export async function fetchGeonamesPostal(
 			const message = error instanceof Error ? error.message : String(error)
 
 			// A 404 here means GeoNames does not publish the country at all, which is a different finding from a failed
-			// transfer and the one a caller planning a shard needs to see. Branch on the TYPED status: matching message
+			// transfer and the one a caller planning a slice needs to see. Branch on the TYPED status: matching message
 			// prose classified a 500 as "unpublished" whenever the URL happened to contain the substring 404 — an
 			// ephemeral test-server port did exactly that in CI.
 			if (error instanceof HTTPStatusError && error.status === HTTP_NOT_FOUND) {

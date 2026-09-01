@@ -48,7 +48,7 @@ export function decorateNode(
 	node.source = "resolver"
 	node.sourceID = `${resolved.placetype}:${resolved.id}`
 
-	// `0,0` is the gazetteer's UNLOCATED sentinel, not a location in the Gulf of Guinea. Shards carry a lot of it —
+	// `0,0` is the gazetteer's UNLOCATED sentinel, not a location in the Gulf of Guinea. Extracts carry a lot of it —
 	// 48,216 of 142,604 JP postcodes, 86,377 GB, 9,708 intl, 414 US — and stamping it produces a node that answers
 	// "yes" to every `lat != null` guard downstream, including the admin ladder's. Absence is the representable form
 	// (`AddressNode.lat` is optional and {@link isResolvedWithCoord} already reads the sentinel this way), so the

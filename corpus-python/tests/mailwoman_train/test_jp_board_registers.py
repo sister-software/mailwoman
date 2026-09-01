@@ -1,8 +1,8 @@
 """Per-register acceptability on the JP board — and proof the pre-registered gate is untouched.
 
-The full JP shard (#1458) writes a ``register`` column on every board row (``native`` /
+The full JP slice (#1458) writes a ``register`` column on every board row (``native`` /
 ``arabic_chome`` / ``compact_folded`` / ``designator``). Two of those four surfaces appear in ZERO
-source rows and exist only because ``build_jp_shard`` synthesizes them, and they are a small
+source rows and exist only because ``build_jp_slice`` synthesizes them, and they are a small
 minority of the board — so a blended average is exactly the statistic that would hide them failing.
 ``score_jp_probe_board.score_board`` splits the same per-row outcomes by that column.
 

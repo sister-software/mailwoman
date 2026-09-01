@@ -14,10 +14,10 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/resolver"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
-import { readReleaseManifest, resolveShardPath, type DataReleaseManifest } from "#data-release"
+import { readReleaseManifest, resolveDatabasePath, type DataReleaseManifest } from "#data-release"
 
 /**
- * The per-state shards to wire into a single geocode resolve. Either/both may be absent (admin-only).
+ * The per-state databases to wire into a single geocode resolve. Either/both may be absent (admin-only).
  */
 export interface RegionDatabases {
 	addressPoints?: AddressPointLookup
@@ -32,7 +32,7 @@ export interface RegionDatabases {
 }
 
 /**
- * Resolve the situs/interpolation shards for a state slug (e.g. `"tx"`). `null` slug → no shards.
+ * Resolve the situs/interpolation databases for a state slug (e.g. `"tx"`). `null` slug → no databases.
  */
 export type RegionDatabaseResolver = (stateSlug: string | null) => RegionDatabases
 
@@ -51,7 +51,7 @@ export const US_STATE_SLUG_BY_NAME: ReadonlyMap<string, string> = new Map(
  * Lowercase 2-letter state slug from a parsed region value / resolver name, else null. Accepts the abbreviation
  * register ("MI") and the full-name register ("Michigan", "New York") — a user spells the state however they spell it,
  * and a null here silently drops the WHOLE per-state street tier (situs + interpolation), which is how "…, Fraser MI"
- * reached the register while "…, Brooklyn New York" never loaded a shard.
+ * reached the register while "…, Brooklyn New York" never loaded a database.
  */
 export function regionToStateSlug(
 	regionValue: string | null | undefined,
@@ -71,7 +71,7 @@ export function regionToStateSlug(
 }
 
 /**
- * Walk a (parsed or resolved) tree for its region → the per-state shard slug (e.g. `"tx"`), else null.
+ * Walk a (parsed or resolved) tree for its region → the per-state database slug (e.g. `"tx"`), else null.
  */
 export function regionSlugFromTree(tree: AddressTree): string | null {
 	let regionValue: string | null = null
@@ -93,8 +93,8 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 		}
 	}
 
-	// A slug names a US shard and nothing else, but `regionToStateSlug` accepts ANY two-letter region, so a foreign
-	// subnational code that happens to spell a US state selects that state's rooftop shard. Measured against the shards
+	// A slug names a US database and nothing else, but `regionToStateSlug` accepts ANY two-letter region, so a foreign
+	// subnational code that happens to spell a US state selects that state's rooftop database. Measured against the databases
 	// on disk: 8 of 16 Italian province codes reach one (MI→Michigan, CO→Colorado, PA→Pennsylvania, VA→Virginia,
 	// CA→California, MO→Missouri, AL→Alabama, MT→Montana), 5 of 5 Spanish, 6 of 12 Brazilian, and AU's WA→Washington.
 	// IT and ES are tier-1 and write the code in ordinary postal form — `20121 Milano MI`.
@@ -113,7 +113,7 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 }
 
 /**
- * Per-state situs shard path under `<dataRoot>/address-points/`, or null if the slug/file is absent.
+ * Per-state situs database path under `<dataRoot>/address-points/`, or null if the slug/file is absent.
  */
 export async function selectAddressPointsDB(dataRoot: string, stateSlug: string | null): Promise<string | null> {
 	if (!stateSlug) return null
@@ -123,7 +123,7 @@ export async function selectAddressPointsDB(dataRoot: string, stateSlug: string 
 }
 
 /**
- * Per-state interpolation shard path under `<dataRoot>/interpolation/`, or null if absent.
+ * Per-state interpolation database path under `<dataRoot>/interpolation/`, or null if absent.
  */
 export async function selectInterpolationDB(dataRoot: string, stateSlug: string | null): Promise<string | null> {
 	if (!stateSlug) return null
@@ -152,14 +152,14 @@ export interface RegionDatabaseCacheEntry extends RegionDatabases {
 
 /**
  * Opens + CACHES per-state situs/interpolation lookups so a batch geocoding many addresses in one state opens that
- * state's (possibly multi-GB) shards once, not once per row. Versioned-data aware (#485): paths resolve through the
+ * state's (possibly multi-GB) databases once, not once per row. Versioned-data aware (#485): paths resolve through the
  * `releases.json` manifest (legacy unversioned fallback), and {@link reload} performs a zero-downtime atomic switchover
  * when a new version is published. Call {@link close} when done to release every cached handle.
  *
  * `for` is synchronous, so on-disk existence is probed asynchronously ONCE instead of per call: {@linkcode warm} awaits
- * the #2029-async manifest read + `resolveShardPath` for every US state/territory slug and records what exists; `for`
- * then consults that map. Prefer {@linkcode RegionDatabaseProvider.create}, which constructs AND warms before answering
- * — the constructor itself is private because it cannot await those probes.
+ * the #2029-async manifest read + `resolveDatabasePath` for every US state/territory slug and records what exists;
+ * `for` then consults that map. Prefer {@linkcode RegionDatabaseProvider.create}, which constructs AND warms before
+ * answering — the constructor itself is private because it cannot await those probes.
  */
 export class RegionDatabaseProvider implements Disposable {
 	readonly #factory: RegionDatabaseFactory
@@ -171,7 +171,7 @@ export class RegionDatabaseProvider implements Disposable {
 	#retired: Disposable[] = []
 	#manifest: DataReleaseManifest | null
 	/**
-	 * Per-slug resolved shard paths, preloaded by {@linkcode warm} so `for` never touches the filesystem.
+	 * Per-slug resolved database paths, preloaded by {@linkcode warm} so `for` never touches the filesystem.
 	 */
 	readonly #paths = new Map<string, { apPath: string | null; ipPath: string | null }>()
 
@@ -183,7 +183,7 @@ export class RegionDatabaseProvider implements Disposable {
 
 	/**
 	 * Construct a provider and warm its path map before answering. The constructor cannot await the #2029-async manifest
-	 * read + shard-path probes, so this static factory does.
+	 * read + database-path probes, so this static factory does.
 	 */
 	static async create(factory: RegionDatabaseFactory, dataRoot: PathBuilderLike): Promise<RegionDatabaseProvider> {
 		const root = resolvePath(dataRoot)
@@ -195,9 +195,10 @@ export class RegionDatabaseProvider implements Disposable {
 	}
 
 	/**
-	 * Preload shard paths for every US state/territory slug. Awaits `resolveShardPath` for each slug's rooftop shard and
-	 * its interpolation tier, recording the paths that exist so `for` never touches the filesystem. Safe to call more
-	 * than once: it re-probes the same slug set and overwrites the map, which is how {@linkcode reload} re-reads the disk.
+	 * Preload database paths for every US state/territory slug. Awaits `resolveDatabasePath` for each slug's rooftop
+	 * database and its interpolation tier, recording the paths that exist so `for` never touches the filesystem. Safe to
+	 * call more than once: it re-probes the same slug set and overwrites the map, which is how {@linkcode reload} re-reads
+	 * the disk.
 	 */
 	async warm(): Promise<void> {
 		this.#paths.clear()
@@ -206,8 +207,8 @@ export class RegionDatabaseProvider implements Disposable {
 			const slug = abbreviation.toLowerCase()
 
 			const [apPath, ipPath] = await Promise.all([
-				resolveShardPath(this.#dataRoot, "address-points", slug, this.#manifest),
-				resolveShardPath(this.#dataRoot, "interpolation", slug, this.#manifest),
+				resolveDatabasePath(this.#dataRoot, "address-points", slug, this.#manifest),
+				resolveDatabasePath(this.#dataRoot, "interpolation", slug, this.#manifest),
 			])
 
 			this.#paths.set(slug, { apPath, ipPath })
@@ -242,8 +243,8 @@ export class RegionDatabaseProvider implements Disposable {
 	}
 
 	/**
-	 * Re-read the manifest, re-probe the shard paths, and atomically swap any cached shard whose resolved path changed.
-	 * New requests see the new version immediately; the old handles are RETIRED and closed on the next reload
+	 * Re-read the manifest, re-probe the database paths, and atomically swap any cached database whose resolved path
+	 * changed. New requests see the new version immediately; the old handles are RETIRED and closed on the next reload
 	 * (one-generation grace — safe because find() is synchronous, so no in-flight query can still hold a handle once a
 	 * request yields). Returns the new version map.
 	 */

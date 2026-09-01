@@ -56,7 +56,7 @@
   hours earlier. Cost: the int8/arena legs of one battery (~20 min; the fp32 FAIL record
   survived). Rule, now standing: scripts with live instances are immutable; stage edits and
   apply between runs.
-- **The shard agent's audit gate shared its builder's blind spot** (both normalized the dots
+- **The extract agent's audit gate shared its builder's blind spot** (both normalized the dots
   away), so the dotted-truncation bug reached the full run instead of dying at the audit. Audit
   gates need at least one check that operates on the RAW surface, not the builder's own
   normalization.
@@ -95,7 +95,7 @@
 
 - Conventions loss-mask rides the next full run (`use_conventions_loss_mask: true` + a
   pre-registered FR-region floor ≥ 25.6).
-- #517: codex au/nz po_box slices → shard vocabulary extension → next consolidation.
+- #517: codex au/nz po_box slices → extract vocabulary extension → next consolidation.
 - S6 drafted here: the next gate spec (v4.5.0-class) promotes the two watch lenses to floors
   with one release of history behind them — proposed bars: VT-intersection golden a/b ≥ 90
   (v4.4.0 measured 94.9/96.1) and glue-rows region/postcode recall ≥ 85 (measured 93/97).

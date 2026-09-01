@@ -2,14 +2,14 @@
 
 The insurance against repeating the 2026-08-05 GB defect
 (``docs/records/evals/2026-08-05-en-gb-anchor-off.md``). That defect was invisible for 60,000 steps
-because nothing ever asked the question this script asks: *given this shard and this
+because nothing ever asked the question this script asks: *given this slice and this
 ``anchor_lookup_path``, how many rows put a non-zero value into the anchor channel?* The answer for
-every GB shard against ``pilot-anchor-lookup.json`` is ZERO, and a zero is not a smaller number — it
+every GB slice against ``pilot-anchor-lookup.json`` is ZERO, and a zero is not a smaller number — it
 is the channel being switched off for that country while the config still says ``use_postcode_anchor:
 true``.
 
-Run it before a launch, once per shard whose country you expect the anchor to serve. A zero on a
-shard you expected to paint is a STOP, not a warning: either the lookup lacks that country's keys or
+Run it before a launch, once per slice whose country you expect the anchor to serve. A zero on a
+slice you expected to paint is a STOP, not a warning: either the lookup lacks that country's keys or
 the key normalization diverged.
 
 WHAT IT EXERCISES. The real train-side code, not a re-implementation:
@@ -20,10 +20,10 @@ copies per-char values onto pieces).
 
     python3 corpus-python/scripts/count_painted_anchor_rows.py \
       --lookup $MAILWOMAN_DATA_ROOT/anchor/staging-2026-08-05/pilot-anchor-lookup-v2-2026-08-05.json \
-      --shard $MAILWOMAN_DATA_ROOT/corpus/shards/synth-gb-v1.jsonl \
+      --slice $MAILWOMAN_DATA_ROOT/corpus/slices/synth-gb-v1.jsonl \
       --limit 100000
 
-Exits non-zero when a shard paints zero rows (``--allow-zero`` to survey instead of gate).
+Exits non-zero when a slice paints zero rows (``--allow-zero`` to survey instead of gate).
 """
 
 from __future__ import annotations
@@ -40,15 +40,15 @@ from mailwoman_train.postcode_shapes import collect_matches  # noqa: E402
 from mailwoman_train.tokenizer import ANCHOR_FEATURE_DIM, _paint_anchor_chars  # noqa: E402
 
 
-def count_shard(
-    shard: Path,
+def count_slice(
+    slice: Path,
     lookup: dict[str, tuple[dict[str, float], float, float]],
     limit: int | None,
 ) -> dict[str, int]:
-    """Walk a JSONL shard and count rows by what the painter does to them."""
+    """Walk a JSONL slice and count rows by what the painter does to them."""
     stats = {"rows": 0, "shaped": 0, "painted": 0, "spans": 0, "spans_hit": 0, "gold_postcode": 0}
     zero = [0.0] * ANCHOR_FEATURE_DIM
-    with shard.open(encoding="utf-8") as fh:
+    with slice.open(encoding="utf-8") as fh:
         for line in fh:
             if limit is not None and stats["rows"] >= limit:
                 break
@@ -81,8 +81,8 @@ def count_shard(
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--lookup", required=True, help="anchor lookup JSON (the config's anchor_lookup_path)")
-    ap.add_argument("--shard", required=True, action="append", help="JSONL shard; repeatable")
-    ap.add_argument("--limit", type=int, default=None, help="rows per shard (default: all)")
+    ap.add_argument("--slice", required=True, action="append", help="JSONL slice; repeatable")
+    ap.add_argument("--limit", type=int, default=None, help="rows per slice (default: all)")
     ap.add_argument("--allow-zero", action="store_true", help="survey mode — do not fail on a zero")
     args = ap.parse_args()
 
@@ -92,20 +92,20 @@ def main() -> int:
     print(f"  keys {len(lookup):,}   letter-bearing {letter_bearing:,}")
 
     zeroes: list[str] = []
-    for shard_path in args.shard:
-        shard = Path(shard_path)
-        stats = count_shard(shard, lookup, args.limit)
+    for slice_path in args.slice:
+        slice = Path(slice_path)
+        stats = count_slice(slice, lookup, args.limit)
         rows = stats["rows"] or 1
-        print(f"\nshard {shard.name}  rows {stats['rows']:,}")
+        print(f"\nslice {slice.name}  rows {stats['rows']:,}")
         print(f"  gold postcode component : {stats['gold_postcode']:,} ({100 * stats['gold_postcode'] / rows:.1f}%)")
         print(f"  shape-detected a span   : {stats['shaped']:,} ({100 * stats['shaped'] / rows:.1f}%)")
         print(f"  PAINTED (lookup hit)    : {stats['painted']:,} ({100 * stats['painted'] / rows:.1f}%)")
         print(f"  spans {stats['spans']:,}  spans that hit the lookup {stats['spans_hit']:,}")
         if stats["painted"] == 0:
-            zeroes.append(shard.name)
+            zeroes.append(slice.name)
 
     if zeroes and not args.allow_zero:
-        print(f"\nZERO PAINTED ROWS on: {', '.join(zeroes)} — the anchor channel is OFF for this shard.")
+        print(f"\nZERO PAINTED ROWS on: {', '.join(zeroes)} — the anchor channel is OFF for this slice.")
         return 1
     return 0
 

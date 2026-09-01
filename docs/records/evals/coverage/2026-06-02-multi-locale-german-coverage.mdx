@@ -69,7 +69,7 @@ Gate passed. The wall is coverage, and coverage is cheap.
 
 ## Teaching the order
 
-The fix is a small supplement shard that shows the model German order, and the trick is to not
+The fix is a small supplement extract that shows the model German order, and the trick is to not
 synthesize German street names, because German morphology is hard to fake and you'll teach the model
 your own mistakes. Instead, take _real_ OpenAddresses tuples (Berlin and Saxony, 1.2 million of them) and
 re-render each one in idiomatic German order. The rendering is free: the OpenCage `DE` template
@@ -103,14 +103,14 @@ Here's the "before," measured on a held-out German set the model has never seen:
 
 street and house_number are the floor, the two tags that depend on order. locality and postcode are
 already decent, because a city name and a five-digit number are recognizable wherever they sit. The
-shard targets the floor.
+extract targets the floor.
 
 The retrain itself is staged but not run as of this writing. Launching it mutates the shared
 training corpus manifest, the kind of irreversible, shared-state change that deserves a human's yes
-rather than an autonomous one. Everything is one approval away: the shard is built and
+rather than an autonomous one. Everything is one approval away: the extract is built and
 uploaded, the config is committed, the before/after harness is wired. When it runs, the test is
 simple and pre-registered: street and house_number should climb, US and French should not move more
 than a point (the interference regression check), and the German resolver coordinate error should hold.
 
-If German costs US accuracy, the shard comes back out. That's the whole discipline: you don't get to
+If German costs US accuracy, the extract comes back out. That's the whole discipline: you don't get to
 _hope_ a locale is free, you measure whether it was.

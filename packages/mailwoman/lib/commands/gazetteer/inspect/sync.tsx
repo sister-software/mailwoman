@@ -7,7 +7,7 @@
  *   builds read.
  *
  *   The destination defaults to `<data-root>/wof/repos`, matching every consumer of these repositories
- *   (`gazetteer build admin`, `gazetteer build`, `build postcode-shard`, `gazetteer polygons` all document that same
+ *   (`gazetteer build admin`, `gazetteer build`, `build postcode-database`, `gazetteer polygons` all document that same
  *   default). Which repositories to sync is decided in `sync-plan.ts` before any network work, so a mistake is a
  *   message rather than a directory full of clones.
  *

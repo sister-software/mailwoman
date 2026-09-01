@@ -332,7 +332,7 @@ a healthy park, not a stall.
 | **1505** | `91e6f8b88` (#1522) — AGENTS.md now lists bdc:45, filer:46, fastify:62, react:65, apps:76, hf-publish:78                                                                       | High                         |
 | **1491** | `91e6f8b88` — `--corpus-version` rename plus an AST guard over all 133 command modules                                                                                         | High                         |
 | **1493** | `91e6f8b88` — `RELEASING.md:399` records `fst-global-priority.bin` RETIRED 2026-08-06; note the HF-bucket deletion is a release-time operator action                           | High, with a caveat          |
-| **1495** | `91e6f8b88` — `build-candidate.ts:311` `foldPostcodeShard`. Code-complete; **the artifact lands at the next `gazetteer build candidate`**                                      | Close with the caveat stated |
+| **1495** | `91e6f8b88` — `build-candidate.ts:311` `foldPostcodeExtract`. Code-complete; **the artifact lands at the next `gazetteer build candidate`**                                    | Close with the caveat stated |
 
 **Two traps.** #1539 and #1519 look closed by their commit subjects and are not. `f2c9810b7` touches
 three files for 18 lines and its own message says the over-greed is _"now a NAMED failure mode
@@ -388,7 +388,7 @@ Everything in (a), plus:
 | --- | --------------------------------------------------------------------------------------------------------------- | ----------- | --------------------------------------------------------------------------- |
 | b1  | Re-run the three-way benchmark on 9.0.0; the standing result has Pelias ahead 88 to 80 @25 km                   | single-lane | bounded engineering — **the highest-leverage single measurement available** |
 | b2  | Precision, not recall: 26% @1 km against Nominatim 77 / Pelias 71. The gap is address-point coverage, not parse | multi-lane  | data acquisition, per-country                                               |
-| b3  | AU at 35% against Pelias 78 / Nominatim 97                                                                      | multi-lane  | data plus a shard                                                           |
+| b3  | AU at 35% against Pelias 78 / Nominatim 97                                                                      | multi-lane  | data plus a extract                                                         |
 | b4  | #1529 — crossing-point computation. TIGER edges already back the interpolation DB                               | single-lane | bounded engineering                                                         |
 | b5  | Upstream parity tests for all three drop-ins — nothing today compares them to what they replace                 | single-lane | bounded engineering                                                         |
 | b6  | Nominatim `limit` capped at 1; `viewbox`, `polygon_*`, structured `county`                                      | single-lane | bounded engineering                                                         |
@@ -415,7 +415,7 @@ Everything above, plus:
 | c6  | Record matching (#598 family)                                                                                                                                           | multi-lane                                         | **operator decision** — parked pending funding or a pilot               |
 | c7  | `@mailwoman/osm` publish, HK ALS, the Lite artifact line                                                                                                                | external-dependency                                | **ODbL counsel review, unretained**                                     |
 | c8  | Starter kits — 22 unchecked boxes, zero checked, no artifacts exist                                                                                                     | single-lane                                        | bounded, plus two operator gates (org repo creation, npm first-publish) |
-| c9  | Secondary address support (#1100), locator[] (#295/#296), script-shard routing (#245)                                                                                   | arc-with-preregistration                           | schema changes ride retrains                                            |
+| c9  | Secondary address support (#1100), locator[] (#295/#296), script-extract routing (#245)                                                                                 | arc-with-preregistration                           | schema changes ride retrains                                            |
 
 **The only genuine external blocker across the whole project is c7** — the ODbL question holding
 `osm/`, and it has no counsel behind it. The dossier records the operator's position verbatim: _"do
@@ -458,7 +458,7 @@ the designed cure and **none of those three bars has been run**.
 
 The same failure shape recurs where a named place carries digits or a street-type word: the venue's
 year read as a postcode, the venue fragment read as an outward code, `Pier 39`'s long-standing unit-tag
-quirk. The v9 sub-venue shard is the first training-side answer to it. It is not resolved.
+quirk. The v9 sub-venue extract is the first training-side answer to it. It is not resolved.
 
 ### 5.4 The instruments have been lying, and some still are
 
@@ -541,7 +541,7 @@ at pack time with a guard that refuses to publish a missing target. Every one of
 something broke once and was written down. It works.
 
 **The gazetteer and layer discipline.** Sealed, read-only, provenance-tracked, license-tagged, with a
-meaning-of-zero rule that distinguishes absence from zero. The NI postcode shard shipping
+meaning-of-zero rule that distinguishes absence from zero. The NI postcode extract shipping
 ancestry-only with zero coordinates — because inventing them would be the lie — is the discipline
 working under pressure.
 

@@ -4,7 +4,7 @@ Pins the contract the JP probe trains under (docs/superpowers/plans/2026-07-18-v
 design.md): ``char_ids (S, W)`` with S = label units / W = positional composition window; char mode
 is one unit per character with per-char B/I used as-is; word mode is one unit per whitespace token
 with B/I re-flipped per unit; the loader's char branch skips SentencePiece, REQUIRES span-schema
-shards, and refuses any per-SP-piece channel configuration.
+slices, and refuses any per-SP-piece channel configuration.
 """
 
 from __future__ import annotations

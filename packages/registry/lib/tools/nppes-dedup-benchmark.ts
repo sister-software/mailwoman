@@ -172,7 +172,7 @@ export async function nppesDedupBenchmark(
 
 	if (PARALLEL_GEOCODE) {
 		// Threaded geocode: normalize on the main thread, then hand records to a worker pool that each rebuild the
-		// classifier/resolver/shards from config. `address` is a single pre-joined column here, so `--legacy-join`
+		// classifier/resolver/extracts from config. `address` is a single pre-joined column here, so `--legacy-join`
 		// (a separator toggle) is a no-op for this path; `normalizeCase` follows the worker default (on).
 		if (!options.geocodeStream) {
 			throw new Error("parallelGeocode requires the injected geocodeStream (see ./eval-geocoder.ts)")

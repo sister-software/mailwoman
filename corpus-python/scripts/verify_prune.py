@@ -30,23 +30,23 @@ import numpy as np
 
 
 def sample_training_rows(manifest_path: str, remap: tuple[str, str], n: int, seed: int) -> list[str]:
-    """Fresh random sample across shards: pick shards round-robin, one random batch each."""
+    """Fresh random sample across slices: pick slices round-robin, one random batch each."""
     import pyarrow.parquet as pq
 
     manifest = json.loads(Path(manifest_path).read_text())
-    shards = [s["path"].replace(remap[0], remap[1], 1) for s in manifest["shards"] if s["split"] == "train"]
+    slices = [s["path"].replace(remap[0], remap[1], 1) for s in manifest["slices"] if s["split"] == "train"]
     rng = random.Random(seed)
-    rng.shuffle(shards)
+    rng.shuffle(slices)
     rows: list[str] = []
-    per_shard = max(1, n // len(shards) + 1)
+    per_slice = max(1, n // len(slices) + 1)
 
-    for shard in shards:
-        pf = pq.ParquetFile(shard)
+    for slice in slices:
+        pf = pq.ParquetFile(slice)
         group = rng.randrange(pf.num_row_groups)
         table = pf.read_row_group(group, columns=["raw"])
         raws = table.column(0).to_pylist()
         rng.shuffle(raws)
-        rows.extend(raws[:per_shard])
+        rows.extend(raws[:per_slice])
 
         if len(rows) >= n:
             break

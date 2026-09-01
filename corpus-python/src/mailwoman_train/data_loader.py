@@ -1,6 +1,6 @@
 """Streaming parquet → encoded tensors data pipeline for Phase 2 training.
 
-Reads ``corpus-v0.1.0`` parquet shards via PyArrow's row-group iterator (lazy, memory-stable),
+Reads ``corpus-v0.1.0`` parquet slices via PyArrow's row-group iterator (lazy, memory-stable),
 filters / weights rows per the YAML config, encodes each row through the SentencePiece
 tokenizer with realigned BIO labels, and yields PyTorch ``(input_ids, attention_mask, labels)``
 tensors in a batched ``DataLoader``-compatible shape.
@@ -15,19 +15,19 @@ Why PyArrow + a generator and not ``datasets.load_dataset('parquet', streaming=T
 
 Per Phase 2 §2:
 
-- Lazy + streaming + memory-stable: row-group iteration, never reads a full shard.
+- Lazy + streaming + memory-stable: row-group iteration, never reads a full slice.
 - Stratified sampling: ``country_weights`` are renormalized probabilities; rows are accepted
   with probability proportional to their country's weight relative to the max.
 - Length filter: rows whose SP tokenization exceeds ``max_length`` are dropped.
 - Tokenizer alignment verification: re-tokenize a sample and assert the stored ``tokens``
   match (see ``verify_tokenizer_alignment``).
 
-v0.5.0 char-offset labels (#519): shards whose schema carries
+v0.5.0 char-offset labels (#519): slices whose schema carries
 ``span_starts``/``span_ends``/``span_tags`` stream the triple end-to-end — through the
 augmentations (which re-target it; see ``augment.py``) and the #511 relabel pass (char
 arithmetic; see ``relabel.py``) into ``encode_row``, which builds the per-char label array FROM
-the spans. Frozen pre-v0.5.0 shards carry no span columns and ride the legacy token path. A
-shard with a partial column set, or a null span value in a span-schema shard, is corrupt and
+the spans. Frozen pre-v0.5.0 slices carry no span columns and ride the legacy token path. A
+slice with a partial column set, or a null span value in a span-schema slice, is corrupt and
 raises loudly — never a silent fallback.
 """
 
@@ -53,9 +53,9 @@ logger = logging.getLogger(__name__)
 
 _REQUIRED_COLUMNS: tuple[str, ...] = ("raw", "tokens", "labels", "country", "source")
 
-# v0.5.0 char-offset label columns (#519). Presence is decided PER SHARD by schema: a v0.5.0
-# shard carries all three (and every row must be non-null in all three); a frozen pre-v0.5.0
-# shard carries none (rows ride the legacy token path). A shard with SOME of the three is
+# v0.5.0 char-offset label columns (#519). Presence is decided PER SLICE by schema: a v0.5.0
+# slice carries all three (and every row must be non-null in all three); a frozen pre-v0.5.0
+# slice carries none (rows ride the legacy token path). A slice with SOME of the three is
 # corrupt — loud failure, never a silent fallback.
 _SPAN_COLUMNS: tuple[str, ...] = SPAN_KEYS
 
@@ -118,21 +118,21 @@ def load_anchor_lookup(path: str) -> dict[str, tuple[dict[str, float], float, fl
     return {pc: (row[0], float(row[1]), float(row[2])) for pc, row in raw.items()}
 
 
-def _shard_paths(corpus_dir: Path, split: str) -> list[Path]:
-    """Resolve train/val/test shard paths via MANIFEST.json (adapter-addition corpora)
+def _slice_paths(corpus_dir: Path, split: str) -> list[Path]:
+    """Resolve train/val/test slice paths via MANIFEST.json (adapter-addition corpora)
     or legacy glob fallback (monolithic corpora).
 
-    The MANIFEST lists per-shard absolute ``path`` + ``split``. Two realities complicate this:
+    The MANIFEST lists per-slice absolute ``path`` + ``split``. Two realities complicate this:
 
-    1. **Overlay corpora.** An overlay (e.g. v0.4.0 = synth shards layered on v0.3.0's base) keeps
-       a manifest whose base-shard paths deliberately point into the OTHER corpus dir
+    1. **Overlay corpora.** An overlay (e.g. v0.4.0 = synth slices layered on v0.3.0's base) keeps
+       a manifest whose base-slice paths deliberately point into the OTHER corpus dir
        (``/data/.../v0.3.0/...``). Those are correct and must be used VERBATIM — re-rooting them to
-       ``corpus_dir`` would point at files that don't exist (v0.4.0 only has the overlay shards).
+       ``corpus_dir`` would point at files that don't exist (v0.4.0 only has the overlay slices).
     2. **Portability.** A non-overlay manifest stores absolute paths from the BUILD machine
        (``/mnt/playpen/...``) that don't exist when the corpus is mounted elsewhere (Modal volume
        at ``/data/...``).
 
-    So per shard: use the manifest path AS-IS when it exists; otherwise RE-ROOT it under
+    So per slice: use the manifest path AS-IS when it exists; otherwise RE-ROOT it under
     ``corpus_dir`` (take the ``<split>/<basename>`` tail). This serves both cases — overlay
     cross-dir refs are preserved when valid, build-machine paths are re-rooted when stale — and is
     why v0.7.2 (v0.4.0 overlay → v0.3.0 base) trained fine: its manifest paths resolve as-is on the
@@ -148,7 +148,7 @@ def _shard_paths(corpus_dir: Path, split: str) -> list[Path]:
         rerooted = 0
         missing: list[str] = []
         declared = 0
-        for s in data.get("shards", []):
+        for s in data.get("slices", []):
             if s.get("split") != split:
                 continue
             declared += 1
@@ -166,28 +166,28 @@ def _shard_paths(corpus_dir: Path, split: str) -> list[Path]:
                 rerooted += 1
             else:
                 missing.append(str(raw))
-        # STRICT partial-resolution guard (#480, the v0.7.1 trap): a manifest that declares shards
+        # STRICT partial-resolution guard (#480, the v0.7.1 trap): a manifest that declares slices
         # this loop cannot find means the corpus is BROKEN (an overlay missing its base, a moved
         # volume) — training on the survivors silently measures the wrong corpus. There is no
         # legitimate partial case; fail with the full missing list. All-missing falls through to
         # the legacy glob (monolithic corpora whose manifests never resolved here).
         if resolved and missing:
             raise FileNotFoundError(
-                f"MANIFEST declares {declared} '{split}' shards but {len(missing)} are unresolvable "
+                f"MANIFEST declares {declared} '{split}' slices but {len(missing)} are unresolvable "
                 f"(as-is AND re-rooted under {corpus_dir}):\n  "
                 + "\n  ".join(missing[:10])
                 + ("\n  ..." if len(missing) > 10 else "")
             )
         if resolved:
             print(
-                f"[shards] {split}: {len(resolved)} resolved ({rerooted} re-rooted) from MANIFEST"
+                f"[slices] {split}: {len(resolved)} resolved ({rerooted} re-rooted) from MANIFEST"
                 + (f" (base_corpus_version={base_version})" if base_version else " (no base_corpus_version field)")
             )
             return sorted(resolved)
-    # legacy fallback (monolithic corpora, or manifest yielded no resolvable shards)
+    # legacy fallback (monolithic corpora, or manifest yielded no resolvable slices)
     paths = sorted((corpus_dir / split).glob("*.parquet"))
     if not paths:
-        raise FileNotFoundError(f"no shards via MANIFEST or {corpus_dir / split}")
+        raise FileNotFoundError(f"no slices via MANIFEST or {corpus_dir / split}")
     return paths
 
 
@@ -202,14 +202,14 @@ def _row_components_keys(labels: Sequence[str]) -> list[str]:
     return list(out)
 
 
-def _shard_first_source(shard: Path) -> str:
-    """Return the ``source`` value of the first row in a parquet shard.
+def _slice_first_source(slice: Path) -> str:
+    """Return the ``source`` value of the first row in a parquet slice.
 
-    Corpus v0.2.0 shards are 100% source-segregated (one source per shard), so reading
-    the first row's source identifies the shard's source. Costs ~50 ms / shard at index
-    time; called once per shard when ``_raw_row_stream`` starts.
+    Corpus v0.2.0 slices are 100% source-segregated (one source per slice), so reading
+    the first row's source identifies the slice's source. Costs ~50 ms / slice at index
+    time; called once per slice when ``_raw_row_stream`` starts.
     """
-    pf = pq.ParquetFile(shard)
+    pf = pq.ParquetFile(slice)
     rg = pf.read_row_group(0, columns=["source"])
     return rg["source"][0].as_py()
 
@@ -218,35 +218,35 @@ def source_row_counts(corpus_dir: Path, split: str = "train") -> dict[str, int]:
     """Rows per source, read from parquet METADATA only — no row groups touched.
 
     Exists so the epoch audit can report DOSE rather than share. Share answers "what fraction of draws
-    came from this shard"; dose answers "how many times was each of its rows shown", and only the second
-    is the quantity a human picks a weight to control. #1677: the shard at the config's LOWEST weight
-    (1.0) got 165 reps per row, 33x the exposure of shards weighted six times higher, because 277 rows
+    came from this slice"; dose answers "how many times was each of its rows shown", and only the second
+    is the quantity a human picks a weight to control. #1677: the slice at the config's LOWEST weight
+    (1.0) got 165 reps per row, 33x the exposure of slices weighted six times higher, because 277 rows
     divided into a 0.60% share is still 165 passes over every row. Nobody picks 165.
 
     Metadata-only by construction: ``ParquetFile.metadata.num_rows`` reads the footer, so this costs a
-    stat and a seek per shard rather than a scan. Source identification still reads one row group per
-    shard, the same one-time cost ``_raw_row_stream`` already pays at index time.
+    stat and a seek per slice rather than a scan. Source identification still reads one row group per
+    slice, the same one-time cost ``_raw_row_stream`` already pays at index time.
     """
     counts: dict[str, int] = {}
 
-    for shard in _shard_paths(corpus_dir, split):
-        if not shard.exists():
+    for slice in _slice_paths(corpus_dir, split):
+        if not slice.exists():
             continue
         try:
-            src = _shard_first_source(shard)
+            src = _slice_first_source(slice)
         except Exception:
-            # A shard whose source cannot be read is skipped rather than counted under a guessed name —
+            # A slice whose source cannot be read is skipped rather than counted under a guessed name —
             # an inflated row count understates dose, which is the direction that hides the defect.
             continue
         if src is None:
             continue
-        counts[src] = counts.get(src, 0) + pq.ParquetFile(shard).metadata.num_rows
+        counts[src] = counts.get(src, 0) + pq.ParquetFile(slice).metadata.num_rows
 
     return counts
 
 
-def _shard_row_iter(
-    shard: Path,
+def _slice_row_iter(
+    slice: Path,
     *,
     expected_source: str | None,
     rng: random.Random,
@@ -254,13 +254,13 @@ def _shard_row_iter(
     max_weight: float,
     coarse_filter: bool,
 ) -> Iterator[dict]:
-    """Yield filter-accepted rows from a single parquet shard, with row-group + row shuffle.
+    """Yield filter-accepted rows from a single parquet slice, with row-group + row shuffle.
 
     Applies the country-weight acceptance test, (when ``coarse_filter`` is set) the
     coarse-label gate, and — when ``expected_source`` is given — a per-row source equality
-    check. The per-row source check matters for the 2 "transition" shards in corpus
+    check. The per-row source check matters for the 2 "transition" slices in corpus
     v0.2.0 (part-0016 and part-0259) where one source's data ends and the next begins
-    mid-shard; without it the per-source iterator would yield rows from the wrong source.
+    mid-slice; without it the per-source iterator would yield rows from the wrong source.
 
     Does **not** apply source weighting — source weighting is handled at the multinomial
     sampler level in ``_raw_row_stream``, so that the observed mix matches ``source_weights``
@@ -268,16 +268,16 @@ def _shard_row_iter(
     acceptance produces, which under v0.2.0's heavy raw-share skew toward BAN proved
     unreliable as a steering mechanism — PR #44).
     """
-    pf = pq.ParquetFile(shard)
-    # Span-column presence is a per-shard schema fact (#519): all three or none. Partial = a
-    # corrupt shard; reading the survivors would silently train the wrong labels.
+    pf = pq.ParquetFile(slice)
+    # Span-column presence is a per-slice schema fact (#519): all three or none. Partial = a
+    # corrupt slice; reading the survivors would silently train the wrong labels.
     schema_names = set(pf.schema_arrow.names)
     span_present = [c for c in _SPAN_COLUMNS if c in schema_names]
     if span_present and len(span_present) != len(_SPAN_COLUMNS):
         missing = [c for c in _SPAN_COLUMNS if c not in schema_names]
         raise ValueError(
-            f"corrupt shard {shard}: carries span columns {span_present} but is missing {missing} "
-            "— the #519 triple is all-or-none per shard"
+            f"corrupt slice {slice}: carries span columns {span_present} but is missing {missing} "
+            "— the #519 triple is all-or-none per slice"
         )
     has_spans = bool(span_present)
     columns = list(_REQUIRED_COLUMNS) + (list(_SPAN_COLUMNS) if has_spans else [])
@@ -320,19 +320,19 @@ def _shard_row_iter(
                 nulls = [c for c, v in spans.items() if v is None]
                 if nulls:
                     raise ValueError(
-                        f"corrupt row in {shard} (row-group {rg}, raw={row['raw']!r}): "
-                        f"null span column(s) {nulls} in a span-schema shard — never a silent "
+                        f"corrupt row in {slice} (row-group {rg}, raw={row['raw']!r}): "
+                        f"null span column(s) {nulls} in a span-schema slice — never a silent "
                         "fallback to token labels"
                     )
-                # EMPTY is the other way a span-schema shard lies, and it is the quieter one. A writer
+                # EMPTY is the other way a span-schema slice lies, and it is the quieter one. A writer
                 # that projects rows without the span triple emits `[]` for all three, which passes the
                 # null check above; `char_label_array_from_spans(raw, [], [], [])` then returns an
                 # all-`O` array and every such row trains as "nothing here is an address component".
                 # A row whose BIO labels carry a tag cannot honestly have no spans.
                 if all(not v for v in spans.values()) and any(lbl != "O" for lbl in bio_labels):
                     raise ValueError(
-                        f"corrupt row in {shard} (row-group {rg}, raw={row['raw']!r}): "
-                        "every span column is EMPTY while the BIO labels carry a tag — the shard "
+                        f"corrupt row in {slice} (row-group {rg}, raw={row['raw']!r}): "
+                        "every span column is EMPTY while the BIO labels carry a tag — the slice "
                         "declares the span triple and its writer did not populate it, so this row "
                         "would train as all-O"
                     )
@@ -341,7 +341,7 @@ def _shard_row_iter(
 
 
 def _source_iter(
-    shards: list[Path],
+    slices: list[Path],
     *,
     expected_source: str,
     rng: random.Random,
@@ -349,17 +349,17 @@ def _source_iter(
     max_weight: float,
     coarse_filter: bool,
 ) -> Iterator[dict]:
-    """Yield rows from a sequence of shards, restricted to ``expected_source``.
+    """Yield rows from a sequence of slices, restricted to ``expected_source``.
 
-    Shards are visited in shuffled order; within each shard, row-groups and row indices
-    are also shuffled (see ``_shard_row_iter``). One row-group's worth of rows is held
+    Slices are visited in shuffled order; within each slice, row-groups and row indices
+    are also shuffled (see ``_slice_row_iter``). One row-group's worth of rows is held
     in memory at a time per source, so total RAM is bounded by the number of distinct
-    sources, not by any shard-pool parameter.
+    sources, not by any slice-pool parameter.
     """
-    order = list(shards)
+    order = list(slices)
     rng.shuffle(order)
     for s in order:
-        yield from _shard_row_iter(
+        yield from _slice_row_iter(
             s,
             expected_source=expected_source,
             rng=rng,
@@ -384,53 +384,53 @@ def _raw_row_stream(
 
     Architecture:
 
-    1. Bucket shards by their (single) ``source`` value. Corpus v0.2.0 shards are 100%
-       source-segregated, so this is a one-time scan of one row-group header per shard.
-    2. For each source, build a per-source row iterator that visits its shards in shuffled
+    1. Bucket slices by their (single) ``source`` value. Corpus v0.2.0 slices are 100%
+       source-segregated, so this is a one-time scan of one row-group header per slice.
+    2. For each source, build a per-source row iterator that visits its slices in shuffled
        order. Each iterator yields rows after country + coarse filtering.
     3. On each pull, sample a source via the ``source_weights`` multinomial (or uniform
        when ``source_weights`` is None) and yield the next row from that source's iterator.
        The multinomial is FIXED for the whole epoch: an exhausted source restarts with a
        fresh shuffled pass, and the epoch ends once every source has completed at least one
        full pass (stationary mixture — see the 2026-08-09 P0 note at the sampling loop).
-       Non-train splits skip all of this and stream every shard's rows directly.
+       Non-train splits skip all of this and stream every slice's rows directly.
 
     Why this and not per-row source acceptance:
 
     The naive approach of accepting each row with probability ``source_weights[source] /
     max(source_weights)`` was the original v0.2.0 implementation (PR #44). It is correct
     on average — the observed mix converges to ``raw_share × accept_share / norm`` — but
-    under v0.2.0's shard layout it fails empirically: shards are 1M-row single-source
-    blocks, so the downstream shuffle buffer fills entirely from the current shard's
+    under v0.2.0's slice layout it fails empirically: slices are 1M-row single-source
+    blocks, so the downstream shuffle buffer fills entirely from the current slice's
     source before any cross-source mixing happens. Long runs of one source within a batch
     reproduce the positional-heuristic overfit that motivated this issue (#43).
 
     Source-level multinomial sampling makes the observed mix match ``source_weights``
-    *exactly* per-pull, regardless of raw share or shard layout. Memory: one active
+    *exactly* per-pull, regardless of raw share or slice layout. Memory: one active
     row-group per source ≈ ``|sources| × 50 MB`` peak — ~300 MB for v0.2.0's 6 train-split
     sources, well within budget.
     """
-    shard_paths = _shard_paths(corpus_dir, split)
+    slice_paths = _slice_paths(corpus_dir, split)
     max_weight = max(country_weights.values())
 
     # Non-train splits bypass source bucketing entirely (2026-08-09 P0). The bucketing below
-    # identifies a shard's source from its FIRST row and filters every row to it — correct for
-    # the source-segregated train corpus, but a MIXED-source validation shard silently loses
-    # every later-source row (the inherited val shards are mixed, so "3 val shards" was never a
+    # identifies a slice's source from its FIRST row and filters every row to it — correct for
+    # the source-segregated train corpus, but a MIXED-source validation slice silently loses
+    # every later-source row (the inherited val slices are mixed, so "3 val slices" was never a
     # coverage receipt). Held-out streams have no source mixture to steer; yield every
-    # filter-accepted row of every shard, shard order shuffled.
+    # filter-accepted row of every slice, slice order shuffled.
     if split != "train":
-        order = [s for s in shard_paths if s.exists()]
+        order = [s for s in slice_paths if s.exists()]
         rng.shuffle(order)
         for s in order:
             # Keep the --golden misuse check the bucketing path used to provide: a label-less
-            # golden shard (source=None) scoring as val would produce garbage metrics silently.
-            if _shard_first_source(s) is None:
+            # golden slice (source=None) scoring as val would produce garbage metrics silently.
+            if _slice_first_source(s) is None:
                 raise ValueError(
-                    f"shard {s} has no `source` field — likely a --golden (label-less) shard used as a "
-                    f"{split!r} shard. Rebuild that shard WITHOUT --golden so rows carry source + labels."
+                    f"slice {s} has no `source` field — likely a --golden (label-less) slice used as a "
+                    f"{split!r} slice. Rebuild that slice WITHOUT --golden so rows carry source + labels."
                 )
-            yield from _shard_row_iter(
+            yield from _slice_row_iter(
                 s,
                 expected_source=None,
                 rng=rng,
@@ -440,60 +440,60 @@ def _raw_row_stream(
             )
         return
 
-    logger.info("Indexing %d shards by source...", len(shard_paths))
+    logger.info("Indexing %d slices by source...", len(slice_paths))
     by_source: dict[str, list[Path]] = {}
-    skipped_shards: list[tuple[Path, str]] = []
-    for s in shard_paths:
+    skipped_slices: list[tuple[Path, str]] = []
+    for s in slice_paths:
         if not s.exists():
-            skipped_shards.append((s, "file not found"))
+            skipped_slices.append((s, "file not found"))
             continue
         try:
-            src = _shard_first_source(s)
+            src = _slice_first_source(s)
         except Exception as exc:
-            skipped_shards.append((s, str(exc)))
+            skipped_slices.append((s, str(exc)))
             continue
         by_source.setdefault(src, []).append(s)
 
-    if skipped_shards:
+    if skipped_slices:
         logger.warning(
-            "Skipped %d shards (missing or unreadable):\n  %s",
-            len(skipped_shards),
-            "\n  ".join(f"{p}: {reason}" for p, reason in skipped_shards[:10]),
+            "Skipped %d slices (missing or unreadable):\n  %s",
+            len(skipped_slices),
+            "\n  ".join(f"{p}: {reason}" for p, reason in skipped_slices[:10]),
         )
 
-    # misuse check: a shard with a None `source` (e.g. a --golden eval shard wrongly used as a train/
-    # val shard — golden rows carry no source field) used to crash here with a cryptic
+    # misuse check: a slice with a None `source` (e.g. a --golden eval slice wrongly used as a train/
+    # val slice — golden rows carry no source field) used to crash here with a cryptic
     # "'<' not supported between NoneType and str" from sorted(). Fail loud with the real cause instead.
     if any(src is None for src in by_source):
         n_none = sum(len(s) for src, s in by_source.items() if src is None)
         raise ValueError(
-            f"{n_none} shard rows have no `source` field — likely a --golden (label-less) shard used as a "
-            "train/val shard. Rebuild that shard WITHOUT --golden so rows carry source + labels."
+            f"{n_none} slice rows have no `source` field — likely a --golden (label-less) slice used as a "
+            "train/val slice. Rebuild that slice WITHOUT --golden so rows carry source + labels."
         )
     # ``source_weights`` describes the desired TRAIN mixture. Validation corpora intentionally
     # contain only a small fixed source subset, so requiring every positive training source there
-    # would make the first scheduled validation fail even though its own shards are healthy. Keep
+    # would make the first scheduled validation fail even though its own slices are healthy. Keep
     # the stale-config guard on the split where the recipe makes its coverage claim.
     if source_weights is not None and split == "train":
         missing_positive = sorted(src for src, weight in source_weights.items() if weight > 0 and src not in by_source)
         if missing_positive:
             raise ValueError(
-                f"positive source_weights entries have no shards in the {split!r} split: "
+                f"positive source_weights entries have no slices in the {split!r} split: "
                 f"{missing_positive}. Remove the stale weights or rebuild the corpus with those sources."
             )
     logger.info(
-        "Shard index: %s",
-        ", ".join(f"{src}={len(shards)}" for src, shards in sorted(by_source.items())),
+        "Slice index: %s",
+        ", ".join(f"{src}={len(slices)}" for src, slices in sorted(by_source.items())),
     )
 
     if source_weights is not None:
         dropped = {src for src in by_source if source_weights.get(src, 0) <= 0}
-        by_source = {src: shards for src, shards in by_source.items() if source_weights.get(src, 0) > 0}
+        by_source = {src: slices for src, slices in by_source.items() if source_weights.get(src, 0) > 0}
         if dropped:
             logger.info("Dropped %d zero-weighted sources: %s", len(dropped), dropped)
         if not by_source:
             raise ValueError(
-                "no shards remain after applying source_weights — every shard's source "
+                "no slices remain after applying source_weights — every slice's source "
                 f"is missing from or zero-weighted in source_weights={source_weights!r}"
             )
 
@@ -514,7 +514,7 @@ def _raw_row_stream(
 
     # STATIONARY mixture (2026-08-09 P0). The previous loop deleted an exhausted source and
     # renormalized the remaining weights, so ``source_weights`` was only the OPENING
-    # distribution: a small oversampled source (the #1569 30k-row suffix shard at weight 12.0)
+    # distribution: a small oversampled source (the #1569 30k-row suffix slice at weight 12.0)
     # was live for ~3,330 of each ~7,812-step epoch and silent afterwards — the v4.3.3 B1
     # board oscillated in lockstep with those exposure windows. Now the multinomial is fixed
     # for the whole epoch: an exhausted source restarts with a fresh shuffled pass (weighted
@@ -586,12 +586,12 @@ def iter_rows(
     affix_relabel_lexicon: AffixRelabelLexicon | None = None,
     shuffle_buffer: int = 131072,
 ) -> Iterator[dict]:
-    """Yield rows from parquet shards, filtered + shuffled.
+    """Yield rows from parquet slices, filtered + shuffled.
 
     Shuffling is done at three levels:
 
-    1. Shard order (per-epoch): shards visited in random order.
-    2. Row-group order within shard: row-groups visited in random order.
+    1. Slice order (per-epoch): slices visited in random order.
+    2. Row-group order within slice: row-groups visited in random order.
     3. Within row-group: row indices permuted before scan.
 
     Then a reservoir-style ``shuffle_buffer`` of size ``shuffle_buffer`` rows mixes
@@ -611,7 +611,7 @@ def iter_rows(
     country: str, source: str}. For Stage 1 coarse rows, that's ~1 KB per row; default
     131072 buffer is ~128 MB resident, well within budget. The v0.1.1 default of 16384
     was sized for a 22M-row corpus; v0.2.0 ships 263M rows so the same 16k buffer would
-    sample only 0.006% per shuffle — within-shard order would dominate. 128k buffer
+    sample only 0.006% per shuffle — within-slice order would dominate. 128k buffer
     samples 0.05% which restores effective randomness without meaningful RAM impact.
     """
     if not country_weights:
@@ -687,7 +687,7 @@ def iter_rows(
         # (#511 — see relabel.py). augment_row yields fresh dicts but shares the labels list with
         # the source row on the no-op path, so relabel copies before mutating.
         # Augmentation-pool exclusion (2026-08-10): listed sources bypass augmentation entirely —
-        # copies of an oversampled shard compound its repetition dose without adding diversity.
+        # copies of an oversampled slice compound its repetition dose without adding diversity.
         # The relabel still applies below; the two policies are independent.
         if do_augment and row["source"] not in augment_excluded:
             for augmented in augment_row(
@@ -859,12 +859,12 @@ def iter_encoded(
             continue
         if char_vocab is not None:
             # CharCNN path: span-schema is REQUIRED — the per-char label array comes straight from
-            # the span triple (no whitespace-token quantization), and a token-only frozen shard has
+            # the span triple (no whitespace-token quantization), and a token-only frozen slice has
             # no honest char-level labels to offer. Loud failure, never a silent fallback (#519).
             starts, ends, tags = row.get("span_starts"), row.get("span_ends"), row.get("span_tags")
             if starts is None or ends is None or tags is None:
                 raise ValueError(
-                    f"data.char_mode={char_mode} requires span-schema shards (v0.5.0 #519); "
+                    f"data.char_mode={char_mode} requires span-schema slices (v0.5.0 #519); "
                     f"got a token-only row: {row['raw'][:60]!r}"
                 )
             raw = row["raw"]
@@ -908,7 +908,7 @@ def iter_encoded(
             country_lexicon=country_lexicon,
             street_type_lexicon=street_type_lexicon,
             locality_surface_lexicon=locality_surface_lexicon,
-            # v0.5.0 char-offset labels (#519): rows from a span-schema shard train FROM the
+            # v0.5.0 char-offset labels (#519): rows from a span-schema slice train FROM the
             # spans (encode_row builds the per-char label array from them; the token path is the
             # legacy fallback for frozen corpora). encode_row raises on a partial triple.
             span_starts=row.get("span_starts"),
@@ -1013,8 +1013,8 @@ def verify_tokenizer_alignment(
 
     If invariant (1) fails this raises; (2) failed earlier when we constructed Tokenizer.
     """
-    shard = _shard_paths(corpus_dir, "train")[0]
-    pf = pq.ParquetFile(shard)
+    slice = _slice_paths(corpus_dir, "train")[0]
+    pf = pq.ParquetFile(slice)
     t = pf.read_row_group(0, columns=list(_REQUIRED_COLUMNS))
     raws = t["raw"]
     tokens_col = t["tokens"]
@@ -1025,7 +1025,7 @@ def verify_tokenizer_alignment(
         try:
             whitespace_spans(raw, toks)
         except ValueError as exc:
-            raise RuntimeError(f"corpus tokenizer invariant broken at row {i} of shard {shard}: {exc}") from exc
+            raise RuntimeError(f"corpus tokenizer invariant broken at row {i} of slice {slice}: {exc}") from exc
         # Smoke the SP encoder so a mis-pointed tokenizer.model fails fast.
         tokenizer.encode_with_spans(raw)
 

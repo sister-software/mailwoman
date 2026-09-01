@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Ordnance Survey **Code-Point Open** acquisition — the GB unit-postcode register, and the licensed
- *   replacement for the GeoNames `GB_full` rows the tail shard has been riding on (see
+ *   replacement for the GeoNames `GB_full` rows the tail database has been riding on (see
  *   `../geonames-tail.ts`, whose `GB_LICENSE_NOTE` is the reason this module exists).
  *
  *   Code-Point Open is an OS OpenData product: no API key, no account, no click-through. The OS Data
@@ -22,9 +22,9 @@
  *   ## Layout
  *
  *   This is an `sdk/`-shaped trio (fetch → extract → parse, exactly like `ban/sdk`) that deliberately
- *   does NOT live in its own workspace. Code-Point Open has one consumer — the GB postcode shard
+ *   does NOT live in its own workspace. Code-Point Open has one consumer — the GB postcode database
  *   builder two directories up — and `gazetteer-pipeline/postcode/` already owns every other postcode
- *   shard's build. A top-level `codepoint/` workspace would add a publish surface, an exports map, two
+ *   database's build. A top-level `codepoint/` workspace would add a publish surface, an exports map, two
  *   tsconfigs and a row in the AGENTS.md table to acquire one 14 MB zip that nothing outside this
  *   pipeline will ever import.
  *
@@ -51,8 +51,8 @@ export const OS_DOWNLOADS_API_BASE = "https://api.os.uk/downloads/v1"
 export const CODEPOINT_PRODUCT_ID = "CodePointOpen"
 
 /**
- * The licence Code-Point Open is published under. Named exactly as OS names it, because the shard's `meta` table stores
- * this verbatim and a consumer greps it.
+ * The licence Code-Point Open is published under. Named exactly as OS names it, because the database's `meta` table
+ * stores this verbatim and a consumer greps it.
  */
 export const CODEPOINT_LICENSE = "Open Government Licence v3.0"
 
@@ -113,7 +113,7 @@ export interface CodePointDownload {
 }
 
 /**
- * The product record, for the version stamp that goes into the shard's provenance.
+ * The product record, for the version stamp that goes into the database's provenance.
  */
 export interface CodePointProduct {
 	id: string
@@ -133,8 +133,8 @@ export interface CodePointProduct {
  * cover the Isle of Man or the Channel Islands. The country codes on the 2026-05 rows are exactly three — `E92000001`,
  * `S92000003`, `W92000004` — with no `N92000002` among 1,747,841 rows. NI postcodes (the `BT` area) are administered by
  * Land & Property Services and are not in any OS OpenData product; ONS's OGL grant for postcode products explicitly
- * excludes NI data. So a shard built from this source has a real, permanent `BT` hole, and the hole is a licensing fact
- * rather than a data-quality one. Report it; do not fill it from an unlicensed source.
+ * excludes NI data. So a database built from this source has a real, permanent `BT` hole, and the hole is a licensing
+ * fact rather than a data-quality one. Report it; do not fill it from an unlicensed source.
  */
 export const CODEPOINT_COVERAGE_NOTE =
 	"Code-Point Open covers England, Scotland and Wales only (country codes E92000001/S92000003/W92000004). " +
@@ -176,15 +176,15 @@ export const CODEPOINT_COVERAGE_NOTE =
  * LPS/ONSPD centroids into OSM, so this cannot be laundered. (c) SHIP NO NI POSTCODE CENTROIDS. Fall back to the
  * OGL-clean OSNI Streetnames gazetteer (every NI street with Irish Grid coordinates) for street-level NI resolution.
  *
- * **(b) LANDED 2026-08-05, at the build-local tier** — `../ni-osm-shard.ts`, `mailwoman gazetteer build
- * postcode-ni-osm`. The share-alike problem is solved by not publishing: the shard is built on the operator's own
- * machine and reaches the resolver only through `DEFAULT_POSTCODE_SHARDS`'s `existsSync` filter, so no npm consumer
+ * **(b) LANDED 2026-08-05, at the build-local tier** — `../ni-osm-database.ts`, `mailwoman gazetteer build
+ * postcode-ni-osm`. The share-alike problem is solved by not publishing: the database is built on the operator's own
+ * machine and reaches the resolver only through `DEFAULT_POSTCODE_DATABASES`'s `existsSync` filter, so no npm consumer
  * ever receives an ODbL byte. Measured coverage is 4,757 of the 50,032 live NI postcodes (9.5 %), across 250 of 886
  * sectors and 80 of 80 districts, from 12,327 OSM address elements. Partial, and additive rather than risky: since
- * #1480 an unknown postcode ABSTAINS, so a `BT` code the shard lacks behaves exactly as it did when there was no shard
- * at all.
+ * #1480 an unknown postcode ABSTAINS, so a `BT` code the database lacks behaves exactly as it did when there was no
+ * database at all.
  *
- * THIS shard — Code-Point Open, the published one — still does (c), and must: its `BT` hole is a licensing fact and
+ * THIS database — Code-Point Open, the published one — still does (c), and must: its `BT` hole is a licensing fact and
  * filling it from an ODbL source would be exactly the contamination the tier split exists to prevent. Scale of what (c)
  * gives up: ONSPD Feb 2025 counts 50,032 LIVE NI postcodes (62,980 including terminated). The incumbent GeoNames
  * snapshot's 48,990 BT rows sit between the May 2020 and May 2021 live figures, i.e. a live-only extract roughly five
@@ -201,9 +201,9 @@ export const NORTHERN_IRELAND_OPTIONS_NOTE =
 	"VAT full NI coverage; >£3,000 orders need a formal >=12-month licence) — the only route to complete NI centroids in " +
 	"a permissively-licensed package; (b) ship NI as ODbL from OpenStreetMap addr:postcode — partial coverage plus " +
 	"share-alike contamination; (c) ship no NI centroids and use the OGL-clean OSNI Streetnames gazetteer for " +
-	"street-level NI resolution. (c) is what THIS shard does and must keep doing — its BT hole is a licensing fact, and " +
+	"street-level NI resolution. (c) is what THIS database does and must keep doing — its BT hole is a licensing fact, and " +
 	"filling it from an ODbL source would contaminate a published artifact. (b) landed separately on 2026-08-05 as the " +
-	"BUILD-LOCAL shard postalcode-ni-osm.db (`mailwoman gazetteer build postcode-ni-osm`), which is never published and " +
+	"BUILD-LOCAL database postalcode-ni-osm.db (`mailwoman gazetteer build postcode-ni-osm`), which is never published and " +
 	"covers 4,757 of the 50,032 live NI postcodes (9.5 %), 250/886 sectors, 80/80 districts. Scale: ONSPD Feb 2025 " +
 	"counts 50,032 live NI postcodes."
 
@@ -254,7 +254,7 @@ export interface DownloadCodePointOptions {
 	 */
 	destDir: string
 	/**
-	 * Which archive to take. `CSV` is what the shard builder parses; `GeoPackage` carries the same rows behind a GDAL
+	 * Which archive to take. `CSV` is what the database builder parses; `GeoPackage` carries the same rows behind a GDAL
 	 * dependency we do not need.
 	 */
 	format?: "CSV" | "GeoPackage"
@@ -307,8 +307,8 @@ export interface DownloadCodePointResult {
  * non-stream response type in memory. Same call as `osm/sdk/fetch.ts` and `tiger/sdk/download.ts`.
  *
  * The md5 check is not ceremony. A truncated or CDN-corrupted archive still unzips far enough to yield plausible CSVs,
- * and the failure would surface as a quietly short postcode count in a 1.7 M-row shard — the kind of defect that reads
- * as a data change rather than a transfer error.
+ * and the failure would surface as a quietly short postcode count in a 1.7 M-row database — the kind of defect that
+ * reads as a data change rather than a transfer error.
  */
 export async function downloadCodePointOpen(options: DownloadCodePointOptions): Promise<DownloadCodePointResult> {
 	const { destDir, format = "CSV", reuseExisting = true } = options

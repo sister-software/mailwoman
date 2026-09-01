@@ -16,7 +16,7 @@
  *   Two facts this encodes that an agent otherwise re-derives every time:
  *
  *   - **A candidate's regressions are `candidate − null`, not `candidate − shipped`.** Touching the base costs rows
- *     before the new shard is read at all — measured at 10 of 649 on `v440-step-060000`, paid inside the first 1,000
+ *     before the new extract is read at all — measured at 10 of 649 on `v440-step-060000`, paid inside the first 1,000
  *     steps and flat to 4,000. Eighteen regressions where the null has ten is eight attributable, not eighteen.
  *   - **A self-control that is not 0 invalidates the session, not the row.** If the shipped model graded through the
  *     candidate path disagrees with itself, no candidate number from that rig means anything, and reporting one
@@ -144,7 +144,7 @@ export interface ArcOptions {
 	 */
 	control?: string
 	/**
-	 * The null arm: same base, same steps, same seed, same brake, NO added shard.
+	 * The null arm: same base, same steps, same seed, same brake, NO added extract.
 	 */
 	null?: string
 	inputs?: unknown

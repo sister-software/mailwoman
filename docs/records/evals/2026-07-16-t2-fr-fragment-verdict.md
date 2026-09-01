@@ -1,4 +1,4 @@
-# T2 — the BAN fragment shard: the licence hypothesis holds
+# T2 — the BAN fragment extract: the licence hypothesis holds
 
 **Pre-registered gate (config header + `baselines.json` profile `fragment-fr-v264`, registered against
 the shipped model before the run):** targets move, guards hold.
@@ -8,13 +8,13 @@ improved.** The house-number-licence diagnosis (T1c) is confirmed by the fix wor
 
 This is **not** a promote gate — see §5.
 
-|           |                                                                    |
-| --------- | ------------------------------------------------------------------ |
-| Run       | `ap-onoBImKJriMFy7Pz3i5t0D`, config `v3.1.0-fr-fragment`           |
-| Change    | ONE variable vs shipped v264: the `synth-fr-fragment` shard @ 12.0 |
-| Shard     | 144,865 rows, BAN (Licence Ouverte), 0 eval surfaces               |
-| Training  | 8000/8000 steps, 0 errors, no NaN, `cross_pollution 0.00%`         |
-| Precision | int8 candidate vs int8 baselines (asserted, see §4)                |
+|           |                                                                      |
+| --------- | -------------------------------------------------------------------- |
+| Run       | `ap-onoBImKJriMFy7Pz3i5t0D`, config `v3.1.0-fr-fragment`             |
+| Change    | ONE variable vs shipped v264: the `synth-fr-fragment` extract @ 12.0 |
+| Extract   | 144,865 rows, BAN (Licence Ouverte), 0 eval surfaces                 |
+| Training  | 8000/8000 steps, 0 errors, no NaN, `cross_pollution 0.00%`           |
+| Precision | int8 candidate vs int8 baselines (asserted, see §4)                  |
 
 ---
 
@@ -50,11 +50,11 @@ broken prior for another.
 new default, and the discriminating evidence is the designator, which is the only thing that actually
 separates the two classes.
 
-That is what the counter-distribution was for. 20% of the shard is bare communes carrying no street
+That is what the counter-distribution was for. 20% of the extract is bare communes carrying no street
 label; without them, the cheapest way to satisfy every other row is to start calling bare toponyms
 streets. The guard is why we can say the model learned rather than swapped.
 
-**The contextful guards did not merely hold — they improved** (+2.3pp, +3.5pp). The shard did not buy
+**The contextful guards did not merely hold — they improved** (+2.3pp, +3.5pp). The extract did not buy
 fragments with full addresses.
 
 ## 3. Board 1 — the global parity floor (the guard)
@@ -122,7 +122,7 @@ real; this one reported a problem that was not. Same root — a metric on a dist
 about — and the same rule: read the instrument the gate names.
 
 That does not make `region` uninteresting. It is the tag the fragment mass pulls on, #1102 is real,
-and a heavier weight or a second locale's shard could push −0.2pp into −2pp. It is a thing to watch,
+and a heavier weight or a second locale's extract could push −0.2pp into −2pp. It is a thing to watch,
 not a thing to ignore, and it is cheap to watch: this table is one command.
 
 ### 4.2 The pre-registered "ALSO" — which did NOT come out as predicted
@@ -146,8 +146,8 @@ against the prediction, and two of the six have a mechanism worth naming:
 ```
 
 `ZAC` / `ZA` are French **zone** designators (_zone d'aménagement concerté_), and `sous la` is exactly
-the particle pattern the shard teaches. This is **on-thesis over-generalization**: the grammar the
-shard installs — "French designator + particle + name = street" — is slightly too wide, and French
+the particle pattern the extract teaches. This is **on-thesis over-generalization**: the grammar the
+extract installs — "French designator + particle + name = street" — is slightly too wide, and French
 zone names sit just inside its edge. The other four (`BOOM` → `Boom`, `new south wales aus`,
 `philadelphia museum of art`) are pre-existing non-French confusions that shifted.
 
@@ -161,7 +161,7 @@ The two populations do not contradict each other; they partition:
 
 The fix is a sibling of what is already there — extend the counter-distribution to French zone
 designators (`ZAC`, `ZA`, `Lotissement`, `Résidence` as NOT-street). Not a new idea, a wider one.
-It is a shard change, so it belongs to the next run, not to this verdict.
+It is a extract change, so it belongs to the next run, not to this verdict.
 
 **This is what pre-registration is for.** Two of the three gate clauses passed decisively; the third
 went the other way and is on the page at the same size as the wins.
@@ -181,7 +181,7 @@ synthetic coverage** source — the doctrine's whole claim — works on its firs
   operator GO. Nothing ships on this page.
 - **The v7 floors.** street 0.6067 vs a 0.90 floor. +3.0pp is real and it is not 32pp.
 - **`date-name`.** 0.158 is +10.3pp and still 84% wrong. BAN holds only ~1,418 date-name streets and
-  the extractor already takes every one; the shard has 655 rows of it. The lever there is **shard
+  the extractor already takes every one; the extract has 655 rows of it. The lever there is **extract
   weight**, not more data — and, per T1c, the underlying confusion (a digit inside a street name vs a
   house number) is the same one the span decode shows from the other side.
 - **Other locales.** FR only. Generalization goes **by tier** (BAN → BAG → TIGER-with-scope), never

@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The BAN rooftop shard provider — the injection point the geocode cascade consults for the national
+ *   The BAN rooftop extract provider — the injection point the geocode cascade consults for the national
  *   open-register precision tier (#1012), AHEAD of the community OSM tier. Given a data root, it opens
  *   `ban/address-points-<cc>.db` with the country's street-normalization locale (so probe-side keying
- *   matches the shard the builder wrote) and caches the open handle per country. Wire its bound `for`
- *   into `GeocodeDeps.nationalShards`.
+ *   matches the extract the builder wrote) and caches the open handle per country. Wire its bound `for`
+ *   into `GeocodeDeps.nationalExtracts`.
  *
  *   BAN is a French national register, so the registry is deliberately FR-only today; the shape
  *   generalises to any other national open register (the coverage story, one country at a time).
@@ -20,9 +20,9 @@ import { join } from "path-ts"
 import { streetLocaleForBANCountry, supportedBANCountries } from "#sdk/street-locale"
 
 /**
- * What the cascade needs from a BAN shard — structurally a subset of mailwoman's `RegionDatabases`.
+ * What the cascade needs from a BAN extract — structurally a subset of mailwoman's `RegionDatabases`.
  */
-export interface BANShards {
+export interface BANExtracts {
 	addressPoints?: AddressPointSqliteLookup
 	/**
 	 * The #1042 derived street-centroid tier — a `GROUP BY street` roll-up, for a street-only query (no house number).
@@ -32,18 +32,18 @@ export interface BANShards {
 
 /**
  * Opens + caches per-country BAN rooftop lookups. A non-US geocode consults `for(country)`; the first hit for a country
- * opens its shard (with the matching street locale) once, subsequent calls reuse it.
+ * opens its extract (with the matching street locale) once, subsequent calls reuse it.
  *
  * `for` is synchronous, so on-disk existence is probed asynchronously ONCE instead of per call: {@linkcode warm} awaits
- * `pathExists` for every supported country × shard-tier combination and records what exists; `for` consults that map.
+ * `pathExists` for every supported country × extract-tier combination and records what exists; `for` consults that map.
  * Prefer {@linkcode BANRegionDatabaseProvider.create}, which constructs AND warms before answering — a provider
  * constructed directly must be warmed before its first `for`, or it answers `{}` for every country.
  */
 export class BANRegionDatabaseProvider implements Disposable {
 	readonly #dataRoot: string
-	readonly #cache = new Map<string, BANShards>()
+	readonly #cache = new Map<string, BANExtracts>()
 	/**
-	 * Shard paths {@linkcode warm} observed on disk — the synchronous existence source `for` consults.
+	 * Extract paths {@linkcode warm} observed on disk — the synchronous existence source `for` consults.
 	 */
 	readonly #onDisk = new Set<string>()
 	#warmPromise?: Promise<void>
@@ -64,7 +64,7 @@ export class BANRegionDatabaseProvider implements Disposable {
 		return provider
 	}
 
-	#shardPath(countryCode: string): string {
+	#slicePath(countryCode: string): string {
 		return join(this.#dataRoot, "ban", `address-points-${countryCode}.db`)
 	}
 
@@ -73,17 +73,17 @@ export class BANRegionDatabaseProvider implements Disposable {
 	}
 
 	/**
-	 * Preload shard existence for every country the provider may be asked for.
+	 * Preload extract existence for every country the provider may be asked for.
 	 *
-	 * Awaits `pathExists` for each supported country's rooftop shard and its derived street-centroid tier, recording the
-	 * paths that exist so `for` never touches the filesystem. Safe to call more than once: the probe promise is cached,
-	 * so every caller (and {@linkcode BANRegionDatabaseProvider.create}) shares one pass.
+	 * Awaits `pathExists` for each supported country's rooftop extract and its derived street-centroid tier, recording
+	 * the paths that exist so `for` never touches the filesystem. Safe to call more than once: the probe promise is
+	 * cached, so every caller (and {@linkcode BANRegionDatabaseProvider.create}) shares one pass.
 	 */
-	readonly warm = (): Promise<void> => (this.#warmPromise ??= this.#probeShards())
+	readonly warm = (): Promise<void> => (this.#warmPromise ??= this.#probeExtracts())
 
-	async #probeShards(): Promise<void> {
+	async #probeExtracts(): Promise<void> {
 		for (const cc of supportedBANCountries()) {
-			for (const path of [this.#shardPath(cc), this.#streetCentroidPath(cc)]) {
+			for (const path of [this.#slicePath(cc), this.#streetCentroidPath(cc)]) {
 				if (await pathExists(path)) {
 					this.#onDisk.add(path)
 				}
@@ -92,22 +92,22 @@ export class BANRegionDatabaseProvider implements Disposable {
 	}
 
 	/**
-	 * Resolve the BAN shards for an ISO-3166 alpha-2 country, or `{}` when none is shipped/registered.
+	 * Resolve the BAN extracts for an ISO-3166 alpha-2 country, or `{}` when none is shipped/registered.
 	 *
 	 * Synchronous: the on-disk answer comes from the map {@linkcode warm} preloaded, so no filesystem probe runs per call.
 	 */
-	readonly for = (country: string): BANShards => {
+	readonly for = (country: string): BANExtracts => {
 		const cc = country.toLowerCase()
 		const cached = this.#cache.get(cc)
 
 		if (cached) return cached
 
-		const entry: BANShards = {}
+		const entry: BANExtracts = {}
 
-		// Only countries with a registered street locale AND an on-disk shard — never key with the wrong rules.
+		// Only countries with a registered street locale AND an on-disk extract — never key with the wrong rules.
 		if (supportedBANCountries().includes(cc)) {
 			const locale = streetLocaleForBANCountry(cc)
-			const path = this.#shardPath(cc)
+			const path = this.#slicePath(cc)
 
 			if (this.#onDisk.has(path)) {
 				entry.addressPoints = new AddressPointSqliteLookup(path, { streetLocale: locale })

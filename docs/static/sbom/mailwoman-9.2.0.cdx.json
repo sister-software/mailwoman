@@ -1305,7 +1305,7 @@
       "name": "@mailwoman/ban",
       "version": "9.2.0",
       "scope": "required",
-      "description": "Base Adresse Nationale (France) rooftop address-point ingestion — builds the national FR precision shard on the situs address-point schema.",
+      "description": "Base Adresse Nationale (France) rooftop address-point ingestion — builds the national FR precision extract on the situs address-point schema.",
       "purl": "pkg:npm/%40mailwoman/ban@9.2.0",
       "properties": [],
       "externalReferences": [

@@ -4,7 +4,7 @@
 `mailwoman/eval-harness/fixtures/poi-board.jsonl` (45 cases, committed). **DB:**
 `/mnt/playpen/mailwoman-data/poi/poi-full.db` (the full 4-country build — 13,681,698 rows,
 release 2026-05-20.0; **not** a `--limit` sample, per the poi-layer-runbook's warning against
-grading coverage off a limited build). **Resolver:** default FTS admin shard
+grading coverage off a limited build). **Resolver:** default FTS admin extract
 (`admin-global-priority.db`).
 
 **Status: BASELINE ONLY. No floors yet — this is the pre-registered first run** (spec §3.6:

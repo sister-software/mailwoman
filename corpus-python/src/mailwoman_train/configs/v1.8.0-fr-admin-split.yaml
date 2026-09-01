@@ -1,6 +1,6 @@
 # === v1.8.0-fr-admin-split (surpass-v1.5.0, the international admin-split run) ====================
 # Clone of v1.5.0-fr-order (the production default, model-card 4.6.0) with EXACTLY ONE added lever:
-# the synth-fr-admin-split shard. It teaches the model to SPLIT the département out of the locality on
+# the synth-fr-admin-split slice. It teaches the model to SPLIT the département out of the locality on
 # bare/space/comma French place rows ("Thauron, Creuse" -> locality=Thauron, region=Creuse; not the
 # merged/dropped failure). The model's admin-split detector is overfit to the US "City, ST ZIP"
 # template; non-US formats fuse the trailing admin token into the locality. Unlike US (situs-cascade
@@ -16,7 +16,7 @@
 # GOAL / GATE: grade the ASSEMBLED anchor-ON coordinate, NOT label-F1. Live gate: FR centroid-shift vs
 # v1.5.0 on the held-out commune set (mean <= 0.95x + significant) AND US guardrail (mean regress <=1%
 # rel, p90 <=0.1km) AND #727 diacritic (Lozère -> region, not "ère"). NOT promoted without operator GO.
-# CORPUS: corpus-v0.5.0 (690 shards verbatim) + synth-fr-admin-split (60k BAN rows) overlay -> R2 -> sync_v080.
+# CORPUS: corpus-v0.5.0 (690 slices verbatim) + synth-fr-admin-split (60k BAN rows) overlay -> R2 -> sync_v080.
 # Launch: modal run -d scripts/modal/train_remote.py --config v1.8.0-fr-admin-split.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.8.0-fr-admin-split/corpus-v0.8.0-fr-admin-split
@@ -43,7 +43,7 @@ data:
     synth-german: 6.0
     # THE #560 recovery lever: reversed-order (postcode-first) FR — teaches the post-postcode
     # house_number the canonical-only BAN training never showed. First-pass weight 3.0 (moderate; the
-    # shard carries BOTH orders via --reversed-fraction, so it won't over-skew canonical FR). Bump if
+    # slice carries BOTH orders via --reversed-fraction, so it won't over-skew canonical FR). Bump if
     # the step-2000 eval shows insufficient reversed-FR signal.
     synth-fr-order: 3.0
     synth-fr-admin-split: 6.0

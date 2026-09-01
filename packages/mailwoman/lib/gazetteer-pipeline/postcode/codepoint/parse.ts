@@ -65,7 +65,7 @@ export type CodePointCountry = (typeof CODEPOINT_COUNTRY_CODES)[keyof typeof COD
 export interface CodePointRecord {
 	/**
 	 * The postcode in OS's own spacing — outward code, one space, inward code (`SW1A 1AA`). This is the DISPLAY form; the
-	 * normalized lookup form is derived by the shard builder via the #920 name law.
+	 * normalized lookup form is derived by the database builder via the #920 name law.
 	 */
 	postcode: string
 	/**
@@ -162,8 +162,8 @@ export function splitCSVLine(line: string): string[] {
 /**
  * Stream every usable record from one extracted area CSV, mutating `stats` as it goes.
  *
- * Yields rather than collecting: the whole of GB is 1.75 M rows, and the shard builder inserts as it reads rather than
- * materializing an array it would only iterate once.
+ * Yields rather than collecting: the whole of GB is 1.75 M rows, and the database builder inserts as it reads rather
+ * than materializing an array it would only iterate once.
  */
 export async function* readCodePointCSV(csvPath: string, stats: CodePointParseStats): AsyncGenerator<CodePointRecord> {
 	// These files have no header row; the column names ship separately in

@@ -7,11 +7,11 @@ and the resolver, not another recipe tweak.
 
 ## What v0.7.2 was
 
-Single variable vs v0.7.1: the synth-intersection shard regenerated **~60% bare**
+Single variable vs v0.7.1: the synth-intersection extract regenerated **~60% bare**
 (no `, City, ST` tail) + an `@` connector, weight held at 0.2. v0.7.1 had proven
-the model _learns_ intersections (assigned-prob 0.0001 → 0.99 after the shard)
+the model _learns_ intersections (assigned-prob 0.0001 → 0.99 after the extract)
 but only in the format it trained on, so it fumbled the harness's bare `X & Y`
-cases (4/65). v0.7.2 tests whether format diversity in the shard fixes that.
+cases (4/65). v0.7.2 tests whether format diversity in the extract fixes that.
 Base recipe, tokenizer (v0.6.0-a0), and everything else unchanged → F1 valid.
 
 ## Primary metric — harness pass rate
@@ -46,7 +46,7 @@ Golden exact-match 21.1% → 22.0%. No tag regressed >2pp. Highlights:
 | venue    | +0.9pp                    | +13                     |
 | country  | −0.8pp (within tolerance) | −29                     |
 
-The street gain + locality-hallucination drop are the bare-format shard
+The street gain + locality-hallucination drop are the bare-format extract
 generalizing beyond intersections (street segmentation improved a little).
 
 ## Capability map on v0.7.2 (all three arenas)
@@ -75,7 +75,7 @@ Opt-in `--unit-repair` post-decode pass. v0.7.2 showed unit-drop has two modes:
    intersections were.
 
 Net: the repair patches the locality half safely; the street-absorption half
-needs a coverage shard (backlog B3'). Stays opt-in.
+needs a coverage extract (backlog B3'). Stays opt-in.
 
 ## Recommendation
 
@@ -90,7 +90,7 @@ needs a coverage shard (backlog B3'). Stays opt-in.
   non-US locales (the third arena's 0% edge classes) — and (b) the resolver
   (Direction B), which routes per-input on quality (rules for clean, neural for
   noisy) instead of grading neural on rules' home turf. Both are bigger than a
-  shard weight.
+  extract weight.
 - **Next parser-backlog item:** B2 country-repair (v0.7.2 mislabels trailing
   `AUSTRALIA` → locality; country −0.8pp) — a closed-lexicon post-decode pass,
   same low-risk mould as postcode/unit repair.

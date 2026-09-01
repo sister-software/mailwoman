@@ -7,7 +7,7 @@
  *   is salvaged from isp-nexus `spatial/countries` ({@link ./names.ts}, {@link ./codes.ts}); this
  *   adds the layer ISO doesn't carry — the **surface forms** addresses actually use (endonyms +
  *   common abbreviations: "USA"/"United States"/"U.S."; "Deutschland"/"Germany"; "España"/"Spain")
- *   — plus a {@link matchCountry} resolver the corpus country-shard + parsing reuse. Same shape as
+ *   — plus a {@link matchCountry} resolver the corpus country-extract + parsing reuse. Same shape as
  *   the other codex matchers (street-suffix, directional, po-box).
  */
 
@@ -154,7 +154,7 @@ export function isCountryToken(token: unknown): boolean {
 }
 
 /**
- * The preferred render forms for an alpha-2 (canonical first), for synth shards. Empty if none curated.
+ * The preferred render forms for an alpha-2 (canonical first), for synth extracts. Empty if none curated.
  */
 export function countrySurfaceForms(iso2: string): readonly string[] {
 	return (COUNTRY_SURFACE_FORMS as Record<string, readonly string[]>)[iso2.toUpperCase()] ?? []

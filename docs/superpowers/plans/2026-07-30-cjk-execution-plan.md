@@ -45,7 +45,7 @@ that convert the design into a verdict were never launched. That is what changes
   (`char_mode` config, `encode_row_units`, char-vocab build) per the contract note's D1/D6.
 
 **Step 2 — on a Leg-1 PASS: Phases 2–5 as written** (schema activation 33→47 with the
-own-param-group-LR rule; the full JP shard; train with channels re-aligned per-unit; ship JP-only
+own-param-group-LR rule; the full JP extract; train with channels re-aligned per-unit; ship JP-only
 with the query-shape script router, the second weights artifact, browser + drop-in verification).
 Phase 2–5 sizing: ~4–6 agent-nights across corpus + train + ship, riding the same release
 choreography as 8.2.0.

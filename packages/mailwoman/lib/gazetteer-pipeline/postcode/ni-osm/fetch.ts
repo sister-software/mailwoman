@@ -7,9 +7,9 @@
  *
  *   This is option (b) of the three `NORTHERN_IRELAND_OPTIONS_NOTE` (in `../codepoint/fetch.ts`) lays
  *   out for the `BT` hole that Code-Point Open leaves and that no OGL source can fill. Option (a) is
- *   licensing LPS Pointer at ~£9,224; option (c) — ship nothing — is what the GB shard does today. (b)
+ *   licensing LPS Pointer at ~£9,224; option (c) — ship nothing — is what the GB database does today. (b)
  *   is partial and ODbL, so it lands at the **build-local tier**: this machine builds it, it never
- *   enters an npm tarball, and `DEFAULT_POSTCODE_SHARDS` is `existsSync`-filtered, which IS the
+ *   enters an npm tarball, and `DEFAULT_POSTCODE_DATABASES` is `existsSync`-filtered, which IS the
  *   build-local mechanism. Same posture as `poi.db` and `@mailwoman/osm`.
  *
  *   ## Why one query, saved verbatim
@@ -17,7 +17,7 @@
  *   Overpass is a volunteer-run public endpoint with a published fair-use policy. The acquisition is a
  *   SINGLE request whose response is written to a dated directory and never re-fetched; every later
  *   build reads that file. So the reproducibility artifact is the response, not the query — a rebuilt
- *   shard from the same `response.json` is byte-comparable, while a re-query against a live OSM would
+ *   database from the same `response.json` is byte-comparable, while a re-query against a live OSM would
  *   not be (OSM changes hourly, and that is a feature of the source, not a defect of the build).
  *
  *   ## Why not `@mailwoman/poi-taxonomy`'s emitter
@@ -28,7 +28,7 @@
  *
  *   ## Licence
  *
- *   ODbL 1.0, share-alike on a Derived Database. The attribution is mandatory and rides in the shard's
+ *   ODbL 1.0, share-alike on a Derived Database. The attribution is mandatory and rides in the database's
  *   own `meta` table; see {@link OSM_ATTRIBUTION} and {@link NI_OSM_BUILD_LOCAL_NOTE}.
  */
 
@@ -57,8 +57,8 @@ export const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter"
 export const OVERPASS_ENDPOINT_KUMI = "https://overpass.kumi.systems/api/interpreter"
 
 /**
- * The one query. Verbatim, because its md5 goes into the shard's provenance and a reader must be able to re-run exactly
- * this text.
+ * The one query. Verbatim, because its md5 goes into the database's provenance and a reader must be able to re-run
+ * exactly this text.
  *
  * ## The spatial filter is a BBOX, not `area["ISO3166-2"="GB-NIR"]`
  *
@@ -77,7 +77,7 @@ export const OVERPASS_ENDPOINT_KUMI = "https://overpass.kumi.systems/api/interpr
  * The bbox loses nothing, because **`BT` is a Northern Ireland-exclusive postcode area** — the tag filter is already
  * the NI selector, and the bbox exists only to make it index-cheap. The corners are a deliberate superset of NI: a
  * tight box could clip a border townland, and a `BT` postcode on the Republic side of the line is still a `BT`
- * postcode, which is exactly the fact this shard attests.
+ * postcode, which is exactly the fact this database attests.
  *
  * ## The rest
  *
@@ -114,26 +114,26 @@ export const OSM_ATTRIBUTION =
 	"(https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright."
 
 /**
- * Why this shard is BUILD-LOCAL, in one sentence plus the receipts.
+ * Why this database is BUILD-LOCAL, in one sentence plus the receipts.
  *
  * ODbL §4.4 makes a Derived Database share-alike: publish one and you must publish it under ODbL. Mailwoman's shipped
  * gazetteer is assembled from permissive sources (WOF, Overture, OpenAddresses, GeoNames, Code-Point Open) precisely so
  * that no consumer inherits a share-alike obligation from installing an npm package. Folding OSM-derived rows into a
- * SHIPPED shard would push that obligation onto every consumer of `mailwoman`, which is the outcome the whole
+ * SHIPPED database would push that obligation onto every consumer of `mailwoman`, which is the outcome the whole
  * permissive sourcing discipline exists to avoid.
  *
  * So the artifact stays on the machine that builds it. The enforcement is not a policy document:
- * `DEFAULT_POSTCODE_SHARDS` is resolved through `existsSync`, and nothing copies this file into a tarball, an R2
+ * `DEFAULT_POSTCODE_DATABASES` is resolved through `existsSync`, and nothing copies this file into a tarball, an R2
  * bucket, or the demo. An operator who wants NI coverage runs the builder and accepts ODbL on their own artifact — the
  * same opt-in-per-country posture `@mailwoman/osm` already documents, and the same tier `poi.db` sits in.
  */
 export const NI_OSM_BUILD_LOCAL_NOTE =
 	"BUILD-LOCAL TIER — this artifact is never published. OSM data is ODbL 1.0, whose share-alike clause (§4.4) binds a " +
 	"Derived Database, and every shipped mailwoman gazetteer artifact is built from permissive sources specifically so " +
-	"that installing the package imposes no share-alike obligation on a consumer. This shard is therefore built on the " +
+	"that installing the package imposes no share-alike obligation on a consumer. This database is therefore built on the " +
 	"operator's own machine, is excluded from every npm tarball / R2 publish / demo asset, and is picked up at runtime " +
-	"only because `DEFAULT_POSTCODE_SHARDS` is existsSync-filtered. An operator who builds it takes the ODbL obligation " +
-	"on their own copy. Same posture as @mailwoman/osm's address-point shards and the poi.db layer."
+	"only because `DEFAULT_POSTCODE_DATABASES` is existsSync-filtered. An operator who builds it takes the ODbL obligation " +
+	"on their own copy. Same posture as @mailwoman/osm's address-point databases and the poi.db layer."
 
 /**
  * One element as Overpass returns it under `out center`.
@@ -208,7 +208,7 @@ export interface AcquireNIPostcodesOptions {
 	client?: APIClient
 	/**
 	 * Override the Overpass instance. Default {@link OVERPASS_ENDPOINT}; the endpoint actually used is recorded in
-	 * `acquisition.json` and in the shard's `meta`, because which mirror answered is part of the provenance.
+	 * `acquisition.json` and in the database's `meta`, because which mirror answered is part of the provenance.
 	 */
 	endpoint?: string
 	/**
@@ -233,7 +233,7 @@ export interface AcquireNIPostcodesResult {
 	 */
 	md5: string
 	/**
-	 * Md5 of {@link NI_POSTCODE_OVERPASS_QUERY} — the query fingerprint that travels into the shard's `meta`.
+	 * Md5 of {@link NI_POSTCODE_OVERPASS_QUERY} — the query fingerprint that travels into the database's `meta`.
 	 */
 	queryMD5: string
 	/**
@@ -280,7 +280,7 @@ export async function acquireNIPostcodes(options: AcquireNIPostcodesOptions): Pr
 			phase("reuse", `${responsePath} already present (md5 ${md5})`)
 
 			// A response with no sidecar beside it is provenance-less, and an operator who copied only the
-			// bytes into place should not get a shard that says "unknown". Reconstruct what is recoverable
+			// bytes into place should not get a database that says "unknown". Reconstruct what is recoverable
 			// and SAY that it was reconstructed: the retrieval instant becomes the file's mtime, which is
 			// when those bytes were written, and the flag keeps that distinguishable from a first-hand
 			// stamp. (The meaning-of-zero rule in its provenance form — a recovered value and a recorded

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman situs build` — national ADDRESS-POINT (situs) shard build driver. The situs
+ *   `mailwoman situs build` — national ADDRESS-POINT (situs) database build driver. The situs
  *   counterpart to `mailwoman situs interpolation`, but downloadless: every US address point
  *   already lives in one pinned Overture parquet, so this fans the per-state `mailwoman situs
  *   address-points` command out across every covered state.
@@ -17,18 +17,18 @@
  *   scan, so N concurrent inserts is the real win. Sequentialise via `--concurrency 1`.
  *
  *   Each per-state CHILD owns its own DB's atomic write; this driver only spawns children (skipping
- *   COMPLETE shards) and writes the small `ATTRIBUTION.json` manifest incrementally — so there is
+ *   COMPLETE databases) and writes the small `ATTRIBUTION.json` manifest incrementally — so there is
  *   no national-DB temp-then-rename here, the large-artifact atomicity lives one level down in the
- *   shard builder. Progress streams to stderr; the final summary lands on stdout.
+ *   database builder. Progress streams to stderr; the final summary lands on stdout.
  *
  *   LICENSING (measured 2026-06-14): US Overture addresses are NAD (68%, US public domain) +
  *   OpenAddresses (32%, government open data) with ZERO OpenStreetMap/ODbL rows. So the default is
  *   NO license filter — `--license-filter NAD` would drop a third of coverage for no benefit. The
  *   only obligation is ATTRIBUTION: the per-row `overture:<dataset>` provenance is summarized into
- *   `<out-dir>/ATTRIBUTION.json`. Pass `--license-filter <datasets>` to build a narrowed shard.
+ *   `<out-dir>/ATTRIBUTION.json`. Pass `--license-filter <datasets>` to build a narrowed database.
  *
- *   IDEMPOTENCY: a state is skipped only if its shard is COMPLETE — non-empty `address_point` table
- *   AND the `idx_ap_streetkey` index present. A half-built shard (data inserted, indexing/VACUUM
+ *   IDEMPOTENCY: a state is skipped only if its database is COMPLETE — non-empty `address_point` table
+ *   AND the `idx_ap_streetkey` index present. A half-built database (data inserted, indexing/VACUUM
  *   not reached — e.g. a killed run) is detected as incomplete and rebuilt. `--force` rebuilds
  *   regardless.
  */
@@ -59,7 +59,7 @@ import {
  */
 export const spec = {
 	name: "build",
-	description: "Build state address-point shards",
+	description: "Build state address-point databases",
 	options: {
 		"out-dir": { type: "string", description: "Output directory" },
 		release: { type: "string", default: "2026-05-20.0", description: "Overture release" },
@@ -67,7 +67,7 @@ export const spec = {
 		"license-filter": { type: "string", description: "Dataset allow-list" },
 		concurrency: { type: "number", default: 4, validate: positiveInteger, description: "Parallel state builds" },
 		threads: { type: "number", validate: positiveInteger, description: "DuckDB threads per child" },
-		force: { type: "boolean", default: false, description: "Rebuild complete shards" },
+		force: { type: "boolean", default: false, description: "Rebuild complete databases" },
 	},
 } as const satisfies CommandSpec
 
@@ -170,7 +170,7 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 		const cores = availableParallelism()
 		const threads = Math.max(1, options.threads || Math.floor(cores / concurrency))
 		// The per-state ADDRESS-POINT builder is now the sibling `situs address-points` command (the
-		// old `scripts/build-address-point-shard.ts` was migrated into the CLI). Re-invoke the SAME CLI
+		// old `scripts/build-address-point-database.ts` was migrated into the CLI). Re-invoke the SAME CLI
 		// entry this process was started from, so dev + published installs both resolve correctly.
 		const cliEntry = scriptEntryPath()
 
@@ -182,7 +182,7 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 		// command tree (e.g. `mailwoman --help`) doesn't pull it at module-eval.
 		const { parallelMap } = await import("spliterator")
 
-		// A shard is COMPLETE iff its address_point table has rows AND the streetkey index exists — the
+		// A database is COMPLETE iff its address_point table has rows AND the streetkey index exists — the
 		// index is the last build step, so its presence means insert + index + VACUUM all finished.
 		const isComplete = async (dbPath: string): Promise<boolean> => {
 			if (!(await pathExists(dbPath))) return false

@@ -1,6 +1,6 @@
 /**
  * #1569/#1519 joint boundary board. Derives the held-out classes from golden v0.1.3 with the SAME classifier used by
- * the training shard, then scores a package-shaped fp32 candidate.
+ * the training extract, then scores a package-shaped fp32 candidate.
  *
  * Usage: node scripts/eval/score-suffix-boundary.ts --weights-cache <cache-root> [--json out.json]
  */
@@ -9,7 +9,7 @@ import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { classifySuffixBoundaryStreet } from "@mailwoman/corpus/shard-recipes/street-affix"
+import { classifySuffixBoundaryStreet } from "@mailwoman/corpus/recipes/street-affix"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { JSONSpliterator } from "spliterator"

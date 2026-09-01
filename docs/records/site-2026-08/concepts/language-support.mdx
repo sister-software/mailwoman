@@ -51,7 +51,7 @@ most places. Dutch is the standout: block-level postcodes take it to 0.05 km
 median. Austrian, Belgian, and Swiss addresses ride the German/French/Dutch
 handling with their own panel rows. Australian English trained on G-NAF, the
 national address register, but that register only fed the training corpus — no
-AU rooftop shard is wired into the resolver, so Australian addresses resolve at
+AU rooftop extract is wired into the resolver, so Australian addresses resolve at
 the same locality-and-postcode grade as the rest of this tier.
 
 German also carries a gate floor of its own, and the West Slavic set (Czech,
@@ -85,7 +85,7 @@ The one evaluators poke at first, so here it is up front. UK addresses parse
 better than you'd expect — a postcode-format prior routes them correctly most of
 the time — but there is no UK training corpus, because the usable open data
 carries a share-alike license that conflicts with how we distribute training
-shards. The blocker is licensing, not modeling, and the issue tracking it has a
+extracts. The blocker is licensing, not modeling, and the issue tracking it has a
 check-back owner. Ireland, Hungary, and Romania sit behind the same gate.
 
 Non-Latin scripts (Cyrillic, Hangul, Han, Armenian) have synthetic transliteration

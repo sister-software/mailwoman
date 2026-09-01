@@ -140,7 +140,7 @@ export interface LinkableArtifact {
 /**
  * An artifact the recipe names that must be BUILT, not copied — the source entry is a build INPUT.
  *
- * Kept in a separate type on purpose. `softFeed.postcodeDBByCountry[cc]` names a WOF postcode SHARD
+ * Kept in a separate type on purpose. `softFeed.postcodeDBByCountry[cc]` names a WOF postcode EXTRACT
  * (`postalcode-gb.db`) from which `mailwoman gazetteer postcode-binary` produces `postcode-gb.bin`;
  * `pairIndexByCountry[cc]` names a tuples CSV behind `pair-index-<cc>.bin`. A consumer that treated either as linkable
  * would place a database where the resolver expects a binary — and since every sibling degrades `existsSync →

@@ -15,7 +15,7 @@ across **four new workspaces** and **14 commits**, with **121 passing tests** in
 new packages (+170 corpus tests still green through a migration). Nothing is merged;
 it's all a draft PR awaiting review/CI/split. The only thing left to _run it on real
 data_ is a CLI command that injects the heavy geocoder (operator-verifiable; the
-weights/shards aren't in the worktree).
+weights/extracts aren't in the worktree).
 
 ## What got built — the cascade
 
@@ -137,7 +137,7 @@ solid baseline; org _matching_ needs a follow-up pass. Full detail in
 - **After adding a workspace:** add it to root `package.json` workspaces, `tsconfig.json`
   references, `vitest.config.ts` aliases, then `yarn install` (updates the lockfile — keep
   it clean for CI's `--immutable`).
-- **The heavy geocoder (weights + situs/interp shards) is NOT in this worktree**, so the
+- **The heavy geocoder (weights + situs/interp extracts) is NOT in this worktree**, so the
   real end-to-end geocode run can't be unit-tested here — it's operator-verifiable via the
   CLI. That's why geocoding is an injected seam.
 - Another agent was active on `eval/oa-offmap-pull` in the shared checkout during this
@@ -148,7 +148,7 @@ solid baseline; org _matching_ needs a follow-up pass. Full detail in
 ## Open work (prioritized)
 
 1. **CLI command** `mailwoman registry <csv>` — construct the real geocoder (neural parse +
-   resolver + shards) and inject it into `geocodeAddressVia`, then run
+   resolver + extracts) and inject it into `geocodeAddressVia`, then run
    ingest, resolve, GeoJSON on a dataset. Lives in `mailwoman/` (the CLI package, which
    already has `geocode-core.ts`). This is the operator-verifiable integration that makes
    it run on real clinic data — **grades the thesis against truth.**

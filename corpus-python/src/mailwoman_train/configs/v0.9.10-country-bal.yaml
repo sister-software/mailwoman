@@ -1,20 +1,20 @@
-# === v0.9.10-country-bal (#464) — MODEL-FIRST country, the balanced shard. ===================
+# === v0.9.10-country-bal (#464) — MODEL-FIRST country, the balanced slice. ===================
 # The shipped v4.1.0 model is STARVED on `country` (P=R=F1=0 on the homograph eval — it never emits
-# the tag; the night-9 49-F1/23%-precision over-fire was a SEPARATE bad shard). So this fills a void,
+# the tag; the night-9 49-F1/23%-precision over-fire was a SEPARATE bad slice). So this fills a void,
 # the same way `unit` did — but the corpus is built to AVOID re-creating the over-fire, and the lever
 # is MODEL-FIRST (no deterministic override; the gazetteer informs the model, never substitutes —
 # see docs/engineering/reference/closed-vocab-fields-model-first.mdx).
 #
-# ONE variable vs v4.1.0 (v0.9.7-unit-v3): the BALANCED country shard is overlaid on the SHIPPED
+# ONE variable vs v4.1.0 (v0.9.7-unit-v3): the BALANCED country slice is overlaid on the SHIPPED
 # unit base (v0.4.5-unit-v2 → v0.4.10-country-bal). NO affix (not shipped). NO anchor feature yet
 # (DeepSeek's data-first: prove balanced data alone, add the soft anchor only if long-tail recall
 # lags). Class-weight B/I-country HELD at 2.0 (shipped model had 2.0 and country was 0% → the gap was
 # DATA). Everything else held — v0.9.3 recipe (anchor ON, self-cond ON, region-tail German), seed 42.
 #
-# THE SHARD (build-country-shard-balanced.mjs, 50k): breadth (OA skeletons + varied ISO country forms
+# THE SLICE (build-country-slice-balanced.mjs, 50k): breadth (OA skeletons + varied ISO country forms
 # + ~25% absent) + homograph CONTRAST (~26%: Georgia/Jordan/Lebanon/Mexico/Peru/Turkey BOTH as
 # country [foreign city] AND as US region/locality [US ZIP]) + code-as-region negatives (~10%:
-# CA/GA/IN/MA/PA/AL). The contrast is the signal the over-firing v0.9.9 shard lacked.
+# CA/GA/IN/MA/PA/AL). The contrast is the signal the over-firing v0.9.9 slice lacked.
 #
 # PRE-REGISTERED GATE (stop at 20k) — data/eval/external/country-homograph-real.jsonl (n=54, held-out):
 #   - `country` F1 >> 0 (was 0) AND over-fire = 0 (NO region/locality token mistagged as country).
@@ -27,7 +27,7 @@
 # Measure: scripts/eval/score-country-homograph.ts + per-locale-f1.ts (US/FR) + de-order-eval.ts +
 #   unit-real-designators (fp32-to-fp32).
 #
-# CORPUS: v0.4.10-country-bal (v0.4.5-unit-v2 base + balanced country shard). Launch:
+# CORPUS: v0.4.10-country-bal (v0.4.5-unit-v2 base + balanced country slice). Launch:
 #   modal run -d scripts/modal/train_remote.py \
 #     --config v0.9.10-country-bal.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
@@ -58,7 +58,7 @@ data:
     synth-german: 6.0
     # Retained from v4.1.0 — keep the shipped unit win.
     synth-unit: 1.5
-    # NEW (#464, model-first country): the BALANCED country shard — homograph CONTRAST pairs
+    # NEW (#464, model-first country): the BALANCED country slice — homograph CONTRAST pairs
     # (Georgia/Jordan/Lebanon/Mexico/Peru/Turkey rendered BOTH as country and US region/locality) +
     # code-as-region negatives (CA/GA/IN/MA/PA/AL) + breadth. Single variable vs v4.1.0 (NO affix).
     # Class-weight B/I-country HELD at 2.0 below — the shipped model already had 2.0 and country was

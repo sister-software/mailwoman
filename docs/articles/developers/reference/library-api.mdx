@@ -293,7 +293,7 @@ row.
 
 ### Dependencies
 
-`GeocodeDeps` has 18 fields. The 16 below are the ones a consumer sets; `osmShards` and
+`GeocodeDeps` has 18 fields. The 16 below are the ones a consumer sets; `osmExtracts` and
 `hardCountrySafelist` are omitted as evaluation and build-time wiring.
 
 | Field                    | Type                           | Default              | Effect                                                         |
@@ -301,8 +301,8 @@ row.
 | `classifier`             | `GeocodeClassifier`            | required             | The parser                                                     |
 | `inputMode`              | `"fragmented"` / `"formatted"` | from the query kind  | Which register the evidence channels run in                    |
 | `resolver`               | `Resolver`                     | required             | The gazetteer walk                                             |
-| `shards`                 | `RegionDatabaseResolver`       | none                 | Per-state rooftop and interpolation lookups                    |
-| `nationalShards`         | `(country) => RegionDatabases` | none                 | Per-country lookups, for example the French rooftop database   |
+| `extracts`               | `RegionDatabaseResolver`       | none                 | Per-state rooftop and interpolation lookups                    |
+| `nationalExtracts`       | `(country) => RegionDatabases` | none                 | Per-country lookups, for example the French rooftop database   |
 | `defaultCountry`         | `string`                       | none                 | Scopes the resolver to one country                             |
 | `bias`                   | proximity points               | none                 | Soft re-rank toward a viewport or a user location              |
 | `interpCalibration`      | `number` or a table            | the database's value | Multiplier on the interpolation tier's uncertainty radius      |
@@ -365,7 +365,7 @@ class RegionDatabaseProvider {
 ```
 
 The constructor is positional. `factory` is the `@mailwoman/resolver-wof-sqlite` module namespace in
-practice. `for` is a property rather than a method so it can be passed unbound as `deps.shards`.
+practice. `for` is a property rather than a method so it can be passed unbound as `deps.extracts`.
 
 ### Example
 

@@ -45,7 +45,7 @@ async function stamped(path: string, name: string, createdAt: string): Promise<s
 		tier: LayerTier.BuildLocal,
 		license: "ODbL-1.0",
 		source: "admin-global-priority@2026-08-17",
-		sourceVintage: "postcode-shards=24",
+		sourceVintage: "postcode-databases=24",
 		buildCmd: "mailwoman gazetteer build candidate",
 		buildSHA: "abc1234",
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
@@ -77,8 +77,8 @@ describe("readFreshness — a stamped artifact", () => {
 		expect(entry?.built).toBe("2026-08-17T19:21:17.000Z")
 		expect(entry?.version).toBe("candidate@2026-08-17")
 		// The candidate's source is a CHAIN — it names its ancestor admin build — and the vintage carries the
-		// shard counts that make one candidate build different from another. Both, or neither identifies it.
-		expect(entry?.sources).toEqual(["admin-global-priority@2026-08-17", "postcode-shards=24"])
+		// database counts that make one candidate build different from another. Both, or neither identifies it.
+		expect(entry?.sources).toEqual(["admin-global-priority@2026-08-17", "postcode-databases=24"])
 		expect(entry?.reason).toBeUndefined()
 	})
 

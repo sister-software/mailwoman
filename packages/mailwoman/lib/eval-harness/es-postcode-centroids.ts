@@ -43,9 +43,9 @@ export interface ESPostcodeCentroidsOptions {
 	 *
 	 * The `postalcode-` prefix is required, not cosmetic: `deriveSchemaName` turns the filename into the attached SQL
 	 * schema name and `pickExtractsForPlacetype` routes by testing it against the placetype, which is `postalcode`. A
-	 * shard spelled `postcode-` matches no branch and is silently never queried. The sibling `postcode-locality-*.db`
+	 * database spelled `postcode-` matches no branch and is silently never queried. The sibling `postcode-locality-*.db`
 	 * family keeps the shorter prefix on purpose — those carry a `postcode_locality` relation table and no `spr`, so they
-	 * are never routed as place shards in the first place.
+	 * are never routed as place databases in the first place.
 	 */
 	out?: string
 }
@@ -81,7 +81,7 @@ export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptio
 
 	// Per-postcode centroid: mean of points within 3σ of the per-postcode mean (population stddev).
 	// ES postcodes are 5-digit; left-pad numeric codes so leading zeros survive (eval truth uses "01001").
-	// pcLen 0 = no lpad (use the raw Overture form). Correct when BOTH the candidate shard AND the
+	// pcLen 0 = no lpad (use the raw Overture form). Correct when BOTH the candidate database AND the
 	// eval/query come from Overture (same surface form), and the only safe choice for non-numeric formats
 	// (PT "XXXX-XXX", SK/CZ "XXX XX", LV "LV-XXXX"). A positive pcLen left-pads numeric codes to that
 	// width (the GeoNames-comparison case the ES build used).

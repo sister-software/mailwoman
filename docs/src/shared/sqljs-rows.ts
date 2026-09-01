@@ -31,7 +31,7 @@ export interface SQLExecutor {
 }
 
 /**
- * One round trip to confirm the database carries a table — graceful on a tableless shard.
+ * One round trip to confirm the database carries a table — graceful on a tableless extract.
  */
 export function tableExists(worker: SQLExecutor, name: string): Promise<boolean> {
 	return worker.db

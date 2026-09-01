@@ -27,7 +27,7 @@ interface DebtCounters {
 	selfPackageImports: number
 	synchronousFilesystemCalls: number
 	/**
-	 * Occurrences of the word `shard` in any spelling, anywhere in tracked source — identifiers, comments and string
+	 * Occurrences of the word `extract` in any spelling, anywhere in tracked source — identifiers, comments and string
 	 * literals alike.
 	 *
 	 * The vocabulary is being removed because the word stood for FOUR different things (corpus recipes, per-country
@@ -40,7 +40,7 @@ interface DebtCounters {
 	 * against 3,427 without, so a `grep`-based ratchet would hide 54 occurrences and could certify zero while they
 	 * remained. `readLocalTextFile` has no such blind spot.
 	 */
-	shardVocabulary: number
+	bannedVocabulary: number
 }
 
 const root = String(repoRootPath())
@@ -55,7 +55,7 @@ function emptyCounters(): DebtCounters {
 		productionFilesOver1000Lines: 0,
 		selfPackageImports: 0,
 		synchronousFilesystemCalls: 0,
-		shardVocabulary: 0,
+		bannedVocabulary: 0,
 	}
 }
 
@@ -240,7 +240,21 @@ const UNCOUNTED = [
 	// The runtime mirror and the idiom over it call the builtins on purpose; counting them would measure the
 	// implementation rather than its callers.
 	"packages/core/lib/fs/",
+	// THIS FILE COUNTS ITSELF OTHERWISE, and the count could never reach zero: {@link BANNED_VOCABULARY} has to
+	// spell the word it bans. Excluded for the same reason as the line above — the implementation is not a caller.
+	"scripts/repo-health.ts",
 ]
+
+/**
+ * The word being removed from the codebase, and the pattern {@link DebtCounters.bannedVocabulary} counts.
+ *
+ * KEEP THE COUNTER'S NAME FREE OF THE WORD. This ratchet is written in the language it polices, so the vocabulary sweep
+ * it exists to drive rewrote it: a case-preserving `shard` → `extract` pass over `scripts/` renamed `shardVocabulary`
+ * to `extractVocabulary` AND rewrote this very pattern, so the gate began measuring the REPLACEMENT word while still
+ * reporting a falling number. It stayed green throughout. A neutral counter name and a single pattern constant are what
+ * make that impossible to repeat.
+ */
+const BANNED_VOCABULARY = /\b[A-Za-z_]*shard[A-Za-z_]*\b/giu
 
 // `existingOnly`: a tracked path can be absent from the working tree (a deletion staged but not
 // committed); skip it rather than failing the whole gate on a file the next commit removes anyway.
@@ -284,7 +298,7 @@ for (const path of paths) {
 	}
 
 	// Textual, not AST: the word is being removed from comments and string literals as well as identifiers.
-	counters.shardVocabulary += text.match(/\b[A-Za-z_]*shard[A-Za-z_]*\b/giu)?.length ?? 0
+	counters.bannedVocabulary += text.match(BANNED_VOCABULARY)?.length ?? 0
 }
 
 // The key IS the flag text parseArgs matches, so it must stay kebab-case: `package.json`'s `health:debt:update`

@@ -22,8 +22,8 @@ copy-pasted scripts totalling 2,001 lines, ranging 24 to 586.
 databases probed: 60 ; carrying layer_manifest: 8
 ```
 
-The eight are `poi.db` and its variants plus four OSM address-point shards. The gazetteer itself —
-`candidate.db`, `admin-global-priority.db`, every postcode shard, timezone, nuts, un-locode, bdc, filer —
+The eight are `poi.db` and its variants plus four OSM address-point extracts. The gazetteer itself —
+`candidate.db`, `admin-global-priority.db`, every postcode extract, timezone, nuts, un-locode, bdc, filer —
 carries no provenance at all.
 
 The contract already exists. `docs/engineering/reference/layer-contract.mdx` specifies `layer_manifest` /
@@ -177,12 +177,12 @@ order. Deduplicating the repos root and naming one layout canonical belongs here
 Four builders stamp a `layer_manifest`, through one shared `stampLayerManifest` that also owns the ordering
 (before the seal, or before the swap — a sealed artifact is `0444` and a swapped one is already live):
 
-| Builder                     | Artifact                   | Notes                                                                  |
-| --------------------------- | -------------------------- | ---------------------------------------------------------------------- |
-| `gazetteer build admin`     | `admin-global-priority.db` | licence is a CONJUNCTION of the folds that actually contributed        |
-| `gazetteer build candidate` | `candidate-*.db`           | provenance is a CHAIN — names its ancestor, not the ancestor's sources |
-| `situs interpolation-shard` | `interpolation/*` (52)     | TIGER, public domain                                                   |
-| `situs address-points`      | `address-points/*` (53)    | records the dataset allow-list the build applied                       |
+| Builder                       | Artifact                   | Notes                                                                  |
+| ----------------------------- | -------------------------- | ---------------------------------------------------------------------- |
+| `gazetteer build admin`       | `admin-global-priority.db` | licence is a CONJUNCTION of the folds that actually contributed        |
+| `gazetteer build candidate`   | `candidate-*.db`           | provenance is a CHAIN — names its ancestor, not the ancestor's sources |
+| `situs interpolation-extract` | `interpolation/*` (52)     | TIGER, public domain                                                   |
+| `situs address-points`        | `address-points/*` (53)    | records the dataset allow-list the build applied                       |
 
 Plus a fix to the OSM rooftop builder, whose `build_cmd` recorded a path the workspace regroup moved — the
 defect phase 1 surfaced.
@@ -200,8 +200,8 @@ discipline working, not a gap.
 ### What phase 3 did NOT cover, and why
 
 The `wof/` family is 79 databases and four of its sub-families are still unstamped: the 24 `postcode-*`
-shards, the 13 `postalcode-*` WOF ingests, the 2 `wof-polygons`, and assorted one-offs. None is on the
-resolution path a geocode takes — the resolver reads `candidate.db`, and the postcode shards are INPUTS to
+extracts, the 13 `postalcode-*` WOF ingests, the 2 `wof-polygons`, and assorted one-offs. None is on the
+resolution path a geocode takes — the resolver reads `candidate.db`, and the postcode extracts are INPUTS to
 the candidate build rather than things it reads at query time. They are worth stamping and they are not
 what the acceptance criterion asked for.
 

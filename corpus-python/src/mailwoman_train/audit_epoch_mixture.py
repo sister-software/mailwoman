@@ -174,8 +174,8 @@ def audit_mixture(
             "draws": draws_for_src,
             "draw_share": share,
             "max_window_relative_deviation": max(deviations) if deviations else 0.0,
-            # `None` when the shard's row count could not be read — reported as unknown rather than as a
-            # dose of zero, which would read as "this shard is safe".
+            # `None` when the slice's row count could not be read — reported as unknown rather than as a
+            # dose of zero, which would read as "this slice is safe".
             "rows": rows,
             "reps_per_row": (draws_for_src / rows) if rows else None,
         }
@@ -371,7 +371,7 @@ def run(
 
 
 #: A source whose per-row exposure exceeds this multiple of the median is almost certainly a mistake.
-#: 8x is deliberately loose — the #1677 case was 33x the shards weighted six times higher, so a guard
+#: 8x is deliberately loose — the #1677 case was 33x the slices weighted six times higher, so a guard
 #: that only catches THAT is a guard for one incident rather than for the foot-gun.
 _DOSE_OUTLIER_MULTIPLE = 8.0
 
@@ -430,7 +430,7 @@ def _print_summary(report: dict) -> None:
 
     unknown = [src for src, s in per_source.items() if s.get("rows") is None]
     if unknown:
-        # Absence reported as absence: a shard whose rows could not be read has an UNKNOWN dose, which is
+        # Absence reported as absence: a slice whose rows could not be read has an UNKNOWN dose, which is
         # different from a safe one, and the outlier guard above could not have considered it.
         print(f"\n  row count unavailable, dose UNKNOWN (not safe): {', '.join(sorted(unknown))}")
 

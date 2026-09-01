@@ -5,7 +5,7 @@
  *
  *   Gazetteer-quality eval for the postcode anchor (#240): how close does the anchor's centroid land
  *   to the true address? For each OpenAddresses point with a postcode and real coordinates, look
- *   the postcode up in the shards, take the centroid for that country, and measure the haversine
+ *   the postcode up in the databases, take the centroid for that country, and measure the haversine
  *   distance to the true point.
  *
  *   This measures the parent-borrow backfill, not rooftop accuracy. A backfilled centroid is the
@@ -33,21 +33,21 @@ const ANCHOR_TOLERANCE_KM = 25
 interface Args {
 	evalPath: string
 	country: string
-	shards: string[]
+	databases: string[]
 }
 
 function parseArgs(): Args {
 	let evalPath = "data/eval/external/openaddresses-de-sample.jsonl"
 	let country = "DE"
 
-	const shards: string[] = [
+	const databases: string[] = [
 		resolvePath(dataRootPath("wof", "postalcode-us.db")),
 		resolvePath(dataRootPath("wof", "postalcode-intl.db")),
 	]
 
 	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
 	const { values } = parseArguments({
-		options: { country: { type: "string" }, eval: { type: "string" }, shard: { type: "string", multiple: true } },
+		options: { country: { type: "string" }, eval: { type: "string" }, extract: { type: "string", multiple: true } },
 		strict: false,
 		allowPositionals: true,
 	})
@@ -60,11 +60,11 @@ function parseArgs(): Args {
 		country = values["country"] as string
 	}
 
-	for (const v of (values["shard"] as string[] | undefined) ?? []) {
-		shards.push(v)
+	for (const v of (values["extract"] as string[] | undefined) ?? []) {
+		databases.push(v)
 	}
 
-	return { evalPath, country, shards }
+	return { evalPath, country, databases }
 }
 
 /**
@@ -81,8 +81,8 @@ interface EvalRow {
 }
 
 async function main(): Promise<void> {
-	const { evalPath, country, shards } = parseArgs()
-	const lookup = new WOFPostcodeLookup(shards)
+	const { evalPath, country, databases } = parseArgs()
+	const lookup = new WOFPostcodeLookup(databases)
 
 	const rows = await Array.fromAsync(JSONSpliterator.fromAsync<EvalRow>(evalPath))
 	let withPostcode = 0

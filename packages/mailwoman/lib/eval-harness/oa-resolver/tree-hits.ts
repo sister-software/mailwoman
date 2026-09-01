@@ -146,7 +146,7 @@ export function mostSpecific(rs: Resolved[]): Resolved | null {
 
 /**
  * True when the tree carries BOTH a street and a house number — the precondition the street-level tiers need before a
- * miss can be read as a shard gap rather than a parse gap.
+ * miss can be read as a database gap rather than a parse gap.
  */
 export function hasStreetHouseNumber(tree: AddressTree | null): boolean {
 	if (!tree) return false

@@ -8,14 +8,14 @@
 #
 # ONE EFFECTIVE LEVER: repair the load-time target labels. The v4.3.0/v4.3.1 runs were trained after the
 # affix relabel pass corrupted an already-decomposed terminal-only street into two suffixes. The corrected
-# 250k selectable-feed audit holds carrier prevalence fixed and moves the target shard from 5,183/16,143
+# 250k selectable-feed audit holds carrier prevalence fixed and moves the target slice from 5,183/16,143
 # correct to 16,143/16,143; terminal contrast remains exactly 5,405/5,505. Removing two absent positive
 # source weights is declarative cleanup only: the old loader already omitted them, so the sampled mix is
 # unchanged (33 positive sources, denominator 170.5, target share 7.04%).
 #
 # ORIGINAL PRE-RUN BASE CONSISTENCY CLAIM (superseded): existing affix rows label terminal contrasts correctly;
 # the target terminal-only class was believed sparse/absent. OA source pools before sampling:
-# 163,606 terminal-only and 11,734 terminal-contrast. The emitted shard is exactly 24,000/6,000
+# 163,606 terminal-only and 11,734 terminal-contrast. The emitted slice is exactly 24,000/6,000
 # (80%/20%) after alignment, seed 1569, JSONL sha256
 # f3c4948ed446800390fb5ac7c59063ea9ed57d6b0c358f2f620286003e23e9f5.
 #

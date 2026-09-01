@@ -30,7 +30,7 @@
  *
  *   `postcodeAnchor` adds a `neural+anchor` row: neural's admin match, but the COORDINATE taken
  *   from the postcode anchor's own centroid (`@mailwoman/neural/postcode-anchor` over the
- *   postalcode shards, `postcodeShards`). On German this drops coord p50 9.9 km → 1.2 km (p99
+ *   postalcode databases, `postcodeDatabases`). On German this drops coord p50 9.9 km → 1.2 km (p99
  *   318 → 11 km) with admin match unchanged — the postcode tier between admin-centroid and
  *   street-level.
  *
@@ -42,7 +42,7 @@
  *
  *   `--wof` defaults to `admin-global-priority.db,postcode-locality-intl.db` — coordinate-first
  *   locality resolution is ON by default (no-op where the candidate table has no rows, e.g. US).
- *   Pass `--wof <admin.db>` alone for the admin-only baseline, or append a postcode shard
+ *   Pass `--wof <admin.db>` alone for the admin-only baseline, or append a postcode database
  *   (postalcode-*.db) to also resolve the postcode node.
  *
  *   `--anchor-off` (#887) ablates the model's postcode-anchor INPUT channel — the sanctioned,
@@ -99,7 +99,7 @@ export async function oaResolverEval(
 	const evalPath = options.eval || "data/eval/external/openaddresses-us-sample.jsonl"
 	const limit = (options.limit ?? 0) || Infinity
 
-	// Default attaches the coordinate-first candidate shard (postcode-locality-intl.db) alongside the
+	// Default attaches the coordinate-first candidate database (postcode-locality-intl.db) alongside the
 	// admin gazetteer, so locality resolution is coordinate-first by default for the locales it covers
 	// (DE/FR/GB/NL functional). It no-ops where the table has no rows (e.g. US), so US stays unchanged.
 	// Override `--wof` to measure the admin-only baseline.
@@ -201,11 +201,11 @@ export async function oaResolverEval(
 			;(globalThis as { gc?: () => void }).gc?.()
 		}
 
-		// --cascade: per-row per-state shards (the production geocode cascade); falls back to the
+		// --cascade: per-row per-state databases (the production geocode cascade); falls back to the
 		// single-state --address-points/--interpolation when --cascade is off (byte-stable default).
-		const rowShards = cascadeProvider ? cascadeProvider.for((row.state || "").toLowerCase() || null) : null
-		const rowAddrPoints = rowShards?.addressPoints ?? addressPoints ?? null
-		const rowInterp = rowShards?.interpolation ?? interpolation ?? null
+		const rowDatabases = cascadeProvider ? cascadeProvider.for((row.state || "").toLowerCase() || null) : null
+		const rowAddrPoints = rowDatabases?.addressPoints ?? addressPoints ?? null
+		const rowInterp = rowDatabases?.interpolation ?? interpolation ?? null
 
 		// Shared resolve opts (hoisted so the assembled arms below resolve identically to neural).
 		const nOpts = {
@@ -277,7 +277,7 @@ export async function oaResolverEval(
 			// --- coverage diagnostic (MAILWOMAN_DIAG_INTERP=1): split the miss cause. ---
 			// The interp tier only runs in resolveTree when the exact tier did NOT stamp. So:
 			//   precond met (street+house_number+postcode parsed) + exact miss + interp null
-			//   ⟹ a genuine StreetInterpolator.find() miss (shard/normalization gap, NOT parse, NOT gate).
+			//   ⟹ a genuine StreetInterpolator.find() miss (database/normalization gap, NOT parse, NOT gate).
 			if (diagInterp && nDecorated) {
 				const { street: s, houseNumber: hn, postcode: pc } = findInterpolationSpans(nDecorated)
 				const precond = !!(s && hn && pc)

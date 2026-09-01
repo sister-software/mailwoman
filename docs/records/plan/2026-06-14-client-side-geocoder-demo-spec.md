@@ -12,10 +12,10 @@ work, de-risked and specified here._
 
 The demo already byte-ranges the WOF resolver DB (`docs/src/shared/httpvfs-resolver.ts`,
 sql.js-httpvfs, ~3.6 MB/session out of 53 MB). The open question for street-level geocoding was whether
-the same trick survives a **3.3 GB** situs shard (California, 13.5 M points) — or whether a lookup
+the same trick survives a **3.3 GB** situs extract (California, 13.5 M points) — or whether a lookup
 drags the whole file.
 
-**Measured (`/tmp/situs-byterange-probe.mjs`, CA shard):** the geocode lookup is a clean indexed point
+**Measured (`/tmp/situs-byterange-probe.mjs`, CA extract):** the geocode lookup is a clean indexed point
 query —
 
 ```
@@ -31,13 +31,13 @@ byte-bound.
 
 ### One data-layer tuning note
 
-The situs shards are `page_size` 4096; the existing httpvfs resolver fetches in 64 KB `requestChunkSize`
+The situs extracts are `page_size` 4096; the existing httpvfs resolver fetches in 64 KB `requestChunkSize`
 chunks (16 pages). A situs point lookup touches ~6 _scattered_ B-tree pages, so it lands in a few
 64 KB chunks — this is precisely the "sparse single-row access over-fetches" tradeoff the
 `httpvfs-resolver.ts` header already calls out for the polygon DB. Two levers for the hosted demo
-shards, to measure (not assume):
+extracts, to measure (not assume):
 
-- **Rebuild hosted shards at a larger `page_size`** (32–64 KB) so a B-tree level is one chunk → fewer
+- **Rebuild hosted extracts at a larger `page_size`** (32–64 KB) so a B-tree level is one chunk → fewer
   round-trips per lookup.
 - **Tune `requestChunkSize` down** for the situs DB specifically (sparse access) vs up for the FTS-walk
   WOF DB — they want opposite chunk sizes.
@@ -108,11 +108,11 @@ lifted, the page↔worker contract is:
 Cache the immutable assets (sql.js-httpvfs UMD + worker + WASM, the ONNX model, the tokenizer) and the
 byte-range responses (range requests are cacheable; a region's hot index pages stay warm across
 queries → near-instant repeat lookups + offline resilience once warm). **Cap the cache** — the CA
-shard's range responses could accumulate; an LRU eviction with a size ceiling (e.g. 50 MB of range
-chunks) keeps it under storage quota. Indiscriminate caching of a 3.3 GB shard's pages is the failure
+extract's range responses could accumulate; an LRU eviction with a size ceiling (e.g. 50 MB of range
+chunks) keeps it under storage quota. Indiscriminate caching of a 3.3 GB extract's pages is the failure
 mode to avoid.
 
-## Launch shards: NY / MI / CA
+## Launch databases: NY / MI / CA
 
 A deliberate size spread to validate byte-range latency across scales, hosted on R2 with Range support
 and immutable `Cache-Control`:
@@ -123,9 +123,9 @@ and immutable `Cache-Control`:
 | NY    |      6.5 M |    1.44 GB | dense urban (NYC)                            |
 | CA    |     13.5 M |    3.30 GB | the stress test — if it's OK, every state is |
 
-State routing: `regionSlugFromTree()` (already in `geocode-core.ts`) picks the shard from the parsed
+State routing: `regionSlugFromTree()` (already in `geocode-core.ts`) picks the extract from the parsed
 region; the worker lazy-loads that state's situs+interp handles on first use and caches them. The
-demo's region constraint already biases the WOF resolve; the same slug selects the street shards.
+demo's region constraint already biases the WOF resolve; the same slug selects the street extracts.
 
 ## The autocomplete nuance (per the DeepSeek hint)
 
@@ -133,12 +133,12 @@ The shipped `mailwoman autocomplete` (#547) walks the **WOF FST** → it suggest
 counties: "San Diego", "San Juan"), ranked by importance. That is the right typeahead for the
 _locality_ field, but a Google-Maps-grade box also wants **address-level** suggestions ("350 5th Ave"
 → "350 5th Avenue, New York, NY"). Those are a different index — street-name prefixes over the situs
-shards, not the admin FST. Three honest options, in increasing cost:
+extracts, not the admin FST. Three honest options, in increasing cost:
 
 1. **Place-level typeahead only** (ship now): wire the existing FST autocomplete into the search box.
    Suggests cities/regions; the user types the full street themselves. Lowest cost, real value.
 2. **Street-name autocomplete** within a resolved locality: once the user has a city, prefix-complete
-   street names from that state's situs shard (`street_norm` has a natural prefix index). Mid cost.
+   street names from that state's situs extract (`street_norm` has a natural prefix index). Mid cost.
 3. **Full address autocomplete** (true Google-Maps): house-number + street + city as one suggestion
    stream. Highest cost; needs a dedicated suggestion index and ranking. A later milestone.
 
@@ -156,7 +156,7 @@ epic — it is more than "wire the existing feature," which is the nuance worth 
    `index.tsx` runs it before `runCascade` and falls back to admin on a null. Main-thread async — no
    worker needed for correctness.
 3. **Host MI first** (229 MB — smallest) byte-range; wire the street tier on Michigan end-to-end; verify
-   via `run-docs` that the browser issues **Range** requests (pulls ~KB, not the full shard) on a real
+   via `run-docs` that the browser issues **Range** requests (pulls ~KB, not the full extract) on a real
    geocode. The gate — confirm before NY/CA. (Local Range-serving for the verification; R2 for prod.)
 4. **Add NY, then CA**; measure CA's real in-browser geocode latency against the < 3 s budget.
 5. **UX (#377):** map pin + calibrated-radius circle (the per-region factor from
@@ -168,16 +168,16 @@ epic — it is more than "wire the existing feature," which is the nuance worth 
 ## What's done headless vs. what needs a browser
 
 Steps 1–2 are pure code mirroring an existing, tested pattern — written + query-verified against a real
-shard with `node:sqlite` (the httpvfs version runs the identical SQL). Steps 3+ change browser code
+extract with `node:sqlite` (the httpvfs version runs the identical SQL). Steps 3+ change browser code
 whose correctness is only observable in a browser (Range requests fired, WASM loaded, map render) and
-need shards served with byte-range. The two architectural risks — does byte-range survive the 3.3 GB
-stress shard, and does the sync `find()` contract force a worker — are **both retired here** (it does;
+need extracts served with byte-range. The two architectural risks — does byte-range survive the 3.3 GB
+stress extract, and does the sync `find()` contract force a worker — are **both retired here** (it does;
 it doesn't, because the demo's cascade is already async). So the remaining work is execution against a
 de-risked spec, not open questions.
 
 ## Sources
 
-- `/tmp/situs-byterange-probe.mjs` — the CA byte-range measurement (reproduce: `node … <shard>.db`)
+- `/tmp/situs-byterange-probe.mjs` — the CA byte-range measurement (reproduce: `node … <extract>.db`)
 - `docs/src/shared/httpvfs-resolver.ts` — the proven WOF byte-range pattern this extends
 - `docs/articles/evals/2026-06-06-demo-service-worker-design.mdx` — the SW design to build on
 - `mailwoman/geocode-core.ts` — `geocodeAddress`, `regionSlugFromTree`, `GeocodeResult`

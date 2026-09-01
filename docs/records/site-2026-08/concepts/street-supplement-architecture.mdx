@@ -163,11 +163,11 @@ Country-level granularity is the right v0.7 scope. Within-country variations (US
 
 **Wiring:** Add `fstStreetMorphology?: FSTMatcherLike` to `ParseOpts` in `neural/classifier.ts`. Apply via `addEmissionMatrix` after the existing admin FST bias. Same 3.0-logit cap.
 
-**Locale handling:** Build a single combined FST containing all locales — the morphology data is small enough (60 locales × ~30 affix lines × ~5 variants = ~9K entries) that per-locale sharding is unnecessary. Position (prefix vs suffix) is encoded in the `PlaceEntry` payload, not derived per-entry at query time.
+**Locale handling:** Build a single combined FST containing all locales — the morphology data is small enough (60 locales × ~30 affix lines × ~5 variants = ~9K entries) that per-locale extract routing is unnecessary. Position (prefix vs suffix) is encoded in the `PlaceEntry` payload, not derived per-entry at query time.
 
 ### Layer 1.5: Street candidacy lookup
 
-**Data source:** Existing training corpus (OpenAddresses + WOF + synth shards). Not external OSM — distributional consistency with what the model was trained on matters more than data-source independence.
+**Data source:** Existing training corpus (OpenAddresses + WOF + synth extracts). Not external OSM — distributional consistency with what the model was trained on matters more than data-source independence.
 
 **Build:** One-pass scan over training-corpus bigrams and trigrams. For each n-gram, count distinct localities (keyed by WOF `wof_id` to avoid Springfield-style conflation) where the n-gram appears adjacent to a labeled locality span.
 
@@ -191,7 +191,7 @@ Country-level granularity is the right v0.7 scope. Within-country variations (US
 
 **Inference:** Reuses Layer 1's `fstStreetMorphology` integration point (same `addEmissionMatrix` call, different binary). Layer 2 supersedes Layer 1's role for streets the FST knows about; Layer 1 stays active for novel street suffixes the FST doesn't.
 
-**Scoping:** Per-metro sharding. NYC POC validates the approach; metro expansion is gated on POC results.
+**Scoping:** Per-metro extract routing. NYC POC validates the approach; metro expansion is gated on POC results.
 
 **Status:** v0.7+. Multi-shift work — OSM extraction, dedup, parent-chain assignment, metro packaging.
 

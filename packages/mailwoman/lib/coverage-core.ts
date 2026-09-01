@@ -8,7 +8,7 @@
  *   Backs the `mailwoman coverage build` command; kept React-free here so the logic is testable and
  *   the command is a thin Ink wrapper (mirrors `geocode-core.ts`).
  *
- *   Pipeline: ATTACH the per-state address-point shards (+ interpolation shards) read-only → DuckDB's
+ *   Pipeline: ATTACH the per-state address-point databases (+ interpolation databases) read-only → DuckDB's
  *   H3 community extension bins points to a fine resolution and rolls up to coarser ones →
  *   boundaries stream to NDJSON → `tippecanoe` bakes one `coverage` source-layer into a single
  *   PMTiles. Publish the result with `mailwoman tiles publish`.
@@ -53,11 +53,11 @@ export interface CoverageBuildOptions {
 	 */
 	excludeStates: string[]
 	/**
-	 * Root holding `address-points-us-<st>.db` shards.
+	 * Root holding `address-points-us-<st>.db` databases.
 	 */
 	dataRoot: string
 	/**
-	 * Root holding `interpolation-us-<st>.db` shards, or null to skip the street-segment signal.
+	 * Root holding `interpolation-us-<st>.db` databases, or null to skip the street-segment signal.
 	 */
 	interpRoot: string | null
 	/**
@@ -136,7 +136,7 @@ export type CoverageProgress = (stage: string, message: string) => void
 export interface CoverageBuildResult {
 	out: string
 	states: number
-	interpShards: number
+	interpDatabases: number
 	domainCells: number
 	withPoints: number
 	streetOnly: number
@@ -145,7 +145,7 @@ export interface CoverageBuildResult {
 	pmtilesBytes: number
 }
 
-interface StateShard {
+interface StateDatabase {
 	slug: string
 	file: string
 	interp: string | null
@@ -157,9 +157,9 @@ interface StateShard {
 const RES_ONSET_ZOOM: Record<number, number> = { 4: 0, 5: 0, 6: 5, 7: 7, 8: 9, 9: 10, 10: 12, 11: 14 }
 
 /**
- * Resolve the shard set + matching interpolation shards.
+ * Resolve the database set + matching interpolation databases.
  */
-async function resolveStates(opts: CoverageBuildOptions): Promise<StateShard[]> {
+async function resolveStates(opts: CoverageBuildOptions): Promise<StateDatabase[]> {
 	const exclude = new Set(opts.excludeStates.map((s) => s.toUpperCase()))
 	const files = (await readDirectory(opts.dataRoot)).filter((f) => /^address-points-us-[a-z]+\.db$/.test(f))
 	const bySlug = new Map(files.map((f) => [f.replaceAll(/^address-points-us-|\.db$/g, ""), f]))
@@ -167,12 +167,12 @@ async function resolveStates(opts: CoverageBuildOptions): Promise<StateShard[]> 
 	const slugs =
 		opts.states.toLowerCase() === "all" ? [...bySlug.keys()] : opts.states.split(",").map((s) => s.trim().toLowerCase())
 
-	const out: StateShard[] = []
+	const out: StateDatabase[] = []
 
 	for (const slug of slugs.filter((candidate) => !exclude.has(candidate.toUpperCase()))) {
 		const file = bySlug.get(slug)
 
-		if (!file) throw new Error(`no address-point shard for state '${slug}' under ${opts.dataRoot}`)
+		if (!file) throw new Error(`no address-point database for state '${slug}' under ${opts.dataRoot}`)
 		const interpFile = opts.interpRoot ? join(opts.interpRoot, `interpolation-us-${slug}.db`) : ""
 
 		out.push({
@@ -250,7 +250,7 @@ export async function buildCoverageTiles(
 
 	onProgress(
 		"init",
-		`${states.length} shard(s)${opts.interpRoot ? ` (+${interpCount} interp)` : ""} · fine res ${opts.fineRes} · rollup ${opts.rollup.join(",")} · domain res ${opts.domainRes}`
+		`${states.length} database(s)${opts.interpRoot ? ` (+${interpCount} interp)` : ""} · fine res ${opts.fineRes} · rollup ${opts.rollup.join(",")} · domain res ${opts.domainRes}`
 	)
 
 	const instance = await DuckDBInstance.create()
@@ -262,7 +262,7 @@ export async function buildCoverageTiles(
 
 	await duck.run("INSTALL h3 FROM community; LOAD h3; INSTALL spatial; LOAD spatial; INSTALL sqlite; LOAD sqlite;")
 
-	// ATTACH every shard read-only (address-points as st<i>, interpolation as ip<i> when present).
+	// ATTACH every database read-only (address-points as st<i>, interpolation as ip<i> when present).
 	for (const [i, s] of states.entries()) {
 		await duck.run(`ATTACH '${s.file}' AS st${i} (TYPE sqlite, READ_ONLY)`)
 
@@ -299,7 +299,7 @@ export async function buildCoverageTiles(
 			)
 			.join("\nUNION ALL\n")
 
-		onProgress("aggregate", `street segments → fine cells (${segIdx.length} interp shard(s))…`)
+		onProgress("aggregate", `street segments → fine cells (${segIdx.length} interp database(s))…`)
 
 		await duck.run(
 			`CREATE TEMP TABLE data_seg AS SELECT h3_latlng_to_cell(lat, lon, ${opts.fineRes}) AS cell, count(*)::BIGINT AS cnt FROM (${segAgg}) GROUP BY 1`
@@ -525,7 +525,7 @@ export async function buildCoverageTiles(
 	return {
 		out: opts.out,
 		states: states.length,
-		interpShards: interpCount,
+		interpDatabases: interpCount,
 		domainCells,
 		withPoints,
 		streetOnly,

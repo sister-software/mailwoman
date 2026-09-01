@@ -5,7 +5,7 @@
  *
  *   Reduce the saved Overpass response to one point per `BT` unit postcode.
  *
- *   The response is a flat list of OSM elements that each CLAIM a postcode on an address; the shard needs one
+ *   The response is a flat list of OSM elements that each CLAIM a postcode on an address; the database needs one
  *   coordinate per postcode. So this module does three things and counts everything it drops:
  *
  *   1. **Validate** against the BT unit shape. OSM tag values are free text typed by humans, and this
@@ -40,7 +40,7 @@ import type { OverpassElement, OverpassResponse } from "#gazetteer-pipeline/post
 export const NI_UNIT_POSTCODE = /^BT[0-9][A-Z0-9]?\s[0-9][A-Z]{2}$/
 
 /**
- * What a parse run read and dropped, and why. Counters rather than booleans so the shard's provenance can state the
+ * What a parse run read and dropped, and why. Counters rather than booleans so the database's provenance can state the
  * meaning of each zero — "measured, none" is a different claim from "never looked".
  */
 export interface NIOSMParseStats {
@@ -79,7 +79,7 @@ export interface NIOSMParseStats {
 
 /**
  * How many distinct malformed values to retain. A bounded list: the counter is the signal, the samples are the
- * diagnosis, and an unbounded map would let a filter regression write a million keys into the shard's `meta`.
+ * diagnosis, and an unbounded map would let a filter regression write a million keys into the database's `meta`.
  */
 const MALFORMED_SAMPLE_LIMIT = 50
 
@@ -98,7 +98,7 @@ export interface NIPostcodeRecord {
 	latitude: number
 	longitude: number
 	/**
-	 * How many OSM elements attested this postcode. Coverage evidence, and the reason a shard consumer can tell a
+	 * How many OSM elements attested this postcode. Coverage evidence, and the reason a database consumer can tell a
 	 * one-node guess from a 40-building consensus.
 	 */
 	attestations: number
@@ -154,8 +154,8 @@ function elementPoint(element: OverpassElement): PostcodePoint | null {
  * Group the response's elements into one {@link NIPostcodeRecord} per distinct unit postcode, mutating `stats`.
  *
  * Records come back sorted by lookup `name`. Insertion order would also be deterministic given a fixed response file,
- * but it is deterministic THROUGH the file's element order — sorting makes the shard's synthetic ids a function of the
- * postcode set alone, so a re-cut of OSM that adds one building does not renumber every place after it.
+ * but it is deterministic THROUGH the file's element order — sorting makes the database's synthetic ids a function of
+ * the postcode set alone, so a re-cut of OSM that adds one building does not renumber every place after it.
  */
 export function parseNIPostcodes(response: OverpassResponse, stats: NIOSMParseStats): NIPostcodeRecord[] {
 	const groups = new Map<string, { display: string; points: PostcodePoint[] }>()

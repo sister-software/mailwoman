@@ -2,7 +2,7 @@
 
 Samples real (street, house_number, locality, region, postcode) tuples from the two LABEL layers
 already on disk — the FR BAN address-points DB and the US national-situs per-state DBs — and emits
-the `HouseVenueBaseTuple` JSONL the `house-venue` shard recipe consumes (tuples mode). The
+the `HouseVenueBaseTuple` JSONL the `house-venue` slice recipe consumes (tuples mode). The
 synthesizer supplies venue names + templates; this script supplies REAL address material so the
 venue rows sit on genuine streets/localities/postcodes rather than a synthetic pool.
 
@@ -10,8 +10,8 @@ Casing: the DBs carry normalized-lowercase surfaces; rows are re-cased to the tr
 US title-case, FR title-case with French particles kept lowercase (de/la/du/des/le/les/…) except
 in first position ("Rue de la Huchette", never "Rue De La Huchette").
 
-Split note: these tuples come from BAN/situs LABEL data, the same sources many corpus shards
-draw from — that is FINE for this shard (venue rows are synthetic compositions; the eval's venue
+Split note: these tuples come from BAN/situs LABEL data, the same sources many corpus slices
+draw from — that is FINE for this slice (venue rows are synthetic compositions; the eval's venue
 fixtures are gauntlet rows + golden venue tags, not a BAN-street holdout). The fr-fragment
 reserved-surface discipline does not bind here, but we exclude the fragment board's reserved
 street surfaces anyway (cheap, removes any doubt).

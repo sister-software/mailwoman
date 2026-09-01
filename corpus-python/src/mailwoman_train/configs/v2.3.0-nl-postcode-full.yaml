@@ -1,9 +1,9 @@
 # v2.3.0-nl-postcode-FULL (#924) — PINNED full run after the pilot tipped fr-chevaleret metamorphic.
-# Family shards (fr-bare-street/si-village/no-street-led/cz-pcfirst) up-weighted 6->12 to PIN the
+# Family slices (fr-bare-street/si-village/no-street-led/cz-pcfirst) up-weighted 6->12 to PIN the
 # knife-edge boundary while the NL postcode is learned (DeepSeek fallback). LR 1e-5, warmup 1000, 5000 steps.
 # v2.3.0-nl-postcode-PILOT (#924) — DeepSeek-signed init_from FINE-TUNE (not from-scratch).
 # Falsification pilot: init_from v5.3.0 (step-100000), LR 5e-6, warmup 500, 2000 steps, eval every 500.
-# Adds synth-nl-postcode@6.0 to the 698-shard base (→699). Checks the 5 #901 sentinels HOLD (the
+# Adds synth-nl-postcode@6.0 to the 698-slice base (→699). Checks the 5 #901 sentinels HOLD (the
 # 'surgery-lineage tips them' lore is checkpoint-specific; v5.3.0 is from-scratch → should be safe).
 # If sentinels hold → full run (LR 1e-5, warmup 1000, ~5000 steps). NO sentinel pinning in the pilot.
 # OUTPUT DIR IS FRESH — never overwrites v220's checkpoints (init_from READS them).
@@ -11,13 +11,13 @@
 # NOTE (corrected during assembly): v1.9.3a3 was RESUME-lineage, not from-scratch — the modern line
 # never retrained from zero. This config is the v0.8-ERA from-scratch schedule (lr 1.5e-4, warmup
 # 1000, batch 128, 100k steps — the last true from-scratch era) on the v0.10.0-boundary-family
-# corpus (698 shards incl. the validated four-orthography family
+# corpus (698 slices incl. the validated four-orthography family
 # @6.0) with tokenizer v0.7.1-nsplice (63,913 pieces) — the FIRST ground-up training on the
 # spliced vocab: the mean-init rows finally receive gradients WITH everything else instead of
 # being tipped by partial updates (the four-probe attribution, gate-v193/RESULTS.md 2026-07-03).
 # Acceptance rows: the five #901 knife-edge sentinels (gauntlet) + the full v5.2.0 battery.
 data:
-  # v0.9.4 overlay = v0.9.3a3's 694 shards VERBATIM (re-rooted to /data) + the 1 fr-bare-street shard.
+  # v0.9.4 overlay = v0.9.3a3's 694 slices VERBATIM (re-rooted to /data) + the 1 fr-bare-street slice.
   corpus_dir: /data/corpus/versioned/v0.10.1-nl-postcode/corpus-v0.10.1-nl-postcode
   tokenizer_dir: /data/models/tokenizer/v0.7.1-nsplice
   max_length: 128
@@ -45,7 +45,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM from v1.9.3a3 + the one new fr-bare-street shard.
+  source_weights: # VERBATIM from v1.9.3a3 + the one new fr-bare-street slice.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -69,7 +69,7 @@ data:
     overture: 3.0
     gnaf: 6.0
     synth-anchor-absorption: 6.0
-    # #251 NEW: the bare-no-postcode FR street shard. 6.0 = targeted-fix precedent.
+    # #251 NEW: the bare-no-postcode FR street slice. 6.0 = targeted-fix precedent.
     synth-fr-bare-street: 12.0
     synth-si-bare-village: 12.0 # the family, balanced polarity
     synth-no-street-led: 12.0

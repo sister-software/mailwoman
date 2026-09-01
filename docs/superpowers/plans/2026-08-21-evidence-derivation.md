@@ -1097,7 +1097,7 @@ describe("uprnAbsenceAt", () => {
 		expect(e).not.toBeNull()
 		expect(e!.scope.basis).toBe("designated")
 		expect(e!.scope.layer).toBe("os-open-uprn")
-		// Vintage comes from the shard's own manifest, never a literal.
+		// Vintage comes from the extract's own manifest, never a literal.
 		expect(e!.vintage).toBe("2026-08")
 	})
 
@@ -1178,7 +1178,7 @@ The function:
 Run: `yarn compile && yarn vitest run packages/resolver-wof-sqlite/uprn-existence.test.ts`
 Expected: PASS, 5 tests.
 
-- [ ] **Step 6: Verify against the real shard**
+- [ ] **Step 6: Verify against the real extract**
 
 `uprn.db` is build-local, so this is a manual check rather than a test. Confirm the two cases the fixture
 cannot: a real GB postcode centroid inside coverage returns `null` (points exist there), and a Northern
@@ -1724,7 +1724,7 @@ the ingester, the GEOID join and the cache were already here."
 node -e "const {DatabaseSync}=require('node:sqlite');const db=new DatabaseSync(process.env.MAILWOMAN_DATA_ROOT+'/ban/street-centroids-fr.db',{readOnly:true});console.log(db.prepare('select count(*) streets, count(distinct locality_base) communes from street_centroid').get())"
 ```
 
-Expected, at the `ban:fr` release `2026-05-18` shard: `{ streets: 2195655, communes: 32539 }`. France has roughly 34,900 communes, so a blanket `designated` would already be false.
+Expected, at the `ban:fr` release `2026-05-18` extract: `{ streets: 2195655, communes: 32539 }`. France has roughly 34,900 communes, so a blanket `designated` would already be false.
 
 - [ ] **Step 2: Find whether BAN publishes a per-commune completeness signal**
 
@@ -1745,7 +1745,7 @@ Either verdict must state what was measured, not what was assumed.
 git add scratchpad/2026-08-21-ban-designation-probe.md
 git commit -m "ban: measure whether BAN designates per commune before claiming it does
 
-32,539 communes in the shard against roughly 34,900 in France. The
+32,539 communes in the extract against roughly 34,900 in France. The
 CoverageBasis docstring uses BAN as its designated example; this establishes
 whether that is true of the data or only of the sentence."
 ```

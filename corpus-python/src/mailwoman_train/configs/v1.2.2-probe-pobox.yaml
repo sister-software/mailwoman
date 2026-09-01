@@ -1,10 +1,10 @@
 # === v1.2.2-probe-pobox (po_box/cedex solo probe) ===============================================
 # SINGLE-VARIABLE vs the shipped v1.1.0: corpus v0.4.12 -> v0.4.14-pobox (the codex-sourced
-# po_box/cedex coverage shard, PR #516, 50K rows verbatim-overlaid) + source weight
+# po_box/cedex coverage slice, PR #516, 50K rows verbatim-overlaid) + source weight
 # synth-po-box-cedex 1.5 (the unit-playbook precedent). The OLD fixed-layout synth-po-box stays
 # at 1.5 for THIS probe (single variable); its retire/down-weight decision is the consolidation
 # run's, stated there. Resume v1.1.0 step-040000, +4k. PRE-REGISTERED READ: po_box >= 85 /
-# cedex >= 80 on the shard's val (data/.../po-box val.jsonl) AND FR postcode >= 99.5 (cedex puts
+# cedex >= 80 on the slice's val (data/.../po-box val.jsonl) AND FR postcode >= 99.5 (cedex puts
 # trailing digits after the locality — the adjacent surface to the digit-split class) AND golden
 # po_box rows no-regression. Fail -> layout audit before any re-probe.
 # Launch: modal run -d scripts/modal/train_remote.py --config v1.2.2-probe-pobox.yaml --resume auto
@@ -30,7 +30,7 @@ data:
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
     synth-po-box: 1.5
-    # THE single variable: the new codex-sourced coverage shard (PR #516).
+    # THE single variable: the new codex-sourced coverage slice (PR #516).
     synth-po-box-cedex: 1.5
     synth-intersection: 0.2
     synth-german: 6.0
@@ -48,7 +48,7 @@ data:
   # The v0.9.12 US-postcode fix (#468): zero the gazetteer clue on tokens adjacent to a postcode-anchor
   # hit, at train time (paired with classifier.suppressGazetteerNearPostcode at inference). First trained here.
   gazetteer_choreography: true
-  # THE #511 lever: end the base-vs-shard affix label contradiction (probe-validated v1.0.6).
+  # THE #511 lever: end the base-vs-slice affix label contradiction (probe-validated v1.0.6).
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
 
 model:

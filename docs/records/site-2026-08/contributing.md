@@ -35,7 +35,7 @@ differ, the repository copy governs code contributions and this page will be cor
 ## Contributing
 
 For anything larger than a typo or an obvious fix, get in touch first so we can agree on the
-approach before you spend the time. Model-layer work (training, corpus shards, evals) has its
+approach before you spend the time. Model-layer work (training, corpus extracts, evals) has its
 own gates and runbook: [Contributing model work](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/CONTRIBUTING_MODEL_WORK.mdx).
 
 ### Requirements for acceptable contributions

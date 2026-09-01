@@ -7,10 +7,10 @@
  *   half needs — UNIT keys plus OUTWARD district keys, in the SPACE-STRIPPED UPPERCASE form the train
  *   painter writes (`SW1A 2AA` → `SW1A2AA`).
  *
- *   WHY THIS EXISTS RATHER THAN `mailwoman gazetteer postcode-binary --locale GB:<shard>`. That
+ *   WHY THIS EXISTS RATHER THAN `mailwoman gazetteer postcode-binary --locale GB:<database>`. That
  *   command's GB branch (`aggregateGbOutward`) derives the outward code by splitting `name` on a
- *   SPACE, because it was written against `postalcode-gb.db` (the retired GeoNames-lineage shard),
- *   whose `name` column carries the spaced display form. The licence-clean Code-Point Open shard
+ *   SPACE, because it was written against `postalcode-gb.db` (the retired GeoNames-lineage database),
+ *   whose `name` column carries the spaced display form. The licence-clean Code-Point Open database
  *   (`postalcode-gb-codepoint.db`, OGL v3.0) stores `name` already space-stripped (`AB101AB`), so
  *   `gbOutward` returns null on every one of its 1,746,976 rows and the command writes a VALID,
  *   EMPTY, 0-code binary and reports success. Measured 2026-08-05:
@@ -49,14 +49,14 @@ import { buildPostcodeBinaryEntries } from "#gazetteer-pipeline/postcode/binary"
 const { values } = parseArguments({
 	options: {
 		out: { type: "string" },
-		shard: { type: "string", default: "postalcode-gb-codepoint.db" },
+		database: { type: "string", default: "postalcode-gb-codepoint.db" },
 	},
 })
 
 if (!values.out) throw new Error("--out <dir> is required")
 
-const shardPath = values.shard!.startsWith("/") ? values.shard! : String(dataRootPath("wof", values.shard!))
-using con = new DatabaseClient<WOFDatabase>(shardPath, { readOnly: true })
+const databasePath = values.database!.startsWith("/") ? values.database! : String(dataRootPath("wof", values.database!))
+using con = new DatabaseClient<WOFDatabase>(databasePath, { readOnly: true })
 
 const rows = con
 	.prepare("SELECT name, latitude AS lat, longitude AS lon FROM spr WHERE placetype='postalcode' AND is_current!=0")

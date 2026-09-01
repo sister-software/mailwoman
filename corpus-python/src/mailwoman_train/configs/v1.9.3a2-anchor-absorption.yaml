@@ -24,7 +24,7 @@
 #     consult's "locale dropout" is inapplicable (no channel to mask); the locale-crutch risk is handled
 #     by the locale-AMBIGUOUS-TEXT counter-aug slice (weak country signal -> decision rests on local
 #     tokens), NOT a misleading-locale-tag slice (which would corrupt the aux head's target).
-#  4. source_weights += counter-aug shard (synth-anchor-absorption, weight 6.0 = targeted-fix precedent):
+#  4. source_weights += counter-aug slice (synth-anchor-absorption, weight 6.0 = targeted-fix precedent):
 #     6 slices (H-adversarial 30 / P-congruent 20 / P-incongruent[anchor-adversarial] 15 /
 #     anchor-false-positive 10 / locale-ambiguous-text 15 / standard 10). Minority floor: CASE-P >=35%.
 #
@@ -42,7 +42,7 @@ data:
   # (encode_row paints on shape, not the parquet), so the WHERE fix needs NO new data / NO rebuild. The
   # existing US corpus already carries real 5-digit house numbers; shaped-painting fires the anchor on
   # them at train (gold=house_number) = the override signal. Probe A1 (if A0 under-moves SLICE-H) swaps
-  # corpus_dir to a rebuilt overlay that ADDS the synth-anchor-absorption shard to amplify the signal.
+  # corpus_dir to a rebuilt overlay that ADDS the synth-anchor-absorption slice to amplify the signal.
   corpus_dir: /data/corpus/versioned/v0.9.3a2-anchor-absorption/corpus-v0.9.3a2-anchor-absorption
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
   max_length: 128
@@ -70,7 +70,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM from v1.9.2 + the one new counter-augmentation shard.
+  source_weights: # VERBATIM from v1.9.2 + the one new counter-augmentation slice.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -93,7 +93,7 @@ data:
     synth-country: 2.0
     overture: 3.0
     gnaf: 6.0
-    # PROBE A1 ONLY (not A0): the counter-augmentation shard (6 slices, see header) — added by the
+    # PROBE A1 ONLY (not A0): the counter-augmentation slice (6 slices, see header) — added by the
     # rebuilt overlay corpus iff A0 under-moves SLICE-H. 6.0 = the targeted-fix precedent
     # (synth-german/synth-fr-admin-split/gnaf all 6.0). For A0 this line stays commented out.
     synth-anchor-absorption: 6.0

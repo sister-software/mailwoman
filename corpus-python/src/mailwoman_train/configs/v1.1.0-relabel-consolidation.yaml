@@ -1,7 +1,7 @@
 # === v1.1.0-relabel-consolidation (#511 — THE FULL RUN) ==========================================
 # The v4.2.0 consolidation recipe on a LABEL-CONSISTENT mix: data.affix_relabel_lexicon_path makes
-# the base corpus agree with the affix shard (trailing USPS suffix -> street_suffix, leading
-# directional -> street_prefix, exact shard-builder semantics — see relabel.py / #511).
+# the base corpus agree with the affix slice (trailing USPS suffix -> street_suffix, leading
+# directional -> street_prefix, exact slice-builder semantics — see relabel.py / #511).
 #
 # PROBE-VALIDATED (v1.0.6, 2026-06-10): single-variable vs probe 0, relabel ON ended the transient
 # decay — prefix 88.0R@+2k -> 84.0R@+4k (one eval instance, vs the control's 81 -> 61.1 collapse),
@@ -74,7 +74,7 @@ data:
   # The v0.9.12 US-postcode fix (#468): zero the gazetteer clue on tokens adjacent to a postcode-anchor
   # hit, at train time (paired with classifier.suppressGazetteerNearPostcode at inference). First trained here.
   gazetteer_choreography: true
-  # THE #511 lever: end the base-vs-shard affix label contradiction (probe-validated v1.0.6).
+  # THE #511 lever: end the base-vs-slice affix label contradiction (probe-validated v1.0.6).
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
 
 model:

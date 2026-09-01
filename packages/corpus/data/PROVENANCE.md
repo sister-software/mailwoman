@@ -15,7 +15,7 @@ postcode-to-place join unchanged.
 
 ## `sub-venue-lexicon.json` — the sub-venue designator lexicon (#35, waves 1–2)
 
-The vocabulary a corpus shard (and eventually the span proposer) reads to recognize `Terminal 5`,
+The vocabulary a corpus slice (and eventually the span proposer) reads to recognize `Terminal 5`,
 `North Terminal`, `Concourse B`, `第1ターミナル` as venue-interior structure. Generated, **not
 hand-edited**. See `docs/engineering/sub-venue-corpus-task.mdx` for why this exists — the short
 version is that the `unit` tag was never taught the modifier+designator shape, so closing the class by
@@ -68,13 +68,13 @@ The extract JSONLs and the `.osm.pbf` files are build inputs under
 | OpenStreetMap   | Geofabrik `japan-latest.osm.pbf`                   | ODbL                | 183,999 |
 | Overture Places | `poi.db` spatial layer, vintage `2026-05-20.0`     | CDLA-Permissive-2.0 | 9,219   |
 
-**The ODbL question, unchanged from wave 1 and still open for the shard.** The committed artifact
+**The ODbL question, unchanged from wave 1 and still open for the slice.** The committed artifact
 contains no OSM geometry and no OSM row. What survives the OSM leg is surface COUNTS — that the token
 `ターミナル` appears in 1,215 Japanese feature names — plus the `identifierShapes` distribution, whose
 `examples` are gate reference strings (`B32`, `1A`, `16-18`). Facts and short factual strings are not
 a substantial extraction from a database, so this table is not treated as a Derived Database. That
-reading matches `osm/README.md`'s posture that the ODbL obligation rides on the built shard rather
-than on code. **A corpus shard built from OSM rows IS a derived work, and that question is still not
+reading matches `osm/README.md`'s posture that the ODbL obligation rides on the built slice rather
+than on code. **A corpus slice built from OSM rows IS a derived work, and that question is still not
 settled** — it gates step 4, not this table.
 
 ### What the sources are FOR, and what each cannot do
@@ -189,9 +189,9 @@ list.
 
 **A rejection of a SHIPPED designator is advisory.** `neural/venue-structure.ts` carries a flat
 English vocabulary with no locale gate, and `wing`, `terminal` and `concourse` are in it. This table
-cannot un-ship them: the `wing` / en-US rejection tells a shard author which locale to leave out of a
+cannot un-ship them: the `wing` / en-US rejection tells a slice author which locale to leave out of a
 generated line, and it does nothing to stop the span proposer firing on "Red Wing". Giving the shipped
-vocabulary a per-locale gate is step 4's problem, and it is the single largest thing the shard will
+vocabulary a per-locale gate is step 4's problem, and it is the single largest thing the slice will
 want that does not exist yet.
 
 The mechanism does hold for anything the lexicon adds. `pier` is promoted for en-GB and rejected for
@@ -203,7 +203,7 @@ en-US, and because it is not in the shipped list, the rejection has teeth: the r
 `Gate A12` is a rendering, not a string anyone wrote down: all 658 Great Britain `aeroway=gate`
 features but 13 are unnamed and carry only a `ref`. The table therefore carries a distribution rather
 than a phrase list — and the distribution turns out to differ by country far more than the shared
-vocabulary suggests, so a shard generating `Gate <ref>` for a French address has to sample France's:
+vocabulary suggests, so a slice generating `Gate <ref>` for a French address has to sample France's:
 
 | region | gate refs | most common shape      |           second | third           |
 | ------ | --------: | ---------------------- | ---------------: | --------------- |

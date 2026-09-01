@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer build postcode-prefix <shard>` — build a PFX1 postcode-prefix index
- *   (postcode-structure arc, B3-1) from a postcode shard already in the data root.
+ *   `mailwoman gazetteer build postcode-prefix <database>` — build a PFX1 postcode-prefix index
+ *   (postcode-structure arc, B3-1) from a postcode database already in the data root.
  *
- *   Two shards, and they are DELIBERATELY TWO FILES rather than one `postcode-prefix-gb.bin`:
+ *   Two databases, and they are DELIBERATELY TWO FILES rather than one `postcode-prefix-gb.bin`:
  *
  *   - `gb-codepoint` → `postcode-prefix-gb-esw.bin`. 2,863 outward codes from OS Code-Point Open
  *       (OGL v3, shippable tier), each with a centroid and its measured `radiusP95Km`. Code-Point Open
  *       covers England, Scotland and Wales ONLY — the scope slug says so, because a file named for the
- *       whole country while missing a constituent one is the coverage confusion the shard's own meta
+ *       whole country while missing a constituent one is the coverage confusion the database's own meta
  *       spends three keys warning about.
  *   - `gb-ni-osm` → `postcode-prefix-gb-ni.bin`. 80 BT districts from OpenStreetMap, ANCESTRY-ONLY,
  *       no coordinates. ODbL 1.0, so BUILD-LOCAL: folding these nodes into the Code-Point file would
@@ -49,9 +49,9 @@ const SEALED_MODE = 0o444
  */
 const EXAMPLES_PER_LINE = 6
 
-interface ShardRecipe {
+interface DatabaseRecipe {
 	/**
-	 * Shard filename under `<data-root>/wof/`.
+	 * Database filename under `<data-root>/wof/`.
 	 */
 	sourceFile: string
 	country: string
@@ -61,19 +61,19 @@ interface ShardRecipe {
 	scope: string
 	level: PostcodePrefixLevel
 	/**
-	 * WOF polygon shard under `<data-root>/wof/`, for a recipe whose ancestry is point-in-polygon rather than a
+	 * WOF polygon database under `<data-root>/wof/`, for a recipe whose ancestry is point-in-polygon rather than a
 	 * documented area table. Absent means the recipe does not use geometry.
 	 */
 	polygonFile?: string
 	/**
-	 * Prefixes probed after write. Per SHARD, never shared: probing Code-Point prefixes against a freshly built NI index
-	 * prints reassuring-looking misses that verify nothing (the lesson the pair-index command's en-nz first build
+	 * Prefixes probed after write. Per DATABASE, never shared: probing Code-Point prefixes against a freshly built NI
+	 * index prints reassuring-looking misses that verify nothing (the lesson the pair-index command's en-nz first build
 	 * taught).
 	 */
 	probePrefixes: readonly string[]
 }
 
-const SHARD_RECIPES = {
+const DATABASE_RECIPES = {
 	"gb-codepoint": {
 		sourceFile: "postalcode-gb-codepoint.db",
 		country: "gb",
@@ -99,13 +99,13 @@ const SHARD_RECIPES = {
 		// honest radiusP95Km runs to hundreds of km and is the reason a coordinate may never ship without one.
 		probePrefixes: ["605", "946", "205", "995"],
 	},
-} as const satisfies Record<string, ShardRecipe>
+} as const satisfies Record<string, DatabaseRecipe>
 
-type ShardName = keyof typeof SHARD_RECIPES
+type DatabaseName = keyof typeof DATABASE_RECIPES
 
-export const description = "Build a PFX1 postcode-prefix index from a postcode shard (B3-1)"
+export const description = "Build a PFX1 postcode-prefix index from a postcode database (B3-1)"
 
-const shardNames = ["gb-codepoint", "gb-ni-osm", "us-wof"] as const
+const databaseNames = ["gb-codepoint", "gb-ni-osm", "us-wof"] as const
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -113,9 +113,9 @@ const shardNames = ["gb-codepoint", "gb-ni-osm", "us-wof"] as const
 export const spec = {
 	name: "postcode-prefix",
 	description: "Build a postcode-prefix index",
-	positionals: [{ name: "shard", required: true, choices: shardNames, description: "Shard to index" }],
+	positionals: [{ name: "database", required: true, choices: databaseNames, description: "Database to index" }],
 	options: {
-		source: { type: "string", description: "Shard path" },
+		source: { type: "string", description: "Database path" },
 		admin: { type: "string", description: "WOF admin DB" },
 		polygons: { type: "string", description: "WOF polygon DB" },
 		out: { type: "string", description: "Output path" },
@@ -131,7 +131,7 @@ interface Options {
 	delta?: number
 }
 
-const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [ShardName]> = ({ args, options }) => {
+const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [DatabaseName]> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath, md5File, median } = await import("@mailwoman/core/utils")
 
@@ -140,8 +140,8 @@ const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [ShardName]>
 
 		const { buildPostcodePrefixIndex } = await import("#gazetteer-pipeline/postcode-prefix")
 
-		const shard = args[0] as ShardName
-		const recipe: ShardRecipe = SHARD_RECIPES[shard]
+		const database = args[0] as DatabaseName
+		const recipe: DatabaseRecipe = DATABASE_RECIPES[database]
 		const sourcePath = options.source ?? String(dataRootPath("wof", recipe.sourceFile))
 		const adminPath = options.admin ?? String(dataRootPath("wof", "admin-global-priority.db"))
 
@@ -150,7 +150,7 @@ const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [ShardName]>
 			: undefined
 
 		for (const [label, path] of [
-			["shard", sourcePath],
+			["database", sourcePath],
 			["admin DB", adminPath],
 			...(polygonPath ? ([["polygon DB", polygonPath]] as const) : []),
 		] as const) {
@@ -170,15 +170,15 @@ const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [ShardName]>
 
 		const outPath = options.out ?? String(dataRootPath("postcode-prefix", `postcode-prefix-${recipe.scope}-${day}.bin`))
 
-		// The shard's own meta is the authority on where it came from and what it does not cover — re-deriving that prose
-		// here would let the two drift, and the shard is the one that knows.
-		const source = built.meta.source ?? "(unrecorded — the shard's meta carries no `source`)"
-		const attribution = built.meta.attribution ?? "(unrecorded — the shard's meta carries no `attribution`)"
+		// The database's own meta is the authority on where it came from and what it does not cover — re-deriving that prose
+		// here would let the two drift, and the database is the one that knows.
+		const source = built.meta.source ?? "(unrecorded — the database's meta carries no `source`)"
+		const attribution = built.meta.attribution ?? "(unrecorded — the database's meta carries no `attribution`)"
 		const tier: PostcodePrefixTier = built.meta.tier === "build-local" ? "build-local" : "shipped"
 
 		const coverageNote =
-			(built.meta.coverage_meaning_of_zero ?? built.meta.coverage ?? "(the shard's meta declares no coverage)") +
-			` [PFX1: a prefix ABSENT from this index was not observed in the shard above; read that as coverage, never as ` +
+			(built.meta.coverage_meaning_of_zero ?? built.meta.coverage ?? "(the database's meta declares no coverage)") +
+			` [PFX1: a prefix ABSENT from this index was not observed in the database above; read that as coverage, never as ` +
 			`"the prefix does not exist". Nodes carry ${built.coordinateTier === "centroid" ? "a centroid and its measured radiusP95Km" : "NO coordinate — ancestry only"}: ${built.coordinateTierReason}.]`
 
 		const header: PostcodePrefixHeader = {
@@ -252,7 +252,7 @@ const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [ShardName]>
 
 		return [
 			`postcode-prefix-${recipe.scope}.bin → ${outPath} (${bytes.length.toLocaleString()} bytes, sealed 0444)`,
-			`shard: ${sourcePath}`,
+			`database: ${sourcePath}`,
 			`header: country=${recipe.country} scope=${recipe.scope} levels=[${recipe.level}] tier=${tier}` +
 				` ${options.delta !== undefined ? `delta=${options.delta}` : "(no delta — un-wired index)"}`,
 			`source (numbering register): ${source}`,
@@ -263,7 +263,7 @@ const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [ShardName]>
 					: ""),
 			"round-trip (read back from the written bytes):",
 			`  nodes ${resolver.size.toLocaleString()}`,
-			`  unitCount sum ${readUnits.toLocaleString()} (shard rows ${built.unitRows.toLocaleString()}, ${built.skippedShort} too short to cleave)`,
+			`  unitCount sum ${readUnits.toLocaleString()} (database rows ${built.unitRows.toLocaleString()}, ${built.skippedShort} too short to cleave)`,
 			...(Object.keys(built.excludedUnits).length
 				? [
 						`  units excluded from the coordinate: ` +
