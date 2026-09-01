@@ -59,35 +59,35 @@ export {
 } from "#coverage-manifest-schema"
 
 export type { CountryBBoxTable, CountryCoverageTable, GazetteerCoverageDatabase } from "#coverage-manifest-schema"
-export { SQLiteStreetNameLookup, type SQLiteStreetNameLookupOpts } from "#street-name-lookup"
+export { SQLiteStreetNameLookup, type SQLiteStreetNameLookupOpts } from "#street/name-lookup"
 
 export {
 	GEONAMES_ID_BASE,
 	type GeonamesIngestProgress,
 	ingestGeonamesAliases,
 	purgeGeonamesAliasRange,
-} from "#geonames-aliases"
+} from "#geonames/aliases"
 
-export { GEONAMES_POSTAL_ID_BASE } from "#geonames-postal"
+export { GEONAMES_POSTAL_ID_BASE } from "#geonames/postal"
 
-export { ADDRESS_POINT_COLUMNS, createAddressPointIndexes, createAddressPointTable } from "#address-point-schema"
-export type { AddressPointDatabase, AddressPointTable } from "#address-point-schema"
+export { ADDRESS_POINT_COLUMNS, createAddressPointIndexes, createAddressPointTable } from "#address/point-schema"
+export type { AddressPointDatabase, AddressPointTable } from "#address/point-schema"
 
 export {
 	WOFPostalCityAliasLookup,
 	type PostalCityAlias,
 	type WOFPostalCityAliasLookupOpts,
-} from "#postal-city-alias-lookup"
+} from "#postal/city-alias-lookup"
 
-export type { PostalCityAliasDatabase, PostalCityAliasTable } from "#postal-city-alias-schema"
+export type { PostalCityAliasDatabase, PostalCityAliasTable } from "#postal/city-alias-schema"
 
 export {
 	POSTAL_CITY_CANDIDATE_COLUMNS,
 	POSTAL_CITY_CANDIDATE_TABLE,
 	createPostalCityCandidateTable,
-} from "#postal-city-candidate-schema"
+} from "#postal/city-candidate-schema"
 
-export type { PostalCityCandidateDatabase, PostalCityCandidateTable } from "#postal-city-candidate-schema"
+export type { PostalCityCandidateDatabase, PostalCityCandidateTable } from "#postal/city-candidate-schema"
 
 export {
 	ADDRESS_CONVENTION_TABLE,
@@ -101,7 +101,7 @@ export {
 	type ResolvedConvention,
 	type ScoringWeights,
 	type Strategy,
-} from "#convention"
+} from "#convention/index"
 
 export { SqliteConventionSource } from "#sqlite-convention-source"
 
@@ -115,9 +115,9 @@ export {
 	placeSearchFTSExists,
 	type BuildPlaceSearchFTSOpts,
 	type BuildPlaceSearchFTSResult,
-} from "#fts"
+} from "#fts/index"
 
-export { PLACETYPE_DEPTH, ancestorLineage, placetypeDepth, type AncestorPlaceRow } from "#ancestry"
+export { PLACETYPE_DEPTH, ancestorLineage, placetypeDepth, type AncestorPlaceRow } from "#ancestry/index"
 
 export {
 	WOFReverseGeocoder,
@@ -127,17 +127,17 @@ export {
 	type WOFReverseGeocoderOpts,
 } from "#reverse"
 
-export { AddressPointInterpolator } from "#address-point-interpolation"
-export { AddressPointSqliteLookup } from "#address-point"
+export { AddressPointInterpolator } from "#address/point-interpolation"
+export { AddressPointSqliteLookup } from "#address/point"
 
 export {
 	STREET_CENTROID_COLUMNS,
 	createStreetCentroidIndexes,
 	createStreetCentroidTable,
-} from "#street-centroid-schema"
+} from "#street/centroid-schema"
 
-export type { StreetCentroidDatabase, StreetCentroidTable } from "#street-centroid-schema"
-export { StreetCentroidSqliteLookup } from "#street-centroid"
+export type { StreetCentroidDatabase, StreetCentroidTable } from "#street/centroid-schema"
+export { StreetCentroidSqliteLookup } from "#street/centroid"
 
 export {
 	StreetInterpolator,

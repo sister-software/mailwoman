@@ -23,7 +23,7 @@
  *   path. 1 malformed value. 4,757 distinct valid unit postcodes across 80 districts and 250 sectors.
  */
 
-import { medoidPoint, normalizePostcodeName, type PostcodePoint } from "@mailwoman/resolver-wof-sqlite/geonames-postal"
+import { medoidPoint, normalizePostcodeName, type PostcodePoint } from "@mailwoman/resolver-wof-sqlite/geonames"
 
 import { normalizePostcodeDisplay } from "#gazetteer-pipeline/postcode/display-form"
 import type { OverpassElement, OverpassResponse } from "#gazetteer-pipeline/postcode/ni-osm/fetch"

@@ -45,8 +45,8 @@ import {
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { POI_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import {
+	POI_H3_RESOLUTION,
 	createPOIBrandIndex,
 	createPOINameKeyIndex,
 	createPOISearchFTS,
@@ -55,8 +55,8 @@ import {
 	POI_COLUMNS,
 	POI_FTS_TABLE,
 	type POIDatabase,
-} from "@mailwoman/resolver-wof-sqlite/poi-schema"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+} from "@mailwoman/resolver-wof-sqlite/poi"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"

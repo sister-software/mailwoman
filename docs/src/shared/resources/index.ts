@@ -494,7 +494,7 @@ export async function loadFSTGazetteer(
 	version: string
 ): Promise<{ matcher: FSTMatcherLike; provenance?: FSTProvenanceLike }> {
 	const [fstModule, fstBinary] = await Promise.all([
-		import("@mailwoman/resolver-wof-sqlite/fst-deserialize-web"),
+		import("@mailwoman/resolver-wof-sqlite/fst/deserialize-web"),
 		fetch(assetURL(locale, version, "fst-en-US.bin")).then((r) => {
 			if (!r.ok) throw new Error(`FST fetch failed (${r.status})`)
 
@@ -526,7 +526,7 @@ export async function loadStreetMorphologyFST(locale: string, version: string): 
 	const res = await fetch(assetURL(locale, version, "fst-street-morphology.bin"))
 
 	if (!res.ok) return null
-	const fstModule = await import("@mailwoman/resolver-wof-sqlite/fst-deserialize-web")
+	const fstModule = await import("@mailwoman/resolver-wof-sqlite/fst/deserialize-web")
 
 	return fstModule.deserializeFSTWeb(await res.arrayBuffer()) as FSTMatcherLike
 }

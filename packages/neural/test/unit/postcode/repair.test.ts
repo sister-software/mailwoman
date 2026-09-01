@@ -1,0 +1,262 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Tests for the v0.7 #35 postcode regex repair pass. Each case constructs a char-aligned
+ *   DecoderToken sequence (offsets must match the raw text) and asserts the repaired postcode span.
+ *   Covers the four failure modes from the 2026-05-29 diagnostic plus the precision guards
+ *   (longest-match-wins, SNAP-only for numeric shapes, no-add-over-structural, local smear-clip).
+ */
+
+import type { BIOLabel, DecoderToken } from "@mailwoman/core/decoder"
+import { repairPostcodeLabels } from "@mailwoman/neural/postcode"
+import { describe, expect, it } from "vitest"
+
+/**
+ * Build a char-aligned token.
+ */
+function tok(piece: string, start: number, end: number, label: BIOLabel): DecoderToken {
+	return { piece, start, end, label, confidence: 1 }
+}
+
+/**
+ * The contiguous postcode value implied by the repaired labels (first B-…I-* run).
+ */
+function postcodeValue(text: string, tokens: DecoderToken[]): string | null {
+	let start = -1
+	let end = -1
+
+	for (const t of tokens) {
+		if (t.label === "B-postcode") {
+			if (start === -1) {
+				start = t.start
+				end = t.end
+			}
+		} else if (t.label === "I-postcode" && start !== -1) {
+			end = t.end
+		} else if (start !== -1) {
+			break // run ended
+		}
+	}
+
+	return start === -1 ? null : text.slice(start, end)
+}
+
+/**
+ * The contiguous locality value implied by the repaired labels (first B-…I-locality run).
+ */
+function localityValue(text: string, tokens: DecoderToken[]): string | null {
+	let start = -1
+	let end = -1
+
+	for (const t of tokens) {
+		if (t.label === "B-locality") {
+			if (start === -1) {
+				start = t.start
+				end = t.end
+			} else break
+		} else if (t.label === "I-locality" && start !== -1) {
+			end = t.end
+		} else if (start !== -1) {
+			break
+		}
+	}
+
+	return start === -1 ? null : text.slice(start, end)
+}
+
+describe("repairPostcodeLabels", () => {
+	it("ADDs an alphanumeric postcode the model missed (GB), over O/locality", () => {
+		const text = "London SW1A 1AA"
+		// model labeled the postcode tokens O — total miss.
+		const tokens = [tok("London", 0, 6, "B-locality"), tok("SW1A", 7, 11, "O"), tok("1AA", 12, 15, "O")]
+		const { tokens: out, changed } = repairPostcodeLabels(text, tokens)
+		expect(changed).toBeGreaterThan(0)
+		expect(postcodeValue(text, out)).toBe("SW1A 1AA")
+	})
+
+	it("SNAPs a fragmented IE Eircode to the full shape (F91 Y5CY — the 2026-07-06 diagnostic)", () => {
+		const text = "Ballysadare, F91 Y5CY"
+
+		// model truncates the routing key: only "91" carries a postcode label.
+		const tokens = [
+			tok("Ballysadare", 0, 11, "B-locality"),
+			tok(",", 11, 12, "O"),
+			tok("F", 13, 14, "O"),
+			tok("91", 14, 16, "B-postcode"),
+			tok("Y5CY", 17, 21, "O"),
+		]
+
+		const { tokens: out } = repairPostcodeLabels(text, tokens)
+		expect(postcodeValue(text, out)).toBe("F91 Y5CY")
+	})
+
+	it("ADDs a missed IE Eircode over O, incl. the D6W special; GB inward stays GB-shaped", () => {
+		const text = "Dublin D6W XV67"
+		const tokens = [tok("Dublin", 0, 6, "B-locality"), tok("D6W", 7, 10, "O"), tok("XV67", 11, 15, "O")]
+		const { tokens: out } = repairPostcodeLabels(text, tokens)
+		expect(postcodeValue(text, out)).toBe("D6W XV67")
+		// A GB letter+2-digit outward has a 3-char inward — the IE pattern (4-alnum unique) must not claim it.
+		const gb = "Birmingham B12 8QX"
+		const gbTokens = [tok("Birmingham", 0, 10, "B-locality"), tok("B12", 11, 14, "O"), tok("8QX", 15, 18, "O")]
+		const { tokens: gbOut } = repairPostcodeLabels(gb, gbTokens)
+		expect(postcodeValue(gb, gbOut)).toBe("B12 8QX") // via the GB pattern, not IE
+	})
+
+	it("SNAPs a truncated postcode to the full shape (CA M5V 2T6)", () => {
+		const text = "Toronto ON M5V 2T6"
+
+		// model labeled only "2T6" as postcode (truncation).
+		const tokens = [
+			tok("Toronto", 0, 7, "B-locality"),
+			tok("ON", 8, 10, "B-region"),
+			tok("M5V", 11, 14, "O"),
+			tok("2T6", 15, 18, "B-postcode"),
+		]
+
+		const { tokens: out } = repairPostcodeLabels(text, tokens)
+		expect(postcodeValue(text, out)).toBe("M5V 2T6")
+	})
+
+	it("longest-match-wins: US ZIP+4 beats the NL-shaped tail (94610-2737 CA → not 2737 CA)", () => {
+		const text = "Oakland 94610-2737 CA"
+
+		const tokens = [
+			tok("Oakland", 0, 7, "B-locality"),
+			tok("94610-2737", 8, 18, "B-postcode"), // model got it right
+			tok("CA", 19, 21, "B-region"),
+		]
+
+		const { tokens: out } = repairPostcodeLabels(text, tokens)
+		expect(postcodeValue(text, out)).toBe("94610-2737")
+		// CA must NOT have been pulled into the postcode.
+		expect(out.find((t) => t.piece === "CA")!.label).not.toBe("I-postcode")
+	})
+
+	it("keeps a BR CEP whole: NNNNN-NNN is a shape, not a 5-digit postcode with a stray tail (#35)", () => {
+		// The model emits the full CEP (verified against the shipped model on both BR world-structures
+		// rows). Without a BR shape the generic 5-digit pattern matched only "95090", snapped the span to
+		// it, and the trailing-smear clip discarded "-020" — the repair pass TRUNCATED a correct parse.
+		const text = "Caxias do Sul, RS 95090-020, Brazil"
+
+		const tokens = [
+			tok("Caxias do Sul", 0, 13, "B-locality"),
+			tok(",", 13, 14, "O"),
+			tok("RS", 15, 17, "B-region"),
+			tok("95090", 18, 23, "B-postcode"),
+			tok("-", 23, 24, "I-postcode"),
+			tok("020", 24, 27, "I-postcode"),
+			tok(",", 27, 28, "O"),
+			tok("Brazil", 29, 35, "B-country"),
+		]
+
+		const { tokens: out } = repairPostcodeLabels(text, tokens)
+		expect(postcodeValue(text, out)).toBe("95090-020")
+	})
+
+	it("SNAPs a fragmented BR CEP back to the full shape", () => {
+		// The other half of the same shape gap: the model kept only the 5-digit head.
+		const text = "Brasília - Federal District, 70390-100, Brazil"
+
+		const tokens = [
+			tok("Brasília", 0, 8, "B-locality"),
+			tok(" - ", 8, 11, "O"),
+			tok("Federal District", 11, 27, "B-region"),
+			tok(",", 27, 28, "O"),
+			tok("70390", 29, 34, "B-postcode"),
+			tok("-", 34, 35, "O"),
+			tok("100", 35, 38, "B-locality"),
+			tok(",", 38, 39, "O"),
+			tok("Brazil", 40, 46, "B-country"),
+		]
+
+		const { tokens: out } = repairPostcodeLabels(text, tokens)
+		expect(postcodeValue(text, out)).toBe("70390-100")
+	})
+
+	it("does not let the BR shape steal the tail of a US ZIP+4", () => {
+		// `\d{5}-\d{3}` could bite the first nine chars of "94610-2737"; the trailing \b forbids it, and
+		// longest-match-wins settles anything left over.
+		const text = "Oakland 94610-2737"
+		const tokens = [tok("Oakland", 0, 7, "B-locality"), tok("94610-2737", 8, 18, "B-postcode")]
+		const { tokens: out } = repairPostcodeLabels(text, tokens)
+		expect(postcodeValue(text, out)).toBe("94610-2737")
+	})
+
+	it("still refuses to CREATE a BR-shaped postcode — numeric shapes stay SNAP-only", () => {
+		const text = "12345-678 Main St"
+
+		const tokens = [
+			tok("12345-678", 0, 9, "B-house_number"),
+			tok("Main", 10, 14, "B-street"),
+			tok("St", 15, 17, "I-street"),
+		]
+
+		const { tokens: out, changed } = repairPostcodeLabels(text, tokens)
+		expect(changed).toBe(0)
+		expect(postcodeValue(text, out)).toBeNull()
+	})
+
+	it("clips smear: postcode label bleeding onto a neighbour is trimmed to the match", () => {
+		const text = "Paris 75008 France"
+
+		// model smeared the postcode onto "France".
+		const tokens = [
+			tok("Paris", 0, 5, "B-locality"),
+			tok("75008", 6, 11, "B-postcode"),
+			tok("France", 12, 18, "I-postcode"),
+		]
+
+		const { tokens: out } = repairPostcodeLabels(text, tokens)
+		expect(postcodeValue(text, out)).toBe("75008")
+		expect(out.find((t) => t.piece === "France")!.label).toBe("O")
+	})
+
+	it("hands a trailing over-extension BACK to the city (DE postcode→city absorption)", () => {
+		// The model swallowed the city's leading "Pl" into the postcode span ("08523 Pl|auen").
+		const text = "08523 Plauen"
+
+		const tokens = [
+			tok("08523", 0, 5, "B-postcode"),
+			tok("Pl", 6, 8, "I-postcode"), // over-extension: the city's first chars
+			tok("auen", 8, 12, "B-locality"), // the city remainder
+		]
+
+		const { tokens: out } = repairPostcodeLabels(text, tokens)
+		expect(postcodeValue(text, out)).toBe("08523")
+		// "Pl" is reassigned to locality and merged with "auen" into one span → "Plauen".
+		expect(localityValue(text, out)).toBe("Plauen")
+	})
+
+	it("does NOT add a numeric postcode from scratch (a bare 5-digit could be a house number)", () => {
+		const text = "12345 Main St"
+		// 12345 is a house number the model labeled correctly; no postcode present.
+		const tokens = [tok("12345", 0, 5, "B-house_number"), tok("Main", 6, 10, "B-street"), tok("St", 11, 13, "I-street")]
+		const { tokens: out, changed } = repairPostcodeLabels(text, tokens)
+		expect(changed).toBe(0)
+		expect(postcodeValue(text, out)).toBeNull()
+	})
+
+	it("does NOT add over a structural tag even for an alphanumeric shape", () => {
+		const text = "1012 AB"
+		// model labeled "1012" as house_number — ADD must be blocked (structural tag present).
+		const tokens = [tok("1012", 0, 4, "B-house_number"), tok("AB", 5, 7, "O")]
+		const { tokens: out } = repairPostcodeLabels(text, tokens)
+		expect(out[0]!.label).toBe("B-house_number") // untouched
+	})
+
+	it("is a no-op when no postcode shape is present", () => {
+		const text = "Main Street Springfield"
+
+		const tokens = [
+			tok("Main", 0, 4, "B-street"),
+			tok("Street", 5, 11, "I-street"),
+			tok("Springfield", 12, 23, "B-locality"),
+		]
+
+		const { tokens: out, changed } = repairPostcodeLabels(text, tokens)
+		expect(changed).toBe(0)
+		expect(out.map((t) => t.label)).toEqual(tokens.map((t) => t.label))
+	})
+})

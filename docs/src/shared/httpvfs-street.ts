@@ -25,7 +25,7 @@ import {
 	normalizeStreetForKeyLocale,
 	type StreetLocale,
 	stripArrondissement,
-} from "@mailwoman/resolver-wof-sqlite/street-normalize"
+} from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { clampFraction, pointAlong } from "@mailwoman/spatial"
 
 import { memoizeResettable, rowsFromExec, tableExists } from "./sqljs-rows.ts"

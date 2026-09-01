@@ -35,7 +35,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import type { ComponentTag } from "@mailwoman/core/types"
-import type { PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
+import type { PairIndexHeaderInput } from "@mailwoman/neural/pair"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
@@ -199,7 +199,7 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 		// Both `@mailwoman/neural` subpaths are self-contained — `fst-prior` type-imports from a sibling and
 		// `pair-index-resolver` reaches only `core/types` — so neither load pulls the ONNX runtime.
 		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
-		const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair-index-resolver")
+		const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair")
 		const { PairIndexBuilder, applyPairIndexHoldout } = await import("#gazetteer-pipeline/pair-index")
 		const { CSVSpliterator, JSONSpliterator } = await import("spliterator")
 		const { extractBoroughPairs } = await import("#gazetteer-pipeline/borough-pairs")

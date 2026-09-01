@@ -391,7 +391,7 @@ const GazetteerPostcodeIntl: ParsedCommandComponent<Options> = ({ options }) => 
 		// street-normalize lives in the optional `@mailwoman/resolver-wof-sqlite` peer — load it
 		// dynamically so merely importing this command (e.g. `mailwoman --help`) doesn't fault when
 		// the peer isn't installed.
-		const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
+		const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/street")
 
 		console.error(`Reading GeoNames postal for ${countries.join(", ")} from ${geonames} …`)
 

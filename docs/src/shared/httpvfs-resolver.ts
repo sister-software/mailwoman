@@ -42,7 +42,7 @@ import {
 	RERANK_FETCH,
 } from "@mailwoman/resolver-wof-sqlite/primary-preference"
 import { applyProximityRerank } from "@mailwoman/resolver-wof-sqlite/proximity-rerank"
-import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 // THE shared name_key normalizer — identical build-side (build-candidate.ts) and query-side, the
 // one-normalizer discipline that keeps the candidate table's keys reachable by construction.
 

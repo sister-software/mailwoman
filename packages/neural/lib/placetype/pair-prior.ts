@@ -1,0 +1,989 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Placetype-pair emission bias — the sixth emission prior (placetype-pair-prior arc). The
+ *   retrieval-augmented complement to the encoder's own judgment: probes contiguous word windows of
+ *   the input against a PIX1 pair index (`pair-index-resolver.ts`) of (child, parent) place-name
+ *   pairs harvested from a real address register (the GB extract: PPD `CITY`/`DISTRICT`), and
+ *   nudges the matching BIO label when a window resolves.
+ *
+ *   Same additive-matrix contract as every other prior in this file (`fst-prior.ts`,
+ *   `street-morphology-prior.ts`, `query-shape-prior.ts`'s `addEmissionMatrix`) — a `[seqLen][numLabels]`
+ *   matrix the caller folds into the decoder's emissions before Viterbi. The encoder + the other
+ *   priors still get the final vote; this one only proposes.
+ *
+ *   Evidence: rung-3 gate (2026-07-22) measured 100% recall / 0.0% false-positive rate at δ=6.0 on the
+ *   probe set that motivated this prior. **Superseded by the shipped δ calibration** (2026-07-22, a
+ *   held-out register-row + venue-confound sweep) — the real
+ *   `pair-index-gb.bin` artifact ships δ=5.0 in its header (feed-8k's calibrated
+ *   optimum; feed-2k calibrates to 4.5 but fails the FR-fragment
+ *   bare-locality bar).
+ *
+ *   **Disable semantics.** This
+ *   module has no notion of "on"/"off" by itself — `buildPlacetypePairPriors(opts, …)` just returns a
+ *   zero matrix whenever `opts?.index` is absent, and the CALLER (`neural/classifier.ts`'s `#decode`)
+ *   decides what `opts` resolves to. Three distinct cases, don't conflate them:
+ *
+ *   - **No config default, no per-call override** (e.g. `loadFromWeights({ locale: "en-us" })`, which
+ *     ships no `pair-index-*.bin` sibling to auto-wire) — genuinely no prior at all: `opts` is
+ *     `undefined` all the way down.
+ *   - **A config default IS auto-wired** (`loadFromWeights` for an en-gb-shaped cache) and the
+ *     caller passes nothing per-call — the prior is ON, not off; omitting the per-call field does NOT
+ *     recover the no-prior path in this case (see `ParseOpts.placetypePair`'s own doc comment for
+ *     the exact resolution order).
+ *   - **A config default is auto-wired and the caller wants it off for THIS call** — pass an explicit
+ *     `placetypePair: false` per-call (typed disable, same shape as `spanProposer`). There is no
+ *     config-level "null-index override" mechanism; the typed `false` on `ParseOpts` is the real
+ *     mechanism.
+ *
+ *   **Probe mode — the 2026-07-22 venue-confound falsifier verdict, extended by the 2026-07-24 anchored
+ *   adjacent-pair design** (`docs/superpowers/plans/2026-07-24-pair-prior-comma-scope-BRAINSTORM_RESPONSE.md`).
+ *   `opts.probeMode` selects HOW a candidate is built, and it matters a great deal:
+ *
+ *   - `"auto"` (**DEFAULT**, v1.1) — the production probe CHAIN: the segment path first (engages iff the
+ *     input splits into ≥2 comma-delimited segments, and then runs byte-identically to explicit
+ *     `"segment"` mode — a construction property, the chain shares the segment path's code verbatim);
+ *     when it cannot engage (a comma-free input is one giant segment — the population segment mode is
+ *     deterministically inert on), the anchored-adjacent path takes over. Segment mode's matrix on that
+ *     population is a guaranteed zero, so any anchored bias is strictly additive and the chain cannot
+ *     perturb anything outside the comma-free target population.
+ *   - `"segment"` (the v1 default, still available as an explicit override) — a candidate is a WHOLE
+ *     comma-delimited segment of the input, folded as one unit. See "Segment mode" below for the full
+ *     contract. Comma-free input = one segment = zero matrix, the documented v1 trade-off.
+ *   - `"anchored"` — the anchored adjacent-pair path alone (harness use; the chain reaches it only on
+ *     comma-free input). See "Anchored mode" below.
+ *   - `"window"` — the sliding 1..{@link WINDOW_MAX_WORDS}-word behavior (see "Window mode"
+ *     below), opt-in only.
+ *
+ *   The rung-3 gate above measured the prior's RECALL/FP on a curated probe set — real (child, parent)
+ *   pairs in isolation, no surrounding venue text. A second measurement (2026-07-22) went looking for the
+ *   failure mode a curated probe set can't see: a **6,500-row venue-confound
+ *   board**, built from real UK Food Standards Agency establishment names that happen to embed a real GB
+ *   place name inside a longer venue/business string ("Bitterne Charcoal Grill" embeds the place "Bitterne";
+ *   "North Cadbury Village Stores Ltd" embeds "North Cadbury"). Run through the full pipeline with the prior
+ *   ON in **window mode**, at the real artifact's δ=6.0, against the feed-2k dependent_locality-resurrected
+ *   checkpoint: **52.123% false-positive rate** (3,388/6,500 rows emitted a `dependent_locality` span
+ *   overlapping the venue's own text) — against a pre-registered FP=0 bar. Window mode's sub-segment
+ *   sliding probe has no venue-boundary awareness: it finds "North Cadbury" as a 2-word window INSIDE
+ *   "North Cadbury Village Stores Ltd" just as readily as it finds a bare "North Cadbury" standing alone,
+ *   because a window is any contiguous 1..3-word run regardless of what larger phrase currently contains
+ *   it. Marker suppression ({@link STRUCTURAL_MARKER_WORDS}) closes a handful of specific successor-word
+ *   classes ("Church Road", "Manor House") but was never a general venue-boundary detector, and the
+ *   venue-confound board's FP hits are dominated by venue name shapes the marker table was never built to
+ *   catch ("… Stores Ltd", "… Academy", "… Charcoal Grill"). Hence the arc's pre-registered fallback:
+ *   **segment mode is the v1 default**, and window mode sits behind this opt-in flag.
+ *   Re-enabling window mode as a default requires BOTH (a) a venue-aware suppression mechanism (a
+ *   venue/POI-name detector ahead of the prior, not just a fixed successor-word table) AND (b) a
+ *   re-measured venue-confound FP of 0 on this same board (or its successor) with that mechanism engaged.
+ *
+ *   **Segment mode.** A candidate is an ENTIRE comma-delimited segment of the input — not a sliding
+ *   sub-window. Segments are reconstructed from the tokenizer pieces' own character offsets against the raw
+ *   input text (`opts.inputText`, mirroring `query-shape-prior.ts`'s `BuildPriorsOpts.inputText` — the caller
+ *   supplies the same raw text it already has in hand; see {@link buildSegmentWindows}): every literal `,`
+ *   character in the input increments the segment counter, and each non-punctuation word group is assigned
+ *   to the segment its first piece's start offset falls into. A segment's key is the WHOLE segment folded —
+ *   both the space-joined form (each word's own fold, joined with `" "`) and the concat form (joined with no
+ *   separator) — exactly the same dual-key contract as window mode's "dual-key probe" section below, just at
+ *   segment granularity instead of per-window. This is what defeats the venue-confound class structurally:
+ *   "North Cadbury Village Stores Ltd" is ONE segment (no internal comma), so its only candidate key is the
+ *   5-word fold "north cadbury village stores ltd" — which never equals the census's 2-word "north cadbury"
+ *   entry. A real place name only fires when it occupies a segment BY ITSELF (i.e. the input actually
+ *   comma-delimits it as its own field) — which is exactly the shape a real structured address has
+ *   ("5 Fishburn Road, Fishburn, Stockton-on-Tees") and a venue-embedding string does not.
+ *
+ *   **Same-field trailing postcode (#1308).** An idiomatic NZ / free-text GB address writes the postcode in the SAME
+ *   comma-field as the post town, with no comma between them: "…Plimmerton, Porirua 5026", "…Henbury, Macclesfield SK11
+ *   9PD". Without correction that segment folds to "porirua 5026" / "macclesfield sk11 9pd" and misses the index's bare
+ *   "porirua" / "macclesfield" parent, so the (child, parent) pair never fires (the comma-separated "…, Porirua, 5026"
+ *   and no-postcode forms already flip — the postcode simply lands in its own segment there). The segment path fixes this
+ *   by stripping a TRAILING postcode-shaped run from a segment's KEY before it becomes a parent-candidate probe key — per
+ *   the index header country's postcode shape (`@mailwoman/codex/<system>`; see {@link segmentParentPostcodeShape} /
+ *   {@link stripTrailingSegmentPostcode}). Only a trailing run, never a segment that IS just a postcode, and only for a
+ *   country with a known codex shape (else byte-stable). SEGMENT PATH ONLY — anchored mode already anchors LEFT of the
+ *   whole postcode span (see "Anchored mode"), and window mode is untouched. Positions/pieceIndices still span the whole
+ *   segment, so only the probe key changes.
+ *
+ *   **Identity pairs — the repeated-name convention (segment path only).** Some registers conventionally
+ *   write the same name twice when the dependent locality and the post town coincide — NZ is the measured
+ *   case ("Mangawhai, Mangawhai": 63/246 rows of the NZ golden board, 25.6%),
+ *   and the LINZ-built pair index records the identity pair ("mangawhai","mangawhai") accordingly. The
+ *   (x,x) entry IS the evidence of the convention (registry-evidence semantics): it says "when this name
+ *   appears twice in adjacent fields, the FIRST occurrence is the dependent locality and the second is the
+ *   post town." Without special handling, BOTH identical adjacent segments loop through the X role, each
+ *   probes the other successfully, both receive the bias, and the parse fuses/mis-tags what should be
+ *   dependent_locality("Mangawhai") + locality("Mangawhai"). The rule: when a segment's IMMEDIATELY
+ *   PRECEDING segment folds to an identical key (any fold form — space-join or concat, so a cross-spelling
+ *   repeat like "Stockton-on-Tees, Stockton on Tees" also counts; see {@link sharesFoldForm}), that segment
+ *   is a REPEAT and draws no bias from any identical-key partner — the model's own (typically strong
+ *   locality) read stands. The head of the run keeps today's behavior and takes the identity bias. In a run
+ *   of ≥3 identical adjacent segments ("X, X, X"), only the FIRST overall is biased: every non-head member
+ *   is a repeat and skips identical-key partners in BOTH directions (its following twin included) — biasing
+ *   the first member of each overlapping pair (first AND second) would recreate exactly the
+ *   two-adjacent-biased-segments fusion this rule removes. NON-adjacent identical segments ("Mangawhai,
+ *   Something, Mangawhai") are outside the convention's shape and keep the ordinary two-sided behavior
+ *   unchanged. Non-identical pairs are untouched in every respect, and inputs with no identical adjacent
+ *   segment keys are byte-stable (asserted in the test suite). Country-agnostic by design: the semantics
+ *   engage wherever a register records the convention — measured 2026-07-24, the shipped `pair-index-gb.bin`
+ *   (19,209 entries, built 2026-07-23) contains ZERO identity pairs, so GB is unaffected today, but a future
+ *   GB build that records CITY==DISTRICT rows would get the same treatment for free. Window mode is
+ *   deliberately excluded (its overlapping sub-windows make "adjacent identical candidates" a different,
+ *   unmeasured population); the anchored path needs no equivalent rule — it only ever biases the child left
+ *   of the parent anchor, so a comma-free "Mangawhai Mangawhai" already biases the first occurrence only.
+ *
+ *   Two known, measured trade-offs of the segment default (all against the
+ *   feed-2k checkpoint): (1) a residual FP class survives — when a non-venue FIELD (e.g. the venue-confound
+ *   board's synthetic `street` field) happens to equal a bare census child verbatim as its OWN segment (e.g.
+ *   `"Moelfre B & B, Moelfre, Abergele, …"` — the street segment is literally "Moelfre"), segment mode still
+ *   fires, because the mechanism is purely textual/segmental, not semantic; this is not a bug in the segment
+ *   restriction, it is the segment restriction doing exactly what it's specified to do. (2) recall on a
+ *   comma-FREE input degrades toward inert, because a comma-free string is one giant segment with no
+ *   internal split — which is what the `"auto"` chain's anchored path exists to cover. Window mode remains
+ *   available, opt-in, for callers who have their own venue-boundary gate and have re-verified FP=0.
+ *
+ *   **Anchored mode (v1.1)** — the comma-free complement to segment mode, reached by the `"auto"` chain
+ *   exactly where segment mode is structurally inert. The delta vs window mode is candidate SELECTION
+ *   only (the probing/dual-key/bias implementation is shared verbatim): instead of probing every window
+ *   against every other window anywhere in the string (the any-to-any geometry behind window mode's
+ *   79% venue-confound FP at δ=10 — see the brainstorm doc's FP anatomy), candidates are pinned to the
+ *   register-style GB suffix geometry: the PARENT (post-town position) is a 1..{@link WINDOW_MAX_WORDS}-word
+ *   window immediately LEFT of a postcode-shaped span (shape per `postcode-repair.ts`'s
+ *   {@link collectMatches} — the same family the repair pass and postcode-anchor path run; the anchor
+ *   sits left of the WHOLE span, GB outward+inward included), or the string-FINAL window when no
+ *   postcode shape is present. The CHILD is a 1..{@link ANCHORED_CHILD_MAX_WORDS}-word window
+ *   immediately left of the parent (`child.endPos + 1 === parent.startPos`). Candidates are tried
+ *   longest-match-first on both sides, which implements LEFT-MAXIMALITY for free: if extending the
+ *   child one word left also pairs with the same parent, the longer child was already probed (and won)
+ *   before the shorter one — a partial-child probe ("cadbury" under "north cadbury") can never fire.
+ *   The FIRST hit biases the CHILD span only (the parent keeps the model's own — typically strong
+ *   `locality` — read, matching how the other modes only ever bias the X role) and probing stops. "Typically" is
+ *   required and was never checked — see "Whole-edge parent bias" below for the case where it does not hold and the
+ *   opt-in that closes it.
+ *   Marker suppression applies to the child exactly as window mode applies it. A venue-embedded
+ *   confound at the string start ("Queens Park Cafe …") is rejected by construction — its text is
+ *   never immediately left of the post-town anchor.
+ *
+ *   **Windowing (window mode only).** A candidate is any CONTIGUOUS run of 1..{@link WINDOW_MAX_WORDS}
+ *   non-punctuation words (punctuation-only word groups, e.g. a bare comma, are skipped without breaking
+ *   contiguity — same idiom as `fst-prior.ts`/`street-morphology-prior.ts`). `WINDOW_MAX_WORDS = 3` is the
+ *   p99 of the GB PPD `CITY` word-length distribution measured building the Task-3 artifact (n=9,031,691
+ *   non-empty-CITY rows):
+ *
+ *   | words | rows      | share  |
+ *   |-------|-----------|--------|
+ *   | 1     | 6,614,402 | 73.2%  |
+ *   | 2     | 2,043,332 | 22.6%  |
+ *   | 3     |   345,064 |  3.8%  |
+ *   | 4     |    28,606 |  0.3%  |
+ *   | 5     |       287 | <0.01% |
+ *
+ *   p50=1, p90=2, **p99=3**, max=5. Going to the observed max (5) buys negligible additional recall
+ *   against real over-matching risk on short common words — 3 is the frozen scale; widening it is a
+ *   future tunable, not a free lunch.
+ *
+ *   **The folded window key is a SPACE-JOIN of each word's own fold**, not a joint fold of the
+ *   concatenated text: `normalizeFSTToken("St")` + `" "` + `normalizeFSTToken("Helens")` → `"st helens"`.
+ *   This mirrors exactly how the Task-3 builder folds the source register's multi-word `CITY` values
+ *   (`normalizeFSTToken` preserves interior Zs whitespace — see that function's docstring) — a window
+ *   probe that instead concatenated the words with no separator (`"sthelens"`) would never hit a real
+ *   index entry. See `placetype-pair-prior.test.ts` for the "St Helens" regression case.
+ *
+ *   **Dual-key probe (hyphen/space cross-form).** The space-join above is right for a source `CITY` value
+ *   that was itself written with spaces ("St Helens"). It is WRONG for a source value that was written
+ *   hyphenated ("Stockton-on-Tees") — `normalizeFSTToken` strips the hyphens as punctuation, so the Task-3
+ *   builder folds that field to ONE concatenated token, `"stocktonontees"`, with no interior space at all.
+ *   A query that instead WRITES the same place with spaces ("Stockton on Tees") groups into three
+ *   `▁`-delimited words, and its space-joined window key (`"stockton on tees"`) never matches that
+ *   concatenated index entry. So every window is probed under BOTH candidate keys — the space-join AND the
+ *   bare concatenation (`slice.map(fstToken).join("")`) — for BOTH the X and Y role, since either side of a
+ *   real pair can be the multi-word one. `probeWindows` tries the four `(x-form, y-form)` combinations in a
+ *   fixed order — space/space, space/concat, concat/space, concat/concat — and returns on the first hit: a
+ *   real index cannot disagree with itself on the SAME pair of real-world places, but if a contrived index
+ *   ever did resolve two different tags across forms, this order means the space-joined attempt (tried
+ *   first) wins. A single-word window's two forms are identical strings, so this costs nothing extra for
+ *   the common case — the extra probes only fire for genuine multi-word windows.
+ *
+ *   **Two-sided, order-free matching.** For each candidate window X (in either textual position
+ *   relative to any other window — "two-sided" means the search for a matching partner is NOT limited
+ *   to windows that follow X, unlike the forward-only FST walk in `fst-prior.ts`), X gets a bias iff
+ *   some OTHER, DISJOINT window Y (word-group ranges must not overlap) anywhere in the input satisfies
+ *   `index.probe(x.key, y.key) === tag`. Looping every window through the X role (not just probing one
+ *   direction from a fixed anchor) is what makes the pair discoverable regardless of which of the two
+ *   real-world roles (child/parent) happens to come first in the query text — a real (child, parent)
+ *   pair is found once per member, independently, when that member takes the X role in its own
+ *   iteration. Distance/adjacency between X and Y is NOT weighted — a future tunable, frozen at "off"
+ *   for this task per the same "note as a future tunable" discipline as `fst-prior.ts`'s length-scaling
+ *   header.
+ *
+ *   **Marker suppression** (the DeepSeek venue-confound filter) — **active in both probe modes,
+ *   unchanged by the segment-mode default**. A candidate immediately followed by a structural-marker word
+ *   (or a house-number-shaped token) is a street/venue HEAD, not a standalone place reference, and is
+ *   skipped outright — no probe, no bias — regardless of whether it would otherwise have matched.
+ *   Rationale per marker, see {@link STRUCTURAL_MARKER_WORDS}: without this, a pair-index entry like
+ *   `("church", "some-locality")` would fire on "Church" in "Church House" / "Church Road" / "Church
+ *   Court" — none of which are the place "Church", all of which are street/venue names that happen to
+ *   START with a word the register also knows as a place name somewhere else in the country. This is a
+ *   narrower, purely lexical defense than the venue-confound falsifier above needed — it was never meant
+ *   to be a general venue-boundary detector, which is exactly why the segment restriction exists
+ *   alongside it rather than instead of it.
+ *
+ *   **Segment-boundary awareness.** In segment mode, the successor check only suppresses when the
+ *   successor word is in the SAME comma-delimited segment as the candidate — a successor that has already crossed into
+ *   the NEXT segment can never be read as a street/venue-head suffix of THIS candidate, because a comma sits between
+ *   them. Worked case: `"Fishburn, 5 Fishburn Road"` — "Fishburn" (segment 0) must NOT be suppressed by "5"
+ *   (segment 1's first word, a house-number shape), because the comma means "5" is never a suffix of "Fishburn" in the
+ *   source text. Since a segment-mode candidate already spans its ENTIRE segment (see "Segment mode" below), this
+ *   check is structurally near-inert for segment mode's own candidates — the real protection against a "Church
+ *   Road"-shaped false read is the whole-segment fusion itself ("Church Road" is one candidate, key "church road",
+ *   never probed as bare "church"); the successor check here exists for defense-in-depth and to keep window mode's
+ *   (comma-oblivious, unchanged) behavior sharing one code path. See `isMarkerSuppressed`'s doc comment for the exact
+ *   mechanism.
+ *
+ *   **Bias write.** `+delta` on `B-<tag>` (window's first piece) / `I-<tag>` (the rest), same
+ *   per-piece pattern as `fst-prior.ts`'s `applyBias` — `Math.max` against any bias already written by
+ *   an earlier window, never additive-stacked. `delta` resolves as `index.delta ?? opts.biasScale ??`
+ *   {@link DEFAULT_DELTA} — the real artifact's header carries the calibrated per-country `delta` (5.0 for GB as of the 2026-07-22 calibration), so `biasScale` exists
+ *   only as an override for a hand-built `PairIndexLike` test double that omits it.
+ *
+ *   **Transition term (TRANSITION-BETA build, 2026-07-24).** When the index header carries the optional
+ *   `transitionBeta` (see `PairIndexHeader.transitionBeta`), every applied bias ALSO emits a
+ *   position-scoped decoder transition adjustment — `+β` on every transition into `B-<tag>` at the child
+ *   span's first piece (see {@link TransitionAdjustment} and `viterbi.ts`'s `ViterbiTransitionAdjustment`).
+ *   This is the path-fusion recovery lever the transition-level probe measured: the emission δ can
+ *   win the per-token argmax at the child-start piece while the global Viterbi still routes through a
+ *   fused street/locality run; the entry-transition bonus pays the structural continuation toll directly
+ *   (β=5: 13/17 comma-free GB misses recovered, zero measured collateral). No hit / no `transitionBeta` →
+ *   an empty adjustment list, byte-identical decode to the emission-only behavior. One refinement
+ *   (2026-07-24, the v2 battery's single named-row regression): a child immediately preceded by a
+ *   venue-title preposition ("New Inn at Hoff") keeps the emission bias but draws NO transition
+ *   adjustment — see {@link TITLE_PREPOSITION_PREDECESSORS} for the rationale and growth discipline.
+ *
+ *   **Whole-edge parent bias (issue #46).** Everything above biases the CHILD only, on the stated
+ *   assumption that "the parent keeps the model's own — typically strong `locality` — read". Nothing checks that
+ *   assumption: `buildPlacetypePairPriors` never receives the emissions. Where it fails, the mechanism REMOVES an admin
+ *   level instead of adding one — measured on `brooklyn, new york, ny` (shipped en-US weights,
+ *   `model-v401-base-step-060000-int8.onnx`): the trailing `ny` pulls "New York" to `B-region` by 4.21 nats, the pair
+ *   fires, `brooklyn` becomes `dependent_locality`, and the tree ends with NO locality at all — worse than the pre-prior
+ *   tree, where `brooklyn` was `B-locality` at p=0.942. See
+ *   `docs/records/evals/2026-08-04-pix1-parent-assumption.md`.
+ *
+ *   The parent bias writes the other half of the edge: the record's OWN `parentTag` gets `+parentDelta` over the parent
+ *   window (see {@link applyParentTagBias}). Emission-only — the child's calibrated `transitionBeta` is not inherited.
+ *   The magnitude resolves as `opts.parentDelta ?? index.parentDelta`: the artifact header carries the calibrated
+ *   per-country value (5 on us/gb/nz/fr, absent on de/in/es/it — see `PairIndexHeader.parentDelta`) exactly as `delta`
+ *   and `transitionBeta` do, and an explicit opt (which `MAILWOMAN_PAIR_PARENT_DELTA` feeds) overrides it so an eval can
+ *   sweep without rebuilding artifacts. Both absent → no parent write at all, byte-identical to every pre-#46 build.
+ *
+ *   PIX2 (schema 3) is what made this per-record. The first implementation derived the parent's allowed tags from
+ *   `containmentFor(system)[childTag]` and biased every member equally, which is inert wherever the set has more than
+ *   one member and cannot express an edge containment disallows (the US source's `dependent_locality` under a BOROUGH).
+ *   The tag now comes off the record.
+ *
+ *   One interaction worth naming: in segment/window mode every candidate takes the X (child) role in its own iteration,
+ *   so a chain `A, B, C` where both (A,B) and (B,C) fire writes a CHILD bias and a PARENT bias onto B, toward different
+ *   tags. They compose by `Math.max` per label like any other overlapping write; the decoder arbitrates.
+ *
+ *   **PCN1 census observability (2026-08-05, the observability rung).** `opts.census` rides this module's probe chain
+ *   WITHOUT touching a single emission. Every time a candidate is probed as the PARENT half of a (child, parent) pair —
+ *   {@link probeWindowPair}, the one site all three paths funnel through — the parent's folded surface is ALSO probed
+ *   against the PCN1 placetype census (`placetype-census.ts`), and a hit is recorded on the trace out-record as a
+ *   {@link PlacetypeCensusObservation}. Nothing reads it back: no delta, no matrix write, no transition adjustment. The
+ *   census header deliberately carries no `delta` (see `PlacetypeCensusHeader.delta`), and the 2026-08-04 wiring
+ *   assessment ruled that no decode wiring ships before a calibration rung measures one; this rung exists so that
+ *   calibration has real traces to read. Zero-cost when off: `opts.census` (or the trace out-record) absent means the
+ *   recorder is never constructed and the probe never runs, so the decode is byte-identical either way — asserted in
+ *   `placetype-census-observability.test.ts`.
+ *
+ *   Missing index (`opts` undefined, or `opts.index` absent) → zero matrix, composes harmlessly with
+ *   `addEmissionMatrix`. Same for a present-but-empty/never-matching index (no country data loaded for
+ *   this locale) — the probe loop simply never finds a tag.
+ */
+
+import type { ComponentTag } from "@mailwoman/core/types"
+
+import { groupPiecesIntoWords, type WordGroup } from "#fst-prior"
+import type { PairEdge, PairIndexLike } from "#pair/index-resolver"
+import {
+	ANCHORED_CHILD_MAX_WORDS,
+	segmentParentPostcodeShape,
+	buildSegmentWindows,
+	buildWindows,
+	type CandidateWindow,
+	computeGroupSegments,
+	DEFAULT_DELTA,
+	disjoint,
+	hasTitlePrepositionPredecessor,
+	LEADING_POSTCODE_COUNTRIES,
+	looksLikeHouseNumber,
+	sharesFoldForm,
+	STRUCTURAL_MARKER_WORDS,
+	WINDOW_MAX_WORDS,
+} from "#pair/prior-windows"
+import type { PlacetypeCensusLike } from "#placetype/census"
+import { collectMatches } from "#postcode/repair"
+import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
+import type { TokenLike } from "#query-shape-prior"
+
+/**
+ * /** `probeMode` selects the candidate-building strategy — see the module docstring's "Probe mode" section for the
+ * 2026-07-22 venue-confound falsifier verdict and the 2026-07-24 anchored adjacent-pair design.
+ *
+ * - `"auto"` (**default**) — the production probe CHAIN: segment path when the input has ≥2 comma-delimited segments
+ *   (byte-identical to explicit `"segment"` there, by construction), else the anchored-adjacent path.
+ * - `"segment"` — a candidate is a WHOLE comma-delimited segment, folded as one unit. Requires `inputText` to find
+ *   segment boundaries (see {@link PlacetypePairPriorOpts.inputText}); without it, the entire input is treated as one
+ *   segment (matches the documented comma-free-input degradation, not a distinct failure mode).
+ * - `"anchored"` — the anchored adjacent-pair path alone (see the module docstring's "Anchored mode" section). Explicit
+ *   value for harness use; the chain reaches it only on comma-free input.
+ * - `"window"` — the sliding 1..{@link WINDOW_MAX_WORDS}-word behavior. Opt-in only; re-enabling as a default requires a
+ *   venue-aware suppression mechanism AND a re-measured venue-confound FP=0 (see the module docstring).
+ */
+type PlacetypePairProbeMode = "auto" | "segment" | "anchored" | "window"
+
+/**
+ * Out-record for trace support, mutated in place by {@link buildPlacetypePairPriors} when the caller supplies it via
+ * {@link PlacetypePairPriorOpts.probeTrace}. `firedPath` is set only when at least one bias was actually written —
+ * EFFECT, not configuration, matching the classifier's applied-flag pattern — and names the candidate-construction path
+ * that produced it (under `"auto"`, which leg of the chain engaged).
+ */
+export interface PlacetypeCensusObservation {
+	/**
+	 * The FOLDED parent surface that hit the census — the same key form the pair probe used (the space-join, or the bare
+	 * concatenation when that is the form the census knows). Folded once by `groupPiecesIntoWords`/`normalizeFSTToken`
+	 * and shared by both artifacts, which is what `PlacetypeCensusHeader.foldVersion` exists to guarantee.
+	 */
+	parent: string
+	/**
+	 * Which child KINDS this parent has at all, in the artifact's own descending-count order. Presence is the census's
+	 * actual claim; the counts behind it are deliberately not copied here (a share is ~100% for the dominant class
+	 * everywhere, so the number a consumer would read is a constant — `lift` is the part that varies).
+	 */
+	childTagsPresent: ComponentTag[]
+	/**
+	 * Per-tag lift — the parent's share of that tag divided by the country base rate (`PlacetypeCensusResolver.lift`).
+	 * Keyed by tag rather than parallel-arrayed with `childTagsPresent` on purpose: one fewer alignment invariant, the
+	 * same reasoning `NeuralParseTrace` gives for hanging vocab ids off `pieces[]`.
+	 */
+	lift: Partial<Record<ComponentTag, number>>
+}
+
+export interface PlacetypePairProbeTrace {
+	firedPath?: "segment" | "anchored" | "window"
+	/**
+	 * PCN1 census observations, one per DISTINCT parent surface this input's probe chain looked up and the census KNEW
+	 * (see {@link PlacetypeCensusObservation}). Absent unless `opts.census` was supplied.
+	 */
+	censusObservations?: PlacetypeCensusObservation[]
+	/**
+	 * How many distinct parent surfaces were probed against the census, hit or miss — the DENOMINATOR for
+	 * {@link censusObservations}. Without it an empty observation list is ambiguous between "the census was never
+	 * consulted" and "it was consulted and knew nothing", which is exactly the meaning-of-zero mistake a magnitude cannot
+	 * report on its own. Absent unless `opts.census` was supplied.
+	 */
+	censusProbedParents?: number
+	/**
+	 * Every CHILD tag a pair hit asserted on this input, in fire order, duplicates included (#46). Recorded on the hit —
+	 * not on the emission write — so a hit whose tag this checkpoint's label set lacks still shows up here.
+	 *
+	 * Added for bar B-1, which graded byte-stability on the rows whose child tag allowed ≥2 parents under the containment
+	 * DERIVATION the parent bias used at the time. PIX2 (schema 3) retired that derivation — the parent tag now comes off
+	 * the record — so the population B-1 sorted on no longer exists. Kept because it is the only way to read which tags a
+	 * probe actually asserted on a row without re-deriving the probe, which board builders and flip attribution both
+	 * want.
+	 */
+	firedChildTags?: ComponentTag[]
+}
+
+export interface PlacetypePairPriorOpts {
+	/**
+	 * The PIX1 pair index to probe.
+	 */
+	index: PairIndexLike
+	/**
+	 * Fallback bias magnitude when `index.delta` is absent (a hand-built test double). Default 1.0 — see
+	 * {@link DEFAULT_DELTA}.
+	 */
+	biasScale?: number
+	/**
+	 * Candidate-building strategy. Default `"auto"` (the segment→anchored probe chain) — see
+	 * {@link PlacetypePairProbeMode} and the module docstring's "Probe mode" section for the 52.1% venue-confound FP
+	 * measurement (2026-07-22) that set the v1 segment path, and the 2026-07-24 anchored adjacent-pair design that added
+	 * the comma-free leg.
+	 */
+	probeMode?: PlacetypePairProbeMode
+	/**
+	 * Raw input text — required for the segment path to locate comma boundaries via the tokenizer pieces' own character
+	 * offsets (see {@link buildSegmentWindows}), and for the anchored path to locate a postcode-shaped span (see
+	 * {@link resolveAnchorParentEnd}). Mirrors `query-shape-prior.ts`'s `BuildPriorsOpts.inputText`: the caller already
+	 * has this string in hand (the same text passed to `tokenizer.encode`) and passes it straight through. Unused in
+	 * `"window"` mode. Omitting it is not an error — the segment path degrades to treating the whole input as one segment
+	 * (same as a genuinely comma-free query), the anchored path to the string-final parent anchor.
+	 */
+	inputText?: string
+	/**
+	 * Optional out-record: which probe path actually produced a bias (see {@link PlacetypePairProbeTrace}). Supplied by
+	 * the classifier's trace path; mutated in place, never read by this module.
+	 */
+	probeTrace?: PlacetypePairProbeTrace
+	/**
+	 * OBSERVABILITY ONLY — the PCN1 placetype census to probe alongside each parent candidate (see the module docstring's
+	 * "PCN1 census observability" section). Writes nothing to the emission matrix or the transition adjustments; its sole
+	 * effect is filling {@link PlacetypePairProbeTrace.censusObservations}, so it does nothing at all without
+	 * `probeTrace`. There is no `censusDelta` sibling to `parentDelta` here, and adding one is not a small change: the
+	 * 2026-08-04 wiring assessment ruled that a decode-time census bias needs a calibration δ first, and this rung is the
+	 * evidence that calibration will read.
+	 */
+	census?: PlacetypeCensusLike
+	/**
+	 * WHOLE-EDGE bias magnitude for the PARENT window (issue #46 — see the module docstring's "Whole-edge parent bias"
+	 * section). OVERRIDES the loaded index's own `parentDelta` header field; omit it to use the artifact's calibrated
+	 * value. Both absent = child-only, byte-identical to every pre-#46 build.
+	 *
+	 * Deliberately its OWN number rather than reusing `index.delta`. The child δ was sized to clear a ~7.0-logit TRAINING
+	 * deficit on a tag the shipped lineage never learned; the parent bias instead argues with a normal, healthy model
+	 * read (4.21 nats on "new york" in `brooklyn, new york, ny`), so inheriting the child's δ would be an uncalibrated
+	 * guess. Bar B-4 calibrated it independently and landed on 5.
+	 */
+	parentDelta?: number
+}
+
+/**
+ * A position-scoped decoder transition bonus (TRANSITION-BETA build, 2026-07-24): `+bonus` on every transition INTO
+ * `toLabel` at exactly `pieceIndex`, from any predecessor. Emitted alongside the emission matrix — one per pair hit, at
+ * the CHILD span's first piece, toward `B-<tag>` — and ONLY when the loaded index's header carries `transitionBeta`
+ * (see `PairIndexHeader.transitionBeta`). Rationale: the emission-side δ wins the per-token argmax at the child-start
+ * piece yet the global Viterbi can still route through a fused street/locality run (switching one piece to
+ * `B-dependent_locality` structurally forces the following pieces to continue/restart, and that forced continuation can
+ * cost more emission mass than the local win recovers); a bonus on the ENTRY transition pays that structural toll where
+ * it is levied. Measured at β=5: 13/17 comma-free GB misses recovered, 0/47 flips on already-correct rows, 0/200 new
+ * venue-overlap FP.
+ *
+ * `toLabel` is the full BIO label string — the caller (`classifier.ts`) owns the label→index mapping and converts to
+ * the decoder's index-based `ViterbiTransitionAdjustment` (`viterbi.ts`); this module deliberately never learns the
+ * decoder's axis.
+ */
+interface TransitionAdjustment {
+	/**
+	 * Piece position whose INCOMING transition is adjusted — the child span's first piece.
+	 */
+	pieceIndex: number
+	/**
+	 * Full BIO label the adjusted transition lands on (e.g. `"B-dependent_locality"`).
+	 */
+	toLabel: string
+	/**
+	 * Additive bonus (log-score units) — the index header's `transitionBeta`.
+	 */
+	bonus: number
+}
+
+/**
+ * What {@link buildPlacetypePairPriors} returns: the emission-bias matrix (the prior's original, unchanged output) plus
+ * the position-scoped transition adjustments. `transitionAdjustments` is EMPTY unless BOTH a pair hit fired AND the
+ * index carries `transitionBeta` — a beta-less index (every artifact before the TRANSITION-BETA build, the NZ artifact
+ * by design) yields `[]`, and the decode is byte-identical to the emission-only behavior.
+ */
+export interface PlacetypePairPriorResult {
+	matrix: number[][]
+	transitionAdjustments: TransitionAdjustment[]
+}
+
+/**
+ * /** The census side-probe hook (observability rung): called with the PARENT candidate of every (child, parent) pair
+ * the chain probes, before the pair index itself is consulted. `undefined` — the production path — means no census was
+ * supplied or nobody is tracing, and not one census lookup happens.
+ */
+type CensusParentRecorder = (parent: CandidateWindow) => void
+
+/**
+ * Build the census side-probe recorder, or `undefined` when the feature is entirely inert (no census artifact loaded,
+ * or no trace out-record to write into — this rung produces trace entries and nothing else, so a census without a trace
+ * would be pure cost).
+ *
+ * Deduplicates by the parent candidate's key PAIR, so a surface probed under several children is looked up once and
+ * appears once. `censusProbedParents` counts the distinct surfaces LOOKED UP; `censusObservations` gets an entry only
+ * for the ones the census knew. The gap between the two numbers is the census's coverage on this input, and reporting
+ * it is the whole reason the counter exists: a missing node means the gazetteer counted no children there, which is
+ * usually coverage rather than a claim (`PlacetypeCensusResolver.probe`'s meaning-of-zero note).
+ *
+ * The dual-key try order mirrors {@link probeWindowPair} exactly — space-join first, bare concatenation second — so the
+ * surface recorded here is the same one the pair probe would have keyed on.
+ */
+function makeCensusParentRecorder(
+	census: PlacetypeCensusLike | undefined,
+	trace: PlacetypePairProbeTrace | undefined
+): CensusParentRecorder | undefined {
+	if (!census || !trace) return undefined
+
+	const observations: PlacetypeCensusObservation[] = (trace.censusObservations ??= [])
+	const seen = new Set<string>()
+
+	trace.censusProbedParents ??= 0
+
+	return (parent) => {
+		const keys = parent.key === parent.concatKey ? [parent.key] : [parent.key, parent.concatKey]
+		const dedupeKey = keys.join("\0")
+
+		if (seen.has(dedupeKey)) return
+
+		seen.add(dedupeKey)
+		trace.censusProbedParents = (trace.censusProbedParents ?? 0) + 1
+
+		for (const key of keys) {
+			const node = census.probe(key)
+
+			if (!node) continue
+
+			// The reader materializes `counts` in the artifact's own descending-count order, so this key order is the
+			// artifact's — a reader that wants only the dominant class can take the first entry, as PCN1's layout intends.
+			const childTagsPresent = (Object.entries(node.counts) as Array<[ComponentTag, number | undefined]>)
+				.filter((entry): entry is [ComponentTag, number] => typeof entry[1] === "number" && entry[1] > 0)
+				.map(([tag]) => tag)
+
+			const lift: Partial<Record<ComponentTag, number>> = {}
+
+			for (const tag of childTagsPresent) {
+				lift[tag] = census.lift(key, tag)
+			}
+
+			observations.push({ parent: key, childTagsPresent, lift })
+
+			return
+		}
+	}
+}
+
+/**
+ * Probe `index` for the `(x, y)` pair under every combination of their space-joined/concatenated key forms — see the
+ * module docstring's "dual-key probe" section. Tries space/space, space/concat, concat/space, concat/concat in that
+ * order and returns the first hit; a window's two forms collapse to one string when it's a single word, so this is a
+ * single probe (not four) for the common case.
+ *
+ * `recordCensusParent` (observability rung) is called with `y` — the PARENT half of the pair — before the index is
+ * consulted. This is the single site every probe path funnels through, which is why the census hook lives here rather
+ * than at the three call sites: segment, anchored and window modes get identical census coverage by construction, the
+ * same argument `applyWindowBias`'s docstring makes for the transition adjustment.
+ */
+function probeWindowPair(
+	index: PairIndexLike,
+	x: CandidateWindow,
+	y: CandidateWindow,
+	recordCensusParent?: CensusParentRecorder
+): PairEdge | undefined {
+	recordCensusParent?.(y)
+
+	const xKeys = x.key === x.concatKey ? [x.key] : [x.key, x.concatKey]
+	const yKeys = y.key === y.concatKey ? [y.key] : [y.key, y.concatKey]
+
+	for (const xKey of xKeys) {
+		for (const yKey of yKeys) {
+			const edge = index.probe(xKey, yKey)
+
+			if (edge) return edge
+		}
+	}
+
+	return undefined
+}
+
+/**
+ * Build the candidate for an explicit inclusive `[startPos, endPos]` word-group range (the anchored-mode selector).
+ */
+function makeCandidateWindow(nonEmptyGroups: readonly WordGroup[], startPos: number, endPos: number): CandidateWindow {
+	const slice = nonEmptyGroups.slice(startPos, endPos + 1)
+	const tokens = slice.map((g) => g.fstToken)
+
+	return {
+		key: tokens.join(" "),
+		concatKey: tokens.join(""),
+		startPos,
+		endPos,
+		pieceIndices: slice.flatMap((g) => g.pieceIndices),
+	}
+}
+
+/**
+ * Locate the anchored-mode parent anchor: the filtered word-group position the parent window must END at. With a
+ * postcode-shaped span in the input (shape per {@link collectMatches} — the same per-country regex family the repair
+ * pass and the postcode-anchor path run), that's the position immediately LEFT of the span's first word-group — left of
+ * the WHOLE span, so a two-token GB postcode (outward + inward) never leaks into a parent candidate. Without a postcode
+ * shape (or without `inputText` to search), the parent is string-final: the last word-group position.
+ *
+ * With several postcode-shaped spans, the LAST one (by start offset) anchors — string-final postcodes are the register
+ * convention this mode targets. Can return `-1` (postcode shape at the very start of the string): the caller treats any
+ * position `< 1` as "no room for a child left of the parent" and stays inert.
+ */
+function resolveAnchorParentEnd(
+	nonEmptyGroups: readonly WordGroup[],
+	pieces: ReadonlyArray<TokenLike>,
+	inputText: string | undefined
+): number {
+	const lastPos = nonEmptyGroups.length - 1
+
+	if (!inputText) return lastPos
+
+	const matches = collectMatches(inputText)
+
+	if (!matches.length) return lastPos
+
+	let anchor = matches[0]!
+
+	for (const m of matches) {
+		if (m.start > anchor.start) {
+			anchor = m
+		}
+	}
+
+	for (let i = 0; i < nonEmptyGroups.length; i++) {
+		const group = nonEmptyGroups[i]!
+		const start = pieces[group.pieceIndices[0]!]!.start
+		const end = pieces[group.pieceIndices.at(-1)!]!.end
+
+		if (start < anchor.end && anchor.start < end) return i - 1
+	}
+
+	// The postcode-shaped span intersects no word-group (it fell inside text the tokenizer's word grouping dropped) —
+	// degrade to the string-final anchor rather than going inert on a technicality.
+	return lastPos
+}
+
+/**
+ * The anchored adjacent-pair probe (see the module docstring's "Anchored mode" section): parent windows of
+ * 1..{@link WINDOW_MAX_WORDS} words ending at `parentEnd`, child windows of 1..{@link ANCHORED_CHILD_MAX_WORDS} words
+ * immediately left of the parent (`child.endPos + 1 === parent.startPos`), both tried longest-first — which is what
+ * implements the left-maximality rule: for a given parent, the longest child pairing with it is found (and returned)
+ * before any of its right-suffixes can be probed. Returns the FIRST hit — the child span the caller biases, the PARENT
+ * window it matched against (for the whole-edge parent bias, {@link applyParentTagBias}), and the typed edge.
+ *
+ * Marker suppression: an adjacent child's successor word is always the parent's own first word, identical for every
+ * child length under that parent — so one suppressed child suppresses the whole child loop for that parent (`break`,
+ * equivalent to window mode's per-candidate skip).
+ */
+function probeAnchoredAdjacentPair(
+	index: PairIndexLike,
+	nonEmptyGroups: readonly WordGroup[],
+	parentEnd: number,
+	recordCensusParent?: CensusParentRecorder
+): { child: CandidateWindow; parent: CandidateWindow; edge: PairEdge } | undefined {
+	// parentStart must leave at least one word-group to its left for a child, so parentLen caps at parentEnd.
+	const maxParentLen = Math.min(WINDOW_MAX_WORDS, parentEnd)
+
+	for (let parentLen = maxParentLen; parentLen >= 1; parentLen--) {
+		const parentStart = parentEnd - parentLen + 1
+		const parent = makeCandidateWindow(nonEmptyGroups, parentStart, parentEnd)
+		const childEnd = parentStart - 1
+		const maxChildLen = Math.min(ANCHORED_CHILD_MAX_WORDS, childEnd + 1)
+
+		for (let childLen = maxChildLen; childLen >= 1; childLen--) {
+			const child = makeCandidateWindow(nonEmptyGroups, childEnd - childLen + 1, childEnd)
+
+			if (isMarkerSuppressed(nonEmptyGroups, child)) break
+
+			const edge = probeWindowPair(index, child, parent, recordCensusParent)
+
+			if (edge) return { child, parent, edge }
+		}
+	}
+
+	return undefined
+}
+
+/**
+ * Is `x` immediately followed (in the non-punctuation word sequence) by a structural marker?
+ *
+ * `groupSegments`, when supplied (segment mode only — see the call site), gates this on the successor sharing `x`'s OWN
+ * segment. Without that gate, a candidate at the tail of one comma-delimited segment reads the FIRST word of the NEXT
+ * segment as its "successor" — a false cross-segment reading, not a real street/venue-head suffix of this candidate.
+ * Worked case: `"Fishburn, 5 Fishburn Road"` — ungated, "Fishburn" (segment 0) is suppressed because "5" (segment 1's
+ * first word, a house-number shape) sits next in `nonEmptyGroups`, even though the comma between them means "5" can
+ * never be read as a suffix of "Fishburn". In WINDOW mode (`groupSegments` omitted), suppression ignores comma
+ * placement entirely, by design (see `buildWindows`).
+ */
+function isMarkerSuppressed(
+	nonEmptyGroups: readonly WordGroup[],
+	x: CandidateWindow,
+	groupSegments?: readonly number[]
+): boolean {
+	const successor = nonEmptyGroups[x.endPos + 1]
+
+	if (!successor) return false
+
+	if (groupSegments && groupSegments[x.endPos] !== groupSegments[x.endPos + 1]) return false
+
+	return STRUCTURAL_MARKER_WORDS.has(successor.fstToken) || looksLikeHouseNumber(successor.fstToken)
+}
+
+/**
+ * Append `tag` to the trace's {@link PlacetypePairProbeTrace.firedChildTags}, allocating the array on first use. No-op
+ * without a trace out-record, which is the production path — this costs nothing when nobody is watching.
+ */
+function recordFiredChildTag(trace: PlacetypePairProbeTrace | undefined, tag: ComponentTag): void {
+	if (!trace) return
+
+	trace.firedChildTags ??= []
+	trace.firedChildTags.push(tag)
+}
+
+/**
+ * The emission half of a bias write: `+bias` on `B-<tag>` at the window's first piece and `I-<tag>` on the rest,
+ * `Math.max`'d against whatever's already there. Returns `false` when the model's label set has no `B-<tag>` column (an
+ * index asserting a tag this checkpoint never learned) — the caller then skips the transition adjustment too, so a hit
+ * the emission side dropped never leaves a half-applied bias behind.
+ *
+ * Shared by the CHILD write ({@link applyWindowBias}) and the WHOLE-EDGE parent write ({@link applyParentTagBias}) so
+ * the two can never drift on B/I placement or on `Math.max` composition.
+ */
+function writeSpanBias(
+	matrix: number[][],
+	labelToCol: ReadonlyMap<string, number>,
+	pieceIndices: readonly number[],
+	tag: ComponentTag,
+	bias: number
+): boolean {
+	const bCol = labelToCol.get(`B-${tag}`)
+	const iCol = labelToCol.get(`I-${tag}`)
+
+	if (bCol === undefined) return false
+
+	for (let k = 0; k < pieceIndices.length; k++) {
+		const pi = pieceIndices[k]!
+		const col = k === 0 ? bCol : (iCol ?? bCol)
+
+		matrix[pi]![col] = Math.max(matrix[pi]![col]!, bias)
+	}
+
+	return true
+}
+
+/**
+ * WHOLE-EDGE parent bias (issue #46 — see the module docstring's "Whole-edge parent bias" section).
+ *
+ * A pair hit asserts a typed (child, parent) hierarchical edge. Biasing only the child asserts half of it, on the
+ * unchecked assumption that the parent already reads as the child's containing level; where that assumption fails the
+ * mechanism REMOVES an admin level instead of adding one (`brooklyn, new york, ny` → `dependent_locality` + no locality
+ * at all, worse than the pre-prior tree). This writes the other half: `+parentDelta` on the record's OWN `parentTag`
+ * over the PARENT window.
+ *
+ * The tag comes off the RECORD (PIX2 / schema 3), not from `containmentFor(system)[childTag]`. The containment map
+ * answers a different question — which parents the tree builder will ACCEPT for a tag — and the two diverge in both
+ * directions. It cannot express the US source's `dependent_locality` under a borough (containment allows `locality`
+ * alone), and where its set has several members the derivation biased them all equally and therefore moved nothing.
+ *
+ * Emission-only by design: no transition adjustment. `transitionBeta` is the child's calibrated path-fusion lever (β=5,
+ * measured on the child span's entry transition); the parent bias has no such calibration and must not inherit one.
+ */
+function applyParentTagBias(
+	matrix: number[][],
+	labelToCol: ReadonlyMap<string, number>,
+	parent: CandidateWindow,
+	parentTag: ComponentTag,
+	parentDelta: number
+): void {
+	// The KEY's span, not the whole segment — see `CandidateWindow.keyPieceIndices` for the FR measurement that forced
+	// the distinction. The child write keeps the whole segment; only the parent needs the narrower one, because only
+	// the parent's segment carries a same-field postcode.
+	writeSpanBias(matrix, labelToCol, parent.keyPieceIndices ?? parent.pieceIndices, parentTag, parentDelta)
+}
+
+/**
+ * Write `bias` onto `B-<tag>`/`I-<tag>` for every piece in `window`, `Math.max`'d against whatever's already there.
+ *
+ * When `transitionBeta` is set (the index header carried it — TRANSITION-BETA build), ALSO record a position-scoped
+ * transition adjustment into `adjustments`: `+β` on every transition into `B-<tag>` at the window's FIRST piece (see
+ * {@link TransitionAdjustment}). Lives here — not at the call sites — so every path that applies a bias (segment,
+ * anchored, window) emits the adjustment identically, and a hit the emission side skips (unknown label, `bCol`
+ * undefined) never emits one either. Duplicate (pieceIndex, toLabel) cells (overlapping window-mode candidates) compose
+ * by `Math.max`, mirroring the emission write's own discipline.
+ *
+ * BETA REFINEMENT (2026-07-24): a child whose immediately-preceding word-group folds to a venue-title preposition (see
+ * {@link TITLE_PREPOSITION_PREDECESSORS}) draws the emission bias as normal but NO transition adjustment — enforced
+ * here, for the same single-site reason: every emitting path (segment, anchored, window) suppresses identically.
+ */
+function applyWindowBias(
+	nonEmptyGroups: readonly WordGroup[],
+	matrix: number[][],
+	labelToCol: ReadonlyMap<string, number>,
+	window: CandidateWindow,
+	tag: ComponentTag,
+	bias: number,
+	transitionBeta: number | undefined,
+	adjustments: TransitionAdjustment[]
+): void {
+	if (!writeSpanBias(matrix, labelToCol, window.pieceIndices, tag, bias)) return
+
+	if (transitionBeta === undefined || !window.pieceIndices.length) return
+
+	if (hasTitlePrepositionPredecessor(nonEmptyGroups, window)) return
+
+	const pieceIndex = window.pieceIndices[0]!
+	const toLabel = `B-${tag}`
+	const existing = adjustments.find((a) => a.pieceIndex === pieceIndex && a.toLabel === toLabel)
+
+	if (existing) {
+		existing.bonus = Math.max(existing.bonus, transitionBeta)
+	} else {
+		adjustments.push({ pieceIndex, toLabel, bonus: transitionBeta })
+	}
+}
+
+/**
+ * Build a `[seqLen][numLabels]` bias matrix from placetype-pair index matches, plus the position-scoped transition
+ * adjustments (TRANSITION-BETA build — empty unless the index carries `transitionBeta` AND a hit fired; see
+ * {@link PlacetypePairPriorResult}). See the module docstring for the full windowing/matching/suppression contract.
+ */
+export function buildPlacetypePairPriors(
+	opts: PlacetypePairPriorOpts | undefined,
+	pieces: ReadonlyArray<TokenLike & { piece: string }>,
+	labels: ReadonlyArray<string>
+): PlacetypePairPriorResult {
+	const T = pieces.length
+	const L = labels.length
+	const matrix = emptyPriorMatrix(T, L)
+	const transitionAdjustments: TransitionAdjustment[] = []
+
+	if (!opts?.index) return { matrix, transitionAdjustments }
+
+	const { index } = opts
+	const bias = index.delta ?? opts.biasScale ?? DEFAULT_DELTA
+	const transitionBeta = index.transitionBeta
+	// Explicit opt WINS over the header — that ordering is what lets `MAILWOMAN_PAIR_PARENT_DELTA` sweep δ against a
+	// shipped artifact without rebuilding it. Both absent = child-only, the pre-#46 behavior. Read once here so every
+	// emitting path shares one resolution. (`delta` resolves the other way round on purpose: its `opts.biasScale` is a
+	// FALLBACK for a hand-built double, not an override.)
+	const parentDelta = opts.parentDelta ?? index.parentDelta
+
+	// Observability rung (PCN1): `undefined` on the production path, and then not one census lookup runs. It is built
+	// here, above every early return that still probes, so the three probe paths share one recorder and one dedupe set.
+	const recordCensusParent = makeCensusParentRecorder(opts.census, opts.probeTrace)
+
+	const labelToCol = labelColumnIndex(labels)
+
+	const wordGroups = groupPiecesIntoWords(pieces)
+	const nonEmptyGroups = wordGroups.filter((g) => g.fstToken !== "")
+
+	if (nonEmptyGroups.length < 2) return { matrix, transitionAdjustments } // need ≥2 disjoint candidates to form a pair
+
+	const probeMode: PlacetypePairProbeMode = opts.probeMode ?? "auto"
+	// `groupSegments` is only meaningful (and only computed) on the segment path — window mode's marker suppression
+	// stays comma-blind by design (see `isMarkerSuppressed`'s doc comment), and the anchored path only ever handles
+	// comma-free input, where every group shares segment 0 anyway.
+	const needsSegments = probeMode === "segment" || probeMode === "auto"
+	const groupSegments = needsSegments ? computeGroupSegments(nonEmptyGroups, pieces, opts.inputText) : undefined
+	// #1308: the segment path strips a trailing same-field postcode from parent-candidate keys, per the index country's
+	// codex shape. Resolved on the segment path only — anchored and window modes never see it (they build their own
+	// candidates), so their behavior is byte-identical to pre-#1308.
+	const parentPostcodeShape = needsSegments ? segmentParentPostcodeShape(index.country) : undefined
+
+	// Only countries whose convention actually leads with the postcode get the leading pass — everywhere else this is
+	// `undefined` and the strip is a no-op, keeping every existing artifact's probe keys byte-identical.
+	const leadingPostcodeShape =
+		needsSegments && index.country && LEADING_POSTCODE_COUNTRIES.has(index.country.toLowerCase())
+			? parentPostcodeShape
+			: undefined
+
+	const segmentWindows = groupSegments
+		? buildSegmentWindows(nonEmptyGroups, groupSegments, parentPostcodeShape, leadingPostcodeShape)
+		: undefined
+
+	// The "auto" probe-chain dispatch (v1.1 — module docstring, "Probe mode"): with <2 comma segments the segment path
+	// is structurally inert (one giant candidate cannot pair with itself), so the anchored-adjacent path takes over.
+	// With ≥2 segments the chain falls through to the segment loop below UNCHANGED — comma'd inputs are byte-identical
+	// to explicit `"segment"` mode by construction, not by measurement.
+	if (probeMode === "anchored" || (probeMode === "auto" && segmentWindows!.length < 2)) {
+		const parentEnd = resolveAnchorParentEnd(nonEmptyGroups, pieces, opts.inputText)
+
+		// A parent anchored at position 0 leaves no word-group to its left to serve as a child — inert.
+		if (parentEnd < 1) return { matrix, transitionAdjustments }
+
+		const hit = probeAnchoredAdjacentPair(index, nonEmptyGroups, parentEnd, recordCensusParent)
+
+		if (hit) {
+			recordFiredChildTag(opts.probeTrace, hit.edge.tag)
+
+			applyWindowBias(
+				nonEmptyGroups,
+				matrix,
+				labelToCol,
+				hit.child,
+				hit.edge.tag,
+				bias,
+				transitionBeta,
+				transitionAdjustments
+			)
+
+			if (parentDelta !== undefined) {
+				applyParentTagBias(matrix, labelToCol, hit.parent, hit.edge.parentTag, parentDelta)
+			}
+
+			if (opts.probeTrace) {
+				opts.probeTrace.firedPath = "anchored"
+			}
+		}
+
+		return { matrix, transitionAdjustments }
+	}
+
+	const windows = probeMode === "window" ? buildWindows(nonEmptyGroups, WINDOW_MAX_WORDS) : segmentWindows!
+
+	// Segment mode collapses to one giant candidate on comma-free input (or a missing inputText) — no
+	// second, disjoint candidate to pair against. Bail before the O(n²) loop below; this is the
+	// documented comma-free-input degradation, not a bug.
+	if (windows.length < 2) return { matrix, transitionAdjustments }
+
+	let anyApplied = false
+
+	for (let wi = 0; wi < windows.length; wi++) {
+		const x = windows[wi]!
+
+		if (isMarkerSuppressed(nonEmptyGroups, x, groupSegments)) continue
+
+		// The repeated-name convention (module docstring, "Identity pairs" — segment path only; `windows` is in text
+		// order and segment candidates partition the group range contiguously, so `windows[wi - 1]` IS the immediately
+		// preceding segment). A segment whose preceding neighbor folds to an identical key is a REPEAT: the (x, x)
+		// index entry's evidence points at the FIRST occurrence (the dependent locality), so the repeat draws no bias
+		// from any identical-key partner — in either direction, which is what keeps a ≥3-run ("X, X, X") down to ONE
+		// biased segment. Non-identical partners below are untouched.
+		const previous = probeMode !== "window" && wi > 0 ? windows[wi - 1]! : undefined
+		const isIdentityRepeat = previous !== undefined && previous.endPos + 1 === x.startPos && sharesFoldForm(previous, x)
+
+		let matchedEdge: PairEdge | undefined
+		// The PARENT window of the matched pair, retained for the whole-edge parent bias (#46). `x` is the child by
+		// construction — `probeWindowPair(index, x, y)` probes the index in (child, parent) key order — so the `y` that
+		// produced the hit IS the asserted parent.
+		let matchedParent: CandidateWindow | undefined
+
+		for (const y of windows) {
+			if (!disjoint(x, y)) continue
+
+			if (isIdentityRepeat && sharesFoldForm(x, y)) continue
+
+			const edge = probeWindowPair(index, x, y, recordCensusParent)
+
+			if (edge) {
+				matchedEdge = edge
+				matchedParent = y
+
+				break
+			}
+		}
+
+		if (!matchedEdge) continue
+
+		recordFiredChildTag(opts.probeTrace, matchedEdge.tag)
+
+		applyWindowBias(nonEmptyGroups, matrix, labelToCol, x, matchedEdge.tag, bias, transitionBeta, transitionAdjustments)
+
+		if (parentDelta !== undefined) {
+			applyParentTagBias(matrix, labelToCol, matchedParent!, matchedEdge.parentTag, parentDelta)
+		}
+
+		anyApplied = true
+	}
+
+	if (anyApplied && opts.probeTrace) {
+		opts.probeTrace.firedPath = probeMode === "window" ? "window" : "segment"
+	}
+
+	return { matrix, transitionAdjustments }
+}

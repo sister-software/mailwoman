@@ -55,7 +55,7 @@ export async function foldGeonames(
 	opts: FoldGeonamesOptions
 ): Promise<FoldGeonamesResult> {
 	// resolver-wof-sqlite is an OPTIONAL peer of mailwoman — lazy import (the gazetteer-pipeline convention).
-	const { ingestGeonamesAliases } = await import("@mailwoman/resolver-wof-sqlite/geonames-aliases")
+	const { ingestGeonamesAliases } = await import("@mailwoman/resolver-wof-sqlite/geonames")
 	const geonamesDir = opts.geonamesDir ?? String(dataRootPath("geonames"))
 	const alternateDir = opts.alternateDir ?? String(dataRootPath("geonames-alternate"))
 

@@ -12,9 +12,9 @@
  *   without opening a database — mirrors `@mailwoman/osm`'s `street-locale.ts`.
  */
 
-import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"
 
-export { normalizeStreetForKeyLocale, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+export { normalizeStreetForKeyLocale, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"
 
 /**
  * ISO-3166 alpha-2 (lowercase) → the street-normalization locale a BAN extract was built with. FR-only: BAN is the

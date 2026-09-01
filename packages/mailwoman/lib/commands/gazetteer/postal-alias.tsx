@@ -106,7 +106,7 @@ const GazetteerPostalAlias: ParsedCommandComponent<Options> = ({ options }) => {
 		// DDL via the SHARED createPostalCityAliasTable builder — the exact table the reader + tests
 		// use, so this producer can't drift from postal-city-alias-schema.ts. DuckDB above is the raw
 		// parquet reader; the hot INSERT below stays on the raw `db` handle.
-		const { createPostalCityAliasTable } = await import("@mailwoman/resolver-wof-sqlite/postal-city-alias-schema")
+		const { createPostalCityAliasTable } = await import("@mailwoman/resolver-wof-sqlite/postal")
 
 		await createPostalCityAliasTable(kdb)
 

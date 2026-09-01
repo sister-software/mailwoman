@@ -27,8 +27,7 @@ import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
-import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
-import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import { normalizeTokens, deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 
 const { values, positionals } = parseArguments({
 	allowPositionals: true,

@@ -30,9 +30,9 @@ import {
 	createPOISearchFTS,
 	createPOITable,
 	type POIDatabase,
-} from "@mailwoman/resolver-wof-sqlite/poi-schema"
+} from "@mailwoman/resolver-wof-sqlite/poi"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { normalizeLocalityForKey as nameKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { normalizeLocalityForKey as nameKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { aroundAll, describe, expect, it } from "vitest"

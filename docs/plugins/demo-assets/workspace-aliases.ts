@@ -40,7 +40,9 @@ const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: strin
 	// them. Nothing noticed, because a missing target only warned. {@link requireAlias} now refuses instead —
 	// a HAND-LISTED entry naming a module that does not exist is a bug by definition, and this list is the
 	// mirror that goes stale every time a subpath moves.
-	...["fst-deserialize-web", "fst-matcher", "fst-types", "fts", "street-normalize", "fst-autocomplete"].map(
+	// These are the BROWSER-SAFE LEAVES: each keeps a per-file subpath so the demo bundle never pulls
+	// the Node-only siblings that share its directory entry.
+	...["fst/deserialize-web", "fst/matcher", "fst/types", "street/normalize", "fst/autocomplete", "fts/index"].map(
 		(subpath) => ["@mailwoman/resolver-wof-sqlite", subpath] as const
 	),
 	["@mailwoman/neural", "web-loader"],

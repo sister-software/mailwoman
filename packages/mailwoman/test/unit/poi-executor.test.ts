@@ -6,7 +6,7 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { POIIntent } from "@mailwoman/core/pipeline"
-import type { POISearchHit, POISearchQuery } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
+import type { POISearchHit, POISearchQuery } from "@mailwoman/resolver-wof-sqlite/poi"
 import { createPOIExecutor, type POIExecutorLookup } from "mailwoman/poi-executor"
 import { describe, expect, it } from "vitest"
 

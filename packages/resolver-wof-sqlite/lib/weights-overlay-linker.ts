@@ -19,7 +19,7 @@ import { spawnProcessSync } from "@mailwoman/core/process"
 import { dataRootPath, md5File, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 
-import { fstFreshnessWarning } from "#fst-freshness"
+import { fstFreshnessWarning } from "#fst/freshness"
 
 /**
  * Replicate `ln -sf SRC DEST` ATOMICALLY: symlink under a temp name, then rename over the destination. A plain

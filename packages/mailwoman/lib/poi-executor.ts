@@ -13,7 +13,7 @@
 
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
-import type { POISearchHit, POISearchQuery } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
+import type { POISearchHit, POISearchQuery } from "@mailwoman/resolver-wof-sqlite/poi"
 
 /**
  * The executor's view of a POI lookup — just the `search` method, not the full `POILookup` class. `POILookup` carries

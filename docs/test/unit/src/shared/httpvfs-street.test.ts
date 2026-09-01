@@ -13,7 +13,7 @@
 
 import { resolveStreet } from "@mailwoman/docs/shared/demo-helpers"
 import { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "@mailwoman/docs/shared/httpvfs-street"
-import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
+import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
 

@@ -54,7 +54,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { type HardSliceCase, loadHardSliceBoard } from "#eval-harness/hard-slice-board"

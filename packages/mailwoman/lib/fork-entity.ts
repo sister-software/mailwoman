@@ -26,7 +26,7 @@
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 
 import { type AdminCoherenceReport, type AdminCoherenceTreeNode, forkedEntityCoherenceField } from "#admin-coherence"
 import type { POIExecutorLookup } from "#poi-executor"

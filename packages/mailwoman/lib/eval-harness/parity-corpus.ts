@@ -19,7 +19,7 @@ import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { computeQueryShape } from "@mailwoman/query-shape"
-import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
+import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
 import { JSONSpliterator } from "spliterator"
 
 /**
@@ -151,7 +151,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		const fstPath = (classifier as { fstPath?: string }).fstPath
 
 		if (fstPath) {
-			const { deserializeFST } = await import("@mailwoman/resolver-wof-sqlite/fst-serialize")
+			const { deserializeFST } = await import("@mailwoman/resolver-wof-sqlite/fst")
 
 			fstGazetteer = deserializeFST(await readLocalBuffer(fstPath))
 
@@ -172,7 +172,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		// Sealed-artifact-first (static-index candidate 1): the loader's shared ladder — data-root
 		// `fst-street-morphology.bin`, degrading to the per-process dictionary build this site used to
 		// inline (with a cwd-relative dictionaries path, no less).
-		const { loadStreetMorphologyFST } = await import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader")
+		const { loadStreetMorphologyFST } = await import("@mailwoman/resolver-wof-sqlite/street")
 		const loaded = await loadStreetMorphologyFST({ onWarn: (message) => console.warn(message) })
 		fstStreetMorphology = loaded.matcher
 

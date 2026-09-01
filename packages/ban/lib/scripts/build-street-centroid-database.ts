@@ -32,14 +32,15 @@ import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
 import { foldStreetSurface } from "@mailwoman/resolver"
-import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
+import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import {
 	createStreetCentroidIndexes,
 	createStreetCentroidTable,
 	STREET_CENTROID_COLUMNS,
 	type StreetCentroidDatabase,
-} from "@mailwoman/resolver-wof-sqlite/street-centroid-schema"
-import { type NameKey, stripArrondissement } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+	type NameKey,
+	stripArrondissement,
+} from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { dirname, resolvePath } from "path-ts"

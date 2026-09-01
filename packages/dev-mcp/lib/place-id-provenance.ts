@@ -17,8 +17,7 @@
  *   DIFFERENT population (31,951 against Overture's 44,212 on both rows).
  */
 
-import { GEONAMES_ID_BASE } from "@mailwoman/resolver-wof-sqlite/geonames-aliases"
-import { GEONAMES_POSTAL_ID_BASE } from "@mailwoman/resolver-wof-sqlite/geonames-postal"
+import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/resolver-wof-sqlite/geonames"
 import { OVERTURE_ID_BASE } from "mailwoman/gazetteer-pipeline/admin/fold-overture"
 
 /**

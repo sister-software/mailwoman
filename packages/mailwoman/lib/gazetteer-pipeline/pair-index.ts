@@ -31,7 +31,7 @@
 import type { ComponentTag } from "@mailwoman/core/types"
 import { SeededRandom } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
-import type { PairIndexEntry } from "@mailwoman/neural/pair-index-resolver"
+import type { PairIndexEntry } from "@mailwoman/neural/pair"
 
 /**
  * The one CHILD tag this arc's extractions ever emit — the CITY-slot candidate is always a dependent_locality. The

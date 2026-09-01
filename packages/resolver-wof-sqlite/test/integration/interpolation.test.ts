@@ -10,10 +10,7 @@
  */
 
 import { StreetInterpolator } from "@mailwoman/resolver-wof-sqlite/interpolation"
-import {
-	type StreetSegmentDatabase,
-	writeInterpCalibration,
-} from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
+import { type StreetSegmentDatabase, writeInterpCalibration } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 

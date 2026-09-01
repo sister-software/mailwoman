@@ -27,7 +27,7 @@
  */
 
 import { CoverageBasis } from "@mailwoman/core/layers"
-import { POI_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
+import { POI_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/poi"
 import { shortCellToInt, type ParsedGeometry, type H3Cell } from "@mailwoman/spatial"
 import { cellToParent, latLngToCell } from "h3-js"
 

@@ -40,12 +40,12 @@ import {
 	OSM_ADDRESS_POINT_COLUMNS,
 	type OSMAddressPointDatabase,
 } from "@mailwoman/osm/sdk"
-import { createAddressPointIndexes } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
+import { createAddressPointIndexes } from "@mailwoman/resolver-wof-sqlite/address"
 import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
-} from "@mailwoman/resolver-wof-sqlite/street-normalize"
+} from "@mailwoman/resolver-wof-sqlite/street"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"

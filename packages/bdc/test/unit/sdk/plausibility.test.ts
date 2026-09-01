@@ -45,16 +45,16 @@ import {
 	writeLayerManifest,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
-import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import {
+	POILookup,
 	createPOIBrandIndex,
 	createPOINameKeyIndex,
 	createPOISearchFTS,
 	createPOIStagingTables,
 	createPOITable,
 	type POIDatabase,
-} from "@mailwoman/resolver-wof-sqlite/poi-schema"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+} from "@mailwoman/resolver-wof-sqlite/poi"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { shortCellToInt, type H3Cell, type PointLiteral } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToChildren, cellToLatLng, cellToParent, latLngToCell } from "h3-js"

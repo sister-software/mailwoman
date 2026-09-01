@@ -28,7 +28,7 @@ import { globPaths } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
-import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
+import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Box, Text } from "ink"
 import { basename, dirname, resolvePath } from "path-ts"
@@ -175,12 +175,12 @@ const SitusInterpolationDatabase: ParsedCommandComponent<Options> = ({ options }
 		// Optional maintainer deps: the shared schema/normalizer (resolver-wof-sqlite, an optional peer)
 		// and the DuckDB spatial reader (@duckdb/node-api, a dev dep). Both dynamic + guarded so the
 		// published CLI doesn't force them on every consumer.
-		let segmentSchema: typeof import("@mailwoman/resolver-wof-sqlite/street-segment-schema")
-		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street-normalize")
+		let segmentSchema: typeof import("@mailwoman/resolver-wof-sqlite/street")
+		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street")
 
 		try {
-			segmentSchema = await import("@mailwoman/resolver-wof-sqlite/street-segment-schema")
-			streetNormalize = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
+			segmentSchema = await import("@mailwoman/resolver-wof-sqlite/street")
+			streetNormalize = await import("@mailwoman/resolver-wof-sqlite/street")
 		} catch {
 			throw new CommandError(
 				"situs interpolation-database requires `@mailwoman/resolver-wof-sqlite` to be installed (the shared street-segment schema + normalizer)."

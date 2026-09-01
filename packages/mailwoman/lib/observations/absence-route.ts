@@ -74,7 +74,7 @@ import type {
 	RelationAssertion,
 	SourceProvenance,
 } from "@mailwoman/geographic-model"
-import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { recoverShortCellResolution, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "h3-js"

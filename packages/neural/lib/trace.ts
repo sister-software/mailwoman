@@ -17,7 +17,7 @@
 import type { SystemCode } from "@mailwoman/codex"
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
-import type { PlacetypeCensusObservation } from "#placetype-pair-prior"
+import type { PlacetypeCensusObservation } from "#placetype/pair-prior"
 import type { SoftFeatureChannel } from "#soft-features"
 
 /**

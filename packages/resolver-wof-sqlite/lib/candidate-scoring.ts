@@ -11,7 +11,7 @@ import { haversineKm } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { exactMatchIDs, officialNameIDs } from "#exact-match"
-import { foldQueryText } from "#fts"
+import { foldQueryText } from "#fts/index"
 import { compareReferential, referentialFromPopulation } from "#place-importance-schema"
 import { populationBoostTerm, type RankingWeights } from "#ranking-weights"
 import type { RawSearchRow } from "#search-fetch"

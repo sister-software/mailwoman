@@ -58,7 +58,7 @@ const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
 		const { createPostalCityCandidateTable, POSTAL_CITY_CANDIDATE_COLUMNS, POSTAL_CITY_CANDIDATE_TABLE } =
 			await import("@mailwoman/resolver-wof-sqlite")
 
-		const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
+		const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/street")
 
 		using db = new DatabaseClient<PostalCityCandidateDatabase>(candidateDB)
 

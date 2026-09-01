@@ -19,7 +19,7 @@ import {
 	createCandidateStagingTables,
 } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
 

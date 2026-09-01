@@ -35,7 +35,7 @@
  * type by shape — no import required.
  */
 import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
-import { spansOverlap } from "#span-repair"
+import { spansOverlap } from "#span/repair"
 
 /**
  * Candidate count above which the shape prior is too diffuse to be worth applying.

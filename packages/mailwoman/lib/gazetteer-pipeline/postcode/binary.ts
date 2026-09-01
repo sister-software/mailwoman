@@ -28,7 +28,7 @@
  *   training lookup's GB entries up to the format's i16 centroid quantization (~300 m).
  */
 
-import type { PostcodeBinaryEntry } from "@mailwoman/neural/postcode-binary-resolver"
+import type { PostcodeBinaryEntry } from "@mailwoman/neural/postcode"
 
 /**
  * A GB unit postcode in the SPACE-STRIPPED key form the train painter writes (`SW1A2AA`) — outward glued to inward.

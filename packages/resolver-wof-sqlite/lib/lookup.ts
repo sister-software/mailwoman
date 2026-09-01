@@ -15,7 +15,7 @@ import { haversineKm } from "@mailwoman/spatial"
 import type { SQLInputValue } from "@mailwoman/sqlite/client"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { ancestorLineage } from "#ancestry"
+import { ancestorLineage } from "#ancestry/index"
 import { candidateFromSearchRow, rankCandidates } from "#candidate-scoring"
 import { loadCoincidentLocalities } from "#coincident-roles"
 import {
@@ -26,7 +26,7 @@ import {
 	type ConventionSource,
 	type ResolvedConvention,
 	type Strategy,
-} from "#convention"
+} from "#convention/index"
 import {
 	pickExtractForPlacetype,
 	pickExtractsForPlacetype,
@@ -42,11 +42,11 @@ import {
 	placeBboxExists,
 	placePopulationExists,
 	placeSearchFTSExists,
-} from "#fts"
-import { normalizePlacetypes, sanitizeFTSQuery } from "#fts-query"
+} from "#fts/index"
+import { normalizePlacetypes, sanitizeFTSQuery } from "#fts/query"
 import { cfNormalize, softNameScore } from "#name-score"
 import { encyclopedicClauses } from "#place-importance-schema"
-import type { WOFPostalCityAliasLookup } from "#postal-city-alias-lookup"
+import type { WOFPostalCityAliasLookup } from "#postal/city-alias-lookup"
 import { DEFAULT_WEIGHTS, populationScaleTerm, type RankingWeights } from "#ranking-weights"
 import type { WOFDatabase } from "#schema"
 import { fetchSearchRows, type RawSearchRow } from "#search-fetch"

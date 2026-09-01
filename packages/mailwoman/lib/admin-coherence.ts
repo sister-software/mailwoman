@@ -56,7 +56,7 @@
 
 import { countrySurfaceForms, ISO2_TO_NAME, matchCountry } from "@mailwoman/codex/country"
 import { REGION_CLASS_PLACETYPES, regionKeys } from "@mailwoman/resolver-wof-sqlite/region-keys"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 
 /**
  * One admin-coherence verdict. See the module docstring for the exact meaning of each — in particular, `unverifiable`

@@ -9,9 +9,9 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { CandidateDatabase } from "#candidate-schema"
 import type { PlaceAttrs, StageRow } from "#candidate/place-attrs"
-import { ALIAS_SEPARATOR } from "#fts"
+import { ALIAS_SEPARATOR } from "#fts/index"
 import type { WOFDatabase } from "#schema"
-import { normalizeLocalityForKey } from "#street-normalize"
+import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
  * Pass 2 — explode each place's `place_search.alt_names` bag into distinct-key alias rows (`is_primary = 0`), and count

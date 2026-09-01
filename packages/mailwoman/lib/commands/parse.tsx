@@ -15,7 +15,7 @@ import { percentile } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { weightsPackageName } from "@mailwoman/neural/weights"
 import type { Resolver } from "@mailwoman/resolver"
-import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
+import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
 import type React from "react"
 
 import {
@@ -255,7 +255,7 @@ async function tryBuildFST(options: ParseOptions): Promise<FSTMatcher | undefine
 
 	try {
 		if (!(await pathExists(dbPath))) return undefined
-		const { buildFSTFromWOF } = await import("@mailwoman/resolver-wof-sqlite/fst-builder")
+		const { buildFSTFromWOF } = await import("@mailwoman/resolver-wof-sqlite/fst")
 		const { matcher } = await buildFSTFromWOF({ dbPath })
 
 		return matcher

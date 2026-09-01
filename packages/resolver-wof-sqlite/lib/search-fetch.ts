@@ -15,7 +15,7 @@
 import { bboxAround } from "@mailwoman/spatial"
 import type { DatabaseClient, SQLInputValue } from "@mailwoman/sqlite/client"
 
-import { PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE } from "#fts"
+import { PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE } from "#fts/index"
 import type { RankingWeights } from "#ranking-weights"
 import { allRows } from "#sqlite-utils"
 import type { FindPlaceQuery, WOFPlacetype } from "#types"

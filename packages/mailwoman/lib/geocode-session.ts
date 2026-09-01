@@ -450,8 +450,8 @@ export async function loadForkEntityDeps(
 	if (options.forkEntity === false || !(await pathExists(poiDBPath))) return { deps: {} }
 
 	const [{ POILookup }, { loadStreetMorphologyFST }] = await Promise.all([
-		import("@mailwoman/resolver-wof-sqlite/poi-lookup"),
-		import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"),
+		import("@mailwoman/resolver-wof-sqlite/poi"),
+		import("@mailwoman/resolver-wof-sqlite/street"),
 	])
 
 	const morphology = await loadStreetMorphologyFST()
@@ -516,8 +516,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// Default-on: only an explicit `false` disables it.
 	if (options.gazetteerPrior !== false) {
 		const [{ deserializeFST }, { loadStreetMorphologyFST }] = await Promise.all([
-			import("@mailwoman/resolver-wof-sqlite/fst-serialize"),
-			import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"),
+			import("@mailwoman/resolver-wof-sqlite/fst"),
+			import("@mailwoman/resolver-wof-sqlite/street"),
 		])
 
 		const fstPath = classifier.fstPath

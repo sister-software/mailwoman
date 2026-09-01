@@ -10,7 +10,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { findFSTAcceptedMatches } from "@mailwoman/neural/fst-prior"
 import { groupPhrasesSync } from "@mailwoman/phrase-grouper/group"
 import { computeQueryShape } from "@mailwoman/query-shape"
-import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"
+import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
 
 import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
 import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"

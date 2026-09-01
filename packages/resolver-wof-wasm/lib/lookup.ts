@@ -24,7 +24,7 @@ import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "
 // alias-bag parser, query fold, FTS sanitizer, and ranking weights keep this backend
 // byte-identical to the Node resolver's exact tier and population re-rank.
 import { aliasBagExactMatch, foldQueryText } from "@mailwoman/resolver-wof-sqlite/fts"
-import { normalizePlacetypes, sanitizeFTSQuery } from "@mailwoman/resolver-wof-sqlite/fts-query"
+import { normalizePlacetypes, sanitizeFTSQuery } from "@mailwoman/resolver-wof-sqlite/fts/query"
 import { DEFAULT_WEIGHTS, populationBoostTerm } from "@mailwoman/resolver-wof-sqlite/ranking-weights"
 import type { Database } from "@sqlite.org/sqlite-wasm"
 

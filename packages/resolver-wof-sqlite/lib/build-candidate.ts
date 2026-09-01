@@ -62,7 +62,7 @@ import { createCapitalTable } from "#capital-schema"
 import type { CapitalPoint } from "#capitals"
 import { resurrectCurrencyHoles } from "#currency-backfill"
 import type { WOFDatabase } from "#schema"
-import { normalizeLocalityForKey } from "#street-normalize"
+import { normalizeLocalityForKey } from "#street/normalize"
 
 // The build's contract is this module path; the passes behind it live in `./candidate/`. Re-exported
 // here so a consumer never has to know which pass owns which name.

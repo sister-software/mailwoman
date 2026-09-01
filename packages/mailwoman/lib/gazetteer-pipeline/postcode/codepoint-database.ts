@@ -193,7 +193,7 @@ export async function buildPostcodeCodePoint(
 	const { createUnifiedSchema, createUnifiedIndexes, populateAncestors } =
 		await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 
-	const { normalizePostcodeName } = await import("@mailwoman/resolver-wof-sqlite/geonames-postal")
+	const { normalizePostcodeName } = await import("@mailwoman/resolver-wof-sqlite/geonames")
 
 	const ingestPath = `${out}.ingest`
 	await removeStagingArtifacts(ingestPath)

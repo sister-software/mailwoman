@@ -13,7 +13,7 @@ import type { CandidateDatabase } from "#candidate-schema"
 import { isOwnNameVariant } from "#candidate/own-name"
 import type { PlaceAttrs } from "#candidate/place-attrs"
 import type { WOFDatabase } from "#schema"
-import { normalizeLocalityForKey } from "#street-normalize"
+import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
  * Key-count cut for the gloss anomaly detector (#1730) — the sweep's own boundary: 4,000 places carried >= 50 keys, and

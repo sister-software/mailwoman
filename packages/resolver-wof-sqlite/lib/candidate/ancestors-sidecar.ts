@@ -7,7 +7,7 @@
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { placetypeDepth } from "#ancestry"
+import { placetypeDepth } from "#ancestry/index"
 import {
 	CANDIDATE_ANCESTOR_COLUMNS,
 	CANDIDATE_ANCESTOR_TABLE,

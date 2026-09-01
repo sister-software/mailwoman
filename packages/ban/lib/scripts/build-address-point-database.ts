@@ -37,13 +37,13 @@ import {
 	type AddressPointDatabase,
 	createAddressPointIndexes,
 	createAddressPointTable,
-} from "@mailwoman/resolver-wof-sqlite/address-point-schema"
+} from "@mailwoman/resolver-wof-sqlite/address"
 import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
 	stripArrondissement,
-} from "@mailwoman/resolver-wof-sqlite/street-normalize"
+} from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { dirname, resolvePath } from "path-ts"

@@ -11,7 +11,7 @@ import { tableExists } from "@mailwoman/sqlite/introspection"
 import type { CandidateDatabase } from "#candidate-schema"
 import type { PlaceAttrs, StageRow } from "#candidate/place-attrs"
 import type { WOFDatabase } from "#schema"
-import { normalizeLocalityForKey } from "#street-normalize"
+import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
  * Fold ONE extract (`spr` rows at `extractPlacetype` carrying real coordinates) in, then pass 4b: the alias names
