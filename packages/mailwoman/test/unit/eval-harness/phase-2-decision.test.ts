@@ -135,7 +135,7 @@ describe("the frozen phase-2 pre-registration (#1967)", () => {
 		expect(phase2DefinitionHash(definition)).toBe(freeze.sha256)
 		expect(freeze.decisionID).toBe(definition.decisionID)
 		expect(freeze.version).toBe(definition.version)
-		expect(freeze.definition).toBe("packages/mailwoman/eval-harness/phase-2-decision/decision-definition.json")
+		expect(freeze.definition).toBe("packages/mailwoman/lib/eval-harness/phase-2-decision/decision-definition.json")
 	})
 
 	it("audits clean", async () => {

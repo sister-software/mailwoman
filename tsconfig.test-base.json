@@ -13,7 +13,12 @@
 	// file carries only the options.
 	//
 	// Run them all with `yarn typecheck:tests`.
+	// `rootDir` is re-widened here on purpose. Each workspace's BUILD project narrows it to `./lib`
+	// (source lives there, so `out/` stays flat), but a test project also pulls in `./test/**/*`,
+	// which sits OUTSIDE `lib/` — and TS6059 "not under rootDir" fires even under `noEmit`. These
+	// projects emit nothing, so the widened root costs nothing.
 	"compilerOptions": {
+		"rootDir": "${configDir}",
 		"noEmit": true,
 		"emitDeclarationOnly": false,
 		"composite": false,

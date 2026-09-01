@@ -6,7 +6,7 @@ already trusts.
 
 ## The problem, measured
 
-`resolveWeights` (`packages/neural/weights.ts:243`) walks four rungs: explicit paths → an explicit
+`resolveWeights` (`packages/neural/lib/weights.ts:243`) walks four rungs: explicit paths → an explicit
 `cacheRoot` → the installed package directory → the user cache at `~/.cache/mailwoman/weights`. Rung three
 throws when the package resolves but its binaries are missing, and the throw is deliberate — its comment
 calls it "the metadata-only dev-checkout trap".

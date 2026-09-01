@@ -511,9 +511,9 @@ jobs:
         with:
           filters: |
             conformance:
-              - 'packages/mailwoman/eval-harness/conformance/**'
-              - 'packages/mailwoman/eval-harness/gauntlet/**'
-              - 'packages/mailwoman/runtime-pipeline.ts'
+              - 'packages/mailwoman/lib/eval-harness/conformance/**'
+              - 'packages/mailwoman/lib/eval-harness/gauntlet/**'
+              - 'packages/mailwoman/lib/runtime-pipeline.ts'
               - 'packages/normalize/**'
               - 'packages/query-shape/**'
               - 'packages/locale-gate/**'
@@ -571,7 +571,7 @@ jobs:
         with:
           filters: |
             lexicon:
-              - 'packages/mailwoman/gazetteer-pipeline/**'
+              - 'packages/mailwoman/lib/gazetteer-pipeline/**'
               - 'data/gazetteer/**'
               - 'packages/core/data/libpostal/**'
               - 'packages/codex/**'

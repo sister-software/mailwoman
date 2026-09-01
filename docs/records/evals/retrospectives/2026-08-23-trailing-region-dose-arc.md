@@ -297,7 +297,7 @@ mirrored locally — worth one query before concluding it is unobtainable, not w
 That makes the VE question a product decision rather than a data-fetching task: either a synthetic
 4-digit code paired with a REAL (locality, region) pair from the WOF admin DB, or VE stays unfixed. The
 `house-venue` synthesizer now carries VE's tail ordering, so the shape has a home either way — see
-`packages/corpus/src/synthesizers/house-venue.ts`.
+`packages/corpus/lib/synthesizers/house-venue.ts`.
 
 ## The control that licenses all of the above
 

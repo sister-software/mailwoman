@@ -26,7 +26,7 @@
 	"type": "module",
 	"imports": {
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -34,17 +34,17 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./format": {
-			"node": "./format.ts",
+			"node": "./lib/format.ts",
 			"default": "./out/format.js",
 			"types": "./out/format.d.ts"
 		},
 		"./key": {
-			"node": "./key.ts",
+			"node": "./lib/key.ts",
 			"default": "./out/key.js",
 			"types": "./out/key.d.ts"
 		}

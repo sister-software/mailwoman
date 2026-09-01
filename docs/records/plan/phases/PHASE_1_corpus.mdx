@@ -20,13 +20,13 @@
 
 - [ ] Create `packages/corpus/` workspace
 - [ ] Create `packages/corpus-python/` (Python, not in workspaces — has its own `pyproject.toml`)
-- [ ] `packages/corpus/src/types.ts` — `CanonicalRow`, `LabeledRow`, `CorpusAdapter`, `AdapterOptions` per `reference/INTERFACES.md`
+- [ ] `packages/corpus/lib/types.ts` — `CanonicalRow`, `LabeledRow`, `CorpusAdapter`, `AdapterOptions` per `reference/INTERFACES.md`
 - [ ] Add to root tsconfig references, root package.json scripts
 
 ### 2. Adapter framework
 
-- [ ] `packages/corpus/src/adapter.ts` — base `CorpusAdapter` interface, helper utilities (streaming, checksum, dedup)
-- [ ] `packages/corpus/src/runner.ts` — drives an adapter, writes intermediate JSONL, reports progress, handles backpressure
+- [ ] `packages/corpus/lib/adapter.ts` — base `CorpusAdapter` interface, helper utilities (streaming, checksum, dedup)
+- [ ] `packages/corpus/lib/runner.ts` — drives an adapter, writes intermediate JSONL, reports progress, handles backpressure
 - [ ] CLI: `npx mailwoman corpus run <adapter-id> --input <path> --output <dir> [--country XX] [--limit N]`
 
 ### 3. Adapters — priority order
@@ -61,7 +61,7 @@ Build adapters in this order. Each must have:
 #### 3d. `address-formatting` (P1, synthesis support)
 
 - [ ] Vendor or fetch OpenCageData's `address-formatting` repo (MIT). It contains country-keyed templates for rendering component dicts into strings.
-- [ ] `packages/corpus/src/format.ts` exposes `formatAddress(components: ComponentDict, country: string): string`
+- [ ] `packages/corpus/lib/format.ts` exposes `formatAddress(components: ComponentDict, country: string): string`
 - [ ] This is not an adapter — it's a utility used by adapters and synthesis to render `raw` from component dicts.
 
 #### 3e. `ban` (P2, FR street-level)
@@ -100,7 +100,7 @@ Defer to end of Phase 1 or push to Phase 2 if running long. Each is a small adap
 
 Given a `CanonicalRow` with `raw` and `components`, produce a `LabeledRow` with token-level BIO labels.
 
-- [ ] `packages/corpus/src/align.ts`
+- [ ] `packages/corpus/lib/align.ts`
 - [ ] Strategy: for each component value, find its character span in `raw` using fuzzy match (`fastest-levenshtein`). Tokenize `raw` with SentencePiece. Assign BIO labels to tokens whose spans overlap component spans.
 - [ ] Reject rows where any component cannot be aligned (component text doesn't appear in `raw` within edit distance threshold). Write rejected rows to `/data/corpus/quarantine/` with a reason for human review.
 - [ ] Unit tests: alignment correct on hand-crafted examples covering: missing components, reordered components, abbreviated forms, accented vs unaccented text.
@@ -121,7 +121,7 @@ The tokenizer is trained on the corpus, not picked off the shelf.
 
 ### 6. Synthesis / augmentation
 
-- [ ] `packages/corpus/src/synthesize.ts`
+- [ ] `packages/corpus/lib/synthesize.ts`
 - [ ] Augmentations for both US and FR:
   - Case perturbation (random upper/lower)
   - Punctuation drop/add (commas)
@@ -141,7 +141,7 @@ The tokenizer is trained on the corpus, not picked off the shelf.
 
 ### 7. Parquet output
 
-- [ ] `packages/corpus/src/parquet.ts` — write labeled rows to Parquet shards, ~1M rows per shard
+- [ ] `packages/corpus/lib/parquet.ts` — write labeled rows to Parquet shards, ~1M rows per shard
 - [ ] Schema: `raw: string, tokens: list<string>, labels: list<string>, country: string, locale: string, source: string, source_id: string, corpus_version: string, license: string, synth_method: string?, synth_base_id: string?`
 - [ ] Use `@dsnp/parquetjs` or, if that proves limiting, write JSONL and convert via a tiny Python script (PyArrow). Either is acceptable.
 - [ ] Output path: `/data/corpus/versioned/corpus-v0.1.0/`
@@ -150,7 +150,7 @@ The tokenizer is trained on the corpus, not picked off the shelf.
 
 ⚠ This is where corpora silently leak. Do it correctly.
 
-- [ ] `packages/corpus/src/split.ts`
+- [ ] `packages/corpus/lib/split.ts`
 - [ ] Split strategy: **hold out by locality**, not random row sampling
   - US: hold out all rows from Vermont, Wyoming, North Dakota (low-density states, ensures generalization)
   - FR: hold out all rows from Corse, Lozère, Creuse (small departments)

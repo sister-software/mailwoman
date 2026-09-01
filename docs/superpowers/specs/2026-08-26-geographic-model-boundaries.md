@@ -48,14 +48,14 @@ Every path in this section was read at the commit this record was written agains
 
 ### 2.1 POI categories — `@mailwoman/poi-taxonomy`
 
-| What                                | Where                                                                                                                                    |
-| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Category record + branded id        | `packages/poi-taxonomy/types.ts` (`CategoryRecord`, `POICategoryID`, `CategorySource`)                                                   |
-| Authored curated layer              | `packages/poi-taxonomy/data/curated-overlay.json` — 26 category records, 55 synonym phrases                                              |
-| External snapshot                   | `packages/poi-taxonomy/data/overture-categories.csv` — Overture schema `v1.17.0`, CDLA-Permissive-2.0                                    |
-| Generated, committed merge          | `packages/poi-taxonomy/data/taxonomy.json` — 2,113 categories, 55 synonyms; **do not hand-edit**                                         |
-| Provenance + regeneration procedure | `packages/poi-taxonomy/data/PROVENANCE.md`                                                                                               |
-| Matching core                       | `packages/poi-taxonomy/lookup-core.ts` (`createLookupCore`, `lookupPOICategory`, `requiresBuildLocalLayer`, `resolveOvertureCategories`) |
+| What                                | Where                                                                                                                                        |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Category record + branded id        | `packages/poi-taxonomy/lib/types.ts` (`CategoryRecord`, `POICategoryID`, `CategorySource`)                                                   |
+| Authored curated layer              | `packages/poi-taxonomy/data/curated-overlay.json` — 26 category records, 55 synonym phrases                                                  |
+| External snapshot                   | `packages/poi-taxonomy/data/overture-categories.csv` — Overture schema `v1.17.0`, CDLA-Permissive-2.0                                        |
+| Generated, committed merge          | `packages/poi-taxonomy/data/taxonomy.json` — 2,113 categories, 55 synonyms; **do not hand-edit**                                             |
+| Provenance + regeneration procedure | `packages/poi-taxonomy/data/PROVENANCE.md`                                                                                                   |
+| Matching core                       | `packages/poi-taxonomy/lib/lookup-core.ts` (`createLookupCore`, `lookupPOICategory`, `requiresBuildLocalLayer`, `resolveOvertureCategories`) |
 
 Three structures exist over categories, and none of them is a relation in the sense this program
 needs:
@@ -68,7 +68,7 @@ needs:
    declare one (`bank`, `cafe`, `place_of_worship`, `school`, `supermarket`, `trail`). Absent means
    identity: the seed id is its own probe id.
 3. **`SynonymEntry`** — one phrase, **one** `categoryID`, optionally locale-gated
-   (`packages/poi-taxonomy/types.ts`). The cardinality is the point: the field is a single id, so a
+   (`packages/poi-taxonomy/lib/types.ts`). The cardinality is the point: the field is a single id, so a
    phrase can never name a set.
 
 There is no relation type, no modality, no country scope, and no per-assertion provenance anywhere in
@@ -84,13 +84,13 @@ single-valued synonym cannot hold a set. This is the gap the program opens, and 
 
 ### 2.3 Coverage epistemics — `@mailwoman/core/layers`
 
-| What                                | Where                                                                                                          |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Contract tables + DDL               | `packages/core/layers/schema.ts` (`LayerManifestTable`, `LayerCoverageTable`, `LayerTier`, `CoverageBasis`)    |
-| Parsed face + read/write + the gate | `packages/core/layers/manifest.ts` (`LayerManifest`, `CoverageCell`, `supportsExclusion`, `readLayerCoverage`) |
-| Barrel                              | `packages/core/layers/index.ts`                                                                                |
-| Contract prose for layer authors    | `docs/engineering/reference/layer-contract.mdx`                                                                |
-| Cell-vs-scope coverage design       | `docs/superpowers/specs/2026-08-11-coverage-register-design.md`                                                |
+| What                                | Where                                                                                                              |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Contract tables + DDL               | `packages/core/lib/layers/schema.ts` (`LayerManifestTable`, `LayerCoverageTable`, `LayerTier`, `CoverageBasis`)    |
+| Parsed face + read/write + the gate | `packages/core/lib/layers/manifest.ts` (`LayerManifest`, `CoverageCell`, `supportsExclusion`, `readLayerCoverage`) |
+| Barrel                              | `packages/core/lib/layers/index.ts`                                                                                |
+| Contract prose for layer authors    | `docs/engineering/reference/layer-contract.mdx`                                                                    |
+| Cell-vs-scope coverage design       | `docs/superpowers/specs/2026-08-11-coverage-register-design.md`                                                    |
 
 `supportsExclusion(cell)` returns true only for `CoverageBasis.Designated` or
 `CoverageBasis.Surveyed`. `CoverageBasis.SourcePresent` supports presence and nothing else — the
@@ -100,7 +100,7 @@ means unmapped, never surveyed-and-empty.
 **Measured against the shipped layer** (`poi.db`, manifest `name: poi`, `version: 2026-07-22.0`,
 `tier: shipped`, `source: overture-places`, `source_vintage: 2026-07-22.0`): 158,813 coverage cells,
 **every one at `basis = source_present`**, `completeness` min and max both `1.0`. The writer says so
-in place — `packages/mailwoman/gazetteer-pipeline/poi/build-poi.ts` sets
+in place — `packages/mailwoman/lib/gazetteer-pipeline/poi/build-poi.ts` sets
 `basis: CoverageBasis.SourcePresent` on both the rows-derived and the override coverage sets, with a
 comment stating that the `1.0` means "Overture returned rows here", not "everything here is known".
 
@@ -112,16 +112,16 @@ capability.
 
 ### 2.4 Execution — the runtime POI branch
 
-| Stage                         | Where                                                                                                                |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Subject/anchor split          | `packages/kind-classifier/poi.ts` (`matchPOISubject`, `createScorePOIQuery`, `createScorePOICategory`)               |
-| Lexicon adapter + stage build | `packages/mailwoman/poi-intent.ts` (`poiTaxonomyLookup`, `createPOIIntentStage`)                                     |
-| Intent execution              | `packages/mailwoman/poi-executor.ts` (`createPOIExecutor`)                                                           |
-| Backend probe                 | `packages/resolver-wof-sqlite/poi-lookup.ts` (`POILookup.search`, `#searchKRing`)                                    |
-| Wiring                        | `packages/mailwoman/runtime-pipeline.ts` (`poiQueryKind`, default-on)                                                |
-| Contract types                | `packages/core/pipeline/types.ts` (`POIIntent`, `POIResult`, `POIIntentOutcome`)                                     |
-| Layer build                   | `packages/mailwoman/gazetteer-pipeline/poi/build-poi.ts`                                                             |
-| Committed board + fixtures    | `packages/mailwoman/eval-harness/poi-board.ts`, `packages/mailwoman/eval-harness/fixtures/poi-board.jsonl` (51 rows) |
+| Stage                         | Where                                                                                                                        |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Subject/anchor split          | `packages/kind-classifier/lib/poi.ts` (`matchPOISubject`, `createScorePOIQuery`, `createScorePOICategory`)                   |
+| Lexicon adapter + stage build | `packages/mailwoman/lib/poi-intent.ts` (`poiTaxonomyLookup`, `createPOIIntentStage`)                                         |
+| Intent execution              | `packages/mailwoman/lib/poi-executor.ts` (`createPOIExecutor`)                                                               |
+| Backend probe                 | `packages/resolver-wof-sqlite/lib/poi-lookup.ts` (`POILookup.search`, `#searchKRing`)                                        |
+| Wiring                        | `packages/mailwoman/lib/runtime-pipeline.ts` (`poiQueryKind`, default-on)                                                    |
+| Contract types                | `packages/core/lib/pipeline/types.ts` (`POIIntent`, `POIResult`, `POIIntentOutcome`)                                         |
+| Layer build                   | `packages/mailwoman/lib/gazetteer-pipeline/poi/build-poi.ts`                                                                 |
+| Committed board + fixtures    | `packages/mailwoman/lib/eval-harness/poi-board.ts`, `packages/mailwoman/lib/eval-harness/fixtures/poi-board.jsonl` (51 rows) |
 
 The path is: `matchPOISubject` splits the input at the first anchor separator whose prefix hits the
 injected lexicon (subject ≤ 8 tokens) → `poiTaxonomyLookup` probes exact phrase, then a small English
@@ -143,10 +143,10 @@ The abstain vocabulary is small and already structured: `POIIntentOutcome` is
 
 | What                           | Where                                                                                                                                        |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Decode-time grammar + tree     | `packages/core/decoder/` (`build-tree.ts`, `validate-tree.ts`, `types.ts`)                                                                   |
+| Decode-time grammar + tree     | `packages/core/lib/decoder/` (`build-tree.ts`, `validate-tree.ts`, `types.ts`)                                                               |
 | Grammar contract               | `docs/engineering/reference/decoder-grammar.mdx`                                                                                             |
 | Inference + decode-time priors | `packages/neural/` (`scorer.ts`, `viterbi.ts`, `semi-markov-decode.ts`, `placetype-pair-prior.ts`, `fst-prior.ts`, `gazetteer-inference.ts`) |
-| Candidate ordering             | `packages/resolver/toponym-prior.ts` (`rankByImportance`), `packages/resolver/admin-containment.ts`                                          |
+| Candidate ordering             | `packages/resolver/lib/toponym-prior.ts` (`rankByImportance`), `packages/resolver/lib/admin-containment.ts`                                  |
 
 This is the seam the program must not reach into. The standing doctrine is that registries are soft
 priors supplying **positive evidence only**, and the decoder grammar contract states which terms the
@@ -155,22 +155,22 @@ would be authoring policy at the one place where the system is supposed to learn
 
 ### 2.6 Measurement surfaces that already exist
 
-| Surface                                                           | Where                                                                  |
-| ----------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| POI query board (assembled-answer grading, pre-registered floors) | `packages/mailwoman/eval-harness/poi-board.ts`                         |
-| Gauntlet cases                                                    | `packages/mailwoman/eval-harness/gauntlet/`                            |
-| Warm-engine measuring tools                                       | `packages/dev-mcp/tools/`                                              |
-| Mechanism-account shapes                                          | `packages/dev-mcp/diagnose.ts` (`DIAGNOSE_SHAPES`, `SHAPE_PREDICATES`) |
-| Diagnosis conventions                                             | `docs/superpowers/specs/2026-08-17-mechanism-accounts.md`              |
-| Conformance-law fixture contract (#1918)                          | `packages/mailwoman/eval-harness/conformance/`                         |
-| Law-suite register (what a default run covers)                    | `packages/mailwoman/eval-harness/conformance/suites.ts`                |
-| Law-suite runner (`mailwoman eval conformance`)                   | `packages/mailwoman/eval-harness/conformance/command.ts`               |
+| Surface                                                           | Where                                                                      |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| POI query board (assembled-answer grading, pre-registered floors) | `packages/mailwoman/lib/eval-harness/poi-board.ts`                         |
+| Gauntlet cases                                                    | `packages/mailwoman/lib/eval-harness/gauntlet/`                            |
+| Warm-engine measuring tools                                       | `packages/dev-mcp/lib/tools/`                                              |
+| Mechanism-account shapes                                          | `packages/dev-mcp/lib/diagnose.ts` (`DIAGNOSE_SHAPES`, `SHAPE_PREDICATES`) |
+| Diagnosis conventions                                             | `docs/superpowers/specs/2026-08-17-mechanism-accounts.md`                  |
+| Conformance-law fixture contract (#1918)                          | `packages/mailwoman/lib/eval-harness/conformance/`                         |
+| Law-suite register (what a default run covers)                    | `packages/mailwoman/lib/eval-harness/conformance/suites.ts`                |
+| Law-suite runner (`mailwoman eval conformance`)                   | `packages/mailwoman/lib/eval-harness/conformance/command.ts`               |
 
 **Updated 2026-08-27 (#1961).** When this record was written the register held two laws, case folding
 (#1919) and whitespace (#1920). `CONFORMANCE_SUITES` holds **five** on HEAD, each a `{ts,jsonl}` pair
 in that directory: `case-folding`, `whitespace`, `punctuation`, `nfc-nfd` (the canonical-form law) and
 `refinement-monotonicity`. The last of those reads the resolver's own candidate tables through
-`packages/mailwoman/eval-harness/conformance/candidate-admissibility.ts` (#1923), which is a set of
+`packages/mailwoman/lib/eval-harness/conformance/candidate-admissibility.ts` (#1923), which is a set of
 candidate accounts rather than a sixth suite. The paragraph below describes the fixture contract, and
 it is unchanged.
 
@@ -258,7 +258,7 @@ What each line binds:
 - **world relation: `affords`** — the only non-taxonomic relation. `isa`, `partOf`, and any other
   relation stay unminted until an executable need names one.
 - **coverage rule** — a missing expected observation becomes negative evidence only where
-  `supportsExclusion(...)` from `packages/core/layers/manifest.ts` permits it. As measured in §2.3,
+  `supportsExclusion(...)` from `packages/core/lib/layers/manifest.ts` permits it. As measured in §2.3,
   that permits nothing against today's `poi.db`; the rule is written as a gate so the first slice
   cannot accidentally ship an exclusion the data does not support.
 - **ranking behavior: unchanged** — no ordering, score term, boost, or penalty changes anywhere in
@@ -336,7 +336,7 @@ amendment admits that change. Three things about it:
 
 #### What the closed vocabularies do NOT need
 
-- **`ConceptKind` gains no member, and `packages/geographic-model/schema.ts` is not touched by this
+- **`ConceptKind` gains no member, and `packages/geographic-model/lib/schema.ts` is not touched by this
   review.** `drugstore` is a class of premises a person can go to, which is `establishment` — already the
   kind `affords` accepts on the asserting side. Wave 1 authors no `place`-kind concept and no
   `activity`-kind concept beyond the two §4 froze.
@@ -443,7 +443,7 @@ contain at all.
 from an activity to the set of entity kinds that afford it, and no single category is the right answer
 even after the phrase is understood.
 
-Attested controls (committed, `packages/mailwoman/eval-harness/fixtures/poi-board.jsonl`) — the
+Attested controls (committed, `packages/mailwoman/lib/eval-harness/fixtures/poi-board.jsonl`) — the
 venue-noun form of the same intent, which passes today:
 
 | Row         | Query                     | Expectation                                      |
@@ -509,7 +509,7 @@ The proportions are not uniform across countries, which is the country-condition
 
 The same measurement exposes a second, sharper witness. The curated overlay ships a locale-gated
 synonym `drugstore → pharmacy` (en-US), and it **never reaches a caller**. The phrase index in
-`packages/poi-taxonomy/lookup-core.ts` inserts each category's id-as-phrase and label before the
+`packages/poi-taxonomy/lib/lookup-core.ts` inserts each category's id-as-phrase and label before the
 synonym table, `lookupPOICategory` deduplicates by category and sorts by confidence descending, and
 both entries score `1.0` under an `en-US` locale — so the stable sort leaves the `drugstore` _category_
 at index 0 and `matchPOISubject` consumes `hits[0]` only. `PROVENANCE.md` documents the mechanism that
@@ -536,7 +536,7 @@ relation type, no country scope and no per-assertion provenance.
 ### 5.5 Bounds #1928 must respect
 
 - **No committed input set contains an activity-shaped query.** Nothing under
-  `packages/mailwoman/eval-harness/fixtures/` matches an activity phrasing. The program's own
+  `packages/mailwoman/lib/eval-harness/fixtures/` matches an activity phrasing. The program's own
   precondition — target rows mined from committed corpora that predate the probe — therefore cannot be
   met for §5.1 as the corpora stand. #1928 must either commit the rows to the POI board first (graded
   on OUTCOMES only, per the anti-Pelias commitment in
@@ -629,7 +629,7 @@ So a reader can re-run them rather than trust them.
   `bank`, `cafe`, `place_of_worship`, `school`, `supermarket`, `trail`.
 - **Subject-match table** (§5.2): each query passed to `matchPOISubject` from
   `@mailwoman/kind-classifier` with the shipped `poiTaxonomyLookup` from
-  `packages/mailwoman/poi-intent.ts` and the locale shown. No model, no database, no network — the
+  `packages/mailwoman/lib/poi-intent.ts` and the locale shown. No model, no database, no network — the
   lexicon probe is the whole mechanism under test.
 - **Layer counts and coverage** (§2.3, §5.3): one read-only `node:sqlite` pass over the shipped
   `poi.db` at `dataRootPath("poi", "poi.db")`, joining `poi.category_id` through

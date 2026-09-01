@@ -21,7 +21,7 @@ function readRows(path: string): Promise<unknown[]> {
 
 test("parity-inputs.jsonl: every row has a file, an input, and expected records", async () => {
 	const rows = (await readRows(
-		workspacePath("mailwoman", "test-fixtures", "legacy-golden", "parity-inputs.jsonl")
+		workspacePath("mailwoman", "lib", "test-fixtures", "legacy-golden", "parity-inputs.jsonl")
 	)) as Array<{
 		file?: string
 		input?: string
@@ -38,10 +38,12 @@ test("parity-inputs.jsonl: every row has a file, an input, and expected records"
 })
 
 test("parity-raw.jsonl: aligned 1:1 with parity-inputs", async () => {
-	const inputs = await readRows(workspacePath("mailwoman", "test-fixtures", "legacy-golden", "parity-inputs.jsonl"))
+	const inputs = await readRows(
+		workspacePath("mailwoman", "lib", "test-fixtures", "legacy-golden", "parity-inputs.jsonl")
+	)
 
 	const raw = (await readRows(
-		workspacePath("mailwoman", "test-fixtures", "legacy-golden", "parity-raw.jsonl")
+		workspacePath("mailwoman", "lib", "test-fixtures", "legacy-golden", "parity-raw.jsonl")
 	)) as Array<{
 		solutions?: unknown[]
 	}>
@@ -55,7 +57,7 @@ test("parity-raw.jsonl: aligned 1:1 with parity-inputs", async () => {
 
 test("v1-parse-golden.jsonl: outcomes carry solutions arrays", async () => {
 	const rows = (await readRows(
-		workspacePath("mailwoman", "test-fixtures", "legacy-golden", "v1-parse-golden.jsonl")
+		workspacePath("mailwoman", "lib", "test-fixtures", "legacy-golden", "v1-parse-golden.jsonl")
 	)) as Array<{
 		input?: string
 		outcome?: { solutions?: unknown[] }

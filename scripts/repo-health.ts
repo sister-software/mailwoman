@@ -223,7 +223,7 @@ function visit(
 const UNCOUNTED = [
 	// The runtime mirror and the idiom over it call the builtins on purpose; counting them would measure the
 	// implementation rather than its callers.
-	"packages/core/fs/",
+	"packages/core/lib/fs/",
 ]
 
 // `existingOnly`: a tracked path can be absent from the working tree (a deletion staged but not

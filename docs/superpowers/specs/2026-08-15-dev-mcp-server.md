@@ -93,12 +93,12 @@ Grounding, so the spec proposes implementation rather than re-describing it.
 `packages/mcp/` is a published workspace (`@mailwoman/mcp@9.1.0`) exposing nine tools over stdio:
 `mailwoman_parse`, `mailwoman_geocode`, `mailwoman_poi_search`, `mailwoman_overpass_export`,
 `mailwoman_layer_manifest`, `mailwoman_bdc_filing_landscape`, `mailwoman_plausibility_check`,
-`mailwoman_filer_lookup`, `mailwoman_filer_family` (`packages/mcp/tools.ts:260-412`).
+`mailwoman_filer_lookup`, `mailwoman_filer_family` (`packages/mcp/lib/tools.ts:260-412`).
 
 Facts that constrain this design:
 
 - It builds its geocoder by hand rather than through `createGeocodeSession`: a `corePromise` memo at
-  `packages/mcp/cli.ts:102`, `loadCore()` at `:115-163`, `geocodeAddress(...)` at `:212`. It therefore
+  `packages/mcp/lib/cli.ts:102`, `loadCore()` at `:115-163`, `geocodeAddress(...)` at `:212`. It therefore
   never sees `GeocodeTrace`, `PipelineTiming`, or `initTiming`.
 - Deps are lazy and cached for the process lifetime; there is **no shutdown handler at all** — no
   `close()` on the resolver or `ShardProvider`. Exit reclaims them.
@@ -115,7 +115,7 @@ absent from `.release-it.json` — see §7.4 for the workspace accounting that i
 
 ### 2.2 `createGeocodeSession` — the warm-session abstraction that already exists
 
-`packages/mailwoman/geocode-session.ts:269` is the closest thing to the daemon today, and its header
+`packages/mailwoman/lib/geocode-session.ts:269` is the closest thing to the daemon today, and its header
 (`:6-27`) states the purpose in the same terms: "a caller that geocodes more than once … pays for the
 classifier, the gazetteer backend and the shard handles ONCE."
 
@@ -126,20 +126,20 @@ optional `GeocodeTrace` (`:124-166`) holding `NeuralParseTrace`, `QueryShape`, t
 its construction order **is** the CLI's error contract (`:10-18`).
 
 **The dev daemon builds on this, not beside it.** Everything the trace surface needs is already
-assembled; `packages/mcp/cli.ts` simply does not use it.
+assembled; `packages/mcp/lib/cli.ts` simply does not use it.
 
 ### 2.3 The eval harness — the graders already exist
 
-- `packages/mailwoman/eval-harness/gauntlet/harness.ts:228` `buildGauntletDeps` builds full-pipeline
+- `packages/mailwoman/lib/eval-harness/gauntlet/harness.ts:228` `buildGauntletDeps` builds full-pipeline
   geocode deps with an optional **candidate model** and **resolver lever pins**
   (`GauntletResolverLevers`, `:70-77`). It already knows how to swap only the ONNX, or a whole
   package-shaped weights cache, and it routes per-country weights overlays (`:283-290`).
-- `packages/mailwoman/eval-harness/gauntlet/run.ts:186` `runGauntlet` runs the four layers —
+- `packages/mailwoman/lib/eval-harness/gauntlet/run.ts:186` `runGauntlet` runs the four layers —
   `regression`, `metamorphic`, `holdout`, `ablation` — and emits the combined verdict.
-- `packages/mailwoman/eval-harness/promotion-gate.ts` runs the full battery against a gate spec in
+- `packages/mailwoman/lib/eval-harness/promotion-gate.ts` runs the full battery against a gate spec in
   `eval-harness/gates/*.json` and writes `verdict.json`.
 - The board corpus is **837 rows** across 129 case directories under
-  `packages/mailwoman/eval-harness/gauntlet/cases/` (128 ISO country directories plus
+  `packages/mailwoman/lib/eval-harness/gauntlet/cases/` (128 ISO country directories plus
   `generalization`), dominated by `regression.jsonl` (115 files) and `street-name-boundaries.jsonl`
   (25).
 - `parity-corpus.ts` holds the 321-row triaged parse-parity fixture set with pre-registered floors;
@@ -182,7 +182,7 @@ minute, and `minRequestIntervalMs` set alongside the budget. Google requires
 Its header states the boundary this spec inherits: _"Not truth, and not a gate. … Nothing here should
 ever decide whether a build ships; a human reads it and decides what to pin."_
 
-### 2.6 `packages/mailwoman/dev-tools/*.run.ts` — the sanctioned probes
+### 2.6 `packages/mailwoman/lib/dev-tools/*.run.ts` — the sanctioned probes
 
 Twenty-eight committed probes already exist, several of which are exactly the tools proposed below
 (`probe-fst-bias.run.ts`, `probe-query-intent.run.ts`, `router-kind-probe.run.ts`,
@@ -230,7 +230,7 @@ warmth is worthless.
 3. **Isolation.** A candidate model that segfaults `onnxruntime-node` takes down one worker, not the
    registry.
 
-**Concurrency is capped, and low on purpose.** `packages/mailwoman/geocode-stream.ts:23-28` records
+**Concurrency is capped, and low on purpose.** `packages/mailwoman/lib/geocode-stream.ts:23-28` records
 the measurement: on a shared multi-GB WOF SQLite, throughput peaked at **2 workers (~1.4×)** and
 _degraded_ from there — 4 workers ≈ baseline, 6 ≈ no gain, because memory bandwidth and the shared DB
 are the ceiling, not core count. The supervisor therefore defaults to a small concurrency budget and
@@ -344,7 +344,7 @@ unless the fingerprint is itself the declared variable (§6).
 - **Start.** `mwdevd` is started on demand by the MCP shim, or explicitly. It binds a Unix domain
   socket under `$XDG_RUNTIME_DIR` (falling back to the data root), one socket per `(dataRoot, repo
 path)` pair so two checkouts do not share a daemon. It holds **no** engine at startup; the first
-  tool call that needs one builds it. This mirrors `packages/mcp/cli.ts:14-17`'s laziness contract, and
+  tool call that needs one builds it. This mirrors `packages/mcp/lib/cli.ts:14-17`'s laziness contract, and
   for the same reason: an agent may connect, list tools, and never call one.
 - **Idle.** Engines are evicted after a configurable idle interval; the daemon exits after a longer one
   with no clients. Both intervals are reported by `mwdev_daemon`.
@@ -364,7 +364,7 @@ socket — no TCP, no HTTP, no network listener (§7).
 
 Two departures from `packages/mcp`'s tool envelope, both earned:
 
-1. **Declare `outputSchema` and return `structuredContent`.** `packages/mcp/server.ts:42` stringifies
+1. **Declare `outputSchema` and return `structuredContent`.** `packages/mcp/lib/server.ts:42` stringifies
    every result into one text block. That is fine for a parse tree; it is wrong for a comparison
    result, whose denominators and verdict fields must be machine-readable so a wrapper can enforce
    §5's rules rather than trusting the agent to read prose.
@@ -372,7 +372,7 @@ Two departures from `packages/mcp`'s tool envelope, both earned:
    milliseconds. Tools that can exceed a few seconds return a `job_id` immediately and are polled
    through `mwdev_job` (§4).
 
-Input key casing is **snake_case throughout**. `packages/mcp/tools.ts` mixes camelCase and snake_case
+Input key casing is **snake_case throughout**. `packages/mcp/lib/tools.ts` mixes camelCase and snake_case
 across its nine tools and hand-maps between them (`tools.ts:337-339`); one convention, chosen once.
 
 ---
@@ -410,8 +410,8 @@ out: { pid, uptime_s, socket, tree_fingerprint, git_head, dirty_files: string[],
 ```
 
 `artifacts` is the honest inventory. Absent is reported as `null` with a reason, never as zero or an
-empty object — the rule `packages/mailwoman/eval-harness/gauntlet/ablation-report.ts:8-13` already
-enforces for the ablation map. `mailwoman doctor`'s existing check functions (`packages/mailwoman/doctor/checks.ts`)
+empty object — the rule `packages/mailwoman/lib/eval-harness/gauntlet/ablation-report.ts:8-13` already
+enforces for the ablation map. `mailwoman doctor`'s existing check functions (`packages/mailwoman/lib/doctor/checks.ts`)
 supply most of this; reuse them rather than re-deriving.
 
 ### 4.2 `mwdev_inputs`
@@ -455,7 +455,7 @@ out: { run_id, provenance: Provenance, n_requested, n_evaluated, n_errored, erro
 ```
 
 `EngineConfig` is a single flat record covering every construction- and call-time lever, derived from
-`GeocodeCommandOptions` (`packages/mailwoman/geocode-command-options.ts:9-35`) and
+`GeocodeCommandOptions` (`packages/mailwoman/lib/geocode-command-options.ts:9-35`) and
 `GauntletGeocodeOpts` so the vocabulary is the CLI's: `locale`, `country_scope`, `default_country`,
 `candidate_db`, `resolve_db`, `weights_cache`, `model_path`, `gazetteer_prior`, `place_country`,
 `postcode_country_coherence`, `fork_entity`, `bias`, and so on. **Unset means the production default**,
@@ -847,7 +847,7 @@ Concretely, refuse:
 
 - **Any write to a sealed database.** Every built SQLite artifact is chmod 0444 via `sealDatabase`
   (`@mailwoman/core/utils`), and `openBuiltDatabase` enforces read-only with a named error. All handles
-  the daemon opens are `readOnly: true`, matching `packages/mcp/cli.ts`'s posture.
+  the daemon opens are `readOnly: true`, matching `packages/mcp/lib/cli.ts`'s posture.
 - **Artifact builds.** `gazetteer build`, `coverage build`, `tiles publish`, `corpus` ingest,
   `data pull` (multi-gigabyte downloads). These are hours and disk, and they are the operator's call.
 - **Promotion and release.** `release …`, `bless-package`, `npm publish`, Hugging Face staging,
@@ -872,12 +872,12 @@ attestation waits on the repo becoming public is stale). Everything committed is
 constrains this package specifically because it is a _lab_ tool:
 
 - **No literal lab paths anywhere in committed code, docstrings, defaults or fixtures.** Use
-  `dataRootPath` / `mailwomanDataRoot` (`packages/core/utils/data-root.ts`) and write
+  `dataRootPath` / `mailwomanDataRoot` (`packages/core/lib/utils/data-root.ts`) and write
   `$MAILWOMAN_DATA_ROOT` in prose, per AGENTS.md. The benchmark panels and the Pelias rig's scorer live
   outside the repo today; the tool references them by data-root-relative path and never by absolute
   path.
 - **No credentials, and no credential-shaped defaults.** `GOOGLE_MAPS_API_KEY` is read through
-  `$private` (`packages/core/env/schema.ts:211`) and is never echoed into a result, a cache key, a log
+  `$private` (`packages/core/lib/env/schema.ts:211`) and is never echoed into a result, a cache key, a log
   or a URL — the oracle client already takes care of the last one by injecting it as an Axios
   instance-level default.
 - **Result payloads are model-visible.** Anything the daemon puts in a tool result may end up in a
@@ -895,7 +895,7 @@ constrains this package specifically because it is a _lab_ tool:
 - carries a per-daemon-lifetime call cap that the tool reports as it consumes;
 - inherits the existing disk cache under `$MAILWOMAN_DATA_ROOT/geocode-oracle/google` (30-day TTL) and
   60 req/min pacing, so a repeated panel costs nothing;
-- is **never** a scored arm and never a grading truth. `packages/geocode-oracle/index.ts`'s own header
+- is **never** a scored arm and never a grading truth. `packages/geocode-oracle/lib/index.ts`'s own header
   is explicit: _"Not truth, and not a gate … Nothing here should ever decide whether a build ships."_
   A comparison with an oracle arm always reports `grade: "diff-only"` and `verdict: null`, and its
   purpose is flagging rows for a human to read.
@@ -1031,7 +1031,7 @@ problem, and the change is favourable.
 
 ### 10.1 What is actually there
 
-`GeocodeTrace` (`packages/mailwoman/geocode-session.ts:124-144`) is already a structured record, not a
+`GeocodeTrace` (`packages/mailwoman/lib/geocode-session.ts:124-144`) is already a structured record, not a
 rendering:
 
 ```ts

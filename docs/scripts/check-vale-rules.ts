@@ -6,7 +6,7 @@
  *
  *   Fixture test for `docs/styles/Mailwoman/*.yml` (the published-prose rules) and
  *   `docs/styles/MailwomanChat/*.yml` (the agent-reply rules the Stop hook runs through
- *   `.vale-chat.ini` — see `packages/dev-mcp/hooks/vale-response-check.ts`).
+ *   `.vale-chat.ini` — see `packages/dev-mcp/lib/hooks/vale-response-check.ts`).
  *
  *   There is no vitest harness for a set of Vale YAML rule files, so this is the test. Each style
  *   has two fixtures. The dirty one is written to trip every rule file at least once, and also
@@ -25,7 +25,7 @@
  *     (Nominatim's response field) must NOT trip `Spelling.yml`, nor must the JSON fence carrying
  *     both. Vale's markdown parser skips inline code and fences natively, which is the whole reason
  *     those two en-GB-looking identifiers can stay on the swap list.
- *   - `promotion-gate.ts`, `packages/corpus/src/shard-recipes/` and `mailwoman eval gate` are
+ *   - `promotion-gate.ts`, `packages/corpus/lib/shard-recipes/` and `mailwoman eval gate` are
  *     backticked, so `AmbiguousShorthand` must stay quiet on all three — that is how a
  *     contract-bearing name survives the vocabulary ban without being renamed.
  *

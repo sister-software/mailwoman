@@ -15,14 +15,14 @@ name: Board Pins
 on:
   pull_request:
     paths:
-      - "packages/mailwoman/eval-harness/gauntlet/cases/**"
-      - "packages/mailwoman/eval-harness/gauntlet/ablation.ts"
+      - "packages/mailwoman/lib/eval-harness/gauntlet/cases/**"
+      - "packages/mailwoman/lib/eval-harness/gauntlet/ablation.ts"
       - "packages/mailwoman/test/unit/eval-harness/gauntlet/cases/load.test.ts"
   push:
     branches: [main]
     paths:
-      - "packages/mailwoman/eval-harness/gauntlet/cases/**"
-      - "packages/mailwoman/eval-harness/gauntlet/ablation.ts"
+      - "packages/mailwoman/lib/eval-harness/gauntlet/cases/**"
+      - "packages/mailwoman/lib/eval-harness/gauntlet/ablation.ts"
       - "packages/mailwoman/test/unit/eval-harness/gauntlet/cases/load.test.ts"
   schedule:
     # Daily, off-peak for the lab fleet (UTC).

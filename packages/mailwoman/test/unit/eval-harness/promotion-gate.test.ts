@@ -133,7 +133,7 @@ describe("resolveGateSpecPath", () => {
 	})
 
 	it("prefers a real path verbatim", async () => {
-		const real = "packages/mailwoman/eval-harness/gates/v5.3.0-family.json"
+		const real = "packages/mailwoman/lib/eval-harness/gates/v5.3.0-family.json"
 
 		expect(await resolveGateSpecPath(real)).toBe(real)
 	})
@@ -152,13 +152,15 @@ describe("resolveGateSpecPath", () => {
 		// installed `mailwoman eval gate --gate <name>` found an empty gates dir.
 		const pkg = await readLocalJSONFile<{ files: string[] }>(new URL("../../../package.json", import.meta.url))
 
+		// Package-relative, so it names the path INSIDE the tarball: source lives under `lib/`, and these
+		// JSON files ride along with it rather than being emitted into `out/`.
 		for (const spec of await listGateSpecs()) {
-			const rel = `eval-harness/gates/${spec}`
+			const rel = `lib/eval-harness/gates/${spec}`
 			expect(shipsInPackage(pkg.files, rel), `${rel} must be covered by package.json files`).toBe(true)
 		}
 
 		// baselines.json resolves through the same source-tree-fallback pattern (baseline-assert.ts).
-		expect(shipsInPackage(pkg.files, "eval-harness/baselines.json")).toBe(true)
+		expect(shipsInPackage(pkg.files, "lib/eval-harness/baselines.json")).toBe(true)
 	})
 })
 

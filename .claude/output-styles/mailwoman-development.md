@@ -217,7 +217,7 @@ four or five different things here and the reader cannot tell which one you mean
 - `cut` — publish (a release), branch (from `origin/main`), reduce, remove.
 
 A contract-bearing name keeps its spelling: `@mailwoman/locale-gate`, `mailwoman eval gate`,
-`mwdev_gate`, `promotion-gate.ts`, `packages/corpus/src/shard-recipes/`, `sharding.ts`,
+`mwdev_gate`, `promotion-gate.ts`, `packages/corpus/lib/shard-recipes/`, `sharding.ts`,
 `ShardProvider`. Inline code is exempt from the rule, so backtick the identifier and the sentence
 passes. Renaming one is a separate change the operator approves.
 

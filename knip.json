@@ -8,7 +8,7 @@
 		"docs/**/*.mdx",
 		"docs/.agents/**",
 		"docs/build/**",
-		"packages/mailwoman/commands/**/*.tsx",
+		"packages/mailwoman/lib/commands/**/*.tsx",
 		"packages/sentencepiece-wasm/sentencepiece.mjs",
 		"packages/*/out/**"
 	],
@@ -16,24 +16,38 @@
 	"ignoreDependencies": ["@duckdb/node-api", "ts-morph", "onnxruntime-web"],
 	"workspaces": {
 		"packages/*": {
-			"entry": ["index.ts", "cli.ts", "cli.tsx", "scripts/**/*.ts", "tools/**/*.ts", "dev-tools/**/*.ts"]
+			"entry": [
+				"lib/index.ts",
+				"lib/cli.ts",
+				"lib/cli.tsx",
+				"lib/scripts/**/*.ts",
+				"lib/tools/**/*.ts",
+				"lib/dev-tools/**/*.ts"
+			]
 		},
 		"packages/mailwoman": {
 			"entry": [
-				"index.ts",
-				"cli.tsx",
-				"commands/**/*.tsx",
-				"dev-tools/**/*.ts",
-				"geocode-worker.ts",
-				"test-fixtures/**/*"
+				"lib/index.ts",
+				"lib/cli.tsx",
+				"lib/commands/**/*.tsx",
+				"lib/dev-tools/**/*.ts",
+				"lib/geocode-worker.ts",
+				"lib/test-fixtures/**/*"
 			],
 			"ignoreDependencies": ["@mailwoman/neural-weights-en-us"]
 		},
 		"packages/dev-mcp": {
-			"entry": ["index.ts", "cli.ts", "worker.ts", "hooks/*.ts"]
+			"entry": ["lib/index.ts", "lib/cli.ts", "lib/worker.ts", "lib/hooks/*.ts"]
 		},
 		"packages/{fastify,libpostal,mcp,nominatim,photon}": {
-			"entry": ["index.ts", "cli.ts", "cli.tsx", "scripts/**/*.ts", "tools/**/*.ts", "dev-tools/**/*.ts"],
+			"entry": [
+				"lib/index.ts",
+				"lib/cli.ts",
+				"lib/cli.tsx",
+				"lib/scripts/**/*.ts",
+				"lib/tools/**/*.ts",
+				"lib/dev-tools/**/*.ts"
+			],
 			"ignoreDependencies": ["@mailwoman/neural", "@mailwoman/neural-weights-en-us"]
 		},
 		"packages/neural-weights-*": {
@@ -41,10 +55,10 @@
 			"ignoreDependencies": ["@mailwoman/neural-weights-en-us"]
 		},
 		"packages/registry": {
-			"entry": ["index.ts", "cli.ts", "models/**/*.ts", "tools/**/*.ts"]
+			"entry": ["lib/index.ts", "lib/cli.ts", "lib/models/**/*.ts", "lib/tools/**/*.ts"]
 		},
 		"packages/tile-worker": {
-			"entry": ["index.ts", "_worker.ts"]
+			"entry": ["lib/index.ts", "lib/_worker.ts"]
 		},
 		"docs": {
 			"entry": [

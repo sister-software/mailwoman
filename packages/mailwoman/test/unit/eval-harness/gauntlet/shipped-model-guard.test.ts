@@ -26,7 +26,7 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
-const HARNESS = String(repoRootPath("packages", "mailwoman", "eval-harness", "gauntlet", "harness.ts"))
+const HARNESS = String(repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "harness.ts"))
 
 describe("the #1024 shipped-model guard", () => {
 	it("derives the graded model from the resolver, never from a package path literal", async () => {

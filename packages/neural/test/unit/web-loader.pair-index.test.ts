@@ -52,13 +52,13 @@ let capturedConfig: {
 } | null = null
 
 // The real tokenizer needs a valid SentencePiece model; stub the load (we feed dummy bytes).
-vi.mock("../../tokenizer.ts", async (importOriginal) => ({
+vi.mock("../../lib/tokenizer.ts", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@mailwoman/neural/tokenizer")>()),
 	MailwomanTokenizer: { loadFromBase64: vi.fn(async () => ({ tokenizerStub: true })) },
 }))
 
 // Capture-only stub: we only care that the load reached construction and WHAT placetypePair config it received.
-vi.mock("../../classifier.ts", async (importOriginal) => ({
+vi.mock("../../lib/classifier.ts", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@mailwoman/neural/classifier")>()),
 	NeuralAddressClassifier: class {
 		constructor(cfg: NonNullable<typeof capturedConfig>) {

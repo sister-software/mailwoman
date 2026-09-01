@@ -16,7 +16,7 @@ the basis discipline; the flood survey
 ([`2026-08-27-flood-layer-survey.md`](./2026-08-27-flood-layer-survey.md)) is this record's structural
 template and the source of its acquisition mechanics; the arability survey
 ([`2026-08-27-arability-layer-survey.md`](./2026-08-27-arability-layer-survey.md)) verified the USDA
-soil path this record reuses; and `packages/mailwoman/observations/absence-route.ts` plus its
+soil path this record reuses; and `packages/mailwoman/lib/observations/absence-route.ts` plus its
 `QueryIntentMarker` carrier deliver an additive, provenance-carrying advisory without touching ranking.
 
 **Every external claim below carries its URL and the date it was read.** Measurements taken from this

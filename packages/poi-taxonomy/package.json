@@ -22,13 +22,13 @@
 		"!*.test.tsx",
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
-		"!scripts/**",
+		"!lib/scripts/**",
 		"!test/**"
 	],
 	"type": "module",
 	"imports": {
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -36,48 +36,48 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./table": {
-			"node": "./table.ts",
+			"node": "./lib/table.ts",
 			"default": "./out/table.js",
 			"types": "./out/table.d.ts"
 		},
 		"./overpass": {
-			"node": "./overpass.ts",
+			"node": "./lib/overpass.ts",
 			"default": "./out/overpass.js",
 			"types": "./out/overpass.d.ts"
 		},
 		"./venue-word-hints": {
-			"node": "./venue-word-hints.ts",
+			"node": "./lib/venue-word-hints.ts",
 			"default": "./out/venue-word-hints.js",
 			"types": "./out/venue-word-hints.d.ts"
 		},
 		"./data/*.json": "./data/*.json",
 		"./brands": {
-			"node": "./brands.ts",
+			"node": "./lib/brands.ts",
 			"default": "./out/brands.js",
 			"types": "./out/brands.d.ts"
 		},
 		"./lookup": {
-			"node": "./lookup.ts",
+			"node": "./lib/lookup.ts",
 			"default": "./out/lookup.js",
 			"types": "./out/lookup.d.ts"
 		},
 		"./scripts/generate-taxonomy": {
-			"node": "./scripts/generate-taxonomy.ts",
+			"node": "./lib/scripts/generate-taxonomy.ts",
 			"default": "./out/scripts/generate-taxonomy.js",
 			"types": "./out/scripts/generate-taxonomy.d.ts"
 		},
 		"./types": {
-			"node": "./types.ts",
+			"node": "./lib/types.ts",
 			"default": "./out/types.js",
 			"types": "./out/types.d.ts"
 		},
 		"./packaged-data": {
-			"node": "./packaged-data.ts",
+			"node": "./lib/packaged-data.ts",
 			"default": "./out/packaged-data.js",
 			"types": "./out/packaged-data.d.ts"
 		}

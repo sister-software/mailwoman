@@ -45,7 +45,7 @@
 	"type": "module",
 	"imports": {
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -53,77 +53,77 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./scripts/*": {
-			"node": "./scripts/*.ts",
+			"node": "./lib/scripts/*.ts",
 			"default": "./out/scripts/*.js",
 			"types": "./out/scripts/*.d.ts"
 		},
 		"./schema": {
-			"node": "./schema.ts",
+			"node": "./lib/schema.ts",
 			"default": "./out/schema.js",
 			"types": "./out/schema.d.ts"
 		},
 		"./vocabulary": {
-			"node": "./vocabulary.ts",
+			"node": "./lib/vocabulary.ts",
 			"default": "./out/vocabulary.js",
 			"types": "./out/vocabulary.d.ts"
 		},
 		"./test-kit": {
-			"node": "./test-kit.ts",
+			"node": "./lib/test-kit.ts",
 			"default": "./out/test-kit.js",
 			"types": "./out/test-kit.d.ts"
 		},
 		"./rings": {
-			"node": "./rings.ts",
+			"node": "./lib/rings.ts",
 			"default": "./out/rings.js",
 			"types": "./out/rings.d.ts"
 		},
 		"./sdk": {
-			"node": "./sdk/index.ts",
+			"node": "./lib/sdk/index.ts",
 			"default": "./out/sdk/index.js",
 			"types": "./out/sdk/index.d.ts"
 		},
 		"./sdk/build-coastal": {
-			"node": "./sdk/build-coastal.ts",
+			"node": "./lib/sdk/build-coastal.ts",
 			"default": "./out/sdk/build-coastal.js",
 			"types": "./out/sdk/build-coastal.d.ts"
 		},
 		"./sdk/cells": {
-			"node": "./sdk/cells.ts",
+			"node": "./lib/sdk/cells.ts",
 			"default": "./out/sdk/cells.js",
 			"types": "./out/sdk/cells.d.ts"
 		},
 		"./sdk/client": {
-			"node": "./sdk/client.ts",
+			"node": "./lib/sdk/client.ts",
 			"default": "./out/sdk/client.js",
 			"types": "./out/sdk/client.d.ts"
 		},
 		"./sdk/download": {
-			"node": "./sdk/download.ts",
+			"node": "./lib/sdk/download.ts",
 			"default": "./out/sdk/download.js",
 			"types": "./out/sdk/download.d.ts"
 		},
 		"./sdk/ingest": {
-			"node": "./sdk/ingest.ts",
+			"node": "./lib/sdk/ingest.ts",
 			"default": "./out/sdk/ingest.js",
 			"types": "./out/sdk/ingest.d.ts"
 		},
 		"./sdk/ingest-chunk": {
-			"node": "./sdk/ingest-chunk.ts",
+			"node": "./lib/sdk/ingest-chunk.ts",
 			"default": "./out/sdk/ingest-chunk.js",
 			"types": "./out/sdk/ingest-chunk.d.ts"
 		},
 		"./sdk/measure-resolutions": {
-			"node": "./sdk/measure-resolutions.ts",
+			"node": "./lib/sdk/measure-resolutions.ts",
 			"default": "./out/sdk/measure-resolutions.js",
 			"types": "./out/sdk/measure-resolutions.d.ts"
 		},
 		"./sdk/verify": {
-			"node": "./sdk/verify.ts",
+			"node": "./lib/sdk/verify.ts",
 			"default": "./out/sdk/verify.js",
 			"types": "./out/sdk/verify.d.ts"
 		}

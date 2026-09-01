@@ -179,15 +179,15 @@ on their own disk. It is not published and not in the data-bundles registry.
 
 ## Where the code is
 
-| piece                                                              | what it owns                                                     |
-| ------------------------------------------------------------------ | ---------------------------------------------------------------- |
-| `packages/mailwoman/commands/gazetteer/build/poi-coverage.tsx`     | the command — the one path in this pipeline to `basis: surveyed` |
-| `packages/mailwoman/gazetteer-pipeline/poi/capture-recapture.ts`   | the match protocol grid and Chapman's estimator, pure            |
-| `packages/mailwoman/gazetteer-pipeline/poi/coverage-region.ts`     | region outline → interior cell set, pure                         |
-| `packages/mailwoman/gazetteer-pipeline/poi/exclusion-coverage.ts`  | composition into coverage cells, pure                            |
-| `packages/mailwoman/gazetteer-pipeline/poi/reference-inventory.ts` | the read-only probe of a sealed reference layer                  |
-| `packages/osm/sdk/extract-boundary.ts`                             | the named administrative outline, refusing a multi-match         |
-| `packages/core/layers/manifest.ts`                                 | coverage-cell invariants, now enforced at write AND read         |
+| piece                                                                  | what it owns                                                     |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `packages/mailwoman/lib/commands/gazetteer/build/poi-coverage.tsx`     | the command — the one path in this pipeline to `basis: surveyed` |
+| `packages/mailwoman/lib/gazetteer-pipeline/poi/capture-recapture.ts`   | the match protocol grid and Chapman's estimator, pure            |
+| `packages/mailwoman/lib/gazetteer-pipeline/poi/coverage-region.ts`     | region outline → interior cell set, pure                         |
+| `packages/mailwoman/lib/gazetteer-pipeline/poi/exclusion-coverage.ts`  | composition into coverage cells, pure                            |
+| `packages/mailwoman/lib/gazetteer-pipeline/poi/reference-inventory.ts` | the read-only probe of a sealed reference layer                  |
+| `packages/osm/lib/sdk/extract-boundary.ts`                             | the named administrative outline, refusing a multi-match         |
+| `packages/core/lib/layers/manifest.ts`                                 | coverage-cell invariants, now enforced at write AND read         |
 
 To rebuild it:
 

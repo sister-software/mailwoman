@@ -29,7 +29,7 @@
 	"type": "module",
 	"imports": {
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -37,47 +37,47 @@
 	"exports": {
 		"./package.json": "./package.json",
 		"./sdk": {
-			"node": "./sdk/index.ts",
+			"node": "./lib/sdk/index.ts",
 			"default": "./out/sdk/index.js",
 			"types": "./out/sdk/index.d.ts"
 		},
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./sdk/census-client": {
-			"node": "./sdk/census-client.ts",
+			"node": "./lib/sdk/census-client.ts",
 			"default": "./out/sdk/census-client.js",
 			"types": "./out/sdk/census-client.d.ts"
 		},
 		"./sdk/census-parser": {
-			"node": "./sdk/census-parser.ts",
+			"node": "./lib/sdk/census-parser.ts",
 			"default": "./out/sdk/census-parser.js",
 			"types": "./out/sdk/census-parser.d.ts"
 		},
 		"./sdk/census-types": {
-			"node": "./sdk/census-types.ts",
+			"node": "./lib/sdk/census-types.ts",
 			"default": "./out/sdk/census-types.js",
 			"types": "./out/sdk/census-types.d.ts"
 		},
 		"./sdk/map-link": {
-			"node": "./sdk/map-link.ts",
+			"node": "./lib/sdk/map-link.ts",
 			"default": "./out/sdk/map-link.js",
 			"types": "./out/sdk/map-link.d.ts"
 		},
 		"./sdk/google-client": {
-			"node": "./sdk/google-client.ts",
+			"node": "./lib/sdk/google-client.ts",
 			"default": "./out/sdk/google-client.js",
 			"types": "./out/sdk/google-client.d.ts"
 		},
 		"./sdk/google-parser": {
-			"node": "./sdk/google-parser.ts",
+			"node": "./lib/sdk/google-parser.ts",
 			"default": "./out/sdk/google-parser.js",
 			"types": "./out/sdk/google-parser.d.ts"
 		},
 		"./sdk/google-types": {
-			"node": "./sdk/google-types.ts",
+			"node": "./lib/sdk/google-types.ts",
 			"default": "./out/sdk/google-types.js",
 			"types": "./out/sdk/google-types.d.ts"
 		}

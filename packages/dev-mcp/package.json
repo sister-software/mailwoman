@@ -10,13 +10,13 @@
 		"directory": "packages/dev-mcp"
 	},
 	"bin": {
-		"mwdev-mcp": "./cli.ts"
+		"mwdev-mcp": "./lib/cli.ts"
 	},
 	"type": "module",
 	"imports": {
 		"#test/stub-registry": "./test/stub-registry.ts",
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -24,257 +24,257 @@
 	"exports": {
 		"./package.json": "./package.json",
 		"./cli": {
-			"node": "./cli.ts",
+			"node": "./lib/cli.ts",
 			"default": "./out/cli.js",
 			"types": "./out/cli.d.ts"
 		},
 		"./hooks/todo-issue-sync": {
-			"node": "./hooks/todo-issue-sync.ts",
+			"node": "./lib/hooks/todo-issue-sync.ts",
 			"default": "./out/hooks/todo-issue-sync.js",
 			"types": "./out/hooks/todo-issue-sync.d.ts"
 		},
 		"./hooks/vale-check-core": {
-			"node": "./hooks/vale-check-core.ts",
+			"node": "./lib/hooks/vale-check-core.ts",
 			"default": "./out/hooks/vale-check-core.js",
 			"types": "./out/hooks/vale-check-core.d.ts"
 		},
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./arms": {
-			"node": "./arms.ts",
+			"node": "./lib/arms.ts",
 			"default": "./out/arms.js",
 			"types": "./out/arms.d.ts"
 		},
 		"./bench": {
-			"node": "./bench.ts",
+			"node": "./lib/bench.ts",
 			"default": "./out/bench.js",
 			"types": "./out/bench.d.ts"
 		},
 		"./census": {
-			"node": "./census.ts",
+			"node": "./lib/census.ts",
 			"default": "./out/census.js",
 			"types": "./out/census.d.ts"
 		},
 		"./evidence": {
-			"node": "./evidence.ts",
+			"node": "./lib/evidence.ts",
 			"default": "./out/evidence.js",
 			"types": "./out/evidence.d.ts"
 		},
 		"./cli-allowlist": {
-			"node": "./cli-allowlist.ts",
+			"node": "./lib/cli-allowlist.ts",
 			"default": "./out/cli-allowlist.js",
 			"types": "./out/cli-allowlist.d.ts"
 		},
 		"./compare": {
-			"node": "./compare.ts",
+			"node": "./lib/compare.ts",
 			"default": "./out/compare.js",
 			"types": "./out/compare.d.ts"
 		},
 		"./contract-census": {
-			"node": "./contract-census.ts",
+			"node": "./lib/contract-census.ts",
 			"default": "./out/contract-census.js",
 			"types": "./out/contract-census.d.ts"
 		},
 		"./contract-report": {
-			"node": "./contract-report.ts",
+			"node": "./lib/contract-report.ts",
 			"default": "./out/contract-report.js",
 			"types": "./out/contract-report.d.ts"
 		},
 		"./engine-registry": {
-			"node": "./engine-registry.ts",
+			"node": "./lib/engine-registry.ts",
 			"default": "./out/engine-registry.js",
 			"types": "./out/engine-registry.d.ts"
 		},
 		"./oracle-arm": {
-			"node": "./oracle-arm.ts",
+			"node": "./lib/oracle-arm.ts",
 			"default": "./out/oracle-arm.js",
 			"types": "./out/oracle-arm.d.ts"
 		},
 		"./reliability": {
-			"node": "./reliability.ts",
+			"node": "./lib/reliability.ts",
 			"default": "./out/reliability.js",
 			"types": "./out/reliability.d.ts"
 		},
 		"./reliability-report": {
-			"node": "./reliability-report.ts",
+			"node": "./lib/reliability-report.ts",
 			"default": "./out/reliability-report.js",
 			"types": "./out/reliability-report.d.ts"
 		},
 		"./reliability-surfaces": {
-			"node": "./reliability-surfaces.ts",
+			"node": "./lib/reliability-surfaces.ts",
 			"default": "./out/reliability-surfaces.js",
 			"types": "./out/reliability-surfaces.d.ts"
 		},
 		"./run-store": {
-			"node": "./run-store.ts",
+			"node": "./lib/run-store.ts",
 			"default": "./out/run-store.js",
 			"types": "./out/run-store.d.ts"
 		},
 		"./external-arm": {
-			"node": "./external-arm.ts",
+			"node": "./lib/external-arm.ts",
 			"default": "./out/external-arm.js",
 			"types": "./out/external-arm.d.ts"
 		},
 		"./compiled-tree": {
-			"node": "./compiled-tree.ts",
+			"node": "./lib/compiled-tree.ts",
 			"default": "./out/compiled-tree.js",
 			"types": "./out/compiled-tree.d.ts"
 		},
 		"./source-census": {
-			"node": "./source-census.ts",
+			"node": "./lib/source-census.ts",
 			"default": "./out/source-census.js",
 			"types": "./out/source-census.d.ts"
 		},
 		"./tree-fingerprint": {
-			"node": "./tree-fingerprint.ts",
+			"node": "./lib/tree-fingerprint.ts",
 			"default": "./out/tree-fingerprint.js",
 			"types": "./out/tree-fingerprint.d.ts"
 		},
 		"./tools/coverage": {
-			"node": "./tools/coverage.ts",
+			"node": "./lib/tools/coverage.ts",
 			"default": "./out/tools/coverage.js",
 			"types": "./out/tools/coverage.d.ts"
 		},
 		"./arc": {
-			"node": "./arc.ts",
+			"node": "./lib/arc.ts",
 			"default": "./out/arc.js",
 			"types": "./out/arc.d.ts"
 		},
 		"./tool-kit": {
-			"node": "./tool-kit.ts",
+			"node": "./lib/tool-kit.ts",
 			"default": "./out/tool-kit.js",
 			"types": "./out/tool-kit.d.ts"
 		},
 		"./confound": {
-			"node": "./confound.ts",
+			"node": "./lib/confound.ts",
 			"default": "./out/confound.js",
 			"types": "./out/confound.d.ts"
 		},
 		"./constraint-census": {
-			"node": "./constraint-census.ts",
+			"node": "./lib/constraint-census.ts",
 			"default": "./out/constraint-census.js",
 			"types": "./out/constraint-census.d.ts"
 		},
 		"./counterfactual": {
-			"node": "./counterfactual.ts",
+			"node": "./lib/counterfactual.ts",
 			"default": "./out/counterfactual.js",
 			"types": "./out/counterfactual.d.ts"
 		},
 		"./diagnose": {
-			"node": "./diagnose.ts",
+			"node": "./lib/diagnose.ts",
 			"default": "./out/diagnose.js",
 			"types": "./out/diagnose.d.ts"
 		},
 		"./input-sets": {
-			"node": "./input-sets.ts",
+			"node": "./lib/input-sets.ts",
 			"default": "./out/input-sets.js",
 			"types": "./out/input-sets.d.ts"
 		},
 		"./engine-rigs": {
-			"node": "./engine-rigs.ts",
+			"node": "./lib/engine-rigs.ts",
 			"default": "./out/engine-rigs.js",
 			"types": "./out/engine-rigs.d.ts"
 		},
 		"./gate-report": {
-			"node": "./gate-report.ts",
+			"node": "./lib/gate-report.ts",
 			"default": "./out/gate-report.js",
 			"types": "./out/gate-report.d.ts"
 		},
 		"./gauntlet-report": {
-			"node": "./gauntlet-report.ts",
+			"node": "./lib/gauntlet-report.ts",
 			"default": "./out/gauntlet-report.js",
 			"types": "./out/gauntlet-report.d.ts"
 		},
 		"./geo-grade": {
-			"node": "./geo-grade.ts",
+			"node": "./lib/geo-grade.ts",
 			"default": "./out/geo-grade.js",
 			"types": "./out/geo-grade.d.ts"
 		},
 		"./grade": {
-			"node": "./grade.ts",
+			"node": "./lib/grade.ts",
 			"default": "./out/grade.js",
 			"types": "./out/grade.d.ts"
 		},
 		"./lookup-sources": {
-			"node": "./lookup-sources.ts",
+			"node": "./lib/lookup-sources.ts",
 			"default": "./out/lookup-sources.js",
 			"types": "./out/lookup-sources.d.ts"
 		},
 		"./lookup": {
-			"node": "./lookup.ts",
+			"node": "./lib/lookup.ts",
 			"default": "./out/lookup.js",
 			"types": "./out/lookup.d.ts"
 		},
 		"./lookup-tool": {
-			"node": "./lookup-tool.ts",
+			"node": "./lib/lookup-tool.ts",
 			"default": "./out/lookup-tool.js",
 			"types": "./out/lookup-tool.d.ts"
 		},
 		"./minimal-pairs": {
-			"node": "./minimal-pairs.ts",
+			"node": "./lib/minimal-pairs.ts",
 			"default": "./out/minimal-pairs.js",
 			"types": "./out/minimal-pairs.d.ts"
 		},
 		"./parse-compare": {
-			"node": "./parse-compare.ts",
+			"node": "./lib/parse-compare.ts",
 			"default": "./out/parse-compare.js",
 			"types": "./out/parse-compare.d.ts"
 		},
 		"./parse-compare-report": {
-			"node": "./parse-compare-report.ts",
+			"node": "./lib/parse-compare-report.ts",
 			"default": "./out/parse-compare-report.js",
 			"types": "./out/parse-compare-report.d.ts"
 		},
 		"./place-id-provenance": {
-			"node": "./place-id-provenance.ts",
+			"node": "./lib/place-id-provenance.ts",
 			"default": "./out/place-id-provenance.js",
 			"types": "./out/place-id-provenance.d.ts"
 		},
 		"./power": {
-			"node": "./power.ts",
+			"node": "./lib/power.ts",
 			"default": "./out/power.js",
 			"types": "./out/power.d.ts"
 		},
 		"./tally": {
-			"node": "./tally.ts",
+			"node": "./lib/tally.ts",
 			"default": "./out/tally.js",
 			"types": "./out/tally.d.ts"
 		},
 		"./jobs": {
-			"node": "./jobs.ts",
+			"node": "./lib/jobs.ts",
 			"default": "./out/jobs.js",
 			"types": "./out/jobs.d.ts"
 		},
 		"./tools": {
-			"node": "./tools/index.ts",
+			"node": "./lib/tools/index.ts",
 			"default": "./out/tools/index.js",
 			"types": "./out/tools/index.d.ts"
 		},
 		"./vocabulary": {
-			"node": "./vocabulary.ts",
+			"node": "./lib/vocabulary.ts",
 			"default": "./out/vocabulary.js",
 			"types": "./out/vocabulary.d.ts"
 		},
 		"./worker-host": {
-			"node": "./worker-host.ts",
+			"node": "./lib/worker-host.ts",
 			"default": "./out/worker-host.js",
 			"types": "./out/worker-host.d.ts"
 		},
 		"./worktree-arm": {
-			"node": "./worktree-arm.ts",
+			"node": "./lib/worktree-arm.ts",
 			"default": "./out/worktree-arm.js",
 			"types": "./out/worktree-arm.d.ts"
 		},
 		"./routed-mailwoman-arm": {
-			"node": "./routed-mailwoman-arm.ts",
+			"node": "./lib/routed-mailwoman-arm.ts",
 			"default": "./out/routed-mailwoman-arm.js",
 			"types": "./out/routed-mailwoman-arm.d.ts"
 		},
 		"./symbol-index": {
-			"node": "./symbol-index.ts",
+			"node": "./lib/symbol-index.ts",
 			"default": "./out/symbol-index.js",
 			"types": "./out/symbol-index.d.ts"
 		}

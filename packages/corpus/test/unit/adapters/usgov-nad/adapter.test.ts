@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest"
 
 import type { CanonicalRow } from "#types"
 
-const FIXTURE_DIR = workspacePath("corpus", "src", "adapters", "usgov-nad", "fixtures")
+const FIXTURE_DIR = workspacePath("corpus", "lib", "adapters", "usgov-nad", "fixtures")
 
 async function collect(adapter = createUsgovNADAdapter(), opts: { country?: string; limit?: number } = {}) {
 	const out: CanonicalRow[] = []

@@ -93,7 +93,7 @@ import { describe, expect, test } from "vitest"
 /**
  * The frozen rules-parser capture (phase 0, PR #1092): one row per parity input, top-3 solved solutions.
  */
-const PARITY_RAW_GOLDEN = "packages/mailwoman/test-fixtures/legacy-golden/parity-raw.jsonl"
+const PARITY_RAW_GOLDEN = "packages/mailwoman/lib/test-fixtures/legacy-golden/parity-raw.jsonl"
 
 /**
  * A captured rules solution's flat classification record (the shape `solutions[0].classifications` had).
@@ -220,7 +220,7 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 			const fixtures = (
 				await Array.fromAsync(
 					JSONSpliterator.fromAsync<ParityFixture>(
-						"packages/mailwoman/eval-harness/fixtures/parity-corpus.triaged.jsonl"
+						"packages/mailwoman/lib/eval-harness/fixtures/parity-corpus.triaged.jsonl"
 					)
 				)
 			).filter((f) => !f.dropped && f.expect)

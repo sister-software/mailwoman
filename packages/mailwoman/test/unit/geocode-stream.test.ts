@@ -9,7 +9,7 @@ import type { SourceRecord } from "@mailwoman/registry"
 import { geocodeStream } from "mailwoman/geocode-stream"
 import { describe, expect, it } from "vitest"
 
-const fakeWorker = workspacePath("mailwoman", "test-fixtures", "fake-geocode-worker.js")
+const fakeWorker = workspacePath("mailwoman", "lib", "test-fixtures", "fake-geocode-worker.js")
 
 /**
  * What `fake-geocode-worker.js` writes into the `address` slot instead of a geocode: the config locale it was handed

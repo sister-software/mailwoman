@@ -140,7 +140,7 @@ The rules the rows encode:
    graded on identifying the right place: conformance, span coherence to gazetteer ancestry, currency,
    provenance. State distance only when the gate uses it, and say why it matters for this task.
 10. **A conclusion word appears after its evidence, not instead of it.** "Decisive" survives only in its
-    defined gauntlet sense (see `packages/mailwoman/eval-harness/gauntlet/ablation-expectation.md`); as
+    defined gauntlet sense (see `packages/mailwoman/lib/eval-harness/gauntlet/ablation-expectation.md`); as
     praise it is deleted and the evidence stands alone.
 11. **A decision is specified.** "One judgment call needs your eyes" → the contract being changed, both
     options, and what each costs. "Needs your eyes" is a handoff heading, not a description: the item

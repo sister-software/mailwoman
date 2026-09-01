@@ -14,7 +14,7 @@
 ## of `shard` is unchanged by its move out of this file.
 ##
 ## A backticked artifact name (`synth-suffix-boundary`,
-## `packages/corpus/src/shard-recipes/`) survives, because inline code is
+## `packages/corpus/lib/shard-recipes/`) survives, because inline code is
 ## exempt — mention the artifact by its real name instead of the shorthand.
 extends: existence
 message: "'%s' is banned project shorthand — name the concrete artifact or change in plain words (the config key, the corpus recipe file, the run version, the systems compared)."

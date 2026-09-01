@@ -30,11 +30,11 @@ interface KnipReport {
  * Duplicate values intentionally exposed under both their current and compatibility names.
  */
 const ALLOWED_DUPLICATE_EXPORTS = new Set([
-	"packages/codex/us/street-suffix.ts:StreetSuffixAbbreviationRecord,US_STREET_SUFFIX_VARIANTS",
-	"packages/core/decoder/containment.ts:PARENT_OF,WESTERN_PARENT_OF",
-	"packages/corpus/src/shard-recipes/sub-venue.ts:buildPositiveForms,buildSubVenueForm",
-	"packages/fastify/index.ts:default,mailwomanFastify",
-	"packages/mailwoman/gazetteer-pipeline/defaults.ts:DEFAULT_FOLD_COUNTRIES,DEFAULT_GEONAMES_COUNTRIES",
+	"packages/codex/lib/us/street-suffix.ts:StreetSuffixAbbreviationRecord,US_STREET_SUFFIX_VARIANTS",
+	"packages/core/lib/decoder/containment.ts:PARENT_OF,WESTERN_PARENT_OF",
+	"packages/corpus/lib/shard-recipes/sub-venue.ts:buildPositiveForms,buildSubVenueForm",
+	"packages/fastify/lib/index.ts:default,mailwomanFastify",
+	"packages/mailwoman/lib/gazetteer-pipeline/defaults.ts:DEFAULT_FOLD_COUNTRIES,DEFAULT_GEONAMES_COUNTRIES",
 ])
 
 function duplicateKey(file: string, symbols: KnipSymbol[]): string {

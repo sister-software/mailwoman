@@ -44,7 +44,7 @@
 	"type": "module",
 	"imports": {
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -52,77 +52,77 @@
 	"exports": {
 		"./package.json": "./package.json",
 		"./scripts/*": {
-			"node": "./scripts/*.ts",
+			"node": "./lib/scripts/*.ts",
 			"default": "./out/scripts/*.js",
 			"types": "./out/scripts/*.d.ts"
 		},
 		"./sdk": {
-			"node": "./sdk/index.ts",
+			"node": "./lib/sdk/index.ts",
 			"default": "./out/sdk/index.js",
 			"types": "./out/sdk/index.d.ts"
 		},
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./schema": {
-			"node": "./schema.ts",
+			"node": "./lib/schema.ts",
 			"default": "./out/schema.js",
 			"types": "./out/schema.d.ts"
 		},
 		"./sdk/build-bdc": {
-			"node": "./sdk/build-bdc.ts",
+			"node": "./lib/sdk/build-bdc.ts",
 			"default": "./out/sdk/build-bdc.js",
 			"types": "./out/sdk/build-bdc.d.ts"
 		},
 		"./sdk/common": {
-			"node": "./sdk/common.ts",
+			"node": "./lib/sdk/common.ts",
 			"default": "./out/sdk/common.js",
 			"types": "./out/sdk/common.d.ts"
 		},
 		"./sdk/parsing": {
-			"node": "./sdk/parsing.ts",
+			"node": "./lib/sdk/parsing.ts",
 			"default": "./out/sdk/parsing.js",
 			"types": "./out/sdk/parsing.d.ts"
 		},
 		"./sdk/filing-dates": {
-			"node": "./sdk/filing-dates.ts",
+			"node": "./lib/sdk/filing-dates.ts",
 			"default": "./out/sdk/filing-dates.js",
 			"types": "./out/sdk/filing-dates.d.ts"
 		},
 		"./sdk/client": {
-			"node": "./sdk/client.ts",
+			"node": "./lib/sdk/client.ts",
 			"default": "./out/sdk/client.js",
 			"types": "./out/sdk/client.d.ts"
 		},
 		"./sdk/download": {
-			"node": "./sdk/download.ts",
+			"node": "./lib/sdk/download.ts",
 			"default": "./out/sdk/download.js",
 			"types": "./out/sdk/download.d.ts"
 		},
 		"./sdk/list-files": {
-			"node": "./sdk/list-files.ts",
+			"node": "./lib/sdk/list-files.ts",
 			"default": "./out/sdk/list-files.js",
 			"types": "./out/sdk/list-files.d.ts"
 		},
 		"./sdk/filing-landscape": {
-			"node": "./sdk/filing-landscape.ts",
+			"node": "./lib/sdk/filing-landscape.ts",
 			"default": "./out/sdk/filing-landscape.js",
 			"types": "./out/sdk/filing-landscape.d.ts"
 		},
 		"./sdk/nearest-infrastructure": {
-			"node": "./sdk/nearest-infrastructure.ts",
+			"node": "./lib/sdk/nearest-infrastructure.ts",
 			"default": "./out/sdk/nearest-infrastructure.js",
 			"types": "./out/sdk/nearest-infrastructure.d.ts"
 		},
 		"./sdk/plausibility": {
-			"node": "./sdk/plausibility.ts",
+			"node": "./lib/sdk/plausibility.ts",
 			"default": "./out/sdk/plausibility.js",
 			"types": "./out/sdk/plausibility.d.ts"
 		},
 		"./sdk/technologies": {
-			"node": "./sdk/technologies.ts",
+			"node": "./lib/sdk/technologies.ts",
 			"default": "./out/sdk/technologies.js",
 			"types": "./out/sdk/technologies.d.ts"
 		}

@@ -25,7 +25,7 @@ import {
 import { resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
-const COMMITTED_CENSUS = "packages/mailwoman/eval-harness/activity-lexicon/collision-census.json"
+const COMMITTED_CENSUS = "packages/mailwoman/lib/eval-harness/activity-lexicon/collision-census.json"
 
 const lexicon = await readActivityLexicon()
 
@@ -40,12 +40,12 @@ const scratchRoot = await temporaryDirectory("collision-census-")
 
 afterAll(() => scratchRoot[Symbol.asyncDispose]())
 
-await makeDirectories(scratchRoot.resolve("packages/mailwoman/eval-harness/fixtures"))
+await makeDirectories(scratchRoot.resolve("packages/mailwoman/lib/eval-harness/fixtures"))
 
 await writeLocalTextFile(
 	`${JSON.stringify({ id: "sem-act-fr-01", query: "somewhere to fill a prescription near Toulouse" })}\n` +
 		`${JSON.stringify({ id: "cat-fr-03", query: "pharmacy near Toulouse" })}\n`,
-	scratchRoot.resolve("packages/mailwoman/eval-harness/fixtures/rows.jsonl")
+	scratchRoot.resolve("packages/mailwoman/lib/eval-harness/fixtures/rows.jsonl")
 )
 
 afterAll(async () => {

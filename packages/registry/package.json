@@ -26,12 +26,12 @@
 	"type": "module",
 	"imports": {
 		"#index": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -39,57 +39,57 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./resolve": {
-			"node": "./resolve.ts",
+			"node": "./lib/resolve.ts",
 			"default": "./out/resolve.js",
 			"types": "./out/resolve.d.ts"
 		},
 		"./geojson": {
-			"node": "./geojson.ts",
+			"node": "./lib/geojson.ts",
 			"default": "./out/geojson.js",
 			"types": "./out/geojson.d.ts"
 		},
 		"./ingest": {
-			"node": "./ingest.ts",
+			"node": "./lib/ingest.ts",
 			"default": "./out/ingest.js",
 			"types": "./out/ingest.d.ts"
 		},
 		"./tools": {
-			"node": "./tools/index.ts",
+			"node": "./lib/tools/index.ts",
 			"default": "./out/tools/index.js",
 			"types": "./out/tools/index.d.ts"
 		},
 		"./address-key": {
-			"node": "./address-key.ts",
+			"node": "./lib/address-key.ts",
 			"default": "./out/address-key.js",
 			"types": "./out/address-key.d.ts"
 		},
 		"./types": {
-			"node": "./types.ts",
+			"node": "./lib/types.ts",
 			"default": "./out/types.js",
 			"types": "./out/types.d.ts"
 		},
 		"./geocode-handler": {
-			"node": "./geocode-handler.ts",
+			"node": "./lib/geocode-handler.ts",
 			"default": "./out/geocode-handler.js",
 			"types": "./out/geocode-handler.d.ts"
 		},
 		"./learned-scorer": {
-			"node": "./learned-scorer.ts",
+			"node": "./lib/learned-scorer.ts",
 			"default": "./out/learned-scorer.js",
 			"types": "./out/learned-scorer.d.ts"
 		},
 		"./map-html": {
-			"node": "./map-html.ts",
+			"node": "./lib/map-html.ts",
 			"default": "./out/map-html.js",
 			"types": "./out/map-html.d.ts"
 		},
 		"./reconcile": {
-			"node": "./reconcile.ts",
+			"node": "./lib/reconcile.ts",
 			"default": "./out/reconcile.js",
 			"types": "./out/reconcile.d.ts"
 		}

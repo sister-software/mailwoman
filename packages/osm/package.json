@@ -27,7 +27,7 @@
 	"type": "module",
 	"imports": {
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -35,47 +35,47 @@
 	"exports": {
 		"./package.json": "./package.json",
 		"./scripts/*": {
-			"node": "./scripts/*.ts",
+			"node": "./lib/scripts/*.ts",
 			"default": "./out/scripts/*.js",
 			"types": "./out/scripts/*.d.ts"
 		},
 		"./sdk": {
-			"node": "./sdk/index.ts",
+			"node": "./lib/sdk/index.ts",
 			"default": "./out/sdk/index.js",
 			"types": "./out/sdk/index.d.ts"
 		},
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./sdk/address-point-schema": {
-			"node": "./sdk/address-point-schema.ts",
+			"node": "./lib/sdk/address-point-schema.ts",
 			"default": "./out/sdk/address-point-schema.js",
 			"types": "./out/sdk/address-point-schema.d.ts"
 		},
 		"./sdk/street-locale": {
-			"node": "./sdk/street-locale.ts",
+			"node": "./lib/sdk/street-locale.ts",
 			"default": "./out/sdk/street-locale.js",
 			"types": "./out/sdk/street-locale.d.ts"
 		},
 		"./sdk/extract-boundary": {
-			"node": "./sdk/extract-boundary.ts",
+			"node": "./lib/sdk/extract-boundary.ts",
 			"default": "./out/sdk/extract-boundary.js",
 			"types": "./out/sdk/extract-boundary.d.ts"
 		},
 		"./sdk/extract-poi": {
-			"node": "./sdk/extract-poi.ts",
+			"node": "./lib/sdk/extract-poi.ts",
 			"default": "./out/sdk/extract-poi.js",
 			"types": "./out/sdk/extract-poi.d.ts"
 		},
 		"./sdk/extract-subvenue": {
-			"node": "./sdk/extract-subvenue.ts",
+			"node": "./lib/sdk/extract-subvenue.ts",
 			"default": "./out/sdk/extract-subvenue.js",
 			"types": "./out/sdk/extract-subvenue.d.ts"
 		},
 		"./sdk/representative-point": {
-			"node": "./sdk/representative-point.ts",
+			"node": "./lib/sdk/representative-point.ts",
 			"default": "./out/sdk/representative-point.js",
 			"types": "./out/sdk/representative-point.d.ts"
 		}

@@ -35,7 +35,7 @@ where those artifacts are held —
   a phrase naming an activity no entity kind both affords and maps into a searchable category would
   match a query and answer nothing, which reads as the query being unanswerable rather than as the
   vocabulary being wrong. The consumer refuses at construction — see
-  `packages/mailwoman/observations/semantic-route.ts`.
+  `packages/mailwoman/lib/observations/semantic-route.ts`.
 - **Say anything about the world.** Which entity kinds afford the activity, in which country, with
   what modality and on whose authority come from `@mailwoman/geographic-model`. An entry that
   restated any of it would be a second copy of a claim with no provenance behind it.
@@ -59,7 +59,7 @@ it says.
 2. Name the record that attests it, in one of the four classes above, and quote the text it rests on.
 3. Write the note a future reviewer would need to decide whether the entry still belongs.
 4. Run the phrase-collision census
-   (`node packages/mailwoman/dev-tools/activity-phrase-collision-census.run.ts --db <poi.db>`) and
+   (`node packages/mailwoman/lib/dev-tools/activity-phrase-collision-census.run.ts --db <poi.db>`) and
    commit the refreshed report. A new phrase whose subject a name or category lexicon already claims
    never reaches an activity route at all, and the census is where that is visible.
 5. Bump `version`.

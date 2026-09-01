@@ -36,7 +36,7 @@ const BRAILLE_PATTERN = /[⠀-⣿]/u
  */
 const STATUS_PATTERN = /-?\d+\.\d{4},-?\d+\.\d{4} z\d+/g
 
-const CLI = resolvePackagePath("@mailwoman/map-tui", "cli.ts")
+const CLI = resolvePackagePath("@mailwoman/map-tui", "lib", "cli.ts")
 const FIXTURE = resolvePackagePath("@mailwoman/map-tui", "test", "fixtures", "portland.pmtiles")
 
 const PTY_COLUMNS = 100

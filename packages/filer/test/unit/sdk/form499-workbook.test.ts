@@ -141,7 +141,7 @@ describe("assertWorkbookHeader", () => {
 	it("refuses a file that is not a workbook rather than yielding empty rows", async () => {
 		await expect(async () => {
 			for await (const _row of parseForm499Workbook(
-				resolvePackagePath("@mailwoman/filer", "sdk", "form499-workbook.ts")
+				resolvePackagePath("@mailwoman/filer", "lib", "sdk", "form499-workbook.ts")
 			)) {
 				// Not reached — the reader throws before yielding.
 			}

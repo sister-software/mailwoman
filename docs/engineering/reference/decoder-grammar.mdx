@@ -36,7 +36,7 @@ the weights.
 ## 1. The grammar we decode today, exactly
 
 The shipped model emits per-token scores over a BIO vocabulary (Begin/Inside/Outside markers over
-`ComponentTag`). The decoder (`packages/neural/viterbi.ts`) solves:
+`ComponentTag`). The decoder (`packages/neural/lib/viterbi.ts`) solves:
 
 ```
 ŷ = argmax over y ∈ L_BIO of   Σₖ e(k, yₖ)  +  Σₖ M[yₖ₋₁][yₖ]
@@ -160,14 +160,14 @@ explains, rows it would flag falsely. Detectors are graded against truth-graded 
 against the model's agreement with itself (the same echo-chamber rule the coherence record fixes
 for the resolver-side checker).
 
-| id  | predicate over `(x, parse)`                                                                                                                         | inputs required                             | status                                                                                                                                           |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| C1  | spans disjoint; uncovered tokens are O                                                                                                              | parse                                       | implemented (post-hoc, greedy)                                                                                                                   |
-| C2  | tags nest as a tree under `PARENT_OF`                                                                                                               | parse, containment table                    | implemented (build + validator)                                                                                                                  |
-| C3  | BIO well-formedness                                                                                                                                 | label sequence                              | implemented (structural mask)                                                                                                                    |
-| C4  | a span boundary interior to a delimiter-free phrase is licensed by a delimiter, an affix lexeme, a character-class change, or a registry match edge | parse, phrase-grouper units, affix lexicons | **detector buildable today** — the grouper computes the units and does not bind the decode                                                       |
-| C5  | the segment-label sequence belongs to the address system's template `G_c`                                                                           | parse, per-country templates                | **needs inventory** — `packages/codex/address-system-conventions.ts` is the natural home; templates not yet stated as machine-readable sequences |
-| C6  | no sub-span registry hit licenses a boundary inside a span a longer registry entry covers                                                           | parse, FST maximal matches                  | **detector buildable today** — walk the FST for covering entries over every decoded boundary                                                     |
+| id  | predicate over `(x, parse)`                                                                                                                         | inputs required                             | status                                                                                                                                               |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C1  | spans disjoint; uncovered tokens are O                                                                                                              | parse                                       | implemented (post-hoc, greedy)                                                                                                                       |
+| C2  | tags nest as a tree under `PARENT_OF`                                                                                                               | parse, containment table                    | implemented (build + validator)                                                                                                                      |
+| C3  | BIO well-formedness                                                                                                                                 | label sequence                              | implemented (structural mask)                                                                                                                        |
+| C4  | a span boundary interior to a delimiter-free phrase is licensed by a delimiter, an affix lexeme, a character-class change, or a registry match edge | parse, phrase-grouper units, affix lexicons | **detector buildable today** — the grouper computes the units and does not bind the decode                                                           |
+| C5  | the segment-label sequence belongs to the address system's template `G_c`                                                                           | parse, per-country templates                | **needs inventory** — `packages/codex/lib/address-system-conventions.ts` is the natural home; templates not yet stated as machine-readable sequences |
+| C6  | no sub-span registry hit licenses a boundary inside a span a longer registry entry covers                                                           | parse, FST maximal matches                  | **detector buildable today** — walk the FST for covering entries over every decoded boundary                                                         |
 
 The proposed instrument is a constraint-violation census over the board — an extension of
 `mwdev_diagnose`'s mechanism accounts — so that every board failure carries the predicate(s) it
@@ -213,7 +213,7 @@ violates, and the taxonomy is thereafter read from evaluation rather than argued
 | candidate spans                 | phrase-grouper (pipeline stage 2.7)                                              | exists; output does not bind the decode     |
 | `HEAD/REL` tree                 | `AddressTree` + `PARENT_OF` (`build-tree.ts`, `containment.ts`)                  | built post-decode, unscored                 |
 | POI-under-POI (`located_at`)    | none — `venue` parents are `["street", "locality"]`                              | schema decision open                        |
-| `G_c` segment templates         | `packages/codex/address-system-conventions.ts`                                   | home exists; templates not machine-readable |
+| `G_c` segment templates         | `packages/codex/lib/address-system-conventions.ts`                               | home exists; templates not machine-readable |
 | `G_name` toponym grammar        | street domain only (street-type lexicon, morphology FST, affix tags)             | toponym modifier/generic inventories absent |
 | registry evidence               | FST prior, country-surface clues, anchor channel                                 | present — token-granular, hence the §4 leak |
 
@@ -229,7 +229,7 @@ parses it should forbid.
    gazetteer locality entry flips `Port of Spain`-class rows without retraining. Expressible in the
    engine config; falsifies §4 if it fails.
 3. **FST maximal-match check** — ANSWERED (2026-08-24, read from `buildFSTEmissionPriors` in
-   `packages/neural/fst-prior.ts`): there is NO maximal-match preference. The walk starts at every
+   `packages/neural/lib/fst-prior.ts`): there is NO maximal-match preference. The walk starts at every
    word position, applies bias at the first accepting state, and applies bias AGAIN at every longer
    accepting extension from the same start — nested and covering entries stack additively into the
    emission matrix, and nothing ranks, deduplicates, or suppresses among overlapping spans

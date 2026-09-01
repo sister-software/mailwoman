@@ -48,14 +48,14 @@ vi.mock("onnxruntime-web/webgpu", () => {
 let capturedConfig: { postcodeAnchorLookup?: Map<string, unknown> } | null = null
 
 // The real tokenizer needs a valid SentencePiece model; stub the load (we feed dummy bytes).
-vi.mock("../../tokenizer.ts", async (importOriginal) => ({
+vi.mock("../../lib/tokenizer.ts", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@mailwoman/neural/tokenizer")>()),
 	MailwomanTokenizer: { loadFromBase64: vi.fn(async () => ({ tokenizerStub: true })) },
 }))
 
 // Capture-only stub: the real classifier needs the real tokenizer + label wiring. We only care
 // that it is CONSTRUCTED (the load reached the end) and WHAT postcode lookup it received.
-vi.mock("../../classifier.ts", async (importOriginal) => ({
+vi.mock("../../lib/classifier.ts", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@mailwoman/neural/classifier")>()),
 	NeuralAddressClassifier: class {
 		constructor(cfg: { postcodeAnchorLookup?: Map<string, unknown> }) {

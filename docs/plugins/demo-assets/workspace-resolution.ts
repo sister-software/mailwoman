@@ -35,10 +35,19 @@ export function resolvePackagePath(packageName: string, ...segments: string[]): 
 }
 
 /**
+ * The directory a workspace keeps its TypeScript in, relative to the package root.
+ *
+ * Each source probe below is followed by an `out/` fallback, so a probe aimed at the WRONG directory does not fail
+ * loudly — it silently hands the demo bundle compiled JavaScript instead of the source the alias exists to select. That
+ * is what happened when source moved here from the package root, and only `webpack-policy.test.ts` noticed.
+ */
+const SourceDirectoryName = "lib"
+
+/**
  * Resolve a package's source entry, falling back to compiled output when source is unavailable.
  */
 export async function resolvePackageEntry(packageName: string): Promise<string | null> {
-	const source = resolvePackagePath(packageName, "index.ts")
+	const source = resolvePackagePath(packageName, SourceDirectoryName, "index.ts")
 
 	if (source && (await pathExists(source))) return source
 
@@ -49,7 +58,7 @@ export async function resolvePackageEntry(packageName: string): Promise<string |
  * Resolve a single-file package subpath such as `objects.ts`.
  */
 export async function resolvePackageFile(packageName: string, subpath: string): Promise<string | null> {
-	const source = resolvePackagePath(packageName, `${subpath}.ts`)
+	const source = resolvePackagePath(packageName, SourceDirectoryName, `${subpath}.ts`)
 
 	if (source && (await pathExists(source))) return source
 
@@ -60,7 +69,7 @@ export async function resolvePackageFile(packageName: string, subpath: string): 
  * Resolve a directory package subpath such as `decoder/index.ts`.
  */
 export async function resolvePackageDirectoryEntry(packageName: string, subpath: string): Promise<string | null> {
-	const source = resolvePackagePath(packageName, subpath, "index.ts")
+	const source = resolvePackagePath(packageName, SourceDirectoryName, subpath, "index.ts")
 
 	if (source && (await pathExists(source))) return source
 

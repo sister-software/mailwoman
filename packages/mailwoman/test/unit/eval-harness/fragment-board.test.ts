@@ -137,7 +137,7 @@ describe("the FR fragment board fixture", () => {
 		const reserved = new Set(
 			[
 				...TextSpliterator.from(
-					await readLocalTextFile("packages/mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt")
+					await readLocalTextFile("packages/mailwoman/lib/eval-harness/fixtures/ban-fragments-fr.surfaces.txt")
 				),
 			].filter((line) => line && !line.startsWith("#"))
 		)

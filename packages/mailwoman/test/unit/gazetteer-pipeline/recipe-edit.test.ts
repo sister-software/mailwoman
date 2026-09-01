@@ -96,7 +96,7 @@ describe("removeCountry", () => {
 	})
 })
 
-const source = await readLocalTextFile(new URL("../../../gazetteer-pipeline/defaults.ts", import.meta.url))
+const source = await readLocalTextFile(new URL("../../../lib/gazetteer-pipeline/defaults.ts", import.meta.url))
 
 describe("against the real defaults.ts", () => {
 	it("would refuse to remove IN from the WOF list — the entry that carries the measurement", () => {

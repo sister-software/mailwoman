@@ -39,7 +39,7 @@ const META_BACKSPACE = `${ESC}\u007F`
  */
 const CTRL_W = "\u0017"
 
-const PROBE = resolvePackagePath("mailwoman", "debug-view", "test", "input-probe.ts")
+const PROBE = resolvePackagePath("mailwoman", "lib", "debug-view", "test", "input-probe.ts")
 
 const PTY_COLUMNS = 100
 const PTY_ROWS = 30

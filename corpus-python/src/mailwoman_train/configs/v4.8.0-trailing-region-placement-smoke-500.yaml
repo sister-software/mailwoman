@@ -36,7 +36,7 @@
 # KNOWN LIMITATION for the model card: all 16,000 trailing rows are IN. The run cannot distinguish
 # "learned after_region" from "learned India" using the trailing arm alone. The VE rows separate them.
 #
-# EXTRACTION is committed now (packages/corpus/src/tools/postcode-triples.ts); v0.24.0's was a one-off
+# EXTRACTION is committed now (packages/corpus/lib/tools/postcode-triples.ts); v0.24.0's was a one-off
 # that never landed, which is why the shard was unbuildable for a new country. Route notes in its
 # docstring: parent_id joins for FR/DE/ES/IT/NL only, GeoNames carries the triple inline for PT/MX/IN,
 # and nearest-locality-centroid was measured (13.5-81.1% agreement) and REJECTED.

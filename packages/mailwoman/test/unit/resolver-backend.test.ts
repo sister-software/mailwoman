@@ -68,7 +68,7 @@ test("resolveCandidateDBPath: returns an explicit/env path only when it exists o
 test("resolveCandidateDBPath: falls back to <data-root>/wof/candidate.db, and 'none' pins the FTS backend", async () => {
 	// The fallback is what makes the candidate table the default backend. Pointed at this file's own
 	// directory tree so the convention path is a real file: `<root>/wof/candidate.db`.
-	const root = resolvePackagePath("mailwoman", "test-fixtures", "candidate-root")
+	const root = resolvePackagePath("mailwoman", "lib", "test-fixtures", "candidate-root")
 
 	setEnv("MAILWOMAN_DATA_ROOT", root)
 	setEnv("MAILWOMAN_CANDIDATE_DB", undefined)
@@ -86,7 +86,7 @@ test("resolveCandidateDBPath: falls back to <data-root>/wof/candidate.db, and 'n
 })
 
 test("resolveCandidateDBPath: an explicit data root does not depend on MAILWOMAN_DATA_ROOT", async () => {
-	const root = resolvePackagePath("mailwoman", "test-fixtures", "candidate-root")
+	const root = resolvePackagePath("mailwoman", "lib", "test-fixtures", "candidate-root")
 
 	setEnv("MAILWOMAN_DATA_ROOT", "/no/such/root")
 	setEnv("MAILWOMAN_CANDIDATE_DB", undefined)

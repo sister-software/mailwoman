@@ -30,7 +30,7 @@ basis discipline; the flood survey
 template; the erosion survey
 ([`2026-08-27-erosion-layer-survey.md`](./2026-08-27-erosion-layer-survey.md)) is where the
 meaning-of-zero inversion this subject shares was first written down; and
-`packages/mailwoman/observations/absence-route.ts` with its `QueryIntentMarker` carrier delivers an
+`packages/mailwoman/lib/observations/absence-route.ts` with its `QueryIntentMarker` carrier delivers an
 additive, provenance-carrying advisory without touching ranking.
 
 **Every external claim below carries its URL and the date it was read.** Measurements taken from this lab
@@ -896,7 +896,7 @@ totalling 18,686,303,456 bytes**.
 
 **This repository's Overture path does not carry it.** A census of `theme=` string literals across the
 whole tree (excluding `node_modules` and `out/`) returns **six occurrences over three themes** —
-`theme=divisions` (3, in `packages/mailwoman/gazetteer-pipeline/admin/fold-overture.ts`), `theme=places`
+`theme=divisions` (3, in `packages/mailwoman/lib/gazetteer-pipeline/admin/fold-overture.ts`), `theme=places`
 (2, in `.../poi/build-poi.ts`), and `theme=addresses` (1). **There is no `theme=base` reference anywhere,
 so the existing ingestion path carries no land-use theme at all** and adding one would be new work, not a
 configuration change.
@@ -1182,7 +1182,7 @@ zoning conclusion by mixing the two.
 
 **This is `packages/filer/`'s discipline, applied unchanged.** `FilerEdgeAssertion` grades an assertion
 `Authoritative` or `Inferred`; its schema keeps them in separate columns from what the assertion _means_;
-and a `CHECK` constraint enforces the direction, because — verbatim from `packages/filer/schema.ts` — "a
+and a `CHECK` constraint enforces the direction, because — verbatim from `packages/filer/lib/schema.ts` — "a
 score may appear ONLY on an inferred row, since an authoritative membership matched nothing and any
 number there would be a fabricated confidence." The same three mechanics carry over: the grade is a
 column rather than a convention, a blank grade is rejected (`NOT NULL` alone would accept `''`, and a

@@ -34,7 +34,7 @@
 	"type": "module",
 	"imports": {
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -42,72 +42,72 @@
 	"exports": {
 		"./package.json": "./package.json",
 		"./coordinate-bounds": {
-			"node": "./coordinate-bounds.ts",
+			"node": "./lib/coordinate-bounds.ts",
 			"default": "./out/coordinate-bounds.js",
 			"types": "./out/coordinate-bounds.d.ts"
 		},
 		"./sdk": {
-			"node": "./sdk/index.ts",
+			"node": "./lib/sdk/index.ts",
 			"default": "./out/sdk/index.js",
 			"types": "./out/sdk/index.d.ts"
 		},
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./coordinate-formats": {
-			"node": "./coordinate-formats.ts",
+			"node": "./lib/coordinate-formats.ts",
 			"default": "./out/coordinate-formats.js",
 			"types": "./out/coordinate-formats.d.ts"
 		},
 		"./open-location-code": {
-			"node": "./open-location-code.ts",
+			"node": "./lib/open-location-code.ts",
 			"default": "./out/open-location-code.js",
 			"types": "./out/open-location-code.d.ts"
 		},
 		"./geometries/polygon": {
-			"node": "./geometries/polygon.ts",
+			"node": "./lib/geometries/polygon.ts",
 			"default": "./out/geometries/polygon.js",
 			"types": "./out/geometries/polygon.d.ts"
 		},
 		"./h3/cell": {
-			"node": "./h3/cell.ts",
+			"node": "./lib/h3/cell.ts",
 			"default": "./out/h3/cell.js",
 			"types": "./out/h3/cell.d.ts"
 		},
 		"./h3/polygon-cells": {
-			"node": "./h3/polygon-cells.ts",
+			"node": "./lib/h3/polygon-cells.ts",
 			"default": "./out/h3/polygon-cells.js",
 			"types": "./out/h3/polygon-cells.d.ts"
 		},
 		"./geometries/ring-blob": {
-			"node": "./geometries/ring-blob.ts",
+			"node": "./lib/geometries/ring-blob.ts",
 			"default": "./out/geometries/ring-blob.js",
 			"types": "./out/geometries/ring-blob.d.ts"
 		},
 		"./projection-transform": {
-			"node": "./projection-transform.ts",
+			"node": "./lib/projection-transform.ts",
 			"default": "./out/projection-transform.js",
 			"types": "./out/projection-transform.d.ts"
 		},
 		"./osm/*": {
-			"node": "./osm/*.ts",
+			"node": "./lib/osm/*.ts",
 			"default": "./out/osm/*.js",
 			"types": "./out/osm/*.d.ts"
 		},
 		"./sdk/well-known-text": {
-			"node": "./sdk/well-known-text.ts",
+			"node": "./lib/sdk/well-known-text.ts",
 			"default": "./out/sdk/well-known-text.js",
 			"types": "./out/sdk/well-known-text.d.ts"
 		},
 		"./sdk/ogr": {
-			"node": "./sdk/ogr.ts",
+			"node": "./lib/sdk/ogr.ts",
 			"default": "./out/sdk/ogr.js",
 			"types": "./out/sdk/ogr.d.ts"
 		},
 		"./h3/coverage": {
-			"node": "./h3/coverage.ts",
+			"node": "./lib/h3/coverage.ts",
 			"default": "./out/h3/coverage.js",
 			"types": "./out/h3/coverage.d.ts"
 		}

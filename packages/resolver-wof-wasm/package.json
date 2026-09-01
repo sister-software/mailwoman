@@ -27,7 +27,7 @@
 	"type": "module",
 	"imports": {
 		"#*": {
-			"node": "./*.ts",
+			"node": "./lib/*.ts",
 			"default": "./out/*.js",
 			"types": "./out/*.d.ts"
 		}
@@ -35,22 +35,22 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
-			"node": "./index.ts",
+			"node": "./lib/index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
 		"./browser-cascade": {
-			"node": "./browser-cascade.ts",
+			"node": "./lib/browser-cascade.ts",
 			"default": "./out/browser-cascade.js",
 			"types": "./out/browser-cascade.d.ts"
 		},
 		"./loader": {
-			"node": "./loader.ts",
+			"node": "./lib/loader.ts",
 			"default": "./out/loader.js",
 			"types": "./out/loader.d.ts"
 		},
 		"./lookup": {
-			"node": "./lookup.ts",
+			"node": "./lib/lookup.ts",
 			"default": "./out/lookup.js",
 			"types": "./out/lookup.d.ts"
 		}
