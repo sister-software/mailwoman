@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { isPOBox, matchPOBox, normalizePOBox } from "@mailwoman/codex/us/po-box"
+import { isPOBox, matchPOBox, normalizePOBox } from "@mailwoman/codex/us"
 import { expect, test } from "vitest"
 
 test("isPOBox: recognizes the USPS designator phrases with an id", () => {

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { firstDigitRegion, isJpPostalCode, normalizeJpPostalCode } from "@mailwoman/codex/jp/postal-code"
+import { firstDigitRegion, isJpPostalCode, normalizeJpPostalCode } from "@mailwoman/codex/jp"
 import { describe, expect, it } from "vitest"
 
 describe("normalizeJpPostalCode", () => {

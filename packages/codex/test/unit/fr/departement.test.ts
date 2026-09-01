@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { departementInfo, FR_DEPARTEMENTS } from "@mailwoman/codex/fr/departement"
+import { departementInfo, FR_DEPARTEMENTS } from "@mailwoman/codex/fr"
 import { expect, test } from "vitest"
 
 test("departementInfo: metropolitan code → name + région", () => {

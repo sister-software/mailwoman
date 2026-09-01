@@ -11,7 +11,7 @@ import {
 	matchLeadingDirectional,
 	pluckDirectionalName,
 	renderDirectional,
-} from "@mailwoman/codex/us/street-directional"
+} from "@mailwoman/codex/us"
 import { expect, test } from "vitest"
 
 test("pluckDirectionalName: abbreviation → full USPS name, case-insensitive", () => {

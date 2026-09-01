@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { isFrenchStreetWord } from "@mailwoman/codex/fr/voie"
+import { isFrenchStreetWord } from "@mailwoman/codex/fr"
 import { describe, expect, it } from "vitest"
 
 describe("isFrenchStreetWord", () => {

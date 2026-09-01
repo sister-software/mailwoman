@@ -8,7 +8,7 @@
  *   a tagging miss. These cases pin the specific strings, not just the mechanism.
  */
 
-import { countryDisplayNames, enumerateCountryDisplayNames } from "@mailwoman/codex/country/display-names"
+import { countryDisplayNames, enumerateCountryDisplayNames } from "@mailwoman/codex/country"
 import { describe, expect, it } from "vitest"
 
 describe("enumerateCountryDisplayNames", () => {

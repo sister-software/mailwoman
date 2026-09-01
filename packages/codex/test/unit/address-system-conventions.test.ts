@@ -12,7 +12,7 @@
  */
 
 import { ADDRESS_SYSTEM_CONVENTIONS, conventionsForSystem } from "@mailwoman/codex/address-system-conventions"
-import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb/postcode"
+import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 import { describe, expect, it } from "vitest"
 
 describe("FR address-system conventions (#719)", () => {

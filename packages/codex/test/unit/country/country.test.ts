@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { countrySurfaceForms, isCountryToken, matchCountry } from "@mailwoman/codex/country/country"
+import { countrySurfaceForms, isCountryToken, matchCountry } from "@mailwoman/codex/country"
 import { expect, test } from "vitest"
 
 test("matchCountry: resolves alpha-2, alpha-3, and name (case-insensitive) to the iso2", () => {

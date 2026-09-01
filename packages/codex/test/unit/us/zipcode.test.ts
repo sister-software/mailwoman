@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
-import { isUSStateAbbreviation } from "@mailwoman/codex/us/state"
 import {
 	isZipCode,
 	pluckStateZIPCode,
 	StateAbbreviationZipCodePrefixRecord,
 	ZipCodePatterns,
 	ZipCodePrefixAbbreviationMap,
-} from "@mailwoman/codex/us/zipcode"
+} from "@mailwoman/codex/us"
+import { isUSStateAbbreviation } from "@mailwoman/codex/us/state"
 import { describe, expect, it } from "vitest"
 
 describe("isZipCode", () => {

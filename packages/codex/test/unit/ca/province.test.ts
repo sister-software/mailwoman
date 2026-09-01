@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { CA_PROVINCES, isCanadianProvinceCode, lookupCanadianProvince } from "@mailwoman/codex/ca/province"
+import { CA_PROVINCES, isCanadianProvinceCode, lookupCanadianProvince } from "@mailwoman/codex/ca"
 import { describe, expect, it } from "vitest"
 
 describe("CA_PROVINCES", () => {

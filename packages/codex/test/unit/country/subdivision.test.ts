@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { matchSubdivision, matchSubdivisionIn } from "@mailwoman/codex/country/subdivision"
+import { matchSubdivision, matchSubdivisionIn } from "@mailwoman/codex/country"
 import { describe, expect, it } from "vitest"
 
 describe("matchSubdivision", () => {

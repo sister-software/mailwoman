@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { isNZPostcode, normalizeNZPostcode, NZ_POSTCODE_PATTERN } from "@mailwoman/codex/nz/postcode"
+import { isNZPostcode, normalizeNZPostcode, NZ_POSTCODE_PATTERN } from "@mailwoman/codex/nz"
 import { expect, test } from "vitest"
 
 test("NZ_POSTCODE_PATTERN: matches exactly four digits, nothing else", () => {

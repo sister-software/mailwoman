@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DE_BUNDESLAENDER, isGermanStateCode, lookupGermanState } from "@mailwoman/codex/de/bundesland"
+import { DE_BUNDESLAENDER, isGermanStateCode, lookupGermanState } from "@mailwoman/codex/de"
 import { describe, expect, it } from "vitest"
 
 describe("DE_BUNDESLAENDER", () => {

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { AU_POSTCODE_PATTERN, isAuPostcode, normalizeAuPostcode } from "@mailwoman/codex/au/postcode"
+import { AU_POSTCODE_PATTERN, isAuPostcode, normalizeAuPostcode } from "@mailwoman/codex/au"
 import { expect, test } from "vitest"
 
 test("AU_POSTCODE_PATTERN: matches exactly four digits, nothing else", () => {

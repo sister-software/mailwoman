@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { isCedex, matchCedex } from "@mailwoman/codex/fr/cedex"
+import { isCedex, matchCedex } from "@mailwoman/codex/fr"
 import { describe, expect, it } from "vitest"
 
 describe("matchCedex", () => {

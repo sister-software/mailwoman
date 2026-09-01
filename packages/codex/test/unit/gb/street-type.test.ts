@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { GB_STREET_TYPES, isBritishStreetWord } from "@mailwoman/codex/gb/street-type"
+import { GB_STREET_TYPES, isBritishStreetWord } from "@mailwoman/codex/gb"
 import { describe, expect, it } from "vitest"
 
 describe("GB_STREET_TYPES", () => {

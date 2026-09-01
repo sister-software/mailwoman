@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DE_STREET_SUFFIXES, isGermanStreetToken } from "@mailwoman/codex/de/street-type"
+import { DE_STREET_SUFFIXES, isGermanStreetToken } from "@mailwoman/codex/de"
 import { describe, expect, it } from "vitest"
 
 describe("isGermanStreetToken", () => {

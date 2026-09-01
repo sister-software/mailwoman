@@ -4,12 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import {
-	isJapaneseAdminSuffix,
-	JP_ADMIN_SUFFIXES,
-	JP_BLOCK_MARKERS,
-	stripAdminSuffix,
-} from "@mailwoman/codex/jp/address-unit"
+import { isJapaneseAdminSuffix, JP_ADMIN_SUFFIXES, JP_BLOCK_MARKERS, stripAdminSuffix } from "@mailwoman/codex/jp"
 import { describe, expect, it } from "vitest"
 
 describe("JP_ADMIN_SUFFIXES / JP_BLOCK_MARKERS", () => {

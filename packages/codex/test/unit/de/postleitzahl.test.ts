@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { isPostleitzahl, leitzoneOf, normalizePLZ, PLZ_LEITZONEN } from "@mailwoman/codex/de/postleitzahl"
+import { isPostleitzahl, leitzoneOf, normalizePLZ, PLZ_LEITZONEN } from "@mailwoman/codex/de"
 import { describe, expect, it } from "vitest"
 
 describe("normalizePLZ", () => {

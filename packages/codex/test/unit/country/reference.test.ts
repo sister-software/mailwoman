@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { countryFlag, countryReferenceAnnotator } from "@mailwoman/codex/country/reference"
+import { countryFlag, countryReferenceAnnotator } from "@mailwoman/codex/country"
 import { expect, test } from "vitest"
 
 test("countryFlag: alpha-2 → regional-indicator emoji, case-insensitive", () => {

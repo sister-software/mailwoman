@@ -12,7 +12,7 @@ import {
 	US_ARMED_FORCES_REGIONS,
 	US_MILITARY_POST_OFFICE_CODES,
 	US_MILITARY_UNIT_DESIGNATORS,
-} from "@mailwoman/codex/us/military-address"
+} from "@mailwoman/codex/us"
 import { describe, expect, it } from "vitest"
 
 describe("US_MILITARY_POST_OFFICE_CODES", () => {
