@@ -6,9 +6,9 @@
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { ResourceError } from "@mailwoman/core/errors"
+import type { PolygonLiteral } from "@mailwoman/spatial/geometries/polygon"
 
-import { polygonToOSMFilter, type PolygonLiteral } from "#geometries/polygon"
-import type { OSMOverpassElement, OSMOverpassResponseBody } from "#osm/utils"
+import { polygonToOSMFilter, type OSMOverpassElement, type OSMOverpassResponseBody } from "#overpass/nodes"
 
 const overpassClient = new APIClient({ displayName: "overpass", retry: true })
 

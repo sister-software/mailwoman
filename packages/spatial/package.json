@@ -87,11 +87,6 @@
 			"default": "./out/projection-transform.js",
 			"types": "./out/projection-transform.d.ts"
 		},
-		"./osm/*": {
-			"node": "./lib/osm/*.ts",
-			"default": "./out/osm/*.js",
-			"types": "./out/osm/*.d.ts"
-		},
 		"./well-known-text": {
 			"node": "./lib/well-known-text.ts",
 			"default": "./out/well-known-text.js",

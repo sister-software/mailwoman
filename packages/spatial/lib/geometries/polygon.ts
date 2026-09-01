@@ -214,27 +214,6 @@ export interface MultiPolygonLiteral<P extends PolygonPath = PolygonPath> extend
 	coordinates: P[]
 }
 
-/**
- * Predicate for checking if a GeoJSON object is a `MultiPolygon` geometry.
- */
-
-/**
- * Given a polygon geometry, return an OSM filter string.
- *
- * This is useful when working with the Overpass API.
- */
-// `unknown`, matched by the guard on the next line: this reads geometry off an API response, and a parameter that
-// promises a polygon makes the guard look redundant while forcing every test of it to assert past the signature.
-export function polygonToOSMFilter(input: unknown): string {
-	if (!isPolygonLiteral(input)) return ""
-
-	const [exteriorRing] = input.coordinates
-
-	const filter = exteriorRing.map(([lon, lat]) => `${lat} ${lon}`).join(" ")
-
-	return `poly:'${filter}'`
-}
-
 //#region Ring-list geometry — the parsed-GeoJSON shape
 
 /**
