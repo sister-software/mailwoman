@@ -276,9 +276,9 @@ The manual recipe below is the same thing, step by step, for reference / one-off
 # (the standalone script is retired — the fold lives in the pipeline and `gazetteer build`
 #  runs it; for a fold-on-copy without a full rebuild, `mailwoman gazetteer build --help`.)
 node packages/mailwoman/out/cli.js gazetteer build   # admin (fold included) → candidate, turnkey
-# 1. Build the candidate table from the FOLDED admin DB + the postcode shards. The FTS5-trigram fuzzy
+# 1. Build the candidate table from the FOLDED admin DB + the postcode databases. The FTS5-trigram fuzzy
 #    index (typo tolerance — Manchestr→Manchester) is baked in by build-candidate now; no separate step.
-#    --postcodes is repeatable: US + the WOF intl shard (NL/FR/DE/ES/IT) + the GeoNames intl shard (PT/AU)
+#    --postcodes is repeatable: US + the WOF intl extract (NL/FR/DE/ES/IT) + the GeoNames intl extract (PT/AU)
 #    + Overture-derived postcode centroids (CA + the EU-coverage locales), each built with
 #      node packages/mailwoman/out/cli.js eval es-postcode-centroids --country <CC> --pc-len 0 --parquet <addresses-cc.parquet>
 #    (--pc-len 0 = no lpad, the Overture-to-Overture / non-numeric-format case). Each ZIP becomes a
@@ -492,7 +492,7 @@ Stage them under a generation segment:
 ```
 
 - The generation is `PAIR_INDEX_VERSION` in `docs/src/shared/resources.tsx` — **bump it in the same commit you
-  stage a new one**, the way `ADMIN_GAZETTEER_VERSION` / `POI_LAYER_VERSION` / `NATIONAL_STREET_SHARD_VERSION`
+  stage a new one**, the way `ADMIN_GAZETTEER_VERSION` / `POI_LAYER_VERSION` / `NATIONAL_STREET_DATABASE_VERSION`
   already work. The demo bundle is the mutable pointer; the binaries are immutable at a fresh URL.
 - Why: these objects ship `Cache-Control: public, max-age=604800, immutable`. The PIX schema-3 republish was
   uploaded over the flat `mailwoman/pair-index/pair-index-<cc>.bin` keys, so Cloudflare kept serving schema-1

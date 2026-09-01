@@ -57,19 +57,19 @@ first-party artifact and the corpus provenance is tracked per row.
 
 ## Used only when developing Mailwoman in this repository
 
-The following are used to build the corpus, gazetteer shards, evaluations, and the
+The following are used to build the corpus, gazetteer databases, evaluations, and the
 documentation site. They are **not** redistributed in any published npm package.
 
 ### GeoNames — CC-BY 4.0
 
 [GeoNames](https://www.geonames.org/) postal and centroid data is used to build gazetteer
-postcode shards and the training corpus, under
+postcode databases and the training corpus, under
 [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 ### Ordnance Survey Code-Point Open — Open Government Licence v3.0
 
 [Code-Point Open](https://osdatahub.os.uk/downloads/open/CodePointOpen) is the source of the GB
-unit-postcode gazetteer shard (`postalcode-gb-codepoint-<date>.db`, built by
+unit-postcode gazetteer database (`postalcode-gb-codepoint-<date>.db`, built by
 `mailwoman gazetteer build postcode-codepoint`). All three lines of the following block are
 required by OS, and each names a different rightsholder — Ordnance Survey for the geography,
 Royal Mail for the postcodes, National Statistics for the administrative codes:
@@ -81,7 +81,7 @@ Royal Mail for the postcodes, National Statistics for the administrative codes:
 Licensed under the
 [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
 The same block, plus the source md5 and OS's own `Doc/licence.txt` verbatim, is baked into the
-shard's `meta` table so a consumer reads the obligation at open rather than trusting a runbook.
+database's `meta` table so a consumer reads the obligation at open rather than trusting a runbook.
 
 Coverage is England, Scotland and Wales. Northern Ireland (`BT`), the Isle of Man and the
 Channel Islands are **not** in this product — that geography is administered separately and is

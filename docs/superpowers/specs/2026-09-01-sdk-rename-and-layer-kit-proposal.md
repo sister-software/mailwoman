@@ -16,11 +16,11 @@ intuitive answer**, which is why they are written down rather than acted on.
    (88 before this arc removed five), and the benefit is that a directory name would agree with a sentence in
    `AGENTS.md`. The two real defects the audit found — a fossil in `spatial` and a request path reaching
    through an acquisition barrel — are already fixed, and neither was fixed by a rename (§2).
-   1b. **Do it when the next breaking release happens anyway, and take every rename in that one release.**
-   Operator direction, 2026-09-01. A consumer should pay for renames once. The planned removal of the word
-   `shard` is the other rename in flight, and §6 sizes both so the bundle is planned on numbers — with one
-   correction: on PUBLISHED SUBPATHS `shard` is **4**, not more than `sdk/`'s 83. The two breaks are large in
-   different currencies, and that changes what the bundle is for.
+   1b. **Do it when the next breaking release happens anyway.** Operator direction, 2026-09-01: a consumer
+   should pay for renames once. That was written when a second rename — the retired four-way vocabulary word —
+   looked like it had to travel in the same release. Measured, it did not: it carried **4** published subpaths
+   against `sdk/`'s 83, so it was an internal refactor with a small external edge and shipped continuously
+   instead (§6). `sdk/` is therefore the only passenger left, and still waits for a release it can share.
 2. **If it is renamed anyway, the word is `acquire/`**, because `soil/lib/sdk/acquire.ts` already chose it,
    and the migration must ship with the enforcement rule in the same PR (§3).
 3. **Do not build `layer-kit` for de-duplication.** The four layer packages share eight filenames and
@@ -187,80 +187,52 @@ hook). It is not to create a package.
 5. One CHANGELOG "Unreleased" entry per package, listing every removed subpath.
 6. `AGENTS.md`: replace the `sdk/` bullet rather than amending it again.
 
-## 6. Sizing the bundled release: `sdk/` and `shard` are big in different currencies
+## 6. The other rename in flight — DONE, and it did not need the release
 
-§0.1b takes both renames in one breaking release. The premise offered for that — that removing `shard` is
-"more public surface than `sdk/`'s 88" — does not survive measurement, and the correction changes what the
-bundle is for.
+§0.1b planned to take this rename and the retired-vocabulary rename in one breaking release. The premise offered
+for that — that the vocabulary change carried more public surface than `sdk/`'s 83 subpaths — did not survive
+measurement, and the correction dissolved the coupling:
 
-|                           | `sdk/` |          `shard` |
+|                           | `sdk/` | the retired word |
 | ------------------------- | -----: | ---------------: |
 | published export subpaths | **83** |            **4** |
 | files touched             |     87 | **435 of 2,508** |
-| total occurrences         |      — |        **3,402** |
+| total occurrences         |      — |        **3,481** |
 | distinct spellings        |      1 |          **165** |
 
-The four `shard` subpaths are `core`'s `./resources/whosonfirst/sharded-repo`, `corpus`'s `./shard-recipes/*`,
-`mailwoman`'s `./geocode-shards` and `resolver-wof-sqlite`'s `./sharding`.
+**`sdk/` is an EXTERNAL break with a small internal footprint; the vocabulary rename was the reverse** — an
+internal refactor with four subpaths attached. So it was never gated on a release, and it shipped continuously
+instead: those four subpaths moved with their modules, each recorded in CHANGELOG "Unreleased".
 
-**`sdk/` is an EXTERNAL break with a small internal footprint; `shard` is an INTERNAL refactor with a small
-external one.** Two consequences:
+That leaves the `sdk/` rename holding a release of its own, for 83 subpaths and no other passenger — which
+strengthens §0.1 rather than weakening it. Bundle it with the next breaking change that has to happen anyway.
 
-1. The bundling argument holds, but it is buying one release for **87 subpaths**, not for two comparably-sized
-   breaks — and the honest CHANGELOG line is "83 `sdk` paths and 4 `shard` paths".
-2. The `shard` work is **not gated on a release**. Almost all of it is identifier churn no consumer observes;
-   only those four subpaths need to wait. If the vocabulary work is otherwise ready it can land continuously,
-   holding back only those four entries.
+### 6.1 The completion criterion, and what it cost to state honestly
 
-On the replacement word: there is none, by design. `shard` is being removed **because it stood for four
-things**, so a single synonym would re-create the defect under a new spelling. The replacements are
-per-concept nouns — corpus recipes, per-country postcode databases, WOF extracts, and the providers' region
-databases — and the 165 distinct spellings are the map of which sites take which noun.
+**Done: zero occurrences, enforced.** `repo-health`'s `bannedVocabulary` counter holds the tree there, with an
+allow-list that carries a reason beside every entry. Three findings are worth keeping, because each one is a
+trap for the next vocabulary removal:
 
-One path correction for anyone working from the earlier note: `packages/corpus/src/shard-recipes/` is now
-`packages/corpus/lib/shard-recipes/` (#2050).
+1. **The instrument must read NUL-bearing files.** Five tracked sources carry raw NUL bytes (#2018), which
+   `grep` treats as binary and skips SILENTLY — 3,481 occurrences with `-a` against 3,427 without. A
+   `grep`-based ratchet would have certified zero with 54 still standing. The counter reads through Node
+   instead, which has no such blind spot.
+2. **A ratchet written in the language it polices is inside its own blast radius.** The case-preserving sweep
+   renamed the counter AND rewrote the pattern it counts with, so the gate silently began measuring the
+   REPLACEMENT word while still reporting a falling number. It stayed green throughout. The counter is now
+   named neutrally, its term lives in one constant, and `scripts/repo-health.ts` excludes itself — otherwise
+   the count can never reach zero, because the pattern has to spell what it bans.
+3. **Scanning only `.ts`/`.tsx` under-reports by a lot.** The first zero left **125** occurrences standing in
+   prose, config, dictionaries and eval rows — including three sentences in `AGENTS.md` telling the next agent
+   that retired names were current. A vocabulary an agent reads is a vocabulary an agent writes.
 
-### 6.1 The completion criterion: `shard` reaches zero
+What deliberately keeps it: the Vale rules that refuse it (a ban must name what it bans), `AGENTS.md` for the
+same reason, and CONTENT — transliterated place names in the capitals gazetteer, real surnames and given names
+in the libpostal dictionaries, and dated notes inside committed board rows. Renaming any of those would corrupt
+data to satisfy a style rule.
 
-**The work is done when the word appears zero times in tracked source.** Operator direction, 2026-09-01. A
-countable finish line rather than a judgement, and the repo has done this once before: #2029 drove
-`synchronousFilesystemCalls` to a baseline of **0** in `scripts/repo-health-baseline.json`, and the counter is
-what kept it there.
-
-The denominator matters, because "zero in the codebase" is not literally reachable and a criterion that cannot
-be met gets quietly dropped:
-
-- **Counted:** tracked `.ts`/`.tsx`, all spellings, case-insensitive. **Today: 3,481 occurrences across 2,508
-  files, 165 distinct spellings.**
-- **Not counted:** `docs/records/` and `CHANGELOG.md`. Those describe a state the repository was in, and
-  rewriting them to remove the word would falsify a record — the same rule that kept the frozen
-  pre-registrations out of the #2050 path sweep.
-- **Decide when it is first non-trivial:** corpus data files and shard artifacts on disk carry the word in
-  filenames and stored manifests. Renaming an artifact is a rebuild, not a refactor.
-
-The enforcement shape is the one that already works: a `shardVocabulary` counter in `scripts/repo-health.ts`
-with its baseline ratcheted downward per PR, so the count can only fall. Land the counter FIRST, at today's
-**3,481**, so every subsequent PR is measured against it.
-
-**THE INSTRUMENT MUST READ NUL-BEARING FILES, or it will report zero while occurrences remain.** Five tracked
-sources carry raw NUL bytes (#2018), so `grep` classifies them as binary and skips them silently — no error,
-no count. Measured on the same tree:
-
-| command                |     count | why it differs                                 |
-| ---------------------- | --------: | ---------------------------------------------- |
-| `grep -aoiE` (correct) | **3,481** | reads every file                               |
-| `grep -oiE` (no `-a`)  |     3,427 | **54 occurrences hidden** in 5 files           |
-| `grep -aoE '[Ss]hard'` |     3,402 | case-sensitive; misses `SHARD`-style spellings |
-
-The 54 hidden occurrences sit in `dev-mcp/lib/lookup-sources.ts` (35), `mailwoman`'s `nz-localities.ts` (13)
-and `lieudit-pairs.ts` (4), `gauntlet/ablation.ts` (1) and `neural/lib/postcode-prefix-index.ts` (1). This is
-a second, sharper consequence of #2018 than the one it records: NUL bytes do not merely make a file invisible
-to `grep` — they would let a ratchet counter certify a finish line it never reached.
-
-```bash
-git ls-files '*.ts' '*.tsx' | grep -v /out/ \
-  | xargs grep -aoiE '\b[a-z_]*shard[a-z_]*\b' | wc -l    # 3481 on 2026-09-01
-```
+One open item: those board-row notes are inside `SEED_CASE_KEY_ORDER`, so they are part of the pinned corpus
+content hash. Editing one is a deliberate re-pin, not a sweep.
 
 ## 7. Reproducing every number here
 

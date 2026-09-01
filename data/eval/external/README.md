@@ -191,7 +191,7 @@ Two German sets from OpenAddresses Berlin + Saxony support the multi-locale work
   same `ingest-openaddresses.ts`, selected with `--sources de/berlin,de/sn/statewide`.
 - **`openaddresses-de-golden.jsonl`** (1,500 records, held-out seed 7) is the
   _parser_ eval set (`{raw, components}` with street + house_number), rendered in
-  idiomatic German order. Built by `build-german-shard.mjs --golden`.
+  idiomatic German order. Built by `build-german-slice.mjs --golden`.
 
 Two changes make non-US OpenAddresses usable here:
 
@@ -203,21 +203,21 @@ Two changes make non-US OpenAddresses usable here:
    to a US namesake (`Berlin` resolved to a 20k-pop US Berlin, coord ~5,940 km). Pass
    `--default-country DE` (or `none`) for non-US data and the coord drops to ~10 km.
 
-The German _training_ shard (`synth-german`, `corpus/src/synthesize-german.ts`)
+The German _training_ slice (`synth-german`, `corpus/lib/synthesize-german.ts`)
 renders these real DE tuples in German order via the OpenCage `DE` template, so the
 model learns house-number-after-street and postcode-before-city. Run the German
 before/after with `node scripts/eval-de-coverage.ts <model> <tokenizer> <model-card>`.
 
-## ES/IT/NL — order-shard goldens (#241, 2026-07-02)
+## ES/IT/NL — order-slice goldens (#241, 2026-07-02)
 
 Per-locale held-out parser goldens mirroring the German pattern above —
 `{raw, components, country, order}` rows rendered from REAL OpenAddresses
-tuples by the `locale` shard recipe's `--golden` mode
-(`corpus/src/shard-recipes/locale.ts` → `synthesizeLocaleRow`):
+tuples by the `locale` recipe's `--golden` mode
+(`corpus/lib/recipes/locale.ts` → `synthesizeLocaleRow`):
 
 - **`openaddresses-es-golden.jsonl`** / **`openaddresses-it-golden.jsonl`** /
   **`openaddresses-nl-golden.jsonl`** (1,500 records each, held-out seed 7 vs
-  the training shards' seed 42 — the same seed split the DE golden used).
+  the training slices' seed 42 — the same seed split the DE golden used).
   ~60% native order (house-after-street, postcode-before-city), ~40%
   international; the `order` field stratifies them.
 - Surface diversity matches the observed eval forms: ES rows mix the
@@ -232,7 +232,7 @@ tuples by the `locale` shard recipe's `--golden` mode
 Rebuild:
 
 ```bash
-mailwoman corpus shard locale --country ES --count 1500 --seed 7 --golden \
+mailwoman corpus slice locale --country ES --count 1500 --seed 7 --golden \
   --output data/eval/external/openaddresses-es-golden.jsonl   # IT/NL alike
 ```
 

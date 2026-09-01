@@ -35,18 +35,25 @@ replaced by a combined entry on purpose — `@mailwoman/spatial` is imported by 
 barrel deliberately excludes both modules, and a combined subpath would put a `node:child_process` reach one
 `export *` away from a browser graph.
 
-### Breaking — the provider region databases stop being called "shards"
+### Breaking — a retired word is gone from every name in the tree
 
-`mailwoman/geocode-shards` becomes `mailwoman/geocode-regions`. The identifiers move with it:
-`ShardProvider` → `RegionDatabaseProvider`, `BANShardProvider`/`OSMShardProvider` →
-`BANRegionDatabaseProvider`/`OSMRegionDatabaseProvider`, `StateShards` → `RegionDatabases`,
-`ShardResolver` → `RegionDatabaseResolver`, `ShardLookupFactory` → `RegionDatabaseFactory`,
-`ShardCacheEntry` → `RegionDatabaseCacheEntry`. `@mailwoman/ban` and `@mailwoman/osm` rename
-`sdk/shard-provider` to `sdk/region-database-provider`.
+One word used to stand for four unrelated things: a corpus recipe's output, a per-country postcode database, a
+WOF SQLite extract, and the per-region databases the geocode cascade routes between. It is removed everywhere,
+with no replacement synonym — each site now takes the noun for the thing it actually names. No shims anywhere.
 
-First slice of removing the word `shard`, which is going because it stood for four different things at once.
-There is no replacement synonym: each site takes the noun for the thing it names, and this one routes
-per-region address-point and interpolation databases. No shims.
+The new names, by concept:
+
+| Concept                                    | Name now                                                                                                                                                |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| the geocode cascade's per-region databases | `mailwoman/geocode-regions`, `RegionDatabaseProvider`, `RegionDatabases`, `RegionDatabaseResolver`, `RegionDatabaseFactory`, `RegionDatabaseCacheEntry` |
+| the same, per source register              | `@mailwoman/ban`/`@mailwoman/osm` `sdk/region-database-provider`, `BANRegionDatabaseProvider`, `OSMRegionDatabaseProvider`                              |
+| WOF SQLite extracts                        | `@mailwoman/resolver-wof-sqlite/extracts`, `ExtractConfig`, `ResolvedExtract`, `resolveExtracts`, `pickExtractForPlacetype`, `wofExtractPaths`          |
+| a corpus recipe and its output             | `@mailwoman/corpus/recipes/*`, `CorpusRecipe`, and a corpus **slice**                                                                                   |
+| per-country postcode databases             | `@mailwoman/core/resources/whosonfirst/extract-repo`, and `database` throughout the gazetteer pipeline                                                  |
+
+**Migrating:** search your own source for the retired word — every import that carried it has a same-shaped
+replacement in the table above, and nothing changed but the spelling. `repo-health`'s `bannedVocabulary` counter
+holds the tree at zero so it cannot return.
 
 ### Breaking — `@mailwoman/filer` moves three domain modules out of `./sdk/`
 

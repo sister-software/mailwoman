@@ -92,9 +92,9 @@ private but exports nothing at all, so it is not in scope.
 ## 4. Sequencing
 
 1. **Fold the collapse into the hierarchy arc's second half**, not before it.
-2. **Take the subpath removals in the same breaking release as the `sdk/` rename and the `shard` subpaths** —
-   one CHANGELOG entry per package listing every removed path, rather than three rounds of consumer churn.
-   See `2026-09-01-sdk-rename-and-layer-kit-proposal.md` §6, which sizes those two.
+2. **Take the subpath removals in the same breaking release as the `sdk/` rename** — one CHANGELOG entry per
+   package listing every removed path, rather than two rounds of consumer churn. See
+   `2026-09-01-sdk-rename-and-layer-kit-proposal.md` §6, which sizes what is left to bundle.
 3. **`sideEffects: false` and the leaf docstrings land FIRST**, before any collapse. Both are prerequisites:
    without the flag a barrel import stops tree-shaking, and without the docstrings the leaves get collapsed by
    someone who cannot see why they exist.

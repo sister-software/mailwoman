@@ -62,7 +62,7 @@
 #    node list, which is what makes the file deterministic. Identity is the (placetype, wofID, name)
 #    triple, not wofID alone.
 #
-# 6. `wof_id` is an f64, not a u4. WOF IDs are not bounded by 2^32 — the NI shard's synthetic postcode
+# 6. `wof_id` is an f64, not a u4. WOF IDs are not bounded by 2^32 — the NI extract's synthetic postcode
 #    IDs start at 9.8e12. f64 is exact to 2^53 and the serializer asserts each ID against
 #    `Number.MAX_SAFE_INTEGER`, so an ID beyond the safe range fails the build rather than
 #    round-tripping to a neighbour. A reader in a language with native integers should read the 8
