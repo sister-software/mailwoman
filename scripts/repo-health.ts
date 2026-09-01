@@ -279,9 +279,6 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	// cases. Renaming any of them would corrupt data to satisfy a style rule.
 	["packages/core/data/", "libpostal dictionaries — real given names and surnames"],
 	["data/gazetteer/", "gazetteer place names"],
-	["data/eval/", "external eval fixtures"],
-	["packages/mailwoman/lib/eval-harness/gauntlet/cases/", "dated notes inside committed board rows"],
-	["packages/mailwoman/lib/eval-harness/fixtures/", "committed eval surfaces"],
 	[".yarn/", "vendored third-party release"],
 ]
 

@@ -1,5 +1,5 @@
 # Normalized street surfaces reserved by the FR fragment board (T1c).
-# T2's BAN training shard MUST exclude every surface listed here — source-disjoint by
+# T2's BAN training slice MUST exclude every surface listed here — source-disjoint by
 # SURFACE, not by record row. A row-disjoint split leaks the surface across the boundary
 # and measures memorization instead of generalization to unseen streets.
 allee alberte bonjean

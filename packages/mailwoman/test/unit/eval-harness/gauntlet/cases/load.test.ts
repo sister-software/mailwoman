@@ -215,8 +215,19 @@ const CORPUS_SIZE = 651
  * split (#1886; `by-cs-brest` scoped to Belarus, `fr-cs-brest-bare` pinning the oracle-ratified bare answer; 649 → 650)
  * merged with CI skipped, so nothing caught the stale pin until the next branch ran the suite. Then `gb-cs-whitby` (650
  * → 651), the row that brackets `ENCYCLOPEDIC_BOOST_CAP` from below.
+ *
+ * Moved 2026-09-01 — `9151f474…` → `8eacc945…` — by PROSE ONLY, which makes it the first move here that changes no
+ * measurement. Twelve `note` fields carried the retired four-way word; each now names what it meant (a per-state or
+ * per-country database, the LINZ promote, a training slice). Row count stays 651 and every `id`, `input`,
+ * `expectComponents`, `expectLat`/`expectLon` and tolerance is byte-identical, so the board id below does NOT move —
+ * the same reason it held across the 2026-08-06 `expectPlaceName` edit.
+ *
+ * It still has to move, because `note` is in {@link SEED_CASE_KEY_ORDER} and the hash is a function of the whole
+ * canonical row. That is the design working: a corpus edit cannot reach the board without someone re-pinning it on
+ * purpose. Every built `regression.db` carrying the old stamp is now stale and a runner will refuse to grade against it
+ * until it is rebuilt — also by design, and the reason this is prose-only rather than bundled with a row change.
  */
-const CORPUS_HASH = "9151f474c67bc435c4edeb6255f20276a6270b753b436fe5270427eea45be6f8"
+const CORPUS_HASH = "8eacc945344c8aa9837c8847fc00e3812b207e7e5fb53b9ad72720c06b030abb"
 
 /**
  * `ablationBoardID` of the corpus.
