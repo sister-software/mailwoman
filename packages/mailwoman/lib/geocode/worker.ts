@@ -16,9 +16,9 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { type ColumnMapping, geocodeAddressVia, makeGeocodeHandler } from "@mailwoman/registry"
 import { createWOFResolver } from "@mailwoman/resolver"
 
-import { geocodeAddress, parseForGeocode } from "#geocode-core"
-import { RegionDatabaseProvider } from "#geocode-regions"
-import type { GeocodeStreamConfig } from "#geocode-stream"
+import { geocodeAddress, parseForGeocode } from "#geocode/core"
+import { RegionDatabaseProvider } from "#geocode/regions"
+import type { GeocodeStreamConfig } from "#geocode/stream"
 import { createResolverBackend } from "#resolver-backend"
 
 const { mapping, geocode: cfg } = (workerData?.userData ?? {}) as {

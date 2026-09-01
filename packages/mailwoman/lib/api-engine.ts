@@ -45,9 +45,9 @@ import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver, type Resolver, type ResolveOpts } from "@mailwoman/resolver"
 
-import { readReleaseManifest } from "#data-release"
-import { geocodeAddress, type GeocodeClassifier } from "#geocode-core"
-import { regionSlugFromTree, RegionDatabaseProvider } from "#geocode-regions"
+import { readReleaseManifest } from "#data/release"
+import { geocodeAddress, type GeocodeClassifier } from "#geocode/core"
+import { regionSlugFromTree, RegionDatabaseProvider } from "#geocode/regions"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-calibration"
 import {
 	buildNoGazetteerMessage,

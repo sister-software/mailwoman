@@ -127,7 +127,7 @@ interface Options {
 const CoverageBuild: ParsedCommandComponent<Options> = ({ options }) => {
 	const [stage, setStage] = useState<{ name: string; message: string }>()
 	const state = useCommandTask(async () => {
-		const { buildCoverageTiles } = await import("#coverage-core")
+		const { buildCoverageTiles } = await import("#coverage/core")
 
 		const rollup = splitNumberList(options.rollup).filter((n) => Number.isInteger(n) && n < options.fineRes)
 

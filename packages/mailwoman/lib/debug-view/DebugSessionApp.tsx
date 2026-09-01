@@ -35,9 +35,9 @@ import { outputLines } from "#debug-view/output-lines"
 import { QueryInput, type InputState } from "#debug-view/QueryInput"
 import { resolveTilesPath } from "#debug-view/tiles"
 import { assertDebugFormatSanity, debugSizeFloorViolation, initialZoomForTier } from "#debug-view/view-policy"
-import type { GeocodeCommandOptions } from "#geocode-command-options"
-import type { GeocodeResult } from "#geocode-result"
-import { createGeocodeSession, type GeocodeRun, type GeocodeSession } from "#geocode-session"
+import type { GeocodeCommandOptions } from "#geocode/command-options"
+import type { GeocodeResult } from "#geocode/result"
+import { createGeocodeSession, type GeocodeRun, type GeocodeSession } from "#geocode/session"
 
 import { DebugFrame, mapPaneCellSize, outputPaneCapacity, type DebugData, type DebugPane } from "./DebugFrame.tsx"
 

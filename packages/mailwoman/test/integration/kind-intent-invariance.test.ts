@@ -54,7 +54,7 @@ import {
 import type { NormalizedInputLite, QueryKind, QueryKindResult, QueryShapeLike } from "@mailwoman/kind-classifier"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { loadRegressionCases } from "mailwoman/eval-harness/gauntlet/cases/load"
-import { poiTaxonomyLookup } from "mailwoman/poi-intent"
+import { poiTaxonomyLookup } from "mailwoman/poi"
 import { beforeAll, describe, expect, test } from "vitest"
 
 /**

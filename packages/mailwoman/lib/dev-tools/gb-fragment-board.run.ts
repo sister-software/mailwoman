@@ -37,7 +37,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { JSONSpliterator } from "spliterator"
 
 import { type Board, emptyBoard, fold, REGISTERS, register, reportBoard } from "#dev-tools/register-board"
-import { deriveGeocodeRegister } from "#geocode-core"
+import { deriveGeocodeRegister } from "#geocode/core"
 import { createRuntimePipeline } from "#index"
 
 const { values } = parseArguments({

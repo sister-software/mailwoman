@@ -25,7 +25,7 @@ import {
 	summarizeConformanceRun,
 	tracedGauntletObserver,
 } from "mailwoman/eval-harness/conformance/run"
-import type { GeocodeResult } from "mailwoman/geocode-result"
+import type { GeocodeResult } from "mailwoman/geocode"
 import { describe, expect, it } from "vitest"
 
 function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {

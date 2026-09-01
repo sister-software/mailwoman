@@ -23,7 +23,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
-import type { GeocodeSessionOptions } from "mailwoman/geocode-session"
+import type { GeocodeSessionOptions } from "mailwoman/geocode"
 
 import type { EngineConfig, EngineRegistryLike } from "#engine-registry"
 import { DISTANCE_THRESHOLDS_KM } from "#geo-grade"

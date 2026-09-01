@@ -25,7 +25,7 @@ import type { QueryKind } from "@mailwoman/core/pipeline"
 import type { Resolver } from "@mailwoman/resolver"
 import { buildZoningDatabase } from "@mailwoman/zoning/sdk/build-zoning"
 import { fixtureFeatures, fixtureSource, FIXTURE_ORIGIN, FIXTURE_PLANS, FIXTURE_SIDE } from "@mailwoman/zoning/test-kit"
-import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode-core"
+import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode"
 import { createZoningDesignationRoute, describeZoningDesignation } from "mailwoman/observations"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 

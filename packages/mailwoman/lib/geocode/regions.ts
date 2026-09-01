@@ -14,7 +14,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/resolver"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
-import { readReleaseManifest, resolveDatabasePath, type DataReleaseManifest } from "#data-release"
+import { readReleaseManifest, resolveDatabasePath, type DataReleaseManifest } from "#data/release"
 
 /**
  * The per-state databases to wire into a single geocode resolve. Either/both may be absent (admin-only).

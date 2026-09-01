@@ -31,7 +31,7 @@ import {
 } from "@mailwoman/flood/test-kit"
 import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL } from "@mailwoman/flood/vocabulary"
 import type { Resolver } from "@mailwoman/resolver"
-import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode-core"
+import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode"
 import { createAuthorityDesignationRoute } from "mailwoman/observations"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 

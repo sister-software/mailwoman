@@ -13,7 +13,7 @@
  */
 
 import { resolveConfig } from "@mailwoman/dev-mcp/engine-registry"
-import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
+import { createGeocodeCommandOptions } from "mailwoman/geocode"
 import { describe, expect, it } from "vitest"
 
 describe("resolveConfig — production lockstep (#1732)", () => {

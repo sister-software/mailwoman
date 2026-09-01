@@ -30,8 +30,8 @@ import {
 	type ParsedCommandComponent,
 	useCommandTask,
 } from "#cli-kit"
-import { artifactURL, BUNDLES, needsDownload, resolveBundleArtifacts, type BundleArtifact } from "#data-bundles"
-import { existingLocalPath, readReleaseManifest } from "#data-release"
+import { artifactURL, BUNDLES, needsDownload, resolveBundleArtifacts, type BundleArtifact } from "#data/bundles"
+import { existingLocalPath, readReleaseManifest } from "#data/release"
 
 /**
  * Native command-line contract consumed by the filesystem command router.

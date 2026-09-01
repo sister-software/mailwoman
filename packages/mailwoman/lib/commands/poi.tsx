@@ -130,7 +130,7 @@ function formatSubject(subject: POIIntent["subject"]): string {
  * Resolve the OverpassQL block, or a clear message when a category subject has no osmTag mapping.
  */
 async function formatOverpassBlock(intent: POIIntent): Promise<string> {
-	const { emitOverpassQL } = await import("#poi-overpass")
+	const { emitOverpassQL } = await import("#poi/overpass")
 
 	if (intent.subject.kind === "category") {
 		const { getPOICategory } = await import("@mailwoman/poi-taxonomy")

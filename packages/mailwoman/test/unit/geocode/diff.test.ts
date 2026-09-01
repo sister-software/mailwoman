@@ -11,7 +11,7 @@
  */
 
 import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
-import { diffGeocode, renderGeocodeDiff, type GeocodeArm } from "mailwoman/geocode-diff"
+import { diffGeocode, renderGeocodeDiff, type GeocodeArm } from "mailwoman/geocode"
 import { describe, expect, it } from "vitest"
 
 /**

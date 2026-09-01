@@ -24,10 +24,10 @@ import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 import type { AdminCoherenceReport } from "#admin-coherence"
 import { OVERLAY_LOCALE_BY_COUNTRY } from "#eval-harness/gauntlet/routing"
-import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode-core"
-import { RegionDatabaseProvider } from "#geocode-regions"
-import type { GeocodeResult } from "#geocode-result"
-import { poiTaxonomyLookup } from "#poi-intent"
+import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode/core"
+import { RegionDatabaseProvider } from "#geocode/regions"
+import type { GeocodeResult } from "#geocode/result"
+import { poiTaxonomyLookup } from "#poi/intent"
 import {
 	createResolverBackend,
 	loadCapitalIndex,

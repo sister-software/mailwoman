@@ -6,7 +6,7 @@
 
 import { workspacePath } from "@mailwoman/core/utils"
 import type { SourceRecord } from "@mailwoman/registry"
-import { geocodeStream } from "mailwoman/geocode-stream"
+import { geocodeStream } from "mailwoman/geocode"
 import { describe, expect, it } from "vitest"
 
 const fakeWorker = workspacePath("mailwoman", "lib", "test-fixtures", "fake-geocode-worker.js")

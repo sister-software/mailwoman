@@ -18,8 +18,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
-import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
-import { createGeocodeSession } from "mailwoman/geocode-session"
+import { createGeocodeCommandOptions, createGeocodeSession } from "mailwoman/geocode"
 import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 

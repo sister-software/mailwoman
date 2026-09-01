@@ -9,7 +9,7 @@
 
 import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
-import { censusCoverage, type CountryCoverage, type CoverageReport } from "mailwoman/coverage-census"
+import { censusCoverage, type CountryCoverage, type CoverageReport } from "mailwoman/coverage"
 import { z } from "zod"
 
 import type { DevTool, DevToolDeps } from "#tool-kit"

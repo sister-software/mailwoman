@@ -36,8 +36,8 @@ import { dataRootPath, mulberry32 } from "@mailwoman/core/utils"
 import { haversineKm, osgb36ToWGS84 } from "@mailwoman/spatial"
 import { basename, join } from "path-ts"
 
-import { createGeocodeCommandOptions } from "#geocode-command-options"
-import { createGeocodeSession } from "#geocode-session"
+import { createGeocodeCommandOptions } from "#geocode/command-options"
+import { createGeocodeSession } from "#geocode/session"
 
 interface SampledPostcode {
 	area: string

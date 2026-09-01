@@ -50,8 +50,8 @@ import {
 	type PremiseLinkageResultRow,
 	PREMISE_LINKAGE_SHAPE_CLASSES,
 } from "#eval-harness/premise-linkage/schema"
-import { geocodeAddress, type GeocodeDeps } from "#geocode-core"
-import type { GeocodeResult } from "#geocode-result"
+import { geocodeAddress, type GeocodeDeps } from "#geocode/core"
+import type { GeocodeResult } from "#geocode/result"
 
 /**
  * Mailwoman with open artifacts only — the product as it ships.

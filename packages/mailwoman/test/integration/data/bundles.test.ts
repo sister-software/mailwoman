@@ -17,7 +17,7 @@ import {
 	resolveBundleArtifacts,
 	type BundleArtifact,
 	type DataBundle,
-} from "mailwoman/data-bundles"
+} from "mailwoman/data"
 import { describe, expect, it } from "vitest"
 
 describe("BUNDLES registry", () => {

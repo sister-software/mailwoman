@@ -26,9 +26,9 @@ afterAll(() => fixtures.disposeAsync())
 /**
  * A minimal git repo whose "pipeline" is one file, plus a `node_modules` the farm can mirror.
  *
- * `mailwoman/geocode-session` is stubbed as a real package directory so the runner's import resolves without this test
- * needing the monorepo. That is the same resolution path the real arm uses — a stub here proves the farm and the
- * subprocess, and the engine is exercised for real by the tools that call this.
+ * `mailwoman/geocode` is stubbed as a real package directory so the runner's import resolves without this test needing
+ * the monorepo. That is the same resolution path the real arm uses — a stub here proves the farm and the subprocess,
+ * and the engine is exercised for real by the tools that call this.
  */
 async function fakeRepo(marker: string): Promise<string> {
 	const root = String(fixtures.use(await temporaryDirectory("mwdev-wt-test-")).path)
@@ -39,7 +39,9 @@ async function fakeRepo(marker: string): Promise<string> {
 	await writeLocalJSONFile(
 		{
 			name: "mailwoman",
-			exports: { "./geocode-session": { node: "./geocode-session.ts", default: "./geocode-session.ts" } },
+			// Mirrors the real package after the prefix fold: `geocode-session.ts` became `geocode/session.ts`
+			// behind the `./geocode` directory entry, which is the subpath the arm runner imports.
+			exports: { "./geocode": { node: "./geocode/index.ts", default: "./geocode/index.ts" } },
 		},
 		join(root, "packages", "mailwoman", "package.json")
 	)
@@ -51,7 +53,7 @@ async function fakeRepo(marker: string): Promise<string> {
 				[Symbol.dispose]: () => {},
 			}
 		}\n`,
-		join(root, "packages", "mailwoman", "geocode-session.ts")
+		join(root, "packages", "mailwoman", "geocode", "index.ts")
 	)
 
 	// The workspace link yarn would have installed. Both arms need it and for different reasons: the WORKTREE arm
@@ -83,7 +85,7 @@ describe("runWorktreeArm — a ref arm runs THAT ref's source", () => {
 			`export async function createGeocodeSession() {
 				return { geocode: async () => ({ result: { lat: 9, lon: 9, resolution_tier: "uncommitted", components: {} } }), [Symbol.dispose]: () => {} }
 			}\n`,
-			join(root, "packages", "mailwoman", "geocode-session.ts")
+			join(root, "packages", "mailwoman", "geocode", "index.ts")
 		)
 
 		const result = await runWorktreeArm({ repoRoot: root, ref: "HEAD", inputs: ["x"], options: OPTIONS })
@@ -101,7 +103,7 @@ describe("runWorktreeArm — the WORKTREE arm runs the UNCOMMITTED source", () =
 			`export async function createGeocodeSession() {
 				return { geocode: async () => ({ result: { lat: 9, lon: 9, resolution_tier: "uncommitted", components: {} } }), [Symbol.dispose]: () => {} }
 			}\n`,
-			join(root, "packages", "mailwoman", "geocode-session.ts")
+			join(root, "packages", "mailwoman", "geocode", "index.ts")
 		)
 
 		const result = await runWorktreeArm({
@@ -129,7 +131,7 @@ describe("runWorktreeArm — the WORKTREE arm runs the UNCOMMITTED source", () =
 
 		await writeLocalTextFile(
 			`export async function createGeocodeSession() { throw new Error("boom") }\n`,
-			join(root, "packages", "mailwoman", "geocode-session.ts")
+			join(root, "packages", "mailwoman", "geocode", "index.ts")
 		)
 
 		await expect(
@@ -181,7 +183,7 @@ describe("runWorktreeArm — per-input failures", () => {
 					[Symbol.dispose]: () => {},
 				}
 			}\n`,
-			join(root, "packages", "mailwoman", "geocode-session.ts")
+			join(root, "packages", "mailwoman", "geocode", "index.ts")
 		)
 
 		const result = await runWorktreeArm({

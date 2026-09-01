@@ -59,8 +59,8 @@ import {
 	resolveBundleArtifacts,
 	type BundleArtifact,
 	type RemoteArtifactState,
-} from "#data-bundles"
-import { existingLocalPath, readReleaseManifest } from "#data-release"
+} from "#data/bundles"
+import { existingLocalPath, readReleaseManifest } from "#data/release"
 
 /**
  * Native command-line contract consumed by the filesystem command router.

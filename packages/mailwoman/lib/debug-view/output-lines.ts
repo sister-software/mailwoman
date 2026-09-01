@@ -20,8 +20,8 @@
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 
 import { ABSENT } from "#debug-view/trace-rows"
-import type { GeocodeResult } from "#geocode-result"
-import type { GeocodeTrace } from "#geocode-session"
+import type { GeocodeResult } from "#geocode/result"
+import type { GeocodeTrace } from "#geocode/session"
 
 //#region Contract
 

@@ -59,7 +59,7 @@ import type { NeuralParseTrace, TracePriorKind } from "@mailwoman/neural"
 import { checkCase } from "mailwoman/eval-harness/gauntlet/check-case"
 import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import type { GauntletCaseTable } from "mailwoman/eval-harness/gauntlet/schema"
-import type { GeocodeRun, GeocodeTrace } from "mailwoman/geocode-session"
+import type { GeocodeRun, GeocodeTrace } from "mailwoman/geocode"
 
 import {
 	COUNTERFACTUAL_LEVERS,

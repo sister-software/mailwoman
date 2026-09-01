@@ -34,7 +34,7 @@ import {
 import type { Resolver } from "@mailwoman/resolver"
 
 import { type PremiseLinkageInputRow, PremiseLinkageInputShapeClass } from "#eval-harness/premise-linkage/schema"
-import type { GeocodeClassifier, GeocodeDeps } from "#geocode-core"
+import type { GeocodeClassifier, GeocodeDeps } from "#geocode/core"
 
 /**
  * Where a run's rows come from. One method, asynchronous, licensed-data-neutral: the controlled implementation reads a

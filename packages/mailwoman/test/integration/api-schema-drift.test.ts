@@ -62,7 +62,7 @@
  */
 
 import { GeocodeOutcomeSchema } from "@mailwoman/api"
-import type { GeocodeResult } from "mailwoman/geocode-result"
+import type { GeocodeResult } from "mailwoman/geocode"
 import { expect, test } from "vitest"
 import { z } from "zod"
 

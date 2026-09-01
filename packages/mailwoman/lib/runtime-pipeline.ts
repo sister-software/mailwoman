@@ -42,12 +42,12 @@ import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
-import { loadDefaultPlaceCountry } from "#default-placer"
-import { loadDefaultReverseGeocoder } from "#default-reverse-geocoder"
-import { loadDefaultStreetEvidence } from "#default-street-evidence"
+import { loadDefaultPlaceCountry } from "#default/placer"
+import { loadDefaultReverseGeocoder } from "#default/reverse-geocoder"
+import { loadDefaultStreetEvidence } from "#default/street-evidence"
 import { rerankByStreetEvidence } from "#kbest-street-rerank"
-import { createPOIExecutor, type POIAncestryEntry } from "#poi-executor"
-import { createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "#poi-intent"
+import { createPOIExecutor, type POIAncestryEntry } from "#poi/executor"
+import { createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "#poi/intent"
 
 /**
  * Structural shape of a `WOFReverseGeocoder`'s sync core — just what {@link buildSyncReverseGeocode} calls.

@@ -5,7 +5,7 @@
  */
 
 import type { POIIntent } from "@mailwoman/core/pipeline"
-import { emitOverpassQL } from "mailwoman/poi-overpass"
+import { emitOverpassQL } from "mailwoman/poi"
 import { describe, expect, it } from "vitest"
 
 const category = (anchor?: POIIntent["anchor"]): POIIntent => ({

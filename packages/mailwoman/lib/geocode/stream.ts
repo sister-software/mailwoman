@@ -9,7 +9,7 @@
  *
  * ```ts
  * import { normalizeCSV } from "@mailwoman/registry"
- * import { geocodeStream } from "mailwoman/geocode-stream"
+ * import { geocodeStream } from "mailwoman/geocode"
  *
  * const normalized = normalizeCSV("nppes.csv", { mapping })
  * for await (const rec of geocodeStream(normalized, { mapping, geocode })) sink.write(rec)

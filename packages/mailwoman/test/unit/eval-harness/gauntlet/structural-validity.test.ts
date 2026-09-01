@@ -27,7 +27,7 @@ import { readDirectory, readLocalTextFile, pathExists } from "@mailwoman/core/fs
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { parseForGeocode } from "mailwoman/geocode-core"
+import { parseForGeocode } from "mailwoman/geocode"
 import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 

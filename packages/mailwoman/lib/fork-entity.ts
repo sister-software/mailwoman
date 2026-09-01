@@ -29,7 +29,7 @@ import type { AddressNode } from "@mailwoman/core/decoder"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 
 import { type AdminCoherenceReport, type AdminCoherenceTreeNode, forkedEntityCoherenceField } from "#admin-coherence"
-import type { POIExecutorLookup } from "#poi-executor"
+import type { POIExecutorLookup } from "#poi/executor"
 
 /**
  * Two poi rows closer than this are the SAME physical venue (door + terrace, or a chain's duplicate ingest of one

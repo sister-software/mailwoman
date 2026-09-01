@@ -15,8 +15,7 @@ import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
-import { createGeocodeSession } from "mailwoman/geocode-session"
+import { createGeocodeCommandOptions, createGeocodeSession } from "mailwoman/geocode"
 import { describe, expect, test } from "vitest"
 
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "admin-global-priority.db"))

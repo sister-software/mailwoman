@@ -6,4 +6,4 @@
 
 export * from "@mailwoman/core"
 export * from "#runtime-pipeline"
-export * from "#default-placer"
+export * from "#default/placer"
