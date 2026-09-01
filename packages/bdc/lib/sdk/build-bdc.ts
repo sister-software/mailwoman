@@ -63,11 +63,12 @@ import {
 } from "@mailwoman/core/layers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import type { FilerDatabase } from "@mailwoman/filer"
-// `pickPrimaryFRN`/`readFRNFilingCandidates` are loaded via a LAZY `await import("@mailwoman/filer/sdk")`
+// `pickPrimaryFRN`/`readFRNFilingCandidates` are loaded via a LAZY `await import("@mailwoman/filer/filer-lookup")`
 // inside `populateBDCProviderTable`, not a top-level runtime import — see that function's docstring
 //
 // Only the TYPES are imported here; `import type` is fully erased.
-import type { FRN, ProviderListRow } from "@mailwoman/filer/sdk"
+import type { FRN } from "@mailwoman/filer/frn"
+import type { ProviderListRow } from "@mailwoman/filer/sdk"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { beginBatched } from "@mailwoman/sqlite/batched"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -488,12 +489,15 @@ async function groupProviderListRows(
  * `brand_name` is always inserted NULL — the provider list carries no brand-name column at all, so there is nothing to
  * populate it from, primary or otherwise (see the schema docstring).
  *
- * **Lazy `@mailwoman/filer/sdk` import.** `readFRNFilingCandidates`/`pickPrimaryFRN` are loaded via `await
- * import("@mailwoman/filer/sdk")`, memoized in `filerSDK` below, rather than a top-level static import — that barrel
- * re-exports `cluster-filers.ts`, which pulls in `@mailwoman/match`/`record`/`registry`. A top-level import regressed
- * `@mailwoman/bdc`'s import time ~32% for EVERY consumer, including ones that never populate providers at all; the
- * dynamic import here only ever runs when a multi-FRN `provider_id` is actually encountered, so a `providers`-less
- * build (or one whose providers are all single-FRN) pays nothing.
+ * **Lazy `@mailwoman/filer/filer-lookup` import.** `readFRNFilingCandidates`/`pickPrimaryFRN` are loaded via `await
+ * import("@mailwoman/filer/filer-lookup")`, memoized in `filerSDK` below, rather than a top-level static import. The
+ * cost this avoids is smaller than it was: the specifier used to be the `@mailwoman/filer/sdk` BARREL, which `export
+ * *`s `cluster-filers.ts` and so pulls `@mailwoman/match`/`record`/`registry` in behind it — a top-level import of that
+ * barrel regressed `@mailwoman/bdc`'s import time ~32% for EVERY consumer, including ones that never populate
+ * providers. `filer-lookup.ts` alone imports only `@mailwoman/sqlite/client`, `#schema` and `#frn` (measured
+ * 2026-09-01), so the heavy graph is no longer on this path at all. The laziness is kept because it also defers opening
+ * the filer database, and a static import here is now a viable simplification if someone wants to measure it — but it
+ * is no longer load-bearing for import time.
  */
 async function populateBDCProviderTable(
 	db: DatabaseClient<BDCDatabase>,
@@ -504,7 +508,7 @@ async function populateBDCProviderTable(
 	const byProviderID = await groupProviderListRows(providers)
 	const insertRows: Insertable<BDCProviderTable>[] = []
 
-	let filerSDK: typeof import("@mailwoman/filer/sdk") | undefined
+	let filerSDK: typeof import("@mailwoman/filer/filer-lookup") | undefined
 
 	for (const [providerID, rows] of byProviderID) {
 		const distinctFRNs = [...new Set(rows.map((row) => row.frn))]
@@ -522,7 +526,7 @@ async function populateBDCProviderTable(
 				)
 			}
 
-			filerSDK ??= await import("@mailwoman/filer/sdk")
+			filerSDK ??= await import("@mailwoman/filer/filer-lookup")
 
 			const candidates = await filerSDK.readFRNFilingCandidates(filerDB, distinctFRNs, asOf)
 

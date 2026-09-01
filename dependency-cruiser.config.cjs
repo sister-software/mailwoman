@@ -36,9 +36,14 @@ module.exports = {
 				"behaviour: 33 are `mailwoman/lib/commands/*` calling the command's own library half, which is the " +
 				"documented CLI architecture, and 3 are `dev-mcp`, where `tools/` means MCP TOOL DEFINITIONS rather " +
 				"than build tooling. `tools/` carries at least four senses across the tree, so it cannot carry this " +
-				"rule. Package identity can: these five ship to a browser or answer a request, and nothing else does.",
+				"rule. Package identity can: these six ship to a browser or answer a request, and nothing else does. " +
+				"`mcp` earned its place by failing this rule: `mcp/lib/cli.ts` took four symbols " +
+				"(`familyRollup`, `filerLookup`, `toFRN`, `FRN`) from `@mailwoman/filer/sdk`, a barrel that " +
+				"`export *`s seventeen modules, so an MCP request path carried the SEC and CORES HTTP clients and the " +
+				"EDGAR ingest along to reach three functions. Those three moved to the filer package root and the " +
+				"import now names them.",
 			severity: "error",
-			from: { path: "^packages/(?:react|neural-web|tile-worker|api|fastify)/" },
+			from: { path: "^packages/(?:react|neural-web|tile-worker|api|fastify|mcp)/" },
 			to: { path: "^packages/[^/]+/lib/(?:tools|sdk)/" },
 		},
 		{

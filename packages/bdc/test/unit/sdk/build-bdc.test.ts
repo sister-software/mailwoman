@@ -36,7 +36,8 @@ import {
 	filerLookup,
 	type FilerDatabase,
 } from "@mailwoman/filer"
-import { toFRN, type ProviderListRow } from "@mailwoman/filer/sdk"
+import { toFRN } from "@mailwoman/filer/frn"
+import type { ProviderListRow } from "@mailwoman/filer/sdk"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 

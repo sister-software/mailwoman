@@ -43,9 +43,9 @@
 
 import { normalizeColumnNames, XLSXSpliterator, type XLSXCellValue } from "spliterator"
 
+import { toFRN } from "#frn"
 import type { Form499Row } from "#sdk/form499"
 import { parseForm499Notes } from "#sdk/form499-notes"
-import { toFRN } from "#sdk/frn"
 
 /**
  * The workbook keys this reader reads by name, as {@linkcode normalizeColumnNames} renders them.

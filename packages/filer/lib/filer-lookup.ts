@@ -116,6 +116,7 @@
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import { isFRN, type FRN } from "#frn"
 import {
 	FILER_FAMILY_SCHEMA_VERSION,
 	FilerEdgeAssertion,
@@ -125,7 +126,6 @@ import {
 	type FilerDatabase,
 	type FilerNodeTable,
 } from "#schema"
-import { isFRN, type FRN } from "#sdk/frn"
 
 /**
  * Exactly one of `frn`/`form499ID`/`bdcProviderID` is required — {@linkcode filerLookup} throws otherwise (matching

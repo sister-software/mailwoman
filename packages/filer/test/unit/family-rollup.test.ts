@@ -41,6 +41,7 @@
  *   into the primary key) live in `filer-lookup.test.ts`.
  */
 
+import { familyRollup } from "@mailwoman/filer/family-rollup"
 import {
 	createFilerEdgeTable,
 	createFilerFamilyTable,
@@ -53,7 +54,6 @@ import {
 	type FilerManifestTable,
 } from "@mailwoman/filer/schema"
 import { mintFamilyID } from "@mailwoman/filer/sdk/family-id"
-import { familyRollup } from "@mailwoman/filer/sdk/family-rollup"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 

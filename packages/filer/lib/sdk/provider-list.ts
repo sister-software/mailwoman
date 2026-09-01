@@ -35,7 +35,7 @@ import { createInterface } from "node:readline"
 
 import { openReadStream } from "@mailwoman/core/fs/streams"
 
-import { toFRN, type FRN } from "#sdk/frn"
+import { toFRN, type FRN } from "#frn"
 
 /**
  * The three provider-list CSV columns this parser actually reads, named after Nexus's `RawProviderRecord`

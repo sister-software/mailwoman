@@ -35,6 +35,21 @@ replaced by a combined entry on purpose — `@mailwoman/spatial` is imported by 
 barrel deliberately excludes both modules, and a combined subpath would put a `node:child_process` reach one
 `export *` away from a browser graph.
 
+### Breaking — `@mailwoman/filer` moves three domain modules out of `./sdk/`
+
+`@mailwoman/filer/sdk/frn`, `@mailwoman/filer/sdk/family-rollup` and `@mailwoman/filer/sdk/filer-lookup` become
+`@mailwoman/filer/frn`, `@mailwoman/filer/family-rollup` and `@mailwoman/filer/filer-lookup`. No shims. All three
+are also re-exported from the package root, so `@mailwoman/filer` itself keeps resolving them.
+
+They are identity and corporate-family readers, not acquisition — and they were exactly the symbols a request path
+needed: `@mailwoman/mcp`'s CLI imported `familyRollup`, `filerLookup`, `toFRN` and `FRN` from the `./sdk` barrel,
+which `export *`s seventeen modules, so an MCP request path carried the SEC and CORES HTTP clients and the EDGAR
+ingest along to reach three functions. That import now names the three modules, and `dependency-cruiser`'s
+`no-serve-package-to-build-tooling` counts `mcp` as a serve package so the edge cannot come back.
+
+The rest of `filer/lib/sdk/` and all of `bdc/lib/sdk/` are unchanged: no serve path reaches them, and renaming them
+would spend published subpaths on a naming preference rather than a measured violation.
+
 ## Notable releases
 
 ### 4.15.0 — postcode-anchor fix (`v1.9.3a3-anchor-absorption`)

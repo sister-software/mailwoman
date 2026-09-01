@@ -12,6 +12,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { toFRN } from "@mailwoman/filer/frn"
 import {
 	FilerEdgeAssertion,
 	FilerIdentifierType,
@@ -21,7 +22,6 @@ import {
 } from "@mailwoman/filer/schema"
 import { buildFilerDatabase, type BuildFilerResult, type EdgarSubsidiaryRow } from "@mailwoman/filer/sdk/build-filer"
 import type { Form499Row } from "@mailwoman/filer/sdk/form499"
-import { toFRN } from "@mailwoman/filer/sdk/frn"
 import type { ProviderListRow } from "@mailwoman/filer/sdk/provider-list"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"

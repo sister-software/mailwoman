@@ -91,10 +91,10 @@
 			"default": "./out/sdk/form499.js",
 			"types": "./out/sdk/form499.d.ts"
 		},
-		"./sdk/frn": {
-			"node": "./lib/sdk/frn.ts",
-			"default": "./out/sdk/frn.js",
-			"types": "./out/sdk/frn.d.ts"
+		"./frn": {
+			"node": "./lib/frn.ts",
+			"default": "./out/frn.js",
+			"types": "./out/frn.d.ts"
 		},
 		"./sdk/provider-list": {
 			"node": "./lib/sdk/provider-list.ts",
@@ -136,15 +136,15 @@
 			"default": "./out/sdk/family-id.js",
 			"types": "./out/sdk/family-id.d.ts"
 		},
-		"./sdk/family-rollup": {
-			"node": "./lib/sdk/family-rollup.ts",
-			"default": "./out/sdk/family-rollup.js",
-			"types": "./out/sdk/family-rollup.d.ts"
+		"./family-rollup": {
+			"node": "./lib/family-rollup.ts",
+			"default": "./out/family-rollup.js",
+			"types": "./out/family-rollup.d.ts"
 		},
-		"./sdk/filer-lookup": {
-			"node": "./lib/sdk/filer-lookup.ts",
-			"default": "./out/sdk/filer-lookup.js",
-			"types": "./out/sdk/filer-lookup.d.ts"
+		"./filer-lookup": {
+			"node": "./lib/filer-lookup.ts",
+			"default": "./out/filer-lookup.js",
+			"types": "./out/filer-lookup.d.ts"
 		},
 		"./sdk/form499-workbook": {
 			"node": "./lib/sdk/form499-workbook.ts",

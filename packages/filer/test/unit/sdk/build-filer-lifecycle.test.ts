@@ -10,11 +10,11 @@
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { toFRN } from "@mailwoman/filer/frn"
 import { type FilerDatabase, FilerIdentifierType, FilerRelationship } from "@mailwoman/filer/schema"
 import { buildFilerDatabase } from "@mailwoman/filer/sdk/build-filer"
 import type { Form499Row } from "@mailwoman/filer/sdk/form499"
 import { parseForm499Notes } from "@mailwoman/filer/sdk/form499-notes"
-import { toFRN } from "@mailwoman/filer/sdk/frn"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
