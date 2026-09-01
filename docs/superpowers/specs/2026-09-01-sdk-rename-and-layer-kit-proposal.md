@@ -12,10 +12,15 @@ intuitive answer**, which is why they are written down rather than acted on.
 
 ## 0. The recommendation
 
-1. **Do not rename `sdk/` across the remaining ten packages.** The cost is 87 source files and **88 published
-   subpaths**, and the benefit is that a directory name would agree with a sentence in `AGENTS.md`. The two
-   real defects the audit found — a fossil in `spatial` and a request path reaching through an acquisition
-   barrel — are already fixed, and neither was fixed by a rename (§2).
+1. **Do not rename `sdk/` on its own account.** The cost is 87 source files and **83 published subpaths**
+   (88 before this arc removed five), and the benefit is that a directory name would agree with a sentence in
+   `AGENTS.md`. The two real defects the audit found — a fossil in `spatial` and a request path reaching
+   through an acquisition barrel — are already fixed, and neither was fixed by a rename (§2).
+   1b. **Do it when the next breaking release happens anyway, and take every rename in that one release.**
+   Operator direction, 2026-09-01. A consumer should pay for renames once. The planned removal of the word
+   `shard` is the other rename in flight, and §6 sizes both so the bundle is planned on numbers — with one
+   correction: on PUBLISHED SUBPATHS `shard` is **4**, not more than `sdk/`'s 83. The two breaks are large in
+   different currencies, and that changes what the bundle is for.
 2. **If it is renamed anyway, the word is `acquire/`**, because `soil/lib/sdk/acquire.ts` already chose it,
    and the migration must ship with the enforcement rule in the same PR (§3).
 3. **Do not build `layer-kit` for de-duplication.** The four layer packages share eight filenames and
@@ -111,6 +116,21 @@ npx jscpd packages/{coastal,flood,soil,zoning}/lib/sdk --min-lines 20 --reporter
 
 > Found **1 exact clone** with **20 (0.18%) duplicated lines** in 38 files.
 
+**That number is a RESIDUAL, and reading it as a baseline inverts what it means.** It was measured on a tree
+where wave 2 of #2041 had already extracted the common code: the four ogr harnesses (~45 lines each), the four
+`read*SourceIdentity` readers, nine batched-commit loops, four ingest-chunk runners, four two-phase build
+handles, four manifest blocks, four byte-identical `#readCoverage` methods, the CKAN reader pair and the five
+identical client factories now live in `core/layers`, `core/api`, `spatial` and `sqlite`. So 0.18% is evidence
+that **the extraction worked**, not that these packages were never duplicated. Anyone re-running this after a
+future extraction should expect the same shape and draw the same care.
+
+Two limits on the instrument, both of which cut against over-reading it:
+
+- `--min-lines 20` cannot see the 5–15-line idioms that were the actual duplication class here — a batched
+  commit loop, a manifest block. The number is a floor on duplication, not a measure of it.
+- "same filename, 2.1× size" measures VOLUME, not shared structure. Two files can differ in length and still
+  share a control-flow skeleton; the table below is evidence against a copy, not evidence against a contract.
+
 And the same-named files are not the same size:
 
 | file              | coastal | flood | soil | zoning |
@@ -133,14 +153,29 @@ This is the inverse of the usual finding, and it is the reason the audit's insti
 not be taken on sight. `@mailwoman/core/layers`, which all four already share, is what the genuinely common
 part looks like — and it is already extracted.
 
-### 4.3 The argument that might still work
+### 4.3 The contract question already has a home — and it is not a new package
 
-A shared package could be justified by CONTRACT rather than by de-duplication: one tested definition of what a
-layer ingest must do — the domain check, the cell classification, the coverage rows, the manifest, the seal —
-so a fifth layer inherits the guarantees instead of re-deriving them. `coastal/lib/test-kit.ts` already hints
-at this shape. That argument needs its own evidence: how many of the five stages have identical CONTRACTS
-(not identical code), and what a fifth layer costs today. This record does not make it, and the 0.18% figure
-is not evidence for it.
+`@mailwoman/core/layers` **is** the contract package. A fifth layer today already inherits
+`runIngestChunkScript`, `buildSealedArtifact`, `polygonLayerManifest`, `designatedCoverageCells`,
+`assertNoNegativeClaim` and `areaAgreementFrom` (with its witness type). So the question is not "should one
+exist" but "what is still missing from the one that does" — which makes `layer-kit` the wrong shape twice
+over: it would duplicate an existing home as well as failing the de-duplication test in §4.1.
+
+The unextracted contract pieces are known and few. Three were deferred **with reasons** during #2041, and the
+fourth is tracked:
+
+| piece                                           | why it was left                        | the difference that blocks a naive merge                              |
+| ----------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------- |
+| the `measureCellResolutions` driver             | per-product control flow               | coastal measures per scenario; zoning narrows                         |
+| the coastal/zoning `resolveDesignations` bodies | one substantive difference, not a copy | —                                                                     |
+| the verify-driver skeleton                      | tolerance is a product constant        | agree/disagree tally is shared; soil's tolerance is 1 m against 0.5 m |
+| the `schema-columns` rewire (#2046)             | adoption shifts stored column order    | four layer `schema.ts` files unrewired                                |
+
+**"What does a fifth layer cost?" is therefore a countable question, not a survey**: build the list of stages
+a new layer must supply, and count how many of them it must RE-DERIVE rather than inherit — today that is the
+four rows above and nothing else. If that count is judged too high, the work is to extract those four into
+`core/layers`, each behind the difference named in its row (a tolerance parameter, a per-scenario driver
+hook). It is not to create a package.
 
 ## 5. Ordered plan, if §0.1 is overruled
 
@@ -152,7 +187,82 @@ is not evidence for it.
 5. One CHANGELOG "Unreleased" entry per package, listing every removed subpath.
 6. `AGENTS.md`: replace the `sdk/` bullet rather than amending it again.
 
-## 6. Reproducing every number here
+## 6. Sizing the bundled release: `sdk/` and `shard` are big in different currencies
+
+§0.1b takes both renames in one breaking release. The premise offered for that — that removing `shard` is
+"more public surface than `sdk/`'s 88" — does not survive measurement, and the correction changes what the
+bundle is for.
+
+|                           | `sdk/` |          `shard` |
+| ------------------------- | -----: | ---------------: |
+| published export subpaths | **83** |            **4** |
+| files touched             |     87 | **435 of 2,508** |
+| total occurrences         |      — |        **3,402** |
+| distinct spellings        |      1 |          **165** |
+
+The four `shard` subpaths are `core`'s `./resources/whosonfirst/sharded-repo`, `corpus`'s `./shard-recipes/*`,
+`mailwoman`'s `./geocode-shards` and `resolver-wof-sqlite`'s `./sharding`.
+
+**`sdk/` is an EXTERNAL break with a small internal footprint; `shard` is an INTERNAL refactor with a small
+external one.** Two consequences:
+
+1. The bundling argument holds, but it is buying one release for **87 subpaths**, not for two comparably-sized
+   breaks — and the honest CHANGELOG line is "83 `sdk` paths and 4 `shard` paths".
+2. The `shard` work is **not gated on a release**. Almost all of it is identifier churn no consumer observes;
+   only those four subpaths need to wait. If the vocabulary work is otherwise ready it can land continuously,
+   holding back only those four entries.
+
+On the replacement word: there is none, by design. `shard` is being removed **because it stood for four
+things**, so a single synonym would re-create the defect under a new spelling. The replacements are
+per-concept nouns — corpus recipes, per-country postcode databases, WOF extracts, and the providers' region
+databases — and the 165 distinct spellings are the map of which sites take which noun.
+
+One path correction for anyone working from the earlier note: `packages/corpus/src/shard-recipes/` is now
+`packages/corpus/lib/shard-recipes/` (#2050).
+
+### 6.1 The completion criterion: `shard` reaches zero
+
+**The work is done when the word appears zero times in tracked source.** Operator direction, 2026-09-01. A
+countable finish line rather than a judgement, and the repo has done this once before: #2029 drove
+`synchronousFilesystemCalls` to a baseline of **0** in `scripts/repo-health-baseline.json`, and the counter is
+what kept it there.
+
+The denominator matters, because "zero in the codebase" is not literally reachable and a criterion that cannot
+be met gets quietly dropped:
+
+- **Counted:** tracked `.ts`/`.tsx`, all spellings, case-insensitive. **Today: 3,481 occurrences across 2,508
+  files, 165 distinct spellings.**
+- **Not counted:** `docs/records/` and `CHANGELOG.md`. Those describe a state the repository was in, and
+  rewriting them to remove the word would falsify a record — the same rule that kept the frozen
+  pre-registrations out of the #2050 path sweep.
+- **Decide when it is first non-trivial:** corpus data files and shard artifacts on disk carry the word in
+  filenames and stored manifests. Renaming an artifact is a rebuild, not a refactor.
+
+The enforcement shape is the one that already works: a `shardVocabulary` counter in `scripts/repo-health.ts`
+with its baseline ratcheted downward per PR, so the count can only fall. Land the counter FIRST, at today's
+**3,481**, so every subsequent PR is measured against it.
+
+**THE INSTRUMENT MUST READ NUL-BEARING FILES, or it will report zero while occurrences remain.** Five tracked
+sources carry raw NUL bytes (#2018), so `grep` classifies them as binary and skips them silently — no error,
+no count. Measured on the same tree:
+
+| command                |     count | why it differs                                 |
+| ---------------------- | --------: | ---------------------------------------------- |
+| `grep -aoiE` (correct) | **3,481** | reads every file                               |
+| `grep -oiE` (no `-a`)  |     3,427 | **54 occurrences hidden** in 5 files           |
+| `grep -aoE '[Ss]hard'` |     3,402 | case-sensitive; misses `SHARD`-style spellings |
+
+The 54 hidden occurrences sit in `dev-mcp/lib/lookup-sources.ts` (35), `mailwoman`'s `nz-localities.ts` (13)
+and `lieudit-pairs.ts` (4), `gauntlet/ablation.ts` (1) and `neural/lib/postcode-prefix-index.ts` (1). This is
+a second, sharper consequence of #2018 than the one it records: NUL bytes do not merely make a file invisible
+to `grep` — they would let a ratchet counter certify a finish line it never reached.
+
+```bash
+git ls-files '*.ts' '*.tsx' | grep -v /out/ \
+  | xargs grep -aoiE '\b[a-z_]*shard[a-z_]*\b' | wc -l    # 3481 on 2026-09-01
+```
+
+## 7. Reproducing every number here
 
 ```bash
 cd /home/lab/Projects/mailwoman
