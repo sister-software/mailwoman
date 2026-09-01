@@ -92,7 +92,7 @@
 		"clsx": "^2.1.1",
 		"docusaurus-plugin-glossary": "^3.3.4",
 		"h3-js": "^4.5.0",
-		"js-yaml": "^4.3.1",
+		"js-yaml": "^4.3.2",
 		"maplibre-gl": "^6.5.0",
 		"onnxruntime-web": "1.25.0-dev.20260327-722743c0e2",
 		"path-ts": "^2.3.0",
