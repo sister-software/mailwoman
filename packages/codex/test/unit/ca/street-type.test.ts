@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { isCanadianDirectional, isCanadianStreetWord } from "@mailwoman/codex/ca/street-type"
+import { isCanadianDirectional, isCanadianStreetWord } from "@mailwoman/codex/ca"
 import { describe, expect, it } from "vitest"
 
 describe("isCanadianStreetWord", () => {

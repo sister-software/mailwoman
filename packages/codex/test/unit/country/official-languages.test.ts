@@ -9,7 +9,7 @@
  *   example).
  */
 
-import { isOfficialLanguage, OFFICIAL_LANGUAGES } from "@mailwoman/codex/country/official-languages"
+import { isOfficialLanguage, OFFICIAL_LANGUAGES } from "@mailwoman/codex/country"
 import { expect, test } from "vitest"
 
 test("bilingual Finland: Swedish is official under both ISO spellings", () => {

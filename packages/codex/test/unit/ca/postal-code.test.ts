@@ -4,12 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import {
-	isCaPostalCode,
-	isRuralPostalCode,
-	normalizeCaPostalCode,
-	provinceOfPostalCode,
-} from "@mailwoman/codex/ca/postal-code"
+import { isCaPostalCode, isRuralPostalCode, normalizeCaPostalCode, provinceOfPostalCode } from "@mailwoman/codex/ca"
 import { describe, expect, it } from "vitest"
 
 describe("normalizeCaPostalCode", () => {

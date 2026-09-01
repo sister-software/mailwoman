@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { inwardCode, isUkPostcode, normalizeUkPostcode, outwardCode, postcodeArea } from "@mailwoman/codex/gb/postcode"
+import { inwardCode, isUkPostcode, normalizeUkPostcode, outwardCode, postcodeArea } from "@mailwoman/codex/gb"
 import { describe, expect, it } from "vitest"
 
 describe("normalizeUkPostcode", () => {

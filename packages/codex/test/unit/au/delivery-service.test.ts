@@ -9,7 +9,7 @@ import {
 	isAuDeliveryService,
 	matchAuDeliveryService,
 	normalizeAuDeliveryService,
-} from "@mailwoman/codex/au/delivery-service"
+} from "@mailwoman/codex/au"
 import { describe, expect, it } from "vitest"
 
 describe("AU_DELIVERY_SERVICE_DESIGNATORS", () => {

@@ -10,7 +10,7 @@ import {
 	normalizeNZDeliveryService,
 	NZ_DELIVERY_SERVICE_TYPES,
 	NZ_PRIVATE_BOX_ALIAS,
-} from "@mailwoman/codex/nz/delivery-service"
+} from "@mailwoman/codex/nz"
 import { describe, expect, it } from "vitest"
 
 describe("NZ_DELIVERY_SERVICE_TYPES", () => {

@@ -4,8 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { FR_DEPARTEMENTS } from "@mailwoman/codex/fr/departement"
-import { FR_REGIONS, isFrenchRegionCode, lookupFrenchRegion } from "@mailwoman/codex/fr/region"
+import { FR_DEPARTEMENTS, FR_REGIONS, isFrenchRegionCode, lookupFrenchRegion } from "@mailwoman/codex/fr"
 import { describe, expect, it } from "vitest"
 
 describe("FR_REGIONS", () => {

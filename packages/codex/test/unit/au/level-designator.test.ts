@@ -11,7 +11,7 @@ import {
 	isAuLevelDesignator,
 	matchAuLevelDesignator,
 	normalizeAuLevelDesignator,
-} from "@mailwoman/codex/au/level-designator"
+} from "@mailwoman/codex/au"
 import { describe, expect, it } from "vitest"
 
 describe("AU_LEVEL_DESIGNATORS", () => {

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { GB_COUNTRIES, isUkCountryCode, lookupUkCountry } from "@mailwoman/codex/gb/country"
+import { GB_COUNTRIES, isUkCountryCode, lookupUkCountry } from "@mailwoman/codex/gb"
 import { describe, expect, it } from "vitest"
 
 describe("GB_COUNTRIES", () => {

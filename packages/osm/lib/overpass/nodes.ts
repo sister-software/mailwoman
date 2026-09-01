@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { isPolygonLiteral } from "@mailwoman/spatial/geometries/polygon"
+
 /**
  * Tags returned by the Overpass API for a node.
  *
@@ -72,4 +74,21 @@ export function isResidentialElement(element: OSMOverpassElement): boolean {
 	if (element.tags[OSMNodeTag.Amenity] === "restaurant") return false
 
 	return true
+}
+
+/**
+ * Given a polygon geometry, return an OSM filter string.
+ *
+ * This is useful when working with the Overpass API.
+ */
+// `unknown`, matched by the guard on the next line: this reads geometry off an API response, and a parameter that
+// promises a polygon makes the guard look redundant while forcing every test of it to assert past the signature.
+export function polygonToOSMFilter(input: unknown): string {
+	if (!isPolygonLiteral(input)) return ""
+
+	const [exteriorRing] = input.coordinates
+
+	const filter = exteriorRing.map(([lon, lat]) => `${lat} ${lon}`).join(" ")
+
+	return `poly:'${filter}'`
 }

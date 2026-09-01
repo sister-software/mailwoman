@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { AU_STATE_ABBREVIATIONS, isAuStateAbbreviation } from "@mailwoman/codex/au/state"
+import { AU_STATE_ABBREVIATIONS, isAuStateAbbreviation } from "@mailwoman/codex/au"
 import { expect, test } from "vitest"
 
 test("AU_STATE_ABBREVIATIONS: the eight ISO 3166-2:AU subdivisions map to their full names", () => {
