@@ -26,6 +26,21 @@ interface DebtCounters {
 	productionFilesOver1000Lines: number
 	selfPackageImports: number
 	synchronousFilesystemCalls: number
+	/**
+	 * Occurrences of the word `shard` in any spelling, anywhere in tracked source — identifiers, comments and string
+	 * literals alike.
+	 *
+	 * The vocabulary is being removed because the word stood for FOUR different things (corpus recipes, per-country
+	 * postcode databases, WOF extracts, and the providers' region databases), so there is no replacement synonym — each
+	 * site takes the noun for the thing it actually names. The target is ZERO, and this counter is the finish line:
+	 * ratcheted down per PR, it can only fall.
+	 *
+	 * COUNTED HERE RATHER THAN WITH `grep` ON PURPOSE. Five tracked sources carry raw NUL bytes (#2018), which `grep`
+	 * treats as binary and skips SILENTLY — no error, no count. Measured 2026-09-01: 3,481 occurrences with `grep -a`
+	 * against 3,427 without, so a `grep`-based ratchet would hide 54 occurrences and could certify zero while they
+	 * remained. `readLocalTextFile` has no such blind spot.
+	 */
+	shardVocabulary: number
 }
 
 const root = String(repoRootPath())
@@ -40,6 +55,7 @@ function emptyCounters(): DebtCounters {
 		productionFilesOver1000Lines: 0,
 		selfPackageImports: 0,
 		synchronousFilesystemCalls: 0,
+		shardVocabulary: 0,
 	}
 }
 
@@ -266,6 +282,9 @@ for (const path of paths) {
 	if (!generated && !/[.]test[.]tsx?$/.test(path) && lineCount > 1000) {
 		counters.productionFilesOver1000Lines++
 	}
+
+	// Textual, not AST: the word is being removed from comments and string literals as well as identifiers.
+	counters.shardVocabulary += text.match(/\b[A-Za-z_]*shard[A-Za-z_]*\b/giu)?.length ?? 0
 }
 
 // The key IS the flag text parseArgs matches, so it must stay kebab-case: `package.json`'s `health:debt:update`

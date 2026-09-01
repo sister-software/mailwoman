@@ -5,6 +5,10 @@
  *
  *   Linear-chain CRF Viterbi decoder in TypeScript.
  *
+ *   ITS OWN SUBPATH ON PURPOSE — do not fold this into the package barrel. `@mailwoman/neural`'s root export
+ *   pulls onnxruntime, and the docs bundle needs the decoder without the runtime. The decode is pure
+ *   arithmetic over scores someone else produced, which is exactly why it can be reached without them.
+ *
  *   Replaces per-token argmax in the classifier when transition scores are available. Mirrors the
  *   Python training-time / eval-time path so JS runtime decode agrees with the model card's
  *   metrics.

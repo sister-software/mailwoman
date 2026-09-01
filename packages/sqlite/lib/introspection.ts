@@ -3,6 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Questions asked of `sqlite_master`.
+ *
+ *   ITS OWN SUBPATH ON PURPOSE — do not fold this into the package barrel. `@mailwoman/sqlite`'s root export
+ *   reaches `node:sqlite`, and the docs demo bundles this package for the browser; importing the barrel to
+ *   ask whether a table exists dragged the builtin into that graph. The split is what keeps these three
+ *   pure-SQL questions reachable from a bundled consumer.
  */
 
 import type { DatabaseClient } from "#client"
