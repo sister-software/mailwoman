@@ -33,19 +33,19 @@ import type {
 	ParseOpts,
 	ParseWithLogitsResult,
 	SpanProposerConfig,
-} from "#classifier-options"
+} from "#classifier/options"
 import { buildFSTEmissionPriors } from "#fst-prior"
 import { STAGE2_BIO_LABELS } from "#labels"
 import type { InferFunction } from "#ort-feeds"
-import type { PlacetypeCensusLike } from "#placetype-census"
-import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "#placetype-pair-prior"
-import { repairPostcodeLabels } from "#postcode-repair"
+import type { PlacetypeCensusLike } from "#placetype/census"
+import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "#placetype/pair-prior"
+import { repairPostcodeLabels } from "#postcode/repair"
 import { addEmissionMatrix, buildEmissionPriors } from "#query-shape-prior"
 import type { SemiCRFTransitions } from "#semi-markov-decode"
 import { buildSoftFeatures, type SoftFeatureChannel } from "#soft-features"
-import { bridgePunctuationGaps } from "#span-bridge"
-import { buildSpanProposalPriors } from "#span-proposal-prior"
-import { buildCodexSpanLexicon } from "#span-proposer-lexicon"
+import { bridgePunctuationGaps } from "#span/bridge"
+import { buildSpanProposalPriors } from "#span/proposal-prior"
+import { buildCodexSpanLexicon } from "#span/proposer-lexicon"
 import { buildStreetMorphologyEmissionPriors } from "#street-morphology-prior"
 import type { MailwomanTokenizer } from "#tokenizer"
 import { TRACE_PRIOR_KINDS } from "#trace"
@@ -66,7 +66,7 @@ export type {
 	ParseOpts,
 	ParseWithLogitsResult,
 	SpanProposerConfig,
-} from "#classifier-options"
+} from "#classifier/options"
 
 /**
  * Structural type the classifier needs from a runner. Lets callers swap the Node-side `ONNXRunner` for a browser-side
@@ -180,9 +180,9 @@ export class NeuralAddressClassifier {
 	 * runtime. Browser callers use `loadNeuralClassifierFromURLs`.
 	 */
 	static async loadFromWeights(
-		...args: Parameters<typeof import("#classifier-loader").loadClassifierFromWeights>
+		...args: Parameters<typeof import("#classifier/loader").loadClassifierFromWeights>
 	): Promise<NeuralAddressClassifier> {
-		const { loadClassifierFromWeights } = await import(/* webpackIgnore: true */ "#classifier-loader")
+		const { loadClassifierFromWeights } = await import(/* webpackIgnore: true */ "#classifier/loader")
 
 		return loadClassifierFromWeights(...args)
 	}

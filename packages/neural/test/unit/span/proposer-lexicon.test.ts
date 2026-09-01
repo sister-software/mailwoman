@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { buildCodexSpanLexicon } from "@mailwoman/neural/span-proposer-lexicon"
+import { buildCodexSpanLexicon } from "@mailwoman/neural/span"
 import { VENUE_STRUCTURE_DESIGNATORS } from "@mailwoman/neural/venue-structure"
 import { expect, test } from "vitest"
 

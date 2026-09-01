@@ -27,7 +27,7 @@
 import type { PathBuilderLike } from "path-ts"
 
 import { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
-import { collectMatches } from "#postcode-repair"
+import { collectMatches } from "#postcode/repair"
 import type { TokenizedPiece } from "#tokenizer"
 
 // The pinned class order lives in labels.ts (`LOCALE_COUNTRIES`); this module keeps its historical

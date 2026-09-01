@@ -26,6 +26,31 @@
 	"type": "module",
 	"sideEffects": false,
 	"imports": {
+		"#postcode": {
+			"node": "./lib/postcode/index.ts",
+			"default": "./out/postcode/index.js",
+			"types": "./out/postcode/index.d.ts"
+		},
+		"#span": {
+			"node": "./lib/span/index.ts",
+			"default": "./out/span/index.js",
+			"types": "./out/span/index.d.ts"
+		},
+		"#classifier": {
+			"node": "./lib/classifier/index.ts",
+			"default": "./out/classifier/index.js",
+			"types": "./out/classifier/index.d.ts"
+		},
+		"#pair": {
+			"node": "./lib/pair/index.ts",
+			"default": "./out/pair/index.js",
+			"types": "./out/pair/index.d.ts"
+		},
+		"#placetype": {
+			"node": "./lib/placetype/index.ts",
+			"default": "./out/placetype/index.js",
+			"types": "./out/placetype/index.d.ts"
+		},
 		"#onnx-runner": {
 			"browser": "./out/onnx-runner-browser.js",
 			"node": "./lib/onnx-runner.ts",
@@ -50,21 +75,6 @@
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
-		"./postcode-anchor": {
-			"node": "./lib/postcode-anchor.ts",
-			"default": "./out/postcode-anchor.js",
-			"types": "./out/postcode-anchor.d.ts"
-		},
-		"./postcode-binary-resolver": {
-			"node": "./lib/postcode-binary-resolver.ts",
-			"default": "./out/postcode-binary-resolver.js",
-			"types": "./out/postcode-binary-resolver.d.ts"
-		},
-		"./postcode-repair": {
-			"node": "./lib/postcode-repair.ts",
-			"default": "./out/postcode-repair.js",
-			"types": "./out/postcode-repair.d.ts"
-		},
 		"./anchor-inference": {
 			"node": "./lib/anchor-inference.ts",
 			"default": "./out/anchor-inference.js",
@@ -74,21 +84,6 @@
 			"node": "./lib/case-normalize.ts",
 			"default": "./out/case-normalize.js",
 			"types": "./out/case-normalize.d.ts"
-		},
-		"./pair-index-resolver": {
-			"node": "./lib/pair-index-resolver.ts",
-			"default": "./out/pair-index-resolver.js",
-			"types": "./out/pair-index-resolver.d.ts"
-		},
-		"./postcode-prefix-index": {
-			"node": "./lib/postcode-prefix-index.ts",
-			"default": "./out/postcode-prefix-index.js",
-			"types": "./out/postcode-prefix-index.d.ts"
-		},
-		"./placetype-census": {
-			"node": "./lib/placetype-census.ts",
-			"default": "./out/placetype-census.js",
-			"types": "./out/placetype-census.d.ts"
 		},
 		"./fst-prior": {
 			"node": "./lib/fst-prior.ts",
@@ -136,11 +131,6 @@
 			"default": "./out/browser.js",
 			"types": "./out/browser.d.ts"
 		},
-		"./classifier": {
-			"node": "./lib/classifier.ts",
-			"default": "./out/classifier.js",
-			"types": "./out/classifier.d.ts"
-		},
 		"./labels": {
 			"node": "./lib/labels.ts",
 			"default": "./out/labels.js",
@@ -161,16 +151,6 @@
 			"default": "./out/gazetteer-inference.js",
 			"types": "./out/gazetteer-inference.d.ts"
 		},
-		"./span-proposal-prior": {
-			"node": "./lib/span-proposal-prior.ts",
-			"default": "./out/span-proposal-prior.js",
-			"types": "./out/span-proposal-prior.d.ts"
-		},
-		"./span-proposer-lexicon": {
-			"node": "./lib/span-proposer-lexicon.ts",
-			"default": "./out/span-proposer-lexicon.js",
-			"types": "./out/span-proposer-lexicon.d.ts"
-		},
 		"./trace": {
 			"node": "./lib/trace.ts",
 			"default": "./out/trace.js",
@@ -186,30 +166,15 @@
 			"default": "./out/country-inference.js",
 			"types": "./out/country-inference.d.ts"
 		},
-		"./placetype-pair-prior": {
-			"node": "./lib/placetype-pair-prior.ts",
-			"default": "./out/placetype-pair-prior.js",
-			"types": "./out/placetype-pair-prior.d.ts"
-		},
 		"./semi-markov-decode": {
 			"node": "./lib/semi-markov-decode.ts",
 			"default": "./out/semi-markov-decode.js",
 			"types": "./out/semi-markov-decode.d.ts"
 		},
-		"./span-bridge": {
-			"node": "./lib/span-bridge.ts",
-			"default": "./out/span-bridge.js",
-			"types": "./out/span-bridge.d.ts"
-		},
 		"./venue-structure": {
 			"node": "./lib/venue-structure.ts",
 			"default": "./out/venue-structure.js",
 			"types": "./out/venue-structure.d.ts"
-		},
-		"./span-repair": {
-			"node": "./lib/span-repair.ts",
-			"default": "./out/span-repair.js",
-			"types": "./out/span-repair.d.ts"
 		},
 		"./street-morphology-prior": {
 			"node": "./lib/street-morphology-prior.ts",
@@ -236,15 +201,30 @@
 			"default": "./out/weights-channels.js",
 			"types": "./out/weights-channels.d.ts"
 		},
-		"./classifier-loader": {
-			"node": "./lib/classifier-loader.ts",
-			"default": "./out/classifier-loader.js",
-			"types": "./out/classifier-loader.d.ts"
+		"./postcode": {
+			"node": "./lib/postcode/index.ts",
+			"default": "./out/postcode/index.js",
+			"types": "./out/postcode/index.d.ts"
 		},
-		"./pair-prior-windows": {
-			"node": "./lib/pair-prior-windows.ts",
-			"default": "./out/pair-prior-windows.js",
-			"types": "./out/pair-prior-windows.d.ts"
+		"./span": {
+			"node": "./lib/span/index.ts",
+			"default": "./out/span/index.js",
+			"types": "./out/span/index.d.ts"
+		},
+		"./classifier": {
+			"node": "./lib/classifier/index.ts",
+			"default": "./out/classifier/index.js",
+			"types": "./out/classifier/index.d.ts"
+		},
+		"./pair": {
+			"node": "./lib/pair/index.ts",
+			"default": "./out/pair/index.js",
+			"types": "./out/pair/index.d.ts"
+		},
+		"./placetype": {
+			"node": "./lib/placetype/index.ts",
+			"default": "./out/placetype/index.js",
+			"types": "./out/placetype/index.d.ts"
 		}
 	},
 	"publishConfig": {

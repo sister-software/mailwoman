@@ -19,7 +19,7 @@
 import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { parseAnchorLookup } from "@mailwoman/neural/anchor-inference"
-import { PostcodeBinaryResolver } from "@mailwoman/neural/postcode-binary-resolver"
+import { PostcodeBinaryResolver } from "@mailwoman/neural/postcode"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { readRequiredChannels } from "@mailwoman/neural/weights-channels"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"

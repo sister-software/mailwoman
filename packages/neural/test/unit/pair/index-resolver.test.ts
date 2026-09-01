@@ -18,7 +18,7 @@ import {
 	type PairIndexEntry,
 	type PairIndexHeader,
 	type PairIndexHeaderInput,
-} from "@mailwoman/neural/pair-index-resolver"
+} from "@mailwoman/neural/pair"
 import { describe, expect, it } from "vitest"
 
 const HEADER: PairIndexHeaderInput = {

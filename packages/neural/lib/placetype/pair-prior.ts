@@ -303,7 +303,7 @@
 import type { ComponentTag } from "@mailwoman/core/types"
 
 import { groupPiecesIntoWords, type WordGroup } from "#fst-prior"
-import type { PairEdge, PairIndexLike } from "#pair-index-resolver"
+import type { PairEdge, PairIndexLike } from "#pair/index-resolver"
 import {
 	ANCHORED_CHILD_MAX_WORDS,
 	segmentParentPostcodeShape,
@@ -319,9 +319,9 @@ import {
 	sharesFoldForm,
 	STRUCTURAL_MARKER_WORDS,
 	WINDOW_MAX_WORDS,
-} from "#pair-prior-windows"
-import type { PlacetypeCensusLike } from "#placetype-census"
-import { collectMatches } from "#postcode-repair"
+} from "#pair/prior-windows"
+import type { PlacetypeCensusLike } from "#placetype/census"
+import { collectMatches } from "#postcode/repair"
 import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
 import type { TokenLike } from "#query-shape-prior"
 

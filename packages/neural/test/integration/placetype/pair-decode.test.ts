@@ -20,7 +20,7 @@ import { workspacePath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, type NeuralRunner } from "@mailwoman/neural/classifier"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
 import type { InferResult } from "@mailwoman/neural/onnx-runner"
-import type { PairIndexLike } from "@mailwoman/neural/pair-index-resolver"
+import type { PairIndexLike } from "@mailwoman/neural/pair"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { describe, expect, it } from "vitest"
 

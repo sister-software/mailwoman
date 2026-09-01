@@ -10,7 +10,7 @@
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
-import { bridgePunctuationGaps } from "@mailwoman/neural/span-bridge"
+import { bridgePunctuationGaps } from "@mailwoman/neural/span"
 import { describe, expect, it } from "vitest"
 
 const tok = (piece: string, start: number, label: string, confidence = 0.9): DecoderToken =>

@@ -42,7 +42,7 @@ vi.mock("../../lib/tokenizer.ts", async (importOriginal) => ({
 	MailwomanTokenizer: { loadFromBase64: vi.fn(async () => ({ tokenizerStub: true })) },
 }))
 
-vi.mock("../../lib/classifier.ts", async (importOriginal) => ({
+vi.mock("../../lib/classifier/index.ts", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@mailwoman/neural/classifier")>()),
 	NeuralAddressClassifier: class {},
 }))

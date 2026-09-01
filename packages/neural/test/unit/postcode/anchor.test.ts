@@ -15,7 +15,7 @@ import {
 	normalizePostcode,
 	type PostcodePlace,
 	type PostcodeResolver,
-} from "@mailwoman/neural/postcode-anchor"
+} from "@mailwoman/neural/postcode"
 import { describe, expect, it } from "vitest"
 
 /**

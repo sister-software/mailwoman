@@ -13,7 +13,7 @@ import {
 	serializePlacetypeCensus,
 	type PlacetypeCensusHeader,
 	type PlacetypeCensusNode,
-} from "@mailwoman/neural/placetype-census"
+} from "@mailwoman/neural/placetype"
 import { describe, expect, it } from "vitest"
 
 const header: PlacetypeCensusHeader = {

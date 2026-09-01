@@ -88,7 +88,7 @@ const GazetteerPostcodeBinary: ParsedCommandComponent<Options> = ({ options }) =
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 		// `@mailwoman/neural/postcode-binary-resolver` is a self-contained serializer whose only imports are
 		// type-only, so this load costs a file read rather than the ONNX runtime the package name suggests.
-		const { serializePostcodeBinary } = await import("@mailwoman/neural/postcode-binary-resolver")
+		const { serializePostcodeBinary } = await import("@mailwoman/neural/postcode")
 
 		const { browserGranularityFor, buildPostcodeBinaryEntries, keyFloorViolation, POSTCODE_BINARY_SOURCES } =
 			await import("#gazetteer-pipeline/postcode/binary")

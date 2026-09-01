@@ -62,7 +62,7 @@ import {
 	serializePairIndex,
 	type PairIndexEntry,
 	type PairIndexHeaderInput,
-} from "@mailwoman/neural/pair-index-resolver"
+} from "@mailwoman/neural/pair"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { basename, join, resolvePath } from "path-ts"

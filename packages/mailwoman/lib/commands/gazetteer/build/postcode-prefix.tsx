@@ -30,7 +30,7 @@
 
 import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
 import { changeMode, movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/neural/postcode-prefix-index"
+import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/neural/postcode"
 import { Box, Text } from "ink"
 import { dirname, join } from "path-ts"
 
@@ -135,8 +135,7 @@ const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [DatabaseNam
 	const state = useCommandTask(async () => {
 		const { dataRootPath, md5File, median } = await import("@mailwoman/core/utils")
 
-		const { PostcodePrefixIndexResolver, serializePostcodePrefixIndex } =
-			await import("@mailwoman/neural/postcode-prefix-index")
+		const { PostcodePrefixIndexResolver, serializePostcodePrefixIndex } = await import("@mailwoman/neural/postcode")
 
 		const { buildPostcodePrefixIndex } = await import("#gazetteer-pipeline/postcode-prefix")
 

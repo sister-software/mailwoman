@@ -24,7 +24,7 @@
 
 import * as ort from "onnxruntime-web/webgpu"
 
-import type { NeuralRunner } from "#classifier"
+import type { NeuralRunner } from "#classifier/index"
 import {
 	decodeInferOutput,
 	packSoftChannelFeeds,

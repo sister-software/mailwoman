@@ -74,7 +74,7 @@
 import { readFramedHeader, writeFramedHeader } from "#binary-frame"
 // Coordinate quantization identical to PCB1's — one grid for the family. A prefix prior whose own
 // p95 radius is measured in kilometres has nothing to gain from a finer grid.
-import { dequantizeCoordinate, LAT_Q, LON_Q, quantizeCoordinate } from "#postcode-binary-resolver"
+import { dequantizeCoordinate, LAT_Q, LON_Q, quantizeCoordinate } from "#postcode/binary-resolver"
 
 /**
  * "PFX1" little-endian (P=0x50 F=0x46 X=0x58 1=0x31)

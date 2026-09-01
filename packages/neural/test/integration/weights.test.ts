@@ -53,7 +53,7 @@ import { createSymbolicLink, makeDirectories, writeLocalFile } from "@mailwoman/
 import { runFileSync } from "@mailwoman/core/process"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, resolveWeights } from "@mailwoman/neural"
-import { PairIndexResolver, serializePairIndex, type PairIndexLike } from "@mailwoman/neural/pair-index-resolver"
+import { PairIndexResolver, serializePairIndex, type PairIndexLike } from "@mailwoman/neural/pair"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { dirname, join } from "path-ts"
 import { afterAll, describe, expect, test, vi } from "vitest"

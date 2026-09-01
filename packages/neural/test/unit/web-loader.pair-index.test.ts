@@ -16,7 +16,7 @@
  *   classifier end-to-end.
  */
 
-import type { PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
+import type { PairIndexHeaderInput } from "@mailwoman/neural/pair"
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
@@ -58,7 +58,7 @@ vi.mock("../../lib/tokenizer.ts", async (importOriginal) => ({
 }))
 
 // Capture-only stub: we only care that the load reached construction and WHAT placetypePair config it received.
-vi.mock("../../lib/classifier.ts", async (importOriginal) => ({
+vi.mock("../../lib/classifier/index.ts", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@mailwoman/neural/classifier")>()),
 	NeuralAddressClassifier: class {
 		constructor(cfg: NonNullable<typeof capturedConfig>) {
@@ -77,7 +77,7 @@ afterAll(() => vi.resetModules())
 
 // Import AFTER the mock declarations + reset. `pair-index-resolver.ts` is NOT mocked, so the
 // binaries built here decode through the real reader.
-const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair-index-resolver")
+const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair")
 const { loadNeuralClassifierFromURLs, resolvePairGateCountry } = await import("@mailwoman/neural/web-loader")
 
 const SEQ = 128

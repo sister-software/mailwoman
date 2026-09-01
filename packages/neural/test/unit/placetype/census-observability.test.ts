@@ -24,15 +24,16 @@ import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
-import type { PairEdge, PairIndexLike } from "@mailwoman/neural/pair-index-resolver"
+import type { PairEdge, PairIndexLike } from "@mailwoman/neural/pair"
 import {
 	PlacetypeCensusResolver,
 	serializePlacetypeCensus,
 	type PlacetypeCensusHeader,
 	type PlacetypeCensusLike,
 	type PlacetypeCensusNode,
-} from "@mailwoman/neural/placetype-census"
-import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "@mailwoman/neural/placetype-pair-prior"
+	buildPlacetypePairPriors,
+	type PlacetypePairProbeTrace,
+} from "@mailwoman/neural/placetype"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { join } from "path-ts"
 import { afterAll, describe, expect, test } from "vitest"
