@@ -22,7 +22,7 @@ import {
 	AREA_GRADE_POSTALCODE_SPECIFICITY,
 	mostSpecificResolved,
 	resolvedSpecificity,
-} from "@mailwoman/resolver/admin-winner"
+} from "@mailwoman/resolver/admin"
 import { describe, expect, it } from "vitest"
 
 /**

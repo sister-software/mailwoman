@@ -11,7 +11,7 @@
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace } from "@mailwoman/core/resolver"
 
-import type { CoordinateOptionalPlace } from "#postcode-prefix"
+import type { CoordinateOptionalPlace } from "#postcode/prefix"
 
 /**
  * A resolved node carries a real coordinate (placeID set + non-zero lat/lon).

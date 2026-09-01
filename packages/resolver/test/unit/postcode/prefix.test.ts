@@ -23,7 +23,7 @@
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { PostcodePrefixIndexLike, ResolverBackend } from "@mailwoman/core/resolver"
-import { derivePostcodePrefix, probePostcodePrefix } from "@mailwoman/resolver/postcode-prefix"
+import { derivePostcodePrefix, probePostcodePrefix } from "@mailwoman/resolver/postcode"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { describe, expect, it } from "vitest"
 

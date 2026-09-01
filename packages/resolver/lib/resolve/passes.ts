@@ -24,15 +24,15 @@ import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/spe
 import { haversineKm } from "@mailwoman/spatial"
 
 import { decorateNode, isResolvedWithCoord } from "#decorate-node"
-import type { CoordinateOptionalPlace } from "#postcode-prefix"
-import { isShapeExcludedPostcode } from "#postcode-shape-coherence"
+import type { CoordinateOptionalPlace } from "#postcode/prefix"
+import { isShapeExcludedPostcode } from "#postcode/shape-coherence"
 import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "#span-rescore"
 
 /**
  * Cap on candidates recorded per {@link ResolveNodeTrace} — the trace is a record, not a dump. The count past the cap is
  * reported in `candidatesTruncated`, so absence of a row is never silent.
  */
-export const TRACE_CANDIDATE_CAP = 10
+const TRACE_CANDIDATE_CAP = 10
 
 /**
  * The fine end of the probe window: `microhood` and no finer.
@@ -41,13 +41,13 @@ export const TRACE_CANDIDATE_CAP = 10
  * span lands on another admin band, and probing every venue in a country per miss buys a long tail of coincidental name
  * matches for a diagnostic that is meant to be read.
  */
-export const FINEST_DIAGNOSTIC_BAND = PLACETYPE_SPECIFICITY["microhood"]!
+const FINEST_DIAGNOSTIC_BAND = PLACETYPE_SPECIFICITY["microhood"]!
 
 /**
  * The coarse end of the probe window. `country` and no coarser: a name matching at `continent` or `planet` says nothing
  * about a mislabeled admin span, and the walk resolves the country from its own node anyway.
  */
-export const COARSEST_DIAGNOSTIC_BAND = PLACETYPE_SPECIFICITY["country"]!
+const COARSEST_DIAGNOSTIC_BAND = PLACETYPE_SPECIFICITY["country"]!
 
 /**
  * The admin bands `ResolveOpts.diagnoseUnreachable` re-probes, coarse to fine.
@@ -435,7 +435,7 @@ export async function applySpanRescore(
  * (`postal_compound_recovered` metadata marks the provenance). No-op when every postcode node resolved, the value has
  * no digit-bearing tokens, or the subset equals the full value (then the walk already tried it).
  */
-export async function recoverPostcodeNode(
+async function recoverPostcodeNode(
 	roots: AddressNode[],
 	backend: ResolverBackend,
 	country: string | undefined,

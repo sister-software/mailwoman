@@ -32,7 +32,7 @@ import {
 	firstLocalityValue,
 	localityValuesInDocumentOrder,
 	POSTCODE_COUNTRY_COHERENCE_GATE_KM,
-} from "@mailwoman/resolver/postcode-country-coherence"
+} from "@mailwoman/resolver/postcode"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { describe, expect, it } from "vitest"
 
