@@ -19,7 +19,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath } from "@mailwoman/core/utils"
-import { BUNDLES } from "mailwoman/data-bundles"
+import { BUNDLES } from "mailwoman/data"
 import { afterAll, describe, expect, test } from "vitest"
 
 const cliBin = workspacePath("mailwoman", "out", "cli.js")

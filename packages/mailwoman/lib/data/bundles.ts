@@ -62,7 +62,7 @@
  *     street, because no French interpolation database is built.
  */
 
-import type { DataReleaseManifest } from "#data-release"
+import type { DataReleaseManifest } from "#data/release"
 
 /**
  * The public, unauthenticated bucket every bundle artifact resolves against — the same host `doctor/checks.ts`'s

@@ -16,8 +16,7 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { AddressPointLookup, ResolveOpts, Resolver, StreetCentroidLookup } from "@mailwoman/resolver"
-import { geocodeAddress, type GeocodeClassifier } from "mailwoman/geocode-core"
-import type { RegionDatabases } from "mailwoman/geocode-regions"
+import { geocodeAddress, type GeocodeClassifier, type RegionDatabases } from "mailwoman/geocode"
 import { describe, expect, test, vi } from "vitest"
 
 /**

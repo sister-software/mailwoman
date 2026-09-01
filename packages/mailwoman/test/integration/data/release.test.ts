@@ -10,8 +10,8 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { readReleaseManifest, resolveDatabasePath } from "mailwoman/data-release"
-import { RegionDatabaseProvider } from "mailwoman/geocode-regions"
+import { readReleaseManifest, resolveDatabasePath } from "mailwoman/data"
+import { RegionDatabaseProvider } from "mailwoman/geocode"
 import { join } from "path-ts"
 import { afterAll, describe, expect, test } from "vitest"
 

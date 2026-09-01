@@ -28,8 +28,12 @@
  */
 
 import { sha256Hex } from "@mailwoman/core/utils/hash"
-import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
-import { createGeocodeSession, type GeocodeSession, type GeocodeSessionOptions } from "mailwoman/geocode-session"
+import {
+	createGeocodeCommandOptions,
+	createGeocodeSession,
+	type GeocodeSession,
+	type GeocodeSessionOptions,
+} from "mailwoman/geocode"
 
 import { missingWeightsCacheArtifacts } from "#gate-report"
 import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "#tree-fingerprint"

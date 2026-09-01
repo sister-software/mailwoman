@@ -15,8 +15,8 @@
  */
 
 import { CommandError } from "#cli-kit"
-import type { GeocodeCommandOptions } from "#geocode-command-options"
-import type { GeocodeResult } from "#geocode-result"
+import type { GeocodeCommandOptions } from "#geocode/command-options"
+import type { GeocodeResult } from "#geocode/result"
 
 //#region Zoom heuristic
 

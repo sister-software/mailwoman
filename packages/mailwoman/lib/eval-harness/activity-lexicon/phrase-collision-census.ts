@@ -38,8 +38,8 @@ import { matchPOISubject, type POIPhraseMatch } from "@mailwoman/kind-classifier
 import { resolvePath, join, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { type LayerManifest, probeManifest } from "#data-inventory"
-import { poiTaxonomyLookup } from "#poi-intent"
+import { type LayerManifest, probeManifest } from "#data/inventory"
+import { poiTaxonomyLookup } from "#poi/intent"
 
 /**
  * The committed input trees the census reads carrier queries out of, repository-relative.

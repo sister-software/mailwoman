@@ -14,7 +14,7 @@
  *   without meaning to gets a message rather than a `undefined` it will misread.
  */
 
-import type { GeocodeSession } from "mailwoman/geocode-session"
+import type { GeocodeSession } from "mailwoman/geocode"
 
 import type { EffectiveConfig, Engine, EngineRegistryLike } from "#engine-registry"
 import type { TreeFingerprint } from "#tree-fingerprint"

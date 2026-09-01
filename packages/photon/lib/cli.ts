@@ -27,8 +27,7 @@ import {
 	resolveGazetteerOrExit,
 	runDropInCLI,
 } from "mailwoman/cli-kit/dropin"
-import { geocodeAddress } from "mailwoman/geocode-core"
-import { RegionDatabaseProvider } from "mailwoman/geocode-regions"
+import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
 import { createResolverBackend, mailwomanDataRoot } from "mailwoman/resolver-backend"
 
 import {

@@ -27,7 +27,7 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify"
 import fp from "fastify-plugin"
 import type { AddressTree, PipelineOpts, PipelineResult, POIIntentOutcome } from "mailwoman"
-import type { extractGeocodeResult, GeocodeResult } from "mailwoman/geocode-result"
+import type { extractGeocodeResult, GeocodeResult } from "mailwoman/geocode"
 
 /**
  * This package's own manifest, read at load rather than imported as a module: a JSON import makes `tsc` copy the file
@@ -152,7 +152,7 @@ interface PipelineHelpers {
  * cycle (see AGENTS.md § the bare-import + subpath-import cycle).
  */
 async function loadHelpers(): Promise<PipelineHelpers> {
-	const [decoder, geo] = await Promise.all([import("@mailwoman/core/decoder"), import("mailwoman/geocode-result")])
+	const [decoder, geo] = await Promise.all([import("@mailwoman/core/decoder"), import("mailwoman/geocode")])
 
 	return { decodeAsTuples: decoder.decodeAsTuples, extractGeocodeResult: geo.extractGeocodeResult }
 }

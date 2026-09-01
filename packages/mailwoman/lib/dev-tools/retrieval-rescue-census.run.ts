@@ -15,7 +15,7 @@ import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"
 import { routeCountry } from "#eval-harness/gauntlet/routing"
 import { classifyRescueRow, type RescueRowReport, summarizeRescue } from "#eval-harness/retrieval-rescue-census"
 import { probeForkEntity } from "#fork-entity"
-import { loadForkEntityDeps } from "#geocode-session"
+import { loadForkEntityDeps } from "#geocode/session"
 
 const { values } = parseArguments({ options: { "out-json": { type: "string" } } })
 

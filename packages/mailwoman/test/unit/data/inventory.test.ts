@@ -23,7 +23,7 @@ import {
 	probeManifest,
 	rebuildHint,
 	takeInventory,
-} from "mailwoman/data-inventory"
+} from "mailwoman/data"
 import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 

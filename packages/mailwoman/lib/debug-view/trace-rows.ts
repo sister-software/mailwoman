@@ -20,7 +20,7 @@
 
 import { softmax } from "@mailwoman/neural/viterbi"
 
-import type { GeocodeTrace } from "#geocode-session"
+import type { GeocodeTrace } from "#geocode/session"
 
 //#region Shared
 

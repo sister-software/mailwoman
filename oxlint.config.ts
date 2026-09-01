@@ -240,7 +240,7 @@ export default {
 				"packages/mailwoman/lib/commands/gazetteer/importance.tsx",
 				"packages/mailwoman/lib/commands/serve.tsx",
 				"packages/mailwoman/lib/commands/situs/interpolation.tsx",
-				"packages/mailwoman/lib/geocode-worker.ts",
+				"packages/mailwoman/lib/geocode/worker.ts",
 				"packages/mailwoman/lib/test-fixtures/fake-geocode-worker.js",
 				"docs/static/examples/mailwoman-server.mjs",
 				"docs/plugins/demo-assets/workspace-resolution.ts",

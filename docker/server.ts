@@ -39,8 +39,7 @@ import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { geocodeAddress } from "mailwoman/geocode-core"
-import { RegionDatabaseProvider } from "mailwoman/geocode-regions"
+import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
 import {
 	createResolverBackend,
 	mailwomanDataRoot,

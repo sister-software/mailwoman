@@ -53,15 +53,15 @@ import {
 	geocodeParseInputs,
 	parseForGeocode,
 	type GeocodeDeps,
-} from "#geocode-core"
-import { RegionDatabaseProvider, type RegionDatabaseResolver, type RegionDatabases } from "#geocode-regions"
-import type { GeocodeResult } from "#geocode-result"
+} from "#geocode/core"
+import { RegionDatabaseProvider, type RegionDatabaseResolver, type RegionDatabases } from "#geocode/regions"
+import type { GeocodeResult } from "#geocode/result"
 import { INTERP_RADIUS_CALIBRATION } from "#interp-calibration"
 import type { CoastalErosionRoute } from "#observations/coastal-route"
 import type { AuthorityDesignationRoute } from "#observations/flood-route"
 import type { SoilCapabilityRoute } from "#observations/soil-route"
 import type { ZoningDesignationRoute } from "#observations/zoning-route"
-import { poiTaxonomyLookup } from "#poi-intent"
+import { poiTaxonomyLookup } from "#poi/intent"
 import {
 	createResolverBackend,
 	existingWOFDatabasePaths,

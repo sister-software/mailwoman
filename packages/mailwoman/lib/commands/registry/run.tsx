@@ -39,7 +39,7 @@ import {
 	useCommandTask,
 } from "#cli-kit"
 import { resolverDefaultCountry } from "#country-scope"
-import type { RegionDatabaseResolver } from "#geocode-regions"
+import type { RegionDatabaseResolver } from "#geocode/regions"
 
 /**
  * Bare `mailwoman registry <csv>` stays the end-to-end matcher now that `registry/` hosts subcommands.
@@ -162,8 +162,8 @@ async function buildGeocoder(options: Options): Promise<{ seam: GeocodeAddress }
 	const { createWOFResolver } = await import("@mailwoman/resolver")
 
 	const [{ geocodeAddress }, { RegionDatabaseProvider }] = await Promise.all([
-		import("#geocode-core"),
-		import("#geocode-regions"),
+		import("#geocode/core"),
+		import("#geocode/regions"),
 	])
 
 	const { INTERP_RADIUS_CALIBRATION } = await import("#interp-calibration")
@@ -259,8 +259,8 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 		const { createWOFResolver } = await import("@mailwoman/resolver")
 
 		const [{ geocodeAddress }, { RegionDatabaseProvider }] = await Promise.all([
-			import("#geocode-core"),
-			import("#geocode-regions"),
+			import("#geocode/core"),
+			import("#geocode/regions"),
 		])
 
 		const wof = flags.wof || String(dataRootPath("wof", "admin-global-priority.db"))

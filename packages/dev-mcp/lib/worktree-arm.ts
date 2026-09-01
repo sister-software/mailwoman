@@ -150,7 +150,7 @@ async function linkNodeModules(mainRoot: string, worktree: string): Promise<void
  * input containing a quote or a newline cannot become a shell problem.
  */
 const RUNNER_SOURCE = `
-import { createGeocodeSession } from "mailwoman/geocode-session"
+import { createGeocodeSession } from "mailwoman/geocode"
 
 const request = JSON.parse(await new Response(process.stdin).text())
 const session = await createGeocodeSession(request.options)

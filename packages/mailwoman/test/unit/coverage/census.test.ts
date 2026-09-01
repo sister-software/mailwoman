@@ -19,7 +19,7 @@ import {
 	readAdmittedCountries,
 	readBoardCoverage,
 	readConfiguredCorpusVersion,
-} from "mailwoman/coverage-census"
+} from "mailwoman/coverage"
 import { join } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 

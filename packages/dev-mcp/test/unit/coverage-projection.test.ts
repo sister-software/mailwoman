@@ -11,7 +11,7 @@
  */
 
 import { projectCoverage } from "@mailwoman/dev-mcp/tools/coverage"
-import type { CoverageReport } from "mailwoman/coverage-census"
+import type { CoverageReport } from "mailwoman/coverage"
 import { describe, expect, it } from "vitest"
 
 function report(overrides: Partial<CoverageReport> = {}): CoverageReport {

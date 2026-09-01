@@ -56,7 +56,7 @@ import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { geocodeAddress } from "mailwoman/geocode-core"
+import { geocodeAddress } from "mailwoman/geocode"
 import { basename, join, resolvePath } from "path-ts"
 
 const HERE = import.meta.dirname

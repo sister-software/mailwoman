@@ -31,7 +31,7 @@
 				"lib/cli.tsx",
 				"lib/commands/**/*.tsx",
 				"lib/dev-tools/**/*.ts",
-				"lib/geocode-worker.ts",
+				"lib/geocode/worker.ts",
 				"lib/test-fixtures/**/*"
 			],
 			"ignoreDependencies": ["@mailwoman/neural-weights-en-us"]

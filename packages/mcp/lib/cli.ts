@@ -60,9 +60,8 @@ import { getPOICategory } from "@mailwoman/poi-taxonomy"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { createRuntimePipeline, type PipelineResult } from "mailwoman"
-import { geocodeAddress } from "mailwoman/geocode-core"
-import { RegionDatabaseProvider } from "mailwoman/geocode-regions"
-import { emitOverpassQL } from "mailwoman/poi-overpass"
+import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
+import { emitOverpassQL } from "mailwoman/poi"
 import {
 	buildNoGazetteerMessage,
 	createResolverBackend,

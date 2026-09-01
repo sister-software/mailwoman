@@ -20,9 +20,9 @@ import {
 	type GeocodeClassifier,
 	type GeocodeDeps,
 	parseForGeocode,
-} from "mailwoman/geocode-core"
-import { extractGeocodeResult } from "mailwoman/geocode-result"
-import { recognizeBarePostcode } from "mailwoman/geocode-tree-reads"
+	extractGeocodeResult,
+	recognizeBarePostcode,
+} from "mailwoman/geocode"
 import { describe, expect, it } from "vitest"
 
 describe("countryFromPostcodeFormat (#928)", () => {

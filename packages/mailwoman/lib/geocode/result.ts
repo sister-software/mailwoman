@@ -20,9 +20,9 @@ import { adminLadderForNodes } from "@mailwoman/resolver"
 
 import { adminCoherenceField, type AdminCoherenceReport } from "#admin-coherence"
 import type { AuthoritativeAssertion } from "#authoritative"
-import { capitalPromotionOf, postcodeCountryScopeOf, variantAliasExemptionOf } from "#geocode-tree-reads"
+import { capitalPromotionOf, postcodeCountryScopeOf, variantAliasExemptionOf } from "#geocode/tree-reads"
 import { assembleHierarchy, lineageAnchorNode, type HierarchyEntry } from "#hierarchy-lineage"
-import { assembleStreetName } from "#street-name-assembly"
+import { assembleStreetName } from "#street/name-assembly"
 
 /**
  * The resolution tier that produced the coordinate. `address_point` > `interpolated` > `street` > `admin`.

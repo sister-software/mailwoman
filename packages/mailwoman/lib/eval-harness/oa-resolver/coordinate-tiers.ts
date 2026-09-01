@@ -10,7 +10,7 @@ import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import type { AddressPointLookup, InterpolationLookup } from "@mailwoman/resolver"
 
 import type { OAResolverEvalOptions } from "#eval-harness/oa-resolver/options"
-import type { RegionDatabaseProvider } from "#geocode-regions"
+import type { RegionDatabaseProvider } from "#geocode/regions"
 
 /**
  * The postcode database reader the anchor extractor probes — the WOF postcode lookup's structural contract, named here
@@ -78,7 +78,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	let cascadeProvider: RegionDatabaseProvider | null = null
 
 	if (cascadeOn) {
-		const { RegionDatabaseProvider } = await import("#geocode-regions")
+		const { RegionDatabaseProvider } = await import("#geocode/regions")
 		const { AddressPointSqliteLookup, StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
 
 		cascadeProvider = await RegionDatabaseProvider.create({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)

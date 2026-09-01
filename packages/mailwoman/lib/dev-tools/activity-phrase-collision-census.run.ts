@@ -29,7 +29,7 @@ import {
 	printPhraseCollisionCensus,
 	runPhraseCollisionCensus,
 } from "#eval-harness/activity-lexicon/phrase-collision-census"
-import { createPOINameLookup } from "#poi-intent"
+import { createPOINameLookup } from "#poi/intent"
 
 const { values } = parseArguments({ options: { db: { type: "string" }, out: { type: "string" } } })
 

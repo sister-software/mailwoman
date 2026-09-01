@@ -30,7 +30,7 @@ import {
 	useCommandTask,
 	writeRawStdout,
 } from "#cli-kit"
-import { trains, type CoverageReport } from "#coverage-census"
+import { trains, type CoverageReport } from "#coverage/census"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -59,7 +59,7 @@ interface Options {
 
 const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { censusCoverage } = await import("#coverage-census")
+		const { censusCoverage } = await import("#coverage/census")
 		const { dataRootPath, repoRootPath } = await import("@mailwoman/core/utils")
 
 		const repoRoot = String(repoRootPath())

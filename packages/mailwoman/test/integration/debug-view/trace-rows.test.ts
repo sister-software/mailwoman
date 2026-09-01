@@ -10,7 +10,7 @@
  */
 
 import { ABSENT, channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mailwoman/debug-view/trace-rows"
-import type { GeocodeTrace } from "mailwoman/geocode-session"
+import type { GeocodeTrace } from "mailwoman/geocode"
 import { describe, expect, it } from "vitest"
 
 const TEXT = "3215 SE Clinton St"

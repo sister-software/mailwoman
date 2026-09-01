@@ -31,7 +31,7 @@ import {
 	Provenance,
 	rebuildHint,
 	takeInventory,
-} from "#data-inventory"
+} from "#data/inventory"
 
 export const description =
 	"Report every database in the data root and whether it records how it was built. `layer_manifest` is " +

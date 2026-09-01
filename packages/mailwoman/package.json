@@ -64,6 +64,36 @@
 	],
 	"type": "module",
 	"imports": {
+		"#geocode": {
+			"node": "./lib/geocode/index.ts",
+			"default": "./out/geocode/index.js",
+			"types": "./out/geocode/index.d.ts"
+		},
+		"#poi": {
+			"node": "./lib/poi/index.ts",
+			"default": "./out/poi/index.js",
+			"types": "./out/poi/index.d.ts"
+		},
+		"#default": {
+			"node": "./lib/default/index.ts",
+			"default": "./out/default/index.js",
+			"types": "./out/default/index.d.ts"
+		},
+		"#data": {
+			"node": "./lib/data/index.ts",
+			"default": "./out/data/index.js",
+			"types": "./out/data/index.d.ts"
+		},
+		"#street": {
+			"node": "./lib/street/index.ts",
+			"default": "./out/street/index.js",
+			"types": "./out/street/index.d.ts"
+		},
+		"#coverage": {
+			"node": "./lib/coverage/index.ts",
+			"default": "./out/coverage/index.js",
+			"types": "./out/coverage/index.d.ts"
+		},
 		"#doctor": {
 			"node": "./lib/doctor/index.ts",
 			"default": "./out/doctor/index.js",
@@ -147,31 +177,6 @@
 			"default": "./out/eval-harness/*.js",
 			"types": "./out/eval-harness/*.d.ts"
 		},
-		"./geocode-diff": {
-			"node": "./lib/geocode-diff.ts",
-			"default": "./out/geocode-diff.js",
-			"types": "./out/geocode-diff.d.ts"
-		},
-		"./coverage-census": {
-			"node": "./lib/coverage-census.ts",
-			"default": "./out/coverage-census.js",
-			"types": "./out/coverage-census.d.ts"
-		},
-		"./geocode-core": {
-			"node": "./lib/geocode-core.ts",
-			"default": "./out/geocode-core.js",
-			"types": "./out/geocode-core.d.ts"
-		},
-		"./geocode-session": {
-			"node": "./lib/geocode-session.ts",
-			"default": "./out/geocode-session.js",
-			"types": "./out/geocode-session.d.ts"
-		},
-		"./geocode-command-options": {
-			"node": "./lib/geocode-command-options.ts",
-			"default": "./out/geocode-command-options.js",
-			"types": "./out/geocode-command-options.d.ts"
-		},
 		"./debug-view/*": {
 			"node": "./lib/debug-view/*.ts",
 			"default": "./out/debug-view/*.js",
@@ -186,11 +191,6 @@
 			"node": "./lib/debug-view/command.tsx",
 			"default": "./out/debug-view/command.js",
 			"types": "./out/debug-view/command.d.ts"
-		},
-		"./geocode-stream": {
-			"node": "./lib/geocode-stream.ts",
-			"default": "./out/geocode-stream.js",
-			"types": "./out/geocode-stream.d.ts"
 		},
 		"./resolver-backend": {
 			"node": "./lib/resolver-backend.ts",
@@ -237,11 +237,6 @@
 			"default": "./out/test-kit/index.js",
 			"types": "./out/test-kit/index.d.ts"
 		},
-		"./poi-overpass": {
-			"node": "./lib/poi-overpass.ts",
-			"default": "./out/poi-overpass.js",
-			"types": "./out/poi-overpass.d.ts"
-		},
 		"./api-engine": {
 			"node": "./lib/api-engine.ts",
 			"default": "./out/api-engine.js",
@@ -267,25 +262,10 @@
 			"default": "./out/test-kit/cli-spawn-lock.js",
 			"types": "./out/test-kit/cli-spawn-lock.d.ts"
 		},
-		"./data-bundles": {
-			"node": "./lib/data-bundles.ts",
-			"default": "./out/data-bundles.js",
-			"types": "./out/data-bundles.d.ts"
-		},
-		"./data-release": {
-			"node": "./lib/data-release.ts",
-			"default": "./out/data-release.js",
-			"types": "./out/data-release.d.ts"
-		},
 		"./observations": {
 			"node": "./lib/observations/index.ts",
 			"default": "./out/observations/index.js",
 			"types": "./out/observations/index.d.ts"
-		},
-		"./poi-intent": {
-			"node": "./lib/poi-intent.ts",
-			"default": "./out/poi-intent.js",
-			"types": "./out/poi-intent.d.ts"
 		},
 		"./commands/registry/run": {
 			"node": "./lib/commands/registry/run.tsx",
@@ -302,11 +282,6 @@
 			"default": "./out/admin-coherence.js",
 			"types": "./out/admin-coherence.d.ts"
 		},
-		"./data-inventory": {
-			"node": "./lib/data-inventory.ts",
-			"default": "./out/data-inventory.js",
-			"types": "./out/data-inventory.d.ts"
-		},
 		"./freshness": {
 			"node": "./lib/freshness.ts",
 			"default": "./out/freshness.js",
@@ -316,11 +291,6 @@
 			"node": "./lib/fork-entity.ts",
 			"default": "./out/fork-entity.js",
 			"types": "./out/fork-entity.d.ts"
-		},
-		"./poi-executor": {
-			"node": "./lib/poi-executor.ts",
-			"default": "./out/poi-executor.js",
-			"types": "./out/poi-executor.d.ts"
 		},
 		"./hierarchy-lineage": {
 			"node": "./lib/hierarchy-lineage.ts",
@@ -341,11 +311,6 @@
 			"node": "./lib/kbest-street-rerank.ts",
 			"default": "./out/kbest-street-rerank.js",
 			"types": "./out/kbest-street-rerank.d.ts"
-		},
-		"./default-reverse-geocoder": {
-			"node": "./lib/default-reverse-geocoder.ts",
-			"default": "./out/default-reverse-geocoder.js",
-			"types": "./out/default-reverse-geocoder.d.ts"
 		},
 		"./postcode-repair": {
 			"node": "./lib/postcode-repair.ts",
@@ -392,20 +357,35 @@
 			"default": "./out/tools/generate-clients.js",
 			"types": "./out/tools/generate-clients.d.ts"
 		},
-		"./geocode-result": {
-			"node": "./lib/geocode-result.ts",
-			"default": "./out/geocode-result.js",
-			"types": "./out/geocode-result.d.ts"
+		"./geocode": {
+			"node": "./lib/geocode/index.ts",
+			"default": "./out/geocode/index.js",
+			"types": "./out/geocode/index.d.ts"
 		},
-		"./geocode-regions": {
-			"node": "./lib/geocode-regions.ts",
-			"default": "./out/geocode-regions.js",
-			"types": "./out/geocode-regions.d.ts"
+		"./poi": {
+			"node": "./lib/poi/index.ts",
+			"default": "./out/poi/index.js",
+			"types": "./out/poi/index.d.ts"
 		},
-		"./geocode-tree-reads": {
-			"node": "./lib/geocode-tree-reads.ts",
-			"default": "./out/geocode-tree-reads.js",
-			"types": "./out/geocode-tree-reads.d.ts"
+		"./default": {
+			"node": "./lib/default/index.ts",
+			"default": "./out/default/index.js",
+			"types": "./out/default/index.d.ts"
+		},
+		"./data": {
+			"node": "./lib/data/index.ts",
+			"default": "./out/data/index.js",
+			"types": "./out/data/index.d.ts"
+		},
+		"./street": {
+			"node": "./lib/street/index.ts",
+			"default": "./out/street/index.js",
+			"types": "./out/street/index.d.ts"
+		},
+		"./coverage": {
+			"node": "./lib/coverage/index.ts",
+			"default": "./out/coverage/index.js",
+			"types": "./out/coverage/index.d.ts"
 		}
 	},
 	"publishConfig": {

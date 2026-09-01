@@ -20,7 +20,7 @@ import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { runStaticDebug } from "mailwoman/debug-view/command"
 import { mapPaneCellSize } from "mailwoman/debug-view/DebugFrame"
-import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
+import { createGeocodeCommandOptions } from "mailwoman/geocode"
 import { describe, expect, test } from "vitest"
 
 // MARK: Environment guard

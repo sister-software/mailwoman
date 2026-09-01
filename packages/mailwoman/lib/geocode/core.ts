@@ -45,16 +45,16 @@ import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 import type { AddressPointLookup, PostcodePrefixIndexLike, ResolveOpts, Resolver } from "@mailwoman/resolver"
 
 import { authoritativeQueryFrom, consultAuthoritativeProvider } from "#authoritative"
-import { loadDefaultPlaceCountry, type PlaceCountryFn } from "#default-placer"
+import { loadDefaultPlaceCountry, type PlaceCountryFn } from "#default/placer"
 import { applyEntityTiers } from "#fork-entity"
-import { type RegionDatabaseResolver, type RegionDatabases, regionSlugFromTree } from "#geocode-regions"
-import { extractGeocodeResult } from "#geocode-result"
+import { type RegionDatabaseResolver, type RegionDatabases, regionSlugFromTree } from "#geocode/regions"
+import { extractGeocodeResult } from "#geocode/result"
 import {
 	postcodeCountryScopeOf,
 	recognizeBarePostcode,
 	resolvedCountryOf,
 	treePostcodeValue,
-} from "#geocode-tree-reads"
+} from "#geocode/tree-reads"
 import { shouldDropInferredScope } from "#inferred-scope"
 import { thingQueryRefusalMarkers } from "#intent-refusal"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "#interp-calibration"
@@ -63,12 +63,12 @@ import { interpCalibrationForRegion, type InterpCalibrationTable } from "#interp
 // conversion that reads them takes all three, so a fourth layer costs no import at this call site.
 import { layerDesignationMarkers, type LayerDesignationRoutes } from "#observations/index"
 import { applyPlusCodeOverride } from "#plus-code-override"
-import type { POIExecutorLookup } from "#poi-executor"
+import type { POIExecutorLookup } from "#poi/executor"
 import { repairPostcodeContradiction } from "#postcode-repair"
 import { declaredAmbiguityMarker } from "#query-intent"
 import { recognizeUSRegions } from "#region-recognition"
 import { repairStrandedAffix } from "#stranded-affix-repair"
-import { applyStreetMissFallback } from "#street-miss-fallback"
+import { applyStreetMissFallback } from "#street/miss-fallback"
 
 export { isUnitGradePostcodeHit, UNIT_GRADE_POSTCODE } from "@mailwoman/codex"
 

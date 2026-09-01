@@ -7,8 +7,7 @@
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { DebugFrame, mapPaneCellSize, outputPaneCapacity, ribbonSegments } from "mailwoman/debug-view/DebugFrame"
 import { renderInkToString } from "mailwoman/debug-view/static-render"
-import type { GeocodeResult } from "mailwoman/geocode-result"
-import type { GeocodeTrace } from "mailwoman/geocode-session"
+import type { GeocodeResult, GeocodeTrace } from "mailwoman/geocode"
 import { describe, expect, it } from "vitest"
 
 const TREE = {

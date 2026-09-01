@@ -27,7 +27,7 @@ import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
 
-import { probeManifest } from "#data-inventory"
+import { probeManifest } from "#data/inventory"
 
 /**
  * The ancestor's identity as this manifest records it.

@@ -80,7 +80,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "h3-js"
 
 import { readCommittedModel } from "#observations/committed-model"
-import { resolvePOISearchCenter } from "#poi-executor"
+import { resolvePOISearchCenter } from "#poi/executor"
 
 /**
  * The relation an affordance is asserted under — the one the frozen vertical slice defines, and the only one this route

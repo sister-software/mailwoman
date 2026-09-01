@@ -48,8 +48,8 @@ import React, { memo, useMemo } from "react"
 import { outputLines, type OutputLine } from "#debug-view/output-lines"
 import { tagColor } from "#debug-view/tag-colors"
 import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "#debug-view/trace-rows"
-import type { GeocodeResult } from "#geocode-result"
-import type { GeocodeTrace } from "#geocode-session"
+import type { GeocodeResult } from "#geocode/result"
+import type { GeocodeTrace } from "#geocode/session"
 
 //#region Contract
 

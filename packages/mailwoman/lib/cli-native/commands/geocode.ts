@@ -19,8 +19,8 @@ import {
 	stringValue,
 	triStateValue,
 } from "#cli-native/spec"
-import type { GeocodeCommandOptions } from "#geocode-command-options"
-import type { GeocodeResult } from "#geocode-result"
+import type { GeocodeCommandOptions } from "#geocode/command-options"
+import type { GeocodeResult } from "#geocode/result"
 
 const localePattern = /^[a-z]{2}(-[A-Z]{2})?$/u
 const debugSizePattern = /^\d+x\d+$/u
@@ -310,7 +310,7 @@ async function formatResult(result: GeocodeResult, format: Format, compact: bool
 
 async function openSession(options: GeocodeOptions) {
 	const importStartedAt = performance.now()
-	const { createGeocodeSession } = await import("#geocode-session")
+	const { createGeocodeSession } = await import("#geocode/session")
 	const importedAt = performance.now()
 	const showProgress = process.stderr.isTTY === true && !options.timing
 

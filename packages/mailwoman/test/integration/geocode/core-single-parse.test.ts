@@ -11,7 +11,7 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { ResolveOpts, Resolver } from "@mailwoman/resolver"
-import { geocodeAddress, type GeocodeClassifier, parseForGeocode } from "mailwoman/geocode-core"
+import { geocodeAddress, type GeocodeClassifier, parseForGeocode } from "mailwoman/geocode"
 import { describe, expect, test, vi } from "vitest"
 
 function fakeClassifier(tree: AddressTree): GeocodeClassifier {

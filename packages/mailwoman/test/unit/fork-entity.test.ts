@@ -15,7 +15,7 @@ import {
 	probeVenueNearAnchorFolded,
 	type ForkEntityProbeOpts,
 } from "mailwoman/fork-entity"
-import type { POIExecutorLookup } from "mailwoman/poi-executor"
+import type { POIExecutorLookup } from "mailwoman/poi"
 import { describe, expect, it } from "vitest"
 
 /**

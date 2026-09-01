@@ -33,9 +33,8 @@ import {
 	resolveGazetteerOrExit,
 	runDropInCLI,
 } from "mailwoman/cli-kit/dropin"
-import { geocodeAddress } from "mailwoman/geocode-core"
-import { RegionDatabaseProvider } from "mailwoman/geocode-regions"
-import type { GeocodeResult } from "mailwoman/geocode-result"
+import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
+import type { GeocodeResult } from "mailwoman/geocode"
 import { createResolverBackend, dataRootPath, mailwomanDataRoot } from "mailwoman/resolver-backend"
 import { resolvePath } from "path-ts"
 

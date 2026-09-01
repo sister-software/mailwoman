@@ -30,7 +30,7 @@ import {
 	fixtureOutline,
 	fixtureSource,
 } from "@mailwoman/soil/test-kit"
-import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode-core"
+import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode"
 import { createSoilCapabilityRoute } from "mailwoman/observations"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 

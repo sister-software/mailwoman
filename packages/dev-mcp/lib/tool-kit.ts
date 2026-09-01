@@ -9,7 +9,7 @@
  */
 
 import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mailwoman/debug-view/trace-rows"
-import type { GeocodeRun } from "mailwoman/geocode-session"
+import type { GeocodeRun } from "mailwoman/geocode"
 import { z } from "zod"
 
 import type { EngineRegistryLike } from "#engine-registry"
