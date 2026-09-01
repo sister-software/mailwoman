@@ -1,11 +1,65 @@
-# The export surface: 727 subpaths, and what they are actually buying
+# The export surface: 727 subpaths, and what they were actually buying
 
-**Date:** 2026-09-01 · **Status:** proposal, decides nothing · **Refs:** #2050 · **Sequenced into:** the
-directory-hierarchy arc's second half (prefix-family folding).
+**Date:** 2026-09-01 · **Status:** DONE, with two recommendations measured and rejected · **Refs:** #2050
 
 Every number here was re-derived on `main` at `dcfd5f106`; §6 has the commands. Four of the operator's
 figures were confirmed exactly and four surrounding claims needed correcting — §5 lists both, because a record
 that only reports agreement is not worth re-reading.
+
+---
+
+## Outcome (2026-09-01, later the same day)
+
+**727 → 641 subpaths**, across #2058, #2061, #2062 and #2063, all merged. The folds and the collapse landed
+together, as §4.1 asked, because the directory structure IS the new export list.
+
+| workspace             |                                            subpaths |
+| --------------------- | --------------------------------------------------: |
+| `dev-mcp`             | 51 → 4 (wildcard; private, so no consumer to break) |
+| `resolver-wof-sqlite` |                                             61 → 45 |
+| `mailwoman`           |                                             55 → 45 |
+| `neural`              |                                             40 → 31 |
+| `resolver`            |                                             15 → 11 |
+
+**Both of the remaining recommendations in §0 were measured, and BOTH were wrong.** That is the useful part
+of this record now.
+
+### §0.2 — `sideEffects: false` is correct, but not for the reason given
+
+Landed on the **43 of 59** published packages that earn it, by walking each module's top-level statement
+list (an expression statement, a bare `import "x"` or a top-level await RUNS; a declaration does not). The
+16 that cannot claim it are almost all entries — `lib/cli.ts`, `scripts/*.ts` — not library modules.
+
+The rationale here said it would let a barrel tree-shake, demoting the browser-safe-leaf discipline to
+defence in depth. **It does not.** Measured after landing it: repointing one demo import from
+`street/normalize` back to the `street` barrel still produces 27
+`'x' is not exported from 'node:fs/promises'` errors. The leaf rule is still load-bearing, and
+`webpack-policy.test.ts` now refuses a barrel import by name in ~30 ms — because the only other thing that
+catches it is a five-minute `docusaurus build`.
+
+_(A first pass at the audit reported 13 clean packages. It used a regex, and `^` under the `m` flag matches
+an indented statement inside a function exactly as happily as a top-level one. It also flagged `neural`,
+which already declared the field — that contradiction is what exposed it.)_
+
+### §0.4 — the docs alias map must NOT be derived from `exports`
+
+This looked obviously right and is the opposite of right. **The alias list's job is to DIFFER from the
+exports map.** `@mailwoman/resolver-wof-sqlite` now advertises both `./fst` and `./fst/deserialize-web`;
+Node callers should take the barrel and the browser must take the leaf, because the barrel re-exports
+`fst/freshness`, which reaches `@mailwoman/core/fs`. A derivation reads both entries and has no way to
+express the preference — it is an editorial judgement about the BROWSER, and the exports map is not written
+from the browser's point of view.
+
+What the hand-list needed was not derivation but a refusal: `requireAlias` now throws on an entry that
+resolves to nothing, which caught three real breaks during the fold (`resolver-wof-sqlite/geo` and
+`core/kysley/dialect`, both long dead, and `resolver/resolve` the moment it became a directory).
+
+### Still open
+
+- An **array-valued** `sideEffects` naming the entry files would let the other 16 packages shake their
+  library halves. Worth doing; not done.
+- `core` (80) and `codex` (54) are now the two largest surfaces and neither was folded — no prefix families
+  at their roots, so the reduction there is a different exercise.
 
 ---
 
