@@ -26,7 +26,7 @@
 
 import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
 import type { ComponentTag } from "@mailwoman/core/types"
-import type { PlacetypeCensusNode } from "@mailwoman/neural/placetype-census"
+import type { PlacetypeCensusNode } from "@mailwoman/neural/placetype"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 

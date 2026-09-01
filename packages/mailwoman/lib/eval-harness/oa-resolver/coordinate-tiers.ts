@@ -23,7 +23,7 @@ export interface PostcodeCentroidLookup extends Disposable {
 /**
  * The postcode-anchor extractor, loaded dynamically because the anchor rows are opt-in.
  */
-export type ExtractPostcodeAnchors = typeof import("@mailwoman/neural/postcode-anchor").extractPostcodeAnchors
+export type ExtractPostcodeAnchors = typeof import("@mailwoman/neural/postcode").extractPostcodeAnchors
 
 /**
  * Wire up the coordinate tiers this run grades, from the flags that select them.
@@ -106,7 +106,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 
 		const { WOFPostcodeLookup } = await import("@mailwoman/resolver-wof-sqlite")
 		postcodeLookup = new WOFPostcodeLookup(databases)
-		extractAnchors = (await import("@mailwoman/neural/postcode-anchor")).extractPostcodeAnchors
+		extractAnchors = (await import("@mailwoman/neural/postcode")).extractPostcodeAnchors
 	}
 
 	return {

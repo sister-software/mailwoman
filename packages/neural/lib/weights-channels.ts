@@ -12,7 +12,7 @@ import { tryParsingJSON } from "@mailwoman/core/objects"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { type AnchorLookup, type AnchorSpanMode, parseAnchorLookup } from "#anchor-inference"
-import { PostcodeBinaryResolver } from "#postcode-binary-resolver"
+import { PostcodeBinaryResolver } from "#postcode/binary-resolver"
 
 // The graph-input inference lives in ort-feeds.ts (pure, so the browser loader shares it); re-exported
 // here because this module is where every other channel-requirement reader lives.

@@ -39,9 +39,9 @@ import {
 	type RepairResult,
 	type SpanMatch,
 	tokenIndicesOverlapping,
-} from "#span-repair"
+} from "#span/repair"
 
-export type { RepairResult } from "#span-repair"
+export type { RepairResult } from "#span/repair"
 
 /**
  * A detected secondary-unit substring with its char range. Units carry no confidence class — every pattern here

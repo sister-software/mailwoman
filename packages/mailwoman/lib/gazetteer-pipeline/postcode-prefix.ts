@@ -81,7 +81,7 @@
 import { GB_BORDER_STRADDLING_AREAS, countryOfPostcodeArea, type UkCountryCode } from "@mailwoman/codex/gb"
 import { isZipCode } from "@mailwoman/codex/us"
 import { percentile } from "@mailwoman/core/utils"
-import type { PostcodePrefixAncestor, PostcodePrefixNode } from "@mailwoman/neural/postcode-prefix-index"
+import type { PostcodePrefixAncestor, PostcodePrefixNode } from "@mailwoman/neural/postcode"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

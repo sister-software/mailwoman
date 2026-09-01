@@ -5,12 +5,12 @@
  */
 
 export * from "#anchor-inference"
-export * from "#classifier"
+export * from "#classifier/index"
 export * from "#gazetteer-inference"
 export * from "#labels"
 export * from "#onnx-runner"
-export * from "#postcode-anchor"
-export * from "#postcode-binary-resolver"
+export * from "#postcode/anchor"
+export * from "#postcode/binary-resolver"
 export * from "#proposal-classifier"
 export { addEmissionMatrix, buildEmissionPriors } from "#query-shape-prior"
 export { parseWordConsistencyEnv, type WordConsistencyOpts } from "#word-consistency"
@@ -18,8 +18,8 @@ export type { BuildPriorsOpts, KnownFormatHitLike, QueryShapeLike, TokenLike } f
 export * from "#scorer"
 export * from "#semi-markov-decode"
 export * from "#soft-features"
-export * from "#span-proposal-prior"
-export * from "#span-proposer-lexicon"
+export * from "#span/proposal-prior"
+export * from "#span/proposer-lexicon"
 export * from "#tokenizer"
 export * from "#trace"
 

@@ -11,8 +11,7 @@
  */
 
 import { proposeSpans, type ProposedSpan } from "@mailwoman/core/pipeline"
-import { buildSpanProposalPriors } from "@mailwoman/neural/span-proposal-prior"
-import { buildCodexSpanLexicon } from "@mailwoman/neural/span-proposer-lexicon"
+import { buildSpanProposalPriors, buildCodexSpanLexicon } from "@mailwoman/neural/span"
 import { describe, expect, it } from "vitest"
 
 const LABELS = ["O", "B-unit", "I-unit", "B-po_box", "I-po_box", "B-house_number", "I-house_number"] as const

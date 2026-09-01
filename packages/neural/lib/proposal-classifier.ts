@@ -28,7 +28,7 @@ import type {
 	Section,
 } from "@mailwoman/core/types"
 
-import type { NeuralAddressClassifier } from "#classifier"
+import type { NeuralAddressClassifier } from "#classifier/index"
 import { STAGE2_TAGS } from "#labels"
 
 export interface NeuralProposalClassifierConfig {

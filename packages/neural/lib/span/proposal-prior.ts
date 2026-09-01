@@ -30,7 +30,7 @@ import type { ProposedSpan } from "@mailwoman/core/pipeline"
 
 import { emptyPriorMatrix, labelColumnIndex } from "#prior-matrix"
 import type { TokenLike } from "#query-shape-prior"
-import { spansOverlap } from "#span-repair"
+import { spansOverlap } from "#span/repair"
 
 export interface SpanProposalPriorOpts {
 	/**

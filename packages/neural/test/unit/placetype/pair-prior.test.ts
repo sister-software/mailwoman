@@ -36,8 +36,8 @@ import {
 	type PairIndexEntry,
 	type PairIndexHeaderInput,
 	type PairIndexLike,
-} from "@mailwoman/neural/pair-index-resolver"
-import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "@mailwoman/neural/placetype-pair-prior"
+} from "@mailwoman/neural/pair"
+import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "@mailwoman/neural/placetype"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { describe, expect, it, test } from "vitest"
 

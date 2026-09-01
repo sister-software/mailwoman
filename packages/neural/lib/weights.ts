@@ -27,7 +27,7 @@ import { resolvePackageDirectory, tryResolvePackageDirectory } from "@mailwoman/
 import { cacheRootPathBuilder, dataRootPath, weightsOverlayPath } from "@mailwoman/core/utils"
 import { basename, dirname, PathBuilder, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 
-import { PlacetypeCensusResolver } from "#placetype-census"
+import { PlacetypeCensusResolver } from "#placetype/census"
 import { readRequiredChannels } from "#weights-channels"
 
 /**

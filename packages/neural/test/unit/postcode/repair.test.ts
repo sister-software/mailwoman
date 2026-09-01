@@ -10,7 +10,7 @@
  */
 
 import type { BIOLabel, DecoderToken } from "@mailwoman/core/decoder"
-import { repairPostcodeLabels } from "@mailwoman/neural/postcode-repair"
+import { repairPostcodeLabels } from "@mailwoman/neural/postcode"
 import { describe, expect, it } from "vitest"
 
 /**

@@ -16,7 +16,7 @@ import {
 	serializePostcodePrefixIndex,
 	type PostcodePrefixHeader,
 	type PostcodePrefixNode,
-} from "@mailwoman/neural/postcode-prefix-index"
+} from "@mailwoman/neural/postcode"
 import { describe, expect, it } from "vitest"
 
 const header: PostcodePrefixHeader = {

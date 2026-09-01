@@ -38,7 +38,7 @@ import {
 	type PairIndexHeader,
 	PairIndexResolver,
 	peekPairIndexHeader,
-} from "@mailwoman/neural/pair-index-resolver"
+} from "@mailwoman/neural/pair"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"

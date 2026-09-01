@@ -9,12 +9,12 @@
  *   `PostcodeResolver` seam), so the WASM resolver is a drop-in for the SQLite one.
  */
 
-import { extractPostcodeAnchors } from "@mailwoman/neural/postcode-anchor"
 import {
+	extractPostcodeAnchors,
 	PostcodeBinaryResolver,
 	serializePostcodeBinary,
 	type PostcodeBinaryEntry,
-} from "@mailwoman/neural/postcode-binary-resolver"
+} from "@mailwoman/neural/postcode"
 import { describe, expect, it } from "vitest"
 
 const ENTRIES: PostcodeBinaryEntry[] = [

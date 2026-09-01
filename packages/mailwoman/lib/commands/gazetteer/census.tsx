@@ -25,7 +25,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import type { ComponentTag } from "@mailwoman/core/types"
-import type { PlacetypeCensusHeader, PlacetypeCensusNode } from "@mailwoman/neural/placetype-census"
+import type { PlacetypeCensusHeader, PlacetypeCensusNode } from "@mailwoman/neural/placetype"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
@@ -65,7 +65,7 @@ const GazetteerCensus: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath, md5File } = await import("@mailwoman/core/utils")
 		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
-		const { PlacetypeCensusResolver, serializePlacetypeCensus } = await import("@mailwoman/neural/placetype-census")
+		const { PlacetypeCensusResolver, serializePlacetypeCensus } = await import("@mailwoman/neural/placetype")
 		const { buildPlacetypeCensus, toBaseRates } = await import("#gazetteer-pipeline/placetype-census")
 
 		const country = options.country.toLowerCase()

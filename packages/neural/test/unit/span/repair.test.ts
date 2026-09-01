@@ -10,7 +10,7 @@
  */
 
 import type { BIOLabel, DecoderToken } from "@mailwoman/core/decoder"
-import { selectNonOverlappingMatches, tagOf, tokenIndicesOverlapping } from "@mailwoman/neural/span-repair"
+import { selectNonOverlappingMatches, tagOf, tokenIndicesOverlapping } from "@mailwoman/neural/span"
 import { describe, expect, it } from "vitest"
 
 const tok = (piece: string, start: number, label: BIOLabel): DecoderToken => ({

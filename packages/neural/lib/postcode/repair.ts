@@ -49,9 +49,9 @@ import {
 	type SpanMatch,
 	tagOf,
 	tokenIndicesOverlapping,
-} from "#span-repair"
+} from "#span/repair"
 
-export type { RepairResult } from "#span-repair"
+export type { RepairResult } from "#span/repair"
 
 /**
  * A detected postcode-shaped substring with its char range and confidence class.

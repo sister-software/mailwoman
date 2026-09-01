@@ -20,7 +20,7 @@
 
 import { readDirectoryEntries, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
-import { PairIndexResolver, serializePairIndex, type PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
+import { PairIndexResolver, serializePairIndex, type PairIndexHeaderInput } from "@mailwoman/neural/pair"
 import { detectPairIndexCountry, type LoadedPairIndex, resolvePairIndexForText } from "@mailwoman/neural/web-loader"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
