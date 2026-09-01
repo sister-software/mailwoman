@@ -485,6 +485,11 @@
 			"node": "./lib/numeric.ts",
 			"default": "./out/numeric.js",
 			"types": "./out/numeric.d.ts"
+		},
+		"./paths": {
+			"node": "./lib/paths.ts",
+			"default": "./out/paths.js",
+			"types": "./out/paths.d.ts"
 		}
 	},
 	"publishConfig": {

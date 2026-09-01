@@ -201,7 +201,7 @@ export class CoarsePlacer {
 		const dir = $public.MAILWOMAN_COARSE_PLACER_DIR
 
 		if (dir) return CoarsePlacer.fromArtifactDir(dir, opts)
-		const { corePackagePath } = await import("#utils/repo")
+		const { corePackagePath } = await import("#paths")
 
 		return CoarsePlacer.fromArtifactDir(corePackagePath("data", "coarse-placer"), opts)
 	}
