@@ -475,6 +475,16 @@
 			"node": "./lib/utils/stats.ts",
 			"default": "./out/utils/stats.js",
 			"types": "./out/utils/stats.d.ts"
+		},
+		"./random": {
+			"node": "./lib/random.ts",
+			"default": "./out/random.js",
+			"types": "./out/random.d.ts"
+		},
+		"./numeric": {
+			"node": "./lib/numeric.ts",
+			"default": "./out/numeric.js",
+			"types": "./out/numeric.d.ts"
 		}
 	},
 	"publishConfig": {

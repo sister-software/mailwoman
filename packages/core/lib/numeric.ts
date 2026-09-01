@@ -2,6 +2,20 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ * @file Numeric helpers with no domain attached.
+ */
+
+/**
+ * `value` limited to the closed interval `[min, max]`.
+ */
+export function clamp(value: number, min: number, max: number): number {
+	return Math.min(Math.max(value, min), max)
+}
+
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
  *
  *   Python-parity numeric helpers — the third member of the `python-*` family in this directory,
  *   beside `python-json.ts` (CPython `json.dumps` spacing) and `python-random.ts` (`random.Random`).
