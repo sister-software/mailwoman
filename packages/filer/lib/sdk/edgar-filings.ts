@@ -461,6 +461,8 @@ const EXHIBIT_21_TYPE_PATTERN = /^ex-?21(\.\d+)?$/i
  * missing either its `TYPE` or its `FILENAME` line is dropped rather than emitted with a guessed value or a `url`
  * ending in a bare slash — decision 6's "abstain, never guess" posture, carried from `exhibit21.ts`, applied here to a
  * manifest row instead of a subsidiary row.
+ *
+ * @todo In desperate need of cheerio or a DOM parser.
  */
 export function parseFilingDocuments(cik: CIK, accessionNumber: string, headerHTML: string): ExhibitDocument[] {
 	const archiveURL = accessionArchiveURL(cik, accessionNumber)

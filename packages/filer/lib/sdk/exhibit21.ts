@@ -79,6 +79,8 @@ const TAG_PATTERN = /<[^>]*>/g
  * The table-cell path takes the shared DOM-backed extraction (`stripHTMLToText`) instead; this stays for the
  * fixed-width plain-text and list strategies, whose column logic depends on the boundary-spacing rule above — a DOM
  * reading concatenates adjacent block texts with nothing between them.
+ *
+ * TODO: Swap out with isomorphic-dompurify via `@mailwoman/core/trust-policies`
  */
 export function stripTags(html: string): string {
 	return html.replaceAll(TAG_PATTERN, (match: string, offset: number, whole: string) => {
@@ -123,6 +125,9 @@ export function decodeEntities(text: string): string {
 	})
 }
 
+/**
+ * @deprecated use or define in `@mailwoman/core/strings/etc...`
+ */
 export function normalizeWhitespace(text: string): string {
 	return text.replaceAll(/\s+/g, " ").trim()
 }
@@ -132,6 +137,8 @@ export function normalizeWhitespace(text: string): string {
  * shared sanitizer), whitespace collapsed, trimmed. Table cells are already column-separated by markup, so (unlike
  * plain-text/list lines) there is no fixed-width spacing worth preserving — which is why the cell path can take the
  * DOM-backed extraction while the fixed-width strategies keep {@linkcode stripTags}.
+ *
+ * @deprecated use or define in `@mailwoman/core/strings/etc...`
  */
 function cleanCellText(rawHTML: string): string {
 	return normalizeWhitespace(stripHTMLToText(rawHTML))
@@ -163,6 +170,9 @@ const TABLE_TAG_PATTERN = /<table[^>]*>|<\/table>/gi
  * EDGAR splits one logical subsidiary list across sibling page-break tables constantly — `att-2025.htm` uses 2,
  * `echostar-2025.htm` 5, `atn-international-2025.htm` 7, and the unvendored Comcast filing 33 — and only the first
  * carries a header row.
+ *
+ * @deprecated Move to `@mailwoman/core/html` and use a DOM parser to read the table structure.
+ * @todo Use cheerio or a DOM parser to read the table structure.
  */
 function extractTopLevelTableHTML(html: string): string[] {
 	const tables: string[] = []
@@ -202,6 +212,9 @@ function extractTopLevelTableHTML(html: string): string[] {
  * cells' text into one fabricated name. Slicing on start-tag boundaries instead treats an unclosed `<td>` exactly as a
  * browser would: implicitly closed by the next `<td>`/`<th>`, or by the row's end when there is no later cell. A
  * trailing `</td>`/`</th>`, if present, is just another stray tag `cleanCellText` strips.
+ *
+ * @deprecated Move to `@mailwoman/core/html` and use a DOM parser to read the table structure.
+ * @todo Use cheerio or a DOM parser to read the table structure.
  */
 function extractRowCells(rowHTML: string): TableCell[] {
 	const starts: Array<{ tag: "td" | "th"; index: number; contentStart: number }> = []
@@ -226,6 +239,9 @@ function extractRowCells(rowHTML: string): TableCell[] {
  * Extracts every top-level table's `<tr>` rows' cells from `html`, or `null` when there is no table at all (the caller
  * falls through to the list/plain-text strategies). A row is `[]` when it has no `<td>`/`<th>` cells at all (formatting
  * cruft — an empty `<tr></tr>`), never `null`.
+ *
+ * @deprecated Move to `@mailwoman/core/html` and use a DOM parser to read the table structure.
+ * @todo Use cheerio or a DOM parser to read the table structure.
  */
 function extractTableRows(html: string): TableCell[][][] | null {
 	const tables = extractTopLevelTableHTML(html)
@@ -252,6 +268,9 @@ function extractTableRows(html: string): TableCell[][][] | null {
  * This is what an all-blank spacer column costs when it isn't dropped: `cable-one-2025.htm`, `ooma-2025.htm`,
  * `verizon-2025.htm`, `att-2025.htm` and `anterix-2025.htm` all interleave one, making every data row look 3-wide (the
  * shape the 3+-column rule abstains on) and yielding zero subsidiaries each.
+ *
+ * @deprecated Move to `@mailwoman/core/html/tables` and use a DOM parser to read the table structure.
+ * @todo Use cheerio or a DOM parser to read the table structure.
  */
 function widestRow(rows: readonly TableCell[][]): number {
 	let width = 0
@@ -263,6 +282,10 @@ function widestRow(rows: readonly TableCell[][]): number {
 	return width
 }
 
+/**
+ * @deprecated Move to `@mailwoman/core/html/tables` and use a DOM parser to read the table structure.
+ * @todo Use cheerio or a DOM parser to read the table structure.
+ */
 function padAndDropBlankColumns(rows: readonly TableCell[][]): TableCell[][] {
 	const width = widestRow(rows)
 	const keep: number[] = []
@@ -755,6 +778,9 @@ const BLOCK_BREAK_PATTERN =
  * step would let `stripTags`' single space per tag concatenate every paragraph onto one line — and worse, two adjacent
  * block tags with nothing between them (`</p><p>`) would fabricate a false 2+-space "column gap" between two
  * otherwise-unrelated paragraphs. See the module docstring's tag-stripping paragraph.
+ *
+ * @deprecated Move to `@mailwoman/core/html` and use a DOM parser to read the table structure.
+ * @todo Use cheerio or a DOM parser to read the table structure.
  */
 function extractPlainTextLines(html: string): string[] {
 	const withLineBreaks = html.replaceAll(BLOCK_BREAK_PATTERN, "\n")
@@ -769,6 +795,8 @@ function extractPlainTextLines(html: string): string[] {
  * string to an empty canonical name and a non-empty `designations` list. Guards {@linkcode splitCandidateLine}'s
  * single-comma rule: a bare designation immediately after a comma is the tail of ONE entity's name (`"Horizon Services,
  * Inc."`), not a jurisdiction, and the comma rule must not treat "Inc." as if it were a place.
+ *
+ * @todo Move to `@mailwoman/record/organization`
  */
 function isBareLegalDesignation(value: string): boolean {
 	const canonicalized = canonicalizeOrganizationName(value)
@@ -985,6 +1013,8 @@ export interface SECDocumentClient {
  * Fetches one Exhibit 21 document (through the shared SEC client's `getDocument` raw-text path) and parses it.
  * Discovering WHICH URL a filing's Exhibit 21 lives at is out of scope here — the caller supplies it (from the filing's
  * own archive index, however that's found).
+ *
+ * @todo Move this to a {@linkcode SECDocumentClient} method.
  */
 export async function fetchExhibit21(client: SECDocumentClient, url: string | URL): Promise<ParsedExhibit21> {
 	const html = await client.getDocument(url)
