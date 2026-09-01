@@ -2,8 +2,13 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ *
+ *   Path homes: the repo root, the data root, the package roots.
+ *
+ *   Extracted from `core/utils` (2026-09): a shelf is not a home, and these two modules carried 366 of
+ *   ~540 consumer references through that door — 68% of everything `@mailwoman/core/utils` was asked for.
+ *   `repo` and `data-root` also reference each other, which made them the shelf's only internal edge.
  */
-
 import {
 	createPathBuilderResolver,
 	createPathResolver,
@@ -31,7 +36,11 @@ const RepoRootAlias = "mailwoman" as const
 
 type RepoRootAlias = typeof RepoRootAlias
 
-const PathReflection = ["packages", "core", "out", "utils"] as const
+// Depth shared by BOTH trees: this file sits at `core/lib/paths.ts` and its emit at
+// `core/out/paths.js`, so "lib" here is the sibling of "out". Count from repo root to the FILE'S
+// DIRECTORY: packages/core/lib is 3. The ancestor this file was extracted from sat one level deeper
+// (packages/core/utils, 4) and its reflection still had "out" written where this has "lib".
+const PathReflection = ["packages", "core", "lib"] as const
 
 type PathReflection = typeof PathReflection
 
@@ -46,8 +55,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias
  * The absolute path to the root of the repository.
  *
  * THERE IS NO SOURCE/COMPILED BRANCH HERE ANY MORE, and that is a property of the layout rather than a simplification
- * anyone is free to undo. Source lives at `core/lib/utils/repo.ts` and its emit at `core/out/utils/repo.js`: `lib/` and
- * `out/` are SIBLINGS, so both trees put this file at the same depth and one constant serves both.
+ * anyone is free to undo. Source lives at `core/lib/paths.ts` and its emit at `core/out/paths.js`: `lib/` and `out/`
+ * are SIBLINGS, so both trees put this file at the same depth and one constant serves both. If this file moves to a
+ * different depth, {@link PathReflection} must move with it — the dictionary-path failure that followed the 2026-09
+ * extraction was this constant counting the OLD depth.
  *
  * Before source moved under `lib/`, source sat one level shallower than its own output and this file carried an
  * `__isCompiledTree` flag — `basename(resolvePath(__dirname, "..")) === "out"` — to pick between two `__upCount`s and
@@ -107,7 +118,7 @@ export const workspacePath = createPathResolver<RepoRootAlias>(PackagesAbsoluteP
  * Used to locate package-bundled assets (dictionary data) that live under the workspace root, NOT the repo root — so
  * that `npm install @mailwoman/core` ships those assets alongside the JS without any post-install copy step.
  */
-const CorePackageAbsolutePath = resolvePath(__dirname, "..", "..")
+const CorePackageAbsolutePath = resolvePath(__dirname, "..")
 /**
  * Path builder rooted at `@mailwoman/core`, so data under `core/data/` resolves the same in source and compiled trees.
  * See the `__isCompiledTree` note in this file before reaching across that boundary.

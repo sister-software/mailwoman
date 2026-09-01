@@ -13,8 +13,8 @@ import { join } from "node:path"
 
 import { PathBuilder, resolvePath, type PathBuilderLike } from "path-ts"
 
+import { tempRootPath } from "#data-root"
 import { makeDirectories } from "#fs/writers"
-import { tempRootPath } from "#utils/data-root"
 
 /**
  * A temporary directory that removes itself when the owning scope ends, together with everything registered on it.

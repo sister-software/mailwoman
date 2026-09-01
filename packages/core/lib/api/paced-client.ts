@@ -14,7 +14,7 @@
 import type { APIClient, APIClientConfig } from "#api/APIClient"
 import type { ClockLike } from "#api/clock"
 import { buildDiskStorage } from "#api/disk-storage"
-import { dataRootPath } from "#utils/data-root"
+import { dataRootPath } from "#data-root"
 
 /**
  * The options every paced-cached client factory accepts.

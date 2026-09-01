@@ -25,13 +25,6 @@
  *   integers vanishingly rarely; the builders that emit coordinates accept this edge.
  */
 
-export interface PyJSONOptions {
-	/**
-	 * Escape non-ASCII as `\uXXXX` (Python `ensure_ascii`). Defaults to `true`, matching Python.
-	 */
-	ensureASCII?: boolean
-}
-
 /**
  * Serialize one string the way Python's json does (then optionally `ensure_ascii`-escape it).
  */
@@ -95,7 +88,14 @@ function serialize(value: unknown, ensureASCII: boolean): string {
 /**
  * `json.dumps(value)` — single line, `(", ", ": ")` separators, `ensure_ascii` per options.
  */
-export function pyJSONDumps(value: unknown, options: PyJSONOptions = {}): string {
+export interface PyJSONDumpOptions {
+	ensureASCII?: boolean
+}
+
+/**
+ * Serialize a value the way Python's json.dumps does.
+ */
+export function pyJSONDumps(value: unknown, options: PyJSONDumpOptions = {}): string {
 	return serialize(value, options.ensureASCII ?? true)
 }
 
@@ -103,12 +103,3 @@ export function pyJSONDumps(value: unknown, options: PyJSONOptions = {}): string
  * Render a string->number map the way Python prints `dict(...)` / `dict(Counter(...))` — single-quoted keys, `, ` / `:
  * ` separators (e.g. `{'US': 1840, 'FR': 950}`). Insertion order is preserved.
  */
-export function pyReprDict(entries: Iterable<readonly [string, number]>): string {
-	const parts: string[] = []
-
-	for (const [k, v] of entries) {
-		parts.push(`'${k}': ${v}`)
-	}
-
-	return "{" + parts.join(", ") + "}"
-}
