@@ -293,6 +293,36 @@
 			"node": "./lib/ancestry/index.ts",
 			"default": "./out/ancestry/index.js",
 			"types": "./out/ancestry/index.d.ts"
+		},
+		"./convention/schema": {
+			"node": "./lib/convention/schema.ts",
+			"default": "./out/convention/schema.js",
+			"types": "./out/convention/schema.d.ts"
+		},
+		"./fst/deserialize-web": {
+			"node": "./lib/fst/deserialize-web.ts",
+			"default": "./out/fst/deserialize-web.js",
+			"types": "./out/fst/deserialize-web.d.ts"
+		},
+		"./fst/matcher": {
+			"node": "./lib/fst/matcher.ts",
+			"default": "./out/fst/matcher.js",
+			"types": "./out/fst/matcher.d.ts"
+		},
+		"./fst/types": {
+			"node": "./lib/fst/types.ts",
+			"default": "./out/fst/types.js",
+			"types": "./out/fst/types.d.ts"
+		},
+		"./fst/autocomplete": {
+			"node": "./lib/fst/autocomplete.ts",
+			"default": "./out/fst/autocomplete.js",
+			"types": "./out/fst/autocomplete.d.ts"
+		},
+		"./street/normalize": {
+			"node": "./lib/street/normalize.ts",
+			"default": "./out/street/normalize.js",
+			"types": "./out/street/normalize.d.ts"
 		}
 	},
 	"publishConfig": {

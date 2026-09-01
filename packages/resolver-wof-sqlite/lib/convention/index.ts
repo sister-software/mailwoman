@@ -152,5 +152,3 @@ export function resolveConvention(source: ConventionSource, ancestorIDs: readonl
 		scoringWeights: { ...WORLD_DEFAULT.scoringWeights, ...merged.scoringWeights },
 	}
 }
-
-export * from "#convention/schema"
