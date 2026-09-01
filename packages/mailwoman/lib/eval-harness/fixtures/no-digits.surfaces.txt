@@ -1,5 +1,5 @@
 # Street surfaces RESERVED for the NO digit-ownership board (no-digits.jsonl).
-# `no-street-led` MUST exclude these (--exclude-surfaces) or the shard trains on its
+# `no-street-led` MUST exclude these (--exclude-surfaces) or the slice trains on its
 # own eval set. Source-disjoint by normalized street SURFACE, never by record row.
 aalstad
 aasta hansteens veg
