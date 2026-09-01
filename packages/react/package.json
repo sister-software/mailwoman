@@ -33,6 +33,7 @@
 		"!storybook-static/**"
 	],
 	"type": "module",
+	"sideEffects": false,
 	"imports": {
 		"#test/act": "./test/act.ts",
 		"#test/mocks": "./test/mocks.tsx",

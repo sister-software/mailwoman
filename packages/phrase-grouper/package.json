@@ -24,6 +24,7 @@
 		"!test/**"
 	],
 	"type": "module",
+	"sideEffects": false,
 	"imports": {
 		"#index": {
 			"node": "./lib/index.ts",

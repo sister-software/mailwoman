@@ -24,6 +24,7 @@
 		"!test/**"
 	],
 	"type": "module",
+	"sideEffects": false,
 	"imports": {
 		"#admin": {
 			"node": "./lib/admin/index.ts",

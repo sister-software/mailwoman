@@ -25,6 +25,7 @@
 		"!test/**"
 	],
 	"type": "module",
+	"sideEffects": false,
 	"imports": {
 		"#fst": {
 			"node": "./lib/fst/index.ts",

@@ -26,6 +26,7 @@
 		"!test/**"
 	],
 	"type": "module",
+	"sideEffects": false,
 	"imports": {
 		"#*": {
 			"node": "./lib/*.ts",
