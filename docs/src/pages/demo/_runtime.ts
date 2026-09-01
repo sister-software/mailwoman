@@ -522,7 +522,7 @@ export function useDemoMapRuntime({
 		if (!fst) return []
 
 		try {
-			const { autocomplete: fstAutocomplete } = await import("@mailwoman/resolver-wof-sqlite/fst")
+			const { autocomplete: fstAutocomplete } = await import("@mailwoman/resolver-wof-sqlite/fst/autocomplete")
 
 			const res = fstAutocomplete(fst as Parameters<typeof fstAutocomplete>[0], query, {
 				maxSuggestions: 6,

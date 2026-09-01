@@ -323,6 +323,11 @@
 			"node": "./lib/street/normalize.ts",
 			"default": "./out/street/normalize.js",
 			"types": "./out/street/normalize.d.ts"
+		},
+		"./fts/query": {
+			"node": "./lib/fts/query.ts",
+			"default": "./out/fts/query.js",
+			"types": "./out/fts/query.d.ts"
 		}
 	},
 	"publishConfig": {

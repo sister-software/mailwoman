@@ -359,5 +359,3 @@ export function placeBboxExists<DB>(db: DatabaseClient<DB>): boolean {
 export function placePopulationExists<DB>(db: DatabaseClient<DB>): boolean {
 	return tableExists(db, PLACE_POPULATION_TABLE)
 }
-
-export * from "#fts/query"

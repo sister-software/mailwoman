@@ -32,8 +32,6 @@ const DIRECTORY_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: 
 	// `resolve-passes.ts` became `resolve/{index,passes}.ts`. Same subpath, different resolver — and
 	// `requireAlias` refused the docs build until it was listed on the right side, which is the point.
 	["@mailwoman/resolver", "resolve"],
-	// `fts` became a directory in the same fold; it resolves through its index like the others here.
-	["@mailwoman/resolver-wof-sqlite", "fts"],
 ]
 
 const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: string]> = [
@@ -44,7 +42,7 @@ const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: strin
 	// mirror that goes stale every time a subpath moves.
 	// These are the BROWSER-SAFE LEAVES: each keeps a per-file subpath so the demo bundle never pulls
 	// the Node-only siblings that share its directory entry.
-	...["fst/deserialize-web", "fst/matcher", "fst/types", "street/normalize", "fst/autocomplete"].map(
+	...["fst/deserialize-web", "fst/matcher", "fst/types", "street/normalize", "fst/autocomplete", "fts/index"].map(
 		(subpath) => ["@mailwoman/resolver-wof-sqlite", subpath] as const
 	),
 	["@mailwoman/neural", "web-loader"],

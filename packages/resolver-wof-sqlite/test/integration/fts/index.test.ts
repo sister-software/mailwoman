@@ -9,10 +9,10 @@
 
 import {
 	ALIAS_SEPARATOR,
-	aliasBagExactMatch,
 	buildPlaceSearchFTS,
 	PLACE_SEARCH_TABLE,
 	placeSearchFTSExists,
+	aliasBagExactMatch,
 } from "@mailwoman/resolver-wof-sqlite/fts"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
