@@ -25,6 +25,23 @@ module.exports = {
 			to: { path: "(?:^|/)(?:test|test-kit)(?:/|$)" },
 		},
 		{
+			name: "no-serve-package-to-build-tooling",
+			comment:
+				"The browser and request-path packages must not reach `lib/tools/` or `lib/sdk/` in ANY workspace. " +
+				"Those directories shell out to binaries (`spatial/lib/tools/ogr.ts`: 'OGR IS BUILD TOOLING, NEVER A " +
+				"SERVE DEPENDENCY'), open build databases, and fetch multi-gigabyte archives; one `export *` is all it " +
+				"takes for a barrel to drag that into a bundle. " +
+				"SCOPED BY PACKAGE, NOT BY FOLDER NAME, and that is the whole design. The obvious rule — 'nothing outside " +
+				"tools/ may import tools/' — was written first and produced 38 violations, every one of them correct " +
+				"behaviour: 33 are `mailwoman/lib/commands/*` calling the command's own library half, which is the " +
+				"documented CLI architecture, and 3 are `dev-mcp`, where `tools/` means MCP TOOL DEFINITIONS rather " +
+				"than build tooling. `tools/` carries at least four senses across the tree, so it cannot carry this " +
+				"rule. Package identity can: these five ship to a browser or answer a request, and nothing else does.",
+			severity: "error",
+			from: { path: "^packages/(?:react|neural-web|tile-worker|api|fastify)/" },
+			to: { path: "^packages/[^/]+/lib/(?:tools|sdk)/" },
+		},
+		{
 			name: "no-circular-dependencies",
 			comment:
 				"Keep the workspace dependency graph acyclic. A cycle that closes only through a dynamic `import()` or a " +

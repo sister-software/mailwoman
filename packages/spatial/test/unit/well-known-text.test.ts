@@ -11,7 +11,7 @@ import {
 	geometryToWKB,
 	geometryToWKT,
 	wellKnownGeometryToGeoJSON,
-} from "@mailwoman/spatial/sdk/well-known-text"
+} from "@mailwoman/spatial/well-known-text"
 import { expect, test } from "vitest"
 import wkx from "wkx"
 

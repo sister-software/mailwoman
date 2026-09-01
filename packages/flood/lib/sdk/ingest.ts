@@ -29,7 +29,7 @@
 
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/core/utils"
 import { assertRingsInsideExtent, requireArealPolygons, type MultiPolygonRings } from "@mailwoman/spatial"
-import { readOGRLayerIdentity } from "@mailwoman/spatial/sdk/ogr"
+import { readOGRLayerIdentity } from "@mailwoman/spatial/tools/ogr"
 
 import { EA_DECLARED_BBOX, EA_FLOOD_LAYER, EA_SOURCE_EPSG } from "#vocabulary"
 

@@ -5,7 +5,7 @@
  */
 
 import type { GeometryLiteral, MultiPolygonLiteral } from "@mailwoman/spatial"
-import { wellKnownGeometryToGeoJSON } from "@mailwoman/spatial/sdk"
+import { wellKnownGeometryToGeoJSON } from "@mailwoman/spatial/well-known-text"
 
 import type {
 	FIPSStateCode,
