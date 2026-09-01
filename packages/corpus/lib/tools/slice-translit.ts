@@ -28,9 +28,10 @@
  *   --out-dir /data/corpus/versioned/v0.4.0`
  */
 
+import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile, tryStat } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { mailwomanDataRoot, sha256File } from "@mailwoman/core/utils"
+import { sha256File } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 

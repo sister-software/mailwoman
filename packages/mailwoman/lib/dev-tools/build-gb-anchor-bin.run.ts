@@ -35,10 +35,10 @@
  *   Usage: node packages/mailwoman/lib/dev-tools/build-gb-anchor-bin.run.ts --out <dir>
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { serializePostcodeBinary } from "@mailwoman/neural/postcode"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

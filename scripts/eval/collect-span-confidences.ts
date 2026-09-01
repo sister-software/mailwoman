@@ -39,12 +39,12 @@
  *   --out data/eval/calibration/confidences.jsonl
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { type AddressTree, flattenTreeNodes } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { JSONSpliterator } from "spliterator"
 
 import { valueMatch } from "./value-match.ts"

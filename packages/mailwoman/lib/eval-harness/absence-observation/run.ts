@@ -24,8 +24,9 @@
  *   read it says so in place rather than omitting the field.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
+import { repoRootPath } from "@mailwoman/core/paths"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
-import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 
 import {
 	type AbsenceCounts,

@@ -20,9 +20,10 @@
  *   [--data-root <dir>] [--out-md docs/articles/evals/resolver-geo/<date>-...md]`
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
-import { dataRootPath, percentile } from "@mailwoman/core/utils"
+import { percentile } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/match"
 
 import { streamRows } from "#index"

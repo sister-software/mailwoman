@@ -1,5 +1,5 @@
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath } from "@mailwoman/core/utils"
 /**
  * Smoke test: confirm WOFSQLitePlaceLookup works against our CUSTOM unified DB (admin-global-priority.db) now that
  * ancestors + FTS are built. Tests plain text lookup AND ancestors-based parent-constraint scoping (the Springfield

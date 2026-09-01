@@ -13,8 +13,8 @@
  *   neural or resolver modules.
  */
 
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { $public } from "@mailwoman/core/env"
-import { tempRootPath } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 
 /**

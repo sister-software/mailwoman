@@ -21,7 +21,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { dirname, join, relative, resolvePath } from "path-ts"
 import ts from "typescript"
 import { describe, expect, test } from "vitest"

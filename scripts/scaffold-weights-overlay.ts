@@ -35,8 +35,8 @@
 
 import { readLocalJSONFile, readLocalTextFile, tryStat } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { workspacePath, repoRootPath } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 
 const { values } = parseArguments({

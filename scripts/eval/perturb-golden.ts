@@ -19,11 +19,11 @@
  * it through harness-neural (formerly harness-v0-neural with --symmetric-match).
  */
 
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { tempRootPath } from "@mailwoman/core/utils"
 import { dirname, join } from "path-ts"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.

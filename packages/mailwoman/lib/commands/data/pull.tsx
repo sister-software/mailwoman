@@ -36,9 +36,10 @@
  */
 
 import type { APIClient } from "@mailwoman/core/api"
+import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { mailwomanDataRoot, md5File, streamToDisk } from "@mailwoman/core/utils"
+import { md5File, streamToDisk } from "@mailwoman/core/utils"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Text } from "ink"
 import { basename, dirname, resolvePath } from "path-ts"

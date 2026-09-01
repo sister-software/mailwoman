@@ -46,9 +46,9 @@
  */
 
 import type { SystemCode } from "@mailwoman/codex"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { dataRootPath } from "@mailwoman/core/utils"
 
 import {
 	loadPerTagEvalRows,

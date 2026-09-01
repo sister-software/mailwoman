@@ -2,8 +2,8 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { spawnProcess } from "@mailwoman/core/process"
-import { repoRootPath } from "@mailwoman/core/utils"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0

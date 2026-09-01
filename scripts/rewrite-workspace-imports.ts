@@ -6,7 +6,7 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { dirname, relative, resolvePath } from "path-ts"
 
 import { trackedSourcePaths } from "./tracked-sources.ts"

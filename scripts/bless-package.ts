@@ -23,8 +23,8 @@
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { repoRootPath } from "@mailwoman/core/utils"
 import { join, resolvePath } from "path-ts"
 import { $, type ProcessPromise } from "zx"
 

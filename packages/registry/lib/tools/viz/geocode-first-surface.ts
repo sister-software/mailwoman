@@ -7,8 +7,8 @@
  *   Fellegi-Sunter weights. The supplied prior is illustrative and the output is self-contained HTML.
  */
 
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { tempRootPath } from "@mailwoman/core/utils"
 
 /**
  * Options for {@linkcode geocodeFirstSurface}.

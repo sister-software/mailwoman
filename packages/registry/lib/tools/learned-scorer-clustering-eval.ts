@@ -28,8 +28,9 @@
  *   [--out-md <md>]`
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
+import { makeLcg } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
 
 import {

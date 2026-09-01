@@ -13,9 +13,9 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import { workspacePath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 const cliBin = workspacePath("mailwoman", "out", "cli.js")

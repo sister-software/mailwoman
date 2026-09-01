@@ -21,11 +21,11 @@
  *   `$MAILWOMAN_TEMP_ROOT/failure-report.json`.
  */
 
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { tempRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { basename, resolvePath } from "path-ts"

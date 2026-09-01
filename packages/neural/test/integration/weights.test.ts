@@ -46,12 +46,13 @@
  *       ~3 before the flip could invert.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { $public } from "@mailwoman/core/env"
 import { readDirectory, readLocalBuffer, readLocalJSONFile, pathExists, isFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
+import { workspacePath } from "@mailwoman/core/paths"
 import { runFileSync } from "@mailwoman/core/process"
-import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, resolveWeights } from "@mailwoman/neural"
 import { PairIndexResolver, serializePairIndex, type PairIndexLike } from "@mailwoman/neural/pair"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"

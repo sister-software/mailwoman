@@ -25,11 +25,13 @@
  *   lands on stdout.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readDirectory, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
-import { dataRootPath, repoRootPathBuilder, streamToDisk } from "@mailwoman/core/utils"
+import { streamToDisk } from "@mailwoman/core/utils"
 import { sleep } from "@mailwoman/core/utils/sleep"
 import { Box, Text } from "ink"
 import { basename, dirname, join, resolvePath, type PathBuilderLike } from "path-ts"

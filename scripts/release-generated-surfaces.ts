@@ -18,8 +18,8 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { repoRootPath } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 import { $ } from "zx"
 

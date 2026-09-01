@@ -7,8 +7,8 @@
  *   and rejects bad input, and that a model-independent fast-path input runs through the compiled CLI.
  */
 
+import { workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
-import { workspacePath } from "@mailwoman/core/utils"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { spec as parseSpec } from "mailwoman/commands/parse"
 import { describe, expect, test } from "vitest"

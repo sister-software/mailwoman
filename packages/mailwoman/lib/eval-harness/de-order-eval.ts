@@ -28,9 +28,9 @@
  *   --out /tmp/v092-eval
  */
 
+import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 

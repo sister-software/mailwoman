@@ -6,8 +6,8 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { runFileSync } from "@mailwoman/core/process"
-import { repoRootPath } from "@mailwoman/core/utils"
 
 interface KnipSymbol {
 	name: string

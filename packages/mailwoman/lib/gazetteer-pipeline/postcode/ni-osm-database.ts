@@ -42,8 +42,9 @@
  *   is `codepoint-database.ts` with an Overpass-JSON reader in place of a CSV one.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { dataRootPath, isoDate, md5File } from "@mailwoman/core/utils"
+import { isoDate, md5File } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"

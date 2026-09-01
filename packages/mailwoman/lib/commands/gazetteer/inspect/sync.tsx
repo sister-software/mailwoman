@@ -19,9 +19,9 @@
 
 import { ProgressBar } from "@inkjs/ui"
 import type { RepositorySource, SynchronizeAction } from "@mailwoman/core"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 import { useState } from "react"

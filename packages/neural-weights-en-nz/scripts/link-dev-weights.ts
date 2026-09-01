@@ -36,8 +36,10 @@
  *   model-card.json (`nz_artifacts.no_postcode_bin`).
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { dataRootPath, repoRootPath, weightsOverlayPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
+import { weightsOverlayPath } from "@mailwoman/core/utils"
 import {
 	buildPairIndexOverlay,
 	linkSoftFeedSibling,

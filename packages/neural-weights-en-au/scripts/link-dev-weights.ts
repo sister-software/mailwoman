@@ -31,7 +31,8 @@
  */
 
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { repoRootPath, weightsOverlayPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
+import { weightsOverlayPath } from "@mailwoman/core/utils"
 import {
 	linkSoftFeedSibling,
 	linkStreetMorphologyFST,

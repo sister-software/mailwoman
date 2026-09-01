@@ -15,7 +15,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { workspacePath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/paths"
 import { wofAdminAdapter } from "@mailwoman/corpus/adapters/wof-admin-json/adapter"
 import { buildCorpus, type BuildStage } from "@mailwoman/corpus/build"
 import { ParquetReader } from "@mailwoman/corpus/parquet-wrapper"

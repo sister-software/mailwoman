@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 
 /**

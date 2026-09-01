@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import type { InputSetRef } from "@mailwoman/dev-mcp/input-sets"
 import { resolveInputSet } from "@mailwoman/dev-mcp/input-sets"
 import { describe, expect, it } from "vitest"

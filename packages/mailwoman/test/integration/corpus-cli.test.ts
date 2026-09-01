@@ -8,9 +8,9 @@
  *   there is to assert is the empty-registry messaging.
  */
 
+import { workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import { workspacePath } from "@mailwoman/core/utils"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { spec as runSpec } from "mailwoman/commands/corpus/run"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"

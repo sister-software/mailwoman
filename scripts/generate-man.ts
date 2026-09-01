@@ -19,9 +19,9 @@
  */
 
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { repoRootPath } from "@mailwoman/core/utils"
 import { dirname, resolvePath } from "path-ts"
 
 const REPO_ROOT = repoRootPath()

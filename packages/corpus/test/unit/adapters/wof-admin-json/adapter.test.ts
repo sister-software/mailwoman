@@ -5,7 +5,7 @@
  */
 
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { workspacePath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/paths"
 import {
 	WOF_ADMIN_ADAPTER_ID,
 	createWOFAdminAdapter,

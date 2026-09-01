@@ -22,9 +22,10 @@
  *   naming all the paths it tried.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readDirectory, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolvePackageDirectory, tryResolvePackageDirectory } from "@mailwoman/core/module/resolvers"
-import { cacheRootPathBuilder, dataRootPath, weightsOverlayPath } from "@mailwoman/core/utils"
+import { cacheRootPathBuilder, weightsOverlayPath } from "@mailwoman/core/utils"
 import { basename, dirname, PathBuilder, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 
 import { PlacetypeCensusResolver } from "#placetype/census"

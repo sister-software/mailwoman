@@ -20,11 +20,11 @@
  */
 
 import { Spinner } from "@inkjs/ui"
+import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { errorMessage } from "@mailwoman/core/errors/schema"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import type { ColumnMapping, EntityGeoData, GeocodeAddress, SourceRecord } from "@mailwoman/registry"
 import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/registry/tools"

@@ -47,6 +47,7 @@
  *   not in any OS OpenData product.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { tryStat, pathExists, readDirectory, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { removePath, makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
@@ -60,7 +61,7 @@ import {
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
-import { dataRootPath, isoDate, md5File } from "@mailwoman/core/utils"
+import { isoDate, md5File } from "@mailwoman/core/utils"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn"
 import {
 	LATITUDE_MAX,

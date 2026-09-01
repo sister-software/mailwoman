@@ -15,10 +15,10 @@
  * - Max-attempts reached (default 50, override via $MAX_ATTEMPTS)
  */
 
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { $public } from "@mailwoman/core/env"
 import { open } from "@mailwoman/core/fs/readers"
 import { passThroughCLIArguments } from "@mailwoman/core/scripting/utils"
-import { tempRootPath } from "@mailwoman/core/utils"
 import { $, sleep } from "zx"
 
 const MAX_ATTEMPTS = Number($public.MAX_ATTEMPTS ?? 50)

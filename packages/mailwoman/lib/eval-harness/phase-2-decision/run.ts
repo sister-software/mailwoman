@@ -27,8 +27,8 @@
 
 import { readActivityLexicon } from "@mailwoman/activity-lexicon/lexicon"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { QueryIntentCode } from "@mailwoman/core/pipeline"
-import { repoRootPath } from "@mailwoman/core/utils"
 import { basename } from "path-ts"
 
 import { runAbsenceObservationProbe } from "#eval-harness/absence-observation/run"

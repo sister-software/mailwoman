@@ -32,10 +32,11 @@
  *   Usage: node packages/mailwoman/lib/dev-tools/probe-referential-delta.run.ts [--board <path>]
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { compareReferential, REFERENTIAL_SATURATION_POPULATION } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { allRows, dataRootPath, getRow } from "@mailwoman/core/utils"
+import { allRows, getRow } from "@mailwoman/core/utils"
 import type { PlaceCandidate } from "@mailwoman/resolver-wof-sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

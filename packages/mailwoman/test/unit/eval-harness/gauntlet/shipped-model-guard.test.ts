@@ -23,7 +23,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
 const HARNESS = String(repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "harness.ts"))

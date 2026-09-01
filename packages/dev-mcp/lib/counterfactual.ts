@@ -21,7 +21,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { haversineKm } from "@mailwoman/spatial"
 import type { GeocodeSessionOptions } from "mailwoman/geocode"
 

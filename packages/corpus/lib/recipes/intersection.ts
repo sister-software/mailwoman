@@ -35,10 +35,11 @@
  */
 
 import type { DuckDBConnection } from "@duckdb/node-api"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { repoRootPath } from "@mailwoman/core/paths"
 import type { ComponentTag } from "@mailwoman/core/types"
-import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 

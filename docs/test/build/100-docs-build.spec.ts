@@ -13,8 +13,8 @@
  *   specs. Skipped automatically in remote-smoke mode (`MAILWOMAN_DEMO_URL` set).
  */
 
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { runFile } from "@mailwoman/core/process"
-import { tempRootPath } from "@mailwoman/core/utils"
 import { expect, test } from "@playwright/test"
 import { resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"

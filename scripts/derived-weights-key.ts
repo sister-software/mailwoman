@@ -18,8 +18,9 @@
  *   `expected 47878 to be 49033`. The generating code is part of the input, not context around it.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readDirectory, readLocalBuffer, statPath } from "@mailwoman/core/fs/readers"
-import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { createHash } from "@mailwoman/core/utils/hash"
 import { POSTCODE_BINARY_KEY_FLOORS } from "mailwoman/gazetteer-pipeline/postcode/binary"
 import { join, relative, resolvePath } from "path-ts"

@@ -14,9 +14,11 @@
  *   drawn from, because a denominator that travels with the number is the only kind that survives a relay.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
-import { dataRootPath, mulberry32, repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
+import { mulberry32 } from "@mailwoman/core/utils"
 import { sha256Hex } from "@mailwoman/core/utils/hash"
 import { loadRegressionCases, regressionCorpusHash } from "mailwoman/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"

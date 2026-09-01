@@ -30,11 +30,11 @@
  *   the report [--out docs/articles/evals/experiments/2026-06-08-honest-eval.md] [--tmp /tmp/honest]
  */
 
+import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, appendLocalTextFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
 

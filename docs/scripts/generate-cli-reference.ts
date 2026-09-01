@@ -32,7 +32,7 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { join } from "path-ts"
 
 import { readCommands, type CommandNode, type OptionSpec } from "./cli-schema.ts"

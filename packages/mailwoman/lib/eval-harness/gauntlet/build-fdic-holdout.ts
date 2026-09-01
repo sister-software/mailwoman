@@ -16,10 +16,10 @@
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { removePath, movePath } from "@mailwoman/core/fs/writers"
-import { dataRootPath } from "@mailwoman/core/utils"
 
 /**
  * Southern edge of the US including Puerto Rico and Hawaii.

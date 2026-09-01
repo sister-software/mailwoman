@@ -6,8 +6,8 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, setTimestamps, makeDirectories } from "@mailwoman/core/fs/writers"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { runFileSync } from "@mailwoman/core/process"
-import { repoRootPath } from "@mailwoman/core/utils"
 import {
 	computeTreeFingerprint,
 	FINGERPRINTED_WORKSPACES,

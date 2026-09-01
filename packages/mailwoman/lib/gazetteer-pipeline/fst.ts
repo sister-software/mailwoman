@@ -28,10 +28,11 @@
  *   operator-gated after the battery.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { dataRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
+import { resourceDictionaryPath } from "@mailwoman/core/paths"
 import {
 	buildFSTFromWOF,
 	fstStaleReason,

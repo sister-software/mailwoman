@@ -13,9 +13,9 @@
  *   the flag that skips the encoder, and the benchmark path now honours it.
  */
 
+import { workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import { workspacePath } from "@mailwoman/core/utils"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { spec as parseSpec } from "mailwoman/commands/parse"
 import { describe, expect, test } from "vitest"

@@ -34,9 +34,9 @@
  *   50]
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 
 import { connectDuckDB, type DuckDBConnection } from "#utils/parquet"

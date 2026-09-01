@@ -1,3 +1,4 @@
+import { dataRootPath } from "@mailwoman/core/data-root"
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
  *
@@ -19,7 +20,7 @@
 import { decodeAsJSON, firstNodeWhere } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath, percentile } from "@mailwoman/core/utils"
+import { percentile } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { resolvePath } from "path-ts"

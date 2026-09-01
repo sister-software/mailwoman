@@ -12,7 +12,7 @@
  *   Requires RCLONE_S3_* env vars (Cloudflare R2 credentials).
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
+import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { Box, Text } from "ink"
 import { useState } from "react"
 

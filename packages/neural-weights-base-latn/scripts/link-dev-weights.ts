@@ -1,7 +1,9 @@
 #!/usr/bin/env node
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { $public } from "@mailwoman/core/env"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
+import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
+import { weightsOverlayPath } from "@mailwoman/core/utils"
 /**
  * Link dev artifacts into the base-latn workspace (FST-distribution arc precedent — same pattern as the locale weights
  * packages, but ships only the shared model + tokenizer + calibration + lexicons; locale-specific data stays in each

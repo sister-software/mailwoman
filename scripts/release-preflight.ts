@@ -20,9 +20,9 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { repoRootPath } from "@mailwoman/core/utils"
 
 import { copyWeights } from "./copy-weights.ts"
 import { fetchHFWeights, reportHFMaterialization } from "./fetch-hf-weights.ts"

@@ -21,8 +21,9 @@
  *   `fst-deserialize-web.ts` (see the docs demo loader).
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { dataRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
+import { resourceDictionaryPath } from "@mailwoman/core/paths"
 
 import type { FSTMatcher } from "#fst/matcher"
 import { deserializeFST, readFSTProvenance } from "#fst/serialize"

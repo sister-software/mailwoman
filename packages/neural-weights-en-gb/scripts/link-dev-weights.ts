@@ -47,11 +47,13 @@
  *   history; the shipped bundle re-tuned δ to 10 (#1269).
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { $public } from "@mailwoman/core/env"
 import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
+import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
-import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
+import { weightsOverlayPath } from "@mailwoman/core/utils"
 import { md5Hex } from "@mailwoman/core/utils/hash"
 import {
 	buildPairIndexOverlay,

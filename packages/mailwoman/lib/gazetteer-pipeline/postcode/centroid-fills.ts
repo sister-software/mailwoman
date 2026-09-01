@@ -20,9 +20,9 @@
  *      (city-states like Berlin). Every coordinate still comes from our own admin DB.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { readWOFFeature, resolveWOFDataDir } from "@mailwoman/core/resources/whosonfirst"
-import { dataRootPath } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { PathBuilder, type PathBuilderLike } from "path-ts"

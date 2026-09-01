@@ -490,6 +490,11 @@
 			"node": "./lib/paths.ts",
 			"default": "./out/paths.js",
 			"types": "./out/paths.d.ts"
+		},
+		"./data-root": {
+			"node": "./lib/data-root.ts",
+			"default": "./out/data-root.js",
+			"types": "./out/data-root.d.ts"
 		}
 	},
 	"publishConfig": {

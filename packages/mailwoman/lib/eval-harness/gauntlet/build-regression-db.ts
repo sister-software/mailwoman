@@ -15,9 +15,9 @@
  *   Run: mailwoman eval gauntlet-build regression-db
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath, makeDirectories } from "@mailwoman/core/fs/writers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { dirname, resolvePath, type PathBuilderLike } from "path-ts"

@@ -24,8 +24,8 @@
  *   behind it, so the receipt states on whose authority each answered row's category was chosen.
  */
 
+import { repoRootPath } from "@mailwoman/core/paths"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
-import { repoRootPath } from "@mailwoman/core/utils"
 import { JSONSpliterator } from "spliterator"
 
 import {

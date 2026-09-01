@@ -23,9 +23,9 @@
  *   Usage: node packages/mailwoman/lib/dev-tools/probe-fst-bias.run.ts [--locale en-us] [--raw] <surface>...
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
 import { normalizeTokens, deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 

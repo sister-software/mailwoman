@@ -38,8 +38,8 @@
  *   while it is gone from `promotion-gate.ts`.
  */
 
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile, copyFileTo, makeDirectories } from "@mailwoman/core/fs/writers"
-import { tempRootPath } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { $ } from "zx"

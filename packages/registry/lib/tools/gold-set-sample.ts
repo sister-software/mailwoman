@@ -20,8 +20,8 @@
  *   [--out-jsonl <path>]`
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { jaccard } from "@mailwoman/match"
 
 import { colocatedDistinctPairs, scanColocatedProviders, stateOption } from "#tools/shared"

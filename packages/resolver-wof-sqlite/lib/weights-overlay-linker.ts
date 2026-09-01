@@ -6,6 +6,7 @@
  * placetype-pair index build.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalTextFile, statPath, readLocalBuffer, statLink } from "@mailwoman/core/fs/readers"
 import {
 	createSymbolicLink,
@@ -15,8 +16,9 @@ import {
 	writeLocalTextFile,
 } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { workspacePath } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
-import { dataRootPath, md5File, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
+import { md5File, weightsOverlayPath } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 
 import { fstFreshnessWarning } from "#fst/freshness"

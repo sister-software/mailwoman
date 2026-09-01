@@ -7,7 +7,7 @@
 import type { BDCDatabase } from "@mailwoman/bdc/schema"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { workspacePath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/paths"
 import {
 	FCC_BDC_ADAPTER_ID,
 	FCC_BDC_DEFAULT_LICENSE,

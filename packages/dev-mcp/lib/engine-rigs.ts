@@ -22,8 +22,8 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { runFile } from "@mailwoman/core/process"
-import { tempRootPath } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
 import { assertScorableEndpoint } from "#external-arm"

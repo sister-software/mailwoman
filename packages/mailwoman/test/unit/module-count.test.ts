@@ -14,9 +14,9 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { workspacePath, repoRootPath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 const cliBin = workspacePath("mailwoman", "out", "cli.js")

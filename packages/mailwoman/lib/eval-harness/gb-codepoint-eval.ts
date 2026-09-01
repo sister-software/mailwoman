@@ -29,10 +29,11 @@
  *   Run: node packages/mailwoman/lib/eval-harness/gb-codepoint-eval.ts [--stamp 2026-08-05] [--per-area 5] [--out <jsonl>]
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath, mulberry32 } from "@mailwoman/core/utils"
+import { mulberry32 } from "@mailwoman/core/utils"
 import { haversineKm, osgb36ToWGS84 } from "@mailwoman/spatial"
 import { basename, join } from "path-ts"
 

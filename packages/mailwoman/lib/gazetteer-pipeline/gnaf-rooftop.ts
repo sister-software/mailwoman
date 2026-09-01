@@ -29,10 +29,10 @@
  *   0-geocode failure).
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readDirectory } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	createOSMAddressPointIndexes,
 	createOSMAddressPointTables,

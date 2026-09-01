@@ -13,7 +13,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { workspacePath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/paths"
 import { readDeclaredArtifactFile, unfedAnchorDetail } from "@mailwoman/neural/weights-channels"
 import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"

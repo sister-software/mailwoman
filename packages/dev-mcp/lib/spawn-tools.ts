@@ -12,8 +12,8 @@
  *   state rather than hide.
  */
 
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { tempRootPath } from "@mailwoman/core/utils"
 import { listGateSpecs } from "mailwoman/eval-harness/promotion-gate"
 import { z } from "zod"
 

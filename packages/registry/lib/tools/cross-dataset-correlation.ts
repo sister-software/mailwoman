@@ -19,9 +19,9 @@
  *   [--data-root <dir>] [--out-md docs/articles/evals/matcher-dedup/<date>-...md]`
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
-import { dataRootPath } from "@mailwoman/core/utils"
 
 import {
 	addressFrequencyKey,

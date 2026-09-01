@@ -16,7 +16,7 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { resolvePath } from "path-ts"
 
 import { ablationBoardID } from "#eval-harness/gauntlet/ablation"

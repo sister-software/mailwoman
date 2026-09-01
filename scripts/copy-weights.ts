@@ -34,12 +34,13 @@
  *   Idempotent. Used by .release-it.json's before:init hook.
  */
 
+import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { $public } from "@mailwoman/core/env"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers"
 import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 
 import { derivedStoreServeViolation, derivedWeightsDir, derivedWeightsKey } from "./derived-weights-key.ts"
