@@ -58,8 +58,8 @@
  */
 
 import { openWriteStream } from "@mailwoman/core/fs/streams"
-import { ogr2ogrGeoJSONSeq } from "@mailwoman/core/utils"
 import { once } from "@mailwoman/core/utils/events"
+import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
 
 import { representativePoint } from "#sdk/representative-point"
 import {

@@ -462,7 +462,8 @@ const EXHIBIT_21_TYPE_PATTERN = /^ex-?21(\.\d+)?$/i
  * ending in a bare slash — decision 6's "abstain, never guess" posture, carried from `exhibit21.ts`, applied here to a
  * manifest row instead of a subsidiary row.
  *
- * @todo In desperate need of cheerio or a DOM parser.
+ * @todo In desperate need of `htmlparser2`'s ecosystem. Extract repeatable aspects into `@mailwoman/core/html` and keep
+ *   what remains here, if anything at all.
  */
 export function parseFilingDocuments(cik: CIK, accessionNumber: string, headerHTML: string): ExhibitDocument[] {
 	const archiveURL = accessionArchiveURL(cik, accessionNumber)

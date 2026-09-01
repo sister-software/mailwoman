@@ -13,8 +13,8 @@
  *   accuracy falling). Validate accuracy on the points that DO have `addr:street` (ground truth) first.
  */
 
-import { ogr2ogrGeoJSONSeq } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
+import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
 
 /**
  * ~330m grid cell.

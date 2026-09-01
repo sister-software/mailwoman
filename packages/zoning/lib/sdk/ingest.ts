@@ -40,9 +40,9 @@
  *   two-path check rather than the archive agreeing with itself. See `sdk/client.ts`.
  */
 
-import { spawnOGR2OGR } from "@mailwoman/core/utils"
 import { assertRingsInsideExtent, requireArealPolygons } from "@mailwoman/spatial"
 import { readOGRLayerIdentity } from "@mailwoman/spatial/tools/ogr"
+import { spawnOGR2OGR } from "@mailwoman/spatial/tools/ogr-stream"
 import { wellKnownGeometryToGeoJSON } from "@mailwoman/spatial/well-known-text"
 import { CSVSpliterator } from "spliterator"
 

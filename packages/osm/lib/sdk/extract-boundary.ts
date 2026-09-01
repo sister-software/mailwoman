@@ -20,8 +20,8 @@
  *   the driver happened to emit first — indistinguishable downstream from the region the caller meant.
  */
 
-import { ogr2ogrGeoJSONSeq } from "@mailwoman/core/utils"
 import type { ParsedGeometry } from "@mailwoman/spatial"
+import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
 
 /**
  * The OSM driver layer administrative boundaries land in. Relations and closed ways both surface here.

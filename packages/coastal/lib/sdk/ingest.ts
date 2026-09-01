@@ -34,9 +34,9 @@
  *   renamed fails as a SQL error naming the column rather than as a stream of null distances.
  */
 
-import { ogr2ogrGeoJSONSeq } from "@mailwoman/core/utils"
 import { assertRingsInsideExtent, requireArealPolygons, type MultiPolygonRings } from "@mailwoman/spatial"
 import { readOGRLayerIdentity } from "@mailwoman/spatial/tools/ogr"
+import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
 
 import {
 	NCERM_DECLARED_BBOX,
