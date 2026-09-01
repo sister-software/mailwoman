@@ -32,10 +32,14 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
-import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
-import { fstStaleReason, peekFSTStampFields, readWOFSourceIdentity } from "@mailwoman/resolver-wof-sqlite/fst-freshness"
-import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
-import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import {
+	buildFSTFromWOF,
+	fstStaleReason,
+	peekFSTStampFields,
+	readWOFSourceIdentity,
+	normalizeTokens,
+	serializeFST,
+} from "@mailwoman/resolver-wof-sqlite/fst"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join, resolvePath } from "path-ts"

@@ -27,9 +27,9 @@
 import { candidateSystemsForPostcode, us } from "@mailwoman/codex"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import type { AnchorSpanMode } from "@mailwoman/neural/anchor-inference"
-import { sanitizeFTSQuery } from "@mailwoman/resolver-wof-sqlite/fts-query"
+import { sanitizeFTSQuery } from "@mailwoman/resolver-wof-sqlite/fts"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
-import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { LookupRow } from "#lookup"

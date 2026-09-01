@@ -28,7 +28,7 @@
  */
 
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
-import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
+import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import { Box, Text } from "ink"
 import { basename, dirname, resolvePath } from "path-ts"
 
@@ -103,12 +103,12 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 		// Optional maintainer deps: the shared schema/normalizer (resolver-wof-sqlite, an optional peer)
 		// and the DuckDB parquet/CSV reader (@duckdb/node-api, a dev dep). Both dynamic + guarded so the
 		// published CLI doesn't force them on every consumer.
-		let pointSchema: typeof import("@mailwoman/resolver-wof-sqlite/address-point-schema")
-		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street-normalize")
+		let pointSchema: typeof import("@mailwoman/resolver-wof-sqlite/address")
+		let streetNormalize: typeof import("@mailwoman/resolver-wof-sqlite/street")
 
 		try {
-			pointSchema = await import("@mailwoman/resolver-wof-sqlite/address-point-schema")
-			streetNormalize = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
+			pointSchema = await import("@mailwoman/resolver-wof-sqlite/address")
+			streetNormalize = await import("@mailwoman/resolver-wof-sqlite/street")
 		} catch {
 			throw new CommandError(
 				"situs address-points requires `@mailwoman/resolver-wof-sqlite` to be installed (the shared address-point schema + normalizer)."

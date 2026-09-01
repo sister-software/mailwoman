@@ -7,7 +7,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows } from "@mailwoman/core/utils"
 import { findFSTAcceptedMatches } from "@mailwoman/neural/fst-prior"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"

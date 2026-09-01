@@ -9,11 +9,10 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite/address-point"
-import { AddressPointInterpolator } from "@mailwoman/resolver-wof-sqlite/address-point-interpolation"
-import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
+import { AddressPointSqliteLookup, AddressPointInterpolator } from "@mailwoman/resolver-wof-sqlite/address"
+import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import { StreetInterpolator } from "@mailwoman/resolver-wof-sqlite/interpolation"
-import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
+import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"

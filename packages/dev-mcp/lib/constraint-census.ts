@@ -25,7 +25,7 @@
  *   this census exists to stop other people making.
  */
 
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 
 import type { EngineConfig, EngineRegistryLike } from "#engine-registry"
 import { resolveInputSet, type InputSetRef } from "#input-sets"

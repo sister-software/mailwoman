@@ -59,7 +59,7 @@ import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { groupPhrases } from "@mailwoman/phrase-grouper"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
-import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { join } from "path-ts"
 
 import { parseSmokeRows, type SmokeRow } from "#eval-harness/demo-cascade-rows"

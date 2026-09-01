@@ -10,13 +10,13 @@
  *   re-exports the normalizer so the OSM SDK is a self-contained surface.
  */
 
-import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"
 
 export {
 	normalizeStreetForKeyLocale,
 	streetLocaleForSurface,
 	type StreetLocale,
-} from "@mailwoman/resolver-wof-sqlite/street-normalize"
+} from "@mailwoman/resolver-wof-sqlite/street"
 
 /**
  * ISO-3166 alpha-2 (lowercase) → the street-normalization locale. Deliberately small: only the countries we actually

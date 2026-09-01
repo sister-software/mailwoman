@@ -34,7 +34,7 @@
 
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath, isoDate, md5File } from "@mailwoman/core/utils"
-import type { GeonamesPostalIngestResult } from "@mailwoman/resolver-wof-sqlite/geonames-postal"
+import type { GeonamesPostalIngestResult } from "@mailwoman/resolver-wof-sqlite/geonames"
 import type { ExtractMetaTable, WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -173,7 +173,7 @@ export async function buildPostcodeGeonamesTail(
 	const { createUnifiedSchema, createUnifiedIndexes, populateAncestors } =
 		await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 
-	const { ingestGeonamesPostal } = await import("@mailwoman/resolver-wof-sqlite/geonames-postal")
+	const { ingestGeonamesPostal } = await import("@mailwoman/resolver-wof-sqlite/geonames")
 
 	const ingestPath = out + ".ingest"
 	await removeStagingArtifacts(ingestPath)

@@ -533,8 +533,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		if (cached) return cached
 
 		const [{ deserializeFST }, { loadStreetMorphologyFST: loadMorph }] = await Promise.all([
-			import("@mailwoman/resolver-wof-sqlite/fst-serialize"),
-			import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"),
+			import("@mailwoman/resolver-wof-sqlite/fst"),
+			import("@mailwoman/resolver-wof-sqlite/street"),
 		])
 
 		let deps: Pick<GeocodeDeps, "fst" | "streetMorphology"> = {}
@@ -565,8 +565,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	if (await pathExists(poiDBPath)) {
 		const [{ POILookup }, { loadStreetMorphologyFST }] = await Promise.all([
-			import("@mailwoman/resolver-wof-sqlite/poi-lookup"),
-			import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"),
+			import("@mailwoman/resolver-wof-sqlite/poi"),
+			import("@mailwoman/resolver-wof-sqlite/street"),
 		])
 
 		const morphology = await loadStreetMorphologyFST()

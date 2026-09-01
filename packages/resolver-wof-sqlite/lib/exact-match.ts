@@ -9,7 +9,7 @@
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { aliasBagExactMatch, foldQueryText } from "#fts"
+import { aliasBagExactMatch, foldQueryText } from "#fts/index"
 
 /**
  * Among `ids`, return the subset whose name OR any alias equals `text` case-insensitively — the exact-match tier for

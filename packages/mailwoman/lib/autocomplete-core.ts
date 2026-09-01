@@ -58,8 +58,8 @@ export async function runAutocomplete(
 	}
 
 	const [{ deserializeFST }, { autocomplete }] = await Promise.all([
-		import("@mailwoman/resolver-wof-sqlite/fst-serialize"),
-		import("@mailwoman/resolver-wof-sqlite/fst-autocomplete"),
+		import("@mailwoman/resolver-wof-sqlite/fst"),
+		import("@mailwoman/resolver-wof-sqlite/fst"),
 	])
 
 	let matcher

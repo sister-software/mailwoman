@@ -37,9 +37,9 @@ import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
 import { getPOICategory, requiresBuildLocalLayer, resolveOvertureCategories } from "@mailwoman/poi-taxonomy"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import type { StreetLocalityEvidence } from "@mailwoman/resolver"
-import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
-import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
-import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"
+import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
+import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { loadDefaultPlaceCountry } from "#default-placer"
@@ -477,7 +477,7 @@ export function createRuntimePipeline(
 			poiLookupResolved = true
 
 			try {
-				const { POILookup } = await import("@mailwoman/resolver-wof-sqlite/poi-lookup")
+				const { POILookup } = await import("@mailwoman/resolver-wof-sqlite/poi")
 				// Read-time WOF ancestry (poiQueryKind register row's second debt payment): lazily loaded
 				// alongside the lookup, same lazy-loader shape as placeCountry/streetEvidence above. A
 				// missing admin gazetteer (no `place_bbox` R*Tree on disk) degrades to `undefined` here —

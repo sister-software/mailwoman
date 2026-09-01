@@ -30,7 +30,7 @@ import {
 } from "@mailwoman/core/layers"
 import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
 import type { CompiledGeographicModel } from "@mailwoman/geographic-model"
-import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "h3-js"

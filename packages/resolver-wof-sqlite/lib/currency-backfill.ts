@@ -20,7 +20,7 @@ import type { loadImportanceIndex } from "#candidate-importance"
 import type { CandidateDatabase } from "#candidate-schema"
 import type { PlaceAttrs, StageRow } from "#candidate/place-attrs"
 import type { WOFDatabase } from "#schema"
-import { normalizeLocalityForKey } from "#street-normalize"
+import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
  * Corroboration radius for the currency backfill (#1737), km — both for the live-near blocker and the GeoNames

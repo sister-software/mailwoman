@@ -23,7 +23,7 @@ import {
 	createPOIStagingTables,
 	createPOITable,
 	type POIDatabase,
-} from "@mailwoman/resolver-wof-sqlite/poi-schema"
+} from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, describe, expect, it } from "vitest"
 

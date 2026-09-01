@@ -7,7 +7,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { LocaleHint, PipelineResult } from "@mailwoman/core/pipeline"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
-import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { loadDefaultReverseGeocoder } from "mailwoman/default-reverse-geocoder"
 import { createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "mailwoman/poi-intent"

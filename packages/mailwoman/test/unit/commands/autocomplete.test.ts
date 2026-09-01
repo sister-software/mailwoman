@@ -12,10 +12,8 @@
 
 import { writeLocalBuffer, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
-import { autocomplete } from "@mailwoman/resolver-wof-sqlite/fst-autocomplete"
-import { FSTMatcher, normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
-import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
-import type { PlacetypeID } from "@mailwoman/resolver-wof-sqlite/fst-types"
+import { autocomplete, FSTMatcher, normalizeTokens, serializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+import type { PlacetypeID } from "@mailwoman/resolver-wof-sqlite/fst"
 import { resolveFSTPath, runAutocomplete } from "mailwoman/autocomplete-core"
 import { beforeAll, describe, expect, it, vi } from "vitest"
 

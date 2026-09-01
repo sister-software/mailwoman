@@ -27,7 +27,7 @@
 import type { BDCDatabase, PlausibilityDeps } from "@mailwoman/bdc"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { FilerDatabase } from "@mailwoman/filer"
-import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
@@ -55,7 +55,7 @@ export async function openBDCDatabaseIfPresent(
 export async function openPlausibilityPOIDeps(databasePath: string | undefined): Promise<PlausibilityDeps["poi"]> {
 	if (!databasePath || !(await pathExists(databasePath))) return undefined
 
-	const { POILookup } = await import("@mailwoman/resolver-wof-sqlite/poi-lookup")
+	const { POILookup } = await import("@mailwoman/resolver-wof-sqlite/poi")
 	const database = new DatabaseClient<POIDatabase>(databasePath, { readOnly: true })
 
 	return {

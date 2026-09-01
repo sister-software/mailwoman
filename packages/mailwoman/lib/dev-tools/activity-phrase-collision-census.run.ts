@@ -20,8 +20,8 @@
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
-import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi"
+import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import {

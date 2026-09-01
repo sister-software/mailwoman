@@ -8,7 +8,7 @@
 import { enumerateCountryDisplayNames } from "@mailwoman/codex/country"
 
 import type { PlaceAttrs, StageRow } from "#candidate/place-attrs"
-import { normalizeLocalityForKey } from "#street-normalize"
+import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
  * Fold every country surface ICU knows onto that country's candidate row (#1678 thread 1).

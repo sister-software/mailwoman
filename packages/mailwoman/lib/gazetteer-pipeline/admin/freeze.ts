@@ -42,7 +42,7 @@ export async function freezeAdmin(
 	// resolver-wof-sqlite is an OPTIONAL peer of mailwoman — import it lazily (the gazetteer-pipeline
 	// convention) so importing this module never faults without it.
 	const { backfillAncestorsFromHierarchy, discoverAdminDataRoots } =
-		await import("@mailwoman/resolver-wof-sqlite/ancestry-backfill")
+		await import("@mailwoman/resolver-wof-sqlite/ancestry")
 
 	const { buildCoincidentRoles } = await import("@mailwoman/resolver-wof-sqlite/coincident-roles")
 	const { createUnifiedIndexes, populateAncestors } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")

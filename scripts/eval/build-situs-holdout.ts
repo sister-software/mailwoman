@@ -1,6 +1,6 @@
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
+import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0

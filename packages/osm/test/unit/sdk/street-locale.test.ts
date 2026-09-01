@@ -9,7 +9,7 @@
  */
 
 import { streetLocaleForCountry, supportedOSMCountries } from "@mailwoman/osm/sdk/street-locale"
-import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street"
 import { expect, test } from "vitest"
 
 test("fr: the Paris acceptance address keys consistently", () => {

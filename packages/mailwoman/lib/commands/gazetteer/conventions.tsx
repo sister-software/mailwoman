@@ -31,7 +31,7 @@ import {
 	createAddressConventionTable,
 	createConventionMetaTable,
 	type ConventionDatabase,
-} from "@mailwoman/resolver-wof-sqlite/convention-schema"
+} from "@mailwoman/resolver-wof-sqlite/convention"
 import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
 

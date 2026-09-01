@@ -30,7 +30,7 @@ import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/l
 import { prettyJSON } from "@mailwoman/core/objects"
 import { allRows, dataRootPath, workspacePath } from "@mailwoman/core/utils"
 import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "@mailwoman/poi-taxonomy"
-import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { dirname, type PathBuilder, type PathBuilderLike } from "path-ts"
 

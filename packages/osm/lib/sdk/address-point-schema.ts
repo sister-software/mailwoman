@@ -12,7 +12,7 @@ import {
 	ADDRESS_POINT_COLUMNS,
 	type AddressPointTable,
 	createAddressPointTable,
-} from "@mailwoman/resolver-wof-sqlite/address-point-schema"
+} from "@mailwoman/resolver-wof-sqlite/address"
 import type { Kysely } from "kysely"
 
 /**

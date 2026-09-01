@@ -61,7 +61,7 @@ import {
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
 import { dataRootPath, isoDate, md5File } from "@mailwoman/core/utils"
-import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn-schema"
+import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn"
 import {
 	LATITUDE_MAX,
 	LATITUDE_MIN,
@@ -586,7 +586,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 
 	// resolver-wof-sqlite is an OPTIONAL peer — lazy import (the gazetteer-pipeline convention).
 	const { createUPRNTable, createUPRNMetaTable, createUPRNIndexes, uprnFullCell, UPRN_COVERAGE_H3_RESOLUTION } =
-		await import("@mailwoman/resolver-wof-sqlite/uprn-schema")
+		await import("@mailwoman/resolver-wof-sqlite/uprn")
 
 	const ingestPath = `${out}.ingest`
 

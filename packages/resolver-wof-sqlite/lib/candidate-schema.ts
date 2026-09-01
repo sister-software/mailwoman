@@ -19,7 +19,7 @@ import { sql, type Kysely } from "kysely"
 
 import type { CandidateAncestorsDatabase } from "#candidate-ancestors-schema"
 import type { CapitalTable } from "#capital-schema"
-import type { NameKey } from "#street-normalize"
+import type { NameKey } from "#street/normalize"
 
 /**
  * One candidate row. `name_key` + the four small int keys + `neg_rank` + `spr_id` form the clustered primary key; the

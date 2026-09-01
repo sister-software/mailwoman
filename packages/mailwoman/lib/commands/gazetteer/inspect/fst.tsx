@@ -38,7 +38,7 @@ const GazetteerInspectFST: ParsedCommandComponent<Options> = ({ args, options })
 
 		const dbPath = options.db ?? join(wofDir(), "admin-global-priority.db")
 		const maxResults = options.max
-		const { buildFSTFromWOF } = await import("@mailwoman/resolver-wof-sqlite/fst-builder")
+		const { buildFSTFromWOF } = await import("@mailwoman/resolver-wof-sqlite/fst")
 
 		console.error(`Building FST from ${dbPath}...`)
 

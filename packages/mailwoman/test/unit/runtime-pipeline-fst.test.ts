@@ -11,8 +11,7 @@
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
-import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import { buildFSTFromWOF, serializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { createRuntimePipeline } from "mailwoman/runtime-pipeline"
@@ -109,7 +108,7 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 		const dir = dirDirectory.path
 		const explicitPath = await writeTinyFST(dir)
 		const { classifier, calls } = fakeClassifier(explicitPath)
-		const { deserializeFST } = await import("@mailwoman/resolver-wof-sqlite/fst-serialize")
+		const { deserializeFST } = await import("@mailwoman/resolver-wof-sqlite/fst")
 
 		const explicit = deserializeFST(await readLocalBuffer(explicitPath))
 		const pipeline = createRuntimePipeline({ classifier, fst: explicit })

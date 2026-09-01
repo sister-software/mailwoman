@@ -28,7 +28,7 @@ import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver 
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import type { OSMAddressPointDatabase } from "@mailwoman/osm/sdk/address-point-schema"
-import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TextSpliterator } from "spliterator"
 

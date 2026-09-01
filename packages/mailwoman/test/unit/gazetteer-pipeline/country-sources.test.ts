@@ -125,7 +125,7 @@ describe("the id-band literals in country-plan.ts", () => {
 		// `censusForCountry` spells the boundaries as SQL literals because a query cannot import a constant.
 		// This is what stops that duplication from drifting: a fold that moves its base moves this test.
 		const { OVERTURE_ID_BASE } = await import("mailwoman/gazetteer-pipeline/admin/fold-overture")
-		const { GEONAMES_ID_BASE } = await import("@mailwoman/resolver-wof-sqlite/geonames-aliases")
+		const { GEONAMES_ID_BASE } = await import("@mailwoman/resolver-wof-sqlite/geonames")
 		const source = await readLocalTextFile(new URL("../../../lib/gazetteer-pipeline/country-plan.ts", import.meta.url))
 
 		expect(source).toContain(
