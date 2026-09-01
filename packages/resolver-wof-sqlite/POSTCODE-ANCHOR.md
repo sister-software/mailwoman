@@ -14,7 +14,7 @@ identity on its own.
   injected `PostcodeResolver`, and computes the posterior and confidence. No database dependency, so it
   ships to the browser later behind the same seam.
 - **`@mailwoman/resolver-wof-sqlite` → `WofPostcodeLookup`** — the server-side `PostcodeResolver`, an
-  exact-match lookup over one or more `postalcode-*.db` shards.
+  exact-match lookup over one or more `postalcode-*.db` extracts.
 - **`@mailwoman/neural` → `PostcodeBinaryResolver`** — the browser/WASM `PostcodeResolver`, a pure-JS
   binary-search over a compact flat binary (no SQLite). `scripts/build-postcode-binary.ts` emits one
   `postcode-<cc>.bin` per locale into `docs/static/mailwoman/` (US 1.8 MB, NL 3.9 MB, FR/DE ~0.3 MB; the
@@ -45,11 +45,11 @@ confidence by a 0.6 penalty. A mistyped `12624` recovers its real neighbour `126
 leaving the parser's city tokens to confirm it. Fuzzy is off by default so existing callers keep
 exact-match behaviour.
 
-## Building the shards
+## Building the extracts
 
 The WOF postcode records (and their ids) come from the operator's own WOF build; coordinates come from
 the priority chain below (own → GeoNames → WOF admin). US already ships as `postalcode-us.db`. For another
-country, clone its WOF postcode repo, build the shard, then backfill:
+country, clone its WOF postcode repo, build the extract, then backfill:
 
 ```bash
 # 1. clone the WOF postcode repo (small for most; GB is ~8 GB and deferred)
@@ -60,7 +60,7 @@ git clone --depth 1 https://github.com/whosonfirst-data/whosonfirst-data-postalc
 curl -sL https://download.geonames.org/export/zip/ES.zip -o /tmp/ES.zip && unzip -o /tmp/ES.zip ES.txt \
   -d /mnt/playpen/mailwoman-data/geonames
 
-# 2. build the spr shard (point --data at a dir of the repos you want combined)
+# 2. build the spr extract (point --data at a dir of the repos you want combined)
 node scripts/build-unified-wof.ts \
   --data <repos-dir> --output /mnt/playpen/mailwoman-data/wof/postalcode-intl.db --placetypes postalcode
 
@@ -86,7 +86,7 @@ a coordinate for every coordinate-less postcode, in priority order:
 2. **GeoNames postal** (`--geonames <dir>`) — the postcode's OWN centroid, matched by string from the GeoNames `zip` dump (CC-BY 4.0, ~80+ countries). The cleanest fill for ES/IT and ~half of DE; it is _finer_ than the WOF parent-borrow (the postcode's point, not a borrowed locality's), and it corrects WOF's mis-linked Italian parents (`20121` → central Milan, not a Liguria village). WOF ids stay canonical; only the coordinate comes from GeoNames.
 3. **WOF parent-borrow / ancestor fallback** (`--admin`, `--repos`) — a coarse "which city/region" approximation from the admin hierarchy, last resort for postcodes GeoNames does not cover.
 
-Postcodes neither GeoNames nor WOF can place keep `latitude=0` (membership only — the country posterior still works). **Licensing:** a shard shipping GeoNames-sourced coordinates must attribute "GeoNames (CC-BY 4.0)".
+Postcodes neither GeoNames nor WOF can place keep `latitude=0` (membership only — the country posterior still works). **Licensing:** a extract shipping GeoNames-sourced coordinates must attribute "GeoNames (CC-BY 4.0)".
 
 ### Coverage and accuracy
 
@@ -118,7 +118,7 @@ WOF is a strong _admin_ gazetteer but a weak _postcode_ one outside a few countr
 
 ### Per-country status
 
-| Country | Shard                | Placement                                        |
+| Country | Extract              | Placement                                        |
 | ------- | -------------------- | ------------------------------------------------ |
 | US      | `postalcode-us.db`   | own centroids                                    |
 | NL      | `postalcode-intl.db` | 100% (own PC6 `1012LM`)                          |

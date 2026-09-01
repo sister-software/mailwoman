@@ -5,7 +5,7 @@
  *
  *   Tests for {@link WOFCandidateTableLookup} — the Node {@link PlaceLookup} over the byte-range
  *   candidate.db (the SAME backend + ranking the browser demo uses). Builds a tiny fixture admin
- *   WOF with a HOMONYM (Moscow RU vs Moscow ID) + a postcode shard via the real
+ *   WOF with a HOMONYM (Moscow RU vs Moscow ID) + a postcode extract via the real
  *   {@link buildCandidateTable}, then asserts the resolver disciplines the CLI/server depend on:
  *
  *   - **population-first, country-agnostic** ranking — bare "Moscow" → the 10.4 M-pop Russian city, not
@@ -200,7 +200,7 @@ function buildFixtureAdmin(path: string): void {
 }
 
 /**
- * A postcode shard: one real-coord ZIP + one placeholder 0,0 (dropped at build, the White House 20500 case).
+ * A postcode extract: one real-coord ZIP + one placeholder 0,0 (dropped at build, the White House 20500 case).
  */
 function buildFixturePostcodes(path: string): void {
 	using db = new DatabaseClient<WOFDatabase>(path)

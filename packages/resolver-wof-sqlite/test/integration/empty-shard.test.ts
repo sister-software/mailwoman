@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Regression test for #568: a present-but-tableless shard (an interrupted build, or a stray 0-byte
+ *   Regression test for #568: a present-but-tableless extract (an interrupted build, or a stray 0-byte
  *   file a `sqlite3 <missing>.db "…"` diagnostic created) must make the street-level lookups a
  *   no-op MISS, not throw `no such table` at construction and take down a whole state's geocode.
  */
@@ -25,7 +25,7 @@ afterAll(() => fixtures.disposeAsync())
 const query = { street: "Main St", number: "100", postcode: "03301" }
 
 async function tablelessDBFile(): Promise<string> {
-	const dir = fixtures.use(await temporaryDirectory("mw-empty-shard-")).path
+	const dir = fixtures.use(await temporaryDirectory("mw-empty-extract-")).path
 	const path = join(dir, "empty.db")
 	using seed = new DatabaseClient<AddressPointDatabase>(path)
 	seed.exec("CREATE TABLE unrelated (x)")
@@ -33,7 +33,7 @@ async function tablelessDBFile(): Promise<string> {
 	return path
 }
 
-describe("empty/tableless shard degrades gracefully (#568)", () => {
+describe("empty/tableless extract degrades gracefully (#568)", () => {
 	it("AddressPointSqliteLookup: missing address_point table → constructs, find() returns null", async () => {
 		const dbFile = await tablelessDBFile()
 		let lookup: AddressPointSqliteLookup | undefined

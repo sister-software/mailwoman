@@ -165,12 +165,12 @@ describe("buildSlimWOFDatabase", () => {
 		expect(rows[0]?.population).toBe(331_000_000)
 	})
 
-	test("merges rows across multiple input shards without duplicating", async () => {
+	test("merges rows across multiple input extracts without duplicating", async () => {
 		const adminSource = scratch.resolve("admin.db")
 		const postcodeSource = scratch.resolve("postcode.db")
 		const output = scratch.resolve("slim.db")
 		buildFixtureWOF(adminSource)
-		// Postcode shard: same schema, only contributes postcodes (here, re-use the admin fixture's
+		// Postcode extract: same schema, only contributes postcodes (here, re-use the admin fixture's
 		// postcode rows to verify INSERT OR IGNORE actually de-dupes on id).
 		buildFixtureWOF(postcodeSource)
 
@@ -180,7 +180,7 @@ describe("buildSlimWOFDatabase", () => {
 			topLocalitiesPerCountry: 1,
 		})
 
-		// Same 5 rows (1 country + 1 region + 1 locality + 2 postcodes) — no duplication across shards.
+		// Same 5 rows (1 country + 1 region + 1 locality + 2 postcodes) — no duplication across extracts.
 		expect(result.rowCounts.spr).toBe(5)
 	})
 
@@ -207,7 +207,7 @@ describe("buildSlimWOFDatabase", () => {
 		expect(hit?.wof_id).toBe(200)
 	})
 
-	test('skips empty input paths (callers pass "" for an unbuilt shard)', async () => {
+	test('skips empty input paths (callers pass "" for an unbuilt extract)', async () => {
 		const source = scratch.resolve("src.db")
 		const output = scratch.resolve("slim.db")
 		buildFixtureWOF(source)

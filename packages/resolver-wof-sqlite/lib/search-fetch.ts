@@ -59,16 +59,18 @@ export interface RawSearchRow {
 	max_longitude: number | null
 	population: number | null // from the place_population aux table; null when missing
 	/**
-	 * From `place_importance.encyclopedic` when the shard's table carries the two-score split columns. NULL means the
-	 * place has no Wikipedia article, or the shard predates the split — absence either way, and never 0 (ROAD_TO_V9 §2).
+	 * From `place_importance.encyclopedic` when the extract's table carries the two-score split columns. NULL means the
+	 * place has no Wikipedia article, or the extract predates the split — absence either way, and never 0 (ROAD_TO_V9
+	 * §2).
 	 */
 	encyclopedic: number | null
 }
 
 /**
- * Fetch the raw candidate rows for a name match on one shard: the BM25-ordered window over `place_search` (widened for
- * short queries), plus the population-ordered companion fetch that keeps the prominent holders of a name pool-complete.
- * `schemaName` is the routed shard's bare schema name — validated at construction, so it is interpolated directly.
+ * Fetch the raw candidate rows for a name match on one extract: the BM25-ordered window over `place_search` (widened
+ * for short queries), plus the population-ordered companion fetch that keeps the prominent holders of a name
+ * pool-complete. `schemaName` is the routed extract's bare schema name — validated at construction, so it is
+ * interpolated directly.
  */
 export function fetchSearchRows<DB>(options: {
 	db: DatabaseClient<DB>
@@ -111,7 +113,7 @@ export function fetchSearchRows<DB>(options: {
 	// spr table but should never win a contemporary lookup. `is_current = 0` is the only WOF
 	// value that means "not current"; both `-1` (modern) and `1` (legacy) mean current. See #91.
 	// Note: with schema-qualified FROM the bare `place_search` reference in MATCH resolves to
-	// the FROM table — required by FTS5 parser, see sharding.ts header comment.
+	// the FROM table — required by FTS5 parser, see extracts.ts header comment.
 	const where: string[] = ["place_search MATCH ?", "spr.is_current != 0", "spr.is_deprecated = 0"]
 	const params: SQLInputValue[] = [ftsQuery]
 
@@ -131,10 +133,10 @@ export function fetchSearchRows<DB>(options: {
 	}
 
 	// Bbox + near-with-radius are SQL-level filters via the R*Tree. We only emit the JOIN when
-	// the active shard has the R*Tree; missing-but-requested is silently treated as no-bbox-
-	// filter so legacy DBs / shards-without-bbox don't crash.
-	const shardHasBbox = hasBboxIndex.get(sch) === true
-	const useBboxJoin = (query.bbox || query.near?.maxDistanceKm !== undefined) && shardHasBbox
+	// the active extract has the R*Tree; missing-but-requested is silently treated as no-bbox-
+	// filter so legacy DBs / extracts-without-bbox don't crash.
+	const extractHasBbox = hasBboxIndex.get(sch) === true
+	const useBboxJoin = (query.bbox || query.near?.maxDistanceKm !== undefined) && extractHasBbox
 	let joinClause = `JOIN ${sch}.spr ON spr.id = place_search.wof_id`
 
 	if (useBboxJoin) {
@@ -145,21 +147,21 @@ export function fetchSearchRows<DB>(options: {
 		params.push(filterBox.maxLat, filterBox.minLat, filterBox.maxLon, filterBox.minLon)
 	}
 
-	// LEFT JOIN the population aux table when present. Missing-on-this-shard means the SELECT
+	// LEFT JOIN the population aux table when present. Missing-on-this-extract means the SELECT
 	// just doesn't include the population column; the post-scoring loop treats it as 0.
-	const shardHasPopulation = hasPopulationIndex.get(sch) === true
+	const extractHasPopulation = hasPopulationIndex.get(sch) === true
 
-	const populationSelect = shardHasPopulation
+	const populationSelect = extractHasPopulation
 		? `${PLACE_POPULATION_TABLE}.population AS population`
 		: `NULL AS population`
 
-	const populationJoin = shardHasPopulation
+	const populationJoin = extractHasPopulation
 		? `LEFT JOIN ${sch}.${PLACE_POPULATION_TABLE} ON ${PLACE_POPULATION_TABLE}.id = spr.id`
 		: ""
 
 	// The encyclopedic score is CARRIED, never ranked on (ROAD_TO_V9 §2, ratified 2026-08-06) — it
 	// appears in the SELECT and in no ORDER BY, here or in the companion fetch below. Gated on the
-	// split column, so a pre-split shard emits a literal NULL and builds no join at all.
+	// split column, so a pre-split extract emits a literal NULL and builds no join at all.
 	const { select: encyclopedicSelect, join: encyclopedicJoin } = encyclopedicClauses.get(sch)!
 
 	// Push the population boost into the ORDER BY when the index is available, so famous places
@@ -176,12 +178,12 @@ export function fetchSearchRows<DB>(options: {
 	// column weighted to zero — no weighting isolates name relevance in this schema. The famous-
 	// holder guarantee lives in the population-ordered companion fetch below instead, and the
 	// exact tier breaks ties by population in the post-scoring sort.
-	const orderByExpr = shardHasPopulation
+	const orderByExpr = extractHasPopulation
 		? `(bm25(place_search) - ? * MIN(1.0, COALESCE(log10(1.0 + ${PLACE_POPULATION_TABLE}.population), 0) / ?))`
 		: "bm25(place_search)"
 
 	// Schema-qualified FROM with bare-name MATCH — required syntax for FTS5 on attached schemas.
-	// See sharding.ts header for the failure mode that drove this design.
+	// See extracts.ts header for the failure mode that drove this design.
 	const stmt = db.prepare(`
 		SELECT
 			spr.id AS id,
@@ -204,7 +206,7 @@ export function fetchSearchRows<DB>(options: {
 		LIMIT ?
 	`)
 
-	if (shardHasPopulation) {
+	if (extractHasPopulation) {
 		params.push(weights.populationBoost, weights.populationScaleLog10)
 	}
 
@@ -218,7 +220,7 @@ export function fetchSearchRows<DB>(options: {
 	// vs a +4.0 boost cap), so FR Paris never even reaches post-scoring. This fetch makes the
 	// prominent holders of a name pool-complete BY CONSTRUCTION; the exact-tier sort below
 	// decides whether they win. Skipped without a population index (nothing to order by).
-	if (shardHasPopulation) {
+	if (extractHasPopulation) {
 		const popStmt = db.prepare(`
 			SELECT
 				spr.id AS id,

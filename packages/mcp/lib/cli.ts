@@ -134,7 +134,7 @@ function loadCore(): Promise<{
 
 		// #1009 friendly-failure discipline, the MCP shape of it. `server.ts` turns a thrown Error into an
 		// `isError` tool result carrying `error.message`, so the message an agent reads IS whatever is thrown
-		// here — which made the raw internal `resolveShards: at least one shard is required` the first thing a
+		// here — which made the raw internal `resolveExtracts: at least one shard is required` the first thing a
 		// stranger saw from `mailwoman_parse` on a fresh install (measured 2026-08-03 against a standalone
 		// `npm install @mailwoman/mcp`). Same preflight as `photon`/`nominatim`/`mailwoman serve`, and the same
 		// discovery: #1444 moved the `<data-root>/wof/candidate.db` convention fallback INTO

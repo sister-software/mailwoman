@@ -8,7 +8,7 @@
  *   Reads a street-name index (the FR instance = BAN `street-centroids-fr.db`, a `street_centroid`
  *   table of `street_norm × locality_base × postcode` rows) and answers "does this street surface
  *   exist as a name" for the k-best rerank. Sync-by-interface, `readOnly`, prepared statements,
- *   graceful-degrade on a tableless shard — the same reader discipline as `AddressPointSqliteLookup`.
+ *   graceful-degrade on a tableless extract — the same reader discipline as `AddressPointSqliteLookup`.
  *
  *   THE FOLD CONTRACT: the surface is folded with {@link foldStreetSurface} (the shared function),
  *   and the DB's `street_norm` column MUST have been built with that SAME fold or every hyphenated /
@@ -52,10 +52,10 @@ export class SQLiteStreetNameLookup implements StreetLocalityEvidence, Disposabl
 		this.#db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 		const table = opts.table ?? "street_centroid"
 
-		// Degrade gracefully on an empty/tableless shard — a no-op miss, never a crash (#568 discipline).
+		// Degrade gracefully on an empty/tableless extract — a no-op miss, never a crash (#568 discipline).
 		if (hasTable(this.#db, table)) {
 			// Prefer the #727 phase-4c `name_key` column (foldStreetSurface, indexed by `idx_sc_name` for a direct seek);
-			// fall back to `street_norm` on a pre-rebuild shard (a skip-scan, but correct). The fold used to build
+			// fall back to `street_norm` on a pre-rebuild extract (a skip-scan, but correct). The fold used to build
 			// `name_key` MUST match `foldStreetSurface` here (the fold-parity contract).
 			const keyCol = hasColumn(this.#db, table, "name_key") ? "name_key" : "street_norm"
 			this.#byName = this.#db.prepare(`SELECT 1 FROM ${table} WHERE ${keyCol} = ? LIMIT 1`)

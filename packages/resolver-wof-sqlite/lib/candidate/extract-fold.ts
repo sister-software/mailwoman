@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Pass 4 of the candidate build — fold a postcode or locality shard into the staging table.
+ * @file Pass 4 of the candidate build — fold a postcode or locality extract into the staging table.
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -14,31 +14,31 @@ import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street-normalize"
 
 /**
- * Fold ONE shard (`spr` rows at `shardPlacetype` carrying real coordinates) in, then pass 4b: the alias names hanging
- * off that same shard's `names` table.
+ * Fold ONE extract (`spr` rows at `extractPlacetype` carrying real coordinates) in, then pass 4b: the alias names
+ * hanging off that same extract's `names` table.
  *
  * Self-contained by construction — it shares only the staging statement and the code dictionaries with the admin passes
  * above it, and nothing downstream reads anything it produces except the two counters it returns.
  */
-export function foldShard(ctx: {
+export function foldExtract(ctx: {
 	/**
-	 * The staging connection. The shard itself is opened read-only here and closed before returning.
+	 * The staging connection. The extract itself is opened read-only here and closed before returning.
 	 */
 	out: DatabaseClient<CandidateDatabase>
-	shardPath: string
-	shardPlacetype: "postalcode" | "locality"
+	extractPath: string
+	extractPlacetype: "postalcode" | "locality"
 	ccID: (code: string | null) => number
 	ptID: (pt: string | null) => number
 	stageRow: StageRow
 	progress: (phase: string, message: string) => void
 }): { primaries: number; aliases: number } {
-	const { out, shardPath, shardPlacetype, ccID, ptID, stageRow, progress } = ctx
+	const { out, extractPath, extractPlacetype, ccID, ptID, stageRow, progress } = ctx
 
-	progress(shardPlacetype === "postalcode" ? "postcodes" : "localities", `reading ${shardPath}`)
+	progress(extractPlacetype === "postalcode" ? "postcodes" : "localities", `reading ${extractPath}`)
 
-	using pc = new DatabaseClient<WOFDatabase>(shardPath, { readOnly: true })
-	const pcPtid = ptID(shardPlacetype)
-	// Per-shard, not the admin `attrs` map: pass 1 only ever sees the admin DB, so the alias pass
+	using pc = new DatabaseClient<WOFDatabase>(extractPath, { readOnly: true })
+	const pcPtid = ptID(extractPlacetype)
+	// Per-extract, not the admin `attrs` map: pass 1 only ever sees the admin DB, so the alias pass
 	// below has nothing to join against unless this primary loop records what it staged.
 	const pcAttrs = new Map<number, PlaceAttrs>()
 	let primaries = 0
@@ -52,7 +52,7 @@ export function foldShard(ctx: {
 				min_latitude AS mnlat, min_longitude AS mnlon, max_latitude AS mxlat, max_longitude AS mxlon
 			 FROM spr WHERE placetype = ? AND latitude != 0 AND longitude != 0`
 		)
-		.iterate(shardPlacetype)) {
+		.iterate(extractPlacetype)) {
 		const name = String(r.name ?? "")
 		const key = normalizeLocalityForKey(name)
 
@@ -94,12 +94,12 @@ export function foldShard(ctx: {
 	// --- pass 4b: postcode ALIAS names (#1495) ---
 	//
 	// The delivery-city names GeoNames supplies for a ZIP ("Brooklyn" for 11201) are written into
-	// the shard's `names` table by `postcode/centroid-fills.ts`'s `geonamesNameFill`. Everything
+	// the extract's `names` table by `postcode/centroid-fills.ts`'s `geonamesNameFill`. Everything
 	// downstream of `names` picked them up EXCEPT this build: `fts.ts` unions `spr.name` with every
 	// `names` row into `place_search.alt_names`, so the FTS backend resolved "Brooklyn" → 11201
 	// while the candidate backend — whose every row IS an exact-tier row — had no key for it at
 	// all. Pass 2 does the equivalent fold for admin places, but reads the ADMIN `place_search`,
-	// and `attrs` holds admin ids only, so a postcode shard could never reach it.
+	// and `attrs` holds admin ids only, so a postcode extract could never reach it.
 	//
 	// Same discipline as pass 2: `is_primary = 0` (so `rankByPrimaryPreference` treats it as an
 	// alias, not a canonical postcode name), the row stays denormalized onto the POSTCODE's own
@@ -128,10 +128,10 @@ export function foldShard(ctx: {
 
 		out.exec("COMMIT")
 	} else {
-		// Never a silent zero: real shards come from `createUnifiedSchema`, which always creates
-		// `names`. A shard without it has no alias surface to lose, but say so rather than reporting
+		// Never a silent zero: real extracts come from `createUnifiedSchema`, which always creates
+		// `names`. A extract without it has no alias surface to lose, but say so rather than reporting
 		// "0 aliases" from a table that was never read.
-		progress("postcode-aliases", `${shardPath} has no \`names\` table — no delivery-city aliases to fold`)
+		progress("postcode-aliases", `${extractPath} has no \`names\` table — no delivery-city aliases to fold`)
 	}
 
 	return { primaries, aliases }

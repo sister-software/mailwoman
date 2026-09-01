@@ -67,8 +67,8 @@ import { mailwomanDataRoot } from "#resolver-backend"
  * underlying survey under a clean licence) and **`postalcode-jp.db`** (142,604 rows, 37 MB).
  *
  * Every member is spelled `postalcode-`, and that is a routing contract rather than a house style. `deriveSchemaName`
- * (`resolver-wof-sqlite/sharding.ts`) turns the filename into the attached SQL schema name, and
- * `pickShardsForPlacetype` selects by testing that name against the placetype — which is `postalcode`. A shard added
+ * (`resolver-wof-sqlite/extracts.ts`) turns the filename into the attached SQL schema name, and
+ * `pickExtractsForPlacetype` selects by testing that name against the placetype — which is `postalcode`. A shard added
  * here as `postcode-<cc>.db` builds the candidate table fine (the builders read `spr` directly) and is then unreachable
  * to any `findPlace({ placetype: "postalcode" })`, returning zero hits rather than an error. The
  * `postcode-locality-<cc>.db` family is the deliberate exception and is NOT a member of this list: those hold a

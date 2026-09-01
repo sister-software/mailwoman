@@ -91,8 +91,8 @@ export interface PlaceCandidate {
 	/**
 	 * STRICT encyclopedia-evidence importance in [0, 1], fan-out-guarded per #1497 — CARRIED, NEVER RANKED ON.
 	 *
-	 * RESERVED SLOT awaiting a strict-channel source: present only when a shard's `place_importance` table carries the
-	 * split columns, and no shipped shard does — the FTS lookup's clauses emit NULL for everything today. `undefined`
+	 * RESERVED SLOT awaiting a strict-channel source: present only when a extract's `place_importance` table carries the
+	 * split columns, and no shipped extract does — the FTS lookup's clauses emit NULL for everything today. `undefined`
 	 * means either "no encyclopedia entry for this place" or "this gazetteer predates the split"; both are absence, and
 	 * neither is 0. The BLENDED prior the ranking reads is {@link PlaceCandidate.importance}.
 	 *
@@ -204,7 +204,7 @@ export interface FindPlaceQuery {
 	 * Sibling postcode. When set on a `locality` query AND a `postcode_locality` table is present, triggers the
 	 * coordinate-first soft-score path: postcode→candidate localities are injected and scored `0.6·S_pc + 0.3·S_name +
 	 * 0.1·S_pop` against the FTS name-match set, recovering small localities the name-match alone misses. Ignored when no
-	 * postcode_locality shard is present.
+	 * postcode_locality extract is present.
 	 */
 	postcode?: string
 	/**

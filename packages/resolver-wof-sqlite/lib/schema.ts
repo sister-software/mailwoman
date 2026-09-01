@@ -167,13 +167,13 @@ export interface CoincidentRolesTable {
  * The provenance row every built extract carries: source fingerprints travelling WITH the database rather than in a
  * document that can drift from it. Written by the postcode builders in `mailwoman/gazetteer-pipeline`.
  */
-export interface ShardMetaTable {
+export interface ExtractMetaTable {
 	key: string
 	value: string | null
 }
 
 export interface WOFDatabase {
-	meta: ShardMetaTable
+	meta: ExtractMetaTable
 	place_search: PlaceSearchTable
 	spr: SprTable
 	names: NamesTable

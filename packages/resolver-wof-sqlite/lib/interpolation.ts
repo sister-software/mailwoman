@@ -8,7 +8,7 @@
  *   then linear interpolation along the segment polyline. Design:
  *   `docs/articles/plan/2026-06-11-interpolation-design.md`.
  *
- *   Reads the per-state shard built by `scripts/build-interpolation-shard.ts` (`street_segment`: one
+ *   Reads the per-state extract built by `scripts/build-interpolation-extract.ts` (`street_segment`: one
  *   row per TIGER edge SIDE — independent left/right ranges, ZIPs, parity). Query-side
  *   normalization is THE shared normalizer (`street-normalize.ts`) — identical to build-side, by
  *   construction.
@@ -38,7 +38,7 @@ import type { StreetSegmentDatabase } from "#street-segment-schema"
 /**
  * How an interpolated answer was computed (#483 Method 2):
  *
- * - `address_point` — bracketed/extrapolated between REAL neighbor points from the #476 shard
+ * - `address_point` — bracketed/extrapolated between REAL neighbor points from the #476 extract
  *   (`AddressPointInterpolator`), replacing TIGER's uniform-spacing assumption with occupancy.
  * - `tiger_range` — linear position within a TIGER segment's theoretical house-number range (`StreetInterpolator`), the
  *   fallback for streets too sparse to bracket.
@@ -190,7 +190,7 @@ export class StreetInterpolator<
 			throw new Error("StreetInterpolator: one of dbPath or database is required")
 		}
 
-		// Degrade gracefully on an empty/tableless shard (interrupted build, stray 0-byte file): with no
+		// Degrade gracefully on an empty/tableless extract (interrupted build, stray 0-byte file): with no
 		// `street_segment` table this interpolator is a no-op miss, not a crash that loses the state (#568).
 		if (hasTable(this.#db, "street_segment")) {
 			const columns = `from_hn, to_hn, min_hn, max_hn, parity, postcode, geometry, source, release`
@@ -209,9 +209,9 @@ export class StreetInterpolator<
 		}
 
 		// #374 doctrine: the conformal radius multiplier is a property of the calibration set the ARTIFACT was
-		// built against, so it ships in the shard's `interp_calibration` metadata table (street-segment-schema.ts)
+		// built against, so it ships in the extract's `interp_calibration` metadata table (street-segment-schema.ts)
 		// and is read here, once, at open time — sync raw `.prepare()` per the sync-by-interface doctrine
-		// (AGENTS.md). Shards predating the table (the pre-2026-07 fleet) yield `undefined`; callers then fall
+		// (AGENTS.md). Extracts predating the table (the pre-2026-07 fleet) yield `undefined`; callers then fall
 		// back to their in-code table, byte-identically.
 		if (hasTable(this.#db, "interp_calibration")) {
 			const row = this.#db.prepare("SELECT radius_multiplier FROM interp_calibration LIMIT 1").get() as
@@ -227,9 +227,9 @@ export class StreetInterpolator<
 	}
 
 	/**
-	 * The artifact's own conformal radius multiplier (#374), read from the shard's `interp_calibration` metadata table at
-	 * construction. `undefined` = the shard predates the table (or carries no valid row) — the resolver then applies no
-	 * artifact default and callers may supply a legacy fallback.
+	 * The artifact's own conformal radius multiplier (#374), read from the extract's `interp_calibration` metadata table
+	 * at construction. `undefined` = the extract predates the table (or carries no valid row) — the resolver then applies
+	 * no artifact default and callers may supply a legacy fallback.
 	 */
 	get radiusCalibration(): number | undefined {
 		return this.#radiusCalibration

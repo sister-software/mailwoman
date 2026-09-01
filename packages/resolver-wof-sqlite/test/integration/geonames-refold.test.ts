@@ -199,7 +199,7 @@ test("every folded locality gets its self-ancestor row, admin fold or not", asyn
 })
 
 test("the purge stops at the GeoNames-POSTAL namespace above it", async () => {
-	// The alias fold owns [9e12, 9.5e12). The postal fold, the NL-PC6 shard (9.6e12), Code-Point
+	// The alias fold owns [9e12, 9.5e12). The postal fold, the NL-PC6 extract (9.6e12), Code-Point
 	// (9.7e12) and NI (9.8e12) each own their own range — a purge that ran to the end of the id space
 	// would silently delete them.
 	await using db = freshDB()

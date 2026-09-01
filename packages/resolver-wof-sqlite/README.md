@@ -65,8 +65,8 @@ const lookup = new WOFSQLitePlaceLookup({
 	databasePath: ["/data/wof/whosonfirst-data-admin-us-latest.db", "/data/wof/whosonfirst-data-postalcode-us-latest.db"],
 })
 
-await lookup.findPlace({ text: "Springfield", placetype: "locality" }) // → admin shard
-await lookup.findPlace({ text: "62701", placetype: "postalcode" }) // → postcode shard
+await lookup.findPlace({ text: "Springfield", placetype: "locality" }) // → admin extract
+await lookup.findPlace({ text: "62701", placetype: "postalcode" }) // → postcode extract
 ```
 
 Override schema names or routing explicitly when needed:

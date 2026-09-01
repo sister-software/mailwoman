@@ -22,7 +22,7 @@
  *
  *   The name_key normalizer is the SHARED {@link normalizeLocalityForKey} — the query side (the demo
  *   resolver {@link WOFCandidateTableLookup}) MUST use the same function, the one-normalizer
- *   discipline the address-point shard uses, so build/query stay consistent by construction.
+ *   discipline the address-point extract uses, so build/query stay consistent by construction.
  *
  *   Measured (2026-06-20, vs the 2.6 GB full-DB FTS): ~5 M rows; ~12 range fetches per 8-query
  *   session (the full DB needs 243); US locality 96.8% (region bbox), EU coord parity 88.6%.
@@ -55,9 +55,9 @@ import {
 import { explodeAliasBags } from "#candidate/alias-bags"
 import { buildAncestorsSidecar } from "#candidate/ancestors-sidecar"
 import { stageCountryDisplayNames } from "#candidate/country-display-names"
+import { foldExtract } from "#candidate/extract-fold"
 import { GLOSS_KEY_THRESHOLD, stampNameRoles } from "#candidate/name-roles"
 import type { PlaceAttrs } from "#candidate/place-attrs"
-import { foldShard } from "#candidate/shard-fold"
 import { createCapitalTable } from "#capital-schema"
 import type { CapitalPoint } from "#capitals"
 import { resurrectCurrencyHoles } from "#currency-backfill"
@@ -86,20 +86,20 @@ export interface BuildCandidateOptions {
 	 */
 	capitals?: readonly CapitalPoint[]
 	/**
-	 * Optional postcode shards (`spr` rows with `placetype='postalcode'` + real coords, e.g. postalcode-us.db) — folded
+	 * Optional postcode extracts (`spr` rows with `placetype='postalcode'` + real coords, e.g. postalcode-us.db) — folded
 	 * in as `postalcode` candidate rows so `findPlace(postalcode)` resolves a ZIP directly (the demo's primary postcode
 	 * path; the postcode-*.bin anchor stays the fallback). Matches the slim wof-hot.db, which took one such postcode DB.
 	 *
-	 * Each shard's `names` table is folded in too (#1495) — that's where the GeoNames delivery-city names live
+	 * Each extract's `names` table is folded in too (#1495) — that's where the GeoNames delivery-city names live
 	 * ("Brooklyn" for 11201), and they were previously reachable only through FTS.
 	 */
 	postcodes?: string[]
 	/**
-	 * Optional LOCALITY shards (`spr` rows with `placetype='locality'` + real coords, e.g. localities-nz-linz.db — the
-	 * #1564 NZ suburb tier) — folded through the same shard loop as the postcode shards, staged as `locality` candidate
-	 * rows with no region scope and UNMEASURED population (`neg_rank 0`: a shard row ranks behind any populated namesake
-	 * and wins only where its key is the answer). Each shard's `names` table folds as aliases, `is_primary = 0`, same as
-	 * the delivery-city pass.
+	 * Optional LOCALITY extracts (`spr` rows with `placetype='locality'` + real coords, e.g. localities-nz-linz.db — the
+	 * #1564 NZ suburb tier) — folded through the same extract loop as the postcode extracts, staged as `locality`
+	 * candidate rows with no region scope and UNMEASURED population (`neg_rank 0`: a extract row ranks behind any
+	 * populated namesake and wins only where its key is the answer). Each extract's `names` table folds as aliases,
+	 * `is_primary = 0`, same as the delivery-city pass.
 	 */
 	localities?: string[]
 	/**
@@ -145,8 +145,8 @@ export interface BuildCandidateResult {
 	abbrevs: number
 	postcodes: number
 	/**
-	 * Delivery-city (and other `names`-table) aliases folded onto postcode rows — #1495. Zero here means the shards
-	 * carried no alias names, NOT that the pass was skipped: a shard with no `names` table reports that separately
+	 * Delivery-city (and other `names`-table) aliases folded onto postcode rows — #1495. Zero here means the extracts
+	 * carried no alias names, NOT that the pass was skipped: a extract with no `names` table reports that separately
 	 * through `onProgress`.
 	 */
 	postcodeAliases: number
@@ -161,7 +161,7 @@ export interface BuildCandidateResult {
 	ancestorPlaces: number
 	/**
 	 * Places that received a pre/post interval label — the canonical-parent forest's node count. Places outside it (no
-	 * recorded ancestry, shard rows, cycle-skipped) have NO label: containment against them is unverifiable, never
+	 * recorded ancestry, extract rows, cycle-skipped) have NO label: containment against them is unverifiable, never
 	 * false.
 	 */
 	intervalPlaces: number
@@ -486,15 +486,15 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	// --- pass 3c: the ancestors sidecar (candidate-ancestors-schema.ts owns the encoding decision) ---
 	const sidecar = await buildAncestorsSidecar({ src, out: kdb, attrs, ptID, progress })
 
-	// --- pass 4 + 4b: postcode and locality shards (foldShard owns the per-shard loop) ---
+	// --- pass 4 + 4b: postcode and locality extracts (foldExtract owns the per-extract loop) ---
 	let nPostcode = 0
 	let nPostcodeAlias = 0
 
 	for (const pcDB of opts.postcodes ?? []) {
-		const folded = foldShard({
+		const folded = foldExtract({
 			out: kdb,
-			shardPath: pcDB,
-			shardPlacetype: "postalcode",
+			extractPath: pcDB,
+			extractPlacetype: "postalcode",
 			ccID,
 			ptID,
 			stageRow,
@@ -512,10 +512,10 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	let nLocality = 0
 
 	for (const locDB of opts.localities ?? []) {
-		const folded = foldShard({
+		const folded = foldExtract({
 			out: kdb,
-			shardPath: locDB,
-			shardPlacetype: "locality",
+			extractPath: locDB,
+			extractPlacetype: "locality",
 			ccID,
 			ptID,
 			stageRow,
@@ -526,7 +526,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	}
 
 	if (nLocality > 0) {
-		progress("localities", `${nLocality.toLocaleString()} shard localities folded`)
+		progress("localities", `${nLocality.toLocaleString()} extract localities folded`)
 	}
 
 	// --- code dictionaries: typed batch inserts via kdb (a few hundred rows — Kysely is clean here) ---

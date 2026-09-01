@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Typed schema for the SITUS / rooftop ADDRESS-POINT shards (`address-points-<cc>-<slug>.db`, built
- *   by `scripts/build-address-point-shard.ts` — the #476/#567 national rooftop tier behind the
+ *   Typed schema for the SITUS / rooftop ADDRESS-POINT extracts (`address-points-<cc>-<slug>.db`, built
+ *   by `scripts/build-address-point-extract.ts` — the #476/#567 national rooftop tier behind the
  *   demo's "type any US address, get the building"). Single source of truth for the columns shared
  *   by the BUILDER and the READER ({@link AddressPointSqliteLookup}), so a column rename in one is a
  *   compile error in the other.
@@ -71,7 +71,7 @@ export interface AddressPointDatabase {
 /**
  * The slice of a Kysely handle the `address_point` DDL touches — the parameter type its builders take.
  *
- * Kysely is invariant in its schema parameter (the incompatibility is in `transaction()`), so a shard that EXTENDS
+ * Kysely is invariant in its schema parameter (the incompatibility is in `transaction()`), so a extract that EXTENDS
  * `AddressPointTable` — OSM adds `h3_cell` — cannot pass its own handle to a `Kysely<AddressPointDatabase>` parameter.
  * Naming only `schema` lets it, and the DDL below needs nothing else.
  */

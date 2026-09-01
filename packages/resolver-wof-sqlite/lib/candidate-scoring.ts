@@ -148,7 +148,7 @@ export function candidateFromSearchRow(
 }
 
 /**
- * Order `candidates` IN PLACE — the exact-match tier first when the shard can answer the name probes, otherwise plain
+ * Order `candidates` IN PLACE — the exact-match tier first when the extract can answer the name probes, otherwise plain
  * weighted-score order. Every candidate is stamped with its `exactMatch` flag on the way through.
  */
 export function rankCandidates<DB>(

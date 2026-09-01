@@ -42,10 +42,10 @@ export interface ESPostcodeCentroidsOptions {
 	 * Output SQLite DB. Default `$MAILWOMAN_DATA_ROOT/wof/postalcode-<cc>-overture.db`.
 	 *
 	 * The `postalcode-` prefix is required, not cosmetic: `deriveSchemaName` turns the filename into the attached SQL
-	 * schema name and `pickShardsForPlacetype` routes by testing it against the placetype, which is `postalcode`. A shard
-	 * spelled `postcode-` matches no branch and is silently never queried. The sibling `postcode-locality-*.db` family
-	 * keeps the shorter prefix on purpose — those carry a `postcode_locality` relation table and no `spr`, so they are
-	 * never routed as place shards in the first place.
+	 * schema name and `pickExtractsForPlacetype` routes by testing it against the placetype, which is `postalcode`. A
+	 * shard spelled `postcode-` matches no branch and is silently never queried. The sibling `postcode-locality-*.db`
+	 * family keeps the shorter prefix on purpose — those carry a `postcode_locality` relation table and no `spr`, so they
+	 * are never routed as place shards in the first place.
 	 */
 	out?: string
 }

@@ -146,4 +146,10 @@ export {
 	type InterpolationQuery,
 } from "#interpolation"
 
-export { deriveSchemaName, pickShardForPlacetype, resolveShards, type ResolvedShard, type ShardConfig } from "#sharding"
+export {
+	deriveSchemaName,
+	pickExtractForPlacetype,
+	resolveExtracts,
+	type ResolvedExtract,
+	type ExtractConfig,
+} from "#extracts"

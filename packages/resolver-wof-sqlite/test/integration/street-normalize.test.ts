@@ -177,7 +177,7 @@ describe("streetLocaleForSurface (the Québec surface router)", () => {
 		expect(streetLocaleForSurface("Main St", "en")).toBe("en")
 	})
 
-	it("only an en base re-routes — fr/de/nl shards already speak their own rules, us stays untouched", () => {
+	it("only an en base re-routes — fr/de/nl extracts already speak their own rules, us stays untouched", () => {
 		expect(streetLocaleForSurface("Rue de Rivoli", "fr")).toBe("fr")
 		expect(streetLocaleForSurface("Rue Quelconque", "de")).toBe("de")
 		expect(streetLocaleForSurface("Rue Something", "us")).toBe("us")
@@ -198,7 +198,7 @@ describe("streetLocaleForSurface (the Québec surface router)", () => {
 
 describe("normalizeStreetForKeyLocale — the pl/vn/id branches (the 2026-08-19 coverage lane)", () => {
 	it("pl: folds ł (the non-decomposing letter) and STRIPS the leading type — OSM Poland tags streets bare", () => {
-		// Typed, spelled and bare surfaces all key to the shard's bare form (22 of 5.56M rows carry "ulica").
+		// Typed, spelled and bare surfaces all key to the extract's bare form (22 of 5.56M rows carry "ulica").
 		expect(normalizeStreetForKeyLocale("ul. Świętokrzyska", "pl")).toBe("swietokrzyska")
 		expect(normalizeStreetForKeyLocale("ulica Świętokrzyska", "pl")).toBe("swietokrzyska")
 		expect(normalizeStreetForKeyLocale("Świętokrzyska", "pl")).toBe("swietokrzyska")
@@ -223,8 +223,8 @@ describe("normalizeStreetForKeyLocale — the pl/vn/id branches (the 2026-08-19 
 		expect(normalizeStreetForKeyLocale("Gg. Waru", "id")).toBe("gang waru")
 	})
 
-	it("the letter maps stay OUT of the other locales — built shards keep their keys", () => {
-		// A Polish-named street in a de shard keys with ł intact, exactly as the shard was built.
+	it("the letter maps stay OUT of the other locales — built extracts keep their keys", () => {
+		// A Polish-named street in a de extract keys with ł intact, exactly as the extract was built.
 		expect(normalizeStreetForKeyLocale("Łuckastraße", "de")).toBe("łuckastrasse")
 	})
 })

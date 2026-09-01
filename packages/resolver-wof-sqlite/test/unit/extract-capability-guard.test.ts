@@ -2,10 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file #1791 — a shard that cannot serve a lookup should say so at construction, not by going quiet.
+ * @file #1791 — a extract that cannot serve a lookup should say so at construction, not by going quiet.
  *
  *   Both ways it failed before were hard to read. An unroutable name returned zero hits, which is indistinguishable
- *   from "this country has no places": a shard reaches routing only through the name `deriveSchemaName` derives from
+ *   from "this country has no places": a extract reaches routing only through the name `deriveSchemaName` derives from
  *   its filename, so a file spelled one letter off the placetype it serves answers with nothing while holding every
  *   row that was asked for. A routable name threw from deep inside a SELECT instead.
  *
@@ -13,9 +13,9 @@
  *   not — so each test isolates one of the two failure modes.
  *
  *   `postalcode-empty.db` is the third case and the one the first cut missed. It carries NO tables, so a guard
- *   keyed on `spr` alone reads it as "not claiming to be a place shard" and waves it through — after which every
+ *   keyed on `spr` alone reads it as "not claiming to be a place extract" and waves it through — after which every
  *   query routed to it by its NAME dies mid-SELECT, which is the exact failure the guard exists to prevent. A
- *   zero-byte or truncated shard file is this shape, and one was on disk when the guard first shipped.
+ *   zero-byte or truncated extract file is this shape, and one was on disk when the guard first shipped.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -27,7 +27,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 let dir: TemporaryDirectory
 
 /**
- * A main shard complete enough to construct against.
+ * A main extract complete enough to construct against.
  */
 const writeMain = (path: string): void => {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -45,7 +45,7 @@ const writeMain = (path: string): void => {
 }
 
 /**
- * A shard that CLAIMS to be a place shard — it carries `spr` — and cannot serve one.
+ * A extract that CLAIMS to be a place extract — it carries `spr` — and cannot serve one.
  */
 const writeSprOnly = (path: string): void => {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -56,14 +56,14 @@ const writeSprOnly = (path: string): void => {
 }
 
 /**
- * A shard with NOTHING in it, under a name that routes. A truncated or zero-byte file reads exactly like this.
+ * A extract with NOTHING in it, under a name that routes. A truncated or zero-byte file reads exactly like this.
  */
 const writeEmpty = (path: string): void => {
 	new DatabaseClient<WOFDatabase>(path).destroy()
 }
 
 /**
- * A relation-table shard, which never claims to be a place shard and is part of the documented default set.
+ * A relation-table extract, which never claims to be a place extract and is part of the documented default set.
  */
 const writeRelationOnly = (path: string): void => {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -74,7 +74,7 @@ const writeRelationOnly = (path: string): void => {
 }
 
 beforeAll(async () => {
-	dir = await temporaryDirectory("shard-guard-")
+	dir = await temporaryDirectory("extract-guard-")
 
 	writeMain(dir.resolve("admin.db"))
 	// Routes by name (`postalcode_x` starts with `postalcode_`), so the old failure was a mid-query throw.
@@ -88,12 +88,12 @@ beforeAll(async () => {
 
 afterAll(() => dir[Symbol.asyncDispose]())
 
-describe("shard capability guard", () => {
-	it("constructs against a complete shard set", () => {
+describe("extract capability guard", () => {
+	it("constructs against a complete extract set", () => {
 		expect(() => new WOFSQLitePlaceLookup({ databasePath: [dir.resolve("admin.db")] })).not.toThrow()
 	})
 
-	it("refuses a shard that carries spr and no place_search", () => {
+	it("refuses a extract that carries spr and no place_search", () => {
 		expect(
 			() => new WOFSQLitePlaceLookup({ databasePath: [dir.resolve("admin.db"), dir.resolve("postalcode-x.db")] })
 		).toThrow(/carries "spr" but no "place_search"/)
@@ -109,12 +109,12 @@ describe("shard capability guard", () => {
 		}
 
 		expect(message).toMatch(/carries "spr" but no "place_search"/)
-		// The half that turns "zero hits" into a diagnosis: this shard would never have been queried anyway.
+		// The half that turns "zero hits" into a diagnosis: this extract would never have been queried anyway.
 		expect(message).toMatch(/matches no routed placetype/)
 		expect(message).toContain("postcode_x")
 	})
 
-	it("says nothing about a shard that routes, when it only lacks the table", () => {
+	it("says nothing about a extract that routes, when it only lacks the table", () => {
 		let message = ""
 
 		try {
@@ -126,8 +126,8 @@ describe("shard capability guard", () => {
 		expect(message).not.toMatch(/matches no routed placetype/)
 	})
 
-	it("EXEMPTS a relation-table shard, which is in the documented default set", () => {
-		// `postcode-locality-<cc>.db` has no `spr`, so it never claims to be a place shard. Guarding on the filename
+	it("EXEMPTS a relation-table extract, which is in the documented default set", () => {
+		// `postcode-locality-<cc>.db` has no `spr`, so it never claims to be a place extract. Guarding on the filename
 		// rather than on the table would have broken the shipped default.
 		expect(
 			() =>
@@ -135,11 +135,11 @@ describe("shard capability guard", () => {
 		).not.toThrow()
 	})
 
-	it("does not examine the MAIN shard for routing — it is the fallback by definition", () => {
+	it("does not examine the MAIN extract for routing — it is the fallback by definition", () => {
 		expect(() => new WOFSQLitePlaceLookup({ databasePath: [dir.resolve("admin.db")] })).not.toThrow()
 	})
 
-	it("refuses an EMPTY shard whose name routes — no spr to claim with, and it would still be queried", () => {
+	it("refuses an EMPTY extract whose name routes — no spr to claim with, and it would still be queried", () => {
 		let message = ""
 
 		try {

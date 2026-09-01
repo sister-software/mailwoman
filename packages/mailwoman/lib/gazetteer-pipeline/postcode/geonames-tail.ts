@@ -35,7 +35,7 @@
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath, isoDate, md5File } from "@mailwoman/core/utils"
 import type { GeonamesPostalIngestResult } from "@mailwoman/resolver-wof-sqlite/geonames-postal"
-import type { ShardMetaTable, WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import type { ExtractMetaTable, WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { join } from "path-ts"
@@ -57,13 +57,13 @@ export { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
  * source fingerprints travel WITH the database instead of in a document that can drift from it.
  */
 
-export type { ShardMetaTable } from "@mailwoman/resolver-wof-sqlite/schema"
+export type { ExtractMetaTable } from "@mailwoman/resolver-wof-sqlite/schema"
 
 /**
  * Kysely read/write contract for the shard's provenance table.
  */
 export interface ShardMetaDatabase {
-	meta: ShardMetaTable
+	meta: ExtractMetaTable
 }
 
 /**

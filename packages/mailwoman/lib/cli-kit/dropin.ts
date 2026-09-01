@@ -134,7 +134,7 @@ export interface GazetteerPaths {
  * - An EXPLICIT `--candidate-db` that does not exist errors loudly. It must never silently fall back to whatever ambient
  *   data-root file happens to be present — a typo'd path would otherwise serve the wrong gazetteer without a word.
  * - No candidate DB AND no shards prints the named-artifact message with the one command that fixes it, instead of
- *   letting the resolver throw its internal "resolveShards: at least one shard is required".
+ *   letting the resolver throw its internal "resolveExtracts: at least one shard is required".
  */
 export async function resolveGazetteerOrExit(candidateDBFlag: string | undefined): Promise<GazetteerPaths> {
 	if (candidateDBFlag && !(await pathExists(candidateDBFlag))) {

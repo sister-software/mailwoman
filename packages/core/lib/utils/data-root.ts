@@ -100,7 +100,7 @@ export function cacheRootPath(...segments: string[]): string {
 
 /**
  * The default WOF shard list the FTS backend probes when no single `--wof-db` is given: the global admin-priority shard
- * plus the postcode shards, with country-aware routing in `pickShardForPlacetype` sending each postcode query to the
+ * plus the postcode shards, with country-aware routing in `pickExtractForPlacetype` sending each postcode query to the
  * shard that claims its country (#920). All under `dataRoot` (defaults to the configured {@link mailwomanDataRoot};
  * callers thread a `--data-root` option through). A fresh array each call; callers filter with `existsSync`, so a
  * deployment missing any of them degrades to whatever is present.
@@ -141,7 +141,7 @@ export interface WOFShardPaths {
 	 */
 	postalcodeGeonamesTail: string
 	/**
-	 * The international postcode shard (FR/DE/ES/IT/NL, and the others `pickShardForPlacetype` routes here).
+	 * The international postcode shard (FR/DE/ES/IT/NL, and the others `pickExtractForPlacetype` routes here).
 	 */
 	postalcodeIntl: string
 	/**

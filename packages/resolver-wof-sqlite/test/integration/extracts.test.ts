@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Schema-name derivation + shard routing tests.
+ *   Schema-name derivation + extract routing tests.
  */
 
-import { deriveSchemaName, pickShardForPlacetype, resolveShards } from "@mailwoman/resolver-wof-sqlite/sharding"
+import { deriveSchemaName, pickExtractForPlacetype, resolveExtracts } from "@mailwoman/resolver-wof-sqlite/extracts"
 import { describe, expect, test } from "vitest"
 
 describe("deriveSchemaName", () => {
@@ -31,15 +31,15 @@ describe("deriveSchemaName", () => {
 	})
 })
 
-describe("resolveShards", () => {
-	test("single string → one shard named main", () => {
-		expect(resolveShards("/tmp/whosonfirst-data-admin-us-latest.db")).toEqual([
+describe("resolveExtracts", () => {
+	test("single string → one extract named main", () => {
+		expect(resolveExtracts("/tmp/whosonfirst-data-admin-us-latest.db")).toEqual([
 			{ path: "/tmp/whosonfirst-data-admin-us-latest.db", schemaName: "main", placetypes: [] },
 		])
 	})
 
 	test("array of strings: first becomes main, rest derive", () => {
-		const r = resolveShards([
+		const r = resolveExtracts([
 			"/tmp/whosonfirst-data-admin-us-latest.db",
 			"/tmp/whosonfirst-data-postalcode-us-latest.db",
 		])
@@ -50,8 +50,8 @@ describe("resolveShards", () => {
 		])
 	})
 
-	test("ShardConfig.schemaName overrides derivation", () => {
-		const r = resolveShards([
+	test("ExtractConfig.schemaName overrides derivation", () => {
+		const r = resolveExtracts([
 			"/tmp/whosonfirst-data-admin-us-latest.db",
 			{ path: "/tmp/weird-name.db", schemaName: "postalcode_us" },
 		])
@@ -60,7 +60,7 @@ describe("resolveShards", () => {
 	})
 
 	test("placetypes hint passes through", () => {
-		const r = resolveShards([
+		const r = resolveExtracts([
 			"/tmp/whosonfirst-data-admin-us-latest.db",
 			{ path: "/tmp/whosonfirst-data-postalcode-us-latest.db", placetypes: ["postalcode"] },
 		])
@@ -68,11 +68,11 @@ describe("resolveShards", () => {
 		expect(r[1]?.placetypes).toEqual(["postalcode"])
 	})
 
-	test("rejects shard name collisions on non-main shards", () => {
-		// The first shard is always "main" regardless of its derived name; collisions only matter
-		// across the non-first entries. Two postcode shards in a row collide.
+	test("rejects extract name collisions on non-main extracts", () => {
+		// The first extract is always "main" regardless of its derived name; collisions only matter
+		// across the non-first entries. Two postcode extracts in a row collide.
 		expect(() =>
-			resolveShards([
+			resolveExtracts([
 				"/tmp/whosonfirst-data-admin-us-latest.db",
 				"/tmp/whosonfirst-data-postalcode-us-latest.db",
 				"/tmp/whosonfirst-data-postalcode-us-latest.db",
@@ -82,61 +82,61 @@ describe("resolveShards", () => {
 
 	test("rejects schema names that aren't valid SQLite identifiers", () => {
 		expect(() =>
-			resolveShards([
+			resolveExtracts([
 				"/tmp/whosonfirst-data-admin-us-latest.db",
 				{ path: "/tmp/weird.db", schemaName: "1nvalid-start" },
 			])
 		).toThrow(/not a valid SQLite identifier/)
 	})
 
-	test("non-main shard cannot use the reserved name `main`", () => {
-		expect(() => resolveShards(["/tmp/a.db", { path: "/tmp/b.db", schemaName: "main" }])).toThrow(/collides/)
+	test("non-main extract cannot use the reserved name `main`", () => {
+		expect(() => resolveExtracts(["/tmp/a.db", { path: "/tmp/b.db", schemaName: "main" }])).toThrow(/collides/)
 	})
 
 	test("empty input rejects", () => {
-		expect(() => resolveShards([])).toThrow(/at least one shard/)
+		expect(() => resolveExtracts([])).toThrow(/at least one extract/)
 	})
 })
 
-describe("pickShardForPlacetype", () => {
-	const shards = resolveShards([
+describe("pickExtractForPlacetype", () => {
+	const extracts = resolveExtracts([
 		"/tmp/whosonfirst-data-admin-us-latest.db",
 		"/tmp/whosonfirst-data-postalcode-us-latest.db",
 	])
 
 	test("undefined placetype → main", () => {
-		expect(pickShardForPlacetype(shards, undefined).schemaName).toBe("main")
+		expect(pickExtractForPlacetype(extracts, undefined).schemaName).toBe("main")
 	})
 
 	test("postalcode → postalcode_us (substring match on schema name)", () => {
-		expect(pickShardForPlacetype(shards, "postalcode").schemaName).toBe("postalcode_us")
+		expect(pickExtractForPlacetype(extracts, "postalcode").schemaName).toBe("postalcode_us")
 	})
 
-	test("locality → main (no postalcode-shard hit, falls back)", () => {
-		expect(pickShardForPlacetype(shards, "locality").schemaName).toBe("main")
+	test("locality → main (no postalcode-extract hit, falls back)", () => {
+		expect(pickExtractForPlacetype(extracts, "locality").schemaName).toBe("main")
 	})
 
 	test("explicit placetypes hint wins over substring match", () => {
-		const explicit = resolveShards([
+		const explicit = resolveExtracts([
 			"/tmp/whosonfirst-data-admin-us-latest.db",
 			{ path: "/tmp/whosonfirst-data-postalcode-us-latest.db", placetypes: ["postalcode", "region"] },
 		])
 
 		// `region` doesn't substring-match `postalcode_us`, but the explicit hint claims it.
-		expect(pickShardForPlacetype(explicit, "region").schemaName).toBe("postalcode_us")
+		expect(pickExtractForPlacetype(explicit, "region").schemaName).toBe("postalcode_us")
 	})
 
 	test("conservative substring match — does NOT false-positive on `region` matching `arboregion`", () => {
-		const odd = resolveShards(["/tmp/whosonfirst-data-admin-us-latest.db", { path: "/tmp/arboregion.db" }])
-		expect(pickShardForPlacetype(odd, "region").schemaName).toBe("main")
+		const odd = resolveExtracts(["/tmp/whosonfirst-data-admin-us-latest.db", { path: "/tmp/arboregion.db" }])
+		expect(pickExtractForPlacetype(odd, "region").schemaName).toBe("main")
 	})
 
-	// #920 — country-aware routing across MULTIPLE placetype-matching shards: first-match starved
-	// the second postcode shard (a FI postcode could never reach postalcode-geonames-tail behind
-	// postalcode-us). With the query country + probed country sets, the claiming shard wins; the
-	// original first-match order stays the tiebreak when no shard claims the country.
-	test("country routes across two postcode shards (#920)", () => {
-		const two = resolveShards([
+	// #920 — country-aware routing across MULTIPLE placetype-matching extracts: first-match starved
+	// the second postcode extract (a FI postcode could never reach postalcode-geonames-tail behind
+	// postalcode-us). With the query country + probed country sets, the claiming extract wins; the
+	// original first-match order stays the tiebreak when no extract claims the country.
+	test("country routes across two postcode extracts (#920)", () => {
+		const two = resolveExtracts([
 			"/tmp/whosonfirst-data-admin-us-latest.db",
 			"/tmp/whosonfirst-data-postalcode-us-latest.db",
 			"/tmp/postalcode-geonames-tail.db",
@@ -147,19 +147,19 @@ describe("pickShardForPlacetype", () => {
 			["postalcode_geonames_tail", new Set(["FI", "CZ", "PL"])],
 		])
 
-		expect(pickShardForPlacetype(two, "postalcode", { country: "FI", countriesBySchema: countries }).schemaName).toBe(
+		expect(pickExtractForPlacetype(two, "postalcode", { country: "FI", countriesBySchema: countries }).schemaName).toBe(
 			"postalcode_geonames_tail"
 		)
 
-		expect(pickShardForPlacetype(two, "postalcode", { country: "US", countriesBySchema: countries }).schemaName).toBe(
+		expect(pickExtractForPlacetype(two, "postalcode", { country: "US", countriesBySchema: countries }).schemaName).toBe(
 			"postalcode_us"
 		)
 
 		// Unknown country / no probe → first placetype match (the pre-#920 behavior, unchanged).
-		expect(pickShardForPlacetype(two, "postalcode", { country: "XX", countriesBySchema: countries }).schemaName).toBe(
+		expect(pickExtractForPlacetype(two, "postalcode", { country: "XX", countriesBySchema: countries }).schemaName).toBe(
 			"postalcode_us"
 		)
 
-		expect(pickShardForPlacetype(two, "postalcode").schemaName).toBe("postalcode_us")
+		expect(pickExtractForPlacetype(two, "postalcode").schemaName).toBe("postalcode_us")
 	})
 })

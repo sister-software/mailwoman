@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Typed schema for the DERIVED STREET-CENTROID shard (`street-centroids-<cc>.db`, built by
- *   `ban/scripts/build-street-centroid-shard.ts` — the #1042 street-level tier behind "street-only
- *   FR queries deserve a street-level answer"). The shard is a `GROUP BY street` roll-up of the
- *   sealed rooftop address-point shard: one row per (street, postcode, commune) carrying the street's
+ *   Typed schema for the DERIVED STREET-CENTROID extract (`street-centroids-<cc>.db`, built by
+ *   `ban/scripts/build-street-centroid-extract.ts` — the #1042 street-level tier behind "street-only
+ *   FR queries deserve a street-level answer"). The extract is a `GROUP BY street` roll-up of the
+ *   sealed rooftop address-point extract: one row per (street, postcode, commune) carrying the street's
  *   CENTROID + bounding-box EXTENT + member-point count. No new data source — a derived artifact.
  *
  *   Single source of truth for the columns shared by the BUILDER (a positional prepared INSERT for

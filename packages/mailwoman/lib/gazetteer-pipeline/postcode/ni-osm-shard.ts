@@ -99,8 +99,8 @@ export const NI_OSM_ID_BASE = 9_800_000_000_000
 /**
  * ISO-3166-1 alpha-2 stamped on every row. Northern Ireland is part of the United Kingdom, so `spr.country` is `GB` —
  * the same value the Code-Point Open shard writes. The NI-vs-GB distinction lives in the postcode area itself (`BT`),
- * not in the country column, and the shard routing (`pickShardForPlacetype`) keys on country, so writing anything else
- * here would take this shard out of GB postcode routing entirely.
+ * not in the country column, and the shard routing (`pickExtractForPlacetype`) keys on country, so writing anything
+ * else here would take this shard out of GB postcode routing entirely.
  */
 const COUNTRY = "GB"
 

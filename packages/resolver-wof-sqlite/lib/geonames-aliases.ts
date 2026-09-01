@@ -62,7 +62,7 @@ const FOLD_OWNED_TABLES = ["spr", "names", "place_population", "ancestors"] as c
  * country. Gaborone/BW at id 9000000121151 became Aichegg/AT and kept all 26 of its names; Kinshasa's 16,000,000
  * population landed on a Lithuanian hamlet.
  *
- * The upper bound is NOT the end of the id space. Each later shard owns a range above this one — GeoNames-postal @
+ * The upper bound is NOT the end of the id space. Each later extract owns a range above this one — GeoNames-postal @
  * 9.5e12, NL-PC6 @ 9.6e12, Code-Point @ 9.7e12, NI @ 9.8e12 — and a purge that ran past {@link GEONAMES_POSTAL_ID_BASE}
  * would delete them.
  */

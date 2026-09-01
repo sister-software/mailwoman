@@ -7,7 +7,7 @@ import { SqliteConventionSource } from "@mailwoman/resolver-wof-sqlite/sqlite-co
  * @author Teffen Ellis, et al.
  *
  *   `SqliteConventionSource` + the convention-asset auto-detect wiring (#290, Direction E). Proves
- *   the build-from-source asset path end-to-end: a `address_convention` table on an attached shard
+ *   the build-from-source asset path end-to-end: a `address_convention` table on an attached extract
  *   is auto-detected, queried on demand by WOF id, and the resolved convention reroutes `findPlace`
  *   dispatch — the same reroute the in-memory `opts.conventions` path gives, but through the
  *   asset.
