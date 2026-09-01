@@ -7,7 +7,7 @@
  *   this is the contract that makes the rows useful as counter-distribution training data.
  */
 
-import { makeLcg } from "@mailwoman/core/utils"
+import { makeLcg } from "@mailwoman/core/random"
 import {
 	hasAnyStreetSideTag,
 	type NoStreetBaseTuple,

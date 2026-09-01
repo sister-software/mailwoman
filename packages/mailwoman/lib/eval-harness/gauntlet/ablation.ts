@@ -59,8 +59,9 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { sha256Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { percentile, sha256Hex } from "@mailwoman/core/utils"
+import { percentile } from "@mailwoman/core/stats"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"

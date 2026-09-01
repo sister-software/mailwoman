@@ -9,7 +9,7 @@
  *   overwhelming majority align (no quarantine).
  */
 
-import { mulberry32 } from "@mailwoman/core/utils"
+import { mulberry32 } from "@mailwoman/core/random"
 import {
 	type BoundaryStressTemplate,
 	synthesizeBoundaryStressRow,

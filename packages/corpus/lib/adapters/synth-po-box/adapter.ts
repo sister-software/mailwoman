@@ -21,7 +21,7 @@
  */
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { makeLcg } from "@mailwoman/core/utils"
+import { makeLcg } from "@mailwoman/core/random"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"

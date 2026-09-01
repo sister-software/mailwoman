@@ -19,8 +19,8 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { pyRound } from "@mailwoman/core/numeric"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { pyRound } from "@mailwoman/core/utils"
 
 /**
  * Tags in report order. Anything the ledger carries that is absent here still appears, sorted, after the listed ones —

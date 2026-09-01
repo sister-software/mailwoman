@@ -52,6 +52,7 @@ import { tryStat, pathExists, readDirectory, readLocalBuffer } from "@mailwoman/
 import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { removePath, makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
+import { md5File } from "@mailwoman/core/hash"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -61,7 +62,7 @@ import {
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
-import { isoDate, md5File } from "@mailwoman/core/utils"
+import { isoDate } from "@mailwoman/core/utils"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn"
 import {
 	LATITUDE_MAX,

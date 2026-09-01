@@ -15,8 +15,8 @@
  *   under test.
  */
 
+import { formatPercent } from "@mailwoman/core/stats"
 import type { ComponentTag } from "@mailwoman/core/types"
-import { formatPercent } from "@mailwoman/core/utils"
 
 import { DEFAULT_WOF_PRIORITY_COUNTRIES } from "#gazetteer-pipeline/defaults"
 import { LADDER, type CountryGranularity, bottomsOutAt } from "#gazetteer-pipeline/granularity"

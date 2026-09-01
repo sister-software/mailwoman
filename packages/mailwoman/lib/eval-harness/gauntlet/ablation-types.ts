@@ -12,8 +12,8 @@
  *   ADDITIVE and says why it exists.
  */
 
+import { percentile } from "@mailwoman/core/stats"
 import type { ComponentTag } from "@mailwoman/core/types"
-import { percentile } from "@mailwoman/core/utils"
 
 import { ABLATION_GRADES, type AblationGrade, emptyGrades } from "#eval-harness/gauntlet/ablation-expectation"
 import type { ResolutionTier } from "#eval-harness/gauntlet/schema"

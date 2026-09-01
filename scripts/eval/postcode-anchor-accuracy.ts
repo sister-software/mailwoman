@@ -20,7 +20,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { percentile } from "@mailwoman/core/utils"
+import { percentile } from "@mailwoman/core/stats"
 import { WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 import { resolvePath } from "path-ts"

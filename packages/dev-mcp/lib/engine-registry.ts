@@ -27,7 +27,7 @@
  *   matter; it is not needed to test whether a warm engine changes which panel gets measured.
  */
 
-import { sha256Hex } from "@mailwoman/core/utils/hash"
+import { sha256Hex } from "@mailwoman/core/hash"
 import {
 	createGeocodeCommandOptions,
 	createGeocodeSession,

@@ -20,7 +20,7 @@
  *   --model-card neural-weights-en-us/model-card.json --n 2660
  */
 
-import { formatPercent } from "@mailwoman/core/utils"
+import { formatPercent } from "@mailwoman/core/stats"
 
 import { loadClassifierPair, loadGoldenRows, norm, parseTwoModelArgs, wordIncludes } from "./two-model-probe.ts"
 

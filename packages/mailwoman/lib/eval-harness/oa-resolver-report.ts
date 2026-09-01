@@ -9,7 +9,7 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { formatPercent, percentile } from "@mailwoman/core/utils"
+import { formatPercent, percentile } from "@mailwoman/core/stats"
 
 import type { Agg, AggPair, OAResolverEvalOptions } from "#eval-harness/oa-resolver-eval"
 

@@ -21,7 +21,7 @@
  */
 
 import { errorMessage } from "@mailwoman/core/errors/schema"
-import { clamp } from "@mailwoman/core/utils"
+import { clamp } from "@mailwoman/core/numeric"
 import { AsciifyTerminal, cursorTo, SGR_RESET } from "@sister.software/asciify/tui"
 
 import { blitFrame } from "#frame"

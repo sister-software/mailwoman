@@ -36,8 +36,9 @@
  */
 
 import { pathExists, readDirectoryRecursive, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pyRound } from "@mailwoman/core/numeric"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { isoSecondsUTC, pyRound } from "@mailwoman/core/utils"
+import { isoSecondsUTC } from "@mailwoman/core/utils"
 import { geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"

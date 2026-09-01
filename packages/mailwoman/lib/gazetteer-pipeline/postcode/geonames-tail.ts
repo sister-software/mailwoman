@@ -34,7 +34,8 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
-import { isoDate, md5File } from "@mailwoman/core/utils"
+import { md5File } from "@mailwoman/core/hash"
+import { isoDate } from "@mailwoman/core/utils"
 import type { GeonamesPostalIngestResult } from "@mailwoman/resolver-wof-sqlite/geonames"
 import type { ExtractMetaTable, WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

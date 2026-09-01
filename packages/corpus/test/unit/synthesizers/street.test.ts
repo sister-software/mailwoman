@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { makeLcg } from "@mailwoman/core/utils"
+import { makeLcg } from "@mailwoman/core/random"
 import { synthesizeStreetRow } from "@mailwoman/corpus/synthesizers/street"
 import { describe, expect, it } from "vitest"
 

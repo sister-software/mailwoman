@@ -17,7 +17,7 @@
  *   the strata, the provenance block. A number that differs between the paths differs because the measurement does.
  */
 
-import { formatPercent } from "@mailwoman/core/utils"
+import { formatPercent } from "@mailwoman/core/stats"
 import { checkCase } from "mailwoman/eval-harness/gauntlet/check-case"
 import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"

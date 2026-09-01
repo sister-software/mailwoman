@@ -20,8 +20,8 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readDirectory, readLocalBuffer, statPath } from "@mailwoman/core/fs/readers"
+import { createHash } from "@mailwoman/core/hash"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { createHash } from "@mailwoman/core/utils/hash"
 import { POSTCODE_BINARY_KEY_FLOORS } from "mailwoman/gazetteer-pipeline/postcode/binary"
 import { join, relative, resolvePath } from "path-ts"
 

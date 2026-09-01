@@ -25,7 +25,7 @@ import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
 import { type AddressTree, firstNodeWhere } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { formatPercent } from "@mailwoman/core/utils"
+import { formatPercent } from "@mailwoman/core/stats"
 import { JSONSpliterator } from "spliterator"
 
 import { norm, valueMatch } from "./value-match.ts"

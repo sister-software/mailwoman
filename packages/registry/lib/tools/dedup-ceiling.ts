@@ -32,7 +32,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { formatPercent } from "@mailwoman/core/utils"
+import { formatPercent } from "@mailwoman/core/stats"
 import { jaccard } from "@mailwoman/match"
 
 import { colocatedDistinctPairs, scanColocatedProviders, stateOption, type ColocatedProvider } from "#tools/shared"

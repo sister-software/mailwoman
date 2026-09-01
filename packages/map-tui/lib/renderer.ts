@@ -15,7 +15,7 @@
  * requested marker always wins the cell.
  */
 
-import { clamp } from "@mailwoman/core/utils"
+import { clamp } from "@mailwoman/core/numeric"
 
 import { type MapFrame, overlayText, rasterizeToFrame, rgbToPacked } from "#frame"
 import {

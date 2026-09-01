@@ -54,9 +54,10 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { md5File } from "@mailwoman/core/hash"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { allRows, md5File } from "@mailwoman/core/utils"
+import { allRows } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import {
 	PairIndexResolver,

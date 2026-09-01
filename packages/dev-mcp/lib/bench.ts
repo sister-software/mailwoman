@@ -16,7 +16,7 @@
  *   A single-threaded number is the honest one to quote.
  */
 
-import { percentile } from "@mailwoman/core/utils"
+import { percentile } from "@mailwoman/core/stats"
 
 export interface LatencyReading {
 	n: number

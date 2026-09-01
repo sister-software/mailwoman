@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { formatPercent, median, percentile } from "@mailwoman/core/utils/stats"
+import { formatPercent, median, percentile } from "@mailwoman/core/stats"
 import { describe, expect, it } from "vitest"
 
 describe("stats", () => {
