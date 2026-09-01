@@ -15,7 +15,7 @@
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolveOpts, ResolverBackend } from "@mailwoman/core/resolver"
-import { adminContainmentVerdict, partitionByContainment } from "@mailwoman/resolver/admin-containment"
+import { adminContainmentVerdict, partitionByContainment } from "@mailwoman/resolver/admin"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { describe, expect, it } from "vitest"
 

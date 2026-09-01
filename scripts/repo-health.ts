@@ -23,12 +23,24 @@ interface DebtCounters {
 	doubleCast: number
 	deepRelativeImports: number
 	filterBoolean: number
+	/**
+	 * Non-generated, non-test source files over 1,000 lines.
+	 *
+	 * BASELINE 1, ACCEPTED 2026-09-01. `packages/filer/lib/sdk/exhibit21.ts` crossed the line at 1,023 when `c8b5c1c6f`
+	 * added 30 lines of `TODO`/`@deprecated` annotations — cleanup notes tripping a debt counter. Operator decision:
+	 * leave it. Recorded here rather than absorbed silently, so the 1 reads as a known file rather than as drift, and so
+	 * a SECOND file crossing still fails the gate.
+	 */
 	productionFilesOver1000Lines: number
 	selfPackageImports: number
 	synchronousFilesystemCalls: number
 	/**
-	 * Occurrences of the word `extract` in any spelling, anywhere in tracked source — identifiers, comments and string
-	 * literals alike.
+	 * Occurrences of the retired vocabulary word — see {@link BANNED_VOCABULARY} for which — in any spelling, anywhere in
+	 * tracked source: identifiers, comments and string literals alike.
+	 *
+	 * THIS SENTENCE DOES NOT NAME THE WORD, deliberately. It named it until 2026-09-01, when the case-preserving sweep
+	 * rewrote the name to the REPLACEMENT and left the doc describing a different word than the pattern counts. One
+	 * constant holds the term; prose points at the constant.
 	 *
 	 * The vocabulary is being removed because the word stood for FOUR different things (corpus recipes, per-country
 	 * postcode databases, WOF extracts, and the providers' region databases), so there is no replacement synonym — each

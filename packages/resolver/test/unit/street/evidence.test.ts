@@ -14,7 +14,7 @@ import {
 	pickByStreetEvidence,
 	type StreetCandidate,
 	type StreetLocalityEvidence,
-} from "@mailwoman/resolver/street-evidence"
+} from "@mailwoman/resolver/street"
 import { describe, expect, test } from "vitest"
 
 /**

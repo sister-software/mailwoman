@@ -28,6 +28,10 @@ const DIRECTORY_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: 
 	...["decoder", "tokenization", "types", "resources", "pipeline"].map(
 		(subpath) => ["@mailwoman/core", subpath] as const
 	),
+	// Moved here from FILE_SUBPATHS when the prefix fold made `resolve` a directory: `resolve.ts` +
+	// `resolve-passes.ts` became `resolve/{index,passes}.ts`. Same subpath, different resolver — and
+	// `requireAlias` refused the docs build until it was listed on the right side, which is the point.
+	["@mailwoman/resolver", "resolve"],
 ]
 
 const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: string]> = [
@@ -46,7 +50,6 @@ const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: strin
 	// the moment it was armed.
 	["@mailwoman/sqlite", "dialect"],
 	["@mailwoman/resolver", "span-rescore"],
-	["@mailwoman/resolver", "resolve"],
 ]
 
 const CODEX_SUBPATHS = [null, "country", "de", "es", "fr", "gb", "it", "nz", "us"] as const

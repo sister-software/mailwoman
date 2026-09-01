@@ -30,8 +30,8 @@ import {
 	applyAdminCoherence,
 	applyExplicitCountryCoherence,
 	applyRegionCountryCoherence,
-} from "#admin-coherence-passes"
-import { adminContainmentVerdict, firstRegionQualifier, partitionByContainment } from "#admin-containment"
+} from "#admin/coherence-passes"
+import { adminContainmentVerdict, firstRegionQualifier, partitionByContainment } from "#admin/containment"
 import { describeCapabilityGaps, reportCapabilityGaps } from "#backend-capabilities"
 import {
 	BARE_REGION_DOMINANCE_LOG10,
@@ -46,9 +46,9 @@ import {
 	findPostcodeCountryScope,
 	type PostcodeCountryScope,
 	stampPostcodeCountryScope,
-} from "#postcode-country-coherence"
-import { type CoordinateOptionalPlace, postcodePrefixResolvedPlace, probePostcodePrefix } from "#postcode-prefix"
-import { applyPostcodeShapeCoherence, isShapeExcludedPostcode } from "#postcode-shape-coherence"
+} from "#postcode/country-coherence"
+import { type CoordinateOptionalPlace, postcodePrefixResolvedPlace, probePostcodePrefix } from "#postcode/prefix"
+import { applyPostcodeShapeCoherence, isShapeExcludedPostcode } from "#postcode/shape-coherence"
 import {
 	applyPostcodeConsistency,
 	applySpanRescore,
@@ -58,8 +58,8 @@ import {
 	NOOP_TRACE_RECORDER,
 	pickCompletion,
 	type ResolutionState,
-} from "#resolve-passes"
-import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "#street-tier"
+} from "#resolve/passes"
+import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "#street/tier"
 import {
 	type CapitalLevelFn,
 	DEFAULT_COUNTRY_PRIOR_WEIGHT,

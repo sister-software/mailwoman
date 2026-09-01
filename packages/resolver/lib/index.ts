@@ -25,7 +25,7 @@ export { createWOFResolver } from "#resolve"
 export { COUNTRY_BBOX, finestResolvedCoordinate, isImplausibleResolution, outsideExpectedCountry } from "#plausibility"
 
 export type { PlausibilityOpts, PlausibilityVerdict, ResolvedCoordinate } from "#plausibility"
-export { foldStreetSurface, isPureTypeVocabulary, pickByStreetEvidence } from "#street-evidence"
+export { foldStreetSurface, isPureTypeVocabulary, pickByStreetEvidence } from "#street/evidence"
 
 export type {
 	PickByStreetEvidenceOpts,
@@ -33,7 +33,7 @@ export type {
 	StreetEvidencePick,
 	StreetEvidenceScope,
 	StreetLocalityEvidence,
-} from "#street-evidence"
+} from "#street/evidence"
 
 export {
 	findPostcodeCountryScope,
@@ -41,12 +41,12 @@ export {
 	localityValuesInDocumentOrder,
 	POSTCODE_COUNTRY_COHERENCE_GATE_KM,
 	stampPostcodeCountryScope,
-} from "#postcode-country-coherence"
+} from "#postcode/country-coherence"
 
-export type { PostcodeCountryScope, PostcodeCountryScopeOpts } from "#postcode-country-coherence"
+export type { PostcodeCountryScope, PostcodeCountryScopeOpts } from "#postcode/country-coherence"
 export { findRescoreCandidate, hasResolvedPlace } from "#span-rescore"
 export type { RescoreCandidate, SpanRescoreOptions } from "#span-rescore"
-export { adminContainmentVerdict, partitionByContainment } from "#admin-containment"
+export { adminContainmentVerdict, partitionByContainment } from "#admin/containment"
 
 export {
 	ADMIN_LADDER_LOCALITY_FIRST,
@@ -56,9 +56,9 @@ export {
 	AREA_GRADE_POSTALCODE_SPECIFICITY,
 	mostSpecificResolved,
 	resolvedSpecificity,
-} from "#admin-winner"
+} from "#admin/winner"
 
-export type { ResolvedPostcodeHit, ResolvedSpecificityInput } from "#admin-winner"
+export type { ResolvedPostcodeHit, ResolvedSpecificityInput } from "#admin/winner"
 
 // The type contract + placetype helpers live in core (pure types, keep core a leaf). Re-export so
 // consumers get the whole surface from `@mailwoman/resolver`.
