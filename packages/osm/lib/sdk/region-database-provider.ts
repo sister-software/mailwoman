@@ -19,7 +19,7 @@ import { join } from "path-ts"
 import { streetLocaleForCountry, supportedOSMCountries } from "#sdk/street-locale"
 
 /**
- * What the cascade needs from an OSM shard — structurally a subset of mailwoman's `StateShards`.
+ * What the cascade needs from an OSM shard — structurally a subset of mailwoman's `RegionDatabases`.
  */
 export interface OSMShards {
 	addressPoints?: AddressPointSqliteLookup
@@ -31,10 +31,10 @@ export interface OSMShards {
  *
  * `for` is synchronous, so on-disk existence is probed asynchronously ONCE instead of per call: {@linkcode warm} awaits
  * `pathExists` for every supported country's shard and records what exists; `for` consults that map. Prefer
- * {@linkcode OSMShardProvider.create}, which constructs AND warms before answering — a provider constructed directly
- * must be warmed before its first `for`, or it answers `{}` for every country.
+ * {@linkcode OSMRegionDatabaseProvider.create}, which constructs AND warms before answering — a provider constructed
+ * directly must be warmed before its first `for`, or it answers `{}` for every country.
  */
-export class OSMShardProvider implements Disposable {
+export class OSMRegionDatabaseProvider implements Disposable {
 	readonly #dataRoot: string
 	readonly #cache = new Map<string, OSMShards>()
 	/**
@@ -51,8 +51,8 @@ export class OSMShardProvider implements Disposable {
 	 * Construct a provider and warm its existence map before answering. The constructor cannot await the probe, so this
 	 * static factory does; a caller that constructs directly must {@linkcode warm} before the first `for`.
 	 */
-	static async create(dataRoot: string): Promise<OSMShardProvider> {
-		const provider = new OSMShardProvider(dataRoot)
+	static async create(dataRoot: string): Promise<OSMRegionDatabaseProvider> {
+		const provider = new OSMRegionDatabaseProvider(dataRoot)
 
 		await provider.warm()
 
@@ -68,7 +68,7 @@ export class OSMShardProvider implements Disposable {
 	 *
 	 * Awaits `pathExists` for each supported country's rooftop shard, recording the paths that exist so `for` never
 	 * touches the filesystem. Safe to call more than once: the probe promise is cached, so every caller (and
-	 * {@linkcode OSMShardProvider.create}) shares one pass.
+	 * {@linkcode OSMRegionDatabaseProvider.create}) shares one pass.
 	 */
 	readonly warm = (): Promise<void> => (this.#warmPromise ??= this.#probeShards())
 

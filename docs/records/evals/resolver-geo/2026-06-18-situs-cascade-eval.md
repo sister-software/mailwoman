@@ -28,7 +28,7 @@ The eval simply called `resolveTree` with no shard options, so every row landed 
 `copy-weights` is skipped on CI and the per-state shards are multi-GB, so nobody noticed the eval was
 running a different, blunter path than production.
 
-`--cascade` closes that: it builds a multi-state `ShardProvider` (per-row state selection), routes
+`--cascade` closes that: it builds a multi-state `RegionDatabaseProvider` (per-row state selection), routes
 the neural resolve through the same `address_point > interpolated > admin` cascade the geocoder
 ships, and reports it as the `neural+cascade` arm. The default (no flag) stays byte-identical — the
 admin-centroid headline is unchanged, so this adds the shipped coordinate beside it rather than
@@ -81,7 +81,7 @@ retrain and not more gazetteer breadth.
 
 - **The cascade needs the data layer.** The bare `@mailwoman/neural-weights-*` weights plus the admin
   gazetteer give the admin centroid; the meter-grade coordinate requires the per-state situs +
-  interpolation shards wired in (the server's `ShardProvider`, the CLI's `--address-points` /
+  interpolation shards wired in (the server's `RegionDatabaseProvider`, the CLI's `--address-points` /
   `--interpolation`, or `--cascade` here). The shards are not in the npm package — they are the data
   release the geocoder consumes.
 - **Ship-config parity is partial.** The eval feeds the postcode **anchor** (the dominant channel for

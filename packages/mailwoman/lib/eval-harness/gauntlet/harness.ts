@@ -25,8 +25,8 @@ import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 import type { AdminCoherenceReport } from "#admin-coherence"
 import { OVERLAY_LOCALE_BY_COUNTRY } from "#eval-harness/gauntlet/routing"
 import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode-core"
+import { RegionDatabaseProvider } from "#geocode-regions"
 import type { GeocodeResult } from "#geocode-result"
-import { ShardProvider } from "#geocode-shards"
 import { poiTaxonomyLookup } from "#poi-intent"
 import {
 	createResolverBackend,
@@ -475,18 +475,18 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				capitalIndex.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: undefined
 
-	const shardProvider = await ShardProvider.create(resolverMod, mailwomanDataRoot())
+	const regionDatabaseProvider = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
 	// Lazy like the resolver module above: `@mailwoman/osm` is an in-repo (unpublished) workspace, and
 	// A static import here would break the
 	// published `mailwoman` CLI outright rather than only this maintainer-run gate.
-	const { OSMShardProvider } = await import("@mailwoman/osm/sdk")
-	const osmProvider = await OSMShardProvider.create(mailwomanDataRoot())
+	const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/sdk")
+	const osmProvider = await OSMRegionDatabaseProvider.create(mailwomanDataRoot())
 	// The BAN national-register tier (#1012) sits AHEAD of OSM in production (geocode.tsx wires it the
 	// same way) — without it here the gauntlet graded an OSM-first cascade production never runs, and
 	// the fr-chevaleret-bare pin silently guarded the wrong tier (caught 2026-07-10 when the BAN tier's
 	// missing bbox fall-through regressed the bare form in production while this gate stayed green).
-	const { BANShardProvider } = await import("@mailwoman/ban/sdk")
-	const banProvider = await BANShardProvider.create(mailwomanDataRoot())
+	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
+	const banProvider = await BANRegionDatabaseProvider.create(mailwomanDataRoot())
 
 	const leverDeps = resolverLeverDeps(opts.levers)
 
@@ -595,7 +595,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			// #1649: same lexicon-aware kind classifier the CLI session wires — the harness grades the user's path.
 			classifyKind: poiKindClassifier,
 			resolver,
-			shards: shardProvider.for,
+			shards: regionDatabaseProvider.for,
 			nationalShards: banProvider.for,
 			osmShards: osmProvider.for,
 			...leverDeps,
@@ -630,7 +630,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			return { result, resolver: resolverTrace }
 		},
 		[Symbol.dispose]: () => {
-			shardProvider[Symbol.dispose]()
+			regionDatabaseProvider[Symbol.dispose]()
 			banProvider[Symbol.dispose]()
 			osmProvider[Symbol.dispose]()
 		},

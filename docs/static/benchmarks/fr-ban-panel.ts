@@ -43,7 +43,7 @@
 // `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from
 // <DATA_ROOT>/wof/candidate.db and the BAN shard from <DATA_ROOT>/ban/address-points-fr.db.
 
-import { BANShardProvider } from "@mailwoman/ban/sdk"
+import { BANRegionDatabaseProvider } from "@mailwoman/ban/sdk"
 import { readLocalJSONFile, realPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { createRequire } from "@mailwoman/core/module/resolvers"
@@ -343,7 +343,7 @@ async function run() {
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: LOCALE })
 	using lookup = new WOFCandidateTableLookup({ databasePath: candidatePath })
 	const resolver = createWOFResolver(lookup)
-	const banShards = new BANShardProvider(DATA_ROOT)
+	const banShards = new BANRegionDatabaseProvider(DATA_ROOT)
 
 	const arms: Record<string, (row: PanelRow) => string> = { clean: cleanForm, reordered: reorderedForm }
 	const results: Record<string, { summary: ReturnType<typeof summarize>; records: GradedRecord[] }> = {}

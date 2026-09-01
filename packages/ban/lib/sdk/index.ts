@@ -15,4 +15,4 @@
 export * from "#sdk/fetch"
 export * from "#sdk/extract"
 export * from "#sdk/street-locale"
-export * from "#sdk/shard-provider"
+export * from "#sdk/region-database-provider"

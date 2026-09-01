@@ -31,16 +31,16 @@ is a subset, it says so and says what it left out.
 serves TypeScript source directly, so no build step stands between an installed package and a running
 script.
 
-| Import                         | What it carries                                                           |
-| ------------------------------ | ------------------------------------------------------------------------- |
-| `mailwoman`                    | `createRuntimePipeline`, plus everything `@mailwoman/core` re-exports     |
-| `mailwoman/geocode-core`       | `geocodeAddress`, `parseForGeocode`, `ShardProvider`, the result types    |
-| `mailwoman/geocode-stream`     | `geocodeStream`                                                           |
-| `mailwoman/resolver-backend`   | `createResolverBackend`, `resolveCandidateDBPath`, data-root path helpers |
-| `mailwoman/cli-kit`            | Ink helpers for building an interactive command                           |
-| `mailwoman/test-kit`           | The parser test helpers                                                   |
-| `mailwoman/poi-overpass`       | OverpassQL export for a matched POI intent                                |
-| `mailwoman/gazetteer-pipeline` | Gazetteer build internals, plus a wildcard subpath for its modules        |
+| Import                         | What it carries                                                                 |
+| ------------------------------ | ------------------------------------------------------------------------------- |
+| `mailwoman`                    | `createRuntimePipeline`, plus everything `@mailwoman/core` re-exports           |
+| `mailwoman/geocode-core`       | `geocodeAddress`, `parseForGeocode`, `RegionDatabaseProvider`, the result types |
+| `mailwoman/geocode-stream`     | `geocodeStream`                                                                 |
+| `mailwoman/resolver-backend`   | `createResolverBackend`, `resolveCandidateDBPath`, data-root path helpers       |
+| `mailwoman/cli-kit`            | Ink helpers for building an interactive command                                 |
+| `mailwoman/test-kit`           | The parser test helpers                                                         |
+| `mailwoman/poi-overpass`       | OverpassQL export for a matched POI intent                                      |
+| `mailwoman/gazetteer-pipeline` | Gazetteer build internals, plus a wildcard subpath for its modules              |
 
 `geocodeAddress` and its result types are reachable only through `mailwoman/geocode-core`. They are
 not re-exported from the bare specifier.
@@ -301,8 +301,8 @@ row.
 | `classifier`             | `GeocodeClassifier`            | required             | The parser                                                     |
 | `inputMode`              | `"fragmented"` / `"formatted"` | from the query kind  | Which register the evidence channels run in                    |
 | `resolver`               | `Resolver`                     | required             | The gazetteer walk                                             |
-| `shards`                 | `ShardResolver`                | none                 | Per-state rooftop and interpolation lookups                    |
-| `nationalShards`         | `(country) => StateShards`     | none                 | Per-country lookups, for example the French rooftop database   |
+| `shards`                 | `RegionDatabaseResolver`       | none                 | Per-state rooftop and interpolation lookups                    |
+| `nationalShards`         | `(country) => RegionDatabases` | none                 | Per-country lookups, for example the French rooftop database   |
 | `defaultCountry`         | `string`                       | none                 | Scopes the resolver to one country                             |
 | `bias`                   | proximity points               | none                 | Soft re-rank toward a viewport or a user location              |
 | `interpCalibration`      | `number` or a table            | the database's value | Multiplier on the interpolation tier's uncertainty radius      |
@@ -349,15 +349,15 @@ the tier, not on the presence of `house_number`: the parsed span is populated wh
 `hierarchy` is the resolved view and carries only nodes the resolver decorated. The flat span fields
 are the parsed view. The two disagree whenever the parse found something the gazetteer did not.
 
-### `ShardProvider`
+### `RegionDatabaseProvider`
 
-`ShardProvider` opens per-state rooftop and interpolation databases on demand, caches the handles, and
+`RegionDatabaseProvider` opens per-state rooftop and interpolation databases on demand, caches the handles, and
 swaps them atomically when the data release changes.
 
 ```ts
-class ShardProvider {
-	constructor(factory: ShardLookupFactory, dataRoot: string)
-	readonly for: ShardResolver
+class RegionDatabaseProvider {
+	constructor(factory: RegionDatabaseFactory, dataRoot: string)
+	readonly for: RegionDatabaseResolver
 	versions(): DataReleaseManifest | null
 	reload(): DataReleaseManifest | null
 	close(): void

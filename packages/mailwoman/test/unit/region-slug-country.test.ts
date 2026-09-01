@@ -11,7 +11,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { regionSlugFromTree, regionToStateSlug } from "mailwoman/geocode-shards"
+import { regionSlugFromTree, regionToStateSlug } from "mailwoman/geocode-regions"
 import { describe, expect, it } from "vitest"
 
 const node = (over: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode => ({

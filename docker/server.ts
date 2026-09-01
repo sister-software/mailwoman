@@ -12,7 +12,7 @@
  *   degraded (parse+health only)" — so `docker run` with no data volume still answers `/v1/parse`.
  *
  *   The wiring MIRRORS `mailwoman/api-engine.ts` (`createServeEngine`) using only that package's own
- *   exported building blocks — `mailwoman/geocode-core` (`geocodeAddress`, `ShardProvider`) and
+ *   exported building blocks — `mailwoman/geocode-core` (`geocodeAddress`, `RegionDatabaseProvider`) and
  *   `mailwoman/resolver-backend` (`createResolverBackend`, `resolveCandidateDBPath`, `wofShardPaths`,
  *   `mailwomanDataRoot`) — so the geocode path does not drift from the real server. Model WEIGHTS ship
  *   IN the image via `@mailwoman/neural-weights-en-us`; the gazetteer / resolver DBs are volume-mounted
@@ -40,7 +40,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { geocodeAddress } from "mailwoman/geocode-core"
-import { ShardProvider } from "mailwoman/geocode-shards"
+import { RegionDatabaseProvider } from "mailwoman/geocode-regions"
 import {
 	createResolverBackend,
 	mailwomanDataRoot,
@@ -113,7 +113,7 @@ async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() 
 				const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 				const backend = await createResolverBackend(resolverMod, { wofPaths: paths })
 				const resolver = createWOFResolver(backend)
-				const shards = await ShardProvider.create(resolverMod, DATA_ROOT)
+				const shards = await RegionDatabaseProvider.create(resolverMod, DATA_ROOT)
 				// Candidate backend → country-agnostic (population-first, demo parity); FTS backend keeps US.
 				const defaultCountry = candidateDB ? undefined : "US"
 

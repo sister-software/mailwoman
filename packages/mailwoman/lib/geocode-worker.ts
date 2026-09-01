@@ -17,7 +17,7 @@ import { type ColumnMapping, geocodeAddressVia, makeGeocodeHandler } from "@mail
 import { createWOFResolver } from "@mailwoman/resolver"
 
 import { geocodeAddress, parseForGeocode } from "#geocode-core"
-import { ShardProvider } from "#geocode-shards"
+import { RegionDatabaseProvider } from "#geocode-regions"
 import type { GeocodeStreamConfig } from "#geocode-stream"
 import { createResolverBackend } from "#resolver-backend"
 
@@ -32,7 +32,7 @@ const wof = await import("@mailwoman/resolver-wof-sqlite")
 // drop-in servers do, or a row geocoded in bulk answers differently from the same row geocoded singly.
 const lookup = await createResolverBackend(wof, { dataRoot: cfg.dataRoot, wofPaths: cfg.wofDBPath })
 const resolver = createWOFResolver(lookup)
-const shards = await ShardProvider.create(wof, cfg.dataRoot)
+const shards = await RegionDatabaseProvider.create(wof, cfg.dataRoot)
 
 const geoDeps = {
 	classifier,

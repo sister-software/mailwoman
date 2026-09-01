@@ -10,7 +10,7 @@ import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import type { AddressPointLookup, InterpolationLookup } from "@mailwoman/resolver"
 
 import type { OAResolverEvalOptions } from "#eval-harness/oa-resolver/options"
-import type { ShardProvider } from "#geocode-shards"
+import type { RegionDatabaseProvider } from "#geocode-regions"
 
 /**
  * The postcode shard reader the anchor extractor probes — the WOF postcode lookup's structural contract, named here so
@@ -31,7 +31,7 @@ export type ExtractPostcodeAnchors = typeof import("@mailwoman/neural/postcode-a
  * Each tier answers WHERE, never WHICH PLACE: every `neural+<tier>` arm keeps neural's admin match and replaces only
  * the coordinate, so the delta between arms isolates exactly what the tier sharpens. `--cascade` supersedes the
  * single-state `--address-points`/`--interpolation` flags with per-row, per-state shard selection through a
- * ShardProvider.
+ * RegionDatabaseProvider.
  */
 export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	// Postcode-anchor fusion (opt-in via `--postcode-anchor`). The resolver supplies the admin/place
@@ -65,7 +65,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	}
 
 	// `--cascade` (#718 situs-eval): grade the PRODUCTION coordinate path (mailwoman/geocode-core.ts) —
-	// per-row, per-state situs + interpolation shards via ShardProvider — so the eval reports the SHIPPED
+	// per-row, per-state situs + interpolation shards via RegionDatabaseProvider — so the eval reports the SHIPPED
 	// coordinate (address_point > interpolated > admin) across ALL states, not the admin centroid the
 	// neural headline alone reports. The diagnostic that motivated this: the headline read 3.3 km p50 /
 	// 10 km p90 (admin centroid) while the production cascade over the same rows is ~0 m p50 / 1 km p90,
@@ -75,13 +75,13 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	// <root>/interpolation/).
 	const cascadeOn = options.cascade ?? false
 	const dataRoot = options.dataRoot || mailwomanDataRoot()
-	let cascadeProvider: ShardProvider | null = null
+	let cascadeProvider: RegionDatabaseProvider | null = null
 
 	if (cascadeOn) {
-		const { ShardProvider } = await import("#geocode-shards")
+		const { RegionDatabaseProvider } = await import("#geocode-regions")
 		const { AddressPointSqliteLookup, StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
 
-		cascadeProvider = await ShardProvider.create({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)
+		cascadeProvider = await RegionDatabaseProvider.create({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)
 	}
 
 	// The addrpt + interp arms run when EITHER a single-state shard was given OR --cascade is on.

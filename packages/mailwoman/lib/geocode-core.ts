@@ -16,9 +16,9 @@
  *   3. `resolveTree` with the coordinate tiers wired (additive; admin-only when shards absent).
  *   4. Extract the best coordinate + resolution tier (address_point > interpolated > admin).
  *
- *   The cascade depends on a {@link ShardResolver} — a `(stateSlug) => { addressPoints?,
+ *   The cascade depends on a {@link RegionDatabaseResolver} — a `(stateSlug) => { addressPoints?,
  *   interpolation? }` function — so the CLI (honoring its explicit `--address-points-db` flags) and
- *   the server (a cached {@link ShardProvider}) supply shards their own way without the core knowing
+ *   the server (a cached {@link RegionDatabaseProvider}) supply shards their own way without the core knowing
  *   how.
  */
 
@@ -47,8 +47,8 @@ import type { AddressPointLookup, PostcodePrefixIndexLike, ResolveOpts, Resolver
 import { authoritativeQueryFrom, consultAuthoritativeProvider } from "#authoritative"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "#default-placer"
 import { applyEntityTiers } from "#fork-entity"
+import { type RegionDatabaseResolver, type RegionDatabases, regionSlugFromTree } from "#geocode-regions"
 import { extractGeocodeResult } from "#geocode-result"
-import { type ShardResolver, type StateShards, regionSlugFromTree } from "#geocode-shards"
 import {
 	postcodeCountryScopeOf,
 	recognizeBarePostcode,
@@ -161,22 +161,22 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	/**
 	 * Per-state shard resolver. Omit for admin-only geocoding.
 	 */
-	shards?: ShardResolver
+	shards?: RegionDatabaseResolver
 	/**
 	 * Authoritative national open-register rooftop shards keyed by ISO-3166 alpha-2 country (#1012) — the government
 	 * address registers (BAN-FR today, 26M points). Consulted ONLY when no US per-state situs shard matched (a non-US
 	 * parse), and AHEAD of {@link osmShards}: a national register is denser + coordinate-authoritative, so it outranks the
-	 * community OSM fallback. Inject from `@mailwoman/ban`'s `BANShardProvider`; absent = no national tier. Licence
-	 * Ouverte/Etalab (permissive) — see `ban/README.md`. The shape generalises to other national registers.
+	 * community OSM fallback. Inject from `@mailwoman/ban`'s `BANRegionDatabaseProvider`; absent = no national tier.
+	 * Licence Ouverte/Etalab (permissive) — see `ban/README.md`. The shape generalises to other national registers.
 	 */
-	nationalShards?: (country: string) => StateShards
+	nationalShards?: (country: string) => RegionDatabases
 	/**
 	 * OSM rooftop shards keyed by ISO-3166 alpha-2 country (#247) — the opt-in international precision tier. Consulted
 	 * ONLY when no US per-state situs shard matched (a non-US parse) AND no {@link nationalShards} register covered the
 	 * country, so the US path is untouched and BAN wins where it exists. Inject from `@mailwoman/osm`'s
-	 * `OSMShardProvider`; absent = no OSM tier. ODbL — see `osm/README.md`.
+	 * `OSMRegionDatabaseProvider`; absent = no OSM tier. ODbL — see `osm/README.md`.
 	 */
-	osmShards?: (country: string) => StateShards
+	osmShards?: (country: string) => RegionDatabases
 	/**
 	 * A configured authoritative provider (#1901) — OS Places, an OS NGD-backed service, or any adapter implementing
 	 * `@mailwoman/core/resolver`'s contract. Absent = the geocode result is byte-identical to a run without the field

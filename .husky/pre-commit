@@ -66,7 +66,14 @@ if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailw
 		# cli.js byte-identical does not rewrite it, so an mtime check against cli.js blocks
 		# forever after an unrelated source edit (bit the ablation-harness worktree 2026-08-05).
 		# tsc always touches the buildinfo when it runs; fall back to cli.js on trees without one.
-		REF=packages/mailwoman/out/tsconfig.tsbuildinfo
+		# tsc writes the buildinfo NEXT TO THE TSCONFIG, not into outDir — `packages/mailwoman/tsconfig.tsbuildinfo`.
+		# This named `out/tsconfig.tsbuildinfo`, which has not existed for some time, so the guard silently fell
+		# through to the cli.js branch below and lost the property it was reaching for: tsc touches the buildinfo
+		# on every run, including one that finds every output byte-identical, whereas cli.js is only rewritten
+		# when its bytes change. A formatter that rewrites a source without changing it then trips the guard
+		# forever, and `yarn compile` cannot clear it because there is nothing to rebuild.
+		REF=packages/mailwoman/tsconfig.tsbuildinfo
+		[ -f "$REF" ] || REF=packages/mailwoman/out/tsconfig.tsbuildinfo
 		[ -f "$REF" ] || REF=packages/mailwoman/out/cli.js
 		NEWEST_SRC=$(find packages/mailwoman/lib/commands packages/mailwoman/lib/cli-kit \( -name '*.tsx' -o -name '*.ts' \) -newer "$REF" -print -quit 2>/dev/null)
 		if [ -n "$NEWEST_SRC" ]; then

@@ -28,7 +28,7 @@ import {
 	runDropInCLI,
 } from "mailwoman/cli-kit/dropin"
 import { geocodeAddress } from "mailwoman/geocode-core"
-import { ShardProvider } from "mailwoman/geocode-shards"
+import { RegionDatabaseProvider } from "mailwoman/geocode-regions"
 import { createResolverBackend, mailwomanDataRoot } from "mailwoman/resolver-backend"
 
 import {
@@ -87,12 +87,12 @@ async function serve(): Promise<void> {
 
 	const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
 	const resolver = createWOFResolver(backend)
-	const shards = await ShardProvider.create(resolverMod, mailwomanDataRoot())
+	const shards = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
 	const postcodeOfLocality = await createLocalityPostcodeLookup()
 	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse. A no-op
 	// when the shard isn't on disk (existsSync-gated inside the provider), so the endpoint degrades cleanly.
-	const { BANShardProvider } = await import("@mailwoman/ban/sdk")
-	const banShards = await BANShardProvider.create(mailwomanDataRoot())
+	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
+	const banShards = await BANRegionDatabaseProvider.create(mailwomanDataRoot())
 	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
 
 	const engine: PhotonEngine = {

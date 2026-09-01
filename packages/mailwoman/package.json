@@ -99,10 +99,10 @@
 			"default": "./out/geocode-core.js",
 			"types": "./out/geocode-core.d.ts"
 		},
-		"#geocode-shards": {
-			"node": "./lib/geocode-shards.ts",
-			"default": "./out/geocode-shards.js",
-			"types": "./out/geocode-shards.d.ts"
+		"#geocode-regions": {
+			"node": "./lib/geocode-regions.ts",
+			"default": "./out/geocode-regions.js",
+			"types": "./out/geocode-regions.d.ts"
 		},
 		"#geocode-session": {
 			"node": "./lib/geocode-session.ts",
@@ -397,10 +397,10 @@
 			"default": "./out/geocode-result.js",
 			"types": "./out/geocode-result.d.ts"
 		},
-		"./geocode-shards": {
-			"node": "./lib/geocode-shards.ts",
-			"default": "./out/geocode-shards.js",
-			"types": "./out/geocode-shards.d.ts"
+		"./geocode-regions": {
+			"node": "./lib/geocode-regions.ts",
+			"default": "./out/geocode-regions.js",
+			"types": "./out/geocode-regions.d.ts"
 		},
 		"./geocode-tree-reads": {
 			"node": "./lib/geocode-tree-reads.ts",

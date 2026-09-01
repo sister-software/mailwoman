@@ -54,8 +54,8 @@ import {
 	parseForGeocode,
 	type GeocodeDeps,
 } from "#geocode-core"
+import { RegionDatabaseProvider, type RegionDatabaseResolver, type RegionDatabases } from "#geocode-regions"
 import type { GeocodeResult } from "#geocode-result"
-import { ShardProvider, type ShardResolver, type StateShards } from "#geocode-shards"
 import { INTERP_RADIUS_CALIBRATION } from "#interp-calibration"
 import type { CoastalErosionRoute } from "#observations/coastal-route"
 import type { AuthorityDesignationRoute } from "#observations/flood-route"
@@ -594,7 +594,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 				capitals.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: undefined
 
-	const shardProvider = await ShardProvider.create(mod, options.dataRoot)
+	const regionDatabaseProvider = await RegionDatabaseProvider.create(mod, options.dataRoot)
 	// Explicit --address-points-db / --interpolation-db flags override per-state selection (testing a
 	// specific file); an unset tier still falls back to the region-derived per-state shard. The street-key
 	// locale follows --locale's region (fr-FR → "fr") — the shard's keys were built with its country's
@@ -609,14 +609,14 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		? new mod.StreetInterpolator({ dbPath: options.interpolationDB })
 		: undefined
 
-	const shards: ShardResolver =
+	const shards: RegionDatabaseResolver =
 		explicitAp || explicitIp
 			? (slug) => {
-					const base = explicitAp && explicitIp ? {} : shardProvider.for(slug)
+					const base = explicitAp && explicitIp ? {} : regionDatabaseProvider.for(slug)
 
 					return { addressPoints: explicitAp ?? base.addressPoints, interpolation: explicitIp ?? base.interpolation }
 				}
-			: shardProvider.for
+			: regionDatabaseProvider.for
 
 	const backendsOpenedAt = performance.now()
 	progress("Loading optional data providers…")
@@ -624,11 +624,11 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse. Optional
 	// like the resolver backend above — absent `@mailwoman/ban` ⇒ no national tier (admin/OSM path unchanged),
 	// and the provider itself is a no-op when the shard isn't on disk. Keeps the CLI backend-agnostic.
-	let nationalShards: ((country: string) => StateShards) | undefined
+	let nationalShards: ((country: string) => RegionDatabases) | undefined
 
 	try {
-		const { BANShardProvider } = await import("@mailwoman/ban/sdk")
-		nationalShards = (await BANShardProvider.create(resolvePath(options.dataRoot))).for
+		const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
+		nationalShards = (await BANRegionDatabaseProvider.create(resolvePath(options.dataRoot))).for
 	} catch {
 		nationalShards = undefined
 	}
@@ -636,11 +636,11 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// Build-local OSM rooftop tier (#247), behind the package + on-disk-shard boundary. The provider
 	// applies the country's street normalizer and enables the resolver's locality-bbox fall-through;
 	// an absent unpublished @mailwoman/osm package or absent shard remains an admin-only no-op.
-	let osmProvider: ({ for: (country: string) => StateShards } & Disposable) | undefined
+	let osmProvider: ({ for: (country: string) => RegionDatabases } & Disposable) | undefined
 
 	try {
-		const { OSMShardProvider } = await import("@mailwoman/osm/sdk")
-		osmProvider = await OSMShardProvider.create(resolvePath(options.dataRoot))
+		const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/sdk")
+		osmProvider = await OSMRegionDatabaseProvider.create(resolvePath(options.dataRoot))
 	} catch {
 		osmProvider = undefined
 	}
@@ -664,7 +664,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	const dispose = (): void => {
 		disposeQuietly(explicitAp)
 		disposeQuietly(explicitIp)
-		disposeQuietly(shardProvider)
+		disposeQuietly(regionDatabaseProvider)
 		disposeQuietly(osmProvider)
 		disposeQuietly(lookup)
 		disposeQuietly(poiHandle)

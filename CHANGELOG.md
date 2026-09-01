@@ -35,6 +35,19 @@ replaced by a combined entry on purpose — `@mailwoman/spatial` is imported by 
 barrel deliberately excludes both modules, and a combined subpath would put a `node:child_process` reach one
 `export *` away from a browser graph.
 
+### Breaking — the provider region databases stop being called "shards"
+
+`mailwoman/geocode-shards` becomes `mailwoman/geocode-regions`. The identifiers move with it:
+`ShardProvider` → `RegionDatabaseProvider`, `BANShardProvider`/`OSMShardProvider` →
+`BANRegionDatabaseProvider`/`OSMRegionDatabaseProvider`, `StateShards` → `RegionDatabases`,
+`ShardResolver` → `RegionDatabaseResolver`, `ShardLookupFactory` → `RegionDatabaseFactory`,
+`ShardCacheEntry` → `RegionDatabaseCacheEntry`. `@mailwoman/ban` and `@mailwoman/osm` rename
+`sdk/shard-provider` to `sdk/region-database-provider`.
+
+First slice of removing the word `shard`, which is going because it stood for four different things at once.
+There is no replacement synonym: each site takes the noun for the thing it names, and this one routes
+per-region address-point and interpolation databases. No shims.
+
 ### Breaking — `@mailwoman/filer` moves three domain modules out of `./sdk/`
 
 `@mailwoman/filer/sdk/frn`, `@mailwoman/filer/sdk/family-rollup` and `@mailwoman/filer/sdk/filer-lookup` become

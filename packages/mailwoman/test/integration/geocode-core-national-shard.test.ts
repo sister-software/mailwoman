@@ -17,7 +17,7 @@
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { AddressPointLookup, ResolveOpts, Resolver, StreetCentroidLookup } from "@mailwoman/resolver"
 import { geocodeAddress, type GeocodeClassifier } from "mailwoman/geocode-core"
-import type { StateShards } from "mailwoman/geocode-shards"
+import type { RegionDatabases } from "mailwoman/geocode-regions"
 import { describe, expect, test, vi } from "vitest"
 
 /**
@@ -52,7 +52,7 @@ const emptyTree: AddressTree = { raw: "x", roots: [] }
 const sentinel = (): AddressPointLookup => ({ find: vi.fn(() => null) })
 const banLookup = sentinel()
 const osmLookup = sentinel()
-const frRegister = (c: string): StateShards => (c === "fr" ? { addressPoints: banLookup } : {})
+const frRegister = (c: string): RegionDatabases => (c === "fr" ? { addressPoints: banLookup } : {})
 
 describe("geocodeAddress — national (BAN) rooftop tier wiring (#1012)", () => {
 	test("BAN wins over OSM for a non-US parse (consulted AHEAD of the OSM tier)", async () => {
@@ -94,7 +94,7 @@ describe("geocodeAddress — national (BAN) rooftop tier wiring (#1012)", () => 
 
 	test("a US parse never consults BAN (the US situs path owns address points)", async () => {
 		const { resolver, seen } = captureResolver()
-		const nationalShards = vi.fn((_c: string): StateShards => ({ addressPoints: banLookup }))
+		const nationalShards = vi.fn((_c: string): RegionDatabases => ({ addressPoints: banLookup }))
 
 		await geocodeAddress("350 5th Ave, New York, NY 10118", {
 			classifier: fakeClassifier(emptyTree),

@@ -50,7 +50,7 @@ Both results are explained by the confound, not by the thesis:
 
 The shards exist locally and I simply did not wire them: `/mnt/playpen/mailwoman-data/interpolation/`
 (per-state US), `/ban/` (FR rooftop), `/osm/`. A valid test runs the **geocode cascade**
-(`geocodeAddress` / `parseForGeocode` + a `ShardResolver`), not the bare WOF admin resolver.
+(`geocodeAddress` / `parseForGeocode` + a `RegionDatabaseResolver`), not the bare WOF admin resolver.
 
 ## What IS supported
 

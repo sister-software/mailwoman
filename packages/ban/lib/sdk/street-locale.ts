@@ -8,7 +8,7 @@
  *   reader on the resolver side and the builder here must call the identical function). This module
  *   only maps an ISO-3166 country code to the locale that selects the right per-locale rules, and
  *   re-exports the normalizer so the BAN SDK is a self-contained surface. Kept SEPARATE from the
- *   heavy `shard-provider.ts` (which pulls the SQLite lookup) so the pure locale contract is testable
+ *   heavy `region-database-provider.ts` (which pulls the SQLite lookup) so the pure locale contract is testable
  *   without opening a database — mirrors `@mailwoman/osm`'s `street-locale.ts`.
  */
 

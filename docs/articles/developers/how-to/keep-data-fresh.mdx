@@ -138,13 +138,13 @@ root naming the current version per family:
 { "address-points": "2026-05-20.0", "interpolation": "TIGER2023" }
 ```
 
-`ShardProvider` reads that manifest when it is constructed:
+`RegionDatabaseProvider` reads that manifest when it is constructed:
 
 ```js
 import { AddressPointSqliteLookup, StreetInterpolator } from "@mailwoman/resolver-wof-sqlite"
-import { ShardProvider } from "mailwoman/geocode-core"
+import { RegionDatabaseProvider } from "mailwoman/geocode-core"
 
-const shards = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, "/tmp/mw-releases-demo")
+const shards = new RegionDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, "/tmp/mw-releases-demo")
 
 console.log("versions:", JSON.stringify(shards.versions()))
 console.log("dc address points open:", Boolean(shards.for("dc").addressPoints))

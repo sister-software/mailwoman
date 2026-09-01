@@ -101,7 +101,7 @@ Facts that constrain this design:
   `packages/mcp/lib/cli.ts:102`, `loadCore()` at `:115-163`, `geocodeAddress(...)` at `:212`. It therefore
   never sees `GeocodeTrace`, `PipelineTiming`, or `initTiming`.
 - Deps are lazy and cached for the process lifetime; there is **no shutdown handler at all** — no
-  `close()` on the resolver or `ShardProvider`. Exit reclaims them.
+  `close()` on the resolver or `RegionDatabaseProvider`. Exit reclaims them.
 - Locale is hardcoded `en-US` (`cli.ts:149`). One process, one geocode at a time; parallel tool calls
   serialize (`docs/articles/developers/how-to/use-the-mcp-server.mdx`, "Limits").
 - No trace, debug, verbose or logging surface of any kind.
@@ -272,15 +272,15 @@ refusal names what is resident and what it would cost.
 
 ### 3.3 What is warm
 
-| Held                                                                  | Cost to rebuild           | Owner                                   |
-| --------------------------------------------------------------------- | ------------------------- | --------------------------------------- |
-| `NeuralAddressClassifier` + per-country overlay classifiers           | ~1.0 s (measured, §1.2)   | engine worker                           |
-| Resolver backend (`WOFCandidateTableLookup` / `WOFSQLitePlaceLookup`) | ~2 ms open, 2.0 GB mapped | engine worker                           |
-| `ShardProvider`, `BANShardProvider`, `OSMShardProvider`, `POILookup`  | ~6 ms                     | engine worker                           |
-| `CoarsePlacer`, FST + street-morphology matchers                      | ~23 ms                    | engine worker                           |
-| Board corpus (837 rows) + its `regressionCorpusHash`                  | ms                        | supervisor, re-verified per read (§3.4) |
-| Benchmark panels, golden sets, parity fixtures                        | ms                        | supervisor                              |
-| Run store (past run results, keyed by `run_id`)                       | —                         | supervisor, on disk outside the repo    |
+| Held                                                                                            | Cost to rebuild           | Owner                                   |
+| ----------------------------------------------------------------------------------------------- | ------------------------- | --------------------------------------- |
+| `NeuralAddressClassifier` + per-country overlay classifiers                                     | ~1.0 s (measured, §1.2)   | engine worker                           |
+| Resolver backend (`WOFCandidateTableLookup` / `WOFSQLitePlaceLookup`)                           | ~2 ms open, 2.0 GB mapped | engine worker                           |
+| `RegionDatabaseProvider`, `BANRegionDatabaseProvider`, `OSMRegionDatabaseProvider`, `POILookup` | ~6 ms                     | engine worker                           |
+| `CoarsePlacer`, FST + street-morphology matchers                                                | ~23 ms                    | engine worker                           |
+| Board corpus (837 rows) + its `regressionCorpusHash`                                            | ms                        | supervisor, re-verified per read (§3.4) |
+| Benchmark panels, golden sets, parity fixtures                                                  | ms                        | supervisor                              |
+| Run store (past run results, keyed by `run_id`)                                                 | —                         | supervisor, on disk outside the repo    |
 
 ### 3.4 Freshness: four staleness traps, four answers
 

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer build gnaf-rooftop` — the AU rooftop address-point shard from Geoscape
- *   G-NAF (CC-BY-4.0, attribution Geoscape Australia), emitted into the `OSMShardProvider` home so
+ *   G-NAF (CC-BY-4.0, attribution Geoscape Australia), emitted into the `OSMRegionDatabaseProvider` home so
  *   the situs tier serves AU with zero runtime changes. Sealed 0444. The pipeline module is
  *   lazy-imported so `--help` never faults without the optional `@mailwoman/osm` /
  *   `@mailwoman/resolver-wof-sqlite` peers.

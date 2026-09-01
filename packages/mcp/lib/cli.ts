@@ -61,7 +61,7 @@ import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { createRuntimePipeline, type PipelineResult } from "mailwoman"
 import { geocodeAddress } from "mailwoman/geocode-core"
-import { ShardProvider } from "mailwoman/geocode-shards"
+import { RegionDatabaseProvider } from "mailwoman/geocode-regions"
 import { emitOverpassQL } from "mailwoman/poi-overpass"
 import {
 	buildNoGazetteerMessage,
@@ -100,7 +100,9 @@ const poiDatabasePath = values["poi-db"]
  * configured candidate gazetteer (`$MAILWOMAN_CANDIDATE_DB`) and otherwise falls back to the admin-only WOF shards
  * already on the data root — same selection `nominatim`/`photon`'s CLIs make.
  */
-let corePromise: Promise<{ classifier: NeuralAddressClassifier; resolver: Resolver; shards: ShardProvider }> | undefined
+let corePromise:
+	| Promise<{ classifier: NeuralAddressClassifier; resolver: Resolver; shards: RegionDatabaseProvider }>
+	| undefined
 
 /**
  * The four tools that need {@link loadCore} — every path through `getPlainPipeline`/`getPoiPipeline`/`resolveGeocode`.
@@ -113,7 +115,11 @@ const CORE_BACKED_TOOLS = "mailwoman_parse, mailwoman_geocode, mailwoman_poi_sea
 const CORE_FREE_TOOLS =
 	"mailwoman_layer_manifest, mailwoman_bdc_filing_landscape, mailwoman_filer_lookup, mailwoman_filer_family"
 
-function loadCore(): Promise<{ classifier: NeuralAddressClassifier; resolver: Resolver; shards: ShardProvider }> {
+function loadCore(): Promise<{
+	classifier: NeuralAddressClassifier
+	resolver: Resolver
+	shards: RegionDatabaseProvider
+}> {
 	corePromise ??= (async () => {
 		const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 		const wofPaths: string[] = []
@@ -162,7 +168,7 @@ function loadCore(): Promise<{ classifier: NeuralAddressClassifier; resolver: Re
 			)
 		}
 
-		const shards = await ShardProvider.create(resolverMod, mailwomanDataRoot())
+		const shards = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
 
 		return { classifier, resolver, shards }
 	})()

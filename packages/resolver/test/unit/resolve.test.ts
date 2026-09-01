@@ -1181,7 +1181,7 @@ function fakeStreetCentroids(
 }
 
 /**
- * A FR-only provider (mirrors BANShardProvider: only `fr` yields a lookup).
+ * A FR-only provider (mirrors BANRegionDatabaseProvider: only `fr` yields a lookup).
  */
 const frProvider = (lookup: StreetCentroidLookup) => (country: string) => (country === "fr" ? lookup : undefined)
 

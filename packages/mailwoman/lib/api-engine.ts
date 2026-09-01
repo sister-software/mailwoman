@@ -47,7 +47,7 @@ import { createWOFResolver, type Resolver, type ResolveOpts } from "@mailwoman/r
 
 import { readReleaseManifest } from "#data-release"
 import { geocodeAddress, type GeocodeClassifier } from "#geocode-core"
-import { regionSlugFromTree, ShardProvider } from "#geocode-shards"
+import { regionSlugFromTree, RegionDatabaseProvider } from "#geocode-regions"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-calibration"
 import {
 	buildNoGazetteerMessage,
@@ -68,7 +68,7 @@ const DATA_ROOT = mailwomanDataRoot()
 interface GeocodeDepsBundle {
 	classifier: GeocodeClassifier
 	resolver: Resolver
-	shards: ShardProvider
+	shards: RegionDatabaseProvider
 	defaultCountry?: string
 }
 
@@ -316,7 +316,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 
 	const backend = await createResolverBackend(resolverMod, { wofPaths: paths })
 	const resolver = createWOFResolver(backend)
-	const shards = await ShardProvider.create(resolverMod, DATA_ROOT)
+	const shards = await RegionDatabaseProvider.create(resolverMod, DATA_ROOT)
 	const deps: GeocodeDepsBundle = { classifier, resolver, shards, defaultCountry: candidateDB ? undefined : "US" }
 
 	// Route records the whole-call metric already (`@mailwoman/api`'s `routes.ts`) — the engine records nothing extra

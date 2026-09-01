@@ -32,7 +32,7 @@
 
 **Interfaces:**
 
-- Produces: `createServeEngine(): Promise<ServeEngine>` where `ServeEngine = { engine: MailwomanAPIEngine; preflight: { ok: true } | { ok: false; message: string } }` — builds the shared stack ONCE (classifier, resolver backend from `wofPaths()`/candidate detection, `ShardProvider`, parser) mirroring `GeocodeRouter.getDeps` + `AddressRouter`'s parser + `HealthRouter`'s health data; wires every `MailwomanAPIEngine` method:
+- Produces: `createServeEngine(): Promise<ServeEngine>` where `ServeEngine = { engine: MailwomanAPIEngine; preflight: { ok: true } | { ok: false; message: string } }` — builds the shared stack ONCE (classifier, resolver backend from `wofPaths()`/candidate detection, `RegionDatabaseProvider`, parser) mirroring `GeocodeRouter.getDeps` + `AddressRouter`'s parser + `HealthRouter`'s health data; wires every `MailwomanAPIEngine` method:
   - `parse` — `createAddressParser().parse(address, { verbose: true })` → the `ParseOutcome` shape (input span + serialized solutions + optional diagnostic report when `debug`), ported from `AddressRouter`.
   - `geocode` — `oneGeocode` port (geocodeAddress with classifier/resolver/shards/defaultCountry/interpCalibration). Route records the whole-call metric already; the engine records nothing extra here.
   - `batch` — ported worker-pool (bounded by `$public.MAILWOMAN_BATCH_CONCURRENCY`), rows TRIMMED, per-row `recordTimed(rowLatency, rowTier)` with `"error"` rows recorded and isolated to `{ input, error }` slots. Cap enforcement stays in the route (`batchMax` from `$public.MAILWOMAN_BATCH_MAX` is passed by serve when creating the app).

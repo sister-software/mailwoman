@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Per-state artifact routing: which address-point / interpolation database serves a parse, the state-slug
- *   derivation that picks it, and `ShardProvider`, the bounded cache of open handles. Split from `geocode-core.ts`,
+ *   derivation that picks it, and `RegionDatabaseProvider`, the bounded cache of open handles. Split from `geocode-core.ts`,
  *   which consumes these through `GeocodeDeps`.
  */
 
@@ -19,14 +19,14 @@ import { readReleaseManifest, resolveShardPath, type DataReleaseManifest } from 
 /**
  * The per-state shards to wire into a single geocode resolve. Either/both may be absent (admin-only).
  */
-export interface StateShards {
+export interface RegionDatabases {
 	addressPoints?: AddressPointLookup
 	interpolation?: InterpolationLookup
 	/**
 	 * Derived street-centroid tier (#1042) — a `GROUP BY street` roll-up of a national register's rooftop points, keyed
-	 * for a street-only query (no house number). Supplied today only by `@mailwoman/ban`'s `BANShardProvider` for FR (the
-	 * US per-state {@link ShardProvider} never opens one), so the tier is FR-only in practice and every non-FR path stays
-	 * byte-stable. Consulted BELOW the address-point/interpolation tiers, ABOVE admin.
+	 * for a street-only query (no house number). Supplied today only by `@mailwoman/ban`'s `BANRegionDatabaseProvider`
+	 * for FR (the US per-state {@link RegionDatabaseProvider} never opens one), so the tier is FR-only in practice and
+	 * every non-FR path stays byte-stable. Consulted BELOW the address-point/interpolation tiers, ABOVE admin.
 	 */
 	streetCentroids?: StreetCentroidLookup
 }
@@ -34,7 +34,7 @@ export interface StateShards {
 /**
  * Resolve the situs/interpolation shards for a state slug (e.g. `"tx"`). `null` slug → no shards.
  */
-export type ShardResolver = (stateSlug: string | null) => StateShards
+export type RegionDatabaseResolver = (stateSlug: string | null) => RegionDatabases
 
 /**
  * Full US state name (case-folded) → lowercase 2-letter slug, from the codex table. Built once — the inverse the codex
@@ -133,14 +133,14 @@ export async function selectInterpolationDB(dataRoot: string, stateSlug: string 
 }
 
 /**
- * The lookup-class surface a {@link ShardProvider} needs from `@mailwoman/resolver-wof-sqlite`.
+ * The lookup-class surface a {@link RegionDatabaseProvider} needs from `@mailwoman/resolver-wof-sqlite`.
  */
-export interface ShardLookupFactory {
+export interface RegionDatabaseFactory {
 	AddressPointSqliteLookup: new (dbPath: string) => AddressPointLookup & Disposable
 	StreetInterpolator: new (opts: { dbPath: string }) => InterpolationLookup & Disposable
 }
 
-export interface ShardCacheEntry extends StateShards {
+export interface RegionDatabaseCacheEntry extends RegionDatabases {
 	_ap?: Disposable
 	_ip?: Disposable
 	/**
@@ -158,13 +158,13 @@ export interface ShardCacheEntry extends StateShards {
  *
  * `for` is synchronous, so on-disk existence is probed asynchronously ONCE instead of per call: {@linkcode warm} awaits
  * the #2029-async manifest read + `resolveShardPath` for every US state/territory slug and records what exists; `for`
- * then consults that map. Prefer {@linkcode ShardProvider.create}, which constructs AND warms before answering — the
- * constructor itself is private because it cannot await those probes.
+ * then consults that map. Prefer {@linkcode RegionDatabaseProvider.create}, which constructs AND warms before answering
+ * — the constructor itself is private because it cannot await those probes.
  */
-export class ShardProvider implements Disposable {
-	readonly #factory: ShardLookupFactory
+export class RegionDatabaseProvider implements Disposable {
+	readonly #factory: RegionDatabaseFactory
 	readonly #dataRoot: string
-	readonly #cache = new Map<string, ShardCacheEntry>()
+	readonly #cache = new Map<string, RegionDatabaseCacheEntry>()
 	/**
 	 * Previous-generation handles, retired by reload() and closed on the NEXT reload (one-gen grace).
 	 */
@@ -175,7 +175,7 @@ export class ShardProvider implements Disposable {
 	 */
 	readonly #paths = new Map<string, { apPath: string | null; ipPath: string | null }>()
 
-	private constructor(factory: ShardLookupFactory, dataRoot: string, manifest: DataReleaseManifest | null) {
+	private constructor(factory: RegionDatabaseFactory, dataRoot: string, manifest: DataReleaseManifest | null) {
 		this.#factory = factory
 		this.#dataRoot = dataRoot
 		this.#manifest = manifest
@@ -185,9 +185,9 @@ export class ShardProvider implements Disposable {
 	 * Construct a provider and warm its path map before answering. The constructor cannot await the #2029-async manifest
 	 * read + shard-path probes, so this static factory does.
 	 */
-	static async create(factory: ShardLookupFactory, dataRoot: PathBuilderLike): Promise<ShardProvider> {
+	static async create(factory: RegionDatabaseFactory, dataRoot: PathBuilderLike): Promise<RegionDatabaseProvider> {
 		const root = resolvePath(dataRoot)
-		const provider = new ShardProvider(factory, root, await readReleaseManifest(root))
+		const provider = new RegionDatabaseProvider(factory, root, await readReleaseManifest(root))
 
 		await provider.warm()
 
@@ -214,7 +214,7 @@ export class ShardProvider implements Disposable {
 		}
 	}
 
-	#open(stateSlug: string): ShardCacheEntry {
+	#open(stateSlug: string): RegionDatabaseCacheEntry {
 		const { apPath, ipPath } = this.#paths.get(stateSlug.toLowerCase()) ?? { apPath: null, ipPath: null }
 		const ap = apPath ? new this.#factory.AddressPointSqliteLookup(apPath) : undefined
 		const ip = ipPath ? new this.#factory.StreetInterpolator({ dbPath: ipPath }) : undefined
@@ -222,7 +222,7 @@ export class ShardProvider implements Disposable {
 		return { addressPoints: ap, interpolation: ip, _ap: ap, _ip: ip, apPath, ipPath }
 	}
 
-	readonly for: ShardResolver = (stateSlug) => {
+	readonly for: RegionDatabaseResolver = (stateSlug) => {
 		if (!stateSlug) return {}
 		let entry = this.#cache.get(stateSlug)
 

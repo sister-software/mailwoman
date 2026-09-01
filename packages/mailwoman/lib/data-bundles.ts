@@ -54,7 +54,7 @@
  *     filename (`resolveBundleArtifacts`, below) so a later `mailwoman geocode` run resolves it.
  *   - `fr`: `<dataRoot>/ban/address-points-fr.db` — `ban/scripts/build-address-point-shard.ts`'s own
  *     default `--out` (`dataRootPath("ban", "address-points-fr.db")`), which is also where
- *     `BANShardProvider` looks. `mailwoman geocode` wires that provider (`commands/geocode.tsx`
+ *     `BANRegionDatabaseProvider` looks. `mailwoman geocode` wires that provider (`commands/geocode.tsx`
  *     imports `@mailwoman/ban/sdk` and passes `nationalShards`), so pulling this bundle is sufficient
  *     — a French address resolves to the `address_point` tier with no further configuration
  *     (re-verified 2026-08-04 on four Paris addresses, uncertainty 1 m). What FR still lacks is the

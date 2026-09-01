@@ -20,7 +20,7 @@ import { join } from "path-ts"
 import { streetLocaleForBANCountry, supportedBANCountries } from "#sdk/street-locale"
 
 /**
- * What the cascade needs from a BAN shard — structurally a subset of mailwoman's `StateShards`.
+ * What the cascade needs from a BAN shard — structurally a subset of mailwoman's `RegionDatabases`.
  */
 export interface BANShards {
 	addressPoints?: AddressPointSqliteLookup
@@ -36,10 +36,10 @@ export interface BANShards {
  *
  * `for` is synchronous, so on-disk existence is probed asynchronously ONCE instead of per call: {@linkcode warm} awaits
  * `pathExists` for every supported country × shard-tier combination and records what exists; `for` consults that map.
- * Prefer {@linkcode BANShardProvider.create}, which constructs AND warms before answering — a provider constructed
- * directly must be warmed before its first `for`, or it answers `{}` for every country.
+ * Prefer {@linkcode BANRegionDatabaseProvider.create}, which constructs AND warms before answering — a provider
+ * constructed directly must be warmed before its first `for`, or it answers `{}` for every country.
  */
-export class BANShardProvider implements Disposable {
+export class BANRegionDatabaseProvider implements Disposable {
 	readonly #dataRoot: string
 	readonly #cache = new Map<string, BANShards>()
 	/**
@@ -56,8 +56,8 @@ export class BANShardProvider implements Disposable {
 	 * Construct a provider and warm its existence map before answering. The constructor cannot await the probe, so this
 	 * static factory does; a caller that constructs directly must {@linkcode warm} before the first `for`.
 	 */
-	static async create(dataRoot: string): Promise<BANShardProvider> {
-		const provider = new BANShardProvider(dataRoot)
+	static async create(dataRoot: string): Promise<BANRegionDatabaseProvider> {
+		const provider = new BANRegionDatabaseProvider(dataRoot)
 
 		await provider.warm()
 
@@ -77,7 +77,7 @@ export class BANShardProvider implements Disposable {
 	 *
 	 * Awaits `pathExists` for each supported country's rooftop shard and its derived street-centroid tier, recording the
 	 * paths that exist so `for` never touches the filesystem. Safe to call more than once: the probe promise is cached,
-	 * so every caller (and {@linkcode BANShardProvider.create}) shares one pass.
+	 * so every caller (and {@linkcode BANRegionDatabaseProvider.create}) shares one pass.
 	 */
 	readonly warm = (): Promise<void> => (this.#warmPromise ??= this.#probeShards())
 

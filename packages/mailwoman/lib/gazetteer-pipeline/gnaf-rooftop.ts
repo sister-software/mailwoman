@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Build `osm/address-points-au-au.db` — the AU rooftop shard from Geoscape G-NAF, on the SHARED
- *   situs schema + OSM H3 spine so the existing `OSMShardProvider` / `AddressPointSqliteLookup`
+ *   situs schema + OSM H3 spine so the existing `OSMRegionDatabaseProvider` / `AddressPointSqliteLookup`
  *   serve it with zero runtime changes.
  *
  *   WHY G-NAF and not OSM for AU: the panel's en-AU misses were uniformly `tier=admin` at 1–6 km —
@@ -77,7 +77,7 @@ export interface GNAFRooftopOptions {
 	 */
 	standardDir?: string
 	/**
-	 * Output shard path. Default: `<data-root>/osm/address-points-au-au.db` (the `OSMShardProvider` home).
+	 * Output shard path. Default: `<data-root>/osm/address-points-au-au.db` (the `OSMRegionDatabaseProvider` home).
 	 */
 	out?: string
 	/**
