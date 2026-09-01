@@ -45,7 +45,7 @@ describe("mwdev_symbol", () => {
 
 		const files = result.findings.flatMap((finding) => finding.sites.map((site) => site.file))
 
-		expect(files).toContain("packages/core/lib/utils/stats.ts")
+		expect(files).toContain("packages/core/lib/stats.ts")
 	})
 
 	it("counts names and sites separately, because one name can have several homes", async () => {

@@ -33,7 +33,7 @@
 
 import { readDirectory, pathExists } from "@mailwoman/core/fs/readers"
 import { copyFileTo, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/utils"
+import { sha256File } from "@mailwoman/core/hash"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { join } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"

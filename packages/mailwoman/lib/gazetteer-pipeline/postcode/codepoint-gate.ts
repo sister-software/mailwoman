@@ -25,7 +25,7 @@
  *      explicitly rather than left inside the general "only in incumbent" bucket.
  */
 
-import { percentile } from "@mailwoman/core/utils"
+import { percentile } from "@mailwoman/core/stats"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

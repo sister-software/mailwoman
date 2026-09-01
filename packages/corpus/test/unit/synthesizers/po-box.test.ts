@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { makeLcg } from "@mailwoman/core/utils"
+import { makeLcg } from "@mailwoman/core/random"
 import {
 	composePoBoxPhrase,
 	countryToLocale,

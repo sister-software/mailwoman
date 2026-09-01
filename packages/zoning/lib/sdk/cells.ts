@@ -226,7 +226,7 @@ export class ZoningCellIndex {
 			storedCellRows: compacted + partial,
 			candidatesPerCell: {
 				mean: touched ? total / touched : 0,
-				// Nearest-rank p90 over the candidate counts, which is the shape `@mailwoman/core/utils/stats` uses.
+				// Nearest-rank p90 over the candidate counts, which is the shape `@mailwoman/core/stats` uses.
 				p90: counts.length ? counts[Math.min(counts.length - 1, Math.ceil(0.9 * counts.length) - 1)]! : 0,
 				max,
 			},

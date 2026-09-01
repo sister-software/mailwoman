@@ -11,7 +11,7 @@
 
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
-import { makeLcg } from "@mailwoman/core/utils"
+import { makeLcg } from "@mailwoman/core/random"
 import { block, gbtScore, trainGBT, type TermFrequencyTable } from "@mailwoman/match"
 import { dirname } from "path-ts"
 

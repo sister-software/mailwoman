@@ -30,9 +30,9 @@
 
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { sha256Hex } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { STREET_FAMILY_TAGS } from "@mailwoman/core/types"
-import { sha256Hex } from "@mailwoman/core/utils/hash"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { JSONSpliterator } from "spliterator"
 

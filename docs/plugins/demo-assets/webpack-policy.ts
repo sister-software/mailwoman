@@ -5,7 +5,7 @@
  * @file Browser/SSR bundle policy for the docs demo.
  */
 
-import { md5Hex } from "@mailwoman/core/utils/hash"
+import { md5Hex } from "@mailwoman/core/hash"
 import type { Configuration } from "webpack"
 import webpack from "webpack"
 

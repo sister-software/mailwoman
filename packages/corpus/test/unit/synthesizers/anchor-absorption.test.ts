@@ -5,7 +5,7 @@
  * what the model must learn instead of flipping the default (the Probe A0 erosion this slice fixes).
  */
 
-import { makeLcg } from "@mailwoman/core/utils"
+import { makeLcg } from "@mailwoman/core/random"
 import { describe, expect, it } from "vitest"
 
 import { synthesizeAnchorAbsorptionRow, type AnchorAbsorptionTemplate } from "#synthesizers/anchor-absorption"

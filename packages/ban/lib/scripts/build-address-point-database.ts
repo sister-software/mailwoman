@@ -31,8 +31,8 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
+import { md5File } from "@mailwoman/core/hash"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { md5File } from "@mailwoman/core/utils"
 import {
 	ADDRESS_POINT_COLUMNS,
 	type AddressPointDatabase,

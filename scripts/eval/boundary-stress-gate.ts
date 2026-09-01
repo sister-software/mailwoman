@@ -30,8 +30,8 @@
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { mulberry32 } from "@mailwoman/core/random"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { mulberry32 } from "@mailwoman/core/utils"
 import {
 	type BoundaryStressTemplate,
 	synthesizeBoundaryStressRow,

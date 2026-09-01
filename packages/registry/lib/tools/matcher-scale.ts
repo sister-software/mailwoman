@@ -17,7 +17,7 @@
  */
 
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { makeLcg } from "@mailwoman/core/utils"
+import { makeLcg } from "@mailwoman/core/random"
 
 import { resolveEntities, type SourceRecord } from "#index"
 

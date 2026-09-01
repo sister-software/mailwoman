@@ -46,7 +46,7 @@ describe("symbol-precheck hook", () => {
 		})
 
 		expect(output.hookSpecificOutput?.hookEventName).toBe("PreToolUse")
-		expect(output.hookSpecificOutput?.additionalContext).toContain("packages/core/lib/utils/stats.ts")
+		expect(output.hookSpecificOutput?.additionalContext).toContain("packages/core/lib/stats.ts")
 	})
 
 	it("stays silent when the symbol has no exported home", () => {

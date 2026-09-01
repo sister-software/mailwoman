@@ -14,8 +14,8 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { sha256Hex } from "@mailwoman/core/hash"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { sha256Hex } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
 
 import { type LayerManifest, probeManifest } from "#data/inventory"

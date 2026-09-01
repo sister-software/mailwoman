@@ -5,7 +5,7 @@
  * @file Per-arm tallies for the OpenAddresses resolver eval, and the JSON shape a run dumps them in.
  */
 
-import { percentile } from "@mailwoman/core/utils"
+import { percentile } from "@mailwoman/core/stats"
 
 /**
  * What one arm reports for a single row: the admin-match flags plus the coordinate error the arm's own tier produced.

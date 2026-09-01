@@ -31,8 +31,8 @@
 
 import { pathExists, readFileRange, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { md5File } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { md5File } from "@mailwoman/core/utils/hash"
 import { basename, resolvePath, type PathBuilderLike } from "path-ts"
 
 import { FST_FORMAT_VERSION } from "#fst/serialize"
@@ -143,10 +143,10 @@ export async function peekFSTStampFields(path: string): Promise<FSTStampFields |
 }
 
 /**
- * Re-exported from `@mailwoman/core/utils/hash`. This package's own test imports it from here, and the sidecar
- * convention below is what it is for.
+ * Re-exported from `@mailwoman/core/hash`. This package's own test imports it from here, and the sidecar convention
+ * below is what it is for.
  */
-export { md5File } from "@mailwoman/core/utils/hash"
+export { md5File } from "@mailwoman/core/hash"
 
 /**
  * The source identity an FST build should stamp, or a check should compare against.

@@ -5,7 +5,7 @@
  * @file The GeoNames postal-dump row reader the CJK postcode-locality builders share.
  */
 
-import { pyFloat } from "@mailwoman/core/utils"
+import { pyFloat } from "@mailwoman/core/numeric"
 import { TSVSpliterator } from "spliterator"
 
 /**

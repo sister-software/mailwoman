@@ -38,7 +38,7 @@
 
 import { APIClient } from "@mailwoman/core/api"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/utils"
+import { sha256File } from "@mailwoman/core/hash"
 import { join } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"

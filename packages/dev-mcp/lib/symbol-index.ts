@@ -311,7 +311,7 @@ export function readWriteIntent(payload: unknown): WriteIntent | null {
  * Render findings as the note an author reads before writing.
  *
  * It reports and does not prescribe, and the reason is on the page in `packages/api-kit/lib/metrics.ts`: that file's
- * `percentile` takes a FRACTION where `@mailwoman/core/utils/stats` takes [0, 100], and its docstring explains that the
+ * `percentile` takes a FRACTION where `@mailwoman/core/stats` takes [0, 100], and its docstring explains that the
  * divergence is deliberate. Phrased as an instruction ("use the existing one"), this note would talk an author into
  * adding a workspace dependency and silently changing a unit. The signature and the export status are what settle the
  * question, so both travel with every site.

@@ -25,7 +25,7 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { clamp } from "@mailwoman/core/utils"
+import { clamp } from "@mailwoman/core/numeric"
 import { lonLatToWorldPx, MapRenderer, TileSource, worldPxToLonLat, type MapFrame } from "@mailwoman/map-tui"
 import { Text, useApp, useInput, useStdout, type Key } from "ink"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"

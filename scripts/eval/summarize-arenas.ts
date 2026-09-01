@@ -17,9 +17,9 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pyFixed } from "@mailwoman/core/numeric"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { pyFixed } from "@mailwoman/core/utils"
 import { JSONSpliterator } from "spliterator"
 
 const { positionals } = parseArguments({ allowPositionals: true, strict: false })

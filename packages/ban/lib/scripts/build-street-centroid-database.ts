@@ -28,10 +28,10 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
+import { md5File } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { md5File } from "@mailwoman/core/utils"
 import { foldStreetSurface } from "@mailwoman/resolver"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import {

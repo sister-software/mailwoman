@@ -9,7 +9,7 @@
  *   lacks).
  */
 
-import { mulberry32 } from "@mailwoman/core/utils"
+import { mulberry32 } from "@mailwoman/core/random"
 import {
 	DEFAULT_US_BASES,
 	generateIntersectionRows,

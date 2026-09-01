@@ -22,10 +22,10 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { globPaths, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { pyFixed } from "@mailwoman/core/numeric"
 import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { pyFixed } from "@mailwoman/core/utils"
 import { geometryContains, type GeometryLiteral } from "@mailwoman/spatial"
 
 /**

@@ -35,7 +35,8 @@
 import { APIClient } from "@mailwoman/core/api"
 import { tryStat } from "@mailwoman/core/fs/readers"
 import { writeLocalBuffer, writeLocalJSONFile, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { md5File, md5Hex } from "@mailwoman/core/utils"
+import { md5File } from "@mailwoman/core/hash"
+import { md5Hex } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 
 /**

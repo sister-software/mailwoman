@@ -12,7 +12,7 @@
  *   support that no ladder could grade. A consumer that needs to tell them apart still can, in the JSON.
  */
 
-import { formatPercent } from "@mailwoman/core/utils"
+import { formatPercent } from "@mailwoman/core/stats"
 
 import { ABLATION_ABSENT } from "#eval-harness/gauntlet/ablation-expectation"
 import {

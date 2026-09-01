@@ -15,10 +15,11 @@ import {
 	removePath,
 	writeLocalTextFile,
 } from "@mailwoman/core/fs/writers"
+import { md5File } from "@mailwoman/core/hash"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { workspacePath } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
-import { md5File, weightsOverlayPath } from "@mailwoman/core/utils"
+import { weightsOverlayPath } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 
 import { fstFreshnessWarning } from "#fst/freshness"

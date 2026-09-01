@@ -59,9 +59,9 @@
 import { isStreetDirectionalToken, matchTrailingSuffix, type USStreetSuffix } from "@mailwoman/codex/us"
 import { pathExists, readDirectoryEntries, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { sha256File } from "@mailwoman/core/hash"
 import { isPresent, parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
-import { sha256File } from "@mailwoman/core/utils"
 import { basename, join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 

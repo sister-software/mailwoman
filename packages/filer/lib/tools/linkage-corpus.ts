@@ -11,8 +11,8 @@
  *   Nothing here imports `linkage-eval.ts`, so the dependency between the two stays one-directional.
  */
 
+import { createHash } from "@mailwoman/core/hash"
 import { createUnionFind } from "@mailwoman/core/utils"
-import { createHash } from "@mailwoman/core/utils/hash"
 
 import { toFRN, type FRN } from "#frn"
 import { FilerIdentifierType } from "#schema"

@@ -13,7 +13,7 @@
  *   same premises, which is the linkage the identifier exists to prevent.
  */
 
-import { sha256Hex } from "@mailwoman/core/utils"
+import { sha256Hex } from "@mailwoman/core/hash"
 
 /**
  * Hex characters kept from the digest. Sixty-four bits of identifier: long enough that a run's rows do not collide,

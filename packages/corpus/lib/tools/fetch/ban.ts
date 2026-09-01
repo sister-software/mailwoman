@@ -22,7 +22,7 @@ import { gunzip } from "@mailwoman/core/fs/compression"
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { isFile, readLocalBuffer, tryStat } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePath, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/utils"
+import { sha256File } from "@mailwoman/core/hash"
 import { sleep } from "@mailwoman/core/utils/sleep"
 import { join } from "path-ts"
 

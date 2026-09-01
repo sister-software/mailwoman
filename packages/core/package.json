@@ -495,6 +495,16 @@
 			"node": "./lib/data-root.ts",
 			"default": "./out/data-root.js",
 			"types": "./out/data-root.d.ts"
+		},
+		"./hash": {
+			"node": "./lib/hash.ts",
+			"default": "./out/hash.js",
+			"types": "./out/hash.d.ts"
+		},
+		"./stats": {
+			"node": "./lib/stats.ts",
+			"default": "./out/stats.js",
+			"types": "./out/stats.d.ts"
 		}
 	},
 	"publishConfig": {

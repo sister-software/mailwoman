@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { md5File, sha256File, sha256Hex } from "@mailwoman/core/utils/hash"
+import { md5File, sha256File, sha256Hex } from "@mailwoman/core/hash"
 import { describe, expect, it } from "vitest"
 
 import { temporaryDirectory } from "#fs/temporary"

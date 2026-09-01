@@ -30,7 +30,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { pathToFileURL } from "@mailwoman/core/module/file-url"
-import { formatPercent } from "@mailwoman/core/utils"
+import { formatPercent } from "@mailwoman/core/stats"
 import { resolvePath } from "path-ts"
 
 import {

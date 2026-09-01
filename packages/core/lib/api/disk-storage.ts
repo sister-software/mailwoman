@@ -29,9 +29,9 @@ import { join, type PathBuilderLike } from "path-ts"
 import { errorMessage } from "#errors/schema"
 import { readLocalTextFile } from "#fs/readers"
 import { makeDirectories, movePath, removePath, removePathIfPresent, writeLocalFile } from "#fs/writers"
+import { sha256Hex } from "#hash"
 import { ConsoleLogger, type IRuntimeLogger } from "#logging/index"
 import { tryParsingJSON } from "#objects"
-import { sha256Hex } from "#utils/hash"
 
 /**
  * Options for {@linkcode buildDiskStorage}.

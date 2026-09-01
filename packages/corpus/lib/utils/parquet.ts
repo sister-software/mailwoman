@@ -39,7 +39,7 @@
 
 import { tryStat } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { sha256File } from "@mailwoman/core/utils"
+import { sha256File } from "@mailwoman/core/hash"
 import { join, type PathBuilderLike } from "path-ts"
 
 import { ParquetWriter, type ParquetSchemaDefinition } from "#parquet-wrapper"

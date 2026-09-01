@@ -17,8 +17,8 @@
  */
 
 import { readDirectoryEntries, statPath } from "@mailwoman/core/fs/readers"
+import { sha256Hex } from "@mailwoman/core/hash"
 import { runFileSync } from "@mailwoman/core/process"
-import { sha256Hex } from "@mailwoman/core/utils/hash"
 import { join, resolvePath, type PathBuilderLike } from "path-ts"
 
 /**

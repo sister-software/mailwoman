@@ -217,7 +217,7 @@ export default {
 				"packages/core/lib/utils/system.ts",
 				"packages/core/lib/utils/sleep.ts",
 				"packages/core/lib/utils/events.ts",
-				"packages/core/lib/utils/hash.ts",
+				"packages/core/lib/hash.ts",
 				"packages/core/lib/module/runtime.ts",
 				"packages/core/lib/crypto/**/*.ts",
 			],
@@ -275,7 +275,7 @@ export default {
 							"`@mailwoman/core` is the only package that reaches a Node builtin, and each has a home there: `node:fs` → " +
 							"`@mailwoman/core/fs/*` (`/temporary` for a scratch directory), `node:path` → `path-ts`, `node:url` → " +
 							"`import.meta.dirname` / `@mailwoman/core/module/file-url`, `node:child_process` → `@mailwoman/core/process`, " +
-							"`parseArgs` → `@mailwoman/core/scripting/arguments`, `node:crypto` → `@mailwoman/core/utils/hash`, `node:os` → " +
+							"`parseArgs` → `@mailwoman/core/scripting/arguments`, `node:crypto` → `@mailwoman/core/hash`, `node:os` → " +
 							"`@mailwoman/core/utils/system`, `node:timers/promises` → `@mailwoman/core/utils/sleep`, `node:events` → " +
 							"`@mailwoman/core/utils/events`, `node:stream` → `@mailwoman/core/fs/streams`, `node:zlib` → " +
 							"`@mailwoman/core/fs/compression`, `node:sqlite` → `@mailwoman/sqlite`.",
