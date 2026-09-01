@@ -26,10 +26,10 @@
  */
 
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { isPresent } from "@mailwoman/core/objects"
-import { dataRootPath } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 

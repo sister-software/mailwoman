@@ -25,9 +25,9 @@
  *       smoke output, not predicted; the docstrings name the strings that produced them.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"

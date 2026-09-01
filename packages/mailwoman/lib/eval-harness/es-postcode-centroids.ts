@@ -17,7 +17,7 @@
  *   Run: mailwoman eval es-postcode-centroids [--parquet <path>] [--out <db>] [--country ES]
  */
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 

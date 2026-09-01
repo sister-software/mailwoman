@@ -39,10 +39,12 @@
  *       `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
-import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
+import { weightsOverlayPath } from "@mailwoman/core/utils"
 import {
 	buildPairIndexOverlay,
 	linkLocaleFST,

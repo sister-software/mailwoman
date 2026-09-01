@@ -18,7 +18,7 @@
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { workspacePath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/paths"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { readLabelsFromModelCard } from "@mailwoman/neural/weights-channels"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"

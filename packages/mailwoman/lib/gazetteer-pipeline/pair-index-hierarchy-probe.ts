@@ -51,11 +51,12 @@
  *   Run: `node mailwoman/gazetteer-pipeline/pair-index-hierarchy-probe.ts [--countries us,fr] [--db <path>] [--out <dir>] [--skip-source-md5]`
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { allRows, dataRootPath, md5File } from "@mailwoman/core/utils"
+import { allRows, md5File } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import {
 	PairIndexResolver,

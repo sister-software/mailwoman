@@ -28,8 +28,8 @@
  *       stale-format file.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import type {
 	AutocompleteOpts,
 	AutocompleteResult,

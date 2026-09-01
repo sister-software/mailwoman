@@ -60,9 +60,9 @@
  *        `JP` key. The JP extract is harvested and ready; the leg belongs to the JP slice.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { isPresent } from "@mailwoman/core/objects"
 import type { ComponentTag } from "@mailwoman/core/types"
-import { dataRootPath } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { makeMulberry32, sliceSourceID, type CorpusRecipe } from "#recipes/scaffold"

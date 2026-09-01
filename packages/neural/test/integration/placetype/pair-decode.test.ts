@@ -15,8 +15,8 @@
  *   reach the decode-order behavior these tests actually check.
  */
 
+import { workspacePath } from "@mailwoman/core/paths"
 import type { ComponentTag } from "@mailwoman/core/types"
-import { workspacePath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, type NeuralRunner } from "@mailwoman/neural/classifier"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
 import type { InferResult } from "@mailwoman/neural/onnx-runner"

@@ -25,8 +25,8 @@
  *   returned nothing" and "we never looked there" are the two facts this file exists to keep apart.
  */
 
+import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join, type PathBuilderLike } from "path-ts"

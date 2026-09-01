@@ -33,11 +33,11 @@
  */
 
 import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { CommandError } from "@mailwoman/core/scripting/command"
-import { tempRootPath } from "@mailwoman/core/utils"
 import { basename } from "path-ts"
 
 import { runProcessOrFail, splitList } from "#cli-kit/shared"

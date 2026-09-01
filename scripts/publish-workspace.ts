@@ -38,8 +38,8 @@
 
 import { $private, $public } from "@mailwoman/core/env"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
-import { repoRootPath } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 
 import { dereferenceWorkspaceSymlinks, packWorkspaceForPublish } from "./pack-workspace.ts"

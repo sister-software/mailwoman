@@ -27,9 +27,9 @@
  *   matching how `.codex/config.toml` addresses `packages/dev-mcp/lib/cli.ts`.
  */
 
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readStandardInputJSON } from "@mailwoman/core/fs/readers"
 import { removePath, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { tempRootPath } from "@mailwoman/core/utils"
 
 import { lintReply, renderVerdict } from "#hooks/vale-check-core"
 

@@ -31,9 +31,9 @@
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { failScript } from "@mailwoman/core/scripting/utils"
-import { repoRootPath } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 import semver from "semver"
 

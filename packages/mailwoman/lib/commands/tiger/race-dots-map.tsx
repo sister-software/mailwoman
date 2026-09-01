@@ -9,7 +9,7 @@
  *   posture of `mailwoman serve`.
  */
 
-import { tempRootPath } from "@mailwoman/core/utils"
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { Box, Text } from "ink"
 import { useState } from "react"
 

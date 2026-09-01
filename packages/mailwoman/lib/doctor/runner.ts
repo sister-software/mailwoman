@@ -13,11 +13,11 @@
  *   geocode` uses, and the POI path from `gazetteer build poi`'s own default.
  */
 
+import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { $public, DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { isWritable, pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath } from "path-ts"

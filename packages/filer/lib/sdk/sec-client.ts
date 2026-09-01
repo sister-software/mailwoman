@@ -70,9 +70,9 @@ import {
 	type ClockLike,
 } from "@mailwoman/core/api"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { $private } from "@mailwoman/core/env"
 import { ResourceError } from "@mailwoman/core/errors"
-import { dataRootPath } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.

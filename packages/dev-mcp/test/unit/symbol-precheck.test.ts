@@ -6,8 +6,8 @@
 
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { runFileSync } from "@mailwoman/core/process"
-import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
 const HOOK = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "symbol-precheck.ts")

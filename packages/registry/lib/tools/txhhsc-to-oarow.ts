@@ -14,9 +14,9 @@
  *   Run: `mailwoman registry convert tx-hhsc [--src <tsv>] [--out /tmp/txhhsc-oarow.jsonl]`
  */
 
+import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
 import { TSVSpliterator } from "spliterator"
 
 import { inTXBBOX } from "#tools/shared"

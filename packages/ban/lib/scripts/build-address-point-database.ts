@@ -28,10 +28,11 @@
  *     node ban/out/scripts/build-address-point-extract.js --depts 48,2A,05 --out /tmp/ban-sample.db
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath, md5File } from "@mailwoman/core/utils"
+import { md5File } from "@mailwoman/core/utils"
 import {
 	ADDRESS_POINT_COLUMNS,
 	type AddressPointDatabase,

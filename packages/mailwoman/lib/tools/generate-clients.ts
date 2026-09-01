@@ -41,7 +41,7 @@ import {
 	writeLocalFile,
 	writeLocalTextFile,
 } from "@mailwoman/core/fs/writers"
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath, repoRootPath } from "@mailwoman/core/paths"
 import { join } from "path-ts"
 
 import type { Check } from "#cli-kit"

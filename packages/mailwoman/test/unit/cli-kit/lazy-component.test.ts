@@ -17,9 +17,9 @@
  *   empty stderr is proof it went through Ink's `<Text color="red">` frame instead.
  */
 
+import { repoRootPath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 /**

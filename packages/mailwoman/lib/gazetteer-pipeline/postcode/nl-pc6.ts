@@ -22,8 +22,8 @@
  *   Run: node scripts/build-postalcode-nl-pc6.ts [--csv <pc6-centroids.csv>] [--out <postalcode-nl-pc6.db>]
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"

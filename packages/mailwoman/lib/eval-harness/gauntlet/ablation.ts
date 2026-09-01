@@ -57,9 +57,10 @@
  *   Run: mailwoman eval gauntlet --layer ablation [--components postcode,street] [--limit 20] [--out DIR]
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { dataRootPath, percentile, sha256Hex } from "@mailwoman/core/utils"
+import { percentile, sha256Hex } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"

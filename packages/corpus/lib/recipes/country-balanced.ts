@@ -25,9 +25,9 @@
  */
 
 import { COUNTRY_SURFACE_FORMS, CountryNames } from "@mailwoman/codex/country"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { isPresent } from "@mailwoman/core/objects"
 import type { ComponentTag } from "@mailwoman/core/types"
-import { dataRootPath } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"

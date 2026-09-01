@@ -13,7 +13,7 @@
  *   Run: mailwoman eval gauntlet --layer holdout --candidate ./out/v194-final/model.onnx [--n 300]
  */
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { resolveWeights } from "@mailwoman/neural"
 import { haversineKm } from "@mailwoman/spatial"
 import { TextSpliterator } from "spliterator"

@@ -22,8 +22,8 @@
 
 import { createRequire } from "@mailwoman/core/module/resolvers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
-import { repoRootPath } from "@mailwoman/core/utils"
 
 const MAX_MATCHES_PER_RULE = 8
 

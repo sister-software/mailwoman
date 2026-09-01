@@ -14,9 +14,10 @@
  *   weights or a database.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/paths"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { runStaticDebug } from "mailwoman/debug-view/command"
 import { mapPaneCellSize } from "mailwoman/debug-view/DebugFrame"

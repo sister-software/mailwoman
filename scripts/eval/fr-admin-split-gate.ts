@@ -20,12 +20,13 @@
  *   --golden /tmp/reg/fr-admin-split-golden.jsonl --label v1.5.0 --out /tmp/reg/gate-v150.json
  */
 
+import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath, mean, percentile, tempRootPath } from "@mailwoman/core/utils"
+import { mean, percentile } from "@mailwoman/core/utils"
 import { parseWordConsistencyEnv } from "@mailwoman/neural"
 import { stripCombiningMarks } from "@mailwoman/normalize"
 import { haversineKm } from "@mailwoman/spatial"

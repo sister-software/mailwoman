@@ -11,8 +11,8 @@
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { repoRootPath } from "@mailwoman/core/utils"
 import { relative, resolvePath } from "path-ts"
 import ts from "typescript"
 

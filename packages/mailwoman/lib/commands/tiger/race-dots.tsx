@@ -8,7 +8,7 @@
  *   through tippecanoe, then render with `tiger race-dots-map`.
  */
 
-import { tempRootPath } from "@mailwoman/core/utils"
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { Text } from "ink"
 
 import {

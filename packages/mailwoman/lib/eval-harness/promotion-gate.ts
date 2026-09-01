@@ -68,6 +68,7 @@
  *       (whose fold reports 0 even on a perfect split).
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import {
 	pathExists,
 	readDirectory,
@@ -78,7 +79,7 @@ import {
 } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { dataRootPath, md5File } from "@mailwoman/core/utils"
+import { md5File } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { basename, dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 

@@ -33,6 +33,7 @@
  *   `<out>.building` instruction, per the brief's own "follow the anchor, record the deviation" rule.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import {
@@ -44,7 +45,6 @@ import {
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	POI_H3_RESOLUTION,
 	createPOIBrandIndex,

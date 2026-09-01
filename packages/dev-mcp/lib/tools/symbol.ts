@@ -11,7 +11,7 @@
  *   the answer changes what gets written.
  */
 
-import { repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { z } from "zod"
 
 import { searchDeclarations } from "#symbol-index"

@@ -30,9 +30,9 @@
  *   inlined the variant logic and never called it).
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { isPresent } from "@mailwoman/core/objects"
 import type { ComponentTag } from "@mailwoman/core/types"
-import { dataRootPath } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "#adapters/utils"
 import { makeMulberry32, readOATuples, type CorpusRecipe } from "#recipes/scaffold"

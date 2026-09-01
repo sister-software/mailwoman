@@ -26,9 +26,10 @@
  *   identical adjacent segments; the repeat draws no bias from the identity pair.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { workspacePath } from "@mailwoman/core/paths"
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
-import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
 import {
 	PairIndexResolver,

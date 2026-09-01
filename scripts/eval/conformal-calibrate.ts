@@ -47,11 +47,12 @@
  *   DO NOT change the resolver or parser — this script only READS stamped metadata.
  */
 
+import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath, median, tempRootPath } from "@mailwoman/core/utils"
+import { median } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"

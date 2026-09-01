@@ -26,10 +26,10 @@
 
 import { extractBANAddrPoints } from "@mailwoman/ban/sdk"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { isPresent } from "@mailwoman/core/objects"
 import type { ComponentTag } from "@mailwoman/core/types"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { join, type PathBuilderLike } from "path-ts"
 
 import { decomposeFrStreet } from "#adapters/ban/street-decompose"

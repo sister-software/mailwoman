@@ -27,11 +27,12 @@
  *   actually live (VT: 255/255 localadmin have real polygons, 0 reached the demo sidecar).
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { wofIDPathSegments, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
-import { allRows, dataRootPath, getRow } from "@mailwoman/core/utils"
+import { allRows, getRow } from "@mailwoman/core/utils"
 import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Box, Text } from "ink"

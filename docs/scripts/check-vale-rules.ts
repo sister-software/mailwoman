@@ -40,8 +40,8 @@
 
 import { createRequire } from "@mailwoman/core/module/resolvers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { failScript } from "@mailwoman/core/scripting/utils"
-import { repoRootPath } from "@mailwoman/core/utils"
 import { dirname, join } from "path-ts"
 import { $ } from "zx"
 

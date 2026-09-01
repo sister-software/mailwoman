@@ -9,7 +9,7 @@
  *   `oa-resolver-eval --address-points`.
  */
 
-import { tempRootPath } from "@mailwoman/core/utils"
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

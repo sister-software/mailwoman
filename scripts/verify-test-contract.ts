@@ -6,7 +6,7 @@
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { relative, resolvePath, sep } from "path-ts"
 import ts from "typescript"
 

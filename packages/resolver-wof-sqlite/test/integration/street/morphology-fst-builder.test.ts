@@ -11,7 +11,7 @@
  *   - Variants resolve to the same PlaceEntry as their canonical
  *   - Serialize → deserialize round-trips with the new `street_affix` placetype
  */
-import { resourceDictionaryPath } from "@mailwoman/core/utils"
+import { resourceDictionaryPath } from "@mailwoman/core/paths"
 import { deserializeFST, readFSTProvenance, serializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { buildStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"
 import { describe, expect, it } from "vitest"

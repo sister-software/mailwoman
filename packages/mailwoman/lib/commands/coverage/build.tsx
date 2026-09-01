@@ -11,7 +11,7 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
 import { useState } from "react"

@@ -30,9 +30,9 @@
  *   [--out-md docs/articles/evals/matcher-dedup/<date>-nppes-dedup-benchmark.md]`
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { pathToFileURL } from "@mailwoman/core/module/file-url"
-import { dataRootPath } from "@mailwoman/core/utils"
 import type { GBT } from "@mailwoman/match"
 import { resolvePath } from "path-ts"
 

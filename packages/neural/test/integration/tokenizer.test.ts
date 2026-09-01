@@ -20,7 +20,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { workspacePath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/paths"
 import { MailwomanTokenizer, SPACE_SENTINEL } from "@mailwoman/neural/tokenizer"
 import { describe, expect, test } from "vitest"
 

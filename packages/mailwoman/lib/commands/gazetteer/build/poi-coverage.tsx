@@ -25,7 +25,7 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { stripCombiningMarks } from "@mailwoman/normalize"
 import { H3_MAX_RESOLUTION } from "@mailwoman/spatial"
 import { Box, Text } from "ink"

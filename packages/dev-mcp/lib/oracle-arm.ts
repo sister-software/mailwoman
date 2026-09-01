@@ -21,8 +21,8 @@
  *   spending money; the operator has to have written it down first.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	createCensusGeocoderClient,
 	createGoogleGeocoderClient,

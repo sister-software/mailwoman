@@ -1,7 +1,7 @@
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { openReadStream, openWriteStream } from "@mailwoman/core/fs/streams"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 

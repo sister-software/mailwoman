@@ -16,7 +16,7 @@
  */
 
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { dirname } from "path-ts"
 

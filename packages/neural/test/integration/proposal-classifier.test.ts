@@ -10,11 +10,12 @@
  *   weights when `MAILWOMAN_TEST_ONNX_MODEL` (or the default host path) is present.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { workspacePath } from "@mailwoman/core/paths"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
-import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import {
 	createNeuralProposalClassifier,

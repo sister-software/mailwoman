@@ -48,10 +48,11 @@
  *   Usage: node packages/mailwoman/lib/dev-tools/score-hard-slice-board.run.ts [--arms none,pop,imp] [--out-json <p>]
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
+import { formatPercent } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"

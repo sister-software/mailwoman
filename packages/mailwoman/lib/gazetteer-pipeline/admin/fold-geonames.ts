@@ -18,7 +18,7 @@
  *   which builds a STANDALONE database — the admin gazetteer never wanted postcode rows folded into it.
  */
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 

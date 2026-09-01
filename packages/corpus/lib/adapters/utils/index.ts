@@ -26,8 +26,9 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { isPresent } from "@mailwoman/core/objects"
+import { resourceDictionaryPath } from "@mailwoman/core/paths"
 import type { ComponentTag } from "@mailwoman/core/types"
-import { resourceDictionaryPath, sha256Hex } from "@mailwoman/core/utils"
+import { sha256Hex } from "@mailwoman/core/utils"
 import { createHash, type Hash } from "@mailwoman/core/utils/hash"
 import { TextSpliterator } from "spliterator"
 

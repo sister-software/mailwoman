@@ -22,8 +22,9 @@
  *   a read-only artifact, called once per rung and once per component per variant.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { allRows, dataRootPath, getRow } from "@mailwoman/core/utils"
+import { allRows, getRow } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { haversineKm } from "@mailwoman/spatial"

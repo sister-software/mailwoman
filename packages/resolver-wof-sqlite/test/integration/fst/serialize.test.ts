@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	buildFSTFromWOF,
 	FSTMatcher,

@@ -20,9 +20,9 @@
  *   blocking a thread.
  */
 
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectoryExclusive, removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { tempRootPath } from "@mailwoman/core/utils"
 import { sleep } from "@mailwoman/core/utils/sleep"
 import { join } from "path-ts"
 

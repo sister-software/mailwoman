@@ -29,7 +29,7 @@
  */
 
 import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import type { FilerDatabase } from "@mailwoman/filer"
 import type { DatabaseClient as DatabaseClientHandle } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"

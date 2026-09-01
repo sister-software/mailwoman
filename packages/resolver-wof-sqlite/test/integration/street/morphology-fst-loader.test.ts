@@ -16,7 +16,7 @@
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalBuffer, changeMode, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { resourceDictionaryPath } from "@mailwoman/core/utils"
+import { resourceDictionaryPath } from "@mailwoman/core/paths"
 import { deserializeFSTWeb, serializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import type { PlaceEntry } from "@mailwoman/resolver-wof-sqlite/fst"
 import { buildStreetMorphologyFST, loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street"

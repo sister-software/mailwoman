@@ -26,7 +26,7 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { Box, Text } from "ink"
 
 import {

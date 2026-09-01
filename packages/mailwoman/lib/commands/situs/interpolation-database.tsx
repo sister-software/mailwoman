@@ -24,10 +24,11 @@
  *   place (scripts/AGENTS.md) — the original script rebuilt in place.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { globPaths } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
-import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Box, Text } from "ink"

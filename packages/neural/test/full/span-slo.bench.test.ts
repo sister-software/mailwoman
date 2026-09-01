@@ -14,8 +14,8 @@
  *   pulling the onnxruntime web graph into the fast leg's shared module graph at collection time.
  */
 
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { tempRootPath } from "@mailwoman/core/utils"
 import { WebONNXRunner } from "@mailwoman/neural/web-onnx-runner"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { join } from "path-ts"

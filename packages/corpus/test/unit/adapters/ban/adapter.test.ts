@@ -5,7 +5,7 @@
  */
 
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { workspacePath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/paths"
 import { BAN_ADAPTER_ID, createBanAdapter } from "@mailwoman/corpus/adapters/ban/adapter"
 import { join } from "path-ts"
 import { describe, expect, it } from "vitest"

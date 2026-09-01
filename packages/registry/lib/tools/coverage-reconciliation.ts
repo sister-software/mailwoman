@@ -29,8 +29,8 @@
  *   [--data-root <dir>] [--out-md <md>] [--out-geojson <geojson>]`
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { dataRootPath } from "@mailwoman/core/utils"
 
 import {
 	ingestRows,

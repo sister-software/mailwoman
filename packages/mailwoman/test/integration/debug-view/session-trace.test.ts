@@ -11,9 +11,9 @@
  *   same reasons, so the two suites run and skip together.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { createGeocodeCommandOptions, createGeocodeSession } from "mailwoman/geocode"
 import { describe, expect, test } from "vitest"

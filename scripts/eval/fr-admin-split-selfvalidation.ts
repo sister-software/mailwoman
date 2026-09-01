@@ -29,9 +29,10 @@
  *   --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db --n 200 --out /tmp/fr-split.md
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { allRows, dataRootPath, mean, percentile } from "@mailwoman/core/utils"
+import { allRows, mean, percentile } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"

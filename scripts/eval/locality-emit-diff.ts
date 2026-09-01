@@ -1,3 +1,4 @@
+import { dataRootPath } from "@mailwoman/core/data-root"
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
  *
@@ -13,7 +14,6 @@
  */
 import { type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { resolvePath } from "path-ts"
 

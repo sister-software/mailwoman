@@ -17,8 +17,8 @@
  *   http://localhost:8899/race-dots-oc.pmtiles --out /tmp/race-dots-oc.html`
  */
 
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { tempRootPath } from "@mailwoman/core/utils"
 
 /**
  * Options for {@linkcode raceDotsMap}.

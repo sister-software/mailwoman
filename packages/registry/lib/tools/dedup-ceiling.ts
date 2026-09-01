@@ -30,8 +30,9 @@
  *   [--out-md <md>]`
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
+import { formatPercent } from "@mailwoman/core/utils"
 import { jaccard } from "@mailwoman/match"
 
 import { colocatedDistinctPairs, scanColocatedProviders, stateOption, type ColocatedProvider } from "#tools/shared"

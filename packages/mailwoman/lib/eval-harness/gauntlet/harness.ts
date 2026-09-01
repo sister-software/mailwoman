@@ -9,10 +9,10 @@
  *   paid for once (#566 / reconcile-retirement).
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { md5Hex } from "@mailwoman/core/utils/hash"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { createScorer, NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"

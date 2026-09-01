@@ -16,7 +16,8 @@
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { removePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { md5File, repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
+import { md5File } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"

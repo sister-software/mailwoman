@@ -21,10 +21,10 @@
  *   expected output, not a fault — it is suppressed here so it stops being read as an error.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { $private } from "@mailwoman/core/env"
 import { pathExists, readDirectory } from "@mailwoman/core/fs/readers"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { useState } from "react"
 

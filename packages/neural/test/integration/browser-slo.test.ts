@@ -51,11 +51,13 @@
 
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { gzipSync } from "@mailwoman/core/fs/compression"
 import { statPath, realPath, pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { createRequire } from "@mailwoman/core/module/resolvers"
-import { dataRootPath, median, percentile, repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
+import { median, percentile } from "@mailwoman/core/utils"
 import { architecture, cpuCount, cpuModel, platformName, totalMemoryBytes } from "@mailwoman/core/utils/system"
 import { resolveWeights, type ResolvedWeights } from "@mailwoman/neural"
 import { build } from "esbuild"

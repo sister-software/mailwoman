@@ -23,8 +23,8 @@
  *      byte-identical across all 1,066).
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { describe, expect, test } from "vitest"
 

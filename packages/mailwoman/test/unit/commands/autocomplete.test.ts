@@ -10,8 +10,8 @@
  *   symmetry contract from issue #190.
  */
 
+import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
 import { writeLocalBuffer, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
 import { autocomplete, FSTMatcher, normalizeTokens, serializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import type { PlacetypeID } from "@mailwoman/resolver-wof-sqlite/fst"
 import { resolveFSTPath, runAutocomplete } from "mailwoman/autocomplete-core"

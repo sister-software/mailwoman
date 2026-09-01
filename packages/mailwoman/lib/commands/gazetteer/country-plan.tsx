@@ -17,9 +17,10 @@
  *   tall as the viewport emits `\x1b[3J`, which wipes the scrollback.
  */
 
+import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { resolvePath } from "path-ts"
 
 import {

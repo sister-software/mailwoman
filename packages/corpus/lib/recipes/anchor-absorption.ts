@@ -12,8 +12,8 @@
  *   scripts/build-anchor-absorption-slice.mjs.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { makeLcg, sliceSourceID, type CorpusRecipe } from "#recipes/scaffold"

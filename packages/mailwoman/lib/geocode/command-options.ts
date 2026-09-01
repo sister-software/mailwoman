@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
+import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import type { PathBuilderLike } from "path-ts"
 
 export interface GeocodeCommandOptions {

@@ -18,8 +18,9 @@
  *   [--data-root <dir>] [--out registry/models/dedup-gbt-en-us.ts]`
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
+import { makeLcg } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
 import { dirname } from "path-ts"
 

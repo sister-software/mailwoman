@@ -13,9 +13,10 @@
  *   - Model.onnx is read from $MAILWOMAN_TEST_ONNX_MODEL or the default path below
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/paths"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"

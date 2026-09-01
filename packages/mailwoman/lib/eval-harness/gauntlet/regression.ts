@@ -15,7 +15,7 @@
  *   Run: mailwoman eval gauntlet --layer regression [--candidate <candidate.onnx>]
  */
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { checkCase } from "#eval-harness/gauntlet/check-case"

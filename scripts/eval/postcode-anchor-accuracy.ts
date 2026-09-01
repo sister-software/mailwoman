@@ -18,8 +18,9 @@
  *   --eval data/eval/external/openaddresses-de-sample.jsonl --country DE
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath, percentile } from "@mailwoman/core/utils"
+import { percentile } from "@mailwoman/core/utils"
 import { WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 import { resolvePath } from "path-ts"

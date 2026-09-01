@@ -60,9 +60,10 @@
  *   also `$MAILWOMAN_DATA_ROOT` overridable.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { finished, openWriteStream } from "@mailwoman/core/fs/streams"
-import { dataRootPath, pyFloat, pyRound } from "@mailwoman/core/utils"
+import { pyFloat, pyRound } from "@mailwoman/core/utils"
 import { once } from "@mailwoman/core/utils/events"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

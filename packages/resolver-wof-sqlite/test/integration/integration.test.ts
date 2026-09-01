@@ -19,9 +19,9 @@
  *   time). The resolver throws a clear error if missing — that's a sufficient signal.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 

@@ -40,7 +40,8 @@
  *   Baked into `meta` verbatim, alongside the source md5 and OS's own `Doc/licence.txt`.
  */
 
-import { dataRootPath, isoDate } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/data-root"
+import { isoDate } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"

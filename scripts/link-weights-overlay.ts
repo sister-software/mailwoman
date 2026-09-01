@@ -21,12 +21,14 @@
  *   ```
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { $public } from "@mailwoman/core/env"
 import { pathExists, readLocalTextFile, statLink } from "@mailwoman/core/fs/readers"
 import { copyFileTo, createSymbolicLink, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { repoRootPathBuilder, workspacePath } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath, md5File, repoRootPathBuilder, workspacePath } from "@mailwoman/core/utils"
+import { md5File } from "@mailwoman/core/utils"
 import { type PathBuilderLike, relative, resolvePath } from "path-ts"
 
 import { readWeightsRecipe } from "./weights-recipe.ts"

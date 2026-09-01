@@ -14,8 +14,9 @@
  *   scrollback. A full listing is 200+ lines, so on any terminal it would.
  */
 
+import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 
 import {
 	type CommandSpec,

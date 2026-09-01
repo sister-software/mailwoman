@@ -27,8 +27,9 @@
  *   in-place), then seal read-only.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { changeMode, makeDirectories, movePath, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { dataRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
+import { resourceDictionaryPath } from "@mailwoman/core/paths"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { buildStreetMorphologyFST, STREET_MORPHOLOGY_ARTIFACT_FILENAME } from "@mailwoman/resolver-wof-sqlite/street"
 import { dirname, resolvePath } from "path-ts"

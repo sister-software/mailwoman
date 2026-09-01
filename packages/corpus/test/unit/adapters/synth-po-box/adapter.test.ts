@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { tempRootPath } from "@mailwoman/core/utils"
 import { createSynthPoBoxAdapter, SYNTH_PO_BOX_ADAPTER_ID } from "@mailwoman/corpus/adapters/synth-po-box/adapter"
 import { describe, expect, it } from "vitest"
 

@@ -8,7 +8,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import {
 	checkBoardPins,
 	PIN_TEST_PATH,

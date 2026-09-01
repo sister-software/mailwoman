@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/paths"
 import {
 	buildFSTEmissionPriors,
 	collapseFSTBias,

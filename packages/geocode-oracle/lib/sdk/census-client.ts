@@ -38,8 +38,8 @@
 
 import { APIClient, type APIClientConfig, type ClockLike } from "@mailwoman/core/api"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { ResourceError } from "@mailwoman/core/errors"
-import { dataRootPath } from "@mailwoman/core/utils"
 
 import type { OracleGeocodeResult } from "#result"
 import { parseCensusAddressMatch } from "#sdk/census-parser"

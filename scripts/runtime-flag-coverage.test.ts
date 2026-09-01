@@ -26,7 +26,7 @@
  */
 
 import { isDirectory, pathExists, readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { join } from "path-ts"
 import { beforeAll, describe, expect, it } from "vitest"
 

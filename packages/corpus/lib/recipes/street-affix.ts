@@ -36,8 +36,8 @@ import {
 	renderDirectional,
 	US_STREET_SUFFIX_PREFERRED_ABBR,
 } from "@mailwoman/codex/us"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import type { ComponentTag } from "@mailwoman/core/types"
-import { dataRootPath } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"

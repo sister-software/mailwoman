@@ -36,12 +36,12 @@
  *   md5 is recorded in the output's provenance block, and `data/PROVENANCE.md` carries the rest.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { md5Hex } from "@mailwoman/core/utils/hash"
 
 import type { VenueWordHint, VenueWordHintTable } from "#venue-word-hints"

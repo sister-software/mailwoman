@@ -21,11 +21,11 @@
  *       --pbf $MAILWOMAN_DATA_ROOT/osm/geofabrik/ile-de-france-260627.osm.pbf
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath, makeDirectories } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { createAddressPointIndexes } from "@mailwoman/resolver-wof-sqlite/address"
 import { canonicalizeRouteKey, normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"

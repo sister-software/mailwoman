@@ -16,9 +16,9 @@
  *   https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/
  */
 
+import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { extractZipEntries } from "@mailwoman/core/fs/zip"
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { dirname, join } from "path-ts"
 import { TextSpliterator } from "spliterator"

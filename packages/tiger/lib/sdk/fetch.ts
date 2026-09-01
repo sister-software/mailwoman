@@ -25,9 +25,9 @@
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { extractZipEntries } from "@mailwoman/core/fs/zip"
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { dirname, join } from "path-ts"

@@ -52,10 +52,10 @@
  *   `--postcode-anchor`, which swaps the resolved COORDINATE, not the model input.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
 import { writeLocalJSONFile, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { renderOaResolverReport } from "#eval-harness/oa-resolver-report"

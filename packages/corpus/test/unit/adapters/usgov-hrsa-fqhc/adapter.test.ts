@@ -5,7 +5,7 @@
  */
 
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { workspacePath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/paths"
 import {
 	USGOV_HRSA_FQHC_ADAPTER_ID,
 	USGOV_HRSA_FQHC_DEFAULT_LICENSE,

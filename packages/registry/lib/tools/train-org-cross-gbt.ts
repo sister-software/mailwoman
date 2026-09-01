@@ -26,7 +26,7 @@
  *   [--wof <admin.db>] [--data-root <dir>] [--out registry/models/org-crosssource-gbt-en-us.ts]`
  */
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/data-root"
 
 import { addressFrequencyKey, streamRows } from "#index"
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"

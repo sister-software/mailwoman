@@ -7,9 +7,9 @@
  *   `crossAgencyOnly` removes links whose sources belong to one agency.
  */
 
+import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
 import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 
 import { type MapFeatureData, toMapHTML } from "#index"

@@ -41,7 +41,7 @@
  */
 
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { dirname } from "path-ts"
 
 import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "#country/country"

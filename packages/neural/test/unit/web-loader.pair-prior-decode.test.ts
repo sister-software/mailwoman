@@ -18,7 +18,7 @@
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { workspacePath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/paths"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
 import { serializePairIndex, type PairIndexHeaderInput } from "@mailwoman/neural/pair"
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"

@@ -21,9 +21,9 @@
  *   Run: mailwoman gazetteer build cz-districts [--source <CZ.txt>] [--out <localities-cz-districts.db>]
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { md5Hex } from "@mailwoman/core/utils/hash"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

@@ -28,10 +28,11 @@
  *   Run: `node mailwoman/gazetteer-pipeline/pair-index-hierarchy-verify.ts [--countries us,fr] [--db <path>] [--dir <dir>]`
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { allRows, dataRootPath } from "@mailwoman/core/utils"
+import { allRows } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import {
 	KNOWN_SCHEMA_VERSION,

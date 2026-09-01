@@ -22,10 +22,11 @@
  *   Run: node packages/mailwoman/lib/dev-tools/build-hard-slice-board.run.ts [--out <path>]
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath, getRow } from "@mailwoman/core/utils"
+import { getRow } from "@mailwoman/core/utils"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
 import { normalizeTokens, deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"

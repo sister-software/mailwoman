@@ -55,13 +55,13 @@
  *   --out-json /tmp/per-locale-f1.json
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
 import { STREET_FAMILY_TAGS } from "@mailwoman/core/types"
-import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	NeuralAddressClassifier,
 	parseAnchorLookup,

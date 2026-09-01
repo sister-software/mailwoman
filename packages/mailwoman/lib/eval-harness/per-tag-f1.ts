@@ -6,9 +6,9 @@
  */
 
 import type { SystemCode } from "@mailwoman/codex"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { createScorer, type ScorerOverrides } from "@mailwoman/neural/scorer"

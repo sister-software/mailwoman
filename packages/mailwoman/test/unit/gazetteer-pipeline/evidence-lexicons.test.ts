@@ -8,8 +8,8 @@
  *   are the regression fence around that tuition.
  */
 
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { tempRootPath } from "@mailwoman/core/utils"
 import {
 	buildStreetTypeLexicon,
 	clearsProminenceFloor,

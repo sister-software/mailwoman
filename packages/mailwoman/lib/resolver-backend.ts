@@ -19,9 +19,11 @@
  *   (or `--candidate-db none`) pins the FTS backend.
  */
 
+import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { $public } from "@mailwoman/core/env"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { mailwomanDataRoot, repoRootPathBuilder, wofExtractPaths } from "@mailwoman/core/utils"
+import { repoRootPathBuilder } from "@mailwoman/core/paths"
+import { wofExtractPaths } from "@mailwoman/core/utils"
 import type {
 	PlaceLookup,
 	WOFCandidateTableLookup,

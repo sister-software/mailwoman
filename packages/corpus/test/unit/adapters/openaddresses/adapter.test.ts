@@ -5,7 +5,7 @@
  */
 
 import { removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { workspacePath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/paths"
 import {
 	OPENADDRESSES_ADAPTER_ID,
 	OPENADDRESSES_DEFAULT_LICENSE,

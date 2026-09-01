@@ -15,8 +15,8 @@
  */
 
 import { pathExists, readDirectoryEntries } from "@mailwoman/core/fs/readers"
+import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
-import { repoRootPath, workspacePath } from "@mailwoman/core/utils"
 import { cpuCount } from "@mailwoman/core/utils/system"
 import { join, relative } from "path-ts"
 import { TextSpliterator } from "spliterator"

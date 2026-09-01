@@ -6,7 +6,7 @@
  *   admin centroid and the street-level point.
  */
 
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
+import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
 import type { AddressPointLookup, InterpolationLookup } from "@mailwoman/resolver"
 
 import type { OAResolverEvalOptions } from "#eval-harness/oa-resolver/options"

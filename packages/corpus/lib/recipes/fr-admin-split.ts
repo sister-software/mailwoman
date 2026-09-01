@@ -31,8 +31,8 @@
  */
 
 import { departementForCodePostal } from "@mailwoman/codex/fr"
+import { tempRootPath } from "@mailwoman/core/data-root"
 import type { ComponentTag } from "@mailwoman/core/types"
-import { tempRootPath } from "@mailwoman/core/utils"
 import { CSVSpliterator, Delimiters } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"

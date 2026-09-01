@@ -11,7 +11,7 @@
  *   capture scripts (this guard cannot catch value edits).
  */
 
-import { workspacePath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/paths"
 import { JSONSpliterator } from "spliterator"
 import { expect, test } from "vitest"
 

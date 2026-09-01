@@ -26,10 +26,10 @@
  *   across fingerprints anyway, and says which two it saw.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readDirectory, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { join, type PathBuilderLike } from "path-ts"
 
 /**

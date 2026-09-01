@@ -13,8 +13,8 @@
  *   everywhere and the consumer simply doesn't decorate.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PostcodeLocalityDatabase } from "mailwoman/gazetteer-pipeline/postcode-locality/schema"
 
