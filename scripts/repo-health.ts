@@ -269,15 +269,11 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["docs/styles/", "the Vale rules that REFUSE the word must name it"],
 	[".claude/output-styles/", "the same refusal list, mirrored for agent replies"],
 	["AGENTS.md", "carries that refusal list, plus the note recording that this family reached zero"],
-	// Records describe a state the repository was in. Rewriting one falsifies it — the rule that kept the
-	// frozen pre-registrations out of the #2050 path sweep.
-	["CHANGELOG.md", "records the rename itself"],
-	["docs/records/", "dated records"],
-	["docs/superpowers/specs/", "dated specs, including the two that proposed this removal"],
-	["evals/scores-by-version.json", "per-version eval history"],
-	[".claude/skills/", "archived consult transcripts"],
-	[".agents/skills/", "archived consult transcripts"],
-	["release.config.json", "the `lineage` string is training-run provenance for a shipped version"],
+	// RECORDS ARE NOT EXEMPT, and that is a deliberate reversal. They were exempt on the reasoning that
+	// rewriting a record falsifies it — but a record names PATHS and IDENTIFIERS, not measurements, and a
+	// retired name in a record is read as a live one by the next agent. Every number, date and verdict is
+	// untouched; only the spelling of things that were renamed moved with them. Operator direction, and the
+	// reason given was the operative one: agents pick the vocabulary back up from prose.
 	// CONTENT, not vocabulary. `shardza`, `sechshard` and `shykshard` are transliterated place names;
 	// `Bosshardt` and `Rashard` are real people's names; the eval rows are dated notes on committed board
 	// cases. Renaming any of them would corrupt data to satisfy a style rule.
