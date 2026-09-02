@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `filing_landscape` reader — the FOUR PRE-REGISTERED ACCEPTANCE GATES this whole phase
- *   is judged by. See `filing-landscape.test.ts` for the gate tests; this module is only the reader.
+ *   `filing_landscape` reader — the FOUR PRE-REGISTERED ACCEPTANCE CRITERIA this whole phase
+ *   is judged by. See `filing-landscape.test.ts` for the criterion tests; this module is only the reader.
  *
  *   Coverage check (the meaning-of-zero rule): a queried block counts as SURVEYED only when its res-6
  *   coverage cell is present in `layer_coverage` (via `readLayerCoverage`) — `undefined` means the area
@@ -175,7 +175,7 @@ export async function filingLandscape(
 	}
 
 	// Read (and validate) the manifest FIRST — a broken/missing manifest must throw before any block is
-	// classified, never fall through to an "unstamped" answer (gate 4).
+	// classified, never fall through to an "unstamped" answer (criterion 4).
 	const manifest = await readLayerManifest(db)
 
 	const requestedUnits: ReadonlyArray<string | number> = query.geoids ?? query.h3Cells!
@@ -206,7 +206,7 @@ export async function filingLandscape(
 	let surveyedBlockCount = 0
 	let unknownBlockCount = 0
 	// Only units that PASS the coverage check feed the census below — a unit with rows but no coverage evidence
-	// (a corrupted/inconsistent db — see filing-landscape.test.ts's "coverage row deleted" gate) is `unknown`, and
+	// (a corrupted/inconsistent db — see filing-landscape.test.ts's "coverage row deleted" case) is `unknown`, and
 	// its rows must not leak into `filings` either: `surveyed_block_count` and the blocks backing `filings` must
 	// always agree, or a caller cross-referencing the two gets a contradiction (an "unknown" block whose filings
 	// still show up looks exactly like the false-negative bug this reader exists to prevent).

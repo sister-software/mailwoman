@@ -147,7 +147,7 @@ export interface BuildBDCOptions {
 	/**
 	 * Provider-list rows ({@link ProviderListRow}, `@mailwoman/filer/sdk`'s `parseProviderList`) — the test/CLI injection
 	 * point for populating `bdc_provider` (2a decision 8 / 3a decision 6). When ABSENT (the default), `bdc_provider`
-	 * stays empty and the rest of the build is untouched: every code path this option touches is gated behind `if
+	 * stays empty and the rest of the build is untouched: every code path this option touches is conditioned behind `if
 	 * (options.providers)`, so omitting it changes nothing. When present, `buildBDCDatabase` groups rows by `providerID`
 	 * and inserts one `bdc_provider` row per distinct provider — see {@link BuildBDCOptions.filerDB} for how the primary
 	 * FRN is picked when a provider carries more than one, and `schema.ts`'s `BDCProviderTable` docstring for the full
@@ -791,7 +791,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			createdAt: new Date().toISOString(),
 		})
 
-		// bdc_provider population (2a decision 8 / 3a decision 6) — entirely additive and gated behind
+		// bdc_provider population (2a decision 8 / 3a decision 6) — entirely additive and conditioned on
 		// `options.providers`: when absent, this block never runs and `bdc_provider` stays empty (see
 		// `BuildBDCOptions.providers`'s docstring for the default-path guarantee).
 		let providersPopulated = 0
