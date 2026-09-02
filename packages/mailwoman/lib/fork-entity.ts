@@ -84,7 +84,7 @@ export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): Fo
 
 	if (!nameKey) return null
 
-	// Gate 2 — street-flavored surfaces belong to the street tier, never the entity probe.
+	// Condition 2 — street-flavored surfaces belong to the street tier, never the entity probe.
 	for (const token of nameKey.split(" ")) {
 		if (token && opts.isStreetGeneric(token)) return null
 	}
@@ -92,13 +92,13 @@ export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): Fo
 	// Over-fetch: FTS ranks by bm25, and the exact-name row is not guaranteed first.
 	const hits = opts.lookup.search({ name: rawQuery, limit: 24 })
 
-	// Gate 3a — name-key EXACT equality only. An FTS partial ("comer" matching "Comer Park") is not
+	// Condition 3a — name-key EXACT equality only. An FTS partial ("comer" matching "Comer Park") is not
 	// the entity bearing this name.
 	const exact = hits.filter((h) => h.name !== null && normalizeLocalityForKey(h.name) === nameKey)
 
 	if (!exact.length) return null
 
-	// Gate 3b — collapse duplicate rows of one physical venue, then require exactly ONE entity.
+	// Condition 3b — collapse duplicate rows of one physical venue, then require exactly ONE entity.
 	const entities: Array<(typeof exact)[number]> = []
 
 	for (const hit of exact) {

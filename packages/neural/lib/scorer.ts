@@ -663,7 +663,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 
 /**
  * Throw in strict mode; otherwise warn loudly and continue (deliberate below-config debugging). `ErrorClass` defaults
- * to {@link UnfedChannelError} (the channel-feed traps); the capability-gate passes {@link CapabilityViolationError} so
+ * to {@link UnfedChannelError} (the channel-feed traps); the capability check passes {@link CapabilityViolationError} so
  * the two fail-closed families are distinguishable.
  */
 function fail(strict: boolean, message: string, ErrorClass: new (message: string) => Error = UnfedChannelError): void {

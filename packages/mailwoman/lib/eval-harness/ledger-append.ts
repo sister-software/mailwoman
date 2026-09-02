@@ -144,7 +144,7 @@ export async function ledgerAppend(options: LedgerAppendOptions): Promise<number
 			return 1
 		}
 
-		exceptionNote = ` OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): ${failing.join(", ")}.`
+		exceptionNote = ` OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the eval spec's revision comment): ${failing.join(", ")}.`
 
 		console.error(`! ledgering a FAIL verdict under operator exception: ${failing.join(", ")}`)
 	}

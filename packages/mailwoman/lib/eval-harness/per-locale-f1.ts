@@ -152,8 +152,8 @@ interface GoldenRow {
 /**
  * Fold neural Stage-3 tags into the golden component vocab (street parts + intersections → street).
  *
- * `foldStreetParts: false` is the v0.1.3 convention (#gate-relabel, 2026-08-06): that answer key labels US streets
- * SPLIT — `street_prefix` / `street` / `street_suffix` are three spans — so gluing the prediction back together before
+ * `foldStreetParts: false` is the v0.1.3 convention (the 2026-08-06 relabel): that answer key labels US streets SPLIT —
+ * `street_prefix` / `street` / `street_suffix` are three spans — so gluing the prediction back together before
  * comparing measures the harness, not the model. The v9.0.0 promotion eval read exactly that as an 0.4pp `us.street`
  * regression. Which mode applies is decided PER ROW from the golden dir's own MANIFEST (see
  * {@linkcode readStreetConvention}), never from a flag someone has to remember: an answer key that declares its

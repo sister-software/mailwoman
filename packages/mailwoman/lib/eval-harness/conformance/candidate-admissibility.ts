@@ -148,7 +148,7 @@ export interface LookupFold {
 	windowed: boolean
 	scope: LookupScope
 	/**
-	 * Every `gates` entry across the records, in first-seen order — the resolver's own mechanism vocabulary.
+	 * Every `checks` entry across the records, in first-seen order — the resolver's own mechanism vocabulary.
 	 */
 	checks: string[]
 	/**

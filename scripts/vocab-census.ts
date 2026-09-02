@@ -257,8 +257,10 @@ async function collectHits(root: string): Promise<string[]> {
 	const tracked = await runFile("git", ["ls-files", ...TRACKED_GLOBS], { cwd: root, maxBuffer: 1 << 26 })
 	const files = TextSpliterator.from(tracked.stdout, { skipEmpty: true }).toArray()
 
+	// The CENSUS config, not the enforcing one: enforcement exempts the Vale fixtures, and the census
+	// needs one of them to trip so its positive control still means something.
 	const vale = resolveModulePath("@vvago/vale/bin/vale")
-	const config = resolvePath(root, "docs/.vale-code.ini")
+	const config = resolvePath(root, "docs/.vale-code-census.ini")
 
 	// Run from the REPO ROOT, because `git ls-files` answers repo-relative paths. Run it from
 	// anywhere else and Vale resolves none of them, reports zero alerts, and exits 0 — the reading

@@ -5,7 +5,7 @@ Per Phase 2 §8:
 - Int8 dynamic quantization.
 - Calibrate on 1000 val-set examples (dynamic quantization doesn't strictly *need* a
   calibration set, but we run an end-to-end smoke over the val set to catch shape /
-  op-support regressions before they hit the eval gate).
+  op-support regressions before they hit the promotion eval).
 - Verify quantized model F1 drops by less than 0.5% from fp32 on the golden set.
 
 Dynamic vs static: dynamic quantizes weights at conversion time but activations at runtime.

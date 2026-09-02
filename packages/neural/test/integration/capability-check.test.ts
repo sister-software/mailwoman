@@ -39,7 +39,7 @@ const MODEL_CARD = workspacePath("neural-weights-en-us", "model-card.json")
 
 // All channels must be feedable: createScorer runs the eval in `strict` mode, and the v1.5.0 card
 // declares anchor+gazetteer required — a missing channel would throw an UnfedChannelError that masks
-// the capability-gate behavior we're testing. Skip the whole suite unless the full feed is present.
+// the capability-check behavior we're testing. Skip the whole suite unless the full feed is present.
 const haveAll = (await Promise.all([MODEL, TOKENIZER, ANCHOR, GAZETTEER, MODEL_CARD].map((p) => pathExists(p)))).every(
 	(exists) => exists
 )

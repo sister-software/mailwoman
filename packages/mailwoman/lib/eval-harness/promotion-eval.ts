@@ -13,7 +13,7 @@
  *   | --weights-cache <fp32-pkg-root> [--int8-weights-cache <int8-pkg-root>]\
  *   --spec packages/mailwoman/lib/eval-harness/specs/<spec>.json\
  *   [--tokenizer <tokenizer.model>] [--card <model-card.json>]\
- *   [--gazetteer-lexicon <lexicon.json>] [--out-dir /tmp/gate-<label>]
+ *   [--gazetteer-lexicon <lexicon.json>] [--out-dir /tmp/eval-<label>]
  *
  *   The --model dual grades RAW artifacts: its fp32↔int8 deltas are valid, but its absolute floors
  *   are NOT for any channel-trained model — the package channel siblings (anchor, gazetteer,
@@ -115,7 +115,7 @@ interface GateSpec {
 	requires_bridge?: boolean
 	/**
 	 * The ANSWER KEY the per-locale battery grades against, e.g. `data/eval/golden/v0.1.3/dev`. Spec-declared for the
-	 * same reason the conventions mask is: two gate specs that name different golden versions are not comparable, and a
+	 * same reason the conventions mask is: two eval specs that name different golden versions are not comparable, and a
 	 * default buried in a scorer makes that invisible. Omitted = per-locale-f1's own default (v0.1.2/dev).
 	 *
 	 * Answer-key versions are never comparable ACROSS conventions — v0.1.2 folds US street spans, v0.1.3 splits them — so
@@ -172,7 +172,7 @@ export interface PromotionGateOptions {
 	 */
 	int8WeightsCache?: string
 	/**
-	 * Battery output dir. Default `/tmp/gate-<label>-<hhmm>`.
+	 * Battery output dir. Default `/tmp/eval-<label>-<hhmm>`.
 	 */
 	outDir?: PathBuilderLike
 }
@@ -209,7 +209,7 @@ export async function resolveGateSpecPath(gate: string): Promise<string> {
 }
 
 /**
- * Every gate spec shipped beside this module, newest-looking last. For `--spec` errors and tooling.
+ * Every eval spec shipped beside this module, newest-looking last. For `--spec` errors and tooling.
  */
 export async function listEvalSpecs(): Promise<string[]> {
 	if (await pathExists(SPECS_DIR)) {
@@ -474,7 +474,7 @@ async function runDemoCascadeLeg(env: {
 
 	if (cascadeExit !== 0) {
 		console.error(
-			`✗ demo-cascade smoke errored (see ${outDir}/cascade-smoke.md) — no sidecar; a floored gate spec will FAIL`
+			`✗ demo-cascade smoke errored (see ${outDir}/cascade-smoke.md) — no sidecar; a floored eval spec will FAIL`
 		)
 	}
 }
@@ -545,7 +545,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	const hhmm = String(new Date().getUTCHours()).padStart(2, "0") + String(new Date().getUTCMinutes()).padStart(2, "0")
 
 	if (!OUT_DIR) {
-		OUT_DIR = `/tmp/gate-${LABEL}-${hhmm}`
+		OUT_DIR = `/tmp/eval-${LABEL}-${hhmm}`
 	}
 
 	await makeDirectories(OUT_DIR)
@@ -750,7 +750,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	// lacks (the 2026-06-11 lesson: #520/#521/#522 all shipped through green per-layer checks). Runs on
 	// the ship artifact against the slim hot DB the demo serves. Env-restricted like the other
 	// artifact-dependent legs: skips LOUD when the DB is absent so CI stays green without it — but a
-	// gate spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by design).
+	// eval spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by design).
 	await runDemoCascadeLeg({
 		outDir: OUT_DIR,
 		shipModel,

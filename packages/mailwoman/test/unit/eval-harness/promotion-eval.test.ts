@@ -148,7 +148,7 @@ describe("resolveGateSpecPath", () => {
 
 	it("SHIPS every resolvable spec in the npm tarball — an installed CLI resolves the shorthand too (#1056)", async () => {
 		// The source-tree fix alone left the packaged CLI broken: `files` covered only `**/*.ts` + `out/**`,
-		// and tsc does not emit readFileSync'd JSON, so the tarball carried ZERO gate specs and the
+		// and tsc does not emit readFileSync'd JSON, so the tarball carried ZERO eval specs and the
 		// installed `mailwoman eval promote --spec <name>` found an empty checks dir.
 		const pkg = await readLocalJSONFile<{ files: string[] }>(new URL("../../../package.json", import.meta.url))
 

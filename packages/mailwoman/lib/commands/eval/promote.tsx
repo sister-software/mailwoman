@@ -31,7 +31,7 @@ export const spec = {
 		"gazetteer-lexicon": { type: "string", description: "Gazetteer lexicon JSON" },
 		"weights-cache": { type: "string", description: "Package-shaped candidate weights directory" },
 		"int8-weights-cache": { type: "string", description: "Package-shaped INT8 candidate directory" },
-		"out-dir": { type: "string", description: "Battery output dir (default /tmp/gate-<label>-<hhmm>)" },
+		"out-dir": { type: "string", description: "Battery output dir (default /tmp/eval-<label>-<hhmm>)" },
 	},
 } as const satisfies CommandSpec
 
