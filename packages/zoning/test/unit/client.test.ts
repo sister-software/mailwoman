@@ -15,7 +15,7 @@
  *   plain text would test nothing.
  */
 
-import { htmlToText } from "@mailwoman/core/utils"
+import { htmlToText } from "@mailwoman/core/html/text"
 import { assertAttributionUnchanged } from "@mailwoman/zoning/sdk/client"
 import { GZT_ATTRIBUTION, GZT_DECLARED_CODE_SET, GZT_DECLARED_CODES, GZT_LICENSE } from "@mailwoman/zoning/vocabulary"
 import { describe, expect, it } from "vitest"

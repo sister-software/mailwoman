@@ -18,15 +18,9 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { decodeEntities, normalizeWhitespace, stripTags } from "@mailwoman/core/html/tables"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import {
-	decodeEntities,
-	fetchExhibit21,
-	normalizeWhitespace,
-	parseExhibit21,
-	type SECDocumentClient,
-	stripTags,
-} from "@mailwoman/filer/sdk/exhibit21"
+import { fetchExhibit21, parseExhibit21, type SECDocumentClient } from "@mailwoman/filer/sdk/exhibit21"
 import { describe, expect, it } from "vitest"
 
 async function fixture(name: string): Promise<string> {

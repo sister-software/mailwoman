@@ -62,9 +62,9 @@ import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { $private } from "@mailwoman/core/env"
 import { ResourceError } from "@mailwoman/core/errors"
+import { decodeEntities, normalizeWhitespace, stripTags } from "@mailwoman/core/html/tables"
 
 import { isFRN, type FRN } from "#frn"
-import { decodeEntities, normalizeWhitespace, stripTags } from "#sdk/exhibit21"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.
 export { isTransientResourceError } from "@mailwoman/core/api"

@@ -505,6 +505,16 @@
 			"node": "./lib/stats.ts",
 			"default": "./out/stats.js",
 			"types": "./out/stats.d.ts"
+		},
+		"./html/tables": {
+			"node": "./lib/html/tables.ts",
+			"default": "./out/html/tables.js",
+			"types": "./out/html/tables.d.ts"
+		},
+		"./html/text": {
+			"node": "./lib/html/text.ts",
+			"default": "./out/html/text.js",
+			"types": "./out/html/text.d.ts"
 		}
 	},
 	"publishConfig": {

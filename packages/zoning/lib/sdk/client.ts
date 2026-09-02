@@ -34,7 +34,7 @@
 
 import { APIClient, type APIClientConfig } from "@mailwoman/core/api"
 import { createPacedCachedClient, type CreatePacedCachedClientOptions } from "@mailwoman/core/api/paced-client"
-import { htmlToText } from "@mailwoman/core/utils"
+import { htmlToText } from "@mailwoman/core/html/text"
 
 import { GZT_ATTRIBUTION, GZT_ITEM_ID, GZT_SERVICE_URL, GZT_SOURCE_EPSG } from "#vocabulary"
 

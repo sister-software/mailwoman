@@ -24,8 +24,9 @@
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { decodeEntities, normalizeWhitespace, stripTags } from "@mailwoman/core/html/tables"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { decodeEntities, normalizeWhitespace, parseExhibit21, stripTags } from "@mailwoman/filer/sdk/exhibit21"
+import { parseExhibit21 } from "@mailwoman/filer/sdk/exhibit21"
 import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
