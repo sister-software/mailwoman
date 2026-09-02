@@ -6,7 +6,7 @@
  *   Round-trip tests for the browser flat-binary postcode resolver (#240): serialize entries, load
  *   the bytes, and assert exact-match, multi-country runs, coordinate-less membership, and
  *   quantization fidelity. Also confirms `extractPostcodeAnchors` works through it (the
- *   `PostcodeResolver` seam), so the WASM resolver is a drop-in for the SQLite one.
+ *   `PostcodeResolver` interface), so the WASM resolver is a drop-in for the SQLite one.
  */
 
 import {

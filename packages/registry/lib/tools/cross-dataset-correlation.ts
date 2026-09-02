@@ -214,7 +214,7 @@ export async function crossDatasetCorrelation(
 	let geo = 0
 	let total = 0
 
-	// Count placements at the seam (parity with the retired in-script counter).
+	// Count placements at the boundary (parity with the retired in-script counter).
 	const seam: GeocodeAddress = async (raw) => {
 		const g = await geocoder.seam(raw)
 
@@ -233,7 +233,7 @@ export async function crossDatasetCorrelation(
 
 	for (const spec of SPECS) {
 		const rows = rawBySource.get(spec.source)!
-		// Per-source geocode-rate snapshot (#694 diagnostic): the seam counters are global, so delta
+		// Per-source geocode-rate snapshot (#694 diagnostic): the boundary counters are global, so delta
 		// them across each source to see WHERE nulls concentrate in the aggregate run.
 		const g0 = geo
 		const t0 = total

@@ -9,7 +9,7 @@
  *   assembly, the abstain precedent, and the `coverage_confidence` combination — so each gate can assert
  *   its own specific claim against a module already known to compose correctly in isolation.
  *
- *   Fixture idiom: a real `bdc.db` built via `buildBDCDatabase`'s `rows:` seam (same idiom as
+ *   Fixture idiom: a real `bdc.db` built via `buildBDCDatabase`'s `rows:` injection point (same idiom as
  *   `filing-landscape.test.ts`), and a poi-layer pair built the SAME way `nearest-infrastructure.test.ts`
  *   established (`poi-schema.ts` table builders directly — `bdc` cannot depend on the `mailwoman`
  *   workspace). Unlike that test's deliberately-decoupled `contractDB` fixture, several tests here need a

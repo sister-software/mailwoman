@@ -54,7 +54,7 @@
  *
  *   **Do not use this module for anything that does.** Surveying, cadastral work, or any consumer
  *   comparing our coordinates against another OSGB36-derived dataset at sub-10 m tolerance needs
- *   OSTN15, which means shipping the shift grid. If that day comes, the seam is
+ *   OSTN15, which means shipping the shift grid. If that day comes, the swap point is
  *   {@link osgb36AiryToWGS84} — swap the Helmert for a grid interpolation and the projection step
  *   above it is unchanged.
  *

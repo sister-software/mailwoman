@@ -65,7 +65,7 @@ export interface DocsDemoAssets {
 	 * Per-parse placetype-pair prior selection (placetype-pair-prior arc, #1278). Runs locale-gate over the input text
 	 * and returns the loaded index whose header country matches (or `undefined` → byte-stable no-prior). Both demo parse
 	 * paths thread this into `runClassifyStage` so a GB/NZ input gets its dependent_locality-resurrecting prior. `null`
-	 * when no pair index was staged/loaded for this release (older bundles) — the seam then behaves exactly as before.
+	 * when no pair index was staged/loaded for this release (older bundles) — the loader then behaves exactly as before.
 	 */
 	selectPairIndex: SelectPairIndex | null
 }

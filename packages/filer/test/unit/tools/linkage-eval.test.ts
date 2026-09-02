@@ -5,7 +5,7 @@
  *
  *   Tests for {@linkcode filerLinkageEval} (§7-3b decisions 3 & 4). Criterion 4's structural requirements
  *   live here — the truth field's absence from the withheld run's input (asserted against the SAME
- *   `buildFilteredEvalInputs()` seam the eval itself calls, not a parallel copy), and reproducibility — plus
+ *   `buildFilteredEvalInputs()` helper the eval itself calls, not a parallel copy), and reproducibility — plus
  *   a POSITIVE CONTROL: the control run's perfect score is asserted, so stubbing
  *   the prediction predicate kills a test instead of leaving 19/19 green. Runs the REAL
  *   `buildFilerDatabase`/`clusterFilers` pipeline end to end against scratch on-disk artifacts.

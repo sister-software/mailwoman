@@ -50,7 +50,7 @@ export interface ConformanceOutcome {
 	 */
 	result: GauntletResult
 	/**
-	 * The mechanism-account shapes this run matched, in the account's own seam order.
+	 * The mechanism-account shapes this run matched, in the account's own stage order.
 	 *
 	 * The vocabulary is `@mailwoman/dev-mcp`'s `DIAGNOSE_SHAPES`, and it is deliberately NOT imported here: dev-mcp is a
 	 * private maintainer workspace that depends on `mailwoman`, so the dependency can only run in that direction, and a
@@ -404,7 +404,7 @@ function compareMechanismShape(base: ConformanceOutcome, variant: ConformanceOut
 	}
 
 	// Same members, different order: the account emits shapes in pipeline-stage order, so the sequence carries which
-	// seam spoke first and a reordering is a real difference rather than a set equality.
+	// stage spoke first and a reordering is a real difference rather than a set equality.
 	if (!differences.length) {
 		differences.push(`same shapes in a different seam order: [${a.join(", ")}] → [${b.join(", ")}]`)
 	}

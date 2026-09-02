@@ -120,7 +120,7 @@ export async function coverageReconciliation(
 	let geo = 0
 	let total = 0
 
-	// Count placements at the seam (parity with the retired in-script counter).
+	// Count placements at the boundary (parity with the retired in-script counter).
 	const seam: GeocodeAddress = async (raw) => {
 		const g = await geocoder.seam(raw)
 

@@ -36,7 +36,7 @@ import { toGauntletResult } from "#eval-harness/gauntlet/harness"
 /**
  * Produce one side of a law: run `query` under `context` and return what the comparators read.
  *
- * The seam exists so a caller that can say MORE about a run than the assembled result — `@mailwoman/dev-mcp`, which
+ * The hook exists so a caller that can say MORE about a run than the assembled result — `@mailwoman/dev-mcp`, which
  * holds the trace and the mechanism-account predicates — attaches its shapes here rather than this module reaching for
  * a private workspace it must not depend on.
  */

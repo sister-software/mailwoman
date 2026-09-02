@@ -67,7 +67,7 @@
  *   should reach this artifact through {@link PostcodePrefixIndexLike} — a structural interface, the
  *   same `…Like` convention `PairIndexLike` and `PlacetypeCensusLike` use — rather than a package
  *   dependency. The format lives here because PFX1 is the fourth member of the PCB1/PIX1/PCN1 family
- *   and a reader's second consumer is the decode-time seam in `postcode-anchor.ts`; splitting the
+ *   and a reader's second consumer is the decode-time consumer in `postcode-anchor.ts`; splitting the
  *   family across two workspaces would buy one import and cost the single-file guarantee.
  */
 

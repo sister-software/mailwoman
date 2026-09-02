@@ -143,7 +143,7 @@ function collectSiblingSystems(roots: readonly AddressNode[]): Set<string> {
 		if (n.tag === "region") {
 			// (a) The region's value as a subdivision ("CA" → US, "ON" → CA — the US-wins tiebreak for
 			// "CA" is matchSubdivision's own). (b) The `country_hint` stamp annotateUSRegions writes on
-			// 2-letter US state abbreviations — the same evidence via the pipeline's other seam.
+			// 2-letter US state abbreviations — the same evidence via the pipeline's other path.
 			const sub = matchSubdivision(n.value)
 
 			if (sub && SYSTEM_UNIVERSE.has(sub.country.toUpperCase())) {

@@ -11,7 +11,7 @@ import type { DatabaseClient, SQLInputValue } from "@mailwoman/sqlite/client"
 import { hasColumn as columnExists, tableExists } from "@mailwoman/sqlite/introspection"
 
 // The row-shape assertion itself lives in `core` so the readers that cannot depend on this package reach the same
-// seam; re-exported here because this module is where this package's readers already look for it.
+// helper; re-exported here because this module is where this package's readers already look for it.
 export { allRows, getRow } from "@mailwoman/core/utils"
 
 /**

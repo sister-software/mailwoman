@@ -11,7 +11,7 @@
  *   channel loads, the parse works. The Run B gate had to stage v7's CONTENT under the v6 FILENAME to
  *   score faithfully.
  *
- *   These tests build synthetic package layouts under a `cacheRoot.path` (the same seam
+ *   These tests build synthetic package layouts under a `cacheRoot.path` (the same injection point
  *   `weights.test.ts`'s pair-index gate uses) so they need no model binaries: `resolveWeights` only
  *   `existsSync`-probes `model.onnx` / `tokenizer.model`, so empty stubs are enough to reach the
  *   sibling-resolution code this file is about.

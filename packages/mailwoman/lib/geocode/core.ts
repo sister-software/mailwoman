@@ -542,7 +542,7 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 }
 
 /**
- * Thread the address's COUNTRY EVIDENCE into the walk's options — one seam for the whole precedence chain: an explicit
+ * Thread the address's COUNTRY EVIDENCE into the walk's options — one path for the whole precedence chain: an explicit
  * caller scope is supreme; an inferred scope yields to the #1684 gate; postcode-format countries (#1589) reach the
  * scoped `postalcode` probe; the fuzzy tier's locale scope (#1585) and the soft locale prior (#27) thread beneath.
  */

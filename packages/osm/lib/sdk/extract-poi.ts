@@ -6,7 +6,7 @@
  *   Telecom-infrastructure POI extractor (decisions 2/3) — stream OSM telecom features
  *   (telephone exchanges, street cabinets, communications masts, data centers) out of a Geofabrik
  *   `.osm.pbf` extract via GDAL/ogr2ogr, matched against an AND/OR tag-rule table, and yielded as
- *   {@link POISourceRow}s ready for `buildPOIDatabase`'s injected `rows` seam
+ *   {@link POISourceRow}s ready for `buildPOIDatabase`'s injected `rows` point
  *   (`mailwoman/gazetteer-pipeline/poi/build-poi.ts:341`) — DuckDB bypassed entirely (decision 3).
  *   Mirrors `extract.ts`'s process-spawn + GeoJSONSeq-over-stdout idiom exactly; the two differences
  *   are the predicate (telecom tags, not `addr:housenumber`) and the match fan-out (a feature can only

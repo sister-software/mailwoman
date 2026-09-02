@@ -108,7 +108,7 @@ export interface NPPESDedupBenchmarkOptions {
 	 */
 	h3Res?: number
 	/**
-	 * Geocode the sample across a worker pool ({@linkcode geocodeStream}) instead of the serial in-process seam. Heavy
+	 * Geocode the sample across a worker pool ({@linkcode geocodeStream}) instead of the serial in-process path. Heavy
 	 * per-row work (ONNX parse + WOF SQLite) → threading pays; measured ~1.5× at 2 workers, coordinates identical.
 	 */
 	parallelGeocode?: boolean
@@ -196,7 +196,7 @@ export async function nppesDedupBenchmark(
 	} else {
 		const geocoder = await options.createGeocoder({ normalizeCase: !LEGACY })
 
-		// Count placements at the seam (parity with the retired in-script counter).
+		// Count placements at the boundary (parity with the retired in-script counter).
 		const countedSeam: GeocodeAddress = async (raw) => {
 			const g = await geocoder.seam(raw)
 

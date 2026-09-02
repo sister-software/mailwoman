@@ -8,7 +8,7 @@
  *   depends on `@mailwoman/registry`, so the reverse import would cycle the workspace graph. Instead
  *   each tool takes an {@linkcode EvalGeocoderFactory} the CLI command constructs from
  *   `mailwoman/geocode-core` (see `mailwoman/commands/registry/run.tsx`), mirroring the matcher's own
- *   `GeocodeAddress` seam philosophy: ingest never pins the runtime, the caller wires it.
+ *   `GeocodeAddress` interface philosophy: ingest never pins the runtime, the caller wires it.
  */
 
 import type { ColumnMapping, GeocodeAddress, SourceRecord } from "#index"
@@ -58,7 +58,7 @@ export interface EvalGeocoderInit {
 export type EvalGeocoderFactory = (init?: EvalGeocoderInit) => Promise<EvalGeocoder>
 
 /**
- * The threaded geocode surface (`mailwoman/geocode-stream` behind the seam) for `nppes-dedup-benchmark
+ * The threaded geocode surface (`mailwoman/geocode-stream` behind the interface) for `nppes-dedup-benchmark
  * --parallel-geocode`. Yields enriched records in completion order.
  */
 export type EvalGeocodeStream = (

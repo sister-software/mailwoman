@@ -451,9 +451,9 @@ function formatDuration(ms: number): string {
 /**
  * A {@linkcode ClockLike} that records how long the client spends asleep, plus the reader that snapshots it.
  *
- * The clock is the only seam `APIClient` exposes that every wait passes through — the pacer sleeps on it, the cooldown
- * timer sleeps on it, and the retry backoff sleeps on it — so wrapping it is how the waiting becomes visible without
- * touching `core/api`.
+ * The clock is the only injection point `APIClient` exposes that every wait passes through — the pacer sleeps on it,
+ * the cooldown timer sleeps on it, and the retry backoff sleeps on it — so wrapping it is how the waiting becomes
+ * visible without touching `core/api`.
  *
  * WAITS ARE UNIONED, NOT SUMMED, and that is the whole subtlety here. Under a concurrent fan-out every caller sleeps at
  * once, and each one's wait is longer than the last: 40 concurrent requests at a 6 s interval sleep 6 s, 12 s, … 234 s,

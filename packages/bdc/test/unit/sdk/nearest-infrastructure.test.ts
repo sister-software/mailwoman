@@ -9,7 +9,7 @@
  *   no DuckDB/network) — rather than `mailwoman/gazetteer-pipeline/poi/build-poi.ts`'s
  *   `buildPOIDatabase`: `bdc` cannot depend on the `mailwoman` workspace (the top-level CLI package
  *   already depends on `@mailwoman/bdc`, so the reverse edge would be circular). `bdc`'s only POI-side
- *   dependency is `@mailwoman/resolver-wof-sqlite`, and the rows-seam idiom (inject synthetic rows, skip
+ *   dependency is `@mailwoman/resolver-wof-sqlite`, and the injected-rows idiom (inject synthetic rows, skip
  *   DuckDB entirely) is preserved exactly.
  *
  *   Fixture rows, all telecom_exchange/tower_comms (`@mailwoman/poi-taxonomy` categories) except one

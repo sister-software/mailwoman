@@ -136,7 +136,7 @@ export interface CompareDeps {
 	 */
 	createExternalClient?: (arm: ExternalArm) => ExternalGeocoderClient
 	/**
-	 * How an oracle arm's client is built. The same seam, for the same reason.
+	 * How an oracle arm's client is built. The same injection point, for the same reason.
 	 */
 	createOracleClient?: (provider: OracleProviderName) => OracleGeocoderLike
 	/**

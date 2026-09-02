@@ -165,7 +165,7 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 		expect(result.pairIndexes[0]!.resolver).not.toBeNull() // LIVE despite no posture (phase 2 load-all)
 
 		// "Shoreditch London" has no postcode, so detection alone yields `us` (no bias); the `{ country }`
-		// override is the seam a preset uses to pin a posture the text shape can't reveal. The returned opt is
+		// override is the mechanism a preset uses to pin a posture the text shape can't reveal. The returned opt is
 		// spread as ParseOpts.placetypePair — exactly the demo's intended call site.
 		const placetypePair = result.selectPairIndexForText("Shoreditch London", { country: "en-gb" })
 		expect(placetypePair).toBeDefined()

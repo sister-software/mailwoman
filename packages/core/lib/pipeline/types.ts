@@ -208,8 +208,8 @@ export const QueryIntentCode = {
 	 */
 	DeclaredFork: "declared_fork",
 	/**
-	 * The query is relative to the asker and no focus point was supplied. `evidence.parameter` names the seam that would
-	 * carry one.
+	 * The query is relative to the asker and no focus point was supplied. `evidence.parameter` names the parameter that
+	 * would carry one.
 	 */
 	FocusPointRequired: "focus_point_required",
 	/**

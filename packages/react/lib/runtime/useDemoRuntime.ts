@@ -10,7 +10,7 @@
  *   WOF opener, the FST fetch, the releases.json fetch) are INJECTED by the host as async functions, so
  *   this module imports only React: no `onnxruntime-web`, no `sql.js-httpvfs`, no `maplibre-gl`, no
  *   `fetch`-specific plumbing. That keeps it node-import-safe and root-exportable from
- *   `@mailwoman/react` — the exact seam `PipelineRuntime` established, generalized to the loader itself.
+ *   `@mailwoman/react` — the exact interface `PipelineRuntime` established, generalized to the loader itself.
  *
  *   The hook is generic over `TAssets` (the opaque bundle the host's `loadAssets` returns — classifier,
  *   FST, WOF lookup, calibrator, …) and `TRelease` (the host's release-manifest entry). The package

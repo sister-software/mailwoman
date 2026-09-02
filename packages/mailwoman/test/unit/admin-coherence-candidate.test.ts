@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The #1717 seam, end to end on the CANDIDATE backend: a fixture candidate.db (built through the
+ *   The #1717 path, end to end on the CANDIDATE backend: a fixture candidate.db (built through the
  *   real {@link buildCandidateTable}, ancestors sidecar included) behind the real resolver walk,
  *   with the admin-coherence verdicts read off the resolved tree the way `extractGeocodeResult`
  *   reads them. This is the flip the sidecar exists for — the Weimar-class winner's `region`

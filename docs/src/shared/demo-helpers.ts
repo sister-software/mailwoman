@@ -260,8 +260,8 @@ export interface ClassifyStageResult {
  * `runPipeline`, and the tree flatten — with the two front-half timings captured. The caller owns resolution
  * (`runCascade`, plus the map path's street tier / anchor fallback) and the staged `onStage` progress ticks.
  *
- * #1278: this is the single seam the locale-gate pre-parse plugs into. A future per-parse country / conventions hint is
- * threaded through {@link ClassifyStageDeps} into the `runPipeline` call HERE — one insertion point for both paths.
+ * #1278: this is the single point the locale-gate pre-parse plugs into. A future per-parse country / conventions hint
+ * is threaded through {@link ClassifyStageDeps} into the `runPipeline` call HERE — one insertion point for both paths.
  */
 /**
  * Per-parse placetype-pair prior selector (placetype-pair-prior arc, #1278), the shape `neural-web`'s

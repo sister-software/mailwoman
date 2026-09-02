@@ -10,7 +10,7 @@
  *   invisible to any outcome test, because a component-match harness never looks at the edges. This asks the question
  *   at board scale — which classes fire, on what, and which never fire at all.
  *
- *   `mwdev_census` is the model for the discipline and this is its sibling one seam over: the census asks whether a
+ *   `mwdev_census` is the model for the discipline and this is its sibling one layer over: the census asks whether a
  *   parse-path MECHANISM signals on any row, this asks whether a decoder CONTRACT is broken on any row. Both refuse to
  *   let a zero stand unexplained.
  *

@@ -50,7 +50,7 @@
  *   `filer_cluster` also conflated two distinct rollups the spec keeps apart: an ENTITY cluster (same
  *   underlying filer under different identifiers — what `filer_cluster` has always meant) and a
  *   CORPORATE FAMILY (a holding/parent/subsidiary/management tree spanning several DIFFERENT filers).
- *   `filer_family` is the new seam for the latter — see {@link FilerFamilyTable}. Its own primary key
+ *   `filer_family` is the new table for the latter — see {@link FilerFamilyTable}. Its own primary key
  *   mirrors `filer_edge`'s reasoning exactly (composite on `(node_id, family_id, naming_node_id, source,
  *   valid_from)`, `relationship` excluded from it for the identical contradiction-vs-plurality reason).
  *
@@ -277,8 +277,8 @@ export interface FilerClusterTable {
 }
 
 /**
- * Corporate-family membership (decisions 1, 2) — the seam `filer_cluster` never had for telling apart an ENTITY cluster
- * (same filer, different identifiers — `filer_cluster`'s own, unchanged meaning) from a CORPORATE FAMILY (a
+ * Corporate-family membership (decisions 1, 2) — the distinction `filer_cluster` never had for telling apart an ENTITY
+ * cluster (same filer, different identifiers — `filer_cluster`'s own, unchanged meaning) from a CORPORATE FAMILY (a
  * holding/parent/subsidiary/management tree spanning several DIFFERENT filers). One row asserts that `node_id` belongs
  * to `family_id` — named by `naming_node_id`'s raw spelling — under a specific {@link FilerRelationship}
  * `relationship`, at a specific {@link FilerEdgeAssertion} `assertion` strength, as reported by one source at one

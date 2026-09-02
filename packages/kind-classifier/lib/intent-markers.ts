@@ -81,9 +81,9 @@ export function deriveIntentMarkers(
 			evidence: {
 				subject,
 				/**
-				 * The SEAM, named but not wired (ROAD_TO_V9 §4.4 scopes v9 to classification). Photon's `/api` already accepts
-				 * `lat`/`lon` location-bias params — `photon/` is the eventual consumer of this marker, and this string is the
-				 * note that says where it plugs in.
+				 * THE PLUG POINT, named but not wired (ROAD_TO_V9 §4.4 scopes v9 to classification). Photon's `/api` already
+				 * accepts `lat`/`lon` location-bias params — `photon/` is the eventual consumer of this marker, and this string
+				 * is the note that says where it plugs in.
 				 */
 				focusParameter: "photon:lat/lon",
 			},

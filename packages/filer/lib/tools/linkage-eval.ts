@@ -562,10 +562,10 @@ export interface LinkageEvalPassOptions {
 	holdingCompanyWithheld: boolean
 	/**
 	 * Writes evidence into the built artifact AFTER the leakage gate has passed and BEFORE the prediction is read — the
-	 * seam the standing "this baseline can be beaten" test uses to simulate an evidence channel that does not exist yet.
-	 * Never set by {@linkcode filerLinkageEval} itself: the two published runs measure builds nobody touched. Ordering is
-	 * the point — the gate still polices what the BUILDER produced from a withheld input, so a probe can add ownership
-	 * facts without disarming it.
+	 * injection point the standing "this baseline can be beaten" test uses to simulate an evidence channel that does not
+	 * exist yet. Never set by {@linkcode filerLinkageEval} itself: the two published runs measure builds nobody touched.
+	 * Ordering is the point — the gate still polices what the BUILDER produced from a withheld input, so a probe can add
+	 * ownership facts without disarming it.
 	 */
 	injectEvidence?: (db: DatabaseClient<FilerDatabase>) => Promise<void>
 }

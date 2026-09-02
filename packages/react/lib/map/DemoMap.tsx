@@ -52,7 +52,7 @@ export interface DemoMapProps {
 	 */
 	viewState?: MapProps["viewState"]
 	/**
-	 * Fired on every camera change (drag/zoom/rotate) — the seam for viewport-bias persistence.
+	 * Fired on every camera change (drag/zoom/rotate) — the hook for viewport-bias persistence.
 	 */
 	onMove?: (event: ViewStateChangeEvent) => void
 	/**

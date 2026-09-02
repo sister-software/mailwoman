@@ -423,7 +423,7 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 		const overrideCell = overrideCells.find((c) => c.observedRows === 1)!
 
 		// The default (Overture) branch's rows-derived coverage — already correct (~:592) — built independently
-		// via the real `buildPOIDatabase` seam over the exact same row.
+		// via the real `buildPOIDatabase` entry point over the exact same row.
 		const result = await buildPOIDatabase({
 			rows: [row],
 			out,

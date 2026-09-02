@@ -11,7 +11,7 @@
  *   anyway, and HTTP/2 + gzip make the 35 MB transfer pay one RTT + transfer time, not the
  *   "hundreds of byte-range requests" cost a HTTP-VFS approach would incur.
  *
- *   When we eventually want incremental loading (Phase B.x), this is the seam to swap — keep
+ *   When we eventually want incremental loading (Phase B.x), this is the point to swap — keep
  *   `WOFWasmPlaceLookup` unchanged and replace the loader with a `sql.js-httpvfs`-style VFS.
  */
 

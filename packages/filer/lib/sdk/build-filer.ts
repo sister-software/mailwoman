@@ -103,7 +103,7 @@
  *   `dcAgent*` field into an edge; this is enforced by construction (the edge-emitting functions below
  *   never read those fields), not by a runtime check.
  *
- *   **EDGAR Exhibit 21 ingest — the optional `edgarRows` seam.** `sec-client.ts`'s `SECClient.getDocument`
+ *   **EDGAR Exhibit 21 ingest — the optional `edgarRows` injection point.** `sec-client.ts`'s `SECClient.getDocument`
  *   plus `exhibit21.ts`'s `parseExhibit21` produce {@link EdgarSubsidiaryRow}s (a parent CIK, a raw
  *   subsidiary name, an optional jurisdiction, a filing date) somewhere upstream of this file; this builder
  *   only ever consumes them, the same "injected iterable" shape `form499Rows`/`providerRows` already use.
@@ -222,7 +222,7 @@ import { assertISODate } from "#sdk/guards"
 import { parseProviderList, type ProviderListRow } from "#sdk/provider-list"
 
 // `@mailwoman/filer/sdk/build-filer` is EdgarSubsidiaryRow's published home — `edgar-ingest.ts` and every consumer
-// building rows for the `edgarRows` seam import it from here, so it stays exported from this module even though its
+// building rows for the `edgarRows` injection point import it from here, so it stays exported from this module even though its
 // declaration sits with the writer that validates it.
 export type { EdgarSubsidiaryRow } from "#sdk/build/edgar-rows"
 

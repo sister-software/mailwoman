@@ -178,7 +178,7 @@ describe("the normalizeToken seam", () => {
 		const trie = Ancestrie.from(builder.seal())
 
 		expect(autocomplete(trie, ["NEW", "YOR"], { normalizeToken: fold }).suggestions.map((s) => s.id)).toEqual([1])
-		// Without the query-side normalizer the cased query misses — the seam is the caller's contract.
+		// Without the query-side normalizer the cased query misses — the normalization boundary is the caller's contract.
 		expect(autocomplete(trie, ["NEW", "YOR"]).suggestions).toEqual([])
 	})
 })

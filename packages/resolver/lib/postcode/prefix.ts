@@ -63,7 +63,7 @@ import type { PostcodePrefixIndexLike, PostcodePrefixNode, ResolvedPlace } from 
  * even the 0,0 unlocated sentinel), and the prefix prior's ancestry-only tier must express absence as `undefined`
  * instead — B3-3: inventing a centroid would reproduce the `BT3 9QQ` → Sheffield defect #1480. `decorateNode` copies
  * `lat`/`lon` onto the node verbatim, so an undefined coordinate stays absent on the node — the meaning-of-zero rule.
- * Widened ONLY at this seam: gazetteer places (always coordinate-bearing) remain plain `ResolvedPlace`.
+ * Widened ONLY at this boundary: gazetteer places (always coordinate-bearing) remain plain `ResolvedPlace`.
  */
 export type CoordinateOptionalPlace = Omit<ResolvedPlace, "lat" | "lon"> & { lat?: number; lon?: number }
 

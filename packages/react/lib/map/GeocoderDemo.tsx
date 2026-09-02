@@ -84,7 +84,7 @@ function GeocoderDemoInner({
 
 	// TEST INJECTION POINT: the e2e viewport-bias suite drives the REAL map (pan + zoom past the bias gate)
 	// before submitting, and a browser test cannot reach a React ref — so the live map handle is
-	// republished on `globalThis.__mailwomanDemoMap`, the same seam the pre-port demo carried. The
+	// republished on `globalThis.__mailwomanDemoMap`, the same global the pre-port demo carried. The
 	// ref fills only after react-map-gl instantiates the map, hence the short poll; cleared on
 	// unmount so a torn-down demo never leaves a stale handle behind.
 	useEffect(() => {
