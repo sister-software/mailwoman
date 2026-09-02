@@ -46,7 +46,7 @@ const MAX_REPORTED_FAILURES = 12
  * Locate a weights SIBLING artifact — `postcode-us.bin`, `anchor-lexicon-v1.json` — the way the runtime does.
  *
  * These were read from `packages/neural-weights-en-us/` directly, which is EMPTY on a dev checkout: the linkers write
- * into the data-root overlay so the tracked workspace stays bare. So this leg threw ENOENT, and the gate rendered the
+ * into the data-root overlay so the tracked workspace stays bare. So this leg threw ENOENT, and the check rendered the
  * throw as `fr.bare_street_intact FAIL (floor 75%)` — a crash reported as a measurement, and one indistinguishable from
  * the French regression this floor exists to catch.
  *
@@ -79,7 +79,7 @@ async function resolveWeightsSibling(fileName: string, weightsCache?: string): P
 }
 
 /**
- * Options for {@linkcode frParseRecall} — one field per flag the gate used to serialize into argv.
+ * Options for {@linkcode frParseRecall} — one field per flag the check used to serialize into argv.
  */
 export interface FRParseRecallOptions {
 	/**
@@ -110,7 +110,7 @@ export interface FRParseRecallOptions {
 	 */
 	fromDB?: boolean
 	/**
-	 * Emit machine-readable rates to this path for the promotion gate.
+	 * Emit machine-readable rates to this path for `promotion-gate.ts`.
 	 */
 	json?: string
 	/**
@@ -120,7 +120,7 @@ export interface FRParseRecallOptions {
 	weightsCache?: string
 	/**
 	 * The enforced floor, in percent. When set, {@linkcode FRParseRecallResult.pass} is false if the BARE-intact rate
-	 * falls below it — which is how the leg's old `process.exit(1)` reaches the gate now.
+	 * falls below it — which is how the leg's old `process.exit(1)` reaches the runner now.
 	 */
 	floor?: string
 }
@@ -170,7 +170,7 @@ function streetKeyOf(tree: {
 /**
  * Measure the FR bare-vs-anchored street parse-recall delta and enforce the `fr.bare_street_intact` floor.
  *
- * The report lines go to `report` and the FAIL line to `reportError`, mirroring the stdout/stderr split the gate
+ * The report lines go to `report` and the FAIL line to `reportError`, mirroring the stdout/stderr split the check
  * captured — it wrote `${stdout}${stderr}` into `fr-bare-street.md`, so the two sinks stay separate and are
  * concatenated in that order. The floor verdict comes back as {@linkcode FRParseRecallResult.pass} instead of the old
  * `process.exit(1)`.

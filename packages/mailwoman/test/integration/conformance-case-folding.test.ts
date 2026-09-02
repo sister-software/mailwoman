@@ -12,7 +12,7 @@
  *   open, never a path literal, because a skip-guard that stops matching does not fail — it skips, and the
  *   suite disappears from the run reporting success.
  *
- *   THIS LEG CANNOT GO RED ON A KNOWN DEFECT. `runConformanceCommand` gates on `status: pass` rows and
+ *   THIS LEG CANNOT GO RED ON A KNOWN DEFECT. `runConformanceCommand` checks on `status: pass` rows and
  *   reports tracked ones without blocking, so a case-folding violation the pipeline currently has is printed
  *   in full and does not fail CI — and a tracked row that starts holding prints a promotion instruction
  *   rather than sitting in the list forever. What it DOES fail on is a new violation on a row that held, or

@@ -27,7 +27,7 @@
  *   So 79–89% of each GeoNames set is already in Overture — real duplication, and it is what produces the
  *   coincident same-name rows the resolver then has to arbitrate. But FI gains roughly 12,000 names
  *   Overture does not carry, so dropping the fold wholesale would lose coverage. Both facts are true, and
- *   a gate that refused two sources would be refusing a deliberate trade.
+ *   a check that refused two sources would be refusing a deliberate trade.
  *
  *   Hence the rule this module encodes: the FOURTEEN are accepted and recorded; a FIFTEENTH is refused.
  *   An existing trade someone measured is not the same thing as a country silently acquiring a second

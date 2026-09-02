@@ -84,7 +84,7 @@ export function treePostcodeValue(tree: AddressTree): string | undefined {
  * confident-constituent guard treats the street span as un-recoverable material (correctly — that guard is what stops
  * "Ave" resolving to Ave, France).
  *
- * The gate is deliberately the narrowest one that fixes the class:
+ * The check is deliberately the narrowest one that fixes the class:
  *
  * - The tree carries NO postcode node already (never second-guess a parse that found one),
  * - The retagged node is the ONLY value-bearing node in the tree, and

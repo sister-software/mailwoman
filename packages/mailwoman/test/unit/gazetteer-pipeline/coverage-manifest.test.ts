@@ -140,7 +140,7 @@ describe("emit → read round-trip through a real candidate build", () => {
 
 		const manifest = readGazetteerCoverageManifest(db)!
 
-		// FI: MEASURED and failed the gate — a first-class negative result, off the safelist.
+		// FI: MEASURED and failed the check — a first-class negative result, off the safelist.
 		const fi = manifest.countryCoverage.get("FI")
 		expect(fi).toBeDefined()
 		expect(fi?.hardFilterSafe).toBe(false)

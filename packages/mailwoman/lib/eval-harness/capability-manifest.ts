@@ -10,7 +10,7 @@
  *   model's measured per-tag F1 with the conventions mask OFF, plus the mask-ON F1 for any tag a
  *   codex `forbiddenTags` row would suppress. The `createScorer` loader (neural/scorer.ts) reads
  *   this `capabilities` block and FAILS CLOSED when a conventions mask would forbid a tag the model
- *   is CERTIFIED to emit — gated by a DELTA (`maskOffF1 − maskOnF1 > 5pp`), not an absolute floor,
+ *   is CERTIFIED to emit — conditional by a DELTA (`maskOffF1 − maskOnF1 > 5pp`), not an absolute floor,
  *   so a tag the model emits at 0.80 is still protected if the mask drops it to 0.0 (the exact #719
  *   shape: FR `street_prefix` collapsed 80.0 → 0.0 under the old blanket prefix+suffix forbid).
  *

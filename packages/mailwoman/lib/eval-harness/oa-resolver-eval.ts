@@ -47,8 +47,8 @@
  *
  *   `--anchor-off` (#887) ablates the model's postcode-anchor INPUT channel — the sanctioned,
  *   declared ablation (`overrides.anchor=false` through createScorer, warn-not-throw per the #718
- *   fail-closed gate). de-order-eval.ts uses it for the 2x2 anchor-OFF column; the old
- *   empty-anchor.json idiom (a lookup that parses to size 0) is refused by the gate. Distinct from
+ *   fail-closed check). de-order-eval.ts uses it for the 2x2 anchor-OFF column; the old
+ *   empty-anchor.json idiom (a lookup that parses to size 0) is refused by the check. Distinct from
  *   `--postcode-anchor`, which swaps the resolved COORDINATE, not the model input.
  */
 

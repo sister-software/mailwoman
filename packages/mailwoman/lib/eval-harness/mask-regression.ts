@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Per-release mask-regression gate (#718) — the "second lock", paired with the load-time
+ *   Per-release mask-regression check (#718) — the "second lock", paired with the load-time
  *   capability-manifest delta check shipped in `neural/scorer.ts`
  *   (`assertConventionsRespectCapabilities`).
  *
@@ -41,7 +41,7 @@
  *
  *   `threshold` overrides the default 0.02 (2pp). `json` writes the full per-tag delta table (every
  *   locale × tag, not just violations) for the release record. All narration goes through the
- *   `report` sink (stderr by default) — the promotion gate captures it into
+ *   `report` sink (stderr by default) — `promotion-gate.ts` captures it into
  *   `<out-dir>/mask-regression.md`.
  */
 
@@ -104,7 +104,7 @@ const TAGS = UNFOLDED_ADDRESS_TAGS
 
 //#endregion
 
-//#region The gate
+//#region The check
 
 interface Delta {
 	locale: SystemCode

@@ -76,7 +76,7 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 		await pipeline("1 Testville Road")
 		expect(calls.length).toBeGreaterThan(0)
 		expect(calls[0]!.fst).toBeDefined()
-		// The gate's morphology matcher is wired with the emission prior ZEROED (the measured-sweet
+		// The check's morphology matcher is wired with the emission prior ZEROED (the measured-sweet
 		// F config — the emission prior stays off on production paths).
 		expect(calls[0]!.fstStreetMorphology).toBeDefined()
 		expect(calls[0]!.fstStreetMorphologyOpts).toEqual({ biasScale: 0, dependentLocalityPenalty: 0 })

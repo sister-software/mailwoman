@@ -73,7 +73,7 @@
  *   wins there on prominence). **Closed by #1546**: the primary-name re-check was dropped — the
  *   backend's `exactMatch` IS the name-OR-alias surface equality (names table / alt_names bag), so a
  *   query matches a place when ANY stored name equals it, Москва's "Moscow" alias included — and
- *   population-first ranking then picks Москва RU. The postcode-consistency gate still applies to
+ *   population-first ranking then picks Москва RU. The postcode-consistency check still applies to
  *   every admitted candidate. Re-measured 2026-08-07, same backend:
  *
  *   | query       | answer before → after                     | candidates before → after | marker after |

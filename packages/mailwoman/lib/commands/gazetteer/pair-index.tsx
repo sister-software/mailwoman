@@ -65,7 +65,7 @@ const RUNG3_PRE_FOLD_CENSUS_LINE_COUNT = 19_431
  * `admin-global-priority.db`. Unlike GB there is no postal register in the mix — every pair is WOF-sourced (borough +
  * neighbourhood children under locality/localadmin/borough parents, see `PAIR_PLACETYPES_BY_COUNTRY`), so this number
  * tracks the WOF snapshot alone. A snapshot refresh legitimately moves it; re-anchor the constant deliberately, after
- * inspecting the diff, rather than relaxing the gate.
+ * inspecting the diff, rather than relaxing the check.
  */
 const EXPECTED_US_PAIR_COUNT = 47_878
 

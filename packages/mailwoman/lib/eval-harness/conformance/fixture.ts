@@ -164,7 +164,7 @@ export interface ConformanceFixture {
 	 */
 	expect: ConformanceRelation
 	/**
-	 * Whether this row gates the run. Absent means {@linkcode CONFORMANCE_STATUSES}'s `pass` — a row says nothing about
+	 * Whether this row checks the run. Absent means {@linkcode CONFORMANCE_STATUSES}'s `pass` — a row says nothing about
 	 * its status only when it is expected to hold.
 	 */
 	status?: ConformanceStatus

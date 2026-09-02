@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman eval gauntlet` — THE Gauntlet gate: all three layers, one combined verdict (the
- *   full-pipeline integration net a model ship gates on; #566 lesson). No flags = self-check on the
+ *   full-pipeline integration net a model ship checks on; #566 lesson). No flags = self-check on the
  *   shipped default (regression + metamorphic); `--candidate` adds the held-out candidate-vs-prod
  *   z-test; `--layer` runs a single layer with the old standalone semantics (its own verdict + exit
  *   code). A non-zero exit blocks the ship (RELEASING.md).
  *
- *   `--layer ablation` is the exception: it is a MEASUREMENT, not a gate. It deletes each asserted
+ *   `--layer ablation` is the exception: it is a MEASUREMENT, not a check. It deletes each asserted
  *   component from each corpus row and reports what the deletion cost per (component, locale) — the
  *   required map. It never joins the combined verdict and cannot block a ship.
  *

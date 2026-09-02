@@ -42,7 +42,7 @@
  *   ## What this test asserts (each threshold traces to a measured receipt)
  *
  *   Re-measured here on the CURRENT shipped model (v381 / v6.5.0) with the shipped instrument
- *   (`isImplausibleResolution`, i.e. the country-centroid guard). The three gated properties, and the
+ *   (`isImplausibleResolution`, i.e. the country-centroid guard). The three conditional properties, and the
  *   fresh measurement each cleared at the time of re-verification:
  *
  *     1. **Coordinate acceptability** — of the both-resolved fixtures whose neural street parse
@@ -55,15 +55,15 @@
  *        guard A only): 5/321 = 1.56%. Bound traces to the "low single digits" framing with margin.
  *
  *   The old parse-tag street/hn/postcode agreement is still COMPUTED and logged as an INFORMATIONAL
- *   line (it drives Track B), it just no longer gates the release.
+ *   line (it drives Track B), it just no longer checks the release.
  *
- *   This gate compares the neural resolution against the rules baseline it replaces — the final
+ *   This check compares the neural resolution against the rules baseline it replaces — the final
  *   pre-excision safety check.
  *
  *   ## Plan-4 conversion (2026-07-17) — the rules arm now reads FROZEN goldens
  *
  *   The v1 rules parser has been DELETED (`createAddressParser` and its module graph are gone). The
- *   rules baseline this gate compares against is no longer produced live; it is read from the
+ *   rules baseline this check compares against is no longer produced live; it is read from the
  *   phase-0 frozen capture `mailwoman/test-fixtures/legacy-golden/parity-raw.jsonl` (the top
  *   solution's `classifications` per input, captured byte-stable in PR #1092). That flat record is
  *   rebuilt into an `AddressTree` via `v0RecordToTree` — the SAME synthetic-token builder the live

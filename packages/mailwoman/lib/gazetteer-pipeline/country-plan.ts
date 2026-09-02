@@ -170,7 +170,7 @@ export function planCountryMove(options: {
 	}
 
 	// The half that nothing enforced. A country served by two sources folds both into one database, and
-	// `verifyAdmin` tests FLOORS — rows >= minRows, countries >= minCountries — so duplication moves every gate
+	// `verifyAdmin` tests FLOORS — rows >= minRows, countries >= minCountries — so duplication moves every check
 	// number in the passing direction and the build ships.
 	for (const source of current) {
 		if (source === options.target) continue

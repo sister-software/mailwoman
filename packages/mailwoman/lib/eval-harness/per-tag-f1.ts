@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Shared exact-match per-tag scoring for weight-dependent evaluation gates.
+ * @file Shared exact-match per-tag scoring for weight-dependent evaluation checks.
  */
 
 import type { SystemCode } from "@mailwoman/codex"
@@ -21,7 +21,7 @@ export interface PerTagEvalRow {
 }
 
 /**
- * Address component vocabulary used by the unfolded affix evaluation gates.
+ * Address component vocabulary used by the unfolded affix evaluation checks.
  */
 export const UNFOLDED_ADDRESS_TAGS = [
 	"street_prefix",
@@ -75,7 +75,7 @@ export interface PerTagCounts {
 }
 
 /**
- * Accumulate exact-match counts per tag. The caller owns inference so gates can choose their precise parse options
+ * Accumulate exact-match counts per tag. The caller owns inference so checks can choose their precise parse options
  * without duplicating the scoring implementation; `onRow` hands each row's predicted components back so a scorer can
  * run per-row diagnostics over the SAME parse the counts were taken from.
  */
@@ -133,7 +133,7 @@ export function perTagRates(counts: PerTagCounts): PerTagRates {
 }
 
 /**
- * Compute exact-match F1 percentages (one decimal, 0–100). The caller owns inference so gates can choose their precise
+ * Compute exact-match F1 percentages (one decimal, 0–100). The caller owns inference so checks can choose their precise
  * parse options without duplicating the scoring implementation.
  */
 export async function scorePerTagF1(

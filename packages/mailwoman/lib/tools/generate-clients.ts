@@ -6,7 +6,7 @@
  *   The client-generation pipeline behind `mailwoman clients generate`: emit all four surfaces'
  *   OpenAPI documents (both flavors), generate a Python package and a Rust crate from them, then
  *   VERIFY both actually build. Everything is one-directional and local — nothing generated here is
- *   committed; `clients-build/` is gitignored. This is the local proof the gated CI job (Phase 5 Task
+ *   committed; `clients-build/` is gitignored. This is the local proof the conditional CI job (Phase 5 Task
  *   4) replays on dispatch.
  *
  *   Salvaged from the superseded `origin/feat/api-clients` branch (unmerged, left in place; see
@@ -29,7 +29,7 @@
  *   salvaged `examples/basic.rs` had drifted against the current spec (a prior progenitor run
  *   synthesized a `SearchQ` newtype + `NonZeroU64` limit that no longer exist — the current spec's
  *   `q`/`limit` are unconstrained, so progenitor now emits plain `Option<&str>`/`Option<i64>`); folding
- *   `--examples` into the receipted verify step means that class of drift fails the gate instead of
+ *   `--examples` into the receipted verify step means that class of drift fails the eval instead of
  *   rotting silently in a file nobody compiles.
  */
 

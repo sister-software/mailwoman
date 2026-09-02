@@ -9,7 +9,7 @@
  *
  *   Parsing contract: the scorers emit pipe-tables (`| tag | P | R | F1 |` from the affix scorers, `|
  *   tag | golden | … |` from per-locale-f1, the de-order summary line). If a harness output format
- *   changes, THIS file is the single place the gate's parsing breaks — loudly (a floor whose number
+ *   changes, THIS file is the single place the check's parsing breaks — loudly (a floor whose number
  *   can't be found is a FAIL, never a skip).
  */
 
@@ -24,7 +24,7 @@ import { TextSpliterator } from "spliterator"
  */
 export interface PromotionVerdictOptions {
 	/**
-	 * Path to the gate-spec JSON (already resolved to a real file).
+	 * Path to the gate spec JSON (already resolved to a real file).
 	 */
 	gate: string
 	/**
@@ -118,7 +118,7 @@ function tableCell(md: string, headerPattern: RegExp, column: string, row: strin
  * parsing.
  */
 /**
- * Parsed scorer sidecar JSON — only the fields this gate reads are modeled.
+ * Parsed scorer sidecar JSON — only the fields this check reads are modeled.
  */
 interface ScorerSidecar {
 	tags?: Record<string, { f1?: number } | undefined>
@@ -217,7 +217,7 @@ export async function assemblePromotionVerdict(
 			sidecar("cascade-smoke.json"),
 		])
 
-		// Capture the anchor-ON native-DE locality (the gated value) regardless of the anchor-OFF cell —
+		// Capture the anchor-ON native-DE locality (the conditional value) regardless of the anchor-OFF cell —
 		// the OFF cell is a diagnostic and is empty when the zeroed-anchor run can't satisfy the card's
 		// `anchor.required` strict scorer (`[^|]*` tolerates that empty cell instead of false-failing).
 		const deNative = deorder.match(/native DE\s*\|[^|]*\|\s*([\d.]+)%/)

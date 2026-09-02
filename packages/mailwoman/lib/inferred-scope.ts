@@ -11,15 +11,15 @@
  *   - `Nanjing Road, Huangpu, Shanghai` under the inferred en-US scope answered a zero-prominence West Virginia
  *     namesake 11,899 km off; the head read GB 1.00 (emphatically not-US — the head cannot say CN).
  *   - `12 Rue du Chat-qui-Pêche, Paris` answered Paris Township, Michigan; the head read FR 1.00.
- *   - `75008` reads US 1.00 — the gate NEVER fires, keeping the Dallas ZIP the locale prior exists to protect.
- *   - `Sacremento` reads FR 0.53 — under the head's action threshold, the gate never fires, and the fuzzy tier keeps
+ *   - `75008` reads US 1.00 — the check NEVER fires, keeping the Dallas ZIP the locale prior exists to protect.
+ *   - `Sacremento` reads FR 0.53 — under the head's action threshold, the check never fires, and the fuzzy tier keeps
  *     answering Sacramento CA.
  *
- *   Two commitments, both measured rather than chosen: the gate only ever DROPS the scope (the head's country is
+ *   Two commitments, both measured rather than chosen: the check only ever DROPS the scope (the head's country is
  *   evidence the text is foreign-shaped, never a resolved country — re-pointing to GB for a Chinese address would
  *   trade one wrong filter for another), and it never fires on an EXPLICIT caller scope (that contract belongs to
  *   #1735's pre-scope). Abstention-filling was measured out separately: unscoping empty results won 2 of 28 fills on
- *   the graded run, so absence stays honest — this gate changes which candidates RACE, not whether silence becomes an
+ *   the graded run, so absence stays honest — this check changes which candidates RACE, not whether silence becomes an
  *   answer.
  */
 

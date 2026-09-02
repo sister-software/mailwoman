@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The de-shell migration's safety net (2026-08-06). When the promotion gate spawned its battery as
+ *   The de-shell migration's safety net (2026-08-06). When `promotion-gate.ts` spawned its battery as
  *   eight child processes, two things were true for free: a child's stdout arrived as bytes, and a
- *   child's non-zero exit was a number the gate could branch on. In-process, both are things this
- *   code now has to GET RIGHT, and neither shows up in a type error if it is wrong — the gate would
+ *   child's non-zero exit was a number the check could branch on. In-process, both are things this
+ *   code now has to GET RIGHT, and neither shows up in a type error if it is wrong — the check would
  *   simply write a subtly different `.md`, or tolerate a leg it used to abort on.
  *
  *   So this file pins the two invariants the migration rests on:
  *
  *   1. `renderLines` reproduces a child's stdout byte-for-byte from the sink's line records.
- *   2. The per-leg error-semantics table — which leg tolerates a failure, which aborts the gate, and
+ *   2. The per-leg error-semantics table — which leg tolerates a failure, which aborts the run, and
  *        which merges stderr into its `.md` — as EXECUTABLE structure rather than a comment, checked
  *        against the shape each migrated module actually presents.
  *
@@ -63,7 +63,7 @@ describe("renderLines — child stdout parity", () => {
 })
 
 /**
- * How a leg's failure reaches the gate, and what the gate does about it. Each row is the behavior the child-process
+ * How a leg's failure reaches the runner, and what the check does about it. Each row is the behavior the child-process
  * spawn had; the migration must not change any of them.
  */
 const LEG_SEMANTICS = [

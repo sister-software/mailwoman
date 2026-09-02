@@ -45,7 +45,7 @@ describe("regionSlugFromTree country gate", () => {
 	})
 
 	it("yields NOTHING for a tree the resolver placed outside the US", () => {
-		// Every one of these selects a real database on disk without the gate.
+		// Every one of these selects a real database on disk without the check.
 		for (const [region, country] of [
 			["MI", "IT"],
 			["CO", "IT"],
@@ -62,7 +62,7 @@ describe("regionSlugFromTree country gate", () => {
 
 	it("still yields a slug when the country is UNKNOWN", () => {
 		// Dropping it here would take the street tier from every US address whose country never resolved — the failure
-		// this gate exists to avoid, not to cause.
+		// this check exists to avoid, not to cause.
 		expect(regionSlugFromTree(tree("MI"))).toBe("mi")
 		expect(regionSlugFromTree(tree("TX"))).toBe("tx")
 	})

@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   THE Gauntlet gate — runs all three layers and emits one combined verdict, so a model ship gates on the
+ *   THE Gauntlet gate — runs all three layers and emits one combined verdict, so a model ship checks on the
  *   full-pipeline integration net, not just per-tag F1 (the whole point of building it; #566 lesson):
  *
  *     1. regression  — the curated executable bug log; a fixed bug must STAY fixed (conditioned on status=pass).
- *     2. metamorphic — un-gameable INV/DIR relations; surface-form robustness (gated minus tracked xfails).
+ *     2. metamorphic — un-gameable INV/DIR relations; surface-form robustness (conditional minus tracked xfails).
  *     3. held-out    — candidate-vs-prod z-test on a fresh draw; THE generalization gate (only with --candidate).
  *
  *   Self-check (shipped default):  mailwoman eval gauntlet
@@ -16,7 +16,7 @@
  *   A RESOLVER lever, both ways:   mailwoman eval gauntlet [--postcode-country-coherence]
  *   The required MAP:          mailwoman eval gauntlet --layer ablation [--components postcode,street]
  *
- *   That last one is not a gate. `ablation` (2026-08-05) deletes each asserted component from each corpus row and
+ *   That last one is not a check. `ablation` (2026-08-05) deletes each asserted component from each corpus row and
  *   measures what the deletion costs, per (component, locale) — the operator's "where does the pipeline falter when a
  *   part of the address is missing?" It is reachable only via `--layer` and is deliberately absent from the combined
  *   verdict below: its expectations are DERIVED from the gazetteer at run time rather than stored, and a measurement
@@ -25,9 +25,9 @@
  *   Derived, not absent: a variant is graded against the row's degradation ladder (`ablation-expectation.ts`), so
  *   "correctly coarsened" and "abstained under untenable ambiguity" are PASSES and only the real defects are red.
  *
- *   The last of those is the resolver-lever pin (#42, added 2026-08-05). The gate could swap the MODEL under test but
+ *   The last of those is the resolver-lever pin (#42, added 2026-08-05). The check could swap the MODEL under test but
  *   not the resolver configuration, so a resolver lever proposed for default-on had no way through the D-rule's
- *   standard instrument — it could only be argued from bespoke probes. Run the gate unpinned and pinned and diff the
+ *   standard instrument — it could only be argued from bespoke probes. Run the check unpinned and pinned and diff the
  *   verdicts; the layers stamp which configuration they graded, and the regression layer reports how many cases the
  *   lever actually fired on (an unchanged verdict from a mechanism that never ran proves nothing).
  *
@@ -90,7 +90,7 @@ export interface GauntletRunOptions {
 	/**
 	 * RESOLVER-side lever pin (#42): force `postcodeCountryCoherence` ON or OFF for every layer. `undefined` grades the
 	 * shipped configuration, which since the 2026-08-05 promotion is ON — so the pin that carries evidence now is the OFF
-	 * one. Run the gate BOTH ways and diff the verdicts, which is what the D-rule asks of a default-on mechanism.
+	 * one. Run the check BOTH ways and diff the verdicts, which is what the D-rule asks of a default-on mechanism.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**

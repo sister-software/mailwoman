@@ -112,13 +112,13 @@ export interface CreateRuntimePipelineOpts {
 	/**
 	 * Street-morphology matcher — the signal source for the FST street-context check (#1315), always consumed with the
 	 * morphology emission prior zeroed at the pipeline's classify call sites (the emission prior is US-golden-negative;
-	 * the gate alone is golden-flat and fragment-positive). DEFAULT-ON alongside the FST auto-load: the sealed
+	 * the check alone is golden-flat and fragment-positive). DEFAULT-ON alongside the FST auto-load: the sealed
 	 * `fst-street-morphology.bin` artifact when available (weights-package sibling, else the data-root staging copy),
 	 * degrading to a per-process build from core's bundled libpostal dictionaries; `false` suppresses it.
 	 */
 	streetMorphology?: RuntimePipelineStages["streetMorphology"] | false
 	/**
-	 * Locale gate override — when shipped, replaces the default caller-trust stub.
+	 * `@mailwoman/locale-gate` override — when shipped, replaces the default caller-trust stub.
 	 *
 	 * @see RuntimePipelineStages.detectLocale
 	 */
@@ -165,15 +165,15 @@ export interface CreateRuntimePipelineOpts {
 	 */
 	hardPlaceCountry?: boolean
 	/**
-	 * #743/#194: default for `PipelineOpts.hardCountrySafelist` — override the coverage safelist that gates the hard
+	 * #743/#194: default for `PipelineOpts.hardCountrySafelist` — override the coverage safelist that checks the hard
 	 * country filter. Undefined → the built-in `HARD_PLACE_COUNTRY_SAFELIST`. Used by the resolver eval to measure
 	 * unrestricted hard-resolve-rates (the full in-map set) when growing the list.
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
 	/**
-	 * #727 phase-4c: the street-name evidence index behind the k-best name-evidence rerank — a positive-evidence-gated
-	 * street-splice into the argmax tree (golden-safe: 0.000 golden regression, +16.9pp FR fragment street, measured
-	 * 2026-07-18).
+	 * #727 phase-4c: the street-name evidence index behind the k-best name-evidence rerank — a
+	 * positive-evidence-conditional street-splice into the argmax tree (golden-safe: 0.000 golden regression, +16.9pp FR
+	 * fragment street, measured 2026-07-18).
 	 *
 	 * - `undefined` (default) → **default-on**: when the classifier ships a span grammar (a v3+ span-head bundle), the
 	 *   bundled FR index ({@link loadDefaultStreetEvidence}, `street-centroids-fr.db`) is lazy-loaded on the first call
@@ -449,7 +449,7 @@ export function createRuntimePipeline(
 	// wrapped the classifier above.
 	let streetEvidenceResolved = opts.streetEvidence !== undefined
 
-	// FST-distribution arc: auto-load the weights-package gazetteer (and the gate's morphology matcher) on the first
+	// FST-distribution arc: auto-load the weights-package gazetteer (and the check's morphology matcher) on the first
 	// call — same lazy convention (file I/O stays out of the synchronous factory). Skipped entirely on explicit
 	// opt-out (`fst: false`) or when the caller shipped their own matcher.
 	const autoFST = opts.fst === undefined
@@ -525,7 +525,7 @@ export function createRuntimePipeline(
 		if (!morphologyResolved) {
 			morphologyResolved = true
 
-			// The gate needs BOTH matchers — skip the load when there's no gazetteer for it to gate.
+			// The check needs BOTH matchers — skip the load when there's no gazetteer for it to gate.
 			if (stages.fst) {
 				const morph = await autoLoadStreetMorphology(opts.classifier)
 

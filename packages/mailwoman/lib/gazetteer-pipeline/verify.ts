@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The structural verify gate for admin-gazetteer builds — run BEFORE sealing/promoting, refuse the
- *   swap on any failure. Row/count gates alone are provably insufficient: the 2026-07-07 #1015 rebuild
+ *   swap on any failure. Row/count checks alone are provably insufficient: the 2026-07-07 #1015 rebuild
  *   passed a rows+countries gate while ~95 countries lost their country/region NODES (#1023/#1026 —
  *   Tbilisi orphaned, "City, Country" scoping broken). Each check here catches a failure class we
  *   actually shipped once:

@@ -5,7 +5,7 @@
  *
  *   `mailwoman gazetteer build fst` — per-locale decode-bias FST gazetteers (`fst-<locale>.bin`,
  *   #1318) with build-time degenerate-surface curation. Artifacts land in a staging dir BESIDE the
- *   shipped `fst-per-locale/` (never overwriting); the swap is operator-gated after the battery. See
+ *   shipped `fst-per-locale/` (never overwriting); the swap is operator-approved after the battery. See
  *   `mailwoman/gazetteer-pipeline/fst.ts` for the curation policy.
  */
 

@@ -16,7 +16,7 @@
  *   `assembled_coordinate` never reads a place id. That separation is the whole reason the comparator set is
  *   closed: an identity law that could fall back to distance would pass whenever two DIFFERENT places
  *   happened to sit inside the tolerance, which is precisely the failure the Gauntlet's own place-identity
- *   gate was added for — Gaborone resolving to an Austrian hamlet came back with the right parsed locality
+ *   check was added for — Gaborone resolving to an Austrian hamlet came back with the right parsed locality
  *   and only a coordinate 8,045 km away to say so, and a namesake inside a 25 km bar would have had nothing
  *   at all.
  *
@@ -62,7 +62,7 @@ export interface ConformanceOutcome {
 	mechanismShapes?: readonly string[]
 	/**
 	 * The resolver's interior for this run (#1721): one record per backend lookup, carrying the candidate table, the
-	 * fetch window it ran under, the `gates` that fired and the pick's provenance.
+	 * fetch window it ran under, the `checks` that fired and the pick's provenance.
 	 *
 	 * Supplied by an observer that asked for a trace — the walk does zero bookkeeping otherwise, so a comparator cannot
 	 * turn one on for itself. `[]` is a real reading (the walk performed no lookup); `undefined` is the absence of a

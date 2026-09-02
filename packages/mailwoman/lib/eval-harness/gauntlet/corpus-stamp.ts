@@ -9,7 +9,7 @@
  *
  *   MEASURED FAILURE, 2026-08-06: `eval gauntlet-build regression-db` was run from a compiled tree whose
  *   `out/` loader still held the deleted pre-JSONL case array. It read that array, wrote a DB, and printed
- *   "[gauntlet] built … cases". The artifact was wrong, the exit code was 0, and the gate that ran next
+ *   "[gauntlet] built … cases". The artifact was wrong, the exit code was 0, and the check that ran next
  *   reported a verdict about a corpus that no longer existed. Nothing in the pipeline could have said
  *   otherwise: a derived artifact carried no evidence of what it derived FROM. This module is that evidence,
  *   and it is the same answer #1488 gave for the FST binaries.

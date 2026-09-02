@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the promotion gate's spec resolution.
+ *   Tests for `promotion-gate.ts`'s spec resolution.
  *
  *   The `--gate` help has always said "a path, or a spec name resolved against eval-harness/gates/".
  *   The resolver never appended `.json`, so `--gate v5.3.0-family` — the spec NAME, exactly as
@@ -149,7 +149,7 @@ describe("resolveGateSpecPath", () => {
 	it("SHIPS every resolvable spec in the npm tarball — an installed CLI resolves the shorthand too (#1056)", async () => {
 		// The source-tree fix alone left the packaged CLI broken: `files` covered only `**/*.ts` + `out/**`,
 		// and tsc does not emit readFileSync'd JSON, so the tarball carried ZERO gate specs and the
-		// installed `mailwoman eval gate --gate <name>` found an empty gates dir.
+		// installed `mailwoman eval gate --gate <name>` found an empty checks dir.
 		const pkg = await readLocalJSONFile<{ files: string[] }>(new URL("../../../package.json", import.meta.url))
 
 		// Package-relative, so it names the path INSIDE the tarball: source lives under `lib/`, and these
@@ -169,7 +169,7 @@ describe("paired weights-caches (#47)", () => {
 	 * Lay out a fake package-shaped weights cache with a model.onnx whose bytes do (int8) or don't (fp32) carry the
 	 * DynamicQuantizeLinear needle the provenance guard scans for, plus the tokenizer + card the pre-battery reads touch.
 	 * The package dir comes from `weightsCachePackageDir` — the resolver's OWN layout function, so the fixture cannot
-	 * drift from what the gate resolves. Every guard under test returns exit 2 BEFORE any battery, so no real ONNX is
+	 * drift from what the check resolves. Every guard under test returns exit 2 BEFORE any battery, so no real ONNX is
 	 * ever loaded.
 	 */
 	async function stageFakeCache(kind: "fp32" | "int8", salt: string): Promise<string> {

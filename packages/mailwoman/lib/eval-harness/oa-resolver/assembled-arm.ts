@@ -44,7 +44,7 @@ export async function buildAssembledArm(
 	const runAssembled = options.assembled ?? false
 	// `--place-country-hard` (#194/#743) promotes a CONFIDENT placer guess to a HARD country filter
 	// (empty→unresolved) — the lever for the low-pop EU tail the soft prior can't move. Production-
-	// representative: gated by the built-in coverage safelist (only well-covered countries hard-filter).
+	// representative: conditional by the built-in coverage safelist (only well-covered countries hard-filter).
 	// `--place-country-hard-all` measures unrestricted (every confident country hard-filters, via a safelist
 	// override of the full in-map set) — how per-country hard-resolve-rates are measured to GROW the
 	// safelist. Both imply the placer is loaded.

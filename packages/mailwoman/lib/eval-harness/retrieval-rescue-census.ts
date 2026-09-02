@@ -28,14 +28,14 @@ import { DEFAULT_TOL_M } from "#eval-harness/gauntlet/check-case"
  * - `entity_rescued_already` — the #1585 wire fired (the result carries `entity`) and the answer is correct: the CURRENT
  *   mechanism already performed the rescue.
  * - `rescue_available_entity` — delivered answer wrong; the unconditional fork-entity probe holds a hit inside tolerance.
- *   The gate (incumbent resolved) is what stands between the row and the right answer.
+ *   The check (incumbent resolved) is what stands between the row and the right answer.
  * - `rescue_available_rank` — delivered answer wrong; a NON-WINNING entry of the resolver's own `candidates` list is
  *   inside tolerance. The ranking, not the retrieval, lost the row.
  * - `rescue_available_both` — both of the above hold.
  * - `no_rescue_on_hand` — delivered answer wrong and neither source holds the truth: these rows need retrieval or parse
  *   work, not rescue plumbing.
  * - `gate_protects` is NOT a value here — it is a separate boolean, because it can hold alongside `correct_as_is`: the
- *   row is correct AND an unconditional entity hit exists (necessarily elsewhere, or redundant), so loosening the gate
+ *   row is correct AND an unconditional entity hit exists (necessarily elsewhere, or redundant), so loosening the check
  *   puts the row at risk. The loosening decision needs both lists, not one label.
  */
 export type RescueClass =
@@ -94,7 +94,7 @@ export interface RescueRowReport {
 	 */
 	rescueRank?: number
 	/**
-	 * The row is CORRECT as delivered while an unconditional entity hit exists — the set a gate loosening puts at risk.
+	 * The row is CORRECT as delivered while an unconditional entity hit exists — the set a check loosening puts at risk.
 	 * Reported beside the classification, never instead of it.
 	 */
 	gateProtects: boolean

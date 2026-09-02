@@ -6,7 +6,7 @@
  *   Phase-0 legacy excision: integrity guard for the committed golden artifacts (spec §Evidence
  *   capture). These files are the non-regression references for the v7 production swaps; this
  *   test fails if one goes missing, truncates, or stops parsing. Deleted in plan 4 along with the
- *   legacy suite once the swaps have landed and their gates carry the load.
+ *   legacy suite once the swaps have landed and their checks carry the load.
  *   The golden files are readonly artifacts: never hand-edit them — regenerate via the dev-tools
  *   capture scripts (this guard cannot catch value edits).
  */

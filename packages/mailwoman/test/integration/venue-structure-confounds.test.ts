@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The venue-structure confound board (#1423), run as a gate.
+ *   The venue-structure confound board (#1423), run as a check.
  *
  *   `venueStructureBiasScale` pushes venue-INTERIOR designators ("concourse", "terminal", "gate",
  *   "wing", …) toward `unit` harder than the postal designators they share a vocabulary with. The
@@ -25,7 +25,7 @@
  *   product defect. It is not one. `Building` tokenizes to `B`/`uil`/`ding`, the model labelled
  *   those `B-unit`/`I-unit`/`B-street` — three components inside one word, a sequence no valid parse
  *   can have — and the heal collapses it to `unit="Building"` the moment it is on. The bug was in
- *   the harness, and the fix is to make the gate incapable of choosing the wrong path.
+ *   the harness, and the fix is to make the check incapable of choosing the wrong path.
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
@@ -57,7 +57,7 @@ try {
 	classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 } catch {
 	// Lean checkout with no materialized weights — the suite skips rather than fails, matching the
-	// other model-gated suites in this leg.
+	// other model-conditional suites in this leg.
 	classifier = undefined
 }
 

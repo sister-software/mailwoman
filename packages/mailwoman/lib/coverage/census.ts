@@ -113,7 +113,7 @@ export interface CoverageMismatches {
 	 */
 	packageWithoutTraining: string[]
 	/**
-	 * Trained (admitted, with rows) but no board row gates it — a locale nothing would catch regressing.
+	 * Trained (admitted, with rows) but no board row checks it — a locale nothing would catch regressing.
 	 */
 	trainedButUnmeasured: string[]
 	/**

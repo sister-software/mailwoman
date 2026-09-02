@@ -18,7 +18,7 @@
  *       Chunghwa Post's 3-digit postal-code → administrative-district table WITH official district
  *       center coordinates (data.gov.tw dataset 25489, `1050812_行政區經緯度(toPost).xml`, OGDL v1).
  *   - The 3-digit code IS the admin-granularity key: TW's "3+3" system appends a road-segment /
- *       delivery-point tail below district level (and the full 3+3 file is account-gated at
+ *       delivery-point tail below district level (and the full 3+3 file is account-conditional at
  *       fpp.post.gov.tw since 2025). A resolver that answers "which district" needs exactly the
  *       3-digit table. Queries carrying a full 3+3 code need a prefix-truncation normalization
  *       upstream (noted on #473; not this table's concern).

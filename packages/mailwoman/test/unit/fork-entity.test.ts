@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The fork→entity probe's gates (`fork-entity.ts`), each against a stub lookup. The SAVILE ROW
+ *   The fork→entity probe's conditions (`fork-entity.ts`), each against a stub lookup. The SAVILE ROW
  *   HIJACK GUARD is the required one: poi.db really does hold exactly one poi named
  *   `savile row`, and without gate 2 the famous London street would resolve to it — the board row
  *   `gb-fork-entity-savile-row-guard` tracks the live behavior; THIS test is the blocking half.

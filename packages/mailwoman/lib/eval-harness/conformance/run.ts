@@ -128,10 +128,10 @@ export interface ConformanceSummary {
 	 * Rows whose comparator read its axis and could not decide — today only `candidate_admissibility`, when a candidate
 	 * left a table that was sitting at its fetch window.
 	 *
-	 * These leave {@linkcode gated} rather than joining {@linkcode failures}: the run has no evidence the law broke, and
-	 * no evidence it held. Reported in full, never blocking, and never counted toward the hold ratio — a suite whose
-	 * every row goes unmeasured therefore reports `pass: false`, which is the reading that keeps a blind instrument from
-	 * looking like a clean one.
+	 * These leave {@linkcode conditional} rather than joining {@linkcode failures}: the run has no evidence the law
+	 * broke, and no evidence it held. Reported in full, never blocking, and never counted toward the hold ratio — a suite
+	 * whose every row goes unmeasured therefore reports `pass: false`, which is the reading that keeps a blind instrument
+	 * from looking like a clean one.
 	 */
 	unmeasured: ConformanceFinding[]
 	/**

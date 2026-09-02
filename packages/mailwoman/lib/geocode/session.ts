@@ -83,8 +83,8 @@ export interface GeocodeSessionOptions {
 	/**
 	 * Feed the gazetteer FST prior to the parse (#1497). **ON by default** since 2026-08-16; pass `false` to disable.
 	 *
-	 * Promoted on measured evidence in both arms of both batteries. Regression board 352/354 → 353/354 gated, with a
-	 * row-level diff over all 209 failing rows showing exactly one fixed and ZERO broken. Parity corpus (321 fixtures)
+	 * Promoted on measured evidence in both arms of both batteries. Regression board 352/354 → 353/354 conditional, with
+	 * a row-level diff over all 209 failing rows showing exactly one fixed and ZERO broken. Parity corpus (321 fixtures)
 	 * under en-US weights: every floor byte-identical, spurious `street` 13/54 → 10/54 (it stops `Perth`, `Dallas` and
 	 * `California` being tagged as streets), full agreement US 54/99 → 57/99 and AU 9/20 → 10/20.
 	 *
@@ -212,7 +212,7 @@ export interface GeocodeTrace {
 	locale: string
 	/**
 	 * #1721 — the resolver's interior: one record per backend lookup the walk performed, carrying the query as sent, the
-	 * candidate table with per-stage ranks, the gates that fired, and the pick's provenance. An EMPTY array means the
+	 * candidate table with per-stage ranks, the checks that fired, and the pick's provenance. An EMPTY array means the
 	 * walk performed no lookups (nothing resolvable in the tree); the field is absent only when tracing was off.
 	 */
 	resolver: ResolveNodeTrace[]
@@ -704,7 +704,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		// Coarse-placer soft country prior (#244) — opt-in. Loads the int8 model bundled in @mailwoman/core
 		// at the requested abstention threshold; a confident in-map guess feeds the resolver's anchorPosterior.
 		// The M2 open-set reject rule (reject on in-map MASS 1-P(OTHER), route on the in-map argmax) lifts in-map
-		// right-country 85.3→91.2% with 0 regressions / 0 misroutes (the pipeline + misroute gates), so it's ON
+		// right-country 85.3→91.2% with 0 regressions / 0 misroutes (the pipeline + misroute checks), so it's ON
 		// by default. --no-place-country disables it (passes `false`); a custom --place-country-threshold builds
 		// an explicit placer instead of the default-on bundled one.
 		placer = options.placeCountry

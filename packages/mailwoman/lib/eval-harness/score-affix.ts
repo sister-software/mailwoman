@@ -8,7 +8,7 @@
  *   split. This scores the UNFOLDED `decodeAsJSON` output against split ground truth: exact-match
  *   (case-insensitive) P/R/F1 per tag.
  *
- *   The promotion gate calls this SIX times per battery — the affix set, `unit-real-designators`,
+ *   `promotion-gate.ts` calls this SIX times per battery — the affix set, `unit-real-designators`,
  *   `po-box-cedex-val`, `intersection-real`, and the two watch lenses (`intersection-golden-vt`,
  *   `glue-rows-perturb`) — capturing each report into its own `.md` and the machine-readable sidecar
  *   into its own `.json`. Every printed line goes through the `report` sink, one call per line, so
@@ -28,7 +28,7 @@ import {
 } from "#eval-harness/per-tag-f1"
 
 /**
- * Options for {@linkcode scoreAffix} — one field per flag the gate used to serialize into argv.
+ * Options for {@linkcode scoreAffix} — one field per flag the check used to serialize into argv.
  */
 export interface ScoreAffixOptions {
 	/**
@@ -47,7 +47,7 @@ export interface ScoreAffixOptions {
 	 */
 	gazetteerLexicon?: string
 	/**
-	 * Write the machine-readable sidecar here — the contract the gate verdict reads. The markdown is presentation.
+	 * Write the machine-readable sidecar here — the contract the check verdict reads. The markdown is presentation.
 	 */
 	json?: string
 	/**

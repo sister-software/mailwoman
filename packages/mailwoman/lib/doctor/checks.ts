@@ -52,7 +52,7 @@ export interface DoctorCheck {
 	 */
 	fix?: string
 	/**
-	 * Whether this check gates the exit code. Core checks (weights + runtime) must be `ok` for a `0` exit; optional
+	 * Whether this check checks the exit code. Core checks (weights + runtime) must be `ok` for a `0` exit; optional
 	 * data-layer checks report their gap but never fail the process (parse runs without them).
 	 */
 	core: boolean

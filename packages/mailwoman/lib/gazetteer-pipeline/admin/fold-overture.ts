@@ -26,7 +26,7 @@ export const OVERTURE_ID_BASE = 8_000_000_000_000
 /**
  * Overture division subtypes that map to the resolver's admin placetypes. `country` is included (#1015) so an
  * Overture-backfilled locale gets its country node — without it the reverse geocoder has no country tier to anchor to
- * (Brussels → nearest FOREIGN place across the border), and forward resolution can't country-gate the locale.
+ * (Brussels → nearest FOREIGN place across the border), and forward resolution can't country-restrict the locale.
  */
 export const OVERTURE_DIVISION_SUBTYPES = ["country", "locality", "region", "county", "localadmin"]
 

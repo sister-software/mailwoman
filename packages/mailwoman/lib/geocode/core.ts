@@ -325,8 +325,8 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 * Postcode-country coherence (#42, `ResolveOpts.postcodeCountryCoherence`) — let a (postcode, locality) pair that is
 	 * geographically consistent in exactly ONE country override a wrong {@link defaultCountry}. `12 Rue de Rivoli, 75001
 	 * Paris` under the en-US locale otherwise lands in Texas, and with the postal databases attached in Addison.
-	 * **Default ON** (operator-promoted 2026-08-05 — gauntlet zero newly-failing gated cases pinned either way, 56,000
-	 * pair evaluations across both backends at zero false positives; see
+	 * **Default ON** (operator-promoted 2026-08-05 — gauntlet zero newly-failing conditional cases pinned either way,
+	 * 56,000 pair evaluations across both backends at zero false positives; see
 	 * `docs/records/evals/2026-08-05-postcode-coherence-default-on-evidence.md`). Pass `false` to opt out.
 	 *
 	 * On this path it also re-selects the rooftop tier. Database selection happens BEFORE the resolve and keys off
@@ -653,7 +653,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// The placer's prediction, computed ONCE and unrestricted (so it's available even for a bare-locality tree, where the
 	// #912 lever below deliberately withholds it from the anchor). Reused by that lever AND by the #1042 street tier's
 	// country hint (a bare thoroughfare "Avenue des Champs-Élysées, Paris" is a bare-locality tree — the only reliable
-	// FR signal there is this unrestricted placer). Byte-stable: the anchor/hardCountry logic stays gated exactly as before.
+	// FR signal there is this unrestricted placer). Byte-stable: the anchor/hardCountry logic stays conditional exactly as before.
 	const placerResult = placeCountry ? placeCountry(parseInput) : null
 
 	const streetPlacerCountry =
@@ -662,7 +662,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// #928: a distinctive postcode FORMAT outranks the language-based placer (which conflates GB/US → US
 	// namesakes). When conditioned on and no explicit defaultCountry, set the country prior from the parsed
 	// postcode's format; the placer block below then no-ops via its `!opts.anchorPosterior` guard. Confidence
-	// 1.0 — a matched format is unambiguous. hardCountry still gates on the safelist (GB isn't on it yet, so
+	// 1.0 — a matched format is unambiguous. hardCountry still checks on the safelist (GB isn't on it yet, so
 	// this is a soft anchorPosterior re-rank for GB — enough to de-boost the US namesakes; a safelist add
 	// would make it hard, see #985).
 	if (
@@ -713,7 +713,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 			// STREET TOKEN — `King Street, Bristol` reads GB 0.5227 and survives, `Queen` does not — and
 			// nothing else in the tree names a country.
 			//
-			// One probe, read by both gates. An unknown or fuzzy bearer is not disagreement, and a resolver
+			// One probe, read by both checks. An unknown or fuzzy bearer is not disagreement, and a resolver
 			// without the findPlace passthrough behaves exactly as before.
 			const localityValue = decodeAsJSON(tree).locality as string | undefined
 
@@ -808,7 +808,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	// National street-centroid tier (#1042): wire the country-keyed street-centroid PROVIDER (BAN-FR today) + the
 	// pre-resolution country hints so a STREET-ONLY query (no house number) — which no rooftop tier can serve — gets a
-	// street-level coordinate instead of the commune centroid. The resolver's applyStreetCentroid self-gates on
+	// street-level coordinate instead of the commune centroid. The resolver's applyStreetCentroid self-checks on
 	// no-house-number (a numbered query is byte-identical) and unions these hints with the RESOLVED-tree countries,
 	// because the pre-resolution country of a bare thoroughfare is unreliable (bare-locality tree / placer mis-route).
 	// US never supplies a street database, so `provider("us")` is undefined and the US path stays byte-stable.
@@ -952,7 +952,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		markers.push(ambiguity)
 	}
 
-	// Entity answers (fork-entity.ts owns both probes and their gates): the declared-fork rescue and the
+	// Entity answers (fork-entity.ts owns both probes and their checks): the declared-fork rescue and the
 	// opt-in venue tier, extracted as one unit — see applyEntityTiers.
 	applyEntityTiers(result, markers, parseInput, resolved.roots, deps)
 

@@ -34,7 +34,7 @@ interface POINameSearch {
 
 /**
  * Adapt a POI FTS reader into positive, exact-name evidence for the kind classifier. FTS supplies candidates; the
- * normalized equality check is the gate, so a fuzzy/token-overlap result can never reroute an address.
+ * normalized equality check is the check, so a fuzzy/token-overlap result can never reroute an address.
  */
 export function createPOINameLookup(searcher: POINameSearch): POIPhraseLookup {
 	return (phrase) => {

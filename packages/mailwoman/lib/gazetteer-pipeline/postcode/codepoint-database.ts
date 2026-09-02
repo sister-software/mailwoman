@@ -322,7 +322,7 @@ export async function buildPostcodeCodePoint(
  * THE TOLERANCE MUST NOT INCLUDE MALFORMED ROWS, and the first version of this function got that wrong in a way worth
  * recording: it set `tolerance = skippedNoCoordinate + skippedMalformed`, so when a CSV-parsing bug rejected all
  * 1,746,976 coordinate-bearing rows, the tolerance grew to 1.75 M and every area "reconciled" against a database
- * holding ZERO postcodes. A gate whose slack is derived from the size of the failure it is meant to catch cannot catch
+ * holding ZERO postcodes. A check whose slack is derived from the size of the failure it is meant to catch cannot catch
  * it. The tolerance is now the no-coordinate drops ALONE — a deliberate, bounded, understood exclusion — and any
  * malformed row at all is reported separately as a defect by {@link buildPostcodeCodePoint}'s caller.
  */

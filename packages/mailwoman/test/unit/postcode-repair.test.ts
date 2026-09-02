@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #1735 pins. The rung's whole contract is its gates: it fires on the recorded contradiction (letter-digit postcode
+ *   #1735 pins. The rung's whole contract is its checks: it fires on the recorded contradiction (letter-digit postcode
  *   span, ≥0.9 shape confidence, only misread-family nodes wholly inside it) and on NOTHING else. The veto cases are
  *   the tests that matter — each one is an input the rung must leave byte-identical.
  */

@@ -30,7 +30,7 @@
  *   ## Restricting
  *
  *   Unlike Code-Point Open, the archive ships NO row-count manifest (`versions.txt` is three label
- *   lines), so there is no upstream oracle to reconcile against. What gates instead: the archive md5
+ *   lines), so there is no upstream oracle to reconcile against. What checks instead: the archive md5
  *   against OS's published digest, an exact header match (schema drift fails loudly), the accounting
  *   identity `read = inserted + malformed + duplicate` with malformed and duplicate both expected
  *   ZERO, and a row floor (the 2026-08 extract holds 41,629,393 rows; the product only grows, so a count
@@ -536,7 +536,7 @@ async function resolveOfflineArchive(sourceDir: string): Promise<string> {
 }
 
 /**
- * Build the sealed `uprn.db` layer. See the module docstring for the gates and the coverage semantics.
+ * Build the sealed `uprn.db` layer. See the module docstring for the checks and the coverage semantics.
  */
 export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<BuildUPRNLayerResult> {
 	const phase = options.onPhase ?? (() => {})
@@ -692,7 +692,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	kdb.exec("COMMIT")
 	phase("ingest", `${inserted.toLocaleString()} UPRNs (${read.toLocaleString()} lines read)`)
 
-	// --- Gates. No upstream row-count manifest exists for this product (see the module docstring), so the
+	// --- Checks. No upstream row-count manifest exists for this product (see the module docstring), so the
 	// checks are internal consistency plus the truncation floor.
 	const mismatches: string[] = []
 

@@ -99,7 +99,7 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	// #920: the GeoNames-postal tail database — TEN countries in ingest order FI/CZ/SK/SI/DK/NO/HR/PL/SE/BE
 	// (57,221 rows; BE joined 2026-08-12 with 1,146 codes after the Overture BE parquet measured too thin —
 	// 203 codes, none of the eu-mixed panel's). GB rode in this database 2026-07-03 → 2026-08-05 and moved to
-	// Code-Point Open above. The swap is parity-gated: the nine prior countries re-joined byte-identical
+	// Code-Point Open above. The swap is parity-conditional: the nine prior countries re-joined byte-identical
 	// (56,075 rows, worst coordinate delta 0).
 	// Rebuild: `mailwoman gazetteer build postcode-geonames --countries FI,CZ,SK,SI,DK,NO,HR,PL,SE,BE`.
 	"postalcode-geonames-tail.db",

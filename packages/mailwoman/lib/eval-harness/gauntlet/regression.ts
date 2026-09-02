@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Gauntlet regression runner — the gated, curated layer (the executable bug log). Loads `regression.db`,
+ *   Gauntlet regression runner — the conditional, curated layer (the executable bug log). Loads `regression.db`,
  *   runs every `status=pass` case through the FULL pipeline, and asserts the ASSEMBLED output: coordinate
  *   within tolerance, resolution tier, resolved place identity, and admin components (case-insensitive). A
  *   fixed bug must STAY fixed — any drift fails the run. This corpus is DELIBERATELY SMALL (curated-set
@@ -91,7 +91,7 @@ export function layerDepsOptions(options: GauntletLayerOptions): GauntletDepsOpt
  */
 export async function runRegressionLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
 	using kdb = new DatabaseClient<GauntletDatabase>(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
-	// Before a single address is graded: does this DB hold the corpus that is committed RIGHT NOW? A gate
+	// Before a single address is graded: does this DB hold the corpus that is committed RIGHT NOW? A check
 	// reading a stale artifact reports a verdict about a corpus nobody has — see corpus-stamp.ts.
 	await assertCorpusStampFresh(kdb)
 	const cases = await kdb.selectFrom("gauntlet_case").selectAll().execute()

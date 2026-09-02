@@ -118,7 +118,7 @@ async function readModelCard(): Promise<Record<string, unknown> | null> {
 		// map, so the subpath resolves as a plain file inside the package, and (unlike `node:module`'s
 		// `findPackageJSON`) `import.meta.resolve` realpaths through the workspace symlink — the same string the CJS
 		// `require.resolve` this replaced returned. It does NOT throw for a missing FILE inside a resolvable package,
-		// only for an unresolvable package; the `pathExists` below already gates every candidate, so that is a no-op
+		// only for an unresolvable package; the `pathExists` below already checks every candidate, so that is a no-op
 		// here.
 		candidates.push(resolveModulePath("@mailwoman/neural-weights-en-us/model-card.json"))
 	} catch {
@@ -306,7 +306,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// still scopes. FTS backend keeps the US default. (#170) A candidate DB alone (no WOF admin database) is a valid boot
 	// configuration — `createResolverBackend` prefers it over `wofPaths` — so the preflight gate below checks BOTH,
 	// mirroring the drop-ins' `!candidateDB && wofPaths.length === 0` gate rather than `GeocodeRouter`'s WOF-only check.
-	// This gate governs geocode/batch/resolveTree/reload ONLY — `parse` is already wired above and unaffected.
+	// This check governs geocode/batch/resolveTree/reload ONLY — `parse` is already wired above and unaffected.
 	const candidateDB = await resolveCandidateDBPath()
 
 	if (!paths.length && !candidateDB) {

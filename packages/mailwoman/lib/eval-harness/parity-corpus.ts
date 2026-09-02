@@ -7,7 +7,7 @@
  *   parse-only. The ratified default gate is the triaged corpus (321 live across 20 countries; see
  *   PARITY_FIXTURES_PATH below); pass `--fixtures` for the 354-live pre-triage v1 denominator. This
  *   is the model campaign's gate for the
- *   HELD plan-2 swaps: the per-label floors below are the SAME pre-registered floors the swap gates
+ *   HELD plan-2 swaps: the per-label floors below are the SAME pre-registered floors the swap checks
  *   carry (house_number ≥ 0.97, postcode ≥ 0.97, street-family ≥ 0.90 — never edited to green; a
  *   miss is an adjudication). Comparison is case-folded, whitespace-collapsed; the street label
  *   compares the assembled neural street-name family against the gold `street` values.
@@ -75,7 +75,7 @@ export interface ParityFixture {
 }
 
 /**
- * Pre-registered floors (plan 2, 2026-07-13). Shared verbatim with the held swap gates.
+ * Pre-registered floors (plan 2, 2026-07-13). Shared verbatim with the held swap checks.
  */
 export const PARITY_FLOORS = [
 	{ label: "house_number", floor: 0.97, tags: ["house_number"] },
@@ -196,11 +196,11 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		const expect = fixture.expect!
 
 		// Ship-config parse (gate-revision 2026-07-15): production's safeClassify/parseForGeocode heal
-		// with WORD_CONSISTENCY_SHIP_DEFAULT, so the gate must grade the same parse the swapped
+		// with WORD_CONSISTENCY_SHIP_DEFAULT, so the check must grade the same parse the swapped
 		// surfaces serve. Floors unchanged. Pre-heal continuity: `--no-word-consistency`.
 		// Production config parity (#1146): the query-shape emission prior is fed on EVERY path
 		// production parses on — `safeClassify` in the runtime pipeline, and `geocode-core` since #981
-		// (which fixed this same divergence for the drop-in servers). Without it this gate graded a
+		// (which fixed this same divergence for the drop-in servers). Without it this check graded a
 		// starved parse. A no-op on inputs carrying no known format and no region abbrev, so the bare
 		// `street, city` class is byte-stable; it earns its keep on the digit-span / region-abbrev rows.
 		const byTag = groupTuplesByTag(
@@ -253,7 +253,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 			}
 		}
 
-		// Full-case agreement (informational, never a gate): every gold tag matches. Non-floor tags
+		// Full-case agreement (informational, never a check): every gold tag matches. Non-floor tags
 		// compare directly by tag name.
 		for (const [tag, goldValues] of Object.entries(expect)) {
 			if (PARITY_FLOORS.some((f) => f.label === tag)) continue

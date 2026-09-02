@@ -9,13 +9,13 @@
  *   segmentations (`decodeSegmentationsKBest`), the measured pick policy (`pickByStreetEvidence`,
  *   the G1/G2 v2 rule), and an injected street-name index (`StreetLocalityEvidence`, FR = BAN).
  *
- *   MEASURED (v3.10.1 8k substrate, 2026-07-18, evidence-gated street-splice vs the argmax baseline
+ *   MEASURED (v3.10.1 8k substrate, 2026-07-18, evidence-conditional street-splice vs the argmax baseline
  *   production actually runs): golden us/fr exact **0.000 regression, every tag unchanged**; FR
  *   fragment street **+16.9pp** (argmax 0.673 → 0.841), 273 fixes / 3 breaks (bare-street +18pp,
  *   date-name +40.7pp). Receipt: `docs/articles/evals/2026-07-18-phase4c-wiring.md`.
  *
  *   THREE THINGS MAKE IT GOLDEN-SAFE:
- *   1. ANCHOR GATE. The rerank fires ONLY on an anchorless fragment — the class it was measured on.
+ *   1. ANCHOR CONDITION. The rerank fires ONLY on an anchorless fragment — the class it was measured on.
  *      If the argmax parse already carries a `country` or `region`, the input is structured and the
  *      model is reliable; a name-index collision then does damage (it steals a token the model
  *      correctly labeled — "France, Creuse, …" → the FR street "France" overrides the country; "Best
@@ -217,7 +217,7 @@ export async function rerankByStreetEvidence(
 		}
 	}
 
-	// ANCHOR GATE (2026-07-18, the full-pipeline collateral fix): the rerank arbitrates a street ONLY on an ANCHORLESS
+	// ANCHOR CONDITION (2026-07-18, the full-pipeline collateral fix): the rerank arbitrates a street ONLY on an ANCHORLESS
 	// fragment — the class it was measured on. When the argmax parse already carries a country or region anchor, the
 	// model is on structured input where it is reliable, and a name-index collision does damage: it STEALS a token the
 	// model correctly labeled country/region ("France, Creuse, …" → the FR street "France" overrides country; "Best Rd,

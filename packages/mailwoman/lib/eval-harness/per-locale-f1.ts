@@ -39,7 +39,7 @@
  *   zero-feed (anchor-off) path on purpose, or `--model-anchor-lookup`/`--gazetteer-lexicon` to
  *   override paths.
  *
- *   The promotion gate calls {@linkcode perLocaleF1} IN-PROCESS and captures the markdown report
+ *   `promotion-gate.ts` calls {@linkcode perLocaleF1} IN-PROCESS and captures the markdown report
  *   (the `report` sink) into `<out-dir>/<tag>-per-locale.md` — the file the verdict assembler
  *   regex-reads for `us.postcode`, `us.locality`, `us.region`, `us.street`, `fr.house_number` and
  *   `us.micro`. The progress narration goes to `reportError`, which is where the child process's
@@ -95,7 +95,7 @@ const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
 //#region Options
 
 /**
- * Options for {@linkcode perLocaleF1} — one field per flag the gate used to serialize into argv. The two fields the old
+ * Options for {@linkcode perLocaleF1} — one field per flag the check used to serialize into argv. The two fields the old
  * `parseArgs` seeded with defaults ({@linkcode PerLocaleF1Options.goldenDir}, {@linkcode PerLocaleF1Options.files}) are
  * optional here and defaulted inside the function, so a caller that omits them gets exactly what the CLI gave.
  */
@@ -363,7 +363,7 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 
 /**
  * Score each locale file separately and report per-locale component-F1, exact-match, and the cross-locale macro-F1
- * SPREAD. The markdown report goes to `report` (one call per line, matching the child stdout the gate captured); the
+ * SPREAD. The markdown report goes to `report` (one call per line, matching the child stdout the runner captured); the
  * progress narration goes to `reportError`.
  */
 export async function perLocaleF1(
@@ -505,7 +505,7 @@ export async function perLocaleF1(
 
 			// PRODUCTION-CONFIG parity (2026-07-17, the M1 gate-fidelity fix): production parses feed the
 			// query-shape prior + postcodeRepair on every path (safeClassify, geocode-core since #981), but
-			// this battery historically fed NEITHER — so the gate scored a config production doesn't run.
+			// this battery historically fed NEITHER — so the check scored a config production doesn't run.
 			// M1 measured that gap at +2.3 micro on golden-us (the battery flattered production; the entire
 			// delta was the since-scoped locality bias, PR #1148). Score what ships.
 			const tree = await neural.parse(row.raw, {

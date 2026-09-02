@@ -26,7 +26,7 @@ export const DEFAULT_TOL_M = 5000
 /**
  * Map an expect_components key to the assembled-result field it asserts.
  *
- * Exported for the ablation layer, which scores a DELETION against the same slot this gate grades — a second copy of
+ * Exported for the ablation layer, which scores a DELETION against the same slot this check grades — a second copy of
  * the mapping would let the two disagree about which field `venue` lives in, and the ablation runner would then report
  * "the slot stayed empty" for a slot it was reading off the wrong field.
  */
@@ -195,7 +195,7 @@ function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] |
 /**
  * Assert one assembled result against its stored case; returns the mismatches (empty = the case passes).
  *
- * Four independent gates, all opt-in per row — a null column asserts nothing:
+ * Four independent checks, all opt-in per row — a null column asserts nothing:
  *
  * 1. COORDINATE, great-circle against `expect_tolerance_m` (default {@linkcode DEFAULT_TOL_M}).
  * 2. TIER, strict — an `address_point` that drifts to `admin` is a regression even inside tolerance.

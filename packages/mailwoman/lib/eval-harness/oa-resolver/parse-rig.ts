@@ -19,7 +19,7 @@ import type { OAResolverEvalOptions } from "#eval-harness/oa-resolver/options"
  * anything.
  *
  * Every tri-state pin below resolves to `undefined` when neither flag is passed, which leaves the library default in
- * force. A gate leg that says which side it graded is the point of a tri-state — a silent config shift inside a gate
+ * force. A check leg that says which side it graded is the point of a tri-state — a silent config shift inside a check
  * battery is the #718 sin.
  */
 export async function buildParseRig(
@@ -39,7 +39,7 @@ export async function buildParseRig(
 	const ablateToAnchor = options.ablateToAnchor ?? false
 	// `--anchor-off` (#887): the sanctioned anchor ablation — `overrides.anchor=false` through
 	// createScorer (a loud warning, not a throw). Replaces the pre-#718 empty-anchor.json idiom,
-	// which the fail-closed gate now refuses (an empty lookup parses to size 0 → UnfedChannelError).
+	// which the fail-closed check now refuses (an empty lookup parses to size 0 → UnfedChannelError).
 	const anchorOff = options.anchorOff ?? false
 
 	const overrides: ScorerOverrides = {
@@ -107,9 +107,9 @@ export async function buildParseRig(
 
 	const localityMatches = buildLocalityMatcher(wofPaths[0]!)
 
-	// #690/#895: normalizeCase is tri-state so a gate leg can PIN either side of the library default
+	// #690/#895: normalizeCase is tri-state so an eval leg can PIN either side of the library default
 	// (default-ON at the classifier since #895). `--normalize-case` pins ON, `--raw-case` pins OFF,
-	// neither = the library default. Silent config shifts in a gate battery are the #718 sin — pin
+	// neither = the library default. Silent config shifts in a check battery are the #718 sin — pin
 	// explicitly in pre-registered legs.
 	const normalizeCase = (options.normalizeCase ?? false) ? true : (options.rawCase ?? false) ? false : undefined
 

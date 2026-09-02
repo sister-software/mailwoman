@@ -25,7 +25,7 @@
  *   Provenance (policy string + excluded-insertion count) is recorded in the artifact trailer.
  *   Artifacts are written to --output (default: a `fst-per-locale-curated/` sibling of the shipped
  *   `fst-per-locale/` dir) — staged BESIDE, never overwriting; the swap into the shipped path is
- *   operator-gated after the battery.
+ *   operator-approved after the battery.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -145,9 +145,9 @@ export interface FSTFreshnessRow {
 /**
  * Check every admin-derived FST against `dbPath`, for the `gazetteer verify` freshness section.
  *
- * WHY IT REPORTS RATHER THAN FAILS. `gazetteer verify` gates a DATABASE, and a stale FST says nothing about whether
+ * WHY IT REPORTS RATHER THAN FAILS. `gazetteer verify` checks a DATABASE, and a stale FST says nothing about whether
  * that database is sound — the arrow runs the other way. The artifacts also cannot be rebuilt as a side effect of a
- * verify: a locale FST build is minutes, its output is staged, and the swap is operator-gated because an FST changes
+ * verify: a locale FST build is minutes, its output is staged, and the swap is operator-approved because an FST changes
  * decoder behaviour. So the section exists to make the drift visible at the moment the operator is already looking at
  * the gazetteer, with the command that starts fixing it. The caller decides what to do with the exit code; today it
  * does nothing, and that is deliberate.

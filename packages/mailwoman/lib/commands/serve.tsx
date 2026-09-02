@@ -210,7 +210,7 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 				// FIRST-forked worker, regardless of which worker's preflight check happens to finish first.
 				// Only that one worker prints; the rest exit silently. Chosen over a primary-side pre-fork
 				// check (the primary doesn't otherwise call createServeEngine() at all, and duplicating its
-				// import/db-existence gate there just to avoid forking would be the more invasive change) and
+				// import/db-existence check there just to avoid forking would be the more invasive change) and
 				// over routing the message back through the primary's cluster "exit" handler (would require an
 				// IPC round-trip for what's a one-line dedupe).
 				if (cluster.worker?.id === 1) {

@@ -147,7 +147,7 @@ describe("runInvarianceSuite", () => {
 
 		expect(result.counts.lost).toBe(1) // still recorded
 		expect(result.newCounts.lost).toBe(0) // but not NEW — baseline has it too
-		expect(result.pass).toBe(true) // so the gate passes
+		expect(result.pass).toBe(true) // so the check passes
 		expect(result.outcomes[0]?.preExisting).toBe(true)
 	})
 
@@ -195,7 +195,7 @@ describe("runInvarianceSuite", () => {
 		expect(result.outcomes[0]?.preExisting).toBe(false) // NOT pre-existing — the candidate is WORSE
 		expect(result.outcomes[0]?.gainedCapability).toBe(false) // baseline's original HAS criticals — not a gained row
 		expect(result.newCounts.lost).toBe(1)
-		expect(result.pass).toBe(false) // gates
+		expect(result.pass).toBe(false) // checks
 	})
 
 	it("the violation report line prints the baseline's ACTUAL verdict, not a hardcoded 'held INVARIANT' claim", async () => {
@@ -373,7 +373,7 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 		expect(result.newCounts.gained).toBe(1)
 		expect(result.counts.lost).toBe(0)
 		expect(result.newCounts.lost).toBe(0)
-		expect(result.pass).toBe(true) // a gain is never a gate failure
+		expect(result.pass).toBe(true) // a gain is never a check failure
 		expect(lines.some((l) => l.startsWith("  + GAINED") && l.includes("[baseline verdict was DEGRADED]"))).toBe(true)
 	})
 
@@ -418,7 +418,7 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 		expect(caseFold.verdict).toBe("DEGRADED")
 		expect(caseFold.gainedCapability).toBe(true)
 
-		// The register-flat tail does not touch the gate: nothing is NEW.
+		// The register-flat tail does not touch the check: nothing is NEW.
 		expect(result.newCounts.lost).toBe(0)
 		expect(result.newCounts.degraded).toBe(0)
 		expect(result.pass).toBe(true)

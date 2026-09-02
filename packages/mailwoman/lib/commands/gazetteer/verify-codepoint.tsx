@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer verify-codepoint` — the promotion gate for the Code-Point Open GB
+ *   `mailwoman gazetteer verify-codepoint` — `promotion-gate.ts` for the Code-Point Open GB
  *   database. Compares it against the incumbent GeoNames `GB_full` rows on row membership, coordinate
  *   agreement, Northern Ireland coverage, and ten hand-checked landmark probes.
  *

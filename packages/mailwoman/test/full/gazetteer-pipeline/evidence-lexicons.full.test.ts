@@ -9,11 +9,11 @@
  *   leg (172s after the scan memoization), and it grows with the gazetteer. It runs in three places,
  *   each catching something the others cannot:
  *
- *   - `test.yml` job `lexicon-full`, path-gated — a PR that changes the builder or its inputs.
+ *   - `test.yml` job `lexicon-full`, path-conditional — a PR that changes the builder or its inputs.
  *   - `lexicon-nightly.yml` — DATA drift. The gazetteer is rebuilt outside any PR, so no path filter
  *       can see it. This is the only layer that catches that and the control for the fixture
  *       layer: if the fixture stops representing the real data, this is what says so.
- *   - `publish.yml` prepare — the release gate.
+ *   - `publish.yml` prepare — the release eval.
  *
  *   The every-PR law coverage lives in `evidence-lexicons.fixture.test.ts`, which asserts the same
  *   four laws against a seeded DB and is invariant to gazetteer size. What stays HERE is the

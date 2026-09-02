@@ -1,5 +1,5 @@
 /**
- * Report-only C6 census over the committed Gauntlet corpus. This command is not a release gate.
+ * Report-only C6 census over the committed Gauntlet corpus. This command is not a release eval.
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"

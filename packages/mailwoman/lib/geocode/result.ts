@@ -59,7 +59,7 @@ export interface GeocodeResult {
 	/**
 	 * The entity the fork→entity probe resolved (#1585's entity half) — present ONLY when the `venue` tier answered: the
 	 * decoder declared a fork, the incumbent path produced no coordinate, and exactly one poi.db entity bears the query's
-	 * exact name (see `fork-entity.ts` for the three gates). Positive evidence only; absent everywhere else.
+	 * exact name (see `fork-entity.ts` for the three checks). Positive evidence only; absent everywhere else.
 	 */
 	entity?: { name: string; categoryID: string | null; confidence: number; country: string }
 	/**
@@ -82,7 +82,7 @@ export interface GeocodeResult {
 	 * that resolved to a house-number-grade coordinate (the `address_point` / `interpolated` {@link resolution_tier})
 	 * render the result HOUSE-GRADE (`type: house` + `housenumber`/`street`, matching upstream Photon) instead of
 	 * mislabeling a rooftop as its admin locality. Populated regardless of tier (they are the parsed spans); the consumer
-	 * gates the house-grade rendering on the tier so an admin-only fallback is never dressed up as a rooftop.
+	 * conditions the house-grade rendering on the tier so an admin-only fallback is never dressed up as a rooftop.
 	 */
 	house_number: string | null
 	street: string | null
@@ -144,11 +144,11 @@ export interface GeocodeResult {
 	 * The country #42's postcode-country coherence pass scoped the walk to, or null. Non-null ONLY when the pass actually
 	 * overrode {@link GeocodeDeps.defaultCountry} — off, abstained and agreed-with-the-default all read null.
 	 *
-	 * This is the FIRING RECEIPT, and it exists because the alternative is unreadable evidence. A gate run with the lever
-	 * OFF and one with it ON can come back identical for two opposite reasons: the mechanism ran on every row and changed
-	 * nothing (the result worth having), or it never ran at all (the 2026-08-04 oa-resolver trap, where an identical 1.94
-	 * MB dump turned out to mean the eval's database set carried no US postcodes). A magnitude never carries its own
-	 * absence, so the pass reports its own count instead of leaving the reader to infer it.
+	 * This is the FIRING RECEIPT, and it exists because the alternative is unreadable evidence. A check run with the
+	 * lever OFF and one with it ON can come back identical for two opposite reasons: the mechanism ran on every row and
+	 * changed nothing (the result worth having), or it never ran at all (the 2026-08-04 oa-resolver trap, where an
+	 * identical 1.94 MB dump turned out to mean the eval's database set carried no US postcodes). A magnitude never
+	 * carries its own absence, so the pass reports its own count instead of leaving the reader to infer it.
 	 */
 	postcode_country_scope: string | null
 	/**

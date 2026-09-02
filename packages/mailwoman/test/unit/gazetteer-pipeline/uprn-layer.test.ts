@@ -5,7 +5,7 @@
  *
  *   The Open UPRN builder's contract: the line parser's input-tail behavior (truncated fields,
  *   `Number("")`-shaped traps), the versions.txt parse, and a full fixture build through
- *   `buildUPRNLayer` — DDL, gates, coverage, manifest, seal — verified by reading the sealed
+ *   `buildUPRNLayer` — DDL, checks, coverage, manifest, seal — verified by reading the sealed
  *   artifact back through the production reader.
  */
 
