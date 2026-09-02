@@ -8,7 +8,7 @@
  *   updated at gazetteer REBUILD, not by a hand-edited code PR after someone remembers:
  *
  *   - `country_coverage`: the hard-country-filter coverage record (#743/#194) — per-country
- *     promote-gate verdicts + the measured hard-resolve rates that used to live in a code comment on
+ *     promotion-eval verdicts + the measured hard-resolve rates that used to live in a code comment on
  *     `HARD_PLACE_COUNTRY_SAFELIST`. Presence = measured; `hard_filter_safe = 0` = measured and
  *     FAILED the check (FI 69.5%, PL 77.8%) — distinguishable from a country never measured at all
  *     (the meaning-of-zero rule, `docs/engineering/reference/layer-contract.mdx`).
@@ -43,7 +43,7 @@ export interface CountryCoverageTable {
 	 */
 	country: string
 	/**
-	 * 0/1 — the promote-gate verdict (a verdict column, NOT re-derived from the rate; see the fact type's docstring).
+	 * 0/1 — the promotion-eval verdict (a verdict column, NOT re-derived from the rate; see the fact type's docstring).
 	 */
 	hard_filter_safe: number
 	/**

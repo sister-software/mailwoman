@@ -18,7 +18,7 @@
  *
  *   Usage:
  *     mailwoman eval ledger-append \
- *       --out-dir /path/to/gate-out --model-version 5.0.0 \
+ *       --out-dir /path/to/eval-out --model-version 5.0.0 \
  *       --run-id v193a3-anchor-absorption-step080000-rescore-20260702 \
  *       --model-path "@mailwoman/neural-weights-en-us@5.0.0" \
  *       [--card neural-weights-en-us/model-card.json] [--notes "..."] [--replace]

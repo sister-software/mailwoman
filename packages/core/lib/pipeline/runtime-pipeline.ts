@@ -91,9 +91,9 @@ const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
  *
  * FALLBACK ROLE (survey candidate #2, 2026-07-26): this set is now the FALLBACK for gazetteer artifacts that predate
  * the coverage manifest. Facts about the artifact live IN the artifact — the candidate gazetteer's `country_coverage`
- * table carries the per-country promote-gate verdicts + the measured rates (the numbers that used to be trivia in this
- * comment), and a loaded artifact's derived safelist (`resolver.artifactCoverage.hardCountrySafelist`) takes precedence
- * over this constant. The measured record lives in `mailwoman/gazetteer-pipeline/coverage-manifest.ts`
+ * table carries the per-country promotion-eval verdicts + the measured rates (the numbers that used to be trivia in
+ * this comment), and a loaded artifact's derived safelist (`resolver.artifactCoverage.hardCountrySafelist`) takes
+ * precedence over this constant. The measured record lives in `mailwoman/gazetteer-pipeline/coverage-manifest.ts`
  * (MEASURED_COUNTRY_COVERAGE — grow THAT at promotes; it updates the artifact at rebuild). Precedence: per-call
  * `PipelineOpts.hardCountrySafelist` (the eval's instrument, measures unrestricted to grow the list) → the loaded
  * artifact's manifest → this constant. Historical receipts now recorded structurally in MEASURED_COUNTRY_COVERAGE:
