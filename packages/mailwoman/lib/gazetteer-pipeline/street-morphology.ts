@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  *
  *   Street-morphology FST artifact build (`mailwoman gazetteer build street-morphology`) — the
- *   sealed `fst-street-morphology.bin` behind the #1315 street-context gate.
+ *   sealed `fst-street-morphology.bin` behind the #1315 street-context check.
  *
  *   THE MOVE (static-index survey candidate 1, 2026-07-26): the street-type affix matcher was built
  *   from the libpostal `street_types.txt` dictionaries per process at three duplicate node call
- *   sites, and never in the browser — the demo silently ran without the street-context gate the node
+ *   sites, and never in the browser — the demo silently ran without the street-context check the node
  *   runtimes apply by default (SCOPE invariant 2 violation). Serializing the matcher once, at build
  *   time, through the EXISTING FST wire format gives every runtime — node and web — the same sealed
  *   artifact to deserialize, and the per-process builds become the degrade path

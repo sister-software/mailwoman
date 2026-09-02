@@ -40,6 +40,14 @@ exceptions:
   - boundary-stress-gate
   - fr-admin-split-gate
   - mwdev_gate
+  ## Tracked filenames. Prose citing one of these spells the filename, which is the remedy the rule's
+  ## message asks for. Renaming any of them is a separate, operator-approved change (#2077).
+  - gate.tsx
+  - gate-report
+  - gate-report.ts
+  - codepoint-gate
+  - capability-gate
+  - eval-gate
 tokens:
   ## The hyphenated prefix REPEATS, because a real filename carries more than one segment:
   ## `v1-parse-gate`, `boundary-stress-gate`, `fr-admin-split-gate`. A single optional prefix
@@ -51,7 +59,9 @@ tokens:
   ##
   ## `cut` keeps its bare form: a prefixed token would match the `cut` inside `executed`, and no
   ## artifact here is spelled `<something>-cut`.
-  - '(?:[\w@/.]+-)*gat(?:e|es|ed|ing)'
+  ## The optional extension lets a filename match as a whole — `gate.tsx` rather than `gate` — so an
+  ## exception can name it. Without it the match stops at the word and the exception never applies.
+  - '(?:[\w@/.]+-)*gat(?:e|es|ed|ing)(?:\.[a-z]+)?'
   - '(?:[\w@/.]+-)*seam(?:s)?'
   - '(?:[\w@/.]+-)*shard(?:s|ed|ing)?'
   - 'cut(?:s|ting)?'

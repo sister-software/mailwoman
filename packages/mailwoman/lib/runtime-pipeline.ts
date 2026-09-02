@@ -110,7 +110,7 @@ export interface CreateRuntimePipelineOpts {
 	 */
 	fst?: RuntimePipelineStages["fst"] | false
 	/**
-	 * Street-morphology matcher — the signal source for the FST street-context gate (#1315), always consumed with the
+	 * Street-morphology matcher — the signal source for the FST street-context check (#1315), always consumed with the
 	 * morphology emission prior zeroed at the pipeline's classify call sites (the emission prior is US-golden-negative;
 	 * the gate alone is golden-flat and fragment-positive). DEFAULT-ON alongside the FST auto-load: the sealed
 	 * `fst-street-morphology.bin` artifact when available (weights-package sibling, else the data-root staging copy),
@@ -289,7 +289,7 @@ async function autoLoadWeightsFST(
 }
 
 /**
- * Load the street-morphology matcher — the street-context gate's signal source (#1315), always consumed with the
+ * Load the street-morphology matcher — the street-context check's signal source (#1315), always consumed with the
  * emission prior zeroed at the pipeline's classify call sites. Resolved on the first pipeline call through the shared
  * ladder (`street-morphology-fst-loader`): the classifier's weights-package sibling (`fst-street-morphology.bin`,
  * surfaced as {@link NeuralAddressClassifier.streetMorphologyPath}), else the data-root sealed artifact, else a

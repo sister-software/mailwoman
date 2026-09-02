@@ -77,7 +77,8 @@ export interface FSTPlaceEntryLike {
 	 * user means").
 	 *
 	 * The structural type deliberately does NOT name `encyclopedic`. The FST entries the matcher hands over carry it, and
-	 * a bias that could see it would eventually use it — so the seam is where the policy is enforced, not a comment.
+	 * a bias that could see it would eventually use it — so the type boundary is where the policy is enforced, not a
+	 * comment.
 	 */
 	referential: number
 }
@@ -131,7 +132,7 @@ const MAPPED_TIER_PLACETYPES: ReadonlySet<string> = new Set(["localadmin", "neig
  * A surface whose final tokens read as a street name: a hard street generic (`street`, `road`, `avenue`, `boulevard`,
  * `square`), optionally followed by one directional (`east`/`west`/`north`/`south`/`upper`/`lower`).
  *
- * Gates the C4 mapped tiers only. Census over the 2026-08-25 candidate gazetteer (279,513 distinct
+ * Restricts the C4 mapped tiers only. Census over the 2026-08-25 candidate gazetteer (279,513 distinct
  * neighbourhood/localadmin surfaces): this predicate covers the three classes that collide with bare street names — 79
  * generic+directional ("King Street East" is a Hamilton, Ontario neighbourhood), 442 hard-generic-final, 235
  * square-final ("Madison Square") — 756 surfaces, 0.27% of the mapped class. The covering-surface classes the mapping
@@ -303,14 +304,14 @@ const SUPPRESS_WHEN_PLACE: readonly string[] = ["B-street", "I-street", "B-house
 export type ImportanceLengthScaleMode = "off" | "suppression" | "both"
 
 /**
- * Street-context gate for the positive FST bias (#1142, street-context gate — the FR-fragment complement to #1173's
+ * Street-context check for the positive FST bias (#1142, street-context check — the FR-fragment complement to #1173's
  * suppression length-scaling).
  *
  * Washington/Madison/Jackson are simultaneously the highest-importance US place names AND the commonest US street
  * names, so a positive locality/region bias must be withheld when the matched span sits in a syntactically
- * street-headed position — gated on SYNTAX (street-type adjacency, house-number-left), NEVER on the importance value
- * (`importance²` magnitude sharpening was measured and REJECTED: it re-imports exactly this collision).
- * Positive-evidence-only: the gate can only scale the positive bias DOWN when street context is present; its absence
+ * street-headed position — conditioned on SYNTAX (street-type adjacency, house-number-left), NEVER on the importance
+ * value (`importance²` magnitude sharpening was measured and REJECTED: it re-imports exactly this collision).
+ * Positive-evidence-only: the check can only scale the positive bias DOWN when street context is present; its absence
  * never penalizes, and a parse with no street context is byte-identical to the ungated path.
  *
  * The street-type signal source is the street-morphology FST (`fst-street-morphology.bin`, locale-general — catches
@@ -323,7 +324,7 @@ export interface StreetContextGateOpts {
 	 */
 	fst: FSTMatcherLike
 	/**
-	 * Multiplier applied to the positive `impBias` when the gate fires. Default 0.25 (tune 0.15–0.4). Deliberately NOT
+	 * Multiplier applied to the positive `impBias` when the check fires. Default 0.25 (tune 0.15–0.4). Deliberately NOT
 	 * zero — "New York Ave" still deserves some admin mass for the semi-markov decoder.
 	 */
 	positiveScale?: number
@@ -347,7 +348,7 @@ export interface FSTPriorOpts {
 }
 
 /**
- * House-number shape for the street-context gate (#1143: "the house number is the license").
+ * House-number shape for the street-context check (#1143: "the house number is the license").
  */
 const HOUSE_NUMBER_RE = /^\d{1,6}[a-z]?$/
 
@@ -382,7 +383,7 @@ export function buildFSTEmissionPriors(
 
 	if (!wordGroups.length) return matrix
 
-	// Street-context gate precompute (#1142) — O(words), only when the morphology FST was passed in.
+	// Street-context check precompute (#1142) — O(words), only when the morphology FST was passed in.
 	// `streetTypeFlags[i]` = word-group i is a street-type token per the morphology FST;
 	// `houseNumberFlags[i]` = word-group i is house-number-shaped.
 	const streetContext = opts.streetContext
@@ -595,15 +596,15 @@ function adjacentNonEmptyIndex(groups: WordGroup[], from: number, direction: 1 |
 }
 
 /**
- * Street-context gate (#1142): returns the positive-bias multiplier for a matched span at word-groups
- * `[startIdx..endIdx]` — `streetContext.positiveScale` (default 0.25) when EITHER syntactic gate fires, else 1.0
- * (byte-identical to the ungated path):
+ * Street-context check (#1142): returns the positive-bias multiplier for a matched span at word-groups
+ * `[startIdx..endIdx]` — `streetContext.positiveScale` (default 0.25) when EITHER syntactic condition holds, else 1.0
+ * (byte-identical to the unrestricted path):
  *
  * 1. **Street-type adjacency** — the word-group immediately after (suffix locales: "Washington Blvd") or before (prefix
  *    locales: "Rue de Rivoli") the matched span is a street-type token per the morphology FST.
  * 2. **House-number left** — the word-group immediately before the match is house-number-shaped (`/^\d{1,6}[a-z]?$/` —
  *    "500 Washington" is street-headed, #1143). A house number before a street-type prefix ("500 rue …") needs no extra
- *    case: the prefix itself already fires gate 1.
+ *    case: the prefix itself already satisfies condition 1.
  *
  * Composes with #1173's length-scaling inside {@linkcode applyBias} (length = weak lone match; context = strong match
  * in a street position); the suppression path is untouched.
@@ -657,7 +658,7 @@ function applyBias(
 	const { biasScale, maxBias, suppressionScale, seenWOFIDs, lengthMode } = tuning
 	const seenTags = new Map<string, number>()
 
-	// Surface-conditional gate on the C4 mapped tiers (#1903): a street-shaped surface draws no locality
+	// Surface-conditional restriction on the C4 mapped tiers (#1903): a street-shaped surface draws no locality
 	// bias from a neighbourhood/localadmin entry. Computed once — the groups are this call's matched surface.
 	const streetShaped = isStreetShapedSurface(groups.map((group) => group.fstToken))
 

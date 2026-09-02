@@ -56,7 +56,7 @@ export interface DemoEmbedState {
 	 */
 	fstProvenance: FSTProvenanceLike | null
 	/**
-	 * The street-morphology matcher (#1315 street-context gate) — `null` when the release ships no
+	 * The street-morphology matcher (#1315 street-context check) — `null` when the release ships no
 	 * `fst-street-morphology.bin`. `PipelineExplorer` threads it into `runClassifyStage` beside `fstMatcher`.
 	 */
 	streetMorphologyMatcher: FSTMatcherLike | null

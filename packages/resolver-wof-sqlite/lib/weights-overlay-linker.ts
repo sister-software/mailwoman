@@ -319,7 +319,7 @@ export async function warnIfFSTStale(fstPath: string, locale: string): Promise<v
 /**
  * Symlink the per-locale FST gazetteer (`fst-<locale>.bin`) from the shared build area
  * (`$MAILWOMAN_DATA_ROOT/wof/fst-per-locale/`) into an overlay so `resolveWeights` surfaces `fstPath` in dev and the
- * runtime pipeline can auto-wire the gazetteer + street-context gate, then run {@link warnIfFSTStale} on the linked
+ * runtime pipeline can auto-wire the gazetteer + street-context check, then run {@link warnIfFSTStale} on the linked
  * artifact. The publish flow stages the real binary (release-sequenced).
  */
 export async function linkLocaleFST(destDir: string, locale: string): Promise<void> {
@@ -339,14 +339,14 @@ export async function linkLocaleFST(destDir: string, locale: string): Promise<vo
 /**
  * Symlink the sealed locale-general street-morphology FST (`$MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin`,
  * `mailwoman gazetteer build street-morphology`) into an overlay so `resolveWeights` surfaces `streetMorphologyPath` in
- * dev and the street-context gate (#1315) deserializes the artifact instead of rebuilding from the libpostal
+ * dev and the street-context check (#1315) deserializes the artifact instead of rebuilding from the libpostal
  * dictionaries per process. Missing is non-fatal — the runtime loader's dictionary-build fallback covers it.
  */
 export async function linkStreetMorphologyFST(destDir: string): Promise<void> {
 	await linkSoftFeedSibling(
 		String(dataRootPath("wof", "fst-street-morphology.bin")),
 		resolvePath(destDir, "fst-street-morphology.bin"),
-		"the street-context gate falls back to the per-process dictionary build."
+		"the street-context check falls back to the per-process dictionary build."
 	)
 }
 

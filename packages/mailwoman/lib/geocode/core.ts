@@ -129,7 +129,7 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	fst?: import("@mailwoman/core/pipeline").FSTMatcherLike
 	/**
-	 * Street-morphology matcher, consumed ONLY as the street-context gate's signal source with the emission prior zeroed
+	 * Street-morphology matcher, consumed ONLY as the street-context check's signal source with the emission prior zeroed
 	 * (`streetContextGateFor`). Inert without {@link GeocodeDeps.fst}.
 	 */
 	streetMorphology?: import("@mailwoman/core/pipeline").FSTMatcherLike
@@ -452,7 +452,7 @@ export function geocodeParseInputs(
 			// decode, it is a different one. Absent `deps.fst` this spread is empty and the decode is
 			// byte-identical to before.
 			...(deps.fst ? { fst: deps.fst } : {}),
-			// The street-context gate pair, from the SAME helper runPipeline calls. Transcribing it here
+			// The street-context check pair, from the SAME helper runPipeline calls. Transcribing it here
 			// would recreate exactly the drift #1669 catalogued: two copies agreeing on every constant
 			// while the code around them diverges.
 			...streetContextGateFor({

@@ -44,7 +44,7 @@ import {
 } from "#weights-channels"
 
 /**
- * Delta threshold for the capability-manifest gate (#718/#719): a conventions row may forbid a tag only if the mask
+ * Delta threshold for the capability-manifest check (#718/#719): a conventions row may forbid a tag only if the mask
  * does NOT provably destroy a real capability — i.e. `maskOffF1 − maskOnF1 ≤ 5pp`. A DELTA, not an absolute floor: a
  * tag the model emits at 0.80 is protected if the mask drops it to 0.0, but a tag the mask leaves intact (small/zero
  * delta) is legal regardless of its absolute F1.
@@ -284,9 +284,10 @@ export interface CreateScorerOpts {
 	 */
 	strict?: boolean
 	/**
-	 * Serving tier whose certified capabilities the load-time delta-gate (#718/#719) reads from the card's `capabilities`
-	 * block: `"server"` (anchor+gazetteer — the production default) or `"pocket"` (anchor-only). Default `"server"`. A
-	 * tier the card doesn't certify → the gate has no capability claims to consult and is a no-op (legal).
+	 * Serving tier whose certified capabilities the load-time delta check (#718/#719) reads from the card's
+	 * `capabilities` block: `"server"` (anchor+gazetteer — the production default) or `"pocket"` (anchor-only). Default
+	 * `"server"`. A tier the card doesn't certify → the check has no capability claims to consult and is a no-op
+	 * (legal).
 	 */
 	tier?: string
 	/**
@@ -318,7 +319,7 @@ class CapabilityViolationError extends Error {
 }
 
 /**
- * The load-time delta-gate (#718/#719). Iterate the codex `ADDRESS_SYSTEM_CONVENTIONS`; for every `forbiddenTags`
+ * The load-time delta check (#718/#719). Iterate the codex `ADDRESS_SYSTEM_CONVENTIONS`; for every `forbiddenTags`
  * entry, look up the loaded tier's certified capability for that (system, tag). The forbid is ILLEGAL — the mask
  * provably destroys a real capability — when the model is certified to emit the tag (`maskOffF1` present) and the mask
  * measurably drops it:
@@ -331,7 +332,7 @@ class CapabilityViolationError extends Error {
  * maskOffF1 − 0). That's the #719 shape: FR `street_prefix` certified at maskOff 80.0, no benign mask-on measurement →
  * forbidding it is rejected at load time.
  *
- * Back-compat: a card with no `capabilities` block (pre-#718) has no claims to consult, so the gate is a one-time-warn
+ * Back-compat: a card with no `capabilities` block (pre-#718) has no claims to consult, so the check is a one-time-warn
  * no-op and the model still loads.
  */
 let warnedNoCapabilities = false
@@ -418,12 +419,12 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	const declared: RequiredChannels =
 		(await readRequiredChannels(opts.modelCardPath)) ?? inferRequiredChannelsFromInputs(await runner.inputNames())
 
-	// --- Capability-manifest delta-gate (#718/#719) -----------------------------------------------
+	// --- Capability-manifest delta check (#718/#719) -----------------------------------------------
 	// BEFORE wiring the conventions mask, prove the shipped codex `forbiddenTags` don't destroy a tag
 	// this model is CERTIFIED to emit (per the card's `capabilities` block for the loaded tier). This
 	// is a property of the model-card + codex pairing, independent of any per-instance `overrides` —
 	// an ablation scorer still loads the same shipped conventions table production will use, so the
-	// gate runs unconditionally. Makes the D2/#719 bug-class structurally impossible to ship.
+	// check runs unconditionally. Makes the D2/#719 bug-class structurally impossible to ship.
 	await assertConventionsRespectCapabilities(opts.modelCardPath, opts.tier ?? "server", strict)
 
 	// --- Anchor channel ---------------------------------------------------------------------------

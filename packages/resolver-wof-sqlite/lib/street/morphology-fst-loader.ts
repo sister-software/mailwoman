@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unified runtime loader for the street-morphology FST — the #1315 street-context gate's signal
+ *   Unified runtime loader for the street-morphology FST — the #1315 street-context check's signal
  *   source, previously rebuilt from the libpostal dictionaries per process at three duplicate call
  *   sites (runtime pipeline / parity eval / neural harness). The sealed artifact
  *   (`fst-street-morphology.bin`, built by `mailwoman gazetteer build street-morphology`) replaces

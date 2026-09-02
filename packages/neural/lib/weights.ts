@@ -256,7 +256,7 @@ export interface ResolvedWeights {
 	fstPath?: string
 	/**
 	 * Path to the locale-GENERAL street-morphology FST (`fst-street-morphology.bin`) shipped beside the resolved model —
-	 * the #1315 street-context gate's signal source, serialized at build time (`mailwoman gazetteer build
+	 * the #1315 street-context check's signal source, serialized at build time (`mailwoman gazetteer build
 	 * street-morphology`) instead of rebuilt from the libpostal dictionaries per process. `undefined` when the package
 	 * doesn't ship it (the runtime pipeline then falls back to the data-root staging artifact or a per-process dictionary
 	 * build). PATH ONLY, same posture as {@link ResolvedWeights.fstPath}: deserialization happens in the caller's layer.

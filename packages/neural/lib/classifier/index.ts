@@ -143,7 +143,7 @@ export class NeuralAddressClassifier {
 
 	/**
 	 * Path to the locale-general street-morphology FST (`fst-street-morphology.bin`) when the resolved weights package
-	 * (or its base) shipped one, else `undefined`. The runtime pipeline's street-context gate (#1315) deserializes it
+	 * (or its base) shipped one, else `undefined`. The runtime pipeline's street-context check (#1315) deserializes it
 	 * through the shared loader ladder instead of rebuilding from the libpostal dictionaries per process.
 	 */
 	get streetMorphologyPath(): string | undefined {
@@ -446,7 +446,7 @@ export class NeuralAddressClassifier {
 					...(opts.fstImportanceLengthScaleMode
 						? { importanceLengthScaleMode: opts.fstImportanceLengthScaleMode }
 						: {}),
-					// Street-context gate (#1142): reuse the morphology FST already loaded for the
+					// Street-context check (#1142): reuse the morphology FST already loaded for the
 					// street-morphology prior. Inert when the morphology FST isn't loaded.
 					...(opts.fstStreetMorphology && opts.fstStreetContextGate !== false
 						? {

@@ -462,7 +462,7 @@ export interface ClassifierOpts {
 	fst?: FSTMatcherLike
 	fstBiasScale?: number
 	/**
-	 * Street-morphology matcher. In the pipeline this is the signal source for the FST street-context GATE (#1315),
+	 * Street-morphology matcher. In the pipeline this is the signal source for the FST street-context CHECK (#1315),
 	 * always paired with zeroed `fstStreetMorphologyOpts` — the morphology EMISSION prior measured US-golden-negative
 	 * (−48, 2026-07-25 decomposition) and stays off on the production paths; it remains reachable via direct
 	 * `classifier.parse` for measured, opt-in use.
@@ -565,7 +565,7 @@ export interface RuntimePipelineStages {
 	 */
 	fst?: FSTMatcherLike
 	/**
-	 * Street-morphology matcher — the signal source for the FST street-context gate (#1315). Consumed ONLY with the
+	 * Street-morphology matcher — the signal source for the FST street-context check (#1315). Consumed ONLY with the
 	 * morphology emission prior zeroed at the classify call sites (the emission prior is US-golden-negative; the gate
 	 * alone is golden-flat and fragment-positive). Effective only when `fst` is also present.
 	 */

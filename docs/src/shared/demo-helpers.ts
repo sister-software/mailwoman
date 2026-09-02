@@ -283,7 +283,7 @@ export interface ClassifyStageDeps {
 	 */
 	fst?: FSTMatcherLike | null
 	/**
-	 * The optional street-morphology matcher — the #1315 street-context gate's signal source. The gate only fires when
+	 * The optional street-morphology matcher — the #1315 street-context check's signal source. The gate only fires when
 	 * BOTH this and `fst` are wired (core's `streetContextGateFor`), matching the node runtime pipeline's default; a
 	 * `null`/omitted matcher parses gate-off, exactly the pre-artifact demo behavior.
 	 */

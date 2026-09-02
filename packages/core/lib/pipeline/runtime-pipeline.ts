@@ -607,7 +607,7 @@ async function safeClassify(
 }
 
 /**
- * The street-context gate pair (#1315): when BOTH the gazetteer FST and the street-morphology matcher are wired, the
+ * The street-context check pair (#1315): when BOTH the gazetteer FST and the street-morphology matcher are wired, the
  * classify call passes the matcher in with the morphology EMISSION prior zeroed — the gate alone (measured golden-flat,
  * fragment-positive) without the emission prior (measured US-golden −48). Absent either matcher, the spread is `{}` and
  * the decode is byte-stable.

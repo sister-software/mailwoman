@@ -14,7 +14,7 @@
  *   matrix the caller folds into the decoder's emissions before Viterbi. The encoder + the other
  *   priors still get the final vote; this one only proposes.
  *
- *   Evidence: rung-3 gate (2026-07-22) measured 100% recall / 0.0% false-positive rate at δ=6.0 on the
+ *   Evidence: the rung-3 promotion eval (2026-07-22) measured 100% recall / 0.0% false-positive rate at δ=6.0 on the
  *   probe set that motivated this prior. **Superseded by the shipped δ calibration** (2026-07-22, a
  *   held-out register-row + venue-confound sweep) — the real
  *   `pair-index-gb.bin` artifact ships δ=5.0 in its header (feed-8k's calibrated
@@ -57,7 +57,7 @@
  *   - `"window"` — the sliding 1..{@link WINDOW_MAX_WORDS}-word behavior (see "Window mode"
  *     below), opt-in only.
  *
- *   The rung-3 gate above measured the prior's RECALL/FP on a curated probe set — real (child, parent)
+ *   The rung-3 promotion eval above measured the prior's RECALL/FP on a curated probe set — real (child, parent)
  *   pairs in isolation, no surrounding venue text. A second measurement (2026-07-22) went looking for the
  *   failure mode a curated probe set can't see: a **6,500-row venue-confound
  *   board**, built from real UK Food Standards Agency establishment names that happen to embed a real GB
@@ -140,7 +140,7 @@
  *   restriction, it is the segment restriction doing exactly what it's specified to do. (2) recall on a
  *   comma-FREE input degrades toward inert, because a comma-free string is one giant segment with no
  *   internal split — which is what the `"auto"` chain's anchored path exists to cover. Window mode remains
- *   available, opt-in, for callers who have their own venue-boundary gate and have re-verified FP=0.
+ *   available, opt-in, for callers who have their own venue-boundary check and have re-verified FP=0.
  *
  *   **Anchored mode (v1.1)** — the comma-free complement to segment mode, reached by the `"auto"` chain
  *   exactly where segment mode is structurally inert. The delta vs window mode is candidate SELECTION
@@ -692,13 +692,13 @@ function probeAnchoredAdjacentPair(
 /**
  * Is `x` immediately followed (in the non-punctuation word sequence) by a structural marker?
  *
- * `groupSegments`, when supplied (segment mode only — see the call site), gates this on the successor sharing `x`'s OWN
- * segment. Without that gate, a candidate at the tail of one comma-delimited segment reads the FIRST word of the NEXT
- * segment as its "successor" — a false cross-segment reading, not a real street/venue-head suffix of this candidate.
- * Worked case: `"Fishburn, 5 Fishburn Road"` — ungated, "Fishburn" (segment 0) is suppressed because "5" (segment 1's
- * first word, a house-number shape) sits next in `nonEmptyGroups`, even though the comma between them means "5" can
- * never be read as a suffix of "Fishburn". In WINDOW mode (`groupSegments` omitted), suppression ignores comma
- * placement entirely, by design (see `buildWindows`).
+ * `groupSegments`, when supplied (segment mode only — see the call site), conditions this on the successor sharing
+ * `x`'s OWN segment. Without that condition, a candidate at the tail of one comma-delimited segment reads the FIRST
+ * word of the NEXT segment as its "successor" — a false cross-segment reading, not a real street/venue-head suffix of
+ * this candidate. Worked case: `"Fishburn, 5 Fishburn Road"` — ungated, "Fishburn" (segment 0) is suppressed because
+ * "5" (segment 1's first word, a house-number shape) sits next in `nonEmptyGroups`, even though the comma between them
+ * means "5" can never be read as a suffix of "Fishburn". In WINDOW mode (`groupSegments` omitted), suppression ignores
+ * comma placement entirely, by design (see `buildWindows`).
  */
 function isMarkerSuppressed(
 	nonEmptyGroups: readonly WordGroup[],

@@ -52,7 +52,7 @@ export interface DocsDemoAssets {
 	fstMatcher: FSTMatcherLike | null
 	fstProvenance: FSTProvenanceLike | null
 	/**
-	 * The street-morphology matcher — the #1315 street-context gate's signal source, the node/browser parity fix (SCOPE
+	 * The street-morphology matcher — the #1315 street-context check's signal source, the node/browser parity fix (SCOPE
 	 * invariant 2: node runtimes wire this by default; the browser previously never could). Loaded with the FST gazetteer
 	 * because the gate needs BOTH (core's `streetContextGateFor` only fires when the two stages are present). `null` when
 	 * the release ships no `fst-street-morphology.bin` (pre-artifact bundles) — the demo then parses without the gate,
@@ -169,7 +169,7 @@ export async function loadDemoAssets(
 			// FST not available for this version.
 		}
 
-		// Street-context gate signal (#1315): fetched tolerantly, like the pair indexes — a release that
+		// Street-context check signal (#1315): fetched tolerantly, like the pair indexes — a release that
 		// predates `fst-street-morphology.bin` returns 404/`null` and the demo parses gate-off, exactly as
 		// before. Only loaded when the gazetteer FST loaded: the gate needs both, so a lone morphology
 		// matcher would be dead weight.
