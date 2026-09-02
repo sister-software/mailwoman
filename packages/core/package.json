@@ -515,6 +515,11 @@
 			"node": "./lib/html/text.ts",
 			"default": "./out/html/text.js",
 			"types": "./out/html/text.d.ts"
+		},
+		"./html/document": {
+			"node": "./lib/html/document.ts",
+			"default": "./out/html/document.js",
+			"types": "./out/html/document.d.ts"
 		}
 	},
 	"publishConfig": {
@@ -529,6 +534,8 @@
 		"change-case": "^5.4.4",
 		"d3-color": "^3.1.0",
 		"d3-scale-chromatic": "^3.1.0",
+		"dom-serializer": "^2.0.0",
+		"domhandler": "^5.0.3",
 		"domutils": "^3.2.2",
 		"entities": "^6.0.0",
 		"env-paths": "^2.2.1",

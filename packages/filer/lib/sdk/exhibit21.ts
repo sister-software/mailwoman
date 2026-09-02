@@ -8,33 +8,21 @@
  * See `exhibit21-parser.md` for the parsing contract and abstention rules.
  */
 
+import { sliceDocument } from "@mailwoman/core/html/document"
+import { extractTableRows, padAndDropBlankColumns, type TableCell, widestRow } from "@mailwoman/core/html/tables"
+import { BLOCK_ELEMENTS, htmlToLayoutText } from "@mailwoman/core/html/text"
+import { isPresent } from "@mailwoman/core/objects"
+import { normalizeWhitespace } from "@mailwoman/core/strings/format"
+import { canonicalizeOrganizationName } from "@mailwoman/record"
+
 import {
-	BLANK_CELL,
 	carriesLegalDesignation,
-	CELL_BLOCK_BOUNDARY_PATTERN,
-	cleanCellText,
-	decodeEntities,
-	documentWindow,
-	extractRowCells,
-	extractTableRows,
-	extractTopLevelTableHTML,
 	FOOTNOTE_MARKER_PATTERN,
 	isHeaderOrDecorationRow,
 	isMultiValueCell,
 	JURISDICTION_HEADER_LABELS,
-	KNOWN_HEADER_LABELS,
-	LETTER_OR_DIGIT_PATTERN,
-	NAME_HEADER_LABELS,
-	normalizeWhitespace,
 	OTHER_HEADER_LABELS,
-	padAndDropBlankColumns,
-	stripTags,
-	type TableCell,
-	widestRow,
-} from "@mailwoman/core/html/tables"
-import { isPresent } from "@mailwoman/core/objects"
-import { stripHTMLToText } from "@mailwoman/core/trust-policies"
-import { canonicalizeOrganizationName } from "@mailwoman/record"
+} from "#sdk/exhibit21-vocabulary"
 
 /**
  * One subsidiary {@linkcode parseExhibit21} confidently extracted.
@@ -260,7 +248,7 @@ function subsidiariesFromTable(
 
 		const leadCell = row.find((cell) => cell.text !== "")!
 
-		if (isMultiValueCell(leadCell.rawHTML)) {
+		if (isMultiValueCell(leadCell.blocks)) {
 			unparseable++
 
 			continue
@@ -342,6 +330,20 @@ function subsidiariesFromTableRows(tables: readonly TableCell[][][]): ParsedExhi
 	return { subsidiaries, unparseable }
 }
 
+/**
+ * Narrows one raw EDGAR archive document to the markup every strategy below should reason about, applied ONCE in
+ * {@linkcode parseExhibit21} so the table, list and plain-text strategies all see the same window rather than each
+ * re-deriving it.
+ *
+ * The SGML `<TEXT>` element is EDGAR's own envelope around the exhibit; a document with no envelope (every hand-written
+ * fixture in `exhibit21.test.ts`) is left whole. The HTML `<head>` goes because its `<title>` is the source filename
+ * rather than a subsidiary — `q42025exh211listofsubsidia.htm` was emitted as an entity name before this window existed
+ * — and `<script>`/`<style>` because their text is code.
+ */
+function documentWindow(html: string): string {
+	return sliceDocument(html, { within: "text", without: ["head", "script", "style"] })
+}
+
 const LI_OPEN_PATTERN = /<li[^>]*>/gi
 const LI_CHILD_BOUNDARY_PATTERN = /<ul[^>]*>|<ol[^>]*>|<li[^>]*>|<\/li>/i
 
@@ -361,7 +363,7 @@ function extractListItemOwnText(html: string): string[] {
 		const rest = html.slice(start)
 		const boundaryIndex = rest.search(LI_CHILD_BOUNDARY_PATTERN)
 		const ownHTML = boundaryIndex === -1 ? rest : rest.slice(0, boundaryIndex)
-		const ownText = decodeEntities(stripTags(ownHTML))
+		const ownText = htmlToLayoutText(ownHTML)
 
 		if (ownText.trim()) {
 			lines.push(ownText)
@@ -371,28 +373,17 @@ function extractListItemOwnText(html: string): string[] {
 	return lines
 }
 
-const BLOCK_BREAK_PATTERN =
-	/<\/?(?:p|div|tr|td|th|li|ul|ol|table|thead|tbody|tfoot|br|hr|h[1-6]|section|article|header|footer|blockquote|pre|html|body|head|title)(?:\s[^>]*)?>/gi
-
 /**
- * Strips any stray markup, decodes entities, and splits into non-blank lines — the plain-text strategy's input prep.
- * Whitespace is deliberately NOT collapsed here (unlike {@linkcode cleanCellText}): a fixed-width plain-text Exhibit 21
- * uses a run of 2+ spaces as its column separator, and {@linkcode splitCandidateLine} needs that run intact to find
- * it.
+ * Strips markup and splits into non-blank lines — the plain-text strategy's input prep. Whitespace inside a line is
+ * deliberately NOT collapsed (unlike a table cell's text): a fixed-width plain-text Exhibit 21 uses a run of 2+ spaces
+ * as its column separator, and {@linkcode splitCandidateLine} needs that run intact to find it.
  *
- * KNOWN BLOCK-level tag boundaries are rewritten to a real line break BEFORE the remaining tags are stripped: a
- * minified document (no real `\n` at all) still separates one paragraph/row per logical line this way. Skipping this
- * step would let `stripTags`' single space per tag concatenate every paragraph onto one line — and worse, two adjacent
- * block tags with nothing between them (`</p><p>`) would fabricate a false 2+-space "column gap" between two
- * otherwise-unrelated paragraphs. See the module docstring's tag-stripping paragraph.
- *
- * @deprecated Move to `@mailwoman/core/html` and use a DOM parser to read the table structure.
- * @todo In desperate need of `htmlparser2`'s ecosystem. Extract repeatable aspects into `@mailwoman/core/html/extract`
- *   and keep what remains here, if anything at all.
+ * BLOCK-level element boundaries become real line breaks, so a minified document with no `\n` anywhere in it still
+ * separates one paragraph per logical line. The layout reading is what makes that safe: two adjacent block boundaries
+ * (`</p><p>`) are ONE separation, where a per-tag rewrite fabricates a second one.
  */
 function extractPlainTextLines(html: string): string[] {
-	const withLineBreaks = html.replaceAll(BLOCK_BREAK_PATTERN, "\n")
-	const text = decodeEntities(stripTags(withLineBreaks))
+	const text = htmlToLayoutText(html, BLOCK_ELEMENTS)
 
 	return text.split(/\r\n|\r|\n/).filter((line) => line.trim() !== "")
 }
@@ -411,6 +402,12 @@ function isBareLegalDesignation(value: string): boolean {
 
 	return canonicalized !== null && canonicalized.canonical === "" && canonicalized.designations.length > 0
 }
+
+/**
+ * The fixed-width column separator: a run of two or more spaces or tabs. U+00A0 counts, because `&nbsp;` and `&#160;`
+ * are the same character and a filer that writes its gap in either spelling states the same column.
+ */
+const COLUMN_GAP_PATTERN = /[ \t\u00A0]{2,}/
 
 /**
  * Splits one candidate line (a plain-text row, or one `<li>`'s own text) into a name and an optional jurisdiction — see
@@ -434,7 +431,7 @@ function isBareLegalDesignation(value: string): boolean {
  */
 function splitCandidateLine(line: string): { name: string; jurisdiction?: string } {
 	const spaced = line
-		.split(/[ \t]{2,}/)
+		.split(COLUMN_GAP_PATTERN)
 		.map((part) => normalizeWhitespace(part))
 		.filter(isPresent)
 
@@ -478,8 +475,8 @@ const LIST_MARKER_PATTERN = /^[•●▪◦∙·*–—-]+\s*/
 /**
  * Whole-line, case-insensitive shapes that are a document title or section heading, never an entity name — see the
  * module docstring's "Line/list refinements" paragraph. Deliberately whole-string patterns, not keyword sniffing, for
- * the same reason `KNOWN_HEADER_LABELS` is an exact-match set: substring sniffing on "subsidiaries" would misfire on a
- * company actually named that.
+ * the same reason `KNOWN_HEADER_LABELS` (`exhibit21-vocabulary.ts`) is an exact-match set: substring sniffing on
+ * "subsidiaries" would misfire on a company actually named that.
  */
 const TITLE_LINE_PATTERNS = [
 	/^exhibit\s*21(\.\d+)?(\s*[-–—:]?\s*list of subsidiaries)?$/i,

@@ -29,8 +29,8 @@
  *   name, a brand, an address — not a source of ownership edges. Do not write a family edge from it.
  *
  *   **No HTML-parser dependency**, matching `exhibit21.ts`: this workspace has none, and the registration
- *   page is a single flat `<th>`/`<td>` table. Parsing reuses `exhibit21.ts`'s own `stripTags` /
- *   `decodeEntities` / `normalizeWhitespace` rather than growing a second normalizer.
+ *   page is a single flat `<th>`/`<td>` table. Cell text is `@mailwoman/core/html/text`'s prose reading rather
+ *   than a second normalizer grown in this workspace.
  *
  *   **Ported from Nexus's `sync/fcc/CORESClient.ts`** (relicense-by-copy), restructured onto
  *   {@linkcode APIClient} and deliberately narrowed in three places:
@@ -62,7 +62,7 @@ import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { $private } from "@mailwoman/core/env"
 import { ResourceError } from "@mailwoman/core/errors"
-import { decodeEntities, normalizeWhitespace, stripTags } from "@mailwoman/core/html/tables"
+import { htmlToText } from "@mailwoman/core/html/text"
 
 import { isFRN, type FRN } from "#frn"
 
@@ -242,14 +242,6 @@ export function recaseUniform(value: string): string {
 }
 
 /**
- * Reduce one cell's raw HTML to its visible text — tags stripped, entities decoded, whitespace collapsed. Shares
- * `exhibit21.ts`'s helpers rather than growing a second normalizer in this workspace.
- */
-function cellText(rawHTML: string): string {
-	return normalizeWhitespace(decodeEntities(stripTags(rawHTML)))
-}
-
-/**
  * Parse a CORES `searchDetail.do` page into a {@linkcode CORESRegistration}.
  *
  * Returns `null` — never a stub record, and never a throw — when the page carries no recognizable registration table,
@@ -269,11 +261,11 @@ export function parseCORESRegistration(frn: FRN, html: string): CORESRegistratio
 
 		if (!label) continue
 
-		const field = FIELD_BY_LABEL[labelKey(cellText(label))]
+		const field = FIELD_BY_LABEL[labelKey(htmlToText(label))]
 
 		if (!field) continue
 
-		const value = cellText(DATA_CELL_PATTERN.exec(rowHTML)?.[1] ?? "")
+		const value = htmlToText(DATA_CELL_PATTERN.exec(rowHTML)?.[1] ?? "")
 
 		if (value) {
 			fields[field] = value

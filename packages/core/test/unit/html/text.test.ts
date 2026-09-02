@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { htmlToText } from "@mailwoman/core/utils"
+import { htmlToText } from "@mailwoman/core/html/text"
 import { describe, expect, it } from "vitest"
 
 describe("htmlToText", () => {
