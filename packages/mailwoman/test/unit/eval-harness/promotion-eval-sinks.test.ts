@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The de-shell migration's safety net (2026-08-06). When `promotion-gate.ts` spawned its battery as
+ *   The de-shell migration's safety net (2026-08-06). When `promotion-eval.ts` spawned its battery as
  *   eight child processes, two things were true for free: a child's stdout arrived as bytes, and a
  *   child's non-zero exit was a number the check could branch on. In-process, both are things this
  *   code now has to GET RIGHT, and neither shows up in a type error if it is wrong — the check would
@@ -25,7 +25,7 @@ import { demoCascadeSmoke } from "mailwoman/eval-harness/demo-cascade-smoke"
 import { externalArenas } from "mailwoman/eval-harness/external-arenas"
 import { frParseRecall } from "mailwoman/eval-harness/fr-parse-recall"
 import { perLocaleF1 } from "mailwoman/eval-harness/per-locale-f1"
-import { renderLines } from "mailwoman/eval-harness/promotion-gate"
+import { renderLines } from "mailwoman/eval-harness/promotion-eval"
 import { scoreAffix } from "mailwoman/eval-harness/score-affix"
 import { scoreCountryHomograph } from "mailwoman/eval-harness/score-country-homograph"
 import { describe, expect, test } from "vitest"

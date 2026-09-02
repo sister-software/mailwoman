@@ -127,6 +127,6 @@ The recipe sits in `packages/corpus/lib/extract-recipes/` as
 `synth-suffix-boundary`. (ProjectShorthand and AmbiguousShorthand: backticked
 artifact names are exempt — that is the replacement both rules ask for.)
 
-The promotion eval ran from `promotion-gate.ts` after `mailwoman eval gate`
+The promotion eval ran from `promotion-eval.ts` after `mailwoman eval promote`
 printed the append command. (AmbiguousShorthand: a backticked script name and a
 backticked CLI command are contracts, not prose, so neither may match.)

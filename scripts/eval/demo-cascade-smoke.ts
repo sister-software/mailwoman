@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   NOTE(de-shell): forwarding shim. The demo-cascade smoke eval (#524) now lives at
- *   `mailwoman/eval-harness/demo-cascade-smoke.ts` and `promotion-gate.ts` calls it IN-PROCESS. This
+ *   `mailwoman/eval-harness/demo-cascade-smoke.ts` and `promotion-eval.ts` calls it IN-PROCESS. This
  *   shim keeps standalone invocation working unchanged. Output is byte-identical because the module
  *   owns every printed line.
  *

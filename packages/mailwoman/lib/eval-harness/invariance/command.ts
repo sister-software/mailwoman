@@ -5,7 +5,7 @@
  *
  *   CLI-facing orchestration for `mailwoman eval invariance` — wires suite + transforms + runner
  *   together from argv-shaped options. Thin on purpose: the module the `invariance.tsx` command wraps
- *   narrates everything and owns only the exit code, matching `eval gate` / `eval error-analysis`.
+ *   narrates everything and owns only the exit code, matching `eval promote` / `eval error-analysis`.
  */
 
 import { type ModelSelectOptions, loadSuite, buildParseFn, runInvarianceSuite } from "#eval-harness/invariance/runner"

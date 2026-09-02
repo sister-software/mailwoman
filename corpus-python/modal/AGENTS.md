@@ -91,7 +91,7 @@ modal volume get mailwoman-training /models/quantized/model-v160-step-40000-int8
 TOK=/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model
 
 # 4a. The 4-shape TARGET gate (the headline — street_suffix/comma-less/fr-prefix/hn-after)
-node scripts/eval/boundary-stress-gate.ts \
+node scripts/eval/boundary-stress-eval.ts \
   --model ./out/v160/model.onnx --tokenizer "$TOK" \
   --model-card neural-weights-en-us/model-card.json --n 300
 
@@ -99,7 +99,7 @@ node scripts/eval/boundary-stress-gate.ts \
 #     tokenizer — both already correct for v1.6.0 (labels identical, same v0.6.0-a0 tokenizer).
 node packages/mailwoman/out/cli.js eval gate \
   --model ./out/v160/model.onnx --int8 ./out/v160/model.onnx \
-  --gate mailwoman/eval-harness/gates/v1.6.0-boundary-stress.json \
+  --spec mailwoman/eval-harness/specs/v1.6.0-boundary-stress.json \
   --tokenizer "$TOK" --card neural-weights-en-us/model-card.json \
   --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json \
   --out-dir /tmp/gate-v160
@@ -107,6 +107,6 @@ cat /tmp/gate-v160/verdict.json
 ```
 
 Both must pass to ship: 4a moves the four boundary targets up; 4b holds the guardrail floors. The floors
-spec (`mailwoman/eval-harness/gates/v1.6.0-boundary-stress.json`) carries a stated `us.street` caveat — the recipe's
+spec (`mailwoman/eval-harness/specs/v1.6.0-boundary-stress.json`) carries a stated `us.street` caveat — the recipe's
 80.4 is the pre-#492 shipped value; recent models sit at ~76-78, so it's floored at the committed 74.0
 pending a re-anchor to v1.5.1's measured number.

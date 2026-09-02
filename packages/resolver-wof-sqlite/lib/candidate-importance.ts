@@ -27,7 +27,7 @@
  *   Warwick in America the fame of Warwick, Rhode Island, which is the fan-out defect
  *   `importance-fanout.ts` documents one layer up, re-introduced at the join. So the group is
  *   disambiguated GEOGRAPHICALLY: the nearest centroid wins, and only within
- *   {@link IMPORTANCE_JOIN_GATE_KM}. Two artifacts describing the same settlement put its centroid in
+ *   {@link IMPORTANCE_JOIN_RADIUS_KM}. Two artifacts describing the same settlement put its centroid in
  *   almost the same place; two same-named towns in one country do not.
  *
  *   ## What lands in the column
@@ -66,7 +66,7 @@ import { normalizeLocalityForKey } from "#street/normalize"
  * identical rows — so the value is chosen by what the join MEANS, not by what it scores. The radius is the definition
  * of "this is the same place"; widening it past the floor starts handing one town's fame to another.
  */
-export const IMPORTANCE_JOIN_GATE_KM = 10
+export const IMPORTANCE_JOIN_RADIUS_KM = 10
 
 /**
  * One scored place from the source: where it is, and what it scored.
@@ -121,7 +121,7 @@ export class ImportanceIndex {
 	 * This is the number worth watching across rebuilds. A jump means the score source and the admin source have drifted
 	 * apart and the join is being asked to guess; it does not mean the radius is too tight.
 	 */
-	gated = 0
+	refused = 0
 
 	constructor(groups: Map<string, ScoredPlace[]>, stats: ImportanceIndexStats) {
 		this.#groups = groups
@@ -130,7 +130,7 @@ export class ImportanceIndex {
 
 	/**
 	 * The importance of the scored place nearest `(lat, lon)` sharing `name`'s folded key, `country` and `placetype`, or
-	 * null when there is no such place within {@link IMPORTANCE_JOIN_GATE_KM}.
+	 * null when there is no such place within {@link IMPORTANCE_JOIN_RADIUS_KM}.
 	 *
 	 * Null is UNMEASURED. Never substitute a zero, and never fall back to a population-derived value here — the source
 	 * column already carries that fallback where it has one, and inventing a second one would make an absence
@@ -157,8 +157,8 @@ export class ImportanceIndex {
 			}
 		}
 
-		if (!best || bestKm > IMPORTANCE_JOIN_GATE_KM) {
-			this.gated++
+		if (!best || bestKm > IMPORTANCE_JOIN_RADIUS_KM) {
+			this.refused++
 
 			return null
 		}

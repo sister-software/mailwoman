@@ -19,7 +19,7 @@
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { IMPORTANCE_JOIN_GATE_KM, loadImportanceIndex } from "@mailwoman/resolver-wof-sqlite/candidate-importance"
+import { IMPORTANCE_JOIN_RADIUS_KM, loadImportanceIndex } from "@mailwoman/resolver-wof-sqlite/candidate-importance"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
@@ -125,7 +125,7 @@ describe("ImportanceIndex.find", () => {
 		// A third US Warwick nowhere near either scored one: the nearest same-key place is ~1,000 km off,
 		// which is a different town. NULL, and counted as refused.
 		expect(index.find("Warwick", "US", "locality", 60, -150)).toBeNull()
-		expect(index.gated).toBe(1)
+		expect(index.refused).toBe(1)
 		expect(index.matched).toBe(0)
 	})
 
@@ -136,8 +136,8 @@ describe("ImportanceIndex.find", () => {
 		expect(index.find("Zürich", "CH", "locality", 47.3769 + 0.05, 8.5417)).toBeCloseTo(0.6216, 4)
 		expect(index.find("Zürich", "CH", "locality", 47.3769 + 0.5, 8.5417)).toBeNull()
 		// Sanity on the constant the two cases straddle.
-		expect(IMPORTANCE_JOIN_GATE_KM).toBeGreaterThan(5.6)
-		expect(IMPORTANCE_JOIN_GATE_KM).toBeLessThan(55)
+		expect(IMPORTANCE_JOIN_RADIUS_KM).toBeGreaterThan(5.6)
+		expect(IMPORTANCE_JOIN_RADIUS_KM).toBeLessThan(55)
 	})
 
 	test("the key is the SHARED fold — diacritics and non-Latin scripts reach their scores", () => {

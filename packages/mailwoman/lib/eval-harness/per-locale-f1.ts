@@ -39,7 +39,7 @@
  *   zero-feed (anchor-off) path on purpose, or `--model-anchor-lookup`/`--gazetteer-lexicon` to
  *   override paths.
  *
- *   `promotion-gate.ts` calls {@linkcode perLocaleF1} IN-PROCESS and captures the markdown report
+ *   `promotion-eval.ts` calls {@linkcode perLocaleF1} IN-PROCESS and captures the markdown report
  *   (the `report` sink) into `<out-dir>/<tag>-per-locale.md` — the file the verdict assembler
  *   regex-reads for `us.postcode`, `us.locality`, `us.region`, `us.street`, `fr.house_number` and
  *   `us.micro`. The progress narration goes to `reportError`, which is where the child process's
@@ -152,8 +152,8 @@ interface GoldenRow {
 /**
  * Fold neural Stage-3 tags into the golden component vocab (street parts + intersections → street).
  *
- * `foldStreetParts: false` is the v0.1.3 convention (#gate-relabel, 2026-08-06): that answer key labels US streets
- * SPLIT — `street_prefix` / `street` / `street_suffix` are three spans — so gluing the prediction back together before
+ * `foldStreetParts: false` is the v0.1.3 convention (the 2026-08-06 relabel): that answer key labels US streets SPLIT —
+ * `street_prefix` / `street` / `street_suffix` are three spans — so gluing the prediction back together before
  * comparing measures the harness, not the model. The v9.0.0 promotion eval read exactly that as an 0.4pp `us.street`
  * regression. Which mode applies is decided PER ROW from the golden dir's own MANIFEST (see
  * {@linkcode readStreetConvention}), never from a flag someone has to remember: an answer key that declares its

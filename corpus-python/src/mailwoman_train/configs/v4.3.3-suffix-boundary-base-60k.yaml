@@ -19,7 +19,7 @@
 #   B1 terminal-only >=116/128
 #   B2 terminal-contrast >=34/48
 #   B4 locality-token retention >=3/7 (exact locality is an upside watch)
-#   B3 `mailwoman eval gate --gate v9.0.0-base`, zero known tier-1 regression, only after B1/B2/B4
+#   B3 `mailwoman eval promote --spec v9.0.0-base`, zero known tier-1 regression, only after B1/B2/B4
 # Grade 5k/10k/20k/40k/60k. A passing earlier checkpoint may win; the run still completes so the
 # learning curve and Fisher artifact are preserved. If 60k misses B1, stop. No decode patch and no
 # recipe treadmill.

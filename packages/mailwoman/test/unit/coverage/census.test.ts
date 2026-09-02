@@ -128,17 +128,17 @@ describe("readBoardCoverage", () => {
 		await writeLocalJSONFile({ id: "z", country: "ZZ", status: "pass" }, cases, "generalization", "passes.jsonl")
 	})
 
-	it("counts GATED rows apart from tracked ones", async () => {
+	it("counts PASSING rows apart from tracked ones", async () => {
 		// A country whose rows are all `improvement_target` has nothing verified, and reporting its row count as
 		// coverage is the mistake this separation exists to prevent.
 		const board = await readBoardCoverage(join(root, "cases"))
 
-		expect(board.get("GB")).toEqual({ rows: 2, gated: 1 })
+		expect(board.get("GB")).toEqual({ rows: 2, passed: 1 })
 	})
 
 	it("attributes a row by its own country field, not its directory", async () => {
 		// Board rows live in a directory by convention and carry their country explicitly; the two disagree in practice.
-		expect((await readBoardCoverage(join(root, "cases"))).get("IE")).toEqual({ rows: 1, gated: 1 })
+		expect((await readBoardCoverage(join(root, "cases"))).get("IE")).toEqual({ rows: 1, passed: 1 })
 	})
 
 	it("skips the generalization directory the loader itself skips", async () => {

@@ -62,7 +62,7 @@ export interface ConformanceOutcome {
 	mechanismShapes?: readonly string[]
 	/**
 	 * The resolver's interior for this run (#1721): one record per backend lookup, carrying the candidate table, the
-	 * fetch window it ran under, the `gates` that fired and the pick's provenance.
+	 * fetch window it ran under, the `checks` that fired and the pick's provenance.
 	 *
 	 * Supplied by an observer that asked for a trace — the walk does zero bookkeeping otherwise, so a comparator cannot
 	 * turn one on for itself. `[]` is a real reading (the walk performed no lookup); `undefined` is the absence of a

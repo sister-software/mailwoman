@@ -21,18 +21,18 @@ floor policy, the standard eval set); read that first if you are promoting a mod
 
 ## The instrument inventory
 
-| Instrument                                                         | What it protects                                                              | Where it lives                                                |
-| ------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Golden floors (per-locale, noise-honest margins)                   | the shipped baseline everywhere                                               | `mailwoman eval gate` + `mailwoman/eval-harness/gates/*.json` |
-| P0 fragment boards **with lowercase legs**                         | the user register (lowercase is doctrine)                                     | eval-harness fragment boards                                  |
-| Invariance suite vs the shipped reference                          | no silent behavior drift                                                      | `--baseline` legs of `mailwoman eval gate`                    |
-| Gauntlet ×3 layers (incl. metamorphic INV/DIR)                     | input robustness; label-preserving perturbations must not move the coordinate | `mailwoman eval gauntlet`                                     |
-| Evidence ablation (channels-zeroed ≥ baseline on unaffected spans) | the model must not launder capability through a retrieval channel             | standing since the v3.16 curriculum work                      |
-| Ablated-vs-fed columns (per channel)                               | what each evidence channel actually contributes                               | the capability manifest + the Modal per-channel contrast      |
-| Canary fixtures with receipts                                      | named past failures stay fixed (zero-flip)                                    | gauntlet fixtures (e.g. Fifth-Ave, world-city rotation)       |
-| Presets byte-check + demo smoke                                    | the user-visible surface                                                      | `mailwoman eval preset-compare` + the demo smoke              |
-| Capability manifest (register-pinned)                              | the card's published capability block is measured, not asserted               | `mailwoman eval capability-manifest`                          |
-| Pre-ship gauntlet on the dev-linked flip                           | the exact bytes about to ship, through the exact runtime                      | the release choreography                                      |
+| Instrument                                                         | What it protects                                                              | Where it lives                                                   |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Golden floors (per-locale, noise-honest margins)                   | the shipped baseline everywhere                                               | `mailwoman eval promote` + `mailwoman/eval-harness/specs/*.json` |
+| P0 fragment boards **with lowercase legs**                         | the user register (lowercase is doctrine)                                     | eval-harness fragment boards                                     |
+| Invariance suite vs the shipped reference                          | no silent behavior drift                                                      | `--baseline` legs of `mailwoman eval promote`                    |
+| Gauntlet ×3 layers (incl. metamorphic INV/DIR)                     | input robustness; label-preserving perturbations must not move the coordinate | `mailwoman eval gauntlet`                                        |
+| Evidence ablation (channels-zeroed ≥ baseline on unaffected spans) | the model must not launder capability through a retrieval channel             | standing since the v3.16 curriculum work                         |
+| Ablated-vs-fed columns (per channel)                               | what each evidence channel actually contributes                               | the capability manifest + the Modal per-channel contrast         |
+| Canary fixtures with receipts                                      | named past failures stay fixed (zero-flip)                                    | gauntlet fixtures (e.g. Fifth-Ave, world-city rotation)          |
+| Presets byte-check + demo smoke                                    | the user-visible surface                                                      | `mailwoman eval preset-compare` + the demo smoke                 |
+| Capability manifest (register-pinned)                              | the card's published capability block is measured, not asserted               | `mailwoman eval capability-manifest`                             |
+| Pre-ship gauntlet on the dev-linked flip                           | the exact bytes about to ship, through the exact runtime                      | the release choreography                                         |
 
 Margins are **noise-honest**: `max(1.0pp, 2 × the metric's 95% binomial half-width)` at each
 metric's support, taken from the reference model's own readings. Floors ratchet at re-scores and

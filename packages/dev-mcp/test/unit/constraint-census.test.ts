@@ -19,7 +19,7 @@ interface FakeLookup {
 	tag: string
 	value: string
 	placetype: string
-	gates: string[]
+	checks: string[]
 	picked: boolean
 	candidates?: number
 }
@@ -65,7 +65,7 @@ function fakeRegistry(byInput: Record<string, FakeLookup[]>): EngineRegistryLike
 								value: l.value,
 								placetype: l.placetype,
 								query: { limit: 5 },
-								gates: l.gates,
+								checks: l.checks,
 								candidates: Array.from({ length: l.candidates ?? 0 }, () => ({})),
 								candidatesTruncated: 0,
 								picked: l.picked ? { id: 1, name: l.value, source: "ranked" } : null,
@@ -84,8 +84,8 @@ describe("constraint census", () => {
 		const { runConstraintCensus } = await import("@mailwoman/dev-mcp/constraint-census")
 
 		const registry = fakeRegistry({
-			a: [{ tag: "locality", value: "Illes Balears", placetype: "locality", gates: [], picked: false }],
-			b: [{ tag: "locality", value: "Nowhereville", placetype: "locality", gates: [], picked: false }],
+			a: [{ tag: "locality", value: "Illes Balears", placetype: "locality", checks: [], picked: false }],
+			b: [{ tag: "locality", value: "Nowhereville", placetype: "locality", checks: [], picked: false }],
 		})
 
 		const r = await runConstraintCensus(registry, { inputs: LITERAL(["a", "b"]) }, dependencies)
@@ -104,11 +104,13 @@ describe("constraint census", () => {
 		const byInput: Record<string, FakeLookup[]> = {}
 
 		for (const k of dead) {
-			byInput[k] = [{ tag: "locality", value: "Bayern", placetype: "locality", gates: ["some_retry"], picked: false }]
+			byInput[k] = [{ tag: "locality", value: "Bayern", placetype: "locality", checks: ["some_retry"], picked: false }]
 		}
 
 		// A second check fires just as often but DOES pick sometimes — it must not be called inert.
-		byInput["alive"] = [{ tag: "locality", value: "Bayern", placetype: "locality", gates: ["live_gate"], picked: true }]
+		byInput["alive"] = [
+			{ tag: "locality", value: "Bayern", placetype: "locality", checks: ["live_gate"], picked: true },
+		]
 
 		const r = await runConstraintCensus(fakeRegistry(byInput), { inputs: LITERAL([...dead, "alive"]) }, dependencies)
 
@@ -121,7 +123,7 @@ describe("constraint census", () => {
 
 		const r = await runConstraintCensus(
 			fakeRegistry({
-				a: [{ tag: "locality", value: "Bayern", placetype: "locality", gates: ["rare_gate"], picked: false }],
+				a: [{ tag: "locality", value: "Bayern", placetype: "locality", checks: ["rare_gate"], picked: false }],
 			}),
 			{ inputs: LITERAL(["a"]) },
 			dependencies
@@ -136,8 +138,8 @@ describe("constraint census", () => {
 
 		const r = await runConstraintCensus(
 			fakeRegistry({
-				a: [{ tag: "locality", value: "Bayern", placetype: "locality", gates: [], picked: false, candidates: 4 }],
-				b: [{ tag: "locality", value: "Bayern", placetype: "locality", gates: [], picked: false }],
+				a: [{ tag: "locality", value: "Bayern", placetype: "locality", checks: [], picked: false, candidates: 4 }],
+				b: [{ tag: "locality", value: "Bayern", placetype: "locality", checks: [], picked: false }],
 			}),
 			{ inputs: LITERAL(["a", "b"]) },
 			dependencies
@@ -152,7 +154,7 @@ describe("constraint census", () => {
 
 		const r = await runConstraintCensus(
 			fakeRegistry({
-				a: [{ tag: "locality", value: "Illes Balears", placetype: "locality", gates: [], picked: true }],
+				a: [{ tag: "locality", value: "Illes Balears", placetype: "locality", checks: [], picked: true }],
 			}),
 			{ inputs: LITERAL(["a"]) },
 			dependencies

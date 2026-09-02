@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer verify-codepoint` — `promotion-gate.ts` for the Code-Point Open GB
+ *   `mailwoman gazetteer verify-codepoint` — `promotion-eval.ts` for the Code-Point Open GB
  *   database. Compares it against the incumbent GeoNames `GB_full` rows on row membership, coordinate
  *   agreement, Northern Ireland coverage, and ten hand-checked landmark probes.
  *
@@ -49,7 +49,8 @@ const GazetteerVerifyPostcodeCodePoint: ParsedCommandComponent<Options> = ({ opt
 	const state = useCommandTask(async () => {
 		const { dataRootPath, isoDate } = await import("@mailwoman/core/utils")
 
-		const { runCodePointGate, formatCodePointGateReport } = await import("#gazetteer-pipeline/postcode/codepoint-gate")
+		const { runCodePointGate, formatCodePointGateReport } =
+			await import("#gazetteer-pipeline/postcode/codepoint-comparison")
 
 		const stamp = isoDate()
 

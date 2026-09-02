@@ -30,7 +30,7 @@
  *   B-street→O; all-street `Gamle` →locality) — the mechanism behind the 2026-06-19 street
  *   regression below. The vote includes `O`, so a disagreeing word can still resolve to all-`O`.
  *
- *   Promotion-eval outcome (2026-06-19, fr-admin-split-gate + per-locale-f1, MAILWOMAN_WORD_CONSISTENCY=1): NOT
+ *   Promotion-eval outcome (2026-06-19, fr-admin-split-eval + per-locale-f1, MAILWOMAN_WORD_CONSISTENCY=1): NOT
  *   a clean win — net-regressed street −12.6 on the adversarial golden — so it shipped DEFAULT-OFF,
  *   with a confidence-thresholded variant hypothesized as the path to a clean win.
  *

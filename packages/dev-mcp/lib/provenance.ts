@@ -109,7 +109,7 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 
 	const dataRoot = String(mailwomanDataRoot())
 
-	// wof-hot.db belongs to the staged demo rather than the data root. Use `promotion-gate.ts`'s lookup order so this
+	// wof-hot.db belongs to the staged demo rather than the data root. Use `promotion-eval.ts`'s lookup order so this
 	// report states the path that the demo-cascade test checks (#524).
 	const { resolveWOFHotDB } = await import("mailwoman/eval-harness/wof-hot-db")
 

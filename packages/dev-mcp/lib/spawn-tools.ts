@@ -14,13 +14,13 @@
 
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { listGateSpecs } from "mailwoman/eval-harness/promotion-gate"
+import { listEvalSpecs } from "mailwoman/eval-harness/promotion-eval"
 import { z } from "zod"
 
 import { checkCLIAllowlist } from "#cli-allowlist"
 import { assertCompiledFresh } from "#compiled-tree"
 import type { EngineRegistryLike } from "#engine-registry"
-import { missingWeightsCacheArtifacts, readGateReport } from "#gate-report"
+import { missingWeightsCacheArtifacts, readEvalReport } from "#eval-report"
 import { parseGauntletReport } from "#gauntlet-report"
 import type { JobRegistry } from "#jobs"
 import { summarizeJob, type DevTool } from "#tool-kit"
@@ -142,7 +142,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 
 				if (!gate) {
 					return {
-						registered_gate_specs: await listGateSpecs(),
+						registered_gate_specs: await listEvalSpecs(),
 						note: "Pass one of these as `gate`, or an absolute path to a spec JSON.",
 					}
 				}
@@ -184,7 +184,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				// to fire — it is surfaced verbatim rather than pre-empted.
 				const freshness = await assertCompiledFresh(registry.repoRoot)
 				const outDir = (args["out_dir"] as string | undefined) ?? tempRootPath(`mwdev-gate-${jobs.list().length}`)
-				const argv = ["packages/mailwoman/out/cli.js", "eval", "gate", "--gate", gate, "--out-dir", outDir]
+				const argv = ["packages/mailwoman/out/cli.js", "eval", "gate", "--spec", gate, "--out-dir", outDir]
 
 				for (const [flag, key] of [
 					["--weights-cache", "weights_cache"],
@@ -324,7 +324,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 
 				// A check job's numbers come from its own artifacts; only a gauntlet job needs its log parsed.
 				const report = gateOutDir
-					? await readGateReport(gateOutDir, job.stdout, job.stderr)
+					? await readEvalReport(gateOutDir, job.stdout, job.stderr)
 					: parseGauntletReport(job.stdout, job.stderr)
 
 				const tail = args["tail_lines"] as number | undefined

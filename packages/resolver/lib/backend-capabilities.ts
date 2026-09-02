@@ -27,14 +27,14 @@ import type { BackendCapabilityGap, ResolverBackend } from "@mailwoman/core/reso
 const CONSEQUENTIAL_CAPABILITIES: ReadonlyArray<Omit<BackendCapabilityGap, "backend">> = [
 	{
 		capability: "ancestors",
-		gates: "hierarchyCompletion",
+		option: "hierarchyCompletion",
 		defaultOn: true,
 		degrades:
 			"the containment lineage is never read: a parse that drops the locality of a city-state or dependent locality keeps the gap, and `metadata.ancestors` (the lineage the Nominatim and Photon drop-ins expose) is never populated",
 	},
 	{
 		capability: "coincidentLocalitiesFor",
-		gates: "hierarchyCompletion",
+		option: "hierarchyCompletion",
 		defaultOn: true,
 		degrades:
 			"the dual-role pass never runs: a region that is also a locality under the same name resolves to one role only",
@@ -61,7 +61,7 @@ export function describeCapabilityGaps(backend: ResolverBackend): readonly Backe
 export function formatCapabilityGaps(gaps: readonly BackendCapabilityGap[]): string {
 	const [first] = gaps
 	const names = gaps.map((g) => `${g.capability}()`).join(", ")
-	const options = [...new Set(gaps.map((g) => g.gates))].join(", ")
+	const options = [...new Set(gaps.map((g) => g.option))].join(", ")
 	const posture = gaps.some((g) => g.defaultOn) ? "default-ON" : "opt-in"
 
 	return `[resolver] ${first?.backend} lacks ${names} — ${options} (${posture}) silently no-ops; see docs/engineering/reference/resolver-backends.mdx`

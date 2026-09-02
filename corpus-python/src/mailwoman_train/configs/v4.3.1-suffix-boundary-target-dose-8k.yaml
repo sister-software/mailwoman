@@ -29,7 +29,7 @@
 #   with the reproducible fp32 instrument instead of changing board membership after training.
 # B2 contrast — 48 dev/us rows structurally classified `terminal-contrast`; fp32 baseline exact
 #   street+street_suffix = 34/48. PASS >=34/48.
-# B3 D-rule — `mailwoman eval gate --gate v9.0.0-base` on every candidate save; zero known tier-1
+# B3 D-rule — `mailwoman eval promote --spec v9.0.0-base` on every candidate save; zero known tier-1
 #   regression. Compare fp32 candidate to fp32 shipped checkpoint with tokenizer v0.9.0-multisplice.
 # B4 opposite-direction #1519 guard — Tel Aviv-Yafo, Port Louis, Port of Spain. Baseline exact
 #   locality 0/3 and locality-token retention 3/7. PASS retention >=3/7; exact is a tracked upside.

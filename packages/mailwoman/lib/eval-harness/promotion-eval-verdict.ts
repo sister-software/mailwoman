@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Verdict assembler for promotion-gate.ts (#479). Parses the battery outputs the runner teed into
+ *   Verdict assembler for promotion-eval.ts (#479). Parses the battery outputs the runner teed into
  *   the out-dir, checks every number against the eval spec's floors, enforces the fp32↔int8 delta
  *   cap, and writes verdict.json. `failed: false` = all floors met.
  *
@@ -28,7 +28,7 @@ export interface PromotionVerdictOptions {
 	 */
 	gate: string
 	/**
-	 * The promotion-gate out-dir carrying the battery outputs.
+	 * The promotion-eval out-dir carrying the battery outputs.
 	 */
 	outDir: PathBuilderLike
 	/**
@@ -263,7 +263,7 @@ export async function assemblePromotionVerdict(
 	const int8 = options.withInt8 ? await collect("int8") : undefined
 	const graded = int8 ?? fp32 // floors are graded on the ship artifact when present
 
-	// Floors owned by a DEDICATED leg in promotion-gate.ts (not a per-tag F1 in `graded`) — that leg
+	// Floors owned by a DEDICATED leg in promotion-eval.ts (not a per-tag F1 in `graded`) — that leg
 	// runs the check and exits non-zero on failure, so the per-tag aggregator here must SKIP them or it
 	// spuriously reports "NOT FOUND" for a floor that already passed (#949's fr.bare_street_intact).
 	const LEG_HANDLED_FLOORS = new Set(["fr.bare_street_intact"])

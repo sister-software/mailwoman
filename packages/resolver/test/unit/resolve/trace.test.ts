@@ -9,7 +9,7 @@
  *      a debug opt-in, never a production cost.
  *   2. The per-stage rank vector attributes loss: a candidate first by the backend and displaced by the fame key
  *      carries `ranks.initial = 1` and `ranks.importance > 1` — "lost to the fame term" as a recorded fact.
- *   3. Every exit path emits — a lookup that resolves NOTHING still records `picked: null` with its `gates`, because an
+ *   3. Every exit path emits — a lookup that resolves NOTHING still records `picked: null` with its `checks`, because an
  *      absent record is indistinguishable from a lookup that never ran.
  */
 
@@ -140,7 +140,7 @@ describe("resolver-interior trace (#1721)", () => {
 		expect(rescued?.metadata?.["span_rescore"]).toBe(true)
 
 		// …and a record for it: no resolved coordinate without a lookup record.
-		const record = records.find((r) => r.gates.includes("span_rescore"))
+		const record = records.find((r) => r.checks.includes("span_rescore"))
 
 		expect(record).toBeDefined()
 		expect(record!.picked).toMatchObject({ source: "span_rescore" })
@@ -163,6 +163,6 @@ describe("resolver-interior trace (#1721)", () => {
 		expect(record!.candidates).toEqual([])
 		// The bare-toponym race ran (single value-bearing locality node) and still found nothing — the
 		// check says the mechanism participated, which is what separates "raced and lost" from "never ran".
-		expect(record!.gates).toContain("bare_race")
+		expect(record!.checks).toContain("bare_race")
 	})
 })

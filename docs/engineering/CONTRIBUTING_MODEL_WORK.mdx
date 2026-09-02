@@ -87,8 +87,8 @@ classes (#513).
 
 :::danger[Grade against `v6.0.0-shipped-baseline`, not `v5.3.0-family`]
 **The current spec is
-[`v6.0.0-shipped-baseline.json`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/eval-harness/gates/v6.0.0-shipped-baseline.json)**
-— `mailwoman eval gate --weights-cache <dir> --gate v6.0.0-shipped-baseline`.
+[`v6.0.0-shipped-baseline.json`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/eval-harness/specs/v6.0.0-shipped-baseline.json)**
+— `mailwoman eval promote --weights-cache <dir> --spec v6.0.0-shipped-baseline`.
 
 `v5.3.0-family` is **retired for v6.x candidates**. It was calibrated against the v2.2.0-era model
 and never re-derived when the lineage moved, so by 2026-07-16 it had drifted into uselessness in both
@@ -113,7 +113,7 @@ kept verbatim — it already carries a designed margin.
 :::
 
 Run for _every_ candidate, regardless of what you changed (this is what
-[`promotion-gate.ts`, #479](https://github.com/sister-software/mailwoman/issues/479) automates):
+[`promotion-eval.ts`, #479](https://github.com/sister-software/mailwoman/issues/479) automates):
 
 | Check               | Command                                                                            | Bar                                     |
 | ------------------- | ---------------------------------------------------------------------------------- | --------------------------------------- |
@@ -138,7 +138,7 @@ and produces numbers that look real (the zero-fill trap; it has bitten the count
 first affix audit).
 
 Plus your tag's pre-registered real-OOD acceptance bar. Pass → append the run to
-`evals/scores-by-version.json` via `mailwoman eval ledger-append` (`promotion-gate.ts` prints the
+`evals/scores-by-version.json` via `mailwoman eval ledger-append` (`promotion-eval.ts` prints the
 pre-filled command on every PASS — fill in the npm semver at promote time) and write the dated
 report in `docs/articles/evals/`.
 
@@ -149,7 +149,7 @@ small, individually-justified "coordinate-invisible" steps with nothing forcing 
 So, as a **requirement, not a virtue**:
 
 - **Every 5 promotes, or any promote that lowers a spec floor, triggers a full per-tag re-score**
-  of the shipped line — the whole `promotion-gate.ts` battery against the current eval spec,
+  of the shipped line — the whole `promotion-eval.ts` battery against the current eval spec,
   published as a dated `docs/articles/evals/parity-scorecard-YYYY-MM-DD.md`.
 - The scorecard quotes the config-canonical bars above its tables, keeps failing rows, and marks
   any relaxed threshold (the no-silent-drift rules).

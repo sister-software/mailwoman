@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Ledger-append (#885) — turn a promotion-gate out-dir into one row of
+ *   Ledger-append (#885) — turn a promotion-eval out-dir into one row of
  *   `evals/scores-by-version.json`, so the per-version score ledger updates itself instead of
  *   relying on discipline (which is how it froze at v4.4.0 for eleven releases).
  *
@@ -32,7 +32,7 @@ import { movePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
  */
 export interface LedgerAppendOptions {
 	/**
-	 * The promotion-gate out-dir carrying `verdict.json`.
+	 * The promotion-eval out-dir carrying `verdict.json`.
 	 */
 	outDir?: string
 	/**
@@ -144,7 +144,7 @@ export async function ledgerAppend(options: LedgerAppendOptions): Promise<number
 			return 1
 		}
 
-		exceptionNote = ` OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): ${failing.join(", ")}.`
+		exceptionNote = ` OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the eval spec's revision comment): ${failing.join(", ")}.`
 
 		console.error(`! ledgering a FAIL verdict under operator exception: ${failing.join(", ")}`)
 	}
@@ -196,7 +196,7 @@ export async function ledgerAppend(options: LedgerAppendOptions): Promise<number
 		model_path: options.modelPath!,
 		corpus_version: corpusVersion,
 		corpus_sha256: "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
-		eval_set_version: `promotion-gate battery (${verdict.label}): golden v0.1.2 + real-OOD + arena perturb`,
+		eval_set_version: `promotion-eval battery (${verdict.label}): golden v0.1.2 + real-OOD + arena perturb`,
 		eval_set_sha256: "per-file, see data/eval/external",
 		trained_at: options.trainedAt ?? new Date().toISOString().slice(0, 10),
 		hardware: modelCard.training?.hardware ?? "unknown",

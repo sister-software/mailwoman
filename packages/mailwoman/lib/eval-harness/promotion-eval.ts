@@ -8,12 +8,12 @@
  *   machine-readable verdict. Exists so promotion evals are ENFORCED, not night-shift discipline,
  *   and so "why did this model ship?" has a one-file answer.
  *
- *   Usage: mailwoman eval gate\
+ *   Usage: mailwoman eval promote\
  *   --model <fp32.onnx> [--int8 <int8.onnx>]\
  *   | --weights-cache <fp32-pkg-root> [--int8-weights-cache <int8-pkg-root>]\
- *   --gate packages/mailwoman/lib/eval-harness/gates/<spec>.json\
+ *   --spec packages/mailwoman/lib/eval-harness/specs/<spec>.json\
  *   [--tokenizer <tokenizer.model>] [--card <model-card.json>]\
- *   [--gazetteer-lexicon <lexicon.json>] [--out-dir /tmp/gate-<label>]
+ *   [--gazetteer-lexicon <lexicon.json>] [--out-dir /tmp/eval-<label>]
  *
  *   The --model dual grades RAW artifacts: its fp32↔int8 deltas are valid, but its absolute floors
  *   are NOT for any channel-trained model — the package channel siblings (anchor, gazetteer,
@@ -47,7 +47,7 @@
  *   deliberate. `nothrow` became try/catch-and-continue; a bare `$` (which threw on non-zero) became
  *   a call whose throw propagates; a leg whose non-zero exit ABORTED the run (arena, fr-recall)
  *   still returns 1; the two legs that merged `${stdout}${stderr}` into one `.md` keep two sinks and
- *   concatenate them in that order. `promotion-gate-sinks.test.ts` pins the table.
+ *   concatenate them in that order. `promotion-eval-sinks.test.ts` pins the table.
  *
  *   ONE deliberate difference, and it touches no artifact: a leg whose stderr the runner captured and
  *   then THREW AWAY (per-locale-f1's progress narration, the cascade leg's preflight complaints) now
@@ -90,7 +90,7 @@ import { frParseRecall } from "#eval-harness/fr-parse-recall"
 import { maskRegressionGate } from "#eval-harness/mask-regression"
 import { perLocaleF1 } from "#eval-harness/per-locale-f1"
 import { presetCompare } from "#eval-harness/preset-compare"
-import { assemblePromotionVerdict } from "#eval-harness/promotion-gate-verdict"
+import { assemblePromotionVerdict } from "#eval-harness/promotion-eval-verdict"
 import { scoreAffix, type ScoreAffixOptions } from "#eval-harness/score-affix"
 import { scoreCountryHomograph } from "#eval-harness/score-country-homograph"
 import { resolveWOFHotDB } from "#eval-harness/wof-hot-db"
@@ -102,7 +102,7 @@ import { resolveWOFHotDB } from "#eval-harness/wof-hot-db"
  * This is the whole migration's required assumption in one line. `console.log(x)` writes `x` then a newline, and zx
  * handed the concatenation of those writes back as `.stdout`; a sink that records one entry per `console.log` call
  * therefore reproduces the same bytes — INCLUDING a multi-line argument (one call, embedded newlines, one trailing
- * newline) and a bare `console.log()` (the empty string, one newline). Exported for `promotion-gate-sinks.test.ts`.
+ * newline) and a bare `console.log()` (the empty string, one newline). Exported for `promotion-eval-sinks.test.ts`.
  */
 export function renderLines(lines: readonly string[]): string {
 	return lines.map((line) => `${line}\n`).join("")
@@ -115,7 +115,7 @@ interface GateSpec {
 	requires_bridge?: boolean
 	/**
 	 * The ANSWER KEY the per-locale battery grades against, e.g. `data/eval/golden/v0.1.3/dev`. Spec-declared for the
-	 * same reason the conventions mask is: two gate specs that name different golden versions are not comparable, and a
+	 * same reason the conventions mask is: two eval specs that name different golden versions are not comparable, and a
 	 * default buried in a scorer makes that invisible. Omitted = per-locale-f1's own default (v0.1.2/dev).
 	 *
 	 * Answer-key versions are never comparable ACROSS conventions — v0.1.2 folds US street spans, v0.1.3 splits them — so
@@ -172,27 +172,27 @@ export interface PromotionGateOptions {
 	 */
 	int8WeightsCache?: string
 	/**
-	 * Battery output dir. Default `/tmp/gate-<label>-<hhmm>`.
+	 * Battery output dir. Default `/tmp/eval-<label>-<hhmm>`.
 	 */
 	outDir?: PathBuilderLike
 }
 
 /**
- * Resolve a `--gate` value to a real file. A path that exists wins verbatim; otherwise the basename is looked up in the
+ * Resolve a `--spec` value to a real file. A path that exists wins verbatim; otherwise the basename is looked up in the
  * `checks/` dir shipped beside this module — `new URL`-relative for the source tree, with a compiled-tree fallback (tsc
  * does not emit readFileSync'd JSON into `out/`, so `packages/mailwoman/out/eval-harness/` reads the source-tree copy
- * at `packages/mailwoman/lib/eval-harness/gates/`; the lint-rules.json pattern). Old `scripts/eval/checks/<spec>.json`
+ * at `packages/mailwoman/lib/eval-harness/specs/`; the lint-rules.json pattern). Old `scripts/eval/checks/<spec>.json`
  * invocations therefore keep working by basename.
  *
  * The `.json` suffix is optional, because the help has always advertised "a spec name" and a spec name is what people
- * type. Before that was true, `--gate v5.3.0-family` fell through to `readFileSync("v5.3.0-family")` and died on a bare
+ * type. Before that was true, `--spec v5.3.0-family` fell through to `readFileSync("v5.3.0-family")` and died on a bare
  * ENOENT naming a file nobody asked for — which is how it read on 2026-07-16.
  */
 /**
  * The eval specs, beside this module in the SOURCE tree — tsc emits no `.json`, so the directory is named from the
  * package root.
  */
-const GATES_DIR = resolvePackagePath("mailwoman", "lib", "eval-harness", "gates")
+const SPECS_DIR = resolvePackagePath("mailwoman", "lib", "eval-harness", "specs")
 
 export async function resolveGateSpecPath(gate: string): Promise<string> {
 	if (await pathExists(gate)) return gate
@@ -200,20 +200,20 @@ export async function resolveGateSpecPath(gate: string): Promise<string> {
 	const name = basename(gate)
 
 	for (const candidate of name.endsWith(".json") ? [name] : [name, `${name}.json`]) {
-		const spec = resolvePath(GATES_DIR, candidate)
+		const spec = resolvePath(SPECS_DIR, candidate)
 
 		if (await pathExists(spec)) return spec
 	}
 
-	throw new Error(`Gate spec not found: "${gate}". Known specs: ${(await listGateSpecs()).join(", ") || "(none)"}`)
+	throw new Error(`Gate spec not found: "${gate}". Known specs: ${(await listEvalSpecs()).join(", ") || "(none)"}`)
 }
 
 /**
- * Every gate spec shipped beside this module, newest-looking last. For `--gate` errors and tooling.
+ * Every eval spec shipped beside this module, newest-looking last. For `--spec` errors and tooling.
  */
-export async function listGateSpecs(): Promise<string[]> {
-	if (await pathExists(GATES_DIR)) {
-		return (await readDirectory(GATES_DIR)).filter((file) => file.endsWith(".json")).toSorted()
+export async function listEvalSpecs(): Promise<string[]> {
+	if (await pathExists(SPECS_DIR)) {
+		return (await readDirectory(SPECS_DIR)).filter((file) => file.endsWith(".json")).toSorted()
 	}
 
 	return []
@@ -474,7 +474,7 @@ async function runDemoCascadeLeg(env: {
 
 	if (cascadeExit !== 0) {
 		console.error(
-			`✗ demo-cascade smoke errored (see ${outDir}/cascade-smoke.md) — no sidecar; a floored gate spec will FAIL`
+			`✗ demo-cascade smoke errored (see ${outDir}/cascade-smoke.md) — no sidecar; a floored eval spec will FAIL`
 		)
 	}
 }
@@ -521,7 +521,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	const WC8_MODEL = WC8 ? resolvePath(WC8_PACKAGE, "model.onnx") : ""
 
 	if (!GATE || (!MODEL && !WC)) {
-		console.error("✗ --gate and one of --model / --weights-cache required")
+		console.error("✗ --spec and one of --model / --weights-cache required")
 
 		return 2
 	}
@@ -545,7 +545,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	const hhmm = String(new Date().getUTCHours()).padStart(2, "0") + String(new Date().getUTCMinutes()).padStart(2, "0")
 
 	if (!OUT_DIR) {
-		OUT_DIR = `/tmp/gate-${LABEL}-${hhmm}`
+		OUT_DIR = `/tmp/eval-${LABEL}-${hhmm}`
 	}
 
 	await makeDirectories(OUT_DIR)
@@ -750,7 +750,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	// lacks (the 2026-06-11 lesson: #520/#521/#522 all shipped through green per-layer checks). Runs on
 	// the ship artifact against the slim hot DB the demo serves. Env-restricted like the other
 	// artifact-dependent legs: skips LOUD when the DB is absent so CI stays green without it — but a
-	// gate spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by design).
+	// eval spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by design).
 	await runDemoCascadeLeg({
 		outDir: OUT_DIR,
 		shipModel,

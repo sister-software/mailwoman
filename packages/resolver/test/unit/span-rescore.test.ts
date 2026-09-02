@@ -213,7 +213,7 @@ describe("findRescoreCandidate", () => {
 		expect(hit?.text).toBe("Grudziądz")
 		expect(hit?.place.id).toBe(1)
 		// 86-300 isn't in the fixture → no anchor → unrestricted (flagged lower-precision).
-		expect(hit?.gated).toBe(false)
+		expect(hit?.postcodeVerified).toBe(false)
 	})
 
 	it("prefers the LONGEST exact match (specific name beats its own prefix)", async () => {
@@ -221,7 +221,7 @@ describe("findRescoreCandidate", () => {
 		const hit = await findRescoreCandidate(raw, [], await makeBackend(), { country: "PL", gateKm: 0 })
 		expect(hit?.text).toBe("Tomaszów Mazowiecki")
 		expect(hit?.place.id).toBe(3)
-		expect(hit?.gated).toBe(false) // check disabled (gateKm 0)
+		expect(hit?.postcodeVerified).toBe(false) // check disabled (gateKm 0)
 	})
 
 	it("flags a recovery GATED when the postcode resolves and the match is within range", async () => {
@@ -233,7 +233,7 @@ describe("findRescoreCandidate", () => {
 		})
 
 		expect(hit?.place.id).toBe(3)
-		expect(hit?.gated).toBe(true)
+		expect(hit?.postcodeVerified).toBe(true)
 	})
 
 	it("postcode gate rejects a match far from where the postcode resolves", async () => {
@@ -267,7 +267,7 @@ describe("findRescoreCandidate", () => {
 		})
 
 		expect(hit?.place.id).toBe(11)
-		expect(hit?.gated).toBe(true)
+		expect(hit?.postcodeVerified).toBe(true)
 		expect(hit?.alternatives.map((a) => a.id)).toEqual([13])
 	})
 
@@ -300,7 +300,7 @@ describe("findRescoreCandidate", () => {
 		})
 
 		expect(hit?.place.id).toBe(31)
-		expect(hit?.gated).toBe(true)
+		expect(hit?.postcodeVerified).toBe(true)
 	})
 
 	it("#1546: the alias surface is the recall for Latin scripts too (query equals an ALIAS, not the primary)", async () => {
@@ -349,7 +349,7 @@ describe("resolveTree + spanRescore", () => {
 		expect(injected?.lat).toBe(53.48)
 		expect(injected?.metadata?.span_rescore).toBe(true)
 		// No postcode node in this tree → no anchor → unrestricted, flagged so the consumer can threshold.
-		expect(injected?.metadata?.rescore_gated).toBe(false)
+		expect(injected?.metadata?.rescore_postcode_verified).toBe(false)
 	})
 
 	it("injects by default when spanRescore is unset (#370 promoted to default-on 2026-06-25)", async () => {

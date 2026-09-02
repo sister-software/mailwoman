@@ -150,7 +150,7 @@ Still outside it:
 | `scripts/eval/conformal-calibrate.ts:107,114`                                        | `percentile` + `median`            |
 | `mailwoman/eval-harness/poi-board.ts:428`                                            | `quantile`                         |
 | `scripts/eval/postcode-anchor-accuracy.ts:65`                                        | `pct` (a percentile)               |
-| `scripts/eval/fr-admin-split-gate.ts:141`                                            | `pct` (a percentile)               |
+| `scripts/eval/fr-admin-split-eval.ts:141`                                            | `pct` (a percentile)               |
 | `scripts/eval/fr-admin-split-selfvalidation.ts:115`                                  | `pct` (a percentile)               |
 | `scripts/eval/rescore-ceiling-probe.ts:60`                                           | `pct` (a percentile)               |
 | `registry/tools/learned-scorer-clustering-eval.ts:416`, `…crossstate-eval.ts:363`    | `quantileThresholds` ×2            |
@@ -174,7 +174,7 @@ docstring also warns that gate parity depends on its exact nearest-rank semantic
 
 | generator                          | copies | sites                                                                                                                                                                                                                    |
 | ---------------------------------- | -----: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `mulberry32`                       |      4 | `corpus/src/synthesize.ts:219`, `corpus/src/synthesize-boundary-stress.test.ts:22`, `corpus/src/synthesize-intersection.test.ts:26`, `scripts/eval/boundary-stress-gate.ts:70`                                           |
+| `mulberry32`                       |      4 | `corpus/src/synthesize.ts:219`, `corpus/src/synthesize-boundary-stress.test.ts:22`, `corpus/src/synthesize-intersection.test.ts:26`, `scripts/eval/boundary-stress-eval.ts:70`                                           |
 | LCG as `seededRandom`/`makeRandom` |      5 | `corpus/src/adapters/synth-po-box/adapter.ts:76`, `corpus/src/synthesize-{house-venue:11,no-street:20,po-box:21,street:11}.test.ts`                                                                                      |
 | LCG as `lcg`/`seeded`              |      7 | `registry/tools/{learned-scorer-clustering-eval:134,learned-scorer-eval:153,train-cross-gbt:122,train-gbt:128,train-org-cross-gbt:104}.ts`, `corpus/src/synthesize-anchor-absorption.test.ts:14`, `match/gbt.test.ts:14` |
 
@@ -273,7 +273,7 @@ reference `$MAILWOMAN_DATA_ROOT`, not the literal."
 | kind      | site                                                                                                                                                                                                                          |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **code**  | `corpus/src/tools/extract-translit.ts:56,167`; `mailwoman/commands/corpus/extract/translit.tsx:26`                                                                                                                            |
-| **tests** | `mailwoman/commands/geocode.test.ts:40,41`; `neural/fst-prior.test.ts:28`; `neural/placetype-pair-prior.test.ts:51`; `neural/test/capability-gate.test.ts:36,37`                                                              |
+| **tests** | `mailwoman/commands/geocode.test.ts:40,41`; `neural/fst-prior.test.ts:28`; `neural/placetype-pair-prior.test.ts:51`; `neural/test/capability-check.test.ts:36,37`                                                             |
 | **prose** | `corpus/src/tools/corpus-stats.ts:35`; `corpus/src/tools/fetch/{index.ts:68,nad.ts:29,openaddresses.ts:47}`; `mailwoman/gazetteer-pipeline/postcode/zcta-centroids.ts:23`; `mailwoman/commands/corpus/extract/translit.tsx:9` |
 
 The `extract-translit` pair is the one that matters: the literal is a **runtime default value**

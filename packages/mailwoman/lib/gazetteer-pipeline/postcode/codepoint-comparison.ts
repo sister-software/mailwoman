@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `promotion-gate.ts` for the Code-Point Open GB database: compare it against the incumbent GeoNames
+ *   `promotion-eval.ts` for the Code-Point Open GB database: compare it against the incumbent GeoNames
  *   `GB_full` rows before anything swaps in `DEFAULT_POSTCODE_DATABASES`.
  *
  *   This exists because the swap is a DATA-SOURCE change, not a refresh. The two sources disagree on

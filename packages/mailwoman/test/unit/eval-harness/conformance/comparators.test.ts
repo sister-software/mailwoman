@@ -301,7 +301,7 @@ describe("candidate_admissibility", () => {
 			value: "Springfield",
 			placetype: "locality",
 			query: { limit: 5, ...over },
-			gates: [],
+			checks: [],
 			candidates: ids.map((id) => ({
 				id,
 				name: "Springfield",

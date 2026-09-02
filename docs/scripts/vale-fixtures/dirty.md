@@ -72,7 +72,7 @@ gate reads it; the seams are what extract routing produced, and the gates fire o
 that were attached, cutting the run short before the gated step ever gating cuts.
 
 Three negative assertions for AmbiguousShorthand live below, and each must stay quiet:
-`promotion-gate.ts`, `packages/corpus/lib/extract-recipes/` and `mailwoman eval gate` are
+`promotion-eval.ts`, `packages/corpus/lib/extract-recipes/` and `mailwoman eval promote` are
 backticked, so the markdown parser hands none of them to the rule — that is how a
 contract-bearing name survives the ban without being renamed.
 

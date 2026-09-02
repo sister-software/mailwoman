@@ -33,8 +33,7 @@ const HIT_PATTERN = /^(.*?):(\d+):(\d+):Mailwoman\.AmbiguousShorthand(?:Code)?:'
  * Names that keep their spelling — `AGENTS.md` lists them as contract-bearing. A hit naming one of these is a
  * formatting fix, not a rewrite.
  */
-const CONTRACT_BEARING =
-	/@mailwoman\/locale[- ]gate|locale[- ]gate|promotion[- ]gate|promote[- ]gate|mailwoman eval gate|eval[- ]gate|mwdev_gate|gate\.test|gate\.ts|v1-parse-gate/i
+const CONTRACT_BEARING = /@mailwoman\/locale[- ]gate|locale[- ]gate|mwdev_gate/i
 
 /**
  * The remedy a hit needs.
@@ -168,7 +167,7 @@ export function classify(hitLines: readonly string[], sources: ReadonlyMap<strin
 		const modifier = (/([A-Za-z0-9_.`§/-]+)[\s-]*$/.exec(before.trimEnd())?.[1] ?? "").toLowerCase()
 
 		// A contract-bearing name is decided by the WHOLE line, not the modifier: `mailwoman eval
-		// gate` and `` `promotion-gate.ts` `` put different words immediately before the hit.
+		// gate` and `` `promotion-eval.ts` `` put different words immediately before the hit.
 		const remedy = CONTRACT_BEARING.test(source)
 			? Remedy.backtick
 			: EMPTY_MODIFIERS.has(modifier)
@@ -183,7 +182,7 @@ export function classify(hitLines: readonly string[], sources: ReadonlyMap<strin
 
 /**
  * Which of the four words a match belongs to. Searched ANYWHERE in the token, not at its start: the code rule matches
- * the whole compound, so `promotion-gate` is a `gate` and a prefix test files it under whichever family the
+ * the whole compound, so `promotion-eval` is a `gate` and a prefix test files it under whichever family the
  * fall-through names.
  */
 export function wordFamily(word: string): "gate" | "seam" | "shard" | "cut" {
@@ -258,8 +257,10 @@ async function collectHits(root: string): Promise<string[]> {
 	const tracked = await runFile("git", ["ls-files", ...TRACKED_GLOBS], { cwd: root, maxBuffer: 1 << 26 })
 	const files = TextSpliterator.from(tracked.stdout, { skipEmpty: true }).toArray()
 
+	// The CENSUS config, not the enforcing one: enforcement exempts the Vale fixtures, and the census
+	// needs one of them to trip so its positive control still means something.
 	const vale = resolveModulePath("@vvago/vale/bin/vale")
-	const config = resolvePath(root, "docs/.vale-code.ini")
+	const config = resolvePath(root, "docs/.vale-code-census.ini")
 
 	// Run from the REPO ROOT, because `git ls-files` answers repo-relative paths. Run it from
 	// anywhere else and Vale resolves none of them, reports zero alerts, and exits 0 — the reading

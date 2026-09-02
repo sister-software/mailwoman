@@ -5,7 +5,7 @@
  *
  *   CLI-facing orchestration for `mailwoman eval conformance` — load the law suites, audit them, run every
  *   row through the Gauntlet's own deps, and report. Thin on purpose: it narrates and owns only the exit
- *   code, matching `eval invariance` and `eval gate`.
+ *   code, matching `eval invariance` and `eval promote`.
  *
  *   EVERY COMMITTED SUITE RUNS BY DEFAULT. {@linkcode CONFORMANCE_SUITES} is the register, and a default run
  *   is all of it: a default that named ONE suite would leave every later law executable only by someone who
@@ -186,8 +186,8 @@ export async function measureConformance(options: ConformanceCommandOptions = {}
 
 			return {
 				law,
-				decided: summarized.gated,
-				holds: summarized.gated - summarized.failures.length,
+				decided: summarized.decided,
+				holds: summarized.decided - summarized.failures.length,
 				tracked: summarized.tracked.length,
 				unmeasured: summarized.unmeasured.length,
 				...(coverage
@@ -230,7 +230,7 @@ export async function runConformanceCommand(options: ConformanceCommandOptions =
 	const { findings, summary, perLaw } = measured
 
 	console.log(
-		`\n=== conformance (${summary.gated - summary.failures.length}/${summary.gated} decided rows hold, ` +
+		`\n=== conformance (${summary.decided - summary.failures.length}/${summary.decided} decided rows hold, ` +
 			`${summary.tracked.length} tracked, ${summary.unmeasured.length} unmeasured) ===`
 	)
 

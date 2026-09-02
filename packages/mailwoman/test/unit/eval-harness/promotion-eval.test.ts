@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for `promotion-gate.ts`'s spec resolution.
+ *   Tests for `promotion-eval.ts`'s spec resolution.
  *
- *   The `--gate` help has always said "a path, or a spec name resolved against eval-harness/gates/".
- *   The resolver never appended `.json`, so `--gate v5.3.0-family` — the spec NAME, exactly as
+ *   The `--spec` help has always said "a path, or a spec name resolved against eval-harness/specs/".
+ *   The resolver never appended `.json`, so `--spec v5.3.0-family` — the spec NAME, exactly as
  *   advertised — fell through to `readFileSync("v5.3.0-family")` and died on a bare ENOENT naming a
  *   file nobody asked for. Cost: one confused re-run on 2026-07-16, mid eval battery.
  */
@@ -15,7 +15,7 @@ import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { listGateSpecs, resolveGateSpecPath, runPromotionGate } from "mailwoman/eval-harness/promotion-gate"
+import { listEvalSpecs, resolveGateSpecPath, runPromotionGate } from "mailwoman/eval-harness/promotion-eval"
 import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -99,9 +99,9 @@ function shipsInPackage(files: string[], path: string): boolean {
 	return included
 }
 
-describe("listGateSpecs", () => {
+describe("listEvalSpecs", () => {
 	it("finds the shipped specs", async () => {
-		const specs = await listGateSpecs()
+		const specs = await listEvalSpecs()
 
 		expect(specs.length).toBeGreaterThan(0)
 		expect(specs).toContain("v5.3.0-family.json")
@@ -133,7 +133,7 @@ describe("resolveGateSpecPath", () => {
 	})
 
 	it("prefers a real path verbatim", async () => {
-		const real = "packages/mailwoman/lib/eval-harness/gates/v5.3.0-family.json"
+		const real = "packages/mailwoman/lib/eval-harness/specs/v5.3.0-family.json"
 
 		expect(await resolveGateSpecPath(real)).toBe(real)
 	})
@@ -148,14 +148,14 @@ describe("resolveGateSpecPath", () => {
 
 	it("SHIPS every resolvable spec in the npm tarball — an installed CLI resolves the shorthand too (#1056)", async () => {
 		// The source-tree fix alone left the packaged CLI broken: `files` covered only `**/*.ts` + `out/**`,
-		// and tsc does not emit readFileSync'd JSON, so the tarball carried ZERO gate specs and the
-		// installed `mailwoman eval gate --gate <name>` found an empty checks dir.
+		// and tsc does not emit readFileSync'd JSON, so the tarball carried ZERO eval specs and the
+		// installed `mailwoman eval promote --spec <name>` found an empty checks dir.
 		const pkg = await readLocalJSONFile<{ files: string[] }>(new URL("../../../package.json", import.meta.url))
 
 		// Package-relative, so it names the path INSIDE the tarball: source lives under `lib/`, and these
 		// JSON files ride along with it rather than being emitted into `out/`.
-		for (const spec of await listGateSpecs()) {
-			const rel = `lib/eval-harness/gates/${spec}`
+		for (const spec of await listEvalSpecs()) {
+			const rel = `lib/eval-harness/specs/${spec}`
 			expect(shipsInPackage(pkg.files, rel), `${rel} must be covered by package.json files`).toBe(true)
 		}
 

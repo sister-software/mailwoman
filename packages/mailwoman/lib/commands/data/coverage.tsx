@@ -199,7 +199,7 @@ function render(report: CoverageReport, wanted?: string[]): string {
 					: "—"
 
 		lines.push(
-			`${c.country} | ${parse} | ${geo} | ${c.boardRows ? `${c.boardGatedRows}/${c.boardRows} gated` : "unmeasured"}`
+			`${c.country} | ${parse} | ${geo} | ${c.boardRows ? `${c.boardPassedRows}/${c.boardRows} gated` : "unmeasured"}`
 		)
 	}
 

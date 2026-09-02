@@ -27,11 +27,8 @@ function hitFor(source: string, word: string): ReturnType<typeof classify> {
 
 describe("a contract-bearing name earns the backtick remedy", () => {
 	it.each([
-		["\t * The promotion gate calls it IN-PROCESS.", "gate"],
-		["\t * `promotion-gate.ts` refuses a candidate with a known regression.", "gate"],
 		["\t// runs locale-gate over the query shape", "gate"],
 		["\t * @mailwoman/locale-gate derives a LocaleHint.", "gate"],
-		["\t// `mailwoman eval gate` prints the ledger command on PASS.", "gate"],
 		["\t// mwdev_gate answers from the warm engine.", "gate"],
 	])("%s", (source, word) => {
 		expect(hitFor(source, word)[0]?.remedy).toBe(Remedy.backtick)
@@ -64,8 +61,8 @@ describe("a bare reference earns the read-context remedy", () => {
 
 describe("the classifier reads the whole line, not only the modifier", () => {
 	it("a contract-bearing name wins even when an ordinary word precedes it", () => {
-		// `the` would otherwise make this bare, and `promotion` would otherwise make it a rename.
-		const [hit] = hitFor("\t * Whatever the promotion gate says, the ledger records it.", "gate")
+		// `the` would otherwise make this bare, and `pipeline` would otherwise make it a rename.
+		const [hit] = hitFor("\t * Whatever the pipeline locale-gate says, the hint records it.", "gate")
 
 		expect(hit?.remedy).toBe(Remedy.backtick)
 	})

@@ -12,7 +12,7 @@
  *
  *   The trap is not hypothetical. `corpus-stamp.ts` records 2026-08-06: `eval gauntlet-build regression-db` ran from a
  *   compiled tree whose `out/` loader still held a deleted case array, wrote a database, printed "built", exited 0, and
- *   every eval afterwards graded a corpus nobody had. `promotion-gate.ts` carries its own recompile-before-eval guard
+ *   every eval afterwards graded a corpus nobody had. `promotion-eval.ts` carries its own recompile-before-eval guard
  *   for the same reason. The failure mode is silence, so the answer is a refusal rather than a warning.
  */
 

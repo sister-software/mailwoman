@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Read a promotion-gate run's own artifacts.
+ *   Read a promotion-eval run's own artifacts.
  *
  *   Unlike the gauntlet, the eval writes STRUCTURED output: `verdict.json` carries every floor with its reading, and
  *   `provenance.txt` records each graded artifact's md5 and dynamic-quant fingerprint. So nothing here parses prose for
@@ -40,7 +40,7 @@ export interface FloorReading {
 	measured: boolean
 }
 
-export interface GateReport {
+export interface EvalReport {
 	/**
 	 * `PASS` / `FAIL` from `verdict.json`, or `null` when the file is absent — a run that crashed before assembling one.
 	 */
@@ -66,7 +66,7 @@ export interface GateReport {
 	 * The pre-filled `eval ledger-append` command the eval prints on a PASS, or `null`.
 	 *
 	 * Surfaced, never RUN. Appending to the ledger is a repo write and a claim about a shipped version; the eval runs on
-	 * candidates that may never ship. See {@link GateReport.ledger_note}.
+	 * candidates that may never ship. See {@link EvalReport.ledger_note}.
 	 */
 	ledger_command: string | null
 	ledger_note: string
@@ -79,7 +79,7 @@ export interface GateReport {
 }
 
 /**
- * The `verdict.json` shape, as `promotion-gate-verdict.ts` writes it.
+ * The `verdict.json` shape, as `promotion-eval-verdict.ts` writes it.
  */
 interface RawVerdict {
 	label?: string
@@ -106,7 +106,7 @@ export const LEDGER_NOTE =
 /**
  * Assemble a report from a finished eval run's out-dir plus its log.
  */
-export async function readGateReport(outDir: string, stdout: string, stderr: string): Promise<GateReport> {
+export async function readEvalReport(outDir: string, stdout: string, stderr: string): Promise<EvalReport> {
 	const notes: string[] = []
 	const verdictPath = join(outDir, "verdict.json")
 	const provenancePath = join(outDir, "provenance.txt")
@@ -199,7 +199,7 @@ export async function readGateReport(outDir: string, stdout: string, stderr: str
  * docstring records — someone diffs two verdicts, sees a delta, and attributes to the model what was a precision
  * difference.
  */
-export function summarizeGateReport(report: GateReport): string {
+export function summarizeEvalReport(report: EvalReport): string {
 	if (!report.verdict) {
 		return `No verdict was assembled in ${report.out_dir}. ${report.notes.join(" ")}`
 	}
@@ -243,7 +243,7 @@ async function declaredArtifacts(packageDir: PathBuilderLike): Promise<string[]>
 /**
  * Check that a `--weights-cache` root has the layout the eval expects, and say what is missing when it does not.
  *
- * The eval's own failure here is deliberate and stays in place: `promotion-gate.ts` names the package directory rather
+ * The eval's own failure here is deliberate and stays in place: `promotion-eval.ts` names the package directory rather
  * than calling `resolveWeights({cacheRoot})` precisely so a mis-staged candidate dies on an ENOENT instead of falling
  * through to the installed workspace package — which in this repo always resolves, and would grade the SHIPPED model
  * under the candidate's label. This check runs BEFORE the spawn only so the reader learns the expected shape from a

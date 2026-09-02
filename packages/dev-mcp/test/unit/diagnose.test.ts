@@ -74,7 +74,7 @@ function lookup(overrides: Partial<ResolveNodeTrace> = {}): ResolveNodeTrace {
 		value: "Weimar",
 		placetype: "locality",
 		query: { limit: 10 },
-		gates: [],
+		checks: [],
 		candidates: [],
 		candidatesTruncated: 0,
 		picked: null,
@@ -187,8 +187,8 @@ describe("collectRetrievalFacts — ranks and the flip stage", () => {
 
 	it("collects the gates fired across every lookup, deduplicated", () => {
 		const facts = collectRetrievalFacts([
-			lookup({ gates: ["region_scope_miss"] }),
-			lookup({ tag: "region", gates: ["region_scope_miss", "min_score_reject"] }),
+			lookup({ checks: ["region_scope_miss"] }),
+			lookup({ tag: "region", checks: ["region_scope_miss", "min_score_reject"] }),
 		])
 
 		expect(facts.gates_fired).toEqual(["region_scope_miss", "min_score_reject"])
@@ -284,13 +284,13 @@ describe("matchShapes", () => {
 	it("flags a readmitted pick, and not a scope miss that resolved nothing", () => {
 		const readmitted = collectRetrievalFacts([
 			lookup({
-				gates: ["region_scope_miss"],
+				checks: ["region_scope_miss"],
 				candidates: [candidate(9, "Astoria", { initial: 1 })],
 				picked: { id: 9, name: "Astoria", source: "ranked" },
 			}),
 		])
 
-		const missedAndAbstained = collectRetrievalFacts([lookup({ gates: ["region_scope_miss"] })])
+		const missedAndAbstained = collectRetrievalFacts([lookup({ checks: ["region_scope_miss"] })])
 
 		expect(matchShapes({ ...EMPTY, retrieval: readmitted })).toContain("scope_miss_readmission")
 		expect(matchShapes({ ...EMPTY, retrieval: missedAndAbstained })).not.toContain("scope_miss_readmission")
@@ -337,7 +337,7 @@ describe("matchShapes", () => {
 			evidence: evidenceOf({ gazetteer: SILENT_CHANNEL }),
 			retrieval: collectRetrievalFacts([
 				lookup({
-					gates: ["region_scope_miss"],
+					checks: ["region_scope_miss"],
 					candidates: [candidate(9, "Astoria", { initial: 3, importance: 1 })],
 					picked: { id: 9, name: "Astoria", source: "ranked" },
 				}),

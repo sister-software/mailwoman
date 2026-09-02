@@ -78,7 +78,7 @@ export interface NodeTraceRecorder {
 		},
 		defaultLimit: number
 	): void
-	gate(name: string): void
+	check(name: string): void
 	stage(name: string, order: readonly ResolvedPlace[]): void
 	reachable(bands: NonNullable<ResolveNodeTrace["reachableIn"]>): void
 	emit(picked: NonNullable<ResolveNodeTrace["picked"]> | null): void
@@ -89,14 +89,14 @@ export interface NodeTraceRecorder {
  */
 export const NOOP_TRACE_RECORDER: NodeTraceRecorder = Object.freeze({
 	bind() {},
-	gate() {},
+	check() {},
 	stage() {},
 	reachable() {},
 	emit() {},
 })
 
 export function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void): NodeTraceRecorder {
-	const gates: string[] = []
+	const checks: string[] = []
 	const stageOrders: Array<[string, readonly ResolvedPlace[]]> = []
 
 	let reachableIn: ResolveNodeTrace["reachableIn"]
@@ -112,8 +112,8 @@ export function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void
 		bind(node, placetype, query, defaultLimit) {
 			ctx = { node, placetype, query, defaultLimit }
 		},
-		gate(name) {
-			gates.push(name)
+		check(name) {
+			checks.push(name)
 		},
 		stage(name, order) {
 			stageOrders.push([name, order])
@@ -166,7 +166,7 @@ export function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void
 					...(ctx.query.regionQualifier ? { regionQualifier: ctx.query.regionQualifier } : {}),
 					limit: ctx.query.limit ?? ctx.defaultLimit,
 				},
-				gates,
+				checks,
 				...(reachableIn ? { reachableIn } : {}),
 				candidates: rows,
 				candidatesTruncated: Math.max(0, finalOrder.length - TRACE_CANDIDATE_CAP),
@@ -408,11 +408,11 @@ export async function applySpanRescore(
 	// dominance margin `declared_ambiguity` reads was uncomputable for exactly the famous-homonym class.
 	// The winner is unchanged (see findRescoreCandidate); this is additive.
 	decorateNode(node, hit.place, hit.alternatives)
-	// `rescore_gated` carries the check's precision signal as an EXPLICIT handle — NOT folded into the
+	// `rescore_postcode_verified` carries the check's precision signal as an EXPLICIT handle — NOT folded into the
 	// calibrated `confidence`, which would break the isotonic guarantee (a true calibrated 0.83 must not
 	// be confused with a rescore plug-in estimate; DeepSeek 2026-06-23). true = postcode check fired
 	// (high-precision); false = unrestricted (no postcode→point coverage for this country, ~83%-precision).
-	node.metadata = { ...node.metadata, span_rescore: true, rescore_gated: hit.gated }
+	node.metadata = { ...node.metadata, span_rescore: true, rescore_postcode_verified: hit.postcodeVerified }
 	roots.push(node)
 
 	// #1721 follow-up: this tier answers OFF the walk, and it used to answer off the record too — the famous-name
@@ -422,8 +422,8 @@ export async function applySpanRescore(
 		const rec = createNodeTraceRecorder(opts.traceSink)
 
 		rec.bind(node, "locality", opts.defaultCountry ? { country: opts.defaultCountry } : {}, 1)
-		rec.gate("span_rescore")
-		rec.gate(hit.gated ? "rescore_gated" : "rescore_ungated")
+		rec.check("span_rescore")
+		rec.check(hit.postcodeVerified ? "rescore_postcode_verified" : "rescore_postcode_unverified")
 		rec.stage("rescore", [hit.place, ...hit.alternatives])
 		rec.emit({ id: hit.place.id, name: hit.place.name, source: "span_rescore" })
 	}
@@ -462,7 +462,7 @@ async function recoverPostcodeNode(
 					const rec = createNodeTraceRecorder(traceSink)
 
 					rec.bind(n, "postalcode", { ...(country ? { country } : {}), limit: 1 }, 1)
-					rec.gate("postal_compound_recovery")
+					rec.check("postal_compound_recovery")
 					rec.stage("recovery", hits)
 					rec.emit({ id: top.id, name: top.name, source: "postal_compound_recovery" })
 				}

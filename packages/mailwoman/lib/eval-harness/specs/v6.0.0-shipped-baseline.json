@@ -33,5 +33,5 @@
 	"int8_vs_fp32_max_delta_pp": 1.5,
 	"ledger_path": "evals/scores-by-version.json",
 	"requires_bridge": true,
-	"$provenance": "Floors derived from /tmp/gate-v264 — the full battery run on the shipped v264 weights cache (package-shaped, #718-safe) at commit e08b337c on 2026-07-16. Reproduce: mailwoman eval gate --weights-cache <v264-cache> --gate v5.3.0-family.json. Per-tag supports from that run's fp32-per-locale.json."
+	"$provenance": "Floors derived from /tmp/gate-v264 — the full battery run on the shipped v264 weights cache (package-shaped, #718-safe) at commit e08b337c on 2026-07-16. Reproduce: mailwoman eval promote --weights-cache <v264-cache> --spec v5.3.0-family.json. Per-tag supports from that run's fp32-per-locale.json."
 }

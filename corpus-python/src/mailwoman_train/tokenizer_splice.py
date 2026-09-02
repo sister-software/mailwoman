@@ -416,7 +416,7 @@ def _main() -> None:
         "--accept-overlap",
         default="",
         help="#900 gate: comma list of locales whose overlap is ACCEPTED — i.e. a per-locale "
-        "non-inferiority leg is pre-registered in the gate spec (CONTRIBUTING_MODEL_WORK.mdx).",
+        "non-inferiority leg is pre-registered in the eval spec (CONTRIBUTING_MODEL_WORK.mdx).",
     )
 
     mi = sub.add_parser("mean-init", help="expand a checkpoint's embeddings to the spliced vocab")

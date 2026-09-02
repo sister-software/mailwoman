@@ -263,7 +263,7 @@ interface LookupFact {
 	scope: { country?: string; parent?: string | number; qualifier?: string }
 	n_candidates: number
 	candidates_truncated: number
-	gates: string[]
+	checks: string[]
 	picked: { name: string; source: string } | null
 	/**
 	 * The picked candidate's rank in the FIRST recorded stage (the backend's own order), or `null` when nothing was
@@ -431,7 +431,7 @@ export function collectRetrievalFacts(records: ReadonlyArray<ResolveNodeTrace> |
 			},
 			n_candidates: record.candidates.length,
 			candidates_truncated: record.candidatesTruncated,
-			gates: record.gates,
+			checks: record.checks,
 			picked: picked ? { name: picked.name, source: picked.source } : null,
 			picked_initial_rank: initialRank,
 			flipped_at:
@@ -441,15 +441,15 @@ export function collectRetrievalFacts(records: ReadonlyArray<ResolveNodeTrace> |
 		}
 	})
 
-	const gates = new Set<string>()
+	const checks = new Set<string>()
 
 	for (const lookup of lookups) {
-		for (const gate of lookup.gates) {
-			gates.add(gate)
+		for (const gate of lookup.checks) {
+			checks.add(gate)
 		}
 	}
 
-	return { lookups, gates_fired: [...gates] }
+	return { lookups, gates_fired: [...checks] }
 }
 
 export function collectOutcomeFacts(result: AccountInput["result"]): OutcomeFacts {
@@ -526,7 +526,7 @@ export function matchShapes(facts: {
 	// rows — so every candidate in that lookup is a re-admitted one, and a pick under the eval is a re-admitted pick.
 	// The per-candidate `regionScopeMiss` stamp does not reach `ResolveCandidateTrace`, so lookup granularity is all
 	// the trace can support; it suffices here because the rule's own condition covers the whole row set.
-	if (lookups.some((lookup) => lookup.gates.includes("region_scope_miss") && lookup.picked)) {
+	if (lookups.some((lookup) => lookup.checks.includes("region_scope_miss") && lookup.picked)) {
 		shapes.push("scope_miss_readmission")
 	}
 

@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman eval gate` — `promotion-gate.ts` (#479): runs the standard eval battery against a
+ *   `mailwoman eval promote` — `promotion-eval.ts` (#479): runs the standard eval battery against a
  *   candidate model, checks every number against an eval spec contract
- *   (`mailwoman/eval-harness/gates/*.json`), and emits `<out-dir>/verdict.json`. Exit 0 = every
+ *   (`mailwoman/eval-harness/specs/*.json`), and emits `<out-dir>/verdict.json`. Exit 0 = every
  *   floor met AND the mask-regression lock held; exit 1 = any miss; exit 2 = usage / lore-guard
  *   refusal. On PASS it prints the pre-filled `eval ledger-append` command (#885). The module
  *   narrates everything (provenance, battery legs, verdict lines) — this wrapper only owns argv +
@@ -31,7 +31,7 @@ export const spec = {
 		"gazetteer-lexicon": { type: "string", description: "Gazetteer lexicon JSON" },
 		"weights-cache": { type: "string", description: "Package-shaped candidate weights directory" },
 		"int8-weights-cache": { type: "string", description: "Package-shaped INT8 candidate directory" },
-		"out-dir": { type: "string", description: "Battery output dir (default /tmp/gate-<label>-<hhmm>)" },
+		"out-dir": { type: "string", description: "Battery output dir (default /tmp/eval-<label>-<hhmm>)" },
 	},
 } as const satisfies CommandSpec
 
@@ -50,7 +50,7 @@ interface Options {
 const EvalGate: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { runPromotionGate } = await import("#eval-harness/promotion-gate")
+			const { runPromotionGate } = await import("#eval-harness/promotion-eval")
 
 			return await runPromotionGate(options)
 		},
@@ -59,7 +59,7 @@ const EvalGate: ParsedCommandComponent<Options> = ({ options }) => {
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />
 
-	// `promotion-gate.ts` narrates its own verdict lines — rendering anything here would pollute the captured report.
+	// `promotion-eval.ts` narrates its own verdict lines — rendering anything here would pollute the captured report.
 	return null
 }
 

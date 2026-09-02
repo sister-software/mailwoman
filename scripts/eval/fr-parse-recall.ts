@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   NOTE(de-shell): forwarding shim. The FR bare-street parse-recall leg now lives at
- *   `mailwoman/eval-harness/fr-parse-recall.ts` and `promotion-gate.ts` calls it IN-PROCESS.
+ *   `mailwoman/eval-harness/fr-parse-recall.ts` and `promotion-eval.ts` calls it IN-PROCESS.
  *
  *   It USED to live at `scripts/diagnostic/fr-parse-recall.ts`, which was the wrong drawer for it:
  *   `scripts/diagnostic/` is `.gitignore`d wholesale, so a eval-required leg was surviving only
