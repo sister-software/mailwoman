@@ -125,7 +125,7 @@ async function parseAlternateNamesV2(
 	// spelling across rows — Malabo carries "Santa Isabel" as (es, unflagged) AND as (no-language,
 	// isHistoric=1, to=1973). Officialness must see the flags from EVERY row for the spelling, or the
 	// colonial-era name sails through on the language-tagged row (the #936 review's Malabo finding).
-	// Do NOT gate on isPreferredName instead — it's sparse annotation, not a signal (Turku's sv "Åbo"
+	// Do NOT condition on isPreferredName instead — it's sparse annotation, not a signal (Turku's sv "Åbo"
 	// is unflagged; FI has 1,746 flags across the whole dump).
 	//
 	// Both passes STREAM the file rather than sharing one materialized array: NO's V2 dump is 33 MB,

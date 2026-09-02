@@ -126,7 +126,7 @@ function wordFuzzySimilarity(a: string, b: string): number {
 }
 
 /**
- * Postcode-containment re-rank gate radius (km) — the SAME value the resolver's country pass measures at
+ * Postcode-containment re-rank check radius (km) — the SAME value the resolver's country pass measures at
  * (`POSTCODE_COUNTRY_COHERENCE_GATE_KM`, resolver/postcode-country-coherence.ts): a locality within this distance of
  * the postcode's own centroid counts as "containing" it. One number, two passes — a divergence here would make the two
  * mechanisms disagree about what is proximal.
@@ -188,7 +188,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	/**
 	 * Facts this candidate DB declares about itself — the coverage manifest (`country_coverage` + `country_bbox`) the
 	 * gazetteer build emits, read once at open. `undefined` when the artifact predates the manifest, so every consumer
-	 * (the hard-country coverage gate, guard-B plausibility) falls back to its code constants byte-identically.
+	 * (the hard-country coverage check, guard-B plausibility) falls back to its code constants byte-identically.
 	 */
 	readonly artifactCoverage: GazetteerArtifactCoverage | undefined
 	/**
@@ -493,7 +493,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		// cannot reach a neighbourhood-tier namesake, so a CONTAINED one is structurally invisible no matter
 		// how the list reorders — the Astoria class: Queens' Astoria is a WOF neighbourhood, and the walk
 		// answered the Oregon locality under `qualifier="NY"` because nothing in the pool sat under NY. The
-		// widening is injection-only and triple-gated: the band is explicit (neighbourhood/macrohood/microhood
+		// widening is injection-only and triple-conditioned: the band is explicit (neighbourhood/macrohood/microhood
 		// — never region or country tiers), admission still requires the sidecar's containment proof, and only
 		// primary-keyed rows enter (an alias-keyed neighbourhood is the #1626 scrape class). Recall can only
 		// widen, and only toward rows the qualifier vouches for. `opts.shapeFilters`' bbox clause is
@@ -765,7 +765,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 			// the same on either backend. The country/placetype/bbox/region filters still apply via `probe`.
 			// Skipped when the index is absent (byte-stable for an older candidate.db).
 			//
-			// Gate: only when the name doesn't exist in the gazetteer AT ALL (unfiltered). A name that exists
+			// Condition: only when the name doesn't exist in the gazetteer AT ALL (unfiltered). A name that exists
 			// but missed under the active country/placetype/bbox filter is a FILTER miss, not a spelling miss
 			// — fuzzing it scrapes an unrelated same-filter place ("Vienna, Austria" misrouted to IT would
 			// pull a tiny Italian name_key near Siena) and masks the cascade's country-agnostic retry that
@@ -823,7 +823,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 
 		let rows = cascade(regionParentID)
 		// #1731: whether the rows the caller receives came from the UNSCOPED fallback below — the backend's
-		// interior gate the resolver-side trace (#1721) cannot otherwise see. Stamped onto every returned
+		// interior check the resolver-side trace (#1721) cannot otherwise see. Stamped onto every returned
 		// place, because the re-admission path is exactly where a wrong-instance namesake enters.
 		let regionScopeMiss = false
 
@@ -840,8 +840,8 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		// holds 75001, not the one that holds a 75001-free namesake). The resolver sends this flag on locality
 		// lookups when `ResolveOpts.postcodeContainmentCoherence` is on. Strictly beneath the #741 postal-city
 		// short-circuit above — an exact (name, postcode) hit IS the answer and outranks any re-rank — and after
-		// the region-scope fallback, so it sees the final row set. Rows within the gate sort by distance first;
-		// the out-gate tail keeps its original population-first order. No in-gate row, or no postcode row in
+		// the region-scope fallback, so it sees the final row set. Rows within the radius sort by distance first;
+		// the out-of-radius tail keeps its original population-first order. No in-radius row, or no postcode row in
 		// the candidate table → unchanged (byte-identical to the flag-off path).
 		if (
 			query.postcode &&
@@ -895,13 +895,13 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 				id: Number(row.spr_id),
 				name: String(row.name ?? ""),
 				placetype: (this.#idToPlacetype.get(Number(row.placetype_id)) ?? "") as WOFPlacetype,
-				// Surfaced so the cascade can country-gate a postcode by the resolved locality (an ambiguous
+				// Surfaced so the cascade can country-restrict a postcode by the resolved locality (an ambiguous
 				// international postcode like 10115 = Berlin DE AND New York US must not out-resolve the city).
 				country: this.#idToCountry.get(Number(row.country_id)) ?? "",
 				lat: Number(row.latitude),
 				lon: Number(row.longitude),
 				// `score` stays the RAW population rank (`-neg_rank`) — it feeds the resolver walk's absolute
-				// `minWinningScore` gate (`resolve.ts`), which must see real prominence, never a penalized value.
+				// `minWinningScore` floor (`resolve.ts`), which must see real prominence, never a penalized value.
 				score: -Number(row.neg_rank),
 				// `prominence` carries the bounded cross-country primary preference (the effective, penalty-adjusted
 				// rank). The walk ORDERS candidates by `prominence ?? score` (`resolve.ts`), so this is what makes the

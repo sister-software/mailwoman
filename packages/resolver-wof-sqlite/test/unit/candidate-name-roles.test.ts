@@ -6,7 +6,7 @@
  *   Tests for {@link stampNameRoles} — pass 3c of the candidate build, whose two detectors decide
  *   which alias rows carry a `name_role`.
  *
- *   Each case is one of the gates the detectors are made of, because the failure mode is a gate
+ *   Each case is one of the checks the detectors are made of, because the failure mode is a check
  *   quietly widening: `gloss` is an ANOMALY signal that must never reach a place with measured
  *   prominence or an admin placetype (a country legitimately carries a name in every language), and
  *   `abbr` is a PROVENANCE signal that must never reach a variant recorded in a language the country

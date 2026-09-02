@@ -69,7 +69,7 @@
  *   CONFIRMS it instead.
  *
  *   **D-rule: opt-in behind `ResolveOpts.postcodeShapeCoherence`, default-OFF.** Demotion is the
- *   failure mode with teeth, so a default-on promotion needs the full pre-registered gate (B1-1
+ *   failure mode with teeth, so a default-on promotion needs the full pre-registered eval (B1-1
  *   byte-stability, B1-2 exclusion ≥90% with the correct sibling tag surviving, B1-3 confound ≤2%
  *   false exclusions; kill on any B1-3 δ).
  */

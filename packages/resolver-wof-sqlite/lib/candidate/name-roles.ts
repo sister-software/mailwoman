@@ -41,7 +41,7 @@ export const GLOSS_EXCLUDED_PLACETYPES: ReadonlySet<string> = new Set([
 
 /**
  * Pass 3c — the #1730 name-role prototype: two independent detectors over the staged rows, WRITE-ONLY in this
- * generation (no ranking consumer; the rank penalty is its own D-rule-gated step with the `gloss_key` board as
+ * generation (no ranking consumer; the rank penalty is its own D-rule-conditional step with the `gloss_key` board as
  * regression check). Both stamp `is_primary = 0` rows only — a place's canonical name and the `place_abbr` region
  * abbreviations are never a gloss or a variant.
  *

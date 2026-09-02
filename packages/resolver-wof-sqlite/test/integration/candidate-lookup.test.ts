@@ -823,12 +823,12 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 		const bare = await lk.findPlace(sansomeQuery())
 		expect(bare.map((c) => c.id)).toEqual([SANSOME_BIG, SANSOME_MID, SANSOME_SMALL])
 
-		// A postcode WITHOUT the flag is byte-identical to no postcode (the flag is the gate).
+		// A postcode WITHOUT the flag is byte-identical to no postcode (the flag is the check).
 		const flagless = await lk.findPlace(sansomeQuery({ postcode: "94101" }))
 		expect(flagless.map((c) => c.id)).toEqual([SANSOME_BIG, SANSOME_MID, SANSOME_SMALL])
 
 		// The population-first winner is ~550 km from the postcode — removing the postcode moves the
-		// answer far outside the gate, so the mechanism is doing what the bar claims it does.
+		// answer far outside the check, so the mechanism is doing what the bar claims it does.
 		expect(haversineKm(ANCHOR.lat, ANCHOR.lon, bare[0]!.lat, bare[0]!.lon)).toBeGreaterThan(25)
 	})
 

@@ -166,7 +166,7 @@ export interface BuildFSTOpts {
 	 * accessible under several surfaces records each surface's own count. Serialized into the place row's former `_pad`
 	 * byte with presence signaled by header flags bit0, so VERSION stays put and pre-ambiguity artifacts read as "no
 	 * data" (never "0 branches" — the meaning-of-zero rule). No decoder consumes it yet; consumers (FST-prior tempering,
-	 * the Option-A evidence channel) arrive behind their own measured gates.
+	 * the Option-A evidence channel) arrive behind their own measured checks.
 	 */
 	surfaceCountryCounts?: ReadonlyMap<string, number>
 	onProgress?: (phase: string, detail?: string) => void

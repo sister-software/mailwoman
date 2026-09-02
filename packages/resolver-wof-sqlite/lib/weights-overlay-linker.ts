@@ -295,10 +295,10 @@ export const REQUIRED_PAIR_INDEX_SCHEMA = 3
  *
  * WHY IT WARNS RATHER THAN REBUILDS, unlike its pair-index sibling above. A pair index is seconds of work and the
  * linker owns its whole recipe. A locale FST is a multi-minute build whose output goes to a STAGING dir on purpose —
- * the swap into `fst-per-locale/` is operator-gated after the battery, because an FST changes decoder behaviour and the
- * D-rule does not let that land unmeasured. So the guard's job is to make the drift impossible to miss, and to name the
- * command that starts fixing it. It is also why a stale FST is never fatal: the artifact is a decode-time bias list,
- * and a dev tree must still run.
+ * the swap into `fst-per-locale/` is operator-approved after the battery, because an FST changes decoder behaviour and
+ * the D-rule does not let that land unmeasured. So the guard's job is to make the drift impossible to miss, and to name
+ * the command that starts fixing it. It is also why a stale FST is never fatal: the artifact is a decode-time bias
+ * list, and a dev tree must still run.
  *
  * The source-side half of the comparison lives here rather than in `fst-freshness.ts` for the same reason
  * `pairIndexStaleReason` splits: only the caller knows which database it built against. All three FST-linking base

@@ -19,7 +19,7 @@
  *   EDGE TABLE [edgeCount × 8 bytes] stringIdx u32 index into string table targetState u32
  *
  *   PLACE TABLE [placeCount × 60 bytes at V5, 56 below] wofID u32 placetypeIdx u8 index into
- *   PLACETYPE_ORDER chainLen u8 0..8 crossCountryBranches u8 (header flags bit0 gates the read)
+ *   PLACETYPE_ORDER chainLen u8 0..8 crossCountryBranches u8 (header flags bit0 enables the read)
  *   placeFlags u8 (V5; bit0 = encyclopedic present) nameIdx u32 index into string table referential f32
  *   population-anchored likelihood [0,1] — was the conflated `importance` (V2–V4), was population u32
  *   (V1) lat f32 lon f32 chain [u32; 8] parent chain (unused slots = 0) encyclopedic f32 (V5 only;
@@ -203,7 +203,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 			buf.writeUInt32LE(place.wofID, pp)
 			buf.writeUInt8(placetypeToIdx.get(place.placetype) ?? 0, pp + 4)
 			buf.writeUInt8(chainLen, pp + 5)
-			// Former _pad: byte 0 = crossCountryBranches (header flags bit0 gates the read), byte 1 = v5 placeFlags.
+			// Former _pad: byte 0 = crossCountryBranches (header flags bit0 enables the read), byte 1 = v5 placeFlags.
 			buf.writeUInt8(hasAmbiguity ? Math.min(place.crossCountryBranches ?? 0, 255) : 0, pp + 6)
 			// An absent encyclopedic score writes flag 0 AND a 0.0 float. The float is unread in that
 			// state, so absence can never surface as a score — the meaning-of-zero rule, in bytes.
@@ -338,7 +338,7 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 				lat: buf.readFloatLE(pp + 16),
 				lon: buf.readFloatLE(pp + 20),
 				parentChain,
-				// Header flags bit0 gates the read (survey #4): pre-ambiguity artifacts expose undefined.
+				// Header flags bit0 enables the read (survey #4): pre-ambiguity artifacts expose undefined.
 				...(hasAmbiguity ? { crossCountryBranches: buf.readUInt8(pp + 6) } : {}),
 				...(hasEncyclopedic ? { encyclopedic: buf.readFloatLE(pp + ENCYCLOPEDIC_OFFSET) } : {}),
 			}

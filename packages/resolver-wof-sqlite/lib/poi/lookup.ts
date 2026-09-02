@@ -47,8 +47,9 @@ export const POI_H3_RESOLUTION = 9
  * unaffected: the loop breaks the ring it accumulates `limit` rows (cafe@Paris fills 20 by ring 2), so this ceiling
  * never enters their probe budget. Only sparse-but-present categories that never reach `limit` scan the fuller budget —
  * a cold, one-shot `mailwoman poi` path, not per-keystroke. 16 (not the bare threshold 14) leaves ~2 rings of margin so
- * the gate is stable against small db rebuilds, while staying ~4x tighter than the board's 25 km "roughly right place"
- * window (no wrong-city false positives). The browser reader passes its own smaller `maxRings` and is untouched.
+ * the radius is stable against small db rebuilds, while staying ~4x tighter than the board's 25 km "roughly right
+ * place" window (no wrong-city false positives). The browser reader passes its own smaller `maxRings` and is
+ * untouched.
  */
 const DEFAULT_MAX_RINGS = 16
 

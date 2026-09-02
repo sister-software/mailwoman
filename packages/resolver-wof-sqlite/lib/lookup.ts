@@ -329,7 +329,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		this.#postcodeLocalityExtract =
 			this.#extracts.find((s) => this.#extractHasTable(s.schemaName, POSTCODE_LOCALITY_TABLE))?.schemaName ?? null
 
-		// Opt-in postal-city alias reader (#475). Construction-time present-or-not is the gate: null
+		// Opt-in postal-city alias reader (#475). Construction-time present-or-not is the check: null
 		// keeps the coordinate-first scorer byte-identical to pre-#475.
 		this.#postalCityAliases = opts.postalCityAliases ?? null
 
@@ -497,9 +497,9 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 	}
 
 	/**
-	 * Strategy `postcode_area_resolution` — the coordinate-first locality path, strictly gated (a sibling postcode AND a
-	 * postcode_locality table AND a locality query). Returns `null` — so the dispatcher falls through to the next
-	 * strategy — when the gate is unmet or the postcode isn't in the table; otherwise the soft-scored postcode∪name
+	 * Strategy `postcode_area_resolution` — the coordinate-first locality path, strictly conditioned (a sibling postcode
+	 * AND a postcode_locality table AND a locality query). Returns `null` — so the dispatcher falls through to the next
+	 * strategy — when the condition is unmet or the postcode isn't in the table; otherwise the soft-scored postcode∪name
 	 * candidate set.
 	 */
 	#postcodeAreaResolution(query: FindPlaceQuery, convention: ResolvedConvention): Promise<PlaceCandidate[] | null> {

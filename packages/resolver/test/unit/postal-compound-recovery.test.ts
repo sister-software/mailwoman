@@ -7,7 +7,7 @@
  *   ("Kožljek 7, 1382 Kožljek") whose parse globs the trailing city into the postcode span. The
  *   fixture mirrors the real failure: the compound resolves as nothing, the confident postcode
  *   span blocks its own city tokens, and the tree comes back empty. With the flag on, the code
- *   subset anchors the gate, the residual city tokens become span material, and the failed
+ *   subset anchors the check, the residual city tokens become span material, and the failed
  *   postcode node gains a coordinate floor. Street blocking (the "Ave, France" guard) stays.
  */
 
@@ -36,7 +36,7 @@ const PLACES: ResolvedPlace[] = [
 		exactMatch: true,
 	},
 	{ id: 900, name: "1382", placetype: "postalcode", country: "SI", lat: 45.82, lon: 14.42, score: 1 },
-	// A distant same-named decoy in another country — the gate + country constraint must hold.
+	// A distant same-named decoy in another country — the check + country constraint must hold.
 	{
 		id: 2,
 		name: "Kožljek",
@@ -192,7 +192,7 @@ describe("postal-compound recovery (#942)", () => {
 		const out = await resolver.resolveTree(failingTree(), { postalCompoundRecovery: true })
 		const locality = out.roots.find((n) => n.tag === "locality" && n.placeID)
 
-		// Both candidates surface; the gate keeps only the SI one.
+		// Both candidates surface; the check keeps only the SI one.
 		expect(locality).toBeDefined()
 		expect(locality!.lat).toBeCloseTo(45.8, 1)
 	})

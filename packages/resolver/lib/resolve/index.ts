@@ -641,7 +641,7 @@ class WOFResolver implements Resolver {
 				candidates = await this.#backend.findPlace(query)
 				rec.stage("initial", candidates)
 
-				// #1731: the backend's interior region-scope fallback, surfaced as a gate — the resolver
+				// #1731: the backend's interior region-scope fallback, surfaced as a check — the resolver
 				// never sees the scoped probe miss, only the stamp the re-admitted rows carry.
 				if (candidates[0]?.regionScopeMiss) {
 					rec.gate("region_scope_miss")
@@ -672,7 +672,7 @@ class WOFResolver implements Resolver {
 				// Defensive: a backend failure should not abort the whole tree walk. Leave the node with
 				// its classifier attribution intact.
 				//
-				// The reason rides the gate name. A bare `backend_error` cannot tell a closed database from a
+				// The reason rides the check name. A bare `backend_error` cannot tell a closed database from a
 				// finalized statement from a genuine query fault, which is what made three full-board constraint
 				// runs unreadable — 64 of 591 rows errored and the census could not say why.
 				rec.gate(`backend_error: ${(error as Error).message}`)

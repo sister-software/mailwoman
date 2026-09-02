@@ -134,7 +134,7 @@ const PLACES: ResolvedPlace[] = [
 		prominence: 3.3606,
 		exactMatch: true,
 	},
-	// A postcode → point for the not-bare guard; sits on Berlin, Wisconsin (id 5) so the gate ADMITS it.
+	// A postcode → point for the not-bare guard; sits on Berlin, Wisconsin (id 5) so the check ADMITS it.
 	{ id: 900, name: "54923", placetype: "postalcode", country: "US", lat: 43.97, lon: -88.95, score: 1 },
 ]
 

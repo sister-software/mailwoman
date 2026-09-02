@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Pass 1c of the candidate build (#1737): resurrect deprecated-with-no-successor WOF localities that a second
- *   source independently attests. Extracted from `build-candidate.ts` as a cohesive unit — the gates, their measured
+ *   source independently attests. Extracted from `build-candidate.ts` as a cohesive unit — the checks, their measured
  *   constants, and the GeoNames dump reader live together here; the build calls {@link resurrectCurrencyHoles} once,
  *   between the primaries pass and the alias pass.
  */
@@ -44,7 +44,7 @@ const CURRENCY_BACKFILL_POP_FLOOR = 1000
  * WOF deprecations WITH a successor need nothing — the successor indexes. A deprecation with `is_superseded = 0` on a
  * populated place is the shape of an upstream mistake (Rochester Kent, Aldershot, Telford; 120 GB localities alone),
  * and it is indistinguishable from a correct pruning at this layer without outside evidence. So every resurrection
- * requires all three gates, positive evidence only:
+ * requires all three conditions, positive evidence only:
  *
  * 1. NO live same-name spr row of any placetype within {@link CURRENCY_BACKFILL_RADIUS_KM} of the dead record — a live row
  *    means the place is alive (possibly under another placetype) and there is no hole. A DISTANT same-name row is a
@@ -170,10 +170,10 @@ export async function resurrectCurrencyHoles(ctx: {
 			// distance alone, on the premise that a nearby same-name row means "the place is alive under another
 			// placetype" — true for a place recorded twice, false for a placetype DEMOTION, which is the shape that
 			// actually occurs: WOF retired `Gillingham` the locality (pop 101,187) and kept `Gillingham` the
-			// neighbourhood 3.2 km away, and the gate read the surviving CHILD as covering its own dead parent.
+			// neighbourhood 3.2 km away, and the check read the surviving CHILD as covering its own dead parent.
 			// Sixteen of seventeen GB refusals had exactly that shape (#1746).
 			//
-			// An UNRANKED placetype blocks, which is the conservative direction: this gate's failure mode is inventing
+			// An UNRANKED placetype blocks, which is the conservative direction: this check's failure mode is inventing
 			// a place, so a row we cannot rank is treated as covering rather than waved through.
 			const liveNear = liveStmt.all(cc, name).some((row) => {
 				if (haversineKm(dLat, dLon, Number(row.latitude), Number(row.longitude)) > CURRENCY_BACKFILL_RADIUS_KM) {
@@ -181,7 +181,7 @@ export async function resurrectCurrencyHoles(ctx: {
 				}
 
 				// Blocks UNLESS the live row is strictly finer. The equal rung must still block — a live `locality`
-				// covers a dead `locality` — and an unranked placetype blocks too, since this gate's failure mode
+				// covers a dead `locality` — and an unranked placetype blocks too, since this check's failure mode
 				// is inventing a place.
 				return isStrictlyFiner(String(row.placetype ?? ""), deadPlacetype) !== true
 			})

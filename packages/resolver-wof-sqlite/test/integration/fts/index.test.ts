@@ -316,7 +316,7 @@ describe("aliasBagExactMatch", () => {
 	test("legacy bag (no separator): padded containment, conditioned on anyStrictExact", () => {
 		const legacy = "York New City" // pre-#523 space-joined bag — boundaries lost
 		expect(aliasBagExactMatch(legacy, "new city", false)).toBe(true) // historical behavior preserved
-		expect(aliasBagExactMatch(legacy, "new city", true)).toBe(false) // the gate
+		expect(aliasBagExactMatch(legacy, "new city", true)).toBe(false) // the check
 	})
 
 	test("null / empty bag and empty query never match", () => {
