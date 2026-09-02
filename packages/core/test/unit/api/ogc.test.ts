@@ -8,9 +8,16 @@
  */
 
 import { type APIClient, readWFSFeatureCount } from "@mailwoman/core/api"
+import type { AxiosResponse } from "axios"
 import { describe, expect, it } from "vitest"
 
-const clientReturning = (data: string) => ({ fetch: async () => ({ data }) }) as unknown as Pick<APIClient, "fetch">
+/**
+ * The one method {@linkcode readWFSFeatureCount} reaches. `fetch` resolves a full axios response; only `data` is read,
+ * so the stub states that field and asserts the shape once rather than hand-building headers and a config.
+ */
+const clientReturning = (data: string): Pick<APIClient, "fetch"> => ({
+	fetch: async <T>() => ({ data: data as T }) as AxiosResponse<T>,
+})
 
 const options = { wfsURL: "https://example.invalid/wfs", typeNames: "layer", context: "test", subject: "zones" }
 

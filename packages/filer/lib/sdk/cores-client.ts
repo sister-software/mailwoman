@@ -62,7 +62,7 @@ import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { $private } from "@mailwoman/core/env"
 import { ResourceError } from "@mailwoman/core/errors"
-import { htmlToText } from "@mailwoman/core/html/text"
+import { extractTableRows } from "@mailwoman/core/html/tables"
 
 import { isFRN, type FRN } from "#frn"
 
@@ -169,10 +169,6 @@ export interface CORESRegistration {
 	lastUpdated?: string
 }
 
-const TABLE_ROW_PATTERN = /<tr[^>]*>([\s\S]*?)<\/tr>/gi
-const HEADER_CELL_PATTERN = /<th[^>]*>([\s\S]*?)<\/th>/i
-const DATA_CELL_PATTERN = /<td[^>]*>([\s\S]*?)<\/td>/i
-
 /**
  * Maps a CORES row label to its {@linkcode CORESRegistration} field. Keyed on the label reduced to lowercase letters and
  * digits only, so `"ContactPhone:"` and `"Contact Phone:"` — the page ships both spellings, the phone and fax rows
@@ -255,20 +251,25 @@ export function recaseUniform(value: string): string {
 export function parseCORESRegistration(frn: FRN, html: string): CORESRegistration | null {
 	const fields: Partial<Record<keyof CORESRegistration, string>> = {}
 
-	for (const rowMatch of html.matchAll(TABLE_ROW_PATTERN)) {
-		const rowHTML = rowMatch[1]!
-		const label = HEADER_CELL_PATTERN.exec(rowHTML)?.[1]
+	// The page states one label/value pair per row. Read as a GRID rather than by pattern: `/<td[^>]*>([\s\S]*?)<\/td>/`
+	// over a network-supplied page backtracks polynomially on a body with many `<td` repetitions and no closing partner
+	// (CodeQL `js/polynomial-redos`), and the parser answers the same question without a scan that can be made to spend
+	// the document.
+	for (const rows of extractTableRows(html) ?? []) {
+		for (const row of rows) {
+			const label = row.find((cell) => cell.tag === "th")?.text
 
-		if (!label) continue
+			if (!label) continue
 
-		const field = FIELD_BY_LABEL[labelKey(htmlToText(label))]
+			const field = FIELD_BY_LABEL[labelKey(label)]
 
-		if (!field) continue
+			if (!field) continue
 
-		const value = htmlToText(DATA_CELL_PATTERN.exec(rowHTML)?.[1] ?? "")
+			const value = row.find((cell) => cell.tag === "td")?.text
 
-		if (value) {
-			fields[field] = value
+			if (value) {
+				fields[field] = value
+			}
 		}
 	}
 
