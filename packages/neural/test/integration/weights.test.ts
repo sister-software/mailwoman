@@ -323,7 +323,7 @@ describe("resolveWeights — package auto-resolve", () => {
 	// postcode-nz.bin (no WOF NZ postcode extract exists — the overlay's model-card `no_postcode_bin`
 	// follow-up), so `anchorLookupPath` must come back undefined while `pair-index-nz.bin` and the
 	// overlay-local model-card still resolve from the package dir. Wiring-only, one test — the
-	// prior/country-gate behavior itself is generic implementation already covered by the en-gb prior
+	// prior/country-restrict behavior itself is generic implementation already covered by the en-gb prior
 	// block below and the mispackaging gate at the bottom of this file.
 	test.skipIf(!haveModel || !haveCLI || !haveNZSource)(
 		"en-nz resolves model/tokenizer from the en-us base + pair-index-nz.bin locally, with NO anchor lookup (no NZ postcode extract), and parses",

@@ -360,7 +360,7 @@ export const DEFAULT_IMPORTANCE_DB = "admin-global-priority-importance.db"
 /**
  * The tail database's country set, in the frozen artifact's own ingest order. GB left for Code-Point Open 2026-08-05;
  * BE joined 2026-08-12 (the eu-mixed lane — the Overture BE parquet measured too thin at 203 codes, none of the
- * panel's, while GeoNames carries the full 1,146). A change here re-freezes the artifact: rebuild, run the parity gate
+ * panel's, while GeoNames carries the full 1,146). A change here re-freezes the artifact: rebuild, run the parity check
  * against the prior database, and swap under the .prev rotation.
  */
 export const DEFAULT_GEONAMES_TAIL_COUNTRIES = ["FI", "CZ", "SK", "SI", "DK", "NO", "HR", "PL", "SE", "BE"] as const

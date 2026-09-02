@@ -77,7 +77,7 @@ export type ConformanceRelation = (typeof CONFORMANCE_RELATIONS)[number]
  * What a row's outcome is allowed to mean for the verdict — the Gauntlet regression layer's own `CaseStatus`, spelled
  * again here because a law suite grades relations rather than cases and must not import the corpus schema to say so.
  *
- * - `pass` — the default, and the only status that GATES. A `pass` row whose law is violated fails the run.
+ * - `pass` — the default, and the only status that CHECKS. A `pass` row whose law is violated fails the run.
  * - `known_fail` / `improvement_target` — the row is run and REPORTED, and does not block. A tracked row that starts
  *   holding is printed as a promotion instruction, which is what keeps the tracked list from becoming a place rows go
  *   to be forgotten.

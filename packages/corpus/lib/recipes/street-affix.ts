@@ -639,7 +639,7 @@ const TERMINAL_ONLY_SHARE = 0.8
  * while contrast was already 95/100 before training (93/100 after). Post-run audit found that the global affix relabel
  * pass corrupts many already-decomposed target rows into double suffixes; do not retrain this recipe until relabel is
  * idempotent over a decomposed street family. The 20% contrast leg remains explicit, additive to the already-strong
- * base distribution, and B2 still gates it unchanged.
+ * base distribution, and B2 still checks it unchanged.
  *
  * V2 (corpus 0.19.0, 2026-08-10 recipe review): the v4.3.3 board split (rich venue-led rows 5/43 vs bare 53/65) showed
  * the model separating template rows from real ones, and the venue shell was the giveaway — six fixed venue strings. v2

@@ -89,7 +89,7 @@ export const WIKIDATA_USER_AGENT =
  *
  * Set as `minRequestIntervalMs` rather than `requestsPerMinute` deliberately — `AGENTS.md` records that
  * `requestsPerMinute` is a BUDGET model whose cooldown lets N requests go out back to back, so it does not deliver N
- * per minute and is not the gate that holds a rate. The interval is.
+ * per minute and is not the check that holds a rate. The interval is.
  */
 const WDQS_MIN_REQUEST_INTERVAL_MS = 1000
 

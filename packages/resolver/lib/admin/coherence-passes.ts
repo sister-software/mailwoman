@@ -368,7 +368,7 @@ export async function applyRegionCountryCoherence(
  * default-country filter hid. `matchSubdivision` turns the region token into `{ name, country }` (null for anything
  * that isn't a US state or CA province → no-op); the region's full name then resolves it under that country (expanding
  * the abbreviation the gazetteer FTS index lacks), and the locality is re-scoped to the same country. Leaves both nodes
- * untouched unless every gate holds — the subdivision names a different country than the default, the region resolves
+ * untouched unless every check holds — the subdivision names a different country than the default, the region resolves
  * under it, and a same-named locality exists there — so the domestic path stays byte-identical.
  */
 async function reconcileRegionCountry(

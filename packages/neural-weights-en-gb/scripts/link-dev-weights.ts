@@ -235,7 +235,7 @@ const CLI = workspacePath("mailwoman", "out", "cli.js")
 // found package-dir-relative and silently re-enables the regression with no warning, because a present
 // artifact is exactly what the loader expects.
 //
-// The gate that resolves both states is the CARD's `requires.anchor.span_mode`. `shaped` is declared
+// The check that resolves both states is the CARD's `requires.anchor.span_mode`. `shaped` is declared
 // only by a model trained against a lookup with letter-bearing keys (`pilot-anchor-lookup-v2` and
 // after), and that is precisely the model for which the bin helps. So: declared `shaped` → build it;
 // anything else → remove any stale copy, loudly. No flag, no lockstep constant to forget — the same

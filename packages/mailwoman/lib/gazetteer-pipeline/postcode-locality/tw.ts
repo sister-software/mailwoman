@@ -87,7 +87,7 @@ const FALLBACK_RADIUS_KM = 20
 /**
  * Cross-placetype spread, one wider than JP/KR: TW districts land on `county` (direct-municipality districts),
  * `localadmin`, `locality` (county-administered townships/cities), AND `neighbourhood` (the Kaohsiung/Taichung inner
- * districts — 前金/苓雅/三民/… are `neighbourhood` in WOF). Neighbourhood rows are only ever accepted NAME-GATED (their
+ * districts — 前金/苓雅/三民/… are `neighbourhood` in WOF). Neighbourhood rows are only ever accepted NAME-CONDITIONAL (their
  * Chinese name must match the postal district), never as bare geometric fallback — 1,450 TW neighbourhoods would
  * otherwise swallow the district tier.
  */

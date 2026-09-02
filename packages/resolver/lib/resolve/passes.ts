@@ -349,7 +349,7 @@ export function firstPostcodeValue(roots: readonly AddressNode[]): string | unde
 /**
  * Span-rescore tier (#370): opt-in last-resort locality recovery. Runs ONLY when the tree resolved NOTHING (the #685
  * brake — never disturb a working coordinate). Enumerates raw-token spans, exact- matches the same-country gazetteer
- * (longest-wins + postcode-consistency gate; see `span-rescore.ts`), and on a hit INJECTS a resolved `locality` node
+ * (longest-wins + postcode-consistency check; see `span-rescore.ts`), and on a hit INJECTS a resolved `locality` node
  * decorated exactly like a normally-resolved one. Default-ON (#370, promoted 2026-06-25); byte-stable opt-out via
  * `opts.spanRescore: false`. Async (it queries the backend), so it's awaited.
  */

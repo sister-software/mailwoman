@@ -740,7 +740,7 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 
 /**
  * The §7-2b acceptance criteria — one describe per criterion, mapped 1:1 to the four bullets in
- * `docs/superpowers/plans/2026-07-30-bdc-2b-plan.md`'s "The §7-2b gates" section. Several criteria' BEHAVIORAL claims
+ * `docs/superpowers/plans/2026-07-30-bdc-2b-plan.md`'s "The §7-2b checks" section. Several criteria' BEHAVIORAL claims
  * are already proven by the suites above — `plausibility.ts`'s own module docstring says as much ("this module is
  * designed for them but doesn't assert them itself"). Where that's true, the test below asserts the criterion's
  * SPECIFIC claim against a real bundle (reusing the established fixtures, including the hoisted `openBoth()`) and

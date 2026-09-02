@@ -95,7 +95,7 @@ const LORE_GUARD_MARKER = "recompile"
 /**
  * Why the ledger command is reported rather than run.
  *
- * Carried on every gate result so the boundary travels with the command: a reader who sees a filled-in command and no
+ * Carried on every check result so the boundary travels with the command: a reader who sees a filled-in command and no
  * note has every reason to assume it already ran.
  */
 export const LEDGER_NOTE =
@@ -104,7 +104,7 @@ export const LEDGER_NOTE =
 	"npm semver, at promote time."
 
 /**
- * Assemble a report from a finished gate run's out-dir plus its log.
+ * Assemble a report from a finished eval run's out-dir plus its log.
  */
 export async function readGateReport(outDir: string, stdout: string, stderr: string): Promise<GateReport> {
 	const notes: string[] = []

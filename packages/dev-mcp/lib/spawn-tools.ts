@@ -26,7 +26,7 @@ import type { JobRegistry } from "#jobs"
 import { summarizeJob, type DevTool } from "#tool-kit"
 
 /**
- * Where each gate job wrote its battery, keyed by job id.
+ * Where each check job wrote its battery, keyed by job id.
  *
  * Kept beside the tools rather than re-derived from the log afterwards: the out-dir is chosen when the job STARTS, so
  * recovering it from printed output would fail exactly when the run died before printing any — the case where knowing

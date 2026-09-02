@@ -344,7 +344,7 @@ export class NeuralAddressClassifier {
 		// decode path and the ProductionScorer feed channels identically, so there is exactly one
 		// choreography. Each channel is undefined when its source is unconfigured (no-op).
 		//
-		// The evidence-bundle channels are REGISTER-GATED (Decision A, see ParseOpts.inputMode):
+		// The evidence-bundle channels are REGISTER-CONDITIONAL (Decision A, see ParseOpts.inputMode):
 		// formatted mode withholds both lexicons so the model runs its curriculum-trained absence
 		// identity — the fed channels lift fragments but damage full-address parses.
 		const evidenceOn = (opts?.inputMode ?? "fragmented") === "fragmented"

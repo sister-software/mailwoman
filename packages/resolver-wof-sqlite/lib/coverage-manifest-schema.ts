@@ -55,7 +55,7 @@ export interface CountryCoverageTable {
 	 */
 	sample_size: number | null
 	/**
-	 * ISO-8601 date of the measurement / promote gate.
+	 * ISO-8601 date of the measurement / promote eval.
 	 */
 	measured_at: string
 	/**

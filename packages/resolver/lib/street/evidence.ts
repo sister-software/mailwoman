@@ -147,7 +147,7 @@ export interface PickByStreetEvidenceOpts {
 	 * G2 — the margin cap. A candidate whose score is more than this far below rank-1 is never promoted by evidence
 	 * (without it, evidence reaches deep down the list and moves off correct rank-1 parses). Default 2.5 — the value the
 	 * v2 board measured (148 fixes / 3 breaks). UNCALIBRATED across models: re-fit when the span head retrains, since raw
-	 * score margins are not comparable across models. (Plan #1134 pre-registers an isotonic ambiguity gate to replace
+	 * score margins are not comparable across models. (Plan #1134 pre-registers an isotonic ambiguity check to replace
 	 * it.)
 	 */
 	marginCap?: number

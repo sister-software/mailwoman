@@ -8,7 +8,7 @@
  *   A warm engine is warm because Node already evaluated its modules. Node's ESM cache has no invalidation, so a source
  *   edit is invisible to a process that already imported it: the agent edits `geocode-core.ts`, calls a tool, and reads
  *   an answer produced by the code it just replaced. Nothing errors. This is the same shape as the stale-`out/` trap
- *   (`corpus-stamp.ts` records the 2026-08-06 instance, where a build printed "built", exited 0, and every gate
+ *   (`corpus-stamp.ts` records the 2026-08-06 instance, where a build printed "built", exited 0, and every check
  *   afterwards graded a corpus nobody had) with one difference that matters: that trap already existed, and this one is
  *   manufactured by the decision to hold state at all.
  *

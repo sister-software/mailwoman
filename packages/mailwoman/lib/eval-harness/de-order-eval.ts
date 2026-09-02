@@ -7,7 +7,7 @@
  *   addresses in BOTH renderings — native German order (the realistic layout) and US/international
  *   order (the layout our OA de-sample ships) — with the postcode anchor fed and ablated
  *   (oa-resolver-eval's `--anchor-off` → `overrides.anchor=false`, the #718-sanctioned declared
- *   ablation; #887), plus US + FR for the no-regression gate. The German "collapse" was
+ *   ablation; #887), plus US + FR for the no-regression check. The German "collapse" was
  *   substantially an eval-order artifact (docs/articles/evals/resolver-geo/2026-06-06-anchor-pilot.md); this
  *   makes native-vs-international a first-class, repeatable measurement instead of a one-off.
  *   Self-emits every figure (each run writes its own .md), then prints a 2x2 + US/FR summary. NOTE:

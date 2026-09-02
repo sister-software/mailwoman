@@ -25,7 +25,7 @@
  *      segmentation decodes locality/region/postcode far worse than the BIO argmax head (replacing
  *      the whole tree cost golden fr −35pp). So the winning segmentation's street tokens are spliced
  *      into the ARGMAX tree; argmax owns every other tag.
- *   3. POSITIVE-EVIDENCE GATE. The splice fires only for a street the atlas CONFIRMS exists. On a
+ *   3. POSITIVE-EVIDENCE CHECK. The splice fires only for a street the atlas CONFIRMS exists. On a
  *      clean address the argmax street is already right + confirmed → the splice is a no-op; on a
  *      fragment the argmax street is wrong/absent and the confirmed segmentation street replaces it.
  *      An unconfirmed street NEVER overrides the model — the model owns every call the atlas can't
@@ -247,7 +247,7 @@ export async function rerankByStreetEvidence(
 		...(opts.scope ? { scope: opts.scope } : {}),
 	})
 
-	// POSITIVE-EVIDENCE GATE on the splice: only override the argmax tree's street with a street the atlas CONFIRMS
+	// POSITIVE-EVIDENCE CHECK on the splice: only override the argmax tree's street with a street the atlas CONFIRMS
 	// exists. This is the same principle as the pick itself — the model owns every call the atlas can't confirm wrong.
 	// Rationale (measured 2026-07-18): always-splicing cost golden fr street −2.7pp (the span head over/under-extends
 	// the street on clean multi-component inputs, and the full BIO head is better there); filtering on "argmax has no

@@ -20,7 +20,7 @@
  *       than a TIGHTER 2pp threshold (per the DeepSeek consult) under the conventions mask —
  *       catching the subtler interaction harms the per-tag 5pp delta check would miss.
  *
- *   It is WEIGHT-DEPENDENT (it runs the model), so it is a RELEASE GATE — run with weights on disk
+ *   It is WEIGHT-DEPENDENT (it runs the model), so it is a RELEASE CHECK — run with weights on disk
  *   BEFORE publishing — NOT a weightless CI step (weight-dependent tests don't run in CI; #582).
  *   Hook it into the release path (`mailwoman eval gate` / the publish flow), NOT into Test CI.
  *

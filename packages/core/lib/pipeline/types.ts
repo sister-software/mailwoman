@@ -485,7 +485,7 @@ export interface ClassifierOpts {
 	/**
 	 * Per-word BIO consistency repair (#727): force each SentencePiece word whose pieces DISAGREE in type to one tag via
 	 * a confidence-weighted vote. Structural mirror of `@mailwoman/neural`'s `WordConsistencyOpts` (core carries no
-	 * neural dependency) — see `neural/word-consistency.ts` for the semantics of each gate.
+	 * neural dependency) — see `neural/word-consistency.ts` for the semantics of each check.
 	 */
 	enforceWordConsistency?:
 		| boolean

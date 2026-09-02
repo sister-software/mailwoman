@@ -35,7 +35,7 @@ import type { WhosOnFirstPlacetype } from "#resources/whosonfirst/placetypes/def
 /**
  * Higher is finer. Absent placetypes are UNRANKED and must be handled by the caller rather than defaulted — a missing
  * entry silently scoring 0 would rank an unknown placetype as coarse as `country`, which is the wrong direction for
- * every gate that reads this.
+ * every check that reads this.
  */
 export const PLACETYPE_SPECIFICITY: Readonly<Partial<Record<WhosOnFirstPlacetype | (string & {}), number>>> = {
 	address: 11,

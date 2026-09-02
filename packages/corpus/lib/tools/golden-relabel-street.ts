@@ -8,7 +8,7 @@
  *   ## Why this exists
  *
  *   The golden answer key and the training corpus disagreed about ONE thing, and the v9.0.0
- *   promotion gate read the disagreement as a model regression (`us.street` 87.4 vs a floor of
+ *   promotion eval read the disagreement as a model regression (`us.street` 87.4 vs a floor of
  *   87.8). The corpus SPLITS a US street into `street` + `street_suffix` — TIGER's adapter
  *   decomposes at `corpus/src/adapters/tiger/street-decompose.ts`, the `street-affix` slice recipe
  *   teaches it from USPS Pub-28, and `ComponentTag` carries `street_suffix` as a first-class tag.

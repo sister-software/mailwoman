@@ -82,7 +82,7 @@ describe("readTriplesFromGeonames", () => {
 	})
 
 	it("drops a place the gazetteer does not know as a locality", async () => {
-		// `Zona Centro` is a colonia and now correctly lands in `dependentLocality`; the gate applies to admin2, the
+		// `Zona Centro` is a colonia and now correctly lands in `dependentLocality`; the check applies to admin2, the
 		// locality, so a row whose CITY the gazetteer does not know is the one that drops.
 		const path = await writeExport("mx.txt", [
 			["MX", "20000", "Zona Centro", "Aguascalientes", "Unknownville"],

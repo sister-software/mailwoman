@@ -199,11 +199,11 @@ def gate_codepoint_overlap(
     *,
     accepted_overlap: set[str] | None = None,
 ) -> dict[str, list[str]]:
-    """#900 — the splice safety gate, pre-registered as a GATE rather than a postmortem note.
+    """#900 — the splice safety gate, pre-registered as a CHECK rather than a postmortem note.
 
     The v5.1.0 splice shipped on a "byte-identical by construction" claim that turned out ASCII-only:
     FR/DE/ES share codepoints with the spliced pieces, so 52/15,000 EU rows re-tokenized — measured
-    AFTER the fact (net-positive, by luck and row-reads). This gate makes the overlap visible BEFORE
+    AFTER the fact (net-positive, by luck and row-reads). This check makes the overlap visible BEFORE
     grading: for every trained locale sample, compute the non-ASCII codepoints shared between the
     NEW pieces and that locale's character inventory, write the per-locale report artifact, and FAIL
     LOUD on any overlapping locale that was not explicitly accepted.

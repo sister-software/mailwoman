@@ -206,7 +206,7 @@ export async function loadClassifierFromWeights(
 	const localitySurfaceLexicon = lexicons.locality_surface
 
 	// Placetype-pair index sibling (placetype-pair-prior arc): construct a PairIndexResolver
-	// when the package shipped one for this country. HARD COUNTRY GATE — an index built for one
+	// when the package shipped one for this country. HARD COUNTRY CHECK — an index built for one
 	// country must never bias a parse resolved for a different locale (a mismatch is a packaging bug,
 	// not something to apply anyway): the index header's `country` must equal the resolved locale's
 	// country subtag, or the default is skipped with a single warning naming both. Unlike the

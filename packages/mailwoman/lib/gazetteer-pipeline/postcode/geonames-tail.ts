@@ -142,7 +142,7 @@ export interface BuildPostcodeGeonamesTailResult {
 	byCountry: Record<string, number>
 	/**
 	 * Countries whose `<CC>.txt` was absent — reported, not fatal (a partial database is still a valid database; the
-	 * parity gate is what decides whether it may be promoted).
+	 * parity check is what decides whether it may be promoted).
 	 */
 	missing: string[]
 	sources: GeonamesPostalSourceFact[]

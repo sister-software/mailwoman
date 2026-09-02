@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The v7 rules-excision swap gate (Track V1) — RE-GATED 2026-07-17.
+ *   The v7 rules-excision swap gate (Track V1) — RE-CONDITIONAL 2026-07-17.
  *
  *   ## What changed and why
  *

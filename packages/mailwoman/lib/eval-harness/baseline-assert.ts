@@ -6,7 +6,7 @@
  *   Harness baseline assertion — an eval refuses to produce a report when its instruments read
  *   wrong (#727 stage-2, Tier 0).
  *
- *   This is NOT a promotion gate. `promotion-gate.ts` asks "is this model good enough to ship";
+ *   This is NOT a promotion eval. `promotion-gate.ts` asks "is this model good enough to ship";
  *   this asks "is this harness measuring what it thinks it is". An eval spec's floors are one-sided
  *   (higher is better, fail below); a baseline is TWO-SIDED — a metric 40% ABOVE its registered
  *   value is as loud a signal as 40% below, because the usual cause is that the number changed

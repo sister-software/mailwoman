@@ -324,7 +324,7 @@ export async function readTriplesFromGeonames(
 
 		if (!postcode || !locality || !region) continue
 
-		// The gate applies to the LOCALITY — admin2 — not to the fine-grained name, which is expected to be a street or
+		// The check applies to the LOCALITY — admin2 — not to the fine-grained name, which is expected to be a street or
 		// a colonia and is emitted as the dependent locality rather than dropped.
 		if (!isKnownLocality(locality)) continue
 

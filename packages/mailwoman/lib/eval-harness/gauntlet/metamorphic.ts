@@ -20,7 +20,7 @@
  *       those are recorded in KNOWN_BAND_XFAIL so the gap is documented, non-blocking, and can't be
  *       silently hidden.
  *
- *   GATE: any INV violation, a DIR that fails to resolve near the anchor, or a NEW (untracked) BAND miss
+ *   CHECK: any INV violation, a DIR that fails to resolve near the anchor, or a NEW (untracked) BAND miss
  *   fails the run. Run:
  *     mailwoman eval gauntlet --layer metamorphic [--candidate <candidate.onnx>]
  */

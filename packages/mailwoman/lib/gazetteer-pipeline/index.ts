@@ -81,7 +81,7 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	// GB via OS Code-Point Open under OGL v3 (operator licence ruling 2026-08-05): 1,746,976 unit
 	// postcodes, England+Scotland+Wales — NO Northern Ireland (excluded from every permissive UK
 	// grant; see the codepoint builder's NI note). Replaces the GeoNames GB rows, which the
-	// 2026-08-05 parity gate measured as the SAME survey (max coordinate delta 6.6 m over 1.75M
+	// 2026-08-05 parity check measured as the SAME survey (max coordinate delta 6.6 m over 1.75M
 	// joined rows) under a muddled licence. Rebuild: `mailwoman gazetteer build postcode-codepoint`.
 	"postalcode-gb-codepoint.db",
 	// Northern Ireland (BT), the hole Code-Point Open leaves — 4,757 of 50,032 live NI postcodes (9.5 %),

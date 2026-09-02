@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer verify` — the structural promotion gate, standalone: node census vs the
+ *   `mailwoman gazetteer verify` — the structural promotion eval, standalone: node census vs the
  *   committed baseline (#1026), coverage floor, region-abbrev/place_abbr spot-checks (#440/#1015),
  *   FTS/bbox coverage, degenerate-extent spot-check (#1015), and the reverse EU panel. Exits non-zero
  *   on any failure — do not swap an artifact that fails here. `build admin` runs this automatically;

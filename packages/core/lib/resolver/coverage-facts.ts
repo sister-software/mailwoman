@@ -9,7 +9,7 @@
  */
 
 /**
- * One country's measured hard-filter coverage fact, as recorded at a promote gate. Facts about the gazetteer artifact
+ * One country's measured hard-filter coverage fact, as recorded at a promote eval. Facts about the gazetteer artifact
  * live IN the artifact (the `country_coverage` table the gazetteer build emits) — code constants are only the fallback
  * for artifacts that predate the manifest.
  *
@@ -38,7 +38,7 @@ export interface CountryCoverageFact {
 	 */
 	sampleSize?: number
 	/**
-	 * ISO-8601 date of the measurement / promote gate.
+	 * ISO-8601 date of the measurement / promote eval.
 	 */
 	measuredAt: string
 	/**

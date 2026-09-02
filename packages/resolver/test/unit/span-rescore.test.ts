@@ -221,7 +221,7 @@ describe("findRescoreCandidate", () => {
 		const hit = await findRescoreCandidate(raw, [], await makeBackend(), { country: "PL", gateKm: 0 })
 		expect(hit?.text).toBe("Tomaszów Mazowiecki")
 		expect(hit?.place.id).toBe(3)
-		expect(hit?.gated).toBe(false) // gate disabled (gateKm 0)
+		expect(hit?.gated).toBe(false) // check disabled (gateKm 0)
 	})
 
 	it("flags a recovery GATED when the postcode resolves and the match is within range", async () => {

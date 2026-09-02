@@ -45,7 +45,7 @@ import { runMetamorphicLayer } from "#eval-harness/gauntlet/metamorphic"
 import { type GauntletLayerOptions, runRegressionLayer } from "#eval-harness/gauntlet/regression"
 
 /**
- * The Gauntlet layers. The first three are GATES and make up the combined verdict; `ablation` is a MEASUREMENT layer —
+ * The Gauntlet layers. The first three are CHECKS and make up the combined verdict; `ablation` is a MEASUREMENT layer —
  * reachable only via `--layer ablation`, deliberately absent from the combined gate below, and incapable of blocking a
  * ship. It produces the required map (what deleting each component costs, per locale), which is a question about the
  * corpus and the resolver rather than a pass/fail about a candidate.

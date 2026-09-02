@@ -305,7 +305,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 			// (`Auckland`) and CITY holds the suburb (`Birkenhead`), so DISTRICT → locality and CITY →
 			// dependent_locality. When DISTRICT is empty (~18% of NZ rows), fall back to CITY → locality with no
 			// sub-locality. GB PPD tuples flip which side is legitimately empty — on the MAJORITY of GB rows CITY
-			// (the dependent_locality) is empty and DISTRICT (the locality) is populated, so the gate below only
+			// (the dependent_locality) is empty and DISTRICT (the locality) is populated, so the check below only
 			// drops a `districtAsLocality` row when BOTH are empty, never when CITY alone is — filtering on CITY
 			// alone silently discards most of the GB source. See {@link LocalePart.districtAsLocality}.
 			let locality: string | null
