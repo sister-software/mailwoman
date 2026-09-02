@@ -8,7 +8,7 @@
  *   the SECOND parse stays host-side by design, so this component loads its own compare classifier and
  *   re-parses the current input whenever the primary result changes — then renders the docs
  *   `<VersionCompare>` diff. It mirrors the compare branch of the live demo's `_app.tsx` onSubmit, kept
- *   here so the staging route exercises the compare seam without touching `_app.tsx`.
+ *   here so the staging route exercises the compare panel's injection point without touching `_app.tsx`.
  */
 
 import type { ParseResult } from "@mailwoman/react"

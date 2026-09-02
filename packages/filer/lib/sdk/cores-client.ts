@@ -347,8 +347,8 @@ export interface CreateCORESClientOptions {
 	baseRetryDelayMs?: number
 	requestTimeoutMs?: number
 	/**
-	 * Axios overrides, merged over this client's defaults. The test seam — every test passes an `adapter` here so no test
-	 * performs a live request. Overriding `headers` wholesale drops the User-Agent, so don't.
+	 * Axios overrides, merged over this client's defaults. The TEST INJECTION POINT — every test passes an `adapter` here
+	 * so no test performs a live request. Overriding `headers` wholesale drops the User-Agent, so don't.
 	 */
 	axios?: APIClientConfig["axios"]
 }

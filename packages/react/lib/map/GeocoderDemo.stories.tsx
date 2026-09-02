@@ -8,7 +8,7 @@
  *   synchronous autocomplete, a fake version list + backend. Open Storybook, type a query, hit
  *   "Parse + resolve", and the demo responds: the result panel fills in and the map drops a marker +
  *   outline and flies to it — with ZERO network. `FullDemo` is the bare composition; `WithPanels` slots in
- *   host panels (about / release / compare / debug drawer / permalink) to exercise the injection seam.
+ *   host panels (about / release / compare / debug drawer / permalink) to exercise the injection point.
  */
 
 import type { Meta, StoryObj } from "@storybook/react-vite"

@@ -144,8 +144,8 @@ export interface CreateCensusGeocoderClientOptions {
 	 */
 	requestTimeoutMs?: number
 	/**
-	 * Axios overrides, merged over this client's own defaults. THE TEST SEAM: every test passes an `adapter` here, so no
-	 * test in this workspace performs a live network call.
+	 * Axios overrides, merged over this client's own defaults. THE TEST INJECTION POINT: every test passes an `adapter`
+	 * here, so no test in this workspace performs a live network call.
 	 */
 	axios?: APIClientConfig["axios"]
 }

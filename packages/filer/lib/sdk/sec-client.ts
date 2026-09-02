@@ -241,9 +241,9 @@ export interface CreateSECClientOptions {
 	 */
 	requestTimeoutMs?: number
 	/**
-	 * Axios overrides, merged over this client's own defaults. The test seam: every test in `sec-client.test.ts` passes
-	 * an `adapter` here, so no test ever performs a live network call (decision 5). Overriding `headers` wholesale would
-	 * drop the User-Agent, so don't.
+	 * Axios overrides, merged over this client's own defaults. The TEST INJECTION POINT: every test in
+	 * `sec-client.test.ts` passes an `adapter` here, so no test ever performs a live network call (decision 5).
+	 * Overriding `headers` wholesale would drop the User-Agent, so don't.
 	 */
 	axios?: APIClientConfig["axios"]
 }

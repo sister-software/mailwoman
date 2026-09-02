@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Contract tests for `AddressTree.system` + the `containmentFor` indirection — the forward-compat
- *   anti-lock-in seam (DeepSeek resolver consult, 2026-05-30). These lock in two guarantees:
+ *   anti-lock-in boundary (DeepSeek resolver consult, 2026-05-30). These lock in two guarantees:
  *
  *   1. The discriminator round-trips: `buildAddressTree(..., { system })` stamps `tree.system`, and
  *        omitting it leaves `system` absent (the default Western path).

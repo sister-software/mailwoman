@@ -144,7 +144,7 @@ export interface UseDemoMapRuntime {
 	 */
 	traceParse: (input: string) => Promise<ParseTraceLike | null>
 	/**
-	 * Whether the loaded classifier exposes the `traceParse` decode-path seam (gates the dev-mode toggle).
+	 * Whether the loaded classifier exposes the `traceParse` decode-path hook (gates the dev-mode toggle).
 	 */
 	supportsTrace: boolean
 }

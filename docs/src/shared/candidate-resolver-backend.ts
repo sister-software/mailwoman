@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The #861 convergence seam: adapt the demo's byte-range candidate lookup
+ *   The #861 convergence boundary: adapt the demo's byte-range candidate lookup
  *   (`MailwomanLookupLike`) to the shared resolver's `ResolverBackend` contract, so the browser
  *   runs the SAME `resolveTree` — greedy walk + admin/explicit-country coherence + span-rescore —
  *   the server runs, instead of the bespoke `runCascade` tier order that re-implemented (and

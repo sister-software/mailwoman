@@ -841,7 +841,7 @@ export function lookupCodex(queries: string[]): LookupRow[] {
 }
 
 /**
- * The postcode-anchor artifact's read seam — `PostcodeBinaryResolver`'s binary search, narrowed to what this probe
+ * The postcode-anchor artifact's read interface — `PostcodeBinaryResolver`'s binary search, narrowed to what this probe
  * uses.
  */
 export interface PostcodeAnchorResolver {

@@ -65,7 +65,7 @@ export function createPOINameLookup(searcher: POINameSearch): POIPhraseLookup {
 export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 	let categoryHits = lookupPOICategory(phrase, locale)
 
-	// The taxonomy stays exact-phrase; this adapter supplies a deliberately small English morphology seam for query
+	// The taxonomy stays exact-phrase; this adapter supplies a deliberately small English morphology layer for query
 	// heads. Positive evidence is still required: the singularized phrase must itself hit the taxonomy.
 	if (!categoryHits.length && (!locale || locale.toLowerCase().startsWith("en"))) {
 		const words = phrase.trim().split(/\s+/)

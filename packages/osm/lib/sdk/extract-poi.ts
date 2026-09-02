@@ -57,9 +57,9 @@ import {
 } from "#sdk/tag-columns"
 
 /**
- * One Overture Places row, decoded to the flat shape `buildPOIDatabase`'s injected-rows seam consumes. Structurally
- * identical to `POISourceRow` in `mailwoman/gazetteer-pipeline/poi/build-poi.ts` — kept as a local copy per this
- * module's header docstring (dependency-direction note).
+ * One Overture Places row, decoded to the flat shape `buildPOIDatabase`'s injected-rows injection point consumes.
+ * Structurally identical to `POISourceRow` in `mailwoman/gazetteer-pipeline/poi/build-poi.ts` — kept as a local copy
+ * per this module's header docstring (dependency-direction note).
  */
 export interface POISourceRow {
 	name: string | null

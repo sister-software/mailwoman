@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `<GeocoderDemo>` — the WHOLE geocoder demo, composed. It is the map analogue of `PipelineExplorer`
- *   and takes the SAME DI seam shape: an injected {@link DemoRuntime} (the host owns ONNX / httpvfs / R2 /
+ *   and takes the SAME DI shape: an injected {@link DemoRuntime} (the host owns ONNX / httpvfs / R2 /
  *   the composed map style) plus a {@link DemoPanels} bag (the host's ModelVisualizer / VersionCompare /
  *   About / Permalink). Everything here is composition + a `ClientOnly` boundary:
  *
@@ -82,7 +82,7 @@ function GeocoderDemoInner({
 }: GeocoderDemoInnerProps): ReactNode {
 	const mapRef = useRef<MapRef>(null)
 
-	// TEST SEAM: the e2e viewport-bias suite drives the REAL map (pan + zoom past the bias gate)
+	// TEST INJECTION POINT: the e2e viewport-bias suite drives the REAL map (pan + zoom past the bias gate)
 	// before submitting, and a browser test cannot reach a React ref — so the live map handle is
 	// republished on `globalThis.__mailwomanDemoMap`, the same seam the pre-port demo carried. The
 	// ref fills only after react-map-gl instantiates the map, hence the short poll; cleared on

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for {@link nearestInfrastructure} (decision 7). The fixture `poi.db` is built via
- *   the rows seam directly against `poi-schema.ts` — the SAME idiom
+ *   the rows injection point directly against `poi-schema.ts` — the SAME idiom
  *   `resolver-wof-sqlite/poi-lookup.test.ts` uses (a tiny hand-built `poi`/`poi_category_codes` fixture,
  *   no DuckDB/network) — rather than `mailwoman/gazetteer-pipeline/poi/build-poi.ts`'s
  *   `buildPOIDatabase`: `bdc` cannot depend on the `mailwoman` workspace (the top-level CLI package

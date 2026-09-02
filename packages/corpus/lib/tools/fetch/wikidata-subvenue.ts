@@ -219,8 +219,8 @@ export interface CreateWikidataClientOptions {
 	 */
 	clock?: ClockLike
 	/**
-	 * Axios overrides, merged over this client's defaults. THE TEST SEAM — pass an `adapter` and no live call is made.
-	 * Overriding `headers` wholesale would drop the required `User-Agent`, so don't.
+	 * Axios overrides, merged over this client's defaults. THE TEST INJECTION POINT — pass an `adapter` and no live call
+	 * is made. Overriding `headers` wholesale would drop the required `User-Agent`, so don't.
 	 */
 	axios?: ConstructorParameters<typeof APIClient>[0]["axios"]
 }

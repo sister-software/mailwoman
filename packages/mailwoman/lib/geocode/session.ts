@@ -493,7 +493,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		// #1732 reach half: the session's dataRoot is authoritative for EVERYTHING it loads, weights and
 		// their FSTs included. Before this line threaded it, a data_root override moved the gazetteer but
 		// weights silently resolved from the process env — so a dev-mcp engine with data_root set measured
-		// a mixed configuration, and no A/B seam for a staged FST existed on the warm path at all.
+		// a mixed configuration, and no A/B comparison for a staged FST existed on the warm path at all.
 		classifier = await NeuralAddressClassifier.loadFromWeights({
 			locale: options.locale,
 			overlayRoot: resolvePath(options.dataRoot, "weights"),

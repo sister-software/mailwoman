@@ -260,7 +260,7 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
 }
 
 /**
- * One Overture Places row, decoded to the flat shape the loader consumes — the injected-iterator testability seam.
+ * One Overture Places row, decoded to the flat shape the loader consumes — the injected-iterator injection point.
  */
 export interface POISourceRow {
 	name: string | null
@@ -416,7 +416,7 @@ export interface BuildPOIOptions {
 	 */
 	parquetPaths?: readonly string[]
 	/**
-	 * Injected row source — the testability seam. When given, the DuckDB read is skipped entirely (tests never touch
+	 * Injected row source — the injection point. When given, the DuckDB read is skipped entirely (tests never touch
 	 * DuckDB).
 	 */
 	rows?: AsyncIterable<POISourceRow> | Iterable<POISourceRow>

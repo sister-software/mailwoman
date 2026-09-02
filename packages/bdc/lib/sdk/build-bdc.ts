@@ -106,8 +106,8 @@ export const BDC_ATTRIBUTION =
 
 export interface BuildBDCOptions {
 	/**
-	 * Injected row source — the test seam (mirrors `BuildPOIOptions.rows`). When given, `csvPaths` is ignored and no
-	 * filesystem read happens.
+	 * Injected row source — the TEST INJECTION POINT (mirrors `BuildPOIOptions.rows`). When given, `csvPaths` is ignored
+	 * and no filesystem read happens.
 	 */
 	rows?: Iterable<BDCAvailabilityRow> | AsyncIterable<BDCAvailabilityRow>
 	/**
@@ -145,9 +145,9 @@ export interface BuildBDCOptions {
 	blockCentroids: (geoid: string) => { lat: number; lon: number } | undefined
 	onProgress?: (message: string) => void
 	/**
-	 * Provider-list rows ({@link ProviderListRow}, `@mailwoman/filer/sdk`'s `parseProviderList`) — the test/CLI seam for
-	 * populating `bdc_provider` (2a decision 8 / 3a decision 6). When ABSENT (the default), `bdc_provider` stays empty
-	 * and the rest of the build is untouched: every code path this option touches is gated behind `if
+	 * Provider-list rows ({@link ProviderListRow}, `@mailwoman/filer/sdk`'s `parseProviderList`) — the test/CLI injection
+	 * point for populating `bdc_provider` (2a decision 8 / 3a decision 6). When ABSENT (the default), `bdc_provider`
+	 * stays empty and the rest of the build is untouched: every code path this option touches is gated behind `if
 	 * (options.providers)`, so omitting it changes nothing. When present, `buildBDCDatabase` groups rows by `providerID`
 	 * and inserts one `bdc_provider` row per distinct provider — see {@link BuildBDCOptions.filerDB} for how the primary
 	 * FRN is picked when a provider carries more than one, and `schema.ts`'s `BDCProviderTable` docstring for the full
@@ -310,7 +310,7 @@ const PROVIDER_ID_PEEK_BYTES = 64 * 1024
 /**
  * Peeks each file's `provider_id` off its head ({@linkcode peekProviderID}, passing the path through so a malformed
  * file's error names it), then STREAMS every row via `readAvailabilityRows` — the file is never resident. This is the
- * production counterpart to the test seam's injected `rows` — exercised by `build-bdc.test.ts` only for the
+ * production counterpart to the TEST INJECTION POINT's injected `rows` — exercised by `build-bdc.test.ts` only for the
  * malformed-provider-id rejection path, same as `build-poi.ts`'s `readParquetRows`.
  */
 async function* readAvailabilityRowsFromCSVPaths(csvPaths: readonly string[]): AsyncIterable<BDCAvailabilityRow> {

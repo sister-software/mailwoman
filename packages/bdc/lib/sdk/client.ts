@@ -176,9 +176,9 @@ export interface CreateBDCClientOptions {
 	 */
 	downloadTimeoutMs?: number
 	/**
-	 * Axios overrides, merged over this client's own defaults. THE TEST SEAM, replacing the old `fetchImpl` option: every
-	 * test passes an `adapter` here, so no test in this workspace ever performs a live network call. Overriding `headers`
-	 * wholesale would drop the credential pair, so don't.
+	 * Axios overrides, merged over this client's own defaults. THE TEST INJECTION POINT, replacing the old `fetchImpl`
+	 * option: every test passes an `adapter` here, so no test in this workspace ever performs a live network call.
+	 * Overriding `headers` wholesale would drop the credential pair, so don't.
 	 */
 	axios?: APIClientConfig["axios"]
 }

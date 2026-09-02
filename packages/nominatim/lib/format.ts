@@ -66,8 +66,8 @@ export function toFeatureCollection(results: readonly NominatimResult[]): Nomina
 
 /**
  * A resolved address in a neutral shape, the input to {@link toNominatimResult}. The engine maps its native
- * geocode/reverse result into this; the formatter renders it as a Nominatim result. This is the #804 mapping seam, kept
- * dependency-free (no `@mailwoman/*` import) so it stays unit-testable.
+ * geocode/reverse result into this; the formatter renders it as a Nominatim result. This is the #804 mapping boundary,
+ * kept dependency-free (no `@mailwoman/*` import) so it stays unit-testable.
  */
 export interface ResolvedAddress {
 	lat: number | null

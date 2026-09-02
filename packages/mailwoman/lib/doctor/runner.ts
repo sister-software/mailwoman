@@ -160,7 +160,7 @@ async function readPOIManifest(path: string): Promise<{ name: string; version: s
 }
 
 /**
- * The production seams — the real filesystem, env, weights resolver, and dynamic imports.
+ * The production dependencies — the real filesystem, env, weights resolver, and dynamic imports.
  */
 export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 	const dataRoot = mailwomanDataRoot()

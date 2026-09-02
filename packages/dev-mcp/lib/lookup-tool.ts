@@ -422,11 +422,11 @@ async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 }
 
 /**
- * Read the anchor artifact behind the resolver seam.
+ * Read the anchor artifact behind the resolver interface.
  *
  * The binary is probed by binary SEARCH, never decoded whole: `postcode-gb.bin` holds 1,749,839 keys and
  * `toAnchorLookup()` builds all of them into a Map in 2,035 ms (against 24 ms to construct the reader), which is the
- * wrong trade for a handful of queries. The JSON form has no search seam, so it is parsed and wrapped.
+ * wrong trade for a handful of queries. The JSON form has no search interface, so it is parsed and wrapped.
  */
 async function loadAnchorArtifact(artifact: { path: string; binary: boolean }): Promise<PostcodeAnchorResolver> {
 	if (artifact.binary) {

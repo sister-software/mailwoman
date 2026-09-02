@@ -172,7 +172,7 @@ export function inferMapping(header: readonly string[]): ColumnMapping {
  */
 export interface IngestOptions {
 	/**
-	 * The geocoding seam. Without it, records carry name/org but no resolved address.
+	 * The geocoding interface. Without it, records carry name/org but no resolved address.
 	 */
 	geocodeAddress?: GeocodeAddress
 	/**
@@ -206,7 +206,7 @@ export function pick(row: Record<string, string>, columns?: string | string[], s
 /**
  * Normalize one tabular row into a {@link SourceRecord} under a {@link ColumnMapping}: parse the person name,
  * canonicalize the org, and (if `opts.geocodeAddress` is provided) geocode the joined address. `id` falls back to the
- * caller-supplied row index. Pure aside from the optional geocode seam, so the deterministic normalization can run
+ * caller-supplied row index. Pure aside from the optional geocode interface, so the deterministic normalization can run
  * single-threaded (see {@link normalizeCSV}) while geocoding is offloaded (see `geocodeStream`).
  */
 export async function ingestRow(

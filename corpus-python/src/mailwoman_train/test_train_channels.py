@@ -1,4 +1,4 @@
-"""Structural parity test for the collate → ``_to_tensor_batch`` seam (#1349).
+"""Structural parity test for the collate → ``_to_tensor_batch`` boundary (#1349).
 
 Every optional channel travels the same three-hop path: the loader paints per-piece features onto
 ``EncodedExample``, ``collate`` emits them keyed by name, and ``_to_tensor_batch`` converts each key

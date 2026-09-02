@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pins the pure seams of the sub-venue extractor: the hstore parser, the per-layer OGRSQL builder,
+ *   Pins the pure interfaces of the sub-venue extractor: the hstore parser, the per-layer OGRSQL builder,
  *   the tag-rule matcher, and the feature decoder. `extractOSMSubVenues` itself spawns `ogr2ogr` and
  *   is not exercised here (GDAL is not a test dependency) — but the GeoJSON feature literals below
  *   are NOT invented. They are the verbatim stdout of the system `ogr2ogr` (GDAL 3.8.4) run against

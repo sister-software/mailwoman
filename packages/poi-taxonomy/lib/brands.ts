@@ -34,7 +34,7 @@ export function lookupPOIBrand(text: string) {
 }
 
 /**
- * The single best (highest-`rows`) brand for an exact-phrase match, if any — the chaining seam for part 2.
+ * The single best (highest-`rows`) brand for an exact-phrase match, if any — the chaining point for part 2.
  */
 export function resolveBrandName(name: string): BrandRecord | undefined {
 	return CORE.resolveBrandName(name)

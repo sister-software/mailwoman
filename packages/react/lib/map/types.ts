@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Types for the geocoder-demo map surface. Mirrors the pipeline seam: the package owns the UI state
+ *   Types for the geocoder-demo map surface. Mirrors the pipeline boundary: the package owns the UI state
  *   machine + the declarative map, while the host injects a {@link DemoRuntime} that owns ONNX / httpvfs
  *   / R2 and the composed map style. {@link DemoRuntime} EXTENDS {@link PipelineRuntime} so the shared
  *   `runParse` / `parseStageLabels` / `loading` contract is reused, and adds the map-specific surface

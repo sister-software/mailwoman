@@ -215,8 +215,8 @@ export const ORACLE_VERDICT_NOTE =
 
 /**
  * What this module needs from a reference-geocoder client. Narrower than either real one on purpose: it is the
- * transport seam a test replaces, and a seam shaped like the whole client invites a test to assert its own idea of the
- * provider's protocol.
+ * transport interface a test replaces, and a seam shaped like the whole client invites a test to assert its own idea of
+ * the provider's protocol.
  */
 export interface OracleGeocoderLike extends AsyncDisposable {
 	geocodeOne(input: string): Promise<OracleGeocodeResult[]>

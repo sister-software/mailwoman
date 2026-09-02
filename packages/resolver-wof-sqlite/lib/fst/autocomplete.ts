@@ -85,7 +85,7 @@ function topByReferential(entries: readonly PlaceEntry[], k: number): PlaceEntry
 }
 
 /**
- * {@link FSTMatcher} presented through ancestrie's storage seam. Records carry the {@link PlaceEntry} itself as the
+ * {@link FSTMatcher} presented through ancestrie's storage interface. Records carry the {@link PlaceEntry} itself as the
  * payload, so the entry that WINS the algorithm's shallowest-depth rule is the entry whose fields the suggestion
  * reports — a side lookup keyed on id could pick a different surface's row (`crossCountryBranches` differs per
  * surface).

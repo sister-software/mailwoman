@@ -121,8 +121,8 @@ afterEach(() => {
 })
 
 /**
- * A client with every timing seam pinned: an immediately-resolving clock, an isolated cache directory, and the stub
- * transport as its only route to "the network".
+ * A client with every timing dependency pinned: an immediately-resolving clock, an isolated cache directory, and the
+ * stub transport as its only route to "the network".
  */
 function clientFor(transport: StubTransport, overrides: Parameters<typeof createBDCClient>[0] = {}) {
 	return createBDCClient({

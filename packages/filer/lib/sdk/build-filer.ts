@@ -235,13 +235,13 @@ const STAGE_BATCH_SIZE = 10_000
 
 export interface BuildFilerOptions {
 	/**
-	 * Injected Form 499 row source — the test seam. When given, `form499Path` is ignored and no filesystem read happens
-	 * for this source.
+	 * Injected Form 499 row source — the TEST INJECTION POINT. When given, `form499Path` is ignored and no filesystem
+	 * read happens for this source.
 	 */
 	form499Rows?: AsyncIterable<Form499Row> | Iterable<Form499Row>
 	/**
-	 * Injected provider-list row source — the test seam. When given, `providerListPath` is ignored and no filesystem read
-	 * happens for this source.
+	 * Injected provider-list row source — the TEST INJECTION POINT. When given, `providerListPath` is ignored and no
+	 * filesystem read happens for this source.
 	 */
 	providerRows?: AsyncIterable<ProviderListRow> | Iterable<ProviderListRow>
 	/**

@@ -27,9 +27,9 @@ import { assertISODate } from "#sdk/guards"
  * in JS, so that branch is already skipped before this function is ever reached there; the guard is unreachable on that
  * path, not merely redundant. On the provider-list path `ProviderListRow.frn` is typed as always-present (`FRN`, never
  * `FRN | null`), and {@linkcode parseProviderList} validates it via `toFRN` on the production (file-reading) route — but
- * the `providerRows` TEST SEAM bypasses that parser entirely. Without this guard, two rows for two DIFFERENT, unrelated
- * providers each carrying a blank `frn` would silently mint and share ONE degenerate `frn:` node — a false identity
- * link joining unrelated filers, the worst failure class this crosswalk can produce.
+ * the `providerRows` TEST INJECTION POINT bypasses that parser entirely. Without this guard, two rows for two
+ * DIFFERENT, unrelated providers each carrying a blank `frn` would silently mint and share ONE degenerate `frn:` node —
+ * a false identity link joining unrelated filers, the worst failure class this crosswalk can produce.
  */
 export function mintFRNNodeID(frn: string, context: string): string {
 	if (frn.trim() === "") {
@@ -142,10 +142,10 @@ export function assertProviderValidFrom(validFrom: string | undefined): string {
 /**
  * Mints the `bdc_provider_id:` node id, throwing when `providerID` is not a safe integer — mirrors `peekProviderID`'s
  * `Number.isSafeInteger` guard (`build-bdc.ts`:259). `ProviderListRow.providerID` is already validated by
- * {@linkcode parseProviderList} on the production (file-reading) path, but the `providerRows` TEST SEAM bypasses that
- * parser entirely — a directly-constructed row with a `NaN` `providerID` would otherwise mint the node id string
- * `"bdc_provider_id:NaN"`, silently merging every malformed row under that one shared identity, the same failure class
- * `build-filer.ts`'s module docstring describes for `form499ID`.
+ * {@linkcode parseProviderList} on the production (file-reading) path, but the `providerRows` TEST INJECTION POINT
+ * bypasses that parser entirely — a directly-constructed row with a `NaN` `providerID` would otherwise mint the node id
+ * string `"bdc_provider_id:NaN"`, silently merging every malformed row under that one shared identity, the same failure
+ * class `build-filer.ts`'s module docstring describes for `form499ID`.
  */
 export function mintProviderNodeID(providerID: number, rowIndex: number): string {
 	if (!Number.isSafeInteger(providerID)) {

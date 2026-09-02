@@ -5,7 +5,7 @@
  *
  *   The four pre-registered 2a acceptance gates for `filingLandscape` — this whole phase
  *   is judged by these. Each gate builds (or reuses) a fixture `bdc.db` via `buildBDCDatabase`'s
- *   `rows:` test seam, feeding one location per (geoid, provider, technology) triple so the census in
+ *   `rows:` TEST INJECTION POINT, feeding one location per (geoid, provider, technology) triple so the census in
  *   Gate 3 is hand-verifiable without any BSL/location_id collapsing to reason about.
  *
  *   Fixture: 3 known blocks (SF, NY, and a THIRD block — "DIVERGENT" — chosen because its directly

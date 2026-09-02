@@ -194,9 +194,9 @@ export interface CreateGoogleGeocoderClientOptions {
 	 */
 	language?: string
 	/**
-	 * Axios overrides, merged over this client's own defaults. THE TEST SEAM: every test passes an `adapter` here, so no
-	 * test in this workspace performs a live network call. Overriding `params` wholesale would drop the API key, so
-	 * don't.
+	 * Axios overrides, merged over this client's own defaults. THE TEST INJECTION POINT: every test passes an `adapter`
+	 * here, so no test in this workspace performs a live network call. Overriding `params` wholesale would drop the API
+	 * key, so don't.
 	 */
 	axios?: APIClientConfig["axios"]
 }

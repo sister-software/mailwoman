@@ -132,12 +132,12 @@ export interface ResolveWeightsOpts {
 	tier?: "server" | "pocket"
 	/**
 	 * Override the user-level weights cache root probed after package resolution fails (plan 3 guard). Defaults to
-	 * {@link weightsCacheDir}. Primarily a test seam.
+	 * {@link weightsCacheDir}. Primarily a TEST INJECTION POINT.
 	 */
 	cacheRoot?: PathBuilderLike | null
 	/**
 	 * Override the data-root weights overlay root probed when the package carries no binaries. Defaults to
-	 * {@link weightsOverlayRoot}. Primarily a test seam.
+	 * {@link weightsOverlayRoot}. Primarily a TEST INJECTION POINT.
 	 */
 	overlayRoot?: string
 }
