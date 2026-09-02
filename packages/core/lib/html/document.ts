@@ -14,7 +14,7 @@
 
 import render from "dom-serializer"
 import type { AnyNode } from "domhandler"
-import { findAll, removeElement } from "domutils"
+import { findAll, removeElement, textContent } from "domutils"
 import { parseDocument } from "htmlparser2"
 
 export interface DocumentSliceOptions {
@@ -56,4 +56,62 @@ export function sliceDocument(html: string, options: DocumentSliceOptions = {}):
 	// `roots` is the live children array of the envelope (or the document), and `removeElement` splices each
 	// node out of its own parent — so the array read here is already the narrowed window.
 	return render(roots)
+}
+
+/**
+ * Whether to read `markup` as XML. XML mode keeps tag case and treats every element as needing an explicit close, which
+ * is what an OGC exception report, an FGDC metadata document, or an S3 listing want. HTML mode recovers unclosed tags
+ * the way a browser does, which is what a filing wants.
+ */
+export interface MarkupQueryOptions {
+	xml?: boolean
+}
+
+/**
+ * The LOCAL name of an element — `gco:CharacterString` is `characterstring`. A namespace prefix is the publisher's
+ * choice of alias and two documents from the same service can spell it differently; the local name is the contract.
+ */
+function localName(name: string): string {
+	const colon = name.lastIndexOf(":")
+
+	return (colon === -1 ? name : name.slice(colon + 1)).toLowerCase()
+}
+
+/**
+ * The text of every element named `name`, in document order — namespace prefix ignored, entities decoded, nested markup
+ * flattened to its text. An empty array when the document states no such element, which is a real answer: the element
+ * is absent, as distinct from present and empty.
+ */
+export function elementTexts(markup: string, name: string, options: MarkupQueryOptions = {}): string[] {
+	const wanted = localName(name)
+	const document = parseDocument(markup, { decodeEntities: true, xmlMode: options.xml ?? false })
+
+	return findAll((element) => localName(element.name) === wanted, document).map((element) => textContent(element))
+}
+
+/**
+ * The text of the FIRST element named `name`, or `undefined` when the document states none.
+ */
+export function elementText(markup: string, name: string, options: MarkupQueryOptions = {}): string | undefined {
+	return elementTexts(markup, name, options).at(0)
+}
+
+/**
+ * One attribute of the document's ROOT element, or `undefined` when the root carries no such attribute. Asked of the
+ * root specifically, so a value repeated on a descendant cannot answer for the document — the count a service reports
+ * for a collection is a property of the collection, and a regex over the whole body cannot tell the two apart.
+ */
+export function rootAttribute(markup: string, attribute: string, options: MarkupQueryOptions = {}): string | undefined {
+	const document = parseDocument(markup, { decodeEntities: true, xmlMode: options.xml ?? false })
+	const root = findAll(() => true, document).at(0)
+
+	if (!root) return undefined
+
+	const wanted = attribute.toLowerCase()
+
+	for (const [key, value] of Object.entries(root.attribs)) {
+		if (localName(key) === wanted) return value
+	}
+
+	return undefined
 }

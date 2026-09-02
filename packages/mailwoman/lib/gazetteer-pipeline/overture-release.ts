@@ -20,6 +20,7 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
+import { elementText, elementTexts } from "@mailwoman/core/html/document"
 
 const BUCKET_URL = "https://overturemaps-us-west-2.s3.amazonaws.com"
 
@@ -39,6 +40,13 @@ export interface OvertureListingClient {
 	}): Promise<{ data: unknown }>
 }
 
+/**
+ * S3 returns at most 1,000 keys per `ListObjectsV2` response and reports the cut in `IsTruncated`. A reader that only
+ * matches `<Prefix>` cannot see that field, so a truncated first page reads as the whole bucket — and every release
+ * past the cut reads as PRUNED, which is the one answer this module exists to give correctly.
+ */
+const LISTING_PAGE_LIMIT = 100
+
 export async function listOvertureReleases(client?: OvertureListingClient): Promise<string[]> {
 	const api =
 		client ??
@@ -47,16 +55,49 @@ export async function listOvertureReleases(client?: OvertureListingClient): Prom
 			axios: { baseURL: BUCKET_URL, timeout: 30_000 },
 		})
 
-	const response = await api.fetch<string>({
-		url: "/",
-		params: { "list-type": 2, prefix: "release/", delimiter: "/" },
-		responseType: "text",
-	})
+	const releases: string[] = []
+	let continuationToken: string | undefined
 
-	return [...String(response.data).matchAll(/<Prefix>release\/([^<]+?)\/?<\/Prefix>/g)]
-		.map((match) => match[1]!)
-		.filter((release) => release.length > 0)
-		.toSorted()
+	for (let page = 0; page < LISTING_PAGE_LIMIT; page++) {
+		const response = await api.fetch<string>({
+			url: "/",
+			params: {
+				"list-type": 2,
+				prefix: "release/",
+				delimiter: "/",
+				...(continuationToken ? { "continuation-token": continuationToken } : {}),
+			},
+			responseType: "text",
+		})
+
+		const body = String(response.data)
+
+		// EVERY `<Prefix>` element, which includes the request echo `<Prefix>release/</Prefix>` beside the
+		// `<CommonPrefixes>` entries. The echo reduces to an empty name and is dropped with any other.
+		for (const prefix of elementTexts(body, "Prefix", { xml: true })) {
+			const release = prefix.replace(/^release\//, "").replace(/\/$/, "")
+
+			if (release) {
+				releases.push(release)
+			}
+		}
+
+		if (elementText(body, "IsTruncated", { xml: true })?.trim() !== "true") {
+			return releases.toSorted()
+		}
+
+		continuationToken = elementText(body, "NextContinuationToken", { xml: true })?.trim()
+
+		if (!continuationToken) {
+			throw new Error(
+				"overture release listing: the bucket reported IsTruncated with no NextContinuationToken, so the remaining releases cannot be read — a short list here would read as a pruned release"
+			)
+		}
+	}
+
+	throw new Error(
+		`overture release listing: still truncated after ${LISTING_PAGE_LIMIT} pages (${releases.length} releases read) — refusing to report a partial list as the bucket's contents`
+	)
 }
 
 export interface ReleaseCheck {

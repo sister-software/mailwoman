@@ -170,7 +170,9 @@ export async function geocodeFirstSurface(
 		prior: PRIOR,
 	}
 
-	const safe = JSON.stringify(data).replaceAll(/<\/script>/gi, "<\\/script>")
+	// EVERY `<`, not only `</script>`: `<!--` also leaves script-data state in the HTML tokenizer, after which a
+	// later `</script>` no longer ends the element. `\u003c` is the same string to a JSON reader.
+	const safe = JSON.stringify(data).replaceAll("<", "\\u003c")
 
 	const html = `<!doctype html><html><head><meta charset="utf-8"/>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>

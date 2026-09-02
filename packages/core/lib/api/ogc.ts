@@ -9,6 +9,7 @@
  */
 
 import type { APIClient } from "#api/APIClient"
+import { rootAttribute } from "#html/document"
 
 /**
  * Ordinates in a CRS84 bounding box: `minLon, minLat, maxLon, maxLat`. A shorter array is a 3D extent this reader does
@@ -112,13 +113,22 @@ export async function readWFSFeatureCount(
 		},
 	})
 
-	const matched = /numberMatched="(?<count>\d+)"/u.exec(data)
+	// The ROOT element's attribute, not the first match anywhere in the body: the count describes the collection,
+	// and a regex cannot tell that apart from the same attribute repeated on a nested member.
+	const numberMatched = rootAttribute(data, "numberMatched", { xml: true })
+	const subject = options.subject === undefined ? "" : ` for ${options.subject}`
 
-	if (!matched?.groups?.count) {
+	if (numberMatched === undefined) {
+		throw new Error(`${options.context}: the WFS hits response${subject} carried no numberMatched attribute`)
+	}
+
+	// WFS 2.0 permits `numberMatched="unknown"`, which is the server declining to count rather than a count of
+	// zero. Reporting it as "no attribute" would name the wrong fact, and returning 0 would invent one.
+	if (!/^\d+$/u.test(numberMatched)) {
 		throw new Error(
-			`${options.context}: the WFS hits response${options.subject === undefined ? "" : ` for ${options.subject}`} carried no numberMatched attribute`
+			`${options.context}: the WFS hits response${subject} reported numberMatched=${JSON.stringify(numberMatched)} rather than a count — the server declined to count the matches, which is not the same as matching none`
 		)
 	}
 
-	return Number(matched.groups.count)
+	return Number(numberMatched)
 }

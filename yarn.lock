@@ -5420,6 +5420,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
+    entities: "npm:^6.0.0"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.4"
     path-ts: "npm:^2.3.0"

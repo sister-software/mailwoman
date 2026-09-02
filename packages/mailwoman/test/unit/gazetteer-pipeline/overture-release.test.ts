@@ -38,6 +38,42 @@ describe("listOvertureReleases", () => {
 	it("returns an empty list for a listing with no prefixes rather than throwing", async () => {
 		expect(await listOvertureReleases(clientReturning("<ListBucketResult></ListBucketResult>"))).toEqual([])
 	})
+
+	it("ignores the request's own echoed prefix, which is not a release", async () => {
+		const echoed = `<ListBucketResult><Prefix>release/</Prefix>
+			<CommonPrefixes><Prefix>release/2026-08-19.0/</Prefix></CommonPrefixes></ListBucketResult>`
+
+		expect(await listOvertureReleases(clientReturning(echoed))).toEqual(["2026-08-19.0"])
+	})
+
+	it("follows the continuation token, so a bucket past S3's 1,000-key page reports every release", async () => {
+		const pages = [
+			`<ListBucketResult><IsTruncated>true</IsTruncated><NextContinuationToken>page-2</NextContinuationToken>
+				<CommonPrefixes><Prefix>release/2026-07-22.0/</Prefix></CommonPrefixes></ListBucketResult>`,
+			`<ListBucketResult><IsTruncated>false</IsTruncated>
+				<CommonPrefixes><Prefix>release/2026-08-19.0/</Prefix></CommonPrefixes></ListBucketResult>`,
+		]
+
+		const seen: Array<string | undefined> = []
+
+		const paging = {
+			fetch: async (request: { params?: Record<string, string | number> }) => {
+				seen.push(request.params?.["continuation-token"] as string | undefined)
+
+				return { data: pages[seen.length - 1]! }
+			},
+		} satisfies OvertureListingClient
+
+		expect(await listOvertureReleases(paging)).toEqual(["2026-07-22.0", "2026-08-19.0"])
+		expect(seen).toEqual([undefined, "page-2"])
+	})
+
+	it("refuses a truncated listing that carries no continuation token rather than reporting a short list", async () => {
+		const truncated = `<ListBucketResult><IsTruncated>true</IsTruncated>
+			<CommonPrefixes><Prefix>release/2026-07-22.0/</Prefix></CommonPrefixes></ListBucketResult>`
+
+		await expect(listOvertureReleases(clientReturning(truncated))).rejects.toThrow(/NextContinuationToken/)
+	})
 })
 
 describe("the empty listing", () => {
