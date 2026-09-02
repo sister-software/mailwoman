@@ -279,6 +279,11 @@ const BANNED_VOCABULARY = /\b[A-Za-z_]*shard[A-Za-z_]*\b/giu
 const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason: string]> = [
 	["scripts/repo-health.ts", "the pattern above has to spell the word it bans"],
 	["docs/styles/", "the Vale rules that REFUSE the word must name it"],
+	[
+		"scripts/vocab-census.ts",
+		"the ambiguous-shorthand census files a match under one of four words and must name each",
+	],
+	["docs/scripts/vale-fixtures/dirty.ts", "a Vale fixture whose purpose is to keep failing, permanently"],
 	[".claude/output-styles/", "the same refusal list, mirrored for agent replies"],
 	["AGENTS.md", "carries that refusal list, plus the note recording that this family reached zero"],
 	// RECORDS ARE NOT EXEMPT, and that is a deliberate reversal. They were exempt on the reasoning that

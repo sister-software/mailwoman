@@ -20,14 +20,14 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { isProcessError, runFile } from "@mailwoman/core/process"
-import { scriptEntryPath } from "@mailwoman/core/scripting/arguments"
+import { parseArguments, scriptEntryPath } from "@mailwoman/core/scripting/arguments"
 import { resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 /**
  * A Vale `--output line` record: `path:line:col:Rule:message`.
  */
-const HIT_PATTERN = /^(.*?):(\d+):(\d+):Mailwoman\.AmbiguousShorthand:'([^']+)'/
+const HIT_PATTERN = /^(.*?):(\d+):(\d+):Mailwoman\.AmbiguousShorthand(?:Code)?:'([^']+)'/
 
 /**
  * Names that keep their spelling — `AGENTS.md` lists them as contract-bearing. A hit naming one of these is a
@@ -140,6 +140,23 @@ export function classify(hitLines: readonly string[], sources: ReadonlyMap<strin
 }
 
 /**
+ * Which of the four words a match belongs to. Searched ANYWHERE in the token, not at its start: the code rule matches
+ * the whole compound, so `promotion-gate` is a `gate` and a prefix test files it under whichever family the
+ * fall-through names.
+ */
+export function wordFamily(word: string): "gate" | "seam" | "shard" | "cut" {
+	const lower = word.toLowerCase()
+
+	if (lower.includes("gat")) return "gate"
+
+	if (lower.includes("seam")) return "seam"
+
+	if (lower.includes("shard")) return "shard"
+
+	return "cut"
+}
+
+/**
  * Counts by remedy, then by modifier within the rename bucket — the two numbers that size the sweep. Printed rather
  * than written to a baseline file: this is a measuring instrument for a sweep that ends at zero, not a debt counter
  * that ratchets.
@@ -153,15 +170,7 @@ export function report(hits: readonly Hit[]): string {
 	for (const hit of hits) {
 		byRemedy.set(hit.remedy, (byRemedy.get(hit.remedy) ?? 0) + 1)
 
-		const family = hit.word.toLowerCase().startsWith("gat")
-			? "gate"
-			: hit.word.toLowerCase().startsWith("seam")
-				? "seam"
-				: hit.word.toLowerCase().startsWith("cut")
-					? "cut"
-					: "shard"
-
-		byWord.set(family, (byWord.get(family) ?? 0) + 1)
+		byWord.set(wordFamily(hit.word), (byWord.get(wordFamily(hit.word)) ?? 0) + 1)
 		files.add(hit.path)
 
 		if (hit.remedy === Remedy.renameCheck) {
@@ -226,25 +235,33 @@ async function collectHits(root: string): Promise<string[]> {
 
 	return TextSpliterator.from(result.stdout)
 		.toArray()
-		.filter((line) => line.includes("Mailwoman.AmbiguousShorthand"))
+		.filter((line) => HIT_PATTERN.test(line))
 }
 
 /**
- * A file this repository is certain to hit, because it necessarily contains the words it counts: `repo-health.ts`
- * states the banned vocabulary as a constant and describes the checks around it. If the census reports nothing here,
- * the run resolved no files and its zero means "not measured", not "clean".
+ * A file that must always trip, so a reported zero is distinguishable from a run that resolved no files. The Vale
+ * fixture is the right control precisely because it is PERMANENT: every other file carrying these words is scheduled to
+ * lose them, and a control the sweep eventually cleans stops proving anything on the day it matters most.
  */
-const POSITIVE_CONTROL = "scripts/repo-health.ts"
+const POSITIVE_CONTROL = "docs/scripts/vale-fixtures/dirty.ts"
 
-if (import.meta.filename === scriptEntryPath()) {
+/**
+ * Paths whose hits DO NOT count, and why each is excluded. The set measured is every tracked source minus these — the
+ * denominator the count is reported against.
+ *
+ * Each states the vocabulary as DATA rather than using it as prose, so counting them measures the instrument instead of
+ * the repository and the target of zero could never be reached.
+ */
+const UNMEASURED: ReadonlyArray<readonly [path: string, reason: string]> = [
+	["docs/scripts/vale-fixtures/", "the rule's own fixtures; the dirty one must keep failing forever"],
+	["scripts/vocab-census.ts", "this file — its exceptions pattern has to spell the words it classifies"],
+	["scripts/vocab-census.test.ts", "its cases are lines of source quoted verbatim"],
+	["scripts/repo-health.ts", "its banned-vocabulary constant has to spell the word it counts"],
+]
+
+async function main(): Promise<void> {
 	const root = String(repoRootPath())
 	const hitLines = await collectHits(root)
-
-	if (!hitLines.some((line) => line.startsWith(POSITIVE_CONTROL))) {
-		throw new Error(
-			`vocab-census: the positive control ${POSITIVE_CONTROL} reported no hits, so Vale resolved no files — this run measured nothing and its count is not an absence`
-		)
-	}
 
 	const paths = new Set<string>()
 
@@ -271,5 +288,46 @@ if (import.meta.filename === scriptEntryPath()) {
 		})
 	)
 
-	console.log(report(classify(hitLines, sources)))
+	const hits = classify(hitLines, sources)
+
+	// Asserted on the CLASSIFIED hits, not on the raw Vale lines. A control that greps the raw
+	// output tests a different string than the classifier parses: renaming the rule to
+	// `AmbiguousShorthandCode` kept every raw line matching a substring check while the classifier's
+	// pattern matched none, and the census reported a clean tree.
+	if (!hits.some((hit) => hit.path === POSITIVE_CONTROL)) {
+		throw new Error(
+			`vocab-census: the positive control ${POSITIVE_CONTROL} classified no hits, so this run measured nothing — its count is not an absence`
+		)
+	}
+
+	// Excluded AFTER the control is checked, never before: the control must be measured to prove the run resolved
+	// files, and excluded to keep the target of zero reachable.
+	const counted = hits.filter((hit) => !UNMEASURED.some(([path]) => hit.path.startsWith(path)))
+
+	const { values } = parseArguments({
+		options: { remedy: { type: "string" }, modifier: { type: "string" } },
+		allowPositionals: false,
+	})
+
+	if (!values.remedy && !values.modifier) {
+		console.log(report(counted))
+
+		return
+	}
+
+	// Site listing, for working one bucket at a time. Every PR in the sweep carries ONE remedy or
+	// ONE sense, so a reviewer checks a single rationale rather than each edit on its own.
+	const selected = counted.filter(
+		(hit) => (!values.remedy || hit.remedy === values.remedy) && (!values.modifier || hit.modifier === values.modifier)
+	)
+
+	for (const hit of selected) {
+		console.log(`${hit.path}:${hit.line}\t${hit.word}\t${hit.modifier}`)
+	}
+
+	console.error(`${selected.length} of ${counted.length} hits`)
+}
+
+if (import.meta.filename === scriptEntryPath()) {
+	await main()
 }

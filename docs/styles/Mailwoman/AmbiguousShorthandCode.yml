@@ -1,0 +1,57 @@
+## Mailwoman house style: banned ambiguous shorthand, SOURCE-COMMENT variant.
+##
+## Same four words and the same reason as Mailwoman/AmbiguousShorthand.yml.
+## This file exists because the escape hatch that rule depends on is a
+## property of Vale's MARKDOWN parser, and the comment scanner has none.
+##
+## That rule's docstring says contracts "survive by being written as
+## contracts ... `mailwoman eval gate`, `@mailwoman/locale-gate` and
+## `promotion-gate.ts` all pass when they are backticked". Measured on
+## @vvago/vale 3.17.0 against a .ts file: they do not. Vale extracts comment
+## prose and hands the raw text to the rules, so a backticked identifier in a
+## `//` or `/** */` comment is flagged exactly like bare prose. `TokenIgnores`
+## does not reach it either.
+##
+## So the contract is protected by NAME instead of by formatting. The tokens
+## below admit an optional hyphenated prefix, which makes the MATCHED string
+## the whole compound — `promotion-gate` rather than `gate` — and `exceptions`
+## filters on the match. Backticks around these remain correct style and are
+## unaffected either way.
+##
+## `cut` deliberately keeps its bare form. A compound token for it would match
+## the `cut` inside `executed`, and no contract-bearing name here is spelled
+## `<something>-cut`.
+##
+## Renaming any name in the exceptions list is a separate, operator-approved
+## change; adding one means a new contract-bearing identifier exists.
+extends: existence
+message: "'%s' is ambiguous shorthand — name the concrete thing (the check by its name, the artifact by its filename, the boundary by its interface) or use a plain verb. Backticks do NOT exempt a code comment; a contract-bearing identifier belongs in this rule's exceptions list."
+level: error
+ignorecase: true
+## Every entry is a REAL artifact: a package, a command, or a tracked filename. Prose that means
+## one of them must spell it in full, which is the "name the artifact by its filename" remedy
+## rather than an escape from it. `locale-gated` is deliberately ABSENT — an inflected verb form
+## is the ambiguous usage, and "restricted to the locale" is the plain verb it should be.
+exceptions:
+  - promotion-gate
+  - locale-gate
+  - "@mailwoman/locale-gate"
+  - v1-parse-gate
+  - boundary-stress-gate
+  - fr-admin-split-gate
+  - mwdev_gate
+tokens:
+  ## The hyphenated prefix REPEATS, because a real filename carries more than one segment:
+  ## `v1-parse-gate`, `boundary-stress-gate`, `fr-admin-split-gate`. A single optional prefix
+  ## matches only the last segment, and the exception then filters nothing.
+  ##
+  ## Hyphen only, never a space. Admitting a space lets a match run across words, so a leading
+  ## `the` becomes part of it and every exception would need a spelling per preceding word. A
+  ## comment meaning the promotion eval names `promotion-gate.ts`, which is exempt.
+  ##
+  ## `cut` keeps its bare form: a prefixed token would match the `cut` inside `executed`, and no
+  ## artifact here is spelled `<something>-cut`.
+  - '(?:[\w@/.]+-)*gat(?:e|es|ed|ing)'
+  - '(?:[\w@/.]+-)*seam(?:s)?'
+  - '(?:[\w@/.]+-)*shard(?:s|ed|ing)?'
+  - 'cut(?:s|ting)?'

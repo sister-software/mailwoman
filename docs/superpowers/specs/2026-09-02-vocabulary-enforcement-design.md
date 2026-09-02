@@ -5,7 +5,8 @@
 
 ## The problem
 
-`AGENTS.md` states that four words — `gate`, `shard`, `seam`, `cut` — are banned "in replies AND in
+`AGENTS.md` states that four words — `gate`, `seam`, `cut` and the retired one `repo-health` already
+counts — are banned "in replies AND in
 every committed prose surface", because each stands for four or five different things and a reader
 cannot tell which one a sentence means. Three Vale configs enforce parts of that claim, and the
 claim is wider than the enforcement:
@@ -25,7 +26,7 @@ Two consequences, both measured at `9996e8f60`:
    same run now reports **213**.
 2. **Source comments are unenforced.** 2,638 tracked `.ts`/`.tsx`/`.py` files carry **2,014**
    `AmbiguousShorthand` hits across **619** files. The only code-side vocabulary check is
-   `repo-health`'s `bannedVocabulary` counter, which covers the retired `shard` family alone.
+   `repo-health`'s `bannedVocabulary` counter, which covers the retired word alone.
 
 Vale reads comment prose in all three languages correctly — it extracts comments and ignores code —
 so the gap is a missing config section, not a missing tool.
@@ -45,7 +46,7 @@ the acronym-casing convention already exempts them and this ban follows the same
 
 ## Why a sense census comes before any rewrite
 
-`shard` reached zero occurrences from 3,481 only after its four concepts were named — a corpus
+The retired word reached zero occurrences from 3,481 only after its four concepts were named — a corpus
 recipe, a corpus slice, a WOF extract, a region database — so each site had one agreed replacement
 rather than a per-site guess. `AGENTS.md` records that as the working precedent.
 
@@ -64,9 +65,13 @@ files:
 | `rename-check` | 956   | The modifier carries the check's real name: `street-context gate` → `the street-context check`. Top modifiers: `street-context` 32, `delta` 20, `test` 19, `country` 27, `acceptance` 11, `postcode` 9, `§7-3b` 9, `existence` 8, `interval` 7, `detection` 6. | verify the modifier is the real name |
 | `read-context` | 895   | The site says only "the gate" / "a gate". Which check it means is learnable solely from the surrounding paragraph.                                                                                                                                             | full                                 |
 
-By word family: `gate` 1,741, `seam` 158, `cut` 114, `shard` 1. The single `shard` is
-`scripts/repo-health.ts`'s own `BANNED_VOCABULARY` constant, which necessarily contains the word it
+By word family: `gate` 1,741, `seam` 158, `cut` 114, and one occurrence of the retired word — which
+is `scripts/repo-health.ts`'s own `BANNED_VOCABULARY` constant, necessarily containing the word it
 counts.
+
+This paragraph does not spell that word, deliberately, for the reason its counter's docstring gives:
+the ratchet is written in the language it polices, and prose that spells it raises the count it is
+reporting on.
 
 ## Order of work
 
