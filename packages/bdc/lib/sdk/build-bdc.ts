@@ -339,7 +339,7 @@ interface GeoJSONMultiPolygon {
  * rings for a MultiPolygon. Interior rings/holes are still ignored — a hole moves a block's centroid far less than the
  * vertex-density skew this replaces, and only 1.0% of measured blocks carry one.
  *
- * This REPLACED the first cut's vertex-average, whose "same res-9 cell for all but pathological shapes" claim was
+ * This REPLACED the first version's vertex-average, whose "same res-9 cell for all but pathological shapes" claim was
  * falsified by measurement over every real TIGER 2020 block in LA + Orange county (118,360 blocks, 2026-08-11): the
  * vertex-average landed in a different res-9 cell for 11.6% of blocks, p99 displacement 286 m (past the ~174 m cell
  * edge), max 3.7 km — the tail is TIGER's elongated rural/mountain blocks, whose boundary vertices cluster on the

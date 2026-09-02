@@ -142,7 +142,7 @@ BOARD_BUCKET_MIN = 97
 # runs at S=96 units and ``encode_row_units`` truncates past that SILENTLY, so the slice must not
 # contain a row that cannot fit. 64 leaves 32 characters of headroom for everything rendering adds:
 # 〒NNN-NNNN + space (10), 日本 (2), three separator spaces, and the designator register's kanji.
-# Measured distribution: median rendered row is 18 characters, so this cuts far out in the tail.
+# Measured distribution: median rendered row is 18 characters, so this truncates far out in the tail.
 MAX_FIELD_CHARS = 64
 
 # The hard invariant the guard above exists to produce. Violation RAISES — reaching it means the

@@ -39,7 +39,7 @@ const PTCODES = new Map([
 ])
 
 /**
- * Fixture-scale stand-in for {@link GLOSS_KEY_THRESHOLD}: the production cut is a property of the real key
+ * Fixture-scale stand-in for {@link GLOSS_KEY_THRESHOLD}: the production threshold is a property of the real key
  * distribution, so a test that reused it would need 50 aliases per place to say anything.
  */
 const THRESHOLD = 3
@@ -311,7 +311,7 @@ describe("stampNameRoles: the key-tail census", () => {
 			[]
 		)
 
-		// Toledo is below the cut, so it is not in the denominator; New York is, and carries no role.
+		// Toledo is below the threshold, so it is not in the denominator; New York is, and carries no role.
 		expect(keyTailPlaces).toBe(2)
 		expect(keyTailWithRole).toBe(1)
 	})

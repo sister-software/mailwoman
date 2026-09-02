@@ -371,7 +371,7 @@ export function dominanceMarginLog10(places: readonly AblationPlace[]): number {
 }
 
 /**
- * Is the top candidate decisive — one place, or a population margin at or above the measured cut?
+ * Is the top candidate decisive — one place, or a population margin at or above the measured threshold?
  */
 export function isDecisive(places: readonly AblationPlace[]): boolean {
 	return places.length > 0 && dominanceMarginLog10(places) >= DECISIVE_MARGIN_LOG10

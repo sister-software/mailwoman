@@ -25,7 +25,7 @@
  *   That is an oracle the build gets for free: sum the manifest, compare against the rows actually
  *   parsed, and a truncated CSV or a silently-skipped area file fails loudly instead of shipping a
  *   slightly-short database. {@link parseCodePointMetadata} reads it and {@link ExtractCodePointResult}
- *   carries it forward. Verified against the 2026-05 cut: the manifest sums to 1,747,841 and the CSVs
+ *   carries it forward. Verified against the 2026-05 extract: the manifest sums to 1,747,841 and the CSVs
  *   hold exactly 1,747,841 rows.
  *
  *   Extraction is to disk rather than streamed in memory because the dated acquisition directory IS the

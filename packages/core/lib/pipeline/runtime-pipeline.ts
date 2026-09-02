@@ -390,7 +390,7 @@ export async function runPipeline(
 	// above — leaves the field unset and every result carries `[]`, which is the byte-stable pre-§4 behaviour.
 	//
 	// `declared_ambiguity` is deliberately ABSENT from this list: its trigger is the resolved candidate list's
-	// dominance margin, and the measured 0.5-log10 cut behind it lives in `mailwoman`'s eval harness, which core
+	// dominance margin, and the measured 0.5-log10 threshold behind it lives in `mailwoman`'s eval harness, which core
 	// cannot import (the dependency runs the other way). `mailwoman/query-intent.ts` adds it on the geocode path.
 	const intentMarkers: QueryIntentMarker[] = kind.intentMarkers ? [...kind.intentMarkers] : []
 

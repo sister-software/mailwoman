@@ -245,7 +245,7 @@ export function tostEquivalence(
 	if (standardErrorPP === 0) {
 		// A zero standard error is not zero uncertainty. It means both arms sat exactly at 0 or exactly at 1, where the
 		// normal approximation has no variance to offer and is simply the wrong instrument: two hits out of two is not
-		// evidence of parity. The Wilson interval — the same one `power.ts` cuts its bounds from — still has width
+		// evidence of parity. The Wilson interval — the same one `power.ts` derives its bounds from — still has width
 		// there, and the difference is bounded conservatively by the two half-widths together.
 		const halfWidthPP = (wilsonHalfWidth(successesA, n) + wilsonHalfWidth(successesB, n)) * PERCENT
 		const equivalent = Math.abs(deltaPP) + halfWidthPP <= boundPP

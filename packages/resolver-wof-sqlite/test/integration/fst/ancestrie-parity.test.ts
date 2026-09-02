@@ -222,7 +222,7 @@ describe("fst-autocomplete ↔ ancestrie parity — synthetic", () => {
 
 	// Root: new, san, chic, chicago, springfield. Behavior matrix in the states:
 	//  - "new london": referential TIE between city and county (tie order = insertion order).
-	//  - "springfield": SIX entries at one state — denser than PER_BRANCH, forcing the top-4 cut.
+	//  - "springfield": SIX entries at one state — denser than PER_BRANCH, forcing the top-4 limit.
 	//  - "new york": encyclopedic present + crossCountryBranches + a deep parent chain.
 	//  - wofID 4 reachable at BOTH "san francisco" (depth 2) and "chic …" BFS (the shallowest-depth rule).
 	//  - "chic" is a complete edge AND a prefix of "chicago" (the #587 shadowing case).

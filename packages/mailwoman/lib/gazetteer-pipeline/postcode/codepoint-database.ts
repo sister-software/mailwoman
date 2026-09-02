@@ -374,8 +374,8 @@ interface DatabaseMetaInput {
 /**
  * Bake the provenance record into the staging DB (pre-VACUUM, pre-seal — a shipped DB is never patched).
  *
- * The attribution year comes from OS's own `COPYRIGHT DATE`, not from the build clock: republishing a 2026 cut in 2027
- * still attributes the 2026 data. Both dates are stored so the distinction stays visible.
+ * The attribution year comes from OS's own `COPYRIGHT DATE`, not from the build clock: republishing a 2026 extract in
+ * 2027 still attributes the 2026 data. Both dates are stored so the distinction stays visible.
  */
 async function writeDatabaseMeta(db: DatabaseClient<WOFDatabase>, input: DatabaseMetaInput): Promise<void> {
 	await createDatabaseMetaTable(db)

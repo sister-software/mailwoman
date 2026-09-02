@@ -155,7 +155,7 @@ export interface OverpassElement {
 }
 
 /**
- * The Overpass JSON envelope. `osm3s.timestamp_osm_base` is the DATA cut this response reflects — a far more useful
+ * The Overpass JSON envelope. `osm3s.timestamp_osm_base` is the DATA extract this response reflects — a far more useful
  * provenance stamp than the wall clock at retrieval, and it is why the response is kept whole rather than reduced.
  */
 export interface OverpassResponse {
@@ -202,8 +202,8 @@ export interface AcquireNIPostcodesOptions {
 	destDir: string
 	/**
 	 * Reuse an existing `response.json` instead of re-querying. The DEFAULT and the point: Overpass is a volunteer
-	 * endpoint and the saved response is the reproducibility artifact. Set `false` only to take a deliberate new cut into
-	 * a NEW dated directory.
+	 * endpoint and the saved response is the reproducibility artifact. Set `false` only to take a deliberate new extract
+	 * into a NEW dated directory.
 	 */
 	reuseExisting?: boolean
 	client?: APIClient

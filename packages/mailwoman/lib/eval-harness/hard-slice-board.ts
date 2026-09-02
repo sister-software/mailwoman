@@ -33,7 +33,7 @@
  *       they are the arm comparison's hijack-risk population and are reported separately.
  *
  *   Reading `out` as "no bias applies" is the trap this field exists to prevent, and the builder's first
- *   cut fell into it by DECLARING `popBias: 0` for every `out` row instead of measuring. Both fields are
+ *   version fell into it by DECLARING `popBias: 0` for every `out` row instead of measuring. Both fields are
  *   measured for every row, always; a zero here means the FST accepted nothing for that surface, which is
  *   a fact about the gazetteer rather than a default.
  *

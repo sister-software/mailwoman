@@ -41,9 +41,9 @@ export interface OvertureListingClient {
 }
 
 /**
- * S3 returns at most 1,000 keys per `ListObjectsV2` response and reports the cut in `IsTruncated`. A reader that only
- * matches `<Prefix>` cannot see that field, so a truncated first page reads as the whole bucket — and every release
- * past the cut reads as PRUNED, which is the one answer this module exists to give correctly.
+ * S3 returns at most 1,000 keys per `ListObjectsV2` response and reports the truncation in `IsTruncated`. A reader that
+ * only matches `<Prefix>` cannot see that field, so a truncated first page reads as the whole bucket — and every
+ * release past the truncation reads as PRUNED, which is the one answer this module exists to give correctly.
  */
 const LISTING_PAGE_LIMIT = 100
 

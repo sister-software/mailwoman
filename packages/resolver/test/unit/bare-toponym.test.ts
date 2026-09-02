@@ -660,7 +660,7 @@ describe("bare-region dominance (#1650)", () => {
 	})
 
 	it("does NOT promote under the dominance margin (bare New York stays the city)", async () => {
-		// State 19.57M vs city 8.84M: log-margin 0.345, under the 0.5 cut — the famous city holds.
+		// State 19.57M vs city 8.84M: log-margin 0.345, under the 0.5 threshold — the famous city holds.
 		const out = await createWOFResolver(backend()).resolveTree(bare("New York"))
 		const root = out.roots[0]!
 

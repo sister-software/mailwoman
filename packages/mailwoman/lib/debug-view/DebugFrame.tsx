@@ -267,7 +267,7 @@ export function ribbonSegments(tree: AddressTree): RibbonSegment[] {
 }
 
 /**
- * The demo's confidence tiers (`react/pipeline/ConfidenceCell.tsx`): high at 0.8, medium at 0.5. Same cuts, so a
+ * The demo's confidence tiers (`react/pipeline/ConfidenceCell.tsx`): high at 0.8, medium at 0.5. Same thresholds, so a
  * component that reads green in the browser reads green here.
  */
 const HIGH_CONFIDENCE_MIN = 0.8

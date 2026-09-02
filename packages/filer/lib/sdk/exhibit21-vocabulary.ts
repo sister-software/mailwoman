@@ -163,7 +163,7 @@ export function carriesLegalDesignation(value: string): boolean {
  * are stated on wrapped rows.
  *
  * Each side is CUMULATIVE, not the adjacent block: a name may itself wrap across two blocks, and the question is
- * whether the cell can be cut in two, not whether two neighbours happen to look complete.
+ * whether the cell can be split in two, not whether two neighbours happen to look complete.
  */
 export function isMultiValueCell(blocks: readonly string[]): boolean {
 	for (let split = 1; split < blocks.length; split++) {

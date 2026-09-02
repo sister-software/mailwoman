@@ -13,7 +13,7 @@
  *   to canonical entities, and report the entities whose members span ≥2 sources — those are the
  *   cross-dataset links. We surface the correlation; interpretation is the consumer's.
  *
- *   Tractable cut: TX-scoped, capped per source. Streams the 4.8 GB NPPES registry via `streamRows`.
+ *   Tractable slice: TX-scoped, capped per source. Streams the 4.8 GB NPPES registry via `streamRows`.
  *
  *   Run: `mailwoman registry scorer-eval cross-dataset [--cap 300] [--wof <admin.db>]
  *   [--data-root <dir>] [--out-md docs/articles/evals/matcher-dedup/<date>-...md]`

@@ -15,7 +15,7 @@
  *   for more recall. Its known weakness is over-merging via transitive chains (a string of weak
  *   links can pull unrelated records into one component); the principled fix is
  *   centroid-/average-linkage hierarchical clustering (Dedupe), which uses the full within-cluster
- *   score matrix — a documented refinement, not this first cut. For a geocode-first matcher the
+ *   score matrix — a documented refinement, not this first version. For a geocode-first matcher the
  *   over-merge risk is already damped: blocking keeps candidate sets local, so chains can't run
  *   across the whole dataset.
  */

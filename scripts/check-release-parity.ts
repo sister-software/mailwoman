@@ -135,7 +135,7 @@ const cardModelVersion = normalizeVersion(localCard.version)
 const demoDefault = await readDemoDefaultVersion()
 
 // SECOND REFINEMENT (2026-07-24): the demo's parity contract is MODEL BYTES, not the bundle
-// number. Bundle revisions that change only decode-side artifacts (6.6.1: pair-index re-cut;
+// number. Bundle revisions that change only decode-side artifacts (6.6.1: pair-index rebuild;
 // 6.6.2: en-nz overlay) move the card version with ZERO model.onnx change — the demo serving the
 // previous bundle serves the IDENTICAL model, and can't even use the new artifacts until
 // neural-web grows pair-prior wiring (#1278). So a trailing defaultVersion passes IFF the

@@ -155,7 +155,7 @@ function elementPoint(element: OverpassElement): PostcodePoint | null {
  *
  * Records come back sorted by lookup `name`. Insertion order would also be deterministic given a fixed response file,
  * but it is deterministic THROUGH the file's element order — sorting makes the database's synthetic ids a function of
- * the postcode set alone, so a re-cut of OSM that adds one building does not renumber every place after it.
+ * the postcode set alone, so a rebuild of OSM that adds one building does not renumber every place after it.
  */
 export function parseNIPostcodes(response: OverpassResponse, stats: NIOSMParseStats): NIPostcodeRecord[] {
 	const groups = new Map<string, { display: string; points: PostcodePoint[] }>()

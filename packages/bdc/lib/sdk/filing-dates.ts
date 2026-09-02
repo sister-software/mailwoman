@@ -9,7 +9,7 @@
  *   {@linkcode BDCClient}.
  *
  *   CACHING MOVED TO THE CLIENT. Both the Nexus original (one `<filingType>-dates.json` per filing
- *   type) and this port's first cut (`dataRootPath("bdc", "cache", "filing-dates.json")`, unfiltered)
+ *   type) and this port's first version (`dataRootPath("bdc", "cache", "filing-dates.json")`, unfiltered)
  *   hand-rolled a JSON file cache here. `BDCClient` is built on `APIClient` and now carries an on-disk
  *   response cache of its own, so the hand-rolled one was the exact duplication that migration exists to
  *   remove — and it was worse than what replaced it: it had NO expiry, so a machine that resolved a

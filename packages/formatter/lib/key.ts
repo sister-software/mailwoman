@@ -15,7 +15,7 @@
  *
  *   Deliberately NOT done yet (follow-ups, all gated on `@mailwoman/codex`): expanding street
  *   suffixes (`Ave` → `avenue`) and directionals (`N` → `north`) to a canonical form, and
- *   USPS-style standardization. This first cut is pure normalization with no dictionary expansion,
+ *   USPS-style standardization. This first version is pure normalization with no dictionary expansion,
  *   so the key is stable and explainable; expansion is an additive refinement, not a rewrite.
  */
 

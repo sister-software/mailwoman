@@ -103,6 +103,12 @@ const EMPTY_MODIFIERS = new Set([
 /**
  * Classifies each Vale `--output line` record against `sources`, a map from path to that file's lines. Pure, so the
  * fixture test states its cases inline rather than writing files.
+ *
+ * A reported line number is Vale's, and it was right in every case measured — a run of line comments, a block
+ * docstring, and the first line of a file. One file (`packages/neural/test/integration/weights.test.ts`) reported two
+ * lines past the match and the cause was not found: it carries no CR, no U+2028 or U+2029, and its line count agrees
+ * with `splitlines()`. The COUNT is unaffected either way. Only the MODIFIER a hit is bucketed by comes from the
+ * indexed line, so a stray offset mislabels a bucket rather than losing a site — read the line before editing it.
  */
 export function classify(hitLines: readonly string[], sources: ReadonlyMap<string, readonly string[]>): Hit[] {
 	const hits: Hit[] = []

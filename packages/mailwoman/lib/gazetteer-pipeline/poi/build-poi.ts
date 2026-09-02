@@ -332,7 +332,7 @@ async function* readParquetRows(parquetPaths: readonly string[]): AsyncIterable<
 
 /**
  * A simple lon/lat rectangle — the shape a Geofabrik extract's declared bounding box takes. Not a general polygon (OSM
- * extracts are rectangular cuts); {@link bboxCoverageCells} turns it into a 4-vertex ring for `polygonToCells`.
+ * extracts are rectangular extracts); {@link bboxCoverageCells} turns it into a 4-vertex ring for `polygonToCells`.
  */
 export interface BBox {
 	minLon: number

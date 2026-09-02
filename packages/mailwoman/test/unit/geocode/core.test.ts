@@ -668,7 +668,7 @@ describe("#1537: a famous namesake the model reads as a `street` keeps its candi
 		const marker = result.intent_markers.find((m) => m.code === "declared_ambiguity")
 
 		expect(marker).toBeDefined()
-		// 5.10 − 5.05, an order of magnitude under the 0.5 decisive cut.
+		// 5.10 − 5.05, an order of magnitude under the 0.5 decisive threshold.
 		expect(marker!.evidence?.["margin"]).toBeCloseTo(0.05, 4)
 	})
 })

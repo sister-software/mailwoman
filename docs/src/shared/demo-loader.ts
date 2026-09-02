@@ -104,7 +104,7 @@ export async function loadDemoAssets(
 	// 404s them (the standing GB/NZ pair-index gap since v8.0.0). The same-origin plugin staging
 	// remains a dev-preview fallback in the plugin, but the demo now reads the bucket.
 	//
-	// VERSIONED since 2026-08-05: the objects ship `immutable` Cache-Control, so an in-place re-cut
+	// VERSIONED since 2026-08-05: the objects ship `immutable` Cache-Control, so an in-place rebuild
 	// (the PIX schema-3 move) left the CDN serving schema-1 bytes a reader that throws on them could
 	// not use. Every generation object is published under this path, so it is read directly — the
 	// transition HEAD probe retired once the bucket held them (its own removal condition).

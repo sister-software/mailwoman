@@ -54,8 +54,8 @@ const SEAT_PLACETYPE = "locality"
 /**
  * Over-fetch cap for {@link rankByPrimaryPreference}: the candidate rows for one `name_key` (all same-name places
  * worldwide) are re-ranked in-process, so the probe fetches this many (population-ordered) before the re-rank rather
- * than the caller's small `limit`, ensuring the intended primary isn't cut below the fold by a cluster of more-populous
- * foreign aliases. Bounded and small — a single contiguous B-tree scan.
+ * than the caller's small `limit`, ensuring the intended primary isn't pushed below the fold by a cluster of
+ * more-populous foreign aliases. Bounded and small — a single contiguous B-tree scan.
  */
 export const RERANK_FETCH = 64
 

@@ -899,7 +899,7 @@ class WOFResolver implements Resolver {
 		// DOMINATE the locality winner by {@link BARE_REGION_DOMINANCE_LOG10} in log-population:
 		// prominence saturates at the backend's populationBoost cap, so the margin is measured on the
 		// raw populations, and the margin is what keeps bare "New York" on the city (state 19.6M vs
-		// city 8.8M = 0.35, under the cut) while bare "Georgia" promotes to the 11M state over the
+		// city 8.8M = 0.35, under the threshold) while bare "Georgia" promotes to the 11M state over the
 		// Vermont hamlet (margin 3.4). A bare name with no admin namesake never reaches these lines,
 		// and the displaced locality stays first among the alternatives either way.
 		if (bareCountry && (bareCountry.prominence ?? bareCountry.score) > (top.prominence ?? top.score)) {

@@ -251,7 +251,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			// Deliberate license exclusion (#26): drop a row ONLY when the operator named its license
 			// kind via `excludeLicenses`. Default (no patterns) keeps everything — exclusion is a
 			// purposeful act, not a silent default. Counted BEFORE the drop so the manifest's license
-			// set reflects what the corpus actually CONTAINED, and `excluded_by_license` what was cut.
+			// set reflects what the corpus actually CONTAINED, and `excluded_by_license` what was removed.
 			if (licenseExcluded(row.license, excludeLicenses)) {
 				excludedByLicense++
 

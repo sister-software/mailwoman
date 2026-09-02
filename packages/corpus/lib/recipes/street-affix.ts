@@ -342,13 +342,13 @@ async function readVenuePool(csvPath: PathBuilderLike): Promise<string[]> {
 const tail = (loc: string, reg: string, pc: string): string => (pc ? `${loc}, ${reg} ${pc}` : `${loc}, ${reg}`)
 
 /**
- * Layout-shell options for {@link renderRow}. `cuts` are the cumulative random() cutoffs for [full, bare, street-only] —
- * the remainder is the venue shell. Defaults reproduce the original street-affix distribution (40/25/20/15) with the
- * six template venues.
+ * Layout-shell options for {@link renderRow}. `cutoffs` are the cumulative random() boundaries for [full, bare,
+ * street-only] — the remainder is the venue shell. Defaults reproduce the original street-affix distribution
+ * (40/25/20/15) with the six template venues.
  */
 interface RenderRowOpts {
 	venues?: readonly string[]
-	cuts?: readonly [number, number, number]
+	cutoffs?: readonly [number, number, number]
 }
 
 /**
@@ -363,7 +363,7 @@ export function renderRow(
 	opts: RenderRowOpts = {}
 ): { fmt: string; raw: string; components: Partial<Record<ComponentTag, string>> } {
 	const venues = opts.venues ?? VENUES
-	const [fullCut, bareCut, streetOnlyCut] = opts.cuts ?? [0.4, 0.65, 0.85]
+	const [fullCutoff, bareCutoff, streetOnlyCutoff] = opts.cutoffs ?? [0.4, 0.65, 0.85]
 
 	const hn = base.house_number,
 		loc = base.locality,
@@ -374,16 +374,16 @@ export function renderRow(
 	const withRoad: Partial<Record<ComponentTag, string>> = { house_number: hn, ...streetComponents }
 	const r = random()
 
-	if (r < fullCut)
+	if (r < fullCutoff)
 		return {
 			fmt: "full",
 			raw: `${road}, ${tail(loc, reg, pc)}`,
 			components: { ...withRoad, locality: loc, region: reg, ...(pc ? { postcode: pc } : {}) },
 		}
 
-	if (r < bareCut) return { fmt: "bare", raw: road, components: withRoad }
+	if (r < bareCutoff) return { fmt: "bare", raw: road, components: withRoad }
 
-	if (r < streetOnlyCut) return { fmt: "street-only", raw: street, components: { ...streetComponents } }
+	if (r < streetOnlyCutoff) return { fmt: "street-only", raw: street, components: { ...streetComponents } }
 	const v = pick(venues, random)
 
 	return {
@@ -667,7 +667,7 @@ export const suffixBoundaryRecipe: CorpusRecipe = {
 			)
 		}
 
-		const shell: RenderRowOpts = { venues: venuePool, cuts: [0.35, 0.55, 0.7] }
+		const shell: RenderRowOpts = { venues: venuePool, cutoffs: [0.35, 0.55, 0.7] }
 
 		const pool: Record<SuffixBoundaryClass, USTuple[]> = {
 			"terminal-only": [],

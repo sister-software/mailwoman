@@ -33,7 +33,7 @@
  *   lines), so there is no upstream oracle to reconcile against. What gates instead: the archive md5
  *   against OS's published digest, an exact header match (schema drift fails loudly), the accounting
  *   identity `read = inserted + malformed + duplicate` with malformed and duplicate both expected
- *   ZERO, and a row floor (the 2026-08 cut holds 41,629,393 rows; the product only grows, so a count
+ *   ZERO, and a row floor (the 2026-08 extract holds 41,629,393 rows; the product only grows, so a count
  *   under the floor means a truncated read, not a smaller Britain).
  *
  *   ## Coverage
@@ -98,16 +98,16 @@ export const OPEN_UPRN_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/op
 
 /**
  * The attribution OS requires of OS OpenData redistributors, in the wording the archive's own `licence.txt` uses.
- * `year` is the OS copyright year as stated in that licence text — not the build year; republishing a 2026 cut in 2027
- * still attributes the 2026 data.
+ * `year` is the OS copyright year as stated in that licence text — not the build year; republishing a 2026 extract in
+ * 2027 still attributes the 2026 data.
  */
 export function openUPRNAttribution(year: number): string {
 	return `Contains Ordnance Survey data © Crown copyright and database right ${year}.`
 }
 
 /**
- * The exact CSV header of the product. Verified against the 2026-08 cut; a drifted header fails the build loudly rather
- * than silently mapping columns by position.
+ * The exact CSV header of the product. Verified against the 2026-08 extract; a drifted header fails the build loudly
+ * rather than silently mapping columns by position.
  */
 export const OPEN_UPRN_HEADER = "UPRN,X_COORDINATE,Y_COORDINATE,LATITUDE,LONGITUDE"
 
@@ -128,8 +128,8 @@ export const OPEN_UPRN_COVERAGE_NOTE =
 	"administered by Land & Property Services (Pointer) and are outside OS OpenData."
 
 /**
- * Row floor for {@link buildUPRNLayer}'s truncation guard. The 2026-08 cut holds 41,629,393 rows and the register only
- * grows, so a full-source build under this floor read a truncated CSV. Fixture builds pass their own floor.
+ * Row floor for {@link buildUPRNLayer}'s truncation guard. The 2026-08 extract holds 41,629,393 rows and the register
+ * only grows, so a full-source build under this floor read a truncated CSV. Fixture builds pass their own floor.
  */
 export const OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS = 40_000_000
 
@@ -156,7 +156,7 @@ export interface OpenUPRNProduct {
 }
 
 /**
- * The three label lines of the archive's `versions.txt` — no row counts, no checksums; just enough to date the cut.
+ * The three label lines of the archive's `versions.txt` — no row counts, no checksums; just enough to date the extract.
  */
 export interface OpenUPRNVersions {
 	/**
@@ -164,11 +164,11 @@ export interface OpenUPRNVersions {
 	 */
 	productName: string
 	/**
-	 * `osopenuprn_202608` — the cut's file stem.
+	 * `osopenuprn_202608` — the extract's file stem.
 	 */
 	fileName: string
 	/**
-	 * `03-07-2026` (DD-MM-YYYY) — when OS extracted the cut from AddressBase Premium.
+	 * `03-07-2026` (DD-MM-YYYY) — when OS extracted the extract from AddressBase Premium.
 	 */
 	extractionDate: string
 }
@@ -351,7 +351,7 @@ export interface ExtractOpenUPRNResult {
 	csvBytes: number
 	/**
 	 * `licence.txt` verbatim — the words a redistributor is legally required to carry, decoded strictly (UTF-8, falling
-	 * back to Latin-1 for the lone `©` byte the Code-Point cut shipped) so the attribution never bakes in mojibake.
+	 * back to Latin-1 for the lone `©` byte the Code-Point extract shipped) so the attribution never bakes in mojibake.
 	 */
 	licenseText: string
 	versions: OpenUPRNVersions

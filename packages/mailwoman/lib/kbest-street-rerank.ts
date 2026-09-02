@@ -224,7 +224,7 @@ export async function rerankByStreetEvidence(
 	// VT" → the US street reranks against the FR index). Skipping anchored inputs fixes both by construction and keeps
 	// every fragment-board class (bare street ± house number carries no admin anchor). Scored against gold, this holds
 	// golden exact to noise (us 2180→2180, fr 1308→1308, |Δ| < 0.3pp/tag) while the FR fragment board moves +17.3pp.
-	// Postcode is NOT an anchor: adding it cut a little US collateral but mislabels 4-digit years as postcode, killing
+	// Postcode is NOT an anchor: adding it removed a little US collateral but mislabels 4-digit years as postcode, killing
 	// the date-name board (0.550→0.215) — too blunt for a real gain, so the anchor set stays country+region only.
 	if (trace.tokens.some((t) => ANCHOR_TAGS.has(t.label.replace(/^[BI]-/, "")))) {
 		return { tree: buildAddressTree(trace.text, trace.tokens), moved: false, rank: 0, streetSurface: "" }

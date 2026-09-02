@@ -172,7 +172,7 @@ export interface BuildPostcodeNIOSMResult {
 	 */
 	queryMD5: string
 	/**
-	 * The OSM data cut the response reflects (`osm3s.timestamp_osm_base`) — the real provenance date, as against the
+	 * The OSM data extract the response reflects (`osm3s.timestamp_osm_base`) — the real provenance date, as against the
 	 * wall-clock retrieval time.
 	 */
 	osmTimestamp: string
@@ -459,7 +459,7 @@ async function writeDatabaseMeta<DB extends DatabaseMetaDatabase>(
 		["source_query_md5", input.queryMD5],
 		["source_response_md5", input.responseMD5],
 		["source_retrieved_at", input.retrievedAt],
-		// The DATA cut, which is the date that matters — `source_retrieved_at` only says when we asked.
+		// The DATA extract, which is the date that matters — `source_retrieved_at` only says when we asked.
 		["source_osm_timestamp", input.osmTimestamp],
 		["license", OSM_LICENSE],
 		["license_url", OSM_LICENSE_URL],

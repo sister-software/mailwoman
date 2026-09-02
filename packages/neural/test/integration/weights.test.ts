@@ -506,7 +506,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 	// new source joining the index (a borough DB, a checked-in London pair set) — and the CI cache key has
 	// to track the same set. A pass here is only as trustworthy as the artifact's freshness.
 	//
-	// THE CONTRAST RETIRED AT THE 9.1.0 CUT (2026-08-11): under the v4.4.0 suffix-boundary base, the
+	// THE CONTRAST RETIRED AT THE 9.1.0 RELEASE (2026-08-11): under the v4.4.0 suffix-boundary base, the
 	// discriminator population is EMPTY as far as a fresh 191-pair PPD sweep can see — 190/191 rows
 	// recover the dependent locality in BOTH legs (Glenfield included), 0 rows need β, 0 rows regress
 	// with β on, 1 row misses in both. There is no row to move the pin to, so the beta-less leg now
@@ -522,7 +522,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			const r = await resolveWeights({ locale: "en-gb" })
 			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 
-			// The re-cut artifact's header contract: delta stays 10, transitionBeta 5 (the link script's
+			// The rebuild artifact's header contract: delta stays 10, transitionBeta 5 (the link script's
 			// PAIR_INDEX_TRANSITION_BETA lockstep guard rebuilds a stale binary before this line can see it).
 			expect(resolver.header.delta).toBe(10)
 			expect(resolver.header.transitionBeta).toBe(5)

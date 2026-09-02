@@ -33,7 +33,7 @@ test("splitCSVLine strips the wrapping quotes Code-Point puts on every text fiel
 })
 
 test("splitCSVLine treats a comma inside quotes as data", () => {
-	// The case that defeats the shared splitter. No row in the 2026-05 cut needs this; the format allows it.
+	// The case that defeats the shared splitter. No row in the 2026-05 extract needs this; the format allows it.
 	expect(splitCSVLine('"AB1 1AA",10,1,2,"X, Y","b"')).toEqual(["AB1 1AA", "10", "1", "2", "X, Y", "b"])
 })
 

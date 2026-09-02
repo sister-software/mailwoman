@@ -132,7 +132,7 @@ export interface BuildCandidateOptions {
 	onProgress?: (phase: string, message: string) => void
 	/**
 	 * Key-count threshold for the gloss anomaly detector — {@link GLOSS_KEY_THRESHOLD} unless a test passes a
-	 * fixture-scale value. The production number is the #1730 sweep's own cut (4,000 places at >= 50 keys).
+	 * fixture-scale value. The production number is the #1730 sweep's own threshold (4,000 places at >= 50 keys).
 	 */
 	glossKeyThreshold?: number
 }

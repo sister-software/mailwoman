@@ -172,7 +172,7 @@ export interface GeocodeResult {
 	 *
 	 * Nothing here changed the answer. Three of the four markers are raised by the kind classifier from the string alone;
 	 * the fourth (`declared_ambiguity`) is raised after the resolve by reading the ranked candidate list's dominance
-	 * margin and comparing it to the measured 0.5-log10 decisive cut — a read, never a re-rank. This is the same
+	 * margin and comparing it to the measured 0.5-log10 decisive threshold — a read, never a re-rank. This is the same
 	 * narrow-channel posture {@link postcode_country_scope} set: an advisory RECEIPT inside a resolution contract, not a
 	 * second opinion about the result.
 	 */

@@ -79,9 +79,9 @@ const MS_PER_MINUTE = 60_000
  * How long a cached match stays fresh: **7 days**.
  *
  * Shorter than the Google client's thirty because the answer is versioned rather than stable. `Public_AR_Current` is
- * re-cut from MTDB twice a year, and a re-cut can move an interpolated coordinate along its segment or reassign the
- * segment entirely. A week bounds how long a run can be reading pre-roll answers, and costs nothing — the requests are
- * free, and the cache exists here to spare a slow public service, not a bill.
+ * re-issued from MTDB twice a year, and a re-issue can move an interpolated coordinate along its segment or reassign
+ * the segment entirely. A week bounds how long a run can be reading pre-roll answers, and costs nothing — the requests
+ * are free, and the cache exists here to spare a slow public service, not a bill.
  */
 const DEFAULT_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -350,7 +350,7 @@ export function createCensusGeocoderClient(options: CreateCensusGeocoderClientOp
 				validate: isCacheableCensusBody,
 			}),
 			ttl: options.cacheTTLMs ?? DEFAULT_CACHE_TTL_MS,
-			// The TTL above is chosen against the twice-yearly MTDB re-cut. Letting a response header
+			// The TTL above is chosen against the twice-yearly MTDB re-issue. Letting a response header
 			// override it would replace that reasoning with whatever the CDN happens to send.
 			interpretHeader: false,
 			// Never cache a failure: the interceptor's default predicate admits 3xx too.

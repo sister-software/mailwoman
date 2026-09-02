@@ -359,7 +359,7 @@ export interface ResolveConfig {
 	/**
 	 * **#603: the LEARNED gradient-boosted-tree scorer — DEFAULT-ON.** Omitted or `true` uses the bundled
 	 * {@link DEDUP_GBT_MODEL} (trained on the NPPES NPI-truth set; beats the Fellegi-Sunter baseline ~+5pp dedup F1
-	 * held-out within a state and ~+22pp on states it never trained on, cutting the co-located over-merge). `false` opts
+	 * held-out within a state and ~+22pp on states it never trained on, reducing the co-located over-merge). `false` opts
 	 * out to the pure FS baseline; pass your own {@link GBT} for a custom model. The scorer is built over the SAME
 	 * collapsed-spatial + address-frequency feature model as training (via the resolved {@link addressFrequency}),
 	 * independent of this call's comparison config. An explicit {@link scorer} takes precedence. When the bundled model

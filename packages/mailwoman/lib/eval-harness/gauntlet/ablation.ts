@@ -168,7 +168,7 @@ export function boundedOccurrences(input: string, value: string): number[] {
 }
 
 /**
- * Delete `[at, at + length)` and tidy the separator debris the cut leaves behind. Deliberately LITERAL — the whole
+ * Delete `[at, at + length)` and tidy the separator debris the deletion leaves behind. Deliberately LITERAL — the whole
  * reason this runner does not reuse metamorphic's `\b\d{5}\b` stripper is that a pattern deletes house numbers on the
  * 4-digit postal systems (the postcode arc's M-1 finding, in reverse).
  */

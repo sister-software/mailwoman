@@ -107,7 +107,7 @@ export const POSTCODE_CONVENTIONS: ReadonlyMap<string, { placement: PostcodePlac
 /**
  * How many postcodes one locality may contribute.
  *
- * A quota rather than a cut-off — see the header. It bounds repetition without deleting a locality: a city with 9,222
+ * A quota rather than a cutoff — see the header. It bounds repetition without deleting a locality: a city with 9,222
  * postcodes contributes this many and stays in the slice.
  */
 export const DEFAULT_LOCALITY_QUOTA = 24

@@ -85,7 +85,7 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	// joined rows) under a muddled licence. Rebuild: `mailwoman gazetteer build postcode-codepoint`.
 	"postalcode-gb-codepoint.db",
 	// Northern Ireland (BT), the hole Code-Point Open leaves — 4,757 of 50,032 live NI postcodes (9.5 %),
-	// 250/886 sectors, 80/80 districts, from OpenStreetMap `addr:postcode` (2026-08-05 cut). A miss on a
+	// 250/886 sectors, 80/80 districts, from OpenStreetMap `addr:postcode` (2026-08-05 extract). A miss on a
 	// BT code means NOT ATTESTED IN OSM, not that the code does not exist; since #1480 an unknown postcode
 	// abstains, so the partial database is strictly additive.
 	//

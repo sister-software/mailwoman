@@ -231,11 +231,11 @@ export interface ResolverBackend {
 		 */
 		bias?: Array<{ lat: number; lon: number; weight?: number }>
 		/**
-		 * Restrict name matching to PRIMARY-keyed rows — set by probes whose query surface is a RE-READING (a token cut out
-		 * of a longer classified span) rather than a naming. The #1626 rationale, generalized: `Savile Row`'s token `Row`
-		 * never named Rhu's historical alias, so the alias tier must not answer it; a whole-input bare toponym DID name
-		 * whatever it matches (Москва's exonym rows included) and keeps the alias tier. Backends without a primary flag
-		 * ignore it.
+		 * Restrict name matching to PRIMARY-keyed rows — set by probes whose query surface is a RE-READING (a token taken
+		 * out of a longer classified span) rather than a naming. The #1626 rationale, generalized: `Savile Row`'s token
+		 * `Row` never named Rhu's historical alias, so the alias tier must not answer it; a whole-input bare toponym DID
+		 * name whatever it matches (Москва's exonym rows included) and keeps the alias tier. Backends without a primary
+		 * flag ignore it.
 		 */
 		primaryOnly?: boolean
 		/**

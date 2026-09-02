@@ -669,7 +669,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		}
 
 		// The re-reading guard (#1632, the #1626 rationale generalized to the caller): a probe whose surface
-		// is a token cut out of a longer classified span never NAMED an alias, so alias-keyed rows must not
+		// is a token taken out of a longer classified span never NAMED an alias, so alias-keyed rows must not
 		// answer it — 'Savile Row''s token 'Row' resolved Rhu, Scotland (585 km) through the village's
 		// historical-name alias key. Whole-input bare probes never set this, keeping the exonym recall the
 		// #1546 note protects (Москва's alias rows answer 'Moscow').

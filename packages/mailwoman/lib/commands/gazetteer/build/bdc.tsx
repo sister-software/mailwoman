@@ -8,7 +8,7 @@
  *   (`buildBDCDatabase`, list-files.ts, download.ts), so it stays unit-testable without Ink or
  *   network in the loop. Mirrors `poi.tsx`'s progress (stderr) / summary (stdout) split.
  *
- *   First cut wires Fixed Broadband provider availability only (the primary wireline dataset) — mobile
+ *   First version wires Fixed Broadband provider availability only (the primary wireline dataset) — mobile
  *   broadband/voice subcategories are a future flag, not a scope gap in this command's shape.
  *
  *   `--provider-list-path` (decision 6) opts INTO populating `bdc_provider` —

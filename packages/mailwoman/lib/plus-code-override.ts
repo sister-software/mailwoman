@@ -15,8 +15,8 @@ import { decodePlusCode, isFullPlusCode, recoverNearestPlusCode } from "@mailwom
 
 /**
  * A plus-code token anywhere in the input: `VFQ6+92P` (short) or `764MVFQ6+92P` (full). The digit alphabet excludes
- * every vowel-like letter, so an ordinary word cannot match; the boundary guard keeps the token from being cut out of a
- * longer alphanumeric run.
+ * every vowel-like letter, so an ordinary word cannot match; the boundary guard keeps the token from being split out of
+ * a longer alphanumeric run.
  */
 const PLUS_CODE_TOKEN = /(?:^|[\s,])([23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJMPQRVWX]{2,3})(?=[\s,]|$)/i
 

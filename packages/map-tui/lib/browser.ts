@@ -120,7 +120,7 @@ interface DragAnchor {
 
 /**
  * Clips a string to a cell budget, counting codepoints — the status bar's arrows are one cell each but two UTF-16
- * units, and `String.prototype.slice` would cut one in half.
+ * units, and `String.prototype.slice` would split one in half.
  */
 function clipToCells(text: string, cells: number): string {
 	const codePoints = Array.from(text)

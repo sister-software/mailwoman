@@ -17,7 +17,7 @@
  *   NPI split across two genuinely-distant addresses is geo-first behaving correctly, counted here
  *   as a recall miss. We resolve and report; interpretation is the consumer's.
  *
- *   Sample: a tractable, variation-rich cut — providers in one state (default TX) that have ≥1
+ *   Sample: a tractable, variation-rich slice — providers in one state (default TX) that have ≥1
  *   alternate name, so every entity has ≥2 records and the dedup is non-trivial. Streams the 4.8 GB
  *   registry via `streamRows` (#616), so nothing loads whole.
  *

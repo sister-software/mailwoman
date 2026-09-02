@@ -3460,9 +3460,9 @@ def mean_init_ptro():
     timeout=600,
 )
 def mean_init_numsplice23():
-    """B4c 10-999 cut — 2+3-digit. Same FVT mean-init as the others, tokenizer v0.11.2-numsplice23
-    (word-start 10-999, +988 pieces). Adds 2-digit pieces on top of the 3-digit cut: `11`->`▁11`
-    (the FR date-name day win the 3-digit cut forgoes) while 4-5 digit numbers (postcodes, years)
+    """B4c 10-999 split — 2+3-digit. Same FVT mean-init as the others, tokenizer v0.11.2-numsplice23
+    (word-start 10-999, +988 pieces). Adds 2-digit pieces on top of the 3-digit split: `11`->`▁11`
+    (the FR date-name day win the 3-digit split forgoes) while 4-5 digit numbers (postcodes, years)
     STAY multi-piece (2-digit can't collide with a 4-5 digit postcode). Writes
     /data/models/numsplice23-expanded. Expect 73143 -> 74131."""
     import os

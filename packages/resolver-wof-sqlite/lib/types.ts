@@ -186,8 +186,8 @@ export interface FindPlaceQuery {
 	 */
 	fuzzyCountry?: string
 	/**
-	 * Restrict name matching to PRIMARY-keyed rows (#1632) — set by probes whose surface is a RE-READING (a token cut out
-	 * of a longer classified span), which never named an alias. See the ResolverBackend contract in
+	 * Restrict name matching to PRIMARY-keyed rows (#1632) — set by probes whose surface is a RE-READING (a token taken
+	 * out of a longer classified span), which never named an alias. See the ResolverBackend contract in
 	 * `@mailwoman/core/resolver`.
 	 */
 	primaryOnly?: boolean

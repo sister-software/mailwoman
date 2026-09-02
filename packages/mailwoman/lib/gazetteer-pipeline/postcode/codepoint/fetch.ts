@@ -17,7 +17,7 @@
  *   VERIFIED 2026-08-05: both endpoints answer unauthenticated. Product version `2026-05`, CSV archive
  *   `codepo_gb.zip`, 14,446,552 bytes, md5 `ad0e258f056cee7bd81a50dc626c4f69`. The same md5 was already
  *   sitting in `$MAILWOMAN_DATA_ROOT/codepoint/2026-07-22/` from an earlier manual pull, which dates the
- *   release: OS has not re-cut the file between 2026-07-22 and 2026-08-05.
+ *   release: OS has not re-issued the file between 2026-07-22 and 2026-08-05.
  *
  *   ## Layout
  *
@@ -70,8 +70,8 @@ export const CODEPOINT_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/op
  * not compliance.
  *
  * `year` is the year of YOUR publication, not the year of the OS release; OGL attribution tracks the redistribution.
- * That is the whole reason this is a function. The archive's own `Doc/licence.txt` in the 2026-05 cut reads `2026` on
- * all three lines.
+ * That is the whole reason this is a function. The archive's own `Doc/licence.txt` in the 2026-05 extract reads `2026`
+ * on all three lines.
  */
 export function codePointAttribution(year: number): string {
 	return [
@@ -120,7 +120,7 @@ export interface CodePointProduct {
 	name: string
 	/**
 	 * OS's release label, e.g. `2026-05`. Distinct from the internal `DATASET VERSION NUMBER` in the archive's
-	 * `Doc/metadata.txt` (`2026.2.0` for this cut) — both are recorded.
+	 * `Doc/metadata.txt` (`2026.2.0` for this extract) — both are recorded.
 	 */
 	version: string
 }

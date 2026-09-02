@@ -14,7 +14,7 @@
  *   author stating which artifacts the tarball carries, and `git ls-files` says which of those a
  *   checkout already has; the difference is exactly the set something must materialize — the same
  *   predicate `verify-tarball.ts` refuses a publish over (`literalFilesEntries`, shared with it). The
- *   v9.2.0 cut published 49 of 51 workspaces before that audit refused
+ *   v9.2.0 release published 49 of 51 workspaces before that audit refused
  *   `@mailwoman/neural-weights-en-au`, whose four declared lexicons the YAML's hand-maintained copy
  *   list did not name. A derived list cannot fall behind a manifest that way.
  *
@@ -64,7 +64,7 @@ export type ArtifactOrigin = { kind: "hf"; remoteName: string } | { kind: "repo"
  */
 export interface WeightsArtifactPlan {
 	/**
-	 * Repo-relative workspace path — always under `packages/`, which the destination inherits. The v9.2.0 cut's first
+	 * Repo-relative workspace path — always under `packages/`, which the destination inherits. The v9.2.0 release's first
 	 * dispatch died because the YAML wrote `"$ws/…"` after the regroup, so this is the field the fixture pins.
 	 */
 	workspace: string

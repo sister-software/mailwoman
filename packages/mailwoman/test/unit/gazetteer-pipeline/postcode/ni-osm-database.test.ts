@@ -110,7 +110,7 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	expect(result.sectors).toBe(2)
 	// Every internal identity holds; nothing is silently unaccounted for.
 	expect(result.reconciliationFailures).toEqual([])
-	// The data cut, not the wall clock — the date that actually describes the rows.
+	// The data extract, not the wall clock — the date that actually describes the rows.
 	expect(result.osmTimestamp).toBe("2026-08-05T13:14:01Z")
 	// Sealed 0444 — the artifact is read-only from the moment it exists (mode bits, not accessSync: root.path
 	// ignores the permission and would pass a W_OK probe on a sealed file).

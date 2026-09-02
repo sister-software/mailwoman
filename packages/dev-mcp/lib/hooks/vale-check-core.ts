@@ -69,8 +69,8 @@ export function lintReply(reply: string): ValeAlert[] {
 
 /**
  * The rule's guidance with the match's own name factored out, so one grouped line carries the message once instead of
- * once per hit. Message templates vary ("'%s' is …", "Cut the stock form '%s' — …", and templates with no substitution
- * at all), so the fallbacks keep every shape readable.
+ * once per hit. Message templates vary ("'%s' is …", the stock-form template, and templates with no substitution at
+ * all), so the fallbacks keep every shape readable.
  */
 function ruleGuidance(alert: ValeAlert): string {
 	const quoted = `'${alert.Match}'`

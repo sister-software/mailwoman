@@ -17,7 +17,7 @@
  *   We read the first five and drop the health/admin codes — they are ONS lookup keys, not geography,
  *   and nothing in the resolver consumes them.
  *
- *   ## Two traps, both measured against the 2026-05 cut
+ *   ## Two traps, both measured against the 2026-05 extract
  *
  *   1. **865 rows carry no coordinate.** Positional quality indicator `90` means "no coordinate
  *      available", and those rows are written as eastings `0`, northings `0`. Grid `0,0` is a REAL
@@ -26,7 +26,7 @@
  *      drop them by. Distribution across all 1,747,841 rows: PQI 10 → 1,742,328 · 20 → 253 · 30 → 26 ·
  *      50 → 4,166 · 60 → 203 · 90 → 865. So 99.69 % of the file is PQI 10, OS's best grade (within the
  *      building of the address nearest the postcode's mean position).
- *   2. **Quoting applies to record boundaries as well as columns.** The current cut carries no embedded
+ *   2. **Quoting applies to record boundaries as well as columns.** The current extract carries no embedded
  *      comma or newline, but both are legal inside a quoted CSV field. Parsing the byte stream with quote
  *      handling enabled keeps such a field intact even when its newline or closing quote crosses a read
  *      boundary; a line-first parser cannot repair the record after splitting it.
@@ -222,9 +222,9 @@ export async function* readCodePointCSV(csvPath: string, stats: CodePointParseSt
  *
  * The product is SPECIFIED as a fixed 7-character field — the outward code left-justified, the inward code
  * right-justified, so a short postcode like `B1 1AA` is padded to `B1 1AA` with two spaces. The 2026-05 CSVs happen to
- * ship the single-spaced form already, but the specification is what a future cut will follow, and a double space would
- * otherwise sail through as a distinct postcode from its single-spaced twin. Collapsing runs of whitespace costs one
- * regex and closes that.
+ * ship the single-spaced form already, but the specification is what a future extract will follow, and a double space
+ * would otherwise sail through as a distinct postcode from its single-spaced twin. Collapsing runs of whitespace costs
+ * one regex and closes that.
  */
 export function normalizeCodePointSpacing(raw: string): string {
 	return normalizePostcodeDisplay(raw)
