@@ -6,7 +6,7 @@
  *   `<ResultOverlay>` — the resolved-place outline (crisp admin polygon, or an approximate/exact-radius
  *   circle) as a declarative `<Source>` + fill/line `<Layer>`s. This replaces the demo's imperative
  *   `setPlaceOutline` / `drawApproxCircle` / `drawPlaceGeometry` / `clearBbox` helpers and their
- *   `whenStyleReady` gate: react-map-gl owns the "add source/layer once the style is loaded, remove on
+ *   `whenStyleReady` guard: react-map-gl owns the "add source/layer once the style is loaded, remove on
  *   unmount" lifecycle, so the hand-rolled `isStyleLoaded()` / `styledata` races disappear.
  *
  *   Pass the `outline` straight from a {@link MapPlaceRenderSpec}; a `null` outline renders nothing (the

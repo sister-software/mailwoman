@@ -101,6 +101,48 @@ const EMPTY_MODIFIERS = new Set([
 ])
 
 /**
+ * How far from Vale's reported line to look for the matched word.
+ *
+ * A BARE `//` line shifts Vale's line numbers: measured on @vvago/vale 3.17.0, a hit on line 5 with two empty comment
+ * lines above it is reported as line 6. The COUNT is unaffected — the hit is real either way — but the census indexes
+ * source by that number to derive a modifier, and a reader following the output would be sent to the wrong line.
+ *
+ * Searching a window rather than trusting the number makes the instrument self-correcting. Three lines is measured, not
+ * guessed: the two files in this repository that drift are each off by two.
+ */
+const LINE_DRIFT_WINDOW = 3
+
+/**
+ * The line that actually carries `word`, nearest to Vale's reported one. Falls back to the reported line when the word
+ * is nowhere in the window, so a hit is never dropped — a missing modifier costs a bucket label, a dropped hit costs a
+ * site.
+ */
+function locate(
+	lines: readonly string[],
+	reported: number,
+	column: number,
+	word: string
+): { line: number; source: string; index: number } {
+	const needle = word.toLowerCase()
+
+	for (let offset = 0; offset <= LINE_DRIFT_WINDOW; offset++) {
+		for (const candidate of offset === 0 ? [reported] : [reported - offset, reported + offset]) {
+			const source = lines[candidate - 1] ?? ""
+			const from = candidate === reported ? Math.max(0, column - 3) : 0
+			let index = source.toLowerCase().indexOf(needle, from)
+
+			if (index === -1 && candidate === reported) {
+				index = source.toLowerCase().indexOf(needle)
+			}
+
+			if (index !== -1) return { line: candidate, source, index }
+		}
+	}
+
+	return { line: reported, source: lines[reported - 1] ?? "", index: -1 }
+}
+
+/**
  * Classifies each Vale `--output line` record against `sources`, a map from path to that file's lines. Pure, so the
  * fixture test states its cases inline rather than writing files.
  *
@@ -119,14 +161,8 @@ export function classify(hitLines: readonly string[], sources: ReadonlyMap<strin
 		if (!match) continue
 
 		const [, path, lineText, colText, word] = match
-		const line = Number(lineText)
-		const source = sources.get(path!)?.[line - 1] ?? ""
-
-		let index = source.toLowerCase().indexOf(word!.toLowerCase(), Math.max(0, Number(colText) - 3))
-
-		if (index === -1) {
-			index = source.toLowerCase().indexOf(word!.toLowerCase())
-		}
+		const lines = sources.get(path!) ?? []
+		const { line, source, index } = locate(lines, Number(lineText), Number(colText), word!)
 
 		const before = index === -1 ? "" : source.slice(0, index)
 		const modifier = (/([A-Za-z0-9_.`§/-]+)[\s-]*$/.exec(before.trimEnd())?.[1] ?? "").toLowerCase()

@@ -89,7 +89,7 @@ async function serve(): Promise<void> {
 	const extracts = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
 	const postcodeOfLocality = await createLocalityPostcodeLookup()
 	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse. A no-op
-	// when the extract isn't on disk (existsSync-gated inside the provider), so the endpoint degrades cleanly.
+	// when the extract isn't on disk (conditioned on existsSync inside the provider), so the endpoint degrades cleanly.
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
 	const banExtracts = await BANRegionDatabaseProvider.create(mailwomanDataRoot())
 	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined

@@ -74,7 +74,7 @@ export function resolveLocaleScope(
 }
 
 /**
- * Match a query token against the variant alias table, gated by detected locale.
+ * Match a query token against the variant alias table, filtered by detected locale.
  *
  * Confidence:
  *

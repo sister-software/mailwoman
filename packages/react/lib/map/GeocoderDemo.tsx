@@ -54,7 +54,7 @@ export interface GeocoderDemoProps {
 	presets?: ReadonlyArray<Preset>
 	/**
 	 * Only hint the viewport bias once the visitor has zoomed past the global view — a whole-globe center is noise.
-	 * Matches the demo's `map.getZoom() >= 4` gate. @default 4
+	 * Matches the demo's `map.getZoom() >= 4` threshold. @default 4
 	 */
 	minBiasZoom?: number
 	/**
@@ -82,7 +82,7 @@ function GeocoderDemoInner({
 }: GeocoderDemoInnerProps): ReactNode {
 	const mapRef = useRef<MapRef>(null)
 
-	// TEST INJECTION POINT: the e2e viewport-bias suite drives the REAL map (pan + zoom past the bias gate)
+	// TEST INJECTION POINT: the e2e viewport-bias suite drives the REAL map (pan + zoom past the bias threshold)
 	// before submitting, and a browser test cannot reach a React ref — so the live map handle is
 	// republished on `globalThis.__mailwomanDemoMap`, the same global the pre-port demo carried. The
 	// ref fills only after react-map-gl instantiates the map, hence the short poll; cleared on

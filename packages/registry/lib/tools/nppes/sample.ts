@@ -87,7 +87,7 @@ export interface NPPESMultiSampleOptions {
  * Build the benchmark's input records from the real registry, one bucket per requested state.
  *
  * Two passes over two files, and the SECOND one cannot break early: the address-frequency table needs every registry
- * row even after the sample is full, so the per-bucket `keptNpis.size < maxNpisPerState` test gates only the sample
+ * row even after the sample is full, so the per-bucket `keptNpis.size < maxNpisPerState` test bounds only the sample
  * branch.
  */
 export async function buildNPPESStateSamples(

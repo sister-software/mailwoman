@@ -81,6 +81,37 @@ describe("the classifier reads the whole line, not only the modifier", () => {
 		expect(classify(["", "Errors 0 Warnings 3"], new Map())).toEqual([])
 	})
 
+	it("finds the word when Vale's line number drifts, rather than bucketing a blank", () => {
+		// A bare `//` line shifts Vale's numbering: a hit on line 1 gets reported as line 3. Trusting the
+		// number reads an unrelated line, so the modifier comes out empty and the site lands in the
+		// read-context bucket by accident. Two files in this repository drift, both by two.
+		const source = [
+			"\t// then fail the ambiguity gate for Nassau's rows",
+			"\t//",
+			"\t//",
+			"\t// unrelated",
+			"\t// also unrelated",
+		]
+
+		const [hit] = classify(
+			["a.ts:3:22:Mailwoman.AmbiguousShorthandCode:'gate' is ambiguous"],
+			new Map([["a.ts", source]])
+		)
+
+		expect(hit?.line).toBe(1)
+		expect(hit?.modifier).toBe("ambiguity")
+	})
+
+	it("keeps a hit whose word is nowhere in the window rather than dropping it", () => {
+		const [hit] = classify(
+			["a.ts:2:1:Mailwoman.AmbiguousShorthandCode:'gate' is ambiguous"],
+			new Map([["a.ts", ["x", "y"]]])
+		)
+
+		expect(hit).toBeDefined()
+		expect(hit?.remedy).toBe(Remedy.readContext)
+	})
+
 	it("indexes source by ABSOLUTE line number, blank lines included", () => {
 		// The driver reads files with `TextSpliterator.from(..., { skipEmpty: false })`. The default
 		// drops blank lines, which shifts every line number after the first one — the hit below then

@@ -193,7 +193,7 @@ export interface CensusGeocoderClientConfig extends APIClientConfig {
  *
  * VALIDATED BEFORE WRITING, per `core/api/disk-storage.ts`'s first rule. The Census geocoder answers an overload with
  * an HTML error page, and — because Axios's `transitional.silentJSONParsing` is turned off below — that already raises
- * rather than being handed back as a string. This is the second gate: a 200 whose JSON is structurally something else
+ * rather than being handed back as a string. This is the second check: a 200 whose JSON is structurally something else
  * must not reach disk under a week-long TTL.
  *
  * An EMPTY `addressMatches` array is cacheable. "This address does not match TIGER" is a real, stable answer, and it is
@@ -334,7 +334,7 @@ export function createCensusGeocoderClient(options: CreateCensusGeocoderClientOp
 	return new CensusGeocoderClient({
 		displayName: "US Census Geocoder",
 		benchmark: CensusBenchmarkName.Current,
-		// BOTH GATES, and the interval is the one that holds the rate — `requestsPerMinute` alone is a
+		// BOTH LIMITS, and the interval is the one that holds the rate — `requestsPerMinute` alone is a
 		// budget that dispatches N back to back and then waits 60/N seconds, measured at 100/minute for a
 		// configured 10/minute. See `bdc/sdk/client.ts` for the full arrival trace.
 		requestsPerMinute,

@@ -57,7 +57,7 @@ export interface ClusterOptions {
 /**
  * Refine one connected component by agglomerative average-linkage. Starts with every member a singleton and repeatedly
  * merges the cluster pair with the highest _average_ inter-cluster link weight while that average is at or above
- * `threshold`; clusters with no link between them never merge. O(k³) in the component size, so callers gate it on a
+ * `threshold`; clusters with no link between them never merge. O(k³) in the component size, so callers boundate it on a
  * size cap.
  */
 function averageLinkageRefine<R>(members: R[], edges: Array<[number, number, number]>, threshold: number): R[][] {

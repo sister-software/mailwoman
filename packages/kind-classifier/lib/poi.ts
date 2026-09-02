@@ -289,7 +289,7 @@ export function createScorePOICategory(
 
 /**
  * The whole-input category hit behind a `poi_category` verdict, for the marker's evidence. `null` when the input is not
- * a bare category — same gates as {@link createScorePOICategory}, so the two cannot disagree.
+ * a bare category — same conditions as {@link createScorePOICategory}, so the two cannot disagree.
  */
 export function matchPOICategory(
 	text: string,

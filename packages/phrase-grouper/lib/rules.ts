@@ -170,7 +170,7 @@ function isStreetSuffix(token: string): boolean {
  * Romance/Latin street-TYPE words that LEAD the street ("Via Trento", "Calle Mayor", "Corso Italia"). English puts the
  * type last (a suffix — see STREET_SUFFIXES); Romance languages put it first. Without this, a leading "Via"/"Calle" is
  * capitalized first-segment text the locality rule proposes, and on OOD intl input the model can't type it either — so
- * the grouper-audit promotes it to a spurious `locality`, burying the real city (#425 re-gate).
+ * the grouper-audit promotes it to a spurious `locality`, burying the real city (#425 re-verification).
  *
  * Street-TYPES only — deliberately NOT the ambiguous area/development words ("Polígono", "Urbanización", "Lugar",
  * "Partida", "Borgo") that legitimately serve AS localities. This stays a bounded linguistic category; per-locale
@@ -373,7 +373,7 @@ const VENUE_MARKERS: ReadonlyMap<string, number> = new Map([
 const UNIT_MARKER_EXTENSIONS: ReadonlySet<string> = new Set(["#"])
 
 /**
- * True when a token gates the venue-by-exclusion heuristic as a unit/suite/floor marker: any USPS secondary unit or
+ * True when a token admits the venue-by-exclusion heuristic as a unit/suite/floor marker: any USPS secondary unit or
  * floor-class designator (dotted abbreviations included — one trailing period is stripped), or a local extension.
  */
 function isUnitMarker(token: string): boolean {

@@ -169,7 +169,7 @@ export interface DemoLoaderState<TAssets, TRelease extends DemoReleaseBase = Dem
  *
  * Sequence: on mount `loadManifest` runs and its `defaultVersion` becomes the selection; each version (or `forceWASM`)
  * change reloads the bundle via `loadAssets`, the previous load aborted first. The assets are revealed ATOMICALLY when
- * `loadAssets` resolves (so `ready` flips exactly once per load), and consumers gate on `ready`.
+ * `loadAssets` resolves (so `ready` flips exactly once per load), and consumers wait on `ready`.
  */
 export function useDemoRuntime<TAssets, TRelease extends DemoReleaseBase = DemoReleaseBase>(
 	config: DemoRuntimeConfig<TAssets, TRelease>

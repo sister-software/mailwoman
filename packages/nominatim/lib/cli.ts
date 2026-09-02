@@ -134,7 +134,7 @@ async function serve(): Promise<void> {
 	const resolver = createWOFResolver(backend)
 	const extracts = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
 	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse. A no-op
-	// when the extract isn't on disk (existsSync-gated inside the provider), so the endpoint degrades cleanly.
+	// when the extract isn't on disk (conditioned on existsSync inside the provider), so the endpoint degrades cleanly.
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
 	const banExtracts = await BANRegionDatabaseProvider.create(mailwomanDataRoot())
 	// NOT a geocode country constraint. The default-on #244 placer already routes the query's country

@@ -7,7 +7,7 @@
 /**
  * Protomaps-basemap style table for the map-tui debug view.
  *
- * Defines fill, line, and label styles for each of the nine protomaps-basemap layers, gated by zoom level. Color
+ * Defines fill, line, and label styles for each of the nine protomaps-basemap layers, restricted by zoom level. Color
  * palette calibrated for dark-terminal rendering: dim fills (read as stipple density via dithering), bright lines and
  * labels.
  */
@@ -92,8 +92,8 @@ const STYLE_TABLE: Record<string, LayerStyle[]> = {
 }
 
 /**
- * Styles applying to a protomaps-basemap layer at a zoom, draw-ordered (fills < lines < labels). Empty for
- * unstyled/gated layers.
+ * Styles applying to a protomaps-basemap layer at a zoom, draw-ordered (fills < lines < labels). Empty for unstyled or
+ * zoom-restricted layers.
  */
 export function stylesFor(layerName: string, zoom: number): LayerStyle[] {
 	return (STYLE_TABLE[layerName] ?? []).filter((style) => zoom >= style.minZoom)

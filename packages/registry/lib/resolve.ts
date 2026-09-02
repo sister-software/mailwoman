@@ -349,10 +349,10 @@ export interface ResolveConfig {
 	 * FS baseline on the identical pipeline. The function is responsible for its own feature computation (e.g. the
 	 * agreement pattern, which is EM-independent, plus any corpus statistics it captured).
 	 *
-	 * INTERACTION with {@link requireCorroboration}: the two are independent and compose, but the corroboration gate is
+	 * INTERACTION with {@link requireCorroboration}: the two are independent and compose, but the corroboration check is
 	 * still evaluated on the Fellegi-Sunter `contributions` (NOT the learned score) — so a learned-high pair with no
-	 * positive FS name/org/phone agreement is still gated out. A learned scorer is normally trained to subsume
-	 * corroboration, so use ONE or the other; combining them lets the FS gate veto the learned score, which is rarely
+	 * positive FS name/org/phone agreement is still held out. A learned scorer is normally trained to subsume
+	 * corroboration, so use ONE or the other; combining them lets the FS check veto the learned score, which is rarely
 	 * what you want.
 	 */
 	scorer?: (a: SourceRecord, b: SourceRecord) => number

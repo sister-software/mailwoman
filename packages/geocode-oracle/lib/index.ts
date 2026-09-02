@@ -27,7 +27,7 @@
  *   `@mailwoman/record`'s `PostalAddress` (a `ComponentTag`-keyed dict, the formatter's `canonicalKey`,
  *   a coordinate and a `ResolutionTier`), so the comparison is field-to-field rather than eyeball.
  *
- *   WHAT IT IS NOT. Not truth, and not a gate. Google and the Census Bureau disagree with each other
+ *   WHAT IT IS NOT. Not truth, and not a check. Google and the Census Bureau disagree with each other
  *   and with the address as written, and both return a confident coordinate for addresses that do not
  *   exist. Nothing here should ever decide whether a build ships; a human reads it and decides what to
  *   pin. `OracleGeocodeResult.raw` always carries the provider's untouched answer for exactly that

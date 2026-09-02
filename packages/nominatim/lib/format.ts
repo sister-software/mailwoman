@@ -104,7 +104,7 @@ function stableID(seed: string): number {
 }
 
 /**
- * Render a {@link ResolvedAddress} as a Nominatim result. `addressdetails` gates the `address` block, matching
+ * Render a {@link ResolvedAddress} as a Nominatim result. `addressdetails` selects the `address` block, matching
  * Nominatim. The `annotations` block is attached by the caller (empty until the annotations layer lands).
  */
 export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: boolean } = {}): NominatimResult {

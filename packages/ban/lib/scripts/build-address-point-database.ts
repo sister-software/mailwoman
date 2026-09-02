@@ -19,7 +19,7 @@
  *   is a NEW, purely-additive artifact (`ban/address-points-fr.db`); it never touches the OSM extract.
  *
  *   BAN is published under the Licence Ouverte / Etalab 2.0 (attribution, NO share-alike), so the built
- *   extract ships under the same terms as the permissive core — no ODbL lawyer gate. `source = "ban:fr"`.
+ *   extract ships under the same terms as the permissive core — no ODbL counsel sign-off. `source = "ban:fr"`.
  *
  *   Usage:
  *     node ban/out/scripts/build-address-point-extract.js \

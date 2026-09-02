@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The venue-word hint table's integrity gate. The table is mined, so the committed artifact — not
+ *   The venue-word hint table's integrity check. The table is mined, so the committed artifact — not
  *   the generator — is what ships; these tests hold the committed rows to the bars the provenance
  *   block declares, and pin the exclusion families the composed measure exists to kill. A regenerate
  *   that widens a bar or leaks a toponym fails here, not in a consumer.

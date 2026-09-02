@@ -22,7 +22,7 @@ const CORE = createLookupCore(TABLE)
 export type { CategoryMatch } from "#lookup-core"
 
 /**
- * Exact-phrase category lookup. `locale` gates locale-restricted synonyms with the variant-aliases semantics: exact
+ * Exact-phrase category lookup. `locale` selects locale-restricted synonyms with the variant-aliases semantics: exact
  * locale 1.0, language-only 0.5, otherwise no match. unrestricted phrases always match at 1.0. Deduplicated by category
  * (best confidence wins), sorted by confidence descending.
  */

@@ -79,7 +79,7 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	})
 
 	/**
-	 * Exact-phrase category lookup. `locale` gates locale-restricted synonyms with the variant-aliases semantics
+	 * Exact-phrase category lookup. `locale` selects locale-restricted synonyms with the variant-aliases semantics
 	 * (`@mailwoman/variant-aliases`' `resolveLocaleScope` owns that rule; the copies here stay local to keep this package
 	 * dependency-free): exact locale 1.0, language-only 0.5, otherwise no match. unrestricted phrases always match at
 	 * 1.0. Deduplicated by category (best confidence wins), sorted by confidence descending.

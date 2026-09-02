@@ -33,7 +33,7 @@
  *
  *   `mailwoman_filer_lookup` follows the SAME "requires the layer unconditionally" discipline as
  *   `mailwoman_bdc_filing_landscape` (`assertFilerDatabaseExists` + `openFilerDatabaseIfPresent`, mirroring
- *   `assertBDCDatabaseExists` + the BDC open) — `filerLookup` itself has no optional-dep abstain shape (gate 4 makes
+ *   `assertBDCDatabaseExists` + the BDC open) — `filerLookup` itself has no optional-dep abstain shape (criterion 4 makes
  *   it throw rather than answer unstamped), so a missing filer.db becomes one friendly thrown Error naming the layer.
  *
  *   `mailwoman_filer_family` follows the IDENTICAL discipline, reusing the same two guards — `familyRollup`
@@ -324,7 +324,7 @@ const deps: MCPToolDeps = {
 	},
 
 	async filerLookup(q) {
-		// Decision 6/gate 4: filerLookup has no optional-dep abstain shape — it throws rather than
+		// Decision 6 / criterion 4: filerLookup has no optional-dep abstain shape — it throws rather than
 		// answer unstamped — so filer.db is required unconditionally, same discipline as bdc.db is for
 		// mailwoman_bdc_filing_landscape.
 		await assertFilerDatabaseExists("mailwoman_filer_lookup", q.databasePath)

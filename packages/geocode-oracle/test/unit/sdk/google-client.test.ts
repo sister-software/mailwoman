@@ -11,7 +11,7 @@
  *   the operator's card on every CI run.
  *
  *   The interesting assertions are the ones about Google's IN-BAND error channel — statuses that
- *   arrive under HTTP 200 and are therefore invisible to every gate `core/api` provides — and about
+ *   arrive under HTTP 200 and are therefore invisible to every check `core/api` provides — and about
  *   the API key, which must not reach a log, a cache key or a filename.
  */
 
