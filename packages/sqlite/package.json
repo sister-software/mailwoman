@@ -95,7 +95,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"kysely": "^0.29.4",
+		"kysely": "^0.29.5",
 		"path-ts": "^2.3.0"
 	},
 	"devDependencies": {

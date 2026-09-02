@@ -58,9 +58,9 @@
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.3.0",
 		"spliterator": "^6.4.1",
-		"zod": "^4.4.3"
+		"zod": "^4.5.4"
 	},
 	"devDependencies": {
-		"@vvago/vale": "^3.17.0"
+		"@vvago/vale": "^3.17.1"
 	}
 }

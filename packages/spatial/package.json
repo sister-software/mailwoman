@@ -124,7 +124,7 @@
 	},
 	"optionalDependencies": {
 		"@googlemaps/google-maps-services-js": "^3.4.2",
-		"@types/google.maps": "^3.65.3"
+		"@types/google.maps": "^3.66.0"
 	},
 	"engines": {
 		"node": ">=24.18.0"

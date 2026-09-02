@@ -50,6 +50,6 @@
 		"h3-js": "^4.5.0"
 	},
 	"devDependencies": {
-		"@types/node": ">=26.1.2"
+		"@types/node": ">=26.4.0"
 	}
 }
