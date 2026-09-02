@@ -18,7 +18,7 @@ asks for one. The number of steps does not grant permission to write to GitHub.
 
 ## Step 1 — write the plan as a todo list FIRST
 
-State the steps before touching anything. Two situations, and be honest about which you are in:
+State the steps before touching anything. Two situations, and say which you are in:
 
 - **The session has the task tools** (`TodoWrite`, or `TaskCreate`/`TaskUpdate`). Use them; the hook
   below mirrors `TodoWrite` into the linked issue automatically.

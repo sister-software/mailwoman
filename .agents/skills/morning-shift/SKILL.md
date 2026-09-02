@@ -5,8 +5,8 @@ description: Operator returns from a night-shift handoff. Encodes the wrap of th
 
 # Morning Shift Skill
 
-The dual to `night-shift`. Two modes; usually run back-to-back: WRAP closes the
-autonomous session cleanly, then KICKOFF starts the day's collaborative work.
+The dual to `night-shift`. Two modes, run back-to-back: WRAP closes the
+autonomous session, then KICKOFF starts the day's collaborative work.
 
 ## When to use
 
@@ -155,7 +155,7 @@ gh pr merge <N> --squash --delete-branch
 git fetch origin && git log origin/main --oneline -3
 ```
 
-Merge in the order the postmortem stated (usually: main-fixer first, then docs,
+Merge in the order the postmortem stated (main-fixer first, then docs,
 then code, then experimental PRs). If a merge breaks main, **stop the loop and
 flag it** — don't keep merging the rest in the hope they'll fix it.
 
@@ -163,11 +163,11 @@ flag it** — don't keep merging the rest in the hope they'll fix it.
 
 Before launching today's work, read three things in this order:
 
-1. **The chat morning summary you just sent** — these are the decisions on the table.
+1. **The chat morning summary you sent** — these are the decisions on the table.
 2. **`docs/records/evals/YYYY-MM-DD-night-N-postmortem.md`** — the "What could've gone better" section. These are the patterns today should avoid.
-3. **`/home/lab/.claude/projects/-home-lab-Projects-mailwoman/memory/MEMORY.md`** top entries — these are the live constraints (treadmill stops, ship/hold decisions, gate states).
+3. **`/home/lab/.claude/projects/-home-lab-Projects-mailwoman/memory/MEMORY.md`** top entries — these are the live constraints (treadmill stops, ship/hold decisions, eval verdicts).
 
-If any of those three contradicts what the operator just asked for, **surface
+If any of those three contradicts what the operator asked for, **surface
 the contradiction now, not 3 hours into the work.** Example:
 
 > "The postmortem flagged the affix split has a stability ceiling at 29M params.
@@ -207,7 +207,7 @@ the trigger, not the wall-clock time.
 
 These survive both modes — they're not posture, they're project rules:
 
-- **No silent gate drift** — the postmortem table cites config bars verbatim above any scorecard.
+- **No silent eval drift** — the postmortem table cites config bars verbatim above any scorecard.
 - **Diagnostic before fix** — even in day-mode collaboration, a 30+ min GPU action gets a 2k-step probe first.
 - **Resume vs init_from** — never `init_from` to continue a capability still being grown.
 - **Salvage-first** — check isp-nexus + mailwoman before writing new modules.
@@ -243,7 +243,7 @@ shift — this stub is what I can reconstruct."
 
 ### The chat morning summary was already delivered
 
-If the night-shift handed off cleanly and the morning summary is already in
+If the night-shift handed off without error and the morning summary is already in
 chat, WRAP step 3 is "confirm it's accurate against the fresh snapshot (step
 2), correct any stale numbers, then proceed." Don't re-deliver a full summary.
 

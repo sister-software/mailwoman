@@ -52,7 +52,7 @@ node packages/mailwoman/out/cli.js gazetteer build fst \
 ```
 
 Builds `fst-{en-us,fr-fr,en-gb,de-de}.bin` — the `FST_LOCALES` set. Output goes to a STAGING dir and
-the swap into `fst-per-locale/` is operator-gated: an FST changes decoder behaviour, so it moves
+the swap into `fst-per-locale/` is operator-approved: an FST changes decoder behaviour, so it moves
 after the battery, not as a side effect of a build.
 
 **`fst-global-priority.bin` and the CJK three (`fst-{ja-jp,zh-cn,ko-kr}.bin`) have no builder.** They
@@ -122,7 +122,7 @@ Measured against `admin-global-priority.db` md5 `1e963a54`:
 A rebuild that reproduces those five numbers per locale is a no-op except for parent chains and the
 stamp — the counts held exactly across the admin swap that added macrohood records, because `macrohood`/`microhood` are
 not in the builder's `DEFAULT_PLACETYPES`. The ingest still reaches the artifact, but only as ancestry:
-2,602 US / 67 GB / 19 FR neighbourhood chains grew from one hop to the full walk once their macrohood
+2,602 US / 67 GB / 19 FR `neighbourhood` chains grew from one hop to the full walk once their macrohood
 parents existed to walk through.
 
 ## When to run

@@ -1,17 +1,17 @@
 ---
 name: mailwoman-release
-description: Codifies the mailwoman npm release — a coordinated version bump across ALL @mailwoman/* workspaces (the model included), published ENTIRELY via CI (publish.yml + npm Trusted Publishing/OIDC), never locally. Covers version determination (npm view + git tag FIRST — a code-only release burns the next number), the model-card + release.config prep PR, the Hugging Face weight-staging prerequisite (`mailwoman release hf`), the dry-run-then-real CI dispatch, and PUBLISHED-tarball md5 verification. The demo repoint is a SEPARATE follow-up. Use when promoting a trained model to npm or cutting any npm release ("publish", "release", "ship v…", "promote the model").
+description: Codifies the mailwoman npm release — a coordinated version bump across ALL @mailwoman/* workspaces (the model included), published ENTIRELY via CI (publish.yml + npm Trusted Publishing/OIDC), never locally. Covers version determination (npm view + git tag FIRST — a code-only release burns the next number), the model-card + release.config prep PR, the Hugging Face weight-staging prerequisite (`mailwoman release hf`), the dry-run-then-real CI dispatch, and PUBLISHED-tarball md5 verification. The demo repoint is a SEPARATE follow-up. Use when promoting a trained model to npm or publishing any npm release ("publish", "release", "ship v…", "promote the model").
 ---
 
 # Mailwoman Release Skill
 
 The coordinated-publish runbook. `RELEASING.md` is the canonical doc; this skill is the
-operational checklist + the landmines that have bitten real releases (v4.13.0 hit five in one cut).
+operational checklist + the landmines that have bitten real releases (v4.13.0 hit five in one release).
 
 ## When to use
 
 - Promoting a trained model to npm (the main case — a new `neural-weights-*` bundle).
-- Cutting a code-only npm release (no model change — the version still bumps in sync).
+- Publishing a code-only npm release (no model change — the version still bumps in sync).
 - Operator says "publish", "release", "ship vX", "promote the model".
 
 ## When NOT to use
@@ -29,7 +29,7 @@ operational checklist + the landmines that have bitten real releases (v4.13.0 hi
 2. **Full-sync versioning** — every workspace in `.release-it.json` + `neural-weights-*/model-card.json#version`
    - `release.config.json#version` + the demo `releases.json` share ONE number per release. The
      trained artifact keeps its own identity (`release.config.json#weights`, the card's `model_lineage`);
-     the published version is just the unified release number.
+     the published version is the unified release number.
 3. **The model release version is the NEXT UNIFIED number — verify, don't assume.** A _code-only_
    release bumps the packages but NOT the card (the card version tracks the MODEL). So the card can
    lag the package version (e.g. card 4.11.0 while npm is at 4.12.0). **Run `npm view mailwoman
@@ -68,7 +68,7 @@ For a **model release**, on a branch off current `main`:
    new int8 md5**, plus reconcile `model_lineage`, `phase`, `notes` (the `requires` ship-config stays
    UNCHANGED unless the channels changed). Validate JSON: `jq -e .version <file>`.
 
-   The card is the SOURCE OF TRUTH for the md5 — en-us's `DEFAULT_MODEL_MD5` derives from it, and
+   The card WINS for the md5 — en-us's `DEFAULT_MODEL_MD5` derives from it, and
    en-gb's linker reads THIS file to verify its own link. Skip `files_md5` and the en-gb guard fails
    comparing new bytes against the old digest, which reads as a broken link rather than a missed edit.
 
@@ -85,8 +85,8 @@ For a **model release**, on a branch off current `main`:
    every hit outside `scratchpad/` is a file that still has to move. Then run `link-dev-weights` for
    en-us AND en-gb — en-gb's #397 guard is what proves the pair moved together.
 
-   `weights.tokenizer` / `weights.tokenizerVersion` change ONLY when the tokenizer actually changed.
-   Confirm by md5, not by run name: a from-scratch run usually reuses the shipped tokenizer, and
+   `weights.tokenizer` / `weights.tokenizerVersion` change ONLY when the tokenizer changed.
+   Confirm by md5, not by run name: a from-scratch run reuses the shipped tokenizer unless the recipe replaces it, and
    assuming otherwise stages the wrong one into the bundle.
 
 5. The `neural-weights-fr-fr` card version lags by long-standing convention (publish.yml cp's the
@@ -194,7 +194,7 @@ model to R2 (`public.mailwoman.ai/mailwoman/en-us/v<target>/`), and bump the dem
 in `docs/src/`. Heed the `hasPolygons=false` warning (demo degrades to rectangles/anchor-off if the
 R2 side is incomplete). This is its own task — surface it, don't assume it.
 
-## failure mode index (each cost real time on a prior cut)
+## failure mode index (each cost real time on a prior release)
 
 - **Code-only release burns the next number** without bumping the card → `npm view` + `git tag` FIRST.
 - **`--minor` → patch** through the yarn wrapper → pass the explicit semver to `-f version=`.
@@ -203,7 +203,7 @@ R2 side is incomplete). This is its own task — surface it, don't assume it.
 - **The materialized `model.onnx` can read stale** (post-dry-run cleanup) → verify the PUBLISHED tarball.
 - **The FST is model-independent** → reuse the prior version's; don't rebuild it for a model bump.
 - **Demo ≠ npm** → `--set-default` + R2 + demo constant are a separate repoint.
-- **Stage binaries BESIDE the canonical** (new filename); the operator gates the actual swap = the merge + dispatch.
+- **Stage binaries BESIDE the canonical** (new filename); the operator approves the actual swap = the merge + dispatch.
 - **Branch rulesets reject direct pushes to main** (the "Production Integrity"
   ruleset — PR + `test` required, bypass = OrganizationAdmin only — rejected the old release-it
   direct push with GH013 AFTER a green dry-run; dry-run doesn't exercise the push). That incident

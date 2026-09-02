@@ -1,24 +1,24 @@
 ---
 name: eval-model
-description: Deciding whether a model change may ship. The gate is the 649-row board plus the promotion battery, run through the warm-engine mwdev tools; the six-address preset check is a SMOKE test for tag collapse and is not a gate. Use before promoting any model, and read it before writing a probe script.
+description: Deciding whether a model change may ship. The shipping decision rests on the 649-row board plus the promotion battery, run through the warm-engine mwdev tools; the six-address preset check is a SMOKE test for tag collapse and does not decide. Use before promoting any model, and read it before writing a probe script.
 ---
 
-## The gate is not six addresses
+## Six addresses do not decide
 
-This skill used to open with six US presets and a v0.5.3 baseline, under the heading "release gate".
+This skill used to open with six US presets and a v0.5.3 baseline, under the heading "release eval".
 It is kept below because it still catches what it was written to catch — a collapsed tagger, a
 tokenizer/model mismatch — and those failures are worth thirty seconds before anything expensive.
 
-It is not a gate, and treating it as one ships a model graded on six US rows with no truth
+It is not the shipping decision, and treating it as one ships a model graded on six US rows with no truth
 coordinates, no non-US locale, no geocoding, and a baseline from a model several majors old.
 
-## The actual gate
+## What decides
 
 Three floors, all of which must hold:
 
 1. **Net improved-minus-regressed ≥ 0 on the 649-row board.**
 2. **No regression on FR, GB or DE** — iron rule 6, the D-rule. A winning net does not buy one.
-3. **The promotion battery passes every floor declared by the gate spec**
+3. **The promotion battery passes every floor declared by the eval spec**
    (`mwdev_gate --spec v9.0.0-base`). The command reports the passed and total floor counts; do not
    copy a count into this runbook because adding a floor would make it stale.
 
@@ -50,10 +50,10 @@ scripts keep concluding that nothing changed.
 | Why did the coordinate move — parse, retrieval, or tier? | `mwdev_diff_geocode` |
 | Two configs, one changed setting                         | `mwdev_compare`      |
 | The promotion battery                                    | `mwdev_gate`         |
-| What does the corpus actually contain?                   | `mwdev_coverage`     |
+| What does the corpus contain?                            | `mwdev_coverage`     |
 | Where did this span come from?                           | `mwdev_trace`        |
 
-`mwdev_run` with no arguments grades all 649 board rows in about a minute. That is usually the right
+`mwdev_run` with no arguments grades all 649 board rows in about a minute. That is the right
 first command, and it is cheaper than the script you were about to write.
 
 ## Reading the result
@@ -103,7 +103,7 @@ take it to the board.
 ## Related
 
 - `.agents/skills/training-arc/SKILL.md` — the protocol, and the controls that precede a number
-- `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` — which evals gate a change; iron rule 6 is the D-rule
+- `docs/engineering/CONTRIBUTING_MODEL_WORK.mdx` — which evals decide a change; iron rule 6 is the D-rule
 - `packages/core/test/unit/pipeline/grouper-audit.test.ts` — the audit no-op test for the v0.5.3 collapse pattern
 - `docs/records/evals/model-versions/2026-05-27-v0.5.3-diagnostic-training-review.mdx` — the eval that
   produced the smoke presets

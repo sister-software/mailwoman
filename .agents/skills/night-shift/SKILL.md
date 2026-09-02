@@ -1,13 +1,13 @@
 ---
 name: night-shift
-description: Autonomous overnight engineering shift workflow for mailwoman. Encodes pre-flight checks, salvage-first survey, idle-time policy, eval gates (with no-silent-gate-drift), diagnostic-before-fix, resume-vs-init_from, NaN protocol, compute placement, treadmill guard, and shift-end handoff. Use when the operator hands the conn for a multi-hour autonomous session, especially involving Modal training runs and HF releases.
+description: Autonomous overnight engineering shift workflow for mailwoman. Encodes pre-flight checks, salvage-first survey, idle-time policy, eval floors (with no-silent-eval-drift), diagnostic-before-fix, resume-vs-init_from, NaN protocol, compute placement, treadmill guard, and shift-end handoff. Use when the operator hands the conn for a multi-hour autonomous session, especially involving Modal training runs and HF releases.
 ---
 
 # Night Shift Skill
 
 ## When to use
 
-- The operator hands the conn for a multi-hour autonomous session (often via `/goal`).
+- The operator hands the conn for a multi-hour autonomous session (via `/goal`).
 - The session likely involves: launching one or more Modal training runs, shipping models to HF, updating the demo, writing docs.
 - The operator is offline or asleep — decisions must be made without their input.
 
@@ -100,7 +100,7 @@ When training diverges:
 1. **Stop** the app: `modal app stop -y <app-id>`. Don't let it burn GPU on garbage gradients.
 2. **Capture** the divergence point: which step, what loss trajectory, what config differed from a known-good run.
 3. **Diagnose ONE knob.** Never adjust two variables simultaneously — you lose attribution.
-4. **Document** the hypothesis in the config YAML as a comment, not just the commit message. The next iteration needs to see what's already been tried.
+4. **Document** the hypothesis in the config YAML as a comment, not the commit message alone. The next iteration needs to see what's already been tried.
 5. **Retry.** If it diverges again with the same root, escalate: drop the feature entirely (CE-only fallback) or schedule a deeper investigation as a separate issue.
 
 **Known constraints (bf16 CRF):**
@@ -178,13 +178,13 @@ which null run backs it, then pick a row.
 trying to grow.** If you need the checkpoint slot, snapshot the optimizer state
 with the weights and delete the _next_ checkpoint, not the resume target.
 
-## Pre-publish eval gate
+## Pre-publish eval
 
 **A candidate number means nothing until the controls have run.** Before the per-tag
 analysis below, run `mwdev_arc` — self-control, then null, then candidate. It refuses
 to attribute a result when the shipped model disagrees with itself, and it subtracts
 the fine-tune's own row loss rather than attributing it to the change under test. The protocol and its rationale
-are the `training-arc` skill; the gate floors are the `eval-model` skill. Neither is
+are the `training-arc` skill; the eval floors are the `eval-model` skill. Neither is
 optional, and the per-tag check below is in addition to them, not instead.
 
 ### Per-tag error analysis
@@ -202,13 +202,13 @@ Abort the upload if **any tag regresses >2pp from the default release**, unless:
 
 The 2pp threshold catches the regressions that matter without blocking on noise.
 
-**If the gate fires:** label the artifact as experimental in the model card, add it to `releases.json` without promoting to `defaultVersion`, file a GitHub issue explaining the trade-off. The artifact still ships — it's the _promotion_ that's gated.
+**If the eval fires:** label the artifact as experimental in the model card, add it to `releases.json` without promoting to `defaultVersion`, file a GitHub issue explaining the trade-off. The artifact still ships — it's the _promotion_ that is withheld.
 
-### No silent gate drift
+### No silent eval drift
 
-The 2pp pre-publish gate measures against **canonical floors from the config**,
+The 2pp pre-publish eval measures against **canonical floors from the config**,
 not against whatever table happens to be in the current postmortem. Any
-relaxation lives in a separate, explicit "gate-revision" note with a stated
+relaxation lives in a separate, explicit "eval-revision" note with a stated
 reason; the table in the doc cites the config bars verbatim above any
 scorecard.
 
@@ -226,18 +226,18 @@ When writing a scorecard or comparison table in `docs/records/evals/`:
 A consolidation doc once relaxed `affix 78/67 → 72/64` and dropped the
 US-street row from one table; the operator caught it on review. No decision
 flipped on the relaxed numbers (luck), but ~2h of detection lag is the kind of
-friction that ends with "did we just ship a regression?" The
-`feedback-no-silent-gate-drift` memory exists; this rule is what keeps the
+friction that ends with "did we ship a regression?" The
+`feedback-no-silent-eval-drift` memory exists; this rule is what keeps the
 next doc from triggering it.
 
-When a regression is genuinely the right thing to ship (e.g. guardrail gains that
+When a regression is the right thing to ship (e.g. guardrail gains that
 justify a tag dip), the path is: state the trade-off in the doc, file the
-gate revision separately, and the operator promotes — not the agent silently
+eval revision separately, and the operator promotes — not the agent silently
 lowering the bar in the table.
 
 ## Idle-time policy
 
-**Between training launches, work the backlog. Do NOT just schedule wakeups and wait.**
+**Between training launches, work the backlog. Do NOT only schedule wakeups and wait.**
 
 Scheduled wakeups (`ScheduleWakeup`) are correct for _monitoring signals_: training step counter, CI status flip, external job completion. They are wrong for "check back later in case something happened."
 
@@ -282,7 +282,7 @@ Sections (in this order):
 
 1. **What shipped** — bullets, links to HF artifacts, git tags
 2. **What went well** — concrete patterns worth reusing
-3. **What could've gone better** — honest, named friction points
+3. **What could've gone better** — named friction points
 4. **Decisions made autonomously** — what choices you made without operator input, what the alternatives were, why you chose what you chose
 5. **Open questions** — things the operator should decide when they're back
 6. **Concrete next steps** — bullets with file paths, branch names, issue numbers
@@ -296,7 +296,7 @@ Numbers table at the end: shift duration, models trained, total Modal time, loca
 ### Ship discipline
 
 - Default to **don't ship** for any artifact you'd be uncomfortable demoing to a hostile interviewer.
-- "Experimental" labels are a privilege, not a fallback. Use them when results genuinely warrant inspection (mixed signal, A/B-able), not as cover for "I uploaded too fast."
+- "Experimental" labels are a privilege, not a fallback. Use them when results warrant inspection (mixed signal, A/B-able), not as cover for "I uploaded too fast."
 
 ### Iteration discipline
 
@@ -326,7 +326,7 @@ affix peak + FR-region collapse; moderate density → stable ~65 affix ceiling
 
 ## Operator handoff format
 
-At the very end of an autonomous shift, send the operator a chat-friendly summary (not just a commit link). **Order matters — lead with what the operator needs to act on, not with what shipped.**
+At the very end of an autonomous shift, send the operator a chat-friendly summary (not a commit link alone). **Order matters — lead with what the operator needs to act on, not with what shipped.**
 
 1. **Anything that needs eyes-on, in priority order** — merge wall, decision deferred, regression to review, open NaN mystery. This is what gets read first; everything below is context.
 2. **What changed in production** — HF defaults, demo version, npm tags. Empty is fine; say so.

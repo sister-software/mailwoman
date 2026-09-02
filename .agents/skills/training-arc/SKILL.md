@@ -24,7 +24,7 @@ mwdev_arc candidate=<staged candidate dir> \
 
 It refuses to attribute anything when the self-control is dirty, subtracts the placebo (the `null=` arm)
 before reporting a regression count, checks the D-rule, and prints the regressed ADDRESSES rather than only their number.
-Omitting `control` or `null` does not skip the check quietly — the result says which control never ran
+Omitting `control` or `null` does not skip the check without saying so — the result says which control never ran
 and marks the number an upper bound.
 
 Read the rest of this file when a leg needs building, or when the tool's verdict needs auditing.
@@ -105,14 +105,14 @@ and a candidate that flips them changed a low-confidence answer rather than brok
 `retrieval-repointed` (ranking or gazetteer), `tier-changed` (**data coverage — no model change touches it**).
 Grading a tier fall-through against a model wastes a run.
 
-## Step 5 — the gate is against SHIPPED, and it is not the attribution
+## Step 5 — the comparison is against SHIPPED, and it is not the attribution
 
 The placebo is the right baseline for _attributing_ a regression. It never authorizes shipping one:
 publishing costs a user the difference from what they have today.
 
 - net improved-minus-regressed ≥ 0 on the 649-row board
 - FR, GB and DE show no regression anywhere — iron rule 6, the D-rule
-- the promotion battery `mwdev_gate --spec v9.0.0-base` passes every floor declared by the gate
+- the promotion battery `mwdev_gate --spec v9.0.0-base` passes every floor declared by the eval
   spec; use the passed and total counts printed by the command rather than a count copied into this
   runbook
 
@@ -130,7 +130,7 @@ measurement in this protocol.
   `packages/dev-mcp/lib/compiled-tree.ts`. Never resolve by name sort: `v0.9.9` beats `v0.26.0`
   lexically.
 - **A smoke run proves the config loads, not that the new rows are reached.** Read the file through
-  the loader's own gate (`country_weights.get(cc)`) first.
+  the loader's own check (`country_weights.get(cc)`) first.
 - **`country_weights` is a hard admission filter.** A country absent from it trains on nothing
   regardless of how many rows exist. Check with `mwdev_coverage` before assuming a locale is taught.
 - **A hypothesis-bearing corpus change declares `data.required_corpus_receipts`.** Each receipt states
