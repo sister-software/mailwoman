@@ -1,6 +1,6 @@
-"""Invariance gates for the v0.5.0 char-offset label format (#519 — the consult keepers, as tests).
+"""Invariance checks for the v0.5.0 char-offset label format (#519 — the consult keepers, as tests).
 
-Three gates, pre-registered in the design doc (2026-06-11-char-offset-labels-design.md, blast-radius
+Three checks, pre-registered in the design doc (2026-06-11-char-offset-labels-design.md, blast-radius
 items 6 + 8, plus the positive case the migration exists for):
 
 (a) **Label-stream bit-identity** — on rows WITHOUT intra-span punctuation, the spans-based

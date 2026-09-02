@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Demo-cascade smoke eval (#524) — the whole-stack lens the per-layer gate battery lacks.
+ *   Demo-cascade smoke eval (#524) — the whole-stack lens the per-layer eval battery lacks.
  *
  *   Runs each row of `data/eval/external/demo-cascade-smoke.jsonl` through the FULL stack exactly the
  *   way the demo (and any real consumer) composes it: neural parse with the ship config (gazetteer
@@ -30,7 +30,7 @@
  *   Defaults point at the staged demo release dir (`--stage-dir`, the byte-copies of what the live
  *   demo serves); `MAILWOMAN_WOF_HOT_DB` overrides the DB path (same env the #522 integration tests
  *   use). Exit 0 = the run completed (row failures are reported in the table + sidecar; the
- *   promotion-gate verdict enforces any floor). Exit 2 = missing artifacts / malformed rows.
+ *   promotion-eval verdict enforces any floor). Exit 2 = missing artifacts / malformed rows.
  *
  *   Measurement only: this script changes no pipeline or resolver behavior.
  *

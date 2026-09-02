@@ -8,7 +8,7 @@
  *   The `--gate` help has always said "a path, or a spec name resolved against eval-harness/gates/".
  *   The resolver never appended `.json`, so `--gate v5.3.0-family` — the spec NAME, exactly as
  *   advertised — fell through to `readFileSync("v5.3.0-family")` and died on a bare ENOENT naming a
- *   file nobody asked for. Cost: one confused re-run on 2026-07-16, mid gate battery.
+ *   file nobody asked for. Cost: one confused re-run on 2026-07-16, mid eval battery.
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"

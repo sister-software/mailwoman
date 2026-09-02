@@ -695,7 +695,7 @@ export interface POIBoardRunResult {
  * Linear-interpolated quantile — deliberately NOT `percentile` from `@mailwoman/core/utils`.
  *
  * They are different estimators, not two copies of one. Core's is nearest-rank and its docstring warns against
- * "upgrading" it, because the resolver gate baselines were measured with that exact semantics. This one interpolates
+ * "upgrading" it, because the resolver eval baselines were measured with that exact semantics. This one interpolates
  * between the bracketing order statistics, which is what the POI board's distance summaries have always reported.
  * Pointing this at core would shift published board numbers without changing a single measurement.
  */

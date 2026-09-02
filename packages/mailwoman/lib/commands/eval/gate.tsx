@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman eval gate` — `promotion-gate.ts` (#479): runs the standard eval battery against a
- *   candidate model, checks every number against a gate spec contract
+ *   candidate model, checks every number against an eval spec contract
  *   (`mailwoman/eval-harness/gates/*.json`), and emits `<out-dir>/verdict.json`. Exit 0 = every
  *   floor met AND the mask-regression lock held; exit 1 = any miss; exit 2 = usage / lore-guard
  *   refusal. On PASS it prints the pre-filled `eval ledger-append` command (#885). The module

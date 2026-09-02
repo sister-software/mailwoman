@@ -111,7 +111,7 @@ export interface ParityEvalOptions {
 	gazetteerPrior?: boolean
 	/**
 	 * Ship-config word-consistency heal (default true since the 2026-07-15 gate revision — production parses heal, so the
-	 * gate grades the healed parse). Pass `false` to reproduce pre-heal baselines.
+	 * eval grades the healed parse). Pass `false` to reproduce pre-heal baselines.
 	 */
 	wordConsistency?: boolean
 	/**

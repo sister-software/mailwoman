@@ -1,4 +1,4 @@
-"""Build the DE fragment board (G8's instrument — the v7 DE-fold value gate, v8.3.0 ladder).
+"""Build the DE fragment board (G8's instrument — the v7 DE-fold value threshold, v8.3.0 ladder).
 
 Mirrors the FR board's taxonomy (`ban-fragments-fr.jsonl`, 7 classes × 400 with Wilson-interval
 support) from Overture-DE (2026-06-17.0, 800k rows, `address_levels = [state code, municipality]`),

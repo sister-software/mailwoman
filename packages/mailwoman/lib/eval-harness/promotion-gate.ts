@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Promotion eval runner (#479) — ONE command that runs the standard eval battery against a
- *   candidate model, checks every number against a gate spec CONTRACT, and emits a single
+ *   candidate model, checks every number against an eval spec CONTRACT, and emits a single
  *   machine-readable verdict. Exists so promotion evals are ENFORCED, not night-shift discipline,
  *   and so "why did this model ship?" has a one-file answer.
  *
@@ -28,7 +28,7 @@
  *       the per-tag battery on the int8 artifact and enforces the fp32↔int8 delta cap.
  *   - Demo-cascade smoke (#524): whole-stack parse→reconcile→resolve against the slim hot DB
  *       (MAILWOMAN_WOF_HOT_DB or the v4.4.0 stage default). Skips LOUD when the DB is absent; floor
- *       key `cascade.demo_smoke` (pass-rate %) for specs that gate on it.
+ *       key `cascade.demo_smoke` (pass-rate %) for specs that eval on it.
  *   - Mask-regression check (#718): when the spec declares requires_conventions, re-runs the ship
  *       artifact mask-off vs mask-on and FAILS the eval if any tag drops >2pp under the mask — the
  *       "second lock" beside createScorer's load-time capability delta check.
@@ -60,7 +60,7 @@
  *
  *   - Tokenizer comparability: the tokenizer path must contain the card's tokenizer_version; refuses to
  *       grade otherwise (F1 across tokenizers is meaningless).
- *   - Gaz-fed flags: when the gate spec sets requires_gazetteer_lexicon, every scorer gets
+ *   - Gaz-fed flags: when the eval spec sets requires_gazetteer_lexicon, every scorer gets
  *       --gazetteer-lexicon + --suppress-gaz-near-postcode (zero-filled clues fake an affix crash
  *       and depress country recall).
  *   - Recompile-before-eval: warns when core/ sources are newer than core/out.
@@ -189,7 +189,7 @@ export interface PromotionGateOptions {
  * ENOENT naming a file nobody asked for — which is how it read on 2026-07-16.
  */
 /**
- * The gate specs, beside this module in the SOURCE tree — tsc emits no `.json`, so the directory is named from the
+ * The eval specs, beside this module in the SOURCE tree — tsc emits no `.json`, so the directory is named from the
  * package root.
  */
 const GATES_DIR = resolvePackagePath("mailwoman", "lib", "eval-harness", "gates")
@@ -417,7 +417,7 @@ async function runLoreGuards(env: {
  * Demo-cascade smoke (#524): the whole-stack parse→reconcile→resolve pass the per-layer battery lacks (the 2026-06-11
  * lesson: #520/#521/#522 all shipped through green per-layer checks). Runs on the ship artifact against the slim hot DB
  * the demo serves. Env-restricted like the other artifact-dependent legs: skips LOUD when the DB is absent so CI stays
- * green without it — but a gate spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by
+ * green without it — but an eval spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by
  * design).
  *
  * Its own function because it is self-contained and `runPromotionGate` is at the statement ceiling; nothing about the
@@ -480,7 +480,7 @@ async function runDemoCascadeLeg(env: {
 }
 
 /**
- * Run the full promotion-gate battery. Returns the process exit code: 0 = every floor met AND the mask-regression lock
+ * Run the full promotion-eval battery. Returns the process exit code: 0 = every floor met AND the mask-regression lock
  * held, 1 = any miss, 2 = usage / lore-guard refusal.
  */
 export async function runPromotionGate(options: PromotionGateOptions): Promise<number> {
@@ -568,7 +568,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		channelOptions.suppressGazNearPostcode = true
 	}
 
-	// Conventions channel (#511 Tier A): when the gate spec declares requires_conventions, every scorer
+	// Conventions channel (#511 Tier A): when the eval spec declares requires_conventions, every scorer
 	// parses with the address-system conventions mask in the declared mode ("auto" = locale-head
 	// detection). Same contract discipline as the gaz flags — the spec IS the ship config.
 	const CONV_MODE = gate.requires_conventions ?? ""

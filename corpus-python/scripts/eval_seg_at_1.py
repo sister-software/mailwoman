@@ -34,7 +34,7 @@ STREET_TYPES = {"street", "street_prefix", "street_prefix_particle", "street_suf
 
 
 def fold(value: str) -> str:
-    """Case-fold + collapse whitespace — the same comparison the JS parity gate uses."""
+    """Case-fold + collapse whitespace — the same comparison the JS parity check uses."""
     return " ".join(value.lower().split())
 
 

@@ -147,7 +147,7 @@ def test_collapse_label_drops_unknown_tags():
 
 
 def test_active_components_present_accepts_coarse_only_rows():
-    # WOF-admin shape: country + region, no fine tags. Still passes the gate.
+    # WOF-admin shape: country + region, no fine tags. Still passes the check.
     assert active_components_present(["country", "region"]) is True
     assert active_components_present(["locality"]) is True
     assert active_components_present(["postcode"]) is True
@@ -164,7 +164,7 @@ def test_active_components_present_accepts_fine_only_rows():
 def test_active_components_present_rejects_empty_and_irrelevant():
     assert active_components_present([]) is False
     # `attention` is in no stage; `entrance`/`staircase` are STAGE4 — defined but not
-    # active — so none of these count toward the gate.
+    # active — so none of these count toward the check.
     assert active_components_present(["attention", "entrance", "staircase"]) is False
 
 

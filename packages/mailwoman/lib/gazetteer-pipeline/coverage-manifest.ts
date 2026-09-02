@@ -44,7 +44,7 @@ const OA_PANEL_SOURCE = "#743 OA held-out hard-resolve panel (DeepSeek-advised g
 const OSM_PANEL_SOURCE = "#928 promote OSM panel, night 34 (2026-07-06)"
 
 /**
- * The reviewed per-country hard-filter coverage record — every promote-gate verdict + measurement that grew (or
+ * The reviewed per-country hard-filter coverage record — every promote-eval verdict + measurement that grew (or
  * deliberately kept a country off) the hard-country safelist. This is the structured form of the receipts that lived in
  * the `HARD_PLACE_COUNTRY_SAFELIST` code comment; the derived safelist (`hardFilterSafe === true`) is asserted
  * byte-identical to that constant in `coverage-manifest.test.ts`, so the two cannot drift silently.

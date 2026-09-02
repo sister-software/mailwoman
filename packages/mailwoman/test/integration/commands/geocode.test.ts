@@ -6,7 +6,7 @@
  *   Tests for the `mailwoman geocode` command.
  *
  *   Structure mirrors `reverse.test.ts`: unconditional argument-validation tests that run in every
- *   environment, plus DB-conditional integration tests (`describe.skipIf`) that gate on live database files
+ *   environment, plus DB-conditional integration tests (`describe.skipIf`) that eval on live database files
  *   being present on disk.
  *
  *   Integration suite paths:

@@ -1,4 +1,4 @@
-"""Score a v8 JP char model on the municipality-held-out board (the pre-registered gate read).
+"""Score a v8 JP char model on the municipality-held-out board (the pre-registered eval read).
 
 PRE-REGISTERED DEFINITION — written before any board inference was run (the bars-are-bars rule):
 
@@ -14,12 +14,12 @@ PRE-REGISTERED DEFINITION — written before any board inference was run (the ba
   A row whose predicted pair is absent from the table is UNACCEPTABLE. 15 km covers the areal
   spread of large municipalities around their own centroid (the WOF-JP point-geometry situation:
   municipality centroids suffice — the architecture plan's stated resolution).
-- **GATE (Leg 1, pre-registered 2026-07-18): acceptable fraction >= 0.70.**
+- **EVAL (Leg 1, pre-registered 2026-07-18): acceptable fraction >= 0.70.**
 - Secondary diagnostics reported alongside (the FAIL ladder's first rung, computed either way):
   per-tag span exact-match rates (region/locality/street/house_number/postcode vs the board's
   gold spans) and the unresolved-pair count.
 
---- Phase-3 additions (2026-08-05). The gate above is UNCHANGED; both additions are diagnostic. ---
+--- Phase-3 additions (2026-08-05). The check above is UNCHANGED; both additions are diagnostic. ---
 
 **Per-register acceptability.** The full JP slice (#1458) writes a ``register`` column on every
 board row — which of the four surfaces ``build_jp_slice`` rendered it in (``native`` /
@@ -27,7 +27,7 @@ board row — which of the four surfaces ``build_jp_slice`` rendered it in (``na
 reads Japanese" from "the model reads the 68% of the board that is the source's own surface", and
 the two synthesized registers are exactly the ones the source never contains — so they are the ones
 a blended average hides. This script now splits the SAME per-row outcomes by that column and prints
-the breakdown under the blended number. **The gate is still the blended fraction >= 0.70**; a
+the breakdown under the blended number. **The check is still the blended fraction >= 0.70**; a
 per-register number has no bar attached to it and cannot pass or fail anything. Boards with no
 ``register`` column (the Leg-1 probe board) simply get no breakdown — the blended read is identical.
 
@@ -201,7 +201,7 @@ def score_board(
 
 
 def format_report(result: Mapping, *, accept_km: float = ACCEPT_KM, gate: float = GATE) -> str:
-    """The printed read. The gate line is the blended fraction and nothing else."""
+    """The printed read. The check line is the blended fraction and nothing else."""
     lines = [f"board rows: {result['rows']}; unresolved (pred pair not in table): {result['unresolved']}"]
     tag_total, tag_hit = result["tag_total"], result["tag_hit"]
     lines.append("per-tag span exact-match:")

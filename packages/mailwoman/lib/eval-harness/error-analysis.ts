@@ -14,7 +14,7 @@
  *   4. Near-class confusion — city↔state, street↔venue swaps
  *   5. Structural violations — illegal BIO transitions (I after O)
  *
- *   This is the pre-publish 2pp promote gate (night-shift skill: "run the full per-tag error analysis
+ *   This is the pre-publish 2pp promote eval (night-shift skill: "run the full per-tag error analysis
  *   and compare against the current default release; abort the upload if any tag regresses >2pp").
  *   It therefore builds the classifier via the canonical `createScorer`
  *   (`@mailwoman/neural/scorer`, #718) in STRICT mode, so the model is fed the full SHIP-CONFIG it

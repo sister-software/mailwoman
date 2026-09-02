@@ -3684,7 +3684,7 @@ def grade_evidence_bundle(
         if heal:
             # heal-approx (production enforceWordConsistency's core): per whitespace word, majority
             # char vote on street-membership — arbitrates the mid-word piece truncations the raw
-            # argmax leaves behind. NOT the full TS heal (no punctuation-separator/byte gates);
+            # argmax leaves behind. NOT the full TS heal (no punctuation-separator/byte checks);
             # labeled heal-approx in every report.
             import re as _re
 
@@ -3846,7 +3846,7 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
         if heal:
             # heal-approx (production enforceWordConsistency's core): per whitespace word, majority
             # char vote on street-membership — arbitrates the mid-word piece truncations the raw
-            # argmax leaves behind. NOT the full TS heal (no punctuation-separator/byte gates);
+            # argmax leaves behind. NOT the full TS heal (no punctuation-separator/byte checks);
             # labeled heal-approx in every report.
             import re as _re
 

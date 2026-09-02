@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman eval gauntlet` — THE Gauntlet gate: all three layers, one combined verdict (the
+ *   `mailwoman eval gauntlet` — THE Gauntlet eval: all three layers, one combined verdict (the
  *   full-pipeline integration net a model ship checks on; #566 lesson). No flags = self-check on the
  *   shipped default (regression + metamorphic); `--candidate` adds the held-out candidate-vs-prod
  *   z-test; `--layer` runs a single layer with the old standalone semantics (its own verdict + exit

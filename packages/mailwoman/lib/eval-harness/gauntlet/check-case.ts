@@ -252,7 +252,7 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 				`place unresolved (hierarchy empty) ≠ ${c.expect_place_name ? `"${c.expect_place_name}"` : c.expect_place_id}`
 			)
 		} else {
-			// Case-insensitive, matching the component gate: the corpus is authored from an oracle's rendering, and
+			// Case-insensitive, matching the component check: the corpus is authored from an oracle's rendering, and
 			// casing is the gazetteer's business (`resolver_name` is proper-cased canonical, #1014).
 			if (c.expect_place_name != null && place.name.toLowerCase() !== c.expect_place_name.toLowerCase()) {
 				issues.push(`place name "${place.name}" ≠ "${c.expect_place_name}"`)

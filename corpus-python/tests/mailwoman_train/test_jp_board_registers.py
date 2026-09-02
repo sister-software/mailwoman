@@ -1,4 +1,4 @@
-"""Per-register acceptability on the JP board — and proof the pre-registered gate is untouched.
+"""Per-register acceptability on the JP board — and proof the pre-registered eval is untouched.
 
 The full JP slice (#1458) writes a ``register`` column on every board row (``native`` /
 ``arabic_chome`` / ``compact_folded`` / ``designator``). Two of those four surfaces appear in ZERO

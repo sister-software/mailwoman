@@ -10,7 +10,7 @@
  *   street_norm. The bare-vs-anchored match-rate delta IS the gap, and isolates whether the model only
  *   learned FR structure in the postcode-anchored context.
  *
- *   GATE-required (#949). This is a promotion-gate battery leg — the `fr.bare_street_intact`
+ *   GATE-required (#949). This is a promotion-eval battery leg — the `fr.bare_street_intact`
  *   floor — not a one-off probe, which is why it lives here and not in `scripts/diagnostic/`. It sat
  *   in that drawer until the de-shell migration; the drawer is `.gitignore`d wholesale
  *   (`scripts/diagnostic/`), so the file survived only because it had been force-added to the index,
@@ -100,7 +100,7 @@ export interface FRParseRecallOptions {
 	 */
 	label?: string
 	/**
-	 * Gate-leg mode (#949): the FROZEN 40-row sample, so the bare-street floor is reproducible anywhere (incl. CI, which
+	 * Eval-leg mode (#949): the FROZEN 40-row sample, so the bare-street floor is reproducible anywhere (incl. CI, which
 	 * has no database). Default `scripts/eval/fixtures/fr-bare-street-40.jsonl`.
 	 */
 	fixture?: string

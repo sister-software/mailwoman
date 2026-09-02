@@ -825,7 +825,7 @@ def build(args: argparse.Namespace) -> dict:
                 + "\n"
             )
 
-    # --- Sanity gates. Violations RAISE; a slice that fails one is not a slice. -------------------
+    # --- Sanity checks. Violations RAISE; a slice that fails one is not a slice. -------------------
     train_prefectures = {row[0] for row in train_source}
     if args.max_row_groups is None and len(train_prefectures) != 47:
         raise RuntimeError(f"train covers {len(train_prefectures)} prefectures, expected 47 — stratification broken")

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Shared Gauntlet harness: build the full-pipeline geocode deps (optionally with a CANDIDATE model, so a
- *   gate can compare candidate-vs-production on the same inputs) and run one address end-to-end. The
+ *   eval can compare candidate-vs-production on the same inputs) and run one address end-to-end. The
  *   Gauntlet grades the ASSEMBLED output — coordinate + tier — not raw parse F1, the lesson this project
  *   paid for once (#566 / reconcile-retirement).
  */

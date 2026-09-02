@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Verdict assembler for promotion-gate.ts (#479). Parses the battery outputs the runner teed into
- *   the out-dir, checks every number against the gate spec's floors, enforces the fp32↔int8 delta
+ *   the out-dir, checks every number against the eval spec's floors, enforces the fp32↔int8 delta
  *   cap, and writes verdict.json. `failed: false` = all floors met.
  *
  *   Parsing contract: the scorers emit pipe-tables (`| tag | P | R | F1 |` from the affix scorers, `|
@@ -24,7 +24,7 @@ import { TextSpliterator } from "spliterator"
  */
 export interface PromotionVerdictOptions {
 	/**
-	 * Path to the gate spec JSON (already resolved to a real file).
+	 * Path to the eval spec JSON (already resolved to a real file).
 	 */
 	gate: string
 	/**

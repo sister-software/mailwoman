@@ -20,7 +20,7 @@ Pre-registered shape (2026-07-18-v8-jp-char-encoder-design §d):
   round-robin draw to the target count — Tokyo cannot drown Tottori.
 - Held-out board: municipalities whose bucket hash lands in the board range NEVER appear in
   train/val; board rows carry the gold fields + coordinate for the resolve-side scoring.
-- Sanity gates (the JSON-hides-gaps scar): no all-O row, per-char BIO coverage printed, >= 45
+- Sanity checks (the JSON-hides-gaps scar): no all-O row, per-char BIO coverage printed, >= 45
   prefectures in train, board∩train municipality overlap must be empty — violations RAISE.
 
 Spans are emitted BY CONSTRUCTION (the raw is concatenated from the labeled fields), which is why
@@ -83,7 +83,7 @@ JP_PREFECTURES = frozenset(
 )
 
 # Municipality bucket split (md5 of the NFC space-stripped muni kanji, mod 100). Board
-# municipalities are UNSEEN by train AND val — the generalization read the gate needs.
+# municipalities are UNSEEN by train AND val — the generalization read the check needs.
 BOARD_BUCKET_MIN = 97
 
 

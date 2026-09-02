@@ -135,7 +135,7 @@ export interface ConformanceSummary {
 	 */
 	unmeasured: ConformanceFinding[]
 	/**
-	 * How many rows GATED and were DECIDED — the denominator a reader needs before the pass count means anything.
+	 * How many rows were ADMITTED and DECIDED — the denominator a reader needs before the pass count means anything.
 	 */
 	gated: number
 	pass: boolean

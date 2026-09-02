@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   THE Gauntlet gate — runs all three layers and emits one combined verdict, so a model ship checks on the
+ *   THE Gauntlet eval — runs all three layers and emits one combined verdict, so a model ship checks on the
  *   full-pipeline integration net, not just per-tag F1 (the whole point of building it; #566 lesson):
  *
  *     1. regression  — the curated executable bug log; a fixed bug must STAY fixed (conditioned on status=pass).
