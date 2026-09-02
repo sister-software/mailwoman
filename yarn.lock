@@ -4645,7 +4645,7 @@ __metadata:
     "@hono/node-server": "npm:^2.0.12"
     "@hono/zod-openapi": "npm:^1.5.1"
     "@mailwoman/core": "workspace:*"
-    hono: "npm:^4.13.2"
+    hono: "npm:^4.13.3"
     zod: "npm:^4.4.3"
   languageName: unknown
   linkType: soft
@@ -4658,7 +4658,7 @@ __metadata:
     "@mailwoman/api-kit": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/formatter": "workspace:*"
-    hono: "npm:^4.13.2"
+    hono: "npm:^4.13.3"
     zod: "npm:^4.4.3"
   languageName: unknown
   linkType: soft
@@ -4985,7 +4985,7 @@ __metadata:
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
-    hono: "npm:^4.13.2"
+    hono: "npm:^4.13.3"
     mailwoman: "workspace:*"
     zod: "npm:^4.4.3"
   bin:
@@ -5206,7 +5206,7 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     "@mailwoman/timezone-lookup": "workspace:*"
     "@mailwoman/un-locode-lookup": "workspace:*"
-    hono: "npm:^4.13.2"
+    hono: "npm:^4.13.3"
     mailwoman: "workspace:*"
     path-ts: "npm:^2.3.0"
     spliterator: "npm:^6.4.1"
@@ -5264,7 +5264,7 @@ __metadata:
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    hono: "npm:^4.13.2"
+    hono: "npm:^4.13.3"
     mailwoman: "workspace:*"
     zod: "npm:^4.4.3"
   bin:
@@ -15304,10 +15304,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hono@npm:^4.13.2":
-  version: 4.13.2
-  resolution: "hono@npm:4.13.2"
-  checksum: 10/568eaac403b565c5229c6a742526304349badea69b949a2117b69bc1988a9ed94e9287b173448d65e56ab7ef1b0194bf0be2fa847b7ca9969f7115c5d1875915
+"hono@npm:^4.13.3":
+  version: 4.13.3
+  resolution: "hono@npm:4.13.3"
+  checksum: 10/d7e913da993477f2639f9f6b0c7f1306f7b685da1dc3dfe9949fd2282a775161fdde9b5b57e2bbdbe69460996350504e84da849da35f8493ee6e455ae3ff4e1c
   languageName: node
   linkType: hard
 
