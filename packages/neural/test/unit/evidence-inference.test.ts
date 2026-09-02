@@ -11,7 +11,7 @@
  *   computation — this is the fence.
  *
  *   The probe set deliberately carries the classes that have bitten: hyphen/apostrophe folds (a
- *   Phase-1 defect made them unreachable keys), uppercase-gated short codes, homograph bits,
+ *   Phase-1 defect made them unreachable keys), uppercase-conditional short codes, homograph bits,
  *   longest-first multi-token matches, the lowercase register (operator doctrine), negatives.
  */
 

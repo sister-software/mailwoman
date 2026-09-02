@@ -86,7 +86,7 @@
  *   Prototyped out-of-tree against the live gazetteer over the public `findPlace` surface (2026-08-03):
  *   400 real US (ZIP, city) pairs from `postalcode-us.db` + 400 real FR (CP, commune) pairs from
  *   `postcode-locality-fr.db` — 800 pairs, **zero** border crossings, at both the 15 km and 25 km
- *   gates. The 22 US abstentions were pairs whose ZIP parent name is not an exact-matching locality
+ *   checks. The 22 US abstentions were pairs whose ZIP parent name is not an exact-matching locality
  *   in the admin gazetteer (a recall gap; abstention is the safe outcome). The confound board's
  *   verdicts were identical at 15, 25 AND 50 km, so the mechanism is not gate-tuned; the default
  *   below is the 25 km the scale run measured.
@@ -97,7 +97,7 @@
  *   unless the tree carries both a postcode and a locality.
  *
  *   **Default-ON** since the operator promotion of 2026-08-05 (#1477) — the resolver gauntlet, pinned
- *   both ways, returned zero newly-failing gated cases, and 56,000 pair evaluations across both
+ *   both ways, returned zero newly-failing conditional cases, and 56,000 pair evaluations across both
  *   backends returned zero false positives. `ResolveOpts.postcodeCountryCoherence: false` opts out,
  *   and the walk is byte-stable then. Receipts:
  *   `docs/records/evals/2026-08-05-postcode-coherence-default-on-evidence.md`.

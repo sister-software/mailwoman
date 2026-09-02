@@ -779,7 +779,7 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 
 	test("B2-1: the #741 postal-city short-circuit is untouched — an exact (name, postcode) hit wins with the flag on or off", async () => {
 		// Patch the built candidate DB with the #741 side-index carrying the exact hit; the lookup
-		// existence-gates its probe on the table, so this is the real fast-path configuration.
+		// conditions its probe on the table, so this is the real fast-path configuration.
 		using db = new DatabaseClient<WOFDatabase>(candidatePath)
 
 		db.exec(

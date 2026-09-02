@@ -178,11 +178,11 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	 */
 	readonly #ftsProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	/**
-	 * Prepared UNFILTERED existence probe (`name_key` present anywhere, ignoring country/placetype/bbox). Gates the fuzzy
-	 * fallback: fuzzy is a TYPO corrector, so it engages only when the name doesn't exist in the gazetteer at all. A name
-	 * that DOES exist but missed under the active filter is a filter miss (e.g. a placer misroute "Vienna, Austria"→IT),
-	 * not a spelling miss — fuzzing it would scrape an unrelated same-country place and defeat the cascade's
-	 * country-agnostic retry. Prepared only alongside `#ftsProbe`.
+	 * Prepared UNFILTERED existence probe (`name_key` present anywhere, ignoring country/placetype/bbox). Checks the
+	 * fuzzy fallback: fuzzy is a TYPO corrector, so it engages only when the name doesn't exist in the gazetteer at all.
+	 * A name that DOES exist but missed under the active filter is a filter miss (e.g. a placer misroute "Vienna,
+	 * Austria"→IT), not a spelling miss — fuzzing it would scrape an unrelated same-country place and defeat the
+	 * cascade's country-agnostic retry. Prepared only alongside `#ftsProbe`.
 	 */
 	readonly #nameKeyExistsProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	/**
@@ -287,7 +287,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		this.#variantAliasExemption = opts.variantAliasExemption === true
 		this.#roleSelect = this.#hasNameRole ? ", name_role" : ""
 
-		// Ancestors sidecar (#1717): existence-restricted like the probes above, and the CAPABILITY gates with
+		// Ancestors sidecar (#1717): existence-restricted like the probes above, and the CAPABILITY checks with
 		// it — see the `ancestors` property doc for why an older artifact must read as "no ancestors()"
 		// rather than as a method that answers [] everywhere.
 		if (hasTable(this.#db, CANDIDATE_ANCESTOR_TABLE)) {

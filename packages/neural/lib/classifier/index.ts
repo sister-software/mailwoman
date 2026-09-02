@@ -314,7 +314,7 @@ export class NeuralAddressClassifier {
 		logits: number[][]
 		pieces: ReturnType<MailwomanTokenizer["encode"]>["pieces"]
 		/**
-		 * The locale head's confident country verdict, or null — computed on EVERY parse (the #1684 scope gate reads it).
+		 * The locale head's confident country verdict, or null — computed on EVERY parse (the #1684 scope check reads it).
 		 */
 		localeCountry: { country: string; confidence: number } | null
 		/**

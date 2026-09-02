@@ -21,7 +21,7 @@ import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import type { GauntletCaseTable } from "mailwoman/eval-harness/gauntlet/schema"
 
 /**
- * The z at which a two-sided 95% test rejects. Same constant the held-out layer already gates on (`holdout.ts`'s
+ * The z at which a two-sided 95% test rejects. Same constant the held-out layer already checks on (`holdout.ts`'s
  * `Z_CRITICAL_95_TWO_SIDED`), stated positively here because this test is two-tailed in both directions rather than a
  * one-sided floor.
  */

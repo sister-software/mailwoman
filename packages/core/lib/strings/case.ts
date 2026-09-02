@@ -62,7 +62,7 @@ export function smartCapitalCase(input: string): string {
  * Python `str.isupper()`: at least one cased character, and every cased character uppercase.
  *
  * Distinct from {@link isUniformlyCased}, which reports `true` for a string with no cased characters at all — `"123"` is
- * uniformly cased and is NOT `isupper()`. Ports that gate a titlecase on the Python predicate need this one.
+ * uniformly cased and is NOT `isupper()`. Ports that condition on a titlecase on the Python predicate need this one.
  */
 export function pyIsUpper(input: string): boolean {
 	let hasCased = false

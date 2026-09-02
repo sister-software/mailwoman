@@ -392,7 +392,7 @@ export async function findRescoreCandidate(
 	// `locality`-tagged tree, but the model reads a bare famous name as a `street`, so the shape that
 	// needs it most is exactly the shape that guard cannot see.
 	//
-	// The shape gate is deliberately narrow. `qualified` below is the D-rule guard: a postcode, a region,
+	// The shape check is deliberately narrow. `qualified` below is the D-rule guard: a postcode, a region,
 	// a country or a house number in the tree means the address named its own context and a locale guess
 	// is no longer the only evidence — 'Berlin, Wisconsin' keeps resolving to Berlin, Wisconsin. And the
 	// span must cover the WHOLE input: a sub-span of a longer query is not a bare toponym, so
@@ -457,7 +457,7 @@ export async function findRescoreCandidate(
 		for (const h of exact) {
 			if (!withinGate(h)) continue
 
-			// gated = the postcode anchor existed AND validated this match (within gateKm). When no anchor
+			// conditional = the postcode anchor existed AND validated this match (within gateKm). When no anchor
 			// (no postcode→point coverage), the match is unrestricted — returned, but flagged lower-precision.
 			//
 			// #1537: carry the rest of the SAME lookup's exact matches as the namesake runner-ups. Gate-filtered on the

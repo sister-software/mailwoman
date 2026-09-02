@@ -298,7 +298,7 @@ class WOFResolver implements Resolver {
 			// resolve (a foreign subdivision — "Montreal QC" under a US locale). The default filter discarded "QC" and
 			// force-matched the locality to the US namesake; this re-resolves the subdivision + its same-named locality
 			// under the subdivision's OWN country. Disjoint from the two passes above (unresolved region + resolved
-			// locality); evidence-gated + byte-stable on the domestic path (a US region resolves under `US`).
+			// locality); evidence-conditional + byte-stable on the domestic path (a US region resolves under `US`).
 			await applyRegionCountryCoherence(newRoots, this.#backend, state.defaultCountry)
 		}
 
@@ -318,7 +318,7 @@ class WOFResolver implements Resolver {
 		}
 
 		// Interpolation tier (#483): strictly AFTER the exact-point block so an estimate can never
-		// override a real situs point (applyInterpolation also gates on resolution_tier). Opt-in;
+		// override a real situs point (applyInterpolation also checks on resolution_tier). Opt-in;
 		// byte-stable when opts.interpolation is absent.
 		if (opts.interpolation) {
 			applyInterpolation(newRoots, opts.interpolation, opts.interpolationRadiusCalibration)
@@ -344,7 +344,7 @@ class WOFResolver implements Resolver {
 		// Street-centroid tier (#1042): LAST, after span-rescore, so it can (a) union the span-rescore-recovered
 		// country into its FR/national country hints (a placer-misrouted street — "Rue Sainte-Catherine" → IT — leaves
 		// admin unresolved, and only span-rescore recovers the FR country signal) and (b) override a coarse recovered
-		// locality with the exact street centroid. Self-gates on no house number + no existing street-level tier, so a
+		// locality with the exact street centroid. Applies only when there is no house number + no existing street-level tier, so a
 		// rooftop query is untouched; byte-stable when opts.streetCentroids absent.
 		if (opts.streetCentroids) {
 			applyStreetCentroid(newRoots, tree.raw, opts.streetCentroids, opts.streetCountryHints ?? [])
@@ -521,7 +521,7 @@ class WOFResolver implements Resolver {
 		}
 
 		// #194: a resolved parent's country wins, then the caller's `defaultCountry`, then the confident
-		// placer `hardCountry`. All three are a HARD candidate filter. The placer's `hardCountry` is gated
+		// placer `hardCountry`. All three are a HARD candidate filter. The placer's `hardCountry` is conditional
 		// upstream on high confidence (so it only fires when the model is sure), and on a miss the node is
 		// left UNRESOLVED rather than re-resolved globally: the off-continent rows are precisely the ones
 		// whose locality isn't in the country's gazetteer slice, so a global retry would just re-admit the

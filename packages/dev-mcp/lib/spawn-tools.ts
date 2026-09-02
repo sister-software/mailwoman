@@ -322,7 +322,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 
 				const gateOutDir = gateOutDirs.get(jobID)
 
-				// A gate job's numbers come from its own artifacts; only a gauntlet job needs its log parsed.
+				// A check job's numbers come from its own artifacts; only a gauntlet job needs its log parsed.
 				const report = gateOutDir
 					? await readGateReport(gateOutDir, job.stdout, job.stderr)
 					: parseGauntletReport(job.stdout, job.stderr)

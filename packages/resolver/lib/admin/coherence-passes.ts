@@ -320,11 +320,11 @@ async function reconcileExplicitCountry(
  * same-named locality under it? Only when BOTH hold does it swap the region and locality to the in-country pair.
  * Geography confirms; the subdivision table is a soft name→country prior, not a routing decision.
  *
- * Evidence-gated to stay byte-stable on the domestic path. It fires ONLY when (a) a default country is in force, (b)
- * the region node is UNRESOLVED (the default-country filter came up empty — a US region resolves fine under `US`, so a
- * well-formed US query never trips this), (c) the token is a subdivision of a DIFFERENT country than the default, and
- * (d) both the foreign region and a same-named foreign locality resolve. "Springfield, IL" / "Portland, ME": the region
- * resolves under `US`, so gate (b) fails and the tree is untouched. Costs one region + one locality lookup per
+ * Evidence-conditional to stay byte-stable on the domestic path. It fires ONLY when (a) a default country is in force,
+ * (b) the region node is UNRESOLVED (the default-country filter came up empty — a US region resolves fine under `US`,
+ * so a well-formed US query never trips this), (c) the token is a subdivision of a DIFFERENT country than the default,
+ * and (d) both the foreign region and a same-named foreign locality resolve. "Springfield, IL" / "Portland, ME": the
+ * region resolves under `US`, so gate (b) fails and the tree is untouched. Costs one region + one locality lookup per
  * triggering pair. See `ResolveOpts.adminCoherence`.
  */
 export async function applyRegionCountryCoherence(

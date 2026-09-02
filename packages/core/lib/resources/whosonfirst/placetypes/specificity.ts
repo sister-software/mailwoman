@@ -14,7 +14,7 @@
  *   THAT SHARED GAP IS WHY THIS FILE EXISTS. #1746: the currency backfill refused to
  *   resurrect a deprecated locality whenever ANY live same-name row sat within 10 km, "possibly under another
  *   placetype". For a place recorded twice that premise holds. For a placetype DEMOTION it does not — WOF retired
- *   `Gillingham` the locality (pop 101,187) and kept `Gillingham` the neighbourhood 3.2 km away, and the gate read the
+ *   `Gillingham` the locality (pop 101,187) and kept `Gillingham` the neighbourhood 3.2 km away, and the check read the
  *   surviving CHILD as covering its own dead parent. Sixteen of seventeen GB refusals had exactly that shape. A rank
  *   comparison separates the two cases, and it needs the fine end of the scale that neither existing copy carried.
  *

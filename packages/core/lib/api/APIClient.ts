@@ -134,7 +134,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		//
 		// `axios-cache-interceptor` short-circuits a cache HIT by replacing `config.adapter` with its own
 		// `cachedAdapter`, so anything installed here is reached only when the request is actually going
-		// to the network. Restricting in `fetch()` instead put the cache interceptor DOWNSTREAM of the gate and
+		// to the network. Restricting in `fetch()` instead put the cache interceptor DOWNSTREAM of the check and
 		// made every cache hit burn a full pacer sleep: measured 1 dispatch, 5 hits, five 111ms sleeps for
 		// zero network traffic. `/Archives/` documents are cached for a century by design, so warm re-runs
 		// are the EXPECTED mode for a bulk crawl — at 100k cached documents that is ~3 hours of sleeping
@@ -180,9 +180,9 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	}
 
 	/**
-	 * Perform a fetch operation using the API's Axios instance: served from cache when possible, paced and cooldown-gated
-	 * when not, retried within the configured ceiling, and — on the final failure — mapped to a {@linkcode ResourceError}
-	 * carrying a numeric `status` and a `(source, kind, reason)` URN.
+	 * Perform a fetch operation using the API's Axios instance: served from cache when possible, paced and
+	 * cooldown-conditional when not, retried within the configured ceiling, and — on the final failure — mapped to a
+	 * {@linkcode ResourceError} carrying a numeric `status` and a `(source, kind, reason)` URN.
 	 *
 	 * Error mapping happens HERE rather than in a response interceptor so the retry loop can see the raw `AxiosError`
 	 * (status AND `Retry-After`) before it is summarized. The pacing/cooldown limit deliberately does NOT happen here —
@@ -197,7 +197,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		// the un-stripped form: a client at `minRequestIntervalMs: 5000` issuing three concurrent `fetch({ url, adapter })`
 		// calls made 3 dispatches, took 0 grants and slept 0 times.
 		//
-		// The cache interceptor swaps the adapter too, and that one is INTENDED — it is how a cache hit skips the gate
+		// The cache interceptor swaps the adapter too, and that one is INTENDED — it is how a cache hit skips the check
 		// without spending a grant. The difference is that it swaps on the merged config from inside the interceptor
 		// chain, after this method has already handed the request over. Stripping it here closes the caller-supplied
 		// door without touching the interceptor's.

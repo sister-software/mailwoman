@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The CONSTRAINT census — what our gates COST, measured per constraint rather than per row.
+ *   The CONSTRAINT census — what our checks COST, measured per constraint rather than per row.
  *
  *   `census.ts` asks whether a mechanism in the PARSE path fires at all (L0/L1). This asks the resolver-path question
  *   underneath it: of the lookups that resolved nothing, which constraint was in force, and did we hold the row

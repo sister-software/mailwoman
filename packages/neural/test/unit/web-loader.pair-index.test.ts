@@ -291,7 +291,7 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 
 		const wired = capturedConfig?.placetypePair?.index
 		expect(wired).toBeInstanceOf(PairIndexResolver)
-		// BOTH load live now — nz is no longer gated to null; it is available for a per-parse nz pick.
+		// BOTH load live now — nz is no longer restricted to null; it is available for a per-parse nz pick.
 		const [gb, nz] = result.pairIndexes
 		expect(gb).toEqual({ url: GB_INDEX, country: "gb", resolver: wired })
 		expect(nz!.country).toBe("nz")

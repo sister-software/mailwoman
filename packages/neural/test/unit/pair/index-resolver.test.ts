@@ -245,7 +245,7 @@ describe("transitionBeta header field (TRANSITION-BETA build)", () => {
 		expect(peekPairIndexHeader(bytes).transitionBeta).toBeUndefined()
 		expect("transitionBeta" in r.header).toBe(false)
 		// transitionBeta stays absence-tolerant WITHIN a schema — optional fields ride on the JSON header without
-		// version bumps; only the RECORD-shaping fields (the tag table, the parent byte) are version-gated.
+		// version bumps; only the RECORD-shaping fields (the tag table, the parent byte) are version-conditional.
 		expect(r.header.schemaVersion).toBe(3)
 	})
 })

@@ -161,7 +161,7 @@ export function buildSoftFeatures(
 	// while the resolver already owns that register outright; withholding = the curriculum-trained
 	// absence identity, the same declared-ablation semantics as formatted mode. Street-bearing
 	// fragments — every measured win class (homonym/bare-street/particle rows all carry a street-type
-	// word) — keep the full bundle. The street channel itself needs no gate: it paints nothing on a
+	// word) — keep the full bundle. The street channel itself needs no check: it paints nothing on a
 	// street-word-less input by construction.
 	const streetContext = streetType !== undefined && streetType.confidence.some((c) => c > 0)
 

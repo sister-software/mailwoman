@@ -296,7 +296,7 @@ export interface BackendCapabilityGap {
 	 */
 	gates: keyof ResolveOpts
 	/**
-	 * Whether `gates` is on unless a caller turns it off — the difference between a silent loss and a chosen one.
+	 * Whether `checks` is on unless a caller turns it off — the difference between a silent loss and a chosen one.
 	 */
 	defaultOn: boolean
 	/**
@@ -836,7 +836,7 @@ export interface ResolveCandidateTrace {
 
 /**
  * One `ResolveNodeTrace` per backend lookup the walk performed (#1721) — and one per POST-WALK recovery that answers
- * off the walk (`span_rescore`, `postal_compound_recovery`), so no resolved coordinate is off the record. `gates`
+ * off the walk (`span_rescore`, `postal_compound_recovery`), so no resolved coordinate is off the record. `checks`
  * records mechanism events in execution order, in the resolver's own vocabulary (`parent_fallback_retry`,
  * `region_scope_miss`, `backend_error`, `postcode_format_probe`, `postcode_prefix_prior`, `bare_race`,
  * `empty_admin_pick`, `min_score_reject`, `bare_country_repick`, `bare_region_repick`, `placetype_fallback`). `picked:

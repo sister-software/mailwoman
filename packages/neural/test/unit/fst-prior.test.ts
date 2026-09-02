@@ -23,7 +23,7 @@ import { describe, expect, it, test } from "vitest"
 
 const TOKENIZER_MODEL_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
-// Production tokenizer, gated (mirrors weights.test.ts's `haveModel` skipIf idiom) — the bare-▁-orphan splits below
+// Production tokenizer, conditional (mirrors weights.test.ts's `haveModel` skipIf idiom) — the bare-▁-orphan splits below
 // only occur in ITS vocab, not the small fixture's. Not present in stripped-down CI, so this whole block skips
 // there; it runs on the lab host where $MAILWOMAN_DATA_ROOT is populated.
 const PRODUCTION_TOKENIZER_PATH = dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
@@ -441,7 +441,7 @@ describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)
 		// PENDING, so the next piece ("on", with no leading ▁ of its own) opens a fresh word instead of being
 		// dropped. This is not a fixture-vocab curiosity: the pattern is live and widespread in the PRODUCTION
 		// tokenizer (v0.9.0-multisplice) — "Newcastle upon Tyne", "Weston super Mare", "Kingston upon Hull" and
-		// a trailing "IL" all split this way; see the skipIf-gated production-tokenizer block below.
+		// a trailing "IL" all split this way; see the skipIf-conditional production-tokenizer block below.
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 		const { pieces } = tokenizer.encode("Stockton on the Forest")
 		const groups = groupPiecesIntoWords(pieces)

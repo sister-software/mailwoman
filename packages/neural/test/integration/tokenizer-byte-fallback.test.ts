@@ -11,7 +11,7 @@
  *   byte-fallback piece itself, which is why the assertions here reach well past the fallback run. On the small
  *   fixture tokenizer (`tokenizer-v0.1.0.model`, deliberately tiny-vocab) byte-fallback fires on curly quotes “”‘’,
  *   guillemets «», and even ASCII braces `{}`/`[]` — not just non-Latin scripts, so this suite reproduces without the
- *   gated production tokenizer. See `tokenizer.ts`'s doc comment for the handling (buffer a byte-fallback RUN, decode
+ *   conditional production tokenizer. See `tokenizer.ts`'s doc comment for the handling (buffer a byte-fallback RUN, decode
  *   as one UTF-8 sequence via `TextDecoder`, advance the cursor by the DECODED string's length).
  */
 

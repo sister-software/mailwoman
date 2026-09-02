@@ -46,7 +46,7 @@ const LABELS = STAGE2_BIO_LABELS
 
 const FIXTURE_TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
-// Production tokenizer, gated (mirrors weights.test.ts's `haveModel` skipIf idiom). Not present in
+// Production tokenizer, conditional (mirrors weights.test.ts's `haveModel` skipIf idiom). Not present in
 // stripped-down CI; runs on the lab host where $MAILWOMAN_DATA_ROOT is populated.
 const PRODUCTION_TOKENIZER_PATH = dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
 const haveProductionTokenizer = await pathExists(PRODUCTION_TOKENIZER_PATH)
@@ -614,7 +614,7 @@ describe("buildPlacetypePairPriors — segment-parent same-field postcode strip 
 	})
 
 	it("a country with no known codex shape (au) → no strip, byte-stable: the same-field postcode stays in the parent key and the pair does NOT fire", () => {
-		// AU is 4-digit too, but is deliberately NOT in SEGMENT_PARENT_POSTCODE_SHAPES — the strip gates on the prior's
+		// AU is 4-digit too, but is deliberately NOT in SEGMENT_PARENT_POSTCODE_SHAPES — the strip checks on the prior's
 		// own country map, not on whether SOME shape exists. So "Porirua 5026" keeps its postcode-bearing fold and misses
 		// the bare "porirua" parent, exactly as pre-#1308.
 		const index = mockPairIndex({ "plimmerton|porirua": "dependent_locality" }, 6, undefined, "au")

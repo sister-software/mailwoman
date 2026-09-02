@@ -341,7 +341,7 @@ describe("resolveWeights — package auto-resolve", () => {
 			expect(r.modelCardPath).toMatch(/\/model-card\.json$/)
 			expect(r.pairIndexPath).toMatch(/\/pair-index-nz\.bin$/)
 
-			// Probe the built artifact directly: header country gates to nz, and a known identity pair
+			// Probe the built artifact directly: header country checks to nz, and a known identity pair
 			// (the NZ repeated-name convention — 255/1178 census pairs are (x,x)) is
 			// genuinely present in THIS build.
 			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
@@ -555,7 +555,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 		async () => {
 			// en-us ships `pair-index-us.bin` (49,033 WOF-sourced pairs), so the property worth protecting is not the
 			// packaging fact that no sibling exists — it does exist — but that the index is still INERT on GB input.
-			// Two independent things keep it inert — the header's hard country gate, and the plain fact that US pairs
+			// Two independent things keep it inert — the header's hard country restriction, and the plain fact that US pairs
 			// don't contain GB place names (measured: the US index misses all five GB canonical pairs).
 			ensureDevWeightsLinked("en-us")
 
@@ -570,7 +570,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 	)
 })
 
-// The hard country gate's WARN branch (classifier.ts loadFromWeights): a pair-index sibling whose
+// The hard country restriction's WARN branch (classifier.ts loadFromWeights): a pair-index sibling whose
 // PIX1 header country disagrees with the resolved locale's country is a PACKAGING error — the eval
 // must warn + skip the prior default, and the load must still succeed (skip-not-throw). Unreachable
 // through a correctly-built package (resolvePairIndexSibling matches on the locale's own country

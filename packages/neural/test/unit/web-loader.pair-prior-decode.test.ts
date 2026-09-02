@@ -183,7 +183,7 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 		fusedLatticeSession() // fresh canned session for the second load
 		const priorFree = await loadNeuralClassifierFromURLs(baseOpts([]))
 
-		// Phase 2: the gb index is LIVE + retained (not gated to null), but no posture pin + a text that
+		// Phase 2: the gb index is LIVE + retained (not conditional to null), but no posture pin + a text that
 		// detects `us` (no UK postcode) means nothing selects it — byte-stable.
 		expect(loaded.pairIndexes).toHaveLength(1)
 		expect(loaded.pairIndexes[0]!.resolver).not.toBeNull()

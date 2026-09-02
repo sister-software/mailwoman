@@ -335,7 +335,7 @@ export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reaso
 }
 
 /**
- * The #1721 resolver-interior rows — one line per backend lookup: the query as sent, the gates that fired, the pick,
+ * The #1721 resolver-interior rows — one line per backend lookup: the query as sent, the checks that fired, the pick,
  * and the candidate table with each row's per-stage rank vector. `resolver: []` renders as its own claim (the walk
  * performed no lookups) rather than nothing, because an absent line is indistinguishable from a section that predates
  * the field.

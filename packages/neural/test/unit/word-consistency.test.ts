@@ -85,7 +85,7 @@ describe("enforceWordConsistency only arbitrates DISAGREEING words (the document
 
 describe("enforceWordConsistency confidence gates (#727 gated variant)", () => {
 	it("minMeanConfidence skips a low-confidence heal (noise-amplification guard)", () => {
-		// Near-flat emissions: the vote has no conviction. unrestricted it still heals; gated it must not.
+		// Near-flat emissions: the vote has no conviction. unrestricted it still heals; conditional it must not.
 		const flat = (idx: number): number[] => LABELS.map((_l, i) => (i === idx ? 0.1 : 0))
 		const pieces = [{ piece: "▁VER" }, { piece: "MONT" }]
 		const unrestricted = enforceWordConsistency(pieces, [flat(1), flat(3)], LABELS, [1, 3])

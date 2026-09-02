@@ -89,9 +89,9 @@ const BYTE_FALLBACK = /^<0x[0-9A-Fa-f]{2}>$/
  *
  * THE OTHER TWO VALUES ARE SPELLED HERE BECAUSE THEY ARE THE WIRE CONTRACT, not prose: the string an operator sets has
  * to appear verbatim or this docstring stops describing the parser below it. Renaming the value is a separate,
- * operator-approved change (#2077). `"gated"` = the #727 thresholded preset (slash grouping + byte-fallback skip, no
- * confidence floor); `"gated:<floor>"` adds a `minMeanConfidence` floor (e.g. `"gated:0.5"`). Anything else (unset
- * included) = off.
+ * operator-approved change (#2077). `"conditional"` = the #727 thresholded preset (slash grouping + byte-fallback skip,
+ * no confidence floor); `"conditional:<floor>"` adds a `minMeanConfidence` floor (e.g. `"conditional:0.5"`). Anything
+ * else (unset included) = off.
  */
 export function parseWordConsistencyEnv(value: string | undefined): boolean | WordConsistencyOpts {
 	if (value === "1") return true

@@ -124,7 +124,7 @@ describe("extractPostcodeAnchors — position-aware confidence (house-number dis
 		"12345": [{ country: "US", lat: 42.1, lon: -72.6 }],
 		"90210": [{ country: "US", lat: 34.1, lon: -118.4 }],
 		"SW1A 1AA": [{ country: "GB", lat: 51.5, lon: -0.12 }],
-		// A German-member code, for the membership-gated German-vocab cases below.
+		// A German-member code, for the membership-conditional German-vocab cases below.
 		"12623": [{ country: "DE", lat: 52.48, lon: 13.6 }],
 	})
 

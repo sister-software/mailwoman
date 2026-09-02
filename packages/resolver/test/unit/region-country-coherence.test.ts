@@ -20,7 +20,7 @@ import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { describe, expect, it } from "vitest"
 
 // A test region carries an `abbrev` so the fake backend can model the 2-letter address-line code (the gazetteer
-// resolves "IL" via an alt-name; here abbrev-match stands in). `country` gates it under the hard default-country filter.
+// resolves "IL" via an alt-name; here abbrev-match stands in). `country` checks it under the hard default-country filter.
 interface RegionPlace extends ResolvedPlace {
 	abbrev: string
 }

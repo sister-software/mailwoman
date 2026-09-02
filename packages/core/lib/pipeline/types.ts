@@ -566,7 +566,7 @@ export interface RuntimePipelineStages {
 	fst?: FSTMatcherLike
 	/**
 	 * Street-morphology matcher — the signal source for the FST street-context check (#1315). Consumed ONLY with the
-	 * morphology emission prior zeroed at the classify call sites (the emission prior is US-golden-negative; the gate
+	 * morphology emission prior zeroed at the classify call sites (the emission prior is US-golden-negative; the check
 	 * alone is golden-flat and fragment-positive). Effective only when `fst` is also present.
 	 */
 	streetMorphology?: FSTMatcherLike

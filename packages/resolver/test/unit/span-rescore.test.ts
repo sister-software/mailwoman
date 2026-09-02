@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the #370 span-rescore: the pure `findRescoreCandidate` (raw-token enumeration, longest-
- *   wins, postcode gate) and its `resolveTree` integration (opt-in injection, the #685 brake, byte-
+ *   wins, postcode check) and its `resolveTree` integration (opt-in injection, the #685 brake, byte-
  *   stability when the flag is unset). A fixture backend stands in for the gazetteer.
  */
 
@@ -225,7 +225,7 @@ describe("findRescoreCandidate", () => {
 	})
 
 	it("flags a recovery GATED when the postcode resolves and the match is within range", async () => {
-		// 97-200 resolves (fixture) near Tomaszów Mazowiecki; the longest match lands within 50km → gated.
+		// 97-200 resolves (fixture) near Tomaszów Mazowiecki; the longest match lands within 50km → conditional.
 		const hit = await findRescoreCandidate("Tomaszów Mazowiecki", [], await makeBackend(), {
 			country: "PL",
 			postcode: "97-200",

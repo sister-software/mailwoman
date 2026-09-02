@@ -188,7 +188,7 @@ export interface ResolutionState {
 	 */
 	defaultCountryIsInferred: boolean
 	/**
-	 * The tree's single value-bearing node when it is locality-tagged (the bare-toponym shape), else null. Gates the
+	 * The tree's single value-bearing node when it is locality-tagged (the bare-toponym shape), else null. Checks the
 	 * country-placetype sibling race in `#lookupAndPick` — a bare name can be a country the parser tagged `locality`
 	 * ("Japan", "China"), and the locality placetype filter makes the country row unreachable no matter how it ranks.
 	 */
@@ -410,7 +410,7 @@ export async function applySpanRescore(
 	decorateNode(node, hit.place, hit.alternatives)
 	// `rescore_gated` carries the check's precision signal as an EXPLICIT handle — NOT folded into the
 	// calibrated `confidence`, which would break the isotonic guarantee (a true calibrated 0.83 must not
-	// be confused with a rescore plug-in estimate; DeepSeek 2026-06-23). true = postcode gate fired
+	// be confused with a rescore plug-in estimate; DeepSeek 2026-06-23). true = postcode check fired
 	// (high-precision); false = unrestricted (no postcode→point coverage for this country, ~83%-precision).
 	node.metadata = { ...node.metadata, span_rescore: true, rescore_gated: hit.gated }
 	roots.push(node)

@@ -105,7 +105,7 @@ describe("errorClasses", () => {
 			{ confidence: 0.95, correct: false, strata: { expected: "ES", predicted: "PT" } },
 			{ confidence: 0.95, correct: false, strata: { expected: "ES", predicted: "PT" } },
 			{ confidence: 0.95, correct: false, strata: { expected: "AT", predicted: "DE" } },
-			// Below the eval: a real error, but not one this gate admits.
+			// Below the eval: a real error, but not one this check admits.
 			{ confidence: 0.2, correct: false, strata: { expected: "SI", predicted: "HR" } },
 			{ confidence: 0.99, correct: true, strata: { expected: "FR", predicted: "FR" } },
 		]
