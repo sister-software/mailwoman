@@ -657,7 +657,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 				// filer.db has no independent versioning yet — same deferral build-bdc.ts makes for bdc.db's `release`.
 				version: options.sourceVintage,
 				// The current schema version from filer/schema.ts — bumped to 3 when SupersededBy and
-				// valid_to semantics landed. Every reader that needs temporal awareness should gate on this.
+				// valid_to semantics landed. Every reader that needs temporal awareness should condition on this.
 				schema_version: FILER_SCHEMA_VERSION,
 				source: sourcesUsed.join(","),
 				source_vintage: options.sourceVintage,

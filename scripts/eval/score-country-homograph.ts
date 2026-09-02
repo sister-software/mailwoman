@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   NOTE(de-shell): forwarding shim. The country-homograph scorer now lives at
- *   `mailwoman/eval-harness/score-country-homograph.ts` and the promotion gate calls it IN-PROCESS.
+ *   `mailwoman/eval-harness/score-country-homograph.ts` and `promotion-gate.ts` calls it IN-PROCESS.
  *   This shim keeps standalone invocation — `node scripts/eval/score-country-homograph.ts --model
  *   <onnx> [--file <jsonl>]` — working unchanged. Output is byte-identical because the module owns
  *   every printed line. Do not add logic here.

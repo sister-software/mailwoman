@@ -541,7 +541,7 @@ describe("familyRollup — general reader contract", () => {
 				.execute()
 
 			// Same family_id for both — exactly what canonicalizeOrganizationName would produce for real (verified
-			// end-to-end via the REAL builder in filer-lookup.test.ts's own multi-spelling gate test).
+			// end-to-end via the REAL builder in filer-lookup.test.ts's own multi-spelling assertion).
 			await db
 				.insertInto("filer_family")
 				.values([

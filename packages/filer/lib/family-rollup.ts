@@ -8,7 +8,7 @@
  *   SEPARATE from an entity cluster (same filer, different identifiers — `cluster-filers.ts` /
  *   `filer-lookup.ts`'s `cluster` field). This module reads ONLY `filer_family`; it never touches
  *   `filer_cluster` or the authoritative-edge entity-clustering path, so a family membership can never be
- *   returned here as an entity-cluster member, and this reader cannot be the source of the conflation gate
+ *   returned here as an entity-cluster member, and this reader cannot be the source of the conflation check
  *   1 (`filer-lookup.test.ts`'s `describe("§7-3b criteria")`) exists to catch.
  *
  *   Query shape mirrors `filerLookup`'s XOR discipline: exactly one of `familyID`/`nodeID` is required.

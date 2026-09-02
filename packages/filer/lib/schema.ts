@@ -74,7 +74,7 @@
  *   memberships — a name-match guess at WHICH FRN a disclosed subsidiary name belongs to. Without these
  *   columns that guess is shape-identical, on every read surface, to a Form 499 holding-company
  *   membership the filer itself filed: the row records the fact and its `source` but not the STRENGTH of
- *   the claim behind it, so the gate never reaches the table `familyRollup`/`filerLookup.families`
+ *   the claim behind it, so the check never reaches the table `familyRollup`/`filerLookup.families`
  *   actually answer family questions from. `source` is not a usable proxy for that strength either —
  *   `edgar-exhibit-21` writes BOTH an authoritative disclosure edge and an inferred corroboration edge,
  *   so one source name spans both grades.

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pre-training gate: verifies that every slice in MANIFEST.json which has `lint_flags > 0` ALSO has
+ *   Pre-training check: verifies that every slice in MANIFEST.json which has `lint_flags > 0` ALSO has
  *   `lint_acknowledged: true`. Exits non-zero if any flagged slice is unacknowledged, blocking the
  *   training run.
  *

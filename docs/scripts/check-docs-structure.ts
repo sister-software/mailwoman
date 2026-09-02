@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Docs structural gate (docs-architecture cleanup, Phase 4; frontmatter contract rewrite, docs-reorg
+ *   Docs structural check (docs-architecture cleanup, Phase 4; frontmatter contract rewrite, docs-reorg
  *   Phase 0 task 2). Static frontmatter parse only — no install, no Docusaurus build — so it runs in
  *   seconds as the first step of the Docs workflow (`.github/workflows/docs-build.yml`) and locally
  *   via `yarn workspace @mailwoman/docs lint:structure` (or `node docs/scripts/check-docs-structure.ts`

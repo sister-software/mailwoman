@@ -14,8 +14,8 @@
  *   - `explanation`, `evidence` — no fields beyond `role:`.
  *
  *   `validatePage` is pure — no filesystem, no process, no sidebar — so it's unit-tested directly in
- *   `check-docs-structure.test.ts`. The gate (`check-docs-structure.ts`) wires it against the real
- *   corpus under `--strict`; without the flag the gate keeps enforcing the OLD seven-role vocabulary
+ *   `check-docs-structure.test.ts`. The check (`check-docs-structure.ts`) wires it against the real
+ *   corpus under `--strict`; without the flag the check keeps enforcing the OLD seven-role vocabulary
  *   (guide/tutorial/concept/reference/decision/evidence/landing) this module deliberately does not
  *   know about — that vocabulary is retired by this contract, not extended by it.
  */

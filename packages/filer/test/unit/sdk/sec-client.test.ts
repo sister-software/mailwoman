@@ -604,7 +604,7 @@ describe("createSECClient: rate limiting", () => {
 		// ARRIVALS, timestamped inside the adapter — not `clock.sleepCalls`. The grant schedule is not what a
 		// rate limiter sees, and asserting it hid exactly this bug: the sleeps were 111ms apart and passed,
 		// while 10 requests still landed inside one second. `runUntilSettled` is required because the pacing
-		// gate now sits DOWNSTREAM of the on-disk cache lookup, so each request spends real event-loop turns
+		// check now sits DOWNSTREAM of the on-disk cache lookup, so each request spends real event-loop turns
 		// in `readFile` before it registers its sleep.
 		await clock.runUntilSettled(
 			Promise.all(Array.from({ length: FAN_OUT }, (_, i) => client.get(`https://data.sec.gov/fanout/${i}.json`)))

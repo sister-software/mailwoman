@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #375 boundary-stress GATE — the promote/no-promote verdict for the v1.6.0 boundary-instability
+ *   #375 boundary-stress EVAL — the promote/no-promote verdict for the v1.6.0 boundary-instability
  *   retrain. Same four stress shapes as the "before" baseline (boundary-stress-baseline.ts), graded
  *   against the recipe's PRE-REGISTERED targets + the shared street-span floor. Emits a per-shape
  *   table and a single PROMOTE / NO-PROMOTE line; exit 0 = all targets met, exit 1 = any miss.
@@ -13,17 +13,17 @@
  *   re-creates). The classifier is built via the canonical `createScorer`
  *   (`@mailwoman/neural/scorer`, #718) in STRICT mode, so the model is fed the full SHIP-CONFIG it
  *   was TRAINED against — anchor + gazetteer + conventions, per the model-card's `requires` block —
- *   and the gate FAILS CLOSED if a declared channel can't be fed. This closes the #566/#685 trap
- *   the gate previously walked into: it built the classifier via `loadFromWeights` with NO
+ *   and the eval FAILS CLOSED if a declared channel can't be fed. This closes the #566/#685 trap
+ *   the eval previously walked into: it built the classifier via `loadFromWeights` with NO
  *   anchor/gazetteer/conventions, so the anchor-trained STAGE3 model was scored ANCHOR-OFF
- *   (out-of-distribution on exactly the admin- adjacent boundary shapes this gate measures). The
+ *   (out-of-distribution on exactly the admin- adjacent boundary shapes this eval measures). The
  *   model-card is therefore MANDATORY for a custom model (`createScorer` reads its label vocab AND
- *   `requires`); without it the gate now throws rather than silently mis-decoding the 33-label
+ *   `requires`); without it the eval now throws rather than silently mis-decoding the 33-label
  *   STAGE3 model.
  *
- *   Run (baseline, dev weights): node scripts/eval/boundary-stress-gate.ts
+ *   Run (baseline, dev weights): node scripts/eval/boundary-stress-eval.ts
  *   Run (a fetched v1.6.0 bundle): node
- *   scripts/eval/boundary-stress-gate.ts\
+ *   scripts/eval/boundary-stress-eval.ts\
  *   --model ./out/v160/model.onnx\
  *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --model-card ./out/v160/model-card.json # crf-transitions.json beside --model is auto-picked
@@ -51,9 +51,9 @@ const { values: args } = parseArguments({
 const N = Number(args.n)
 
 /**
- * The pre-registered gate (v1.6.0-boundary-stress.yaml). Per shape: the stress tag it teaches, the re-baselined
+ * The pre-registered eval (v1.6.0-boundary-stress.yaml). Per shape: the stress tag it teaches, the re-baselined
  * "before" number, and the target the retrain must clear. PLUS the shared street-span floor (≥65 on all four shapes) —
- * the street is the common casualty across every shape. Partial: this v1.6.0-era gate has pre-registered baselines only
+ * the street is the common casualty across every shape. Partial: this v1.6.0-era eval has pre-registered baselines only
  * for the original 4 templates. The 2 added 2026-06-18 ("bare-locality", "house-number-before-street") have no measured
  * baseline here.
  */
@@ -70,7 +70,7 @@ const STREET_SPAN_FLOOR = 65
 // TRAINED against (anchor + gazetteer + conventions, per the model-card's `requires` block). The
 // prior loadFromWeights construction fed NO anchor/gazetteer/conventions, so this anchor-trained
 // STAGE3 model was scored ANCHOR-OFF — out-of-distribution on exactly the admin-adjacent boundary
-// shapes this gate measures (the #566/#685 trap). createScorer in `strict` mode FAILS CLOSED if a
+// shapes this eval measures (the #566/#685 trap). createScorer in `strict` mode FAILS CLOSED if a
 // declared channel can't actually be fed, so a silent OOD re-grade can't recur.
 if (args.model && !args.tokenizer) throw new Error("--tokenizer is required when --model is passed")
 
@@ -155,7 +155,7 @@ for (const template of Object.keys(TARGETS) as BoundaryStressTemplate[]) {
 
 const pad = (s: string, n: number) => s.padEnd(n)
 
-console.log(`\n== boundary-stress gate — model: ${args.model ?? "dev weights (en-US)"} (n=${N}/shape) ==\n`)
+console.log(`\n== boundary-stress eval — model: ${args.model ?? "dev weights (en-US)"} (n=${N}/shape) ==\n`)
 console.log(
 	`  ${pad("shape", 28)} ${pad("tag", 14)} ${pad("base→target", 13)} ${pad("actual", 8)} ${pad("street", 8)} verdict`
 )
@@ -171,9 +171,9 @@ for (const r of results) {
 const allPass = results.every((r) => r.pass)
 
 console.log(`\n  street-span floor: ≥${STREET_SPAN_FLOOR}% on every shape  ·  targets: stress-tag ≥ per-shape`)
-console.log(`\n  VERDICT: ${allPass ? "✅ PROMOTE (4-shape gate met)" : "⛔ NO-PROMOTE (target/floor miss above)"}`)
-console.log(`  NOTE: this is the 4-shape TARGET gate only. The per-locale non-regression FLOORS (US street ≥80.4,`)
+console.log(`\n  VERDICT: ${allPass ? "✅ PROMOTE (4-shape eval met)" : "⛔ NO-PROMOTE (target/floor miss above)"}`)
+console.log(`  NOTE: this is the 4-shape TARGET eval only. The per-locale non-regression FLOORS (US street ≥80.4,`)
 console.log(`        locality ≥72.9, fr.house_number ≥87, FR postcode ≥99.5, affix, DE locality ≥83.8) are a`)
-console.log(`        SEPARATE gate — run scripts/eval/promotion-gate.ts. Both must hold to ship.\n`)
+console.log(`        SEPARATE eval — run scripts/eval/promotion-eval.ts. Both must hold to ship.\n`)
 
 process.exit(allPass ? 0 : 1)

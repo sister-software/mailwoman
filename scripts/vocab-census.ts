@@ -299,6 +299,10 @@ const UNMEASURED: ReadonlyArray<readonly [path: string, reason: string]> = [
 	["scripts/vocab-census.ts", "this file — its exceptions pattern has to spell the words it classifies"],
 	["scripts/vocab-census.test.ts", "its cases are lines of source quoted verbatim"],
 	["scripts/repo-health.ts", "its banned-vocabulary constant has to spell the word it counts"],
+	[
+		"docs/scripts/check-vale-rules.ts",
+		"the rule fixtures' own harness; its docstring quotes the words the rules match",
+	],
 ]
 
 async function main(): Promise<void> {

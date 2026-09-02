@@ -19,7 +19,7 @@
  *   **Two endpoints, and this is the one that answers.** `data.fcc.gov/api/frn/getInfo` is the documented
  *   JSON "FRN Conversions" API and it returns 403 at the Akamai edge from the lab host (retested
  *   2026-08-07; a descriptive User-Agent does not change it, so the block is host/IP-based). The 3a plan's
- *   Task 9 stopped at a gate on exactly that. `apps.fcc.gov/cores/searchDetail.do` — the HTML detail page —
+ *   Task 9 stopped at a check on exactly that. `apps.fcc.gov/cores/searchDetail.do` — the HTML detail page —
  *   answers 200 from the same host with an ordinary descriptive User-Agent, no browser spoofing and no
  *   credentials. That is what this client uses.
  *
@@ -360,7 +360,7 @@ export interface CORESClientConfig extends APIClientConfig {
 /**
  * Only a non-empty string body is worth persisting: every CORES response is an HTML document, so an empty body is a
  * truncated fetch rather than a legitimately empty record. There is no Axios-level parse step on a text response to
- * lean on, which makes this the only gate between a truncated page and a cache entry.
+ * lean on, which makes this the only check between a truncated page and a cache entry.
  */
 function isCacheableCORESBody(value: { data?: { data?: unknown } }): boolean {
 	const body = value.data?.data

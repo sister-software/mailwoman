@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Neural test harness — the arena scorer behind `external-arenas.ts` and the pre-ship gate
+ *   Neural test harness — the arena scorer behind `external-arenas.ts` and the pre-ship eval
  *   battery. Reads the 30+ `mailwoman/test/address.*.test.ts` files (and sibling
  *   intersection/venue/compound_street tests), extracts every `assert(input, ...expected)` call via
  *   TS AST, and grades each input's neural parse (`NeuralAddressClassifier`) against the expected
@@ -73,7 +73,7 @@ interface Args {
 	unitRepair: boolean
 	/**
 	 * #478: also grade the ASSEMBLED runtime pipeline (`createRuntimePipeline` — normalize → kind/ fast-path → grouper →
-	 * reconcile → classify), not just the raw neural classifier. This is the #566-lesson gate: a pipeline regression
+	 * reconcile → classify), not just the raw neural classifier. This is the #566-lesson eval: a pipeline regression
 	 * (e.g. a reconcile/arbitration change) is invisible when the eval grades raw neural. Off by default → the existing
 	 * raw-neural report is byte-stable.
 	 */
@@ -631,7 +631,7 @@ function printReport(results: AssertionResult[]): void {
 		const asmGainedVsNeural = results.filter((r) => r.assembled_pass && !r.neural_pass).length
 		const asmLostVsNeural = results.filter((r) => !r.assembled_pass && r.neural_pass).length
 
-		console.log("## Assembled pipeline (#478 — `runPipeline`, the gate)")
+		console.log("## Assembled pipeline (#478 — `runPipeline`, the eval)")
 		console.log("")
 		console.log(`| Metric | Count | Rate |`)
 		console.log(`|--------|-------|------|`)

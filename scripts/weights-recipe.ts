@@ -45,7 +45,7 @@ export interface PairIndexInputs {
 	/**
 	 * The whole-edge parent-bias magnitude (#46). Present only on the locales whose parent side has a board — absence
 	 * means the shipped artifact carries no header key and the parent bias is OFF for that locale, which is the D-rule's
-	 * per-locale gate rather than an oversight.
+	 * per-locale check rather than an oversight.
 	 */
 	parentDelta?: number
 	boroughDB?: string

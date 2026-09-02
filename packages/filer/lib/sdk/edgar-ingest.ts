@@ -17,9 +17,9 @@
  *        → EdgarSubsidiaryRow[]
  *   ```
  *
- *   **The corroboration gate is not optional and cannot be turned off from here.** Resolving 24 telecom
+ *   **The corroboration check is not optional and cannot be turned off from here.** Resolving 24 telecom
  *   names by score alone returned the wrong company twice, at 0.829 and 0.886 — confident scores pointing
- *   at the wrong registrant. A caller may supply pins; it may not skip the gate. That is why
+ *   at the wrong registrant. A caller may supply pins; it may not skip the check. That is why
  *   {@link EdgarIngestOptions} exposes `pinnedCIKs` and no bypass.
  *
  *   **Every drop is counted, none are thrown.** A name that resolves to nothing, a registrant SEC files
@@ -129,7 +129,7 @@ export interface EdgarIngestOptions extends CIKCorroborationOptions {
 
 /**
  * EDGAR's submissions payload for one registrant. Only the two fields this module reads are declared — `sic` for the
- * corroboration gate, and the rest is handed to `parseTenKFilings` untouched.
+ * corroboration check, and the rest is handed to `parseTenKFilings` untouched.
  */
 interface SubmissionsPayload {
 	sic?: unknown
@@ -176,7 +176,7 @@ async function resolveCorroboratedCIK(
 	if (!corroborated.length) return { ok: false, reason: EdgarSkipReason.Uncorroborated }
 
 	// Sort corroborated by score, highest first — the order from resolveCIKCandidates can shift once
-	// some candidates are dropped by the SIC gate.
+	// some candidates are dropped by the SIC check.
 	corroborated.sort((a, b) => b.score - a.score)
 
 	// Ambiguity is a genuine TIE at the top, not "more than one survived". A slower-scoring candidate

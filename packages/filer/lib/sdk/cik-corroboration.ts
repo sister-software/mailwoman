@@ -2,7 +2,7 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The gate between a name match and a database write.
+ * @file The check between a name match and a database write.
  *
  *   `resolveCIKCandidates` (`edgar-filings.ts`) scores a company name against EDGAR's registrant index
  *   and deliberately returns EVERY candidate above a threshold, never a winner, because two different
@@ -24,7 +24,7 @@
  *   `fetchTenKFilings` reads — carries the registrant's Standard Industrial Classification. Both false
  *   matches above fall outside the communications range; the real carriers land inside it.
  *
- *   **The gate is honest about what it costs.** Measured over the same 24 registrants, an SIC-only rule
+ *   **The check is honest about what it costs.** Measured over the same 24 registrants, an SIC-only rule
  *   rejects 2 of 2 false matches and accepts 6 of 8 real carriers. The two it wrongly rejects are
  *   Bandwidth Inc. (SIC 7372, prepackaged software — a CLEC whose own Exhibit 21 lists
  *   `Bandwidth.com CLEC, LLC`) and Ooma, Inc. (SIC 7374). SEC files VoIP and CPaaS carriers under
@@ -41,7 +41,7 @@
 import type { CIK } from "#sdk/edgar-filings"
 
 /**
- * SIC codes this gate accepts as corroborating a telecom identity — SEC's Office of Telecommunications range,
+ * SIC codes this check accepts as corroborating a telecom identity — SEC's Office of Telecommunications range,
  * enumerated rather than expressed as a `48xx` prefix test so each entry is a decision someone made.
  *
  * `4813` (telephone, no radiotelephone) covers the ILECs and most CLECs; `4841` the cable operators; `4899` the
@@ -105,7 +105,7 @@ export interface CIKCorroborationOptions {
 	pinnedCIKs?: ReadonlySet<string>
 	/**
 	 * SIC codes accepted as corroborating. Defaults to {@linkcode TELECOM_SIC_CODES}. Overridable so a caller working a
-	 * different vertical does not have to fork the gate — NOT so a telecom run can quietly widen it.
+	 * different vertical does not have to fork the check — NOT so a telecom run can quietly widen it.
 	 */
 	acceptedSICCodes?: ReadonlySet<string>
 }

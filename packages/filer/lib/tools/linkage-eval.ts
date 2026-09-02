@@ -92,7 +92,7 @@ export interface LeakageCensus {
 	/**
 	 * `filer_family` rows whose relationship is not a {@linkcode FilerRelationship} value at all — impossible from any
 	 * shipped writer, so a non-zero count means a row this build did not write. Counted separately rather than folded
-	 * into either bucket, and the gate REFUSES on it: an assertion the eval cannot classify is exactly what a leakage
+	 * into either bucket, and the check REFUSES on it: an assertion the eval cannot classify is exactly what a leakage
 	 * check should stop on, not something to file under "not ownership" and pass.
 	 */
 	unrecognizedFamilyRows: number
@@ -113,10 +113,10 @@ export interface LeakageCensus {
  * through to "counts as ownership" silently, in BOTH the prediction and the leakage census, scoring a fact nobody
  * decided should be scored and doing it without a test failing. The `satisfies Record<FilerRelationship, boolean>` pin
  * below inverts that default: a new member is a COMPILE error here until someone classifies it deliberately. Same idiom
- * the BDC plausibility gate uses (`bdc/sdk/plausibility.test.ts`'s `satisfies Record<keyof PlausibilityBundle, true>`).
- * Unlike the `satisfies` pins that live in TEST files — which only `yarn typecheck:tests` evaluates — this one sits in
- * a source file inside `filer/tsconfig.json`'s default include, so plain `tsc -b` enforces it: dropping a member fails
- * with TS1360 naming the missing relationship.
+ * the BDC plausibility check uses (`bdc/sdk/plausibility.test.ts`'s `satisfies Record<keyof PlausibilityBundle,
+ * true>`). Unlike the `satisfies` pins that live in TEST files — which only `yarn typecheck:tests` evaluates — this one
+ * sits in a source file inside `filer/tsconfig.json`'s default include, so plain `tsc -b` enforces it: dropping a
+ * member fails with TS1360 naming the missing relationship.
  *
  * `SameEntity` is false because two identifiers denoting ONE filer say nothing about who owns it; `ManagementCompany`
  * because operational control is not ownership (spec §3.1 finding 1, and the reason this eval excludes management
@@ -156,15 +156,15 @@ function assertsOwnership(relationship: string): boolean {
 
 /**
  * Is this relationship one {@linkcode OWNERSHIP_BY_RELATIONSHIP} actually classifies? Distinct from
- * {@linkcode assertsOwnership} because the PREDICTION and the GATE want opposite defaults for a string neither
+ * {@linkcode assertsOwnership} because the PREDICTION and the CHECK want opposite defaults for a string neither
  * recognizes, and one predicate cannot serve both.
  *
- * The prediction must not score an assertion it does not understand, so unknown → not ownership → ignored. The gate
+ * The prediction must not score an assertion it does not understand, so unknown → not ownership → ignored. The check
  * exists to REFUSE publication when the withheld build holds ownership facts it should never have seen, and "a
  * relationship this eval does not recognize, in a build it did not write" is precisely the case it should refuse rather
- * than quietly bucket as non-ownership. Collapse the two call sites onto `assertsOwnership` alone and the gate narrows
+ * than quietly bucket as non-ownership. Collapse the two call sites onto `assertsOwnership` alone and the check narrows
  * to nothing on exactly that case: three injected `transfer_of_control` family rows leave `scoredFamilyRows: 0` and the
- * gate silent.
+ * check silent.
  */
 function isRecognizedRelationship(relationship: string): boolean {
 	return Object.hasOwn(OWNERSHIP_BY_RELATIONSHIP, relationship)
@@ -193,11 +193,11 @@ async function readLeakageCensus(db: DatabaseClient<FilerDatabase>): Promise<Lea
 }
 
 /**
- * Hard gate on the withheld build (decision 4). The leakage exclusion is structural —
+ * Hard check on the withheld build (decision 4). The leakage exclusion is structural —
  * {@linkcode buildFilteredEvalInputs} is the only thing that builds what the builder receives — but "structural" is an
  * argument, and this is a check: if any ownership artifact survives into the withheld build, the eval refuses to report
  * a number rather than reporting a flattered one. Runs against the census taken straight off the BUILD, before any
- * injected evidence, so a deliberate probe can still be measured without disarming the gate.
+ * injected evidence, so a deliberate probe can still be measured without disarming the check.
  */
 export function assertNoOwnershipLeak(census: LeakageCensus): void {
 	if (census.holdingCompanyNodes || census.ownershipEdges || census.scoredFamilyRows || census.unrecognizedFamilyRows) {
@@ -561,10 +561,10 @@ export interface LinkageEvalPassOptions {
 	 */
 	holdingCompanyWithheld: boolean
 	/**
-	 * Writes evidence into the built artifact AFTER the leakage gate has passed and BEFORE the prediction is read — the
+	 * Writes evidence into the built artifact AFTER the leakage check has passed and BEFORE the prediction is read — the
 	 * injection point the standing "this baseline can be beaten" test uses to simulate an evidence channel that does not
 	 * exist yet. Never set by {@linkcode filerLinkageEval} itself: the two published runs measure builds nobody touched.
-	 * Ordering is the point — the gate still polices what the BUILDER produced from a withheld input, so a probe can add
+	 * Ordering is the point — the check still polices what the BUILDER produced from a withheld input, so a probe can add
 	 * ownership facts without disarming it.
 	 */
 	injectEvidence?: (db: DatabaseClient<FilerDatabase>) => Promise<void>
@@ -591,7 +591,7 @@ export async function runLinkagePass(options: LinkageEvalPassOptions): Promise<L
 	})
 
 	// buildFilerDatabase seals the artifact read-only — clusterFilers writes filer_cluster/filer_edge, so unseal
-	// first (mirrors filer-lookup.test.ts's "REAL builder + REAL clusterAuthoritativeComponents" gate).
+	// first (mirrors filer-lookup.test.ts's "REAL builder + REAL clusterAuthoritativeComponents" check).
 	await changeMode(out, 0o644)
 
 	using db = new DatabaseClient<FilerDatabase>(out)
@@ -600,7 +600,7 @@ export async function runLinkagePass(options: LinkageEvalPassOptions): Promise<L
 	// real filer.db, and its counters belong in the report even though this eval scores a different table.
 	const { inferred } = await clusterFilers(db, { sourceVintage: EVAL_SOURCE_VINTAGE, validFrom: EVAL_VALID_FROM })
 
-	// Gate the BUILD, then inject, then census what will actually be scored. Taking one census for both jobs is what
+	// Check the BUILD, then inject, then census what will actually be scored. Taking one census for both jobs is what
 	// let three injected `subsidiary` family rows move recall to 0.500 while the published census still read 0.
 	if (holdingCompanyWithheld) {
 		assertNoOwnershipLeak(await readLeakageCensus(db))

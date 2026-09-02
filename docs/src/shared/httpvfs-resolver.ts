@@ -686,12 +686,12 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 				id: Number(row.spr_id),
 				name: String(row.name ?? ""),
 				placetype: idToPlacetype.get(Number(row.placetype_id)) ?? "",
-				// Surfaced so the cascade can country-gate a postcode by the resolved locality (an ambiguous
+				// Surfaced so the cascade can country-restrict a postcode by the resolved locality (an ambiguous
 				// international postcode like 10115 = Berlin DE AND New York US must not out-resolve the city).
 				country: idToCountry.get(Number(row.country_id)),
 				lat: Number(row.latitude),
 				lon: Number(row.longitude),
-				// `score` stays the RAW population rank — the walk's absolute `minWinningScore` gate must see
+				// `score` stays the RAW population rank — the walk's absolute `minWinningScore` floor must see
 				// real prominence, never a penalized value. `prominence` carries the bounded cross-country
 				// primary preference; the walk orders by `prominence ?? score`, same as the Node reader.
 				score: -(row.neg_rank as number),

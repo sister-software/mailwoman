@@ -8,7 +8,7 @@
  *   column header to sort ascending; click again to reverse.
  *
  *   The data is sourced from the parity scorecards (2026-06-11 for v4.1.0–v4.3.0, the v4.4.0 ship
- *   gate, and parity-scorecard-2026-07-02.md for the v5.0.0 re-score). It is hardcoded here — the
+ *   check, and parity-scorecard-2026-07-02.md for the v5.0.0 re-score). It is hardcoded here — the
  *   scorecard is the single source of truth; this component mirrors it for the status page.
  */
 
@@ -367,7 +367,7 @@ const F1ScoreTableInner: React.FC = () => {
 			</table>
 			<p className={styles.footnote}>
 				Source: <a href="./evals/parity-scorecard-2026-07-02">parity-scorecard-2026-07-02.md</a> (v5.0.0 re-score;
-				earlier columns from <a href="./evals/parity-scorecard-2026-06-11">2026-06-11</a> and the v4.4.0 ship gate).
+				earlier columns from <a href="./evals/parity-scorecard-2026-06-11">2026-06-11</a> and the v4.4.0 ship check).
 				Click any column header to sort. Hover over a score to see what it means in context.{" "}
 				<span className={styles.colorKey}>
 					<span className={styles.keyHigh}>≥ 80 healthy</span> · <span className={styles.keyMid}>30–79 moderate</span> ·{" "}

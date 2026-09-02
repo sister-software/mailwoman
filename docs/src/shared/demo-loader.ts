@@ -54,15 +54,15 @@ export interface DocsDemoAssets {
 	/**
 	 * The street-morphology matcher — the #1315 street-context check's signal source, the node/browser parity fix (SCOPE
 	 * invariant 2: node runtimes wire this by default; the browser previously never could). Loaded with the FST gazetteer
-	 * because the gate needs BOTH (core's `streetContextGateFor` only fires when the two stages are present). `null` when
-	 * the release ships no `fst-street-morphology.bin` (pre-artifact bundles) — the demo then parses without the gate,
-	 * byte-identical to before.
+	 * because the check needs BOTH (core's `streetContextGateFor` only fires when the two stages are present). `null`
+	 * when the release ships no `fst-street-morphology.bin` (pre-artifact bundles) — the demo then parses without the
+	 * check, byte-identical to before.
 	 */
 	streetMorphologyMatcher: FSTMatcherLike | null
 	lookup: MailwomanLookupLike | null
 	calibrator: Calibrator | null
 	/**
-	 * Per-parse placetype-pair prior selection (placetype-pair-prior arc, #1278). Runs locale-gate over the input text
+	 * Per-parse placetype-pair prior selection (placetype-pair-prior arc, #1278). Runs locale-check over the input text
 	 * and returns the loaded index whose header country matches (or `undefined` → byte-stable no-prior). Both demo parse
 	 * paths thread this into `runClassifyStage` so a GB/NZ input gets its dependent_locality-resurrecting prior. `null`
 	 * when no pair index was staged/loaded for this release (older bundles) — the loader then behaves exactly as before.
@@ -123,7 +123,7 @@ export async function loadDemoAssets(
 			}),
 			// Placetype-pair prior (#1278): the GB/NZ dependent_locality retrieval channel, served from R2
 			// (the release-train repoint, 2026-07-29; versioned generation since 2026-08-05). Load ALL of
-			// them; the loader keeps each live and `selectPairIndexForText` picks per parse via locale-gate.
+			// them; the loader keeps each live and `selectPairIndexForText` picks per parse via locale-check.
 			// Fetched tolerantly — a 404 is skipped, so this is byte-stable if the bucket path regresses.
 			pairIndexURLs: pairIndexURLs(pairIndexBase),
 		}
@@ -170,14 +170,14 @@ export async function loadDemoAssets(
 		}
 
 		// Street-context check signal (#1315): fetched tolerantly, like the pair indexes — a release that
-		// predates `fst-street-morphology.bin` returns 404/`null` and the demo parses gate-off, exactly as
-		// before. Only loaded when the gazetteer FST loaded: the gate needs both, so a lone morphology
+		// predates `fst-street-morphology.bin` returns 404/`null` and the demo parses with the check off, exactly as
+		// before. Only loaded when the gazetteer FST loaded: the check needs both, so a lone morphology
 		// matcher would be dead weight.
 		if (fstMatcher) {
 			try {
 				streetMorphologyMatcher = await loadStreetMorphologyFST(DEFAULT_LOCALE, release.version)
 			} catch {
-				// Corrupt/unfetchable artifact — treat as absent (gate off).
+				// Corrupt/unfetchable artifact — treat as absent (check off).
 			}
 		}
 	}

@@ -106,7 +106,7 @@ async function serveFromDerivedStore(dir: string, filename: string): Promise<boo
  */
 async function stashDerived(dir: string, filename: string): Promise<void> {
 	// Never poison the store: a below-floor build must not become the artifact every future run
-	// receives as a HIT. The build-time floors are the primary gate; this holds when they are
+	// receives as a HIT. The build-time floors are the primary check; this holds when they are
 	// bypassed (a stale-compiled builder predating them was #1528's exact shape).
 	const violation = await derivedStoreServeViolation(filename, resolvePath(dir, filename))
 

@@ -7,7 +7,7 @@
  *   a candidate-style lookup via `CandidateResolverBackend`) against a stub lookup that mimics the
  *   byte-range candidate table: name/country/bbox/placetype filters, population-first ordering, NO
  *   `parentID` support (the adapter translates parent scopes to country/bbox — that translation is
- *   what these tests exercise, alongside pin extraction and the cross-country postcode gate). The
+ *   what these tests exercise, alongside pin extraction and the cross-country postcode check). The
  *   coherence passes themselves are tested in `resolver/admin-coherence.test.ts`; integration
  *   coverage against the real DB lives in `scripts/eval/demo-cascade-smoke.ts`.
  */
@@ -168,7 +168,7 @@ describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 		expect(hits[0]?.placetype).toBe("postalcode")
 	})
 
-	test("cross-country postcode gate: a foreign postcode match cannot out-pin the parsed city", async () => {
+	test("cross-country postcode check: a foreign postcode match cannot out-pin the parsed city", async () => {
 		// "10115"-class: the postcode string resolves to a DE row, the city is a US locality — the
 		// locality wins the pin; the postcode stays in the hit list.
 		const lookup = stubLookup([

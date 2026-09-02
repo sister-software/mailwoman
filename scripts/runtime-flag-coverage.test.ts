@@ -13,8 +13,8 @@
  *   The sweep that motivated it found two register entries with zero test files, and they had decayed in
  *   opposite directions — which is exactly why the two readings both have to stay open:
  *
- *   - `arbitrate` did not exist in any source file. It gated a union with the LEGACY RULE PARSER, deleted
- *       in v7.0.0, so it had gated nothing for two majors. Removal.
+ *   - `arbitrate` did not exist in any source file. It restricted a union with the LEGACY RULE PARSER, deleted
+ *       in v7.0.0, so it had restricted nothing for two majors. Removal.
  *   - `jointReconcile` is live in `runtime-pipeline.ts` and reaches ~1,850 lines of well-tested reconcile
  *       implementation. The MECHANISM has a 648-line kryptonite suite; the FLAG that reaches it has nothing.
  *       Missing testing — of the switch, not the switched.

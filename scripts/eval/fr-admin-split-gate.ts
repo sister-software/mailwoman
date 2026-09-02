@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fr-admin-split-gate.ts — the LIVE gate for the v1.8.0 international admin-split candidate (night
+ *   Fr-admin-split-eval.ts — the LIVE eval for the v1.8.0 international admin-split candidate (night
  *   2026-06-19). Runs the production ship-config parse (createScorer: anchor + gazetteer +
  *   conventions=auto) → resolve (createWOFResolver, defaultCountry FR) → coordinate on the HELD-OUT
  *   FR golden set (disjoint communes, with truth coords), and reports the metrics that decide the
@@ -14,10 +14,10 @@
  *   v1.8.0 candidate; promote iff the candidate's mean centroid error ≤ 0.95× v1.5.0 AND the US
  *   guardrail (separate oa-resolver-eval run) holds.
  *
- *   Run: node scripts/eval/fr-admin-split-gate.ts\
+ *   Run: node scripts/eval/fr-admin-split-eval.ts\
  *   --model <int8.onnx> --tokenizer <tok> --model-card neural-weights-en-us/model-card.json\
  *   --anchor-lookup $MAILWOMAN_DATA_ROOT/anchor/pilot-anchor-lookup.json\
- *   --golden /tmp/reg/fr-admin-split-golden.jsonl --label v1.5.0 --out /tmp/reg/gate-v150.json
+ *   --golden /tmp/reg/fr-admin-split-golden.jsonl --label v1.5.0 --out /tmp/reg/eval-v150.json
  */
 
 import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
@@ -88,8 +88,8 @@ const stringArgs = rawStringArgs as {
  *
  * `@mailwoman/resolver`'s `resolvedSpecificity` is the conditional both arms now consume, and this table is the last
  * flat copy left. It differs on ONE axis: it ranks `postalcode` (5) above `localadmin`/`borough` (4), where the shared
- * scale puts an area-grade code below the whole `PLACETYPE_FILTER_GROUPS.locality` tier. Migrating changes this gate's
- * verdict on any row that resolves a `localadmin` or `borough`, so it needs that count on this gate's own panel first —
+ * scale puts an area-grade code below the whole `PLACETYPE_FILTER_GROUPS.locality` tier. Migrating changes this eval's
+ * verdict on any row that resolves a `localadmin` or `borough`, so it needs that count on this eval's own panel first —
  * a promoted convention does not move on an argument.
  */
 const PLACETYPE_RANK: Record<string, number> = {
@@ -109,7 +109,7 @@ const POSTCODE_CONVENTION_RANK: Record<string, number> = { ...PLACETYPE_RANK, po
 
 /**
  * Deliberately LOCAL rather than tree-hits' `mostSpecific`, which delegates to the production conditional ladder
- * (`mostSpecificResolved`): this gate grades on the flat #945 convention tables above — see the `PLACETYPE_RANK`
+ * (`mostSpecificResolved`): this eval grades on the flat #945 convention tables above — see the `PLACETYPE_RANK`
  * docstring for why migrating needs a panel count first.
  */
 function mostSpecific(rs: Resolved[], rank: Record<string, number> = PLACETYPE_RANK): Resolved | null {
@@ -166,9 +166,9 @@ async function main() {
 		tier: "server",
 	})
 
-	// #936 option 3 gate legs: `--official-name-exact` flips the official-name sub-tier promotion on
+	// #936 option 3 eval legs: `--official-name-exact` flips the official-name sub-tier promotion on
 	// Boolean pin flags via node:util parseArgs (strict off — the string args ride the stringArgs block above).
-	// #895/#718 discipline: the tri-state pins keep gate legs reproducible against pre-flip baselines —
+	// #895/#718 discipline: the tri-state pins keep eval legs reproducible against pre-flip baselines —
 	// the positive flag pins ON, the `--no-*`/inverse flag pins OFF (the historical config), no flag =
 	// the current library default. Pin explicitly in pre-registered legs.
 	const { values: pins } = parseArguments({

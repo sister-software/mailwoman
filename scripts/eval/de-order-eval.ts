@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   NOTE(de-shell): forwarding shim. The both-order order-robustness harness now lives at
- *   `mailwoman/eval-harness/de-order-eval.ts` and the promotion gate calls it IN-PROCESS. This shim
+ *   `mailwoman/eval-harness/de-order-eval.ts` and `promotion-gate.ts` calls it IN-PROCESS. This shim
  *   keeps standalone invocation working unchanged. Output is byte-identical because the module owns
  *   every printed line. Do not add logic here.
  */

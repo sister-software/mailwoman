@@ -4,7 +4,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Release-time fail-fast gate: verify the SHIPPED MODEL's metadata has propagated to every human-
+ *   Release-time fail-fast check: verify the SHIPPED MODEL's metadata has propagated to every human-
  *   facing surface BEFORE a publish goes out. Mirrors the Hugging Face weight-staging preflight in
  *   `.github/workflows/publish.yml` — HEAD-check the surfaces, and on any miss print the exact
  *   remediation and stop, rather than shipping silently and backfilling a release later.
@@ -21,7 +21,7 @@
  *   series exist: the npm version (what `npm install` gives you, bumped in lockstep across all
  *   workspaces on EVERY release) and the trained-model lineage recorded in the weights bundle's
  *   `model-card.json`. A CODE-ONLY release bumps npm but NOT the model card — the model didn't
- *   change, so the ledger/docs shouldn't be forced to grow a new MODEL row. This gate therefore keys
+ *   change, so the ledger/docs shouldn't be forced to grow a new MODEL row. This eval therefore keys
  *   off the MODEL version (the `version` field of `neural-weights-en-us/model-card.json`), not npm /
  *   package.json, and asserts the ledger + docs are current FOR THAT MODEL. A code-only npm bump on
  *   top of an unchanged model still passes, provided every release newer than the model version is
@@ -39,7 +39,7 @@
  *
  *   NOT covered here (tracked follow-up): the isotonic calibration tables in the weights bundle are
  *   still fitted on the v5.3.0 lineage and carried forward — a separate, larger re-fit workstream,
- *   deliberately out of scope for this gate.
+ *   deliberately out of scope for this eval.
  *
  *   Usage:
  *     node scripts/verify-release-metadata.ts
@@ -143,9 +143,9 @@ async function checkLedger(version: string, ledgerPath: string): Promise<Surface
 		ok: false,
 		message:
 			`evals/scores-by-version.json has NO run with model_version === "${version}".\n` +
-			`      Append it (the promotion-gate PASS prints this line pre-filled — fill --out-dir/--run-id from that run):\n` +
+			`      Append it (the promotion-eval PASS prints this line pre-filled — fill --out-dir/--run-id from that run):\n` +
 			`        node packages/mailwoman/out/cli.js eval ledger-append \\\n` +
-			`          --out-dir <gate-out-dir> --model-version ${version} \\\n` +
+			`          --out-dir <eval-out-dir> --model-version ${version} \\\n` +
 			`          --run-id <label>-<yyyymmdd> \\\n` +
 			`          --model-path "@mailwoman/neural-weights-en-us@${version}" --card packages/neural-weights-en-us/model-card.json`,
 	}
