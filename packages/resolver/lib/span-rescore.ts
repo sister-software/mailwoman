@@ -20,7 +20,7 @@
  *   (`scripts/eval/span-rescore-validate.ts`, eval
  *   `docs/articles/evals/experiments/2026-06-23-370-span-rescore.mdx`): longest-exact-match-wins (the gold
  *   locality is usually the LONGER, more-specific name — shortest- wins grabs the ambiguous prefix
- *   "Tomaszów" of "Tomaszów Mazowiecki", 135 km off), and a postcode- consistency gate that rejects
+ *   "Tomaszów" of "Tomaszów Mazowiecki", 135 km off), and a postcode- consistency check that rejects
  *   a match far from where the postcode resolves (kills coverage-gap false-positives where the
  *   backend has postcode coverage).
  */
@@ -38,11 +38,11 @@ export interface SpanRescoreOptions {
 	 */
 	country?: string
 	/**
-	 * Sibling postcode — used both as the backend disambiguation hint AND the consistency-gate anchor.
+	 * Sibling postcode — used both as the backend disambiguation hint AND the consistency-check anchor.
 	 */
 	postcode?: string
 	/**
-	 * Reject a candidate whose coordinate is farther than this (km) from the postcode anchor. The gate only fires when
+	 * Reject a candidate whose coordinate is farther than this (km) from the postcode anchor. The check only fires when
 	 * the postcode resolves to a point in the backend; otherwise it can't and the match is accepted (so it never
 	 * penalizes a backend without postcode coverage). 0 disables. Default 50.
 	 */
@@ -94,8 +94,8 @@ export interface RescoreCandidate {
 	 */
 	place: ResolvedPlace
 	/**
-	 * Whether the postcode-consistency gate FIRED for this recovery — i.e. the postcode resolved to a point and the match
-	 * was validated within `gateKm` of it. `true` = high-precision (postcode- consistent); `false` = ungated (no
+	 * Whether the postcode-consistency check FIRED for this recovery — i.e. the postcode resolved to a point and the
+	 * match was validated within `gateKm` of it. `true` = high-precision (postcode- consistent); `false` = ungated (no
 	 * postcode→point coverage for this country, so the match wasn't geo-validated — the ~83%-precision case). The caller
 	 * surfaces this as `metadata.rescore_gated` so a consumer can threshold on it WITHOUT a hidden per-country coverage
 	 * map. Deliberately NOT folded into the calibrated `confidence` — that would break the isotonic guarantee (a true
@@ -104,8 +104,8 @@ export interface RescoreCandidate {
 	gated: boolean
 	/**
 	 * The SAME-SPAN namesake runner-ups — the other exact-name matches this recovery's own lookup already returned, in
-	 * the backend's rank order, minus the winner and minus anything the postcode gate rejected. Empty when the span named
-	 * exactly one place.
+	 * the backend's rank order, minus the winner and minus anything the postcode check rejected. Empty when the span
+	 * named exactly one place.
 	 *
 	 * #1537: these were being discarded. A name the model reads as a `street` ("Springfield", "Berlin", "Manchester",
 	 * "Moscow", "Fulda") never reaches the admin walk, so the whole tree comes back unresolved and THIS tier is what
@@ -115,7 +115,7 @@ export interface RescoreCandidate {
 	 * backend, 2026-08-07: those five queries returned 1 candidate each while `Cambridge`/`Athens`/`Paris` — the same
 	 * class, but parsed as `locality` — returned 4-5.
 	 *
-	 * The winner is unchanged by their presence: the pick is still the first gate-passing exact match, and these are the
+	 * The winner is unchanged by their presence: the pick is still the first check-passing exact match, and these are the
 	 * ones that came after it. This costs no extra query — they were in the same `findPlace` response.
 	 */
 	alternatives: ResolvedPlace[]
@@ -226,10 +226,10 @@ export function hasResolvedPlace(roots: readonly AddressNode[]): boolean {
  * modifier inside a name, not a name. Probing it anyway matches a real US place (`New`, wof:1276997945) and pins the
  * address to Kentucky — an answer strictly worse than none, because it is confident and wrong.
  *
- * Deliberately NOT confidence-gated, unlike {@link confidentRanges}. The country node in that case carries 0.68, under
- * the 0.7 bar, and a low-confidence GROUPING is still a grouping: the tokens were read as one name either way, and the
- * interior of a name the parse doubts is not thereby a better standalone candidate. Single-token spans are excluded —
- * there is no interior to protect.
+ * Deliberately NOT confidence-conditioned, unlike {@link confidentRanges}. The country node in that case carries 0.68,
+ * under the 0.7 bar, and a low-confidence GROUPING is still a grouping: the tokens were read as one name either way,
+ * and the interior of a name the parse doubts is not thereby a better standalone candidate. Single-token spans are
+ * excluded — there is no interior to protect.
  */
 function multiTokenNameInteriors(roots: readonly AddressNode[], raw: string): Array<[number, number]> {
 	const out: Array<[number, number]> = []
@@ -299,7 +299,7 @@ function confidentRanges(
 
 /**
  * Find the best locality the raw text exact-matches in the gazetteer. Returns null when nothing matches (or the
- * postcode gate rejects every match). Callers gate on `hasResolvedPlace` first.
+ * postcode check rejects every match). Callers test `hasResolvedPlace` first.
  */
 export async function findRescoreCandidate(
 	raw: string,
@@ -314,13 +314,13 @@ export async function findRescoreCandidate(
 	const postcode = opts.postcode?.trim() || undefined
 
 	// Postcode-consistency anchor: where does the postcode itself resolve? (No-op when the backend has
-	// no postcode coverage — findPlace returns nothing → no anchor → gate can't fire → match accepted.)
+	// no postcode coverage — findPlace returns nothing → no anchor → check can't fire → match accepted.)
 	let anchor: { lat: number; lon: number } | null = null
 
 	if (postcode && gateKm > 0) {
 		// #961: both anchor probes are postalcode-TYPED. Untyped, a truncated code fragment (v5.3.0
 		// emits "250 Zabiče" → subset "250") name-matches arbitrary places ("Chak No 250", PK) and the
-		// false anchor then GATES OUT the true village. A typed miss leaves anchor=null → the match is
+		// false anchor then EXCLUDES the true village. A typed miss leaves anchor=null → the match is
 		// accepted ungated, which is the correct degradation for an unverifiable code.
 		const pcHits = await backend.findPlace({ text: postcode, country, placetype: "postalcode", limit: 2 })
 		const a = pcHits.find((h) => h.lat !== 0 || h.lon !== 0)
@@ -330,7 +330,7 @@ export async function findRescoreCandidate(
 		}
 
 		// #942: the globbed compound ("1382 Kožljek") matches no bare-code row — retry the anchor with
-		// the code-shaped token subset so the consistency gate can validate the recovered city.
+		// the code-shaped token subset so the consistency check can validate the recovered city.
 		if (!anchor && opts.postalCompoundRecovery) {
 			const code = postcodeCodeSubset(postcode)
 
@@ -408,10 +408,10 @@ export async function findRescoreCandidate(
 		const key = foldName(sp.text)
 
 		if (key.length < 2 || /^\d+$/.test(key)) continue // skip bare numbers / empties
-		// Whole-input coverage and the soft-country prior are SEPARATE gates. `bare` (the prior) also
+		// Whole-input coverage and the soft-country prior are SEPARATE checks. `bare` (the prior) also
 		// needs an unqualified tree + a caller country; `wholeSpan` alone decides the alias tier below —
 		// a scope-less bare "Riyadh"/"Frankfurt" is still a NAMING (their Latin surfaces live in alias
-		// rows: الرياض / Frankfurt am Main), and conflating the two gates cost exactly those rows on the
+		// rows: الرياض / Frankfurt am Main), and conflating the two checks cost exactly those rows on the
 		// 2026-08-15 board before this line split them.
 		const wholeSpan = !!wholeInput && sp.start === wholeInput.start && sp.end === wholeInput.end
 		const bare = softCountryEligible && wholeSpan
@@ -441,7 +441,7 @@ export async function findRescoreCandidate(
 		// non-Latin-primary class: Москва folds to "" and could never equal "moscow", so Moscow RU never
 		// entered the list and Moscow, Idaho won by default among the Latin-named bearers — population-
 		// first ranking starved, not violated. The alias surface is the recall; ranking then does its job.
-		// The postcode gate below still applies to every admitted candidate, Moscow RU included.
+		// The postcode check below still applies to every admitted candidate, Moscow RU included.
 		//
 		// #17: importance-first WITHIN the admitted set. The key is the #28 blended fame prior
 		// (`PlaceCandidate.importance`, produced by the candidate build) — the only key that separates
@@ -461,7 +461,7 @@ export async function findRescoreCandidate(
 			// (no postcode→point coverage), the match is ungated — returned, but flagged lower-precision.
 			//
 			// #1537: carry the rest of the SAME lookup's exact matches as the namesake runner-ups. Gate-filtered on the
-			// same rule as the winner — a candidate the postcode gate rejected is not a namesake worth offering, it is a
+			// same rule as the winner — a candidate the postcode check rejected is not a namesake worth offering, it is a
 			// place the evidence already excluded. Rank order is the backend's, preserved by `filter`.
 			return {
 				text: sp.text,
@@ -480,7 +480,7 @@ export async function findRescoreCandidate(
 	// scoped pass finds nothing and a postcode is present, re-probe the spans UNSCOPED (the admin
 	// gazetteer is one extract, all countries), then verify each exact candidate against the postcode's
 	// code subset resolved in the CANDIDATE's own country (postcode extracts route by country). A
-	// cross-country promotion is accepted ONLY postcode-verified within the gate — never ungated —
+	// cross-country promotion is accepted ONLY postcode-verified within the radius — never unverified —
 	// so a US-shaped query can't wander abroad on a name coincidence (the 48026 guard: resolved
 	// trees never reach this code, and unresolved ones must pass the joint postcode check).
 	if (opts.postalCompoundRecovery && postcode && gateKm > 0) {

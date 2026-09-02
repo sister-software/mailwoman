@@ -2,9 +2,9 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Tests for {@linkcode parseExhibit21}/{@linkcode fetchExhibit21} (§7-3b decision 6, gate 3).
+ * @file Tests for {@linkcode parseExhibit21}/{@linkcode fetchExhibit21} (§7-3b decision 6, criterion 3).
  *
- *   Gate 3 first (TDD order): the mangled fixture's zero-subsidiaries/non-zero-unparseable/no-throw
+ *   Criterion 3 first (TDD order): the mangled fixture's zero-subsidiaries/non-zero-unparseable/no-throw
  *   contract is the required test in this file. The other three fixtures (clean table, nested list,
  *   plain text) each pin a correct extraction for their own shape.
  *
@@ -28,7 +28,7 @@ async function fixture(name: string): Promise<string> {
 	return await readLocalTextFile(resolvePackagePath("@mailwoman/filer", "test-fixtures", name))
 }
 
-describe("parseExhibit21 — gate 3 (decision 6: abstain, never guess)", () => {
+describe("parseExhibit21 — criterion 3 (decision 6: abstain, never guess)", () => {
 	it("a deliberately mangled fixture yields ZERO subsidiaries, a NON-ZERO unparseable count, and throws nothing", async () => {
 		const html = await fixture("exhibit21-mangled.html")
 
@@ -343,7 +343,7 @@ const NAME_ONLY_PROBES: Record<string, string> = {
 	"name-only plain-text line": "Standalone Sub LLC\n",
 }
 
-describe("parseExhibit21 — substring invariant (decision 6, gate 3): a name is only emitted if the input contains it", () => {
+describe("parseExhibit21 — substring invariant (decision 6, criterion 3): a name is only emitted if the input contains it", () => {
 	it.each(FIXTURE_FILES)(
 		"every emitted name/jurisdiction is a substring of the normalized document: %s",
 		async (name) => {

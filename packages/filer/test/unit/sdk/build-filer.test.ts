@@ -372,7 +372,7 @@ describe("buildFilerDatabase", () => {
 		expect(await pathExists(out)).toBe(false)
 	})
 
-	it("an empty lastFiledAt is loud — never produces a blank-provenance edge (decision 7 / gate 1)", async () => {
+	it("an empty lastFiledAt is loud — never produces a blank-provenance edge (decision 7 / criterion 1)", async () => {
 		await using scratch = await temporaryDirectory("filer-build-")
 		const out = scratch.resolve("filer.db")
 

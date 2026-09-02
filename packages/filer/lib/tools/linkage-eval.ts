@@ -36,7 +36,7 @@ import { groupPredicateFromMap, scorePairwiseGrouping, type PairwiseGroupingScor
 /**
  * `sourceVintage`/`validFrom` for the eval's own `buildFilerDatabase`/`clusterFilers` calls — FIXED constants, never
  * "today", so a re-run at a different wall-clock date builds byte-identical `filer_edge`/`filer_family` provenance
- * columns (gate 4's reproducibility clause).
+ * columns (criterion 4's reproducibility clause).
  */
 const EVAL_SOURCE_VINTAGE = "2026-eval-v1"
 const EVAL_VALID_FROM = "2026-01-01"

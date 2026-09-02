@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for {@linkcode filerLinkageEval} (§7-3b decisions 3 & 4). Gate 4's structural requirements
+ *   Tests for {@linkcode filerLinkageEval} (§7-3b decisions 3 & 4). Criterion 4's structural requirements
  *   live here — the truth field's absence from the withheld run's input (asserted against the SAME
  *   `buildFilteredEvalInputs()` seam the eval itself calls, not a parallel copy), and reproducibility — plus
  *   a POSITIVE CONTROL: the control run's perfect score is asserted, so stubbing
@@ -78,7 +78,7 @@ async function runEval(): Promise<FilerLinkageEvalResult> {
 	return await cached
 }
 
-describe("buildFilteredEvalInputs — decision 4's leakage exclusion (gate 4)", () => {
+describe("buildFilteredEvalInputs — decision 4's leakage exclusion (criterion 4)", () => {
 	it("clears holdingCompany to an empty string on every Form499Row", () => {
 		const { form499Rows } = buildFilteredEvalInputs()
 
@@ -311,7 +311,7 @@ describe("hashLinkageEvalInputs", () => {
 	})
 })
 
-describe("filerLinkageEval — reproducibility (gate 4)", () => {
+describe("filerLinkageEval — reproducibility (criterion 4)", () => {
 	it("reproduces identical scores and input SHAs across two independent runs", async () => {
 		const first = await runEval()
 		const second = await filerLinkageEval({ date: PUBLISHED_LINKAGE_EVAL_DATE, printMarkdown: false })

@@ -401,8 +401,8 @@ describe("filer schema", () => {
 		 * `assertion` is graded evidence, not decoration: EDGAR's subsidiary→FRN corroboration is the repo's first INFERRED
 		 * family membership, and without this column it would reach `filerLookup.families` shape-identical to a Form 499
 		 * holding-company disclosure. Its two constraints close the two ways that grading can be defeated at write time — a
-		 * blank value (which `NOT NULL` accepts, and which would then match NEITHER half of a gate-2 read, so the row would
-		 * vanish from any surface that splits on strength), and a `match_score` on an authoritative row (a fabricated
+		 * blank value (which `NOT NULL` accepts, and which would then match NEITHER half of a criterion-2 read, so the row
+		 * would vanish from any surface that splits on strength), and a `match_score` on an authoritative row (a fabricated
 		 * confidence for a membership that matched nothing).
 		 *
 		 * Each expectation names the CONSTRAINT, not just "CHECK constraint failed" — this table carries three, and a test

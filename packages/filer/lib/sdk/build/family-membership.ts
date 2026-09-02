@@ -50,7 +50,7 @@ export interface FamilyMembershipFact {
 	/**
 	 * One of {@link FilerEdgeAssertion} — copied from the accompanying edge, never re-derived. Required rather than
 	 * defaulted to `Authoritative`: a new family writer must state the strength of its claim on purpose, and a default
-	 * would let an inferred one inherit authority by omission — the exact conflation gate 2 exists to prevent.
+	 * would let an inferred one inherit authority by omission — the exact conflation criterion 2 exists to prevent.
 	 */
 	assertion: string
 	/**

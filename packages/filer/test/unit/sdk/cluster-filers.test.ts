@@ -18,7 +18,7 @@
  *   authoritative components (component A / component B, no shared identifier) must NEVER form at
  *   all, which is why the fixtures below assert its absence rather than its cluster assignment. The
  *   "positive control" fixtures (two nodes sharing an authoritative FRN) are what a GENUINE inferred
- *   link looks like, and gate 2 is tested against THAT: even a real, sanctioned inferred link must
+ *   link looks like, and criterion 2 is tested against THAT: even a real, sanctioned inferred link must
  *   never alter an authoritative cluster assignment.
  */
 
@@ -346,7 +346,7 @@ describe("clusterInferredLinks — the identifier veto", () => {
 		// The nameless node never gets an inferred assignment at all.
 		expect(inferredMap.has(FORM499_D)).toBe(false)
 
-		// GATE 2: the authoritative assignments are BYTE-IDENTICAL to before the inferred pass ran (true both
+		// CRITERION 2: the authoritative assignments are BYTE-IDENTICAL to before the inferred pass ran (true both
 		// because nothing bridged AND because the passes write disjoint assertion values by construction).
 		const authoritativeAfter = await readClusterMap(db, FilerEdgeAssertion.Authoritative)
 		expect(authoritativeAfter).toEqual(authoritativeBefore)
@@ -437,7 +437,7 @@ describe("clusterInferredLinks — the identifier veto", () => {
 		expect(bridge?.source).toBe(CLUSTER_FILERS_SOURCE)
 		expect(bridge?.match_score).not.toBeNull()
 
-		// GATE 2, still: even a REAL, sanctioned inferred link never alters the authoritative assignment.
+		// CRITERION 2, still: even a REAL, sanctioned inferred link never alters the authoritative assignment.
 		const authoritativeAfter = await readClusterMap(db, FilerEdgeAssertion.Authoritative)
 		expect(authoritativeAfter).toEqual(authoritativeBefore)
 		expect(authoritativeResult.clusters).toBe(1)

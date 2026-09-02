@@ -47,7 +47,7 @@
  *   naming the offending row. Likewise an empty `frn` (on EITHER row shape — see {@linkcode mintFRNNodeID})
  *   and an empty `lastFiledAt` (see {@linkcode assertLastFiledAt}: an unguarded blank `lastFiledAt` reaches
  *   `source_vintage`/`valid_from` as `""`, which SQLite's `NOT NULL` does not reject, breaking decision 7 /
- *   gate 1's "valid_from is MANDATORY" invariant). A `null` {@link Form499Row.frn} is the opposite case —
+ *   criterion 1's "valid_from is MANDATORY" invariant). A `null` {@link Form499Row.frn} is the opposite case —
  *   common and legitimate (a filer not yet registered in CORES) — so it is never an error, only a counted
  *   {@link BuildFilerResult.skipped} opportunity.
  *

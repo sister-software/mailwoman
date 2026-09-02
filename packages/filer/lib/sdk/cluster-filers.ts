@@ -24,8 +24,8 @@
  *   exists to keep apart from `filer_cluster`. A hand-written test fixture that inserts edges with
  *   `relationship: SameEntity` by default (`filer-lookup.test.ts`'s `authoritativeEdge()` helper) cannot
  *   catch a regression here — only a fixture built through the REAL `buildFilerDatabase`, which types
- *   holding-/management-company edges correctly, exposes it, which is why gate 1
- *   (`filer-lookup.test.ts`'s `describe("§7-3b gates")`) includes a real-builder-path test.
+ *   holding-/management-company edges correctly, exposes it, which is why criterion 1
+ *   (`filer-lookup.test.ts`'s `describe("§7-3b criteria")`) includes a real-builder-path test.
  *
  *   **(b) Inferred links** ({@linkcode clusterInferredLinks}) — one {@linkcode SourceRecord}
  *   (`@mailwoman/registry`) per `form499_id` node that carries a `legal_name` attribute:
@@ -82,7 +82,7 @@
  *   normalized HQ address, a contact phone/email) — that data doesn't exist reliably in this crosswalk
  *   until CORES and EDGAR land in Phase 3b, so it's explicitly deferred there, not attempted here.
  *
- *   **Decision 5 / gate 2, BINDING and required:** an inferred link must NEVER alter an
+ *   **Decision 5 / criterion 2, BINDING and required:** an inferred link must NEVER alter an
  *   authoritative cluster assignment. This is not a runtime check on the inferred pass's output — it
  *   is a structural property of where each pass writes: (a) only ever touches `filer_cluster` rows
  *   `WHERE assertion = 'authoritative'`; (b) only ever touches rows `WHERE assertion = 'inferred'`
@@ -549,7 +549,7 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
  * Pass (b): name-match `form499_id` nodes across the whole crosswalk via `resolveEntities` (decision 4: BINDING
  * `learnedScorer: false`, plus a HARD identifier veto via a custom `scorer` — see {@linkcode scoreWithIdentifierVeto}
  * and the module docstring's "identifier veto" section), and record the outcome as `assertion: "inferred"` rows —
- * WITHOUT touching any `assertion: "authoritative"` row (decision 5 / gate 2, BINDING; see the module docstring).
+ * WITHOUT touching any `assertion: "authoritative"` row (decision 5 / criterion 2, BINDING; see the module docstring).
  *
  * Writes:
  *
