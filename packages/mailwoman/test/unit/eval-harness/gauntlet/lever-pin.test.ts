@@ -174,7 +174,7 @@ describe("runResolverLevers forwards BOTH halves of the prior tri-state", () => 
 	// The bug this pins: while the prior was opt-in, the builder forwarded only the truthy half
 	// (`...(options.gazetteerPrior ? { gazetteerPrior: true } : {})`). After the default-on flip that silently
 	// discarded `--gazetteer-prior-off`, so the OFF arm graded the DEFAULT configuration while its log said
-	// `gazetteerPrior=OFF` — the exact "two gate logs that differ only in a flag someone typed" failure the levers
+	// `gazetteerPrior=OFF` — the exact "two lever logs that differ only in a flag someone typed" failure the levers
 	// line exists to prevent. Caught by running the off arm and reading the board, not by a test.
 	it("keeps an explicit false", () => {
 		expect(runResolverLevers({ gazetteerPrior: false })).toEqual({ gazetteerPrior: false })

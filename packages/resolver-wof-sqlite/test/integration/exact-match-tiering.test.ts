@@ -219,7 +219,7 @@ describe("findPlace — exact-match tiering", () => {
 
 		lookup = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
 
-		// Placetype gate: a region-typed query never enters the ladder (and the spaced phrase can't
+		// Placetype check: a region-typed query never enters the ladder (and the spaced phrase can't
 		// FTS-match the one-token docs), so it comes back empty rather than silently coarsening.
 		const nonPostcode = await lookup.findPlace({ text: "1012 LG", placetype: "region", country: "NL", limit: 1 })
 		expect(nonPostcode).toHaveLength(0)

@@ -694,7 +694,7 @@ async function resolveAnchorLookupSibling(
  * `locality-surface-lexicon-v6.json` — while both the shipped v4.0.1 recipe and the v4.2.0 candidate TRAIN against
  * locality-surface **v7** (`/data/gazetteer/locality-surface-lexicon-v7.json`). Serving therefore fed the channel a
  * DIFFERENT lexicon generation than training painted, and nothing said so: the v6 file exists, the channel loads, the
- * parse works. The Run B gate had to stage v7's CONTENT under the v6 FILENAME to score the candidate faithfully — a
+ * parse works. The Run B check had to stage v7's CONTENT under the v6 FILENAME to score the candidate faithfully — a
  * workaround that only exists because the filename, not the card, was the contract.
  *
  * The contract is now the card: `requires.<channel>.lexicon` NAMES the artifact the model trained against, and

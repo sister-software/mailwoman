@@ -166,7 +166,7 @@ export async function resurrectCurrencyHoles(ctx: {
 			// cannot silently start comparing every candidate against a hardcoded rung.
 			const deadPlacetype = String(d.placetype ?? "locality")
 
-			// A live row blocks only when it is AT LEAST AS COARSE as the dead one. The original gate compared name and
+			// A live row blocks only when it is AT LEAST AS COARSE as the dead one. The original check compared name and
 			// distance alone, on the premise that a nearby same-name row means "the place is alive under another
 			// placetype" — true for a place recorded twice, false for a placetype DEMOTION, which is the shape that
 			// actually occurs: WOF retired `Gillingham` the locality (pop 101,187) and kept `Gillingham` the

@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   The parity-corpus eval (#1093) — the rescued v1 hand-written gold scored against a checkpoint,
- *   parse-only. The ratified default gate is the triaged corpus (321 live across 20 countries; see
+ *   parse-only. The ratified default check is the triaged corpus (321 live across 20 countries; see
  *   PARITY_FIXTURES_PATH below); pass `--fixtures` for the 354-live pre-triage v1 denominator. This
- *   is the model campaign's gate for the
+ *   is the model campaign's check for the
  *   HELD plan-2 swaps: the per-label floors below are the SAME pre-registered floors the swap checks
  *   carry (house_number ≥ 0.97, postcode ≥ 0.97, street-family ≥ 0.90 — never edited to green; a
  *   miss is an adjudication). Comparison is case-folded, whitespace-collapsed; the street label
@@ -23,7 +23,7 @@ import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
 import { JSONSpliterator } from "spliterator"
 
 /**
- * Default gate corpus. RATIFIED 2026-07-13 to the triaged set (321 live / 55 tombstones): the 22 rules-era no-solution
+ * Default check corpus. RATIFIED 2026-07-13 to the triaged set (321 live / 55 tombstones): the 22 rules-era no-solution
  * assertions plus 33 gold-triage tombstones (rules-idiosyncratic fixtures a neural parser should not be graded against
  * — solver-permutation probes, autocomplete-era jitter, self-admitted TODOs; each carries a `dropped` reason). Proposal
  * + per-fixture rationale: `docs/articles/evals/competitive-parity/2026-07-13-parity-gold-triage.md`. The pre-#875 v1
@@ -110,8 +110,8 @@ export interface ParityEvalOptions {
 	 */
 	gazetteerPrior?: boolean
 	/**
-	 * Ship-config word-consistency heal (default true since the 2026-07-15 gate revision — production parses heal, so the
-	 * eval grades the healed parse). Pass `false` to reproduce pre-heal baselines.
+	 * Ship-config word-consistency heal (default true since the 2026-07-15 check revision — production parses heal, so
+	 * the eval grades the healed parse). Pass `false` to reproduce pre-heal baselines.
 	 */
 	wordConsistency?: boolean
 	/**
@@ -195,7 +195,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	for (const fixture of live) {
 		const expect = fixture.expect!
 
-		// Ship-config parse (gate-revision 2026-07-15): production's safeClassify/parseForGeocode heal
+		// Ship-config parse (check-revision 2026-07-15): production's safeClassify/parseForGeocode heal
 		// with WORD_CONSISTENCY_SHIP_DEFAULT, so the check must grade the same parse the swapped
 		// surfaces serve. Floors unchanged. Pre-heal continuity: `--no-word-consistency`.
 		// Production config parity (#1146): the query-shape emission prior is fed on EVERY path

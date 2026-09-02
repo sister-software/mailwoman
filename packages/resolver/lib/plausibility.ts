@@ -188,10 +188,11 @@ export interface PlausibilityOpts {
 }
 
 /**
- * Decide whether a resolved tree's geocode is implausible for a structured address — the cheap guard the v7 hybrid gate
- * runs after routing an input to the neural parser (#38). Trips when the finest resolved place is a bare `country`
- * centroid (guard A), or — when the caller supplies `expectedCountry` — when the served coordinate falls outside that
- * country's coarse bbox (guard B). An unresolved tree (nothing to serve) is plausible: there is no garbage to serve.
+ * Decide whether a resolved tree's geocode is implausible for a structured address — the cheap guard the v7 hybrid
+ * check runs after routing an input to the neural parser (#38). Trips when the finest resolved place is a bare
+ * `country` centroid (guard A), or — when the caller supplies `expectedCountry` — when the served coordinate falls
+ * outside that country's coarse bbox (guard B). An unresolved tree (nothing to serve) is plausible: there is no garbage
+ * to serve.
  */
 export function isImplausibleResolution(tree: AddressTree, opts: PlausibilityOpts = {}): PlausibilityVerdict {
 	const coordinate = finestResolvedCoordinate(tree)

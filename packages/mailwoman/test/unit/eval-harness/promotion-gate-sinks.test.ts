@@ -17,7 +17,7 @@
  *        against the shape each migrated module actually presents.
  *
  *   Weightless by construction (#582): nothing here loads a model, so it runs in CI. The numeric
- *   equivalence proof is the twice-run gate receipt, not a unit test.
+ *   equivalence proof is the twice-run check receipt, not a unit test.
  */
 
 import { deOrderEval } from "mailwoman/eval-harness/de-order-eval"

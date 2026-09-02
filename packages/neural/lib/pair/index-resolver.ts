@@ -169,7 +169,7 @@ export interface PairIndexHeader {
 	 * Calibrated per country, and only where it was MEASURED. `us`/`gb`/`nz`/`fr` ship 5 — the smallest δ that saturates
 	 * bar B-2's brooklyn-class sub-board, flat from there through 20
 	 * (`docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`). `de`/`in`/`es`/`it` ship WITHOUT it: no board has
-	 * graded the parent side there, and the D-rule's answer to an unmeasured locale is a per-locale gate, not an
+	 * graded the parent side there, and the D-rule's answer to an unmeasured locale is a per-locale check, not an
 	 * inherited magnitude.
 	 *
 	 * Overridable at decode: `PlacetypePairPriorOpts.parentDelta` (which `MAILWOMAN_PAIR_PARENT_DELTA` feeds) wins over

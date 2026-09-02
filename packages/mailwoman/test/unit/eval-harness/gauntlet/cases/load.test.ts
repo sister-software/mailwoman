@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The corpus loader's gate, and the receipt for the 2026-08-05 TS-array → per-country-JSONL migration.
+ *   The corpus loader's check, and the receipt for the 2026-08-05 TS-array → per-country-JSONL migration.
  *
  *   THE MIGRATION PROOF, in two legs. While both representations existed, this suite deep-equalled the
  *   loaded corpus against `REGRESSION_CASES` row for row — see the commit that added `cases/<cc>/*.jsonl`,
@@ -172,7 +172,7 @@ const CORPUS_SIZE = 651
  *
  * Moved again the same day — → this — by the dj-cs-djibouti re-pin: `expectPlaceName` moves to the canonical "Republic
  * of Djibouti" (the #1650 country-population rebuild let the bare-country repick win, 9.9 km inside the 25 km bar; the
- * coordinate gate already excludes the 65.9-km city row, so the country row is the only admissible answer and
+ * coordinate check already excludes the 65.9-km city row, so the country row is the only admissible answer and
  * hierarchy[0].name carries its canonical resolver_name). The same commit also flipped dj's status to pass (now-PASSES
  * byte-identical across two runs; attribution #1650) and rewrote the Rochester note to its measured cause — the
  * paragraph above under-reported that. Board id held throughout.

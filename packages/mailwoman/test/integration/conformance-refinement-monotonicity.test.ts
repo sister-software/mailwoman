@@ -16,7 +16,7 @@
  *   WHAT THIS LEG ADDS OVER THE FAST ONE. The unit legs prove the instrument reads a candidate table
  *   correctly and that every chain is corpus-attested, both without loading anything. Neither can produce a
  *   candidate table, and the table is the whole subject: the fetch window, the country scope, the hierarchy
- *   path and the `checks` are things the resolver decides at run time, and no synthetic trace can attest what
+ *   path and the `gates` are things the resolver decides at run time, and no synthetic trace can attest what
  *   the shipped walk actually does with them.
  *
  *   THIS LEG CANNOT GO RED ON A KNOWN DEFECT, AND CANNOT GO GREEN ON A BLIND ONE. `runConformanceCommand`

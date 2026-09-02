@@ -66,7 +66,7 @@
  *
  *   ### OpenAddresses authentication (as of 2026-05-18)
  *
- *   `batch.openaddresses.io` now requires a free registered account for bulk downloads (auth gate
+ *   `batch.openaddresses.io` now requires a free registered account for bulk downloads (auth check
  *   prevents CDN abuse; data remains openly licensed). `fetchOpenAddresses` reads `OA_BATCH_TOKEN`
  *   from the environment:
  *

@@ -95,7 +95,7 @@ const EvalGauntlet: ParsedCommandComponent<Options> = ({ options }) => {
 					...(components ? { components: splitList(components) } : {}),
 					// An UNSET flag must stay unset, not become an explicit pin either way. The schema supplies its
 					// `false` default for BOTH halves, and forwarding one verbatim would pin the lever forever — which is
-					// exactly how the 2026-08-05 default-on flip could have gone unnoticed by the standard gate. Neither
+					// exactly how the 2026-08-05 default-on flip could have gone unnoticed by the standard eval. Neither
 					// flag set keeps "no flag" meaning "grade whatever production does".
 					postcodeCountryCoherence: options.postcodeCountryCoherence
 						? true

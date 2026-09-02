@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The #1649 FIRST-REFUSAL gate: a lexicon-aware kind classifier, when the caller injects one, gets
+ *   The #1649 FIRST-REFUSAL check: a lexicon-aware kind classifier, when the caller injects one, gets
  *   first look at the query. A top-slot `poi_query` / `poi_category` / `near_me` verdict means the
  *   string asks for a THING, not an address — the address lanes can only manufacture confident
  *   nonsense from it ("Statue of Liberty" resolved Of, Trabzon through a fuzzy locality; "Restaurants

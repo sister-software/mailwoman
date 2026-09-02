@@ -18,7 +18,7 @@
  *   It earned the check by first being WRONG in a way worth recording. The initial sweep flagged eight, and five were
  *   the sub-venue shape (`Terminal 5` of `Heathrow Airport`) on a row that PASSES the check: `PARENT_OF[unit]` had no
  *   `venue` edge, so the contract was narrower than the capability the board already tested. Fixed in 8c54b4b48. A
- *   structural gate is only as good as the structure it is given, which is the argument for the allowlist below being
+ *   structural check is only as good as the structure it is given, which is the argument for the allowlist below being
  *   short and reasoned rather than long and tolerated.
  */
 

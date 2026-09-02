@@ -90,7 +90,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	const useAnchor = options.postcodeAnchor ?? false
 	// `--anchor-rerank` (#369 S8): feed the postcode anchor's country posterior into the resolver's
 	// locality re-rank (`ResolveOpts.anchorPosterior`), to measure whether the merged re-ranker pulls
-	// resolves into the right country's polygon when no locale gate is set (`--default-country none`).
+	// resolves into the right country's polygon when no `@mailwoman/locale-check` stage is set (`--default-country none`).
 	const anchorRerank = options.anchorRerank ?? false
 
 	let postcodeLookup: PostcodeCentroidLookup | null = null

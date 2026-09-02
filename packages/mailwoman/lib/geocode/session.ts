@@ -187,8 +187,8 @@ export interface GeocodeSessionOptions {
  * actually produced; there is no field here a surface has to invent a number for. What it deliberately does NOT carry
  * is a `PipelineResult`: `geocodeAddress`'s cascade is not `runPipeline` (see `geocode-core.ts`'s header — the
  * pipeline's reconcile stage drops the street node the coordinate tiers need), so the stages that never run on this
- * path — the locale gate, the phrase grouper, the POI branch — have nothing to report and are absent rather than
- * defaulted.
+ * path — the `@mailwoman/locale-check` stage, the phrase grouper, the POI branch — have nothing to report and are
+ * absent rather than defaulted.
  */
 export interface GeocodeTrace {
 	/**
@@ -440,7 +440,7 @@ export async function loadZoningDesignationRoute(
 
 /**
  * The fork→entity probe's two signals — both or neither (an unrestricted probe is the Savile Row hijack; fork-entity.ts
- * gate 2). Tolerate-and-degrade: no poi.db in the data root, no probe.
+ * check 2). Tolerate-and-degrade: no poi.db in the data root, no probe.
  */
 export async function loadForkEntityDeps(
 	options: Pick<GeocodeSessionOptions, "dataRoot" | "forkEntity">

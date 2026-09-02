@@ -6,7 +6,7 @@
  *   The invariance mini-suite runner (#886 five-whys follow-up). A standing, seconds-cheap
  *   metamorphic-invariance check meant to run in EVERY probe grade — not just the release Gauntlet's
  *   heavier resolver-level metamorphic layer (`gauntlet/cases/metamorphic.ts`, which asserts on assembled
- *   COORDINATES and is release-gate weight). This suite asserts on decoded PARSE COMPONENTS only (no
+ *   COORDINATES and is release-eval weight). This suite asserts on decoded PARSE COMPONENTS only (no
  *   resolver, no gazetteer DB), which is what keeps it cheap: a handful of pipeline calls per row, not
  *   geocode-and-resolve round trips.
  *
@@ -413,7 +413,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 					// LOST. Treating two non-INVARIANT verdicts as pre-existing regardless of severity would let a
 					// candidate LOST slide through as "non-blocking" whenever the baseline merely DEGRADED on the
 					// same pair: baseline drops a non-critical `unit` on comma-drop, candidate drops the CRITICAL
-					// `house_number` on the identical pair — that must gate, not hide.
+					// `house_number` on the identical pair — that must check, not hide.
 					// v1 is verdict-severity matching only, not content-diff matching: it doesn't check whether the
 					// candidate's LOST is the SAME underlying break as the baseline's LOST (e.g. same tag, same kind
 					// of corruption) — only that it's no worse in kind. A future tightening could require the diffs

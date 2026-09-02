@@ -161,7 +161,7 @@ export function scriptRenderings(value: string): string[] {
  * elements that ran together, so a `locality` of `四季酒家 Manchester` satisfied `Manchester`. Review converted the
  * relaxation into the per-row `expect_component_renderings` OPT-IN: a case that genuinely carries a span in two scripts
  * lists the renderings it requires, a key so listed supersedes the same key here, and every other assertion stays this
- * strict equality. See {@linkcode checkCase}'s component gate for the contract.
+ * strict equality. See {@linkcode checkCase}'s component check for the contract.
  */
 export function componentMatches(got: string, expected: string): boolean {
 	return got.toLowerCase() === expected.toLowerCase()
@@ -206,12 +206,12 @@ function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] |
  *    25 km bar of its impostor would have had nothing at all. The corpus stored both columns from the first migration
  *    and no branch read them, so "wrong place, plausible coordinate" was unassertable for the corpus's whole life.
  * 4. COMPONENTS, exact case-insensitive per key, against the parsed/assembled spans ({@linkcode componentMatches}). Last
- *    because a corrupt `expect_components` JSON short-circuits the rest of ITS gate, and the place gate must still have
- *    run. Rows whose input carries a span in two or more scripts opt in per key via `expect_component_renderings` — `{
- *    tag: [rendering, …] }` — and for a listed key the assertion becomes: {@linkcode scriptRenderings} of the got value
- *    must CONTAIN EVERY listed rendering, case-folded (both scripts required when the case defines both). Nothing else
- *    about that value is asserted. PRECEDENCE: a key present in `expect_component_renderings` supersedes the same key
- *    in `expect_components`; an empty rendering list throws (an authoring bug the seed schema refuses upstream).
+ *    because a corrupt `expect_components` JSON short-circuits the rest of ITS check, and the place check must still
+ *    have run. Rows whose input carries a span in two or more scripts opt in per key via `expect_component_renderings`
+ *    — `{ tag: [rendering, …] }` — and for a listed key the assertion becomes: {@linkcode scriptRenderings} of the got
+ *    value must CONTAIN EVERY listed rendering, case-folded (both scripts required when the case defines both). Nothing
+ *    else about that value is asserted. PRECEDENCE: a key present in `expect_component_renderings` supersedes the same
+ *    key in `expect_components`; an empty rendering list throws (an authoring bug the seed schema refuses upstream).
  */
 export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 	const issues: string[] = []
@@ -279,7 +279,7 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 
 	if (c.expect_components != null) {
 		// From our own builder's JSON.stringify, so malformed = a corrupt DB row — surface it as a
-		// case issue (loud, per-case) rather than letting a raw SyntaxError kill the whole gate.
+		// case issue (loud, per-case) rather than letting a raw SyntaxError kill the whole check.
 		const exp = tryParsingJSON<Record<string, string>>(c.expect_components)
 
 		if (!exp) {

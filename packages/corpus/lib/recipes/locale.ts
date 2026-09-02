@@ -149,7 +149,7 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		// HM Land Registry Price Paid Data tuples (25.67M rows out of the PPD ingest). PPD's DISTRICT is the
 		// postal town (locality) and CITY is the dependent locality — legitimately EMPTY on the majority of rows
 		// (most GB addresses have no dependent locality). `districtAsLocality` maps DISTRICT→locality and, when
-		// present, CITY→dependent_locality; the `readTuples` gate above only drops a row when BOTH are empty, so
+		// present, CITY→dependent_locality; the `readTuples` check above only drops a row when BOTH are empty, so
 		// the majority empty-CITY rows survive.
 		source: "synth-gb",
 		corpusVersion: "0.9.9",
@@ -399,7 +399,7 @@ export function applyCountryAppend(
 
 		if (!forms?.length) {
 			// The BR/NZ lesson: a missing table entry must never silently no-op a requested fraction —
-			// it must raise so the gap is caught at build time, not discovered later as a 0% gate failure.
+			// it must raise so the gap is caught at build time, not discovered later as a 0% check failure.
 			throw new Error(
 				`No COUNTRY_SURFACE_FORMS entry for ${country} — add it to codex/country/country.ts before using --country-fraction`
 			)

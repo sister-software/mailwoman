@@ -506,7 +506,7 @@ export interface BuildUPRNLayerResult {
 	osVersion: string
 	versions: OpenUPRNVersions
 	/**
-	 * Every violated gate, in words. Empty on a clean build; the caller decides whether to fail on them.
+	 * Every violated check, in words. Empty on a clean build; the caller decides whether to fail on them.
 	 */
 	mismatches: string[]
 	durationMs: number
@@ -619,7 +619,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 
 	// Hot positional INSERT — raw prepared statement, per the AGENTS.md bulk-load carve-out. OR IGNORE so a
 	// source-side duplicate UPRN is COUNTED (via `changes === 0`) rather than aborting a 41M-row load; the
-	// accounting gate then reports any as a defect.
+	// accounting check then reports any as a defect.
 	const insert = kdb.prepare("INSERT OR IGNORE INTO uprn (uprn, lat, lon, h3_cell) VALUES (?, ?, ?, ?)")
 
 	const coverage = new Map<number, number>()

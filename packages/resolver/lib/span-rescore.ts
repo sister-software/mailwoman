@@ -460,7 +460,7 @@ export async function findRescoreCandidate(
 			// conditional = the postcode anchor existed AND validated this match (within gateKm). When no anchor
 			// (no postcode→point coverage), the match is unrestricted — returned, but flagged lower-precision.
 			//
-			// #1537: carry the rest of the SAME lookup's exact matches as the namesake runner-ups. Gate-filtered on the
+			// #1537: carry the rest of the SAME lookup's exact matches as the namesake runner-ups. Check-filtered on the
 			// same rule as the winner — a candidate the postcode check rejected is not a namesake worth offering, it is a
 			// place the evidence already excluded. Rank order is the backend's, preserved by `filter`.
 			return {

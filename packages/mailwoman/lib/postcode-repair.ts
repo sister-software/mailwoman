@@ -50,7 +50,7 @@ const MISREAD_TAGS: ReadonlySet<string> = new Set([
 	"street_prefix",
 	"unit",
 	// "PO33 4DE" — the Portsmouth/Isle of Wight area reads as a PO Box. A REAL PO Box surface ("PO Box
-	// 123") can never match a letter-digit postcode format span, so the format gate keeps this safe.
+	// 123") can never match a letter-digit postcode format span, so the format check keeps this safe.
 	"po_box",
 ])
 

@@ -9,7 +9,7 @@
  *   The corpus alignment tokenizer drops standalone punctuation (corpus/src/tokenize.ts), so NO
  *   training row can label the periods inside "P.O. Box" — the model learns the tag perfectly
  *   (every letter piece at 0.93+ confidence) but emits it as fragments split at each dot, and span
- *   assembly surfaces only the first fragment ("p"). Measured on the v1.3.0 gate: dotted po_box
+ *   assembly surfaces only the first fragment ("p"). Measured on the v1.3.0 check: dotted po_box
  *   leaders failed 98%, ALL truncations, while plain leaders passed — a structural expressivity
  *   limit of the label format, not a learning failure.
  *

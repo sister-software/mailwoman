@@ -15,7 +15,7 @@
  *       tags, and only against pre-recorded numbers — it can't see a tag the mask harms INDIRECTLY
  *       (e.g. forbidding `street_suffix` shifts probability mass and depresses `street`), nor a
  *       regression on a tag no `forbiddenTags` row names.
- *   - THIS gate is PROACTIVE + FINE: it RE-RUNS the model (mask-off vs mask-auto/on) per locale under
+ *   - THIS check is PROACTIVE + FINE: it RE-RUNS the model (mask-off vs mask-auto/on) per locale under
  *       the full SHIP-CONFIG (anchor-on + gazetteer-on) and FAILS if ANY tag's F1 drops by more
  *       than a TIGHTER 2pp threshold (per the DeepSeek consult) under the conventions mask —
  *       catching the subtler interaction harms the per-tag 5pp delta check would miss.
@@ -29,7 +29,7 @@
  *   toggling mask off vs auto, and the UNFOLDED exact-match per-tag F1 from `score-affix.ts`
  *   (street parts split, so an affix regression is visible — the folded `per-locale-f1.ts` can't
  *   see it). The DIFFERENCE from the manifest generator: that one records `maskOnF1` only for
- *   codex-forbidden tags (the only tags the LOAD-TIME gate reads); THIS gate computes the delta for
+ *   codex-forbidden tags (the only tags the LOAD-TIME check reads); THIS check computes the delta for
  *   EVERY tag, because a mask can harm a tag no `forbiddenTags` row names.
  *
  *   Run (Node 26+, custom DB / anchor-on, the production default v1.5.0 int8):

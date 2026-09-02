@@ -128,7 +128,7 @@ export function probePostcodePrefix(
 ): PostcodePrefixProbeResult | null {
 	const indexCountry = index.country?.toUpperCase()
 
-	// Country gate: the index is evidence FOR its own country only. A GB index under a US scope stays
+	// Country check: the index is evidence FOR its own country only. A GB index under a US scope stays
 	// silent — the walk's country filter is the caller's declared universe.
 	if (queryCountry && indexCountry && queryCountry.toUpperCase() !== indexCountry) return null
 

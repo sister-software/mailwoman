@@ -146,7 +146,7 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 			// The generator constructs its scorers WHILE the card's `capabilities` block may not yet
 			// exist; the loader's delta check is a no-op until the block is written. After a `--write`,
 			// regenerating uses the already-written block, but mask-OFF construction never trips the
-			// gate (it only fires for a forbidden CERTIFIED tag, and mask-off forbids none).
+			// check (it only fires for a forbidden CERTIFIED tag, and mask-off forbids none).
 			// `inputMode: "formatted"` is deliberate and score-relevant: certification probes are
 			// formatted postal addresses, whose production path disables evidence-bundle channels.
 			const { off, on } = await scoreConventionsMaskOffOn(

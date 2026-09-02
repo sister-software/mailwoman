@@ -45,7 +45,7 @@
  *   a note saying what the number means. A baseline you can't reproduce from its own row isn't a
  *   baseline, it's a rumor. When a number legitimately moves (new fixture, new tokenizer, a real
  *   model change), RE-REGISTER it with a fresh row and a reason — never widen the tolerance to make
- *   a deviation quiet. That's the silent-gate-drift failure wearing a different hat.
+ *   a deviation quiet. That's the silent-check-drift failure wearing a different hat.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

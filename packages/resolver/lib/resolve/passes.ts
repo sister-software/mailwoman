@@ -515,7 +515,7 @@ export function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: 
 		findAnchor.push(...n.children)
 	}
 
-	if (!anchor) return // no postcode→point — nothing to disambiguate against (gate can't fire)
+	if (!anchor) return // no postcode→point — nothing to disambiguate against (check can't fire)
 
 	const stack: AddressNode[] = [...roots]
 

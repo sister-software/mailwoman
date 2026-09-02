@@ -2,7 +2,7 @@
  * Report-only retrieval-rescue census over the committed Gauntlet corpus (#1878). Not a release eval.
  *
  * One production-routed board pass with the shipped model. For each row: the delivered answer, the unconditional
- * fork-entity probe (gate 1 deliberately ignored — that is the measurement), and the resolver's ranked alternates,
+ * fork-entity probe (check 1 deliberately ignored — that is the measurement), and the resolver's ranked alternates,
  * classified against the row's coordinate truth by `retrieval-rescue-census.ts`.
  */
 
@@ -44,7 +44,7 @@ for (const c of cases) {
 	const markers = result.intent_markers.map((m) => m.code)
 
 	// Unconditional: ask the entity layer whenever the fork marker rode, INCLUDING when the incumbent
-	// resolved — measuring what gate 1 currently silences is the census's purpose.
+	// resolved — measuring what check 1 currently silences is the census's purpose.
 	const hit =
 		markers.includes("declared_fork") && probe.deps.poiLookup && probe.deps.isStreetGeneric
 			? probeForkEntity(c.input, {

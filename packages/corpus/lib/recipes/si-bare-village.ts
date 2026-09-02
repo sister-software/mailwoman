@@ -5,7 +5,7 @@
  *
  *   `si-bare-village` — the Slovenian no-street counter-slice (#901 run-2). Slovenia's rural
  *   addressing has NO street line: the village name is the street-level token and repeats as the
- *   locality ("Zabiče 8, 6250 Zabiče"). The v1.9.8 gate FALSIFIED the fr-bare-street slice alone on
+ *   locality ("Zabiče 8, 6250 Zabiče"). The v1.9.8 check FALSIFIED the fr-bare-street slice alone on
  *   exactly this class (SI resolve −3.4pp; "Apače 108" split into street "Apače 10" + house "8") —
  *   the bare-street boundary lesson generalizes onto a form where the leading name must keep its
  *   number whole and the trailing mention must stay locality-bound. This slice is the paired

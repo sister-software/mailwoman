@@ -138,7 +138,7 @@ export interface CreateRuntimePipelineOpts {
 	 */
 	groupPhrases?: RuntimePipelineStages["groupPhrases"]
 	/**
-	 * Coarse country router (#244, soft prior) — **default-on (#244 M2, after the misroute gate).** A confident in-map
+	 * Coarse country router (#244, soft prior) — **default-on (#244 M2, after the misroute check).** A confident in-map
 	 * guess becomes a soft country prior the resolver re-rank boosts (never filters).
 	 *
 	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9) is lazy-loaded on the
@@ -294,7 +294,7 @@ async function autoLoadWeightsFST(
  * ladder (`street-morphology-fst-loader`): the classifier's weights-package sibling (`fst-street-morphology.bin`,
  * surfaced as {@link NeuralAddressClassifier.streetMorphologyPath}), else the data-root sealed artifact, else a
  * per-process build from core's bundled libpostal dictionaries — the pre-artifact behavior kept as the degrade path.
- * Failures degrade to `undefined` (gate off, byte-stable).
+ * Failures degrade to `undefined` (check off, byte-stable).
  */
 async function autoLoadStreetMorphology(
 	classifier: CreateRuntimePipelineOpts["classifier"]
@@ -391,7 +391,7 @@ export function createRuntimePipeline(
 		// `undefined` default is lazy-loaded on the first call (below) so the sync factory stays sync;
 		// `false` disables it. A confident in-map guess feeds the resolver's anchorPosterior re-rank.
 		placeCountry: typeof opts.placeCountry === "function" ? opts.placeCountry : undefined,
-		// Default locale gate: rule-based from @mailwoman/locale-gate. Derives locale from
+		// Default `@mailwoman/locale-check` stage: rule-based from @mailwoman/locale-gate. Derives locale from
 		// QueryShape character class (CJK→ja-JP, Cyrillic→ru-RU, Arabic→ar) + known-format
 		// hits (us_zip→en-US, fr_postcode→fr-FR, uk_postcode→en-GB). Caller-hint wins when set.
 		detectLocale:
@@ -525,7 +525,7 @@ export function createRuntimePipeline(
 		if (!morphologyResolved) {
 			morphologyResolved = true
 
-			// The check needs BOTH matchers — skip the load when there's no gazetteer for it to gate.
+			// The check needs BOTH matchers — skip the load when there's no gazetteer for it to condition.
 			if (stages.fst) {
 				const morph = await autoLoadStreetMorphology(opts.classifier)
 

@@ -36,7 +36,7 @@ const PLACES: FixturePlace[] = [
 		score: 10,
 		exactMatch: true,
 	},
-	// Two same-prefix localities far apart — the longest-wins + gate test.
+	// Two same-prefix localities far apart — the longest-wins + postcode-consistency test.
 	{
 		id: 2,
 		name: "Tomaszów",
@@ -95,7 +95,7 @@ const PLACES: FixturePlace[] = [
 		prominence: 5.05,
 		exactMatch: true,
 	},
-	// Sits ~5 km from id 11 — the one same-name candidate that SURVIVES a 62701-anchored gate alongside it.
+	// Sits ~5 km from id 11 — the one same-name candidate that SURVIVES a 62701-anchored check alongside it.
 	{
 		id: 13,
 		name: "Springfield",

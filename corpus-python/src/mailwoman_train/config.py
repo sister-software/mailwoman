@@ -415,7 +415,7 @@ class TrainConfig:
     # Evidence-bundle anti-over-trust curriculum (v3.16.0 probe — the P-A decay's measured requirement).
     # When True, the trainer applies the SAME ramped per-row zero-out schedule to the street_type AND
     # locality_surface confidences, so the model keeps its label competence with and without the bundle
-    # (the retrieval-ablation training the RAG over-trust literature prescribes). The ablation gate
+    # (the retrieval-ablation training the RAG over-trust literature prescribes). The ablation check
     # (evidence-zeroed parse ≥ baseline on unaffected spans) is the corresponding eval-side check.
     evidence_curriculum: bool = False
     # v3.21.0 false-evidence noise rate (per row per bundle channel; see train.perturb_evidence_noise).
@@ -506,7 +506,7 @@ def _merge(
     (#1248). Config guards raise, same discipline as the YAML-Norway guard below.
 
     ``strict=False`` is the override: unknown keys are silently skipped (the
-    historical hasattr-gate behavior). Reserved for tooling that intentionally
+    historical hasattr-check behavior). Reserved for tooling that intentionally
     consumes a partial view of a config; never for training entrypoints.
     """
     for k, v in src.items():

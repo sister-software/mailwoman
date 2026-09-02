@@ -187,7 +187,7 @@ describe("postal-compound recovery (#942)", () => {
 
 	it("gate rejects a cross-border same-named decoy (unscoped)", async () => {
 		// No defaultCountry: the HR decoy is name-identical. The code-subset anchor (SI 1382) plus the
-		// 50km gate must reject the 400+km decoy and accept the SI village.
+		// 50km check must reject the 400+km decoy and accept the SI village.
 		const resolver = createWOFResolver(await makeBackend())
 		const out = await resolver.resolveTree(failingTree(), { postalCompoundRecovery: true })
 		const locality = out.roots.find((n) => n.tag === "locality" && n.placeID)

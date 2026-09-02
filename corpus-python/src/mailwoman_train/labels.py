@@ -268,11 +268,11 @@ def active_components_present(components_keys: list[str]) -> bool:
 
     Used to filter training rows per Phase 2 §5.1.
 
-    The v0.1.0 gate required ``country`` plus one of (region, locality, postcode),
-    modelled on wof-admin's "Paris, France"-style rows. That gate silently dropped every
+    The v0.1.0 check required ``country`` plus one of (region, locality, postcode),
+    modelled on wof-admin's "Paris, France"-style rows. That check silently dropped every
     non-wof-admin source in corpus v0.2.0 — BAN, TIGER, NPPES, IMLS, state-* all label
     house_number / street / postcode / locality / region without a country token, because
-    country is implicit in the data source's geography. The strict gate was the upstream
+    country is implicit in the data source's geography. The strict check was the upstream
     cause of the v0.1.0 positional-heuristic overfit (PR #42, issue #43): pre-filter the
     training data was ~73% wof-admin, post-filter ~100% wof-admin.
 

@@ -57,7 +57,7 @@ export interface GauntletLayerOptions {
 	weightsCacheRoot?: string
 	/**
 	 * RESOLVER-side lever pins (#42's `postcodeCountryCoherence` today) — the resolver counterpart to the model swaps
-	 * above, so a resolver lever can be graded by the standard gate instead of by a bespoke probe. Omitted → production
+	 * above, so a resolver lever can be graded by the standard eval instead of by a bespoke probe. Omitted → production
 	 * defaults.
 	 */
 	levers?: GauntletResolverLevers

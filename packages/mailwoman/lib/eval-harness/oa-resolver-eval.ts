@@ -277,7 +277,7 @@ export async function oaResolverEval(
 			// --- coverage diagnostic (MAILWOMAN_DIAG_INTERP=1): split the miss cause. ---
 			// The interp tier only runs in resolveTree when the exact tier did NOT stamp. So:
 			//   precond met (street+house_number+postcode parsed) + exact miss + interp null
-			//   ⟹ a genuine StreetInterpolator.find() miss (database/normalization gap, NOT parse, NOT gate).
+			//   ⟹ a genuine StreetInterpolator.find() miss (database/normalization gap, NOT parse, NOT check).
 			if (diagInterp && nDecorated) {
 				const { street: s, houseNumber: hn, postcode: pc } = findInterpolationSpans(nDecorated)
 				const precond = !!(s && hn && pc)

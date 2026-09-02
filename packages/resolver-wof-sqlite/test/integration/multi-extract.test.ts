@@ -7,7 +7,7 @@
  *
  *   Uses on-disk fixture DBs because ATTACH requires file paths. Tests run unconditionally (the
  *   fixture DBs are built in-test via the same shape the real WOF distribution uses), so this
- *   doesn't gate on the real WOF being present.
+ *   doesn't check on the real WOF being present.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"

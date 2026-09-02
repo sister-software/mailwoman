@@ -143,7 +143,7 @@ def test_collapse_label_drops_unknown_tags():
     assert collapse_label("malformed") == "O"
 
 
-# --- active_components_present (relaxed gate) ---------------------------------------
+# --- active_components_present (relaxed check) ---------------------------------------
 
 
 def test_active_components_present_accepts_coarse_only_rows():

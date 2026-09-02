@@ -72,7 +72,7 @@ export { DEFAULT_RELEASE } from "#gazetteer-pipeline/poi/defaults"
  */
 const COVERAGE_H3_RESOLUTION = 6
 /**
- * Confidence floor already applied by `ingestPlaces`'s Parquet predicate — restated here as the loader's own gate.
+ * Confidence floor already applied by `ingestPlaces`'s Parquet predicate — restated here as the loader's own check.
  */
 const MIN_CONFIDENCE = 0.85
 /**

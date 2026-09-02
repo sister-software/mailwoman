@@ -8,10 +8,10 @@
  *
  *     1. regression  — the curated executable bug log; a fixed bug must STAY fixed (conditioned on status=pass).
  *     2. metamorphic — un-gameable INV/DIR relations; surface-form robustness (conditional minus tracked xfails).
- *     3. held-out    — candidate-vs-prod z-test on a fresh draw; THE generalization gate (only with --candidate).
+ *     3. held-out    — candidate-vs-prod z-test on a fresh draw; THE generalization check (only with --candidate).
  *
  *   Self-check (shipped default):  mailwoman eval gauntlet
- *   Promote gate (a candidate):    mailwoman eval gauntlet --candidate ./out/v195/model.onnx [--source us]
+ *   Promote check (a candidate):    mailwoman eval gauntlet --candidate ./out/v195/model.onnx [--source us]
  *   One layer only:                mailwoman eval gauntlet --layer regression|metamorphic|holdout …
  *   A RESOLVER lever, both ways:   mailwoman eval gauntlet [--postcode-country-coherence]
  *   The required MAP:          mailwoman eval gauntlet --layer ablation [--components postcode,street]
@@ -35,7 +35,7 @@
  *   in-process modules now — a layer that THROWS is caught, printed, and counted as a FAIL, preserving the
  *   old isolated-failure semantics without the spawn.
  *
- *   Wire into the release flow as a `before:release` gate (RELEASING.md): a non-zero exit blocks the ship.
+ *   Wire into the release flow as a `before:release` check (RELEASING.md): a non-zero exit blocks the ship.
  */
 
 import { type AblationLayerOptions, runAblationLayer } from "#eval-harness/gauntlet/ablation"
@@ -46,7 +46,7 @@ import { type GauntletLayerOptions, runRegressionLayer } from "#eval-harness/gau
 
 /**
  * The Gauntlet layers. The first three are CHECKS and make up the combined verdict; `ablation` is a MEASUREMENT layer —
- * reachable only via `--layer ablation`, deliberately absent from the combined gate below, and incapable of blocking a
+ * reachable only via `--layer ablation`, deliberately absent from the combined check below, and incapable of blocking a
  * ship. It produces the required map (what deleting each component costs, per locale), which is a question about the
  * corpus and the resolver rather than a pass/fail about a candidate.
  */
@@ -80,7 +80,7 @@ export interface GauntletRunOptions {
 	 */
 	weightsCacheRoot?: string
 	/**
-	 * Run ONE layer instead of the combined gate.
+	 * Run ONE layer instead of the combined check.
 	 */
 	layer?: GauntletLayer
 	/**
@@ -137,7 +137,7 @@ export function runAblationOptions(options: GauntletRunOptions): AblationLayerOp
 /**
  * The resolver-lever pins a run's options describe, or undefined when nothing is pinned (→ production defaults). Pure
  * and exported: the "a pin reaches every layer" contract is a mapping, and a mapping is cheap to test — the alternative
- * is discovering a dropped pin from two identical gate logs, which is the failure this whole surface exists to
+ * is discovering a dropped pin from two identical lever logs, which is the failure this whole surface exists to
  * prevent.
  */
 export function runResolverLevers(options: GauntletRunOptions): GauntletResolverLevers | undefined {
@@ -202,8 +202,8 @@ async function runLayer(layer: GauntletLayer, options: GauntletRunOptions): Prom
 
 /**
  * Run the Gauntlet. With `layer` set, runs that single layer and returns its exit code verbatim; otherwise runs the
- * combined gate (regression + metamorphic, plus held-out when a candidate is given) and returns 0 only when every layer
- * passes.
+ * combined check (regression + metamorphic, plus held-out when a candidate is given) and returns 0 only when every
+ * layer passes.
  */
 export async function runGauntlet(options: GauntletRunOptions = {}): Promise<{ exitCode: number }> {
 	if (options.layer) {
@@ -239,7 +239,7 @@ export async function runGauntlet(options: GauntletRunOptions = {}): Promise<{ e
 	const allPass = results.every((r) => r.pass)
 
 	console.log(`\n════════════════ GAUNTLET ════════════════`)
-	// The lever line prints on EVERY run, pinned or not. Two gate logs that differ only in a flag someone typed are
+	// The lever line prints on EVERY run, pinned or not. Two lever logs that differ only in a flag someone typed are
 	// not evidence about that flag unless each log says which configuration it graded.
 	console.log(`  ${describeResolverLevers(runResolverLevers(options))}`)
 

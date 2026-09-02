@@ -44,8 +44,8 @@ export function isBareTreeOf(tree: AddressTree, tag: ComponentTag): boolean {
 }
 
 /**
- * The tree's single value-bearing node, or null when the tree holds none or more than one. Callers gate on the returned
- * node's `tag` — the quantifier ("this is the WHOLE query") is what this walk answers.
+ * The tree's single value-bearing node, or null when the tree holds none or more than one. Callers check on the
+ * returned node's `tag` — the quantifier ("this is the WHOLE query") is what this walk answers.
  */
 export function loneValueBearingNode(tree: AddressTree): AddressNode | null {
 	let lone: AddressNode | null = null

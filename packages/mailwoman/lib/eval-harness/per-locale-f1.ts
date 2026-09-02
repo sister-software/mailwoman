@@ -28,7 +28,7 @@
  *   its `MANIFEST.json` (`convention.street_convention`), so the fold is now read per row from the
  *   answer key itself: split-convention countries are scored UNFOLDED, everyone else keeps the glue.
  *   An answer key that carries its own convention cannot be graded under the wrong one by accident —
- *   which is what happened on the v9.0.0 gate, where the convention gap read as an 0.4pp `us.street`
+ *   which is what happened on the v9.0.0 check, where the convention gap read as an 0.4pp `us.street`
  *   regression.
  *
  *   The anchor + gazetteer feed channels are fed by DEFAULT (the standard paths, same as
@@ -101,7 +101,7 @@ const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
  */
 export interface PerLocaleF1Options {
 	/**
-	 * The answer key to grade against. Default `data/eval/golden/v0.1.2/dev`. Gate specs declare this (`golden_dir`)
+	 * The answer key to grade against. Default `data/eval/golden/v0.1.2/dev`. Check specs declare this (`golden_dir`)
 	 * because two specs naming different golden versions are not comparable.
 	 */
 	goldenDir?: string
@@ -503,7 +503,7 @@ export async function perLocaleF1(
 		for (const row of rows) {
 			const wordConsistency = parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY)
 
-			// PRODUCTION-CONFIG parity (2026-07-17, the M1 gate-fidelity fix): production parses feed the
+			// PRODUCTION-CONFIG parity (2026-07-17, the M1 check-fidelity fix): production parses feed the
 			// query-shape prior + postcodeRepair on every path (safeClassify, geocode-core since #981), but
 			// this battery historically fed NEITHER — so the check scored a config production doesn't run.
 			// M1 measured that gap at +2.3 micro on golden-us (the battery flattered production; the entire

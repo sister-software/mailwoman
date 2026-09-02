@@ -257,7 +257,7 @@ export async function buildPostcodeCodePoint(
 		db.exec("COMMIT")
 		phase("ingest", `${inserted.toLocaleString()} unit postcodes`)
 
-		// --- Gate on the archive's own manifest. See `codepoint/extract.ts` for why this oracle exists.
+		// --- Check on the archive's own manifest. See `codepoint/extract.ts` for why this oracle exists.
 
 		// Every row's parent_id is -1 (Code-Point carries no hierarchy), so this writes the SELF row per place
 		// and nothing else. Not decorative: the resolver's parent-constraint scopes a lookup with

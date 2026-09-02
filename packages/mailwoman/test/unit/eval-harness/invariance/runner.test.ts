@@ -172,7 +172,7 @@ describe("runInvarianceSuite", () => {
 	})
 
 	it("--baseline severity gate: candidate LOST where baseline only DEGRADED is a NEW (enforcing) violation, not pre-existing", async () => {
-		// The case the severity gate exists for: baseline drops `unit` on comma-drop (DEGRADED — non-critical),
+		// The case the severity check exists for: baseline drops `unit` on comma-drop (DEGRADED — non-critical),
 		// candidate drops `house_number` on the SAME pair (LOST — critical). Severity-blind matching (both
 		// sides merely "non-INVARIANT") would wrongly call this pre-existing and let it through. A candidate
 		// verdict that is WORSE than the baseline's on the same (row, transform) must always be NEW.
@@ -199,7 +199,7 @@ describe("runInvarianceSuite", () => {
 	})
 
 	it("the violation report line prints the baseline's ACTUAL verdict, not a hardcoded 'held INVARIANT' claim", async () => {
-		// Same case as the severity-gate test above (baseline DEGRADED, candidate LOST — a NEW,
+		// Same case as the severity-threshold test above (baseline DEGRADED, candidate LOST — a NEW,
 		// enforcing violation) — but this time asserting on the printed report LINE itself, not just the
 		// structured outcome. A violation line that hardcodes "baseline held INVARIANT" is false on its
 		// face here: the baseline was DEGRADED, so the line has to read the baseline's actual verdict.

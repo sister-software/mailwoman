@@ -109,7 +109,7 @@ const TAGS = [
 
 /**
  * Score one eval file's UNFOLDED per-tag P/R/F1. Every narration line goes through `report`, one call per line, so the
- * gate's captured markdown matches the child-process stdout it replaced byte-for-byte.
+ * check's captured markdown matches the child-process stdout it replaced byte-for-byte.
  */
 export async function scoreAffix(
 	options: ScoreAffixOptions = {},

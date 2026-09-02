@@ -175,7 +175,7 @@ export function synthesizeLocaleRow(
 
 	// Sub-locality (suburb / district) sits between street and locality and renders in BOTH orders — it's part
 	// of the address body, not the admin-region tail that native order drops. NZ needs it (suburb + city both on
-	// the envelope). The tokenPresent gate below drops the row if the template didn't surface it verbatim.
+	// the envelope). The tokenPresent check below drops the row if the template didn't surface it verbatim.
 	if (base.dependent_locality) {
 		components.dependent_locality = base.dependent_locality
 	}

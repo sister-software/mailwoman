@@ -16,7 +16,7 @@
  *   silent default here would let an uncalibrated number ship unnoticed. `--parent-delta` follows the
  *   same discipline one step weaker: OPTIONAL, no default, and omitting it writes NO header key, so
  *   an artifact whose locale nobody has boarded the parent side of ships with the parent bias OFF
- *   rather than with an inherited magnitude (the D-rule's per-locale gate, expressed in the build).
+ *   rather than with an inherited magnitude (the D-rule's per-locale check, expressed in the build).
  *
  *   PARENT TAGS (PIX2 / schema 3). Every entry records the parent's own `ComponentTag`, and each
  *   source states it from its own semantics — see {@link SOURCE_PARENT_TAGS} for the table and the
@@ -128,7 +128,7 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
  * rather than deriving it from the child's, so every source has to name the slot it read. The evidence for each:
  *
  * - `registerDistrict` — the `--source` CSV's `DISTRICT` column. On GB's PPD tuples that is the POST TOWN
- *   (`corpus/src/database-recipes/locale.ts`'s `districtAsLocality` gate reads it as the locality line); on the NZ
+ *   (`corpus/src/database-recipes/locale.ts`'s `districtAsLocality` check reads it as the locality line); on the NZ
  *   LINZ/OpenAddresses countrywide export it is the town/city above the suburb in `CITY`. Both are the locality slot.
  * - `secondaryPairsJSONL` — the `--pairs-jsonl` files. All three shipped ones pair a neighbourhood-class child with a
  *   town: `london-pairs-v2.jsonl` (966 London wards ∪ neighbourhoods under "London", R3/R4b), `ni-pairs-v1.jsonl` (87
@@ -390,8 +390,8 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 		]
 
 		// The rung-3 cross-check assumes a COMPLETE build — a nonzero --holdout-fraction deliberately produces a
-		// smaller `entries.length` by design, so the strict count-match gate is meaningless (and would misreport
-		// "BLOCKED") under holdout. Gate against `built.entries.length` (pre-holdout) instead in that case.
+		// smaller `entries.length` by design, so the strict count-match check is meaningless (and would misreport
+		// "BLOCKED") under holdout. Check against `built.entries.length` (pre-holdout) instead in that case.
 		const preHoldoutCount = built.entries.length
 		// Pre-fold context suffix — the raw rung-3 census line count, for provenance/debugging (e.g. diffing a
 		// future source refresh against this cycle's raw count). Not the cross-check target; see

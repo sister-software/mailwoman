@@ -138,7 +138,7 @@ const LINK_SCRIPT_TIMEOUT_MS = 600_000
  * narrow enough for the prior to decide it, which is exactly what an end-to-end smoke should demonstrate.
  *
  * KNIFE-EDGE, KEPT ON PURPOSE: measured post-bias margin at δ=6.0 is only ~0.211 logits (biased B-dependent_locality
- * 4.592 vs runner-up B-locality 4.380 at the "Fish" piece) — too thin to gate an argmax-flip assertion on (see
+ * 4.592 vs runner-up B-locality 4.380 at the "Fish" piece) — too thin to condition an argmax-flip assertion on (see
  * `GB_WIDE_MARGIN_ADDRESS` for that). Still used for the WIRING assertions below (`pairIndexPath` resolves, `applied`
  * true/false) and the bias-DELTA assertion, both margin-independent.
  */
@@ -264,7 +264,7 @@ describe("resolveWeights — package auto-resolve", () => {
 	// slot 4. That change produces no error and no warning on its own; it just quietly makes GB worse.
 	// 9.0.0 (ROAD_TO_V9 A4): the GB anchor slot is TRAINED (v4.2.0 base, Fisher receipts in the
 	// en-gb card) and postcode-gb.bin is back — the card declares span_mode "shaped" and the dev
-	// linker builds the bin off that card gate. The #1467 "has NO anchor lookup" posture this test
+	// linker builds the bin off that card check. The #1467 "has NO anchor lookup" posture this test
 	// pinned from 2026-08-05 lives on in the card's gb_artifacts history.
 	test.skipIf(!haveModel || !haveCLI)(
 		"en-gb resolves model/tokenizer from the en-us base with its own model-card, resolves the RETURNED postcode-gb.bin, and parses",
@@ -324,7 +324,7 @@ describe("resolveWeights — package auto-resolve", () => {
 	// follow-up), so `anchorLookupPath` must come back undefined while `pair-index-nz.bin` and the
 	// overlay-local model-card still resolve from the package dir. Wiring-only, one test — the
 	// prior/country-restrict behavior itself is generic implementation already covered by the en-gb prior
-	// block below and the mispackaging gate at the bottom of this file.
+	// block below and the mispackaging check at the bottom of this file.
 	test.skipIf(!haveModel || !haveCLI || !haveNZSource)(
 		"en-nz resolves model/tokenizer from the en-us base + pair-index-nz.bin locally, with NO anchor lookup (no NZ postcode extract), and parses",
 		async () => {

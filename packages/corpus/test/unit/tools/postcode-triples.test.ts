@@ -47,7 +47,7 @@ async function writeExport(
 }
 
 /**
- * Gate that accepts everything, so a test about deduplication is not also a test about the gazetteer.
+ * Check that accepts everything, so a test about deduplication is not also a test about the gazetteer.
  */
 const acceptAll = { isKnownLocality: () => true }
 

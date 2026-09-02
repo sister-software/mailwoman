@@ -280,7 +280,7 @@ def export_to_onnx(
             "(the production ship-config); got has_anchor="
             f"{has_anchor}, has_gaz={has_gaz}, has_country={has_country}."
         )
-    # Evidence-bundle gate (Option-A): the bundle exports ONLY as the full v3.18-confirmed shape —
+    # Evidence-bundle check (Option-A): the bundle exports ONLY as the full v3.18-confirmed shape —
     # BOTH channels, on top of anchor+gaz+country. Any other combination would ship a model whose
     # ONNX silently drops a trained channel (the #566/#685 OOD trap) — fail loud instead.
     has_bundle = has_street_type or has_locality_surface

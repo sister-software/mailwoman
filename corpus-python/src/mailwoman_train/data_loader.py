@@ -257,7 +257,7 @@ def _slice_row_iter(
     """Yield filter-accepted rows from a single parquet slice, with row-group + row shuffle.
 
     Applies the country-weight acceptance test, (when ``coarse_filter`` is set) the
-    coarse-label gate, and — when ``expected_source`` is given — a per-row source equality
+    coarse-label check, and — when ``expected_source`` is given — a per-row source equality
     check. The per-row source check matters for the 2 "transition" slices in corpus
     v0.2.0 (part-0016 and part-0259) where one source's data ends and the next begins
     mid-slice; without it the per-source iterator would yield rows from the wrong source.

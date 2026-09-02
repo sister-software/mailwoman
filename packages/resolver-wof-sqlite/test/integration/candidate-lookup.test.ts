@@ -490,7 +490,7 @@ describe("WOFCandidateTableLookup", () => {
 		const alias = hits.find((h) => h.country === "CN")
 		expect(alias).toBeDefined()
 		expect(alias!.exactMatch).toBe(false)
-		// `score` stays the RAW population rank (for the walk's minWinningScore gate); `prominence` carries the
+		// `score` stays the RAW population rank (for the walk's minWinningScore check); `prominence` carries the
 		// penalty, so the primary's prominence now exceeds the more-populous alias's.
 		expect(hits[0]!.score).toBeLessThan(alias!.score)
 		expect(hits[0]!.prominence!).toBeGreaterThan(alias!.prominence!)

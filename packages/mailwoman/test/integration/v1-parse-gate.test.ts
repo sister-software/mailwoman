@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The v7 rules-excision swap gate (Track V1) — RE-CONDITIONAL 2026-07-17.
+ *   The v7 rules-excision swap check (Track V1) — RE-CONDITIONAL 2026-07-17.
  *
  *   ## What changed and why
  *
- *   The original Plan-2 gate asserted **parse-tag byte-parity floors** on the rescued parity corpus:
+ *   The original Plan-2 check asserted **parse-tag byte-parity floors** on the rescued parity corpus:
  *   street ≥ 0.90, house_number ≥ 0.97, postcode ≥ 0.97 (folded string equality of each label's value
  *   against the rules-parser golden). Street sat at ~0.54–0.60 and never cleared 0.90, so the built
- *   T1/T2/T4 neural swaps (`hold/v1-parse-neural-gate-blocked`) were parked indefinitely.
+ *   T1/T2/T4 neural swaps (`hold/v1-parse-neural-check-blocked`) were parked indefinitely.
  *
  *   **Operator decision, 2026-07-17** (`scratchpad/MAILWOMAN_ROAD_TO_V7.md` §4.1): the v7 acceptance
  *   criterion is now **coordinate acceptability + the plausibility guard**, NOT the 0.90 parse-tag

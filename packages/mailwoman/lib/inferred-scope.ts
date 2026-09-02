@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #1684 — the conditional-scope gate: a locale-INFERRED country filter yields when the model's own locale head
+ *   #1684 — the conditional-scope check: a locale-INFERRED country filter yields when the model's own locale head
  *   confidently reads the text as a DIFFERENT country's addressing.
  *
  *   The measured basis (2026-08-19, the graded scope compare + witness traces):

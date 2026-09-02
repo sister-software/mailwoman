@@ -131,7 +131,7 @@ def _fixture_sanity(raw, tokens, labels, span_starts, span_ends, span_tags):
         assert 0 <= start < end <= len(raw)
 
 
-# --- Gate (a): label-stream bit-identity on punctuation-free rows ---------------------------
+# --- Check (a): label-stream bit-identity on punctuation-free rows ---------------------------
 
 
 @pytest.mark.parametrize("name,raw,tokens,labels,starts,ends,tags,chunks", FIXTURES)
@@ -152,7 +152,7 @@ def test_gate_a_encode_row_bit_identical(name, raw, tokens, labels, starts, ends
     assert via_spans == via_tokens, f"{name}: encode_row outputs diverged"
 
 
-# --- Gate (b): anchor + gazetteer channel invariance ----------------------------------------
+# --- Check (b): anchor + gazetteer channel invariance ----------------------------------------
 
 
 @pytest.mark.parametrize("name,raw,tokens,labels,starts,ends,tags,chunks", FIXTURES)
@@ -186,7 +186,7 @@ def test_gate_b_gazetteer_painting_fires_on_fixtures():
     assert feats[confs.index(1.0)] == [0.0, 1.0]  # locality_homograph bit
 
 
-# --- Gate (c): the punctuation-covering stream the token path cannot produce ----------------
+# --- Check (c): the punctuation-covering stream the token path cannot produce ----------------
 
 # "P.O. Box 19" — one po_box span over chars [0, 11) (the whole surface). Pieces give each
 # period its own piece: the token path's per-char array has O on the periods (the corpus

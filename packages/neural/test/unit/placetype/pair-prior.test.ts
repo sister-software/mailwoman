@@ -324,7 +324,7 @@ describe("buildPlacetypePairPriors — marker-scope regression (Fix 3, reviewer 
 		// The window "Ashworth" is immediately followed by "House" — a structural marker — so if
 		// `isMarkerSuppressed` were (incorrectly) also consulted for the Y (parent) role, this pair would
 		// never fire: "Ashworth" would be excluded from the probe loop before `index.probe` ever ran. The
-		// suppression check must only ever gate the X (child) window; "Ashworth" is disjoint from "sometown"
+		// suppression check must only ever check the X (child) window; "Ashworth" is disjoint from "sometown"
 		// and IS "sometown"'s child-role partner here, not the other way around, so it's fine for it to sit
 		// next to "House" in the source text.
 		const index = mockPairIndex({ "sometown|ashworth": "dependent_locality" }, 6)

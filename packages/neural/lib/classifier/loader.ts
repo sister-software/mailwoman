@@ -43,7 +43,7 @@ export async function loadClassifierFromWeights(
 		 * Explicit `placetype-census-<cc>.bin` path, overriding the build-local data-root lookup (`loadPlacetypeCensus`).
 		 * For a harness that built a census to a scratch directory — the data root is read-only on the lab host, so "build
 		 * it and point at it" is the only way to exercise a FRESH artifact. A wrong-country file is still refused by the
-		 * loader's header gate.
+		 * loader's header check.
 		 */
 		placetypeCensusPath?: string
 	} = {}

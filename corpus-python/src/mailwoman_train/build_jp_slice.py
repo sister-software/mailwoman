@@ -1,7 +1,7 @@
 """Build the FULL JP training slice from Overture-JP (v8 CJK Phase 3, epic #1176).
 
 The Leg-1 probe slice (``scripts/build_jp_probe_slice.py``, 200k rows) proved the char path on the
-universal STAGE3 subset: coordinate-acceptability **0.9925 vs the pre-registered 0.70 gate**. Phase 3
+universal STAGE3 subset: coordinate-acceptability **0.9925 vs the pre-registered 0.70 check**. Phase 3
 is the full slice the probe's PASS unlocked, and it differs from the probe in four ways:
 
 1. **JP-native labels** (``label_set: stage3-jp``, 47 BIO — activated by #1357). The probe mapped

@@ -552,7 +552,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 				// No polygon (or nothing usable in it): the JP/KR-style authoritative-name + proximity net.
 				// The en stem also rescues district rows whose WOF point fell OUTSIDE their own polygon
 				// (Wanhua sits ~5 km west of 萬華區, in New Taipei). Neighbourhood rows only qualify through
-				// the name gate, never by bare proximity — see the PLACETYPES note.
+				// the name check, never by bare proximity — see the PLACETYPES note.
 				const cands = nearby(d.lat, d.lon, FALLBACK_RADIUS_KM)
 				const districtTierNameHit = cands.find((c) => DISTRICT_TIER.has(c.place.placetype) && nameMatches(c.place))
 				const nameHit = districtTierNameHit ?? cands.find((c) => nameMatches(c.place))

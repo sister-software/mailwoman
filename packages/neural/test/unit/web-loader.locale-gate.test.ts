@@ -6,7 +6,7 @@
  *   #1278 phase 2 — the browser-side per-parse country selection. Two concerns, no ORT/classifier mock
  *   needed (the units under test are pure):
  *
- *   1. BROWSER-SAFETY SCOPE (the hard gate): the two Stage-2 modules the loader now imports —
+ *   1. BROWSER-SAFETY SCOPE (the hard check): the two Stage-2 modules the loader now imports —
  *      `@mailwoman/locale-gate` + `@mailwoman/query-shape` — must be free of any `node:*` / fs / path /
  *      process runtime import across their FULL non-test source, or they'd break the browser bundle. A
  *      static scan of the shipped source asserts it (a type-only re-export of `@mailwoman/core/pipeline`

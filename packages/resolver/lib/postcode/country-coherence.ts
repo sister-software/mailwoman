@@ -13,7 +13,7 @@
  *   0.9999908844 has nothing to promote — a soft re-rank downstream of a hard filter is inert by
  *   construction. Population then picks Paris, Texas (pop 24,969). With the postal extracts attached
  *   the answer gets WORSE, not merely wrong: the postcode resolves to the US row (ZIP 75001,
- *   Addison TX), `applyPostcodeConsistency` finds no Paris within its 50 km gate (the nearest is
+ *   Addison TX), `applyPostcodeConsistency` finds no Paris within its 50 km check (the nearest is
  *   143.8 km), and falls the locality coordinate back to the ZIP point. See
  *   `docs/records/evals/2026-08-03-postcode-locality-scoping.md` for the instrumented diagnosis.
  *
@@ -40,7 +40,7 @@
  *   `state.defaultCountry` for the whole walk. Everything downstream — including the three post-walk
  *   coherence passes and the street/rooftop tiers — then sees the corrected country.
  *
- *   ## Why it is not a hard veto (the doctrine gate)
+ *   ## Why it is not a hard veto (the doctrine check)
  *
  *   Registries are SOFT priors here, positive evidence only. Two properties keep this one honest:
  *
@@ -88,7 +88,7 @@
  *   `postcode-locality-fr.db` — 800 pairs, **zero** border crossings, at both the 15 km and 25 km
  *   checks. The 22 US abstentions were pairs whose ZIP parent name is not an exact-matching locality
  *   in the admin gazetteer (a recall gap; abstention is the safe outcome). The confound board's
- *   verdicts were identical at 15, 25 AND 50 km, so the mechanism is not gate-tuned; the default
+ *   verdicts were identical at 15, 25 AND 50 km, so the mechanism is not check-tuned; the default
  *   below is the 25 km the scale run measured.
  *
  *   Cost: 2 lookups on the byte-stable path (postcode + locality under the default country), and at

@@ -107,7 +107,7 @@ describe("constraint census", () => {
 			byInput[k] = [{ tag: "locality", value: "Bayern", placetype: "locality", gates: ["some_retry"], picked: false }]
 		}
 
-		// A second gate fires just as often but DOES pick sometimes — it must not be called inert.
+		// A second check fires just as often but DOES pick sometimes — it must not be called inert.
 		byInput["alive"] = [{ tag: "locality", value: "Bayern", placetype: "locality", gates: ["live_gate"], picked: true }]
 
 		const r = await runConstraintCensus(fakeRegistry(byInput), { inputs: LITERAL([...dead, "alive"]) }, dependencies)

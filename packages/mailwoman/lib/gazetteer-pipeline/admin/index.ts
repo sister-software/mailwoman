@@ -56,7 +56,7 @@ export interface BuildAdminOptions {
 	geonamesCountries?: readonly string[]
 	overtureRelease?: string
 	/**
-	 * Skip the verify gate (fixture/dev runs ONLY — an unverified artifact must never be promoted).
+	 * Skip the verify step (fixture/dev runs ONLY — an unverified artifact must never be promoted).
 	 */
 	skipVerify?: boolean
 	/**

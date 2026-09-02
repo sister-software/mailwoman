@@ -82,7 +82,7 @@ export interface CountryCoverage {
 	gazetteerPlaces: number
 	geocodeTier: GeocodeTier
 	/**
-	 * Board rows, and how many of them gate rather than merely track.
+	 * Board rows, and how many of them check rather than merely track.
 	 */
 	boardRows: number
 	boardGatedRows: number
@@ -353,7 +353,7 @@ export async function readAdmittedCountries(configPath: string): Promise<Set<str
 }
 
 /**
- * Board rows per country, and how many of them gate.
+ * Board rows per country, and how many of them check.
  *
  * Reads the cases tree the loader reads: two-letter directories only. `generalization/` is excluded by that same filter
  * and holds 279 rows, so a glob over `*\u200B/*.jsonl` overstates the board by 43%.

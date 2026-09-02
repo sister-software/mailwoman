@@ -225,7 +225,7 @@ export function buildPostcodeBinaryEntries(
 }
 
 /**
- * Per-country key floors — the "this build did not silently collapse" gate (#1509).
+ * Per-country key floors — the "this build did not silently collapse" check (#1509).
  *
  * MEASURED 2026-08-06 against the shipped databases, `SELECT COUNT(*) FROM spr WHERE placetype='postalcode' AND
  * is_current!=0 AND country=?`:

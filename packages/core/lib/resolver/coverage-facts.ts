@@ -42,7 +42,7 @@ export interface CountryCoverageFact {
 	 */
 	measuredAt: string
 	/**
-	 * The receipt: which panel/gate produced this row (issue + date, human-readable).
+	 * The receipt: which panel/check produced this row (issue + date, human-readable).
 	 */
 	source: string
 }

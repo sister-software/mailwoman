@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The Gauntlet — a full-pipeline integration-test corpus (`input → expected assembled output`). This is
- *   the CURATED REGRESSION layer (DeepSeek 019f1144): the executable memory of fixed bugs. Its gate is
+ *   the CURATED REGRESSION layer (DeepSeek 019f1144): the executable memory of fixed bugs. Its check is
  *   REGRESSION-ONLY — "must not break what already passed" — and its pass-RATE is NEVER a ship gauge (that
  *   would re-invent the Pelias acceptance-test false-trust pass-list). Generalization is conditional elsewhere:
  *   the held-out fresh-draw runner (`holdout.ts`) and the metamorphic invariants (`metamorphic.ts`), which

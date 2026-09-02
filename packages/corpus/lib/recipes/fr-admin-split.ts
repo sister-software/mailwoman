@@ -192,7 +192,7 @@ export const frAdminSplitRecipe: CorpusRecipe = {
 			}
 
 			if (opts.golden) {
-				// Held-out eval slice for the centroid gate — carries the truth coordinate.
+				// Held-out eval slice for the centroid check — carries the truth coordinate.
 				write(JSON.stringify({ raw, components, country: "FR", lat: Number(base.lat), lon: Number(base.lon) }) + "\n")
 
 				emitted++

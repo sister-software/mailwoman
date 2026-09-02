@@ -17,7 +17,7 @@ import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
  * Key-count threshold for the gloss anomaly detector (#1730) — the sweep's own boundary: 4,000 places carried >= 50
- * keys, and a legitimate famous place at that count (New York, 176 keys) is separated by the PROMINENCE gate, never by
+ * keys, and a legitimate famous place at that count (New York, 176 keys) is separated by the PROMINENCE check, never by
  * this number alone.
  */
 export const GLOSS_KEY_THRESHOLD = 50

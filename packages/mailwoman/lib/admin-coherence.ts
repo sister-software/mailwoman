@@ -6,7 +6,7 @@
  *   Admin-coherence verdicts (#1717 stage 1) — after a geocode resolves, compare the PARSED admin
  *   qualifiers (`region`, `country`) against what the winning candidate's resolved ancestry actually
  *   says, and report a per-component verdict. FLAG-ONLY: nothing reads these verdicts to rank,
- *   re-pick, or gate — they exist so a board run can count how often the resolver's answer ignores a
+ *   re-pick, or check — they exist so a board run can count how often the resolver's answer ignores a
  *   qualifier the parse got right (`Weimar, Thüringen` → Weimar TX), and how often the winner
  *   carries no ancestry to check at all (the `unverifiable` count).
  *

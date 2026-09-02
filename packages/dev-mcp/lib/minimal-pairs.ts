@@ -66,7 +66,7 @@ interface RungReading {
 	lon: number | null
 	tier: string
 	/**
-	 * The #1649 intent gate's verdict, when it fired on this rung.
+	 * The #1649 intent check's verdict, when it fired on this rung.
 	 *
 	 * A refused rung has NO components and no coordinate, and is otherwise indistinguishable from an input the parser
 	 * could make nothing of. It is the opposite: the eval discards a COMPLETED tree. `Cafe at St Mary's, Oxford` parses

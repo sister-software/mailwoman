@@ -263,7 +263,7 @@ describe("parentDelta header field (whole-edge default-on, #46)", () => {
 
 	it("absence-tolerant: a header WITHOUT the field reads back parentDelta === undefined", () => {
 		// Absent means "no parent bias", NOT "0" — the same absence contract transitionBeta carries, and the
-		// one de/in/es/it artifacts ship under (unmeasured locales, per-locale gate).
+		// one de/in/es/it artifacts ship under (unmeasured locales, per-locale check).
 		const bytes = serializePairIndex(HEADER, ENTRIES)
 		const r = new PairIndexResolver(bytes)
 

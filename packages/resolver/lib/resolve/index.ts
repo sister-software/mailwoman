@@ -302,7 +302,7 @@ class WOFResolver implements Resolver {
 			await applyRegionCountryCoherence(newRoots, this.#backend, state.defaultCountry)
 		}
 
-		// Postcode-consistency (#370 "Lever A"): default-ON (promoted 2026-07-04 — the corrected gate:
+		// Postcode-consistency (#370 "Lever A"): default-ON (promoted 2026-07-04 — the corrected check:
 		// FI 231/0, SI 37/6, CZ 47/2, US byte-flat; see the ResolveOpts docstring). After the admin walk
 		// (needs both the locality and the postcode resolved) and before the street tiers (which key off
 		// the postcode/street, not the locality coordinate this adjusts). `false` opts out, byte-stable.

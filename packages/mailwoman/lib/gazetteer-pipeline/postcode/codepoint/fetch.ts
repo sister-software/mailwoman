@@ -154,7 +154,7 @@ export const CODEPOINT_COVERAGE_NOTE =
  * Licence (for internal business use only)". The ONSPD User Guide (May 2021, §3) said it flatter still: "Open
  * Government Licensing terms do not apply to NI postcodes."
  *
- * And the LPS End User Licence itself is not merely a commercial-use gate. It is PERSONAL (§1.2 "personal to you and
+ * And the LPS End User Licence itself is not merely a commercial-use check. It is PERSONAL (§1.2 "personal to you and
  * the licence granted herein is for your benefit only"), INTERNAL-ONLY (§2 "solely for your own internal business use …
  * all other uses are prohibited"), and NON-SUBLICENSABLE (§9 "you may not novate, assign, transfer, sub-contract or
  * otherwise part with this Licence"). Shipping BT rows in a published package is therefore out under any reading,

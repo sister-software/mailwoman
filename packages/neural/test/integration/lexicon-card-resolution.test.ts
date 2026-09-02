@@ -8,11 +8,11 @@
  *   The defect: `resolveWeights` probed the literal `locality-surface-lexicon-v6.json` while both the
  *   shipped v4.0.1 recipe and the v4.2.0 candidate TRAIN against v7. Serving fed the channel a
  *   different lexicon generation than training painted, and nothing said so — the v6 file exists, the
- *   channel loads, the parse works. The Run B gate had to stage v7's CONTENT under the v6 FILENAME to
+ *   channel loads, the parse works. The Run B check had to stage v7's CONTENT under the v6 FILENAME to
  *   score faithfully.
  *
  *   These tests build synthetic package layouts under a `cacheRoot.path` (the same injection point
- *   `weights.test.ts`'s pair-index gate uses) so they need no model binaries: `resolveWeights` only
+ *   `weights.test.ts`'s pair-index check uses) so they need no model binaries: `resolveWeights` only
  *   `existsSync`-probes `model.onnx` / `tokenizer.model`, so empty stubs are enough to reach the
  *   sibling-resolution code this file is about.
  */

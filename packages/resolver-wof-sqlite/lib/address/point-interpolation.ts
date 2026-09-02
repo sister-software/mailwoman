@@ -7,7 +7,7 @@
  *   `docs/articles/plan/2026-06-11-resolution-ladder.md`): when the exact address-point tier (#476)
  *   misses a house number, bracket the number with REAL neighbor points on the same street from the
  *   same #476 extract and interpolate linearly in house-number space between them. Real occupancy
- *   replaces TIGER's uniform-spacing assumption — the dominant error term of the TIGER pilot's gate
+ *   replaces TIGER's uniform-spacing assumption — the dominant error term of the TIGER pilot's check
  *   miss; TIGER range interpolation (`StreetInterpolator`) demotes to the fallback for streets too
  *   sparse to bracket.
  *

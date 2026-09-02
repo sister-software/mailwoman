@@ -88,7 +88,7 @@ export function tracedGauntletObserver(geocodeTraced: GauntletDeps["geocodeTrace
  * Run every fixture and report which laws held.
  *
  * `pass` is true only when every fixture held. A suite with no fixtures returns `pass: false`: an empty run is not a
- * clean run, and reporting one as passing is how a mis-pointed fixture path becomes a green gate.
+ * clean run, and reporting one as passing is how a mis-pointed fixture path becomes a green check.
  */
 export async function runConformanceFixtures(
 	fixtures: readonly ConformanceFixture[],

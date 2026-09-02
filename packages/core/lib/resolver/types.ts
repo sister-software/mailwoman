@@ -296,7 +296,7 @@ export interface BackendCapabilityGap {
 	 */
 	gates: keyof ResolveOpts
 	/**
-	 * Whether `checks` is on unless a caller turns it off — the difference between a silent loss and a chosen one.
+	 * Whether `gates` is on unless a caller turns it off — the difference between a silent loss and a chosen one.
 	 */
 	defaultOn: boolean
 	/**
@@ -664,9 +664,9 @@ export interface ResolveOpts {
 	 * US default must not have its 2000 excluded — that row is exactly what {@link postcodeCountryCoherence} rescues).
 	 * Confirmed spans narrow the country-scope pass's candidate list to the intersection (a pure subset, safe).
 	 *
-	 * **Default OFF** (D-rule: demotion is the failure mode with teeth — a default-on promotion needs the full B1 gate
-	 * set from `docs/superpowers/plans/2026-08-05-postcode-structure-arc.md`: B1-1 byte-stability, B1-2 exclusion board
-	 * ≥90% with the correct sibling tag surviving, B1-3 confound ≤2% false exclusions, kill on any δ).
+	 * **Default OFF** (D-rule: demotion is the failure mode with teeth — a default-on promotion needs the full B1
+	 * criterion set from `docs/superpowers/plans/2026-08-05-postcode-structure-arc.md`: B1-1 byte-stability, B1-2
+	 * exclusion board ≥90% with the correct sibling tag surviving, B1-3 confound ≤2% false exclusions, kill on any δ).
 	 */
 	postcodeShapeCoherence?: boolean
 	/**
@@ -836,7 +836,7 @@ export interface ResolveCandidateTrace {
 
 /**
  * One `ResolveNodeTrace` per backend lookup the walk performed (#1721) — and one per POST-WALK recovery that answers
- * off the walk (`span_rescore`, `postal_compound_recovery`), so no resolved coordinate is off the record. `checks`
+ * off the walk (`span_rescore`, `postal_compound_recovery`), so no resolved coordinate is off the record. `gates`
  * records mechanism events in execution order, in the resolver's own vocabulary (`parent_fallback_retry`,
  * `region_scope_miss`, `backend_error`, `postcode_format_probe`, `postcode_prefix_prior`, `bare_race`,
  * `empty_admin_pick`, `min_score_reject`, `bare_country_repick`, `bare_region_repick`, `placetype_fallback`). `picked:

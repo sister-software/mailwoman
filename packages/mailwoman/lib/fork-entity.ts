@@ -62,7 +62,7 @@ export interface ForkEntityProbeOpts {
 
 /**
  * Great-circle meters — local copy of the haversine at the two-point scale this module needs; the shared
- * `@mailwoman/spatial` km helper would round through km for a 150 m gate.
+ * `@mailwoman/spatial` km helper would round through km for a 150 m check.
  */
 function distanceM(latA: number, lonA: number, latB: number, lonB: number): number {
 	const R = 6_371_000

@@ -275,7 +275,7 @@ export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"])
 }
 
 /**
- * The #1649 intent gate's verdict, when it fired.
+ * The #1649 intent check's verdict, when it fired.
  *
  * A refusal is not a parse failure, and everything downstream of it looks exactly like one: the eval discards a
  * COMPLETED tree and hands back `roots: []`, so `decodeAsJSON` answers `{}` and the resolver-interior records are
@@ -533,7 +533,7 @@ export function stratify(rows: ComparedRow[], by: StratumKey): Record<string, un
 }
 
 /**
- * One sentence for a job, whichever kind it is. A still-running gate gets no partial reading: its numbers live in
+ * One sentence for a job, whichever kind it is. A still-running check gets no partial reading: its numbers live in
  * `verdict.json`, which the assembler writes at the END, so anything read before then is not a partial answer — it is
  * no answer.
  */

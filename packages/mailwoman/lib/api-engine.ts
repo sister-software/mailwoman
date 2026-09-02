@@ -17,7 +17,7 @@
  *   instead of a runtime 503 on the first request. `parse` speaks native neural output (`ParseOutcome`
  *   = ordered components + the decoded `AddressTree`, the same language `/v1/resolve` speaks) — it
  *   needs only the model weights, loaded ONCE here and reused by the geocode stack below, so it is
- *   built independently of the WOF-data gate: a WOF-less boot still answers `/v1/parse`, while
+ *   built independently of the WOF-data check: a WOF-less boot still answers `/v1/parse`, while
  *   `geocode`/`batch`/`resolveTree`/`reload` are simply absent (`@mailwoman/api`'s routes answer 503
  *   for those on their own). When the weights themselves are unresolvable (`@mailwoman/neural`
  *   missing, or no weights package installed), `parse` is ALSO absent and the routes answer 501 — no
@@ -250,7 +250,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// when broken" contract.
 	const health: MailwomanAPIEngine["health"] = () => buildHealthData()
 
-	// Parse needs only the model weights — not the gazetteer. Load them independently of the WOF-data gate below so
+	// Parse needs only the model weights — not the gazetteer. Load them independently of the WOF-data check below so
 	// `/v1/parse` answers whenever weights resolve, even on a geocode-degraded boot. The classifier instance loaded
 	// here is reused by the geocode stack below — weights load ONCE per boot.
 	let parse: MailwomanAPIEngine["parse"]
@@ -304,7 +304,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	const paths = await wofPaths()
 	// Candidate backend → country-agnostic default (demo's global, population-first behavior); a per-request `country`
 	// still scopes. FTS backend keeps the US default. (#170) A candidate DB alone (no WOF admin database) is a valid boot
-	// configuration — `createResolverBackend` prefers it over `wofPaths` — so the preflight gate below checks BOTH,
+	// configuration — `createResolverBackend` prefers it over `wofPaths` — so the preflight check below checks BOTH,
 	// mirroring the drop-ins' `!candidateDB && wofPaths.length === 0` condition rather than `GeocodeRouter`'s WOF-only check.
 	// This check governs geocode/batch/resolveTree/reload ONLY — `parse` is already wired above and unaffected.
 	const candidateDB = await resolveCandidateDBPath()

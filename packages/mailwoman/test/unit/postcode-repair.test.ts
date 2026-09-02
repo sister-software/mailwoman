@@ -84,7 +84,7 @@ describe("repairPostcodeContradiction (#1735)", () => {
 		expect(repairPostcodeContradiction(po, computeQueryShape("PO33 4DE"))).toBe(true)
 		expect(tags(po)).toEqual(["postcode:PO33 4DE"])
 
-		// A genuine PO Box surface carries no letter-digit postcode span — the format gate never opens.
+		// A genuine PO Box surface carries no letter-digit postcode span — the format check never opens.
 		const box = tree("PO Box 123", [node("po_box", "PO Box 123", 0, 10)])
 
 		expect(repairPostcodeContradiction(box, computeQueryShape("PO Box 123"))).toBe(false)

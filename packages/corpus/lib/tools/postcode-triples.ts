@@ -261,7 +261,7 @@ export async function createKnownLocalityGate(country: string, adminDB?: string)
 	}
 
 	// An empty set means the gazetteer has no localities for this country at all, which is a coverage fact about the
-	// gazetteer rather than a verdict on the source — so gate nothing rather than drop everything.
+	// gazetteer rather than a verdict on the source — so check nothing rather than drop everything.
 	if (!names.size) return () => true
 
 	return (name: string) => names.has(name.toLowerCase())

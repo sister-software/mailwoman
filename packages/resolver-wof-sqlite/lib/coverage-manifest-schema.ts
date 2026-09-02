@@ -59,7 +59,7 @@ export interface CountryCoverageTable {
 	 */
 	measured_at: string
 	/**
-	 * The receipt: which panel/gate produced this row.
+	 * The receipt: which panel/check produced this row.
 	 */
 	source: string
 }

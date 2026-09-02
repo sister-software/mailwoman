@@ -22,7 +22,7 @@
  *   The prior `--model` path built a RAW `new NeuralAddressClassifier` with NO anchor/gazetteer, so
  *   a freshly-trained STAGE3 checkpoint was graded ANCHOR-OFF (admin tags collapse) while the
  *   no-`--model` default (loadFromWeights) was anchor-ON — the candidate was scored OOD against an
- *   in-distribution baseline, the #566/#685 trap this very gate exists to prevent. `--no-strict`
+ *   in-distribution baseline, the #566/#685 trap this very check exists to prevent. `--no-strict`
  *   warns-and-continues for ad-hoc/legacy (pre-anchor) models instead of failing closed.
  *
  *   Usage: mailwoman eval error-analysis\

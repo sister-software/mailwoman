@@ -516,8 +516,9 @@ export interface AddressClassifier {
 
 /**
  * Injectable stage implementations. All optional — when a stage is absent, the coordinator either skips it (resolver)
- * or substitutes a no-op stub (normalize / queryShape / locale gate / kind classifier). The classifier is required for
- * the full pipeline path; without it, the coordinator can only fast-path on QueryShape known-formats.
+ * or substitutes a no-op stub (normalize / queryShape / `@mailwoman/locale-check` stage / kind classifier). The
+ * classifier is required for the full pipeline path; without it, the coordinator can only fast-path on QueryShape
+ * known-formats.
  */
 export interface RuntimePipelineStages {
 	normalize?: (raw: string, opts?: { locale?: string }) => NormalizedInputLite

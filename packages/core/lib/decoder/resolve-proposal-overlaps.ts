@@ -29,7 +29,7 @@
  *       finer decomposition itself; this tiebreak is the safety net when a coarse rule span
  *       competes.
  *
- *   This policy is deliberately simple and deterministic. It is the lever the inc-3 assembled gate
+ *   This policy is deliberately simple and deterministic. It is the lever the inc-3 assembled check
  *   validates: if it drops too many house numbers (precondition regression) the comparator is where
  *   to look. (An alternative — earliest-end-first maximal-tiling, ignoring confidence — maximizes
  *   the _count_ of non-overlapping spans but can let a spurious tiny span evict a correct large

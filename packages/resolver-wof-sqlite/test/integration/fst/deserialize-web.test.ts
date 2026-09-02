@@ -339,7 +339,7 @@ test("deserializeFSTWeb: version 0 is rejected", () => {
 test("deserializeFSTWeb: a version above MAX_VERSION (now 5) is rejected", () => {
 	// MAX_VERSION tracks the serializer's VERSION (5, the two-score split): v3/v4/v5 parse, v6+ is
 	// rejected. This assertion is why the check stops drifting — it fails the moment the serializer
-	// bumps and the reader's gate does not.
+	// bumps and the reader's check does not.
 	const bytes = buildFSTBuffer(PARIS_FIXTURE)
 	new DataView(bytes.buffer).setUint16(4, 6, true)
 	expect(() => deserializeFSTWeb(bytes)).toThrow(/version 6 unsupported/i)
@@ -360,7 +360,7 @@ const PROVENANCE = {
 }
 
 test("readFSTProvenanceWeb: returns undefined for versions below 3 (no trailer support)", () => {
-	// A v2 buffer never carries provenance the reader will read — version gate is `< 3`.
+	// A v2 buffer never carries provenance the reader will read — version check is `< 3`.
 	const bytes = buildFSTBuffer(PARIS_FIXTURE, { version: 2, provenance: PROVENANCE })
 	expect(readFSTProvenanceWeb(bytes)).toBeUndefined()
 })

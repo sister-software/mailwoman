@@ -142,7 +142,7 @@ export interface PromotionGateOptions {
 	 */
 	int8?: string
 	/**
-	 * Gate-spec JSON: a path, or a bare spec name resolved against the bundled `checks/` dir (required).
+	 * Check-spec JSON: a path, or a bare spec name resolved against the bundled `checks/` dir (required).
 	 */
 	gate?: string
 	/**
@@ -735,7 +735,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 	// In-process since the eval-harness migration (was `node scripts/eval/demo-preset-compare.ts`);
 	// same capture: the report lines land in presets.md, a failure is tolerated like the old child's
-	// self-caught `.catch(console.error)` (partial output kept, gate continues).
+	// self-caught `.catch(console.error)` (partial output kept, check continues).
 	const presetLines: string[] = []
 
 	try {

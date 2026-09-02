@@ -6,7 +6,7 @@
  *   `mailwoman placer eval <kind>` — the coarse placer (#244) eval suite, one enum command. Kinds:
  *   `in-distribution` (accuracy + per-class + ECE + multi-script abstention), `openset` (the M2
  *   post-hoc open-set score Pareto), `latin-offmap` (the M3 Latin off-map handled-rate), and
- *   `quant-compare` (int8 vs fp32 gate). Every kind emits its report to stdout; all need the
+ *   `quant-compare` (int8 vs fp32 check). Every kind emits its report to stdout; all need the
  *   dataset + model artifacts locally — operator-run, not CI.
  */
 

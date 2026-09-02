@@ -161,7 +161,7 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 
 /**
  * House-number interpolation tier (#483): the third rung, consulted ONLY when the exact address-point tier
- * ({@link applyAddressPoint}) did NOT already stamp the street node (`resolution_tier === "address_point"`). That gate
+ * ({@link applyAddressPoint}) did NOT already stamp the street node (`resolution_tier === "address_point"`). That check
  * IS the "after the exact-point fall-through" — an estimate never overwrites a real situs point. Postcode-scoped (no
  * locality — the interpolators abstain statewide without a postcode). Stamps a DISTINCT metadata key
  * (`interpolated_point`, never `address_point`). Additive only — admin resolution is untouched.
@@ -209,7 +209,7 @@ export function applyInterpolation(
 
 	if (!street || !houseNumber) return
 
-	// The fall-through gate: an exact situs point already won — never override it with an estimate.
+	// The fall-through check: an exact situs point already won — never override it with an estimate.
 	if (street.metadata?.["resolution_tier"] === "address_point") return
 
 	const near = postcode ? undefined : localityCoord
@@ -248,7 +248,7 @@ export function applyInterpolation(
  * a place name ("Place Bellecour", "Cours de l'Intendance", "Quai des Bateliers"). Used by the #1042 street-centroid
  * tier to recognize a thoroughfare that the model mis-parsed as a `locality` (the FR no-street class, #901).
  * Deliberately generous — a false positive simply misses the exact street-centroid lookup and no-ops; the lookup is the
- * real gate.
+ * real check.
  */
 const FR_VOIE_TYPES: ReadonlySet<string> = new Set([
 	"rue",

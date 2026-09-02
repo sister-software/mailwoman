@@ -73,7 +73,7 @@ export async function buildParseRig(
 	}
 
 	// `--candidate-db <candidate.db>` swaps the FTS backend for the byte-range candidate-table lookup
-	// (the SAME backend + ranking the browser demo uses). This is the "CLI matches demo" gate: run the
+	// (the SAME backend + ranking the browser demo uses). This is the "CLI matches demo" check: run the
 	// eval both ways and confirm US locality/coord don't regress before defaulting the CLI to it.
 	const candidateDB = options.candidateDB || ""
 	// `--postal-city-alias-db <db>` (#475) attaches the opt-in postal-city alias scorer on the FTS
@@ -130,7 +130,7 @@ export async function buildParseRig(
 	// share `resolveOpts`), so the comparison stays fair. `--city-state-fallback` kept as an alias.
 	const hierarchyCompletion = options.hierarchyCompletion ?? false
 
-	// #895: adminCoherence is default-ON in the resolver now (drift D1 settled). Tri-state pin for gate
+	// #895: adminCoherence is default-ON in the resolver now (drift D1 settled). Tri-state pin for check
 	// legs: `--admin-coherence` ON, `--no-admin-coherence` OFF, neither = the library default.
 	const adminCoherence =
 		(options.adminCoherence ?? false) ? true : (options.noAdminCoherence ?? false) ? false : undefined

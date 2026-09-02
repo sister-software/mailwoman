@@ -64,7 +64,7 @@ export const PLACETYPE_SPECIFICITY: Readonly<Partial<Record<WhosOnFirstPlacetype
  * The rank of a placetype, or `undefined` when it carries none.
  *
  * Returning `undefined` rather than a number is the point: a caller that cannot rank a row has to decide what that
- * means for its own gate, and the two reasonable answers (block conservatively, or ignore) differ per call site.
+ * means for its own check, and the two reasonable answers (block conservatively, or ignore) differ per call site.
  */
 export function placetypeSpecificity(placetype: string | null | undefined): number | undefined {
 	if (!placetype) return undefined

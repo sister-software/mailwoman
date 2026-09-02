@@ -322,7 +322,7 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 
 		expect(manifest.attribution).toMatch(/OpenStreetMap/)
 
-		// --- Gate-relevant: the zero-observed-rows cell must round-trip, never read back as undefined ---
+		// --- Check-relevant: the zero-observed-rows cell must round-trip, never read back as undefined ---
 		const zeroCell = coverageCellsOverride.find((c) => c.observedRows === 0)!
 		const readBack = await readLayerCoverage(kdb, zeroCell.h3Cell)
 

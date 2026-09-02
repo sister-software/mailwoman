@@ -12,7 +12,7 @@
  *   1. The **conditional header**, which is the verdict's actual denominator. Reading the tail of a gauntlet log instead of
  *      this line is how "+15 rows, zero regressions" got reported on 2026-08-15 for a run that was 329/352 against a
  *      350/352 baseline — 21 regressions, in a line printed above the part that got read.
- *   2. The **levers line**. `run.ts` states the reason it prints on every run, pinned or not: "two gate logs that
+ *   2. The **levers line**. `run.ts` states the reason it prints on every run, pinned or not: "two lever logs that
  *      differ only in a flag someone typed are not evidence about that flag unless each log says which configuration
  *      it graded."
  *   3. The **firing count**, for the one pass that prints one. An unchanged verdict from a mechanism that never ran

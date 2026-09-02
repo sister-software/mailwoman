@@ -261,7 +261,7 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 		expect(new Set(marked.flatMap((m) => m.codes))).toEqual(new Set(["declared_fork"]))
 
 		// `landmark` and `locality_only`, and the split is by REGISTER: `scoreVenueLandmark` requires a capital letter
-		// (`rules.ts`'s `/[A-Z]/` gate) and scores 0.88, so "Diego Garcia" is a landmark and "diego garcia" is a
+		// (`rules.ts`'s `/[A-Z]/` check) and scores 0.88, so "Diego Garcia" is a landmark and "diego garcia" is a
 		// locality. That is a PRE-EXISTING case-keyed rule, unchanged here and recorded because it is exactly the kind
 		// of thing this receipt would otherwise be read as having introduced. What matters for the D-rule is that the
 		// same two kinds come out with and without §4 — which the byte-identical routing test above already pinned.

@@ -180,7 +180,7 @@ export interface GeocodeResult {
 	/**
 	 * Admin-coherence verdicts (#1717 stage 1) — did the winning candidate's resolved ancestry confirm, contradict, or
 	 * fail to speak to the PARSED `region` / `country` qualifiers? Flag-only measurement in the same posture as
-	 * {@link intent_markers}: nothing reads these to rank or gate, and the field is additive. Present whenever a winner
+	 * {@link intent_markers}: nothing reads these to rank or check, and the field is additive. Present whenever a winner
 	 * resolved (both members always populated — `unstated` is the explicit no-qualifier claim); absent when the geocode
 	 * produced no resolved winner to check against. See `admin-coherence.ts` for the verdict contract and the stated v1
 	 * fold-equality bounds.

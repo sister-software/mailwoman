@@ -170,7 +170,7 @@ export function resolverLeverDeps(levers: GauntletResolverLevers | undefined): {
  */
 export function describeResolverLevers(levers: GauntletResolverLevers | undefined): string {
 	// `resolverLeverDeps` is pure and so cannot see the artifact-carrying pins; describing only what it returns is how
-	// a pinned run prints as "production defaults" and two different configurations produce identical gate logs. That
+	// a pinned run prints as "production defaults" and two different configurations produce identical lever logs. That
 	// is precisely the failure this surface exists to prevent, so every lever is named here, not just the boolean ones.
 	const entries: string[] = Object.entries(resolverLeverDeps(levers)).map(([k, v]) => `${k}=${v ? "ON" : "OFF"}`)
 
@@ -218,7 +218,7 @@ export interface GauntletGeocodeOpts {
 /**
  * #1024 drift guard: the materialized model the check is about to grade MUST match the en-us model-card's
  * `files_md5["model.onnx"]` — the card (source of truth) and `release.config.json` (what copy-weights.ts materializes
- * from) drifted once and the superseded model shipped past a silent gate. Throws loudly on mismatch so the release
+ * from) drifted once and the superseded model shipped past a silent check. Throws loudly on mismatch so the release
  * before:release step (RELEASING.md) blocks the ship. Only the shipped default is checked; a `--candidate` run grades a
  * different artifact by design. Soft-returns when the card / field is absent (a card-format problem is not this guard's
  * job) — the model file itself is always present here (the caller `existsSync`-conditional it).
@@ -311,7 +311,7 @@ export async function assertDeclaredAnchorBins(locales: readonly string[], cache
 
 /**
  * Build the geocode deps. `modelPath` swaps ONLY the ONNX (same tokenizer/card/anchor/gazetteer soft-feed), so the
- * held-out gate can grade a candidate against production fairly; omit it for the shipped default.
+ * held-out check can grade a candidate against production fairly; omit it for the shipped default.
  *
  * `tokenizerPath` (+ optional `modelCardPath`) additionally swaps the VOCAB — required to grade a tokenizer-SPLICE
  * candidate (#444/#884/#912), whose model has extra embedding rows a plain `modelPath` swap can never exercise (the
@@ -478,7 +478,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	const regionDatabaseProvider = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
 	// Lazy like the resolver module above: `@mailwoman/osm` is an in-repo (unpublished) workspace, and
 	// A static import here would break the
-	// published `mailwoman` CLI outright rather than only this maintainer-run gate.
+	// published `mailwoman` CLI outright rather than only this maintainer-run check.
 	const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/sdk")
 	const osmProvider = await OSMRegionDatabaseProvider.create(mailwomanDataRoot())
 	// The BAN national-register tier (#1012) sits AHEAD of OSM in production (geocode.tsx wires it the

@@ -5,7 +5,7 @@
  *
  *   Accuracy cost of the #244 coarse-placer int8 quantization (milestone 3). Runs the held-out test
  *   split through the fp32 model and the int8 model (dequantized inline) and reports overall + per-
- *   class accuracy for each, the delta, prediction-agreement rate, and confidence MAE. Gate: int8
+ *   class accuracy for each, the delta, prediction-agreement rate, and confidence MAE. Check: int8
  *   within ~1pp of fp32 (the milestone target).
  *
  *   Run: `mailwoman placer eval quant-compare [--fp32 <dir>] [--int8 <dir>] [--abstain 0.5]`
