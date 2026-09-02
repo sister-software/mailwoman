@@ -220,7 +220,7 @@ A single FST with per-edge locale bitsets is space-efficient but query-slower. F
 
 ## Relationship to existing architecture
 
-The FST is the "pay-it-forward" implementation of the mail-carrier philosophy: each carrier's knowledge is pre-compiled into a structure that narrows the search space with each token consumed. The deliberative assembly (phrase grouper + neural model + reconciler) still adjudicates — the FST just gives them much better priors to work with.
+The FST is the "pay-it-forward" implementation of the mail-carrier philosophy: each carrier's knowledge is pre-compiled into a structure that narrows the search space with each token consumed. The deliberative assembly (phrase grouper + neural model + reconciler) still adjudicates — the FST gives them much better priors to work with.
 
 Where the QueryShape soft prior says "this 5-digit token is probably a postcode" (structural pattern), the FST prior says "this token sequence matches 'New York' which is either locality WOF:85977539 or region WOF:85688543" (factual knowledge from the gazetteer). Both are additive biases; neither overrides the neural model.
 

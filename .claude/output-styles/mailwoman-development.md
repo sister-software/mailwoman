@@ -193,7 +193,7 @@ Avoid these stock forms:
 - `Great question.`
 - `Here's the thing.`
 - `The smoking gun is...`
-- `It's not just X, it's Y.`
+- `It's not X, it's Y.`
 - `The real question is...`
 - `Let's dive in.`
 - `This is crucial/pivotal/robust.`

@@ -32,7 +32,7 @@ all published at one synced version (the model too — see Versioning policy). T
 > the two-phase CI flow — see "Releasing from CI" below. `yarn release --dry-run` remains useful
 > as a local preview of the version bump + pack surface.
 
-Verify the flow without actually publishing:
+Verify the flow without publishing:
 
 ```bash
 yarn release --dry-run
@@ -167,7 +167,7 @@ MAILWOMAN_PUBLISH_TOKENIZER=/path/to/tokenizer.model \
 
 The binaries are gitignored in the workspace dirs (`neural-weights-*/.gitignore`) and exist only between
 `copy-weights` and the post-publish cleanup. **Always confirm the tokenizer matches the model** — the model
-card's `training.tokenizer_version` is the source of truth (mismatches have shipped before).
+card's `training.tokenizer_version` wins (mismatches have shipped before).
 
 ## Rebuilding + swapping the canonical admin gazetteer (`admin-global-priority.db`)
 
@@ -335,9 +335,9 @@ minutes to propagate to all edges — don't conclude it's broken from a test in 
   card's `version` and the demo's `releases.json` are bumped to match.
 - **The model version follows the release**, not the other way around. The underlying trained artifact keeps its
   own identity (filename, training step, tokenizer) under `release.config.json#weights` and in the model card's
-  `model_lineage`; the published `version` is just the unified release number (e.g. the Stage-3 / step-100000
+  `model_lineage`; the published `version` is the unified release number (e.g. the Stage-3 / step-100000
   model shipped as `4.0.0`). This replaces the old "weights versioned to the model" scheme, which the sync-mode
-  plugin could never actually express — that mismatch is what produced the version drift before 4.0.0.
+  plugin could never express — that mismatch is what produced the version drift before 4.0.0.
 
 ## Promoting a NON-default model (the full promotion flow)
 
@@ -359,9 +359,9 @@ Read this first — it's the 30-minute version once you know the shape. Three ba
 
 The end-to-end order that worked: **the promotion eval (revised if needed) → commit card+config to main → HF stage → `publish.yml` (real) → verify npm md5 → R2 demo repoint.** Time-savers and traps, each cost real minutes once:
 
-- **Only TWO model-card fields are pipeline-breaking**: `version` (publish.yml derives `MODEL_VERSION` from it) and `files_md5.model.onnx` (re-verified at `yarn pack`). Everything else in the card (`model_lineage`, `phase`, `training`, `notes`, `base_relpath`, the `eval` block) is provenance — get it honest, but a typo there won't break the publish. Move fast on the prose, slow on those two.
+- **Only TWO model-card fields are pipeline-breaking**: `version` (publish.yml derives `MODEL_VERSION` from it) and `files_md5.model.onnx` (re-verified at `yarn pack`). Everything else in the card (`model_lineage`, `phase`, `training`, `notes`, `base_relpath`, the `eval` block) is provenance — get it right, but a typo there won't break the publish. Move fast on the prose, slow on those two.
 - **The `neural-weights-fr-fr` card silently drifts.** It is NOT auto-bumped (release-it only touches `package.json`), so its `version` + `model_lineage` rot — found it stuck at `4.6.0` / "v1.5.0-fr-order" while it had long shipped the en-us binary. Reconcile both fields every model promotion.
-- **`release.config.json` silently drifts from the card, and copy-weights trusts the config.** The card is the source of truth for _which_ model ships; `release.config.json#weights.model` is the PATH copy-weights.ts materializes from. They must move in the SAME commit as the card (Step 1 items 2+3) — when they don't, copy-weights materializes the SUPERSEDED model and the Gauntlet grades it silently (#1024: config lagged at v220 `a64ad2e6` while the v5.4.0 promote shipped v230 `ea785a70`, costing a bisect detour). **Guardrail (#1024):** the Gauntlet harness now asserts the materialized `neural-weights-en-us/model.onnx` md5 == the card's `files_md5["model.onnx"]` for the shipped default and FAILS the Gauntlet on mismatch. Since the Gauntlet is the release `before:release` step, a drifted config can no longer ship. #1005 fixed the dev-weights-symlink half of the same class; this is the release-config half.
+- **`release.config.json` silently drifts from the card, and copy-weights trusts the config.** The card wins for _which_ model ships; `release.config.json#weights.model` is the PATH copy-weights.ts materializes from. They must move in the SAME commit as the card (Step 1 items 2+3) — when they don't, copy-weights materializes the SUPERSEDED model and the Gauntlet grades it silently (#1024: config lagged at v220 `a64ad2e6` while the v5.4.0 promote shipped v230 `ea785a70`, costing a bisect detour). **Guardrail (#1024):** the Gauntlet harness now asserts the materialized `neural-weights-en-us/model.onnx` md5 == the card's `files_md5["model.onnx"]` for the shipped default and FAILS the Gauntlet on mismatch. Since the Gauntlet is the release `before:release` step, a drifted config can no longer ship. #1005 fixed the dev-weights-symlink half of the same class; this is the release-config half.
 - **The floor comparison is `>=`** (`mailwoman eval promote`, `mailwoman/eval-harness/promotion-eval.ts`). A floor set exactly AT the measured value passes (95.0 ≥ 95.0) — no need to set it below, and no re-run to find out. A promotion eval that needs a floor lowered gets a **new eval file** with a stated `$revision_*` reason (no silent drift); the full promotion eval is ~12–15 min, so set the floors right the first time.
 - **The R2 demo repoint is "carry-forward + overwrite 2 files."** Between model versions ONLY `model.onnx` and `model-card.json` change — tokenizer, `fst-en-US.bin`, `postcode-*.bin`, `wof-polygons.db`, `anchor-lexicon-v1.json`, `calibration.json` are byte-identical. Fastest path: boto3-`download` ALL of the prior `en-us/v<PRIOR>/` (the exact serving bytes), `cp` the new `model.onnx` + `model-card.json` over them, rebuild `releases.json` (prepend entry + `defaultVersion`), one `publish-demo-assets-to-r2.py --src`. ~60 MB, two commands. (The bucket is `nexus-public`, creds are `RCLONE_S3_PUBLIC_*`.)
 - **npm CDN tarball lags ~10 min behind the version metadata.** Right after publish, `npm view <pkg>@<ver> version` already returns the new version but `npm pack` 404s and a raw tarball `curl` returns a tiny error JSON — that's CDN propagation, NOT a failed publish. Verify meanwhile via `npm view … dist.unpackedSize` (a code-only pkg is <1 MB; a model-bundled one is ~33 MB) and the md5 chain `/mnt/playpen source == HF upload == R2 staging`. Re-`npm pack` to close the loop once the CDN catches up.
@@ -591,7 +591,7 @@ It keys off the **model** version — the `version` field of `neural-weights-en-
 NOT npm/`package.json` — and checks: (1) `evals/scores-by-version.json` has a run for that
 `model_version`; (2) `releases.mdx` has a matrix row for it AND the `(current)` marker sits on it;
 (3) the `status.mdx` `:::info[Verified as of …]` box cites it. Because it reads the model card, a
-**code-only release** (npm bumps, the model card doesn't) passes cleanly: the `(current)` marker is
+**code-only release** (npm bumps, the model card doesn't) passes without error: the `(current)` marker is
 allowed to sit on a newer row as long as every release above the model version is a documented
 "model unchanged" row. A dry run is the operator's last look before the real dispatch — that's where
 this is meant to catch a forgotten surface. (Out of scope, tracked separately: the isotonic
@@ -611,7 +611,7 @@ The CI publish can land most packages then die mid-publish (seen on v4.11.0: a t
 `E401 … Failed to generate Web Auth URLs` hit `record` + `registry` while the other 15 published).
 `mode=publish` is idempotent by construction — the tag and GitHub release are create-if-missing, and
 each workspace publish rides `--tolerate-republish` (already-published ones are no-ops) — so the
-recovery is simply the same dispatch again:
+recovery is the same dispatch again:
 
 ```bash
 gh workflow run publish.yml -f mode=publish
@@ -682,7 +682,7 @@ Then, on npmjs.com, **configure each new package's Trusted Publisher** (repo `si
 
 `scripts/bless-package.ts` does both halves (first publish + trust config) from the terminal — it
 runs npm's web-auth flow, so a hardware key on the laptop signs for a publish from the lab host. **The
-workflow filename it claims must be the workflow that actually publishes** (`publish.yml`; the script
+workflow filename it claims must be the workflow that publishes** (`publish.yml`; the script
 now refuses a name that is not in `.github/workflows/`). npm stores the claim verbatim and never
 checks it, so a wrong one is accepted and then denies every CI publish with a bare `E404 Not Found -
 PUT` that names neither trust nor the workflow. That is what held `neural-weights-{en-in,it-it,es-es}`
@@ -776,7 +776,7 @@ Every dispatch of `publish.yml` — including a `dry_run` — regenerates both c
 workflow artifacts (`mailwoman-client-python`: the wheel + sdist; `mailwoman-client-rust`: a tarball of
 the assembled crate). That half runs unconditionally: it's the same local, receipt-verified pipeline as
 `mailwoman clients generate` (below), so a broken generator or a spec that drifted out from under
-`progenitor`/`openapi-python-client` fails the job and shows up on every dispatch, not just the runs
+`progenitor`/`openapi-python-client` fails the job and shows up on every dispatch, not the runs alone
 where someone remembers to check. Nothing in `publish.yml` ever reaches a registry.
 
 **A red `clients` job concludes the release run FAILED, and that is a receipt — not a rollback**
@@ -788,7 +788,7 @@ unpublish or republish the release. This was ambient for two releases: the job h
 run since the workspace regroup, and the workflow comment beside it said its failure could not turn a
 release red.
 
-To actually publish, dispatch `Publish API clients` (`publish-clients.yml`) from the Actions UI. It
+To publish, dispatch `Publish API clients` (`publish-clients.yml`) from the Actions UI. It
 builds once from `main` (the same composite the release-run inspection artifacts use), then:
 
 - **`pypi` job:** downloads the wheel/sdist artifact and publishes via Trusted Publishing — the
@@ -843,7 +843,7 @@ node packages/mailwoman/out/cli.js clients generate
 ```
 
 Emits all 8 OpenAPI documents, generates the Python package and assembles the Rust crate, then verifies
-both actually build (`uv build` + a wheel import-check; `cargo check --examples`) — the same 7-check
+both build (`uv build` + a wheel import-check; `cargo check --examples`) — the same 7-check
 pipeline the `clients` CI job replays on every dispatch. Output lands under gitignored `clients-build/`;
 nothing it produces is committed. `--skip-verify` exists for a faster template-only loop but should
 never be used to validate a real change — the verify step is the entire point.

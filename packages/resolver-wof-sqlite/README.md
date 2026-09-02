@@ -35,7 +35,7 @@ for (const c of candidates) {
 
 ## A database that cannot answer says so on construction
 
-Databases are `ATTACH`ed by a schema name **derived from the filename**, and queries route to them by matching that name against the requested placetype — `postalcode_us` serves `postalcode`. Two ways that used to fail quietly, and both now throw when you build the lookup:
+Databases are `ATTACH`ed by a schema name **derived from the filename**, and queries route to them by matching that name against the requested placetype — `postalcode_us` serves `postalcode`. Two ways that used to fail without logging, and both now throw when you build the lookup:
 
 - The name does not route. `postcode-ca-overture.db` derives `postcode_ca_overture`, and the router tests `startsWith("postalcode_")` — **"postcode" is not "postalcode"**. It held 843,739 Canadian codes and answered every query with zero hits, which is indistinguishable from "this country has no places".
 - The database carries `spr` but no `place_search`. It routes, then dies mid-`SELECT`.

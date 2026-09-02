@@ -127,7 +127,7 @@ Decision of record (2026-07-19): publish the FULL multi-country poi.db to R2 for
 access — no separate demo slice artifact. Demo config: category queries only (no FTS name
 search over httpvfs — multi-hop traversal is the slow path), ring budget capped ~3–4 (the
 CLI default is 12). Contingency if the shipped file or probe latency surprises: a
-clearly-labeled regional slice, as fallback only.
+labeled regional slice, as fallback only.
 
 **Publish flow (canonical POI path, 2026-07-20).** The poi.db goes up via the demo-assets
 uploader, not the gazetteer path: stage a hardlink dir mirroring the R2 layout

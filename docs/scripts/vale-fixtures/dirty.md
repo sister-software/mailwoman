@@ -32,8 +32,6 @@ The controls are real and worth preserving.
 
 The failure is real and worth tracing.
 
-The trace names the stage that diverged.
-
 The problem is in the name.
 
 The difference is worth spelling out.

@@ -14,7 +14,7 @@ across a two-turn DeepSeek consult; see the rationale below.
 
 :::tip[Generalized to street registries]
 The same principle applied to street names — where the registers are national and
-complete enough to make substitution genuinely tempting — is
+complete enough to make substitution tempting — is
 [registry-backed structured prediction](./registry-backed-structured-prediction.mdx).
 That doc carries the source capability tiers and the positive-evidence-only rule.
 :::
@@ -62,11 +62,11 @@ parser substitution — the same safety, at the right layer.
 The night-9 "open-vocab → train / closed-vocab → deterministic" split was too coarse; the
 partition that matters is by _what the field needs to learn_:
 
-| Tier                                                 | Fields                                   | Treatment                                                                                                                                            |
-| ---------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Open-vocab, starved**                              | `unit`, `street_prefix`, `street_suffix` | coverage slice + retrain (proven: `unit` 0→92%, sharpened neighbors)                                                                                 |
-| **Closed-vocab, no homographs, just starved**        | `po_box`, `cedex`                        | also just a coverage slice — they were starved, not unlearnable. "PO Box"/"CEDEX" carry no ambiguity, so no anchor is needed; train them like `unit` |
-| **Closed-vocab, large set + homographs + long tail** | `country`                                | balanced coverage slice **plus** a soft gazetteer anchor feature (long-tail recall floor + homograph flag). The only tier that needs the feature     |
+| Tier                                                 | Fields                                   | Treatment                                                                                                                                        |
+| ---------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Open-vocab, starved**                              | `unit`, `street_prefix`, `street_suffix` | coverage slice + retrain (proven: `unit` 0→92%, sharpened neighbors)                                                                             |
+| **Closed-vocab, no homographs, starved**             | `po_box`, `cedex`                        | also a coverage slice — they were starved, not unlearnable. "PO Box"/"CEDEX" carry no ambiguity, so no anchor is needed; train them like `unit`  |
+| **Closed-vocab, large set + homographs + long tail** | `country`                                | balanced coverage slice **plus** a soft gazetteer anchor feature (long-tail recall floor + homograph flag). The only tier that needs the feature |
 
 The deterministic _override_ appears in none of them.
 

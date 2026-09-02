@@ -21,6 +21,10 @@ tokens:
   - happy to help
   - hope (?:this|that) helps
   - worth (?:noting|mentioning|saying|calling out)
+  ## Moved from Mailwoman/StockPhrases.yml: in a REPLY this is filler, but in published prose and in
+  ## a code comment it is the plain verb — and banning it there contradicted AmbiguousShorthand,
+  ## whose own message asks the writer to name the concrete thing.
+  - \snames the\s
   - keep in mind
   - deep dive
   - for completeness

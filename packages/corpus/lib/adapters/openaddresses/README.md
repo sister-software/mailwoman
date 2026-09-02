@@ -3,7 +3,7 @@
 OpenAddresses (<https://openaddresses.io>) aggregates open-data address
 dumps from hundreds of city, county, and state sources worldwide. The
 adapter consumes the **line-delimited GeoJSON** (`.geojsonl` /
-`.ndgeojson`) shape one Feature per line, which streams cleanly for the
+`.ndgeojson`) shape one Feature per line, which streams line by line for the
 multi-gigabyte national dumps.
 
 ## Input

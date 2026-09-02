@@ -62,7 +62,7 @@ public web:
   not a venue-name + two-line postal-address record. Rewriting against
   it would lose the only training signal this adapter exists to
   contribute — the `street1` / `street2` narrative sub-tenant chaos
-  ("Suite C, behind main building") — and would just be a parallel,
+  ("Suite C, behind main building") — and would be a parallel,
   weaker NPPES.
 - **Find via FOIA / SAMHSA dev channels (deferred, not chosen).**
   The data exists (the locator UI is backed by it); the access path is

@@ -207,7 +207,7 @@ These are decisions to make when the implementation phase opens; recording so th
 
 1. **Where does `QueryShape` get computed?** Eagerly at parse-entry (always pay the microseconds cost), or lazily on first downstream consumer (some inputs may not need it)? Recommend eagerly — it's cheaper to compute than to threaded-lazy-evaluate.
 2. **Known-format regex set extensibility?** Hardcoded vs. registerable. Recommend hardcoded for v1 (the postcode set rarely changes) and re-evaluate if community adapters want to register country-specific formats.
-3. **Confidence threshold for fast-path routing?** Pick conservatively (~0.95) and tune from real-world data. Failure mode of too-low is catastrophic (wrong answer instead of full pipeline); failure mode of too-high is just slower inference.
+3. **Confidence threshold for fast-path routing?** Pick conservatively (~0.95) and tune from real-world data. Failure mode of too-low is catastrophic (wrong answer instead of full pipeline); failure mode of too-high is slower inference.
 4. **Segment-id as encoder feature — additive or concatenated?** Concatenated to input embeddings is simplest and avoids architecture change. Decide when the encoder retrain happens.
 5. **How does `QueryShape` interact with `LocaleDetector`?** The detector probably uses `QueryShape.characterClass` + `QueryShape.tokenClasses` as input features. Suggests `LocaleDetector` runs _after_ `QueryShape.compute()`. Document this dependency.
 

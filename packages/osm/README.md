@@ -23,7 +23,7 @@ keep it that way. So the OSM precision tier is quarantined:
   the countries you want, and you take the share-alike obligation only on those.
 - **The permissive core never touches an OSM byte.** OSM points are not folded into the WOF-keyed
   gazetteer; they live in their own per-country databases beside it. The `source` on every OSM point is
-  `openstreetmap:<cc>`, so attribution and licence are attributable per-row, and the resolver surfaces
+  `openstreetmap:<cc>`, so attribution and license are attributable per-row, and the resolver surfaces
   "© OpenStreetMap contributors (ODbL)" on any result that resolved through one.
 
 ### ⚠ Lawyer sign-off required

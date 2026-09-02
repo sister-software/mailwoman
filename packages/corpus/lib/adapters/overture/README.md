@@ -56,5 +56,5 @@ few in-text-region locales (DE Bundesland, FR département) are covered by the `
 (it already emits `{ postcode, locality, region }`) — don't duplicate that here.
 
 License: **CDLA-Permissive-2.0** (attribution; not share-alike). Per the #471 fill-rate requirement, check
-`fill-rates.md` before committing a locale: ES/NL/FR fill cleanly; IT postcode is ~0% (street+locality
+`fill-rates.md` before committing a locale: ES/NL/FR fill completely; IT postcode is ~0% (street+locality
 only); DE postcode is sparse in Overture (use GeoNames for DE postcodes).

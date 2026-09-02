@@ -22,7 +22,7 @@ zones the Environment Agency states England-wide coverage and the Planning Pract
 Zone 1 as "all land outside Zones 2, 3a and 3b" — so an empty answer inside England IS a
 designation. NCERM publishes no coverage statement at all. A location in England with no erosion
 polygon is either **inland** — most of the country, about which the product says nothing — or **on
-the coast and outside the mapped risk area**, which is the designation a caller actually wants; and
+the coast and outside the mapped risk area**, which is the designation a caller wants; and
 the published layers cannot tell those apart. A reader that generalized the flood rule would report
 the whole country as free of coastal-erosion risk, on a well-formed artifact that passed every
 structural check.
@@ -125,11 +125,11 @@ Each is encoded in the code rather than written down somewhere else:
    70,296,882-byte body, so freshness can never be probed by content length. The cached archive is
    keyed on the product's ISO revision date instead, which is the authority's own statement about
    what changed.
-3. **The attribution comes from the structured licence field.** The abstract carries the statement
+3. **The attribution comes from the structured license field.** The abstract carries the statement
    twice and the **first copy — inherited from the superseded 2018–2021 record — has no year**; the
    ISO record has no `gmd:credit` element at all. `parseAttributionStatement` takes the copy carrying
-   a year and refuses text where none does. OGL v3.0 makes the statement a licence condition, so a
-   parse taking the first match ships a licence condition stated incorrectly.
+   a year and refuses text where none does. OGL v3.0 makes the statement a license condition, so a
+   parse taking the first match ships a license condition stated incorrectly.
 
 ## The two tiers, and where this differs from the flood layer
 
@@ -137,7 +137,7 @@ Each is encoded in the code rather than written down somewhere else:
 truth table. `coastal_zone_cell` is the H3 containment index above it, classifying each cell `whole`
 or `partial` **per polygon** rather than per class: an erosion answer IS the polygon, because the
 distance, the policy and the defence are per feature. A `whole` cell answers in primary-key probes
-alone; only a `partial` cell falls through to the ray cast, against just the polygons the cell names
+alone; only a `partial` cell falls through to the ray cast, against only the polygons the cell names
 for that scenario.
 
 **There is no build-time touch table, and its absence follows from the key.** The flood build
@@ -171,7 +171,7 @@ candidates in one pass):
 |  10 |          588,095 |       593,213 |   560,415 |                94.5% | 92.2 % – 95.8 %            |
 |  11 |        2,276,541 |     2,471,517 | 1,869,758 |                75.7% | 68.7 % – 80.8 %            |
 
-Per scenario at the chosen resolution 10 — the number a scenario-scoped probe actually reads:
+Per scenario at the chosen resolution 10 — the number a scenario-scoped probe reads:
 
 | scenario        | features | touched cells | whole | partial | partial share | whole after compaction |
 | --------------- | -------: | ------------: | ----: | ------: | ------------: | ---------------------: |
@@ -241,7 +241,7 @@ for:
 | Happisburgh, Norfolk (52.8236, 1.5352)       | unknown                  | designated, 160 m        |
 | Withernsea, East Yorkshire (53.7305, 0.0341) | designated, 175 m        | unknown                  |
 | Birling Gap, East Sussex (50.7433, 0.2003)   | designated, 12 m         | designated, 62 m         |
-| Birmingham city centre (52.4796, −1.9026)    | unknown, no coverage row | unknown, no coverage row |
+| Birmingham city center (52.4796, −1.9026)    | unknown, no coverage row | unknown, no coverage row |
 
 The first two rows move in OPPOSITE directions, and both are the authority's own reading rather than
 a defect. Happisburgh is outside the medium-term present-day band and inside the long-term band under
@@ -267,7 +267,7 @@ MAPPED, plus its geometry. Two candidates are named in the survey and **neither 
 - The **Shoreline Management Plan Mapping** record, a sibling dataset on the same platform. NCERM's
   own lineage states it is derived from the Shoreline Management Plans, and every erosion feature
   carries `smp_no`, `smp_name` and `smp_pu` — measured, `smp_no` runs 0–22 over 21 distinct values.
-  Its coverage statement, licence, extent and schema were not read.
+  Its coverage statement, license, extent and schema were not read.
 - The **frontage geometry behind `frontageid`**. Whether the Environment Agency publishes the
   frontages themselves, rather than only their id, was not established.
 
@@ -299,7 +299,7 @@ mailwoman gazetteer build coastal --verify
 The ingest reprojects EPSG:27700 to WGS84 and asserts every reprojected vertex lands inside the
 authority's own declared bounding box. **It also asks PROJ which transformation it would choose and
 refuses a ballpark one**: without the OSTN15 grid PROJ substitutes a ballpark datum shift and
-produces coordinates that are metres wrong and look exactly like correct ones. On the sibling flood
+produces coordinates that are meters wrong and look exactly like correct ones. On the sibling flood
 product that surfaced only as eight disagreements out of 59 against the authority's own service.
 Install it with `projsync --area-of-use "United Kingdom"`.
 
@@ -323,8 +323,8 @@ Dynamic Coast carries an explicit prohibition on property-level assessment, and 
 publishes 122 line segments carrying one attribute — none of them interchangeable with England's. A
 positive-only check would pass on an artifact that reported the entire country as designated.
 
-Distances are measured to the **edge**, not to the nearest vertex: a point a centimetre from a long
-edge can be metres from every vertex of it, and measuring vertices makes the boundary tolerance far
+Distances are measured to the **edge**, not to the nearest vertex: a point a centimeter from a long
+edge can be meters from every vertex of it, and measuring vertices makes the boundary tolerance far
 stricter than it reads.
 
 ## Consumer
@@ -340,7 +340,7 @@ The artifact is named for its **extent** rather than for its subject, because th
 interchangeable with it — a file called `coastal.db` would invite a Welsh or Scottish product to
 overwrite an English one.
 
-## Licence and posture
+## License and posture
 
 OGL v3.0, with the published attribution string
 `© Environment Agency copyright and/or database right 2025. All rights reserved.` — which OGL makes a

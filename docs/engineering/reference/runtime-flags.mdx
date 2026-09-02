@@ -81,7 +81,7 @@ all decayed differently by the time anyone looked:
 
 - `forceJointReconcile` was **already gone from source**; the row promised to delete a flag that did not exist.
 - `cityStateFallback` was documented as "alias still honored" and was read by **nothing**. A consumer passing `cityStateFallback: false` got hierarchy completion anyway — a silent no-op that reads as an opt-out — and the test asserting the alias worked never passed the alias.
-- `trailingLocality` was a live, opt-in, measured-net-negative prior that **no production path opted into**; the census verified it inert on 558/558 board rows and said so: "the honest end state is deletion, not a permanent allowlist row."
+- `trailingLocality` was a live, opt-in, measured-net-negative prior that **no production path opted into**; the census verified it inert on 558/558 board rows and said so: the end state is deletion, not a permanent allowlist row.
 
 All three are deleted. Retire a mechanism by removing it, and remove its prose in the same commit — a
 stale docstring outlives the code it described and is what people quote.
@@ -102,7 +102,7 @@ stale docstring outlives the code it described and is what people quote.
 - **D4 — stale comment:** the demo `_app.tsx` still claims reconcile-runs-since-#427; reconcile
   was retired (#566). Cleanup rides the next demo touch.
 - **D5 — surface audit (Task 7, placetype-pair-prior arc, 2026-07-22):** which public surfaces ride
-  Viterbi/priors, and what `parseWithLogits` actually exposes. Every drop-in (`api`, `nominatim`,
+  Viterbi/priors, and what `parseWithLogits` exposes. Every drop-in (`api`, `nominatim`,
   `photon`, `libpostal`, `mcp`) and the CLI consume the SAME `createRuntimePipeline`
   (`core/pipeline/runtime-pipeline.ts`). ~~which itself calls one of two classifier methods depending
   on `jointReconcile`/`arbitrate`~~ — AMENDED 2026-08-19 (#1749): there is only ONE path now.

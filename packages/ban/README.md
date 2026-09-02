@@ -12,7 +12,7 @@ input — the flatness is the tell of a coverage ceiling, not a parse problem. B
 
 ## The licensing boundary
 
-Unlike the ODbL OpenStreetMap tier, BAN is published under the **Licence Ouverte / Open Licence 2.0
+Unlike the ODbL OpenStreetMap tier, BAN is published under the **License Ouverte / Open License 2.0
 (Etalab)** — attribution only, **no share-alike**. So the built database ships under the same terms as the
 permissive Mailwoman core (Who's On First, Overture, OpenAddresses, GeoNames); there is no lawyer sign-off
 requirement. The one standing obligation is attribution:

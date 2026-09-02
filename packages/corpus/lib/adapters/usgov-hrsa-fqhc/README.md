@@ -76,7 +76,7 @@ Buffalo Health Center Inc., 123 Main St, Buffalo, NY 14201
 ```
 
 US-conventional addressee-then-address ordering, matching how HRSA
-users actually type into geocoders.
+users type into geocoders.
 
 ## Filtering
 

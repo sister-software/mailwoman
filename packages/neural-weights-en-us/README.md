@@ -105,9 +105,9 @@ required channels in its `requires` block:
 
 Construct the scorer through `@mailwoman/neural`'s `createScorer` (the canonical
 `ProductionScorer`): it reads `requires` and **fails closed** if a declared
-channel isn't actually fed. Do not hand-wire the raw ONNX session with the anchor
+channel isn't fed. Do not hand-wire the raw ONNX session with the anchor
 input zero-filled — that is the documented "anchor-off" trap that makes the model
-look far worse than it is. Every honest eval here is **anchor-on**.
+look far worse than it is. Every eval here is **anchor-on**.
 
 ## Evaluation
 
@@ -148,7 +148,7 @@ Two more notes on reading these:
   metric is 97.8%). The small residual (~2%) is mostly civic-suffix name-mismatch
   ("Barre City" vs the gazetteer's "Barre"), not absent places — a naming-convention
   artifact more than a coverage hole.
-- **Structured types are where the neural front-end clearly leads** the rules
+- **Structured types are where the neural front-end leads** the rules
   baseline it replaces: on templated PO boxes, units, and intersections the
   rules port emits 0% correct structure (no `po_box` tag, dropped intersection
   side, stripped unit designator) where this model emits them, because it was

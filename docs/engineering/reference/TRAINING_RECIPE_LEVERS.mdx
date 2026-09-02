@@ -5,7 +5,7 @@ title: Training recipe levers
 
 # Training recipe levers
 
-Every training run is defined by a YAML config with ~30 knobs. Most interact. This document catalogues each lever, what it does, how we arrived at the current value, what happens when you move it, and where we've found ceilings. The goal is to make the reasoning behind the recipe reproducible — not just the recipe itself.
+Every training run is defined by a YAML config with ~30 knobs. Most interact. This document catalogues each lever, what it does, how we arrived at the current value, what happens when you move it, and where we've found ceilings. The goal is to make the reasoning behind the recipe reproducible — not the recipe itself alone.
 
 Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 100K steps). Both trained on corpus-v0.4.0 with the A1 tokenizer.
 
@@ -21,7 +21,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 | 384   | v0.5.0 bisect (h384 + dual-loss) | Diverged at step 700-1050 in all attempts.                  |
 | 384   | v0.5.1 (h384 + CE-only)          | Stable. val_macro_f1=0.633 at 55K. Peak before overfitting. |
 
-**How we got to 384.** The operator chose it as the v0.5.0 target. The plan doc described 256→384 as "paid for by rented GPU." The h384 bisect during the divergence campaign appeared to show h384 was a destabilizer — but it was actually the dual-loss interaction that was unstable at every size. Once CE-only fixed the training, h384 worked on the first try.
+**How we got to 384.** The operator chose it as the v0.5.0 target. The plan doc described 256→384 as "paid for by rented GPU." The h384 bisect during the divergence campaign appeared to show h384 was a destabilizer — but it was the dual-loss interaction that was unstable at every size. Once CE-only fixed the training, h384 worked on the first try.
 
 **Ceiling.** Not found. 512 is the next natural step (doubles the FFN intermediate from 1536 to 2048). Expected cost: ~2× wall time per step, ~4× parameter count (~68M vs 29M at h384). Whether the additional capacity helps depends on whether the model is capacity-limited or data-limited. The v0.5.1 overfitting past step 65K suggests data-limited at h384 — going larger without more data would overfit faster.
 
@@ -138,7 +138,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **How we got to batch=128 direct.** The A100 has 40 GB VRAM; the h384 model uses ~4 GB. No need for gradient accumulation. Direct batch=128 gives cleaner gradients (no micro-batch noise) and much higher throughput (120 sps vs 6.9 sps).
 
-**The smoke-batch lesson.** Smoke tests at eff_batch=8 passed cleanly while full runs at eff_batch=128 diverged. At smaller batch sizes, the higher per-step gradient noise paradoxically stabilizes training against curvature conflicts (the model can't settle deep enough into the basin where the conflict manifests). This is now documented in [VERDICT_SMOKES.md](./VERDICT_SMOKES.mdx).
+**The smoke-batch lesson.** Smoke tests at eff_batch=8 passed without error while full runs at eff_batch=128 diverged. At smaller batch sizes, the higher per-step gradient noise paradoxically stabilizes training against curvature conflicts (the model can't settle deep enough into the basin where the conflict manifests). This is now documented in [VERDICT_SMOKES.md](./VERDICT_SMOKES.mdx).
 
 ### `warmup_steps`
 

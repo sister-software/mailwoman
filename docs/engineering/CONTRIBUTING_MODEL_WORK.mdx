@@ -104,7 +104,7 @@ the spec's own `$` keys.
 
 **When the lineage moves again, derive a new spec the same way** — and note what it costs you: a spec
 derived from current readings has **no memory** and can only ratchet down. Every floor that moves gets a
-`$revision` note saying why, or the re-derivation is just silent drift with better manners.
+`$revision` note saying why, or the re-derivation is silent drift with better manners.
 
 **Never re-derive a campaign TARGET from a current reading.** This spec re-derives _regression bars_
 ("don't get worse than shipped"). The v7 street 0.90 goal lives in the parity floors; deriving it
@@ -122,7 +122,7 @@ Run for _every_ candidate, regardless of what you changed (this is what
 | Unit retention      | unit-real designators eval                                                         | ≥ 88                                    |
 | Affix split         | `scripts/eval/score-affix.ts` (NOT `per-locale-f1` — its fold can't see the split) | hold the spec's floors                  |
 | Demo smoke          | `eval-model` skill / `mailwoman eval preset-compare`                               | presets stable                          |
-| Honest geography    | `scripts/eval/honest-eval.ts`                                                      | region-match + coord p50/p90 + PIP hold |
+| Geographic accuracy | `scripts/eval/honest-eval.ts`                                                      | region-match + coord p50/p90 + PIP hold |
 | Input robustness    | `mailwoman eval gauntlet --layer metamorphic` (INV/DIR)                            | no new drift; xfails tracked            |
 
 The input-robustness check is the metamorphic layer of the Gauntlet — label-preserving
@@ -299,7 +299,7 @@ Three more receipts from the same run:
    MISS. When a floor trips, check the margin's provenance against the metric's actual support
    before spending a contingency run.
 
-**"Can't we just start and stop training at will?"** Resume-of-the-same-run: yes — optimizer +
+**"Can't we start and stop training at will?"** Resume-of-the-same-run: yes — optimizer +
 scheduler + step restore exactly (the v4.0.0 run was resumed across a Modal timeout at 59,900 and
 completed identically-in-kind). What does NOT exist is "just continue" past the end of a cosine
 schedule: the anneal ends at LR 0 by design, so extending a finished run means choosing a NEW

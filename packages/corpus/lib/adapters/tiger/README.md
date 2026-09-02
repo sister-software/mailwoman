@@ -16,7 +16,7 @@ US coverage:
 3. **Canonical naming**: street names match the USPS Pub-28 canonical
    form (the postal service is the same federal government as the
    Census), so the suffix-codex augmentations (`us-street-suffix-*` in
-   `synthesize.ts`) compose cleanly.
+   `synthesize.ts`) compose without conflict.
 
 ## Input
 
@@ -47,7 +47,7 @@ mailwoman tiger fetch --state 50 --level addrfeat --out tiger.db
 ```
 
 (Internally the CLI still shells out to `ogr2ogr` for the shapefile read +
-column mapping; it just owns the discovery, schema, and idempotency.)
+column mapping; it owns the discovery, schema, and idempotency.)
 
 The `WHERE FULLNAME IS NOT NULL` filter drops the small fraction of segment
 rows that have no name (typically unnamed alleys or parcel edges) — they

@@ -11,7 +11,7 @@ number. Mapping between them is useful — it is how `terminal` and `gate` reach
 vocabulary — but three structural mismatches make a naive table dangerous.
 
 Written 2026-08-02 while extending the span proposer's designator vocabulary. Confidence is flagged
-per row: OSM conventions are firm in some places and genuinely contested in others.
+per row: OSM conventions are firm in some places and contested in others.
 
 ## The three mismatches to know before reading the table
 
@@ -48,7 +48,7 @@ sub-venue parsing lives in OSM's _indoor_ scheme, not its _place_ scheme.
 | `country`       | `boundary=administrative` + `admin_level=2`; also `place=country`                                             | firm                       |
 | `county`        | `boundary=administrative`, typically `admin_level=6`                                                          | moderate                   |
 | `custom`        | none — WOF's override for non-standard geometries                                                             | n/a                        |
-| `dependency`    | `boundary=administrative` with ISO3166 tags; genuinely messy in OSM                                           | weak                       |
+| `dependency`    | `boundary=administrative` with ISO3166 tags; messy in OSM                                                     | weak                       |
 | `disputed`      | `disputed=yes` / `boundary=disputed`                                                                          | moderate                   |
 | `empire`        | **none** — historical polities live in OpenHistoricalMap, not OSM                                             | firm (absent)              |
 | `enclosure`     | none in the place scheme; a fenced area is `barrier=*`, an interior one is indoor tagging                     | weak                       |

@@ -43,7 +43,7 @@ Fixture: same 43-line `data/eval/multi-script/v0.5.0-a0.jsonl` A0 used. Numbers 
 ## How to read the numbers
 
 - **A1 beats A0 on every script except cyrillic** (+0.2 pt regression, within noise) **and hebrew** (flat). The training data's effect is unambiguous.
-- **A1 beats v0.1.0 leakage on cjk** — the largest non-Latin script class and the most important target. v0.1.0's CJK win was always a WOF admin-name artefact (see [tokenizer-a0-baseline.md](./tokenizer-a0-baseline.mdx#why-a0-looks-worse--the-wof-admin-name-leakage-hypothesis)); A1's CJK win is honest.
+- **A1 beats v0.1.0 leakage on cjk** — the largest non-Latin script class and the most important target. v0.1.0's CJK win was always a WOF admin-name artefact (see [tokenizer-a0-baseline.md](./tokenizer-a0-baseline.mdx#why-a0-looks-worse--the-wof-admin-name-leakage-hypothesis)); A1's CJK win holds.
 - **Latin improved, not regressed** — the anti-goal in the plan held. 5.8% → 3.4% is a meaningful Latin gain, likely from the kryptonite rows sharpening US/FR sub-pieces.
 - **`<5%` overall target missed** — the gap is concentrated in thai (41.9%) and the residual cjk (45.2%). B2 covered cjk + 4 others; thai needs a B3 follow-up to hit the headline target.
 - **Three scripts B2 didn't explicitly cover (devanagari, armenian, greek) improved or zeroed anyway.** Character-coverage 0.9999 + the larger training mix is doing real work. Devanagari going to 0% on 2 fixture lines is fragile — expand the fixture before relying on it.

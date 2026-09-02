@@ -89,7 +89,7 @@ That `1` is the batch dimension, traced in as a literal.
 
 The cause is **`torch.export`'s 0/1 specialization**: a dimension of size 0 or 1 is specialized to a
 constant unconditionally, even when `dynamic_shapes` marks it dynamic. The export traced with batch=1
-example inputs, so the request was discarded while the input still got labelled `'batch'`, which is
+example inputs, so the request was discarded while the input still got labeled `'batch'`, which is
 why the metadata lied. Tracing with batch=2 fixes it:
 
 ```

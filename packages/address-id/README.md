@@ -27,7 +27,7 @@ const id = createPostalAddressID({
 | Segment          | Purpose                                                                                                                                                                                         |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **State prefix** | Coarse region (`tx`, `ca`, `ny`, …) from a supplied state or plucked from the ZIP via `@mailwoman/codex`; `xx` when unknown. Makes the key region-sortable.                                     |
-| **H3 cell**      | Jitter-stable locality token from the resolved coordinate (`h3-js` `latLngToCell` at resolution 9). Coarse on purpose: two geocodes of the same place a few metres apart land in the same cell. |
+| **H3 cell**      | Jitter-stable locality token from the resolved coordinate (`h3-js` `latLngToCell` at resolution 9). Coarse on purpose: two geocodes of the same place a few meters apart land in the same cell. |
 | **Content hash** | Hash of the address canonicalized by `@mailwoman/normalize`, so `123 Main St` and `123 MAIN STREET` hash identically. This is the identity; the cell + state localize and partition it.         |
 
 ## API

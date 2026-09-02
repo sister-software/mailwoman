@@ -6,7 +6,7 @@ For the narrative / why-it-exists framing, read [`concepts/the-staged-pipeline`]
 
 ## Status
 
-- **Source of truth:** this file is the canonical interface contract for the runtime pipeline. Any stage implementation must conform.
+- **Canonical:** this file is the canonical interface contract for the runtime pipeline. Any stage implementation must conform.
 - **Last edited:** 2026-05-25.
 - **Implementation state (frozen 2026-05-25):**
   - **Shipped and wired as default:** Stage 1 (normalize), Stage 2.5 (kind classifier), Stage 2.7 (phrase grouper, rule-based), Stage 3 (neural classifier + CRF Viterbi), Stage 4a (CRF structural mask), Stage 6 (WOF SQLite resolver).
@@ -219,14 +219,14 @@ export interface KindClassifier {
 
 **Today.** `@mailwoman/kind-classifier` workspace shipped 2026-05-23. Rule-based, pure functions. Composes per-kind scorers (po_box, intersection, landmark, postcode_only, locality_only, structured_address, vague) and returns the top kind plus alternatives sorted by confidence. Wired in as the default `classifyKind` by `mailwoman/runtime-pipeline.ts::createRuntimePipeline`.
 
-**Future.** Hybrid rule + tiny model. Rule path is shipped; model path remains: when no format dominates, use a small classifier trained on `(QueryShape, label)` pairs from a labelled corpus slice (Phase 5 Studio is the source of those labels).
+**Future.** Hybrid rule + tiny model. Rule path is shipped; model path remains: when no format dominates, use a small classifier trained on `(QueryShape, label)` pairs from a labeled corpus slice (Phase 5 Studio is the source of those labels).
 
 **Failure classes owned.** Routes around the encoder for the trivial cases that don't need it (postcode-only, locality-only). Improves accuracy on intersection / PO box by routing to specialist heads when they exist (v0.6.0+).
 
 **Open questions.**
 
 - Should `kind` be exclusive (one label) or distributional (probability over kinds)? Recommend: distributional via `alternatives` — graceful failure on ambiguous cases.
-- Specialist heads vs single multi-purpose encoder? Recommend: single encoder for v1; revisit when there's enough labelled `intersection` / `po_box` data to justify specialization.
+- Specialist heads vs single multi-purpose encoder? Recommend: single encoder for v1; revisit when there's enough labeled `intersection` / `po_box` data to justify specialization.
 
 ## Stage 2.7 — Phrase grouper
 
@@ -272,7 +272,7 @@ Per "possibilities not constraints", the grouper emits overlapping proposals fre
 
 ## Stage 3 — Token classify
 
-**Purpose.** Per-token BIO labelling. The current Mailwoman model (`@mailwoman/neural` + `@mailwoman/neural-weights-*`).
+**Purpose.** Per-token BIO labeling. The current Mailwoman model (`@mailwoman/neural` + `@mailwoman/neural-weights-*`).
 
 **Interface.** The `Classifier` interface from [`INTERFACES.md`](./INTERFACES.mdx), with `QueryShape` and `LocaleHint` added to `ClassifierContext`:
 

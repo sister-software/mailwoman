@@ -64,7 +64,7 @@ node scripts/corpus-stats.mjs
 - **Character-offset aligned** — labels track the raw string, not the
   normalized form, so the model learns real input distributions.
 - **Source-homogeneous subsets** — each training-data subset comes from one source, ordered by
-  type, so eval splits are honest (no bleed between train and held-out).
+  type, so eval splits are clean (no bleed between train and held-out).
 
 ## Related
 

@@ -1,6 +1,6 @@
 # Component Schema
 
-This document defines the canonical `ComponentTag` union. It is the single source of truth.
+This document defines the canonical `ComponentTag` union. Where another document disagrees, this one wins.
 
 **Rule:** any change to this file requires:
 
@@ -108,7 +108,7 @@ the eval floor on a convention disagreement, not a model regression. On v0.1.3 t
 | `building_number` | JP gō (号)                          | `1号`                  |
 | `building_name`   | JP named building (often in romaji) | `Tokyo Building`       |
 
-**Activation status (CJK Phase 2, 2026-07-29):** the JP tags are live in the training stack as the `stage3-jp` label set (`corpus-python labels.py`, 47 BIO labels = STAGE3 + these seven) — the JP CHAR model's head vocabulary. The Latin model stays on STAGE3 and never emits them. Per the encoder-design D4 rule, COMPACT numbers (`2-3-16`) remain whole-span `house_number`; `block`/`sub_block`/`building_number` label the kanji-designator long form (`2丁目3番16号`) only. The `componentsSupported` field on `LocaleProfile` is how the system knows which tags a locale actually uses; `ja-JP` declares these seven + `house_number`/`country`/`postcode`.
+**Activation status (CJK Phase 2, 2026-07-29):** the JP tags are live in the training stack as the `stage3-jp` label set (`corpus-python labels.py`, 47 BIO labels = STAGE3 + these seven) — the JP CHAR model's head vocabulary. The Latin model stays on STAGE3 and never emits them. Per the encoder-design D4 rule, COMPACT numbers (`2-3-16`) remain whole-span `house_number`; `block`/`sub_block`/`building_number` label the kanji-designator long form (`2丁目3番16号`) only. The `componentsSupported` field on `LocaleProfile` is how the system knows which tags a locale uses; `ja-JP` declares these seven + `house_number`/`country`/`postcode`.
 
 ## BIO labeling
 

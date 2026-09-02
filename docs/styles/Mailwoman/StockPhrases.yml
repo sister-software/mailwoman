@@ -7,6 +7,12 @@
 ## is stripped by Vale before linting, and the `(^source-of-truth:.*)` entry in
 ## .vale.ini's TokenIgnores is a defensive backstop for that case.
 ##
+## `\snames the\s` MOVED to MailwomanChat/ChatStockForms.yml. It fires on published prose as a
+## plain, precise verb — "the key names the reduction rather than the raw column", "every reading
+## names the one it answered under" — and, worse, it forbade the remedy AmbiguousShorthand's own
+## message prescribes ("name the concrete thing"). One rule must not ban what another requires.
+## The chat register still refuses it, which is where the filler actually occurs.
+##
 ## The bottom four tokens are the ease-claim cluster the docs-reorg field
 ## survey turned up in marketing and quickstart copy ("Creating a new map is
 ## as simple as making a POST request"; "drag and drop your files onto the
@@ -38,7 +44,6 @@ tokens:
   - source of truth
   - are real and worth
   - is real and worth
-  - \snames the\s
   - in the name
   - worth spelling\s
   - as simple as

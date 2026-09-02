@@ -3,7 +3,7 @@
 > **A magnitude never carries its own absence.**
 
 When `0` means both "we don't know" and "we measured zero", no consumer can tell them apart — and
-both readings look like a number, so nothing errors, nothing logs, and the lever just quietly does
+both readings look like a number, so nothing errors, nothing logs, and the mechanism does
 nothing. This page is the invariant and the audit behind it.
 
 The operator named this after it bit twice in one day. That is what promotes a coincidence to a bug
@@ -52,7 +52,7 @@ confidence: number
 So `confidence: 0` means **either**:
 
 - `27` is not a postcode at all, **or**
-- `75008` absolutely is a postcode, and it exists in so many countries that the posterior is uniform.
+- `75008` absolutely is a postcode, and it exists in most countries that the posterior is uniform.
 
 Those are opposite claims. The first says "ignore this token"; the second says "this IS a postcode,
 just don't trust the country."

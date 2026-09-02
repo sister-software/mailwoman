@@ -31,7 +31,7 @@ evidence is computed over projections.**
 | `county`, `macrocounty`                                                          | `subregion` (US); **`region` for IE-style formats**             | Ireland writes county as an address line ("Co. Kerry") — a county census under IE contexts is the same conditional nudge GB's dep-loc got.                                                                                                        |
 | `country`, `nation`, `dependency`, `disputed`                                    | `country`                                                       | `dependency` covers crown dependencies (Isle of Man, Faroes-adjacent forms) — country-channel surface coverage, not new grammar.                                                                                                                  |
 | `postalcode`                                                                     | `postcode`                                                      | Shipped: the postcode-anchor channel is this pattern's first production instance.                                                                                                                                                                 |
-| `venue`                                                                          | `venue`                                                         | Venue-density per parent (poi.db can answer it) — venue-led parse likelihood by neighbourhood of the hierarchy.                                                                                                                                   |
+| `venue`                                                                          | `venue`                                                         | Venue-density per parent (poi.db can answer it) — venue-led parse likelihood by `neighbourhood` of the hierarchy.                                                                                                                                 |
 | `intersection`, `address`                                                        | — (structurally multi-span; deliberately null)                  | Neither projects onto a single tag — an intersection is `intersection_a` + `intersection_b`, and an address is a whole record. Both are `null` in `PLACETYPE_PROJECTION`. Consumed by the kind-classifier and the resolver's address-point tiers. |
 | `building`, `campus`, `wing`, `concourse`, `arcade`, `enclosure`, `installation` | `venue` (building, campus) / `unit` (the interior subdivisions) | The sub-venue census: "does this venue-parent have wing/concourse children?" is the airport-terminal / campus parsing nudge.                                                                                                                      |
 | `metroarea`, `marketarea`, `postalregion`, `timezone`                            | — (context only)                                                | Conditioning features and annotation surfaces; never emitted spans.                                                                                                                                                                               |
@@ -45,7 +45,7 @@ logit bias at decode time. Its three-way ablation is the composition proof (0/69
 model-alone and index-alone; 69/69 together).
 
 The general form is the **placetype census**: per gazetteer node, the distribution of its
-children's _projected_ tags ("this parent: 5 borough-children, 90 neighbourhoods, 0 dependent
+children's _projected_ tags ("this parent: 5 borough-children, 90 `neighbourhood` rows, 0 dependent
 localities"). That turns a globally-rare tag into a conditionally-common one exactly where it
 should be — `dependent_locality`'s global prior is tiny, its prior _given this subtree_ is large.
 
@@ -61,11 +61,11 @@ What the offline probe measured, and what it did not:
 - A census hit is **real conditional evidence**. Of GB's 16,987 distinct locality-class surfaces,
   33.2% carry any dependent-locality child — so a hit rules out two thirds of the parent
   population — and against PPD post towns (25.7M rows, a source the census never read) **74.3% of
-  rows** land in a covered town, 77.5% among rows that actually carry a dependent locality.
+  rows** land in a covered town, 77.5% among rows that carry a dependent locality.
 - The complementary measurement is about the pair index: it resolves **11.6%** of WOF's 22,843 GB
   dependent-locality links. The long tail is most of the space, and it is what the census is for.
 - **The census is parent-scoped and cannot do span-level work.** On the 56-row law-1 confound
-  board — directional neighbourhood surfaces that open venue names — every row shares the London
+  board — directional `neighbourhood` surfaces that open venue names — every row shares the London
   parent with the true positives, so the census has dependent-locality mass on 100% of them. A
   census bias alone would lift the venue span exactly as much as the real dependent locality. This
   is the artifact's ceiling, not a tuning problem.
@@ -96,7 +96,7 @@ express — is structurally outside the census's parent vocabulary today. A cali
 reads only GB traces will not see that. (Re-measured on the post-rebuild gazetteer, 2026-08-05: GB
 5,577 nodes / 136,675 bytes / 33,936 links; US 7,532 nodes / 164,764 bytes / 123,909 links.)
 
-Why the census does not simply become more pair entries: a pair entry _asserts_ a surface is a
+Why the census does not become more pair entries: a pair entry _asserts_ a surface is a
 dependent locality, so each batch needs a venue-confound board before it ships. A census node
 asserts nothing about any surface — it can only tilt a reading the model already entertains under a
 parent it already identified. That is what makes it the safe carrier for a tail no batch-by-batch
@@ -145,7 +145,7 @@ measurements, in the order that determines the result:
    retrained into the shipped lineage.
 3. **So GB does not emit because the tag is alive there — it emits because an artifact clears a
    uniform deficit.** A US pair index built from WOF (49,033 pairs; `borough` admitted as a parent
-   placetype, since WOF parents US neighbourhoods to the locality rather than the borough) makes
+   placetype, since WOF parents US `neighbourhood` rows to the locality rather than the borough) makes
    the US behave exactly like GB: `123 Main St, Park Slope, Brooklyn, NY 11215` goes from
    `locality=Park Slope` with **"Brooklyn" silently dropped** to `dependent_locality=Park Slope,
 locality=Brooklyn`. Gauntlet unchanged, 0/60 venue-confound false positives, 60/60 tag-correct
@@ -159,17 +159,17 @@ not a question about the model.
 ## Coverage boundaries measured so far (2026-08-01 probe set)
 
 The GB pair source (PPD) is England+Wales and leaves CITY empty for London, so London
-neighbourhoods, estates, Northern Ireland and the Republic all sat outside the shipped index by the
+`neighbourhood` rows, estates, Northern Ireland and the Republic all sat outside the shipped index by the
 source's own construction. **Great Britain is now covered end to end**, entirely from open data:
 
-| rung     | source                                  | pairs      |
-| -------- | --------------------------------------- | ---------- |
-| baseline | HM Land Registry PPD                    | 19,209     |
-| R2       | WOF boroughs                            | 15         |
-| R3 / R4b | ONSPD wards + WOF London neighbourhoods | 815        |
-| R7       | WOF Northern Ireland                    | 87         |
-| R8       | WOF Scotland, Wales, England            | 10,708     |
-|          | **GB total, cross-checked**             | **30,834** |
+| rung     | source                                        | pairs      |
+| -------- | --------------------------------------------- | ---------- |
+| baseline | HM Land Registry PPD                          | 19,209     |
+| R2       | WOF boroughs                                  | 15         |
+| R3 / R4b | ONSPD wards + WOF London `neighbourhood` rows | 815        |
+| R7       | WOF Northern Ireland                          | 87         |
+| R8       | WOF Scotland, Wales, England                  | 10,708     |
+|          | **GB total, cross-checked**                   | **30,834** |
 
 Every increment after the baseline cleared a venue-confound board before shipping, and no board has
 ever exceeded 0 false positives.
@@ -177,7 +177,7 @@ ever exceeded 0 false positives.
 **Northern Ireland's blocker turned out not to exist.** It was deferred for months on "the pair
 parent needs post towns" — a licensed Royal Mail table — which was reasoning from GB's _source
 shape_ (PPD's parent column happens to be the post town) rather than from what a pair requires.
-WOF parents NI neighbourhoods to Belfast, Newtownabbey, Londonderry and Lisburn, which _are_ those
+WOF parents NI `neighbourhood` rows to Belfast, Newtownabbey, Londonderry and Lisburn, which _are_ those
 post towns. Worth re-reading any deferred blocker after a premise moves.
 
 Two register-vs-writer distinctions the GB rungs had to make explicit, both general:
@@ -206,7 +206,7 @@ overlay declaring `baseWeights`. Once that was understood the rest was mechanica
 | NZ     |       — | LINZ         | shipped earlier                                       |
 
 **Ireland is the only one left, and it is the only one ever blocked on something other than
-mechanics**: its sources (Tailte Éireann, logainm) need a licence survey before anything can be
+mechanics**: its sources (Tailte Éireann, logainm) need a license survey before anything can be
 harvested.
 
 Three things the non-GB instances established that the GB arc never had to face:

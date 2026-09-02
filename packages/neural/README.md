@@ -83,11 +83,11 @@ export { normalizeCase, type CaseNormalizeResult } from "./case-normalize.js"
 
 ## PFX1 — what a partial postcode asserts
 
-`postcode-prefix-index.ts` is the reader and writer for PFX1, a sealed binary index keyed by postcode **prefix**: a GB outward code, or a US 3-digit sectional centre. A node carries the admin ancestry that prefix asserts, the number of units observed under it, and — when the source can place it — a centroid.
+`postcode-prefix-index.ts` is the reader and writer for PFX1, a sealed binary index keyed by postcode **prefix**: a GB outward code, or a US 3-digit sectional center. A node carries the admin ancestry that prefix asserts, the number of units observed under it, and — when the source can place it — a centroid.
 
 The coordinate is optional and its absence is meaningful. A node that cannot be placed carries ancestry and no `lat`/`lon`, never `0,0`.
 
-`radiusP95Km` is **mandatory beside a coordinate**, and that is the format's most required rule. A GB outward district and a US sectional centre are both "a prefix with a centroid" and they differ by more than an order of magnitude — GB outward has a 3.24 km median p95 radius, the US SCF tier 53.56 km. A consumer reading a coordinate without its radius cannot tell them apart, and one of the two is nearly worthless for the use it would be put to.
+`radiusP95Km` is **mandatory beside a coordinate**, and that is the format's most required rule. A GB outward district and a US sectional center are both "a prefix with a centroid" and they differ by more than an order of magnitude — GB outward has a 3.24 km median p95 radius, the US SCF tier 53.56 km. A consumer reading a coordinate without its radius cannot tell them apart, and one of the two is nearly worthless for the use it would be put to.
 
 Two indexes ship today:
 
@@ -96,7 +96,7 @@ Two indexes ship today:
 | `gb-esw` (OS Code-Point Open) | 2,863 outward |              3.24 km | country → constituent country           |
 | `us` (WOF + point-in-polygon) |       915 SCF |             53.56 km | country → region, on **unanimity** only |
 
-The US arm asserts a region only when every clean unit under the prefix lands in the same one. Twenty-five sectional centres span two or three states and assert the country alone — the same rule GB uses for its border-straddling postcode areas.
+The US arm asserts a region only when every clean unit under the prefix lands in the same one. Twenty-five sectional centers span two or three states and assert the country alone — the same rule GB uses for its border-straddling postcode areas.
 
 The layout is specified normatively in [`pfx1.ksy`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/pfx1.ksy), and a conformance test walks the serializer's bytes against that document rather than against itself.
 

@@ -35,7 +35,7 @@ export const LAYER_GROUP_PATTERNS: ReadonlyArray<{ name: string; match: RegExp }
 	// Address-coverage fog overlay (#coverage). Two separate groups so each fog reading gets its own
 	// checkbox — turn on "optimistic" (looks covered, reveals gaps on zoom) OR "honest" (true fraction).
 	{ name: "Coverage · optimistic fog", match: /^coverage-opt/ },
-	{ name: "Coverage · honest fog", match: /^coverage-honest/ },
+	{ name: "Coverage · measured fog", match: /^coverage-honest/ },
 	// Race-by-dot-density overlay (#race-dots). Per-category default-off layers → one checkbox each, so
 	// you can show the full mosaic or isolate a single group's geography.
 	{ name: "Race · White", match: /^race-dots-white/ },

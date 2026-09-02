@@ -84,7 +84,7 @@ class — see the Calibrate section.
 
 Pick one authoritative **open** register per country and extract `(child, parent)` tuples.
 
-| Country | Register             | Licence   | Tuple source                             |
+| Country | Register             | License   | Tuple source                             |
 | ------- | -------------------- | --------- | ---------------------------------------- |
 | GB      | HM Land Registry PPD | OGL v3.0  | `CITY` (child) under `DISTRICT` (parent) |
 | NZ      | LINZ → OpenAddresses | CC-BY 4.0 | suburb (child) under post town (parent)  |
@@ -157,8 +157,7 @@ The shipped chain is `probeMode: "auto"` (default), a strictly ordered fall-thro
 1. **Segment path** — engages when the input splits into ≥2 comma-delimited segments. A candidate is
    an ENTIRE comma-delimited segment folded as one unit, so `North Cadbury Village Stores Ltd` is
    one 5-word key that never equals the census's 2-word `north cadbury`. This is what defeats the
-   venue-confound class structurally: a real place fires only when the input actually
-   comma-delimits it as its own field. This path also strips a same-field trailing postcode from a
+   venue-confound class structurally: a real place fires only when the input comma-delimits it as its own field. This path also strips a same-field trailing postcode from a
    parent-candidate key (#1308 — `…Henbury, Macclesfield SK11 9PD` folds to `macclesfield`, not
    `macclesfield sk11 9pd`, so the bare parent still matches).
 2. **Anchored-adjacent path** — engages only on comma-free input (the population segment mode is
@@ -196,7 +195,7 @@ Calibrate δ against the **shipped** model (v385), not a training checkpoint. Sw
 - **emit / tag-correct recall** on the golden dependent-locality board,
 - **golden no-DL FP** (a board with no dependent locality — must stay 0 at every δ),
 - **venue-confound FP** on REAL register-derived venue names (see step 5),
-- and read the trajectory, not just the endpoint.
+- and read the trajectory, not the endpoint alone.
 
 The GB sweep on the untouched v385:
 
@@ -212,7 +211,7 @@ classifier deficit for the tag is large but uniform (~7.0 logits mean), so a δ 
 the whole board at once — δ=10 saturates recall. NZ replicated the shape (gap mean 7.8 logits, same
 δ=10 works). Treat δ≈10 as the expected landing zone for a fresh country; a wildly different optimum
 is a signal to re-check the deficit-uniformity premise (step-0), not to keep sweeping. FP grows
-**monotonically** with δ (roughly 6–10× from δ=3 to δ=7), so δ is a genuine recall/FP dial — the
+**monotonically** with δ (roughly 6–10× from δ=3 to δ=7), so δ is a working recall/FP dial — the
 smallest δ clearing the recall bar is required, and the trade lives entirely in the
 venue-confound floor.
 
@@ -285,7 +284,7 @@ all of them, and a missed one ships a broken or inert overlay:
 
 - **`release.config.json`** — add the locale to `locales`, and add a `softFeed.pairIndexByCountry.<cc>`
   entry `{ "source": "<csv-under-dataRoot>", "delta": <d>, "transitionBeta?": <b> }`. This is the one
-  source of truth `copy-weights.ts` reads to materialize the binary at publish time. (Note `source`
+  the file `copy-weights.ts` reads to materialize the binary at publish time. (Note `source`
   is relative to `weights.dataRoot`, NOT `dataRoot/wof` like `postcodeDBByCountry`.)
 - **`.release-it.json`** — add `neural-weights-en-<cc>` to the workspace publish list.
 - **root `package.json`** — the `workspaces` glob must cover the new directory (a bare-rule
@@ -375,7 +374,7 @@ The invariants (§5 of the road-to-v8 roadmap) plus what the arc added:
   postcode in the same comma-field as the post town with no comma between them (`…Plimmerton,
 Porirua 5026`). Strip a trailing postcode-shaped run from a parent-candidate segment key (per the
   header country's codex shape) before probing — segment path only; the anchored path already
-  anchors left of the whole postcode span. Only a trailing run, never a segment that IS just a
+  anchors left of the whole postcode span. Only a trailing run, never a segment that IS only a
   postcode, and only for a country with a known codex shape (else byte-stable).
 - **Provenance is loud or it lies.** Per-country self-check probes (#1283), the `serializePairIndex`
   duplicate throw, the header md5s, and the freshness guard all exist because a reassuring-looking

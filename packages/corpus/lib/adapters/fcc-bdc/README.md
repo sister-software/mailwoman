@@ -8,7 +8,7 @@ first member of Phase 1.6's "adversarial sources" class.
 The Mailwoman corpus is dominated by gazetteer rows (WOF, BAN) and
 TIGER street-name segments — clean, canonicalized data. A model trained
 exclusively on that distribution learns to parse _well-formed_ addresses
-but stumbles on the chaos humans actually send geocoders.
+but stumbles on the chaos humans send geocoders.
 
 The FCC's Broadband Data Collection program publishes the Broadband
 Serviceable Location (BSL) Fabric — ~120M US addresses with their

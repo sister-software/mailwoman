@@ -95,7 +95,7 @@ The split between `neural/` (runtime) and `neural-weights-*/` (data) is delibera
 
 ### `ComponentTag`
 
-The canonical union of address component types. Defined in [`reference/SCHEMA.md`](./SCHEMA.mdx). Single source of truth. Adding a tag requires a written rationale.
+The canonical union of address component types. Defined in [`reference/SCHEMA.md`](./SCHEMA.mdx). Single canonical definition. Adding a tag requires a written rationale.
 
 ### `ClassificationProposal`
 
@@ -278,7 +278,7 @@ None of these are Phase 0–3 scope. Filed for Phase 4 territory or beyond. spaC
 | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | Release notes template (label scheme table + transformer config block + per-component F1 + compatibility matrix)     | spaCy's GitHub release format for models like [ja_core_news_trf-3.7.0](https://github.com/explosion/spacy-models/releases/tag/ja_core_news_trf-3.7.0) | Phase 3 (#11) `@mailwoman/neural-weights-*` package READMEs + model card JSON           |
 | Eval reporting conventions (per-component P/R/F1 + confusion matrix layout, `displaCy`-style visualization patterns) | spaCy benchmark reports                                                                                                                               | Phase 2 (#10) eval reports                                                              |
-| "Training described entirely by a config file, code is just the runner" hygiene                                      | spacy.cfg pattern                                                                                                                                     | `corpus-python/train.py` config shape — adopt the pattern without taking spaCy as a dep |
+| "Training described entirely by a config file, code is the runner" hygiene                                           | spacy.cfg pattern                                                                                                                                     | `corpus-python/train.py` config shape — adopt the pattern without taking spaCy as a dep |
 | Vintage / language-model-version conventions                                                                         | spaCy's `ja_core_news_trf-3.7.0` naming (`<lang>_<domain>_<size>_<framework>-<version>`)                                                              | Weights package versioning + ONNX file naming                                           |
 
 **Optional Phase 3 baseline comparison**: run a fine-tuned `xx_ent_wiki_sm` or `en_core_web_trf` against the same golden set, report comparison numbers in the model card. General NER tagging `LOC` / `ORG` where we expect `locality` / `venue` is informative — shows the address-specific gain over general NER. Operator-time, ~1 hour for a fair baseline run. Not in the install dependency tree; one-off comparison only.
@@ -333,7 +333,7 @@ The metric per iteration is whether the artifact is independently shippable and 
 
 - **Classifier-as-plugin** preserves Mailwoman's existing extensibility. New rule classifiers, new neural variants, future learned rankers all conform to the same interface.
 - **Per-component policy** allows incremental rollout without big-bang risk. A regression in neural `street` parsing doesn't affect `country` parsing.
-- **Locale profiles** prevent the architecture from being Anglocentric by default. If the abstractions can't express a non-Anglo locale cleanly, we fix the abstractions, not the locale.
+- **Locale profiles** prevent the architecture from being Anglocentric by default. If the abstractions can't express a non-Anglo locale, we fix the abstractions, not the locale.
 - **Separate weights packages** keep npm install times sane and let users opt in to languages they need.
 - **Training in Python, inference in TS** uses each ecosystem for what it's best at and avoids the dual-language maintenance tax in production code.
 

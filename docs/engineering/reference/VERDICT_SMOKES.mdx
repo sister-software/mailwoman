@@ -18,7 +18,7 @@ Promoted to the full 50K run, **`cw-only` diverged at step 2250** — `macro_f1`
 
 Why the smoke missed it: the smoke ran cosine LR decay over `warmup_steps=1000` → `max_steps=3000`. By step 2250 the cosine schedule had decayed the learning rate to roughly `0.5 * (1 + cos(π * 0.625))` ≈ **30% of peak**, and by step 2750 to ~6%. The destabilizing dynamics needed sustained peak LR to manifest, and the cosine tail collapsed the LR before the loss curve made the divergence visible.
 
-The smoke was reporting "this recipe is stable at this hparam slice" when what it had actually demonstrated was "this recipe is stable when LR is decaying off". Two different statements; the smoke conflated them.
+The smoke was reporting "this recipe is stable at this hparam slice" when what it had demonstrated was "this recipe is stable when LR is decaying off". Two different statements; the smoke conflated them.
 
 This cost a 6h rented-GPU full-train cycle.
 
@@ -51,7 +51,7 @@ Cosine schedule, but `max_steps >= 10000` so the cosine tail does not dominate t
 | Pre-flight integration check (wiring, dtype, sampler) — not a verdict      | Either; constant-LR is faster                           |
 | Reproducing a known divergence to characterize it                          | **A — constant-LR**                                     |
 
-When in doubt: pick constant-LR. The false-positive cost (a stable recipe gets flagged at sustained peak LR when it would actually survive cosine decay) is small — you just promote it to the full run anyway. The false-negative cost (a divergent recipe passes the smoke and burns a full run) is what the v0.4.0 campaign paid.
+When in doubt: pick constant-LR. The false-positive cost (a stable recipe gets flagged at sustained peak LR when it would survive cosine decay) is small — you promote it to the full run anyway. The false-negative cost (a divergent recipe passes the smoke and burns a full run) is what the v0.4.0 campaign paid.
 
 ## How to invoke
 
@@ -97,7 +97,7 @@ Three v0.4.0 diagnostic tools that should run against every v0.5.0 smoke / full-
       --config corpus-python/src/mailwoman_train/configs/<recipe>.yaml
   ```
 
-- **`diagnose_regression.py`** ([`corpus-python/scripts/diagnose_regression.py`](https://github.com/sister-software/mailwoman/blob/main/corpus-python/scripts/diagnose_regression.py)) — post-eval FP/FN bucketing (`non_latin` / `case_only` / `bio_slip` / `empty_pred` / `num_confused` / `other`). Use it on every eval pass, not just post-hoc — bucket distributions are how recipe choices get debugged. The v0.4.0 retrospective entry documents reference distributions for calibration.
+- **`diagnose_regression.py`** ([`corpus-python/scripts/diagnose_regression.py`](https://github.com/sister-software/mailwoman/blob/main/corpus-python/scripts/diagnose_regression.py)) — post-eval FP/FN bucketing (`non_latin` / `case_only` / `bio_slip` / `empty_pred` / `num_confused` / `other`). Use it on every eval pass, not post-hoc — bucket distributions are how recipe choices get debugged alone. The v0.4.0 retrospective entry documents reference distributions for calibration.
 
 - **Decoder span-trim** (commit [`c72ab4c`](https://github.com/sister-software/mailwoman/commit/c72ab4c), `core/decoder/build-tree.ts:58`) — `trimBoundary(raw, start, end)` shrinks BIO span bounds past leading / trailing non-`/[\p{L}\p{N}]/u` characters. No retrain required; covers the `bio_slip` long tail the phrase grouper (Thread E) hasn't been designed to catch yet.
 
@@ -107,7 +107,7 @@ Two hard-won additions from the v0.5.0 C-train bisect campaign. Both were footgu
 
 ### Smoke effective batch must match the full run
 
-The v0.5.0 ablation-smoke at `batch_size=8, grad_accum=1` (eff_batch=8) passed cleanly — loss descended, val_macro_f1 climbed, no divergence through 1500 steps. The full train at `batch_size=16, grad_accum=8` (eff_batch=128) diverged at step 800.
+The v0.5.0 ablation-smoke at `batch_size=8, grad_accum=1` (eff_batch=8) passed without error — loss descended, val_macro_f1 climbed, no divergence through 1500 steps. The full train at `batch_size=16, grad_accum=8` (eff_batch=128) diverged at step 800.
 
 **The recipe's stability is batch-geometry-dependent.** A smoke that doesn't reproduce the full-run's gradient noise characteristics is a smoke that can't detect this class of failure. The gradient noise at eff*batch=8 is ~4× larger per-step than at eff_batch=128 (more stochastic), which paradoxically \_stabilises* training against the curvature-conflict instability (the model can't settle deep enough into the basin where the conflict manifests).
 

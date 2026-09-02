@@ -80,7 +80,7 @@ metric on an anchor-trained model is systematically misleading. Construct the
 scorer through `@mailwoman/neural`'s `createScorer` (the canonical
 `ProductionScorer`), which reads the bundle's `requires`/channel contract and
 **fails closed** if a declared channel isn't fed. Do not hand-wire the raw ONNX
-session with the anchor input zero-filled. Every honest eval here is
+session with the anchor input zero-filled. Every eval here is
 **anchor-on**.
 
 ## Evaluation
@@ -92,7 +92,7 @@ neural front-end out-parses the rules baseline it replaces on locality-match.
 
 The two `model-index` entries above (postcode ≈ 0.99 F1, house_number ≈ 0.946 F1)
 are the multi-locale model's strong FR tags, **anchor-on, canonical order**. Two
-honest caveats on the FR numbers:
+known gaps on the FR numbers:
 
 - **FR `region` is a known open gap** — F1 is low and tracked as an outstanding
   issue; do not expect region-level accuracy on FR comparable to en-us.

@@ -50,7 +50,7 @@ For maximum licensing safety on published model weights, restrict to US-federal 
 
 Everything below this section is **corpus** material — address _strings_ and name/address pairs to train the BIO parser. This section is the other half: the **gazetteer** the resolver and the postcode anchor consume — the datasets that turn a parsed span into a place + coordinate. Different shopping list, and it's where WOF's gaps bite (see `resolver-wof-sqlite/POSTCODE-ANCHOR.md` and the 2026-06-03 postcode-anchor postmortem).
 
-WOF is an excellent **admin** gazetteer (the in-DB hierarchy + ancestors table is our Elasticsearch-free differentiator), and it's **CC0**, which is half of why it came naturally. But it was never complete for every token type: [no street node](../../concepts/wof-hierarchy-gap.mdx) (neighbourhood → address directly), thin and uneven postcode geometry outside a few countries (US/NL carry own coords; DE ~66% placeable via ancestor-borrow; ES/IT orphan-heavy and effectively unplaceable), and limited POI/venue coverage. The canonical fix is the rest of the Pelias four-layer stack — **WOF** (admin) + **OpenAddresses** (addresses/postcodes) + **OpenStreetMap** (streets/POIs) + **GeoNames** (places/postcodes) — supplemented per gap.
+WOF is an excellent **admin** gazetteer (the in-DB hierarchy + ancestors table is our Elasticsearch-free differentiator), and it's **CC0**, which is half of why it came naturally. But it was never complete for every token type: [no street node](../../concepts/wof-hierarchy-gap.mdx) (`neighbourhood` → address directly), thin and uneven postcode geometry outside a few countries (US/NL carry own coords; DE ~66% placeable via ancestor-borrow; ES/IT orphan-heavy and effectively unplaceable), and limited POI/venue coverage. The canonical fix is the rest of the Pelias four-layer stack — **WOF** (admin) + **OpenAddresses** (addresses/postcodes) + **OpenStreetMap** (streets/POIs) + **GeoNames** (places/postcodes) — supplemented per gap.
 
 ### By gap layer
 
@@ -118,7 +118,7 @@ Attach supplemental data as **attributes on WOF-keyed entities** (a centroid her
 - **Florida** — FLDOE Master School ID (MSID) — https://eds.fldoe.org/EDS/MasterSchoolID/ — Queryable per-school; addresses, administration, accountability sections. NWRDC bulk file requires district access.
 - **Georgia** — GOSA Downloadable Data Repository — https://download.gosa.ga.gov/ — Bulk district/school spreadsheet downloads. GaDOE Facilities DB UI: https://app3.doe.k12.ga.us/ows-bin/owa/main_pack_fcl099.entry_form.
 - **Hawaii** — Hawaii DOE School List (Excel) — https://www.hawaiipublicschools.org/DOE%20Forms/SchoolList.xlsx — Direct XLSX bulk download maintained by HIDOE. UI: https://hawaiipublicschools.org/enrolling-in-school/find-your-school/.
-- **Idaho** — Idaho SDE Schools / Districts — https://www.sde.idaho.gov/school-districts/ — Alphabetical district list. No clearly published single bulk download from SDE; consider NCES CCD for bulk.
+- **Idaho** — Idaho SDE Schools / Districts — https://www.sde.idaho.gov/school-districts/ — Alphabetical district list. No published single bulk download from SDE; consider NCES CCD for bulk.
 - **Illinois** — ISBE Entity Profile System (EPS) — https://www.isbe.net/Pages/Entity-Profile-System.aspx — Bulk Excel workbook of all entity records updated nightly; public. Lookup UI: http://webprod1.isbe.net/isbedir/default.aspx.
 - **Indiana** — IDOE Data Center & Reports — https://www.in.gov/doe/it/data-center-and-reports/ — Downloadable datasets. ESRI shapefile of schools available via state GIS at https://maps.indiana.edu/previewMaps/Infrastructure/Schools_IDOE.html.
 - **Iowa** — Iowa DOE Directories — https://educate.iowa.gov/directories — Annual XLSX directories: public district, public building, nonpublic building.
@@ -126,7 +126,7 @@ Attach supplemental data as **attributes on WOF-keyed entities** (a centroid her
 - **Kentucky** — Open House District & School Directory — https://openhouse.education.ky.gov/Home/Index — Searchable; Principals & Schools export at https://openhouse.education.ky.gov/Principals. SDCI: https://applications.education.ky.gov/sdci/.
 - **Louisiana** — LDOE School Finder — https://louisianaschools.com/ — Search UI; bulk-download links limited. Sponsor Site System background: https://leads13.doe.louisiana.gov/lug/SPS/SPS.htm. Investigate https://doe.louisiana.gov/ data library for SPS exports.
 - **Maine** — Maine DOE — https://www.maine.gov/doe/ — Site has printable directories; no obvious bulk download. Investigate manually for current XLSX/CSV.
-- **Maryland** — MSDE Directory — https://marylandpublicschools.org/about/pages/directory.aspx — Online directory; bulk download not obviously published from MSDE. Maryland State Archives list by county: https://msa.maryland.gov/msa/mdmanual/01glance/html/edschools.html.
+- **Maryland** — MSDE Directory — https://marylandpublicschools.org/about/pages/directory.aspx — Online directory; bulk download not published from MSDE. Maryland State Archives list by county: https://msa.maryland.gov/msa/mdmanual/01glance/html/edschools.html.
 - **Massachusetts** — DESE School & District Profiles — https://profiles.doe.mass.edu/ — Directory + exportable data reports. DESE dataset directory at https://www.mass.gov/info-details/dese-directory-of-datasets-and-reports. MassGIS schools dataset: https://www.mass.gov/info-details/massgis-data-massachusetts-schools-pre-k-through-high-school.
 - **Michigan** — CEPI Educational Entity Master (EEM) — https://cepi.state.mi.us/eem/ — Public bulk datasets at https://cepi.state.mi.us/eem/publicdatasets.aspx. Customized list/export available.
 - **Minnesota** — MDE Districts, Schools & Educators — https://education.mn.gov/MDE/DSE/MDE074620 — Site Verification system at https://education.mn.gov/MDE/dse/datasub/SiteVerif/. MARSS Appendix A lists all districts.
@@ -134,13 +134,13 @@ Attach supplemental data as **attributes on WOF-keyed entities** (a centroid her
 - **Missouri** — DESE School Directory Data Downloads — https://dese.mo.gov/school-directory/data-downloads — District + building directory files refreshed weekly, multiple formats.
 - **Montana** — OPI Montana Schools Directory — https://opi.mt.gov/Leadership/Management-Operations/Montana-Schools-Directory — Directory page with help link; downloadable directory available.
 - **Nebraska** — NDE Education Directory — https://www.education.ne.gov/dataservices/education-directory/ — NDE Directory Search (query + lists/data files): https://educdirsrc.education.ne.gov/. Printed directory discontinued.
-- **Nevada** — NDE Schools and Districts — https://doe.nv.gov/Schools_Districts/ — Schools/Districts landing. Resource page: https://doe.nv.gov/school-and-district-information/resources. Bulk download not obviously published; query CCD or NDE directly.
+- **Nevada** — NDE Schools and Districts — https://doe.nv.gov/Schools_Districts/ — Schools/Districts landing. Resource page: https://doe.nv.gov/school-and-district-information/resources. Bulk download not published; query CCD or NDE directly.
 - **New Hampshire** — NH DOE Bureau of Education Statistics — https://www.education.nh.gov/who-we-are/division-of-educator-and-analytic-resources/bureau-of-education-statistics/schools-and-sau-information — Public, chartered, non-public school directories.
 - **New Jersey** — NJ School Directory — https://homeroom6.doe.state.nj.us/directory/ — Public + nonpublic directory. Data portal: https://www.nj.gov/education/doedata/.
 - **New Mexico** — NMPED Public Schools Directory — https://web.ped.nm.gov/new-mexico-public-schools-directory/ — Downloadable CSV opens in Excel/Sheets.
 - **New York** — NYSED SEDREF Public Reports — https://www.p12.nysed.gov/irs/schoolDirectory/ — Downloadable Excel/XLS reports of public, nonpublic, charter, BOCES, state-operated schools/districts. Landing: https://www.nysed.gov/content/directory-public-and-non-public-schools-and-administrators-new-york-state.
 - **North Carolina** — NC DPI Education Directory (EDDIE) — https://ncpublicschools.org/nceddirectory — Districts, schools, charters, special/federal, postsecondary with addresses + downloads.
-- **North Dakota** — NDDPI Districts/Schools — https://www.nd.gov/dpi/districtsschools — LEA/School directory MIS01/MIS02 framework. Bulk download not obviously linked from main page; investigate STARS reports.
+- **North Dakota** — NDDPI Districts/Schools — https://www.nd.gov/dpi/districtsschools — LEA/School directory MIS01/MIS02 framework. Bulk download not linked from main page; investigate STARS reports.
 - **Ohio** — Ohio Educational Directory System (OEDS) — https://education.ohio.gov/Topics/Data/Ohio-Educational-Directory-System-OEDS — Public org search + DataExtract at https://oeds.ode.state.oh.us/dataextract — Excel exports.
 - **Oklahoma** — OSDE State School Directory — https://oklahoma.gov/education/resources/state-school-directory.html — Excel/text/CSV bulk download by district or site. Also Open Data sets: https://data.ok.gov/dataset/oklahoma-public-school-site-directory.
 - **Oregon** — ODE Institution Identification — https://www.oregon.gov/ode/schools-and-districts/pages/institution-identification-school-names.aspx — CSV download of public schools. Institution Lookup with daily-extract Excel: https://www.ode.state.or.us/instid/.
@@ -150,7 +150,7 @@ Attach supplemental data as **attributes on WOF-keyed entities** (a centroid her
 - **South Dakota** — SD DOE Educational Directory — https://doe.sd.gov/ofm/edudir.aspx — Principal & School Info Excel list + Superintendent/Admin/District address list.
 - **Tennessee** — TN School Directory — https://tnschooldirectory.tnedu.gov/ — Excel download of all schools, districts, regions. Advanced search: https://tnschooldirectory.tnedu.gov/Advanced-Search/.
 - **Texas** — TEA AskTED — https://tealprod.tea.state.tx.us/tea.askted.web/Forms/Home.aspx — School/district directory; HTML/CSV/PDF reports through Reports & Directories menu. PDF Texas School Directory annually.
-- **Utah** — USBE Utah Schools / District Directory — https://schools.utah.gov/schooldistricts — Districts list. Data/Directories landing: https://schools.utah.gov/parent/dataschoollookupeducatorlookupcalendars. Single bulk CSV not obviously linked; investigate manually.
+- **Utah** — USBE Utah Schools / District Directory — https://schools.utah.gov/schooldistricts — Districts list. Data/Directories landing: https://schools.utah.gov/parent/dataschoollookupeducatorlookupcalendars. Single bulk CSV not linked; investigate manually.
 - **Vermont** — VT AOE Directories — https://education.vermont.gov/documents/directory-principals-by-school — Principals-by-school spreadsheet; independent schools PDF at https://education.vermont.gov/documents/independent-schools-directory; Vermont Education Dashboard Organizations: https://education.vermont.gov/data-and-reporting/vermont-education-dashboard/organizations.
 - **Virginia** — VDOE Virginia School Directories — https://www.doe.virginia.gov/about-vdoe/virginia-school-directories — Listings by division + region; staff listings by division.
 - **Washington** — OSPI Education Directory — https://eds.ospi.k12.wa.us/DirectoryEDS.aspx — School list: https://eds.ospi.k12.wa.us/schoollist.aspx. Note: Washington state law forbids commercial use of directory data.
@@ -169,7 +169,7 @@ Attach supplemental data as **attributes on WOF-keyed entities** (a centroid her
 - **Alabama** — APLS Find My Library — https://aplsws2.apls.state.al.us/find-my-library — Directory lookup + Library Listing PDF on APLS site.
 - **Alaska** — Alaska State Library — https://library.alaska.gov/ — State library home (no published bulk public-library directory file from APK obvious in search); rely on IMLS PLS for AK outlet addresses.
 - **Arizona** — AZ State Library Directory — https://azlibrary.gov/services/library-directory — Library directory portal of the AZ State Library, Archives & Public Records.
-- **Arkansas** — AR State Library Directory — https://library.arkansas.gov/services/arkansas-public-library-data/library-directory/ — Comprehensive public library directory grouped by city/county/system.
+- **Arkansas** — AR State Library Directory — https://library.arkansas.gov/services/arkansas-public-library-data/library-directory/ — Statewide public library directory grouped by city/county/system.
 - **California** — CA State Library Public Library Directories — https://www.library.ca.gov/services/to-libraries/library-directory/ — Headquarters Directory + Branch Directory (Excel files).
 - **Colorado** — Library Research Service (LRS) — https://www.lrs.org/ — LRS publishes CO public library statistics + directory (https://www.lrs.org/public/data/). CDE Public Libraries: https://www.cde.state.co.us/cdelib/publiclibraries.
 - **Connecticut** — CT State Library — https://portal.ct.gov/csl — CT Public Libraries Directory PDF published by Division of Library Development; help guide at https://libguides.ctstatelibrary.org/dld/help.
@@ -237,13 +237,13 @@ State-level public databases of licensed professionals (with practice/office add
 
 ### State unified license portals
 
-(Some states route many professions through a single search; per-profession entries below reference these where applicable.)
+(Some states route professions through a single search; per-profession entries below reference these where applicable.)
 
 - **California DCA License Search** — covers medical, nursing, real estate (separate ADRE), 150+ DCA professions — https://search.dca.ca.gov/
-- **Florida DBPR License Search** — covers real estate, contractors, many trades (health professions are separate at FL DOH MQA) — https://www.myfloridalicense.com/wl11.asp?mode=2&search=Name
+- **Florida DBPR License Search** — covers real estate, contractors and other trades (health professions are separate at FL DOH MQA) — https://www.myfloridalicense.com/wl11.asp?mode=2&search=Name
 - **Florida DOH MQA Search** — covers physicians, nurses, all health pros — https://mqa-internet.doh.state.fl.us/MQASearchServices/HealthCareProviders
 - **Utah DOPL License Lookup Verification** — covers medical, nursing, real estate (separate Division of RE), contractors — https://secure.utah.gov/llv/search/index.html
-- **Virginia DPOR License Lookup** — covers real estate, contractors, and many occupations (medical/nursing handled by VA DHP) — https://www.dpor.virginia.gov/LicenseLookup
+- **Virginia DPOR License Lookup** — covers real estate, contractors and other occupations (medical/nursing handled by VA DHP) — https://www.dpor.virginia.gov/LicenseLookup
 - **Virginia DHP License Lookup** — covers physicians, nurses, all health — https://dhp.virginiainteractive.org/Lookup
 - **Michigan LARA / MiPLUS** — covers medical, nursing, real estate, residential builders, and 26 health pros — https://www.michigan.gov/lara/i-need-to/find-or-verify-a-licensed-professional-or-business and https://val.apps.lara.state.mi.us/
 - **Alaska CBPL Professional License Search** — covers medical, nursing, real estate, contractors — https://www.commerce.alaska.gov/cbp/main/search/professional
@@ -252,7 +252,7 @@ State-level public databases of licensed professionals (with practice/office add
 - **Illinois IDFPR License Lookup** — covers medical, nursing, real estate, contractors — https://online-dfpr.micropact.com/lookup/licenselookup.aspx
 - **Indiana PLA License & Verification** — covers medical, nursing, real estate (no statewide contractor license) — https://secure.in.gov/apps/pla/search
 - **Iowa DIAL (Dept. of Inspections, Appeals & Licensing)** — covers medical, nursing, real estate, contractors — https://dial.iowa.gov/i-need/records
-- **Kansas License Verification Portal** — covers many professions — https://prolicenseverify.ks.gov/
+- **Kansas License Verification Portal** — covers professions across sectors — https://prolicenseverify.ks.gov/
 - **Maine PFR Licensee Search** — covers medical, real estate, residential contractors (nursing is separate at Maine BON) — https://www.maine.gov/pfr/consumer/licensee-search
 - **Maryland DLLR Licensing Queries** — covers real estate, MHIC contractors (medical/nursing separate) — https://labor.maryland.gov/pq/
 - **Massachusetts Check a License** — covers health pros, occupational boards, real estate, HIC contractors — https://www.mass.gov/how-to/check-an-occupational-board-license
@@ -263,11 +263,11 @@ State-level public databases of licensed professionals (with practice/office add
 - **New Hampshire OPLC License Lookup** — covers 54+ boards (medical, nursing, real estate, contractors limited) — https://www.oplc.nh.gov/license-lookup
 - **New Jersey DCA License Verification** — covers ~50 professions including medical, nursing, real estate — https://newjersey.mylicense.com/verification/
 - **New Mexico RLD Public Search** — covers medical, nursing, real estate, contractors (NM-PLUS) — https://nmrldlpi.my.site.com/bcd/s/rld-public-search
-- **Ohio eLicense** — covers Medical Board + many; OCILB + Commerce real estate on separate eLicense subsites — https://elicense.ohio.gov/oh_verifylicense
+- **Ohio eLicense** — covers Medical Board and others; OCILB + Commerce real estate on separate eLicense subsites — https://elicense.ohio.gov/oh_verifylicense
 - **Oregon (per-board portals; no single unified)** — see per profession
 - **Pennsylvania PALS** — covers ~250 license types, all 29 BPOA boards (medical, nursing, real estate) — https://www.pals.pa.gov/
 - **South Carolina LLR Licensee Lookup** — covers medical, nursing, real estate, contractors, residential builders — https://verify.llronline.com/LicLookup/LookupMain.aspx
-- **Tennessee Verify (Commerce & Insurance / DCI)** — covers real estate, contractors, many; health pros separate at TN DOH — https://verify.tn.gov/
+- **Tennessee Verify (Commerce & Insurance / DCI)** — covers real estate, contractors and others; health pros separate at TN DOH — https://verify.tn.gov/
 - **Tennessee DOH Licensure Verification** — physician, nursing — https://apps.health.tn.gov/Licensure/
 - **Vermont OPR "Find a Professional"** — covers medical, nursing, real estate, residential contractors — https://sos.vermont.gov/opr/find-a-professional
 - **Washington DOH Provider Credential Search** — health professions — https://doh.wa.gov/licenses-permits-and-certificates/provider-credential-or-facility-search
@@ -942,7 +942,7 @@ State-level public databases of licensed professionals (with practice/office add
 
 - Business entity search: Rhode Island Department of State — https://business.sos.ri.gov/corpweb/corpsearch/corpsearch.aspx — query-only
 - Notary registry: Rhode Island Department of State — https://business.sos.ri.gov/PublicNotarySearch/Home — query-only
-- Charity registry: Rhode Island Department of Business Regulation (DBR) — https://dbr.ri.gov/banking-securities-and-charitable-organizations/securities-and-charities/charitable-organizations — query/file-only; no robust public search
+- Charity registry: Rhode Island Department of Business Regulation (DBR) — https://dbr.ri.gov/banking-securities-and-charitable-organizations/securities-and-charities/charitable-organizations — query/file-only; no public search endpoint
 - Lobbyist registry: Rhode Island Department of State (Lobby Tracker) — https://lobbytracker.sos.ri.gov/ — query-only
 
 ### South Carolina
@@ -1056,7 +1056,7 @@ State-level public databases of licensed professionals (with practice/office add
 - **Missouri** — State of Missouri — https://data.mo.gov/ — Socrata (lightweight). Geospatial: https://data-msdis.opendata.arcgis.com/ (MSDIS).
 - **Montana** — Montana State Library — https://msl.mt.gov/geoinfo/ (portal) and https://geoinfo.msl.mt.gov/ (data hub) — ArcGIS Hub — geospatial-led; includes statewide parcels.
 - **Nebraska** — Office of the CIO Geographic Information Office — https://www.nebraskamap.gov/ — ArcGIS Hub.
-- **Nevada** — State of Nevada — https://open.nv.gov/ — Socrata (limited). No comprehensive unified portal; GIS scattered.
+- **Nevada** — State of Nevada — https://open.nv.gov/ — Socrata (limited). No unified portal; GIS scattered.
 - **New Hampshire** — NH GRANIT (UNH) — https://granit.unh.edu/ + https://new-hampshire-geodata-portal-1-nhgranit.hub.arcgis.com/ — ArcGIS Hub.
 - **New Jersey** — NJ Office of Information Technology — https://data.nj.gov/ — Socrata. Geospatial: https://njogis-newjersey.opendata.arcgis.com/ (NJGIN).
 - **New Mexico** — NM RGIS (UNM) — https://rgis.unm.edu/ — Custom clearinghouse — no unified statewide tabular portal.
@@ -1077,7 +1077,7 @@ State-level public databases of licensed professionals (with practice/office add
 - **Virginia** — Virginia Geographic Information Network (VGIN) — https://data.virginia.gov/ — Socrata + VGIN.
 - **Washington** — WaTech / OCIO — https://data.wa.gov/ — Socrata. Geospatial: https://geo.wa.gov/ (ArcGIS Hub).
 - **West Virginia** — WV GIS Technical Center (WVU) — https://wvgis.wvu.edu/ — Clearinghouse — no unified statewide tabular portal.
-- **Wisconsin** — N/A unified — multiple specialized portals; GeoData@Wisconsin (https://geodata.wisc.edu/) is the most comprehensive geospatial catalog.
+- **Wisconsin** — N/A unified — multiple specialized portals; GeoData@Wisconsin (https://geodata.wisc.edu/) is the largest geospatial catalog.
 - **Wyoming** — Wyoming Geospatial Hub — https://data.geospatialhub.org/ — ArcGIS Hub — geospatial-led; no unified statewide tabular portal.
 
 License terms note: most state ArcGIS Hub deployments default to Esri Open Data terms (effectively public-domain or attribution); confirm per dataset. Socrata-hosted state portals generally publish under each state's open-data terms (typically attribution-only).
@@ -1499,7 +1499,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 
 ### State-aggregated parcel data
 
-Only states with a true statewide parcel aggregation (not just per-county) listed. License notes added where visible.
+Only states with a true statewide parcel aggregation (not per-county alone) listed. License notes added where visible.
 
 - **Arkansas** — AR GIS Office — https://gis.arkansas.gov/product/parcels/ — statewide parcels aggregated; public domain.
 - **Connecticut** — CT Office of Policy and Management / CT ECO — https://cteco.uconn.edu/data/parcels/ — statewide parcels by town; public.

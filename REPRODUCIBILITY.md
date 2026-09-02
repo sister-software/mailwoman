@@ -15,7 +15,7 @@ is **v4.2.0** (`v1.0.2-consolidation-runB`); substitute per the eval-ledger row
 | Tokenizer     | `v0.6.0-a0/tokenizer.model` (md5 `b6137e8c…`)                              | same volume, `/data/models/tokenizer/`                                                                                                                                                        |
 | Aux lookups   | `pilot-anchor-lookup.json` + `anchor-lexicon-v1.json`                      | volume `/data/anchor/`, `/data/gazetteer/` — rebuildable from source: `scripts/build-pilot-anchor-lookup.ts`, `scripts/build-gazetteer-anchor-lexicon.mjs` (needs the custom WOF DBs + codex) |
 
-> **Honest caveats (the #480 gaps, still open):** the corpus + tokenizer are snapshots on
+> **Known gaps (the #480 gaps, still open):** the corpus + tokenizer are snapshots on
 > R2/Modal, not derivable offline from the repo (adapters fetch from live sources that age);
 > overlay corpus manifests reference base corpora by absolute volume path (strict-mode
 > loader is the planned guard); `init_from`/curriculum state is recorded in the model card's
@@ -45,7 +45,7 @@ before trusting anything.
 ## The pinned export/quant toolchain
 
 `torch==2.12.0 · transformers==5.9.0 · onnx==1.21.0 · onnxruntime==1.26.0 · onnxscript==0.7.0`
-(the v4.1.0 set; source of truth is `corpus-python/modal/train_remote.py`'s training image).
+(the v4.1.0 set; the authoritative list is `corpus-python/modal/train_remote.py`'s training image).
 **This set is essential**: opset ≤17 + the `value_info` strip in `quantize.py` are what
 keep the int8 graph Safari-WebGPU-safe. Check your local env against it:
 

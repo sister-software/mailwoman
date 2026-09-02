@@ -3,7 +3,7 @@
 # Normative binary-layout spec for `postcode-prefix-<scope>.bin`, the retrieval artifact that maps a
 # postcode PREFIX — a partial code that still encodes ancestry — to the admin surfaces it asserts and,
 # when the source can honestly support one, a centroid with its own measured dispersion. GB's outward
-# code (`SW1A`), a US sectional centre (`941`), an NI district (`BT9`). Written for the outside
+# code (`SW1A`), a US sectional center (`941`), an NI district (`BT9`). Written for the outside
 # contributor (or a coding agent with a limited context window) who needs to read or emit the format
 # without the mailwoman tree in their head. The reference implementation owns BOTH ends of the format
 # in one file: `neural/postcode-prefix-index.ts` (`serializePostcodePrefixIndex` /
@@ -25,7 +25,7 @@
 #                       could see.
 #      schemaVersion  — MUST be exactly 1. Readers refuse both older and newer.
 #      levels         — which prefix granularity the node table carries: `["outward"]` for GB,
-#                       `["3"]` for a US sectional-centre build.
+#                       `["3"]` for a US sectional-center build.
 #      source         — the NUMBERING AUTHORITY the prefixes came from, NOT the gazetteer they were
 #                       joined to. M-3 is the receipt: 7.9% of US ZIPs disagree with their own
 #                       gazetteer parent's state, because a firm/unique ZIP names an organization's
@@ -34,11 +34,11 @@
 #      sourceMD5s     — md5s of the source artifact(s), the same discipline as PCN1's.
 #      buildDate      — ISO date of the build.
 #      tier           — `shipped` | `build-local`, in the sense `layer-contract.mdx` uses.
-#      attribution    — licence attribution carried through from the source, so a copied artifact
+#      attribution    — license attribution carried through from the source, so a copied artifact
 #                       still names the terms it travels under.
 #      coverageNote   — MANDATORY meaning-of-zero statement: what a MISS means for THIS file. A prefix
 #                       absent from a complete register does not exist; a prefix absent from a partial
-#                       one may simply be unattested, and a consumer that cannot tell the two apart
+#                       one may be unattested, and a consumer that cannot tell the two apart
 #                       will read coverage as fact.
 #    Optional (absence-tolerant — no version bump when it appears). ABSENT means the mechanism is OFF,
 #    which is not the same statement as a magnitude of zero:
@@ -138,7 +138,7 @@ types:
       - id: wof_id
         type: f8
         doc: |
-          Who's on First ID — the join key a consumer resolves against the gazetteer. f64, NOT u32:
+          Who's On First ID — the join key a consumer resolves against the gazetteer. f64, NOT u32:
           see prose note 6.
       - id: name_len
         type: u1

@@ -28,7 +28,7 @@ const decorated = await resolver.resolveTree(tree)
 
 `createWOFResolver` takes a `ResolverBackend` — a structural interface, not a class. `@mailwoman/resolver-wof-sqlite` implements it over `node:sqlite`, `@mailwoman/resolver-wof-wasm` over `@sqlite.org/sqlite-wasm` in a browser, and `RemoteResolver` over HTTP. Nothing here imports any of them.
 
-Backends differ in what they can answer, and that is visible rather than silent: `describeCapabilityGaps(backend)` reports which optional methods are missing, so a default-on feature that quietly no-ops on your backend says so instead of looking like a bad result.
+Backends differ in what they can answer, and that is visible rather than silent: `describeCapabilityGaps(backend)` reports which optional methods are missing, so a default-on feature that no-ops without logging on your backend says so instead of looking like a bad result.
 
 ## Absence is a value
 
@@ -68,7 +68,7 @@ Ranking a span in isolation gets Portland, Maine to Messina, Italy. These run ov
 
 | Pass                         | Question                                                                       |
 | ---------------------------- | ------------------------------------------------------------------------------ |
-| `admin-coherence-passes`     | Do the resolved places actually contain one another?                           |
+| `admin-coherence-passes`     | Do the resolved places contain one another?                                    |
 | `postcode-country-coherence` | Does the postcode's shape agree with the country the rest of the tree implies? |
 | `postcode-shape-coherence`   | Is this span a postcode at all, in any system the query could be in?           |
 | `admin-containment`          | Split candidates by whether they sit inside an established parent.             |

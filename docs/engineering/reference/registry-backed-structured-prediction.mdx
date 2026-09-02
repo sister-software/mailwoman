@@ -63,7 +63,7 @@ prior — that's a training-distribution problem and it gets a training-distribu
 
 ## The provider
 
-One abstraction, so a tier can never quietly acquire a capability it wasn't granted:
+One abstraction, so a tier can never acquire, unlogged, a capability it wasn't granted:
 
 ```ts
 interface StreetNameEvidenceProvider {
@@ -138,16 +138,16 @@ exact error the arc is trying to fix.
 This is measured, not asserted. Walking the shipped FST (`fst-global-priority.bin`) over
 the Paris fixtures returns 43 distinct surfaces, 37 of which would fire an emission bias:
 
-| surface        | placetype : importance                |
-| -------------- | ------------------------------------- |
-| `rue`          | localadmin 0.145, neighbourhood 0.149 |
-| `boulevard`    | neighbourhood 0.167                   |
-| `place`        | neighbourhood 0.169                   |
-| `la`           | locality **0.850**                    |
-| `du`           | region **0.650**                      |
-| `londres`      | region 0.937, locality 0.936          |
-| `saintgermain` | locality 0.386                        |
-| `12`, `2`, …   | localadmin 0.05–0.15                  |
+| surface        | placetype : importance                  |
+| -------------- | --------------------------------------- |
+| `rue`          | localadmin 0.145, `neighbourhood` 0.149 |
+| `boulevard`    | `neighbourhood` 0.167                   |
+| `place`        | `neighbourhood` 0.169                   |
+| `la`           | locality **0.850**                      |
+| `du`           | region **0.650**                        |
+| `londres`      | region 0.937, locality 0.936            |
+| `saintgermain` | locality 0.386                          |
+| `12`, `2`, …   | localadmin 0.05–0.15                    |
 
 The French particles carry the strongest hits on the board — `la` at 0.850 locality,
 inside street phrases like `Rue de la Paix` — and bare house numbers match localadmin

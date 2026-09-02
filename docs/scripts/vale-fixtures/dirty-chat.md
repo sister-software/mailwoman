@@ -130,3 +130,5 @@ artifact names are exempt — that is the replacement both rules ask for.)
 The promotion eval ran from `promotion-eval.ts` after `mailwoman eval promote`
 printed the append command. (AmbiguousShorthand: a backticked script name and a
 backticked CLI command are contracts, not prose, so neither may match.)
+
+This paragraph names the thing you already read, which is filler in a reply.

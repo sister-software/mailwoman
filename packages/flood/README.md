@@ -43,18 +43,18 @@ decisions below rest on it rather than on an impression of what a flood polygon 
 | ≤ 0.1° (~11 km)          |  118,855 | 14.61% |
 | ≤ 1° (~111 km)           |      102 |  0.01% |
 
-The metre figures are the LATITUDE reading of each degree bound; at 53°N a degree of longitude is
+The meter figures are the LATITUDE reading of each degree bound; at 53°N a degree of longitude is
 about six tenths of that, so a feature in the first row is under 11 m north-south and under 7 m
 east-west.
 
 The largest single feature spans 0.604° (~67 km) and covers 494.7 km²; the widest carries 640,493
 vertices. So the product is overwhelmingly tiny slivers with a long tail of river-network polygons,
-which is why the index has to handle both ends: a centre-containment polyfill loses the first
+which is why the index has to handle both ends: a center-containment polyfill loses the first
 column entirely, and a fixed fine resolution overruns h3's allocator on the last.
 
 **The rings are stored as `float64` pairs, unsimplified — 16 bytes a vertex, so the geometry tier
 is about 5.3 GB before SQLite's own overhead.** That is the size the two-tier contract accepts:
-geometry is the truth table, and a rooftop answer at a zone boundary has no cheaper honest source.
+geometry is the truth table, and a rooftop answer at a zone boundary has no cheaper defensible source.
 A fixed-point encoding at 1e-7° would halve it, and is deliberately NOT done here — the source
 publishes 0.1 mm precision and quantizing to 11 mm is a change to the authority's data, which needs
 its own measurement rather than a size argument.
@@ -62,7 +62,7 @@ its own measurement rather than a size argument.
 ## The two tiers
 
 The authority's **unsimplified rings are the truth table**: a rooftop answer at a zone boundary —
-where a flood answer matters most — has no other honest source. Above them, an **H3 cell table
+where a flood answer matters most — has no other defensible source. Above them, an **H3 cell table
 classifies every cell `whole` or `partial` per zone**: a `whole` cell answers in one primary-key
 probe with no geometry read, and only a `partial` cell falls through to a ray cast against the few
 polygons `flood_zone_cell_area` already named for it. The whole set is compacted parent-ward, so a
@@ -71,7 +71,7 @@ where it is irreducible.
 
 ## Building it
 
-**Prerequisite: the OSGB36 datum grid.** OSGB36 to WGS84 is accurate to a metre only through the
+**Prerequisite: the OSGB36 datum grid.** OSGB36 to WGS84 is accurate to a meter only through the
 OSTN15 grid; without it PROJ substitutes a ballpark offset, silently. Install it once:
 
 ```bash
@@ -94,7 +94,7 @@ mailwoman gazetteer build flood --verify
 ```
 
 The build acquires the geodatabase itself: the catalogue entry supplies the product's ISO revision
-date, the licence field and the direct file URL, and the archive is cached per vintage. Pass
+date, the license field and the direct file URL, and the archive is cached per vintage. Pass
 `--gdb` to point at an already-unzipped `.gdb`, and `--offline` to skip every network read.
 
 **`--measure-resolutions` is single-process, and a build is the authoritative instrument.** The
@@ -111,11 +111,11 @@ and the build is bounded by construction.
   The metadata prose describes the column the second way; the shipped geodatabase declares it as a
   3-character string. Measured over the whole file: 540,282 `FZ2`, 273,345 `FZ3`, 813,627 together.
   A builder written against the prose finds nothing.
-- **The source is EPSG:27700, not WGS84.** OSGB36 / British National Grid, in metres. Read as
+- **The source is EPSG:27700, not WGS84.** OSGB36 / British National Grid, in meters. Read as
   degrees it lands in the Gulf of Guinea. The ingest asserts the declared authority code and then
   asserts every reprojected vertex against the collection's own declared extent, which is what
   catches a coordinate-order mistake the projection check cannot see.
-- **A centre-containment polyfill drops most of this product.** The first feature is a 128 m²
+- **A center-containment polyfill drops most of this product.** The first feature is a 128 m²
   square, and `polygonToCells` returns ZERO cells for it at resolutions 7, 8, 9 and 10 alike. The
   index takes overlapping containment, and a feature that reaches no cell fails the build — a
   dropped feature reads downstream as an absence, which is the one answer this layer must never
@@ -130,13 +130,13 @@ and the build is bounded by construction.
   `1.698151293, 52.648130027`; with the grid installed it placed it at `1.698174628, 52.648157259` —
   3.4 m apart. Both are ordinary WGS84 coordinates and both pass a bounding-box check. It surfaced
   only in the two-path agreement check, as 8 disagreements out of 59 against the authority's own OGC
-  service, every one a point that had fallen into a neighbouring sliver: at this product's scale
+  service, every one a point that had fallen into a neighboring sliver: at this product's scale
   3 m changes the answer, because 38.8% of its polygons are under 11 m across. With the grid
   installed the same check reads **59/59**. `--config PROJ_NETWORK ON` does not reach PROJ through
   GDAL 3.8 and `PROJ_ONLY_BEST=ON` was observed not to refuse, so the build asks `projinfo` what PROJ
   would choose and stops when the answer is a ballpark.
 
-## The index resolution, and what the measurement actually decided
+## The index resolution, and what the measurement decided
 
 Three full builds over all 813,627 polygons. Every column is from the build's own receipt.
 
@@ -216,10 +216,10 @@ ring blob under it are properties of h3-js and of byte layout rather than of thi
 them. What stays in this package is what is zone-shaped: `FloodCellIndex` accumulates per zone code,
 because the question asked of this layer is about the ZONE.
 
-## Licence
+## License
 
 The layer ships at `tier: shipped` because OGL v3.0 permits redistribution with a named
-acknowledgement. The attribution string is the licence condition, not decoration, and rides in
+acknowledgement. The attribution string is the license condition, not decoration, and rides in
 `layer_manifest.attribution`:
 
 > © Environment Agency copyright and/or database right 2025. All rights reserved.

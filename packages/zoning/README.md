@@ -11,7 +11,7 @@ represented in the layer.** That is a jurisdiction statement and nothing more: l
 is not the same as having a zoning polygon at your address.
 
 **The artifact is built locally and never redistributed.** Three published statements disagree about the
-source's licence, so the manifest carries `tier: build-local` and `license: NOASSERTION`, and the builder
+source's license, so the manifest carries `tier: build-local` and `license: NOASSERTION`, and the builder
 refuses a `shipped` tier until that is resolved in writing. See _Licence and posture_ below.
 
 ## What it reports, and what it refuses to
@@ -89,9 +89,9 @@ answer in silence. Measured over the whole national export (85,330 features, 93,
 
 | reading                                                    |         km² |
 | ---------------------------------------------------------- | ----------: |
-| sum of signed ring areas, in the source's own ITM metres   | **5,444.5** |
+| sum of signed ring areas, in the source's own ITM meters   | **5,444.5** |
 | the Department's own `Shape__Area` sum                     | **5,444.5** |
-| sum of ABSOLUTE ring areas, in the source's own ITM metres | **5,666.6** |
+| sum of ABSOLUTE ring areas, in the source's own ITM meters | **5,666.6** |
 
 **Read in the source's own projection the signed sum matches the publisher to eight significant figures**
 (5,444,492,956.43 m² against 5,444,492,956.40) — which is what settles the convention. The BUILD compares a
@@ -113,7 +113,7 @@ exterior of their own feature, which on eight of the nine is the only exterior t
 feature of 85,330** has no ring the rule can read as an exterior at all: `OBJECTID` 74040, Galway County
 Council's `Agriculture`, a three-vertex ring enclosing 3.0 × 10⁻⁷ m². At that magnitude a ring's winding is
 floating-point noise rather than something the publisher stated — it reads clockwise in the source's own Irish
-Transverse Mercator metres and counter-clockwise after reprojection — so the largest ring by magnitude becomes
+Transverse Mercator meters and counter-clockwise after reprojection — so the largest ring by magnitude becomes
 the exterior, which is also the correct reading for a feature published wholly inverted. Both counts ride on
 the build receipt rather than being implied to be zero.
 
@@ -129,7 +129,7 @@ written as CSV/WKT keeps the source's 5/102 split intact.
 ### The publisher's own area column is not in the archive
 
 `Shape__Area` is a service field and the bulk GeoJSON export drops it, so the area cross-check reads it from the
-live service instead — which is what makes it a genuine two-path check rather than the archive agreeing with
+live service instead — which is what makes it a two-path check rather than the archive agreeing with
 itself. Measured: 5,444,492,956.40 m² over 85,330 features.
 
 ### The definition host has no DNS record
@@ -155,7 +155,7 @@ is NULL on every row rather than filled with a plausible one.
 bounding box; `zoning_cell` is an H3 containment index above it, `WITHOUT ROWID`, keyed `(h3_cell, area_id)`.
 A probe walks the index first and reaches the geometry only for a cell a boundary crosses.
 
-**The index is cell-touches-polygon, never cell-centre-in-polygon**, and a feature that reaches no cell fails
+**The index is cell-touches-polygon, never cell-center-in-polygon**, and a feature that reaches no cell fails
 the build. That is not a preference: `polygonToCells` — the polyfill a builder reaches for first — returns
 nothing at all for most of these polygons, and every dropped polygon would read downstream as an absence of
 zoning at exactly the question this layer exists to answer.
@@ -193,7 +193,7 @@ p90 3 → 2 for another 4.7× the rows. The knee is at 10, and the `partial` sha
 knee at all, which is the measurement that says it is the wrong column to choose on.
 
 **The left-hand column is the finding, and it is a defect waiting to happen.** At resolution 9, `polygonToCells`
-returns nothing at all for **73,068 of 85,330 polygons — 85.6%** — because no cell centre falls inside them. A
+returns nothing at all for **73,068 of 85,330 polygons — 85.6%** — because no cell center falls inside them. A
 builder that indexed only the polyfill output would silently drop six of every seven zoning polygons, and every
 dropped polygon would read downstream as "no zoning here". Even at resolution 11 it drops 22.5%. The survey
 measured 86.8% on one urban authority; the national figure is 85.6%, measured rather than extrapolated.
@@ -245,15 +245,15 @@ ceiling by luck is not the same fact as one that cannot cross it.
 
 **Positive half.** A deterministic sample of interior points, spread across authorities, answered from the
 sealed artifact and then re-asked of the live service. The service's rings get the SAME hole-role resolution
-the ingest gave the archive's, so what is compared is a verdict against a verdict. A point within half a metre
+the ingest gave the archive's, so what is compared is a verdict against a verdict. A point within half a meter
 of a service-polygon edge is reported as `boundary_tolerance` rather than as a disagreement, with its distance
-**to the nearest edge** — a point a centimetre from a long edge can be metres from every vertex of it.
+**to the nearest edge** — a point a centimeter from a long edge can be meters from every vertex of it.
 
 **Negative half, and it matters more here than for any sibling layer.** Donegal points and Northern Irish
 points must come back `unknown` with no designation. A positive-only check would pass on an artifact that
 reported the whole island as zoned.
 
-## Licence and posture
+## License and posture
 
 **Three published statements disagree about the grant**, all read 2026-08-27:
 
@@ -261,7 +261,7 @@ reported the whole island as zoned.
 2. The ArcGIS item's `licenseInfo` says the Department "aims to publish its data holdings into the future,
    **where possible**, as Open Data licensed under Creative Commons Attribution 4.0" and, in the same field,
    that copyright "belonging to our licensors (**Tailte Éireann**) may not be copied, transmitted or reproduced
-   without their prior consent. … © Tailte Éireann. All rights reserved. Licence No. 2023/OSi_NMA_073".
+   without their prior consent. … © Tailte Éireann. All rights reserved. License No. 2023/OSi_NMA_073".
 3. `myplan.ie`'s own disclaimer grants distribution and commercial use, and points at a map-viewer splash
    screen for the operative terms.
 
@@ -271,7 +271,7 @@ A shipped layer needs one grant it can quote, and this record does not have one.
   `CC-BY-4.0` there while an all-rights-reserved clause names a licensor would be this program asserting a
   grant.
 - `layer_manifest.tier` is **`build-local`**, and `assertTierMatchesLicense` refuses a `shipped` build while the
-  licence reads `NOASSERTION`. Moving the tier takes a deliberate edit at a line that names what is unresolved.
+  license reads `NOASSERTION`. Moving the tier takes a deliberate edit at a line that names what is unresolved.
 - `layer_manifest.attribution` carries **both halves** — the Department's credit line and the Tailte Éireann
   clause — because a re-user who saw only the first would not know the second exists.
 

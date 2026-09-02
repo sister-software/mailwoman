@@ -69,18 +69,18 @@ where the sub-venue carries both forms:
 - designator + identifier — `Terminal 5`, `Gate 12`, `Concourse B`, `Wing B`, `Building 43`
 - modifier + designator — `West Wing`, `North Terminal`, `Upper Concourse`, `Main Building`
 
-with the sub-venue labelled `unit` and the containing venue labelled `venue`.
+with the sub-venue labeled `unit` and the containing venue labeled `venue`.
 
 Include the confound shapes as NEGATIVES in the same corpus slice, or the model learns the surface rather
 than the structure: `12 East Gate` (street), `Briggate` / `Kirkgate` (single-token GB street names),
 `Gate House` (venue), `Wing Yip` (business name), `Grand Central Terminal` (the pair inside a longer
 name).
 
-## Get real data first, and get a lot of it
+## Get real data first, and get enough of it
 
 Do not synthesize these from a template list. Airports and transit terminals are the densest real
 source of sub-venue structure in existence, they are globally distributed, and the naming is
-genuinely varied in ways an invented list will not be — `Concourse B`, `Terminal 2F`, `Pier C`,
+varied in ways an invented list will not be — `Concourse B`, `Terminal 2F`, `Pier C`,
 `Satellite 4`, `Hall M`, `Gate A12`, `North Terminal`, `Terminal Sur`.
 
 This is also the class of query a geocoder is expected to answer and currently answers badly. "Which

@@ -14,14 +14,14 @@ A demo-map overlay that answers **"where do we need data"** at a glance — cove
 2. **Global "work to do" holes** (`fog = salience·(1 − coverage)`) — populated places worldwide that we **can't geocode yet** show as gray-fog holes, [weighted by importance](./WIKIPEDIA_IMPORTANCE.mdx) (big uncovered cities are darkest). Postcode/rooftop coverage **clears** the hole, so the holes land where civilization exists but our data doesn't — Africa, the Middle East, C/S Asia, South America, and gaps like UK/Ireland (Royal Mail isn't in open GeoNames).
 
 - **Live:** `https://tiles.mailwoman.ai/coverage-v5.json` (XYZ vector tiles via the tile worker).
-- **In the demo:** the **Layers** panel (top-right) has two **default-off** toggle groups — _Coverage · optimistic fog_ and _Coverage · honest fog_. The user picks one.
+- **In the demo:** the **Layers** panel (top-right) has two **default-off** toggle groups — _Coverage · optimistic fog_ and _Coverage · measured fog_. The user picks one.
 - **Coverage today:** US rooftop = 48 states + DC + VI (Overture) + HI (OpenAddresses) + NH (street-level), **AK excluded** (antimeridian). Global postcode coverage = GeoNames `allCountries` postal (121 countries) clearing the holes; civilization backdrop = WOF settlement places weighted by `place_importance`.
 
 ## Architecture (read this before touching anything)
 
 It is an **H3 hexbin** tileset. Each cell carries **two baked fog values** in `[0,1]` (0 = covered/clear, 1 = empty/gray):
 
-- `fog` — **honest**: fine cells use point density; coarse cells use the mean child coverage fraction.
+- `fog` — **measured**: fine cells use point density; coarse cells use the mean child coverage fraction.
 - `fog_opt` — **optimistic**: `fog ** gamma` (γ>1) lifts partial coverage toward clear, so a region "looks covered" zoomed out and the gaps surface on zoom-in.
 
 The demo's two fill layers (`coverage-opt-fog`, `coverage-honest-fog`) just point `fill-opacity` at one prop or the other — **no rebake needed to switch readings**. Each H3 resolution is baked in its own non-overlapping zoom band; the finest is baked at a single tile-max zoom and MapLibre **overzooms** above it (hexes are identical geometry at every zoom).
@@ -89,12 +89,12 @@ mailwoman tiles publish --file $MAILWOMAN_DATA_ROOT/coverage/coverage-global-v5.
 
 ## Data state + the HI/NH situation
 
-| State group         | Source                            | Notes                                                                                                                                                                                                                            |
-| ------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 48 states + DC + VI | Overture addresses `2026-05-20.0` | `build-address-point-extract.ts` (default).                                                                                                                                                                                      |
-| **HI**              | **OpenAddresses**                 | Overture omits Hawaii entirely (verified at the S3 source — 0 rows in both releases). Built via `build-address-point-extract.ts --oa-csv <4 county CSVs>` → 348K rooftop points.                                                 |
-| **NH**              | TIGER interpolation only          | No rooftop source exists — OA's only NH run is coordinate-only (0 usable of 610K), Overture absent. NH renders **street-level** (visibly a less-covered region — honest). Real NH rooftop points = **NH GRANIT** (not yet done). |
-| AK                  | _excluded_                        | Antimeridian: `h3_cell_to_boundary_wkt` emits unwrapped lon for Aleutian cells. Needs antimeridian splitting before inclusion.                                                                                                   |
+| State group         | Source                            | Notes                                                                                                                                                                                                                              |
+| ------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 48 states + DC + VI | Overture addresses `2026-05-20.0` | `build-address-point-extract.ts` (default).                                                                                                                                                                                        |
+| **HI**              | **OpenAddresses**                 | Overture omits Hawaii entirely (verified at the S3 source — 0 rows in both releases). Built via `build-address-point-extract.ts --oa-csv <4 county CSVs>` → 348K rooftop points.                                                   |
+| **NH**              | TIGER interpolation only          | No rooftop source exists — OA's only NH run is coordinate-only (0 usable of 610K), Overture absent. NH renders **street-level** (visibly a less-covered region — measured). Real NH rooftop points = **NH GRANIT** (not yet done). |
+| AK                  | _excluded_                        | Antimeridian: `h3_cell_to_boundary_wkt` emits unwrapped lon for Aleutian cells. Needs antimeridian splitting before inclusion.                                                                                                     |
 
 To add an Overture-gap state from OpenAddresses: download the OA conformed CSV(s) from `results.openaddresses.io/latest/run/us/<st>/<source>.zip`, then `build-address-point-extract.ts --state <ST> --oa-csv <csv1>,<csv2>,…`. The new state database is picked up automatically on the next `coverage build`.
 
@@ -120,7 +120,7 @@ To add an Overture-gap state from OpenAddresses: download the OA conformed CSV(s
 | `--salience-floor`   | 0.15                                        | Min place importance to flag as a hole — the noise floor (raise to keep only the notable holes). |
 | `--postcode-exclude` | `US`                                        | Countries the holes layer skips (handled by the rooftop fine map).                               |
 
-The salience is `sqrt(importance)` — lifts modest uncovered towns to a visible gray while keeping big cities darkest. Holes below 0.05 residual fog (covered or trivial) are dropped, so the layer is just the holes (~290 K res-6 cells); covered + empty stay clear.
+The salience is `sqrt(importance)` — lifts modest uncovered towns to a visible gray while keeping big cities darkest. Holes below 0.05 residual fog (covered or trivial) are dropped, so the layer is the holes (~290 K res-6 cells); covered + empty stay clear.
 
 **National size by `--fine-res`** (res-9 d6 measured): res-9 ≈ **848 MiB**, res-8 ≈ 364 MiB, res-7 ≈ 55 MiB. Only res-7 fits wrangler's 300 MiB cap — irrelevant now that rclone-multipart works, so we ship the full res-9.
 
