@@ -16,7 +16,7 @@
  *   have overlapping spans.** It is a greedy interval selection — accept proposals in priority
  *   order, skip any that overlap an already-accepted span.
  *
- *   ## The selection policy (the gate-tunable lever)
+ *   ## The selection policy (the tunable policy)
  *
  *   Priority is **confidence desc, then shorter span first, then earlier start**:
  *

@@ -63,8 +63,8 @@ const REFUSED_ENDPOINT_HOSTS = new Set(["photon.komoot.io", "nominatim.openstree
  * sequential comparison reaches anyway, so it costs a well-behaved run nothing and bounds a pathological one.
  *
  * Set through `minRequestIntervalMs` rather than `requestsPerMinute` deliberately: AGENTS.md records that the budget
- * gate alone does not deliver N requests per minute (measured at 100/min for `requestsPerMinute: 10`), and the interval
- * gate is the one that actually holds a rate.
+ * budget alone does not deliver N requests per minute (measured at 100/min for `requestsPerMinute: 10`), and the
+ * interval gate is the one that actually holds a rate.
  */
 export const EXTERNAL_ARM_MIN_REQUEST_INTERVAL_MS = 50
 

@@ -12,7 +12,7 @@
  *      dissolve the moment the system stops working that way. (The anti-Pelias rule: no mechanistic belief accumulates
  *      that a truer understanding of addresses could break against.)
  *   2. **Failure shapes are MECHANISM-STATES, never address shapes.** Every predicate below reads pipeline facts —
- *      channels, gates, ranks, lineage — and none reads what KIND of address the row is. A shape makes a claim about
+ *      channels, constraints, ranks, lineage — and none reads what KIND of address the row is. A shape makes a claim about
  *      what the system did on this input; it cannot fossilize a wrong belief about how addresses work.
  *
  *   Classification is v1: transparent predicates over recorded pipeline facts, with NO calibration. Every result says so in its
@@ -522,10 +522,10 @@ export function matchShapes(facts: {
 		shapes.push("retrieval_empty")
 	}
 
-	// The gate fires only when the scoped probe missed across the whole cascade AND the unscoped fallback produced
-	// rows — so every candidate in that lookup is a re-admitted one, and a pick under the gate is a re-admitted pick.
+	// The rule fires only when the scoped probe missed across the whole cascade AND the unscoped fallback produced
+	// rows — so every candidate in that lookup is a re-admitted one, and a pick under the eval is a re-admitted pick.
 	// The per-candidate `regionScopeMiss` stamp does not reach `ResolveCandidateTrace`, so lookup granularity is all
-	// the trace can support; it suffices here because the gate's own condition covers the whole row set.
+	// the trace can support; it suffices here because the rule's own condition covers the whole row set.
 	if (lookups.some((lookup) => lookup.gates.includes("region_scope_miss") && lookup.picked)) {
 		shapes.push("scope_miss_readmission")
 	}

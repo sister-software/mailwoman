@@ -81,7 +81,7 @@ export interface PipelineOpts {
 	placetypePair?: PlacetypePairPassthrough
 	/**
 	 * #743/#194: promote a CONFIDENT coarse-placer guess from the soft `anchorPosterior` boost to a HARD country filter
-	 * (empty→unresolved) — see {@link ResolveOpts.hardCountry}. Gated three ways: the placer's confidence ≥
+	 * (empty→unresolved) — see {@link ResolveOpts.hardCountry}. Conditioned three ways: the placer's confidence ≥
 	 * `HARD_PLACE_COUNTRY_MIN_CONF` (ambiguous DK↔NO stay soft), the country is in the coverage
 	 * `HARD_PLACE_COUNTRY_SAFELIST` (or a {@link hardCountrySafelist} override), and no caller
 	 * `hardCountry`/`defaultCountry` is already set. **Default-ON** in the shipped
@@ -91,7 +91,7 @@ export interface PipelineOpts {
 	 */
 	hardPlaceCountry?: boolean
 	/**
-	 * #743/#194: override the coverage safelist that gates {@link hardPlaceCountry}. Undefined → the loaded gazetteer
+	 * #743/#194: override the coverage safelist that bounds {@link hardPlaceCountry}. Undefined → the loaded gazetteer
 	 * artifact's own coverage manifest (`resolver.artifactCoverage.hardCountrySafelist`) when it carries one, else the
 	 * built-in `HARD_PLACE_COUNTRY_SAFELIST` fallback (byte-identical for artifacts predating the manifest). Supply a set
 	 * to test/measure a different coverage frontier — the resolver eval passes the full in-map country set to measure
@@ -501,7 +501,7 @@ export interface ClassifierOpts {
 
 /**
  * The word-consistency setting production parses ship with (2026-07-15): heal intra-word tag disagreement, with the
- * punctuation-separator + byte-fallback gates on and no confidence floor — the configuration that cleared golden
+ * punctuation-separator + byte-fallback conditions on and no confidence floor — the configuration that cleared golden
  * us/fr/adversarial and the parity floors with zero per-file regressions. One constant so the pipeline's
  * `safeClassify`, `parseForGeocode`, and the eval harness can't drift apart.
  */

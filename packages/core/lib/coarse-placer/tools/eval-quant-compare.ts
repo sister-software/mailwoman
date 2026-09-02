@@ -59,7 +59,7 @@ export interface EvalQuantCompareResult {
 	 */
 	accInt8: number
 	/**
-	 * Whether int8 is within 1pp of fp32 (the gate).
+	 * Whether int8 is within 1pp of fp32 (the threshold).
 	 */
 	pass: boolean
 }

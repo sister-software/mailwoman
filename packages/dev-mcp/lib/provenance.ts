@@ -41,7 +41,7 @@ interface ArtifactState {
 	linkTarget: string | null
 	/**
 	 * `true` when the file is read-only, which is how a sealed build is distinguished from one still being written. An
-	 * unsealed artifact is one a verify gate refused, and must never be measured against as if it had passed.
+	 * unsealed artifact is one a verify step refused, and must never be measured against as if it had passed.
 	 */
 	sealed: boolean | null
 }
@@ -109,7 +109,7 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 
 	const dataRoot = String(mailwomanDataRoot())
 
-	// wof-hot.db belongs to the staged demo rather than the data root. Use the promotion gate's lookup order so this
+	// wof-hot.db belongs to the staged demo rather than the data root. Use `promotion-gate.ts`'s lookup order so this
 	// report states the path that the demo-cascade test checks (#524).
 	const { resolveWOFHotDB } = await import("mailwoman/eval-harness/wof-hot-db")
 

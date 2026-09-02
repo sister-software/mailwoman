@@ -7,7 +7,7 @@
  *   `NeuralAddressClassifier` + REAL fixture tokenizer, only onnxruntime-web mocked) must thread a
  *   country-matched index's emission matrix AND its TRANSITION-BETA adjustments into the shared decode
  *   (`buildPlacetypePairPriors` → `viterbi` — the same one-decoder-two-hosts path the node classifier
- *   runs), and must be BYTE-STABLE when no index matches the gate.
+ *   runs), and must be BYTE-STABLE when no index matches the eval.
  *
  *   The fixture is `neural/test/placetype-pair-decode.test.ts`'s task-8 path-fusion lattice on the same
  *   fixture tokenizer: "Shoreditch London" → ['▁Shore','d','itch','▁London'], with a fused street run

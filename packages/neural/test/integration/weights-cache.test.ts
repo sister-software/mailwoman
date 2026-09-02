@@ -166,7 +166,7 @@ describe("resolveWeights cache fallback", () => {
 
 	// The tie between the exported layout helper and the layout this file pins independently. Every other call site in
 	// the tree now builds the directory with `weightsCachePackageDir`; if it and the hand-spelled path ever disagree,
-	// they disagree HERE and not in a gate run that silently graded the wrong bundle.
+	// they disagree HERE and not in an eval run that silently graded the wrong bundle.
 	test("weightsCachePackageDir builds exactly the layout this file pins", () => {
 		expect(String(weightsCachePackageDir(cacheRoot.path, LOCALE))).toBe(cacheRoot.resolve("node_modules", PACKAGE_NAME))
 

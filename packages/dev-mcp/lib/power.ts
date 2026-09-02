@@ -29,7 +29,7 @@ export function zeroEventUpperBound(n: number, alpha = 0.05): number {
 }
 
 /**
- * Wilson score interval — the non-zero counterpart, and the same interval the gate specs already derive their floors
+ * Wilson score interval — the non-zero counterpart, and the same interval the eval specs already derive their floors
  * from (`gates/v9.0.0-base.json`'s `$margin_rationale`: "2 × the downward Wilson 95% half-width at the metric's own
  * support").
  */

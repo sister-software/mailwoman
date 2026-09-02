@@ -120,7 +120,7 @@ describe("enforceWordConsistency confidence gates (#727 gated variant)", () => {
 		const emissions = [peak(1, 8), peak(1, 8), peak(0, 8), peak(3, 8), peak(3, 8)]
 		const labelIndices = [1, 2, 0, 3, 4] // B-loc I-loc O B-reg I-reg (stand-ins for unit/house_number)
 		const unrestricted = enforceWordConsistency(pieces, emissions, LABELS, labelIndices)
-		expect(unrestricted.healedWords).toBe(1) // the flattening the gate exists to prevent
+		expect(unrestricted.healedWords).toBe(1) // the flattening the eval exists to prevent
 		const gated = enforceWordConsistency(pieces, emissions, LABELS, labelIndices, { splitOnPunctuation: true })
 		expect(gated.healedWords).toBe(0)
 		expect(gated.labelIndices).toEqual(labelIndices)

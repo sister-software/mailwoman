@@ -51,7 +51,7 @@ describe("readGateReport", () => {
 	})
 
 	it("distinguishes an unmeasured floor from one that missed the bar", async () => {
-		// The gate marks an unmeasured floor failing so it cannot pass by default. Reading that as "missed the bar"
+		// The eval marks an unmeasured floor failing so it cannot pass by default. Reading that as "missed the bar"
 		// sends someone tuning a metric that never ran.
 		const report = await readGateReport(
 			await outDir({

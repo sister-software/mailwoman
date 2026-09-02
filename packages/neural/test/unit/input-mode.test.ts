@@ -73,7 +73,7 @@ describe("inputMode register enforcement (Decision A)", () => {
 		await classifier.parse("Springfield", { inputMode: "fragmented" })
 		expect(seen.evidence).toHaveLength(1)
 		// The street channel rides (all-zero confidence on a street-word-less input — inert by
-		// construction); the LOCALITY channel is what the gate withholds.
+		// construction); the LOCALITY channel is what the eval withholds.
 		const evidence = seen.evidence[0] as { streetType?: unknown; localitySurface?: unknown }
 		expect(evidence.localitySurface).toBeUndefined()
 		expect(evidence.streetType).toBeDefined()

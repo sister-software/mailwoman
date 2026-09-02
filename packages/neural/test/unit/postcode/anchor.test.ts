@@ -156,7 +156,7 @@ describe("extractPostcodeAnchors — position-aware confidence (house-number dis
 	})
 
 	it("matches an agglutinative compound street (German Straße) by suffix — for a German-member code", () => {
-		// 12623 is a German member, so the German vocabulary is in the gate and Straußstraße fires.
+		// 12623 is a German member, so the German vocabulary is in the eval and Straußstraße fires.
 		const [a] = extractPostcodeAnchors("Straußstraße 12623, Berlin", R)
 		expect(a!.positionFactor).toBeLessThan(1)
 	})

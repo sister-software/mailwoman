@@ -491,7 +491,7 @@ export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 
 	/**
 	 * The header's ISO country code, so a load site can refuse an index built for a different country than the locale
-	 * being parsed — the gate `PlacetypeCensusLike.country` exists for.
+	 * being parsed — the eval `PlacetypeCensusLike.country` exists for.
 	 */
 	get country(): string {
 		return this.header.country

@@ -166,7 +166,7 @@ export class VirtualClock implements ClockLike {
 	 * idle.
 	 *
 	 * {@linkcode advance} alone is not enough once the code under test interleaves virtual sleeps with real asynchrony —
-	 * a paced client whose gate sits downstream of an on-disk cache spends several real event-loop turns in `readFile`
+	 * a paced client whose limit sits downstream of an on-disk cache spends several real event-loop turns in `readFile`
 	 * before it ever registers its `sleep()`. A caller that drains once and then advances finds nothing pending, jumps
 	 * the clock past the deadlines that are registered a moment later, and the test hangs. This polls instead: drain, and
 	 * if any sleep is pending, advance to the earliest deadline; if none is, yield and look again.

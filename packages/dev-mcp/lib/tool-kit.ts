@@ -277,7 +277,7 @@ export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"])
 /**
  * The #1649 intent gate's verdict, when it fired.
  *
- * A refusal is not a parse failure, and everything downstream of it looks exactly like one: the gate discards a
+ * A refusal is not a parse failure, and everything downstream of it looks exactly like one: the eval discards a
  * COMPLETED tree and hands back `roots: []`, so `decodeAsJSON` answers `{}` and the resolver-interior records are
  * empty. Rendered without this line, `Cafe at St Mary's, Oxford` reads as an input the parser could make nothing of,
  * when in fact it parsed to `locality=Oxford › dependent_locality=St Mary's › street=Cafe` and was refused as a

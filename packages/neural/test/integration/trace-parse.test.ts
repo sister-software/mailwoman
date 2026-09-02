@@ -292,7 +292,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 			return row
 		})
 
-		// WITHOUT the pin (pre-#1275 en-gb reality): the gate never opens, the clip stands.
+		// WITHOUT the pin (pre-#1275 en-gb reality): the eval never opens, the clip stands.
 		const unpinned = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
 		const clippedTrace = await unpinned.traceParse(text, { spanProposer: false })
 		// The subject here is the POSTCODE gate: unpinned, the codex gb row is never consulted, so the snap

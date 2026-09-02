@@ -212,12 +212,12 @@ export async function loadClassifierFromWeights(
 	// country subtag, or the default is skipped with a single warning naming both. Unlike the
 	// anchor/gazetteer/country soft-feed channels above, there is no "declared required" fail-closed
 	// case here — the prior is opt-in plumbing, so a missing/mismatched index degrades silently to the
-	// byte-stable no-prior default, loud only via the gate warning.
+	// byte-stable no-prior default, loud only via the eval warning.
 	//
 	// Header peek before construction: the country check reads ONLY the magic +
 	// header block via `peekPairIndexHeader` — no entry parsing, no Map build — so a mismatched index
 	// never pays the full-parse cost just to be discarded. The `PairIndexResolver` constructor (which
-	// DOES walk every entry) only runs once the gate has already confirmed the country match.
+	// DOES walk every entry) only runs once the eval has already confirmed the country match.
 	let placetypePair: PlacetypePairPriorOpts | undefined
 
 	if (resolved.pairIndexPath) {

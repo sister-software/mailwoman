@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tree-SHAPE predicates over an `AddressTree` — the one stack walk behind the pipeline's bare-tree
- *   guards and the "lone bare toponym" gates. Two quantifiers cover every consumer:
+ *   guards and the "lone bare toponym" conditions. Two quantifiers cover every consumer:
  *
  *   - {@link isBareTreeOf} — every value-bearing node carries the given tag (several allowed). The
  *     #912 / #1589 posture guards (`isBareLocalityTree`, `isBarePostcodeTree`) are this with the tag

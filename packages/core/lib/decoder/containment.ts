@@ -51,7 +51,7 @@ export const WESTERN_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = 
 	house_number: ["street"],
 	// `venue` is here for the SUB-VENUE case — `Terminal 5` of `Heathrow Airport`, `Gate 12` of `Manchester Airport`.
 	// The table modelled `attention: ["venue"]` but not a unit of a venue, so `validateTree` reported a correct,
-	// gate-passing parse (gb-subvenue-heathrow-terminal) as a stranded dependent: the contract was narrower than the
+	// passing parse (gb-subvenue-heathrow-terminal) as a stranded dependent: the contract was narrower than the
 	// capability the board already tests.
 	unit: ["street", "house_number", "venue"],
 	intersection_a: ["street", "locality"],

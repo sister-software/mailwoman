@@ -141,14 +141,14 @@ export function isBarePostcodeTree(tree: AddressTree): boolean {
 }
 
 /**
- * #743/#194: the shared coverage-guard gate — decide whether a confident coarse-placer country should become a HARD
+ * #743/#194: the shared coverage-guard check — decide whether a confident coarse-placer country should become a HARD
  * candidate filter. Exported so the two production placeCountry call sites (the runtime pipeline AND `geocodeAddress`)
- * apply the SAME three gates and can't drift: confidence ≥ {@link HARD_PLACE_COUNTRY_MIN_CONF}, country in the safelist
- * (override or the default {@link HARD_PLACE_COUNTRY_SAFELIST}), and no caller-set hard/default country to respect.
- * Returns the country to hard-filter, or `undefined` to stay on the soft prior.
+ * apply the SAME three conditions and can't drift: confidence ≥ {@link HARD_PLACE_COUNTRY_MIN_CONF}, country in the
+ * safelist (override or the default {@link HARD_PLACE_COUNTRY_SAFELIST}), and no caller-set hard/default country to
+ * respect. Returns the country to hard-filter, or `undefined` to stay on the soft prior.
  *
  * `safelist` precedence is the CALLER's job: pass `perCallOverride ?? resolver.artifactCoverage?.hardCountrySafelist`
- * (the eval instrument first, then the loaded artifact's own manifest) and this gate falls back to the code constant
+ * (the eval instrument first, then the loaded artifact's own manifest) and this check falls back to the code constant
  * only when both are absent — byte-identical to the pre-manifest behavior.
  */
 export function hardCountryFor(
@@ -295,7 +295,7 @@ function buildFastPathTree(text: string, kind: QueryKindResult, shape: QueryShap
  *
  * 1. Normalize (or identity)
  * 2. Compute QueryShape (or empty)
- * 3. Locale gate (or caller-trust)
+ * 3. `@mailwoman/locale-gate` (or caller-trust)
  * 4. Kind classifier (or default structured_address)
  * 5. Branch: fast-path → resolver; full → classifier → resolver
  *
@@ -339,7 +339,7 @@ export async function runPipeline(
 			// #194/#743: promote a CONFIDENT placement to a HARD country filter (empty→unresolved) when the
 			// caller opts in, the confidence clears the bar, AND the country is in the coverage SAFELIST. The
 			// soft posterior alone can't move a LOW-population place (a FI town loses to a high-pop namesake
-			// even when FI is pinned); the hard filter does. Three gates: confidence (ambiguous DK↔NO stay
+			// even when FI is pinned); the hard filter does. Three conditions: confidence (ambiguous DK↔NO stay
 			// soft), the safelist (only well-covered countries — where a miss is a genuine non-match, not a
 			// coverage gap — hard-filter; the low-coverage tail keeps its recall on the soft path), and the
 			// caller's own hardCountry/defaultCountry is never overwritten. Safelist precedence: the per-call
@@ -585,7 +585,7 @@ async function safeClassify(
 		// Postcode regex repair on by default (v0.7 #35, operator-signed). #690 normalizeCase forwards as-is —
 		// default-ON at the classifier since #895 (unset runs it; explicit false pins the raw-case parse).
 		// Word-consistency heal on by default (2026-07-15): arbitrates intra-word tag disagreement only, with the
-		// punctuation-separator + byte-fallback gates — clean win across golden us/fr/adversarial + parity floors.
+		// punctuation-separator + byte-fallback conditions — clean win across golden us/fr/adversarial + parity floors.
 		// Semantics in neural/word-consistency.ts.
 		// placetypePair (#1278): an opaque per-parse prior handle forwarded verbatim — undefined omits it (byte-stable
 		// no-prior decode), so the classifier's `opts?.placetypePair ?? cfg.placetypePair` resolution is unchanged when absent.
@@ -608,18 +608,18 @@ async function safeClassify(
 
 /**
  * The street-context check pair (#1315): when BOTH the gazetteer FST and the street-morphology matcher are wired, the
- * classify call passes the matcher in with the morphology EMISSION prior zeroed — the gate alone (measured golden-flat,
- * fragment-positive) without the emission prior (measured US-golden −48). Absent either matcher, the spread is `{}` and
- * the decode is byte-stable.
+ * classify call passes the matcher in with the morphology EMISSION prior zeroed — the check alone (measured
+ * golden-flat, fragment-positive) without the emission prior (measured US-golden −48). Absent either matcher, the
+ * spread is `{}` and the decode is byte-stable.
  */
 export const ZEROED_MORPHOLOGY_OPTS = { biasScale: 0, dependentLocalityPenalty: 0 } as const
 
 /**
- * D2 remediation (#1320, ROAD_TO_MAILWOMAN_V8_1_0 §5.2): the pipeline ships the gate at FULL suppression (0.0), not the
- * classifier's 0.25 default. Measured 2026-07-26 on v8.0.0-as-shipped (branch TS == origin/main, FST md5 == published):
- * 0.0 puts FR admin-street-homonym at EXACT P0 parity (159/400 vs 157 at 0.25) with golden us/fr and every other
- * fragment class byte-identical to 0.25 — the "some admin mass for the semi-markov decoder" rationale for 0.25 carried
- * no measured benefit at the pipeline level. Satisfies the D-rule (iron rule 6) ≥P0 clause for #1318.
+ * D2 remediation (#1320, ROAD_TO_MAILWOMAN_V8_1_0 §5.2): the pipeline ships the check at FULL suppression (0.0), not
+ * the classifier's 0.25 default. Measured 2026-07-26 on v8.0.0-as-shipped (branch TS == origin/main, FST md5 ==
+ * published): 0.0 puts FR admin-street-homonym at EXACT P0 parity (159/400 vs 157 at 0.25) with golden us/fr and every
+ * other fragment class byte-identical to 0.25 — the "some admin mass for the semi-markov decoder" rationale for 0.25
+ * carried no measured benefit at the pipeline level. Satisfies the D-rule (iron rule 6) ≥P0 clause for #1318.
  */
 export const STREET_CONTEXT_POSITIVE_SCALE = 0
 

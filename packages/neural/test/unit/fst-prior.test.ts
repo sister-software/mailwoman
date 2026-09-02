@@ -242,7 +242,7 @@ describe("buildFSTEmissionPriors — street-context gate (#1142, syntactic conte
 		})
 
 		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.25, 2)
-		// Suppression path untouched by the gate: 1-token match → -1.5 × 0.25 (#1173).
+		// Suppression path untouched by the eval: 1-token match → -1.5 × 0.25 (#1173).
 		expect(gated[0]![labelCol("B-street")]).toBeCloseTo(-1.5 * 0.25, 2)
 		// "Blvd" itself never matches the gazetteer — its row stays zero.
 		expect(gated[1]!.every((v) => v === 0)).toBe(true)

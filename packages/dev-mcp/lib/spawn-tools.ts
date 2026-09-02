@@ -180,7 +180,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				}
 
 				// Spawned for the same reason the gauntlet is: it writes its battery report to stdout, which here is the
-				// JSON-RPC channel. The gate ALSO runs its own recompile-before-eval guard, stricter than this one and meant
+				// JSON-RPC channel. The eval ALSO runs its own recompile-before-eval guard, stricter than this one and meant
 				// to fire — it is surfaced verbatim rather than pre-empted.
 				const freshness = await assertCompiledFresh(registry.repoRoot)
 				const outDir = (args["out_dir"] as string | undefined) ?? tempRootPath(`mwdev-gate-${jobs.list().length}`)

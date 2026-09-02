@@ -5,13 +5,13 @@
  *
  *   Read a promotion-gate run's own artifacts.
  *
- *   Unlike the gauntlet, the gate writes STRUCTURED output: `verdict.json` carries every floor with its reading, and
+ *   Unlike the gauntlet, the eval writes STRUCTURED output: `verdict.json` carries every floor with its reading, and
  *   `provenance.txt` records each graded artifact's md5 and dynamic-quant fingerprint. So nothing here parses prose for
  *   a number — the log is read only for the two things that exist nowhere else, the lore-guard refusal and the
  *   pre-filled ledger command.
  *
- *   This module adds no metric and moves no floor. The gate is the release authority; a floor relaxed here would be the
- *   silent gate drift the eval discipline exists to catch.
+ *   This module adds no metric and moves no floor. The eval is the release authority; a floor relaxed here would be the
+ *   silent eval drift the eval discipline exists to catch.
  */
 
 import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -27,7 +27,7 @@ export interface FloorReading {
 	/**
 	 * The measured value, or `null` when the battery produced none.
 	 *
-	 * `null` is NOT zero and not a failure to clear the bar — it is a metric that was never measured, and the gate marks
+	 * `null` is NOT zero and not a failure to clear the bar — it is a metric that was never measured, and the eval marks
 	 * it failing precisely so an unmeasured floor cannot pass by default. Reported separately from `pass` so a reader can
 	 * tell "missed the bar" from "never ran".
 	 */
@@ -63,15 +63,15 @@ export interface GateReport {
 	 */
 	provenance: string | null
 	/**
-	 * The pre-filled `eval ledger-append` command the gate prints on a PASS, or `null`.
+	 * The pre-filled `eval ledger-append` command the eval prints on a PASS, or `null`.
 	 *
-	 * Surfaced, never RUN. Appending to the ledger is a repo write and a claim about a shipped version; the gate runs on
+	 * Surfaced, never RUN. Appending to the ledger is a repo write and a claim about a shipped version; the eval runs on
 	 * candidates that may never ship. See {@link GateReport.ledger_note}.
 	 */
 	ledger_command: string | null
 	ledger_note: string
 	/**
-	 * The recompile-before-eval refusal, verbatim, when the gate's own lore guard fired. Passed through rather than
+	 * The recompile-before-eval refusal, verbatim, when the eval's own lore guard fired. Passed through rather than
 	 * worked around: that guard is correct, and a tool that swallowed it would grade a stale tree.
 	 */
 	lore_guard_refusal: string | null
@@ -195,7 +195,7 @@ export async function readGateReport(outDir: string, stdout: string, stderr: str
 /**
  * One line for the `summary` an agent relays.
  *
- * Names `graded_artifact` before the verdict. A gate verdict without it invites the exact confound the field's own
+ * Names `graded_artifact` before the verdict. An eval verdict without it invites the exact confound the field's own
  * docstring records — someone diffs two verdicts, sees a delta, and attributes to the model what was a precision
  * difference.
  */
@@ -241,16 +241,16 @@ async function declaredArtifacts(packageDir: PathBuilderLike): Promise<string[]>
 }
 
 /**
- * Check that a `--weights-cache` root has the layout the gate expects, and say what is missing when it does not.
+ * Check that a `--weights-cache` root has the layout the eval expects, and say what is missing when it does not.
  *
- * The gate's own failure here is deliberate and stays in place: `promotion-gate.ts` names the package directory rather
+ * The eval's own failure here is deliberate and stays in place: `promotion-gate.ts` names the package directory rather
  * than calling `resolveWeights({cacheRoot})` precisely so a mis-staged candidate dies on an ENOENT instead of falling
  * through to the installed workspace package — which in this repo always resolves, and would grade the SHIPPED model
  * under the candidate's label. This check runs BEFORE the spawn only so the reader learns the expected shape from a
  * sentence rather than from a stack trace; it never substitutes for that guard.
  *
  * The layout comes from `weightsCachePackageDir`, the resolver's own function, rather than a re-typed
- * `node_modules/@mailwoman/…` literal — the 2026-08-06 triage lesson recorded at the gate's own call site.
+ * `node_modules/@mailwoman/…` literal — the 2026-08-06 triage lesson recorded at the eval's own call site.
  *
  * @returns `kind` distinguishes a wrong-shaped root from a correctly-shaped one that is under-staged; the two need
  *   different fixes and one message for both sends the reader to the wrong place. `paths` is empty when well-formed.

@@ -5,7 +5,7 @@
  *
  *   Reference geocoders as a comparison arm — metered, and never a grading truth.
  *
- *   `@mailwoman/geocode-oracle`'s own header is unambiguous about what this is for: *"Not truth, and not a gate …
+ *   `@mailwoman/geocode-oracle`'s own header is unambiguous about what this is for: *"Not truth, and not an eval …
  *   Nothing here should ever decide whether a build ships."* So an oracle arm always reports `grade: "diff-only"` and a
  *   null verdict, and its purpose is flagging rows for a human to read. That is enforced here rather than left to the
  *   caller, because a billed third-party geocoder quietly becoming an answer key is the exact failure the package was

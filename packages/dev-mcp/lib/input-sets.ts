@@ -58,7 +58,7 @@ export const HOLDOUT_SOURCES = ["fr", "us"] as const
 type HoldoutSource = (typeof HOLDOUT_SOURCES)[number]
 
 /**
- * Default holdout draw size. Matches `runHoldoutLayer`'s own default, so a set drawn here is the size the gate is
+ * Default holdout draw size. Matches `runHoldoutLayer`'s own default, so a set drawn here is the size the eval is
  * calibrated on.
  */
 export const HOLDOUT_DEFAULT_N = 300

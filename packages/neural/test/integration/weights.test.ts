@@ -571,7 +571,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 })
 
 // The hard country gate's WARN branch (classifier.ts loadFromWeights): a pair-index sibling whose
-// PIX1 header country disagrees with the resolved locale's country is a PACKAGING error — the gate
+// PIX1 header country disagrees with the resolved locale's country is a PACKAGING error — the eval
 // must warn + skip the prior default, and the load must still succeed (skip-not-throw). Unreachable
 // through a correctly-built package (resolvePairIndexSibling matches on the locale's own country
 // code), so the test manufactures the mispackaging: a cacheRoot package layout whose
@@ -587,7 +587,7 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 			// ASK THE RESOLVER where the artifacts are. This used to name the workspace directory, which held
 			// them only while the dev linkers materialized into the tracked package; they now land in the
 			// data-root overlay, and a fixture mirroring an empty directory produces a cache with no binaries —
-			// so the resolve under test silently answers from somewhere else and the gate never fires.
+			// so the resolve under test silently answers from somewhere else and the eval never fires.
 			const packageDir = dirname((await resolveWeights({ locale: "en-us" })).modelPath)
 			const cacheRoot = fixtures.use(await temporaryDirectory("mailwoman-pair-gate-")).path
 			const fakePackageDir = weightsCachePackageDir(cacheRoot, "en-us")
@@ -624,7 +624,7 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
 
 			try {
-				// The sibling RESOLVES (filename matches the locale's country) — the gate is downstream.
+				// The sibling RESOLVES (filename matches the locale's country) — the eval is downstream.
 				const r = await resolveWeights({ locale: "en-us", cacheRoot })
 				expect(r.pairIndexPath).toMatch(/pair-index-us\.bin$/)
 

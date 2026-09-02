@@ -5,7 +5,7 @@
  *
  *   The constraint census, tested against a FAKE engine and a FAKE candidate table.
  *
- *   What is under test is the accounting — reachability kept apart from coverage, a gate called inert only when it
+ *   What is under test is the accounting — reachability kept apart from coverage, an eval called inert only when it
  *   never accompanied a pick — not whether the resolver is right about any particular place. A test that loaded the
  *   real gazetteer would take minutes and fail for reasons this file has no opinion about.
  */
