@@ -88,7 +88,7 @@ describe("APIClient: unthrottled default (the shape TileAPI uses)", () => {
 describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", () => {
 	// MEASURED BEFORE THE FIX, through this exact surface: `fetch()` awaited `$cooldown` once and the
 	// request was only COUNTED by a response interceptor, so a 40-call fan-out put 40 dispatches on the
-	// wire inside 3ms against a budget of 2/minute (and 40 against 10/minute). The gate has to be
+	// wire inside 3ms against a budget of 2/minute (and 40 against 10/minute). The check has to be
 	// checked AND the slot reserved in the same synchronous step.
 	it("does not let a concurrent fan-out spend more than the per-minute budget before the cooldown opens", async () => {
 		const REQUESTS_PER_MINUTE = 2
@@ -412,7 +412,7 @@ describe("APIClient: bounded retry (A3)", () => {
 
 describe("APIClient: the pacing gate sits downstream of the cache (I2)", () => {
 	it("does not pace a cache HIT — only a request that actually reaches the network", async () => {
-		// The gate used to live in `fetch()`, upstream of the cache interceptor, so every hit burned a
+		// The check used to live in `fetch()`, upstream of the cache interceptor, so every hit burned a
 		// full pacer sleep: measured 1 dispatch, 5 hits, five 111ms sleeps for zero network traffic.
 		// `/Archives/` documents are cached for a century by design, so warm re-runs are the EXPECTED
 		// mode for a bulk crawl — at 100k cached documents that is ~3 hours of sleeping at an empty
@@ -469,7 +469,7 @@ describe("APIClient: the pacing gate sits downstream of the cache (I2)", () => {
 
 describe("APIClient: every retry attempt takes its own pacer grant (I6/M-R)", () => {
 	it("paces retries, not just the first attempt", async () => {
-		// The guarantee was stated in a docstring and tested nowhere: hoisting the gate out of the
+		// The guarantee was stated in a docstring and tested nowhere: hoisting the check out of the
 		// per-dispatch path let a retry burst outrun the pacer entirely with 0 test failures. A retry
 		// storm past the rate limit is the exact class this whole task exists to close.
 		const INTERVAL_MS = 100
@@ -540,7 +540,7 @@ describe("APIClient: the pacer and the cooldown compose (I4)", () => {
 
 describe("APIClient: a caller-supplied adapter cannot bypass the gate", () => {
 	it("strips a per-request adapter so the pacing grant is still taken", async () => {
-		// `mergeConfig` lets a request-level `adapter` win over the instance default, and the gate lives in that
+		// `mergeConfig` lets a request-level `adapter` win over the instance default, and the check lives in that
 		// instance adapter — so before this was stripped, three concurrent calls made 3 dispatches, took 0 grants and
 		// slept 0 times. The cache interceptor's own adapter swap is unaffected: it happens inside the interceptor
 		// chain on the merged config, not through this entry point.

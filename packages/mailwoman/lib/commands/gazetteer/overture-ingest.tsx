@@ -8,7 +8,7 @@
  *
  *   Pulls address rows for a pinned Overture release into per-country local Parquet via DuckDB with
  *   predicate pushdown (megabytes per country — never the planet), and emits the fill-rate report
- *   that gates every downstream Overture issue (#472-#477): per-country row counts, field fill
+ *   that checks every downstream Overture issue (#472-#477): per-country row counts, field fill
  *   percentages, observed source datasets, and OpenAddresses-lineage share.
  *
  *   Standing rules encoded here (see epic #470 "pre-registered decision rules"):
@@ -50,7 +50,7 @@ const S3_GLOB = (release: string) =>
 	`s3://overturemaps-us-west-2/release/${release}/theme=addresses/type=address/*.parquet`
 
 /**
- * Fields whose fill rate the report tracks — the gate inputs for #472-#477.
+ * Fields whose fill rate the report tracks — the check inputs for #472-#477.
  */
 const FILL_FIELDS = ["postcode", "street", "number", "unit", "postal_city"] as const
 

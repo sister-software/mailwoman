@@ -13,7 +13,7 @@
  *   produces a confident wrong answer. A published locale package is not training (only `en-us` ships a model; the
  *   rest are data-only overlays). Corpus rows are not training (`country_weights` is a hard admission filter — a
  *   country absent from it trains on nothing, which is how Norway trained on zero rows across 44 configs). Training is
- *   not verification (a board row that is not `status: pass` tracks rather than gates). And the geocoder's coverage is
+ *   not verification (a board row that is not `status: pass` tracks rather than checks). And the geocoder's coverage is
  *   a different, much wider set than the parser's.
  *
  *   `--json` emits the full report. The checklist form shows the mismatches first, because those are the rows nobody

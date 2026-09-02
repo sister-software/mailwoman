@@ -10,7 +10,7 @@
  *   — and hands the suggestion layer its per-(component, locale) prior on nudge value
  *   (`docs/superpowers/plans/2026-08-05-suggestion-layer.md` §C.5, which specifies `AblationCell`).
  *
- *   This is a MEASUREMENT layer, not a gate. It never joins the combined verdict (`run.ts` lists only
+ *   This is a MEASUREMENT layer, not a check. It never joins the combined verdict (`run.ts` lists only
  *   regression + metamorphic), it has no stored expected values, and its verdict says only whether the
  *   INSTRUMENT ran — a map of all-zero cells is "not measured", never "nothing broke" (meaning-of-zero).
  *
@@ -21,7 +21,7 @@
  *       house numbers. Here the deletion is LITERAL (the asserted span, boundary-checked), every component
  *       the row asserts is deleted in turn, and the tolerance is the row's own.
  *   - `check-case.ts`'s `componentOf` maps an `expect_components` key to the assembled-result field. Reused
- *       verbatim (exported for this), so the slot a deletion is scored against is the same slot the gate grades.
+ *       verbatim (exported for this), so the slot a deletion is scored against is the same slot the check grades.
  *   - S-2 (`scripts/diagnostic/suggestion/s2-postcode-free.ts`, the suggestion arc's postcode column) is this
  *       runner's postcode column, and its finding 3 is why `substitutedCount` exists: 16 of 139 postcode
  *       deletions did not yield "no postcode", they yielded a DIFFERENT token in the postcode slot (house
@@ -168,7 +168,7 @@ export function boundedOccurrences(input: string, value: string): number[] {
 }
 
 /**
- * Delete `[at, at + length)` and tidy the separator debris the cut leaves behind. Deliberately LITERAL — the whole
+ * Delete `[at, at + length)` and tidy the separator debris the deletion leaves behind. Deliberately LITERAL — the whole
  * reason this runner does not reuse metamorphic's `\b\d{5}\b` stripper is that a pattern deletes house numbers on the
  * 4-digit postal systems (the postcode arc's M-1 finding, in reverse).
  */
@@ -515,7 +515,7 @@ function timestampDir(now: Date): string {
 
 /**
  * Run the ablation layer over the curated corpus. Returns `pass` — which reports only whether the INSTRUMENT ran (at
- * least one measured cell). A map is not a gate; nothing here can fail a ship.
+ * least one measured cell). A map is not a check; nothing here can fail a ship.
  */
 export async function runAblationLayer(
 	options: AblationLayerOptions = {}
@@ -761,7 +761,7 @@ export async function runAblationLayer(
 
 	printSummary(cells, rows, { boardID, measuredAt, anchorsRun, outDir, leverLine, skips })
 
-	// The instrument check, not a gate: a map of zero cells means the run measured NOTHING, and a "PASS" printed
+	// The instrument, not a check: a map of zero cells means the run measured NOTHING, and a "PASS" printed
 	// over an empty map is precisely the reading the meaning-of-zero rule exists to forbid.
 	return { pass: cells.length > 0, outDir, cells }
 }

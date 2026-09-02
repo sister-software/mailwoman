@@ -23,7 +23,7 @@
  *   The SHIPPED candidate gazetteer is never patched ("never patch databases — rebuild"): an
  *   artifact predating the manifest reads `undefined` at open and every consumer falls back to the
  *   code constants byte-identically. The meaning-of-zero rule is honored structurally: FI/PL are
- *   PRESENT rows with `hardFilterSafe: false` (measured, failed the gate) — distinguishable from a
+ *   PRESENT rows with `hardFilterSafe: false` (measured, failed the check) — distinguishable from a
  *   country that was simply never measured (absent row).
  */
 
@@ -44,7 +44,7 @@ const OA_PANEL_SOURCE = "#743 OA held-out hard-resolve panel (DeepSeek-advised g
 const OSM_PANEL_SOURCE = "#928 promote OSM panel, night 34 (2026-07-06)"
 
 /**
- * The reviewed per-country hard-filter coverage record — every promote-gate verdict + measurement that grew (or
+ * The reviewed per-country hard-filter coverage record — every promote-eval verdict + measurement that grew (or
  * deliberately kept a country off) the hard-country safelist. This is the structured form of the receipts that lived in
  * the `HARD_PLACE_COUNTRY_SAFELIST` code comment; the derived safelist (`hardFilterSafe === true`) is asserted
  * byte-identical to that constant in `coverage-manifest.test.ts`, so the two cannot drift silently.
@@ -59,13 +59,13 @@ export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
 	{ country: "ES", hardFilterSafe: true, hardResolveRate: 0.998, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
 	{ country: "NL", hardFilterSafe: true, hardResolveRate: 0.973, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
 	{ country: "IT", hardFilterSafe: true, hardResolveRate: 0.968, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
-	// Measured and FAILED the gate — present rows on purpose (meaning-of-zero: a failed measurement is a
+	// Measured and FAILED the check — present rows on purpose (meaning-of-zero: a failed measurement is a
 	// first-class negative result, distinguishable from "never measured"). They stay on the soft prior
 	// until their gazetteer coverage is filled (#193).
 	{ country: "FI", hardFilterSafe: false, hardResolveRate: 0.695, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
 	{ country: "PL", hardFilterSafe: false, hardResolveRate: 0.778, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
 	// #928 promote (2026-07-06): the postcodeCountryPrior FORMAT signal routes GB/CA confidently (the
-	// language placer conflated both with US), and the OSM-panel gates passed with the hard filter ON.
+	// language placer conflated both with US), and the OSM-panel checks passed with the hard filter ON.
 	// Rates here are the panels' RESOLVE rates (1 − unresolved/n): GB 293/300 (271 ok, 7 unresolved),
 	// CA 269/300 (200 ok, 31 unresolved) — CA cleared on the format-prior rationale despite the sub-95%
 	// panel number, which is exactly why `hardFilterSafe` is a stored VERDICT, not a rate threshold.

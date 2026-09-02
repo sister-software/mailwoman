@@ -107,7 +107,7 @@ export interface RerankOpts {
  *
  * **When every resolved candidate is implausible, the model's rank-1 wins.** A reranker that returns nothing is worse
  * than one that defers: "all my evidence says these are all bad" is not grounds to invent a different answer, only
- * grounds to flag low confidence (the Phase-4b ambiguity gate).
+ * grounds to flag low confidence (the Phase-4b ambiguity check).
  */
 export async function rerankByResolution<T>(
 	candidates: ReadonlyArray<RerankCandidate<T>>,

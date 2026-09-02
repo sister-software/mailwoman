@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer build street-morphology` — the sealed street-morphology FST artifact
- *   (`fst-street-morphology.bin`), the #1315 street-context gate's signal source serialized once at
+ *   (`fst-street-morphology.bin`), the #1315 street-context check's signal source serialized once at
  *   build time instead of rebuilt from the libpostal dictionaries per process (and never in the
  *   browser). Lands at `$MAILWOMAN_DATA_ROOT/wof/` by default — beside, never inside, the
  *   per-locale FST dir. See `mailwoman/gazetteer-pipeline/street-morphology.ts` for the rationale.

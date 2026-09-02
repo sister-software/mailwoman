@@ -33,7 +33,7 @@ import type { Tagged } from "type-fest"
  * The brand is here because the fold is applied at BUILD time and is therefore mandatory at QUERY time, while a
  * near-miss approximation of it (`toLowerCase()`, `trim()`) is still a `string`: it binds to the parameter, returns
  * fewer rows, and the shortfall reads as a coverage gap in the data rather than a defect in the probe. Requiring the
- * brand at the seam turns that silent under-match into a compile error. Mint one only by calling the fold.
+ * brand at the boundary turns that silent under-match into a compile error. Mint one only by calling the fold.
  */
 export type NameKey = Tagged<string, "NameKey">
 
@@ -123,7 +123,7 @@ export function normalizeStreetForKey(street: string): StreetKey {
 	if (!tokens.length) return "" as StreetKey
 
 	// Spelled-ordinal street names → digit form when a street suffix follows ("Tenth Street" →
-	// "10th street", #723). Gated on the next token being a suffix so ordinal-WORD names are untouched.
+	// "10th street", #723). Conditioned on the next token being a suffix so ordinal-WORD names are untouched.
 	for (let i = 0; i < tokens.length - 1; i++) {
 		const digit = SPELLED_ORDINAL_TO_DIGIT.get(tokens[i]!)
 

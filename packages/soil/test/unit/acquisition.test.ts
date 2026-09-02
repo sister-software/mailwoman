@@ -113,7 +113,7 @@ describe("readFGDCMetadata", () => {
 
 	it("reads an unclosed element as unreadable, in one pass rather than by scanning for it", () => {
 		// What a truncated archive produces, and what a lazy-quantifier reader backtracks polynomially over. Every element
-		// after the cut is unreadable, so the licence assertion — the FIRST thing read — is what refuses, and the refusal
+		// after the truncation is unreadable, so the licence assertion — the FIRST thing read — is what refuses, and the refusal
 		// doubles as the timing check.
 		const truncated = `${FGDC.slice(0, FGDC.indexOf("<pubdate>") + "<pubdate>".length)}${"9".repeat(200_000)}`
 		const started = performance.now()

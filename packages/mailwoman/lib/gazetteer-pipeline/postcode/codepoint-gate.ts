@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The promotion gate for the Code-Point Open GB database: compare it against the incumbent GeoNames
+ *   `promotion-gate.ts` for the Code-Point Open GB database: compare it against the incumbent GeoNames
  *   `GB_full` rows before anything swaps in `DEFAULT_POSTCODE_DATABASES`.
  *
  *   This exists because the swap is a DATA-SOURCE change, not a refresh. The two sources disagree on
@@ -154,7 +154,7 @@ const CROWN_DEPENDENCY_AREAS = ["IM", "GY", "JE"] as const
  * three city-centre probes near 500-900 m) are loose because the LANDMARK coordinate is a district rather than a door —
  * both databases agree with each other there to within 3 m, which is the comparison this list is actually making.
  *
- * The Senedd probe is `CF99 1SN` and that is not a typo. It was originally `CF99 1NA`, which the first gate run
+ * The Senedd probe is `CF99 1SN` and that is not a typo. It was originally `CF99 1NA`, which the first eval run
  * reported ABSENT from Code-Point Open and present in the incumbent. Chasing it found the real story rather than a bug:
  * the Senedd's postcode changed from `CF99 1NA` to `CF99 1SN` in 2021, Code-Point Open 2026-05 carries only the current
  * one, and the incumbent GeoNames snapshot still carries the retired one 114 m away. That single row is the whole
@@ -176,7 +176,7 @@ export const CODEPOINT_PROBES = [
 /**
  * The #920 sanitized form — every non-letter/number stripped. Both databases store this as `spr.name`, so it is the
  * join key. Duplicated from `resolver-wof-sqlite/geonames-postal.ts` rather than imported because that package is an
- * OPTIONAL peer and this gate must run without it.
+ * OPTIONAL peer and this check must run without it.
  */
 function normalizeName(raw: string): string {
 	return raw.replaceAll(/[^\p{L}\p{N}]/gu, "").toUpperCase()
@@ -203,7 +203,7 @@ export interface RunCodePointGateOptions {
 }
 
 /**
- * Run the gate. Both databases are opened read-only; nothing is written anywhere.
+ * Run the check. Both databases are opened read-only; nothing is written anywhere.
  *
  * Memory: the incumbent's GB rows are held in a `Map` of ~1.84 M entries (~250 MB) so the join is a single pass over
  * each side rather than a SQL `ATTACH` join across two 800 MB+ files. Measured at ~40 s end to end.

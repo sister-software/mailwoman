@@ -128,7 +128,7 @@ export const FAKE_SUGGESTIONS: Suggestion[] = [
  * parse+resolve) with the map surface: the offline stub style, a version list, a backend, an injected autocomplete, and
  * a `resolveMapPlace` that hands the selected candidate a bbox so the declarative overlays draw a marker + outline. No
  * network, no ONNX, no maplibre-at-runtime — everything is data. `runParseWithBias` delegates to the base parse (the
- * bias is ignored by the fake but present so the seam is exercised).
+ * bias is ignored by the fake but present so the parameter is exercised).
  */
 export function makeDemoRuntime(overrides: Partial<DemoRuntime> = {}): DemoRuntime {
 	const base = makePipelineRuntime()

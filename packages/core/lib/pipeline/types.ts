@@ -65,7 +65,7 @@ export interface PipelineOpts {
 	resolveOpts?: ResolveOpts
 	/**
 	 * #690: title-case detected all-caps ASCII input before the Stage 3 classifier (helps on all-caps registry/compliance
-	 * data). Threaded to `ClassifierOpts.normalizeCase`. Detection-gated
+	 * data). Threaded to `ClassifierOpts.normalizeCase`. Detection-restricted
 	 *
 	 * - **Default-ON** (#895 settled drift D2; the classifier applies it when unset) — byte-stable for mixed-case input
 	 *   either way. Pass `false` to restore the raw-case parse.
@@ -81,7 +81,7 @@ export interface PipelineOpts {
 	placetypePair?: PlacetypePairPassthrough
 	/**
 	 * #743/#194: promote a CONFIDENT coarse-placer guess from the soft `anchorPosterior` boost to a HARD country filter
-	 * (empty→unresolved) — see {@link ResolveOpts.hardCountry}. Gated three ways: the placer's confidence ≥
+	 * (empty→unresolved) — see {@link ResolveOpts.hardCountry}. Conditioned three ways: the placer's confidence ≥
 	 * `HARD_PLACE_COUNTRY_MIN_CONF` (ambiguous DK↔NO stay soft), the country is in the coverage
 	 * `HARD_PLACE_COUNTRY_SAFELIST` (or a {@link hardCountrySafelist} override), and no caller
 	 * `hardCountry`/`defaultCountry` is already set. **Default-ON** in the shipped
@@ -91,11 +91,11 @@ export interface PipelineOpts {
 	 */
 	hardPlaceCountry?: boolean
 	/**
-	 * #743/#194: override the coverage safelist that gates {@link hardPlaceCountry}. Undefined → the loaded gazetteer
+	 * #743/#194: override the coverage safelist that bounds {@link hardPlaceCountry}. Undefined → the loaded gazetteer
 	 * artifact's own coverage manifest (`resolver.artifactCoverage.hardCountrySafelist`) when it carries one, else the
 	 * built-in `HARD_PLACE_COUNTRY_SAFELIST` fallback (byte-identical for artifacts predating the manifest). Supply a set
 	 * to test/measure a different coverage frontier — the resolver eval passes the full in-map country set to measure
-	 * ungated hard-resolve-rates (which is how the production safelist is grown).
+	 * unrestricted hard-resolve-rates (which is how the production safelist is grown).
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
 	signal?: AbortSignal
@@ -208,8 +208,8 @@ export const QueryIntentCode = {
 	 */
 	DeclaredFork: "declared_fork",
 	/**
-	 * The query is relative to the asker and no focus point was supplied. `evidence.parameter` names the seam that would
-	 * carry one.
+	 * The query is relative to the asker and no focus point was supplied. `evidence.parameter` names the parameter that
+	 * would carry one.
 	 */
 	FocusPointRequired: "focus_point_required",
 	/**
@@ -462,7 +462,7 @@ export interface ClassifierOpts {
 	fst?: FSTMatcherLike
 	fstBiasScale?: number
 	/**
-	 * Street-morphology matcher. In the pipeline this is the signal source for the FST street-context GATE (#1315),
+	 * Street-morphology matcher. In the pipeline this is the signal source for the FST street-context CHECK (#1315),
 	 * always paired with zeroed `fstStreetMorphologyOpts` — the morphology EMISSION prior measured US-golden-negative
 	 * (−48, 2026-07-25 decomposition) and stays off on the production paths; it remains reachable via direct
 	 * `classifier.parse` for measured, opt-in use.
@@ -478,14 +478,14 @@ export interface ClassifierOpts {
 	postcodeRepair?: boolean
 	/**
 	 * #690: title-case a detected all-caps ASCII input before the model (all-caps registry/compliance data is partly
-	 * OOD). Detection-gated — mixed-case + non-ASCII input is untouched. **Default-ON** (#895 settled drift D2); `false`
-	 * restores the raw-case parse.
+	 * OOD). Detection-restricted — mixed-case + non-ASCII input is untouched. **Default-ON** (#895 settled drift D2);
+	 * `false` restores the raw-case parse.
 	 */
 	normalizeCase?: boolean
 	/**
 	 * Per-word BIO consistency repair (#727): force each SentencePiece word whose pieces DISAGREE in type to one tag via
 	 * a confidence-weighted vote. Structural mirror of `@mailwoman/neural`'s `WordConsistencyOpts` (core carries no
-	 * neural dependency) — see `neural/word-consistency.ts` for the semantics of each gate.
+	 * neural dependency) — see `neural/word-consistency.ts` for the semantics of each check.
 	 */
 	enforceWordConsistency?:
 		| boolean
@@ -501,7 +501,7 @@ export interface ClassifierOpts {
 
 /**
  * The word-consistency setting production parses ship with (2026-07-15): heal intra-word tag disagreement, with the
- * punctuation-separator + byte-fallback gates on and no confidence floor — the configuration that cleared golden
+ * punctuation-separator + byte-fallback conditions on and no confidence floor — the configuration that cleared golden
  * us/fr/adversarial and the parity floors with zero per-file regressions. One constant so the pipeline's
  * `safeClassify`, `parseForGeocode`, and the eval harness can't drift apart.
  */
@@ -516,8 +516,9 @@ export interface AddressClassifier {
 
 /**
  * Injectable stage implementations. All optional — when a stage is absent, the coordinator either skips it (resolver)
- * or substitutes a no-op stub (normalize / queryShape / locale gate / kind classifier). The classifier is required for
- * the full pipeline path; without it, the coordinator can only fast-path on QueryShape known-formats.
+ * or substitutes a no-op stub (normalize / queryShape / `@mailwoman/locale-check` stage / kind classifier). The
+ * classifier is required for the full pipeline path; without it, the coordinator can only fast-path on QueryShape
+ * known-formats.
  */
 export interface RuntimePipelineStages {
 	normalize?: (raw: string, opts?: { locale?: string }) => NormalizedInputLite
@@ -565,8 +566,8 @@ export interface RuntimePipelineStages {
 	 */
 	fst?: FSTMatcherLike
 	/**
-	 * Street-morphology matcher — the signal source for the FST street-context gate (#1315). Consumed ONLY with the
-	 * morphology emission prior zeroed at the classify call sites (the emission prior is US-golden-negative; the gate
+	 * Street-morphology matcher — the signal source for the FST street-context check (#1315). Consumed ONLY with the
+	 * morphology emission prior zeroed at the classify call sites (the emission prior is US-golden-negative; the check
 	 * alone is golden-flat and fragment-positive). Effective only when `fst` is also present.
 	 */
 	streetMorphology?: FSTMatcherLike

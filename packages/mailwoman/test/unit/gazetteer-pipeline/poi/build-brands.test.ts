@@ -5,7 +5,7 @@
  *
  *   Tests for {@linkcode aggregateBrands} (the pure aggregation core) and {@linkcode buildBrandTable} /
  *   {@linkcode serializeBrandTable}, exercised entirely via injected `BrandNameCount` fixtures and an
- *   injected `sourceLayer` — mirrors `build-poi.test.ts`'s injected-`rows` seam, so this suite never
+ *   injected `sourceLayer` — mirrors `build-poi.test.ts`'s injected-`rows` idiom, so this suite never
  *   touches `node:sqlite`.
  */
 

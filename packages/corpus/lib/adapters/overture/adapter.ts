@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `overture`: Overture Maps Addresses adapter (epic #470 — the gated corpus adapter, realized
+ *   `overture`: Overture Maps Addresses adapter (epic #470 — the conditional corpus adapter, realized
  *   2026-06-20). Overture's global Addresses theme is the single-schema, well-normalized address
  *   dataset that fixes OpenAddresses' per-country patchiness (OA dropped Spain; OA-DE omits the
  *   Bundesland) — it even re-hosts the OA Spain data the standalone OA bucket no longer serves.

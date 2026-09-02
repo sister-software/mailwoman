@@ -5,7 +5,7 @@
  *
  *   CLI integration tests for `parse --neural --resolve` (Phase 4.3).
  *
- *   Schema-level tests run unconditionally. End-to-end tests gate on a real WOF SQLite distribution
+ *   Schema-level tests run unconditionally. End-to-end tests check on a real WOF SQLite distribution
  *   being on disk (skip-if-missing via `describe.skipIf`), matching the pattern in
  *   `resolver-wof-sqlite/integration.test.ts`.
  */

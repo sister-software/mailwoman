@@ -11,7 +11,7 @@
  *
  *   Why the geometry and not a bounding box: a coverage claim keyed on a rectangle asserts survey over
  *   whatever the rectangle overhangs, and a country/region extract is clipped to a polygon, not a
- *   rectangle. `bboxCoverageCells` in the POI pipeline is correct for the rectangular cuts it was written
+ *   rectangle. `bboxCoverageCells` in the POI pipeline is correct for the rectangular extracts it was written
  *   for; a named administrative region needs its own outline or the cells along its edge claim coverage
  *   the source never had.
  *

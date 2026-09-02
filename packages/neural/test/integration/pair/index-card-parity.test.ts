@@ -7,7 +7,7 @@
  *
  *   A model card is what a consumer, the release preflight and a future maintainer all read to learn
  *   what an artifact IS. Nothing else compares the two, and a card can drift across several
- *   increments without any gate noticing — leaving it not merely absent but confidently wrong. The
+ *   increments without any check noticing — leaving it not merely absent but confidently wrong. The
  *   artifact is the arbiter here; the card is graded against it.
  *
  *   WHAT IT CHECKS, AND WHAT IT DELIBERATELY DOES NOT. Pair COUNT and the calibrated `delta` /
@@ -15,7 +15,7 @@
  *   the same sources reproduces them exactly. The card's `md5` is NOT compared: a PIX1 header
  *   embeds `buildDate`, so identical sources produce different bytes on every rebuild, and asserting
  *   on it would fail constantly for a reason that is not a defect. The md5 documents the artifact
- *   STAGED for a release; the release-side gate in `scripts/verify-release-metadata.ts` is where
+ *   STAGED for a release; the release-side check in `scripts/verify-release-metadata.ts` is where
  *   staged bytes get checked.
  *
  *   Skips per-package when the binary is absent — these are derived artifacts, gitignored and built
@@ -130,7 +130,7 @@ describe("pair-index ↔ model-card parity", () => {
 			// The whole-edge parent bias (#46) is default-on for the locales that have a board, and OFF (no
 			// header key) for the ones that don't. Both directions are graded: a card that omits a shipped
 			// parentDelta misdescribes the behaviour, and a card that CLAIMS one the artifact lacks is worse —
-			// it reads as though the D-rule's per-locale gate had been cleared when it hasn't. The assertion
+			// it reads as though the D-rule's per-locale check had been cleared when it hasn't. The assertion
 			// spells out `parentDelta=<n>` rather than the bare number because δ and β are both 5 today, so a
 			// substring match on "5" would pass on a card that never mentioned the parent at all.
 			const parentClaim = `parentDelta=${facts.parentDelta}`

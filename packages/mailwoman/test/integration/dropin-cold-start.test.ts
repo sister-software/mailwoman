@@ -31,7 +31,7 @@
  *   These assertions run in EVERY environment and download nothing (a bare `mkdtemp` data root, never
  *   populated). The full loop — actually `data pull candidate` (~1.65 GB) and confirm photon/nominatim ALSO
  *   bind + answer 200 against it, plus the Paris/Texas routing retest (#task-7's carry-forward finding: the FTS
- *   default backend misroutes a French address to its US homonym; the candidate backend does not) — is gated
+ *   default backend misroutes a French address to its US homonym; the candidate backend does not) — is conditional
  *   behind `$MAILWOMAN_COLD_START_FULL=1` (unset in CI). Run it manually once per change to this cold-start
  *   path; `$MAILWOMAN_COLD_START_DATA_ROOT` lets a repeat local run reuse an already-pulled data root instead of
  *   re-downloading.
@@ -99,12 +99,14 @@ const HEALTHY_TIMEOUT_MS = 30_000
 const TEST_TIMEOUT_MS = 150_000
 
 /**
- * The `data pull candidate` step in the gated suite streams ~1.65 GB; this budget is network-bound, not CPU-bound.
+ * The `data pull candidate` step in the conditional suite streams ~1.65 GB; this budget is network-bound, not
+ * CPU-bound.
  */
 const PULL_TIMEOUT_MS = 600_000
 
 /**
- * The gated test's own vitest timeout: the pull, plus two server boots and a geocode call, each independently bounded.
+ * The conditional test's own vitest timeout: the pull, plus two server boots and a geocode call, each independently
+ * bounded.
  */
 const GATED_TEST_TIMEOUT_MS = PULL_TIMEOUT_MS + 3 * HEALTHY_TIMEOUT_MS + 30_000
 
@@ -449,7 +451,7 @@ describe("mailwoman-mcp — cold start over stdio, no data", () => {
 	)
 })
 
-//#region Gated: real data pull + Paris/Texas retest
+//#region Conditional: real data pull + Paris/Texas retest
 
 const isFull = $public.MAILWOMAN_COLD_START_FULL === "1"
 

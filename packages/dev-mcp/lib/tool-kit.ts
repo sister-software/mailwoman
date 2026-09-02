@@ -275,9 +275,9 @@ export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"])
 }
 
 /**
- * The #1649 intent gate's verdict, when it fired.
+ * The #1649 intent check's verdict, when it fired.
  *
- * A refusal is not a parse failure, and everything downstream of it looks exactly like one: the gate discards a
+ * A refusal is not a parse failure, and everything downstream of it looks exactly like one: the eval discards a
  * COMPLETED tree and hands back `roots: []`, so `decodeAsJSON` answers `{}` and the resolver-interior records are
  * empty. Rendered without this line, `Cafe at St Mary's, Oxford` reads as an input the parser could make nothing of,
  * when in fact it parsed to `locality=Oxford › dependent_locality=St Mary's › street=Cafe` and was refused as a
@@ -335,7 +335,7 @@ export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reaso
 }
 
 /**
- * The #1721 resolver-interior rows — one line per backend lookup: the query as sent, the gates that fired, the pick,
+ * The #1721 resolver-interior rows — one line per backend lookup: the query as sent, the checks that fired, the pick,
  * and the candidate table with each row's per-stage rank vector. `resolver: []` renders as its own claim (the walk
  * performed no lookups) rather than nothing, because an absent line is indistinguishable from a section that predates
  * the field.
@@ -533,7 +533,7 @@ export function stratify(rows: ComparedRow[], by: StratumKey): Record<string, un
 }
 
 /**
- * One sentence for a job, whichever kind it is. A still-running gate gets no partial reading: its numbers live in
+ * One sentence for a job, whichever kind it is. A still-running check gets no partial reading: its numbers live in
  * `verdict.json`, which the assembler writes at the END, so anything read before then is not a partial answer — it is
  * no answer.
  */

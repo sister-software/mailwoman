@@ -130,13 +130,13 @@ export interface CompareDeps {
 	/**
 	 * How an external arm's client is built.
 	 *
-	 * The transport seam, and the only one: a test replaces the Axios adapter through this, so the real client, its
+	 * The transport interface, and the only one: a test replaces the Axios adapter through this, so the real client, its
 	 * pacing and its response parsing all still run against a scripted wire. A test that stubbed the ANSWER instead would
 	 * be asserting its own hypothesis about the protocol.
 	 */
 	createExternalClient?: (arm: ExternalArm) => ExternalGeocoderClient
 	/**
-	 * How an oracle arm's client is built. The same seam, for the same reason.
+	 * How an oracle arm's client is built. The same injection point, for the same reason.
 	 */
 	createOracleClient?: (provider: OracleProviderName) => OracleGeocoderLike
 	/**

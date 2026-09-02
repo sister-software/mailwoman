@@ -194,12 +194,12 @@ function hasDeicticTail(lowercased: string): boolean {
 }
 
 /**
- * The gates `bare_toponym` and `route_pair` share: no address grammar of any kind, one segment, alpha throughout.
+ * The conditions `bare_toponym` and `route_pair` share: no address grammar of any kind, one segment, alpha throughout.
  *
  * Returns the word list when the input clears them, `null` when it does not. Deliberately a SUPERSET of
- * `scoreLocalityOnly`'s gates (which admits two segments), so `bare_toponym` is a strict refinement of `locality_only`
- * and can never fire where `locality_only` did not — the property `intent-rules.test.ts` asserts and the reason the
- * ranking discipline above is enough to keep the top kind pinned.
+ * `scoreLocalityOnly`'s conditions (which admit two segments), so `bare_toponym` is a strict refinement of
+ * `locality_only` and can never fire where `locality_only` did not — the property `intent-rules.test.ts` asserts and
+ * the reason the ranking discipline above is enough to keep the top kind pinned.
  */
 function bareNameWords(input: NormalizedInputLite, shape: QueryShapeLike): string[] | null {
 	const text = input.normalized.trim()

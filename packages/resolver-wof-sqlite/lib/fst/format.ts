@@ -15,10 +15,10 @@ import type { PlacetypeID } from "#fst/types"
  * an older artifact format-stale without re-typing the number (mirrors `REQUIRED_PAIR_INDEX_SCHEMA`'s role for PIX1 —
  * see `fst-freshness.ts`).
  *
- * ONE constant for the writer and both readers, deliberately. The browser reader's acceptance gate was a SEPARATE
+ * ONE constant for the writer and both readers, deliberately. The browser reader's acceptance criterion was a SEPARATE
  * `MAX_VERSION` number from the layout branches, and it drifted twice: left stale at 2 when the v4 wide-state layout
  * shipped (rejecting every real artifact), and stale again at 4 through the v5 two-score split until the line moved by
- * hand. A gate that is the writer's version cannot drift from it.
+ * hand. A check that is the writer's version cannot drift from it.
  */
 export const FST_FORMAT_VERSION = 5
 

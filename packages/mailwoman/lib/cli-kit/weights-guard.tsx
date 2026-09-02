@@ -148,7 +148,7 @@ export interface WeightsGuardProps {
 	 */
 	forceDegraded?: boolean
 	/**
-	 * Test seam / non-default cache root.
+	 * TEST INJECTION POINT / non-default cache root.
 	 */
 	cacheRoot?: string
 	/**

@@ -6,7 +6,7 @@
  * Runs inside a worker thread (spawned by `geocodeStream` via `spliterator.parallelMap`). Top-level
  * code is per-worker init: rebuild the classifier, WOF SQLite lookup, resolver, and geometry databases
  * from the serializable `workerData.userData` config (paths + locale), then assemble the same geocode
- * seam the CLI builds. Each dispatched record is geocoded by `makeGeocodeHandler`.
+ * interface the CLI builds. Each dispatched record is geocoded by `makeGeocodeHandler`.
  */
 
 import { workerData } from "node:worker_threads"
@@ -56,7 +56,7 @@ const seam = geocodeAddressVia({
 })
 
 /**
- * Per-item handler the worker pool invokes. Bound to this worker's seam and mapping at module load, so each item costs
- * only the geocode itself.
+ * Per-item handler the worker pool invokes. Bound to this worker's geocoder and mapping at module load, so each item
+ * costs only the geocode itself.
  */
 export const handleItem = makeGeocodeHandler(seam, mapping)

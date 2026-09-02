@@ -165,7 +165,7 @@ describe("peekFSTStampFields", () => {
 	it("survives a truncated trailer instead of throwing", async () => {
 		const path = await writeFST("truncated.bin", provenanceOf({ sourceDBMD5: "deadbeef" }))
 		const bytes = await readLocalBuffer(path)
-		// Cut into the JSON: the declared length now runs past EOF.
+		// Truncate the JSON: the declared length now runs past EOF.
 		await writeLocalFile(bytes.subarray(0, -20), path)
 
 		expect((await peekFSTStampFields(path))?.provenance).toBeUndefined()

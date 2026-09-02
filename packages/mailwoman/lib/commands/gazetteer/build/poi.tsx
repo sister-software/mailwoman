@@ -10,7 +10,7 @@
  *   (stderr) / summary (stdout) split.
  *
  *   `--source osm` (decisions 3/5): a second, build-local branch alongside the default
- *   Overture path — same command, same `buildPOIDatabase` seam, different inputs. It streams
+ *   Overture path — same command, same `buildPOIDatabase` entry point, different inputs. It streams
  *   `@mailwoman/osm/sdk`'s `extractOSMPOIs` over a Geofabrik `.osm.pbf` extract (telecom-infrastructure
  *   categories only), stamps the invocation's `--country` onto every row (a bare OSM feature
  *   carries no country property — see `extract-poi.ts`'s module docstring), and derives res-6 coverage
@@ -120,7 +120,7 @@ const GazetteerBuildPOI: ParsedCommandComponent<Options> = ({ options }) => {
 
 			// Buffered (not streamed straight into buildPOIDatabase): telecom-infra extracts are
 			// category-sparse — a few thousand rows even for a whole country — and the array is walked
-			// twice, once here to derive coverage, once as buildPOIDatabase's `rows` seam.
+			// twice, once here to derive coverage, once as buildPOIDatabase's `rows` injection point.
 			const rows: POISourceRow[] = []
 
 			// DYNAMIC import, required: @mailwoman/osm is UNPUBLISHED (ODbL counsel sign-off

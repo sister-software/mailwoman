@@ -497,7 +497,7 @@ describe("buildCandidateTable", () => {
 
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
-			// Springfield's only same-key scored place is 1,500 km away — a different town. The gate
+			// Springfield's only same-key scored place is 1,500 km away — a different town. The check
 			// refuses it, and the refusal is recorded as ABSENCE, not as a zero a consumer could rank on.
 			expect(importanceOf(db, normalizeLocalityForKey("Springfield"))).toEqual([null])
 			// Illinois (region) and the US (country) were never scored at all.

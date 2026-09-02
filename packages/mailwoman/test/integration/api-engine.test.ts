@@ -22,7 +22,7 @@
  *   express's per-request lazy `getDeps()`, `createServeEngine()` does the (slow: model + SQLite)
  *   setup work eagerly, so paying that cost once per file (not once per test) matters. Error-path
  *   assertions run unconditionally: the validation-layer 400s never reach the engine, so they pass
- *   whether or not real WOF + database data is present on this host. Success-path assertions gate on
+ *   whether or not real WOF + database data is present on this host. Success-path assertions check on
  *   real WOF + TX databases being present (`describeIfStack`), same as the express predecessor.
  */
 
@@ -44,7 +44,7 @@ const hasStack = (await pathExists(wofPath)) && (await pathExists(txSitus))
 const describeIfStack = describe.skipIf(!hasStack)
 
 /**
- * `/v1/parse` needs only the model weights — gate its own tests independently of the WOF/TX stack above.
+ * `/v1/parse` needs only the model weights — check its own tests independently of the WOF/TX stack above.
  */
 async function weightsPresent(): Promise<boolean> {
 	try {
@@ -145,7 +145,7 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 })
 
 // /v1/parse — native neural output; needs only the model weights, not the gazetteer, so
-// it's gated on `weightsPresent()` rather than `hasStack` — a WOF-less boot still answers this.
+// it's conditioned on `weightsPresent()` rather than `hasStack` — a WOF-less boot still answers this.
 
 describeIfWeights(
 	"api-engine — /v1/parse (native neural output)",

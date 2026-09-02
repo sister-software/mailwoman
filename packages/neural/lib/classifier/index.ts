@@ -143,7 +143,7 @@ export class NeuralAddressClassifier {
 
 	/**
 	 * Path to the locale-general street-morphology FST (`fst-street-morphology.bin`) when the resolved weights package
-	 * (or its base) shipped one, else `undefined`. The runtime pipeline's street-context gate (#1315) deserializes it
+	 * (or its base) shipped one, else `undefined`. The runtime pipeline's street-context check (#1315) deserializes it
 	 * through the shared loader ladder instead of rebuilding from the libpostal dictionaries per process.
 	 */
 	get streetMorphologyPath(): string | undefined {
@@ -192,7 +192,7 @@ export class NeuralAddressClassifier {
 	async parse(text: string, opts?: ParseOpts): Promise<AddressTree> {
 		if (!text.length) return { raw: text, roots: [] }
 		// #690: title-case all-caps ASCII input so the mixed-case-trained model doesn't go OOD.
-		// Detection-gated (mixed-case + non-ASCII untouched). Default-ON (#895 settled drift D2 — the geocode
+		// Detection-restricted (mixed-case + non-ASCII untouched). Default-ON (#895 settled drift D2 — the geocode
 		// path had run it since #713 while the pipeline factory + raw classifier defaulted off); `false`
 		// restores the raw-case parse. ASCII title-case is char-for-char length-preserving, so token offsets
 		// are unaffected; the tree is built from the normalized text (values come out title-cased — the
@@ -314,7 +314,7 @@ export class NeuralAddressClassifier {
 		logits: number[][]
 		pieces: ReturnType<MailwomanTokenizer["encode"]>["pieces"]
 		/**
-		 * The locale head's confident country verdict, or null — computed on EVERY parse (the #1684 scope gate reads it).
+		 * The locale head's confident country verdict, or null — computed on EVERY parse (the #1684 scope check reads it).
 		 */
 		localeCountry: { country: string; confidence: number } | null
 		/**
@@ -344,7 +344,7 @@ export class NeuralAddressClassifier {
 		// decode path and the ProductionScorer feed channels identically, so there is exactly one
 		// choreography. Each channel is undefined when its source is unconfigured (no-op).
 		//
-		// The evidence-bundle channels are REGISTER-GATED (Decision A, see ParseOpts.inputMode):
+		// The evidence-bundle channels are REGISTER-CONDITIONAL (Decision A, see ParseOpts.inputMode):
 		// formatted mode withholds both lexicons so the model runs its curriculum-trained absence
 		// identity — the fed channels lift fragments but damage full-address parses.
 		const evidenceOn = (opts?.inputMode ?? "fragmented") === "fragmented"
@@ -446,7 +446,7 @@ export class NeuralAddressClassifier {
 					...(opts.fstImportanceLengthScaleMode
 						? { importanceLengthScaleMode: opts.fstImportanceLengthScaleMode }
 						: {}),
-					// Street-context gate (#1142): reuse the morphology FST already loaded for the
+					// Street-context check (#1142): reuse the morphology FST already loaded for the
 					// street-morphology prior. Inert when the morphology FST isn't loaded.
 					...(opts.fstStreetMorphology && opts.fstStreetContextGate !== false
 						? {
@@ -503,7 +503,7 @@ export class NeuralAddressClassifier {
 
 		// Placetype-pair prior (placetype-pair-prior arc): retrieval-augmented complement to the
 		// encoder — see placetype-pair-prior.ts for the full windowing/matching contract. Config-level
-		// default set by loadFromWeights (its country-gated construction); per-call opts override it,
+		// default set by loadFromWeights (its country-restricted construction); per-call opts override it,
 		// same "opts ?? cfg default" shape as bridgePunctuationGaps/enforceWordConsistency below. Default
 		// OFF (neither set → byte-stable). Composed BEFORE the conventions mask so an ungrammatical tag it
 		// might bias toward still gets masked out.

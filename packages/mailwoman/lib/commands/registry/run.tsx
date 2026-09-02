@@ -7,10 +7,10 @@
  *
  *   This is the integration that runs `@mailwoman/registry`'s cascade on real data: it constructs the
  *   heavy geocoder (neural parser + WOF resolver + per-state situs/interp databases — the same wiring
- *   as `geocode`) and injects it into the matcher's `GeocodeAddress` seam, so the registry package
+ *   as `geocode`) and injects it into the matcher's `GeocodeAddress` interface, so the registry package
  *   itself never imports the runtime. Then:
  *
- *   CSV → ingest (column-map + normalize) → geocode (the seam) → resolveEntities (block →
+ *   CSV → ingest (column-map + normalize) → geocode (the injected step) → resolveEntities (block →
  *   Fellegi-Sunter score, EM-trained label-free → cluster) → GeoJSON.
  *
  *   The thesis it grades: two rows reading `123 Main St` and `123 Main Street Apt 2` — different
@@ -152,7 +152,7 @@ async function resolveWOFPath(options: Options): Promise<string> {
 
 /**
  * Construct the heavy geocoder once (neural parser + WOF resolver + per-state databases) and wire it into the matcher's
- * {@link GeocodeAddress} seam. Returns the seam plus a disposal hook for the database handles. Shared by the single-CSV
+ * {@link GeocodeAddress} interface. Returns it plus a disposal hook for the database handles. Shared by the single-CSV
  * and multi-source paths.
  */
 async function buildGeocoder(options: Options): Promise<{ seam: GeocodeAddress } & Disposable> {

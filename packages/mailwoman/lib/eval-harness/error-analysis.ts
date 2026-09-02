@@ -14,7 +14,7 @@
  *   4. Near-class confusion — city↔state, street↔venue swaps
  *   5. Structural violations — illegal BIO transitions (I after O)
  *
- *   This is the pre-publish 2pp promote gate (night-shift skill: "run the full per-tag error analysis
+ *   This is the pre-publish 2pp promote eval (night-shift skill: "run the full per-tag error analysis
  *   and compare against the current default release; abort the upload if any tag regresses >2pp").
  *   It therefore builds the classifier via the canonical `createScorer`
  *   (`@mailwoman/neural/scorer`, #718) in STRICT mode, so the model is fed the full SHIP-CONFIG it
@@ -22,7 +22,7 @@
  *   The prior `--model` path built a RAW `new NeuralAddressClassifier` with NO anchor/gazetteer, so
  *   a freshly-trained STAGE3 checkpoint was graded ANCHOR-OFF (admin tags collapse) while the
  *   no-`--model` default (loadFromWeights) was anchor-ON — the candidate was scored OOD against an
- *   in-distribution baseline, the #566/#685 trap this very gate exists to prevent. `--no-strict`
+ *   in-distribution baseline, the #566/#685 trap this very check exists to prevent. `--no-strict`
  *   warns-and-continues for ad-hoc/legacy (pre-anchor) models instead of failing closed.
  *
  *   Usage: mailwoman eval error-analysis\

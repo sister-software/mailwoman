@@ -105,7 +105,7 @@ def _dual_fixture():
 
 def test_dual_injection_zero_confidence_is_exact_identity():
     """The critical property must survive dual-injection: c=0 everywhere → exact no-anchor identity
-    (the max-confidence gate makes the position-0 add 0 when there's no anchor)."""
+    (the max-confidence floor makes the position-0 add 0 when there's no anchor)."""
     _, dual, ids, mask, feats = _dual_fixture()
     with_zero = dual(ids, attention_mask=mask, anchor_features=feats, anchor_confidence=torch.zeros(2, 8))
     no_anchor = dual(ids, attention_mask=mask)

@@ -12,7 +12,7 @@
  *   The two `spr`-only fixtures below differ ONLY in that prefix — `postalcode-x.db` routes, `postcode-x.db` does
  *   not — so each test isolates one of the two failure modes.
  *
- *   `postalcode-empty.db` is the third case and the one the first cut missed. It carries NO tables, so a guard
+ *   `postalcode-empty.db` is the third case and the one the first version missed. It carries NO tables, so a guard
  *   keyed on `spr` alone reads it as "not claiming to be a place extract" and waves it through — after which every
  *   query routed to it by its NAME dies mid-SELECT, which is the exact failure the guard exists to prevent. A
  *   zero-byte or truncated extract file is this shape, and one was on disk when the guard first shipped.

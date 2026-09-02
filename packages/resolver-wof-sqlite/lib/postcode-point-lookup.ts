@@ -11,7 +11,7 @@
  *   `@mailwoman/neural`'s `extractPostcodeAnchors`. It is deliberately dumb: an indexed exact-match
  *   on the postcode string across every extract, unioned. No FTS, no ranking, no proximity — the
  *   anchor only needs "does this string exist as a postcode, in which countries, near where". A
- *   future WASM build swaps this for an FST-backed resolver behind the same `lookup()` seam.
+ *   future WASM build swaps this for an FST-backed resolver behind the same `lookup()` interface.
  *
  *   Why multiple extracts instead of the multi-extract `WOFSQLitePlaceLookup`: that resolver routes a
  *   query to ONE extract by placetype, but every postcode extract shares `placetype='postalcode'`, so a

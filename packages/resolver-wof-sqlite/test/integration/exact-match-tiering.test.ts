@@ -209,9 +209,9 @@ describe("findPlace — exact-match tiering", () => {
 	})
 
 	// #924: the NL retry ladder — spaced full-form queries reach unspaced full-code rows (block
-	// level), and unknown letter pairs fall to the 4-digit stem. Country-gated: the same shape
+	// level), and unknown letter pairs fall to the 4-digit stem. Country-restricted: the same shape
 	// under another country must NOT retry.
-	test("#924: NL postcode ladder — joined form first, stem second, country-gated", async () => {
+	test("#924: NL postcode ladder — joined form first, stem second, country-restricted", async () => {
 		const db = buildDB([
 			{ id: 21, name: "1012LG", country: "NL", lat: 52.377, lon: 4.898, placetype: "postalcode" },
 			{ id: 22, name: "1012", country: "NL", lat: 52.374, lon: 4.895, placetype: "postalcode" },
@@ -219,7 +219,7 @@ describe("findPlace — exact-match tiering", () => {
 
 		lookup = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
 
-		// Placetype gate: a region-typed query never enters the ladder (and the spaced phrase can't
+		// Placetype check: a region-typed query never enters the ladder (and the spaced phrase can't
 		// FTS-match the one-token docs), so it comes back empty rather than silently coarsening.
 		const nonPostcode = await lookup.findPlace({ text: "1012 LG", placetype: "region", country: "NL", limit: 1 })
 		expect(nonPostcode).toHaveLength(0)

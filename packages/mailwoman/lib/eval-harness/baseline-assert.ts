@@ -6,8 +6,8 @@
  *   Harness baseline assertion — an eval refuses to produce a report when its instruments read
  *   wrong (#727 stage-2, Tier 0).
  *
- *   This is NOT a promotion gate. `promotion-gate.ts` asks "is this model good enough to ship";
- *   this asks "is this harness measuring what it thinks it is". A gate spec's floors are one-sided
+ *   This is NOT a promotion eval. `promotion-gate.ts` asks "is this model good enough to ship";
+ *   this asks "is this harness measuring what it thinks it is". An eval spec's floors are one-sided
  *   (higher is better, fail below); a baseline is TWO-SIDED — a metric 40% ABOVE its registered
  *   value is as loud a signal as 40% below, because the usual cause is that the number changed
  *   meaning, not that the model got better. That two-sidedness is the whole point; a one-sided
@@ -45,7 +45,7 @@
  *   a note saying what the number means. A baseline you can't reproduce from its own row isn't a
  *   baseline, it's a rumor. When a number legitimately moves (new fixture, new tokenizer, a real
  *   model change), RE-REGISTER it with a fresh row and a reason — never widen the tolerance to make
- *   a deviation quiet. That's the silent-gate-drift failure wearing a different hat.
+ *   a deviation quiet. That's the silent-check-drift failure wearing a different hat.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

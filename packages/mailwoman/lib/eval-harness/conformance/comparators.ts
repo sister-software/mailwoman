@@ -16,7 +16,7 @@
  *   `assembled_coordinate` never reads a place id. That separation is the whole reason the comparator set is
  *   closed: an identity law that could fall back to distance would pass whenever two DIFFERENT places
  *   happened to sit inside the tolerance, which is precisely the failure the Gauntlet's own place-identity
- *   gate was added for — Gaborone resolving to an Austrian hamlet came back with the right parsed locality
+ *   check was added for — Gaborone resolving to an Austrian hamlet came back with the right parsed locality
  *   and only a coordinate 8,045 km away to say so, and a namesake inside a 25 km bar would have had nothing
  *   at all.
  *
@@ -50,7 +50,7 @@ export interface ConformanceOutcome {
 	 */
 	result: GauntletResult
 	/**
-	 * The mechanism-account shapes this run matched, in the account's own seam order.
+	 * The mechanism-account shapes this run matched, in the account's own stage order.
 	 *
 	 * The vocabulary is `@mailwoman/dev-mcp`'s `DIAGNOSE_SHAPES`, and it is deliberately NOT imported here: dev-mcp is a
 	 * private maintainer workspace that depends on `mailwoman`, so the dependency can only run in that direction, and a
@@ -403,8 +403,8 @@ function compareMechanismShape(base: ConformanceOutcome, variant: ConformanceOut
 		differences.push(`only in variant: ${onlyVariant.join(", ")}`)
 	}
 
-	// Same members, different order: the account emits shapes in pipeline-seam order, so the sequence carries which
-	// seam spoke first and a reordering is a real difference rather than a set equality.
+	// Same members, different order: the account emits shapes in pipeline-stage order, so the sequence carries which
+	// stage spoke first and a reordering is a real difference rather than a set equality.
 	if (!differences.length) {
 		differences.push(`same shapes in a different seam order: [${a.join(", ")}] → [${b.join(", ")}]`)
 	}

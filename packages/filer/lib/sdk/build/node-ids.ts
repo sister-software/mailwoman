@@ -27,9 +27,9 @@ import { assertISODate } from "#sdk/guards"
  * in JS, so that branch is already skipped before this function is ever reached there; the guard is unreachable on that
  * path, not merely redundant. On the provider-list path `ProviderListRow.frn` is typed as always-present (`FRN`, never
  * `FRN | null`), and {@linkcode parseProviderList} validates it via `toFRN` on the production (file-reading) route — but
- * the `providerRows` TEST SEAM bypasses that parser entirely. Without this guard, two rows for two DIFFERENT, unrelated
- * providers each carrying a blank `frn` would silently mint and share ONE degenerate `frn:` node — a false identity
- * link joining unrelated filers, the worst failure class this crosswalk can produce.
+ * the `providerRows` TEST INJECTION POINT bypasses that parser entirely. Without this guard, two rows for two
+ * DIFFERENT, unrelated providers each carrying a blank `frn` would silently mint and share ONE degenerate `frn:` node —
+ * a false identity link joining unrelated filers, the worst failure class this crosswalk can produce.
  */
 export function mintFRNNodeID(frn: string, context: string): string {
 	if (frn.trim() === "") {
@@ -96,12 +96,12 @@ export function mintForm499NodeID(form499ID: string, rowIndex: number): string {
 
 /**
  * Validates `lastFiledAt` is non-blank before it is written into BOTH `filer_edge.source_vintage`/`valid_from` and
- * every attribute's `source_vintage` for this row. Decision 7 / gate 1 make `valid_from` MANDATORY on every edge — but
- * `Form499Row.lastFiledAt` is a raw, unvalidated TSV string (`form499.ts`'s own docstring: "no `Date` parsing happens
- * at this layer"), and SQLite's `NOT NULL` does not reject an empty string. An unguarded blank `lastFiledAt` would
- * silently write `source_vintage: ""`/`valid_from: ""` onto every edge/attribute this row produces — a time-scoped read
- * (`valid_from <= asOf`) then treats that edge as valid SINCE FOREVER, exactly the dishonesty decision 7 exists to
- * prevent. Guarded here — in the builder, not in `form499.ts`'s parser — for the same reason
+ * every attribute's `source_vintage` for this row. Decision 7 / criterion 1 make `valid_from` MANDATORY on every edge —
+ * but `Form499Row.lastFiledAt` is a raw, unvalidated TSV string (`form499.ts`'s own docstring: "no `Date` parsing
+ * happens at this layer"), and SQLite's `NOT NULL` does not reject an empty string. An unguarded blank `lastFiledAt`
+ * would silently write `source_vintage: ""`/`valid_from: ""` onto every edge/attribute this row produces — a
+ * time-scoped read (`valid_from <= asOf`) then treats that edge as valid SINCE FOREVER, exactly the dishonesty decision
+ * 7 exists to prevent. Guarded here — in the builder, not in `form499.ts`'s parser — for the same reason
  * {@linkcode mintForm499NodeID} guards `form499ID` here rather than upstream: this file already owns the "which fields
  * are required for THIS artifact's identity/provenance" discipline, and `form499.ts` is deliberately a raw,
  * non-validating passthrough for every field it doesn't itself need to type (see its own docstring).
@@ -110,7 +110,7 @@ export function assertLastFiledAt(lastFiledAt: string, form499ID: string, rowInd
 	if (lastFiledAt.trim() === "") {
 		throw new Error(
 			`buildFilerDatabase: malformed form499 row #${rowIndex} (form499ID=${JSON.stringify(form499ID)}) — empty ` +
-				`lastFiledAt. Decision 7 / gate 1 make valid_from MANDATORY on every edge; a blank value would silently ` +
+				`lastFiledAt. Decision 7 / criterion 1 make valid_from MANDATORY on every edge; a blank value would silently ` +
 				`write source_vintage/valid_from as "" on every edge and attribute this row produces, which a ` +
 				`time-scoped (valid_from <= asOf) read would then treat as valid since forever.`
 		)
@@ -142,10 +142,10 @@ export function assertProviderValidFrom(validFrom: string | undefined): string {
 /**
  * Mints the `bdc_provider_id:` node id, throwing when `providerID` is not a safe integer — mirrors `peekProviderID`'s
  * `Number.isSafeInteger` guard (`build-bdc.ts`:259). `ProviderListRow.providerID` is already validated by
- * {@linkcode parseProviderList} on the production (file-reading) path, but the `providerRows` TEST SEAM bypasses that
- * parser entirely — a directly-constructed row with a `NaN` `providerID` would otherwise mint the node id string
- * `"bdc_provider_id:NaN"`, silently merging every malformed row under that one shared identity, the same failure class
- * `build-filer.ts`'s module docstring describes for `form499ID`.
+ * {@linkcode parseProviderList} on the production (file-reading) path, but the `providerRows` TEST INJECTION POINT
+ * bypasses that parser entirely — a directly-constructed row with a `NaN` `providerID` would otherwise mint the node id
+ * string `"bdc_provider_id:NaN"`, silently merging every malformed row under that one shared identity, the same failure
+ * class `build-filer.ts`'s module docstring describes for `form499ID`.
  */
 export function mintProviderNodeID(providerID: number, rowIndex: number): string {
 	if (!Number.isSafeInteger(providerID)) {

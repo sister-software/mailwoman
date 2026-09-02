@@ -12,7 +12,7 @@
  *
  *   ⚠ ODbL: the OUTPUT extract is an OpenStreetMap Derived Database (share-alike). This code carries no
  *   OSM bytes; the obligation rides on the built `.db`. Source = `openstreetmap:<cc>`. See
- *   `osm/README.md` for the licensing boundary + the lawyer sign-off gate before any extract ships.
+ *   `osm/README.md` for the licensing boundary + the counsel sign-off required before any extract ships.
  *
  *   Usage:
  *     node osm/scripts/build-rooftop-extract.ts \

@@ -128,7 +128,7 @@ async function parseFeature(
 	// Settlement records only: a GeoNames LOCALITY anchor marks the urban seat, but its records for
 	// regions/counties are centroids, so consulting them there re-imports the very defect class this
 	// exists to fix (measured: the anchor moved the Texas region 172 km off its label placement).
-	// The census the rule is sized against is locality-scoped; so is the gate.
+	// The census the rule is sized against is locality-scoped; so is the check.
 	if (placetype === "locality" && hasLbl && hasGeom && anchorLookup) {
 		const gnID = props["wof:concordances"]?.["gn:id"]
 

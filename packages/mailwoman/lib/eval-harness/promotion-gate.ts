@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Promotion gate runner (#479) — ONE command that runs the standard eval battery against a
- *   candidate model, checks every number against a gate-spec CONTRACT, and emits a single
- *   machine-readable verdict. Exists so promotion gates are ENFORCED, not night-shift discipline,
+ *   Promotion eval runner (#479) — ONE command that runs the standard eval battery against a
+ *   candidate model, checks every number against an eval spec CONTRACT, and emits a single
+ *   machine-readable verdict. Exists so promotion evals are ENFORCED, not night-shift discipline,
  *   and so "why did this model ship?" has a one-file answer.
  *
  *   Usage: mailwoman eval gate\
@@ -28,14 +28,14 @@
  *       the per-tag battery on the int8 artifact and enforces the fp32↔int8 delta cap.
  *   - Demo-cascade smoke (#524): whole-stack parse→reconcile→resolve against the slim hot DB
  *       (MAILWOMAN_WOF_HOT_DB or the v4.4.0 stage default). Skips LOUD when the DB is absent; floor
- *       key `cascade.demo_smoke` (pass-rate %) for specs that gate on it.
- *   - Mask-regression gate (#718): when the spec declares requires_conventions, re-runs the ship
- *       artifact mask-off vs mask-on and FAILS the gate if any tag drops >2pp under the mask — the
- *       "second lock" beside createScorer's load-time capability delta-gate.
+ *       key `cascade.demo_smoke` (pass-rate %) for specs that eval on it.
+ *   - Mask-regression check (#718): when the spec declares requires_conventions, re-runs the ship
+ *       artifact mask-off vs mask-on and FAILS the eval if any tag drops >2pp under the mask — the
+ *       "second lock" beside createScorer's load-time capability delta check.
  *   - Collects headline numbers into <out-dir>/verdict.json with per-floor PASS/FAIL.
  *   - Exit 0 = every floor met AND the mask-regression lock held; exit 1 = any miss.
  *
- *   EVERY leg RUNS IN-PROCESS. The gate spawned eight children (`per-locale-f1`, `score-affix` ×6,
+ *   EVERY leg RUNS IN-PROCESS. The check spawned eight children (`per-locale-f1`, `score-affix` ×6,
  *   `score-country-homograph`, `de-order-eval`, `external-arenas`, `demo-cascade-smoke`,
  *   `fr-parse-recall`), re-serializing typed options into argv and scraping stdout back out of a
  *   pipe. They are now direct calls into sibling modules with typed options and a line sink,
@@ -45,22 +45,22 @@
  *
  *   Error semantics are preserved leg-for-leg, because they are not uniform and the differences are
  *   deliberate. `nothrow` became try/catch-and-continue; a bare `$` (which threw on non-zero) became
- *   a call whose throw propagates; a leg whose non-zero exit ABORTED the gate (arena, fr-recall)
+ *   a call whose throw propagates; a leg whose non-zero exit ABORTED the run (arena, fr-recall)
  *   still returns 1; the two legs that merged `${stdout}${stderr}` into one `.md` keep two sinks and
  *   concatenate them in that order. `promotion-gate-sinks.test.ts` pins the table.
  *
- *   ONE deliberate difference, and it touches no artifact: a leg whose stderr the gate captured and
+ *   ONE deliberate difference, and it touches no artifact: a leg whose stderr the runner captured and
  *   then THREW AWAY (per-locale-f1's progress narration, the cascade leg's preflight complaints) now
- *   reaches the gate's own stderr, because those modules default `reportError` to `console.error`
+ *   reaches the runner's own stderr, because those modules default `reportError` to `console.error`
  *   and this file only overrides the sinks it actually files. `$.verbose = false` used to swallow
  *   them, which is why a 20-minute per-locale leg looked like a hang. Every `.md` is byte-identical
- *   either way — the gate never wrote those bytes anywhere.
+ *   either way — the runner never wrote those bytes anywhere.
  *
  *   Lore encoded (the traps that bit before — see CONTRIBUTING_MODEL_WORK.mdx):
  *
  *   - Tokenizer comparability: the tokenizer path must contain the card's tokenizer_version; refuses to
  *       grade otherwise (F1 across tokenizers is meaningless).
- *   - Gaz-fed flags: when the gate spec sets requires_gazetteer_lexicon, every scorer gets
+ *   - Gaz-fed flags: when the eval spec sets requires_gazetteer_lexicon, every scorer gets
  *       --gazetteer-lexicon + --suppress-gaz-near-postcode (zero-filled clues fake an affix crash
  *       and depress country recall).
  *   - Recompile-before-eval: warns when core/ sources are newer than core/out.
@@ -97,7 +97,7 @@ import { resolveWOFHotDB } from "#eval-harness/wof-hot-db"
 
 /**
  * Render captured sink lines the way a child process's stdout arrived: one trailing newline per `report()` call. Every
- * `.md` the gate writes goes through this, so the artifacts match the pre-migration bytes.
+ * `.md` the runner writes goes through this, so the artifacts match the pre-migration bytes.
  *
  * This is the whole migration's required assumption in one line. `console.log(x)` writes `x` then a newline, and zx
  * handed the concatenation of those writes back as `.stdout`; a sink that records one entry per `console.log` call
@@ -142,7 +142,7 @@ export interface PromotionGateOptions {
 	 */
 	int8?: string
 	/**
-	 * Gate-spec JSON: a path, or a bare spec name resolved against the bundled `gates/` dir (required).
+	 * Check-spec JSON: a path, or a bare spec name resolved against the bundled `checks/` dir (required).
 	 */
 	gate?: string
 	/**
@@ -179,9 +179,9 @@ export interface PromotionGateOptions {
 
 /**
  * Resolve a `--gate` value to a real file. A path that exists wins verbatim; otherwise the basename is looked up in the
- * `gates/` dir shipped beside this module — `new URL`-relative for the source tree, with a compiled-tree fallback (tsc
+ * `checks/` dir shipped beside this module — `new URL`-relative for the source tree, with a compiled-tree fallback (tsc
  * does not emit readFileSync'd JSON into `out/`, so `packages/mailwoman/out/eval-harness/` reads the source-tree copy
- * at `packages/mailwoman/lib/eval-harness/gates/`; the lint-rules.json pattern). Old `scripts/eval/gates/<spec>.json`
+ * at `packages/mailwoman/lib/eval-harness/gates/`; the lint-rules.json pattern). Old `scripts/eval/checks/<spec>.json`
  * invocations therefore keep working by basename.
  *
  * The `.json` suffix is optional, because the help has always advertised "a spec name" and a spec name is what people
@@ -189,7 +189,7 @@ export interface PromotionGateOptions {
  * ENOENT naming a file nobody asked for — which is how it read on 2026-07-16.
  */
 /**
- * The gate specs, beside this module in the SOURCE tree — tsc emits no `.json`, so the directory is named from the
+ * The eval specs, beside this module in the SOURCE tree — tsc emits no `.json`, so the directory is named from the
  * package root.
  */
 const GATES_DIR = resolvePackagePath("mailwoman", "lib", "eval-harness", "gates")
@@ -224,7 +224,7 @@ export async function listGateSpecs(): Promise<string[]> {
  * not be stale, and every graded artifact's md5 + dynamic-quant fingerprint is recorded to `provenance.txt`. Returns an
  * exit code to propagate, or `null` when the run may proceed.
  *
- * A FAIL is only trustworthy if you know WHICH bytes were graded. v1.9.2's first gate run false-FAILed (us.postcode
+ * A FAIL is only trustworthy if you know WHICH bytes were graded. v1.9.2's first eval run false-FAILed (us.postcode
  * 86.9) because it graded a stale/mislabeled artifact — the real model scored 97.5 under every config.
  */
 async function runLoreGuards(env: {
@@ -287,7 +287,7 @@ async function runLoreGuards(env: {
 	}
 
 	// --- lore guard: artifact provenance ----------------------------------------
-	// A FAIL is only trustworthy if you know WHICH bytes were graded. v1.9.2's first gate run
+	// A FAIL is only trustworthy if you know WHICH bytes were graded. v1.9.2's first eval run
 	// false-FAILed (us.postcode 86.9) because it graded a stale/mislabeled artifact — the real model
 	// scored 97.5 under every config. Record md5 + the dynamic-quant fingerprint (count of
 	// DynamicQuantizeLinear nodes; 0 = fp32, >0 = int8) of every graded artifact, and hard-assert the
@@ -415,9 +415,10 @@ async function runLoreGuards(env: {
 
 /**
  * Demo-cascade smoke (#524): the whole-stack parse→reconcile→resolve pass the per-layer battery lacks (the 2026-06-11
- * lesson: #520/#521/#522 all shipped through green per-layer gates). Runs on the ship artifact against the slim hot DB
- * the demo serves. Env-gated like the other artifact-dependent legs: skips LOUD when the DB is absent so CI stays green
- * without it — but a gate spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by design).
+ * lesson: #520/#521/#522 all shipped through green per-layer checks). Runs on the ship artifact against the slim hot DB
+ * the demo serves. Env-restricted like the other artifact-dependent legs: skips LOUD when the DB is absent so CI stays
+ * green without it — but an eval spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by
+ * design).
  *
  * Its own function because it is self-contained and `runPromotionGate` is at the statement ceiling; nothing about the
  * leg's behavior changed in the lift.
@@ -444,7 +445,7 @@ async function runDemoCascadeLeg(env: {
 	// nothrow parity: a refusal (missing artifacts / malformed rows) comes back as a non-zero exitCode,
 	// and an unexpected throw is caught and treated the same way. Only the OUT sink reaches the .md —
 	// the child's stderr went nowhere, so a preflight refusal still leaves an empty cascade-smoke.md
-	// and only the gate's own line below explains it.
+	// and only the runner's own line below explains it.
 	const cascadeLines: string[] = []
 	let cascadeExit: number
 
@@ -479,7 +480,7 @@ async function runDemoCascadeLeg(env: {
 }
 
 /**
- * Run the full promotion-gate battery. Returns the process exit code: 0 = every floor met AND the mask-regression lock
+ * Run the full promotion-eval battery. Returns the process exit code: 0 = every floor met AND the mask-regression lock
  * held, 1 = any miss, 2 = usage / lore-guard refusal.
  */
 export async function runPromotionGate(options: PromotionGateOptions): Promise<number> {
@@ -567,7 +568,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		channelOptions.suppressGazNearPostcode = true
 	}
 
-	// Conventions channel (#511 Tier A): when the gate spec declares requires_conventions, every scorer
+	// Conventions channel (#511 Tier A): when the eval spec declares requires_conventions, every scorer
 	// parses with the address-system conventions mask in the declared mode ("auto" = locale-head
 	// detection). Same contract discipline as the gaz flags — the spec IS the ship config.
 	const CONV_MODE = gate.requires_conventions ?? ""
@@ -616,7 +617,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 		// Each leg below captured a child's stdout into one `.md`. In-process the sink collects the same
 		// lines and `renderLines` re-adds the newline console.log would have. A bare `$` THREW on a
-		// non-zero exit, aborting the gate — these calls throw the same way, so the abort behavior for
+		// non-zero exit, aborting the run — these calls throw the same way, so the abort behavior for
 		// the metric probes is unchanged.
 		const perLocaleLines: string[] = []
 
@@ -638,7 +639,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 		await writeLocalFile(renderLines(perLocaleLines), `${OUT_DIR}/${tag}-per-locale.md`)
 
-		// One helper for the SIX score-affix legs — the gate's most repeated spawn, and the migration's
+		// One helper for the SIX score-affix legs — the runner's most repeated spawn, and the migration's
 		// clearest win: `file`/`json` are the only things that varied.
 		const runAffix = async (mdName: string, extra: ScoreAffixOptions): Promise<void> => {
 			const lines: string[] = []
@@ -689,7 +690,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 		// de-order-eval tolerates its own non-zero regression exit (it wrote a valid report) — the
 		// try/catch is the in-process `nothrow:`, and the two sinks concatenated below are the
-		// `${stdout}${stderr}` the gate wrote before.
+		// `${stdout}${stderr}` the check wrote before.
 		const deorderOut: string[] = []
 		const deorderErr: string[] = []
 
@@ -734,7 +735,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 	// In-process since the eval-harness migration (was `node scripts/eval/demo-preset-compare.ts`);
 	// same capture: the report lines land in presets.md, a failure is tolerated like the old child's
-	// self-caught `.catch(console.error)` (partial output kept, gate continues).
+	// self-caught `.catch(console.error)` (partial output kept, check continues).
 	const presetLines: string[] = []
 
 	try {
@@ -746,8 +747,8 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	await writeLocalTextFile(presetLines.map((line) => `${line}\n`).join(""), `${OUT_DIR}/presets.md`)
 
 	// Demo-cascade smoke (#524): the whole-stack parse→reconcile→resolve pass the per-layer battery
-	// lacks (the 2026-06-11 lesson: #520/#521/#522 all shipped through green per-layer gates). Runs on
-	// the ship artifact against the slim hot DB the demo serves. Env-gated like the other
+	// lacks (the 2026-06-11 lesson: #520/#521/#522 all shipped through green per-layer checks). Runs on
+	// the ship artifact against the slim hot DB the demo serves. Env-restricted like the other
 	// artifact-dependent legs: skips LOUD when the DB is absent so CI stays green without it — but a
 	// gate spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by design).
 	await runDemoCascadeLeg({
@@ -794,7 +795,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 		await writeLocalTextFile(`${renderLines(arenaOut)}${renderLines(arenaErr)}`, `${OUT_DIR}/arenas.md`)
 
-		// set -e: a non-zero arena run aborts the gate before the verdict.
+		// set -e: a non-zero arena run aborts the run before the verdict.
 		if (arenaFailed) {
 			return 1
 		}
@@ -808,7 +809,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 	if (bareStreetFloor !== undefined) {
 		// The `env: childEnv()` this spawn carried is gone with the child — an in-process call already
-		// runs under the gate's own environment, which is what childEnv() was reconstructing.
+		// runs under the runner's own environment, which is what childEnv() was reconstructing.
 		const bareOut: string[] = []
 		const bareErr: string[] = []
 		let barePassed: boolean
@@ -848,9 +849,9 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		console.log(`✓ fr.bare_street_intact PASS (floor ${bareStreetFloor}%)`)
 	}
 
-	// --- mask-regression gate (#718) — the "second lock" ------------------------
+	// --- mask-regression check (#718) — the "second lock" ------------------------
 	// Re-runs the SHIP artifact mask-off vs the declared conventions mode and FAILS if any tag's UNFOLDED
-	// F1 drops >2pp under the mask — a finer net than createScorer's load-time 5pp delta-gate (it catches
+	// F1 drops >2pp under the mask — a finer net than createScorer's load-time 5pp delta check (it catches
 	// INDIRECT mask harms, e.g. forbidding street_suffix depressing street). Weight-dependent, so it lives
 	// on the release path here, NOT Test CI (#582). Only meaningful when the spec declares a conventions
 	// mask; skipped = PASS otherwise. Its status folds into the final verdict below. In-process since the
@@ -896,7 +897,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	}
 
 	// --- collect + verify --------------------------------------------------------
-	// Folds BOTH locks: the floor verdict AND the mask-regression gate above. Either miss fails the gate.
+	// Folds BOTH locks: the floor verdict AND the mask-regression check above. Either miss fails the eval.
 	let VERDICT_STATUS: number
 
 	try {
@@ -925,7 +926,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	// --- ledger (#885) — the update is automatic, not discipline ------------------
 	// The ledger froze at v4.4.0 because appending relied on a human remembering. On a PASS, print
 	// the exact ledger-append command with everything pre-filled; the release-prep flow runs it with
-	// the real npm version. (Not auto-executed here: the gate runs on candidates that may never
+	// the real npm version. (Not auto-executed here: the runner runs on candidates that may never
 	// ship, and the ledger records shipped/shippable versions keyed by npm semver.)
 	const shipDate = new Date().toISOString().slice(0, 10)
 

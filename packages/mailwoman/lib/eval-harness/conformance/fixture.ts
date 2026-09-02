@@ -77,7 +77,7 @@ export type ConformanceRelation = (typeof CONFORMANCE_RELATIONS)[number]
  * What a row's outcome is allowed to mean for the verdict — the Gauntlet regression layer's own `CaseStatus`, spelled
  * again here because a law suite grades relations rather than cases and must not import the corpus schema to say so.
  *
- * - `pass` — the default, and the only status that GATES. A `pass` row whose law is violated fails the run.
+ * - `pass` — the default, and the only status that CHECKS. A `pass` row whose law is violated fails the run.
  * - `known_fail` / `improvement_target` — the row is run and REPORTED, and does not block. A tracked row that starts
  *   holding is printed as a promotion instruction, which is what keeps the tracked list from becoming a place rows go
  *   to be forgotten.
@@ -164,7 +164,7 @@ export interface ConformanceFixture {
 	 */
 	expect: ConformanceRelation
 	/**
-	 * Whether this row gates the run. Absent means {@linkcode CONFORMANCE_STATUSES}'s `pass` — a row says nothing about
+	 * Whether this row checks the run. Absent means {@linkcode CONFORMANCE_STATUSES}'s `pass` — a row says nothing about
 	 * its status only when it is expected to hold.
 	 */
 	status?: ConformanceStatus
@@ -334,12 +334,12 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 		throw new Error(`${label}: "bugRef" must be a non-empty string when present (got ${JSON.stringify(bugRef)})`)
 	}
 
-	// A `bugRef` on a gating row points at a diagnosis for a row that is expected to hold, which reads as a tracked
+	// A `bugRef` on a enforcing row points at a diagnosis for a row that is expected to hold, which reads as a tracked
 	// row to everyone but the verdict. Refused for the same reason `toleranceM` is refused off its comparator.
 	if (bugRef !== undefined && (status === undefined || status === "pass")) {
 		throw new Error(
 			`${label}: "bugRef" is only meaningful on a tracked row, and this row's status is ` +
-				`"${status ?? "pass"}" — a gating row that names a defect asserts the defect is fixed.`
+				`"${status ?? "pass"}" — a enforcing row that names a defect asserts the defect is fixed.`
 		)
 	}
 

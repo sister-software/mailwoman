@@ -85,11 +85,11 @@ describe("enforceWordConsistency only arbitrates DISAGREEING words (the document
 
 describe("enforceWordConsistency confidence gates (#727 gated variant)", () => {
 	it("minMeanConfidence skips a low-confidence heal (noise-amplification guard)", () => {
-		// Near-flat emissions: the vote has no conviction. Ungated it still heals; gated it must not.
+		// Near-flat emissions: the vote has no conviction. unrestricted it still heals; conditional it must not.
 		const flat = (idx: number): number[] => LABELS.map((_l, i) => (i === idx ? 0.1 : 0))
 		const pieces = [{ piece: "▁VER" }, { piece: "MONT" }]
-		const ungated = enforceWordConsistency(pieces, [flat(1), flat(3)], LABELS, [1, 3])
-		expect(ungated.healedWords).toBe(1)
+		const unrestricted = enforceWordConsistency(pieces, [flat(1), flat(3)], LABELS, [1, 3])
+		expect(unrestricted.healedWords).toBe(1)
 		const gated = enforceWordConsistency(pieces, [flat(1), flat(3)], LABELS, [1, 3], { minMeanConfidence: 0.5 })
 		expect(gated.healedWords).toBe(0)
 		expect(gated.labelIndices).toEqual([1, 3]) // untouched
@@ -119,8 +119,8 @@ describe("enforceWordConsistency confidence gates (#727 gated variant)", () => {
 		const pieces = [{ piece: "▁1" }, { piece: "2" }, { piece: "/" }, { piece: "3" }, { piece: "45" }]
 		const emissions = [peak(1, 8), peak(1, 8), peak(0, 8), peak(3, 8), peak(3, 8)]
 		const labelIndices = [1, 2, 0, 3, 4] // B-loc I-loc O B-reg I-reg (stand-ins for unit/house_number)
-		const ungated = enforceWordConsistency(pieces, emissions, LABELS, labelIndices)
-		expect(ungated.healedWords).toBe(1) // the flattening the gate exists to prevent
+		const unrestricted = enforceWordConsistency(pieces, emissions, LABELS, labelIndices)
+		expect(unrestricted.healedWords).toBe(1) // the flattening the eval exists to prevent
 		const gated = enforceWordConsistency(pieces, emissions, LABELS, labelIndices, { splitOnPunctuation: true })
 		expect(gated.healedWords).toBe(0)
 		expect(gated.labelIndices).toEqual(labelIndices)
@@ -133,8 +133,8 @@ describe("enforceWordConsistency confidence gates (#727 gated variant)", () => {
 		// `Ave` a trivially-consistent single-piece word → untouched.
 		const pieces = [{ piece: "Ave" }, { piece: "," }]
 		const emissions = [peak(1, 1), peak(0, 9)] // weak street mass on Ave, huge O mass on the comma
-		const ungated = enforceWordConsistency(pieces, emissions, LABELS, [1, 0])
-		expect(ungated.healedWords).toBe(1) // comma's O mass drags Ave to O
+		const unrestricted = enforceWordConsistency(pieces, emissions, LABELS, [1, 0])
+		expect(unrestricted.healedWords).toBe(1) // comma's O mass drags Ave to O
 		const gated = enforceWordConsistency(pieces, emissions, LABELS, [1, 0], { splitOnPunctuation: true })
 		expect(gated.healedWords).toBe(0)
 		expect(gated.labelIndices).toEqual([1, 0])

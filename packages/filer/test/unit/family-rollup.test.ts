@@ -7,8 +7,8 @@
  *   directly against an in-memory `filer.db` (`filer_family`/`filer_manifest` rows inserted straight through
  *   Kysely), the same convention `filer-lookup.test.ts` uses for its own non-builder fixtures. This suite
  *   covers the general reader contract (asOf scoping, manifest-first, the schema-version guard, the
- *   familyID/nodeID query shapes, the always-array return shape); the two pre-registered §7-3b gates live in
- *   `filer-lookup.test.ts`'s `describe("§7-3b gates")` block instead, since gate 1 is specifically about
+ *   familyID/nodeID query shapes, the always-array return shape); the two pre-registered §7-3b criteria live in
+ *   `filer-lookup.test.ts`'s `describe("§7-3b criteria")` block instead, since criterion 1 is specifically about
  *   `filerLookup`'s `families` field staying structurally distinct from `cluster`.
  *
  *   **A `nodeID` resolving to more than one family is ordinary, not an error.** `familyRollup` always
@@ -541,7 +541,7 @@ describe("familyRollup — general reader contract", () => {
 				.execute()
 
 			// Same family_id for both — exactly what canonicalizeOrganizationName would produce for real (verified
-			// end-to-end via the REAL builder in filer-lookup.test.ts's own multi-spelling gate test).
+			// end-to-end via the REAL builder in filer-lookup.test.ts's own multi-spelling assertion).
 			await db
 				.insertInto("filer_family")
 				.values([

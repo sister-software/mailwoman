@@ -10,7 +10,7 @@
  *
  *   It is the shared source of truth for "which systems can this shape be" — consumed by the postcode
  *   anchor (to narrow which systems' street vocabularies it checks) and, in time, by the runtime
- *   pipeline's locale gate (so its format→locale scoring derives from the same patterns rather than
+ *   pipeline's `@mailwoman/locale-gate` stage (so its format→locale scoring derives from the same patterns rather than
  *   a second, divergent copy). The point is to unify the DATA, not to couple the modules: callers
  *   depend on this pure function, never on each other.
  *

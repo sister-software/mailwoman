@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Pass 3c of the candidate build — the `name_role` detectors and the cuts they are judged by.
+ * @file Pass 3c of the candidate build — the `name_role` detectors and the thresholds they are judged by.
  */
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
@@ -16,9 +16,9 @@ import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
- * Key-count cut for the gloss anomaly detector (#1730) — the sweep's own boundary: 4,000 places carried >= 50 keys, and
- * a legitimate famous place at that count (New York, 176 keys) is separated by the PROMINENCE gate, never by this
- * number alone.
+ * Key-count threshold for the gloss anomaly detector (#1730) — the sweep's own boundary: 4,000 places carried >= 50
+ * keys, and a legitimate famous place at that count (New York, 176 keys) is separated by the PROMINENCE check, never by
+ * this number alone.
  */
 export const GLOSS_KEY_THRESHOLD = 50
 
@@ -41,7 +41,7 @@ export const GLOSS_EXCLUDED_PLACETYPES: ReadonlySet<string> = new Set([
 
 /**
  * Pass 3c — the #1730 name-role prototype: two independent detectors over the staged rows, WRITE-ONLY in this
- * generation (no ranking consumer; the rank penalty is its own D-rule-gated step with the `gloss_key` board as
+ * generation (no ranking consumer; the rank penalty is its own D-rule-conditional step with the `gloss_key` board as
  * regression check). Both stamp `is_primary = 0` rows only — a place's canonical name and the `place_abbr` region
  * abbreviations are never a gloss or a variant.
  *

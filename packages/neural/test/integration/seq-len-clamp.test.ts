@@ -28,7 +28,7 @@ async function modelIsMaterialized(): Promise<boolean> {
 
 		return !!weights.modelPath && (await pathExists(weights.modelPath))
 	} catch {
-		// Lean checkout with no materialized weights — skip, like the other model-gated suites here.
+		// Lean checkout with no materialized weights — skip, like the other model-conditional suites here.
 		return false
 	}
 }

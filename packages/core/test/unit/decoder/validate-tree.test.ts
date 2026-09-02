@@ -74,7 +74,7 @@ describe("validateTree", () => {
 	})
 
 	test("a unit anchored by a VENUE is valid — the sub-venue case the contract used to omit", () => {
-		// `Terminal 5, Heathrow Airport, Hounslow, TW6 2GA` parses to exactly this shape and is a GATED PASS on the
+		// `Terminal 5, Heathrow Airport, Hounslow, TW6 2GA` parses to exactly this shape and is a CONDITIONAL PASS on the
 		// board. Before `venue` joined PARENT_OF[unit] the checker called it a stranded dependent, so the contract was
 		// narrower than the capability already being tested — the checker was wrong, not the parse.
 		const tree = {

@@ -12,7 +12,7 @@
  *   Folding this in was considered and rejected on the code, not on taste. `geonames-tail.ts` is a
  *   REPRODUCER: its docstring pins it to a frozen 946 MB artifact, its country order is required
  *   because `ingestGeonamesPostal` allocates ids from one counter so a rebuild stays id-comparable,
- *   and it is gated on per-country row-count parity against that artifact. Code-Point Open shares none
+ *   and it is conditioned on per-country row-count parity against that artifact. Code-Point Open shares none
  *   of its inputs — different coordinate system (OSGB36 eastings/northings, not degrees), different row
  *   grain (one row per unit postcode, so no medoid collapse), different licence block, and a row count
  *   that is SUPPOSED to differ from the frozen GB figure. Adding it as a mode would put a source that
@@ -119,7 +119,7 @@ export interface BuildPostcodeCodePointResult {
 	 */
 	stats: CodePointParseStats
 	/**
-	 * The archive's own manifest — the row-count oracle this build is gated on.
+	 * The archive's own manifest — the row-count oracle this build is conditioned on.
 	 */
 	metadata: CodePointMetadata
 	/**
@@ -257,7 +257,7 @@ export async function buildPostcodeCodePoint(
 		db.exec("COMMIT")
 		phase("ingest", `${inserted.toLocaleString()} unit postcodes`)
 
-		// --- Gate on the archive's own manifest. See `codepoint/extract.ts` for why this oracle exists.
+		// --- Check on the archive's own manifest. See `codepoint/extract.ts` for why this oracle exists.
 
 		// Every row's parent_id is -1 (Code-Point carries no hierarchy), so this writes the SELF row per place
 		// and nothing else. Not decorative: the resolver's parent-constraint scopes a lookup with
@@ -322,7 +322,7 @@ export async function buildPostcodeCodePoint(
  * THE TOLERANCE MUST NOT INCLUDE MALFORMED ROWS, and the first version of this function got that wrong in a way worth
  * recording: it set `tolerance = skippedNoCoordinate + skippedMalformed`, so when a CSV-parsing bug rejected all
  * 1,746,976 coordinate-bearing rows, the tolerance grew to 1.75 M and every area "reconciled" against a database
- * holding ZERO postcodes. A gate whose slack is derived from the size of the failure it is meant to catch cannot catch
+ * holding ZERO postcodes. A check whose slack is derived from the size of the failure it is meant to catch cannot catch
  * it. The tolerance is now the no-coordinate drops ALONE — a deliberate, bounded, understood exclusion — and any
  * malformed row at all is reported separately as a defect by {@link buildPostcodeCodePoint}'s caller.
  */
@@ -374,8 +374,8 @@ interface DatabaseMetaInput {
 /**
  * Bake the provenance record into the staging DB (pre-VACUUM, pre-seal — a shipped DB is never patched).
  *
- * The attribution year comes from OS's own `COPYRIGHT DATE`, not from the build clock: republishing a 2026 cut in 2027
- * still attributes the 2026 data. Both dates are stored so the distinction stays visible.
+ * The attribution year comes from OS's own `COPYRIGHT DATE`, not from the build clock: republishing a 2026 extract in
+ * 2027 still attributes the 2026 data. Both dates are stored so the distinction stays visible.
  */
 async function writeDatabaseMeta(db: DatabaseClient<WOFDatabase>, input: DatabaseMetaInput): Promise<void> {
 	await createDatabaseMetaTable(db)

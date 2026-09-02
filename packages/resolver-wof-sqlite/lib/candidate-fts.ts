@@ -28,7 +28,7 @@
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
- * Name of the FTS5 trigram virtual table this module owns. The reader gates its fuzzy fallback on it.
+ * Name of the FTS5 trigram virtual table this module owns. The reader conditions its fuzzy fallback on it.
  */
 export const CANDIDATE_FTS_TABLE = "candidate_fts"
 

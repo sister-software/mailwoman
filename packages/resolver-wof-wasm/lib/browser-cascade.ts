@@ -59,7 +59,7 @@ export interface MailwomanLookupLike {
 			name: string
 			placetype: string
 			/**
-			 * ISO country code of the resolved place — lets the cascade country-gate an ambiguous postcode.
+			 * ISO country code of the resolved place — lets the cascade country-restrict an ambiguous postcode.
 			 */
 			country?: string
 			lat: number
@@ -253,7 +253,7 @@ export async function runCascade(
 	// global by design (the placer/population ranking routes, never a hardcoded country).
 	// bias (#938): the map viewport (and optional geolocation) as SOFT proximity hints — an in-view
 	// namesake sorts ahead of a distant one at equal exact-tier, and no-bias stays byte-identical
-	// (48026 → Fraser MI vs Russi IT, the rule the library gate pins). Omitted when empty.
+	// (48026 → Fraser MI vs Russi IT, the rule the library check pins). Omitted when empty.
 	const resolved = (await resolver.resolveTree(tree, {
 		adminCoherence: true,
 		...(bias && bias.length ? { bias } : {}),
@@ -332,7 +332,7 @@ export async function runCascade(
 
 	collected.sort((a, b) => b.rank - a.rank || b.hit.score - a.hit.score)
 
-	// Cross-country postcode gate, carried over from the old cascade: an ambiguous INTERNATIONAL
+	// Cross-country postcode check, carried over from the old cascade: an ambiguous INTERNATIONAL
 	// postcode (10115 = Berlin DE and a New York US ZIP shape) must not out-pin the parsed city
 	// across countries. When the top pin is a postcode whose country differs from the resolved
 	// locality's, the locality wins the pin; the postcode stays in the list.

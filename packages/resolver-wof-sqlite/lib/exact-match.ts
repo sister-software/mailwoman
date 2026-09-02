@@ -58,9 +58,9 @@ export function exactMatchIDs<DB>(
 		}
 
 		// Alias pass via the shared bag parser (#523). Separated bags (built since #523) get a true
-		// per-alias equality check, ungated — matching the `names`-table branch above, where an
+		// per-alias equality check, unrestricted — matching the `names`-table branch above, where an
 		// alias match counts as exact regardless of other candidates. Legacy bags (no separator)
-		// fall back to padded containment, gated on "no canonical exact in the pool" because their
+		// fall back to padded containment, conditioned on "no canonical exact in the pool" because their
 		// lost boundaries would otherwise false-promote interior fragments ("York" inside the alias
 		// "New York City") or cross-alias fragments ("York New" across "…York" + "New City…").
 		const anyCanonicalExact = out.size > 0

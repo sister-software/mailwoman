@@ -11,7 +11,7 @@
  * per cell. The braille dither/luminance work is asciify's — `FrameRasterizer` subclasses `AsciifyTerminal` with a
  * no-op sink purely to reach its protected `_computeBrailleCells`, `_cellChars`, `_cellColors`, so this module never
  * re-implements the dot math. `frameToANSILines` and `overlayText` then work on the plain `MapFrame` value, with no
- * further asciify dependency; `blitFrame` is the seam back the other way, for callers driving a live terminal.
+ * further asciify dependency; `blitFrame` is the path back the other way, for callers driving a live terminal.
  */
 
 import { AsciifyTerminal, SGR_RESET } from "@sister.software/asciify/tui"

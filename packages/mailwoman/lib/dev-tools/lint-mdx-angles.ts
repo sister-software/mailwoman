@@ -6,7 +6,7 @@
  *   Raw-angle-bracket MDX lint. Docusaurus compiles BOTH .md and .mdx through micromark's MDX-JSX
  *   extension, so a bare `<55` or `{word` in prose is a BUILD-BREAKING parse error ("Unexpected
  *   character before name"). This class broke three builds on 2026-06-10 alone (the consolidation
- *   session doc, the deep-dive review, the fill-rate record) — hence this gate.
+ *   session doc, the deep-dive review, the fill-rate record) — hence this check.
  *
  *   Checks STAGED docs markdown by default (pre-commit), or explicit paths when given. Skips fenced
  *   code blocks and inline code; flags raw `<` before a digit or `{` before a letter.

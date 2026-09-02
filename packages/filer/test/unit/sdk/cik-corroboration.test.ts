@@ -2,10 +2,10 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Tests for the CIK corroboration gate.
+ * @file Tests for the CIK corroboration check.
  *
  *   Every CIK and SIC below was pulled live from EDGAR's submissions API on 2026-08-03/07, including both
- *   false matches the gate exists to reject.
+ *   false matches the check exists to reject.
  */
 
 import { CIKCorroborationBasis, corroborateCIK, TELECOM_SIC_CODES } from "@mailwoman/filer/sdk/cik-corroboration"
@@ -15,7 +15,7 @@ import { describe, expect, it } from "vitest"
 const cik = (value: string): CIK => toCIK(value)!
 
 /**
- * The measured corpus: [label, CIK, SIC, should the gate corroborate it].
+ * The measured corpus: [label, CIK, SIC, should the check corroborate it].
  */
 const REGISTRANTS: ReadonlyArray<readonly [string, string, string, boolean]> = [
 	["Lumen Technologies", "0000018926", "4813", true],
@@ -27,7 +27,7 @@ const REGISTRANTS: ReadonlyArray<readonly [string, string, string, boolean]> = [
 	// The two false matches. Name scores were 0.829 and 0.886 — confident, and pointing at the wrong company.
 	["AlTi Global (matched 'Altice USA')", "0001838615", "6282", false],
 	["WidePoint (matched 'WideOpenWest')", "0001034760", "7373", false],
-	// Real carriers SEC files under software classifications. The gate's known cost.
+	// Real carriers SEC files under software classifications. The check's known cost.
 	["Bandwidth", "0001514416", "7372", false],
 	["Ooma", "0001327688", "7374", false],
 ]
@@ -119,7 +119,7 @@ describe("the allowlist itself", () => {
 		}
 	})
 
-	it("is overridable for another vertical without forking the gate", () => {
+	it("is overridable for another vertical without forking the check", () => {
 		const acceptedSICCodes = new Set(["6282"])
 
 		expect(corroborateCIK(cik("0001838615"), "6282", { acceptedSICCodes }).corroborated).toBe(true)

@@ -62,8 +62,9 @@ import { resolvePath } from "path-ts"
 /**
  * --- current default -------------- 9.1.0 ships the v4.4.0-suffix-boundary-v2 step-60000 int8 (the suffix-boundary
  * cure on the anchor-cure base) + the v0.9.0-multisplice tokenizer (tokenizer UNCHANGED since 6.1.0). Bump this path,
- * model-card.json `files_md5`, and release.config.json `weights.model` in LOCKSTEP on each ship — the 9.0.0 cut moved
- * only release.config, which left this default and the card's md5 record on the prior base for a full release cycle.
+ * model-card.json `files_md5`, and release.config.json `weights.model` in LOCKSTEP on each ship — the 9.0.0 release
+ * moved only release.config, which left this default and the card's md5 record on the prior base for a full release
+ * cycle.
  */
 const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-v440-suffix-boundary-v2-step-060000-int8.onnx")
 /**

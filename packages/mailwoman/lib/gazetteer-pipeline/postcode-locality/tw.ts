@@ -18,7 +18,7 @@
  *       Chunghwa Post's 3-digit postal-code → administrative-district table WITH official district
  *       center coordinates (data.gov.tw dataset 25489, `1050812_行政區經緯度(toPost).xml`, OGDL v1).
  *   - The 3-digit code IS the admin-granularity key: TW's "3+3" system appends a road-segment /
- *       delivery-point tail below district level (and the full 3+3 file is account-gated at
+ *       delivery-point tail below district level (and the full 3+3 file is account-conditional at
  *       fpp.post.gov.tw since 2025). A resolver that answers "which district" needs exactly the
  *       3-digit table. Queries carrying a full 3+3 code need a prefix-truncation normalization
  *       upstream (noted on #473; not this table's concern).
@@ -87,7 +87,7 @@ const FALLBACK_RADIUS_KM = 20
 /**
  * Cross-placetype spread, one wider than JP/KR: TW districts land on `county` (direct-municipality districts),
  * `localadmin`, `locality` (county-administered townships/cities), AND `neighbourhood` (the Kaohsiung/Taichung inner
- * districts — 前金/苓雅/三民/… are `neighbourhood` in WOF). Neighbourhood rows are only ever accepted NAME-GATED (their
+ * districts — 前金/苓雅/三民/… are `neighbourhood` in WOF). Neighbourhood rows are only ever accepted NAME-CONDITIONAL (their
  * Chinese name must match the postal district), never as bare geometric fallback — 1,450 TW neighbourhoods would
  * otherwise swallow the district tier.
  */
@@ -552,7 +552,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 				// No polygon (or nothing usable in it): the JP/KR-style authoritative-name + proximity net.
 				// The en stem also rescues district rows whose WOF point fell OUTSIDE their own polygon
 				// (Wanhua sits ~5 km west of 萬華區, in New Taipei). Neighbourhood rows only qualify through
-				// the name gate, never by bare proximity — see the PLACETYPES note.
+				// the name check, never by bare proximity — see the PLACETYPES note.
 				const cands = nearby(d.lat, d.lon, FALLBACK_RADIUS_KM)
 				const districtTierNameHit = cands.find((c) => DISTRICT_TIER.has(c.place.placetype) && nameMatches(c.place))
 				const nameHit = districtTierNameHit ?? cands.find((c) => nameMatches(c.place))

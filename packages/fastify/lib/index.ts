@@ -11,7 +11,7 @@
  *   exposes the same three operations programmatically.
  *
  *   The plugin runs ONE runtime pipeline (`createRuntimePipeline` from `mailwoman`). Inject a
- *   pre-built pipeline via the `pipeline` option (the DI / testing seam — no model weights required)
+ *   pre-built pipeline via the `pipeline` option (the DI injection point — no model weights required)
  *   or let the plugin build one lazily on first use from `resolveDatabasePath` / `poiDatabasePath` /
  *   `locale`. The lazy build resolves weights + gazetteer data through `@mailwoman/neural`'s standard
  *   resolution, exactly like the CLI and the drop-in servers.

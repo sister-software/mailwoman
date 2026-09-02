@@ -5,7 +5,7 @@
  *
  *   Live wrapper for <ModelVisualizer>: an input box + the demo-embed classifier (production
  *   Hugging Face assets via DemoEmbedProvider). Feature-detects `traceParse` — deployed bundles
- *   built before the trace seam lack it, in which case we say so instead of crashing.
+ *   built before the `traceParse` hook lack it, in which case we say so instead of crashing.
  */
 
 import React, { useCallback, useState } from "react"
@@ -47,7 +47,7 @@ export function LiveModelVisualizer(): React.JSX.Element {
 	if (!ready) return <p>Loading model assets… {loadingProgress}</p>
 
 	if (!classifier?.traceParse) {
-		return <p>This deployed model bundle predates the trace seam — trace introspection unavailable.</p>
+		return <p>This deployed model bundle predates the `traceParse` hook — trace introspection unavailable.</p>
 	}
 
 	return (

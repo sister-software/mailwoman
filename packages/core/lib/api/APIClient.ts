@@ -53,7 +53,7 @@ export interface APIClientConfig {
 	 * dispatches, then stall until the cooldown lapses.
 	 *
 	 * This cannot express a flat per-second rate, which is what most fair-access policies actually publish. For that use
-	 * {@linkcode minRequestIntervalMs}; the two compose (both gates must clear) but you almost certainly want one.
+	 * {@linkcode minRequestIntervalMs}; the two compose (both limits must clear) but you almost certainly want one.
 	 */
 	requestsPerMinute?: number
 
@@ -130,11 +130,11 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		this.#retryPolicy = resolveRetryPolicy(config.retry)
 		this.#pacer = config.minRequestIntervalMs ? new RequestPacer(config.minRequestIntervalMs, this.#clock) : null
 
-		// THE PACING GATE LIVES IN THE ADAPTER, not in `fetch()`.
+		// THE PACING LIMIT LIVES IN THE ADAPTER, not in `fetch()`.
 		//
 		// `axios-cache-interceptor` short-circuits a cache HIT by replacing `config.adapter` with its own
 		// `cachedAdapter`, so anything installed here is reached only when the request is actually going
-		// to the network. Gating in `fetch()` instead put the cache interceptor DOWNSTREAM of the gate and
+		// to the network. Restricting in `fetch()` instead put the cache interceptor DOWNSTREAM of the check and
 		// made every cache hit burn a full pacer sleep: measured 1 dispatch, 5 hits, five 111ms sleeps for
 		// zero network traffic. `/Archives/` documents are cached for a century by design, so warm re-runs
 		// are the EXPECTED mode for a bulk crawl — at 100k cached documents that is ~3 hours of sleeping
@@ -180,24 +180,24 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	}
 
 	/**
-	 * Perform a fetch operation using the API's Axios instance: served from cache when possible, paced and cooldown-gated
-	 * when not, retried within the configured ceiling, and — on the final failure — mapped to a {@linkcode ResourceError}
-	 * carrying a numeric `status` and a `(source, kind, reason)` URN.
+	 * Perform a fetch operation using the API's Axios instance: served from cache when possible, paced and
+	 * cooldown-conditional when not, retried within the configured ceiling, and — on the final failure — mapped to a
+	 * {@linkcode ResourceError} carrying a numeric `status` and a `(source, kind, reason)` URN.
 	 *
 	 * Error mapping happens HERE rather than in a response interceptor so the retry loop can see the raw `AxiosError`
-	 * (status AND `Retry-After`) before it is summarized. The pacing/cooldown gate deliberately does NOT happen here — it
-	 * sits in the adapter (see the constructor), downstream of the cache, so a hit costs nothing. Every retry attempt
-	 * re-enters `this.axios(...)` and therefore re-enters that gate; a retry burst cannot outrun the pacer.
+	 * (status AND `Retry-After`) before it is summarized. The pacing/cooldown limit deliberately does NOT happen here —
+	 * it sits in the adapter (see the constructor), downstream of the cache, so a hit costs nothing. Every retry attempt
+	 * re-enters `this.axios(...)` and therefore re-enters that limit; a retry burst cannot outrun the pacer.
 	 */
 	public fetch = async <T>(options: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
 		const method = options.method?.toUpperCase() || "GET"
 
-		// A per-request `adapter` would WIN over the instance default in `mergeConfig`, and the pacing/cooldown gate
+		// A per-request `adapter` would WIN over the instance default in `mergeConfig`, and the pacing/cooldown limit
 		// lives in that instance adapter — so passing one here would dispatch with no grant at all. Reproduced against
 		// the un-stripped form: a client at `minRequestIntervalMs: 5000` issuing three concurrent `fetch({ url, adapter })`
 		// calls made 3 dispatches, took 0 grants and slept 0 times.
 		//
-		// The cache interceptor swaps the adapter too, and that one is INTENDED — it is how a cache hit skips the gate
+		// The cache interceptor swaps the adapter too, and that one is INTENDED — it is how a cache hit skips the check
 		// without spending a grant. The difference is that it swaps on the merged config from inside the interceptor
 		// chain, after this method has already handed the request over. Stripping it here closes the caller-supplied
 		// door without touching the interceptor's.
@@ -231,17 +231,17 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	}
 
 	/**
-	 * Acquire permission to dispatch one request, clearing BOTH gates. Each reserves SYNCHRONOUSLY with respect to its
+	 * Acquire permission to dispatch one request, clearing BOTH limits. Each reserves SYNCHRONOUSLY with respect to its
 	 * own state, so concurrency cannot defeat either of them.
 	 *
 	 * The bug this replaced: `fetch()` awaited a single `$cooldown` read and the request was only COUNTED by a response
-	 * interceptor. N callers invoked in the same turn all cleared the gate before any response came back to set a
+	 * interceptor. N callers invoked in the same turn all cleared the limit before any response came back to set a
 	 * cooldown — measured at 40 dispatches inside 3ms against a configured budget of 2/minute, and 40 against 10/minute.
 	 *
 	 * The pacer is re-acquired on every pass of the loop, NOT taken once up front. A grant is a claim on a specific
 	 * instant; blocking on a cooldown after taking one leaves it stale, and every caller holding a stale grant spends it
 	 * the moment the cooldown lifts — measured as four pairs dispatching 0ms apart against a documented 100ms minimum
-	 * when both gates were configured together. Re-acquiring discards the stale grant (the pacer under-issues by one per
+	 * when both limits were configured together. Re-acquiring discards the stale grant (the pacer under-issues by one per
 	 * cooldown wait, which is the safe direction) and takes a fresh one for the instant we actually dispatch.
 	 */
 	protected acquireDispatchSlot = async (): Promise<void> => {
@@ -251,9 +251,9 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 			const pending = this.#cooldownWithResolvers
 
 			if (!pending) {
-				// Check AND reserve in the same synchronous step. Splitting them — "await the gate, then
+				// Check AND reserve in the same synchronous step. Splitting them — "await the limit, then
 				// count" — is the whole bug: every caller queued behind the same microtask turn passes a
-				// gate that only closes once one of them has already counted, so the (N-1) callers behind
+				// limit that only closes once one of them has already counted, so the (N-1) callers behind
 				// the budget-spending one sail straight through.
 				this.#reserveCooldownSlot()
 

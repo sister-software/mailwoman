@@ -82,7 +82,7 @@ export const BUILTIN_STRATEGY_NAMES = ["postcode_area_resolution", "fallback_fuz
 export const ADDRESS_CONVENTION_TABLE = "address_convention"
 
 /**
- * A named resolution primitive. Returns `null` to abstain (gate unmet / no data) → the dispatcher tries the next
+ * A named resolution primitive. Returns `null` to abstain (condition unmet / no data) → the dispatcher tries the next
  * strategy; returns an array (possibly empty) to claim the result.
  */
 export type Strategy = (query: FindPlaceQuery, convention: ResolvedConvention) => Promise<PlaceCandidate[] | null>

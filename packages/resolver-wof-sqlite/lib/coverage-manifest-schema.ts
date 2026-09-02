@@ -8,9 +8,9 @@
  *   updated at gazetteer REBUILD, not by a hand-edited code PR after someone remembers:
  *
  *   - `country_coverage`: the hard-country-filter coverage record (#743/#194) — per-country
- *     promote-gate verdicts + the measured hard-resolve rates that used to live in a code comment on
+ *     promotion-eval verdicts + the measured hard-resolve rates that used to live in a code comment on
  *     `HARD_PLACE_COUNTRY_SAFELIST`. Presence = measured; `hard_filter_safe = 0` = measured and
- *     FAILED the gate (FI 69.5%, PL 77.8%) — distinguishable from a country never measured at all
+ *     FAILED the check (FI 69.5%, PL 77.8%) — distinguishable from a country never measured at all
  *     (the meaning-of-zero rule, `docs/engineering/reference/layer-contract.mdx`).
  *   - `country_bbox`: the coarse guard-B plausibility boxes that used to live in
  *     `resolver/plausibility.ts`'s `COUNTRY_BBOX`. An absent row fails open (never trips the guard),
@@ -43,7 +43,7 @@ export interface CountryCoverageTable {
 	 */
 	country: string
 	/**
-	 * 0/1 — the promote-gate verdict (a verdict column, NOT re-derived from the rate; see the fact type's docstring).
+	 * 0/1 — the promotion-eval verdict (a verdict column, NOT re-derived from the rate; see the fact type's docstring).
 	 */
 	hard_filter_safe: number
 	/**
@@ -55,11 +55,11 @@ export interface CountryCoverageTable {
 	 */
 	sample_size: number | null
 	/**
-	 * ISO-8601 date of the measurement / promote gate.
+	 * ISO-8601 date of the measurement / promote eval.
 	 */
 	measured_at: string
 	/**
-	 * The receipt: which panel/gate produced this row.
+	 * The receipt: which panel/check produced this row.
 	 */
 	source: string
 }
@@ -91,7 +91,7 @@ export interface GazetteerCoverageDatabase {
 }
 
 /**
- * Table names the lookup probes (existence-gated, so a candidate.db built before the manifest is byte-stable).
+ * Table names the lookup probes (existence-restricted, so a candidate.db built before the manifest is byte-stable).
  */
 export const COUNTRY_COVERAGE_TABLE = "country_coverage"
 /**

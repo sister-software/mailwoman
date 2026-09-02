@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman eval error-analysis` — categorized failure report over the golden eval set (the
- *   pre-publish 2pp promote gate; night-shift skill). Builds the classifier via `createScorer` in
+ *   pre-publish 2pp promote eval; night-shift skill). Builds the classifier via `createScorer` in
  *   STRICT ship-config mode so a `--model` candidate is graded in-distribution (#566/#685 trap);
  *   `--no-strict` warns-and-continues for legacy pre-anchor models.
  */

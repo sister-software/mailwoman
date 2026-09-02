@@ -466,7 +466,7 @@ describe("findPostcodeCountryScope", () => {
 			await findPostcodeCountryScope(roots, backend, { postcode: "75001", defaultCountry: "US", gateKm: 25 })
 		).not.toBeNull()
 
-		// Paris 1er's postcode point sits ~0.8 km from the locality point, so a sub-metre gate excludes it.
+		// Paris 1er's postcode point sits ~0.8 km from the locality point, so a sub-metre check excludes it.
 		const tight = await findPostcodeCountryScope(roots, backend, {
 			postcode: "75001",
 			defaultCountry: "US",

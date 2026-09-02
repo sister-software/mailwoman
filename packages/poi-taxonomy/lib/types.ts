@@ -90,7 +90,7 @@ export interface SynonymEntry {
 	phrase: string
 	categoryID: POICategoryID
 	/**
-	 * BCP-47 locale gate, same semantics as `@mailwoman/variant-aliases`: omitted = ungated (matches any locale at
+	 * BCP-47 locale filter, same semantics as `@mailwoman/variant-aliases`: omitted = unrestricted (matches any locale at
 	 * confidence 1.0); present = 1.0 on exact locale, 0.5 on language-only.
 	 */
 	locales?: string[]

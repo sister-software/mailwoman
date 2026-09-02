@@ -298,11 +298,11 @@ class WOFResolver implements Resolver {
 			// resolve (a foreign subdivision — "Montreal QC" under a US locale). The default filter discarded "QC" and
 			// force-matched the locality to the US namesake; this re-resolves the subdivision + its same-named locality
 			// under the subdivision's OWN country. Disjoint from the two passes above (unresolved region + resolved
-			// locality); evidence-gated + byte-stable on the domestic path (a US region resolves under `US`).
+			// locality); evidence-conditional + byte-stable on the domestic path (a US region resolves under `US`).
 			await applyRegionCountryCoherence(newRoots, this.#backend, state.defaultCountry)
 		}
 
-		// Postcode-consistency (#370 "Lever A"): default-ON (promoted 2026-07-04 — the corrected gate:
+		// Postcode-consistency (#370 "Lever A"): default-ON (promoted 2026-07-04 — the corrected check:
 		// FI 231/0, SI 37/6, CZ 47/2, US byte-flat; see the ResolveOpts docstring). After the admin walk
 		// (needs both the locality and the postcode resolved) and before the street tiers (which key off
 		// the postcode/street, not the locality coordinate this adjusts). `false` opts out, byte-stable.
@@ -318,7 +318,7 @@ class WOFResolver implements Resolver {
 		}
 
 		// Interpolation tier (#483): strictly AFTER the exact-point block so an estimate can never
-		// override a real situs point (applyInterpolation also gates on resolution_tier). Opt-in;
+		// override a real situs point (applyInterpolation also checks on resolution_tier). Opt-in;
 		// byte-stable when opts.interpolation is absent.
 		if (opts.interpolation) {
 			applyInterpolation(newRoots, opts.interpolation, opts.interpolationRadiusCalibration)
@@ -344,7 +344,7 @@ class WOFResolver implements Resolver {
 		// Street-centroid tier (#1042): LAST, after span-rescore, so it can (a) union the span-rescore-recovered
 		// country into its FR/national country hints (a placer-misrouted street — "Rue Sainte-Catherine" → IT — leaves
 		// admin unresolved, and only span-rescore recovers the FR country signal) and (b) override a coarse recovered
-		// locality with the exact street centroid. Self-gates on no house number + no existing street-level tier, so a
+		// locality with the exact street centroid. Applies only when there is no house number + no existing street-level tier, so a
 		// rooftop query is untouched; byte-stable when opts.streetCentroids absent.
 		if (opts.streetCentroids) {
 			applyStreetCentroid(newRoots, tree.raw, opts.streetCentroids, opts.streetCountryHints ?? [])
@@ -521,7 +521,7 @@ class WOFResolver implements Resolver {
 		}
 
 		// #194: a resolved parent's country wins, then the caller's `defaultCountry`, then the confident
-		// placer `hardCountry`. All three are a HARD candidate filter. The placer's `hardCountry` is gated
+		// placer `hardCountry`. All three are a HARD candidate filter. The placer's `hardCountry` is conditional
 		// upstream on high confidence (so it only fires when the model is sure), and on a miss the node is
 		// left UNRESOLVED rather than re-resolved globally: the off-continent rows are precisely the ones
 		// whose locality isn't in the country's gazetteer slice, so a global retry would just re-admit the
@@ -641,13 +641,13 @@ class WOFResolver implements Resolver {
 				candidates = await this.#backend.findPlace(query)
 				rec.stage("initial", candidates)
 
-				// #1731: the backend's interior region-scope fallback, surfaced as a gate — the resolver
+				// #1731: the backend's interior region-scope fallback, surfaced as a check — the resolver
 				// never sees the scoped probe miss, only the stamp the re-admitted rows carry.
 				if (candidates[0]?.regionScopeMiss) {
 					rec.gate("region_scope_miss")
 				}
 
-				// Parent soft-gating: `parentID` is a HARD descendant filter in the backend, which wrongly
+				// Parent soft-filtering: `parentID` is a HARD descendant filter in the backend, which wrongly
 				// zeroes the result when the parent resolved wrong OR the gazetteer hierarchy is incomplete
 				// (a real locality whose `ancestors` chain is missing its region). Rather than turn a
 				// resolvable node into an unresolved one, retry once WITHOUT the parent constraint — we
@@ -672,7 +672,7 @@ class WOFResolver implements Resolver {
 				// Defensive: a backend failure should not abort the whole tree walk. Leave the node with
 				// its classifier attribution intact.
 				//
-				// The reason rides the gate name. A bare `backend_error` cannot tell a closed database from a
+				// The reason rides the check name. A bare `backend_error` cannot tell a closed database from a
 				// finalized statement from a genuine query fault, which is what made three full-board constraint
 				// runs unreadable — 64 of 591 rows errored and the census could not say why.
 				rec.gate(`backend_error: ${(error as Error).message}`)
@@ -899,7 +899,7 @@ class WOFResolver implements Resolver {
 		// DOMINATE the locality winner by {@link BARE_REGION_DOMINANCE_LOG10} in log-population:
 		// prominence saturates at the backend's populationBoost cap, so the margin is measured on the
 		// raw populations, and the margin is what keeps bare "New York" on the city (state 19.6M vs
-		// city 8.8M = 0.35, under the cut) while bare "Georgia" promotes to the 11M state over the
+		// city 8.8M = 0.35, under the threshold) while bare "Georgia" promotes to the 11M state over the
 		// Vermont hamlet (margin 3.4). A bare name with no admin namesake never reaches these lines,
 		// and the displaced locality stays first among the alternatives either way.
 		if (bareCountry && (bareCountry.prominence ?? bareCountry.score) > (top.prominence ?? top.score)) {
@@ -946,7 +946,7 @@ class WOFResolver implements Resolver {
 }
 
 /**
- * #1880's promotion plus its firing receipt, in one seam: when the promotion changes the race's leading candidate, the
+ * #1880's promotion plus its firing receipt, in one place: when the promotion changes the race's leading candidate, the
  * node is stamped `capital_promotion` with the promoted candidate's country — the same posture as
  * `postcode_country_scope`, a mechanism reporting that it SPOKE apart from whether the outcome moved, so an unchanged
  * verdict downstream can never mean either "harmless" or "never ran". Metadata-only; nothing reads it to rank.

@@ -261,7 +261,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		// code as region ("SK11 9PD" → region "S" + postcode "K11 9PD"). The en-gb model-card pins
 		// `requires.conventions.mode` to "gb", which loadFromWeights forwards as the classifier's
 		// `addressSystemConventions` config — reproduced here directly. The codex gb row's
-		// `postcodePattern` must open the repair gate so the snap path reunites the span.
+		// `postcodePattern` must open the repair check so the snap path reunites the span.
 		const tokenizer = await loadTokenizer()
 		const text = "Macclesfield SK11 9PD"
 		const { pieces } = tokenizer.encode(text)
@@ -292,10 +292,10 @@ describe("NeuralAddressClassifier.traceParse", () => {
 			return row
 		})
 
-		// WITHOUT the pin (pre-#1275 en-gb reality): the gate never opens, the clip stands.
+		// WITHOUT the pin (pre-#1275 en-gb reality): the eval never opens, the clip stands.
 		const unpinned = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
 		const clippedTrace = await unpinned.traceParse(text, { spanProposer: false })
-		// The subject here is the POSTCODE gate: unpinned, the codex gb row is never consulted, so the snap
+		// The subject here is the POSTCODE check: unpinned, the codex gb row is never consulted, so the snap
 		// path never runs and the clip stands. Assert that specifically rather than `repairs === []` — the
 		// blanket form silently also pinned "word-consistency never fires", which was true only while that
 		// repair was default-OFF on the classifier, and broke the moment the default matched the pipeline's.
@@ -305,7 +305,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		expect(clipped.postcode).not.toBe("SK11 9PD")
 		expect("SK11 9PD".endsWith(clipped.postcode!)).toBe(true)
 
-		// WITH the pin (what the en-gb card now declares): pinned system → codex gb row → repair gate
+		// WITH the pin (what the en-gb card now declares): pinned system → codex gb row → repair check
 		// opens → the snap path relabels the whole raw-text match as one postcode span.
 		const pinned = new NeuralAddressClassifier({
 			tokenizer,

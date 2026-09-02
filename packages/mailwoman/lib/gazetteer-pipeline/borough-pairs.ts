@@ -178,7 +178,7 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 		// Scoped to `eng` deliberately. The names table is exhaustively multilingual — Bangalore alone carries ~100
 		// language rows — and folding all of them in would bloat the artifact with scripts this Latin model never sees
 		// and surfaces no English-written address uses. The existing surface-expansion probe
-		// (`pair-index-hierarchy-probe.ts`) gates on `official = 1`; that is right for name-exactness checks but too
+		// (`pair-index-hierarchy-probe.ts`) checks on `official = 1`; that is right for name-exactness checks but too
 		// strict here, because it is exactly the rows a rename leaves behind. Positive evidence only: an extra parent
 		// key can only create a match where the writer actually used that name.
 		const aliasRows = !expandParentAliases
@@ -202,7 +202,7 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 
 			// The WRITER's language decides which alias is worth carrying: the country's own official languages, plus
 			// English as the lingua franca. WOF's preferred name is often neither — it stores `Rome` (eng) for a city
-			// Italians write `Roma` (ita), and `Bangalore` for one Indians write `Bengaluru`. Gating on `eng` alone, as
+			// Italians write `Roma` (ita), and `Bangalore` for one Indians write `Bengaluru`. Restricting on `eng` alone, as
 			// this did when India motivated it, misses every Italian and Spanish form.
 			//
 			// `isOfficialLanguage` is the codex table the WOF ingest already consults for exactly this question, so

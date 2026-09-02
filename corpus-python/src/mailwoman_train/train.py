@@ -477,7 +477,7 @@ def _cross_pollution(
     (``B-locality`` / ``B-region``) are predicted as a POSTCODE label (``B-`` / ``I-postcode``).
 
     Overall, plus per-locale when ``row_locale_ids`` (one id per sequence) is supplied. The
-    pre-registered PR3 gate wants this under 1% per locale by 20k steps — it is the direct readout
+    pre-registered PR3 check wants this under 1% per locale by 20k steps — it is the direct readout
     of a city's lead token bleeding into the postcode span, the failure self-conditioning exists to
     stop. Returns an empty dict when the val sample contains no city/region-start tokens.
     """
@@ -923,7 +923,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                     )
                 # Gazetteer-anchor confidence curriculum (#464, v0.9.13): same ramped per-row zero-out
                 # so the model keeps label competence with AND without the clue (recovers the v0.9.12
-                # US postcode -3.7). Gated on the config flag so always-on runs stay reproducible.
+                # US postcode -3.7). Conditioned on the config flag so always-on runs stay reproducible.
                 if "gazetteer_confidence" in tb and getattr(cfg.train, "gazetteer_curriculum", False):
                     tb["gazetteer_confidence"] = perturb_gazetteer_confidence(
                         tb["gazetteer_confidence"], step, cfg.train.max_steps
@@ -1011,7 +1011,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                         f"  val_rows={val.get('val_rows', 0)}"
                         f"\n         {tag_summary}"
                     )
-                    # PR3 regression check: city/region-start → postcode rate (gate < 1% per locale), plus
+                    # PR3 regression check: city/region-start → postcode rate (check < 1% per locale), plus
                     # the aux locale-head accuracy. Only prints when self-conditioning is active.
                     if "cross_pollution" in val:
                         xpoll = "  ".join(
@@ -1061,7 +1061,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                             tags_with_support += 1
                     eval_metrics["val_tags_with_support"] = tags_with_support
                     # PR3: stream the cross-pollution regression check (overall + per-locale) and the aux
-                    # locale-head accuracy to the dashboard, so the 20k gate is watchable live.
+                    # locale-head accuracy to the dashboard, so the 20k check is watchable live.
                     for k, v in val.items():
                         if k.startswith("cross_pollution") or k == "locale_acc":
                             eval_metrics[k] = float(v)

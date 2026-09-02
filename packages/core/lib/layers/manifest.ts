@@ -71,8 +71,9 @@ export interface CoverageCell {
  * Whether a coverage reading can support an EXCLUSION — a claim that the thing asked for is not there.
  *
  * Presence is supportable from any basis. Absence is not: `source_present` records that the source returned rows, which
- * says nothing about what it missed. Callers building negative evidence must gate on this rather than on `completeness`
- * alone, or an exclusion fires identically on a genuinely empty cell and on one we simply never surveyed.
+ * says nothing about what it missed. Callers building negative evidence must condition on this rather than on
+ * `completeness` alone, or an exclusion fires identically on a genuinely empty cell and on one we simply never
+ * surveyed.
  */
 export function supportsExclusion(cell: Pick<CoverageCell, "basis">): boolean {
 	return cell.basis === CoverageBasis.Designated || cell.basis === CoverageBasis.Surveyed

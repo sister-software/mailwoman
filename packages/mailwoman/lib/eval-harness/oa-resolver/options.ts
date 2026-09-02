@@ -7,7 +7,7 @@
 
 /**
  * Options for {@linkcode oaResolverEval}. Keys mirror the command's kebab flags (`--out-md` → `outMd`); booleans default
- * off, tri-states are the paired on/off flags the gate legs pin (`adminCoherence`/`noAdminCoherence`).
+ * off, tri-states are the paired on/off flags the eval legs pin (`adminCoherence`/`noAdminCoherence`).
  */
 export interface OAResolverEvalOptions {
 	/**
@@ -112,7 +112,7 @@ export interface OAResolverEvalOptions {
 	normalizeCase?: boolean
 	/**
 	 * #42 tri-state pin: force postcodeCountryCoherence ON. The library default has been ON since 2026-08-05, so this pin
-	 * is now a no-op restatement; it stays because a gate leg that says what it graded is the point of a tri-state.
+	 * is now a no-op restatement; it stays because a check leg that says what it graded is the point of a tri-state.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
@@ -136,11 +136,11 @@ export interface OAResolverEvalOptions {
 	 */
 	placeCountry?: boolean
 	/**
-	 * #194/#743: promote a confident placer guess to a hard country filter (safelist-gated).
+	 * #194/#743: promote a confident placer guess to a hard country filter (safelist-conditional).
 	 */
 	placeCountryHard?: boolean
 	/**
-	 * Ungated hard-filter measurement (full in-map safelist).
+	 * Unrestricted hard-filter measurement (full in-map safelist).
 	 */
 	placeCountryHardAll?: boolean
 	/**

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Shared Gauntlet harness: build the full-pipeline geocode deps (optionally with a CANDIDATE model, so a
- *   gate can compare candidate-vs-production on the same inputs) and run one address end-to-end. The
+ *   eval can compare candidate-vs-production on the same inputs) and run one address end-to-end. The
  *   Gauntlet grades the ASSEMBLED output — coordinate + tier — not raw parse F1, the lesson this project
  *   paid for once (#566 / reconcile-retirement).
  */
@@ -40,7 +40,7 @@ export interface GauntletDeps extends Disposable {
 	geocode(input: string, opts?: GauntletGeocodeOpts): Promise<GeocodeResult>
 	/**
 	 * The same geocode, with the resolver's interior recorded (#1721): one {@linkcode ResolveNodeTrace} per backend lookup
-	 * the walk performed, carrying the query as sent, the candidate table with its per-stage rank vector, the gates that
+	 * the walk performed, carrying the query as sent, the candidate table with its per-stage rank vector, the checks that
 	 * fired and the pick's provenance.
 	 *
 	 * A SEPARATE METHOD rather than a field on {@linkcode GauntletGeocodeOpts}, because a trace sink is not a per-query
@@ -56,7 +56,7 @@ export interface GauntletDeps extends Disposable {
 	): Promise<{ result: GeocodeResult; resolver: ResolveNodeTrace[] }>
 	/**
 	 * Report-only access to the exact classifier, overlay, parse options, and FST selected by the Gauntlet path. It
-	 * performs no resolution and does not alter the gate's geocode path.
+	 * performs no resolution and does not alter the check's geocode path.
 	 */
 	diagnoseParse(input: string, opts?: GauntletGeocodeOpts): Promise<{ trace: NeuralParseTrace; fst?: FSTMatcherLike }>
 }
@@ -95,7 +95,7 @@ export interface GauntletDepsOptions {
 
 /**
  * RESOLVER-side levers a gauntlet run can PIN — the counterpart to the model-side `modelPath`/`tokenizerPath` swaps.
- * Both kinds of pin exist for the same reason: the gate has to be able to grade the exact configuration a ship would
+ * Both kinds of pin exist for the same reason: the check has to be able to grade the exact configuration a ship would
  * use, and a lever that cannot be switched here has never been through the D-rule's standard instrument.
  *
  * The idiom is `eval oa-resolver`'s (`adminCoherence` / `postcodeCountryCoherence` boolean pins forwarded verbatim into
@@ -170,7 +170,7 @@ export function resolverLeverDeps(levers: GauntletResolverLevers | undefined): {
  */
 export function describeResolverLevers(levers: GauntletResolverLevers | undefined): string {
 	// `resolverLeverDeps` is pure and so cannot see the artifact-carrying pins; describing only what it returns is how
-	// a pinned run prints as "production defaults" and two different configurations produce identical gate logs. That
+	// a pinned run prints as "production defaults" and two different configurations produce identical lever logs. That
 	// is precisely the failure this surface exists to prevent, so every lever is named here, not just the boolean ones.
 	const entries: string[] = Object.entries(resolverLeverDeps(levers)).map(([k, v]) => `${k}=${v ? "ON" : "OFF"}`)
 
@@ -216,12 +216,12 @@ export interface GauntletGeocodeOpts {
 }
 
 /**
- * #1024 drift guard: the materialized model the gate is about to grade MUST match the en-us model-card's
+ * #1024 drift guard: the materialized model the check is about to grade MUST match the en-us model-card's
  * `files_md5["model.onnx"]` — the card (source of truth) and `release.config.json` (what copy-weights.ts materializes
- * from) drifted once and the superseded model shipped past a silent gate. Throws loudly on mismatch so the release
+ * from) drifted once and the superseded model shipped past a silent check. Throws loudly on mismatch so the release
  * before:release step (RELEASING.md) blocks the ship. Only the shipped default is checked; a `--candidate` run grades a
  * different artifact by design. Soft-returns when the card / field is absent (a card-format problem is not this guard's
- * job) — the model file itself is always present here (the caller `existsSync`-gated it).
+ * job) — the model file itself is always present here (the caller `existsSync`-conditional it).
  *
  * The md5 it receives is of the model `resolveWeights` returned, NOT of a path spelled out here: the guard must check
  * the artifact the run will actually grade, or it checks nothing the run depends on.
@@ -232,7 +232,7 @@ async function assertShippedModelMatchesCard(materializedMd5: string): Promise<v
 	if (!(await pathExists(cardPath))) return
 
 	// Soft-return on an UNPARSEABLE card too — the docstring's contract is that a card-format problem is
-	// not this guard's job (the model file itself is always existsSync-gated by the caller).
+	// not this guard's job (the model file itself is always existsSync-conditional by the caller).
 	const card = tryParsingJSON<{ version?: string; files_md5?: Record<string, string> }>(
 		await readLocalTextFile(cardPath)
 	)
@@ -252,7 +252,7 @@ async function assertShippedModelMatchesCard(materializedMd5: string): Promise<v
 			`[gauntlet] materialized model md5 ${materializedMd5} ≠ model-card files_md5["model.onnx"] ${expected} ` +
 				`(neural-weights-en-us/model-card.json, v${card.version ?? "?"}). The card is the source of truth; ` +
 				`release.config.json / the dev-weights symlink has DRIFTED from it (#1024). Re-materialize the card's model ` +
-				`(scripts/copy-weights.ts) or fix release.config.json weights.model before gating/shipping.`
+				`(scripts/copy-weights.ts) or fix release.config.json weights.model before verifying/shipping.`
 		)
 	}
 }
@@ -311,7 +311,7 @@ export async function assertDeclaredAnchorBins(locales: readonly string[], cache
 
 /**
  * Build the geocode deps. `modelPath` swaps ONLY the ONNX (same tokenizer/card/anchor/gazetteer soft-feed), so the
- * held-out gate can grade a candidate against production fairly; omit it for the shipped default.
+ * held-out check can grade a candidate against production fairly; omit it for the shipped default.
  *
  * `tokenizerPath` (+ optional `modelCardPath`) additionally swaps the VOCAB — required to grade a tokenizer-SPLICE
  * candidate (#444/#884/#912), whose model has extra embedding rows a plain `modelPath` swap can never exercise (the
@@ -339,7 +339,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// the en-us weights package's model path outright, which was the same file the loader below would pick only
 	// while the dev linker happened to materialize into that package — and the whole block was wrapped in
 	// `existsSync`, so the day the binaries live anywhere else (a data-root overlay, the user cache, a consumer's
-	// node_modules) the stamp goes quiet, `assertShippedModelMatchesCard` never runs, and the gate grades a model it
+	// node_modules) the stamp goes quiet, `assertShippedModelMatchesCard` never runs, and the check grades a model it
 	// never verified. That is #1024 exactly, re-created by a path literal: a guard that fails OPEN when its
 	// assumption stops holding. `resolveWeights` answers with the file `loadFromWeights` will actually open.
 	const resolvedModel = opts.modelPath ? undefined : (await resolveWeights({ locale: "en-us" })).modelPath
@@ -352,10 +352,10 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 		// #1024: the transparency stamp exposed a config↔card drift once (release.config.json still pointed at
 		// v220 a64ad2e6 while the v5.4.0 promote shipped v230 ea785a70), so copy-weights.ts materialized the
-		// SUPERSEDED model and this gate SILENTLY graded it — a full bisect detour. Make the stamp ASSERT: the
+		// SUPERSEDED model and this check SILENTLY graded it — a full bisect detour. Make the stamp ASSERT: the
 		// shipped default must match the model-card's files_md5 (the card is the source of truth). A `--candidate`
-		// run intentionally grades a different artifact, so it is exempt. This gate is wired as the release
-		// before:release step (RELEASING.md), so failing here guards BOTH the gate and the ship.
+		// run intentionally grades a different artifact, so it is exempt. This check is wired as the release
+		// before:release step (RELEASING.md), so failing here guards BOTH the check and the ship.
 		if (!opts.modelPath && !opts.tokenizerPath && !opts.weightsCacheRoot) {
 			await assertShippedModelMatchesCard(md5)
 		}
@@ -478,13 +478,13 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	const regionDatabaseProvider = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
 	// Lazy like the resolver module above: `@mailwoman/osm` is an in-repo (unpublished) workspace, and
 	// A static import here would break the
-	// published `mailwoman` CLI outright rather than only this maintainer-run gate.
+	// published `mailwoman` CLI outright rather than only this maintainer-run check.
 	const { OSMRegionDatabaseProvider } = await import("@mailwoman/osm/sdk")
 	const osmProvider = await OSMRegionDatabaseProvider.create(mailwomanDataRoot())
 	// The BAN national-register tier (#1012) sits AHEAD of OSM in production (geocode.tsx wires it the
 	// same way) — without it here the gauntlet graded an OSM-first cascade production never runs, and
 	// the fr-chevaleret-bare pin silently guarded the wrong tier (caught 2026-07-10 when the BAN tier's
-	// missing bbox fall-through regressed the bare form in production while this gate stayed green).
+	// missing bbox fall-through regressed the bare form in production while this check stayed green).
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
 	const banProvider = await BANRegionDatabaseProvider.create(mailwomanDataRoot())
 

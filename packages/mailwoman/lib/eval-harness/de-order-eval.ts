@@ -7,14 +7,14 @@
  *   addresses in BOTH renderings — native German order (the realistic layout) and US/international
  *   order (the layout our OA de-sample ships) — with the postcode anchor fed and ablated
  *   (oa-resolver-eval's `--anchor-off` → `overrides.anchor=false`, the #718-sanctioned declared
- *   ablation; #887), plus US + FR for the no-regression gate. The German "collapse" was
+ *   ablation; #887), plus US + FR for the no-regression check. The German "collapse" was
  *   substantially an eval-order artifact (docs/articles/evals/resolver-geo/2026-06-06-anchor-pilot.md); this
  *   makes native-vs-international a first-class, repeatable measurement instead of a one-off.
  *   Self-emits every figure (each run writes its own .md), then prints a 2x2 + US/FR summary. NOTE:
  *   anchor on/off only differs for an anchor-trained (4-input) model; for a plain model both
  *   columns are identical (the anchor inputs are ignored / absent).
  *
- *   The promotion gate calls {@linkcode deOrderEval} IN-PROCESS and captures its report into
+ *   `promotion-gate.ts` calls {@linkcode deOrderEval} IN-PROCESS and captures its report into
  *   `<out-dir>/<tag>-deorder.md` — the file the verdict assembler regex-reads for
  *   `de.native_locality` (the `native DE` row's anchor-ON cell). Each of the six inner
  *   `oaResolverEval` runs is likewise in-process now; their markdown still lands in
@@ -37,7 +37,7 @@ import { TextSpliterator } from "spliterator"
 import { oaResolverEval } from "#eval-harness/oa-resolver-eval"
 
 /**
- * Options for {@linkcode deOrderEval} — one field per flag the gate used to serialize into argv.
+ * Options for {@linkcode deOrderEval} — one field per flag the check used to serialize into argv.
  */
 export interface DeOrderEvalOptions {
 	/**
@@ -64,7 +64,7 @@ export interface DeOrderEvalOptions {
 
 /**
  * What {@linkcode deOrderEval} returns. `ok` is false only for the usage refusal the script signalled with exit 1
- * (missing model/card) — the gate tolerated that exit code, and tolerates this the same way.
+ * (missing model/card) — the check tolerated that exit code, and tolerates this the same way.
  */
 export interface DeOrderEvalResult {
 	ok: boolean
@@ -73,7 +73,7 @@ export interface DeOrderEvalResult {
 
 /**
  * Run the both-order robustness battery. Every report line goes through `report` (stdout parity) and the usage refusal
- * through `reportError`, matching the `${stdout}${stderr}` capture the gate writes into `<tag>-deorder.md`.
+ * through `reportError`, matching the `${stdout}${stderr}` capture the runner writes into `<tag>-deorder.md`.
  */
 export async function deOrderEval(
 	options: DeOrderEvalOptions = {},
@@ -100,7 +100,7 @@ export async function deOrderEval(
 	const run = async (evalJsonl: string, anchorOn: boolean, country: string, outName: string): Promise<void> => {
 		// Anchor OFF = oa-resolver-eval's `anchorOff` (overrides.anchor=false — the sanctioned, declared
 		// ablation; #887). The old idiom (an empty-anchor.json fed as the anchor lookup) is refused by the
-		// #718 fail-closed gate: a lookup parsing to size 0 → UnfedChannelError.
+		// #718 fail-closed check: a lookup parsing to size 0 → UnfedChannelError.
 		const anchorOptions = anchorOn ? { modelAnchorLookup: lookup } : { anchorOff: true }
 
 		// The try/catch is the in-process spelling of the `nothrow:` this call used to carry.

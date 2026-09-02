@@ -19,7 +19,7 @@
  *     instead of the raw `node:sqlite` "unable to open database file" message.
  *   - `openFilerDatabaseIfPresent` / `assertFilerDatabaseExists` — the SAME pairing, for filer.db.
  *     `mailwoman_filer_lookup` requires filer.db unconditionally (mirrors `mailwoman_bdc_filing_landscape`'s own
- *     "requires the layer" discipline — `filerLookup` itself has no optional-dep abstain shape either, since gate
+ *     "requires the layer" discipline — `filerLookup` itself has no optional-dep abstain shape either, since criterion
  *     4 makes it throw rather than answer unstamped), so `cli.ts` pairs `assertFilerDatabaseExists` (the friendly
  *     throw) with `openFilerDatabaseIfPresent` (the actual open) the same way `bdcFilingLandscape`'s handler does.
  */
@@ -90,8 +90,8 @@ export async function openFilerDatabaseIfPresent(
 
 /**
  * Throws a friendly Error naming the layer when `databasePath` doesn't exist — `mailwoman_filer_lookup`'s guard
- * (mirroring {@link assertBDCDatabaseExists}). `filerLookup` itself has no optional-dep abstain shape (gate 4 makes it
- * throw rather than answer unstamped), so filer.db is required unconditionally, same as bdc.db is for
+ * (mirroring {@link assertBDCDatabaseExists}). `filerLookup` itself has no optional-dep abstain shape (criterion 4
+ * makes it throw rather than answer unstamped), so filer.db is required unconditionally, same as bdc.db is for
  * `mailwoman_bdc_filing_landscape`.
  */
 export async function assertFilerDatabaseExists(toolName: string, databasePath: string): Promise<void> {

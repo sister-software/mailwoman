@@ -104,7 +104,7 @@ export async function resolvePostalCityAliasDBPath(explicit?: string): Promise<s
 export { dataRootPath, mailwomanDataRoot, wofExtractPaths } from "@mailwoman/core/utils"
 
 /**
- * The #1009 "no gazetteer data found" preflight message, shared by every caller that gates on a candidate/WOF resolver
+ * The #1009 "no gazetteer data found" preflight message, shared by every caller that checks on a candidate/WOF resolver
  * being present before it will boot (`photon/cli.ts`, `nominatim/cli.ts`, `mailwoman/api-engine.ts`'s `mailwoman
  * serve`). Originally a bare `curl -fSL https://public.mailwoman.ai/...` line; measured 2026-08-03
  * (`commands/data/pull.tsx`'s `downloadToDisk` docstring) that an UNRANGED GET against that bucket 403s — the hint was

@@ -26,7 +26,7 @@
  *   normalization — deferred. Kana→kanji transliteration (ちょうめ→丁目) is dictionary work and likewise
  *   deferred.
  *
- *   Self-gating: a string with none of these characters returns identity, so Latin input is
+ *   Self-limiting: a string with none of these characters returns identity, so Latin input is
  *   untouched.
  */
 

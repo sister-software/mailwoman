@@ -40,7 +40,7 @@ export function assertISODate(value: string, context: string, caller = "buildFil
 	if (!ISO_DATE_PATTERN.test(value)) {
 		throw new Error(
 			`${caller}: malformed ${context} — ${JSON.stringify(value)} is not an ISO YYYY-MM-DD date. ` +
-				`valid_from/valid_to must always be ISO-sortable dates (decision 7 / gate 1's asOf predicate is a ` +
+				`valid_from/valid_to must always be ISO-sortable dates (decision 7 / criterion 1's asOf predicate is a ` +
 				`plain string comparison over them) — a vintage LABEL like "2026-Q2" outranks every ISO date in its own ` +
 				`year, so it would silently break every asOf-scoped read against the edge it's written to.`
 		)

@@ -48,7 +48,7 @@ export const CENSUS_ALLOWLIST: Partial<Record<string, string>> = {
 	streetMorphology:
 		"Deliberately zeroed in production (ZEROED_MORPHOLOGY_OPTS, runtime-pipeline.ts): the morphology FST is loaded " +
 		"to serve the #1142 street-context gate INSIDE the fst prior, and its own emission bias ships at scale 0 — " +
-		"ungated it measured US-golden −48. A firing here means a non-default morphology config, worth knowing.",
+		"unrestricted it measured US-golden −48. A firing here means a non-default morphology config, worth knowing.",
 }
 
 /**

@@ -29,7 +29,7 @@
  *     acquisition) — the branch exists so the law is tested before the data.
  *   - **Anything else** — abstain (null).
  *
- *   ## The probe's country gate
+ *   ## The probe's country restriction
  *
  *   The index is country-specific EVIDENCE: it is only probed when its `country` matches the
  *   query's country scope (or the scope is absent). A GB index must not speak under a US scope —
@@ -63,7 +63,7 @@ import type { PostcodePrefixIndexLike, PostcodePrefixNode, ResolvedPlace } from 
  * even the 0,0 unlocated sentinel), and the prefix prior's ancestry-only tier must express absence as `undefined`
  * instead — B3-3: inventing a centroid would reproduce the `BT3 9QQ` → Sheffield defect #1480. `decorateNode` copies
  * `lat`/`lon` onto the node verbatim, so an undefined coordinate stays absent on the node — the meaning-of-zero rule.
- * Widened ONLY at this seam: gazetteer places (always coordinate-bearing) remain plain `ResolvedPlace`.
+ * Widened ONLY at this boundary: gazetteer places (always coordinate-bearing) remain plain `ResolvedPlace`.
  */
 export type CoordinateOptionalPlace = Omit<ResolvedPlace, "lat" | "lon"> & { lat?: number; lon?: number }
 
@@ -117,7 +117,7 @@ export interface PostcodePrefixProbeResult {
 }
 
 /**
- * Probe the index for `code`'s prefix. Two abstention gates, in order: the index's country must match the query's
+ * Probe the index for `code`'s prefix. Two abstention checks, in order: the index's country must match the query's
  * country scope (or the scope is absent), and the derivation law must yield a prefix the index carries. Returns null to
  * abstain — never throws, never guesses.
  */
@@ -128,7 +128,7 @@ export function probePostcodePrefix(
 ): PostcodePrefixProbeResult | null {
 	const indexCountry = index.country?.toUpperCase()
 
-	// Country gate: the index is evidence FOR its own country only. A GB index under a US scope stays
+	// Country check: the index is evidence FOR its own country only. A GB index under a US scope stays
 	// silent — the walk's country filter is the caller's declared universe.
 	if (queryCountry && indexCountry && queryCountry.toUpperCase() !== indexCountry) return null
 

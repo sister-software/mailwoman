@@ -14,7 +14,7 @@ This module defines:
   index used to one-hot encode per-token features.
 
 - ``PhraseFeatureEncoding``: per-token feature width + the slot layout. v0.5.0 first
-  cut uses a fixed one-hot (BIE markers + kind one-hot), per the plan doc recommendation.
+  split uses a fixed one-hot (BIE markers + kind one-hot), per the plan doc recommendation.
   Total width = ``len(_BIE) + len(PHRASE_KINDS) = 3 + 7 = 10``.
 
 Why mirror the TS taxonomy here instead of importing? The classifier trains in Python

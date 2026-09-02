@@ -61,18 +61,18 @@ describe("poiTaxonomyLookup adapter", () => {
 		expect(hits[0]).toMatchObject({ kind: "brand", categoryID: "Chevron", wikidata: "Q319642", confidence: 1 })
 	})
 
-	it("chains through variant-aliases for locale-gated brand slang, resolving a QID", () => {
+	it("chains through variant-aliases for locale-restricted brand slang, resolving a QID", () => {
 		// "mcdo" isn't in the brand table's own aliases (verified empty for McDonald's) — this only resolves via the
 		// variant-aliases -> resolveBrandName chain.
 		const hits = poiTaxonomyLookup("mcdo", "fr-FR")
 		expect(hits[0]).toMatchObject({ kind: "brand", categoryID: "McDonald's", wikidata: "Q38076" })
 	})
 
-	it("does not chain locale-gated brand slang without a locale", () => {
+	it("does not chain locale-restricted brand slang without a locale", () => {
 		expect(poiTaxonomyLookup("mcdo", undefined)).toEqual([])
 	})
 
-	it("does not match locale-gated brand slang under an unrelated locale", () => {
+	it("does not match locale-restricted brand slang under an unrelated locale", () => {
 		expect(poiTaxonomyLookup("mcdo", "en-US")).toEqual([])
 	})
 

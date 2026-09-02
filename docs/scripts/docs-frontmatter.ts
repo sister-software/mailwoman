@@ -5,7 +5,7 @@
  *
  *   Shared plumbing for the docs structural checks (docs-architecture cleanup, Phase 4): walk
  *   `docs/articles`, parse each page's frontmatter block, and derive the Docusaurus doc id. Used by
- *   `check-docs-structure.ts` (the CI gate) and `list-stale-docs.ts` (the quarterly freshness
+ *   `check-docs-structure.ts` (the CI check) and `list-stale-docs.ts` (the quarterly freshness
  *   sweep).
  *
  *   The frontmatter parser is deliberately minimal — top-level `key: scalar` lines only, quotes
@@ -80,7 +80,7 @@ export function parseFrontmatter(source: string): { fields: Map<string, string>;
 
 	let opened = false
 
-	// This module runs in the PRE-INSTALL "Docs structure checks" CI gate (docs-build.yml), whose
+	// This module runs in the PRE-INSTALL "Docs structure checks" CI check (docs-build.yml), whose
 	// contract is node built-ins only — no install has happened when it executes. A spliterator
 	// import here is ERR_MODULE_NOT_FOUND on every CI run (2026-08-04). Frontmatter blocks are a
 	// handful of short lines; the whole-buffer split costs nothing at this scale.
@@ -160,7 +160,7 @@ export function isExcludedFromBuild(page: DocPage): boolean {
 /**
  * The evals and retrospectives trees are a delegated workstream (see the coordination boundary in
  * `docs/superpowers/plans/2026-07-14-documentation-architecture-cleanup.md`); their role/status adoption ships with its
- * own gate. Only the duplicate-title check reads them — a title collision is site-wide by nature.
+ * own check. Only the duplicate-title check reads them — a title collision is site-wide by nature.
  */
 export function isDelegatedWorkstream(page: DocPage): boolean {
 	return page.relativePath.startsWith("evals/") || page.relativePath.startsWith("retrospectives/")

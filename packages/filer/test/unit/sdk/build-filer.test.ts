@@ -5,7 +5,7 @@
  *
  *   Tests for {@linkcode buildFilerDatabase} — the stage/materialize/seal build of `filer.db`. Feeds
  *   the loader synthetic {@link Form499Row}/{@link ProviderListRow} sources directly (the
- *   `form499Rows`/`providerRows` seams), so the suite exercises the whole build WITHOUT touching the
+ *   `form499Rows`/`providerRows` injection points), so the suite exercises the whole build WITHOUT touching the
  *   filesystem — matches `build-bdc.test.ts`'s injected-row convention.
  */
 
@@ -372,7 +372,7 @@ describe("buildFilerDatabase", () => {
 		expect(await pathExists(out)).toBe(false)
 	})
 
-	it("an empty lastFiledAt is loud — never produces a blank-provenance edge (decision 7 / gate 1)", async () => {
+	it("an empty lastFiledAt is loud — never produces a blank-provenance edge (decision 7 / criterion 1)", async () => {
 		await using scratch = await temporaryDirectory("filer-build-")
 		const out = scratch.resolve("filer.db")
 

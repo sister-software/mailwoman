@@ -10,7 +10,7 @@
  *   highest-traffic case. This measures street exact-match on the held-out US golden subset where
  *   gold has BOTH a street and a locality span, compares a baseline (v1.5.1) to a candidate, and
  *   tallies how often a street regression coincides with the gold street's leading token landing in
- *   the candidate's locality (the "eat" mechanism). The v1.7.0 gate aborts/flags if the candidate
+ *   the candidate's locality (the "eat" mechanism). The v1.7.0 eval aborts/flags if the candidate
  *   drops >1pp below v1.5.1 here.
  *
  *   Run: node scripts/eval/street-recall-full-probe.ts\

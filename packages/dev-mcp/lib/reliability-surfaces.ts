@@ -43,9 +43,9 @@ export type UnassertedPolicy = (typeof UnassertedPolicy)[keyof typeof Unasserted
  * How a component's confidence is folded out of its tokens.
  *
  * `min` is the weakest link — a span is only as trustworthy as its least certain piece — and is the default because
- * that is the reading a gate should use. `mean` exists because it is what `AddressNode.confidence` already reports
+ * that is the reading an eval should use. `mean` exists because it is what `AddressNode.confidence` already reports
  * (`build-tree.ts`), so a caller calibrating the number a tree consumer actually reads can ask for it. The two diverge
- * most on long spans, which is where a gate decision is usually being made, so the choice travels with every result
+ * most on long spans, which is where an eval decision is usually being made, so the choice travels with every result
  * rather than being assumed.
  */
 export const ComponentAggregate = {
@@ -234,7 +234,7 @@ export async function decodeReliabilitySample(
  *
  * `abstainBelow: 0` so every row yields a confidence. Production sets that to the threshold under test, which would
  * censor exactly the low-confidence rows the curve is about — a curve measured at the production threshold reports only
- * the region where the gate already agreed with itself.
+ * the region where the eval already agreed with itself.
  *
  * The default corpus is the held-out `test` split, held out from BOTH the training set and the `val` split the
  * temperature was fit on, so the number is not the fit reporting on itself. Pointing this at `val` or `train` destroys
@@ -270,7 +270,7 @@ export async function coarsePlacerReliabilitySample(corpusPath: string): Promise
 			confidence: prediction.confidence,
 			correct: prediction.country === row.country,
 			// An abstain is a PREDICTION here, named rather than dropped: at abstainBelow 0 the placer still declines on
-			// an out-of-set input, and dropping those rows would report a precision the gate does not deliver.
+			// an out-of-set input, and dropping those rows would report a precision the eval does not deliver.
 			strata: { expected: row.country, predicted: prediction.country ?? "(abstain)" },
 		})
 	}

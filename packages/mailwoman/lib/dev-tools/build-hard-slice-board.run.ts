@@ -165,7 +165,7 @@ for (const s of SWEEP_ROWS) {
 	const hasCoord = lat !== undefined && lon !== undefined && tol !== undefined
 	// Sweep rows grade under the base package: no overlay ships for these countries.
 	const locale = "en-us"
-	// MEASURED, never declared. The first cut of this builder wrote `popBias: 0, impBias: 0` here on the
+	// MEASURED, never declared. The first version of this builder wrote `popBias: 0, impBias: 0` here on the
 	// reasoning that "no FST covers Botswana", and that was WRONG in the way this repo keeps finding: the
 	// arm loads the FST by LOCALE, not by answer-country, so an en-us row's surface is scored against the
 	// US gazetteer whatever the answer's country is. "Moscow" carries 0.3411 → 0.5465 from 33 US bearers

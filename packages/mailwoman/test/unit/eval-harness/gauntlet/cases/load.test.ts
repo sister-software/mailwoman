@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The corpus loader's gate, and the receipt for the 2026-08-05 TS-array → per-country-JSONL migration.
+ *   The corpus loader's check, and the receipt for the 2026-08-05 TS-array → per-country-JSONL migration.
  *
  *   THE MIGRATION PROOF, in two legs. While both representations existed, this suite deep-equalled the
  *   loaded corpus against `REGRESSION_CASES` row for row — see the commit that added `cases/<cc>/*.jsonl`,
@@ -112,7 +112,7 @@ const CORPUS_SIZE = 651
  * Moved 2026-08-12 (seventh) — → this — by the ANTI-ROT PROMOTION SWEEP: 218 improvement_target rows whose now-PASSES
  * flags were byte-identical across three same-corpus production boards (the sweep baseline, the register-scope-tags
  * board, and the range-fallback board) flip to pass in one reviewed batch. Status-only — every id, input, and note
- * untouched, so the board id stays; the gated set grows 107 → 325.
+ * untouched, so the board id stays; the conditional set grows 107 → 325.
  *
  * Moved 2026-08-12 (sixth) — → this — by the range-surface fallback landing with its 1-row pin ('32-36 Osborne Drive,
  * Burpengary QLD 4505' — the reader's null-only low-end retry keys the register's NUMBER_FIRST). 537 → 538, so the
@@ -153,17 +153,17 @@ const CORPUS_SIZE = 651
  * resolved dependent-locality identity stays marked by `in_winner_lineage: false`, and the pinned outcome is
  * components-only per the outcomes-not-mechanisms rule) and `ni-ws-antiguo-cine-gonzalez-pluscode` (its own note
  * predicted "fix the explicit-country vs postcode-drag ordering and this row flips" — the #1735 explicit-country
- * pre-scope is that fix). Status flips only, so CORPUS_SIZE and the board id both hold; the gate grows 364 → 366.
+ * pre-scope is that fix). Status flips only, so CORPUS_SIZE and the board id both hold; the check grows 364 → 366.
  *
  * Moved again the same evening — by the #1650 country-population candidate swap: `sm-cs-san-marino` (was San Marino CA,
  * 9,997 km) and `sx-cs-sint-maarten` (was a St. Martin in Ohio, 3,094 km) flip improvement_target → pass — 147 of 237
  * country rows entered every prominence race at population 0, and the codex fallback ended that. Each passed twice (the
- * pre-swap A/B battery and the post-swap board). Status flips only again; the gate grows 366 → 368.
+ * pre-swap A/B battery and the post-swap board). Status flips only again; the check grows 366 → 368.
  *
  * Moved 2026-08-18 night — by the #1730 role guard (39d219e8c): `bf-gloss-to-accent` flips improvement_target → pass
  * with its note rewritten to the fix receipt (the bare-region race refuses abbr-stamped alias rows; `Tó` answers the
  * primary-named Tô BF at 0 km, was Toledo ES at 3,171 km). Stable across the D-rule battery and two consecutive
- * full-board runs. Status + note edit; the gate grows 368 → 369.
+ * full-board runs. Status + note edit; the check grows 368 → 369.
  *
  * Moved 2026-08-19 — → this — by `gb-cs-rochester-kent`: city-plus-county disambiguation lands improvement_target for
  * the live Rochester-Kent → Rochester-Northumberland miss (the Kent alternative sits flagged `regionScopeMiss` — the
@@ -172,7 +172,7 @@ const CORPUS_SIZE = 651
  *
  * Moved again the same day — → this — by the dj-cs-djibouti re-pin: `expectPlaceName` moves to the canonical "Republic
  * of Djibouti" (the #1650 country-population rebuild let the bare-country repick win, 9.9 km inside the 25 km bar; the
- * coordinate gate already excludes the 65.9-km city row, so the country row is the only admissible answer and
+ * coordinate check already excludes the 65.9-km city row, so the country row is the only admissible answer and
  * hierarchy[0].name carries its canonical resolver_name). The same commit also flipped dj's status to pass (now-PASSES
  * byte-identical across two runs; attribution #1650) and rewrote the Rochester note to its measured cause — the
  * paragraph above under-reported that. Board id held throughout.
@@ -181,7 +181,7 @@ const CORPUS_SIZE = 651
  * pass with the #1737 receipt (the candidate build's currency backfill resurrects the WOF-deprecated Kent locality
  * under a GeoNames attestation; the row answers wof:101750331 at ~2.5 km with region coherence flipping contradicted →
  * confirmed; now-PASSES byte-identical across two consecutive full-board runs on the swapped artifact). Status + note
- * edit; the board id holds; the row joins the gated set at its next run.
+ * edit; the board id holds; the row joins the conditional set at its next run.
  *
  * Moved again the same day — → this — by the 2-row `ca_qc_street` witness pair (#1738): the abbreviated form lands pass
  * (the surface-router receipt — 'boul St-Laurent' reaches the attested OSM rooftop) and the fully-French form lands
@@ -207,8 +207,8 @@ const CORPUS_SIZE = 651
  * Moved 2026-08-19 (late) — → this — by the `gb-cs-brixton-hill` / `gb-cs-biggin-hill` pair (#1747): a `street_suffix`
  * with no `street` anywhere in the tree, so the resolver was handed a bare `Brixton` and answered Brixton, DEVON, 300.3
  * km away. 573 → 575, so the board id moves too. * Moved 2026-08-23 — → this — by the operator's Google Maps batch (57
- * rows, 36 gated) plus the #1764 accented-commune row. Truth is each place's own map pin, resolved from the supplied
- * short link. First VE and PG coverage the board has had, and the first rows for punctuation-led venue names
+ * rows, 36 conditional) plus the #1764 accented-commune row. Truth is each place's own map pin, resolved from the
+ * supplied short link. First VE and PG coverage the board has had, and the first rows for punctuation-led venue names
  * (`%ARABICA`, `¿Por Qué No?`, `@homePizza`, `Coffee#1`). 591 → 649, so the board id moves too.
  *
  * Moved 2026-08-24 — → this — by two same-day additions, the first of which shipped UNPINNED: the Brest referential

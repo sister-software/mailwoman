@@ -309,14 +309,14 @@ describe("aliasBagExactMatch", () => {
 		expect(aliasBagExactMatch(separated, "york new", false)).toBe(false) // cross-boundary fragment
 	})
 
-	test("separated bag: ungated — an alias match counts even when another candidate is strictly exact", () => {
+	test("separated bag: unrestricted — an alias match counts even when another candidate is strictly exact", () => {
 		expect(aliasBagExactMatch(separated, "new city", true)).toBe(true)
 	})
 
-	test("legacy bag (no separator): padded containment, gated on anyStrictExact", () => {
+	test("legacy bag (no separator): padded containment, conditioned on anyStrictExact", () => {
 		const legacy = "York New City" // pre-#523 space-joined bag — boundaries lost
 		expect(aliasBagExactMatch(legacy, "new city", false)).toBe(true) // historical behavior preserved
-		expect(aliasBagExactMatch(legacy, "new city", true)).toBe(false) // the gate
+		expect(aliasBagExactMatch(legacy, "new city", true)).toBe(false) // the check
 	})
 
 	test("null / empty bag and empty query never match", () => {

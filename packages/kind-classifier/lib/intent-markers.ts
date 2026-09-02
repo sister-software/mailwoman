@@ -9,7 +9,7 @@
  *   Three of the four intent kinds can raise their marker here, from the string alone. The fourth —
  *   `bare_toponym`'s `declared_ambiguity` — cannot: its trigger is the dominance margin of the
  *   RESOLVED candidate list, which does not exist yet at Stage 2.5. That one is raised by
- *   `mailwoman/query-intent.ts` after the resolve, against the measured 0.5-log10 cut. The split is
+ *   `mailwoman/query-intent.ts` after the resolve, against the measured 0.5-log10 threshold. The split is
  *   deliberate and it is why this module never emits `declared_ambiguity`: a marker that asserted
  *   ambiguity from the string alone would be declaring that every bare city name is ambiguous, which
  *   is false 89.1% of the time (the measured table behind `DECISIVE_MARGIN_LOG10`).
@@ -81,9 +81,9 @@ export function deriveIntentMarkers(
 			evidence: {
 				subject,
 				/**
-				 * The SEAM, named but not wired (ROAD_TO_V9 §4.4 scopes v9 to classification). Photon's `/api` already accepts
-				 * `lat`/`lon` location-bias params — `photon/` is the eventual consumer of this marker, and this string is the
-				 * note that says where it plugs in.
+				 * THE PLUG POINT, named but not wired (ROAD_TO_V9 §4.4 scopes v9 to classification). Photon's `/api` already
+				 * accepts `lat`/`lon` location-bias params — `photon/` is the eventual consumer of this marker, and this string
+				 * is the note that says where it plugs in.
 				 */
 				focusParameter: "photon:lat/lon",
 			},

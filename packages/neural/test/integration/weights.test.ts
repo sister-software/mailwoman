@@ -27,7 +27,7 @@
  *       and feeding it makes GB parses worse (a training gap). Same `anchorLookupPath === undefined`
  *       assertion, opposite repair.
  *   - The placetype-pair-prior block is the arc's end-to-end smoke: en-gb resolves
- *       `pairIndexPath`, `loadFromWeights` constructs a country-gated `PairIndexResolver` default, and a
+ *       `pairIndexPath`, `loadFromWeights` constructs a country-restricted `PairIndexResolver` default, and a
  *       real GB dependent_locality address parses with the tag applied. A companion case proves the
  *       prior is INERT on en-us (no sibling shipped) against the identical GB-shaped input.
  *   - MARGIN DISCIPLINE in that same "placetype-pair prior" describe block: a single argmax flip on
@@ -84,8 +84,8 @@ const haveModel = await pathExists(MODEL_PATH)
  * file deletes a real `neural-weights-*` artifact mid-run (the two `rmSync`/`symlinkSync` sites work on temp fixtures),
  * so the memo cannot go stale underneath a later test. If that ever changes, this is what has to be reconsidered.
  *
- * Deliberately lazy rather than a top-level `beforeAll`: every caller is `skipIf`-gated on the dev model being present,
- * and a `beforeAll` would spawn the scripts even where all of them skip.
+ * Deliberately lazy rather than a top-level `beforeAll`: every caller is `skipIf`-conditioned on the dev model being
+ * present, and a `beforeAll` would spawn the scripts even where all of them skip.
  */
 const linkedLocales = new Set<string>()
 
@@ -138,7 +138,7 @@ const LINK_SCRIPT_TIMEOUT_MS = 600_000
  * narrow enough for the prior to decide it, which is exactly what an end-to-end smoke should demonstrate.
  *
  * KNIFE-EDGE, KEPT ON PURPOSE: measured post-bias margin at δ=6.0 is only ~0.211 logits (biased B-dependent_locality
- * 4.592 vs runner-up B-locality 4.380 at the "Fish" piece) — too thin to gate an argmax-flip assertion on (see
+ * 4.592 vs runner-up B-locality 4.380 at the "Fish" piece) — too thin to condition an argmax-flip assertion on (see
  * `GB_WIDE_MARGIN_ADDRESS` for that). Still used for the WIRING assertions below (`pairIndexPath` resolves, `applied`
  * true/false) and the bias-DELTA assertion, both margin-independent.
  */
@@ -264,7 +264,7 @@ describe("resolveWeights — package auto-resolve", () => {
 	// slot 4. That change produces no error and no warning on its own; it just quietly makes GB worse.
 	// 9.0.0 (ROAD_TO_V9 A4): the GB anchor slot is TRAINED (v4.2.0 base, Fisher receipts in the
 	// en-gb card) and postcode-gb.bin is back — the card declares span_mode "shaped" and the dev
-	// linker builds the bin off that card gate. The #1467 "has NO anchor lookup" posture this test
+	// linker builds the bin off that card check. The #1467 "has NO anchor lookup" posture this test
 	// pinned from 2026-08-05 lives on in the card's gb_artifacts history.
 	test.skipIf(!haveModel || !haveCLI)(
 		"en-gb resolves model/tokenizer from the en-us base with its own model-card, resolves the RETURNED postcode-gb.bin, and parses",
@@ -323,8 +323,8 @@ describe("resolveWeights — package auto-resolve", () => {
 	// postcode-nz.bin (no WOF NZ postcode extract exists — the overlay's model-card `no_postcode_bin`
 	// follow-up), so `anchorLookupPath` must come back undefined while `pair-index-nz.bin` and the
 	// overlay-local model-card still resolve from the package dir. Wiring-only, one test — the
-	// prior/country-gate behavior itself is generic implementation already covered by the en-gb prior
-	// block below and the mispackaging gate at the bottom of this file.
+	// prior/country-restrict behavior itself is generic implementation already covered by the en-gb prior
+	// block below and the mispackaging check at the bottom of this file.
 	test.skipIf(!haveModel || !haveCLI || !haveNZSource)(
 		"en-nz resolves model/tokenizer from the en-us base + pair-index-nz.bin locally, with NO anchor lookup (no NZ postcode extract), and parses",
 		async () => {
@@ -341,7 +341,7 @@ describe("resolveWeights — package auto-resolve", () => {
 			expect(r.modelCardPath).toMatch(/\/model-card\.json$/)
 			expect(r.pairIndexPath).toMatch(/\/pair-index-nz\.bin$/)
 
-			// Probe the built artifact directly: header country gates to nz, and a known identity pair
+			// Probe the built artifact directly: header country checks to nz, and a known identity pair
 			// (the NZ repeated-name convention — 255/1178 census pairs are (x,x)) is
 			// genuinely present in THIS build.
 			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
@@ -359,7 +359,7 @@ describe("resolveWeights — package auto-resolve", () => {
 })
 
 // placetype-pair-prior arc: the arc's end-to-end proof. `pairIndexPath` resolves on en-gb,
-// `loadFromWeights` constructs a country-gated `PairIndexResolver` default from it, and a real GB
+// `loadFromWeights` constructs a country-restricted `PairIndexResolver` default from it, and a real GB
 // dependent_locality address decodes with the tag applied. The en-us companion proves the SAME input
 // produces NO bias when the package ships no sibling index — the prior degrades to byte-stable, not to
 // a crash or a silent wrong-country apply.
@@ -371,7 +371,7 @@ describe("resolveWeights — package auto-resolve", () => {
 // ~3.5), not the knife-edge `GB_DEPENDENT_LOCALITY_ADDRESS` (margin ~0.211).
 describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smoke)", () => {
 	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
-		"en-gb: pairIndexPath resolves and the country-gated default fires (WIRING — margin-independent)",
+		"en-gb: pairIndexPath resolves and the country-restricted default fires (WIRING — margin-independent)",
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
 
@@ -506,7 +506,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 	// new source joining the index (a borough DB, a checked-in London pair set) — and the CI cache key has
 	// to track the same set. A pass here is only as trustworthy as the artifact's freshness.
 	//
-	// THE CONTRAST RETIRED AT THE 9.1.0 CUT (2026-08-11): under the v4.4.0 suffix-boundary base, the
+	// THE CONTRAST RETIRED AT THE 9.1.0 RELEASE (2026-08-11): under the v4.4.0 suffix-boundary base, the
 	// discriminator population is EMPTY as far as a fresh 191-pair PPD sweep can see — 190/191 rows
 	// recover the dependent locality in BOTH legs (Glenfield included), 0 rows need β, 0 rows regress
 	// with β on, 1 row misses in both. There is no row to move the pin to, so the beta-less leg now
@@ -522,7 +522,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			const r = await resolveWeights({ locale: "en-gb" })
 			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 
-			// The re-cut artifact's header contract: delta stays 10, transitionBeta 5 (the link script's
+			// The rebuild artifact's header contract: delta stays 10, transitionBeta 5 (the link script's
 			// PAIR_INDEX_TRANSITION_BETA lockstep guard rebuilds a stale binary before this line can see it).
 			expect(resolver.header.delta).toBe(10)
 			expect(resolver.header.transitionBeta).toBe(5)
@@ -555,7 +555,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 		async () => {
 			// en-us ships `pair-index-us.bin` (49,033 WOF-sourced pairs), so the property worth protecting is not the
 			// packaging fact that no sibling exists — it does exist — but that the index is still INERT on GB input.
-			// Two independent things keep it inert — the header's hard country gate, and the plain fact that US pairs
+			// Two independent things keep it inert — the header's hard country restriction, and the plain fact that US pairs
 			// don't contain GB place names (measured: the US index misses all five GB canonical pairs).
 			ensureDevWeightsLinked("en-us")
 
@@ -570,8 +570,8 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 	)
 })
 
-// The hard country gate's WARN branch (classifier.ts loadFromWeights): a pair-index sibling whose
-// PIX1 header country disagrees with the resolved locale's country is a PACKAGING error — the gate
+// The hard country restriction's WARN branch (classifier.ts loadFromWeights): a pair-index sibling whose
+// PIX1 header country disagrees with the resolved locale's country is a PACKAGING error — the eval
 // must warn + skip the prior default, and the load must still succeed (skip-not-throw). Unreachable
 // through a correctly-built package (resolvePairIndexSibling matches on the locale's own country
 // code), so the test manufactures the mispackaging: a cacheRoot package layout whose
@@ -587,7 +587,7 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 			// ASK THE RESOLVER where the artifacts are. This used to name the workspace directory, which held
 			// them only while the dev linkers materialized into the tracked package; they now land in the
 			// data-root overlay, and a fixture mirroring an empty directory produces a cache with no binaries —
-			// so the resolve under test silently answers from somewhere else and the gate never fires.
+			// so the resolve under test silently answers from somewhere else and the eval never fires.
 			const packageDir = dirname((await resolveWeights({ locale: "en-us" })).modelPath)
 			const cacheRoot = fixtures.use(await temporaryDirectory("mailwoman-pair-gate-")).path
 			const fakePackageDir = weightsCachePackageDir(cacheRoot, "en-us")
@@ -624,7 +624,7 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
 
 			try {
-				// The sibling RESOLVES (filename matches the locale's country) — the gate is downstream.
+				// The sibling RESOLVES (filename matches the locale's country) — the eval is downstream.
 				const r = await resolveWeights({ locale: "en-us", cacheRoot })
 				expect(r.pairIndexPath).toMatch(/pair-index-us\.bin$/)
 

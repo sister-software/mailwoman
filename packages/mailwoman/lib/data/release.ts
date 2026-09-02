@@ -6,7 +6,7 @@
  *   Versioned data-artifact addressing + atomic switchover (#485 piece 4). Database DBs are addressed as
  *   `<family>/<family>-us-<slug>-<version>.db`, with a `releases.json` manifest at the data root
  *   pinning each family to its current version. So a new build publishes ALONGSIDE the old,
- *   flipping the manifest (one atomic file write) cuts traffic over, and the build provenance (the
+ *   flipping the manifest (one atomic file write) switches traffic over, and the build provenance (the
  *   version) travels in the filename — "what data is deployed" is a read of one JSON.
  *
  *   Back-compat: with no manifest (or a family unlisted) resolution falls back to the legacy

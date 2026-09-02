@@ -29,7 +29,7 @@ interface DebtCounters {
 	 * BASELINE 0, RESTORED 2026-09-01. `packages/filer/lib/sdk/exhibit21.ts` crossed the line at 1,023 when `c8b5c1c6f`
 	 * added 30 lines of `TODO`/`@deprecated` annotations — cleanup notes tripping a debt counter. The cleanup it kept
 	 * asking for happened: the SGML/HTML table machinery moved to `@mailwoman/core/html/tables` and the parser now sits
-	 * at 611 lines. Any file crossing 1,000 fails the gate again.
+	 * at 611 lines. Any file crossing 1,000 fails the check again.
 	 */
 	productionFilesOver1000Lines: number
 	selfPackageImports: number
@@ -262,7 +262,7 @@ const UNCOUNTED = [
  *
  * KEEP THE COUNTER'S NAME FREE OF THE WORD. This ratchet is written in the language it polices, so the vocabulary sweep
  * it exists to drive rewrote it: a case-preserving `shard` → `extract` pass over `scripts/` renamed `shardVocabulary`
- * to `extractVocabulary` AND rewrote this very pattern, so the gate began measuring the REPLACEMENT word while still
+ * to `extractVocabulary` AND rewrote this very pattern, so the check began measuring the REPLACEMENT word while still
  * reporting a falling number. It stayed green throughout. A neutral counter name and a single pattern constant are what
  * make that impossible to repeat.
  */
@@ -279,6 +279,11 @@ const BANNED_VOCABULARY = /\b[A-Za-z_]*shard[A-Za-z_]*\b/giu
 const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason: string]> = [
 	["scripts/repo-health.ts", "the pattern above has to spell the word it bans"],
 	["docs/styles/", "the Vale rules that REFUSE the word must name it"],
+	[
+		"scripts/vocab-census.ts",
+		"the ambiguous-shorthand census files a match under one of four words and must name each",
+	],
+	["docs/scripts/vale-fixtures/dirty.ts", "a Vale fixture whose purpose is to keep failing, permanently"],
 	[".claude/output-styles/", "the same refusal list, mirrored for agent replies"],
 	["AGENTS.md", "carries that refusal list, plus the note recording that this family reached zero"],
 	// RECORDS ARE NOT EXEMPT, and that is a deliberate reversal. They were exempt on the reasoning that
@@ -295,7 +300,7 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 ]
 
 // `existingOnly`: a tracked path can be absent from the working tree (a deletion staged but not
-// committed); skip it rather than failing the whole gate on a file the next commit removes anyway.
+// committed); skip it rather than failing the whole check on a file the next commit removes anyway.
 // The enumerate-the-index rationale lives on scripts/tracked-sources.ts.
 const paths = await trackedSourcePaths(root, { excludePrefixes: UNCOUNTED, existingOnly: true })
 

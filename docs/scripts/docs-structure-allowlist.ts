@@ -16,7 +16,7 @@
  *   too, so the un-navved conference proposal is no longer a published page needing an exemption.
  *   See task-2-report.md, task-4-report.md and task-5-report.md for the before/after evidence.
  *
- *   Adding an entry back is a reviewable act, and the gate guards against rot in the other
+ *   Adding an entry back is a reviewable act, and the check guards against rot in the other
  *   direction as well: an allowance whose subject no longer exists is itself a failure.
  */
 

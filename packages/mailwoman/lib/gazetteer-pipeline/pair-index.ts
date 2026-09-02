@@ -11,7 +11,7 @@
  *   {@link PairIndexBuilder} consumes one (rawCity, rawDistrict) row at a time — child = CITY,
  *   child tag always `dependent_locality` (the PPD-tuples shape this arc's GB database reads: CITY is
  *   the dependent_locality candidate, DISTRICT the enclosing post town — see
- *   `corpus/src/database-recipes/locale.ts`'s `districtAsLocality` gate). A row with an empty CITY (the
+ *   `corpus/src/database-recipes/locale.ts`'s `districtAsLocality` check). A row with an empty CITY (the
  *   PPD majority — the dependent_locality is legitimately absent on most rows) is skipped: it carries
  *   no dependent_locality to pair. Both fields are folded through `normalizeFSTToken` (the arc's one
  *   exported fold), matching `PairIndexHeader.foldVersion` — the same fold the PIX1

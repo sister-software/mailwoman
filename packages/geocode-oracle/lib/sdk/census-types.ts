@@ -43,13 +43,13 @@ import type {
 } from "@mailwoman/tiger"
 
 /**
- * Which MTDB vintage the locator searches. Benchmarks are re-cut twice yearly.
+ * Which MTDB vintage the locator searches. Benchmarks are re-issued twice yearly.
  *
  * A const object rather than an `enum` (the isp-nexus original used one) — `erasableSyntaxOnly` is on repo-wide.
  */
 export const CensusBenchmarkName = {
 	/**
-	 * Public Address Ranges — Current Benchmark. The default: whatever MTDB cut is newest.
+	 * Public Address Ranges — Current Benchmark. The default: whatever MTDB extract is newest.
 	 */
 	Current: "Public_AR_Current",
 	/**

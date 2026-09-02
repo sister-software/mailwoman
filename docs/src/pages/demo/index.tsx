@@ -12,7 +12,7 @@
  *
  *   The docs-only chrome (about box, permalink, result panel, geo-bias row, calibration + dev-mode
  *   toggles, model-visualizer drawer, version-compare) is injected through the package's `DemoPanels`
- *   seam — see the `_controls` / `_devDrawer` / `_mapControls` / `_compare` modules in this folder.
+ *   injection point — see the `_controls` / `_devDrawer` / `_mapControls` / `_compare` modules in this folder.
  *
  *   `/debug` (`../debug.tsx`) reuses this body via {@link DemoPageInner} with `debugDefault`, which opens
  *   the model-visualizer drawer by default.

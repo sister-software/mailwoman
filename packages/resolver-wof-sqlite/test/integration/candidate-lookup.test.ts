@@ -490,7 +490,7 @@ describe("WOFCandidateTableLookup", () => {
 		const alias = hits.find((h) => h.country === "CN")
 		expect(alias).toBeDefined()
 		expect(alias!.exactMatch).toBe(false)
-		// `score` stays the RAW population rank (for the walk's minWinningScore gate); `prominence` carries the
+		// `score` stays the RAW population rank (for the walk's minWinningScore check); `prominence` carries the
 		// penalty, so the primary's prominence now exceeds the more-populous alias's.
 		expect(hits[0]!.score).toBeLessThan(alias!.score)
 		expect(hits[0]!.prominence!).toBeGreaterThan(alias!.prominence!)
@@ -779,7 +779,7 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 
 	test("B2-1: the #741 postal-city short-circuit is untouched — an exact (name, postcode) hit wins with the flag on or off", async () => {
 		// Patch the built candidate DB with the #741 side-index carrying the exact hit; the lookup
-		// existence-gates its probe on the table, so this is the real fast-path configuration.
+		// conditions its probe on the table, so this is the real fast-path configuration.
 		using db = new DatabaseClient<WOFDatabase>(candidatePath)
 
 		db.exec(
@@ -823,12 +823,12 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 		const bare = await lk.findPlace(sansomeQuery())
 		expect(bare.map((c) => c.id)).toEqual([SANSOME_BIG, SANSOME_MID, SANSOME_SMALL])
 
-		// A postcode WITHOUT the flag is byte-identical to no postcode (the flag is the gate).
+		// A postcode WITHOUT the flag is byte-identical to no postcode (the flag is the check).
 		const flagless = await lk.findPlace(sansomeQuery({ postcode: "94101" }))
 		expect(flagless.map((c) => c.id)).toEqual([SANSOME_BIG, SANSOME_MID, SANSOME_SMALL])
 
 		// The population-first winner is ~550 km from the postcode — removing the postcode moves the
-		// answer far outside the gate, so the mechanism is doing what the bar claims it does.
+		// answer far outside the check, so the mechanism is doing what the bar claims it does.
 		expect(haversineKm(ANCHOR.lat, ANCHOR.lon, bare[0]!.lat, bare[0]!.lon)).toBeGreaterThan(25)
 	})
 
@@ -984,7 +984,7 @@ describe("WOFCandidateTableLookup — importance (#28)", () => {
 		expect(hits.every((h) => h.importance === undefined)).toBe(true)
 	})
 
-	test("an artifact PREDATING the column still resolves — the probe is existence-gated", async () => {
+	test("an artifact PREDATING the column still resolves — the probe is existence-restricted", async () => {
 		// Reproduce a pre-#28 gazetteer by removing the column from a real build, rather than hand-writing
 		// an old DDL that could drift from what the old builder actually emitted.
 		const legacyPath = scratch.resolve("candidate-legacy.db")
@@ -1240,7 +1240,7 @@ describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
 		expect(hits[1]!.containedByQualifier).toBe(false)
 	})
 
-	test("CAPABILITY-GATED: a pre-sidecar artifact ignores the qualifier and stamps nothing", async () => {
+	test("CAPABILITY-RESTRICTED: a pre-sidecar artifact ignores the qualifier and stamps nothing", async () => {
 		// Reproduce a pre-sidecar candidate.db by dropping the tables from a real build — the same
 		// vintage discipline as the pre-#28 importance-column test above.
 		const preSidecarPath = scratch.resolve("candidate-pre-sidecar.db")

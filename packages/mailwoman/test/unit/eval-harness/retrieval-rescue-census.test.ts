@@ -5,7 +5,7 @@
  * @file `classifyRescueRow` — the pure half of the retrieval-rescue census (#1878).
  *
  *   Each case pins a distinction the summary would otherwise blur. The COMER pair is the live instance the census
- *   exists for: a wrong delivered answer with the correct entity on hand, silenced by the incumbent-resolved gate.
+ *   exists for: a wrong delivered answer with the correct entity on hand, silenced by the incumbent-resolved check.
  */
 
 import { classifyRescueRow, type RescueRowInput, summarizeRescue } from "mailwoman/eval-harness/retrieval-rescue-census"
@@ -60,7 +60,7 @@ describe("classifyRescueRow", () => {
 	})
 
 	it("keeps gate_protects a SEPARATE flag on a correct row with an entity hit", () => {
-		// Loosening the gate reorders which mechanism answers even when both are right — that row belongs in the
+		// Loosening the check reorders which mechanism answers even when both are right — that row belongs in the
 		// risk list without leaving the correct_as_is count.
 		const graded = classifyRescueRow(
 			row({

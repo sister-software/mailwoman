@@ -17,7 +17,7 @@
  *   (see `copyToTerminalClipboard`) — paste and go.
  *
  *   Expect one approval per write op. `npm trust` takes no `--otp` (it accepts no flags at all), and
- *   as of August 2026 npm gates trusted-publishing config behind interactive 2FA that no token can
+ *   as of August 2026 npm puts trusted-publishing config behind interactive 2FA that no token can
  *   skip, so the browser step here is not removable. It is a per-package bootstrap cost: once trust
  *   is on file, releases run from CI over OIDC with no second factor at all.
  */

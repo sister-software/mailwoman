@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for {@link plausibilityCheck} (decisions 4, 6, 8). The four §7-2b acceptance gates get their
- *   own `describe("§7-2b gates")` block at the bottom of this file; every suite above it exercises the
+ *   Tests for {@link plausibilityCheck} (decisions 4, 6, 8). The four §7-2b acceptance criteria get their
+ *   own `describe("§7-2b criteria")` block at the bottom of this file; every suite above it exercises the
  *   composition logic itself — claim resolution, the tech→category mapping, filing/physical evidence
- *   assembly, the abstain precedent, and the `coverage_confidence` combination — so each gate can assert
+ *   assembly, the abstain precedent, and the `coverage_confidence` combination — so each criterion can assert
  *   its own specific claim against a module already known to compose correctly in isolation.
  *
- *   Fixture idiom: a real `bdc.db` built via `buildBDCDatabase`'s `rows:` seam (same idiom as
+ *   Fixture idiom: a real `bdc.db` built via `buildBDCDatabase`'s `rows:` injection point (same idiom as
  *   `filing-landscape.test.ts`), and a poi-layer pair built the SAME way `nearest-infrastructure.test.ts`
  *   established (`poi-schema.ts` table builders directly — `bdc` cannot depend on the `mailwoman`
  *   workspace). Unlike that test's deliberately-decoupled `contractDB` fixture, several tests here need a
@@ -247,7 +247,7 @@ async function openPOIContractDB(resolutionOverride = 9): Promise<DatabaseClient
 
 /**
  * Both layers open together, poi coverage written for exactly Springfield's own res-6 parent (the query point's cell).
- * Hoisted to module scope — shared by the "full composition" suite below AND the `§7-2b gates` block (Gate 2's
+ * Hoisted to module scope — shared by the "full composition" suite below AND the `§7-2b criteria` block (criterion 2's
  * co-presence claim reuses this exact fixture rather than re-deriving it).
  */
 async function openBoth(): Promise<AsyncDisposableStack & { deps: PlausibilityDeps }> {
@@ -739,15 +739,15 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 })
 
 /**
- * The §7-2b acceptance gates — one describe per gate, mapped 1:1 to the four bullets in
- * `docs/superpowers/plans/2026-07-30-bdc-2b-plan.md`'s "The §7-2b gates" section. Several gates' BEHAVIORAL claims are
- * already proven by the suites above — `plausibility.ts`'s own module docstring says as much ("this module is designed
- * for them but doesn't assert them itself"). Where that's true, the test below asserts the gate's SPECIFIC claim
- * against a real bundle (reusing the established fixtures, including the hoisted `openBoth()`) and cross-references the
- * fuller proof by comment, rather than re-deriving the whole scenario.
+ * The §7-2b acceptance criteria — one describe per criterion, mapped 1:1 to the four bullets in
+ * `docs/superpowers/plans/2026-07-30-bdc-2b-plan.md`'s "The §7-2b checks" section. Several criteria' BEHAVIORAL claims
+ * are already proven by the suites above — `plausibility.ts`'s own module docstring says as much ("this module is
+ * designed for them but doesn't assert them itself"). Where that's true, the test below asserts the criterion's
+ * SPECIFIC claim against a real bundle (reusing the established fixtures, including the hoisted `openBoth()`) and
+ * cross-references the fuller proof by comment, rather than re-deriving the whole scenario.
  */
-describe("§7-2b gates", () => {
-	describe("Gate 1 — positive-evidence-only invariant (required)", () => {
+describe("§7-2b criteria", () => {
+	describe("Criterion 1 — positive-evidence-only invariant (required)", () => {
 		it("well-covered area, no filing, no nearby plant -> zero evidence entries, and confidence that reflects the REAL coverage (never insufficient_survey_data)", async () => {
 			await using bdc = await buildBDCFixture()
 			await using poi = await buildPOILookupFixture([]) // no plant anywhere
@@ -758,7 +758,7 @@ describe("§7-2b gates", () => {
 			// its own — filing-landscape.ts's meaning-of-zero POSITIVE case (see the "positive absence" test in the
 			// "filing evidence + corroboration" suite above). Cover that SAME res-6 parent on the poi side too, so
 			// the physical axis is genuinely surveyed as well, not merely absent — the well-covered half of this
-			// gate's contrast (the sparse-cell half is the next test).
+			// criterion’s contrast (the sparse-cell half is the next test).
 			await writeLayerCoverage(poiContractDB, [
 				{ h3Cell: SPRINGFIELD_RES6_PARENT_SHORT, completeness: 1, observedRows: 0 },
 			])
@@ -797,7 +797,7 @@ describe("§7-2b gates", () => {
 			expect(bundle.coverage_detail).toEqual({ filing: "cell_unsurveyed", physical: "cell_unsurveyed" })
 			expect(bundle.coverage_confidence).toBe("insufficient_survey_data")
 
-			// A gate anchor must never assert LESS than the ordinary test it cites as fuller proof, so the abstain
+			// A criterion anchor must never assert LESS than the ordinary test it cites as fuller proof, so the abstain
 			// assertion from the "both axes unknown" test is mirrored here too.
 			expect(bundle.evidence_found).toContainEqual({
 				type: "abstain",
@@ -807,15 +807,15 @@ describe("§7-2b gates", () => {
 		})
 
 		/**
-		 * STRUCTURAL half of the gate: an exhaustive, `satisfies Record<T, true>` pin (the established idiom — see
+		 * STRUCTURAL half of the criterion: an exhaustive, `satisfies Record<T, true>` pin (the established idiom — see
 		 * `mailwoman/test/api-schema-drift.test.ts`) over every closed string-literal union on the bundle's public surface.
 		 * TypeScript enforces BOTH directions on each object below: a union member missing from the list fails to compile
 		 * ("missing property"), and a listed key that isn't a real union member fails to compile ("excess property" — these
 		 * are object literals assigned directly via `satisfies`, so excess-property checking applies). A future change that
 		 * adds a verdict-shaped member (e.g. `"implausible"`) to any of these unions therefore either fails to compile here
 		 * — silently missing from the pinned list, forcing a reviewer to touch this file — or, once added to the list,
-		 * fails the runtime blocklist check below. That's the "mutation-style" assertion Gate 1 asks for: the pins are what
-		 * keep the property true, not a reviewer's memory.
+		 * fails the runtime blocklist check below. That's the "mutation-style" assertion criterion 1 asks for: the pins are
+		 * what keep the property true, not a reviewer's memory.
 		 *
 		 * Only `tsc` checks the `satisfies` clauses (`yarn typecheck:tests`, which auto-discovers `bdc/tsconfig.test.json`)
 		 * — `yarn vitest run` alone (esbuild, types stripped) runs only the `it()` below, which still confirms none of the
@@ -900,7 +900,7 @@ describe("§7-2b gates", () => {
 		})
 	})
 
-	describe("Gate 2 — co-presence (fuller proof: 'full composition' suite above)", () => {
+	describe("Criterion 2 — co-presence (fuller proof: 'full composition' suite above)", () => {
 		it("matching filing + nearby plant, both covered -> corroborating filing evidence + a physical hit + coverage_confidence: high, coverage_detail fully covered, and no abstain", async () => {
 			await using both = await openBoth()
 			const { deps } = both
@@ -915,7 +915,7 @@ describe("§7-2b gates", () => {
 			)
 
 			expect(bundle.coverage_confidence).toBe("high")
-			// A gate anchor must never assert LESS than the ordinary test it cites as fuller proof, so the
+			// A criterion anchor must never assert LESS than the ordinary test it cites as fuller proof, so the
 			// coverage_detail and no-abstain assertions from the co-presence test are mirrored here too.
 			expect(bundle.coverage_detail).toEqual({ filing: "covered", physical: "covered" })
 			expect(bundle.evidence_found.some((e) => e.type === "filing" && e.corroborates)).toBe(true)
@@ -924,7 +924,7 @@ describe("§7-2b gates", () => {
 		})
 	})
 
-	describe("Gate 3 — layer absent: abstain, no fabricated evidence (fuller proof: 'bdc layer absent/insufficient' and 'physical evidence + poi layer absence' suites above)", () => {
+	describe("Criterion 3 — layer absent: abstain, no fabricated evidence (fuller proof: 'bdc layer absent/insufficient' and 'physical evidence + poi layer absence' suites above)", () => {
 		it("poi layer absent -> abstain requires_build_local_layer, and no physical_plant (the only distance-bearing evidence shape) is fabricated", async () => {
 			const bundle = await plausibilityCheck(
 				{
@@ -960,7 +960,7 @@ describe("§7-2b gates", () => {
 		})
 	})
 
-	describe("Gate 4 — block-grain flag (fuller proof: 'claim resolution' suite above)", () => {
+	describe("Criterion 4 — block-grain flag (fuller proof: 'claim resolution' suite above)", () => {
 		it("address- and point-resolved claims carry block_resolution: h3_cell_approximation; a geoid-given claim carries geoid", async () => {
 			const byPoint = await plausibilityCheck(
 				{ point: SPRINGFIELD_POINT, technologyCode: BroadbandTechnologyCode.AsymmetricXDSL, claimedDownloadMbps: 10 },

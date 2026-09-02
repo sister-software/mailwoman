@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fixture-scale guard for the NI OSM postcode database. The real gate is the full build's reconciliation
+ *   Fixture-scale guard for the NI OSM postcode database. The real check is the full build's reconciliation
  *   against the 2026-08-05 census (12,327 elements → 4,757 units → exactly 1 malformed value); this
- *   holds the four things that gate cannot express cheaply — the #920 name law survives, the medoid
+ *   holds the four things that eval cannot express cheaply — the #920 name law survives, the medoid
  *   lands on a real member point, a malformed tag value is DROPPED and named rather than repaired, and
  *   the provenance `meta` reaches the sealed artifact carrying the ODbL obligation and the
  *   meaning-of-zero coverage record.
@@ -110,7 +110,7 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	expect(result.sectors).toBe(2)
 	// Every internal identity holds; nothing is silently unaccounted for.
 	expect(result.reconciliationFailures).toEqual([])
-	// The data cut, not the wall clock — the date that actually describes the rows.
+	// The data extract, not the wall clock — the date that actually describes the rows.
 	expect(result.osmTimestamp).toBe("2026-08-05T13:14:01Z")
 	// Sealed 0444 — the artifact is read-only from the moment it exists (mode bits, not accessSync: root.path
 	// ignores the permission and would pass a W_OK probe on a sealed file).

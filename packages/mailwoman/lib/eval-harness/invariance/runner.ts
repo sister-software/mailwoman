@@ -6,7 +6,7 @@
  *   The invariance mini-suite runner (#886 five-whys follow-up). A standing, seconds-cheap
  *   metamorphic-invariance check meant to run in EVERY probe grade — not just the release Gauntlet's
  *   heavier resolver-level metamorphic layer (`gauntlet/cases/metamorphic.ts`, which asserts on assembled
- *   COORDINATES and is release-gate weight). This suite asserts on decoded PARSE COMPONENTS only (no
+ *   COORDINATES and is release-eval weight). This suite asserts on decoded PARSE COMPONENTS only (no
  *   resolver, no gazetteer DB), which is what keeps it cheap: a handful of pipeline calls per row, not
  *   geocode-and-resolve round trips.
  *
@@ -25,12 +25,12 @@
  *
  *   `--baseline` mode (regression-focused, the shape a probe grade uses against v385): every candidate
  *   violation is also computed for the baseline model on the SAME pair. A violation the baseline ALSO
- *   exhibits is a PRE-EXISTING gap — reported, but it does not fail the gate. Only a NEW violation (the
+ *   exhibits is a PRE-EXISTING gap — reported, but it does not fail the check. Only a NEW violation (the
  *   baseline held INVARIANT, the candidate didn't) counts toward the LOST / `--max-degraded` thresholds.
  *   Two more regression-mode classes, both reported and non-blocking:
  *
  *   - GAINED: the candidate HOLDS a pair the baseline violated — a capability that went 0/207 → 205/207
- *     is a gain, not a violation (it gets its own report section, never the gate).
+ *     is a gain, not a violation (it gets its own report section, never the check).
  *   - gained-capability residual: a violation on a row whose baseline ORIGINAL parse carried no critical
  *     component (street/house_number/postcode) while the candidate's does — the baseline never had the
  *     row's core capability, so the pair is "gained but not register-flat", not a lost capability.
@@ -196,7 +196,7 @@ export async function buildParseFn(opts: ModelSelectOptions): Promise<ParseFn> {
 
 /**
  * `GAINED` is a regression-mode class, not a comparison class: the candidate held a pair the baseline violated — a
- * capability the baseline lacked, not a regression. It never counts toward the gate.
+ * capability the baseline lacked, not a regression. It never counts toward the check.
  */
 export type OutcomeVerdict = Verdict | "GAINED"
 
@@ -246,7 +246,7 @@ export interface RunInvarianceOptions {
 	 */
 	baselineParse?: ParseFn
 	/**
-	 * Fail the gate if the NEW-violation DEGRADED count exceeds this. Default 0.
+	 * Fail the check if the NEW-violation DEGRADED count exceeds this. Default 0.
 	 */
 	maxDegraded?: number
 	report?: (line: string) => void
@@ -292,7 +292,7 @@ function hasCriticalComponent(components: Record<string, string>): boolean {
 }
 
 /**
- * Run the full suite. Returns a report with per-pair outcomes, summary counts, and the gate exit code.
+ * Run the full suite. Returns a report with per-pair outcomes, summary counts, and the check exit code.
  */
 export async function runInvarianceSuite(options: RunInvarianceOptions): Promise<InvarianceReport> {
 	const maxDegraded = options.maxDegraded ?? 0
@@ -405,7 +405,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 				if (candidateOutcome.verdict === "INVARIANT" && baselineResult.verdict !== "INVARIANT") {
 					// Gained-capability class (#1516): the candidate HOLDS a pair the baseline violated.
 					// A capability that went 0/207 → 205/207 is a gain, not a violation — it is reported
-					// in its own section below and never touches the gate.
+					// in its own section below and never touches the check.
 					outcome.verdict = "GAINED"
 				} else {
 					// Severity-aware, NOT severity-blind: a violation is pre-existing only if the candidate's verdict
@@ -413,7 +413,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 					// LOST. Treating two non-INVARIANT verdicts as pre-existing regardless of severity would let a
 					// candidate LOST slide through as "non-blocking" whenever the baseline merely DEGRADED on the
 					// same pair: baseline drops a non-critical `unit` on comma-drop, candidate drops the CRITICAL
-					// `house_number` on the identical pair — that must gate, not hide.
+					// `house_number` on the identical pair — that must check, not hide.
 					// v1 is verdict-severity matching only, not content-diff matching: it doesn't check whether the
 					// candidate's LOST is the SAME underlying break as the baseline's LOST (e.g. same tag, same kind
 					// of corruption) — only that it's no worse in kind. A future tightening could require the diffs

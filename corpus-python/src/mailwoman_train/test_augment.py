@@ -291,7 +291,7 @@ def test_expansion_leaves_the_original_rows_spans_alone():
 
 
 def test_expanded_spans_project_identically_to_expanded_tokens():
-    """Gate: on the augmented copy, the spans-based piece stream equals the token-based one."""
+    """Check: on the augmented copy, the spans-based piece stream equals the token-based one."""
     rng = random.Random(42)
     augmented = list(augment_row(_spanned_directional_row(), rng, directional_prob=1.0, region_prob=0.0))[1]
     pieces = []

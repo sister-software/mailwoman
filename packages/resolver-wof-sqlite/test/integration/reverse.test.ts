@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the reverse geocoder (#484): the ray-cast PIP primitives, the bbox→PIP→descent walk
- *   over an inline fixture gazetteer, and an env-gated integration pass against the REAL production
+ *   over an inline fixture gazetteer, and an env-restricted integration pass against the REAL production
  *   DBs.
  *
  *   The integration suite SKIPS unless BOTH env vars point at real artifacts (so CI stays green
@@ -190,7 +190,7 @@ describe("WOFReverseGeocoder over the fixture gazetteer", () => {
 	})
 })
 
-// --- env-gated integration against the real artifacts (see file header for paths) ---------------
+// --- env-restricted integration against the real artifacts (see file header for paths) ---------------
 
 const ADMIN_DB = $public.MAILWOMAN_WOF_ADMIN_DB
 const POLYGONS_DB = $public.MAILWOMAN_WOF_POLYGONS_DB

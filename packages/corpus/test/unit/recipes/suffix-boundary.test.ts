@@ -50,7 +50,7 @@ describe("suffix-boundary v2 layout shells (corpus 0.19.0)", () => {
 			{ street: "Industrial Park" },
 			{
 				venues,
-				cuts: [0.35, 0.55, 0.7],
+				cutoffs: [0.35, 0.55, 0.7],
 			}
 		)
 
@@ -71,7 +71,7 @@ describe("suffix-boundary v2 layout shells (corpus 0.19.0)", () => {
 			base_source_id: "t",
 		}
 
-		// r=0.5 under default cuts [0.4, 0.65, 0.85] → the bare shell, exactly as before.
+		// r=0.5 under default cutoffs [0.4, 0.65, 0.85] → the bare shell, exactly as before.
 		const row = renderRow(() => 0.5, base, "Main St", { street: "Main" })
 		expect(row.fmt).toBe("bare")
 		expect(row.raw).toBe("12 Main St")

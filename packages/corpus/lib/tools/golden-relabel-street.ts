@@ -8,7 +8,7 @@
  *   ## Why this exists
  *
  *   The golden answer key and the training corpus disagreed about ONE thing, and the v9.0.0
- *   promotion gate read the disagreement as a model regression (`us.street` 87.4 vs a floor of
+ *   promotion eval read the disagreement as a model regression (`us.street` 87.4 vs a floor of
  *   87.8). The corpus SPLITS a US street into `street` + `street_suffix` — TIGER's adapter
  *   decomposes at `corpus/src/adapters/tiger/street-decompose.ts`, the `street-affix` slice recipe
  *   teaches it from USPS Pub-28, and `ComponentTag` carries `street_suffix` as a first-class tag.
@@ -49,7 +49,7 @@
  *
  *   ## Surface bytes
  *
- *   The split is a cut at a whitespace run in the ORIGINAL string — no trimming, no case
+ *   The split is a break at a whitespace run in the ORIGINAL string — no trimming, no case
  *   normalization, no re-joining of tokens. `street + gap + street_suffix` reconstructs the input
  *   byte-for-byte, so the whitespace between them belongs to neither span (the same shape the corpus
  *   adapter's spans have). The tool asserts this per row and refuses to write a file if it ever
@@ -148,7 +148,7 @@ interface TailSplit {
 }
 
 /**
- * Cut `s` at its LAST whitespace run, returning the three pieces verbatim. Null when there is no interior whitespace,
+ * Split `s` at its LAST whitespace run, returning the three pieces verbatim. Null when there is no interior whitespace,
  * when the head would be empty, or when `s` carries leading/trailing whitespace (a golden row is stored trimmed; an
  * untrimmed one is reported rather than silently normalized).
  */
@@ -162,7 +162,7 @@ function splitLastWord(s: string): TailSplit | null {
 }
 
 /**
- * Cut `s` at its FIRST whitespace run — the leading-directional counterpart of {@link splitLastWord}. `head` is the
+ * Split `s` at its FIRST whitespace run — the leading-directional counterpart of {@link splitLastWord}. `head` is the
  * first word, `tail` the rest, both verbatim.
  */
 function splitFirstWord(s: string): TailSplit | null {
@@ -215,9 +215,9 @@ export interface RelabelStreetRowOptions {
 	/**
 	 * Also lift a folded LEADING directional out into `street_prefix`. Default true.
 	 *
-	 * On by default because the fold cuts both ways and the answer key has to be corrected on both, or the correction is
-	 * not a correction: 207 of the 1,682 split dev rows (12.3%) still opened with a directional after the suffix move —
-	 * "N Desmet Avenue" would have graded `street: "N Desmet"` against a model that says `street_prefix: "N", street:
+	 * On by default because the fold applies both ways and the answer key has to be corrected on both, or the correction
+	 * is not a correction: 207 of the 1,682 split dev rows (12.3%) still opened with a directional after the suffix move
+	 * — "N Desmet Avenue" would have graded `street: "N Desmet"` against a model that says `street_prefix: "N", street:
 	 * "Desmet"`. Turn it OFF only to measure what the prefix fold alone costs.
 	 */
 	splitPrefix?: boolean
@@ -501,7 +501,7 @@ export async function relabelGoldenDirectory(
 
 				lineNumber++
 				// A corrupt answer-key line must STOP the relabel, not silently drop a row — a golden file
-				// short by one row is a floor cut against a different denominator.
+				// short by one row is a floor threshold against a different denominator.
 				const row = parseJSONStrict<GoldenStreetRow>(line)
 				const result = relabelGoldenStreetRow(row, { splitPrefix: options.splitPrefix ?? true })
 

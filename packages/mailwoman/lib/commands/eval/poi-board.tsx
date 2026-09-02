@@ -9,7 +9,7 @@
  *
  *   Floors (spec §3.6, set off the v1 baseline): `overall ≥ 90%`, `abstain = 100%`, `address = 100%`.
  *   They are graded and printed on EVERY run. Pass `--enforce` to turn a breach into a non-zero exit
- *   (the CI-gate mode). Without `--enforce` the command stays report-only — it exits 0 on case
+ *   (the CI-check mode). Without `--enforce` the command stays report-only — it exits 0 on case
  *   failures, and a non-zero exit means the HARNESS broke (missing fixtures, missing db, a pipeline
  *   construction error), never a graded case failing.
  *

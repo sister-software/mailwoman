@@ -47,7 +47,7 @@ export interface PostcodePlace {
 
 /**
  * The minimal surface the anchor needs from a gazetteer. Implementations: an in-memory fake (tests) or a SQLite-backed
- * lookup over the `postalcode-*.db` extracts (`@mailwoman/resolver-wof-sqlite`). Keeping the seam this narrow lets a
+ * lookup over the `postalcode-*.db` extracts (`@mailwoman/resolver-wof-sqlite`). Keeping this boundary narrow lets a
  * future FST/WASM resolver drop in without touching the anchor logic.
  */
 export interface PostcodeResolver {
@@ -247,11 +247,11 @@ const NL_STREET_SUFFIXES = ["straat", "laan", "plein", "gracht", "kade", "dijk",
  * (`-berg`, `-burg`, `-dorf`) that would otherwise flag a city token. French voie words come from `@mailwoman/codex/fr`
  * ({@link isFrenchStreetWord}). ES/IT and Dutch fall back to the inline lists.
  *
- * `systems` GATES which vocabularies are consulted — only the systems the postcode plausibly belongs to (its gazetteer
- * membership, e.g. a US-only ZIP gates to `{us}` and never checks the German or French vocab). This is what lets the
- * check scale to 15-20 systems without a cross-locale collision (German `-ring` vs English `spring`): an unrelated
- * system's vocabulary is simply never asked. The gate carries lowercase system/locale tags (`us`, `de`, `fr`, `es`,
- * `it`, `nl`).
+ * `systems` RESTRICTS which vocabularies are consulted — only the systems the postcode plausibly belongs to (its
+ * gazetteer membership, e.g. a US-only ZIP restricts to `{us}` and never checks the German or French vocab). This is
+ * what lets the check scale to 15-20 systems without a cross-locale collision (German `-ring` vs English `spring`): an
+ * unrelated system's vocabulary is simply never asked. The restriction carries lowercase system/locale tags (`us`,
+ * `de`, `fr`, `es`, `it`, `nl`).
  */
 function looksLikeStreetWord(token: string, systems: ReadonlySet<string>): boolean {
 	const t = token.toLowerCase().replaceAll(/[^\p{L}]/gu, "")
@@ -368,7 +368,7 @@ export function extractPostcodeAnchors(
 			}
 		}
 
-		// Gate the street-word check to the systems this code plausibly belongs to: its gazetteer
+		// Restrict the street-word check to the systems this code plausibly belongs to: its gazetteer
 		// membership when known (precise — a US-only ZIP never checks the German vocab), else the
 		// format-shape candidates from codex (for a code in no gazetteer; its confidence is 0 anyway).
 		const systems = countries.length

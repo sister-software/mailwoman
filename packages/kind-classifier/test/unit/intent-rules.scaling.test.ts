@@ -12,7 +12,7 @@
  *
  *   1. **Growth** — the intent rules must stay LINEAR in input length. All three are
  *       lexicon-lookup-cheap by construction (a bounded regex over the tail, a Set membership test
- *       per word, a length gate that rejects anything over 30 characters before any of it runs), and
+ *       per word, a length check that rejects anything over 30 characters before any of it runs), and
  *       the ratio is what proves that rather than the docstring saying so. A ratio assertion also
  *       survives a loaded runner in a way a millisecond budget does not.
  *   2. **Absolute overhead vs the pre-§4 scorer set** — the number the reader of ROAD_TO_V9 §4
@@ -46,7 +46,7 @@ const TIMING_SAMPLES = 5
 
 /**
  * Capitalized run — every token is candidate place-name content, which is the shape that makes `bareNameWords`'s word
- * split and per-word Set probes work hardest before the length gate can reject.
+ * split and per-word Set probes work hardest before the length check can reject.
  */
 const CAPS_RUN_UNIT = "Aa "
 
@@ -119,7 +119,7 @@ test("the intent rules stay linear in input length", () => {
 	// Sizes chosen so the absolute timings clear a millisecond: at 50k/100k the whole measurement lands under 0.3 ms,
 	// where scheduler noise on a parallel test runner is larger than the signal and the ratio flakes (measured: 3.25x on
 	// a run where both arms were sub-millisecond). The work being timed is a `trim` + `toLowerCase` + two anchored
-	// regexes over the full string, which is linear; the length gate rejects everything else at 30 characters.
+	// regexes over the full string, which is linear; the length check rejects everything else at 30 characters.
 	const { ratio, smallMs, largeMs } = medianPairedRatio(runAt(500_000), runAt(1_000_000))
 
 	expect(

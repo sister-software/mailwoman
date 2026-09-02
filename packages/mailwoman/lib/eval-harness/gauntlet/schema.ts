@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   The Gauntlet — a full-pipeline integration-test corpus (`input → expected assembled output`). This is
- *   the CURATED REGRESSION layer (DeepSeek 019f1144): the executable memory of fixed bugs. Its gate is
+ *   the CURATED REGRESSION layer (DeepSeek 019f1144): the executable memory of fixed bugs. Its check is
  *   REGRESSION-ONLY — "must not break what already passed" — and its pass-RATE is NEVER a ship gauge (that
- *   would re-invent the Pelias acceptance-test false-trust pass-list). Generalization is gated elsewhere:
+ *   would re-invent the Pelias acceptance-test false-trust pass-list). Generalization is conditional elsewhere:
  *   the held-out fresh-draw runner (`holdout.ts`) and the metamorphic invariants (`metamorphic.ts`), which
  *   need no stored expected values and so can't be over-fit.
  *
@@ -146,8 +146,8 @@ export interface GauntletCaseTable {
  *
  * Exists because `regression.db` is a derived artifact with no link back to its source: on 2026-08-06 `eval
  * gauntlet-build regression-db` rebuilt it from a STALE COMPILED TREE (an `out/` loader still holding the deleted
- * pre-JSONL case array), printed "built", and every gate afterwards graded a corpus nobody had. Nothing in the DB could
- * contradict it. The stamp is that contradiction — the same posture as #1488's FST freshness stamps.
+ * pre-JSONL case array), printed "built", and every check afterwards graded a corpus nobody had. Nothing in the DB
+ * could contradict it. The stamp is that contradiction — the same posture as #1488's FST freshness stamps.
  */
 export interface GauntletMetaTable {
 	/**

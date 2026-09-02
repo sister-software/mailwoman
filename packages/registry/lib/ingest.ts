@@ -12,9 +12,9 @@
  *        hold the name, organization, address, phone, email; each row is normalized with
  *        `@mailwoman/record` (parse the person name, canonicalize the org). This is deterministic
  *        and testable with no heavy runtime.
- *   2. **Geocoding** (the heavy part) is an injected seam — a {@link GeocodeAddress} the caller provides.
+ *   2. **Geocoding** (the heavy part) is an injected dependency — a {@link GeocodeAddress} the caller provides.
  *        Ingest never imports the neural parser, the resolver, or the extracts; it just calls the
- *        seam per address. {@link geocodeAddressVia} builds that seam from mailwoman's real parse +
+ *        call per address. {@link geocodeAddressVia} builds that geocoder from mailwoman's real parse +
  *        geocode primitives (which the CLI constructs with the model + data in hand), so the wiring
  *        is concrete and testable without pinning the heavy runtime into this package.
  *
@@ -30,7 +30,7 @@ import { type AsyncSequence, CSVSpliterator, Delimiters } from "spliterator"
 import type { SourceRecord } from "#types"
 
 /**
- * Resolve a raw address string into a {@link PostalAddress}. The seam to mailwoman's geocoder.
+ * Resolve a raw address string into a {@link PostalAddress}. The entry point to mailwoman's geocoder.
  */
 export type GeocodeAddress = (raw: string) => Promise<PostalAddress | null> | PostalAddress | null
 
@@ -172,7 +172,7 @@ export function inferMapping(header: readonly string[]): ColumnMapping {
  */
 export interface IngestOptions {
 	/**
-	 * The geocoding seam. Without it, records carry name/org but no resolved address.
+	 * The geocoding interface. Without it, records carry name/org but no resolved address.
 	 */
 	geocodeAddress?: GeocodeAddress
 	/**
@@ -206,7 +206,7 @@ export function pick(row: Record<string, string>, columns?: string | string[], s
 /**
  * Normalize one tabular row into a {@link SourceRecord} under a {@link ColumnMapping}: parse the person name,
  * canonicalize the org, and (if `opts.geocodeAddress` is provided) geocode the joined address. `id` falls back to the
- * caller-supplied row index. Pure aside from the optional geocode seam, so the deterministic normalization can run
+ * caller-supplied row index. Pure aside from the optional geocode interface, so the deterministic normalization can run
  * single-threaded (see {@link normalizeCSV}) while geocoding is offloaded (see `geocodeStream`).
  */
 export async function ingestRow(

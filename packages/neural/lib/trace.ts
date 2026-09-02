@@ -54,8 +54,8 @@ export interface TracePrior {
 	kind: TracePriorKind
 	/**
 	 * Whether this prior moved anything. ALWAYS `false` on `"placetypeCensus"`, which writes no emissions at all — a
-	 * `true` there would mean somebody wired a census bias into the decoder, which the 2026-08-04 assessment gates behind
-	 * a calibration δ the artifact deliberately doesn't carry.
+	 * `true` there would mean somebody wired a census bias into the decoder, which the 2026-08-04 assessment checks
+	 * behind a calibration δ the artifact deliberately doesn't carry.
 	 */
 	applied: boolean
 	/**

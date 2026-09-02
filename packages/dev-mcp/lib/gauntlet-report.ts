@@ -9,10 +9,10 @@
  *   would be a second answer key. What it does is surface three things the spec says must not stay buried in a log a
  *   reader has to scroll:
  *
- *   1. The **gated header**, which is the verdict's actual denominator. Reading the tail of a gauntlet log instead of
+ *   1. The **conditional header**, which is the verdict's actual denominator. Reading the tail of a gauntlet log instead of
  *      this line is how "+15 rows, zero regressions" got reported on 2026-08-15 for a run that was 329/352 against a
  *      350/352 baseline — 21 regressions, in a line printed above the part that got read.
- *   2. The **levers line**. `run.ts` states the reason it prints on every run, pinned or not: "two gate logs that
+ *   2. The **levers line**. `run.ts` states the reason it prints on every run, pinned or not: "two lever logs that
  *      differ only in a flag someone typed are not evidence about that flag unless each log says which configuration
  *      it graded."
  *   3. The **firing count**, for the one pass that prints one. An unchanged verdict from a mechanism that never ran
@@ -52,7 +52,7 @@ export interface GauntletReport {
 	 */
 	postcode_country_coherence_fired_on: { n: number; of: number } | null
 	/**
-	 * Gated failures, verbatim, in log order. These are the rows a verdict rests on.
+	 * Refused rows, verbatim, in log order. These are the rows a verdict rests on.
 	 */
 	gated_failures: string[]
 	/**
@@ -195,8 +195,8 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 /**
  * A one-line reading of the report, for the `summary` an agent relays.
  *
- * Leads with the gated fraction rather than the verdict word: the fraction is the thing a reader can compare against a
- * baseline, and the line that got skipped the day this rule was written.
+ * Leads with the admitted fraction rather than the verdict word: the fraction is the thing a reader can compare against
+ * a baseline, and the line that got skipped the day this rule was written.
  */
 export function summarizeGauntletReport(report: GauntletReport): string {
 	if (!report.layers.length) {

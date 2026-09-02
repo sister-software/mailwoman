@@ -54,7 +54,7 @@ export interface SeedCase {
 	 * OPT-IN multi-script rendering contract, per component key — `{ venue: ["Gandantegchinlen Monastery",
 	 * "Гандантэгчинлэн хийд"] }`. For a listed key the grader asserts that `scriptRenderings(got)` contains EVERY listed
 	 * rendering (case-folded), and the same key in {@linkcode expectComponents} is superseded — see `check-case.ts`'s
-	 * component gate. Only for a row whose INPUT genuinely carries a span in two or more scripts; every list must be
+	 * component check. Only for a row whose INPUT genuinely carries a span in two or more scripts; every list must be
 	 * non-empty (the schema refuses an empty one).
 	 */
 	expectComponentRenderings?: Record<string, string[]>

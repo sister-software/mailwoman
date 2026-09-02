@@ -8,7 +8,7 @@
  *   over-fire confusion: how often a gold region/locality span is mistagged as `country` (the
  *   "trailing token = country" failure), and how often gold country is missed.
  *
- *   The promotion gate calls this once per battery and captures the report into
+ *   `promotion-gate.ts` calls this once per battery and captures the report into
  *   `<out-dir>/<tag>-country.md`, with the machine-readable sidecar at `<tag>-country.json` (the
  *   verdict reads `tags.country.f1` from it). Every printed line goes through the `report` sink, one
  *   call per line, so the captured markdown is byte-identical to the child stdout it replaced.
@@ -29,7 +29,7 @@ import {
 } from "#eval-harness/per-tag-f1"
 
 /**
- * Options for {@linkcode scoreCountryHomograph} — one field per flag the gate used to serialize into argv.
+ * Options for {@linkcode scoreCountryHomograph} — one field per flag the check used to serialize into argv.
  */
 export interface ScoreCountryHomographOptions {
 	/**
@@ -49,7 +49,7 @@ export interface ScoreCountryHomographOptions {
 	 */
 	gazetteerLexicon?: string
 	/**
-	 * Write the machine-readable sidecar here — the contract the gate verdict reads.
+	 * Write the machine-readable sidecar here — the contract the check verdict reads.
 	 */
 	json?: string
 	/**
@@ -61,7 +61,7 @@ export interface ScoreCountryHomographOptions {
 	 */
 	bridgeGaps?: boolean
 	/**
-	 * Suppress gazetteer clues adjacent to a postcode. The gate always passes this for the country probe — zero-filled
+	 * Suppress gazetteer clues adjacent to a postcode. The check always passes this for the country probe — zero-filled
 	 * clues near a postcode depress country recall.
 	 */
 	suppressGazNearPostcode?: boolean
@@ -106,7 +106,7 @@ export interface ScoreCountryHomographResult {
 const TAGS = ["country", "region", "locality"] as const
 
 /**
- * Score the country-homograph battery. Every narration line goes through `report`, one call per line, so the gate's
+ * Score the country-homograph battery. Every narration line goes through `report`, one call per line, so the check's
  * captured markdown matches the child-process stdout it replaced byte-for-byte.
  */
 export async function scoreCountryHomograph(

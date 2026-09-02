@@ -17,7 +17,7 @@
  *   NPI split across two genuinely-distant addresses is geo-first behaving correctly, counted here
  *   as a recall miss. We resolve and report; interpretation is the consumer's.
  *
- *   Sample: a tractable, variation-rich cut — providers in one state (default TX) that have ≥1
+ *   Sample: a tractable, variation-rich slice — providers in one state (default TX) that have ≥1
  *   alternate name, so every entity has ≥2 records and the dedup is non-trivial. Streams the 4.8 GB
  *   registry via `streamRows` (#616), so nothing loads whole.
  *
@@ -108,7 +108,7 @@ export interface NPPESDedupBenchmarkOptions {
 	 */
 	h3Res?: number
 	/**
-	 * Geocode the sample across a worker pool ({@linkcode geocodeStream}) instead of the serial in-process seam. Heavy
+	 * Geocode the sample across a worker pool ({@linkcode geocodeStream}) instead of the serial in-process path. Heavy
 	 * per-row work (ONNX parse + WOF SQLite) → threading pays; measured ~1.5× at 2 workers, coordinates identical.
 	 */
 	parallelGeocode?: boolean
@@ -196,7 +196,7 @@ export async function nppesDedupBenchmark(
 	} else {
 		const geocoder = await options.createGeocoder({ normalizeCase: !LEGACY })
 
-		// Count placements at the seam (parity with the retired in-script counter).
+		// Count placements at the boundary (parity with the retired in-script counter).
 		const countedSeam: GeocodeAddress = async (raw) => {
 			const g = await geocoder.seam(raw)
 

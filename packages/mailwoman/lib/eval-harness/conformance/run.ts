@@ -36,7 +36,7 @@ import { toGauntletResult } from "#eval-harness/gauntlet/harness"
 /**
  * Produce one side of a law: run `query` under `context` and return what the comparators read.
  *
- * The seam exists so a caller that can say MORE about a run than the assembled result — `@mailwoman/dev-mcp`, which
+ * The hook exists so a caller that can say MORE about a run than the assembled result — `@mailwoman/dev-mcp`, which
  * holds the trace and the mechanism-account predicates — attaches its shapes here rather than this module reaching for
  * a private workspace it must not depend on.
  */
@@ -88,7 +88,7 @@ export function tracedGauntletObserver(geocodeTraced: GauntletDeps["geocodeTrace
  * Run every fixture and report which laws held.
  *
  * `pass` is true only when every fixture held. A suite with no fixtures returns `pass: false`: an empty run is not a
- * clean run, and reporting one as passing is how a mis-pointed fixture path becomes a green gate.
+ * clean run, and reporting one as passing is how a mis-pointed fixture path becomes a green check.
  */
 export async function runConformanceFixtures(
 	fixtures: readonly ConformanceFixture[],
@@ -128,14 +128,14 @@ export interface ConformanceSummary {
 	 * Rows whose comparator read its axis and could not decide — today only `candidate_admissibility`, when a candidate
 	 * left a table that was sitting at its fetch window.
 	 *
-	 * These leave {@linkcode gated} rather than joining {@linkcode failures}: the run has no evidence the law broke, and
-	 * no evidence it held. Reported in full, never blocking, and never counted toward the hold ratio — a suite whose
-	 * every row goes unmeasured therefore reports `pass: false`, which is the reading that keeps a blind instrument from
-	 * looking like a clean one.
+	 * These leave {@linkcode conditional} rather than joining {@linkcode failures}: the run has no evidence the law
+	 * broke, and no evidence it held. Reported in full, never blocking, and never counted toward the hold ratio — a suite
+	 * whose every row goes unmeasured therefore reports `pass: false`, which is the reading that keeps a blind instrument
+	 * from looking like a clean one.
 	 */
 	unmeasured: ConformanceFinding[]
 	/**
-	 * How many rows GATED and were DECIDED — the denominator a reader needs before the pass count means anything.
+	 * How many rows were ADMITTED and DECIDED — the denominator a reader needs before the pass count means anything.
 	 */
 	gated: number
 	pass: boolean
@@ -145,7 +145,7 @@ export interface ConformanceSummary {
  * Split a run by row status, mirroring the Gauntlet regression layer's own three-way reading.
  *
  * `pass` is false on an EMPTY findings list for the same reason {@linkcode runConformanceFixtures} refuses an empty
- * suite, and false on a suite with no gating rows at all: a run whose every row is tracked has measured nothing that
+ * suite, and false on a suite with no enforcing rows at all: a run whose every row is tracked has measured nothing that
  * could fail, and reporting it as a pass is how a suite quietly stops holding anything.
  */
 export function summarizeConformanceRun(findings: readonly ConformanceFinding[]): ConformanceSummary {

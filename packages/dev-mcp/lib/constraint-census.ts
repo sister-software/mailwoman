@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The CONSTRAINT census — what our gates COST, measured per constraint rather than per row.
+ *   The CONSTRAINT census — what our checks COST, measured per constraint rather than per row.
  *
  *   `census.ts` asks whether a mechanism in the PARSE path fires at all (L0/L1). This asks the resolver-path question
  *   underneath it: of the lookups that resolved nothing, which constraint was in force, and did we hold the row
@@ -111,7 +111,7 @@ export interface ConstraintCensusResult {
 }
 
 /**
- * Above this, a gate that never once accompanies a successful pick is called INERT rather than merely unlucky.
+ * Above this, an eval that never once accompanies a successful pick is called INERT rather than merely unlucky.
  *
  * Small on purpose: the claim is about a mechanism that has never worked, and at n below this the honest report is "not
  * enough firings to say", which the rendering states instead.
@@ -214,7 +214,7 @@ export async function runConstraintCensus(
 				fired.set(key, (fired.get(key) ?? 0) + 1)
 
 				if (rec.picked) {
-					// A gate that ever accompanies a pick is not inert, whatever its miss rate.
+					// A constraint that ever accompanies a pick is not inert, whatever its miss rate.
 					for (const gate of rec.gates) {
 						pickedUnder.add(gate)
 					}

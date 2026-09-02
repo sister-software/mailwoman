@@ -5,7 +5,7 @@
  *
  *   The IO half of `mailwoman doctor`: gather the environment facts (weights resolution, data-root
  *   writability, gazetteer discovery, POI manifest, Node + ONNX runtime) and hand them to the pure
- *   verdict logic in {@link ./checks.ts}. All the environment-dependent seams (`fs`, env, dynamic
+ *   verdict logic in {@link ./checks.ts}. All the environment-dependent dependencies (`fs`, env, dynamic
  *   imports, DB reads) live behind {@link DoctorDeps} so the whole flow is injectable — a test drives
  *   `runDoctor` with fakes, and the default deps wire the real thing. Mirrors, never re-implements:
  *   weights resolution comes from `@mailwoman/neural/weights`, the data root from
@@ -49,7 +49,7 @@ interface ResolvedWeightsLike {
 }
 
 /**
- * Every environment seam `runDoctor` touches. Injected in tests; {@link defaultDoctorDeps} wires the real ones.
+ * Every environment dependency `runDoctor` touches. Injected in tests; {@link defaultDoctorDeps} wires the real ones.
  */
 export interface DoctorDeps {
 	/**
@@ -160,7 +160,7 @@ async function readPOIManifest(path: string): Promise<{ name: string; version: s
 }
 
 /**
- * The production seams — the real filesystem, env, weights resolver, and dynamic imports.
+ * The production dependencies — the real filesystem, env, weights resolver, and dynamic imports.
  */
 export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 	const dataRoot = mailwomanDataRoot()

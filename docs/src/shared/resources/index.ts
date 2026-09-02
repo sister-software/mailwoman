@@ -47,8 +47,8 @@ export interface FSTMatcherLike {
 export interface MailwomanClassifierLike {
 	parse: (text: string, opts?: { queryShape?: unknown; fst?: FSTMatcherLike }) => Promise<unknown>
 	/**
-	 * Decode-path introspection (spec 2026-07-03). Optional: deployed bundles built before the trace seam lack it —
-	 * feature-detect before calling.
+	 * Decode-path introspection (spec 2026-07-03). Optional: deployed bundles built before the `traceParse` hook lack it
+	 * — feature-detect before calling.
 	 */
 	traceParse?: (text: string, opts?: { addressSystemConventions?: "auto" }) => Promise<ParseTraceLike>
 }
@@ -456,7 +456,7 @@ export const PAIR_INDEX_COUNTRIES = ["gb", "nz"] as const
  *
  * The binaries carry the same `public, max-age=604800, immutable` Cache-Control as every other bucket object, so a
  * rebuilt index needs a FRESH URL — the discipline {@link ADMIN_GAZETTEER_VERSION}, {@link POI_LAYER_VERSION} and
- * {@link NATIONAL_STREET_EXTRACT_VERSION} already follow. Bump this the same commit the binaries are re-cut and
+ * {@link NATIONAL_STREET_EXTRACT_VERSION} already follow. Bump this the same commit the binaries are rebuild and
  * re-uploaded; the mutable pointer is this constant inside the (revalidated) Pages bundle, never the binaries.
  *
  * Why a site-side constant rather than a `releases.json` field: the PIX reader that consumes these binaries
@@ -465,7 +465,7 @@ export const PAIR_INDEX_COUNTRIES = ["gb", "nz"] as const
  * property of the deployed site, not of the release the visitor selected — pinning it per release entry would let a
  * schema-3 reader ask for a schema-1 generation.
  *
- * 2026-08-05: the PIX schema-3 (typed parent record) re-cut. It was overwritten IN PLACE at the un-versioned path, and
+ * 2026-08-05: the PIX schema-3 (typed parent record) rebuild. It was overwritten IN PLACE at the un-versioned path, and
  * the CDN kept serving the schema-1 bytes under the immutable header until a manual purge — the wound this scheme
  * closes.
  */
@@ -516,10 +516,10 @@ export async function loadFSTGazetteer(
 
 /**
  * Load the locale-general street-morphology FST (`fst-street-morphology.bin`) for a release — the #1315 street-context
- * gate's signal source, shipped as a weights-package sibling (so it rides the same per-version R2 asset layout as the
+ * check's signal source, shipped as a weights-package sibling (so it rides the same per-version R2 asset layout as the
  * model). Node runtimes rebuild this matcher from the bundled libpostal dictionaries when the artifact is absent; the
  * browser cannot, which is exactly the node/browser behavior fork the sealed artifact closes. Returns `null` when the
- * release predates the artifact (HTTP 404) — the demo then parses without the gate, exactly as before. A
+ * release predates the artifact (HTTP 404) — the demo then parses without the check, exactly as before. A
  * present-but-corrupt binary throws; the caller's tolerant catch treats that as absent too.
  */
 export async function loadStreetMorphologyFST(locale: string, version: string): Promise<FSTMatcherLike | null> {

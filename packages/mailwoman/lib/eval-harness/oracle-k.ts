@@ -5,7 +5,7 @@
  *
  *   Oracle-recall@k over segment-level k-best decodes (#727 stage-2 instrumentation).
  *
- *   Every standing gate scores the TOP-1 parse, which made hypothesis-space improvements invisible —
+ *   Every standing eval scores the TOP-1 parse, which made hypothesis-space improvements invisible —
  *   the instrument-blindness the 2026-07-15 stage-2 plan names. This eval measures the k-best
  *   headroom directly: a semi-Markov Viterbi over the CURRENT model's post-prior emissions (span
  *   score = summed B-/I- log-probs over word-aligned segments, smoothed empirical segment-type

@@ -99,7 +99,7 @@ describe("the build stamp", () => {
 		await buildRegressionDB({ casesDir: stateA, output })
 
 		// State B: the same tree, one row edited — the shape of an operator fixing an expectation and re-running
-		// the gate without rebuilding.
+		// the check without rebuilding.
 		const stateB = await scratchCorpus(row("xx-a", "1 Test Avenue"))
 		const kdb = open(output)
 

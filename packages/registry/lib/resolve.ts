@@ -349,17 +349,17 @@ export interface ResolveConfig {
 	 * FS baseline on the identical pipeline. The function is responsible for its own feature computation (e.g. the
 	 * agreement pattern, which is EM-independent, plus any corpus statistics it captured).
 	 *
-	 * INTERACTION with {@link requireCorroboration}: the two are independent and compose, but the corroboration gate is
+	 * INTERACTION with {@link requireCorroboration}: the two are independent and compose, but the corroboration check is
 	 * still evaluated on the Fellegi-Sunter `contributions` (NOT the learned score) — so a learned-high pair with no
-	 * positive FS name/org/phone agreement is still gated out. A learned scorer is normally trained to subsume
-	 * corroboration, so use ONE or the other; combining them lets the FS gate veto the learned score, which is rarely
+	 * positive FS name/org/phone agreement is still held out. A learned scorer is normally trained to subsume
+	 * corroboration, so use ONE or the other; combining them lets the FS check veto the learned score, which is rarely
 	 * what you want.
 	 */
 	scorer?: (a: SourceRecord, b: SourceRecord) => number
 	/**
 	 * **#603: the LEARNED gradient-boosted-tree scorer — DEFAULT-ON.** Omitted or `true` uses the bundled
 	 * {@link DEDUP_GBT_MODEL} (trained on the NPPES NPI-truth set; beats the Fellegi-Sunter baseline ~+5pp dedup F1
-	 * held-out within a state and ~+22pp on states it never trained on, cutting the co-located over-merge). `false` opts
+	 * held-out within a state and ~+22pp on states it never trained on, reducing the co-located over-merge). `false` opts
 	 * out to the pure FS baseline; pass your own {@link GBT} for a custom model. The scorer is built over the SAME
 	 * collapsed-spatial + address-frequency feature model as training (via the resolved {@link addressFrequency}),
 	 * independent of this call's comparison config. An explicit {@link scorer} takes precedence. When the bundled model

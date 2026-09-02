@@ -5,7 +5,7 @@
  *
  *   The constraint census, tested against a FAKE engine and a FAKE candidate table.
  *
- *   What is under test is the accounting — reachability kept apart from coverage, a gate called inert only when it
+ *   What is under test is the accounting — reachability kept apart from coverage, an eval called inert only when it
  *   never accompanied a pick — not whether the resolver is right about any particular place. A test that loaded the
  *   real gazetteer would take minutes and fail for reasons this file has no opinion about.
  */
@@ -107,7 +107,7 @@ describe("constraint census", () => {
 			byInput[k] = [{ tag: "locality", value: "Bayern", placetype: "locality", gates: ["some_retry"], picked: false }]
 		}
 
-		// A second gate fires just as often but DOES pick sometimes — it must not be called inert.
+		// A second check fires just as often but DOES pick sometimes — it must not be called inert.
 		byInput["alive"] = [{ tag: "locality", value: "Bayern", placetype: "locality", gates: ["live_gate"], picked: true }]
 
 		const r = await runConstraintCensus(fakeRegistry(byInput), { inputs: LITERAL([...dead, "alive"]) }, dependencies)

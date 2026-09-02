@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tree-SHAPE predicates over an `AddressTree` — the one stack walk behind the pipeline's bare-tree
- *   guards and the "lone bare toponym" gates. Two quantifiers cover every consumer:
+ *   guards and the "lone bare toponym" conditions. Two quantifiers cover every consumer:
  *
  *   - {@link isBareTreeOf} — every value-bearing node carries the given tag (several allowed). The
  *     #912 / #1589 posture guards (`isBareLocalityTree`, `isBarePostcodeTree`) are this with the tag
@@ -44,8 +44,8 @@ export function isBareTreeOf(tree: AddressTree, tag: ComponentTag): boolean {
 }
 
 /**
- * The tree's single value-bearing node, or null when the tree holds none or more than one. Callers gate on the returned
- * node's `tag` — the quantifier ("this is the WHOLE query") is what this walk answers.
+ * The tree's single value-bearing node, or null when the tree holds none or more than one. Callers check on the
+ * returned node's `tag` — the quantifier ("this is the WHOLE query") is what this walk answers.
  */
 export function loneValueBearingNode(tree: AddressTree): AddressNode | null {
 	let lone: AddressNode | null = null

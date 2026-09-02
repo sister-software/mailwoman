@@ -936,7 +936,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		const street = result.roots.find((n) => n.tag === "street")
 		expect(street?.metadata?.["resolution_tier"]).toBe("address_point")
 		expect(street?.metadata?.["address_point"]).toMatchObject({ lat: 44.2, lon: -72.6 })
-		// the gate held: no interpolated estimate stamped
+		// the check held: no interpolated estimate stamped
 		expect(street?.metadata?.["interpolated_point"]).toBeUndefined()
 	})
 

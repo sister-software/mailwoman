@@ -8,7 +8,7 @@
  *   The gap this closes: `createGeocodeSession` resolved gazetteer artifacts under `options.dataRoot` but called
  *   `loadFromWeights({ locale })` bare, so weights (and the per-locale FST inside them) resolved from the process
  *   env's data root regardless of the lever. A dev-mcp engine with `data_root` overridden therefore measured a MIXED
- *   configuration, silently — and the FST v4→v5 battery had no warm-path A/B seam at all.
+ *   configuration, silently — and the FST v4→v5 battery had no warm-path A/B comparison at all.
  *
  *   The discriminating shape: a bogus data root WITH a real candidate.db passes the gazetteer check (which is
  *   deliberately resolved first), so the session's next stop is weights — which must now fail against the bogus root.
@@ -38,7 +38,7 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 		// ladder answers, it must never be a path inside the PROCESS ENV data root's weights overlay when the
 		// session was given a different root. Pre-fix, `artifacts.fstPath` pointed exactly there.
 		const outcome = await createGeocodeSession(
-			// The production defaults factory, not a hand-built literal — the same lockstep seam the dev-mcp
+			// The production defaults factory, not a hand-built literal — the same lockstep factory the dev-mcp
 			// registry derives from, so this pin cannot drift from the shipped configuration.
 			createGeocodeCommandOptions({
 				locale: "en-US",

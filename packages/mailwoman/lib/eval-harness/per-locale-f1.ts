@@ -28,7 +28,7 @@
  *   its `MANIFEST.json` (`convention.street_convention`), so the fold is now read per row from the
  *   answer key itself: split-convention countries are scored UNFOLDED, everyone else keeps the glue.
  *   An answer key that carries its own convention cannot be graded under the wrong one by accident —
- *   which is what happened on the v9.0.0 gate, where the convention gap read as an 0.4pp `us.street`
+ *   which is what happened on the v9.0.0 check, where the convention gap read as an 0.4pp `us.street`
  *   regression.
  *
  *   The anchor + gazetteer feed channels are fed by DEFAULT (the standard paths, same as
@@ -39,7 +39,7 @@
  *   zero-feed (anchor-off) path on purpose, or `--model-anchor-lookup`/`--gazetteer-lexicon` to
  *   override paths.
  *
- *   The promotion gate calls {@linkcode perLocaleF1} IN-PROCESS and captures the markdown report
+ *   `promotion-gate.ts` calls {@linkcode perLocaleF1} IN-PROCESS and captures the markdown report
  *   (the `report` sink) into `<out-dir>/<tag>-per-locale.md` — the file the verdict assembler
  *   regex-reads for `us.postcode`, `us.locality`, `us.region`, `us.street`, `fr.house_number` and
  *   `us.micro`. The progress narration goes to `reportError`, which is where the child process's
@@ -95,13 +95,13 @@ const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
 //#region Options
 
 /**
- * Options for {@linkcode perLocaleF1} — one field per flag the gate used to serialize into argv. The two fields the old
+ * Options for {@linkcode perLocaleF1} — one field per flag the check used to serialize into argv. The two fields the old
  * `parseArgs` seeded with defaults ({@linkcode PerLocaleF1Options.goldenDir}, {@linkcode PerLocaleF1Options.files}) are
  * optional here and defaulted inside the function, so a caller that omits them gets exactly what the CLI gave.
  */
 export interface PerLocaleF1Options {
 	/**
-	 * The answer key to grade against. Default `data/eval/golden/v0.1.2/dev`. Gate specs declare this (`golden_dir`)
+	 * The answer key to grade against. Default `data/eval/golden/v0.1.2/dev`. Check specs declare this (`golden_dir`)
 	 * because two specs naming different golden versions are not comparable.
 	 */
 	goldenDir?: string
@@ -154,7 +154,7 @@ interface GoldenRow {
  *
  * `foldStreetParts: false` is the v0.1.3 convention (#gate-relabel, 2026-08-06): that answer key labels US streets
  * SPLIT — `street_prefix` / `street` / `street_suffix` are three spans — so gluing the prediction back together before
- * comparing measures the harness, not the model. The v9.0.0 promotion gate read exactly that as an 0.4pp `us.street`
+ * comparing measures the harness, not the model. The v9.0.0 promotion eval read exactly that as an 0.4pp `us.street`
  * regression. Which mode applies is decided PER ROW from the golden dir's own MANIFEST (see
  * {@linkcode readStreetConvention}), never from a flag someone has to remember: an answer key that declares its
  * convention cannot be graded under the wrong one by accident.
@@ -363,7 +363,7 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 
 /**
  * Score each locale file separately and report per-locale component-F1, exact-match, and the cross-locale macro-F1
- * SPREAD. The markdown report goes to `report` (one call per line, matching the child stdout the gate captured); the
+ * SPREAD. The markdown report goes to `report` (one call per line, matching the child stdout the runner captured); the
  * progress narration goes to `reportError`.
  */
 export async function perLocaleF1(
@@ -503,9 +503,9 @@ export async function perLocaleF1(
 		for (const row of rows) {
 			const wordConsistency = parseWordConsistencyEnv($public.MAILWOMAN_WORD_CONSISTENCY)
 
-			// PRODUCTION-CONFIG parity (2026-07-17, the M1 gate-fidelity fix): production parses feed the
+			// PRODUCTION-CONFIG parity (2026-07-17, the M1 check-fidelity fix): production parses feed the
 			// query-shape prior + postcodeRepair on every path (safeClassify, geocode-core since #981), but
-			// this battery historically fed NEITHER — so the gate scored a config production doesn't run.
+			// this battery historically fed NEITHER — so the check scored a config production doesn't run.
 			// M1 measured that gap at +2.3 micro on golden-us (the battery flattered production; the entire
 			// delta was the since-scoped locality bias, PR #1148). Score what ships.
 			const tree = await neural.parse(row.raw, {

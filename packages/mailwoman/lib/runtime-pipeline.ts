@@ -110,15 +110,15 @@ export interface CreateRuntimePipelineOpts {
 	 */
 	fst?: RuntimePipelineStages["fst"] | false
 	/**
-	 * Street-morphology matcher — the signal source for the FST street-context gate (#1315), always consumed with the
+	 * Street-morphology matcher — the signal source for the FST street-context check (#1315), always consumed with the
 	 * morphology emission prior zeroed at the pipeline's classify call sites (the emission prior is US-golden-negative;
-	 * the gate alone is golden-flat and fragment-positive). DEFAULT-ON alongside the FST auto-load: the sealed
+	 * the check alone is golden-flat and fragment-positive). DEFAULT-ON alongside the FST auto-load: the sealed
 	 * `fst-street-morphology.bin` artifact when available (weights-package sibling, else the data-root staging copy),
 	 * degrading to a per-process build from core's bundled libpostal dictionaries; `false` suppresses it.
 	 */
 	streetMorphology?: RuntimePipelineStages["streetMorphology"] | false
 	/**
-	 * Locale gate override — when shipped, replaces the default caller-trust stub.
+	 * `@mailwoman/locale-gate` override — when shipped, replaces the default caller-trust stub.
 	 *
 	 * @see RuntimePipelineStages.detectLocale
 	 */
@@ -138,7 +138,7 @@ export interface CreateRuntimePipelineOpts {
 	 */
 	groupPhrases?: RuntimePipelineStages["groupPhrases"]
 	/**
-	 * Coarse country router (#244, soft prior) — **default-on (#244 M2, after the misroute gate).** A confident in-map
+	 * Coarse country router (#244, soft prior) — **default-on (#244 M2, after the misroute check).** A confident in-map
 	 * guess becomes a soft country prior the resolver re-rank boosts (never filters).
 	 *
 	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9) is lazy-loaded on the
@@ -151,7 +151,7 @@ export interface CreateRuntimePipelineOpts {
 	placeCountry?: RuntimePipelineStages["placeCountry"] | false
 	/**
 	 * #690: default for `PipelineOpts.normalizeCase` on every call — title-case detected all-caps ASCII input before the
-	 * model (helps on all-caps registry/compliance data; detection-gated, mixed-case untouched). The classifier is
+	 * model (helps on all-caps registry/compliance data; detection-restricted, mixed-case untouched). The classifier is
 	 * **default-ON** since #895 (drift D2 settled), so leaving this unset runs it; set `false` here to pin the raw-case
 	 * parse for every call. A per-call `runOpts.normalizeCase` overrides this.
 	 */
@@ -165,15 +165,15 @@ export interface CreateRuntimePipelineOpts {
 	 */
 	hardPlaceCountry?: boolean
 	/**
-	 * #743/#194: default for `PipelineOpts.hardCountrySafelist` — override the coverage safelist that gates the hard
+	 * #743/#194: default for `PipelineOpts.hardCountrySafelist` — override the coverage safelist that checks the hard
 	 * country filter. Undefined → the built-in `HARD_PLACE_COUNTRY_SAFELIST`. Used by the resolver eval to measure
-	 * ungated hard-resolve-rates (the full in-map set) when growing the list.
+	 * unrestricted hard-resolve-rates (the full in-map set) when growing the list.
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
 	/**
-	 * #727 phase-4c: the street-name evidence index behind the k-best name-evidence rerank — a positive-evidence-gated
-	 * street-splice into the argmax tree (golden-safe: 0.000 golden regression, +16.9pp FR fragment street, measured
-	 * 2026-07-18).
+	 * #727 phase-4c: the street-name evidence index behind the k-best name-evidence rerank — a
+	 * positive-evidence-conditional street-splice into the argmax tree (golden-safe: 0.000 golden regression, +16.9pp FR
+	 * fragment street, measured 2026-07-18).
 	 *
 	 * - `undefined` (default) → **default-on**: when the classifier ships a span grammar (a v3+ span-head bundle), the
 	 *   bundled FR index ({@link loadDefaultStreetEvidence}, `street-centroids-fr.db`) is lazy-loaded on the first call
@@ -289,12 +289,12 @@ async function autoLoadWeightsFST(
 }
 
 /**
- * Load the street-morphology matcher — the street-context gate's signal source (#1315), always consumed with the
+ * Load the street-morphology matcher — the street-context check's signal source (#1315), always consumed with the
  * emission prior zeroed at the pipeline's classify call sites. Resolved on the first pipeline call through the shared
  * ladder (`street-morphology-fst-loader`): the classifier's weights-package sibling (`fst-street-morphology.bin`,
  * surfaced as {@link NeuralAddressClassifier.streetMorphologyPath}), else the data-root sealed artifact, else a
  * per-process build from core's bundled libpostal dictionaries — the pre-artifact behavior kept as the degrade path.
- * Failures degrade to `undefined` (gate off, byte-stable).
+ * Failures degrade to `undefined` (check off, byte-stable).
  */
 async function autoLoadStreetMorphology(
 	classifier: CreateRuntimePipelineOpts["classifier"]
@@ -391,7 +391,7 @@ export function createRuntimePipeline(
 		// `undefined` default is lazy-loaded on the first call (below) so the sync factory stays sync;
 		// `false` disables it. A confident in-map guess feeds the resolver's anchorPosterior re-rank.
 		placeCountry: typeof opts.placeCountry === "function" ? opts.placeCountry : undefined,
-		// Default locale gate: rule-based from @mailwoman/locale-gate. Derives locale from
+		// Default `@mailwoman/locale-check` stage: rule-based from @mailwoman/locale-gate. Derives locale from
 		// QueryShape character class (CJK→ja-JP, Cyrillic→ru-RU, Arabic→ar) + known-format
 		// hits (us_zip→en-US, fr_postcode→fr-FR, uk_postcode→en-GB). Caller-hint wins when set.
 		detectLocale:
@@ -449,7 +449,7 @@ export function createRuntimePipeline(
 	// wrapped the classifier above.
 	let streetEvidenceResolved = opts.streetEvidence !== undefined
 
-	// FST-distribution arc: auto-load the weights-package gazetteer (and the gate's morphology matcher) on the first
+	// FST-distribution arc: auto-load the weights-package gazetteer (and the check's morphology matcher) on the first
 	// call — same lazy convention (file I/O stays out of the synchronous factory). Skipped entirely on explicit
 	// opt-out (`fst: false`) or when the caller shipped their own matcher.
 	const autoFST = opts.fst === undefined
@@ -525,7 +525,7 @@ export function createRuntimePipeline(
 		if (!morphologyResolved) {
 			morphologyResolved = true
 
-			// The gate needs BOTH matchers — skip the load when there's no gazetteer for it to gate.
+			// The check needs BOTH matchers — skip the load when there's no gazetteer for it to condition.
 			if (stages.fst) {
 				const morph = await autoLoadStreetMorphology(opts.classifier)
 

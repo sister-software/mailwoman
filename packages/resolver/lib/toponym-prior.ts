@@ -32,7 +32,7 @@
  *   {@link rankByCountryPrior} covers the other half of the class — the query where a country IS
  *   known, but only because a locale said so. See `span-rescore.ts` for where that one applies.
  *
- *   Both obey the same three house rules, and neither is a gate:
+ *   Both obey the same three house rules, and neither is a check:
  *
  *   1. **Tier-safe.** `exactMatch` stays the primary key. A soft prior re-orders WITHIN a tier; it never
  *      promotes a partial match over an exact one.

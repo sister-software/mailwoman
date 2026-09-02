@@ -21,7 +21,7 @@
  *        the exact `GROUP BY brand_wikidata, name` aggregate plus the source layer's manifest
  *        identity.
  *   2. {@linkcode aggregateBrands} — a PURE function over an `Iterable<BrandNameCount>` (real rows
- *        OR an injected test fixture) — mirrors `build-poi.ts`'s injected-`rows` testability seam
+ *        OR an injected test fixture) — mirrors `build-poi.ts`'s injected-`rows` injection point
  *        (`POISourceRow`) and `chooseCategoryColumn`'s pure-function-over-decoded-rows pattern.
  */
 
@@ -65,7 +65,7 @@ export function defaultBrandTableOutPath(): string {
 }
 
 /**
- * One `(brand_wikidata, name)` group from `poi` — the injected-iterator testability seam (mirrors `POISourceRow`).
+ * One `(brand_wikidata, name)` group from `poi` — the injected-iterator injection point (mirrors `POISourceRow`).
  */
 export interface BrandNameCount {
 	wikidata: string
@@ -183,7 +183,7 @@ export interface BuildBrandTableOptions {
 	 */
 	dbPath?: PathBuilderLike
 	/**
-	 * Injected row source — the testability seam. When given, `node:sqlite` is never touched.
+	 * Injected row source — the injection point. When given, `node:sqlite` is never touched.
 	 */
 	rows?: Iterable<BrandNameCount>
 	/**

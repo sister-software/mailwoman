@@ -197,7 +197,7 @@ export function renderDefault(value: unknown): string {
 /**
  * Make a source-authored help string safe as MDX table-cell text. Docusaurus compiles `.mdx` through micromark's JSX
  * extension, so a bare `<address>` is an element and a bare `{ checks: [...] }` is an expression — both build-breaking
- * or content-eating (the class `mailwoman dev lint mdx-angles` gates). Entities render as the literal characters and
+ * or content-eating (the class `mailwoman dev lint mdx-angles` catches). Entities render as the literal characters and
  * cannot be parsed as syntax. The pipe escape is the table's own requirement, and the asterisk escape is `oxfmt`'s: a
  * literal `*` in prose (`place_bbox R*Tree`) is emphasis syntax, and leaving it raw makes the emitted file fail
  * `--check`.

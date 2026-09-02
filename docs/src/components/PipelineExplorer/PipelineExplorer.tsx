@@ -98,7 +98,7 @@ function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels }
 			async runParse(input, { onStage }): Promise<ParseResult> {
 				if (!classifier) throw new Error("classifier not ready")
 
-				// Shared classify front-half (#861 / #1278 seam) — identical to the `/demo` map path, minus the
+				// Shared classify front-half (#861 / #1278 boundary) — identical to the `/demo` map path, minus the
 				// map-only street tier / bias. `onStage(1)` fires between shape and classify, as before.
 				const { tree, nodes, kindResult, timing } = await runClassifyStage(
 					input,

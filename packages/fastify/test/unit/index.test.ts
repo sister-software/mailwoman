@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `@mailwoman/fastify` route + decorator tests. Every case injects a FAKE runtime pipeline via the `pipeline` option
- *   so no model weights or gazetteer data are needed — the plugin's routing, envelopes, decorator, POI gating, and
+ *   so no model weights or gazetteer data are needed — the plugin's routing, envelopes, decorator, POI filtering, and
  *   prefix encapsulation are all exercised over `fastify.inject`.
  */
 

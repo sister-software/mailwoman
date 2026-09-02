@@ -1,4 +1,4 @@
-"""Parquet round-trip gate for the v0.5.0 span columns (#519, rebuild-plan step 1).
+"""Parquet round-trip check for the v0.5.0 span columns (#519, rebuild-plan step 1).
 
 The slice pipeline is JSONL (builders, via ``alignRow``) → converter →
 parquet → this package's PyArrow readers. JSONL has carried the span triple since #527; this
@@ -11,7 +11,7 @@ test pins the two properties the parquet leg must now hold:
    with a named row. Silent loss (the pre-#519 behavior: columns simply dropped) is the hazard
    this step exists to close.
 
-Runs the converter via subprocess so the gate covers the actual converter, not a
+Runs the converter via subprocess so the check covers the actual converter, not a
 re-implementation. The converter was ported from ``scripts/jsonl-to-parquet.py`` to
 TypeScript (e61a4a0d, the TypeScript-monoculture ship) and now lives at
 ``corpus/src/tools/jsonl-to-parquet.ts`` — a DuckDB rewrite verified field-for-field

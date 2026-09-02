@@ -6,7 +6,7 @@
  *   `<DemoDebugDrawer>` — the dev-mode decode-path drawer for `/demo`, injected into `<GeocoderDemo>`
  *   via `DemoPanels.debugDrawer`. It mirrors the live demo's model-visualizer aside (`_app.tsx`): when dev mode
  *   is on and a result is present, it traces the current input through the host's classifier and renders the
- *   docs `<ModelVisualizer>` beside the map. Dev-mode-gated by design — closed by default, opened by the
+ *   docs `<ModelVisualizer>` beside the map. Dev-mode-only by design — closed by default, opened by the
  *   "🐛 Dev mode" toggle.
  */
 

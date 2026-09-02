@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared core of the reply prose gate: run a finished agent reply through the Mailwoman Vale
+ *   Shared core of the reply prose check: run a finished agent reply through the Mailwoman Vale
  *   rules and render one verdict. The platform adapters — `vale-response-check.ts` (Claude Code)
  *   and `vale-response-check-codex.ts` (Codex) — own payload parsing, the loop guard, and the
  *   output JSON; the POLICY (which config, which severities block, how findings read) lives here
@@ -69,8 +69,8 @@ export function lintReply(reply: string): ValeAlert[] {
 
 /**
  * The rule's guidance with the match's own name factored out, so one grouped line carries the message once instead of
- * once per hit. Message templates vary ("'%s' is …", "Cut the stock form '%s' — …", and templates with no substitution
- * at all), so the fallbacks keep every shape readable.
+ * once per hit. Message templates vary ("'%s' is …", the stock-form template, and templates with no substitution at
+ * all), so the fallbacks keep every shape readable.
  */
 function ruleGuidance(alert: ValeAlert): string {
 	const quoted = `'${alert.Match}'`

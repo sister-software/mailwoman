@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Loader wiring for the PIX1 placetype-pair index (#1278 phase 2 — locale-gate wiring): fetch
- *   tolerance, LOAD-ALL construction (every fetched index becomes a live resolver, no load-time gate),
+ *   tolerance, LOAD-ALL construction (every fetched index becomes a live resolver, no load-time check),
  *   and the OPTIONAL config-default posture pin the `country` load-option now sets.
  *
  *   Strategy mirrors `web-loader.tolerance.test.ts`: mock onnxruntime-web (no model file) +
@@ -217,7 +217,7 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 		// No `country` load-option → no config-default posture pin. The per-parse selection is the only path
 		// (byte-stable when nothing selected — asserted end-to-end in loader.pair-prior-decode.test.ts).
 		expect(capturedConfig?.placetypePair).toBeUndefined()
-		// But the index is LIVE and retained (phase 2: load all, don't gate) — the same instance the per-parse
+		// But the index is LIVE and retained (phase 2: load all, don't check) — the same instance the per-parse
 		// selection can return.
 		const [gb] = result.pairIndexes
 		expect(result.pairIndexes).toHaveLength(1)
@@ -225,7 +225,7 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 		expect(gb!.country).toBe("gb")
 		expect(gb!.resolver).toBeInstanceOf(PairIndexResolver)
 		expect(gb!.resolver.probe("shoreditch", "london")?.tag).toBe("dependent_locality")
-		// Omitting the posture is NOT a misconfiguration — no warn (contrast #1300's gate).
+		// Omitting the posture is NOT a misconfiguration — no warn (contrast #1300's check).
 		expect(warn).not.toHaveBeenCalled()
 
 		warn.mockRestore()
@@ -291,7 +291,7 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 
 		const wired = capturedConfig?.placetypePair?.index
 		expect(wired).toBeInstanceOf(PairIndexResolver)
-		// BOTH load live now — nz is no longer gated to null; it is available for a per-parse nz pick.
+		// BOTH load live now — nz is no longer restricted to null; it is available for a per-parse nz pick.
 		const [gb, nz] = result.pairIndexes
 		expect(gb).toEqual({ url: GB_INDEX, country: "gb", resolver: wired })
 		expect(nz!.country).toBe("nz")

@@ -122,7 +122,7 @@ const GazetteerAnchorLexicon: ParsedCommandComponent<Options> = ({ options }) =>
 			add(surface, BIT.country)
 		}
 
-		// ── region (US first cut): state names + USPS abbreviations ──────────────────────────────────
+		// ── region (US first version): state names + USPS abbreviations ──────────────────────────────────
 		for (const name of Object.values(US_STATE_BY_ABBREVIATION)) {
 			add(name, BIT.region)
 		}

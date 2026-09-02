@@ -89,7 +89,7 @@ export const WIKIDATA_USER_AGENT =
  *
  * Set as `minRequestIntervalMs` rather than `requestsPerMinute` deliberately — `AGENTS.md` records that
  * `requestsPerMinute` is a BUDGET model whose cooldown lets N requests go out back to back, so it does not deliver N
- * per minute and is not the gate that holds a rate. The interval is.
+ * per minute and is not the check that holds a rate. The interval is.
  */
 const WDQS_MIN_REQUEST_INTERVAL_MS = 1000
 
@@ -219,8 +219,8 @@ export interface CreateWikidataClientOptions {
 	 */
 	clock?: ClockLike
 	/**
-	 * Axios overrides, merged over this client's defaults. THE TEST SEAM — pass an `adapter` and no live call is made.
-	 * Overriding `headers` wholesale would drop the required `User-Agent`, so don't.
+	 * Axios overrides, merged over this client's defaults. THE TEST INJECTION POINT — pass an `adapter` and no live call
+	 * is made. Overriding `headers` wholesale would drop the required `User-Agent`, so don't.
 	 */
 	axios?: ConstructorParameters<typeof APIClient>[0]["axios"]
 }

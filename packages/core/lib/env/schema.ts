@@ -68,7 +68,7 @@ export const PublicEnvSchema = z.object({
 	MAILWOMAN_TEMP_ROOT: blankAsAbsent(z.string().default(DefaultMailwomanPaths.temp)),
 
 	// Corpus source-fetch tools (`corpus/src/tools/fetch/*` — env knobs are now command flags; these remain for compat). Callers do their own numeric/boolean parsing on these,
-	// so they stay raw strings — the schema only gates which keys surface, not how they're coerced.
+	// so they stay raw strings — the schema only selects which keys surface, not how they're coerced.
 	OUT_ROOT: z.string().optional(),
 	NAD_MODE: z.string().optional(),
 	NAD_URL: z.string().optional(),
@@ -134,7 +134,7 @@ export const PublicEnvSchema = z.object({
 	 */
 	MAILWOMAN_TEST_ONNX_MODEL: z.string().optional(),
 	/**
-	 * Override the ONNX model exercised by the capability gate.
+	 * Override the ONNX model exercised by the capability check.
 	 */
 	MAILWOMAN_CAPABILITY_ONNX_MODEL: z.string().optional(),
 	MAILWOMAN_DIAG_INTERP: z.string().optional(),
@@ -145,20 +145,20 @@ export const PublicEnvSchema = z.object({
 	 * tag's allowed parents in `containmentFor(system)`. UNSET (the default) = child-only, byte-identical to every
 	 * pre-#46 build.
 	 *
-	 * A bar-gated toggle, not a shipped knob: the mechanism stays off until the four bars in
+	 * A bar-conditional toggle, not a shipped knob: the mechanism stays off until the four bars in
 	 * `docs/superpowers/plans/2026-08-04-pix1-whole-edge-preregistration.md` clear, and this is how the ON leg of B-1's
 	 * ON-vs-OFF comparison is driven through `mailwoman eval gauntlet` without a code edit between the two runs.
 	 */
 	MAILWOMAN_PAIR_PARENT_DELTA: blankAsAbsent(z.coerce.number().optional()),
 	/**
-	 * Gates the with-data half of `mailwoman/test/dropin-cold-start.test.ts` — a real `mailwoman data pull candidate`
+	 * Selects the with-data half of `mailwoman/test/dropin-cold-start.test.ts` — a real `mailwoman data pull candidate`
 	 * (~1.65 GB) plus booting all three drop-in servers against it. Unset in CI; the always-on half (missing-data +
 	 * libpostal's zero-data boot) downloads nothing and needs no guard.
 	 */
 	MAILWOMAN_COLD_START_FULL: z.string().optional(),
 	/**
-	 * Reuse an already-populated data root for the gated cold-start suite above instead of pulling candidate.db fresh
-	 * into a throwaway temp dir — avoids a redundant ~1.65 GB re-download across repeated local runs.
+	 * Reuse an already-populated data root for the conditional cold-start suite above instead of pulling candidate.db
+	 * fresh into a throwaway temp dir — avoids a redundant ~1.65 GB re-download across repeated local runs.
 	 */
 	MAILWOMAN_COLD_START_DATA_ROOT: z.string().optional(),
 	MW_DUMP_REGRESSIONS: z.string().optional(),

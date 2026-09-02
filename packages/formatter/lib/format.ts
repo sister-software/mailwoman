@@ -13,7 +13,7 @@
  *   (vendored via `@fragaria/address-formatter`, MIT) so callers get idiomatic per-country output
  *   without reinventing template logic. Owning our own templates — so we can express the slots
  *   OpenCage can't (`unit`, `intersection`, `cedex`, the JP tags) — is a deliberate follow-up; this
- *   first cut keeps Fragaria as the engine and concentrates the mapping in one place.
+ *   first version keeps Fragaria as the engine and concentrates the mapping in one place.
  *
  *   Known limitations inherited from the OpenCage vocabulary (documented, not blockers):
  *

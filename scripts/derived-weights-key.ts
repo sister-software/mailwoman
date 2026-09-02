@@ -180,14 +180,14 @@ export function derivedWeightsDir(key: string): string {
  * stale-compiled builder wrote, and served it as a HIT indefinitely (#1528). A `postcode-<cc>.bin` is refused when its
  * PCB1 header is malformed or its record count sits below the LOWEST calibrated floor for that country — for GB that is
  * the outward floor, so a legitimate outward-granularity bin is never false-refused while the empty/collapsed class
- * always is. The calibrated per-granularity gate remains the builder's; this one only has the header to read.
+ * always is. The calibrated per-granularity check remains the builder's; this one only has the header to read.
  *
  * Non-postcode entries (pair indexes) pass — their reader validates a typed header on load, and no measured floor
  * exists for them yet.
  */
 /**
- * Magic (4) + u32 recordCount (4) + u8 countryCount (1) — the PCB1 prefix the serve gate reads; anything shorter cannot
- * carry a record count at all.
+ * Magic (4) + u32 recordCount (4) + u8 countryCount (1) — the PCB1 prefix the serve check reads; anything shorter
+ * cannot carry a record count at all.
  */
 const PCB1_HEADER_BYTES = 9
 

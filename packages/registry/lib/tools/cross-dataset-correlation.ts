@@ -13,7 +13,7 @@
  *   to canonical entities, and report the entities whose members span ≥2 sources — those are the
  *   cross-dataset links. We surface the correlation; interpretation is the consumer's.
  *
- *   Tractable cut: TX-scoped, capped per source. Streams the 4.8 GB NPPES registry via `streamRows`.
+ *   Tractable slice: TX-scoped, capped per source. Streams the 4.8 GB NPPES registry via `streamRows`.
  *
  *   Run: `mailwoman registry scorer-eval cross-dataset [--cap 300] [--wof <admin.db>]
  *   [--data-root <dir>] [--out-md docs/articles/evals/matcher-dedup/<date>-...md]`
@@ -214,7 +214,7 @@ export async function crossDatasetCorrelation(
 	let geo = 0
 	let total = 0
 
-	// Count placements at the seam (parity with the retired in-script counter).
+	// Count placements at the boundary (parity with the retired in-script counter).
 	const seam: GeocodeAddress = async (raw) => {
 		const g = await geocoder.seam(raw)
 
@@ -233,7 +233,7 @@ export async function crossDatasetCorrelation(
 
 	for (const spec of SPECS) {
 		const rows = rawBySource.get(spec.source)!
-		// Per-source geocode-rate snapshot (#694 diagnostic): the seam counters are global, so delta
+		// Per-source geocode-rate snapshot (#694 diagnostic): the boundary counters are global, so delta
 		// them across each source to see WHERE nulls concentrate in the aggregate run.
 		const g0 = geo
 		const t0 = total

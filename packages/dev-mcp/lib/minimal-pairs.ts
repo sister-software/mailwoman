@@ -66,10 +66,10 @@ interface RungReading {
 	lon: number | null
 	tier: string
 	/**
-	 * The #1649 intent gate's verdict, when it fired on this rung.
+	 * The #1649 intent check's verdict, when it fired on this rung.
 	 *
 	 * A refused rung has NO components and no coordinate, and is otherwise indistinguishable from an input the parser
-	 * could make nothing of. It is the opposite: the gate discards a COMPLETED tree. `Cafe at St Mary's, Oxford` parses
+	 * could make nothing of. It is the opposite: the eval discards a COMPLETED tree. `Cafe at St Mary's, Oxford` parses
 	 * to `locality=Oxford › dependent_locality=St Mary's › street=Cafe` and is then refused as a thing-query, while `The
 	 * Cafe at St Mary's, Oxford` is not — so a ladder over the two reads as a parse collapse unless the refusal is named
 	 * here.

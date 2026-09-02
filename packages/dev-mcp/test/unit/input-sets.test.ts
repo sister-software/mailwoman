@@ -12,8 +12,8 @@ import { describe, expect, it } from "vitest"
 
 /**
  * The board and parity corpora are COMMITTED, so they grade everywhere. The panel and golden sets live under
- * `$MAILWOMAN_DATA_ROOT` and are absent in CI, so their suites are presence-gated the way `weights.test.ts` gates on
- * the dev model.
+ * `$MAILWOMAN_DATA_ROOT` and are absent in CI, so their suites are presence-conditional the way `weights.test.ts`
+ * checks on the dev model.
  *
  * A skipped suite is not a passing one: these assertions hold only on a machine carrying the artifacts, and CI's green
  * tick says nothing about them.

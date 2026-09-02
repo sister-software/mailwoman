@@ -76,7 +76,7 @@ export const MAX_ANCESTOR_DEPTH = 8
 export const CANDIDATE_ANCESTOR_TABLE = "candidate_ancestor"
 
 /**
- * The interval-label table's name — the closure table's seal-time sibling; existence-gated the same way.
+ * The interval-label table's name — the closure table's seal-time sibling; existence-restricted the same way.
  */
 export const CANDIDATE_INTERVAL_TABLE = "candidate_interval"
 

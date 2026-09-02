@@ -12,7 +12,7 @@
  *   the issue stays a live mirror of the working plan without the agent spending a turn on bookkeeping.
  *
  *   It NEVER blocks, on the same reasoning as `symbol-precheck.ts`: every failure path is silence, and the sync work
- *   itself runs in a DETACHED worker so the hook adds no latency to the turn. Three conditions gate the worker, each
+ *   itself runs in a DETACHED worker so the hook adds no latency to the turn. Three conditions check the worker, each
  *   making a no-op explicit rather than accidental:
  *
  *   - `.claude/state/linked-issue` must exist (the skill writes it; no link, no sync — most sessions have none).

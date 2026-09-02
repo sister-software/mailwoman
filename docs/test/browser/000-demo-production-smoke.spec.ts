@@ -4,7 +4,7 @@
  *   demo served no WOF hits, no FST, and no street tier — version parity is not functional parity. Every one of those
  *   three failures produced zero console errors; the only symptom was degraded results. So this smoke grades the
  *   RESULTS, not the absence of errors. Tagged `@smoke`: `demo-smoke.yml` runs THIS spec (and only this) against the
- *   deployed site daily via `MAILWOMAN_DEMO_URL`. It also runs in the local build gate like every other browser spec,
+ *   deployed site daily via `MAILWOMAN_DEMO_URL`. It also runs in the local build check like every other browser spec,
  *   so a refactor that breaks the cascade fails in CI before it ships. Two addresses, chosen to light up all three
  *   tiers at once:
  *

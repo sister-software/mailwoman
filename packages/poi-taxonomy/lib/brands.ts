@@ -7,7 +7,7 @@
  *   `poi.db` by `mailwoman/gazetteer-pipeline/poi/build-brands.ts` (`mailwoman gazetteer build
  *   poi-brands`). Same loader + module-level-singleton shape as `lookup.ts`'s category lookup.
  *
- *   Matching is exact-phrase only, no locale gating (brand names aren't a locale-synonym concern the way
+ *   Matching is exact-phrase only, no locale filtering (brand names aren't a locale-synonym concern the way
  *   "chemist"/"drugstore" are) — see `brands-lookup-core.ts` for the shared matching core with the
  *   browser-safe `./table` entry.
  *
@@ -34,7 +34,7 @@ export function lookupPOIBrand(text: string) {
 }
 
 /**
- * The single best (highest-`rows`) brand for an exact-phrase match, if any — the chaining seam for part 2.
+ * The single best (highest-`rows`) brand for an exact-phrase match, if any — the chaining point for part 2.
  */
 export function resolveBrandName(name: string): BrandRecord | undefined {
 	return CORE.resolveBrandName(name)

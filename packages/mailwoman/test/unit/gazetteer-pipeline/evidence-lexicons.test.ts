@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The three-law selectivity's unit surface (pure functions) + a DB-gated integration pass for the
+ *   The three-law selectivity's unit surface (pure functions) + a DB-conditional integration pass for the
  *   locality-surface build. Each law traces to a falsified training run (v3.16→v3.18) — these tests
  *   are the regression fence around that tuition.
  */

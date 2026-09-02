@@ -36,7 +36,7 @@ export { type WebONNXRunnerDiagnostics } from "#web-onnx-runner"
  * the input text (a US and a GB address in the same session need DIFFERENT indexes), the loader can no longer pick one
  * live resolver at load time. So EVERY successfully-fetched index is now constructed into a live
  * {@link PairIndexResolver} and retained here, tagged by its header country — the per-parse selection (see
- * {@link LoadResult.selectPairIndexForText}) chooses among them at decode time. (#1300's load-time country gate —
+ * {@link LoadResult.selectPairIndexForText}) chooses among them at decode time. (#1300's load-time country restriction —
  * construct only the one matching index — is superseded; the `country` load-option survives as an optional
  * CONFIG-DEFAULT posture pin, see {@link LoadFromURLsOptions.country}.)
  */
@@ -142,7 +142,7 @@ export interface LoadFromURLsOptions {
 	 * selection of WHICH index biases a given parse is a per-parse decision — see
 	 * {@link LoadResult.selectPairIndexForText}, which runs locale-gate over the input text — because one loaded
 	 * classifier serves inputs from multiple countries and the country is a property of the text, not the load. (#1300's
-	 * load-time single-index country gate is superseded; the `country` load-option below survives as an optional
+	 * load-time single-index country restriction is superseded; the `country` load-option below survives as an optional
 	 * config-default posture pin.)
 	 */
 	pairIndexURLs?: readonly string[]
@@ -156,7 +156,8 @@ export interface LoadFromURLsOptions {
 	 *
 	 * OMITTED (the recommended shape for the multi-locale demo) sets NO config default — every parse's prior comes solely
 	 * from the per-parse selection, and an input that matches no loaded index decodes byte-stable (no prior). Note the
-	 * behavior change from #1300: omission no longer defaults to `"us"`/gates loading — it means "detect per parse."
+	 * behavior change from #1300: omission no longer defaults to `"us"` or restricts loading — it means "detect per
+	 * parse."
 	 *
 	 * There is still no browser-side AUTO-detection at LOAD time (nothing here knows a locale before any text arrives);
 	 * detection happens per parse, on the actual input, in {@link LoadResult.selectPairIndexForText}.
@@ -210,7 +211,7 @@ export interface LoadFromURLsOptions {
 	/**
 	 * Span bridge (v4.4.0 declared behavior): merge same-tag spans split at intra-token punctuation ("P.O. Box").
 	 * Defaults to TRUE per the v4.4.0 ship config (model-card.json: po_box 60.4 without, 89.1 with). Pass false to
-	 * disable for pre-bridge bundles where gate parity matters.
+	 * disable for pre-bridge bundles where parity of that restriction matters.
 	 */
 	bridgePunctuationGaps?: boolean
 	/**
@@ -261,7 +262,7 @@ async function loadPostcodeAnchorLookup(
 }
 
 /**
- * Reduce {@link LoadFromURLsOptions.country} to the bare country code the pair-index gate compares. A full locale
+ * Reduce {@link LoadFromURLsOptions.country} to the bare country code the pair-index restriction compares. A full locale
  * ("en-gb") yields its country subtag ("gb") — the node classifier's exact `localeCountry` derivation — and a bare code
  * ("gb") passes through unchanged (a browser-side widening: the node path only ever receives locales). Omitted =
  * `"en-us"` → `"us"`, the node default.
@@ -278,12 +279,12 @@ export function resolvePairGateCountry(country: string | undefined): string {
  * with a loud `console.warn` naming the URL — never a rejection that blocks the classifier load. Older HF release
  * versions ship no pair indexes at all, and the prior is a soft decode channel, not a required model input.
  *
- * **Phase 2 (#1278): NO load-time country gate.** Every successfully-fetched index is constructed into a live
+ * **Phase 2 (#1278): NO load-time country restriction.** Every successfully-fetched index is constructed into a live
  * {@link PairIndexResolver} and retained, tagged by its header country. The per-parse selection
  * ({@link resolvePairIndexForText}) chooses among them at decode time from the input text's detected country — a load
  * that serves a US and a GB address in one session needs BOTH resolvers live. (#1300 constructed only the single
- * gate-matching index; that peek-before-construct economy is dropped deliberately — the multi-locale demo needs them
- * all, and a handful of small pair maps is cheap.)
+ * matching index; that peek-before-construct economy is dropped deliberately — the multi-locale demo needs them all,
+ * and a handful of small pair maps is cheap.)
  */
 async function loadPairIndexes(urls: readonly string[], fetchImpl: typeof fetch): Promise<LoadedPairIndex[]> {
 	const settled = await Promise.all(

@@ -16,7 +16,7 @@ export type JSONValue = string | number | boolean | null | JSONValue[] | { [key:
 
 /**
  * A caller-supplied per-token normalizer (case folding, diacritic stripping, script folding — the consumer's domain).
- * This is the tokenizer-normalization seam: the SAME function must be applied on the build side ({@link
+ * This is the tokenizer-normalization boundary: the SAME function must be applied on the build side ({@link
  * AncestrieBuilderOptions.normalizeToken}) and the query side ({@link AutocompleteOptions.normalizeToken}), or queries
  * will silently miss — the package never normalizes on its own.
  */
@@ -174,9 +174,9 @@ export interface AutocompleteResult<TPayload = Uint8Array | JSONValue> {
 }
 
 /**
- * The storage seam: what the algorithm half of this package ({@link autocomplete}) requires of a reader. The sealed
- * {@link Ancestrie} class is the canonical implementation; a consumer whose entries live in its own structure — an
- * in-memory trie, a different binary format — supplies an adapter instead of re-implementing the algorithm
+ * The storage interface: what the algorithm half of this package ({@link autocomplete}) requires of a reader. The
+ * sealed {@link Ancestrie} class is the canonical implementation; a consumer whose entries live in its own structure —
+ * an in-memory trie, a different binary format — supplies an adapter instead of re-implementing the algorithm
  * (`@mailwoman/resolver-wof-sqlite`'s FST gazetteer is the worked example: its `FST\0` artifacts predate this package
  * and stay in their own format, so its `fst-autocomplete` wraps the matcher in this contract).
  *

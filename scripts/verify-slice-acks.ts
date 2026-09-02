@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pre-training gate: verifies that every slice in MANIFEST.json which has `lint_flags > 0` ALSO has
+ *   Pre-training check: verifies that every slice in MANIFEST.json which has `lint_flags > 0` ALSO has
  *   `lint_acknowledged: true`. Exits non-zero if any flagged slice is unacknowledged, blocking the
  *   training run.
  *
  *   Pairs with ``mailwoman dev lint corpus-slice`` (which emits the flag count) and the MANIFEST schema
- *   extension introduced 2026-05-29 after the v0.6.2 "5th Avenue Theatre" incident. The gating
+ *   extension introduced 2026-05-29 after the v0.6.2 "5th Avenue Theatre" incident. The enforcing
  *   model is "report + acknowledgment, not block":
  *
  *   - Linter flags suspicious patterns and writes the count to MANIFEST.

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build-health gate. Runs the real production build (`docusaurus build`) and asserts it both
+ *   Build-health check. Runs the real production build (`docusaurus build`) and asserts it both
  *   succeeds AND emits no warnings/errors — most importantly Docusaurus's broken-anchor /
  *   broken-link warnings, which only surface during the static-site-generation phase, not during
  *   typecheck or bundling.

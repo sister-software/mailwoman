@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Register gating fence (Decision A): `parse(text, { inputMode: "formatted" })` must run the
+ *   Register enforcement fence (Decision A): `parse(text, { inputMode: "formatted" })` must run the
  *   evidence-bundle channels OFF (the curriculum-trained absence identity) while every other channel
  *   feeds unchanged; `"fragmented"` (and the bare-library default, unset) feeds them. Asserted at the
- *   runner boundary via a stub — the same seam the ONNX session sees.
+ *   runner boundary via a stub — the same interface the ONNX session sees.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -53,7 +53,7 @@ async function makeClassifier(seen: { evidence: unknown[] }) {
 	})
 }
 
-describe("inputMode register gating (Decision A)", () => {
+describe("inputMode register enforcement (Decision A)", () => {
 	it("formatted mode withholds the evidence channels", async () => {
 		const seen = { evidence: [] as unknown[] }
 		const classifier = await makeClassifier(seen)
@@ -73,7 +73,7 @@ describe("inputMode register gating (Decision A)", () => {
 		await classifier.parse("Springfield", { inputMode: "fragmented" })
 		expect(seen.evidence).toHaveLength(1)
 		// The street channel rides (all-zero confidence on a street-word-less input — inert by
-		// construction); the LOCALITY channel is what the gate withholds.
+		// construction); the LOCALITY channel is what the eval withholds.
 		const evidence = seen.evidence[0] as { streetType?: unknown; localitySurface?: unknown }
 		expect(evidence.localitySurface).toBeUndefined()
 		expect(evidence.streetType).toBeDefined()

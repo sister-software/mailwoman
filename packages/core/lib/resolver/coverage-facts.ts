@@ -9,7 +9,7 @@
  */
 
 /**
- * One country's measured hard-filter coverage fact, as recorded at a promote gate. Facts about the gazetteer artifact
+ * One country's measured hard-filter coverage fact, as recorded at a promote eval. Facts about the gazetteer artifact
  * live IN the artifact (the `country_coverage` table the gazetteer build emits) — code constants are only the fallback
  * for artifacts that predate the manifest.
  *
@@ -23,9 +23,9 @@ export interface CountryCoverageFact {
 	 */
 	country: string
 	/**
-	 * The promote-gate VERDICT: hard-filtering this country is a pure win (a hard-filter miss is almost always a genuine
-	 * non-match, not a coverage gap). Stored as a verdict — not re-derived from `hardResolveRate` at read time — because
-	 * the gate is a judgment over a panel, not a pure rate function (CA cleared at the #928 promote on the
+	 * The promotion-eval VERDICT: hard-filtering this country is a pure win (a hard-filter miss is almost always a
+	 * genuine non-match, not a coverage gap). Stored as a verdict — not re-derived from `hardResolveRate` at read time —
+	 * because the check is a judgment over a panel, not a pure rate function (CA cleared at the #928 promote on the
 	 * postcode-format-prior rationale despite a sub-95% panel resolve rate).
 	 */
 	hardFilterSafe: boolean
@@ -38,11 +38,11 @@ export interface CountryCoverageFact {
 	 */
 	sampleSize?: number
 	/**
-	 * ISO-8601 date of the measurement / promote gate.
+	 * ISO-8601 date of the measurement / promote eval.
 	 */
 	measuredAt: string
 	/**
-	 * The receipt: which panel/gate produced this row (issue + date, human-readable).
+	 * The receipt: which panel/check produced this row (issue + date, human-readable).
 	 */
 	source: string
 }

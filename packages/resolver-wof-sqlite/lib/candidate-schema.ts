@@ -99,7 +99,7 @@ export interface CandidateTable {
 	 *   core.
 	 *
 	 * NULL = no role detected. The column is WRITE-ONLY in this build generation: no ranking consumer reads it — a rank
-	 * penalty is its own future, D-rule-gated step with the `gloss_key` board as regression check.
+	 * penalty is its own future, D-rule-conditional step with the `gloss_key` board as regression check.
 	 */
 	name_role: string | null
 }

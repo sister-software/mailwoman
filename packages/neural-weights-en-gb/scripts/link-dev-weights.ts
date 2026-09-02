@@ -27,7 +27,7 @@
  *   artifact with it. `street-type-lexicon-v*.json` is committed under `data/gazetteer/`;
  *   `locality-surface-lexicon-v*.json` is 7-13 MB and lives in the data root under `gazetteer/`.
  *
- *   `postcode-gb.bin` is CARD-GATED, and that gate is the interesting decision in this file — the
+ *   `postcode-gb.bin` is CARD-CONDITIONAL, and that condition is the interesting decision in this file — the
  *   full reasoning sits at the build step below. Short version: the binary helps only a model whose
  *   encoder actually trained on letter-bearing GB anchor keys, and the card says whether this is one
  *   (`requires.anchor.span_mode === "shaped"`). Declared → build it from the licence-clean Code-Point
@@ -221,7 +221,7 @@ for (const { channel, source } of EVIDENCE_LEXICONS) {
  */
 const CLI = workspacePath("mailwoman", "out", "cli.js")
 
-// --- postcode-gb.bin: CARD-GATED, not unconditional -------------------------------------
+// --- postcode-gb.bin: CARD-CONDITIONAL, not unconditional -------------------------------------
 //
 // The GB anchor binary is the one artifact whose correctness depends on WHICH MODEL is loaded, so it
 // is built only when the card says the model can use it.
@@ -235,7 +235,7 @@ const CLI = workspacePath("mailwoman", "out", "cli.js")
 // found package-dir-relative and silently re-enables the regression with no warning, because a present
 // artifact is exactly what the loader expects.
 //
-// The gate that resolves both states is the CARD's `requires.anchor.span_mode`. `shaped` is declared
+// The check that resolves both states is the CARD's `requires.anchor.span_mode`. `shaped` is declared
 // only by a model trained against a lookup with letter-bearing keys (`pilot-anchor-lookup-v2` and
 // after), and that is precisely the model for which the bin helps. So: declared `shaped` → build it;
 // anything else → remove any stale copy, loudly. No flag, no lockstep constant to forget — the same
@@ -259,7 +259,7 @@ const GB_POSTCODE_EXTRACT = "postalcode-gb-codepoint.db"
 /**
  * Keys the built binary must carry (1,746,976 units + 2,863 outward districts) — the GB half of the training lookup
  * `pilot-anchor-lookup-v2` verbatim. `gazetteer postcode-binary` enforces its own floor and exits nonzero below it, so
- * this number is documentation rather than a second gate.
+ * this number is documentation rather than a second check.
  */
 const GB_POSTCODE_BIN_KEYS = 1_749_839
 

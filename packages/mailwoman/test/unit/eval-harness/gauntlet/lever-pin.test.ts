@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the Gauntlet's RESOLVER-lever pin (#42, 2026-08-05) — the plumbing that lets the gate grade a resolver
+ *   Tests for the Gauntlet's RESOLVER-lever pin (#42, 2026-08-05) — the plumbing that lets the check grade a resolver
  *   configuration, not just a model.
  *
- *   These assert a mapping, deliberately: `run options → layer options → geocode deps`. The gate itself needs the ~9 GB
+ *   These assert a mapping, deliberately: `run options → layer options → geocode deps`. The check itself needs the ~9 GB
  *   database set and a loaded ONNX, so a test that ran it would be an integration run, not a check — and the failure mode
- *   this surface exists to prevent is silent. A dropped pin does not throw; it produces a gate log identical to the
+ *   this surface exists to prevent is silent. A dropped pin does not throw; it produces a check log identical to the
  *   unpinned one, which reads exactly like "the lever changed nothing". Every hop is therefore pinned here.
  */
 
@@ -174,7 +174,7 @@ describe("runResolverLevers forwards BOTH halves of the prior tri-state", () => 
 	// The bug this pins: while the prior was opt-in, the builder forwarded only the truthy half
 	// (`...(options.gazetteerPrior ? { gazetteerPrior: true } : {})`). After the default-on flip that silently
 	// discarded `--gazetteer-prior-off`, so the OFF arm graded the DEFAULT configuration while its log said
-	// `gazetteerPrior=OFF` — the exact "two gate logs that differ only in a flag someone typed" failure the levers
+	// `gazetteerPrior=OFF` — the exact "two lever logs that differ only in a flag someone typed" failure the levers
 	// line exists to prevent. Caught by running the off arm and reading the board, not by a test.
 	it("keeps an explicit false", () => {
 		expect(runResolverLevers({ gazetteerPrior: false })).toEqual({ gazetteerPrior: false })

@@ -5,7 +5,7 @@
  *
  *   #936 option 3 — `officialNameExact`: an OFFICIAL name (preferred form in an official language
  *   of the place's country, `names.official = 1` from the #940 ingest bit) joins the NAME-exact
- *   sub-tier instead of the alias-exact one, floor-gated on the holder's population. The Åbo
+ *   sub-tier instead of the alias-exact one, floor-conditioned on the holder's population. The Åbo
  *   fixture mirrors the motivating row: unscoped "Åbo" must reach Turku (its official Swedish
  *   name, pop 207k) rather than a hamlet literally named Åbo — while Paris Township's plain alias
  *   still loses to Paris' own name, and pre-#940 gazetteers (no `official` column) fail soft.

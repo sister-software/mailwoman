@@ -6,7 +6,7 @@
  *   CLI integration tests for `mailwoman reverse <lat> <lon>` (#484).
  *
  *   Error-path tests run unconditionally against the compiled CLI (node out/cli.js). The end-to-end
- *   suite gates on both real DB env vars — same pattern as resolve-flag.test.ts and
+ *   suite checks on both real DB env vars — same pattern as resolve-flag.test.ts and
  *   resolver-wof-sqlite/reverse.test.ts:
  *
  *   - MAILWOMAN_WOF_ADMIN_DB — admin gazetteer with place_bbox R*Tree

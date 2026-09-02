@@ -198,7 +198,7 @@ class SemiMarkovCRF(nn.Module):
         """Argmax segmentation per row — same recurrence as ``log_partition`` with max for logsumexp.
 
         Phase 3 extends this to k-best (keep the top-k per state instead of the max); the 1-best form
-        is what Phase 1's ``seg@1`` gate needs.
+        is what Phase 1's ``seg@1`` check needs.
         """
         scores = span_scores.float() + self._length_mask(span_scores.device)
         batch, _, _, num_types = scores.shape

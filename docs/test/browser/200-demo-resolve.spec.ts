@@ -26,10 +26,10 @@ test.describe("Demo — resolution cascade", () => {
 		demo.console.assertNoFailEvents()
 	})
 
-	test("German address — postcode 10115 country-gates into Berlin, not New York", async ({ demo }) => {
+	test("German address — postcode 10115 country-restricts into Berlin, not New York", async ({ demo }) => {
 		// Regression for the candidate-table cascade: 10115 is both a Berlin DE postcode and a New York US
 		// ZIP, and the gazetteer now carries US + DE/FR/EU postcodes. The locality must resolve first
-		// (Berlin → DE by population) and country-gate the postcode, so it resolves to the DE 10115 point —
+		// (Berlin → DE by population) and country-restrict the postcode, so it resolves to the DE 10115 point —
 		// IN Berlin — never the NYC ZIP. Grade the COORDINATE (postcode-precise now): Berlin ≈ 52.5, 13.4,
 		// not Manhattan ≈ 40.8, -74.0.
 		await demo.goto("5 Hauptstraße, Berlin, Berlin 10115")
@@ -44,7 +44,7 @@ test.describe("Demo — resolution cascade", () => {
 	test("Canadian address — postcode M5H 2N2 resolves into Toronto (the -20f CA coverage)", async ({ demo }) => {
 		// -20f folds Canada's Overture divisions into the admin gazetteer (Toronto, Montréal, … — absent
 		// before) PLUS 843k CA postcode centroids. So "Toronto" resolves to Ontario (top by population),
-		// the cascade country-gates to CA, and the CA postcode is reachable. Grade the COORDINATE:
+		// the cascade country-restricts to CA, and the CA postcode is reachable. Grade the COORDINATE:
 		// downtown Toronto ≈ 43.6, -79.4 — not Toronto, Ohio (40.46), where it landed pre-CA-admin.
 		await demo.goto("100 Queen Street West, Toronto, ON M5H 2N2")
 		await demo.submit()
@@ -88,7 +88,7 @@ test.describe("Demo — resolution cascade", () => {
 
 	// -20j (2026-06-24a) adds postcodes for PT/PL/CZ/AU — absent from the prior -20h build, so these
 	// countries had no postcode tier on the demo at all. Each case feeds locality + postcode + country
-	// and grades the resolved coordinate against the city bbox: the cascade country-gates and the new
+	// and grades the resolved coordinate against the city bbox: the cascade country-restricts and the new
 	// postcode (or its locality) is reachable. Pairs with the v4.14.0 AU model (postcode-first format).
 	const newPostcodeCases: { name: string; query: string; lat: number; lon: number; tolDeg: number }[] = [
 		{

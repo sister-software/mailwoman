@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `node:sqlite` → typed-row seam, in ONE place.
+ *   The `node:sqlite` → typed-row boundary, in ONE place.
  *
  *   `node:sqlite` types every result as `Record<string, SQLOutputValue>` because it cannot infer a row shape from SQL
  *   text, so every raw read needs an assertion somewhere. That assertion belongs at this boundary rather than repeated

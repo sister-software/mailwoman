@@ -65,7 +65,7 @@ describe("hardCountryFor — #743/#194 coverage-guarded hard country filter", ()
 		expect(hardCountryFor("ES", 0.99, { hardCountry: "US" }, ON, undefined)).toBeUndefined()
 	})
 
-	it("honours a safelist override (how the eval measures ungated to grow the list)", () => {
+	it("honours a safelist override (how the eval measures unrestricted to grow the list)", () => {
 		expect(hardCountryFor("FI", 0.99, {}, ON, new Set(["FI"]))).toBe("FI")
 		expect(hardCountryFor("ES", 0.99, {}, ON, new Set(["FI"]))).toBeUndefined()
 	})

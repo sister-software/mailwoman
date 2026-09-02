@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Pair-index asset URL construction (2026-08-05). History: the binaries were published flat at
- *   `mailwoman/pair-index/pair-index-<cc>.bin` and re-cut IN PLACE for PIX schema 3 — the objects
+ *   `mailwoman/pair-index/pair-index-<cc>.bin` and rebuilt IN PLACE for PIX schema 3 — the objects
  *   carry `immutable` Cache-Control, so the CDN served the schema-1 bytes for a week while the
  *   site's reader threw on them (`schemaVersion 1 predates the typed parent record`), and the fix
  *   was a manual purge. Every other model-independent artifact (gazetteer, poi, national street

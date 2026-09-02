@@ -110,7 +110,7 @@ if (otp) {
 	publishArgs.push("--otp", otp)
 }
 
-// npm can only mint a provenance attestation from a CI provider it supports, so this is gated on GitHub Actions
+// npm can only mint a provenance attestation from a CI provider it supports, so this is conditioned on GitHub Actions
 // rather than on CI generally: a local `yarn release` passing --provenance fails outright, with no OIDC token to
 // sign against. Trusted Publishing works either way — the attestation is the part that needs the CI identity.
 //

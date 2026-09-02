@@ -100,7 +100,7 @@ STAGE3_BIO_LABELS: Final[tuple[str, ...]] = (
 # The existing STAGE3 ``unit`` tag is deliberately KEPT as the bare unit-id role rather than renamed to
 # ``unit_id`` — a rename would rewrite every ``unit``-labeled corpus row. A ``unit`` → ``unit_id``
 # rename, plus reconciling the JP ``building_number``/``building_name`` declarations against
-# ``building_designator``/``building_id``, is a version-gated batch for the activation bump, not
+# ``building_designator``/``building_id``, is a version-conditional batch for the activation bump, not
 # piecemeal here (same discipline as the #875 casing batch).
 #
 # ACTIVATION (coupled, deliberately deferred — rides the v7-adjacent label-stage bump): bumping
@@ -268,17 +268,17 @@ def active_components_present(components_keys: list[str]) -> bool:
 
     Used to filter training rows per Phase 2 §5.1.
 
-    The v0.1.0 gate required ``country`` plus one of (region, locality, postcode),
-    modelled on wof-admin's "Paris, France"-style rows. That gate silently dropped every
+    The v0.1.0 check required ``country`` plus one of (region, locality, postcode),
+    modelled on wof-admin's "Paris, France"-style rows. That check silently dropped every
     non-wof-admin source in corpus v0.2.0 — BAN, TIGER, NPPES, IMLS, state-* all label
     house_number / street / postcode / locality / region without a country token, because
-    country is implicit in the data source's geography. The strict gate was the upstream
+    country is implicit in the data source's geography. The strict check was the upstream
     cause of the v0.1.0 positional-heuristic overfit (PR #42, issue #43): pre-filter the
     training data was ~73% wof-admin, post-filter ~100% wof-admin.
 
-    v0.2.0 relaxed the gate to "at least one coarse tag". v0.3.0 broadens further: "at
+    v0.2.0 relaxed the check to "at least one coarse tag". v0.3.0 broadens further: "at
     least one ACTIVE tag" — rows with only fine tags (e.g. BAN's house_number + street,
-    TIGER's street-only ADDRFEAT segments) now contribute. The gate's purpose is to drop
+    TIGER's street-only ADDRFEAT segments) now contribute. The check's purpose is to drop
     rows with no usable supervision at all, not to enforce a particular schema shape.
     """
     return bool(set(components_keys) & set(ACTIVE_TAGS))

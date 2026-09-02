@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Load-time capability delta-gate (#718/#719). The structural fix that makes the D2/#719 bug-class
+ *   Load-time capability delta check (#718/#719). The structural fix that makes the D2/#719 bug-class
  *   — a conventions `forbiddenTags` row destroying a tag the model demonstrably emits — impossible
  *   to ship: `createScorer` reads the model-card's `capabilities` block and FAILS CLOSED when a
  *   conventions row forbids a certified tag (`maskOffF1 − maskOnF1 > 5pp`).
@@ -37,7 +37,7 @@ const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const GAZETTEER = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
 const MODEL_CARD = workspacePath("neural-weights-en-us", "model-card.json")
 
-// All channels must be feedable: createScorer runs the gate in `strict` mode, and the v1.5.0 card
+// All channels must be feedable: createScorer runs the eval in `strict` mode, and the v1.5.0 card
 // declares anchor+gazetteer required — a missing channel would throw an UnfedChannelError that masks
 // the capability-gate behavior we're testing. Skip the whole suite unless the full feed is present.
 const haveAll = (await Promise.all([MODEL, TOKENIZER, ANCHOR, GAZETTEER, MODEL_CARD].map((p) => pathExists(p)))).every(
@@ -53,8 +53,8 @@ const baseOpts = {
 	strict: true as const,
 }
 
-describe.skipIf(!haveAll)("createScorer capability delta-gate (#718/#719)", () => {
-	// Save/restore the live FR conventions row — the gate reads the shared in-memory codex table, so a
+describe.skipIf(!haveAll)("createScorer capability delta check (#718/#719)", () => {
+	// Save/restore the live FR conventions row — the eval reads the shared in-memory codex table, so a
 	// synthetic forbid mutates it for the duration of one test and must be reverted.
 	let savedFr: AddressSystemConventions | undefined
 
@@ -75,7 +75,7 @@ describe.skipIf(!haveAll)("createScorer capability delta-gate (#718/#719)", () =
 
 	test("THROWS when a synthetic FR forbid re-adds street_prefix — a CERTIFIED tag (catches the #719 bug at load)", async () => {
 		// Re-introduce the original bug: forbid street_prefix for FR. The model is certified at maskOff
-		// F1 80 (server tier) with NO benign maskOn measurement → the gate must reject this mask.
+		// F1 80 (server tier) with NO benign maskOn measurement → the eval must reject this mask.
 		;(ADDRESS_SYSTEM_CONVENTIONS as Record<string, AddressSystemConventions | undefined>).fr = {
 			...savedFr,
 			forbiddenTags: ["street_prefix", "street_suffix"],

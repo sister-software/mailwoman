@@ -67,7 +67,7 @@
  *   should reach this artifact through {@link PostcodePrefixIndexLike} — a structural interface, the
  *   same `…Like` convention `PairIndexLike` and `PlacetypeCensusLike` use — rather than a package
  *   dependency. The format lives here because PFX1 is the fourth member of the PCB1/PIX1/PCN1 family
- *   and a reader's second consumer is the decode-time seam in `postcode-anchor.ts`; splitting the
+ *   and a reader's second consumer is the decode-time consumer in `postcode-anchor.ts`; splitting the
  *   family across two workspaces would buy one import and cost the single-file guarantee.
  */
 
@@ -491,7 +491,7 @@ export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 
 	/**
 	 * The header's ISO country code, so a load site can refuse an index built for a different country than the locale
-	 * being parsed — the gate `PlacetypeCensusLike.country` exists for.
+	 * being parsed — the eval `PlacetypeCensusLike.country` exists for.
 	 */
 	get country(): string {
 		return this.header.country

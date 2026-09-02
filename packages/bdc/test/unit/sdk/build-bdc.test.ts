@@ -740,7 +740,7 @@ describe("buildBDCDatabase — malformed provider_id via csvPaths (the productio
 	// non-numeric provider_id field parses to NaN, which binds to `bdc_stage.provider_id` (INTEGER NOT NULL) as
 	// SQLite NULL — `INSERT OR IGNORE` then silently drops EVERY row of the file, miscounted as ordinary `deduped`
 	// rows rather than surfaced as the malformed-file error it actually is. This test goes through `csvPaths` (the
-	// real filesystem-reading production path `readAvailabilityRowsFromCSVPaths` uses), not the `rows:` test seam,
+	// real filesystem-reading production path `readAvailabilityRowsFromCSVPaths` uses), not the `rows:` TEST INJECTION POINT,
 	// so it proves the guard is wired all the way from disk.
 	it("rejects the whole build, naming the malformed CSV, instead of silently absorbing its rows as deduped", async () => {
 		const malformedCSVPath = resolvePackagePath(

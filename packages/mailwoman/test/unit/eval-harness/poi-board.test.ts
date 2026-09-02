@@ -367,7 +367,7 @@ describe("the committed poi-board fixture set", () => {
 		}
 	})
 
-	it("gates at least one locale-synonym case to an exact locale, and at least one is ungated", () => {
+	it("gates at least one locale-synonym case to an exact locale, and at least one is unrestricted", () => {
 		const withLocale = fixtures.filter((f) => f.locale)
 
 		expect(withLocale.length).toBeGreaterThanOrEqual(1)
@@ -405,7 +405,7 @@ describe("the committed poi-board fixture set", () => {
 		}
 	})
 
-	it("carries at least 4 brand cases: brand+anchor results, locale-gated slang, and a bare-brand abstain", () => {
+	it("carries at least 4 brand cases: brand+anchor results, locale-restricted slang, and a bare-brand abstain", () => {
 		const brandResults = fixtures.filter((f) => f.expect.kind === "results" && f.expect.brandWikidata !== undefined)
 
 		expect(brandResults.length).toBeGreaterThanOrEqual(4)

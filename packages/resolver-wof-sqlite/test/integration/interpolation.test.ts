@@ -436,7 +436,7 @@ describe("StreetInterpolator — parity-first ambiguity, near tie-break, key var
 
 		it("advances the key-variant ladder past a wrong-register variant that covers but cannot answer", () => {
 			// "Saint Pauls PL St": the doubled-type collapse gives `saint pauls place`, which reaches the
-			// two far ZIPs and fails the near gate — the ladder must go on to `st pauls place` and answer
+			// two far ZIPs and fails the near check — the ladder must go on to `st pauls place` and answer
 			// from 33333 rather than stopping at "rows found".
 			const hit = nearInterp.find({ street: "Saint Pauls PL St", number: "10", near: { lat: 0.01, lon: 0 } })
 

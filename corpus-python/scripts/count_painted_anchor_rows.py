@@ -23,7 +23,7 @@ copies per-char values onto pieces).
       --slice $MAILWOMAN_DATA_ROOT/corpus/slices/synth-gb-v1.jsonl \
       --limit 100000
 
-Exits non-zero when a slice paints zero rows (``--allow-zero`` to survey instead of gate).
+Exits non-zero when a slice paints zero rows (``--allow-zero`` to survey instead of refuse).
 """
 
 from __future__ import annotations

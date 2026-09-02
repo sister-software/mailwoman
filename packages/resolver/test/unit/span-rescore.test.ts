@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the #370 span-rescore: the pure `findRescoreCandidate` (raw-token enumeration, longest-
- *   wins, postcode gate) and its `resolveTree` integration (opt-in injection, the #685 brake, byte-
+ *   wins, postcode check) and its `resolveTree` integration (opt-in injection, the #685 brake, byte-
  *   stability when the flag is unset). A fixture backend stands in for the gazetteer.
  */
 
@@ -36,7 +36,7 @@ const PLACES: FixturePlace[] = [
 		score: 10,
 		exactMatch: true,
 	},
-	// Two same-prefix localities far apart — the longest-wins + gate test.
+	// Two same-prefix localities far apart — the longest-wins + postcode-consistency test.
 	{
 		id: 2,
 		name: "Tomaszów",
@@ -57,7 +57,7 @@ const PLACES: FixturePlace[] = [
 		score: 5,
 		exactMatch: true,
 	},
-	// A postcode → point, near Tomaszów Mazowiecki (the gate anchor).
+	// A postcode → point, near Tomaszów Mazowiecki (the check anchor).
 	{ id: 900, name: "97-200", placetype: "postalcode", country: "PL", lat: 51.53, lon: 20.01, score: 1 },
 	// #1537 namesake group: four same-named US localities, rank order as listed. The model reads a bare
 	// "Springfield" as a `street`, so the admin walk never touches it and span-rescore is the only tier
@@ -95,7 +95,7 @@ const PLACES: FixturePlace[] = [
 		prominence: 5.05,
 		exactMatch: true,
 	},
-	// Sits ~5 km from id 11 — the one same-name candidate that SURVIVES a 62701-anchored gate alongside it.
+	// Sits ~5 km from id 11 — the one same-name candidate that SURVIVES a 62701-anchored check alongside it.
 	{
 		id: 13,
 		name: "Springfield",
@@ -107,7 +107,7 @@ const PLACES: FixturePlace[] = [
 		prominence: 4.1,
 		exactMatch: true,
 	},
-	// The gate anchor for the namesake group — resolves next to id 11 (IL).
+	// The check anchor for the namesake group — resolves next to id 11 (IL).
 	{ id: 901, name: "62701", placetype: "postalcode", country: "US", lat: 39.79, lon: -89.65, score: 1 },
 	// A lone namesake: one place, one name. The "absent, not empty" case.
 	{
@@ -159,7 +159,7 @@ const PLACES: FixturePlace[] = [
 		prominence: 3.6,
 		exactMatch: true,
 	},
-	// The gate anchor for the #1546 group — resolves next to the Idaho bearer (id 31).
+	// The check anchor for the #1546 group — resolves next to the Idaho bearer (id 31).
 	{ id: 902, name: "83843", placetype: "postalcode", country: "US", lat: 46.73, lon: -116.99, score: 1 },
 	// #1546: the alias surface is the recall for LATIN scripts too — a query equal to a place's ALIAS
 	// ("New York City") but not its primary name ("New York") was dropped by the same primary-name
@@ -212,7 +212,7 @@ describe("findRescoreCandidate", () => {
 		const hit = await findRescoreCandidate(raw, roots, await makeBackend(), { country: "PL", postcode: "86-300" })
 		expect(hit?.text).toBe("Grudziądz")
 		expect(hit?.place.id).toBe(1)
-		// 86-300 isn't in the fixture → no anchor → ungated (flagged lower-precision).
+		// 86-300 isn't in the fixture → no anchor → unrestricted (flagged lower-precision).
 		expect(hit?.gated).toBe(false)
 	})
 
@@ -221,11 +221,11 @@ describe("findRescoreCandidate", () => {
 		const hit = await findRescoreCandidate(raw, [], await makeBackend(), { country: "PL", gateKm: 0 })
 		expect(hit?.text).toBe("Tomaszów Mazowiecki")
 		expect(hit?.place.id).toBe(3)
-		expect(hit?.gated).toBe(false) // gate disabled (gateKm 0)
+		expect(hit?.gated).toBe(false) // check disabled (gateKm 0)
 	})
 
 	it("flags a recovery GATED when the postcode resolves and the match is within range", async () => {
-		// 97-200 resolves (fixture) near Tomaszów Mazowiecki; the longest match lands within 50km → gated.
+		// 97-200 resolves (fixture) near Tomaszów Mazowiecki; the longest match lands within 50km → conditional.
 		const hit = await findRescoreCandidate("Tomaszów Mazowiecki", [], await makeBackend(), {
 			country: "PL",
 			postcode: "97-200",
@@ -238,7 +238,7 @@ describe("findRescoreCandidate", () => {
 
 	it("postcode gate rejects a match far from where the postcode resolves", async () => {
 		// "Tomaszów" alone exact-matches the FAR Tomaszów (id 2); the 97-200 postcode anchors near the
-		// Mazowiecki one (~240 km away), so the gate rejects it → no recovery.
+		// Mazowiecki one (~240 km away), so the check rejects it → no recovery.
 		const hit = await findRescoreCandidate("Tomaszów", [], await makeBackend(), {
 			country: "PL",
 			postcode: "97-200",
@@ -257,7 +257,7 @@ describe("findRescoreCandidate", () => {
 	})
 
 	it("#1537: the postcode gate filters the runner-ups on the same rule as the winner", async () => {
-		// 62701 anchors next to id 11 (IL). MO (id 10) and MA (id 12) are >50 km out, so the gate drops them
+		// 62701 anchors next to id 11 (IL). MO (id 10) and MA (id 12) are >50 km out, so the check drops them
 		// from BOTH roles: id 11 wins, and only the ~5 km id 13 survives as an alternative. A candidate the
 		// postcode already excluded is not a namesake worth offering.
 		const hit = await findRescoreCandidate("Springfield", [], await makeBackend(), {
@@ -291,8 +291,8 @@ describe("findRescoreCandidate", () => {
 
 	it("#1546: the postcode gate still rejects the non-Latin namesake when it is far from the anchor", async () => {
 		// "Moscow, ID 83843": the postcode anchors next to the Idaho bearer (id 31); Moscow RU is
-		// thousands of km away, so the gate excludes it and the Idaho winner is unchanged. Admission is
-		// recall; the gate still decides.
+		// thousands of km away, so the check excludes it and the Idaho winner is unchanged. Admission is
+		// recall; the check still decides.
 		const hit = await findRescoreCandidate("Moscow", [], await makeBackend(), {
 			country: "US",
 			postcode: "83843",
@@ -348,7 +348,7 @@ describe("resolveTree + spanRescore", () => {
 		expect(injected?.value).toBe("Grudziądz")
 		expect(injected?.lat).toBe(53.48)
 		expect(injected?.metadata?.span_rescore).toBe(true)
-		// No postcode node in this tree → no anchor → ungated, flagged so the consumer can threshold.
+		// No postcode node in this tree → no anchor → unrestricted, flagged so the consumer can threshold.
 		expect(injected?.metadata?.rescore_gated).toBe(false)
 	})
 

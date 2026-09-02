@@ -12,7 +12,7 @@
  *   same two paths for dev. The en-us copy's own docstring records what that cost:
  *
  *   > Bump this path, model-card.json `files_md5`, and release.config.json `weights.model` in LOCKSTEP on
- *   > each ship — the 9.0.0 cut moved only release.config, which left this default and the card's md5
+ *   > each ship — the 9.0.0 release moved only release.config, which left this default and the card's md5
  *   > record on the prior base for a full release cycle.
  *
  *   Three legs, one of them pure duplication. This is the leg that goes.
@@ -45,7 +45,7 @@ export interface PairIndexInputs {
 	/**
 	 * The whole-edge parent-bias magnitude (#46). Present only on the locales whose parent side has a board — absence
 	 * means the shipped artifact carries no header key and the parent bias is OFF for that locale, which is the D-rule's
-	 * per-locale gate rather than an oversight.
+	 * per-locale check rather than an oversight.
 	 */
 	parentDelta?: number
 	boroughDB?: string

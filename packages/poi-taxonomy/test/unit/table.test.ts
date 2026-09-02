@@ -35,10 +35,10 @@ const TWO_CATEGORY_TABLE: POITaxonomyTable = {
 	overtureRelease: null,
 	categories: [hospital, telecomCabinet],
 	synonyms: [
-		// Locale-gated synonym case, same semantics as the node entry's `chemist` fixture.
+		// Locale-restricted synonym case, same semantics as the node entry's `chemist` fixture.
 		{ phrase: "hospice", categoryID: hospital.id, locales: ["en-GB"] },
 		{ phrase: "hôpital", categoryID: hospital.id, locales: ["fr"] },
-		// Infra-flag case: an ungated synonym pointing at the mailwoman-infra category.
+		// Infra-flag case: an unrestricted synonym pointing at the mailwoman-infra category.
 		{ phrase: "fiber hut", categoryID: telecomCabinet.id },
 	],
 }

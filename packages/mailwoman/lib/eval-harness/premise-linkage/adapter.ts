@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The premise-linkage input adapter seam (#1902), plus the ONE implementation this repository ships:
+ *   The premise-linkage input adapter interface (#1902), plus the ONE implementation this repository ships:
  *   a synthetic fixture whose addresses, coordinates and identifiers are invented.
  *
- *   The seam is an async iterable rather than an array because a controlled file is read under terms
+ *   The interface is an async iterable rather than an array because a controlled file is read under terms
  *   that usually forbid holding it whole, and because a run that streams can be stopped without ever
  *   having materialized the licensed rows. A provider's data populates ONE implementation of this
  *   interface; nothing downstream of it changes.

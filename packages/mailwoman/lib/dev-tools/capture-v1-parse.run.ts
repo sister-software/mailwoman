@@ -6,7 +6,7 @@
  *   Phase-0: golden `/v1/parse` outcomes from the CURRENT (rules-backed) serve engine, captured at
  *   the engine layer (`createServeEngine().engine.parse`) — the semantic content of the endpoint.
  *   The route/wire wrapper is exercised by `@mailwoman/api`'s own tests, and the v7 swap changes
- *   the wire shape by design, so the gate built on this artifact compares components, not bytes.
+ *   the wire shape by design, so the check built on this artifact compares components, not bytes.
  *   Run from the repo root: `node packages/mailwoman/lib/dev-tools/capture-v1-parse.run.ts`
  */
 

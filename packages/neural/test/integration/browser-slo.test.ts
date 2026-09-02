@@ -216,11 +216,11 @@ const CANDIDATE_PROBE_SQL =
 	"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, neg_rank, is_primary, population " +
 	`FROM candidate WHERE name_key = ? ORDER BY neg_rank ASC LIMIT ${CANDIDATE_PROBE_LIMIT}`
 
-// MARK: Gates
+// MARK: Checks
 
 /**
- * Artifact-gated exactly like `weights.test.ts`: a checkout without the dev weights, or without Playwright's browser,
- * skips this suite rather than failing it.
+ * Artifact-conditional exactly like `weights.test.ts`: a checkout without the dev weights, or without Playwright's
+ * browser, skips this suite rather than failing it.
  */
 const requireFromHere = createRequire(import.meta.url)
 

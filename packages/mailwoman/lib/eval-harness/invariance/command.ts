@@ -16,7 +16,7 @@ export interface InvarianceCommandOptions extends ModelSelectOptions {
 	 */
 	suite?: string
 	/**
-	 * Fail the gate if the NEW-violation DEGRADED count exceeds this. Default 0.
+	 * Fail the check if the NEW-violation DEGRADED count exceeds this. Default 0.
 	 */
 	maxDegraded?: number
 	/**

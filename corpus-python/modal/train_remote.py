@@ -1442,7 +1442,7 @@ def sync_src_gb():
     """SOURCE-ONLY sync for the v3.10.x dep-loc probes: pull `corpus-python/src/` from R2, clear
     pycache, and VERIFY the resurrection levers landed volume-side — commit 78adb380 added
     `reinit_label_rows` + `classifier_learning_rate` to train.py/config.py, and a volume-side
-    config.py predating them would silently drop both keys via the `_merge` hasattr gate (#1248).
+    config.py predating them would silently drop both keys via the `_merge` hasattr check (#1248).
     This sync asserts the marker string is present in BOTH files before returning, so a stale sync
     fails loud instead of silently launching a lever-less run. (Historical note: written mid-arc
     under a run-A "instrument failure" hypothesis that later checkpoint-cosine analysis SUPERSEDED —
@@ -1754,7 +1754,7 @@ def sync_v193a1():
     VERBATIM + the 1 counter-aug slice), so this pulls that overlay (small — base slices persist on the
     volume, referenced by the re-rooted manifest) + the code+config, then pre-seeds v192 step-040000 into
     the v193a1 output dir for `--resume auto` (RESUME, not init_from). Heavy CASE-P (35%) to stop the A0
-    default-flip; gate = SLICE-H recovered AND postcode guardrail held."""
+    default-flip; criterion = SLICE-H recovered AND postcode guardrail held."""
     import shutil
     import subprocess
 
@@ -1818,7 +1818,7 @@ def sync_v193a2():
     VERBATIM + the 1 counter-aug slice), so this pulls that overlay (small — base slices persist on the
     volume, referenced by the re-rooted manifest) + the code+config, then pre-seeds v192 step-040000 into
     the v193a2 output dir for `--resume auto` (RESUME, not init_from). Heavy CASE-P (35%) to stop the A0
-    default-flip; gate = SLICE-H recovered AND postcode guardrail held."""
+    default-flip; criterion = SLICE-H recovered AND postcode guardrail held."""
     import shutil
     import subprocess
 
@@ -1882,7 +1882,7 @@ def sync_v193a3():
     VERBATIM + the 1 counter-aug slice), so this pulls that overlay (small — base slices persist on the
     volume, referenced by the re-rooted manifest) + the code+config, then pre-seeds v192 step-040000 into
     the v193a3 output dir for `--resume auto` (RESUME, not init_from). Heavy CASE-P (35%) to stop the A0
-    default-flip; gate = SLICE-H recovered AND postcode guardrail held."""
+    default-flip; criterion = SLICE-H recovered AND postcode guardrail held."""
     import shutil
     import subprocess
 
@@ -2450,7 +2450,7 @@ def versions():
 )
 def sync_nsplice():
     """#912 lever 4 — Nordic splice staging. Pulls the v0.7.0-nsplice tokenizer (v0.6.0-bsplice's
-    58,582 pieces + 8,613 Nordic diacritic pieces from OA fi/se/no/dk/is; #900 overlap gate PASS,
+    58,582 pieces + 8,613 Nordic diacritic pieces from OA fi/se/no/dk/is; #900 overlap check PASS,
     accepted set stamped in the report next to the local artifact) and refreshes the training code.
     The mean-init input is models/bsplice-expanded — the SHIPPED v5.1.0 fp32 (the pure mean-init
     artifact; the fine-tune washed, see tokenizer_splice.py's header) — already on the volume."""
@@ -2559,7 +2559,7 @@ def mean_init_nsplice():
 def sync_v241_fr_nsplice():
     """#444 — stage the FR-diacritic init_from FINE-TUNE (the #1047 falsification's principled fix).
     Pulls the v0.8.0-fr-nsplice tokenizer (v0.7.1's 63913 + 2406 FR diacritic pieces from OA-FR street/
-    city text; md5 04995524…, #900 overlap gate PASS, US byte-identical) + refreshes the training code/
+    city text; md5 04995524…, #900 overlap check PASS, US byte-identical) + refreshes the training code/
     config (v2.4.1-fr-nsplice-ft.yaml). The v230-nl-postcode (v5.4.0) step-005000 base checkpoint, the
     v0.10.1-nl-postcode corpus, and the v0.7.1-nsplice base tokenizer are already on the volume from the
     v5.4.0 chain — not re-synced. Prints a container-side isfile verify block AFTER vol.commit() (the
@@ -2810,7 +2810,7 @@ def diagnose_corpus(
     ``--verify-country DE --verify-source synth-german`` to additionally PULL a few rows through the
     real filter and confirm they survive — the night-4 trap was a German slice whose rows were all
     filtered out, so the run trained on nothing. This is the pre-launch "verify the loader sees the
-    slice, THEN launch" gate.
+    slice, THEN launch" check.
     """
     import json
     import random
@@ -2906,7 +2906,7 @@ def eval_de(
     """DE-locality readout for the anchor pilot (#239/#240): per-tag PARSER F1 on the German val for
     one checkpoint. The German collapse shows as a low locality/postcode F1 (with street/house# up);
     the anchor fix as a recovered locality. ``anchor_lookup`` set → feed the real anchor;
-    ``anchor_off=True`` → feed the features but force confidence 0 (the anchor-free degradation gate).
+    ``anchor_off=True`` → feed the features but force confidence 0 (the anchor-free degradation check).
     Forwards + argmax (CRF weight is 0, so the trained signal is in the emissions)."""
     import sys
     from pathlib import Path
@@ -3460,9 +3460,9 @@ def mean_init_ptro():
     timeout=600,
 )
 def mean_init_numsplice23():
-    """B4c 10-999 cut — 2+3-digit. Same FVT mean-init as the others, tokenizer v0.11.2-numsplice23
-    (word-start 10-999, +988 pieces). Adds 2-digit pieces on top of the 3-digit cut: `11`->`▁11`
-    (the FR date-name day win the 3-digit cut forgoes) while 4-5 digit numbers (postcodes, years)
+    """B4c 10-999 split — 2+3-digit. Same FVT mean-init as the others, tokenizer v0.11.2-numsplice23
+    (word-start 10-999, +988 pieces). Adds 2-digit pieces on top of the 3-digit split: `11`->`▁11`
+    (the FR date-name day win the 3-digit split forgoes) while 4-5 digit numbers (postcodes, years)
     STAY multi-piece (2-digit can't collide with a 4-5 digit postcode). Writes
     /data/models/numsplice23-expanded. Expect 73143 -> 74131."""
     import os
@@ -3684,7 +3684,7 @@ def grade_evidence_bundle(
         if heal:
             # heal-approx (production enforceWordConsistency's core): per whitespace word, majority
             # char vote on street-membership — arbitrates the mid-word piece truncations the raw
-            # argmax leaves behind. NOT the full TS heal (no punctuation-separator/byte gates);
+            # argmax leaves behind. NOT the full TS heal (no punctuation-separator/byte checks);
             # labeled heal-approx in every report.
             import re as _re
 
@@ -3846,7 +3846,7 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
         if heal:
             # heal-approx (production enforceWordConsistency's core): per whitespace word, majority
             # char vote on street-membership — arbitrates the mid-word piece truncations the raw
-            # argmax leaves behind. NOT the full TS heal (no punctuation-separator/byte gates);
+            # argmax leaves behind. NOT the full TS heal (no punctuation-separator/byte checks);
             # labeled heal-approx in every report.
             import re as _re
 

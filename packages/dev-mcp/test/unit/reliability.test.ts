@@ -7,7 +7,7 @@
  *
  *   A calibration curve is the one measurement that is worthless when it is subtly wrong: an ECE computed against the
  *   wrong denominator, or a table that drops its empty bins, still reads as a plausible number and still gets quoted
- *   into a threshold decision. So the binning, the weighting and the gate table are pinned here against samples
+ *   into a threshold decision. So the binning, the weighting and the eval table are pinned here against samples
  *   constructed to have a known answer.
  */
 
@@ -87,7 +87,7 @@ describe("thresholdTable", () => {
 		expect(row?.admitted).toBe(80)
 		expect(row?.precision_above).toBeCloseTo(76 / 80, 10)
 		expect(row?.errors_admitted).toBe(4)
-		// 76 + 10 + 20 = 106 correct overall, 76 of them above the gate.
+		// 76 + 10 + 20 = 106 correct overall, 76 of them above the eval.
 		expect(row?.correct_below).toBe(30)
 	})
 
@@ -105,7 +105,7 @@ describe("errorClasses", () => {
 			{ confidence: 0.95, correct: false, strata: { expected: "ES", predicted: "PT" } },
 			{ confidence: 0.95, correct: false, strata: { expected: "ES", predicted: "PT" } },
 			{ confidence: 0.95, correct: false, strata: { expected: "AT", predicted: "DE" } },
-			// Below the gate: a real error, but not one this gate admits.
+			// Below the eval: a real error, but not one this check admits.
 			{ confidence: 0.2, correct: false, strata: { expected: "SI", predicted: "HR" } },
 			{ confidence: 0.99, correct: true, strata: { expected: "FR", predicted: "FR" } },
 		]

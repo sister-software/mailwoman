@@ -31,8 +31,8 @@ export const CRITICAL_TAGS = ["house_number", "street", "postcode"] as const
 export type Verdict = "INVARIANT" | "DEGRADED" | "LOST"
 
 /**
- * Ordinal severity — INVARIANT < DEGRADED < LOST. Used by the runner's `--baseline` regression gate to decide whether a
- * candidate's verdict on a (row, transform) pair is "at least as bad as" the baseline's, not merely "also
+ * Ordinal severity — INVARIANT < DEGRADED < LOST. Used by the runner's `--baseline` regression check to decide whether
+ * a candidate's verdict on a (row, transform) pair is "at least as bad as" the baseline's, not merely "also
  * non-INVARIANT" (see runner.ts's `preExisting` computation).
  */
 export const VERDICT_SEVERITY: Record<Verdict, number> = { INVARIANT: 0, DEGRADED: 1, LOST: 2 }

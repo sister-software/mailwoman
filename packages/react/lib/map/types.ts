@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Types for the geocoder-demo map surface. Mirrors the pipeline seam: the package owns the UI state
+ *   Types for the geocoder-demo map surface. Mirrors the pipeline boundary: the package owns the UI state
  *   machine + the declarative map, while the host injects a {@link DemoRuntime} that owns ONNX / httpvfs
  *   / R2 and the composed map style. {@link DemoRuntime} EXTENDS {@link PipelineRuntime} so the shared
  *   `runParse` / `parseStageLabels` / `loading` contract is reused, and adds the map-specific surface
@@ -12,7 +12,7 @@
  *
  *   The map-spec types are imported type-only from `react-map-gl/maplibre`; nothing here loads maplibre at
  *   runtime, so this module stays node-safe (its concrete-value CONSUMERS — `DemoMap`, `GeocoderDemo` —
- *   are the ones gated behind the `@mailwoman/react/map` subpath).
+ *   are the ones behind the `@mailwoman/react/map` subpath).
  */
 
 import type { ReactNode } from "react"
@@ -283,8 +283,8 @@ export interface DemoPanels {
 	compare?: (context: DemoCompareContext) => ReactNode
 	/**
 	 * The model-visualizer / debug drawer, mounted beside the map (host's ModelVisualizer). A render-prop so the host can
-	 * trace the CURRENT result (its input) — the package passes the live parse result; the host gates on its own dev-mode
-	 * state and returns `null` when the drawer is closed.
+	 * trace the CURRENT result (its input) — the package passes the live parse result; the host decides on its own
+	 * dev-mode state and returns `null` when the drawer is closed.
 	 */
 	debugDrawer?: (context: { result: ParseResult | null }) => ReactNode
 	/**

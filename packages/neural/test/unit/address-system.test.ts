@@ -55,7 +55,7 @@ describe("conventions table", () => {
 	it("fr forbids only the trailing street_suffix (NOT street_prefix) and pins the 5-digit shape", () => {
 		// Post-#719: FR has a LEADING street_prefix ("Rue de Rivoli") that the model emits, so
 		// the conventions row forbids only the trailing USPS-style street_suffix — forbidding the prefix
-		// destroyed real capability (see address-system-conventions.ts provenance + the load-time gate).
+		// destroyed real capability (see address-system-conventions.ts provenance + the load-time check).
 		const fr = conventionsForSystem("fr")!
 		expect(fr.forbiddenTags).toEqual(["street_suffix"])
 		expect(fr.forbiddenTags).not.toContain("street_prefix")

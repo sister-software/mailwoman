@@ -18,7 +18,7 @@
  *   vintage. (`SPIN` is a reserved identifier namespace — see {@link FilerIdentifierType}'s own docstring
  *   for why it carries no populated node in 3a.)
  *
- *   Decision 7 / gate 1 (required): `valid_from` is MANDATORY on every edge (`valid_to` is the
+ *   Decision 7 / criterion 1 (required): `valid_from` is MANDATORY on every edge (`valid_to` is the
  *   nullable half of the pair), and the primary key is the 4-tuple `(from_node_id, to_node_id, source,
  *   valid_from)`, NOT just `(from_node_id, to_node_id)`. Two sources asserting the same relationship, or
  *   one source revising its assertion at a later vintage, produce two rows rather than a silent
@@ -50,7 +50,7 @@
  *   `filer_cluster` also conflated two distinct rollups the spec keeps apart: an ENTITY cluster (same
  *   underlying filer under different identifiers — what `filer_cluster` has always meant) and a
  *   CORPORATE FAMILY (a holding/parent/subsidiary/management tree spanning several DIFFERENT filers).
- *   `filer_family` is the new seam for the latter — see {@link FilerFamilyTable}. Its own primary key
+ *   `filer_family` is the new table for the latter — see {@link FilerFamilyTable}. Its own primary key
  *   mirrors `filer_edge`'s reasoning exactly (composite on `(node_id, family_id, naming_node_id, source,
  *   valid_from)`, `relationship` excluded from it for the identical contradiction-vs-plurality reason).
  *
@@ -69,12 +69,12 @@
  *   family-membership row would otherwise record the FACT without recording what produced it.
  *
  *   **`filer_family` carries `assertion` + `match_score` too** — the two columns {@link FilerEdgeTable}
- *   has carried since 3a. Gate 2 ("inferred never merges with authoritative") enforced on `filer_edge`
+ *   has carried since 3a. Criterion 2 ("inferred never merges with authoritative") enforced on `filer_edge`
  *   alone stops at the table boundary, and `build-filer.ts`'s EDGAR ingest writes INFERRED family
  *   memberships — a name-match guess at WHICH FRN a disclosed subsidiary name belongs to. Without these
  *   columns that guess is shape-identical, on every read surface, to a Form 499 holding-company
  *   membership the filer itself filed: the row records the fact and its `source` but not the STRENGTH of
- *   the claim behind it, so the gate never reaches the table `familyRollup`/`filerLookup.families`
+ *   the claim behind it, so the check never reaches the table `familyRollup`/`filerLookup.families`
  *   actually answer family questions from. `source` is not a usable proxy for that strength either —
  *   `edgar-exhibit-21` writes BOTH an authoritative disclosure edge and an inferred corroboration edge,
  *   so one source name spans both grades.
@@ -197,7 +197,7 @@ export interface FilerNodeTable {
 
 /**
  * One source's assertion, at one vintage, that two nodes denote the same filer. See the file header for the
- * composite-PK provenance-plurality rationale (decision 7 / gate 1).
+ * composite-PK provenance-plurality rationale (decision 7 / criterion 1).
  */
 export interface FilerEdgeTable {
 	from_node_id: string
@@ -222,8 +222,8 @@ export interface FilerEdgeTable {
 	 */
 	source_vintage: string
 	/**
-	 * MANDATORY (decision 7 / gate 1) — every edge asserts a start of validity, even an authoritative one lifted straight
-	 * from a filing (use the filing's vintage/date when no finer-grained date exists).
+	 * MANDATORY (decision 7 / criterion 1) — every edge asserts a start of validity, even an authoritative one lifted
+	 * straight from a filing (use the filing's vintage/date when no finer-grained date exists).
 	 */
 	valid_from: string
 	/**
@@ -277,8 +277,8 @@ export interface FilerClusterTable {
 }
 
 /**
- * Corporate-family membership (decisions 1, 2) — the seam `filer_cluster` never had for telling apart an ENTITY cluster
- * (same filer, different identifiers — `filer_cluster`'s own, unchanged meaning) from a CORPORATE FAMILY (a
+ * Corporate-family membership (decisions 1, 2) — the distinction `filer_cluster` never had for telling apart an ENTITY
+ * cluster (same filer, different identifiers — `filer_cluster`'s own, unchanged meaning) from a CORPORATE FAMILY (a
  * holding/parent/subsidiary/management tree spanning several DIFFERENT filers). One row asserts that `node_id` belongs
  * to `family_id` — named by `naming_node_id`'s raw spelling — under a specific {@link FilerRelationship}
  * `relationship`, at a specific {@link FilerEdgeAssertion} `assertion` strength, as reported by one source at one
@@ -397,9 +397,9 @@ export async function createFilerNodeTable(db: Kysely<FilerDatabase>): Promise<v
 
 /**
  * Create `filer_edge` with the composite PK `(from_node_id, to_node_id, source, valid_from)` — see the file header for
- * the provenance-plurality rationale (decision 7 / gate 1) and why this stays a plain rowid table rather than `WITHOUT
- * ROWID`. Call {@link createFilerEdgeToNodeIndex} separately, after bulk load, for the reverse (in-edges) traversal
- * path.
+ * the provenance-plurality rationale (decision 7 / criterion 1) and why this stays a plain rowid table rather than
+ * `WITHOUT ROWID`. Call {@link createFilerEdgeToNodeIndex} separately, after bulk load, for the reverse (in-edges)
+ * traversal path.
  *
  * `relationship` (decisions 1, 2) is deliberately NOT part of the primary key, even though it's every bit as required
  * as `assertion`: the PK's job is telling apart DIFFERENT provenance (a different source, or the same source at a later
@@ -506,10 +506,10 @@ export async function createFilerClusterIndex(db: Kysely<FilerDatabase>): Promis
  * too: one source, at one instant, grading the identical membership BOTH `authoritative` and `inferred` is a
  * contradiction, not a plurality — two sources disagreeing about the strength of the same fact already produce two
  * rows, because `source` is in the key. It gets the same blank-rejecting CHECK as `relationship`: `NOT NULL` alone
- * would accept `''`, and a blank assertion is worse than a wrong one, since it matches neither half of every gate-2
- * read (`= 'authoritative'` and `= 'inferred'` would both miss it) and the row would vanish from any surface that split
- * on strength. `match_score` gets a CHECK of its own — a score may appear ONLY on an inferred row, since an
- * authoritative membership matched nothing and any number there would be a fabricated confidence.
+ * would accept `''`, and a blank assertion is worse than a wrong one, since it matches neither half of every
+ * criterion-2 read (`= 'authoritative'` and `= 'inferred'` would both miss it) and the row would vanish from any
+ * surface that split on strength. `match_score` gets a CHECK of its own — a score may appear ONLY on an inferred row,
+ * since an authoritative membership matched nothing and any number there would be a fabricated confidence.
  */
 export async function createFilerFamilyTable(db: Kysely<FilerDatabase>): Promise<void> {
 	await db.schema

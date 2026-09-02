@@ -32,7 +32,7 @@
  *   7's commit because Exhibit 21 parsing is the first consumer). {@linkcode SECClient.get} is JSON-only —
  *   `responseType: "json"` plus a cache `validate` predicate that required an object body — so it could
  *   never fetch a filing DOCUMENT (a 10-K, an Exhibit 21, any `/Archives/` HTML/text page). {@linkcode
- *   SECClient.getDocument} is the raw-text sibling: same client, same pacing gate, same host allowlist, same
+ *   SECClient.getDocument} is the raw-text sibling: same client, same pacing limit, same host allowlist, same
  *   retry policy, same {@linkcode ResourceError} mapping — the only difference is a per-request `responseType:
  *   "text"` override, which makes Axios return the body as-is rather than attempt `JSON.parse`. The on-disk
  *   cache is keyed by URL alone (method/URL/params/body — never `responseType`), so a document fetched once
@@ -241,9 +241,9 @@ export interface CreateSECClientOptions {
 	 */
 	requestTimeoutMs?: number
 	/**
-	 * Axios overrides, merged over this client's own defaults. The test seam: every test in `sec-client.test.ts` passes
-	 * an `adapter` here, so no test ever performs a live network call (decision 5). Overriding `headers` wholesale would
-	 * drop the User-Agent, so don't.
+	 * Axios overrides, merged over this client's own defaults. The TEST INJECTION POINT: every test in
+	 * `sec-client.test.ts` passes an `adapter` here, so no test ever performs a live network call (decision 5).
+	 * Overriding `headers` wholesale would drop the User-Agent, so don't.
 	 */
 	axios?: APIClientConfig["axios"]
 }
@@ -319,7 +319,7 @@ export class SECClient extends APIClient<SECClientConfig> {
 	 * {@linkcode get} cannot provide: a filing document (a 10-K, an Exhibit 21 exhibit) is HTML/text, not JSON, and
 	 * `get`'s `responseType: "json"` plus its cache `validate` predicate both assume a JSON body.
 	 *
-	 * Same client, same pacing gate, same host allowlist, same retry policy, same {@linkcode ResourceError} mapping as
+	 * Same client, same pacing limit, same host allowlist, same retry policy, same {@linkcode ResourceError} mapping as
 	 * {@linkcode get} — only a per-request `responseType: "text"` override differs, which tells Axios to hand back the
 	 * body as-is rather than attempt `JSON.parse` on it (Axios's default `transformResponse` only parses when
 	 * `responseType === "json"`; this override is what turns that off for exactly this one call). `/Archives/edgar/data/`
@@ -369,13 +369,13 @@ function responseTTL(response: { config: { url?: string } }, mutableTTLMs: numbe
  *
  * - A JSON object/array (every `get<T>` call — the submissions index, the ticker map, `browse-edgar`). Axios already
  *   rejects an unparseable body via `transitional.silentJSONParsing` (see the `axios` config below), so this is the
- *   second gate rather than the first — a decoded body that isn't an object means the upstream served something other
+ *   second check rather than the first — a decoded body that isn't an object means the upstream served something other
  *   than what it claimed.
  * - A non-empty string (every `getDocument` call — a filing document is HTML/text, never JSON): admits the body
  *   `getDocument`'s `responseType: "text"` override actually produces. A `typeof === "object"` test alone would reject
  *   it outright, since a string is never `typeof "object"`. `.length > 0` is the truncated/empty guard on THIS shape —
  *   `getDocument` has no Axios-level parse step to lean on the way the JSON path does, so this predicate is the only
- *   gate standing between a truncated/empty document and a permanent (`/Archives/edgar/data/`) cache entry with no
+ *   check standing between a truncated/empty document and a permanent (`/Archives/edgar/data/`) cache entry with no
  *   self-healing path short of hand-deleting a hash-named file.
  *
  * An `/Archives/` entry cached under the permanent TTL has no self-healing path short of hand-deleting a hash-named

@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The grader's gate. Every assertion the curated regression layer makes is decided here, and until
+ *   The grader's check. Every assertion the curated regression layer makes is decided here, and until
  *   2026-08-06 none of it was reachable without the ~9 GB database set — which is how two stored expectation
  *   columns (`expect_place_id`, `expect_place_name`) went the corpus's whole life unread (#1507).
  *
  *   The required case is `grades place identity off the RESOLVED place, not the echoed query span`: it
- *   pins the exact confusion that would make this whole gate decorative.
+ *   pins the exact confusion that would make this whole check decorative.
  */
 
 import { checkCase, componentOf, scriptRenderings } from "mailwoman/eval-harness/gauntlet/check-case"
@@ -17,7 +17,7 @@ import type { GauntletCaseTable } from "mailwoman/eval-harness/gauntlet/schema"
 import { describe, expect, it } from "vitest"
 
 /**
- * A stored case with nothing asserted — every gate opts in per row, so this one must always pass.
+ * A stored case with nothing asserted — every check opts in per row, so this one must always pass.
  */
 function storedCase(over: Partial<GauntletCaseTable> = {}): GauntletCaseTable {
 	return {
@@ -147,7 +147,7 @@ describe("the place-identity gate (#1507)", () => {
 	it("grades place identity off the RESOLVED place, not the echoed query span", () => {
 		// The Gaborone class, verbatim: the parse is perfect and `locality` echoes it, while the resolver
 		// returned an Austrian hamlet. `expect_components.locality` is green on this result; only the place
-		// gate can see the failure — which is what makes reading `hierarchy[0].name` required.
+		// check can see the failure — which is what makes reading `hierarchy[0].name` required.
 		const c = storedCase({
 			expect_components: JSON.stringify({ locality: "Gaborone" }),
 			expect_place_name: "Gaborone",

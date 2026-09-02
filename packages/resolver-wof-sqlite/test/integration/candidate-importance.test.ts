@@ -123,7 +123,7 @@ describe("ImportanceIndex.find", () => {
 		const index = loadImportanceIndex(sourcePath)
 
 		// A third US Warwick nowhere near either scored one: the nearest same-key place is ~1,000 km off,
-		// which is a different town. NULL, and counted as gated.
+		// which is a different town. NULL, and counted as refused.
 		expect(index.find("Warwick", "US", "locality", 60, -150)).toBeNull()
 		expect(index.gated).toBe(1)
 		expect(index.matched).toBe(0)

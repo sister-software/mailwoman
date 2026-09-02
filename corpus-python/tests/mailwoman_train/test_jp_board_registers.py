@@ -1,4 +1,4 @@
-"""Per-register acceptability on the JP board — and proof the pre-registered gate is untouched.
+"""Per-register acceptability on the JP board — and proof the pre-registered eval is untouched.
 
 The full JP slice (#1458) writes a ``register`` column on every board row (``native`` /
 ``arabic_chome`` / ``compact_folded`` / ``designator``). Two of those four surfaces appear in ZERO
@@ -8,7 +8,7 @@ minority of the board — so a blended average is exactly the statistic that wou
 
 What these tests pin, in order of how badly a regression would hurt:
 
-1. The GATE. ``fraction`` is ``acceptable / rows`` over the whole board, an unresolved pair counts
+1. The CHECK. ``fraction`` is ``acceptable / rows`` over the whole board, an unresolved pair counts
    as unacceptable, and the bar is 0.70 — the 2026-07-18 pre-registration, unchanged. The
    per-register split is diagnostic and must not be able to move it: the board in
    ``test_gate_is_the_blended_number_even_when_a_register_is_wiped_out`` has one register at 0.0000

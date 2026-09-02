@@ -10,14 +10,14 @@
  *   structure cannot decide it, no gazetteer row bears the name, and poi.db holds the exact
  *   restaurant 6 m from truth under a worldwide-unique name key.
  *
- *   Three gates, all required, each with a receipt behind it:
+ *   Three checks, all required, each with a receipt behind it:
  *
  *   1. **The incumbent abstained** (no coordinate). The probe never contests a resolved answer — only
  *      a null can change, which is what makes the mechanism default-on under the D-rule.
  *   2. **No token of the query is a street generic** (the street-morphology FST — libpostal's
  *      thoroughfare vocabulary). The fork population's street-flavored surfaces (`Savile Row`,
  *      `Kärntner Straße`, `Gran Vía`) belong to the street tier, and poi.db holds exactly one poi
- *      NAMED `savile row` — without this gate the famous street would resolve to a shop
+ *      NAMED `savile row` — without this check the famous street would resolve to a shop
  *      (`gb-fork-entity-savile-row-guard` is the live regression check).
  *   3. **Exactly one entity worldwide bears the name** (name-key EXACT equality, duplicate rows of
  *      the same physical venue collapsed by proximity). Zero is a miss; two is an ambiguity the
@@ -54,15 +54,15 @@ export interface ForkEntityProbeOpts {
 	lookup: POIExecutorLookup
 	/**
 	 * `true` when a token is a thoroughfare generic (the street-morphology FST). The probe requires this signal: without
-	 * it gate 2 cannot run, and an ungated probe is the Savile Row hijack — so the caller must not invoke the probe at
-	 * all when no matcher is loaded.
+	 * it criterion 2 cannot run, and an unrestricted probe is the Savile Row hijack — so the caller must not invoke the
+	 * probe at all when no matcher is loaded.
 	 */
 	isStreetGeneric: (token: string) => boolean
 }
 
 /**
  * Great-circle meters — local copy of the haversine at the two-point scale this module needs; the shared
- * `@mailwoman/spatial` km helper would round through km for a 150 m gate.
+ * `@mailwoman/spatial` km helper would round through km for a 150 m check.
  */
 function distanceM(latA: number, lonA: number, latB: number, lonB: number): number {
 	const R = 6_371_000
@@ -77,7 +77,7 @@ function distanceM(latA: number, lonA: number, latB: number, lonB: number): numb
 
 /**
  * Probe the entity layer for a fork surface. Returns the single entity the world knows by this exact name, or `null`
- * (gate failed / no entity / ambiguous).
+ * (check failed / no entity / ambiguous).
  */
 export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): ForkEntityHit | null {
 	const nameKey = normalizeLocalityForKey(rawQuery)
@@ -176,8 +176,8 @@ function applyForkEntityAnswer(
 
 /**
  * How far a venue entity may sit from the resolved admin anchor and still be "this address's venue", meters. Wide on
- * purpose: the anchor is a LOCALITY centroid (a metro's centroid can sit 20+ km from its edges), and the gate exists to
- * separate the local bearer from same-named entities in other cities, not to assert rooftop precision.
+ * purpose: the anchor is a LOCALITY centroid (a metro's centroid can sit 20+ km from its edges), and the check exists
+ * to separate the local bearer from same-named entities in other cities, not to assert rooftop precision.
  */
 const VENUE_ANCHOR_GATE_M = 30_000
 
@@ -186,7 +186,7 @@ const VENUE_ANCHOR_GATE_M = 30_000
  * anchored sibling of {@link probeForkEntity}. The fork probe requires WORLDWIDE uniqueness because a bare fork surface
  * has no other evidence; a venue-led address DOES — the walk already resolved its admin anchor — so the discipline here
  * is LOCAL uniqueness: exact name-key entities only, and exactly ONE of them within {@link VENUE_ANCHOR_GATE_M} of the
- * anchor. Two same-named venues in one metro is a genuine ambiguity and abstains; entities beyond the gate are other
+ * anchor. Two same-named venues in one metro is a genuine ambiguity and abstains; entities beyond the check are other
  * cities' bearers and never contest.
  */
 export function probeVenueNearAnchor(

@@ -1,7 +1,7 @@
 """Build the FULL JP training slice from Overture-JP (v8 CJK Phase 3, epic #1176).
 
 The Leg-1 probe slice (``scripts/build_jp_probe_slice.py``, 200k rows) proved the char path on the
-universal STAGE3 subset: coordinate-acceptability **0.9925 vs the pre-registered 0.70 gate**. Phase 3
+universal STAGE3 subset: coordinate-acceptability **0.9925 vs the pre-registered 0.70 check**. Phase 3
 is the full slice the probe's PASS unlocked, and it differs from the probe in four ways:
 
 1. **JP-native labels** (``label_set: stage3-jp``, 47 BIO — activated by #1357). The probe mapped
@@ -142,7 +142,7 @@ BOARD_BUCKET_MIN = 97
 # runs at S=96 units and ``encode_row_units`` truncates past that SILENTLY, so the slice must not
 # contain a row that cannot fit. 64 leaves 32 characters of headroom for everything rendering adds:
 # 〒NNN-NNNN + space (10), 日本 (2), three separator spaces, and the designator register's kanji.
-# Measured distribution: median rendered row is 18 characters, so this cuts far out in the tail.
+# Measured distribution: median rendered row is 18 characters, so this truncates far out in the tail.
 MAX_FIELD_CHARS = 64
 
 # The hard invariant the guard above exists to produce. Violation RAISES — reaching it means the
@@ -825,7 +825,7 @@ def build(args: argparse.Namespace) -> dict:
                 + "\n"
             )
 
-    # --- Sanity gates. Violations RAISE; a slice that fails one is not a slice. -------------------
+    # --- Sanity checks. Violations RAISE; a slice that fails one is not a slice. -------------------
     train_prefectures = {row[0] for row in train_source}
     if args.max_row_groups is None and len(train_prefectures) != 47:
         raise RuntimeError(f"train covers {len(train_prefectures)} prefectures, expected 47 — stratification broken")

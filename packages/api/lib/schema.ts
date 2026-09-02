@@ -290,7 +290,7 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	// say. Advisory ONLY — no marker changed which answer won, and a client is free to ignore the array entirely.
 	intent_markers: z.array(QueryIntentMarkerSchema),
 	// #1717 stage 1: flag-only admin-coherence verdicts — did the winning candidate's resolved ancestry confirm,
-	// contradict, or fail to speak to the PARSED region/country qualifiers? Nothing ranks or gates on these; present
+	// contradict, or fail to speak to the PARSED region/country qualifiers? Nothing ranks or filters on these; present
 	// whenever a winner resolved (both members always populated — `unstated` is the explicit no-qualifier claim),
 	// absent when nothing resolved to check against. See mailwoman's `admin-coherence.ts` for the verdict contract.
 	admin_coherence: z

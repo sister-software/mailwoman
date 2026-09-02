@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The #1894 preflight's regression fixtures — one per v9.2.0 publish failure, plus the release-list identity.
  *
- *   The four dispatches that cut v9.2.0 died on: a materialization destination that lost its `packages/` prefix, a
+ *   The four dispatches that published v9.2.0 died on: a materialization destination that lost its `packages/` prefix, a
  *   parity-test selector left empty by a moved file, an exports target no build produces (the `@mailwoman/corpus`
  *   class), and declared files never materialized (the `@mailwoman/neural-weights-en-au` class). Each is pinned here.
  */
@@ -155,7 +155,7 @@ describe("the Hugging Face materialization plan", () => {
 	}
 
 	it("puts every destination under packages/ — the lost-prefix class", async () => {
-		// The v9.2.0 cut's FIRST dispatch died on `cp … "$ws/street-type-lexicon-v3.json"` after every workspace
+		// The v9.2.0 release's FIRST dispatch died on `cp … "$ws/street-type-lexicon-v3.json"` after every workspace
 		// moved under `packages/`. Destinations are now derived from one prefix in one function, and this pins it.
 		const plans = await planWeightsMaterialization(repoRoot)
 
@@ -207,7 +207,7 @@ describe("the Hugging Face materialization plan", () => {
 
 describe("the pair-index parity selector", () => {
 	it("still matches a test file — the empty-selection class", async () => {
-		// The v9.2.0 cut's SECOND dispatch died because publish.yml named the parity test's pre-regroup path and
+		// The v9.2.0 release's SECOND dispatch died because publish.yml named the parity test's pre-regroup path and
 		// Vitest matched zero files. The workflow now calls a package script whose filter is the test's NAME, and
 		// this asserts the filter is not empty-handed — the same answer a dispatch would return several minutes in.
 		const repoRoot = String(repoRootPath())

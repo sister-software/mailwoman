@@ -112,7 +112,7 @@ export interface FreshnessArtifact {
  *
  * Reuses `data-inventory`'s {@link probeManifest} — the package's one home for "read this database's manifest, or say
  * why not" — rather than opening a second reader over the same table. It deliberately does NOT run the contract's
- * `readLayerManifest` validator: that gate enforces the SPINE-KEY and tier invariants, which govern how a layer is
+ * `readLayerManifest` validator: that eval enforces the SPINE-KEY and tier invariants, which govern how a layer is
  * JOINED, and a layer whose spine declaration is wrong still has a build date this surface can report. Rejecting the
  * date over an unrelated field would report absence where a fact exists, which is the failure this whole reader is
  * built against.

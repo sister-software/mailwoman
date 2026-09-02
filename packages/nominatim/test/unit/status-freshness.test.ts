@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `/status` over the real freshness reader (#997) — the seam between the artifacts on disk and the wire.
+ *   `/status` over the real freshness reader (#997) — the boundary between the artifacts on disk and the wire.
  *
  *   The reader's own states are covered next door, in `mailwoman`'s `freshness.test.ts`. What is under test
  *   here is the one thing only this side can get wrong: `data_updated` must be OMITTED when no artifact

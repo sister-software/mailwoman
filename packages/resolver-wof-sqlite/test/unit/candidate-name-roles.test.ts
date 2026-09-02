@@ -6,7 +6,7 @@
  *   Tests for {@link stampNameRoles} — pass 3c of the candidate build, whose two detectors decide
  *   which alias rows carry a `name_role`.
  *
- *   Each case is one of the gates the detectors are made of, because the failure mode is a gate
+ *   Each case is one of the checks the detectors are made of, because the failure mode is a check
  *   quietly widening: `gloss` is an ANOMALY signal that must never reach a place with measured
  *   prominence or an admin placetype (a country legitimately carries a name in every language), and
  *   `abbr` is a PROVENANCE signal that must never reach a variant recorded in a language the country
@@ -39,7 +39,7 @@ const PTCODES = new Map([
 ])
 
 /**
- * Fixture-scale stand-in for {@link GLOSS_KEY_THRESHOLD}: the production cut is a property of the real key
+ * Fixture-scale stand-in for {@link GLOSS_KEY_THRESHOLD}: the production threshold is a property of the real key
  * distribution, so a test that reused it would need 50 aliases per place to say anything.
  */
 const THRESHOLD = 3
@@ -311,7 +311,7 @@ describe("stampNameRoles: the key-tail census", () => {
 			[]
 		)
 
-		// Toledo is below the cut, so it is not in the denominator; New York is, and carries no role.
+		// Toledo is below the threshold, so it is not in the denominator; New York is, and carries no role.
 		expect(keyTailPlaces).toBe(2)
 		expect(keyTailWithRole).toBe(1)
 	})

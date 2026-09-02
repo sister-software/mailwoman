@@ -278,7 +278,7 @@ const CA_LOCALITY_MIN_POPULATION = 1000
  * strides the whole country instead of reading one département.
  *
  * The stride counts PHYSICAL lines, so a record carrying a newline inside a quoted field is two lines to the stride and
- * can be cut in half by it. That is a sampling artefact of striding before the parse, not of the parse: whichever lines
+ * can be halved by it. That is a sampling artefact of striding before the parse, not of the parse: whichever lines
  * survive are re-assembled into records by the CSV reader, and a halved record fails the field checks below. Hence
  * `skipEmpty: false` and no quote handling on the line split — a blank line still advances the count, exactly as it did
  * when this was `awk NR`, and the rows the stride selects are the rows every existing FR slice was built from.

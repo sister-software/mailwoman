@@ -15,7 +15,7 @@ import type { ResolveOpts } from "@mailwoman/core/resolver"
 /**
  * The bare-toponym STREET-MISS fallback (the Moscow/Wellington/Antwerpen class): the model tags a lone bare token
  * `street`, the street tier finds no such street, and the result is null — while the resolver walk, handed the same
- * span as a locality, answers directly. Four gates: null-only (the D-rule geometry the fork wire established); a lone
+ * span as a locality, answers directly. Four checks: null-only (the D-rule geometry the fork wire established); a lone
  * SINGLE-TOKEN street-tagged span (a multi-token retry re-enters the qualifier-strip scrape class — measured: the
  * unguarded retry stripped 'COMER parís.méxico' to Comer, Georgia); never on a declared fork (those belong to the
  * entity probe); and the retry runs under the #912 bare-locality posture — placer anchor/hard filter always withheld
@@ -70,7 +70,7 @@ export async function applyStreetMissFallback(
 
 /**
  * The lone bare street span the street-miss fallback retries as a locality, or `null` when the tree is anything richer:
- * the gate is EXACTLY one value-bearing node, tagged `street`, no prefix/suffix siblings — the single-token shape the
+ * the check is EXACTLY one value-bearing node, tagged `street`, no prefix/suffix siblings — the single-token shape the
  * model mis-tags on unfamiliar capitals.
  */
 function loneBareStreetSpan(tree: AddressTree): string | null {

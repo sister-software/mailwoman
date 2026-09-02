@@ -6,7 +6,7 @@
  *   `mailwoman dev lint corpus-database --database <parquet> --stats <stats.json>` — corpus linter:
  *   compares a new database against pre-computed corpus statistics (see `mailwoman corpus stats`) and
  *   flags the v0.6.2 "5th Avenue Theatre" class of poisoning patterns. Markdown report on stdout;
- *   exits 1 when any error-severity flag fires (warnings don't gate).
+ *   exits 1 when any error-severity flag fires (warnings don't check).
  */
 
 import {

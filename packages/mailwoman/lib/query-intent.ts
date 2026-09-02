@@ -145,7 +145,7 @@ export interface DeclaredAmbiguityOpts {
  * decisive.
  *
  * Returns `null` — not an empty marker — when the query was not a bare toponym, when nothing resolved, or when the
- * margin cleared the cut. A magnitude never carries its own absence, and "we checked and it was decisive" is
+ * margin cleared the threshold. A magnitude never carries its own absence, and "we checked and it was decisive" is
  * represented by the caller's marker array simply not gaining an entry.
  */
 export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryIntentMarker | null {
@@ -190,7 +190,7 @@ export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryInten
 		mechanism: "resolver:dominance_margin",
 		message:
 			`"${winner!.name}" names ${distinct.length} distinct places and the top-two margin is ` +
-			`${margin.toFixed(2)}, below the measured decisive cut of ${DECISIVE_MARGIN_LOG10}. The answer below is the ` +
+			`${margin.toFixed(2)}, below the measured decisive threshold of ${DECISIVE_MARGIN_LOG10}. The answer below is the ` +
 			`top-ranked one and it was not a clear win.`,
 		evidence: {
 			margin: Number(margin.toFixed(4)),

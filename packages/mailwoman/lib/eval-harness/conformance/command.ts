@@ -18,7 +18,7 @@
  *   a second rather than a model load, and costs nobody a wrong diagnosis.
  *
  *   A TRACKED ROW IS RUN. The verdict splits by status the way the Gauntlet regression layer splits: `pass`
- *   rows gate, tracked rows report, and a tracked row that starts holding prints a promotion instruction. A
+ *   rows check, tracked rows report, and a tracked row that starts holding prints a promotion instruction. A
  *   red row is never removed to make the exit code zero.
  *
  *   THE OBSERVER IS CHOSEN FROM THE ROWS. `candidate_admissibility` reads the resolver's interior, which the

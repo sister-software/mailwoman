@@ -9,7 +9,7 @@
  *   highway within a tight radius. A grid index over densified highway vertices keeps it O(points).
  *
  *   ⚠ A wrong recovery can create a false-positive rooftop (a point keyed under the wrong street), so the
- *   radius is tight and the whole thing is gated on the held-out Gauntlet (does FR coverage rise WITHOUT
+ *   radius is tight and the whole thing is conditioned on the held-out Gauntlet (does FR coverage rise WITHOUT
  *   accuracy falling). Validate accuracy on the points that DO have `addr:street` (ground truth) first.
  */
 

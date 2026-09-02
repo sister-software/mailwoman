@@ -132,12 +132,12 @@ export interface ResolveWeightsOpts {
 	tier?: "server" | "pocket"
 	/**
 	 * Override the user-level weights cache root probed after package resolution fails (plan 3 guard). Defaults to
-	 * {@link weightsCacheDir}. Primarily a test seam.
+	 * {@link weightsCacheDir}. Primarily a TEST INJECTION POINT.
 	 */
 	cacheRoot?: PathBuilderLike | null
 	/**
 	 * Override the data-root weights overlay root probed when the package carries no binaries. Defaults to
-	 * {@link weightsOverlayRoot}. Primarily a test seam.
+	 * {@link weightsOverlayRoot}. Primarily a TEST INJECTION POINT.
 	 */
 	overlayRoot?: string
 }
@@ -256,7 +256,7 @@ export interface ResolvedWeights {
 	fstPath?: string
 	/**
 	 * Path to the locale-GENERAL street-morphology FST (`fst-street-morphology.bin`) shipped beside the resolved model —
-	 * the #1315 street-context gate's signal source, serialized at build time (`mailwoman gazetteer build
+	 * the #1315 street-context check's signal source, serialized at build time (`mailwoman gazetteer build
 	 * street-morphology`) instead of rebuilt from the libpostal dictionaries per process. `undefined` when the package
 	 * doesn't ship it (the runtime pipeline then falls back to the data-root staging artifact or a per-process dictionary
 	 * build). PATH ONLY, same posture as {@link ResolvedWeights.fstPath}: deserialization happens in the caller's layer.
@@ -694,7 +694,7 @@ async function resolveAnchorLookupSibling(
  * `locality-surface-lexicon-v6.json` — while both the shipped v4.0.1 recipe and the v4.2.0 candidate TRAIN against
  * locality-surface **v7** (`/data/gazetteer/locality-surface-lexicon-v7.json`). Serving therefore fed the channel a
  * DIFFERENT lexicon generation than training painted, and nothing said so: the v6 file exists, the channel loads, the
- * parse works. The Run B gate had to stage v7's CONTENT under the v6 FILENAME to score the candidate faithfully — a
+ * parse works. The Run B check had to stage v7's CONTENT under the v6 FILENAME to score the candidate faithfully — a
  * workaround that only exists because the filename, not the card, was the contract.
  *
  * The contract is now the card: `requires.<channel>.lexicon` NAMES the artifact the model trained against, and

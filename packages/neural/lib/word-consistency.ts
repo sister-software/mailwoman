@@ -30,9 +30,9 @@
  *   B-street→O; all-street `Gamle` →locality) — the mechanism behind the 2026-06-19 street
  *   regression below. The vote includes `O`, so a disagreeing word can still resolve to all-`O`.
  *
- *   Gate outcome (2026-06-19, fr-admin-split-gate + per-locale-f1, MAILWOMAN_WORD_CONSISTENCY=1): NOT
+ *   Promotion-eval outcome (2026-06-19, fr-admin-split-gate + per-locale-f1, MAILWOMAN_WORD_CONSISTENCY=1): NOT
  *   a clean win — net-regressed street −12.6 on the adversarial golden — so it shipped DEFAULT-OFF,
- *   with a confidence-gated variant hypothesized as the path to a clean win.
+ *   with a confidence-thresholded variant hypothesized as the path to a clean win.
  *
  *   Re-diagnosis (2026-07-15): the regression was NOT vote noise — it was two defects in this module.
  *   (1) The heal re-decoded words whose pieces already AGREED whenever the local type-mass preferred
@@ -40,9 +40,9 @@
  *   structurally: the vote now only runs on words whose pieces disagree in type. (2) Punctuation
  *   continuation pieces joined the preceding word's vote group (`Ave` + `,`), and their `O` mass
  *   manufactured fake disagreements that killed real spans — the `WordConsistencyOpts.splitOnPunctuation`
- *   gate. With both fixed (+ `skipByteFallbackWords`), the heal is a clean win with NO confidence floor:
+ *   promotion eval. With both fixed (+ `skipByteFallbackWords`), the heal is a clean win with NO confidence floor:
  *   golden us street 82.0→82.2, fr macro 42.2→51.5, adversarial flat; parity house_number .767→.808,
- *   postcode →1.000, street .543→.573; error-analysis 2pp gate PASS. Ships ON at the pipeline call
+ *   postcode →1.000, street .543→.573; error-analysis 2pp threshold PASS. Ships ON at the pipeline call
  *   sites via `WORD_CONSISTENCY_SHIP_DEFAULT` (core/pipeline/types.ts). A `minMeanConfidence` floor
  *   was measured NET-NEGATIVE on the parity corpus (fragment rows are low-confidence but heal
  *   correctly) — it exists as an opt, unused by the ship default.
@@ -53,15 +53,15 @@ import { softmax } from "#viterbi"
 
 export interface WordConsistencyOpts {
 	/**
-	 * Skip the heal when the vote's mean p(bestType) across the word is below this floor. The ungated variant's failure
-	 * mode (the 2026-06-19 gate) was amplifying noise on rows where the per-piece confidence is itself unreliable — a
-	 * low-confidence vote is exactly that signature. `0` (default) never skips.
+	 * Skip the heal when the vote's mean p(bestType) across the word is below this floor. The unrestricted variant's
+	 * failure mode (the 2026-06-19 promotion eval) was amplifying noise on rows where the per-piece confidence is itself
+	 * unreliable — a low-confidence vote is exactly that signature. `0` (default) never skips.
 	 */
 	minMeanConfidence?: number
 	/**
 	 * Skip healing any word containing a raw byte-fallback piece (`<0xNN>`). On byte-soup words the
-	 * confidence-weighted-vote premise ("the surviving pieces are trustworthy") breaks — see the module docstring's gate
-	 * outcome. Default false.
+	 * confidence-weighted-vote premise ("the surviving pieces are trustworthy") breaks — see the module docstring's
+	 * outcome outcome. Default false.
 	 */
 	skipByteFallbackWords?: boolean
 	/**
@@ -85,9 +85,13 @@ const PUNCTUATION_ONLY = /^[^\p{L}\p{N}]+$/u
 const BYTE_FALLBACK = /^<0x[0-9A-Fa-f]{2}>$/
 
 /**
- * Interpret the `MAILWOMAN_WORD_CONSISTENCY` env string as a heal setting. `"1"` = the original ungated vote; `"gated"`
- * = the #727 gated preset (slash grouping + byte-fallback skip, no confidence floor); `"gated:<floor>"` adds a
- * `minMeanConfidence` floor (e.g. `"gated:0.5"`). Anything else (unset included) = off.
+ * Interpret the `MAILWOMAN_WORD_CONSISTENCY` env string as a heal setting. `"1"` = the original unconditional vote.
+ *
+ * THE OTHER TWO VALUES ARE SPELLED HERE BECAUSE THEY ARE THE WIRE CONTRACT, not prose: the string an operator sets has
+ * to appear verbatim or this docstring stops describing the parser below it. Renaming the value is a separate,
+ * operator-approved change (#2077). `"conditional"` = the #727 thresholded preset (slash grouping + byte-fallback skip,
+ * no confidence floor); `"conditional:<floor>"` adds a `minMeanConfidence` floor (e.g. `"conditional:0.5"`). Anything
+ * else (unset included) = off.
  */
 export function parseWordConsistencyEnv(value: string | undefined): boolean | WordConsistencyOpts {
 	if (value === "1") return true
@@ -140,8 +144,8 @@ function labelType(label: string): string {
  *   Softmaxed per piece for the vote so each piece's confidence carries its weight.
  * @param labels The BIO label vocabulary (index ↔ label).
  * @param labelIndices The current per-piece decision (viterbi path or argmax). Not mutated.
- * @param opts Optional gates on the heal (confidence floor, byte-fallback skip, slash grouping) — the #727-tracked
- *   "confidence-gated variant". Omitted = the original ungated behavior, byte-identical.
+ * @param opts Optional conditions on the heal (confidence floor, byte-fallback skip, slash grouping) — the #727-tracked
+ *   "confidence-thresholded variant". Omitted = the original unconditional behavior, byte-identical.
  */
 export function enforceWordConsistency(
 	pieces: ReadonlyArray<{ piece: string }>,
@@ -227,7 +231,7 @@ export function enforceWordConsistency(
 
 		if (currentTypes.size <= 1) continue
 
-		// Byte-fallback gate: on a word with raw byte pieces the per-piece confidences the vote relies
+		// Byte-fallback condition: on a word with raw byte pieces the per-piece confidences the vote relies
 		// on are themselves unreliable — leave the word untouched.
 		if (opts?.skipByteFallbackWords && w.some((pi) => BYTE_FALLBACK.test(pieces[pi]!.piece))) continue
 
@@ -267,8 +271,8 @@ export function enforceWordConsistency(
 
 		// mean p(bestType) — length-invariant (DeepSeek t3)
 
-		// Confidence gate: a low-confidence vote is the noise-amplification signature the 2026-06-19
-		// gate caught — skip the heal rather than force an unreliable consensus.
+		// Confidence floor: a low-confidence vote is the noise-amplification signature the 2026-06-19
+		// promotion eval caught — skip the heal rather than force an unreliable consensus.
 		if (opts?.minMeanConfidence && meanConf < opts.minMeanConfidence) continue
 
 		healedWords++

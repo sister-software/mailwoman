@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mwdev_reliability`'s measurement: pick a surface, collect graded confidences, curve them, and say what a gate on
+ *   `mwdev_reliability`'s measurement: pick a surface, collect graded confidences, curve them, and say what an eval on
  *   them would buy.
  *
  *   The report deliberately answers TWO questions that get conflated. "Is the number honest?" is the curve — ECE, MCE,
- *   the per-bin gap. "Is it worth gating on?" is the threshold table, and a well-calibrated surface can still fail it,
+ *   the per-bin gap. "Is it worth filtering on?" is the threshold table, and a well-calibrated surface can still fail it,
  *   because the admitted-error count at every useful recall can be too high for the downstream cost. A tool that
  *   returned only ECE would let a caller conclude the second from the first.
  */
@@ -47,8 +47,8 @@ export type ReliabilitySurface = (typeof ReliabilitySurface)[keyof typeof Reliab
 const PLACER_TEST_SPLIT = ["data", "coarse-placer", "test.jsonl"] as const
 
 /**
- * The gate positions the placer work actually argued over, so a reader comparing against that record does not have to
- * re-derive the rows. A caller may pass their own; these are a starting table, not a claim about where the gate
+ * The eval positions the placer work actually argued over, so a reader comparing against that record does not have to
+ * re-derive the rows. A caller may pass their own; these are a starting table, not a claim about where the eval
  * belongs.
  */
 const DEFAULT_THRESHOLDS = [0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 0.99] as const
@@ -87,7 +87,7 @@ export async function runReliability(registry: EngineRegistryLike, args: Record<
 	const overall = reliabilityCurve(sample.observations, binCount)
 	const gate = thresholdTable(sample.observations, thresholds)
 
-	// Read at the lowest threshold that admits anything, so the classes describe a gate someone could actually set. A
+	// Read at the lowest threshold that admits anything, so the classes describe an eval someone could actually set. A
 	// threshold admitting nothing has no admitted errors to rank, which reads as a clean confusion matrix.
 	const gateForClasses = gate.find((row) => row.admitted > 0)?.threshold ?? thresholds[0] ?? 0
 

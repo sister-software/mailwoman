@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Demo-cascade smoke eval (#524) — the whole-stack lens the per-layer gate battery lacks.
+ *   Demo-cascade smoke eval (#524) — the whole-stack lens the per-layer eval battery lacks.
  *
  *   Runs each row of `data/eval/external/demo-cascade-smoke.jsonl` through the FULL stack exactly the
  *   way the demo (and any real consumer) composes it: neural parse with the ship config (gazetteer
@@ -14,8 +14,8 @@
  *   the top hit — not parse components. See the row README
  *   (`data/eval/external/demo-cascade-smoke.README.md`) for the convention.
  *
- *   Why: on 2026-06-11 three production bugs (#520/#521/#522) shipped through green gates because
- *   every gate lens is per-layer. Two of the three would have been caught by exactly this pass.
+ *   Why: on 2026-06-11 three production bugs (#520/#521/#522) shipped through green checks because
+ *   every check lens is per-layer. Two of the three would have been caught by exactly this pass.
  *
  *   Usage (after `yarn compile`):
  *
@@ -30,7 +30,7 @@
  *   Defaults point at the staged demo release dir (`--stage-dir`, the byte-copies of what the live
  *   demo serves); `MAILWOMAN_WOF_HOT_DB` overrides the DB path (same env the #522 integration tests
  *   use). Exit 0 = the run completed (row failures are reported in the table + sidecar; the
- *   promotion-gate verdict enforces any floor). Exit 2 = missing artifacts / malformed rows.
+ *   promotion-eval verdict enforces any floor). Exit 2 = missing artifacts / malformed rows.
  *
  *   Measurement only: this script changes no pipeline or resolver behavior.
  *
@@ -38,7 +38,7 @@
  *   `flattenTree` and `runCascade` from `docs/src/shared/demo-helpers.ts` and its row schema from a
  *   sibling `demo-cascade-rows.ts`. That sibling was swept into the gitignored diagnostic drawer by
  *   the 2026-07-10 probe triage (c61159ef) and vanished, so the leg has been UNLOADABLE — a bare
- *   `ERR_MODULE_NOT_FOUND` — ever since; the gate spawned it with `nothrow` and only ever ran it
+ *   `ERR_MODULE_NOT_FOUND` — ever since; the runner spawned it with `nothrow` and only ever ran it
  *   when a `wof-hot.db` was present, so nothing surfaced it. The schema module is restored beside
  *   this file. `runCascade` now comes from `@mailwoman/resolver-wof-wasm/browser-cascade`, which is
  *   where `demo-helpers` re-exports it FROM — the same function, so the "measure the REAL cascade"
@@ -66,7 +66,7 @@ import { parseSmokeRows, type SmokeRow } from "#eval-harness/demo-cascade-rows"
 import { resolveWOFHotDB, wofHotStageDir } from "#eval-harness/wof-hot-db"
 
 /**
- * Options for {@linkcode demoCascadeSmoke} — one field per flag the gate used to serialize into argv.
+ * Options for {@linkcode demoCascadeSmoke} — one field per flag the check used to serialize into argv.
  */
 export interface DemoCascadeSmokeOptions {
 	/**
@@ -91,7 +91,7 @@ export interface DemoCascadeSmokeOptions {
 	 */
 	file?: string
 	/**
-	 * Write the sidecar here — the gate verdict reads `summary.pass_rate_pct` from it for `cascade.demo_smoke`.
+	 * Write the sidecar here — the check verdict reads `summary.pass_rate_pct` from it for `cascade.demo_smoke`.
 	 */
 	json?: string
 	/**
@@ -102,8 +102,8 @@ export interface DemoCascadeSmokeOptions {
 
 /**
  * What {@linkcode demoCascadeSmoke} returns. `exitCode` carries what the script signalled with `process.exit`: 0 = the
- * run completed (row failures are in the table + sidecar; the gate verdict enforces any floor), 2 = missing artifacts
- * or malformed rows. The gate reports a non-zero code and continues, exactly as it did with the child.
+ * run completed (row failures are in the table + sidecar; the check verdict enforces any floor), 2 = missing artifacts
+ * or malformed rows. The check reports a non-zero code and continues, exactly as it did with the child.
  */
 export interface DemoCascadeSmokeResult {
 	exitCode: number
@@ -127,10 +127,10 @@ interface RowResult {
  * Run every smoke row through the FULL stack — neural parse (ship config) → `runPipeline` + grouper audit → the demo's
  * `runCascade` over the slim hot DB — and assert the RESOLVED WOF PLACE ID of the top hit.
  *
- * The table goes to `report` (the gate captures it into `cascade-smoke.md`); preflight refusals and `explain` narration
- * go to `reportError`, which is where the child's stderr went — captured and dropped. A preflight refusal therefore
- * leaves an EMPTY `cascade-smoke.md` and a non-zero {@linkcode DemoCascadeSmokeResult.exitCode}, which is exactly what
- * the child process produced.
+ * The table goes to `report` (the runner captures it into `cascade-smoke.md`); preflight refusals and `explain`
+ * narration go to `reportError`, which is where the child's stderr went — captured and dropped. A preflight refusal
+ * therefore leaves an EMPTY `cascade-smoke.md` and a non-zero {@linkcode DemoCascadeSmokeResult.exitCode}, which is
+ * exactly what the child process produced.
  */
 export async function demoCascadeSmoke(
 	options: DemoCascadeSmokeOptions = {},

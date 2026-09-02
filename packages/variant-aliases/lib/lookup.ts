@@ -6,7 +6,7 @@
  *   Regional variant alias lookup. Given a token (or short phrase) and a detected locale, return the
  *   canonical amenity category or brand it refers to.
  *
- *   This is the data-side foundation for #166 (variant alias table + locale-gated category matching).
+ *   This is the data-side foundation for #166 (variant alias table + locale-restricted category matching).
  *   The runtime integration into the kind classifier is v0.6.0+ work.
  */
 
@@ -46,8 +46,8 @@ const INDEX: ReadonlyMap<string, ReadonlyArray<VariantAlias>> = (() => {
 })()
 
 /**
- * Decide how a locale-scoped record answers under a detected locale — the rule every locale-gated vocabulary in the
- * pipeline follows.
+ * Decide how a locale-scoped record answers under a detected locale — the rule every locale-restricted vocabulary in
+ * the pipeline follows.
  *
  * - `unscoped` (confidence 1) when the record declares no locales at all.
  * - `exact` (confidence 1) when the detected locale is one the record declares.
@@ -74,7 +74,7 @@ export function resolveLocaleScope(
 }
 
 /**
- * Match a query token against the variant alias table, gated by detected locale.
+ * Match a query token against the variant alias table, filtered by detected locale.
  *
  * Confidence:
  *

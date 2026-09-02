@@ -185,8 +185,8 @@ def verify_source_identical(base_tokenizer: Path, spliced_tokenizer: Path, probe
 def collect_sample_codepoints(sample_path: Path, *, cap_bytes: int = 4_000_000) -> set[str]:
     """The set of non-ASCII codepoints in a locale sample file (first ``cap_bytes``, utf-8, errors ignored).
 
-    Deliberately format-agnostic (CSV/JSONL/plain all work): the #900 gate needs a locale's CHARACTER
-    inventory, not its parse — reading raw text keeps the gate free of per-format code.
+    Deliberately format-agnostic (CSV/JSONL/plain all work): the #900 check needs a locale's CHARACTER
+    inventory, not its parse — reading raw text keeps the check free of per-format code.
     """
     raw = sample_path.read_bytes()[:cap_bytes].decode("utf-8", errors="ignore")
     return {c for c in raw if ord(c) >= 128}
@@ -199,17 +199,17 @@ def gate_codepoint_overlap(
     *,
     accepted_overlap: set[str] | None = None,
 ) -> dict[str, list[str]]:
-    """#900 — the splice safety gate, pre-registered as a GATE rather than a postmortem note.
+    """#900 — the splice safety check, pre-registered as a CHECK rather than a postmortem note.
 
     The v5.1.0 splice shipped on a "byte-identical by construction" claim that turned out ASCII-only:
     FR/DE/ES share codepoints with the spliced pieces, so 52/15,000 EU rows re-tokenized — measured
-    AFTER the fact (net-positive, by luck and row-reads). This gate makes the overlap visible BEFORE
+    AFTER the fact (net-positive, by luck and row-reads). This check makes the overlap visible BEFORE
     grading: for every trained locale sample, compute the non-ASCII codepoints shared between the
     NEW pieces and that locale's character inventory, write the per-locale report artifact, and FAIL
     LOUD on any overlapping locale that was not explicitly accepted.
 
     "Accepted" is a commitment, not a waiver: per CONTRIBUTING_MODEL_WORK.mdx, accepting a locale
-    means a per-locale non-inferiority leg for it is pre-registered in the gate spec BEFORE the
+    means a per-locale non-inferiority leg for it is pre-registered in the check spec BEFORE the
     first measurement (the FR n=3000 leg from v5.1.0 is the template).
     """
     accepted = accepted_overlap or set()

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the v7 hybrid-gate resolution-plausibility guard (#38). The guard trips only when a
+ *   Tests for the v7 hybrid-check resolution-plausibility guard (#38). The guard trips only when a
  *   resolved tree's finest place is a bare country centroid — the garbage-geocode archetype the
  *   coordinate-parity study surfaced (`California` / `6000, NSW, Australia` → a country centroid).
  */

@@ -138,7 +138,7 @@ export interface ResolvedPlace {
 	 * which EVERY bearer of a name is scored comparably (the strict channel reaches eleven countries and is blind on
 	 * CA/AU/RU, exactly the homonym contests the prior exists to settle; see `candidate-schema.ts` →
 	 * `CandidateTable.importance`). Consumed by `rankByImportance` (`resolver/toponym-prior.ts`), a soft tier-safe
-	 * re-rank, never a gate.
+	 * re-rank, never a filter.
 	 *
 	 * Absent means UNMEASURED — the score source had no row, the join refused it, or the artifact predates the column —
 	 * and an unmeasured candidate holds the rank population gave it (meaning-of-zero: never fill a 0 in).
@@ -181,7 +181,7 @@ export interface ResolvedPlace {
 	 * unscoped fallback produced this row — the re-admission path where a wrong-instance namesake enters (the Astoria
 	 * class: no locality-group row exists under the parent, so the fallback answers population-first from anywhere).
 	 * Absent when the question never arose (no parent scope, or the scoped probe answered). Backend-optional; the
-	 * resolver-interior trace (#1721) surfaces it as a gate.
+	 * resolver-interior trace (#1721) surfaces it as a check.
 	 */
 	regionScopeMiss?: boolean
 	/**
@@ -221,7 +221,7 @@ export interface ResolverBackend {
 		postcode?: string
 		/**
 		 * Postcode-containment coherence (#31, Mechanism 2) — when set, a coordinate-first backend may re-rank locality
-		 * candidates by distance to the sibling postcode's own centroid (bounded by a 25 km containment gate) instead of
+		 * candidates by distance to the sibling postcode's own centroid (bounded by a 25 km containment check) instead of
 		 * answering blind population-first. Opt-in, strictly beneath the #741 exact `(name_key, postcode)` probe; backends
 		 * without postcode support ignore it.
 		 */
@@ -231,11 +231,11 @@ export interface ResolverBackend {
 		 */
 		bias?: Array<{ lat: number; lon: number; weight?: number }>
 		/**
-		 * Restrict name matching to PRIMARY-keyed rows — set by probes whose query surface is a RE-READING (a token cut out
-		 * of a longer classified span) rather than a naming. The #1626 rationale, generalized: `Savile Row`'s token `Row`
-		 * never named Rhu's historical alias, so the alias tier must not answer it; a whole-input bare toponym DID name
-		 * whatever it matches (Москва's exonym rows included) and keeps the alias tier. Backends without a primary flag
-		 * ignore it.
+		 * Restrict name matching to PRIMARY-keyed rows — set by probes whose query surface is a RE-READING (a token taken
+		 * out of a longer classified span) rather than a naming. The #1626 rationale, generalized: `Savile Row`'s token
+		 * `Row` never named Rhu's historical alias, so the alias tier must not answer it; a whole-input bare toponym DID
+		 * name whatever it matches (Москва's exonym rows included) and keeps the alias tier. Backends without a primary
+		 * flag ignore it.
 		 */
 		primaryOnly?: boolean
 		/**
@@ -545,21 +545,21 @@ export interface ResolveOpts {
 	 * A COUNTRY-KEYED PROVIDER (not a bare lookup) because the country signal for a street-only query is unreliable
 	 * BEFORE resolution: a bare thoroughfare ("Avenue des Champs-Élysées, Paris") is a bare-locality tree the placer is
 	 * skipped on, and the placer mis-routes some French streets ("Rue Sainte-Catherine" → IT). So the tier probes a UNION
-	 * of candidate countries — {@link streetCountryHints} (pre-resolution: defaultCountry + the ungated placer) PLUS the
-	 * countries the tree actually RESOLVED to — and the exact (street, base-commune) match is itself the country filter.
-	 * Opt-in; absent = byte-stable. Never fires when a house number is present (rooftop tiers untouched) or when a
-	 * street-level coordinate already resolved.
+	 * of candidate countries — {@link streetCountryHints} (pre-resolution: defaultCountry + the unrestricted placer) PLUS
+	 * the countries the tree actually RESOLVED to — and the exact (street, base-commune) match is itself the country
+	 * filter. Opt-in; absent = byte-stable. Never fires when a house number is present (rooftop tiers untouched) or when
+	 * a street-level coordinate already resolved.
 	 */
 	streetCentroids?: (country: string) => StreetCentroidLookup | undefined
 	/**
 	 * Ordered pre-resolution country hints for the {@link streetCentroids} tier — the caller's defaultCountry and the
-	 * (ungated) coarse-placer country. The tier unions these with the resolved-tree countries. Absent = only the resolved
-	 * countries are tried.
+	 * (unrestricted) coarse-placer country. The tier unions these with the resolved-tree countries. Absent = only the
+	 * resolved countries are tried.
 	 */
 	streetCountryHints?: readonly string[]
 	/**
 	 * Span-rescore tier (#370). When the tree resolved nothing, recover a dropped/fragmented locality from the raw text:
-	 * enumerate raw-token spans, exact-match the same-country gazetteer (longest-wins + postcode-consistency gate), and
+	 * enumerate raw-token spans, exact-match the same-country gazetteer (longest-wins + postcode-consistency check), and
 	 * inject the recovered locality as a resolved node. Targets the EU no-result tail the model leaves when it fragments
 	 * an accented locality token ("Grudziądz" → "Grudzi"+"dz", #555). **Default-ON** (promoted 2026-06-25 — same-harness
 	 * EU+AU +1pp @25km, zero regressions); set `false` to opt out (byte-stable then). Never disturbs a tree that already
@@ -568,8 +568,8 @@ export interface ResolveOpts {
 	 */
 	spanRescore?: boolean
 	/**
-	 * Postcode-consistency gate radius (km) for the span-rescore tier — reject a recovered locality farther than this
-	 * from where the postcode resolves. Only bites when the backend has postcode coverage (else no anchor, no gate).
+	 * Postcode-consistency check radius (km) for the span-rescore tier — reject a recovered locality farther than this
+	 * from where the postcode resolves. Only bites when the backend has postcode coverage (else no anchor, no check).
 	 * Default 50.
 	 */
 	spanRescoreGateKm?: number
@@ -585,27 +585,28 @@ export interface ResolveOpts {
 	 * the failed postcode NODE is decorated from the code resolution (a postcode-tier coordinate floor, strictly
 	 * subordinate to a recovered locality). Never fires on a resolved tree (the #685 brake).
 	 *
-	 * **Default ON** (operator-promoted 2026-07-03 after the pre-registered gate: SI 25/25 recovery at p50 0.67 km, US/FR
-	 * byte-identical, and the insurance leg — the composition-failed v2.2.0 candidate recovers all 55 lost rows). Set
-	 * `false` to opt out (byte-stable then).
+	 * **Default ON** (operator-promoted 2026-07-03 after the pre-registered promotion eval: SI 25/25 recovery at p50 0.67
+	 * km, US/FR byte-identical, and the insurance leg — the composition-failed v2.2.0 candidate recovers all 55 lost
+	 * rows). Set `false` to opt out (byte-stable then).
 	 */
 	postalCompoundRecovery?: boolean
 	/**
 	 * Postcode-disambiguated locality selection (#370 "Lever A"). When set, AND a locality resolves far from a resolved
 	 * sibling postcode, re-pick the same-named candidate (from the lookup's already- captured `alternatives`) nearest the
-	 * postcode; if none reconciles within the gate, fall the coordinate back to the postcode point and flag
+	 * postcode; if none reconciles within the radius, fall the coordinate back to the postcode point and flag
 	 * `postcode_city_mismatch`. Targets the dominant failure mode on the EU/AU panel — a same-named town resolved to the
 	 * wrong instance while the postcode that would disambiguate it sits resolved in the same tree (e.g. "06260
 	 * Saint-Pierre" → 617 km off, postcode 06260 correct). Only bites where the backend resolved the postcode to a point
 	 * (so it composes with postcode coverage, #193).
 	 *
-	 * **Default ON** (operator-promoted 2026-07-04 after the corrected gate: FI 231 wins / 0 losses, SI 37/6, CZ 47/2, US
-	 * aggregates byte-flat with 9/2,000 rows touched — the four losses being two golden-data errors the pass correctly
-	 * flags as `postcode_city_mismatch` and one bad ZIP centroid). Explicit `false` opts out (byte-stable then).
+	 * **Default ON** (operator-promoted 2026-07-04 after the corrected promotion eval: FI 231 wins / 0 losses, SI 37/6,
+	 * CZ 47/2, US aggregates byte-flat with 9/2,000 rows touched — the four losses being two golden-data errors the pass
+	 * correctly flags as `postcode_city_mismatch` and one bad ZIP centroid). Explicit `false` opts out (byte-stable
+	 * then).
 	 */
 	postcodeConsistency?: boolean
 	/**
-	 * Gate radius (km) for {@link postcodeConsistency} — a locality farther than this from the resolved postcode is
+	 * Check radius (km) for {@link postcodeConsistency} — a locality farther than this from the resolved postcode is
 	 * re-picked or demoted. Default 50.
 	 */
 	postcodeConsistencyGateKm?: number
@@ -625,7 +626,7 @@ export interface ResolveOpts {
 	 * shape test, whether the postcode resolves there AND a same-named locality sits within
 	 * {@link postcodeCountryCoherenceGateKm} of it — then scopes the whole walk to the country where the pair is
 	 * consistent. Measured over 800 real pairs (400 US ZIP+city, 400 FR CP+commune): **zero** border crossings at both
-	 * the 15 km and 25 km gates.
+	 * the 15 km and 25 km radii.
 	 *
 	 * Soft by construction, per the positive-evidence-only rule: the caller's `defaultCountry` is tested FIRST and a
 	 * coherent default always wins (returning immediately, ≤2 lookups, byte-identical walk), and both zero coherent
@@ -634,10 +635,10 @@ export interface ResolveOpts {
 	 *
 	 * **Default ON** (operator-promoted 2026-08-05 after the D-rule evidence in
 	 * `docs/records/evals/2026-08-05-postcode-coherence-default-on-evidence.md`: the standard gauntlet run pinned both
-	 * ways produced ZERO newly-failing gated cases — 65/68 either way, the same three unrelated failures — and 56,000
-	 * pair evaluations across BOTH backends (28,000 FTS + 28,000 candidate; OpenAddresses US/FR + OSM GB, domestic and
-	 * mis-scoped legs) returned zero false positives. The rescue leg fixes ~9 in 10 mis-scoped defaults. Set `false` to
-	 * opt out (byte-stable then). Costs 2 lookups on the byte-stable path, at most 8 when it fires.
+	 * ways produced ZERO newly-failing restricted cases — 65/68 either way, the same three unrelated failures — and
+	 * 56,000 pair evaluations across BOTH backends (28,000 FTS + 28,000 candidate; OpenAddresses US/FR + OSM GB, domestic
+	 * and mis-scoped legs) returned zero false positives. The rescue leg fixes ~9 in 10 mis-scoped defaults. Set `false`
+	 * to opt out (byte-stable then). Costs 2 lookups on the byte-stable path, at most 8 when it fires.
 	 *
 	 * Reach is bounded by codex's `candidateSystemsForPostcode` and the attached gazetteer: measured 2026-08-05 it can
 	 * speak for US/DE/FR/GB on the production FTS extract set and additionally CA/AU on the candidate table; JP and NZ
@@ -645,9 +646,9 @@ export interface ResolveOpts {
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
-	 * Gate radius (km) for {@link postcodeCountryCoherence} — how near a same-named locality must sit to the resolved
+	 * Check radius (km) for {@link postcodeCountryCoherence} — how near a same-named locality must sit to the resolved
 	 * postcode to count that country as consistent. Default 25 (what the 800-pair scale run measured; the confound board
-	 * returned identical verdicts at 15, 25 and 50, so the pass is not gate-tuned).
+	 * returned identical verdicts at 15, 25 and 50, so the pass is not radius-tuned).
 	 */
 	postcodeCountryCoherenceGateKm?: number
 	/**
@@ -663,19 +664,19 @@ export interface ResolveOpts {
 	 * US default must not have its 2000 excluded — that row is exactly what {@link postcodeCountryCoherence} rescues).
 	 * Confirmed spans narrow the country-scope pass's candidate list to the intersection (a pure subset, safe).
 	 *
-	 * **Default OFF** (D-rule: demotion is the failure mode with teeth — a default-on promotion needs the full B1 gate
-	 * set from `docs/superpowers/plans/2026-08-05-postcode-structure-arc.md`: B1-1 byte-stability, B1-2 exclusion board
-	 * ≥90% with the correct sibling tag surviving, B1-3 confound ≤2% false exclusions, kill on any δ).
+	 * **Default OFF** (D-rule: demotion is the failure mode with teeth — a default-on promotion needs the full B1
+	 * criterion set from `docs/superpowers/plans/2026-08-05-postcode-structure-arc.md`: B1-1 byte-stability, B1-2
+	 * exclusion board ≥90% with the correct sibling tag surviving, B1-3 confound ≤2% false exclusions, kill on any δ).
 	 */
 	postcodeShapeCoherence?: boolean
 	/**
 	 * Postcode-containment coherence (#31, Mechanism 2) — the reverse arrow, generalized. When a locality-wanting query
 	 * carries a postcode and the #741 exact `(name_key, postcode)` probe misses, a coordinate-first backend resolves the
-	 * postcode's centroid once and re-ranks the name candidates by distance to it, bounded by a 25 km containment gate —
+	 * postcode's centroid once and re-ranks the name candidates by distance to it, bounded by a 25 km containment rate —
 	 * "Paris TX 75460" and "Paris 75001" differ by which candidate the postcode is near, and the population ranking
 	 * cannot see that. Strictly beneath the #741 short-circuit (B2-1: byte-identical wherever the fast path fires); no
-	 * in-gate candidate → unchanged (B2-2's postcode-removed arm). Rides `FindPlaceQuery.postcodeContainmentCoherence` to
-	 * the backend.
+	 * in-radius candidate → unchanged (B2-2's postcode-removed arm). Rides `FindPlaceQuery.postcodeContainmentCoherence`
+	 * to the backend.
 	 *
 	 * **Default OFF.** The promotion decision must measure it JOINTLY with {@link postcodeConsistency} (B2-3: the arms
 	 * agree on ≥98%), because this rung partially subsumes #370 — the compliant outcome may be that mechanism 2 replaces
@@ -788,7 +789,7 @@ export interface ResolveOpts {
 	adminContainmentRerank?: boolean
 	/**
 	 * Resolver-interior trace sink (#1721): when set, the walk emits one {@link ResolveNodeTrace} per candidate lookup —
-	 * the query as sent, the candidate table with per-stage ranks, every gate that fired, and the pick's provenance — so
+	 * the query as sent, the candidate table with per-stage ranks, every check that fired, and the pick's provenance — so
 	 * "the right row was present at rank 3 and lost to the fame term" is a recorded fact instead of a spelunking result.
 	 * Absent (the default) the walk does ZERO trace bookkeeping and stays byte-identical; the sink is a hot-path opt-in
 	 * for debug surfaces, never a production default.
@@ -897,7 +898,7 @@ export interface Resolver {
 	findPlace?: ResolverBackend["findPlace"]
 	/**
 	 * Facts the loaded gazetteer artifact declares about itself, passed through from the {@link ResolverBackend} so
-	 * pipeline-level consumers (the hard-country coverage gate, guard-B plausibility) read them from the handle they
+	 * pipeline-level consumers (the hard-country coverage check, guard-B plausibility) read them from the handle they
 	 * already hold. Absent = artifact predates the manifest → code-constant fallback.
 	 */
 	artifactCoverage?: GazetteerArtifactCoverage

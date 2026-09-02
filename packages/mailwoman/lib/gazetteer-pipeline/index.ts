@@ -81,11 +81,11 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	// GB via OS Code-Point Open under OGL v3 (operator licence ruling 2026-08-05): 1,746,976 unit
 	// postcodes, England+Scotland+Wales — NO Northern Ireland (excluded from every permissive UK
 	// grant; see the codepoint builder's NI note). Replaces the GeoNames GB rows, which the
-	// 2026-08-05 parity gate measured as the SAME survey (max coordinate delta 6.6 m over 1.75M
+	// 2026-08-05 parity check measured as the SAME survey (max coordinate delta 6.6 m over 1.75M
 	// joined rows) under a muddled licence. Rebuild: `mailwoman gazetteer build postcode-codepoint`.
 	"postalcode-gb-codepoint.db",
 	// Northern Ireland (BT), the hole Code-Point Open leaves — 4,757 of 50,032 live NI postcodes (9.5 %),
-	// 250/886 sectors, 80/80 districts, from OpenStreetMap `addr:postcode` (2026-08-05 cut). A miss on a
+	// 250/886 sectors, 80/80 districts, from OpenStreetMap `addr:postcode` (2026-08-05 extract). A miss on a
 	// BT code means NOT ATTESTED IN OSM, not that the code does not exist; since #1480 an unknown postcode
 	// abstains, so the partial database is strictly additive.
 	//
@@ -99,7 +99,7 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	// #920: the GeoNames-postal tail database — TEN countries in ingest order FI/CZ/SK/SI/DK/NO/HR/PL/SE/BE
 	// (57,221 rows; BE joined 2026-08-12 with 1,146 codes after the Overture BE parquet measured too thin —
 	// 203 codes, none of the eu-mixed panel's). GB rode in this database 2026-07-03 → 2026-08-05 and moved to
-	// Code-Point Open above. The swap is parity-gated: the nine prior countries re-joined byte-identical
+	// Code-Point Open above. The swap is parity-conditional: the nine prior countries re-joined byte-identical
 	// (56,075 rows, worst coordinate delta 0).
 	// Rebuild: `mailwoman gazetteer build postcode-geonames --countries FI,CZ,SK,SI,DK,NO,HR,PL,SE,BE`.
 	"postalcode-geonames-tail.db",

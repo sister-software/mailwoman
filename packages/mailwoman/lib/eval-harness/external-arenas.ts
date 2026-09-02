@@ -27,14 +27,14 @@
  *   postal arena, a breakdown by edge_class. Run `yarn compile` first — the harness resolves
  * @mailwoman/neural to its compiled out/ tree.
  *
- *   The promotion gate calls {@linkcode externalArenas} IN-PROCESS (when the spec floors
+ *   `promotion-gate.ts` calls {@linkcode externalArenas} IN-PROCESS (when the spec floors
  *   `arena.perturb`) and captures `${report}${reportError}` into `<out-dir>/arenas.md` — the file
  *   the verdict assembler column-reads for `arena.perturb`. A THROW here is what the child's
- *   non-zero exit was, and the gate aborts on it exactly as before.
+ *   non-zero exit was, and the check aborts on it exactly as before.
  *
  *   SCOPE NOTE (de-shell): the three inner probes this still spawns as child processes —
  *   `perturb-golden.ts`, `harness-neural.ts` (×3) and `summarize-arenas.ts` — are `scripts/eval`
- *   residents, not gate legs, and de-shelling them is a separate job. `zx` therefore survives HERE
+ *   residents, not eval legs, and de-shelling them is a separate job. `zx` therefore survives HERE
  *   while it is gone from `promotion-gate.ts`.
  */
 
@@ -45,7 +45,7 @@ import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
 
 /**
- * Options for {@linkcode externalArenas} — one field per flag the gate used to serialize into argv.
+ * Options for {@linkcode externalArenas} — one field per flag the check used to serialize into argv.
  */
 export interface ExternalArenasOptions {
 	/**
@@ -77,9 +77,9 @@ export interface ExternalArenasOptions {
 
 /**
  * Run the three unbiased capability arenas. Narration splits across `report`/`reportError` the way the child process's
- * stdout/stderr did, because the gate concatenates them in that order into `arenas.md`.
+ * stdout/stderr did, because the check concatenates them in that order into `arenas.md`.
  *
- * THROWS on a failed inner probe — the in-process spelling of the non-zero exit the gate treats as fatal.
+ * THROWS on a failed inner probe — the in-process spelling of the non-zero exit the check treats as fatal.
  */
 export async function externalArenas(
 	options: ExternalArenasOptions = {},

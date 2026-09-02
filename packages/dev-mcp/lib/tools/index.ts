@@ -5,7 +5,7 @@
  *
  *   The tool table — the tested contract. `server.ts` only adapts it to the SDK's envelope.
  *
- *   ONE FILE PER TOOL, and the split is along the seam that matters: a file here is a CONTRACT — the description an
+ *   ONE FILE PER TOOL, and the split is along the boundary that matters: a file here is a CONTRACT — the description an
  *   agent reads, the input schema, the handler wiring — while the measurement it calls lives in the package root
  *   (`compare.ts`, `diagnose.ts`, `provenance.ts`, `vocabulary.ts`, …). The pairing is deliberate rather than
  *   duplicated naming: `tools/diagnose.ts` is what an agent is told `mwdev_diagnose` does, `../diagnose.ts` is what it

@@ -37,15 +37,15 @@ export interface ParsedSubsidiary {
 }
 
 /**
- * {@linkcode parseExhibit21}'s result. `unparseable` is a COUNT, not a list of the offending text — gate 3 only requires
- * knowing abstention happened and how often, not what was abstained from.
+ * {@linkcode parseExhibit21}'s result. `unparseable` is a COUNT, not a list of the offending text — criterion 3 only
+ * requires knowing abstention happened and how often, not what was abstained from.
  */
 export interface ParsedExhibit21 {
 	subsidiaries: ParsedSubsidiary[]
 	/**
 	 * Rows/lines this parser recognized as an ENTRY (a table data row, a list item, a non-blank text line) but could not
 	 * confidently reduce to a subsidiary name — decision 6: counted and dropped, never guessed at, and never thrown as an
-	 * error either (gate 3).
+	 * error either (criterion 3).
 	 */
 	unparseable: number
 }
@@ -65,7 +65,7 @@ interface ColumnMapping {
  * not already read the same way, so requiring three costs no fixture a single subsidiary — and it keeps a two-cell
  * header from claiming to describe a WIDER data row it never mentions, which is `exhibit21-mangled.html`'s shape
  * exactly: a `Name of Subsidiary`/`State` header over a row whose third cell is `"Note: pending name change"`. That row
- * is unreadable and must stay unreadable (gate 3's required fixture asserts zero subsidiaries from it).
+ * is unreadable and must stay unreadable (criterion 3's required fixture asserts zero subsidiaries from it).
  */
 const MINIMUM_HEADER_ROW_CELLS = 3
 
@@ -573,8 +573,8 @@ function isEntirelyBlankTable(tables: readonly TableCell[][][]): boolean {
 /**
  * Parses an Exhibit 21 document into its subsidiary list. Decision 6 binds: a row/line that cannot be confidently
  * extracted is counted (`unparseable`) and dropped, never guessed at — this function NEVER throws on malformed input
- * (gate 3); the worst case for a document this parser cannot make sense of at all is `{subsidiaries: [], unparseable:
- * N}`.
+ * (criterion 3); the worst case for a document this parser cannot make sense of at all is `{subsidiaries: [],
+ * unparseable: N}`.
  *
  * Runs {@linkcode documentWindow} once, first — every strategy below reasons about the same window, never the raw
  * archive document with its SGML envelope still attached.

@@ -247,7 +247,7 @@ export class StreetInterpolator<
 		// Key-variant ladder (see `streetKeyVariants`): the literal key first, then the doubled-type
 		// collapse and the saint↔st register swap. A variant advances the ladder when it produces no
 		// ANSWER, not merely no rows — a wrong-register key can cover the number in far-away towns and
-		// then fail the ambiguity gate ("saint pauls place" reaches Nassau's rows; the Brooklyn answer
+		// then fail the ambiguity check ("saint pauls place" reaches Nassau's rows; the Brooklyn answer
 		// lives under "st pauls place"), and stopping at rows would eclipse the right variant.
 		for (const variant of streetKeyVariants(query.street)) {
 			const streetNorm = canonicalizeRouteKey(variant)

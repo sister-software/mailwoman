@@ -3,8 +3,8 @@
  *   hint, so an in-view namesake sorts ahead of a distant one at equal exact-tier. Two assertions pin the contract: (1)
  *   with the map parked over Ohio, "Dublin" resolves to Dublin, OH — the bias broke the tie the user's view implies;
  *   (2) a strong population signal still wins regardless of view — "Paris" stays in France even from a US-centered map
- *   (guards the #912 fix, which the bias must never undo). Bias is gated on zoom ≥ 4, so a whole-globe view contributes
- *   nothing.
+ *   (guards the #912 fix, which the bias must never undo). Bias is conditioned on zoom ≥ 4, so a whole-globe view
+ *   contributes nothing.
  */
 
 import { expect, test } from "#e2e"
@@ -20,7 +20,7 @@ test.describe("Demo — viewport bias (#938)", () => {
 		})
 
 		// The map loads independently of the classifier — wait until the jump has actually taken (zoom
-		// past the global-view gate) so the viewport bias is live before we submit.
+		// past the global-view threshold) so the viewport bias is live before we submit.
 		await page.waitForFunction(
 			() => {
 				const m = (globalThis as { __mailwomanDemoMap?: { getZoom: () => number } }).__mailwomanDemoMap

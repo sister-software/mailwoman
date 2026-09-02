@@ -5,7 +5,7 @@
  *
  *   Quick comparison of demo presets between two models (`mailwoman eval preset-compare`). Baseline
  *   = the shipped dev weights; pass `modelPath` to also print a candidate's parses. The promotion
- *   gate captures this report into `<out-dir>/presets.md` via the `report` sink.
+ *   check captures this report into `<out-dir>/presets.md` via the `report` sink.
  */
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"

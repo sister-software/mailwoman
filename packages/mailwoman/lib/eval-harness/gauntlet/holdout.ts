@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Held-out fresh-draw Gauntlet — THE generalization gate (DeepSeek 019f1144: "the only layer that
+ *   Held-out fresh-draw Gauntlet — THE generalization check (DeepSeek 019f1144: "the only layer that
  *   measures the tail; when it conflicts with the curated suite, it wins"). Each run draws a FRESH random
  *   sample with truth coordinates (BAN for FR), so the model can't memorize it, and runs BOTH the candidate
- *   and the current production model on the SAME draw. It gates on a two-proportion z-test: ship only if the
+ *   and the current production model on the SAME draw. It checks on a two-proportion z-test: ship only if the
  *   candidate is NOT statistically worse than production at the locality tolerance. Absolute accuracy is not
- *   the gate — the candidate-vs-prod DELTA is (this controls for data drift + coverage gaps).
+ *   the check — the candidate-vs-prod DELTA is (this controls for data drift + coverage gaps).
  *
  *   Run: mailwoman eval gauntlet --layer holdout --candidate ./out/v194-final/model.onnx [--n 300]
  */
@@ -21,8 +21,8 @@ import { TextSpliterator } from "spliterator"
 import { buildGauntletDeps, type GauntletDeps, type GauntletResolverLevers } from "#eval-harness/gauntlet/harness"
 
 /**
- * Two-sided 95% critical value of the standard normal. The gate blocks only on a SIGNIFICANT regression, so a candidate
- * that is ahead or within noise passes; this is the noise boundary.
+ * Two-sided 95% critical value of the standard normal. The check blocks only on a SIGNIFICANT regression, so a
+ * candidate that is ahead or within noise passes; this is the noise boundary.
  */
 const Z_CRITICAL_95_TWO_SIDED = -1.96
 
@@ -138,7 +138,7 @@ export function holdoutSources(): Record<string, SourceDef> {
  * Reservoir-sample N rows with truth coords from the selected source — a genuinely fresh draw each run.
  *
  * `random` is injectable so a caller that must be able to re-draw the SAME sample can seed it. The layer itself never
- * passes one: an unseeded draw is what makes this the only gate the model cannot have memorized, and a seeded default
+ * passes one: an unseeded draw is what makes this the only check the model cannot have memorized, and a seeded default
  * would quietly turn the generalization measure into a fixed set. It also returns `drawnFrom`, the count of parseable
  * rows the reservoir saw, because the sample size alone does not say what it was drawn out of.
  */

@@ -11,7 +11,7 @@
  *
  *   Coverage is England, Scotland and Wales; Northern Ireland's identifiers live in LPS Pointer, not
  *   any OS OpenData product, and the layer's own coverage rows say so. See
- *   `gazetteer-pipeline/uprn-layer.ts` for the gates (md5, exact header, accounting identity, row
+ *   `gazetteer-pipeline/uprn-layer.ts` for the checks (md5, exact header, accounting identity, row
  *   floor).
  *
  *   The pipeline module is lazy-imported so `--help` never faults without the optional

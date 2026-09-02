@@ -8,8 +8,8 @@
  *   over a single broadband-service claim, under the registry-backed doctrine's positive-evidence-only
  *   invariant (spec §4): a BDC filing or a nearby infrastructure hit can RAISE confidence; their absence
  *   can only ever read as "unknown" or "no supporting evidence found, coverage permitting" — NEVER as
- *   "implausible." The four §7-2b acceptance gates are asserted in `plausibility.test.ts`'s
- *   `describe("§7-2b gates")` block; this module is designed for them but doesn't assert them itself.
+ *   "implausible." The four §7-2b acceptance criteria are asserted in `plausibility.test.ts`'s
+ *   `describe("§7-2b criteria")` block; this module is designed for them but doesn't assert them itself.
  *
  *   **Claim resolution (decision 4).** A claim's spatial key resolves two INDEPENDENT ways:
  *
@@ -88,11 +88,11 @@
  *   filing coverage alone — it degrades to filing-covered → `"low"`, filing-unknown/absent →
  *   `"insufficient_survey_data"`. Rationale: spec §4 frames physical co-presence as the vertical's
  *   distinguishing "falsifier that only fires positively" and reserves `"high"` for genuine two-channel
- *   corroboration (§7-2b Gate 2: "matching filing + nearby plant in covered cells… high"); a tech
+ *   corroboration (§7-2b criterion 2: "matching filing + nearby plant in covered cells… high"); a tech
  *   that structurally can never offer a second channel should not be able to claim the same top
  *   confidence a fiber claim earns by actually having one available. This reading is more conservative
  *   than the alternative (treating the missing axis as inert and reporting `"high"` off filing alone),
- *   and nothing pins it: none of the four §7-2b gates exercises a no-physical-falsifier tech code.
+ *   and nothing pins it: none of the four §7-2b criteria exercises a no-physical-falsifier tech code.
  *
  *   **The per-layer coverage-resolution sanity check.** Neither bdc.db's nor poi.db's `layer_manifest`
  *   records the COVERAGE-cell h3 resolution (6) that `res9ShortCellToRes6Parent` hardcodes on both sides
@@ -103,7 +103,7 @@
  *   WIRED — `bdcDB`, `poi`, or both, checked independently — {@link assertLayerSpineResolution} compares that one
  *   layer's recorded `spineKeys.h3.resolution` directly against the `BDC_H3_RESOLUTION` constant `pointCell` is
  *   actually derived from, and throws on a mismatch, catching a layer built at a different spine resolution before it
- *   silently mis-joins a coverage cell. This is TWO-SIDED, not gated on both layers being present together: a
+ *   silently mis-joins a coverage cell. This is TWO-SIDED, not conditioned on both layers being present together: a
  *   poi-only call still checks poi's own recorded resolution, since `readLayerCoverage`'s poi-side join key (below)
  *   is derived from `BDC_H3_RESOLUTION` regardless of whether `bdcDB` is wired at all — comparing each manifest
  *   against the constant, rather than the two manifests against each other, is what makes a single-layer call

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fr-admin-split-selfvalidation.ts — the PRE-GPU gate for the international admin-split retrain
+ *   Fr-admin-split-selfvalidation.ts — the PRE-GPU eval for the international admin-split retrain
  *   (night 2026-06-19). Before spending an A100, falsify the premise: does splitting the
  *   département out of the locality actually move the resolved coordinate, anchor-ON, through the
  *   production resolver? Or does FTS land the same commune either way (DeepSeek's silent-wash risk
@@ -22,7 +22,7 @@
  *   COLLISION communes (a name in >1 département), where the région is the only disambiguator.
  *   UNIQUE communes are the control (the resolver should find them with or without the région).
  *
- *   Gate: ≥5% mean centroid-error reduction (SPLIT vs DROPPED) on the collision stratum, else STOP —
+ *   Eval: ≥5% mean centroid-error reduction (SPLIT vs DROPPED) on the collision stratum, else STOP —
  *   the premise is false and no retrain can fix it.
  *
  *   Run (compiled CLI): node scripts/eval/fr-admin-split-selfvalidation.ts\
@@ -61,7 +61,7 @@ const values = rawValues as { db?: string; n?: string; out?: string }
 // The resolved-tree readers are the shared `mailwoman/eval-harness/oa-resolver/tree-hits` helpers —
 // the home the oa-resolver-eval copies moved to. `mostSpecific` there delegates to the production
 // resolver ladder (`mostSpecificResolved`), replacing the flat `placetypeSpecificity` sort this file
-// carried. Note the sibling `fr-admin-split-gate.ts` deliberately keeps its own flat ranking (the
+// carried. Note the sibling `fr-admin-split-eval.ts` deliberately keeps its own flat ranking (the
 // post-#945 locality-over-postcode convention), which the shared ladder would not preserve on the
 // postcode-vs-locality axis.
 
@@ -240,7 +240,7 @@ const verdict =
 		: `❌ LEVER FALSE — collision reduction ${collReduction.toFixed(1)}% < 5%. The resolver lands the same place without the région. STOP — no retrain fixes this.`
 
 const out = [
-	"# FR admin-split self-validation (pre-GPU gate, 2026-06-19)",
+	"# FR admin-split self-validation (pre-GPU eval, 2026-06-19)",
 	"",
 	"Does splitting the département out of the locality move the resolved coordinate, anchor-ON, through the production resolver? Tested on FR communes (truth = WOF centroid), collision (name in >1 département) vs unique control.",
 	"",

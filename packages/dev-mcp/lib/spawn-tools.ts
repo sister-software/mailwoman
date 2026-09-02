@@ -26,7 +26,7 @@ import type { JobRegistry } from "#jobs"
 import { summarizeJob, type DevTool } from "#tool-kit"
 
 /**
- * Where each gate job wrote its battery, keyed by job id.
+ * Where each check job wrote its battery, keyed by job id.
  *
  * Kept beside the tools rather than re-derived from the log afterwards: the out-dir is chosen when the job STARTS, so
  * recovering it from printed output would fail exactly when the run died before printing any — the case where knowing
@@ -180,7 +180,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				}
 
 				// Spawned for the same reason the gauntlet is: it writes its battery report to stdout, which here is the
-				// JSON-RPC channel. The gate ALSO runs its own recompile-before-eval guard, stricter than this one and meant
+				// JSON-RPC channel. The eval ALSO runs its own recompile-before-eval guard, stricter than this one and meant
 				// to fire — it is surfaced verbatim rather than pre-empted.
 				const freshness = await assertCompiledFresh(registry.repoRoot)
 				const outDir = (args["out_dir"] as string | undefined) ?? tempRootPath(`mwdev-gate-${jobs.list().length}`)
@@ -322,7 +322,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 
 				const gateOutDir = gateOutDirs.get(jobID)
 
-				// A gate job's numbers come from its own artifacts; only a gauntlet job needs its log parsed.
+				// A check job's numbers come from its own artifacts; only a gauntlet job needs its log parsed.
 				const report = gateOutDir
 					? await readGateReport(gateOutDir, job.stdout, job.stderr)
 					: parseGauntletReport(job.stdout, job.stderr)

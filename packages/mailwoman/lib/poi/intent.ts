@@ -34,7 +34,7 @@ interface POINameSearch {
 
 /**
  * Adapt a POI FTS reader into positive, exact-name evidence for the kind classifier. FTS supplies candidates; the
- * normalized equality check is the gate, so a fuzzy/token-overlap result can never reroute an address.
+ * normalized equality check is the check, so a fuzzy/token-overlap result can never reroute an address.
  */
 export function createPOINameLookup(searcher: POINameSearch): POIPhraseLookup {
 	return (phrase) => {
@@ -55,8 +55,8 @@ export function createPOINameLookup(searcher: POINameSearch): POIPhraseLookup {
 /**
  * The union phrase → subject lookup (part 2 of the brand-lexicon work): `@mailwoman/poi-taxonomy` categories first
  * (existing behavior, unchanged), then the taxonomy's own brand table (`lookupPOIBrand`, exact-phrase, no locale
- * gating), then `@mailwoman/variant-aliases`' brand-kind regional slang (locale-gated, e.g. "mcdo" → fr-FR/fr-CA/fr-BE)
- * chained through `resolveBrandName` to recover the QID.
+ * filtering), then `@mailwoman/variant-aliases`' brand-kind regional slang (locale-restricted, e.g. "mcdo" →
+ * fr-FR/fr-CA/fr-BE) chained through `resolveBrandName` to recover the QID.
  *
  * Precedence on a phrase that matches BOTH a category and a brand: CATEGORY WINS. Deterministic, and intentional —
  * `@mailwoman/poi-taxonomy`'s categories are the curated set; a brand phrase collision (none observed in the shipped
@@ -65,7 +65,7 @@ export function createPOINameLookup(searcher: POINameSearch): POIPhraseLookup {
 export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 	let categoryHits = lookupPOICategory(phrase, locale)
 
-	// The taxonomy stays exact-phrase; this adapter supplies a deliberately small English morphology seam for query
+	// The taxonomy stays exact-phrase; this adapter supplies a deliberately small English morphology layer for query
 	// heads. Positive evidence is still required: the singularized phrase must itself hit the taxonomy.
 	if (!categoryHits.length && (!locale || locale.toLowerCase().startsWith("en"))) {
 		const words = phrase.trim().split(/\s+/)
@@ -136,7 +136,7 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 		}))
 	}
 
-	// Regional brand slang is locale-gated — nothing to chain without a detected/asserted locale.
+	// Regional brand slang is locale-restricted — nothing to chain without a detected/asserted locale.
 	if (!locale) return []
 
 	const isBrandAlias = (hit: AliasLookupResult): hit is AliasLookupResult & { alias: BrandAlias } =>

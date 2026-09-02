@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Drift gate for the generated CLI reference (`generate-cli-reference.ts`). Three things are
+ *   Drift check for the generated CLI reference (`generate-cli-reference.ts`). Three things are
  *   asserted, and each fails for a different reason:
  *
  *   1. Two known commands render exactly as snapshotted. A flag added, removed, renamed or
@@ -19,7 +19,7 @@
  *
  *   The walk reads `mailwoman/out/commands`, so `yarn compile` is a prerequisite. That is already
  *   true of every CI test leg (each runs `yarn compile` before `vitest`), and a missing tree throws
- *   with that instruction rather than skipping — a silently-skipped drift gate is not a gate.
+ *   with that instruction rather than skipping — a silently-skipped drift check is not a check.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"

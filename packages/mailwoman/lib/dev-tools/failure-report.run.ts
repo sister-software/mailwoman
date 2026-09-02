@@ -55,7 +55,7 @@ interface Fixture {
 }
 
 /**
- * Load the corpus. Default = the schema-correct parity corpus (street-family aware, campaign gate).
+ * Load the corpus. Default = the schema-correct parity corpus (street-family aware, campaign check).
  * `golden:<dir>[:<sampleN>]` = the golden dev set (broad label coverage INCLUDING country/region, which parity is
  * sparse on) — note its `street` gold is FLAT-schema (pre-split), so street reads confounded there;
  * country/region/locality/postcode/house_number are single-tag and valid.

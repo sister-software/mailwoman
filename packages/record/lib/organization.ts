@@ -19,7 +19,7 @@
  *   axes**:
  *
  *   - **jurisdiction** (ISO 3166-1 alpha-2, e.g. from the resolved address country) — _adds_ the legal
- *       forms valid in that country. Collision-prone forms (`pt`, `sca`, `scs`) live here, gated
+ *       forms valid in that country. Collision-prone forms (`pt`, `sca`, `scs`) live here, admitted only
  *       behind a known jurisdiction, NOT in the universal base.
  *   - **domain** (an ingest-config tag, e.g. `healthcare`) — _protects_ domain-meaningful tokens from
  *       ever being stripped, even when a jurisdiction pack would add them. Domain protection wins.
@@ -75,7 +75,7 @@ export type DesignationDomain = "general" | "healthcare"
 export interface CanonicalizeOptions {
 	/**
 	 * ISO 3166-1 alpha-2 country code of the org's jurisdiction (typically the resolved address country). Adds that
-	 * country's legal forms — including collision-prone ones gated out of the base — to the strip-set. Case-insensitive;
+	 * country's legal forms — including collision-prone ones held out of the base — to the strip-set. Case-insensitive;
 	 * unknown codes add nothing.
 	 */
 	jurisdiction?: string
@@ -91,7 +91,7 @@ export interface CanonicalizeOptions {
  * they don't collide with common domain abbreviations. Normalized to lowercase with punctuation removed (so `L.L.C.` →
  * `llc`). Drawn from the ISO 20275 register + `cleanco`'s common set. Stripped as whole tokens wherever they occur.
  * Deliberately excludes name-meaningful words (`group`, `holdings`, `partners`, `associates`) AND the collision-prone
- * forms (`pt`, `sca`, `scs`) — those last live in {@link JURISDICTION_DESIGNATIONS}, gated behind a known
+ * forms (`pt`, `sca`, `scs`) — those last live in {@link JURISDICTION_DESIGNATIONS}, admitted only behind a known
  * jurisdiction.
  */
 const BASE_DESIGNATIONS = new Set([
@@ -150,8 +150,8 @@ const BASE_DESIGNATIONS = new Set([
 ])
 
 /**
- * Jurisdiction-gated legal forms (ISO 3166-1 alpha-2 → forms), added only when the jurisdiction is known. This is where
- * the collision-prone tokens live: `pt` (Indonesia), `sca` / `scs` (French/Belgian/Luxembourg commandite forms).
+ * Jurisdiction-conditional legal forms (ISO 3166-1 alpha-2 → forms), added only when the jurisdiction is known. This is
+ * where the collision-prone tokens live: `pt` (Indonesia), `sca` / `scs` (French/Belgian/Luxembourg commandite forms).
  * Stripping these is correct ONLY when we know the org's country — never in the universal base. Grounded seeds, not
  * exhaustive; extend per ISO 20275.
  */
@@ -167,8 +167,8 @@ const JURISDICTION_DESIGNATIONS: Record<string, readonly string[]> = {
 /**
  * Domain protect-sets (domain → tokens never stripped). Overrides any jurisdiction pack: a token here stays in the name
  * even if the org's jurisdiction would treat it as a legal form. `healthcare` guards the clinical abbreviations that
- * collide with gated legal forms — `pt` (Physical Therapy), `sca` (Sudden Cardiac Arrest), `scs` (Spinal Cord
- * Stimulator) — plus a couple of always-clinical ones for future-proofing.
+ * collide with jurisdiction-conditional legal forms — `pt` (Physical Therapy), `sca` (Sudden Cardiac Arrest), `scs`
+ * (Spinal Cord Stimulator) — plus a couple of always-clinical ones for future-proofing.
  */
 const DOMAIN_PROTECTED: Record<DesignationDomain, readonly string[]> = {
 	general: [],

@@ -1,4 +1,4 @@
-"""#727 stage-2 Phase 1 GATE: does a segment decode over LEARNED span scores beat the token decode?
+"""#727 stage-2 Phase 1 CHECK: does a segment decode over LEARNED span scores beat the token decode?
 
 Baselines to beat (v264, ship config, triaged parity corpus): street token@1 0.573. A segment decode
 over the SUMMED-BIO stand-in scored 0.453 — WORSE — which is exactly why a trained span scorer is
@@ -34,7 +34,7 @@ STREET_TYPES = {"street", "street_prefix", "street_prefix_particle", "street_suf
 
 
 def fold(value: str) -> str:
-    """Case-fold + collapse whitespace — the same comparison the JS parity gate uses."""
+    """Case-fold + collapse whitespace — the same comparison the JS parity check uses."""
     return " ".join(value.lower().split())
 
 

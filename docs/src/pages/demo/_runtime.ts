@@ -140,11 +140,11 @@ export interface UseDemoMapRuntime {
 	calibrator: ((raw: number) => number | null) | undefined
 	/**
 	 * Trace the current input through the decode path (for the dev-mode ModelVisualizer drawer). Resolves `null` when the
-	 * classifier bundle predates the `traceParse` seam or the trace fails. Feature-detect via {@link supportsTrace}.
+	 * classifier bundle predates the `traceParse` hook or the trace fails. Feature-detect via {@link supportsTrace}.
 	 */
 	traceParse: (input: string) => Promise<ParseTraceLike | null>
 	/**
-	 * Whether the loaded classifier exposes the `traceParse` decode-path seam (gates the dev-mode toggle).
+	 * Whether the loaded classifier exposes the `traceParse` decode-path hook (enables the dev-mode toggle).
 	 */
 	supportsTrace: boolean
 }
@@ -319,7 +319,7 @@ export function useDemoMapRuntime({
 			if (!classifier) throw new Error("Classifier not ready")
 			hooks.onStage(0)
 
-			// Shared classify front-half (#861 / #1278 seam): 4-way pipeline import → query-shape/kind → neural
+			// Shared classify front-half (#861 / #1278 boundary): 4-way pipeline import → query-shape/kind → neural
 			// runPipeline → flatten, with the two front-half timings captured. `onStage(1)` fires between shape and
 			// classify, exactly as before.
 			const { tree, nodes, kindResult, timing } = await runClassifyStage(

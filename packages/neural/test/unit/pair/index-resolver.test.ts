@@ -245,7 +245,7 @@ describe("transitionBeta header field (TRANSITION-BETA build)", () => {
 		expect(peekPairIndexHeader(bytes).transitionBeta).toBeUndefined()
 		expect("transitionBeta" in r.header).toBe(false)
 		// transitionBeta stays absence-tolerant WITHIN a schema — optional fields ride on the JSON header without
-		// version bumps; only the RECORD-shaping fields (the tag table, the parent byte) are version-gated.
+		// version bumps; only the RECORD-shaping fields (the tag table, the parent byte) are version-conditional.
 		expect(r.header.schemaVersion).toBe(3)
 	})
 })
@@ -263,7 +263,7 @@ describe("parentDelta header field (whole-edge default-on, #46)", () => {
 
 	it("absence-tolerant: a header WITHOUT the field reads back parentDelta === undefined", () => {
 		// Absent means "no parent bias", NOT "0" — the same absence contract transitionBeta carries, and the
-		// one de/in/es/it artifacts ship under (unmeasured locales, per-locale gate).
+		// one de/in/es/it artifacts ship under (unmeasured locales, per-locale check).
 		const bytes = serializePairIndex(HEADER, ENTRIES)
 		const r = new PairIndexResolver(bytes)
 
@@ -298,7 +298,7 @@ describe("peekPairIndexHeader", () => {
 	it("succeeds on a header-only-valid buffer whose entry section is truncated — the constructor throws on the same bytes", () => {
 		// Serialize a normal index, then truncate everything after the header + pairCount fields — the
 		// header block itself is untouched and fully valid, but the entry bytes it declares (pairCount > 0)
-		// don't exist. This is the gate's real-world shape: a caller that peeks BEFORE constructing must
+		// don't exist. This is the eval's real-world shape: a caller that peeks BEFORE constructing must
 		// never pay for (or trip over) a full parse when it's about to discard the result on a country
 		// mismatch.
 		const bytes = serializePairIndex(HEADER, ENTRIES)

@@ -96,7 +96,7 @@ describe("resolveTree + postcodeConsistency (Lever A)", () => {
 	})
 
 	it("falls the coordinate back to the postcode when no same-named instance reconciles", async () => {
-		// Only the FAR Saint-Pierre exists — no alternative within the gate → demote to the postcode point.
+		// Only the FAR Saint-Pierre exists — no alternative within the radius → demote to the postcode point.
 		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR]))
 
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
@@ -112,7 +112,7 @@ describe("resolveTree + postcodeConsistency (Lever A)", () => {
 	})
 
 	it("leaves a locality already consistent with the postcode untouched", async () => {
-		// NEAR is the only/top candidate and it's within the gate → no change.
+		// NEAR is the only/top candidate and it's within the radius → no change.
 		const resolver = createWOFResolver(await makeBackend([PC, SP_NEAR]))
 
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {

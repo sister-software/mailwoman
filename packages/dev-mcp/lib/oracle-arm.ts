@@ -5,7 +5,7 @@
  *
  *   Reference geocoders as a comparison arm — metered, and never a grading truth.
  *
- *   `@mailwoman/geocode-oracle`'s own header is unambiguous about what this is for: *"Not truth, and not a gate …
+ *   `@mailwoman/geocode-oracle`'s own header is unambiguous about what this is for: *"Not truth, and not an eval …
  *   Nothing here should ever decide whether a build ships."* So an oracle arm always reports `grade: "diff-only"` and a
  *   null verdict, and its purpose is flagging rows for a human to read. That is enforced here rather than left to the
  *   caller, because a billed third-party geocoder quietly becoming an answer key is the exact failure the package was
@@ -215,8 +215,8 @@ export const ORACLE_VERDICT_NOTE =
 
 /**
  * What this module needs from a reference-geocoder client. Narrower than either real one on purpose: it is the
- * transport seam a test replaces, and a seam shaped like the whole client invites a test to assert its own idea of the
- * provider's protocol.
+ * transport interface a test replaces, and an injection point shaped like the whole client invites a test to assert its
+ * own idea of the provider's protocol.
  */
 export interface OracleGeocoderLike extends AsyncDisposable {
 	geocodeOne(input: string): Promise<OracleGeocodeResult[]>

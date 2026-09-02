@@ -5,7 +5,7 @@
  *
  *   Tests for the arena summary parser in promotion-gate-verdict.ts. The arena table shape changed when the #1151
  *   rules-parser deletion dropped the v0 comparison columns; `arenaColumn` must read the `neural` score by header on
- *   BOTH the pre- and post-#1151 shapes, so a gate run on the current tree stops misreading `fail` as `neural`.
+ *   BOTH the pre- and post-#1151 shapes, so a check run on the current tree stops misreading `fail` as `neural`.
  */
 
 import { arenaColumn } from "mailwoman/eval-harness/promotion-gate-verdict"

@@ -18,7 +18,7 @@ export interface BrandMatch {
 	 */
 	matchedPhrase: string
 	/**
-	 * Always 1.0 — brand matching is exact-phrase only, no locale gating (unlike category synonyms).
+	 * Always 1.0 — brand matching is exact-phrase only, no locale filtering (unlike category synonyms).
 	 */
 	confidence: number
 }

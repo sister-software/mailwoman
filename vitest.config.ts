@@ -145,7 +145,7 @@ export default defineConfig({
 			// Playwright e2e specs live under docs/test/browser/ + docs/test/build/. They use
 			// @playwright/test as the runner, not vitest, but vitest's default `*.spec.ts` glob would
 			// pick them up and crash on the unfamiliar `test.describe` API. (The build/ entry
-			// — the `docusaurus build` health gate — was missing here, so it surfaced the moment CI
+			// — the `docusaurus build` health check — was missing here, so it surfaced the moment CI
 			// could reach the test phase again.)
 			"**/docs/test/browser/**",
 			"**/docs/test/build/**",

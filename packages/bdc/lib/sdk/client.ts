@@ -16,7 +16,7 @@
  *     2. The `username` + `hash_value` PLAIN HEADER PAIR — read carefully off the Nexus original's
  *        `axios.headers` config, this is NOT bearer or basic auth.
  *     3. The request budget: {@linkcode BDC_DEFAULT_REQUESTS_PER_MINUTE} requests per MINUTE, six
- *        seconds apart. See that constant for the sourcing and for why the interval gate is set too.
+ *        seconds apart. See that constant for the sourcing and for why the interval limit is set too.
  *     4. UN-UNWRAPPED response bodies. Every BDC endpoint nests its payload under a `data` key
  *        (`{ data: [...] }`), and callers pluck `.data` themselves at the call site — `filing-dates.ts`
  *        and `list-files.ts` both do. {@linkcode BDCClient.get} deliberately does NOT unwrap, so the
@@ -176,9 +176,9 @@ export interface CreateBDCClientOptions {
 	 */
 	downloadTimeoutMs?: number
 	/**
-	 * Axios overrides, merged over this client's own defaults. THE TEST SEAM, replacing the old `fetchImpl` option: every
-	 * test passes an `adapter` here, so no test in this workspace ever performs a live network call. Overriding `headers`
-	 * wholesale would drop the credential pair, so don't.
+	 * Axios overrides, merged over this client's own defaults. THE TEST INJECTION POINT, replacing the old `fetchImpl`
+	 * option: every test passes an `adapter` here, so no test in this workspace ever performs a live network call.
+	 * Overriding `headers` wholesale would drop the credential pair, so don't.
 	 */
 	axios?: APIClientConfig["axios"]
 }
@@ -219,10 +219,10 @@ export interface BDCThrottleStats {
 	 */
 	waits: number
 	/**
-	 * How many times the per-minute BUDGET gate opened a cooldown, counted off `APIClient`'s `cooldown_start` event. With
-	 * the interval gate also configured this is one per budget's worth of requests, and each is a REAL wait, not a
+	 * How many times the per-minute BUDGET limit opened a cooldown, counted off `APIClient`'s `cooldown_start` event.
+	 * With the interval limit also configured this is one per budget's worth of requests, and each is a REAL wait, not a
 	 * zero-length window-rollover marker: the budget's cooldown runs to the end of the minute the window opened in
-	 * (`APIClient.#reserveCooldownSlot`), and the interval gate has by then spent only `(N-1) * 60000/N` ms of it. At
+	 * (`APIClient.#reserveCooldownSlot`), and the interval limit has by then spent only `(N-1) * 60000/N` ms of it. At
 	 * 10/minute that is a 6 s cooldown per 10 requests. Some of {@linkcode BDCThrottleStats.waitingMs} is therefore
 	 * cooldown, not pacing. See {@linkcode createBDCClient} for the full arrival trace.
 	 */
@@ -451,9 +451,9 @@ function formatDuration(ms: number): string {
 /**
  * A {@linkcode ClockLike} that records how long the client spends asleep, plus the reader that snapshots it.
  *
- * The clock is the only seam `APIClient` exposes that every wait passes through — the pacer sleeps on it, the cooldown
- * timer sleeps on it, and the retry backoff sleeps on it — so wrapping it is how the waiting becomes visible without
- * touching `core/api`.
+ * The clock is the only injection point `APIClient` exposes that every wait passes through — the pacer sleeps on it,
+ * the cooldown timer sleeps on it, and the retry backoff sleeps on it — so wrapping it is how the waiting becomes
+ * visible without touching `core/api`.
  *
  * WAITS ARE UNIONED, NOT SUMMED, and that is the whole subtlety here. Under a concurrent fan-out every caller sleeps at
  * once, and each one's wait is longer than the last: 40 concurrent requests at a 6 s interval sleep 6 s, 12 s, … 234 s,
@@ -536,20 +536,20 @@ export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient
 		username,
 		downloadTimeoutMs: options.downloadTimeoutMs ?? DEFAULT_DOWNLOAD_TIMEOUT_MS,
 		readThrottleStats: () => meter.read(cooldowns),
-		// BOTH GATES, on purpose, and the interval is the one that holds the rate.
+		// BOTH LIMITS, on purpose, and the interval is the one that holds the rate.
 		//
 		// `requestsPerMinute` alone does NOT deliver N requests per minute. It is a budget model whose
 		// cooldown is `MS_PER_MINUTE / N` minus the gap since the previous dispatch — so N dispatches go out
 		// back to back and the client then waits 60000/N ms, i.e. N requests every 60/N SECONDS. Measured
 		// against a bare `APIClient` at `requestsPerMinute: 10` with a 20-call fan-out on a virtual clock:
 		// arrivals at `[0 x10, 6000 x10]`, i.e. 20 inside one sliding minute against a budget of 10, and a
-		// sustained 100 requests/minute — ten times the published limit. `minRequestIntervalMs` is the gate
+		// sustained 100 requests/minute — ten times the published limit. `minRequestIntervalMs` is the limit
 		// that actually spaces dispatches, and it is what makes this client honor 10/minute.
 		//
-		// The budget is still declared rather than dropped — and it is NOT free. The two gates compose (both
+		// The budget is still declared rather than dropped — and it is NOT free. The two limits compose (both
 		// must clear), so the budget's cooldown still fires, and it is a REAL wait: `APIClient` measures that
-		// cooldown to the end of the MINUTE the window opened in, while the interval gate has by then spent
-		// only `(N-1) * 60000/N` ms of it. With both gates on 10/minute, arrivals run `0, 6, …, 54 s`; the
+		// cooldown to the end of the MINUTE the window opened in, while the interval limit has by then spent
+		// only `(N-1) * 60000/N` ms of it. With both limits on 10/minute, arrivals run `0, 6, …, 54 s`; the
 		// 10th dispatch opens a `60000 - 54000 = 6000 ms` cooldown; the pacer's grant for #11 is discarded
 		// across that wait (`acquireDispatchSlot` re-acquires rather than holding a stale grant, under-issuing
 		// by one — the safe direction), so #11 lands at 66 s and the pattern repeats. Steady state is 10

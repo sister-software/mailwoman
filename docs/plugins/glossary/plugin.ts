@@ -7,7 +7,7 @@
  *   component (`@theme/GlossaryTerm`), client modules, and remark auto-linking — but replaces the
  *   `/glossary` route with our own page component. The upstream plugin hard-codes its route
  *   component to a path inside the package (not a `@theme/*` component), so swizzling can't reach
- *   it; overriding the lifecycle hooks is the supported seam-free alternative to vendoring.
+ *   it; overriding the lifecycle hooks is the supported extension-free alternative to vendoring.
  *
  *   On top of the upstream data model this wrapper:
  *

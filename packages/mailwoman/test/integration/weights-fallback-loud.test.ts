@@ -194,7 +194,7 @@ describe("#1108 — the interactive/declined degraded banner is unchanged (regre
 	}, 30_000)
 })
 
-// End-to-end --resolve degraded path (exit 0 with a real resolver) — gated on a WOF SQLite distribution,
+// End-to-end --resolve degraded path (exit 0 with a real resolver) — conditioned on a WOF SQLite distribution,
 // mirroring resolve-flag.test.ts. Runs only where a WOF DB is on disk; proves the warning + degraded
 // output + exit 0 combination the audit's test (1) calls for on the full --resolve path.
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))

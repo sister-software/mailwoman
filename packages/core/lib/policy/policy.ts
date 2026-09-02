@@ -6,7 +6,7 @@
  *   Classifier policy types (per #6). A `ClassifierPolicy` declares which classifier family (rule /
  *   neural / both / preferred) has authority for each `ComponentTag`, optionally narrowed by
  *   locale. The default table starts every component in `rule_only` mode; migrations to
- *   neural-backed modes happen one component at a time, gated on golden-set metrics.
+ *   neural-backed modes happen one component at a time, conditioned on golden-set metrics.
  */
 
 import type { ClassificationProposal, ComponentTag } from "#types"

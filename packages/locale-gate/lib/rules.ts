@@ -87,7 +87,7 @@ export function scoreByPostcode(shape: QueryShapeLike): LocaleCandidate | null {
 }
 
 /**
- * Whole-input fallback: when nothing else fires, return en-US at low confidence. Keeps the gate always-decisive (no
+ * Whole-input fallback: when nothing else fires, return en-US at low confidence. Keeps this stage always-decisive (no
  * `null` to the caller, ever).
  */
 export function scoreFallback(_shape: QueryShapeLike): LocaleCandidate {

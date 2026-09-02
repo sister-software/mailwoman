@@ -106,8 +106,8 @@ export const BDC_ATTRIBUTION =
 
 export interface BuildBDCOptions {
 	/**
-	 * Injected row source — the test seam (mirrors `BuildPOIOptions.rows`). When given, `csvPaths` is ignored and no
-	 * filesystem read happens.
+	 * Injected row source — the TEST INJECTION POINT (mirrors `BuildPOIOptions.rows`). When given, `csvPaths` is ignored
+	 * and no filesystem read happens.
 	 */
 	rows?: Iterable<BDCAvailabilityRow> | AsyncIterable<BDCAvailabilityRow>
 	/**
@@ -145,9 +145,9 @@ export interface BuildBDCOptions {
 	blockCentroids: (geoid: string) => { lat: number; lon: number } | undefined
 	onProgress?: (message: string) => void
 	/**
-	 * Provider-list rows ({@link ProviderListRow}, `@mailwoman/filer/sdk`'s `parseProviderList`) — the test/CLI seam for
-	 * populating `bdc_provider` (2a decision 8 / 3a decision 6). When ABSENT (the default), `bdc_provider` stays empty
-	 * and the rest of the build is untouched: every code path this option touches is gated behind `if
+	 * Provider-list rows ({@link ProviderListRow}, `@mailwoman/filer/sdk`'s `parseProviderList`) — the test/CLI injection
+	 * point for populating `bdc_provider` (2a decision 8 / 3a decision 6). When ABSENT (the default), `bdc_provider`
+	 * stays empty and the rest of the build is untouched: every code path this option touches is conditioned behind `if
 	 * (options.providers)`, so omitting it changes nothing. When present, `buildBDCDatabase` groups rows by `providerID`
 	 * and inserts one `bdc_provider` row per distinct provider — see {@link BuildBDCOptions.filerDB} for how the primary
 	 * FRN is picked when a provider carries more than one, and `schema.ts`'s `BDCProviderTable` docstring for the full
@@ -310,7 +310,7 @@ const PROVIDER_ID_PEEK_BYTES = 64 * 1024
 /**
  * Peeks each file's `provider_id` off its head ({@linkcode peekProviderID}, passing the path through so a malformed
  * file's error names it), then STREAMS every row via `readAvailabilityRows` — the file is never resident. This is the
- * production counterpart to the test seam's injected `rows` — exercised by `build-bdc.test.ts` only for the
+ * production counterpart to the TEST INJECTION POINT's injected `rows` — exercised by `build-bdc.test.ts` only for the
  * malformed-provider-id rejection path, same as `build-poi.ts`'s `readParquetRows`.
  */
 async function* readAvailabilityRowsFromCSVPaths(csvPaths: readonly string[]): AsyncIterable<BDCAvailabilityRow> {
@@ -339,7 +339,7 @@ interface GeoJSONMultiPolygon {
  * rings for a MultiPolygon. Interior rings/holes are still ignored — a hole moves a block's centroid far less than the
  * vertex-density skew this replaces, and only 1.0% of measured blocks carry one.
  *
- * This REPLACED the first cut's vertex-average, whose "same res-9 cell for all but pathological shapes" claim was
+ * This REPLACED the first version's vertex-average, whose "same res-9 cell for all but pathological shapes" claim was
  * falsified by measurement over every real TIGER 2020 block in LA + Orange county (118,360 blocks, 2026-08-11): the
  * vertex-average landed in a different res-9 cell for 11.6% of blocks, p99 displacement 286 m (past the ~174 m cell
  * edge), max 3.7 km — the tail is TIGER's elongated rural/mountain blocks, whose boundary vertices cluster on the
@@ -791,7 +791,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			createdAt: new Date().toISOString(),
 		})
 
-		// bdc_provider population (2a decision 8 / 3a decision 6) — entirely additive and gated behind
+		// bdc_provider population (2a decision 8 / 3a decision 6) — entirely additive and conditioned on
 		// `options.providers`: when absent, this block never runs and `bdc_provider` stays empty (see
 		// `BuildBDCOptions.providers`'s docstring for the default-path guarantee).
 		let providersPopulated = 0

@@ -7,7 +7,7 @@
  *   `evals/scores-by-version.json`, so the per-version score ledger updates itself instead of
  *   relying on discipline (which is how it froze at v4.4.0 for eleven releases).
  *
- *   Metric values come from the out-dir's `verdict.json` (the gate's own floor readings — the
+ *   Metric values come from the out-dir's `verdict.json` (the eval spec's own floor readings — the
  *   same numbers the promote decision used). Run metadata (corpus, steps, hardware) defaults from
  *   the model-card; everything is overridable by option. Rows follow the file's PRACTICED shape
  *   (the v4.4.0 row): the strict schema wants 64-hex digests for corpus/eval-set, but the
@@ -18,7 +18,7 @@
  *
  *   Usage:
  *     mailwoman eval ledger-append \
- *       --out-dir /path/to/gate-out --model-version 5.0.0 \
+ *       --out-dir /path/to/eval-out --model-version 5.0.0 \
  *       --run-id v193a3-anchor-absorption-step080000-rescore-20260702 \
  *       --model-path "@mailwoman/neural-weights-en-us@5.0.0" \
  *       [--card neural-weights-en-us/model-card.json] [--notes "..."] [--replace]
@@ -68,9 +68,9 @@ export interface LedgerAppendOptions {
 	 */
 	replace?: boolean
 	/**
-	 * The gate-revision escape (mirrors the no-silent-gate-drift discipline): a FAIL verdict may be ledgered ONLY when
+	 * The check-revision escape (mirrors the no-silent-check-drift discipline): a FAIL verdict may be ledgered ONLY when
 	 * every failing check is named here — i.e. the operator adjudicated the exact miss at a fork (e.g. a per-artifact
-	 * int8-delta exception recorded in the gate spec's $revision comment). The excepted checks are stamped into the row's
+	 * int8-delta exception recorded in the eval spec's $revision comment). The excepted checks are stamped into the row's
 	 * notes; any UNnamed failure still refuses. Repeatable.
 	 */
 	operatorException?: string[]
@@ -93,7 +93,7 @@ interface Ledger {
 }
 
 /**
- * Append one gate run to the ledger. Returns 0 when appended and 1 when refused. (duplicate without `replace`, or an
+ * Append one eval run to the ledger. Returns 0 when appended and 1 when refused. (duplicate without `replace`, or an
  * un-excepted FAIL verdict), 2 = usage error.
  */
 export async function ledgerAppend(options: LedgerAppendOptions): Promise<number> {

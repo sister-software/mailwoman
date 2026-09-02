@@ -3,24 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Per-release mask-regression gate (#718) — the "second lock", paired with the load-time
- *   capability-manifest delta-gate shipped in `neural/scorer.ts`
+ *   Per-release mask-regression check (#718) — the "second lock", paired with the load-time
+ *   capability-manifest delta check shipped in `neural/scorer.ts`
  *   (`assertConventionsRespectCapabilities`).
  *
- *   What it adds over the load-time delta-gate (and why two locks):
+ *   What it adds over the load-time delta check (and why two locks):
  *
- *   - The LOAD-TIME delta-gate (createScorer) is REACTIVE + COARSE: it consults the model card's
+ *   - The LOAD-TIME delta check (createScorer) is REACTIVE + COARSE: it consults the model card's
  *       `capabilities` block and rejects only a conventions mask that forbids a tag the card
  *       CERTIFIES, at a 5pp `maskOffF1 − maskOnF1` threshold. It fires only on EXPLICITLY-forbidden
  *       tags, and only against pre-recorded numbers — it can't see a tag the mask harms INDIRECTLY
  *       (e.g. forbidding `street_suffix` shifts probability mass and depresses `street`), nor a
  *       regression on a tag no `forbiddenTags` row names.
- *   - THIS gate is PROACTIVE + FINE: it RE-RUNS the model (mask-off vs mask-auto/on) per locale under
+ *   - THIS check is PROACTIVE + FINE: it RE-RUNS the model (mask-off vs mask-auto/on) per locale under
  *       the full SHIP-CONFIG (anchor-on + gazetteer-on) and FAILS if ANY tag's F1 drops by more
  *       than a TIGHTER 2pp threshold (per the DeepSeek consult) under the conventions mask —
- *       catching the subtler interaction harms the per-tag 5pp delta-gate would miss.
+ *       catching the subtler interaction harms the per-tag 5pp delta check would miss.
  *
- *   It is WEIGHT-DEPENDENT (it runs the model), so it is a RELEASE GATE — run with weights on disk
+ *   It is WEIGHT-DEPENDENT (it runs the model), so it is a RELEASE CHECK — run with weights on disk
  *   BEFORE publishing — NOT a weightless CI step (weight-dependent tests don't run in CI; #582).
  *   Hook it into the release path (`mailwoman eval gate` / the publish flow), NOT into Test CI.
  *
@@ -29,7 +29,7 @@
  *   toggling mask off vs auto, and the UNFOLDED exact-match per-tag F1 from `score-affix.ts`
  *   (street parts split, so an affix regression is visible — the folded `per-locale-f1.ts` can't
  *   see it). The DIFFERENCE from the manifest generator: that one records `maskOnF1` only for
- *   codex-forbidden tags (the only tags the LOAD-TIME gate reads); THIS gate computes the delta for
+ *   codex-forbidden tags (the only tags the LOAD-TIME check reads); THIS check computes the delta for
  *   EVERY tag, because a mask can harm a tag no `forbiddenTags` row names.
  *
  *   Run (Node 26+, custom DB / anchor-on, the production default v1.5.0 int8):
@@ -41,7 +41,7 @@
  *
  *   `threshold` overrides the default 0.02 (2pp). `json` writes the full per-tag delta table (every
  *   locale × tag, not just violations) for the release record. All narration goes through the
- *   `report` sink (stderr by default) — the promotion gate captures it into
+ *   `report` sink (stderr by default) — `promotion-gate.ts` captures it into
  *   `<out-dir>/mask-regression.md`.
  */
 
@@ -83,9 +83,9 @@ export interface MaskRegressionOptions {
 	 */
 	gazetteerLexicon?: string
 	/**
-	 * The regression threshold (pp, as a fraction). Per the DeepSeek consult, 2pp — a FINER net than the load-time
-	 * delta-gate's 5pp, so subtler interaction harms surface at release. A tag whose mask-on F1 is within this band of
-	 * its mask-off F1 is considered unharmed by the mask. Default 0.02.
+	 * The regression threshold (pp, as a fraction). Per the DeepSeek consult, 2pp — a FINER net than the load-time delta
+	 * check's 5pp, so subtler interaction harms surface at release. A tag whose mask-on F1 is within this band of its
+	 * mask-off F1 is considered unharmed by the mask. Default 0.02.
 	 */
 	threshold?: number
 	/**
@@ -104,7 +104,7 @@ const TAGS = UNFOLDED_ADDRESS_TAGS
 
 //#endregion
 
-//#region The gate
+//#region The check
 
 interface Delta {
 	locale: SystemCode

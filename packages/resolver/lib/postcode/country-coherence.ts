@@ -13,7 +13,7 @@
  *   0.9999908844 has nothing to promote — a soft re-rank downstream of a hard filter is inert by
  *   construction. Population then picks Paris, Texas (pop 24,969). With the postal extracts attached
  *   the answer gets WORSE, not merely wrong: the postcode resolves to the US row (ZIP 75001,
- *   Addison TX), `applyPostcodeConsistency` finds no Paris within its 50 km gate (the nearest is
+ *   Addison TX), `applyPostcodeConsistency` finds no Paris within its 50 km check (the nearest is
  *   143.8 km), and falls the locality coordinate back to the ZIP point. See
  *   `docs/records/evals/2026-08-03-postcode-locality-scoping.md` for the instrumented diagnosis.
  *
@@ -40,7 +40,7 @@
  *   `state.defaultCountry` for the whole walk. Everything downstream — including the three post-walk
  *   coherence passes and the street/rooftop tiers — then sees the corrected country.
  *
- *   ## Why it is not a hard veto (the doctrine gate)
+ *   ## Why it is not a hard veto (the doctrine check)
  *
  *   Registries are SOFT priors here, positive evidence only. Two properties keep this one honest:
  *
@@ -86,9 +86,9 @@
  *   Prototyped out-of-tree against the live gazetteer over the public `findPlace` surface (2026-08-03):
  *   400 real US (ZIP, city) pairs from `postalcode-us.db` + 400 real FR (CP, commune) pairs from
  *   `postcode-locality-fr.db` — 800 pairs, **zero** border crossings, at both the 15 km and 25 km
- *   gates. The 22 US abstentions were pairs whose ZIP parent name is not an exact-matching locality
+ *   checks. The 22 US abstentions were pairs whose ZIP parent name is not an exact-matching locality
  *   in the admin gazetteer (a recall gap; abstention is the safe outcome). The confound board's
- *   verdicts were identical at 15, 25 AND 50 km, so the mechanism is not gate-tuned; the default
+ *   verdicts were identical at 15, 25 AND 50 km, so the mechanism is not check-tuned; the default
  *   below is the 25 km the scale run measured.
  *
  *   Cost: 2 lookups on the byte-stable path (postcode + locality under the default country), and at
@@ -97,7 +97,7 @@
  *   unless the tree carries both a postcode and a locality.
  *
  *   **Default-ON** since the operator promotion of 2026-08-05 (#1477) — the resolver gauntlet, pinned
- *   both ways, returned zero newly-failing gated cases, and 56,000 pair evaluations across both
+ *   both ways, returned zero newly-failing conditional cases, and 56,000 pair evaluations across both
  *   backends returned zero false positives. `ResolveOpts.postcodeCountryCoherence: false` opts out,
  *   and the walk is byte-stable then. Receipts:
  *   `docs/records/evals/2026-08-05-postcode-coherence-default-on-evidence.md`.
@@ -111,7 +111,7 @@ import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
 /**
- * Default gate radius (km) for the postcode↔locality consistency test. 25 km is what the 800-pair scale run measured;
+ * Default check radius (km) for the postcode↔locality consistency test. 25 km is what the 800-pair scale run measured;
  * the confound board returned identical verdicts at 15, 25 and 50, so this is a floor choice, not a tuned one.
  */
 export const POSTCODE_COUNTRY_COHERENCE_GATE_KM = 25
@@ -120,7 +120,7 @@ export const POSTCODE_COUNTRY_COHERENCE_GATE_KM = 25
  * Which half (or halves) of the address bought the verdict — the firing receipt, so a reader of a scoped result can
  * tell a two-sided agreement from a one-sided uniqueness claim without re-deriving it.
  *
- * - `pair` — postcode AND locality both resolve in this country, within the gate. The strongest rung and the only one
+ * - `pair` — postcode AND locality both resolve in this country, within the radius. The strongest rung and the only one
  *   that existed before #24.
  * - `locality` — the locality names exactly one country in the whole gazetteer, and the postcode names none that
  *   contradict it. This is the CH/BE class: the gazetteer carries no Swiss or Belgian postcodes at all, so the pair
@@ -180,7 +180,7 @@ export interface PostcodeCountryScopeOpts {
 	 */
 	defaultCountry: string | undefined
 	/**
-	 * Consistency gate radius in km. Defaults to {@link POSTCODE_COUNTRY_COHERENCE_GATE_KM}.
+	 * Consistency check radius in km. Defaults to {@link POSTCODE_COUNTRY_COHERENCE_GATE_KM}.
 	 */
 	gateKm?: number
 	/**
@@ -326,8 +326,9 @@ async function countriesHolding(
 /**
  * Is the (postcode, locality) pair geographically consistent in `country`? Returns the winning pair and its distance,
  * or `null` when the postcode does not resolve there, no same-named locality exists there, or the nearest one is
- * outside the gate. Costs one postcode lookup plus (only if that hit) one locality lookup — or just the locality lookup
- * when the caller already knows the country's postcode row (`knownPostcodePlace`, from the exhaustive unscoped probe).
+ * outside the check. Costs one postcode lookup plus (only if that hit) one locality lookup — or just the locality
+ * lookup when the caller already knows the country's postcode row (`knownPostcodePlace`, from the exhaustive unscoped
+ * probe).
  */
 async function coherenceIn(
 	country: string,
@@ -495,7 +496,7 @@ export async function findPostcodeCountryScope(
 
 	// 4a. A locality value names exactly one country. Stronger than the postcode rung — a place name is far
 	//     more discriminative than a four-digit code — so it is tried first. A verdict stands down when that
-	//     country's OWN postcode row contradicts the locality (outside the gate): the two halves disagreeing
+	//     country's OWN postcode row contradicts the locality (outside the check): the two halves disagreeing
 	//     inside one country is exactly what the pair test exists to catch, and a single-sided rung must not
 	//     launder it.
 	// PRIMARY-keyed rows only (#1626's re-reading discipline, applied to a country verdict): "the locality

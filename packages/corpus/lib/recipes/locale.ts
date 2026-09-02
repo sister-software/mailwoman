@@ -149,7 +149,7 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		// HM Land Registry Price Paid Data tuples (25.67M rows out of the PPD ingest). PPD's DISTRICT is the
 		// postal town (locality) and CITY is the dependent locality — legitimately EMPTY on the majority of rows
 		// (most GB addresses have no dependent locality). `districtAsLocality` maps DISTRICT→locality and, when
-		// present, CITY→dependent_locality; the `readTuples` gate above only drops a row when BOTH are empty, so
+		// present, CITY→dependent_locality; the `readTuples` check above only drops a row when BOTH are empty, so
 		// the majority empty-CITY rows survive.
 		source: "synth-gb",
 		corpusVersion: "0.9.9",
@@ -305,8 +305,8 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 			// (`Auckland`) and CITY holds the suburb (`Birkenhead`), so DISTRICT → locality and CITY →
 			// dependent_locality. When DISTRICT is empty (~18% of NZ rows), fall back to CITY → locality with no
 			// sub-locality. GB PPD tuples flip which side is legitimately empty — on the MAJORITY of GB rows CITY
-			// (the dependent_locality) is empty and DISTRICT (the locality) is populated, so the gate below only
-			// drops a `districtAsLocality` row when BOTH are empty, never when CITY alone is — gating on CITY
+			// (the dependent_locality) is empty and DISTRICT (the locality) is populated, so the check below only
+			// drops a `districtAsLocality` row when BOTH are empty, never when CITY alone is — filtering on CITY
 			// alone silently discards most of the GB source. See {@link LocalePart.districtAsLocality}.
 			let locality: string | null
 			let dependent_locality: string | undefined
@@ -399,7 +399,7 @@ export function applyCountryAppend(
 
 		if (!forms?.length) {
 			// The BR/NZ lesson: a missing table entry must never silently no-op a requested fraction —
-			// it must raise so the gap is caught at build time, not discovered later as a 0% gate failure.
+			// it must raise so the gap is caught at build time, not discovered later as a 0% check failure.
 			throw new Error(
 				`No COUNTRY_SURFACE_FORMS entry for ${country} — add it to codex/country/country.ts before using --country-fraction`
 			)

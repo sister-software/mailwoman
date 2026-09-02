@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman eval gauntlet` — THE Gauntlet gate: all three layers, one combined verdict (the
- *   full-pipeline integration net a model ship gates on; #566 lesson). No flags = self-check on the
+ *   `mailwoman eval gauntlet` — THE Gauntlet eval: all three layers, one combined verdict (the
+ *   full-pipeline integration net a model ship checks on; #566 lesson). No flags = self-check on the
  *   shipped default (regression + metamorphic); `--candidate` adds the held-out candidate-vs-prod
  *   z-test; `--layer` runs a single layer with the old standalone semantics (its own verdict + exit
  *   code). A non-zero exit blocks the ship (RELEASING.md).
  *
- *   `--layer ablation` is the exception: it is a MEASUREMENT, not a gate. It deletes each asserted
+ *   `--layer ablation` is the exception: it is a MEASUREMENT, not a check. It deletes each asserted
  *   component from each corpus row and reports what the deletion cost per (component, locale) — the
  *   required map. It never joins the combined verdict and cannot block a ship.
  *
@@ -95,7 +95,7 @@ const EvalGauntlet: ParsedCommandComponent<Options> = ({ options }) => {
 					...(components ? { components: splitList(components) } : {}),
 					// An UNSET flag must stay unset, not become an explicit pin either way. The schema supplies its
 					// `false` default for BOTH halves, and forwarding one verbatim would pin the lever forever — which is
-					// exactly how the 2026-08-05 default-on flip could have gone unnoticed by the standard gate. Neither
+					// exactly how the 2026-08-05 default-on flip could have gone unnoticed by the standard eval. Neither
 					// flag set keeps "no flag" meaning "grade whatever production does".
 					postcodeCountryCoherence: options.postcodeCountryCoherence
 						? true

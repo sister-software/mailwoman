@@ -11,7 +11,7 @@
  *   (postalcode-intl.db) on the ES eval rows — does Overture's 15.7M-point density beat GeoNames on
  *   anchor accuracy?
  *
- *   IT is OUT: Overture IT postcode fill = 0% (the #474 ingest gate "≥80% else renegotiate" fails) —
+ *   IT is OUT: Overture IT postcode fill = 0% (the #474 ingest check "≥80% else renegotiate" fails) —
  *   GeoNames stays IT's source; documented as an Overture gap.
  *
  *   Run: mailwoman eval es-postcode-centroids [--parquet <path>] [--out <db>] [--country ES]

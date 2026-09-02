@@ -3,19 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The four pre-registered 2a acceptance gates for `filingLandscape` — this whole phase
- *   is judged by these. Each gate builds (or reuses) a fixture `bdc.db` via `buildBDCDatabase`'s
- *   `rows:` test seam, feeding one location per (geoid, provider, technology) triple so the census in
- *   Gate 3 is hand-verifiable without any BSL/location_id collapsing to reason about.
+ *   The four pre-registered 2a acceptance criteria for `filingLandscape` — this whole phase
+ *   is judged by these. Each criterion builds (or reuses) a fixture `bdc.db` via `buildBDCDatabase`'s
+ *   `rows:` TEST INJECTION POINT, feeding one location per (geoid, provider, technology) triple so the census in
+ *   criterion 3 is hand-verifiable without any BSL/location_id collapsing to reason about.
  *
  *   Fixture: 3 known blocks (SF, NY, and a THIRD block — "DIVERGENT" — chosen because its directly
  *   -indexed res-6 cell disagrees with its res-9 cell's H3 hierarchy parent, see below) × 2
  *   providers each at SF/NY, distinct techs/speeds landing in 3 different speed buckets, plus one geoid
- *   that is NEVER fed to the builder at all (Gate 2's "absent from the fixture" block). Gates 1–4 below
+ *   that is NEVER fed to the builder at all (criterion 2's "absent from the fixture" block). Criteria 1–4 below
  *   query only `[GEOID_SF, GEOID_NY]` (or subsets), so DIVERGENT doesn't perturb their hand-counts
  *   — it's exercised only by the coverage-cell unification tests that need it.
  *
- *   Three properties the four gates do NOT pin on their own, each with its own describe block below:
+ *   Three properties the four criteria do NOT pin on their own, each with its own describe block below:
  *
  *   - **Builder and reader must derive a block's res-6 coverage cell the SAME way.** H3's cell hierarchy
  *     is not geometrically exact: `latLngToCell(centroid, 6)` and `cellToParent(latLngToCell(centroid,
@@ -25,16 +25,16 @@
  *     res-9 index; see that file's docstring. The "builder/reader coverage-cell unification" describe
  *     block below proves the agreement holds even for the DIVERGENT block, chosen specifically because
  *     the two derivations DO disagree there (asserted inline first, so the test cannot pass vacuously).
- *   - **Gate 2 must exercise `readLayerCoverage`, not the zero-rows shortcut.** A geoid absent from the
+ *   - **criterion 2 must exercise `readLayerCoverage`, not the zero-rows shortcut.** A geoid absent from the
  *     fixture derives no candidate cell at all, so it is classified unknown before the coverage check is
- *     ever reached — a Gate 2 built only on that block stays green with the coverage branch deleted
- *     outright. "Gate 2 (extended)" below adds a geoid that HAS rows but whose `layer_coverage` row is
+ *     ever reached — a criterion 2 built only on that block stays green with the coverage branch deleted
+ *     outright. "criterion 2 (extended)" below adds a geoid that HAS rows but whose `layer_coverage` row is
  *     deliberately deleted post-build (a genuine coverage-check exercise), plus an `h3Cells`-form query
  *     against a cell that was never surveyed at all — that branch is the ONLY path for an `h3Cells`
  *     query, which has no "zero rows" shortcut available to it.
  *   - **The SQL `CASE` and the JS `speedBucketForDownloadSpeed` mirror must not drift.** "speed bucket
  *     boundaries" below is a table test over the exact boundary values plus a dedicated SQL-vs-JS
- *     agreement test; the "100-1000" bucket is otherwise never exercised by the gates.
+ *     agreement test; the "100-1000" bucket is otherwise never exercised by the criteria.
  */
 
 import { BDC_H3_RESOLUTION, type BDCDatabase } from "@mailwoman/bdc/schema"
@@ -71,7 +71,7 @@ const GEOID_NY = "360610001001001"
 // directly-indexed res-6 cell (`latLngToCell(_, 6)`) disagrees with its res-9 cell's H3 hierarchy parent
 // (`cellToParent(latLngToCell(_, 9), 6)`) — the exact divergence class builder/reader unification guards.
 const GEOID_DIVERGENT = "510090101001001"
-// Deliberately NEVER passed to `buildBDCDatabase` at all — Gate 2's "absent from the fixture" block.
+// Deliberately NEVER passed to `buildBDCDatabase` at all — criterion 2's "absent from the fixture" block.
 const GEOID_UNKNOWN = "999999999999999"
 
 const CENTROID_SF = { lat: 37.7749, lon: -122.4194 }
@@ -97,13 +97,13 @@ const PROVIDER_B = 130_080
 
 /**
  * 5 rows, one location each (`includeLocationIDs` stays default-off; ONE row per (geoid, provider, technology) triple
- * keeps the block-grain collapse a no-op, so `result.rows` and the hand-computed census in Gate 3 agree without any
- * surprise collapsing):
+ * keeps the block-grain collapse a no-op, so `result.rows` and the hand-computed census in criterion 3 agree without
+ * any surprise collapsing):
  *
  * - SF: provider A / tech 50 / 1000 Mbps (gigabit), provider B / tech 40 / 80 Mbps (25-100)
  * - NY: provider A / tech 50 / 1000 Mbps (gigabit — SAME bucket/tech/provider as SF, block_count sums to 2), provider B /
  *   tech 10 / 10 Mbps (under-25)
- * - DIVERGENT: provider A / tech 30 / 500 Mbps (100-1000) — not queried by Gates 1–4, only by the fix-round-1 tests.
+ * - DIVERGENT: provider A / tech 30 / 500 Mbps (100-1000) — not queried by Criteria 1–4, only by the fix-round-1 tests.
  */
 function fixtureRows(): BDCAvailabilityRow[] {
 	return [
@@ -235,7 +235,7 @@ describe("filingLandscape — Gate 2: meaning-of-zero", () => {
 })
 
 describe("filingLandscape — Gate 2 (extended): coverage-check is required, not a rows-shortcut proxy", () => {
-	// Gate 2 above never reaches `readLayerCoverage` — GEOID_UNKNOWN has zero rows, so it's classified unknown by
+	// criterion 2 above never reaches `readLayerCoverage` — GEOID_UNKNOWN has zero rows, so it's classified unknown by
 	// the "no candidate cell" shortcut alone, and the coverage-check branch can be deleted outright without turning
 	// it red. These two tests target that branch directly: (a) a geoid WITH rows whose coverage row is deliberately
 	// deleted, and (b) an `h3Cells` query — which has NO rows-based shortcut available at all — against a cell that

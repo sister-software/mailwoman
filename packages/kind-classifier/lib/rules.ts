@@ -142,7 +142,7 @@ export function wordsOf(text: string): string[] {
  * True when a word is USPS street-suffix vocabulary that unambiguously signals an address — the full Pub-28 table via
  * `@mailwoman/codex`, minus its curated name-prone canonicals (PARK, FIELD, HILL, LAKE, …). Those double as ordinary
  * proper-name heads ("Wrigley Field", "Menlo Park"), and disqualifying on them would reject the very venue and place
- * names the rules below exist to capture. Shared with `intent-rules.ts` so both gates read one definition.
+ * names the rules below exist to capture. Shared with `intent-rules.ts` so both rule sets read one definition.
  */
 export function isDisqualifyingStreetSuffix(word: string): boolean {
 	const canonical = US_STREET_SUFFIX_LOOKUP.get(word.trim().toLowerCase())

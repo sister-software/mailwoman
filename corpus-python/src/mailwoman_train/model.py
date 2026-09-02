@@ -343,7 +343,7 @@ class MailwomanCoarseEncoder(nn.Module):
         self.use_locality_surface_anchor = use_locality_surface_anchor
         self.locality_surface_feature_dim = int(locality_surface_feature_dim) if use_locality_surface_anchor else 0
         # v0.3.0 additions: CRF decoder for structural validity + learned tag dynamics,
-        # label smoothing on the per-token CE leg for calibration. Both gate-able for
+        # label smoothing on the per-token CE leg for calibration. Both conditionable for
         # ablation studies via the kwargs above.
         self.use_crf = use_crf
         self.label_smoothing = label_smoothing
@@ -1308,7 +1308,7 @@ class MailwomanCoarseEncoder(nn.Module):
         # map_location="cpu": checkpoints are written on an A100, and torch pickles the storage's
         # device. Without this, loading a GPU-trained checkpoint on a CPU-only box raises
         # "Attempting to deserialize object on a CUDA device" — which is every local grading run
-        # (the #727 phase-1 gate hit exactly this). CPU is the safe landing spot; callers .to(device).
+        # (the #727 phase-1 check hit exactly this). CPU is the safe landing spot; callers .to(device).
         # Use weights_only=True if available (torch 2.4+) to avoid pickle-arbitrary-code warning.
         try:
             sd = torch.load(model_dir / "pytorch_model.bin", weights_only=True, map_location="cpu")
@@ -1327,7 +1327,7 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size
     """
     # v8 CJK Phase 2: the label vocabulary is per-config (data.label_set; "stage3" default keeps
     # every existing recipe byte-identical). The internal consumers of the module-global 33-label
-    # maps (CRF init aside — that one is threaded) are flag-gated features that have never trained
+    # maps (CRF init aside — that one is threaded) are flag-restricted features that have never trained
     # against a non-default set; refuse the combination loudly rather than mislabel silently.
     from .labels import resolve_label_set
 

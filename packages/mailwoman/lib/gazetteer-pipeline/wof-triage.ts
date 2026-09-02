@@ -55,9 +55,9 @@ const TRIAGE_PLACETYPES = ["locality", "localadmin", "borough"] as const
 const COVER_PLACETYPES = ["locality", "localadmin", "borough", "county", "macrocounty", "region"] as const
 
 /**
- * Radius for "is this place already covered by a live record", km. Matches the currency backfill's gate radius, and for
- * the same reason: a locality centroid and its live twin can sit kilometres apart, while a same-named place in another
- * region is a different place entirely.
+ * Radius for "is this place already covered by a live record", km. Matches the currency backfill's check radius, and
+ * for the same reason: a locality centroid and its live twin can sit kilometres apart, while a same-named place in
+ * another region is a different place entirely.
  */
 const COVERAGE_RADIUS_KM = 10
 

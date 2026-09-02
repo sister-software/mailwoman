@@ -19,7 +19,7 @@
  *
  *   Faithfulness note: a regex/rule parser may normalize values (casing, abbreviation expansion) so a
  *   value isn't a verbatim substring of raw. We fall back to case-insensitive search; a value we
- *   still can't place is dropped (logged via the return's `dropped` count). The preliminary gate
+ *   still can't place is dropped (logged via the return's `dropped` count). The preliminary check
  *   (v0-via-adapter >= 85% of v0 standalone component accuracy on canonical) catches an adapter
  *   that drops too much.
  */

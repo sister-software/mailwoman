@@ -107,7 +107,7 @@ export const POSTCODE_CONVENTIONS: ReadonlyMap<string, { placement: PostcodePlac
 /**
  * How many postcodes one locality may contribute.
  *
- * A quota rather than a cut-off — see the header. It bounds repetition without deleting a locality: a city with 9,222
+ * A quota rather than a cutoff — see the header. It bounds repetition without deleting a locality: a city with 9,222
  * postcodes contributes this many and stays in the slice.
  */
 export const DEFAULT_LOCALITY_QUOTA = 24
@@ -261,7 +261,7 @@ export async function createKnownLocalityGate(country: string, adminDB?: string)
 	}
 
 	// An empty set means the gazetteer has no localities for this country at all, which is a coverage fact about the
-	// gazetteer rather than a verdict on the source — so gate nothing rather than drop everything.
+	// gazetteer rather than a verdict on the source — so check nothing rather than drop everything.
 	if (!names.size) return () => true
 
 	return (name: string) => names.has(name.toLowerCase())
@@ -324,7 +324,7 @@ export async function readTriplesFromGeonames(
 
 		if (!postcode || !locality || !region) continue
 
-		// The gate applies to the LOCALITY — admin2 — not to the fine-grained name, which is expected to be a street or
+		// The check applies to the LOCALITY — admin2 — not to the fine-grained name, which is expected to be a street or
 		// a colonia and is emitted as the dependent locality rather than dropped.
 		if (!isKnownLocality(locality)) continue
 

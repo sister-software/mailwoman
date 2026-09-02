@@ -59,7 +59,7 @@ describe("lookupPOICategory", () => {
 		expect(lookupPOICategory("chemist", "en-GB")[0]?.confidence).toBe(1)
 		expect(lookupPOICategory("chemist", "en-IE")[0]?.confidence).toBe(0.5)
 		expect(lookupPOICategory("chemist", "fr-FR")).toEqual([])
-		// Ungated synonyms match any locale at full confidence.
+		// unrestricted synonyms match any locale at full confidence.
 		expect(lookupPOICategory("datacenter", "fr-FR")[0]?.confidence).toBe(1)
 	})
 
@@ -147,7 +147,7 @@ describe("resolveOvertureCategories", () => {
 })
 
 describe("lookup without a locale", () => {
-	it("hides locale-gated synonyms and keeps ungated ones", () => {
+	it("hides locale-restricted synonyms and keeps unrestricted ones", () => {
 		expect(lookupPOICategory("chemist")).toEqual([])
 		expect(lookupPOICategory("drinking fountain")[0]?.confidence).toBe(1)
 	})

@@ -26,7 +26,7 @@ export type TruthLabel = (rec: SourceRecord) => string
 /**
  * Union every pair in each block whose org names agree.
  *
- * Quadratic within a block, which is what keeps the gate honest: the Jaccard test is per PAIR, so a chain of
+ * Quadratic within a block, which is what keeps the test honest: the Jaccard test is per PAIR, so a chain of
  * near-matches cannot transitively fuse two genuinely distinct co-located orgs unless some pair actually agrees.
  */
 function unionAgreeingPairs(
@@ -96,7 +96,7 @@ export function buildOrgNameGrain(npiPrimary: Map<string, NPIPrimary>): TruthLab
 /**
  * The coordinate-keyed org-name truth: union same-org NPIs whose primary practice coordinates fall within
  * {@linkcode COLOCATION_KM}. Blocking by the GEOCODED BUILDING catches the same-building pairs the address string keys
- * apart, so this F1 is at or above the string grain's; the Jaccard gate still blocks distinct co-located orgs.
+ * apart, so this F1 is at or above the string grain's; the Jaccard test still blocks distinct co-located orgs.
  *
  * Brute-force pairwise over the sampled NPIs — trivial at this scale, and unlike a cell key it has no boundary
  * artifact.

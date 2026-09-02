@@ -11,7 +11,7 @@ import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
  *   (CC-BY, CC0, PDDL, ODbL, CC-BY-SA, and proprietary attribution-only). The per-row LICENSE filter
  *   in the openaddresses adapter is essential for proprietary-weights training: Tier-C rows (ODbL,
  *   CC-BY-SA, CC-SA) are dropped at ingest by default. This module downloads the raw collection; the
- *   adapter does the license gating.
+ *   adapter does the license filtering.
  *
  *   Native `fetch` streams the download to disk (no curl + Python subprocess tax);
  *   `node:child_process` keeps the genuine shell ops it still needs (`file` magic detection +

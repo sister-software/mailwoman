@@ -14,7 +14,7 @@
  *   THAT SHARED GAP IS WHY THIS FILE EXISTS. #1746: the currency backfill refused to
  *   resurrect a deprecated locality whenever ANY live same-name row sat within 10 km, "possibly under another
  *   placetype". For a place recorded twice that premise holds. For a placetype DEMOTION it does not — WOF retired
- *   `Gillingham` the locality (pop 101,187) and kept `Gillingham` the neighbourhood 3.2 km away, and the gate read the
+ *   `Gillingham` the locality (pop 101,187) and kept `Gillingham` the neighbourhood 3.2 km away, and the check read the
  *   surviving CHILD as covering its own dead parent. Sixteen of seventeen GB refusals had exactly that shape. A rank
  *   comparison separates the two cases, and it needs the fine end of the scale that neither existing copy carried.
  *
@@ -35,7 +35,7 @@ import type { WhosOnFirstPlacetype } from "#resources/whosonfirst/placetypes/def
 /**
  * Higher is finer. Absent placetypes are UNRANKED and must be handled by the caller rather than defaulted — a missing
  * entry silently scoring 0 would rank an unknown placetype as coarse as `country`, which is the wrong direction for
- * every gate that reads this.
+ * every check that reads this.
  */
 export const PLACETYPE_SPECIFICITY: Readonly<Partial<Record<WhosOnFirstPlacetype | (string & {}), number>>> = {
 	address: 11,
@@ -64,7 +64,7 @@ export const PLACETYPE_SPECIFICITY: Readonly<Partial<Record<WhosOnFirstPlacetype
  * The rank of a placetype, or `undefined` when it carries none.
  *
  * Returning `undefined` rather than a number is the point: a caller that cannot rank a row has to decide what that
- * means for its own gate, and the two reasonable answers (block conservatively, or ignore) differ per call site.
+ * means for its own check, and the two reasonable answers (block conservatively, or ignore) differ per call site.
  */
 export function placetypeSpecificity(placetype: string | null | undefined): number | undefined {
 	if (!placetype) return undefined
@@ -99,7 +99,7 @@ export function isAtLeastAsSpecific(
  * drops the equal case — measured on the real artifact, that turned 973 blocked rows into 18 and would have resurrected
  * 955 places that are already alive.
  *
- * `undefined` when either placetype is unranked; a caller gating on this should treat that as "not strictly finer".
+ * `undefined` when either placetype is unranked; a caller filtering on this should treat that as "not strictly finer".
  */
 export function isStrictlyFiner(
 	candidate: string | null | undefined,

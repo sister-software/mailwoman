@@ -59,7 +59,8 @@ import { beforeAll, describe, expect, test } from "vitest"
 
 /**
  * The scorer set as it stood BEFORE ROAD_TO_V9 §4 — a verbatim replay of `classify.ts`'s list at commit `4ebd955`,
- * minus the three intent scorers and the POI pair (which are lexicon-gated and unreachable from `classifyKindSync`).
+ * minus the three intent scorers and the POI pair (which are lexicon-restricted and unreachable from
+ * `classifyKindSync`).
  */
 const PRE_INTENT_SCORERS: ReadonlyArray<{
 	kind: QueryKind
@@ -260,7 +261,7 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 		expect(new Set(marked.flatMap((m) => m.codes))).toEqual(new Set(["declared_fork"]))
 
 		// `landmark` and `locality_only`, and the split is by REGISTER: `scoreVenueLandmark` requires a capital letter
-		// (`rules.ts`'s `/[A-Z]/` gate) and scores 0.88, so "Diego Garcia" is a landmark and "diego garcia" is a
+		// (`rules.ts`'s `/[A-Z]/` check) and scores 0.88, so "Diego Garcia" is a landmark and "diego garcia" is a
 		// locality. That is a PRE-EXISTING case-keyed rule, unchanged here and recorded because it is exactly the kind
 		// of thing this receipt would otherwise be read as having introduced. What matters for the D-rule is that the
 		// same two kinds come out with and without §4 — which the byte-identical routing test above already pinned.

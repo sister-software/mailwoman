@@ -267,8 +267,9 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	}
 
 	/**
-	 * Exposes the header's ISO country code so the resolver conforms to {@link PlacetypeCensusLike} — the country gate at
-	 * the load site reads it to refuse a census built for a different country than the locale being parsed.
+	 * Exposes the header's ISO country code so the resolver conforms to {@link PlacetypeCensusLike} — the country
+	 * restriction at the load site reads it to refuse a census built for a different country than the locale being
+	 * parsed.
 	 */
 	get country(): string {
 		return this.header.country

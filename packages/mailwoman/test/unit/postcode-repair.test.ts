@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #1735 pins. The rung's whole contract is its gates: it fires on the recorded contradiction (letter-digit postcode
+ *   #1735 pins. The rung's whole contract is its checks: it fires on the recorded contradiction (letter-digit postcode
  *   span, ≥0.9 shape confidence, only misread-family nodes wholly inside it) and on NOTHING else. The veto cases are
  *   the tests that matter — each one is an input the rung must leave byte-identical.
  */
@@ -84,7 +84,7 @@ describe("repairPostcodeContradiction (#1735)", () => {
 		expect(repairPostcodeContradiction(po, computeQueryShape("PO33 4DE"))).toBe(true)
 		expect(tags(po)).toEqual(["postcode:PO33 4DE"])
 
-		// A genuine PO Box surface carries no letter-digit postcode span — the format gate never opens.
+		// A genuine PO Box surface carries no letter-digit postcode span — the format check never opens.
 		const box = tree("PO Box 123", [node("po_box", "PO Box 123", 0, 10)])
 
 		expect(repairPostcodeContradiction(box, computeQueryShape("PO Box 123"))).toBe(false)

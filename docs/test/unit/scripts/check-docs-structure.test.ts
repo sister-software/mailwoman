@@ -6,7 +6,7 @@
  *   Unit tests for the six-role frontmatter contract (`validatePage`, `docs-frontmatter-contract.ts`)
  *   that `check-docs-structure.ts` enforces on every published page under `--strict` (docs-reorg
  *   Phase 0, task 2). Pure fixture objects only — no filesystem, no sidebar, no real corpus — the
- *   orphan/duplicate-title checks and the legacy per-path role gate keep their own coverage (or lack
+ *   orphan/duplicate-title checks and the legacy per-path role check keep their own coverage (or lack
  *   thereof) unchanged by this file.
  */
 

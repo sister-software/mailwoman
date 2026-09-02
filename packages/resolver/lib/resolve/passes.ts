@@ -188,7 +188,7 @@ export interface ResolutionState {
 	 */
 	defaultCountryIsInferred: boolean
 	/**
-	 * The tree's single value-bearing node when it is locality-tagged (the bare-toponym shape), else null. Gates the
+	 * The tree's single value-bearing node when it is locality-tagged (the bare-toponym shape), else null. Checks the
 	 * country-placetype sibling race in `#lookupAndPick` — a bare name can be a country the parser tagged `locality`
 	 * ("Japan", "China"), and the locality placetype filter makes the country row unreachable no matter how it ranks.
 	 */
@@ -349,7 +349,7 @@ export function firstPostcodeValue(roots: readonly AddressNode[]): string | unde
 /**
  * Span-rescore tier (#370): opt-in last-resort locality recovery. Runs ONLY when the tree resolved NOTHING (the #685
  * brake — never disturb a working coordinate). Enumerates raw-token spans, exact- matches the same-country gazetteer
- * (longest-wins + postcode-consistency gate; see `span-rescore.ts`), and on a hit INJECTS a resolved `locality` node
+ * (longest-wins + postcode-consistency check; see `span-rescore.ts`), and on a hit INJECTS a resolved `locality` node
  * decorated exactly like a normally-resolved one. Default-ON (#370, promoted 2026-06-25); byte-stable opt-out via
  * `opts.spanRescore: false`. Async (it queries the backend), so it's awaited.
  */
@@ -408,10 +408,10 @@ export async function applySpanRescore(
 	// dominance margin `declared_ambiguity` reads was uncomputable for exactly the famous-homonym class.
 	// The winner is unchanged (see findRescoreCandidate); this is additive.
 	decorateNode(node, hit.place, hit.alternatives)
-	// `rescore_gated` carries the gate's precision signal as an EXPLICIT handle — NOT folded into the
+	// `rescore_gated` carries the check's precision signal as an EXPLICIT handle — NOT folded into the
 	// calibrated `confidence`, which would break the isotonic guarantee (a true calibrated 0.83 must not
-	// be confused with a rescore plug-in estimate; DeepSeek 2026-06-23). true = postcode gate fired
-	// (high-precision); false = ungated (no postcode→point coverage for this country, ~83%-precision).
+	// be confused with a rescore plug-in estimate; DeepSeek 2026-06-23). true = postcode check fired
+	// (high-precision); false = unrestricted (no postcode→point coverage for this country, ~83%-precision).
 	node.metadata = { ...node.metadata, span_rescore: true, rescore_gated: hit.gated }
 	roots.push(node)
 
@@ -487,8 +487,8 @@ async function recoverPostcodeNode(
  * 1. Find the resolved postcode's coordinate (the trustworthy anchor — a postcode is unambiguous within a country in a way
  *    a town name is not).
  * 2. For each resolved locality node farther than `gateKm` from it: re-pick the same-named candidate from the node's
- *    already-captured `alternatives` that is NEAREST the postcode and within the gate. This keeps locality granularity
- *    at the CORRECT instance.
+ *    already-captured `alternatives` that is NEAREST the postcode and within the radius. This keeps locality
+ *    granularity at the CORRECT instance.
  * 3. If no alternative reconciles, the locality instance is unreliable — fall its coordinate back to the postcode point
  *    (right area, the safe answer) and flag `postcode_city_mismatch`.
  *
@@ -515,7 +515,7 @@ export function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: 
 		findAnchor.push(...n.children)
 	}
 
-	if (!anchor) return // no postcode→point — nothing to disambiguate against (gate can't fire)
+	if (!anchor) return // no postcode→point — nothing to disambiguate against (check can't fire)
 
 	const stack: AddressNode[] = [...roots]
 
@@ -527,7 +527,7 @@ export function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: 
 
 		if (haversineKm(anchor.lat, anchor.lon, node.lat!, node.lon!) <= gateKm) continue // already consistent
 
-		// Re-pick: the same-named candidate nearest the postcode, within the gate. `alternatives` is
+		// Re-pick: the same-named candidate nearest the postcode, within the radius. `alternatives` is
 		// typed `unknown[]` on the node (decoder/types.ts can't import resolver types) — they ARE the
 		// `ResolvedPlace` runner-ups decorateNode attached, so the cast is sound.
 		const alts = (node.alternatives as ResolvedPlace[] | undefined) ?? []

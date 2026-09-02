@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `runDoctor` orchestration tests — driven entirely through injected {@link DoctorDeps} seams, so no
+ *   `runDoctor` orchestration tests — driven entirely through injected {@link DoctorDeps} dependencies, so no
  *   filesystem, weights package, or ONNX binding is touched. Verifies the fact-gathering (weights,
  *   gazetteer discovery order, POI manifest, runtime) and the exit-code discipline end-to-end.
  *
- *   The last describe is the deliberate exception: `defaultDoctorDeps`'s engines floor is the one seam
+ *   The last describe is the deliberate exception: `defaultDoctorDeps`'s engines floor is the one dependency
  *   that resolves a real file, so nothing above it can catch a broken resolution.
  */
 
@@ -23,7 +23,7 @@ import {
 import { describe, expect, it } from "vitest"
 
 /**
- * A fully-healthy set of seams; individual tests override just the fields they exercise.
+ * A fully-healthy set of dependencies; individual tests override just the fields they exercise.
  */
 function healthyDeps(): DoctorDeps {
 	return {
@@ -170,7 +170,7 @@ describe("runDoctor (injected seams)", () => {
 	})
 })
 
-// The one seam that is NOT injected in the suite above: `defaultDoctorDeps` reads `engines.node` from mailwoman's own
+// The one dependency that is NOT injected in the suite above: `defaultDoctorDeps` reads `engines.node` from mailwoman's own
 // manifest, located by self-reference (`resolvePackageDirectory("mailwoman")("package.json")`). It touches the filesystem by
 // construction — that is the thing under test — and it degrades to ">=0" on any failure, so a broken resolution would
 // otherwise show up only as a doctor report that silently stops enforcing the Node floor.

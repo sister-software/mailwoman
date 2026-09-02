@@ -446,7 +446,7 @@ describe("injectDependentLocalityLine", () => {
 	})
 
 	it("does not misfire on an incidental substring collision (dependent_locality embedded inside the locality string)", () => {
-		// Regression for the exact false-positive the ES pedanía report flagged: the alignment gate's naive
+		// Regression for the exact false-positive the ES pedanía report flagged: the alignment check's naive
 		// whole-string `includes` check saw "Cea" as already present because it's a trailing substring of the
 		// locality "San Cristovo de Cea" — but the template never actually rendered a distinct suburb line. This
 		// helper anchors on the LOCALITY's line, not a whole-string substring test, so it still splices "Cea" in

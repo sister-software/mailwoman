@@ -29,7 +29,7 @@
  *   `data pull us --only nh` for one state instead of the whole ~41 GB tier).
  *
  *   A successful `candidate` pull prints the `export MAILWOMAN_CANDIDATE_DB=...` line `mailwoman
- *   doctor` used to be the only place showing — candidate.db resolution is env-gated
+ *   doctor` used to be the only place showing — candidate.db resolution is env-restricted
  *   (`resolver-backend.ts`'s `resolveCandidateDBPath`), so writing the file alone doesn't wire it up;
  *   this is the ledgered product finding (FR addresses geocoding to the US on the FTS default) whose
  *   fix path is the candidate backend, so the env line has to be impossible to miss.

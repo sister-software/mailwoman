@@ -82,7 +82,7 @@ describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 		expect(tree.roots.length).toBeGreaterThan(0)
 		// Spot-check that at least one node carries one of the expected component tags. The actual
 		// labels depend on the model's quality — this test exercises the wiring, not the model's
-		// recall. A future PR can add accuracy gating against the golden set.
+		// recall. A future PR can add accuracy checks against the golden set.
 		const allTags = collectTags(tree.roots)
 		expect(allTags.size).toBeGreaterThan(0)
 	})

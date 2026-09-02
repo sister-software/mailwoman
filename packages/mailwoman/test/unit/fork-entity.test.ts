@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The fork→entity probe's gates (`fork-entity.ts`), each against a stub lookup. The SAVILE ROW
+ *   The fork→entity probe's conditions (`fork-entity.ts`), each against a stub lookup. The SAVILE ROW
  *   HIJACK GUARD is the required one: poi.db really does hold exactly one poi named
- *   `savile row`, and without gate 2 the famous London street would resolve to it — the board row
+ *   `savile row`, and without check 2 the famous London street would resolve to it — the board row
  *   `gb-fork-entity-savile-row-guard` tracks the live behavior; THIS test is the blocking half.
  */
 
@@ -68,7 +68,7 @@ describe("probeForkEntity", () => {
 	})
 
 	it("THE HIJACK GUARD: a street-generic token stands the probe down even with a unique entity", () => {
-		// poi.db's real state: exactly one poi named 'savile row'. Without gate 2 this would resolve.
+		// poi.db's real state: exactly one poi named 'savile row'. Without check 2 this would resolve.
 		const lookup = stubLookup([{ name: "Savile Row", categoryID: "clothing_store", lat: 51, lon: -2, country: "GB" }])
 
 		expect(probeForkEntity("Savile Row", { lookup, isStreetGeneric: REAL_GENERICS })).toBeNull()

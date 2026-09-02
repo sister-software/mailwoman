@@ -47,7 +47,7 @@
  *   naming the offending row. Likewise an empty `frn` (on EITHER row shape — see {@linkcode mintFRNNodeID})
  *   and an empty `lastFiledAt` (see {@linkcode assertLastFiledAt}: an unguarded blank `lastFiledAt` reaches
  *   `source_vintage`/`valid_from` as `""`, which SQLite's `NOT NULL` does not reject, breaking decision 7 /
- *   gate 1's "valid_from is MANDATORY" invariant). A `null` {@link Form499Row.frn} is the opposite case —
+ *   criterion 1's "valid_from is MANDATORY" invariant). A `null` {@link Form499Row.frn} is the opposite case —
  *   common and legitimate (a filer not yet registered in CORES) — so it is never an error, only a counted
  *   {@link BuildFilerResult.skipped} opportunity.
  *
@@ -103,7 +103,7 @@
  *   `dcAgent*` field into an edge; this is enforced by construction (the edge-emitting functions below
  *   never read those fields), not by a runtime check.
  *
- *   **EDGAR Exhibit 21 ingest — the optional `edgarRows` seam.** `sec-client.ts`'s `SECClient.getDocument`
+ *   **EDGAR Exhibit 21 ingest — the optional `edgarRows` injection point.** `sec-client.ts`'s `SECClient.getDocument`
  *   plus `exhibit21.ts`'s `parseExhibit21` produce {@link EdgarSubsidiaryRow}s (a parent CIK, a raw
  *   subsidiary name, an optional jurisdiction, a filing date) somewhere upstream of this file; this builder
  *   only ever consumes them, the same "injected iterable" shape `form499Rows`/`providerRows` already use.
@@ -222,7 +222,7 @@ import { assertISODate } from "#sdk/guards"
 import { parseProviderList, type ProviderListRow } from "#sdk/provider-list"
 
 // `@mailwoman/filer/sdk/build-filer` is EdgarSubsidiaryRow's published home — `edgar-ingest.ts` and every consumer
-// building rows for the `edgarRows` seam import it from here, so it stays exported from this module even though its
+// building rows for the `edgarRows` injection point import it from here, so it stays exported from this module even though its
 // declaration sits with the writer that validates it.
 export type { EdgarSubsidiaryRow } from "#sdk/build/edgar-rows"
 
@@ -235,13 +235,13 @@ const STAGE_BATCH_SIZE = 10_000
 
 export interface BuildFilerOptions {
 	/**
-	 * Injected Form 499 row source — the test seam. When given, `form499Path` is ignored and no filesystem read happens
-	 * for this source.
+	 * Injected Form 499 row source — the TEST INJECTION POINT. When given, `form499Path` is ignored and no filesystem
+	 * read happens for this source.
 	 */
 	form499Rows?: AsyncIterable<Form499Row> | Iterable<Form499Row>
 	/**
-	 * Injected provider-list row source — the test seam. When given, `providerListPath` is ignored and no filesystem read
-	 * happens for this source.
+	 * Injected provider-list row source — the TEST INJECTION POINT. When given, `providerListPath` is ignored and no
+	 * filesystem read happens for this source.
 	 */
 	providerRows?: AsyncIterable<ProviderListRow> | Iterable<ProviderListRow>
 	/**
@@ -657,7 +657,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 				// filer.db has no independent versioning yet — same deferral build-bdc.ts makes for bdc.db's `release`.
 				version: options.sourceVintage,
 				// The current schema version from filer/schema.ts — bumped to 3 when SupersededBy and
-				// valid_to semantics landed. Every reader that needs temporal awareness should gate on this.
+				// valid_to semantics landed. Every reader that needs temporal awareness should condition on this.
 				schema_version: FILER_SCHEMA_VERSION,
 				source: sourcesUsed.join(","),
 				source_vintage: options.sourceVintage,

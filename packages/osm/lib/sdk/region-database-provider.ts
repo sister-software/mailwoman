@@ -9,7 +9,7 @@
  *   wrote) and caches the open handle per country. Wire its bound `for` into `GeocodeDeps.osmExtracts`.
  *
  *   ⚠ The extracts it opens are ODbL OpenStreetMap Derived Databases — see `osm/README.md` for the
- *   distribution boundary and the lawyer sign-off gate before shipping any of them.
+ *   distribution boundary and the counsel sign-off required before shipping any of them.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"

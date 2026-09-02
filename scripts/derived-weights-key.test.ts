@@ -193,7 +193,7 @@ describe("derivedStoreServeViolation — the serve-time floor (#1528)", () => {
 		expect(await derivedStoreServeViolation("postcode-fr.bin", path)).toMatch(/below the FR floor of 13,000/)
 	})
 
-	it("serves a GB binary at outward granularity — the LOWEST GB floor is the serve gate", async () => {
+	it("serves a GB binary at outward granularity — the LOWEST GB floor is the serve check", async () => {
 		const path = join(dir, "postcode-gb.bin")
 		await writeLocalFile(pcb1(1500), path)
 

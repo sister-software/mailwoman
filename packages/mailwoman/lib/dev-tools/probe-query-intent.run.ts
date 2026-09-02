@@ -8,7 +8,7 @@
  *
  *   The unit tests pin the rules and the invariance receipt pins the 306-row corpus, but neither can
  *   answer the question that decides whether `declared_ambiguity` is worth shipping: on live
- *   gazetteer data, does the 0.5-log10 cut separate the names that need a warning from the ones that
+ *   gazetteer data, does the 0.5-log10 threshold separate the names that need a warning from the ones that
  *   do not? That is a property of the candidate table's populations, not of any code in this repo,
  *   so it needs the ~9 GB database set and cannot live in CI.
  *
@@ -41,7 +41,7 @@
  *   | Paris      |        1.943 | —                   |
  *   | Bordeaux   |        3.295 | —                   |
  *
- *   Two things to read out of that table. The cut lands where the doctrine wants it: Cambridge
+ *   Two things to read out of that table. The threshold lands where the doctrine wants it: Cambridge
  *   (MA/UK/ON, three cities within 0.07 of each other) and Richmond (VA/BC/CA) are declared, and
  *   every capital-city query stays silent. And **Paris reads 1.94, not 0.01**, which is the
  *   coincident-collapse working — without it the `locality`/`localadmin` twin sits 0.3 km away with a
@@ -73,7 +73,7 @@
  *   wins there on prominence). **Closed by #1546**: the primary-name re-check was dropped — the
  *   backend's `exactMatch` IS the name-OR-alias surface equality (names table / alt_names bag), so a
  *   query matches a place when ANY stored name equals it, Москва's "Moscow" alias included — and
- *   population-first ranking then picks Москва RU. The postcode-consistency gate still applies to
+ *   population-first ranking then picks Москва RU. The postcode-consistency check still applies to
  *   every admitted candidate. Re-measured 2026-08-07, same backend:
  *
  *   | query       | answer before → after                     | candidates before → after | marker after |

@@ -15,7 +15,7 @@
  *   for more recall. Its known weakness is over-merging via transitive chains (a string of weak
  *   links can pull unrelated records into one component); the principled fix is
  *   centroid-/average-linkage hierarchical clustering (Dedupe), which uses the full within-cluster
- *   score matrix — a documented refinement, not this first cut. For a geocode-first matcher the
+ *   score matrix — a documented refinement, not this first version. For a geocode-first matcher the
  *   over-merge risk is already damped: blocking keeps candidate sets local, so chains can't run
  *   across the whole dataset.
  */
@@ -57,7 +57,7 @@ export interface ClusterOptions {
 /**
  * Refine one connected component by agglomerative average-linkage. Starts with every member a singleton and repeatedly
  * merges the cluster pair with the highest _average_ inter-cluster link weight while that average is at or above
- * `threshold`; clusters with no link between them never merge. O(k³) in the component size, so callers gate it on a
+ * `threshold`; clusters with no link between them never merge. O(k³) in the component size, so callers boundate it on a
  * size cap.
  */
 function averageLinkageRefine<R>(members: R[], edges: Array<[number, number, number]>, threshold: number): R[][] {

@@ -54,8 +54,8 @@ const SEAT_PLACETYPE = "locality"
 /**
  * Over-fetch cap for {@link rankByPrimaryPreference}: the candidate rows for one `name_key` (all same-name places
  * worldwide) are re-ranked in-process, so the probe fetches this many (population-ordered) before the re-rank rather
- * than the caller's small `limit`, ensuring the intended primary isn't cut below the fold by a cluster of more-populous
- * foreign aliases. Bounded and small — a single contiguous B-tree scan.
+ * than the caller's small `limit`, ensuring the intended primary isn't pushed below the fold by a cluster of
+ * more-populous foreign aliases. Bounded and small — a single contiguous B-tree scan.
  */
 export const RERANK_FETCH = 64
 
@@ -66,7 +66,7 @@ export type RankedRow<R> = R & {
 	/**
 	 * `neg_rank` plus the bounded cross-country alias penalty — the value the row is ORDERED by, and the base the emitted
 	 * `prominence` is derived from (so the resolver walk's `prominence ?? score` sort, `resolve.ts`, agrees with this
-	 * order; the raw `score`/`neg_rank` is left intact for the walk's `minWinningScore` gate).
+	 * order; the raw `score`/`neg_rank` is left intact for the walk's `minWinningScore` floor).
 	 */
 	effectiveNegRank: number
 	/**
@@ -134,9 +134,9 @@ export type RankedRow<R> = R & {
  * the fame prior overrides by design; a probe with NO placetype filter (the browser cascade's last resort, the dev
  * lookup tools) presents the full tie and this term is all that breaks it.
  *
- * BOTH GATES ARE required, and a plain "finer placetype wins" measured wrong before this shape was settled: it moved
- * the top slot on 11,377 keys in `candidate.db`, of which only 722 were the seat/district duplicate. The rest were
- * contests between genuinely distinct places that merely tie — 2,885 `locality → neighbourhood` (a bare city name
+ * BOTH CONDITIONS ARE required, and a plain "finer placetype wins" measured wrong before this shape was settled: it
+ * moved the top slot on 11,377 keys in `candidate.db`, of which only 722 were the seat/district duplicate. The rest
+ * were contests between genuinely distinct places that merely tie — 2,885 `locality → neighbourhood` (a bare city name
  * losing to a same-named hood), 2,973 `region → county`, 2,662 `postalcode → locality` — and 7,179 of the 11,377 sat at
  * population 0, where a tie means NO EVIDENCE rather than equal evidence. Requiring a real population keeps the term
  * off every no-evidence tie; promoting the populated-place tier specifically, rather than whatever is finer, keeps it

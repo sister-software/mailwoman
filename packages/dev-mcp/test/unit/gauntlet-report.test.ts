@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Fixtures are lifted verbatim from real runs on 2026-08-15/16, including the exact line that got skipped the day
- *   the gated-header rule was written.
+ *   the conditional-header rule was written.
  */
 
 import { parseGauntletReport, summarizeGauntletReport } from "@mailwoman/dev-mcp/gauntlet-report"

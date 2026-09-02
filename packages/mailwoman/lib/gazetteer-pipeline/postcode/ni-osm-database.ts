@@ -172,7 +172,7 @@ export interface BuildPostcodeNIOSMResult {
 	 */
 	queryMD5: string
 	/**
-	 * The OSM data cut the response reflects (`osm3s.timestamp_osm_base`) — the real provenance date, as against the
+	 * The OSM data extract the response reflects (`osm3s.timestamp_osm_base`) — the real provenance date, as against the
 	 * wall-clock retrieval time.
 	 */
 	osmTimestamp: string
@@ -370,9 +370,9 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
  * Check the identities that no single counter implies.
  *
  * There is no upstream manifest here — OSM does not publish "this many BT-tagged elements exist" — so unlike the
- * Code-Point Open build there is no external oracle to gate on. What CAN be checked is internal consistency plus two
- * bounds that a broken validator would blow through, and those are worth more than they look: the
- * `codepoint-database.ts` gate learned the hard way that a tolerance derived from the failure it is meant to catch
+ * Code-Point Open build there is no external oracle to condition on. What CAN be checked is internal consistency plus
+ * two bounds that a broken validator would blow through, and those are worth more than they look: the
+ * `codepoint-database.ts` check learned the hard way that a tolerance derived from the failure it is meant to catch
  * catches nothing, so every check here is against a fixed number.
  *
  * 1. Every tagged element is either a point or an accounted drop. A parser that silently skips a shape fails here.
@@ -459,7 +459,7 @@ async function writeDatabaseMeta<DB extends DatabaseMetaDatabase>(
 		["source_query_md5", input.queryMD5],
 		["source_response_md5", input.responseMD5],
 		["source_retrieved_at", input.retrievedAt],
-		// The DATA cut, which is the date that matters — `source_retrieved_at` only says when we asked.
+		// The DATA extract, which is the date that matters — `source_retrieved_at` only says when we asked.
 		["source_osm_timestamp", input.osmTimestamp],
 		["license", OSM_LICENSE],
 		["license_url", OSM_LICENSE_URL],

@@ -9,13 +9,13 @@
  *   segmentations (`decodeSegmentationsKBest`), the measured pick policy (`pickByStreetEvidence`,
  *   the G1/G2 v2 rule), and an injected street-name index (`StreetLocalityEvidence`, FR = BAN).
  *
- *   MEASURED (v3.10.1 8k substrate, 2026-07-18, evidence-gated street-splice vs the argmax baseline
+ *   MEASURED (v3.10.1 8k substrate, 2026-07-18, evidence-conditional street-splice vs the argmax baseline
  *   production actually runs): golden us/fr exact **0.000 regression, every tag unchanged**; FR
  *   fragment street **+16.9pp** (argmax 0.673 → 0.841), 273 fixes / 3 breaks (bare-street +18pp,
  *   date-name +40.7pp). Receipt: `docs/articles/evals/2026-07-18-phase4c-wiring.md`.
  *
  *   THREE THINGS MAKE IT GOLDEN-SAFE:
- *   1. ANCHOR GATE. The rerank fires ONLY on an anchorless fragment — the class it was measured on.
+ *   1. ANCHOR CONDITION. The rerank fires ONLY on an anchorless fragment — the class it was measured on.
  *      If the argmax parse already carries a `country` or `region`, the input is structured and the
  *      model is reliable; a name-index collision then does damage (it steals a token the model
  *      correctly labeled — "France, Creuse, …" → the FR street "France" overrides the country; "Best
@@ -25,7 +25,7 @@
  *      segmentation decodes locality/region/postcode far worse than the BIO argmax head (replacing
  *      the whole tree cost golden fr −35pp). So the winning segmentation's street tokens are spliced
  *      into the ARGMAX tree; argmax owns every other tag.
- *   3. POSITIVE-EVIDENCE GATE. The splice fires only for a street the atlas CONFIRMS exists. On a
+ *   3. POSITIVE-EVIDENCE CHECK. The splice fires only for a street the atlas CONFIRMS exists. On a
  *      clean address the argmax street is already right + confirmed → the splice is a no-op; on a
  *      fragment the argmax street is wrong/absent and the confirmed segmentation street replaces it.
  *      An unconfirmed street NEVER overrides the model — the model owns every call the atlas can't
@@ -217,14 +217,14 @@ export async function rerankByStreetEvidence(
 		}
 	}
 
-	// ANCHOR GATE (2026-07-18, the full-pipeline collateral fix): the rerank arbitrates a street ONLY on an ANCHORLESS
+	// ANCHOR CONDITION (2026-07-18, the full-pipeline collateral fix): the rerank arbitrates a street ONLY on an ANCHORLESS
 	// fragment — the class it was measured on. When the argmax parse already carries a country or region anchor, the
 	// model is on structured input where it is reliable, and a name-index collision does damage: it STEALS a token the
 	// model correctly labeled country/region ("France, Creuse, …" → the FR street "France" overrides country; "Best Rd,
 	// VT" → the US street reranks against the FR index). Skipping anchored inputs fixes both by construction and keeps
 	// every fragment-board class (bare street ± house number carries no admin anchor). Scored against gold, this holds
 	// golden exact to noise (us 2180→2180, fr 1308→1308, |Δ| < 0.3pp/tag) while the FR fragment board moves +17.3pp.
-	// Postcode is NOT an anchor: adding it cut a little US collateral but mislabels 4-digit years as postcode, killing
+	// Postcode is NOT an anchor: adding it removed a little US collateral but mislabels 4-digit years as postcode, killing
 	// the date-name board (0.550→0.215) — too blunt for a real gain, so the anchor set stays country+region only.
 	if (trace.tokens.some((t) => ANCHOR_TAGS.has(t.label.replace(/^[BI]-/, "")))) {
 		return { tree: buildAddressTree(trace.text, trace.tokens), moved: false, rank: 0, streetSurface: "" }
@@ -247,10 +247,10 @@ export async function rerankByStreetEvidence(
 		...(opts.scope ? { scope: opts.scope } : {}),
 	})
 
-	// POSITIVE-EVIDENCE GATE on the splice: only override the argmax tree's street with a street the atlas CONFIRMS
+	// POSITIVE-EVIDENCE CHECK on the splice: only override the argmax tree's street with a street the atlas CONFIRMS
 	// exists. This is the same principle as the pick itself — the model owns every call the atlas can't confirm wrong.
 	// Rationale (measured 2026-07-18): always-splicing cost golden fr street −2.7pp (the span head over/under-extends
-	// the street on clean multi-component inputs, and the full BIO head is better there); gating on "argmax has no
+	// the street on clean multi-component inputs, and the full BIO head is better there); filtering on "argmax has no
 	// street" was too coarse (kept argmax's WRONG street on fragments). Splicing only an atlas-confirmed street holds
 	// golden to noise (segmentation street == argmax street on clean, both confirmed → no-op) AND keeps the fragment
 	// win (argmax street wrong/absent, segmentation street confirmed → spliced). An unconfirmed street never overrides.

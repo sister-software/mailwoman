@@ -7,7 +7,7 @@
  *   takes a plain OBSERVATION object (facts already gathered from the filesystem/runtime by
  *   {@link ../doctor/runner.ts}) and returns a {@link DoctorCheck}. Keeping the verdict logic pure —
  *   no IO, no env — is what makes it unit-testable without rendering Ink or standing up
- *   a data root: the runner injects the IO seams, this module owns only the ok/missing/degraded call.
+ *   a data root: the runner injects the IO dependencies, this module owns only the ok/missing/degraded call.
  *
  *   Meaning-of-zero discipline (memory: feedback-meaning-of-zero): a missing OPTIONAL layer reports as
  *   `missing`/`degraded` with a fix hint, never as a hard error. Only the CORE checks (weights +
@@ -52,7 +52,7 @@ export interface DoctorCheck {
 	 */
 	fix?: string
 	/**
-	 * Whether this check gates the exit code. Core checks (weights + runtime) must be `ok` for a `0` exit; optional
+	 * Whether this check checks the exit code. Core checks (weights + runtime) must be `ok` for a `0` exit; optional
 	 * data-layer checks report their gap but never fail the process (parse runs without them).
 	 */
 	core: boolean

@@ -320,11 +320,11 @@ async function reconcileExplicitCountry(
  * same-named locality under it? Only when BOTH hold does it swap the region and locality to the in-country pair.
  * Geography confirms; the subdivision table is a soft name→country prior, not a routing decision.
  *
- * Evidence-gated to stay byte-stable on the domestic path. It fires ONLY when (a) a default country is in force, (b)
- * the region node is UNRESOLVED (the default-country filter came up empty — a US region resolves fine under `US`, so a
- * well-formed US query never trips this), (c) the token is a subdivision of a DIFFERENT country than the default, and
- * (d) both the foreign region and a same-named foreign locality resolve. "Springfield, IL" / "Portland, ME": the region
- * resolves under `US`, so gate (b) fails and the tree is untouched. Costs one region + one locality lookup per
+ * Evidence-conditional to stay byte-stable on the domestic path. It fires ONLY when (a) a default country is in force,
+ * (b) the region node is UNRESOLVED (the default-country filter came up empty — a US region resolves fine under `US`,
+ * so a well-formed US query never trips this), (c) the token is a subdivision of a DIFFERENT country than the default,
+ * and (d) both the foreign region and a same-named foreign locality resolve. "Springfield, IL" / "Portland, ME": the
+ * region resolves under `US`, so check (b) fails and the tree is untouched. Costs one region + one locality lookup per
  * triggering pair. See `ResolveOpts.adminCoherence`.
  */
 export async function applyRegionCountryCoherence(
@@ -343,7 +343,7 @@ export async function applyRegionCountryCoherence(
 		// Fire for an UNRESOLVED region (the default-country filter came up empty) whose companion locality node
 		// exists — regardless of the locality's resolution state, so it covers both the resolved-but-foreign namesake
 		// (Montreal → the greedy US pick, Montreal WI) and the unresolved locality the span-rescore tier would
-		// otherwise back-fill with a US namesake. The in-country lookups below are the evidence gate.
+		// otherwise back-fill with a US namesake. The in-country lookups below are the evidence check.
 		if (
 			regionHere &&
 			!isResolvedWithCoord(regionHere) &&
@@ -368,7 +368,7 @@ export async function applyRegionCountryCoherence(
  * default-country filter hid. `matchSubdivision` turns the region token into `{ name, country }` (null for anything
  * that isn't a US state or CA province → no-op); the region's full name then resolves it under that country (expanding
  * the abbreviation the gazetteer FTS index lacks), and the locality is re-scoped to the same country. Leaves both nodes
- * untouched unless every gate holds — the subdivision names a different country than the default, the region resolves
+ * untouched unless every check holds — the subdivision names a different country than the default, the region resolves
  * under it, and a same-named locality exists there — so the domestic path stays byte-identical.
  */
 async function reconcileRegionCountry(

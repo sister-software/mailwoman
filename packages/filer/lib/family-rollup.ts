@@ -8,8 +8,8 @@
  *   SEPARATE from an entity cluster (same filer, different identifiers — `cluster-filers.ts` /
  *   `filer-lookup.ts`'s `cluster` field). This module reads ONLY `filer_family`; it never touches
  *   `filer_cluster` or the authoritative-edge entity-clustering path, so a family membership can never be
- *   returned here as an entity-cluster member, and this reader cannot be the source of the conflation gate
- *   1 (`filer-lookup.test.ts`'s `describe("§7-3b gates")`) exists to catch.
+ *   returned here as an entity-cluster member, and this reader cannot be the source of the conflation check
+ *   1 (`filer-lookup.test.ts`'s `describe("§7-3b criteria")`) exists to catch.
  *
  *   Query shape mirrors `filerLookup`'s XOR discipline: exactly one of `familyID`/`nodeID` is required.
  *   Given a `familyID`, this returns that one family's membership (0 or 1 elements — see the return-shape
@@ -52,7 +52,7 @@
  *   first inferred family membership, and `source` cannot grade it — `edgar-exhibit-21` writes an
  *   authoritative disclosure edge and an inferred corroboration in the same build, so the source name spans
  *   both grades and a caller reading strength off it would need a private table of which sources are
- *   inferential. Gate 2's "inferred never merges with authoritative" therefore reaches this rollup the same
+ *   inferential. Criterion 2's "inferred never merges with authoritative" therefore reaches this rollup the same
  *   way it reaches `filerLookup`'s `cluster`/`inferred_links` split. See {@link FamilyRollupMember}.
  */
 

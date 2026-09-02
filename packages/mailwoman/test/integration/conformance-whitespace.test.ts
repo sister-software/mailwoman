@@ -12,7 +12,7 @@
  *   open, never a path literal, because a skip-guard that stops matching does not fail — it skips, and the
  *   suite disappears from the run reporting success.
  *
- *   THIS LEG CANNOT GO RED ON A KNOWN DEFECT. `runConformanceCommand` gates on `status: pass` rows and
+ *   THIS LEG CANNOT GO RED ON A KNOWN DEFECT. `runConformanceCommand` checks on `status: pass` rows and
  *   reports tracked ones without blocking, so the three whitespace violations the pipeline currently has are
  *   printed in full and do not fail CI — and a tracked row that starts holding prints a promotion instruction
  *   rather than sitting in the list forever. What it DOES fail on is a new violation on a row that held, or a
@@ -50,7 +50,7 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 			expect(auditWhitespaceSuite(await loadConformanceFixtures(WHITESPACE_SUITE_PATH))).toEqual([])
 		})
 
-		it("holds on every gating row, and prints the tracked ones", async () => {
+		it("holds on every enforcing row, and prints the tracked ones", async () => {
 			expect(await runConformanceCommand({ suite: WHITESPACE_SUITE_PATH })).toBe(0)
 		}, 600_000)
 	}

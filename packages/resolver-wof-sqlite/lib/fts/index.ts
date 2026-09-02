@@ -91,10 +91,10 @@ export function foldQueryText(input: string): string {
  *
  * - **Separated bags** (built since #523): aliases joined with {@link ALIAS_SEPARATOR}, plus a trailing separator so even
  *   a single-alias bag self-identifies as separator-formatted. Split + per-alias equality — a true exact-alias check,
- *   matching the semantics of the full `names` table (`names.name = ? COLLATE NOCASE`), so it runs UNGATED: an alias
- *   match is an exact match whether or not another candidate matched on its canonical name.
+ *   matching the semantics of the full `names` table (`names.name = ? COLLATE NOCASE`), so it runs unrestricted: an
+ *   alias match is an exact match whether or not another candidate matched on its canonical name.
  * - **Legacy bags** (pre-#523 artifacts, e.g. an already-deployed slim DB): aliases space-joined, boundaries lost. Falls
- *   back to the historical padded-containment check, gated on `anyStrictExact` — ungated containment would
+ *   back to the historical padded-containment check, conditioned on `anyStrictExact` — unrestricted containment would
  *   false-promote interior fragments ("York" inside the alias "New York City") and cross-boundary fragments ("York New"
  *   across "…York" + "New…"). Delete this branch once every shipped artifact carries the separator.
  *

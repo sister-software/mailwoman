@@ -194,9 +194,9 @@ export interface CreateGoogleGeocoderClientOptions {
 	 */
 	language?: string
 	/**
-	 * Axios overrides, merged over this client's own defaults. THE TEST SEAM: every test passes an `adapter` here, so no
-	 * test in this workspace performs a live network call. Overriding `params` wholesale would drop the API key, so
-	 * don't.
+	 * Axios overrides, merged over this client's own defaults. THE TEST INJECTION POINT: every test passes an `adapter`
+	 * here, so no test in this workspace performs a live network call. Overriding `params` wholesale would drop the API
+	 * key, so don't.
 	 */
 	axios?: APIClientConfig["axios"]
 }
@@ -485,7 +485,7 @@ export class GoogleGeocoderClient extends APIClient<GoogleGeocoderClientConfig> 
 	 *
 	 * THE RETRY LOOP HERE IS NOT REDUNDANT WITH `APIClient`'s. That one is driven off the HTTP layer — a status outside
 	 * 2xx, or a transport failure — and `OVER_QUERY_LIMIT` is neither: it is a 200 with a JSON body, indistinguishable to
-	 * every gate between the socket and this method. Teaching `core/api` to peek inside a body would make one API's
+	 * every check between the socket and this method. Teaching `core/api` to peek inside a body would make one API's
 	 * in-band protocol the concern of every client in the repo, so the loop lives here, uses the same clock and the same
 	 * policy numbers, and re-enters `fetch` (and therefore the pacer) on every attempt.
 	 *
@@ -568,7 +568,7 @@ export function createGoogleGeocoderClient(options: CreateGoogleGeocoderClientOp
 		maxAttempts: options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS,
 		baseRetryDelayMs: options.baseRetryDelayMs ?? DEFAULT_BASE_RETRY_DELAY_MS,
 		clock,
-		// BOTH GATES, and the interval is the one that holds the rate. `requestsPerMinute` alone is a
+		// BOTH LIMITS, and the interval is the one that holds the rate. `requestsPerMinute` alone is a
 		// BUDGET whose cooldown is `60000/N` minus the gap since the last dispatch, so N requests go out
 		// back to back and the client then waits 60/N seconds — measured at 100/minute for a configured
 		// 10/minute. See `bdc/sdk/client.ts`, where that measurement was taken, for the full trace.

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   No fixture PBF exists under `osm/` test fixtures, so per the task brief this locks the two pure
- *   seams instead: {@link matchOSMPOITagRule} (the AND/OR tag-rule matcher, over synthetic tag dicts)
+ *   pure helpers instead: {@link matchOSMPOITagRule} (the AND/OR tag-rule matcher, over synthetic tag dicts)
  *   and {@link buildTelecomPOISQL} (the OGRSQL string builder). Neither spawns `ogr2ogr` — the actual
  *   `extractOSMPOIs` process-spawn integration is unexercised here and requires the build-local ladder
  *   (a real Geofabrik `.osm.pbf` + GDAL on the path); see the task report for a transcript verifying

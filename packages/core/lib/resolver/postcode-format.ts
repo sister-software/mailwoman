@@ -16,7 +16,8 @@
  * language-based coarse placer, which conflates GB/US (both carry English street patterns) and mis-routes GB addresses
  * to US namesakes (`London E4 9AZ` → London, Ohio) at 0.94–0.96 confidence. The format is unforgeable across these
  * countries: the GB pattern (letters-first) never matches a US ZIP or an NL `\d{4} [A-Z]{2}` code. Extend ONLY with
- * formats validated as non-overlapping. Feeds the `postcodeCountryPrior` lever (gated, default-off pending its gate).
+ * formats validated as non-overlapping. Feeds the `postcodeCountryPrior` lever (conditional, default-off pending its
+ * check).
  */
 export const POSTCODE_FORMAT_COUNTRY: ReadonlyArray<{ readonly re: RegExp; readonly country: string }> = [
 	// GB `E4 9AZ` — letters-first, ends `\d[A-Z]{2}`. Never matches a US ZIP / NL / FR / CA code.
@@ -32,7 +33,7 @@ export const POSTCODE_FORMAT_COUNTRY: ReadonlyArray<{ readonly re: RegExp; reado
 	// NL PC6 is DELIBERATELY ABSENT: `\d{4} [A-Z]{2}` is forgeable in parse context — a US
 	// house-number + directional fragment (`1234 NE`, `8990 SW`) matches it exactly, and this table
 	// feeds recognizeBarePostcode, which must never touch a street name. NL lives in
-	// countriesFromPostcodeFormat instead, whose consumers gate on a bare-postcode TREE.
+	// countriesFromPostcodeFormat instead, whose consumers check on a bare-postcode TREE.
 ]
 
 /**
@@ -50,7 +51,7 @@ export function countryFromPostcodeFormat(postcode: string | undefined): string 
 
 /**
  * Spaced `NNN NN` — the CZ/SK/SE/GR shared postcode space (#1589's `100 00`). Unlike the
- * {@link POSTCODE_FORMAT_COUNTRY} singles, this shape implies a SET: no single country owns it, so it can gate a
+ * {@link POSTCODE_FORMAT_COUNTRY} singles, this shape implies a SET: no single country owns it, so it can check a
  * locale-inferred scope but never name one country outright.
  */
 const SHARED_NNN_NN = /^\d{3} \d{2}$/
@@ -59,7 +60,7 @@ const SHARED_NNN_NN = /^\d{3} \d{2}$/
  * NL PC6 (`1012 LG`) — digits-first then exactly two letters. NL-unique as a POSTCODE shape (GB/CA/IE are
  * letters-first; the digit-only families carry no letters), but too forgeable for {@link POSTCODE_FORMAT_COUNTRY}: a US
  * house-number + directional fragment (`1234 NE`) matches it, so it must never feed recognizeBarePostcode. It belongs
- * only here, where every consumer gates on a tree that IS a bare postcode.
+ * only here, where every consumer checks on a tree that IS a bare postcode.
  */
 const NL_PC6 = /^\d{4}\s?[A-Z]{2}$/i
 

@@ -8,7 +8,7 @@
  *   seven columns 2a keeps. Columns 0-2 (`frn`, `provider_id`, `brand_name`) and 9, 11 (`state_usps`,
  *   `h3_res8_id`) are read past and never emitted: `provider_id` comes from the {@linkcode ProviderID}
  *   parameter instead (the FCC partitions availability files per provider, so the caller already knows it),
- *   and FRN/brand/state/H3 join concerns are a 2c registry-join seam.
+ *   and FRN/brand/state/H3 join concerns are a 2c registry-join boundary.
  *
  *   Two projection decisions are required and pre-registered. `location_id` (column 3) stays a STRING —
  *   the FCC's values are zero-padded 10-digit strings and `parseInt` would lose the leading zeros (decision

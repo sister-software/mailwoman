@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fixture-scale guard for the GeoNames-postal tail reproducer. The real gate is per-country row-count
+ *   Fixture-scale guard for the GeoNames-postal tail reproducer. The real check is per-country row-count
  *   parity against the frozen 946 MB artifact (see the module docstring); this holds the three things
- *   that gate cannot express cheaply — the #920 name law survives a rebuild, a country with no dump is
+ *   that eval cannot express cheaply — the #920 name law survives a rebuild, a country with no dump is
  *   REPORTED rather than silently zeroed, and the provenance `meta` table actually reaches the sealed
  *   artifact carrying source md5s.
  */

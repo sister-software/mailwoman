@@ -5,7 +5,7 @@
  *
  *   Browser-side postcode resolver for the anchor (#240). A pure-JS, zero-dependency
  *   `PostcodeResolver` backed by a compact flat binary instead of SQLite, so the postcode anchor
- *   runs in the WASM/browser parser behind the same `lookup()` seam as the server-side
+ *   runs in the WASM/browser parser behind the same `lookup()` interface as the server-side
  *   `WOFPostcodeLookup`.
  *
  *   This file owns BOTH ends of the format — `serializePostcodeBinary` (run in Node by
@@ -140,7 +140,7 @@ export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[])
 }
 
 /**
- * Pure-JS, browser-safe postcode resolver over the flat binary. Implements the same `lookup()` seam as the SQLite
+ * Pure-JS, browser-safe postcode resolver over the flat binary. Implements the same `lookup()` interface as the SQLite
  * `WOFPostcodeLookup`, so `extractPostcodeAnchors` is agnostic to which backs it.
  */
 export class PostcodeBinaryResolver {
