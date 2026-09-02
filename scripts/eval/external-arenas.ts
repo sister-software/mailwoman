@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   NOTE(de-shell): forwarding shim. The three unbiased capability arenas now live at
- *   `mailwoman/eval-harness/external-arenas.ts` and `promotion-gate.ts` calls them IN-PROCESS. This
+ *   `mailwoman/eval-harness/external-arenas.ts` and `promotion-eval.ts` calls them IN-PROCESS. This
  *   shim keeps standalone invocation working unchanged. Output is byte-identical because the module
  *   owns every printed line. Do not add logic here.
  */

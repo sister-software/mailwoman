@@ -419,7 +419,7 @@ const noSyncFSInAsyncRule: Rule = {
 
 /**
  * A dynamic `import("./x.ts")` names a file by where the importer sits, so it breaks the moment either side moves and
- * says nothing about which package boundary it crosses. The package's `imports` map (`#eval-harness/promotion-gate`)
+ * says nothing about which package boundary it crosses. The package's `imports` map (`#eval-harness/promotion-eval`)
  * names the module once, resolves `.ts` under `node` and `out/*.js` everywhere else, and is what a static import of the
  * same module already uses.
  */

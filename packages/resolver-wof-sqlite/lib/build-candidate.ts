@@ -45,7 +45,7 @@ import { removePath } from "@mailwoman/core/fs/writers"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { createCandidateFTS } from "#candidate-fts"
-import { IMPORTANCE_JOIN_GATE_KM, loadImportanceIndex } from "#candidate-importance"
+import { IMPORTANCE_JOIN_RADIUS_KM, loadImportanceIndex } from "#candidate-importance"
 import {
 	CANDIDATE_COLUMNS,
 	createCandidateStagingTables,
@@ -175,7 +175,7 @@ export interface BuildCandidateResult {
 	importanceScored?: number
 	/**
 	 * Places whose `(name_key, country, placetype)` matched a scored group but whose nearest scored centroid was outside
-	 * {@link IMPORTANCE_JOIN_GATE_KM} — a different town wearing the same name, refused rather than scored.
+	 * {@link IMPORTANCE_JOIN_RADIUS_KM} — a different town wearing the same name, refused rather than scored.
 	 *
 	 * Worth watching across rebuilds: a jump here means the score source and the admin source have drifted apart, and the
 	 * join is being asked to guess.
@@ -382,7 +382,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		progress(
 			"importance",
 			`${importance.matched.toLocaleString()} places scored; ` +
-				`${importance.gated.toLocaleString()} refused (nearest same-name place > ${IMPORTANCE_JOIN_GATE_KM} km away)`
+				`${importance.refused.toLocaleString()} refused (nearest same-name place > ${IMPORTANCE_JOIN_RADIUS_KM} km away)`
 		)
 	}
 
@@ -605,6 +605,6 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		ancestorPlaces: sidecar.ancestorPlaces,
 		intervalPlaces: sidecar.intervalPlaces,
 		...roles,
-		...(importance ? { importanceScored: importance.matched, importanceGated: importance.gated } : {}),
+		...(importance ? { importanceScored: importance.matched, importanceGated: importance.refused } : {}),
 	}
 }

@@ -29,7 +29,7 @@ grading this answer key. `scripts/eval/per-locale-f1.ts` reads the declaration i
 `MANIFEST.json` and scores split-convention rows unfolded.
 
 Numbers here are NOT comparable with v0.1.2 numbers. The gate spec that grades
-against this key is `mailwoman/eval-harness/gates/v9.0.0-base.json`.
+against this key is `mailwoman/eval-harness/specs/v9.0.0-base.json`.
 
 ## Files
 

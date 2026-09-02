@@ -42,7 +42,7 @@
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
 		"out/**/*.json",
-		"lib/eval-harness/gates/*.json",
+		"lib/eval-harness/specs/*.json",
 		"lib/eval-harness/baselines.json",
 		"lib/eval-harness/gauntlet/cases/*/*.jsonl",
 		"lib/eval-harness/conformance/*.jsonl",

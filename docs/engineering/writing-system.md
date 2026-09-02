@@ -297,8 +297,8 @@ Adding a rule means adding a fixture. `docs/scripts/vale-fixtures/dirty.md` carr
 `clean.md` must stay at zero alerts; `docs/scripts/check-vale-rules.ts` asserts both, plus a minimum error
 count and at least one hit from every rule file, and it runs in the docs CI job. That script also carries
 negative assertions: `full-text search` in plain prose must stay quiet, because the `text search` swap is
-guarded so the FTS vocabulary this repo ships survives the rule, and a backticked `promotion-gate.ts` or
-`mailwoman eval gate` must stay quiet, because a contract-bearing name in backticks is exempt by design.
+guarded so the FTS vocabulary this repo ships survives the rule, and a backticked `promotion-eval.ts` or
+`mailwoman eval promote` must stay quiet, because a contract-bearing name in backticks is exempt by design.
 
 ## Templates
 

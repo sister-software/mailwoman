@@ -105,7 +105,7 @@ export interface ParseCallOpts {
 export type ParseFn = (raw: string, opts?: ParseCallOpts) => Promise<Record<string, string>>
 
 /**
- * Options that select a model — mirrors the shape of `eval gate` / `eval error-analysis`.
+ * Options that select a model — mirrors the shape of `eval promote` / `eval error-analysis`.
  */
 export interface ModelSelectOptions {
 	/**

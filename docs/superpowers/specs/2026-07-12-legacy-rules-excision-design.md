@@ -123,7 +123,7 @@ Stays, explicitly: `core/data/libpostal/` + `core/data/internal/` dictionaries (
 - Every swap PR carries its golden-set gate; the goldens are committed fixtures, so gates outlive the parser.
 - Converted parity fixtures join the neural eval suite in the same PR that deletes their source files — coverage never dips between PRs.
 - CI sheds ~6.8k LOC of legacy tests at step 8; `ci:test` keeps running the full remaining suite.
-- Standing eval gates (`mailwoman eval gate`, demo presets) run per swap; ledger append on PASS as usual.
+- Standing eval gates (`mailwoman eval promote`, demo presets) run per swap; ledger append on PASS as usual.
 
 ## Migration guide (outline, ships in docs)
 

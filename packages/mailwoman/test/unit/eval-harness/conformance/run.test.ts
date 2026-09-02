@@ -158,7 +158,7 @@ describe("summarizeConformanceRun", () => {
 
 		const summary = summarizeConformanceRun(findings)
 
-		expect(summary.gated).toBe(1)
+		expect(summary.decided).toBe(1)
 		expect(summary.failures.map((finding) => finding.fixture.id)).toEqual(["cnf-sample-01"])
 		expect(summary.tracked.map((finding) => finding.fixture.id)).toEqual(["cnf-tracked-01"])
 		expect(summary.pass).toBe(false)
@@ -330,7 +330,7 @@ describe("tracedGauntletObserver", () => {
 				value: "Springfield",
 				placetype: "locality",
 				query: { limit: 5 },
-				gates: ["bare_race"],
+				checks: ["bare_race"],
 				candidates: [
 					{
 						id: 85_940_429,
@@ -390,7 +390,7 @@ describe("the unmeasured verdict bucket", () => {
 				value: "Springfield",
 				placetype: "locality",
 				query: { limit: query === "Springfield" ? 5 : 1 },
-				gates: [],
+				checks: [],
 				candidates:
 					query === "Springfield"
 						? [
@@ -419,7 +419,7 @@ describe("the unmeasured verdict bucket", () => {
 		expect(findings[0]!.reading.observed).toBe("unmeasured")
 		expect(summary.unmeasured).toHaveLength(1)
 		expect(summary.failures).toHaveLength(0)
-		expect(summary.gated).toBe(0)
+		expect(summary.decided).toBe(0)
 		// A suite that could measure nothing at all is not a clean suite — the same refusal an empty suite gets.
 		expect(summary.pass).toBe(false)
 	})
@@ -448,7 +448,7 @@ describe("the unmeasured verdict bucket", () => {
 		const summary = summarizeConformanceRun(findings)
 
 		expect(summary.unmeasured).toEqual([])
-		expect(summary.gated).toBe(1)
+		expect(summary.decided).toBe(1)
 		expect(summary.pass).toBe(true)
 	})
 })

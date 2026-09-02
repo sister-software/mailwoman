@@ -137,7 +137,7 @@ export interface ConformanceSummary {
 	/**
 	 * How many rows were ADMITTED and DECIDED — the denominator a reader needs before the pass count means anything.
 	 */
-	gated: number
+	decided: number
 	pass: boolean
 }
 
@@ -153,7 +153,7 @@ export function summarizeConformanceRun(findings: readonly ConformanceFinding[])
 	const tracked: ConformanceFinding[] = []
 	const newlyHolding: ConformanceFinding[] = []
 	const unmeasured: ConformanceFinding[] = []
-	let gated = 0
+	let decided = 0
 
 	for (const finding of findings) {
 		const blocking = (finding.fixture.status ?? "pass") === "pass"
@@ -167,7 +167,7 @@ export function summarizeConformanceRun(findings: readonly ConformanceFinding[])
 		}
 
 		if (blocking) {
-			gated += 1
+			decided += 1
 
 			if (!finding.held) {
 				failures.push(finding)
@@ -179,7 +179,7 @@ export function summarizeConformanceRun(findings: readonly ConformanceFinding[])
 		}
 	}
 
-	return { failures, tracked, newlyHolding, unmeasured, gated, pass: gated > 0 && failures.length === 0 }
+	return { failures, tracked, newlyHolding, unmeasured, decided, pass: decided > 0 && failures.length === 0 }
 }
 
 /**

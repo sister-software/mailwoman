@@ -150,7 +150,7 @@ export interface LookupFold {
 	/**
 	 * Every `gates` entry across the records, in first-seen order — the resolver's own mechanism vocabulary.
 	 */
-	gates: string[]
+	checks: string[]
 	/**
 	 * The provenance of the pick, or `null` when the lookup resolved nothing. `null` is a claim; absence of the fold is
 	 * the thing that means nobody asked.
@@ -183,7 +183,7 @@ export function foldLookups(records: readonly ResolveNodeTrace[]): Map<string, L
 				limit: record.query.limit,
 				windowed: false,
 				scope: {},
-				gates: [],
+				checks: [],
 				pickedSource: null,
 			}
 
@@ -215,9 +215,9 @@ export function foldLookups(records: readonly ResolveNodeTrace[]): Map<string, L
 			fold.scope.regionQualifier = record.query.regionQualifier
 		}
 
-		for (const gate of record.gates) {
-			if (!fold.gates.includes(gate)) {
-				fold.gates.push(gate)
+		for (const gate of record.checks) {
+			if (!fold.checks.includes(gate)) {
+				fold.checks.push(gate)
 			}
 		}
 
@@ -423,7 +423,7 @@ function accountLookup(base: LookupFold, variant: LookupFold, readings: Candidat
 			reason:
 				`admissible at rank ${candidate.rank} before refinement and gone after, from a table with room ` +
 				`(${variant.pool.size} of ${variant.limit}) under ${describeScope(variant.scope)}` +
-				(variant.gates.length ? ` · \`gates\` ${variant.gates.join(", ")}` : "") +
+				(variant.checks.length ? ` · \`gates\` ${variant.checks.join(", ")}` : "") +
 				` · pick ${variant.pickedSource ?? "none"}`,
 		})
 	}
@@ -475,7 +475,7 @@ function accountLookup(base: LookupFold, variant: LookupFold, readings: Candidat
 			reason:
 				`entered at rank ${candidate.rank} with no added constraint and no re-scope, from a base table with ` +
 				`room (${base.pool.size} of ${base.limit})` +
-				(variant.gates.length ? ` · \`gates\` ${variant.gates.join(", ")}` : "") +
+				(variant.checks.length ? ` · \`gates\` ${variant.checks.join(", ")}` : "") +
 				` · pick ${variant.pickedSource ?? "none"}`,
 		})
 	}

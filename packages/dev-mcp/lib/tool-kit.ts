@@ -13,8 +13,8 @@ import type { GeocodeRun } from "mailwoman/geocode"
 import { z } from "zod"
 
 import type { EngineRegistryLike } from "#engine-registry"
-import type { GateReport } from "#gate-report"
-import { summarizeGateReport } from "#gate-report"
+import type { EvalReport } from "#eval-report"
+import { summarizeEvalReport } from "#eval-report"
 import { summarizeGauntletReport, type GauntletReport } from "#gauntlet-report"
 import type { RowGrade } from "#grade"
 import { HOLDOUT_DEFAULT_N, HOLDOUT_SOURCES, type ResolvedInputSet } from "#input-sets"
@@ -387,7 +387,7 @@ function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 
 		const head =
 			`resolver ${JSON.stringify(record.value)} → ${query}` +
-			(record.gates.length ? ` gates=[${record.gates.join(",")}]` : "") +
+			(record.checks.length ? ` checks=[${record.checks.join(",")}]` : "") +
 			(record.picked
 				? record.picked.source === "ranked"
 					? ""
@@ -540,7 +540,7 @@ export function stratify(rows: ComparedRow[], by: StratumKey): Record<string, un
 export function summarizeJob(
 	state: string,
 	elapsedSeconds: number,
-	report: GauntletReport | GateReport,
+	report: GauntletReport | EvalReport,
 	isGate: boolean
 ): string {
 	if (state === "running") {
@@ -549,5 +549,5 @@ export function summarizeJob(
 			: `Still running (${elapsedSeconds}s). Parsed from the log SO FAR: ${summarizeGauntletReport(report as GauntletReport)}`
 	}
 
-	return isGate ? summarizeGateReport(report as GateReport) : summarizeGauntletReport(report as GauntletReport)
+	return isGate ? summarizeEvalReport(report as EvalReport) : summarizeGauntletReport(report as GauntletReport)
 }

@@ -5,7 +5,7 @@
  *
  *   `mailwoman eval preset-compare` — the 6 demo presets through the shipped baseline (and
  *   optionally a candidate model), one parse per line. The eval-model skill's quick demo-smoke
- *   companion; `eval gate` captures the same report into `<out-dir>/presets.md`.
+ *   companion; `eval promote` captures the same report into `<out-dir>/presets.md`.
  */
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

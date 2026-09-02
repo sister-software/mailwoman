@@ -195,7 +195,7 @@ export async function oaResolverEval(
 		}
 
 		// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims it
-		// (~380-parse SIGKILL on the lab box — it crashed the promotion-gate's de-order step tonight).
+		// (~380-parse SIGKILL on the lab box — it crashed the promotion-eval's de-order step tonight).
 		// Periodic forced GC reclaims it; run with `node --expose-gc`. No-op without the flag. (#787 pattern.)
 		if (i % 50 === 0) {
 			;(globalThis as { gc?: () => void }).gc?.()

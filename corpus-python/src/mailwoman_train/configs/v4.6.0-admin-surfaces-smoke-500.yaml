@@ -43,7 +43,7 @@
 #   B1 terminal-only >=116/128
 #   B2 terminal-contrast >=34/48
 #   B4 locality-token retention >=3/7 (exact locality is an upside watch)
-#   B3 `mailwoman eval gate --gate v9.0.0-base`, zero known tier-1 regression, only after B1/B2/B4
+#   B3 `mailwoman eval promote --spec v9.0.0-base`, zero known tier-1 regression, only after B1/B2/B4
 # Grade 5k/10k/20k/40k/60k fp32. GRADE DISCIPLINE: mid-cosine reads understate the finished
 # model (the 40k cooldown branch measured the tail worth +3 B1) — interim grades are curve
 # telemetry, the 60k grade is the verdict. If 60k misses B1, stop this lever; the next moves

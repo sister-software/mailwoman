@@ -56,7 +56,7 @@ interface LookupSpec {
 	parentID?: string | number
 	regionQualifier?: string
 	postcode?: string
-	gates?: string[]
+	checks?: string[]
 	picked?: ResolveNodeTrace["picked"]
 }
 
@@ -72,7 +72,7 @@ function lookup(spec: LookupSpec): ResolveNodeTrace {
 			...(spec.regionQualifier ? { regionQualifier: spec.regionQualifier } : {}),
 			...(spec.postcode ? { postcode: spec.postcode } : {}),
 		},
-		gates: spec.gates ?? [],
+		checks: spec.checks ?? [],
 		candidates: spec.candidates.map(candidate),
 		candidatesTruncated: spec.truncated ?? 0,
 		picked: spec.picked ?? null,
@@ -261,7 +261,7 @@ describe("reading a refinement pair", () => {
 				lookup({
 					candidates: [{ id: 1 }],
 					limit: 5,
-					gates: ["min_score_reject"],
+					checks: ["min_score_reject"],
 					picked: { id: 1, name: "a", source: "ranked" },
 				}),
 			]
@@ -280,7 +280,7 @@ describe("reading a refinement pair", () => {
 	it("fails an unrelated expansion apart from ranking movement, naming the lookup and its mechanism", () => {
 		const reading = accountRefinement(
 			[lookup({ candidates: [{ id: 1 }], limit: 5 })],
-			[lookup({ candidates: [{ id: 1 }, { id: 7 }], limit: 5, gates: ["bare_race"] })]
+			[lookup({ candidates: [{ id: 1 }, { id: 7 }], limit: 5, checks: ["bare_race"] })]
 		)
 
 		expect(reading.relation).toBe("diverges")

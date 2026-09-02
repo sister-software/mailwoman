@@ -8,7 +8,7 @@
  *   over-fire confusion: how often a gold region/locality span is mistagged as `country` (the
  *   "trailing token = country" failure), and how often gold country is missed.
  *
- *   `promotion-gate.ts` calls this once per battery and captures the report into
+ *   `promotion-eval.ts` calls this once per battery and captures the report into
  *   `<out-dir>/<tag>-country.md`, with the machine-readable sidecar at `<tag>-country.json` (the
  *   verdict reads `tags.country.f1` from it). Every printed line goes through the `report` sink, one
  *   call per line, so the captured markdown is byte-identical to the child stdout it replaced.

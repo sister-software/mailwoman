@@ -611,7 +611,7 @@ class WOFResolver implements Resolver {
 		// set — its index is country-scoped by construction, so it is not the fold this branch
 		// exists to avoid (the B3 tests hold that path).
 		if (placetype === "postalcode" && !query.country && state.postcodeFormatCountries?.length) {
-			rec.gate("postcode_format_probe")
+			rec.check("postcode_format_probe")
 			let best: ResolvedPlace | undefined
 
 			for (const impliedCountry of state.postcodeFormatCountries) {
@@ -644,7 +644,7 @@ class WOFResolver implements Resolver {
 				// #1731: the backend's interior region-scope fallback, surfaced as a check — the resolver
 				// never sees the scoped probe miss, only the stamp the re-admitted rows carry.
 				if (candidates[0]?.regionScopeMiss) {
-					rec.gate("region_scope_miss")
+					rec.check("region_scope_miss")
 				}
 
 				// Parent soft-filtering: `parentID` is a HARD descendant filter in the backend, which wrongly
@@ -655,7 +655,7 @@ class WOFResolver implements Resolver {
 				// this still can't wander to a foreign place. Same logical resolution → no extra budget.
 				if (!candidates.length && state.parentFallback && query.parentID !== undefined) {
 					delete query.parentID
-					rec.gate("parent_fallback_retry")
+					rec.check("parent_fallback_retry")
 					candidates = await this.#backend.findPlace(query)
 					rec.stage("parent_fallback", candidates)
 				}
@@ -675,7 +675,7 @@ class WOFResolver implements Resolver {
 				// The reason rides the check name. A bare `backend_error` cannot tell a closed database from a
 				// finalized statement from a genuine query fault, which is what made three full-board constraint
 				// runs unreadable — 64 of 591 rows errored and the census could not say why.
-				rec.gate(`backend_error: ${(error as Error).message}`)
+				rec.check(`backend_error: ${(error as Error).message}`)
 				rec.emit(null)
 
 				return null
@@ -701,7 +701,7 @@ class WOFResolver implements Resolver {
 						: {}),
 				}
 
-				rec.gate("postcode_prefix_prior")
+				rec.check("postcode_prefix_prior")
 				const prefixPlace = postcodePrefixResolvedPlace(probe.prefix, probe.node, state.postcodePrefixIndex)
 
 				rec.emit({ id: prefixPlace.id, name: prefixPlace.name, source: "postcode_prefix" })
@@ -723,7 +723,7 @@ class WOFResolver implements Resolver {
 		const isBareRace = placetype === "locality" && node === state.bareLocalityNode
 
 		if (isBareRace) {
-			rec.gate("bare_race")
+			rec.check("bare_race")
 		}
 
 		const bareCountry = isBareRace ? await bareCountryCandidate(this.#backend, node.value, query.country) : null
@@ -735,7 +735,7 @@ class WOFResolver implements Resolver {
 			const admin = pickLargerAdmin(bareCountry, bareRegion)
 
 			if (admin) {
-				rec.gate("empty_admin_pick")
+				rec.check("empty_admin_pick")
 				rec.emit({ id: admin.id, name: admin.name, source: "empty_admin" })
 
 				return {
@@ -888,7 +888,7 @@ class WOFResolver implements Resolver {
 		const top = ranked[0]!
 
 		if (top.score < state.minWinningScore) {
-			rec.gate("min_score_reject")
+			rec.check("min_score_reject")
 			rec.emit(null)
 
 			return null
@@ -903,14 +903,14 @@ class WOFResolver implements Resolver {
 		// Vermont hamlet (margin 3.4). A bare name with no admin namesake never reaches these lines,
 		// and the displaced locality stays first among the alternatives either way.
 		if (bareCountry && (bareCountry.prominence ?? bareCountry.score) > (top.prominence ?? top.score)) {
-			rec.gate("bare_country_repick")
+			rec.check("bare_country_repick")
 			rec.emit({ id: bareCountry.id, name: bareCountry.name, source: "bare_country" })
 
 			return { top: bareCountry, alternatives: ranked, metadata: { bare_country_repick: true } }
 		}
 
 		if (bareRegion && logPopulation(bareRegion) >= logPopulation(top) + BARE_REGION_DOMINANCE_LOG10) {
-			rec.gate("bare_region_repick")
+			rec.check("bare_region_repick")
 			rec.emit({ id: bareRegion.id, name: bareRegion.name, source: "bare_region" })
 
 			return { top: bareRegion, alternatives: ranked, metadata: { bare_region_repick: true } }
@@ -921,7 +921,7 @@ class WOFResolver implements Resolver {
 		// identity/coordinate are unchanged; only `metadata.resolution_quality` is stamped downstream.
 		if (isPlacetypeFallback(placetype, top.placetype)) {
 			top.resolutionQuality = "fallback"
-			rec.gate("placetype_fallback")
+			rec.check("placetype_fallback")
 		}
 
 		rec.emit({ id: top.id, name: top.name, source: "ranked" })

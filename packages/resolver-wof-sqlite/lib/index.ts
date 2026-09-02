@@ -42,7 +42,7 @@ export { CANDIDATE_FTS_TABLE, createCandidateFTS } from "#candidate-fts"
 
 export {
 	ImportanceIndex,
-	IMPORTANCE_JOIN_GATE_KM,
+	IMPORTANCE_JOIN_RADIUS_KM,
 	type ImportanceIndexStats,
 	loadImportanceIndex,
 } from "#candidate-importance"

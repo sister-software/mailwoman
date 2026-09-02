@@ -22,7 +22,7 @@
  *
  *   It is WEIGHT-DEPENDENT (it runs the model), so it is a RELEASE CHECK — run with weights on disk
  *   BEFORE publishing — NOT a weightless CI step (weight-dependent tests don't run in CI; #582).
- *   Hook it into the release path (`mailwoman eval gate` / the publish flow), NOT into Test CI.
+ *   Hook it into the release path (`mailwoman eval promote` / the publish flow), NOT into Test CI.
  *
  *   Mechanics: reuses the `capability-manifest.ts` scoring implementation verbatim — `createScorer` (so
  *   the channel feed matches the ship config, the #566/#685 trap) with `overrides.conventions`
@@ -41,7 +41,7 @@
  *
  *   `threshold` overrides the default 0.02 (2pp). `json` writes the full per-tag delta table (every
  *   locale × tag, not just violations) for the release record. All narration goes through the
- *   `report` sink (stderr by default) — `promotion-gate.ts` captures it into
+ *   `report` sink (stderr by default) — `promotion-eval.ts` captures it into
  *   `<out-dir>/mask-regression.md`.
  */
 

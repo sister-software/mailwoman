@@ -14,7 +14,7 @@
  *   anchor on/off only differs for an anchor-trained (4-input) model; for a plain model both
  *   columns are identical (the anchor inputs are ignored / absent).
  *
- *   `promotion-gate.ts` calls {@linkcode deOrderEval} IN-PROCESS and captures its report into
+ *   `promotion-eval.ts` calls {@linkcode deOrderEval} IN-PROCESS and captures its report into
  *   `<out-dir>/<tag>-deorder.md` — the file the verdict assembler regex-reads for
  *   `de.native_locality` (the `native DE` row's anchor-ON cell). Each of the six inner
  *   `oaResolverEval` runs is likewise in-process now; their markdown still lands in

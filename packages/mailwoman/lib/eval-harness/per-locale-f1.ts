@@ -39,7 +39,7 @@
  *   zero-feed (anchor-off) path on purpose, or `--model-anchor-lookup`/`--gazetteer-lexicon` to
  *   override paths.
  *
- *   `promotion-gate.ts` calls {@linkcode perLocaleF1} IN-PROCESS and captures the markdown report
+ *   `promotion-eval.ts` calls {@linkcode perLocaleF1} IN-PROCESS and captures the markdown report
  *   (the `report` sink) into `<out-dir>/<tag>-per-locale.md` — the file the verdict assembler
  *   regex-reads for `us.postcode`, `us.locality`, `us.region`, `us.street`, `fr.house_number` and
  *   `us.micro`. The progress narration goes to `reportError`, which is where the child process's

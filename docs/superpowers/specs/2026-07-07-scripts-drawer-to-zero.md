@@ -4,7 +4,7 @@
 **Standardization addendum (PR #1033):** the argv/env cleanup the migration left behind is DONE —
 57 local-helper/inline-scan files → `parseArgs` (codemod v2), the 4 gitignored diagnostic files with
 broken cli-args imports fixed (`rg` respects .gitignore — always recount with `--no-ignore`),
-promotion-gate converted STRICT with exit-2 parity, photon/libpostal/nominatim dispatch →
+promotion-eval converted STRICT with exit-2 parity, photon/libpostal/nominatim dispatch →
 positionals, smoke-resolve's hardcoded playpen path → `dataRootPath`. Deliberately NOT converted:
 the lookup CLIs' documented negative-coordinate hand-parse and the resolver build CLIs' structured
 tested parsers — neither is the scan anti-pattern.
@@ -193,7 +193,7 @@ These are invoked by `.release-it.json` hooks, CI, or the operator at release ti
 
 The 166 tracked files in `scripts/eval/` (plus the 2 gitignored), plus the 55 diagnostic scripts in `scripts/diagnostic/` (46 gitignored, 9 tracked). These are the eval/diagnostic harness — the promotion gate, the gauntlet, per-tag probes, calibration scripts, golden-set builders, and one-off investigation scripts.
 
-**Disposition: stay as-is.** These are by design — ad-hoc evaluation probes and diagnostic investigations that don't belong in a package. The distinction between `eval/` and `diagnostic/` is already fuzzy (diagnostic is gitignored; eval has many tracked probes that read like diagnostics). Consider consolidating: `eval/` for the _gates_ (promotion-gate, gauntlet, gates/) and `diagnostic/` for everything else — but that's cleanup, not migration.
+**Disposition: stay as-is.** These are by design — ad-hoc evaluation probes and diagnostic investigations that don't belong in a package. The distinction between `eval/` and `diagnostic/` is already fuzzy (diagnostic is gitignored; eval has many tracked probes that read like diagnostics). Consider consolidating: `eval/` for the _gates_ (promotion-eval, gauntlet, gates/) and `diagnostic/` for everything else — but that's cleanup, not migration.
 
 **One cleanup task:** 2 files in `eval/` are gitignored (residual probes). Ensure the gitignore is correct and nothing tracked should be gitignored or vice versa.
 
@@ -273,7 +273,7 @@ const verbose = values.verbose!
 
 200+ scripts use ad-hoc `process.env.X` or bare `process.env` access. 12 scripts already correctly use `$public` / `$private` from `@mailwoman/core/env`.
 
-Not all 200 need conversion (many are one-off probes where ad-hoc env is fine), but any script that ships or gates a release MUST use the typed env accessors. At minimum, ensure the release-tooling and promotion-gate scripts use them.
+Not all 200 need conversion (many are one-off probes where ad-hoc env is fine), but any script that ships or gates a release MUST use the typed env accessors. At minimum, ensure the release-tooling and promotion-eval scripts use them.
 
 ---
 

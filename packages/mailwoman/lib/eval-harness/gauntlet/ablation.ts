@@ -420,7 +420,7 @@ export function aggregateCells(
  */
 export interface AblationLayerOptions extends GauntletLayerOptions {
 	/**
-	 * Where the artifacts land. Defaults to `/tmp/ablation-<YYYYMMDD-HHmm>` — the `promotion-gate.ts` convention, and
+	 * Where the artifacts land. Defaults to `/tmp/ablation-<YYYYMMDD-HHmm>` — the `promotion-eval.ts` convention, and
 	 * deliberately NOT under `$MAILWOMAN_DATA_ROOT`, which this layer only ever reads.
 	 */
 	outDir?: string

@@ -497,8 +497,8 @@ async function measure(
 		record(
 			readings,
 			"conformance.decided_rows",
-			measured.summary.gated,
-			`${measured.summary.gated} rows gated and decided across ${laws.length} laws`
+			measured.summary.decided,
+			`${measured.summary.decided} rows gated and decided across ${laws.length} laws`
 		)
 
 		record(

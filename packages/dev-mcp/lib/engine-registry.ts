@@ -35,7 +35,7 @@ import {
 	type GeocodeSessionOptions,
 } from "mailwoman/geocode"
 
-import { missingWeightsCacheArtifacts } from "#gate-report"
+import { missingWeightsCacheArtifacts } from "#eval-report"
 import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "#tree-fingerprint"
 
 /**
@@ -208,7 +208,7 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
  * `resolveWeights` honours an explicit `cacheRoot` only when that directory holds `model.onnx` and `tokenizer.model`,
  * and otherwise walks on to the installed workspace package — which in this repo always resolves. So the failure mode
  * of a mis-typed or half-staged candidate is not an error: it is a full run of the SHIPPED model, reported under the
- * candidate's label, with every number plausible. `promotion-gate.ts` refuses the same way and for the same reason;
+ * candidate's label, with every number plausible. `promotion-eval.ts` refuses the same way and for the same reason;
  * this is that guard on the warm path, sharing its check rather than re-deriving the layout.
  *
  * Runs BEFORE the session build, so a bad path costs a `stat` rather than the ~1.4 s construction.

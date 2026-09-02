@@ -20,7 +20,7 @@ export const diagnoseTool = async ({ registry }: DevToolDeps): Promise<DevTool> 
 		"Per-row MECHANISM ACCOUNT (#1722), measured on the ONE-config out-of-the-box path (the #1669 caveat on " +
 		"mwdev_run applies). What the pipeline did, assembled from its own seams \u2014 kind verdict, " +
 		"known formats, priors, repairs and decode confidence; the three-state evidence channels; every backend " +
-		"lookup with its gates, candidate count and the rank the pick started at; admin coherence, lineage and " +
+		"lookup with its checks, candidate count and the rank the pick started at; admin coherence, lineage and " +
 		"tier \u2014 plus the smallest single-lever flip that moves the answer. Rows are classified into " +
 		`mechanism-state shapes (${DIAGNOSE_SHAPES.join(", ")}) by TRANSPARENT seam-fact predicates, and the ` +
 		"result says so: this is uncalibrated v1, every predicate ships beside its count, and a row that fails " +

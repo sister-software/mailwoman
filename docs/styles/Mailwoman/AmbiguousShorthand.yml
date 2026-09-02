@@ -19,11 +19,11 @@
 ## loads the Mailwoman style too.
 ##
 ## Contracts survive by being written as contracts. Vale's markdown parser
-## skips inline code and fenced blocks natively, so `mailwoman eval gate`,
+## skips inline code and fenced blocks natively, so `mailwoman eval promote`,
 ## `packages/corpus/lib/shard-recipes/`, `@mailwoman/locale-gate` and
-## `promotion-gate.ts` all pass when they are backticked — which is how an
+## `promotion-eval.ts` all pass when they are backticked — which is how an
 ## identifier, a path, or a command the reader types should be written
-## anyway. A BARE `promotion-gate` in running prose does trip this rule:
+## anyway. A BARE `promotion-eval` in running prose does trip this rule:
 ## tokens carry word boundaries, and a hyphen is a word boundary, so the
 ## remedy is the backticks, not a rename. Renaming a contract-bearing
 ## identifier is a separate, operator-approved change.

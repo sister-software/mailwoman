@@ -85,7 +85,7 @@ export interface CountryCoverage {
 	 * Board rows, and how many of them check rather than merely track.
 	 */
 	boardRows: number
-	boardGatedRows: number
+	boardPassedRows: number
 }
 
 /**
@@ -358,8 +358,8 @@ export async function readAdmittedCountries(configPath: string): Promise<Set<str
  * Reads the cases tree the loader reads: two-letter directories only. `generalization/` is excluded by that same filter
  * and holds 279 rows, so a glob over `*\u200B/*.jsonl` overstates the board by 43%.
  */
-export async function readBoardCoverage(casesRoot: string): Promise<Map<string, { rows: number; gated: number }>> {
-	const out = new Map<string, { rows: number; gated: number }>()
+export async function readBoardCoverage(casesRoot: string): Promise<Map<string, { rows: number; passed: number }>> {
+	const out = new Map<string, { rows: number; passed: number }>()
 
 	if (!(await pathExists(casesRoot))) return out
 
@@ -383,12 +383,12 @@ export async function readBoardCoverage(casesRoot: string): Promise<Map<string, 
 				if (row === null) continue
 
 				const country = String(row.country ?? dir).toUpperCase()
-				const entry = out.get(country) ?? { rows: 0, gated: 0 }
+				const entry = out.get(country) ?? { rows: 0, passed: 0 }
 
 				entry.rows++
 
 				if (row.status === "pass") {
-					entry.gated++
+					entry.passed++
 				}
 
 				out.set(country, entry)
@@ -525,7 +525,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 			gazetteerPlaces,
 			geocodeTier: ROOFTOP_PUBLISHED.has(cc) ? "rooftop-published" : gazetteerPlaces > 0 ? "locality" : "none",
 			boardRows: boardEntry?.rows ?? 0,
-			boardGatedRows: boardEntry?.gated ?? 0,
+			boardPassedRows: boardEntry?.passed ?? 0,
 		}
 	})
 
@@ -547,7 +547,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 			presentButDropped: countries.filter((c) => c.corpusRows > 0 && !c.admitted).map((c) => c.country),
 			admittedButEmpty: countries.filter((c) => c.admitted && c.corpusRows === 0).map((c) => c.country),
 			packageWithoutTraining: countries.filter((c) => c.weightsPackage && !trains(c)).map((c) => c.country),
-			trainedButUnmeasured: countries.filter((c) => trains(c) && c.boardGatedRows === 0).map((c) => c.country),
+			trainedButUnmeasured: countries.filter((c) => trains(c) && c.boardPassedRows === 0).map((c) => c.country),
 			measuredButUntrained: countries.filter((c) => c.boardRows > 0 && !trains(c)).map((c) => c.country),
 		},
 		corpusVersion: census.corpusVersion,
@@ -564,7 +564,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 				"absent from it trains on nothing regardless of how many corpus rows exist — the Norway bug's mechanism.",
 			"Rooftop geocoding is `published` for US and FR only. `data-bundles.ts` has four entries and every other " +
 				"rooftop database is ODbL build-local, which looks identical from inside the repo and is unobtainable outside it.",
-			"A board row that is not `status: pass` tracks rather than gates, so `boardGatedRows: 0` means nothing about " +
+			"A board row that is not `status: pass` tracks rather than checks, so `boardPassedRows: 0` means nothing about " +
 				"that country is verified.",
 		],
 	}

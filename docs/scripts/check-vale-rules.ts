@@ -25,7 +25,7 @@
  *     (Nominatim's response field) must NOT trip `Spelling.yml`, nor must the JSON fence carrying
  *     both. Vale's markdown parser skips inline code and fences natively, which is the whole reason
  *     those two en-GB-looking identifiers can stay on the swap list.
- *   - `promotion-gate.ts`, `packages/corpus/lib/recipes/` and `mailwoman eval gate` are
+ *   - `promotion-eval.ts`, `packages/corpus/lib/recipes/` and `mailwoman eval promote` are
  *     backticked, so `AmbiguousShorthand` must stay quiet on all three — that is how a
  *     contract-bearing name survives the vocabulary ban without being renamed.
  *

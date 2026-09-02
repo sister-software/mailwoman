@@ -8,7 +8,7 @@
  *   split. This scores the UNFOLDED `decodeAsJSON` output against split ground truth: exact-match
  *   (case-insensitive) P/R/F1 per tag.
  *
- *   `promotion-gate.ts` calls this SIX times per battery — the affix set, `unit-real-designators`,
+ *   `promotion-eval.ts` calls this SIX times per battery — the affix set, `unit-real-designators`,
  *   `po-box-cedex-val`, `intersection-real`, and the two watch lenses (`intersection-golden-vt`,
  *   `glue-rows-perturb`) — capturing each report into its own `.md` and the machine-readable sidecar
  *   into its own `.json`. Every printed line goes through the `report` sink, one call per line, so

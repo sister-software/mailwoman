@@ -10,7 +10,7 @@ Copy this to the top of the new page. This role carries no fields beyond `role:`
 
 ```yaml
 ---
-title: Pre-publish 2D eval gate
+title: Pre-publish 2D eval
 description: The two-dimensional threshold that runs before any weights release, and the regression it was built from.
 role: evidence
 ---

@@ -136,8 +136,8 @@ assembled; `packages/mcp/lib/cli.ts` simply does not use it.
   package-shaped weights cache, and it routes per-country weights overlays (`:283-290`).
 - `packages/mailwoman/lib/eval-harness/gauntlet/run.ts:186` `runGauntlet` runs the four layers —
   `regression`, `metamorphic`, `holdout`, `ablation` — and emits the combined verdict.
-- `packages/mailwoman/lib/eval-harness/promotion-gate.ts` runs the full battery against a gate spec in
-  `eval-harness/gates/*.json` and writes `verdict.json`.
+- `packages/mailwoman/lib/eval-harness/promotion-eval.ts` runs the full battery against a gate spec in
+  `eval-harness/specs/*.json` and writes `verdict.json`.
 - The board corpus is **837 rows** across 129 case directories under
   `packages/mailwoman/lib/eval-harness/gauntlet/cases/` (128 ISO country directories plus
   `generalization`), dominated by `regression.jsonl` (115 files) and `street-name-boundaries.jsonl`
@@ -289,7 +289,7 @@ This repo has scar tissue for three of these. The design adds a fourth of its ow
 **(a) A stale compiled `out/`.** The pattern is documented twice. `corpus-stamp.ts:10-16` records
 2026-08-06: `eval gauntlet-build regression-db` ran from a compiled tree whose `out/` loader still held
 a deleted case array, wrote a DB, printed "built", exited 0, and every gate afterwards graded a corpus
-nobody had. `promotion-gate.ts:250-278` carries the recompile-before-eval lore guard that walks
+nobody had. `promotion-eval.ts:250-278` carries the recompile-before-eval lore guard that walks
 `packages/core` two levels deep for a `.ts` newer than `packages/core/out`.
 
 _Answer:_ the daemon imports **source**. `packages/mailwoman/package.json`'s exports map puts a `node`
@@ -389,7 +389,7 @@ Prefix `mwdev_`, server name `mailwoman-dev`, bin `mwdev-mcp`. Eleven tools.
 | `mwdev_compare`  | two arms over one input set, diffed and graded                       | `fst-probe.ts`, `fst-board-probe.ts`, `hierarchy-benefit.ts`, `affix-diff.ts`, `backend-parity.ts`, all Pelias/Photon/Nominatim head-to-heads |
 | `mwdev_trace`    | per-stage evidence for a handful of inputs                           | `pgn-probe.ts`                                                                                                                                |
 | `mwdev_gauntlet` | run gauntlet layers, whole or single, with model and lever pins      | `mailwoman eval gauntlet` spawns                                                                                                              |
-| `mwdev_gate`     | run the promotion gate against a spec                                | `mailwoman eval gate` spawns                                                                                                                  |
+| `mwdev_gate`     | run the promotion gate against a spec                                | `mailwoman eval promote` spawns                                                                                                               |
 | `mwdev_lookup`   | direct data-source probes (FST, candidate table, normalizer, poi.db) | `icu-probe.mjs`, `keynorm-probe.ts`, `probe-fst-bias.run.ts`                                                                                  |
 | `mwdev_bench`    | latency and throughput, cold and warm distinguished                  | `bench-reverse-throughput.ts`                                                                                                                 |
 | `mwdev_cli`      | allowlisted read-only CLI passthrough                                | ad-hoc `Bash` invocations of the CLI                                                                                                          |

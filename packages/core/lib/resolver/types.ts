@@ -294,9 +294,9 @@ export interface BackendCapabilityGap {
 	/**
 	 * The {@link ResolveOpts} field whose behavior the absence removes.
 	 */
-	gates: keyof ResolveOpts
+	option: keyof ResolveOpts
 	/**
-	 * Whether `gates` is on unless a caller turns it off — the difference between a silent loss and a chosen one.
+	 * Whether `option` is on unless a caller turns it off — the difference between a silent loss and a chosen one.
 	 */
 	defaultOn: boolean
 	/**
@@ -854,7 +854,7 @@ export interface ResolveNodeTrace {
 		regionQualifier?: string
 		limit: number
 	}
-	gates: string[]
+	checks: string[]
 	/**
 	 * Which OTHER admin bands hold this value, probed only when the lookup resolved nothing and
 	 * {@link ResolveOpts.diagnoseUnreachable} is on.

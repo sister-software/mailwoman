@@ -122,7 +122,7 @@ describe("postal-compound recovery (#942)", () => {
 		expect(locality).toBeDefined()
 		expect(locality!.lat).toBeCloseTo(45.8, 1)
 		expect(locality!.metadata?.span_rescore).toBe(true)
-		expect(locality!.metadata?.rescore_gated).toBe(true) // the code-subset anchor validated it
+		expect(locality!.metadata?.rescore_postcode_verified).toBe(true) // the code-subset anchor validated it
 		// The postcode node stays UNdecorated when a locality was recovered — its medoid centroid is
 		// coarser than the village pin, and postcode-over-locality consumers must not trade down.
 		const pc = out.roots.find((n) => n.tag === "postcode")
@@ -210,7 +210,7 @@ describe("#961 joint country recovery — the locale-default trap", () => {
 
 		expect(locality).toBeDefined()
 		expect(locality!.lat).toBeCloseTo(45.8, 1)
-		expect(locality!.metadata?.rescore_gated).toBe(true)
+		expect(locality!.metadata?.rescore_postcode_verified).toBe(true)
 	})
 
 	it("rejects a cross-country namesake whose own country cannot verify the postcode", async () => {

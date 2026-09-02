@@ -110,7 +110,7 @@ export interface FRParseRecallOptions {
 	 */
 	fromDB?: boolean
 	/**
-	 * Emit machine-readable rates to this path for `promotion-gate.ts`.
+	 * Emit machine-readable rates to this path for `promotion-eval.ts`.
 	 */
 	json?: string
 	/**

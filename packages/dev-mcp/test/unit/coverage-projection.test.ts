@@ -25,7 +25,7 @@ function report(overrides: Partial<CoverageReport> = {}): CoverageReport {
 				gazetteerPlaces: 1_545_916,
 				geocodeTier: "locality",
 				boardRows: 3,
-				boardGatedRows: 1,
+				boardPassedRows: 1,
 			},
 		],
 		mismatches: {

@@ -97,11 +97,11 @@ export interface RescoreCandidate {
 	 * Whether the postcode-consistency check FIRED for this recovery — i.e. the postcode resolved to a point and the
 	 * match was validated within `gateKm` of it. `true` = high-precision (postcode- consistent); `false` = unrestricted
 	 * (no postcode→point coverage for this country, so the match wasn't geo-validated — the ~83%-precision case). The
-	 * caller surfaces this as `metadata.rescore_gated` so a consumer can threshold on it WITHOUT a hidden per-country
-	 * coverage map. Deliberately NOT folded into the calibrated `confidence` — that would break the isotonic guarantee (a
-	 * true calibrated 0.83 must not be confused with a rescore plug-in estimate).
+	 * caller surfaces this as `metadata.rescore_postcode_verified` so a consumer can threshold on it WITHOUT a hidden
+	 * per-country coverage map. Deliberately NOT folded into the calibrated `confidence` — that would break the isotonic
+	 * guarantee (a true calibrated 0.83 must not be confused with a rescore plug-in estimate).
 	 */
-	gated: boolean
+	postcodeVerified: boolean
 	/**
 	 * The SAME-SPAN namesake runner-ups — the other exact-name matches this recovery's own lookup already returned, in
 	 * the backend's rank order, minus the winner and minus anything the postcode check rejected. Empty when the span
@@ -468,7 +468,7 @@ export async function findRescoreCandidate(
 				start: sp.start,
 				end: sp.end,
 				place: h,
-				gated: anchor !== null,
+				postcodeVerified: anchor !== null,
 				alternatives: exact.filter((a) => a !== h && withinGate(a)),
 			}
 		}
@@ -515,7 +515,7 @@ export async function findRescoreCandidate(
 					// namesake one: a postcode is present and has already picked the country, so there is nothing
 					// ambiguous left to declare. The bare-toponym queries #1537 is about never reach this branch (it
 					// requires a postcode).
-					return { text: sp.text, start: sp.start, end: sp.end, place: h, gated: true, alternatives: [] }
+					return { text: sp.text, start: sp.start, end: sp.end, place: h, postcodeVerified: true, alternatives: [] }
 				}
 			}
 		}

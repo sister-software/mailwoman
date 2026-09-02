@@ -92,7 +92,7 @@ function line(c: CountryCoverage): string {
 				? `locality (${c.gazetteerPlaces.toLocaleString()})`
 				: "none"
 
-	const board = c.boardRows ? `${c.boardGatedRows}/${c.boardRows} gated` : "unmeasured"
+	const board = c.boardRows ? `${c.boardPassedRows}/${c.boardRows} gated` : "unmeasured"
 
 	return `${c.country} | parse: ${parse} | geocode: ${geo} | board: ${board}${c.weightsPackage ? ` | pkg: ${c.weightsPackage}` : ""}`
 }

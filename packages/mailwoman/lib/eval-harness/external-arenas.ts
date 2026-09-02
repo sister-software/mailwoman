@@ -27,7 +27,7 @@
  *   postal arena, a breakdown by edge_class. Run `yarn compile` first — the harness resolves
  * @mailwoman/neural to its compiled out/ tree.
  *
- *   `promotion-gate.ts` calls {@linkcode externalArenas} IN-PROCESS (when the spec floors
+ *   `promotion-eval.ts` calls {@linkcode externalArenas} IN-PROCESS (when the spec floors
  *   `arena.perturb`) and captures `${report}${reportError}` into `<out-dir>/arenas.md` — the file
  *   the verdict assembler column-reads for `arena.perturb`. A THROW here is what the child's
  *   non-zero exit was, and the check aborts on it exactly as before.
@@ -35,7 +35,7 @@
  *   SCOPE NOTE (de-shell): the three inner probes this still spawns as child processes —
  *   `perturb-golden.ts`, `harness-neural.ts` (×3) and `summarize-arenas.ts` — are `scripts/eval`
  *   residents, not eval legs, and de-shelling them is a separate job. `zx` therefore survives HERE
- *   while it is gone from `promotion-gate.ts`.
+ *   while it is gone from `promotion-eval.ts`.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"

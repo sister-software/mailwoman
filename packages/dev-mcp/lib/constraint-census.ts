@@ -15,7 +15,7 @@
  *   A key that exists nowhere is a COVERAGE fact. Both currently reach a caller as `null`, and they call for opposite
  *   work: one is a retrieval fix, the other is a data acquisition. They are never summed here.
  *
- *   The raw material has existed since #1721 and nothing consumed it: `ResolveNodeTrace.gates` records mechanism
+ *   The raw material has existed since #1721 and nothing consumed it: `ResolveNodeTrace.checks` records mechanism
  *   events in execution order, and `picked: null` is — in that type's own words — "a claim, not an omission". The
  *   first run over the board found `parent_fallback_retry` firing 194 times and converting zero, because it relaxes
  *   the PARENT while the BAND is what blocks (#1756).
@@ -46,7 +46,7 @@ interface ConstraintMiss {
 	 * a row we hold unreachable, and the miss is indistinguishable from the row not existing.
 	 */
 	band: string
-	gates: string[]
+	checks: string[]
 	/**
 	 * Bands holding this key OTHER than the one probed, measured with no constraint applied at all. Empty means the key
 	 * exists nowhere in the gazetteer, which is a coverage fact rather than a retrieval failure.
@@ -74,7 +74,7 @@ interface CensusDatabase {
 type OpenCensusArtifact = (path: string | undefined) => { db: CensusDatabase } | { unavailable: string }
 
 interface GateReading {
-	gates: string
+	checks: string
 	fired: number
 	resolved_nothing: number
 	/**
@@ -99,7 +99,7 @@ export interface ConstraintCensusResult {
 	 * with the column above.
 	 */
 	n_coverage: number
-	gates: GateReading[]
+	checks: GateReading[]
 	/**
 	 * Reachability classes, largest first: which band was probed, and which bands actually hold the key. The largest
 	 * class is the one a cross-band retry should try first.
@@ -141,11 +141,11 @@ function render(result: Omit<ConstraintCensusResult, "rendered">): string {
 		`  ${"gates".padEnd(46)} fired   nothing  reachable`,
 	]
 
-	for (const g of result.gates) {
+	for (const g of result.checks) {
 		const pct = ((g.resolved_nothing / Math.max(1, g.fired)) * 100).toFixed(0)
 
 		lines.push(
-			`  ${g.gates.padEnd(46)} ${String(g.fired).padStart(5)}   ${String(g.resolved_nothing).padStart(5)} (${pct.padStart(3)}%)  ${String(g.reachable_elsewhere).padStart(5)}`
+			`  ${g.checks.padEnd(46)} ${String(g.fired).padStart(5)}   ${String(g.resolved_nothing).padStart(5)} (${pct.padStart(3)}%)  ${String(g.reachable_elsewhere).padStart(5)}`
 		)
 	}
 
@@ -160,7 +160,7 @@ function render(result: Omit<ConstraintCensusResult, "rendered">): string {
 		lines.push("", `  probed ${cls.probed} → key lives in ${cls.found_in.join(", ")}   (${cls.n} lookup(s))`)
 
 		for (const m of cls.examples) {
-			lines.push(`      ${m.id}  tag=${m.tag} "${m.value}"  gates=[${m.gates.join(",")}]`)
+			lines.push(`      ${m.id}  tag=${m.tag} "${m.value}"  checks=[${m.checks.join(",")}]`)
 		}
 	}
 
@@ -209,13 +209,13 @@ export async function runConstraintCensus(
 			for (const rec of run.trace?.resolver ?? []) {
 				lookups++
 
-				const key = rec.gates.length ? rec.gates.join("+") : "(none)"
+				const key = rec.checks.length ? rec.checks.join("+") : "(none)"
 
 				fired.set(key, (fired.get(key) ?? 0) + 1)
 
 				if (rec.picked) {
 					// A constraint that ever accompanies a pick is not inert, whatever its miss rate.
-					for (const gate of rec.gates) {
+					for (const gate of rec.checks) {
 						pickedUnder.add(gate)
 					}
 
@@ -234,7 +234,7 @@ export async function runConstraintCensus(
 					value: rec.value,
 					name_key: nameKey,
 					band: rec.placetype,
-					gates: rec.gates,
+					checks: rec.checks,
 					elsewhere,
 					had_candidates: rec.candidates.length > 0,
 				})
@@ -246,13 +246,13 @@ export async function runConstraintCensus(
 
 	const reachability = misses.filter((m) => m.elsewhere.length)
 
-	const gates: GateReading[] = [...fired.entries()]
+	const checks: GateReading[] = [...fired.entries()]
 		.map(([g, n]) => ({
-			gates: g,
+			checks: g,
 			fired: n,
 			resolved_nothing: nothing.get(g) ?? 0,
 			reachable_elsewhere: misses.filter(
-				(m) => (m.gates.length ? m.gates.join("+") : "(none)") === g && m.elsewhere.length
+				(m) => (m.checks.length ? m.checks.join("+") : "(none)") === g && m.elsewhere.length
 			).length,
 		}))
 		.toSorted((a, b) => b.fired - a.fired)
@@ -294,7 +294,7 @@ export async function runConstraintCensus(
 		n_resolved_nothing: misses.length,
 		n_reachability: reachability.length,
 		n_coverage: misses.length - reachability.length,
-		gates,
+		checks,
 		by_band: byBand,
 		inert_gates: inert,
 		misses,

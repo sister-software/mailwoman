@@ -51,7 +51,7 @@ Logic lands in **`mailwoman/eval-harness/`** — deliberate deviation from ownin
 
 | Command                      | Source script                                                                               |
 | ---------------------------- | ------------------------------------------------------------------------------------------- |
-| `eval gate`                  | `scripts/eval/promotion-gate.ts` (+ `promotion-gate-verdict.ts`)                            |
+| `eval promote`               | `scripts/eval/promotion-eval.ts` (+ `promotion-eval-verdict.ts`)                            |
 | `eval gauntlet`              | `scripts/eval/gauntlet/run.ts` (+ harness/schema/regression/metamorphic/holdout as modules) |
 | `eval ledger append`         | `scripts/eval/ledger-append.ts`                                                             |
 | `eval capability-manifest`   | `scripts/eval/gen-capability-manifest.ts`                                                   |
@@ -153,13 +153,13 @@ Commands remain TSX (compiled); tool modules in owning workspaces remain plain `
 | 2     | `mailwoman dev` namespace (codex/core/corpus/dev-tools)                                            | codegen output byte-identical vs old scripts on same inputs                                                                            |
 | 3     | WOF bin absorption + demo-assets slim-leg removal + bin deletions                                  | resolver-wof-sqlite tests; **demo production smoke green**; `mailwoman gazetteer build fts` parity vs old bin on a fixture DB          |
 | 4     | registry/tiger/placer groups + record-matcher scripts → registry/tools + tiger dep fix             | `--help` smokes; one figure render; placer eval parity on cached dataset                                                               |
-| 5     | eval: eval-harness module extraction + commands + probe triage → diagnostic/                       | **promotion-gate + gauntlet before/after parity: identical exit codes + artifacts on the same model**; RELEASING.md + skills repointed |
+| 5     | eval: eval-harness module extraction + commands + probe triage → diagnostic/                       | **promotion-eval + gauntlet before/after parity: identical exit codes + artifacts on the same model**; RELEASING.md + skills repointed |
 
 Phase 5 last because the gates guard releases — nothing else may wobble while they move. Phases 1/2/4 are independent after 0.
 
 ## 6. Risks + contracts
 
-- **Gate parity is the hard contract:** `eval gate`/`eval gauntlet` must reproduce the old scripts' exit codes, stdout verdict lines consumed by the operator, and artifact paths (ledger append command printed on PASS). Run both on the same model before deleting.
+- **Gate parity is the hard contract:** `eval promote`/`eval gauntlet` must reproduce the old scripts' exit codes, stdout verdict lines consumed by the operator, and artifact paths (ledger append command printed on PASS). Run both on the same model before deleting.
 - **Reference repoints** (enumerated during each phase's plan): RELEASING.md, `.agents/skills/{mailwoman-release,wof-build,night-shift,eval-model}`, `.pi/prompts/release-check.md`, root `package.json` scripts (`ci:smoke` untouched), workflows.
 - **Published-surface changes:** resolver-wof-sqlite loses 4 bins (breaking, accepted); `mailwoman` `./sdk/*` shimmed not removed; `mailwoman` gains `@mailwoman/tiger` (+ possibly resolver-wof-sqlite) deps — check publish weight impact is nil (deps already in the workspace tree).
 - **Pastel flag-prop caveat** (AGENTS.md): kebab flags bind lowercase-acronym props (`--resolve-db` → `resolveDB`) — schema keys must match Pastel's derivation; keep the existing exception note.
@@ -175,4 +175,4 @@ Phase 5 last because the gates guard releases — nothing else may wobble while 
 - [ ] `mailwoman/sdk/` gone (shims at old subpaths); `sdk` = data acquisition everywhere
 - [ ] Every command uses `useCommandTask`/cli-kit; zero copy-pasted runner dances
 - [ ] Dedupe table §3 executed for all migrated code; survey re-run shows no new duplicates in migrated trees
-- [ ] `yarn lint`, `yarn compile`, full test suite, promotion-gate + gauntlet parity, demo smoke — all green at each phase boundary
+- [ ] `yarn lint`, `yarn compile`, full test suite, promotion-eval + gauntlet parity, demo smoke — all green at each phase boundary

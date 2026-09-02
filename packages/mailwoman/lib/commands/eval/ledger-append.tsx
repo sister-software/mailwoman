@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman eval ledger-append` — turn a promotion-gate out-dir into one row of
- *   `evals/scores-by-version.json` (#885). `eval gate` prints this command pre-filled on every
+ *   `mailwoman eval ledger-append` — turn a promotion-eval out-dir into one row of
+ *   `evals/scores-by-version.json` (#885). `eval promote` prints this command pre-filled on every
  *   PASS. Refuses duplicates without `--replace` and refuses un-excepted FAIL verdicts; exit codes
  *   mirror the retired script (0 appended, 1 refused, 2 usage).
  */
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
-export const description = "Append a promotion-gate run to evals/scores-by-version.json (#885)"
+export const description = "Append a promotion-eval run to evals/scores-by-version.json (#885)"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -20,7 +20,7 @@ export const spec = {
 	name: "ledger-append",
 	description,
 	options: {
-		"out-dir": { type: "string", description: "The promotion-gate out-dir carrying verdict.json (required)" },
+		"out-dir": { type: "string", description: "The promotion-eval out-dir carrying verdict.json (required)" },
 		"model-version": { type: "string", description: "The npm semver being ledgered (required)" },
 		"run-id": { type: "string", description: "Stable run id, ^[a-z0-9-]+$ (required)" },
 		"model-path": {

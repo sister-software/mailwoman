@@ -22,7 +22,7 @@ export {
 	type LookupRow,
 } from "#lookup"
 
-export { readGateReport, summarizeGateReport, LEDGER_NOTE, type GateReport, type FloorReading } from "#gate-report"
+export { readEvalReport, summarizeEvalReport, LEDGER_NOTE, type EvalReport, type FloorReading } from "#eval-report"
 export { parseGauntletReport, summarizeGauntletReport, type GauntletReport } from "#gauntlet-report"
 export { JobRegistry, type Job, type JobSummary, type JobState } from "#jobs"
 export { checkConfounds, VariableIsolation, assertComparableField, type ConfoundReading } from "#confound"
