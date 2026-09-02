@@ -7,7 +7,7 @@
  *   `poi.db` by `mailwoman/gazetteer-pipeline/poi/build-brands.ts` (`mailwoman gazetteer build
  *   poi-brands`). Same loader + module-level-singleton shape as `lookup.ts`'s category lookup.
  *
- *   Matching is exact-phrase only, no locale gating (brand names aren't a locale-synonym concern the way
+ *   Matching is exact-phrase only, no locale filtering (brand names aren't a locale-synonym concern the way
  *   "chemist"/"drugstore" are) — see `brands-lookup-core.ts` for the shared matching core with the
  *   browser-safe `./table` entry.
  *

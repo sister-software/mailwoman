@@ -6,7 +6,7 @@
  *   THE Gauntlet gate — runs all three layers and emits one combined verdict, so a model ship gates on the
  *   full-pipeline integration net, not just per-tag F1 (the whole point of building it; #566 lesson):
  *
- *     1. regression  — the curated executable bug log; a fixed bug must STAY fixed (gated on status=pass).
+ *     1. regression  — the curated executable bug log; a fixed bug must STAY fixed (conditioned on status=pass).
  *     2. metamorphic — un-gameable INV/DIR relations; surface-form robustness (gated minus tracked xfails).
  *     3. held-out    — candidate-vs-prod z-test on a fresh draw; THE generalization gate (only with --candidate).
  *

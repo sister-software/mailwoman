@@ -560,7 +560,7 @@ function formatMs(ms: number): string {
  */
 async function runBenchmark(input: string, options: ParseOptions, iterations: number): Promise<string> {
 	// `--degraded` is the encoder-less benchmark: the weights guard never runs on this path (it is
-	// gated on `benchmark === undefined`), so the flag has to be read here or it silently does nothing.
+	// conditioned on `benchmark === undefined`), so the flag has to be read here or it silently does nothing.
 	const classifier = options.degraded ? undefined : await tryLoadNeural(options)
 
 	const runOne = async (

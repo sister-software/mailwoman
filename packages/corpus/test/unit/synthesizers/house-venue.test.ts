@@ -142,7 +142,7 @@ describe("synthesizeHouseVenueRow", () => {
 	})
 
 	it("leaves every non-VE country's tail exactly as it was", () => {
-		// The branch is country-gated, and the shipped `house-venue` slice is FR + US only (116,244 rows, zero VE), so
+		// The branch is country-restricted, and the shipped `house-venue` slice is FR + US only (116,244 rows, zero VE), so
 		// this addition cannot move an existing row. Pinned rather than asserted.
 		for (const [country, pattern] of [
 			["US", /Boston, MA 02101/],

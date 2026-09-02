@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Load-time capability delta-gate (#718/#719). The structural fix that makes the D2/#719 bug-class
+ *   Load-time capability delta check (#718/#719). The structural fix that makes the D2/#719 bug-class
  *   — a conventions `forbiddenTags` row destroying a tag the model demonstrably emits — impossible
  *   to ship: `createScorer` reads the model-card's `capabilities` block and FAILS CLOSED when a
  *   conventions row forbids a certified tag (`maskOffF1 − maskOnF1 > 5pp`).
@@ -53,7 +53,7 @@ const baseOpts = {
 	strict: true as const,
 }
 
-describe.skipIf(!haveAll)("createScorer capability delta-gate (#718/#719)", () => {
+describe.skipIf(!haveAll)("createScorer capability delta check (#718/#719)", () => {
 	// Save/restore the live FR conventions row — the gate reads the shared in-memory codex table, so a
 	// synthetic forbid mutates it for the duration of one test and must be reverted.
 	let savedFr: AddressSystemConventions | undefined

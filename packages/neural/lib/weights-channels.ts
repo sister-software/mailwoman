@@ -331,7 +331,7 @@ export async function readRequiredChannels(
  * One tag's certified capability under a (tier × address-system) cell of the capability manifest (#718/#719).
  * `maskOffF1` is the model's measured per-tag exact-match F1 with the conventions mask OFF; `maskOnF1` is the same with
  * the mask ON — recorded ONLY for tags some codex `forbiddenTags` row suppresses, because that's the only place the
- * loader's delta-gate consults it.
+ * loader's delta check consults it.
  */
 export interface TagCapability {
 	/**
@@ -358,7 +358,7 @@ export type CapabilityManifest = Record<string, Record<string, Record<string, Ta
 /**
  * Read the `capabilities` block from a `model-card.json` (#718/#719). DEFENSIVE, mirroring `readRequiredChannels`:
  * returns `undefined` when the card is absent, unreadable, or has no `capabilities` field (a pre-#718 card → the
- * loader's delta-gate is skipped, back-compat). Throws ONLY when the field is PRESENT but not an object — a corrupt
+ * loader's delta check is skipped, back-compat). Throws ONLY when the field is PRESENT but not an object — a corrupt
  * declared contract is a loud artifact bug, not a silent skip. Tier/system/tag sub-shapes are read leniently (a
  * malformed cell simply yields no capability claim — `undefined` from `lookupTagCapability`).
  */

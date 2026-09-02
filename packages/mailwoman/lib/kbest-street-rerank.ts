@@ -250,7 +250,7 @@ export async function rerankByStreetEvidence(
 	// POSITIVE-EVIDENCE GATE on the splice: only override the argmax tree's street with a street the atlas CONFIRMS
 	// exists. This is the same principle as the pick itself — the model owns every call the atlas can't confirm wrong.
 	// Rationale (measured 2026-07-18): always-splicing cost golden fr street −2.7pp (the span head over/under-extends
-	// the street on clean multi-component inputs, and the full BIO head is better there); gating on "argmax has no
+	// the street on clean multi-component inputs, and the full BIO head is better there); filtering on "argmax has no
 	// street" was too coarse (kept argmax's WRONG street on fragments). Splicing only an atlas-confirmed street holds
 	// golden to noise (segmentation street == argmax street on clean, both confirmed → no-op) AND keeps the fragment
 	// win (argmax street wrong/absent, segmentation street confirmed → spliced). An unconfirmed street never overrides.

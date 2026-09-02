@@ -202,7 +202,7 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 
 			// The WRITER's language decides which alias is worth carrying: the country's own official languages, plus
 			// English as the lingua franca. WOF's preferred name is often neither — it stores `Rome` (eng) for a city
-			// Italians write `Roma` (ita), and `Bangalore` for one Indians write `Bengaluru`. Gating on `eng` alone, as
+			// Italians write `Roma` (ita), and `Bangalore` for one Indians write `Bengaluru`. Restricting on `eng` alone, as
 			// this did when India motivated it, misses every Italian and Spanish form.
 			//
 			// `isOfficialLanguage` is the codex table the WOF ingest already consults for exactly this question, so

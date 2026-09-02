@@ -31,7 +31,7 @@
  *       key `cascade.demo_smoke` (pass-rate %) for specs that gate on it.
  *   - Mask-regression gate (#718): when the spec declares requires_conventions, re-runs the ship
  *       artifact mask-off vs mask-on and FAILS the gate if any tag drops >2pp under the mask — the
- *       "second lock" beside createScorer's load-time capability delta-gate.
+ *       "second lock" beside createScorer's load-time capability delta check.
  *   - Collects headline numbers into <out-dir>/verdict.json with per-floor PASS/FAIL.
  *   - Exit 0 = every floor met AND the mask-regression lock held; exit 1 = any miss.
  *
@@ -416,8 +416,9 @@ async function runLoreGuards(env: {
 /**
  * Demo-cascade smoke (#524): the whole-stack parse→reconcile→resolve pass the per-layer battery lacks (the 2026-06-11
  * lesson: #520/#521/#522 all shipped through green per-layer gates). Runs on the ship artifact against the slim hot DB
- * the demo serves. Env-gated like the other artifact-dependent legs: skips LOUD when the DB is absent so CI stays green
- * without it — but a gate spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by design).
+ * the demo serves. Env-restricted like the other artifact-dependent legs: skips LOUD when the DB is absent so CI stays
+ * green without it — but a gate spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by
+ * design).
  *
  * Its own function because it is self-contained and `runPromotionGate` is at the statement ceiling; nothing about the
  * leg's behavior changed in the lift.
@@ -747,7 +748,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 	// Demo-cascade smoke (#524): the whole-stack parse→reconcile→resolve pass the per-layer battery
 	// lacks (the 2026-06-11 lesson: #520/#521/#522 all shipped through green per-layer gates). Runs on
-	// the ship artifact against the slim hot DB the demo serves. Env-gated like the other
+	// the ship artifact against the slim hot DB the demo serves. Env-restricted like the other
 	// artifact-dependent legs: skips LOUD when the DB is absent so CI stays green without it — but a
 	// gate spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by design).
 	await runDemoCascadeLeg({
@@ -850,7 +851,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 	// --- mask-regression gate (#718) — the "second lock" ------------------------
 	// Re-runs the SHIP artifact mask-off vs the declared conventions mode and FAILS if any tag's UNFOLDED
-	// F1 drops >2pp under the mask — a finer net than createScorer's load-time 5pp delta-gate (it catches
+	// F1 drops >2pp under the mask — a finer net than createScorer's load-time 5pp delta check (it catches
 	// INDIRECT mask harms, e.g. forbidding street_suffix depressing street). Weight-dependent, so it lives
 	// on the release path here, NOT Test CI (#582). Only meaningful when the spec declares a conventions
 	// mask; skipped = PASS otherwise. Its status folds into the final verdict below. In-process since the

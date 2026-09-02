@@ -398,7 +398,7 @@ export function applyStreetCentroid(
 
 	if (houseNumber) return // street-only tier — a numbered address is the rooftop tiers' job
 
-	// Candidate countries: pre-resolution hints (defaultCountry + ungated placer) then the resolved countries. BAN is
+	// Candidate countries: pre-resolution hints (defaultCountry + unrestricted placer) then the resolved countries. BAN is
 	// FR-only, so a non-FR candidate simply yields no lookup; the exact (street, base-commune) match is the real filter.
 	const countries: string[] = []
 

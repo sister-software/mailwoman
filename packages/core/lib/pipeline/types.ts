@@ -65,7 +65,7 @@ export interface PipelineOpts {
 	resolveOpts?: ResolveOpts
 	/**
 	 * #690: title-case detected all-caps ASCII input before the Stage 3 classifier (helps on all-caps registry/compliance
-	 * data). Threaded to `ClassifierOpts.normalizeCase`. Detection-gated
+	 * data). Threaded to `ClassifierOpts.normalizeCase`. Detection-restricted
 	 *
 	 * - **Default-ON** (#895 settled drift D2; the classifier applies it when unset) — byte-stable for mixed-case input
 	 *   either way. Pass `false` to restore the raw-case parse.
@@ -95,7 +95,7 @@ export interface PipelineOpts {
 	 * artifact's own coverage manifest (`resolver.artifactCoverage.hardCountrySafelist`) when it carries one, else the
 	 * built-in `HARD_PLACE_COUNTRY_SAFELIST` fallback (byte-identical for artifacts predating the manifest). Supply a set
 	 * to test/measure a different coverage frontier — the resolver eval passes the full in-map country set to measure
-	 * ungated hard-resolve-rates (which is how the production safelist is grown).
+	 * unrestricted hard-resolve-rates (which is how the production safelist is grown).
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
 	signal?: AbortSignal
@@ -478,8 +478,8 @@ export interface ClassifierOpts {
 	postcodeRepair?: boolean
 	/**
 	 * #690: title-case a detected all-caps ASCII input before the model (all-caps registry/compliance data is partly
-	 * OOD). Detection-gated — mixed-case + non-ASCII input is untouched. **Default-ON** (#895 settled drift D2); `false`
-	 * restores the raw-case parse.
+	 * OOD). Detection-restricted — mixed-case + non-ASCII input is untouched. **Default-ON** (#895 settled drift D2);
+	 * `false` restores the raw-case parse.
 	 */
 	normalizeCase?: boolean
 	/**

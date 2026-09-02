@@ -304,7 +304,7 @@ describe("fst-autocomplete ↔ ancestrie parity — synthetic", () => {
 
 /**
  * Round the synthetic trie through the real serializer so parity is measured on entries as the BYTES deliver them (f32
- * referential, flag-gated encyclopedic and ambiguity reads) — not on the hand-built object graph.
+ * referential, flag-restricted encyclopedic and ambiguity reads) — not on the hand-built object graph.
  */
 function deserializeThroughBytes(nodes: ConstructorParameters<typeof FSTMatcher>[0]): FSTMatcher {
 	return deserializeFST(serializeFST(new FSTMatcher(nodes)))

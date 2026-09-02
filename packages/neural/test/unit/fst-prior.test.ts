@@ -279,39 +279,39 @@ describe("buildFSTEmissionPriors — street-context gate (#1142, syntactic conte
 		expect(gated[1]![labelCol("I-locality")]).toBeCloseTo(0.95 * 3 * 0.25, 2)
 	})
 
-	it("'Washington' alone → full boost, BYTE-IDENTICAL to the ungated run (default-safe asymmetry)", () => {
+	it("'Washington' alone → full boost, BYTE-IDENTICAL to the unrestricted run (default-safe asymmetry)", () => {
 		const pieces = makePieces("Washington")
-		const ungated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS)
+		const unrestricted = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS)
 
 		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
 
-		expect(gated).toEqual(ungated)
+		expect(gated).toEqual(unrestricted)
 		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3, 2)
 	})
 
-	it("'Washington DC' → adjacent region, gate silent → full boost, byte-identical to ungated", () => {
+	it("'Washington DC' → adjacent region, gate silent → full boost, byte-identical to unrestricted", () => {
 		const pieces = makePieces("Washington DC")
-		const ungated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS)
+		const unrestricted = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS)
 
 		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
 
-		expect(gated).toEqual(ungated)
+		expect(gated).toEqual(unrestricted)
 		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3, 2)
 	})
 
-	it("no street context anywhere in the parse → whole matrix byte-identical to ungated", () => {
+	it("no street context anywhere in the parse → whole matrix byte-identical to unrestricted", () => {
 		const pieces = makePieces("Hello Washington Goodbye")
-		const ungated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS)
+		const unrestricted = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS)
 
 		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
 
-		expect(gated).toEqual(ungated)
+		expect(gated).toEqual(unrestricted)
 	})
 
 	it("custom positiveScale is honored (tuning range 0.15–0.4)", () => {
@@ -526,7 +526,7 @@ describe("street-shaped surface gate on the C4 mapped tiers (#1903)", () => {
 		[["madison", "square"], true],
 		[["8th", "avenue", "south"], true],
 		[["valencia", "road"], true],
-		// The covering-surface classes the C4 mapping exists for stay un-gated.
+		// The covering-surface classes the C4 mapping exists for stay unrestricted.
 		[["biggin", "hill"], false],
 		[["soho"], false],
 		[["camden", "town"], false],

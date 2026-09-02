@@ -39,7 +39,7 @@ export function streetLocaleForBANCountry(countryCode: string): StreetLocale {
 }
 
 /**
- * The countries with a registered BAN street locale (for CLI validation / provider gating).
+ * The countries with a registered BAN street locale (for CLI validation / provider filtering).
  */
 export function supportedBANCountries(): string[] {
 	return registry.supported()

@@ -99,7 +99,7 @@ export function isAtLeastAsSpecific(
  * drops the equal case — measured on the real artifact, that turned 973 blocked rows into 18 and would have resurrected
  * 955 places that are already alive.
  *
- * `undefined` when either placetype is unranked; a caller gating on this should treat that as "not strictly finer".
+ * `undefined` when either placetype is unranked; a caller filtering on this should treat that as "not strictly finer".
  */
 export function isStrictlyFiner(
 	candidate: string | null | undefined,

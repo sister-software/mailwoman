@@ -96,7 +96,8 @@ export interface WOFSQLitePlaceLookupOpts {
 	 * Opt-in postal-city alias reader (#475). When supplied, the coordinate-first locality scorer treats an observed
 	 * `postal_city` ("Antioch", postcode 37013) as a name-match alias for the geographic locality the postcode sits in
 	 * ("Nashville"), recovering the chronic postal-vs- geographic-city mismatch. Absent (the default), the resolver is
-	 * byte-identical — every alias code path is gated on this being non-null, so an unprovided reader changes no score.
+	 * byte-identical — every alias code path is conditioned on this being non-null, so an unprovided reader changes no
+	 * score.
 	 */
 	postalCityAliases?: WOFPostalCityAliasLookup
 }
@@ -202,7 +203,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 	readonly #ancestorsCache = new Map<number, Ancestor[]>()
 	/**
 	 * Opt-in postal-city alias reader (#475). `null` unless `opts.postalCityAliases` was supplied — every alias code path
-	 * is gated on this, so the default resolver is byte-identical.
+	 * is conditioned on this, so the default resolver is byte-identical.
 	 */
 	readonly #postalCityAliases: WOFPostalCityAliasLookup | null
 
@@ -223,7 +224,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 			this.#extracts = extracts
 			// Read-only by default — shipped gazetteer extracts are sealed 0444 and Docker `:ro` mounts
 			// forbid write-mode opens, so a writable open fails there. The only code path that writes to
-			// the main extract is `#ensureFTS()` (FTS5 index build), gated on `opts.buildFTS`; open writable
+			// the main extract is `#ensureFTS()` (FTS5 index build), conditioned on `opts.buildFTS`; open writable
 			// ONLY when that build was explicitly requested. Every read query (FTS5 MATCH, the aux-table
 			// SELECTs, ATTACH, and the `busy_timeout` PRAGMA) works read-only. See the docker read-only
 			// mount limitation (#1213).
@@ -407,7 +408,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		// ('1012 LG') — two FTS tokens that can never match the one-token doc (the #920 name law,
 		// resurfacing in a WOF-built extract). On a postcode-typed NL-shape miss, retry ONCE with the
 		// whitespace-joined form (block-level precision when the full-code row exists), then the
-		// 4-digit stem (area-level). Country-gated to NL — the same digits+letters shape elsewhere
+		// 4-digit stem (area-level). Country-restricted to NL — the same digits+letters shape elsewhere
 		// must not silently coarsen to a different system's code. Each retry only fires when its
 		// text differs from the current one, so the ladder terminates by construction.
 		if (

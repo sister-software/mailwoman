@@ -54,8 +54,8 @@ export interface ForkEntityProbeOpts {
 	lookup: POIExecutorLookup
 	/**
 	 * `true` when a token is a thoroughfare generic (the street-morphology FST). The probe requires this signal: without
-	 * it gate 2 cannot run, and an ungated probe is the Savile Row hijack — so the caller must not invoke the probe at
-	 * all when no matcher is loaded.
+	 * it gate 2 cannot run, and an unrestricted probe is the Savile Row hijack — so the caller must not invoke the probe
+	 * at all when no matcher is loaded.
 	 */
 	isStreetGeneric: (token: string) => boolean
 }

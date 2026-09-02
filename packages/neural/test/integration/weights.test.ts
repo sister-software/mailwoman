@@ -27,7 +27,7 @@
  *       and feeding it makes GB parses worse (a training gap). Same `anchorLookupPath === undefined`
  *       assertion, opposite repair.
  *   - The placetype-pair-prior block is the arc's end-to-end smoke: en-gb resolves
- *       `pairIndexPath`, `loadFromWeights` constructs a country-gated `PairIndexResolver` default, and a
+ *       `pairIndexPath`, `loadFromWeights` constructs a country-restricted `PairIndexResolver` default, and a
  *       real GB dependent_locality address parses with the tag applied. A companion case proves the
  *       prior is INERT on en-us (no sibling shipped) against the identical GB-shaped input.
  *   - MARGIN DISCIPLINE in that same "placetype-pair prior" describe block: a single argmax flip on
@@ -84,8 +84,8 @@ const haveModel = await pathExists(MODEL_PATH)
  * file deletes a real `neural-weights-*` artifact mid-run (the two `rmSync`/`symlinkSync` sites work on temp fixtures),
  * so the memo cannot go stale underneath a later test. If that ever changes, this is what has to be reconsidered.
  *
- * Deliberately lazy rather than a top-level `beforeAll`: every caller is `skipIf`-gated on the dev model being present,
- * and a `beforeAll` would spawn the scripts even where all of them skip.
+ * Deliberately lazy rather than a top-level `beforeAll`: every caller is `skipIf`-conditioned on the dev model being
+ * present, and a `beforeAll` would spawn the scripts even where all of them skip.
  */
 const linkedLocales = new Set<string>()
 
@@ -359,7 +359,7 @@ describe("resolveWeights — package auto-resolve", () => {
 })
 
 // placetype-pair-prior arc: the arc's end-to-end proof. `pairIndexPath` resolves on en-gb,
-// `loadFromWeights` constructs a country-gated `PairIndexResolver` default from it, and a real GB
+// `loadFromWeights` constructs a country-restricted `PairIndexResolver` default from it, and a real GB
 // dependent_locality address decodes with the tag applied. The en-us companion proves the SAME input
 // produces NO bias when the package ships no sibling index — the prior degrades to byte-stable, not to
 // a crash or a silent wrong-country apply.
@@ -371,7 +371,7 @@ describe("resolveWeights — package auto-resolve", () => {
 // ~3.5), not the knife-edge `GB_DEPENDENT_LOCALITY_ADDRESS` (margin ~0.211).
 describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smoke)", () => {
 	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
-		"en-gb: pairIndexPath resolves and the country-gated default fires (WIRING — margin-independent)",
+		"en-gb: pairIndexPath resolves and the country-restricted default fires (WIRING — margin-independent)",
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
 

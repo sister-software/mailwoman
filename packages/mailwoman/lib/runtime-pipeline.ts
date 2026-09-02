@@ -151,7 +151,7 @@ export interface CreateRuntimePipelineOpts {
 	placeCountry?: RuntimePipelineStages["placeCountry"] | false
 	/**
 	 * #690: default for `PipelineOpts.normalizeCase` on every call — title-case detected all-caps ASCII input before the
-	 * model (helps on all-caps registry/compliance data; detection-gated, mixed-case untouched). The classifier is
+	 * model (helps on all-caps registry/compliance data; detection-restricted, mixed-case untouched). The classifier is
 	 * **default-ON** since #895 (drift D2 settled), so leaving this unset runs it; set `false` here to pin the raw-case
 	 * parse for every call. A per-call `runOpts.normalizeCase` overrides this.
 	 */
@@ -167,7 +167,7 @@ export interface CreateRuntimePipelineOpts {
 	/**
 	 * #743/#194: default for `PipelineOpts.hardCountrySafelist` — override the coverage safelist that gates the hard
 	 * country filter. Undefined → the built-in `HARD_PLACE_COUNTRY_SAFELIST`. Used by the resolver eval to measure
-	 * ungated hard-resolve-rates (the full in-map set) when growing the list.
+	 * unrestricted hard-resolve-rates (the full in-map set) when growing the list.
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
 	/**

@@ -312,7 +312,7 @@ export type ImportanceLengthScaleMode = "off" | "suppression" | "both"
  * street-headed position — conditioned on SYNTAX (street-type adjacency, house-number-left), NEVER on the importance
  * value (`importance²` magnitude sharpening was measured and REJECTED: it re-imports exactly this collision).
  * Positive-evidence-only: the check can only scale the positive bias DOWN when street context is present; its absence
- * never penalizes, and a parse with no street context is byte-identical to the ungated path.
+ * never penalizes, and a parse with no street context is byte-identical to the unrestricted path.
  *
  * The street-type signal source is the street-morphology FST (`fst-street-morphology.bin`, locale-general — catches
  * prefix locales like "Rue de Rivoli", the FR −3), NOT codex `us/street-suffix.ts` (US-only — using it re-introduces an

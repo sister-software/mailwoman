@@ -17,8 +17,8 @@
  *   missing fixtures, missing db, a pipeline construction error — not a graded case failing).
  *
  *   Composition (`fixtures/poi-board.jsonl`, committed): ~22 category+anchor cases spanning all four
- *   currently-shipped poi.db countries (US/CA/MX/FR), ~5 locale-gated-synonym cases (exercising
- *   `@mailwoman/poi-taxonomy`'s locale gating — exact-locale, cross-language, and ungated phrases),
+ *   currently-shipped poi.db countries (US/CA/MX/FR), ~5 locale-restricted-synonym cases (exercising
+ *   `@mailwoman/poi-taxonomy`'s locale filtering — exact-locale, cross-language, and unrestricted phrases),
  *   ~6 abstains (3 build-local infra categories that poi.db structurally can't answer, 3 bare
  *   shipped categories with no anchor to search from), ~6 address-guards (full addresses + the
  *   venue-led "category, address" shape — the poi branch must NOT claim these), ~6

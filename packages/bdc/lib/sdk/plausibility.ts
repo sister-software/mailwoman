@@ -103,7 +103,7 @@
  *   WIRED — `bdcDB`, `poi`, or both, checked independently — {@link assertLayerSpineResolution} compares that one
  *   layer's recorded `spineKeys.h3.resolution` directly against the `BDC_H3_RESOLUTION` constant `pointCell` is
  *   actually derived from, and throws on a mismatch, catching a layer built at a different spine resolution before it
- *   silently mis-joins a coverage cell. This is TWO-SIDED, not gated on both layers being present together: a
+ *   silently mis-joins a coverage cell. This is TWO-SIDED, not conditioned on both layers being present together: a
  *   poi-only call still checks poi's own recorded resolution, since `readLayerCoverage`'s poi-side join key (below)
  *   is derived from `BDC_H3_RESOLUTION` regardless of whether `bdcDB` is wired at all — comparing each manifest
  *   against the constant, rather than the two manifests against each other, is what makes a single-layer call

@@ -119,7 +119,8 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	poiVenueTier?: boolean
 	/**
 	 * Street-morphology token test (the #1315 gate's matcher) — gate 2 of the fork→entity probe. Absent = no probe: an
-	 * ungated probe is the Savile Row hijack, so degrading the guard degrades the whole mechanism, never just the guard.
+	 * unrestricted probe is the Savile Row hijack, so degrading the guard degrades the whole mechanism, never just the
+	 * guard.
 	 */
 	isStreetGeneric?: (token: string) => boolean
 	/**
@@ -221,10 +222,10 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	fuzzyCountryScope?: string
 	/**
-	 * Title-case all-caps ASCII input before the model (#690), detection-gated so mixed-case + non-Latin pass through
-	 * untouched. **Default `true`** — validated-beneficial on this geocode/resolveTree path (#619: TX-facility locality
-	 * 90.1 → 99.7%). The #694 comma-less crater was the space-join, not the casing, so on comma-joined input it is a
-	 * clean win. Set `false` to restore the legacy raw-case parse.
+	 * Title-case all-caps ASCII input before the model (#690), detection-restricted so mixed-case + non-Latin pass
+	 * through untouched. **Default `true`** — validated-beneficial on this geocode/resolveTree path (#619: TX-facility
+	 * locality 90.1 → 99.7%). The #694 comma-less crater was the space-join, not the casing, so on comma-joined input it
+	 * is a clean win. Set `false` to restore the legacy raw-case parse.
 	 */
 	normalizeCase?: boolean
 	/**
@@ -282,7 +283,7 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	hardPlaceCountry?: boolean
 	/**
-	 * #743/#194: override the coverage safelist gating {@link hardPlaceCountry}. Undefined → the loaded gazetteer
+	 * #743/#194: override the coverage safelist that bounds {@link hardPlaceCountry}. Undefined → the loaded gazetteer
 	 * artifact's own coverage manifest when it carries one, else the built-in constant (the fallback for artifacts
 	 * predating the manifest).
 	 */
@@ -331,8 +332,8 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 * On this path it also re-selects the rooftop tier. Database selection happens BEFORE the resolve and keys off
 	 * `defaultCountry ?? placedCountry`, so a US-scoped call would pick no national/OSM database and leave the corrected
 	 * FR address at its commune centroid. When the resolver reports an override (the `postcode_country_scope` stamp), the
-	 * rooftop/street databases are re-selected for the corrected country and the tree is resolved ONCE more. Self-gating:
-	 * the second pass costs nothing unless an override actually fired.
+	 * rooftop/street databases are re-selected for the corrected country and the tree is resolved ONCE more.
+	 * Self-limiting: the second pass costs nothing unless an override actually fired.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
@@ -649,17 +650,17 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// The placer's country (in-map, non-OTHER) — reused below to select an OSM rooftop database for a non-US parse.
 	let placedCountry: string | null = null
 
-	// The placer's prediction, computed ONCE and UNGATED (so it's available even for a bare-locality tree, where the
+	// The placer's prediction, computed ONCE and unrestricted (so it's available even for a bare-locality tree, where the
 	// #912 lever below deliberately withholds it from the anchor). Reused by that lever AND by the #1042 street tier's
 	// country hint (a bare thoroughfare "Avenue des Champs-Élysées, Paris" is a bare-locality tree — the only reliable
-	// FR signal there is this ungated placer). Byte-stable: the anchor/hardCountry logic stays gated exactly as before.
+	// FR signal there is this unrestricted placer). Byte-stable: the anchor/hardCountry logic stays gated exactly as before.
 	const placerResult = placeCountry ? placeCountry(parseInput) : null
 
 	const streetPlacerCountry =
 		placerResult?.country && placerResult.country !== "OTHER" ? placerResult.country.toLowerCase() : null
 
 	// #928: a distinctive postcode FORMAT outranks the language-based placer (which conflates GB/US → US
-	// namesakes). When gated on and no explicit defaultCountry, set the country prior from the parsed
+	// namesakes). When conditioned on and no explicit defaultCountry, set the country prior from the parsed
 	// postcode's format; the placer block below then no-ops via its `!opts.anchorPosterior` guard. Confidence
 	// 1.0 — a matched format is unambiguous. hardCountry still gates on the safelist (GB isn't on it yet, so
 	// this is a soft anchorPosterior re-rank for GB — enough to de-boost the US namesakes; a safelist add
@@ -705,7 +706,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 		if (placed.country && placed.country !== "OTHER" && !opts.anchorPosterior) {
 			// #1738's disagreement test, hoisted. It used to sit inside the hardCountry branch below and
-			// gate the HARD filter only, which left the SOFT posterior ungated — and the soft posterior is
+			// gate the HARD filter only, which left the SOFT posterior unrestricted — and the soft posterior is
 			// enough on its own: the within-tier sort key is `(prominence ?? score) + w·posterior[country]`
 			// at w = 1, so on `Queen Street, Bristol` a 0.9261 posterior gap overturns GB Bristol's 0.884776
 			// prominence lead and the answer moves 5,274 km to Connecticut (#1751). The placer reads the

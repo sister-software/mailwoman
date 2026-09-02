@@ -12,7 +12,7 @@
  *   Address tags live in the driver's `other_tags` hstore; we pull them with OGRSQL `hstore_get_value`
  *   over the `points` (nodes) and `multipolygons` (building ways/relations) layers. `addr:interpolation`
  *   ways are intentionally NOT read here — the rooftop tier is point-first; explicit interpolation is a
- *   separate, confidence-gated tier (never synthesize a number line from scattered points).
+ *   separate, confidence-restricted tier (never synthesize a number line from scattered points).
  */
 
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"

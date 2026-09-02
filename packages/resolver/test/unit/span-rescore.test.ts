@@ -212,7 +212,7 @@ describe("findRescoreCandidate", () => {
 		const hit = await findRescoreCandidate(raw, roots, await makeBackend(), { country: "PL", postcode: "86-300" })
 		expect(hit?.text).toBe("Grudziądz")
 		expect(hit?.place.id).toBe(1)
-		// 86-300 isn't in the fixture → no anchor → ungated (flagged lower-precision).
+		// 86-300 isn't in the fixture → no anchor → unrestricted (flagged lower-precision).
 		expect(hit?.gated).toBe(false)
 	})
 
@@ -348,7 +348,7 @@ describe("resolveTree + spanRescore", () => {
 		expect(injected?.value).toBe("Grudziądz")
 		expect(injected?.lat).toBe(53.48)
 		expect(injected?.metadata?.span_rescore).toBe(true)
-		// No postcode node in this tree → no anchor → ungated, flagged so the consumer can threshold.
+		// No postcode node in this tree → no anchor → unrestricted, flagged so the consumer can threshold.
 		expect(injected?.metadata?.rescore_gated).toBe(false)
 	})
 

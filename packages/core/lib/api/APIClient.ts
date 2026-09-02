@@ -134,7 +134,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		//
 		// `axios-cache-interceptor` short-circuits a cache HIT by replacing `config.adapter` with its own
 		// `cachedAdapter`, so anything installed here is reached only when the request is actually going
-		// to the network. Gating in `fetch()` instead put the cache interceptor DOWNSTREAM of the gate and
+		// to the network. Restricting in `fetch()` instead put the cache interceptor DOWNSTREAM of the gate and
 		// made every cache hit burn a full pacer sleep: measured 1 dispatch, 5 hits, five 111ms sleeps for
 		// zero network traffic. `/Archives/` documents are cached for a century by design, so warm re-runs
 		// are the EXPECTED mode for a bulk crawl — at 100k cached documents that is ~3 hours of sleeping

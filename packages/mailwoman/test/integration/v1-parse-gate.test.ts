@@ -43,7 +43,7 @@
  *
  *   Re-measured here on the CURRENT shipped model (v381 / v6.5.0) with the shipped instrument
  *   (`isImplausibleResolution`, i.e. the country-centroid guard). The three gated properties, and the
- *   fresh measurement each cleared at the time of re-gating:
+ *   fresh measurement each cleared at the time of re-verification:
  *
  *     1. **Coordinate acceptability** — of the both-resolved fixtures whose neural street parse
  *        passes, ≥ 0.90 resolve within 1 km of the rules geocode. Receipt: 98.6%; fresh: 76/80 = 0.950.
@@ -282,7 +282,7 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 				})
 			}
 
-			// INFORMATIONAL: the old parse-tag agreement (non-gating; drives Track B)
+			// INFORMATIONAL: the old parse-tag agreement (non-enforcing; drives Track B)
 			const agreement = (label: string) => {
 				const scored = rows.filter((r) => r.agree[label] !== undefined)
 				const hit = scored.filter((r) => r.agree[label]).length
@@ -293,7 +293,7 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 			for (const label of ["street", "house_number", "postcode"]) {
 				const a = agreement(label)
 
-				console.error(`[informational] parse-tag ${label}: ${a.hit}/${a.total} = ${a.rate.toFixed(4)} (non-gating)`)
+				console.error(`[informational] parse-tag ${label}: ${a.hit}/${a.total} = ${a.rate.toFixed(4)} (non-enforcing)`)
 			}
 
 			// P1. Coordinate acceptability

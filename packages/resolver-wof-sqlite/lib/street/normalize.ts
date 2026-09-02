@@ -123,7 +123,7 @@ export function normalizeStreetForKey(street: string): StreetKey {
 	if (!tokens.length) return "" as StreetKey
 
 	// Spelled-ordinal street names → digit form when a street suffix follows ("Tenth Street" →
-	// "10th street", #723). Gated on the next token being a suffix so ordinal-WORD names are untouched.
+	// "10th street", #723). Conditioned on the next token being a suffix so ordinal-WORD names are untouched.
 	for (let i = 0; i < tokens.length - 1; i++) {
 		const digit = SPELLED_ORDINAL_TO_DIGIT.get(tokens[i]!)
 

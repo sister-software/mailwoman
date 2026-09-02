@@ -59,7 +59,8 @@ import { beforeAll, describe, expect, test } from "vitest"
 
 /**
  * The scorer set as it stood BEFORE ROAD_TO_V9 §4 — a verbatim replay of `classify.ts`'s list at commit `4ebd955`,
- * minus the three intent scorers and the POI pair (which are lexicon-gated and unreachable from `classifyKindSync`).
+ * minus the three intent scorers and the POI pair (which are lexicon-restricted and unreachable from
+ * `classifyKindSync`).
  */
 const PRE_INTENT_SCORERS: ReadonlyArray<{
 	kind: QueryKind

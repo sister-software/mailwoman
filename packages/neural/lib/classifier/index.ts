@@ -192,7 +192,7 @@ export class NeuralAddressClassifier {
 	async parse(text: string, opts?: ParseOpts): Promise<AddressTree> {
 		if (!text.length) return { raw: text, roots: [] }
 		// #690: title-case all-caps ASCII input so the mixed-case-trained model doesn't go OOD.
-		// Detection-gated (mixed-case + non-ASCII untouched). Default-ON (#895 settled drift D2 — the geocode
+		// Detection-restricted (mixed-case + non-ASCII untouched). Default-ON (#895 settled drift D2 — the geocode
 		// path had run it since #713 while the pipeline factory + raw classifier defaulted off); `false`
 		// restores the raw-case parse. ASCII title-case is char-for-char length-preserving, so token offsets
 		// are unaffected; the tree is built from the normalized text (values come out title-cased — the
@@ -503,7 +503,7 @@ export class NeuralAddressClassifier {
 
 		// Placetype-pair prior (placetype-pair-prior arc): retrieval-augmented complement to the
 		// encoder — see placetype-pair-prior.ts for the full windowing/matching contract. Config-level
-		// default set by loadFromWeights (its country-gated construction); per-call opts override it,
+		// default set by loadFromWeights (its country-restricted construction); per-call opts override it,
 		// same "opts ?? cfg default" shape as bridgePunctuationGaps/enforceWordConsistency below. Default
 		// OFF (neither set → byte-stable). Composed BEFORE the conventions mask so an ungrammatical tag it
 		// might bias toward still gets masked out.

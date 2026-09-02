@@ -52,7 +52,7 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 			expect(auditCaseFoldingSuite(await loadConformanceFixtures(CASE_FOLDING_SUITE_PATH))).toEqual([])
 		})
 
-		it("holds on every gating row, and prints the tracked ones", async () => {
+		it("holds on every enforcing row, and prints the tracked ones", async () => {
 			expect(await runConformanceCommand({ suite: CASE_FOLDING_SUITE_PATH })).toBe(0)
 		}, 600_000)
 	}

@@ -7,7 +7,7 @@
  *   them would buy.
  *
  *   The report deliberately answers TWO questions that get conflated. "Is the number honest?" is the curve — ECE, MCE,
- *   the per-bin gap. "Is it worth gating on?" is the threshold table, and a well-calibrated surface can still fail it,
+ *   the per-bin gap. "Is it worth filtering on?" is the threshold table, and a well-calibrated surface can still fail it,
  *   because the admitted-error count at every useful recall can be too high for the downstream cost. A tool that
  *   returned only ECE would let a caller conclude the second from the first.
  */

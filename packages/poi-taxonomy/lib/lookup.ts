@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Phrase → category lookup over `data/taxonomy.json`. Same loader + locale-gating shape as
+ *   Phrase → category lookup over `data/taxonomy.json`. Same loader + locale-filtering shape as
  *   `@mailwoman/variant-aliases` (its slang table resolves INTO these category ids). Matching is
  *   exact-phrase over a lowercased index; n-gram extraction from longer queries is the kind
  *   classifier's job, not this package's.
@@ -23,7 +23,7 @@ export type { CategoryMatch } from "#lookup-core"
 
 /**
  * Exact-phrase category lookup. `locale` gates locale-restricted synonyms with the variant-aliases semantics: exact
- * locale 1.0, language-only 0.5, otherwise no match. Ungated phrases always match at 1.0. Deduplicated by category
+ * locale 1.0, language-only 0.5, otherwise no match. unrestricted phrases always match at 1.0. Deduplicated by category
  * (best confidence wins), sorted by confidence descending.
  */
 export function lookupPOICategory(text: string, locale?: string) {

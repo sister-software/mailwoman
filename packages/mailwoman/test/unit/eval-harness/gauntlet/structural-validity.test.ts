@@ -10,7 +10,7 @@
  *   years nothing consumed it: `validateTree` was called only by its own test, so the check existed and the answer was
  *   never asked for. #1747 repaired one instance after finding the diagnosis had sat unread.
  *
- *   THE PROPERTY THAT MAKES THIS WORTH GATING is that the verdict needs no truth. Every other board assertion compares
+ *   THE PROPERTY THAT MAKES THIS WORTH RESTRICTING is that the verdict needs no truth. Every other board assertion compares
  *   against an expected component or coordinate; this one reads the tree against its own contract, so it can fail a row
  *   nobody has labelled and it cannot be satisfied by pinning a new expectation. Measured over 854 rows it flags four,
  *   and all four are rows the board independently tracks as failing — no false positives.

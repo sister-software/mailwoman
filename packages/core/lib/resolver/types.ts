@@ -545,16 +545,16 @@ export interface ResolveOpts {
 	 * A COUNTRY-KEYED PROVIDER (not a bare lookup) because the country signal for a street-only query is unreliable
 	 * BEFORE resolution: a bare thoroughfare ("Avenue des Champs-Élysées, Paris") is a bare-locality tree the placer is
 	 * skipped on, and the placer mis-routes some French streets ("Rue Sainte-Catherine" → IT). So the tier probes a UNION
-	 * of candidate countries — {@link streetCountryHints} (pre-resolution: defaultCountry + the ungated placer) PLUS the
-	 * countries the tree actually RESOLVED to — and the exact (street, base-commune) match is itself the country filter.
-	 * Opt-in; absent = byte-stable. Never fires when a house number is present (rooftop tiers untouched) or when a
-	 * street-level coordinate already resolved.
+	 * of candidate countries — {@link streetCountryHints} (pre-resolution: defaultCountry + the unrestricted placer) PLUS
+	 * the countries the tree actually RESOLVED to — and the exact (street, base-commune) match is itself the country
+	 * filter. Opt-in; absent = byte-stable. Never fires when a house number is present (rooftop tiers untouched) or when
+	 * a street-level coordinate already resolved.
 	 */
 	streetCentroids?: (country: string) => StreetCentroidLookup | undefined
 	/**
 	 * Ordered pre-resolution country hints for the {@link streetCentroids} tier — the caller's defaultCountry and the
-	 * (ungated) coarse-placer country. The tier unions these with the resolved-tree countries. Absent = only the resolved
-	 * countries are tried.
+	 * (unrestricted) coarse-placer country. The tier unions these with the resolved-tree countries. Absent = only the
+	 * resolved countries are tried.
 	 */
 	streetCountryHints?: readonly string[]
 	/**

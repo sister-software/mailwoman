@@ -434,8 +434,8 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 
 				// Alias tier: `alt_names` is the FTS row's alias bag, aliases joined on the
 				// boundary-preserving ALIAS_SEPARATOR (#523). The shared parser does a per-alias equality
-				// check, ungated; on a LEGACY bag (pre-#523 slim artifact, boundaries lost) it falls back
-				// to padded containment gated on "no strictly exact candidate" so interior fragments
+				// check, unrestricted; on a LEGACY bag (pre-#523 slim artifact, boundaries lost) it falls back
+				// to padded containment conditioned on "no strictly exact candidate" so interior fragments
 				// ("York" inside "New York City") can't be false-promoted. Mirrors WOFWasmPlaceLookup.
 				const aliasExact =
 					typeof row.alt_names === "string" && aliasBagExactMatch(row.alt_names, normQuery, anyStrictExact)
@@ -501,7 +501,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 	/**
 	 * Whether this candidate.db carries the #741 postal-city side-index. Memoized — absent (today's production demo DB)
 	 * the postal-city probe never fires, so resolution is byte-identical to pre-#741. Mirrors the Node
-	 * `WOFCandidateTableLookup`'s existence-gated probe.
+	 * `WOFCandidateTableLookup`'s existence-restricted probe.
 	 */
 	readonly #postalCityPresent = memoizeResettable(() => tableExists(this.#worker, "postal_city_candidate"))
 
@@ -571,7 +571,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 
 		// #741: postcode-keyed postal-city alias. An exact (name_key, postcode) hit resolves a
 		// user-typed POSTAL city ("Antioch", 37013) to the geographic locality the postcode sits in
-		// ("Nashville"), bypassing the population/region ranking that can't see the postcode. Gated on
+		// ("Nashville"), bypassing the population/region ranking that can't see the postcode. Conditioned on
 		// the side-index being present, a postcode in the query, and a locality-tier request — so the
 		// common path is byte-identical, and inert on a candidate.db built without the side-index
 		// (today's production demo). Mirrors the Node WOFCandidateTableLookup probe.

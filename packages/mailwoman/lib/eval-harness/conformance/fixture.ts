@@ -334,12 +334,12 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 		throw new Error(`${label}: "bugRef" must be a non-empty string when present (got ${JSON.stringify(bugRef)})`)
 	}
 
-	// A `bugRef` on a gating row points at a diagnosis for a row that is expected to hold, which reads as a tracked
+	// A `bugRef` on a enforcing row points at a diagnosis for a row that is expected to hold, which reads as a tracked
 	// row to everyone but the verdict. Refused for the same reason `toleranceM` is refused off its comparator.
 	if (bugRef !== undefined && (status === undefined || status === "pass")) {
 		throw new Error(
 			`${label}: "bugRef" is only meaningful on a tracked row, and this row's status is ` +
-				`"${status ?? "pass"}" — a gating row that names a defect asserts the defect is fixed.`
+				`"${status ?? "pass"}" — a enforcing row that names a defect asserts the defect is fixed.`
 		)
 	}
 

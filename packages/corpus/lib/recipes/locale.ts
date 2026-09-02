@@ -306,7 +306,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 			// dependent_locality. When DISTRICT is empty (~18% of NZ rows), fall back to CITY → locality with no
 			// sub-locality. GB PPD tuples flip which side is legitimately empty — on the MAJORITY of GB rows CITY
 			// (the dependent_locality) is empty and DISTRICT (the locality) is populated, so the gate below only
-			// drops a `districtAsLocality` row when BOTH are empty, never when CITY alone is — gating on CITY
+			// drops a `districtAsLocality` row when BOTH are empty, never when CITY alone is — filtering on CITY
 			// alone silently discards most of the GB source. See {@link LocalePart.districtAsLocality}.
 			let locality: string | null
 			let dependent_locality: string | undefined

@@ -45,7 +45,7 @@ export async function buildAssembledArm(
 	// `--place-country-hard` (#194/#743) promotes a CONFIDENT placer guess to a HARD country filter
 	// (empty→unresolved) — the lever for the low-pop EU tail the soft prior can't move. Production-
 	// representative: gated by the built-in coverage safelist (only well-covered countries hard-filter).
-	// `--place-country-hard-all` measures UNGATED (every confident country hard-filters, via a safelist
+	// `--place-country-hard-all` measures unrestricted (every confident country hard-filters, via a safelist
 	// override of the full in-map set) — how per-country hard-resolve-rates are measured to GROW the
 	// safelist. Both imply the placer is loaded.
 	const useHardCountryAll = options.placeCountryHardAll ?? false
@@ -72,7 +72,7 @@ export async function buildAssembledArm(
 				placeCountry: evalPlacer ?? false,
 				hardPlaceCountry: useHardCountry && !!evalPlacer,
 				// `--place-country-hard-all` overrides the production coverage safelist with the full in-map
-				// set, so EVERY confident country hard-filters (ungated measurement). Plain `--place-country-hard`
+				// set, so EVERY confident country hard-filters (unrestricted measurement). Plain `--place-country-hard`
 				// leaves it undefined → the built-in safelist (production-representative).
 				...(useHardCountryAll
 					? { hardCountrySafelist: new Set(COARSE_CLASSES.filter((c) => c !== "OTHER")) as ReadonlySet<string> }

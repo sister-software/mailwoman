@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Pure phrase → category matching core, shared by the node entry (`lookup.ts`, `node:fs` loader) and the
- *   browser-safe entry (`table.ts`, injected table). Holds the index construction + locale-gating logic — zero
+ *   browser-safe entry (`table.ts`, injected table). Holds the index construction + locale-filtering logic — zero
  *   node imports, so it stays bundler-safe. Not exported via a subpath of its own.
  */
 
@@ -18,7 +18,7 @@ export interface CategoryMatch {
 	 */
 	matchedPhrase: string
 	/**
-	 * 1.0 = ungated or exact-locale; 0.5 = language-only locale match.
+	 * 1.0 = unrestricted or exact-locale; 0.5 = language-only locale match.
 	 */
 	confidence: number
 }
@@ -81,8 +81,8 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	/**
 	 * Exact-phrase category lookup. `locale` gates locale-restricted synonyms with the variant-aliases semantics
 	 * (`@mailwoman/variant-aliases`' `resolveLocaleScope` owns that rule; the copies here stay local to keep this package
-	 * dependency-free): exact locale 1.0, language-only 0.5, otherwise no match. Ungated phrases always match at 1.0.
-	 * Deduplicated by category (best confidence wins), sorted by confidence descending.
+	 * dependency-free): exact locale 1.0, language-only 0.5, otherwise no match. unrestricted phrases always match at
+	 * 1.0. Deduplicated by category (best confidence wins), sorted by confidence descending.
 	 */
 	function lookupPOICategory(text: string, locale?: string): CategoryMatch[] {
 		const norm = text.trim().toLowerCase()
@@ -120,8 +120,8 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	}
 
 	/**
-	 * Diacritic-insensitive matching is deliberately limited to locale-gated synonyms. This lets `hopital` recover the
-	 * French `hôpital` without turning every English taxonomy label into a globally fuzzy alias.
+	 * Diacritic-insensitive matching is deliberately limited to locale-restricted synonyms. This lets `hopital` recover
+	 * the French `hôpital` without turning every English taxonomy label into a globally fuzzy alias.
 	 */
 	function lookupPOICategoryLocaleNormalized(text: string, locale?: string): CategoryMatch[] {
 		if (!locale) return []
@@ -156,8 +156,9 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	}
 
 	/**
-	 * One-edit recovery over the same locale-gated phrase index. Returns a result only when the best edit distance maps
-	 * to exactly one category; ambiguity is an abstention. Short inputs are excluded because one edit is too permissive.
+	 * One-edit recovery over the same locale-restricted phrase index. Returns a result only when the best edit distance
+	 * maps to exactly one category; ambiguity is an abstention. Short inputs are excluded because one edit is too
+	 * permissive.
 	 */
 	function lookupPOICategoryTypo(text: string, locale?: string): CategoryMatch[] {
 		const norm = text.trim().toLowerCase()

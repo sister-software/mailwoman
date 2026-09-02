@@ -199,7 +199,7 @@ export interface NeuralAddressClassifierConfig {
 	 * Per-word BIO consistency repair (#727 + the admin-token fragmentation class). Default off → byte-identical. When
 	 * enabled, every `▁`-delimited word's pieces are forced to ONE tag by a confidence-weighted vote over the post-prior
 	 * emissions (see word-consistency.ts). Pass a `WordConsistencyOpts` object to enable WITH the #727 confidence
-	 * thresholds (floor / byte-fallback skip / slash grouping); `true` = the ungated vote. Per-parse
+	 * thresholds (floor / byte-fallback skip / slash grouping); `true` = the unrestricted vote. Per-parse
 	 * `ParseOptions.enforceWordConsistency` overrides this default.
 	 */
 	enforceWordConsistency?: boolean | WordConsistencyOpts

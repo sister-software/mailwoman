@@ -140,7 +140,7 @@ export interface OAResolverEvalOptions {
 	 */
 	placeCountryHard?: boolean
 	/**
-	 * Ungated hard-filter measurement (full in-map safelist).
+	 * Unrestricted hard-filter measurement (full in-map safelist).
 	 */
 	placeCountryHardAll?: boolean
 	/**

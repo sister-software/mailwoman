@@ -647,7 +647,7 @@ class WOFResolver implements Resolver {
 					rec.gate("region_scope_miss")
 				}
 
-				// Parent soft-gating: `parentID` is a HARD descendant filter in the backend, which wrongly
+				// Parent soft-filtering: `parentID` is a HARD descendant filter in the backend, which wrongly
 				// zeroes the result when the parent resolved wrong OR the gazetteer hierarchy is incomplete
 				// (a real locality whose `ancestors` chain is missing its region). Rather than turn a
 				// resolvable node into an unresolved one, retry once WITHOUT the parent constraint — we

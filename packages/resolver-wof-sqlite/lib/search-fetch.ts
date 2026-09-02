@@ -160,7 +160,7 @@ export function fetchSearchRows<DB>(options: {
 		: ""
 
 	// The encyclopedic score is CARRIED, never ranked on (ROAD_TO_V9 §2, ratified 2026-08-06) — it
-	// appears in the SELECT and in no ORDER BY, here or in the companion fetch below. Gated on the
+	// appears in the SELECT and in no ORDER BY, here or in the companion fetch below. Conditioned on the
 	// split column, so a pre-split extract emits a literal NULL and builds no join at all.
 	const { select: encyclopedicSelect, join: encyclopedicJoin } = encyclopedicClauses.get(sch)!
 

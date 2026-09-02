@@ -95,11 +95,11 @@ export interface RescoreCandidate {
 	place: ResolvedPlace
 	/**
 	 * Whether the postcode-consistency check FIRED for this recovery — i.e. the postcode resolved to a point and the
-	 * match was validated within `gateKm` of it. `true` = high-precision (postcode- consistent); `false` = ungated (no
-	 * postcode→point coverage for this country, so the match wasn't geo-validated — the ~83%-precision case). The caller
-	 * surfaces this as `metadata.rescore_gated` so a consumer can threshold on it WITHOUT a hidden per-country coverage
-	 * map. Deliberately NOT folded into the calibrated `confidence` — that would break the isotonic guarantee (a true
-	 * calibrated 0.83 must not be confused with a rescore plug-in estimate).
+	 * match was validated within `gateKm` of it. `true` = high-precision (postcode- consistent); `false` = unrestricted
+	 * (no postcode→point coverage for this country, so the match wasn't geo-validated — the ~83%-precision case). The
+	 * caller surfaces this as `metadata.rescore_gated` so a consumer can threshold on it WITHOUT a hidden per-country
+	 * coverage map. Deliberately NOT folded into the calibrated `confidence` — that would break the isotonic guarantee (a
+	 * true calibrated 0.83 must not be confused with a rescore plug-in estimate).
 	 */
 	gated: boolean
 	/**
@@ -321,7 +321,7 @@ export async function findRescoreCandidate(
 		// #961: both anchor probes are postalcode-TYPED. Untyped, a truncated code fragment (v5.3.0
 		// emits "250 Zabiče" → subset "250") name-matches arbitrary places ("Chak No 250", PK) and the
 		// false anchor then EXCLUDES the true village. A typed miss leaves anchor=null → the match is
-		// accepted ungated, which is the correct degradation for an unverifiable code.
+		// accepted unrestricted, which is the correct degradation for an unverifiable code.
 		const pcHits = await backend.findPlace({ text: postcode, country, placetype: "postalcode", limit: 2 })
 		const a = pcHits.find((h) => h.lat !== 0 || h.lon !== 0)
 
@@ -458,7 +458,7 @@ export async function findRescoreCandidate(
 			if (!withinGate(h)) continue
 
 			// gated = the postcode anchor existed AND validated this match (within gateKm). When no anchor
-			// (no postcode→point coverage), the match is ungated — returned, but flagged lower-precision.
+			// (no postcode→point coverage), the match is unrestricted — returned, but flagged lower-precision.
 			//
 			// #1537: carry the rest of the SAME lookup's exact matches as the namesake runner-ups. Gate-filtered on the
 			// same rule as the winner — a candidate the postcode check rejected is not a namesake worth offering, it is a

@@ -175,10 +175,10 @@ describe("the committed whitespace suite", () => {
 		expect(new Set(fixtures.map((fixture) => fixture.context?.caseCountry)).size).toBeGreaterThan(1)
 	})
 
-	it("gives every tracked row a reference and a note, and every gating row no reference", () => {
+	it("gives every tracked row a reference and a note, and every enforcing row no reference", () => {
 		for (const fixture of fixtures) {
 			if ((fixture.status ?? "pass") === "pass") {
-				expect(fixture.bugRef, `${fixture.id}: a gating row must not name a defect`).toBeUndefined()
+				expect(fixture.bugRef, `${fixture.id}: a enforcing row must not name a defect`).toBeUndefined()
 
 				continue
 			}

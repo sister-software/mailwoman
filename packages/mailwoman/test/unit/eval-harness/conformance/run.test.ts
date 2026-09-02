@@ -196,7 +196,7 @@ describe("summarizeConformanceRun", () => {
 		expect(summary.pass).toBe(true)
 	})
 
-	it("refuses to pass a run with no gating row at all", async () => {
+	it("refuses to pass a run with no enforcing row at all", async () => {
 		const { observe } = tableObserver(HELD_TABLE)
 
 		const { findings } = await runConformanceFixtures(

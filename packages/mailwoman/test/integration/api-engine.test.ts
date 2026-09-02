@@ -145,7 +145,7 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 })
 
 // /v1/parse — native neural output; needs only the model weights, not the gazetteer, so
-// it's gated on `weightsPresent()` rather than `hasStack` — a WOF-less boot still answers this.
+// it's conditioned on `weightsPresent()` rather than `hasStack` — a WOF-less boot still answers this.
 
 describeIfWeights(
 	"api-engine — /v1/parse (native neural output)",

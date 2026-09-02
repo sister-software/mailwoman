@@ -53,8 +53,8 @@ import { softmax } from "#viterbi"
 
 export interface WordConsistencyOpts {
 	/**
-	 * Skip the heal when the vote's mean p(bestType) across the word is below this floor. The ungated variant's failure
-	 * mode (the 2026-06-19 promotion eval) was amplifying noise on rows where the per-piece confidence is itself
+	 * Skip the heal when the vote's mean p(bestType) across the word is below this floor. The unrestricted variant's
+	 * failure mode (the 2026-06-19 promotion eval) was amplifying noise on rows where the per-piece confidence is itself
 	 * unreliable — a low-confidence vote is exactly that signature. `0` (default) never skips.
 	 */
 	minMeanConfidence?: number

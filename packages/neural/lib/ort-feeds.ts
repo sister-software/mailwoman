@@ -156,11 +156,11 @@ function packChannelFeed(
 }
 
 /**
- * Pack every soft-feed channel the graph declares, in feed-name order. EVERY channel is gated on the graph's declared
- * inputs: a supplied channel the graph does not declare is never fed (an undeclared feed crashes ORT), and a declared
- * channel the caller did not supply gets the zero-fill confidence=0 identity so the session never throws on a missing
- * required input. The anchor channel historically skipped the declared-input gate on the supplied path — an undeclared
- * feed — and now takes the same gate as every other channel.
+ * Pack every soft-feed channel the graph declares, in feed-name order. EVERY channel is conditioned on the graph's
+ * declared inputs: a supplied channel the graph does not declare is never fed (an undeclared feed crashes ORT), and a
+ * declared channel the caller did not supply gets the zero-fill confidence=0 identity so the session never throws on a
+ * missing required input. The anchor channel historically skipped the declared-input gate on the supplied path — an
+ * undeclared feed — and now takes the same gate as every other channel.
  *
  * `supplied` dims read the channel's own rows; the fallback dim covers the zero-fill path (and, for the evidence
  * channels, a supplied channel with no rows).

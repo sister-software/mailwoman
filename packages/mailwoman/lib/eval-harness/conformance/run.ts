@@ -145,7 +145,7 @@ export interface ConformanceSummary {
  * Split a run by row status, mirroring the Gauntlet regression layer's own three-way reading.
  *
  * `pass` is false on an EMPTY findings list for the same reason {@linkcode runConformanceFixtures} refuses an empty
- * suite, and false on a suite with no gating rows at all: a run whose every row is tracked has measured nothing that
+ * suite, and false on a suite with no enforcing rows at all: a run whose every row is tracked has measured nothing that
  * could fail, and reporting it as a pass is how a suite quietly stops holding anything.
  */
 export function summarizeConformanceRun(findings: readonly ConformanceFinding[]): ConformanceSummary {

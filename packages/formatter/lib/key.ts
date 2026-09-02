@@ -13,7 +13,7 @@
  *   blocking stage wants as one cheap, high-precision candidate signal (alongside geographic
  *   proximity, which carries the real weight — see the geocode-first record-matching concept doc).
  *
- *   Deliberately NOT done yet (follow-ups, all gated on `@mailwoman/codex`): expanding street
+ *   Deliberately NOT done yet (follow-ups, all conditioned on `@mailwoman/codex`): expanding street
  *   suffixes (`Ave` → `avenue`) and directionals (`N` → `north`) to a canonical form, and
  *   USPS-style standardization. This first version is pure normalization with no dictionary expansion,
  *   so the key is stable and explainable; expansion is an additive refinement, not a rewrite.

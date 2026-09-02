@@ -407,7 +407,7 @@ export async function crossSourceThresholdSweep(
 				`threshold to admit more only over-merges (the over-merge features REPLACE the FS weight, so true ` +
 				`cross-source pairs share a logit band with genuine over-merges). Threshold alone (option 1) is ` +
 				`**INSUFFICIENT** — FS stays pinned (correct + best-precision for this objective); a cross-objective ` +
-				`retrain (option 2), gated on cross-source labels, is the only lever. See #655.`
+				`retrain (option 2), conditioned on cross-source labels, is the only lever. See #655.`
 		)
 	} else {
 		lines.push(

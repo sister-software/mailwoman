@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   Per-release mask-regression gate (#718) — the "second lock", paired with the load-time
- *   capability-manifest delta-gate shipped in `neural/scorer.ts`
+ *   capability-manifest delta check shipped in `neural/scorer.ts`
  *   (`assertConventionsRespectCapabilities`).
  *
- *   What it adds over the load-time delta-gate (and why two locks):
+ *   What it adds over the load-time delta check (and why two locks):
  *
- *   - The LOAD-TIME delta-gate (createScorer) is REACTIVE + COARSE: it consults the model card's
+ *   - The LOAD-TIME delta check (createScorer) is REACTIVE + COARSE: it consults the model card's
  *       `capabilities` block and rejects only a conventions mask that forbids a tag the card
  *       CERTIFIES, at a 5pp `maskOffF1 − maskOnF1` threshold. It fires only on EXPLICITLY-forbidden
  *       tags, and only against pre-recorded numbers — it can't see a tag the mask harms INDIRECTLY
@@ -18,7 +18,7 @@
  *   - THIS gate is PROACTIVE + FINE: it RE-RUNS the model (mask-off vs mask-auto/on) per locale under
  *       the full SHIP-CONFIG (anchor-on + gazetteer-on) and FAILS if ANY tag's F1 drops by more
  *       than a TIGHTER 2pp threshold (per the DeepSeek consult) under the conventions mask —
- *       catching the subtler interaction harms the per-tag 5pp delta-gate would miss.
+ *       catching the subtler interaction harms the per-tag 5pp delta check would miss.
  *
  *   It is WEIGHT-DEPENDENT (it runs the model), so it is a RELEASE GATE — run with weights on disk
  *   BEFORE publishing — NOT a weightless CI step (weight-dependent tests don't run in CI; #582).
@@ -83,9 +83,9 @@ export interface MaskRegressionOptions {
 	 */
 	gazetteerLexicon?: string
 	/**
-	 * The regression threshold (pp, as a fraction). Per the DeepSeek consult, 2pp — a FINER net than the load-time
-	 * delta-gate's 5pp, so subtler interaction harms surface at release. A tag whose mask-on F1 is within this band of
-	 * its mask-off F1 is considered unharmed by the mask. Default 0.02.
+	 * The regression threshold (pp, as a fraction). Per the DeepSeek consult, 2pp — a FINER net than the load-time delta
+	 * check's 5pp, so subtler interaction harms surface at release. A tag whose mask-on F1 is within this band of its
+	 * mask-off F1 is considered unharmed by the mask. Default 0.02.
 	 */
 	threshold?: number
 	/**

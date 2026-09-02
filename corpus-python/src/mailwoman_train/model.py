@@ -1327,7 +1327,7 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size
     """
     # v8 CJK Phase 2: the label vocabulary is per-config (data.label_set; "stage3" default keeps
     # every existing recipe byte-identical). The internal consumers of the module-global 33-label
-    # maps (CRF init aside — that one is threaded) are flag-gated features that have never trained
+    # maps (CRF init aside — that one is threaded) are flag-restricted features that have never trained
     # against a non-default set; refuse the combination loudly rather than mislabel silently.
     from .labels import resolve_label_set
 

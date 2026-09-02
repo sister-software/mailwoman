@@ -14,7 +14,7 @@
  *   leaving the artifact with no way to rebuild it. Every piece of hard logic survived that deletion
  *   (`ingestGeonamesPostal` and its two #920 laws, `createUnifiedSchema`, `buildPlaceSearchFTS`,
  *   `sealDatabase`); what was lost was the invocation glue, which is what this module is. It is
- *   gated on per-country row-count parity with the frozen artifact — GB 1,839,678 · PL 20,299 ·
+ *   conditioned on per-country row-count parity with the frozen artifact — GB 1,839,678 · PL 20,299 ·
  *   SE 18,870 · NO 5,132 · FI 3,576 · SK 3,480 · CZ 2,694 · DK 1,159 · SI 556 · HR 309.
  *
  *   Country ORDER is required for id reproducibility, not for correctness: `ingestGeonamesPostal`

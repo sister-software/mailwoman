@@ -12,7 +12,7 @@
  *   Folding this in was considered and rejected on the code, not on taste. `geonames-tail.ts` is a
  *   REPRODUCER: its docstring pins it to a frozen 946 MB artifact, its country order is required
  *   because `ingestGeonamesPostal` allocates ids from one counter so a rebuild stays id-comparable,
- *   and it is gated on per-country row-count parity against that artifact. Code-Point Open shares none
+ *   and it is conditioned on per-country row-count parity against that artifact. Code-Point Open shares none
  *   of its inputs — different coordinate system (OSGB36 eastings/northings, not degrees), different row
  *   grain (one row per unit postcode, so no medoid collapse), different licence block, and a row count
  *   that is SUPPOSED to differ from the frozen GB figure. Adding it as a mode would put a source that
@@ -119,7 +119,7 @@ export interface BuildPostcodeCodePointResult {
 	 */
 	stats: CodePointParseStats
 	/**
-	 * The archive's own manifest — the row-count oracle this build is gated on.
+	 * The archive's own manifest — the row-count oracle this build is conditioned on.
 	 */
 	metadata: CodePointMetadata
 	/**

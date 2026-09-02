@@ -923,7 +923,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                     )
                 # Gazetteer-anchor confidence curriculum (#464, v0.9.13): same ramped per-row zero-out
                 # so the model keeps label competence with AND without the clue (recovers the v0.9.12
-                # US postcode -3.7). Gated on the config flag so always-on runs stay reproducible.
+                # US postcode -3.7). Conditioned on the config flag so always-on runs stay reproducible.
                 if "gazetteer_confidence" in tb and getattr(cfg.train, "gazetteer_curriculum", False):
                     tb["gazetteer_confidence"] = perturb_gazetteer_confidence(
                         tb["gazetteer_confidence"], step, cfg.train.max_steps

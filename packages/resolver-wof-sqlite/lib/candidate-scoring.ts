@@ -202,7 +202,7 @@ export function rankCandidates<DB>(
 
 			// #936 option 3: an OFFICIAL name (preferred form in an official language of the place's
 			// country, `names.official = 1`) counts as the place's own name for the sub-tier — "Åbo" is
-			// Turku's name, not merely its alias. Floor-gated on the holder's population (see the
+			// Turku's name, not merely its alias. Floor-conditioned on the holder's population (see the
 			// RankingWeights docstring for the measured 100k boundary). officialIDs ⊆ exactIDs by
 			// construction (official rows are names rows), so only the sub-tier KIND changes.
 			const officialIDs = weights.officialNameExact

@@ -27,7 +27,7 @@
  *   Helmert (measured p95 4.18 m) would replace the publisher's OSTN15-grade answer with a strictly
  *   worse one.
  *
- *   ## Gating
+ *   ## Restricting
  *
  *   Unlike Code-Point Open, the archive ships NO row-count manifest (`versions.txt` is three label
  *   lines), so there is no upstream oracle to reconcile against. What gates instead: the archive md5

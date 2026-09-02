@@ -439,8 +439,8 @@ export async function loadZoningDesignationRoute(
 }
 
 /**
- * The fork→entity probe's two signals — both or neither (an ungated probe is the Savile Row hijack; fork-entity.ts gate
- * 2). Tolerate-and-degrade: no poi.db in the data root, no probe.
+ * The fork→entity probe's two signals — both or neither (an unrestricted probe is the Savile Row hijack; fork-entity.ts
+ * gate 2). Tolerate-and-degrade: no poi.db in the data root, no probe.
  */
 export async function loadForkEntityDeps(
 	options: Pick<GeocodeSessionOptions, "dataRoot" | "forkEntity">
@@ -688,7 +688,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// instead of the address lanes manufacturing a confident wrong answer.
 	const kindClassifierWithLexicon = createKindClassifier({ poiLexicon: poiTaxonomyLookup })
 
-	// The locale rides in the closure: category synonyms are locale-gated ("mailbox" is the en-US
+	// The locale rides in the closure: category synonyms are locale-restricted ("mailbox" is the en-US
 	// register of post_box), and the geocode-core dep signature stays two-argument.
 	const poiKindClassifier: NonNullable<GeocodeDeps["classifyKind"]> = (input, shape) =>
 		kindClassifierWithLexicon(input, shape, {

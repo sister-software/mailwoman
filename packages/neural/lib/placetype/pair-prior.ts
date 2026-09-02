@@ -695,10 +695,10 @@ function probeAnchoredAdjacentPair(
  * `groupSegments`, when supplied (segment mode only — see the call site), conditions this on the successor sharing
  * `x`'s OWN segment. Without that condition, a candidate at the tail of one comma-delimited segment reads the FIRST
  * word of the NEXT segment as its "successor" — a false cross-segment reading, not a real street/venue-head suffix of
- * this candidate. Worked case: `"Fishburn, 5 Fishburn Road"` — ungated, "Fishburn" (segment 0) is suppressed because
- * "5" (segment 1's first word, a house-number shape) sits next in `nonEmptyGroups`, even though the comma between them
- * means "5" can never be read as a suffix of "Fishburn". In WINDOW mode (`groupSegments` omitted), suppression ignores
- * comma placement entirely, by design (see `buildWindows`).
+ * this candidate. Worked case: `"Fishburn, 5 Fishburn Road"` — unrestricted, "Fishburn" (segment 0) is suppressed
+ * because "5" (segment 1's first word, a house-number shape) sits next in `nonEmptyGroups`, even though the comma
+ * between them means "5" can never be read as a suffix of "Fishburn". In WINDOW mode (`groupSegments` omitted),
+ * suppression ignores comma placement entirely, by design (see `buildWindows`).
  */
 function isMarkerSuppressed(
 	nonEmptyGroups: readonly WordGroup[],

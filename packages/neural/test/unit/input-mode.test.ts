@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Register gating fence (Decision A): `parse(text, { inputMode: "formatted" })` must run the
+ *   Register enforcement fence (Decision A): `parse(text, { inputMode: "formatted" })` must run the
  *   evidence-bundle channels OFF (the curriculum-trained absence identity) while every other channel
  *   feeds unchanged; `"fragmented"` (and the bare-library default, unset) feeds them. Asserted at the
  *   runner boundary via a stub — the same interface the ONNX session sees.
@@ -53,7 +53,7 @@ async function makeClassifier(seen: { evidence: unknown[] }) {
 	})
 }
 
-describe("inputMode register gating (Decision A)", () => {
+describe("inputMode register enforcement (Decision A)", () => {
 	it("formatted mode withholds the evidence channels", async () => {
 		const seen = { evidence: [] as unknown[] }
 		const classifier = await makeClassifier(seen)

@@ -91,7 +91,7 @@ export interface GazetteerCoverageDatabase {
 }
 
 /**
- * Table names the lookup probes (existence-gated, so a candidate.db built before the manifest is byte-stable).
+ * Table names the lookup probes (existence-restricted, so a candidate.db built before the manifest is byte-stable).
  */
 export const COUNTRY_COVERAGE_TABLE = "country_coverage"
 /**

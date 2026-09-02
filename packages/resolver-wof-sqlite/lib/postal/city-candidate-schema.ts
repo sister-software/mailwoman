@@ -55,7 +55,7 @@ export interface PostalCityCandidateDatabase {
 }
 
 /**
- * The table name the lookup probes (existence-gated, so an old candidate.db without it is byte-stable).
+ * The table name the lookup probes (existence-restricted, so an old candidate.db without it is byte-stable).
  */
 export const POSTAL_CITY_CANDIDATE_TABLE = "postal_city_candidate"
 

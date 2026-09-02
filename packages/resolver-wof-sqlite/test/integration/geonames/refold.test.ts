@@ -177,7 +177,7 @@ test("re-folding the SAME list twice is a no-op, not a doubling", async () => {
 test("every folded locality gets its self-ancestor row, admin fold or not", async () => {
 	// The purge clears `ancestors` in the range too, and the fold-on-copy path never runs the freeze
 	// phase's `populateAncestors` closure — so the fold owes the closure's output for its own rows. The
-	// self row is the part that used to be gated on the #267 admin fold and so went missing for every
+	// self row is the part that used to be conditioned on the #267 admin fold and so went missing for every
 	// country that already had WOF/Overture admin.
 	await using db = freshDB()
 

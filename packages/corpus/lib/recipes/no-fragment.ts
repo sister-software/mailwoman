@@ -29,7 +29,7 @@
  *
  *   SLASH HAZARD, pinned deliberately: NO `124/1` is ONE house_number (cadastral gnr/bnr). AU
  *   `12/345` is TWO (unit + house_number). This slice teaches the Norwegian reading; a future AU
- *   intra-word-split slice (B5) must not generalize over it. The two are locale-gated by design.
+ *   intra-word-split slice (B5) must not generalize over it. The two are locale-restricted by design.
  *
  *   SPLIT: `--exclude-surfaces` REQUIRED (throws otherwise) — the digit board's reserved surface
  *   list. Diacritic-KEEPING normalizer, matching the board (see the norm docstring).

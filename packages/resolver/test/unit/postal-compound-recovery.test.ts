@@ -202,7 +202,7 @@ describe("#961 joint country recovery — the locale-default trap", () => {
 	// The CLI's en-US locale default scoped both the anchor and the village probe to US, so the SI
 	// floor never fired through geocode-core. The joint pass probes spans unscoped and verifies each
 	// candidate against the postcode resolved in the CANDIDATE's own country — cross-country
-	// promotion only postcode-verified, never ungated.
+	// promotion only postcode-verified, never unrestricted.
 	it("recovers under a WRONG defaultCountry via the postcode-verified joint pass", async () => {
 		const resolver = createWOFResolver(await makeBackend())
 		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "US" })
@@ -225,7 +225,7 @@ describe("#961 joint country recovery — the locale-default trap", () => {
 		expect(out.roots.filter((n) => n.tag === "locality" && n.placeID)).toHaveLength(0)
 	})
 
-	it("never cross-promotes without a postcode present (no ungated wandering)", async () => {
+	it("never cross-promotes without a postcode present (no unrestricted wandering)", async () => {
 		const resolver = createWOFResolver(await makeBackend())
 
 		const tree: AddressTree = {

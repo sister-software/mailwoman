@@ -245,7 +245,7 @@ export interface LocaleEvalSpec {
  * street-prefix slice (`fr-street-prefix-real.jsonl`, the #719 reproduction), NOT the broad golden dev set, for the
  * essential tags: golden FR carries only ~7 `street_prefix` rows against ~1535 without it, so the unfolded
  * `street_prefix` F1 there is dominated by absent-gold rows (measured 5.3) — it would UNDER-certify the very capability
- * the delta-gate exists to protect. On the purpose-built slice the model emits FR `street_prefix` at F1 80.0 (the
+ * the delta check exists to protect. On the purpose-built slice the model emits FR `street_prefix` at F1 80.0 (the
  * figure the #719 fix cites), which is the honest capability number the loader must guard.
  */
 export const MASK_EVAL_LOCALES: LocaleEvalSpec[] = [

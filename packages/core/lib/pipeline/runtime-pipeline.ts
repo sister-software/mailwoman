@@ -95,10 +95,10 @@ const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
  * comment), and a loaded artifact's derived safelist (`resolver.artifactCoverage.hardCountrySafelist`) takes precedence
  * over this constant. The measured record lives in `mailwoman/gazetteer-pipeline/coverage-manifest.ts`
  * (MEASURED_COUNTRY_COVERAGE — grow THAT at promotes; it updates the artifact at rebuild). Precedence: per-call
- * `PipelineOpts.hardCountrySafelist` (the eval's instrument, measures ungated to grow the list) → the loaded artifact's
- * manifest → this constant. Historical receipts now recorded structurally in MEASURED_COUNTRY_COVERAGE: US/FR/DE 100,
- * ES 99.8, NL 97.3, IT 96.8 (in); FI 69.5, PL 77.8 (measured, out); GB + CA at the #928 promote (2026-07-06, OSM
- * panels, night 34); AU with the #244 placer class (2026-07-06).
+ * `PipelineOpts.hardCountrySafelist` (the eval's instrument, measures unrestricted to grow the list) → the loaded
+ * artifact's manifest → this constant. Historical receipts now recorded structurally in MEASURED_COUNTRY_COVERAGE:
+ * US/FR/DE 100, ES 99.8, NL 97.3, IT 96.8 (in); FI 69.5, PL 77.8 (measured, out); GB + CA at the #928 promote
+ * (2026-07-06, OSM panels, night 34); AU with the #244 placer class (2026-07-06).
  */
 export const HARD_PLACE_COUNTRY_SAFELIST: ReadonlySet<string> = new Set([
 	"US",
@@ -343,7 +343,7 @@ export async function runPipeline(
 			// soft), the safelist (only well-covered countries — where a miss is a genuine non-match, not a
 			// coverage gap — hard-filter; the low-coverage tail keeps its recall on the soft path), and the
 			// caller's own hardCountry/defaultCountry is never overwritten. Safelist precedence: the per-call
-			// `hardCountrySafelist` override (the eval measures ungated to grow it) → the loaded gazetteer
+			// `hardCountrySafelist` override (the eval measures unrestricted to grow it) → the loaded gazetteer
 			// artifact's own coverage manifest → the code-constant fallback inside hardCountryFor.
 			const hardCountry = hardCountryFor(
 				placed.country,

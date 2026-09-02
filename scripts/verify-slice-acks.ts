@@ -8,7 +8,7 @@
  *   training run.
  *
  *   Pairs with ``mailwoman dev lint corpus-slice`` (which emits the flag count) and the MANIFEST schema
- *   extension introduced 2026-05-29 after the v0.6.2 "5th Avenue Theatre" incident. The gating
+ *   extension introduced 2026-05-29 after the v0.6.2 "5th Avenue Theatre" incident. The enforcing
  *   model is "report + acknowledgment, not block":
  *
  *   - Linter flags suspicious patterns and writes the count to MANIFEST.

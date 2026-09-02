@@ -5,7 +5,7 @@
  *
  *   Integration tests for `WOFSQLitePlaceLookup` against a real Who's On First SQLite distribution.
  *
- *   These are gated on the WOF DB being present on disk — the suite SKIPS (with a clear stderr
+ *   These are conditioned on the WOF DB being present on disk — the suite SKIPS (with a clear stderr
  *   message) if the path doesn't exist. CI runs against the fixture-only suites; operators with the
  *   real DB locally get an extra layer of validation.
  *

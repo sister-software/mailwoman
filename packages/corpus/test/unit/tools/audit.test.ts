@@ -8,7 +8,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectoryExclusive, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-// Re-export the internals for testing. The script's CLI entry is gated on
+// Re-export the internals for testing. The script's CLI entry is conditioned on
 // `runIfScript(import.meta, …)`, so importing the module is side-effect-free.
 import { audit } from "@mailwoman/corpus/tools/audit"
 // Lightweight integration smoke against the actual corpus on this host. Skipped when the data

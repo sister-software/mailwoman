@@ -411,7 +411,7 @@ export async function applySpanRescore(
 	// `rescore_gated` carries the gate's precision signal as an EXPLICIT handle — NOT folded into the
 	// calibrated `confidence`, which would break the isotonic guarantee (a true calibrated 0.83 must not
 	// be confused with a rescore plug-in estimate; DeepSeek 2026-06-23). true = postcode gate fired
-	// (high-precision); false = ungated (no postcode→point coverage for this country, ~83%-precision).
+	// (high-precision); false = unrestricted (no postcode→point coverage for this country, ~83%-precision).
 	node.metadata = { ...node.metadata, span_rescore: true, rescore_gated: hit.gated }
 	roots.push(node)
 

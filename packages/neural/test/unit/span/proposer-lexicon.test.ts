@@ -57,7 +57,7 @@ test("buildCodexSpanLexicon: no systems → only the locale-general venue-struct
 	}
 
 	// What remains is the venue-INTERIOR vocabulary, which is deliberately NOT system-gated: a concourse is a
-	// concourse regardless of which postal authority delivers to the building, and gating it on a codex system would
+	// concourse regardless of which postal authority delivers to the building, and keying it on a codex system would
 	// make "Terminal 5" parse in one country and not another for no defensible reason. Sourced from the WOF placetype
 	// vocabulary + OSM aeroway — see core/resources/whosonfirst/placetypes/venue-structure.ts.
 	expect([...lex.unitDesignators].toSorted()).toEqual([...VENUE_STRUCTURE_DESIGNATORS].toSorted())

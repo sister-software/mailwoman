@@ -199,8 +199,8 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 			.map((row) => {
 				// Alias tier: `alt_names` is the FTS row's alias bag (the slim DB's only surviving alias
 				// source), aliases joined on the boundary-preserving ALIAS_SEPARATOR (#523). The shared
-				// parser does a true per-alias equality check, ungated; on a LEGACY bag (pre-#523 slim
-				// artifact, boundaries lost) it falls back to padded containment gated on "no strictly
+				// parser does a true per-alias equality check, unrestricted; on a LEGACY bag (pre-#523 slim
+				// artifact, boundaries lost) it falls back to padded containment conditioned on "no strictly
 				// exact candidate" so interior fragments ("York" inside "New York City") can't be
 				// false-promoted. Mirrors the Node resolver's alias tier
 				// (`WOFSQLitePlaceLookup.#exactMatchIDs`).

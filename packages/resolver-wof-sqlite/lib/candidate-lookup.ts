@@ -193,7 +193,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	readonly artifactCoverage: GazetteerArtifactCoverage | undefined
 	/**
 	 * `", importance"` when this artifact carries the #28 fame column, `""` when it does not — spliced into the probe's
-	 * SELECT list. Existence-gated exactly like `#ftsProbe` and `#postalCityProbe` above, and for the same reason: a
+	 * SELECT list. Existence-restricted exactly like `#ftsProbe` and `#postalCityProbe` above, and for the same reason: a
 	 * candidate.db built before the column is a valid artifact, and naming a column it lacks would turn a stale gazetteer
 	 * into `no such column` on the first keystroke rather than into "no fame signal", which is what it is.
 	 */
@@ -216,7 +216,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	readonly #ancestorsCache = new Map<number, Ancestor[]>()
 	/**
 	 * Prepared interval-label probe over `candidate_interval` — `undefined` when the artifact predates the sidecar, which
-	 * is what makes the admin-containment re-rank (#1717 stage 2) capability-gated: without it,
+	 * is what makes the admin-containment re-rank (#1717 stage 2) capability-restricted: without it,
 	 * `FindPlaceQuery.regionQualifier` is ignored, no candidate carries a `containedByQualifier` stamp, and the resolver
 	 * walk reports the lever `unavailable` instead of silently dead.
 	 */
@@ -287,7 +287,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		this.#variantAliasExemption = opts.variantAliasExemption === true
 		this.#roleSelect = this.#hasNameRole ? ", name_role" : ""
 
-		// Ancestors sidecar (#1717): existence-gated like the probes above, and the CAPABILITY gates with
+		// Ancestors sidecar (#1717): existence-restricted like the probes above, and the CAPABILITY gates with
 		// it — see the `ancestors` property doc for why an older artifact must read as "no ancestors()"
 		// rather than as a method that answers [] everywhere.
 		if (hasTable(this.#db, CANDIDATE_ANCESTOR_TABLE)) {
@@ -299,7 +299,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 			this.ancestors = (id) => this.#ancestorLineage(id)
 		}
 
-		// Admin-containment re-rank (#1717 stage 2): gated on the interval half of the sidecar (built in
+		// Admin-containment re-rank (#1717 stage 2): conditioned on the interval half of the sidecar (built in
 		// the same pass as the closure rows; probed separately so a hand-degraded artifact degrades
 		// truthfully) AND on the placetype dictionary carrying the qualifier band at all.
 		if (this.#ancestorsProbe && hasTable(this.#db, CANDIDATE_INTERVAL_TABLE)) {
@@ -316,7 +316,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 			}
 		}
 
-		// Coverage manifest (survey candidate #2): the artifact's own coverage facts, existence-gated like
+		// Coverage manifest (survey candidate #2): the artifact's own coverage facts, existence-restricted like
 		// the probes above — a candidate.db built before the manifest reads `undefined` and consumers keep
 		// their code-constant fallbacks byte-identically.
 		this.artifactCoverage = readGazetteerCoverageManifest(this.#db)
@@ -603,7 +603,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 
 		// #741: postcode-keyed postal-city alias. An exact `(name_key, postcode)` hit resolves a
 		// user-typed POSTAL city ("Antioch", 37013) to the geographic locality the postcode sits in
-		// ("Nashville"), bypassing the population/region ranking that can't see the postcode. Gated on
+		// ("Nashville"), bypassing the population/region ranking that can't see the postcode. Conditioned on
 		// the side-index being present, a postcode in the query, and a locality-tier request — so the
 		// common (no-postcode / non-locality) path is untouched. A hit short-circuits: the postcode is
 		// an exact, high-confidence disambiguator, so we return the single geographic locality.
@@ -875,7 +875,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 
 		// Admin-containment re-rank (#1717 stage 2): LAST, on the final row set — the qualifier is the
 		// address's outermost explicit statement, so its partition outranks the postcode-proximity order
-		// above (contained rows keep that order among themselves). Capability-gated on the sidecar
+		// above (contained rows keep that order among themselves). Capability-conditioned on the sidecar
 		// (`#qualifierProbe`); when the artifact predates it, `regionQualifier` is ignored, no stamp is
 		// written, and the resolver walk reports the lever `unavailable`.
 		if (query.regionQualifier?.trim() && this.#qualifierProbe && this.#wantsLocality(query.placetype)) {

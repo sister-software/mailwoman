@@ -984,7 +984,7 @@ describe("WOFCandidateTableLookup — importance (#28)", () => {
 		expect(hits.every((h) => h.importance === undefined)).toBe(true)
 	})
 
-	test("an artifact PREDATING the column still resolves — the probe is existence-gated", async () => {
+	test("an artifact PREDATING the column still resolves — the probe is existence-restricted", async () => {
 		// Reproduce a pre-#28 gazetteer by removing the column from a real build, rather than hand-writing
 		// an old DDL that could drift from what the old builder actually emitted.
 		const legacyPath = scratch.resolve("candidate-legacy.db")
@@ -1240,7 +1240,7 @@ describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
 		expect(hits[1]!.containedByQualifier).toBe(false)
 	})
 
-	test("CAPABILITY-GATED: a pre-sidecar artifact ignores the qualifier and stamps nothing", async () => {
+	test("CAPABILITY-RESTRICTED: a pre-sidecar artifact ignores the qualifier and stamps nothing", async () => {
 		// Reproduce a pre-sidecar candidate.db by dropping the tables from a real build — the same
 		// vintage discipline as the pre-#28 importance-column test above.
 		const preSidecarPath = scratch.resolve("candidate-pre-sidecar.db")
