@@ -41,8 +41,10 @@
  *   fetch-then-parse pairing, same shape as `fetchCompanyTickers`/`fetchTenKFilings` above.
  */
 
+import { BLOCK_ELEMENTS, htmlToLayoutText } from "@mailwoman/core/html/text"
 import { nameSimilarity } from "@mailwoman/match"
 import { canonicalizeOrganizationName } from "@mailwoman/record"
+import { TextSpliterator } from "spliterator"
 import type { Tagged } from "type-fest"
 
 import type { SECDocumentClient } from "#sdk/exhibit21"
@@ -439,14 +441,6 @@ export function accessionArchiveURL(cik: CIK, accessionNumber: string): string {
 	return `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accessionNumber.replaceAll("-", "")}`
 }
 
-// Operates on `headerHTML` — the accession's `…-index-headers.html` body, which HTML-escapes EDGAR's own SGML
-// manifest (so `<DOCUMENT>` reads literally as `&lt;DOCUMENT&gt;` in the source). One block per filed document, in
-// filing order; a final unterminated block (malformed/truncated input) still yields everything after its opening tag
-// via the `$` fallback rather than being silently dropped.
-const DOCUMENT_BLOCK_PATTERN = /&lt;DOCUMENT&gt;([\s\S]*?)(?:&lt;\/DOCUMENT&gt;|$)/gi
-const DOCUMENT_TYPE_PATTERN = /&lt;TYPE&gt;([^\r\n<]+)/i
-const DOCUMENT_FILENAME_PATTERN = /&lt;FILENAME&gt;([^\r\n<]+)/i
-
 /**
  * Matches every `TYPE` spelling EDGAR actually files an Exhibit 21 under (`EX-21`, `EX-21.1`, `EX-21.01`, lowercase
  * `ex-21.2`, …) while rejecting a type that merely starts the same way — `EX-2`, `EX-2.1`, `EX-210`, `EX-23`, `EX-21A`
@@ -456,27 +450,67 @@ const DOCUMENT_FILENAME_PATTERN = /&lt;FILENAME&gt;([^\r\n<]+)/i
 const EXHIBIT_21_TYPE_PATTERN = /^ex-?21(\.\d+)?$/i
 
 /**
+ * One `<TAG>value` line of EDGAR's SGML manifest, which is a tag-per-line header format rather than nested markup —
+ * `<TYPE>`, `<SEQUENCE>` and `<FILENAME>` have no closing tags at all. Matched against RECOVERED text, never against
+ * markup: {@linkcode parseFilingDocuments} reads the index page first, which is what turns `&lt;TYPE&gt;` back into
+ * `<TYPE>` and removes the page's own `<a>`/`<br>` elements.
+ */
+const MANIFEST_FIELD_PATTERN = /^<([a-z][a-z-]*)>(.*)$/i
+
+/**
  * Reads EVERY document out of one accession's SGML manifest (`headerHTML`, the `…-index-headers.html` body) — not only
- * the exhibits, so a caller wanting a different document type later doesn't need a second parser. A manifest block
- * missing either its `TYPE` or its `FILENAME` line is dropped rather than emitted with a guessed value or a `url`
- * ending in a bare slash — decision 6's "abstain, never guess" posture, carried from `exhibit21.ts`, applied here to a
- * manifest row instead of a subsidiary row.
+ * the exhibits, so a caller wanting a different document type later doesn't need a second parser.
  *
- * @todo In desperate need of `htmlparser2`'s ecosystem. Extract repeatable aspects into `@mailwoman/core/html` and keep
- *   what remains here, if anything at all.
+ * The manifest is EDGAR's own SGML, HTML-ESCAPED inside the index page (`<DOCUMENT>` is written `&lt;DOCUMENT&gt;`) and
+ * interleaved with that page's `<a>` and `<br>` elements — the Lumen 2025 accession states 163 of them across 161
+ * documents. Reading the page as text decodes the manifest back to itself and drops the page markup, so the field
+ * patterns below never have to match one markup language through another's escaping.
+ *
+ * A manifest block missing either its `TYPE` or its `FILENAME` line is dropped rather than emitted with a guessed value
+ * or a `url` ending in a bare slash — decision 6's "abstain, never guess" posture, carried from `exhibit21.ts`, applied
+ * to a manifest row instead of a subsidiary row.
  */
 export function parseFilingDocuments(cik: CIK, accessionNumber: string, headerHTML: string): ExhibitDocument[] {
 	const archiveURL = accessionArchiveURL(cik, accessionNumber)
 	const documents: ExhibitDocument[] = []
 
-	for (const match of headerHTML.matchAll(DOCUMENT_BLOCK_PATTERN)) {
-		const block = match[1]!
-		const type = DOCUMENT_TYPE_PATTERN.exec(block)?.[1]?.trim()
-		const filename = DOCUMENT_FILENAME_PATTERN.exec(block)?.[1]?.trim()
+	let type: string | undefined
+	let filename: string | undefined
 
-		if (!type || !filename) continue
+	for (const line of TextSpliterator.from(htmlToLayoutText(headerHTML, BLOCK_ELEMENTS), { skipEmpty: true })) {
+		const field = MANIFEST_FIELD_PATTERN.exec(line.trim())
 
-		documents.push({ type, filename, url: `${archiveURL}/${filename}` })
+		if (!field) continue
+
+		const value = field[2]!.trim()
+
+		switch (field[1]!.toUpperCase()) {
+			case "DOCUMENT": {
+				// A new block abandons whatever the previous one left half-stated.
+				type = undefined
+				filename = undefined
+
+				break
+			}
+
+			case "TYPE": {
+				type ??= value
+
+				break
+			}
+
+			case "FILENAME": {
+				filename ??= value
+
+				break
+			}
+		}
+
+		if (type && filename) {
+			documents.push({ type, filename, url: `${archiveURL}/${filename}` })
+			type = undefined
+			filename = undefined
+		}
 	}
 
 	return documents

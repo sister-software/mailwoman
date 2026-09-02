@@ -35,6 +35,7 @@ import { APIClient, type APIClientConfig, type ClockLike } from "@mailwoman/core
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { decodeXML } from "entities"
 
 import { saverestToISODate } from "#sdk/tabular"
 
@@ -106,7 +107,7 @@ export function readServiceException(body: string): string | undefined {
 
 	// A report whose exception element cannot be read is still a report, and reporting it as a successful empty answer
 	// is the failure this whole function exists to prevent.
-	return decodeXMLEntities((exceptionText(body) ?? "the report carried no readable ServiceException element").trim())
+	return decodeXML((exceptionText(body) ?? "the report carried no readable ServiceException element").trim())
 }
 
 /**
@@ -149,18 +150,6 @@ function exceptionText(body: string): string | undefined {
 
 		return body.slice(contentStart + 1, end)
 	}
-}
-
-/**
- * The five predefined XML entities, which is all the service emits (`Invalid column name &#39;x&#39;.`).
- */
-function decodeXMLEntities(value: string): string {
-	return value
-		.replaceAll("&#39;", "'")
-		.replaceAll("&quot;", '"')
-		.replaceAll("&lt;", "<")
-		.replaceAll("&gt;", ">")
-		.replaceAll("&amp;", "&")
 }
 
 /**

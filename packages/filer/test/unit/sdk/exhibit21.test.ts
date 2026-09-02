@@ -18,15 +18,10 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { htmlToLayoutText } from "@mailwoman/core/html/text"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import {
-	decodeEntities,
-	fetchExhibit21,
-	normalizeWhitespace,
-	parseExhibit21,
-	type SECDocumentClient,
-	stripTags,
-} from "@mailwoman/filer/sdk/exhibit21"
+import { normalizeWhitespace } from "@mailwoman/core/strings/format"
+import { fetchExhibit21, parseExhibit21, type SECDocumentClient } from "@mailwoman/filer/sdk/exhibit21"
 import { describe, expect, it } from "vitest"
 
 async function fixture(name: string): Promise<string> {
@@ -301,7 +296,7 @@ describe("fetchExhibit21", () => {
  * is checked on the same basis the parser itself reasons on, not against the raw (still-tagged) source.
  */
 function normalizedDocument(html: string): string {
-	return normalizeWhitespace(decodeEntities(stripTags(html)))
+	return normalizeWhitespace(htmlToLayoutText(html))
 }
 
 /**
@@ -336,11 +331,11 @@ const FIXTURE_FILES = [
  * truncating at the wrong boundary. Every fragment they fabricate remains, structurally, a literal substring of the
  * SAME normalized whole document (it's built from real source text via the identical strip/decode/collapse pipeline the
  * invariant check itself uses) — so the substring check alone does not independently catch any of those six; the
- * case-specific behavioral tests above do (mutation-proven: reverting `stripTags`'s adjacent-whitespace check kills the
- * C4 test, reverting the plain-text block-boundary line-break kills the C2 test). What the substring invariant DOES
- * catch is the other real risk it's meant to guard against: a jurisdiction/name fabricated from nothing — synthesized,
- * defaulted, or otherwise not derived from the input at all — which requires a name-only shape (no jurisdiction
- * column/parenthetical/comma) actually present in the swept set to have something to violate.
+ * case-specific behavioral tests above do (mutation-proven: reverting `htmlToLayoutText`'s adjacent-whitespace check
+ * kills the C4 test, reverting the plain-text block-boundary line-break kills the C2 test). What the substring
+ * invariant DOES catch is the other real risk it's meant to guard against: a jurisdiction/name fabricated from nothing
+ * — synthesized, defaulted, or otherwise not derived from the input at all — which requires a name-only shape (no
+ * jurisdiction column/parenthetical/comma) actually present in the swept set to have something to violate.
  */
 const NAME_ONLY_PROBES: Record<string, string> = {
 	"name-only table row": "<table><tr><td>Standalone Sub LLC</td></tr></table>",

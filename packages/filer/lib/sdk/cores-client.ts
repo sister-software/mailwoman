@@ -29,8 +29,8 @@
  *   name, a brand, an address — not a source of ownership edges. Do not write a family edge from it.
  *
  *   **No HTML-parser dependency**, matching `exhibit21.ts`: this workspace has none, and the registration
- *   page is a single flat `<th>`/`<td>` table. Parsing reuses `exhibit21.ts`'s own `stripTags` /
- *   `decodeEntities` / `normalizeWhitespace` rather than growing a second normalizer.
+ *   page is a single flat `<th>`/`<td>` table. Cell text is `@mailwoman/core/html/text`'s prose reading rather
+ *   than a second normalizer grown in this workspace.
  *
  *   **Ported from Nexus's `sync/fcc/CORESClient.ts`** (relicense-by-copy), restructured onto
  *   {@linkcode APIClient} and deliberately narrowed in three places:
@@ -62,9 +62,9 @@ import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { $private } from "@mailwoman/core/env"
 import { ResourceError } from "@mailwoman/core/errors"
+import { extractTableRows } from "@mailwoman/core/html/tables"
 
 import { isFRN, type FRN } from "#frn"
-import { decodeEntities, normalizeWhitespace, stripTags } from "#sdk/exhibit21"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.
 export { isTransientResourceError } from "@mailwoman/core/api"
@@ -169,10 +169,6 @@ export interface CORESRegistration {
 	lastUpdated?: string
 }
 
-const TABLE_ROW_PATTERN = /<tr[^>]*>([\s\S]*?)<\/tr>/gi
-const HEADER_CELL_PATTERN = /<th[^>]*>([\s\S]*?)<\/th>/i
-const DATA_CELL_PATTERN = /<td[^>]*>([\s\S]*?)<\/td>/i
-
 /**
  * Maps a CORES row label to its {@linkcode CORESRegistration} field. Keyed on the label reduced to lowercase letters and
  * digits only, so `"ContactPhone:"` and `"Contact Phone:"` — the page ships both spellings, the phone and fax rows
@@ -242,14 +238,6 @@ export function recaseUniform(value: string): string {
 }
 
 /**
- * Reduce one cell's raw HTML to its visible text — tags stripped, entities decoded, whitespace collapsed. Shares
- * `exhibit21.ts`'s helpers rather than growing a second normalizer in this workspace.
- */
-function cellText(rawHTML: string): string {
-	return normalizeWhitespace(decodeEntities(stripTags(rawHTML)))
-}
-
-/**
  * Parse a CORES `searchDetail.do` page into a {@linkcode CORESRegistration}.
  *
  * Returns `null` — never a stub record, and never a throw — when the page carries no recognizable registration table,
@@ -263,20 +251,25 @@ function cellText(rawHTML: string): string {
 export function parseCORESRegistration(frn: FRN, html: string): CORESRegistration | null {
 	const fields: Partial<Record<keyof CORESRegistration, string>> = {}
 
-	for (const rowMatch of html.matchAll(TABLE_ROW_PATTERN)) {
-		const rowHTML = rowMatch[1]!
-		const label = HEADER_CELL_PATTERN.exec(rowHTML)?.[1]
+	// The page states one label/value pair per row. Read as a GRID rather than by pattern: `/<td[^>]*>([\s\S]*?)<\/td>/`
+	// over a network-supplied page backtracks polynomially on a body with many `<td` repetitions and no closing partner
+	// (CodeQL `js/polynomial-redos`), and the parser answers the same question without a scan that can be made to spend
+	// the document.
+	for (const rows of extractTableRows(html) ?? []) {
+		for (const row of rows) {
+			const label = row.find((cell) => cell.tag === "th")?.text
 
-		if (!label) continue
+			if (!label) continue
 
-		const field = FIELD_BY_LABEL[labelKey(cellText(label))]
+			const field = FIELD_BY_LABEL[labelKey(label)]
 
-		if (!field) continue
+			if (!field) continue
 
-		const value = cellText(DATA_CELL_PATTERN.exec(rowHTML)?.[1] ?? "")
+			const value = row.find((cell) => cell.tag === "td")?.text
 
-		if (value) {
-			fields[field] = value
+			if (value) {
+				fields[field] = value
+			}
 		}
 	}
 

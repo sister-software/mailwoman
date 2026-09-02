@@ -314,10 +314,12 @@ export interface FGDCMetadata {
 /**
  * Read the metadata NRCS ships inside the archive.
  *
- * Targeted extraction rather than a general XML parse: the document is regular, this reader wants five values out of
- * it, and adding an XML parser to the dependency graph to read `<pubdate>` would be the larger change. Every value it
- * cannot find is reported as `null` EXCEPT the publication date and the licence sentence, which throw — those two
- * decide the artifact's vintage and whether it may be shipped at all, and neither has a safe default.
+ * Targeted extraction rather than a general XML parse, and NOT for want of a parser — `@mailwoman/core` ships
+ * `htmlparser2`. A parser RECOVERS an unclosed element by giving it the rest of the document as its content, and the
+ * two values below that throw would then stamp the artifact with that content instead. {@link elementText} answers
+ * `undefined` for an element it cannot read, which is what makes the throw reachable. Every value this reader cannot
+ * find is reported as `null` EXCEPT the publication date and the licence sentence, which throw — those two decide the
+ * artifact's vintage and whether it may be shipped at all, and neither has a safe default.
  *
  * @throws {Error} When the metadata carries no publication date, or its use constraints no longer carry the
  *   public-information sentence.

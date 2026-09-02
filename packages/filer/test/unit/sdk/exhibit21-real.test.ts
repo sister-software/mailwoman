@@ -24,8 +24,10 @@
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { htmlToLayoutText } from "@mailwoman/core/html/text"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { decodeEntities, normalizeWhitespace, parseExhibit21, stripTags } from "@mailwoman/filer/sdk/exhibit21"
+import { normalizeWhitespace } from "@mailwoman/core/strings/format"
+import { parseExhibit21 } from "@mailwoman/filer/sdk/exhibit21"
 import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
@@ -54,7 +56,7 @@ async function fixture(name: string): Promise<string> {
  * The document as the parser's own preprocessing leaves it — what the substring invariant is measured against.
  */
 function normalized(html: string): string {
-	return normalizeWhitespace(decodeEntities(stripTags(html)))
+	return normalizeWhitespace(htmlToLayoutText(html))
 }
 
 /**

@@ -26,10 +26,10 @@ interface DebtCounters {
 	/**
 	 * Non-generated, non-test source files over 1,000 lines.
 	 *
-	 * BASELINE 1, ACCEPTED 2026-09-01. `packages/filer/lib/sdk/exhibit21.ts` crossed the line at 1,023 when `c8b5c1c6f`
-	 * added 30 lines of `TODO`/`@deprecated` annotations — cleanup notes tripping a debt counter. Operator decision:
-	 * leave it. Recorded here rather than absorbed silently, so the 1 reads as a known file rather than as drift, and so
-	 * a SECOND file crossing still fails the gate.
+	 * BASELINE 0, RESTORED 2026-09-01. `packages/filer/lib/sdk/exhibit21.ts` crossed the line at 1,023 when `c8b5c1c6f`
+	 * added 30 lines of `TODO`/`@deprecated` annotations — cleanup notes tripping a debt counter. The cleanup it kept
+	 * asking for happened: the SGML/HTML table machinery moved to `@mailwoman/core/html/tables` and the parser now sits
+	 * at 611 lines. Any file crossing 1,000 fails the gate again.
 	 */
 	productionFilesOver1000Lines: number
 	selfPackageImports: number
