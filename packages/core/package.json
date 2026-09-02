@@ -529,6 +529,8 @@
 		"change-case": "^5.4.4",
 		"d3-color": "^3.1.0",
 		"d3-scale-chromatic": "^3.1.0",
+		"domutils": "^3.2.2",
+		"entities": "^6.0.0",
 		"env-paths": "^2.2.1",
 		"fast-glob": "^3.3.3",
 		"htmlparser2": "^10",

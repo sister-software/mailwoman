@@ -4750,6 +4750,8 @@ __metadata:
     change-case: "npm:^5.4.4"
     d3-color: "npm:^3.1.0"
     d3-scale-chromatic: "npm:^3.1.0"
+    domutils: "npm:^3.2.2"
+    entities: "npm:^6.0.0"
     env-paths: "npm:^2.2.1"
     fast-glob: "npm:^3.3.3"
     htmlparser2: "npm:^10"

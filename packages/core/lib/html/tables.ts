@@ -8,9 +8,14 @@
  *   @mailwoman/core/html/tables as this home.
  */
 
+import { htmlToText } from "@mailwoman/core/html/text"
 import { isPresent } from "@mailwoman/core/objects"
-import { stripHTMLToText } from "@mailwoman/core/trust-policies"
 import { canonicalizeOrganizationName } from "@mailwoman/record"
+import render from "dom-serializer"
+import type { AnyNode } from "domhandler"
+import { getElementsByTagName, isTag } from "domutils"
+import { decodeHTML } from "entities"
+import { parseDocument } from "htmlparser2"
 
 const SGML_TEXT_OPEN = /<TEXT>/i
 const SGML_TEXT_CLOSE = /<\/TEXT>/i
@@ -29,12 +34,18 @@ const SCRIPT_OR_STYLE_BLOCK = /<(script|style)[^>]*>[\s\S]*?<\/\1>/gi
  * blocks.
  */
 export function documentWindow(html: string): string {
-	const open = SGML_TEXT_OPEN.exec(html)
-	const afterOpen = open ? html.slice(open.index + open[0].length) : html
-	const close = SGML_TEXT_CLOSE.exec(afterOpen)
+	const document = parseDocument(html, { decodeEntities: true })
+
+	// The SGML window: content between the first <TEXT> open and its closing tag, then head/script/style
+	// blocks removed. htmlparser2 lowercases element names, so the SGML TEXT element is "text".
+	const text = getElementsByTagName("text", document, true)[0]
+	const base = text ? render(text) : html
+	const open = /<TEXT>/i.exec(base)
+	const afterOpen = open ? base.slice(open.index + open[0].length) : base
+	const close = /<\/TEXT>/i.exec(afterOpen)
 	const body = close ? afterOpen.slice(0, close.index) : afterOpen
 
-	return body.replaceAll(HEAD_BLOCK, "").replaceAll(SCRIPT_OR_STYLE_BLOCK, "")
+	return body.replaceAll(/<head[^>]*>[\s\S]*?<\/head>/gi, "").replaceAll(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, "")
 }
 
 const TAG_PATTERN = /<[^>]*>/g
@@ -99,9 +110,6 @@ export function decodeEntities(text: string): string {
 	})
 }
 
-/**
- * @deprecated use or define in `@mailwoman/core/strings/etc...`
- */
 export function normalizeWhitespace(text: string): string {
 	return text.replaceAll(/\s+/g, " ").trim()
 }
@@ -111,11 +119,9 @@ export function normalizeWhitespace(text: string): string {
  * shared sanitizer), whitespace collapsed, trimmed. Table cells are already column-separated by markup, so (unlike
  * plain-text/list lines) there is no fixed-width spacing worth preserving — which is why the cell path can take the
  * DOM-backed extraction while the fixed-width strategies keep {@linkcode stripTags}.
- *
- * @deprecated use or define in `@mailwoman/core/strings/etc...`
  */
 export function cleanCellText(rawHTML: string): string {
-	return normalizeWhitespace(stripHTMLToText(rawHTML))
+	return normalizeWhitespace(htmlToText(rawHTML))
 }
 
 export interface TableCell {
@@ -149,54 +155,45 @@ const TABLE_TAG_PATTERN = /<table[^>]*>|<\/table>/gi
  * EDGAR splits one logical subsidiary list across sibling page-break tables constantly — `att-2025.htm` uses 2,
  * `echostar-2025.htm` 5, `atn-international-2025.htm` 7, and the unvendored Comcast filing 33 — and only the first
  * carries a header row.
- *
- * @deprecated Move to `@mailwoman/core/html/tables` and use a DOM parser to read the table structure.
- * @todo In desperate need of `htmlparser2`'s ecosystem. Extract repeatable aspects into `@mailwoman/core/html/tables`
- *   and keep what remains here, if anything at all.
  */
+const nearestTableAncestor = (node: AnyNode): AnyNode | null => {
+	for (let current = node.parentNode; current; current = current.parentNode) {
+		if (isTag(current) && current.name === "table") return current as unknown as AnyNode
+	}
+
+	return null
+}
+
+const hasTableAncestor = (node: AnyNode): boolean => {
+	for (let current = node.parentNode; current; current = current.parentNode) {
+		if (isTag(current) && current.name === "table") return true
+	}
+
+	return false
+}
+
 export function extractTopLevelTableHTML(html: string): string[] {
+	const document = parseDocument(html, { decodeEntities: true })
+
+	// htmlparser2 recovers unclosed tags the way a browser would. A top-level table has no table ANCESTOR:
+	// nested layout tables stay with the cell they sit in. This replaces the regex depth-tracking walk.
 	const tables: string[] = []
 
-	let depth = 0
-	let contentStart = -1
-
-	for (const match of html.matchAll(TABLE_TAG_PATTERN)) {
-		if (match[0]!.toLowerCase().startsWith("<table")) {
-			if (depth === 0) {
-				contentStart = match.index + match[0].length
-			}
-
-			depth++
-		} else if (depth > 0) {
-			depth--
-
-			if (depth === 0) {
-				tables.push(html.slice(contentStart, match.index))
-
-				contentStart = -1
-			}
+	for (const node of getElementsByTagName("table", document as unknown as AnyNode, true) as AnyNode[]) {
+		if (!hasTableAncestor(node)) {
+			tables.push(render(node))
 		}
 	}
 
-	if (depth > 0 && contentStart !== -1) {
-		tables.push(html.slice(contentStart))
+	// A truncated final table the parser could not close is invisible to the tree; fall back to the original
+	// whole-input capture for that one case.
+	if (!tables.length && /<table[^>]*>/i.test(html) && !/<\/table>/i.test(html)) {
+		tables.push(html)
 	}
 
 	return tables
 }
 
-/**
- * Extracts one `<tr>` row's cells by slicing between successive `<td>`/`<th>` START tags — NOT by matching each cell up
- * to its own closing tag. Word-exported EDGAR HTML routinely leaves `<td>` unclosed; requiring a matching `</t[dh]>`
- * (the previous approach) makes an unclosed cell's match run on to the NEXT cell's closing tag, silently merging two
- * cells' text into one fabricated name. Slicing on start-tag boundaries instead treats an unclosed `<td>` exactly as a
- * browser would: implicitly closed by the next `<td>`/`<th>`, or by the row's end when there is no later cell. A
- * trailing `</td>`/`</th>`, if present, is just another stray tag `cleanCellText` strips.
- *
- * @deprecated Move to `@mailwoman/core/html/tables` and use a DOM parser to read the table structure.
- * @todo In desperate need of `htmlparser2`'s ecosystem. Extract repeatable aspects into `@mailwoman/core/html/tables`
- *   and keep what remains here, if anything at all.
- */
 export function extractRowCells(rowHTML: string): TableCell[] {
 	const starts: Array<{ tag: "td" | "th"; index: number; contentStart: number }> = []
 
@@ -220,24 +217,34 @@ export function extractRowCells(rowHTML: string): TableCell[] {
  * Extracts every top-level table's `<tr>` rows' cells from `html`, or `null` when there is no table at all (the caller
  * falls through to the list/plain-text strategies). A row is `[]` when it has no `<td>`/`<th>` cells at all (formatting
  * cruft — an empty `<tr></tr>`), never `null`.
- *
- * @deprecated Move to `@mailwoman/core/html/tables` and use a DOM parser to read the table structure.
- * @todo In desperate need of `htmlparser2`'s ecosystem. Extract repeatable aspects into `@mailwoman/core/html/tables`
- *   and keep what remains here, if anything at all.
  */
 export function extractTableRows(html: string): TableCell[][][] | null {
-	const tables = extractTopLevelTableHTML(html)
+	const document = parseDocument(html, { decodeEntities: true })
+	const topLevelTables = [] as AnyNode[]
 
-	if (!tables.length) return null
+	for (const table of getElementsByTagName("table", document as unknown as AnyNode, true) as AnyNode[]) {
+		if (!hasTableAncestor(table)) {
+			topLevelTables.push(table)
+		}
+	}
 
-	return tables.map((tableHTML) => {
-		const rows: TableCell[][] = []
+	if (!topLevelTables.length) return null
 
-		for (const rowMatch of tableHTML.matchAll(ROW_PATTERN)) {
-			rows.push(extractRowCells(rowMatch[1]!))
+	const rows = getElementsByTagName("tr", document as unknown as AnyNode, true) as AnyNode[]
+
+	return topLevelTables.map((table) => {
+		const tableRows: TableCell[][] = []
+
+		for (const row of rows) {
+			// A row belongs to this table when the table is its NEAREST table ancestor. Rows of a nested
+			// layout table inside a cell have that nested table nearer and stay with it.
+			const nearestTable = nearestTableAncestor(row)
+
+			if (nearestTable !== table) continue
+			tableRows.push(extractRowCells(render(row)))
 		}
 
-		return rows
+		return tableRows
 	})
 }
 
@@ -250,10 +257,6 @@ export function extractTableRows(html: string): TableCell[][][] | null {
  * This is what an all-blank spacer column costs when it isn't dropped: `cable-one-2025.htm`, `ooma-2025.htm`,
  * `verizon-2025.htm`, `att-2025.htm` and `anterix-2025.htm` all interleave one, making every data row look 3-wide (the
  * shape the 3+-column rule abstains on) and yielding zero subsidiaries each.
- *
- * @deprecated Move to `@mailwoman/core/html/tables` and use a DOM parser to read the table structure.
- * @todo In desperate need of `htmlparser2`'s ecosystem. Extract repeatable aspects into `@mailwoman/core/html/tables`
- *   and keep what remains here, if anything at all.
  */
 export function widestRow(rows: readonly TableCell[][]): number {
 	let width = 0
@@ -265,11 +268,6 @@ export function widestRow(rows: readonly TableCell[][]): number {
 	return width
 }
 
-/**
- * @deprecated Move to `@mailwoman/core/html/tables` and use a DOM parser to read the table structure.
- * @todo In desperate need of `htmlparser2`'s ecosystem. Extract repeatable aspects into `@mailwoman/core/html/tables`
- *   and keep what remains here, if anything at all.
- */
 export function padAndDropBlankColumns(rows: readonly TableCell[][]): TableCell[][] {
 	const width = widestRow(rows)
 	const keep: number[] = []
