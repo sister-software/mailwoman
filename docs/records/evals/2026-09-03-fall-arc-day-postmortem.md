@@ -21,18 +21,24 @@ All via PRs on auto-merge after CI; no release, no npm publish, no GPU.
   **#2106** (#2016), and on auto-merge at the time of writing **#2103** (#1938), **#2105** (#2018),
   **#2107** (#2017), **#2108** (the declared feature count's one home, after #2104's `vi.mock` tests
   proved order-dependent under the root vitest `isolate: false`).
+- **#2109** — the gauntlet resolver pins carry `poiVenueTier`, so the board-routed path can grade
+  the venue tier. **#2112** (#2110, on auto-merge at the time of writing) — the venue tier's reach
+  follows the anchor's grade: a unit-grade postcode hit bounds the entity to 1 km, every other admin
+  or street anchor keeps 30 km.
 
 ## Measurements and their verdicts
 
-| Step          | Issue                               | Verdict                                                                                                                                 | Denominator                                                 |
-| ------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| 1             | #1684 exp 3, GHSL habitability mask | NO-GO on the pre-registered rule                                                                                                        | 46 of 416 FIRST_PASS tail rows; 420 truth points as control |
-| 2             | evidence-derivation Task 1          | PROCEED: 44 mis-tags vs 4 fold failures                                                                                                 | 61 unique locality-band coverage misses of 651 board rows   |
-| 3             | #2045 ES/IT postcode systems        | shipped; board byte-stable                                                                                                              | 0 of 651 rows differ                                        |
-| 6             | #2034 `队`-final census             | 109 `队`, 24 `连`, 9 `大队`, 5 `分场`; `连`/`旗`/`团` collide with names                                                                | 50,000 CN rows                                              |
-| 8             | #1684 exp 2, dwell → amenity        | NO-GO on the 1.5× bar; direction holds in 60 of 60 cells                                                                                | 2,940,857 res-9 cells, five countries                       |
-| 9             | #1942, #1938                        | both fixed; conformance 183 of 183; board 0 of 651 differ each                                                                          | plus ES 15-row and IT 228-row confound arms                 |
-| 4 (first cut) | #1684 exp 1 via `poi_venue_tier`    | visit: 11 of 119 rows move, 2 cross tolerance, 0 regress; deliver: 1 of 424 panel rows moves (the one venue-led row), 0 of 13 trap rows | no build; the suppress branch stays undesigned              |
+| Step           | Issue                               | Verdict                                                                                                                                 | Denominator                                                 |
+| -------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| 1              | #1684 exp 3, GHSL habitability mask | NO-GO on the pre-registered rule                                                                                                        | 46 of 416 FIRST_PASS tail rows; 420 truth points as control |
+| 2              | evidence-derivation Task 1          | PROCEED: 44 mis-tags vs 4 fold failures                                                                                                 | 61 unique locality-band coverage misses of 651 board rows   |
+| 3              | #2045 ES/IT postcode systems        | shipped; board byte-stable                                                                                                              | 0 of 651 rows differ                                        |
+| 6              | #2034 `队`-final census             | 109 `队`, 24 `连`, 9 `大队`, 5 `分场`; `连`/`旗`/`团` collide with names                                                                | 50,000 CN rows                                              |
+| 8              | #1684 exp 2, dwell → amenity        | NO-GO on the 1.5× bar; direction holds in 60 of 60 cells                                                                                | 2,940,857 res-9 cells, five countries                       |
+| 9              | #1942, #1938                        | both fixed; conformance 183 of 183; board 0 of 651 differ each                                                                          | plus ES 15-row and IT 228-row confound arms                 |
+| 4 (first pass) | #1684 exp 1 via `poi_venue_tier`    | visit: 11 of 119 rows move, 2 cross tolerance, 0 regress; deliver: 1 of 424 panel rows moves (the one venue-led row), 0 of 13 trap rows | no build; the suppress branch stays undesigned              |
+
+| 4 (treatment) | #2110 venue-tier reach | tier off vs on on the branch: 2 improve, 0 regress (routed, 651 rows); tier off, main vs branch: 0 of 651 differ; of the old reach's 17 moved rows, only Chichester is refused |
 
 Decision packages posted, no build: #1998, #1999, #2048, and step 4 (#1684 exp 1, on #1684).
 
@@ -80,24 +86,26 @@ Decision packages posted, no build: #1998, #1999, #2048, and step 4 (#1684 exp 1
 - Step 4's cheap half is measured (11 of 119 visit rows move, 2 cross tolerance, 0 regress; the
   deliver population does not move). The remaining build is inferred intent, which the measurement
   does not yet justify.
-- The venue-tier default-on decision has its issue: single-config full board 17 of 651 differ, 3
-  improve, 0 regress; the routed battery (through the new `poiVenueTier` pin, PR #2109) reads 4
-  improve, 1 regress, `University of Chichester, The Dome, Upper Bognor Rd, Bognor Regis PO21 1HR`
-  landing on the Chichester campus 9.87 km away. The D-rule refuses default-on until the tier prefers
-  the entity nearest the answer it replaces. The two paths disagreeing on one row is the reason the
-  routed battery is the one that decides.
+- The venue-tier default-on decision has its issue (#2110). The routed battery through the new
+  `poiVenueTier` pin (PR #2109) read 4 improve, 1 regress, `University of Chichester, The Dome, Upper
+Bognor Rd, Bognor Regis PO21 1HR` landing on the Chichester campus 9.87 km away: the 30 km reach was
+  sized for a locality centroid and the anchor was a unit postcode 80 m from truth. PR #2112 scales the
+  reach to the anchor's grade; on the branch the routed battery reads 2 improve, 0 regress, and the
+  default path is byte-stable (0 of 651). The D-rule objection is closed; default-on is the operator's
+  decision, with the receipt on #2110. The two paths disagreeing on one row is the reason the routed
+  battery is the one that decides.
 - #1946 (comma-free segmentation) is a `computeQueryShape` change that moves every single-segment
   query; grade on the full board and all conformance suites.
 - #2035 sizes as medium-large: the ten `link-dev-weights.ts` scripts run 28 to 331 lines and en-gb
   builds two binaries; not a manifest-plus-a-call extraction yet.
 - #2046 needs a rebuild and byte check per layer artifact.
 
-| Quantity                    | Value                                                                                      |
-| --------------------------- | ------------------------------------------------------------------------------------------ |
-| Shift duration              | 07:05–16:00 UTC, with one standby for review                                               |
-| PRs merged or on auto-merge | 15                                                                                         |
-| Issues filed                | 2 (#2092, #2095)                                                                           |
-| Modal                       | $0, no runs                                                                                |
-| Board A/B runs              | 5 source A/Bs, all 0 of 651 rows differ; 11 lever A/Bs for experiment 1 and the venue tier |
-| NaN incidents               | 0                                                                                          |
-| CI failures on first push   | 4, all fixed on the branch                                                                 |
+| Quantity                    | Value                                                                                           |
+| --------------------------- | ----------------------------------------------------------------------------------------------- |
+| Shift duration              | 07:05–16:00 UTC, with one standby for review                                                    |
+| PRs merged or on auto-merge | 15                                                                                              |
+| Issues filed                | 2 (#2092, #2095)                                                                                |
+| Modal                       | $0, no runs                                                                                     |
+| Board A/B runs              | 5 source A/Bs, all 0 of 651 rows differ; 11 config-pin A/Bs for experiment 1 and the venue tier |
+| NaN incidents               | 0                                                                                               |
+| CI failures on first push   | 4, all fixed on the branch                                                                      |
