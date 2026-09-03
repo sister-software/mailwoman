@@ -30,7 +30,7 @@ commitments prevent it:
    are recomputed from the current system on every run, free to dissolve when the code changes —
    nothing mechanistic accumulates for a truer understanding of addresses to break against.
 2. **Failure shapes are MECHANISM-STATES, never address shapes.** The vocabulary comes from the
-   pipeline's own seams — _parsed-but-not-consulted_, _absent-from-candidates_,
+   pipeline's own boundaries — _parsed-but-not-consulted_, _absent-from-candidates_,
    _present-but-outranked-by-term-T_, _gated-out-by-G_, _evidence-silent_ — and makes claims about
    what the system did, never about how addresses work. It is finite, derived from code structure,
    and versioned with the code.
@@ -58,7 +58,7 @@ smallest counterfactual: apply the region constraint → order inverts
 ```
 
 The interiority boundary, stated honestly: inside the weights there are no reasons to recover.
-Accounts live at the seams — what was fed, retrieved, gated, ranked — and when one bottoms out at
+Accounts live at the boundaries — what was fed, retrieved, gated, ranked — and when one bottoms out at
 "the model chose X with margin m and every channel silent," that IS the class (the model flew
 blind), and the fix is evidence, not archaeology in the logits.
 
@@ -67,7 +67,7 @@ blind), and the fix is evidence, not archaeology in the logits.
 Classification is a **posterior with abstention**, never a bare label (operator's amendment,
 2026-08-16 — a hard label is a confidence of 1.0 nobody argued for).
 
-- **v1 — seam-fact matching.** Each shape predicts a pattern of seam facts; a row's posterior is
+- **v1 — stage-fact matching.** Each shape predicts a pattern of boundary facts; a row's posterior is
   scored by which predictions the observed facts match. Transparent, no training, and reports
   itself as uncalibrated. Ambiguity is useful: a posterior split evenly between
   `constraint-not-consulted` and `evidence-starvation` names the next cheapest probe (feed the
@@ -146,7 +146,7 @@ attention-as-explanation.
 - Run store + recorded arms (#1714) — every comparison replayable by `run_id`, which is what makes
   account-generation over past runs possible.
 - `mwdev_diagnose` v1 (#1722) — per-row accounts over the parse / evidence / retrieval / outcome
-  seams, seven mechanism-state shapes as documented predicates, the five-change counterfactual sweep,
+  boundaries, seven mechanism-state shapes as documented predicates, the five-change counterfactual sweep,
   and `by_shape` aggregation. v1 reports the SET of matching shapes with each predicate attached and
   `calibration: "none"`, not the normalized posterior §4 describes — the scoring layer arrives with
   the v2 conformal calibration, which is what a posterior's numbers would have to mean.

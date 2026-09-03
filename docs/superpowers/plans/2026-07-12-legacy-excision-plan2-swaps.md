@@ -15,7 +15,7 @@
 ## Global Constraints
 
 - **Pre-registered gate floors (set before any gate run; do NOT adjust to green a failing gate — a miss is an adjudication, not a threshold bug):** after case-folding (`.toLowerCase()`) and street assembly: `house_number` agreement ≥ 0.97, `postcode` ≥ 0.97, `road`/street-family ≥ 0.90, measured over golden rows where the rules engine emitted that label.
-- **Raw `classifier.parse(text, { postcodeRepair: true })` is the parse seam** — never `createRuntimePipeline`/`runPipeline` for parse-only surfaces (#566).
+- **Raw `classifier.parse(text, { postcodeRepair: true })` is the parse entry point** — never `createRuntimePipeline`/`runPipeline` for parse-only surfaces (#566).
 - **Wire contracts:** libpostal + nominatim response SHAPES are frozen (compat drop-ins); `/v1/parse`'s shape changes deliberately (v7 major) and its schema edit auto-cascades to the emitted OpenAPI + regenerated clients (client publish stays a separate manual dispatch — no action here).
 - **Goldens are readonly** — gates read them, never rewrite them.
 - Tabs; 4-line license headers on new files; explicit `.ts` relative imports; ZERO raw `process.env`/`process.argv`; acronym casing (`decodeAsJSON`-style).

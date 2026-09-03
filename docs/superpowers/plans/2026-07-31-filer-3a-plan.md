@@ -185,7 +185,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 
 Authoritative edges emitted: FRN↔form499ID, FRN↔holdingCompanyName, FRN↔managementCompanyName (both, per decision), bdcProviderID↔FRN, bdcProviderID↔holdingCompanyName. Attributes: legal name, DBA, classifications, contact fields. `valid_from` per decision 7.
 
-- [x] TDD via the rows seams (no file IO in tests). Assert: a malformed row is loud; a provider_id with two FRNs yields two edges; every edge has non-empty provenance; the manifest carries the vintage.
+- [x] TDD via the rows boundaries (no file IO in tests). Assert: a malformed row is loud; a provider_id with two FRNs yields two edges; every edge has non-empty provenance; the manifest carries the vintage.
 - [x] Commit `feat(filer): filer.db builder — authoritative edges, staged dedup, sealed artifact (3a task 5)`.
 
 ### Task 6: Entity clustering

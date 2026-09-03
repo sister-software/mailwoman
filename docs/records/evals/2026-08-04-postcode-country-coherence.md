@@ -22,7 +22,7 @@ record lands the mechanism and measures it.
 surfaced as `--postcode-country-coherence` on `parse` and `geocode` and as an opt-in pin on
 `eval oa-resolver`.
 
-**The seam is a pre-walk SCOPE decision, not a post-walk re-pick.** Its three sibling coherence passes
+**The boundary is a pre-walk SCOPE decision, not a post-walk re-pick.** Its three sibling coherence passes
 (`applyAdminCoherence` #263, `applyExplicitCountryCoherence` #822, `applyRegionCountryCoherence`) run
 after the greedy walk and swap the wrong node pair for the right one. That shape cannot work here.
 What needs correcting is the walk's country _scope_, and the scope poisons three things a post-walk

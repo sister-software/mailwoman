@@ -104,7 +104,7 @@ Six issues resolved, three advanced with receipts:
   builder inherits it; bdc migrated onto the helper + heals an orphaned aside at build start.
 - **#1559 closed** — both awk-translated extract readers verified BYTE-IDENTICAL against the real
   sources (FR stride: 501 lines; GeoNames CA admin1=10/08: 483/572 localities, the numeric-coercion
-  seam included). `fr__countrywide.zip` (609 MB) + `geonames/CA.zip` now cached on the host.
+  boundary included). `fr__countrywide.zip` (609 MB) + `geonames/CA.zip` now cached on the host.
 - **#1507 closed** — verified already wired (check-case grades place identity; 7 world-capital
   cases live; 34/34 tests).
 - **#1561 closed** (PR #1600) — the four unzip subprocesses were already migrated
@@ -134,9 +134,9 @@ The migrated suite was driven to a fully-dispositioned state against the live de
 
 - **Green**: cold-load, structural render, the resolve cascade (Chicago, Berlin native-order, the
   ZIP marker, rooftop siblings), street tier, viewport bias, debug drawer, theme — with two more
-  port casualties found and fixed on the way (PR #1603: the `__mailwomanDemoMap` test seam the
+  port casualties found and fixed on the way (PR #1603: the `__mailwomanDemoMap` test injection point the
   viewport suite drives the real map through, dropped by the port and restored with a documented
-  TEST SEAM comment; the `/debug/` trailing-slash navigation missed by #1590 because the spec
+  TEST INJECTION POINT comment; the `/debug/` trailing-slash navigation missed by #1590 because the spec
   bypasses the fixture).
 - **#1602 filed (NEW model-boundary finding)**: `1502 A Cage Street, Houston, TX 77020` misses the
   situs tier on prod AND the Node path — v4.4.0 parses `street="Cage"`, `house_number="1502 A"`

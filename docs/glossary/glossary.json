@@ -1921,7 +1921,7 @@
 		},
 		{
 			"term": "street-context gate",
-			"definition": "The decode-time seam that zeroes locality evidence on inputs with no street-painter hits — bare lookups must not have city names painted into street structure. Every measured evidence win class carries street words, so the gate costs nothing.",
+			"definition": "The decode-time boundary that zeroes locality evidence on inputs with no street-painter hits — bare lookups must not have city names painted into street structure. Every measured evidence win class carries street words, so the gate costs nothing.",
 			"tags": ["runtime", "evidence"],
 			"aliases": [],
 			"relatedTerms": ["evidence bundle", "input mode"]

@@ -12,13 +12,13 @@ identity on its own.
 - **`@mailwoman/neural/postcode-anchor`** — `extractPostcodeAnchors(text, resolver)`. Pure logic: it runs
   the same per-country shape regexes the decoder repair pass uses, resolves each shaped span through an
   injected `PostcodeResolver`, and computes the posterior and confidence. No database dependency, so it
-  ships to the browser later behind the same seam.
+  ships to the browser later behind the same boundary.
 - **`@mailwoman/resolver-wof-sqlite` → `WofPostcodeLookup`** — the server-side `PostcodeResolver`, an
   exact-match lookup over one or more `postalcode-*.db` extracts.
 - **`@mailwoman/neural` → `PostcodeBinaryResolver`** — the browser/WASM `PostcodeResolver`, a pure-JS
   binary-search over a compact flat binary (no SQLite). `scripts/build-postcode-binary.ts` emits one
   `postcode-<cc>.bin` per locale into `docs/static/mailwoman/` (US 1.8 MB, NL 3.9 MB, FR/DE ~0.3 MB; the
-  browser fetches only the locale it needs). Same `lookup()` seam as the SQLite resolver, so
+  browser fetches only the locale it needs). Same `lookup()` boundary as the SQLite resolver, so
   `extractPostcodeAnchors` is agnostic to which backs it.
 
 ### Posterior and confidence

@@ -6,7 +6,7 @@
 spec); its §7 decisions bind here — the layer contract, the shipped/build-local/private tiers,
 the meaning-of-zero rule, "ship the builder, not ODbL data," the agent-as-decoder framing, and
 the thin MCP toolset. Companion integration notes:
-`scratchpad/poi-record-match-integration.md` (record/match seams for the provider registry and
+`scratchpad/poi-record-match-integration.md` (record/match boundaries for the provider registry and
 CRM layers). Nexus salvage source surveyed read-only this session:
 `/home/lab/Projects/isp-nexus/universe` (AGPL, operator is sole author, relicense-by-copy
 approved per the Phase-1 salvage rule).
@@ -175,7 +175,7 @@ exists in-tree** — `tiger/sdk/schema.ts` defines `TIGERBlockTable` (`populatio
 **mostly redundant** — do not re-port it; reuse `@mailwoman/tiger`. The only genuinely new piece
 is exposing the block table as a demographics layer conforming to the layer contract (a thin
 manifest/coverage wrapper + a res-9 h3 column), so `market_size` reads it through the same
-`@mailwoman/core/layers` seam as everything else. Census is public domain — shipped tier, sealed.
+`@mailwoman/core/layers` boundary as everything else. Census is public domain — shipped tier, sealed.
 
 ### 2.5 Provider registry — versioned-refresh (2c)
 

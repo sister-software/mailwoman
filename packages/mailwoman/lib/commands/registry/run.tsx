@@ -155,7 +155,7 @@ async function resolveWOFPath(options: Options): Promise<string> {
  * {@link GeocodeAddress} interface. Returns it plus a disposal hook for the database handles. Shared by the single-CSV
  * and multi-source paths.
  */
-async function buildGeocoder(options: Options): Promise<{ seam: GeocodeAddress } & Disposable> {
+async function buildGeocoder(options: Options): Promise<{ geocodeAddress: GeocodeAddress } & Disposable> {
 	const { decodeAsJSON } = await import("@mailwoman/core/decoder")
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 	const { geocodeAddressVia } = await import("@mailwoman/registry")
@@ -196,7 +196,7 @@ async function buildGeocoder(options: Options): Promise<{ seam: GeocodeAddress }
 	const defaultCountry = resolverDefaultCountry(options, !!(await resolveCandidateDBPath())) || undefined
 	const resolver = createWOFResolver(lookup)
 
-	const seam = geocodeAddressVia({
+	const geocodeForIngest = geocodeAddressVia({
 		parse: async (raw) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
 		geocode: (raw) =>
 			geocodeAddress(raw, {
@@ -211,7 +211,7 @@ async function buildGeocoder(options: Options): Promise<{ seam: GeocodeAddress }
 	})
 
 	return {
-		seam,
+		geocodeAddress: geocodeForIngest,
 		[Symbol.dispose]: () => {
 			regionDatabaseProvider[Symbol.dispose]()
 			lookup[Symbol.dispose]()
@@ -288,14 +288,14 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 				...(init?.normalizeCase !== undefined ? { normalizeCase: init.normalizeCase } : {}),
 			})
 
-		const seam = geocodeAddressVia({
+		const geocodeForIngest = geocodeAddressVia({
 			parse: async (raw) => decodeAsJSON(await classifier.parse(raw, { postcodeRepair: true })),
 			geocode,
 			country: "US",
 		})
 
 		return {
-			seam,
+			geocodeAddress: geocodeForIngest,
 			geocode,
 			[Symbol.dispose]: () => {
 				regionDatabaseProvider[Symbol.dispose]()
@@ -389,7 +389,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 	} = await import("@mailwoman/registry")
 
 	using geocoder = await buildGeocoder(options)
-	const { seam } = geocoder
+	const { geocodeAddress: geocodeForIngest } = geocoder
 
 	const records: SourceRecord[] = []
 	const perSource: string[] = []
@@ -411,7 +411,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 			}
 		})()
 
-		const recs = await ingestRows(rows, mapping, { geocodeAddress: seam })
+		const recs = await ingestRows(rows, mapping, { geocodeAddress: geocodeForIngest })
 
 		for (const record of recs) {
 			record.id = `${label}:${record.id}`
@@ -503,9 +503,9 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 	const base = options.inferMapping && rows[0] ? inferMapping(Object.keys(rows[0])) : DEFAULT_MAPPING
 	const mapping = await loadMapping(options.mapping, options.source, base)
 	using geocoder = await buildGeocoder(options)
-	const { seam } = geocoder
+	const { geocodeAddress: geocodeForIngest } = geocoder
 
-	const records = await ingestRows(rows, mapping, { geocodeAddress: seam })
+	const records = await ingestRows(rows, mapping, { geocodeAddress: geocodeForIngest })
 
 	const result = resolveEntities(records, {
 		trainEM: options.trainEm,

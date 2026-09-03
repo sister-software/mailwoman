@@ -141,7 +141,7 @@ export async function scorerPairwiseEval(
 	}
 
 	const records = await ingestRows(rows, mapping, {
-		geocodeAddress: geocoder.seam,
+		geocodeAddress: geocoder.geocodeAddress,
 	})
 
 	geocoder[Symbol.dispose]()

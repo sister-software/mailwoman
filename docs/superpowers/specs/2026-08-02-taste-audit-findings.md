@@ -482,7 +482,7 @@ all three packages already depend on it.
 ### B11. `registry/tools` has no shared module
 
 Beyond A2/A8: `buildSpecs` ×3 (`coverage-reconciliation:95`, `cross-dataset-correlation:117`,
-`cross-source-threshold-sweep:95`), `seam` ×2, `mappingFor` ×2, `addr` ×2, four variants of `norm`.
+`cross-source-threshold-sweep:95`), `boundary` ×2, `mappingFor` ×2, `addr` ×2, four variants of `norm`.
 Twenty-four tool scripts, no `registry/tools/shared.ts`.
 **Cost of leaving it: low** (tools, not shipped runtime) **but it is where new copies keep landing.**
 

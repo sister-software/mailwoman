@@ -125,8 +125,8 @@ export async function scorerCrossStateEval(
 		source: "nppes",
 	}
 
-	const trainRecords = await ingestRows(trainSample.rows, mapping, { geocodeAddress: geocoder.seam })
-	const evalRecords = await ingestRows(evalSample.rows, mapping, { geocodeAddress: geocoder.seam })
+	const trainRecords = await ingestRows(trainSample.rows, mapping, { geocodeAddress: geocoder.geocodeAddress })
+	const evalRecords = await ingestRows(evalSample.rows, mapping, { geocodeAddress: geocoder.geocodeAddress })
 	geocoder[Symbol.dispose]()
 
 	// Feature basis: the SHARED production featurizer (train ≡ eval ≡ inference, one definition) over the

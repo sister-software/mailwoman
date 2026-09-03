@@ -88,20 +88,20 @@ function GeocoderDemoInner({
 	// ref fills only after react-map-gl instantiates the map, hence the short poll; cleared on
 	// unmount so a torn-down demo never leaves a stale handle behind.
 	useEffect(() => {
-		const seam = globalThis as { __mailwomanDemoMap?: ReturnType<MapRef["getMap"]> }
+		const host = globalThis as { __mailwomanDemoMap?: ReturnType<MapRef["getMap"]> }
 
 		const timer = setInterval(() => {
 			const map = mapRef.current?.getMap()
 
 			if (map) {
-				seam.__mailwomanDemoMap = map
+				host.__mailwomanDemoMap = map
 				clearInterval(timer)
 			}
 		}, 250)
 
 		return () => {
 			clearInterval(timer)
-			delete seam.__mailwomanDemoMap
+			delete host.__mailwomanDemoMap
 		}
 	}, [])
 

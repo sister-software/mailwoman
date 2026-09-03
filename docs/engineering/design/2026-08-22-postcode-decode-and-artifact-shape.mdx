@@ -237,7 +237,7 @@ vs 3.26, ≤1 km 86.2% vs 82.3%), because rural keeps the locality.
 144,715 rows across four shipped extracts sit on null island — **48,216 of 142,604 JP postcodes, one in
 three** — and `decorateNode` was copying that onto the node, where every `lat != null` guard
 downstream accepts it. Thirteen hand-written `(lat !== 0 || lon !== 0)` comparisons existed to work
-around it, including one three lines above the assignment. Fixed at the seam (#1786): the place still
+around it, including one three lines above the assignment. Fixed at the boundary (#1786): the place still
 resolves and identifies itself, and states that it cannot say where it is.
 
 No shipped CLI path produced a `0,0` answer — the cascade's country-bbox check rejects it — so this

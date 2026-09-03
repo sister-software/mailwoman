@@ -164,14 +164,14 @@ It never did — there is no `mailfail-board.ts` beside `digit-board.ts` / `frag
 which asserts the fault contract against synthetic throwing stubs and says nothing about the 105
 rows.
 
-The Gauntlet's shared runner has no seam for abstention either. `GauntletResult`
+The Gauntlet's shared runner has no boundary for abstention either. `GauntletResult`
 (`gauntlet/harness.ts:316-342`) carries resolved values only, `checkCase` has no must-not-resolve
 predicate, and `faults` never reaches `runOne`. The `us-op3-island-lake-duplicate-degenerate` note
 names this in its own text.
 
 ### A.6 What the inventory says about the sketch
 
-- **The round trip is a seam with a missing half.** Parse, resolve and render all ship; the diff
+- **The round trip is a boundary with a missing half.** Parse, resolve and render all ship; the diff
   between the render and the input has never been computed once, anywhere.
 - **The abstention signal exists and is upstream of everything.** Span confidence is on the node, in
   `[0, 1]`, on both backends. The gate that would read it (`minWinningScore`) reads the wrong field
@@ -776,7 +776,7 @@ Two model-adjacent items are named here so they are not mistaken for part of thi
 
 - The venue/locality slot swaps S-1b found (`MR & MRS CRAB` → locality `MR`) are parse defects. They
   make the diff noisier and they are a corpus question, not a suggestion-layer question.
-- The `Calibrator` seam (`core/decoder/calibration.ts:9-49`) exists and nothing supplies a bin table.
+- The `Calibrator` boundary (`core/decoder/calibration.ts:9-49`) exists and nothing supplies a bin table.
   Every confidence threshold in this document is therefore a threshold on a RAW mean-of-softmax, and
   the 2026-08-04 review's caveat about the 0.918–0.945 band applies unchanged. Fitting a calibrator
   would make the thresholds portable across locales; not fitting one is why B1-1 and B1-5 are graded
@@ -814,7 +814,7 @@ all.
   decision with its own evidence record, the way #1477 got one.
 - **Fixing the parse defects S-1b found.** `MR & MRS CRAB` → locality `MR` is real and it is a corpus
   task. Named here so the diff's noise floor is understood, not claimed as this arc's work.
-- **Calibrating span confidence.** The `Calibrator` seam is empty; filling it is its own
+- **Calibrating span confidence.** The `Calibrator` boundary is empty; filling it is its own
   preregistration with its own held-out set.
 - **`formatter/README.md`'s wrong signatures.** Recorded in A.1 so they are not lost; they belong to
   whoever next touches that package.

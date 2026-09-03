@@ -197,8 +197,8 @@ export async function nppesDedupBenchmark(
 		const geocoder = await options.createGeocoder({ normalizeCase: !LEGACY })
 
 		// Count placements at the boundary (parity with the retired in-script counter).
-		const countedSeam: GeocodeAddress = async (raw) => {
-			const g = await geocoder.seam(raw)
+		const countedGeocodeForIngest: GeocodeAddress = async (raw) => {
+			const g = await geocoder.geocodeAddress(raw)
 
 			if (g?.geocode) {
 				geo++
@@ -208,7 +208,7 @@ export async function nppesDedupBenchmark(
 		}
 
 		records = await ingestRows(rows, mapping, {
-			geocodeAddress: countedSeam,
+			geocodeAddress: countedGeocodeForIngest,
 			addressSeparator: LEGACY ? " " : ", ",
 		})
 

@@ -5,7 +5,7 @@
 
 ## The problem
 
-`AGENTS.md` states that four words — `gate`, `seam`, `cut` and the retired one `repo-health` already
+`AGENTS.md` states that four words — the three the `AmbiguousShorthand` rule listed then, and the retired one `repo-health` already
 counts — are banned "in replies AND in
 every committed prose surface", because each stands for four or five different things and a reader
 cannot tell which one a sentence means. Three Vale configs enforce parts of that claim, and the
@@ -65,7 +65,7 @@ files:
 | `rename-check` | 956   | The modifier carries the check's real name: `street-context gate` → `the street-context check`. Top modifiers: `street-context` 32, `delta` 20, `test` 19, `country` 27, `acceptance` 11, `postcode` 9, `§7-3b` 9, `existence` 8, `interval` 7, `detection` 6. | verify the modifier is the real name |
 | `read-context` | 895   | The site says only "the gate" / "a gate". Which check it means is learnable solely from the surrounding paragraph.                                                                                                                                             | full                                 |
 
-By word family: `gate` 1,741, `seam` 158, `cut` 114, and one occurrence of the retired word — which
+By word family, in the rule's listing order: 1,741, 158, 114, and one occurrence of the retired word — which
 is `scripts/repo-health.ts`'s own `BANNED_VOCABULARY` constant, necessarily containing the word it
 counts.
 

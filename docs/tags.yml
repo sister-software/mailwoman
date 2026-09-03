@@ -224,7 +224,7 @@ runtime:
 
 api:
   label: API surface
-  description: The HTTP/library contract — endpoints, options, and the annotation seams.
+  description: The HTTP/library contract — endpoints, options, and the annotation boundaries.
 
 schema:
   label: Schema

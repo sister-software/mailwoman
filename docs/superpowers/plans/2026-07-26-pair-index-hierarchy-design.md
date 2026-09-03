@@ -167,7 +167,7 @@ table in the header extension would make this cheap). Open question below.
 
 ### (a) Decode prior (future, gated — NOT this task)
 
-Same seam as today: `PairIndexLike` structural injection into `placetype-pair-prior.ts`; the
+Same boundary as today: `PairIndexLike` structural injection into `placetype-pair-prior.ts`; the
 loader's country hard gate; positive-evidence-only; probe-mode chain (segment → anchored). What
 changes per edge is only calibration and the emission target (the entry tag already encodes it).
 The (locality, region) edge has a sharper confound profile than dep-loc: region names are a small
@@ -276,7 +276,7 @@ throughout and carries a comment so the trap isn't re-walked. The count check is
    The Option-A training consumer doesn't care (Python side reads the file once per run).
 2. **Name policy:** add `eng`-preferred surfaces (D3)? Bumps `namePolicy` to v2.
 3. **Edge priority after (locality, region):** (neighbourhood, locality) US/GB next per the survey,
-   or (locality, country) for the coarse-placer seam? The neighbourhood edge is the Option-A
+   or (locality, country) for the coarse-placer boundary? The neighbourhood edge is the Option-A
    channel's likelier second slot (open-vocab child, open-vocab parent — the hard case the region
    edge doesn't exercise).
 4. **FR localadmin:** WOF FR has 35,282 `localadmin` rows (communes proper) alongside 57,187
@@ -300,7 +300,7 @@ throughout and carries a comment so the trap isn't re-walked. The count check is
 3. **Next edge: (neighbourhood, locality)** — the doc's lean, now with the bundle arc's sharper
    reason: the confirmed weakness class is open-vocab×open-vocab discrimination, which this edge
    exercises and the region edge doesn't. (locality, country) stays unbuilt: the #1104 country
-   channel + coarse-placer own that seam (no double-coverage per D3). Sequenced into the
+   channel + coarse-placer own that boundary (no double-coverage per D3). Sequenced into the
    productionization plan's Phase 1 builder consolidation (one WOF-ancestry pass, both edges).
 4. **FR localadmin: YES, measure in the v2 build** — one flag, probe-safe. Expectation: genuine
    adds (communes are FR's canonical admin unit and BAN cites them); the build report states

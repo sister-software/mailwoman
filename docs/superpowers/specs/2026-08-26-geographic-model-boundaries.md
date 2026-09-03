@@ -10,7 +10,7 @@ closing note). **Companion decision:**
 [the semantic-route integration decision](./2026-08-27-semantic-route-integration-decision.md)
 (2026-08-27, #1966) — stop condition 2, answered; §6's `@mailwoman/core` exclusion left standing.
 
-This record does two things and nothing else. It **names the current owner** of every seam the
+This record does two things and nothing else. It **names the current owner** of every boundary the
 world-model program would otherwise re-create, each against a path that exists on HEAD; and it
 **freezes one vertical slice** — `pharmacy affords obtain_medication` — so that every later issue in
 the program has a fixed target to be judged against.
@@ -30,19 +30,19 @@ the responsibilities named in §3 and nothing beyond them.
 
 The repository already holds a POI category vocabulary, a phrase→category lexicon, a POI intent and
 execution path, a per-cell coverage contract with an exclusion predicate, a committed POI board, and
-a mechanism-account vocabulary. Every one of those is a seam a semantic layer is tempted to
+a mechanism-account vocabulary. Every one of those is a boundary a semantic layer is tempted to
 duplicate, and two of them (`@mailwoman/poi-taxonomy`, `@mailwoman/core/layers`) are close enough to
 "world knowledge" that an implementer could reasonably grow one into a general ontology without
 noticing they had made that decision.
 
 The failure this record is aimed at is therefore not "we lack a design". It is **a second copy of an
-existing seam, or world semantics landing inside `@mailwoman/core`.** The inventory below is what
+existing boundary, or world semantics landing inside `@mailwoman/core`.** The inventory below is what
 makes that visible at review time: if a change proposes a concept, a mapping, or a coverage rule, §2
 says who already owns the nearest thing, and §3 says whether the new work belongs there.
 
 ---
 
-## 2. Seam inventory against HEAD
+## 2. Boundary inventory against HEAD
 
 Every path in this section was read at the commit this record was written against.
 
@@ -148,7 +148,7 @@ The abstain vocabulary is small and already structured: `POIIntentOutcome` is
 | Inference + decode-time priors | `packages/neural/` (`scorer.ts`, `viterbi.ts`, `semi-markov-decode.ts`, `placetype-pair-prior.ts`, `fst-prior.ts`, `gazetteer-inference.ts`) |
 | Candidate ordering             | `packages/resolver/lib/toponym-prior.ts` (`rankByImportance`), `packages/resolver/lib/admin-containment.ts`                                  |
 
-This is the seam the program must not reach into. The standing doctrine is that registries are soft
+This is the boundary the program must not reach into. The standing doctrine is that registries are soft
 priors supplying **positive evidence only**, and the decoder grammar contract states which terms the
 shipped decoder maximizes. A world-model record that emitted a boost, a penalty, or a candidate order
 would be authoring policy at the one place where the system is supposed to learn its own.
@@ -174,7 +174,7 @@ in that directory: `case-folding`, `whitespace`, `punctuation`, `nfc-nfd` (the c
 candidate accounts rather than a sixth suite. The paragraph below describes the fixture contract, and
 it is unchanged.
 
-The conformance module is the seam a law suite plugs into: a fixture names a base query, one context, a
+The conformance module is the boundary a law suite plugs into: a fixture names a base query, one context, a
 variant query, a law, one of five closed outcome comparators, and the relation the two outcomes must
 stand in. A row also carries a `status`: `pass` gates the run, `known_fail` / `improvement_target`
 report without blocking, following the Gauntlet regression layer's own three-way reading — a violated
@@ -599,7 +599,7 @@ statistics, water/land compatibility, coverage inference, spatial statistics, ma
    activity, a second entity kind, or a `@mailwoman/core` dependency amends §3 or §4 in a reviewed
    change. It does not widen them in passing.
 6. **Refresh before filing.** The repository moves; an implementer who finds a §2 path moved or a
-   named seam already landed updates the inventory before opening work against it.
+   named boundary already landed updates the inventory before opening work against it.
 
 ---
 

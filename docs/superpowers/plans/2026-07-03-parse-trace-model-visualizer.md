@@ -792,7 +792,7 @@ export interface MailwomanClassifierLike {
 	parse: (text: string, opts?: { queryShape?: unknown; fst?: FSTMatcherLike }) => Promise<unknown>
 	/**
 	 * Decode-path introspection (spec 2026-07-03). Optional: deployed bundles built before the
-	 * trace seam lack it — feature-detect before calling.
+	 * trace boundary lack it — feature-detect before calling.
 	 */
 	traceParse?: (text: string, opts?: { addressSystemConventions?: "auto" }) => Promise<ParseTraceLike>
 }
@@ -1487,7 +1487,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
  *
  *   Live wrapper for <ModelVisualizer>: an input box + the demo-embed classifier (production
  *   Hugging Face assets via DemoEmbedProvider). Feature-detects `traceParse` — deployed bundles
- *   built before the trace seam lack it, in which case we say so instead of crashing.
+ *   built before the trace boundary lack it, in which case we say so instead of crashing.
  */
 
 import React, { useCallback, useState } from "react"
@@ -1523,7 +1523,7 @@ export function LiveModelVisualizer(): JSX.Element {
 	if (!ready) return <p>Loading model assets… {loadingProgress ?? ""}</p>
 
 	if (!classifier?.traceParse) {
-		return <p>This deployed model bundle predates the trace seam — trace introspection unavailable.</p>
+		return <p>This deployed model bundle predates the trace boundary — trace introspection unavailable.</p>
 	}
 
 	return (

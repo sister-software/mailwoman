@@ -20,7 +20,7 @@ export const contractTool = ({ registry }: DevToolDeps): DevTool => ({
 		"can match every asserted component and still be incoherent: a `house_number` or `street_suffix` floating with " +
 		"no `street` anywhere, an `attention` with no `venue`. Those orphan fragments are the signature of an " +
 		"overconfident hallucination, and no outcome test sees them — a component-match harness never looks at the " +
-		"edges. Sibling to `mwdev_census`, one seam " +
+		"edges. Sibling to `mwdev_census`, one boundary " +
 		"over: that asks whether a parse-path MECHANISM signals on any row, this asks whether a decoder CONTRACT " +
 		"breaks on any row. A ZERO MEANS OPPOSITE THINGS FOR THE TWO CHECKS and they are never summed — `illegal-edge` " +
 		"is enforced by the tree builder at construction, so zero is the designed state and any count is a builder " +

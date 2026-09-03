@@ -4,7 +4,7 @@
 #
 # WHAT THE 8.2.0 PRE-SHIP GAUNTLET CAUGHT on v3.23-4k (record: progress.md 2026-07-29):
 #   1. World-city rotation on fed bare lookups — FIXED CODE-SIDE (the street-context gate at the
-#      soft-features seam; locality evidence needs street context; every measured win class carries
+#      soft-features boundary; locality evidence needs street context; every measured win class carries
 #      street words). Ships regardless of this run.
 #   2. "350 Fifth Ave, New York, NY" → locality absorbed into region (283km resolve). v385-clean ⇒
 #      a real model regression; 1/8 in the targeted sweep (point brittleness, not a class — the

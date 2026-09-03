@@ -634,7 +634,7 @@ export async function trainCrossSourceModel(
 			...(await ingestRows(
 				rows.filter((r) => r.source === source),
 				mappingFor(source),
-				{ geocodeAddress: geocoder.seam }
+				{ geocodeAddress: geocoder.geocodeAddress }
 			))
 		)
 	}

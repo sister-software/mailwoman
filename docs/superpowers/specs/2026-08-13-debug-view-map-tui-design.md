@@ -4,7 +4,7 @@
 - **Status:** Approved design, pre-implementation
 - **Scope:** Phase 1 — `mw geocode "<address>" --debug` (interactive + static) backed by a new
   `@mailwoman/map-tui` library workspace. Phase 2 (the standalone full-screen `npx map-tui`
-  browser) is out of scope here beyond the seams this design leaves for it.
+  browser) is out of scope here beyond the boundaries this design leaves for it.
 
 ## Motivation
 

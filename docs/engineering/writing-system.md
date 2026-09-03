@@ -279,7 +279,7 @@ yarn workspace @mailwoman/docs lint:prose:fixtures
 ```
 
 `lint:prose:vocab` reads `.vale-vocab.ini`, which switches every rule off except
-`Mailwoman.AmbiguousShorthand` — the ban on `seam`, `extract`, `cut` and `gate`. Those four surfaces have
+`Mailwoman.AmbiguousShorthand` — the ban on the four ambiguous nouns the rule file lists. Those four surfaces have
 never been under the rest of the house style, and turning it all on at once would fail on 175 unrelated
 alerts. `yarn lint` runs this one, so it reports in the required `test` CI context rather than only in the
 docs job. Dated point-in-time records are out of its path list.

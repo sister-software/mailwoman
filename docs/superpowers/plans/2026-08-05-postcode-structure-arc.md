@@ -421,7 +421,7 @@ index and the PCB1 anchor, and the country-evidence-layer runbook applies.
    answer to #1480: today a BT code that misses abstains and contributes nothing. With PFX1 it
    abstains on the UNIT and still contributes its DISTRICT.
 2. **The decoder**, later and only if step 1 clears — a soft prior on the country/region head keyed
-   by the prefix, feeding the same seam `neural/postcode-anchor.ts` uses. Not in scope for the first
+   by the prefix, feeding the same boundary `neural/postcode-anchor.ts` uses. Not in scope for the first
    bars; the GB hole (A.3) is the standing receipt for what happens when a channel is fed a value it
    was never trained on.
 

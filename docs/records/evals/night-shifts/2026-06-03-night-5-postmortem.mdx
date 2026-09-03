@@ -26,7 +26,7 @@ when the neural parser is out of distribution on a locale, a structured signal c
   WOF-unplaceable.
 - **#253 — the browser resolver, dual-target complete.** `PostcodeBinaryResolver` in `@mailwoman/neural`:
   a pure-JS binary-search over a compact flat binary, so the anchor runs in the WASM/browser parser behind
-  the same `lookup()` seam as the SQLite resolver. `build-postcode-binary.ts` emits per-country `.bin`
+  the same `lookup()` boundary as the SQLite resolver. `build-postcode-binary.ts` emits per-country `.bin`
   files (US 1.8 MB, NL 3.9 MB, FR/DE ~0.3 MB). DeepSeek picked this with the operator's delegated authority
   as the highest-ROI tail work, since it unblocks the pilot's anchor-wiring. Verified loading the real
   `.bin`: `1012 LM Amsterdam` → NL Amsterdam centroid, `12623 Berlin` → DE Berlin centroid.

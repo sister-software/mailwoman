@@ -215,8 +215,8 @@ export async function crossDatasetCorrelation(
 	let total = 0
 
 	// Count placements at the boundary (parity with the retired in-script counter).
-	const seam: GeocodeAddress = async (raw) => {
-		const g = await geocoder.seam(raw)
+	const geocodeForIngest: GeocodeAddress = async (raw) => {
+		const g = await geocoder.geocodeAddress(raw)
 
 		total++
 
@@ -237,7 +237,7 @@ export async function crossDatasetCorrelation(
 		// them across each source to see WHERE nulls concentrate in the aggregate run.
 		const g0 = geo
 		const t0 = total
-		const recs = await ingestRows(rows, spec.mapping, { geocodeAddress: seam })
+		const recs = await ingestRows(rows, spec.mapping, { geocodeAddress: geocodeForIngest })
 		const dg = geo - g0
 		const dt = total - t0
 		report?.(`    ${spec.source}: geocoded ${dg}/${dt} (${dt ? ((100 * dg) / dt).toFixed(1) : "0"}%)`)

@@ -218,13 +218,13 @@ export async function crossSourceThresholdSweep(
 
 	report?.("[B] building the geocoder…")
 	const geocoder = await options.createGeocoder()
-	const seam: GeocodeAddress = geocoder.seam
+	const geocodeForIngest: GeocodeAddress = geocoder.geocodeAddress
 
 	report?.("[C] geocoding + ingesting…")
 	const records: SourceRecord[] = []
 
 	for (const spec of SPECS) {
-		const recs = await ingestRows(rawBySource.get(spec.source)!, spec.mapping, { geocodeAddress: seam })
+		const recs = await ingestRows(rawBySource.get(spec.source)!, spec.mapping, { geocodeAddress: geocodeForIngest })
 
 		for (const r of recs) {
 			r.id = `${spec.source}:${r.id}`

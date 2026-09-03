@@ -18,7 +18,7 @@ shipping a fix that looks great on the headline and rots underneath.
 ## The weakness with many faces
 
 Boundary instability is what you get when two address components meet and the model puts the
-seam in the wrong place. Give it `Country Club Rd` and the street swallows its own suffix. Give
+boundary in the wrong place. Give it `Country Club Rd` and the street swallows its own suffix. Give
 it `North Sydney NSW 2060` with the commas stripped out and the city and the state melt into
 each other. Hand it a French street like `Neuve-des-Capucines 5` and the house number gets
 absorbed into the name.
@@ -40,13 +40,13 @@ how big the hole is, write the recipe, wire it into the corpus. Routine, on pape
 
 The first version pulled from a thin vocabulary: sixteen street names and a handful of cities.
 Twenty thousand rows out of sixteen streets means the model sees `Country Club Rd` a thousand
-times over, so it learns the lexeme and never the seam. That part we expected. The sneaky part
+times over, so it learns the lexeme and never the boundary. That part we expected. The sneaky part
 showed up when we baselined the current model against that same thin data and it scored 48% on
 the suffix boundary and 70% on the French prefix. Respectable. Encouraging, even.
 
 Then we tripled the vocabulary, a hundred streets and real cities with every row unique, and the
 same model scored 41 and 48. So the thin data had done two things at once: it taught the lexeme
-instead of the seam, and it graded its own exam on a curve. The runbook already warns
+instead of the boundary, and it graded its own exam on a curve. The runbook already warns
 that thin diversity teaches the pattern-matcher and skips the boundary. Now there's a number
 sitting next to the warning.
 
