@@ -49,11 +49,6 @@
 			"default": "./out/sdk/*.js",
 			"types": "./out/sdk/*.d.ts"
 		},
-		"./overpass": {
-			"node": "./lib/overpass/index.ts",
-			"default": "./out/overpass/index.js",
-			"types": "./out/overpass/index.d.ts"
-		},
 		"./overpass/*": {
 			"node": "./lib/overpass/*.ts",
 			"default": "./out/overpass/*.js",
