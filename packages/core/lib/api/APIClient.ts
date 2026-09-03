@@ -42,6 +42,11 @@ export interface APIClientConfig {
 	 * The logged display name of the API client.
 	 */
 	displayName: string
+	/**
+	 * Where the client's own lines go. Defaults to a console logger prefixed with `displayName`, which writes debug lines
+	 * to stdout; a caller that owns stdout passes `silentLogger()` or its own.
+	 */
+	logger?: IRuntimeLogger
 
 	/**
 	 * Options for caching responses.
@@ -125,7 +130,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		super()
 
 		this.config = config
-		this.logger = ConsoleLogger.prefix(config.displayName)
+		this.logger = config.logger ?? ConsoleLogger.prefix(config.displayName)
 		this.#clock = config.clock ?? systemClock
 		this.#retryPolicy = resolveRetryPolicy(config.retry)
 		this.#pacer = config.minRequestIntervalMs ? new RequestPacer(config.minRequestIntervalMs, this.#clock) : null

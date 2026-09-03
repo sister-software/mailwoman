@@ -29,6 +29,10 @@ function checkLines(check: DoctorCheck): string[] {
 		lines.push(chalk.gray(`    why it matters: ${check.consequence}`))
 	}
 
+	if (check.license?.attribution) {
+		lines.push(chalk.gray(`    attribution: ${check.license.attribution}`))
+	}
+
 	if (check.fix) {
 		lines.push(chalk.gray(`    fix: ${check.fix}`))
 	}

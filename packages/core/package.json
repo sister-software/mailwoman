@@ -121,6 +121,11 @@
 			"default": "./out/layers/index.js",
 			"types": "./out/layers/index.d.ts"
 		},
+		"./license": {
+			"node": "./lib/license/index.ts",
+			"default": "./out/license/index.js",
+			"types": "./out/license/index.d.ts"
+		},
 		"./resources": {
 			"node": "./lib/resources/index.ts",
 			"default": "./out/resources/index.js",

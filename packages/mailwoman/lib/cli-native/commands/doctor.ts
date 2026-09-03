@@ -12,7 +12,7 @@ import { booleanValue, type CommandSpec, runNativeCommand } from "#cli-native/sp
 export const spec = {
 	name: "doctor",
 	description:
-		"Check whether this machine can run mailwoman, and what each gap costs you. Runtime first (node, ONNX), then the model weights, then the optional data layers geocoding needs — a missing layer is reported, never fatal, and every failing line carries the one command that closes it.",
+		"Check whether this machine can run mailwoman, and what each gap costs you. Runtime first (node, ONNX), then the model weights, then the optional data layers geocoding needs — a missing layer is reported, never fatal, and every failing line carries the one command that closes it. Then the license posture: the branch of mailwoman's license that applies to this installation, and the obligations each attached layer's recorded license carries (attribution, share-alike, source offer).",
 	options: {
 		json: {
 			type: "boolean",

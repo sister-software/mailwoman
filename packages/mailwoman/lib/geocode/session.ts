@@ -54,6 +54,7 @@ import {
 	parseForGeocode,
 	type GeocodeDeps,
 } from "#geocode/core"
+import { layerDatabasePath } from "#geocode/layer-paths"
 import { RegionDatabaseProvider, type RegionDatabaseResolver, type RegionDatabases } from "#geocode/regions"
 import type { GeocodeResult } from "#geocode/result"
 import { INTERP_RADIUS_CALIBRATION } from "#interp-calibration"
@@ -332,7 +333,7 @@ export interface ForkEntityProbe {
 export async function loadAuthorityDesignationRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
 ): Promise<AuthorityDesignationRoute | undefined> {
-	const floodDBPath = resolvePath(options.dataRoot, "flood", "flood.db")
+	const floodDBPath = layerDatabasePath(options.dataRoot, "flood")
 
 	if (!(await pathExists(floodDBPath))) return undefined
 
@@ -359,7 +360,7 @@ export async function loadAuthorityDesignationRoute(
 export async function loadSoilCapabilityRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
 ): Promise<SoilCapabilityRoute | undefined> {
-	const soilDBPath = resolvePath(options.dataRoot, "soil", "soil.db")
+	const soilDBPath = layerDatabasePath(options.dataRoot, "soil")
 
 	if (!(await pathExists(soilDBPath))) return undefined
 
@@ -392,7 +393,7 @@ export async function loadSoilCapabilityRoute(
 export async function loadCoastalErosionRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
 ): Promise<CoastalErosionRoute | undefined> {
-	const coastalDBPath = resolvePath(options.dataRoot, "coastal", "coastal-england.db")
+	const coastalDBPath = layerDatabasePath(options.dataRoot, "coastal")
 
 	if (!(await pathExists(coastalDBPath))) return undefined
 
@@ -425,7 +426,7 @@ export async function loadCoastalErosionRoute(
 export async function loadZoningDesignationRoute(
 	options: Pick<GeocodeSessionOptions, "dataRoot">
 ): Promise<ZoningDesignationRoute | undefined> {
-	const zoningDBPath = resolvePath(options.dataRoot, "zoning", "zoning-ireland.db")
+	const zoningDBPath = layerDatabasePath(options.dataRoot, "zoning")
 
 	if (!(await pathExists(zoningDBPath))) return undefined
 
@@ -445,7 +446,7 @@ export async function loadZoningDesignationRoute(
 export async function loadForkEntityDeps(
 	options: Pick<GeocodeSessionOptions, "dataRoot" | "forkEntity">
 ): Promise<ForkEntityProbe> {
-	const poiDBPath = resolvePath(options.dataRoot, "poi", "poi.db")
+	const poiDBPath = layerDatabasePath(options.dataRoot, "poi")
 
 	if (options.forkEntity === false || !(await pathExists(poiDBPath))) return { deps: {} }
 

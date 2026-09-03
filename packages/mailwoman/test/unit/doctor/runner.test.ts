@@ -42,6 +42,15 @@ function healthyDeps(): DoctorDeps {
 		wofExtractPaths: () => ["/data/wof/admin.db"],
 		poiPath: () => "/data/poi/poi.db",
 		readPOIManifest: async () => ({ name: "poi", version: "2026-07-20a", sourceVintage: "2026-07" }),
+		layerDatabases: () => [{ id: "poi", label: "POI layer", path: "/data/poi/poi.db" }],
+		readLayerLicense: async () => ({
+			name: "poi",
+			license: "CDLA-Permissive-2.0",
+			attribution: "Overture Maps Foundation",
+		}),
+		runtimeLicense: async () => "AGPL-3.0-only OR LicenseRef-Commercial",
+		licenseKey: () => undefined,
+		confirmLicenseKeyPublished: async () => "unreachable",
 		loadONNX: async () => {},
 		nodeVersion: "24.18.0",
 		enginesFloor: ">=24.18.0",
@@ -58,7 +67,7 @@ const byID = (checks: DoctorCheck[], id: string): DoctorCheck => {
 }
 
 describe("runDoctor (injected boundaries)", () => {
-	it("all-healthy → every check ok, exit 0, 7 checks in render order", async () => {
+	it("all-healthy → every check ok, exit 0, 9 checks in render order", async () => {
 		const report = await runDoctor(healthyDeps())
 		expect(report.exitCode).toBe(0)
 
@@ -71,6 +80,8 @@ describe("runDoctor (injected boundaries)", () => {
 			"data-root",
 			"gazetteer",
 			"poi-layer",
+			"license-mailwoman",
+			"license-poi",
 			"locale-overlay-fr-fr",
 		])
 
@@ -155,6 +166,160 @@ describe("runDoctor (injected boundaries)", () => {
 		expect(report.exitCode).toBe(0)
 		expect(byID(report.checks, "gazetteer").status).toBe(CheckStatus.Missing)
 		expect(byID(report.checks, "poi-layer").status).toBe(CheckStatus.Missing)
+	})
+
+	it("license posture: the open-source branch applies without a commercial agreement, and a layer's recorded license is summarized", async () => {
+		const report = await runDoctor(healthyDeps())
+		const runtime = byID(report.checks, "license-mailwoman")
+		const poi = byID(report.checks, "license-poi")
+
+		expect(runtime.license).toEqual({
+			subject: "mailwoman",
+			expression: "AGPL-3.0-only OR LicenseRef-Commercial",
+			applied: "AGPL-3.0-only",
+			obligations: ["attribution", "share_alike", "source_offer"],
+			recognized: true,
+		})
+
+		expect(poi.license).toEqual({
+			subject: "poi",
+			expression: "CDLA-Permissive-2.0",
+			applied: "CDLA-Permissive-2.0",
+			obligations: ["attribution"],
+			recognized: true,
+			attribution: "Overture Maps Foundation",
+		})
+	})
+
+	it("license posture: a valid key applies the commercial branch, names the licensee, and records the freshness answer", async () => {
+		const valid = {
+			status: "valid" as const,
+			kid: "v9-deadbeef",
+			payload: {
+				v: 1 as const,
+				kid: "v9-deadbeef",
+				licensee: "Example Ltd",
+				issued: "2026-09-03",
+				expires: "2027-09-03",
+				scope: "all" as const,
+				terms: "LicenseRef-Commercial" as const,
+			},
+		}
+
+		const asked: string[] = []
+
+		const report = await runDoctor({
+			...healthyDeps(),
+			licenseKey: () => valid,
+			confirmLicenseKeyPublished: async (kid) => {
+				asked.push(kid)
+
+				return "listed"
+			},
+		})
+
+		const check = byID(report.checks, "license-mailwoman")
+
+		expect(asked).toEqual(["v9-deadbeef"])
+		expect(check.status).toBe(CheckStatus.OK)
+
+		expect(check.license).toMatchObject({
+			applied: "LicenseRef-Commercial",
+			obligations: ["attribution"],
+			licensee: "Example Ltd",
+			keyID: "v9-deadbeef",
+			keyStatus: "valid",
+		})
+
+		expect(check.detail).toContain("confirmed by mailwoman.ai")
+	})
+
+	it("license posture: an expired, unknown or retired key reports its reason and the open-source branch applies", async () => {
+		const payload = {
+			v: 1 as const,
+			kid: "v9-deadbeef",
+			licensee: "Example Ltd",
+			issued: "2025-09-03",
+			expires: "2026-09-01",
+			scope: "all" as const,
+			terms: "LicenseRef-Commercial" as const,
+		}
+
+		const expired = await runDoctor({
+			...healthyDeps(),
+			licenseKey: () => ({ status: "expired", kid: "v9-deadbeef", payload }),
+		})
+
+		const expiredCheck = byID(expired.checks, "license-mailwoman")
+
+		expect(expiredCheck.status).toBe(CheckStatus.Degraded)
+		expect(expiredCheck.license?.applied).toBe("AGPL-3.0-only")
+		expect(expiredCheck.detail).toContain("expired on 2026-09-01")
+		expect(expired.exitCode).toBe(0)
+
+		const unknown = await runDoctor({
+			...healthyDeps(),
+			licenseKey: () => ({
+				status: "unknown_key",
+				kid: "v9-00000000",
+				reason: "signed by key id v9-00000000, which this build does not trust",
+			}),
+		})
+
+		expect(byID(unknown.checks, "license-mailwoman").license).toMatchObject({
+			applied: "AGPL-3.0-only",
+			keyStatus: "unknown_key",
+		})
+
+		const retired = await runDoctor({
+			...healthyDeps(),
+			licenseKey: () => ({ status: "valid", kid: "v9-deadbeef", payload: { ...payload, expires: "2030-01-01" } }),
+			confirmLicenseKeyPublished: async () => "retired",
+		})
+
+		expect(byID(retired.checks, "license-mailwoman").license).toMatchObject({
+			applied: "AGPL-3.0-only",
+			keyStatus: "retired",
+		})
+	})
+
+	it("license posture: the well-known register is never asked when no key is configured", async () => {
+		let asked = 0
+
+		await runDoctor({
+			...healthyDeps(),
+			confirmLicenseKeyPublished: async () => {
+				asked++
+
+				return "listed"
+			},
+		})
+
+		expect(asked).toBe(0)
+	})
+
+	it("license posture: an absent layer gets no license line; a layer recording NOASSERTION is degraded, not guessed", async () => {
+		const absent = await runDoctor({
+			...healthyDeps(),
+			layerDatabases: () => [
+				{ id: "poi", label: "POI layer", path: "/data/poi/poi.db" },
+				{ id: "zoning", label: "Zoning (Ireland)", path: "/data/zoning/zoning-ireland.db" },
+			],
+			exists: async (path) => path !== "/data/zoning/zoning-ireland.db",
+		})
+
+		expect(absent.checks.some((c) => c.id === "license-zoning")).toBe(false)
+
+		const unasserted = await runDoctor({
+			...healthyDeps(),
+			readLayerLicense: async () => ({ name: "zoning-ie-gzt", license: "NOASSERTION", attribution: null }),
+		})
+
+		const check = byID(unasserted.checks, "license-poi")
+
+		expect(check.status).toBe(CheckStatus.Degraded)
+		expect(check.license?.recognized).toBe(false)
+		expect(unasserted.exitCode).toBe(0)
 	})
 
 	it("poi.db present but manifest unreadable → degraded (not a hard error)", async () => {

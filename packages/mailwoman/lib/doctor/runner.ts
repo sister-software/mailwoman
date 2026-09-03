@@ -17,26 +17,35 @@ import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { $public, DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { isWritable, pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
+import {
+	confirmLicenseKeyPublished,
+	type LicenseKeyPublication,
+	type LicenseKeyVerification,
+	verifyConfiguredLicenseKey,
+} from "@mailwoman/core/license"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { resolvePath } from "path-ts"
 
 import {
 	assembleReport,
 	checkPOI,
 	dataRootCheck,
 	gazetteerCheck,
+	layerLicenseCheck,
 	localeOverlayCheck,
 	nodeVersionCheck,
 	onnxRuntimeCheck,
+	runtimeLicenseCheck,
 	weightsCheck,
 	type DoctorCheck,
 	type DoctorReport,
 	type GazetteerObservation,
+	type LayerLicenseObservation,
 	type POIObservation,
 	type WeightsObservation,
 } from "#doctor/checks"
+import { layerDatabasePath, layerDatabases, type LayerDatabaseRef } from "#geocode/layer-paths"
 import { conventionCandidateDBPath, resolveCandidateDBPath, resolveWOFDatabasePaths } from "#resolver-backend"
 
 /**
@@ -98,6 +107,29 @@ export interface DoctorDeps {
 	 */
 	readPOIManifest(path: string): Promise<{ name: string; version: string; sourceVintage: string }>
 	/**
+	 * Every layer database the geocode session would attach, present or not; the doctor reports the license of each one
+	 * that is on disk.
+	 */
+	layerDatabases(): LayerDatabaseRef[]
+	/**
+	 * Read the license fields of a layer manifest (throws on a missing/invalid manifest).
+	 */
+	readLayerLicense(path: string): Promise<{ name: string; license: string; attribution: string | null }>
+	/**
+	 * Mailwoman's own `license` expression, from its package manifest.
+	 */
+	runtimeLicense(): Promise<string>
+	/**
+	 * The configured license key, verified offline against the trusted keys this build ships; `undefined` when none is
+	 * configured.
+	 */
+	licenseKey(): LicenseKeyVerification | undefined
+	/**
+	 * Ask mailwoman.ai's well-known register whether a key id is still listed. Called only when a key is configured;
+	 * answers `unreachable` rather than throwing when there is no route.
+	 */
+	confirmLicenseKeyPublished(kid: string): Promise<LicenseKeyPublication>
+	/**
 	 * Attempt to load the ONNX native binding (throws when unavailable).
 	 */
 	loadONNX(): Promise<void>
@@ -151,6 +183,26 @@ async function defaultConventionCandidatePath(dataRoot: string): Promise<string 
 /**
  * Open a POI db READ-ONLY, read its layer manifest, and narrow it to the identity fields doctor prints.
  */
+/**
+ * Open a layer db READ-ONLY and read the license fields of its manifest.
+ */
+async function readLayerLicense(path: string): Promise<{ name: string; license: string; attribution: string | null }> {
+	using kdb = new DatabaseClient<LayerContractDatabase>(path, { readOnly: true })
+	const manifest = await readLayerManifest(kdb)
+
+	return { name: manifest.name, license: manifest.license, attribution: manifest.attribution ?? null }
+}
+
+/**
+ * Mailwoman's own license expression, read from the package manifest located by self-reference (the same lookup
+ * `readEnginesFloor` uses), so the doctor reports the license that ships rather than a string in this file.
+ */
+async function readRuntimeLicense(): Promise<string> {
+	const manifest = await readLocalJSONFile<{ license?: string }>(resolvePackageDirectory("mailwoman")("package.json"))
+
+	return manifest.license ?? "NOASSERTION"
+}
+
 async function readPOIManifest(path: string): Promise<{ name: string; version: string; sourceVintage: string }> {
 	using kdb = new DatabaseClient<LayerContractDatabase>(path, { readOnly: true })
 
@@ -182,8 +234,13 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 			$public.MAILWOMAN_CANDIDATE_DB ? await resolveCandidateDBPath(undefined, dataRoot) : undefined,
 		conventionCandidatePath: () => defaultConventionCandidatePath(dataRoot),
 		wofExtractPaths: () => resolveWOFDatabasePaths(undefined, dataRoot),
-		poiPath: () => resolvePath(dataRoot, "poi", "poi.db"),
+		poiPath: () => layerDatabasePath(dataRoot, "poi"),
 		readPOIManifest,
+		layerDatabases: () => layerDatabases(dataRoot),
+		readLayerLicense,
+		runtimeLicense: readRuntimeLicense,
+		licenseKey: () => verifyConfiguredLicenseKey(),
+		confirmLicenseKeyPublished: (kid) => confirmLicenseKeyPublished(kid),
 		loadONNX: async () => {
 			await import("onnxruntime-node")
 		},
@@ -259,6 +316,23 @@ async function gatherPOI(deps: DoctorDeps): Promise<POIObservation> {
 	}
 }
 
+/**
+ * The license observation for one layer database, or `undefined` when the database is absent — an absent layer is not
+ * in play and gets no license line, which keeps "not installed" distinct from "installed under an unknown license".
+ */
+async function gatherLayerLicense(
+	deps: DoctorDeps,
+	layer: LayerDatabaseRef
+): Promise<LayerLicenseObservation | undefined> {
+	if (!(await deps.exists(layer.path))) return undefined
+
+	try {
+		return { ...layer, manifest: await deps.readLayerLicense(layer.path) }
+	} catch (error) {
+		return { ...layer, error: error instanceof Error ? error.message : String(error) }
+	}
+}
+
 async function gatherOverlay(deps: DoctorDeps, locale: string): Promise<DoctorCheck> {
 	const packageName = deps.weightsPackageName(locale)
 
@@ -313,10 +387,34 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 	const gazetteer = gazetteerCheck(await gatherGazetteer(deps))
 	const poi = checkPOI(await gatherPOI(deps))
 
+	// License posture: mailwoman's own branch, then each attached layer's recorded license. Informational.
+	const key = deps.licenseKey()
+	const publication = key && "kid" in key ? await deps.confirmLicenseKeyPublished(key.kid) : undefined
+
+	const runtimeLicense = runtimeLicenseCheck({
+		expression: await deps.runtimeLicense(),
+		...(key ? { key } : {}),
+		...(publication ? { publication } : {}),
+	})
+
+	const layerLicenses = (await Promise.all(deps.layerDatabases().map((layer) => gatherLayerLicense(deps, layer))))
+		.filter((o): o is LayerLicenseObservation => o !== undefined)
+		.map(layerLicenseCheck)
+
 	// Informational: locale overlays.
 	const overlays = await Promise.all(deps.overlayLocales.map((locale) => gatherOverlay(deps, locale)))
 
-	return assembleReport([nodeCheck, onnx, weights, dataRoot, gazetteer, poi, ...overlays])
+	return assembleReport([
+		nodeCheck,
+		onnx,
+		weights,
+		dataRoot,
+		gazetteer,
+		poi,
+		runtimeLicense,
+		...layerLicenses,
+		...overlays,
+	])
 }
 
 //#region --verbose environment dump
