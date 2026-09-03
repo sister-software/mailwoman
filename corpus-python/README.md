@@ -1,7 +1,7 @@
 # `mailwoman-corpus-python`
 
 Python helpers for the Mailwoman pipeline. **Not** a Yarn workspace — has its own
-`pyproject.toml` and is invoked from the host's Python environment, not from Node.
+`pyproject.toml` and runs under `uv` (Python 3.12, pinned by `.python-version`), never from Node.
 
 Two Python responsibilities now live here:
 
@@ -18,51 +18,64 @@ Parquet writer (`@dsnp/parquetjs`-based) that landed in `packages/corpus/lib/par
 
 ## Install
 
-The base install gives you the tokenizer-training and corpus-sampling scripts:
+Everything runs under [`uv`](https://docs.astral.sh/uv/); the interpreter is pinned by
+`.python-version` (3.12 — matches `modal/train_remote.py`'s image). Call every tool through
+`uv run` so it uses the project environment, never a stray system install.
 
 ```sh
-cd packages/corpus-python
-python3 -m venv .venv
-. .venv/bin/activate
-pip install -e .[dev]
+cd corpus-python
+uv sync --extra dev        # base deps + dev toolchain (ruff, mypy, bandit, pytest)
+uv run python -m mailwoman_train --help
 ```
 
 For Phase 2 model training you also need the heavy ML stack (`torch`, `transformers`,
 `datasets`, `onnx`, `onnxruntime`):
 
 ```sh
-pip install -e .[train]
+uv sync --extra train
 ```
 
-The expected runtime is Python 3.10+. The `[train]` extra pulls CPU-default PyTorch wheels; if
-you want CUDA, install `torch` separately from the appropriate wheel index _before_ installing
-this package — pip's resolver will keep the CUDA build.
+The `[train]` extra pulls CPU-default PyTorch wheels; if you want CUDA, install `torch`
+separately from the appropriate wheel index _before_ syncing — uv's resolver will keep the CUDA
+build (see the Lab GPU recipe below).
 
-## Linting & formatting
+## Toolchain
 
-[Ruff](https://docs.astral.sh/ruff/) — the Python counterpart to the repo's `oxlint` + `oxfmt`
-(lint and format in one tool). Config is in `pyproject.toml` under `[tool.ruff]`. Ruff ships in the
-`[dev]` extra, so it's present after `pip install -e .[dev]` (or `uv sync`).
+All tools resolve through the `[dev]` extra and are invoked with `uv run` so they read the
+project environment and the `pyproject.toml` config:
+
+- **Ruff** (`uv run ruff`) — lint **and** format in one tool; the Python counterpart of the
+  repo's `oxlint` + `oxfmt`. Config: `[tool.ruff]`.
+- **mypy** (`uv run mypy`) — `--strict` typing over `src/` (the shipped library; `modal/`
+  and `scripts/` move under the gate as they clean up). Config: `[tool.mypy]`.
+- **bandit** (`uv run bandit -r src`) — security/static analysis. Config: `[tool.bandit]`.
+- **pytest** (`uv run pytest`) — the corpus test suite.
 
 ```sh
-ruff check .            # lint        (oxlint)
-ruff check --fix .      # lint + fix  (oxlint --fix)
-ruff format .           # format      (oxfmt)
-ruff format --check .   # format check, for CI
+uv run ruff check .            # lint        (oxlint)
+uv run ruff check --fix .      # lint + fix  (oxlint --fix)
+uv run ruff format .           # format      (oxfmt)
+uv run ruff format --check .   # format check, for CI
+uv run mypy                    # type check  (tsc --strict)
+uv run bandit -r src           # security    (static scan)
+uv run pytest                  # tests       (vitest)
+uv run python scripts/verify_toolchain.py   # train-pin consistency guard
 ```
 
-(With uv, prefix any of the above with `uv run`.)
+`yarn lint` from the repo root runs ruff + the toolchain guard repo-wide (see
+`.github/workflows/test.yml`). It does not run mypy or bandit yet — those are local gates
+until their baselines are triaged to zero.
 
 ### Lab GPU (Radeon 780M / gfx1103) recipe
 
 For the lab's specific iGPU you must use the ROCm 6.2 wheel and set the override env var:
 
 ```sh
-python3 -m venv ~/training-venv
+uv venv ~/training-venv
 . ~/training-venv/bin/activate
-pip install --upgrade pip
-pip install torch --index-url https://download.pytorch.org/whl/rocm6.2
-pip install -e .[train]
+uv pip install --upgrade pip
+uv pip install torch --index-url https://download.pytorch.org/whl/rocm6.2
+uv pip install -e .[train]
 export HSA_OVERRIDE_GFX_VERSION=11.0.0   # required: gfx1103 unofficially supported
 ```
 
