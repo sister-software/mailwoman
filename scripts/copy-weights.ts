@@ -260,8 +260,9 @@ async function materializeStreetMorphology(workspace: string, dir: string) {
 
 /**
  * Materialize the #718 D1 soft-feed artifacts into a weights workspace: the gazetteer-anchor lexicon (a verbatim copy)
- * + the per-country PCB1 postcode-anchor binary (built fresh from the WOF extract). Both `removeIfPresent` first — same
- * symlink-in-tarball trap the model/tokenizer copy guards against.
+ *
+ * - The per-country PCB1 postcode-anchor binary (built fresh from the WOF extract). Both `removeIfPresent` first — same
+ *   symlink-in-tarball trap the model/tokenizer copy guards against.
  */
 async function materializeSoftFeed(workspace: string, dir: string) {
 	// Repo-committed lexicons (gazetteer #464, country #1104, street-type Option-A) — verbatim copies,

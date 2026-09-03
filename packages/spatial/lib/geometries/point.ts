@@ -298,9 +298,9 @@ export class GeoPoint implements PointLiteral {
 	 *    Dallas and left corrupted in Berlin — behaviour selected by the data, from one code path. This change is a no-op
 	 *    for every WELL-FORMED input: a valid `[longitude, latitude]` pair can never have an out-of-range second element,
 	 *    so the heuristic never fired on one.
-	 * 2. **An out-of-range magnitude is rejected, not repaired.** `[999, 999]` used to produce a GeoPoint reporting latitude
-	 *    999. It now returns `null` here and throws a `RangeError` from the constructor. Note the deliberate asymmetry
-	 *    with the scalar `longitude` / `latitude` setters, which still wrap and clamp: mutating a point is a pan gesture,
+	 * 2. **An out-of-range magnitude is rejected, not repaired.** `[999, 999]` used to produce a GeoPoint reporting latitude 999.
+	 *    It now returns `null` here and throws a `RangeError` from the constructor. Note the deliberate asymmetry with
+	 *    the scalar `longitude` / `latitude` setters, which still wrap and clamp: mutating a point is a pan gesture,
 	 *    where 190° meaning -170° is right; PARSING one is a claim about the world, where an impossible magnitude means
 	 *    the input was malformed and any repair invents a location.
 	 *

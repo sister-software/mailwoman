@@ -16,7 +16,8 @@ import { writeLocalFile } from "@mailwoman/core/fs/writers"
 export interface GeocodeFirstSurfaceOptions {
 	/**
 	 * Illustrative prior λ. Production's record matcher uses λ=1e-4 (calibrated for the full multi-field model with phone
-	 * + spatial exact-key); here we want the boundary visible in a two-axis slice. Default 0.02.
+	 *
+	 * - Spatial exact-key); here we want the boundary visible in a two-axis slice. Default 0.02.
 	 */
 	lambda?: number
 	/**

@@ -61,8 +61,7 @@ const STARTS_WITH_CAPITALIZED_WORD = /^\s*[A-Z]/
  *
  * Generated FORWARD from the entry rather than un-inflected from the surface, which is the same direction the matcher
  * runs. An inverse ("strip a trailing es, else strip a trailing s") is not the inverse: it takes "states" to "stat",
- * and the first build with one shipped a guard that suppressed `state` on every page while leaving `states` linking on
- * 26.
+ * and the first build with one shipped a guard that suppressed `state` on every page while leaving `states` linking on 26.
  */
 function matchableForms(entry: string): string[] {
 	const lower = entry.trim().toLowerCase()

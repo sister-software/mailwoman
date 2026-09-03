@@ -54,9 +54,10 @@ import { mailwomanDataRoot } from "#resolver-backend"
 
 /**
  * The canonical postcode-database set (filenames under `<data-root>/wof/`): US + the WOF intl database (NL/FR/DE/ES/IT)
- * + the GeoNames intl database (PT/AU) + the OS Code-Point Open GB database + the OSM Northern Ireland database + the
- * GeoNames-postal tail database (nine countries) + Overture postcode centroids (CA + the EU-coverage locales). Missing
- * databases are skipped, not fatal.
+ *
+ * - The GeoNames intl database (PT/AU) + the OS Code-Point Open GB database + the OSM Northern Ireland database + the
+ *   GeoNames-postal tail database (nine countries) + Overture postcode centroids (CA + the EU-coverage locales).
+ *   Missing databases are skipped, not fatal.
  *
  * That skip is not merely tolerant — it is the **build-local tier's mechanism**. `postalcode-ni-osm.db` is ODbL and is
  * never published, so on every machine but the one that built it the `pathExists` filter in

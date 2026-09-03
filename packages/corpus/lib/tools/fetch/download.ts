@@ -79,9 +79,9 @@ export interface SourceManifest {
 /**
  * An HTTP failure that CARRIES its status, so callers branch on `error.status` rather than on message prose. The prose
  * route shipped a real flake: a caller classified "not published upstream" with `message.includes("404")`, and the
- * message contains the URL — an ephemeral test-server port such as `:40453` satisfies it while the actual status is
- * 500. Roughly 1–2% of ephemeral ports contain the substring, which is exactly the kind of sometimes-failure that burns
- * a CI run and vanishes locally.
+ * message contains the URL — an ephemeral test-server port such as `:40453` satisfies it while the actual status is 500.
+ * Roughly 1–2% of ephemeral ports contain the substring, which is exactly the kind of sometimes-failure that burns a CI
+ * run and vanishes locally.
  */
 export class HTTPStatusError extends Error {
 	readonly status: number

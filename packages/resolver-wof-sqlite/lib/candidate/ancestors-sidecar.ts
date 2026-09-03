@@ -26,9 +26,9 @@ import type { WOFDatabase } from "#schema"
  * denormalizing each edge with the parent's name/key from `attrs`, streamed `ORDER BY id` so the clustered `(spr_id,
  * depth)` insert is sorted — the contiguous-leaves discipline of the candidate table itself.
  *
- * Excluded by policy: self rows, and placetypes outside the containment ladder (continent, empire, …: `placetypeDepth`
- * 0) — they discriminate nothing a consumer of this sidecar checks. An edge to a parent with no current `spr` row has
- * no name to denormalize; it is dropped and counted rather than stored blind.
+ * Excluded by policy: self rows, and placetypes outside the containment ladder (continent, empire, …: `placetypeDepth` 0)
+ * — they discriminate nothing a consumer of this sidecar checks. An edge to a parent with no current `spr` row has no
+ * name to denormalize; it is dropped and counted rather than stored blind.
  */
 export async function buildAncestorsSidecar(ctx: {
 	src: DatabaseClient<WOFDatabase>

@@ -127,7 +127,8 @@ function nzIndexBytes(): Uint8Array {
 
 /**
  * A fake `fetch` whose per-URL response is decided by `respond`. Model/tokenizer URLs get dummy bytes (the ORT session
- * + tokenizer are mocked, so the content is irrelevant).
+ *
+ * - Tokenizer are mocked, so the content is irrelevant).
  */
 function makeFetch(respond: (url: string) => Uint8Array | number): typeof fetch {
 	return async (input) => {

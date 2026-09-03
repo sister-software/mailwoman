@@ -434,9 +434,11 @@ export const FormatResponseSchema = z
 
 /**
  * `GET /health` response — `status`/`uptime_s` are stamped by the ROUTE itself, unconditionally, regardless of engine
- * (`api/routes.ts`'s `healthRoute` handler: `{ status: "ok", uptime_s, ...engine.health?.() }`), so those two are cheap
- * + accurate to pin. Everything else is `HealthData` (`api/engine.ts`) — an engine-defined block (model card, data-root
- * inventory for `mailwoman serve`; something else entirely for another engine) — stays loose.
+ * (`api/routes.ts`'s `healthRoute` handler: `{ status: "ok", uptime_s, ...engine.health?.() }`), so those two are
+ * cheap
+ *
+ * - Accurate to pin. Everything else is `HealthData` (`api/engine.ts`) — an engine-defined block (model card, data-root
+ *   inventory for `mailwoman serve`; something else entirely for another engine) — stays loose.
  */
 export const HealthResponseSchema = z
 	.object({
