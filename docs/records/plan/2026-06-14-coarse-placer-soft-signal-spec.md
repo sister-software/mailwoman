@@ -100,7 +100,7 @@ clean-install smoke test** — the new artifact must resolve from a fresh `npm i
   browser export + bundling the artifact). Not in this spec's scope; flagged as the natural next step so the
   demo's "it all runs client-side" story eventually includes country routing.
 
-## Risks & the open lever
+## Risks & the open change
 
 - **Double-counting with the postcode anchor** → the precedence rule (postcode wins; coarse-placer fills).
 - **Model-not-shipped** → the packaging prerequisite above; must pass `ci:smoke`.

@@ -40,7 +40,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 			name: "mwdev_gauntlet",
 			description:
 				"Run a gauntlet layer and return a job id. The gauntlet is the release authority — this adds nothing to " +
-				"its grading, it only surfaces the gated header, the levers line and the firing count rather than leaving " +
+				"its grading, it only surfaces the gated header, the pins line and the firing count rather than leaving " +
 				"them in a log. Poll with mwdev_job.",
 			inputSchema: z.object({
 				layer: z
@@ -112,7 +112,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 						newest_compiled: freshness.newestCompiled?.path ?? null,
 					},
 					note:
-						"Started. Poll with mwdev_job. The result carries the gated header, the levers line and the firing " +
+						"Started. Poll with mwdev_job. The result carries the gated header, the pins line and the firing " +
 						"count parsed out of the log, plus the log itself — read the gated fraction, not the tail.",
 				}
 			},

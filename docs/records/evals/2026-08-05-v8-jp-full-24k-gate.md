@@ -58,7 +58,7 @@ printed, supported labels separated, scorer ran end to end) — which is all a p
 - Shipping. This is a training-gate record, not a release: the JP model has no serving path yet
   (char-path inference, weights packaging, and the `ja-jp` overlay are the next arc). The ledger
   keys by shipped npm model versions and does not take this row.
-- The head-LR lever (`classifier_learning_rate: 1e-3`, a 2× head/body ratio). The run converged
+- The head-LR change (`classifier_learning_rate: 1e-3`, a 2× head/body ratio). The run converged
   with it; nothing here isolates its contribution. The A/B the probe config describes (delete the
   key, diff per-label F1) remains unrun and optional.
 

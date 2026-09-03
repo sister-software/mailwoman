@@ -258,7 +258,11 @@ const UNCOUNTED = [
 ]
 
 /**
- * The word being removed from the codebase, and the pattern {@link DebtCounters.bannedVocabulary} counts.
+ * The words being removed from the codebase, and the pattern {@link DebtCounters.bannedVocabulary} counts. The second
+ * alternation carries a negative lookahead for the letter runs that continue it into an unrelated English word
+ * ("advantage") and into six place names. It is case-sensitive on purpose: `availableVersions` and `localeVerdict`
+ * contain the letters across a camelCase boundary that appear in eval rows and records; those survive verbatim by
+ * construction, not by allowlist.
  *
  * KEEP THE COUNTER'S NAME FREE OF THE WORD. This ratchet is written in the language it polices, so the vocabulary sweep
  * it exists to drive rewrote it: a case-preserving `shard` → `extract` pass over `scripts/` renamed `shardVocabulary`
@@ -266,7 +270,8 @@ const UNCOUNTED = [
  * reporting a falling number. It stayed green throughout. A neutral counter name and a single pattern constant are what
  * make that impossible to repeat.
  */
-const BANNED_VOCABULARY = /\b[A-Za-z_]*shard[A-Za-z_]*\b/giu
+const BANNED_VOCABULARY =
+	/\b[A-Za-z_]*(?:[Ss]hard|SHARD)[A-Za-z_]*\b|\b[A-Za-z_]*(?:[Ll]ever|LEVER)(?!age|AGE|ano|ANO|ton|TON|ock|OCK|stock|STOCK|dalsveien|DALSVEIEN|n\b|N\b)[A-Za-z_]*\b/gu
 
 /**
  * Where the banned word is allowed to survive, and why each one earns it.
@@ -277,13 +282,13 @@ const BANNED_VOCABULARY = /\b[A-Za-z_]*shard[A-Za-z_]*\b/giu
  * is a vocabulary an agent writes, so prose is in scope.
  */
 const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason: string]> = [
-	["scripts/repo-health.ts", "the pattern above has to spell the word it bans"],
+	["scripts/repo-health.ts", "the pattern above has to spell the words it bans"],
 	["docs/styles/", "the Vale rules that REFUSE the word must name it"],
 	[
 		"scripts/vocab-census.ts",
 		"the ambiguous-shorthand census files a match under one of four words and must name each",
 	],
-	["docs/scripts/vale-fixtures/dirty.ts", "a Vale fixture whose purpose is to keep failing, permanently"],
+	["docs/scripts/vale-fixtures/", "Vale fixtures whose purpose is to keep failing, permanently"],
 	[".claude/output-styles/", "the same refusal list, mirrored for agent replies"],
 	["AGENTS.md", "carries that refusal list, plus the note recording that this family reached zero"],
 	// RECORDS ARE NOT EXEMPT, and that is a deliberate reversal. They were exempt on the reasoning that

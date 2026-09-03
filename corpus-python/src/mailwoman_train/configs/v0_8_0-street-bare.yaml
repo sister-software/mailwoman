@@ -1,4 +1,4 @@
-# v0.8.0 candidate — bare-street harness lever.
+# v0.8.0 candidate — bare-street harness change.
 #
 # SINGLE VARIABLE vs v0_7_2-intersection-bare.yaml: add the synth-street-bare slice (weight 0.2).
 # The harness functional.test.ts cluster (32/34 fail on v0.7.2) is bare street names ("10th Ave",

@@ -20,7 +20,7 @@
 _geonames cities15000, top 3/country by population (≥ 50000). "Resolved" = within
 50 km of the city's true coordinate. **Bare** = no country constraint (what the drop-in sends
 for a bare query); **+hint** = with the country as a `countrycodes` constraint. The bare→hint lift is
-what growing the placer would buy (#822); what stays unresolved with a hint is the exonym/coverage lever._
+what growing the placer would buy (#822); what stays unresolved with a hint is the exonym/coverage change._
 
 - Cities: **506** across **187** countries
 - Resolve-rate **bare: 29.2%** → **+hint: 46.6%** (lift +17.4 pp)
@@ -31,7 +31,7 @@ what growing the placer would buy (#822); what stays unresolved with a hint is t
 > **How to read this.** Bare resolve-rate is the placer ceiling, not the geocoder's capability — a
 > bare query carries no country hint. The **+hint** column is the honest #822 prize: countries that
 > resolve once the country is known but not before. The **residual** set fails even with the hint, so
-> the placer can't fix it — that's alt-name (Warsaw/Warszawa) + gazetteer coverage, a parallel lever.
+> the placer can't fix it — that's alt-name (Warsaw/Warszawa) + gazetteer coverage, a parallel change.
 
 ## Placer-recoverable (#822) — a country hint fixes it; growing the placer captures it
 

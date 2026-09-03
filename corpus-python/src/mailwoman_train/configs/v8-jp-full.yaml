@@ -49,7 +49,7 @@
 #   * The PREMISE ("existing warm layers") does not hold on a from-scratch run. #727's precedent
 #     numbers (inherited 1e-5 stalled at 0.004, own 1e-3 converged) come from a fresh head on a
 #     PRETRAINED encoder. Here the encoder is cold too, so this is not a rescue — it is an ordinary
-#     head/body LR-ratio lever with an unmeasured effect on this corpus.
+#     head/body LR-ratio change with an unmeasured effect on this corpus.
 #
 # So: 1.0e-3 is a 2x ratio over the 5.0e-4 base, NOT #727's 100x. It is set deliberately modest
 # because it is unvalidated here, and `v8-jp-full-2k.yaml` exists to read it before the full run.
@@ -103,7 +103,7 @@ data:
   max_units: 96
 
 model:
-  # The probe's geometry, unchanged. Scaling the encoder is a separate lever with its own read;
+  # The probe's geometry, unchanged. Scaling the encoder is a separate change with its own read;
   # this run changes the corpus and the head, so the encoder stays fixed to keep that attribution
   # clean. 384/4 at 7.5M params cleared the gate with room.
   hidden_size: 384

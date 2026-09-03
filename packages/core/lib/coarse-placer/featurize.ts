@@ -27,7 +27,7 @@ import { hashFNV1a } from "#coarse-placer/fnv-hash"
  * couldn't emit — ambiguous names there (FI "Helsinki", PL "Rybnik") landed off-continent in the population-first
  * candidate gazetteer because no country prior pinned them. They're trained from the Overture per-country addresses
  * theme (`build-dataset.mjs`), and they're pulled OUT of the Latin off-map OTHER outlier set
- * (`build-outlier-latin.mjs`) that used to teach PL/PT/CZ → OTHER. Widening the class set is the soft-prior lever; it
+ * (`build-outlier-latin.mjs`) that used to teach PL/PT/CZ → OTHER. Widening the class set is the soft-prior change; it
  * never hard-filters, so a neighbour confusion (DK↔NO, EE↔LT↔LV) still keeps resolution in-region, off the global-pop
  * attractors. Adding a class requires a retrain + a fresh artifact — the bundled meta.json carries its own `classes`,
  * so this constant only drives training (`train.mjs`), not inference.
@@ -61,7 +61,7 @@ export const COARSE_CLASSES = [
 	"SI",
 	"SK",
 	// #244/#928 AU expansion (2026-07-06): AU was unrepresentable (not in-map) AND its 4-digit postcode
-	// is format-ambiguous, so no #928 format-prior lever applies — the placer is AU's only country
+	// is format-ambiguous, so no #928 format-prior change applies — the placer is AU's only country
 	// signal. Trained from the v0.9.2 G-NAF corpus extract (150k real Australian addresses).
 	"AU",
 	"OTHER",

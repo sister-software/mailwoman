@@ -74,7 +74,7 @@ as briefed; one Modal call (int8 quantize, ~seconds); no training, no promotion.
   release-prep PR (model-card: new `tokenizer_version`, OA CZ/PL attribution) → `mailwoman-release`.
 - #887 is a bounded night-shift chore (wire `overrides.anchor=false` through `oa-resolver-eval`).
 - #296-residual: CZ 14.8%/PL 7.9% wrong-city is decode-boundary/namesake + coverage now — name-key
-  or span levers, not vocab.
+  or span changes, not vocab.
 
 ## Ledger
 

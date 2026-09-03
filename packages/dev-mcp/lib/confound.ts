@@ -50,7 +50,7 @@ export const VariableIsolation = {
 	NoVariable: "no_variable",
 	/**
 	 * The arms are different geocoders. No configuration record can express what differs, because the dominant variable
-	 * is the INDEX each one holds — and no configuration record can isolate a lever here, however carefully declared.
+	 * is the INDEX each one holds — and no configuration record can isolate a change here, however carefully declared.
 	 */
 	CrossEngine: "cross_engine",
 } as const
@@ -66,7 +66,7 @@ export interface ConfoundReading {
 	variable_effective: string[]
 	declared: string[]
 	/**
-	 * Declared but identical across the arms — usually a typo in the declaration, occasionally a lever that silently
+	 * Declared but identical across the arms — usually a typo in the declaration, occasionally a change that silently
 	 * resolved to the same default in both arms, which is itself worth seeing.
 	 */
 	declared_but_unmoved: string[]
@@ -93,8 +93,8 @@ export function checkConfounds(
 ): ConfoundReading {
 	const moved = differingKeys(effectiveA, effectiveB)
 	// Declared keys arrive in the CLI's snake_case (the vocabulary the tool schema documents); `effective*` keys are
-	// camelCase. Compared raw, one correctly-declared lever reads as TWO findings — declared-but-unmoved under one
-	// spelling, moved-but-undeclared under the other — and every honest single-lever comparison grades itself ambiguous.
+	// camelCase. Compared raw, one correctly-declared change reads as TWO findings — declared-but-unmoved under one
+	// spelling, moved-but-undeclared under the other — and every honest single-change comparison grades itself ambiguous.
 	const declaredSet = new Set(declared.map(effectiveKeyFor))
 	const movedSet = new Set(moved)
 
@@ -107,7 +107,7 @@ export function checkConfounds(
 	if (movedButUndeclared.length) {
 		warnings.push(
 			`Undeclared differences: ${movedButUndeclared.join(", ")}. The delta cannot be attributed to ` +
-				`${declared.length ? declared.join(", ") : "any single lever"} alone — these moved too. ` +
+				`${declared.length ? declared.join(", ") : "any single pin"} alone — these moved too. ` +
 				`Either pin them across both arms, or declare them and read the result as a 1×2 slice of a 2×2.`
 		)
 	}
@@ -115,14 +115,14 @@ export function checkConfounds(
 	if (declaredButUnmoved.length) {
 		warnings.push(
 			`Declared but identical in both arms: ${declaredButUnmoved.join(", ")}. ` +
-				`Either the declaration is wrong or both arms resolved that lever to the same default.`
+				`Either the declaration is wrong or both arms resolved that pin to the same default.`
 		)
 	}
 
 	if (!moved.length) {
 		warnings.push(
 			"The two arms have identical effective configurations. Any difference between them comes from outside this " +
-				"record — nondeterminism or external state — not from a lever."
+				"record — nondeterminism or external state — not from a pin."
 		)
 	}
 
@@ -147,8 +147,8 @@ export function checkConfounds(
  *
  * {@link checkConfounds} is the wrong instrument here and would be actively misleading if pointed at this case. Its
  * question is "did more config keys move than the caller declared", and across engines the answer is a list of keys one
- * arm does not have — every mailwoman lever against an endpoint and a version string. A reader would get a paragraph of
- * true, useless warnings, and paragraphs of those train a reader to skip the field.
+ * arm does not have — every mailwoman change against an endpoint and a version string. A reader would get a paragraph
+ * of true, useless warnings, and paragraphs of those train a reader to skip the field.
  *
  * What is actually true is shorter and worse: the arms hold different indexes built from different sources at different
  * vintages, and no record either arm can produce says by how much. The panel comparator in the benchmark rig states the
@@ -164,7 +164,7 @@ export function crossEngineReading(armA: string, armB: string, declared: string[
 		declared_but_unmoved: [],
 		moved_but_undeclared: declared.includes("engine") ? [] : ["engine"],
 		warnings: [
-			`${armA} and ${armB} are different geocoders over different indexes. No delta here belongs to a lever: ` +
+			`${armA} and ${armB} are different geocoders over different indexes. No delta here belongs to a pin: ` +
 				"coverage, source vintage and ranking all move together, and nothing in either arm's provenance says by " +
 				"how much. Read this as a behavioral comparison of two systems, never as an attribution.",
 		],

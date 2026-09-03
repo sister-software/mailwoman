@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the `no-fragment` slice (Track B — the NO house-number-licence lever).
+ *   Tests for the `no-fragment` slice (Track B — the NO house-number-licence change).
  *
  *   Two invariants, both required (the fr-fragment lesson, transplanted):
  *

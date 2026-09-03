@@ -312,9 +312,9 @@ systematically — the one loss is a reproducible singleton with a clear owner, 
 p50 cost (1.5 → 2.4 km international) is real but small next to the p90 gain (180 → 47 km).
 
 **Two caveats on the way the flip is framed.** First, ship the backend flip _without_ also flipping
-the country filter, or the change is untestable against these numbers — they are separate levers
+the country filter, or the change is untestable against these numbers — they are separate changes
 with separate risk, and it is the filter, not the backend, that carries the +10 on bare
-international city names. Second, `mailwoman/resolver-backend.ts` currently makes them one lever;
+international city names. Second, `mailwoman/resolver-backend.ts` currently makes them one change;
 splitting `resolverDefaultCountry`'s `candidateActive` branch from the backend selection is a
 prerequisite for shipping either independently.
 

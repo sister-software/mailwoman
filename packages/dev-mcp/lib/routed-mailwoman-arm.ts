@@ -184,7 +184,7 @@ export async function buildRoutedMailwomanArm(
 		await deps.buildDeps({
 			...(cacheRoot ? { weightsCacheRoot: cacheRoot } : {}),
 			...(config.candidate_db ? { candidateDB: config.candidate_db } : {}),
-			levers: {
+			pins: {
 				...(config.postcode_country_coherence === undefined
 					? {}
 					: { postcodeCountryCoherence: config.postcode_country_coherence }),

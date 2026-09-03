@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  * Embind wrapper for google/sentencepiece v0.2.2 — the mailwoman tokenizer's WASM core (task #26,
- * the SP 0.2.2 native-offsets lever from the 2026-07-30 Latin tokenizer survey).
+ * the SP 0.2.2 native-offsets change from the 2026-07-30 Latin tokenizer survey).
  *
  * Why this exists: the previous runtime (`@sctg/sentencepiece-js`, an emscripten build of an older
  * sentencepiece) exposed pieces + ids but never bound the offset-carrying proto API, forcing

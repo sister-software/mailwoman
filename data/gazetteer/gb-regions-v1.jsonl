@@ -144,7 +144,7 @@
 {"child": "Allerford", "parent": "Selworthy"}
 {"child": "Allerton", "parent": "Bradford"}
 {"child": "Allerton", "parent": "Liverpool"}
-{"child": "Allerton Mauleverer", "parent": "Allerton Mauleverer with Hopperton"}
+{"child": "Allerton Mauchangeer", "parent": "Allerton Mauchangeer with Hopperton"}
 {"child": "Allerwash", "parent": "Haydon"}
 {"child": "Allesley", "parent": "Coventry"}
 {"child": "Allestree", "parent": "Derby"}
@@ -712,7 +712,7 @@
 {"child": "Belle Vale", "parent": "Liverpool"}
 {"child": "Belle Vue", "parent": "Carlisle"}
 {"child": "Belle Vue", "parent": "Ffestiniog"}
-{"child": "Bellever", "parent": "Dartmoor Forest"}
+{"child": "Belchange", "parent": "Dartmoor Forest"}
 {"child": "Bellingdon", "parent": "Chartridge"}
 {"child": "Bellingdon", "parent": "Ellington"}
 {"child": "Bells Yew Green", "parent": "Frant"}
@@ -2927,7 +2927,7 @@
 {"child": "Danygraig", "parent": "St. Bride's Major"}
 {"child": "Danygraig", "parent": "St. Brides Major"}
 {"child": "Danzey Green", "parent": "Ullenhall"}
-{"child": "Darcy Lever", "parent": "Bolton"}
+{"child": "Darcy Change", "parent": "Bolton"}
 {"child": "Daresbury", "parent": "Oswestry"}
 {"child": "Darite", "parent": "St. Cleer"}
 {"child": "Darlaston", "parent": "Walsall"}
@@ -3261,7 +3261,7 @@
 {"child": "Earlestown", "parent": "St Helens"}
 {"child": "Earley", "parent": "Woodley"}
 {"child": "Earlham", "parent": "Norwich"}
-{"child": "Earlsdon", "parent": "Lea and Cleverton"}
+{"child": "Earlsdon", "parent": "Lea and Cchangeton"}
 {"child": "Earlsheaton", "parent": "Dewsbury"}
 {"child": "Earlswood", "parent": "Erwood"}
 {"child": "Earlswood", "parent": "Greasley"}
@@ -4374,7 +4374,7 @@
 {"child": "Great Kingshill", "parent": "Hughenden"}
 {"child": "Great Langdale", "parent": "Lakes"}
 {"child": "Great Leighs", "parent": "Great and Little Leighs"}
-{"child": "Great Lever", "parent": "Bolton"}
+{"child": "Great Change", "parent": "Bolton"}
 {"child": "Great Malvern", "parent": "Malvern"}
 {"child": "Great Marton", "parent": "Blackpool"}
 {"child": "Great Meadow", "parent": "Warndon"}
@@ -5313,7 +5313,7 @@
 {"child": "Hope Cove", "parent": "South Huish"}
 {"child": "Hope Valley", "parent": "Hope"}
 {"child": "Hopkinstown", "parent": "Pontypridd"}
-{"child": "Hopperton", "parent": "Allerton Mauleverer with Hopperton"}
+{"child": "Hopperton", "parent": "Allerton Mauchangeer with Hopperton"}
 {"child": "Hopstone", "parent": "Worfield"}
 {"child": "Hopton", "parent": "Great Ness"}
 {"child": "Hopton", "parent": "Hopton and Coton"}
@@ -6211,7 +6211,7 @@
 {"child": "Little Langdale", "parent": "Lakes"}
 {"child": "Little Langford", "parent": "Steeple Langford"}
 {"child": "Little Leighs", "parent": "Great and Little Leighs"}
-{"child": "Little Lever", "parent": "Bolton"}
+{"child": "Little Change", "parent": "Bolton"}
 {"child": "Little Linford", "parent": "Haversham-Cum-Little Linford"}
 {"child": "Little London", "parent": "Bradford"}
 {"child": "Little London", "parent": "Heathfield and Waldron"}

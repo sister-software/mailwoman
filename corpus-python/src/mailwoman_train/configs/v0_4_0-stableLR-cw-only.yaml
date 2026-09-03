@@ -2,7 +2,7 @@
 #
 # Tests whether §3 destabilizes even at the v0.3.0-stable LR (1.5e-4). If this run
 # diverges past step 2000, class_weights are the offender at any LR — kill the
-# §3 lever, restore uniform CE.
+# §3 change, restore uniform CE.
 #
 # Recipe:
 #   v0.3.0 base:    per_sequence CRF NLL × crf_loss_weight=0.05

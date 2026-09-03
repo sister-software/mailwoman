@@ -631,7 +631,7 @@ def build_optimizer(
     """... (keep the existing docstring; append:)
 
     `classifier_learning_rate` carves the output head (`classifier.`) into its own group —
-    the dead-tag resurrection lever (#456/#1100): a re-initialized output row (see
+    the dead-tag resurrection change (#456/#1100): a re-initialized output row (see
     `reinit_label_rows`) cannot climb out of a baked-negative neighborhood at the encoder's
     fine-tune LR, and Adam's gradient scale-invariance rules out hook-based row scaling.
     """
@@ -698,7 +698,7 @@ Expected: 3 PASS. Then the full suite: `uv run pytest` — zero regressions.
 
 ```bash
 git add corpus-python/src/mailwoman_train/train.py corpus-python/tests/test_resurrection.py <config-file-if-separate>
-git commit -m "feat(train): dead-tag resurrection levers — reinit_label_rows + classifier_learning_rate param group"
+git commit -m "feat(train): dead-tag resurrection changes — reinit_label_rows + classifier_learning_rate param group"
 ```
 
 ---

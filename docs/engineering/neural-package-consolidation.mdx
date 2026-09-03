@@ -103,7 +103,7 @@ neither side; the only signal is a `[webpackbar]` line two rows above reading
 ```
 
 No export condition can distinguish "webpack building for SSR" from "real Node", so the SSR bundle
-needs a config-side lever: a targeted alias for the one specifier, which
+needs a config-side change: a targeted alias for the one specifier, which
 `docs/plugins/demo-assets/plugin.ts` now carries under `isServer`. Adding `browser` to the server's
 `conditionNames` also works and is far broader — it flips every browser-conditioned package in
 `node_modules` for SSR, and `@mailwoman/neural` is the only workspace carrying such a condition.

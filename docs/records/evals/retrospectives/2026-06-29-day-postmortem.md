@@ -18,7 +18,7 @@ _A collaborative day that started as three namesake bugs and turned into an arch
 - The off-map international "0%" was a coverage hole, and a model cannot route to a place that isn't in the gazetteer.
 - Covered international (JP/KR) already resolves 11/12 romanized.
 
-No measured residual justified a learned model. The international lever was coverage (#266), which moved the number from 0% to 80% with data, not parameters.
+No measured residual justified a learned model. The international change was coverage (#266), which moved the number from 0% to 80% with data, not parameters.
 
 ## Disciplines that earned their keep
 

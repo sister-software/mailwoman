@@ -185,7 +185,7 @@ const LEGAL_NAME_ATTRIBUTE_KEY = "legal_name"
  *
  * `buildDefaultModel`'s prior (`lambda: 0.0001`) alone contributes `log2(0.0001 / 0.9999) ≈ -13.29` bits — a large,
  * constant tax on EVERY pair, since a match between two records drawn at random from the whole crosswalk is assumed
- * rare (the model was designed for the general case; it has no per-domain lambda lever). Because pass (b)'s blocking
+ * rare (the model was designed for the general case; it has no per-domain lambda change). Because pass (b)'s blocking
  * key is an EXACT canonicalized-organization-name match, every candidate pair this module scores already carries the
  * organization comparison's `"exact"` level (`m: 0.8, u: 0.01` → `log2(80) ≈ +6.32` bits) — the identity signal
  * blocking selected FOR. `exactDiscriminators` (`frn`/`form499ID`/`providerID`) then contribute their OWN "different"

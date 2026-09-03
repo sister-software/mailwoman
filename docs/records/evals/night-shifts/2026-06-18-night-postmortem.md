@@ -34,7 +34,7 @@ _(Living document — sketched as the shift runs; final numbers + verdict at the
   (`./out/v170/model.onnx`). **4-target gate: NO-PROMOTE (1/4), targets ~flat vs v1.6.0** — fr-prefix 99.3
   (✓), street_suffix 55.3 (tag at target, street-span short), comma-less 57.0 (✗), hn-after 53.7 (✗). The
   balanced extract rebalanced (held the guardrail) but did NOT lift the boundary targets — they're flat, so the
-  boundary lever needs more than rebalancing (weight, or capacity). Floors gate + locality-regression +
+  boundary change needs more than rebalancing (weight, or capacity). Floors gate + locality-regression +
   street-recall probes + the record-matcher 3rd point running — the decisive question is whether the v1.6.0
   locality regression got FIXED.
   **COMBINED VERDICT: NO-PROMOTE — but the diagnosis-driven fix WORKED.**
@@ -47,7 +47,7 @@ _(Living document — sketched as the shift runs; final numbers + verdict at the
   - ❌ ONE red floor: `us.country_homograph_f1` 80.9 vs 83.3 — but the **v1.5.1 baseline (run after) reframed
     this: it is NOT a v1.7.0 regression.** v1.5.1 scores the _identical_ 80.9; the 83.3 floor is stale (from
     the older v4.x 85-89 models). v1.7.0 didn't touch country.
-  - Record-matcher 3-point curve FLAT: v1.5.1 68.0 / v1.6.0 67.9 / v1.7.0 68.0 (boundary lever ≠ dedup lever).
+  - Record-matcher 3-point curve FLAT: v1.5.1 68.0 / v1.6.0 67.9 / v1.7.0 68.0 (boundary change ≠ dedup change).
 
   **THE v1.5.1 → v1.7.0 FLOOR DELTA (the definitive comparison — most important number of the shift):**
   locality **+5.1** (74.9→80.0), **fr.house_number +10.2** (`84.7→94.9` — v1.5.1 was _failing_ its own 87 floor),
@@ -61,7 +61,7 @@ _(Living document — sketched as the shift runs; final numbers + verdict at the
 - **Stretch #1 — record-matcher curve** (`ed89dd4d` + reports): added a model-swap to `nppes-dedup-benchmark.ts`
   and ran the v1.5.1 + v1.6.0 baselines (TX, 300 NPIs). **Result: flat within noise** — org-name F1 68.0%
   (v1.5.1) vs 67.9% (v1.6.0), NPI 62.8 vs 62.6, baseline 61.0 vs 60.9. The read: **the boundary-parse
-  lever does NOT move the NPPES dedup F1** — the benchmark's own pre-registered finding is "config dominates
+  change does NOT move the NPPES dedup F1** — the benchmark's own pre-registered finding is "config dominates
   the model," and dedup is bottlenecked on org-name over-merge (#625/#603), not parse boundaries. So the
   synthetic boundary wins are real for the PARSE but don't translate to this real-world dedup task. v1.7.0
   joins as the 3rd point when it lands (expected ~flat).
@@ -151,7 +151,7 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
   token). Needs a quick diagnosis before the next iteration — is it real or eval noise, and does a small
   country-context addition to the extract recover it? **Operator call: worth a v1.7.1 to clear this one floor?**
 - **The boundary targets are stuck (1/4).** The extract at weight 1.0 rebalanced but didn't ADVANCE the four
-  shapes. The confidence probe said signal-not-capacity, so the next lever is more boundary signal — sweep
+  shapes. The confidence probe said signal-not-capacity, so the next change is more boundary signal — sweep
   the extract weight up (the recipe's pre-registered 1.5), now that the guardrail is protected by the bare-locality
   balance. Or accept that 29.6M params caps these shapes (the #492 ceiling) and bank the regression fix.
 
@@ -160,9 +160,9 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
 - **RECOMMENDATION: PROMOTE v1.7.0 (a net improvement over v1.5.1); do NOT bump the weight.** The v1.5.1
   baseline shows v1.7.0 wins the floors that matter — locality +5.1, **fr.house*number +10.2 (v1.5.1 was
   \_failing* its own floor)**, fr.region +7.1 — at the cost of us.street −4.3 (above floor). DeepSeek-confirmed:
-  weight 1.5 is unsafe (amplifies the flat boundary signal, re-risks the guardrail — the lever that cratered an
+  weight 1.5 is unsafe (amplifies the flat boundary signal, re-risks the guardrail — the change that cratered an
   affix tag) and the 4 boundary targets are capacity-bound; don't chase them. The record-matcher flatness
-  confirms the boundary lever doesn't move real-world dedup. v1.7.0 is the better ship.
+  confirms the boundary change doesn't move real-world dedup. v1.7.0 is the better ship.
 - **Two stated gate decisions the promote needs (operator's call, not autonomous — the no-silent-drift rule):**
   (1) **re-baseline the stale `us.country_homograph` floor** 83.3 → ~80 (v1.5.1 fails it identically at 80.9 —
   it's not a v1.7.0 regression); (2) **re-frame the 4 capacity-bound boundary targets as WATCH-items**, not
@@ -218,7 +218,7 @@ Re-anchored to v1.5.0 ([head-to-head](../model-versions/2026-06-18-v150-vs-v170-
 
 **Verdict: HOLD v1.5.0. Do not promote v1.7.0.** No coordinate-level case, plus a country regression.
 
-**The lever moved.** The US coordinate misses are rural-gazetteer coverage (SD 62%, VT 31%
+**The change moved.** The US coordinate misses are rural-gazetteer coverage (SD 62%, VT 31%
 locality-match — identical across model versions), not model tagging. The model has caught up to its
 database; the next US gain is in the gazetteer/resolver, not a retrain. v1.7.1 (street recovery)
 won't change the coordinate picture and isn't worth the GPU.
@@ -247,12 +247,12 @@ all along and the eval couldn't see it.
   the same 10k rows are **p50 0.0 km, 85.9% within 100 m** — three orders of magnitude tighter
   ([situs-cascade-eval](../resolver-geo/2026-06-18-situs-cascade-eval.md), `dd3628da`).
 
-### This RETRACTS the Addendum's "lever moved"
+### This RETRACTS the Addendum's "change moved"
 
 The Addendum (above) concluded "the US coordinate misses are rural-gazetteer coverage (SD 62%, VT
 31%)." Both halves were measurement artifacts: the SD/VT locality-match was the localadmin scoring
 bug, and the coordinate "bottleneck" was the eval grading the admin centroid instead of the shipped
-cascade. The lever was never the model nor the gazetteer — it was the measurement. The shipped US
+cascade. The change was never the model nor the gazetteer — it was the measurement. The shipped US
 coordinate is meter-grade.
 
 ### Shipped
@@ -275,7 +275,7 @@ coordinate is meter-grade.
 
 - **HOLD v1.5.0 confirmed.** The country −2.4 the night flagged is a single record (`Avenida Arequipa,
 Lima 15046, Peru`) on a 27-row denominator — pulled the rows; not systematic.
-- **Overture ingest is NOT the coordinate lever.** The situs extracts are already built from Overture;
+- **Overture ingest is NOT the coordinate change.** The situs extracts are already built from Overture;
   the SD/IL holes are a NAD-vs-OpenAddresses theme-selection bug, not missing data (#723).
 - **Banked the situs theme-reselect (#723).** The coordinate is in great shape; the extract rebuild
   (~+3.7 pts) is deferred, not launched.

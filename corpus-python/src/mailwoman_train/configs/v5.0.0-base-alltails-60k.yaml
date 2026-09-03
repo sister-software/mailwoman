@@ -4,9 +4,9 @@
 # that contains the trailing tails, and admitting 134 countries instead of 25. No init_from, no EWC.
 #
 # WHY FROM SCRATCH, measured rather than preferred. Eight fine-tunes of the v4.4.0 base were graded
-# against it on the 649-row board. Every lever an additive fine-tune has was isolated:
+# against it on the 649-row board. Every change an additive fine-tune has was isolated:
 #
-#   run       lever                                  net    regressed
+#   run       change                                  net    regressed
 #   v4.8.0    admin slice @ 9.4%                     -18    25
 #   v4.9.0    + dependent locality                   -20    31
 #   v4.10.0   dose -> 3.1%                           -13    22

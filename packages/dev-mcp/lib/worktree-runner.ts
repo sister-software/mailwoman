@@ -26,7 +26,7 @@ import { runWorktreeArm } from "#worktree-arm"
  * first `answer()` call.
  *
  * The config is resolved by {@linkcode resolveConfig}, the SAME function the in-process arm uses, and handed to the
- * child whole. A lever added there reaches this arm without being copied into it — the alternative, a hand-written
+ * child whole. A change added there reaches this arm without being copied into it — the alternative, a hand-written
  * option list inside the runner script, is exactly the shared-constants drift this comparison exists to DETECT rather
  * than to commit.
  */

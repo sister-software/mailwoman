@@ -11,8 +11,8 @@
 #   v4.11.0   venue-bearing, no new source or dose   net -13    9 venue-led
 #   v4.12.0   EWC brake x10                          net -12    9 venue-led
 #
-# Three unrelated levers — exposure, composition, regularization — reach the same floor with the SAME
-# NINE venue-led rows. A floor that three independent levers cannot move is not a property of any of
+# Three unrelated changes — exposure, composition, regularization — reach the same floor with the SAME
+# NINE venue-led rows. A floor that three independent changes cannot move is not a property of any of
 # them, and the obvious remaining explanation was never tested: that a 4,000-step fine-tune of this
 # base moves those rows on its own, whatever it is fed.
 #

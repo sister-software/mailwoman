@@ -29,7 +29,7 @@ Robustness: the ΔAUC is small but **consistent** — std 0.0030 across seeds, S
 |    7 |      16231 | 0.9437 | 0.9479 |  0.9590 |
 |    8 |      17236 | 0.9406 | 0.9466 |  0.9580 |
 
-The LR beats FS **consistently** — it wins 8/8 seeds and lifts the operating-point F1 by +4.3pp (72.6% → 76.9%). The ΔAUC is small (+0.0057) only because FS already ranks well (0.9420); the gain concentrates at the decision boundary, exactly where the interaction features (which FS structurally can't express) bite. **This greenlights the #603 learned scorer:** a GBM — non-linear over the same features — is the principled generalization of the hand-tuned #625 levers and should extend this linear gain. Honest framing: the linear headroom is modest, so the GBM's job is to _widen a real-but-small margin_, not to unlock a step change past the 64.7% dedup plateau on its own — the reliable secondary identifier (#625) is still the larger lever.
+The LR beats FS **consistently** — it wins 8/8 seeds and lifts the operating-point F1 by +4.3pp (72.6% → 76.9%). The ΔAUC is small (+0.0057) only because FS already ranks well (0.9420); the gain concentrates at the decision boundary, exactly where the interaction features (which FS structurally can't express) bite. **This greenlights the #603 learned scorer:** a GBM — non-linear over the same features — is the principled generalization of the hand-tuned #625 changes and should extend this linear gain. Honest framing: the linear headroom is modest, so the GBM's job is to _widen a real-but-small margin_, not to unlock a step change past the 64.7% dedup plateau on its own — the reliable secondary identifier (#625) is still the larger change.
 
 ## Caveats
 

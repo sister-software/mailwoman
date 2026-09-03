@@ -115,7 +115,7 @@ export const HARD_PLACE_COUNTRY_SAFELIST: ReadonlySet<string> = new Set([
 ])
 
 /**
- * #912 lever 1 — is this parse a single BARE locality ("Paris", "Dublin")? The coarse placer is out-of-distribution on
+ * #912 change 1 — is this parse a single BARE locality ("Paris", "Dublin")? The coarse placer is out-of-distribution on
  * one-token city names (trained on full addresses): measured on the gauntlet's bare-namesake rows it emitted Paris→IT
  * .35, Melbourne→GB .66 — all wrong, and even sub-threshold the SOFT posterior still re-ranks the resolver toward the
  * wrong country. A bare locality carries no country evidence the placer can read that the resolver's exact-tier +
@@ -326,7 +326,7 @@ export async function runPipeline(
 	// caller-supplied posterior (a stronger postcode anchor — never overwrite it). Off (no stage) →
 	// `effectiveOpts === opts` → byte-stable. See the soft-signal wiring spec.
 	let effectiveOpts = opts
-	// #912 lever 1: true when the anchorPosterior in effectiveOpts came from the placer (not the
+	// #912 change 1: true when the anchorPosterior in effectiveOpts came from the placer (not the
 	// caller) — the post-parse bare-locality abstention below only strips what the placer added.
 	let placerAnchorApplied = false
 
@@ -499,7 +499,7 @@ export async function runPipeline(
 		throwIfAborted(opts)
 		const tResolve = performance.now()
 
-		// #912 lever 1: the placer abstains on a single bare locality — strip ONLY the anchor it
+		// #912 change 1: the placer abstains on a single bare locality — strip ONLY the anchor it
 		// added (a caller-supplied posterior was never overwritten and passes through untouched).
 		// #1589: a bare POSTCODE abstains the same way — the code's format carries the country
 		// evidence, and the placer's language read of it is noise (see isBarePostcodeTree).

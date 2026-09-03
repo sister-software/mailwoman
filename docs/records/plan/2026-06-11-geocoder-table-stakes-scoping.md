@@ -22,7 +22,7 @@ honest-eval harness inverts almost for free. **Open question:** placetype granul
 ## #483 House-number interpolation — the coverage jump
 
 **Shape:** "123 Main St" where no address point exists → estimate between known points. The
-biggest forward-geocoding coverage lever (admin-centroid answers become street-accurate).
+biggest forward-geocoding coverage change (admin-centroid answers become street-accurate).
 
 **Data:** the address-point extract work (#475-era `build-address-point-extract.ts` +
 `AddressPointLookup` in `core/resolver/types.ts`) already gives exact-point hits; interpolation

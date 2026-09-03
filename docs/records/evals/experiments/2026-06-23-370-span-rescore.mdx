@@ -11,7 +11,7 @@ tags:
 
 The competitive benchmark (the vs-Nominatim/Pelias scorecard, PR #775) put a number on where we lose to Nominatim and Pelias in Europe, and it wasn't precision. When mailwoman resolves an EU address its centroid is tight (p50 1–3 km). The gap is **no-result** — on the messy multi-order EU panel, mailwoman returns nothing for ~45% of addresses where the competitors return something. So the question for closing the gap isn't "place it more accurately." It's "place it at all."
 
-This is the story of one lever against that tail: a post-hoc **span-rescore** (#370). Falsify first, then build — and let the coordinate, not the label, decide.
+This is the story of one change against that tail: a post-hoc **span-rescore** (#370). Falsify first, then build — and let the coordinate, not the label, decide.
 
 ## Where the tail comes from
 
@@ -104,12 +104,12 @@ EU coord panel (n=972, @25km right-place), spanRescore off → on:
 
 The strategic read, stated precisely (a trade-show claim has to survive a hostile check). The **clean, defensible result is the +16 pp lift** — a flag-only A/B that substantially narrows the EU no-result tail. What it does to the standing-vs-Nominatim is more nuanced than "parity," and the per-locale picture is the honest version. Against #775's Nominatim on the same panels:
 
-|                   |  IT |  PT |  FR |  PL |  AT |  CZ |  AU |
-| ----------------- | --: | --: | --: | --: | --: | --: | --: |
-| mailwoman + lever |  99 |  73 |  81 |  85 |  85 |  71 |  42 |
-| Nominatim (#775)  |  75 |  47 |  59 |  96 |  97 |  88 |  97 |
+|                    |  IT |  PT |  FR |  PL |  AT |  CZ |  AU |
+| ------------------ | --: | --: | --: | --: | --: | --: | --: |
+| mailwoman + change |  99 |  73 |  81 |  85 |  85 |  71 |  42 |
+| Nominatim (#775)   |  75 |  47 |  59 |  96 |  97 |  88 |  97 |
 
-So with the lever on, mailwoman **leads** on IT/PT/FR and still **trails** on PL/AT/CZ (narrowed, not closed) and AU (the cross-state problem the country gate can't touch). The aggregates land ~79% each — but that's a _mix_ (the IT/PT/FR leads offset the Slavic/German/AU trails), **not** a uniform catch-up. And it's a **cross-harness** comparison: the e2e grades mailwoman more leniently than #775 did (e2e IT 99 vs #775's 92), so a same-harness run could put mailwoman-with-lever _below_ 79%. **The honest claim: the lever makes mailwoman competitive on EU aggregate and ahead on several countries — not "matches Nominatim across EU."** Confirm the aggregate standing with a single-harness mailwoman-vs-Nominatim run before claiming parity.
+So with the change on, mailwoman **leads** on IT/PT/FR and still **trails** on PL/AT/CZ (narrowed, not closed) and AU (the cross-state problem the country gate can't touch). The aggregates land ~79% each — but that's a _mix_ (the IT/PT/FR leads offset the Slavic/German/AU trails), **not** a uniform catch-up. And it's a **cross-harness** comparison: the e2e grades mailwoman more leniently than #775 did (e2e IT 99 vs #775's 92), so a same-harness run could put mailwoman-with-change _below_ 79%. **The honest claim: the change makes mailwoman competitive on EU aggregate and ahead on several countries — not "matches Nominatim across EU."** Confirm the aggregate standing with a single-harness mailwoman-vs-Nominatim run before claiming parity.
 
 One process note: the first e2e run reported **+0.0 pp** because `@mailwoman/core` resolves to the _compiled_ `out/` (stale, pre-#780) while the unit tests alias to _source_ — `yarn compile`, then the real +16. Grade the wired path on compiled code, not only source unit tests.
 

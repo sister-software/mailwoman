@@ -159,6 +159,6 @@ latency. **Arbitration ships SAFE and default-OFF; it is not promoted.**
 The durable findings: (1) the `v0-only` arena column conflates "neural is wrong" with "neural is
 _differently right_" — arbitrating toward v0 captures both, and the second kind is harmful; (2) for a
 model this strong on the addresses we serve, rule-vs-neural arbitration toward v0 is not a quality
-lever. The implementation + the safe fix-v1 are banked behind the flag, with the gate instruments, should a
+change. The implementation + the safe fix-v1 are banked behind the flag, with the gate instruments, should a
 weaker model, a new locale, or a per-tag config (where the data shows arbitration nets positive on a
 specific tag) make it worth revisiting.

@@ -1,15 +1,15 @@
 ---
 sidebar_position: 16
-title: Training recipe levers
+title: Training recipe settings
 ---
 
-# Training recipe levers
+# Training recipe settings
 
-Every training run is defined by a YAML config with ~30 knobs. Most interact. This document catalogues each lever, what it does, how we arrived at the current value, what happens when you move it, and where we've found ceilings. The goal is to make the reasoning behind the recipe reproducible — not the recipe itself alone.
+Every training run is defined by a YAML config with ~30 knobs. Most interact. This document catalogues each setting, what it does, how we arrived at the current value, what happens when you move it, and where we've found ceilings. The goal is to make the reasoning behind the recipe reproducible — not the recipe itself alone.
 
 Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 100K steps). Both trained on corpus-v0.4.0 with the A1 tokenizer.
 
-## Architecture levers
+## Architecture settings
 
 ### `hidden_size`
 
@@ -61,7 +61,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **Whether they helped.** Unclear from the current data — we haven't run h384 + CE-only WITHOUT phrase priors on A100 to isolate the contribution. The 0.633 vs 0.621 delta between v0.5.1 and v0.5.0 conflates h384 + phrase priors + class weights + direct batch + more steps. An ablation (h384 + CE-only + phrase priors OFF) would isolate it.
 
-## Loss levers
+## Loss settings
 
 ### `crf_loss_weight`
 
@@ -108,7 +108,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **Next experiment.** label_smoothing=0.1 is the standard starting point. Expected effect: slightly lower peak macro_f1 (the model hedges its predictions) but better-calibrated confidence scores.
 
-## Optimizer levers
+## Optimizer settings
 
 ### `learning_rate`
 
@@ -164,13 +164,13 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **Downside.** Constant LR can overfit faster (no LR decay to slow learning in late training). The v0.5.1 overfitting past step 65K may partly be caused by constant LR — cosine decay would reduce the learning rate by that point, slowing the overfitting. A future experiment: constant LR for the first 60K steps (validation), then cosine decay for the remaining 40K (refinement).
 
-## Data levers
+## Data settings
 
 ### `source_weights`
 
 **What it does.** Per-source sampling weights in the training data loader. Higher weight = more rows from that source in each epoch.
 
-Current values are carried from v0.4.0's §4 source rebalance (the only recipe lever that shipped clean in v0.4.0):
+Current values are carried from v0.4.0's §4 source rebalance (the only recipe setting that shipped clean in v0.4.0):
 
 | Source         | Weight  | Why                                                                                                                                                     |
 | -------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -207,7 +207,7 @@ Current values are carried from v0.4.0's §4 source rebalance (the only recipe l
 
 3. **Reconciler ceiling.** Hybrid-joint improved exact-match from 0.1% to 6.0% with v0.5.0 weights. Whether this improves further with v0.5.1 weights depends on the classifier putting better alternatives in its top-K. The reconciler can only re-rank what exists.
 
-4. **Calibration ceiling.** The 54.5% overconfident-wrong rate with v0.5.0 weights is a first-generation model problem. label_smoothing and temperature scaling are unexplored levers. The reconciler masks this at the pipeline level (0.1% overconfident-wrong) but per-model calibration would help all modes.
+4. **Calibration ceiling.** The 54.5% overconfident-wrong rate with v0.5.0 weights is a first-generation model problem. label_smoothing and temperature scaling are unexplored settings. The reconciler masks this at the pipeline level (0.1% overconfident-wrong) but per-model calibration would help all modes.
 
 ## See also
 

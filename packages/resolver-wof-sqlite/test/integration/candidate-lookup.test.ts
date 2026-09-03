@@ -96,7 +96,7 @@ function buildFixtureAdmin(path: string): void {
 
 		-- The #1717 stage-2 containment board, the Weimar shape: 'Marwei' DE (60 k, under region Thuria)
 		-- vs a MORE-populous US namesake (2.0 M, under region Texia). Population-first answers the US one
-		-- and a hard country=US filter hides the DE one entirely; the containment lever must answer the
+		-- and a hard country=US filter hides the DE one entirely; the containment setting must answer the
 		-- DE one in BOTH postures (reorder worldwide, inject under the scope).
 		INSERT INTO spr VALUES (900, 'Thuria', 'region', 'DE', 50.9, 11.0, 50.0, 10.0, 51.5, 12.0, -1, 0);
 		INSERT INTO spr VALUES (901, 'Marwei', 'locality', 'DE', 50.98, 11.32, 50.9, 11.2, 51.1, 11.4, -1, 0);
@@ -610,7 +610,7 @@ describe("rankByPrimaryPreference (bounded cross-country primary preference)", (
 	})
 })
 
-describe("rankByPrimaryPreference — exonym-collision band (δ=1.0 population-ratio lever, regression lock)", () => {
+describe("rankByPrimaryPreference — exonym-collision band (δ=1.0 population-ratio setting, regression lock)", () => {
 	// THE RULE, locked here so it can't silently drift: δ=1.0 (PRIMARY_PREFERENCE_LOG10) means a
 	// cross-country ALIAS must be ≥10x more populous than the same-key foreign PRIMARY to win; below 10x the
 	// primary wins and the alias is demoted out of the exact tier. This is a population-RATIO proxy for
@@ -627,7 +627,7 @@ describe("rankByPrimaryPreference — exonym-collision band (δ=1.0 population-r
 	const AT = 4
 
 	// A row from a raw population — build-candidate stores neg_rank = -log10(population + 1), so the pure
-	// lever sees exactly the ratios below (alias wins iff (aliasPop + 1) / (primaryPop + 1) > 10).
+	// setting sees exactly the ratios below (alias wins iff (aliasPop + 1) / (primaryPop + 1) > 10).
 	const pop = (population: number, is_primary: number, country_id: number) => ({
 		neg_rank: -Math.log10(population + 1),
 		is_primary,
@@ -661,10 +661,10 @@ describe("rankByPrimaryPreference — exonym-collision band (δ=1.0 population-r
 		expect(under[0]!.is_primary).toBe(1)
 	})
 
-	test("SAME-country collision is unaffected by the ratio lever — population-first at any ratio", () => {
+	test("SAME-country collision is unaffected by the ratio setting — population-first at any ratio", () => {
 		// primary US 100k vs alias US 950k (same country) → no penalty → the bigger alias wins even at ~9.5x
 		// (below the cross-country bar) and is never demoted. A naive `is_primary DESC` would wrongly pick the
-		// primary here — this is the guard that the lever stays CROSS-country-only.
+		// primary here — this is the guard that the setting stays CROSS-country-only.
 		const ranked = rankByPrimaryPreference([pop(950_000, 0, US), pop(100_000, 1, US)], 5)
 		expect(ranked[0]!.is_primary).toBe(0)
 		expect(ranked[0]!.demoted).toBe(false)
@@ -1104,7 +1104,7 @@ describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
 	// namesake (2.0 M). Population-first answers the US one; a country=US scope hides the DE one; the
 	// qualifier must answer the DE one in both postures. The board-measured mechanism (2026-08-18):
 	// the locale-inferred hard filter partitions the true instance out of the list BEFORE any
-	// comparator, so a reorder-only lever would be inert — the #1729 class, which is why these
+	// comparator, so a reorder-only setting would be inert — the #1729 class, which is why these
 	// fixtures pin INJECTION, not just ordering.
 
 	test("#1731: a contained NEIGHBOURHOOD is injected past the locality filter group", async () => {
@@ -1252,7 +1252,7 @@ describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
 
 		const hits = await lk.findPlace({ text: "Marwei", placetype: "locality", regionQualifier: "Thuria", limit: 5 })
 
-		// Population-first, unmoved — and NO stamp, so the walk reports the lever `unavailable`
+		// Population-first, unmoved — and NO stamp, so the walk reports the setting `unavailable`
 		// rather than reading the absence as "not contained" (meaning-of-zero).
 		expect(hits.map((h) => h.id)).toEqual([902, 901])
 		expect(hits.every((h) => !("containedByQualifier" in h))).toBe(true)

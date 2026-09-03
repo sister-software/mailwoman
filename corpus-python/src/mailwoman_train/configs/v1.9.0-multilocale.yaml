@@ -1,5 +1,5 @@
-# === v1.9.0-multilocale (the multi-locale parse-recall lever, #148) ============================
-# Clone of v1.8.0-fr-admin-split (production-default lineage) with ONE added lever: the
+# === v1.9.0-multilocale (the multi-locale parse-recall change, #148) ============================
+# Clone of v1.8.0-fr-admin-split (production-default lineage) with ONE added change: the
 # `overture-multilocale` slice — ~150k real Overture address rows EACH across 20 EU locales
 # (ES/IT/NL/PT/BE/PL/DE/AT/CH/CZ/DK/NO/SE/FI/IE/GB/SK/SI/HR/HU), ~3M rows total. The model is
 # en-us/fr-trained and never saw non-en/fr street + locality formats; the 8-locale assembled-
@@ -17,7 +17,7 @@
 # first: at the step-2000/4000 checkpoint, run scripts/eval/nonus-coord-panel.ts — mid-tier resolve
 # (PT/PL/AT/CZ, pre-registered ~50%) must MOVE UP, AND the US/FR golden guardrail must hold (US
 # per-locale-f1 not worse >1pp; FR centroid flat). If mid-tier resolve is flat at 2-4k, KILL (the
-# lever or the weight is wrong) before the full 40k. NOT promoted without operator GO (model swap).
+# change or the weight is wrong) before the full 40k. NOT promoted without operator GO (model swap).
 # CORPUS: corpus-v0.8.0 (base, incl. fr-admin-split) + overture-multilocale overlay -> R2 -> sync.
 # Launch: modal run -d scripts/modal/train_remote.py --config v1.9.0-multilocale.yaml --resume none
 data:
@@ -68,7 +68,7 @@ data:
     synth-po-box-cedex: 1.5
     synth-affix: 2.0
     synth-country: 2.0
-    # #148 lever: the multi-locale EU slice. Weight 3.0 — solid EU exposure (each locale's ~150k rows
+    # #148 change: the multi-locale EU slice. Weight 3.0 — solid EU exposure (each locale's ~150k rows
     # get comparable weighted mass to fr-admin-split's 60k*6.0) without dominating the US-heavy base;
     # the step-2000 diagnostic gate adjudicates dilution (lower if US/FR regress, raise if mid-tier flat).
     overture: 3.0

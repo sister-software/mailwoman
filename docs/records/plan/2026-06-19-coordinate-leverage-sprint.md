@@ -1,5 +1,5 @@
 ---
-title: "Sprint: coordinate-leverage routing (reranker vs coverage vs multi-locale)"
+title: "Sprint: coordinate-changeage routing (reranker vs coverage vs multi-locale)"
 ---
 
 # Sprint: where the next coordinate gains live
@@ -130,7 +130,7 @@ coverage gap is ~2% on this sample (it bet 12–15%).
 `Essex Junction Village`, `Saint Albans City` vs `Saint Albans Town` (VT town/city/village splits);
 `Dakota Dunes`, `Pennco` (SD CDPs); `Yankton County`. OpenAddresses' "city" field is frequently a civil
 township / village / CDP that WOF does not model as a `locality`. **So the first, lowest-cost US
-coverage lever is a granularity/alias mapping (OA-city → WOF place; CDP/localadmin resolution), NOT a
+coverage change is a granularity/alias mapping (OA-city → WOF place; CDP/localadmin resolution), NOT a
 WOF re-ingest** — the places largely exist, they're modelled at a different granularity.
 
 **Honest caveats (do not over-read):**
@@ -144,7 +144,7 @@ WOF re-ingest** — the places largely exist, they're modelled at a different gr
   if real traffic is noisier, ranking headroom could be higher. Worth a degraded-input probe before
   fully closing the reranker door, but on clean data it is unambiguously DOA.
 
-**Net:** for US, do not build a reranker. The coordinate lever is coverage, and specifically the
+**Net:** for US, do not build a reranker. The coordinate change is coverage, and specifically the
 township/CDP granularity mapping. Whether US-coverage or EU-coverage is the sprint's priority is the
 strategic fork below.
 
@@ -195,11 +195,11 @@ Volume-weighting is **circular** for us. "US is ~65% of queries" is an artifact 
 serve (a US-centric model + US/DE/FR-only gazetteer), not where the strategic value is — mailwoman is
 positioned as a **sovereign, EU-first, multi-locale** alternative to Google geocoding. So the matrix is
 computed **twice**: current-volume-weighted (optimize the book we have) **and** EU-strategic-weighted
-(the book we're trying to win). If the two weightings route to different levers — likely: US says
+(the book we're trying to win). If the two weightings route to different changes — likely: US says
 "reranker or US-coverage," EU says "gazetteer ingest" — that divergence is the strategic decision, and
 it is the operator's to make. The diagnostic's job is to make it explicit, not to pick.
 
-## Workstream B (conditional, post-diagnostic): the chosen lever
+## Workstream B (conditional, post-diagnostic): the chosen change
 
 Whichever the matrix routes to. If it's the **reranker**, the eval is pre-registered now so an
 in-distribution win cannot fool us (our GBM record-matcher's TX→CA over-fit + "smokes-mislead-at-scale"
@@ -280,10 +280,10 @@ postcode prefix — so the held-out strings don't match the gazetteer names. Rea
 that normalization (or the model to learn it); the gazetteer itself is fine.
 
 The control rows (ES/IT/NL) are unchanged from the global WOF path — the Overture backfill regressed
-nothing. The remaining levers are **resolve-rate** (the 34–70% locales: more Overture/postcode
+nothing. The remaining changes are **resolve-rate** (the 34–70% locales: more Overture/postcode
 coverage on the unresolved fraction) and the **p90 tail** (wrong-place name collisions — note IT, a
 covered control, also tails to 118 km, so this is a general resolver-ranking job: population tiebreak /
-postcode constraint, not specific to the new locales). Neither is a parser-retrain lever.
+postcode constraint, not specific to the new locales). Neither is a parser-retrain change.
 
 The staging DB (`admin-global-priority-eu.db`) is built and validated; promoting it to the shipped
 `admin-global-priority.db` is the gated canonical-DB swap awaiting operator GO.

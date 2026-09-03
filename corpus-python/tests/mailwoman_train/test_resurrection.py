@@ -1,4 +1,4 @@
-"""Dead-tag resurrection levers (#456/#1100): reinit_label_rows + classifier_learning_rate.
+"""Dead-tag resurrection changes (#456/#1100): reinit_label_rows + classifier_learning_rate.
 
 Adam's update is gradient-scale-invariant, so a gradient hook on rows 7/8 cannot create an
 effective per-row LR — the carve-out must be a real param group over the whole classifier

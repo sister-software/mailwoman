@@ -302,7 +302,7 @@ class WOFResolver implements Resolver {
 			await applyRegionCountryCoherence(newRoots, this.#backend, state.defaultCountry)
 		}
 
-		// Postcode-consistency (#370 "Lever A"): default-ON (promoted 2026-07-04 — the corrected check:
+		// Postcode-consistency (#370 "Change A"): default-ON (promoted 2026-07-04 — the corrected check:
 		// FI 231/0, SI 37/6, CZ 47/2, US byte-flat; see the ResolveOpts docstring). After the admin walk
 		// (needs both the locality and the postcode resolved) and before the street tiers (which key off
 		// the postcode/street, not the locality coordinate this adjusts). `false` opts out, byte-stable.
@@ -804,7 +804,7 @@ class WOFResolver implements Resolver {
 			rec.stage("anchor", ranked)
 		}
 
-		// Locale-country soft prior (#27) — the #912 lever's other half, at the tier that decides a bare
+		// Locale-country soft prior (#27) — the #912 change's other half, at the tier that decides a bare
 		// toponym the model tagged `locality`. `--locale en-GB "Whitby"` answers Whitby, Ontario while
 		// `--default-country GB "Whitby"` answers the gold, because the CLI DROPS the locale-inferred
 		// country for this shape rather than choosing between "hard filter" and "nothing". This is the
@@ -852,7 +852,7 @@ class WOFResolver implements Resolver {
 		// above, because the qualifier is the address's OWN text — evidence, which outranks a prior. The
 		// backend already put contained rows first; this second partition is required, not belt-and-
 		// braces: `rankByImportance` just re-ordered the exact tier by fame, and Richmond, Virginia
-		// outscores Richmond, North Yorkshire on importance — without this the lever loses exactly where
+		// outscores Richmond, North Yorkshire on importance — without this the change loses exactly where
 		// fame disagrees with the qualifier (the shared-function partition, tier-safe + stable, so it can
 		// never promote a contained partial match over an exact one). No stamps → identity → byte-stable
 		// on any backend that ignored `regionQualifier`.

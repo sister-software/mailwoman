@@ -1,6 +1,6 @@
 # === v4.3.3-cooldown46k — WSD-style decay branch of the v4.3.3 step-040000 checkpoint ===
 #
-# HYPOTHESIS (2026-08-10 recipe review, lever 11): every graded v4.3.3 checkpoint sat mid-cosine
+# HYPOTHESIS (2026-08-10 recipe review, change 11): every graded v4.3.3 checkpoint sat mid-cosine
 # at 26-93% of peak LR; the schedule literature (Chinchilla schedule-matching; Hagele 2024
 # arXiv:2405.18392; MiniCPM arXiv:2404.06395) says such reads understate the finished model, and
 # that decaying a mid-run checkpoint's LR to zero over a short branch recovers approximately the

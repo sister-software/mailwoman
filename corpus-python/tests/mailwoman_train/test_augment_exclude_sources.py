@@ -1,4 +1,4 @@
-"""Augmentation-pool exclusion (2026-08-10 recipe review, lever 12).
+"""Augmentation-pool exclusion (2026-08-10 recipe review, change 12).
 
 Augmented copies fill 25.5% of the emitted row budget (full-epoch mixture audit), and copies
 of an OVERSAMPLED synthetic slice are near-duplicates that compound its repetition dose while

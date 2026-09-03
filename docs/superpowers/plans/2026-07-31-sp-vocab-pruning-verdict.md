@@ -29,7 +29,7 @@ fired-1–99 "weak" pieces) would add 5.5 MB — and that band is practiced, so 
 
 ## Verdict
 
-The lever as surveyed — "embedding is ~72.5% of params at ≤24% utilization" implying a
+The change as surveyed — "embedding is ~72.5% of params at ≤24% utilization" implying a
 half-size-class prune — **does not exist**. 3.7 MB at the cost of a permanent id-remap coupling
 between tokenizer.model and model.onnx (a new invariant surface every future fine-tune, splice,
 and the browser loader must respect) is a bad trade. Not built, not shipped.

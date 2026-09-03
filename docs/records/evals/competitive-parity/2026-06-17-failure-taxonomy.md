@@ -18,13 +18,13 @@ carry their eval's date so staleness is visible.
 - **deferred** — measured, a fix exists or was tried, and we consciously did not ship it (with a reason).
 - **rejected** — a fix was built and the eval said it didn't earn its place.
 
-The most important column is **lever / root cause**: it's what turns a number into a next step.
+The most important column is **change / root cause**: it's what turns a number into a next step.
 
 ---
 
 ## 1. Input-shape failures
 
-| class                                   | measured                                              | engine | status | lever / root cause                                                                                   | source                                 |
+| class                                   | measured                                              | engine | status | change / root cause                                                                                  | source                                 |
 | --------------------------------------- | ----------------------------------------------------- | ------ | ------ | ---------------------------------------------------------------------------------------------------- | -------------------------------------- |
 | all-caps input                          | locality 90.1% → **99.7%** fixed (1172 TX facilities) | neural | fixed  | OOD case (`PALESTINE`→`ALESTINE`); title-case detected all-caps before the model (#690, default-OFF) | 2026-06-17-geocoder-vs-provided-coords |
 | intersection (`A & B`)                  | 82% correct structure (templated)                     | neural | open   | ~1-in-6 trip; thin corpus coverage of the bare form                                                  | 2026-06-17-per-type-headtohead         |
@@ -37,19 +37,19 @@ artifact (#694) — see §4.
 
 ## 2. Locale / script failures
 
-| class                                    | measured                              | engine | status   | lever / root cause                                                                                                                                                       | source                                        |
+| class                                    | measured                              | engine | status   | change / root cause                                                                                                                                                      | source                                        |
 | ---------------------------------------- | ------------------------------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------- |
 | fr.house_number (postcode-first reorder) | 87.4% vs a 91% pre-registered floor   | neural | deferred | positional shortcut learned on canonical data; the floor was mis-calibrated for the reordered case (SOTA ~90–91); weight falsified — needs real data, not another weight | 2026-06-13-fr-house-number-threshold-research |
 | fr.region (golden dev)                   | 16.2% → 25.6% (v4.4.0)                | neural | open     | unfloored; FR has no real reordered data to train on                                                                                                                     | parity-scorecard-2026-06-11                   |
 | non-Latin / thin-coverage locales        | in-map right-country ~26–35% (NL, KR) | neural | open     | en-US-centric training; no locale-native eval set for non-Latin script                                                                                                   | 2026-06-14-coarse-placer-arc-postmortem       |
 
-Locale is the deepest open frontier and the one least amenable to a code lever: the recurring finding
+Locale is the deepest open frontier and the one least amenable to a code change: the recurring finding
 (fr.house_number) is that **weight tuning is exhausted** — the next move is real reordered/native data,
 not another loss-mask or weight bump.
 
 ## 3. Format failures (po_box, intersection, unit, delimiters)
 
-| class                             | measured                                                 | engine | status       | lever / root cause                                                                                                | source                         |
+| class                             | measured                                                 | engine | status       | change / root cause                                                                                               | source                         |
 | --------------------------------- | -------------------------------------------------------- | ------ | ------------ | ----------------------------------------------------------------------------------------------------------------- | ------------------------------ |
 | po_box (dotted leader)            | 60% fail → 87% (span bridge) → 89% (separator exclusion) | neural | fixed        | tokenizer dropped standalone punctuation; corrected at decode                                                     | 2026-06-11-v4.4.0-ship-gate    |
 | intersection (real TIGER extract) | 100% (real-OOD) vs 82% templated                         | neural | fixed        | a real extract beats synthetic templates                                                                          | 2026-06-11-v4.4.0-ship-gate    |
@@ -63,7 +63,7 @@ useful negative result — the eval gate stopped a plausible-but-wrong revival.
 
 ## 4. Geocoder coverage / accuracy
 
-| class                        | measured                                                                              | engine   | status         | lever / root cause                                                               | source                                  |
+| class                        | measured                                                                              | engine   | status         | change / root cause                                                              | source                                  |
 | ---------------------------- | ------------------------------------------------------------------------------------- | -------- | -------------- | -------------------------------------------------------------------------------- | --------------------------------------- |
 | admin-centroid fallback      | ~40% of TX facilities fall back (p50 3.4 km, p99 catastrophic)                        | resolver | open           | **coverage**, not precision — no rooftop/interp extract hit on the parsed street | 2026-06-17-geocoder-vs-provided-coords  |
 | rooftop (address_point) tier | fires 47%; **0.7 km** p50 where it fires                                              | resolver | open           | coverage is the frontier — accuracy is solved when a extract has the point       | 2026-06-17-geocoder-vs-provided-coords  |
@@ -72,13 +72,13 @@ useful negative result — the eval gate stopped a plausible-but-wrong revival.
 | in-map wrong-region misroute | **0 / 2000** across 10 countries                                                      | resolver | fixed          | the soft prior re-rank never misroutes (tier-safe)                               | 2026-06-14-coarse-placer-arc-postmortem |
 
 The headline: where the finer tiers fire, the geocoder is rooftop-accurate (0.1–0.7 km, calibrated). The
-open problem is **coverage** — ~40% fall back to a city centroid for lack of a extract. That's a data lever
+open problem is **coverage** — ~40% fall back to a city centroid for lack of a extract. That's a data change
 (more situs/interpolation extracts), not a model one. See the companion concept note on coordinate
 sufficiency ("How close is close enough?") for what these tiers are _worth_ per use-case.
 
 ## 5. Parity gaps & boundary instability
 
-| class                       | measured                                            | engine | status          | lever / root cause                                                                               | source                      |
+| class                       | measured                                            | engine | status          | change / root cause                                                                              | source                      |
 | --------------------------- | --------------------------------------------------- | ------ | --------------- | ------------------------------------------------------------------------------------------------ | --------------------------- |
 | us.street (golden dev)      | 75.5% → 77.9% (below the 80% bar)                   | neural | open            | street-eats-affix boundary wobble; #511 helped affixes but didn't fully recover street precision | parity-scorecard-2026-06-11 |
 | us.locality (golden dev)    | 60.1% → 75.7% (below 80%)                           | neural | open            | improving, but still under the canonical bar — note it _beats_ v0 on OA-clean (§6)               | parity-scorecard-2026-06-11 |
@@ -86,7 +86,7 @@ sufficiency ("How close is close enough?") for what these tiers are _worth_ per 
 
 The connective tissue across §1, §5: **token-boundary instability** (street eats affix, region+postcode
 glue, directional wobble, dotted-abbreviation absorption) is one failure _family_ surfacing under many
-names. It's the most leveraged single area — a boundary-aware decode lever would touch several rows.
+names. It's the most leveraged single area — a boundary-aware decode change would touch several rows.
 
 ## 6. The inverse — capability asymmetries (wins worth defending)
 
@@ -113,9 +113,9 @@ gap.
 
 ## What the table says about the roadmap
 
-1. **Boundary instability is the highest-leverage parser lever** — it's one family (§1 dotted, §5 street/glue, §6 within-token) under many names; a boundary-aware decode would move several rows at once.
+1. **Boundary instability is the highest-changeage parser change** — it's one family (§1 dotted, §5 street/glue, §6 within-token) under many names; a boundary-aware decode would move several rows at once.
 2. **Geocoder accuracy is solved; coverage is the frontier** — the ~40% admin fallback is a extract-data problem, not a model one (§4).
-3. **Locale is a data problem, not a weight problem** — fr.house_number falsified weight tuning; real reordered/native data is the only remaining lever (§2).
+3. **Locale is a data problem, not a weight problem** — fr.house_number falsified weight tuning; real reordered/native data is the only remaining change (§2).
 4. **The eval gate earns its keep** — the rejected paired-delimiter proposer (§3) and the deferred geocoder wiring (§4, #694) are both cases where a plausible change was stopped by a measured regression. Keep grading the assembled output, not label-F1 (the #566 discipline).
 
 _Sources: all rows cite a dated eval under `docs/articles/evals/`. Re-run the named eval to refresh._

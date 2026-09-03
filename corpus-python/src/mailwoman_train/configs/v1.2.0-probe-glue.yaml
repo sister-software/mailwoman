@@ -3,7 +3,7 @@
 # augmentation, PR #514 — fuse region+postcode in raw, labels stay split via char projection).
 # Resume the v1.1.0 step-040000 (copied to a fresh dir), +4k. PRE-REGISTERED READ: the perturb
 # arena's glue rows (the ~25-30 "NY14201" class) recover at +4k AND affix floors hold (32-row
-# 78/67, v2 85/85) AND US postcode >= 97. Fail -> the lever doesn't ride v4.4.0.
+# 78/67, v2 85/85) AND US postcode >= 97. Fail -> the change doesn't ride v4.4.0.
 # Launch: modal run -d scripts/modal/train_remote.py --config v1.2.0-probe-glue.yaml --resume auto
 data:
   corpus_dir: /data/corpus/versioned/v0.4.12-consolidation/corpus-v0.4.12-consolidation
@@ -29,7 +29,7 @@ data:
     synth-po-box: 1.5
     synth-intersection: 0.2
     synth-german: 6.0
-    # Every proven lever rides at its solo-validated weight.
+    # Every proven change rides at its solo-validated weight.
     synth-unit: 1.5
     synth-affix: 2.0
     synth-country: 2.0
@@ -45,7 +45,7 @@ data:
   # The v0.9.12 US-postcode fix (#468): zero the gazetteer clue on tokens adjacent to a postcode-anchor
   # hit, at train time (paired with classifier.suppressGazetteerNearPostcode at inference). First trained here.
   gazetteer_choreography: true
-  # THE #511 lever: end the base-vs-slice affix label contradiction (probe-validated v1.0.6).
+  # THE #511 change: end the base-vs-slice affix label contradiction (probe-validated v1.0.6).
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
 
 model:

@@ -80,7 +80,7 @@ boarding them is not a plan).
 
 **Scope: data + loader + offline probe. NO decode wiring, and the header ships with NO `delta`** —
 a calibrated bias is a later rung's output, and an artifact carrying an unmeasured one would ship a
-lever nobody measured.
+change nobody measured.
 
 **Pre-registered bars:**
 

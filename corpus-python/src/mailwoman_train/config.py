@@ -401,7 +401,7 @@ class TrainConfig:
     # smoke window masks divergence by collapsing LR before the loss curve shows it; the
     # constant-LR mode keeps the signal visible. See the ref doc for when to pick which.
     lr_schedule: str = "cosine"
-    # ``"linear_cooldown"``'s branch point (2026-08-10 recipe review, lever 11): resume a
+    # ``"linear_cooldown"``'s branch point (2026-08-10 recipe review, setting 11): resume a
     # mid-schedule checkpoint at this step with ``learning_rate`` set to that checkpoint's
     # CURRENT (tail) LR; multiplier holds 1.0 through the start, then decays linearly to zero
     # at ``max_steps`` — the WSD-style read of a mid-cosine checkpoint's finished-schedule
@@ -449,8 +449,8 @@ class TrainConfig:
     # "Parallel training-side experiment"): every param NOT starting with one of these prefixes
     # gets requires_grad=False; matches stay trainable. Empty (default) = no-op, byte-identical
     # to every prior recipe. Mutually exclusive with freeze_encoder/freeze_token_embeddings — the
-    # three levers overlap in intent (encoder-representation exclusion) and combining them would
-    # make the "which lever did it" attribution ambiguous. See train.py's application site (mirrors
+    # three settings overlap in intent (encoder-representation exclusion) and combining them would
+    # make the "which setting did it" attribution ambiguous. See train.py's application site (mirrors
     # the freeze_encoder idiom: loud count print, raise-if-no-match) and build_optimizer's
     # empty-base-group handling for the classifier-only case.
     trainable_only_prefixes: list[str] = field(default_factory=list)
@@ -502,7 +502,7 @@ def _merge(
     key RAISES, naming the full dotted path and the config source — the 2026-07-22
     en-GB probe run A burned a launch cycle when a YAML carrying
     ``train.reinit_label_rows`` + ``train.classifier_learning_rate`` met a volume-side
-    config that predated those fields and the levers went inert with zero signal
+    config that predated those fields and the settings went inert with zero signal
     (#1248). Config guards raise, same discipline as the YAML-Norway guard below.
 
     ``strict=False`` is the override: unknown keys are silently skipped (the

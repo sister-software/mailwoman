@@ -41,7 +41,7 @@ data:
   country_weights:
     US: 1.0
     FR: 1.0
-  # Carry-over of v0.4.0's source rebalance (the only §-recipe lever that shipped clean
+  # Carry-over of v0.4.0's source rebalance (the only §-recipe change that shipped clean
   # in v0.4.0). Re-evaluate after the first v0.5.0 eval run — corpus-v0.4.0's adversarial
   # additions may shift the optimal mix.
   source_weights:

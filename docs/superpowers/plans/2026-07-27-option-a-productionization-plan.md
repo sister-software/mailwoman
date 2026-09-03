@@ -60,12 +60,12 @@ doctrine (operator-ratified) is required: evidence value peaks in the register u
 
 - The promotion ships model + lexicons together (tokenizer-mismatch discipline applies to lexicons
   now too: the card pins their identities).
-- Decode-surface retirement check (SCOPE invariant 4): which FST-prior/gate levers does the trained
+- Decode-surface retirement check (SCOPE invariant 4): which FST-prior/gate changes does the trained
   bundle subsume? Measured head-to-head; retire what it beats — the anti-hellscape payoff.
 
 ## Open research items (named, not blocking Phases 1–2)
 
-- **Street channel × lowercase × house-number** (the −0.19 class): levers = feed case-augmentation
+- **Street channel × lowercase × house-number** (the −0.19 class): changes = feed case-augmentation
   bump, street-channel presence-noise, `normalizeCase`-for-lowercase (its own product arc). Phase 3
   carries it as a watched class with its own bar, not a blocker.
 - The ambiguity field (`crossCountryBranches`, 6.6.5 candidates) as a continuous third dim — only

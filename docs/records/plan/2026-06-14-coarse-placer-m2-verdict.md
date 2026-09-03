@@ -63,7 +63,7 @@ component min.
 On the assembled gate the threshold is a **flat optimum** in [0.5, 0.9] (identical 9 wins / 0 regressions —
 the homograph wins are all high-mass). So we keep **`abstainBelow` 0.9**: it captures every win, keeps
 off-map catch high on the component (≈88% at 0.9-ish), and minimizes in-map _misrouting_ exposure (inject
-only when confident). The rule — not the threshold — is the M2 lever (+5.9pp in-map over max-prob).
+only when confident). The rule — not the threshold — is the M2 change (+5.9pp in-map over max-prob).
 
 ## Status + what's gated
 

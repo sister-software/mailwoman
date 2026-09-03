@@ -14,14 +14,14 @@
 # bare-locality, which requires the street WITHOUT a number so the model can't lean on the digit. This
 # is exactly the fr-fragment fix (which moved its analogue +50pp). knob 1 concentrates the signal there.
 # B4c (the vocab splice) is CLOSED as a diffuse-cost trade (scratchpad/deepparse-cmp/NUMSPLICE-8k-verdict.md);
-# this corpus lever cannot perturb the numeric manifold the way the tokenizer surgery did.
+# this corpus change cannot perturb the numeric manifold the way the tokenizer surgery did.
 #
 # THE MEASURED PROBLEM (board 3, n=400/class, 95% Wilson, SHIPPED v310, zero Norwegian rows pre-#1145):
 #     bare-street-hn   "Hallingrudveien 32"   0.693 [0.646, 0.736]   <- TARGET (no postcode competing)
 #
 # MOVE  : bare-street-hn CLEARS the bar v3.3.0 missed — clear motion, i.e. its lower CI clears v310's
 #         UPPER CI (0.736), so ~>=0.78. +1.7pp with overlapping CIs (v3.3.0) does not count. Falsifier:
-#         if 0.70 still does not clear, the corpus lever is refuted for this defect and digit-ownership
+#         if 0.70 still does not clear, the corpus change is refuted for this defect and digit-ownership
 #         closes (numsplice already closed) — a real, decision-ending result.
 # GUARD : bare-pc (negative class) HOLDS at 1.000 — the model must not stop emitting postcode.
 # GUARD : street-led-hn / city-first-hn / pc-first-hn do NOT regress from 0.94-0.968.
@@ -100,7 +100,7 @@ data:
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
-    # Track B — the NO house-number-licence lever. 12.0 = the targeted-fix tier
+    # Track B — the NO house-number-licence change. 12.0 = the targeted-fix tier
     # (matches fr-fragment). Bare streets + street+number with NO postcode partner, + counters.
     synth-no-fragment: 12.0
   train_rows_per_epoch: 1000000

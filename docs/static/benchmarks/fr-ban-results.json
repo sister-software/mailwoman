@@ -611,12 +611,12 @@
 				"routed": true
 			},
 			{
-				"input": "35 Rue de Kersivy Vraz, 22660 Trelevern",
+				"input": "35 Rue de Kersivy Vraz, 22660 Trechangen",
 				"expected": {
 					"lat": 48.8066,
 					"lon": -3.371963,
 					"postcode": "22660",
-					"locality": "trelevern"
+					"locality": "trechangen"
 				},
 				"got": {
 					"lat": 48.8066,
@@ -626,7 +626,7 @@
 					"house_number": "35",
 					"street": "Rue de Kersivy Vraz",
 					"postcode": "22660",
-					"locality": "Trelevern"
+					"locality": "Trechangen"
 				},
 				"countryCode": "FR",
 				"tier": "address_point",
@@ -2913,12 +2913,12 @@
 				"routed": true
 			},
 			{
-				"input": "22660 Trelevern, 35 Rue de Kersivy Vraz",
+				"input": "22660 Trechangen, 35 Rue de Kersivy Vraz",
 				"expected": {
 					"lat": 48.8066,
 					"lon": -3.371963,
 					"postcode": "22660",
-					"locality": "trelevern"
+					"locality": "trechangen"
 				},
 				"got": {
 					"lat": 48.8066,
@@ -2928,7 +2928,7 @@
 					"house_number": "35",
 					"street": "Rue de Kersivy Vraz",
 					"postcode": "22660",
-					"locality": "Trelevern"
+					"locality": "Trechangen"
 				},
 				"countryCode": "FR",
 				"tier": "address_point",

@@ -1,6 +1,6 @@
 # === v1.4.0-charoffset (the FIRST char-offset-corpus run) =======================================
 # Identical recipe to v1.3.0-boundary-consolidation (the v4.4.0 ship), retargeted at the v0.5.0
-# CHAR-OFFSET corpus. This is the format-change run: same levers, same source mix, same gates — the
+# CHAR-OFFSET corpus. This is the format-change run: same changes, same source mix, same gates — the
 # ONE variable is that labels now come from the #519 span triple (span_starts/ends/tags) instead of
 # per-token BIO. The loader's span path (PR #534) trains FROM the spans; encode_row realigns them to
 # SentencePiece pieces. Holding the recipe fixed is deliberate: it isolates "did the format change

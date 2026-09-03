@@ -12,7 +12,7 @@
  *   through the compiled CLI on 2026-08-10: `geocode --locale en-US 'Zürich'` returns Zurich, Kansas
  *   (population 81), 8,043 km from the gold; `--locale en-GB 'Zürich'` returns nothing at all.
  *
- *   The fix is the #912 lever, applied where the bare-toponym class is actually decided: when the span
+ *   The fix is the #912 change, applied where the bare-toponym class is actually decided: when the span
  *   covers the WHOLE unqualified input, probe the gazetteer unscoped and let the locale country be an
  *   additive bonus instead of a filter. Everything else — a postcode, a region qualifier, a partial
  *   span — keeps the hard filter byte-for-byte.
@@ -343,13 +343,13 @@ describe("importance key in the admin walk (#17)", () => {
 	})
 
 	/**
-	 * #27 — the OTHER half of the #912 lever. A bare toponym the model tags `locality` never reaches span-rescore (the
+	 * #27 — the OTHER half of the #912 change. A bare toponym the model tags `locality` never reaches span-rescore (the
 	 * tree resolves, so the #685 brake holds), so the soft country prior that fixed `Zürich` cannot see it. The CLI's
 	 * answer today is to drop the locale country entirely, which is why `--locale en-GB Whitby` and `--default-country GB
 	 * Whitby` disagree.
 	 *
 	 * OPT-IN, and the calibration is in `ResolveOpts.localeCountryPrior`: the weight that flips these four is disjoint
-	 * from the weight that holds the en-US board. The lever is here, tested, and off.
+	 * from the weight that holds the en-US board. The change is here, tested, and off.
 	 */
 	it("promotes the in-locale-country namesake when the locale prior is supplied (#27)", async () => {
 		const out = await walk(WHITBY, { localeCountryPrior: "GB" })
@@ -363,7 +363,7 @@ describe("importance key in the admin walk (#17)", () => {
 
 	it("is additive, never a filter — a dominant foreign bearer still wins", async () => {
 		// Paris FR (6.34) over Paris TX (4.40 + 2 = 6.40)? No: the bonus DOES flip this one, which is
-		// exactly why the lever ships off. What must hold is that the prior cannot make a place the
+		// exactly why the change ships off. What must hold is that the prior cannot make a place the
 		// gazetteer never returned appear — `weight: 0` is the identity, and the foreign bearer survives.
 		const out = await walk(WHITBY, { localeCountryPrior: "GB", localeCountryPriorWeight: 0 })
 		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("CA")

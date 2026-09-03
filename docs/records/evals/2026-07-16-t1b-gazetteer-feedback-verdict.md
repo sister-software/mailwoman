@@ -89,7 +89,7 @@ fragments are rare and bare localities are not.
 **This is a positive result for the plan, not a null one.** It removes the last inference-time
 explanation standing between the evidence and the training-distribution hypothesis. T2 (the BAN
 bare-street extract) was already ranked highest-EV by all three reviewers; it is now the only live
-explanation with a lever attached.
+explanation with a change attached.
 
 **Opens — the harness does not run production's configuration.** Found while setting this up:
 

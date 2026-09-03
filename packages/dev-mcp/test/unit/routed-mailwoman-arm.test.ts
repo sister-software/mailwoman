@@ -104,7 +104,7 @@ describe("buildRoutedMailwomanArm", () => {
 
 		expect(deps.buildDeps).toHaveBeenCalledWith({
 			weightsCacheRoot: "/candidate",
-			levers: { gazetteerPrior: false },
+			pins: { gazetteerPrior: false },
 		})
 
 		expect(deps.runOne).toHaveBeenCalledWith("10 Downing Street, London SW1A 2AA", expect.anything(), {
@@ -136,7 +136,7 @@ describe("buildRoutedMailwomanArm", () => {
 		expect(deps.buildDeps).toHaveBeenCalledWith({
 			weightsCacheRoot: "/candidate",
 			candidateDB: "/staging/candidate-variant.db",
-			levers: {
+			pins: {
 				postcodeCountryCoherence: false,
 				gazetteerPrior: false,
 				adminContainmentRerank: true,

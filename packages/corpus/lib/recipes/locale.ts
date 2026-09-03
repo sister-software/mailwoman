@@ -199,7 +199,7 @@ const NL_GLUED_POSTCODE_FRACTION = 0.5
  *   `de`/`di` makes them full names, unlike the German glued-abbreviation class.
  * - ES bilingual slash names (`Laudio/Llodio`; 2.16%): official co-names — the eval expects them verbatim.
  * - IT ALL-CAPS city casing (98.79% of the source, and the eval's observed form): casing is the #829 case-augmentation
- *   lever, not this slice's.
+ *   change, not this slice's.
  */
 export function cleanCityNoise(city: string): string | null {
 	if (/,|\d{4}/.test(city)) return null

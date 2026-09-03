@@ -91,7 +91,7 @@ US 97.2 / FR 84.9 held; no collapse. The region tail did _exactly_ what it was d
 the number we care about, because the number we care about was never capped by the tail. The anchor-on
 international gap is `83.6 − 44.7 = 38.9pp`, four times the 10pp the pre-registered gate allowed.
 
-So the corpus lever — both-order rendering, then the region tail — is **exhausted** for the anchor-on
+So the corpus change — both-order rendering, then the region tail — is **exhausted** for the anchor-on
 international gap. Three independent lines now point at the same place: anchor-off is order-agnostic at ~48%,
 forcing the posterior to `DE=1.0` changed nothing, and rendering the region tail changed nothing. The ceiling
 is the anchor's _structure_ — an additive vector injected at the postcode token, which lands on the wrong side
@@ -161,7 +161,7 @@ rather than dead: give each locale its own anchor direction. The highest-value n
 postcode-after-city, no shared vector forced to compromise. That is a future iteration with its own gate, not
 a one-run patch, so it waits.
 
-One cheap operational lever falls out of (b) in the meantime, no GPU and no retrain: route an input to the
+One cheap operational change falls out of (b) in the meantime, no GPU and no retrain: route an input to the
 `c=0` (anchor-off) path when a lightweight order check — the postcode's position relative to the locality in
 the raw string — says the layout is international, and keep the anchor on when the postcode leads. The
 research-line model would then read native German at 83.5% and international German at ~48%, taking the better

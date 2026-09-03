@@ -124,7 +124,7 @@ readable through `@mailwoman/core/layers` beside the existing manifest.
 4. **Falsifier 3 becomes gradable**: fit the CPT prior only in `surveyed_complete` POI cells; the
    residual then measures the theory, not the coverage. (The poi.db register rebuild — board #26 —
    is the prerequisite and is a REBUILD of the sealed artifact per the standing rule.)
-5. **Benchmark receipts sharpen**: every discrepancy row can terminate in "coverage lever" with a
+5. **Benchmark receipts sharpen**: every discrepancy row can terminate in "coverage change" with a
    cell-level citation instead of an inference.
 
 ## Explicitly out of scope for phase 1

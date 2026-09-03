@@ -172,7 +172,7 @@ shape of the lesson holds, the numbers are ours to measure.
 
 ## Where a model earns its place
 
-The classical core is the v1. Models are selective levers bolted on where the
+The classical core is the v1. Models are selective changes bolted on where the
 evidence says they pay — never the foundation:
 
 - **Org-name embeddings** for fuzzy blocking and similarity. Regex can't see
@@ -224,19 +224,19 @@ The four rules the geocoder already lives by govern the matcher too:
   that silently never compares two records reads as "no match found" — the most
   dangerous lie an ER system can tell.
 
-## The address-frequency lever needs a corpus
+## The address-frequency change needs a corpus
 
 Two records at the same address might be the same clinic — or two of the forty
-providers who share a hospital campus. The matcher's strongest precision lever is
+providers who share a hospital campus. The matcher's strongest precision change is
 [inverse-address-frequency](./spatial-expectation-and-density.mdx): down-weight a shared address by how many distinct
 entities sit on it, so a lonely address is strong evidence of identity and a
 crowded one is nearly none. It's on by default.
 
-But rarity is only meaningful against a population. The lever counts how often each
+But rarity is only meaningful against a population. The change counts how often each
 address appears across the records you hand it — so when you dedupe a _whole_
 dataset, the input is the corpus and it just works. Hand it a thin sample and
 there's nothing to be rare against: every address looks unique, the signal
-flattens, and the lever degrades to baseline with no warning. The fix is cheap — the frequency
+flattens, and the change degrades to baseline with no warning. The fix is cheap — the frequency
 table is a parse-free string scan, no geocoding — so when you're matching a slice,
 build the table over the full source and pass it in. The one thing you can't do is
 conjure rarity from a single record with nothing to compare it to.

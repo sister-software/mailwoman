@@ -1,6 +1,6 @@
 # Boundary-instability: the current model's gap, quantified (#375)
 
-The failure taxonomy named boundary instability the #1 parser lever and the within-token decomposition
+The failure taxonomy named boundary instability the #1 parser change and the within-token decomposition
 (#702) showed it surfacing under many names. The boundary-stress extract (#703) is the training-data fix.
 This is the **"before" baseline** — how badly today's model places these boundaries, on the exact
 synthetic shapes the extract teaches (`scripts/eval/boundary-stress-baseline.ts`, 300 rows/shape through
@@ -59,7 +59,7 @@ caught two things, only one of them a true problem:
 - **The street boundary is the common casualty** (38% / 46% / 43% / 49% across all four shapes): when an
   adjacent component is ambiguous, the street span absorbs or surrenders tokens. One failure, many faces.
 - **house-number-after-street 51%** is the fr.house_number plateau in miniature (the FR/DE
-  number-follows-street order) — this extract's `house-number-after-street` shape targets that lever too.
+  number-follows-street order) — this extract's `house-number-after-street` shape targets that change too.
 
 ## So what
 

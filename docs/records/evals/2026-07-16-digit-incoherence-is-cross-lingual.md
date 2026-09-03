@@ -72,13 +72,13 @@ each other on the same pieces.
 1. **Oversample long house numbers.** The defect is worst at 3+ digits, where the postcode prior is
    strongest. A extract drawn from real NO/PL numbers is mostly 2–3 digits; deliberately weighting
    3–4-digit house numbers aims the signal where the prior is hardest to beat.
-2. **The representation direction is the real lever.** The #727 research says a lower-fertility vocab
+2. **The representation direction is the real change.** The #727 research says a lower-fertility vocab
    is upstream of any head, and this is the digit-specific evidence: a 3-digit number is 3 pieces
    with 2 postcode-leaning continuations _because_ digits tokenize one-per-character. A vocab where
    `178` is one piece removes the continuation-postcode mass entirely. That is a bigger change than a
    extract, and it is the operator's call whether Track B justifies re-opening the vocab work.
 
-## The vocab lever, quantified
+## The vocab change, quantified
 
 The tokenizer (`v0.9.0-multisplice`, 73,143 pieces) carries **exactly two multi-digit numeric
 pieces** — `▁10` and `▁16` — and **none at 3+ digits**. So:

@@ -1,4 +1,4 @@
-# 2026-07-13 — Parity campaign night 1: three cheap levers closed, the data lever confirmed
+# 2026-07-13 — Parity campaign night 1: three cheap changes closed, the data change confirmed
 
 Conn granted ~01:30 UTC (operator nearby). Goal: execute the campaign runbook's probe sequence
 (`docs/superpowers/plans/2026-07-13-parity-campaign-runbook.md`). Gate: `mailwoman eval parity`
@@ -25,7 +25,7 @@ are unmodified).
 
 ## What went well
 
-- **Characterize-before-fix paid three times.** Each closed lever cost minutes and produced a
+- **Characterize-before-fix paid three times.** Each closed change cost minutes and produced a
   mechanism, not just a number: the router can't name fragments; morphology bias trades AU units
   for marginal street recall; a base-corpus sequence prior actively entrenches full-address order
   against the fragment distribution — which is positive evidence FOR the fragment-extract training
@@ -76,10 +76,10 @@ are unmodified).
 ## Probe 1 — the fragment-extract assay (UPDATE, ~06:00 UTC)
 
 Launched after the operator's course-correction ("the shift runs to 15:00 — complete the task"):
-`v2.5.0-fragment-assay` on Modal (init_from the SHIPPED v241 step-012000, one lever = the
+`v2.5.0-fragment-assay` on Modal (init_from the SHIPPED v241 step-012000, one change = the
 123,272-row balanced-polarity fragment extract at weight 6.0, lr 1e-5 constant, 6k steps, ~2h A100).
 
-**Verdict: the data lever is REAL on the current architecture — DeepSeek prediction 2 FALSIFIED.**
+**Verdict: the data change is REAL on the current architecture — DeepSeek prediction 2 FALSIFIED.**
 All separators moved together (no span-exact lag): fragment-dev span-exact 0.142→0.481,
 tag-accuracy 0.241→0.537, trailing-number→postcode 0.218→**0.084**. Parity: street
 0.4033→**0.5333** (+13pp), house_number 0.7273→0.7532, postcode held 0.9861; FR full-agree
@@ -88,7 +88,7 @@ tag-accuracy 0.241→0.537, trailing-number→postcode 0.218→**0.084**. Parity
 class the extract deliberately excluded — extract-v2 material).
 
 Residual street failures after the assay are ~all mangle-class (offset bleed after diacritics),
-i.e. exactly what the splice lever removes → **the consolidation run launched**:
+i.e. exactly what the splice change removes → **the consolidation run launched**:
 `v2.5.1-fragment-splice` (v0.9.0-multisplice tokenizer, FVT mean-init-expanded v241 via the new
 `mean_init_multisplice` modal fn, lr 5e-5/12k — the splice-adaptation idiom). Grades + the
 standard gate set follow when it lands.
@@ -99,7 +99,7 @@ the wof-admin block (base extracts are source-homogeneous+ordered). Everything r
 `iter_batches().to_pylist()`; `build_fragment_extract.py` carries the warning comment.
 
 Scoreboard (session 019f590a): prediction 1 HELD, prediction 3 PARTIALLY HELD, prediction 2
-**FALSIFIED** — structural 2/3. The falsification is the good kind: the cheap lever sufficed where
+**FALSIFIED** — structural 2/3. The falsification is the good kind: the cheap change sufficed where
 the consult predicted architecture work.
 
 ## The training arc (UPDATE 2, shift close): four runs, a gauntlet-green candidate
@@ -107,12 +107,12 @@ the consult predicted architecture work.
 | run                        | one variable                           | parity (hn / pc / street)         | verdict                                                        |
 | -------------------------- | -------------------------------------- | --------------------------------- | -------------------------------------------------------------- |
 | shipped v241               | —                                      | .7013 / .9861 / .3967             | baseline                                                       |
-| v2.5.0 assay (6k)          | fragment extract v1                    | .7532 / .9861 / .5333             | data lever CONFIRMED; pred-2 falsified                         |
+| v2.5.0 assay (6k)          | fragment extract v1                    | .7532 / .9861 / .5333             | data change CONFIRMED; pred-2 falsified                        |
 | v2.5.1 consolidation (12k) | + multisplice tokenizer (mean-init)    | .7922@2k / .9444 / .5467@12k      | mangle cured at char level; pc regression classed (loc+pc gap) |
 | v2.5.2 (8k)                | extract-v2: AU units + loc+pc polarity | .7597 / **.9861 PASS** / .5500@2k | pc restored; gauntlet FAIL: global-dublin-bare                 |
 | v2.5.3 (8k)                | extract-v3: +11k global locality twins | .7403 / **.9861 PASS** / .5233    | **FULL GAUNTLET PASS** — staged, not promoted                  |
 
-Iteration discipline held: each run changed one named lever answering the previous read-out's
+Iteration discipline held: each run changed one named change answering the previous read-out's
 classed failure — no knob oscillated (treadmill guard never fired). The Dublin→Melbourne
 whack-a-mole exposed the durable design for extract-v4: DETERMINISTIC twins from the gazetteer's
 top-population localities, closing the famous-city class instead of sampling instances.
@@ -131,4 +131,4 @@ legs and the operator's promote call outstanding).
 | Local compute       | ~6 parity evals (354 rows each), one 8M-row bigram fit |
 | NaN incidents       | 0                                                      |
 | Regressions shipped | 0 (all probe artifacts reverted; candidate verified)   |
-| Levers closed       | 3 (router, morphology bias, bolt-on transitions)       |
+| Changes closed      | 3 (router, morphology bias, bolt-on transitions)       |

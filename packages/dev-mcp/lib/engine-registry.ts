@@ -39,9 +39,9 @@ import { missingWeightsCacheArtifacts } from "#eval-report"
 import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "#tree-fingerprint"
 
 /**
- * Every lever a caller can set, in the CLI's own vocabulary.
+ * Every change a caller can set, in the CLI's own vocabulary.
  *
- * `undefined` means the PRODUCTION DEFAULT, never "off" — the rule `GauntletResolverLevers` states in `harness.ts:69`:
+ * `undefined` means the PRODUCTION DEFAULT, never "off" — the rule `GauntletResolverChanges` states in `harness.ts:69`:
  * "the library defaults are the thing under test". A tool that coerced undefined to false would grade a configuration
  * nobody ships.
  */
@@ -54,7 +54,7 @@ export interface EngineConfig {
 	resolve_db?: string
 	data_root?: string
 	/**
-	 * Grade a CANDIDATE weights bundle rather than the installed one — the lever that turns a model question into a
+	 * Grade a CANDIDATE weights bundle rather than the installed one — the change that turns a model question into a
 	 * comparison. Unset means whatever the resolution ladder finds, which is what production loads.
 	 *
 	 * Guarded by {@link assertWeightsCacheStaged} at {@link EngineRegistry.acquire} because the ladder's fall-through is
@@ -71,7 +71,7 @@ export interface EngineConfig {
 	postcode_containment_coherence?: boolean
 	admin_containment_rerank?: boolean
 	/**
-	 * The opt-in venue tier (#1684's POI half) — default OFF in production; this lever exists so the promotion battery
+	 * The opt-in venue tier (#1684's POI half) — default OFF in production; this change exists so the promotion battery
 	 * measures it with the standard tooling.
 	 */
 	poi_venue_tier?: boolean
@@ -93,9 +93,9 @@ export interface EngineConfig {
 	/**
 	 * Re-probe a resolved-nothing lookup across the other admin bands and record which hold it.
 	 *
-	 * NOT a lever and deliberately absent from the tool schemas: the answer is byte-identical either way, so declaring it
-	 * as a variable in a comparison would be declaring a variable that cannot move an outcome. The measuring tools that
-	 * read misses force it on, the same way they force `trace`.
+	 * NOT a change and deliberately absent from the tool schemas: the answer is byte-identical either way, so declaring
+	 * it as a variable in a comparison would be declaring a variable that cannot move an outcome. The measuring tools
+	 * that read misses force it on, the same way they force `trace`.
 	 */
 	diagnose_unreachable?: boolean
 }
@@ -115,11 +115,11 @@ export interface EngineConfig {
  * {@link resolveConfig} performs the translation inline, where it is invisible to anyone else who needs it. This map is
  * the same translation, named, because `confound.ts` compares a caller's DECLARED keys against the keys that actually
  * differ between two resolved configs. Without it, declaring `["place_country"]` and having `placeCountry` move reads
- * as two separate facts — one lever declared and unmoved, one moved and undeclared — and every correctly-declared
+ * as two separate facts — one change declared and unmoved, one moved and undeclared — and every correctly-declared
  * comparison grades itself ambiguous.
  *
- * `configKeyMapping.test.ts` asserts this stays in step with `resolveConfig`, which is the only thing that can: a lever
- * added to one and not the other is a silent regression to exactly the behaviour above.
+ * `configKeyMapping.test.ts` asserts this stays in step with `resolveConfig`, which is the only thing that can: a
+ * change added to one and not the other is a silent regression to exactly the behaviour above.
  */
 export const EFFECTIVE_KEY_FOR = {
 	locale: "locale",
@@ -171,7 +171,7 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 	// THE production defaults, from the geocode command's own factory — never re-typed here (#1732).
 	// The hand-copied table this replaces drifted on three values (postcodeShapeCoherence,
 	// postcodeContainmentCoherence, placeCountryThreshold: true/true/0.5 vs the shipped
-	// false/false/0.9), so every unset-lever measurement graded a configuration production does not
+	// false/false/0.9), so every unset-change measurement graded a configuration production does not
 	// ship. Comparisons where both arms shared the drift stayed internally valid; absolute numbers
 	// did not. `resolve-config.test.ts` pins this function against the factory field by field.
 	const production = createGeocodeCommandOptions()

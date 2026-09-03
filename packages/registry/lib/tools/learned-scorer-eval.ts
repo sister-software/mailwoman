@@ -396,7 +396,7 @@ export async function scorerPairwiseEval(
 					`Because the key over-merge interactions are ALREADY hand-engineered into the feature vector, the tree's main ` +
 					`advantage — auto-discovering interactions — is largely pre-empted; it neither extends nor erases the linear ` +
 					`gain. The signal in this feature set is close to linearly saturated, so a production GBM should budget for the ` +
-					`SAME modest margin the LR shows, not a step change — its real value is generalizing the #625 levers, not ` +
+					`SAME modest margin the LR shows, not a step change — its real value is generalizing the #625 changes, not ` +
 					`finding hidden non-linear structure here.`
 
 	lines.push(treeVerdict)
@@ -419,9 +419,9 @@ export async function scorerPairwiseEval(
 				`small (+${f4(meanDelta)}) only because FS already ranks well (${f4(mean(fsAucs)!)}); the gain concentrates at the ` +
 				`decision boundary, exactly where the interaction features (which FS structurally can't express) bite. ` +
 				`**This greenlights the #603 learned scorer:** a GBM — non-linear over the same features — is the principled ` +
-				`generalization of the hand-tuned #625 levers and should extend this linear gain. Honest framing: the linear ` +
+				`generalization of the hand-tuned #625 changes and should extend this linear gain. Honest framing: the linear ` +
 				`headroom is modest, so the GBM's job is to *widen a real-but-small margin*, not to unlock a step change past the ` +
-				`64.7% dedup plateau on its own — the reliable secondary identifier (#625) is still the larger lever.`
+				`64.7% dedup plateau on its own — the reliable secondary identifier (#625) is still the larger gain.`
 			: unanimous && zScore >= STRONG_EVIDENCE_Z
 				? `The LR beats FS by a **small but statistically robust** margin (ΔAUC +${f4(meanDelta)}, ≈${zScore.toFixed(1)}σ, ` +
 					`${lrWins}/${SEEDS} seeds; ΔF1 ${sgn(f1Delta * 100)}${(f1Delta * 100).toFixed(1)}pp). The interaction features ` +

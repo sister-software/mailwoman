@@ -15,7 +15,7 @@
  *
  *   What stays in each pass is what actually differs: the patterns, the ADD/SNAP eligibility rules,
  *   the `ADD_OVER_TAGS` set, and the smear-cleanup policy (postcode-repair hands a trailing smear
- *   BACK to a following locality; unit-repair always clips to `O`). Those are the levers — do not
+ *   BACK to a following locality; unit-repair always clips to `O`). Those are the changes — do not
  *   pull them up here.
  */
 
@@ -123,7 +123,7 @@ export function createLabelSetter(tokens: DecoderToken[]): {
 
 /**
  * The ADD-path safety check: a span may be created only over `O` tokens and the tags in `addOverTags` — never over a
- * confident structural label. Each pass declares its own `addOverTags` set; that set is a lever and stays with the
+ * confident structural label. Each pass declares its own `addOverTags` set; that set is a change and stays with the
  * pass.
  */
 export function isAddSafe(

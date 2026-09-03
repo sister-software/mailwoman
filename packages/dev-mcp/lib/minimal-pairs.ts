@@ -6,7 +6,7 @@
  *   Where along a LADDER of near-identical inputs the answer changes, and which component changed first.
  *
  *   Every other measurement here varies the CONFIGURATION and holds the input fixed: `mwdev_compare` swaps arms,
- *   `counterfactual.ts` flips one lever. This varies the INPUT and holds the configuration fixed, which is the only
+ *   `counterfactual.ts` flips one change. This varies the INPUT and holds the configuration fixed, which is the only
  *   way to attribute a failure to a token rather than a setting. Both defects it was built from were diagnosed this
  *   way by hand:
  *

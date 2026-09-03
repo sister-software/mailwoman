@@ -56,7 +56,7 @@ Three findings, all the same direction:
 3. **Even unique communes benefit.** Adding the département lifts resolve-rate 65 → 87%: a bare
    `{commune}` doesn't always resolve, and the admin context helps the resolver find it.
 
-**Verdict: the lever is real — the resolver demonstrably uses the région tag, so a model that emits
+**Verdict: the change is real — the resolver demonstrably uses the région tag, so a model that emits
 the split will move the anchor-ON coordinate.** The GPU is justified.
 
 **Honest caveat:** this measures the _ceiling_ with perfect, hand-constructed splits. The retrain

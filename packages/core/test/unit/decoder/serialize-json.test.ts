@@ -11,7 +11,7 @@ import type { ComponentTag } from "@mailwoman/core/types/component"
  *   `decodeAsJSON` holds one value per tag, so a tree carrying two `locality` spans emits one and the other ceases
  *   to exist. Without a report, `region: null` means both "the input named no region" and "it named one and we
  *   deleted it". The #1748 trailing region is the worked case: parsed, mistagged `locality`, deleted here — which
- *   is why no decode lever could ever move that class.
+ *   is why no decode change could ever move that class.
  */
 import { describe, expect, it } from "vitest"
 

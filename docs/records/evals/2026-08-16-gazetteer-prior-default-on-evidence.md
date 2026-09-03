@@ -17,7 +17,7 @@ fixed in separate PRs.
    read as `street` with the flag on and off alike.
 2. **The gauntlet fed every overlay the BASE classifier's FST** (#1703). A GB row ran en-GB weights
    against the en-US gazetteer — a pairing production never runs. `st margarets hope` is in
-   `fst-en-gb.bin` and absent from `fst-en-us.bin`, so the row the lever fixes was invisible.
+   `fst-en-gb.bin` and absent from `fst-en-us.bin`, so the row the change fixes was invisible.
 
 ## Evidence
 
@@ -36,7 +36,7 @@ Row-level diff over all failing rows (gated + tracked), 209 OFF and 208 ON:
 
 ### Parity corpus, 321 fixtures
 
-Wired for this decision — until then the lever was reachable only from the gauntlet, which is #1497's
+Wired for this decision — until then the change was reachable only from the gauntlet, which is #1497's
 title verbatim ("FST decoder bias is invisible to every live eval").
 
 | metric                                  | en-US OFF → ON    | fr-FR OFF → ON    |
@@ -80,7 +80,7 @@ identically. Turning the gazetteer prior on does not re-open the morphology ques
 
 ## Bounds
 
-The lever is now visible to the gauntlet and to the parity corpus. It remains invisible to
+The change is now visible to the gauntlet and to the parity corpus. It remains invisible to
 `eval error-analysis`, the coordinate panels and the golden per-tag evals, so "no known regression" is
 bounded by those two batteries. Closing that is the remainder of #1497.
 

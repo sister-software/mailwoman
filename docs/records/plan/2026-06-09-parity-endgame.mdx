@@ -4,7 +4,7 @@
 > (CLOSED at 93.6/96.6 by the #511 relabel after #492 falsified the capacity escalation),
 > consolidation (v4.2.0 flag-plant), plus an unplanned arrival: the conventions layer
 > (#478 slice 1, v4.3.0). Still open from this doc: **po_box/cedex** (the last coverage
-> lever) and the post-parity pivot. Live ordering: the
+> change) and the post-parity pivot. Live ordering: the
 > [Daily Queue board](https://github.com/orgs/sister-software/projects/4). This doc stands
 > as the direction record.
 
@@ -34,7 +34,7 @@ locality, so it never sees this). The fix is **train-time channel choreography**
 zero the gazetteer clue on tokens adjacent to a postcode-anchor hit, at _both_ train
 and inference (the pairing is essential — the harm is weight-baked, so an
 inference-only patch can't undo it). Operator decision: **accept v0.9.12/13 as the
-country lever and carry the choreography into the consolidation retrain** (move 4),
+country change and carry the choreography into the consolidation retrain** (move 4),
 where the dip washes out — no standalone fix-retrain. Choreography ships
 default-off/byte-stable in PR #468.
 
@@ -73,14 +73,14 @@ the bendable version of the crutch rules systems can't drop.
    was the measured gap); region/locality/street membership come nearly free later.
    Gate cleared: country 0 → 83.3 F1, precision/over-fire intact, guardrail lifted. See
    the status section above; po_box/cedex ride the same channel for free.
-2. **Promote the affix lever via the multi-locale reroll (#466 step 1).** v0.9.8's
+2. **Promote the affix change via the multi-locale reroll (#466 step 1).** v0.9.8's
    only blemish is FR-postcode dilution from a US-only extract; the multi-locale country
    extract already demonstrated the recovery. Reroll affix multi-locale, clear its own
    gate, no annotation needed.
 3. **po_box + cedex coverage extracts — the unit playbook, zero drama.** Closed-vocab
    but homograph-free, so they need balanced extracts (and their matcher-accuracy is
    already proven at 100% as feature-sources/eval material). Prove each solo.
-4. **Consolidate (#466): one model carrying all banked levers.** Weight-merge or a
+4. **Consolidate (#466): one model carrying all banked changes.** Weight-merge or a
    single multi-tag run at a larger step budget (the cumulative-dilution lesson:
    never stack extracts into a fixed 20k budget). This run also **carries the gazetteer
    choreography** (PR #468), where the v0.9.12 US-postcode dip is expected to wash
@@ -94,7 +94,7 @@ the bendable version of the crutch rules systems can't drop.
 
 - The `ClosedVocabTagger` post-parse override (#464's original scope) — rejected on
   ethos and on evidence; the issue is rescoped to the anchor.
-- Country/po_box/cedex as "deterministic" levers in the parity scorecard's taxonomy —
+- Country/po_box/cedex as "deterministic" changes in the parity scorecard's taxonomy —
   corrected to model-first; the deterministic probes stand as matcher-accuracy
   evidence and live on as feature-sources.
 - Per-tag, one-off anchor builds — superseded by the general candidate-tag-set

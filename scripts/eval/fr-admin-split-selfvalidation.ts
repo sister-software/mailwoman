@@ -18,7 +18,7 @@
  *   - SPLIT {locality:[commune], region:[dept]} — the corrected parse and measure the great-circle
  *       error to the commune's true centroid.
  *
- *   The lever is REAL iff SPLIT's mean error is materially below DROPPED/MERGED — concentrated on
+ *   The premise is REAL iff SPLIT's mean error is materially below DROPPED/MERGED — concentrated on
  *   COLLISION communes (a name in >1 département), where the région is the only disambiguator.
  *   UNIQUE communes are the control (the resolver should find them with or without the région).
  *
@@ -236,8 +236,8 @@ const collReduction = collDroppedMean > 0 ? (100 * (collDroppedMean - collSplitM
 
 const verdict =
 	collReduction >= MIN_COLLISION_REDUCTION
-		? `✅ LEVER REAL — collision SPLIT-vs-DROPPED reduction ${collReduction.toFixed(1)}% ≥ 5%. The resolver uses the région tag. Retrain premise holds.`
-		: `❌ LEVER FALSE — collision reduction ${collReduction.toFixed(1)}% < 5%. The resolver lands the same place without the région. STOP — no retrain fixes this.`
+		? `✅ PREMISE REAL — collision SPLIT-vs-DROPPED reduction ${collReduction.toFixed(1)}% ≥ 5%. The resolver uses the région tag. Retrain premise holds.`
+		: `❌ PREMISE FALSE — collision reduction ${collReduction.toFixed(1)}% < 5%. The resolver lands the same place without the région. STOP — no retrain fixes this.`
 
 const out = [
 	"# FR admin-split self-validation (pre-GPU eval, 2026-06-19)",

@@ -202,7 +202,7 @@ export interface CreateGoogleGeocoderClientOptions {
 }
 
 /**
- * Per-request overrides. These are the biasing levers the isp-nexus original hardcoded; see
+ * Per-request overrides. These are the biasing changes the isp-nexus original hardcoded; see
  * {@linkcode GeocodeRequestOptions.bounds} for the one that mattered.
  */
 export interface GeocodeRequestOptions {
@@ -210,7 +210,7 @@ export interface GeocodeRequestOptions {
 	 * Restrict results to a country, as an ISO-3166 alpha-2 code. Sent as Google's `components=country:XX` filter, which
 	 * is a HARD restriction, not a bias — a match outside the country is not returned at all.
 	 *
-	 * This is the lever a per-country oracle sweep wants: it stops `"Springfield"` resolving to Illinois when the case
+	 * This is the change a per-country oracle sweep wants: it stops `"Springfield"` resolving to Illinois when the case
 	 * under authorship is Neuseeland's.
 	 */
 	country?: string

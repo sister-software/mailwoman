@@ -54,10 +54,10 @@ misses only 3-4%. mailwoman answers nearly always, at coarser precision, and —
 with the isotonic-calibrated per-field confidence — can tell you when to trust
 the answer. That is the slice a calibrated parser should own.
 
-## The #370 rescore lever
+## The #370 rescore change
 
 Isolated on the `-20j` gazetteer (both arms same backend), the span-rescore
-lever is **+1pp aggregate @25km (86→87), zero regressions**: CZ +5, AT +3,
+change is **+1pp aggregate @25km (86→87), zero regressions**: CZ +5, AT +3,
 PL +2; IT/PT/FR/AU flat; no-result 4→3%. The end-to-end `span-rescore-e2e`
 run agrees: +1.1pp over n=972, CZ +6. The `-20j` _data_ did the heavy lifting
 (the 59→86 climb); rescore adds the last point. It passes the night-plan gate

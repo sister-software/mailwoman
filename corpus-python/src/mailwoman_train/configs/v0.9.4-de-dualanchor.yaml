@@ -4,7 +4,7 @@
 # anchor ON, self-cond ON, v0.7.2 recipe, seed 42. Only the model flag changes.
 #
 # WHY. v0.9.2 (both-order) + v0.9.3 (region tail) BOTH left the anchor-ON international gap ~flat (intl
-# 44.5/44.7 vs native 82-84). The corpus lever is EXHAUSTED: three lines agree the ceiling is the
+# 44.5/44.7 vs native 82-84). The corpus change is EXHAUSTED: three lines agree the ceiling is the
 # anchor's STRUCTURE, not the data — anchor-OFF is order-agnostic (~48% both orders), forcing the
 # posterior to DE=1.0 left intl at 44.5%, and the region tail moved region-tagging (0→~40%) but not
 # locality. The per-token anchor at the TRAILING postcode (international order) fires on the wrong side

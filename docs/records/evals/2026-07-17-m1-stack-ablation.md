@@ -2,7 +2,7 @@
 
 The road-to-v7 Track M opener, and the external audit's central unanswered question: how much of
 the shipped quality is the model, and how much is the stack of prior channels and repair passes
-around it? Eleven configurations — the full production path, each lever off one at a time, the
+around it? Eleven configurations — the full production path, each change off one at a time, the
 gate-battery config, and the raw model alone — scored on four arenas with the gate battery's own
 metric (decodeAsJSON → fold → per-tag exact-match F1; runner `scratchpad/m1-ablation.run.ts`,
 results `scratchpad/m1-ablation-results.json`). Model = shipped v381/v6.5.0, en-us weights, all

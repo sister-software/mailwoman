@@ -72,7 +72,7 @@ today, that's speculative future-proofing, not a current need.
 
 **Note on calibration specifically:** no study isolates CLM-vs-MLM _downstream
 calibration_ — the calibration win is from _pre-training presence_, not the
-objective. The objective-independent calibration lever is **label smoothing +
+objective. The objective-independent calibration change is **label smoothing +
 temperature scaling** (already partially explored in v0.7.0). So: pre-train (any
 bidirectional objective) **and** keep label smoothing in the fine-tune.
 
@@ -122,7 +122,7 @@ pre-training on 50–100M strings, still ~1 GPU-day.
 
 If Stage A does not improve calibration (the ≥0.9-wrong fraction) **and** resolver
 Acc@1 doesn't move ≥1.5pp, stop — the from-scratch model stands and we've learned
-pre-training isn't the lever at this scale.
+pre-training isn't the change at this scale.
 
 ## Interleaving with the resolver-depth track
 

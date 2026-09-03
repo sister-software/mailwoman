@@ -247,7 +247,7 @@ upward, the tokenizer fix becomes smaller-scope.
 **P2 — Pre-classifier design** (gated on postcode result, may slip to v0.8)
 
 If postcode accuracy is still < 90% after calibration + tokenizer fix,
-the locale-router approach becomes the next lever. Recommended
+the locale-router approach becomes the next change. Recommended
 architecture: lexical-feature classifier (regex + char n-grams → tiny
 MLP), `<0.1ms` latency, `<100KB` serialized. 99% accuracy on
 postcode-bearing inputs is achievable via postcode-pattern features
@@ -322,7 +322,7 @@ deliverables (new training runs, new charts, new error reports). But it
 masks deeper questions about whether the right thing is being optimized
 at all. The DeepSeek consult model — broad architectural question at a
 fixed cadence, designed to challenge framing rather than refine within
-it — was the single highest-leverage intervention of the cycle.
+it — was the single highest-changeage intervention of the cycle.
 
 For the next cycle: cap the recipe-tuning budget at two iterations
 before forcing a methodology rethink.

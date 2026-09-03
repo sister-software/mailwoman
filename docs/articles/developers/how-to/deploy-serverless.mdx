@@ -126,7 +126,7 @@ size does not appear in the cold start at all. Geocoding adds about 100 ms of co
 and all of it is the extra module graph, not the database.
 
 **Loading the model is 70% of the cold start and cannot be moved.** It is one ONNX session build over a
-39 MB graph. Warm requests do not pay it, so the lever is instance lifetime, not code.
+39 MB graph. Warm requests do not pay it, so the change is instance lifetime, not code.
 
 **Resident set lands near 375 MB parse-only and 425 MB with a resolver.** Size the instance above that
 rather than at it — the parse-only figure moved between 369 MB and 407 MB across five runs on an idle

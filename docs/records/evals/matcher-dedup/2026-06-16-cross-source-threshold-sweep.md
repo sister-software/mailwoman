@@ -5,7 +5,7 @@ _Measurement for #655. The default-on GBT (#603) is pinned **off** for cross-dat
 "same facility, different operational name across sources" links those flows exist to find. The open
 question: is that a **threshold** artifact (option 1 — keep the GBT, recalibrate a lower link
 threshold for the cross-source objective) or structural (the GBT can't do this job, so a
-cross-objective **retrain** (option 2) is the only lever)? This determines the result with a sweep._
+cross-objective **retrain** (option 2) is the only change)? This determines the result with a sweep._
 
 ## Method
 

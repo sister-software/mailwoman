@@ -165,7 +165,7 @@ dependent-locality arc hit when PPD turned out to have no US analogue.
 
 A probe extending the designator set moved `Terminal 5` → `unit="Terminal 5", locality="Heathrow
 Airport"` and `Gate 12` → `unit="Gate 12"`, but split `Concourse B` into `unit=Concourse` +
-`venue=B` and left the trailing-designator `West Wing` untouched. **Real lever, not a clean sweep** —
+`venue=B` and left the trailing-designator `West Wing` untouched. **Real change, not a clean sweep** —
 and it is a default-on change to unit parsing with obvious confound risk (GB street names ending in
 `-gate`, industrial estates literally named "Terminal"). It gets its own pre-registered board before
 anything ships; the experiment was reverted.

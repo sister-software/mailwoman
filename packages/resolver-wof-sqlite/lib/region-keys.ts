@@ -126,7 +126,7 @@ export function regionKeys(value: string, countryAlpha2?: string): Set<string> {
  * qualifier probe missed every Irish county until this variant landed). Adding `county <key>` restores the
  * two-sidedness for the one stored-form family with an evidenced case; the union is monotone (a wider qualifier set can
  * only find more BEARERS, each of which must still genuinely contain a candidate before anything moves). The suffix
- * sibling (`<key> province`) is deliberately absent — no stored-form case has been evidenced, and a lever without a
+ * sibling (`<key> province`) is deliberately absent — no stored-form case has been evidenced, and a change without a
  * board does not get built.
  */
 export function regionQualifierProbeKeys(value: string, countryAlpha2?: string): Set<string> {

@@ -61,7 +61,7 @@ export const diffParseTool = (deps: DevToolDeps): DevTool => ({
 
 		// PARTICIPATION GUARD. `EngineConfig` is a plain object, so a mistyped key is dropped in silence and both arms
 		// run the same weights — the tool then reports "0 differ", which reads as "the candidate is identical" and is
-		// really "the lever never ran". That happened on this tool's first live call (`weightsCacheRoot` for
+		// really "the change never ran". That happened on this tool's first live call (`weightsCacheRoot` for
 		// `weights_cache`), so the engine is asked what it actually loaded rather than trusted to have taken the key.
 		if (weightsCache && base.engineID === candidate.engineID) {
 			return {

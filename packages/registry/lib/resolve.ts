@@ -135,7 +135,7 @@ export function normalizePhoneStrict(raw: string | null | undefined): string {
 const CORROBORATING_FIELDS = new Set(["given", "family", "organization", "phone"])
 
 /**
- * Options for {@link buildDefaultModel}. Each lever is default-off, so the base model is byte-stable.
+ * Options for {@link buildDefaultModel}. Each change is default-off, so the base model is byte-stable.
  */
 export interface DefaultModelOptions {
 	/**
@@ -163,7 +163,7 @@ export interface DefaultModelOptions {
 	 */
 	discriminators?: string[]
 	/**
-	 * Closed-vocabulary CODE-SET discriminators drawn from {@link SourceRecord.attributes} (#625 taxonomy lever). The
+	 * Closed-vocabulary CODE-SET discriminators drawn from {@link SourceRecord.attributes} (#625 taxonomy change). The
 	 * attribute value is a whitespace-joined set of codes (NPPES taxonomy codes, license numbers, …); agreement = ANY
 	 * shared code (set overlap, not string similarity — `207R00000X` vs `207Q00000X` are DIFFERENT specialties despite
 	 * near-identical text, exactly the case string similarity mis-scores). The over-merge separator: two co-located
@@ -390,7 +390,7 @@ export interface ResolveResult {
  * record with no confident link is its own singleton entity).
  */
 export function resolveEntities(records: readonly SourceRecord[], config: ResolveConfig = {}): ResolveResult {
-	// The proven levers are DEFAULT-ON (#625): the address-frequency down-weight (auto-computed over the
+	// The proven changes are DEFAULT-ON (#625): the address-frequency down-weight (auto-computed over the
 	// input records when not supplied; `false` disables) + the collapsed spatial signal (A1). A new
 	// caller gets the strong config out of the box; pass explicit values to override.
 	const addressFrequency =

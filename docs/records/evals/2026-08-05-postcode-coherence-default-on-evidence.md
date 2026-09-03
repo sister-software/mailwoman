@@ -6,8 +6,8 @@ complete; the flip is the operator's call. **→ FLIPPED 2026-08-05, see §7.**
 
 The landing record shipped `postcodeCountryCoherence` opt-in and named two gaps that stood between it and default-on:
 
-1. **The gauntlet had no resolver-lever pin.** The D-rule's standard instrument could swap the model under test but not
-   the resolver configuration, so a resolver lever could only ever be argued from bespoke probes.
+1. **The gauntlet had no resolver-change pin.** The D-rule's standard instrument could swap the model under test but not
+   the resolver configuration, so a resolver change could only ever be argued from bespoke probes.
 2. **Every scale number was candidate-backend**, while the FTS backend's exact-match tier demonstrably differs (it does
    not fold `ü`→`u` — the `München` row).
 
@@ -22,7 +22,7 @@ work turned up on the way.
 
 `mailwoman eval gauntlet --postcode-country-coherence`, threaded through all three layers.
 
-The pin mirrors the model-swap idiom rather than inventing a parallel one. `GauntletResolverLevers` (`harness.ts`) sits
+The pin mirrors the model-swap idiom rather than inventing a parallel one. `GauntletResolverChanges` (`harness.ts`) sits
 beside `modelPath`/`tokenizerPath`/`weightsCacheRoot` in the same `buildGauntletDeps` options object; each field maps
 1:1 onto a `geocodeAddress` dep of the same name, exactly as `eval oa-resolver`'s `adminCoherence` /
 `postcodeCountryCoherence` pins do. `layerDepsOptions` (`regression.ts`) builds that object once for every layer — the
@@ -31,17 +31,17 @@ metamorphic layer had been carrying its own copy of the model-selection ladder, 
 Three properties are deliberate:
 
 - **An unset flag stays unset.** Pastel hands the schema's `false` default to the command, and forwarding it verbatim
-  would pin the lever OFF forever — so the day the library default flips to ON, the standard gate would silently keep
+  would pin the change OFF forever — so the day the library default flips to ON, the standard gate would silently keep
   grading the old configuration. Only the ON pin is forwarded; "no flag" means "grade whatever production does".
-- **Every run states its configuration**, pinned or not: `resolver levers: (none pinned — production defaults)` or
-  `resolver levers: postcodeCountryCoherence=ON`, on the combined verdict block and in each layer's build banner. Two
+- **Every run states its configuration**, pinned or not: `resolver changes: (none pinned — production defaults)` or
+  `resolver changes: postcodeCountryCoherence=ON`, on the combined verdict block and in each layer's build banner. Two
   gate logs that differ only in a flag someone typed are not evidence about that flag unless each log says what it
   graded.
 - **The pass reports its own firing count.** `GeocodeResult.postcode_country_scope` carries the country the walk was
   re-scoped to (null whenever nothing was overridden), and the regression layer prints
   `postcode-country coherence fired on N/M cases`.
 
-Tests: `mailwoman/eval-harness/gauntlet/lever-pin.test.ts`, 16 assertions over the mapping
+Tests: `mailwoman/eval-harness/gauntlet/pin.test.ts`, 16 assertions over the mapping
 `run options → layer options → geocode deps`, including every model-selection ladder and the unpinned control. They
 assert a mapping on purpose — the gate itself needs the extract set and a loaded ONNX, and the failure this surface
 exists to prevent is silent: a dropped pin does not throw, it produces a gate log identical to the unpinned one.
@@ -60,7 +60,7 @@ unchanged verdict from a mechanism that never ran is not evidence of anything.
 The cause is structural, not incidental. The pass is inert without a `defaultCountry`, and the curated corpus carried
 **exactly one** case with one (`fr-lyonnais-3-bare-country-bias`, an FR address under `FR`, where the pass exits at
 step 1 by design). The corpus had no case in which a country prior is in tension with the address it is applied to —
-which is precisely the defect #42 exists to fix, so the gate could not have seen the lever no matter how it was pinned.
+which is precisely the defect #42 exists to fix, so the gate could not have seen the change no matter how it was pinned.
 
 ### 1.3 The corpus extension
 
@@ -76,7 +76,7 @@ Seven cases, all measured through the compiled CLI on 2026-08-05 against the 202
 | `gb-downing-us-scoped` | `10 Downing Street, London SW1A 2AA`  | US      | improvement\_target | London, Ohio under a US default                          |
 | `de-linden-us-scoped`  | `Unter den Linden 77, 10117 Berlin`   | US      | improvement\_target | Berlin, Connecticut — pairs against `us-berlin-nh-03570` |
 
-The four adversarial rows are gated (`status: pass`): they must hold with the lever pinned either way, and they are the
+The four adversarial rows are gated (`status: pass`): they must hold with the change pinned either way, and they are the
 "zero newly-failing cases" bar with teeth. The three rescue rows are `improvement_target`: they fail today, which is the
 point — they ARE the defect — and under the pin they pass, which the runner's anti-rot loop reports as
 "now PASSES — promote to status=pass". That is what a default-on flip should look like from inside the gate.
@@ -89,7 +89,7 @@ same US default, opposite correct answers. Nothing about the name or the shape s
 Both legs, same corpus (137 cases, 68 gated), same model (`model.onnx` md5 `c968c24a`), same backend (the candidate
 table, which is what `createResolverBackend` picks when one is present).
 
-**Lever unpinned — `mailwoman eval gauntlet`:**
+**Change unpinned — `mailwoman eval gauntlet`:**
 
 ```
 === Gauntlet · regression (65/68 gated cases pass, 68 tracked) ===
@@ -107,14 +107,14 @@ verdict: FAIL
 verdict: PASS (with 3 tracked xfails)
 
 ════════════════ GAUNTLET ════════════════
-  resolver levers: (none pinned — production defaults)
+  resolver changes: (none pinned — production defaults)
   ✗ FAIL  regression
   ✓ PASS  metamorphic
 
 VERDICT: FAIL — do not ship
 ```
 
-**Lever pinned — `mailwoman eval gauntlet --postcode-country-coherence`:**
+**Change pinned — `mailwoman eval gauntlet --postcode-country-coherence`:**
 
 ```
 === Gauntlet · regression (65/68 gated cases pass, 66 tracked) ===
@@ -140,14 +140,14 @@ verdict: FAIL
 verdict: PASS (with 3 tracked xfails)
 
 ════════════════ GAUNTLET ════════════════
-  resolver levers: postcodeCountryCoherence=ON
+  resolver changes: postcodeCountryCoherence=ON
   ✗ FAIL  regression
   ✓ PASS  metamorphic
 
 VERDICT: FAIL — do not ship
 ```
 
-**Both legs FAIL, on the same three cases, for reasons that have nothing to do with this lever.** That is the baseline
+**Both legs FAIL, on the same three cases, for reasons that have nothing to do with this change.** That is the baseline
 of a freshly-rebuilt corpus on today's `main`, and it is stated first so the rest is readable:
 
 - `si-sentinel-apace` was already failing before any of this work (it failed in the first pinned/unpinned pair too,
@@ -310,12 +310,12 @@ build-stamp comparison at layer start would do it).
 The D-rule asks one question — does this default-on mechanism carry a known regression against the shipped model on
 any tier-1 locale? The answer is measured, not argued:
 
-- **Gauntlet, the standard instrument, both ways: zero newly-failing cases.** 65/68 gated cases pass with the lever
+- **Gauntlet, the standard instrument, both ways: zero newly-failing cases.** 65/68 gated cases pass with the change
   pinned and with it unpinned; the three failures are identical, pre-date this work, and are unrelated. The full diff
   between the two runs is two rescues and a banner line.
 - **The mechanism ran.** 2/137 cases fired, both correctly, and the four adversarial rows that would break first were
   untouched by the cheap exit. This is the column that was missing from the first attempt, where an identical verdict
-  meant only that the corpus could not see the lever.
+  meant only that the corpus could not see the change.
 - **56,000 pair evaluations across both backends, zero false positives.** 28,000 on FTS (new) and 28,000 on the
   candidate table (reproducing the landing record to the row). 1,210 domestic FTS rows and 1,240 domestic candidate
   rows fell past the cheap exit and had every alternative country tried; every one was refuted.
@@ -389,7 +389,7 @@ the same constraint that named `eval oa-resolver`'s `adminCoherenceOff`.
 
 The regression-layer firing report was keyed on the ON pin. That was right while the default was OFF and wrong the
 moment it flipped: the standard unpinned run is now the ON configuration, and it is the run whose firing count a
-reader needs. It now prints unless the lever is pinned OFF.
+reader needs. It now prints unless the change is pinned OFF.
 
 ### 7.2 Ride-along condition 1 — the corpus rebuild
 
@@ -423,7 +423,7 @@ verdict: FAIL
 verdict: PASS (with 3 tracked xfails)
 
 ════════════════ GAUNTLET ════════════════
-  resolver levers: (none pinned — production defaults)
+  resolver changes: (none pinned — production defaults)
   ✗ FAIL  regression
   ✓ PASS  metamorphic
 
@@ -448,7 +448,7 @@ verdict: FAIL
 four-line firing report. The metamorphic layer is byte-identical — it passes no `defaultCountry`, so the pass is
 inert there by construction.
 
-**The verdict is FAIL on both legs, on the same three cases, for reasons unrelated to this lever** — §1.4 named all
+**The verdict is FAIL on both legs, on the same three cases, for reasons unrelated to this change** — §1.4 named all
 three, and the promotion moves none of them. Read the gated count, not the verdict word: 67/70 at the new default
 against 65/70 at the old, with the identical failure set. **Newly-failing gated cases: zero.**
 
@@ -479,8 +479,8 @@ changes nothing on malformed input" was a claim, not a fact, until this ran.
   explicitly. Two legs had expressed "off" by OMITTING the option, which after the flip means ON; the bug-reproduction
   row ("resolves to Paris TEXAS") and the domestic-control byte-identity row would both have silently stopped testing
   what their names say. A new row asserts the default itself: unset → the override fires.
-- `mailwoman/eval-harness/gauntlet/lever-pin.test.ts` — two rows added for the OFF pin's path through
-  `runResolverLevers` and through the full end-to-end hop chain. `resolverLeverDeps` already carried an explicit OFF
+- `mailwoman/eval-harness/gauntlet/pin.test.ts` — two rows added for the OFF pin's path through
+  `runResolverChanges` and through the full end-to-end hop chain. `resolverChangeDeps` already carried an explicit OFF
   (it was written tri-state from the start); the CLI-options hop was the one that had only ever been exercised ON.
 - `mailwoman/eval-harness/gauntlet/cases/regression.ts` — the two rescue rows promoted to `status: pass`, and the
   block comment rewritten to say which row stayed an `improvement_target` and why.

@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The comparison-model lever progression the NPPES benchmark walks — each row turns one lever on so its marginal
+ * @file The comparison-model setting progression the NPPES benchmark walks — each row turns one setting on so its marginal
  *   effect is isolated.
  */
 
@@ -11,7 +11,7 @@ import type { TermFrequencyTable } from "@mailwoman/match"
 /**
  * The subset of `ResolveConfig` this progression varies.
  */
-export interface LeverConfig {
+export interface SettingConfig {
 	addressFrequency?: TermFrequencyTable | false
 	collapseSpatial?: boolean
 	discriminators?: string[]
@@ -24,24 +24,24 @@ export interface LeverConfig {
 /**
  * One row of the progression.
  */
-export interface Lever {
+export interface Setting {
 	label: string
-	config: LeverConfig
+	config: SettingConfig
 }
 
 /**
  * Build the progression against a corpus-wide address-frequency table.
  *
- * Every row sets BOTH `collapseSpatial` and `addressFrequency` EXPLICITLY, because the proven levers are default-on in
- * `resolveEntities`: leave either implicit and the flipped default silently rides the `+ inverse-address-frequency`
+ * Every row sets BOTH `collapseSpatial` and `addressFrequency` EXPLICITLY, because the proven settings are default-on
+ * in `resolveEntities`: leave either implicit and the flipped default silently rides the `+ inverse-address-frequency`
  * row, making the A1 delta read as 0. Every row is fed the corpus-wide table — the realistic deployment, where the CLI
  * builds it from the full source files — so the zero-config default, whose input-scoped table is intentionally sparse
  * on a sub-sample, has to be measured separately.
  */
-export function buildLevers(addressFrequency: TermFrequencyTable): Lever[] {
+export function buildSettings(addressFrequency: TermFrequencyTable): Setting[] {
 	return [
 		{
-			label: "baseline (legacy: address-key + distance, levers OFF)",
+			label: "baseline (legacy: address-key + distance, settings OFF)",
 			config: { collapseSpatial: false, addressFrequency: false },
 		},
 		{ label: "+ inverse-address-frequency (#617, corpus-wide)", config: { collapseSpatial: false, addressFrequency } },
@@ -50,9 +50,9 @@ export function buildLevers(addressFrequency: TermFrequencyTable): Lever[] {
 			label: "+ authorized-official discriminator (#625)",
 			config: { collapseSpatial: true, addressFrequency, discriminators: ["authorizedOfficial"] },
 		},
-		// A2–A4 (#625): the built-but-unmeasured over-merge levers. Each builds on the A1 + discriminator
+		// A2–A4 (#625): the built-but-unmeasured over-merge settings. Each builds on the A1 + discriminator
 		// stack so the marginal effect is isolated. A2 (require name/org corroboration) is the direct
-		// over-merge precision lever; A3 (phone) is the recall-tail corroborator that should keep A2 from
+		// over-merge precision setting; A3 (phone) is the recall-tail corroborator that should keep A2 from
 		// killing name-drift links; A4 (average-linkage) splits a component joined only by a weak bridge.
 		{
 			label: "+ require name/org corroboration (A2, #625)",

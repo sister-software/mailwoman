@@ -1,6 +1,6 @@
 # B4 — the NO fragment probe did NOT clear its pre-registered bar
 
-2026-07-16. The 2k falsifier for the Norwegian house-number-licence lever.
+2026-07-16. The 2k falsifier for the Norwegian house-number-licence change.
 
 **Verdict: the probe did not clear the pre-registered MOVE criterion, and the do-no-harm guard on
 the French board drifted the wrong way. Per the config header's own pre-registration, the full 8k
@@ -92,7 +92,7 @@ pre-registered and probed, not tuned in the dark.
 - The instrument (board 3) and the recipe (`no-fragment`, tested, split-disciplined) are correct and
   reusable. The probe _worked_ — it gave a clean, cheap read that stopped an unjustified 8k run.
 - `bare-pc` holding at 1.000 confirms the counter-distribution does its job: the model did not learn
-  to stop emitting postcode to chase the digit. The extract's shape is sound; its ratio is the lever.
+  to stop emitting postcode to chase the digit. The extract's shape is sound; its ratio is the change.
 - The Norway YAML fix (#1145) is the required result of the night regardless of this probe —
   Norway now trains at all, and this probe is the first read that could ever have measured it.
 

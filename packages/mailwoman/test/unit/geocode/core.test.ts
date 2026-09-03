@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   #928: `countryFromPostcodeFormat` — a parsed postcode's FORMAT as a country signal, used by the
- *   `postcodeCountryPrior` lever to override the language-based placer (which conflates GB/US). The
+ *   `postcodeCountryPrior` change to override the language-based placer (which conflates GB/US). The
  *   essential guarantee: the GB pattern is UNFORGEABLE across the formats we resolve — it never matches
- *   a US ZIP, an NL `\d{4} [A-Z]{2}`, an FR 5-digit, or a Canadian `A#A #A#` code — so turning the lever
+ *   a US ZIP, an NL `\d{4} [A-Z]{2}`, an FR 5-digit, or a Canadian `A#A #A#` code — so turning the change
  *   on can never mis-route a non-GB address.
  */
 

@@ -33,7 +33,7 @@ below sharpens that layer where the arenas show it bleeding.
 
 ## Categorize by fix mechanism
 
-The cheapest, lowest-risk lever is a **deterministic post-decode repair pass**
+The cheapest, lowest-risk change is a **deterministic post-decode repair pass**
 (the postcode-repair `#35` family): detect a rigid surface shape with a regex,
 snap/add the BIO labels after decode, before tree-build. The model is untouched,
 the pass is opt-in, and precision guards keep it from regressing a confident

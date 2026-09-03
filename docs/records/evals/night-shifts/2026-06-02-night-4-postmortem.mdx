@@ -50,7 +50,7 @@ boundaries came apart:
 - **postcode loss is over-application:** the model now grabs numbers as `house_number` so eagerly that
   on some golden rows it cannibalizes the postcode.
 
-So the lever is real, and the failure is a known, nameable boundary bug rather than a dead end. The next
+So the change is real, and the failure is a known, nameable boundary bug rather than a dead end. The next
 attempt needs the order signal _without_ the boundary damage. Candidates: (a) the Saint-Albans span-merge
 decoder fix applied to house_number/locality spans, (b) a larger/cleaner extract so the model sees complete
 multi-digit house numbers and complete trailing city names, (c) train fresh-with-German rather than
@@ -146,7 +146,7 @@ resolver: neural locality 77.4%, coord p50 10.0 km.
 
 1. **Which fix for the next German attempt?** The order signal works; the boundary fragmentation is
    the blocker. Three candidates, in rough cost order: (a) span-merge decoder fix (cheap, no GPU, though
-   it's the "one more rule" lever you've pushed back on; here it's a decode-time span join rather than a
+   it's the "one more rule" change you've pushed back on; here it's a decode-time span join rather than a
    hand-written parse rule); (b) bigger/cleaner extract + retrain; (c) fresh-with-German run instead of
    continue-train. My read: (c) is the cleanest test of whether continue-train caused the boundary
    damage, though it's the most GPU. Your call before any more spend.

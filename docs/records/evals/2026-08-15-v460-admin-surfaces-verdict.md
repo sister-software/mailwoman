@@ -221,7 +221,7 @@ failed hypothesis about the trailing-region extract.
 4. **Re-dose `synth-bare-country-v23` before the next run.** 277 rows at dose 1.0 repeat ~20× an
    epoch under the per-source sampler, and they taught "bare capitalised name → country" strongly
    enough to erase the bare-locality and bare-street classes. The mechanism works — that is what
-   +11.0 pp shows — but the dose is the lever, and the next attempt should carry a pre-registered
+   +11.0 pp shows — but the dose is the change, and the next attempt should carry a pre-registered
    watch on the bare-toponym board rows, per the #513 adjacent-class rule.
 5. **The measurement lesson.** The board's gated pass/fail header prints ABOVE the promote-flag
    block. Reading the tail alone shows the flips and hides the breakage. Read `gated cases pass`

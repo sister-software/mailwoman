@@ -47,7 +47,7 @@ suspected per-keystroke bottleneck (DeepSeek S45).
 
 **Cold load is network-bound on the 29 MB model**, not compute. The session-init (126 ms node → ~0.5 s WASM)
 and the ~12 candidate-table byte-range fetches are small beside a 29 MB sequential download. So the cold-load
-SLO is won or lost on **model transfer size**, which points the levers at: a smaller model (distillation /
+SLO is won or lost on **model transfer size**, which points the changes at: a smaller model (distillation /
 structured pruning past int8), HTTP streaming + compile-while-download, and CDN edge-caching — not at the
 SQLite path.
 

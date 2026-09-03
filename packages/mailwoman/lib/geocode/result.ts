@@ -144,17 +144,17 @@ export interface GeocodeResult {
 	 * The country #42's postcode-country coherence pass scoped the walk to, or null. Non-null ONLY when the pass actually
 	 * overrode {@link GeocodeDeps.defaultCountry} — off, abstained and agreed-with-the-default all read null.
 	 *
-	 * This is the FIRING RECEIPT, and it exists because the alternative is unreadable evidence. A check run with the
-	 * lever OFF and one with it ON can come back identical for two opposite reasons: the mechanism ran on every row and
-	 * changed nothing (the result worth having), or it never ran at all (the 2026-08-04 oa-resolver trap, where an
-	 * identical 1.94 MB dump turned out to mean the eval's database set carried no US postcodes). A magnitude never
-	 * carries its own absence, so the pass reports its own count instead of leaving the reader to infer it.
+	 * This is the FIRING RECEIPT, and it exists because the alternative is unreadable evidence. A check run with the pin
+	 * OFF and one with it ON can come back identical for two opposite reasons: the mechanism ran on every row and changed
+	 * nothing (the result worth having), or it never ran at all (the 2026-08-04 oa-resolver trap, where an identical 1.94
+	 * MB dump turned out to mean the eval's database set carried no US postcodes). A magnitude never carries its own
+	 * absence, so the pass reports its own count instead of leaving the reader to infer it.
 	 */
 	postcode_country_scope: string | null
 	/**
 	 * The #1880 capital promotion's firing receipt, in the same posture as {@link postcode_country_scope}: the promoted
 	 * candidate's country, PRESENT only when the promotion changed some node's leading candidate. Absent means it never
-	 * spoke — off, no capital in any race, or the capital already led. A lever-pinned comparison counts this instead of
+	 * spoke — off, no capital in any race, or the capital already led. A pinned comparison counts this instead of
 	 * inferring activity from moved rows.
 	 */
 	capital_promotion?: string
@@ -203,7 +203,7 @@ export interface GeocodeResult {
 export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeOutcomeLike {
 	// `includeDropped` is not optional here even though the flag is: a span the projection deleted is the ONE thing a
 	// caller cannot reconstruct from the result, and #1755 is what its absence cost — the #1748 trailing region is
-	// parsed, mistagged `locality`, and deleted at this line, which is why no decode lever ever moved that class.
+	// parsed, mistagged `locality`, and deleted at this line, which is why no decode pin ever moved that class.
 	const projected = decodeAsJSON(tree, { includeDropped: true })
 	const { dropped, ...components } = projected
 	const allNodes = collectNodes(tree.roots, () => true)

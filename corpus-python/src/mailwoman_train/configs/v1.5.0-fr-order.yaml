@@ -1,5 +1,5 @@
 # === v1.5.0-fr-order (the fr.house_number RECOVERY run) =========================================
-# Identical to v1.4.0-charoffset (the shipped v4.5.0) EXCEPT one added lever: the synth-fr-order
+# Identical to v1.4.0-charoffset (the shipped v4.5.0) EXCEPT one added change: the synth-fr-order
 # slice (#560). v4.5.0 shipped with fr.house_number 97.7 -> 89.6 (-8pp) because the model is
 # ORDER-BLIND on postcode-first FR ("47110 Locality, 69 Street") — the FR training (BAN) is canonical-
 # order only, and v4.4.0's 97.7 was bridge-rescued. synth-fr-order teaches reversed-order FR (the
@@ -38,7 +38,7 @@ data:
     deepseek-kryptonite: 3.0
     synth-intersection: 1.0
     synth-german: 6.0
-    # THE #560 recovery lever: reversed-order (postcode-first) FR — teaches the post-postcode
+    # THE #560 recovery change: reversed-order (postcode-first) FR — teaches the post-postcode
     # house_number the canonical-only BAN training never showed. First-pass weight 3.0 (moderate; the
     # slice carries BOTH orders via --reversed-fraction, so it won't over-skew canonical FR). Bump if
     # the step-2000 eval shows insufficient reversed-FR signal.

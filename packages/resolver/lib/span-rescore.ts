@@ -387,7 +387,7 @@ export async function findRescoreCandidate(
 	//
 	// So for this ONE query shape the filter is demoted to an additive prior: probe the gazetteer
 	// unscoped, then rank with `rankByCountryPrior` so an in-country place may be up to 100x smaller and
-	// still win. This is the #912 lever ("Paris under en-US must not be hard-scoped to Paris, Texas")
+	// still win. This is the #912 change ("Paris under en-US must not be hard-scoped to Paris, Texas")
 	// applied at the tier that actually decides the class — #912 lives upstream in the CLI and keys on a
 	// `locality`-tagged tree, but the model reads a bare famous name as a `street`, so the shape that
 	// needs it most is exactly the shape that guard cannot see.

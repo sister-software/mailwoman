@@ -101,7 +101,7 @@ known gaps on the FR numbers:
   canonical-order figure — the published frontier for reordered house numbers is
   ~90–91% (neural parsers collapse much further on reorder). The en-us release's
   later checkpoint adds a reversed-order training subset that recovers this; this fr-fr
-  bundle predates that lever.
+  bundle predates that change.
 
 Because the older anchor-off / pre-diversified-golden figures in this bundle's
 `model-card.json` `eval` block were measured before the anchor-on grading

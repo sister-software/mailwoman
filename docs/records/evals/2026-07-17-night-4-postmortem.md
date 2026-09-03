@@ -60,9 +60,9 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   the FR fragment board (n=400, complete BAN coverage) next.
 - 05:29 (dd2e8aae) — **PHASE-4B RESULT at board scale (n=1600, the FR fragment board's four street classes):
   name-evidence rerank street@1 0.619 → 0.706 (+8.7pp); bare-street 0.675 → 0.860 (+18.5pp) — the
-  66% recall class every corpus lever plateaued on, collected with ZERO training.** Of 202
+  66% recall class every corpus change plateaued on, collected with ZERO training.** Of 202
   recoverable rows: 140 fixed / 14 broken / 48 neutral (10:1). Resolver-as-arbiter validated with
-  the corrected instrument; option C no longer the primary lever for bare fragments. Eval doc:
+  the corrected instrument; option C no longer the primary change for bare fragments. Eval doc:
   `2026-07-17-phase4-name-evidence-rerank.md` (dd2e8aae). Caveats stated there: v301 span artifact
   (k-best only exists on the archived branch — this result is the consumer that justifies merging
   it), FR-only index, BAN-derived board = ideal coverage.

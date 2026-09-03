@@ -22,14 +22,14 @@ confidence). Zero-GPU, coordinate-graded._
    - **#776** — calibrated-confidence showcase (the differentiator). Re-fit on the shipped v4.13.0
      (ECE 0.060→0.0055), live reliability + abstention curves on the calibration concept page,
      render-verified. The trade-show centerpiece: the one thing a search index can't show.
-   - **#777** — #370 span-rescore + postcode gate (the EU-coverage lever). Default-off, eval-validated:
-     lifts 53% of the EU no-result tail to right-place @25 km. _Eval infra + the gated lever, no
+   - **#777** — #370 span-rescore + postcode gate (the EU-coverage change). Default-off, eval-validated:
+     lifts 53% of the EU no-result tail to right-place @25 km. _Eval infra + the gated change, no
      production wiring._
    - **#778** — EU qualified-name recall diagnostic (buffer-time bonus, answers #734). Baseline EU
      candidate recall 90.8% (confirms #734's "real ~93%"); the ≤3-char trailing-token base-name strip
-     is a clean +1.4 pp / zero-collision EU lever. _Eval infra + finding._
+     is a clean +1.4 pp / zero-collision EU change. _Eval infra + finding._
    - **#780** — #370 span-rescore **production wiring** (default-off). The resolver code for #777's
-     validated lever; wires `ResolveOpts.spanRescore` into `resolveTree`. 8 new + 48 existing resolver
+     validated change; wires `ResolveOpts.spanRescore` into `resolveTree`. 8 new + 48 existing resolver
      tests pass. _Merge after #777 (its eval is the justification)._
 3. **The postmortem PR (this doc)** — `docs/night-2026-06-23-postmortem` branch.
 
@@ -43,7 +43,7 @@ confidence). Zero-GPU, coordinate-graded._
   typecheck clean. **Then validated end-to-end** (`scripts/eval/span-rescore-e2e.ts`, on #780): flipping
   the flag through the _real_ `resolveTree` + candidate backend lifts EU right-place **@25km 63.2 → 79.2%
   (+16pp)** and resolved 76 → 95% — PL +42, CZ +42, PT +11; ~17% of new resolutions land >25km (the
-  mis-fire rate #777 measured). So the wired lever delivers the EU coordinate lift in production, not
+  mis-fire rate #777 measured). So the wired change delivers the EU coordinate lift in production, not
   just in the standalone validator. **Your remaining calls:** flip `ResolveOpts.spanRescore` on (the
   +16pp vs the 17% mis-fire is the trade), and widen postcode coverage so the gate reaches CZ/AU (IT today).
 - **Demo confidence toggle — SHIPPED in #776 (default OFF).** Resolved by making it opt-in: the default
@@ -55,7 +55,7 @@ confidence). Zero-GPU, coordinate-graded._
 - **G-NAF (#208).** License is clear (CC-BY-4.0 per the data-sources catalog); the ingest is the work
   (~5 GB AU, backlog #31). Lower priority than EU for the trade show.
 
-### ⭐ Strategic upshot — the lever substantially narrows the EU gap (claim it precisely)
+### ⭐ Strategic upshot — the change substantially narrows the EU gap (claim it precisely)
 
 **Crispest accurate one-liner:** the rescore narrows the EU @25km gap from **−20pp** (#775 same-harness:
 mailwoman 59 vs Nominatim 79, no rescore) to an estimated **~−4pp** (59 + the clean +16pp lift ≈ 75 vs 79) — most of the gap closed, and mailwoman now _ahead_ of Nominatim on IT/PT/FR. Not parity, but close,
@@ -67,13 +67,13 @@ The **#370 span-rescore (#780) attacks exactly that tail**, and the end-to-end e
 defensible number: enabling the flag lifts mailwoman EU **@25km 63.2 → 79.2% (+16pp)** — a flag-only A/B,
 no caveat. **That lift is the headline.** What it does to the standing-vs-Nominatim is more nuanced, and
 I corrected my own first draft of this (verify-before-verdict): it is **not** "parity across EU." Per
-locale, mailwoman-with-lever **leads** IT (99 vs 75) / PT (73 vs 47) / FR (81 vs 59) and still **trails**
+locale, mailwoman-with-change **leads** IT (99 vs 75) / PT (73 vs 47) / FR (81 vs 59) and still **trails**
 PL (85 vs 96) / AT (85 vs 97) / CZ (71 vs 88) / AU (42 vs 97 — the cross-state problem the country gate
 can't fix). The aggregates land ~79% each, but that's a _mix_ (the IT/PT/FR leads offsetting the
 Slavic/German/AU trails), not a uniform catch-up — **and** it's a cross-harness compare in which the e2e
 grades mailwoman more leniently than #775 (e2e IT 99 vs #775 92), so a same-harness run could put
-mailwoman-with-lever _below_ Nominatim's 79%.
-**The precise trade-show claim: the lever makes mailwoman competitive on EU aggregate and ahead of
+mailwoman-with-change _below_ Nominatim's 79%.
+**The precise trade-show claim: the change makes mailwoman competitive on EU aggregate and ahead of
 Nominatim on several countries (IT/PT/FR) — NOT "matches Nominatim across EU."** Confirm the aggregate
 standing with one single-harness mailwoman-vs-Nominatim run (reuse #775's Nominatim rows — no need to
 re-hammer their free API) before claiming parity.
@@ -122,16 +122,16 @@ live effect; `cf-cache-status: DYNAMIC` so it propagated immediately).
   (PL untouched). Reach is bounded by candidate-DB postcode coverage (IT 97%, CZ/AU ~0) — a data limit
   that lifts as the gazetteer fills. Stays **default-off**; remaining before default-on = wire the gated
   `spanRescore` into production `resolveTree` + widen postcode coverage. _Operator merge; eval infra +
-  the gated lever, no production wiring._
+  the gated change, no production wiring._
 - **EU qualified-name recall — #734's "measure first," answered (#778).** Buffer-time diagnostic, same
   root cause as the #370 swap tail (OA's qualified locality forms vs gazetteer base names). Coordinate-
   graded: baseline EU candidate recall **90.8%** (confirms #734's "real ~93%, not 88%" — the 88% was a
-  Lithuanian eval-extraction artifact, LT absent here). The lever #734 called "collision-risky" — a
+  Lithuanian eval-extraction artifact, LT absent here). The change #734 called "collision-risky" — a
   trailing-token base-name strip — is the **safe** one when bounded to **≤3 chars**: +14 PT _freguesia_-
   code recoveries (`Santa Eulália Viz`→`Santa Eulália`, 1 km), **zero collisions** (the bound spares real
   name parts `Cravo`/`Chão`/`Cruz`, all ≥4 chars). The "low-risk" structural suffixes (`b.`/`im`) recover
   0 here — AT/CH forms absent from the panel; needs an AT/CH holdout to grade (data-blocked). _Operator
-  merge; eval infra + finding, no production wiring. Wiring it (additive fallback) is a clean next lever._
+  merge; eval infra + finding, no production wiring. Wiring it (additive fallback) is a clean next change._
 - **Competitive benchmark harness** (`scripts/eval/competitive-benchmark.ts`, PRIMARY A) — mailwoman vs
   Nominatim (public API) vs Pelias (geocode.earth, via the operator's git-excluded diag, dynamically
   imported so the committed harness degrades gracefully). Two-axis: resolve-rate @ coarse km threshold
@@ -166,9 +166,9 @@ On clean OA held-out (150/locale, @25km right-place), **mailwoman trails BOTH co
 - **The centerpiece got render-verified, not just build-verified** — Playwright with an intercepted
   R2 fetch drew the real SVGs (24 circles, 2 polylines, zero errors); production CORS confirmed by header.
 - **The #780 wiring got end-to-end-verified, and it caught a stale-compile lie.** The unit tests pass on
-  _source_; production resolves the _compiled_ `out/`. The first e2e run reported +0.0pp — the lever
+  _source_; production resolves the _compiled_ `out/`. The first e2e run reported +0.0pp — the change
   looked dead. Recompiling revealed the real **+16pp EU @25km**. Grading the wired path on compiled code
-  (not just source unit tests) is what turned a false negative into the lever's production proof.
+  (not just source unit tests) is what turned a false negative into the change's production proof.
 
 ## What could've gone better
 
@@ -180,7 +180,7 @@ Mazowiecki`, not `Tomaszów`") would have predicted it before the run.
   `localhost`, so the first Playwright pass hit the component's error state. Resolved by intercepting
   the fetch, but a few minutes were spent proving it was a localhost artifact, not a bug.
 - **The #370 gate's reach is data-limited and I found that late** — the postcode→point lookup the gate
-  needs only covers IT among the swap locales (CZ/AU resolve ~none). The lever is still net-positive,
+  needs only covers IT among the swap locales (CZ/AU resolve ~none). The change is still net-positive,
   but the gate is more "proof of the mechanism" than "broad fix" until postcode coverage widens.
 
 ## Decisions made autonomously

@@ -55,7 +55,7 @@ interface GNAFTuple {
 
 /**
  * The address layouts an AU address actually arrives in. The model already handles postcode-TRAILING (canonical); the
- * two postcode-LEADING forms are the ones it fails, so they carry the lever. We keep the canonical form too so the
+ * two postcode-LEADING forms are the ones it fails, so they carry the change. We keep the canonical form too so the
  * retrain doesn't forget it.
  */
 function renderOrders(c: GNAFTuple): string[] {

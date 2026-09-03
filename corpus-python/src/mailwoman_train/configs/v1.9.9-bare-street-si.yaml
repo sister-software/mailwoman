@@ -3,7 +3,7 @@
 # (resolve -3.4pp; 37 rows lost, all the Slovenian no-street "Village N, Postcode Village" form —
 # "Apače 108" split into street "Apače 10" + house "8"). The bare-street boundary lesson generalizes
 # onto a form where the leading name must keep its number whole and the trailing mention must stay
-# locality-bound. Per the falsified-lever rule nothing from v1.9.8 ships; THIS run pairs the slice
+# locality-bound. Per the falsified-change rule nothing from v1.9.8 ships; THIS run pairs the slice
 # with its counter-distribution: synth-si-bare-village (6,285 real OA SI village tuples, 3 orders,
 # gold = street:V / house_number:n / postcode:pc / locality:V-trailing).
 # ONE compositional change vs v1.9.8 (corpus overlay v0.9.9 = v0.9.4 + the SI slice, weight 6.0).

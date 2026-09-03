@@ -164,9 +164,9 @@ describe("mwdev_compare", () => {
 		).rejects.toThrow(/both arms resolved to engine same/)
 	})
 
-	it("caveats a zero-difference result, because that is also what an unfired lever looks like", async () => {
+	it("caveats a zero-difference result, because that is also what an unfired pin looks like", async () => {
 		// Learned on 2026-08-16: this tool's first real run reported "0 of 558 differed — tight enough to read as a
-		// real absence" for a lever that never reached a decode. The number could not tell the two apart, so the
+		// real absence" for a pin that never reached a decode. The number could not tell the two apart, so the
 		// result must not be relayed as though it could.
 		const same = (input: string) => input
 		const tools = await tableWith([stubEngine("a", { x: 1 }, same), stubEngine("b", { x: 2 }, same)])
@@ -178,7 +178,7 @@ describe("mwdev_compare", () => {
 		})) as Record<string, unknown>
 
 		expect((result["arms_differed_on"] as { n: number }).n).toBe(0)
-		expect(result["summary"]).toContain("or the lever never ran")
+		expect(result["summary"]).toContain("or the pin never ran")
 		expect((result["warnings"] as string[]).join(" ")).toContain("mwdev_trace")
 	})
 

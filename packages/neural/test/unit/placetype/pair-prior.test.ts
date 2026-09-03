@@ -1286,7 +1286,7 @@ describe("buildPlacetypePairPriors — whole-edge parent bias (#46)", () => {
 		expect(matrix[2]![labelCol("B-locality")]).toBe(5)
 	})
 
-	it("an explicit opts.parentDelta OVERRIDES the header — the MAILWOMAN_PAIR_PARENT_DELTA sweep lever", () => {
+	it("an explicit opts.parentDelta OVERRIDES the header — the MAILWOMAN_PAIR_PARENT_DELTA sweep setting", () => {
 		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality>locality" }, 10, undefined, "us", 5)
 		const text = "Brooklyn, New York, NY"
 		const pieces = makePiecesWithCommas(text)
@@ -1306,7 +1306,7 @@ describe("buildPlacetypePairPriors — whole-edge parent bias (#46)", () => {
 	})
 
 	it("the parent bias is emission-only — it never emits a transition adjustment", () => {
-		// `transitionBeta` is the CHILD's calibrated path-fusion lever (β=5, measured on the child span's entry
+		// `transitionBeta` is the CHILD's calibrated path-fusion setting (β=5, measured on the child span's entry
 		// transition). The parent bias has no such calibration and must not inherit one.
 		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality" }, 10, 5)
 		const text = "Brooklyn, New York, NY"

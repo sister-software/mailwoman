@@ -7,7 +7,7 @@
  *
  *   The incident this guards: `resolveConfig` carried a hand-copied default table that drifted on three values
  *   (postcode shape/containment coherence true where production ships false; placer threshold 0.5 where production
- *   ships 0.9), so every unset-lever measurement graded a configuration nobody ships. A copied constant cannot be kept
+ *   ships 0.9), so every unset-pin measurement graded a configuration nobody ships. A copied constant cannot be kept
  *   honest by review — the #861 rule — so `resolveConfig` now derives from `createGeocodeCommandOptions()` itself, and
  *   this test exists to fail if anyone re-introduces a literal.
  */
@@ -17,7 +17,7 @@ import { createGeocodeCommandOptions } from "mailwoman/geocode"
 import { describe, expect, it } from "vitest"
 
 describe("resolveConfig — production lockstep (#1732)", () => {
-	it("matches the geocode command's own defaults on every shared lever", () => {
+	it("matches the geocode command's own defaults on every shared pin", () => {
 		const production = createGeocodeCommandOptions()
 		const resolved = resolveConfig({})
 
@@ -45,7 +45,7 @@ describe("resolveConfig — production lockstep (#1732)", () => {
 		expect(resolved.placeCountryThreshold).toBe(0.9)
 	})
 
-	it("still lets every lever override the production default", () => {
+	it("still lets every pin override the production default", () => {
 		const resolved = resolveConfig({
 			postcode_shape_coherence: true,
 			place_country_threshold: 0.5,

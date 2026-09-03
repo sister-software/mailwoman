@@ -21,7 +21,7 @@ export const diagnoseTool = async ({ registry }: DevToolDeps): Promise<DevTool> 
 		"mwdev_run applies). What the pipeline did, assembled from its own seams \u2014 kind verdict, " +
 		"known formats, priors, repairs and decode confidence; the three-state evidence channels; every backend " +
 		"lookup with its checks, candidate count and the rank the pick started at; admin coherence, lineage and " +
-		"tier \u2014 plus the smallest single-lever flip that moves the answer. Rows are classified into " +
+		"tier \u2014 plus the smallest single-setting flip that moves the answer. Rows are classified into " +
 		`mechanism-state shapes (${DIAGNOSE_SHAPES.join(", ")}) by TRANSPARENT seam-fact predicates, and the ` +
 		"result says so: this is uncalibrated v1, every predicate ships beside its count, and a row that fails " +
 		"its expectation while matching no shape is reported `unclassified` rather than forced into the nearest " +
@@ -33,9 +33,9 @@ export const diagnoseTool = async ({ registry }: DevToolDeps): Promise<DevTool> 
 			.boolean()
 			.default(true)
 			.describe(
-				"Re-run each row under one flipped lever at a time and report the flips that moved the answer. " +
+				"Re-run each row under one flipped setting at a time and report the flips that moved the answer. " +
 					`Above ${COUNTERFACTUAL_FULL_RUN_MAX_ROWS} rows this narrows to rows that matched a non-clean ` +
-					"shape, and the result says so \u2014 a clean row's levers are then unmeasured, not inert."
+					"shape, and the result says so \u2014 a clean row's settings are then unmeasured, not inert."
 			),
 		limit: z
 			.number()
@@ -49,7 +49,7 @@ export const diagnoseTool = async ({ registry }: DevToolDeps): Promise<DevTool> 
 			.positive()
 			.optional()
 			.describe(
-				"Cap on the PER-ROW accounts in the reply — the aggregates (by_shape, counterfactual_levers, summary) " +
+				"Cap on the PER-ROW accounts in the reply — the aggregates (by_shape, counterfactual_settings, summary) " +
 					"still cover every evaluated row. The emitted slice leads with non-clean rows and `rows_omitted` " +
 					"says what it left out. Use for large sets where the census is the point and the row dump is not."
 			),

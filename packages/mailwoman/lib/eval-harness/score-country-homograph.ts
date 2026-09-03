@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Country homograph scorer — the TRUE baseline for the model-first country lever. Measures
+ *   Country homograph scorer — the TRUE baseline for the model-first country change. Measures
  *   country/region/locality P/R/F1 (unfolded `decodeAsJSON`) on the hard homograph eval, PLUS the
  *   over-fire confusion: how often a gold region/locality span is mistagged as `country` (the
  *   "trailing token = country" failure), and how often gold country is missed.

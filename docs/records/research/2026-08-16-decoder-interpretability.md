@@ -217,7 +217,7 @@ Training Differentiable Models by Constraining their Explanations_ (IJCAI) [S]: 
 gradients on features the model _shouldn't_ use (or reward gradients on ones it should). Directly
 implementable in corpus-python as a `∂logits/∂channel` regularizer — but note the sign: our
 problem is under-reliance on channels only when channels are _present and correct_; when they're
-silent, token-embedding reliance is desired behavior. A blanket penalty is the wrong lever.
+silent, token-embedding reliance is desired behavior. A blanket penalty is the wrong change.
 
 **Interchange-intervention training / causal alignment — the strongest fit.** Geiger et al. 2022,
 _Inducing Causal Structure for Interpretable Neural Networks_ (IIT, ICML) [S]; Geiger et al. 2024,
@@ -352,7 +352,7 @@ that class existed, emitted a novelty p-value telling the triager to mint it.
 | Linear country probe         | Hidden states read "DE" while the resolver chose US — the cross-boundary contradiction that _was_ the actual failure.                                |
 | SAE dictionary               | Would likely surface a German-place-morphology feature firing on "Thüringen" — same fact as the probe, at ~1000× the effort.                         |
 | Hard concept bottleneck      | Would have been forced to abstain (zero concept input) — and been wrong, since the parse was right; shows why the bypass is a feature at parse time. |
-| RRR gradient penalty         | Would push reliance toward channels — the wrong lever here; the model's grammar-only decision was correct.                                           |
+| RRR gradient penalty         | Would push reliance toward channels — the wrong change here; the model's grammar-only decision was correct.                                          |
 | IIT/DAS country register     | A trained country subspace would have output "DE" as a first-class readable value for the resolver to check against.                                 |
 | Calibration (parse level)    | No flag — correctly confident; calibration is not an error-shape detector.                                                                           |
 | Mondrian conformal diagnosis | Classifies the case into "evidence-silent + resolver country flip" with per-class coverage, or emits a novelty p-value before that class exists.     |

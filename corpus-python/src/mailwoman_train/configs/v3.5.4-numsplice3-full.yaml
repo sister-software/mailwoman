@@ -26,7 +26,7 @@
 #   DO-NO-HARM — FR fragment board + global parity hold.
 #
 # DECISION TABLE:
-#   win HOLDS + guard HOLDS -> SHIP CANDIDATE. 8k, then promote. The clean lever #727 wanted.
+#   win HOLDS + guard HOLDS -> SHIP CANDIDATE. 8k, then promote. The clean change #727 wanted.
 #   win HOLDS + guard DROPS -> the trade is intrinsic to single-piece numbers; shelve numsplice, take B4b.
 #   win ABSENT + guard HOLDS -> 3-digit too narrow; the win needs 4-digit (widen to 100-9999, re-probe).
 #

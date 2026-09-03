@@ -182,9 +182,9 @@ export const INPUT_SET_SCHEMA = z
 	.describe('Which inputs to measure. `{"kind":"board"}` is the full 558-row regression board and is the default.')
 
 /**
- * Every construction- and call-time lever, in the CLI's own vocabulary.
+ * Every construction- and call-time pin, in the CLI's own vocabulary.
  *
- * Unset means the PRODUCTION DEFAULT, never "off" — the rule `GauntletResolverLevers` states in `harness.ts`: "the
+ * Unset means the PRODUCTION DEFAULT, never "off" — the rule `GauntletResolverPins` states in `harness.ts`: "the
  * library defaults are the thing under test". A schema that coerced undefined to false would grade a configuration
  * nobody ships.
  */
@@ -221,7 +221,7 @@ export const ENGINE_CONFIG_SCHEMA = z
 		variant_alias_exemption: z.boolean().optional(),
 	})
 	.strict()
-	.describe("Every lever, in the CLI's vocabulary. Unset means the PRODUCTION DEFAULT, never off.")
+	.describe("Every pin, in the CLI's vocabulary. Unset means the PRODUCTION DEFAULT, never off.")
 
 export interface DevToolDeps {
 	registry: EngineRegistryLike
@@ -405,7 +405,7 @@ function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
  * whether the outcome moved.
  *
  * `postcode_country_scope` is the worked example and the harness's own reason for carrying it (`harness.ts`): it is
- * "the FIRING COUNT, so a lever-pinned run can say how many rows the mechanism actually spoke on rather than leaving an
+ * "the FIRING COUNT, so a pinned run can say how many rows the mechanism actually spoke on rather than leaving an
  * unchanged verdict to mean either 'harmless' or 'never ran'."
  */
 export function firingSignals(rows: ComparedRow[]): Record<string, { a: number; b: number }> {

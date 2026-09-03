@@ -28,8 +28,8 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
   (the anti-join) / 572 funded-not-eligible**, as GeoJSON. Neutral framing audited.
 - **#624 merged** (concept doc) · **#631 merged** (Tier 3: scale eval + O(clusters×links)→linear cohesion
   fix [13× faster] + CA generalization + geocode-first research blog draft).
-- **#626 / #632 / #633 merged** (the #625 comparison-model lever search: A1 collapse + A2/A3 corroboration
-  - A4 average-linkage + the secondary-identifier mechanism — auth-official is the **first lever past the
+- **#626 / #632 / #633 merged** (the #625 comparison-model change search: A1 collapse + A2/A3 corroboration
+  - A4 average-linkage + the secondary-identifier mechanism — auth-official is the **first change past the
     baseline, F1 64.7%**).
 - **#634 merged** — `mailwoman registry --sources` full-pipeline multi-source CLI (the product surface),
   verified end-to-end (resolves a provider + facility across two sources into one cross-dataset link).
@@ -37,7 +37,7 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
 - **#636 open** — FCC commitments two-HCP row explode (#618 B1): a 4th source → **cross-source links
   27 → 219** (10 spanning three of the four _sources_ — but only two _agency-roles_, since RHC +
   commitments are both FCC; the cross-agency correction is in the second-half section below).
-- **Issues #625** (the full lever search, now incl. the auth-official first-positive) · **#630**
+- **Issues #625** (the full change search, now incl. the auth-official first-positive) · **#630**
   (Dependabot triage — dev-tooling-only transitive vulns, triaged not bumped).
 - **#603 learned-scorer probe (DONE, qualified-positive)** — `scripts/record-matcher/learned-scorer-eval.ts`
   - `docs/articles/evals/2026-06-16-learned-scorer-probe.md`. Does a model over the FS feature vector +
@@ -48,7 +48,7 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
     positive — the interaction features carry real, consistent signal concentrated at the decision boundary,
     but FS already ranks well (0.942), so the linear headroom is modest. **Qualified greenlight for the GBM**
     (#603 Tier 2): the principled next step, but it widens a real-but-small margin — the reliable secondary
-    identifier (#625) is the larger lever. The 8-seed design earned its keep: seed 1 alone read a misleading
+    identifier (#625) is the larger change. The 8-seed design earned its keep: seed 1 alone read a misleading
     +0.054; across 8 it settled at +0.0057. Merged via **#637**.
 - **#603 GBT arm (#640) — the tree EXTENDS the linear gain.** Added the non-linear arm (a compact pure-Node
   gradient-boosted-trees scorer, the model #603 names) to the probe. On the same 1500-NPI/8-seed harness:
@@ -61,7 +61,7 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
   records clustered three ways through the same pipeline; multi-seed). **Result (2000 NPIs, 4 seeds, ~1917
   eval records): FS baseline F1 55.3%±3.2, LR 56.7% (+1.4pp), GBT 60.5%±2.7 (+5.2pp, 4/4 seeds)** — driven by a
   large precision gain that **cuts the over-merge** (P 45→61%, over-merged clusters 94→69, the #625 problem).
-  The pairwise gain (#640) DOES translate to clustering; the #603 GBM is a **real dedup lever**, greenlit.
+  The pairwise gain (#640) DOES translate to clustering; the #603 GBM is a **real dedup change**, greenlit.
   **Two methodology catches en route** (both decisive — the result inverted without them): (1) a 300-NPI
   smoke MISLED (FS ahead by 5pp) — too few co-located collisions to exhibit the over-merge, which only bites
   at scale → trust the larger eval; (2) a coarse 6-point threshold sweep understated the learned scorers by
@@ -190,7 +190,7 @@ Two more landed while closing the shift with the operator:
 
 (threshold 0, 300 TX NPIs / 816 records, EM-trained, 100% geocoded)
 
-| lever                              | precision | recall |        F1 |   ARI | over-merged |
+| change                             | precision | recall |        F1 |   ARI | over-merged |
 | ---------------------------------- | --------: | -----: | --------: | ----: | ----------: |
 | baseline (address-key + distance)  |     47.5% |  40.5% |     43.7% | 0.436 |          39 |
 | + inverse-address-frequency (#617) |     55.7% |  74.6% |     63.8% | 0.637 |          36 |
@@ -209,7 +209,7 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
 
 ## What went well
 
-- **The negative results were caught immediately and cheaply** because every lever lands as an OFF→ON row
+- **The negative results were caught immediately and cheaply** because every change lands as an OFF→ON row
   in the same benchmark. A1 (null) and A2-alone (catastrophic) were visible in one table, not buried.
 - **The scale eval found a real bug.** `resolveEntities` computed cohesion by filtering every link for
   every cluster — O(clusters × links), so 50K records took 19s. Indexing record→cluster and accumulating
@@ -217,13 +217,13 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
   That's the value of a scale eval — it pays for itself the first time it runs.
 - **The fix generalizes.** The address-frequency win reproduces on a second held-out state (CA: 45.0% →
   58.6%), so it isn't TX-overfit — magnitude is state-dependent (TX +20pp, CA +12pp), the direction holds.
-- **The first lever to beat the baseline — and a general mechanism for it.** Built `SourceRecord.attributes`
+- **The first change to beat the baseline — and a general mechanism for it.** Built `SourceRecord.attributes`
   - a model `discriminators` option (extra secondary-identifier comparisons + corroborators — taxonomy,
-    license, authorized-official…). The authorized-official discriminator is the **first lever to exceed the
+    license, authorized-official…). The authorized-official discriminator is the **first change to exceed the
     63.9% baseline: F1 64.7% at threshold 12** (it holds recall where the baseline alone collapsed at t=4, so a
     higher cutoff separates the co-located providers). Modest (+0.8pp) because auth-officials are partly
     shared across hospital-system NPIs — but it **validates the #625 conclusion** that a reliable secondary
-    identifier is the lever (unlike phone, which hurt), and the `discriminators` mechanism makes a stronger
+    identifier is the change (unlike phone, which hurt), and the `discriminators` mechanism makes a stronger
     one (taxonomy / license) a one-line add. The over-merge is confirmed a _scoring_ problem with a path past
     it, not a dead end.
 
@@ -231,7 +231,7 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
 
 - **A1 was a near-null (+0.1pp).** Hypothesis: the address+distance double-count was already largely
   absorbed by EM's m/u fitting, so removing the redundancy is architecturally cleaner (one spatial
-  parameter set) but not a metric lever. Honest result — kept it for the cleaner model, not the number.
+  parameter set) but not a metric change. Honest result — kept it for the cleaner model, not the number.
 - **A2 as a hard name/org-only gate was catastrophic (−20pp, F1 63.9% → 43.8%, recall 74.6% → 40.5%).**
   This is the empirical confirmation of DeepSeek's turn-3 tension: "co-located distinct entities" and
   "co-located same entity with name drift" look identical to a name/org-only gate, so requiring name/org
@@ -247,7 +247,7 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
   bridges — so it only splits the true name-drift clusters. **The conclusion across A1–A4: the NPPES
   over-merge is a _scoring_ problem this data can't resolve, not a comparison-weight or clustering-topology
   one** — the data lacks a reliable discriminator between co-located distinct providers and co-located
-  name-drift. The real levers (out of tonight's CPU scope): a reliable secondary identifier
+  name-drift. The real changes (out of tonight's CPU scope): a reliable secondary identifier
   (authorized-official name / taxonomy / license) or the learned GBM scorer (#603). A1 + A4 ship as tested
   default-off options; the address-frequency baseline (63.9%) is the operating point. The frontier is now
   fully characterized — a clean, honest "we mapped exactly why this is hard" outcome, not a 0.85 number.
@@ -260,7 +260,7 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
   Rather than chase A4 immediately, I kept the clean 63.9% baseline as the committed headline, reverted the
   phone confound out of the benchmark (it changed blocking and muddied the baseline), documented A2/A3 as
   default-off options + a #625 negative, and shipped the co-headline B (cross-dataset) first. With Tier-1
-  and Tier-3 done and time left, I implemented A4 (average-linkage) — the principled over-merge lever —
+  and Tier-3 done and time left, I implemented A4 (average-linkage) — the principled over-merge change —
   as a tested default-off `cluster()` option, A/B'd in the benchmark.
 
 ## Open questions for the operator
@@ -278,7 +278,7 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
   (LR + GBT over the FS feature vector, by-NPI split, 8 seeds): both beat FS, the tree more (GBT +0.0177 AUC
   / +6.6pp pairwise F1). Then the **definitive clustering A/B** (#641, 2000 NPIs, 4 seeds): **GBT clustering
   F1 60.5% vs FS 55.3%, +5.2pp, 4/4 seeds**, by cutting the over-merge (94→69 clusters). **The GBM is a real
-  dedup lever — greenlit.** Cross-**STATE** generalization is now also DONE (in #641): trained on TX, the GBT
+  dedup change — greenlit.** Cross-**STATE** generalization is now also DONE (in #641): trained on TX, the GBT
   beats the FS baseline on held-out **CA** by **+20.5pp** (the over-merge signal transfers; the LR doesn't
   generalize). Remaining for the operator: (1) review/merge **#641** (it adds the shipped `scorer?` hook +
   the full eval methodology — within-state 4-seed + cross-state); (2) the production build — a tuned offline
@@ -312,7 +312,7 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
 | PRs open (flagged)                                        | **#641** — #603 Tier-2 clustering A/B + `scorer?` hook · **second half (9, awaiting merge):** **#669** geocode-first decision surface · **#670** org-name yardstick (string+coord) · **#671** context-aware designations (#668) · **#672** cross-dataset map (generator-only) · **#673** #655 feasibility · **#674** this postmortem · **#675** #595 stale-test fix · **#676** AGENTS.md TLA-note fix · **#677** the research blog (both figures, draft) |
 | backlog triaged (recommend close / groomed)               | **#642** already-fixed (#646) · **#555** mis-premised (14 code units, not 13) · **#638** already-closed · **#655** data-blocked · **#481** ~6.5/7 done (only TLA remains) — all with evidence                                                                                                                                                                                                                                                            |
 | dedup F1 — by truth grain (GBT, #670)                     | NPI 53.6% → site 55.3% → org-name 60.7% → **org-name-coord 68.1%** (+14.5pp, identical clusters — the ruler, not the model)                                                                                                                                                                                                                                                                                                                              |
-| issues filed                                              | #625 (lever search), #630 (Dependabot), **#638 (demo httpvfs full-extract download — live prod bug)**, **#642 (geocoder wrong-US-state w/o postcode)**                                                                                                                                                                                                                                                                                                   |
+| issues filed                                              | #625 (change search), #630 (Dependabot), **#638 (demo httpvfs full-extract download — live prod bug)**, **#642 (geocoder wrong-US-state w/o postcode)**                                                                                                                                                                                                                                                                                                  |
 | evals produced                                            | dedup (TX + CA), cross-dataset (4-source), reconciliation, geocoder-vs-coords, matcher-scale, learned-scorer (pairwise FS/LR/GBT), **clustering A/B**, **cross-state TX→CA**, geocoder-namesake                                                                                                                                                                                                                                                          |
 | dedup F1                                                  | 43.7% → 63.9% baseline → **64.7%** (auth-official discriminator)                                                                                                                                                                                                                                                                                                                                                                                         |
 | learned scorer — **pairwise** AUC                         | FS 0.942 → LR 0.948 → **GBT 0.960** (+0.0177, 8/8 seeds); best-F1 72.6→76.9→**79.1%**                                                                                                                                                                                                                                                                                                                                                                    |

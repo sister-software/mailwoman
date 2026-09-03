@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `po-box-cedex` slice recipe — the po_box / cedex coverage lever of the parity campaign (the
+ *   `po-box-cedex` slice recipe — the po_box / cedex coverage change of the parity campaign (the
  *   unit-slice playbook applied to the two starved tags `po_box` and `cedex`). Generate-mode,
  *   self-contained. Ported from scripts/build-po-box-cedex-slice.mjs.
  *
@@ -103,7 +103,7 @@ const US_LEADERS_COMMON = T["en-US"]!.leaders
  */
 const US_LEADERS_RARE = ["Caller", "Firm Caller", "Drawer", "Lockbox"]
 // "#" EXCLUDED (v4.4.0 probe finding): bare "#N" is a secondary-unit designator per USPS Pub 28 and
-// the shipped unit lever labels it `unit` — the corpus template's po_box reading CONTRADICTS a
+// the shipped unit change labels it `unit` — the corpus template's po_box reading CONTRADICTS a
 // shipped convention. PMB stays — a genuine commercial-mail-receiving designator, no unit collision.
 /**
  * PMB.

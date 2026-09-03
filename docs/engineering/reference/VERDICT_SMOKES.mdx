@@ -32,7 +32,7 @@ Linear warmup from 0 → `learning_rate` over `warmup_steps`, then **flat at `le
 
 - Divergence shows up immediately because nothing is masking it.
 - The smoke window is a "would this recipe survive at sustained peak LR" probe — which is exactly the question that matters for "will the full run blow up."
-- Use this for any recipe that introduces a new loss term, a new normalization scheme, new class weights, a tokenizer change, or any other lever that hasn't been validated at full LR before.
+- Use this for any recipe that introduces a new loss term, a new normalization scheme, new class weights, a tokenizer change, or any other change that hasn't been validated at full LR before.
 
 ### Mode B — Long-tail cosine
 

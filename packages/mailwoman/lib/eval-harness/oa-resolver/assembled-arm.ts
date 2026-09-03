@@ -43,7 +43,7 @@ export async function buildAssembledArm(
 	// caller sees (ambiguous EU names without a country constraint land off-continent).
 	const runAssembled = options.assembled ?? false
 	// `--place-country-hard` (#194/#743) promotes a CONFIDENT placer guess to a HARD country filter
-	// (empty→unresolved) — the lever for the low-pop EU tail the soft prior can't move. Production-
+	// (empty→unresolved) — the change for the low-pop EU tail the soft prior can't move. Production-
 	// representative: conditional by the built-in coverage safelist (only well-covered countries hard-filter).
 	// `--place-country-hard-all` measures unrestricted (every confident country hard-filters, via a safelist
 	// override of the full in-map set) — how per-country hard-resolve-rates are measured to GROW the

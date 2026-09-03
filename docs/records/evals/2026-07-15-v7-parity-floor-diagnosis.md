@@ -142,7 +142,7 @@ Czech city). So the hybrid gate ships **paired with** #727 stage-2, which erases
 a permanent substitute for the model work.
 
 This unblocks v7 without a model campaign that re-plateaus and without shipping the tail a pure
-coordinate re-gate would. **#727 stage-2 (FSemi-CRF span head)** stays the model lever for the ~39%
+coordinate re-gate would. **#727 stage-2 (FSemi-CRF span head)** stays the model change for the ~39%
 boundary class and shrinks the fallback further. A **29M extract campaign is not recommended as the
 lead**: the plateau evidence says it re-plateaus.
 

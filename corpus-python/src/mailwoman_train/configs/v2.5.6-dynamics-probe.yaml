@@ -2,7 +2,7 @@
 # repaired US recall AND re-broke the Dublin pin), gentler dynamics only: lr 5e-5 -> 1e-5, warmup
 # 200 -> 500, 8000 -> 2000 steps. The 2k diagnostic (diagnostic-before-fix): if BOTH the Dublin pin
 # and the flip repair survive, the twin<->recall bind was SCHEDULE, not capacity — the campaign
-# resumes on data levers at gentle dynamics; if the trade persists, it's capacity -> the #727 arc
+# resumes on data changes at gentle dynamics; if the trade persists, it's capacity -> the #727 arc
 # (runbook: docs/superpowers/plans/2026-07-13-727-span-head-runbook.md). Grade ONLY: gauntlet
 # regression layer (Dublin/Melbourne pins) + us-recall-flip-census + parity floors sanity.
 data:

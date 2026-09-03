@@ -37,7 +37,7 @@ reproducibility, and #483/#484/#485 carry the resolver/service table-stakes work
 
 The shipped release is 4.3.0. `docs/articles/status.mdx` has been refreshed to that release and
 the 2026-06-11 parity scorecard exists. The active v4.4.0 candidate is
-`v1.3.0-boundary-consolidation`, with three probe-passed levers in the config header:
+`v1.3.0-boundary-consolidation`, with three probe-passed changes in the config header:
 glue augmentation, real-TIGER intersection rows, and the rebuilt po_box/cedex extract.
 
 The night-shift plan is coherent: it starts from the v4.4.0 verdict fork, allows publication on a
@@ -119,7 +119,7 @@ release artifact number.
 
 ### 6. The v4.4.0 plan's highest-risk new floor is po_box, not intersection
 
-The intersection lever looks comparatively clean: #487 now has real rows, the recent commits add
+The intersection change looks comparatively clean: #487 now has real rows, the recent commits add
 `intersection-real`/VT watch material, and the config header reports 100/100 probe behavior with
 zero false fires. The floor is conservative at 50.
 
@@ -148,7 +148,7 @@ known unfixed regression.
 3. On fail, classify to row before spending GPU. For tonight, likely classes are po_box
    punctuation truncation, perturb glue rows, and any FR region tail movement.
 4. Do not spend the train-time conventions probe until the v4.4.0 verdict is stable. It is a good
-   next lever, but it is not part of the current gate's proof.
+   next change, but it is not part of the current gate's proof.
 5. Keep #481/#480 cleanup as issue hygiene after the model decision, not during the ship fork.
 
 ## Suggested Follow-ups

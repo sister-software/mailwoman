@@ -1,7 +1,7 @@
 # Night Shift Postmortem — 2026-07-01/02 (30th shift)
 
 Drafted during the shift; finalized at hand-off. Window: **05:30 → 13:10 UTC** (operator returned early).
-Posture: autonomous, CPU/local, ~$0 Modal (GPU levers flagged, not run). PRs shipped + flagged for
+Posture: autonomous, CPU/local, ~$0 Modal (GPU changes flagged, not run). PRs shipped + flagged for
 operator merge (no self-merge).
 
 ## 🔔 Operator decision brief (read first)
@@ -32,11 +32,11 @@ operator merge (no self-merge).
   some public). Documented in AGENTS.md as a version-gated batch.
 - **PR #876** — `recognizeUsRegions` → `recognizeUSRegions` (internal-only slice of #875; no public
   re-export → zero release impact). Compile + affected tests green. Flagged for merge.
-- **Coverage quantified (lever C, closes the #823 loop).** Ran `frontier-gap.ts` against the live
+- **Coverage quantified (change C, closes the #823 loop).** Ran `frontier-gap.ts` against the live
   `candidate.db` (→ `candidate-global-coverage.db`, the post-#266/#267 build), geonames cities15000 top-2/country:
   **resolve-rate bare 88.9% → +hint 94.3%**, across 187 countries. **181 bare-supported · 3 placer-recoverable
-  (AR/GE/PR — 0→2/2 with hint, the #244/#822 lever) · 3 residual · 0 wrong-place.** The residual is a clean
-  exonym-indexing lever: Israel/Kuwait/Antigua fail because the English name (Tel Aviv, Kuwait City) matches no
+  (AR/GE/PR — 0→2/2 with hint, the #244/#822 change) · 3 residual · 0 wrong-place.** The residual is a clean
+  exonym-indexing change: Israel/Kuwait/Antigua fail because the English name (Tel Aviv, Kuwait City) matches no
   in-country record — index alt-name surface forms (Warsaw↔Warszawa is already proven). Down from the ~97
   residual countries the coverage arc started with. #823 was closed on a 5-city spot-check; this is the honest
   full measure.
@@ -57,13 +57,13 @@ operator merge (no self-merge).
   and aggregates the all-O runs into a corpus-gap shopping list, **separating trivial delimiter gaps from
   content gaps**. Honest read: **9.0% content-gap rate** (1.0% of chars; the raw 98% is delimiters). Top
   signal (verified): accented/foreign-influenced mis-segmentations (`Montréal, QC` → model drops the `C`;
-  clean `Austin, TX` tags fine) → an accent-robustness lever, plus fr `sainte`, plus non-Latin scripts.
+  clean `Austin, TX` tags fine) → an accent-robustness change, plus fr `sainte`, plus non-Latin scripts.
 
 - **Multi-locale corpus-gap read → #825 shopping list (verified).** Ran the #878 tool over the `oa-*-coord-150`
   external OpenAddresses sets. **CZ 84% / PL 77%** content-gap rate (the worst by far; PT 27, AT 15, FR 10, IT 2,
   AU 0, US 0). Root cause **verified by dumping cases** (probe before write-up this time): a **Slavic-diacritic
   tokenization/offset failure** — `Grudziądz` splits at `ą`, `Bohaterów` at `ó`, and the span shift eats trailing
-  digits (`39`→`9`). Told #825 the lever is diacritic robustness + CZ-in-scope, not per-locale volume (AU/US
+  digits (`39`→`9`). Told #825 the change is diacritic robustness + CZ-in-scope, not per-locale volume (AU/US
   already 0%). The 3 PRs (#874/#876/#878) all verified MERGEABLE/CLEAN + green.
 
 - **PR #879 — dropped the `as unknown as ResolverBackend` cast (closes #873).** Filed #873 (day session)
@@ -74,7 +74,7 @@ operator merge (no self-merge).
 - **CZ/PL diacritic gap: no clean CPU fix (→ #825 GPU).** `parseWithLogits` shows the tokenizer isolates
   diacritics into own pieces the model tags O; a decoder gap-bridge would patch `Grudziądz` but not the
   broader Polish under-tagging (`Daliowa`→`owa`), and it's #305-class repair risk. Declined; it's the
-  retrain lever.
+  retrain change.
 
 - **PR #880 — exonym-vs-coverage kill-switch (#826).** A pure name_key existence probe (no model) that
   front-runs the candidate-rebuild-payload decision. Verified across two sample widths: **English names
@@ -110,7 +110,7 @@ operator merge (no self-merge).
 
 ## Decisions made autonomously
 
-- **Did not ship #305.** A default-off lever that regresses 21pp when enabled is misleading scaffolding,
+- **Did not ship #305.** A default-off change that regresses 21pp when enabled is misleading scaffolding,
   not a fix. Reverted rather than ship-behind-a-flag.
 - **Deferred the `Json`/public-`Us` acronym batch to the operator** (breaking, version-gated) rather than
   do a piecemeal overnight sweep.

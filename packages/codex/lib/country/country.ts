@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Country recognition for the `country` parity lever. The ISO 3166-1 base (names + alpha-2/alpha-3)
+ *   Country recognition for the `country` parity change. The ISO 3166-1 base (names + alpha-2/alpha-3)
  *   is salvaged from isp-nexus `spatial/countries` ({@link ./names.ts}, {@link ./codes.ts}); this
  *   adds the layer ISO doesn't carry — the **surface forms** addresses actually use (endonyms +
  *   common abbreviations: "USA"/"United States"/"U.S."; "Deutschland"/"Germany"; "España"/"Spain")

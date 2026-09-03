@@ -4,7 +4,7 @@ The failure taxonomy flagged within-token punctuation as the clearest open neura
 81% vs v0 89%, hyphen 81 vs 87, slash 62 vs 72 (`2026-06-14-punctuation-stress`) — with the root cause
 "unmeasured." Measured now (`scripts/eval/within-token-punct-diag.ts`, neural's actual parse vs gold on
 the 61 apostrophe/hyphen/slash rows): **the punctuation token itself rarely fails.** The gap decomposes
-into four distinct mechanisms, three of which are already top-priority levers under other names.
+into four distinct mechanisms, three of which are already top-priority changes under other names.
 
 ## What actually fails
 
@@ -29,7 +29,7 @@ land in the right component. The misses in those rows are elsewhere in the addre
    the same delimiter-stripping failure root-caused on #694 (concatenated input loses segmentation) —
    delimited input fixes it.
 
-3. **Street/affix boundary wobble — the taxonomy's #1 parser lever.** `Country Club Rd` keeps `Rd` in
+3. **Street/affix boundary wobble — the taxonomy's #1 parser change.** `Country Club Rd` keeps `Rd` in
    the street (no `street_suffix`); FR `Rue Jean-Baptiste Lebas` / `Rue Neuve-des-Capucines 5` drop the
    `Rue` prefix and absorb the house number into the street. Pure boundary instability — nothing to do
    with the hyphen.
@@ -44,12 +44,12 @@ land in the right component. The misses in those rows are elsewhere in the addre
 The within-token punctuation gap is **not a punctuation-tokenizer problem** and does not warrant a
 punctuation-specific fix. It decomposes into:
 
-- the **#694 comma-less/delimiter** lever (fixing concatenated-input segmentation — already validated),
-- the **#1 boundary-instability** lever (street/affix; the taxonomy's highest-leverage parser fix),
+- the **#694 comma-less/delimiter** change (fixing concatenated-input segmentation — already validated),
+- the **#1 boundary-instability** change (street/affix; the taxonomy's highest-changeage parser fix),
 - the **#690 OOD-token** family (leading-char drops; foreign postcode formats),
 - and **one new specific case**: the AU/UK slash unit-convention (`4/2A`).
 
-So three of the four are closed by levers already prioritized — fixing boundary instability + delimited
+So three of the four are closed by changes already prioritized — fixing boundary instability + delimited
 input would lift the apostrophe/hyphen classes without touching punctuation. The slash class needs the
 AU/UK unit-convention specifically (a training-extract or a decode rule for `digit/alnum` between a unit
 designator and a street number). **Taxonomy update: re-label the "within-token punctuation" row as a

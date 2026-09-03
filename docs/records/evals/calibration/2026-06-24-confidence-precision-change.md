@@ -1,12 +1,12 @@
-# A precision lever you can dial — calibrated confidence on messy input (v4.13.0)
+# A precision change you can dial — calibrated confidence on messy input (v4.13.0)
 
 _2026-06-24. Shipped model `neural-weights-en-us` v4.13.0 (int8), calibrated via the v4.13.0 isotonic table. 472 held-out OpenAddresses coordinate goldens across us/it/pt/pl/fr/au (≤80/locale), each perturbed to be messy: lowercased, comma-stripped, common street words abbreviated, dash-postcodes dropped — the house number untouched. Coordinate-graded right-place @25km ("no result" counts as a miss). Per-result confidence = the minimum calibrated confidence across the resolved nodes (a coordinate is only as trustworthy as its least-sure driving component)._
 
 ## The claim
 
-A geocoder that returns a best guess gives you one number and no way to know which answers to trust. mailwoman returns a coordinate **and** a calibrated confidence, so you can set a threshold τ and accept only the answers it is at least τ confident about. As τ rises, precision rises and recall falls — a lever no search index exposes. The question this report answers: does that lever actually work — does higher confidence mean higher right-place rate, and does it hold on data the curve was not drawn on?
+A geocoder that returns a best guess gives you one number and no way to know which answers to trust. mailwoman returns a coordinate **and** a calibrated confidence, so you can set a threshold τ and accept only the answers it is at least τ confident about. As τ rises, precision rises and recall falls — a change no search index exposes. The question this report answers: does that change actually work — does higher confidence mean higher right-place rate, and does it hold on data the curve was not drawn on?
 
-## The lever (draw split, 236 rows)
+## The change (draw split, 236 rows)
 
 Sweep τ; at each, precision is right-place @25km among the answers at or above τ, recall is the fraction of all rows answered at or above τ.
 

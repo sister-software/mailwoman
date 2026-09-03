@@ -415,7 +415,7 @@ export function aggregateCells(
 }
 
 /**
- * Options for {@linkcode runAblationLayer} — the shared layer options (model ladder + resolver lever pins) plus this
+ * Options for {@linkcode runAblationLayer} — the shared layer options (model ladder + resolver pin pins) plus this
  * layer's own three.
  */
 export interface AblationLayerOptions extends GauntletLayerOptions {
@@ -720,7 +720,7 @@ export async function runAblationLayer(
 	}
 
 	const cells = aggregateCells(rows, { boardID, measuredAt })
-	const leverLine = describeLevers(options)
+	const pinLine = describePins(options)
 
 	await makeDirectories(outDir)
 
@@ -730,7 +730,7 @@ export async function runAblationLayer(
 		caseCount: anchorsRun,
 		variantCount: rows.length,
 		toleranceKmDefault: DEFAULT_ABLATION_TOLERANCE_KM,
-		levers: leverLine,
+		pins: pinLine,
 		expectationModel: {
 			available: gazetteer.available,
 			unavailableReason: gazetteer.unavailableReason,
@@ -754,22 +754,22 @@ export async function runAblationLayer(
 			caseCount: anchorsRun,
 			variantCount: rows.length,
 			skips,
-			levers: leverLine,
+			pins: pinLine,
 		}),
 		join(outDir, "ablation-map.md")
 	)
 
-	printSummary(cells, rows, { boardID, measuredAt, anchorsRun, outDir, leverLine, skips })
+	printSummary(cells, rows, { boardID, measuredAt, anchorsRun, outDir, pinLine, skips })
 
 	// The instrument, not a check: a map of zero cells means the run measured NOTHING, and a "PASS" printed
 	// over an empty map is precisely the reading the meaning-of-zero rule exists to forbid.
 	return { pass: cells.length > 0, outDir, cells }
 }
 
-function describeLevers(options: AblationLayerOptions): string {
-	return options.levers?.postcodeCountryCoherence === undefined
-		? "resolver levers: (none pinned — production defaults)"
-		: `resolver levers: postcodeCountryCoherence=${options.levers.postcodeCountryCoherence ? "ON" : "OFF"}`
+function describePins(options: AblationLayerOptions): string {
+	return options.pins?.postcodeCountryCoherence === undefined
+		? "resolver pins: (none pinned — production defaults)"
+		: `resolver pins: postcodeCountryCoherence=${options.pins.postcodeCountryCoherence ? "ON" : "OFF"}`
 }
 
 function printSummary(
@@ -780,14 +780,14 @@ function printSummary(
 		measuredAt: string
 		anchorsRun: number
 		outDir: string
-		leverLine: string
+		pinLine: string
 		skips: readonly AblationSkip[]
 	}
 ): void {
 	console.log(`\n=== Gauntlet · ablation (the load-bearing map) ===`)
 	console.log(`  board            ${meta.boardID}`)
 	console.log(`  measured         ${meta.measuredAt}`)
-	console.log(`  ${meta.leverLine}`)
+	console.log(`  ${meta.pinLine}`)
 	console.log(`  cases            ${meta.anchorsRun}`)
 	console.log(`  variants         ${rows.length}`)
 	console.log(`  cells            ${cells.length} (a (component, locale) pair with no row emits NO cell)`)

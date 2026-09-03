@@ -29,7 +29,7 @@ One calibration note from the research: the incumbent moved. Senzing retrained l
 | No version↔capability matrix | Nothing maps npm versions → model lineage → features (anchors, unit coverage, calibration). The model-version vs npm-version split confuses every reader.                                                   |
 | No operational runbooks      | 92 eval reports but no "to evaluate your change, run X"; corpus/training docs scattered across 4 files with no retrain runbook; the gazetteer-anchor implementation isn't cross-linked from its design doc. |
 
-**Top doc fixes by ROI:** (1) fix AGENTS.md paths (30 min), (2) versions/capabilities matrix page, (3) refresh `status.mdx` + link the parity scorecard as the live truth, (4) a CONTRIBUTING_MODEL_WORK runbook (eval harness + lever taxonomy + extract recipe), (5) cross-link gazetteer-anchor design ↔ implementation.
+**Top doc fixes by ROI:** (1) fix AGENTS.md paths (30 min), (2) versions/capabilities matrix page, (3) refresh `status.mdx` + link the parity scorecard as the live truth, (4) a CONTRIBUTING_MODEL_WORK runbook (eval harness + change taxonomy + extract recipe), (5) cross-link gazetteer-anchor design ↔ implementation.
 
 ---
 

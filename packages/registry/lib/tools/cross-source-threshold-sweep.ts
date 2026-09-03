@@ -21,7 +21,7 @@
  *   the threshold fix (option 1) works → ship a cross-source threshold. If matching FS link count
  *   only comes with collapsing total entities and a LOWER phone-corrob (junk over-merges), the
  *   threshold is insufficient by construction → FS stays pinned / a cross-objective retrain (#655
- *   option 2) is the only lever.
+ *   option 2) is the only change.
  *
  *   Run: `mailwoman registry scorer-eval threshold-sweep [--cap 2000] [--state TX]
  *   [--wof <admin.db>] [--data-root <dir>] [--out-md <md>]`
@@ -407,7 +407,7 @@ export async function crossSourceThresholdSweep(
 				`threshold to admit more only over-merges (the over-merge features REPLACE the FS weight, so true ` +
 				`cross-source pairs share a logit band with genuine over-merges). Threshold alone (option 1) is ` +
 				`**INSUFFICIENT** — FS stays pinned (correct + best-precision for this objective); a cross-objective ` +
-				`retrain (option 2), conditioned on cross-source labels, is the only lever. See #655.`
+				`retrain (option 2), conditioned on cross-source labels, is the only change. See #655.`
 		)
 	} else {
 		lines.push(

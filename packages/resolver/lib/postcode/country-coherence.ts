@@ -17,7 +17,7 @@
  *   143.8 km), and falls the locality coordinate back to the ZIP point. See
  *   `docs/records/evals/2026-08-03-postcode-locality-scoping.md` for the instrumented diagnosis.
  *
- *   No pattern-only lever can fix this. `75001` is NOT unambiguously French:
+ *   No pattern-only change can fix this. `75001` is NOT unambiguously French:
  *   `candidateSystemsForPostcode("75001")` returns `["us", "de", "fr"]`, and the 2026-08-04
  *   candidate gazetteer holds the literal string in FOUR countries — FR 48.863,2.336 (Paris 1er),
  *   US 32.960,-96.838 (Addison TX), DE 48.844,9.367, PL 54.190,16.188 (×2 rows). The SHAPE is

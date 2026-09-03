@@ -23,7 +23,7 @@
 #
 # MOVE  : bare-street-hn CROSSES the plateau — v371 (knob 3 8k) topped out at 0.733; this must beat that
 #         materially, ideally lower CI above v310's 0.736 (~>=0.78). Falsifier: if boosting ALL lengths at
-#         6x ALSO plateaus ~0.73, the corpus lever is EXHAUSTED (every knob tried) and digit-ownership is
+#         6x ALSO plateaus ~0.73, the corpus change is EXHAUSTED (every knob tried) and digit-ownership is
 #         fully explored — ship v371 as the clean additive net-positive or hold. This is the last knob.
 # GUARD : bare-pc (negative class) HOLDS at 1.000 — the model must not stop emitting postcode.
 # GUARD : street-led-hn / city-first-hn / pc-first-hn do NOT regress from 0.94-0.968.
@@ -104,7 +104,7 @@ data:
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
-    # Track B — the NO house-number-licence lever. 12.0 = the targeted-fix tier
+    # Track B — the NO house-number-licence change. 12.0 = the targeted-fix tier
     # (matches fr-fragment). Bare streets + street+number with NO postcode partner, + counters.
     synth-no-fragment: 12.0
   train_rows_per_epoch: 1000000

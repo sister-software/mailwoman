@@ -13,7 +13,7 @@
  *   Self-check (shipped default):  mailwoman eval gauntlet
  *   Promote check (a candidate):    mailwoman eval gauntlet --candidate ./out/v195/model.onnx [--source us]
  *   One layer only:                mailwoman eval gauntlet --layer regression|metamorphic|holdout …
- *   A RESOLVER lever, both ways:   mailwoman eval gauntlet [--postcode-country-coherence]
+ *   A RESOLVER pin, both ways:   mailwoman eval gauntlet [--postcode-country-coherence]
  *   The required MAP:          mailwoman eval gauntlet --layer ablation [--components postcode,street]
  *
  *   That last one is not a check. `ablation` (2026-08-05) deletes each asserted component from each corpus row and
@@ -25,11 +25,11 @@
  *   Derived, not absent: a variant is graded against the row's degradation ladder (`ablation-expectation.ts`), so
  *   "correctly coarsened" and "abstained under untenable ambiguity" are PASSES and only the real defects are red.
  *
- *   The last of those is the resolver-lever pin (#42, added 2026-08-05). The check could swap the MODEL under test but
- *   not the resolver configuration, so a resolver lever proposed for default-on had no way through the D-rule's
+ *   The last of those is the resolver-pin pin (#42, added 2026-08-05). The check could swap the MODEL under test but
+ *   not the resolver configuration, so a resolver pin proposed for default-on had no way through the D-rule's
  *   standard instrument — it could only be argued from bespoke probes. Run the check unpinned and pinned and diff the
  *   verdicts; the layers stamp which configuration they graded, and the regression layer reports how many cases the
- *   lever actually fired on (an unchanged verdict from a mechanism that never ran proves nothing).
+ *   pin actually fired on (an unchanged verdict from a mechanism that never ran proves nothing).
  *
  *   The retired `scripts/eval/gauntlet/run.ts` ran each layer in its own child process; the layers are
  *   in-process modules now — a layer that THROWS is caught, printed, and counted as a FAIL, preserving the
@@ -39,7 +39,7 @@
  */
 
 import { type AblationLayerOptions, runAblationLayer } from "#eval-harness/gauntlet/ablation"
-import { describeResolverLevers, type GauntletResolverLevers } from "#eval-harness/gauntlet/harness"
+import { describeResolverPins, type GauntletResolverPins } from "#eval-harness/gauntlet/harness"
 import { runHoldoutLayer } from "#eval-harness/gauntlet/holdout"
 import { runMetamorphicLayer } from "#eval-harness/gauntlet/metamorphic"
 import { type GauntletLayerOptions, runRegressionLayer } from "#eval-harness/gauntlet/regression"
@@ -88,13 +88,13 @@ export interface GauntletRunOptions {
 	 */
 	n?: number
 	/**
-	 * RESOLVER-side lever pin (#42): force `postcodeCountryCoherence` ON or OFF for every layer. `undefined` grades the
+	 * RESOLVER-side pin pin (#42): force `postcodeCountryCoherence` ON or OFF for every layer. `undefined` grades the
 	 * shipped configuration, which since the 2026-08-05 promotion is ON — so the pin that carries evidence now is the OFF
 	 * one. Run the check BOTH ways and diff the verdicts, which is what the D-rule asks of a default-on mechanism.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
-	 * RESOLVER-side lever pin (#1497): feed the gazetteer FST prior to the parse.
+	 * RESOLVER-side pin pin (#1497): feed the gazetteer FST prior to the parse.
 	 *
 	 * TWO-SIDED since the 2026-08-16 default-on promotion. `undefined` means the production default, which is now ON;
 	 * `false` is a real pin that withholds it. Forwarding only the truthy half — as this did while the prior was opt-in —
@@ -102,7 +102,7 @@ export interface GauntletRunOptions {
 	 */
 	gazetteerPrior?: boolean
 	/**
-	 * RESOLVER-side lever pin (#1717 stage 2): the admin-containment re-rank. Two-sided from day one (the #1706
+	 * RESOLVER-side pin pin (#1717 stage 2): the admin-containment re-rank. Two-sided from day one (the #1706
 	 * one-sided-forwarding class): `undefined` grades the production default (OFF), `true` is the evidence pin, and
 	 * `false` pins the default explicitly so an OFF-labeled log really graded OFF.
 	 */
@@ -122,8 +122,8 @@ export interface GauntletRunOptions {
 }
 
 /**
- * The ablation layer's options: the shared model/lever ladder plus its own three. Exported and pure for the same reason
- * as {@linkcode runResolverLevers} — a dropped `--components` filter would silently run the whole corpus.
+ * The ablation layer's options: the shared model/pin ladder plus its own three. Exported and pure for the same reason
+ * as {@linkcode runResolverPins} — a dropped `--components` filter would silently run the whole corpus.
  */
 export function runAblationOptions(options: GauntletRunOptions): AblationLayerOptions {
 	return {
@@ -135,13 +135,12 @@ export function runAblationOptions(options: GauntletRunOptions): AblationLayerOp
 }
 
 /**
- * The resolver-lever pins a run's options describe, or undefined when nothing is pinned (→ production defaults). Pure
- * and exported: the "a pin reaches every layer" contract is a mapping, and a mapping is cheap to test — the alternative
- * is discovering a dropped pin from two identical lever logs, which is the failure this whole surface exists to
- * prevent.
+ * The resolver-pin pins a run's options describe, or undefined when nothing is pinned (→ production defaults). Pure and
+ * exported: the "a pin reaches every layer" contract is a mapping, and a mapping is cheap to test — the alternative is
+ * discovering a dropped pin from two identical pin logs, which is the failure this whole surface exists to prevent.
  */
-export function runResolverLevers(options: GauntletRunOptions): GauntletResolverLevers | undefined {
-	const levers: GauntletResolverLevers = {
+export function runResolverPins(options: GauntletRunOptions): GauntletResolverPins | undefined {
+	const pins: GauntletResolverPins = {
 		...(options.postcodeCountryCoherence === undefined
 			? {}
 			: { postcodeCountryCoherence: options.postcodeCountryCoherence }),
@@ -149,24 +148,24 @@ export function runResolverLevers(options: GauntletRunOptions): GauntletResolver
 		...(options.adminContainmentRerank === undefined ? {} : { adminContainmentRerank: options.adminContainmentRerank }),
 	}
 
-	// Absent, not empty: `undefined` is what `describeResolverLevers` prints as "production defaults", and an empty
+	// Absent, not empty: `undefined` is what `describeResolverPins` prints as "production defaults", and an empty
 	// object would read as "pinned to nothing".
-	return Object.keys(levers).length ? levers : undefined
+	return Object.keys(pins).length ? pins : undefined
 }
 
 /**
- * The layer options a run's options describe — model selection plus the resolver lever pins. Exported for the same
- * reason as {@linkcode runResolverLevers}.
+ * The layer options a run's options describe — model selection plus the resolver pin pins. Exported for the same reason
+ * as {@linkcode runResolverPins}.
  */
 export function runLayerOptions(options: GauntletRunOptions): GauntletLayerOptions {
-	const levers = runResolverLevers(options)
+	const pins = runResolverPins(options)
 
 	return {
 		model: options.candidate,
 		tokenizer: options.tokenizer,
 		card: options.card,
 		weightsCacheRoot: options.weightsCacheRoot,
-		...(levers ? { levers } : {}),
+		...(pins ? { pins } : {}),
 	}
 }
 
@@ -190,7 +189,7 @@ async function runLayer(layer: GauntletLayer, options: GauntletRunOptions): Prom
 					tokenizer: options.tokenizer,
 					card: options.card,
 					weightsCacheRoot: options.weightsCacheRoot,
-					...(layerOptions.levers ? { levers: layerOptions.levers } : {}),
+					...(layerOptions.pins ? { pins: layerOptions.pins } : {}),
 				})
 			).exitCode
 		case "ablation":
@@ -239,9 +238,9 @@ export async function runGauntlet(options: GauntletRunOptions = {}): Promise<{ e
 	const allPass = results.every((r) => r.pass)
 
 	console.log(`\n════════════════ GAUNTLET ════════════════`)
-	// The lever line prints on EVERY run, pinned or not. Two lever logs that differ only in a flag someone typed are
+	// The pin line prints on EVERY run, pinned or not. Two pin logs that differ only in a flag someone typed are
 	// not evidence about that flag unless each log says which configuration it graded.
-	console.log(`  ${describeResolverLevers(runResolverLevers(options))}`)
+	console.log(`  ${describeResolverPins(runResolverPins(options))}`)
 
 	for (const r of results) {
 		console.log(`  ${r.pass ? "✓ PASS" : "✗ FAIL"}  ${r.name}`)

@@ -1,4 +1,4 @@
-# v0.9.3 region-tail — the corpus lever is exhausted
+# v0.9.3 region-tail — the corpus change is exhausted
 
 **Verdict: not promoted.** v0.9.3 added the region tail to the international German synth (the one variable vs v0.9.2). It fixed what it was built to fix — region tagging — and left the thing we actually needed unmoved: international-order locality. Three retrains now agree the international ceiling is the postcode anchor's _structure_, not the data. The follow-up (v0.9.4 dual-injection) is training. Tracking: #327.
 
@@ -25,7 +25,7 @@ PIP-containment (gold point inside the resolved polygon) confirms this is a real
 
 The pre-registered gate asked two things. First, that the region tail lift the intrinsic international ceiling (anchor-OFF international ≥ native). It didn't — international anchor-OFF held at ~47% while native held ~48%, no movement from v0.9.2. Second, that the anchor-ON international gap close to 10pp or less. It's **38.9pp** (83.6 native − 44.7 international). Both miss.
 
-The diagnosis the gate was built to reach: the corpus lever is spent. Anchor-OFF parsing is already order-agnostic (~48% both orders), forcing the country posterior to `DE=1.0` on v0.9.2 left international unchanged at 44.5%, and now the region tail moves region but not locality. The per-token anchor fires at the _trailing_ postcode, which in international order sits on the far side of the locality from where it's needed. The harm is positional, baked into where the anchor lives, not into the data feeding it.
+The diagnosis the gate was built to reach: the corpus change is spent. Anchor-OFF parsing is already order-agnostic (~48% both orders), forcing the country posterior to `DE=1.0` on v0.9.2 left international unchanged at 44.5%, and now the region tail moves region but not locality. The per-token anchor fires at the _trailing_ postcode, which in international order sits on the far side of the locality from where it's needed. The harm is positional, baked into where the anchor lives, not into the data feeding it.
 
 ## Decision
 

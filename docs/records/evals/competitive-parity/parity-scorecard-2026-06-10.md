@@ -36,7 +36,7 @@ as **v4.2.0** after a 4/4 ship gate (`2026-06-10-night-10-ship-gate.md`).
 | house_number           | 96.2 → 96.9            | 91.2 → 94.6        | ✅ FR best ever                                       |
 | locality               | 60.1 → **72.9**        | 69.7 → 70.7        | ✅ +12.8                                              |
 | region                 | 78.4 → **89.1**        | 27.8 → 27.6        | ✅ US / ❌ FR (#330)                                  |
-| country (homograph)    | ~0 → **89.8**          | —                  | ✅ the lever, banked                                  |
+| country (homograph)    | ~0 → **89.8**          | —                  | ✅ the change, banked                                 |
 | street (folded)        | 78.5 → 76.2            | 60.1 → 58.2        | ◐ stated re-baseline (−2.3; #492/#478)                |
 | street_prefix / suffix | 0 → **64.9 / 48.8**    | —                  | ◐ exists at P≈100; ceiling measured (#492)            |
 | unit                   | 92.3 → 90.6 (real-OOD) | —                  | ✅ retained (stated −1.7)                             |
@@ -47,13 +47,13 @@ as **v4.2.0** after a 4/4 ship gate (`2026-06-10-night-10-ship-gate.md`).
 
 ## Campaign status
 
-| Lever                   | status                                                                                  |
+| Change                  | status                                                                                  |
 | ----------------------- | --------------------------------------------------------------------------------------- |
 | unit                    | ✅ banked (v4.1.0), retained at 90.6                                                    |
 | affix                   | ✅ **exists** (0 → 64.9/48.8, P≈100); solo-level stability requires architecture (#492) |
 | country                 | ✅ **banked** (89.8, gazetteer soft anchor; over-fire 0)                                |
 | consolidation v1.0      | ✅ **SHIPPED as v4.2.0** — the flag-plant, with stated re-baselines                     |
-| FR venue/region         | ⏳ #330 — the next training lever                                                       |
+| FR venue/region         | ⏳ #330 — the next training change                                                      |
 | intersection            | ⏳ #487 eval-first                                                                      |
 | architecture escalation | 📋 #492 — operator GO required                                                          |
 | **arbitration**         | 📋 **#478 — the post-parity capstone: converts every `v0-only` cell above into `both`** |

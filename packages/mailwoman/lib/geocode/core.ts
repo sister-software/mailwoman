@@ -651,7 +651,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	let placedCountry: string | null = null
 
 	// The placer's prediction, computed ONCE and unrestricted (so it's available even for a bare-locality tree, where the
-	// #912 lever below deliberately withholds it from the anchor). Reused by that lever AND by the #1042 street tier's
+	// #912 change below deliberately withholds it from the anchor). Reused by that change AND by the #1042 street tier's
 	// country hint (a bare thoroughfare "Avenue des Champs-Élysées, Paris" is a bare-locality tree — the only reliable
 	// FR signal there is this unrestricted placer). Byte-stable: the anchor/hardCountry logic stays conditional exactly as before.
 	const placerResult = placeCountry ? placeCountry(parseInput) : null
@@ -694,7 +694,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		}
 	}
 
-	// #912 lever 1: the placer abstains on a single bare locality — OOD input, and the wrong soft
+	// #912 change 1: the placer abstains on a single bare locality — OOD input, and the wrong soft
 	// posterior overrides the resolver's better-informed exact-tier/population ranking (see
 	// isBareLocalityTree). Explicit defaultCountry / anchorPosterior from the caller are untouched.
 	// #1589 extends the abstention to a bare POSTCODE: the placer's language model reading `SW1A 1AA`
@@ -874,7 +874,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	// #1717 stage 2, PROMOTED default-ON 2026-08-18: an explicit `false` is the only thing that
 	// withholds it. The resolver core keeps its byte-stable `=== true` read, so the default lives
-	// HERE (and in the session), at the same layer every other promoted lever defaults.
+	// HERE (and in the session), at the same layer every other promoted change defaults.
 	if (deps.adminContainmentRerank !== false) {
 		opts.adminContainmentRerank = true
 	}

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for #370 "Lever A" — postcode-disambiguated locality selection
+ *   Tests for #370 "Change A" — postcode-disambiguated locality selection
  *   (`opts.postcodeConsistency`). A same-named locality that resolves far from a resolved sibling
  *   postcode is either re-picked from its alternatives (the same-named instance nearest the
  *   postcode) or, if none reconciles, has its coordinate fall back to the postcode point + flagged.
@@ -79,7 +79,7 @@ const tree = (roots: AddressNode[]): AddressTree => ({ raw: "75001 Saint-Pierre"
 const localityNode = () => node({ tag: "locality", value: "Saint-Pierre", start: 6, end: 18 })
 const postcodeNode = () => node({ tag: "postcode", value: "75001", start: 0, end: 5 })
 
-describe("resolveTree + postcodeConsistency (Lever A)", () => {
+describe("resolveTree + postcodeConsistency (Change A)", () => {
 	it("re-picks the same-named locality nearest the postcode (the wrong instance was the top match)", async () => {
 		// Backend returns the FAR Saint-Pierre first → top is wrong; the NEAR one is an alternative.
 		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR, SP_NEAR]))
@@ -145,12 +145,12 @@ describe("resolveTree + postcodeConsistency (Lever A)", () => {
 
 		const loc = out.roots.find((n) => n.tag === "locality")!
 
-		expect(loc.placeID).toBe("wof:1") // the far one — untouched without the lever
+		expect(loc.placeID).toBe("wof:1") // the far one — untouched without the change
 		expect(loc.lat).toBeCloseTo(44)
 	})
 
 	it("no-ops when no postcode resolved (no anchor to disambiguate against)", async () => {
-		// No postcode in the tree → Lever A can't fire; the (wrong) top match stands.
+		// No postcode in the tree → Change A can't fire; the (wrong) top match stands.
 		const resolver = createWOFResolver(await makeBackend([SP_FAR, SP_NEAR]))
 		const out = await resolver.resolveTree(tree([localityNode()]), { defaultCountry: "FR", postcodeConsistency: true })
 		const loc = out.roots.find((n) => n.tag === "locality")!

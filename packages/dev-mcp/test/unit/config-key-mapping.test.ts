@@ -6,7 +6,7 @@
  *   The two config vocabularies must stay in step, and nothing else can check it.
  *
  *   `EngineConfig` is the CLI's snake_case; `GeocodeSessionOptions` is camelCase. `resolveConfig` translates, and
- *   `EFFECTIVE_KEY_FOR` names the same translation for `confound.ts`. A lever added to one and not the other compiles
+ *   `EFFECTIVE_KEY_FOR` names the same translation for `confound.ts`. A change added to one and not the other compiles
  *   and passes every other test — and silently makes every correctly-declared comparison grade itself ambiguous, which
  *   is a defect in a verdict rather than in a number, so no measurement fails either.
  */
@@ -26,7 +26,7 @@ describe("EFFECTIVE_KEY_FOR", () => {
 	})
 
 	it("maps onto keys resolveConfig actually produces", () => {
-		// Every lever set to a NON-default value, so nothing lands on the conditional-spread branches and drops out.
+		// Every change set to a NON-default value, so nothing lands on the conditional-spread branches and drops out.
 		const resolved = resolveConfig({
 			locale: "en-GB",
 			country_scope: "none",
@@ -59,7 +59,7 @@ describe("EFFECTIVE_KEY_FOR", () => {
 	})
 
 	it("keeps `diagnose_unreachable` OUT of the tool schema on purpose", () => {
-		// It is a session option, not a lever: the answer is byte-identical whether it is on, so declaring it as the
+		// It is a session option, not a change: the answer is byte-identical whether it is on, so declaring it as the
 		// variable of a comparison would declare a variable that cannot move an outcome. The tools that read misses
 		// force it on themselves. If someone "fixes" the asymmetry by adding it to the schema, this is the alarm.
 		expect(Object.keys(ENGINE_CONFIG_SCHEMA.shape)).not.toContain("diagnose_unreachable")

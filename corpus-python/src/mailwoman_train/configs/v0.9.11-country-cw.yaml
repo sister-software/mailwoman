@@ -2,12 +2,12 @@
 # ONE variable vs v0.9.10-country-bal: country class-weight 2.0 -> 3.5 (DeepSeek 3-5x), SAME balanced
 # corpus (v0.4.10-country-bal). Targets the v0.9.10 RECALL gap (40.7% on the homograph gate) — the
 # model went precision-first/conservative (P=100, over-fire 0) and abstains when unsure; a higher
-# miss-penalty should lift recall. The cheap lever before the soft gazetteer anchor (step 2b) — if
+# miss-penalty should lift recall. The cheap change before the soft gazetteer anchor (step 2b) — if
 # this alone recovers recall without re-introducing over-fire, the anchor may be unneeded. Gate: same
 # country-homograph eval (country F1 up, over-fire STILL 0, region/locality held, no spine regression).
 # The shipped v4.1.0 model is STARVED on `country` (P=R=F1=0 on the homograph eval — it never emits
 # the tag; the night-9 49-F1/23%-precision over-fire was a SEPARATE bad slice). So this fills a void,
-# the same way `unit` did — but the corpus is built to AVOID re-creating the over-fire, and the lever
+# the same way `unit` did — but the corpus is built to AVOID re-creating the over-fire, and the change
 # is MODEL-FIRST (no deterministic override; the gazetteer informs the model, never substitutes —
 # see docs/engineering/reference/closed-vocab-fields-model-first.mdx).
 #

@@ -12,12 +12,12 @@
  *   1. The **conditional header**, which is the verdict's actual denominator. Reading the tail of a gauntlet log instead of
  *      this line is how "+15 rows, zero regressions" got reported on 2026-08-15 for a run that was 329/352 against a
  *      350/352 baseline — 21 regressions, in a line printed above the part that got read.
- *   2. The **levers line**. `run.ts` states the reason it prints on every run, pinned or not: "two lever logs that
+ *   2. The **pins line**. `run.ts` states the reason it prints on every run, pinned or not: "two pin logs that
  *      differ only in a flag someone typed are not evidence about that flag unless each log says which configuration
  *      it graded."
  *   3. The **firing count**, for the one pass that prints one. An unchanged verdict from a mechanism that never ran
  *      proves nothing — but only postcode-country coherence reports its own firing rate, so this field is named for
- *      THAT pass rather than for "the lever under test". Pin a different lever and the log carries no evidence it
+ *      THAT pass rather than for "the pin under test". Pin a different pin and the log carries no evidence it
  *      participated; the `unparsed` note says so rather than letting the coherence number stand in for it.
  *
  *   Every field is EXTRACTED, so every field can be absent. A pattern that does not match yields `null` and a note
@@ -40,15 +40,15 @@ export interface GauntletReport {
 	verdict: string | null
 	layers: GauntletLayerReport[]
 	/**
-	 * The `describeResolverLevers` line, verbatim.
+	 * The `describeResolverPins` line, verbatim.
 	 */
-	levers: string | null
+	pins: string | null
 	/**
 	 * `{ n, of }` for the POSTCODE-COUNTRY COHERENCE pass specifically, or `null` when the log carried no firing line.
 	 *
-	 * Named for the mechanism it measures rather than for "the lever under test", because those are usually not the same
+	 * Named for the mechanism it measures rather than for "the pin under test", because those are usually not the same
 	 * thing: pin `gazetteerPrior` and this still reports coherence, which is the only pass that prints a firing count.
-	 * Reading it as the pinned lever's firing rate would be a fabricated number.
+	 * Reading it as the pinned pin's firing rate would be a fabricated number.
 	 */
 	postcode_country_coherence_fired_on: { n: number; of: number } | null
 	/**
@@ -68,8 +68,8 @@ export interface GauntletReport {
 /**
  * Only patterns whose quantifiers cannot overlap live here.
  *
- * The lines this file recognises by shape rather than by regex — the levers line, the promote line — are matched with
- * `startsWith` / `indexOf` instead. Both wanted an ambiguous quantifier to express (`(.*levers.*|.*=.*)$` and
+ * The lines this file recognises by shape rather than by regex — the pins line, the promote line — are matched with
+ * `startsWith` / `indexOf` instead. Both wanted an ambiguous quantifier to express (`(.*pins.*|.*=.*)$` and
  * `(.*?)\s+now PASSES`), which backtracks quadratically on a long non-matching line and which CodeQL flags as
  * polynomial ReDoS. A gauntlet log is our own output rather than hostile input, so the practical exposure was small —
  * but the string version is both shorter and unconditionally linear, so there was nothing to trade away.
@@ -78,7 +78,7 @@ const HEADER = /^=== Gauntlet · (\S+) \((\d+)\/(\d+) gated cases pass(?:, (\d+)
 const VERDICT = /^verdict: (PASS|FAIL)/
 const FIRING = /^postcode-country coherence fired on (\d+)\/(\d+) cases/
 
-const LEVERS_PREFIX = "[gauntlet] "
+const PINS_PREFIX = "[gauntlet] "
 const GATED_FAILURE_MARK = "✗"
 const NOW_PASSING_MARK = " now PASSES"
 const NOW_PASSING_PREFIX = "+"
@@ -86,14 +86,14 @@ const NOW_PASSING_PREFIX = "+"
 /**
  * Parse a gauntlet run's combined output.
  *
- * Takes stdout and stderr together because the pieces are split across them — the report goes to stdout, the levers
- * line to stderr — and a reader wanting "what did this run grade" should not have to know which stream carried which.
+ * Takes stdout and stderr together because the pieces are split across them — the report goes to stdout, the pins line
+ * to stderr — and a reader wanting "what did this run grade" should not have to know which stream carried which.
  */
 export function parseGauntletReport(stdout: string, stderr: string): GauntletReport {
 	const report: GauntletReport = {
 		verdict: null,
 		layers: [],
-		levers: null,
+		pins: null,
 		postcode_country_coherence_fired_on: null,
 		gated_failures: [],
 		now_passing: [],
@@ -154,12 +154,12 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 			}
 		}
 
-		if (!report.levers && line.startsWith(LEVERS_PREFIX)) {
-			const rest = line.slice(LEVERS_PREFIX.length).trim()
+		if (!report.pins && line.startsWith(PINS_PREFIX)) {
+			const rest = line.slice(PINS_PREFIX.length).trim()
 
-			// The levers line is the one that names a configuration — either by saying so or by carrying an assignment.
-			if (rest.toLowerCase().includes("levers") || rest.includes("=")) {
-				report.levers = rest
+			// The pins line is the one that names a configuration — either by saying so or by carrying an assignment.
+			if (rest.toLowerCase().includes("pins") || rest.includes("=")) {
+				report.pins = rest
 			}
 		}
 	}
@@ -177,14 +177,14 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 		)
 	}
 
-	if (!report.levers) {
-		report.unparsed.push("No levers line found, so the configuration this run graded is not recorded here.")
+	if (!report.pins) {
+		report.unparsed.push("No pins line found, so the configuration this run graded is not recorded here.")
 	}
 
 	if (!report.postcode_country_coherence_fired_on) {
 		report.unparsed.push(
 			"No postcode-country coherence firing line found — that pass either did not run or spoke on no rows, and this " +
-				"log cannot tell them apart. NOTE: no other lever prints a firing count, so a run pinning a different lever " +
+				"log cannot tell them apart. NOTE: no other pin prints a firing count, so a run pinning a different pin " +
 				"carries no evidence here that it participated at all."
 		)
 	}
@@ -217,7 +217,7 @@ export function summarizeGauntletReport(report: GauntletReport): string {
 
 	const fired = report.postcode_country_coherence_fired_on
 		? ` Postcode-country coherence fired on ${report.postcode_country_coherence_fired_on.n}/${report.postcode_country_coherence_fired_on.of} rows` +
-			" (that pass is the only one printing a firing count — it is not a reading on whatever lever you pinned)."
+			" (that pass is the only one printing a firing count — it is not a reading on whatever pin you pinned)."
 		: ""
 
 	return `${layers}. Verdict ${report.verdict ?? "ABSENT"}.${failures}${promotions}${fired}`

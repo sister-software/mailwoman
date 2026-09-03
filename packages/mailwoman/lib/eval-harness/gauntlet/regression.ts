@@ -23,7 +23,7 @@ import { assertCorpusStampFresh } from "#eval-harness/gauntlet/corpus-stamp"
 import {
 	buildGauntletDeps,
 	type GauntletDepsOptions,
-	type GauntletResolverLevers,
+	type GauntletResolverPins,
 	runOne,
 } from "#eval-harness/gauntlet/harness"
 import { routeCountry } from "#eval-harness/gauntlet/routing"
@@ -56,34 +56,34 @@ export interface GauntletLayerOptions {
 	 */
 	weightsCacheRoot?: string
 	/**
-	 * RESOLVER-side lever pins (#42's `postcodeCountryCoherence` today) — the resolver counterpart to the model swaps
-	 * above, so a resolver lever can be graded by the standard eval instead of by a bespoke probe. Omitted → production
+	 * RESOLVER-side pin pins (#42's `postcodeCountryCoherence` today) — the resolver counterpart to the model swaps
+	 * above, so a resolver pin can be graded by the standard eval instead of by a bespoke probe. Omitted → production
 	 * defaults.
 	 */
-	levers?: GauntletResolverLevers
+	pins?: GauntletResolverPins
 }
 
 /**
  * The {@linkcode buildGauntletDeps} argument a layer's options describe — the model-selection ladder (weights-cache →
- * model[+tokenizer/card] → shipped default) with the resolver lever pins carried alongside. Shared by every layer so a
+ * model[+tokenizer/card] → shipped default) with the resolver pin pins carried alongside. Shared by every layer so a
  * new pin cannot reach one layer and silently miss another: the metamorphic layer had an independently-maintained copy
  * of the ladder, which is exactly the shape that drifts.
  */
 export function layerDepsOptions(options: GauntletLayerOptions): GauntletDepsOptions {
-	const levers = options.levers ? { levers: options.levers } : {}
+	const pins = options.pins ? { pins: options.pins } : {}
 
-	if (options.weightsCacheRoot) return { weightsCacheRoot: options.weightsCacheRoot, ...levers }
+	if (options.weightsCacheRoot) return { weightsCacheRoot: options.weightsCacheRoot, ...pins }
 
 	if (options.model) {
 		return {
 			modelPath: options.model,
 			...(options.tokenizer ? { tokenizerPath: options.tokenizer } : {}),
 			...(options.card ? { modelCardPath: options.card } : {}),
-			...levers,
+			...pins,
 		}
 	}
 
-	return levers
+	return pins
 }
 
 /**
@@ -166,7 +166,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 	// Printed whenever the pass could have fired — i.e. unless it is explicitly pinned OFF. Keying this on the ON
 	// PIN was right while the library default was OFF and wrong the moment it flipped (2026-08-05): the standard
 	// unpinned run is now the ON configuration and the run whose firing count a reader needs.
-	if (options.levers?.postcodeCountryCoherence !== false) {
+	if (options.pins?.postcodeCountryCoherence !== false) {
 		console.log(`\npostcode-country coherence fired on ${overrides.length}/${cases.length} cases:`)
 
 		for (const o of overrides) {

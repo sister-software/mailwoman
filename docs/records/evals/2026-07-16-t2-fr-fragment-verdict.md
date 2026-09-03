@@ -181,7 +181,7 @@ synthetic coverage** source — the doctrine's whole claim — works on its firs
   operator GO. Nothing ships on this page.
 - **The v7 floors.** street 0.6067 vs a 0.90 floor. +3.0pp is real and it is not 32pp.
 - **`date-name`.** 0.158 is +10.3pp and still 84% wrong. BAN holds only ~1,418 date-name streets and
-  the extractor already takes every one; the extract has 655 rows of it. The lever there is **extract
+  the extractor already takes every one; the extract has 655 rows of it. The change there is **extract
   weight**, not more data — and, per T1c, the underlying confusion (a digit inside a street name vs a
   house number) is the same one the span decode shows from the other side.
 - **Other locales.** FR only. Generalization goes **by tier** (BAN → BAG → TIGER-with-scope), never

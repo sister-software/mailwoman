@@ -50,7 +50,7 @@ Three things change, and they drive the rest.
 
 We pointed this at real public data: the national provider registry (NPPES), the FCC's Rural Health Care funding filings, and a state nursing-facility registry. Three datasets with no shared key, each published in the fragmented shape compliance data typically arrives in.
 
-Resolving within the provider registry, we used the registry's own entity ID as held-out ground truth. The result was an unflattering number — and then a surprise about that number, which gets its own section below. We also have detail on which levers move real errors and which backfire. Negative results are still results.
+Resolving within the provider registry, we used the registry's own entity ID as held-out ground truth. The result was an unflattering number — and then a surprise about that number, which gets its own section below. We also have detail on which changes move real errors and which backfire. Negative results are still results.
 
 Resolving across the three datasets is where the architecture shows its purpose. With no shared ID — purely on geocoded location plus name agreement — the matcher links rural Texas hospitals across the funding program and the provider registry: Hunt Memorial Hospital District, Uvalde County Hospital Authority, Winkler County Memorial Hospital. Each is a record that says "I exist" in one dataset and a record that says "I got funding" in another, stitched because they are the same building, which is a thing you can only know if you geocode first.
 

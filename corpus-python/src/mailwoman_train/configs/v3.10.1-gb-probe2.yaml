@@ -1,12 +1,12 @@
 # === v3.10.1-gb-probe2 — dep-loc resurrection PROBE 2: positive-mass at NZ density. 2k PROBE. ===
 # Clone of v3.10.0-gb-probe.yaml with ONE variable changed: data.source_weights.synth-gb 6.0 -> 36.0.
-# Everything else byte-verbatim (same corpus, same levers, same steps/LR/seed).
+# Everything else byte-verbatim (same corpus, same changes, same steps/LR/seed).
 #
 # WHY PROBE 2 (2026-07-22, operator adjudication): probe 1's 0/246-NZ + 0/69-GB decode-layer read is
 # INCONCLUSIVE, not a FAIL — the null-condition was unmet. At synth-gb 6.0 the head saw only ~3.4k
 # dep-loc positive rows in 2k steps (6/148 x 32.8% ≈ 1.3% of stream) — each example ~1.7x total.
 # Emission-0 only falsifies the dead-tag/output-basin theory when the head is fed ADEQUATE verified
-# positive mass and still stays at zero. Probe 1 also confirmed every lever fired ([init_from]
+# positive mass and still stays at zero. Probe 1 also confirmed every change fired ([init_from]
 # missing=0; [reinit_label_rows] rows [7,8]; [classifier_learning_rate] 12,705 @ 0.001; rows 7/8
 # cosine-to-v385 ~0.10 vs 0.62-0.73 untouched) AND the head is CLIMBING: raw-BIO logit gap
 # (winner - B-dependent_locality at gold positions) narrowed GB 7.02->4.61 mean (min 0.657!),
@@ -34,7 +34,7 @@
 #
 # [SUPERSEDED HISTORY — retained for the record, CORRECTED by the probe-2 header above]: the
 # "run A = instrument failure" adjudication was WRONG. Runs A and B produced byte-identical
-# checkpoints; captured run-B startup logs + rows-7/8 cosine analysis prove every lever fired in
+# checkpoints; captured run-B startup logs + rows-7/8 cosine analysis prove every change fired in
 # BOTH runs (sources were already synced before run A). The maxΔ-based "rows unchanged" reading
 # used the wrong instrument (element scale ~0.07 at 384 dims; cosine 0.10 vs 0.62-0.73 was the
 # truth). Probe 1's real confound was positive-mass starvation + decode-layer scoring.
@@ -143,7 +143,7 @@ data:
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
-    # Track B — the NO house-number-licence lever. 12.0 = the targeted-fix tier
+    # Track B — the NO house-number-licence change. 12.0 = the targeted-fix tier
     # (matches fr-fragment). Bare streets + street+number with NO postcode partner, + counters.
     synth-no-fragment: 12.0
     synth-gb: 36.0 # DELTA probe2: 6.0→36.0 — the ONE variable. NZ-density dep-loc mass (36/172 ≈ 21% stream × 32.8% ≈ 6.9% dep-loc rows ≈ 5x probe-1).

@@ -38,7 +38,7 @@ has the diacritic _characters_ but no multi-char _subwords_ containing them, so 
 own piece — CZ localities at 3.3× English fertility. This is the documented "tokenizer fertility tax." Four
 parallel SOTA agents + a DeepSeek consult mapped the fix space: vocabulary expansion (byte-identical English
 by construction), byte/char-level models (universal but latency-heavy), and a CharCNN front-end (cheap +
-universal). The fix was tokenizer-side; the extract was the wrong lever.
+universal). The fix was tokenizer-side; the extract was the wrong change.
 
 **The 80k gate confirmed it — and then some.** v196 at full convergence: US held (p50 3.31, zero dilution),
 PL flat, but **CZ regressed** — resolved-p50 5.24 → 82.89km, wrong-city 44 → 58%. At 40k CZ was flat; the
@@ -98,7 +98,7 @@ wrong-city 44→28), PL improvement (p50 −0.85, wrong-city 30→11), functiona
 
 - **The retrain was the wrong first move, and it was expensive.** ~$25 of GPU to falsify a hypothesis a $0
   tokenizer probe could have flagged in an hour. The fertility check should have run before the ship
-  candidate, not after. We reached for the pre-registered lever instead of the cheapest falsifier.
+  candidate, not after. We reached for the pre-registered change instead of the cheapest falsifier.
 - **The 150-row CZ/PL eval sets are underpowered.** The CZ resolved-p50 CI was [−40, −0.34] — barely negative
   at the top, huge at the bottom. The wrong-city _rate_ carried the verdict; the p50 was noise. A promote
   decision needs ~1k rows.
@@ -130,7 +130,7 @@ open question: the fix is **training-free** (splice + mean-init, no GPU) and US 
 mechanical: larger CZ/PL eval sets (150 rows is underpowered for a promote call), an int8 bundle-size check
 against the browser SLO (the vocab growth is a real cost), reproducible build scripts for the splice +
 mean-init, and a coordinated model+tokenizer version bump. The residual wrong-city (CZ 28% / PL 11%) re-opens
-the coverage lever we correctly deferred — now downstream of a fixed parse. CharCNN was built and validated in
+the coverage change we correctly deferred — now downstream of a fixed parse. CharCNN was built and validated in
 parallel and is parked as the CJK-forward path (the one place vocab-splice won't scale). Tasks #289–#297.
 
 ## Ledger

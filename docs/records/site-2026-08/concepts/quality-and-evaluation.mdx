@@ -67,7 +67,7 @@ Options:
 
 **Floors don't drift.** Between re-scores a floor is a fixed contract: measured-equals-floor passes, below fails, and shipping a failure anyway requires a written, operator-approved revision noted in that version's ledger row. Two floors currently sit at zero margin on purpose (`us.postcode` 95.0, `fr.postcode` 99.3, both set to measured values in a documented trade); any loss there fails loudly rather than eroding quietly. Because a promote only checks the floors its spec names, a cadence rule backstops them: every five promotes, or any promote that lowers a floor, triggers a full per-tag re-score, published as a dated scorecard. The rule exists because v4.4.0 to v4.15.0 went eleven promotes without one; the re-anchor that paid the debt found the drift bounded and surfaced the two unsigned declines above — the kind a per-promote gate cannot catch.
 
-A lever that fails its gate is reverted, and the falsification is written up with its mechanism at the same standard as a feature. [Methodology](./methodology.mdx) covers that side: pinned baselines, tracked expected-failures, and the regression suite as an executable bug log.
+A change that fails its gate is reverted, and the falsification is written up with its mechanism at the same standard as a feature. [Methodology](./methodology.mdx) covers that side: pinned baselines, tracked expected-failures, and the regression suite as an executable bug log.
 
 ## What a confidence of 0.88 means
 

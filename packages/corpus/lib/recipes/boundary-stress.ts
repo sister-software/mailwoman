@@ -6,7 +6,7 @@
  *   `boundary-stress` slice recipe (#375) — the boundary-instability augmentation. Self-generates
  *   `--count` rows from {@link synthesizeBoundaryStressRow}'s weighted template mix (the v1.7.0,
  *   DeepSeek-tuned 2026-06-18 composition), aligns each to BIO, and emits a labeled JSONL. The
- *   lever for the taxonomy's #1 parser family (the boundary-wobble class). Ported from
+ *   change for the taxonomy's #1 parser family (the boundary-wobble class). Ported from
  *   scripts/build-boundary-stress-slice.mjs.
  *
  *   `synthesizeBoundaryStressRow` is NOT re-exported from the corpus index — imported directly here.

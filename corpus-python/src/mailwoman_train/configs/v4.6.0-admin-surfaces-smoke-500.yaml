@@ -22,7 +22,7 @@
 # carriers taught "absorb the suffix" (the relabel guard refused name-prone splits) while the
 # synthetic slice taught "split", and the model learned the context discrimination instead
 # (rich rows 5/43 vs bare 53/65). This run trains the same geometry from scratch with the
-# contradiction removed and the dose/diversity levers corrected.
+# contradiction removed and the dose/diversity changes corrected.
 #
 # EFFECTIVE DELTAS vs v4.3.3 (each carries its own receipt in scratchpad/SUFFIX_BOUNDARY_TRAINING.md):
 #   1. affix lexicon v2 — positional licensing: ordinary terminal-only carriers 21.0% -> 94.0%
@@ -46,7 +46,7 @@
 #   B3 `mailwoman eval promote --spec v9.0.0-base`, zero known tier-1 regression, only after B1/B2/B4
 # Grade 5k/10k/20k/40k/60k fp32. GRADE DISCIPLINE: mid-cosine reads understate the finished
 # model (the 40k cooldown branch measured the tail worth +3 B1) — interim grades are curve
-# telemetry, the 60k grade is the verdict. If 60k misses B1, stop this lever; the next moves
+# telemetry, the 60k grade is the verdict. If 60k misses B1, stop this change; the next moves
 # are the street-type channel position-encoding and decode-time span scoring, not a re-dose.
 
 data:

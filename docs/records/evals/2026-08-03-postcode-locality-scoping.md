@@ -181,7 +181,7 @@ systems."
 | `postalcode-intl.db`          | `#421285019 DE 48.844,9.367`                                   |
 | `postalcode-geonames-tail.db` | `#8000048250 PL 54.190,16.188`                                 |
 
-**The existing lever declines on purpose.** `countryFromPostcodeFormat` (#928, default-ON since
+**The existing change declines on purpose.** `countryFromPostcodeFormat` (#928, default-ON since
 2026-07-06) is the one postcode→country mechanism in the tree. It covers GB, CA and IE — the
 letter-bearing formats — and its docstring is explicit that these "never match a US ZIP / NL / FR
 code." It returns `null` for every 5-digit code. Extending it to 5-digit shapes is not a fix; it is
@@ -189,7 +189,7 @@ a coin-flip between four countries.
 
 Note also that it lives in `mailwoman/geocode-core.ts`, on the `geocode` path only. The
 `parse --resolve` path runs `core/pipeline/runtime-pipeline.ts`, which has no postcode→country
-mechanism at all. Two production paths, one lever.
+mechanism at all. Two production paths, one change.
 
 ## 4. The mechanism that does work: postcode-country coherence
 
@@ -293,7 +293,7 @@ configuration the bug was reported against. The gate needs to say so out loud ra
 ### A cheaper intermediate, for comparison
 
 Stop deriving `defaultCountry` from the locale's region subtag when the tree carries a postcode or
-the placer is confident. **This precedent already exists**: #912 lever 3 (`commands/geocode.tsx:287`,
+the placer is confident. **This precedent already exists**: #912 change 3 (`commands/geocode.tsx:287`,
 `inferredScopeOK`) skips the locale-inferred default for a bare-locality tree, with the comment
 "Paris under the en-US locale must not be hard-scoped to Paris, Texas". The gate is one predicate
 short of covering this case.

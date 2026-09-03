@@ -88,15 +88,15 @@ export interface GauntletDepsOptions {
 	 */
 	candidateDB?: string
 	/**
-	 * Resolver-side lever pins applied to every geocode this deps object performs.
+	 * Resolver-side pin pins applied to every geocode this deps object performs.
 	 */
-	levers?: GauntletResolverLevers
+	pins?: GauntletResolverPins
 }
 
 /**
- * RESOLVER-side levers a gauntlet run can PIN — the counterpart to the model-side `modelPath`/`tokenizerPath` swaps.
- * Both kinds of pin exist for the same reason: the check has to be able to grade the exact configuration a ship would
- * use, and a lever that cannot be switched here has never been through the D-rule's standard instrument.
+ * RESOLVER-side pins a gauntlet run can PIN — the counterpart to the model-side `modelPath`/`tokenizerPath` swaps. Both
+ * kinds of pin exist for the same reason: the check has to be able to grade the exact configuration a ship would use,
+ * and a pin that cannot be switched here has never been through the D-rule's standard instrument.
  *
  * The idiom is `eval oa-resolver`'s (`adminCoherence` / `postcodeCountryCoherence` boolean pins forwarded verbatim into
  * the resolve): a pin here is a DEFAULT-OVERRIDE, not a new mechanism — every field maps 1:1 onto a
@@ -105,7 +105,7 @@ export interface GauntletDepsOptions {
  * `undefined` means "production default", not "off": the library defaults are the thing under test, so the pin only
  * ever speaks when the runner set it.
  */
-export interface GauntletResolverLevers {
+export interface GauntletResolverPins {
 	/**
 	 * #42 postcode-country coherence — a (postcode, locality) pair coherent in exactly one country overrides a wrong
 	 * `defaultCountry`. Library default ON since the 2026-08-05 promotion (this pin was the D-rule evidence path that got
@@ -114,7 +114,7 @@ export interface GauntletResolverLevers {
 	postcodeCountryCoherence?: boolean
 	/**
 	 * #1497 — feed the gazetteer FST prior to the parse. Unlike the boolean pins above this one carries an ARTIFACT, so
-	 * the harness loads it rather than `resolverLeverDeps` (which stays pure).
+	 * the harness loads it rather than `resolverPinDeps` (which stays pure).
 	 *
 	 * DEFAULT-ON here since 2026-08-16, matching the library: only an explicit `false` withholds the prior, and that pin
 	 * now grades the pre-promotion configuration. The board therefore grades WITH the prior, and a reading that assumes
@@ -130,9 +130,9 @@ export interface GauntletResolverLevers {
 	/**
 	 * #1880 — the capital-status ranking axis: bounded NATIONAL-capital promotion on the bare-toponym class. Like
 	 * `gazetteerPrior` this pin carries an ARTIFACT (the candidate `capital` table, repo-file fallback), so the harness
-	 * loads it rather than `resolverLeverDeps` (which stays pure). Library default ON (PR #1888's board-651 receipt);
-	 * unset follows it, `false` pins the off arm, and an unset pin degrades on a reference-less artifact exactly as the
-	 * session does.
+	 * loads it rather than `resolverPinDeps` (which stays pure). Library default ON (PR #1888's board-651 receipt); unset
+	 * follows it, `false` pins the off arm, and an unset pin degrades on a reference-less artifact exactly as the session
+	 * does.
 	 */
 	capitalTier?: boolean
 	/**
@@ -144,53 +144,51 @@ export interface GauntletResolverLevers {
 }
 
 /**
- * The geocode deps a lever set turns into — spread into every {@linkcode geocodeAddress} call the run makes. Pure and
+ * The geocode deps a pin set turns into — spread into every {@linkcode geocodeAddress} call the run makes. Pure and
  * exported so the "the pin reaches the pipeline" contract is testable without building the ~9 GB database set.
  */
-export function resolverLeverDeps(levers: GauntletResolverLevers | undefined): {
+export function resolverPinDeps(pins: GauntletResolverPins | undefined): {
 	postcodeCountryCoherence?: boolean
 	adminContainmentRerank?: boolean
 } {
-	if (!levers) return {}
+	if (!pins) return {}
 
 	// A key is emitted only when the runner SET it — an `undefined` value would still be an own property, and
 	// `{postcodeCountryCoherence: undefined}` spread into the geocode deps reads as an explicit pin to a reader.
 	return {
-		...(levers.postcodeCountryCoherence === undefined
-			? {}
-			: { postcodeCountryCoherence: levers.postcodeCountryCoherence }),
-		...(levers.adminContainmentRerank === undefined ? {} : { adminContainmentRerank: levers.adminContainmentRerank }),
+		...(pins.postcodeCountryCoherence === undefined ? {} : { postcodeCountryCoherence: pins.postcodeCountryCoherence }),
+		...(pins.adminContainmentRerank === undefined ? {} : { adminContainmentRerank: pins.adminContainmentRerank }),
 	}
 }
 
 /**
- * One-line description of the pinned levers for the run banner. Prints on EVERY run, including the unpinned one, so a
+ * One-line description of the pinned pins for the run banner. Prints on EVERY run, including the unpinned one, so a
  * reader of two gauntlet logs can tell which configuration each graded — an OFF/ON pair whose logs are
- * indistinguishable is not evidence about the lever.
+ * indistinguishable is not evidence about the pin.
  */
-export function describeResolverLevers(levers: GauntletResolverLevers | undefined): string {
-	// `resolverLeverDeps` is pure and so cannot see the artifact-carrying pins; describing only what it returns is how
-	// a pinned run prints as "production defaults" and two different configurations produce identical lever logs. That
-	// is precisely the failure this surface exists to prevent, so every lever is named here, not just the boolean ones.
-	const entries: string[] = Object.entries(resolverLeverDeps(levers)).map(([k, v]) => `${k}=${v ? "ON" : "OFF"}`)
+export function describeResolverPins(pins: GauntletResolverPins | undefined): string {
+	// `resolverPinDeps` is pure and so cannot see the artifact-carrying pins; describing only what it returns is how
+	// a pinned run prints as "production defaults" and two different configurations produce identical pin logs. That
+	// is precisely the failure this surface exists to prevent, so every pin is named here, not just the boolean ones.
+	const entries: string[] = Object.entries(resolverPinDeps(pins)).map(([k, v]) => `${k}=${v ? "ON" : "OFF"}`)
 
-	// Printed only when PINNED away from the production default (now ON). An unset lever prints nothing, which is what
+	// Printed only when PINNED away from the production default (now ON). An unset pin prints nothing, which is what
 	// keeps "no flag" reading as "grade whatever production does".
-	if (levers?.gazetteerPrior !== undefined) {
-		entries.push(`gazetteerPrior=${levers.gazetteerPrior ? "ON" : "OFF"}`)
+	if (pins?.gazetteerPrior !== undefined) {
+		entries.push(`gazetteerPrior=${pins.gazetteerPrior ? "ON" : "OFF"}`)
 	}
 
-	if (levers?.capitalTier !== undefined) {
-		entries.push(`capitalTier=${levers.capitalTier ? "ON" : "OFF"}`)
+	if (pins?.capitalTier !== undefined) {
+		entries.push(`capitalTier=${pins.capitalTier ? "ON" : "OFF"}`)
 	}
 
-	if (levers?.variantAliasExemption !== undefined) {
-		entries.push(`variantAliasExemption=${levers.variantAliasExemption ? "ON" : "OFF"}`)
+	if (pins?.variantAliasExemption !== undefined) {
+		entries.push(`variantAliasExemption=${pins.variantAliasExemption ? "ON" : "OFF"}`)
 	}
 
-	if (!entries.length) return "resolver levers: (none pinned — production defaults)"
+	if (!entries.length) return "resolver pins: (none pinned — production defaults)"
 
-	return `resolver levers: ${entries.join(", ")}`
+	return `resolver pins: ${entries.join(", ")}`
 }
 
 /**
@@ -454,20 +452,20 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		await createResolverBackend(resolverMod, {
 			wofPaths: presentWofDatabases,
 			...(opts.candidateDB ? { candidateDB: opts.candidateDB } : {}),
-			...(opts.levers?.variantAliasExemption === false ? { variantAliasExemption: false } : {}),
+			...(opts.pins?.variantAliasExemption === false ? { variantAliasExemption: false } : {}),
 		})
 	)
 
-	// #1880 — artifact-carrying pin (see GauntletResolverLevers.capitalTier): the reference loads here
+	// #1880 — artifact-carrying pin (see GauntletResolverPins.capitalTier): the reference loads here
 	// and becomes the per-candidate capitalLevel closure, exactly as `createGeocodeSession` builds it.
 	// The tri-state mirrors the session: `false` pins the off arm; explicit `true` demands the
 	// reference; unset follows the ON default and degrades on a reference-less artifact.
 	const capitalIndex =
-		opts.levers?.capitalTier === false
+		opts.pins?.capitalTier === false
 			? undefined
 			: await loadCapitalIndex({
 					candidateDB: await resolveCandidateDBPath(opts.candidateDB),
-					missing: opts.levers?.capitalTier === true ? "throw" : "degrade",
+					missing: opts.pins?.capitalTier === true ? "throw" : "degrade",
 				})
 
 	const capitalLevel = capitalIndex
@@ -488,9 +486,9 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
 	const banProvider = await BANRegionDatabaseProvider.create(mailwomanDataRoot())
 
-	const leverDeps = resolverLeverDeps(opts.levers)
+	const pinDeps = resolverPinDeps(opts.pins)
 
-	// #1497's lever carries an artifact rather than a boolean, and the artifact is PER CLASSIFIER.
+	// #1497's pin carries an artifact rather than a boolean, and the artifact is PER CLASSIFIER.
 	//
 	// The FST ships beside the weights, so the en-GB package carries `fst-en-gb.bin` and the base carries
 	// `fst-en-us.bin`, and they hold different places: `st margarets hope` is in the GB one and absent from the US one.
@@ -499,7 +497,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// `createGeocodeSession` loads the FST from the classifier IT loaded.
 	//
 	// Measured 2026-08-16: `gb-op2-st-margarets-hope` parses `street` under en-GB with no prior and `locality` with the
-	// GB FST fed — so the base-FST wiring hid a row the lever fixes. Cached per resolved path, because the overlay
+	// GB FST fed — so the base-FST wiring hid a row the pin fixes. Cached per resolved path, because the overlay
 	// classifiers are themselves cached and several countries share one.
 	const priorDepsByPath = new Map<string, Pick<GeocodeDeps, "fst" | "streetMorphology">>()
 	const warnedMissingPriorFST = new Set<string>()
@@ -509,19 +507,19 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		label: string
 	): Promise<Pick<GeocodeDeps, "fst" | "streetMorphology">> {
 		// Default-on since 2026-08-16: only an explicit `false` withholds the prior.
-		if (opts.levers?.gazetteerPrior === false) return {}
+		if (opts.pins?.gazetteerPrior === false) return {}
 
 		const fstPath = (forClassifier as { fstPath?: string }).fstPath
 
 		if (!fstPath) {
 			// Loud, once per locale. A prior-on run against an overlay with no FST grades the BASE model for those rows,
-			// and silently: the lever prints ON in the levers line while doing nothing (#1705).
+			// and silently: the pin prints ON in the pins line while doing nothing (#1705).
 			if (!warnedMissingPriorFST.has(label)) {
 				warnedMissingPriorFST.add(label)
 
 				console.error(
 					`[gauntlet] ⚠ gazetteerPrior=ON but the ${label} weights package ships no FST — every ${label} row is ` +
-						"graded WITHOUT the prior. The levers line will still say ON; this is the only place that says otherwise."
+						"graded WITHOUT the prior. The pins line will still say ON; this is the only place that says otherwise."
 				)
 			}
 
@@ -554,7 +552,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		return deps
 	}
 
-	console.error(`[gauntlet] ${describeResolverLevers(opts.levers)}`)
+	console.error(`[gauntlet] ${describeResolverPins(opts.pins)}`)
 
 	// The fork→entity probe's two signals — both or neither, tolerate-and-degrade like every optional
 	// artifact (a machine without poi.db grades the incumbent behavior; the fork-entity board rows are
@@ -579,7 +577,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	/**
 	 * The one geocode call both public entry points make. `extra` is spread LAST so a trace sink cannot be shadowed by a
-	 * lever pin, and so the two entry points cannot drift into two different dependency assemblies — the reason the
+	 * pin pin, and so the two entry points cannot drift into two different dependency assemblies — the reason the
 	 * Gauntlet builds its deps once at all.
 	 */
 	const runGeocode = async (
@@ -598,7 +596,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			databases: regionDatabaseProvider.for,
 			nationalDatabases: banProvider.for,
 			osmDatabases: osmProvider.for,
-			...leverDeps,
+			...pinDeps,
 			...(capitalLevel ? { capitalLevel } : {}),
 			...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
 			...forkEntityDeps,
@@ -666,15 +664,15 @@ export interface GauntletResult {
 	unit: string | null
 	/**
 	 * The country #42's coherence pass scoped this row to, or null when nothing was overridden. Not asserted by any case
-	 * — it is the FIRING COUNT, so a lever-pinned run can say how many rows the mechanism actually spoke on rather than
-	 * leaving an unchanged verdict to mean either "harmless" or "never ran".
+	 * — it is the FIRING COUNT, so a pinned run can say how many rows the mechanism actually spoke on rather than leaving
+	 * an unchanged verdict to mean either "harmless" or "never ran".
 	 */
 	postcode_country_scope: string | null
 	/**
 	 * The #1880 capital promotion's firing receipt, projected verbatim: the promoted candidate's country, present only
 	 * when the promotion changed some node's leading candidate. The same firing-count posture as
-	 * {@linkcode postcode_country_scope} — carried so a lever-pinned comparison counts activity instead of inferring it
-	 * from moved rows.
+	 * {@linkcode postcode_country_scope} — carried so a pinned comparison counts activity instead of inferring it from
+	 * moved rows.
 	 */
 	capital_promotion?: string
 	/**

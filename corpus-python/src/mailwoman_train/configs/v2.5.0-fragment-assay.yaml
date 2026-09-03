@@ -4,7 +4,7 @@
 #   token-F1 up + span-exact-match lag + trailing-number→postcode persisting  ⇒  #727 span-head
 #   ceiling CONFIRMED → redirect budget to the structured-span-head arc; do NOT ship this.
 #
-# RECIPE = v2.4.1-fr-nsplice-ft VERBATIM, with EXACTLY these deltas (one lever: the slice):
+# RECIPE = v2.4.1-fr-nsplice-ft VERBATIM, with EXACTLY these deltas (one change: the slice):
 #   1. corpus_dir → v0.10.2-fragment-assay overlay (v0.10.1's 699 slices verbatim via manifest
 #      cross-dir refs + part-fragment.parquet: 123,272 rows, 16 OA locales + tiger-block US streets,
 #      BALANCED POLARITY — bare-street/street+trailing-number rows AND bare-locality twins; the

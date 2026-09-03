@@ -28,7 +28,7 @@
  *   'catherine', 'savile', …) and none of the toponym family ('paris', 'mexico'). `comer` — the
  *   torture entry that motivated the survey — does NOT pass: its category mass splits across
  *   food/retail/other (top class share 0.46), which is exactly the composed-measure honesty the
- *   trained-channel design needs; it stays with that deferred lever, not in this table.
+ *   trained-channel design needs; it stays with that deferred change, not in this table.
  *
  *   Run: `node poi-taxonomy/scripts/build-venue-word-hints.ts && npx oxfmt poi-taxonomy/data/venue-word-hints.json`
  *   (committed JSON is oxfmt-clean, the repo law). The source artifact is data-root local (built by

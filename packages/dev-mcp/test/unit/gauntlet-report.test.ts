@@ -40,8 +40,8 @@ describe("parseGauntletReport", () => {
 		expect(parseGauntletReport(STDOUT, STDERR).verdict).toBe("FAIL")
 	})
 
-	it("carries the levers line, so two logs differing by a flag say which flag", () => {
-		expect(parseGauntletReport(STDOUT, STDERR).levers).toContain("gazetteerPrior=ON")
+	it("carries the pins line, so two logs differing by a flag say which flag", () => {
+		expect(parseGauntletReport(STDOUT, STDERR).pins).toContain("gazetteerPrior=ON")
 	})
 
 	it("reads the firing count separately from the verdict", () => {
@@ -77,11 +77,11 @@ describe("parseGauntletReport", () => {
 		expect(report.unparsed.join(" ")).toContain("Do not read the absence of failures as a clean run")
 	})
 
-	it("says a missing firing line is not evidence about the pinned lever", () => {
+	it("says a missing firing line is not evidence about the pinned pin", () => {
 		const report = parseGauntletReport("verdict: PASS\n", "")
 
 		expect(report.postcode_country_coherence_fired_on).toBeNull()
-		expect(report.unparsed.join(" ")).toContain("no other lever prints a firing count")
+		expect(report.unparsed.join(" ")).toContain("no other pin prints a firing count")
 	})
 
 	it("handles a multi-layer run", () => {

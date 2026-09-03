@@ -54,7 +54,7 @@ export const PublicEnvSchema = z.object({
 	// cannot overlap a geocode: `onnxruntime-node`'s `session.run()` blocks the JS thread instead of
 	// releasing to the libuv pool, and `node:sqlite` reads are synchronous. Measured 1.00x flat from
 	// 1→16 workers on both parse and full geocode. Don't reintroduce it without re-measuring; worker
-	// threads (see `mailwoman/geocode-stream.ts`) are the only lever that moves this in Node.
+	// threads (see `mailwoman/geocode-stream.ts`) are the only change that moves this in Node.
 	// Receipts: `docs/engineering/reference/performance.mdx`.
 	MAILWOMAN_BATCH_MAX: blankAsAbsent(z.coerce.number().int().positive().default(1000)),
 

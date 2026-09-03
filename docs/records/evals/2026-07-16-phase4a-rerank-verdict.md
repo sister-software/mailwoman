@@ -87,7 +87,7 @@ to a branch.
   own.
 - **4b (isotonic ambiguity gate)** — still valuable, and now _more_ so: if evidence cannot pick the
   winner, calibrated confidence is what lets a caller know the answer is uncertain. Unblocked.
-- **4c (option C: kind-posterior + recall-weighted loss)** — now the **primary** lever for the
+- **4c (option C: kind-posterior + recall-weighted loss)** — now the **primary** change for the
   bare-fragment class, not a follow-up. It attacks the parse where evidence cannot.
 
 **And the standing fact this does not change:** the v7 street floor is **0.90**. seg@1 is 0.577,

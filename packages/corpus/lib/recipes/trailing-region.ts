@@ -22,7 +22,7 @@
  *   board row this recipe was written for is NOT bare — it reads `…, 07691 Portopetro, Illes Balears,
  *   Spain`. Measured over both built slices: 88,904 rows, zero containing a postcode. So the model
  *   learned the bare tail correctly and had never once seen the shape it was failing on, which is why no
- *   decode lever moved it.
+ *   decode change moved it.
  *
  *   The collapse is two-staged and neither trigger is a street, which is what makes this cheap to teach:
  *
@@ -40,7 +40,7 @@
  *   model: `Barcelona 6001, Anzoátegui, Venezuela` tags `6001` as `house_number` and loses the locality
  *   into the street, while `6001 Barcelona, Anzoátegui, Venezuela` tags it `postcode` and recovers
  *   `locality: Barcelona`. `Sandton 2196` vs `2196 Sandton` behaves the same way, and no decode-time
- *   lever moves it — `postcodeShapeCoherence: true` leaves all eight VE board rows byte-identical.
+ *   change moves it — `postcodeShapeCoherence: true` leaves all eight VE board rows byte-identical.
  *
  *   So the tuple's `postcodePlacement` selects the surface, and it keeps apart two trailing conventions
  *   that are NOT the same shape: VE writes `Barcelona 6001, Anzoátegui, Venezuela` (the code on the

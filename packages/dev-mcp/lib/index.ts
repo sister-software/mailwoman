@@ -44,8 +44,8 @@ export {
 	enumerateFlips,
 	measureMove,
 	runCounterfactuals,
-	COUNTERFACTUAL_LEVERS,
-	type CounterfactualLever,
+	COUNTERFACTUAL_SETTINGS,
+	type CounterfactualSetting,
 	type RowCounterfactuals,
 } from "#counterfactual"
 

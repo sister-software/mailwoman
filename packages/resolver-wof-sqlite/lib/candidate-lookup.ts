@@ -218,7 +218,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	 * Prepared interval-label probe over `candidate_interval` — `undefined` when the artifact predates the sidecar, which
 	 * is what makes the admin-containment re-rank (#1717 stage 2) capability-restricted: without it,
 	 * `FindPlaceQuery.regionQualifier` is ignored, no candidate carries a `containedByQualifier` stamp, and the resolver
-	 * walk reports the lever `unavailable` instead of silently dead.
+	 * walk reports the change `unavailable` instead of silently dead.
 	 */
 	readonly #intervalProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	readonly #intervalCache = new Map<number, IntervalLabel | null>()
@@ -634,7 +634,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		// SHAPE subset (placetype/bbox/primary — everything but the country scope) is kept separately
 		// because the admin-containment injection probe (#1717 stage 2) runs under the shape conds
 		// WITHOUT the country: bypassing a locale-inferred country scope for a qualifier-vouched
-		// candidate is the lever's whole point and the one filter injection may cross.
+		// candidate is the change's whole point and the one filter injection may cross.
 		const filters: string[] = []
 		const filterParams: Array<string | number> = []
 		const shapeFilters: string[] = []
@@ -877,7 +877,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		// address's outermost explicit statement, so its partition outranks the postcode-proximity order
 		// above (contained rows keep that order among themselves). Capability-conditioned on the sidecar
 		// (`#qualifierProbe`); when the artifact predates it, `regionQualifier` is ignored, no stamp is
-		// written, and the resolver walk reports the lever `unavailable`.
+		// written, and the resolver walk reports the change `unavailable`.
 		if (query.regionQualifier?.trim() && this.#qualifierProbe && this.#wantsLocality(query.placetype)) {
 			rows = this.#applyAdminContainment(rows, query.regionQualifier.trim(), query.country, {
 				nameKey,

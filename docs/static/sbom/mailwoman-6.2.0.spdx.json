@@ -1230,7 +1230,7 @@
       "SPDXID": "SPDXRef-Package-mailwoman.resolver-6.2.0",
       "versionInfo": "6.2.0",
       "packageFileName": "node_modules/@mailwoman/resolver",
-      "description": "The address resolver: walk an AddressTree, decorate nodes with gazetteer-supplied coordinates + attribution. Backend-agnostic (any ResolverBackend), with the span-rescore + postcode-consistency levers. Lifted out of @mailwoman/core so it can depend on @mailwoman/spatial (haversine) + @mailwoman/codex (USPS directionals) instead of reinventing them; the type contract stays in core so the pipeline composes it without a cycle.",
+      "description": "The address resolver: walk an AddressTree, decorate nodes with gazetteer-supplied coordinates + attribution. Backend-agnostic (any ResolverBackend), with the span-rescore + postcode-consistency changes. Lifted out of @mailwoman/core so it can depend on @mailwoman/spatial (haversine) + @mailwoman/codex (USPS directionals) instead of reinventing them; the type contract stays in core so the pipeline composes it without a cycle.",
       "downloadLocation": "https://registry.npmjs.org/@mailwoman/resolver/-/resolver-6.2.0.tgz",
       "filesAnalyzed": false,
       "homepage": "NOASSERTION",

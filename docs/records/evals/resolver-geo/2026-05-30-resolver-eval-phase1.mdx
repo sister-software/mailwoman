@@ -68,7 +68,7 @@ Fixes (both production keepers):
 2. **Routing is a real but modest lift** (+3.1pp overall, +4.7pp noisy). Worth building as
    the **banded** version (cheap lexical router → arbiter only on the noisy/ambiguous band),
    so the dual-parse cost is spent only where it pays and clean inputs stay on neural.
-3. **The biggest remaining lever is resolver coverage**, not the parser: more aliases/
+3. **The biggest remaining change is resolver coverage**, not the parser: more aliases/
    abbreviations, street-level resolution (TIGER — WOF has no street node), more locales.
    The p90 of 1,090 km is the cross-state ambiguity tail when a region fails to constrain.
 

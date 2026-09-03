@@ -3,27 +3,27 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The lever space and the move predicate. Driven through `resolveConfig` rather than a hand-built options object, so
+ *   The setting space and the move predicate. Driven through `resolveConfig` rather than a hand-built options object, so
  *   the flips are stated against the configuration production actually ships — a flip enumerated off a caller's
- *   half-filled config would move the unset levers in the wrong direction.
+ *   half-filled config would move the unset settings in the wrong direction.
  */
 
 import {
 	BASE_LOCALE,
-	COUNTERFACTUAL_LEVERS,
+	COUNTERFACTUAL_SETTINGS,
 	COUNTERFACTUAL_MOVED_KM,
 	enumerateFlips,
 	measureMove,
-	type CounterfactualLever,
+	type CounterfactualSetting,
 } from "@mailwoman/dev-mcp/counterfactual"
 import { resolveConfig } from "@mailwoman/dev-mcp/engine-registry"
 import { describe, expect, it } from "vitest"
 
-async function flipFor(lever: CounterfactualLever, locale: string, country: string | undefined) {
-	return (await enumerateFlips(resolveConfig({ locale }), country)).flips.find((flip) => flip.lever === lever)
+async function flipFor(setting: CounterfactualSetting, locale: string, country: string | undefined) {
+	return (await enumerateFlips(resolveConfig({ locale }), country)).flips.find((flip) => flip.setting === setting)
 }
 
-describe("enumerateFlips — one lever at a time", () => {
+describe("enumerateFlips — one setting at a time", () => {
 	it("moves exactly one key per flip", async () => {
 		const { flips } = await enumerateFlips(resolveConfig({}), "US")
 
@@ -32,10 +32,10 @@ describe("enumerateFlips — one lever at a time", () => {
 		}
 	})
 
-	it("offers every lever in the fixed space where it applies", async () => {
+	it("offers every setting in the fixed space where it applies", async () => {
 		const { flips } = await enumerateFlips(resolveConfig({}), "GB")
 
-		expect(flips.map((flip) => flip.lever).toSorted()).toEqual([...COUNTERFACTUAL_LEVERS].toSorted())
+		expect(flips.map((flip) => flip.setting).toSorted()).toEqual([...COUNTERFACTUAL_SETTINGS].toSorted())
 	})
 
 	it("flips a base-locale row TO its country's overlay", async () => {
@@ -46,22 +46,22 @@ describe("enumerateFlips — one lever at a time", () => {
 		expect(await flipFor("locale", "de-DE", "DE")).toMatchObject({ from: "de-DE", to: BASE_LOCALE })
 	})
 
-	it("skips the locale lever with a stated reason rather than omitting it", async () => {
+	it("skips the locale setting with a stated reason rather than omitting it", async () => {
 		const noCountry = await enumerateFlips(resolveConfig({}), undefined)
 		const noOverlay = await enumerateFlips(resolveConfig({}), "JP")
 
-		expect(noCountry.flips.some((flip) => flip.lever === "locale")).toBe(false)
+		expect(noCountry.flips.some((flip) => flip.setting === "locale")).toBe(false)
 		expect(noCountry.skipped[0]!.why).toContain("no country for this row")
 		expect(noOverlay.skipped[0]!.why).toContain("no weights overlay ships for JP")
 	})
 
 	it("flips country_scope between auto and none in both directions", async () => {
 		expect((await enumerateFlips(resolveConfig({ country_scope: "none" }), "US")).flips).toContainEqual(
-			expect.objectContaining({ lever: "country_scope", from: "none", to: "auto" })
+			expect.objectContaining({ setting: "country_scope", from: "none", to: "auto" })
 		)
 
 		expect((await enumerateFlips(resolveConfig({ country_scope: "auto" }), "US")).flips).toContainEqual(
-			expect.objectContaining({ lever: "country_scope", from: "auto", to: "none" })
+			expect.objectContaining({ setting: "country_scope", from: "auto", to: "none" })
 		)
 	})
 })

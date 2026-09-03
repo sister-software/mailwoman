@@ -1,7 +1,7 @@
 # Consolidation session — 2026-06-10 (gate complete: guardrail won, affix capacity fork)
 
-A full-day session that closed the **country** and **affix** levers, ran the **v1.0.0
-consolidation** (every proven lever in one model), and then ran three corrective
+A full-day session that closed the **country** and **affix** changes, ran the **v1.0.0
+consolidation** (every proven change in one model), and then ran three corrective
 iterations (Runs A/B/C) under two DeepSeek consults. **The campaign is now STOPPED at the
 treadmill guard with a decisive result:** the consolidation's guardrail win is large, real,
 and stable across every variant — and the affix split has a demonstrated **stability
@@ -111,7 +111,7 @@ region 80.1 · micro 81.6 · FR hn 92.0.
 
 ### Gate provenance & decisions (eval discipline — no silent drift)
 
-- **country ≥83.3** is config-canonical (the v0.9.12 banked-lever floor, "don't regress #464"). The
+- **country ≥83.3** is config-canonical (the v0.9.12 banked-change floor, "don't regress #464"). The
   consolidation _demonstrated_ 87.5, but that's a bonus, not the pre-registered bar. A first doc draft
   wrote ≥85; it was reconciled DOWN to the config's 83.3 — recorded here, not silent.
 - **affix ≥78/67** (hold v0.9.8's solo level) and **US street ≥80.4** are the two REAL open gaps.
@@ -160,7 +160,7 @@ in **epic #488**, not an ad-hoc grab.
 
 ## What shipped / landed today
 
-- **Country lever resolved, bookkept.** v0.9.12 gazetteer anchor = country **83.3 F1**
+- **Country change resolved, bookkept.** v0.9.12 gazetteer anchor = country **83.3 F1**
   (homograph, P95/over-fire 0). Choreography = **PR #468**. #464 closed; plan doc + memory
   updated. (Choreography later found not decisive for the postcode dip — see below.)
 - **Affix multi-locale reroll = PR #469** (v0.9.14, corpus v0.4.11-affix-ml). Proved the

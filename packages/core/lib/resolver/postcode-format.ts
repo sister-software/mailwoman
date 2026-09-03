@@ -16,7 +16,7 @@
  * language-based coarse placer, which conflates GB/US (both carry English street patterns) and mis-routes GB addresses
  * to US namesakes (`London E4 9AZ` → London, Ohio) at 0.94–0.96 confidence. The format is unforgeable across these
  * countries: the GB pattern (letters-first) never matches a US ZIP or an NL `\d{4} [A-Z]{2}` code. Extend ONLY with
- * formats validated as non-overlapping. Feeds the `postcodeCountryPrior` lever (conditional, default-off pending its
+ * formats validated as non-overlapping. Feeds the `postcodeCountryPrior` change (conditional, default-off pending its
  * check).
  */
 export const POSTCODE_FORMAT_COUNTRY: ReadonlyArray<{ readonly re: RegExp; readonly country: string }> = [

@@ -3,7 +3,7 @@
 Autonomous shift, ~04:18→15:00 UTC. **19 PRs merged**, 2 issues fully worked, 8 eval/concept docs, 3
 durable memories, 0 models trained (groundwork only), 0 NaN, 0 CI failures, 1 lab-restart survived.
 The through-line: **grade the assembled output, let the eval/lint gates catch the traps** (#566/#478),
-and — when the easy backlog cleared — build concrete groundwork for the #1 parser lever.
+and — when the easy backlog cleared — build concrete groundwork for the #1 parser change.
 
 ## The four arcs
 
@@ -30,9 +30,9 @@ placed). Overture ES adds a marginal +1.5% at equal accuracy; IT/TW Overture-blo
 **Meta-finding (#470):** Overture's value is the address-POINT layer, not the postcode/postal-city aux
 tables (geography-dependent fill). Reusable extractor shipped (#701).
 
-### 4. The #1 parser lever — boundary-instability extract (#375, the capstone)
+### 4. The #1 parser change — boundary-instability extract (#375, the capstone)
 
-The failure taxonomy (#697) named **boundary instability** the top parser lever; the within-token
+The failure taxonomy (#697) named **boundary instability** the top parser change; the within-token
 decomposition (#702) showed it's the boundary family + #694 + #690 — not a punctuation problem. Built a
 complete, one-upload-away training package:
 
@@ -61,7 +61,7 @@ complete, one-upload-away training package:
 
 ## Decision queue for the operator (all one-review-away)
 
-1. **#1-lever retrain** — `v1.6.0-boundary-stress.yaml`. Needs: the FULL #511 lint clean (operator
+1. **#1-change retrain** — `v1.6.0-boundary-stress.yaml`. Needs: the FULL #511 lint clean (operator
    base-stats; watch locality-token regression / tune locality vocab if it regresses), `modal volume put`
    the staged corpus, `modal run`. Extract + baseline + recipe + glue are done.
 2. **#694 flip** — comma-join + #690 (+15% rooftop, validated). Needs a dedup-GBT re-train.

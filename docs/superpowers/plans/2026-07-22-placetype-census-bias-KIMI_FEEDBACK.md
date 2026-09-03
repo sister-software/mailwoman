@@ -63,7 +63,7 @@ The plan specifies "lowercase + trim" with a diacritic policy TBD. `fst-prior.ts
 ## Smaller notes
 
 - **Naming:** "census" collides with US Census/TIGER vocabulary (`tiger/` workspace, census-tract language throughout the geo pipeline). Name the artifact and module `placetype-pair` / `pair-index` / similar; never the bare word "census" in identifiers.
-- **`count` in the schema is currently unused** (presence-only boost). Fine — but say so, and mark it as the future confidence-scaling lever so nobody "finishes the job" mid-implementation (cf. the raw-SQL addendum in AGENTS.md).
+- **`count` in the schema is currently unused** (presence-only boost). Fine — but say so, and mark it as the future confidence-scaling change so nobody "finishes the job" mid-implementation (cf. the raw-SQL addendum in AGENTS.md).
 - **Artifact header:** add fold-version and schema-version alongside δ, source md5, and build date; the runtime flag should name the minimum schema version it understands. Cheap forward-compat, consistent with sealed-artifact discipline.
 - **Checkpoint choice:** the rung-3 table shows feed-8k at δ=6.0 is 95.5% NZ / 100% GB — within the −5pp tolerance of feed-2k's 100/100, with its guards already measured. The digit-FAIL-vs-guards trade the plan frames as feed-2k's risk cuts both ways; the battery deciding is correct, but the decision matrix should include "feed-8k at δ=6 with a slightly lower NZ ceiling" as a first-class option, not a fallback.
 - **Perf:** segmentation + hash probes are negligible next to ONNX inference, but state the budget (sub-millisecond per parse, census resident in memory) so it survives review.

@@ -141,7 +141,7 @@ have questioned:
   affected spans reported as `unchanged`.
 - An `EngineConfig` key typo (`weightsCacheRoot` for `weights_cache`). A plain object drops the unknown
   key in silence, both arms ran the same weights, and the comparison reported "0 of 6 differ" — which
-  reads as "the candidate is identical" and means "the lever never ran".
+  reads as "the candidate is identical" and means "the change never ran".
 - Two artifact resolvers sorting by NAME. `v0.9.9` beats `v0.26.0` lexically and `v8-jp-full` beats both
   numerically, so a coverage report silently described a corpus nine versions old.
 

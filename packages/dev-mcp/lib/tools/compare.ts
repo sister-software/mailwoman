@@ -23,7 +23,7 @@ export const compareTool = async ({ registry }: DevToolDeps): Promise<DevTool> =
 		"the supplied weights cache. An arm is a mailwoman configuration, an ALREADY-RUNNING " +
 		"external geocoder (Pelias / Photon / Nominatim — this server never starts one), a reference geocoder " +
 		"(Census free, Google billed and opt-in only), or a stored past run replayed by run_id. Reports what CHANGED " +
-		"separately from what IMPROVED, checks that only the declared lever moved, and states the smallest effect this " +
+		"separately from what IMPROVED, checks that only the declared pin moved, and states the smallest effect this " +
 		"many rows could have detected. A cross-engine comparison is graded on the pre-registered distance protocol " +
 		"(top-1, 1/5/25km, a no-result a miss at every threshold) and claims parity only against the pre-registered " +
 		"±5pp equivalence bound. An oracle arm is NEVER graded — a reference geocoder is not truth here.",

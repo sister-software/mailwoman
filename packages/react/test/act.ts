@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The ONE act() lever for the browser-mode suite.
+ *   The ONE act() change for the browser-mode suite.
  *
  *   The components under test do async state updates (autocomplete debounce timers, runtime-load and
  *   parse promises, the clipboard write + its transient "copied" flag). A test triggers an interaction

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `fr-bare-street` slice recipe (#251) — the postcode-anchoring-imbalance lever. BAN (and every
+ *   `fr-bare-street` slice recipe (#251) — the postcode-anchoring-imbalance change. BAN (and every
  *   other comprehensive FR source) is postcode-COMPLETE, so the model learned the French
  *   street→locality boundary as "the token after the 5-digit postcode," never as "comma + city." Strip
  *   the postcode and it leaks the street's proper-noun tokens into the following locality ("Rue René
@@ -107,7 +107,7 @@ export const frBareStreetRecipe: CorpusRecipe = {
 			}
 
 			// Four surfaces over the same tuple, cycled deterministically. The comma form was the
-			// original lever; the COMMA-FREE form is the colloquial register users actually type
+			// original change; the COMMA-FREE form is the colloquial register users actually type
 			// ('12 rue de Rome Paris' — the street↔locality boundary with NO delimiter, the fr-fr
 			// panel's named loss); the ABBREVIATED form is the typeahead register the geocoder-tester
 			// FR slice attests at scale; and the BARE-STREET-ONLY form is the absence counterweight —

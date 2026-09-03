@@ -25,7 +25,7 @@
 # competition is the v4.2.0 trap (affix 78→27). DeepSeek also flagged a per-locale CRF transition penalty
 # (street→cedex) as a clean future rider; it needs wiring (crf_loss_weight is 0.0) so it's a later run.
 #
-# WHY: the failure taxonomy named boundary instability the #1 parser lever, and the within-token
+# WHY: the failure taxonomy named boundary instability the #1 parser change, and the within-token
 # decomposition (#702) showed it surfacing under many names. The "before" baseline
 # (docs/articles/evals/2026-06-17-boundary-stress-baseline.md) measured the current model at 38.7–70%
 # on these boundaries vs ~95%+ on clean canonical:
@@ -106,7 +106,7 @@ data:
     synth-po-box-cedex: 1.5
     synth-affix: 2.0
     synth-country: 2.0
-    # THE #375 #1-lever variable (DeepSeek-signed 2026-06-17): the boundary-instability stress slice.
+    # THE #375 #1-change variable (DeepSeek-signed 2026-06-17): the boundary-instability stress slice.
     # Conservative 1.0 start (prevents street_suffix over-fire); sweep to 1.5 if slash/comma-less land
     # short. ONE change vs v1.5.1 — nothing else moves.
     synth-boundary-stress: 1.0
@@ -200,7 +200,7 @@ train:
   precision: bf16
   num_workers: 0
   csv_log_path: "{output_dir}/../train_log.csv"
-  # v1.7.0 hygiene co-change (STATED, not a lever): was `constant`. v1.6.0's constant LR let the spine
+  # v1.7.0 hygiene co-change (STATED, not a change): was `constant`. v1.6.0's constant LR let the spine
   # drift PAST its ~26k optimum (final-checkpoint spine worse than mid-training). Cosine decay (peak after
   # warmup → ~0 over max_steps) makes the final checkpoint the best, so the gate needn't checkpoint-select.
   lr_schedule: cosine

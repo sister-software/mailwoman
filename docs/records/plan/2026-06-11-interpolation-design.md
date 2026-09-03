@@ -178,7 +178,7 @@ truth is unknowable; measuring on known points is the only honest proxy.
 - **Gate: MISS.** The pre-registered #483 gate (p50 ≤ 50 m, p90 ≤ 150 m) is NOT met —
   stated directly, not re-baselined. The shortfall tracks rural Vermont's long sparse
   segments (median claimed uncertainty 137 m: the geometry itself caps precision) and
-  TIGER's uniform-spacing assumption. Next levers, in measured-first order: re-run on a
+  TIGER's uniform-spacing assumption. Next changes, in measured-first order: re-run on a
   denser county (the gate may simply be a rural-geometry artifact — measure before
   building), segment subdivision at OA point anchors, ZIP+4 snapping (#525). No rollout
   until a gate pass or a STATED re-baseline with operator sign-off.

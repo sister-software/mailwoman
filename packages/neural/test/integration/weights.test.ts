@@ -532,7 +532,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			const row = "12 Church Road Glenfield Leicester LE3 8DP"
 
 			// Beta-less view of the SAME index bytes: probe + delta identical, transitionBeta (and parentDelta,
-			// which arrived with the same generation of levers) withheld. On the 7.0.0 base this leg pinned the
+			// which arrived with the same generation of changes) withheld. On the 7.0.0 base this leg pinned the
 			// pre-β miss; on the v4.4.0 base the 2026-08-11 sweep measured 190/191 PPD rows recovering in both
 			// legs, so the leg now asserts the self-recovery — the wiring proof (applied:true) is unchanged, and
 			// a regression of this class fails HERE first (see the header comment for the re-pin recipe).

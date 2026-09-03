@@ -16,7 +16,7 @@ Autonomous shift, operator-handed conn. Goal: clean the issue backlog — close 
 - **#742** world-coverage gazetteer (97/195 → 244 countries) — #266/#267, deployed `2026-06-30a`.
 - **#833** Portland/UK-namesake → joint-consistency (#837 adminCoherence + #838 country_hint). Gauntlet 10/10.
 - **#832** "New York, NY" → NYC — wof:hierarchy ancestry backfill (#835/#836). Gauntlet 10/10.
-- **#370** parse↔resolve span-rescore — shipped #777/#780. #781 (v2) tracked separately, then closed (lever measured inert).
+- **#370** parse↔resolve span-rescore — shipped #777/#780. #781 (v2) tracked separately, then closed (change measured inert).
 - **#823** non-US recall coverage residual — verified live: Skopje/Tbilisi/Yerevan/Bitola/Batumi all resolve correctly now (were UNRESOLVED).
 - **#735** national US street tier on R2 — verified `street/us/{tx,fl,wa}/{situs,interp}.db` HTTP 206, all 52 slugs hosted.
 - **#481** parser hardening bundle — verified shipped: the `#decode` dedup (item 1), repairs-in-both (item 2), ParseOpts export, TLA removal, policy-filter tests all done.
@@ -25,7 +25,7 @@ Updated (kept open) **#822** and **#829** with live evidence (below).
 
 **Phase 2 — triage (an agent scanned ~45 issues; every CLOSE spot-verified):**
 
-- Closed **#387** (city-state, superseded by dual-role epic #402), **#330** (FR venue/region premise falsified — n=1), **#426** (Route A conditional — verdict was STAY), **#531** (typo-tolerant FTS shipped 43d0b67c), **#552** (imls subregion fix), **#377** (demo UX components built), **#26** (licensing/share-alike shipped corpus/src/license.ts), **#781** (span-rescore v2 lever measured +0.0pp).
+- Closed **#387** (city-state, superseded by dual-role epic #402), **#330** (FR venue/region premise falsified — n=1), **#426** (Route A conditional — verdict was STAY), **#531** (typo-tolerant FTS shipped 43d0b67c), **#552** (imls subregion fix), **#377** (demo UX components built), **#26** (licensing/share-alike shipped corpus/src/license.ts), **#781** (span-rescore v2 change measured +0.0pp).
 - Relabeled **#444/#435/#456/#564/#727** (`neural`), **#733** (`neural,phase-1`), **#229** (`neural,phase-2`).
 
 **Phase 3 — actionable PRs:**
@@ -53,7 +53,7 @@ Updated (kept open) **#822** and **#829** with live evidence (below).
 
 ## Open questions / next
 
-- **#822** — a foreign-country-name resolver hint (Austria/Australia/Switzerland are unambiguous; Georgia is not). Clean lever, resolver-side, not the GPU placer.
+- **#822** — a foreign-country-name resolver hint (Austria/Australia/Switzerland are unambiguous; Georgia is not). Clean change, resolver-side, not the GPU placer.
 - **#379** — serialize-javascript (RCE) + tar (path-traversal) major bumps need a build+test pass before forcing.
 - **#818** — four OpenCage-style recipes remain; the multi-service one wants a voice review.
 - **#260 (B3)** — still gated on #249 ODbL counsel sign-off (from the day shift).
@@ -73,7 +73,7 @@ Updated (kept open) **#822** and **#829** with live evidence (below).
 
 ---
 
-# Part 2 — substantive shift (resolver/parser levers)
+# Part 2 — substantive shift (resolver/parser changes)
 
 The cleanup above was the warm-up. After the operator handed the conn (`/night-shift`, ~05:00 UTC), the
 plan (`nightshift/2026-06-30-NIGHT-SHIFT-PLAN.md`) drives the rest: A (#822) → D → C → B → E + stretch F–I.
@@ -83,12 +83,12 @@ plan (`nightshift/2026-06-30-NIGHT-SHIFT-PLAN.md`) drives the rest: A (#822) →
 The full plan shipped (10 PRs) and the backlog is exhaustively triaged. Five threads now wait on a call only
 you can make — each with my recommendation:
 
-1. **Lever E — the $20 GPU budget.** _(Corrected after a DeepSeek nudge prompted a deeper dive — my first
+1. **Change E — the $20 GPU budget.** _(Corrected after a DeepSeek nudge prompted a deeper dive — my first
    read of this was wrong twice over.)_ The multilocale corpus IS staged AND **the big multilocale win already
    shipped**: v1.9.1-multilocale-3order = **v4.13.0** (PT 52→82%, PL 53→62%, AT +31pp), and v4.16.0 sits on
-   that base. So #825 is the _incremental_ push beyond v4.13.0, and its next lever is campaign-gated, not a
+   that base. So #825 is the _incremental_ push beyond v4.13.0, and its next change is campaign-gated, not a
    cheap probe: more eval-safe data (#477's recipe, a parity-scorecard decision) or a representation change —
-   and **weight is a falsified lever** here (the v1.9.1 postmortem: "only the RENDERING fixes it"). So a
+   and **weight is a falsified change** here (the v1.9.1 postmortem: "only the RENDERING fixes it"). So a
    "resume v194 + upweight the extract, 2k probe" has no falsifiable upside. **Rec: hold the budget; the further
    push is a campaign-strategy + data call, not an overnight GPU run.** (Budget untouched.) Details on #825.
 2. **#378 in-browser P95 trace.** The cold-path SLO + budget shipped (#857), but the live P95 — the SLO's
@@ -105,7 +105,7 @@ you can make — each with my recommendation:
    pulled only by cacache/node-gyp install tooling. **Rec: a deliberate test-then-bump pass; low real-world
    exposure, not an autonomous force.**
 
-## Lever A — #822 named-foreign-country namesake (PR #852)
+## Change A — #822 named-foreign-country namesake (PR #852)
 
 `Vienna, Austria` → Vienna **WV**. The plan called for a probe-gated fix (the #265 discipline); the probes
 re-shaped it twice before a line of resolver code was written:
@@ -136,7 +136,7 @@ default-on, awaiting CI.
 assuming the fix broke, I dug in — the resolver was right (−33.87,151.21); my _expected_ value had a dropped
 minus sign (`33.8696` not `−33.8696`). My typo, caught by the gate, not a regression.
 
-## Lever D — resolver/parser backlog (#305, #435, #456): triaged, none a clean CPU PR
+## Change D — resolver/parser backlog (#305, #435, #456): triaged, none a clean CPU PR
 
 The diagnostic-first discipline earned its keep — all three are GPU/schema/coverage-dependent, not the
 "CPU-doable subset" the plan hoped. The realistic output was a correct re-scope of each (which saves the
@@ -155,7 +155,7 @@ next cycle), not three implementations:
   (`codex/us/unit-designator.ts` + `build-unit-extract`); the open fork is `unit`-subsplit vs `locator[]`
   (#295). Assess-only, deferred to the unit-recognition retrain.
 
-## Lever F — quantify the coverage win (the #822 before/after)
+## Change F — quantify the coverage win (the #822 before/after)
 
 Ran `frontier-gap.ts` (the #822 placer-frontier diagnostic itself) before and after the fix, default drop-in
 config, 506 cities / 187 countries:
@@ -173,12 +173,12 @@ expected a GPU placer retrain to do. The flat +hint ceiling confirms it closed t
 structurally. Artifact: `2026-06-30-822-frontier-gap.md`.
 
 The 18-country residual (exonym + coverage, fails even with a hint) is unchanged — it's the parallel #826
-lever, not #822's job. Updated #826 with the post-fix split (5 exonym / 13 coverage), with the nuance that
-**the capitals already resolve — the misses are 2nd/3rd-tier cities** (so the exonym lever's ceiling is the
+change, not #822's job. Updated #826 with the post-fix split (5 exonym / 13 coverage), with the nuance that
+**the capitals already resolve — the misses are 2nd/3rd-tier cities** (so the exonym change's ceiling is the
 long tail). Verify-before-verdict fired: my first exonym probe tested the capitals (which resolve) before I
 realized the failures were the smaller cities.
 
-## Lever C — #818 recipes (3 of 4 shipped, PR #854)
+## Change C — #818 recipes (3 of 4 shipped, PR #854)
 
 Wrote three OpenCage-style developer recipes in house voice, each verified against the real API (not the
 README-fiction trap): **privacy/coordinate-rounding** (`toGeohash` + decimal rounding, with the
@@ -187,14 +187,14 @@ error isolation, the cap + concurrency knobs), **display-on-a-map** (`resolveEnt
 toMapHTML`, the localhost-CORS `file://` failure mode). `docusaurus build` green. The **multi-service/cost-first**
 recipe was left for the operator's voice pass (competitive positioning, gracious-not-vengeful).
 
-## Lever B — #379 deps (PR #855): the "high CVE" framing was stale
+## Change B — #379 deps (PR #855): the "high CVE" framing was stale
 
 Verify-before-verdict on the dependabot alerts: serialize-javascript is no longer flagged (on 6.0.2, patched);
 js-yaml is all 4.2.0 (above the vuln range); the one cleanly-safe fix was **http-proxy-middleware 2.0.9 →
 2.0.10** (in-major patch, dev-server-only) — shipped. The remaining `tar` alert needs the **7.x major** (no
 6.x backport), pulled only by cacache/node-gyp install tooling — left for the operator, not an autonomous force.
 
-## Lever I — #480 reproducibility (PR #856): #4 shipped, the rest already done
+## Change I — #480 reproducibility (PR #856): #4 shipped, the rest already done
 
 Most of #480 was already shipped (verify-before-verdict again): REPRODUCIBILITY.md, the strict extract
 resolution + `test_extract_paths.py` (deliverable 2), the quantize value_info/opset docstring. The open
@@ -203,13 +203,13 @@ export/quant pins agree across pyproject ↔ the Modal image ↔ the export opse
 mobile-Safari int8 in 2026-06-09), wired into `lint:python` + a 3-test pytest. Deliverables 3 (curriculum
 stamping) + 5 (snapshot publishing) stay open — both touch the train loop / release implementation.
 
-## Lever H — #378 WASM cold-path SLO (committed artifact)
+## Change H — #378 WASM cold-path SLO (committed artifact)
 
 Couldn't run the live browser trace (**no Chrome on the lab box**), so delivered the measurable half: a
 cold-path budget from real artifact sizes (29 MB int8 model, the 1.3 GB candidate.db byte-range-fetched ~12
 cold chunks) + a node-side compute floor (model session-init 126 ms, warm parse 5.7 ms native EP) + a
 proposed two-surface SLO (cold-load < 6 s / per-keystroke < 50 ms on a Moto-G-class phone). The numbers
-already name the cold bottleneck: **the 29 MB model download**, not compute — so the cold lever is model size
+already name the cold bottleneck: **the 29 MB model download**, not compute — so the cold change is model size
 
 - streaming + CDN, not the SQLite path. The per-keystroke resolve cost (which gates **#372 flatbush**) is the
   one piece still needing the in-browser trace. Artifact: `2026-06-30-378-wasm-cold-path-slo.md`. **#372 is
@@ -217,7 +217,7 @@ already name the cold bottleneck: **the 29 MB model download**, not compute — 
 
 ## Decisions made autonomously (Part 2)
 
-- **Deferred lever E (the $20 GPU budget).** #825's gate is GO, but no multilocale corpus/config is staged —
+- **Deferred change E (the $20 GPU budget).** #825's gate is GO, but no multilocale corpus/config is staged —
   the retrain needs _new_ PT/PL/AU data (a pipeline session), and weight-only up-weighting likely falsifies
   (the fr.house_number precedent). Burning the $20 on an uninformative probe is worse than preserving it.
   Flagged for operator override.
@@ -227,12 +227,12 @@ already name the cold bottleneck: **the 29 MB model download**, not compute — 
 
 ## Backlog triage — the contained CPU work is delivered; verify-before-verdict kept paying
 
-After the plan's levers landed, I worked down the rest of the backlog and kept hitting **already-shipped**
+After the plan's changes landed, I worked down the rest of the backlog and kept hitting **already-shipped**
 (checked before re-implementing, the cleanup's lesson held all night): #480 deliverable 2 (strict extract
 resolution + `test_extract_paths.py`), #480's REPRODUCIBILITY.md, #718's "fix boundary-stress-gate.ts first"
 (already routes through the canonical `createScorer` in strict mode), #435 quirk 2 (the v4.16.0 model fixed
 the street-prefix drop), and the NPPES dedup yardstick (already measured anchor-on, the
-`2026-06-22-nppes-dedup-lever-ladder.md` report — #718's "anchor-off 68.0" concern was resolved by
+`2026-06-22-nppes-dedup-setting-ladder.md` report — #718's "anchor-off 68.0" concern was resolved by
 `loadFromWeights`'s default-on soft-feed). Re-doing any of these would have been wasted motion.
 
 What's genuinely left is **operator-gated or focused-session**, not contained CPU riders:
@@ -244,7 +244,7 @@ What's genuinely left is **operator-gated or focused-session**, not contained CP
   `@mailwoman/core/decoder` — the all-O gaps become typed `unknown` spans, round-trip holds 800/800 real
   parses, byte-stable, no serializer touched. The remaining work (serializer contracts, demo) changes
   consumer contracts → the focused session the issue calls for.
-- **#825 / lever E** — _corrected late in the shift (see "DeepSeek nudge" below)_: the big multilocale win
+- **#825 / change E** — _corrected late in the shift (see "DeepSeek nudge" below)_: the big multilocale win
   **already shipped** as v4.13.0 (PT 52→82, PL 53→62); #825 is the incremental push, campaign-gated (more data
   / a representation change — weight is falsified). Budget preserved for that campaign call, not a probe.
 - **#372 flatbush** — parked behind the #378 in-browser trace (diagnostic-before-fix); that trace needs Chrome
@@ -269,7 +269,7 @@ Late in the shift, after I'd settled into "the safe autonomous backlog is exhaus
 DeepSeek pushed back: _make full use of the night — the trust was to produce._ It was right, and the re-examination
 paid off twice:
 
-- **Corrected a factual error on lever E.** Chasing it down, I found my "corpus not staged, E is corpus-blocked"
+- **Corrected a factual error on change E.** Chasing it down, I found my "corpus not staged, E is corpus-blocked"
   read was wrong both ways: the corpus IS staged, AND the multilocale retrain's big win already shipped (v4.13.0,
   PT 52→82). So E's value is largely banked; the residual is campaign-gated, not a probe. Corrected on #825 +
   the decision brief. (The lesson: "exhausted" deserved the same verify-before-verdict as everything else.)
@@ -291,8 +291,8 @@ _Drafted during the shift; finalized at hand-off. Active window ~05:00–13:39 U
 
 |                                         |                                                                                                                                                                               |
 | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Levers shipped                          | A (#822/#852) + C (#818/#854) + B (#379/#855) + I (#480#4/#856) + #493 primitive (#859) + #493 serializers (#864, flagged) + F+H artifacts (#853, #857)                       |
-| Levers triaged/measured                 | D (#305/#435/#456 re-scoped), E (deferred — corrected: v4.13.0 already shipped the multilocale win), F (frontier A/B), H (SLO + cold-path budget), #493 (round-trip baseline) |
+| Changes shipped                         | A (#822/#852) + C (#818/#854) + B (#379/#855) + I (#480#4/#856) + #493 primitive (#859) + #493 serializers (#864, flagged) + F+H artifacts (#853, #857)                       |
+| Changes triaged/measured                | D (#305/#435/#456 re-scoped), E (deferred — corrected: v4.13.0 already shipped the multilocale win), F (frontier A/B), H (SLO + cold-path budget), #493 (round-trip baseline) |
 | PRs merged                              | 12 (#852–860, #862, #863, #865) · 1 open flagged (#864 #493 serializers)                                                                                                      |
 | #822 bare resolve-rate                  | **54.2% → 77.9%** (+23.7pp, CPU, no retrain); 45/57 placer-recoverable countries closed                                                                                       |
 | Modal $                                 | ~0 (E deferred, budget preserved)                                                                                                                                             |
@@ -306,7 +306,7 @@ The decision brief at the top of Part 2 is the authoritative list; the forks for
 
 - **#864** — review the `unknown` serializer contract (native-vs-opt-in, JSON mix-vs-nest), then merge. The
   #493 parse-API wrappers + demo rendering are the follow-on (they depend on #864's types).
-- **Lever E / $20** — held. The multilocale lift is banked (v4.13.0); the further push is a campaign-strategy
+- **Change E / $20** — held. The multilocale lift is banked (v4.13.0); the further push is a campaign-strategy
   - data call (#477 recipe), not an overnight probe. Budget untouched.
 - **#861** — port the country branch to the demo cascade (quick) vs converge on the shared `resolveTree`
   (principled). My rec: converge.

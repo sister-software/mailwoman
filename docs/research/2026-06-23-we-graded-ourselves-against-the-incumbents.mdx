@@ -29,7 +29,7 @@ The part that matters for the rest of this post: we do that in a 30 MB model tha
 
 Graded by the same ruler across six European locales, mailwoman started at about **66%**. Nominatim sat at **78%**, and Pelias — leaning on Elasticsearch and a pile of mixed sources — at **89%**. We were behind both, and the reflex reading is "the parser is worse in Europe." It isn't. When mailwoman _does_ resolve a European address, the point is tight — a kilometer or two from truth. The gap was almost all the other failure mode: on a messy European address, better than one in four came back **empty**. The model didn't place them wrong. It placed them nowhere.
 
-That's a more fixable problem than being wrong. So we went looking for what made it go quiet — and found two different things, one clever and one just embarrassing.
+That's a more fixable problem than being wrong. So we went looking for what made it go quiet — and found two different things, one cchange and one just embarrassing.
 
 ## Why it went quiet, part one: a word it mispronounced
 
@@ -39,7 +39,7 @@ Once you see it, you see it everywhere in the unresolved pile: Polish, Czech, Po
 
 ## Why it went quiet, part two: postcodes we never had
 
-The second cause had no cleverness to it at all. For Poland and Czechia, we simply didn't have the postcodes. WhosOnFirst, our gazetteer's backbone, ships rich postcode coverage for some countries and none for others, and PL and CZ were in the none column — zero rows. A Polish address whose town the model _did_ read correctly could still die, because the only anchor we could have resolved it by wasn't in the database to begin with. Silence by omission.
+The second cause had no cchangeness to it at all. For Poland and Czechia, we simply didn't have the postcodes. WhosOnFirst, our gazetteer's backbone, ships rich postcode coverage for some countries and none for others, and PL and CZ were in the none column — zero rows. A Polish address whose town the model _did_ read correctly could still die, because the only anchor we could have resolved it by wasn't in the database to begin with. Silence by omission.
 
 ## The fixes: read the word, and fill the gap
 

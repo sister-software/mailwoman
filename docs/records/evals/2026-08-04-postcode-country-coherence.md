@@ -242,9 +242,9 @@ test. That leg's result is in §6.
 §6 re-runs it in the regime that matters, and adds an FR and a GB panel. Those close the aggregate
 question. What remains open is narrower:
 
-1. **The gauntlet has not seen this.** `mailwoman eval gauntlet` carries no resolver-lever pin, so the
+1. **The gauntlet has not seen this.** `mailwoman eval gauntlet` carries no resolver-change pin, so the
    D-rule's standard gate has no leg for it. §6 is an oa-resolver measurement, which is the right
-   instrument for a resolver lever but is not the gate the release process runs.
+   instrument for a resolver change but is not the gate the release process runs.
 2. **`exactMatch` is required and backend-dependent.** P04 shows the FTS backend and the candidate
    backend disagree about what an exact match is (`Munchen` → `München` is exact on one, not the
    other). Every §6 number is candidate-backend. A default-on mechanism whose firing rate depends on

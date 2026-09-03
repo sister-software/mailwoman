@@ -41,14 +41,14 @@ FR is already in the model's training and mostly works on canonical street addre
 recipe candidate at all. Its weak tags (region 28%, venue and po_box near zero) come from the eval's
 harder rows rather than from order: checking the FR golden, every expected field is verbatim in the
 raw, but the rows that carry a region are coarse `Île-de-France, France` queries and multi-script
-kryptonite (`Шом, Creuse`, permuted to `France, Шом, Creuse`). So the FR lever is the broader
+kryptonite (`Шом, Creuse`, permuted to `France, Шом, Creuse`). So the FR change is the broader
 multi-script and permutation robustness plus coarse region+country queries, and the German order
 extract touches none of it.
 
 ## The tokenizer is not the wall, for any script
 
 A reasonable worry is that the harder locales fail because the tokenizer can't represent their
-scripts, which would mean a tokenizer change (a bigger, more expensive lever) instead of coverage.
+scripts, which would mean a tokenizer change (a bigger, more expensive change) instead of coverage.
 Checked directly across ten scripts with `diag-tokenizer-multiscript.ts`, that worry doesn't hold.
 
 The v0.6.0-a0 SentencePiece tokenizer round-trips every script losslessly, which is expected given

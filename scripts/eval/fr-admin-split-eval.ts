@@ -179,7 +179,7 @@ async function main() {
 			"no-admin-coherence": { type: "boolean" },
 			"normalize-case": { type: "boolean" },
 			"raw-case": { type: "boolean" },
-			// #375 night-31: opt-in postcodeConsistency (the #370 lever A namesake binder).
+			// #375 night-31: opt-in postcodeConsistency (the #370 change A namesake binder).
 			"postcode-consistency": { type: "boolean" },
 			// #942: postal-compound recovery (library default ON since the 2026-07-03 promote).
 			"postal-compound-recovery": { type: "boolean" },

@@ -286,12 +286,12 @@ async function compareMailwomanArms(
 	})
 
 	// §5.4, learned the hard way on 2026-08-16: this tool's first real run reported "0 of 558 differed —
-	// tight enough to read as a real absence" for a lever that was never reaching a decode at all
+	// tight enough to read as a real absence" for a pin that was never reaching a decode at all
 	// (`geocode-session`'s parseDeps omitted `fst`, and the path parses once up front). A zero-difference
 	// result has TWO readings and the number cannot separate them, so it must not be relayed as one.
 	const zeroDifferenceCaveat = !differed.length
-		? "A zero here has two readings — the lever changed nothing, or the lever never ran. This comparison " +
-			"cannot separate them. Confirm participation with mwdev_trace on an input the lever should move " +
+		? "A zero here has two readings — the pin moved nothing, or the pin never ran. This comparison " +
+			"cannot separate them. Confirm participation with mwdev_trace on an input the pin should move " +
 			"before reporting this as no effect."
 		: ""
 
@@ -351,11 +351,11 @@ async function compareMailwomanArms(
 		n_errored: errors.length,
 		errors,
 		arms_differed_on: { n: differed.length, of: rows.length },
-		// Separate from arms_differed_on on purpose: a lever that fired on 400 rows and moved 0 outcomes is a
-		// different fact from a lever that never fired.
+		// Separate from arms_differed_on on purpose: a pin that fired on 400 rows and moved 0 outcomes is a
+		// different fact from a pin that never fired.
 		mechanism_fired_on: firingSignals(rows),
 		mechanism_fired_on_note:
-			"Only signals a GauntletResult carries for free are counted here. A lever with no signal of its own " +
+			"Only signals a GauntletResult carries for free are counted here. A pin with no signal of its own " +
 			"cannot be confirmed to have run from this result — use mwdev_trace.",
 		graded,
 		significance: test,

@@ -1,5 +1,5 @@
 # === v3.21.0-bundle-noise-8k — PRODUCTION BUNDLE CANDIDATE, INCREMENT 3 (Option-A Phase 3). ===
-# (Claude-owned; the pre-registered held-back lever from the v3.20.0 header, deployed on its
+# (Claude-owned; the pre-registered held-back change from the v3.20.0 header, deployed on its
 # stated condition: the fed-vs-ablated golden gap SURVIVED the v5 retrain.)
 #
 # WHAT v3.20.0 TAUGHT (record: .superpowers/sdd/progress.md 2026-07-28): the collision-family
@@ -28,7 +28,7 @@
 # G1/G2/G5/G6; G3 new-class ⇒ STOP, operator decides. No knob iteration inside the run.
 # If G5/G6 STILL fail with the noise leg: STOP — the register-gated feeding design question
 # (fragment-shaped queries feed the channels, full addresses do not) goes to the operator; that
-# is a decode-surface decision the anti-hellscape doctrine taxes, not a lever to slip in.
+# is a decode-surface decision the anti-hellscape doctrine taxes, not a change to slip in.
 #
 # Launch: modal run -d corpus-python/modal/train_remote.py --config v3.21.0-bundle-noise-8k.yaml --resume none
 #
@@ -99,7 +99,7 @@ data:
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
-    # Track B — the NO house-number-licence lever. 12.0 = the targeted-fix tier
+    # Track B — the NO house-number-licence change. 12.0 = the targeted-fix tier
     # (matches fr-fragment). Bare streets + street+number with NO postcode partner, + counters.
     synth-no-fragment: 12.0
     synth-gb: 10.0 # FEED: 6.1% stream × .328 dep-loc (probe-2 had this at 20.2% — the skew culprit)

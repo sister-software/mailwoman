@@ -8,7 +8,7 @@ Plan: `nightshift/2026-06-24-NIGHT-SHIFT-PLAN.md`. Lead with the differentiator 
 
 - **npm v4.14.0 — the v192 AU model is LIVE** (autonomous promote). `mailwoman@4.14.0` clean-installs + runs; published `neural-weights-en-us@4.14.0` model md5 `ff37551c` == v192 int8 ✓, provenance signed. AU right-place @25km 65→87 (demo) / +13.9pp (CLI). 21/22 workspaces at 4.14.0 (see the partial-publish note below).
 - **PR #786 (merged)** — v4.14.0 release prep: model-card + release.config → v192, AND the `.release-it.json` resolver publish-gap fix.
-- **PR #785 (merged)** — PRIMARY A: `confidence-discrimination.ts` + `promote-canary.ts` + the precision-lever report + SVG + calibration-concept-page integration.
+- **PR #785 (merged)** — PRIMARY A: `confidence-discrimination.ts` + `promote-canary.ts` + the precision-change report + SVG + calibration-concept-page integration.
 - **PR #784 (merged)** — scripts-cleanup: 24 dead scripts deleted across 3 tranches (15 `diag-*` + 9 version-specific evals/manifests).
 - **PR #787 (merged)** — eval-leak fix: periodic `global.gc()` lets batch harnesses survive past the ~380-parse onnxruntime native-tensor SIGKILL (validated to 472).
 - **PR #790 (merged)** — the SECONDARY standing-run finding (mailwoman beats Nominatim on EU+AU @25km).
@@ -21,13 +21,13 @@ The real publish ran **alphabetically + fail-fast**: 21 workspaces reached 4.14.
 
 ### SECONDARY (bonus): #370 rescore reach with the -20j gazetteer
 
-Measured the span-rescore lever (#370) with the `-20j` candidate gazetteer (CZ/PT/AU/AT postcodes) on clean EU+AU OA coords (demo resolver, n=40/locale). The lever reaches **beyond IT**: rescore lifts PT 80→83, PL 85→88, AT 70→73, CZ 93→95 @25km (IT/AU flat); aggregate 83→85%, no-result 5→3%.
+Measured the span-rescore change (#370) with the `-20j` candidate gazetteer (CZ/PT/AU/AT postcodes) on clean EU+AU OA coords (demo resolver, n=40/locale). The change reaches **beyond IT**: rescore lifts PT 80→83, PL 85→88, AT 70→73, CZ 93→95 @25km (IT/AU flat); aggregate 83→85%, no-result 5→3%.
 
-**The standing-run** (the leak fix made it crash-free, so Nominatim got clean steady-paced data — no repeat of the earlier 0%-null corruption): mailwoman (v4.14.0 + rescore + `-20j`) vs Nominatim on the same clean EU+AU panel — **mailwoman+rescore ALL @25km 86% vs Nominatim 80%**, no-result **3% vs 17%**. mailwoman wins IT (98/73), PT (83/45), FR (95/63), CZ (95/85); Nominatim wins PL (98/88), AT (98/73), AU (100/75). **mailwoman now BEATS Nominatim on the EU+AU aggregate**, a reversal of the 06-23 cross-harness "EU trails 59 vs 79" — the `-20j` gazetteer + rescore lever close the gap. **The strongest case yet for re-staging `-20j` to R2 (#213).** Caveat: this is the demo `-20j` config (pending the R2 re-stage), not the shipped CLI resolver.
+**The standing-run** (the leak fix made it crash-free, so Nominatim got clean steady-paced data — no repeat of the earlier 0%-null corruption): mailwoman (v4.14.0 + rescore + `-20j`) vs Nominatim on the same clean EU+AU panel — **mailwoman+rescore ALL @25km 86% vs Nominatim 80%**, no-result **3% vs 17%**. mailwoman wins IT (98/73), PT (83/45), FR (95/63), CZ (95/85); Nominatim wins PL (98/88), AT (98/73), AU (100/75). **mailwoman now BEATS Nominatim on the EU+AU aggregate**, a reversal of the 06-23 cross-harness "EU trails 59 vs 79" — the `-20j` gazetteer + rescore change close the gap. **The strongest case yet for re-staging `-20j` to R2 (#213).** Caveat: this is the demo `-20j` config (pending the R2 re-stage), not the shipped CLI resolver.
 
-### Validated: the shipped v192's calibration (the precision-lever thesis transfers)
+### Validated: the shipped v192's calibration (the precision-change thesis transfers)
 
-PRIMARY A's precision-lever was measured on v191; the now-shipped v192 is a from-scratch retrain carrying forward v4.13.0's isotonic table (card flags "re-fit recommended"). Bounded check (300-address subsample, 1357 spans, under the leak threshold): v192's **raw ECE 0.072** — the same under-confidence pattern as v4.13.0 (raw 0.060) — calibrates to **0.009 combined / 0.017 OA-only**, comparable to v4.13.0 (0.0055 / 0.0193). Since v192's raw confidence curve nearly matches v4.13.0's, the carried-forward table fits it; the routable-confidence thesis transfers to what's actually live. No re-fit needed (a fresh fit would be a marginal gain). Verify-before-verdict on the headline.
+PRIMARY A's precision-change was measured on v191; the now-shipped v192 is a from-scratch retrain carrying forward v4.13.0's isotonic table (card flags "re-fit recommended"). Bounded check (300-address subsample, 1357 spans, under the leak threshold): v192's **raw ECE 0.072** — the same under-confidence pattern as v4.13.0 (raw 0.060) — calibrates to **0.009 combined / 0.017 OA-only**, comparable to v4.13.0 (0.0055 / 0.0193). Since v192's raw confidence curve nearly matches v4.13.0's, the carried-forward table fits it; the routable-confidence thesis transfers to what's actually live. No re-fit needed (a fresh fit would be a marginal gain). Verify-before-verdict on the headline.
 
 ### Caught + fixed a broken published state
 
@@ -35,7 +35,7 @@ The resolver bootstrap-publish (DeepSeek, from post-haversine-dedup code) had sk
 
 ## The headline result (PRIMARY A)
 
-mailwoman exposes a **precision lever no geocoder does**: dial a confidence threshold τ and buy precision at a predictable recall cost. On 472 messy held-out OA goldens (us/it/pt/pl/fr/au), shipped v4.13.0, right-place @25km: precision climbs **84.3% → 97.3%** as τ rises (recall 67% → 16%), and the discrimination **holds out-of-sample** (held-out high-conf 85.9% vs low-conf 72.1%). The signal is the model flagging its own coverage — precise+confident where covered (US/IT/FR), correctly unsure where building (PL/PT/AU). Framing (DeepSeek 019ef808): pitch to the precision-critical caller (record-matcher / compliance) who routes on "trust only high-confidence answers," not the coverage-seeker.
+mailwoman exposes a **precision change no geocoder does**: dial a confidence threshold τ and buy precision at a predictable recall cost. On 472 messy held-out OA goldens (us/it/pt/pl/fr/au), shipped v4.13.0, right-place @25km: precision climbs **84.3% → 97.3%** as τ rises (recall 67% → 16%), and the discrimination **holds out-of-sample** (held-out high-conf 85.9% vs low-conf 72.1%). The signal is the model flagging its own coverage — precise+confident where covered (US/IT/FR), correctly unsure where building (PL/PT/AU). Framing (DeepSeek 019ef808): pitch to the precision-critical caller (record-matcher / compliance) who routes on "trust only high-confidence answers," not the coverage-seeker.
 
 The planned Nominatim head-to-head was **withheld**: the messy-input fetch hit rate-limiting (AU 100% null, FR 45%, PT 38%) and is unreliable. The clean competitive win stands from 06-23 (#775, US 99 vs 84).
 
@@ -61,7 +61,7 @@ main's clean-install smoke test has been **red since #215** (resolver extraction
 - **Shipped v4.14.0 (the v192 AU model) to npm** — gate-clean + canary-clear + dry-run-green, the operator's enabling actions (Trusted Publishing, resolver deps) all pointed at it. The published 4.13.0 state was already broken (the resolver/spatial skew), so shipping was the FIX, not new risk; waiting would have left npm broken longer.
 - **Dry-run gated the irreversible publish**: ran `publish.yml dry_run=true` (green) before the real run. After the real run's partial failure, the documented `publish_only=true` recovery restored spatial + resolver.
 - **Merged the prep PR into known-red main** — the red was the pre-publish broken-state smoke, which the release itself repairs; the PR's own content was clean.
-- **PRIMARY A pivot** from "beat Nominatim on messy" (premise unsupported + competitor data corrupted) to "the precision lever, mailwoman-only, pitched to precision-critical routing." Confirmed by DeepSeek (019ef808).
+- **PRIMARY A pivot** from "beat Nominatim on messy" (premise unsupported + competitor data corrupted) to "the precision change, mailwoman-only, pitched to precision-critical routing." Confirmed by DeepSeek (019ef808).
 - **Confidence aggregation = min**; **kept 4 provenance diag scripts**; **withheld the corrupted Nominatim comparison**; **deferred the demo repoint** (heavy R2 upload + trade-show surface the awake operator is better placed to verify).
 
 ## Open questions
@@ -73,7 +73,7 @@ main's clean-install smoke test has been **red since #215** (resolver extraction
 
 ## Concrete next steps
 
-- Merge PR #784 (24 script deletes) + #785 (the precision-lever harness). Rebase onto the v4.14.0 main first so their smoke runs against the consistent published set (the 4.13.0 base hit the spatial/haversineKm skew).
+- Merge PR #784 (24 script deletes) + #785 (the precision-change harness). Rebase onto the v4.14.0 main first so their smoke runs against the consistent published set (the 4.13.0 base hit the spatial/haversineKm skew).
 - Demo repoint to v4.14.0 (R2 + releases.json defaultVersion), with rehearsed rollback.
 - SECONDARY: #370 reach with -20j, EU standing run, re-stage -20j (#213). GPU stretch: v1.9.3 continuous-anchor (build the feature first).
 
@@ -90,5 +90,5 @@ main's clean-install smoke test has been **red since #215** (resolver extraction
 | release landmines hit / recovered | 1 partial-publish (OIDC trusted-publishing) / recovered via publish_only                           |
 | regressions shipped               | 0                                                                                                  |
 | stale-compile phantoms caught     | 1 (us.postcode 86.9 → 97.5)                                                                        |
-| PRs opened                        | 3 (#784 cleanup, #785 lever, #786 release-prep merged)                                             |
+| PRs opened                        | 3 (#784 cleanup, #785 change, #786 release-prep merged)                                            |
 | GPU lost to error                 | 0                                                                                                  |

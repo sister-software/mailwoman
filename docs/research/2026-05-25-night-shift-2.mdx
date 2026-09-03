@@ -57,7 +57,7 @@ After the model shipped, we ran the full product-level evaluation — four pipel
 
 A few things jump out:
 
-**The neural model hallucinates components it shouldn't.** On the golden set, it invented a `dependent_locality` — a sub-city neighborhood — 956 times where none existed. Two explanations look tempting, and both lead nowhere. Calibration? These predictions come out at high confidence; the model commits hard to the wrong answer. Decoding? Viterbi with the structural mask is already running. What's left is training: cross-entropy treats every mislabeling equally, so the model never learned that `dependent_locality` is rare and should be emitted sparingly. Class-weighted CE — which was blocked in v0.4.0 because it destabilized the dual-loss training — puts a thumb on the scale: mislabeling a rare tag costs more. Now that CE-only training is proven stable, this lever is unlocked.
+**The neural model hallucinates components it shouldn't.** On the golden set, it invented a `dependent_locality` — a sub-city neighborhood — 956 times where none existed. Two explanations look tempting, and both lead nowhere. Calibration? These predictions come out at high confidence; the model commits hard to the wrong answer. Decoding? Viterbi with the structural mask is already running. What's left is training: cross-entropy treats every mislabeling equally, so the model never learned that `dependent_locality` is rare and should be emitted sparingly. Class-weighted CE — which was blocked in v0.4.0 because it destabilized the dual-loss training — puts a thumb on the scale: mislabeling a rare tag costs more. Now that CE-only training is proven stable, this change is unlocked.
 
 **Hybrid mode shows identical numbers to neural alone.** The hybrid mode fuses rule classifications with neural output, but in this iteration the raw neural decoder's overconfidence drowns out the rules, hence the identical numbers. The reconciler (hybrid-joint) is the mode that actually disciplines the merge.
 
@@ -84,7 +84,7 @@ Now that we have cloud GPU access at $5 per full training run, several decisions
 - **Effective batch 128 via gradient accumulation** (batch=16, accumulate 8 steps) — a workaround for limited GPU memory. The A100 can do batch 128 directly, which changes the gradient noise characteristics and potentially the training dynamics.
 - **50,000 steps** — sized for "affordable locally." At 6.9 steps/second on the A100, 100K steps costs $10. We might be undertrained.
 - **Phrase-prior conditioning disabled** — turned off during debugging and never turned back on. The architectural thesis was built around it.
-- **Class-weighted cross-entropy disabled** — the v0.4.0 recipe lever that addresses the 956-FP hallucination problem is now safe to use.
+- **Class-weighted cross-entropy disabled** — the v0.4.0 recipe change that addresses the 956-FP hallucination problem is now safe to use.
 
 The next iteration removes all of these constraints at once: h384, direct large-batch, phrase priors on, class weights on, longer schedule. Same corpus, same tokenizer, same CE-only stability fix — just the model the architecture was designed to produce. One A100 run, a few hours, covered by free credits.
 

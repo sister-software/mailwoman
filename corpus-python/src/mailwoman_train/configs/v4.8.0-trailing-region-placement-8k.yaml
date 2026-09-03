@@ -12,7 +12,7 @@
 #   Heladeria Frappe Mania, Avenida Country Club, 6001 Barcelona, Anzoategui, Venezuela
 #     -> postcode 6001 | locality "Barcelona"                                                   correct
 #
-# `Sandton 2196` vs `2196 Sandton` behaves the same way. No decode-time lever moves it:
+# `Sandton 2196` vs `2196 Sandton` behaves the same way. No decode-time change moves it:
 # postcodeShapeCoherence=true leaves all eight VE board rows byte-identical. So this is corpus.
 #
 # WHAT IS ADDED: synth-trailing-region-structured v25 — 32,125 rows from 32,435 REAL

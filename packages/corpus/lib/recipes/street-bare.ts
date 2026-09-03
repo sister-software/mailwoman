@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `street-bare` slice recipe — BARE-street rows (the v0.8.0 harness lever, 2026-06-05). The
+ *   `street-bare` slice recipe — BARE-street rows (the v0.8.0 harness change, 2026-06-05). The
  *   `functional.test.ts` cluster (bare street names — "10th Ave", "Main St", "1 Main Pl") was
  *   mislabeled `locality` because {@link synthesizeStreetRow} only ever emitted streets WITH a ",
  *   City, ST ZIP" tail. This recipe emits streets BARE (`--bare-prob`, default 0.6) — no tail, only

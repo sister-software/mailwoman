@@ -14,7 +14,7 @@ Three facts frame everything below:
 2. **The wins moved downstream of the model.** The largest recent gains came from resolver logic and data relabeling, not weights: #822 lifted bare "City, Country" resolve from 54.2% → 77.9% with no retrain; the v4.13.0 multi-locale extract lifted EU resolve (IT 79 → 92.7%, PT 52 → 82%, AT 50 → 81.3%). This is healthy — it is what the parse/resolve split was _for_ — but it changed what "progress" means without the measurement or the roadmap being updated to match.
 3. **Nobody outside the lab can see any of it.** The public demo runs its own `runCascade` that skips the shared joint-consistency resolver passes entirely (#861), and it has trailed the npm model by multiple versions before (#203). The +23.7pp resolve win is invisible at the exact URL the project points people to.
 
-The process discipline that got the project here — pre-registered gates, falsified levers reverted rather than shipped (#305: measured −21pp, rolled back), documented gate revisions, ~30 postmortems — is strong and should not change. What needs to change is where the effort points next.
+The process discipline that got the project here — pre-registered gates, falsified changes reverted rather than shipped (#305: measured −21pp, rolled back), documented gate revisions, ~30 postmortems — is strong and should not change. What needs to change is where the effort points next.
 
 ---
 
@@ -38,7 +38,7 @@ None of this is condemnation — scope expansion driven by real wins is how solo
 
 **R1 — Metric substitution without a re-anchor.** The north-star moved from label-F1 to "grade the coordinate, never label-F1" (v4.15.0 promotion doc). Defensible — the coordinate is what users get. But since the switch, five label-F1 regressions shipped as "coordinate-invisible" (three in v4.13.0, two postcode floors lowered in v4.15.0, each with written justification). Each call was individually sound and documented. The pattern is the risk: the label metric can now erode indefinitely as long as each step is small, because nothing forces a periodic full re-score. The ledger that would catch drift (`evals/scores-by-version.json`) stopped being populated at v4.4.0 and `AGENTS.md` still names it authoritative.
 
-**R2 — The hardest model problem is stalled with no probe.** Slavic/accented diacritic tokenization is the dominant open defect: CZ 84% and PL 77% content-gap rates root-caused to mis-tokenization (`Grudziądz` splits at `ą` and eats trailing digits; `Montréal, QC` drops the `C`; `ß` splits). There is no CPU fix — it is a rendering/retrain lever (#825), deferred twice, and the shift notes themselves concluded "only the RENDERING fixes it." Every locale past the original scope makes this defect more expensive to leave open, and there is currently no cheap probe defined that would inform the go/no-go.
+**R2 — The hardest model problem is stalled with no probe.** Slavic/accented diacritic tokenization is the dominant open defect: CZ 84% and PL 77% content-gap rates root-caused to mis-tokenization (`Grudziądz` splits at `ą` and eats trailing digits; `Montréal, QC` drops the `C`; `ß` splits). There is no CPU fix — it is a rendering/retrain change (#825), deferred twice, and the shift notes themselves concluded "only the RENDERING fixes it." Every locale past the original scope makes this defect more expensive to leave open, and there is currently no cheap probe defined that would inform the go/no-go.
 
 **R3 — The demo lies about the product.** #861 (browser cascade skips the joint-consistency passes) means the marquee resolver wins do not execute in the browser at all. #203 showed the demo can silently trail npm by two model versions. The stated long-term goal is that the demo _becomes_ the geocoder; today it is the least accurate rendition of the system that exists anywhere.
 
@@ -56,7 +56,7 @@ The ordering principle: **make the truth visible first, then decide, then spend.
 
 ### Track 1 — Ship the truth to the demo (days, no retrain)
 
-The single highest-leverage item in the backlog, because every win already shipped is discounted to zero until the demo serves it.
+The single highest-changeage item in the backlog, because every win already shipped is discounted to zero until the demo serves it.
 
 - **Fix #861:** route the browser cascade through the shared `resolveTree` joint-consistency passes (or extract those passes to a target both runtimes import). Acceptance: the #822 "City, Country" cases that resolve on the server resolve identically in the browser.
 - **Close the version-lag class, not the instance:** add a release-train checklist item (or CI check) that fails when the demo's pinned model/package version trails the latest npm release. #203 was fixed once as an instance; make it structural.
@@ -88,7 +88,7 @@ The output is not the decisions themselves — it is that autonomous shifts stop
 
 ### Track 4 — The #825 campaign, probe-first (the funded one)
 
-The diacritic defect (R2) is the only thing on the board that requires training budget, and the falsified-lever discipline that served the project should apply to it before the spend:
+The diacritic defect (R2) is the only thing on the board that requires training budget, and the falsified-change discipline that served the project should apply to it before the spend:
 
 - **Pre-register the gate before anything runs** (per `CONTRIBUTING_MODEL_WORK.mdx`): CZ/PL content-gap rate targets, a no-regression floor on the US/FR slices from Track 2's fresh scorecard, and the DE/`ß` and FR-accent cases (#727) as named slices.
 - **Define the cheap probe first:** before a full multi-locale retrain, a bounded experiment that isolates the rendering hypothesis — e.g., a tokenizer-only rebuild (or byte-fallback coverage audit) scored against the failing CZ/PL spans on CPU, to confirm the failure is representational before buying GPU time to fix it. If the probe can't be defined, the shift notes' own rule applies: not ready to train.
@@ -100,7 +100,7 @@ Write the successor to `plan/README.mdx` — a short "what mailwoman is now" sco
 
 ### What not to do
 
-- **No new resolver micro-levers past the frontier.** The shift notes already identified the residual as gazetteer name-key hygiene and exonym coverage (#877), not more levers — #781 measured +0.0pp and was correctly closed. Resist the treadmill.
+- **No new resolver micro-changes past the frontier.** The shift notes already identified the residual as gazetteer name-key hygiene and exonym coverage (#877), not more changes — #781 measured +0.0pp and was correctly closed. Resist the treadmill.
 - **No breaking cosmetic sweeps mid-campaign.** #875 waits for the major it is assigned to.
 - **No new locales before the rendering fix** (covered above, worth repeating as a rule).
 - **No new workstreams** until Tracks 1–3 are done. They total less than a week and everything else compounds on them.
@@ -121,7 +121,7 @@ Between this review and the next morning, the night shift ran the #825 question 
 
 **What happened.** The extract retrain the plan was gating (v196-slavic-anchor, correctly built on the v4.15.0 base) ran and was falsified: it held US but regressed CZ at convergence (wrong-city 44 → 58%, resolved-p50 5.24 → 82.89 km). Root-causing the failure found the bottleneck was never training data: the 48k SentencePiece unigram vocab contains the diacritic _characters_ but no multi-char _subwords_ containing them, so every diacritic isolates its own piece (`Vysoká → [▁V, ys, ok, á]`) — and a unigram model cannot emit a subword absent from its table, so no volume of data fixes it. The fix is a **training-free tokenizer vocab-splice + embedding mean-init** (#884): CZ wrong-city 44 → 28%, PL 30 → 11%, US coordinate output byte-for-byte identical by construction (bootstrap diff 0, CI [0, 0]). No GPU. The ship candidate is the mean-init model; a 2k fine-tune was ablated and retired as slightly harmful.
 
-**What this vindicates.** Two of the disciplines this review said not to change did exactly their job in one night: the falsified-lever rule killed the retrain instead of shipping it, and coordinate-first grading caught what label-F1 would have promoted — the retrain's content-gap label metric _improved_ 100 → 17 while the coordinate regressed. That is the sharpest evidence yet for the R1 nuance: the re-score in #885 is a drift _backstop_, not an argument for re-anchoring on label-F1.
+**What this vindicates.** Two of the disciplines this review said not to change did exactly their job in one night: the falsified-change rule killed the retrain instead of shipping it, and coordinate-first grading caught what label-F1 would have promoted — the retrain's content-gap label metric _improved_ 100 → 17 while the coordinate regressed. That is the sharpest evidence yet for the R1 nuance: the re-score in #885 is a drift _backstop_, not an argument for re-anchoring on label-F1.
 
 **R2 is closed as written.** "Stalled with no probe" no longer describes reality; the probe ran, the hypothesis flipped from data to representation, and the fix is committed and reproducible (branch `feat/825-v196-slavic-anchor`, `tokenizer_splice.py`, day eval `2026-07-01-day-825-tokenizer-fix.md`). The residual risk moves downstream: shipping it.
 

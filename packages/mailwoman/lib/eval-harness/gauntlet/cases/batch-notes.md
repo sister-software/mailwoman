@@ -90,7 +90,7 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 > FR street-name homonyms (operator's Paris list, 2026-07-15). The street's NAME is a major
 > foreign city; the tolerance is what makes these mean something — Paris→Rome is ~1100 km, so a
 > 50 km band FAILS LOUD if the toponym ever out-competes the street reading. These PASS today;
-> they are here because two in-flight levers put them at risk: the #1103 morphology bias (a
+> they are here because two in-flight changes put them at risk: the #1103 morphology bias (a
 > re-probe is pre-registered now that the #727 span head landed) and any recalibration of the
 > gazetteer importance score (`impBias = importance * biasScale * maxBias`, neural/fst-prior.ts
 > — measured 2026-07-15: `rue` 0.149 / `boulevard` 0.167 / `place` 0.169 are themselves
@@ -291,7 +291,7 @@ Heathrow Airport` collapses to locality="Terminal" + house_number=5 with the air
 >
 > A probe extending the designator set moved `Terminal 5` and `Gate 12` to correct units but split
 > `Concourse B` into unit="Concourse" + venue="B" and left trailing-designator `West Wing` untouched,
-> so the lever is real but NOT a clean sweep; it wants its own confound board (GB street names ending
+> so the change is real but NOT a clean sweep; it wants its own confound board (GB street names ending
 > in -gate, industrial "Terminal" estates) before anything ships default-on.
 
 <details><summary>Rows</summary>
@@ -374,7 +374,7 @@ Heathrow Airport` collapses to locality="Terminal" + house_number=5 with the air
 7 rows · `cases/de/`, `cases/fr/`, `cases/gb/`, `cases/us/`
 
 > #42 postcode-country coherence — the mis-scoped-locale block, added 2026-08-05 with the gauntlet's
-> resolver-lever pin. The pin alone was not enough to grade the lever: the corpus carried exactly ONE case with
+> resolver-change pin. The pin alone was not enough to grade the change: the corpus carried exactly ONE case with
 > a `defaultCountry` (an FR address under FR, where the pass exits cheaply by design), so the mechanism fired on
 > 0/116 cases and the pinned run came back byte-identical to the unpinned one. An unchanged verdict from a
 > mechanism that never ran is not evidence — hence these seven, which are the only cases in the corpus that put
@@ -384,11 +384,11 @@ Heathrow Airport` collapses to locality="Terminal" + house_number=5 with the air
 >
 > · four ADVERSARIAL rows at status=pass — real US addresses whose (postcode, locality) pair is exactly the
 > confound the mechanism could break (ZIP 75001 really IS Addison TX; Paris TX; Berlin NH carrying a
-> 5-digit code the DE shape also accepts; Athens GA). They must hold with the lever pinned either way, and
+> 5-digit code the DE shape also accepts; Athens GA). They must hold with the change pinned either way, and
 > they are the "zero newly-failing cases" bar with teeth.
 > · three RESCUE rows — a French, a British and a German address under `defaultCountry: US`, the demo/CLI
 > reality (locale en-US → US on every query). They were the defect: all three failed at the pre-promotion
-> default, and under the lever the FR and DE rows passed, which the runner's anti-rot loop reported as
+> default, and under the change the FR and DE rows passed, which the runner's anti-rot loop reported as
 > "now PASSES — promote to status=pass".
 >
 > PROMOTION 2026-08-05: with `postcodeCountryCoherence` default-ON, `fr-rivoli-us-scoped` and

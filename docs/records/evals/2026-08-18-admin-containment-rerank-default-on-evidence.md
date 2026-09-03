@@ -13,7 +13,7 @@ out.
 The deciding-site measurement (the #1729 method, applied before designing): `Weimar, Thüringen`
 under the default en-US locale probes the locality table with a hard `country = US` filter, so
 Weimar DE **is not in the candidate list** — no reorder of the returned rows can reach it. The
-lever therefore injects contained same-key candidates (additive, never a filter — recall only
+change therefore injects contained same-key candidates (additive, never a filter — recall only
 widens) and partitions contained-first via one shared function at both deciding sites (backend
 pre-window and the walk's post-importance re-rank). It stands down entirely under an explicit
 caller country (#912 posture) and on artifacts without the ancestors sidecar (capability-gated;
@@ -27,7 +27,7 @@ the pick's `metadata.admin_containment` reads `unavailable`).
 | panel v2.1 (420) | 12 changed rows, **12 improvements, 0 regressions**; rooftop @25km **256 → 264**, @5km 247 → 255, @1km 218 → 223 (n=345); city-only @25km 57 → 60 |
 | Weimar six       | qualifier-bearing three land at **0.87 / 1.72 / 1.94 km** (from 5,800–8,600 km); the three with no parsed region node unchanged, correctly        |
 | gauntlet         | regression 353/354 both arms, byte-identical single pre-existing failure; metamorphic PASS both arms, identical 3 xfails                          |
-| parity           | untouched — the lever's first touchpoint is after the parse                                                                                       |
+| parity           | untouched — the change's first touchpoint is after the parse                                                                                      |
 
 Nine en-AU rooftop panel rows return from the wrong continent (0.09–3.8 km); `Georgetown, Penang` →
 George Town MY; `Moscow, Russia` → Москва; `Páirc Adhamhnain … Co. Donegal` → Letterkenny.
@@ -39,7 +39,7 @@ No tier-1 movement, no regression anywhere across 1,332 graded rows.
 
 ## What the promotion's own confirmation battery caught
 
-The first default-flip draft forwarded the lever through the session as
+The first default-flip draft forwarded the change through the session as
 `!== false ? { true } : {}` — which forwards true and **drops an explicit false**, whereupon
 geocode-core's own default-on resurrected it: the opt-out arm measured byte-identical to the
 default (`0 of 558 differed`), the #1706 one-sided-forwarding class, third appearance. Fixed to
@@ -52,11 +52,11 @@ session's resolved options).
 
 - The verdict layer keeps its fold-equality bound: `Weimar, Thüringen` now RESOLVES to Weimar DE
   (50.978, 11.318) while its `admin_coherence.region` still reads `contradicted` (`Thüringen` vs
-  stored `Thuringia`) — the lever bridges via the artifact's alias keys, the flag-only verdict does
+  stored `Thuringia`) — the change bridges via the artifact's alias keys, the flag-only verdict does
   not. Right coordinate, stale verdict; exonym bridging for the verdicts is the named follow-up on
   #1717.
-- 12 board contradictions remain, each with a stated non-lever reason (4 fold/codex-bounded
+- 12 board contradictions remain, each with a stated non-change reason (4 fold/codex-bounded
   verdicts on correct coordinates, 4 IE townland keys absent from candidate.db, 3 parse mislabels —
   the #1722 ledger class, 1 pluscode junk).
-- The lever is inert on the FTS and browser backends and on pre-sidecar artifacts, by construction,
+- The change is inert on the FTS and browser backends and on pre-sidecar artifacts, by construction,
   and says so in the pick's metadata.

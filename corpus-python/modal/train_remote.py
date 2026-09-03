@@ -1440,13 +1440,13 @@ def sync_deploc():
 )
 def sync_src_gb():
     """SOURCE-ONLY sync for the v3.10.x dep-loc probes: pull `corpus-python/src/` from R2, clear
-    pycache, and VERIFY the resurrection levers landed volume-side — commit 78adb380 added
+    pycache, and VERIFY the resurrection settings landed volume-side — commit 78adb380 added
     `reinit_label_rows` + `classifier_learning_rate` to train.py/config.py, and a volume-side
     config.py predating them would silently drop both keys via the `_merge` hasattr check (#1248).
     This sync asserts the marker string is present in BOTH files before returning, so a stale sync
-    fails loud instead of silently launching a lever-less run. (Historical note: written mid-arc
+    fails loud instead of silently launching a run with every setting inert. (Historical note: written mid-arc
     under a run-A "instrument failure" hypothesis that later checkpoint-cosine analysis SUPERSEDED —
-    runs A/B were byte-identical, levers fired in both; the config-header record in
+    runs A/B were byte-identical, settings fired in both; the config-header record in
     v3.10.1-gb-probe2.yaml is authoritative.) No corpus/tokenizer pull — the v0.14.0-gb overlay +
     v0.9.0-multisplice tokenizer persist on the volume from sync_gb."""
     import shutil
@@ -1943,7 +1943,7 @@ def sync_v193a3():
 def sync_v094_fr_bare():
     """#251/#148 fr-bare-street probe. The v0.9.4 overlay = v0.9.3a3's 694 slices VERBATIM (re-rooted to
     /data) + the 1 fr-bare-street slice (BAN-sourced bare-no-postcode FR streets — the postcode-anchoring
-    lever). Pulls that overlay (small; base slices persist on the volume, referenced by the re-rooted
+    setting). Pulls that overlay (small; base slices persist on the volume, referenced by the re-rooted
     manifest) + code/config, then pre-seeds the v193a3 step-080000 ckpt into the v194 output dir for
     `--resume auto` (RESUME — continue growing the FR street→locality boundary, NOT init_from)."""
     import shutil
@@ -2171,8 +2171,8 @@ def _train_gpu(
     print("Starting training...\n")
 
     # Import and run training. load_config is the STRICT path (#1248): an unknown YAML
-    # key — e.g. a lever the volume-side config.py predates — raises here at launch,
-    # naming the dotted key + file, instead of silently running a lever-less fine-tune.
+    # key — e.g. a setting the volume-side config.py predates — raises here at launch,
+    # naming the dotted key + file, instead of silently running a fine-tune with every setting inert.
     from mailwoman_train.config import load_config
     from mailwoman_train.train import train as run_train
 
@@ -2449,7 +2449,7 @@ def versions():
     timeout=1800,
 )
 def sync_nsplice():
-    """#912 lever 4 — Nordic splice staging. Pulls the v0.7.0-nsplice tokenizer (v0.6.0-bsplice's
+    """#912 setting 4 — Nordic splice staging. Pulls the v0.7.0-nsplice tokenizer (v0.6.0-bsplice's
     58,582 pieces + 8,613 Nordic diacritic pieces from OA fi/se/no/dk/is; #900 overlap check PASS,
     accepted set stamped in the report next to the local artifact) and refreshes the training code.
     The mean-init input is models/bsplice-expanded — the SHIPPED v5.1.0 fp32 (the pure mean-init
@@ -2530,7 +2530,7 @@ def sync_v210():
     timeout=1200,
 )
 def mean_init_nsplice():
-    """#912 lever 4: expand the shipped bsplice-expanded checkpoint's embeddings to the nsplice
+    """#912 setting 4: expand the shipped bsplice-expanded checkpoint's embeddings to the nsplice
     vocab (FVT mean-init — same surgery that produced v5.1.0). Writes /data/models/nsplice-expanded."""
     import sys
 
@@ -3125,7 +3125,7 @@ def digit_prior(
     # The control: the countries whose rows actually fail in production, at the shapes that fail.
     # If NO/PL/NZ/NL/DE genuinely teach postcode for a 2-3 digit token, the model is following its
     # corpus and this is a data-mix problem. If they teach house_number like everyone else, the
-    # model is contradicting its corpus and the mix is not the lever.
+    # model is contradicting its corpus and the mix is not the cause.
     # Absence is not a low probability — a country with no rows has no prior at all, and its
     # failures are OOD, not mis-taught. Print the census BEFORE the conditional table so a missing
     # row reads as "no data" rather than "zero probability". (the-meaning-of-zero.mdx)

@@ -1772,7 +1772,7 @@
       "name": "@mailwoman/resolver",
       "version": "7.1.0",
       "scope": "required",
-      "description": "The address resolver: walk an AddressTree, decorate nodes with gazetteer-supplied coordinates + attribution. Backend-agnostic (any ResolverBackend), with the span-rescore + postcode-consistency levers. Lifted out of @mailwoman/core so it can depend on @mailwoman/spatial (haversine) + @mailwoman/codex (USPS directionals) instead of reinventing them; the type contract stays in core so the pipeline composes it without a cycle.",
+      "description": "The address resolver: walk an AddressTree, decorate nodes with gazetteer-supplied coordinates + attribution. Backend-agnostic (any ResolverBackend), with the span-rescore + postcode-consistency changes. Lifted out of @mailwoman/core so it can depend on @mailwoman/spatial (haversine) + @mailwoman/codex (USPS directionals) instead of reinventing them; the type contract stays in core so the pipeline composes it without a cycle.",
       "purl": "pkg:npm/%40mailwoman/resolver@7.1.0",
       "properties": [],
       "externalReferences": [

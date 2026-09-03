@@ -138,7 +138,7 @@ The relationships should be mined ahead of time, not derived per query — the r
 synchronous and per-keystroke. Naming families, per-locality street-set completeness, terrain
 exclusion masks and fitted CPT parameters are all build-time artifacts keyed to the existing H3/WOF
 spine. This is the same pattern as the candidate table and the postcode bins, and it belongs to
-the targeted-precompute lever already filed as
+the targeted-precompute change already filed as
 [#1549](https://github.com/sister-software/mailwoman/issues/1549) — with the caution recorded there
 intact: precompute freezes a query distribution, so only stable and hot query classes earn an
 artifact.
@@ -149,9 +149,9 @@ Pelias, Photon and Nominatim are not merely finish-line competitors. Each incumb
 instrument for discovering a class of claims that users reasonably expect a geocoder to handle out
 of the box. A benchmark discrepancy must terminate in one of four receipts:
 
-1. a parser/model lever;
-2. a resolver or ranking lever;
-3. a coverage/artifact lever; or
+1. a parser/model change;
+2. a resolver or ranking change;
+3. a coverage/artifact change; or
 4. a documented product boundary where abstention is the honest answer.
 
 Issue #1569 is the exemplar: the comparison exposed a terminal-suffix span failure, which became a
@@ -287,7 +287,7 @@ tables and the sealed artifact manifest rather than widening every lookup row.
 **Speculative, needs a probe before any build:**
 
 - Naming-family mining. Does the presidents-block pattern generalize past anecdote? Measure the
-  proportion of localities with a detectable naming scheme before assuming it is a lever.
+  proportion of localities with a detectable naming scheme before assuming it is a change.
 - CPT parameter fitting. The residual on held-out POI regions IS the experiment; if it is wide, the
   prior is too weak to act on.
 - Terrain exclusion. How much candidate area does slope/land-cover actually remove in the places

@@ -10,7 +10,7 @@ Sources: OpenAddresses extracts (STREET/NUMBER columns — real names, real numb
 locale), plus bare US/AU/NZ streets lifted from an existing corpus parquet's street spans (no local
 OA `us` extract). Labels are by construction; spans are char offsets over the rendered text.
 
-ASSAY TOOLING: if the assay confirms the data lever, the production slice graduates to the
+ASSAY TOOLING: if the assay confirms the data change, the production slice graduates to the
 `corpus/` TS generator convention (CONTRIBUTING_MODEL_WORK §Adding a slice). A 10% deterministic
 holdout is written as JSONL (fragment-dev) for the read-out — NEVER into the trained slice.
 

@@ -44,7 +44,7 @@
   re-gate, twice in one night, both with regression tests, $0 GPU. The pre-registered gate did
   exactly its job: it caught a structural corpus-format limit (dotted spans) AND caught the
   first fix over-reaching (comma merges) before either could ship.
-- **Probe-before-spend discipline paid out in both directions**: three data levers rode only
+- **Probe-before-spend discipline paid out in both directions**: three data changes rode only
   after solo probes; the loss-mask probe was deferred because the consult showed the read would
   be uninterpretable — the $15 cap ended the night untouched.
 - **The Modal `run_tests` entrypoint** closed a real gap (torch-dependent tests silently skipping
@@ -67,7 +67,7 @@
 ## Decisions made autonomously
 
 1. **Shipped v4.4.0** on the 17/17 PASS — explicitly granted at kickoff (decision point 1).
-2. **Built the span bridge as the po_box corrective** instead of a data lever — the row audit
+2. **Built the span bridge as the po_box corrective** instead of a data change — the row audit
    showed a structural format limit (10× exposure moved the number +2.9), making decode-side
    containment the only same-night option. Alternative (char-offset corpus labels) is recorded
    in the gate doc as the structural cure.
@@ -75,7 +75,7 @@
    bridging (only po_box/cedex), rejected as a special case that would hide the same bug for the
    next dotted tag.
 4. **Deferred the conventions loss-mask probe** on consult advice — the FR-region recovery was
-   already attributable to the data levers; an uninterpretable probe wastes a cap slot.
+   already attributable to the data changes; an uninterpretable probe wastes a cap slot.
 5. **Did not implement transition masks** (stretch S1) — no live failing class after the bridge;
    recorded the design + failure mode instead.
 

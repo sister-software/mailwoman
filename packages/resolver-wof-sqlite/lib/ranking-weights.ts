@@ -5,7 +5,7 @@
  *
  *   The locality-ranking weights and their shipped defaults. Its own module because every value here is
  *   a measured tuning decision with its rationale attached — the block reads as a reference table, not
- *   as part of the lookup's control flow, and the tests import it directly to pin one lever at a time.
+ *   as part of the lookup's control flow, and the tests import it directly to pin one change at a time.
  */
 
 /**
@@ -114,7 +114,7 @@ export interface RankingWeights {
 
 /**
  * The shipped weights. Every value is a measured decision — change one and re-run the resolver eval; the per-field docs
- * on {@link RankingWeights} say what each lever moves and what motivated its current value.
+ * on {@link RankingWeights} say what each change moves and what motivated its current value.
  */
 export const DEFAULT_WEIGHTS: RankingWeights = {
 	placetypeMatchBoost: 0.5,

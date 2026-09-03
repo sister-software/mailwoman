@@ -7,7 +7,7 @@
  *
  *   The gap this closes: `createGeocodeSession` resolved gazetteer artifacts under `options.dataRoot` but called
  *   `loadFromWeights({ locale })` bare, so weights (and the per-locale FST inside them) resolved from the process
- *   env's data root regardless of the lever. A dev-mcp engine with `data_root` overridden therefore measured a MIXED
+ *   env's data root regardless of the change. A dev-mcp engine with `data_root` overridden therefore measured a MIXED
  *   configuration, silently — and the FST v4→v5 battery had no warm-path A/B comparison at all.
  *
  *   The discriminating shape: a bogus data root WITH a real candidate.db passes the gazetteer check (which is

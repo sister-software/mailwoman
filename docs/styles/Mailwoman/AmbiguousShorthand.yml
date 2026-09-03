@@ -13,6 +13,8 @@
 ##   seam  -> the named boundary: the package boundary, the `PlaceLookup`
 ##            interface, the call site, the module that owns it.
 ##   cut   -> publish (a release), branch (from origin/main), reduce, remove.
+##   lever -> the named change: the config key, the corpus recipe file, the
+##            weight, the run version; a gauntlet default-override is a pin.
 ##
 ## `shard(s)?` moved here from MailwomanChat/ProjectShorthand.yml so one list
 ## covers both surfaces; chat coverage is unchanged, because .vale-chat.ini
@@ -36,3 +38,4 @@ tokens:
   - shard(?:s|ed|ing)?
   - cut(?:s|ting)?
   - gat(?:e|es|ed|ing)
+  - lever(?:s)?

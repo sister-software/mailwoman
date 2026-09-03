@@ -49,7 +49,7 @@ failure mode changes:
 **Cost / follow-up:** the bounds-quarantine drops the affected non-Latin name variants (tens of
 thousands of rows, under 0.02% of the corpus, but a real multi-locale coverage nick). Root cause is
 `locateSpan`'s boundary/fuzzy logic mishandling combining marks; a follow-up fix there would _keep_
-those rows rather than quarantine them. This is the next corpus-quality lever (file an issue).
+those rows rather than quarantine them. This is the next corpus-quality change (file an issue).
 
 **Lesson:** I skipped the two WOF smokes (validated wof _emit_ in-build instead, since the smoke's
 ancestry-index cost ≈ the build's own). But smokes run the _full_ pipeline including align, so a

@@ -199,7 +199,7 @@ export interface WorktreeArmResult {
  * Run one input set through `ref`'s source, in a child process, and return its answers.
  *
  * `options` is the resolved {@linkcode GeocodeSessionOptions} the caller's own registry produced — passed through rather
- * than re-derived here, so both arms are configured by ONE function and a lever added to `resolveConfig` reaches this
+ * than re-derived here, so both arms are configured by ONE function and a change added to `resolveConfig` reaches this
  * arm without being copied into it.
  *
  * The worktree is removed in `finally`, including on a child crash. `git worktree add --detach` never moves the

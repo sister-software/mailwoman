@@ -17,7 +17,7 @@ A spike of yarn's `nodeLinker: pnpm` was run first (2026-08-02; full receipt in
 `2026-08-02-test-suite-performance-design.md` § e2). It measured **slower** than `node-modules` on
 both install (48.4s vs 41.6s) and cold compile (40.5s vs 32.9s) and broke 7 test files.
 
-That result refutes **yarn's pnpm linker as a performance lever**. It does not bear on migrating to
+That result refutes **yarn's pnpm linker as a performance change**. It does not bear on migrating to
 pnpm the package manager, which is a different mechanism: its own resolver, lockfile, and a
 machine-wide content-addressed store with hardlinks rather than a per-project `.store`.
 

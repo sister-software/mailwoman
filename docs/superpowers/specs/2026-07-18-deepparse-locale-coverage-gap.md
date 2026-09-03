@@ -13,7 +13,7 @@ Every claim below cites a source: a URL for Deepparse, a `file:line` for mailwom
 
 Deepparse ships two pretrained models (fastText, BPEmb) trained on a subset of the
 libpostal-derived SubwayGroup _structured multinational address_ dataset (Yassine et al.,
-["Leveraging Subword Embeddings for Multinational Address Parsing", arXiv:2006.16152](https://arxiv.org/abs/2006.16152)).
+["Changeaging Subword Embeddings for Multinational Address Parsing", arXiv:2006.16152](https://arxiv.org/abs/2006.16152)).
 The dataset spans **61 countries**, split into a **20-country training set** and a **41-country
 zero-shot test set**. Deepparse does **not** group countries into formal "zones" — the only grouping
 is trained vs zero-shot.

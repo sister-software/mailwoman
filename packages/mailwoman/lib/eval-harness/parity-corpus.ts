@@ -100,15 +100,15 @@ export interface ParityEvalOptions {
 	weightsCacheRoot?: string
 	/**
 	 * Probe 0 (campaign runbook): feed the decode-time street-morphology emission bias, built from the in-repo libpostal
-	 * `street_types` dictionaries (all locales). Zero-training lever.
+	 * `street_types` dictionaries (all locales). Zero-training change.
 	 */
 	streetMorphology?: boolean
 	/**
 	 * Feed the gazetteer FST emission prior (#1497).
 	 *
-	 * Present because until it was, this eval could not SEE the lever: #1497's title is "FST decoder bias is invisible to
-	 * every live eval", and the gauntlet was the only exception. A default-on decision needs tier-1 per-tag evidence, and
-	 * that is what this corpus carries.
+	 * Present because until it was, this eval could not SEE the change: #1497's title is "FST decoder bias is invisible
+	 * to every live eval", and the gauntlet was the only exception. A default-on decision needs tier-1 per-tag evidence,
+	 * and that is what this corpus carries.
 	 */
 	gazetteerPrior?: boolean
 	/**

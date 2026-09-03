@@ -789,7 +789,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	const geocode = async (input: string): Promise<GeocodeRun> => {
 		const startedAt = performance.now()
 
-		// #912 lever 3: parse ONCE up front (shared into geocodeAddress via parsedTree — no re-parse)
+		// #912 change 3: parse ONCE up front (shared into geocodeAddress via parsedTree — no re-parse)
 		// so a single bare locality can skip the locale-INFERRED default country. "Paris" under the
 		// en-US locale must not be hard-scoped to Paris, Texas; an explicit --default-country still
 		// wins (resolverDefaultCountry returns it before the locale inference is consulted).

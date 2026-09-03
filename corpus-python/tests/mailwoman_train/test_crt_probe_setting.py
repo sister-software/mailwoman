@@ -1,4 +1,4 @@
-"""`train.trainable_only_prefixes` — the cRT probe lever (classifier-only retraining, frozen
+"""`train.trainable_only_prefixes` — the cRT probe setting (classifier-only retraining, frozen
 encoder). See docs/superpowers/plans/2026-07-22-placetype-census-bias.md "Parallel training-side
 experiment" and the v3.12.0-crt-probe.yaml config that exercises it.
 
@@ -58,7 +58,7 @@ def test_trainable_only_prefixes_defaults_empty():
 def test_v3120_crt_probe_config_loads_the_one_variable():
     cfg = load_config(CONFIG_DIR / "v3.12.0-crt-probe.yaml")
     assert cfg.train.trainable_only_prefixes == ["classifier."]
-    # UNCHANGED-from-parent levers (same stream, same resurrection levers, same 8k) — the ONE
+    # UNCHANGED-from-parent settings (same stream, same resurrection settings, same 8k) — the ONE
     # variable claim is only true if these actually match v3.11.0-deploc-feed.yaml.
     parent = load_config(CONFIG_DIR / "v3.11.0-deploc-feed.yaml")
     assert cfg.data == parent.data
@@ -194,5 +194,5 @@ def test_no_shipped_config_combines_trainable_only_prefixes_with_a_freeze_flag(c
     has_freeze = bool(train_section.get("freeze_encoder")) or bool(train_section.get("freeze_token_embeddings"))
     assert not (has_prefixes and has_freeze), (
         f"{config_path.name} combines train.trainable_only_prefixes with a freeze_* flag — "
-        "train.py raises ValueError on this combination (ambiguous lever attribution)"
+        "train.py raises ValueError on this combination (ambiguous setting attribution)"
     )

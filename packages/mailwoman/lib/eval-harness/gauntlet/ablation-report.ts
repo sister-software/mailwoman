@@ -69,7 +69,7 @@ export function renderAblationMarkdown(
 		caseCount: number
 		variantCount: number
 		skips: readonly { component: string; reason: string }[]
-		levers: string
+		pins: string
 		minLocaleRows?: number
 	}
 ): string {
@@ -93,7 +93,7 @@ export function renderAblationMarkdown(
 		`- board: \`${meta.boardID}\``,
 		`- measured: ${meta.measuredAt}`,
 		`- ${meta.caseCount} cases → ${meta.variantCount} deletion variants (+ ${meta.caseCount} anchors)`,
-		`- ${meta.levers}`,
+		`- ${meta.pins}`,
 		`- \`${ABLATION_ABSENT}\` means NOT MEASURED (no row in this corpus carries that component in that locale). It is never a score of zero.`,
 		"",
 		`## Per component (all locales)`,

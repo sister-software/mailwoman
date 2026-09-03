@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The candidate-weights lever, and the guard that keeps it from measuring the shipped model.
+ *   The candidate-weights setting, and the guard that keeps it from measuring the shipped model.
  *
  *   `resolveWeights` treats an explicit `cacheRoot` as authoritative ONLY when that directory actually holds the
  *   binaries; a cache missing them falls through to the installed workspace package, which in this repo always
@@ -66,7 +66,7 @@ async function stageCache(
 	return root
 }
 
-describe("weights_cache — the lever", () => {
+describe("weights_cache — the setting", () => {
 	it("is a key the tool schema accepts", () => {
 		expect(Object.keys(ENGINE_CONFIG_SCHEMA.shape)).toContain("weights_cache")
 	})
@@ -87,7 +87,7 @@ describe("weights_cache — the lever", () => {
 	})
 
 	it("makes two candidates two engines", async () => {
-		// The whole point of the lever: shipped-vs-candidate must not share a warm session. `engineID` hashes the
+		// The whole point of the setting: shipped-vs-candidate must not share a warm session. `engineID` hashes the
 		// effective config, so this holds automatically — and this test is what notices if the key ever stops being
 		// part of that config.
 		const fingerprint = await computeTreeFingerprint(process.cwd())

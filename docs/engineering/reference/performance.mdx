@@ -1,8 +1,8 @@
 # Performance: what moves parse throughput
 
-> **In Node, one parse cannot overlap another in-process. Threads are the only lever.**
+> **In Node, one parse cannot overlap another in-process. Threads are the only change.**
 
-Two levers suggest themselves for making a parser faster: batch the work, or run it concurrently.
+Two changes suggest themselves for making a parser faster: batch the work, or run it concurrently.
 Neither one moves this system, and the reasons are invisible from the call site. This page is the
 measurements, so the next person who reaches for a batch path finds the receipts first.
 
@@ -15,7 +15,7 @@ shape, so throughput is unchanged (parse latency is graph-bound, not weights-bou
 A parse is **93.2% ONNX forward pass**. Tokenizing, the anchor/gazetteer/country channel lookups,
 Viterbi, and building the tree add up to 0.25 ms, under 7% of the wall clock.
 
-If the forward pass were free, parse would be 14.6x faster. Every lever below is an attempt to
+If the forward pass were free, parse would be 14.6x faster. Every change below is an attempt to
 collect that 14.6x, and every one of them fails for the same reason: the forward pass is not
 idle-waiting on anything. ONNX Runtime already spends **8.02 cores on a single batch=1 inference**,
 so there is no slack to reclaim.
@@ -47,7 +47,7 @@ documented as a tuning knob, and it had never done anything. Setting it to 1 and
 same throughput to three digits. `POST /v1/batch` is a sequential loop now, which is what it had been
 in practice all along.
 
-The same lever works in Python, where `intra_op=1` plus 16 threads buys 1.64x, because Python's ORT
+The same change works in Python, where `intra_op=1` plus 16 threads buys 1.64x, because Python's ORT
 releases the GIL during a run. That conclusion doesn't port. The binding is what differs.
 
 ## Batching does not pay

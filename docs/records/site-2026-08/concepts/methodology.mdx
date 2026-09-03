@@ -25,7 +25,7 @@ models; cheap _rigor_ is the underrated one.
 
 Every change starts as a hypothesis with a named, measurable prediction, and the first move is
 the cheapest test that could kill it. A 30-minute GPU run waits behind a 2-minute probe; a
-retrain waits behind a data-side lever; a lever waits behind a diagnostic that characterizes
+retrain waits behind a data-side change; a change waits behind a diagnostic that characterizes
 the failure. Most hypotheses die at the probe stage, which is the point — the expensive step
 runs only on survivors.
 
@@ -41,7 +41,7 @@ Falsified, respecified, retrained, gated, and shipped between dinner and sunrise
 ## Ablation with a control group
 
 An ablation tells you what a component contributes. Ours carry an extra obligation: every
-change must prove what it _didn't_ touch. When a lever targets French, the untouched panels —
+change must prove what it _didn't_ touch. When a change targets French, the untouched panels —
 US, German, the gauntlet's regression cases — must come back **byte-identical**, not "roughly
 flat." The null hypothesis is verified, never assumed.
 
@@ -53,7 +53,7 @@ controls: ablation, with the control group most ablation studies skip.
 ## Per-locale floors
 
 Coverage grows one locale at a time, and each locale gets its own floor — a panel and a
-threshold that later changes must not sink. A lever that lifts French while taxing
+threshold that later changes must not sink. A change that lifts French while taxing
 English would pass any aggregate metric; it cannot pass a per-locale gate. This is what lets
 the system take on new address conventions without silently spending the quality budget of the
 old ones. (For why aggregates mislead in this domain specifically, see
@@ -86,7 +86,7 @@ layer wins every conflict with a prettier metric.
 A falsified hypothesis with a mechanism is treated as shipped work — written up in the issue
 tracker with the measurement that killed it and the reason it failed, at the same standard as
 a feature. This is partly principle and partly economics: the falsification record is what stops
-the same dead lever from being re-run six months later, and in practice the mechanism inside a
+the same dead change from being re-run six months later, and in practice the mechanism inside a
 failure is usually the specification for the fix. The tracker holds weeks where the falsified
 hypotheses outnumbered the shipped features, and those were good weeks.
 

@@ -3,17 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The smallest single-lever flip that changes a row's answer (#1722).
+ *   The smallest single-setting flip that changes a row's answer (#1722).
  *
  *   An account says what the pipeline DID. A counterfactual says what it would have done under one different setting,
  *   which is the only way to turn "this mechanism ran" into "this mechanism decided" — the L2 rung the activation
- *   census deliberately does not measure. One lever moves per flip, always, because a flip that moves two levers
+ *   census deliberately does not measure. One setting moves per flip, always, because a flip that moves two settings
  *   cannot attribute the change to either.
  *
- *   The lever space is FIXED and enumerated here rather than derived from `EngineConfig`. Every lever in that
+ *   The setting space is FIXED and enumerated here rather than derived from `EngineConfig`. Every setting in that
  *   interface is flippable in principle; these five are the ones whose flip is cheap (no second gazetteer, no second
- *   model) and whose meaning is stateable in one sentence. A lever that cannot apply to a row is reported as SKIPPED
- *   with its reason, never omitted — an absent lever and a lever that changed nothing are different facts.
+ *   model) and whose meaning is stateable in one sentence. A setting that cannot apply to a row is reported as SKIPPED
+ *   with its reason, never omitted — an absent setting and a setting that changed nothing are different facts.
  *
  *   Runs are ENGINE-MAJOR: every row needing one flip is measured before the next flip's engine is built. The
  *   registry holds two engines at a time (`EngineRegistry`'s cap, set by the measured throughput ceiling on a shared
@@ -29,12 +29,12 @@ import type { EngineConfig, EngineRegistryLike } from "#engine-registry"
 import { DISTANCE_THRESHOLDS_KM } from "#geo-grade"
 
 /**
- * The fixed lever space, in the CLI's own vocabulary — the same keys `EngineConfig` uses, so a flip a reader wants to
+ * The fixed setting space, in the CLI's own vocabulary — the same keys `EngineConfig` uses, so a flip a reader wants to
  * reproduce is a `config` they can paste into any other tool.
  */
-export const COUNTERFACTUAL_LEVERS = ["locale", "gazetteer_prior", "country_scope", "fork_entity"] as const
+export const COUNTERFACTUAL_SETTINGS = ["locale", "gazetteer_prior", "country_scope", "fork_entity"] as const
 
-export type CounterfactualLever = (typeof COUNTERFACTUAL_LEVERS)[number]
+export type CounterfactualSetting = (typeof COUNTERFACTUAL_SETTINGS)[number]
 
 /**
  * How far an answer must move before the flip is reported, in kilometres.
@@ -56,7 +56,7 @@ export const BASE_LOCALE = "en-US"
 /**
  * Repo-relative home of the release manifest, whose `locales` array is the list of weights overlays that exist. Read
  * rather than re-typed: an overlay added by `scripts/scaffold-weights-overlay.ts` lands there, and a hand-kept copy
- * here would make the locale lever silently stop offering the newest locale.
+ * here would make the locale setting silently stop offering the newest locale.
  */
 const RELEASE_CONFIG_RELATIVE_PATH = "release.config.json"
 
@@ -98,49 +98,49 @@ async function overlayLocaleByCountry(): Promise<Map<string, string>> {
 }
 
 /**
- * One flip: which lever, what it moved from, what it moved to, and the config patch that expresses it.
+ * One flip: which setting, what it moved from, what it moved to, and the config patch that expresses it.
  */
 export interface CounterfactualFlip {
-	lever: CounterfactualLever
+	setting: CounterfactualSetting
 	from: string
 	to: string
 	patch: EngineConfig
 }
 
 /**
- * A lever that could not be flipped for this row, and why. Reported so an empty flip list is readable: no lever
- * applied, or every lever applied and none moved the answer.
+ * A setting that could not be flipped for this row, and why. Reported so an empty flip list is readable: no setting
+ * applied, or every setting applied and none moved the answer.
  */
-export interface LeverSkip {
-	lever: CounterfactualLever
+export interface SettingSkip {
+	setting: CounterfactualSetting
 	why: string
 }
 
 /**
- * The single-lever flips available for one row.
+ * The single-setting flips available for one row.
  *
  * `effective` is the RESOLVED session options — the production defaults already filled in — because the flip has to be
- * stated against what the engine will actually do, not against what the caller happened to type. An unset lever in a
- * caller's `EngineConfig` means the production default, so reading the caller's object would report every unset lever
+ * stated against what the engine will actually do, not against what the caller happened to type. An unset setting in a
+ * caller's `EngineConfig` means the production default, so reading the caller's object would report every unset setting
  * as absent and flip it in the wrong direction.
  */
 export async function enumerateFlips(
 	effective: GeocodeSessionOptions,
 	country: string | undefined
-): Promise<{ flips: CounterfactualFlip[]; skipped: LeverSkip[] }> {
+): Promise<{ flips: CounterfactualFlip[]; skipped: SettingSkip[] }> {
 	const flips: CounterfactualFlip[] = []
-	const skipped: LeverSkip[] = []
+	const skipped: SettingSkip[] = []
 
 	const localeFlip = await localeCounterfactual(effective.locale, country)
 
 	if ("why" in localeFlip) {
-		skipped.push({ lever: "locale", why: localeFlip.why })
+		skipped.push({ setting: "locale", why: localeFlip.why })
 	} else {
 		flips.push(localeFlip)
 	}
 
 	flips.push({
-		lever: "gazetteer_prior",
+		setting: "gazetteer_prior",
 		from: String(effective.gazetteerPrior),
 		to: String(!effective.gazetteerPrior),
 		patch: { gazetteer_prior: !effective.gazetteerPrior },
@@ -149,14 +149,14 @@ export async function enumerateFlips(
 	const scopeTo = effective.countryScope === "none" ? "auto" : "none"
 
 	flips.push({
-		lever: "country_scope",
+		setting: "country_scope",
 		from: effective.countryScope,
 		to: scopeTo,
 		patch: { country_scope: scopeTo },
 	})
 
 	flips.push({
-		lever: "fork_entity",
+		setting: "fork_entity",
 		from: String(effective.forkEntity),
 		to: String(!effective.forkEntity),
 		patch: { fork_entity: !effective.forkEntity },
@@ -194,11 +194,11 @@ async function localeCounterfactual(
 
 	if (to.toLowerCase() === current.toLowerCase()) {
 		return {
-			why: `${current} is already both the base and this row's country overlay, so the lever has nowhere to move`,
+			why: `${current} is already both the base and this row's country overlay, so the setting has nowhere to move`,
 		}
 	}
 
-	return { lever: "locale", from: current, to, patch: { locale: to } }
+	return { setting: "locale", from: current, to, patch: { locale: to } }
 }
 
 /**
@@ -225,13 +225,13 @@ export interface CounterfactualAnswer {
  * fact in that case.
  */
 interface CounterfactualMove extends MoveReading {
-	lever: CounterfactualLever
+	setting: CounterfactualSetting
 	from: string
 	to: string
 }
 
 /**
- * The distance half of a move, with no lever attached — what {@link measureMove} can know from two answers alone.
+ * The distance half of a move, with no setting attached — what {@link measureMove} can know from two answers alone.
  */
 export interface MoveReading {
 	moved_km: number | null
@@ -240,8 +240,8 @@ export interface MoveReading {
 }
 
 export interface RowCounterfactuals {
-	levers_tried: CounterfactualLever[]
-	levers_skipped: LeverSkip[]
+	settings_tried: CounterfactualSetting[]
+	settings_skipped: SettingSkip[]
 	n_flips_run: number
 	n_flips_moved: number
 	moves: CounterfactualMove[]
@@ -265,7 +265,7 @@ export function measureMove(base: CounterfactualAnswer, flipped: CounterfactualA
 
 export interface CounterfactualError {
 	id: string
-	lever: CounterfactualLever
+	setting: CounterfactualSetting
 	message: string
 }
 
@@ -287,15 +287,15 @@ export async function runCounterfactuals(
 		const { flips, skipped } = await enumerateFlips(effective, target.country)
 
 		byRow.set(target.id, {
-			levers_tried: flips.map((flip) => flip.lever),
-			levers_skipped: skipped,
+			settings_tried: flips.map((flip) => flip.setting),
+			settings_skipped: skipped,
 			n_flips_run: 0,
 			n_flips_moved: 0,
 			moves: [],
 		})
 
 		for (const flip of flips) {
-			const key = `${flip.lever} ${JSON.stringify(flip.patch)}`
+			const key = `${flip.setting} ${JSON.stringify(flip.patch)}`
 			const batch = batches.get(key)
 
 			if (batch) {
@@ -329,10 +329,10 @@ export async function runCounterfactuals(
 
 				if (move) {
 					row.n_flips_moved++
-					row.moves.push({ ...move, lever: flip.lever, from: flip.from, to: flip.to })
+					row.moves.push({ ...move, setting: flip.setting, from: flip.from, to: flip.to })
 				}
 			} catch (error) {
-				errors.push({ id: target.id, lever: flip.lever, message: (error as Error).message })
+				errors.push({ id: target.id, setting: flip.setting, message: (error as Error).message })
 			}
 		}
 	}

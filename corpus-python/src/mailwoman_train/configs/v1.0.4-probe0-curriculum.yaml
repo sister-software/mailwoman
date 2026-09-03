@@ -12,9 +12,9 @@
 # US-postcode is EXPECTED to dip with choreography off - not a gate here; this probe reads ONLY
 # the affix trajectory.
 #
-# ONE model carrying every PROVEN parity lever, at a LARGER step budget (the cumulative-dilution
+# ONE model carrying every PROVEN parity change, at a LARGER step budget (the cumulative-dilution
 # lesson: never stack N slices into a fixed 20k budget — give them room). This is NOT a single-variable
-# experiment; it's the integration run. Levers folded in:
+# experiment; it's the integration run. Changes folded in:
 #   - unit          (shipped v4.1.0)                      → synth-unit 1.5
 #   - affix         (multi-locale reroll, #469)           → synth-affix 2.0  (corpus v0.4.11-affix-ml)
 #   - country       (balanced slice, #464)                → synth-country 2.0 (corpus v0.4.10-country-bal)
@@ -36,7 +36,7 @@
 #      fix — and this run is its FIRST training test. Stacking both suppressions would over-zero the
 #      clue, so curriculum is dropped.
 #
-# PRE-REGISTERED GATE (stop at 40k), fp32-to-fp32 vs v4.1.0 (+ the solo-lever banks):
+# PRE-REGISTERED GATE (stop at 40k), fp32-to-fp32 vs v4.1.0 (+ the solo-change banks):
 #   - country ≥ v0.9.12 (83.3 F1 on country-homograph-real), P high, over-fire 0.
 #   - affix: street_prefix ≥ 78, street_suffix ≥ 67 (score-affix, real-affix eval).
 #   - unit ≥ 92 (unit-real-designators).
@@ -84,7 +84,7 @@ data:
     synth-po-box: 1.5
     synth-intersection: 0.2
     synth-german: 6.0
-    # Every proven lever rides at its solo-validated weight.
+    # Every proven change rides at its solo-validated weight.
     synth-unit: 1.5
     # Run C (the resume-fix): affix at the EXACT value the diagnostic hit prefix 75 with — synth-affix
     # 20.0. Run A (10.0, RESUME) → 65; Run B (17.0, init_from) → 65 (the init_from fresh-optimizer was

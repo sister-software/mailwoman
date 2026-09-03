@@ -57,13 +57,13 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
    **namesake collision, not coverage** — FI 300/1k, DK 167, CZ/SK 131, HR 94, SI 91, PL 75
    namesake rows vs single-digit unique-misses. US: 13/2000 (its region tokens + adminCoherence
    already do this job; EU formats carry no region token).
-2. The shaped lever **already exists**: `postcodeConsistency` (#370 lever A, default-off).
+2. The shaped change **already exists**: `postcodeConsistency` (#370 change A, default-off).
 3. Pre-registered experiment (FI/CZ, flag ON): **NULL — byte-identical.** Mechanism: the pass
    needs a RESOLVED postcode node, and `postalcode-intl.db` covers **NL/DE/FR/ES/IT only** — zero
    rows for every namesake-heavy locale. → **#920** filed.
 4. **#920's experiment leg executed the same night** (scope re-derived once the clock was read
    right; EXPERIMENT-labeled extract from GeoNames postal FI+CZ, control leg added to the
-   registration before measuring). Verdict: **the lever hypothesis is falsified — and the control
+   registration before measuring). Verdict: **the change hypothesis is falsified — and the control
    is the discovery.** `postcodeConsistency` is inert (ctrl≡pcc byte-identical); **postcode-extract
    COVERAGE alone collapses the tail: FI namesake 300→1 (unresolved 13→0), CZ 131→4 (12→2), ni
    PASS everywhere** — a resolvable postcode feeds the existing coordinate-first candidate
@@ -74,7 +74,7 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
    p50 on already-correct rows (SK/SI/HR ni-failed the 1 km leg — build needs per-postcode fine
    centroids); (2) PL's null = names must be stored in the SANITIZED-QUERY token shape (the
    hyphen-strip law — third format law of the night); (3) resolve rates held or rose everywhere.
-   **Production #920 is fully spec'd from measurement: the biggest lever on the board, zero GPU.**
+   **Production #920 is fully spec'd from measurement: the biggest change on the board, zero GPU.**
 
 ## What went well
 
@@ -87,7 +87,7 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
 - **Agents compounding:** four dispatched, four delivered (OA fetch ×5 countries incl. a
   city-less-trap dodge; #914 with real format-audit findings; #473 at gate with two WOF-TW data
   findings; #916 which verify-before-verdicted its own issue and then caught the live demo bug).
-- Salvage-first: the night's biggest lever candidate was an existing flag; the SI extract rode the
+- Salvage-first: the night's biggest change candidate was an existing flag; the SI extract rode the
   existing recipe scaffold; DK/FI panels rode the existing R-tree.
 
 ## What could've gone better
@@ -122,7 +122,7 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
 ## Open questions for the operator
 
 1. **The #901 fork** — recommendation: option 3 (unified bare-name-comma extract family), weighed
-   against the taxonomy finding that the resolver-side #920 lever likely dominates it on impact.
+   against the taxonomy finding that the resolver-side #920 change likely dominates it on impact.
 2. **#920 as next-night primary?** The full arc is pre-registered and CPU-only.
 3. Review queue, in merge order: **#918** (TW/JP data + convention row), **#914** (run-2 extracts),
    **#916** (voice pass on one recipe).

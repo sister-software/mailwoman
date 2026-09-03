@@ -14,7 +14,7 @@ is an **accumulation** effect: hot classifier LR × long exposure, emerging well
 resurrection window has done its work. v3.12's own ladder agrees (5k–7k narrow to one violation;
 8k regresses).
 
-Both facts point at the same lever: **keep the hot classifier LR only for the window that needs
+Both facts point at the same change: **keep the hot classifier LR only for the window that needs
 it, then anneal to base** — never yet tried in this arc (every run held classifier LR at 0.001
 for all 8k steps).
 

@@ -67,6 +67,6 @@ small, fixable artifact (preserve all-caps 2-letter state codes) against a large
   point; this validation is what justifies trusting our own coordinate where it doesn't.
 - **Coverage, not precision, is the frontier.** ~40% of these facilities fall back to the city centroid
   for lack of a TX rooftop/interp hit on the parsed street — the address-point extract coverage is the
-  lever, not the tier math.
+  change, not the tier math.
 - **Case robustness is a measurable neural gap.** All-caps compliance/registry data is common, and we
   lose 6.7pp of locality there vs the rules parser. Cheap to fix, worth fixing.

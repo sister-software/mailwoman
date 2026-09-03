@@ -131,8 +131,8 @@ assembled; `packages/mcp/lib/cli.ts` simply does not use it.
 ### 2.3 The eval harness — the graders already exist
 
 - `packages/mailwoman/lib/eval-harness/gauntlet/harness.ts:228` `buildGauntletDeps` builds full-pipeline
-  geocode deps with an optional **candidate model** and **resolver lever pins**
-  (`GauntletResolverLevers`, `:70-77`). It already knows how to swap only the ONNX, or a whole
+  geocode deps with an optional **candidate model** and **resolver change pins**
+  (`GauntletResolverChanges`, `:70-77`). It already knows how to swap only the ONNX, or a whole
   package-shaped weights cache, and it routes per-country weights overlays (`:283-290`).
 - `packages/mailwoman/lib/eval-harness/gauntlet/run.ts:186` `runGauntlet` runs the four layers —
   `regression`, `metamorphic`, `holdout`, `ablation` — and emits the combined verdict.
@@ -258,7 +258,7 @@ engine produces.
 **Construction-time versus per-call is the required split**, and the harness already draws it. In
 `buildGauntletDeps`, the model, the overlays and the resolver backend are construction-time; the
 per-call options are `GauntletGeocodeOpts` — `defaultCountry`, `caseCountry`, `fuzzyCountryScope`
-(`harness.ts:110-127`) — and the lever pins are spread into each `geocodeAddress` call
+(`harness.ts:110-127`) — and the change pins are spread into each `geocodeAddress` call
 (`harness.ts:392-403`). `postcodeCountryCoherence` is a _dep_, not a construction parameter.
 
 The practical consequence, and it should be documented at the tool surface: **comparing two flag
@@ -388,7 +388,7 @@ Prefix `mwdev_`, server name `mailwoman-dev`, bin `mwdev-mcp`. Eleven tools.
 | `mwdev_run`      | parse or geocode one input set under one configuration               | `acceptance-probe.ts`, most one-off parse scripts                                                                                             |
 | `mwdev_compare`  | two arms over one input set, diffed and graded                       | `fst-probe.ts`, `fst-board-probe.ts`, `hierarchy-benefit.ts`, `affix-diff.ts`, `backend-parity.ts`, all Pelias/Photon/Nominatim head-to-heads |
 | `mwdev_trace`    | per-stage evidence for a handful of inputs                           | `pgn-probe.ts`                                                                                                                                |
-| `mwdev_gauntlet` | run gauntlet layers, whole or single, with model and lever pins      | `mailwoman eval gauntlet` spawns                                                                                                              |
+| `mwdev_gauntlet` | run gauntlet layers, whole or single, with model and change pins     | `mailwoman eval gauntlet` spawns                                                                                                              |
 | `mwdev_gate`     | run the promotion gate against a spec                                | `mailwoman eval promote` spawns                                                                                                               |
 | `mwdev_lookup`   | direct data-source probes (FST, candidate table, normalizer, poi.db) | `icu-probe.mjs`, `keynorm-probe.ts`, `probe-fst-bias.run.ts`                                                                                  |
 | `mwdev_bench`    | latency and throughput, cold and warm distinguished                  | `bench-reverse-throughput.ts`                                                                                                                 |
@@ -454,12 +454,12 @@ out: { run_id, provenance: Provenance, n_requested, n_evaluated, n_errored, erro
        elapsed_ms, engine_build_ms }
 ```
 
-`EngineConfig` is a single flat record covering every construction- and call-time lever, derived from
+`EngineConfig` is a single flat record covering every construction- and call-time change, derived from
 `GeocodeCommandOptions` (`packages/mailwoman/lib/geocode-command-options.ts:9-35`) and
 `GauntletGeocodeOpts` so the vocabulary is the CLI's: `locale`, `country_scope`, `default_country`,
 `candidate_db`, `resolve_db`, `weights_cache`, `model_path`, `gazetteer_prior`, `place_country`,
 `postcode_country_coherence`, `fork_entity`, `bias`, and so on. **Unset means the production default**,
-following `GauntletResolverLevers`'s rule (`harness.ts:69`): "`undefined` means 'production default',
+following `GauntletResolverChanges`'s rule (`harness.ts:69`): "`undefined` means 'production default',
 not 'off': the library defaults are the thing under test."
 
 `Provenance` is on every result of every tool:
@@ -474,7 +474,7 @@ interface Provenance {
 	gazetteer: { backend: "candidate" | "fts"; path: string; size: number; mtime: string }
 	channels_fed: string[]
 	channels_unfed: string[] // from unfedChannelWarner
-	config_effective: Record<string, unknown> // every lever, defaults resolved
+	config_effective: Record<string, unknown> // every change, defaults resolved
 	input_set: { set_id: string; n: number; sha256: string; selection: "full" | "slice" | "hand-picked" }
 	warnings: string[]
 }
@@ -513,9 +513,9 @@ It is built on `GeocodeSession`'s existing trace path (`geocode-session.ts:124-1
 ```
 in:  { layer?: "regression" | "metamorphic" | "holdout" | "ablation" | "all",
        candidate?: string, weights_cache?: string, tokenizer?: string, card?: string,
-       levers?: { postcode_country_coherence?: boolean },
+       changes?: { postcode_country_coherence?: boolean },
        source?: "fr" | "us", n?: number, components?: string[] }
-out: { job_id }  →  { verdict, layers: [{name, pass, …}], levers_described, corpus_stamp, provenance, log }
+out: { job_id }  →  { verdict, layers: [{name, pass, …}], changes_described, corpus_stamp, provenance, log }
 ```
 
 A direct passthrough to `runGauntlet` (`gauntlet/run.ts:186`) in a job worker. It adds nothing to the
@@ -524,7 +524,7 @@ would be a second answer key.
 
 Two properties it must surface rather than bury in the log:
 
-- `describeResolverLevers`'s line, which prints on every run, pinned or not, because "two gate logs
+- `describeResolverChanges`'s line, which prints on every run, pinned or not, because "two gate logs
   that differ only in a flag someone typed are not evidence about that flag unless each log says which
   configuration it graded" (`run.ts:220-222`).
 - The **firing count** — how many rows the pinned mechanism actually spoke on
@@ -673,10 +673,10 @@ states the reason: _"an unchanged verdict from a mechanism that never ran proves
 `GauntletResult.postcode_country_scope` exists solely as a firing count for exactly this
 (`harness.ts:441-445`).
 
-Where the mechanism under test has its own firing signal — a lever that records what it overrode, a
+Where the mechanism under test has its own firing signal — a change that records what it overrode, a
 prior that records whether it participated — the comparison surfaces it as `mechanism_fired_on: n / N`
-separately from `arms_differed_on`. A lever that fired on 400 rows and changed 0 outcomes is a
-different fact from a lever that never fired, and both differ from a lever with no firing signal at
+separately from `arms_differed_on`. A change that fired on 400 rows and changed 0 outcomes is a
+different fact from a change that never fired, and both differ from a change with no firing signal at
 all, which reports `mechanism_fired_on: null`.
 
 ### 5.5 A diff is not a verdict

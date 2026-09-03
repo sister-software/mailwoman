@@ -7,10 +7,10 @@
  *
  *   The partition itself is pure and tested directly (tier-safety, stability, the no-stamp
  *   identity). The walk tests then pin the reach contract the #1729 lesson demands: the qualifier is
- *   threaded onto exactly the lookups the lever covers, the partition runs AFTER `rankByImportance`
+ *   threaded onto exactly the lookups the setting covers, the partition runs AFTER `rankByImportance`
  *   (fame must not win back the top slot from a qualifier-vouched candidate), and the
  *   `admin_containment` trace stamp reports the tri-state truthfully — `unavailable` on a backend
- *   that cannot answer is the census surface for an opted-in lever that cannot fire.
+ *   that cannot answer is the census surface for an opted-in setting that cannot fire.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -145,7 +145,7 @@ describe("the walk's deciding site (#1729 reach contract)", () => {
 		return { region, locality, seen }
 	}
 
-	it("threads the qualifier onto the locality lookup when the lever is ON", async () => {
+	it("threads the qualifier onto the locality lookup when the setting is ON", async () => {
 		const seen: Array<{ placetype?: string | string[]; regionQualifier?: string }> = []
 
 		await resolveWith([{ id: 1, country: "US" }], { adminContainmentRerank: true }, seen)
@@ -155,7 +155,7 @@ describe("the walk's deciding site (#1729 reach contract)", () => {
 		expect(locality?.regionQualifier).toBe("Thuria")
 	})
 
-	it("does NOT thread the qualifier when the lever is off — the default is byte-stable", async () => {
+	it("does NOT thread the qualifier when the setting is off — the default is byte-stable", async () => {
 		const seen: Array<{ placetype?: string | string[]; regionQualifier?: string }> = []
 		const { locality } = await resolveWith([{ id: 1, country: "US" }], {}, seen)
 
@@ -171,7 +171,7 @@ describe("the walk's deciding site (#1729 reach contract)", () => {
 		expect(seen.every((q) => q.regionQualifier === undefined)).toBe(true)
 	})
 
-	it("threads under a locale-INFERRED scope — the scope the lever exists to see past", async () => {
+	it("threads under a locale-INFERRED scope — the scope the setting exists to see past", async () => {
 		const seen: Array<{ placetype?: string | string[]; regionQualifier?: string }> = []
 
 		await resolveWith(
@@ -185,7 +185,7 @@ describe("the walk's deciding site (#1729 reach contract)", () => {
 
 	it("the contained candidate wins even when fame disagrees — the partition outranks rankByImportance", async () => {
 		// The uncontained namesake is MORE important (Richmond VA vs Richmond, North Yorkshire): fame
-		// alone re-orders it to the front, so a lever that only trusted the backend's incoming order
+		// alone re-orders it to the front, so a setting that only trusted the backend's incoming order
 		// would lose here. This is the reach proof: the walk's own partition must run after the fame key.
 		const { locality } = await resolveWith(
 			[
@@ -225,12 +225,12 @@ describe("the walk's deciding site (#1729 reach contract)", () => {
 			{ adminContainmentRerank: true }
 		)
 
-		// Fame decides as today — the lever changed nothing, and says so.
+		// Fame decides as today — the setting changed nothing, and says so.
 		expect(locality.placeID).toBe("wof:1")
 		expect(locality.metadata?.["admin_containment"]).toBe("no_contained_candidate")
 	})
 
-	it("reports 'unavailable' on a backend that cannot answer — the opted-in lever is visibly inert", async () => {
+	it("reports 'unavailable' on a backend that cannot answer — the opted-in setting is visibly inert", async () => {
 		const { locality } = await resolveWith(
 			[
 				{ id: 1, country: "US", importance: 0.9 },

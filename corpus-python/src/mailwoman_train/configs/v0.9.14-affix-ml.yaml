@@ -1,5 +1,5 @@
 # === v0.9.14-affix-ml (#466 step 1) — the AFFIX MULTI-LOCALE REROLL ==============================
-# ONE conceptual variable vs v0.9.8-affix (the gated affix lever): the affix slice is now MULTI-LOCALE.
+# ONE conceptual variable vs v0.9.8-affix (the gated affix change): the affix slice is now MULTI-LOCALE.
 # Corpus v0.4.11-affix-ml = v0.4.6-affix with the US-only synth-affix slice SWAPPED for a multi-locale
 # one (50K US affix splits — identical dose to v0.9.8 — PLUS 40K native-order FR/DE/IT/NL balance rows,
 # no affix split, no annotation). Everything else is held EXACTLY at v0.9.8: same recipe (postcode
@@ -24,7 +24,7 @@
 #   - NO-REGRESSION (within ~1pp, fp32): US house_number / postcode / locality / region; DE native-order
 #     locality (de-order-eval.ts). The balance rows ADD FR/DE order signal — DE should hold or improve.
 #   DECISION: FR postcode recovered + affix retained + no regression check → PROMOTE candidate (v4.2.0) and the
-#     affix lever is BANKED for consolidation. If affix slips below v0.9.8: too much balance crowded the
+#     affix change is BANKED for consolidation. If affix slips below v0.9.8: too much balance crowded the
 #     US dose — raise synth-affix to 2.5 or lower --multilocale-count and rerun. If FR still dilutes:
 #     raise --multilocale-count (more FR balance).
 # Measure: per-locale-f1.ts (US/FR golden, fp32 — needs --tokenizer + --model-card) + score-affix.ts

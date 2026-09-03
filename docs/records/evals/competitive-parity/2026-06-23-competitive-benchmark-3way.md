@@ -18,8 +18,8 @@ incumbents.
   Right-_place_ is the fair test.
 - **SECONDARY — conditional median error + the @1/@5 km tiers**, to keep the centroid-vs-rooftop trade
   visible rather than hidden.
-- `n = 60` rows/locale, clean OA input (NOT the messy-degradation case). Lever-off (`mailwoman`) and
-  `#370` span-rescore lever-on (`mailwoman+rescore`) are both graded from the same parse.
+- `n = 60` rows/locale, clean OA input (NOT the messy-degradation case). Change-off (`mailwoman`) and
+  `#370` span-rescore setting-on (`mailwoman+rescore`) are both graded from the same parse.
 
 ## Resolve-rate @ 25 km
 
@@ -58,24 +58,24 @@ incumbents.
    Europe comparison _because_ AU is its own, named, unsolved problem — not because hiding it flatters us.
 4. **Centroids, not rooftops.** mailwoman is 26% @1km vs Nominatim 77 / Pelias 71. The @25km parity is
    right-_area_ parity; the incumbents are far more precise when they hit. State it, don't bury it.
-5. **Two levers, partly substitutes.** On `-20h` (no PL/CZ postcodes) the #370 rescore lever lifted EU
+5. **Two changes, partly substitutes.** On `-20h` (no PL/CZ postcodes) the #370 rescore change lifted EU
    ~+16pp by _recovering the fragmented town_. On `-20i` the postcode resolves the address directly, so
    base is already high and the rescore's marginal EU lift shrinks to +4pp. Postcode coverage (#193) and
    word-recovery (#370) both close the "silence," by different mechanisms — the postcode does most of the
    work where we now have it; the rescore catches the no-postcode tail (PT, AU).
 
-## Levers A + B (post-benchmark, default-off — measured on the same grader)
+## Changes A + B (post-benchmark, default-off — measured on the same grader)
 
 The benchmark's failure dump (`scripts/eval/failure-dump.ts`) classified the 82 misses and pointed at
-two compounding levers. Both are default-off; numbers are mailwoman+rescore on the same harness/grader,
+two compounding changes. Both are default-off; numbers are mailwoman+rescore on the same harness/grader,
 candidate gazetteer noted.
 
-- **Lever A — postcode-disambiguated locality selection** (`ResolveOpts.postcodeConsistency`, resolver-
+- **Change A — postcode-disambiguated locality selection** (`ResolveOpts.postcodeConsistency`, resolver-
   only, no data/GPU): when a same-named locality resolves far from a resolved sibling postcode, re-pick
   the instance nearest the postcode (or fall back to the postcode point). Fixed the 16 "postcode-
   available-but-ignored" misses with ZERO regressions.
-- **Lever B — extend the #193 GeoNames postcode fill to PT/AU/AT** (`candidate-global-20j`): converts
-  uncovered postcodes into anchors, which Lever A then disambiguates. AU 35→65 (+30pp), PT 78→88.
+- **Change B — extend the #193 GeoNames postcode fill to PT/AU/AT** (`candidate-global-20j`): converts
+  uncovered postcodes into anchors, which Change A then disambiguates. AU 35→65 (+30pp), PT 78→88.
 
 | locale      | baseline (-20h) | +A (-20i) | +A+B (-20j) | Nominatim | Pelias |
 | ----------- | --------------: | --------: | ----------: | --------: | -----: |
@@ -89,13 +89,13 @@ candidate gazetteer noted.
 | **EU (6)**  |          **66** |  **92.5** |    **94.2** |    **78** | **89** |
 | **ALL (7)** |          **61** |    **84** |    **90.0** |    **81** | **88** |
 
-With both levers, mailwoman leads BOTH incumbents on the @25km right-area metric — EU 94.2 and all-panel
+With both changes, mailwoman leads BOTH incumbents on the @25km right-area metric — EU 94.2 and all-panel
 90.0 — from a 30 MB browser model, no Elasticsearch. The @1km precision gap (centroids vs rooftops)
 stands; this is right-AREA, not rooftop.
 
-Residuals after A+B (the next levers): AU's remaining misses are mostly a PARSE issue — the model emits a
+Residuals after A+B (the next changes): AU's remaining misses are mostly a PARSE issue — the model emits a
 house number as a second postcode ("Grantson Street 51" → postcode=51), and the anchor picks the first
-postcode (51) not the real one (4030); a Lever-A-v2 anchoring on the postcode that RESOLVES would catch
+postcode (51) not the real one (4030); a Change-A-v2 anchoring on the postcode that RESOLVES would catch
 them. AT's 5 EMPTY are postcodes GeoNames AT doesn't carry.
 
 ## Caveats / next
@@ -104,8 +104,8 @@ them. AT's 5 EMPTY are postcodes GeoNames AT doesn't carry.
   matching search index on messy input" claim needs a separate `--messy` run before it can be made.
 - **AU** is the open coverage/disambiguation problem (#208 G-NAF ingest + a sub-country consistency gate).
 - **AT** (73→80) is the next EU postcode-coverage candidate — GeoNames has 18,937 AT rows; the gazetteer
-  has only 809. Same lever as PL/CZ.
+  has only 809. Same change as PL/CZ.
 
-Harness: `scripts/eval/competitive-benchmark.ts` (`--span-rescore` grades base + lever from one parse;
+Harness: `scripts/eval/competitive-benchmark.ts` (`--span-rescore` grades base + change from one parse;
 the Pelias arm rides the git-excluded `diag-geocode-earth.ts`, country-scoped, throttled to respect
 geocode.earth's 1000/day + 10/s). Raw: `candidate-global-20i.db`, model `out/v191/model.onnx` (v4.13.0).

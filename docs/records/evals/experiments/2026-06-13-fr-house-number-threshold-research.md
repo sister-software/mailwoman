@@ -23,7 +23,7 @@ converged on the same answers. Sources are listed at the end._
    "leading-token" shortcut without supplying a real discriminator, the model drops to the
    _next_-simplest spurious cue ("leading _digit_"), which is exactly why `47110` fragments into
    house_number `4` + postcode `7110`.
-3. **The right levers are not weight.** Highest-ROI: protect the postcode span using the
+3. **The right changes are not weight.** Highest-ROI: protect the postcode span using the
    postcode-anchor signal **we already compute** (a CRF transition penalty / consistency term against
    relabeling postcode-anchored tokens as house_number), and gazetteer-gated disambiguation (a number
    appearing right before a known locality is overwhelmingly a postcode). Then curriculum/denoising of
@@ -95,7 +95,7 @@ The research shifts my earlier "hold" lean. The honest reading:
   a bar that the SOTA itself can't clear is hard to justify.
 - **So the defensible path is: re-baseline the `fr.house_number` floor to a literature-anchored
   ~88–90% (stated + reasoned in the gate config + ledger), and ship v1.5.0** — _while_ opening the
-  targeted-lever work below as the real fix. This is the operator's call to make explicitly; the
+  targeted-change work below as the real fix. This is the operator's call to make explicitly; the
   research removes the ambiguity that made it a coin-flip.
 - **Next improvement is cheap and targeted, not another weight tweak:** (1) postcode-anchor span
   protection (we already compute the signal — add a consistency term / CRF penalty so postcode-anchored
@@ -103,7 +103,7 @@ The research shifts my earlier "hold" lean. The honest reading:
   a known locality is a postcode), (3) curriculum/denoising of the synthetic weight, (4) real reordered
   data. (3)+(1) likely recover the last few points without the weight-6.0 backfire.
 
-## Levers, ranked (DeepSeek + literature consensus)
+## Changes, ranked (DeepSeek + literature consensus)
 
 1. **Postcode-anchor span protection** — highest ROI; reuses an existing signal; directly kills the
    fragmentation. No data/architecture change.
@@ -115,7 +115,7 @@ The research shifts my earlier "hold" lean. The honest reading:
    transformers, and the confusion is also token-identity (both are digit strings), which RoPE doesn't
    fix. Only if 1–3 fail.
 
-- **Missing lever DeepSeek surfaced:** gazetteer-gated disambiguation — concatenate a
+- **Missing change DeepSeek surfaced:** gazetteer-gated disambiguation — concatenate a
   "gazetteer-locality-hit-in-same-utterance" flag so the model learns "5-digit number before a known
   locality = postcode." Leverages an existing component; directly targets the confusion pair.
 
@@ -125,7 +125,7 @@ The research shifts my earlier "hold" lean. The honest reading:
 
 - libpostal — 99.45% full-parse (whole-sequence, not per-component); OSM + format-template ordering.
   https://github.com/openvenues/libpostal
-- Yassine, Beauchemin, et al., "Leveraging Subword Embeddings for Multinational Address Parsing"
+- Yassine, Beauchemin, et al., "Changeaging Subword Embeddings for Multinational Address Parsing"
   (deepparse), 2020. Reorder-collapse + inverse-order zero-shot. https://arxiv.org/abs/2006.16152 ·
   library: https://arxiv.org/abs/2311.11846 · https://deepparse.org/
 - Yin, Li, Goldberg, "Is ChatGPT a game changer for geocoding", SIGSPATIAL workshop 2023. Per-component
@@ -160,6 +160,6 @@ The research shifts my earlier "hold" lean. The honest reading:
   https://arxiv.org/abs/2010.11683
 
 _Independent DeepSeek-v4-pro consult (2026-06-13) reached the same two top-line conclusions (91% floor
-mis-calibrated; levers are anchor-protection + curriculum + real data, not weight) and contributed the
-simplicity-bias-fallback explanation and the gazetteer-gating lever. Transcript distilled into this
+mis-calibrated; changes are anchor-protection + curriculum + real data, not weight) and contributed the
+simplicity-bias-fallback explanation and the gazetteer-gating change. Transcript distilled into this
 note; raw at `~/.cache/ds-consult/sessions/`._

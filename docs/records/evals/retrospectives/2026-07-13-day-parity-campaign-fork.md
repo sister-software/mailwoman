@@ -1,4 +1,4 @@
-# 2026-07-13 day — the campaign hits its fork: data levers exhausted at the twin↔recall trade
+# 2026-07-13 day — the campaign hits its fork: data changes exhausted at the twin↔recall trade
 
 Day session (conn 06:50–15:00 UTC, operator on sponsorship work; standing grant for
 promote/merge/publish). Continues the night-1 postmortem. Three more one-variable runs (v254,
@@ -65,7 +65,7 @@ only because 2k ≪ 8k; the diagnostic wasn't a candidate.
 
 Residual (persists under gentle schedule): the 5 flips are all postcode-adjacent VT cases where
 "VT" absorbs into the street span — the **#727 boundary-digit-absorption class**, which schedule
-does not touch and is now the named last lever.
+does not touch and is now the named last change.
 
 **Caveat RESOLVED (same day):** the coordinate-level check was the open question — "pins clean"
 was PARSE-level, and the v255 FAIL was a COORDINATE assertion. Rather than the #718-trap `--model`

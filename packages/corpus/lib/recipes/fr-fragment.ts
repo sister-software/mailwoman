@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `fr-fragment` slice recipe (#727 T2) — the HOUSE-NUMBER-LICENCE lever.
+ *   `fr-fragment` slice recipe (#727 T2) — the HOUSE-NUMBER-LICENCE change.
  *
  *   The measured problem (T1c, `2026-07-16-t1c-fragment-board-verdict.md`): the shipped model scores
  *   **0.925** on `<n> Rue X` and **0.215** on `Rue X`. Same streets, same model; the only difference
@@ -61,7 +61,7 @@
  *   `street-housenumber` / `alnum-housenumber` on the fragment board and the global parity floor are
  *   there to catch. `date-name` is ~0.5% of the slice because BAN only holds ~1,418 date-name streets
  *   after filtering and the tuple extractor already takes every one; if that class needs more, the
- *   lever is slice weight, not invented data.
+ *   change is slice weight, not invented data.
  *
  *   ⚠ Convention loss-mask: like {@link frBareStreetRecipe}, this recipe TEACHES FR `street_prefix`.
  *   The conventions loss-mask forbids it for FR and will `-inf` these gold labels (the v1.6.0 ~7M-loss
@@ -160,7 +160,7 @@ const ALNUM_HOUSE_NUMBER_SHARE = 0.25
 export const frFragmentRecipe: CorpusRecipe = {
 	name: "fr-fragment",
 	description:
-		"FR street fragments with NO house number (#727 T2): the house-number-licence lever — bare/particle/date-name/homonym + the bare-locality counter",
+		"FR street fragments with NO house number (#727 T2): the house-number-licence change — bare/particle/date-name/homonym + the bare-locality counter",
 	mode: "tuples",
 	options: [
 		{

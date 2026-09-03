@@ -147,7 +147,7 @@ The [Codex review](./2026-05-24-codex-project-direction-review.mdx) (same date) 
 
 ### Hypotheses this review adds
 
-**1. The from-scratch-vs-fine-tuning control experiment.** The Codex review does not mention fine-tuning from a pretrained checkpoint. This is the single highest-leverage unanswered question. The plan explicitly rejects pretrained BERT, but the empirical divergence record across 9 runs is evidence the hypothesis needs testing. A controlled experiment costs ~2 GPU hours and answers whether the capacity/diversity mismatch is the root cause.
+**1. The from-scratch-vs-fine-tuning control experiment.** The Codex review does not mention fine-tuning from a pretrained checkpoint. This is the single highest-changeage unanswered question. The plan explicitly rejects pretrained BERT, but the empirical divergence record across 9 runs is evidence the hypothesis needs testing. A controlled experiment costs ~2 GPU hours and answers whether the capacity/diversity mismatch is the root cause.
 
 **2. The model capacity wall.** The Codex review describes the 9M-param model as "reasonable for address tagging." This review flags that the divergence fingerprint — loss bottoms deep, then climbs to a confident-wrong degenerate minimum — is consistent with a model hitting a capacity wall where memorization is more stable than generalization. spaCy's analogous Japanese NER model uses 110M params (12× larger). The task IS narrower, but the loss surface instability across 9 runs suggests the current capacity may be insufficient for stable training from scratch.
 

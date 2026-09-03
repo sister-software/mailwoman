@@ -62,7 +62,7 @@ import type { GauntletCaseTable } from "mailwoman/eval-harness/gauntlet/schema"
 import type { GeocodeRun, GeocodeTrace } from "mailwoman/geocode"
 
 import {
-	COUNTERFACTUAL_LEVERS,
+	COUNTERFACTUAL_SETTINGS,
 	COUNTERFACTUAL_MOVED_KM,
 	runCounterfactuals,
 	type CounterfactualTarget,
@@ -93,9 +93,9 @@ const SHAPE_ID_CAP = 20
 /**
  * Above this many rows, counterfactuals run only on rows that matched a non-`clean` shape.
  *
- * A flip is one geocode per row per lever and the lever space is five wide, so a full board would be thousands of extra
- * resolves plus an engine build per distinct patch. Every result that applies the narrowing says so, and says that a
- * clean row's levers are then UNMEASURED rather than measured and found inert.
+ * A flip is one geocode per row per setting and the setting space is five wide, so a full board would be thousands of
+ * extra resolves plus an engine build per distinct patch. Every result that applies the narrowing says so, and says
+ * that a clean row's settings are then UNMEASURED rather than measured and found inert.
  */
 export const COUNTERFACTUAL_FULL_RUN_MAX_ROWS = 20
 
@@ -681,7 +681,7 @@ export function renderAccount(account: Omit<RowAccount, "rendered">): string {
 
 	for (const move of account.counterfactuals?.moves ?? []) {
 		parts.push(
-			`cf ${move.lever} ${move.from}→${move.to} ` +
+			`cf ${move.setting} ${move.from}→${move.to} ` +
 				(move.changed_abstention
 					? `changes abstention (now ${move.answer.lat === null ? "no coordinate" : "resolved"})`
 					: `moves ${move.moved_km!.toFixed(1)}km`)
@@ -733,26 +733,26 @@ export function aggregateByShape(
 	return out
 }
 
-export interface LeverTally {
+export interface SettingTally {
 	tried_on: number
 	moved: number
 	skipped: number
 }
 
 /**
- * Per-lever counterfactual counts: how many rows the lever was tried on, how many it moved, how many it could not apply
- * to.
+ * Per-setting counterfactual counts: how many rows the setting was tried on, how many it moved, how many it could not
+ * apply to.
  *
- * All three, always. A lever that moved nothing on forty rows and a lever that was never applicable are the same zero
- * in a moved-only table, and they are not the same fact.
+ * All three, always. A setting that moved nothing on forty rows and a setting that was never applicable are the same
+ * zero in a moved-only table, and they are not the same fact.
  */
 export function aggregateCounterfactuals(
 	accounts: ReadonlyArray<{ counterfactuals?: RowCounterfactuals | undefined }>
-): Record<string, LeverTally> {
-	const out: Record<string, LeverTally> = {}
+): Record<string, SettingTally> {
+	const out: Record<string, SettingTally> = {}
 
-	for (const lever of COUNTERFACTUAL_LEVERS) {
-		out[lever] = { tried_on: 0, moved: 0, skipped: 0 }
+	for (const setting of COUNTERFACTUAL_SETTINGS) {
+		out[setting] = { tried_on: 0, moved: 0, skipped: 0 }
 	}
 
 	for (const account of accounts) {
@@ -760,16 +760,16 @@ export function aggregateCounterfactuals(
 
 		if (!reading) continue
 
-		for (const lever of reading.levers_tried) {
-			out[lever]!.tried_on++
+		for (const setting of reading.settings_tried) {
+			out[setting]!.tried_on++
 		}
 
-		for (const skip of reading.levers_skipped) {
-			out[skip.lever]!.skipped++
+		for (const skip of reading.settings_skipped) {
+			out[skip.setting]!.skipped++
 		}
 
 		for (const move of reading.moves) {
-			out[move.lever]!.moved++
+			out[move.setting]!.moved++
 		}
 	}
 
@@ -884,7 +884,7 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 	const flipCandidates = narrowed ? accounts.filter((account) => !account.shapes.includes("clean")) : accounts
 	const eligible = new Set(flipCandidates.map((account) => account.id))
 
-	let counterfactualErrors: Array<{ id: string; lever: string; message: string }> = []
+	let counterfactualErrors: Array<{ id: string; setting: string; message: string }> = []
 
 	if (wantCounterfactuals) {
 		const { byRow, errors: flipErrors } = await runCounterfactuals(
@@ -924,14 +924,14 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 	const blindRetrieval = rows.filter((row) => row.resolved_without_recorded_lookup).length
 
 	const counterfactualSentence = !wantCounterfactuals
-		? "Counterfactuals were NOT run (counterfactuals: false), so no lever here is priced — a shape without one says " +
+		? "Counterfactuals were NOT run (counterfactuals: false), so no setting here is priced — a shape without one says " +
 			"what the pipeline did, never that it decided the answer."
 		: narrowed
 			? `Above ${COUNTERFACTUAL_FULL_RUN_MAX_ROWS} rows the sweep narrows to rows that matched a non-clean shape, ` +
-				`because a full sweep is one geocode per row per lever: ${eligible.size} of ${rows.length} row(s) ` +
-				`qualified${eligible.size === rows.length ? " — every row here did" : ""}. A clean row's levers are ` +
+				`because a full sweep is one geocode per row per setting: ${eligible.size} of ${rows.length} row(s) ` +
+				`qualified${eligible.size === rows.length ? " — every row here did" : ""}. A clean row's settings are ` +
 				"UNMEASURED in this result, not measured and found inert."
-			: `Counterfactuals ran on all ${rows.length} row(s) across the ${COUNTERFACTUAL_LEVERS.length}-lever space; a ` +
+			: `Counterfactuals ran on all ${rows.length} row(s) across the ${COUNTERFACTUAL_SETTINGS.length}-setting space; a ` +
 				`flip is reported when it moved the answer more than ${COUNTERFACTUAL_MOVED_KM}km or changed abstention.`
 
 	return {
@@ -972,7 +972,7 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 		by_shape_note:
 			"A row can match several shapes, so these counts OVERLAP and must never be summed. `n` is the whole class; " +
 			`\`row_ids\` lists at most ${SHAPE_ID_CAP} of them and \`row_ids_omitted\` says how many it left out.`,
-		counterfactual_levers: aggregateCounterfactuals(rows),
+		counterfactual_settings: aggregateCounterfactuals(rows),
 		counterfactuals_narrowed: narrowed,
 		counterfactual_errors: counterfactualErrors,
 		elapsed_ms: Date.now() - startedAt,

@@ -67,7 +67,7 @@ representation distinction the head would have needed.
 
 ## Disposition
 
-Fix is a corpus lever, filed as **#511**: a deterministic loader-level relabel pass
+Fix is a corpus change, filed as **#511**: a deterministic loader-level relabel pass
 (leading directional → `street_prefix`, trailing USPS C1 suffix from `@mailwoman/codex` →
 `street_suffix`, after augmentation, lineage-stamped). Pre-registered expectations and
 design points live on the issue. Any retrain needs operator GO per #492's standing rule.

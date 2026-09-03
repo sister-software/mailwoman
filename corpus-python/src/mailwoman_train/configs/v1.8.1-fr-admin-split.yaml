@@ -1,5 +1,5 @@
 # === v1.8.0-fr-admin-split (surpass-v1.5.0, the international admin-split run) ====================
-# Clone of v1.5.0-fr-order (the production default, model-card 4.6.0) with EXACTLY ONE added lever:
+# Clone of v1.5.0-fr-order (the production default, model-card 4.6.0) with EXACTLY ONE added change:
 # the synth-fr-admin-split slice. It teaches the model to SPLIT the département out of the locality on
 # bare/space/comma French place rows ("Thauron, Creuse" -> locality=Thauron, region=Creuse; not the
 # merged/dropped failure). The model's admin-split detector is overfit to the US "City, ST ZIP"
@@ -41,7 +41,7 @@ data:
     deepseek-kryptonite: 3.0
     synth-intersection: 1.0
     synth-german: 6.0
-    # THE #560 recovery lever: reversed-order (postcode-first) FR — teaches the post-postcode
+    # THE #560 recovery change: reversed-order (postcode-first) FR — teaches the post-postcode
     # house_number the canonical-only BAN training never showed. First-pass weight 3.0 (moderate; the
     # slice carries BOTH orders via --reversed-fraction, so it won't over-skew canonical FR). Bump if
     # the step-2000 eval shows insufficient reversed-FR signal.

@@ -38,7 +38,7 @@ The clean, unconfounded number is the **same checkpoint with the anchor off vs o
 
 It is a **partial** fix. 45.8% is well short of ~77%, so the anchor helps real and measurably but doesn't fully reverse the collapse at this pilot scale.
 
-**The per-state split is the mechanism — and points at the next lever.** Sachsen (postcodes `01xxx–09xxx`, little US collision) jumps `37.1% → 54.9%` (+17.8pp); Berlin (`10xxx`, colliding hard with US ZIPs) barely moves, `34.7% → 36.7%` (+2pp). The anchor's recovery is **gated by postcode ambiguity**: where the code pins the country it works strongly; where the posterior is a DE/US collision the uniform distribution can't decide and the model stays collapsed. Disambiguating the colliding ranges is where a full fix lives.
+**The per-state split is the mechanism — and points at the next change.** Sachsen (postcodes `01xxx–09xxx`, little US collision) jumps `37.1% → 54.9%` (+17.8pp); Berlin (`10xxx`, colliding hard with US ZIPs) barely moves, `34.7% → 36.7%` (+2pp). The anchor's recovery is **gated by postcode ambiguity**: where the code pins the country it works strongly; where the posterior is a DE/US collision the uniform distribution can't decide and the model stays collapsed. Disambiguating the colliding ranges is where a full fix lives.
 
 ## Correction: most of the "collapse" was us measuring German in the wrong order
 
@@ -82,7 +82,7 @@ Cheapest first: fix the eval (done, that's the table above), then ship the both-
 
 It un-blocks it. The German "wall" that survived three retrains — the order-extract collapse, two self-conditioning attempts, and this anchor pilot — was substantially a mirror: our eval reflecting a layout we built. The parser reads native German better than Pelias, which is the target, hit in the locale we'd written off as our worst. The caveat is that native order is the easy direction; international-order German, the out-of-distribution case, is still 45%, and the both-order retrain is what closes it. The ceiling sits far higher than the collapse let us see.
 
-## Next levers
+## Next changes
 
 - **Fix the eval, then retrain on both orders** — the de-sample renders German US-style; test native order (the Correction table) and most of the collapse is gone. Then ship the both-order extract (`synthesizeLocaleRow({ order })`) and retrain so the model handles either layout. This is the real fix; the items below are now secondary.
 - **Re-isolate the anchor on a correct eval** — the +9.9pp was measured on US-order German. Run native-order anchor-off vs anchor-on to learn what the anchor is worth once the eval isn't rendering the language wrong.

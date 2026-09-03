@@ -110,7 +110,7 @@ contradicted`), never one scalar (the Google-confirmation-levels / USPS-DPV patt
 accept/review/reject band already exists as Fellegi–Sunter's clerical band in `packages/match`).
 
 - **Rung 0 — deterministic containment** (#1717): `ancestry(winner) ∌ parsed region` is a boolean,
-  one PARENT_OF walk, no model. Kills the Weimar class. Flag-first, re-rank behind a lever,
+  one PARENT_OF walk, no model. Kills the Weimar class. Flag-first, re-rank behind a change,
   D-rule before default-on.
 - **Rung 1 — counting**: p(parent|child) as literal hierarchy-table lookups (SDValidate shape);
   smoothing only where sparsity measurably bites.
@@ -130,7 +130,7 @@ country probe + logit-lens decision depth (the model/resolver contradiction dete
 read "DE" while the resolver commits US) → channel-reliance board metric (paired-input interchange;
 ERASER sufficiency/comprehensiveness per checkpoint) → exhaustive patch-sweep tool (~1,700 sites
 per input at this depth; seconds per case) → gated: IIT country register, at most one exploratory
-SAE run. Non-levers, recorded so they are not re-proposed: hard concept bottlenecks (would have
+SAE run. Non-changes, recorded so they are not re-proposed: hard concept bottlenecks (would have
 been wrong in Weimar — flag bypass decisions, never prevent them), RRR gradient penalties,
 attention-as-explanation.
 
@@ -146,7 +146,7 @@ attention-as-explanation.
 - Run store + recorded arms (#1714) — every comparison replayable by `run_id`, which is what makes
   account-generation over past runs possible.
 - `mwdev_diagnose` v1 (#1722) — per-row accounts over the parse / evidence / retrieval / outcome
-  seams, seven mechanism-state shapes as documented predicates, the five-lever counterfactual sweep,
+  seams, seven mechanism-state shapes as documented predicates, the five-change counterfactual sweep,
   and `by_shape` aggregation. v1 reports the SET of matching shapes with each predicate attached and
   `calibration: "none"`, not the normalized posterior §4 describes — the scoring layer arrives with
   the v2 conformal calibration, which is what a posterior's numbers would have to mean.

@@ -1,4 +1,4 @@
-# === v0.9.8-affix (#452-adjacent) — street-affix coverage, the next negative-space parity lever ====
+# === v0.9.8-affix (#452-adjacent) — street-affix coverage, the next negative-space parity change ====
 # ONE conceptual variable vs v0.9.7-unit-v3 (the shipped v4.1.0): the corpus adds a 50K format-diverse
 # street-affix slice (OA streets split into street_prefix/street/street_suffix via the USPS Pub-28
 # C1/C2 codex) and `synth-affix: 2.0` to source_weights. Corpus v0.4.6-affix = v0.4.5-unit-v2 base

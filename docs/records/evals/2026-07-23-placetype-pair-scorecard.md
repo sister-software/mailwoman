@@ -315,7 +315,7 @@ applies to both candidates and was not part of the original six pre-registered g
 The Gauntlet finding above was not left open indefinitely: the operator authorized ONE
 pre-registered repair attempt per the arc's treadmill guard, `v3.11.1-deploc-consolidate` — resume
 feed-8k +2k steps at a damped classifier learning rate, targeting the comma-drop regression
-mechanistically (the resurrection lever that likely over-fit the comma-structured dep-loc extracts).
+mechanistically (the resurrection change that likely over-fit the comma-structured dep-loc extracts).
 
 **CONSOLIDATION VERDICT: NOT CLEAN.** The comma-drop break is byte-identical between the 8k and
 10k checkpoints — a stable learned behavior, not training-run churn that a couple more steps would

@@ -152,7 +152,7 @@ export interface PairIndexHeader {
 	/**
 	 * OPTIONAL per-country transition-bonus magnitude (TRANSITION-BETA build, 2026-07-24): on a pair hit, the prior emits
 	 * a position-scoped decoder adjustment of `+transitionBeta` on every transition INTO `B-<tag>` at the child span's
-	 * first piece — the path-fusion recovery lever the task-8 transition-level probe measured (β=5: 13/17 comma-free GB
+	 * first piece — the path-fusion recovery change the task-8 transition-level probe measured (β=5: 13/17 comma-free GB
 	 * misses recovered, zero measured collateral on 47 correct rows + 200 venue-confound rows). ABSENT = no transition
 	 * term at all (today's emission-only behavior) — backward compatible (old binaries lack the field and keep working)
 	 * AND forward compatible (old readers parse the header JSON and simply never consult the extra key; optional fields

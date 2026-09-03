@@ -53,7 +53,7 @@ data:
 
 model:
   # Architecture unchanged from v0.2.0 — the CRF layer adds <500 scalars, negligible.
-  # Hidden size bump would be the v0.4.0 lever if F1 still bottlenecks.
+  # Hidden size bump would be the v0.4.0 change if F1 still bottlenecks.
   hidden_size: 256
   num_hidden_layers: 6
   num_attention_heads: 4

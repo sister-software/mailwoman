@@ -10,7 +10,7 @@
 #   - lr 5e-5 cosine->0 over 40k, 2k warmup: 3x lower than v0.7.2's constant 1.5e-4 to avoid washing
 #     out the pretrained features (catastrophic forgetting); shorter (40k vs 100k) because a
 #     pretrained encoder adapts fast.
-#   - label_smoothing 0.1: shared calibration lever on BOTH arms.
+#   - label_smoothing 0.1: shared calibration change on BOTH arms.
 #   - CRF OFF (crf_loss_weight 0.0): matches what trained stably; avoids the CRF-under-bf16 NaN.
 #   - corpus v0.4.0 + source_weights + augmentation: the v0.7.2 supervised recipe (the labeled task),
 #     so the comparison reflects the parser the product actually uses.
@@ -67,7 +67,7 @@ model:
   # contribute to the loss. Avoids the CRF-under-bf16 NaN that disabled it in v0.7.2.
   crf_loss_weight: 0.0
   crf_normalization: per_sequence
-  # Shared calibration lever (both arms). v0.7.2 used 0.0.
+  # Shared calibration change (both arms). v0.7.2 used 0.0.
   label_smoothing: 0.1
   class_weights:
     O: 0.5

@@ -19,7 +19,7 @@
 #      Training AND inference painting — one computation, no skew.
 #   2. Feed: synth-po-box-cedex 1.5→1.75 (share parity vs v385; the bundle-less feed control read
 #      fr.cedex 79.8 / us.street 77.4 — BOTH deploc-feed deficits, independent of the bundle).
-#   HELD BACK (pre-registered next lever, NOT in this run): evidence-noise curriculum (paint false
+#   HELD BACK (pre-registered next change, NOT in this run): evidence-noise curriculum (paint false
 #   evidence at rate p to teach discounting) — deployed only if the fed-vs-ablated golden gap
 #   survives the v5 retrain.
 #
@@ -112,7 +112,7 @@ data:
     # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
-    # Track B — the NO house-number-licence lever. 12.0 = the targeted-fix tier
+    # Track B — the NO house-number-licence change. 12.0 = the targeted-fix tier
     # (matches fr-fragment). Bare streets + street+number with NO postcode partner, + counters.
     synth-no-fragment: 12.0
     synth-gb: 10.0 # FEED: 6.1% stream × .328 dep-loc (probe-2 had this at 20.2% — the skew culprit)

@@ -1,6 +1,6 @@
 # #727 span-head arc — night-2 runbook (post-fork)
 
-**Why now:** the fragment campaign's data levers exhausted at the twin↔US-recall trade (treadmill
+**Why now:** the fragment campaign's data changes exhausted at the twin↔US-recall trade (treadmill
 fork, `2026-07-13-day-parity-campaign-fork.md`, #1102). Two residual classes have #727's shape:
 boundary placement (street absorbing trailing digit-tokens; digit-piece fertility) and the
 bare-name polarity bind (context-free tag assignment is a capacity fight under flat BIO). The
@@ -28,7 +28,7 @@ messy input) points at structured span prediction.
    and free — but the residual is NOT weight- or duration-limited. The 2 stubborn cases are
    multi-boundary (region between a postcode and a street), which start/end pressure alone can't
    resolve; that is genuinely FSemi-CRF territory.
-2. **FSemi-CRF head** — the confirmed next arc (stage-1 exhausted the cheap lever). The full #727
+2. **FSemi-CRF head** — the confirmed next arc (stage-1 exhausted the cheap change). The full #727
    design: span enumeration + filtered semi-Markov decode, so the model scores whole (start, end,
    type) spans instead of per-token tags. Architecture change: new export path, #378 browser-SLO
    check, capability-manifest rework — a deliberate multi-night arc, not a probe. Keep the stage-1

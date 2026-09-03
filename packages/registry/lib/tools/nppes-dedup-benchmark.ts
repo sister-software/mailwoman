@@ -21,7 +21,7 @@
  *   alternate name, so every entity has ≥2 records and the dedup is non-trivial. Streams the 4.8 GB
  *   registry via `streamRows` (#616), so nothing loads whole.
  *
- *   The stages live in `./nppes/`: the sample, the scorer, the truth grains, the lever progression,
+ *   The stages live in `./nppes/`: the sample, the scorer, the truth grains, the setting progression,
  *   the adjudication packet, and the report. This file is the orchestration — read it for the order
  *   of operations, the modules for what each stage does.
  *
@@ -45,11 +45,11 @@ import {
 	type SourceRecord,
 } from "#index"
 import type { EvalGeocodeStream, EvalGeocoderFactory } from "#tools/eval-geocoder"
-import { buildLevers } from "#tools/nppes/levers"
 import { writeOvermergePacket } from "#tools/nppes/overmerge-packet"
 import { renderNPPESDedupReport, type SweepArm } from "#tools/nppes/report"
 import { buildNPPESSample } from "#tools/nppes/sample"
 import { scoreEntities, type Score } from "#tools/nppes/scoring"
+import { buildSettings } from "#tools/nppes/settings"
 import {
 	buildOrgNameCoordGrain,
 	buildOrgNameGrain,
@@ -237,23 +237,23 @@ export async function nppesDedupBenchmark(
 	const H3_RES = options.h3Res ?? 11 // res 11 ≈ 25 m edge; res 10 ≈ 65 m (block scale)
 	const orgNameH3Label = buildOrgNameH3Grain(npiPrimary, npiCoord, H3_RES)
 
-	// --- Phase D: the comparison-model lever progression — toggle each lever ON in turn at the default
+	// --- Phase D: the comparison-model setting progression — toggle each setting ON in turn at the default
 	// threshold to isolate its marginal effect, then sweep the link threshold on the best config (geocode
 	// once, resolve many — config is cheap). ---
-	report?.(`[D] resolving the lever progression${TRAIN_EM ? " (EM-trained)" : ""}…`)
+	report?.(`[D] resolving the setting progression${TRAIN_EM ? " (EM-trained)" : ""}…`)
 
-	// learnedScorer:false throughout — this benchmark studies the FS COMPARISON-MODEL levers (#617/#625).
+	// learnedScorer:false throughout — this benchmark studies the FS COMPARISON-MODEL settings (#617/#625).
 	// The learned scorer is now default-on, so it must be pinned off here or every row would silently be the
 	// GBT; the learned scorer is measured separately (learned-scorer-clustering-eval / -crossstate-eval).
-	const progression = buildLevers(addressFrequency).map((l) => {
+	const progression = buildSettings(addressFrequency).map((l) => {
 		const res = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0, ...l.config })
 
 		return { ...l, res, score: score(res.entities, npiLabel) }
 	})
 
-	const bestLever = progression.at(-1)! // the full lever stack
+	const bestSetting = progression.at(-1)! // the full setting stack
 
-	// The SHIPPED out-of-box default (#86): no lever config at all → resolveEntities auto-computes an
+	// The SHIPPED out-of-box default (#86): no setting config at all → resolveEntities auto-computes an
 	// input-scoped address-frequency table + collapsed spatial. On this deliberately-sub-sampled corpus the
 	// auto table is sparse (few repeats), so the inverse-frequency signal is near-inert and F1 collapses to
 	// ≈baseline — NOT a regression, just the honest truth that IDF is a corpus statistic you can't synthesize
@@ -265,12 +265,17 @@ export async function nppesDedupBenchmark(
 	const THRESHOLDS = [0, 4, 8, 12, 16, 20]
 
 	const sweep: SweepArm[] = THRESHOLDS.map((t) => {
-		const res = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: t, ...bestLever.config })
+		const res = resolveEntities(records, {
+			learnedScorer: false,
+			trainEM: TRAIN_EM,
+			threshold: t,
+			...bestSetting.config,
+		})
 
 		return { t, res, score: score(res.entities, npiLabel) }
 	})
 
-	const base = sweep[0]! // threshold 0, full lever stack
+	const base = sweep[0]! // threshold 0, full setting stack
 	let best = sweep[0]!
 
 	for (const arm of sweep) {
@@ -289,20 +294,20 @@ export async function nppesDedupBenchmark(
 
 	// --- Phase F: NPI-level vs ENTITY-level truth. Score the SAME clusters against both yardsticks to
 	// reveal how much of the apparent over-merge is NPI over-segmentation (one org / many subpart-NPIs,
-	// where merging is CORRECT) rather than model error. Two production configs: the FS full lever stack
+	// where merging is CORRECT) rather than model error. Two production configs: the FS full setting stack
 	// and the shipped default (GBT, default-on) — each fed the corpus-wide address-frequency table. ---
 	const entityCount = new Set(records.map((r) => entityLabel(r))).size
 	const orgCount = new Set(records.map((r) => orgNameLabel(r))).size
-	const fsNPI = bestLever.score
-	const fsEntity = score(bestLever.res.entities, entityLabel)
-	const fsOrg = score(bestLever.res.entities, orgNameLabel)
+	const fsNPI = bestSetting.score
+	const fsEntity = score(bestSetting.res.entities, entityLabel)
+	const fsOrg = score(bestSetting.res.entities, orgNameLabel)
 	const gbtRes = resolveEntities(records, { addressFrequency, trainEM: TRAIN_EM }) // GBT default-on (production)
 	const gbtNPI = score(gbtRes.entities, npiLabel)
 	const gbtEntity = score(gbtRes.entities, entityLabel)
 	const gbtOrg = score(gbtRes.entities, orgNameLabel)
 	// Tier 2D: the coordinate-co-location org-name truth (tighter lower bound).
 	const orgCoordCount = new Set(records.map((r) => orgNameCoordLabel(r))).size
-	const fsOrgCoord = score(bestLever.res.entities, orgNameCoordLabel)
+	const fsOrgCoord = score(bestSetting.res.entities, orgNameCoordLabel)
 	const gbtOrgCoord = score(gbtRes.entities, orgNameCoordLabel)
 	// #109: the H3-cell co-location truth — a robustness check on the haversine coord-grain.
 	const orgH3Count = new Set(records.map((r) => orgNameH3Label(r))).size

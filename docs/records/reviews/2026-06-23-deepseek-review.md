@@ -1,14 +1,14 @@
 # Mailwoman project review — `feat/geonames-postcode-coverage`
 
-**Date:** 2026-06-23 · **Branch:** `feat/geonames-postcode-coverage` (6 commits ahead of main) · **Scope:** full project survey with emphasis on the branch's eval tooling, resolver levers, data pipeline, and open strategic questions.
+**Date:** 2026-06-23 · **Branch:** `feat/geonames-postcode-coverage` (6 commits ahead of main) · **Scope:** full project survey with emphasis on the branch's eval tooling, resolver changes, data pipeline, and open strategic questions.
 
 ---
 
 ## Overview
 
-This branch carries a cluster of work that takes mailwoman from "the US champion" to "competitive in Europe." It ships ~925 lines across 11 files: two resolver levers (span-rescore recovery + postcode-consistency disambiguation), a GGeonames-to-SQLite postcode extract builder, a 3-way competitive benchmark harness (mailwoman vs Nominatim vs Pelias), a failure-mode classifier, an AU word-order probe, and the blog post + demo wiring that makes the levers visible.
+This branch carries a cluster of work that takes mailwoman from "the US champion" to "competitive in Europe." It ships ~925 lines across 11 files: two resolver changes (span-rescore recovery + postcode-consistency disambiguation), a GGeonames-to-SQLite postcode extract builder, a 3-way competitive benchmark harness (mailwoman vs Nominatim vs Pelias), a failure-mode classifier, an AU word-order probe, and the blog post + demo wiring that makes the changes visible.
 
-The headline: with both levers active, mailwoman leads Nominatim and Pelias on the @25km right-area metric across a 7-locale EU+AU panel (90.0%), from a 30 MB browser model with no Elasticsearch. The star is Europe: mailwoman 94.2% vs Nominatim 78%, Pelias 89%. Australia is the open problem (65% vs Nominatim 97%), now characterized as a word-order training-data gap, not a capability deficit.
+The headline: with both changes active, mailwoman leads Nominatim and Pelias on the @25km right-area metric across a 7-locale EU+AU panel (90.0%), from a 30 MB browser model with no Elasticsearch. The star is Europe: mailwoman 94.2% vs Nominatim 78%, Pelias 89%. Australia is the open problem (65% vs Nominatim 97%), now characterized as a word-order training-data gap, not a capability deficit.
 
 ---
 
@@ -40,17 +40,17 @@ A clean, honest competitive benchmark. Key design decisions that are correct:
 - **Identical inputs.** Same raw OA address strings, same country hint for all three systems.
 - **Two-axis reporting.** Resolve-rate (the denominator) AND conditional median error (among resolved rows) are reported separately — prevents lumping "half the rows failed but the rest were perfect" into one misleading number.
 - **Pelias is country-scoped** for this run (previously unscoped, which understated it by allowing wrong-country matches).
-- **`--span-rescore` grades base + lever from a single parse.** The model parses once; both `resolveTree(spanRescore:false)` and `resolveTree(spanRescore:true)` are run from `structuredClone(tree)`. Independent, not serial.
+- **`--span-rescore` grades base + change from a single parse.** The model parses once; both `resolveTree(spanRescore:false)` and `resolveTree(spanRescore:true)` are run from `structuredClone(tree)`. Independent, not serial.
 
 The blog post (`docs/research/2026-06-23-we-graded-ourselves-against-the-incumbents.mdx`) is draft (`draft: true`) but publication-ready narrative quality. It accurately characterizes the centroid-vs-rooftop trade, the AU drag, and the two-fix story.
 
-### 3. `#370` Lever A — postcode-disambiguated locality selection
+### 3. `#370` Change A — postcode-disambiguated locality selection
 
 **`a113506b`** — `core/resolver/postcode-consistency.test.ts` (93 lines), `core/resolver/resolve.ts` (+85 lines), `core/resolver/types.ts` (+13 lines)
 
 The single biggest miss class on the EU panel: a same-named town resolved to the WRONG instance while the postcode that would disambiguate it sits resolved in the same tree. Example: "06260 Saint-Pierre" lands 617 km off because the resolver picked the Saint-Pierre in Vendée, not the one in Alpes-Maritimes — despite postcode 06260 resolving correctly.
 
-The lever is backend-agnostic. After the admin resolution walk, it finds the resolved postcode anchor, then walks every resolved locality/dependent_locality node. For each one farther than `gateKm` (default 50 km) from the postcode, it re-picks from the node's already-captured `alternatives` (the runner-up gazetteer candidates `decorateNode` stored). Falls back to the postcode point if no alternative reconciles, flagging `postcode_city_mismatch`.
+The change is backend-agnostic. After the admin resolution walk, it finds the resolved postcode anchor, then walks every resolved locality/dependent_locality node. For each one farther than `gateKm` (default 50 km) from the postcode, it re-picks from the node's already-captured `alternatives` (the runner-up gazetteer candidates `decorateNode` stored). Falls back to the postcode point if no alternative reconciles, flagging `postcode_city_mismatch`.
 
 **Code quality:**
 
@@ -74,17 +74,17 @@ This is the most architecturally disciplined piece on the branch.
 - Longest-exact-match-wins was proven superior to shortest-wins by the falsifier (`span-rescore-validate.ts`): gold-match 49→71%, p50 5.7→3.0 km.
 - The `rescore_gated` metadata flag (boolean) is kept SEPARATE from calibrated confidence. DeepSeek consulted: folding it would break the ECE 0.0055 isotonic guarantee. A consumer thresholds on `metadata.rescore_gated` explicitly instead of inheriting a hidden per-country coverage map. This is correct.
 - The `#685` brake (`hasResolvedPlace`) prevents the recovery from firing on an already-resolved tree — no second-guessing a working coordinate.
-- Default-off in the library; the demo opts the lever ON (user-visible recovery is better than silence). The demo labels ungated recoveries "unverified" — the precision signal surfaced honestly.
+- Default-off in the library; the demo opts the change ON (user-visible recovery is better than silence). The demo labels ungated recoveries "unverified" — the precision signal surfaced honestly.
 
 **`core/resolver/span-rescore.test.ts`** (151 lines, 8 tests) — recovery, longest-wins, postcode gate acceptance, gate rejection, confident-span skip, `hasResolvedPlace`, resolveTree injection, byte-stable-when-unset. The fixture backend pattern (a tiny in-memory gazetteer with exact-normalized-name matching) is clean and sufficient for the logic under test.
 
 **`core/resolver/resolve.ts`** — `applySpanRescore` integrates the recovery into the resolveTree path, hooked after the addressPoint/interpolation tiers. The integration is surgically simple: if `spanRescore` is set and the tree is empty (`!hasResolvedPlace`), call `findRescoreCandidate` and inject the result via `decorateNode`. 39 lines.
 
-### 5. Lever B — extend GeoNames postcode fill to PT/AU/AT
+### 5. Change B — extend GeoNames postcode fill to PT/AU/AT
 
 **`7190ad4c`**
 
-Extends the `#193` extract builder to PT, AU, AT. The benchmark's failure dump showed that Italy hit ceiling (Lever A alone fixed all its same-name-town misses) but PT/AU/AT still had the postcode-coverage gap — Lever A can't fire without a resolved postcode anchor. With both levers: AU 35→65 (+30pp), PT 78→88 (+10pp), AT 73→87 (+14pp).
+Extends the `#193` extract builder to PT, AU, AT. The benchmark's failure dump showed that Italy hit ceiling (Change A alone fixed all its same-name-town misses) but PT/AU/AT still had the postcode-coverage gap — Change A can't fire without a resolved postcode anchor. With both changes: AU 35→65 (+30pp), PT 78→88 (+10pp), AT 73→87 (+14pp).
 
 ### 6. AU word-order diagnosis
 
@@ -98,16 +98,16 @@ This is the German v0.9.2 artifact again — same root cause, different locale.
 
 ## Architecture observations
 
-### The resolver lever pattern is maturing well
+### The resolver change pattern is maturing well
 
-The three levers on this branch — `spanRescore`, `postcodeConsistency`, `addressPoints` — all follow the same disciplined contract:
+The three changes on this branch — `spanRescore`, `postcodeConsistency`, `addressPoints` — all follow the same disciplined contract:
 
 1. **Default-off + byte-stable when unset.** No change to existing behavior without an explicit opt-in.
-2. **Flag + gate-km pair.** Each lever has a boolean toggle and a tunable distance gate.
+2. **Flag + gate-km pair.** Each change has a boolean toggle and a tunable distance gate.
 3. **No extra queries.** `postcodeConsistency` reuses the node's already-captured `alternatives`; `spanRescore` runs exact-match queries that are cheap against the gazetteer.
 4. **Tests cover: on/off, corner cases, byte-stability.** The 8 + 5 new tests keep the pattern.
 
-This is a maintainable extension surface. The risk is flag proliferation — each new lever adds two options to `ResolveOpts`. At 4 levers (addressPoints, interpolation, spanRescore, postcodeConsistency), the API is still manageable. Beyond 6–7, consider a `levers: ResolverLever[]` enum-bundle or a policy-driven resolver config.
+This is a maintainable extension surface. The risk is flag proliferation — each new change adds two options to `ResolveOpts`. At 4 changes (addressPoints, interpolation, spanRescore, postcodeConsistency), the API is still manageable. Beyond 6–7, consider a `changes: ResolverChange[]` enum-bundle or a policy-driven resolver config.
 
 ### haversineKm duplication
 
@@ -132,7 +132,7 @@ The branch ships four eval scripts that form a coherent diagnostic pipeline:
 | `au-order-probe.ts`        | Quantify word-order ceiling             | OA AU goldens |
 | `span-rescore-e2e.ts`      | A/B the flag on/off through resolveTree | OA goldens    |
 
-This is a mature eval posture: start with a benchmark, classify the failures, drill into the worst locale's root cause, verify the fix end-to-end. The failure classifier's taxonomy (`EMPTY_postcode-parsed-unresolved`, `WRONG_locality_postcode-AVAILABLE`, `EMPTY_no-place-tag-parsed`, etc.) is directly actionable — each bucket names a lever.
+This is a mature eval posture: start with a benchmark, classify the failures, drill into the worst locale's root cause, verify the fix end-to-end. The failure classifier's taxonomy (`EMPTY_postcode-parsed-unresolved`, `WRONG_locality_postcode-AVAILABLE`, `EMPTY_no-place-tag-parsed`, etc.) is directly actionable — each bucket names a change.
 
 ### Demo wiring is appropriately cautious
 
@@ -155,7 +155,7 @@ The issue queue relevant to this branch's work:
 | **#735** — national US street tier (50-state situs+interp)       | US rooftop beyond CA/NY/MI/DC — the precision gap behind the @1km numbers.                                                                                      | Open                     |
 | **#531** — typo-tolerant retrieval (FTS edit-distance-1)         | Relevant to span-rescore: the recovery does EXACT match only; a 1-character typo kills it.                                                                      | Open                     |
 | **#208** — G-NAF ingest (AU training data)                       | Directly blocks the AU word-order fix. The ceiling is measured (+22pp); the data is the blocker.                                                                | Not visible in open list |
-| **PR #782** — demo span-rescore                                  | Demo wiring of the span-rescore lever. Open, waiting deploy-preview verification.                                                                               | Open PR                  |
+| **PR #782** — demo span-rescore                                  | Demo wiring of the span-rescore change. Open, waiting deploy-preview verification.                                                                              | Open PR                  |
 
 The issues that are ALREADY SHIPPED but still open (a recurring pattern in this repo — see the night-shift postmortem's "4× verify-before-building confirmed: several 'open' issues can be closed"): none directly on this branch, but #370 (the parent span-rescore issue) is still open despite substantial shipped work. The issue body describes the parse↔resolve rescoring loop, which is a broader concept than the implemented span-rescore. The shipped work (raw-text recovery) is one slice of it. Consider updating #370's body or creating a sub-issue to track what's done vs what remains.
 
@@ -173,7 +173,7 @@ The benchmark harness supports `--messy` (drops commas, abbreviates street words
 
 ### 3. AU's root cause is characterized but the fix path has a dependency gap
 
-The AU order probe (`scripts/eval/au-order-probe.ts`) conclusively shows the model CAN parse AU addresses — it just needs them in canonical order. The ceiling is +22pp. The fix is AU-native-order training data (#208 G-NAF). But G-NAF isn't in the corpus pipeline yet, and the issue isn't visible in the open queue. This is the highest-ROI single lever on the board (would lift all-panel from ~90 to ~93 and flip AU from trailing Pelias to competitive), and it lacks a tracked next step.
+The AU order probe (`scripts/eval/au-order-probe.ts`) conclusively shows the model CAN parse AU addresses — it just needs them in canonical order. The ceiling is +22pp. The fix is AU-native-order training data (#208 G-NAF). But G-NAF isn't in the corpus pipeline yet, and the issue isn't visible in the open queue. This is the highest-ROI single change on the board (would lift all-panel from ~90 to ~93 and flip AU from trailing Pelias to competitive), and it lacks a tracked next step.
 
 ### 4. haversineKm duplication is technical debt
 
@@ -185,7 +185,7 @@ Five copies across core and scripts. Consolidate to `core/spatial/haversine.ts` 
 
 ### 6. The failure-dump classifier conflates two distinct "postcode-available" cases
 
-`classify()` returns `WRONG_locality_postcode-AVAILABLE` when a postcode resolved AND the best coordinate came from a non-postcode placetype. But this bucket includes both "Lever A would fix this" (wrong locality instance, postcode anchor present) and "coordinate is from a street/address but wrong" (postcode is present but the error is elsewhere). Splitting this into `WRONG_locality_postcode-AVAILABLE` (locality-placed, far from postcode) and `WRONG_non-locality_postcode-AVAILABLE` (street/address-placed, postcode present but not the error) would make the lever targeting even sharper. Low priority; the current classifier is already good enough to drive lever decisions.
+`classify()` returns `WRONG_locality_postcode-AVAILABLE` when a postcode resolved AND the best coordinate came from a non-postcode placetype. But this bucket includes both "Change A would fix this" (wrong locality instance, postcode anchor present) and "coordinate is from a street/address but wrong" (postcode is present but the error is elsewhere). Splitting this into `WRONG_locality_postcode-AVAILABLE` (locality-placed, far from postcode) and `WRONG_non-locality_postcode-AVAILABLE` (street/address-placed, postcode present but not the error) would make the change targeting even sharper. Low priority; the current classifier is already good enough to drive change decisions.
 
 ### 7. The GeoNames extract builder has no test but follows the repo convention
 
@@ -197,25 +197,25 @@ Five copies across core and scripts. Consolidate to `core/spatial/haversine.ts` 
 
 ### Where the project is
 
-Mailwoman is now competitive with (and on Europe, ahead of) the incumbents on the right-area metric, from a 30 MB browser model. The centroid-vs-rooftop precision gap at @1km is real but stated honestly. The project has a mature eval pipeline: benchmark → classify → drill-down → fix → re-benchmark. The resolver lever pattern is disciplined and reproducible.
+Mailwoman is now competitive with (and on Europe, ahead of) the incumbents on the right-area metric, from a 30 MB browser model. The centroid-vs-rooftop precision gap at @1km is real but stated honestly. The project has a mature eval pipeline: benchmark → classify → drill-down → fix → re-benchmark. The resolver change pattern is disciplined and reproducible.
 
 ### What blocks the next tier
 
-1. **AU word-order** — highest ROI lever, measured ceiling +22pp, blocked on G-NAF training data (#208).
-2. **AT postcode coverage** — GeoNames has 18,937 AT rows; the gazetteer has 809. Same lever as PL/CZ, just not yet run.
+1. **AU word-order** — highest ROI change, measured ceiling +22pp, blocked on G-NAF training data (#208).
+2. **AT postcode coverage** — GeoNames has 18,937 AT rows; the gazetteer has 809. Same change as PL/CZ, just not yet run.
 3. **Rooftop precision** — the 50-state US street tier (#735) and interpolation coverage are the path from @25km parity to @1km competitiveness.
 4. **Span-rescore v2** — always-recover + fitted calibration dissolves the flag, makes the recovery transparent to consumers.
 
 ### What's healthy
 
 - The eval discipline: benchmark → classify → drill-down → fix. No hunch-driven work.
-- The resolver lever contract: default-off, byte-stable, tested, measured before promotion.
+- The resolver change contract: default-off, byte-stable, tested, measured before promotion.
 - The honesty about limitations: centroid-vs-rooftop, AU drag, @1km gap — all stated directly.
 - The blog voice: technical, self-critical, doesn't flatter.
 
 ### What needs attention
 
-- #208 (G-NAF) needs to be tracked visibly — it's the highest-ROI lever with no open issue.
+- #208 (G-NAF) needs to be tracked visibly — it's the highest-ROI change with no open issue.
 - The blog post should be un-drafted and published.
 - haversineKm consolidation (low priority, consistency cleanup).
 - The `alternatives` type-cast documentation (low priority, defensive).
@@ -224,6 +224,6 @@ Mailwoman is now competitive with (and on Europe, ahead of) the incumbents on th
 
 ## Bottom line
 
-The branch ships measured, honest improvements that take mailwoman from "US champion" to "European competitive." The code is disciplined: every lever is default-off, byte-stable, tested, and validated against real coordinates before promotion. The eval tooling is a pipeline, not a collection of scripts. The remaining gaps — AU word-order, AT postcode coverage, rooftop precision — are all characterized with measured ceilings and named next steps.
+The branch ships measured, honest improvements that take mailwoman from "US champion" to "European competitive." The code is disciplined: every change is default-off, byte-stable, tested, and validated against real coordinates before promotion. The eval tooling is a pipeline, not a collection of scripts. The remaining gaps — AU word-order, AT postcode coverage, rooftop precision — are all characterized with measured ceilings and named next steps.
 
 The project is in good shape. The highest-value next action is unblocking the AU fix (G-NAF training data) and publishing the incumbent-comparison blog post. The centroid-vs-rooftop trade is the honest framing; don't let marketing pressure blur it.

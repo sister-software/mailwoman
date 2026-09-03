@@ -7,7 +7,7 @@
 >   0.90/0.97 parse-tag floor.
 > - **#2 demote vs delete →** **delete** won; the hybrid swap gate was rejected. The rules parser was
 >   deleted in plan 4 (#1151, −9650 LOC); seal tag `legacy-rules-final` @ fd48c21c.
-> - **#3 which model lever →** all three pursued: the **FSemi-CRF span head shipped** (v3.10.1, the
+> - **#3 which model change →** all three pursued: the **FSemi-CRF span head shipped** (v3.10.1, the
 >   #727 arc — phase-4c name-evidence rerank now default-on), the **PT/RO diacritic splice** landed
 >   (v391), and **digit-atomicity** was characterized and closed (v381 / v6.5.0).
 >
@@ -122,7 +122,7 @@ fragment/edge-case-heavy, so the tail is smaller on real drop-in traffic than th
   point)." So the hybrid **contradicts the option-A delete spec**. This is a spec-level decision that
   is yours, not mine, and I stopped before wiring it.
 
-## Levers considered and NOT committed to
+## Changes considered and NOT committed to
 
 - **digit-atomicity tokenizer splice.** Probe confirmed the _cause_: the tokenizer splits multi-digit
   numbers per-digit (`810`→`▁8 1 0`), so the boundary can fall inside a number. [measured] But I have
@@ -146,7 +146,7 @@ fragment/edge-case-heavy, so the tail is smaller on real drop-in traffic than th
 2. **Is demote-with-fallback acceptable, or is delete non-negotiable?** If delete is firm, the hybrid
    gate is off the table and the path is model investment (FSemi-CRF / PT-RO splice / digit work) to
    carry the failing classes outright.
-3. **If we invest in the model, which lever first** — FSemi-CRF (literature-backed, multi-night), a
+3. **If we invest in the model, which change first** — FSemi-CRF (literature-backed, multi-night), a
    PT/RO diacritic splice (fills a confirmed coverage gap), or a digit-atomicity probe (validate the
    fix before the retrain)?
 

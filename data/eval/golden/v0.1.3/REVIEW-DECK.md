@@ -8,7 +8,7 @@
 > ambiguous token to the name. Semantically odd remainders (`High Manor`, `East`) stand: the parse reflects
 > authoritative segmentation (Pub-28/TIGER), not human intuition, and the formatter is lossless. The model's
 > 125-row over-greed is therefore a SUFFIX-BOUNDARY error (recognition is fine; the span extends too far) —
-> tracked with its training lever in the next-run notes.
+> tracked with its training change in the next-run notes.
 
 Rows are deduped to the top-level files (`dev/` and `test/` carry the same rows).
 A flag is a REVIEW TRIGGER, not an adjudication: the split below is already applied.

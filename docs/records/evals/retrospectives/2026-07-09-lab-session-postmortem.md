@@ -12,10 +12,10 @@ lost its `é` at the parser, missed a rooftop the data held, and rendered as a l
 
 ## Shipped
 
-| release    | contents                                                                                                                                                                                                                                                                 |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **v5.8.0** | #1012 BAN FR address-point tier (26M rooftops, @1km 37.4→87.9% in-BAN, Nominatim-independent 13/14 <200 m); #1023 namesake fix; first publish of `@mailwoman/ban` (OIDC can't create packages — operator one-time token publish + trusted-publisher config, then CI)     |
-| **v5.9.0** | **v241 model promotion**: `v2.4.1-fr-nsplice-ft` (init_from fine-tune on the `v0.8.0-fr-nsplice` spliced tokenizer) + #1046 street-centroid tier (2.2M streets derived from the sealed BAN artifact, voies 0/8→7/8) + #1043 house-grade decoration + #1047/#1048 tooling |
+| release    | contents                                                                                                                                                                                                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v5.8.0** | #1012 BAN FR address-point tier (26M rooftops, @1km 37.4→87.9% in-BAN, Nominatim-independent 13/14 under 200 m); #1023 namesake fix; first publish of `@mailwoman/ban` (OIDC can't create packages — operator one-time token publish + trusted-publisher config, then CI) |
+| **v5.9.0** | **v241 model promotion**: `v2.4.1-fr-nsplice-ft` (init_from fine-tune on the `v0.8.0-fr-nsplice` spliced tokenizer) + #1046 street-centroid tier (2.2M streets derived from the sealed BAN artifact, voies 0/8→7/8) + #1043 house-grade decoration + #1047/#1048 tooling  |
 
 v241 gate table (full version on #444): mangle 23.5→**17.7%** int8, Honoré+René fixed, held-out
 FR z=+0.90 / US z=+0.29, non-FR drift ~0. Training: 12k steps, constant lr 5e-5, ~33 min A100.
@@ -24,7 +24,7 @@ FR z=+0.90 / US z=+0.29, non-FR drift ~0. Training: 12k steps, constant lr 5e-5,
 
 1. **#1039 LocaleHint-as-country-prior** — locale-gate is script+postcode by design; `en-US/0.30`
    fallback on 34/36 no-postcode-tail inputs. Wiring it would be inert-to-harmful. Surviving
-   levers: street-type-morphology prior, confidence floor.
+   changes: street-type-morphology prior, confidence floor.
 2. **Training-free FR vocab-splice (#444/#1047)** — mean-init inherits `é`'s strongly-trained
    O-signal; mangle got WORSE (23.5→26.4%). Prior art (#884/#912) held only under weak-diacritic
    conditions. The falsification specified the fine-tune that then shipped.

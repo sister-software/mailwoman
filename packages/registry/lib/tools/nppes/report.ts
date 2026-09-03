@@ -20,9 +20,9 @@ import { pct } from "#tools/shared"
 const BLOCKING_PARITY_TOLERANCE = 0.015
 
 /**
- * One row of the lever progression, scored at the default threshold.
+ * One row of the setting progression, scored at the default threshold.
  */
-export interface LeverScore {
+export interface SettingScore {
 	label: string
 	score: Score
 }
@@ -59,9 +59,9 @@ export interface NPPESReportInput {
 	 */
 	addressFrequency: TermFrequencyTable
 	/**
-	 * The lever progression in order. The first row is the bare baseline, the last the full stack.
+	 * The setting progression in order. The first row is the bare baseline, the last the full stack.
 	 */
-	progression: readonly LeverScore[]
+	progression: readonly SettingScore[]
 	/**
 	 * Zero-config `resolveEntities(records)` — reported apart from the progression because its address-frequency table is
 	 * input-scoped, which on a sub-sample is intentionally sparse.
@@ -129,12 +129,12 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 		geocodedNpis,
 	} = input
 
-	const baseline = progression[0]! // no levers — the prior-prior behaviour
+	const baseline = progression[0]! // no settings — the prior-prior behaviour
 	// The LAST progression row — the whole A1–A5 stack, never compared on F1 against the others. Named for what it
-	// is: a row called `best` invites reading a stack-wide delta as one lever's marginal effect, which is how the
-	// authorized-official sentence below came to quote a five-lever number.
+	// is: a row called `best` invites reading a stack-wide delta as one setting's marginal effect, which is how the
+	// authorized-official sentence below came to quote a five-setting number.
 	const fullStack = progression.at(-1)!
-	const base = sweep[0]! // threshold 0, full lever stack
+	const base = sweep[0]! // threshold 0, full setting stack
 
 	const signed = (x: number) => `${x >= 0 ? "+" : ""}${x.toFixed(1)}pp`
 
@@ -154,7 +154,7 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 			`(${keptNpis} NPI → ${entityCount} site → ${orgCount} org-name classes); the climb is the yardstick getting honest, ` +
 			`not the model changing — gold-set validated (120/120 hard pairs = same org). Details in "Three truth grains" below.`,
 		"",
-		`## The comparison-model levers (each toggled on, at the default threshold)`,
+		`## The comparison-model settings (each toggled on, at the default threshold)`,
 		"",
 		`| model | precision | recall | F1 | ΔF1 | ARI | over-merged |`,
 		`|---|---:|---:|---:|---:|---:|---:|`,
@@ -185,7 +185,7 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 	lines.push("")
 
 	lines.push(
-		`**Out-of-the-box (zero-config \`resolveEntities(records)\`, levers default-on #86):** F1 ` +
+		`**Out-of-the-box (zero-config \`resolveEntities(records)\`, settings default-on #86):** F1 ` +
 			`**${pct(defaultOutOfBox.f1)}%** on this sample — essentially the baseline. The default auto-computes the ` +
 			`address-frequency table over the INPUT records, and this benchmark deliberately sub-samples ${N} records, so ` +
 			`that table is too sparse to carry the inverse-frequency signal (a corpus statistic you can't synthesize from a ` +
@@ -196,7 +196,7 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 	)
 
 	lines.push("")
-	lines.push(`## With all levers on, across the link threshold (the secondary lever)`)
+	lines.push(`## With all settings on, across the link threshold (the secondary setting)`)
 	lines.push("")
 	lines.push(`| link threshold (bits) | precision | recall | F1 | ARI | clusters | over-merged |`)
 	lines.push(`|---:|---:|---:|---:|---:|---:|---:|`)
@@ -322,7 +322,7 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 
 	lines.push(
 		`**Takeaways:** (1) The dedup model's REAL quality is the **org-name F1 ~${pct(gbtOrg.f1)}%**, not the NPI-level ` +
-			`${pct(gbtNPI.f1)}% — the difference was NPI over-segmentation, not model error. (2) The #625 lever was the YARDSTICK, ` +
+			`${pct(gbtNPI.f1)}% — the difference was NPI over-segmentation, not model error. (2) The #625 setting was the YARDSTICK, ` +
 			`not the scorer: the corroboration-feature experiment (reverted) couldn't move precision because the over-merge was ` +
 			`mostly correct. (3) The remaining org-name over-merge (${gbtOrg.overMergedClusters} clusters) is the genuine frontier — ` +
 			`small, approaching the ceiling's ~1.6% irreducible (\`2026-06-16-dedup-ceiling.md\`). (4) Trust the large eval: a 50-NPI ` +
@@ -343,18 +343,18 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 
 	lines.push(
 		`The geocode-first **foundation works**: **${pct(geo / N)}%** of addresses placed, blocking + clustering clean — the ` +
-			`geocoding (the Pelias/Nominatim-can't-do-this part) is not the bottleneck. The comparison-model levers reach the ` +
+			`geocoding (the Pelias/Nominatim-can't-do-this part) is not the bottleneck. The comparison-model settings reach the ` +
 			`address-frequency + A1 baseline at F1 **${pct(progression[2]!.score.f1)}%** (${signed(100 * (progression[2]!.score.f1 - baseline.score.f1))} over baseline): ` +
 			`inverse-frequency weighting restores full weight to a *rare* shared address (stitching a provider's name-drifted ` +
 			`records together — mostly recall) while down-weighting a *crowded* one, and the collapsed spatial signal (A1) drops ` +
 			`the address+distance double-count. What remains is **precision / over-merge** — ${fullStack.score.overMergedClusters} ` +
 			`clusters still fuse distinct co-located providers, because even one down-weighted spatial agreement can outvote a ` +
-			`disagreeing name. The lever search (#625) — two negatives, then the first positive: a name/org/phone ` +
+			`disagreeing name. The setting search (#625) — two negatives, then the first positive: a name/org/phone ` +
 			`**corroboration gate** (A2/A3) — phone is an unreliable secondary identifier on NPPES (shared institutional ` +
 			`switchboard lines), so it over-links and falsely corroborates co-phone distinct providers; and **average-linkage ` +
 			`clustering** (A4) — the over-merged clusters are joined by STRONG shared-address edges, not weak bridges, so ` +
 			`average-linkage can't split them and only trades away name-drift recall. The over-merge is a **scoring** problem ` +
-			`this data can't resolve, not a clustering-topology one. The **authorized-official discriminator** is the first lever to beat the baseline — a reliable secondary identifier holds recall so a higher threshold separates the co-located providers; a still-more-distinctive identifier ` +
+			`this data can't resolve, not a clustering-topology one. The **authorized-official discriminator** is the first setting to beat the baseline — a reliable secondary identifier holds recall so a higher threshold separates the co-located providers; a still-more-distinctive identifier ` +
 			`(taxonomy / license) or a learned scorer over the FS feature vector (#603) goes further. Config ` +
 			`dominates the model (the pre-registered finding) — tracked as #625 / the selective-model work (#602 / #603).`
 	)

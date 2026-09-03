@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `no-fragment` — the Norwegian house-number-licence lever (Track B, 2026-07-16). The mirror of
+ *   `no-fragment` — the Norwegian house-number-licence change (Track B, 2026-07-16). The mirror of
  *   `fr-fragment`, which earned +50pp on the same defect shape in French.
  *
  *   WHY THIS EXISTS AND `no-street-led` DOES NOT SUFFICE. Board 3 (the NO digit board) measured that
@@ -62,7 +62,7 @@ const titleNO = (value: string): string =>
 export const noFragmentRecipe: CorpusRecipe = {
 	name: "no-fragment",
 	description:
-		"NO street fragments — the house-number-licence lever (Track B): '«st» «n»' / bare «st» with NO postcode partner, + bare-locality & bare-postcode counters",
+		"NO street fragments — the house-number-licence change (Track B): '«st» «n»' / bare «st» with NO postcode partner, + bare-locality & bare-postcode counters",
 	mode: "tuples",
 	options: [
 		{

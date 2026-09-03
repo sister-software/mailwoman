@@ -10,7 +10,7 @@ Two arcs shipped today, both measurement-led: closing the EU coordinate gap with
 
 ### 1. EU coverage — zero GPU
 
-- **The lever was coverage, not a retrain.** The Three-Gap Matrix + a held-out coordinate eval (`scripts/eval/eu-coord-direct.ts`) showed the 15 zero-DB EU locales' median coordinate was reachable from gazetteer coverage alone; the "21% broken" was a loc-correct (whole-parse) artifact, not the coordinate. The #566 trap, avoided. See `project-eu-coverage-not-retrain`.
+- **The change was coverage, not a retrain.** The Three-Gap Matrix + a held-out coordinate eval (`scripts/eval/eu-coord-direct.ts`) showed the 15 zero-DB EU locales' median coordinate was reachable from gazetteer coverage alone; the "21% broken" was a loc-correct (whole-parse) artifact, not the coordinate. The #566 trap, avoided. See `project-eu-coverage-not-retrain`.
 - **Overture divisions → the canonical admin DB.** Built the divisions-theme gazetteer, folded the ingest into the canonical build (`build-unified-wof.ts --overture-countries`), and rebuilt + swapped `admin-global-priority.db`: **+15 EU locales (299 k divisions) + TW (16,750)**, with the 10 priority countries **byte-identical** to the prior DB and the US resolver eval **unchanged** (loc 97.6 / region 99.9 / coord p50 3.3 km). Median coordinate solved 14/15 at ES/IT/NL control parity (0.4–7.1 km).
 - The `overture` corpus adapter (#470) was realized along the way (`mailwoman corpus run overture`), and the build manifest records the new source for reproducibility.
 

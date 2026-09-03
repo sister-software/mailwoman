@@ -22,7 +22,7 @@
 #
 # WHY THE EXISTING SLICE DOESN'T COVER IT: synth-fr-bare-street (#251) mints "<n> Rue <name>, <City>"
 # — the bare COMMA form, targeting postcode-anchoring imbalance. Every row it emits still carries a
-# house number AND a locality, so it never shows the model a street standing alone. Different lever.
+# house number AND a locality, so it never shows the model a street standing alone. Different change.
 #
 # THE SLICE (144,865 rows, corpus/src/slice-recipes/fr-fragment.ts): bare-street 14.3%,
 # street-particle 37.3%, date-name 0.5% (BAN's ceiling — only 1,418 such streets exist),

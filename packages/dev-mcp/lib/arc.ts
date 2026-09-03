@@ -128,7 +128,7 @@ function legFrom(label: string, weights: string, result: Record<string, unknown>
  * How the candidate was trained.
  *
  * This is not bookkeeping: it decides whether a null leg is MISSING or INAPPLICABLE. A fine-tune inherits a base and
- * pays to touch it, so a null is the only thing that separates the lever's cost from the tax. A from-scratch run
+ * pays to touch it, so a null is the only thing that separates the change's cost from the tax. A from-scratch run
  * inherits nothing, so there is no tax to subtract and demanding a null would be asking for a control of nothing.
  * Reporting the second case with the first case's caveat is how a correct number gets discounted.
  */
@@ -207,7 +207,7 @@ export function decideArc(
 
 	if (attributableNet !== undefined && attributableNet <= 0) {
 		reasons.push(
-			`Attributable net is ${attributableNet} (candidate ${candidate.net} minus null ${nullLeg?.net}). The lever ` +
+			`Attributable net is ${attributableNet} (candidate ${candidate.net} minus null ${nullLeg?.net}). The change ` +
 				"has not bought back the cost of the fine-tune it rode in on."
 		)
 	}
@@ -276,7 +276,7 @@ export function summarizeArc(arc: ArcResult): string {
 			? arc.shape === "from-scratch"
 				? ", which is already the attributable number — a from-scratch run inherits no base. "
 				: ", with no null leg to attribute it against — treat as an upper bound. "
-			: `, of which net ${arc.attributableNet} is attributable to the lever rather than to the fine-tune. `
+			: `, of which net ${arc.attributableNet} is attributable to the change rather than to the fine-tune. `
 
 	return (
 		`${arc.verdict.toUpperCase()}. Candidate net ${arc.candidate.net} ` +
@@ -310,7 +310,7 @@ export function renderArc(arc: ArcResult): string {
 	if (arc.attributableNet !== undefined) {
 		lines.push(
 			"",
-			`attributable to the LEVER: net ${arc.attributableNet}, regressions ${arc.attributableRegressions} ` +
+			`attributable to the CHANGE: net ${arc.attributableNet}, regressions ${arc.attributableRegressions} ` +
 				"(candidate minus null)"
 		)
 	}

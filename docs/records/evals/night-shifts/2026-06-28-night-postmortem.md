@@ -1,4 +1,4 @@
-# Night shift 2026-06-28 — non-US recall levers (postmortem)
+# Night shift 2026-06-28 — non-US recall changes (postmortem)
 
 _Drafted during the shift; finalized at hand-off. Window: 05:32–14:15 UTC. CPU-only by design ($0 GPU)._
 
@@ -54,16 +54,16 @@ symlink points to v180 (a test side-effect), not the shipped v4.15.0 (v193a3). O
 disastrous (PT p50 47 / PL 116 / AU 798 km). **Re-run on the SHIPPED model**: PT **0.8 km**, PL **2.3 km**,
 AU **1.2 km** median — already tight. No parse-accuracy disaster. The remaining gap is a **recall/p90
 tail** (a perfect parse recovers PT +5 / PL +9 / AU +4 pp of unresolved), and **AU is gazetteer-bound**
-(oracle ceiling 80.6%, Δp50 −2% → NO-GO). So **#825 is a marginal lever on the shipped model, not the
+(oracle ceiling 80.6%, Δp50 −2% → NO-GO). So **#825 is a marginal change on the shipped model, not the
 clean GO the v180 run implied** — frame any retrain as a tail/recall fix, and grade the shipped weights.
 (The street-as-locality mechanism is real on v180 but largely absent in v4.15.0.)
 
-## Phase C (#781) — measure-first killed the lever
+## Phase C (#781) — measure-first killed the change
 
 Span-rescore is **+0.0 pp** on the staged-B candidate gazetteer across every EU locale. Coverage (the
 alt-name fold + B) subsumed its recovery surface (resolved 97.9%), and the remaining EU gap is
 mis-resolution (the #685 brake means span-rescore never fires on a resolved tree). No recovery triples →
-no calibration to fit. **Recommend re-scoping/closing #781**; the EU lever is #825 (Phase D).
+no calibration to fit. **Recommend re-scoping/closing #781**; the EU change is #825 (Phase D).
 
 ## Open questions (operator)
 
@@ -74,7 +74,7 @@ no calibration to fit. **Recommend re-scoping/closing #781**; the EU lever is #8
 2. **Phase A (placer): DATA GAP — defer to a class-set-widening retrain (branch-b).** The deployed
    placer is 28-class (US + EU-mostly); only CN/SK/LV of the 36 recoverable countries are classes
    (in_class_set false 31.6%). Crucially the placer is **99.6% correct at confidence 1.000 on its
-   in-set countries** — so no threshold/M2 change helps; the only lever is adding classes (gated). And
+   in-set countries** — so no threshold/M2 change helps; the only change is adding classes (gated). And
    B already cut namesake misroutes 11.5% → 6.1% (the recoverable cities now resolve bare via
    population-first), so the placer retrain is lower-priority than it was.
 3. **#825 (multilocale parse retrain) — likely NOT worth a GPU shift.** Corrected Phase D: the shipped

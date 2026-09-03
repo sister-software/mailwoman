@@ -27,9 +27,9 @@
 #     the curve, not the endpoint.
 # Everything else is byte-identical to v8-jp-full.yaml. If you change that file, change this one.
 #
-# The optional second leg (only if question 2's lever is in doubt): copy this file with
+# The optional second leg (only if question 2's change is in doubt): copy this file with
 # `classifier_learning_rate` REMOVED and diff the two runs' per-label F1 on the 12 supported JP fine
-# rows. That is the only A/B that can justify keeping a lever whose #727 premise (a warm encoder)
+# rows. That is the only A/B that can justify keeping a change whose #727 premise (a warm encoder)
 # does not hold on a from-scratch run.
 #
 # Launch (the operator runs this):

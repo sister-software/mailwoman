@@ -88,9 +88,9 @@ construction). Every other country ships a first-letter or first-digit table, wh
 is close to useless as a spatial prior. The FR table is also the only one wired into a corpus recipe
 (`corpus/src/extract-recipes/fr-admin-split.ts:85`).
 
-### A.3 Runtime coherence levers (direction 2)
+### A.3 Runtime coherence changes (direction 2)
 
-| Lever                                       | Where                                                                        | What it does                                                                                                                                                                                                                                                                                                            | Default                            | Direction     |
+| Change                                      | Where                                                                        | What it does                                                                                                                                                                                                                                                                                                            | Default                            | Direction     |
 | ------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ------------- |
 | `applyPostcodeConsistency` (#370/#945)      | `resolver/resolve.ts:266-331`, called `:849`                                 | Post-walk, no backend queries. Finds the first resolved postcode's coordinate; for every `locality`/`dependent_locality` beyond `postcodeConsistencyGateKm` (50 km), re-picks from `node.alternatives`, else overwrites the node's lat/lon with the postcode's and stamps `postcode_city_mismatch`                      | **ON** (`!== false`)               | 2             |
 | Postcode-country coherence (#42/#1477)      | `resolver/postcode-country-coherence.ts`, called `resolve.ts:790`            | The only PRE-walk pass and the only thing allowed to override `defaultCountry`. Geometric: postcode centroid vs exact-match locality centroid within 25 km (`:86`). Candidate set = `candidateSystemsForPostcode`. Abstains on 0 or ≥2 coherent countries (`:269`)                                                      | **ON**                             | 1 + 2         |
@@ -308,8 +308,8 @@ postcode-country coherence.
 
 ### Mechanism 1 — `applyPostcodeShapeCoherence`: shape as exclusion, downstream of the siblings
 
-**Lever shape.** Not a model change. This is the "cross-locale grammar leakage" row of the taxonomy —
-a conventions-plus-mask lever — realized as a fifth member of the joint-consistency coherence family,
+**Change shape.** Not a model change. This is the "cross-locale grammar leakage" row of the taxonomy —
+a conventions-plus-mask change — realized as a fifth member of the joint-consistency coherence family,
 alongside the four in A.3. Zero GPU, no retrain.
 
 **Where it lives.** `resolver/postcode-shape-coherence.ts`, called from `resolver/resolve.ts` in the
@@ -364,7 +364,7 @@ default-on risk. Record it as a negative and stop.
 
 ### Mechanism 2 — `applyPostcodeContainmentCoherence`: the reverse arrow, generalized
 
-**Lever shape.** A retrieval-augmented prior in the resolver walk. Direction 2's REVERSE claim —
+**Change shape.** A retrieval-augmented prior in the resolver walk. Direction 2's REVERSE claim —
 an ambiguous name gains validity when the postcode contains it.
 
 **Where it lives.** The resolver walk, not the decoder. Concretely it generalizes the #741
@@ -412,7 +412,7 @@ and the population ranking were already carrying it, and the rung is dead weight
 
 ### Mechanism 3 — PFX1: the partial-code prior
 
-**Lever shape.** A new retrieval artifact plus a decode-time prior — the same recipe as the PIX1 pair
+**Change shape.** A new retrieval artifact plus a decode-time prior — the same recipe as the PIX1 pair
 index and the PCB1 anchor, and the country-evidence-layer runbook applies.
 
 **Where it lives.** Two consumers, in this order:
@@ -530,7 +530,7 @@ pipeline defaulting to `0,0`, in which case the plumbing is fixed before the art
 
 **Measurable with no retrain, and no training batch dependency (all of it):** mechanisms 1 and 2 are
 resolver passes, and mechanism 3's first landing is data plus an offline probe. Nothing in Part C
-requires a GPU. That is deliberate — every one of these is a decode-time or resolve-time lever, and
+requires a GPU. That is deliberate — every one of these is a decode-time or resolve-time change, and
 the taxonomy says a retrain is the tool for open-vocab distributional tags, which postcodes are not.
 
 **Order, cheapest-first:**

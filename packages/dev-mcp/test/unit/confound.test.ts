@@ -78,11 +78,11 @@ describe("assertComparableField", () => {
 })
 
 describe("the declared vocabulary", () => {
-	it("grades a correctly-declared single lever CLEAN, not ambiguous", () => {
+	it("grades a correctly-declared single change CLEAN, not ambiguous", () => {
 		// The defect this closes, found 2026-08-16 by running a real A/B: `variable: ["place_country"]` is the spelling
-		// the tool schema documents, and the effective configs differ at `placeCountry`. Compared raw, the same lever was
+		// the tool schema documents, and the effective configs differ at `placeCountry`. Compared raw, the same change was
 		// counted twice under two spellings — once as declared-but-unmoved, once as moved-but-undeclared — so every
-		// honest single-lever comparison reported ATTRIBUTION AMBIGUOUS.
+		// honest single-change comparison reported ATTRIBUTION AMBIGUOUS.
 		const reading = checkConfounds({ placeCountry: true }, { placeCountry: false }, ["place_country"])
 
 		expect(reading.variable_isolation).toBe("clean")

@@ -75,11 +75,11 @@ data:
     synth-po-box-cedex: 1.5
     synth-affix: 2.0
     synth-country: 2.0
-    # #148 lever: the multi-locale EU slice. Weight 3.0 — solid EU exposure (each locale's ~150k rows
+    # #148 change: the multi-locale EU slice. Weight 3.0 — solid EU exposure (each locale's ~150k rows
     # get comparable weighted mass to fr-admin-split's 60k*6.0) without dominating the US-heavy base;
     # the step-2000 diagnostic gate adjudicates dilution (lower if US/FR regress, raise if mid-tier flat).
     overture: 3.0
-    # #208 lever: the gnaf G-NAF AU 3-order slice (150k rows, 1 locale). Weight 6.0 matches the
+    # #208 change: the gnaf G-NAF AU 3-order slice (150k rows, 1 locale). Weight 6.0 matches the
     # TARGETED-FIX precedent (synth-german 6.0, synth-fr-admin-split 6.0 — single-concept format fixes),
     # NOT overture's 3.0 (broad 16-locale exposure). The step-2000 gate adjudicates: lower if US/EU
     # regress, raise if AU flat.

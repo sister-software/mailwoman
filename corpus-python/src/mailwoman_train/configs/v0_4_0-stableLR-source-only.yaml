@@ -6,7 +6,7 @@
 # knob is on or off (v0.3.0 itself rejected lr=5e-4 in iteration).
 #
 # Stable-LR matrix: drop back to v0.3.0's proven lr=1.5e-4 and test each v0.4.0
-# lever in isolation on top of v0.3.0's stable recipe. This config tests §4 alone
+# change in isolation on top of v0.3.0's stable recipe. This config tests §4 alone
 # — should pass; if it fails the source_weights have a data-loader bug worth fixing.
 #
 # Recipe:

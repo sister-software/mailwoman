@@ -171,9 +171,9 @@ export interface ResolvedPlace {
 	 * The admin-containment verdict for this candidate (#1717 stage 2) — TRI-STATE, and the absence is required
 	 * (meaning-of-zero): `true` = the backend's ancestors sidecar vouches that this candidate sits UNDER the query's
 	 * parsed region qualifier; `false` = the backend evaluated containment and could not vouch for it; `undefined` = the
-	 * question was never asked — the lever is off, the query carried no qualifier, or the backend/artifact cannot answer
-	 * (no sidecar). Set only by backends implementing `FindPlaceQuery.regionQualifier`; consumed by the resolver walk's
-	 * `adminContainmentRerank` partition, which must never read `undefined` as "not contained".
+	 * question was never asked — the setting is off, the query carried no qualifier, or the backend/artifact cannot
+	 * answer (no sidecar). Set only by backends implementing `FindPlaceQuery.regionQualifier`; consumed by the resolver
+	 * walk's `adminContainmentRerank` partition, which must never read `undefined` as "not contained".
 	 */
 	containedByQualifier?: boolean
 	/**
@@ -436,9 +436,9 @@ export interface ResolveOpts {
 	 * (`resolver/toponym-prior.ts`) adds {@link localeCountryPriorWeight} to an in-country candidate's prominence, within
 	 * the exact tier, never as a filter.
 	 *
-	 * **Undefined by default, and the CLI leaves it undefined** — this is an OPT-IN lever (`--locale-country-prior`), not
-	 * a shipped default, and the reason is measured rather than cautious. In log10-population units the weight needed to
-	 * flip the four bare GB panel rows is ≥ 0.99 (Whitby CA 5.11 over GB 4.12), and the weight that leaves the en-US
+	 * **Undefined by default, and the CLI leaves it undefined** — this is an OPT-IN change (`--locale-country-prior`),
+	 * not a shipped default, and the reason is measured rather than cautious. In log10-population units the weight needed
+	 * to flip the four bare GB panel rows is ≥ 0.99 (Whitby CA 5.11 over GB 4.12), and the weight that leaves the en-US
 	 * board intact is < 0.07 (Cambridge CA 5.14 over US 5.07). The two intervals are disjoint, and they interleave:
 	 * `Athens` (GR over US, gap 0.38) and `Cambridge` (0.07) sit BELOW `Warwick` (0.41) and `Epping` (0.41), so no
 	 * threshold, margin or rank rule separates the class either. Population plus a locale cannot answer this question.
@@ -591,7 +591,7 @@ export interface ResolveOpts {
 	 */
 	postalCompoundRecovery?: boolean
 	/**
-	 * Postcode-disambiguated locality selection (#370 "Lever A"). When set, AND a locality resolves far from a resolved
+	 * Postcode-disambiguated locality selection (#370 "Change A"). When set, AND a locality resolves far from a resolved
 	 * sibling postcode, re-pick the same-named candidate (from the lookup's already- captured `alternatives`) nearest the
 	 * postcode; if none reconciles within the radius, fall the coordinate back to the postcode point and flag
 	 * `postcode_city_mismatch`. Targets the dominant failure mode on the EU/AU panel — a same-named town resolved to the
@@ -779,8 +779,8 @@ export interface ResolveOpts {
 	 * `defaultCountry` (the #912 posture: only a locale-INFERRED scope is bypassable by the address's own evidence). Each
 	 * locality pick records `metadata.admin_containment`: `"contained"` (the sidecar vouched for at least one candidate),
 	 * `"no_contained_candidate"` (evaluated, none contained), or `"unavailable"` (the backend or artifact cannot answer —
-	 * a pre-sidecar candidate.db, the FTS/browser backends) — so an inert lever is visible in the trace rather than
-	 * silently dead (#1719's rule; the parse-side census cannot see resolver levers, so the stamp is the census surface
+	 * a pre-sidecar candidate.db, the FTS/browser backends) — so an inert change is visible in the trace rather than
+	 * silently dead (#1719's rule; the parse-side census cannot see resolver changes, so the stamp is the census surface
 	 * here).
 	 *
 	 * **Default OFF** (D-rule): opt in and measure; the promotion battery is the full board + gauntlet + parity ON/OFF

@@ -6,7 +6,7 @@
 # WHY: the slice written to fix `es-op3-southeast-portopetro` never contained the row's shape. Measured
 # over both built v23 slices: 88,904 rows, two surfaces, ZERO postcodes. The model learned the bare
 # admin tail correctly and had never seen `«postcode» «locality», «region»`, which is why no decode
-# lever moved it. Corpus absence, not a decode defect.
+# change moved it. Corpus absence, not a decode defect.
 #
 # THE COLLAPSE IS TWO-STAGED, and neither trigger is a street:
 #     Portopetro, Illes Balears, Spain             locality ok   region ok

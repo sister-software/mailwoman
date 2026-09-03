@@ -40,7 +40,7 @@ data:
     deepseek-kryptonite: 3.0
     synth-intersection: 1.0
     synth-german: 6.0
-    # THE #560 recovery lever: reversed-order (postcode-first) FR. Weight bumped 3.0 → 6.0 (matching
+    # THE #560 recovery change: reversed-order (postcode-first) FR. Weight bumped 3.0 → 6.0 (matching
     # synth-german) after v1.5.0 re-gate showed +32.9pp improvement but still missed fr.house_number
     # floor (87.4% vs 91 floor). Slice correct; BAN canonical-order prior dominates at 3.0 weight.
     synth-fr-order: 6.0

@@ -10,7 +10,7 @@
  *   scored 0% neural. Units have a rigid surface shape (a designator keyword + an identifier), so —
  *   exactly like the postcode-repair pass (#35) — we can detect them deterministically and repair
  *   the BIO labels AFTER decode but BEFORE `buildAddressTree`. The model is untouched; this is a
- *   decoder-side correction, the same "lowest risk" lever family as postcode-repair.
+ *   decoder-side correction, the same "lowest risk" change family as postcode-repair.
  *
  *   PRECISION GUARDS (mirror postcode-repair — never regress a confident parse):
  *

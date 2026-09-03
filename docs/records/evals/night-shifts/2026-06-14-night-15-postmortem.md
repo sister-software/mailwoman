@@ -91,7 +91,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
   _merges_ the parenthetical into the span — wrong direction). The bigger finding: **neural already beats
   v0 here (77.3 vs 75.7) and is far more robust (0 parse deaths vs 2)**; the engines fail _differently_ —
   v0 shatters on quotes and poisons neighbors (`(The White House)` → locality "White"), neural
-  _over-extends_ spans (`Sydney NSW`, `Oxford OX1 4DB`). So the real punctuation lever is reducing neural
+  _over-extends_ spans (`Sydney NSW`, `Oxford OX1 4DB`). So the real punctuation change is reducing neural
   span over-extension (kin to #555 / Saint-Albans), not a span proposer.
 - **#591 — reconcile-default docs sweep.** Three source-of-truth docs (`status.mdx`, `api.mdx`,
   `STAGES.mdx`) still called joint reconcile the default decode path — stale since #566 retired it. The
@@ -114,7 +114,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
 - **Probe-before-build saved hours three times.** The byte-range _measurement_ (24 KB/lookup) de-risked
   the whole marquee before a line of demo wiring; the Overture off-map _probe_ found the data ceiling
   before a wasted retrain campaign; and the punctuation-stress eval (#590) answered "revive the span
-  proposer?" with a measured _no_ before anyone reopened that code — and reframed the lever (neural span
+  proposer?" with a measured _no_ before anyone reopened that code — and reframed the change (neural span
   over-extension, not a proposer) in the bargain.
 - **The marquee actually works.** The biggest risk item shipped browser-verified, not as a "foundation +
   guide." Reusing the existing httpvfs WOF pattern + the already-async demo cascade made it tractable.
@@ -193,7 +193,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
 - **E UX (#377):** tier caption ("exact" / "±N m") and place-level autocomplete typeahead are shipped;
   remaining is span-highlight, the resolved-hierarchy tree, the address-level (street-prefix) typeahead
   (#587), then lifting the cascade into a Web Worker + the capped Service Worker cache.
-- **B:** int8-quantize is done; the broad off-map pull is the next accuracy lever.
+- **B:** int8-quantize is done; the broad off-map pull is the next accuracy change.
 - **C:** finish the 50-state sweep (heat-managed) → complete the calibration table.
 
 ## Numbers

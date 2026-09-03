@@ -26,7 +26,7 @@
 #     (no "Tbilisi, Georgia"→region regressions — the clue must not bulldoze context).
 #   - NO-REGRESSION (within ~1pp, fp32-to-fp32 vs v0.9.11): US/FR golden spine via per-locale-f1
 #     (WITH --tokenizer — the misuse check now enforces it); unit retained ≥88; DE native held.
-#   DECISION: recall up + P~100 + over-fire 0 + spine flat → the country lever is DONE; promote
+#   DECISION: recall up + P~100 + over-fire 0 + spine flat → the country change is DONE; promote
 #     candidate (consolidation #466 picks it up). If the clue over-fires (model echoes the lexicon,
 #     P drops): lower clue exposure — drop gazetteer confidence to 0 on a random ~20% of training
 #     rows (curriculum) — and consult DeepSeek before more knobs.

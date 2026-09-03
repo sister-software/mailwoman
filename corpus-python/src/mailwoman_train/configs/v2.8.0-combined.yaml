@@ -1,7 +1,7 @@
 # v2.8.0-combined — the session's synthesis + the promotion candidate. Combines the two proven-SAFE
-# levers off stable v257: the span-boundary aux head (#727 stage-1: fixes 3/5 boundary-absorption
+# changes off stable v257: the span-boundary aux head (#727 stage-1: fixes 3/5 boundary-absorption
 # cases, gauntlet-stable, inference-invariant) AND punct-drop augmentation 0.3 (#1101: delimiter-free
-# robustness, non-regressing). NOT an attribution probe — each lever was isolated already (v260/261,
+# robustness, non-regressing). NOT an attribution probe — each change was isolated already (v260/261,
 # v270); this is the best-candidate build. 8k, init_from v257. Grade: parity floors, flip census
 # (boundary class), gauntlet regression+metamorphic (incl. the comma-drop INV), then the promotion call.
 data:

@@ -517,7 +517,7 @@ stating it checked.
 
 ### C.1 Mechanism 1 — the format nudge (free, offline)
 
-**Lever shape.** Not a model change. Render-time only: `normalize` + parse + `formatAddress` +
+**Change shape.** Not a model change. Render-time only: `normalize` + parse + `formatAddress` +
 `codex`. Zero GPU, zero retrain, and no gazetteer — this tier runs in a browser with the weights and
 nothing else, which is what makes it the default tier.
 
@@ -578,7 +578,7 @@ posture the 2026-08-04 review recommended for Design B.
 
 ### C.2 Mechanism 2 — the postcode-completion nudge
 
-**Lever shape.** A retrieval-augmented prior at resolve time, reusing the postcode gazetteer already
+**Change shape.** A retrieval-augmented prior at resolve time, reusing the postcode gazetteer already
 loaded. It is the operator's constraint 1 turned into a mechanism: the layer's best move on an input
 with no postcode is to supply one.
 
@@ -636,7 +636,7 @@ kill conditions and stop.
 
 ### C.3 Mechanism 3 — the entity snap
 
-**Lever shape.** The matcher applied to one record instead of a corpus. Highest cost, narrowest
+**Change shape.** The matcher applied to one record instead of a corpus. Highest cost, narrowest
 scope, and last in the sequence.
 
 **Where it lives.** A new `snapRecord(record, index, model)` in `@mailwoman/match` — blocking key →
@@ -767,7 +767,7 @@ apart.
 
 ### C.6 What needs a retrain
 
-**None of it.** Every mechanism above is a render-time or resolve-time lever. The only model-side
+**None of it.** Every mechanism above is a render-time or resolve-time change. The only model-side
 dependency is span confidence, which the shipped model already emits on every node
 (`core/decoder/types.ts:74`). The taxonomy in `CONTRIBUTING_MODEL_WORK.mdx` says a retrain is the
 tool for open-vocab distributional tags; a diff between two strings is not one.

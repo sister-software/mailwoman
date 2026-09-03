@@ -250,7 +250,7 @@
  *   `transitionBeta` (see `PairIndexHeader.transitionBeta`), every applied bias ALSO emits a
  *   position-scoped decoder transition adjustment — `+β` on every transition into `B-<tag>` at the child
  *   span's first piece (see {@link TransitionAdjustment} and `viterbi.ts`'s `ViterbiTransitionAdjustment`).
- *   This is the path-fusion recovery lever the transition-level probe measured: the emission δ can
+ *   This is the path-fusion recovery change the transition-level probe measured: the emission δ can
  *   win the per-token argmax at the child-start piece while the global Viterbi still routes through a
  *   fused street/locality run; the entry-transition bonus pays the structural continuation toll directly
  *   (β=5: 13/17 comma-free GB misses recovered, zero measured collateral). No hit / no `transitionBeta` →
@@ -770,8 +770,9 @@ function writeSpanBias(
  * directions. It cannot express the US source's `dependent_locality` under a borough (containment allows `locality`
  * alone), and where its set has several members the derivation biased them all equally and therefore moved nothing.
  *
- * Emission-only by design: no transition adjustment. `transitionBeta` is the child's calibrated path-fusion lever (β=5,
- * measured on the child span's entry transition); the parent bias has no such calibration and must not inherit one.
+ * Emission-only by design: no transition adjustment. `transitionBeta` is the child's calibrated path-fusion change
+ * (β=5, measured on the child span's entry transition); the parent bias has no such calibration and must not inherit
+ * one.
  */
 function applyParentTagBias(
 	matrix: number[][],

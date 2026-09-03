@@ -1,5 +1,5 @@
 # === v1.6.0-boundary-stress (DRAFT — operator/DeepSeek sign-off + GO required) ===================
-# The #375 #1-lever pass: add the boundary-instability synthetic slice (corpus/src/
+# The #375 #1-change pass: add the boundary-instability synthetic slice (corpus/src/
 # synthesize-boundary-stress.ts, PRs #703/#704/#705) at weight 1.0 on top of v1.5.1 (latest stable
 # FR-order recovery). DeepSeek-signed (2026-06-17): conservative 1.0 weight, tune up next iteration if short.
 #
@@ -21,7 +21,7 @@
 # competition is the v4.2.0 trap (affix 78→27). DeepSeek also flagged a per-locale CRF transition penalty
 # (street→cedex) as a clean future rider; it needs wiring (crf_loss_weight is 0.0) so it's a later run.
 #
-# WHY: the failure taxonomy named boundary instability the #1 parser lever, and the within-token
+# WHY: the failure taxonomy named boundary instability the #1 parser change, and the within-token
 # decomposition (#702) showed it surfacing under many names. The "before" baseline
 # (docs/articles/evals/2026-06-17-boundary-stress-baseline.md) measured the current model at 38.7–70%
 # on these boundaries vs ~95%+ on clean canonical:
@@ -102,7 +102,7 @@ data:
     synth-po-box-cedex: 1.5
     synth-affix: 2.0
     synth-country: 2.0
-    # THE #375 #1-lever variable (DeepSeek-signed 2026-06-17): the boundary-instability stress slice.
+    # THE #375 #1-change variable (DeepSeek-signed 2026-06-17): the boundary-instability stress slice.
     # Conservative 1.0 start (prevents street_suffix over-fire); sweep to 1.5 if slash/comma-less land
     # short. ONE change vs v1.5.1 — nothing else moves.
     synth-boundary-stress: 1.0

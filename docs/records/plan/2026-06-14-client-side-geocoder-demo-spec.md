@@ -34,7 +34,7 @@ byte-bound.
 The situs extracts are `page_size` 4096; the existing httpvfs resolver fetches in 64 KB `requestChunkSize`
 chunks (16 pages). A situs point lookup touches ~6 _scattered_ B-tree pages, so it lands in a few
 64 KB chunks — this is precisely the "sparse single-row access over-fetches" tradeoff the
-`httpvfs-resolver.ts` header already calls out for the polygon DB. Two levers for the hosted demo
+`httpvfs-resolver.ts` header already calls out for the polygon DB. Two changes for the hosted demo
 extracts, to measure (not assume):
 
 - **Rebuild hosted extracts at a larger `page_size`** (32–64 KB) so a B-tree level is one chunk → fewer

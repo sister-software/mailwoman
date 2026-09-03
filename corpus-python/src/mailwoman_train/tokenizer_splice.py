@@ -107,7 +107,7 @@ def build_slavic_corpus(
     corpus = [ln for ln in lines if ln and len(ln) < 80]
     random.Random(_SEED).shuffle(corpus)
     corpus = corpus[:_CORPUS_SAMPLE]
-    # Exonym awareness (#912 lever 4's Åbo lesson): OA STREET/CITY text carries only the NATIVE
+    # Exonym awareness (#912 change 4's Åbo lesson): OA STREET/CITY text carries only the NATIVE
     # names, so an exonym like "Åbo" (Swedish for Turku) never earns a piece and its decode drop
     # survives the splice. extra_text feeds gazetteer ALIAS names in, repeated extra_repeat× so a
     # once-per-name list has enough unigram mass to compete for vocab slots.

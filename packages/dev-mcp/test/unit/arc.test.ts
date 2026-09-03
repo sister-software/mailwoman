@@ -29,7 +29,7 @@ function leg(label: string, improved: number, regressed: number, extra: Partial<
 }
 
 describe("decideArc", () => {
-	it("subtracts the NULL, because the fine-tune tax is not the lever's fault", () => {
+	it("subtracts the NULL, because the fine-tune tax is not the change's fault", () => {
 		// The arc's actual numbers: v4.11.0 read -13 against shipped while the null read -5. Eight of those thirteen
 		// were the cost of touching the base, and reporting thirteen sent two more runs chasing a extract that was
 		// responsible for five.

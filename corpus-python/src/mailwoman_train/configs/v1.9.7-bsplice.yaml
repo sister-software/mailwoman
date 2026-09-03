@@ -106,7 +106,7 @@ data:
     # rebuilt overlay corpus iff A0 under-moves SLICE-H. 6.0 = the targeted-fix precedent
     # (synth-german/synth-fr-admin-split/gnaf all 6.0). For A0 this line stays commented out.
     synth-anchor-absorption: 6.0
-    # #825 lever: the oa-slavic street-level diacritic slice (89837 rows, CZ/PL/SK/SI real OpenAddresses).
+    # #825 change: the oa-slavic street-level diacritic slice (89837 rows, CZ/PL/SK/SI real OpenAddresses).
     # 6.0 = the targeted-fix precedent (synth-german/synth-fr-admin-split/gnaf all 6.0). Fixes the Slavic
     # content gap (CZ 84% / PL 77% all-O spans, unknown-span-report.ts #878) — the ONE new variable vs v4.15.0.
     oa-slavic: 6.0

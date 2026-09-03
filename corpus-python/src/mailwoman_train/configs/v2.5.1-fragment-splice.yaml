@@ -1,6 +1,6 @@
-# v2.5.1-fragment-splice — the CONSOLIDATION run (parity campaign night-1): both solo-proven levers
-# together. Lever A (assay v2.5.0, graded): fragment slice -> parity street .4033->.5333, hn ->.7532,
-# number->postcode .218->.084, US/pc held, NO late overfit (saturated 2k). Lever B (v242 candidates,
+# v2.5.1-fragment-splice — the CONSOLIDATION run (parity campaign night-1): both solo-proven changes
+# together. Change A (assay v2.5.0, graded): fragment slice -> parity street .4033->.5333, hn ->.7532,
+# number->postcode .218->.084, US/pc held, NO late overfit (saturated 2k). Change B (v242 candidates,
 # graded): 12-locale diacritic splice + FVT mean-init -> DE 24->29, hn +.026, US/FR byte-invariant.
 # Residual street failures after A = mangle-class (offset bleed after diacritics) — exactly what B's
 # atomic pieces remove. RECIPE = v2.5.0 VERBATIM, deltas:

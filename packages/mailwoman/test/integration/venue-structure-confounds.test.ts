@@ -11,7 +11,7 @@
  *   designator: the GB `-gate` street names, "Gate House" venues, "Terminal" industrial estates,
  *   "Wing" as a personal or business name, and designators used as street names.
  *
- *   The board is `fixtures/venue-structure-confounds.jsonl`, pre-registered before the lever was
+ *   The board is `fixtures/venue-structure-confounds.jsonl`, pre-registered before the change was
  *   measured. Its bar is absolute — zero `unit` emissions — because every row is a surface where a
  *   unit is simply wrong, not one where a unit is merely unlikely.
  *
@@ -20,7 +20,7 @@
  *   decode stays byte-identical) and is switched on by `geocode-core.ts` via
  *   `WORD_CONSISTENCY_SHIP_DEFAULT`. A board run against the raw classifier therefore measures an
  *   UN-HEALED decode, and it will report failures that no consumer of the shipped pipeline can
- *   reach — which is exactly what happened while this lever was being measured: `1 Building Society
+ *   reach — which is exactly what happened while this change was being measured: `1 Building Society
  *   Place, Leeds` read `unit="Buil"`, a sub-token fragment, and was written up as a pre-existing
  *   product defect. It is not one. `Building` tokenizes to `B`/`uil`/`ding`, the model labelled
  *   those `B-unit`/`I-unit`/`B-street` — three components inside one word, a sequence no valid parse

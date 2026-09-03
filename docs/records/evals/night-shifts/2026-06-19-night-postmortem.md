@@ -33,7 +33,7 @@ without operator GO (merge wall)._
    the split. Scar tissue is conditional, not universal (operator-named principle, now in memory).
 4. **Pre-GPU self-validation PASSED** (`db8ac933`): splitting the département cuts collision-commune
    coordinate error −61%, the merge resolves 0%. The resolver demonstrably uses the région tag → the
-   lever moves the anchor-ON coordinate. GPU justified before a minute was spent.
+   change moves the anchor-ON coordinate. GPU justified before a minute was spent.
 
 ## What shipped (code, committed)
 
@@ -138,7 +138,7 @@ a subword) and wants a separate decode/tokenizer look, not more extract data.
 
 - **Salvage-first paid off:** codex `departementForCodePostal`/`FR_DEPARTEMENTS`, AU `state.ts`, and
   the `build-fr-order-extract.mjs` template meant zero re-derived reference data and a fast build.
-- **Pre-GPU falsification:** the self-validation gate turned "plausible lever" into "evidence-backed
+- **Pre-GPU falsification:** the self-validation gate turned "plausible change" into "evidence-backed
   ceiling" before the GPU spend — the discipline the whole day's campaign was about.
 - **Real data throughout** (BAN, 27M rows → 35k distinct communes), anchor landing 99.9%.
 

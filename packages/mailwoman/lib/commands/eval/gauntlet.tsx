@@ -94,7 +94,7 @@ const EvalGauntlet: ParsedCommandComponent<Options> = ({ options }) => {
 					// header row.
 					...(components ? { components: splitList(components) } : {}),
 					// An UNSET flag must stay unset, not become an explicit pin either way. The schema supplies its
-					// `false` default for BOTH halves, and forwarding one verbatim would pin the lever forever — which is
+					// `false` default for BOTH halves, and forwarding one verbatim would pin the change forever — which is
 					// exactly how the 2026-08-05 default-on flip could have gone unnoticed by the standard eval. Neither
 					// flag set keeps "no flag" meaning "grade whatever production does".
 					postcodeCountryCoherence: options.postcodeCountryCoherence
@@ -103,7 +103,7 @@ const EvalGauntlet: ParsedCommandComponent<Options> = ({ options }) => {
 							? false
 							: undefined,
 					// #1497: two-sided since the 2026-08-16 default-on promotion. There IS a production default to
-					// preserve now, so an unset flag must stay unset rather than pinning the lever either way.
+					// preserve now, so an unset flag must stay unset rather than pinning the change either way.
 					gazetteerPrior: options.gazetteerPrior ? true : gazetteerPriorOff ? false : undefined,
 					// #1717 stage 2: two-sided from day one (the #1706 one-sided-forwarding class) — the OFF pin
 					// grades the production default explicitly, and no flag stays "grade whatever production does".

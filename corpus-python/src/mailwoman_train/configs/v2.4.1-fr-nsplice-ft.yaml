@@ -2,7 +2,7 @@
 # merged FR diacritic pieces gradient steps, the retrain the #1047 falsification specified.
 #
 # WHY (the #1047 mechanism finding): the training-free vocab-splice that fixed CZ/PL/SK/SI (#884) and
-# Nordic (#912 lever-4) is FALSIFIED for FR STREETS. The en-US line was trained FROM SCRATCH on v0.7.1
+# Nordic (#912 change-4) is FALSIFIED for FR STREETS. The en-US line was trained FROM SCRATCH on v0.7.1
 # with abundant FR `é→O`, so `é` carries a strong, well-trained O-signal. FVT mean-init of a merged FR
 # piece — E(▁René) = mean(E[▁Ren], E[é]) — INHERITS that O pull, so the whole merged token tags O and
 # the word drops (`Place René Cassin` → `place cassin`), NET-worse than the baseline dropping just the é

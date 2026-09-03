@@ -8,7 +8,7 @@ score-trends.md	.
 2026-06-14-interp-multiregion-recalibration.md	calibration
 2026-06-14-interp-radius-calibration.md	calibration
 2026-06-23-calibration-v4.13.0.mdx	calibration
-2026-06-24-confidence-precision-lever.md	calibration
+2026-06-24-confidence-precision-change.md	calibration
 2026-07-04-calibration-v530.md	calibration
 2026-07-04-per-locale-calibration-v530.md	calibration
 2026-06-17-failure-taxonomy.md	competitive-parity
@@ -70,10 +70,10 @@ parity-scorecard-2026-07-02.md	competitive-parity
 2026-06-18-nppes-dedup-v151.md	matcher-dedup
 2026-06-18-nppes-dedup-v160.md	matcher-dedup
 2026-06-18-nppes-dedup-v170.md	matcher-dedup
-2026-06-22-nppes-dedup-lever-ladder.md	matcher-dedup
+2026-06-22-nppes-dedup-setting-ladder.md	matcher-dedup
 2026-07-06-625-adjudication-packet.md	matcher-dedup
 2026-07-06-org-cross-gbt-sweep.md	matcher-dedup
-2026-07-06-rollup-signature-lever.md	matcher-dedup
+2026-07-06-rollup-signature-change.md	matcher-dedup
 2026-05-25-v0.5.0-ce-only-eval-matrix.mdx	model-versions
 2026-05-25-v0.5.1-unchained-eval-matrix.mdx	model-versions
 2026-05-26-v0.5.2-eval-matrix.mdx	model-versions

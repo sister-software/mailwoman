@@ -198,7 +198,7 @@ The genuine exonym is shared across _more_ places than the offending noun. Shari
 
 **What does look separable** — and this is a hypothesis, not a finding — is the mismatch between key count
 and prominence. 221 keys on a 63-person neighbourhood is anomalous in a way 428 keys on the United States
-is not. That is a lever with a board, not a change to make from one example.
+is not. That is a change with a board, not a change to make from one example.
 
 ### Why this survived
 

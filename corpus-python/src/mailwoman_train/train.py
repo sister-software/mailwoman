@@ -184,7 +184,7 @@ def _cosine_with_warmup(optimizer: AdamW, warmup_steps: int, max_steps: int) -> 
 
 
 def _linear_cooldown(optimizer: AdamW, cooldown_start: int, max_steps: int) -> LambdaLR:
-    """WSD-style decay branch (2026-08-10 recipe review, lever 11).
+    """WSD-style decay branch (2026-08-10 recipe review, setting 11).
 
     Resume a mid-schedule checkpoint at ``cooldown_start`` with the config's ``learning_rate``
     set to that checkpoint's CURRENT (tail) LR: the multiplier holds 1.0 through the start, so
@@ -232,7 +232,7 @@ def build_optimizer(
     group lets the head run at ~1e-3 while the encoder keeps its gentle 1e-5.
 
     `classifier_learning_rate` carves the output head (`classifier.`) into its own group —
-    the dead-tag resurrection lever (#456/#1100): a re-initialized output row (see
+    the dead-tag resurrection setting (#456/#1100): a re-initialized output row (see
     `reinit_label_rows`) cannot climb out of a baked-negative neighborhood at the encoder's
     fine-tune LR, and Adam's gradient scale-invariance rules out hook-based row scaling.
 
@@ -256,7 +256,7 @@ def build_optimizer(
     clobber them.
 
     The "rest" (base) group is skipped entirely when empty — e.g. `train.trainable_only_prefixes`
-    (the cRT probe lever) freezes every param outside a carve-out prefix, so once that prefix is
+    (the cRT probe setting) freezes every param outside a carve-out prefix, so once that prefix is
     also carved out here nothing remains for "rest". `AdamW`/`LambdaLR` both tolerate a
     zero-params group fine (constructed, stepped, and state_dict-round-tripped clean in testing —
     a single shared `lr_lambda` is applied per group regardless of param count), so this is a
@@ -740,14 +740,14 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     # match stays trainable. Mirrors the freeze_encoder idiom above (explicit filtered param list,
     # loud count print, raise-if-empty). Mutually exclusive with freeze_encoder/freeze_token_embeddings:
     # all three exclude parts of the encoder from training, and combining them would make "which
-    # lever produced the effect" ambiguous. See build_optimizer for the empty-base-group handling
-    # this lever provokes when paired with a `classifier_learning_rate` carve-out (rest becomes empty).
+    # setting produced the effect" ambiguous. See build_optimizer for the empty-base-group handling
+    # this setting provokes when paired with a `classifier_learning_rate` carve-out (rest becomes empty).
     trainable_only_prefixes = tuple(getattr(cfg.train, "trainable_only_prefixes", []) or [])
     if trainable_only_prefixes:
         if getattr(cfg.train, "freeze_encoder", False) or getattr(cfg.train, "freeze_token_embeddings", False):
             raise ValueError(
                 "train.trainable_only_prefixes is mutually exclusive with freeze_encoder/"
-                "freeze_token_embeddings — combining them makes lever attribution ambiguous"
+                "freeze_token_embeddings — combining them makes setting attribution ambiguous"
             )
         frozen = trainable = 0
         for name, p in model.named_parameters():
@@ -806,7 +806,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
             resume_step = int(ts.get("step", 0))
             # Resume-drift audit (#480): every config field that differs from the checkpoint's
             # stamped state is printed LOUDLY. Deliberate resume-with-changes is the campaign's
-            # lever pattern (Run A/C); UNNOTICED drift is the Run-B-class confound. Visibility,
+            # setting pattern (Run A/C); UNNOTICED drift is the Run-B-class confound. Visibility,
             # not prohibition.
             saved_cfg = ts.get("config", {})
             live_cfg = {"data": asdict(cfg.data), "model": asdict(cfg.model), "train": asdict(cfg.train)}

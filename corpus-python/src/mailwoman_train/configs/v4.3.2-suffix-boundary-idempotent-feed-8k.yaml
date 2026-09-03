@@ -1,12 +1,12 @@
 # === v4.3.2-suffix-boundary-idempotent-feed-8k — #1569 corrected-label fine-tune ===
 #
-# ONE LEVER: add the 30k-row `synth-suffix-boundary` overlay/dose to the shipped 9.0.0 base's
+# ONE CHANGE: add the 30k-row `synth-suffix-boundary` overlay/dose to the shipped 9.0.0 base's
 # v0.17.0 feed. Same tokenizer, model geometry, trained channels and data weights as
 # v4.2.0-base-anchor-v2. This is a fresh-optimizer same-vocab fine-tune from that run's step-60000;
 # it is NOT a resume or an extension of the completed cosine schedule. EWC lambda 1e4 is the B11
 # calibration winner from v4.1.2. Launch exactly once with `--resume none`.
 #
-# ONE EFFECTIVE LEVER: repair the load-time target labels. The v4.3.0/v4.3.1 runs were trained after the
+# ONE EFFECTIVE CHANGE: repair the load-time target labels. The v4.3.0/v4.3.1 runs were trained after the
 # affix relabel pass corrupted an already-decomposed terminal-only street into two suffixes. The corrected
 # 250k selectable-feed audit holds carrier prevalence fixed and moves the target slice from 5,183/16,143
 # correct to 16,143/16,143; terminal contrast remains exactly 5,405/5,505. Removing two absent positive

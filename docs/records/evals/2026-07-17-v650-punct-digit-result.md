@@ -42,7 +42,7 @@ the original xfail list). Regression, metamorphic, and held-out all pass: **VERD
 
 ## Digit ownership
 
-The second change is the `synth-no-fragment` extract at its all-length long-number boost — the corpus lever
+The second change is the `synth-no-fragment` extract at its all-length long-number boost — the corpus change
 that teaches the street/number boundary, so a bare `Nordtømmesvegen 178` reads `house_number 178` rather
 than a postcode. On the Norwegian digit board, `bare-street-hn` moves 0.693 → 0.733 (+4pp), the `bare-pc`
 negative guard holds at 1.000, and the contextful classes hold. The gain is a clean net-positive, not a

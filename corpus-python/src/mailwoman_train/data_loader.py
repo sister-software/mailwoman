@@ -112,7 +112,7 @@ def load_anchor_lookup(path: str) -> dict[str, tuple[dict[str, float], float, fl
     returned dict. Interning the posteriors was tried and REJECTED — 2.2M rows share
     ``{"GB": 1.0}``, but freeing the duplicate dicts returns them to pymalloc's arenas, not to the
     OS, so process RSS was byte-for-byte unchanged (1.32 GB either way). If this ever needs to come
-    down, the lever is the FORMAT (a binary lookup like ``postcode-<cc>.bin``), not the loader.
+    down, the change is the FORMAT (a binary lookup like ``postcode-<cc>.bin``), not the loader.
     """
     with open(path, encoding="utf-8") as fh:
         raw = json.load(fh)

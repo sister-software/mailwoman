@@ -478,7 +478,7 @@ async function recoverPostcodeNode(
 }
 
 /**
- * Postcode-disambiguated locality selection (#370 "Lever A"). The single biggest miss on the EU/AU panel is a
+ * Postcode-disambiguated locality selection (#370 "Change A"). The single biggest miss on the EU/AU panel is a
  * same-named town resolved to the WRONG instance — "06260 Saint-Pierre" lands 617 km off — while the postcode that
  * would disambiguate it (06260 → Alpes-Maritimes) sits resolved in the same tree, discarded because the
  * coordinate-picker prefers the (wrong) locality node and never cross- checks it. This post-walk pass closes that loop,

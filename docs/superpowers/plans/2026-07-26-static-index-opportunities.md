@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-26 · **Status:** read-only survey (fork agent), ranked by leverage-to-effort ·
 **Directive:** "every opportunity we find to serialize runtime decisions into static indexes… Who's
-on First's hierarchy is under-leveraged for this sort of thing."
+on First's hierarchy is under-changeaged for this sort of thing."
 
 **Context:** the FST degenerate-surface fix is moving from decode-time guards to build-time artifact
 curation (parallel session, in flight). This survey asks where else the same move pays. The healthy
@@ -77,7 +77,7 @@ Two hand-maintained tables in source re-derive what the gazetteer build already 
 - **Artifact:** per-country pair extracts for the REST of the hierarchy — `(locality, region)`,
   `(neighbourhood, locality)`, `(locality, country)` — built from WOF ancestry (+ registers where
   they exist), same PIX1 format, loader, and per-country calibration discipline. WOF's `ancestors`
-  table is precisely the source; this is the "hierarchy is under-leveraged" claim made concrete.
+  table is precisely the source; this is the "hierarchy is under-changeaged" claim made concrete.
 - **Dual-use (the strategic part):** the Option-A locality evidence channel (Track 2,
   ROAD_TO §8) needs exactly this artifact as a **training-time input feature** — "this span is a
   known locality under a plausible parent present in the same input." One build feeds both the

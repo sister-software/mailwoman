@@ -1,4 +1,4 @@
-# v0.4.0 second bisect: lr 3.0e-4 → 1.5e-4 — v0.3.0 baseline LR + all v0.4.0 levers.
+# v0.4.0 second bisect: lr 3.0e-4 → 1.5e-4 — v0.3.0 baseline LR + all v0.4.0 changes.
 #
 # Both lr=5.0e-4 and lr=3.0e-4 diverged during warmup. The destabilization band lives
 # around lr≈2.5e-4 in both runs:

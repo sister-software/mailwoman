@@ -52,7 +52,7 @@ claim."** The invariants that function as gates:
 1. Grade the assembled coordinate, never label-F1 alone; full per-tag re-score every 5 promotes or
    on any promote that lowers a floor.
 2. The demo is the geocoder. _"A win that doesn't reach the demo is discounted to zero."_
-3. Pre-registered gates; falsified levers get reverted, not shipped.
+3. Pre-registered gates; falsified changes get reverted, not shipped.
 4. Repair retirement — every post-model patch shrinks at each consolidation.
 5. Runtime flags are instruments, not homes.
 
@@ -219,7 +219,7 @@ no-result… It is the real bar, and it is ahead of us overall."_ EU-only, mailw
 
 **Two model majors of resolver and gazetteer work have landed since that measurement, and none of it
 has been scored against Pelias.** The founding objective's status is therefore _unknown, last known
-behind_. That is the single highest-leverage measurement available to this project right now, and it
+behind_. That is the single highest-changeage measurement available to this project right now, and it
 needs no GPU.
 
 Google appears in no benchmark. It is a verification oracle for case authoring only, which the
@@ -336,7 +336,7 @@ a healthy park, not a stall.
 
 **Two traps.** #1539 and #1519 look closed by their commit subjects and are not. `f2c9810b7` touches
 three files for 18 lines and its own message says the over-greed is _"now a NAMED failure mode
-… with its training lever recorded"_ — recorded, not fixed. #1516 is half done and **its title
+… with its training change recorded"_ — recorded, not fixed. #1516 is half done and **its title
 describes the half that is not**.
 
 ### (e) INFRA / PROCESS — 4
@@ -367,7 +367,7 @@ Tier 1 is US and FR only. This is the nearest bar and the gaps are mostly bounde
 | a1  | Re-score the competitive parity scorecard on model 9.0.0 (invariant 1 is unmet; the last one scores 5.0.0)                                     | single-lane              | bounded engineering                        |
 | a2  | Restore the five NOT-SCORED Run B bars — G1 harness, G2 reference, G5/G8 fixtures, G6 harness                                                  | single-lane              | bounded engineering                        |
 | a3  | Write the arena.perturb 78 → 66 delta into the release row, model card and a record; decide whether it is a regression or an instrument change | single-lane              | bounded engineering, then an operator call |
-| a4  | Fix #1539 (125 golden rows of suffix over-greed) — the training lever is recorded                                                              | arc-with-preregistration | needs a training run                       |
+| a4  | Fix #1539 (125 golden rows of suffix over-greed) — the training change is recorded                                                             | arc-with-preregistration | needs a training run                       |
 | a5  | Fix #1537 (famous-namesake candidate collapse) — pre-existing, upstream of intent                                                              | single-lane              | bounded engineering                        |
 | a6  | Close #1516 I1 — invariance runner on the pipeline path with per-row locale                                                                    | single-lane              | bounded engineering                        |
 | a7  | Rebuild and reship the stale FST (#1142 residual) and the candidate DB carrying #1495                                                          | single-lane              | bounded, plus a release action             |
@@ -378,24 +378,24 @@ Tier 1 is US and FR only. This is the nearest bar and the gaps are mostly bounde
 
 a1 through a10 are bounded. **a11 is the one open research question on this bar**, and it is the
 oldest: the #492 stability-ceiling work established that `us.street` sits at an equilibrium set by
-corpus mixing ratios, not by any single lever.
+corpus mixing ratios, not by any single change.
 
 ### Bar (b) — "Pelias-replacement parity"
 
 Everything in (a), plus:
 
-| #   | Gap                                                                                                             | Shape       | Kind                                                                        |
-| --- | --------------------------------------------------------------------------------------------------------------- | ----------- | --------------------------------------------------------------------------- |
-| b1  | Re-run the three-way benchmark on 9.0.0; the standing result has Pelias ahead 88 to 80 @25 km                   | single-lane | bounded engineering — **the highest-leverage single measurement available** |
-| b2  | Precision, not recall: 26% @1 km against Nominatim 77 / Pelias 71. The gap is address-point coverage, not parse | multi-lane  | data acquisition, per-country                                               |
-| b3  | AU at 35% against Pelias 78 / Nominatim 97                                                                      | multi-lane  | data plus a extract                                                         |
-| b4  | #1529 — crossing-point computation. TIGER edges already back the interpolation DB                               | single-lane | bounded engineering                                                         |
-| b5  | Upstream parity tests for all three drop-ins — nothing today compares them to what they replace                 | single-lane | bounded engineering                                                         |
-| b6  | Nominatim `limit` capped at 1; `viewbox`, `polygon_*`, structured `county`                                      | single-lane | bounded engineering                                                         |
-| b7  | Photon `bbox` wire path; `osm_tag`/`layer` honored or removed from the schema                                   | single-lane | bounded engineering                                                         |
-| b8  | libpostal `/expand` language handling                                                                           | single-lane | bounded engineering                                                         |
-| b9  | Coverage: 27 sweep rows resolve to nothing; 71 of 114 failures are class-1 namesake                             | multi-lane  | data plus the #1039 country prior                                           |
-| b10 | The synthetic-id artifact rebuild that closes the 44.5% join disagreement                                       | single-lane | bounded, but it is a full gazetteer rebuild                                 |
+| #   | Gap                                                                                                             | Shape       | Kind                                                                         |
+| --- | --------------------------------------------------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------- |
+| b1  | Re-run the three-way benchmark on 9.0.0; the standing result has Pelias ahead 88 to 80 @25 km                   | single-lane | bounded engineering — **the highest-changeage single measurement available** |
+| b2  | Precision, not recall: 26% @1 km against Nominatim 77 / Pelias 71. The gap is address-point coverage, not parse | multi-lane  | data acquisition, per-country                                                |
+| b3  | AU at 35% against Pelias 78 / Nominatim 97                                                                      | multi-lane  | data plus a extract                                                          |
+| b4  | #1529 — crossing-point computation. TIGER edges already back the interpolation DB                               | single-lane | bounded engineering                                                          |
+| b5  | Upstream parity tests for all three drop-ins — nothing today compares them to what they replace                 | single-lane | bounded engineering                                                          |
+| b6  | Nominatim `limit` capped at 1; `viewbox`, `polygon_*`, structured `county`                                      | single-lane | bounded engineering                                                          |
+| b7  | Photon `bbox` wire path; `osm_tag`/`layer` honored or removed from the schema                                   | single-lane | bounded engineering                                                          |
+| b8  | libpostal `/expand` language handling                                                                           | single-lane | bounded engineering                                                          |
+| b9  | Coverage: 27 sweep rows resolve to nothing; 71 of 114 failures are class-1 namesake                             | multi-lane  | data plus the #1039 country prior                                            |
+| b10 | The synthetic-id artifact rebuild that closes the 44.5% join disagreement                                       | single-lane | bounded, but it is a full gazetteer rebuild                                  |
 
 b2 and b9 are the substance; the rest is bounded work. **Nothing on this bar is blocked on research.**
 It is blocked on measurement (b1), on data (b2, b3, b9), and on finishing surfaces that were built to
@@ -518,7 +518,7 @@ described by its own module as _"an artifact no command can rebuild."_
 
 Direct statement without extrapolation.
 
-**The method.** Pre-registered bars, falsified levers reverted rather than shipped, verdicts written
+**The method.** Pre-registered bars, falsified changes reverted rather than shipped, verdicts written
 down with the numbers that produced them. Twelve preregistration documents in `docs/superpowers/plans/`
 carry graded verdicts, including three that read NEGATIVE and stopped. The sp-vocab-prune arc was
 killed by its own premise check. That discipline is rare and it is the reason this review could be

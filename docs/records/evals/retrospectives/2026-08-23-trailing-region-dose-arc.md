@@ -24,7 +24,7 @@ The cause is position, and it is reproducible outside VE. Moving the same digits
 | `Sandton 2196, Gauteng, South Africa`     | ✗ `house_number` | ✗ `Gauteng`       |
 | `2196 Sandton, Gauteng, South Africa`     | ✓ `postcode`     | ✗ `Gauteng`       |
 
-`postcodeShapeCoherence: true` leaves all eight VE rows **byte-identical**, so no decode-time lever
+`postcodeShapeCoherence: true` leaves all eight VE rows **byte-identical**, so no decode-time change
 touches it. Corpus lane, confirmed before spending a GPU.
 
 Cause found: `trailing-region.ts` built every one of its 17,908 structured rows postcode-LEADING
@@ -92,7 +92,7 @@ Adding a dependent locality moved the "first named segment" binding from `locali
 `dependent_locality`. Bare street names started reading as dependent localities, and venues did not
 recover.
 
-### v4.10.0 — dose is a lever, not a fix
+### v4.10.0 — dose is a change, not a fix
 
 Same extract as v4.9.0, byte-identical, at a third the exposure. One variable.
 
@@ -141,14 +141,14 @@ set by US and FR. Adding them shifts those expectations for the countries it alr
 IE venue rows are where that shows. Composition and dose modulate the size of the shift; neither
 removes it.
 
-### v4.12.0 — the brake is not the lever either, and a FLOOR appears
+### v4.12.0 — the brake is not the change either, and a FLOOR appears
 
 One variable against v4.11.0: `ewc_lambda` 1e4 -> 1e5. Same corpus, source, weight, steps, seed.
 
 **7 improved / 19 regressed, net -12. Venue-led still 9. FR -3, GB -5, IE -3.** A ten-fold stronger
 brake moved the net by one row and the venue class by none.
 
-| run     | lever changed                                  | net | venue-led |
+| run     | change changed                                 | net | venue-led |
 | ------- | ---------------------------------------------- | --: | --------: |
 | v4.8.0  | admin extract @ 9.4%                           | -18 |        12 |
 | v4.9.0  | + dependent locality                           | -20 |        15 |
@@ -156,8 +156,8 @@ brake moved the net by one row and the venue class by none.
 | v4.11.0 | venue-bearing rows, no new source, no new dose | -13 |     **9** |
 | v4.12.0 | EWC brake x10                                  | -12 |     **9** |
 
-Three unrelated levers — exposure, composition, regularization — reach the same floor with the SAME
-NINE venue-led rows. A floor that three independent levers cannot move is not a property of any of
+Three unrelated changes — exposure, composition, regularization — reach the same floor with the SAME
+NINE venue-led rows. A floor that three independent changes cannot move is not a property of any of
 them.
 
 ### The control, RUN — and it splits the ledger
@@ -184,7 +184,7 @@ Both readings matter and neither was available before:
    treated arms. The venue diagnosis holds for that subset.
 
 **The floor of nine venue-led regressions was a mixture too**: five are the tax, four are the data.
-That is why exposure, composition and the brake could not move it — three of those levers act only on
+That is why exposure, composition and the brake could not move it — three of those changes act only on
 the four.
 
 ### What this changes for anything shipped from here
@@ -213,7 +213,7 @@ under NO intervention: **fine-tune the base corpus with no added extract at all,
 It is one 4,000-step run, ~13 minutes and ~$1. **Run it before any further extract work.** Nothing in
 this arc should be trusted until it is answered, including the sections above.
 
-### v4.14.0 — steps is not the lever, and the tax is IMMEDIATE
+### v4.14.0 — steps is not the change, and the tax is IMMEDIATE
 
 The null control suggested the last untested variable: if 4,000 steps costs ten rows, fewer steps
 should cost fewer. One variable against v4.11.0, `max_steps` 4000 -> 1000.
@@ -230,9 +230,9 @@ fixed cost of touching this base at all. No shorter run avoids it.
 
 ### The fine-tune route is closed, on measurement
 
-Eight runs. Every lever that exists for an additive fine-tune, each isolated:
+Eight runs. Every change that exists for an additive fine-tune, each isolated:
 
-| run         | lever                                | net vs shipped | regressed |
+| run         | change                               | net vs shipped | regressed |
 | ----------- | ------------------------------------ | -------------: | --------: |
 | v4.8.0      | admin extract @ 9.4%                 |            -18 |        25 |
 | v4.9.0      | + dependent locality                 |            -20 |        31 |

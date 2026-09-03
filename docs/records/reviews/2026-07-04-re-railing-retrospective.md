@@ -90,8 +90,8 @@ repaired on contact, reinforcing the ship-whole-or-wait rule.
 | 4 — #825, probe-first     | the funded one | Rewritten by the addendum, then exceeded: 5.1.0 (splice, $0), 5.2.0 (nordic), 5.3.0 (from-scratch v2.2.0, salvaged from the archive) — the "funded campaign" ultimately spent ~3.6 A100-h once, and its artifact shipped after the calculus changed rather than being re-run. |
 | 5 — scope re-declaration  | half a day     | SCOPE.mdx + the flag register (which found two default split-brains, #895) + plan/README marked historical.                                                                                                                                                                   |
 
-The review's "what not to do" held on all four counts: no resolver micro-levers past the frontier
-(the residual went to a _typed floor_, not a lever), no breaking sweeps, no new locales before
+The review's "what not to do" held on all four counts: no resolver micro-changes past the frontier
+(the residual went to a _typed floor_, not a change), no breaking sweeps, no new locales before
 the coordinated bump (the freeze lifted exactly when designed), no new workstreams before 1–3.
 
 ---

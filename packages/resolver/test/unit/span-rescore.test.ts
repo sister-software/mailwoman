@@ -415,7 +415,7 @@ describe("resolveTree + spanRescore", () => {
 	it("#1546: the injected node for a bare Moscow is Москва RU — the winner flips only for the starved class", async () => {
 		const resolver = createWOFResolver(await makeBackend())
 
-		// The live shape: a bare famous namesake reads as a `street` (no country prior — the #912 lever
+		// The live shape: a bare famous namesake reads as a `street` (no country prior — the #912 change
 		// abstains on a bare-locality tree), the walk resolves nothing, span-rescore recovers it. Before
 		// the fix the recovered place was Moscow, Idaho: Moscow RU never entered the candidate list.
 		const out = await resolver.resolveTree(

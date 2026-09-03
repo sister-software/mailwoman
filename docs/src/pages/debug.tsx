@@ -5,7 +5,7 @@
  *
  *   `/debug` — the geocoder demo with the model-visualizer drawer open by default. Same client-side
  *   stack as `/demo`; the drawer traces the SAME address you geocode on the map (tokens, retrieval
- *   channels, emissions, priors, repairs) so a lever's effect is visible in place. A dev/inspection
+ *   channels, emissions, priors, repairs) so a change's effect is visible in place. A dev/inspection
  *   surface, not a separate app — it reuses the demo body wholesale via {@link DemoPageInner}.
  */
 

@@ -3,9 +3,10 @@
 ## Vale existence rule. Each token is a name an agent minted for something that
 ## already has a plain name, and the reader has to decode it. `the null` /
 ## `the cure` were invented for two fine-tune runs — say "the control run
-## (v5.0.1)" / "the treatment run (v5.0.2)". `lever` means a specific change —
-## name the config key, corpus recipe, or weight. `three-leg` names a
+## (v5.0.1)" / "the treatment run (v5.0.2)". `three-leg` names a
 ## comparison protocol — say which systems or runs the legs are.
+## The word for a tunable change moved to Mailwoman/AmbiguousShorthand.yml
+## so both surfaces refuse it.
 ##
 ## This file holds the CHAT-ONLY shorthand: words that appear in replies and
 ## never in published prose. The four words banned on BOTH surfaces —
@@ -23,5 +24,4 @@ ignorecase: true
 tokens:
   - the null
   - the cure
-  - lever(s)?
   - three-leg

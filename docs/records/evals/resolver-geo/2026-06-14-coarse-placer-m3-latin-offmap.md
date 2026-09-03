@@ -52,14 +52,14 @@ needs **broad country coverage** — dozens of off-map countries in the OTHER cl
 That breadth is the wall. Of the 12 off-map countries requested from Overture's addresses theme
 (2026-05-20.0, ALPHA), only 5 returned rows (PL/BR/MX/PT/CZ); RO/TR/ID/SE/VN/HU/PH/AR were empty. So
 this is a **data-availability ceiling, not a method failure** — the same shape as #564's fr.house_number
-plateau (real-data realism is the lever; we just don't have enough of it yet).
+plateau (real-data realism is the change; we just don't have enough of it yet).
 
 ## Decision
 
 - **Do not promote.** `model-m3` is a strict improvement but does not meet the ≥90% general target; the
   coarse-placer isn't bundled anywhere yet, so there's nothing to gate — this is a recorded finding,
   and the canonical fp32 model stands.
-- **The next lever is breadth, not weight or recipe.** Broad off-map address coverage — a full
+- **The next change is breadth, not weight or recipe.** Broad off-map address coverage — a full
   OpenAddresses off-map pull, or a later Overture release once the addresses theme fills in — folded
   into OTHER, with the held-out-country probe as the gate. Tracked as a follow-up to #244.
 

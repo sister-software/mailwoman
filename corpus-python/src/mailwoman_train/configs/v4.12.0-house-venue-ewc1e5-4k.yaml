@@ -12,11 +12,11 @@
 # hard the old one is held.
 #
 # WHAT THIS CAN CONCLUDE, both directions useful:
-#   - regressions fall and the 5 gains survive -> the brake was the lever, and this is shippable;
+#   - regressions fall and the 5 gains survive -> the brake was the change, and this is shippable;
 #   - regressions fall and the gains vanish too -> the brake trades learning for stability 1:1, so a
 #     fine-tune cannot carry this data at all and the next step is a from-scratch base that sees every
 #     tail at once;
-#   - nothing moves -> the brake is not the lever either, and the search moves to capacity.
+#   - nothing moves -> the brake is not the change either, and the search moves to capacity.
 #
 # PRE-REGISTERED GATE, unchanged from v4.11.0:
 #   1. the venue-led rows v4.8.0 regressed must ALL hold;

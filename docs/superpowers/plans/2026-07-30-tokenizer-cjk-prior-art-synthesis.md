@@ -8,10 +8,10 @@ required finding. Verdicts first, receipts after.
 ## Verdicts
 
 1. **Latin: keep SentencePiece unigram.** Nothing better-fitting exists under our constraints
-   (browser WASM, deterministic char offsets, int8 ONNX, 40M-param scale). Two free levers found:
+   (browser WASM, deterministic char offsets, int8 ONNX, 40M-param scale). Two free changes found:
    **vocabulary pruning** (shipped-eval utilization ~6.7%, ceiling 24%; the embedding table is
    ~72.5% of model parameters) — **CORRECTION 2026-07-31: the 24% ceiling was falsified at the
-   full-feed measurement (86.27% fired over all 684M rows); the pruning lever is DEAD, see
+   full-feed measurement (86.27% fired over all 684M rows); the pruning change is DEAD, see
    `2026-07-31-sp-vocab-pruning-verdict.md`** — and a **WASM rebuild on SentencePiece 0.2.2**
    (native offsets; SHIPPED 2026-07-31, `@mailwoman/sentencepiece-wasm`, PR #1379).
 2. **CJK: character-level with a composition window confirmed** — the only browser-feasible class
@@ -158,4 +158,4 @@ KR rooftop = gated.
 3. Phase-3 extract build: full-extract vocab rebuild + the normalization steal-list; Phase-5 runtime:
    code-point-native decode + the cjk.ts folding fixes.
 4. v9 unification pre-registration must name the channels-attached condition.
-5. Vocab pruning + SP 0.2.2 WASM: banked as v8.4-class Latin levers (not this arc).
+5. Vocab pruning + SP 0.2.2 WASM: banked as v8.4-class Latin changes (not this arc).

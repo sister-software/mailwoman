@@ -1,7 +1,7 @@
 # === v0.9.10-country-bal (#464) — MODEL-FIRST country, the balanced slice. ===================
 # The shipped v4.1.0 model is STARVED on `country` (P=R=F1=0 on the homograph eval — it never emits
 # the tag; the night-9 49-F1/23%-precision over-fire was a SEPARATE bad slice). So this fills a void,
-# the same way `unit` did — but the corpus is built to AVOID re-creating the over-fire, and the lever
+# the same way `unit` did — but the corpus is built to AVOID re-creating the over-fire, and the change
 # is MODEL-FIRST (no deterministic override; the gazetteer informs the model, never substitutes —
 # see docs/engineering/reference/closed-vocab-fields-model-first.mdx).
 #

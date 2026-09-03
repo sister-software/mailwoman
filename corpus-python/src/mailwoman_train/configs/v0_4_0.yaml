@@ -1,7 +1,7 @@
 # v0.4.0 config — issue #116. Direct follow-up to v0.3.0 (configs/stage2.yaml).
 #
 # Recovers the v0.3.0 coarse-F1 regression (region 0.83 → 0.18, locality 0.65 → 0.27)
-# without abandoning the Stage 2 label expansion. Four levers, all config-driven:
+# without abandoning the Stage 2 label expansion. Four changes, all config-driven:
 #
 #   1. Per-token CRF NLL normalization      (model.crf_normalization=per_token)
 #   2. Class-weighted CE biased toward coarse  (model.class_weights=…)
@@ -51,8 +51,8 @@ data:
   coarse_filter: true
 
 model:
-  # Architecture unchanged — v0.3.0 + 9M params is enough; the v0.4.0 levers are
-  # training-side. Hidden-size bump would be the v0.5.0 lever if F1 still bottlenecks.
+  # Architecture unchanged — v0.3.0 + 9M params is enough; the v0.4.0 changes are
+  # training-side. Hidden-size bump would be the v0.5.0 change if F1 still bottlenecks.
   hidden_size: 256
   num_hidden_layers: 6
   num_attention_heads: 4

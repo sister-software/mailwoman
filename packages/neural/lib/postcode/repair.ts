@@ -16,7 +16,7 @@
  *   This pass runs AFTER the model's per-token BIO labels are decoded but BEFORE `buildAddressTree`.
  *   It detects postcode-shaped substrings with per-country regexes and repairs the label sequence
  *   so the postcode span matches the detected shape. The model is untouched — this is a
- *   deterministic decoder-side correction, the "lowest risk" lever in the v0.7 plan (vs. #36's soft
+ *   deterministic decoder-side correction, the "lowest risk" change in the v0.7 plan (vs. #36's soft
  *   FST shallow-fusion or #41's char-level encoder).
  *
  *   PRECISION GUARDS (so we never regress the countries already passing):

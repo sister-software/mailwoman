@@ -73,13 +73,13 @@ the city-state bug is international-order ONLY. The full 2×2 (`scripts/eval/de-
 | intl   | off    |      47.3% |           59.6% |
 
 Two things fall out. The anchor does real work on native order (PIP 61 → 96), and it slightly _hurts_
-international PIP (59.6 off → 56.1 on) — the anchor was never the international lever. And native German,
+international PIP (59.6 off → 56.1 on) — the anchor was never the international change. And native German,
 measured honestly, beats Pelias comfortably and is done. The genuine residual is one thing: Berlin in
 international order. Everything else is the name-match artifact.
 
 ## Why three retrains "failed"
 
-They optimized an aggregate that was half artifact, half a bug the lever couldn't reach. The anchor was
+They optimized an aggregate that was half artifact, half a bug the change couldn't reach. The anchor was
 never the problem (coord p50 ~6 km throughout); the metric was conflating a gazetteer-name mismatch in
 Saxony with a city-state parse failure in Berlin. With those separated, neither calls for another
 anchor retrain.
@@ -97,5 +97,5 @@ DeepSeek signed off this pivot across four turns. The two real fixes, both off t
 
 v0.9.5 (the `[COUNTRY_DE]` start-token that was queued if PIP fell below 90%) is **cancelled**: the
 country signal helps neither half — Saxony is already correct, and Berlin's country is never in doubt.
-The corpus and anchor levers are spent; the German story moves to the resolver and a narrow city-state
+The corpus and anchor changes are spent; the German story moves to the resolver and a narrow city-state
 data fix.

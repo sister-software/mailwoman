@@ -177,7 +177,7 @@ export async function runConstraintCensus(
 ): Promise<ConstraintCensusResult> {
 	const set = await resolveInputSet(args.inputs ?? { kind: "board" })
 	// Tracing is the census's entire input, and the band probe is what separates reachability from coverage. Both are
-	// forced on regardless of what the caller passed — neither can change an answer, so neither is a lever.
+	// forced on regardless of what the caller passed — neither can change an answer, so neither is a change.
 	const engine = await registry.acquire({ ...args.config, trace: true, diagnose_unreachable: true })
 	const dataRoot = String(engine.effective.dataRoot ?? "")
 	const opened = await (dependencies.openArtifact ?? openSealedArtifact)(`${dataRoot}/wof/candidate.db`)
