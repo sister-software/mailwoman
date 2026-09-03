@@ -301,7 +301,6 @@ export interface ParsedGeoIDBlockLevel {
 	[GeoIDPart.Place]: FIPSPlaceCode
 	[GeoIDPart.BlockGroup]: FIPSBlockGroupCode
 	[GeoIDPart.Block]: FIPSBlockCode
-	[GeoIDPart.BlockGroup]: FIPSBlockGroupCode
 	[GeoIDPart.CongressionalDistrict]: FIPSCongressionalDistrictCode
 }
 

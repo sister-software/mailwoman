@@ -86,10 +86,10 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
-		"@mapbox/vector-tile": "^2.0.5",
+		"@mapbox/vector-tile": "^3.0.0",
 		"@sister.software/asciify": "^4.3.0",
-		"htmlparser2": "^10.1.0",
-		"pbf": "^4.0.2",
+		"htmlparser2": "^12.0.0",
+		"pbf": "^5.1.2",
 		"pmtiles": "^4.5.0"
 	},
 	"engines": {

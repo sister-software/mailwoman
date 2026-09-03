@@ -15,8 +15,8 @@
  */
 
 import render from "dom-serializer"
-import type { AnyNode, Element } from "domhandler"
-import { findAll, isTag } from "domutils"
+import { isTag, type AnyNode, type Element } from "domhandler"
+import { findAll } from "domutils"
 import { parseDocument } from "htmlparser2"
 import { TextSpliterator } from "spliterator"
 

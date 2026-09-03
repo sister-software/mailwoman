@@ -12,7 +12,7 @@
  */
 
 import { VectorTile } from "@mapbox/vector-tile"
-import Pbf from "pbf"
+import { PbfReader } from "pbf"
 
 export interface DecodedFeature {
 	/**
@@ -34,7 +34,7 @@ export interface DecodedLayer {
 }
 
 export function decodeMVT(data: Uint8Array): DecodedLayer[] {
-	const tile = new VectorTile(new Pbf(data))
+	const tile = new VectorTile(new PbfReader(data))
 
 	return Object.entries(tile.layers).map(([name, layer]) => {
 		const features: DecodedFeature[] = []
