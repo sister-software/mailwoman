@@ -15,9 +15,9 @@
  *      pass itself makes, reporting whether the postcode resolved, whether an EXACT same-named locality came back, and
  *      whether the pair was therefore coherent. This is the number that decides whether the pass can speak.
  *
- *   The candidate SET is bounded by codex, not by the gazetteer: `candidateSystemsForPostcode` only knows eight systems,
- *   so a country with no codex slice can never be proposed however many rows it has. The probe therefore walks exactly
- *   those eight.
+ *   The candidate SET is bounded by codex, not by the gazetteer: `candidateSystemsForPostcode` only knows the systems
+ *   in `SYSTEM_CODES`, so a country with no codex slice can never be proposed however many rows it has. The probe
+ *   therefore walks exactly those systems, one real pair each.
  *
  *   Run from the repo root: `node packages/mailwoman/lib/dev-tools/postcode-coherence-coverage.run.ts <fts|candidate>`
  */
@@ -42,6 +42,8 @@ const PROBES: ReadonlyArray<{ system: string; country: string; postcode: string;
 	{ system: "us", country: "US", postcode: "75001", locality: "Addison" },
 	{ system: "de", country: "DE", postcode: "10117", locality: "Berlin" },
 	{ system: "fr", country: "FR", postcode: "75001", locality: "Paris" },
+	{ system: "es", country: "ES", postcode: "28013", locality: "Madrid" },
+	{ system: "it", country: "IT", postcode: "00184", locality: "Roma" },
 	{ system: "ca", country: "CA", postcode: "M5V 3L9", locality: "Toronto" },
 	{ system: "gb", country: "GB", postcode: "SW1A 2AA", locality: "London" },
 	{ system: "jp", country: "JP", postcode: "100-0001", locality: "Chiyoda" },
