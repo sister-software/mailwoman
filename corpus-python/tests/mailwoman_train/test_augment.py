@@ -4,7 +4,7 @@ import random
 
 import pytest
 
-from .augment import (
+from mailwoman_train.augment import (
     _expand_token,
     augment_row,
     drop_separator_punct,
@@ -14,7 +14,7 @@ from .augment import (
     splice_expansion,
     upper_case_row,
 )
-from .tokenizer import PieceSpan, realign_labels_to_pieces, realign_spans_to_pieces, whitespace_spans
+from mailwoman_train.tokenizer import PieceSpan, realign_labels_to_pieces, realign_spans_to_pieces, whitespace_spans
 
 
 def test_expand_token_single_word():
@@ -716,7 +716,7 @@ class TestOrdinalStreetSwap:
     def test_swaps_word_ordinal_to_digit_on_street_label(self):
         import random
 
-        from .augment import augment_row
+        from mailwoman_train.augment import augment_row
 
         rows = list(augment_row(self._row(), random.Random(7), 0.0, 0.0, ordinal_prob=1.0))
         augmented = [r for r in rows[1:] if "5th" in r["raw"]]
@@ -727,7 +727,7 @@ class TestOrdinalStreetSwap:
     def test_never_touches_non_street_ordinals(self):
         import random
 
-        from .augment import augment_row
+        from mailwoman_train.augment import augment_row
 
         row = {
             "raw": "Apt 5th 12 Main St",
@@ -740,7 +740,7 @@ class TestOrdinalStreetSwap:
     def test_prob_zero_is_byte_identical_stream(self):
         import random
 
-        from .augment import augment_row
+        from mailwoman_train.augment import augment_row
 
         a = list(augment_row(self._row(), random.Random(3), 0.3, 0.3))
         b = list(augment_row(self._row(), random.Random(3), 0.3, 0.3, ordinal_prob=0.0))

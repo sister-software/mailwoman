@@ -1032,7 +1032,7 @@ class MailwomanCoarseEncoder(nn.Module):
             span_scores_out = self.span_scorer(h)
 
             if labels is not None and attention_mask is not None and self.span_loss_weight > 0:
-                assert self.semi_crf is not None
+                assert self.semi_crf is not None  # nosec B101 — type narrowing; built in __init__ when use_span_scorer
                 lengths = attention_mask.sum(dim=1).long()
                 rows: list[int] = []
                 segs: list[list[tuple[int, int, int]]] = []
@@ -1311,9 +1311,9 @@ class MailwomanCoarseEncoder(nn.Module):
         # (the #727 phase-1 check hit exactly this). CPU is the safe landing spot; callers .to(device).
         # Use weights_only=True if available (torch 2.4+) to avoid pickle-arbitrary-code warning.
         try:
-            sd = torch.load(model_dir / "pytorch_model.bin", weights_only=True, map_location="cpu")
+            sd = torch.load(model_dir / "pytorch_model.bin", weights_only=True, map_location="cpu")  # nosec B614 — weights_only=True; our own exported state_dict
         except TypeError:  # pragma: no cover — older torch
-            sd = torch.load(model_dir / "pytorch_model.bin", map_location="cpu")
+            sd = torch.load(model_dir / "pytorch_model.bin", map_location="cpu")  # nosec B614 — same trusted artifact; weights_only=True unavailable pre-2.4
         model.load_state_dict(sd)
         return model
 

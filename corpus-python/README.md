@@ -57,7 +57,7 @@ uv run ruff check --fix .      # lint + fix  (oxlint --fix)
 uv run ruff format .           # format      (oxfmt)
 uv run ruff format --check .   # format check, for CI
 uv run mypy                    # type check  (tsc --strict)
-uv run bandit -r src           # security    (static scan)
+uv run bandit -c pyproject.toml -r src   # security (static scan)
 uv run pytest                  # tests       (vitest)
 uv run python scripts/verify_toolchain.py   # train-pin consistency guard
 ```

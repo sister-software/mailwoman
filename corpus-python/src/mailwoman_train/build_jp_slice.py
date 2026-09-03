@@ -424,7 +424,8 @@ def norm_key(text: str) -> str:
 
 
 def muni_bucket(municipality: str) -> int:
-    return int(hashlib.md5(norm_key(municipality).encode("utf-8")).hexdigest(), 16) % 100
+    # md5 is a stable bucketing hash here, never a security digest (bandit B324).
+    return int(hashlib.md5(norm_key(municipality).encode("utf-8"), usedforsecurity=False).hexdigest(), 16) % 100
 
 
 _KENALL_PAREN = re.compile(r"[（(].*?[）)]")

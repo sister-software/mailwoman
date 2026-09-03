@@ -9,7 +9,7 @@ import json
 
 import pytest
 
-from .relabel import AffixRelabelLexicon, relabel_row, relabel_spans, split_street_span
+from mailwoman_train.relabel import AffixRelabelLexicon, relabel_row, relabel_spans, split_street_span
 
 LEX = AffixRelabelLexicon(
     directionals={

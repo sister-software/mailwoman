@@ -192,7 +192,7 @@ def cmd_package(args: argparse.Namespace) -> int:
         eval_report_dict = {
             "n_entries": 0,
             "full_parse_exact_match": 0.0,
-            "mean_token_confidence": 0.0,
+            "mean_token_confidence": 0.0,  # nosec B105 — numeric eval default, not a credential
             "per_component": {},
             "calibration": [],
             "note": "no golden_dir provided; eval skipped",
@@ -613,7 +613,7 @@ def main(argv: list[str] | None = None) -> int:
         from .model import force_math_sdpa
 
         force_math_sdpa()
-    except Exception:  # pragma: no cover — torch/transformers may not be installed
+    except ImportError:  # pragma: no cover — torch/transformers may not be installed
         pass
     parser = build_parser()
     args = parser.parse_args(argv)

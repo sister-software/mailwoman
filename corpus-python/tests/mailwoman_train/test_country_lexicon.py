@@ -15,14 +15,14 @@ from __future__ import annotations
 
 import re
 
-from .country_lexicon import (
+from mailwoman_train.country_lexicon import (
     COUNTRY_AMBIGUOUS_BIT,
     COUNTRY_SURFACE_BIT,
     GazetteerLexicon,
     realign_country_to_pieces,
 )
-from .gazetteer_anchor import gazetteer_char_paint
-from .tokenizer import PieceSpan
+from mailwoman_train.gazetteer_anchor import gazetteer_char_paint
+from mailwoman_train.tokenizer import PieceSpan
 
 S = COUNTRY_SURFACE_BIT  # 1
 A = COUNTRY_AMBIGUOUS_BIT  # 2

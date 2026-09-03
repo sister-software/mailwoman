@@ -79,8 +79,9 @@ ignore = ["E501"]
 docstring-code-format = true
 
 # mypy — strict typing over the SHIPPED LIBRARY first. modal/ and scripts/ are deliberately
-# outside `files`: the gate is src/, and the training scripts move under it as they clean up.
-# The corpus was ~50% annotated when this landed; the strict baseline is a known, shrinking list.
+# outside `files`: the gate is src/, and tests live under tests/ (out of this scope) until the
+# library baseline is zero, then the tests join it. The corpus was ~50% annotated when this
+# landed; the strict baseline is a known, shrinking list.
 [tool.mypy]
 python_version = "3.12"
 files = ["src"]
@@ -88,9 +89,6 @@ strict = true
 show_error_codes = true
 pretty = true
 warn_unused_configs = true
-# src/ also carries test_*.py modules (a packaging smell tracked separately); they are not
-# part of the shipped library and stay out of this gate until they move under tests/.
-exclude = '(^|/)test_.+\.py$'
 
 # pyarrow and sentencepiece ship no py.typed marker; numpy and pyyaml (via types-PyYAML) are
 # typed. The bare module name AND its submodules are both needed — "pyarrow.*" alone does not
@@ -102,3 +100,7 @@ ignore_missing_imports = true
 # bandit — security/static analysis over src. Tests are excluded by bandit's own defaults.
 [tool.bandit]
 exclude_dirs = ["modal", "scripts"]
+# B311: pseudo-random generators are used for corpus sampling/splits, seeded for
+# reproducibility (audit_epoch_mixture, build_*_slice, data_loader, tokenizer_train). They are
+# data-generation randomness, never security/crypto — the CSPRNG rule does not apply.
+skips = ["B311"]

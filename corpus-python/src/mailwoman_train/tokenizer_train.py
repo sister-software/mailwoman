@@ -30,7 +30,7 @@ import json
 import logging
 import random
 import re
-import subprocess
+import subprocess  # nosec B404 — spawns external toolchain binaries by design (git for provenance stamps)
 import tempfile
 import time
 import unicodedata
@@ -436,7 +436,7 @@ def load_fixture_lines(path: Path) -> list[str]:
 def git_commit(workdir: Path | None = None) -> str | None:
     """Best-effort: return the current HEAD SHA, or None outside a git checkout."""
     try:
-        out = subprocess.check_output(
+        out = subprocess.check_output(  # nosec B603, B607 — fixed argv list, no shell, trusted PATH binary
             ["git", "rev-parse", "HEAD"],
             cwd=workdir or Path(__file__).parent,
             stderr=subprocess.DEVNULL,

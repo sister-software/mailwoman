@@ -234,7 +234,7 @@ def source_row_counts(corpus_dir: Path, split: str = "train") -> dict[str, int]:
             continue
         try:
             src = _slice_first_source(slice)
-        except Exception:
+        except Exception:  # nosec B112 — deliberately skip unreadable slices (rationale below)
             # A slice whose source cannot be read is skipped rather than counted under a guessed name —
             # an inflated row count understates dose, which is the direction that hides the defect.
             continue

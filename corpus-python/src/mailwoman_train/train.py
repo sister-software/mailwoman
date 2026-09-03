@@ -797,7 +797,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         resume_from_path = Path(resume_from)
         opt_p = resume_from_path / "optimizer.pt"
         if opt_p.is_file():
-            optim.load_state_dict(torch.load(opt_p, weights_only=False))
+            optim.load_state_dict(torch.load(opt_p, weights_only=False))  # nosec B614 — resume loads optimizer state WE wrote under this output_dir
         ts_p = resume_from_path / "training_state.json"
         if ts_p.is_file():
             ts = json.loads(ts_p.read_text(encoding="utf-8"))
@@ -825,7 +825,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                 print("[resume-drift] none — live config matches the checkpoint's stamped state")
         sched_p = resume_from_path / "scheduler.pt"
         if sched_p.is_file():
-            scheduler.load_state_dict(torch.load(sched_p, weights_only=False))
+            scheduler.load_state_dict(torch.load(sched_p, weights_only=False))  # nosec B614 — same trusted checkpoint dir as the optimizer load above
         else:
             # Pre-resume-feature checkpoint: scheduler.pt didn't exist. Fast-forward the
             # scheduler so LR is correct for the resumed step. ``scheduler.step()`` is cheap.
