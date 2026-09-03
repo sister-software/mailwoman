@@ -218,7 +218,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@dsnp/parquetjs": "1.8.9",
+		"@dsnp/parquetjs": "1.9.3",
 		"@mailwoman/ban": "workspace:*",
 		"@mailwoman/bdc": "workspace:*",
 		"@mailwoman/codex": "workspace:*",

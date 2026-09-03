@@ -3223,9 +3223,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@dsnp/parquetjs@npm:1.8.9":
-  version: 1.8.9
-  resolution: "@dsnp/parquetjs@npm:1.8.9"
+"@dsnp/parquetjs@npm:1.9.3":
+  version: 1.9.3
+  resolution: "@dsnp/parquetjs@npm:1.9.3"
   dependencies:
     "@aws-sdk/client-s3": "npm:^3.1092.0"
     "@types/node-int64": "npm:0.4.32"
@@ -3240,7 +3240,7 @@ __metadata:
     thrift: "npm:0.24.0"
     varint: "npm:6.0.0"
     xxhash-wasm: "npm:1.1.0"
-  checksum: 10/e77a27ecb2154d88fc2ff13c1ad5b0b25413b45fcaaafb7bd490901cc4a56973ed9debf97aefd620e00745fe37f5f630a1fa9c389dc16c2a79c8b4b9e4c57c70
+  checksum: 10/46cdea9334132bb7cc03412c523eb6dbbecf7d3d847d0b0e46edb868c1a061818b3d3ccf9d6608a161cb27a9b52a8921fc36966cb4ea45a8dbcc38d4a490493b
   languageName: node
   linkType: hard
 
@@ -4578,7 +4578,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/corpus@workspace:packages/corpus"
   dependencies:
-    "@dsnp/parquetjs": "npm:1.8.9"
+    "@dsnp/parquetjs": "npm:1.9.3"
     "@mailwoman/ban": "workspace:*"
     "@mailwoman/bdc": "workspace:*"
     "@mailwoman/codex": "workspace:*"
