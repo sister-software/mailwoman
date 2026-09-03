@@ -262,7 +262,11 @@ export async function createShapefileFeatureSource(
 		areaSymbol: options.areaSymbol,
 		// A RANGE's own count is supplied by the caller, because `ogrinfo` reports the layer's total and nothing narrower.
 		// The whole-file total is still checked: the builder sums what its chunks streamed and compares that.
-		declaredFeatureCount: options.declaredFeatureCount ?? options.limit ?? identity.featureCount,
+		declaredFeatureCount:
+			options.declaredFeatureCount ??
+			// A `--limit` above the layer's real count reads every feature there is; the count the builder checks against
+			// is then the layer's, not the limit's, or a complete read throws as a short one.
+			(options.limit === undefined ? identity.featureCount : Math.min(options.limit, identity.featureCount)),
 		layer: identity.layer,
 		epsg: identity.epsg,
 		origin: options.shapefilePath,
