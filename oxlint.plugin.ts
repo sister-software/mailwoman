@@ -26,28 +26,7 @@
  *   delimiters only; splitting on anything else is not a streaming shape and stays silent.
  */
 
-// The plugin-type declarations below mirror `@sister.software/oxlint-config`'s internal
-// `plugin-types.ts`, which the package deliberately does not export. Only the fields this rule
-// reads are declared.
-
-interface AstNode {
-	type: string
-	async?: boolean
-	body?: unknown
-	range: [number, number]
-	value?: unknown
-	name?: string
-	callee?: AstNode
-	object?: AstNode
-	property?: AstNode
-	source?: AstNode
-	meta?: AstNode
-	arguments?: AstNode[]
-	expression?: AstNode
-	typeAnnotation?: AstNode
-	quasis?: { value?: { cooked?: string } }[]
-	expressions?: AstNode[]
-}
+import type { AstNode } from "@sister.software/oxlint-config/plugin-types"
 
 interface RuleContext {
 	options: unknown[]
