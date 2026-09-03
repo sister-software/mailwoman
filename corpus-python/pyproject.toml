@@ -97,6 +97,12 @@ warn_unused_configs = true
 module = ["pyarrow", "pyarrow.*", "sentencepiece", "sentencepiece.*", "onnxruntime"]
 ignore_missing_imports = true
 
+# sentencepiece_model_pb2 ships a stub too sparse for protobuf usage; skip it so its
+# classes are untyped rather than partially-typed (tokenizer_splice builds ModelProtos).
+[[tool.mypy.overrides]]
+module = ["sentencepiece.sentencepiece_model_pb2"]
+follow_imports = "skip"
+
 # bandit — security/static analysis over src. Tests are excluded by bandit's own defaults.
 [tool.bandit]
 exclude_dirs = ["modal", "scripts"]

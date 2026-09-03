@@ -44,9 +44,10 @@ import glob
 import json
 import random
 from pathlib import Path
+from typing import Any
 
-import sentencepiece as spm  # type: ignore[import-not-found]
-from sentencepiece import sentencepiece_model_pb2 as sp_pb2  # type: ignore[import-not-found]
+import sentencepiece as spm
+from sentencepiece import sentencepiece_model_pb2 as sp_pb2
 
 # Deterministic sample size + seed so the corpus (and therefore the spliced vocab) is reproducible.
 _CORPUS_SAMPLE = 350_000
@@ -284,7 +285,7 @@ def mean_init_embeddings(
     return old_vocab, new_vocab
 
 
-def _fvt_rows(base_tokenizer: Path, spliced_tokenizer: Path, emb):  # -> np.ndarray
+def _fvt_rows(base_tokenizer: Path, spliced_tokenizer: Path, emb: Any) -> Any:
     """The FVT mean-init rows for the spliced-in pieces, computed from an existing embedding matrix.
 
     Mirrors the mean-init in ``mean_init_embeddings`` (the pytorch state-dict path) exactly, on numpy so
