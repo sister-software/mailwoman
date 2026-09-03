@@ -34,6 +34,7 @@
  */
 
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
+import { addBoundingBoxColumns, addCellIndexColumns, addRingsColumn } from "@mailwoman/sqlite/schema-columns"
 import { sql, type Kysely } from "kysely"
 
 /**
@@ -305,7 +306,7 @@ export type ZoningSchemaHandle = Pick<Kysely<ZoningDatabase>, "schema">
  * penalizes.
  */
 export async function createZoningAreaTable(db: ZoningSchemaHandle): Promise<void> {
-	await db.schema
+	const table = db.schema
 		.createTable("zoning_area")
 		.addColumn("area_id", "text", (c) => c.primaryKey())
 		.addColumn("jurisdiction_id", "text", (c) => c.notNull())
@@ -318,13 +319,12 @@ export async function createZoningAreaTable(db: ZoningSchemaHandle): Promise<voi
 		.addColumn("crosswalk_description", "text")
 		.addColumn("crosswalk_rollup", "text")
 		.addColumn("provenance_grade", "text", (c) => c.notNull())
-		.addColumn("min_lat", "real", (c) => c.notNull())
-		.addColumn("min_lon", "real", (c) => c.notNull())
-		.addColumn("max_lat", "real", (c) => c.notNull())
-		.addColumn("max_lon", "real", (c) => c.notNull())
+
+	const bounded = addBoundingBoxColumns(table)
 		.addColumn("ring_count", "integer", (c) => c.notNull())
 		.addColumn("signed_area_m2", "real", (c) => c.notNull())
-		.addColumn("rings", "blob", (c) => c.notNull())
+
+	await addRingsColumn(bounded)
 		// ONE GRADE PER CLAIM, AND A BLANK IS NOT ONE. `NOT NULL` alone accepts `''`, which matches neither half of every
 		// read that splits on grade — so the value set and the blank are refused separately, and the second half is the one
 		// a schema without it loses.
@@ -404,12 +404,9 @@ export async function createZoningCrosswalkEdgeTable(db: ZoningSchemaHandle): Pr
  * `WITHOUT ROWID` shape.
  */
 export async function createZoningCellTable(db: ZoningSchemaHandle): Promise<void> {
-	await db.schema
-		.createTable("zoning_cell")
-		.addColumn("h3_cell", "integer", (c) => c.notNull())
-		.addColumn("resolution", "integer", (c) => c.notNull())
-		.addColumn("area_id", "text", (c) => c.notNull())
-		.addColumn("containment", "text", (c) => c.notNull())
+	const table = db.schema.createTable("zoning_cell")
+
+	await addCellIndexColumns(table, "area_id")
 		.addPrimaryKeyConstraint("zoning_cell_pk", ["h3_cell", "area_id"])
 		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
@@ -421,18 +418,15 @@ export async function createZoningCellTable(db: ZoningSchemaHandle): Promise<voi
  * way — see the interface's docstring.
  */
 export async function createZoningMappedExtentTable(db: ZoningSchemaHandle): Promise<void> {
-	await db.schema
+	const table = db.schema
 		.createTable("zoning_mapped_extent")
 		.addColumn("extent_id", "text", (c) => c.primaryKey())
 		.addColumn("source", "text", (c) => c.notNull())
 		.addColumn("statement", "text", (c) => c.notNull())
 		.addColumn("statement_url", "text", (c) => c.notNull())
 		.addColumn("effective_date", "text")
-		.addColumn("min_lat", "real", (c) => c.notNull())
-		.addColumn("min_lon", "real", (c) => c.notNull())
-		.addColumn("max_lat", "real", (c) => c.notNull())
-		.addColumn("max_lon", "real", (c) => c.notNull())
-		.execute()
+
+	await addBoundingBoxColumns(table).execute()
 }
 
 /**

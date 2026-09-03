@@ -29,6 +29,7 @@
  */
 
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
+import { addBoundingBoxColumns, addCellIndexColumns, addRingGeometryColumns } from "@mailwoman/sqlite/schema-columns"
 import { sql, type Kysely } from "kysely"
 
 /**
@@ -214,7 +215,7 @@ export type FloodSchemaHandle = Pick<Kysely<FloodDatabase>, "schema">
  * penalizes.
  */
 export async function createFloodZoneAreaTable(db: FloodSchemaHandle): Promise<void> {
-	await db.schema
+	const table = db.schema
 		.createTable("flood_zone_area")
 		.addColumn("area_id", "text", (c) => c.primaryKey())
 		.addColumn("zone_code", "text", (c) => c.notNull())
@@ -223,12 +224,8 @@ export async function createFloodZoneAreaTable(db: FloodSchemaHandle): Promise<v
 		.addColumn("origin", "text")
 		.addColumn("panel_id", "text")
 		.addColumn("effective_date", "text")
-		.addColumn("min_lat", "real", (c) => c.notNull())
-		.addColumn("min_lon", "real", (c) => c.notNull())
-		.addColumn("max_lat", "real", (c) => c.notNull())
-		.addColumn("max_lon", "real", (c) => c.notNull())
-		.addColumn("rings", "blob", (c) => c.notNull())
-		.execute()
+
+	await addRingGeometryColumns(table).execute()
 }
 
 /**
@@ -236,12 +233,9 @@ export async function createFloodZoneAreaTable(db: FloodSchemaHandle): Promise<v
  * `WITHOUT ROWID` shape.
  */
 export async function createFloodZoneCellTable(db: FloodSchemaHandle): Promise<void> {
-	await db.schema
-		.createTable("flood_zone_cell")
-		.addColumn("h3_cell", "integer", (c) => c.notNull())
-		.addColumn("resolution", "integer", (c) => c.notNull())
-		.addColumn("zone_code", "text", (c) => c.notNull())
-		.addColumn("containment", "text", (c) => c.notNull())
+	const table = db.schema.createTable("flood_zone_cell")
+
+	await addCellIndexColumns(table, "zone_code")
 		.addPrimaryKeyConstraint("flood_zone_cell_pk", ["h3_cell", "zone_code"])
 		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
@@ -266,7 +260,7 @@ export async function createFloodZoneCellAreaTable(db: FloodSchemaHandle): Promi
  * Create `flood_map_extent`.
  */
 export async function createFloodMapExtentTable(db: FloodSchemaHandle): Promise<void> {
-	await db.schema
+	const table = db.schema
 		.createTable("flood_map_extent")
 		.addColumn("extent_id", "text", (c) => c.primaryKey())
 		.addColumn("status", "text", (c) => c.notNull())
@@ -278,10 +272,8 @@ export async function createFloodMapExtentTable(db: FloodSchemaHandle): Promise<
 		.addColumn("boundary_vintage", "text", (c) => c.notNull())
 		.addColumn("boundary_license", "text", (c) => c.notNull())
 		.addColumn("effective_date", "text")
-		.addColumn("min_lat", "real", (c) => c.notNull())
-		.addColumn("min_lon", "real", (c) => c.notNull())
-		.addColumn("max_lat", "real", (c) => c.notNull())
-		.addColumn("max_lon", "real", (c) => c.notNull())
+
+	await addBoundingBoxColumns(table)
 		.addColumn("coverage_cells", "integer", (c) => c.notNull())
 		.addColumn("coverage_resolution", "integer", (c) => c.notNull())
 		.execute()

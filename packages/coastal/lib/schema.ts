@@ -34,6 +34,7 @@
  */
 
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
+import { addBoundingBoxColumns, addCellIndexColumns, addRingGeometryColumns } from "@mailwoman/sqlite/schema-columns"
 import { sql, type Kysely } from "kysely"
 
 /**
@@ -252,7 +253,7 @@ export type CoastalSchemaHandle = Pick<Kysely<CoastalDatabase>, "schema">
  * penalizes.
  */
 export async function createCoastalZoneAreaTable(db: CoastalSchemaHandle): Promise<void> {
-	await db.schema
+	const table = db.schema
 		.createTable("coastal_zone_area")
 		.addColumn("area_id", "text", (c) => c.primaryKey())
 		.addColumn("scenario_key", "text", (c) => c.notNull())
@@ -271,12 +272,8 @@ export async function createCoastalZoneAreaTable(db: CoastalSchemaHandle): Promi
 		.addColumn("defence_type", "text")
 		.addColumn("published_year", "integer")
 		.addColumn("max_overlap", "real")
-		.addColumn("min_lat", "real", (c) => c.notNull())
-		.addColumn("min_lon", "real", (c) => c.notNull())
-		.addColumn("max_lat", "real", (c) => c.notNull())
-		.addColumn("max_lon", "real", (c) => c.notNull())
-		.addColumn("rings", "blob", (c) => c.notNull())
-		.execute()
+
+	await addRingGeometryColumns(table).execute()
 }
 
 /**
@@ -284,13 +281,9 @@ export async function createCoastalZoneAreaTable(db: CoastalSchemaHandle): Promi
  * `WITHOUT ROWID` shape.
  */
 export async function createCoastalZoneCellTable(db: CoastalSchemaHandle): Promise<void> {
-	await db.schema
-		.createTable("coastal_zone_cell")
-		.addColumn("h3_cell", "integer", (c) => c.notNull())
-		.addColumn("resolution", "integer", (c) => c.notNull())
-		.addColumn("scenario_key", "text", (c) => c.notNull())
-		.addColumn("area_id", "text", (c) => c.notNull())
-		.addColumn("containment", "text", (c) => c.notNull())
+	const table = db.schema.createTable("coastal_zone_cell")
+
+	await addCellIndexColumns(table, ["scenario_key", "area_id"])
 		.addPrimaryKeyConstraint("coastal_zone_cell_pk", ["h3_cell", "area_id"])
 		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
@@ -301,7 +294,7 @@ export async function createCoastalZoneCellTable(db: CoastalSchemaHandle): Promi
  * Create `coastal_ground_instability`.
  */
 export async function createCoastalGroundInstabilityTable(db: CoastalSchemaHandle): Promise<void> {
-	await db.schema
+	const table = db.schema
 		.createTable("coastal_ground_instability")
 		.addColumn("area_id", "text", (c) => c.primaryKey())
 		.addColumn("kind", "text", (c) => c.notNull())
@@ -311,12 +304,8 @@ export async function createCoastalGroundInstabilityTable(db: CoastalSchemaHandl
 		.addColumn("smp_name", "text")
 		.addColumn("smp_policy_units", "text")
 		.addColumn("rear_scarp_probability", "text")
-		.addColumn("min_lat", "real", (c) => c.notNull())
-		.addColumn("min_lon", "real", (c) => c.notNull())
-		.addColumn("max_lat", "real", (c) => c.notNull())
-		.addColumn("max_lon", "real", (c) => c.notNull())
-		.addColumn("rings", "blob", (c) => c.notNull())
-		.execute()
+
+	await addRingGeometryColumns(table).execute()
 }
 
 /**
@@ -324,18 +313,15 @@ export async function createCoastalGroundInstabilityTable(db: CoastalSchemaHandl
  * way — see the interface's docstring.
  */
 export async function createCoastalMappedExtentTable(db: CoastalSchemaHandle): Promise<void> {
-	await db.schema
+	const table = db.schema
 		.createTable("coastal_mapped_extent")
 		.addColumn("extent_id", "text", (c) => c.primaryKey())
 		.addColumn("source", "text", (c) => c.notNull())
 		.addColumn("statement", "text", (c) => c.notNull())
 		.addColumn("statement_url", "text", (c) => c.notNull())
 		.addColumn("effective_date", "text")
-		.addColumn("min_lat", "real", (c) => c.notNull())
-		.addColumn("min_lon", "real", (c) => c.notNull())
-		.addColumn("max_lat", "real", (c) => c.notNull())
-		.addColumn("max_lon", "real", (c) => c.notNull())
-		.execute()
+
+	await addBoundingBoxColumns(table).execute()
 }
 
 /**
