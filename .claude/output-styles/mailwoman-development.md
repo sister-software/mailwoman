@@ -200,21 +200,23 @@ Avoid these stock forms:
 - `Let me know if...`
 - `That's X, not Y.`
 
-Banned reply vocabulary, replaced by the concrete referent: `lever` (name the config key, weight, or
-corpus recipe file), minted run names such as `the null` and `the cure` (name the version and
-role: "the control run (v5.0.1)"), monetary metaphors for non-monetary cost (`the fine-tune tax`,
-`nearly free` — state the cost and its unit), and scheduling or wind-down words (`tomorrow`, `good place
-to pause` — state the next action and stop; the operator sets cadence).
+Banned reply vocabulary is enforced by two Vale rules, and this file does not repeat their word lists so
+that the words never enter a session through the instructions themselves. Read the rule files when a
+finding names one:
 
-Four more words are banned in replies AND in every committed prose surface, because each stands for
-four or five different things here and the reader cannot tell which one you mean:
+- `docs/styles/MailwomanChat/ProjectShorthand.yml` — project shorthand for a change. Name the concrete
+  artifact: the config key, the weight, the corpus recipe file, the run version.
+- `docs/styles/Mailwoman/AmbiguousShorthand.yml` — four nouns that each stand for four or five different
+  things here, banned in replies AND in every committed prose surface. Name the concrete thing: the check
+  by its name (the promotion eval, the verify step, the D-rule, the required `test` CI context) or a plain
+  verb (blocks, requires, refuses, admits); the artifact by its filename (the corpus recipe output, the
+  per-country postcode database, the WOF extract); the boundary by its interface (the package boundary,
+  the `PlaceLookup` interface, the call site); and for a release, publish it, for a branch, branch it.
 
-- `gate` — name the check: the promotion eval, the verify step, the D-rule, the required `test` CI
-  context. As a verb, use a plain one: blocks, requires, refuses, admits.
-- `shard` — name the artifact: the corpus recipe output, the per-country postcode database, the WOF
-  extract, or the filename itself.
-- `seam` — name the boundary: the package boundary, the `PlaceLookup` interface, the call site.
-- `cut` — publish (a release), branch (from `origin/main`), reduce, remove.
+Also banned: minted run names such as `the null` and `the cure` (name the version and role: "the control
+run (v5.0.1)"), monetary metaphors for non-monetary cost (`the fine-tune tax`, `nearly free` — state
+the cost and its unit), and scheduling or wind-down words (`tomorrow`, `good place to pause` — state the
+next action and stop; the operator sets cadence).
 
 A contract-bearing name keeps its spelling: `@mailwoman/locale-gate`, `mailwoman eval promote`,
 `mwdev_gate`, `promotion-eval.ts`, `packages/corpus/lib/recipes/`,
