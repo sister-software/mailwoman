@@ -132,7 +132,7 @@ measurement in this protocol.
 - **A smoke run proves the config loads, not that the new rows are reached.** Read the file through
   the loader's own check (`country_weights.get(cc)`) first.
 - **`country_weights` is a hard admission filter.** A country absent from it trains on nothing
-  regardless of how many rows exist. Check with `mwdev_coverage` before assuming a locale is taught.
+  regardless of the row count. Check with `mwdev_coverage` before assuming a locale is taught.
 - **A hypothesis-bearing corpus change declares `data.required_corpus_receipts`.** Each receipt states
   the minimum sampled rows and may constrain source, country, and a contiguous component sequence.
   Run Modal's CPU-only `audit_epoch_mixture` before allocating a GPU; a missing source or a zero-dose

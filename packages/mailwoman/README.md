@@ -181,7 +181,7 @@ Germany                            →   postcode, locality, dependent_locality,
 everything else                    →   locality, dependent_locality, postcode, region, country
 ```
 
-Both routes to the first arm live in `@mailwoman/codex` and are read by `@mailwoman/resolver`'s `adminLadderForNodes`. The second arm is the #945 convention, adopted for France where one _code postal_ often spans several communes.
+Both routes to the first arm live in `@mailwoman/codex` and are read by `@mailwoman/resolver`'s `adminLadderForNodes`. The second arm is the #945 convention, adopted for France where one _code postal_ can span several communes.
 
 The distinction is a fact about a country's **administrative** geography rather than its postal system, and code length does not predict it — France and Germany are both five digits and disagree. Germany's Gemeinden are large enough that Berlin is a single locality, so its PLZ is finer by a wide margin: on 2,997 OpenAddresses rows the coordinate p50 goes 5.84 km → 1.24 km, better on every percentile including p99, and the within-5-km population doubles.
 

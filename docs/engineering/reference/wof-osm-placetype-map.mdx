@@ -36,43 +36,43 @@ sub-venue parsing lives in OSM's _indoor_ scheme, not its _place_ scheme.
 
 ## The table
 
-| WOF placetype   | OSM equivalent                                                                                                | confidence                 |
-| --------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| `address`       | `addr:*` tag cluster on a node/way — no object type of its own                                                | firm                       |
-| `arcade`        | none in the place scheme; a shopping arcade is usually `shop=mall`, the architectural sense is indoor tagging | weak                       |
-| `borough`       | `boundary=administrative` at a country-relative `admin_level` (London: 8)                                     | firm shape, variable level |
-| `building`      | `building=*` — an exact 1:1, the only one in the table                                                        | firm                       |
-| `campus`        | no single tag; `amenity=university\|college\|school` plus `landuse=education`, sometimes a `site` relation    | moderate                   |
-| `concourse`     | none; concourses live inside `aeroway=terminal` as indoor areas                                               | weak                       |
-| `continent`     | `place=continent`                                                                                             | firm                       |
-| `country`       | `boundary=administrative` + `admin_level=2`; also `place=country`                                             | firm                       |
-| `county`        | `boundary=administrative`, typically `admin_level=6`                                                          | moderate                   |
-| `custom`        | none — WOF's override for non-standard geometries                                                             | n/a                        |
-| `dependency`    | `boundary=administrative` with ISO3166 tags; messy in OSM                                                     | weak                       |
-| `disputed`      | `disputed=yes` / `boundary=disputed`                                                                          | moderate                   |
-| `empire`        | **none** — historical polities live in OpenHistoricalMap, not OSM                                             | firm (absent)              |
-| `enclosure`     | none in the place scheme; a fenced area is `barrier=*`, an interior one is indoor tagging                     | weak                       |
-| `installation`  | military: `landuse=military` + `military=base`; industrial: `man_made=works`                                  | moderate                   |
-| `intersection`  | a node where highways meet; `junction=yes`, `highway=motorway_junction`                                       | firm                       |
-| `localadmin`    | `boundary=administrative`, typically `admin_level=7`–`8`                                                      | moderate                   |
-| `locality`      | **`place=city\|town\|village\|hamlet`** — NOT `place=locality`, see mismatch 1                                | firm, and a trap           |
-| `macrocounty`   | **none**                                                                                                      | firm (absent)              |
-| `macrohood`     | none; loosely `place=suburb`                                                                                  | weak                       |
-| `macroregion`   | `boundary=administrative`, typically `admin_level=3`                                                          | moderate                   |
-| `marinearea`    | `place=sea`, `natural=bay\|strait`                                                                            | moderate                   |
-| `marketarea`    | **none** — a media/market region is not a geographic object OSM models                                        | firm (absent)              |
-| `metroarea`     | no standard tag; occasionally boundary relations, inconsistently                                              | weak                       |
-| `microhood`     | `place=neighbourhood` or `place=quarter` at the finer end                                                     | weak                       |
-| `nation`        | overlaps `country`; OSM does not distinguish nation from state                                                | moderate                   |
-| `neighbourhood` | `place=neighbourhood`, sometimes `place=suburb`                                                               | firm                       |
-| `ocean`         | `place=ocean`                                                                                                 | firm                       |
-| `planet`        | **none** — OSM is Earth by definition                                                                         | firm (absent)              |
-| `postalcode`    | `boundary=postal_code`, `postal_code=*`, `addr:postcode`                                                      | firm                       |
-| `postalregion`  | `boundary=postal_code` at a coarser level; no distinct tag                                                    | weak                       |
-| `region`        | `boundary=administrative`, typically `admin_level=4`                                                          | moderate                   |
-| `timezone`      | not a core OSM concept; `timezone=*` appears on some boundaries                                               | weak                       |
-| `venue`         | the POI tag families: `amenity`/`shop`/`tourism`/`leisure`/`office`=\*                                        | firm                       |
-| `wing`          | `building:part=*` + Simple Indoor Tagging                                                                     | moderate                   |
+| WOF placetype   | OSM equivalent                                                                                                      | confidence                 |
+| --------------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| `address`       | `addr:*` tag cluster on a node/way — no object type of its own                                                      | firm                       |
+| `arcade`        | none in the place scheme; the architectural sense uses indoor tagging and `shop=mall` is the closest common OSM tag | weak                       |
+| `borough`       | `boundary=administrative` at a country-relative `admin_level` (London: 8)                                           | firm shape, variable level |
+| `building`      | `building=*` — an exact 1:1, the only one in the table                                                              | firm                       |
+| `campus`        | no single tag; `amenity=university\|college\|school` plus `landuse=education`, sometimes a `site` relation          | moderate                   |
+| `concourse`     | none; concourses live inside `aeroway=terminal` as indoor areas                                                     | weak                       |
+| `continent`     | `place=continent`                                                                                                   | firm                       |
+| `country`       | `boundary=administrative` + `admin_level=2`; also `place=country`                                                   | firm                       |
+| `county`        | `boundary=administrative`, typically `admin_level=6`                                                                | moderate                   |
+| `custom`        | none — WOF's override for non-standard geometries                                                                   | n/a                        |
+| `dependency`    | `boundary=administrative` with ISO3166 tags; messy in OSM                                                           | weak                       |
+| `disputed`      | `disputed=yes` / `boundary=disputed`                                                                                | moderate                   |
+| `empire`        | **none** — historical polities live in OpenHistoricalMap, not OSM                                                   | firm (absent)              |
+| `enclosure`     | none in the place scheme; a fenced area is `barrier=*`, an interior one is indoor tagging                           | weak                       |
+| `installation`  | military: `landuse=military` + `military=base`; industrial: `man_made=works`                                        | moderate                   |
+| `intersection`  | a node where highways meet; `junction=yes`, `highway=motorway_junction`                                             | firm                       |
+| `localadmin`    | `boundary=administrative`, typically `admin_level=7`–`8`                                                            | moderate                   |
+| `locality`      | **`place=city\|town\|village\|hamlet`** — NOT `place=locality`, see mismatch 1                                      | firm, and a trap           |
+| `macrocounty`   | **none**                                                                                                            | firm (absent)              |
+| `macrohood`     | none; loosely `place=suburb`                                                                                        | weak                       |
+| `macroregion`   | `boundary=administrative`, typically `admin_level=3`                                                                | moderate                   |
+| `marinearea`    | `place=sea`, `natural=bay\|strait`                                                                                  | moderate                   |
+| `marketarea`    | **none** — a media/market region is not a geographic object OSM models                                              | firm (absent)              |
+| `metroarea`     | no standard tag; occasionally boundary relations, inconsistently                                                    | weak                       |
+| `microhood`     | `place=neighbourhood` or `place=quarter` at the finer end                                                           | weak                       |
+| `nation`        | overlaps `country`; OSM does not distinguish nation from state                                                      | moderate                   |
+| `neighbourhood` | `place=neighbourhood`, sometimes `place=suburb`                                                                     | firm                       |
+| `ocean`         | `place=ocean`                                                                                                       | firm                       |
+| `planet`        | **none** — OSM is Earth by definition                                                                               | firm (absent)              |
+| `postalcode`    | `boundary=postal_code`, `postal_code=*`, `addr:postcode`                                                            | firm                       |
+| `postalregion`  | `boundary=postal_code` at a coarser level; no distinct tag                                                          | weak                       |
+| `region`        | `boundary=administrative`, typically `admin_level=4`                                                                | moderate                   |
+| `timezone`      | not a core OSM concept; `timezone=*` appears on some boundaries                                                     | weak                       |
+| `venue`         | the POI tag families: `amenity`/`shop`/`tourism`/`leisure`/`office`=\*                                              | firm                       |
+| `wing`          | `building:part=*` + Simple Indoor Tagging                                                                           | moderate                   |
 
 ## What this changed for us
 

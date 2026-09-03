@@ -36,7 +36,7 @@ The transformer backbone HAS positional encodings and CAN learn "token after str
 - **OSM entries are full addresses** — "Washington" → `B-locality` between a street and a region abbreviation
 - **WOF bare-name entries outnumber OSM positional-context entries** for ambiguous place names
 
-The model learns the frequency-dominant pattern (Washington = region) because it sees that label more often in isolation. The positional signal from OSM full-address rows exists but is diluted.
+The model learns the frequency-dominant pattern (Washington = region) because the region label appears more frequently in isolation. The positional signal from OSM full-address rows exists but is diluted.
 
 ## BIO boundaries are correct
 
@@ -101,7 +101,7 @@ If the demo currently runs neural-only, switching to hybrid mode immediately fix
 | Directionals (NW → Northwest) | No — subword mismatch        | Yes — unambiguous, high-frequency |
 | St → Street/Saint             | No — requires disambiguation | No — model learns from context    |
 | Punctuation                   | SentencePiece handles it     | No                                |
-| Unit notation (#)             | No — too many edge cases     | No                                |
+| Unit notation (#)             | No — ambiguous edge cases    | No                                |
 
 ## Relationship to QueryShape
 

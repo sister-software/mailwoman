@@ -39,15 +39,15 @@ whosonfirst-data-postalcode-us,whosonfirst-data-postalcode-fr
 
 Per WOF feature, the adapter consults:
 
-| Property          | Use                                                                                                      |
-| ----------------- | -------------------------------------------------------------------------------------------------------- |
-| `wof:id`          | Record id (also accepts the GeoJSON top-level `id` field as a fallback)                                  |
-| `wof:name`        | Canonical name (one row per record uses this in the `default` slot)                                      |
-| `wof:placetype`   | Mapped to a `ComponentTag` per the table below; unknown placetypes are skipped                           |
-| `wof:country`     | ISO 3166-1 alpha-2; stamped onto every row                                                               |
-| `wof:parent_id`   | Walked upward to build the ancestry chain                                                                |
-| `mz:is_current`   | `1` or `-1` → keep; `0` → drop. `-1` ("unknown but treated as active") is WOF's default for many distros |
-| `name:eng_x_*`, … | Localized name variants; each produces an additional emission slot for the record's own component        |
+| Property          | Use                                                                                                          |
+| ----------------- | ------------------------------------------------------------------------------------------------------------ |
+| `wof:id`          | Record id (also accepts the GeoJSON top-level `id` field as a fallback)                                      |
+| `wof:name`        | Canonical name (one row per record uses this in the `default` slot)                                          |
+| `wof:placetype`   | Mapped to a `ComponentTag` per the table below; unknown placetypes are skipped                               |
+| `wof:country`     | ISO 3166-1 alpha-2; stamped onto every row                                                                   |
+| `wof:parent_id`   | Walked upward to build the ancestry chain                                                                    |
+| `mz:is_current`   | `1` or `-1` → keep; `0` → drop. `-1` ("unknown but treated as active") is WOF's default for multiple distros |
+| `name:eng_x_*`, … | Localized name variants; each produces an additional emission slot for the record's own component            |
 
 ## Placetype mapping
 

@@ -109,7 +109,7 @@
 		"health:duplicates": "jscpd --config jscpd.json",
 		"health:exports": "node scripts/verify-exports.ts",
 		"health:knip": "knip --files --dependencies --reporter compact",
-		"health:manifests": "sherif -i @duckdb/node-api -i @types/node",
+		"health:manifests": "sherif -i @duckdb/node-api -i @types/node -i typescript",
 		"health:test-contract": "node scripts/verify-test-contract.ts",
 		"prepare": "husky",
 		"release:preflight": "node scripts/release-preflight.ts",

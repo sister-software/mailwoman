@@ -264,13 +264,7 @@ function normalizeDuckDBValue(value: unknown): unknown {
 		return value.items.map(normalizeDuckDBValue)
 	}
 
-	if (value && typeof value === "object" && "toArray" in value && typeof value.toArray === "function") {
-		return Array.from(value.toArray() as ArrayLike<unknown>, normalizeDuckDBValue)
-	}
-
 	if (Array.isArray(value)) return value.map(normalizeDuckDBValue)
-
-	if (ArrayBuffer.isView(value)) return Array.from(value as unknown as ArrayLike<unknown>, normalizeDuckDBValue)
 
 	return value
 }

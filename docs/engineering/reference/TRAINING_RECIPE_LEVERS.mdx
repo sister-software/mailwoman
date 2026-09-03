@@ -13,7 +13,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 ### `hidden_size`
 
-**What it does.** The width of every hidden representation in the transformer encoder. Every token is a vector of this many numbers. Wider = more capacity to represent distinctions between address components.
+**What it does.** The width of every hidden representation in the transformer encoder. At `hidden_size=256`, every token is a vector of 256 numbers. Wider = more capacity to represent distinctions between address components.
 
 | Value | Where we used it                 | What happened                                               |
 | ----- | -------------------------------- | ----------------------------------------------------------- |
@@ -29,7 +29,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 ### `num_attention_heads`
 
-**What it does.** How many independent "perspectives" each transformer layer uses when deciding which tokens attend to which. Convention: head_dim = hidden_size / num_heads = 64.
+**What it does.** The number of independent "perspectives" each transformer layer uses when deciding which tokens attend to which. Convention: head_dim = hidden_size / num_heads = 64.
 
 | hidden_size | num_heads | head_dim |
 | ----------- | --------- | -------- |
@@ -40,7 +40,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 ### `num_hidden_layers`
 
-**What it does.** How many transformer blocks the input passes through. More layers = more sequential processing but slower.
+**What it does.** The number of transformer blocks the input passes through. More layers = more sequential processing but slower.
 
 **Current value: 6.** Unchanged since v0.1.0. The model is intentionally shallow — address parsing doesn't require the deep reasoning chains that language generation does. Most of the useful signal is local (neighboring tokens in a comma-separated address).
 
@@ -127,7 +127,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 ### `batch_size` × `grad_accum_steps` (effective batch)
 
-**What it does.** How many examples the optimizer sees before updating weights. Larger = smoother gradients (less noise), but each step covers more wall-clock time.
+**What it does.** The number of examples the optimizer sees before updating weights. Larger = smoother gradients (less noise), but each step covers more wall-clock time.
 
 | Effective batch | How                  | Where                             | What happened                                                  |
 | --------------- | -------------------- | --------------------------------- | -------------------------------------------------------------- |

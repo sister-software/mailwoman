@@ -262,7 +262,7 @@ Coverage includes: placetype filtering, country filtering, the empty-result case
 
 ## Concurrency model
 
-This package opens a single `node:sqlite` connection per `WOFSQLitePlaceLookup` instance. SQLite is single-writer / many-reader; the Kysely wrapper around the connection serializes all queries through a mutex. For high-concurrency HTTP servers, instantiate one resolver per request handler or per pool slot — sharing a single instance across concurrent requests is fine (queries queue) but won't parallelize across cores.
+This package opens a single `node:sqlite` connection per `WOFSQLitePlaceLookup` instance. SQLite is single-writer / multiple-reader; the Kysely wrapper around the connection serializes all queries through a mutex. For high-concurrency HTTP servers, instantiate one resolver per request handler or per pool slot — sharing a single instance across concurrent requests is safe (queries queue) but won't parallelize across cores.
 
 ## License
 

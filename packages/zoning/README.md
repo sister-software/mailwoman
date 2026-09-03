@@ -93,7 +93,7 @@ answer in silence. Measured over the whole national export (85,330 features, 93,
 | the Department's own `Shape__Area` sum                     | **5,444.5** |
 | sum of ABSOLUTE ring areas, in the source's own ITM meters | **5,666.6** |
 
-**Read in the source's own projection the signed sum matches the publisher to eight significant figures**
+**Read in the source's own projection the signed sum matches the publisher to eight decimal places**
 (5,444,492,956.43 m² against 5,444,492,956.40) — which is what settles the convention. The BUILD compares a
 spherical reading of the reprojected rings, so its own numbers sit a few tenths of a percent away from both:
 5,423.2 km² with holes against the publisher's 5,444.5 (**0.392% apart**), and 5,644.4 km² without them

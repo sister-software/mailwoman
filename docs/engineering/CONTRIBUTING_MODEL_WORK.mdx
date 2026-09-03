@@ -266,7 +266,7 @@ The first from-scratch retrain since the v264 era produced receipts every future
 session should read before choosing between a fine-tune and a base run. The mechanism, in one
 paragraph: **the learning rate is the plasticity dial, and a fine-tune deliberately turns it
 down.** A base run (5e-4 peak, tens of thousands of high-LR steps under a cosine anneal) can move
-any weight anywhere — rare classes get visited often enough and pushed hard enough to be carved
+any weight anywhere — rare classes receive enough visits and gradient updates to be carved
 into the weights. A fine-tune (1e-5, ~8k steps) can only drift a short distance from its starting
 point; that is the point (it must not destroy the base), but it has two structural consequences
 that are the SAME phenomenon mirrored:

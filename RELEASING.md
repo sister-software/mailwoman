@@ -389,7 +389,7 @@ in `main`, before anything is staged:
 
 1. Place the int8 in the canonical dir: `cp <staged>/model.onnx /mnt/playpen/mailwoman-data/models/quantized/model-v<NNN>-step-<step>-int8.onnx` and confirm its md5 against the promotion eval or the postmortem.
 2. `release.config.json` — bump `version`, repoint `weights.model`, update `weights.lineage` + `weights.trainingStep`, and put the new int8 md5 in the lineage string.
-3. `neural-weights-en-us/model-card.json` — rewrite `version`, `model_lineage`, `phase`, `training`, `notes`, `base_relpath`, the `eval` block (the promotion eval evidence), and `files_md5`. **State any regression that trips the 2pp threshold** right in the card (no silent drift). `requires` (the ship-config) is usually unchanged if the model cloned the prior recipe.
+3. `neural-weights-en-us/model-card.json` — rewrite `version`, `model_lineage`, `phase`, `training`, `notes`, `base_relpath`, the `eval` block (the promotion eval evidence), and `files_md5`. **State any regression that trips the 2pp threshold** right in the card (no silent drift). `requires` (the ship-config) is unchanged when the model cloned the prior recipe.
 4. Regenerate the capabilities manifest (the fail-closed capabilities delta check reads it; the generator's `$comment` otherwise lies about which model it measured). The generator **refuses if a `capabilities` block already exists**, so rewrite the card WITHOUT that block first, then:
    ```bash
    yarn compile   # the generator imports COMPILED @mailwoman/neural/scorer from out/
@@ -544,7 +544,7 @@ against the real shipped weights, not a staging candidate:
    `docs/articles/status.mdx` + `docs/articles/releases.mdx` (params, vocab size, int8/fp32 size —
    byte-verify each against **the model card** `neural-weights-en-us/model-card.json`
    (`architecture`, `format`, `files_md5`); don't trust the prose you're replacing. A fine-tune off
-   the same lineage often changes NONE of these — confirm via the card rather than assuming drift.
+   the same lineage can change NONE of these — confirm via the card rather than assuming drift.
    These are a **different measurement** from the npm package download/unpacked size quoted in
    `getting-started.mdx` — get those from the registry, never by arithmetic: `npm view
 @mailwoman/neural-weights-en-us@<version> dist.unpackedSize` for the unpacked figure, and a
@@ -879,4 +879,4 @@ If a release fails partway through publishing:
   done
   ```
 
-  npm 2FA OTPs expire in ~30s, so do this in quick succession; a single OTP usually covers all remaining workspaces.
+  npm 2FA OTPs expire in ~30s, so do this in quick succession; a single OTP can cover all remaining workspaces.
