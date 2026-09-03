@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import torch
 from torch import nn
@@ -188,7 +188,7 @@ class CharCNNEmbedding(nn.Module):
             c = torch.relu(conv(x))[..., :width]  # (B*S, per_kernel, W)
             c = c.masked_fill(pad_mask, -1e4)
             feats.append(c.max(dim=2).values)  # (B*S, per_kernel) — max over chars
-        h = self.dropout(self.proj(torch.cat(feats, dim=-1)))  # (B*S, hidden)
+        h: torch.Tensor = self.dropout(self.proj(torch.cat(feats, dim=-1)))  # (B*S, hidden)
         return h.reshape(bsz, seq, -1)  # (B, S, hidden)
 
 
@@ -203,6 +203,14 @@ class MailwomanCoarseEncoder(nn.Module):
         Always returns a dict with ``logits`` ``(batch, seq, num_labels)``. When ``labels``
         is provided, also returns ``loss`` (cross-entropy with ignore_index = -100).
     """
+
+    # register_buffer names typed so mypy reads them as tensors, not the Tensor | Module
+    # union torch's setattr typing produces for undeclared module attributes.
+    conventions_forbidden: torch.Tensor
+    affix_target_lut: torch.Tensor
+    bio_is_begin: torch.Tensor
+    bio_is_inside: torch.Tensor
+    country_feature_scale: torch.Tensor | None
 
     def __init__(
         self,
@@ -781,7 +789,8 @@ class MailwomanCoarseEncoder(nn.Module):
                 )
             # #1104 homograph-guard softener: scale the ambiguous dim (buffer [1.0, ambiguous_scale])
             # before projection. No-op at scale 1.0 (v263); bakes into the ONNX at export.
-            scaled_country = country_features.to(h.dtype) * self.country_feature_scale.to(h.dtype)
+            # country_feature_scale is None only when the anchor is off, which this branch excludes.
+            scaled_country = country_features.to(h.dtype) * cast(torch.Tensor, self.country_feature_scale).to(h.dtype)
             ctry_vec = self.country_projection(scaled_country) + self.country_token_embedding
             h = h + country_confidence.to(h.dtype).unsqueeze(-1) * ctry_vec
         elif country_features is not None:
@@ -1034,7 +1043,7 @@ class MailwomanCoarseEncoder(nn.Module):
             if labels is not None and attention_mask is not None and self.span_loss_weight > 0:
                 assert self.semi_crf is not None  # nosec B101 — type narrowing; built in __init__ when use_span_scorer
                 lengths = attention_mask.sum(dim=1).long()
-                rows: list[int] = []
+                row_idxs: list[int] = []
                 segs: list[list[tuple[int, int, int]]] = []
 
                 for b_i in range(labels.shape[0]):
@@ -1042,11 +1051,11 @@ class MailwomanCoarseEncoder(nn.Module):
                     row_segs, representable = gold_segments(labels[b_i, :n].tolist(), self.span_scorer.max_span)
 
                     if representable and row_segs:
-                        rows.append(b_i)
+                        row_idxs.append(b_i)
                         segs.append(row_segs)
 
-                if rows:
-                    idx = torch.tensor(rows, device=span_scores_out.device)
+                if row_idxs:
+                    idx = torch.tensor(row_idxs, device=span_scores_out.device)
                     span_nll = self.semi_crf.nll(
                         span_scores_out.index_select(0, idx), segs, lengths.index_select(0, idx)
                     ).mean()
@@ -1157,8 +1166,8 @@ class MailwomanCoarseEncoder(nn.Module):
             "vocab_size": int(self.token_embeddings.num_embeddings),
             "hidden_size": int(self.token_embeddings.embedding_dim),
             "num_hidden_layers": len(self.blocks),
-            "num_attention_heads": self.blocks[0].attn.num_heads,
-            "intermediate_size": int(self.blocks[0].ff[0].out_features),
+            "num_attention_heads": int(cast(Any, self.blocks[0]).attn.num_heads),
+            "intermediate_size": int(cast(Any, self.blocks[0]).ff[0].out_features),
             "max_position_embeddings": int(self.max_position_embeddings),
             "hidden_dropout_prob": float(self.input_dropout.p),
             "num_labels": int(self.num_labels),
