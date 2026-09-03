@@ -94,7 +94,7 @@ warn_unused_configs = true
 # typed. The bare module name AND its submodules are both needed — "pyarrow.*" alone does not
 # match "import pyarrow". If real stubs ever appear for either, drop this override, don't keep it.
 [[tool.mypy.overrides]]
-module = ["pyarrow", "pyarrow.*", "sentencepiece", "sentencepiece.*", "onnxruntime"]
+module = ["pyarrow", "pyarrow.*", "onnxruntime", "onnxruntime.*"]
 ignore_missing_imports = true
 
 # sentencepiece_model_pb2 ships a stub too sparse for protobuf usage; skip it so its

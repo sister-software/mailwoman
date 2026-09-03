@@ -25,11 +25,12 @@ import glob
 import json
 import math
 from pathlib import Path
+from typing import Any
 
-import pyarrow.parquet as pq  # type: ignore[import-not-found]
+import pyarrow.parquet as pq
 
 
-def fit(parquet_files: list[str], labels: list[str], temperature: float) -> dict:
+def fit(parquet_files: list[str], labels: list[str], temperature: float) -> dict[str, Any]:
     index = {label: i for i, label in enumerate(labels)}
     n = len(labels)
     # Laplace smoothing: every transition starts at 1 so unseen-but-legal moves stay finite.
@@ -44,7 +45,7 @@ def fit(parquet_files: list[str], labels: list[str], temperature: float) -> dict
 
         for value in table.column("labels"):
             seq = [str(v) for v in value.as_py()]
-            ids = []
+            ids: list[int] = []
 
             for label in seq:
                 if label not in index:

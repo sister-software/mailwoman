@@ -300,7 +300,9 @@ def export_to_onnx(
             torch.zeros((dummy_batch, max_length, locality_surface_dim), dtype=torch.float32),
             torch.zeros((dummy_batch, max_length), dtype=torch.float32),
         )
-        export_model: Any = _LogitsOnlyBundle(model_cpu).eval()  # wrapper picked dynamically below; carries with_locale/with_spans
+        export_model: Any = _LogitsOnlyBundle(
+            model_cpu
+        ).eval()  # wrapper picked dynamically below; carries with_locale/with_spans
         args: tuple[Any, ...] = (
             dummy_ids,
             dummy_mask,
