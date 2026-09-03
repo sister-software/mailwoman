@@ -17,7 +17,7 @@ import { corePackagePath, dataRootPath, repoRootPath } from "#utils"
  * The Latin off-map test sets, one per outlier builder. Each builder writes its own file so neither replaces the
  * other's rows; readers take the union through {@linkcode readLatinOffmapRows}.
  */
-export const LATIN_OFFMAP_TEST_FILES = ["test-latin-offmap-overture.jsonl", "test-latin-offmap-oa.jsonl"] as const
+const LATIN_OFFMAP_TEST_FILES = ["test-latin-offmap-overture.jsonl", "test-latin-offmap-oa.jsonl"] as const
 
 /**
  * Read every Latin off-map test set present in `dataDir`, tagging each row with the file it came from. Refuses an empty
