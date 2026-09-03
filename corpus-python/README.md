@@ -62,9 +62,10 @@ uv run pytest                  # tests       (vitest)
 uv run python scripts/verify_toolchain.py   # train-pin consistency guard
 ```
 
-`yarn lint` from the repo root runs ruff + the toolchain guard repo-wide (see
-`.github/workflows/test.yml`). It does not run mypy or bandit yet — those are local gates
-until their baselines are triaged to zero.
+`yarn lint` from the repo root runs the full python gate repo-wide (see
+`.github/workflows/test.yml`): ruff lint + format, the `verify_toolchain.py` pin guard, then
+`mypy --strict` and `bandit` — each via `uv run`, which syncs corpus-python's venv
+(including the `[train]` extras mypy needs to resolve torch) on demand.
 
 ### Lab GPU (Radeon 780M / gfx1103) recipe
 
