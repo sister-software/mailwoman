@@ -60,10 +60,13 @@ export interface AgreementRow {
 	 */
 	local: FloodZoneReading
 	/**
-	 * The zone the service's own geometry assigns, or `null` where no service polygon contains the point.
+	 * The zone the service's own geometry assigns, or `null` where no service polygon contains the point. A polygon that
+	 * contains the point but carries no zone label is NOT `null`: it is reported as `service_unlabelled`, because a
+	 * service polygon with no label is a defect in the service's answer and reading it as absence would let it agree with
+	 * an artifact that answers Zone 1 by absence.
 	 */
 	service: string | null
-	outcome: "agree" | "disagree" | "boundary_tolerance"
+	outcome: "agree" | "disagree" | "boundary_tolerance" | "service_unlabelled"
 	/**
 	 * Metres from the point to the nearest EDGE of any polygon the service returned nearby.
 	 *
@@ -97,6 +100,11 @@ export interface VerifyFloodResult {
 	agreed: number
 	disagreed: number
 	boundaryTolerance: number
+	/**
+	 * Points the service's geometry contains without labelling. Neither agreement nor disagreement: the service's answer
+	 * is unreadable there, and the row is carried so the count is visible rather than folded into either side.
+	 */
+	serviceUnlabelled: number
 	outside: OutsideRow[]
 	outsidePassed: number
 }
@@ -210,7 +218,13 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 				...point,
 				local,
 				service: service.zone,
-				outcome: localZone === service.zone ? "agree" : nearEdge ? "boundary_tolerance" : "disagree",
+				outcome: service.insideUnlabelled
+					? "service_unlabelled"
+					: localZone === service.zone
+						? "agree"
+						: nearEdge
+							? "boundary_tolerance"
+							: "disagree",
 				...(service.nearestEdgeMetres === undefined ? {} : { nearestEdgeMetres: service.nearestEdgeMetres }),
 			})
 
@@ -230,6 +244,7 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 			agreed: agreement.filter((row) => row.outcome === "agree").length,
 			disagreed: agreement.filter((row) => row.outcome === "disagree").length,
 			boundaryTolerance: agreement.filter((row) => row.outcome === "boundary_tolerance").length,
+			serviceUnlabelled: agreement.filter((row) => row.outcome === "service_unlabelled").length,
 			outside,
 			outsidePassed: outside.filter((row) => row.passed).length,
 		}
@@ -240,17 +255,20 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 
 /**
  * What zone the SERVICE's own geometry assigns at a point, decided here with the same even-odd rule the artifact's
- * reader uses — so what is compared is a verdict against a verdict.
+ * reader uses — so what is compared is a verdict against a verdict. `zone` is `null` only when no returned polygon
+ * contains the point; a containing polygon with no `flood_zone` sets `insideUnlabelled` instead, so the two readings
+ * never share a value.
  */
 async function readServiceZone(
 	readServiceFeatures: ServiceFeatureReader,
 	latitude: number,
 	longitude: number
-): Promise<{ zone: string | null; nearestEdgeMetres?: number }> {
+): Promise<{ zone: string | null; insideUnlabelled: boolean; nearestEdgeMetres?: number }> {
 	const features = await readServiceFeatures(latitude, longitude)
 
 	let nearest = Infinity
 	let zone: string | null = null
+	let insideUnlabelled = false
 
 	for (const feature of features) {
 		const geometry = feature.geometry
@@ -264,11 +282,18 @@ async function readServiceZone(
 		}
 
 		if (zone === null && geometryContains(geometry, longitude, latitude)) {
-			zone = feature.properties?.flood_zone ?? null
+			const label = feature.properties?.flood_zone
+
+			if (typeof label === "string" && label.length) {
+				zone = label
+				insideUnlabelled = false
+			} else {
+				insideUnlabelled = true
+			}
 		}
 	}
 
-	return Number.isFinite(nearest) ? { zone, nearestEdgeMetres: nearest } : { zone }
+	return Number.isFinite(nearest) ? { zone, insideUnlabelled, nearestEdgeMetres: nearest } : { zone, insideUnlabelled }
 }
 
 /**

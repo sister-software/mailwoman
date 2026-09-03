@@ -34,6 +34,7 @@
  *   renamed fails as a SQL error naming the column rather than as a stream of null distances.
  */
 
+import { limitedFeatureCount } from "@mailwoman/core/layers"
 import { assertRingsInsideExtent, requireArealPolygons, type MultiPolygonRings } from "@mailwoman/spatial"
 import { readOGRLayerIdentity } from "@mailwoman/spatial/tools/ogr"
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
@@ -537,7 +538,7 @@ export async function createGeodatabaseFeatureSource(options: GeodatabaseSourceO
 
 		identities.set(layer, identity)
 
-		declared += options.limit === undefined ? identity.featureCount : Math.min(options.limit, identity.featureCount)
+		declared += limitedFeatureCount(identity.featureCount, options.limit)
 		epsg = identity.epsg
 	}
 
