@@ -45,7 +45,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@hono/zod-openapi": "^1.5.1",
+		"@hono/zod-openapi": "^1.6.2",
 		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/api-kit": "workspace:*",
 		"@mailwoman/ban": "workspace:*",
@@ -59,11 +59,11 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"@mailwoman/timezone-lookup": "workspace:*",
 		"@mailwoman/un-locode-lookup": "workspace:*",
-		"hono": "^4.13.2",
+		"hono": "^4.13.5",
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.3.0",
 		"spliterator": "^6.4.1",
-		"zod": "^4.4.3"
+		"zod": "^4.5.4"
 	},
 	"devDependencies": {
 		"@mailwoman/core": "workspace:*"

@@ -91,7 +91,7 @@
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
-		"type-fest": "^5.8.0"
+		"type-fest": "^5.9.0"
 	},
 	"devDependencies": {
 		"path-ts": "^2.3.0"

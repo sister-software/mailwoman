@@ -218,7 +218,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@dsnp/parquetjs": "1.8.9",
+		"@dsnp/parquetjs": "1.9.3",
 		"@mailwoman/ban": "workspace:*",
 		"@mailwoman/bdc": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
@@ -232,13 +232,13 @@
 		"fastest-levenshtein": "^1.0.16",
 		"lru-cache": "^11.5.2",
 		"path-ts": "^2.3.0",
-		"read-excel-file": "^9.3.5",
+		"read-excel-file": "^9.3.10",
 		"spliterator": "^6.4.1"
 	},
 	"devDependencies": {
-		"@types/node": ">=26.1.2",
+		"@types/node": "^26.4.1",
 		"adm-zip": "^0.6.0",
-		"kysely": "^0.29.4",
+		"kysely": "^0.29.5",
 		"write-excel-file": "^4.1.1"
 	}
 }

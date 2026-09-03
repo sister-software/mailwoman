@@ -240,9 +240,9 @@
 		"spliterator": "^6.4.1"
 	},
 	"devDependencies": {
-		"esbuild": "0.28.1",
-		"onnxruntime-node": "^1.26.0",
-		"onnxruntime-web": "1.25.0-dev.20260327-722743c0e2",
+		"esbuild": "0.28.2",
+		"onnxruntime-node": "^1.29.0",
+		"onnxruntime-web": "1.29.0",
 		"playwright": "^1.62.1"
 	},
 	"peerDependencies": {
