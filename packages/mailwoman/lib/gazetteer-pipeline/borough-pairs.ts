@@ -224,7 +224,7 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 		const pairs: BoroughPair[] = []
 
 		for (const { child, parent, parent_placetype } of rows) {
-			const key = `${child} ${parent}`
+			const key = `${child}\0${parent}`
 
 			if (seen.has(key) || !child || !parent || child === parent) continue
 

@@ -6,5 +6,6 @@
 	"productionFilesOver1000Lines": 0,
 	"selfPackageImports": 0,
 	"synchronousFilesystemCalls": 0,
-	"bannedVocabulary": 0
+	"bannedVocabulary": 0,
+	"rawNULBytes": 0
 }
