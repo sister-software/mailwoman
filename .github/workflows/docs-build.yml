@@ -43,6 +43,8 @@ on:
       - "packages/core/**"
       - "packages/spatial/**"
       - "packages/codex/**"
+      # the demo shell is @mailwoman/react (GeocoderDemo, DemoMap, styles.css)
+      - "packages/react/**"
       - "*.md"
 
 permissions:
@@ -104,6 +106,8 @@ jobs:
               - "packages/core/**"
               - "packages/spatial/**"
               - "packages/codex/**"
+              # the demo shell is @mailwoman/react (GeocoderDemo, DemoMap, styles.css)
+              - "packages/react/**"
               - "*.md"
 
       - name: Setup Node
