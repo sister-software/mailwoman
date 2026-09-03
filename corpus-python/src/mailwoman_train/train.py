@@ -25,6 +25,7 @@ import shutil
 import time
 from dataclasses import asdict
 from pathlib import Path
+from typing import Any, cast
 
 import torch
 from torch.optim import AdamW
@@ -44,7 +45,7 @@ def _set_seed(seed: int) -> None:
         torch.cuda.manual_seed_all(seed)
 
 
-def _to_tensor_batch(batch: dict, device: torch.device) -> dict:
+def _to_tensor_batch(batch: dict[str, Any], device: torch.device) -> dict[str, Any]:
     tb = {
         "input_ids": torch.tensor(batch["input_ids"], dtype=torch.long, device=device),
         "attention_mask": torch.tensor(batch["attention_mask"], dtype=torch.long, device=device),
@@ -215,7 +216,7 @@ def _constant_with_warmup(optimizer: AdamW, warmup_steps: int) -> LambdaLR:
 
 
 def build_optimizer(
-    model,
+    model: Any,
     *,
     learning_rate: float,
     weight_decay: float,
@@ -315,7 +316,7 @@ def build_optimizer(
     return AdamW(groups, lr=learning_rate, weight_decay=weight_decay), labels
 
 
-def reinit_label_rows(model, labels: list[str]) -> None:
+def reinit_label_rows(model: Any, labels: list[str]) -> None:
     """Reset the named BIO labels' classifier rows (weight + bias) to the mean of the LIVE rows.
 
     The dead-tag mechanism: init_from a checkpoint where a tag never fires leaves its output
@@ -334,7 +335,7 @@ def reinit_label_rows(model, labels: list[str]) -> None:
     print(f"[reinit_label_rows] rows {rows} ← live-row mean ({labels})")
 
 
-def _build_scheduler(optim: AdamW, cfg_train) -> LambdaLR:
+def _build_scheduler(optim: AdamW, cfg_train: Any) -> LambdaLR:
     schedule = getattr(cfg_train, "lr_schedule", "cosine")
     if schedule == "constant":
         return _constant_with_warmup(optim, cfg_train.warmup_steps)
@@ -569,11 +570,11 @@ def save_checkpoint(
     model: torch.nn.Module,
     output_dir: Path,
     step: int,
-    extras: dict,
+    extras: dict[str, Any],
     *,
     optim: torch.optim.Optimizer | None = None,
-    scheduler: torch.optim.lr_scheduler._LRScheduler | None = None,
-    rng_state: dict | None = None,
+    scheduler: Any = None,
+    rng_state: dict[str, Any] | None = None,
 ) -> Path:
     """Save model + optimizer + scheduler + RNG state into ``output_dir/step-XXXXX/``.
 
@@ -594,7 +595,7 @@ def save_checkpoint(
     tmp.mkdir(parents=True)
     try:
         if hasattr(model, "save_pretrained"):
-            model.save_pretrained(tmp)  # type: ignore[arg-type]
+            cast(Any, model).save_pretrained(tmp)
         else:
             torch.save(model.state_dict(), tmp / "pytorch_model.bin")
         if optim is not None:
@@ -658,9 +659,10 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     if char_mode != "off":
         from .char_tokenizer import load_char_vocab
 
-        if not getattr(cfg.data, "char_vocab_path", None):
+        char_vocab_path = getattr(cfg.data, "char_vocab_path", None)
+        if not char_vocab_path:
             raise ValueError("data.char_mode requires data.char_vocab_path")
-        char_vocab_size = len(load_char_vocab(cfg.data.char_vocab_path))
+        char_vocab_size = len(load_char_vocab(char_vocab_path))
         tokenizer = None
         print(f"char_mode={char_mode}: char_vocab_size={char_vocab_size}, SentencePiece path skipped")
     else:
@@ -852,10 +854,11 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         from .fisher import EWCPenalty
 
         ewc_reference = getattr(cfg.train, "ewc_reference", None) or getattr(cfg.train, "init_from", "")
-        if not getattr(cfg.train, "ewc_fisher_path", None) or not ewc_reference:
+        ewc_fisher_path = getattr(cfg.train, "ewc_fisher_path", None)
+        if not ewc_fisher_path or not ewc_reference:
             raise ValueError("train.ewc_lambda > 0 requires train.ewc_fisher_path and train.ewc_reference/init_from")
         ewc = EWCPenalty(
-            cfg.train.ewc_fisher_path,
+            ewc_fisher_path,
             ewc_reference,
             lam=float(cfg.train.ewc_lambda),
             device=device,
@@ -968,7 +971,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                 # Fisher capture window (base runs): read the accumulated gradient BEFORE clipping
                 # (the empirical Fisher is defined on ∂L/∂θ; the clipped surrogate understates
                 # curvature exactly where it is largest). Read-only — trajectory unaffected.
-                if fisher_acc is not None and step >= fisher_window_start:
+                if fisher_acc is not None and fisher_window_start is not None and step >= fisher_window_start:
                     fisher_acc.accumulate(model)
                 # Stage 2 ships CE + CRF NLL — the CRF leg can produce sharp gradients
                 # during warmup, especially under bf16. Clip global norm to 1.0 before
@@ -1000,6 +1003,8 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                     tracker.log({"train_loss": avg, "lr": lr, "wall_seconds": elapsed}, step=step)
 
                 if step % cfg.train.eval_every_steps == 0:
+                    if tokenizer is None:
+                        raise RuntimeError("eval requires a tokenizer; char-only runs must not reach _eval_val")
                     val = _eval_val(cfg, tokenizer, model, device, max_rows=cfg.data.val_rows)
                     tag_summary = "  ".join(
                         f"{t}={val.get(f'f1_tag.{t}', 0.0):.3f}"
@@ -1079,8 +1084,8 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                         # (the model's own config carries char_vocab_size).
                         "vocab_size": tokenizer.vocab_size if tokenizer is not None else 2,
                     }
-                    ck = save_checkpoint(model, output_dir, step, extras, optim=optim, scheduler=scheduler)
-                    print(f"  [save] checkpoint → {ck}")
+                    saved_ck = save_checkpoint(model, output_dir, step, extras, optim=optim, scheduler=scheduler)
+                    print(f"  [save] checkpoint → {saved_ck}")
         # Final save.
         extras = {
             "step": step,
