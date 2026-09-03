@@ -13,7 +13,7 @@ production instance of. Codified 2026-08-01 from the hierarchy-evidence conversa
 
 WOF placetypes (~33: `borough`, `microhood`, `dependency`, `concourse`, …) describe what a place
 **is**. `ComponentTag` (see [SCHEMA](./SCHEMA.mdx)) describes what role a span plays in an
-address's **grammar**. They are different vocabularies with a many-to-one **projection**, and the
+address's **grammar**. They are different vocabularies with a multiple-to-one **projection**, and the
 projection — not the placetype — is what the decoder can use. SCHEMA.mdx already fixes the
 canonical example: `borough` is not a tag; `dependent_locality` is the umbrella term borough
 projects onto.
@@ -105,7 +105,7 @@ boarding process would ever finish.
 ## The doctrine constraints (standing, non-negotiable)
 
 1. **Positive evidence only.** Presence boosts; absence stays neutral. A subtree with no boroughs
-   must never _forbid_ borough — gazetteer absence is usually coverage, not fact (WOF Japan is
+   must never _forbid_ borough — gazetteer absence can reflect coverage rather than fact (WOF Japan is
    point-geometry; the meaning-of-zero rule).
 2. **Bias, never mask.** The model owns segmentation; the hierarchy contributes soft evidence.
    Hard matching is where venue-confound false positives live (window-mode measured 52% FP; the

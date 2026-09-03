@@ -220,7 +220,6 @@
 		"apache-arrow": "^21.2.0",
 		"fast-glob": "^3.3.3",
 		"fastest-levenshtein": "^1.0.16",
-		"lru-cache": "^11.5.2",
 		"parquet-wasm": "0.7.2",
 		"path-ts": "^2.3.0",
 		"read-excel-file": "^9.3.10",

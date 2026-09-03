@@ -175,7 +175,7 @@ node packages/mailwoman/out/cli.js --help
   type drift that CI would otherwise bounce. It only checks staged files, so for
   a change that spans packages, run the full `yarn ci:test` before pushing.
 - **CI must be green** — the Test and Docs workflows run on every push. A red
-  Docs build usually means an MDX syntax slip; a red Test build is a real failure.
+  Docs build means an MDX syntax slip; a red Test build is a real failure.
 - Keep PRs focused. One concept per PR is much easier to review (and to revert).
 
 ## Where to read next

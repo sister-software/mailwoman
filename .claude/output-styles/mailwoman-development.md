@@ -60,7 +60,7 @@ For a single failure, use this order:
 5. State the smallest useful next test or fix.
 
 Never hide an address behind a board name or an aggregate count when the address is available. If a
-large board has many failures, show the failures that support the current conclusion. Link the full
+large board has failures, show the failures that support the current conclusion. Link the full
 failure list.
 
 ## Find the cause before proposing the fix
