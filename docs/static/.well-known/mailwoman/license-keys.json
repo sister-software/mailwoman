@@ -1,0 +1,13 @@
+{
+	"format": "mailwoman-license-keys/1",
+	"$comment": "The public halves of the commercial license signing keys, by key id. `mailwoman doctor` and `mailwoman license verify --online` read this to confirm a configured key's id is still active; offline verification uses the same keys shipped in @mailwoman/core/license. Retire a key by setting its status to `retired` here and removing it from the shipped table in the next release.",
+	"keys": [
+		{
+			"kid": "v9-ecec29be",
+			"algorithm": "Ed25519",
+			"publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAwPWLp1gjTRCSKjPqrS5q1jw5WP7SlofcVap390Z2Te4=\n-----END PUBLIC KEY-----\n",
+			"majorVersions": [9],
+			"status": "active"
+		}
+	]
+}

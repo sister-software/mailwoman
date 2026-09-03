@@ -49,7 +49,8 @@ function healthyDeps(): DoctorDeps {
 			attribution: "Overture Maps Foundation",
 		}),
 		runtimeLicense: async () => "AGPL-3.0-only OR LicenseRef-Commercial",
-		commercialAgreement: () => false,
+		licenseKey: () => undefined,
+		confirmLicenseKeyPublished: async () => "unreachable",
 		loadONNX: async () => {},
 		nodeVersion: "24.18.0",
 		enginesFloor: ">=24.18.0",
@@ -190,11 +191,111 @@ describe("runDoctor (injected boundaries)", () => {
 		})
 	})
 
-	it("license posture: a commercial agreement applies the commercial branch", async () => {
-		const report = await runDoctor({ ...healthyDeps(), commercialAgreement: () => true })
+	it("license posture: a valid key applies the commercial branch, names the licensee, and records the freshness answer", async () => {
+		const valid = {
+			status: "valid" as const,
+			kid: "v9-deadbeef",
+			payload: {
+				v: 1 as const,
+				kid: "v9-deadbeef",
+				licensee: "Example Ltd",
+				issued: "2026-09-03",
+				expires: "2027-09-03",
+				scope: "all" as const,
+				terms: "LicenseRef-Commercial" as const,
+			},
+		}
 
-		expect(byID(report.checks, "license-mailwoman").license?.applied).toBe("LicenseRef-Commercial")
-		expect(byID(report.checks, "license-mailwoman").license?.obligations).toEqual(["attribution"])
+		const asked: string[] = []
+
+		const report = await runDoctor({
+			...healthyDeps(),
+			licenseKey: () => valid,
+			confirmLicenseKeyPublished: async (kid) => {
+				asked.push(kid)
+
+				return "listed"
+			},
+		})
+
+		const check = byID(report.checks, "license-mailwoman")
+
+		expect(asked).toEqual(["v9-deadbeef"])
+		expect(check.status).toBe(CheckStatus.OK)
+
+		expect(check.license).toMatchObject({
+			applied: "LicenseRef-Commercial",
+			obligations: ["attribution"],
+			licensee: "Example Ltd",
+			keyID: "v9-deadbeef",
+			keyStatus: "valid",
+		})
+
+		expect(check.detail).toContain("confirmed by mailwoman.ai")
+	})
+
+	it("license posture: an expired, unknown or retired key reports its reason and the open-source branch applies", async () => {
+		const payload = {
+			v: 1 as const,
+			kid: "v9-deadbeef",
+			licensee: "Example Ltd",
+			issued: "2025-09-03",
+			expires: "2026-09-01",
+			scope: "all" as const,
+			terms: "LicenseRef-Commercial" as const,
+		}
+
+		const expired = await runDoctor({
+			...healthyDeps(),
+			licenseKey: () => ({ status: "expired", kid: "v9-deadbeef", payload }),
+		})
+
+		const expiredCheck = byID(expired.checks, "license-mailwoman")
+
+		expect(expiredCheck.status).toBe(CheckStatus.Degraded)
+		expect(expiredCheck.license?.applied).toBe("AGPL-3.0-only")
+		expect(expiredCheck.detail).toContain("expired on 2026-09-01")
+		expect(expired.exitCode).toBe(0)
+
+		const unknown = await runDoctor({
+			...healthyDeps(),
+			licenseKey: () => ({
+				status: "unknown_key",
+				kid: "v9-00000000",
+				reason: "signed by key id v9-00000000, which this build does not trust",
+			}),
+		})
+
+		expect(byID(unknown.checks, "license-mailwoman").license).toMatchObject({
+			applied: "AGPL-3.0-only",
+			keyStatus: "unknown_key",
+		})
+
+		const retired = await runDoctor({
+			...healthyDeps(),
+			licenseKey: () => ({ status: "valid", kid: "v9-deadbeef", payload: { ...payload, expires: "2030-01-01" } }),
+			confirmLicenseKeyPublished: async () => "retired",
+		})
+
+		expect(byID(retired.checks, "license-mailwoman").license).toMatchObject({
+			applied: "AGPL-3.0-only",
+			keyStatus: "retired",
+		})
+	})
+
+	it("license posture: the well-known register is never asked when no key is configured", async () => {
+		let asked = 0
+
+		await runDoctor({
+			...healthyDeps(),
+			confirmLicenseKeyPublished: async () => {
+				asked++
+
+				return "listed"
+			},
+		})
+
+		expect(asked).toBe(0)
 	})
 
 	it("license posture: an absent layer gets no license line; a layer recording NOASSERTION is degraded, not guessed", async () => {

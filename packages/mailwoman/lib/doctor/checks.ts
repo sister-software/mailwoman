@@ -15,7 +15,13 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { chooseLicenseBranch, summarizeLicense, type LicenseObligation } from "@mailwoman/core/license"
+import {
+	chooseLicenseBranch,
+	summarizeLicense,
+	type LicenseKeyPublication,
+	type LicenseKeyVerification,
+	type LicenseObligation,
+} from "@mailwoman/core/license"
 
 /**
  * A check's outcome. `ok` = works; `missing` = absent but fixable; `degraded` = present but impaired.
@@ -91,6 +97,12 @@ export interface LicensePosture {
 	 * The attribution line the source asks for, when the manifest records one.
 	 */
 	attribution?: string
+	/**
+	 * For mailwoman's own posture: the licensee a valid key names, its key id, and how the key read.
+	 */
+	licensee?: string
+	keyID?: string
+	keyStatus?: "valid" | "expired" | "unknown_key" | "invalid" | "retired"
 }
 
 /**
@@ -474,20 +486,30 @@ export interface RuntimeLicenseObservation {
 	 */
 	expression: string
 	/**
-	 * Whether a commercial agreement is configured for this installation. Until a license key format lands this is always
-	 * false, and the open-source branch applies.
+	 * The configured license key as verified offline, or absent when none is configured.
 	 */
-	commercialAgreement: boolean
+	key?: LicenseKeyVerification
+	/**
+	 * What mailwoman.ai's well-known register said about the key id, when the doctor could ask.
+	 */
+	publication?: LicenseKeyPublication
 }
 
 /**
- * The license that governs THIS installation of mailwoman, and what it asks of the operator. Without a commercial
- * agreement the AGPL-3.0-only branch applies, and the summary says so in the responsibility vocabulary: attribution,
- * share-alike on modifications, and a source offer to network users (section 13). Informational, never core.
+ * The license that governs THIS installation of mailwoman, and what it asks of the operator. Without a valid key the
+ * AGPL-3.0-only branch applies, and the summary says so in the responsibility vocabulary: attribution, share-alike on
+ * modifications, and a source offer to network users (section 13). A valid key selects the commercial branch; an
+ * expired, unknown, invalid or retired key is reported with its reason and the open-source branch applies. The runtime
+ * behaves the same either way — this check changes what is reported, never what runs. Informational, never core.
  */
 export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
-	const applied = chooseLicenseBranch(o.expression, { commercialAgreement: o.commercialAgreement })
+	const base = { id: "license-mailwoman", label: "License (mailwoman)", core: false }
+	const key = o.key
+	const retired = o.publication === "retired" || o.publication === "unlisted"
+	const commercial = key?.status === "valid" && !retired
+	const applied = chooseLicenseBranch(o.expression, { commercialAgreement: commercial })
 	const summary = summarizeLicense(applied)
+	const obligations = `obligations: ${describeObligations(summary.obligations, summary.recognized)}`
 
 	const license: LicensePosture = {
 		subject: "mailwoman",
@@ -495,18 +517,52 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 		applied,
 		obligations: summary.obligations,
 		recognized: summary.recognized,
+		...(key && "payload" in key ? { licensee: key.payload.licensee } : {}),
+		...(key && "kid" in key ? { keyID: key.kid } : {}),
+		...(key ? { keyStatus: retired && key.status === "valid" ? "retired" : key.status } : {}),
 	}
 
-	const basis = o.commercialAgreement
-		? "commercial agreement configured"
-		: "no commercial agreement configured, so the open-source branch applies"
+	if (!key) {
+		return {
+			...base,
+			status: CheckStatus.OK,
+			detail: `${applied} — no license key configured, so the open-source branch applies · ${obligations}`,
+			license,
+		}
+	}
+
+	if (commercial && key.status === "valid") {
+		const freshness =
+			o.publication === "listed"
+				? "key id confirmed by mailwoman.ai"
+				: o.publication === "unreachable"
+					? "mailwoman.ai unreachable, offline verification only"
+					: "verified offline"
+
+		const expiry = key.payload.expires ? `expires ${key.payload.expires}` : "no expiry"
+
+		return {
+			...base,
+			status: CheckStatus.OK,
+			detail: `${applied} — license key for ${key.payload.licensee} (${key.kid}; ${expiry}; ${freshness}) · ${obligations}`,
+			license,
+		}
+	}
+
+	const reason =
+		key.status === "valid"
+			? `key id ${key.kid} is no longer listed as active at mailwoman.ai, so it is treated as retired`
+			: key.status === "expired"
+				? `license key for ${key.payload.licensee} expired on ${key.payload.expires}`
+				: key.reason
 
 	return {
-		id: "license-mailwoman",
-		label: "License (mailwoman)",
-		core: false,
-		status: CheckStatus.OK,
-		detail: `${applied} — ${basis} · obligations: ${describeObligations(summary.obligations, summary.recognized)}`,
+		...base,
+		status: CheckStatus.Degraded,
+		detail: `${applied} — ${reason}; the open-source branch applies · ${obligations}`,
+		consequence:
+			"A configured license key that does not verify leaves this installation under AGPL-3.0-only terms: attribution, share-alike on modifications, and a source offer to network users.",
+		fix: "mailwoman license verify   (then request a current key from Sister Software)",
 		license,
 	}
 }

@@ -34,6 +34,10 @@ export const nativeCommandRoutes: Readonly<Record<string, NativeCommandRoute>> =
 		summary: "Turn an address into a coordinate.",
 		load: () => import("#cli-native/commands/geocode"),
 	},
+	license: {
+		summary: "Mint, issue and verify commercial license keys.",
+		load: () => import("#cli-native/commands/license"),
+	},
 	openapi: {
 		summary: "Emit the native API OpenAPI document.",
 		load: () => import("#cli-native/commands/openapi"),

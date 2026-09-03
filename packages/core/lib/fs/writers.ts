@@ -125,6 +125,26 @@ export async function writeLocalBuffer<S extends PathBuilderLike[]>(
  * @category Node
  * @category Files
  */
+/**
+ * Write a UTF-8 text file readable and writable by its owner alone (`0600`), creating the parent directory. The mode is
+ * applied after the write as well as at creation, because `writeFile` keeps the mode of a file that already exists. For
+ * a signing key or any other secret the caller must not leave world-readable.
+ */
+export async function writePrivateTextFile<S extends PathBuilderLike[]>(
+	content: string | Promise<string>,
+	...pathSegments: S
+): Promise<void> {
+	if (!pathSegments.length) {
+		throw new Error("No file path segments provided.")
+	}
+
+	const filePath = resolvePath(...pathSegments)
+
+	await mkdir(dirname(filePath), { recursive: true })
+	await writeFile(filePath, await content, { encoding: "utf8", mode: 0o600 })
+	await chmod(filePath, 0o600)
+}
+
 export async function writeLocalFile<S extends PathBuilderLike[]>(
 	content: string | BufferLike,
 	...pathSegments: S

@@ -17,6 +17,12 @@ import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { $public, DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { isWritable, pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
+import {
+	confirmLicenseKeyPublished,
+	type LicenseKeyPublication,
+	type LicenseKeyVerification,
+	verifyConfiguredLicenseKey,
+} from "@mailwoman/core/license"
 import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -114,9 +120,15 @@ export interface DoctorDeps {
 	 */
 	runtimeLicense(): Promise<string>
 	/**
-	 * Whether a commercial agreement is configured. No key format exists yet, so the default answers false.
+	 * The configured license key, verified offline against the trusted keys this build ships; `undefined` when none is
+	 * configured.
 	 */
-	commercialAgreement(): boolean
+	licenseKey(): LicenseKeyVerification | undefined
+	/**
+	 * Ask mailwoman.ai's well-known register whether a key id is still listed. Called only when a key is configured;
+	 * answers `unreachable` rather than throwing when there is no route.
+	 */
+	confirmLicenseKeyPublished(kid: string): Promise<LicenseKeyPublication>
 	/**
 	 * Attempt to load the ONNX native binding (throws when unavailable).
 	 */
@@ -227,7 +239,8 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 		layerDatabases: () => layerDatabases(dataRoot),
 		readLayerLicense,
 		runtimeLicense: readRuntimeLicense,
-		commercialAgreement: () => false,
+		licenseKey: () => verifyConfiguredLicenseKey(),
+		confirmLicenseKeyPublished: (kid) => confirmLicenseKeyPublished(kid),
 		loadONNX: async () => {
 			await import("onnxruntime-node")
 		},
@@ -375,9 +388,13 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 	const poi = checkPOI(await gatherPOI(deps))
 
 	// License posture: mailwoman's own branch, then each attached layer's recorded license. Informational.
+	const key = deps.licenseKey()
+	const publication = key && "kid" in key ? await deps.confirmLicenseKeyPublished(key.kid) : undefined
+
 	const runtimeLicense = runtimeLicenseCheck({
 		expression: await deps.runtimeLicense(),
-		commercialAgreement: deps.commercialAgreement(),
+		...(key ? { key } : {}),
+		...(publication ? { publication } : {}),
 	})
 
 	const layerLicenses = (await Promise.all(deps.layerDatabases().map((layer) => gatherLayerLicense(deps, layer))))
