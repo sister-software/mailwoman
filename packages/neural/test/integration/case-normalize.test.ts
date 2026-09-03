@@ -33,9 +33,9 @@ describe("isAllCapsInput", () => {
 		expect(isAllCapsInput("123 456, 90210")).toBe(false)
 	})
 
-	it("BAILS on any non-ASCII letter — accented + non-Latin (DeepSeek's length/locale concern)", () => {
-		expect(isAllCapsInput("CAFÉ DE PARÍS")).toBe(false) // accented all-caps Latin
-		expect(isAllCapsInput("STRASSE GROSSER ZOLLERN ÜBER")).toBe(false) // German Ü
+	it("admits accented Latin and refuses any non-Latin letter (the length guard lives in titleCaseInput)", () => {
+		expect(isAllCapsInput("CAFÉ DE PARÍS")).toBe(true) // accented all-caps Latin (#1938)
+		expect(isAllCapsInput("STRASSE GROSSER ZOLLERN ÜBER")).toBe(true) // German Ü
 		expect(isAllCapsInput("МОСКВА УЛИЦА")).toBe(false) // Cyrillic
 		expect(isAllCapsInput("東京都")).toBe(false) // CJK
 	})
@@ -106,11 +106,12 @@ describe("normalizeInputCase — the parser hook", () => {
 		expect(normalizeInputCase("1600 pennsylvania ave nw, washington dc")).toBe(canon)
 	})
 
-	it("returns mixed-case and non-ASCII input UNCHANGED (no-regression by construction)", () => {
+	it("returns mixed-case and lowercase accented input UNCHANGED; accented shouting title-cases like ASCII", () => {
 		const mixed = "109 Seminary Dr, Mill Valley, CA 94941"
 		expect(normalizeInputCase(mixed)).toBe(mixed)
-		const accented = "CAFÉ DE PARÍS"
-		expect(normalizeInputCase(accented)).toBe(accented)
+		// #1938: the accented shouting form reaches the model as words rather than single-character pieces. `DE` keeps
+		// the ≤2-letter rule.
+		expect(normalizeInputCase("CAFÉ DE PARÍS")).toBe("Café DE París")
 		const lowerAccented = "café de parís"
 		expect(normalizeInputCase(lowerAccented)).toBe(lowerAccented)
 	})
