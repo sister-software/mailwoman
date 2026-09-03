@@ -34,6 +34,7 @@ import {
 	readWFSFeatureCount,
 	type APIClientConfig,
 	type CKANPackageRecord,
+	assertNoOGCServiceException,
 } from "@mailwoman/core/api"
 import { createPacedCachedClient, type CreatePacedCachedClientOptions } from "@mailwoman/core/api/paced-client"
 
@@ -205,6 +206,8 @@ export class EANCERMClient extends APIClient<APIClientConfig> {
 				elementSetName: "full",
 			},
 		})
+
+		assertNoOGCServiceException(data, "coastal client")
 
 		return parseAttributionStatement(data)
 	}
