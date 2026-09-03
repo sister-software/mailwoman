@@ -12,7 +12,7 @@
 		"packages/sentencepiece-wasm/sentencepiece.mjs",
 		"packages/*/out/**"
 	],
-	"ignoreBinaries": ["ogr2ogr", "rg", "script", "uvx"],
+	"ignoreBinaries": ["ogr2ogr", "rg", "script", "uv", "uvx"],
 	"ignoreDependencies": ["@duckdb/node-api", "ts-morph", "onnxruntime-web"],
 	"workspaces": {
 		"packages/*": {
