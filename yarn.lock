@@ -1540,6 +1540,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.12.0":
+  version: 7.29.7
+  resolution: "@babel/runtime@npm:7.29.7"
+  checksum: 10/9883b4951787779fd382b121f22f92966d85f19434841f65fb00b2dfec232107e139683f47c6f252891826ad8ee18317b46c3a0e4819116a9885f47b46d7126a
+  languageName: node
+  linkType: hard
+
 "@babel/template@npm:^7.28.6, @babel/template@npm:^7.29.7":
   version: 7.29.7
   resolution: "@babel/template@npm:7.29.7"
@@ -4380,7 +4387,7 @@ __metadata:
     "@types/node": "npm:^26.4.1"
     "@types/react": "npm:^19.2.18"
     "@types/react-dom": "npm:^19.2.5"
-    "@types/react-map-gl": "npm:^6.1.9"
+    "@types/react-map-gl": "npm:^6.1.10"
     "@vitejs/plugin-react": "npm:^6.1.1"
     "@vvago/vale": "npm:^3.17.1"
     classnames: "npm:^2.5.1"
@@ -5203,6 +5210,16 @@ __metadata:
     "@types/geojson": "npm:^7946.0.16"
     pbf: "npm:^5.1.0"
   checksum: 10/731a6a094964bc004b51451096cdb5ff65ca60f1c443e638f0e316bb1b24431e67988531bb2f9cb854d3ec31597f32fbbf7de550245efac3bfb1a0cc1d33b567
+  languageName: node
+  linkType: hard
+
+"@math.gl/web-mercator@npm:^3.5.5":
+  version: 3.6.3
+  resolution: "@math.gl/web-mercator@npm:3.6.3"
+  dependencies:
+    "@babel/runtime": "npm:^7.12.0"
+    gl-matrix: "npm:^3.4.0"
+  checksum: 10/493df379d6ecf71b0be22a0f58a20323cf34da788f3c5260091b1edc51f9066458ae99887072288a8b8ecd82221fecc0ec6bf79f9708a53da1ee073e5be03930
   languageName: node
   linkType: hard
 
@@ -8677,15 +8694,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-map-gl@npm:^6.1.9":
-  version: 6.1.9
-  resolution: "@types/react-map-gl@npm:6.1.9"
+"@types/react-map-gl@npm:^6.1.10":
+  version: 6.1.10
+  resolution: "@types/react-map-gl@npm:6.1.10"
   dependencies:
     "@types/geojson": "npm:*"
     "@types/mapbox-gl": "npm:<3.5"
     "@types/react": "npm:*"
-    "@types/viewport-mercator-project": "npm:*"
-  checksum: 10/726b68a4d53bc5e937542d2eb0c50d9a28fdd3a3384c5a138bf4e2bc37382393dce0b6834e8438bbf383bd5cdd6eb548030fc076203ace4423e82cfff912ffa3
+    viewport-mercator-project: "npm:^7.0.2"
+  checksum: 10/f78c99e8f6231882899763a46853149f5d842ce04dd350c539868e255abc0d879fb2a7fc3b322cc66fa24c15772e256e57ccff930313113a8884a4d2361d3e29
   languageName: node
   linkType: hard
 
@@ -8834,15 +8851,6 @@ __metadata:
   version: 2.0.11
   resolution: "@types/unist@npm:2.0.11"
   checksum: 10/6d436e832bc35c6dde9f056ac515ebf2b3384a1d7f63679d12358766f9b313368077402e9c1126a14d827f10370a5485e628bf61aa91117cf4fc882423191a4e
-  languageName: node
-  linkType: hard
-
-"@types/viewport-mercator-project@npm:*":
-  version: 6.1.6
-  resolution: "@types/viewport-mercator-project@npm:6.1.6"
-  dependencies:
-    gl-matrix: "npm:^3.2.0"
-  checksum: 10/3b6b3bf46f76459a97802d158ae5eb2daf423fc0c8d2e2c1eb64b6d50141c9a36cc50424c4d969a6a5c28cd4f442d9f18109585aade00343315030f797a24040
   languageName: node
   linkType: hard
 
@@ -13965,7 +13973,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"gl-matrix@npm:^3.2.0, gl-matrix@npm:^3.4.4":
+"gl-matrix@npm:^3.4.0, gl-matrix@npm:^3.4.4":
   version: 3.4.4
   resolution: "gl-matrix@npm:3.4.4"
   checksum: 10/0a19a881fbfa2cdcff2b5ece0f62041d17e55665393349653e8742a20e43d4516239c68ac6798baa7c35b0c7bd6c9226e70e7824af162228d471eba358a03090
@@ -23769,6 +23777,15 @@ __metadata:
     "@types/unist": "npm:^3.0.0"
     vfile-message: "npm:^4.0.0"
   checksum: 10/a5a85293c9eb8787aa42e180edaef00c13199a493d6ed82fecf13ab29a68526850788e22434d77808ea6b17a74e03ff899b9b4711df5b9eee75afcddd7c2e1fb
+  languageName: node
+  linkType: hard
+
+"viewport-mercator-project@npm:^7.0.2":
+  version: 7.0.4
+  resolution: "viewport-mercator-project@npm:7.0.4"
+  dependencies:
+    "@math.gl/web-mercator": "npm:^3.5.5"
+  checksum: 10/ef6fad785e773caacccd09b333cd485a83813b5b2776fbcaa4b6e2c05e203c5b1fcd4abd94224ca6e4a2129c186b87d107497d532984265c15617e06318ec826
   languageName: node
   linkType: hard
 
