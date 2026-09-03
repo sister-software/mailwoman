@@ -11,7 +11,7 @@
 # case it faceplants on at inference ("12345 Main St"). A train/inference WHERE-mismatch (the zero-fill
 # trap's cousin). The counter-augmentation cannot teach override unless training ALSO paints on shape.
 #
-# THE CHANGE (ONE variable for attribution = "auxiliary-channel hardening", gated as a unit):
+# THE CHANGE (ONE variable for attribution = "auxiliary-channel hardening", conditional as a unit):
 #  1. anchor_paint_mode: shaped   -> paint the anchor on postcode-SHAPED spans (port POSTCODE_PATTERNS
 #     from neural/postcode-repair.ts), MIRRORING inference, not gold spans. THE required fix.
 #  2. anchor_value_mode: region_agnostic_mindist -> demote the rich posterior+latlon vector to a weak
@@ -28,11 +28,11 @@
 #     6 slices (H-adversarial 30 / P-congruent 20 / P-incongruent[anchor-adversarial] 15 /
 #     anchor-false-positive 10 / locale-ambiguous-text 15 / standard 10). Minority floor: CASE-P >=35%.
 #
-# GATE (the $20 cap sits behind this 2k-step probe): 4 held-out slices (scripts/eval/anchor-absorption-
+# CHECK (the $20 cap sits behind this 2k-step probe): 4 held-out slices (scripts/eval/anchor-absorption-
 # probe.sh) graded vs v1.9.2: SLICE-H (US leading-5-digit house# recall RECOVERS toward no-override
 # ceiling), SLICE-P (DE/Nordic leading postcode coord HOLDS, the German lift), SLICE-ROBUST-DROP (anchor
 # forced unknown -> still right from tokens), SLICE-ROBUST-MISLEAD (anchor forced wrong -> follows TEXT).
-# Gates set RELATIVE to the measured v1.9.2 baseline on each slice (not DeepSeek's absolute %; trust
+# Checks set RELATIVE to the measured v1.9.2 baseline on each slice (not DeepSeek's absolute %; trust
 # structure, test numbers). Early-kill @1k: train_loss not O(1) decreasing OR ROBUST-MISLEAD still
 # heavily anchor-following. RESUME from v192 ckpt (grow a capability, NOT init_from). CRF CE-only.
 # conventions-loss-mask OFF. NOT promoted without operator GO + the canary.

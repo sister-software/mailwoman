@@ -62,13 +62,13 @@ One operational footnote from the second command: `--default-country none`. The 
 
 The tier table lives in [the scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx), and it is a statement about evidence, not a switch in the code: a locale is claimed only when a coordinate-graded eval exists for it. Summarized, with what membership means when you run the thing:
 
-| Tier                             | Locales                                                | What you get                                                                                                                                                              |
-| -------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 — first-class, floor-gated     | US, FR                                                 | Per-tag accuracy floors in the release gate (a regressing model does not ship) plus rooftop registers behind both. FR panel (n=3000): 100% resolve, resolved-p90 6.6 km   |
-| 2 — trained + coordinate-paneled | IT, PT, PL, AT, CZ, DE, AU, BE, ES, NL, CH, HR, DK, FI | Parses reliably; resolves to locality-and-postcode grade, not rooftop. Panels (n=1000; BE n=640): resolve rates 87.8% (BE) to 100%, resolved-p90 10 km or less everywhere |
-| 3 — thinly measured              | NO, SE                                                 | Trained and paneled, with named residual failure classes. NO resolves 92.7%; the SE panel is small (n=173), so claims beyond it are unverified                            |
-| resolver-route only              | JP                                                     | Postcode-route resolution through a per-country convention engine; no parser training claim at all                                                                        |
-| blocked / queued                 | GB, IE, HU, RO, KR                                     | External constraints, mostly licensing (below), each with a check-back owner                                                                                              |
+| Tier                               | Locales                                                | What you get                                                                                                                                                              |
+| ---------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 — first-class, floor-conditional | US, FR                                                 | Per-tag accuracy floors in the release check (a regressing model does not ship) plus rooftop registers behind both. FR panel (n=3000): 100% resolve, resolved-p90 6.6 km  |
+| 2 — trained + coordinate-paneled   | IT, PT, PL, AT, CZ, DE, AU, BE, ES, NL, CH, HR, DK, FI | Parses reliably; resolves to locality-and-postcode grade, not rooftop. Panels (n=1000; BE n=640): resolve rates 87.8% (BE) to 100%, resolved-p90 10 km or less everywhere |
+| 3 — thinly measured                | NO, SE                                                 | Trained and paneled, with named residual failure classes. NO resolves 92.7%; the SE panel is small (n=173), so claims beyond it are unverified                            |
+| resolver-route only                | JP                                                     | Postcode-route resolution through a per-country convention engine; no parser training claim at all                                                                        |
+| blocked / queued                   | GB, IE, HU, RO, KR                                     | External constraints, mostly licensing (below), each with a check-back owner                                                                                              |
 
 The scope table also carries a row this summary folds out: its tier 4 records a shipped tokenizer change for the diacritic-heavy locales, a change record rather than a coverage grade.
 
@@ -84,7 +84,7 @@ Everything the resolver consults is a read-only SQLite artifact, sealed at build
 - **Postcode layers.** US postcode centroids, Dutch PC6 codes at street-block grain, and a GeoNames-derived tail for much of the rest of the world, folded onto WOF-keyed entries.
 - **Rooftop registers.** The precision tier. The US situs layer: 124.9 million address points across 50 per-state extracts, built from the National Address Database and OpenAddresses (release 2026-05-20.0). The French BAN layer: 26.0 million points across 101 départements (release 2026-05-18). These two are why Tier 1 reports 1 m uncertainties and Tier 2 does not.
 - **Interpolation and street data.** US TIGER street segments for house-number ranges; BAN street centroids for French street-only queries.
-- **Reference data in the packages.** [`@mailwoman/codex`](https://www.npmjs.com/package/@mailwoman/codex) (per-address-system facts: USPS suffixes, ZIP shapes), locale-gated variant aliases, and the bundled libpostal dictionaries and libaddressinput format rules.
+- **Reference data in the packages.** [`@mailwoman/codex`](https://www.npmjs.com/package/@mailwoman/codex) (per-address-system facts: USPS suffixes, ZIP shapes), locale-hintd variant aliases, and the bundled libpostal dictionaries and libaddressinput format rules.
 
 The full source catalog, with per-source notes and the licensing gradient, is [the address-data-sources reference](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/address-data-sources.mdx).
 
@@ -109,7 +109,7 @@ The visual evidence for all of this is on [the demo map](https://mailwoman.ai/de
 
 ## Where the parser's knowledge comes from
 
-The model's side of "supported" is the training corpus: open, field-structured address records — national registers, state GIS address points, federal facility directories — aligned to BIO labels by per-source adapters and frozen into named corpus versions. The counts change with every rebuild, so they live with the pipeline docs rather than here: [corpus construction](./corpus-construction.mdx) covers the sources and alignment, [the training pipeline](./training-pipeline.mdx) the path from rows to shipped weights. One rule from that pipeline shows up on this page's map: a license filter excludes share-alike sources from training extracts, and the usable open data for Britain and Ireland is share-alike. That is why GB sits in the blocked row — a licensing gate with a check-back owner, not a modeling failure.
+The model's side of "supported" is the training corpus: open, field-structured address records — national registers, state GIS address points, federal facility directories — aligned to BIO labels by per-source adapters and frozen into named corpus versions. The counts change with every rebuild, so they live with the pipeline docs rather than here: [corpus construction](./corpus-construction.mdx) covers the sources and alignment, [the training pipeline](./training-pipeline.mdx) the path from rows to shipped weights. One rule from that pipeline shows up on this page's map: a license filter excludes share-alike sources from training extracts, and the usable open data for Britain and Ireland is share-alike. That is why GB sits in the blocked row — a licensing check with a check-back owner, not a modeling failure.
 
 ## Checking your own area
 

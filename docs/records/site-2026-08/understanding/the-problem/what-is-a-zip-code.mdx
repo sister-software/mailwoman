@@ -91,7 +91,7 @@ The ZIP code format is not a universal postcode format. A parser that treats it 
 - Mislabel 5-digit numbers that are not postcodes (French postcodes before the locality, building numbers in non-US formats).
 - Fail silently on international addresses that use the same digit count for a different purpose.
 
-The staged pipeline addresses this through locale detection (Stage 2): before the classifier runs, the locale gate identifies the address as US or non-US and biases the classifier's expectations accordingly. A 5-digit number after a US state abbreviation is a postcode. A 5-digit number before a French locality name is also a postcode — just in a different position. The parser needs to know which context it is in before it classifies the token.
+The staged pipeline addresses this through locale detection (Stage 2): before the classifier runs, the locale check identifies the address as US or non-US and biases the classifier's expectations accordingly. A 5-digit number after a US state abbreviation is a postcode. A 5-digit number before a French locality name is also a postcode — just in a different position. The parser needs to know which context it is in before it classifies the token.
 
 ## See also
 

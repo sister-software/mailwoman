@@ -59,7 +59,7 @@ import {
 } from "#eval-harness/per-tag-f1"
 
 /**
- * Options for {@linkcode maskRegressionGate}.
+ * Options for {@linkcode maskRegressionCheck}.
  */
 export interface MaskRegressionOptions {
 	/**
@@ -124,7 +124,7 @@ interface Delta {
 /**
  * Run the mask-off vs mask-on per-tag battery. Returns `pass` (no tag regresses beyond the threshold).
  */
-export async function maskRegressionGate(
+export async function maskRegressionCheck(
 	options: MaskRegressionOptions = {},
 	report: (line: string) => void = console.error
 ): Promise<{ pass: boolean; violations: Delta[] }> {
@@ -140,7 +140,7 @@ export async function maskRegressionGate(
 		if (!(await pathExists(p))) throw new Error(`required artifact not found: ${p}`)
 	}
 
-	report(`mask-regression-gate (#718): threshold ${(THRESHOLD * 100).toFixed(1)}pp`)
+	report(`mask-regression-check (#718): threshold ${(THRESHOLD * 100).toFixed(1)}pp`)
 	report(`  model      ${MODEL}`)
 	report(`  tokenizer  ${TOKENIZER}`)
 	report(`  model-card ${MODEL_CARD}`)
@@ -196,7 +196,7 @@ export async function maskRegressionGate(
 	if (JSON_OUT) {
 		await writeLocalJSONFile(
 			{
-				gate: "mask-regression-gate",
+				check: "mask-regression-check",
 				issue: 718,
 				thresholdPp,
 				model: MODEL,

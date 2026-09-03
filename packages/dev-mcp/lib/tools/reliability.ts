@@ -20,7 +20,7 @@ export const reliabilityTool = ({ registry }: DevToolDeps): DevTool => ({
 		"DOES A CONFIDENCE MEAN ANYTHING. Every other measurement here asks whether an ANSWER is right and collapses " +
 		"the confidence away before grading; this asks whether the number attached to the answer predicts that. The " +
 		"two are independent — a surface can be accurate and uninformative (everything at 0.99, right 80% of the " +
-		"time) or inaccurate and well-calibrated, and only the second is safe to gate on. Reports the reliability " +
+		"time) or inaccurate and well-calibrated, and only the second is safe to check on. Reports the reliability " +
 		"curve (per-bin count, mean confidence, accuracy, SIGNED gap, plus ECE and MCE, which disagree on purpose: a " +
 		"rare badly-calibrated bin barely moves ECE and dominates MCE) AND a threshold table, because they answer " +
 		"different questions — a well-calibrated surface can still have no threshold worth setting. Empty bins are " +
@@ -48,7 +48,7 @@ export const reliabilityTool = ({ registry }: DevToolDeps): DevTool => ({
 			.default(ComponentAggregate.Min)
 			.describe(
 				"`decode` only — how a component's confidence is folded out of its tokens. `min` is the weakest link, the " +
-					"reading a gate should use. `mean` is what `AddressNode.confidence` already reports, so calibrate against " +
+					"reading a check should use. `mean` is what `AddressNode.confidence` already reports, so calibrate against " +
 					"it when the consumer reads the tree. They diverge most on long spans."
 			),
 		corpus: z
@@ -64,7 +64,7 @@ export const reliabilityTool = ({ registry }: DevToolDeps): DevTool => ({
 		thresholds: z
 			.array(z.number().min(0).max(1))
 			.optional()
-			.describe("Gate positions for the threshold table. Defaults to a spread from 0.5 to 0.99."),
+			.describe("Check positions for the threshold table. Defaults to a spread from 0.5 to 0.99."),
 		stratify: z
 			.array(z.string())
 			.optional()

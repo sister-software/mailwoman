@@ -257,14 +257,14 @@ export function relabelGoldenStreetRow(
 	let suffixGap = ""
 	let canonical: USStreetSuffix | undefined
 
-	const cut = splitLastWord(street)
+	const split = splitLastWord(street)
 
-	if (!cut) {
+	if (!split) {
 		rowClass = matchTrailingSuffix(street) ? "suffix-only-street" : "single-token"
-	} else if (isStreetDirectionalToken(cut.tail)) {
+	} else if (isStreetDirectionalToken(split.tail)) {
 		// Street type + post-directional ("Pennsylvania Avenue NW"). The corpus adapter emits the pair as
 		// ONE suffix span, and there is no post-directional tag to move it to.
-		const inner = splitLastWord(cut.head)
+		const inner = splitLastWord(split.head)
 		const typeMatch = inner ? matchTrailingSuffix(inner.tail) : null
 
 		if (!inner || !typeMatch) {
@@ -272,7 +272,7 @@ export function relabelGoldenStreetRow(
 		} else {
 			rowClass = "split-suffix-postdirectional"
 			name = inner.head
-			suffix = `${inner.tail}${cut.gap}${cut.tail}`
+			suffix = `${inner.tail}${split.gap}${split.tail}`
 			suffixGap = inner.gap
 			canonical = typeMatch.canonical
 		}
@@ -283,9 +283,9 @@ export function relabelGoldenStreetRow(
 			rowClass = "no-suffix-match"
 		} else {
 			rowClass = "split-suffix"
-			name = cut.head
-			suffix = cut.tail
-			suffixGap = cut.gap
+			name = split.head
+			suffix = split.tail
+			suffixGap = split.gap
 			canonical = typeMatch.canonical
 		}
 	}

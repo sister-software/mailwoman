@@ -234,7 +234,7 @@
 					}
 				]
 			},
-			"notes": "Stage 1 coarse v0.2.0 — same architecture as v0.1.0 (8.87M params, 6L/256H/4-heads), trained on corpus-v0.2.0 (263M aligned rows, 6 train sources) with source-weighted multinomial sampler + relaxed coarse gate (fix in PR for #43). The v0.1.0 positional-heuristic overfit was driven by a strict country-tag gate that dropped ~94% of v0.2.0 before any source weighting; with the gate relaxed and the loader interleaving sources at the row level, the model now sees a fixed mix per batch instead of mono-source blocks.\n\nONNX int8 sha256: dece533c5ad0507256a1ee1dbe9768451491802e09d9c6082ea27f7221eb2098.\n\nDelta vs v0.1.0 on the same golden v0.1.0 eval set:\n  region    F1 0.104 → 0.829  (8.0x)\n  locality  F1 0.042 → 0.647  (15.4x)\n  postcode  F1 0.000 → 0.859  (n/a; v0.1.0 only emitted 1 prediction)\n  country   F1 0.000 → 0.000  (only 6 support entries; both models fail; investigate)\n  exact match 0.00 → 0.527\n\nCalibration much tighter: conf>0.9 bucket accuracy 0.337 → 0.882. Below §6 95% target but a real 9x macro-F1 win + 2.6x calibration tightening; ship-worthy per the graceful-failure framing."
+			"notes": "Stage 1 coarse v0.2.0 — same architecture as v0.1.0 (8.87M params, 6L/256H/4-heads), trained on corpus-v0.2.0 (263M aligned rows, 6 train sources) with source-weighted multinomial sampler + relaxed coarse check (fix in PR for #43). The v0.1.0 positional-heuristic overfit was driven by a strict country-tag check that dropped ~94% of v0.2.0 before any source weighting; with the check relaxed and the loader interleaving sources at the row level, the model now sees a fixed mix per batch instead of mono-source blocks.\n\nONNX int8 sha256: dece533c5ad0507256a1ee1dbe9768451491802e09d9c6082ea27f7221eb2098.\n\nDelta vs v0.1.0 on the same golden v0.1.0 eval set:\n  region    F1 0.104 → 0.829  (8.0x)\n  locality  F1 0.042 → 0.647  (15.4x)\n  postcode  F1 0.000 → 0.859  (n/a; v0.1.0 only emitted 1 prediction)\n  country   F1 0.000 → 0.000  (only 6 support entries; both models fail; investigate)\n  exact match 0.00 → 0.527\n\nCalibration much tighter: conf>0.9 bucket accuracy 0.337 → 0.882. Below §6 95% target but a real 9x macro-F1 win + 2.6x calibration tightening; ship-worthy per the graceful-failure framing."
 		},
 		{
 			"run_id": "stage2-v3.0.0-vs-golden-v0.1.2",
@@ -419,7 +419,7 @@
 					"unit": "90.6 vs 92"
 				}
 			},
-			"notes": "Parity flag-plant candidate. Capacity wall measured (#492). Gate procedure requires --gazetteer-lexicon + --suppress-gaz-near-postcode. All gate numbers repairs-OFF (#486). Lineage: v1.0.2-consolidation-runB @ step 20000 — init_from consolidation v1.0.0 step-040000 (NOT resume; fresh optimizer — recorded honestly, see session doc), affix 17x, corpus v0.4.12-consolidation; shipped as the unified 4.2.0 release int8 md5 9eb4a99f6db06cccff57939f657c09f9."
+			"notes": "Parity flag-plant candidate. Capacity wall measured (#492). Check procedure requires --gazetteer-lexicon + --suppress-gaz-near-postcode. All check numbers repairs-OFF (#486). Lineage: v1.0.2-consolidation-runB @ step 20000 — init_from consolidation v1.0.0 step-040000 (NOT resume; fresh optimizer — recorded honestly, see session doc), affix 17x, corpus v0.4.12-consolidation; shipped as the unified 4.2.0 release int8 md5 9eb4a99f6db06cccff57939f657c09f9."
 		},
 		{
 			"run_id": "v1.1.0-relabel-consolidation-step040000",
@@ -467,7 +467,7 @@
 					"coord_p90_km": 7.4
 				}
 			},
-			"notes": "FROM SCRATCH (clean lineage — no init_from). The #511 relabel run: the #492 ladder's root cause (1,039:1 contradictory street labels) fixed by a loader-level affix-split relabel pass; affix compensations reverted (synth-affix 17→2.0, tag weights →1.5). First gate FAILed fr.postcode 99.3/99.5 (NEW leading-postcode digit-split class) — corrected by the conventions mask (#478 slice 1: locale_logits export + codex fr conventions + emission mask + shape-triggered snap repair), same weights, re-gate PASS 12/12. Ship config: addressSystemConventions:'auto'. Gate record: docs/articles/evals/2026-06-11-v4.3.0-ship-gate.md. Country leg note: this gate fixed the historically gaz-starved country invocation; 85.1 is not comparable to v4.2.0's 89.8."
+			"notes": "FROM SCRATCH (clean lineage — no init_from). The #511 relabel run: the #492 ladder's root cause (1,039:1 contradictory street labels) fixed by a loader-level affix-split relabel pass; affix compensations reverted (synth-affix 17→2.0, tag weights →1.5). First check FAILed fr.postcode 99.3/99.5 (NEW leading-postcode digit-split class) — corrected by the conventions mask (#478 slice 1: locale_logits export + codex fr conventions + emission mask + shape-triggered snap repair), same weights, re-check PASS 12/12. Ship config: addressSystemConventions:'auto'. Check record: docs/articles/evals/2026-06-11-v4.3.0-ship-check.md. Country leg note: this check fixed the historically gaz-starved country invocation; 85.1 is not comparable to v4.2.0's 89.8."
 		},
 		{
 			"run_id": "v1.3.0-boundary-consolidation-step040000",
@@ -505,7 +505,7 @@
 					"native_locality_anchor_on": 91
 				}
 			},
-			"notes": "FROM SCRATCH, clean lineage. PASS 17/17 on the densest pre-registered spec to date (arena floor gated for the first time). Three-battery verdict: po_box FAIL 60.4 (dotted-leader truncation — the corpus format cannot label intra-span punctuation) → span bridge corrective → fr.postcode FAIL 99.0 (comma over-merge) → separator exclusion → PASS. Both correctives decode-side, $0 GPU. Ship config: addressSystemConventions:'auto' + bridgePunctuationGaps:true (REQUIRED — see model card notes)."
+			"notes": "FROM SCRATCH, clean lineage. PASS 17/17 on the densest pre-registered spec to date (arena floor conditional for the first time). Three-battery verdict: po_box FAIL 60.4 (dotted-leader truncation — the corpus format cannot label intra-span punctuation) → span bridge corrective → fr.postcode FAIL 99.0 (comma over-merge) → separator exclusion → PASS. Both correctives decode-side, $0 GPU. Ship config: addressSystemConventions:'auto' + bridgePunctuationGaps:true (REQUIRED — see model card notes)."
 		},
 		{
 			"run_id": "v193a3-anchor-absorption-step080000-rescore-20260702",
@@ -546,7 +546,7 @@
 					"perturb": 78
 				}
 			},
-			"notes": "The #885 measurement re-anchor: first full per-tag re-score since v4.4.0 (17/17 PASS; scorecard parity-scorecard-2026-07-02.md). Rows for 4.5.0-4.16.2 were never populated (the ledger froze at v4.4.0) - their per-release headlines live in releases.mdx + each version's model-card.json; the re-score cadence rule in CONTRIBUTING_MODEL_WORK.mdx now backstops the gap going forward. Scored 2026-07-02 on the shipped int8. [graded_artifact=int8; gate=v4.15.0-boundary; out-dir=/mnt/playpen/mailwoman-data/scratch-825/rescore-885]"
+			"notes": "The #885 measurement re-anchor: first full per-tag re-score since v4.4.0 (17/17 PASS; scorecard parity-scorecard-2026-07-02.md). Rows for 4.5.0-4.16.2 were never populated (the ledger froze at v4.4.0) - their per-release headlines live in releases.mdx + each version's model-card.json; the re-score cadence rule in CONTRIBUTING_MODEL_WORK.mdx now backstops the gap going forward. Scored 2026-07-02 on the shipped int8. [graded_artifact=int8; check=v4.15.0-boundary; out-dir=/mnt/playpen/mailwoman-data/scratch-825/rescore-885]"
 		},
 		{
 			"run_id": "bsplice-meaninit-v193a3-step080000-postship-20260702",
@@ -587,7 +587,7 @@
 					"perturb": 78
 				}
 			},
-			"notes": "The #884 vocab-splice ship (training-free; v1.9.3a3 encoder unchanged + 10,582 mean-init rows; coordinated model+tokenizer bump). POST-SHIP battery on the published pair: 17/17 PASS incl. both zero-margin postcode floors exactly held — per-tag F1 unmoved at gate precision across the tokenizer change (cross-lingual leakage measured separately: 52/15k EU rows re-tokenize, net-positive, FR coord ni PASS). Coordinate wins: wrong-city CZ 22.4->14.8, PL 27.9->7.9, SK 22.2->13.2, SI 18.9->10.6 (n=1k). Re-score cadence entry #1. [graded_artifact=int8; gate=v4.15.0-boundary; out-dir=/mnt/playpen/mailwoman-data/scratch-825/gate-v510]"
+			"notes": "The #884 vocab-splice ship (training-free; v1.9.3a3 encoder unchanged + 10,582 mean-init rows; coordinated model+tokenizer bump). POST-SHIP battery on the published pair: 17/17 PASS incl. both zero-margin postcode floors exactly held — per-tag F1 unmoved at check precision across the tokenizer change (cross-lingual leakage measured separately: 52/15k EU rows re-tokenize, net-positive, FR coord ni PASS). Coordinate wins: wrong-city CZ 22.4->14.8, PL 27.9->7.9, SK 22.2->13.2, SI 18.9->10.6 (n=1k). Re-score cadence entry #1. [graded_artifact=int8; check=v4.15.0-boundary; out-dir=/mnt/playpen/mailwoman-data/scratch-825/check-v510]"
 		},
 		{
 			"run_id": "nsplice-v2-exonym-meaninit-20260703",
@@ -628,7 +628,7 @@
 					"perturb": 78
 				}
 			},
-			"notes": "Coordinated model+code cut on gate v5.2.0-nordic (one $revision: us.postcode 95→94.8, measurement identity — shipped-fp32 reads the same 94.8, 0/2660 parse diffs; operator-approved). Nordic vocab-splice: SE 83.8→90.2 (p90res 113→12.7km), NO 92.7→98.1, DK 91.4→95.2, Åbo 0.12km; 14/14 ni; US byte-identical. Post-ship gauntlet 19/19 + metamorphic PASS. Carries the resolver arc #910/#920/#922/#923/#927/#929/#930/#931. [graded_artifact=fp32; gate=v4.15.0-boundary; out-dir=/mnt/playpen/mailwoman-data/scratch-825/gate-v193/v520-gate-out]"
+			"notes": "Coordinated model+code reduce on check v5.2.0-nordic (one $revision: us.postcode 95→94.8, measurement identity — shipped-fp32 reads the same 94.8, 0/2660 parse diffs; operator-approved). Nordic vocab-splice: SE 83.8→90.2 (p90res 113→12.7km), NO 92.7→98.1, DK 91.4→95.2, Åbo 0.12km; 14/14 ni; US byte-identical. Post-ship gauntlet 19/19 + metamorphic PASS. Carries the resolver arc #910/#920/#922/#923/#927/#929/#930/#931. [graded_artifact=fp32; check=v4.15.0-boundary; out-dir=/mnt/playpen/mailwoman-data/scratch-825/check-v193/v520-check-out]"
 		},
 		{
 			"run_id": "v220-full-family-100k-postship-20260704",
@@ -669,7 +669,7 @@
 					"perturb": 79
 				}
 			},
-			"notes": "v2.2.0-full-family promoted from the 2026-07-03 archive at the #901 operator fork (fixes #949: FR bare street 16->34/40; CZ wrong-city 13.7->6.6, SK 13.3->6.6; SE +4.6pp; Abo fixed; US/FR ni identical; SI +2.7pp trade floored by #942 default-ON). POST-SHIP battery on the published pair: every floor PASS incl. fr.postcode at exactly its revised 99.2 floor (gate v5.3.0-family.json) and fr.cedex_real recovered 89.4->93.1 (the 07-02 scorecard's unsigned drift substantially healed). Re-score cadence entry #2. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): int8_delta.us.country_homograph_f1. [graded_artifact=int8; gate=v5.3.0-family; out-dir=/mnt/playpen/mailwoman-data/scratch-825/gate-v530-postship]"
+			"notes": "v2.2.0-full-family promoted from the 2026-07-03 archive at the #901 operator fork (fixes #949: FR bare street 16->34/40; CZ wrong-city 13.7->6.6, SK 13.3->6.6; SE +4.6pp; Abo fixed; US/FR ni identical; SI +2.7pp trade floored by #942 default-ON). POST-SHIP battery on the published pair: every floor PASS incl. fr.postcode at exactly its revised 99.2 floor (check v5.3.0-family.json) and fr.cedex_real recovered 89.4->93.1 (the 07-02 scorecard's unsigned drift substantially healed). Re-score cadence entry #2. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the check spec's revision comment): int8_delta.us.country_homograph_f1. [graded_artifact=int8; check=v5.3.0-family; out-dir=/mnt/playpen/mailwoman-data/scratch-825/check-v530-postship]"
 		},
 		{
 			"run_id": "v2-4-1-fr-nsplice-ft-20260709",
@@ -710,7 +710,7 @@
 					"perturb": 81
 				}
 			},
-			"notes": "Promoted 2026-07-09 via the gauntlet battery (mangle 23.5→17.7% int8, Honoré+René repros, held-out FR z=+0.90 / US z=+0.29 — table on #444); this promotion-eval run executed post-hoc for the ledger per the re-anchor discipline. Tokenizer v0.8.0-fr-nsplice (spliced; training-free path falsified first, #1047). Clears the int8 homograph floor outright (85.1 vs 83.3) — the 5.3.0/5.4.0 adjudicated int8-delta exception is no longer needed. [graded_artifact=int8; gate=v2.3.0-nl-postcode; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/fc0a4401-3bda-4fa5-b4b9-4031dda9cbeb/scratchpad/gate-v241-ledger]"
+			"notes": "Promoted 2026-07-09 via the gauntlet battery (mangle 23.5→17.7% int8, Honoré+René repros, held-out FR z=+0.90 / US z=+0.29 — table on #444); this promotion-eval run executed post-hoc for the ledger per the re-anchor discipline. Tokenizer v0.8.0-fr-nsplice (spliced; training-free path falsified first, #1047). Clears the int8 homograph floor outright (85.1 vs 83.3) — the 5.3.0/5.4.0 adjudicated int8-delta exception is no longer needed. [graded_artifact=int8; check=v2.3.0-nl-postcode; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/fc0a4401-3bda-4fa5-b4b9-4031dda9cbeb/scratchpad/check-v241-ledger]"
 		},
 		{
 			"run_id": "hono-api-cutover-6-0-0",
@@ -792,7 +792,7 @@
 					"perturb": 80
 				}
 			},
-			"notes": "POST-HOC ledger measurement (package-shaped, eval gate --weights-cache). v261 (#727 stage-1 span-boundary) shipped on the gauntlet COORDINATE gate + operator-approved documented country cosmetic exception (#1104), NOT this v5.3.0-family parity gate. One floor-fail, coordinate-invisible (operator-excepted): fr.postcode 98.9<99.2 — a small FR-postcode dip shared across the multisplice/fragment line, held-out FR coordinate flat. country_homograph 89.x PASSES (v261 has no country channel). See releases.mdx 6.1.0 row. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): fr.postcode. [graded_artifact=fp32; gate=v5.3.0-family; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/68bebf18-8fe3-4263-ae64-70c79a08f97c/scratchpad/gate-v261-610]"
+			"notes": "POST-HOC ledger measurement (package-shaped, eval check --weights-cache). v261 (#727 stage-1 span-boundary) shipped on the gauntlet COORDINATE check + operator-approved documented country cosmetic exception (#1104), NOT this v5.3.0-family parity check. One floor-fail, coordinate-invisible (operator-excepted): fr.postcode 98.9<99.2 — a small FR-postcode dip shared across the multisplice/fragment line, held-out FR coordinate flat. country_homograph 89.x PASSES (v261 has no country channel). See releases.mdx 6.1.0 row. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the check spec's revision comment): fr.postcode. [graded_artifact=fp32; check=v5.3.0-family; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/68bebf18-8fe3-4263-ae64-70c79a08f97c/scratchpad/check-v261-610]"
 		},
 		{
 			"run_id": "v2-6-3-country-channel-20260714",
@@ -833,7 +833,7 @@
 					"perturb": 80
 				}
 			},
-			"notes": "POST-HOC ledger measurement (package-shaped, eval gate --weights-cache). v263 shipped on the gauntlet COORDINATE gate + operator-approved documented per-tag trades, NOT this v5.3.0-family parity gate. Two floor-fails, both coordinate-invisible (operator-excepted): us.country_homograph 82.6<83.3 (the country channel's ambiguity guard over-suppresses homograph countries Georgia/Jordan/Jamaica — trades homograph recall for precision) and fr.postcode 98.8<99.2. The channel LIFTS WOF-admin/golden country recall 84.8->89.3% (the #1104 target); held-out US/FR coordinate flat (z -0.16/-0.17). See 2026-07-14-v263-country-channel-result.md. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): us.country_homograph_f1, fr.postcode. [graded_artifact=fp32; gate=v5.3.0-family; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/68bebf18-8fe3-4263-ae64-70c79a08f97c/scratchpad/gate-v263-620]"
+			"notes": "POST-HOC ledger measurement (package-shaped, eval check --weights-cache). v263 shipped on the gauntlet COORDINATE check + operator-approved documented per-tag trades, NOT this v5.3.0-family parity check. Two floor-fails, both coordinate-invisible (operator-excepted): us.country_homograph 82.6<83.3 (the country channel's ambiguity guard over-suppresses homograph countries Georgia/Jordan/Jamaica — trades homograph recall for precision) and fr.postcode 98.8<99.2. The channel LIFTS WOF-admin/golden country recall 84.8->89.3% (the #1104 target); held-out US/FR coordinate flat (z -0.16/-0.17). See 2026-07-14-v263-country-channel-result.md. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the check spec's revision comment): us.country_homograph_f1, fr.postcode. [graded_artifact=fp32; check=v5.3.0-family; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/68bebf18-8fe3-4263-ae64-70c79a08f97c/scratchpad/check-v263-620]"
 		},
 		{
 			"run_id": "v264-country-softguard-6-3-0",
@@ -874,7 +874,7 @@
 					"perturb": 80
 				}
 			},
-			"notes": "v264 country-softguard (init_from v263 + country_ambiguous_scale 0.5). Strictly dominates v263: country-homograph 82.6->85.1, golden WOF-admin country 89.3->91.1%, aggregate golden label-fails 1101->1098. Coordinate gauntlet PASS both locales (the ship gate). fr.postcode 99.0 vs family-floor 99.2 = the standing saturated-metric exception (same as v261/v263), coordinate-invisible. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): fr.postcode. [graded_artifact=fp32; gate=v5.3.0-family; out-dir=scratchpad/gate-v264-630]"
+			"notes": "v264 country-softguard (init_from v263 + country_ambiguous_scale 0.5). Strictly dominates v263: country-homograph 82.6->85.1, golden WOF-admin country 89.3->91.1%, aggregate golden label-fails 1101->1098. Coordinate gauntlet PASS both locales (the ship check). fr.postcode 99.0 vs family-floor 99.2 = the standing saturated-metric exception (same as v261/v263), coordinate-invisible. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the check spec's revision comment): fr.postcode. [graded_artifact=fp32; check=v5.3.0-family; out-dir=scratchpad/check-v264-630]"
 		},
 		{
 			"run_id": "v310-fr-fragment-6-4-0",
@@ -915,7 +915,7 @@
 					"perturb": 79
 				}
 			},
-			"notes": "The house-number licence: init_from v264 + the synth-fr-fragment BAN slice @ 12.0. FR fragment board bare-street 0.215->0.715. Backfilled 2026-07-17 (the ship did not auto-append). Grade re-run on 2026-07-17 vs v6.0.0-shipped-baseline. [graded_artifact=weights-cache; gate=v6.0.0-shipped-baseline; out-dir=/tmp/gate-v310]"
+			"notes": "The house-number licence: init_from v264 + the synth-fr-fragment BAN slice @ 12.0. FR fragment board bare-street 0.215->0.715. Backfilled 2026-07-17 (the ship did not auto-append). Grade re-run on 2026-07-17 vs v6.0.0-shipped-baseline. [graded_artifact=weights-cache; check=v6.0.0-shipped-baseline; out-dir=/tmp/check-v310]"
 		},
 		{
 			"run_id": "v381-punct-fix-6-5-0",
@@ -956,7 +956,7 @@
 					"perturb": 79
 				}
 			},
-			"notes": "First model to pass the full Gauntlet clean. #1101 comma-free rooftop fix (augment_punct_drop_prob) + the no-fragment digit-ownership slice (NO bare-street-hn 0.693->0.733). Golden gate PASS, 0 tags >2pp below shipped, us.country_homograph +2.3. Weights-only off v310. [graded_artifact=weights-cache; gate=v6.0.0-shipped-baseline; out-dir=/tmp/gate-v381]"
+			"notes": "First model to pass the full Gauntlet clean. #1101 comma-free rooftop fix (augment_punct_drop_prob) + the no-fragment digit-ownership slice (NO bare-street-hn 0.693->0.733). Golden check PASS, 0 tags >2pp below shipped, us.country_homograph +2.3. Weights-only off v310. [graded_artifact=weights-cache; check=v6.0.0-shipped-baseline; out-dir=/tmp/check-v381]"
 		},
 		{
 			"run_id": "v385-latam-camx-6-6-0",
@@ -997,7 +997,7 @@
 					"perturb": 80
 				}
 			},
-			"notes": "v385 CA/MX Overture locale add (npm 7.1.0). Golden 2pp vs shipped v381 PASS (country -1.6 small-N); gauntlet 33/33; MX locality +8.7. v6.0.0-shipped-baseline: sole floor miss fr.cedex_real 85.6 vs 85.8 (-0.2pp, ~1 row, FR tag orthogonal to CA/MX) — operator-adjudicated as noise 2026-07-18. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the gate spec's revision comment): fr.cedex_real. [graded_artifact=weights-cache; gate=v6.0.0-shipped-baseline; out-dir=scratchpad/release-v7.1.0/gate-out]"
+			"notes": "v385 CA/MX Overture locale add (npm 7.1.0). Golden 2pp vs shipped v381 PASS (country -1.6 small-N); gauntlet 33/33; MX locality +8.7. v6.0.0-shipped-baseline: sole floor miss fr.cedex_real 85.6 vs 85.8 (-0.2pp, ~1 row, FR tag orthogonal to CA/MX) — operator-adjudicated as noise 2026-07-18. OPERATOR-EXCEPTED CHECKS (adjudicated at the promote fork, see the check spec's revision comment): fr.cedex_real. [graded_artifact=weights-cache; check=v6.0.0-shipped-baseline; out-dir=scratchpad/release-v7.1.0/check-out]"
 		},
 		{
 			"run_id": "v385-en-gb-pair-prior-6-6-1",
@@ -1105,7 +1105,7 @@
 				}
 			},
 			"notes": "NZ dependent_locality LIVE: as-written 246/246 emit + 246/246 tag-correct (100% — the (x,x) identical-adjacent-segment rule recovers all 63 repeated-name rows, e.g. 'Mangawhai, Mangawhai'); comma-free 244/246 (99.2%); golden FP 0/54; GB surfaces reproduced byte-exact (0 identity pairs in the GB index — structural inertness verified). Model bytes unchanged (v385). NZ venue precision evidence is synthetic-interim until #1279.",
-			"$re_anchor_2026_07_24": "GB comma-stripped baseline RE-ANCHORED 50/69 → 55/69 emit (52/55, 94.5% tag-correct): the v1.1 battery's harness cache was en-us-shaped (no postcode-gb.bin → anchor channel silent); production en-gb resolution consults the GB anchors and correctly splits 5 more localities (Steeple Ashton, Pocklington, Farnsfield, Caergwrle, Wheatley). Verified NOT code drift (identical-artifact rerun of both code bases = 50/69 exactly under the old cache). Production-faithful number, dated re-anchor per no-silent-gate-drift. Receipts: task-8 report § 'Comma-free baseline drift root-cause'."
+			"$re_anchor_2026_07_24": "GB comma-stripped baseline RE-ANCHORED 50/69 → 55/69 emit (52/55, 94.5% tag-correct): the v1.1 battery's harness cache was en-us-shaped (no postcode-gb.bin → anchor channel silent); production en-gb resolution consults the GB anchors and correctly splits 5 more localities (Steeple Ashton, Pocklington, Farnsfield, Caergwrle, Wheatley). Verified NOT code drift (identical-artifact rerun of both code bases = 50/69 exactly under the old cache). Production-faithful number, dated re-anchor per no-silent-check-drift. Receipts: task-8 report § 'Comma-free baseline drift root-cause'."
 		},
 		{
 			"run_id": "v385-transition-beta-6-6-3",
@@ -1166,8 +1166,8 @@
 					"clips": "0 (was 44)"
 				}
 			},
-			"notes": "Model bytes STILL v385. 6.6.3 = GB pair-index re-cut with transitionBeta 5 (position-scoped Viterbi transition bonus at pair-hit child starts, neural 7.8.1) + title-preposition suppression ({at, of}). GB comma-free 55→63/69 emit, 60/63 (95.2%) correct — named-row prediction matched exactly, 8 net-new. Venue-anchored FP restored to the exact pre-beta 4/6500 after the v1 battery caught the 'New Inn at Hoff' collateral (1-row FAIL → suppression → v2 PASS all 5). Also ships #1290 (GB postcode conventions row: exact 26→83, clips 44→0). NZ/golden/presets byte-identical throughout.",
-			"$re_anchor_2026_07_24": "GB comma-stripped baseline RE-ANCHORED 50/69 → 55/69 emit (52/55, 94.5% tag-correct): the v1.1 battery's harness cache was en-us-shaped (no postcode-gb.bin → anchor channel silent); production en-gb resolution consults the GB anchors and correctly splits 5 more localities (Steeple Ashton, Pocklington, Farnsfield, Caergwrle, Wheatley). Verified NOT code drift (identical-artifact rerun of both code bases = 50/69 exactly under the old cache). Production-faithful number, dated re-anchor per no-silent-gate-drift. Receipts: task-8 report § 'Comma-free baseline drift root-cause'."
+			"notes": "Model bytes STILL v385. 6.6.3 = GB pair-index rebuilt with transitionBeta 5 (position-scoped Viterbi transition bonus at pair-hit child starts, neural 7.8.1) + title-preposition suppression ({at, of}). GB comma-free 55→63/69 emit, 60/63 (95.2%) correct — named-row prediction matched exactly, 8 net-new. Venue-anchored FP restored to the exact pre-beta 4/6500 after the v1 battery caught the 'New Inn at Hoff' collateral (1-row FAIL → suppression → v2 PASS all 5). Also ships #1290 (GB postcode conventions row: exact 26→83, clips 44→0). NZ/golden/presets byte-identical throughout.",
+			"$re_anchor_2026_07_24": "GB comma-stripped baseline RE-ANCHORED 50/69 → 55/69 emit (52/55, 94.5% tag-correct): the v1.1 battery's harness cache was en-us-shaped (no postcode-gb.bin → anchor channel silent); production en-gb resolution consults the GB anchors and correctly splits 5 more localities (Steeple Ashton, Pocklington, Farnsfield, Caergwrle, Wheatley). Verified NOT code drift (identical-artifact rerun of both code bases = 50/69 exactly under the old cache). Production-faithful number, dated re-anchor per no-silent-check-drift. Receipts: task-8 report § 'Comma-free baseline drift root-cause'."
 		},
 		{
 			"run_id": "v385-fst-curation-6-6-4",
@@ -1234,11 +1234,11 @@
 					"all_classes": "1889/2800 vs P0 1893 (-0.1pp)"
 				}
 			},
-			"notes": "Bundle revision on unchanged model bytes: per-locale FSTs rebuilt with build-time degenerate-surface curation (policy degenerate-surface-exclusion v1.1 in each artifact trailer). Fragment street-particle 290→298/400 (residual 3 = true homographs: La Grange / La Grande OR / Pierre SD), bare-street 240→241 = P0 parity, admin-street-homonym 159 = exact P0 parity (with the D2 gate pin, closed #1320); golden us/fr byte-equal to shipped (+52/+0 vs P0 unchanged); uncurated A/B control == shipped exactly (delta is pure curation); gauntlet PASS ×3 layers incl. candidate weights-cache (held-out z=0.00). Per-tag golden metrics carried forward from 6.6.3 — measured byte-identical. Also ships fst-street-morphology.bin (sealed, locale-general) unifying 3 build sites + enabling the browser street-context gate at the next docs deploy.",
-			"$re_anchor_2026_07_24": "GB comma-stripped baseline RE-ANCHORED 50/69 → 55/69 emit (52/55, 94.5% tag-correct): the v1.1 battery's harness cache was en-us-shaped (no postcode-gb.bin → anchor channel silent); production en-gb resolution consults the GB anchors and correctly splits 5 more localities (Steeple Ashton, Pocklington, Farnsfield, Caergwrle, Wheatley). Verified NOT code drift (identical-artifact rerun of both code bases = 50/69 exactly under the old cache). Production-faithful number, dated re-anchor per no-silent-gate-drift. Receipts: task-8 report § 'Comma-free baseline drift root-cause'."
+			"notes": "Bundle revision on unchanged model bytes: per-locale FSTs rebuilt with build-time degenerate-surface curation (policy degenerate-surface-exclusion v1.1 in each artifact trailer). Fragment street-particle 290→298/400 (residual 3 = true homographs: La Grange / La Grande OR / Pierre SD), bare-street 240→241 = P0 parity, admin-street-homonym 159 = exact P0 parity (with the D2 check pin, closed #1320); golden us/fr byte-equal to shipped (+52/+0 vs P0 unchanged); uncurated A/B control == shipped exactly (delta is pure curation); gauntlet PASS ×3 layers incl. candidate weights-cache (held-out z=0.00). Per-tag golden metrics carried forward from 6.6.3 — measured byte-identical. Also ships fst-street-morphology.bin (sealed, locale-general) unifying 3 build sites + enabling the browser street-context check at the next docs deploy.",
+			"$re_anchor_2026_07_24": "GB comma-stripped baseline RE-ANCHORED 50/69 → 55/69 emit (52/55, 94.5% tag-correct): the v1.1 battery's harness cache was en-us-shaped (no postcode-gb.bin → anchor channel silent); production en-gb resolution consults the GB anchors and correctly splits 5 more localities (Steeple Ashton, Pocklington, Farnsfield, Caergwrle, Wheatley). Verified NOT code drift (identical-artifact rerun of both code bases = 50/69 exactly under the old cache). Production-faithful number, dated re-anchor per no-silent-check-drift. Receipts: task-8 report § 'Comma-free baseline drift root-cause'."
 		},
 		{
-			"run_id": "v670-bundle-ordinal-ship-gate",
+			"run_id": "v670-bundle-ordinal-ship-check",
 			"model_version": "6.7.0",
 			"model_path": "@mailwoman/neural-weights-en-us@8.2.0",
 			"corpus_version": "v0.13.0-latam (v385's own feed, VERBATIM data section incl. punct_drop 0.3 + all source weights except synth-po-box-cedex 1.5→3.0 — the fine-tune replay boost) — the deploc additions (synth-gb 10.0 / nz / es-pedania / fr-lieudit) are PROBE PASSENGERS removed after the v3.22 feed attribution (GB street-boundary transfer + CA po-box dilution).",
@@ -1276,7 +1276,7 @@
 					"perturb": 82
 				}
 			},
-			"notes": "6.7.0-bundle (v3.24.0-bundle-ordinal step-4000, npm 8.2.0): the Option-A evidence bundle ships — street_type+locality_surface channels, digit-guarded four-law lexicons (street v3/locality-surface v6), inputMode register gating (Decision A) + the street-context gate, ordinal-street augmentation (the 8.2.0 pre-ship metamorphic catch trained out). G5 graded the ABLATED column = formatted-mode production; fragment register: homonym +0.258 asis/+0.730 lower+heal, ALL +0.267 lower+heal. fr.cedex under the noise-honest 82.2 floor (NAMED WATCH). street-hn asis raw -0.022 (one row past the diagnostic bar; +0.022 heal-on production register — recorded). [graded_artifact=weights-cache; gate=v6.0.0-shipped-baseline; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/fbec2b20-ca6b-49a8-bc4c-e23903c72b93/scratchpad/gate-v3240-ablated]"
+			"notes": "6.7.0-bundle (v3.24.0-bundle-ordinal step-4000, npm 8.2.0): the Option-A evidence bundle ships — street_type+locality_surface channels, digit-guarded four-law lexicons (street v3/locality-surface v6), inputMode register blocking (Decision A) + the street-context check, ordinal-street augmentation (the 8.2.0 pre-ship metamorphic catch trained out). G5 graded the ABLATED column = formatted-mode production; fragment register: homonym +0.258 asis/+0.730 lower+heal, ALL +0.267 lower+heal. fr.cedex under the noise-honest 82.2 floor (NAMED WATCH). street-hn asis raw -0.022 (one row past the diagnostic bar; +0.022 heal-on production register — recorded). [graded_artifact=weights-cache; check=v6.0.0-shipped-baseline; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/fbec2b20-ca6b-49a8-bc4c-e23903c72b93/scratchpad/check-v3240-ablated]"
 		},
 		{
 			"run_id": "v401-base-60k-s42",
@@ -1317,7 +1317,7 @@
 					"perturb": 78
 				}
 			},
-			"notes": "model 7.0.0 from-scratch base (v4.0.1-base-60k step-60000); new v7.0.0-base gate spec (Wilson support-aware margins); locality lexicon v6 per the G8 revert; Fisher artifact fisher-diag-v1 beside the weights; one named watch: si-sentinel-ucakar (char-path lineage fix) [graded_artifact=weights-cache; gate=undefined; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/fbec2b20-ca6b-49a8-bc4c-e23903c72b93/scratchpad/gate-v700-final] npm release 8.3.0."
+			"notes": "model 7.0.0 from-scratch base (v4.0.1-base-60k step-60000); new v7.0.0-base check spec (Wilson support-aware margins); locality lexicon v6 per the G8 revert; Fisher artifact fisher-diag-v1 beside the weights; one named watch: si-sentinel-ucakar (char-path lineage fix) [graded_artifact=weights-cache; check=undefined; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/fbec2b20-ca6b-49a8-bc4c-e23903c72b93/scratchpad/check-v700-final] npm release 8.3.0."
 		},
 		{
 			"run_id": "v420-base-anchor-v2-s42-20260806",
@@ -1358,7 +1358,7 @@
 					"perturb": 66
 				}
 			},
-			"notes": "model 9.0.0 anchor-cure base (v4.2.0-base-anchor-v2 step-60000, from scratch on v0.17.0-batch). Gate v9.0.0-base PASS on golden v0.1.3 (the split-canonical answer key — v0.1.2's us.street miss was the folded key crediting non-splitting; corrected instrument reads candidate 75.2 vs baseline 71.7). Anchor cure receipts: gb-golden 318/318 channel-FED, Fisher slot-4 11.28% w/ CA/JP zero controls, GB dep-loc 0->205/207 base package. Watch: us.unit_real 93.9 vs 97.0 (n=34); golden street_prefix 79.8 vs 86.7 (not floored). npm release 9.0.0. [graded_artifact=weights-cache; gate=v9.0.0-base; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/89eb8ad2-8fb4-4c96-b44b-867d2df4a0f1/scratchpad/gate-v900-verdict]"
+			"notes": "model 9.0.0 anchor-cure base (v4.2.0-base-anchor-v2 step-60000, from scratch on v0.17.0-batch). Check v9.0.0-base PASS on golden v0.1.3 (the split-canonical answer key — v0.1.2's us.street miss was the folded key crediting non-splitting; corrected instrument reads candidate 75.2 vs baseline 71.7). Anchor cure receipts: gb-golden 318/318 channel-FED, Fisher slot-4 11.28% w/ CA/JP zero controls, GB dep-loc 0->205/207 base package. Watch: us.unit_real 93.9 vs 97.0 (n=34); golden street_prefix 79.8 vs 86.7 (not floored). npm release 9.0.0. [graded_artifact=weights-cache; check=v9.0.0-base; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/89eb8ad2-8fb4-4c96-b44b-867d2df4a0f1/scratchpad/check-v900-verdict]"
 		},
 		{
 			"run_id": "v9-0-0-base-20260811",
@@ -1399,7 +1399,7 @@
 					"perturb": 64
 				}
 			},
-			"notes": "[graded_artifact=weights-cache; gate=v9.0.0-base; out-dir=/home/lab/Projects/mailwoman/scratchpad/gate-v440-60k-int8-wc]"
+			"notes": "[graded_artifact=weights-cache; check=v9.0.0-base; out-dir=/home/lab/Projects/mailwoman/scratchpad/check-v440-60k-int8-wc]"
 		}
 	]
 }

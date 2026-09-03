@@ -151,7 +151,7 @@ describe("runInvarianceSuite", () => {
 		expect(result.outcomes[0]?.preExisting).toBe(true)
 	})
 
-	it("--baseline regression mode: a NEW violation the baseline does NOT have fails the gate", async () => {
+	it("--baseline regression mode: a NEW violation the baseline does NOT have fails the check", async () => {
 		const brokenRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
 
 		const candidateParse: ParseFn = async (raw): Promise<Record<string, string>> =>
@@ -171,7 +171,7 @@ describe("runInvarianceSuite", () => {
 		expect(result.outcomes[0]?.preExisting).toBe(false)
 	})
 
-	it("--baseline severity gate: candidate LOST where baseline only DEGRADED is a NEW (enforcing) violation, not pre-existing", async () => {
+	it("--baseline severity check: candidate LOST where baseline only DEGRADED is a NEW (enforcing) violation, not pre-existing", async () => {
 		// The case the severity check exists for: baseline drops `unit` on comma-drop (DEGRADED — non-critical),
 		// candidate drops `house_number` on the SAME pair (LOST — critical). Severity-blind matching (both
 		// sides merely "non-INVARIANT") would wrongly call this pre-existing and let it through. A candidate
@@ -229,7 +229,7 @@ describe("runInvarianceSuite", () => {
 		expect(violationLine).not.toContain("held INVARIANT")
 	})
 
-	it("--baseline severity gate: same verdict both sides (e.g. both DEGRADED) is still pre-existing", async () => {
+	it("--baseline severity check: same verdict both sides (e.g. both DEGRADED) is still pre-existing", async () => {
 		const degradedRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
 
 		const candidateParse: ParseFn = async (raw): Promise<Record<string, string>> =>

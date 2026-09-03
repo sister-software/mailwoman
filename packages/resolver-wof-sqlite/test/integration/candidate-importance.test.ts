@@ -119,7 +119,7 @@ describe("ImportanceIndex.find", () => {
 		expect(index.find("Warwick", "US", "locality", 33.2137, -83.9224)).toBeCloseTo(0.3729, 4)
 	})
 
-	test("a same-name place beyond the gate is refused, not scored", () => {
+	test("a same-name place beyond the check is refused, not scored", () => {
 		const index = loadImportanceIndex(sourcePath)
 
 		// A third US Warwick nowhere near either scored one: the nearest same-key place is ~1,000 km off,
@@ -129,7 +129,7 @@ describe("ImportanceIndex.find", () => {
 		expect(index.matched).toBe(0)
 	})
 
-	test("the gate admits a re-centroided match and refuses one just past it", () => {
+	test("the check admits a re-centroided match and refuses one just past it", () => {
 		const index = loadImportanceIndex(sourcePath)
 
 		// ~0.5 degrees of latitude ≈ 55 km — outside. ~0.05 ≈ 5.6 km — inside.

@@ -4,7 +4,7 @@
 
 **Goal:** Replace the ~400-page docs site with a fresh ~85-page three-audience site (Ory-style top level), plus the CLI commands that make every documented path true.
 
-**Architecture:** One Docusaurus instance; six top-nav doors (Product, Solutions, Resources, Developers, About, Pricing) with the existing DocsSubHeader as per-door sub-nav. Internal material moves out of the published content root entirely. A new `mailwoman data` command group closes the download gap; tutorials are executed before they ship. Vale + a rewritten structure gate enforce the house style mechanically.
+**Architecture:** One Docusaurus instance; six top-nav doors (Product, Solutions, Resources, Developers, About, Pricing) with the existing DocsSubHeader as per-door sub-nav. Internal material moves out of the published content root entirely. A new `mailwoman data` command group closes the download gap; tutorials are executed before they ship. Vale + a rewritten structure check enforce the house style mechanically.
 
 **Tech Stack:** Docusaurus 3 (`docs/`), Pastel/Ink CLI (`mailwoman/commands/`), Vale (vendored binary via `@vvago/vale`), vitest, zx.
 
@@ -24,7 +24,7 @@
 ## Phase overview
 
 ```
-Phase 0  toolchain: Vale + frontmatter contract + structure gate      (tasks 1–2)
+Phase 0  toolchain: Vale + frontmatter contract + structure check      (tasks 1–2)
 Phase 1  tree surgery: internal material out, skeleton cutover        (tasks 3–5)
 Phase 2  CLI: data pull, drop-in cold start, Claude skill             (tasks 6–8)
 Phase 3  content, door by door, tutorials executed                    (tasks 9–22)
@@ -72,7 +72,7 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 - [ ] **Step 5: CI wiring.** In `docs-build.yml` PR path-filtered job, add step "Prose lint" running `yarn workspace @mailwoman/docs lint:prose` after install, before build. (Corpus is old prose until Phase 3 — scope the step to `git diff --name-only origin/main... -- 'docs/articles/**/*.md*'` changed files until Task 23 flips it to full-corpus.)
 - [ ] **Step 6: Commit** `feat(docs): Vale prose toolchain with Mailwoman style rules`.
 
-### Task 2: Frontmatter contract + structure gate rewrite
+### Task 2: Frontmatter contract + structure check rewrite
 
 **Files:**
 
@@ -81,12 +81,12 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 
 **Interfaces:**
 
-- Produces: gate requiring on EVERY published page: `role` ∈ the six-role enum; `verified-with` when role ∈ `{tutorial, guide}`; `source-of-truth` when role = reference; `audience` when role = landing. Exported pure `validatePage(frontmatter, path): string[]` for tests.
+- Produces: check requiring on EVERY published page: `role` ∈ the six-role enum; `verified-with` when role ∈ `{tutorial, guide}`; `source-of-truth` when role = reference; `audience` when role = landing. Exported pure `validatePage(frontmatter, path): string[]` for tests.
 
 - [ ] **Step 1: Write failing tests** for `validatePage`: missing role → error; bad role value → error; tutorial without `verified-with` → error; reference without `source-of-truth` → error; landing without `audience` → error; valid page → `[]`.
-- [ ] **Step 2: Rewrite the gate.** Replace the `ROLE_REQUIRED_PAGES` hardcoded-path array with every-page enforcement; keep sidebar-orphan and duplicate-title checks as-is; empty the allowlist (old entries reference pages that will be gone).
-- [ ] **Step 3: Run tests** (`yarn workspace @mailwoman/docs vitest run scripts/`) → green. The full gate will fail against the OLD tree — acceptable: wire the strict mode behind `--strict` flag; CI keeps legacy mode until Task 5 flips `docs-build.yml` to `--strict`.
-- [ ] **Step 4: Commit** `feat(docs): every-page frontmatter contract in the structure gate`.
+- [ ] **Step 2: Rewrite the check.** Replace the `ROLE_REQUIRED_PAGES` hardcoded-path array with every-page enforcement; keep sidebar-orphan and duplicate-title checks as-is; empty the allowlist (old entries reference pages that will be gone).
+- [ ] **Step 3: Run tests** (`yarn workspace @mailwoman/docs vitest run scripts/`) → green. The full check will fail against the OLD tree — acceptable: wire the strict mode behind `--strict` flag; CI keeps legacy mode until Task 5 flips `docs-build.yml` to `--strict`.
+- [ ] **Step 4: Commit** `feat(docs): every-page frontmatter contract in the structure check`.
 
 ### Task 25: Writing-system derivation (execution order: after Task 2, before Task 5)
 
@@ -119,7 +119,7 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 - Produces: `docs/engineering/` — unpublished internal tree. AGENTS.md pointers valid.
 
 - [ ] **Step 1:** `git mv` the files. `grep -rn "articles/plan" --include="*.{ts,tsx,md,mdx,yml,json}" .` (repo root, excluding `docs/records`, `docs/build`, `node_modules`) and fix every hit: AGENTS.md, workflow path filters, sidebars (removal happens in Task 5 — for now delete the moved ids from `sidebars.ts` `reference`/`contribute`/`archive` lists so the build stays green), any code imports of `eval-ledger.schema.json` (it lives in `plan/reference/` — keep its new path wired).
-- [ ] **Step 2:** `yarn workspace @mailwoman/docs build` → green. `mailwoman eval gate --help` smoke (ledger schema path) → green.
+- [ ] **Step 2:** `yarn workspace @mailwoman/docs build` → green. `mailwoman eval check --help` smoke (ledger schema path) → green.
 - [ ] **Step 3: Commit** `refactor(docs): move active internal contracts out of the published tree`.
 
 ### Task 4: Park raw records; retire path-shaped exclusions
@@ -143,7 +143,7 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 
 - Move: remaining `docs/articles/` (understanding, concepts, recipes, root pages, licensing) → `docs/records/site-2026-08/`
 - Create: new `docs/articles/` skeleton: `developers/get-started/{what-mailwoman-is,install-and-first-parse,ten-minute-trial}.mdx`, `developers/status.mdx`, `developers/support.mdx`, `about/{mission,security-and-compliance,contact}.mdx`, `pricing.mdx`
-- Modify: `docs/sidebars.ts` (six new sidebar ids: product, solutions, resources, developers, about, pricing), `docs/src/components/DocsSubHeader/sections.ts` (same ids, same order), `docs/docusaurus.config.ts` (navbar: six doors + Demo CTA + GitHub; footer rebuild), `docs/src/pages/index.tsx` (front page: three-audience fork — rewrite copy, keep component techniques), `.github/workflows/docs-build.yml` (structure gate → `--strict`)
+- Modify: `docs/sidebars.ts` (six new sidebar ids: product, solutions, resources, developers, about, pricing), `docs/src/components/DocsSubHeader/sections.ts` (same ids, same order), `docs/docusaurus.config.ts` (navbar: six doors + Demo CTA + GitHub; footer rebuild), `docs/src/pages/index.tsx` (front page: three-audience fork — rewrite copy, keep component techniques), `.github/workflows/docs-build.yml` (structure check → `--strict`)
 
 **Interfaces:**
 
@@ -152,7 +152,7 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 - [ ] **Step 1:** Park the old tree under `docs/records/site-2026-08/`.
 - [ ] **Step 2:** Write the nine seed pages (real content, not stubs — these are the Get-started trio, Status, Support, About trio, Pricing; briefs in Tasks 9/22; write them to final quality now, they are the minimum viable site). Colleague voice; frontmatter per contract; every claim checked against `mailwoman/` source or `package.json` versions.
 - [ ] **Step 3:** Rebuild nav: sidebars + sections + navbar + footer + front page. Front page fork: "Build with it" → Get started · "Make the case for it" → Solutions · "See the proof" → Benchmarks. Demo button prominent.
-- [ ] **Step 4:** `yarn workspace @mailwoman/docs build` green; structure gate `--strict` green; `yarn workspace @mailwoman/docs lint:prose` green on the new pages. Screenshot via run-docs skill; eyeball nav and front page.
+- [ ] **Step 4:** `yarn workspace @mailwoman/docs build` green; structure check `--strict` green; `yarn workspace @mailwoman/docs lint:prose` green on the new pages. Screenshot via run-docs skill; eyeball nav and front page.
 - [ ] **Step 5: Commit** `feat(docs)!: six-door site skeleton; old tree parked under records`.
 
 ### Task 6: `mailwoman data` command group
@@ -261,7 +261,7 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 **Files:** Create `developers/reference/{library-api,cli,http-apis,component-tags,packages,runtime-flags,locales-and-tiers,footprints}.mdx`; Create `docs/scripts/generate-cli-reference.ts`.
 
 - _cli_ is generated: walk `mailwoman/commands/**` Pastel modules (they export `options` zod schemas + descriptions), emit MDX tables; wire into `prebuild` beside the OpenAPI emit. `source-of-truth: generated — docs/scripts/generate-cli-reference.ts`.
-- _http-apis_ wraps the four existing OpenAPI emits. _component-tags_ renders from the schema source (`docs/engineering/reference/SCHEMA.mdx` stays the contract; the public page derives and links). _packages_ is the curated 40-workspace table (from AGENTS.md, consumer-relevant subset). _runtime-flags_ from the SCOPE flag register. _locales-and-tiers_ states tier-1 locales + eval gates. _footprints_ carries the measured artifact sizes (30.5 MB model etc. — re-measure at head, don't copy).
+- _http-apis_ wraps the four existing OpenAPI emits. _component-tags_ renders from the schema source (`docs/engineering/reference/SCHEMA.mdx` stays the contract; the public page derives and links). _packages_ is the curated 40-workspace table (from AGENTS.md, consumer-relevant subset). _runtime-flags_ from the SCOPE flag register. _locales-and-tiers_ states tier-1 locales + eval checks. _footprints_ carries the measured artifact sizes (30.5 MB model etc. — re-measure at head, don't copy).
 - Controlled register throughout; STE100 rules; no narrative.
 - [ ] Generator with a vitest snapshot test → pages → build → **Commit** `docs(reference): the eight contracts, CLI generated`.
 
@@ -295,7 +295,7 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 
 ### Task 20: Solutions door
 
-**Files:** Create `solutions/{cut-the-per-request-bill,own-what-you-look-up,keep-addresses-inside,fleet-reverse-geocoding,resolve-a-messy-file}.mdx`.
+**Files:** Create `solutions/{reduce-the-per-request-bill,own-what-you-look-up,keep-addresses-inside,fleet-reverse-geocoding,resolve-a-messy-file}.mdx`.
 
 - The manager register: problem → what changes → proof link → try-it + pricing links (the same two, every page). The storage-rights page draws licence contrasts ONLY from published terms with dated citations, neutrally framed. Price anchors only where publicly published.
 - [ ] Same pipeline. **Commit** `docs(solutions): five pains, five pages`.
@@ -306,7 +306,7 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 
 - Benchmarks become public evidence pages: method, n, both arms, the losses published (street-level precision; the Belgian reverse defect + its fix arc), harness links (commit the harnesses under `docs/static/benchmarks/` or link the repo paths), circularity caveats kept ("the BAN tier IS BAN"). Source material is provided by the controller at dispatch time; committed pages carry only public methods, results, and harnesses. _reading-our-numbers_ explains resolve-% vs precision traps.
 - Compare pages: factual tables, dated citations, each ends "run it yourself" → benchmark harness. Kind register throughout.
-- Gate: no internal workflow references, no unsourced figures.
+- Check: no internal workflow references, no unsourced figures.
 - [ ] Same pipeline. **Commit** `docs(resources): re-runnable benchmarks and comparisons`.
 
 ### Task 22: About door + Pricing final
@@ -320,7 +320,7 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 
 ### Task 23: Full-site audit
 
-- [ ] **Step 1:** Flip CI prose-lint to full corpus; `lint:prose` clean over `articles/` + `src/pages/`; structure gate `--strict` green; build green.
+- [ ] **Step 1:** Flip CI prose-lint to full corpus; `lint:prose` clean over `articles/` + `src/pages/`; structure check `--strict` green; build green.
 - [ ] **Step 2:** Re-run `verify-get-started.sh` cold; re-run the drop-in cold-start test; spot-run three random how-to snippets against compiled head.
 - [ ] **Step 3:** Link sweep: `grep -rn "](/docs/" docs/src docs/articles` — every absolute link resolves in `docs/build`; navbar/footer/front-page links clicked in the run-docs browser; screenshots of all six doors + front page saved and eyeballed.
 - [ ] **Step 4:** Publicness sweep: `grep -rli "night-shift\|postmortem\|internal\b" docs/build/docs` → empty; run the controller-held confidential-marker greps over the built output (the controller supplies the marker list at dispatch time; it is never committed) → empty.
@@ -333,6 +333,6 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 
 ## Self-review
 
-- **Spec coverage:** decisions 1–7 → Tasks 5 (shape), 3–5 (publicness), 6–8 (CLI), 9–22 (content), 1–2+23 (style enforcement), 24 (PR). Acceptance bullets each map: cold trial (9, 23), executed builds (12), build/gate/Vale (23), publicness (4, 23), doors-from-front-page (5), drop-ins cold (7, 23).
+- **Spec coverage:** decisions 1–7 → Tasks 5 (shape), 3–5 (publicness), 6–8 (CLI), 9–22 (content), 1–2+23 (style enforcement), 24 (PR). Acceptance bullets each map: cold trial (9, 23), executed builds (12), build/check/Vale (23), publicness (4, 23), doors-from-front-page (5), drop-ins cold (7, 23).
 - **Placeholder scan:** the R2 artifact inventory (Task 6 step 1) and measured numbers (12, 15) are deliberately gathered-at-execution measurements, not placeholders — the steps that gather them are explicit.
-- **Type consistency:** `validatePage` (Task 2) used only in-gate; `DataBundle`/`resolveBundleArtifacts`/`needsDownload` names consistent across Task 6 steps; sidebar ids from Task 5 used verbatim in Phase 3 tasks.
+- **Type consistency:** `validatePage` (Task 2) used only in-check; `DataBundle`/`resolveBundleArtifacts`/`needsDownload` names consistent across Task 6 steps; sidebar ids from Task 5 used verbatim in Phase 3 tasks.

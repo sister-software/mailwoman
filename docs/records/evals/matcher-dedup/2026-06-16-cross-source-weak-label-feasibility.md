@@ -1,7 +1,7 @@
-# #655 option 2 — a cross-source weak-label scorer has no non-circular anchor (the gate is blocked)
+# #655 option 2 — a cross-source weak-label scorer has no non-circular anchor (the check is blocked)
 
 _Feasibility analysis, not a measurement. #655 option 2 proposes a learned cross-source link scorer
-trained on a weak-label pipeline. Before building it, we check the gate it was explicitly conditioned
+trained on a weak-label pipeline. Before building it, we check the check it was explicitly conditioned
 on — "can we build cross-source weak labels?" — and find we cannot, for a structural reason in the
 data. This documents why, so the idea isn't re-tread without a new data source._
 
@@ -48,7 +48,7 @@ across all sources reduce to: **organization name**, **address / geocode**, and 
 
 ## Conclusion
 
-**The gate #655 option 2 was conditioned on does not open with the current data.** There is no
+**The check #655 option 2 was conditioned on does not open with the current data.** There is no
 cross-source signal that is both _strong enough_ to label and _independent_ of the features a scorer
 would use. So FS stays pinned for cross-source — that is a property of the data (no shared clean key),
 not a modeling shortfall. The honest move is to record this rather than run a circular experiment that

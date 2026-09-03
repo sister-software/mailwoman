@@ -12,7 +12,7 @@
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
-export const description = "Mask-regression gate (#718) — mask-off vs mask-on per-tag F1, 2pp lock"
+export const description = "Mask-regression check (#718) — mask-off vs mask-on per-tag F1, 2pp lock"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -50,9 +50,9 @@ interface Options {
 const EvalMaskRegression: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { maskRegressionGate } = await import("#eval-harness/mask-regression")
+			const { maskRegressionCheck } = await import("#eval-harness/mask-regression")
 
-			return (await maskRegressionGate(options)).pass
+			return (await maskRegressionCheck(options)).pass
 		},
 		(pass) => (pass ? 0 : 1)
 	)

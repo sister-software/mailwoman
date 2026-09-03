@@ -20,7 +20,7 @@ the musings' contribution is a shared vocabulary for the whole ladder, which we 
 | 3    | Address point                            | ✅ #476, wired (`applyAddressPoint`)                                  |
 | 4    | Parcel centroid                          | unbuilt, deliberately deferred (US parcel data is patchwork-licensed) |
 | 5    | Address-point interpolation ("Method 2") | **the next corrective — see Phase 1**                                 |
-| 6    | Street-range interpolation (TIGER)       | ✅ #483 pilot, standalone, gate MISS on record                        |
+| 6    | Street-range interpolation (TIGER)       | ✅ #483 pilot, standalone, check MISS on record                       |
 | 7    | OSM interpolation ways                   | blocked on ODbL treatment (#26)                                       |
 | 8    | Street centerline                        | implicit today (segment match without number)                         |
 | 9    | Admin centroid (locality → region)       | ✅ the WOF resolver                                                   |
@@ -43,9 +43,9 @@ Likewise "avoid full reindexing": our artifacts are immutable provenance-tracked
 per source vintage (TIGER yearly, Overture monthly). That cadence is the update story; we do
 not take on incremental index mutation.
 
-## Phase 1 — the gate corrective, re-sequenced
+## Phase 1 — the check corrective, re-sequenced
 
-The #483 pilot missed its pre-registered gate (p50 66 m vs ≤ 50, p90 249 m vs ≤ 150, VT,
+The #483 pilot missed its pre-registered check (p50 66 m vs ≤ 50, p90 249 m vs ≤ 150, VT,
 n=5000). The dominant error term is TIGER's uniform-spacing assumption over long rural
 segments. Two correctives were on the table; review collapsed them into one decision:
 
@@ -54,14 +54,14 @@ to now.** Segment-subdivision-at-anchors and address-point interpolation are nea
 computation (bracket the query number with known points, interpolate between them), but Method
 2 is the simpler of the two: it needs no TIGER at all — the #476 Overture extract alone supplies
 the known points — and it replaces theoretical capacity ranges with real occupancy, which is
-precisely the failed gate's error term. TIGER range interpolation demotes to what it should
+precisely the failed check's error term. TIGER range interpolation demotes to what it should
 always have been: the fallback for streets too sparse to bracket.
 
 Order of work:
 
 1. **Density characterization first** (nearly free): re-run the existing eval on a dense county
    (Cook IL or Kings NY class). If dense passes and VT fails, the miss is geometry-capped and
-   the gate becomes county-stratified — by stated re-baseline with operator sign-off, never a
+   the check becomes county-stratified — by stated re-baseline with operator sign-off, never a
    quiet edit. If dense also fails, the method itself needs the corrective regardless.
 2. **Method 2 implementation**: given `(street, number, scope)`, find bracketing address points
    on the normalized street; interpolate linearly between them; single-sided bracket =
@@ -72,7 +72,7 @@ Order of work:
    not the dominant term.
 4. ZIP+4 snapping stays deferred behind #525.
 
-The gate does not move except by stated decision. A second miss is a second postmortem.
+The check does not move except by stated decision. A second miss is a second postmortem.
 
 ## Phase 2 — resolver wiring + the workspace split
 
@@ -111,7 +111,7 @@ constants are make-or-break trivia in number form. Provenance extends to a struc
 (dataset, release, tier, fallback flag) — the fields already exist per row; the chain is
 assembly.
 
-## Phase 6 — learned placement (research track, strictly gated)
+## Phase 6 — learned placement (research track, strictly conditional)
 
 The novel idea in the musings: replace linear interpolation with a model that
 predicts where addresses sit on a block. Verdict from review: keep it, as research, with two
@@ -126,7 +126,7 @@ tier as the abstain fallback. No ship commitment until that bar clears.
 ## Sequencing
 
 ```
-Now    Phase 1  density characterization → Method 2 → re-gate
+Now    Phase 1  density characterization → Method 2 → re-check
 Next   Phase 2  ordered spatialTiers + workspace split          (then) Phase 3 nationalize
 Then   Phase 4  building centroids (rides #470)
 Later  Phase 5  calibrated confidence  ·  Phase 6 learned placement (parallel research)
@@ -134,13 +134,13 @@ Later  Phase 5  calibrated confidence  ·  Phase 6 learned placement (parallel r
 
 ## Decisions (ruled 2026-06-11 unless marked open)
 
-| Decision                | Ruling                                                              |
-| ----------------------- | ------------------------------------------------------------------- |
-| Search/spatial stack    | sqlite + FTS5 + FST + R\*Tree/PIP — no ES, no PostGIS (standing)    |
-| Primary gate corrective | Method 2 promoted to Phase 1; TIGER demotes to fallback             |
-| Tier interface          | Option B ordered `spatialTiers` list                                |
-| Workspace               | split to `@mailwoman/resolver-interpolation` before national builds |
-| Gate re-baseline        | only county-stratified, only by stated sign-off                     |
-| OSM ways                | blocked on #26 (ODbL)                                               |
-| Learned placement       | research-only; gate = beat Method 2 stratified                      |
-| Parcel tier             | deferred behind building centroids                                  |
+| Decision                 | Ruling                                                              |
+| ------------------------ | ------------------------------------------------------------------- |
+| Search/spatial stack     | sqlite + FTS5 + FST + R\*Tree/PIP — no ES, no PostGIS (standing)    |
+| Primary check corrective | Method 2 promoted to Phase 1; TIGER demotes to fallback             |
+| Tier interface           | Option B ordered `spatialTiers` list                                |
+| Workspace                | split to `@mailwoman/resolver-interpolation` before national builds |
+| Check re-baseline        | only county-stratified, only by stated sign-off                     |
+| OSM ways                 | blocked on #26 (ODbL)                                               |
+| Learned placement        | research-only; check = beat Method 2 stratified                     |
+| Parcel tier              | deferred behind building centroids                                  |

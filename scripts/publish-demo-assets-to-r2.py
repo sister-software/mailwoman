@@ -70,7 +70,7 @@ MUTABLE_FILES = {"releases.json"}
 #
 # `pair-index` earned this the hard way: the binaries were uploaded flat at
 # `mailwoman/pair-index/pair-index-<cc>.bin` and then OVERWRITTEN IN PLACE for the
-# PIX schema-3 re-cut (2026-08-04). CACHE_CONTROL says immutable, so Cloudflare
+# PIX schema-3 rebuilt (2026-08-04). CACHE_CONTROL says immutable, so Cloudflare
 # kept serving the schema-1 bytes — which the site's reader rejects outright
 # (`schemaVersion 1 predates the typed parent record`) — until a manual purge.
 # The demo reads `pair-index/<generation>/` (docs/src/shared/resources.tsx →

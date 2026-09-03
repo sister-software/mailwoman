@@ -13,7 +13,7 @@
 - New core helpers use acronym casing: `readJSONL`, not `readJsonl` (don't join the #875 debt).
 - Dual exports maps: any new subpath is added to BOTH `exports` (with `node →` source condition first) and `publishConfig.exports` (types first, then default).
 - `erasableSyntaxOnly`; relative imports carry `.ts` extensions; tabs; oxfmt.
-- Canonical percentile = the gate scripts' shape (nearest-rank floor, `null` on empty) — gate parity in Phase 5 depends on this exact semantics.
+- Canonical percentile = the check scripts' shape (nearest-rank floor, `null` on empty) — check parity in Phase 5 depends on this exact semantics.
 - `sdk/` submodules mean data acquisition — cli/test helpers move out; shims stay until next major.
 - Tool/kit modules never touch argv or call `process.exit(0)` implicitly; `useCommandTask` owns exit codes (error → 1).
 
@@ -151,8 +151,8 @@ import { describe, expect, it } from "vitest"
 import { formatPercent, median, percentile } from "./stats.ts"
 
 describe("stats", () => {
-	it("percentile matches the gate scripts' nearest-rank shape", () => {
-		// The exact copy migrated from oa-resolver-eval/resolver-eval — Phase 5 gate parity
+	it("percentile matches the check scripts' nearest-rank shape", () => {
+		// The exact copy migrated from oa-resolver-eval/resolver-eval — Phase 5 check parity
 		// depends on THIS semantics: sort ascending, index = floor(p/100 * n), clamped.
 		const xs = [10, 1, 5, 3, 8]
 		expect(percentile(xs, 50)).toBe(5)
@@ -189,8 +189,8 @@ describe("stats", () => {
  *   Small stats helpers — the canonical home for the `percentile`/`median` copies (~15) and the
  *   `pct` percentage-format lambdas (~40) the 2026-07-09 dedupe survey found across eval scripts.
  *
- *   `percentile` is byte-for-byte the gate scripts' nearest-rank implementation
- *   (oa-resolver-eval.ts / resolver-eval.ts) — Phase 5 gate parity depends on this exact semantics;
+ *   `percentile` is byte-for-byte the check scripts' nearest-rank implementation
+ *   (oa-resolver-eval.ts / resolver-eval.ts) — Phase 5 check parity depends on this exact semantics;
  *   do not "upgrade" it to linear interpolation.
  */
 
@@ -217,7 +217,7 @@ export function formatPercent(numerator: number, denominator: number, digits = 1
 
 Add `export * from "./stats.ts"` to `core/utils/index.ts`.
 
-- [ ] **Step 4: Run** → PASS. **Step 5: Commit** — `git commit -m "feat(core): percentile/median/formatPercent — canonical stats helpers (gate-parity semantics)"`
+- [ ] **Step 4: Run** → PASS. **Step 5: Commit** — `git commit -m "feat(core): percentile/median/formatPercent — canonical stats helpers (check-parity semantics)"`
 
 ---
 
@@ -489,7 +489,7 @@ const GazetteerVerify: CommandComponent<typeof OptionsSchema> = ({ options }) =>
 
 ---
 
-### Task 6: Phase gate
+### Task 6: Phase check
 
 - [ ] `yarn lint` → clean. `yarn compile` → clean. `yarn typecheck:scripts` → clean.
 - [ ] `node_modules/.bin/vitest run core/utils mailwoman/test mailwoman/commands` → PASS.

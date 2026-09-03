@@ -8,18 +8,18 @@
 # German/EU word-order gap again, for AU.
 #
 # THE ONE NEW VARIABLE: add AU. Everything else is v1.9.1 VERBATIM. Two lines change:
-#   - country_weights: + AU: 1.0  (so the gnaf AU rows aren't excluded — the data_loader.py gate).
+#   - country_weights: + AU: 1.0  (so the gnaf AU rows aren't excluded — the data_loader.py check).
 #   - source_weights:  + gnaf: 6.0  (the gnaf G-NAF AU 3-order slice, #208). 6.0 matches the TARGETED-
 #     FIX precedent — synth-german (6.0) and synth-fr-admin-split (6.0) are single-concept format fixes,
 #     exactly gnaf's role; overture's 3.0 was for BROAD 16-locale exposure, a different job. The
-#     step-2000 gate adjudicates dilution: lower if US/EU regress, raise if AU flat.
+#     step-2000 check adjudicates dilution: lower if US/EU regress, raise if AU flat.
 # The gnaf slice is the SAME 3-order rotation (canonical/pc-first/city-first, i%3) overture used; built
 # by `mailwoman gnaf assemble` (G-NAF PSV join, 150k held-out from the AU eval) + the `gnaf` corpus
 # adapter. Pure overlay ADD onto corpus-v0.9.1-multilocale (scripts/assemble-overlay-manifest.py).
 #
 # CRITICAL (data_loader.py:244): country_weights.get(country) is None -> the row is EXCLUDED.
 #
-# GOAL / GATE: grade the ASSEMBLED coordinate, never label-F1. Diagnostic-first: at step-2000/4000 run
+# GOAL / CHECK: grade the ASSEMBLED coordinate, never label-F1. Diagnostic-first: at step-2000/4000 run
 # scripts/eval/nonus-coord-panel.ts + the AU coord panel — AU @25km must LIFT toward the 87% ceiling,
 # AND the EU in-slice locales (PT/PL/AT/CZ/IT) + US per-locale-F1 must HOLD (not worse >1pp) + FR
 # centroid flat. If AU is flat OR US/EU regress at 2-4k, KILL (overfit/dilution — the #148 failure mode).
@@ -77,11 +77,11 @@ data:
     synth-country: 2.0
     # #148 change: the multi-locale EU slice. Weight 3.0 — solid EU exposure (each locale's ~150k rows
     # get comparable weighted mass to fr-admin-split's 60k*6.0) without dominating the US-heavy base;
-    # the step-2000 diagnostic gate adjudicates dilution (lower if US/FR regress, raise if mid-tier flat).
+    # the step-2000 diagnostic check adjudicates dilution (lower if US/FR regress, raise if mid-tier flat).
     overture: 3.0
     # #208 change: the gnaf G-NAF AU 3-order slice (150k rows, 1 locale). Weight 6.0 matches the
     # TARGETED-FIX precedent (synth-german 6.0, synth-fr-admin-split 6.0 — single-concept format fixes),
-    # NOT overture's 3.0 (broad 16-locale exposure). The step-2000 gate adjudicates: lower if US/EU
+    # NOT overture's 3.0 (broad 16-locale exposure). The step-2000 check adjudicates: lower if US/EU
     # regress, raise if AU flat.
     gnaf: 6.0
   train_rows_per_epoch: 1000000

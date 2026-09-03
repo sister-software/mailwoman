@@ -37,7 +37,7 @@ close-out.
    card pin means en-gb consumers get the repair only after the next weights-package publish).
 3. **Demo repoint (#1278) — correctly not done**: neural-web has no pair-prior wiring (loader nor
    runner); a repoint would be user-invisible. Gap + ~2-session estimate documented, including
-   the real design question (single-posture demo vs country-gated priors).
+   the real design question (single-posture demo vs country-conditional priors).
 
 ## Also filed / drafted
 

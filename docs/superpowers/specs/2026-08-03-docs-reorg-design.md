@@ -32,7 +32,7 @@ Overview (one engine, one artifact) · Capabilities · Deployment options (libra
 
 ### Solutions (5) — the manager door, organized by pain
 
-Cut the per-request bill · Own what you look up (storage rights) · Keep addresses inside your infrastructure · Fleet/telemetry reverse geocoding at volume · Resolve a messy customer file. Every page ends with the same two links: try it (tutorial) and what it costs (pricing).
+Remove the per-request bill · Own what you look up (storage rights) · Keep addresses inside your infrastructure · Fleet/telemetry reverse geocoding at volume · Resolve a messy customer file. Every page ends with the same two links: try it (tutorial) and what it costs (pricing).
 
 ### Resources (~10)
 
@@ -68,7 +68,7 @@ Working hypothesis the derivation tests (not a foregone conclusion):
 - **Terminology.** One canonical term per concept, seeded from UPU S42 / ISO 19100 where they match the codebase's contract vocabulary (delivery point, postcode, address component, coordinate reference system…). The glossary (327 terms) is the term registry; new docs link terms rather than redefine them.
 - **Mechanical enforcement: Vale.** `.vale.ini` + a Mailwoman style package in-repo. Rules: the banned-word list (actually, basically, simply, obviously, robust, the word for frictionless, comprehensive, leverage, various, numerous…), the "honest/genuine/actual" cluster, anthropomorphism (the parser "thinks"), weasel quantities (nearby, many, fairly) outside deliberately qualitative prose, contrastive-negation stock phrases ("not just X, it's Y"), heading case, canonical-term substitutions. Vale runs in the docs CI job on changed files; the whole new corpus lints clean at launch.
 - **De-slop pass.** Every drafted page is audited for machine-writing tells (inflated symbolism, rule-of-three padding, vague attribution, filler phrases) before review. Numbers appear only with a source; claims a reviewer could not check do not ship.
-- **Frontmatter contract:** `role` (required, enum above) · `audience` (required on landing/solution pages) · `verified-with` (required on tutorial/guide — the version the examples ran against) · `source-of-truth` (required on reference — the code path or generator that owns the contract). The structure gate script is rewritten to enforce this on every published page (no more thin 28-of-458 coverage).
+- **Frontmatter contract:** `role` (required, enum above) · `audience` (required on landing/solution pages) · `verified-with` (required on tutorial/guide — the version the examples ran against) · `source-of-truth` (required on reference — the code path or generator that owns the contract). The structure check script is rewritten to enforce this on every published page (no more thin 28-of-458 coverage).
 
 ### Register rules for competitive and strategy content (house rules, binding)
 
@@ -85,7 +85,7 @@ Working hypothesis the derivation tests (not a foregone conclusion):
 - **Publicness by construction.** The path-shaped build-exclusion globs are retired. `docs/articles/` contains only publishable pages. Internal material moves out of the published tree entirely:
   - Active internal contracts and runbooks (`plan/SCOPE`, `plan/reference/*` incl. SCHEMA, layer-contract, poi-layer-runbook, `CONTRIBUTING_MODEL_WORK`, operations docs) → `docs/engineering/` (in-repo, unpublished). AGENTS.md and memory pointers updated. These serve repo contributors, not site readers; the site's Contributing page points at GitHub.
   - Raw evals, retrospectives, reviews, phase plans, dated specs → `docs/records/` (in-repo, unpublished) or deleted where git history suffices. The eval ledger (`evals/scores-by-version.json`) stays at repo root, untouched.
-- **Structure gate** (`docs/scripts/check-docs-structure.ts`): rewritten for the new frontmatter contract; orphan detection and duplicate-title checks retained; the role-required allowlist becomes "every page," not eight named paths.
+- **Structure check** (`docs/scripts/check-docs-structure.ts`): rewritten for the new frontmatter contract; orphan detection and duplicate-title checks retained; the role-required allowlist becomes "every page," not eight named paths.
 - **Search:** Algolia index re-crawls after deploy; accept the stale-window. No redirects (decision 4); `documentation-map`'s URL-stability promise disappears with the page.
 - **Demo pipeline untouched:** the demo-assets plugin, webpack aliases, R2 asset loading, and the demo page itself are out of scope except for nav/link updates.
 - **Field notes:** blog instance untouched.
@@ -103,7 +103,7 @@ The tutorials define the contract; the commands make the tutorials true:
 
 - A stranger's 10-minute trial passes cold on a clean machine: install → first parse → first geocode, exactly as the Get-started pages state.
 - The US-dataset and planet-build tutorials have been executed as written; their pages carry measured numbers.
-- `yarn workspace @mailwoman/docs build` green (broken links/anchors throw); structure gate green under the new contract; Vale clean over the whole new corpus.
+- `yarn workspace @mailwoman/docs build` green (broken links/anchors throw); structure check green under the new contract; Vale clean over the whole new corpus.
 - No internal material is published: `docs/articles/` contains only the new tree; engineering/records trees live outside the content root.
 - Each audience reaches its door from the front page in one click; every Solutions page ends at try-it + pricing.
 - The three drop-in serve commands start cold as documented.

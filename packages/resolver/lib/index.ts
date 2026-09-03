@@ -39,7 +39,7 @@ export {
 	findPostcodeCountryScope,
 	firstLocalityValue,
 	localityValuesInDocumentOrder,
-	POSTCODE_COUNTRY_COHERENCE_GATE_KM,
+	POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM,
 	stampPostcodeCountryScope,
 } from "#postcode/country-coherence"
 

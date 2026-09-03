@@ -233,7 +233,7 @@
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
-		"@mailwoman/locale-gate": "workspace:*",
+		"@mailwoman/locale-hint": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/sentencepiece-wasm": "workspace:*",
 		"path-ts": "^2.3.0",

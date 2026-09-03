@@ -89,7 +89,7 @@ Consolidate the maintained explanatory material into a small map. Existing pages
 | How Mailwoman parses an address | tokens, encoder, BIO spans, FST priors, Viterbi, tree output | neural classification, tokenization, Viterbi/BIO, decoder walkthroughs       |
 | How Mailwoman resolves a place  | gazetteer retrieval, containment, uncertainty, confidence    | resolver, WOF, containment, calibration concepts                             |
 | Data, locales, and coverage     | supported locale tiers, sources, coverage limits             | language support, data catalog, coverage material                            |
-| Quality and evaluation          | metrics, gates, calibration, known limits                    | eval discipline, input robustness, confidence pages; links to evidence       |
+| Quality and evaluation          | metrics, checks, calibration, known limits                   | eval discipline, input robustness, confidence pages; links to evidence       |
 | Training and model lifecycle    | corpus, training, export, release boundaries                 | corpus construction, training pipeline; links to contributor runbook         |
 | Geocode-first record matching   | matching model and its contract                              | existing matcher concepts                                                    |
 | Compatibility and migration     | choosing/switching from other services                       | existing switching pages, `understanding/alternatives`                       |

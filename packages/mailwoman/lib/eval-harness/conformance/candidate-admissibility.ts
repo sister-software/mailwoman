@@ -215,9 +215,9 @@ export function foldLookups(records: readonly ResolveNodeTrace[]): Map<string, L
 			fold.scope.regionQualifier = record.query.regionQualifier
 		}
 
-		for (const gate of record.checks) {
-			if (!fold.checks.includes(gate)) {
-				fold.checks.push(gate)
+		for (const check of record.checks) {
+			if (!fold.checks.includes(check)) {
+				fold.checks.push(check)
 			}
 		}
 
@@ -423,7 +423,7 @@ function accountLookup(base: LookupFold, variant: LookupFold, readings: Candidat
 			reason:
 				`admissible at rank ${candidate.rank} before refinement and gone after, from a table with room ` +
 				`(${variant.pool.size} of ${variant.limit}) under ${describeScope(variant.scope)}` +
-				(variant.checks.length ? ` · \`gates\` ${variant.checks.join(", ")}` : "") +
+				(variant.checks.length ? ` · \`checks\` ${variant.checks.join(", ")}` : "") +
 				` · pick ${variant.pickedSource ?? "none"}`,
 		})
 	}
@@ -475,7 +475,7 @@ function accountLookup(base: LookupFold, variant: LookupFold, readings: Candidat
 			reason:
 				`entered at rank ${candidate.rank} with no added constraint and no re-scope, from a base table with ` +
 				`room (${base.pool.size} of ${base.limit})` +
-				(variant.checks.length ? ` · \`gates\` ${variant.checks.join(", ")}` : "") +
+				(variant.checks.length ? ` · \`checks\` ${variant.checks.join(", ")}` : "") +
 				` · pick ${variant.pickedSource ?? "none"}`,
 		})
 	}

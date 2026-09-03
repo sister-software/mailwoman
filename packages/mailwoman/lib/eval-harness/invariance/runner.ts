@@ -11,7 +11,7 @@
  *   geocode-and-resolve round trips.
  *
  *   Parses run through the PRODUCTION path — `createRuntimePipeline`, the same staged pipeline the API
- *   and CLI serve (normalize → query-shape → locale-gate → kind → grouper → classify), with the row's
+ *   and CLI serve (normalize → query-shape → locale-hint → kind → grouper → classify), with the row's
  *   country-derived locale threaded per call and the weights package's FST auto-loaded when the
  *   classifier surfaces one (#1516). Routing matters: the old runner bypassed the pipeline with raw
  *   `classifier.parse`, which measured NEW violations on fr-montmartre and gb-quoted-venue that the
@@ -96,7 +96,7 @@ export async function loadSuite(path: string = DEFAULT_SUITE_PATH): Promise<Inva
 export interface ParseCallOpts {
 	/**
 	 * Per-call locale hint — the row's country-derived tag (e.g. `en-GB` for a GB row). Threaded into the pipeline's
-	 * normalize / query-shape / locale-gate stages exactly as a production caller hint would be. The classifier itself is
+	 * normalize / query-shape / locale-hint stages exactly as a production caller hint would be. The classifier itself is
 	 * loaded once per run from `ModelSelectOptions.locale`.
 	 */
 	locale?: string
@@ -171,7 +171,7 @@ async function buildClassifier(opts: ModelSelectOptions): Promise<NeuralAddressC
  *
  * Routing (#1516): every parse runs through the PRODUCTION path — `createRuntimePipeline` — not the raw
  * `classifier.parse` the old runner used. That is the point of the probe: the release Gauntlet measures the
- * user-visible pipeline, and a metamorphic probe that bypasses it (no #690 case normalization, no locale-gate, no
+ * user-visible pipeline, and a metamorphic probe that bypasses it (no #690 case normalization, no locale-hint, no
  * kind/grouping stages, no weights-package FST auto-load) manufactures violations the shipped path never exhibits — and
  * misses the D-rule regressions that DO ride the pipeline stages. With a `weightsCache` classifier this is fully
  * production-faithful: `loadFromWeights` surfaces `fstPath`, which `createRuntimePipeline`'s `autoLoadWeightsFST` uses
@@ -343,7 +343,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 			!hasCriticalComponent(await baselineOriginalFor(row)) &&
 			hasCriticalComponent(await originalFor(row))
 
-		// Production caller hint for every parse of this row (locale-gate / normalize case-fold).
+		// Production caller hint for every parse of this row (locale-hint / normalize case-fold).
 		const rowLocale = localeForCountry(row.country)
 
 		for (const transformID of row.transforms) {

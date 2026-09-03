@@ -318,7 +318,7 @@ export type ImportanceLengthScaleMode = "off" | "suppression" | "both"
  * prefix locales like "Rue de Rivoli", the FR −3), NOT codex `us/street-suffix.ts` (US-only — using it re-introduces an
  * FR regression).
  */
-export interface StreetContextGateOpts {
+export interface StreetContextRequirementOpts {
 	/**
 	 * The street-morphology FST matcher (same instance the street-morphology prior consumes).
 	 */
@@ -342,9 +342,9 @@ export interface FSTPriorOpts {
 	 */
 	importanceLengthScaleMode?: ImportanceLengthScaleMode
 	/**
-	 * See {@link StreetContextGateOpts}. Absent → current behavior (default-safe no-op).
+	 * See {@link StreetContextRequirementOpts}. Absent → current behavior (default-safe no-op).
 	 */
-	streetContext?: StreetContextGateOpts
+	streetContext?: StreetContextRequirementOpts
 }
 
 /**
@@ -613,7 +613,7 @@ function streetContextScale(
 	groups: WordGroup[],
 	startIdx: number,
 	endIdx: number,
-	streetContext: StreetContextGateOpts | undefined,
+	streetContext: StreetContextRequirementOpts | undefined,
 	streetTypeFlags: boolean[] | null,
 	houseNumberFlags: boolean[] | null
 ): number {

@@ -25,11 +25,11 @@ Two arcs shipped today, both measurement-led: closing the EU coordinate gap with
 
 - **Candidate table over both alternatives.** It beat the full-DB byte-range (243 → 12 fetches) _and_ the slim (global coverage, no `SLIM_COUNTRIES` upkeep). The decision was the spike number, not the estimate.
 - **Coverage over a GPU retrain for EU.** The falsification made the retrain (#148) unnecessary for the coordinate; it stays on HOLD.
-- **US-only postcodes in the candidate table**, matching what the slim carried; international postcodes are country-gated by the resolved locality so an ambiguous ZIP (10115 = Berlin DE _and_ NYC) can't drag a German address to Manhattan.
+- **US-only postcodes in the candidate table**, matching what the slim carried; international postcodes are country-blocked by the resolved locality so an ambiguous ZIP (10115 = Berlin DE _and_ NYC) can't drag a German address to Manhattan.
 
 ## What went well
 
-- **Verify-before-verdict paid out repeatedly.** The spike caught 243 fetches against my ~1 MB estimate; the e2e caught the postcode regression _before_ the slim was torn out; the US A/B gate proved the admin-DB swap was byte-identical before promotion.
+- **Verify-before-verdict paid out repeatedly.** The spike caught 243 fetches against my ~1 MB estimate; the e2e caught the postcode regression _before_ the slim was torn out; the US A/B check proved the admin-DB swap was byte-identical before promotion.
 - **The consult earned its keep.** DeepSeek's candidate-table structure was the structural win; we trusted the structure and tested the numbers ourselves.
 
 ## What could've gone better

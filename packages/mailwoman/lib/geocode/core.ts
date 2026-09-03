@@ -35,7 +35,7 @@ import {
 	isBarePostcodeTree,
 	type QueryKindResult,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
-	streetContextGateFor,
+	streetContextRequirementFor,
 } from "@mailwoman/core/pipeline"
 import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/core/resolver"
 import type { AuthoritativeProvider } from "@mailwoman/core/resolver"
@@ -131,7 +131,7 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	fst?: import("@mailwoman/core/pipeline").FSTMatcherLike
 	/**
 	 * Street-morphology matcher, consumed ONLY as the street-context check's signal source with the emission prior zeroed
-	 * (`streetContextGateFor`). Inert without {@link GeocodeDeps.fst}.
+	 * (`streetContextRequirementFor`). Inert without {@link GeocodeDeps.fst}.
 	 */
 	streetMorphology?: import("@mailwoman/core/pipeline").FSTMatcherLike
 	/**
@@ -456,7 +456,7 @@ export function geocodeParseInputs(
 			// The street-context check pair, from the SAME helper runPipeline calls. Transcribing it here
 			// would recreate exactly the drift #1669 catalogued: two copies agreeing on every constant
 			// while the code around them diverges.
-			...streetContextGateFor({
+			...streetContextRequirementFor({
 				...(deps.fst ? { fst: deps.fst } : {}),
 				...(deps.streetMorphology ? { streetMorphology: deps.streetMorphology } : {}),
 			}),

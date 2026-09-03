@@ -142,7 +142,7 @@ def main() -> int:
         "\nNOTE: these numbers are CHANNEL-STARVED and are NOT comparable to the JS harness's\n"
         "  `mailwoman eval parity --weights-cache` (v264 street token@1 0.573). This script feeds no\n"
         "  anchor/gazetteer/country channels, no postcodeRepair, no word-consistency heal — the #718\n"
-        "  trap — so token@1 here reads ~0.35 on the same model. The GATE is still valid as a RELATIVE\n"
+        "  trap — so token@1 here reads ~0.35 on the same model. The CHECK is still valid as a RELATIVE\n"
         "  comparison: both heads read the same starved encoder state. Do not quote these absolutes."
     )
 

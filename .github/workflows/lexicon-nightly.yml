@@ -1,6 +1,6 @@
 # The full-scale locality-surface build, nightly, against the LIVE data root.
 #
-# WHY A NIGHTLY AND NOT JUST THE PATH GATE: `test.yml`'s `lexicon-full` job catches a pull request
+# WHY A NIGHTLY AND NOT JUST THE PATH CHECK: `test.yml`'s `lexicon-full` job catches a pull request
 # that changes the BUILDER or its committed inputs. It cannot catch the other failure mode — the
 # gazetteer itself being rebuilt. That happens outside any pull request, so no path filter will ever
 # see it, and the first symptom would otherwise be a bad lexicon shipping at release.
@@ -8,7 +8,7 @@
 # This job is also the CONTROL FOR THE FIXTURE LAYER. Since 2026-08-02 the every-PR coverage of the
 # four-law selectivity is `evidence-lexicons.fixture.test.ts`, a seeded DB that by construction does
 # not move when the real data moves. That is what makes it cheap, and it is also its one weakness: a
-# fixture that stops representing reality is a gate that passes while meaning nothing. This run is
+# fixture that stops representing reality is a check that passes while meaning nothing. This run is
 # what would say so.
 #
 # A failure here is a DATA finding, not a broken build. Read it as "the gazetteer changed under the
@@ -40,7 +40,7 @@ jobs:
   full-build:
     # NOT PORTABLE: reads the 4.9 GB WOF admin DB. The `mailwoman-data` label means
     # "$MAILWOMAN_DATA_ROOT is present and populated". If the fleet is down this job queues rather
-    # than running — which for a nightly is the right failure: it is not gating anything, and a
+    # than running — which for a nightly is the right failure: it is not blocking anything, and a
     # skipped nightly that silently reported green would defeat the point of having it.
     runs-on:
       - self-hosted

@@ -291,9 +291,9 @@ environment, `cargo check --examples` the crate. Nothing generated is committed 
 the specs change.
 
 **Not yet published.** Both packages build and verify cleanly on every `mailwoman clients generate`
-run, but neither has shipped to a registry yet — that's gated behind an operator step (provisioning a
+run, but neither has shipped to a registry yet — that's blocked behind an operator step (provisioning a
 PyPI account and a crates.io account, each with a publish token) documented in the repo's
-`RELEASING.md`. Once provisioned, the same generation pipeline runs inside a gated CI job: it always
+`RELEASING.md`. Once provisioned, the same generation pipeline runs inside a conditional CI job: it always
 builds the artifacts on a release dispatch, and only pushes to PyPI/crates.io when the operator
 explicitly opts in for that run. Until then, build them yourself:
 

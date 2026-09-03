@@ -209,7 +209,7 @@ interface Measured {
 }
 
 describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
-	"v7 swap gate — coordinate acceptability + plausibility",
+	"v7 swap check — coordinate acceptability + plausibility",
 	() => {
 		test("neural resolution is coordinate-safe and the garbage tail is bounded by the plausibility guard", async () => {
 			const rulesGolden = await loadRulesGolden()
@@ -312,15 +312,15 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 			const residual = tailStructured.filter((r) => !r.implausible).length
 			const residualRate = residual / rows.length
 
-			console.error(`[gate] live fixtures: ${rows.length}  both-resolved: ${both.length}`)
+			console.error(`[check] live fixtures: ${rows.length}  both-resolved: ${both.length}`)
 			console.error(
-				`[gate] P1 coordinate acceptability (street-PASS within 1km): ${streetPassWithin1km}/${streetPass.length} = ${acceptRate.toFixed(4)} (floor 0.90; receipt 0.986)`
+				`[check] P1 coordinate acceptability (street-PASS within 1km): ${streetPassWithin1km}/${streetPass.length} = ${acceptRate.toFixed(4)} (floor 0.90; receipt 0.986)`
 			)
 			console.error(
-				`[gate] P2 guard false positives (coord-safe structured tripping guard): ${guardFalsePositives}/${safeStructured.length} (bound 0; receipt 0/81)`
+				`[check] P2 guard false positives (coord-safe structured tripping guard): ${guardFalsePositives}/${safeStructured.length} (bound 0; receipt 0/81)`
 			)
 			console.error(
-				`[gate] P3 garbage-tail residual (structured, street-fail, Δ>25km, guard-miss): ${residual}/${rows.length} = ${(100 * residualRate).toFixed(2)}% (bound 2.0%; receipt 0.9% = 3/321)`
+				`[check] P3 garbage-tail residual (structured, street-fail, Δ>25km, guard-miss): ${residual}/${rows.length} = ${(100 * residualRate).toFixed(2)}% (bound 2.0%; receipt 0.9% = 3/321)`
 			)
 
 			// P1 — Receipt: 98.6% within 1km when the neural street parse is correct; fresh: 76/80 = 0.950.

@@ -34,7 +34,7 @@ export const spec = {
 		"overture-countries": { type: "string", description: "CSV override of the Overture country set" },
 		"geonames-countries": { type: "string", description: "CSV override of the GeoNames country set" },
 		"overture-release": { type: "string", description: "Pinned Overture release" },
-		"skip-verify": { type: "boolean", default: false, description: "Skip the verify gate (development only)" },
+		"skip-verify": { type: "boolean", default: false, description: "Skip the verify check (development only)" },
 	},
 } as const satisfies CommandSpec
 

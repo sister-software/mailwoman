@@ -11,7 +11,7 @@
 
 ## The guards (all PASS)
 
-**Golden 2pp gate** (`data/eval/golden/v0.1.2`, channels-on, v385 vs shipped v381, same run):
+**Golden 2pp check** (`data/eval/golden/v0.1.2`, channels-on, v385 vs shipped v381, same run):
 
 | tag          | v385         | shipped      | Δ        |
 | ------------ | ------------ | ------------ | -------- |
@@ -31,7 +31,7 @@ No tag > 2pp down → **PASS**. The one nick is `country` **−1.6pp** (220 vs 2
 
 - BR **dropped** (0% OA-lineage → license unclear; `number` field is `SN (CASA N)` garbage). Deferred, not blocked.
 - NZ **excluded** — separate dead-tag problem (`dependent_locality` unemittable in v381; see `2026-07-18-night-postmortem.md`). NZ is not in this overlay.
-- 2k → 8k escalation was gated on a net-positive 2k probe + a passing golden 2pp; the 8k recovered the country nick from −2.0 to −1.6.
+- 2k → 8k escalation was blocked on a net-positive 2k probe + a passing golden 2pp; the 8k recovered the country nick from −2.0 to −1.6.
 
 ## To promote (operator)
 

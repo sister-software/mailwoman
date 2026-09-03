@@ -35,7 +35,7 @@
 #      fix — and this run is its FIRST training test. Stacking both suppressions would over-zero the
 #      clue, so curriculum is dropped.
 #
-# PRE-REGISTERED GATE (stop at 40k), fp32-to-fp32 vs v4.1.0 (+ the solo-change banks):
+# PRE-REGISTERED CHECK (stop at 40k), fp32-to-fp32 vs v4.1.0 (+ the solo-change banks):
 #   - country ≥ v0.9.12 (83.3 F1 on country-homograph-real), P high, over-fire 0.
 #   - affix: street_prefix ≥ 78, street_suffix ≥ 67 (score-affix, real-affix eval).
 #   - unit ≥ 92 (unit-real-designators).

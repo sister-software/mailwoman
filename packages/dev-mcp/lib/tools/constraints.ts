@@ -18,12 +18,12 @@ import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#tool-kit"
 export const constraintsTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_constraints",
 	description:
-		"WHAT OUR GATES COST. Every backend lookup that resolved NOTHING, grouped by the constraint in force when it " +
+		"WHAT OUR CHECKS COST. Every backend lookup that resolved NOTHING, grouped by the constraint in force when it " +
 		"missed, with the one split that makes it a measurement: a lookup that missed in band X while the same key " +
 		"sits in band Y is a REACHABILITY failure — we held the row and the query went to the wrong shelf — while a " +
 		"key that exists nowhere is a COVERAGE fact. Both reach a caller as `null` today and they call for opposite " +
 		"work, so they are reported separately and never summed. Complements mwdev_census, which asks whether a " +
-		"PARSE-path mechanism fires at all; this asks what a resolver-path constraint costs when it does. A gate " +
+		"PARSE-path mechanism fires at all; this asks what a resolver-path constraint costs when it does. A check " +
 		"that fires often and never once accompanies a pick is reported INERT — the first run over the board found " +
 		"`parent_fallback_retry` at 194 firings and zero conversions, because it relaxes the PARENT while the BAND " +
 		"is what blocks (#1756). Keys are folded with the candidate build's own `normalizeLocalityForKey`; a " +

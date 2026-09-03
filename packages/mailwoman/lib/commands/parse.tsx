@@ -400,7 +400,7 @@ function emitFaultWarnings(result: { faults: ReadonlyArray<{ stage: string; name
 
 /**
  * Encoder-less structural parse (plan 3), WITHOUT the banner: the REAL pipeline stages (normalize → query-shape →
- * locale-gate → kind → grouper fast-paths) with no neural classifier. The tree carries what the structural stages can
+ * locale-hint → kind → grouper fast-paths) with no neural classifier. The tree carries what the structural stages can
  * prove (postcode_only / locality_only fast-paths populate it; free-form addresses may yield an empty tree). The caller
  * owns the degraded notice — either {@link emitDegradedBanner} or the precise absent/load-error warning `tryLoadNeural`
  * already printed — so no path degrades silently, and none double-warns.

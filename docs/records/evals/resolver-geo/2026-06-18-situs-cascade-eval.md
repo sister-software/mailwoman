@@ -52,8 +52,8 @@ the honest best estimate.
 **Update (post-fix, 2026-06-19):** characterizing that 12% admin tail (#723) found 54% of it
 recoverable with no new data, and two fixes from this diagnostic's follow-up landed it on the same
 10k rows — the directional-quadrant street-key fold (`d1b8bcbe`: a quadrant the model mis-tagged
-`unit`, "Taylor Street NE") and the US-gated 5-digit-house-number-as-ZIP relabel (`5977ce4d`:
-"24588 Outback Trl" → house_number, with the FR reversed-order #560 extract left untouched, gate-
+`unit`, "Taylor Street NE") and the US-conditional 5-digit-house-number-as-ZIP relabel (`5977ce4d`:
+"24588 Outback Trl" → house_number, with the FR reversed-order #560 extract left untouched, check-
 verified `fr.house_number` flat). Re-measured: **address_point 79.8 → 83.5%, interpolated 8.2 →
 9.7%, admin 12.0 → 6.8%; within 100 m 85.9 → 90.0%, within 1 km 90.0 → 94.8%, cascade p99 18.3 →
 10.9 km.** The admin tail is now under 7%, and the remaining bulk is a situs extract theme-reselect

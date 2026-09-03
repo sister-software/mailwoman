@@ -24,7 +24,7 @@
 #     --config v4.3.3-cooldown46k.yaml \
 #     --resume /data/output-v433-suffix-boundary-base-s42/checkpoints/step-040000
 #
-# GATES (fp32, unchanged): B1 >=116/128, B2 >=34/48, B4 tokens >=3/7; B3 only after all three.
+# CHECKS (fp32, unchanged): B1 >=116/128, B2 >=34/48, B4 tokens >=3/7; B3 only after all three.
 # Grade the FINAL 46k checkpoint (decay complete); 42k/44k saves are curve receipts only.
 # If 46k still sits in the 72-85 B1 band, the plateau was not a schedule artifact and the
 # data-contradiction fix carries the full weight. No recipe iteration on this branch.

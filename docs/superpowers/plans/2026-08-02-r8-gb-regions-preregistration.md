@@ -2,7 +2,7 @@
 
 Campaign R8, 2026-08-02. London landed at R3/R4b and Northern Ireland at R7, both through the
 en-GB carrier that already exists. Scotland, Wales and England need no new package either — they
-are the same country code, the same artifact, the same gate. This rung finishes GB.
+are the same country code, the same artifact, the same check. This rung finishes GB.
 
 ## Survey, and the two data problems it turned up
 
@@ -31,7 +31,7 @@ This is by far the largest increment the campaign has shipped — 10,708 against
 of R4b — so the confound board is weighted toward the risk rather than sampled evenly.
 
 - **B-R8.1 (no regression).** Gauntlet + GB cross-check at its new expected total. Bar: **zero
-  newly-failing gated cases.**
+  newly-failing counted cases.**
 - **B-R8.2 (venue-confound floor).** A 90-row board: **60 law-1 directional** surfaces (drawn from
   1,023 available) plus 30 single-word surfaces (from 7,469) — the two classes most likely to open a
   venue name. Bar: **≤2%** dependent-locality false positives.

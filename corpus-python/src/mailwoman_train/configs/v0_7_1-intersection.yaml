@@ -1,6 +1,6 @@
 # v0.7.1 — intersection coverage retrain (DeepSeek-decided, night-3 2026-05-29).
 #
-# The v0.7 calibration experiment (ls=0.1) failed the gate: it cut overconfidence
+# The v0.7 calibration experiment (ls=0.1) failed the check: it reduce overconfidence
 # but left the PRIMARY harness pass rate flat, because the harness is COVERAGE-
 # bound. The single largest gap is INTERSECTIONS: 65/376 harness assertions (17%)
 # at 0% neural, because the model assigns intersection_a/b ~0.0001 probability —

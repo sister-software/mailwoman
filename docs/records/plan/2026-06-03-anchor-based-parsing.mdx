@@ -174,7 +174,7 @@ estimates, not gospel** (the same source over-called the tokenizer wall, which o
    `docs/articles/evals/2026-06-03-night-5-postmortem.md`.
 
 3. **De-risk pilot (~$3-8).** From-scratch US/FR/DE with self-conditioning + the postcode-anchor channel +
-   dropout on both signals, stopped at the 20k gate (cross-boundary error under 1%, DE locality F1 ≥70%
+   dropout on both signals, stopped at the 20k check (cross-boundary error under 1%, DE locality F1 ≥70%
    and rising, US/FR within 1pp, anchor/token-free degradation ≤5pp). It validates the architecture before
    any scale spend. Test the postcode anchor and self-conditioning _together_.
 4. **Real run.** One from-scratch, balanced, self-conditioned run once the pilot passes and 4-5 locales

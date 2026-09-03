@@ -57,7 +57,7 @@ a feature; it is drag.
 Four phases, and no shippable artifact. Worth saying rather than dressing up.
 
 What it produced instead is the reason the fix exists. `oracle@k` and the k-best decode made the
-headroom **visible** — oracle@10 0.775 against a 0.577 rank-1, a gap invisible to every gate that
+headroom **visible** — oracle@10 0.775 against a 0.577 rank-1, a gap invisible to every check that
 scored top-1. That gap motivated T1a's cross-tab, which found the digit-eating and forced the
 hallucination check, which motivated T1c's board, which found the house-number licence, which built
 T2's extract, which fixed the class the span head was built to rescue.
@@ -73,7 +73,7 @@ review follow-up), option C, and — by premise-collapse — the name-index rera
 
 **Survives, and is now the standing instrumentation:** `oracle-k` (the headroom tracker), the
 fragment board with its negative class, the parity precision half, `baselines.json` and its refusal,
-and the v6 gate cut from the shipped model.
+and the v6 check reduce from the shipped model.
 
 **Survives as the open work:** Track B — digit ownership. Untouched by any of this.
 

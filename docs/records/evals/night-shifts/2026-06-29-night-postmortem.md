@@ -37,7 +37,7 @@ Continuation of the day's FR rooftop precision arc. Full autonomy granted (relea
   _second_ test file (`neural/test/case-normalize.test.ts`) carried the same assertions — the hook runs only
   the staged file's tests, so it greened locally while CI went red on the un-staged copy. Both casing pushes
   red'd main for ~25 min before I caught it. The standing lesson (memory: precommit-hook-staged-scoped) is
-  to run the full package suite after a cross-cutting change; I leaned on the hook and paid the CI round-trip.
+  to run the full package suite after a cross-reducing change; I leaned on the hook and paid the CI round-trip.
   Two co-located test files for one module is itself a smell worth consolidating.
 - **The whole Gauntlet self-check ran on the stale v193a3 symlink, not the demo's v194 — for most of the
   shift.** The local `loadFromWeights` default points at the v193a3 training base, not the shipped model. I
@@ -59,7 +59,7 @@ v194`. Net: #831 was a false finding (fixed on the demo); #832/#833 are model-in
 
 ## D9 — #250 association recovery (DEPLOYED as the FR default; `--recover`, code `763e51d8`)
 
-Nearest-named-highway recovery: validated **88% precision / 95% coverage** on FR ground truth; cuts the
+Nearest-named-highway recovery: validated **88% precision / 95% coverage** on FR ground truth; reduces the
 association gap **58% → 1.3%** (648k points, extract 477k → 1.13M). **Deployed as the FR default OSM extract.**
 
 **The verdict flipped on a measurement fix — a verify-before-verdict catch worth remembering.** The first
@@ -75,10 +75,10 @@ actually covers):
 | 5km (locality)  | 160     | 154 (−6, noise) |
 | resolved        | 213     | 213             |
 
-A coverage-limited tier MUST be gated on a draw from the COVERED region — the all-France draw nearly
+A coverage-limited tier MUST be blocked on a draw from the COVERED region — the all-France draw nearly
 killed a doubling of rooftop coverage. **This is a Gauntlet held-out improvement (C6): make the draw
 region-aware.** The `--recover` flag stays explicit (validate per-locale before enabling); hosted
-deployment of the extract is gated on B3 (browser tier) + #249 (ODbL legal). The local FR extract is ready.
+deployment of the extract is blocked on B3 (browser tier) + #249 (ODbL legal). The local FR extract is ready.
 
 ## D10 — DE/NL rooftop extracts (built + validated, auto-routed)
 
@@ -93,34 +93,34 @@ OSM rooftop tier extended to DE + NL with the existing pipeline (no code change 
 **Finding: the association gap is import-specific, not universal.** FR/IdF's 58% gap was a cadastre-style
 import (addr:housenumber nodes with no addr:street); DE-Berlin and NL (BAG) tag streets, so `--recover` is
 an FR-specific change, not a blanket pass. Measure the gap before reaching for recovery. The extracts are local
-artifacts; public deployment is gated on B3 (browser tier) + #249 (ODbL legal). NL at 2.3 GB is too big for
+artifacts; public deployment is blocked on B3 (browser tier) + #249 (ODbL legal). NL at 2.3 GB is too big for
 browser httpvfs as-is — a sub-region (Amsterdam) would be the demo extract.
 
 ## C — Gauntlet Phase-2 hardening
 
-- **C7: metamorphic xfail + DE/NL coverage** (`a3a7172f`). The metamorphic gate now tracks known,
+- **C7: metamorphic xfail + DE/NL coverage** (`a3a7172f`). The metamorphic check now tracks known,
   deterministic INV failures as non-blocking xfails (it fails only on NEW regressions), with an anti-rot
   check that flags any xfail that starts passing — the Pelias-pass-list trap inverted. Added DE (Unter den
   Linden) + NL (Damrak) rooftop bases + a comma-tight perturbation. Surfaced 6 tracked xfails: #829
   (lowercase sensitivity — US→admin, NL→null) + the NEW **#831** (FR no-postcode rooftop/admin boundary;
   any surface perturbation flips the tier — likely a shared case-sensitive-parse root with #829). DE held
-  clean. Gate: PASS with 6 xfails, DIR 3/3.
+  clean. Check: PASS with 6 xfails, DIR 3/3.
 - **C6: US verified-coord held-out source** (`898baecf`). FDIC BankFind (77,442 bank branches, address +
   geocoded lat/lon, public domain, NOT in training) is now a held-out source beside FR/BAN; holdout.ts is
   multi-source (`--source us|fr`), and the pool doubles as the fast draw (77k CSV vs streaming the 5 GB BAN).
   Smoke (n=200, v194 vs prod): **rooftop 61.5%, street 74%, locality 92.5%, 100% resolved, z=0.19 PASS** —
   an independent validation of the national situs tier on a source it never trained on. The region-aware
-  lesson (D9) applies to coverage-limited comparisons (the extract A/B), not the nationwide locality gate.
-- **C8b: regression runner + the unified gate** (`17c32518`). The regression layer had cases + a DB builder
-  but no runner — built it (status-aware: gates `status=pass`, tracks `known_fail`/`improvement_target`
+  lesson (D9) applies to coverage-limited comparisons (the extract A/B), not the nationwide locality check.
+- **C8b: regression runner + the unified check** (`17c32518`). The regression layer had cases + a DB builder
+  but no runner — built it (status-aware: checks `status=pass`, tracks `known_fail`/`improvement_target`
   non-blocking, flags any tracked case that starts passing). `run.ts` runs all three layers in isolated
-  processes and emits ONE combined verdict — the gate a ship runs (documented in RELEASING.md). Its FIRST
+  processes and emits ONE combined verdict — the check a ship runs (documented in RELEASING.md). Its FIRST
   run caught real issues, exactly the point: the bare-Chevaleret mis-parse (#831, now a tracked known*fail),
   the US hierarchy stopping at region (dropped the over-reaching `country` assertion), and **#832** — "350
   5th Ave, New York, NY" resolves to \_upstate* NY, not NYC (a real disambiguation bug the per-tag F1 misses).
-  Gate now: regression 5/5 gated + 3 tracked, metamorphic 29/35 + 6 xfails → **PASS, clear to ship** (`e35583ff`).
+  Check now: regression 5/5 conditional + 3 tracked, metamorphic 29/35 + 6 xfails → **PASS, clear to ship** (`e35583ff`).
 
-## The gate's payoff — a bare-query coordinate-bug class (operator follow-ups)
+## The check's payoff — a bare-query coordinate-bug class (operator follow-ups)
 
 The integration net surfaced what the operator built it to catch: silent coordinate bugs the per-tag F1 is
 blind to. All three are now tracked in the regression corpus (non-blocking `improvement_target`/`known_fail`),
@@ -149,10 +149,10 @@ geocodeAddress-no-normalize path), so the metamorphic `ws|Damrak` violation was 
 
 **Fix (PR #834, flagged for review):** `geocodeAddress` now runs Stage-1 normalize (default-on, opt-out).
 Diagnostic-before-fix: fixes `ws|Damrak` → rooftop; a with/without A/B on 300 clean FDIC addresses is
-**exactly identical** (177/205/272 — idempotent, do-no-harm); unified gate PASS. Two durable wins from the
+**exactly identical** (177/205/272 — idempotent, do-no-harm); unified check PASS. Two durable wins from the
 fidelity theme: the harness now **md5-stamps the model** every run, and `geocodeAddress` is now a complete
 self-contained entry. Side-note: `default-country.test.ts`'s resolution tests are red locally (the #832 NYC
-regression + a stale Paris opt-out) but **skipped in CI** (they need the WOF DB) — worth wiring into the gate.
+regression + a stale Paris opt-out) but **skipped in CI** (they need the WOF DB) — worth wiring into the check.
 
 ## Open questions / next
 
@@ -180,19 +180,19 @@ regression + a stale Paris opt-out) but **skipped in CI** (they need the WOF DB)
       DIRECTION is confirmed — the operator launches the full retrain knowing it works, not on faith. DeepSeek
       scoreboard (session 019f1223): structural 1/1 (surface-augmentation predicted-and-held).
 - The three findings above are the headline operator follow-ups (model/ranking/gazetteer fixes).
-- **B3** (browser OSM rooftop tier) + **R2-deploy the extracts** — the demo's visible rooftop; double-gated on
+- **B3** (browser OSM rooftop tier) + **R2-deploy the extracts** — the demo's visible rooftop; double-blocked on
   the browser build + **#249** (ODbL legal sign-off, counsel's call).
 - **A2** — the npm-side v4.16.0 release (HF stage + `@mailwoman/osm` trusted-publishing); non-urgent.
-- **E** — data ingestion (SIRENE/GLEIF) for the record-matcher; the held-out gate is well-covered (FR+US).
+- **E** — data ingestion (SIRENE/GLEIF) for the record-matcher; the held-out check is well-covered (FR+US).
 
 ## Numbers
 
-|                       |                                                                                                     |
-| --------------------- | --------------------------------------------------------------------------------------------------- |
-| Shift window          | ~02:00–11:10 UTC (operator returned ~5h before the planned 16:00 close)                             |
-| Models trained        | 1 — the v195 case-aug probe (2k steps), which VALIDATED #261 (US lowercase fixed)                   |
-| Modal $               | ~$1.5 — the v195 probe ($20 budget)                                                                 |
-| CI failures           | 2 main reds (the #252 second-test-file miss), caught + fixed in ~25 min; #828/#830 caught pre-merge |
-| Demo regressions      | 0                                                                                                   |
-| Coordinate bugs found | 3 — #832 + #833 real (model-independent); #831 a stale-symlink false-positive (closed)              |
-| Gauntlet              | complete: 3 layers + unified gate; regression 5/5 gated + 3 tracked, metamorphic 29/35 + 6 xfails   |
+|                       |                                                                                                          |
+| --------------------- | -------------------------------------------------------------------------------------------------------- |
+| Shift window          | ~02:00–11:10 UTC (operator returned ~5h before the planned 16:00 close)                                  |
+| Models trained        | 1 — the v195 case-aug probe (2k steps), which VALIDATED #261 (US lowercase fixed)                        |
+| Modal $               | ~$1.5 — the v195 probe ($20 budget)                                                                      |
+| CI failures           | 2 main reds (the #252 second-test-file miss), caught + fixed in ~25 min; #828/#830 caught pre-merge      |
+| Demo regressions      | 0                                                                                                        |
+| Coordinate bugs found | 3 — #832 + #833 real (model-independent); #831 a stale-symlink false-positive (closed)                   |
+| Gauntlet              | complete: 3 layers + unified check; regression 5/5 conditional + 3 tracked, metamorphic 29/35 + 6 xfails |

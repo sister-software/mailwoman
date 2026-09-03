@@ -11,7 +11,7 @@
 #   3. trailing-region es v23 (Portopetro: '«locality», «region», Spain' tails from WOF pairs).
 #   4. trailing-region gb v23 (St Margaret's Hope: venue-looking locality names, 8x extraction
 #      weight on the venue-ish subset).
-# Gates: the 500-step feed smoke precedes the launch; the full battery + the 349-row regression
+# Checks: the 500-step feed smoke precedes the launch; the full battery + the 349-row regression
 # board grade the result; the two standing board rows (es-op3-southeast-portopetro,
 # gb-op2-st-margarets-hope) are the acceptance tests. PROMOTE IS THE OPERATOR'S.
 #
@@ -39,7 +39,7 @@
 # warmup 1,000, 60k cosine, batch 128, bf16, Fisher capture over the final 2k steps, seed 42.
 # The loader is the repaired substrate (stationary sampler, clean val, atomic checkpoints).
 #
-# GATES (fp32, unchanged):
+# CHECKS (fp32, unchanged):
 #   B1 terminal-only >=116/128
 #   B2 terminal-contrast >=34/48
 #   B4 locality-token retention >=3/7 (exact locality is an upside watch)

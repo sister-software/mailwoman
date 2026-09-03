@@ -340,7 +340,7 @@ pair-index-gb.bin,pair-index-nz.bin …` uploads the built binaries alongside th
 3. **Verify the PUBLISHED tarball md5.** Grade by explicit md5-pinned path against the published npm
    tarball's binary, never the dev symlink.
 4. **The demo is a separate follow-up (#1278).** The browser runtime fetches `pair-index-<cc>.bin`
-   per parse, selected by `locale-gate` (`neural-web` phases 1–3): the loader takes
+   per parse, selected by `locale-hint` (`neural-web` phases 1–3): the loader takes
    `pairIndexURLs`, a 404 leaves `placetypePair` undefined (inert, not an error), and the preset
    country-pin routes the right index. Repoint the demo after the npm publish lands, not with it.
 

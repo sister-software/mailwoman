@@ -29,7 +29,7 @@ required finding. Verdicts first, receipts after.
    (Apache-2.0, 8.3M downloads, F1 92.39 on GeoGLUE) — Python/ModelScope-only, no ONNX, no
    browser. Everything else in the JP/KR ecosystems is regex + dictionary, with runtime HTTP
    fetches or multi-GB local databases.
-5. **⚠ KR is legally gated; TW is the clean second CJK locale.** The juso bulk DB carries a
+5. **⚠ KR is legally conditional; TW is the clean second CJK locale.** The juso bulk DB carries a
    signed pledge: 국외 반출 금지 (no export from Korea) + no-commercial/no-redistribution ToS —
    the acquired 6.17M juso rows need counsel BEFORE any training touches them (G1 agenda item).
    OpenAddresses KR is dead (frozen 2017); Overture does not cover KR at all. Taiwan, by
@@ -131,7 +131,7 @@ hold change the Phase-6 picture:
 **The assembled KR recipe without juso:** parse corpus = localdata (dual-format, the mess is the
 signal) + synthetic-from-schema (지하 prefixes, closed-up road digit runs — the official rendering
 rules are public documentation) + NEIS/HIRA clean registers; gazetteer = WOF-KR admin ladder.
-What it cannot give: rooftop geocoding (house-number → point stays juso/partner-gated) — resolve
+What it cannot give: rooftop geocoding (house-number → point stays juso/partner-conditional) — resolve
 lands at admin/locality-centroid tier, the same shape several EU locales shipped with before
 their coverage arcs (the coverage-not-retrain precedent).
 
@@ -149,7 +149,7 @@ self-hosting is the only legal path to rooftop KR, which is the product.
 KOGL type on the specific localdata datasets and (b) confirm business-permit addresses are not
 captured by the address-register rule. Phase-6 sequencing becomes an ordinary product call again:
 TW = full-stack second CJK locale; KR parse capability = buildable now on the alternative vein,
-KR rooftop = gated.
+KR rooftop = conditional.
 
 ## Consequences folded into standing plans
 

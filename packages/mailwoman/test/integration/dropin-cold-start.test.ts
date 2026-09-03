@@ -108,7 +108,7 @@ const PULL_TIMEOUT_MS = 600_000
  * The conditional test's own vitest timeout: the pull, plus two server boots and a geocode call, each independently
  * bounded.
  */
-const GATED_TEST_TIMEOUT_MS = PULL_TIMEOUT_MS + 3 * HEALTHY_TIMEOUT_MS + 30_000
+const CONDITIONAL_TEST_TIMEOUT_MS = PULL_TIMEOUT_MS + 3 * HEALTHY_TIMEOUT_MS + 30_000
 
 //#endregion
 
@@ -456,7 +456,7 @@ describe("mailwoman-mcp — cold start over stdio, no data", () => {
 const isFull = $public.MAILWOMAN_COLD_START_FULL === "1"
 
 describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI)(
-	"drop-in cold start WITH data (gated: MAILWOMAN_COLD_START_FULL=1)",
+	"drop-in cold start WITH data (conditional: MAILWOMAN_COLD_START_FULL=1)",
 	() => {
 		test(
 			"mailwoman data pull candidate + photon/nominatim serve bind and answer 200; Paris routes to France not Texas",
@@ -521,7 +521,7 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 				expect(result.lat).toBeCloseTo(48.8566, 1)
 				expect(result.lon).toBeCloseTo(2.3428, 1)
 			},
-			GATED_TEST_TIMEOUT_MS
+			CONDITIONAL_TEST_TIMEOUT_MS
 		)
 	}
 )

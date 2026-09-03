@@ -3,7 +3,7 @@
 The international admin-split retrain (night 2026-06-19, surpass-v1.5.0) rests on one premise: that
 teaching the model to **split the département out of the locality** moves the assembled, anchor-ON
 coordinate. The whole measurement-integrity campaign says to prove that before spending an A100 —
-the v1.7.0 trap was a label change the resolver ignored. So this is the falsification gate, run
+the v1.7.0 trap was a label change the resolver ignored. So this is the falsification check, run
 **before** any training.
 
 ## Method
@@ -60,8 +60,8 @@ Three findings, all the same direction:
 the split will move the anchor-ON coordinate.** The GPU is justified.
 
 **Honest caveat:** this measures the _ceiling_ with perfect, hand-constructed splits. The retrain
-must still learn to (a) emit the right département and (b) keep the commune right. So the live gate
-on the trained candidate (`gate rubric` in the night plan — FR centroid-shift, anchor-ON, vs v1.5.0)
+must still learn to (a) emit the right département and (b) keep the commune right. So the live check
+on the trained candidate (`check rubric` in the night plan — FR centroid-shift, anchor-ON, vs v1.5.0)
 is what counts; this only proves the ceiling is worth climbing toward. It is: a 55–61% reduction and
 a 0% → 97% resolve-rate flip on the merge class.
 

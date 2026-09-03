@@ -82,7 +82,7 @@ Full design: `2026-08-17-dev-weights-resolution-design.md`. Summary: delete the 
 `release.config.json` already carries `weights.model`, `weights.tokenizer`, and a `lineage` string richer
 than the code comment duplicating it; `scripts/copy-weights.ts:177` already reads it. The ten
 `link-dev-weights.ts` scripts hold a byte-identical copy of the same two paths. That duplicate is the leg the
-9.0.0 cut dropped, and it goes.
+9.0.0 reduce dropped, and it goes.
 
 `@mailwoman/neural` gains one rung that probes a data-root overlay laid out with the shipped filenames, so
 the published package learns a directory convention and never the recipe.
@@ -159,11 +159,11 @@ broken repo-wide because oxfmt walks the working tree.
 
 Everything phase 2 produces emits a manifest, so the phase 1 number improves by construction.
 
-### The gate this phase owes
+### The check this phase owes
 
 "One country, one source" is currently held by comments in `defaults.ts`; `verifyAdmin` tests floors, so
-duplication moves every gate number in the passing direction and the build ships. The command that MOVES a
-country between sources is exactly the thing that can violate the invariant, so the gate lands with the
+duplication moves every check number in the passing direction and the build ships. The command that MOVES a
+country between sources is exactly the thing that can violate the invariant, so the check lands with the
 command, not after it.
 
 A second, newly measured instance of the same class: three repositories are currently checked out **twice**,

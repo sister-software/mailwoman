@@ -13,7 +13,7 @@
 # countries are listed below at 1.0 (an acceptance filter relative to max_weight, NOT a 1/N split,
 # so US/FR are not starved — every 1.0 row is accepted).
 #
-# GOAL / GATE: grade the ASSEMBLED coordinate, never label-F1 (the panel's whole lesson). Diagnostic-
+# GOAL / CHECK: grade the ASSEMBLED coordinate, never label-F1 (the panel's whole lesson). Diagnostic-
 # first: at the step-2000/4000 checkpoint, run scripts/eval/nonus-coord-panel.ts — mid-tier resolve
 # (PT/PL/AT/CZ, pre-registered ~50%) must MOVE UP, AND the US/FR golden guardrail must hold (US
 # per-locale-f1 not worse >1pp; FR centroid flat). If mid-tier resolve is flat at 2-4k, KILL (the
@@ -70,7 +70,7 @@ data:
     synth-country: 2.0
     # #148 change: the multi-locale EU slice. Weight 3.0 — solid EU exposure (each locale's ~150k rows
     # get comparable weighted mass to fr-admin-split's 60k*6.0) without dominating the US-heavy base;
-    # the step-2000 diagnostic gate adjudicates dilution (lower if US/FR regress, raise if mid-tier flat).
+    # the step-2000 diagnostic check adjudicates dilution (lower if US/FR regress, raise if mid-tier flat).
     overture: 3.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

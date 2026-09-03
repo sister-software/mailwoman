@@ -47,7 +47,7 @@ project environment and the `pyproject.toml` config:
 - **Ruff** (`uv run ruff`) — lint **and** format in one tool; the Python counterpart of the
   repo's `oxlint` + `oxfmt`. Config: `[tool.ruff]`.
 - **mypy** (`uv run mypy`) — `--strict` typing over `src/` (the shipped library; `modal/`
-  and `scripts/` move under the gate as they clean up). Config: `[tool.mypy]`.
+  and `scripts/` move under the check as they clean up). Config: `[tool.mypy]`.
 - **bandit** (`uv run bandit -r src`) — security/static analysis. Config: `[tool.bandit]`.
 - **pytest** (`uv run pytest`) — the corpus test suite.
 
@@ -62,7 +62,7 @@ uv run pytest                  # tests       (vitest)
 uv run python scripts/verify_toolchain.py   # train-pin consistency guard
 ```
 
-`yarn lint` from the repo root runs the full python gate repo-wide (see
+`yarn lint` from the repo root runs the full python check repo-wide (see
 `.github/workflows/test.yml`): ruff lint + format, the `verify_toolchain.py` pin guard, then
 `mypy --strict` and `bandit` — each via `uv run`, which syncs corpus-python's venv
 (including the `[train]` extras mypy needs to resolve torch) on demand.

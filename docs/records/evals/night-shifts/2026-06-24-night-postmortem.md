@@ -1,6 +1,6 @@
 # Night-shift postmortem — 2026-06-24
 
-_Drafted during the shift, finalized at the morning hand-off. Night-shift window: 04:37 → 15:00 UTC (substantive work + all merges complete by ~12:00; held a green board through the close). Autonomous-promote authority granted for the shift (permission wall down; quality gates + ~200-address canary + rehearsed rollback intact)._
+_Drafted during the shift, finalized at the morning hand-off. Night-shift window: 04:37 → 15:00 UTC (substantive work + all merges complete by ~12:00; held a green board through the close). Autonomous-promote authority granted for the shift (permission wall down; quality checks + ~200-address canary + rehearsed rollback intact)._
 
 Plan: `nightshift/2026-06-24-NIGHT-SHIFT-PLAN.md`. Lead with the differentiator (a confidence you can route on), ship the AU model.
 
@@ -46,20 +46,20 @@ main's clean-install smoke test has been **red since #215** (resolver extraction
 ## What went well
 
 - **Salvage-first paid off.** `competitive-benchmark.ts` already had `messify()` + @25km grading + Nominatim; `core/decoder/calibration.ts` already exposed `createCalibrator`; the 06-23 showcase already had a span-level abstention curve. PRIMARY A is the result-level extension of existing pieces.
-- **verify-before-verdict fired three times, all live.** (1) The "mailwoman beats Nominatim on AU" read was a rate-limit artifact (AU 100% null) — caught by the per-locale + cache-null analysis. (2) The triage census's DELETE list was too aggressive (flagged 4 provenance/runbook-referenced scripts + 2 test-referenced ones) — per-file grep verification pulled them back. (3) The `us.postcode 86.9` gate FAIL was a stale-compile phantom, not a v192 regression (re-graded 97.5 clean).
+- **verify-before-verdict fired three times, all live.** (1) The "mailwoman beats Nominatim on AU" read was a rate-limit artifact (AU 100% null) — caught by the per-locale + cache-null analysis. (2) The triage census's DELETE list was too aggressive (flagged 4 provenance/runbook-referenced scripts + 2 test-referenced ones) — per-file grep verification pulled them back. (3) The `us.postcode 86.9` check FAIL was a stale-compile phantom, not a v192 regression (re-graded 97.5 clean).
 - **Incremental checkpointing recovered a crashing collector.** The confidence-discrimination run died twice to an onnxruntime leak at ~380 parses; the per-row `--rows-out` checkpoint let it resume and finish without re-fetching.
 
 ## What could have gone better
 
-- **The stale-compile trap bit AGAIN.** Shift-start `yarn compile` (incremental `tsc -b`) silently skipped `core` despite the merge changing source mtimes — `core/out/decoder/index.js` stayed dated 06-18. The gate graded the stale decode path → `us.postcode 86.9` phantom (the exact morning number). Fix was `yarn compile:clean && yarn compile`. **Lesson: after a merge, incremental compile is not enough — `compile:clean` first, or trust the gate's own "core sources newer than core/out" warning the first time it fires.**
-- **An onnxruntime-node resource leak kills long single-process collectors at ~380 parses** (no JS stack → SIGKILL/native) — cost real recovery time before it was diagnosed. conf-disc crashed twice at PL/FR ~380. Diagnosed (native tensor memory, JS-GC too slow) + fixed (#787, periodic `global.gc()`, validated to 472); the canary was run per-model at n=40 (under threshold) before the fix landed. The mid-shift confusion (mistaking the leak for a bad row, then mistaking the gate's normal heat for an orphan) was the costliest friction of the night.
-- **I mis-killed the gate's own ONNX sub-evals twice**, mistaking the gate's normal 92°C heat load (an `oa-resolver-eval` child) for a heat-orphan. The gate's heat IS the gate working. Lesson: don't `pkill` ONNX procs during a gate run; let it finish.
+- **The stale-compile trap bit AGAIN.** Shift-start `yarn compile` (incremental `tsc -b`) silently skipped `core` despite the merge changing source mtimes — `core/out/decoder/index.js` stayed dated 06-18. The check graded the stale decode path → `us.postcode 86.9` phantom (the exact morning number). Fix was `yarn compile:clean && yarn compile`. **Lesson: after a merge, incremental compile is not enough — `compile:clean` first, or trust the check's own "core sources newer than core/out" warning the first time it fires.**
+- **An onnxruntime-node resource leak kills long single-process collectors at ~380 parses** (no JS stack → SIGKILL/native) — cost real recovery time before it was diagnosed. conf-disc crashed twice at PL/FR ~380. Diagnosed (native tensor memory, JS-GC too slow) + fixed (#787, periodic `global.gc()`, validated to 472); the canary was run per-model at n=40 (under threshold) before the fix landed. The mid-shift confusion (mistaking the leak for a bad row, then mistaking the check's normal heat for an orphan) was the costliest friction of the night.
+- **I mis-killed the check's own ONNX sub-evals twice**, mistaking the check's normal 92°C heat load (an `oa-resolver-eval` child) for a heat-orphan. The check's heat IS the check working. Lesson: don't `pkill` ONNX procs during a check run; let it finish.
 - **Local ONNX runs the box at ~92°C** (summer ceiling). The operator/DeepSeek added an external fan mid-shift. Heavy eval should arguably be Modal-first here.
 
 ## Decisions made autonomously
 
-- **Shipped v4.14.0 (the v192 AU model) to npm** — gate-clean + canary-clear + dry-run-green, the operator's enabling actions (Trusted Publishing, resolver deps) all pointed at it. The published 4.13.0 state was already broken (the resolver/spatial skew), so shipping was the FIX, not new risk; waiting would have left npm broken longer.
-- **Dry-run gated the irreversible publish**: ran `publish.yml dry_run=true` (green) before the real run. After the real run's partial failure, the documented `publish_only=true` recovery restored spatial + resolver.
+- **Shipped v4.14.0 (the v192 AU model) to npm** — check-clean + canary-clear + dry-run-green, the operator's enabling actions (Trusted Publishing, resolver deps) all pointed at it. The published 4.13.0 state was already broken (the resolver/spatial skew), so shipping was the FIX, not new risk; waiting would have left npm broken longer.
+- **Dry-run conditional the irreversible publish**: ran `publish.yml dry_run=true` (green) before the real run. After the real run's partial failure, the documented `publish_only=true` recovery restored spatial + resolver.
 - **Merged the prep PR into known-red main** — the red was the pre-publish broken-state smoke, which the release itself repairs; the PR's own content was clean.
 - **PRIMARY A pivot** from "beat Nominatim on messy" (premise unsupported + competitor data corrupted) to "the precision change, mailwoman-only, pitched to precision-critical routing." Confirmed by DeepSeek (019ef808).
 - **Confidence aggregation = min**; **kept 4 provenance diag scripts**; **withheld the corrupted Nominatim comparison**; **deferred the demo repoint** (heavy R2 upload + trade-show surface the awake operator is better placed to verify).
@@ -79,16 +79,16 @@ main's clean-install smoke test has been **red since #215** (resolver extraction
 
 ---
 
-| metric                            | value                                                                                              |
-| --------------------------------- | -------------------------------------------------------------------------------------------------- |
-| shift window                      | 04:37 → 15:00 UTC                                                                                  |
-| npm shipped                       | **v4.14.0 (v192 AU model live)** — 22/22 workspaces after the resolver-wof-sqlite recovery         |
-| models trained                    | 0 (promoted the pre-trained v192)                                                                  |
-| Modal time / $                    | $0                                                                                                 |
-| local compute                     | conf-discrimination (472 parses, 2 leak-crashes recovered) + v192 gate battery + canary + AU coord |
-| NaN incidents                     | 0                                                                                                  |
-| release landmines hit / recovered | 1 partial-publish (OIDC trusted-publishing) / recovered via publish_only                           |
-| regressions shipped               | 0                                                                                                  |
-| stale-compile phantoms caught     | 1 (us.postcode 86.9 → 97.5)                                                                        |
-| PRs opened                        | 3 (#784 cleanup, #785 change, #786 release-prep merged)                                            |
-| GPU lost to error                 | 0                                                                                                  |
+| metric                            | value                                                                                               |
+| --------------------------------- | --------------------------------------------------------------------------------------------------- |
+| shift window                      | 04:37 → 15:00 UTC                                                                                   |
+| npm shipped                       | **v4.14.0 (v192 AU model live)** — 22/22 workspaces after the resolver-wof-sqlite recovery          |
+| models trained                    | 0 (promoted the pre-trained v192)                                                                   |
+| Modal time / $                    | $0                                                                                                  |
+| local compute                     | conf-discrimination (472 parses, 2 leak-crashes recovered) + v192 check battery + canary + AU coord |
+| NaN incidents                     | 0                                                                                                   |
+| release landmines hit / recovered | 1 partial-publish (OIDC trusted-publishing) / recovered via publish_only                            |
+| regressions shipped               | 0                                                                                                   |
+| stale-compile phantoms caught     | 1 (us.postcode 86.9 → 97.5)                                                                         |
+| PRs opened                        | 3 (#784 cleanup, #785 change, #786 release-prep merged)                                             |
+| GPU lost to error                 | 0                                                                                                   |

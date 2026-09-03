@@ -12,7 +12,7 @@ The conversation refined four parts of the original reviews and named three blin
 | Ordering of joint-reconcile vs bisect      | Both reviews put joint-reconcile after training experiments (Codex Step 3, DeepSeek Step 2 after Step 0.5) | Joint-reconcile **first** — zero GPU, can run against v0.4.0 weights today, measures the architectural thesis independent of training stability. DeepSeek conceded the reordering.                                                               |
 | Top-k integration for v0.4.0 weights       | Implicit assumption: needs a TS beam decoder port or synthetic top-k                                       | **Option C**: expose per-token logits from ONNX (already emitted, currently discarded), aggregate softmax across phrase-grouper spans for per-span top-k. ~100 lines, real model confidences, code path matches the eventual production runtime. |
 | Fine-tuning DistilBERT control             | DeepSeek Step 0.5 — high priority, ahead of bisect                                                         | Demoted to "nuclear option" — only run if CE-only training also diverges. The dual-loss decoupling probe + CE-only repair is cheaper and more diagnostic.                                                                                        |
-| Go/no-go decision rule for joint-reconcile | Both reviews listed 10+ metrics but no decision rule                                                       | Two-axis matrix: **+15pp kryptonite exact-match** AND **≤1pt golden v0.1.2 macro_F1 regression** as the gating conditions. Combined exact-match on `kryptonite ∪ golden` as the single headline number.                                          |
+| Go/no-go decision rule for joint-reconcile | Both reviews listed 10+ metrics but no decision rule                                                       | Two-axis matrix: **+15pp kryptonite exact-match** AND **≤1pt golden v0.1.2 macro_F1 regression** as the blocking conditions. Combined exact-match on `kryptonite ∪ golden` as the single headline number.                                        |
 
 ## The dual-loss decoupling probe
 
@@ -52,7 +52,7 @@ Why this is better than the alternatives:
 
 ## Go/no-go decision matrix for joint-reconcile vs argmax
 
-Two gates, applied after running joint-reconcile against the kryptonite catalogue (4,771 rows) and golden v0.1.2 (4,535 entries) using v0.4.0 weights + Option-C top-k:
+Two checks, applied after running joint-reconcile against the kryptonite catalogue (4,771 rows) and golden v0.1.2 (4,535 entries) using v0.4.0 weights + Option-C top-k:
 
 | Kryptonite Δ exact-match | Golden Δ macro_F1 | Verdict                                                                                                                           |
 | ------------------------ | ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
@@ -65,7 +65,7 @@ Two gates, applied after running joint-reconcile against the kryptonite catalogu
 
 **Why golden ≤1pt as a guard rail:** concordance scoring should be a no-op on already-correct parses. A >1pt regression on golden means the scoring function is making correct → wrong flips, which indicates a scoring bug, not an architectural failure.
 
-**Explicitly not the top-line:** resolver top-1 accuracy. If the parse is wrong, the resolver will be wrong regardless. Exact-match measures what the reconciler actually changes; resolver accuracy gates a later "is our WOF data good?" question that joint decode can't answer.
+**Explicitly not the top-line:** resolver top-1 accuracy. If the parse is wrong, the resolver will be wrong regardless. Exact-match measures what the reconciler actually changes; resolver accuracy checks a later "is our WOF data good?" question that joint decode can't answer.
 
 ## Three blind spots both reviews missed
 
@@ -85,9 +85,9 @@ The reconciler works by re-ranking — it takes the classifier's top-K, then con
 
 ### 3. Golden v0.1.2 is too small to be a trustworthy regression guard
 
-4,535 entries. A 1pt macro_F1 regression is ~45 entries flipping. At typical 1% annotator error rate in human-labeled NER data, that's another ~45 entries of noise. The "regression" signal has a ~10% false-positive rate from annotation noise alone — you could ship joint decode that's better and still "fail" the golden gate.
+4,535 entries. A 1pt macro_F1 regression is ~45 entries flipping. At typical 1% annotator error rate in human-labeled NER data, that's another ~45 entries of noise. The "regression" signal has a ~10% false-positive rate from annotation noise alone — you could ship joint decode that's better and still "fail" the golden check.
 
-**Mitigation:** if golden regression lands in the 0.5–1.5pt band, manually inspect all disagreement entries before deciding. If >half are debatable or clearly wrong in golden, expand the gate tolerance. If they are genuine (concordance damage), the matrix stands.
+**Mitigation:** if golden regression lands in the 0.5–1.5pt band, manually inspect all disagreement entries before deciding. If >half are debatable or clearly wrong in golden, expand the check tolerance. If they are genuine (concordance damage), the matrix stands.
 
 ## Updated validation sprint plan
 
@@ -105,7 +105,7 @@ Execution order — all but the final step run against v0.4.0 weights or existin
 5. **Wire `reconcileSpans` into `runPipeline` behind `forceJointReconcile` flag.** Uses Option-C top-k from step 4.
 6. **Eval matrix script** — runs joint-reconcile vs argmax fallback against kryptonite + golden, emits the four numbers (kryptonite Δ exact-match, golden Δ macro_F1, combined exact-match, per-example failure audit) needed for the decision matrix.
 
-### Track C — gated on Track A + B results
+### Track C — blocked on Track A + B results
 
 7. **Decision via the matrix** (see above).
 8. **CE-only training run** if Track A step 1 confirms dual-loss decoupling. crf_loss_weight=0, otherwise v0.4.0-stable recipe. ~6h local GPU.
@@ -160,7 +160,7 @@ Knobs that scale loss values cannot fix asymmetric curvature.
 
 Drop the CRF NLL loss term entirely during training. Keep the CRF as an inference-time structural decoder (frozen transition mask + Viterbi). The structural benefits that protect against orphan I-tags + BIO-invalid spans come from the **mask**, which is hand-encoded — not from the trained transition matrix. The training-side NLL was layered on as a learned refinement and that refinement is what fights with CE.
 
-One-line model.py change, gated on `crf_loss_weight > 0`. Backward-compatible: existing recipes ship CRF; the new behaviour activates only when a recipe explicitly sets `crf_loss_weight: 0.0`.
+One-line model.py change, blocked on `crf_loss_weight > 0`. Backward-compatible: existing recipes ship CRF; the new behaviour activates only when a recipe explicitly sets `crf_loss_weight: 0.0`.
 
 This is the same destination DeepSeek's earlier review pointed at, with a sharper reason.
 
@@ -176,13 +176,13 @@ If all three pass, promote to a full 50K-step CE-only training run. **Stability 
 
 Replaces the "validation sprint plan" earlier in this document.
 
-| Phase                       | Time    | Action                                                                                                                                     |
-| --------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1 (now, ~2 h, parallel)     | t0      | WOF parent_id spot-check + model.py one-line gate + CE-only smoke YAML + launch CE-only smoke (~2 h on the iGPU)                           |
-| 2 (parallel with smoke)     | t0      | Reconciler integration via per-span logit aggregation against v0.4.0 weights; eval against kryptonite ∪ golden via the ±15pp / ≤1pt matrix |
-| 3 (gate at smoke step 2000) | ~t+2 h  | Read CE-only smoke result; both stability + quality gates pass → promote                                                                   |
-| 4 (gated on Phase 3)        | ~t+2 h  | Full 50K-step CE-only C-train (~6–8 h); parallel: act on reconciler matrix result                                                          |
-| 4.1 (post-train)            | ~t+10 h | Eval CE-only checkpoint against product-level matrix; if ≥2-axis improvement vs v0.4.0 → ship v0.5.0                                       |
+| Phase                        | Time    | Action                                                                                                                                     |
+| ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 (now, ~2 h, parallel)      | t0      | WOF parent_id spot-check + model.py one-line check + CE-only smoke YAML + launch CE-only smoke (~2 h on the iGPU)                          |
+| 2 (parallel with smoke)      | t0      | Reconciler integration via per-span logit aggregation against v0.4.0 weights; eval against kryptonite ∪ golden via the ±15pp / ≤1pt matrix |
+| 3 (check at smoke step 2000) | ~t+2 h  | Read CE-only smoke result; both stability + quality checks pass → promote                                                                  |
+| 4 (blocked on Phase 3)       | ~t+2 h  | Full 50K-step CE-only C-train (~6–8 h); parallel: act on reconciler matrix result                                                          |
+| 4.1 (post-train)             | ~t+10 h | Eval CE-only checkpoint against product-level matrix; if ≥2-axis improvement vs v0.4.0 → ship v0.5.0                                       |
 
 ### Additional discipline note
 

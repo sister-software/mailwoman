@@ -12,7 +12,7 @@
 # job. The clue INFORMS (the homograph bit says "context is critical here"); the model decides.
 # See docs/engineering/reference/closed-vocab-fields-model-first.mdx + the knowledge ladder.
 #
-# PRE-REGISTERED GATE (stop at 20k) — data/eval/external/country-homograph-real.jsonl (n=54):
+# PRE-REGISTERED CHECK (stop at 20k) — data/eval/external/country-homograph-real.jsonl (n=54):
 #   - country RECALL up vs v0.9.11's 48.1 (target: the long-tail/multi-word/leading misses recover;
 #     ≥70 would be decisive) AND precision stays ~100 AND over-fire stays 0.
 #   - region/locality F1 held (v0.9.11: region 82.2, locality 64.4); homograph rows stay correct

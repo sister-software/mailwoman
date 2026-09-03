@@ -96,9 +96,9 @@ const BYTE_FALLBACK = /^<0x[0-9A-Fa-f]{2}>$/
 export function parseWordConsistencyEnv(value: string | undefined): boolean | WordConsistencyOpts {
 	if (value === "1") return true
 
-	if (value?.startsWith("gated")) {
+	if (value?.startsWith("conditional")) {
 		const opts: WordConsistencyOpts = { skipByteFallbackWords: true, splitOnPunctuation: true }
-		const floor = Number.parseFloat(value.slice("gated:".length))
+		const floor = Number.parseFloat(value.slice("conditional:".length))
 
 		if (Number.isFinite(floor) && floor > 0) {
 			opts.minMeanConfidence = floor

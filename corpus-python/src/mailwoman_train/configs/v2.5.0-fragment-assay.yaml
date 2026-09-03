@@ -15,11 +15,11 @@
 #   3. init_from → the SHIPPED v241 step-012000 (same vocab, so the same-vocab fine-tune LR 1e-5 —
 #      v230 precedent — NOT the 5e-5 splice-adaptation LR; there are no new embedding rows to move).
 #   4. SHORT run, tight cadence (the v196 scar: long constant-LR fine-tunes overfit late; 40k was
-#      flat, 80k regressed): 6000 steps, eval/save every 1000 → 6 gated checkpoints, early read at
+#      flat, 80k regressed): 6000 steps, eval/save every 1000 → 6 conditional checkpoints, early read at
 #      2000 per the diagnostic-before-fix discipline.
 #   5. output_dir/run name → v250-fragment-assay (FRESH dir; init_from READS v241, never overwrites).
 #
-# GATES when checkpoints land (grade with `mailwoman eval parity --weights-cache` — NEVER --model
+# CHECKS when checkpoints land (grade with `mailwoman eval parity --weights-cache` — NEVER --model
 # explicit paths, the #718 zero-fill trap): parity floors house_number ≥0.97 / postcode ≥0.97 /
 # street ≥0.90; fragment-dev (13,696 held-out rows, local scratchpad + volume copy) token-F1 AND
 # span-exact-match; US/FR non-regression on the parity per-country table. NaN protocol standard.

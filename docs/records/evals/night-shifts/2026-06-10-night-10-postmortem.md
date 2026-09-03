@@ -2,21 +2,21 @@
 
 Autonomous shift, 08:08–15:00 UTC equivalent (operator offline, extended-trust delegation).
 Plan: `2026-06-10-NIGHT-SHIFT-PLAN.md`. Headline mandate: ship Run B as v4.2.0 iff the ship
-gate passes; merge the flag-plant set; then eat the queue. All three happened; the queue is
+check passes; merge the flag-plant set; then eat the queue. All three happened; the queue is
 substantially eaten.
 
 ## What shipped
 
-- **v4.2.0 — the v1.0 parity flag-plant — live on every surface, byte-verified — and in true ship config it beats v0 on the CLEAN arena (41 vs 29), the first time ever.** Ship gate
-  4/4 (`2026-06-10-night-10-ship-gate.md`): honest-eval VT identical to baseline, presets
+- **v4.2.0 — the v1.0 parity flag-plant — live on every surface, byte-verified — and in true ship config it beats v0 on the CLEAN arena (41 vs 29), the first time ever.** Ship check
+  4/4 (`2026-06-10-night-10-ship-check.md`): honest-eval VT identical to baseline, presets
   clean (+ the intended affix split), int8 ≤0.1pp of fp32 (deterministic quant, md5
   `9eb4a99f…`), DE native 90.9. Merge sequence #468 → #469 → #491 (epic #466 closed), zero
   conflicts (the operator's squash choreography worked exactly as designed), zero
   merge-wall blocks. Bookkeeping #494 (cards w/ honest `init_from` lineage, ledger row,
   scorecard re-emit, status/releases contract pages). HF staged + default; **the R2 leg**
-  (10 objects, served-model md5 = the gated artifact); `publish.yml` → npm 4.2.0
+  (10 objects, served-model md5 = the conditional artifact); `publish.yml` → npm 4.2.0
   (registry-direct verified), tag + release object.
-- **promotion-gate.sh (#479, closed via #495):** gate-specs-as-contracts; validated by
+- **promotion-check.sh (#479, closed via #495):** check-specs-as-contracts; validated by
   reproducing the manual ship verdict bit-for-bit (12/12 floors, max int8 delta 0.1pp).
 - **US source-independent holdout (#472, closed via #496):** 6,453 NAD-only rows, 44
   states. **No memorization cliff** — v4.2.0 within noise of v4.1.0 on never-seen-lineage
@@ -35,12 +35,12 @@ substantially eaten.
   probe-first), #493 (lossless decomposition spec), #498 (census-designation name-credit —
   54% of NAD locality misses, the #386 class US edition). Design notes posted on #478
   (config surface, routing overlay, pre-registered v0-only→0 metric) and #487 (format-gap
-  audit + TIGER-EDGES recipe + gate draft).
+  audit + TIGER-EDGES recipe + check draft).
 
 ## What went well
 
-- **The gate stack carried the night.** Pre-registered ship gate → binary verdict → no 3am
-  judgment calls. The promotion-gate runner then reproduced the verdict mechanically — the
+- **The check stack carried the night.** Pre-registered ship check → binary verdict → no 3am
+  judgment calls. The promotion-check runner then reproduced the verdict mechanically — the
   night validated its own tooling on its own decision.
 - **Probe-first kept paying.** The fill-rate probe's heir (the alias-table join) killed a
   wrong attribution in 20 minutes; the smoke test surfaced Barre City ≠ Barre Town before
@@ -66,13 +66,13 @@ substantially eaten.
 ## Decisions made autonomously (alternatives considered)
 
 1. **Ran honest-eval with zero-filled gaz clues** (harness lacks the flag) — accepted as
-   conservative-valid since it PASSED degraded; alternative was harness surgery mid-gate
-   (rejected: gate integrity over completeness).
+   conservative-valid since it PASSED degraded; alternative was harness surgery mid-check
+   (rejected: check integrity over completeness).
 2. **Repairs-in-both for `parseWithLogits`** — reconcile must see user-path tokens; the
    opts were silently ignored before, so no default change. Alternative (document the skip)
    rejected as preserving a latent divergence.
-3. **Arena dip (−2/3pp whole-parse) reported with caveats, NOT treated as a gate** — the
-   arenas were never pre-registered as ship criteria; adding one retroactively is gate
+3. **Arena dip (−2/3pp whole-parse) reported with caveats, NOT treated as a check** — the
+   arenas were never pre-registered as ship criteria; adding one retroactively is check
    drift in the other direction. Flagged for morning eyes instead.
 4. **#487 eval build deferred** (census downloads + shapefile parsing at hour 7) — recipe
    posted instead; risk-ordering guardrail applied.
@@ -88,8 +88,8 @@ substantially eaten.
    updated with the correction block.
 2. **#397**: close as resolved-by-process, or re-title to the test-restores-symlink ask?
 3. **#492 architecture escalation**: the cheap probe (dedicated affix head) is specced and
-   gated — fund it when?
-4. The night-9 → night-10 arc (silent gate drift caught → canonical bars restored → stated
+   conditional — fund it when?
+4. The night-9 → night-10 arc (silent check drift caught → canonical bars restored → stated
    re-baseline shipped) is a strong research blog story; draft deliberately not written tonight —
    want it?
 
@@ -103,15 +103,15 @@ substantially eaten.
 
 ## Numbers
 
-|                                   |                                                                                                                        |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| shift span                        | 08:08–15:00 UTC (operator offline)                                                                                     |
-| models trained                    | **0** (treadmill guard held; 1 export + 2 quant runs, ~3 min A100)                                                     |
-| released                          | v4.2.0: npm (13 pkgs, registry-verified), HF + R2 (md5-verified), tag, release object                                  |
-| PRs merged                        | 10 — #491, #494, #495, #496, #497, #499, #500, #501, #502, #503 (gaz-fed arenas)                                       |
-| issues closed                     | #466, #472, #476, #479 (+ #475/#481/#487/#478 advanced with scoped completions)                                        |
-| issues filed                      | #492, #493, #498                                                                                                       |
-| evals run                         | ship gate ×2 artifacts, arenas ×2 (one invalid, caught), NAD holdout ×2 models, VT tier on/off, gate-runner validation |
-| findings corrected by measurement | 3 (NAD Finding 2; the stash byte-check; the arena 'dip' — handicapped harness, resolved to a +19/+9/+7 sweep)          |
-| CI failures                       | 1 (MDX raw-angle, fixed in 8 min)                                                                                      |
-| merge-wall blocks                 | 0                                                                                                                      |
+|                                   |                                                                                                                          |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| shift span                        | 08:08–15:00 UTC (operator offline)                                                                                       |
+| models trained                    | **0** (treadmill guard held; 1 export + 2 quant runs, ~3 min A100)                                                       |
+| released                          | v4.2.0: npm (13 pkgs, registry-verified), HF + R2 (md5-verified), tag, release object                                    |
+| PRs merged                        | 10 — #491, #494, #495, #496, #497, #499, #500, #501, #502, #503 (gaz-fed arenas)                                         |
+| issues closed                     | #466, #472, #476, #479 (+ #475/#481/#487/#478 advanced with scoped completions)                                          |
+| issues filed                      | #492, #493, #498                                                                                                         |
+| evals run                         | ship check ×2 artifacts, arenas ×2 (one invalid, caught), NAD holdout ×2 models, VT tier on/off, check-runner validation |
+| findings corrected by measurement | 3 (NAD Finding 2; the stash byte-check; the arena 'dip' — handicapped harness, resolved to a +19/+9/+7 sweep)            |
+| CI failures                       | 1 (MDX raw-angle, fixed in 8 min)                                                                                        |
+| merge-wall blocks                 | 0                                                                                                                        |

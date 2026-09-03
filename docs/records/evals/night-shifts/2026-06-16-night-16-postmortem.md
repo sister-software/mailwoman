@@ -60,7 +60,7 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
   leakage-free clustering A/B (`scorer?` hook in `resolveEntities` + a train-NPI / eval-NPI split, held-out
   records clustered three ways through the same pipeline; multi-seed). **Result (2000 NPIs, 4 seeds, ~1917
   eval records): FS baseline F1 55.3%±3.2, LR 56.7% (+1.4pp), GBT 60.5%±2.7 (+5.2pp, 4/4 seeds)** — driven by a
-  large precision gain that **cuts the over-merge** (P 45→61%, over-merged clusters 94→69, the #625 problem).
+  large precision gain that **reduces the over-merge** (P 45→61%, over-merged clusters 94→69, the #625 problem).
   The pairwise gain (#640) DOES translate to clustering; the #603 GBM is a **real dedup change**, greenlit.
   **Two methodology catches en route** (both decisive — the result inverted without them): (1) a 300-NPI
   smoke MISLED (FS ahead by 5pp) — too few co-located collisions to exhibit the over-merge, which only bites
@@ -120,7 +120,7 @@ circumvented).
   the honest yardstick figure instead.
 - **#671 — context-aware legal designations (Tier 3E, #668).** A two-axis `canonicalizeOrganizationName`
   (a jurisdiction + a domain option): the strip-set is `(base ∪ jurisdiction-pack) − domain-protect-pack`.
-  The collision-prone forms (`pt`/`sca`/`scs`) are gated behind a known jurisdiction (ID/FR); a
+  The collision-prone forms (`pt`/`sca`/`scs`) are blocked behind a known jurisdiction (ID/FR); a
   `healthcare` domain protects them
   (PT = Physical Therapy, not Perseroan Terbatas). Byte-stable default, 8 new tests, full suite + typecheck
   green. Not yet wired into `resolveEntities` (a behavior change wanting its own eval).
@@ -199,7 +199,7 @@ Two more landed while closing the shift with the operator:
 **The baseline holds at F1 63.9%.** A2 (corroboration) and A3 (phone) were investigated and are documented
 negatives on NPPES — not in this table, not promoted (full detail in #625):
 
-- A2 as a name/org-**only** gate: −20pp (recall 74.6% → 40.5%) — kills name-drift recall.
+- A2 as a name/org-**only** check: −20pp (recall 74.6% → 40.5%) — kills name-drift recall.
 - A3 phone as the secondary corroborator: backfires because NPPES practice phones are shared institutional
   switchboard lines → phone-blocking over-groups, connected-components fuses, phone-corroboration falsely
   rescues co-phone distinct providers. Best phone-regime F1 47.1% < the 63.8% baseline.
@@ -232,15 +232,15 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
 - **A1 was a near-null (+0.1pp).** Hypothesis: the address+distance double-count was already largely
   absorbed by EM's m/u fitting, so removing the redundancy is architecturally cleaner (one spatial
   parameter set) but not a metric change. Honest result — kept it for the cleaner model, not the number.
-- **A2 as a hard name/org-only gate was catastrophic (−20pp, F1 63.9% → 43.8%, recall 74.6% → 40.5%).**
+- **A2 as a hard name/org-only check was catastrophic (−20pp, F1 63.9% → 43.8%, recall 74.6% → 40.5%).**
   This is the empirical confirmation of DeepSeek's turn-3 tension: "co-located distinct entities" and
-  "co-located same entity with name drift" look identical to a name/org-only gate, so requiring name/org
+  "co-located same entity with name drift" look identical to a name/org-only check, so requiring name/org
   agreement throws away the geo-first recall the address signal was carrying. The fix (DeepSeek's own
   answer) is a **secondary identifier** — corroboration = name OR org OR **phone** (A3). The drift records
   share the NPI's practice line, so phone rescues them while distinct providers at a shared address keep
   distinct numbers. A3 wired (phone as comparison + corroborator); the A1+A3+A2 progression is the result
   to read.
-- **Lesson:** a corroboration gate is only as good as its set of corroborators. Shipping A2 without A3
+- **Lesson:** a corroboration check is only as good as its set of corroborators. Shipping A2 without A3
   would have been a −20pp regression masquerading as a precision fix.
 - **A4 (average-linkage) is also a documented negative (−4.6pp, recall −13.3pp, over-merge flat).** It
   can't split the over-merged clusters because they're joined by STRONG shared-address edges, not weak
@@ -265,7 +265,7 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
 
 ## Open questions for the operator
 
-- **A5 (site-level truth re-cut)** remains held for your methodology sign-off.
+- **A5 (site-level truth rebuilt)** remains held for your methodology sign-off.
 - Whether to flip A1/A2 (and the address-frequency fix) to default-on in `buildDefaultModel` once the
   full progression is validated — currently all default-off (byte-stable).
 
@@ -277,7 +277,7 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
 - **#603 learned scorer — TAKEN END-TO-END this shift (#637 + #640 merged; #641 flagged).** Pairwise probe
   (LR + GBT over the FS feature vector, by-NPI split, 8 seeds): both beat FS, the tree more (GBT +0.0177 AUC
   / +6.6pp pairwise F1). Then the **definitive clustering A/B** (#641, 2000 NPIs, 4 seeds): **GBT clustering
-  F1 60.5% vs FS 55.3%, +5.2pp, 4/4 seeds**, by cutting the over-merge (94→69 clusters). **The GBM is a real
+  F1 60.5% vs FS 55.3%, +5.2pp, 4/4 seeds**, by reducing the over-merge (94→69 clusters). **The GBM is a real
   dedup change — greenlit.** Cross-**STATE** generalization is now also DONE (in #641): trained on TX, the GBT
   beats the FS baseline on held-out **CA** by **+20.5pp** (the over-merge signal transfers; the LR doesn't
   generalize). Remaining for the operator: (1) review/merge **#641** (it adds the shipped `scorer?` hook +
@@ -290,7 +290,7 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
   CA. Not a config fix (chunked mode needs split files; `fileLength` ineffective). Flagged for a deliberate
   pass: chunked serverMode + per-extract config.json, or a lib upgrade. The `250-demo-street-tier` spec's
   `test.fixme` byte guard is the ready oracle.
-- **A5 site-level truth re-cut** — held for your methodology sign-off (`--truth=site`, build-and-flag).
+- **A5 site-level truth rebuilt** — held for your methodology sign-off (`--truth=site`, build-and-flag).
 - **HRSA HPSA/MUA overlay (#621 C2)** — attach shortage-area flags to the reconciled entities; needs the
   designation data (probe `data.hrsa.gov`).
 - **A more distinctive discriminator** than auth-official — license number (where present); taxonomy is

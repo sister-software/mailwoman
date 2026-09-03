@@ -116,7 +116,7 @@ describe("derivePostcodePrefix — the derivation laws", () => {
 	})
 })
 
-describe("probePostcodePrefix — the country gate", () => {
+describe("probePostcodePrefix — the country check", () => {
 	it("refuses to let a GB index speak under a US scope (B3-5 posture)", () => {
 		expect(probePostcodePrefix("BT9 5GS", gbCoordinateIndex, "US")).toBeNull()
 	})

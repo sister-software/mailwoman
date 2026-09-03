@@ -1,7 +1,7 @@
 {
 	"name": "@mailwoman/variant-aliases",
 	"version": "9.2.0",
-	"description": "Regional variant alias table — local terms for amenities/brands gated by locale. 'servo' → fuel (en-AU), 'マクド' → McDonald's (ja-JP), 'PFK' → KFC (fr-CA).",
+	"description": "Regional variant alias table — local terms for amenities/brands blocked by locale. 'servo' → fuel (en-AU), 'マクド' → McDonald's (ja-JP), 'PFK' → KFC (fr-CA).",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
 		"type": "git",

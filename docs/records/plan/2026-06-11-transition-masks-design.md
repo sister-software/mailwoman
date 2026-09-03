@@ -41,7 +41,7 @@ the glue rows, asserted not-worse under the mask.
 
 ## When to revisit
 
-- A gate FAIL whose row characterization shows an ORDERING error (not a span/boundary error)
+- A check FAIL whose row characterization shows an ORDERING error (not a span/boundary error)
   in a conventioned system.
 - The double-postcode class surviving the next corpus pass.
 - The `de` conventions row shipping (its postcode shape + the transition pair come as a unit).

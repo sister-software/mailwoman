@@ -22,7 +22,7 @@
 # warmup 1,000, 60k cosine, batch 128, bf16, Fisher capture over the final 2k steps, seed 42.
 # The loader is the repaired substrate (stationary sampler, clean val, atomic checkpoints).
 #
-# GATES (fp32, unchanged):
+# CHECKS (fp32, unchanged):
 #   B1 terminal-only >=116/128
 #   B2 terminal-contrast >=34/48
 #   B4 locality-token retention >=3/7 (exact locality is an upside watch)

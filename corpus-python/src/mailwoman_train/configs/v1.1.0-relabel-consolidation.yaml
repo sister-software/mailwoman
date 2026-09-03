@@ -8,7 +8,7 @@
 # suffix F1 96.7 -> 100.0, street flat 87.5. The #492 contradiction theory is CONFIRMED.
 #
 # TWO deliberate changes vs the shipped Run B (v1.0.2) — both REVERSIONS of anti-contradiction
-# compensation that a consistent mix no longer needs (stated here per no-silent-gate-drift):
+# compensation that a consistent mix no longer needs (stated here per no-silent-check-drift):
 #   1. synth-affix 17.0 -> 2.0 (the v1.0.0 base value). 17.0 was calibrated to outshout a 1,000:1
 #      contradiction that no longer exists; the probe held affix at high-80s/100 even resuming a
 #      20.0-weight model. If affix lands short at 2.0, sweep UP (4.0) — do not restore 17.0 blind.
@@ -17,7 +17,7 @@
 # From scratch (--resume none, NO init_from): the equilibrium claim is that a consistent mix
 # produces affix-stable weights natively, not that a rescued checkpoint can keep them.
 #
-# PRE-REGISTERED GATE — the v4.2.0 ship-gate floors, UNCHANGED (scripts/eval/gates/v4.2.0-ship.json,
+# PRE-REGISTERED CHECK — the v4.2.0 ship-check floors, UNCHANGED (scripts/eval/checks/v4.2.0-ship.json,
 # fp32-to-fp32, ship-config channels: gazetteer lexicon + suppress-gaz-near-postcode + anchor):
 #   - affix: street_prefix >= 78, street_suffix >= 67 — measured at 20k AND 40k (STABILITY is the
 #     claim under test; a 20k peak that decays by 40k is a MISS even if 40k clears the floor).
@@ -27,7 +27,7 @@
 #   - NEW watches (DeepSeek consult 2026-06-10): folded-street invariance, short-street ("Main St")
 #     recall, house_number->street_prefix CRF transition sanity. The EXPANDED affix eval (#511
 #     task: >=100 prefix / >=100 suffix instances from NAD native fields) re-baselines BEFORE the
-#     gate verdict; the 32-row eval result is recorded alongside, not substituted.
+#     check verdict; the 32-row eval result is recorded alongside, not substituted.
 #   DECISION: all hold -> ship candidate (int8 -> v4.3.0). Affix short at 2.0 -> one weight sweep
 #   (4.0), nothing else. Any spine regression -> STOP, the relabel pass gets re-audited before any
 #   weight surgery (a relabel bug presents as boundary noise, not as a dilution problem).

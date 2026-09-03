@@ -195,7 +195,7 @@ describe("ablationLadderFromChain", () => {
 	})
 })
 
-describe("dominanceMarginLog10 — the measured decisiveness cut", () => {
+describe("dominanceMarginLog10 — the measured decisiveness threshold", () => {
 	it("is infinite for a single candidate: no contest", () => {
 		expect(dominanceMarginLog10([SPRINGFIELD_IL])).toBe(Infinity)
 	})
@@ -204,7 +204,7 @@ describe("dominanceMarginLog10 — the measured decisiveness cut", () => {
 		expect(dominanceMarginLog10([SPRINGFIELD_MA, SPRINGFIELD_IL])).toBeCloseTo(0.13, 2)
 	})
 
-	it("puts the Springfield contest UNDER the cut — which is what makes abstention the right answer", () => {
+	it("puts the Springfield contest UNDER the threshold — which is what makes abstention the right answer", () => {
 		expect(dominanceMarginLog10([SPRINGFIELD_MA, SPRINGFIELD_IL])).toBeLessThan(DECISIVE_MARGIN_LOG10)
 	})
 })

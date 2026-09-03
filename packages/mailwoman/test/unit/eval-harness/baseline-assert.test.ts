@@ -237,6 +237,6 @@ describe("formatVerdict", () => {
 	it("warns against widening tolerance instead of re-registering", async () => {
 		const message = formatVerdict(await assertBaselines([{ id: "parity.street.token_at_1@v264", observed: 0.348 }]))
 
-		expect(message).toContain("silent gate drift")
+		expect(message).toContain("silent check drift")
 	})
 })

@@ -7,21 +7,21 @@
 #
 # The 2k probe cleared ALL THREE pre-registered reads (2026-07-17):
 #   LEG-1 span mechanism: loss 18.6→1.49 converged; seg@1 0.603 > token@1 0.558 (+4.5pp, parity 267,
-#     CHANNEL-STARVED relative gate) — the span scorer beats token decode on the v0.11.0-no-fragment
+#     CHANNEL-STARVED relative check) — the span scorer beats token decode on the v0.11.0-no-fragment
 #     corpus (the novel confirmation; v301 proved it on v257).
 #   GUARD: golden us micro 86.9=86.9 / exact 66.4 vs 66.2; fr micro 90.0 vs 90.1 / exact flat — the
 #     span head is a purely ADDITIONAL output, the BIO token path is byte-stable-ish.
 #   LEG-2 P3 all-caps: FAILED (raw-case exact 48.0 vs v381 48.3, vs the +5pp bar). augment_upper_case
 #     is INERT at 2k. It RIDES the 8k as an UNCHANGED passenger (resume = no distribution shift) and
 #     gets a fair 8k re-grade — but its PROMOTE bar (+5pp) is UNCHANGED and unmet; the #690 shim stays
-#     unless the 8k re-grade clears it. Not a bar relaxation: the promote gate still stands.
+#     unless the 8k re-grade clears it. Not a bar relaxation: the promote check still stands.
 #
 # PRE-REGISTERED 8k READS (package-shaped int8 vs shipped v381 baselines; SAME corpus+tokenizer → F1 valid):
-#   PROMOTE GATE (standing): golden 2pp gate (no tag >2pp down vs v381), gauntlet PASS, metamorphic,
+#   PROMOTE CHECK (standing): golden 2pp check (no tag >2pp down vs v381), gauntlet PASS, metamorphic,
 #     FR fragment board + digit board no worse than -2pp. The span head must not cost the token path.
 #   ARC READS (the point): seg@1 and oracle@5 on the JS harness via the PR #1154 decode surface +
 #     the semi-crf-transitions sidecar; the phase-4c name-evidence rerank consumes this model.
-#   LEG-2 re-grade: all-caps raw-case vs v381 48.3 (promote bar +5pp — informational, shim-delete gate).
+#   LEG-2 re-grade: all-caps raw-case vs v381 48.3 (promote bar +5pp — informational, shim-delete check).
 #   This 8k checkpoint ships NOWHERE without the full battery green; it is the phase-4c decode substrate.
 #
 # fp32 partition math enforced inside span_scorer.py regardless of autocast (v0.5.0 bf16 CRF scar).

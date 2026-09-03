@@ -1,7 +1,7 @@
 # The interpolation radius factor is regional — 1.70 is a Texas artifact
 
 _2026-06-14. The conformal interpolation-radius factor (Q̂ = 1.70, #569) was calibrated on one region
-(Texas / Travis County E-911). This re-gates it on four more states spanning the density spectrum,
+(Texas / Travis County E-911). This re-checks it on four more states spanning the density spectrum,
 using each state's situs address points (OA/NAD) as independent ground truth for the TIGER
 interpolation tier — a non-circular holdout available for all 50 states. The factor is **not**
 region-invariant: it runs 1.53× (dense NY) to 2.85× (rural MT), a ~2× spread that tracks rurality. The

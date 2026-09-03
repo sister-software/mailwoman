@@ -4,7 +4,7 @@
 
 **Goal:** Make the canonical recipe produce the country/region nodes it has been silently missing (#1026 — the GeoNames admin fold), delete the four superseded admin-mutation scripts, and corral the loose diagnostics — the PR C slice of the cleanup spec.
 
-**Architecture:** `foldGeonames` gains the existing (never-wired) `adminForCountries` capability from `ingestGeonamesAliases` (#267); `buildAdmin` computes the zero-coverage gap set (geonames − overture − WOF-priority) and passes it. An E2E rebuild through `gazetteer build admin` must then pass the full verify gate — that artifact is the #1026 swap candidate.
+**Architecture:** `foldGeonames` gains the existing (never-wired) `adminForCountries` capability from `ingestGeonamesAliases` (#267); `buildAdmin` computes the zero-coverage gap set (geonames − overture − WOF-priority) and passes it. An E2E rebuild through `gazetteer build admin` must then pass the full verify check — that artifact is the #1026 swap candidate.
 
 **Tech Stack:** as PR A+B (`docs/superpowers/plans/2026-07-07-sealed-artifacts-gazetteer-cli.md`).
 
@@ -40,7 +40,7 @@ Same as PR A+B (branch `feat/gazetteer-cli-pr-c` off main; oxlint/oxfmt + `typec
 
 **Files:** Delete `scripts/augment-admin-overture.ts`, `scripts/augment-admin-official-names.ts`, `scripts/build-admin-geonames-fold.ts`, `scripts/build-coverage-expansion.ts`.
 
-Each is subsumed: incremental Overture augment → edit `defaults.ts` + rebuild (`build admin`); #936 official-names bridge → the #940 ingest bit is native (its own docstring says "until the next full rebuild"); the standalone geonames fold → `foldGeonames`; coverage expansion → the recipe IS the coverage (edit defaults, rebuild, verify gates it).
+Each is subsumed: incremental Overture augment → edit `defaults.ts` + rebuild (`build admin`); #936 official-names bridge → the #940 ingest bit is native (its own docstring says "until the next full rebuild"); the standalone geonames fold → `foldGeonames`; coverage expansion → the recipe IS the coverage (edit defaults, rebuild, verify checks it).
 
 **Steps:**
 
@@ -51,7 +51,7 @@ Each is subsumed: incremental Overture augment → edit `defaults.ts` + rebuild 
 **Files:** `git mv` into the gitignored homes per `scripts/AGENTS.md`:
 
 - → `scripts/diagnostic/`: `diag-functional-morphology.ts`, `diag-geocode-earth.ts`, `diag-nyc-reconcile.ts`, `diag-postcode-anchor.ts`, `diag-postcode.ts`, `diag-saintalbans.ts`
-- → `scripts/eval/`: `eval-de-coverage.ts`, `eval-error-analysis.ts`, `eval-gate.ts`, `eval-joint-reconcile.ts`, `eval-morphology-fst.ts`, `harness-postcode.ts`, `harness-v0-neural.ts`, `extract-tuples.ts`, `extract-tuples-de-gb.ts`, `log-scale-chart.ts`, `training-chart.ts`, `parse-training-log.ts`
+- → `scripts/eval/`: `eval-de-coverage.ts`, `eval-error-analysis.ts`, `eval-check.ts`, `eval-joint-reconcile.ts`, `eval-morphology-fst.ts`, `harness-postcode.ts`, `harness-v0-neural.ts`, `extract-tuples.ts`, `extract-tuples-de-gb.ts`, `log-scale-chart.ts`, `training-chart.ts`, `parse-training-log.ts`
 
 **Steps:**
 
@@ -61,7 +61,7 @@ Each is subsumed: incremental Overture augment → edit `defaults.ts` + rebuild 
 ### Task 4: E2E — the recipe now reproduces the artifact (the #1026 candidate)
 
 - [ ] `yarn compile && node mailwoman/out/cli.js gazetteer build admin --out /mnt/playpen/mailwoman-data/wof/admin-global-priority.PRC.db` (~12 min).
-- [ ] Expected: **verify PASS 21/21** (node-census restored — the gate that failed on the E2E in PR B), sealed, build-log appended.
+- [ ] Expected: **verify PASS 21/21** (node-census restored — the check that failed on the E2E in PR B), sealed, build-log appended.
 - [ ] Per-country/per-placetype census diff vs the live DB + vs the pre-936 backup (GE must have country+regions again). Post findings to #1026.
 - [ ] **Do NOT swap** — present the artifact + census to the operator (runbook swap is a deliberate step: bak → mv → seal check → service restarts → demo propagation).
 - [ ] Push branch, open PR C referencing the spec + #1026.

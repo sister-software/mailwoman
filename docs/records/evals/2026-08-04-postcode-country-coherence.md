@@ -42,7 +42,7 @@ replaces `state.defaultCountry` for the whole walk.
    (a genuine geographic tie) both abstain.
 
 Consistency = the postcode resolves in that country AND an EXACT-matching same-named locality sits
-within `gateKm` (default 25) of it. Non-exact locality hits contribute nothing — a generous FTS match
+within `thresholdKm` (default 25) of it. Non-exact locality hits contribute nothing — a generous FTS match
 ("Paris" → "Parish") is evidence about the index, not about the country.
 
 Two bounds fall out of the candidate set being codex-shaped. A country with no codex slice can never
@@ -60,7 +60,7 @@ Rooftop and street-centroid extracts are selected BEFORE the resolve — they ar
 FR address would sit at its commune centroid with the national register never consulted. So when the
 resolver reports an override (the `postcode_country_scope` stamp it writes onto the postcode and
 locality nodes), `geocodeAddress` re-selects the extracts for the corrected country and resolves once
-more. Self-gating: unreachable unless an override fired, and bounded at one extra resolve.
+more. Self-blocking: unreachable unless an override fired, and bounded at one extra resolve.
 
 ## 2. Blocker 2, verified from this end
 
@@ -243,8 +243,8 @@ test. That leg's result is in §6.
 question. What remains open is narrower:
 
 1. **The gauntlet has not seen this.** `mailwoman eval gauntlet` carries no resolver-change pin, so the
-   D-rule's standard gate has no leg for it. §6 is an oa-resolver measurement, which is the right
-   instrument for a resolver change but is not the gate the release process runs.
+   D-rule's standard check has no leg for it. §6 is an oa-resolver measurement, which is the right
+   instrument for a resolver change but is not the check the release process runs.
 2. **`exactMatch` is required and backend-dependent.** P04 shows the FTS backend and the candidate
    backend disagree about what an exact match is (`Munchen` → `München` is exact on one, not the
    other). Every §6 number is candidate-backend. A default-on mechanism whose firing rate depends on
@@ -279,7 +279,7 @@ addresses".
 **Separately, and worth its own ticket:** this is now the only thing in the tree that can override
 `defaultCountry`. The coarse placer's 0.9999908844-confidence FR call on the very same address still
 cannot — `hardCountryFor` returns `undefined` whenever a `defaultCountry` is set, and geocode-core's
-#928 postcode-format prior is gated on `!opts.defaultCountry`. The diagnosis argued those are the same
+#928 postcode-format prior is blocked on `!opts.defaultCountry`. The diagnosis argued those are the same
 decision as this one. This lands the geometric half; the placer half is untouched.
 
 ## 6. Scale: 14,000 pairs, three countries, three mis-scope directions
@@ -344,7 +344,7 @@ within-tier ranking), so the "before" assertion genuinely lands on Paris, Texas 
 
 The safety properties have direct tests: coherent-default-wins, abstain-on-zero, abstain-on-tie,
 abstain-without-a-locality, abstain-on-an-unrecognized-shape, never-propose-a-country-without-a-codex-
-slice (the PL row), exact-match-only, gate-respected, backend-throw-degrades-to-no-override, and a
+slice (the PL row), exact-match-only, check-respected, backend-throw-degrades-to-no-override, and a
 byte-identical flag-on-vs-off assertion on the domestic control.
 
 Repo-wide: unit suite 4,637 passed / 1 failed (`geocode.test.ts` "missing address argument" — a 15 s

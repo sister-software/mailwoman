@@ -180,7 +180,7 @@ export interface BuildCandidateResult {
 	 * Worth watching across rebuilds: a jump here means the score source and the admin source have drifted apart, and the
 	 * join is being asked to guess.
 	 */
-	importanceGated?: number
+	importanceFiltered?: number
 	/**
 	 * Alias rows stamped `name_role = 'gloss'` — the anomaly detector's certain core (#1730).
 	 */
@@ -605,6 +605,6 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		ancestorPlaces: sidecar.ancestorPlaces,
 		intervalPlaces: sidecar.intervalPlaces,
 		...roles,
-		...(importance ? { importanceScored: importance.matched, importanceGated: importance.refused } : {}),
+		...(importance ? { importanceScored: importance.matched, importanceFiltered: importance.refused } : {}),
 	}
 }

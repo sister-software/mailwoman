@@ -1,7 +1,7 @@
 # v8.3.0 Phase-0 memo 2 — Fisher capture design (D4)
 
 **Resolves:** ROAD_TO_MAILWOMAN_V8_3_0 §4 D4 + §6. The consolidation artifact that makes
-"your fine-tune cannot break core parsing" a gate instead of a hope (the B11 guarantee).
+"your fine-tune cannot break core parsing" a check instead of a hope (the B11 guarantee).
 
 ## What is captured
 
@@ -38,10 +38,10 @@ v2 refinement once a real engagement asks for it.
   is): sweep λ ∈ {0, 1e2, 1e4, 1e6} on a 2k-step probe; pick the largest λ that leaves the
   increment's target metric within noise of λ=0. That λ becomes the template default; a customer
   engagement inherits it and only revisits on a battery failure.
-- **The guarantee gate** (the sellable sentence): a Fisher-protected fine-tune must hold every
+- **The guarantee check** (the sellable sentence): a Fisher-protected fine-tune must hold every
   base capability within the noise-honest margins on the packaged battery. Base capabilities =
   the golden floors + the P0 fragment bars + the gauntlet; the customer's own canaries ride
-  alongside. A gate failure at the calibrated λ is a _finding about the customer data_, surfaced
+  alongside. A check failure at the calibrated λ is a _finding about the customer data_, surfaced
   before delivery — which is the product working, not failing.
 
 ## Contract + provenance
@@ -50,11 +50,11 @@ v2 refinement once a real engagement asks for it.
   model card's `files_md5` (HF-staged; npm optional per above), captured-at metadata (run id,
   step window, feed hash) in an `.json` sidecar — the same provenance discipline as the lexicons.
 - The release-hf command + publish.yml preflight gain one file each (the mechanical pattern from
-  the lexicon additions; noted in ROAD_TO §9 so it isn't forgotten at the cut).
+  the lexicon additions; noted in ROAD_TO §9 so it isn't forgotten at the reduce).
 
 ## What this deliberately does not claim
 
 EWC protects against drift in _parameter space_, calibrated on _our_ distributions. It does not
 guarantee arbitrary customer data can't find a pathological direction — that is what the battery
-gate is for. The two together (parameter-space brake + behavior-space gate) are the honest
+check is for. The two together (parameter-space brake + behavior-space check) are the honest
 guarantee; neither alone is.

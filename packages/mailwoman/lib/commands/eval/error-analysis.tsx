@@ -11,7 +11,7 @@
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
-export const description = "Categorized golden-set failure report (the pre-publish 2pp promote gate)"
+export const description = "Categorized golden-set failure report (the pre-publish 2pp promote check)"
 
 /**
  * Native command-line contract consumed by the filesystem command router.

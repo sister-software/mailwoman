@@ -76,8 +76,8 @@
 			"baseline_v0.6.0_pct": 14.4,
 			"target_band": "≥25% promotion, 15-24% experimental, ≤14.4% hold"
 		},
-		"gate_vs_v0.6.0": {
-			"verdict": "TBD-from-eval-gate",
+		"check_vs_v0.6.0": {
+			"verdict": "TBD-from-eval-check",
 			"recall_threshold_pp": 2,
 			"hall_abs_threshold": 100
 		}

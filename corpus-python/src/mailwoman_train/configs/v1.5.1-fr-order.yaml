@@ -2,8 +2,8 @@
 # Same as v1.5.0-fr-order (one variable vs v4.5.0: synth-fr-order slice), with ONE change:
 # synth-fr-order weight 3.0 → 6.0 (matching the proven synth-german weight).
 #
-# WHY: v1.5.0 re-gate (2026-06-13 ~04:30 UTC) showed:
-#   - fr.house_number: 87.4% (gate floor 91, target ≥95) — MISS
+# WHY: v1.5.0 re-check (2026-06-13 ~04:30 UTC) showed:
+#   - fr.house_number: 87.4% (check floor 91, target ≥95) — MISS
 #   - BUT: v4.5.0 scored only 54.5% on the same diversified golden → net +32.9pp improvement
 #   - ALL 93 FR house_number misses are "47110 Sainte-Livrade-sur-Lot, XX..." (postcode-first)
 #     — model still predicts the leading 47110 as house_number (BAN canonical-order prior too strong)
@@ -11,7 +11,7 @@
 #   - German synth at weight=6.0 fully works; FR slice needs equivalent signal strength
 #   - Bridge retirement HELD (po_box 90.3), DE order HELD (native 90.8%), all US/FR floors PASS
 #
-# GOAL / GATE: same as v1.5.0 — fr.house_number ≥95 (actual-vs-v4.4.0 benchmark) AND bridge
+# GOAL / CHECK: same as v1.5.0 — fr.house_number ≥95 (actual-vs-v4.4.0 benchmark) AND bridge
 # retirement holds (po_box ≥89.1) AND all v4.4.0 floors hold AND no NEW regression vs v4.5.0.
 #
 # CORPUS: same v0.5.0 + synth-fr-order (already on Modal volume, no re-upload needed).
@@ -41,7 +41,7 @@ data:
     synth-intersection: 1.0
     synth-german: 6.0
     # THE #560 recovery change: reversed-order (postcode-first) FR. Weight bumped 3.0 → 6.0 (matching
-    # synth-german) after v1.5.0 re-gate showed +32.9pp improvement but still missed fr.house_number
+    # synth-german) after v1.5.0 re-check showed +32.9pp improvement but still missed fr.house_number
     # floor (87.4% vs 91 floor). Slice correct; BAN canonical-order prior dominates at 3.0 weight.
     synth-fr-order: 6.0
     synth-unit: 1.5

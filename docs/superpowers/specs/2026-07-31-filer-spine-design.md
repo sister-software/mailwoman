@@ -203,7 +203,7 @@ its own provider registry, so the registry is built once. Track C's C3 row now p
   cover pages, 990s); no dedicated ingest. A 990 pass can be reconsidered if rural co-ops become a
   focus, since that is where it would actually pay.
 - **D7 — v1 sources are licensing-clean.** CORES, Form 499, ASR, ULS, and EDGAR are all US federal
-  public domain, so **Phase 3 is not gated on counsel** — unlike the Fabric question hanging over 2a.
+  public domain, so **Phase 3 is not blocked on counsel** — unlike the Fabric question hanging over 2a.
   PeeringDB (API terms) is a 3c/C6-time check; LERG/OCN and OpenCorporates are out of scope by D4.
   Recorded in the counsel dossier as informational, not blocking.
 

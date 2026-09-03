@@ -350,9 +350,9 @@ async function assertConventionsRespectCapabilities(
 			warnedNoCapabilities = true
 
 			console.error(
-				`[createScorer] model-card has no \`capabilities\` block — the conventions capability-gate ` +
+				`[createScorer] model-card has no \`capabilities\` block — the conventions capability-check ` +
 					`(#718/#719) is SKIPPED. Regenerate the card via \`mailwoman eval capability-manifest\` to ` +
-					`certify per-tag capability and enable the gate.`
+					`certify per-tag capability and enable the check.`
 			)
 		}
 

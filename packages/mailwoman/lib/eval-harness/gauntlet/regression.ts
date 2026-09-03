@@ -101,7 +101,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 	const fails: string[] = [] // status=pass that failed → BLOCK
 	const tracked: string[] = [] // known_fail / improvement_target still failing → report, non-blocking
 	const newlyPassing: string[] = [] // tracked case that now passes → promote it (anti-rot)
-	let gated = 0
+	let counted = 0
 	// #42 firing receipts. An unchanged verdict means "harmless" only if the mechanism actually ran on some row;
 	// otherwise it means "never reached", and the two are indistinguishable without this count.
 	const overrides: string[] = []
@@ -133,7 +133,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		const ref = c.bug_ref ? ` ${c.bug_ref}` : ""
 
 		if (c.status === "pass") {
-			gated++
+			counted++
 
 			if (issues.length) {
 				fails.push(`  ✗ ${c.id} "${c.input}": ${issues.join("; ")}`)
@@ -148,7 +148,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 	deps[Symbol.dispose]()
 
 	console.log(
-		`\n=== Gauntlet · regression (${gated - fails.length}/${gated} gated cases pass, ${tracked.length} tracked) ===`
+		`\n=== Gauntlet · regression (${counted - fails.length}/${counted} counted cases pass, ${tracked.length} tracked) ===`
 	)
 
 	for (const f of fails) {

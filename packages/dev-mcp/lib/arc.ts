@@ -201,7 +201,7 @@ export function decideArc(
 	if (dRuleViolations.length) {
 		reasons.push(
 			`D-RULE: regressions on ${dRuleViolations.map((entry) => `${entry.country} (${entry.n})`).join(", ")}. ` +
-				"Iron rule 6 blocks a default-on ship regardless of net. Fix, gate per-locale, or make it opt-in."
+				"Iron rule 6 blocks a default-on ship regardless of net. Fix, check per-locale, or make it opt-in."
 		)
 	}
 

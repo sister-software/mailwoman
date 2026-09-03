@@ -15,7 +15,7 @@
 # 1,000, 60k cosine, bf16, Fisher capture over the final 2k steps. This is one fresh seed-42 run.
 # Multilingual street-type and mixed-script data remain out of scope.
 #
-# GATES (fp32):
+# CHECKS (fp32):
 #   B1 terminal-only >=116/128
 #   B2 terminal-contrast >=34/48
 #   B4 locality-token retention >=3/7 (exact locality is an upside watch)

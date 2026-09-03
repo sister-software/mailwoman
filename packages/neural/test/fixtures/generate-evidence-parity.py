@@ -8,7 +8,7 @@ tokenizer, and snapshots per-piece features + confidence. The TS test
 productionization plan's Phase 2 mandates.
 
 The probe set deliberately carries: hyphenated + apostrophe surfaces (the fold class a Phase-1
-defect made unreachable), uppercase-gated short codes, homograph bits, multi-token longest-first
+defect made unreachable), uppercase-conditional short codes, homograph bits, multi-token longest-first
 matches, the lowercase register (operator doctrine), and negative rows.
 
 Run (from repo root):

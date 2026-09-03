@@ -54,7 +54,7 @@ incumbents.
    outright; CZ now edges Pelias (87 vs 78).
 3. **Australia drags the aggregate.** mailwoman 35% vs Nominatim 97 / Pelias 78. The whole EU-vs-all-panel
    gap (88 → 80) is AU. The failure mode is same-named towns scattered across states, which the
-   country-level postcode-consistency gate can't disambiguate. EU-only is the legitimate headline for a
+   country-level postcode-consistency check can't disambiguate. EU-only is the legitimate headline for a
    Europe comparison _because_ AU is its own, named, unsolved problem — not because hiding it flatters us.
 4. **Centroids, not rooftops.** mailwoman is 26% @1km vs Nominatim 77 / Pelias 71. The @25km parity is
    right-_area_ parity; the incumbents are far more precise when they hit. State it, don't bury it.
@@ -102,7 +102,7 @@ them. AT's 5 EMPTY are postcodes GeoNames AT doesn't carry.
 
 - **Clean input only.** This run is clean OA strings. The "calibrated parser degrades better than a token-
   matching search index on messy input" claim needs a separate `--messy` run before it can be made.
-- **AU** is the open coverage/disambiguation problem (#208 G-NAF ingest + a sub-country consistency gate).
+- **AU** is the open coverage/disambiguation problem (#208 G-NAF ingest + a sub-country consistency check).
 - **AT** (73→80) is the next EU postcode-coverage candidate — GeoNames has 18,937 AT rows; the gazetteer
   has only 809. Same change as PL/CZ.
 

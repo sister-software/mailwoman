@@ -15,7 +15,7 @@ This page describes the five entry points a consumer calls from TypeScript: `cre
 output that file produced.
 
 It does not describe the stage packages (`@mailwoman/normalize`, `@mailwoman/query-shape`,
-`@mailwoman/locale-gate`, `@mailwoman/kind-classifier`, `@mailwoman/phrase-grouper`). Those are wired
+`@mailwoman/locale-hint`, `@mailwoman/kind-classifier`, `@mailwoman/phrase-grouper`). Those are wired
 by `createRuntimePipeline` with production defaults, and a consumer who calls them directly is
 building a pipeline rather than using one. For the command line, see [CLI](./cli.mdx). For HTTP, see
 [HTTP APIs](./http-apis.mdx).
@@ -73,7 +73,7 @@ Two stages take an injected implementation. The rest carry production defaults.
 | `normalizeCase`       | `boolean`                          | on                           | Title-cases detected all-caps ASCII input before the model                    |
 | `hardPlaceCountry`    | `boolean`                          | on                           | Promotes a confident country guess to a filter, inside a coverage safelist    |
 | `hardCountrySafelist` | `ReadonlySet<string>`              | the gazetteer's own manifest | Which countries the hard filter applies to. Falls back to a built-in list     |
-| `detectLocale`        | function                           | `@mailwoman/locale-gate`     | Stage 2                                                                       |
+| `detectLocale`        | function                           | `@mailwoman/locale-hint`     | Stage 2                                                                       |
 | `classifyKind`        | function                           | `@mailwoman/kind-classifier` | Stage 2.5. An explicit override wins over the POI-aware default               |
 | `groupPhrases`        | function                           | `@mailwoman/phrase-grouper`  | Stage 2.7                                                                     |
 
@@ -88,7 +88,7 @@ factory default.
 
 | Field               | Type                            | Default                  | Effect                                                    |
 | ------------------- | ------------------------------- | ------------------------ | --------------------------------------------------------- |
-| `locale`            | `string`                        | derived by `locale-gate` | BCP-47 tag, for example `en-US`                           |
+| `locale`            | `string`                        | derived by `locale-hint` | BCP-47 tag, for example `en-US`                           |
 | `inputMode`         | `"fragmented"` or `"formatted"` | derived from the kind    | Which register the evidence channels run in               |
 | `resolveOpts`       | `ResolveOpts`                   | none                     | Passed through to the resolver                            |
 | `normalizeCase`     | `boolean`                       | the factory value        | Overrides the factory default for this call               |
@@ -200,7 +200,7 @@ dependency, so it reports where the gazetteer index is and leaves deserializatio
 ### Parse options
 
 These are the fields of `ParseOpts` a consumer sets. `ParseOpts` has 20 fields; the ten omitted here
-are the FST bias magnitudes and decision thresholds (`fstBiasScale`, `fstStreetContextGate` and their
+are the FST bias magnitudes and decision thresholds (`fstBiasScale`, `fstStreetContextRequirement` and their
 siblings, four of which the source marks internal), the `queryShapeBiasScale` magnitude, the
 morphology-prior override, the pre-v4.4.0 `bridgePunctuationGaps` switch, and `trailingLocality`,
 which is deprecated and scheduled for deletion at the next major.

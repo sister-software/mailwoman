@@ -13,11 +13,11 @@
 
 ## Training verdict (both runs — NEITHER promoted; v0.7.2 stays default)
 
-|                                        | per-tag gate                                                                    | harness                                                                                                 | verdict                                                                                          |
-| -------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| **ls=0.05**                            | postcode +4.2pp, but street −4.1 / venue −4.5 / house_number −2.4 (3 tags >2pp) | +1.6pp (20.2%)                                                                                          | **not promoted** — calibration trades postcode for street/venue; fails the gate, not significant |
-| **bare-street**                        | street −2.8pp (golden full-address streets shifted)                             | +0.9pp (19.5%); **usa +7pp** (22→29%) but **functional 2/34→1/34 — target missed**; net not significant | **not promoted** — redistributes (US harness up, golden street down), fails the gate             |
-| **bare-street v2 (continue, stopped)** | — (+4k steps only)                                                              | harness 20.7%; **functional STILL 1/34** (`main pl`/`10th ave` still → `locality`)                      | **not promoted** — the no-house-number fix did not move the cluster                              |
+|                                        | per-tag check                                                                   | harness                                                                                                 | verdict                                                                                           |
+| -------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| **ls=0.05**                            | postcode +4.2pp, but street −4.1 / venue −4.5 / house_number −2.4 (3 tags >2pp) | +1.6pp (20.2%)                                                                                          | **not promoted** — calibration trades postcode for street/venue; fails the check, not significant |
+| **bare-street**                        | street −2.8pp (golden full-address streets shifted)                             | +0.9pp (19.5%); **usa +7pp** (22→29%) but **functional 2/34→1/34 — target missed**; net not significant | **not promoted** — redistributes (US harness up, golden street down), fails the check             |
+| **bare-street v2 (continue, stopped)** | — (+4k steps only)                                                              | harness 20.7%; **functional STILL 1/34** (`main pl`/`10th ave` still → `locality`)                      | **not promoted** — the no-house-number fix did not move the cluster                               |
 
 **Post-handoff update (re-engaged on the auto-classifier's nudge): the bare-street v2 retry FAILED, and a budget caution.** v2 corrected the extract (47% pure-bare streets vs v1's ~9% — the diagnosed no-house-number gap, #310) and continue-trained the v1 checkpoint. At +4k steps the functional cluster did **not** budge — the model's bare-input→`locality` prior (100k steps deep) didn't yield. The bare-format-extract approach has now failed twice.
 
@@ -31,12 +31,12 @@
 
   **v0.7.2 baselines (the current default, kept as default):**
   - Harness (the operator's "v0 test-suite coverage"): **neural 18.6%** pass (77/415) vs v0 93.7%; both-pass 17.1%, v0-only 76.6%, neural-only 1.4%. Per-file: usa 22%, intersection 17%, functional 6%, fra 33%, nld 9%.
-  - Per-tag golden (the pre-publish gate): exact-match 31.4%; locality 39.1%, region 64.9%, postcode 79.3%, street 47.8%, house_number 80.5%.
+  - Per-tag golden (the pre-publish check): exact-match 31.4%; locality 39.1%, region 64.9%, postcode 79.3%, street 47.8%, house_number 80.5%.
   - Differentiators: the 22 falsehoods in the harness (`/tmp/v072-harness.json`).
 
 - **bare-street** (#308) — the harness change, from the analysis below. Val macro_f1 0.81. Result: usa +7pp but functional target missed, golden street −2.8pp → not promoted (verdict above).
 
-**ls=0.05 calibration — DONE, NOT PROMOTED (the staged fork is answered).** Per-tag vs v0.7.2: postcode **+4.2pp** (calibration's win) but **street −4.1, venue −4.5, house_number −2.4** (three tags regress >2pp → fails the pre-publish gate). Exact-match flat (31.2 vs 31.4). Harness +1.6pp (20.2% vs 18.6%) — real but not "significant," and the per-tag regressions disqualify it anyway. Verdict: ls=0.05 trades postcode for street/venue, net not a clean win; calibration is not the v0.8.0 change. The fork the operator staged is closed.
+**ls=0.05 calibration — DONE, NOT PROMOTED (the staged fork is answered).** Per-tag vs v0.7.2: postcode **+4.2pp** (calibration's win) but **street −4.1, venue −4.5, house_number −2.4** (three tags regress >2pp → fails the pre-publish check). Exact-match flat (31.2 vs 31.4). Harness +1.6pp (20.2% vs 18.6%) — real but not "significant," and the per-tag regressions disqualify it anyway. Verdict: ls=0.05 trades postcode for street/venue, net not a clean win; calibration is not the v0.8.0 change. The fork the operator staged is closed.
 
 **The harness analysis that drove the second run.** Broke down the 318 v0-only harness failures (where v0 passes, neural fails):
 
@@ -45,7 +45,7 @@
 
   So the honest answer to "can we move the harness tonight?": **the safe change (calibration) can't** (adds no coverage); **the bare-street change can, partially** (the in-distribution cluster); **the big gap (untrained locales) is blocked** on unsolved parser work.
 
-**Both runs were exported + evaluated** (per-tag `eval-error-analysis.ts` + `harness-v0-neural.ts` vs the v0.7.2 baselines). Neither cleared the promote gate (harness ↑ meaningfully AND no tag −2pp) — verdict table above. v0.7.2 stays the default; nothing uploaded to HF.
+**Both runs were exported + evaluated** (per-tag `eval-error-analysis.ts` + `harness-v0-neural.ts` vs the v0.7.2 baselines). Neither cleared the promote check (harness ↑ meaningfully AND no tag −2pp) — verdict table above. v0.7.2 stays the default; nothing uploaded to HF.
 
 ## What went well
 
@@ -61,10 +61,10 @@
 
 ## Decisions made autonomously
 
-- **Launched the ls=0.05 run early** (06:00, not the planned 12:00 gate) to maximize eval/react time, since the config was a clean single-variable fork reusing v0.7.2's exact corpus + tokenizer (low risk). Honest expectation logged: unlikely to clear the "significant harness gain" bar; run as a data point closing the staged fork.
+- **Launched the ls=0.05 run early** (06:00, not the planned 12:00 check) to maximize eval/react time, since the config was a clean single-variable fork reusing v0.7.2's exact corpus + tokenizer (low risk). Honest expectation logged: unlikely to clear the "significant harness gain" bar; run as a data point closing the staged fork.
 - **Launched the bare-street run** (concurrent, second A100) after the harness analysis showed a clean in-distribution change — and committed it (#308) before knowing the result. Honest call: a real, safe shot at the operator's harness goal; it didn't pan out, but the analysis + the `bareProb` feature are durable.
 - **Did NOT attempt the multi-locale parser retrain** (the 175/318 untrained-locale failures) — that's the unsolved German-collapse direction, the wrong thing to brute-force in an autonomous session.
-- **Did NOT promote either run** — both fail the per-tag >2pp gate and neither is significant. Default to don't-ship; v0.7.2 stays.
+- **Did NOT promote either run** — both fail the per-tag >2pp check and neither is significant. Default to don't-ship; v0.7.2 stays.
 - **Deferred #305, KR/TW** rather than spin on walled data / a byte-stable-path risk.
 
 ## Open questions for the operator

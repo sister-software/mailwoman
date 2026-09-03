@@ -77,7 +77,7 @@ This note is a thesis with one actionable extraction. To keep it from becoming a
 - **Not actionable:** the second vertical. Electric/gas is not started, scoped, or promised until the
   telecom vertical has a paying customer or a published artifact proving the thesis. One vertical
   proven beats two half-built, and the discipline that got 2a and 2b shipped was narrow phases with
-  pre-registered gates.
+  pre-registered checks.
 - **The delivery shape is already right.** The BDC spec's "the interface is an agent, not a form"
   holds here: the customer-facing product is an agent with a deterministic, provenance-carrying tool
   belt. This analysis is what that workflow looks like when the substrate exists — which is evidence

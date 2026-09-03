@@ -29,11 +29,11 @@
 #
 # 31,815 rows: 16,803 leading (FR DE ES IT NL PT MX) + 16,000 after_region (IN).
 #
-# PRE-REGISTERED GATE, tightened by what v4.8.0 measured:
+# PRE-REGISTERED CHECK, tightened by what v4.8.0 measured:
 #   1. the 11 venue-led rows v4.8.0 regressed must ALL hold — that is the defect this run exists to fix;
 #   2. FR, GB and DE show no regression anywhere (D-rule, iron rule 6);
 #   3. net improved-minus-regressed >= 0 on the full board;
-#   4. the 4 ve_city_postcode_trailing_state rows remain the IMPROVEMENT metric, not the gate.
+#   4. the 4 ve_city_postcode_trailing_state rows remain the IMPROVEMENT metric, not the check.
 #
 # WHAT v4.7.0 GOT WRONG, and it was not the dose. Its slice emitted the postcode only at the HEAD
 # (`const head = ... ${postcode} `), so every one of its 17,908 rows was postcode-LEADING. That was
@@ -82,7 +82,7 @@
 # Taiwanese toponyms are not places.
 #
 # COST of the expansion, measured rather than assumed: 0.778% of every epoch. country_weights is a
-# per-row admission gate applied INSIDE each source's stream, and the source multinomial fixes each
+# per-row admission check applied INSIDE each source's stream, and the source multinomial fixes each
 # source's draw share — so admitting CN's 11.36M rows does not buy CN 1.7% of the run. CN's rows live
 # almost entirely in wof-admin, which is 1.155% of draws, so CN lands at 0.368%.
 #
@@ -100,10 +100,10 @@
 # -> 16.10, a 9.4% share. v4.7.0 was 6 reps x 17,908 -> 18.17 at 10.5%. Nearly the same dose, twice the
 # surface breadth, and six reps is now arithmetically impossible at this row count.
 #
-# PRE-REGISTERED GATE (set before the run):
-#   1. the gated fraction does not lose a row;
+# PRE-REGISTERED CHECK (set before the run):
+#   1. the conditional fraction does not lose a row;
 #   2. FR and DE show no regression anywhere - iron rule 6, the D-rule;
-#   3. the 4 ve_city_postcode_trailing_state rows are the IMPROVEMENT metric, not the gate;
+#   3. the 4 ve_city_postcode_trailing_state rows are the IMPROVEMENT metric, not the check;
 #   4. WATCH: tier-1 must not regress from the 134-country admission. If it does, the expansion and the
 #      placement change are separable - re-run with the 25-country map to attribute.
 

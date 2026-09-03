@@ -11,7 +11,7 @@
 #
 # THE RECIPE = v2.3.0-nl-postcode-full (the shipped v5.4.0 lineage) VERBATIM, with EXACTLY these deltas:
 #   1. tokenizer_dir  → v0.8.0-fr-nsplice (v0.7.1's 63913 + 2406 FR diacritic pieces; md5 04995524…,
-#      #900 overlap gate PASS, US byte-identical by construction).
+#      #900 overlap check PASS, US byte-identical by construction).
 #   2. init_from      → /data/models/fr-nsplice-expanded — the v230-nl-postcode (v5.4.0) step-005000
 #      checkpoint's token_embeddings FVT mean-init-expanded 63913→66319 (mean_init_fr_nsplice, the
 #      pytorch-checkpoint twin of the onnx-mean-init that produced the staged v240 candidate; same FVT
@@ -25,7 +25,7 @@
 # config (crf_loss_weight 0.0; conventions loss-mask absent=OFF), anchor/gaz knobs, class_weights, seed
 # 42, batch 128, bf16 — is v230-VERBATIM, so the SPLICED VOCAB + its gradient steps are the only variable.
 #
-# GATE when it lands (operator reviews; do NOT auto-promote): mangle rate < 23.5% baseline (the #444
+# CHECK when it lands (operator reviews; do NOT auto-promote): mangle rate < 23.5% baseline (the #444
 # metric, scripts/eval/fr-accent-mangle-rate.ts); Honoré + René repros flip to HIT; gauntlet held-out FR
 # + US z-tests via --candidate + --candidate-tokenizer v0.8.0-fr-nsplice (a model-only swap leaves the
 # new rows dormant); non-FR byte-stability. NaN protocol: if the first checkpoints are NaN/inf, stop.
@@ -172,14 +172,14 @@ train: # #444 vocab-splice INIT_FROM FINE-TUNE (the v1.9.7/v2.1.0 idiom: fresh o
   grad_accum_steps: 1
   # 5.0e-5 = the vocab-splice fine-tune LR (v1.9.7/v1.9.8/v1.9.9/v2.1.0), 5× v230's same-vocab 1e-5 —
   # the mean-init FR rows must MOVE off the inherited O-signal; drift on the trained encoder/US is
-  # guarded by the US byte-identity + non-inferiority gate. Constant schedule, warmup 200.
+  # guarded by the US byte-identity + non-inferiority check. Constant schedule, warmup 200.
   learning_rate: 5.0e-5
   weight_decay: 0.01
   warmup_steps: 200
   grad_clip_norm: 1.0
-  # 12000 steps, eval/save every 2000 (6 gated checkpoints) — the fuller splice-fine-tune length
+  # 12000 steps, eval/save every 2000 (6 conditional checkpoints) — the fuller splice-fine-tune length
   # (v1.9.8/v2.1.0); FR overcomes a STRONGER O-prior than the CZ/PL/Nordic splices. ~1/8 the from-scratch
-  # 100k schedule → a short fine-tune. Operator gates the best checkpoint when it lands (no auto-promote).
+  # 100k schedule → a short fine-tune. Operator checks the best checkpoint when it lands (no auto-promote).
   max_steps: 12000
   eval_every_steps: 2000
   save_every_steps: 2000

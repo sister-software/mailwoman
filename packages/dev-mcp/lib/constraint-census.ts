@@ -73,7 +73,7 @@ interface CensusDatabase {
 
 type OpenCensusArtifact = (path: string | undefined) => { db: CensusDatabase } | { unavailable: string }
 
-interface GateReading {
+interface CheckReading {
 	checks: string
 	fired: number
 	resolved_nothing: number
@@ -99,13 +99,13 @@ export interface ConstraintCensusResult {
 	 * with the column above.
 	 */
 	n_coverage: number
-	checks: GateReading[]
+	checks: CheckReading[]
 	/**
 	 * Reachability classes, largest first: which band was probed, and which bands actually hold the key. The largest
 	 * class is the one a cross-band retry should try first.
 	 */
 	by_band: Array<{ probed: string; found_in: string[]; n: number; examples: ConstraintMiss[] }>
-	inert_gates: string[]
+	inert_checks: string[]
 	misses: ConstraintMiss[]
 	rendered: string
 }
@@ -138,7 +138,7 @@ function render(result: Omit<ConstraintCensusResult, "rendered">): string {
 		`  key exists in another band : ${result.n_reachability}  ← reachability, a retrieval fix`,
 		`  key exists nowhere         : ${result.n_coverage}  ← coverage, a data fact`,
 		"",
-		`  ${"gates".padEnd(46)} fired   nothing  reachable`,
+		`  ${"checks".padEnd(46)} fired   nothing  reachable`,
 	]
 
 	for (const g of result.checks) {
@@ -149,10 +149,10 @@ function render(result: Omit<ConstraintCensusResult, "rendered">): string {
 		)
 	}
 
-	if (result.inert_gates.length) {
+	if (result.inert_checks.length) {
 		lines.push(
 			"",
-			`  INERT — fired ≥${INERT_MIN_FIRINGS} times and NEVER accompanied a pick: ${result.inert_gates.join(", ")}`
+			`  INERT — fired ≥${INERT_MIN_FIRINGS} times and NEVER accompanied a pick: ${result.inert_checks.join(", ")}`
 		)
 	}
 
@@ -215,8 +215,8 @@ export async function runConstraintCensus(
 
 				if (rec.picked) {
 					// A constraint that ever accompanies a pick is not inert, whatever its miss rate.
-					for (const gate of rec.checks) {
-						pickedUnder.add(gate)
+					for (const check of rec.checks) {
+						pickedUnder.add(check)
 					}
 
 					continue
@@ -246,7 +246,7 @@ export async function runConstraintCensus(
 
 	const reachability = misses.filter((m) => m.elsewhere.length)
 
-	const checks: GateReading[] = [...fired.entries()]
+	const checks: CheckReading[] = [...fired.entries()]
 		.map(([g, n]) => ({
 			checks: g,
 			fired: n,
@@ -257,17 +257,17 @@ export async function runConstraintCensus(
 		}))
 		.toSorted((a, b) => b.fired - a.fired)
 
-	const firingsPerGate = new Map<string, number>()
+	const firingsPerCheck = new Map<string, number>()
 
 	for (const [set_, n] of fired.entries()) {
-		for (const gate of set_.split("+")) {
-			firingsPerGate.set(gate, (firingsPerGate.get(gate) ?? 0) + n)
+		for (const check of set_.split("+")) {
+			firingsPerCheck.set(check, (firingsPerCheck.get(check) ?? 0) + n)
 		}
 	}
 
-	const inert = [...firingsPerGate.entries()]
-		.filter(([gate, n]) => n >= INERT_MIN_FIRINGS && !pickedUnder.has(gate) && gate !== "(none)")
-		.map(([gate, n]) => `${gate} (${n} firings)`)
+	const inert = [...firingsPerCheck.entries()]
+		.filter(([check, n]) => n >= INERT_MIN_FIRINGS && !pickedUnder.has(check) && check !== "(none)")
+		.map(([check, n]) => `${check} (${n} firings)`)
 		.toSorted()
 
 	const classes = new Map<string, ConstraintMiss[]>()
@@ -296,13 +296,13 @@ export async function runConstraintCensus(
 		n_coverage: misses.length - reachability.length,
 		checks,
 		by_band: byBand,
-		inert_gates: inert,
+		inert_checks: inert,
 		misses,
 		summary:
 			`${misses.length} of ${lookups} lookups over ${set.inputs.length} rows resolved nothing. ` +
 			`${reachability.length} hold the key in another band (retrieval), ${misses.length - reachability.length} ` +
 			`hold it nowhere (coverage) — never summed. ` +
-			(inert.length ? `INERT: ${inert.join(", ")}.` : "No gate reached the inert threshold."),
+			(inert.length ? `INERT: ${inert.join(", ")}.` : "No check reached the inert threshold."),
 	}
 
 	return { ...base, rendered: render(base) }

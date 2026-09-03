@@ -23,7 +23,7 @@ Delete this section when the change is not a fix.
 
 - [ ] A test fails without this change (revert the fix and confirm, when the PR is a fix).
 - [ ] CI green — `yarn ci:test` passes.
-- [ ] D-rule: no known regression on any tier-1 locale vs shipped, or stated with its per-locale gate
+- [ ] D-rule: no known regression on any tier-1 locale vs shipped, or stated with its per-locale check
       (`docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`).
 - [ ] The linked issue's task list is fully checked.
 - [ ] Every number in this description has its denominator; every WOF id has its entity name.

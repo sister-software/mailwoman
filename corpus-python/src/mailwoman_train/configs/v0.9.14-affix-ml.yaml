@@ -1,5 +1,5 @@
 # === v0.9.14-affix-ml (#466 step 1) — the AFFIX MULTI-LOCALE REROLL ==============================
-# ONE conceptual variable vs v0.9.8-affix (the gated affix change): the affix slice is now MULTI-LOCALE.
+# ONE conceptual variable vs v0.9.8-affix (the conditional affix change): the affix slice is now MULTI-LOCALE.
 # Corpus v0.4.11-affix-ml = v0.4.6-affix with the US-only synth-affix slice SWAPPED for a multi-locale
 # one (50K US affix splits — identical dose to v0.9.8 — PLUS 40K native-order FR/DE/IT/NL balance rows,
 # no affix split, no annotation). Everything else is held EXACTLY at v0.9.8: same recipe (postcode
@@ -7,7 +7,7 @@
 # NO gazetteer anchor here — that + its choreography fold in at CONSOLIDATION (#466). This is a clean
 # SOLO A/B: does multi-locale balance clear the FR-postcode dilution WITHOUT losing the affix win?
 #
-# WHY. v0.9.8 cleared the affix gate (street_prefix 0→78, street_suffix 0→67, P100; US street +2.1
+# WHY. v0.9.8 cleared the affix check (street_prefix 0→78, street_suffix 0→67, P100; US street +2.1
 # negative-space) but its ONE blemish was FR postcode −3.9 — a US-ONLY slice (every row "City, ST ZIP")
 # strengthened the US postcode-after-region pattern and diluted FR's postcode-BEFORE-locality order.
 # The night-9 cumulative country run PROVED the recovery: its multi-locale rows lifted FR postcode
@@ -15,7 +15,7 @@
 # 2026-06-09, and docs/articles/plan/2026-06-09-parity-endgame.mdx move 2). The US affix EXPOSURE is
 # unchanged (50K US rows at weight 2.0 = same weighted mass as v0.9.8); the balance rows are additive.
 #
-# PRE-REGISTERED GATE (stop at 20k), fp32-to-fp32 vs v4.1.0 / v0.9.8:
+# PRE-REGISTERED CHECK (stop at 20k), fp32-to-fp32 vs v4.1.0 / v0.9.8:
 #   - RECOVER FR postcode: FR postcode F1 >= v4.1.0 (undo the −3.9; back within ~1pp).
 #   - RETAIN the affix win: street_suffix F1 >= 65% AND street_prefix F1 >= 70% on the real-affix eval
 #     (data/eval/external/street-affix-real.jsonl) — at or above v0.9.8 (78/67).

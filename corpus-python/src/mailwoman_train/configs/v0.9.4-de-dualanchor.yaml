@@ -15,11 +15,11 @@
 #
 # SINGLE VARIABLE: identical to v0.9.3-de-regiontail EXCEPT model.inject_first_token=true. NO corpus,
 # data-pipeline, or inference change — the model pools the per-token anchor (gather by max-confidence,
-# the postcode span) and adds it at position 0, gated by that confidence so the c=0 identity holds. The
+# the postcode span) and adds it at position 0, blocked by that confidence so the c=0 identity holds. The
 # ONNX captures it (4-input, unchanged inference). De-risked: corpus-python test_anchor_channel.py
 # (c=0 identity + position-0 signal + save/load + export-equivalent to the per-token-only baseline).
 #
-# PRE-REGISTERED GATE (DeepSeek-signed; stop at 20k):
+# PRE-REGISTERED CHECK (DeepSeek-signed; stop at 20k):
 #   - anchor-ON international >= anchor-ON native - 10pp (gap <= 10pp) — SUCCESS: dual-injection works,
 #     the first-token cue lets the anchor help international order too.
 #   - NATIVE-order DE locality >= 80% (hold ~83) · US/FR within ~1pp · cross_pollution < 1% — no
@@ -69,7 +69,7 @@ data:
     synth-po-box: 1.5
     synth-intersection: 0.2
     # German at ~18% of the mix — same weight as v0.9.1; the ONLY change is the slice now carries both
-    # orders. THE key tunable if a gate lags: raise for more DE, lower if US/FR slip the 1pp regression check.
+    # orders. THE key tunable if a check lags: raise for more DE, lower if US/FR slip the 1pp regression check.
     synth-german: 6.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

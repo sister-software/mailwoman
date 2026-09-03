@@ -508,7 +508,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 	}
 
 	if (fails.length) {
-		console.log(`\nNEW violations (gate-failing):`)
+		console.log(`\nNEW violations (check-failing):`)
 
 		for (const f of fails) {
 			console.log(f)

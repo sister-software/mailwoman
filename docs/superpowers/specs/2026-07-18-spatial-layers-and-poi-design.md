@@ -117,7 +117,7 @@ adds the amenity/brand/intent half and re-homes venue data as layer #1.
 
 - New `QueryKind` union member `poi_query` (`core/pipeline/types.ts`).
 - New scorer in `kind-classifier` (template: `scoreVenueLandmark`): lexicon hit on a
-  category/brand phrase, with the already-reserved `locale` param gating locale-specific
+  category/brand phrase, with the already-reserved `locale` param blocking locale-specific
   aliases. The classifier's "no place-name dictionaries" docstring invariant is relaxed
   deliberately: the lexicon lives in `variant-aliases` data and is injected, not hardcoded.
 - Anchor split: on a `poi_query` hit, the subject phrase is stripped and the remainder
@@ -175,7 +175,7 @@ ISP-adjacent categories are one slice of it. It therefore splits from `variant-a
 - Build: `mailwoman gazetteer build poi` (Overture places ingest; the divisions ingest is
   precedent). Scope: **all currently supported locales' countries (US, CA, MX, FR)** —
   operator decision. California rows cover the demo-preset acceptance probes (Pier 39 /
-  Golden Gate Park). Demo (Tier A pocket) inclusion is a separate budget review.
+  Golden Check Park). Demo (Tier A pocket) inclusion is a separate budget review.
 - Venue resolve half (placetypeMap `venue` entry, resolve.ts venue pass) proceeds per the
   Fable spec Phase 1; poi.db serves both the venue lookup and category/brand search.
 
@@ -187,7 +187,7 @@ they live in OSM and in Overture's _base_ theme, both ODbL. Ship `poi build --so
 The category lexicon still recognizes these subjects when the layer is absent — the answer is
 then "requires the locally-built OSM layer," not a mangled parse.
 
-### 3.6 Gates (pre-registered)
+### 3.6 Checks (pre-registered)
 
 - Golden 2pp guard with the `poi_query` scorer live; byte-identical parses for non-POI queries.
 - Curated POI query board (the class-1/9 probe table + amenity/brand/infra fixtures) with

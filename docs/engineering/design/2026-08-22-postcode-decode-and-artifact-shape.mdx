@@ -126,7 +126,7 @@ The first proposal was to return `Array<[state, share]>` and let a threshold dec
 fails:
 
 ```
-cut     kept   plausible   implausible   precision
+reduce     kept   plausible   implausible   precision
 0.00     749        195           554      26.0%
 0.10     249         77           172      30.9%
 0.30      76         36            40      47.4%
@@ -228,7 +228,7 @@ carries the answer: `T0H 1M0` is rural, `M1J 1A8` is not. The urban half shipped
 `UNIT_GRADE_POSTCODE`; the rural half is excluded by that one character.
 
 **The pooled number would have been a trap.** Across both populations CA reads 0.10 km p50, which
-looks like a uniform win and is not one. Gating on the character beats promoting the country
+looks like a uniform win and is not one. Blocking on the character beats promoting the country
 _measurably_ — the shipped result now beats blanket postcode-first on every percentile (p90 1.88 km
 vs 3.26, ≤1 km 86.2% vs 82.3%), because rural keeps the locality.
 

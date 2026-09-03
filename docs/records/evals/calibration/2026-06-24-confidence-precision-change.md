@@ -43,7 +43,7 @@ The high-confidence bucket outperforms the low-confidence bucket by 13.8pp out-o
 | PL     |  80 |             28% |    36% | building — correctly low confidence |
 | AU     |  72 |             63% |    53% | building                            |
 
-The discrimination is the model flagging its own coverage. Where mailwoman has gazetteer depth (US, IT, FR) it is both precise and confident; where coverage is still being built (PL, PT, AU) it is correctly unsure, so a τ threshold removes exactly those answers. That is the asset: for a caller who must avoid wrong answers — a record-matcher deduping compliance data, say — the threshold cuts the error rate by trusting only the answers the model stands behind. Coverage breadth is a separate axis, tracked elsewhere.
+The discrimination is the model flagging its own coverage. Where mailwoman has gazetteer depth (US, IT, FR) it is both precise and confident; where coverage is still being built (PL, PT, AU) it is correctly unsure, so a τ threshold removes exactly those answers. That is the asset: for a caller who must avoid wrong answers — a record-matcher deduping compliance data, say — the threshold reduces the error rate by trusting only the answers the model stands behind. Coverage breadth is a separate axis, tracked elsewhere.
 
 ## What this report does NOT claim
 

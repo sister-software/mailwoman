@@ -56,8 +56,8 @@ exposure for:
 > US, FR, DE, ES, IT, NL, PT, BE, PL, AT, CH, CZ, DK, NO, SE, FI, IE, GB, SK, SI, HR, HU, AU
 
 AU is trained via the `gnaf` source (weight 6.0) in the same block. The tiering of these claims
-(which are floor-gated vs thinly measured) is `docs/articles/plan/SCOPE.mdx:44-48`:
-Tier 1 US/FR (floor-gated), Tier 2 IT/PT/PL/AT/CZ/DE/AU/BE/ES/NL/CH/HR/DK/FI (coordinate-paneled),
+(which are floor-conditional vs thinly measured) is `docs/articles/plan/SCOPE.mdx:44-48`:
+Tier 1 US/FR (floor-conditional), Tier 2 IT/PT/PL/AT/CZ/DE/AU/BE/ES/NL/CH/HR/DK/FI (coordinate-paneled),
 Tier 3 NO/SE (thin), Tier 4 CZ/PL/SK/SI (diacritic splice), Tier 5 JP (resolver-route only, **no
 parser training claim**).
 

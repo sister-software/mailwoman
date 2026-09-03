@@ -387,7 +387,7 @@ function renderReport(
 		`- **Unique tokens:** ${slice.tokens.size}`,
 		`- **Unique bigrams:** ${slice.bigrams.size}`,
 		"",
-		`**Errors:** ${errors.length} (gates the slice's inclusion unless MANIFEST sets \`lint_acknowledged: true\`)`,
+		`**Errors:** ${errors.length} (checks the slice's inclusion unless MANIFEST sets \`lint_acknowledged: true\`)`,
 		`**Warnings:** ${warns.length} (advisory)`,
 		"",
 	]

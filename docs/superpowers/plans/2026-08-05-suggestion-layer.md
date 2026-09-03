@@ -79,7 +79,7 @@ that is "abbreviation-expanded" — `key.ts:16-19` says expansion is deliberatel
 | Widened-span merge rule             | `neural/span-bridge.ts:129`                                                                   | `Math.min` of the two, not the mean                                                                                       |
 | `PipelineResult.faults`             | `core/pipeline/types.ts:501`, type `:460`, stages `:444-448`                                  | Three stage values only (`classifier`, `phrase-grouper`, `resolver`); `name` is the thrown value's constructor name       |
 | Fault propagation                   | —                                                                                             | **Stops at the pipeline boundary.** `faults` appears nowhere in `mailwoman/geocode-core.ts`, `api/`, or `apps/`           |
-| `minWinningScore`                   | `core/resolver/types.ts:383`, default `resolve.ts:762`, gate `:1112`                          | Default 0. Set by exactly one caller in the tree: `resolver/resolve.test.ts:306`. Built, uncalled                         |
+| `minWinningScore`                   | `core/resolver/types.ts:383`, default `resolve.ts:762`, check `:1112`                         | Default 0. Set by exactly one caller in the tree: `resolver/resolve.test.ts:306`. Built, uncalled                         |
 | Postcode abstention (#1480)         | `resolver-wof-sqlite/candidate-lookup.ts:437-443`, cause `:433-436`                           | Skips the trigram rung for postcode-typed queries. **Stamps nothing** — a silent empty return                             |
 | The stamp idiom                     | `resolver/resolve.ts:329`, `:1155`, `:1168`, `:1175`, `postcode-country-coherence.ts:289-290` | ~20 `metadata` keys, no registry, no type. The deletion list at `resolve.ts:509-517` is the closest thing                 |
 | The one stamp that reaches a caller | `mailwoman/geocode-core.ts:868`, `:144`, `api/schema.ts:153`                                  | `postcode_country_scope`. Its sibling `postcode_country_scope_km` does not                                                |
@@ -158,7 +158,7 @@ single-record path either ships a prebuilt table or drops the adjustment and say
 | Degenerate duplicate venue  | `cases/regression.ts:3214-3224`, `us-op3-island-lake-duplicate-degenerate` | 1         | `improvement_target`, and its note records the schema gap: the table cannot express "expect no coordinate" |
 | Metamorphic DIR             | `gauntlet/metamorphic.ts:420-434`, bases `:67-81`                          | **3**     | Dropping a 5-digit postcode must land within 5 km of the with-postcode anchor                              |
 
-The mailfail fixture's own commit message says it was committed "so these cases can become a gate".
+The mailfail fixture's own commit message says it was committed "so these cases can become a check".
 It never did — there is no `mailfail-board.ts` beside `digit-board.ts` / `fragment-board.ts` /
 `poi-board.ts`. The only executable residue is `core/pipeline/runtime-pipeline.test.ts:803-882`,
 which asserts the fault contract against synthetic throwing stubs and says nothing about the 105
@@ -174,7 +174,7 @@ names this in its own text.
 - **The round trip is a boundary with a missing half.** Parse, resolve and render all ship; the diff
   between the render and the input has never been computed once, anywhere.
 - **The abstention signal exists and is upstream of everything.** Span confidence is on the node, in
-  `[0, 1]`, on both backends. The gate that would read it (`minWinningScore`) reads the wrong field
+  `[0, 1]`, on both backends. The check that would read it (`minWinningScore`) reads the wrong field
   and no caller sets it.
 - **Attribution is the hard part, and it is missing by one field in three places.** Of the eight
   answer-changing mechanisms in A.3, two stamp what they did and exactly one of those two reaches a
@@ -182,7 +182,7 @@ names this in its own text.
   `candidate-lookup.ts:450`) or record it behind a flag nothing sets (`traceRepairs`).
 - **The entity tier is corpus-shaped**, so the second suggestion tier needs one new function, not a
   new package.
-- **The garbage board is committed and ungated**, which means the layer's most important bar can be
+- **The garbage board is committed and unconditional**, which means the layer's most important bar can be
   written today against material that already exists.
 
 ## Part B — Measurements
@@ -239,7 +239,7 @@ the 39 non-identical rows under the shipped default, re-split by cause:
    render reproduces the input's tokens, so the case-and-punctuation fold classes it as cosmetic.
    **A token-level fold cannot be the diff's only lens** — B1-4's reversibility bar exists to catch
    exactly this row.
-4. **The 26 "material" rows are mostly parse defects on rows the coordinate gate passes.**
+4. **The 26 "material" rows are mostly parse defects on rows the coordinate check passes.**
    `s1b-probe.ts` dumps the components for six of them, and the result is the finding that justifies
    the whole diff:
 
@@ -265,7 +265,7 @@ Neusser Str. 12, Nippes, 50733 Köln
   has no slot for it, so the render drops it)
 ```
 
-Three of these carry `status=pass` and resolve to the correct rooftop. **The coordinate gate cannot
+Three of these carry `status=pass` and resolve to the correct rooftop. **The coordinate check cannot
 see a venue/locality slot swap, and one round-trip render exposes it in a single line.** The last row
 is the opposite case and the reason attribution matters: `Park Slope` was parsed correctly and lost
 in the RENDER, because `DEPENDENT_LOCALITY_SLOTS.postRender` (`formatter/format.ts:83`) covers ES and
@@ -320,7 +320,7 @@ Per locale, which is the ablation map's first row:
 | PR     | 3   | 2           | 1           |
 | VI     | 3   | 3           | 0           |
 
-**Three findings, and the third is the one that gates the completion nudge.**
+**Three findings, and the third is the one that checks the completion nudge.**
 
 1. **The postcode's value is locale-shaped, by a factor of five.** Deleting a US ZIP leaves 81.8% of
    rows inside 5 km; deleting a GB postcode leaves 48.9%, and sends 42.6% more than 100 km away. On
@@ -380,11 +380,11 @@ suggesting rows by committed bar
 suggesting rows by class
   script 20   adversarial 17   numeric 16   structured 14   degenerate 4   symbolic 3   size 2
 
-max span confidence cut, applied to the 76
+max span confidence reduce, applied to the 76
   >= 0.5     66 survive
   >= 0.8     28 survive
   >= 0.9      8 survive
-  >= 0.918    7 survive     (the 2026-08-04 characterization's cut)
+  >= 0.918    7 survive     (the 2026-08-04 characterization's reduce)
   >= 0.95     1 survive
 ```
 
@@ -392,7 +392,7 @@ max span confidence cut, applied to the 76
 
 1. **Three quarters of the garbage board produces a suggestion today.** That is the population the
    guards exist to suppress, and it is the number the ZERO-suggestions bar is written against.
-2. **A confidence cut alone cannot reach zero, and it fails in the most instructive direction.** At
+2. **A confidence reduce alone cannot reach zero, and it fails in the most instructive direction.** At
    `>= 0.95` the single survivor is `+1 (555) 867-5309` → `"1, 867-5309"` at **0.964** — the same
    phone number the 2026-08-04 review found at the top of its violation set. It is the
    highest-confidence row in the entire garbage board, higher than any real address in it. The
@@ -466,7 +466,7 @@ interface Suggestion {
 	after: string | null
 	/**
 	 * `family:rule`, per the `PhraseProposal.source` convention (`core/pipeline/span-proposer.ts:360`).
-	 * Never `"unknown"` — an unattributable change is a bug in the pass that made it, and B1-3 gates
+	 * Never `"unknown"` — an unattributable change is a bug in the pass that made it, and B1-3 checks
 	 * on that.
 	 */
 	mechanism: string
@@ -544,7 +544,7 @@ conditioned on whether the input carried a country token, not on the formatter's
 
 **D-rule.** Opt-in behind `suggest`, default-OFF. It changes no answer — it only reports — so the
 promotion question is about the SUGGESTION's precision, not about resolution accuracy. That is a
-different gate set and it gets its own record.
+different check set and it gets its own record.
 
 **Pre-registered bars.**
 
@@ -653,7 +653,7 @@ question — the registry's own corpus, or a customer's. The term-frequency tabl
 (`match/tf.ts:83`) is corpus-fitted, so the single-record path either ships a prebuilt table or drops
 the adjustment and declares it in the result.
 
-**D-rule.** Opt-in behind `entitySnap`, default-OFF, and gated behind Mechanism 1's bars — a snap on
+**D-rule.** Opt-in behind `entitySnap`, default-OFF, and blocked behind Mechanism 1's bars — a snap on
 top of a wrong render is a confident wrong answer, which is the failure mode the whole document
 exists to avoid.
 

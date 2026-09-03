@@ -32,7 +32,7 @@ Newtownabbey 4, Londonderry/Derry 3, Lisburn 2). Fold-collision audit against th
 ## Pre-registered bars
 
 - **B-R7.1 (no regression).** Full gauntlet + the GB boards, index rebuilt with the NI pairs. Bar:
-  **zero newly-failing gated cases**, and the GB cross-check reproduces at its new expected total.
+  **zero newly-failing counted cases**, and the GB cross-check reproduces at its new expected total.
 - **B-R7.2 (venue-confound floor).** A held-out NI confound board built from the **8 law-1
   directional** surfaces (East/North/South Belfast, Upper Malone, Upper/Lower Shankill, Lower
   Springfield, New Barnsley) plus a sample of the rest, each opening a venue name. These are the
@@ -47,14 +47,14 @@ Newtownabbey 4, Londonderry/Derry 3, Lisburn 2). Fold-collision audit against th
 ## Ireland stays open, and the reason is not data
 
 The Republic needs a **carrier package** (`en-IE`) before any artifact can reach it — the pair index
-is hard-gated on the resolved locale's country, so an IE artifact inside en-GB would never fire.
+is hard-blocked on the resolved locale's country, so an IE artifact inside en-GB would never fire.
 That is a packaging decision plus the still-open licence survey (Tailte Éireann / logainm), not a
 rung that can be executed off the shelf like this one.
 
 ## The readings
 
 - **B-R7.1 PASS.** GB index rebuilds to **20,126** distinct pairs (19,209 PPD + 917 secondary = 15
-  borough + 815 London + 87 NI), CROSS-CHECK PASS. Full gauntlet green with two new NI gated cases;
+  borough + 815 London + 87 NI), CROSS-CHECK PASS. Full gauntlet green with two new NI counted cases;
   neural + gazetteer-pipeline suites **600/600**.
 - **B-R7.2 PASS.** 30-row NI confound board — all 8 law-1 directional surfaces (East/North/South
   Belfast, Upper Malone, Upper/Lower Shankill, Lower Springfield, New Barnsley) plus 22 others, each
@@ -73,7 +73,7 @@ release path builds all three indexes) materialized a release-config `model.onnx
 symlink, and the next gauntlet run failed the #1024 model-card drift guard — materialized md5
 `cb0527b5…` against the card's `c968c24a…`. Not an NI failure at all. `copy-weights` writes
 RELEASE artifacts into the dev packages; re-run `link-dev-weights` after using it to verify the
-release path, or the next gate reads the wrong model.
+release path, or the next check reads the wrong model.
 
 ## Verdict
 

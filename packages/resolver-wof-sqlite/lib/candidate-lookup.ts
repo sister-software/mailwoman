@@ -127,11 +127,11 @@ function wordFuzzySimilarity(a: string, b: string): number {
 
 /**
  * Postcode-containment re-rank check radius (km) — the SAME value the resolver's country pass measures at
- * (`POSTCODE_COUNTRY_COHERENCE_GATE_KM`, resolver/postcode-country-coherence.ts): a locality within this distance of
- * the postcode's own centroid counts as "containing" it. One number, two passes — a divergence here would make the two
- * mechanisms disagree about what is proximal.
+ * (`POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM`, resolver/postcode-country-coherence.ts): a locality within this distance
+ * of the postcode's own centroid counts as "containing" it. One number, two passes — a divergence here would make the
+ * two mechanisms disagree about what is proximal.
  */
-const POSTCODE_CONTAINMENT_GATE_KM = 25
+const POSTCODE_CONTAINMENT_THRESHOLD_KM = 25
 
 /**
  * Unpadded character-trigrams of `s`, OR'd into an FTS5 trigram MATCH query (each quoted so FTS treats it as a literal
@@ -852,23 +852,23 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 			const anchor = this.#postcodeAnchor(query.postcode, query.country)
 
 			if (anchor) {
-				const inGate: Array<{ row: RankedRow<CandidateRow>; distanceKm: number }> = []
-				const outGate: RankedRow<CandidateRow>[] = []
+				const insideThreshold: Array<{ row: RankedRow<CandidateRow>; distanceKm: number }> = []
+				const outsideThreshold: RankedRow<CandidateRow>[] = []
 
 				for (const row of rows) {
 					const distanceKm = haversineKm(anchor.lat, anchor.lon, Number(row.latitude), Number(row.longitude))
 
-					if (distanceKm <= POSTCODE_CONTAINMENT_GATE_KM) {
-						inGate.push({ row, distanceKm })
+					if (distanceKm <= POSTCODE_CONTAINMENT_THRESHOLD_KM) {
+						insideThreshold.push({ row, distanceKm })
 					} else {
-						outGate.push(row)
+						outsideThreshold.push(row)
 					}
 				}
 
-				if (inGate.length) {
+				if (insideThreshold.length) {
 					// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
-					inGate.sort((a, b) => a.distanceKm - b.distanceKm)
-					rows = [...inGate.map(({ row }) => row), ...outGate]
+					insideThreshold.sort((a, b) => a.distanceKm - b.distanceKm)
+					rows = [...insideThreshold.map(({ row }) => row), ...outsideThreshold]
 				}
 			}
 		}

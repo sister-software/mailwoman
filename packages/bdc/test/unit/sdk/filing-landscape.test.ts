@@ -182,7 +182,7 @@ function openFixture(): DatabaseClient<BDCDatabase> {
 	return new DatabaseClient<BDCDatabase>(out, { readOnly: true })
 }
 
-describe("filingLandscape — Gate 1: contract conformance", () => {
+describe("filingLandscape — Check 1: contract conformance", () => {
 	it("reads a manifest whose spine is res-9 h3, and stores h3_cell byte-compatible with shortCellToInt(latLngToCell(...))", async () => {
 		using db = openFixture()
 		const contractDB = db
@@ -206,7 +206,7 @@ describe("filingLandscape — Gate 1: contract conformance", () => {
 	})
 })
 
-describe("filingLandscape — Gate 2: meaning-of-zero", () => {
+describe("filingLandscape — Check 2: meaning-of-zero", () => {
 	it("reports a geoid absent from the fixture in unknown_block_count, never as a zero-filing claim", async () => {
 		using db = openFixture()
 		const contractDB = db
@@ -234,7 +234,7 @@ describe("filingLandscape — Gate 2: meaning-of-zero", () => {
 	})
 })
 
-describe("filingLandscape — Gate 2 (extended): coverage-check is required, not a rows-shortcut proxy", () => {
+describe("filingLandscape — Check 2 (extended): coverage-check is required, not a rows-shortcut proxy", () => {
 	// criterion 2 above never reaches `readLayerCoverage` — GEOID_UNKNOWN has zero rows, so it's classified unknown by
 	// the "no candidate cell" shortcut alone, and the coverage-check branch can be deleted outright without turning
 	// it red. These two tests target that branch directly: (a) a geoid WITH rows whose coverage row is deliberately
@@ -340,7 +340,7 @@ describe("filingLandscape — builder/reader coverage-cell unification", () => {
 	})
 })
 
-describe("filingLandscape — Gate 3: hand-verified census", () => {
+describe("filingLandscape — Check 3: hand-verified census", () => {
 	it("returns the exact ProviderFilingSummary[] for 2 providers over 2 blocks", async () => {
 		using db = openFixture()
 
@@ -390,7 +390,7 @@ describe("filingLandscape — Gate 3: hand-verified census", () => {
 	})
 })
 
-describe("filingLandscape — Gate 4: vintage-or-throw", () => {
+describe("filingLandscape — Check 4: vintage-or-throw", () => {
 	it("throws when the manifest row is missing, rather than answering unstamped", async () => {
 		await using corruptScratch = await temporaryDirectory("bdc-filing-landscape-corrupt-")
 		const corruptOut = corruptScratch.resolve("bdc.db")

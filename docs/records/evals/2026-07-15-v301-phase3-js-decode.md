@@ -21,7 +21,7 @@ country channels **fed**, against the real 0.573 baseline.
 | oracle@5                      | 0.663                            | **0.7228**                    |
 | oracle@10                     | 0.749                            | **0.7753**                    |
 
-Phase 1's +7.9pp was measured in the channel-starved Python gate, where `token@1` reads 0.4906
+Phase 1's +7.9pp was measured in the channel-starved Python check, where `token@1` reads 0.4906
 instead of 0.5693. **A large part of that gap was the BIO head's starvation, not the span head's
 strength.** Feed the channels and the BIO head recovers most of it. The Phase-1 doc flagged the
 absolutes as non-comparable; it did not anticipate that the _margin_ would shrink this much, and the
@@ -98,7 +98,7 @@ includes the decode-side marshalling, not just the graph. Reproducible via
 `neural-web/span-slo.bench.test.ts` (reported, never asserted — a wall-clock threshold in CI is a
 flake generator).
 
-Combined with Phase 2's size gate (+0.22 MB int8, +0.57%), the browser cost of carrying the span head
+Combined with Phase 2's size check (+0.22 MB int8, +0.57%), the browser cost of carrying the span head
 is **+0.5% latency and +0.6% download** — and that is while _reading_ the spans. A browser that never
 decodes them pays neither.
 
@@ -109,6 +109,6 @@ is the speculative structure this project keeps refusing (cf. the `<= -0.5` impo
 ## Next
 
 Phase 4 is now the whole ballgame: resolver rerank over the k-best list + the isotonic calibration for
-the ambiguity gate + option C (kind-posterior + recall-weighted loss) for the 17 locality-refusals the
+the ambiguity check + option C (kind-posterior + recall-weighted loss) for the 17 locality-refusals the
 span head provably does not fix. The headroom is measured (oracle@5 0.723 vs shipped 0.573); the
 question is how much of it evidence-based reranking can actually collect.

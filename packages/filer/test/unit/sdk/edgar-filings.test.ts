@@ -116,7 +116,7 @@ describe("parseCIKLookupData", () => {
 	})
 })
 
-describe("resolveCIKCandidates — the no-name-only-match gate (required, 3a's false-identity-link lesson)", () => {
+describe("resolveCIKCandidates — the no-name-only-match check (required, 3a's false-identity-link lesson)", () => {
 	const NAMESAKE_TICKERS: CompanyTickerEntry[] = [
 		{ cik: toCIK("0001111111")!, ticker: "ABBD", title: "American Broadband LLC" },
 		{ cik: toCIK("0002222222")!, ticker: "ABBI", title: "American Broadband, Inc." },

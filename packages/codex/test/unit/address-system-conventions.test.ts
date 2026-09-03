@@ -57,7 +57,7 @@ describe("GB address-system conventions (#1275)", () => {
 		}
 	})
 
-	it("forbids NO tags — the row exists for the postcode snap-repair gate only", () => {
+	it("forbids NO tags — the row exists for the postcode snap-repair check only", () => {
 		// A forbid needs measured zero-cost receipts (the FR street_prefix lesson, #719). GB has none.
 		expect(conventionsForSystem("gb")!.forbiddenTags).toBeUndefined()
 	})

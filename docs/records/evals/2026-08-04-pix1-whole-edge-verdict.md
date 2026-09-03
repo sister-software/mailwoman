@@ -136,8 +136,8 @@ Full gauntlet, `MAILWOMAN_PAIR_PARENT_DELTA` unset vs `=6`, everything else iden
 
 ```
 5c5
-< === Gauntlet · regression (54/55 gated cases pass, 61 tracked) ===
-> === Gauntlet · regression (54/55 gated cases pass, 60 tracked) ===
+< === Gauntlet · regression (54/55 counted cases pass, 61 tracked) ===
+> === Gauntlet · regression (54/55 counted cases pass, 60 tracked) ===
 29d28
 <   ~ gb-op2-nine-elms-bare [improvement_target]: locality "Nine Elms" ≠ "London"
 69a69,71
@@ -145,7 +145,7 @@ Full gauntlet, `MAILWOMAN_PAIR_PARENT_DELTA` unset vs `=6`, everything else iden
 >   + gb-op2-nine-elms-bare [improvement_target] now PASSES — promote to status=pass
 ```
 
-Same gated verdict, one tracked improvement_target promoted, zero newly-failing cases. The `54/55`
+Same conditional verdict, one tracked improvement_target promoted, zero newly-failing cases. The `54/55`
 is the pre-existing `si-sentinel-apace` failure, present on both legs and on `main`.
 
 ## The defect the bars caught
@@ -207,18 +207,18 @@ parent ROW's placetype through `PLACETYPE_PROJECTION` (`locality`/`localadmin` �
 **Shipped default-on at δ=5 for us/gb/nz/fr**, carried in the artifact header (`PairIndexHeader.parentDelta`)
 exactly as `delta` and `transitionBeta` are, so the classifier auto-wires it with no code that knows
 which locale is which. `de`/`in`/`es`/`it` ship WITHOUT the key: no board has graded the parent side
-there, and the D-rule's answer to an unmeasured locale is a per-locale gate, not an inherited magnitude.
+there, and the D-rule's answer to an unmeasured locale is a per-locale check, not an inherited magnitude.
 `MAILWOMAN_PAIR_PARENT_DELTA` still overrides the header, for sweeps.
 
-### Gate receipts on the per-record mechanism
+### Check receipts on the per-record mechanism
 
 Rebuilt all eight dev pair indexes at schema 3. OFF leg = the same artifacts with `parentDelta` removed
 from the header (entries, `buildDate` and every other field byte-identical — one key apart, a tighter
 control than a second build).
 
 ```
-OFF: === Gauntlet · regression (54/55 gated cases pass, 61 tracked) ===
-ON:  === Gauntlet · regression (54/55 gated cases pass, 61 tracked) ===
+OFF: === Gauntlet · regression (54/55 counted cases pass, 61 tracked) ===
+ON:  === Gauntlet · regression (54/55 counted cases pass, 61 tracked) ===
 ```
 
 The two runs are **byte-identical end to end** — `diff` over the whole transcript is empty, both legs

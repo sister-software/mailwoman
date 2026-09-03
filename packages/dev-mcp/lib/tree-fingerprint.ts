@@ -36,7 +36,7 @@ export const FINGERPRINTED_WORKSPACES = [
 	"packages/resolver-wof-sqlite",
 	"packages/normalize",
 	"packages/query-shape",
-	"packages/locale-gate",
+	"packages/locale-hint",
 	"packages/kind-classifier",
 	"packages/phrase-grouper",
 	"packages/codex",

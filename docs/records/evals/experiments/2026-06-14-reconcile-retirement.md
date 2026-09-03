@@ -59,11 +59,11 @@ every US street address.
 
 ## Why #427 didn't catch it
 
-The Route A Phase II re-gate reported "DE +25pp, IT/ES +15pp, per-field regression under 0.5%." A direct
+The Route A Phase II re-check reported "DE +25pp, IT/ES +15pp, per-field regression under 0.5%." A direct
 DE/ES probe shows the kernel of truth: on out-of-distribution inputs where the en-US model mangles the
 street (`Müllerstraße 12` → raw `street = "Müllerstraße 1"`, truncated), reconcile keeps the street
 string intact (`"Müllerstraße 12"`). That lifts a **loose street-string-recall** metric. But neither
-path separates the house number on those inputs — neither produces a geocodable parse — and the re-gate
+path separates the house number on those inputs — neither produces a geocodable parse — and the re-check
 never measured the **geocode precondition** (clean street + separated house number) on standard US
 addresses. Our evals grade raw neural, so nothing downstream of the classifier was ever scored against
 truth. The blind spot was the eval target, not the math.

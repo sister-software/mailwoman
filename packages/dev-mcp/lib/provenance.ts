@@ -172,7 +172,7 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 	if (unsealed.length) {
 		notes.push(
 			`UNSEALED (owner-writable): ${unsealed.map((a) => a.name).join(", ")} — a finished build is sealed 0444, so ` +
-				`this is either mid-build or an artifact a verify gate refused. Do not grade against it.`
+				`this is either mid-build or an artifact a verify check refused. Do not grade against it.`
 		)
 	}
 

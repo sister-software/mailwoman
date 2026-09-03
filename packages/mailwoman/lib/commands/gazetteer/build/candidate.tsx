@@ -130,7 +130,7 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 			`ancestors: ${r.ancestorRows.toLocaleString()} closure rows across ${r.ancestorPlaces.toLocaleString()} places; ${r.intervalPlaces.toLocaleString()} interval labels`,
 			r.importanceScored === undefined
 				? "importance: not joined (no score source) — the column is empty"
-				: `importance: ${r.importanceScored.toLocaleString()} places scored, ${r.importanceGated?.toLocaleString() ?? 0} refused as a different same-name place`,
+				: `importance: ${r.importanceScored.toLocaleString()} places scored, ${r.importanceFiltered?.toLocaleString() ?? 0} refused as a different same-name place`,
 			`next: mailwoman gazetteer promote   (then publish, or run gazetteer release for all of it)`,
 		]
 	})

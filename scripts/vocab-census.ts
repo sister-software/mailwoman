@@ -31,9 +31,10 @@ const HIT_PATTERN = /^(.*?):(\d+):(\d+):Mailwoman\.AmbiguousShorthand(?:Code)?:'
 
 /**
  * Names that keep their spelling — `AGENTS.md` lists them as contract-bearing. A hit naming one of these is a
- * formatting fix, not a rewrite.
+ * formatting fix, not a rewrite. Empty since #2090 renamed every contract-bearing identifier that carried a banned
+ * word; add a name here only when a new one must carry one, and record why in `AmbiguousShorthandCode.yml`.
  */
-const CONTRACT_BEARING = /@mailwoman\/locale[- ]gate|locale[- ]gate|mwdev_gate/i
+const CONTRACT_BEARING = /(?!)/
 
 /**
  * The remedy a hit needs.

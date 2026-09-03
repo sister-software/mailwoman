@@ -29,7 +29,7 @@ The ten-minute trial still asks a developer to assemble a project by hand. Start
 - `npm init @mailwoman -- --template geocoder` in an empty dir on a clean machine produces a project whose `npm start` (or the kit's first command) succeeds after the printed next steps — verified by the pack-based smoke in CI for all four kits.
 - The four `mailwoman/starter-*` repos exist, are template-flagged, carry the generated banner, and match the release's rendered templates byte-for-byte.
 - All five packages published (first-publish blessing is an operator step; the runbook documents it).
-- Docs pages updated and gate-green.
+- Docs pages updated and check-green.
 
 ## Non-goals
 

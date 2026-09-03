@@ -193,7 +193,7 @@ def collect_sample_codepoints(sample_path: Path, *, cap_bytes: int = 4_000_000) 
     return {c for c in raw if ord(c) >= 128}
 
 
-def gate_codepoint_overlap(
+def check_codepoint_overlap(
     new_pieces: list[str],
     locale_samples: dict[str, Path],
     report_path: Path,
@@ -239,7 +239,7 @@ def gate_codepoint_overlap(
     if offending:
         detail = "; ".join(f"{loc}: {''.join(report[loc][:12])}" for loc in offending)
         raise AssertionError(
-            f"#900 splice gate: codepoint overlap with trained locale(s) {offending} ({detail}). "
+            f"#900 splice check: codepoint overlap with trained locale(s) {offending} ({detail}). "
             f"Either the overlap is a bug, or pre-register a per-locale non-inferiority leg for each "
             f"and re-run with --accept-overlap {','.join(offending)}. Report: {report_path}"
         )
@@ -401,9 +401,9 @@ def _main() -> None:
     bt.add_argument(
         "--trained-samples",
         default="",
-        help="#900 gate: comma list of locale=samplePath pairs for every TRAINED locale "
+        help="#900 check: comma list of locale=samplePath pairs for every TRAINED locale "
         "(e.g. fr=data/eval/external/openaddresses-fr-sample.jsonl,de=...). When set, the "
-        "codepoint-overlap gate runs and FAILS on unaccepted overlap; the per-locale report "
+        "codepoint-overlap check runs and FAILS on unaccepted overlap; the per-locale report "
         "is written next to the spliced tokenizer either way.",
     )
     bt.add_argument(
@@ -416,7 +416,7 @@ def _main() -> None:
     bt.add_argument(
         "--accept-overlap",
         default="",
-        help="#900 gate: comma list of locales whose overlap is ACCEPTED — i.e. a per-locale "
+        help="#900 check: comma list of locales whose overlap is ACCEPTED — i.e. a per-locale "
         "non-inferiority leg is pre-registered in the eval spec (CONTRIBUTING_MODEL_WORK.mdx).",
     )
 
@@ -461,9 +461,9 @@ def _main() -> None:
             }
             accepted = {x.strip() for x in args.accept_overlap.split(",") if x.strip()}
             report_path = args.out_tokenizer.with_suffix(".overlap-report.json")
-            report = gate_codepoint_overlap(new_pieces, samples, report_path, accepted_overlap=accepted)
+            report = check_codepoint_overlap(new_pieces, samples, report_path, accepted_overlap=accepted)
             overlapping = [loc for loc, cps in report.items() if cps]
-            print(f"#900 overlap gate PASS — report {report_path}; overlapping (accepted): {overlapping or 'none'}")
+            print(f"#900 overlap check PASS — report {report_path}; overlapping (accepted): {overlapping or 'none'}")
     elif args.cmd == "mean-init":
         old_v, new_v = mean_init_embeddings(args.checkpoint, args.base_tokenizer, args.spliced_tokenizer, args.out_dir)
         print(f"expanded token_embeddings {old_v} -> {new_v}; wrote {args.out_dir}")

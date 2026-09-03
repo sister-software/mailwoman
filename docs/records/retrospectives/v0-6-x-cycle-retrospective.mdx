@@ -46,8 +46,8 @@ implementation is fragile in a way that recipe tuning cannot stabilize.
 The cycle didn't ship a model, but it did ship a substantial
 infrastructure layer that v0.7 will sit on top of:
 
-- **2D pre-publish eval gate**
-  ([`scripts/eval-gate.ts`](https://github.com/sister-software/mailwoman))
+- **2D pre-publish eval check**
+  ([`scripts/eval-check.ts`](https://github.com/sister-software/mailwoman))
   — `(recall drop > 2pp AND baseline > 10%) OR (hallucination spike >
 100 AND rate > 20%)`. Retro-validated against v0.6.0 → v0.6.1 — catches
   the regression with 3 violations including dep_loc rate at 2665%.
@@ -84,7 +84,7 @@ infrastructure layer that v0.7 will sit on top of:
   as venues.
 - **Postcode-only harness**
   ([`scripts/harness-postcode.ts`](https://github.com/sister-software/mailwoman))
-  — per-country postcode accuracy gate. Created as the v0.7 regression
+  — per-country postcode accuracy check. Created as the v0.7 regression
   fence for what should be a slam-dunk metric.
 
 ## 3. What v0.6.x actually revealed
@@ -111,7 +111,7 @@ the magnitude of the mismatch but not its structure.
 
 ### 3.2 Per-tag recall has been the wrong release metric
 
-The 2D gate operates on per-tag recall. v0.6.2b passed the gate in
+The 2D check operates on per-tag recall. v0.6.2b passed the check in
 isolation (dep_loc 0, locality 41.1%, house_number 77.3% at 20K) but
 its harness pass rate was 14.7% — a 0.3pp improvement over v0.6.0's
 14.4%. Three iterations of corpus engineering produced essentially zero
@@ -125,7 +125,7 @@ B-street is structurally invalid but counted as correct), swap errors
 present" still produces a parse the resolver can't use).
 
 DeepSeek turn 11 changed mind from turn 7 on this point: the v0.6.2b
-ship recommendation was wrong because it was gated against per-tag
+ship recommendation was wrong because it was conditional against per-tag
 recall, not the harness.
 
 ### 3.3 The model is overconfident, not undertrained
@@ -162,10 +162,10 @@ postcodes at the character or FST level.
 
 ### 3.5 Test-set leakage at the DECISION level
 
-v0.1.2 has been the gate baseline for every v0.6.x decision. Three
+v0.1.2 has been the check baseline for every v0.6.x decision. Three
 iterations consumed the same dataset as decision data. The threshold
-values in the 2D gate (2pp recall drop, 100 hallucination count) were
-calibrated against the same set we've been reading. Some gate
+values in the 2D check (2pp recall drop, 100 hallucination count) were
+calibrated against the same set we've been reading. Some check
 pass/fail decisions may have been false positives.
 
 The model has never seen v0.1.2 in training. But the recipe HAS been
@@ -215,7 +215,7 @@ the speculative-architecture work (per-locale routing) to v0.8.
 - `label_smoothing=0.1` on v0.6.0's UNCHANGED corpus.
 - Single-variable change (no synth changes, no corpus changes).
 - Held-out test set: split v0.1.2 randomly 90/10 dev/test.
-- Early-eval gates against DEV; release-gate against TEST (touched once).
+- Early-eval checks against DEV; release-check against TEST (touched once).
 - Measure: **harness pass rate** (PRIMARY — replaces per-tag recall as
   the release metric), overconfidence %, per-tag recall on held-out test.
 - Decision: ship if harness improves AND overconfidence drops; pivot if
@@ -244,7 +244,7 @@ DeepSeek turn 12 favors (1) + (3). Final choice depends on calibration
 result — if calibration alone moves postcode accuracy meaningfully
 upward, the tokenizer fix becomes smaller-scope.
 
-**P2 — Pre-classifier design** (gated on postcode result, may slip to v0.8)
+**P2 — Pre-classifier design** (blocked on postcode result, may slip to v0.8)
 
 If postcode accuracy is still < 90% after calibration + tokenizer fix,
 the locale-router approach becomes the next change. Recommended
@@ -259,7 +259,7 @@ This is the entry point for v0.8's system-multiplicity work
 ### 5.3 Methodology fixes (carry forward from turn 11)
 
 - **Harness pass rate is the primary release metric.** Per-tag recall
-  becomes a diagnostic-only metric. The 2D gate stays as a secondary
+  becomes a diagnostic-only metric. The 2D check stays as a secondary
   safety net but no longer controls the ship decision.
 - **Held-out test set methodology.** v0.1.2 split 90/10 dev/test. Test
   read exactly once per release. Closes decision-side test-set leakage.

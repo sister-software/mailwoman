@@ -7,7 +7,7 @@
  *
  *   Consumers who want the full happy-path (normalize → QueryShape → classify → resolve) can call
  *   `createRuntimePipeline({ classifier, resolver })` and get a one-call entry point. All stages
- *   have production-ready defaults: normalize, QueryShape, locale-gate (rule-based v1), kind
+ *   have production-ready defaults: normalize, QueryShape, locale-hint (rule-based v1), kind
  *   classifier (rule-based), phrase grouper (rule-based). Only the neural classifier and resolver
  *   need explicit injection.
  *
@@ -30,7 +30,7 @@ import {
 	createKindClassifier,
 	type POIPhraseLookup,
 } from "@mailwoman/kind-classifier"
-import { detectLocale as defaultDetectLocale } from "@mailwoman/locale-gate"
+import { detectLocale as defaultDetectLocale } from "@mailwoman/locale-hint"
 import type { NeuralAddressClassifier, ParseOpts } from "@mailwoman/neural"
 import { normalize } from "@mailwoman/normalize"
 import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
@@ -118,7 +118,7 @@ export interface CreateRuntimePipelineOpts {
 	 */
 	streetMorphology?: RuntimePipelineStages["streetMorphology"] | false
 	/**
-	 * `@mailwoman/locale-gate` override — when shipped, replaces the default caller-trust stub.
+	 * `@mailwoman/locale-hint` override — when shipped, replaces the default caller-trust stub.
 	 *
 	 * @see RuntimePipelineStages.detectLocale
 	 */
@@ -312,7 +312,7 @@ async function autoLoadStreetMorphology(
 
 		return loaded.matcher
 	} catch (error) {
-		console.warn(`[mailwoman] failed to load the street-morphology FST: ${(error as Error).message} — gate off`)
+		console.warn(`[mailwoman] failed to load the street-morphology FST: ${(error as Error).message} — check off`)
 
 		return undefined
 	}
@@ -391,7 +391,7 @@ export function createRuntimePipeline(
 		// `undefined` default is lazy-loaded on the first call (below) so the sync factory stays sync;
 		// `false` disables it. A confident in-map guess feeds the resolver's anchorPosterior re-rank.
 		placeCountry: typeof opts.placeCountry === "function" ? opts.placeCountry : undefined,
-		// Default `@mailwoman/locale-check` stage: rule-based from @mailwoman/locale-gate. Derives locale from
+		// Default `@mailwoman/locale-check` stage: rule-based from @mailwoman/locale-hint. Derives locale from
 		// QueryShape character class (CJK→ja-JP, Cyrillic→ru-RU, Arabic→ar) + known-format
 		// hits (us_zip→en-US, fr_postcode→fr-FR, uk_postcode→en-GB). Caller-hint wins when set.
 		detectLocale:

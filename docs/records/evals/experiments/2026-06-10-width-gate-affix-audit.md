@@ -1,7 +1,7 @@
-# Width gate + affix miss audit — the #492 ladder closes (2026-06-10)
+# Width check + affix miss audit — the #492 ladder closes (2026-06-10)
 
 The probe ladder for issue #492 ran three falsification experiments in one day, each
-individually GO'd by the operator, each with a pre-registered gate. All three hypotheses
+individually GO'd by the operator, each with a pre-registered check. All three hypotheses
 fell. The audit that followed found the real constraint, and it was in the data the whole
 time.
 
@@ -13,7 +13,7 @@ time.
 | Frozen-encoder head (v1.0.5, init 40k, 2k)   | shared-BIO output competition; a dedicated head bypasses it | prefix 38.7 / suffix 46.2, P=100 / R≈25 — the head only finds what the frozen representation already separates | falsified |
 | Width 48M (v2.0.0, 512H/8 heads/FF2048, 40k) | 29M is capacity-bound                                       | prefix **64.9** — identical to 29M Run A's 64.9 at matched 5× density                                          | falsified |
 
-## Width gate (fp32-to-fp32, pre-registered floors)
+## Width check (fp32-to-fp32, pre-registered floors)
 
 FAIL, 6 of 12 checks:
 

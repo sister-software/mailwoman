@@ -186,7 +186,7 @@ evidence says they pay — never the foundation:
   gradient-boosted tree over the agreement pattern plus the over-merge interaction
   (co-located × name-disagree), trained on the NPPES NPI-truth set. It beat the
   Fellegi-Sunter core by ~5pp dedup F1 held-out within a state and by ~+22pp on
-  states it never trained on (TX→CA, TX→NY), cutting the co-located over-merge — so
+  states it never trained on (TX→CA, TX→NY), reducing the co-located over-merge — so
   it earns the default slot, shipped with a calibrated link threshold (its logit
   isn't in FS-weight units). The model is NPPES/US-trained; for a very different
   domain, A/B it or drop back to the hand-weighted core with
@@ -199,7 +199,7 @@ evidence says they pay — never the foundation:
   where recall, not over-merge precision, is what matters. Same model, opposite
   objective: pick the scorer by the question you're asking.
 - **An LLM in the gray zone, never on the easy 95%.** Framed as in-context
-  _clustering_ rather than all-pairs classification, an LLM cuts API calls ~5× and
+  _clustering_ rather than all-pairs classification, an LLM reduces API calls ~5× and
   improves quality (LLM-CER, 2025). Spend it only on the clerical-review band the
   calibrated scorer abstained on.
 - **An LLM for ingest.** The messy-data reality — "it came as a SQLite dump" — is

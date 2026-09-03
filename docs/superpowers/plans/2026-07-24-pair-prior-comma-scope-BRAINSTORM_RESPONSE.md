@@ -33,7 +33,7 @@ Ship the operator-pending comma-scoped v1 (segment-only) unchanged. v1.1 adds a 
 that engages ONLY where segment mode is structurally inert:
 
 ```
-probeChain (per parse, en-gb-gated as today):
+probeChain (per parse, en-gb-conditional as today):
   1. SEGMENT path — current code, untouched. Engages when ≥2 comma segments exist.
      Byte-stability on all comma'd inputs: identical by construction, not by measurement.
   2. ANCHORED-ADJACENT path — only when step 1 produced <2 windows (comma-free input,
@@ -105,17 +105,17 @@ post-town position (pre-postcode or string-final) and the child immediately prec
 suffix-region restriction ("after the last street-suffix token") falls out for free — the parent
 anchor IS the suffix region.
 
-On "model owns ambiguity" for odd orderings: the anchor gate is a condition on FIRING, never a
+On "model owns ambiguity" for odd orderings: the anchor check is a condition on FIRING, never a
 penalty. A genuinely odd ordering (post town first, dep-loc last) simply gets no bias — identical
 to today's comma-free behavior, positive-evidence-only doctrine intact. If odd orderings later
 prove common in real traffic, add mirrored anchors (parent at string start) as a separately
-gated, separately measured tier — do not loosen the default.
+conditional, separately measured tier — do not loosen the default.
 
 ## Q3 — per-pair δ by child-name specificity: real, but second-order; bucket, don't fit
 
 The FP problem is positional, not magnitude-driven (δ=8 window still 53.5% FP; δ changes recall
 AND FP together — the curves don't separate under δ alone), so specificity weighting cannot
-substitute for the anchor gate. As a COMPLEMENT it's worth building, with the cheapest defensible
+substitute for the anchor check. As a COMPLEMENT it's worth building, with the cheapest defensible
 estimator:
 
 - **Specificity score per child:** `log((df_place + 1) / (df_venue + 1))` where `df_place` = PPD
@@ -136,7 +136,7 @@ vocabulary size. Start with the ratio.
 ## Q4 — first-pass-span veto: yes as the secondary mechanism, fail-open, child-side only
 
 Distinct value from Q1's segmentation: it attacks the RESIDUAL class (street field verbatim-equal
-to a census child, adjacent to the anchor) — the one configuration the anchor gate structurally
+to a census child, adjacent to the anchor) — the one configuration the anchor check structurally
 cannot reject, because the geometry genuinely matches. The discriminator there is exactly "the
 model reads this occurrence as `street`" (healthy head on GB, unlike venue).
 
@@ -148,12 +148,12 @@ Contract: veto a child candidate only when the first-pass argmax over its span i
 inputs only, or fold into the v1.2 two-pass variant. Sequencing: implement behind the same
 pre-registered decision rule as Q3 — only if anchored-alone FP > 5%.
 
-## Q5 — determiner/shape gate: mostly redundant; one narrow reuse survives
+## Q5 — determiner/shape check: mostly redundant; one narrow reuse survives
 
-As a standalone gate it IS the marker list at larger scale, and dies the same way (task-6's
+As a standalone check it IS the marker list at larger scale, and dies the same way (task-6's
 verdict: fixed successor tables were never a venue-boundary detector). The `The X Arms`
 determiner cue covers a minority of the board and invites lexicon-maintenance treadmill. **Skip
-the general shape gate.** The narrow reuse that survives: the poi-taxonomy business-suffix
+the general shape check.** The narrow reuse that survives: the poi-taxonomy business-suffix
 lexicon as a SUCCESSOR veto generalizing `STRUCTURAL_MARKER_WORDS` (`queens park` + `cafe` →
 suppress), and as a LEFT-neighbor downgrade in the anchored mode's optional tier. Both are
 positional uses of the lexicon — evidence about where compounds end — not shape judgments about
@@ -212,7 +212,7 @@ pays for itself.
    presets + golden us/fr byte-identical; segment-mode as-written numbers reproduced exactly
    (69/69, 217/6500) — the probe-chain ordering makes that a construction property, asserted not
    re-measured... then re-measured anyway.
-2. **Only on miss:** δ=12 anchored-only re-sweep (FP is anchor-gated, so the δ↔FP coupling that
+2. **Only on miss:** δ=12 anchored-only re-sweep (FP is anchor-conditional, so the δ↔FP coupling that
    killed window mode should be much weaker — measure, don't assume).
 3. **Only on FP >5%:** Q4 child-side confident-street veto (fail-open), then Q3 specificity
    tiers, in that order — veto first because it's positional evidence; tiers last because they're
@@ -225,7 +225,7 @@ Predicted against the handoff's bar: comma-stripped emit **50–62/69** at δ=10
 **≥95%** (window's 96% at δ=10 improves when cross-string geometry errors are removed); venue-FP
 **3–5%** (residual street-verbatim class ≈ segment's measured 3.338% floor); golden **0/51**
 (board carries no index pairs by construction — 0 at every configuration ever measured);
-presets/golden **byte-identical** (en-gb gate + comma-free applicability gate, asserted and
+presets/golden **byte-identical** (en-gb check + comma-free applicability check, asserted and
 verified); segment as-written **unchanged** (probe chain tries segment first, anchored path is
 unreachable when commas exist). The two numbers most likely to break the prediction: the 18-miss
 diagnosis (if marker suppression is eating real children, recall lands ~40/69 and the suppression

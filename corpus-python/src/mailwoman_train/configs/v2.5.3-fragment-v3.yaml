@@ -1,7 +1,7 @@
 # v2.5.3-fragment-v3 — slice-v3 iteration: ONE variable off v2.5.2 (the slice gains 11k GLOBAL
 # bare-locality twins from corpus locality spans across 11 countries — the gauntlet
 # global-dublin-bare regression: famous cities outside the 16 OA slice locales lost their locality
-# reading as fragment street-mass grew). Gate bars: v252 non-regression (street >= .5433, pc PASS
+# reading as fragment street-mass grew). Check bars: v252 non-regression (street >= .5433, pc PASS
 # .9861, hn >= .7597) + gauntlet regression layer GREEN (the Dublin pin) + fragment-dev.
 data:
   corpus_dir: /data/corpus/versioned/v0.10.4-fragment-v3/corpus-v0.10.4-fragment-v3

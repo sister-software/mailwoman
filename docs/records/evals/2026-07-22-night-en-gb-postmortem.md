@@ -1,10 +1,10 @@
 # 2026-07-22 night shift — en-GB arc: the dependent_locality resurrection window
 
-Conn handed 04:42 UTC with ship authority (gate-conditional); wrapped early — all task-list items executed or parked at a documented operator fork. PR: [#1249](https://github.com/sister-software/mailwoman/pull/1249).
+Conn handed 04:42 UTC with ship authority (check-conditional); wrapped early — all task-list items executed or parked at a documented operator fork. PR: [#1249](https://github.com/sister-software/mailwoman/pull/1249).
 
 ## What shipped
 
-- **PR #1249** (unmerged, morning review): 21 reviewed commits — GB corpus pipeline (PPD 31.3M→25.67M tuples), dep-loc extract paths for GB/NZ/ES/FR (each hard-gated), two formatter dependent_locality rendering fixes (quarter-slot; place-slot + post-render injection — ~169 countries newly renderable), resurrection training changes (`reinit_label_rows` + `classifier_learning_rate`), three pre-registered configs, four golden boards (GB/NZ committed in-arc; ES/FR landing as the shift's last commit), `@mailwoman/neural-weights-en-gb` overlay with full release wiring + the base-card-fallback Critical fix from the final review.
+- **PR #1249** (unmerged, morning review): 21 reviewed commits — GB corpus pipeline (PPD 31.3M→25.67M tuples), dep-loc extract paths for GB/NZ/ES/FR (each hard-conditional), two formatter dependent_locality rendering fixes (quarter-slot; place-slot + post-render injection — ~169 countries newly renderable), resurrection training changes (`reinit_label_rows` + `classifier_learning_rate`), three pre-registered configs, four golden boards (GB/NZ committed in-arc; ES/FR landing as the shift's last commit), `@mailwoman/neural-weights-en-gb` overlay with full release wiring + the base-card-fallback Critical fix from the final review.
 - **No model shipped** — the feed run failed its registered bars; ship discipline held despite standing authority.
 - **Acquisition wave** (~13.7 GiB, all provenance-manifested): BR CNPJ 2026-07 (6.3 GiB, bairro confirmed), MX DENUE (548 MiB), GB EPC domestic (6.0 GiB), ONSPD, OS Open UPRN. Catalog corrections folded into `.notes/data-sources.md` (CNPJ WebDAV move; EPC Bearer auth).
 - Issues filed: #1247 (stale STAGE2 label tests), #1248 (`_merge` silent unknown-key drop).
@@ -34,7 +34,7 @@ The null condition is **not** met — the tag is learnable; the _schedule_ is wr
 
 ## What went well
 
-- **Gate discipline caught four would-be disasters:** the 0%-dep-loc GB extract (formatter quarter bug) pre-training; the ES no-slot template pre-training; the card-less en-gb overlay that would have _published broken_ (final-review Critical); and the feed run's ship path stayed closed on a guard fail despite standing ship authority.
+- **Check discipline caught four would-be disasters:** the 0%-dep-loc GB extract (formatter quarter bug) pre-training; the ES no-slot template pre-training; the card-less en-gb overlay that would have _published broken_ (final-review Critical); and the feed run's ship path stayed closed on a guard fail despite standing ship authority.
 - Pre-registration + one-variable discipline made the four-run story fully attributable — every number traces to a header written before the run.
 - The checkpoint sweep (zero GPU) converted a failed run into the arc's most valuable finding.
 

@@ -11,7 +11,7 @@ tags:
 
 This is the design reference for the work that fills the [WOF hierarchy gap](./wof-hierarchy-gap.mdx). It synthesizes the architectural decisions reached during the v0.6.1 postmortem and the subsequent design consult. Code in `neural/`, `resolver-wof-sqlite/`, and `core/` refers back here; this article tells you why each piece looks the way it does.
 
-The high-level shape: WOF's placetype hierarchy stops at `address` and has no street node. Mailwoman's tag schema promises a street layer but the inference-time prior (the FST gazetteer) does not back it. Four layers fill the gap, plus a fifth piece (brand FST) and a sixth (locality-conditional gating) sit alongside them. Each layer addresses a different vacuum; they don't substitute.
+The high-level shape: WOF's placetype hierarchy stops at `address` and has no street node. Mailwoman's tag schema promises a street layer but the inference-time prior (the FST gazetteer) does not back it. Four layers fill the gap, plus a fifth piece (brand FST) and a sixth (locality-conditional blocking) sit alongside them. Each layer addresses a different vacuum; they don't substitute.
 
 ## Four layers
 
@@ -44,7 +44,7 @@ Each layer's contribution is additive and non-overlapping. Examples:
 | `Plein 1944`              | no signal                                        | "plein_1944" has Nijmegen co-occurrence           | direct match in NL FST     |
 | `Health Clinic`           | matches no street affix                          | zero locality co-occurrence → strongly NOT street | (not in OSM as a street)   |
 
-Layer 4 (brand FST for franchise venues) is parallel, not subordinate. Layer 5 (locality-conditional hierarchy gating) is meta — it modulates which layers are active per country.
+Layer 4 (brand FST for franchise venues) is parallel, not subordinate. Layer 5 (locality-conditional hierarchy blocking) is meta — it modulates which layers are active per country.
 
 ## Schema storage: flat ComponentTag, not WOF emulation
 
@@ -98,13 +98,13 @@ This is a useful reminder: schema changes that look like "just one line in PAREN
 
 ### Dependent street is a real gap
 
-`6 Elm Avenue, Runcorn Road, Birmingham` (Royal Mail dependent-street format) cannot be expressed with the current schema. Adding `dependent_street` is v0.7+ scope, gated on UK PAF corpus availability. Containment: `street → dependent_street` (a street contains an optional dependent street).
+`6 Elm Avenue, Runcorn Road, Birmingham` (Royal Mail dependent-street format) cannot be expressed with the current schema. Adding `dependent_street` is v0.7+ scope, blocked on UK PAF corpus availability. Containment: `street → dependent_street` (a street contains an optional dependent street).
 
 ### Venue + po_box stay as siblings
 
 `CULLEN INSULATION INC, POBOX 3211 FARGO ND 58108`: venue is the addressee, po_box is the delivery endpoint. The containment should NOT make po_box a venue-parent. Both remain siblings under locality; the resolver cross-references them at lookup time.
 
-## Locality-conditional hierarchy gating
+## Locality-conditional hierarchy blocking
 
 Different countries use mutually-incompatible address grammars:
 
@@ -191,7 +191,7 @@ Country-level granularity is the right v0.7 scope. Within-country variations (US
 
 **Inference:** Reuses Layer 1's `fstStreetMorphology` integration point (same `addEmissionMatrix` call, different binary). Layer 2 supersedes Layer 1's role for streets the FST knows about; Layer 1 stays active for novel street suffixes the FST doesn't.
 
-**Scoping:** Per-metro extract routing. NYC POC validates the approach; metro expansion is gated on POC results.
+**Scoping:** Per-metro extract routing. NYC POC validates the approach; metro expansion is blocked on POC results.
 
 **Status:** v0.7+. Multi-shift work — OSM extraction, dedup, parent-chain assignment, metro packaging.
 
@@ -204,7 +204,7 @@ Country-level granularity is the right v0.7 scope. Within-country variations (US
 3. JP model training (likely a separate `@mailwoman/neural-weights-ja-jp` bundle)
 4. JP-specific FST (Japanese place names + Japanese block-level data)
 
-No new tags needed. The locality-conditional gating (above) is what activates them in inference.
+No new tags needed. The locality-conditional blocking (above) is what activates them in inference.
 
 **For Mannheim grid, Nicaragua landmarks, dependent_street:** New tags needed. v0.8+ scope.
 
@@ -238,7 +238,7 @@ Applied to span-level confidence scores only. Zero contamination of emission or 
 | v0.6.x polish    | Layer 1 build + golden-set eval                                   | 1 shift (done)        |
 | v0.6.2 retrain   | Negative-example corpus augmentation + Layer 1 prior at inference | 1-2 shifts            |
 | v0.6.x continued | Layer 1.5 if v0.6.2 leaves residual hallucinations                | 1 shift               |
-| v0.7.0           | Locality-conditional gating + JP activation + Layer 2 NYC POC     | 3-4 shifts            |
+| v0.7.0           | Locality-conditional blocking + JP activation + Layer 2 NYC POC   | 3-4 shifts            |
 | v0.7.x           | Layer 2 metro expansion, Layer 4 brand FST                        | per-metro / per-brand |
 | v0.8+            | Mannheim grid, Nicaragua landmarks, dependent_street              | scope work            |
 

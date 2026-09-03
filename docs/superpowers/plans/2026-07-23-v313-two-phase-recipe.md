@@ -1,4 +1,4 @@
-# v3.13 — two-phase classifier-LR recipe (pre-registered proposal, OPERATOR-GATED, NOT LAUNCHED)
+# v3.13 — two-phase classifier-LR recipe (pre-registered proposal, OPERATOR-CONDITIONAL, NOT LAUNCHED)
 
 **Date:** 2026-07-23 (night #2) · **Status:** proposal — the stop rule ended the v3.12 lineage;
 this is the dossier's **option B** written out so the morning decision is a green-light, not a

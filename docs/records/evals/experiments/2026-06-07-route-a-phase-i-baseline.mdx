@@ -2,7 +2,7 @@
 
 The decision document for [epic #421](https://github.com/sister-software/mailwoman/issues/421). Before committing to making the joint-decode / concordance stage the default, we measured the _existing_ opt-in path (`forceJointReconcile`) head-to-head against the argmax default. The result is decisive, and it points the opposite way from what you'd hope.
 
-## Verdict: **STAY** — do not flip the default. Phase II (phrase grouper) is a hard gate, not an option.
+## Verdict: **STAY** — do not flip the default. Phase II (phrase grouper) is a hard check, not an option.
 
 Joint-decode wins enormously on the case it was built for and **catastrophically regresses everything else**, for one diagnosable reason. The "just flip the default" option is dead; the full programme is the only viable path, and it's blocked on a prerequisite.
 
@@ -19,7 +19,7 @@ Joint-decode wins enormously on the case it was built for and **catastrophically
 | IT (native)                                              |      84.8% | **68.5%** | **−16.3pp** | **26.0%** |     9.8% |          1.73 |
 | ES (native)                                              |      83.8% | **58.5%** | **−25.3pp** | **34.0%** |     8.8% |          1.62 |
 
-The gate (from #421) wants a regression rate **≤ 0.5%** to even consider flipping the default. The multi-word locales come in at **16–34%** — fifty to seventy times the bar.
+The check (from #421) wants a regression rate **≤ 0.5%** to even consider flipping the default. The multi-word locales come in at **16–34%** — fifty to seventy times the bar.
 
 ## Why — the phrase grouper, exactly as predicted
 
@@ -36,9 +36,9 @@ Latency is a non-issue: p50 is unchanged across the board and p99 sits at 1.5–
 
 ## What this means for the plan
 
-- **JUST-FLIP is dead.** Flipping `forceJointReconcile` to default today would tank locality accuracy on three of six locales by 15–25 points. No telemetry gate survives that.
+- **JUST-FLIP is dead.** Flipping `forceJointReconcile` to default today would tank locality accuracy on three of six locales by 15–25 points. No telemetry check survives that.
 - **The dual-role / multi-role work was the right call.** The city-state recovery it ships (Berlin → 80.9% PIP) is exactly the +25pp that joint-decode also delivers — but the Resolve-stage relation completion delivers it _without_ the multi-word collateral. That mechanism stays.
-- **FULL Route A hinges entirely on Phase II ([#425](https://github.com/sister-software/mailwoman/issues/425)) — maturing the phrase grouper to propose multi-word spans reliably.** Until the phrase grouper covers `Reggio nell'Emilia` as one span, joint decoding cannot be the default. This A/B is the re-gate: after #425, re-run it; flip only if the native-order regression drops under the bar.
+- **FULL Route A hinges entirely on Phase II ([#425](https://github.com/sister-software/mailwoman/issues/425)) — maturing the phrase grouper to propose multi-word spans reliably.** Until the phrase grouper covers `Reggio nell'Emilia` as one span, joint decoding cannot be the default. This A/B is the re-check: after #425, re-run it; flip only if the native-order regression drops under the bar.
 
 So Phase I did its job — it cost a day and a benchmark, and it turned "should we spend weeks making concordance the default?" into "not until the phrase grouper can cover multi-word spans, and here's the test that proves when it can." Phases III–IV (concordance dual-role signal, flip) stay closed behind that.
 

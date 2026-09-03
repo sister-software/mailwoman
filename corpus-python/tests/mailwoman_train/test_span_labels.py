@@ -135,7 +135,7 @@ def _fixture_sanity(raw, tokens, labels, span_starts, span_ends, span_tags):
 
 
 @pytest.mark.parametrize("name,raw,tokens,labels,starts,ends,tags,chunks", FIXTURES)
-def test_gate_a_label_stream_bit_identical(name, raw, tokens, labels, starts, ends, tags, chunks):
+def test_check_a_label_stream_bit_identical(name, raw, tokens, labels, starts, ends, tags, chunks):
     _fixture_sanity(raw, tokens, labels, starts, ends, tags)
     pieces = _pieces(raw, chunks)
     token_stream = realign_labels_to_pieces(raw, tokens, labels, pieces)
@@ -144,7 +144,7 @@ def test_gate_a_label_stream_bit_identical(name, raw, tokens, labels, starts, en
 
 
 @pytest.mark.parametrize("name,raw,tokens,labels,starts,ends,tags,chunks", FIXTURES)
-def test_gate_a_encode_row_bit_identical(name, raw, tokens, labels, starts, ends, tags, chunks):
+def test_check_a_encode_row_bit_identical(name, raw, tokens, labels, starts, ends, tags, chunks):
     """Full encode_row output (ids + mask + label ids, padded) identical under both paths."""
     tok = FakeTokenizer(_pieces(raw, chunks))
     via_tokens = encode_row(tok, raw, tokens, labels, max_length=32)
@@ -156,18 +156,18 @@ def test_gate_a_encode_row_bit_identical(name, raw, tokens, labels, starts, ends
 
 
 @pytest.mark.parametrize("name,raw,tokens,labels,starts,ends,tags,chunks", FIXTURES)
-def test_gate_b_anchor_channel_identical(name, raw, tokens, labels, starts, ends, tags, chunks):
+def test_check_b_anchor_channel_identical(name, raw, tokens, labels, starts, ends, tags, chunks):
     pieces = _pieces(raw, chunks)
     feats_tok, confs_tok = realign_anchor_to_pieces(raw, tokens, labels, pieces, ANCHOR_LOOKUP)
     feats_spn, confs_spn = realign_anchor_to_pieces_from_spans(raw, starts, ends, tags, pieces, ANCHOR_LOOKUP)
     assert confs_spn == confs_tok, f"{name}: anchor confidence diverged"
     assert feats_spn == feats_tok, f"{name}: anchor features diverged"
     if "postcode" in tags:
-        assert any(c > 0 for c in confs_spn), f"{name}: anchor never fired — vacuous gate"
+        assert any(c > 0 for c in confs_spn), f"{name}: anchor never fired — vacuous check"
 
 
 @pytest.mark.parametrize("name,raw,tokens,labels,starts,ends,tags,chunks", FIXTURES)
-def test_gate_b_channels_identical_through_encode_row(name, raw, tokens, labels, starts, ends, tags, chunks):
+def test_check_b_channels_identical_through_encode_row(name, raw, tokens, labels, starts, ends, tags, chunks):
     """Anchor + gazetteer tensors identical through the full encode_row, both label sources."""
     tok = FakeTokenizer(_pieces(raw, chunks))
     kwargs = dict(max_length=32, anchor_lookup=ANCHOR_LOOKUP, gazetteer_lexicon=LEXICON)
@@ -177,7 +177,7 @@ def test_gate_b_channels_identical_through_encode_row(name, raw, tokens, labels,
         assert via_spans[key] == via_tokens[key], f"{name}: {key} diverged"
 
 
-def test_gate_b_gazetteer_painting_fires_on_fixtures():
+def test_check_b_gazetteer_painting_fires_on_fixtures():
     """Anti-vacuity: the gazetteer clue actually lights up on at least one fixture piece."""
     raw = "Strasse 12 10115 Berlin"
     pieces = _pieces(raw, ["Strasse", "12", "101", "15", "Ber", "lin"])
@@ -198,14 +198,14 @@ PO_SPANS = ([0], [11], ["po_box"])
 PO_CHUNKS = ["P", ".", "O", ".", "Box", "19"]
 
 
-def test_gate_c_token_path_fragments_on_dotted_designator():
+def test_check_c_token_path_fragments_on_dotted_designator():
     pieces = _pieces(PO_RAW, PO_CHUNKS)
     token_stream = realign_labels_to_pieces(PO_RAW, PO_TOKENS, PO_LABELS, pieces)
     # The structural blind spot, pinned: periods fall to O, splitting the entity in three.
     assert token_stream == ["B-po_box", "O", "B-po_box", "O", "B-po_box", "I-po_box"]
 
 
-def test_gate_c_span_path_covers_the_punctuation():
+def test_check_c_span_path_covers_the_punctuation():
     pieces = _pieces(PO_RAW, PO_CHUNKS)
     starts, ends, tags = PO_SPANS
     span_stream = realign_spans_to_pieces(PO_RAW, starts, ends, tags, pieces)
@@ -215,7 +215,7 @@ def test_gate_c_span_path_covers_the_punctuation():
     assert span_stream != token_stream
 
 
-def test_gate_c_through_encode_row():
+def test_check_c_through_encode_row():
     tok = FakeTokenizer(_pieces(PO_RAW, PO_CHUNKS))
     starts, ends, tags = PO_SPANS
     via_tokens = encode_row(tok, PO_RAW, PO_TOKENS, PO_LABELS, max_length=16)

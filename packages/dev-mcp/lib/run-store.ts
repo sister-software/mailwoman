@@ -85,8 +85,8 @@ export interface StoredRun {
 	engine_id: string | null
 	input_set_id: string | null
 	/**
-	 * Per-arm replay indices, keyed by the arm's label. Absent for a run nothing can replay — `mwdev_gate`, say, which
-	 * answers about a battery rather than about rows.
+	 * Per-arm replay indices, keyed by the arm's label. Absent for a run nothing can replay — `mwdev_promotion_eval`,
+	 * say, which answers about a battery rather than about rows.
 	 */
 	answers?: Record<string, RecordedAnswer[]>
 	payload: unknown

@@ -107,12 +107,12 @@ the `postcodeDBByCountry` edit is release-time only.
 
 ## Gauntlet
 
-Standard gate, no flags, both arms on the same worktree with only `postcode-gb.bin` differing.
+Standard check, no flags, both arms on the same worktree with only `postcode-gb.bin` differing.
 
 Before (anchor ON):
 
 ```
-=== Gauntlet · regression (62/70 gated cases pass, 66 tracked) ===
+=== Gauntlet · regression (62/70 counted cases pass, 66 tracked) ===
 verdict: FAIL
 === Gauntlet · metamorphic ===
   INV  (label-preserving, ≤1m):  63/63 held, 0 known-xfail
@@ -125,7 +125,7 @@ VERDICT: FAIL — do not ship
 After (anchor OFF, shipped):
 
 ```
-=== Gauntlet · regression (62/70 gated cases pass, 64 tracked) ===
+=== Gauntlet · regression (62/70 counted cases pass, 64 tracked) ===
 verdict: FAIL
 === Gauntlet · metamorphic ===
   INV  (label-preserving, ≤1m):  63/63 held, 0 known-xfail
@@ -135,10 +135,10 @@ verdict: PASS (with 3 tracked xfails)
 VERDICT: FAIL — do not ship
 ```
 
-**Gated: 62/70 in both arms, and the eight failures are the same eight rows verbatim** (`si-sentinel-apace`,
+**Conditional: 62/70 in both arms, and the eight failures are the same eight rows verbatim** (`si-sentinel-apace`,
 `de-r9-nippes-koeln`, `in-r10-indiranagar-bengaluru`, `es-r11-aravaca-madrid`, `it-r11-trastevere-roma`,
 `us-subvenue-googleplex-building`, `fr-rivoli-us-scoped`, `de-linden-us-scoped`). None is GB. The overall
-FAIL predates this work and is unchanged by it. Zero newly-failing gated cases.
+FAIL predates this work and is unchanged by it. Zero newly-failing counted cases.
 
 The tracked (`improvement_target`, non-blocking) population moves 66 → 64: `gb-venue-north-face-covent`
 and `gb-op2-via-emilia` now pass outright. Within the rows that still fail, most GB entries lose their

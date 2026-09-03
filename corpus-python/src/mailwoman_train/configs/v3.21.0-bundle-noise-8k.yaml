@@ -19,14 +19,14 @@
 #   LABELS stay gold, so the gradient itself teaches evidence-as-hint. Unit-smoked locally
 #   (identity pre-ramp / at p=0; mass-conserving roll; synthetic hit on clean rows).
 #
-# PRE-REGISTERED GATES: G1-G6 VERBATIM from the v3.20.0 header (P0 grid per save with
+# PRE-REGISTERED CHECKS: G1-G6 VERBATIM from the v3.20.0 header (P0 grid per save with
 # --lexicon locality-surface-lexicon-v5.json --street-lexicon street-type-lexicon-v2.json;
 # G2 dual references; G3 invariance --baseline v385; G4 gauntlet ×3; G5 golden ALL floors on the
 # FED weights-cache — named watch fr.cedex_real/us.street stays: if either misses while ablated
 # passes all else, NO-SHIP names a FEED problem and the feed work unbundles; G6 canary zero
 # fed-vs-ablated flips). VERDICT: all six ⇒ promotion battery. Earlier-save fallback for
 # G1/G2/G5/G6; G3 new-class ⇒ STOP, operator decides. No knob iteration inside the run.
-# If G5/G6 STILL fail with the noise leg: STOP — the register-gated feeding design question
+# If G5/G6 STILL fail with the noise leg: STOP — the register-conditional feeding design question
 # (fragment-shaped queries feed the channels, full addresses do not) goes to the operator; that
 # is a decode-surface decision the anti-hellscape doctrine taxes, not a change to slip in.
 #

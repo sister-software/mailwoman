@@ -15,11 +15,11 @@
 #
 # SLICE PROVENANCE (eval-honesty): train slice = real non-Vermont US OA streets, split via the codex
 # (directionals + USPS suffixes), prefixes partly injected. Held-out VT golden measures affix
-# recognition on held-out addresses; the REAL-in-the-wild gate is data/eval/external/
+# recognition on held-out addresses; the REAL-in-the-wild check is data/eval/external/
 # street-affix-real.jsonl (30 curated real addresses, naturally-occurring affixes — the TRUSTWORTHY
-# lens, mirroring the unit-real-designators eval). Read the real-affix eval at the gate, not the VT #.
+# lens, mirroring the unit-real-designators eval). Read the real-affix eval at the check, not the VT #.
 #
-# PRE-REGISTERED GATE (stop at 20k):
+# PRE-REGISTERED CHECK (stop at 20k):
 #   - street_suffix F1 >= 70% AND street_prefix F1 >= 60% on the real-affix eval (both were ~0%).
 #   - `street` F1 >= v4.1.0 (no loss; ideally +; negative space) on golden US + the real-affix eval.
 #   - RETAIN the unit win: `unit` >= 88% on data/eval/external/unit-real-designators.jsonl (was 92.3%).

@@ -4,7 +4,7 @@ _The collaborative day-shift continuation of [night 15](../night-shifts/2026-06-
 shipped the coarse-placer as an int8 **model** (#581) — a 0.79 MB linear country router that nothing
 consumed yet. This shift wired it into the geocoder as a **soft country prior**, proved it safe at every
 step, flipped it **on by default**, and shipped the whole thing to npm as **v4.9.0**. Five PRs in a clean
-stack (#606, #608, #609, #610, #611), each gated and merged on green; one DeepSeek consult; the broken-then-
+stack (#606, #608, #609, #610, #611), each conditional and merged on green; one DeepSeek consult; the broken-then-
 fixed v4.8.0/4.8.1 release saga as the lead-in. The operator was at the keyboard throughout — every merge and
 the default-on flip were authorized, not self-granted._
 
@@ -31,7 +31,7 @@ the default-on flip were authorized, not self-granted._
   that turns a confident in-map country guess into an `anchorPosterior` fed to the resolver's existing #369
   re-rank — it _boosts_ the right-country candidate, never filters. Reuses the postcode-anchor implementation
   whole; defers to a postcode posterior; no-op on abstain/OTHER; byte-stable when the stage is absent. Wired
-  into `core/pipeline`, `geocode-core`, and a `geocode --place-country` CLI flag. **Promotion gate (the
+  into `core/pipeline`, `geocode-core`, and a `geocode --place-country` CLI flag. **Promotion check (the
   assembled pipeline, not the component): in-map right-country 64.7 → 85.3 %, 7 wins, 0 regressions.**
 - **M2 — the open-set rule (#608).** The headline finding of the shift, and it wasn't what anyone predicted:
   the ~88/88 off-map ceiling a linear char-ngram model hits was **a decision rule, not the model.** The
@@ -39,8 +39,8 @@ the default-on flip were authorized, not self-granted._
   conflated "which country?" with "is it in-map at all?". Reading total in-map **mass** `1 − P(OTHER)` and
   routing on the in-map argmax **clears 90/90 post-hoc, no retrain** (honest dev→test 91.3, vs the 89.1
   ceiling; the _pre-registered_ Mahalanobis and reject-head came in last and unnecessary). On the assembled
-  gate it lifts in-map right-country **85.3 → 91.2 %** (9 wins, 0 regressions).
-- **Misroute gate (#609).** The check that gated default-on: does the prior ever push an _in-map_ address to
+  check it lifts in-map right-country **85.3 → 91.2 %** (9 wins, 0 regressions).
+- **Misroute check (#609).** The check that conditional default-on: does the prior ever push an _in-map_ address to
   the _wrong in-map country_? Resolved 2 000 in-map addresses (200/country × 10; TW has no WOF rows) with the
   country token stripped so the country must be inferred. **0 misroutes, 0 regressions** — the tier-safe soft
   re-rank never misroutes.
@@ -52,15 +52,15 @@ the default-on flip were authorized, not self-granted._
   instead of the one-hot argmax, so it breaks country-ambiguous ties with its own place-level evidence and
   can never commit to a wrong argmax. Strict improvement — identical on confident cases, +1 win / 0
   regressions on the misroute set, larger on cross-border data than this US-heavy set shows.
-- **Release v4.9.0.** Code-only minor cut (model unchanged at v4.6.0). Dry-run first (clean: `4.8.1...4.9.0`,
+- **Release v4.9.0.** Code-only minor reduce (model unchanged at v4.6.0). Dry-run first (clean: `4.8.1...4.9.0`,
   all 13 workspaces, `workspace:*` preserved), then the real publish; tag `v4.9.0`; all 13 packages verified
   live **registry-direct**; a clean install of the _published_ `mailwoman@4.9.0` installs and parses.
 
 ## What went well
 
-- **"Grade the pipeline, not the component" held at every gate.** The reconcile-retirement lesson is now
-  reflex: M1 and the misroute gate both measure the geocoder's right-country rate against truth, never the
-  placer's intrinsic F1. M2's component probe picked the _method_; the assembled gate validated it. They
+- **"Grade the pipeline, not the component" held at every check.** The reconcile-retirement lesson is now
+  reflex: M1 and the misroute check both measure the geocoder's right-country rate against truth, never the
+  placer's intrinsic F1. M2's component probe picked the _method_; the assembled check validated it. They
   agreed, but the discipline is what makes that meaningful.
 - **The open-set result is the good kind of surprise** — the fix was simpler than the plan. We expected to
   retrain (Mahalanobis-on-the-manifold or a binary reject-head); instead a one-line decision-rule change
@@ -70,11 +70,11 @@ the default-on flip were authorized, not self-granted._
   independent check on the contradiction mattered — and it returned the sharpest insight of the shift: 90/90
   is the wrong objective for a _soft_ prior. A false-reject forfeits a disambiguation win; a false-accept
   costs ~nothing (tier-safe re-rank). The asymmetry is why the threshold stays permissive and why the
-  misroute gate, not a symmetric metric, was the right default-on bar.
-- **`ci:smoke` did its job.** Born from the v4.8.0 break, it gated default-on (which added a lazy
-  `@mailwoman/core/coarse-placer` import to the `parse` path) and the v4.9.0 cut. The release was verified
+  misroute check, not a symmetric metric, was the right default-on bar.
+- **`ci:smoke` did its job.** Born from the v4.8.0 break, it conditional default-on (which added a lazy
+  `@mailwoman/core/coarse-placer` import to the `parse` path) and the v4.9.0 reduce. The release was verified
   three ways: dry-run, registry-direct, and a clean install of the published artifact.
-- **Clean stack, clean history.** Five PRs, each compiled + linted + tested + gated, merged on green in
+- **Clean stack, clean history.** Five PRs, each compiled + linted + tested + conditional, merged on green in
   order, with the eval reports committed beside the code that they grade.
 
 ## What could've gone better
@@ -102,21 +102,21 @@ the default-on flip were authorized, not self-granted._
   families → 100 %, unseen +13pp), operator-approved.
 - **Open-set via `p_inmap`, not the pre-registered Mahalanobis/reject-head** — evidence-driven; the simpler
   rule dominated and made Phase 2 (a retrain) unnecessary.
-- **Threshold stays 0.9.** On the assembled gate the operating point is a flat optimum in [0.5, 0.9]
+- **Threshold stays 0.9.** On the assembled check the operating point is a flat optimum in [0.5, 0.9]
   (identical wins/regressions). The asymmetry favors recall, but a lower threshold buys nothing here while
   raising misroute _exposure_, so 0.9 (inject only when confident) is the conservative pick.
-- **Flip default-on** after the misroute gate came back clean — the operator's call (a user-facing default
-  change), taken with the gate as evidence.
+- **Flip default-on** after the misroute check came back clean — the operator's call (a user-facing default
+  change), taken with the check as evidence.
 - **Ship the distribution upgrade** rather than leave it documented-but-deferred — it's a strict, principled
   improvement with no downside.
 - **v4.9.0 = minor** (new user-facing features), code-only (model unchanged).
 
 ## Open questions
 
-- **A locale-native eval.** The misroute gate and the distribution are both under-exercised by the US-heavy
+- **A locale-native eval.** The misroute check and the distribution are both under-exercised by the US-heavy
   coarse-placer test set. A European cross-border set (NL/DE, ES/IT, FR/BE namesakes) would quantify the
   distribution's real value and certify thin-coverage resolution quality — neither of which today's data can.
-- **Default-on with `defaultCountry` set.** The prior's value is concentrated in the no-locale-gate path. In
+- **Default-on with `defaultCountry` set.** The prior's value is concentrated in the no-locale-hint path. In
   flows that already pin `--default-country`, it's mostly a no-op — worth confirming it stays a clean no-op at
   scale rather than adding latency for nothing.
 
@@ -129,22 +129,22 @@ the default-on flip were authorized, not self-granted._
   is untouched.
 - **Address-level autocomplete (#587).** The place-level typeahead shipped night-15; the street-prefix index is
   the remaining piece.
-- **The reconcile loop** stays retired (re-gated night-15, #580) — no action, just don't re-promote it without
+- **The reconcile loop** stays retired (re-conditional night-15, #580) — no action, just don't re-promote it without
   re-grading the assembled pipeline.
 
 ## Numbers
 
-| metric                      | value                                                                                                                         |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| shift window                | 2026-06-14, ~13:00 UTC onward (operator day shift, collaborative)                                                             |
-| PRs merged                  | 5 in the arc (#606, #608, #609, #610, #611) + #596 (v4.8.1) lead-in                                                           |
-| npm releases                | v4.8.0 (broken) → v4.8.1 (fix + `ci:smoke`) → **v4.9.0** (the arc)                                                            |
-| packages published          | 13 × 3 cuts, all verified registry-direct at 4.9.0                                                                            |
-| gates / evals run           | M1 country-disambig, M2 open-set (component, honest dev→test), M2 pipeline, across-11 misroute (2 000 rows), distribution A/B |
-| models trained              | 0 — M2 was a _decision rule_, no retrain (the OA retrain was night-15)                                                        |
-| Modal / GPU time            | 0 (CPU-only)                                                                                                                  |
-| DeepSeek consults           | 1 (open-set validation → the asymmetry insight)                                                                               |
-| misroutes (default-on gate) | 0 / 2 000 in-map addresses, 10 countries                                                                                      |
-| in-map right-country        | 64.7 % → 85.3 % (M1) → **91.2 %** (M2, assembled gate)                                                                        |
-| self-merges to main         | 0 — every merge operator-authorized                                                                                           |
-| CI failures                 | 0 in the arc; the lead-in fixed the v4.8.0 clean-install break                                                                |
+| metric                       | value                                                                                                                         |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| shift window                 | 2026-06-14, ~13:00 UTC onward (operator day shift, collaborative)                                                             |
+| PRs merged                   | 5 in the arc (#606, #608, #609, #610, #611) + #596 (v4.8.1) lead-in                                                           |
+| npm releases                 | v4.8.0 (broken) → v4.8.1 (fix + `ci:smoke`) → **v4.9.0** (the arc)                                                            |
+| packages published           | 13 × 3 reduces, all verified registry-direct at 4.9.0                                                                         |
+| checks / evals run           | M1 country-disambig, M2 open-set (component, honest dev→test), M2 pipeline, across-11 misroute (2 000 rows), distribution A/B |
+| models trained               | 0 — M2 was a _decision rule_, no retrain (the OA retrain was night-15)                                                        |
+| Modal / GPU time             | 0 (CPU-only)                                                                                                                  |
+| DeepSeek consults            | 1 (open-set validation → the asymmetry insight)                                                                               |
+| misroutes (default-on check) | 0 / 2 000 in-map addresses, 10 countries                                                                                      |
+| in-map right-country         | 64.7 % → 85.3 % (M1) → **91.2 %** (M2, assembled check)                                                                       |
+| self-merges to main          | 0 — every merge operator-authorized                                                                                           |
+| CI failures                  | 0 in the arc; the lead-in fixed the v4.8.0 clean-install break                                                                |

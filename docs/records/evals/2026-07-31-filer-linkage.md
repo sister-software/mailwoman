@@ -110,20 +110,20 @@ The 6 registrant pairs the withheld field puts together. Every other pair of the
 
 ## What is actually in each artifact
 
-Counted from the two builds, not asserted about them. The withheld build contains no ownership node, no ownership edge, no family row the prediction would score and no family row carrying a relationship this eval cannot classify — that is the withholding, verified, and a runtime gate refuses to report a withheld score if any of those four counts is non-zero. It DOES contain 2 corporate-family rows, from the management-company disclosures the eval does not withhold; they are namespaced separately from ownership families and the prediction skips them. An earlier version of this page claimed no family row could exist here at all, which was wrong on its own artifact.
+Counted from the two builds, not asserted about them. The withheld build contains no ownership node, no ownership edge, no family row the prediction would score and no family row carrying a relationship this eval cannot classify — that is the withholding, verified, and a runtime check refuses to report a withheld score if any of those four counts is non-zero. It DOES contain 2 corporate-family rows, from the management-company disclosures the eval does not withhold; they are namespaced separately from ownership families and the prediction skips them. An earlier version of this page claimed no family row could exist here at all, which was wrong on its own artifact.
 
-The family counts are split by what the prediction does with a row, not by relationship name, into three buckets that partition the total. "Scored" is every membership whose relationship asserts OWNERSHIP, so a `subsidiary` or `parent_company` row a future writer emits lands there rather than going uncounted. The second bucket is the relationships this eval recognizes and deliberately does not score — `management_company` and `same_entity`. The third is anything else: a relationship string no shipped writer can produce, which the gate refuses on rather than filing under either of the other two. The total is printed alongside all three so nothing can hide between them.
+The family counts are split by what the prediction does with a row, not by relationship name, into three buckets that partition the total. "Scored" is every membership whose relationship asserts OWNERSHIP, so a `subsidiary` or `parent_company` row a future writer emits lands there rather than going uncounted. The second bucket is the relationships this eval recognizes and deliberately does not score — `management_company` and `same_entity`. The third is anything else: a relationship string no shipped writer can produce, which the check refuses on rather than filing under either of the other two. The total is printed alongside all three so nothing can hide between them.
 
-| what the built artifact contains                                              | withheld | control |
-| ----------------------------------------------------------------------------- | -------- | ------- |
-| `holding_company_name` nodes                                                  | 0        | 4       |
-| ownership `filer_edge` rows (relationship asserts ownership)                  | 0        | 8       |
-| `filer_family` rows the prediction scores (relationship asserts ownership)    | 0        | 8       |
-| `filer_family` rows the prediction ignores (recognized, not ownership)        | 2        | 2       |
-| `filer_family` rows with an unrecognized relationship (gate refuses on these) | 0        | 0       |
-| `filer_family` rows, total                                                    | 2        | 10      |
-| entity-resolution records scored                                              | 12       | 12      |
-| entity-resolution links written                                               | 0        | 0       |
+| what the built artifact contains                                               | withheld | control |
+| ------------------------------------------------------------------------------ | -------- | ------- |
+| `holding_company_name` nodes                                                   | 0        | 4       |
+| ownership `filer_edge` rows (relationship asserts ownership)                   | 0        | 8       |
+| `filer_family` rows the prediction scores (relationship asserts ownership)     | 0        | 8       |
+| `filer_family` rows the prediction ignores (recognized, not ownership)         | 2        | 2       |
+| `filer_family` rows with an unrecognized relationship (check refuses on these) | 0        | 0       |
+| `filer_family` rows, total                                                     | 2        | 10      |
+| entity-resolution records scored                                               | 12       | 12      |
+| entity-resolution links written                                                | 0        | 0       |
 
 ## Why the withheld run recovers nothing
 

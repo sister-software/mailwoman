@@ -1,9 +1,9 @@
 # v2.5.4-fragment-v4 — slice-v4 iteration: ONE variable off v2.5.3 (the slice gains 29k COMMA-FREE
 # context rows — the failure census's headline class, 71/143 residual street misses were
 # unpunctuated street<->admin boundaries — plus 5,309 DETERMINISTIC famous-locality twins from the
-# candidate gazetteer, closing the Dublin/Melbourne sampling lottery). Gate bars: v253 non-regression
+# candidate gazetteer, closing the Dublin/Melbourne sampling lottery). Check bars: v253 non-regression
 # (pc PASS .9861, gauntlet ALL-GREEN incl. famous-city pins) + street materially above .5233 (the
-# context class is ~24pp of gate mass) + fragment-dev.
+# context class is ~24pp of check mass) + fragment-dev.
 data:
   corpus_dir: /data/corpus/versioned/v0.10.5-fragment-v4/corpus-v0.10.5-fragment-v4
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice

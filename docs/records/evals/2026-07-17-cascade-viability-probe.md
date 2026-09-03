@@ -3,7 +3,7 @@
 The delegation vision under test: a query-shape front stage that handles easy shapes deterministically
 (no encoder pass) and escalates the rest to the full model — the cascade form of the mixture idea, made
 principled by calibrated confidence. This probe measures it on the four standing arenas: what fraction a
-confidence-gated front tier would absorb, how often its deterministic parse matches gold, and how often
+confidence-conditional front tier would absorb, how often its deterministic parse matches gold, and how often
 the full model matches gold **on those same rows**. Runner: `scratchpad/cascade-probe.run.ts` (kinds via
 `classifyKindSync` at confidence ≥0.7; handlers: `postcode_only` → the format-hit span, `locality_only` →
 bare locality or the doubleton split at a trailing region abbreviation).

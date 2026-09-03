@@ -16,7 +16,7 @@ because the model had never seen them with house-number/street context — a tra
 **We built the ship candidate carefully — and caught a trap doing it.** The obvious move was to grade the
 running probe (`v1.9.3-slavic-diacritic`). But that recipe was copied from `v1.9.2-multilocale-au` (v4.14.0),
 which predates the #723 anchor-absorption fix. Grading it against v4.15.0 would have confounded the Slavic
-extract with a reverted #723 — and #723 is coordinate-invisible, so the coord gate would never have caught it.
+extract with a reverted #723 — and #723 is coordinate-invisible, so the coord check would never have caught it.
 So we forked a clean candidate, **v196-slavic-anchor** = v4.15.0's recipe verbatim + the one new extract, off
 the v4.15.0 corpus so it keeps #723. One variable. (Lesson banked: a extract recipe copied from vN-1 silently
 inherits vN-1's bugs.)
@@ -40,7 +40,7 @@ parallel SOTA agents + a DeepSeek consult mapped the fix space: vocabulary expan
 by construction), byte/char-level models (universal but latency-heavy), and a CharCNN front-end (cheap +
 universal). The fix was tokenizer-side; the extract was the wrong change.
 
-**The 80k gate confirmed it — and then some.** v196 at full convergence: US held (p50 3.31, zero dilution),
+**The 80k check confirmed it — and then some.** v196 at full convergence: US held (p50 3.31, zero dilution),
 PL flat, but **CZ regressed** — resolved-p50 5.24 → 82.89km, wrong-city 44 → 58%. At 40k CZ was flat; the
 extra 40k steps at constant LR overfit the extract and broke the Czech parses. NO-PROMOTE. The retrain didn't
 just fail to help — at scale it did harm. We only know because we graded the assembled coordinate; on
@@ -77,14 +77,14 @@ And because it leaves v4.15.0's encoder byte-for-byte untouched, US identity is 
 unchanged + English input_ids unchanged → identical logits), not an observation — the freeze-encoder variant
 we were going to build is what the mean-init already is.
 
-Every gate passes: US non-inferiority (byte-identical), CZ improvement (p50 −1.70, CI wholly negative,
+Every check passes: US non-inferiority (byte-identical), CZ improvement (p50 −1.70, CI wholly negative,
 wrong-city 44→28), PL improvement (p50 −0.85, wrong-city 30→11), functional eyeball (no over-tagging).
 
 ## What worked
 
 - **Grading the coordinate, not label-F1.** This is the whole story. The retrain's content-gap win (100→17)
   was real and would have shipped a coordinate regression. The wrong-city decomposition (tight / coarse /
-  wrong-city buckets) is the honest metric for these locales and should be a standard part of the non-US gate.
+  wrong-city buckets) is the honest metric for these locales and should be a standard part of the non-US check.
 - **Diagnostic before fix.** The $0 splice-and-verify (English byte-identical, fertility drop, `Vysoká`
   atomic) proved the mechanism before a single GPU dollar. The expensive retrain came first only because it
   was the pre-registered plan; the cheap tokenizer probe should have been the opening move.

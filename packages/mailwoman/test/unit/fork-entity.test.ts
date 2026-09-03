@@ -120,7 +120,7 @@ describe("probeVenueNearAnchor (#1684's venue tier)", () => {
 		expect(hit?.country).toBe("GB")
 	})
 
-	it("abstains when TWO same-named entities sit inside the gate — a metro-local ambiguity", () => {
+	it("abstains when TWO same-named entities sit inside the check — a metro-local ambiguity", () => {
 		const lookup = stubLookup([
 			{ name: "The Red Lion", lat: 51.51, lon: -0.12, country: "GB" },
 			{ name: "The Red Lion", lat: 51.52, lon: -0.2, country: "GB" },
@@ -129,7 +129,7 @@ describe("probeVenueNearAnchor (#1684's venue tier)", () => {
 		expect(probeVenueNearAnchor("The Red Lion", LONDON, { lookup })).toBeNull()
 	})
 
-	it("abstains when the only exact bearer is beyond the gate — another city's venue never contests", () => {
+	it("abstains when the only exact bearer is beyond the check — another city's venue never contests", () => {
 		const lookup = stubLookup([{ name: "Nine Elms Tavern", lat: 40.7, lon: -74, country: "US" }])
 
 		expect(probeVenueNearAnchor("Nine Elms Tavern", LONDON, { lookup })).toBeNull()

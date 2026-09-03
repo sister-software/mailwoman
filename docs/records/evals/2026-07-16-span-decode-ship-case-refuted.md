@@ -79,7 +79,7 @@ dressing up.
 
 What it produced instead is the reason the fix exists at all. `oracle@k` and the k-best decode were
 the instruments that made the headroom **visible** (oracle@10 0.775 against a 0.577 rank-1 — a gap
-nobody could see when every gate scored top-1). That gap is what motivated T1a's cross-tab, which
+nobody could see when every check scored top-1). That gap is what motivated T1a's cross-tab, which
 found the digit-eating and forced the hallucination check, which motivated T1c's board, which found
 the licence, which built T2's extract, which fixed the class.
 

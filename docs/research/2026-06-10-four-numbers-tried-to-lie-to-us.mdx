@@ -31,7 +31,7 @@ slightly too small. Pull it up to your chin and your feet get cold.
 
 ## Lie number one: the bar that lowered itself
 
-While writing up the gate criteria for the fix attempts, we restated the targets from
+While writing up the check criteria for the fix attempts, we restated the targets from
 memory. Affix ≥78 became "≥72". Unit 92 became 91. And the US street floor, the one
 number that would have exposed a regression hiding in every single consolidation run,
 fell out of the table entirely.
@@ -40,7 +40,7 @@ Nobody decided this. That's the unsettling part. Restating numbers from memory i
 a contract becomes a vibe, and a vibe always drifts toward whatever you already built.
 The operator caught it by asking one question about one number. The fix cost ten
 minutes, and the rule it produced is now non-negotiable: **the training config is the
-canonical gate, and any change to a bar is a stated decision with a reason, in
+canonical check, and any change to a bar is a stated decision with a reason, in
 writing, before the eval runs.** When a model misses the bar, you confront the miss:
 re-baseline it with reasons, or iterate. Re-describing it as a pass is how you
 wake up six weeks later wondering when street tagging got worse.
@@ -63,7 +63,7 @@ So that's a capacity wall with a number on it: 29 million parameters cannot _hol
 affix split and the rest of the distribution at once. It can visit. It can't stay. We
 wrote months ago that the first model-size increase would have to earn its way in with
 evidence, and this is what earning it looks like. The escalation now sits in an issue
-with a pre-registered gate and a cheap probe to try first — a dedicated affix head —
+with a pre-registered check and a cheap probe to try first — a dedicated affix head —
 before anyone reaches for more parameters.
 
 ## Shipping the miss, out loud
@@ -100,7 +100,7 @@ we knew to ask.
 
 ## Calibrate the instrument too
 
-Four numbers lied to us in 24 hours: a gate that softened itself in retelling, a
+Four numbers lied to us in 24 hours: a check that softened itself in retelling, a
 consultant's confident extrapolation, a transient peak dressed as an equilibrium, and
 a benchmark grading a handicapped model. None of them lied maliciously. Every one of
 them was _plausible_, and plausible is the only kind of wrong number that survives

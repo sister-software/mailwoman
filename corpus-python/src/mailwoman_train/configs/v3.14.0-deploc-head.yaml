@@ -23,7 +23,7 @@
 # config.py use_deploc_head; train.py carveout adds "deploc_head." to the classifier LR group.
 #
 # PRE-REGISTERED (inherited v3.12/v3.13 bars — this is a probe, so the invariance suite IS the read):
-#   GATING AT EVERY CHECKPOINT (1k + 2k): metamorphic INVARIANCE SUITE (`mailwoman eval invariance
+#   BLOCKING AT EVERY CHECKPOINT (1k + 2k): metamorphic INVARIANCE SUITE (`mailwoman eval invariance
 #     --baseline v385`) — the Pennsylvania INV[comma-drop] class is the whole question. NEW class vs
 #     v385 = break persists = B insufficient; NO new class + dep-loc emits = break gone = B live.
 #   READ (not hard bars — this is a falsifier): GB dep-loc board w/ prior δ=5.0 emit/tag-correct;

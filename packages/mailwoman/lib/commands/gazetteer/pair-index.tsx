@@ -398,7 +398,7 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 		// `EXPECTED_GB_PAIR_COUNT`'s doc comment for the 221-group collision receipt that separates the two numbers.
 		const preFoldSuffix = ` (pre-fold rung-3 census: ${RUNG3_PRE_FOLD_CENSUS_LINE_COUNT.toLocaleString()} lines)`
 
-		const gateLine =
+		const checkLine =
 			country === "gb"
 				? options.holdoutFraction > 0
 					? `(cross-check skipped under --holdout-fraction; ${preHoldoutCount.toLocaleString()} distinct pairs before holdout, expects ${(EXPECTED_GB_PAIR_COUNT + boroughsAdded).toLocaleString()})${preFoldSuffix}`
@@ -427,7 +427,7 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 			`rows kept ${rowsKept.toLocaleString()} / skipped ${rowsSkipped.toLocaleString()} (empty CITY)`,
 			`distinct pairs: ${entries.length.toLocaleString()}`,
 			...(holdoutLine ? [holdoutLine] : []),
-			gateLine,
+			checkLine,
 			...distLines,
 			...probeLines,
 		]

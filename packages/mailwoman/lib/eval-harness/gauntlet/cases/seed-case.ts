@@ -41,7 +41,7 @@ export interface SeedCase {
 	defaultCountry?: string
 	/**
 	 * The CLI locale this row runs under (`en-NZ`); the runner derives the weights overlay from its region subtag,
-	 * mirroring production's locale-gate routing. A LOCALE HINT, never a country constraint — `country` above stays the
+	 * mirroring production's locale-hint routing. A LOCALE HINT, never a country constraint — `country` above stays the
 	 * TRUTH's country, which for a locale row can differ (`Paris` under `en-US` is an FR row run with the US overlay).
 	 * See #1585's contract.
 	 */

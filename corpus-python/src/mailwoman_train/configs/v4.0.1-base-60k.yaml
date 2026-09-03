@@ -11,10 +11,10 @@
 # drops unlisted sources; synth-house-venue existed as a recipe but was in NO corpus) — the
 # shipped model's venue competence was lineage inheritance, which from-scratch X-rayed away.
 #
-# PRE-REGISTERED GATES: the v4.0.0 sheet VERBATIM (G1-G8 + Fisher sanity as written there), plus:
+# PRE-REGISTERED CHECKS: the v4.0.0 sheet VERBATIM (G1-G8 + Fisher sanity as written there), plus:
 #   - The 3 venue fixtures (mr-mrs-crab / jjan-chatelet / american-bar-le-marais) MUST clear.
 #   - The 2 now-PASS tracked cases (chat-qui-peche, venue-delta) must STAY passing (promote their
-#     status in the same cut).
+#     status in the same reduce).
 #   - us.street_prefix graded against the SUPPORT-AWARE recut floor (the recorded disposition:
 #     the 96.0 floor used the 2.0pp fallback margin on an n=25 metric; the spec-rule floor ≈ 86).
 #   - No other class may drop below its run-1 reading by more than noise (the delta is one slice

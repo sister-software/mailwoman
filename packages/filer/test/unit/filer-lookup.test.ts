@@ -117,7 +117,7 @@ function minimalForm499Row(overrides: Partial<Form499Row> = {}): Form499Row {
 		frn: toFRN("0001753557"),
 		lastFiledAt: "2026-01-15",
 		usfContributor: false,
-		legalNameOfCarrier: "Gate Co",
+		legalNameOfCarrier: "Check Co",
 		doingBusinessAs: "",
 		principalCommType: "",
 		holdingCompany: "",
@@ -259,7 +259,7 @@ describe("§7-3a criteria", () => {
 		})
 
 		it("guards reject a whitespace-only lastFiledAt (not just empty) via buildFilerDatabase", async () => {
-			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			await using scratch = await temporaryDirectory("filer-lookup-check1-")
 			const out = scratch.resolve("filer.db")
 
 			await expect(
@@ -275,7 +275,7 @@ describe("§7-3a criteria", () => {
 		})
 
 		it("guards reject an empty lastFiledAt via buildFilerDatabase", async () => {
-			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			await using scratch = await temporaryDirectory("filer-lookup-check1-")
 			const out = scratch.resolve("filer.db")
 
 			await expect(
@@ -291,7 +291,7 @@ describe("§7-3a criteria", () => {
 		})
 
 		it("guards reject a whitespace-only form499ID (not just empty) via buildFilerDatabase", async () => {
-			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			await using scratch = await temporaryDirectory("filer-lookup-check1-")
 			const out = scratch.resolve("filer.db")
 
 			await expect(
@@ -307,7 +307,7 @@ describe("§7-3a criteria", () => {
 		})
 
 		it("guards reject a whitespace-only provider-list frn (not just empty) via buildFilerDatabase", async () => {
-			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			await using scratch = await temporaryDirectory("filer-lookup-check1-")
 			const out = scratch.resolve("filer.db")
 
 			const malformedRows: ProviderListRow[] = [
@@ -483,22 +483,22 @@ describe("§7-3a criteria", () => {
 			await createAllTables(db)
 			await seedManifest(db)
 
-			const FRN_GATE2 = `${FilerIdentifierType.FRN}:8080808080`
-			const FAMILY_GATE2 = "holding_company_name:gate2-holdco"
-			const NAMING_GATE2 = `${FilerIdentifierType.HoldingCompanyName}:Gate2 Holdco`
+			const FRN_CHECK2 = `${FilerIdentifierType.FRN}:8080808080`
+			const FAMILY_CHECK2 = "holding_company_name:check2-holdco"
+			const NAMING_CHECK2 = `${FilerIdentifierType.HoldingCompanyName}:Check2 Holdco`
 
 			await db
 				.insertInto("filer_node")
-				.values({ node_id: FRN_GATE2, identifier_type: FilerIdentifierType.FRN, identifier_value: "8080808080" })
+				.values({ node_id: FRN_CHECK2, identifier_type: FilerIdentifierType.FRN, identifier_value: "8080808080" })
 				.execute()
 
 			await db
 				.insertInto("filer_family")
 				.values([
 					{
-						node_id: FRN_GATE2,
-						family_id: FAMILY_GATE2,
-						naming_node_id: NAMING_GATE2,
+						node_id: FRN_CHECK2,
+						family_id: FAMILY_CHECK2,
+						naming_node_id: NAMING_CHECK2,
 						assertion: FilerEdgeAssertion.Authoritative,
 						relationship: FilerRelationship.HoldingCompany,
 						source: "form-499",
@@ -508,9 +508,9 @@ describe("§7-3a criteria", () => {
 						match_score: null,
 					},
 					{
-						node_id: FRN_GATE2,
-						family_id: FAMILY_GATE2,
-						naming_node_id: NAMING_GATE2,
+						node_id: FRN_CHECK2,
+						family_id: FAMILY_CHECK2,
+						naming_node_id: NAMING_CHECK2,
 						assertion: FilerEdgeAssertion.Inferred,
 						relationship: FilerRelationship.HoldingCompany,
 						source: "name-match-v1",
@@ -527,14 +527,14 @@ describe("§7-3a criteria", () => {
 			// THE ASSERTION: two entries, not one. A caller can tell the filed disclosure from the guess.
 			expect(result.families).toEqual([
 				{
-					family_id: FAMILY_GATE2,
+					family_id: FAMILY_CHECK2,
 					relationship: FilerRelationship.HoldingCompany,
 					assertion: FilerEdgeAssertion.Authoritative,
 					match_score: null,
 					display_names: [],
 				},
 				{
-					family_id: FAMILY_GATE2,
+					family_id: FAMILY_CHECK2,
 					relationship: FilerRelationship.HoldingCompany,
 					assertion: FilerEdgeAssertion.Inferred,
 					match_score: 0.61,
@@ -544,19 +544,19 @@ describe("§7-3a criteria", () => {
 
 			// And the inverse view agrees: familyRollup's members carry the same grading, so a caller reading the
 			// family from the other direction cannot be told a different story about how strong its membership is.
-			const rollup = await familyRollup(db, { familyID: FAMILY_GATE2, asOf: "2026-06-01" })
+			const rollup = await familyRollup(db, { familyID: FAMILY_CHECK2, asOf: "2026-06-01" })
 			expect(rollup).toHaveLength(1)
 
 			expect(rollup[0]?.members).toEqual([
 				{
-					node_id: FRN_GATE2,
+					node_id: FRN_CHECK2,
 					relationship: FilerRelationship.HoldingCompany,
 					assertion: FilerEdgeAssertion.Authoritative,
 					match_score: null,
 					source: "form-499",
 				},
 				{
-					node_id: FRN_GATE2,
+					node_id: FRN_CHECK2,
 					relationship: FilerRelationship.HoldingCompany,
 					assertion: FilerEdgeAssertion.Inferred,
 					match_score: 0.61,
@@ -801,7 +801,7 @@ describe("§7-3a criteria", () => {
 			expect(result.primary_frn?.frn).toBe("0003333333")
 		})
 
-		it("BEFORE the closing date, the later-filed (then still-open) FRN correctly wins — proving the temporal window, not a static preference, gates the outcome", async () => {
+		it("BEFORE the closing date, the later-filed (then still-open) FRN correctly wins — proving the temporal window, not a static preference, checks the outcome", async () => {
 			using db = openMemory()
 			await seedClosedVsInForce(db)
 
@@ -834,7 +834,7 @@ describe("§7-3a criteria", () => {
 		 * this test would fail.
 		 */
 		it("REAL builder path: a non-ISO sourceVintage never leaks into valid_from — a provider-list edge built via buildFilerDatabase stays findable asOf a real date", async () => {
-			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			await using scratch = await temporaryDirectory("filer-lookup-check1-")
 			const out = scratch.resolve("filer.db")
 
 			await buildFilerDatabase({
@@ -1125,7 +1125,7 @@ describe("§7-3b criteria", () => {
 		 * this test immediately.
 		 */
 		it("REAL builder + REAL clusterAuthoritativeComponents: 3 FRNs sharing one holding company yield 3 distinct entity clusters and 1 shared family — never merged", async () => {
-			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			await using scratch = await temporaryDirectory("filer-lookup-check1-")
 			const out = scratch.resolve("filer.db")
 
 			const SHARED_HOLDING = "Real Pipeline Holdco Inc"
@@ -1246,7 +1246,7 @@ describe("§7-3b criteria", () => {
 		 * `display_names`, sorted, never silently collapsed to one.
 		 */
 		it("REAL builder, multi-spelling family: two raw holding-company spellings that canonicalize identically both survive in display_names, sorted — never collapsed to one", async () => {
-			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			await using scratch = await temporaryDirectory("filer-lookup-check1-")
 			const out = scratch.resolve("filer.db")
 
 			const FRN_SPELLING_1 = toFRN("0009300001")!
@@ -1312,7 +1312,7 @@ describe("§7-3b criteria", () => {
 		 * counts distinct member NODES, never rows).
 		 */
 		it("REAL builder, one filer reporting TWO spellings of one family: both survive in display_names, families stays one entry, distinct_member_count stays 1", async () => {
-			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			await using scratch = await temporaryDirectory("filer-lookup-check1-")
 			const out = scratch.resolve("filer.db")
 
 			const FRN_TWO_SPELLINGS = toFRN("0009500001")!
@@ -1411,7 +1411,7 @@ describe("§7-3b criteria", () => {
 		 * cross-contamination output whenever the scoping predicate is removed, whatever form it takes.
 		 */
 		it("display_names never leaks across a DIFFERENT family: REAL builder, provider-list path — one providerID with two DIFFERENT holding companies under the same source+valid_from never cross-contaminates each family's display_names", async () => {
-			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			await using scratch = await temporaryDirectory("filer-lookup-check1-")
 			const out = scratch.resolve("filer.db")
 
 			const FRN_SHARED = toFRN("0009400001")!
@@ -1455,7 +1455,7 @@ describe("§7-3b criteria", () => {
 		})
 
 		it("display_names never leaks across a DIFFERENT family: REAL builder, 499 path — one FRN with two DIFFERENT holding companies filed the same day never cross-contaminates each family's display_names", async () => {
-			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			await using scratch = await temporaryDirectory("filer-lookup-check1-")
 			const out = scratch.resolve("filer.db")
 
 			const FRN_SHARED = toFRN("0009400002")!
@@ -1554,8 +1554,8 @@ describe("§7-3b criteria", () => {
 
 			const partialFamily = {
 				node_id: "frn:4040404040",
-				family_id: "holding_company_name:gate2-co",
-				naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:Gate2 Co`,
+				family_id: "holding_company_name:check2-co",
+				naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:Check2 Co`,
 				assertion: FilerEdgeAssertion.Authoritative,
 				// relationship deliberately omitted — this is the runtime half of criterion 2's rejection test.
 				source: "form-499",
@@ -1580,8 +1580,8 @@ describe("§7-3b criteria", () => {
 
 			const partialFamily = {
 				node_id: "frn:5050505050",
-				family_id: "holding_company_name:gate2-co",
-				naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:Gate2 Co`,
+				family_id: "holding_company_name:check2-co",
+				naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:Check2 Co`,
 				assertion: FilerEdgeAssertion.Authoritative,
 				relationship: FilerRelationship.HoldingCompany,
 				// source deliberately omitted
@@ -1609,8 +1609,8 @@ describe("§7-3b criteria", () => {
 					.insertInto("filer_family")
 					.values({
 						node_id: "frn:6060606060",
-						family_id: "holding_company_name:gate2-co",
-						naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:Gate2 Co`,
+						family_id: "holding_company_name:check2-co",
+						naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:Check2 Co`,
 						assertion: FilerEdgeAssertion.Authoritative,
 						relationship: "",
 						source: "form-499",
@@ -1636,8 +1636,8 @@ describe("§7-3b criteria", () => {
 					.insertInto("filer_family")
 					.values({
 						node_id: "frn:7070707070",
-						family_id: "holding_company_name:gate2-co",
-						naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:Gate2 Co`,
+						family_id: "holding_company_name:check2-co",
+						naming_node_id: `${FilerIdentifierType.HoldingCompanyName}:Check2 Co`,
 						assertion: FilerEdgeAssertion.Authoritative,
 						relationship: "   ",
 						source: "form-499",
@@ -1759,9 +1759,9 @@ describe("§7-3b criteria", () => {
 	 * kinds without any code change, while the POSITIVE half (the family surfaces DO pick up the EDGAR row) is asserted
 	 * too — an assertion that that only checked absence could pass just as well with the whole EDGAR path deleted.
 	 */
-	describe("2. EDGAR-sourced families extend gates 1-2", () => {
+	describe("2. EDGAR-sourced families extend checks 1-2", () => {
 		it("an inferred EDGAR subsidiary relationship never leaks into entity clustering or identifiers, but DOES surface as a family via familyRollup/filerLookup.families", async () => {
-			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			await using scratch = await temporaryDirectory("filer-lookup-check1-")
 			const out = scratch.resolve("filer.db")
 
 			const FRN_SUBSIDIARY = toFRN("0009600001")!

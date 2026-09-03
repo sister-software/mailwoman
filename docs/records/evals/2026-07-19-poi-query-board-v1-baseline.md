@@ -14,13 +14,13 @@ against.
 
 ## Composition (45 cases)
 
-| slice                  |   n | notes                                                                                                             |
-| ---------------------- | --: | ----------------------------------------------------------------------------------------------------------------- |
-| category + anchor      |  22 | ≥4 per country: US 6, CA 5, MX 5, FR 6 — well-known city-center golds, 25 km tolerance                            |
-| locale-gated synonym   |   5 | 3 exact-locale-gated (`er`/en-US, `petrol station`/en-GB, `mailbox`/en-CA), 2 ungated                             |
-| abstain                |   7 | 3 build-local infra (anchored — see note below), 3 bare no-anchor shipped categories, 1 gated-synonym→build-local |
-| address-guard          |   6 | 4 full addresses + 2 venue-led (`category, address`) — must NOT take the poi path                                 |
-| near-miss / robustness |   6 | comma anchors, multiword synonyms, multi-segment anchors, 2 genuine coverage-gap probes                           |
+| slice                  |   n | notes                                                                                                                   |
+| ---------------------- | --: | ----------------------------------------------------------------------------------------------------------------------- |
+| category + anchor      |  22 | ≥4 per country: US 6, CA 5, MX 5, FR 6 — well-known city-center golds, 25 km tolerance                                  |
+| locale-hintd synonym   |   5 | 3 exact-locale-hintd (`er`/en-US, `petrol station`/en-GB, `mailbox`/en-CA), 2 unconditional                             |
+| abstain                |   7 | 3 build-local infra (anchored — see note below), 3 bare no-anchor shipped categories, 1 conditional-synonym→build-local |
+| address-guard          |   6 | 4 full addresses + 2 venue-led (`category, address`) — must NOT take the poi path                                       |
+| near-miss / robustness |   6 | comma anchors, multiword synonyms, multi-segment anchors, 2 genuine coverage-gap probes                                 |
 
 **A deliberate deviation from the task's literal phrasing:** the composition brief lists
 "bare build-local categories (fire hydrant, drinking fountain, datacenter) → `requires_build_local_layer`."
@@ -52,7 +52,7 @@ nearest-distance distribution (km, results-cases with ≥1 result, n=29): min 0.
 ```
 
 - **abstain 7/7 (100%)** — both abstain paths (`requires_build_local_layer`,
-  `anchor_required`) fire exactly where expected, including the gated-synonym→build-local
+  `anchor_required`) fire exactly where expected, including the conditional-synonym→build-local
   case (`mailbox`, en-CA).
 - **address 6/6 (100%)** — no address-guard false-positive; the venue-led shape
   (`"hospital, 350 5th Ave, New York, NY 10118"`) correctly stays on the address path in both
@@ -118,7 +118,7 @@ The pre-registered floors are now **live** in the harness (`POI_BOARD_FLOORS` /
 | address-guard | = 100%    | hard — the poi branch must never hijack a full address                                       |
 
 Floors print on every run; `mailwoman eval poi-board --enforce` turns a breach into a
-non-zero exit (the CI-gate mode). Without `--enforce` the command stays report-only.
+non-zero exit (the CI-check mode). Without `--enforce` the command stays report-only.
 
 **Current standing (v1.1, 2026-07-20 promotion battery — `2026-07-20-poi-promotion-battery.md`):**
 the fixture set has grown from v1's 45 to **51** (v1.1 added 6 brand cases — see

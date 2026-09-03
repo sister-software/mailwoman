@@ -26,7 +26,7 @@ import {
 	NeuralAddressClassifier,
 	PairIndexResolver,
 	peekPairIndexHeader,
-	resolvePairGateCountry,
+	resolvePairIndexCountry,
 	resolvePairIndexForText,
 	WebONNXRunner,
 } from "@mailwoman/neural-web"
@@ -43,7 +43,7 @@ const REEXPORTS: Array<[name: string, viaShim: unknown, viaSource: unknown]> = [
 	["defaultGazetteerLexiconURL", defaultGazetteerLexiconURL, webLoader.defaultGazetteerLexiconURL],
 	["detectPairIndexCountry", detectPairIndexCountry, webLoader.detectPairIndexCountry],
 	["loadNeuralClassifierFromURLs", loadNeuralClassifierFromURLs, webLoader.loadNeuralClassifierFromURLs],
-	["resolvePairGateCountry", resolvePairGateCountry, webLoader.resolvePairGateCountry],
+	["resolvePairIndexCountry", resolvePairIndexCountry, webLoader.resolvePairIndexCountry],
 	["resolvePairIndexForText", resolvePairIndexForText, webLoader.resolvePairIndexForText],
 	["DEFAULT_FIXED_SEQ_LEN", DEFAULT_FIXED_SEQ_LEN, webRunner.DEFAULT_FIXED_SEQ_LEN],
 	["WebONNXRunner", WebONNXRunner, webRunner.WebONNXRunner],

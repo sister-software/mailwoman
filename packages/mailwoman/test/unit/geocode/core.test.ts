@@ -261,7 +261,7 @@ describe("extractGeocodeResult — parsed house-grade fields (#1041)", () => {
 		expect(r.street).toBe("East Sheldon Rd")
 	})
 
-	it("still carries the parsed spans on an admin-tier fallback (the consumer gates on the tier, not their presence)", () => {
+	it("still carries the parsed spans on an admin-tier fallback (the consumer checks on the tier, not their presence)", () => {
 		const r = extractGeocodeResult("123 East Sheldon Rd 75001 Paris", rooftopTree("admin"))
 		expect(r.resolution_tier).toBe("admin") // no address_point/interpolated metadata → admin centroid
 		expect(r.house_number).toBe("123") // populated regardless of tier — informational

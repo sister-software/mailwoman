@@ -83,7 +83,7 @@ Six work areas, each with its own thread. Cross-thread dependencies noted.
   - **Learned** later (small 1-2M param span proposer trained on segmentation labels derived from corpus). Validates whether learned generalization beats rules.
 - **Why:** decouples boundary discovery from type classification — addresses v0.4.0's bio_slip slice at source rather than via decoder post-trim. Feeds both Stage 3 (as input conditioning) and Stage 5 (as span candidates).
 - **Specifics:**
-  - New workspace `@mailwoman/phrase-grouper/` alongside `@mailwoman/locale-gate` + `@mailwoman/kind-classifier`
+  - New workspace `@mailwoman/phrase-grouper/` alongside `@mailwoman/locale-hint` + `@mailwoman/kind-classifier`
   - Output: `Array<{ span: Section; kindHypothesis: PhraseKind; confidence: number }>`
   - PhraseKind taxonomy includes NUMERIC, STREET_PHRASE, LOCALITY_PHRASE, REGION_ABBREVIATION, POSTCODE, VENUE_PHRASE, HYPHENATED_COMPOUND
   - Rule-based version ships first as proof-of-concept; learned version is v0.5.0 stretch if time permits, otherwise v0.5.1

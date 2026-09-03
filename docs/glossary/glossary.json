@@ -4,7 +4,7 @@
 	"terms": [
 		{
 			"term": "absence curriculum",
-			"definition": "Training-time ramped per-row zero-out of an evidence channel's confidence so the model keeps label competence with AND without the clue — the anti-over-reliance leg. The ablation gate (evidence-zeroed parse ≥ baseline) is its eval-side check.",
+			"definition": "Training-time ramped per-row zero-out of an evidence channel's confidence so the model keeps label competence with AND without the clue — the anti-over-reliance leg. The ablation check (evidence-zeroed parse ≥ baseline) is its eval-side check.",
 			"tags": ["training", "evidence"],
 			"aliases": ["evidence curriculum", "anti-over-trust curriculum"],
 			"relatedTerms": ["false-evidence noise", "evidence bundle", "over-trust decay"]
@@ -19,7 +19,7 @@
 		},
 		{
 			"term": "acceptance battery",
-			"definition": "The packaged promotion harness — golden floors with noise-honest margins, fragment boards with lowercase legs, invariance, gauntlet, canaries, evidence ablation, capability manifest — run identically for our own promotes and (with per-customer canaries + the EWC guarantee gate) at fine-tune-engagement delivery.",
+			"definition": "The packaged promotion harness — golden floors with noise-honest margins, fragment boards with lowercase legs, invariance, gauntlet, canaries, evidence ablation, capability manifest — run identically for our own promotes and (with per-customer canaries + the EWC guarantee check) at fine-tune-engagement delivery.",
 			"tags": ["evals", "enterprise"],
 			"aliases": ["battery", "promotion battery"],
 			"relatedTerms": ["gauntlet", "canary fixture", "EWC", "golden master"]
@@ -102,7 +102,7 @@
 		},
 		{
 			"term": "arbitration",
-			"definition": "A pipeline stage that compares rule-based (v0) and neural classifier output, resolving disagreements via a policy registry. Built and merged but not promoted — the coordinate gate showed label-F1 gains came at the cost of worse geocoding.",
+			"definition": "A pipeline stage that compares rule-based (v0) and neural classifier output, resolving disagreements via a policy registry. Built and merged but not promoted — the coordinate check showed label-F1 gains came at the cost of worse geocoding.",
 			"tags": ["staged-pipeline", "hybrid"],
 			"relatedTerms": ["rule-based classifier", "neural classifier", "joint decoding"]
 		},
@@ -226,7 +226,7 @@
 		{
 			"term": "canary fixture",
 			"definition": "A named eval row pinning a specific past failure with its receipt, graded zero-flip at every promotion — the row must never regress. The customer-facing variant (rows from a customer's own stock) is the B11 acceptance battery's per-engagement layer.",
-			"tags": ["evals", "gates"],
+			"tags": ["evals", "checks"],
 			"aliases": ["canary"],
 			"relatedTerms": ["gauntlet", "acceptance battery"]
 		},
@@ -394,7 +394,7 @@
 			"term": "conventions mask",
 			"definition": "A decode-time constraint layer keyed by the model's own address-system detection (the exported locale head): tags that are ungrammatical in the detected system are removed from the Viterbi vocabulary, and the system's postcode shape arms a snap-only repair pass. The first slice forbids USPS street-affix decomposition for French. Same knowledge-outside-the-weights property as the gazetteer anchor — add a codex conventions row, no retrain.",
 			"tags": ["hybrid", "neural"],
-			"relatedTerms": ["Viterbi decoding", "gazetteer anchor", "locale gate"]
+			"relatedTerms": ["Viterbi decoding", "gazetteer anchor", "locale check"]
 		},
 		{
 			"term": "coord metric",
@@ -405,7 +405,7 @@
 		},
 		{
 			"term": "coordinate-acceptability",
-			"definition": "The resolve-through read used as a probe gate: parse → resolve the predicted admin pair through the gazetteer → acceptable iff the resolved point lands within tolerance of the row's gold coordinate. Measures whether the parse reaches the right PLACE, not span cosmetics.",
+			"definition": "The resolve-through read used as a probe check: parse → resolve the predicted admin pair through the gazetteer → acceptable iff the resolved point lands within tolerance of the row's gold coordinate. Measures whether the parse reaches the right PLACE, not span cosmetics.",
 			"tags": ["evals"],
 			"aliases": ["coord acceptability"],
 			"relatedTerms": ["coord metric", "acc@1"]
@@ -464,10 +464,10 @@
 		},
 		{
 			"term": "D-rule",
-			"definition": "Iron rule 6: no default-on mechanism (model or decode-time) ships with a known regression vs the shipped model on any tier-1 locale — fix, per-locale-gate, or opt-in. The gate every cut passes through.",
-			"tags": ["process", "gates"],
+			"definition": "Iron rule 6: no default-on mechanism (model or decode-time) ships with a known regression vs the shipped model on any tier-1 locale — fix, per-locale-hint, or opt-in. The check every reduce passes through.",
+			"tags": ["process", "checks"],
 			"aliases": ["iron rule 6"],
-			"relatedTerms": ["named watch", "gated promotion"]
+			"relatedTerms": ["named watch", "conditional promotion"]
 		},
 		{
 			"term": "decoder",
@@ -604,7 +604,7 @@
 		},
 		{
 			"term": "ensemble",
-			"definition": "Combining several models' predictions to cut variance and improve robustness. A general ML technique, noted in the docs as a technique Mailwoman has not needed.",
+			"definition": "Combining several models' predictions to reduce variance and improve robustness. A general ML technique, noted in the docs as a technique Mailwoman has not needed.",
 			"tags": ["neural"],
 			"relatedTerms": ["neural classifier", "generalization"]
 		},
@@ -760,8 +760,8 @@
 		},
 		{
 			"term": "fragment board",
-			"definition": "The standing targeted-failure-class eval: ~400 rows per pre-registered class (homonym, bare-street, bare-locality, housenumber variants, particles, date-names) sampled from a national source, graded with Wilson intervals, with the NEGATIVE class scored (a hallucinated street on a bare locality is visible by construction). The FR board (ban-fragments-fr) is the P0 instrument; the DE board (overture-fragments-de) is the v7-fold gate's leg.",
-			"tags": ["evals", "gates"],
+			"definition": "The standing targeted-failure-class eval: ~400 rows per pre-registered class (homonym, bare-street, bare-locality, housenumber variants, particles, date-names) sampled from a national source, graded with Wilson intervals, with the NEGATIVE class scored (a hallucinated street on a bare locality is visible by construction). The FR board (ban-fragments-fr) is the P0 instrument; the DE board (overture-fragments-de) is the v7-fold check's leg.",
+			"tags": ["evals", "checks"],
 			"aliases": ["P0 board", "fragment fixture"],
 			"relatedTerms": ["user register", "gauntlet", "flip census"]
 		},
@@ -795,18 +795,18 @@
 			"relatedTerms": ["BAN", "OpenAddresses", "corpus"]
 		},
 		{
-			"term": "gated promotion",
+			"term": "conditional promotion",
 			"definition": "A release discipline where a model ships to production only if it passes pre-registered metrics (e.g. 'DE locality ≥ 70%, no tag regresses > 2pp'). Failing models can be uploaded as experiments but not promoted to default.",
 			"tags": ["evals", "training"],
-			"aliases": ["promotion gate"],
+			"aliases": ["promotion check"],
 			"relatedTerms": ["parity scorecard", "verdict-smoke", "night shift"]
 		},
 		{
 			"term": "gauntlet",
-			"definition": "The three-layer input-robustness gate: regression fixtures (named past failures, must-pass), metamorphic perturbations (label-preserving edits must not move the coordinate — INV/DIR/BAND relations), and a held-out fresh draw. Known failures are tracked xfails; a NEW failure blocks.",
-			"tags": ["evals", "gates"],
+			"definition": "The three-layer input-robustness check: regression fixtures (named past failures, must-pass), metamorphic perturbations (label-preserving edits must not move the coordinate — INV/DIR/BAND relations), and a held-out fresh draw. Known failures are tracked xfails; a NEW failure blocks.",
+			"tags": ["evals", "checks"],
 			"aliases": [],
-			"relatedTerms": ["canary fixture", "gated promotion"]
+			"relatedTerms": ["canary fixture", "conditional promotion"]
 		},
 		{
 			"term": "gazetteer",
@@ -1086,13 +1086,13 @@
 			"term": "kind classifier",
 			"definition": "Stage 2.5 of the runtime pipeline: categorizes the input into one of eight query kinds (structured_address, postcode_only, locality_only, intersection, po_box, landmark, poi_query, vague) so the coordinator can route to the right parsing strategy.",
 			"tags": ["staged-pipeline"],
-			"relatedTerms": ["staged pipeline", "query shape", "locale gate"]
+			"relatedTerms": ["staged pipeline", "query shape", "locale check"]
 		},
 		{
 			"term": "known format",
 			"definition": "A recognized postcode or postal pattern (US ZIP, UK postcode, French code postal) detected by regex in the query-shape stage to arm fast paths and locale hints.",
 			"tags": ["staged-pipeline", "postcode"],
-			"relatedTerms": ["query shape", "postcode", "locale gate"]
+			"relatedTerms": ["query shape", "postcode", "locale check"]
 		},
 		{
 			"term": "label set",
@@ -1169,7 +1169,7 @@
 		},
 		{
 			"term": "LLM-as-corpus-generator",
-			"definition": "Using a large language model to synthesize annotated training rows for low-data or multilingual cases, gated by alignment validation that rejects rows whose components don't substring-match the surface.",
+			"definition": "Using a large language model to synthesize annotated training rows for low-data or multilingual cases, blocked by alignment validation that rejects rows whose components don't substring-match the surface.",
 			"tags": ["corpus"],
 			"relatedTerms": ["synthetic extract", "reject rate", "alignment"]
 		},
@@ -1177,10 +1177,10 @@
 			"term": "locale",
 			"definition": "The combination of language and country an address comes from. en-US and fr-FR are the locales Mailwoman ships weights for.",
 			"tags": ["domain", "multilingual"],
-			"relatedTerms": ["locale gate", "model weights"]
+			"relatedTerms": ["locale check", "model weights"]
 		},
 		{
-			"term": "locale gate",
+			"term": "locale check",
 			"definition": "Stage 2 of the runtime pipeline: rule-based locale detection from the query shape's script and known-format signals. Returns a LocaleHint with the top candidate and alternatives, surfacing disagreement with an explicit --locale flag.",
 			"tags": ["staged-pipeline"],
 			"relatedTerms": ["staged pipeline", "query shape", "locale tag"]
@@ -1364,7 +1364,7 @@
 			"term": "night shift",
 			"definition": "An autonomous overnight agent session — training launches, evals, publishing, issue triage — that ends with a structured postmortem (what shipped, regressions, open questions) committed for handoff.",
 			"tags": ["night-shift"],
-			"relatedTerms": ["gated promotion", "iteration log", "parity scorecard"]
+			"relatedTerms": ["conditional promotion", "iteration log", "parity scorecard"]
 		},
 		{
 			"term": "NLL",
@@ -1375,10 +1375,10 @@
 		},
 		{
 			"term": "noise-honest margin",
-			"definition": "The floor-cutting rule: floor = reference reading − max(1.0pp, 2× the metric's 95% binomial half-width at its own support). The noise band varies ~19× across metrics, so a uniform margin either blesses real drift or fails on coin flips. Where support is not exposed the rule falls back to 2.0pp — a trap when the true support is small (the street_prefix lesson).",
-			"tags": ["evals", "gates"],
+			"definition": "The floor-reducing rule: floor = reference reading − max(1.0pp, 2× the metric's 95% binomial half-width at its own support). The noise band varies ~19× across metrics, so a uniform margin either blesses real drift or fails on coin flips. Where support is not exposed the rule falls back to 2.0pp — a trap when the true support is small (the street_prefix lesson).",
+			"tags": ["evals", "checks"],
 			"aliases": [],
-			"relatedTerms": ["gated promotion", "named watch", "pre-registration"]
+			"relatedTerms": ["conditional promotion", "named watch", "pre-registration"]
 		},
 		{
 			"term": "normalize",
@@ -1518,7 +1518,7 @@
 		},
 		{
 			"term": "parity campaign",
-			"definition": "The systematic effort to close the gap between Mailwoman's neural parser and the legacy rule-based v0 parser on every address component tag. Tracked through per-tag parity tables and gated by honest-eval probes.",
+			"definition": "The systematic effort to close the gap between Mailwoman's neural parser and the legacy rule-based v0 parser on every address component tag. Tracked through per-tag parity tables and blocked by honest-eval probes.",
 			"tags": ["evals"],
 			"relatedTerms": ["honest eval", "boundary instability", "negative space"]
 		},
@@ -1555,7 +1555,7 @@
 		},
 		{
 			"term": "perplexity",
-			"definition": "How surprised a language model is by held-out text, expressed as the effective number of choices it was weighing per token; lower means better prediction. It is the standard health metric for generative models, with a classic trap: it is computed per token, so models with different tokenizers cannot be compared on it. Mailwoman does not gate on perplexity — a token classifier is graded on labels and, ultimately, coordinates — but the same trap governs our own metrics: parse-F1 is never compared across tokenizer versions.",
+			"definition": "How surprised a language model is by held-out text, expressed as the effective number of choices it was weighing per token; lower means better prediction. It is the standard health metric for generative models, with a classic trap: it is computed per token, so models with different tokenizers cannot be compared on it. Mailwoman does not check on perplexity — a token classifier is graded on labels and, ultimately, coordinates — but the same trap governs our own metrics: parse-F1 is never compared across tokenizer versions.",
 			"tags": ["neural"],
 			"relatedTerms": ["language model", "tokenizer", "cross-entropy", "eval"]
 		},
@@ -1635,10 +1635,10 @@
 		},
 		{
 			"term": "pre-registration",
-			"definition": "Writing the full gate sheet — every bar, baseline identity, and stop rule — before any GPU spend. Bars are bars: a below-bar number is a miss to confront (re-baseline with a stated reason, or iterate), never a quiet pass; deviations are recorded, never silently re-read.",
+			"definition": "Writing the full check sheet — every bar, baseline identity, and stop rule — before any GPU spend. Bars are bars: a below-bar number is a miss to confront (re-baseline with a stated reason, or iterate), never a quiet pass; deviations are recorded, never silently re-read.",
 			"tags": ["process", "evals"],
 			"aliases": ["bars are bars"],
-			"relatedTerms": ["noise-honest margin", "gated promotion", "flip census"]
+			"relatedTerms": ["noise-honest margin", "conditional promotion", "flip census"]
 		},
 		{
 			"term": "precision",
@@ -1677,7 +1677,7 @@
 			"term": "query shape",
 			"definition": "Stage 1.5 of the runtime pipeline: computes a structural fingerprint of the input — script class, segmentation, known-format hits (postcode regexes, state abbreviations) — in microseconds without ML. Used by downstream stages for locale detection and kind classification.",
 			"tags": ["staged-pipeline"],
-			"relatedTerms": ["staged pipeline", "locale gate", "kind classifier"]
+			"relatedTerms": ["staged pipeline", "locale check", "kind classifier"]
 		},
 		{
 			"term": "R*Tree",
@@ -1792,7 +1792,7 @@
 			"definition": "An auxiliary model head that predicts the input's locale (language/country) and then FiLM-modulates the encoder so parsing adapts to the detected locale. Structural facts like word order still need explicit training on both orders.",
 			"tags": ["neural"],
 			"aliases": ["locale-conditional decoding"],
-			"relatedTerms": ["FiLM modulation", "multi-order training", "locale gate"]
+			"relatedTerms": ["FiLM modulation", "multi-order training", "locale check"]
 		},
 		{
 			"term": "SentencePiece",
@@ -1882,17 +1882,17 @@
 		},
 		{
 			"term": "stage",
-			"definition": "One of the dataflow stages in the runtime pipeline (normalize, locale gate, kind classify, phrase group, token classify, sequence correct, reconcile, resolve). Distinct from tier (model vocabulary) and phase (plan milestone).",
+			"definition": "One of the dataflow stages in the runtime pipeline (normalize, locale check, kind classify, phrase group, token classify, sequence correct, reconcile, resolve). Distinct from tier (model vocabulary) and phase (plan milestone).",
 			"tags": ["staged-pipeline"],
 			"aliases": ["runtime stage"],
 			"relatedTerms": ["staged pipeline", "tier", "phase"]
 		},
 		{
 			"term": "staged pipeline",
-			"definition": "Mailwoman's runtime architecture: a sequence of pure-function stages (normalize → query-shape → locale-gate → kind-classifier → phrase-grouper → classifier → decoder) connected by typed handoffs. Each stage is published as its own npm package.",
+			"definition": "Mailwoman's runtime architecture: a sequence of pure-function stages (normalize → query-shape → locale-hint → kind-classifier → phrase-grouper → classifier → decoder) connected by typed handoffs. Each stage is published as its own npm package.",
 			"tags": ["staged-pipeline", "architecture"],
 			"aliases": ["runtime pipeline", "pipeline"],
-			"relatedTerms": ["normalize", "query shape", "locale gate", "kind classifier", "phrase grouper"]
+			"relatedTerms": ["normalize", "query shape", "locale check", "kind classifier", "phrase grouper"]
 		},
 		{
 			"term": "starved",
@@ -1920,8 +1920,8 @@
 			"relatedTerms": ["street", "morphology FST", "conventions mask"]
 		},
 		{
-			"term": "street-context gate",
-			"definition": "The decode-time boundary that zeroes locality evidence on inputs with no street-painter hits — bare lookups must not have city names painted into street structure. Every measured evidence win class carries street words, so the gate costs nothing.",
+			"term": "street-context check",
+			"definition": "The decode-time boundary that zeroes locality evidence on inputs with no street-painter hits — bare lookups must not have city names painted into street structure. Every measured evidence win class carries street words, so the check costs nothing.",
 			"tags": ["runtime", "evidence"],
 			"aliases": [],
 			"relatedTerms": ["evidence bundle", "input mode"]
@@ -2034,7 +2034,7 @@
 		},
 		{
 			"term": "truncation",
-			"definition": "Cutting an input down to the max sequence length (or an LLM response to its token limit), discarding everything past the cap.",
+			"definition": "Reducing an input down to the max sequence length (or an LLM response to its token limit), discarding everything past the cap.",
 			"tags": ["tokenizer"],
 			"relatedTerms": ["max sequence length", "byte fallback"]
 		},
@@ -2084,7 +2084,7 @@
 			"definition": "A short diagnostic training run (≈1,500–3,000 steps) that must match the full run's gradient-noise profile, used to catch recipe instability before committing to a full 50k-step launch.",
 			"tags": ["training", "evals"],
 			"aliases": ["smoke test"],
-			"relatedTerms": ["divergence", "NaN protocol", "gated promotion"]
+			"relatedTerms": ["divergence", "NaN protocol", "conditional promotion"]
 		},
 		{
 			"term": "Viterbi decoding",

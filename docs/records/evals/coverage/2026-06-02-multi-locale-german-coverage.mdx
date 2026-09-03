@@ -45,14 +45,14 @@ positions the model trusts, that's where a number like it would sit.
 That's a coverage gap. But before spending money closing it, there's a cheaper thing it _could_ have
 been, and you have to rule it out.
 
-## The gate: is the tokenizer the wall?
+## The check: is the tokenizer the wall?
 
 `Straußstraße → Strau` is suspicious. The span dies exactly at the `ß`. If the tokenizer can't
 represent German orthography, if `ß` and the long compound street names fall apart into pieces the
 model can't reassemble, then no amount of training data will help, and the right move is a
 tokenizer change, which is a much bigger, more expensive decision.
 
-So that's the gate, and it's an afternoon's work, not a GPU run. Feed the v0.6.0-a0 SentencePiece
+So that's the check, and it's an afternoon's work, not a GPU run. Feed the v0.6.0-a0 SentencePiece
 tokenizer a batch of German streets and check the round-trip:
 
 ```
@@ -65,7 +65,7 @@ The tokenizer is fine. `ß` gets its own clean piece, sitting right next to its 
 convenient exit and ends the street span early. That's exactly the kind of mistake more training
 data fixes.
 
-Gate passed. The wall is coverage, and coverage is cheap.
+Check passed. The wall is coverage, and coverage is cheap.
 
 ## Teaching the order
 

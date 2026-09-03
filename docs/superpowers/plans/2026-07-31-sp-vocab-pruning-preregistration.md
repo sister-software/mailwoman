@@ -33,7 +33,7 @@ behavior change** on every input whose segmentation never used a pruned piece.
 - **B2 — logit bit-parity**: original vs pruned ONNX on ≥200 eval inputs (ids remapped): logits
   **bitwise equal**. The graph is unchanged except the gather table; kept rows are byte-identical;
   anything non-equal means the surgery touched something it shouldn't have.
-- **B3 — the full battery**: gauntlet (regression + metamorphic) + the `v7.0.0-base` gate on the
+- **B3 — the full battery**: gauntlet (regression + metamorphic) + the `v7.0.0-base` check on the
   pruned pair — **PASS with scores identical** to the shipped pair (not merely within margins:
   B1+B2 imply identical parses; any score delta is a defect).
 - **Receipt**: artifact sizes before/after (int8 onnx + tokenizer.model), % params removed,

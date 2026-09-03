@@ -10,11 +10,11 @@ scheduling is the v0.5.0 rebuild's. Rulings:
    `alignRow` already finds char offsets and QUANTIZES to tokens; the new format deletes the
    quantization rather than adding a converter. No conversion step exists, so the converter's
    Unicode-mismatch class (blast-radius item 7) dissolves into a build-time NFC assertion; the
-   per-piece channel invariance gates (item 8) remain as encode-time checks. Old corpora stay
+   per-piece channel invariance checks (item 8) remain as encode-time checks. Old corpora stay
    frozen as history.
-3. **Span bridge: RETIRE FULLY on gate-pass** (operator override of the keep-reduced option,
+3. **Span bridge: RETIRE FULLY on check-pass** (operator override of the keep-reduced option,
    consistent with the "old bundles are historical" ruling): once a new-format model passes the
-   pre-registered gate (dotted po_box ≥ 89.1 with the bridge OFF, FR postcode ≥ 99.5 held, affix
+   pre-registered check (dotted po_box ≥ 89.1 with the bridge OFF, FR postcode ≥ 99.5 held, affix
    floors unchanged, over-merge precision floor), the bridge leaves ship config AND the decoder.
 4. **v0.5.0 scope FROZEN at four passengers**: char-offset format, DE holdout, ZCTA centroid
    fill (#525), FTS alias-bag boundary separator (#523). Everything else is v0.5.1.
@@ -28,7 +28,7 @@ training row can place a label on a character the tokenizer dropped.
 
 What this cost, concretely:
 
-- **The dotted-designator class** (v4.4.0 gate, battery 1): `P.O. Box` decodes as
+- **The dotted-designator class** (v4.4.0 check, battery 1): `P.O. Box` decodes as
   period-truncated fragments — 98% miss on dotted po_box leaders while the model labeled every
   letter piece correctly at 0.93+. Ten times more data moved it +2.9pp. Now contained by the
   span bridge (decode-side merge), which is containment, not cure: the bridge must GUESS which
@@ -70,7 +70,7 @@ Properties:
 2. **`encode_row` + augmentations + the relabel pass + choreography** (corpus-python): the glue
    augmentation and the #511 relabel pass re-target spans (both get SIMPLER — the relabel pass's
    builder-parity token surgery becomes char arithmetic).
-3. **Audit gates**: must compare RAW-surface reconstructions (this is a feature — the dotted
+3. **Audit checks**: must compare RAW-surface reconstructions (this is a feature — the dotted
    blind spot came from token-level audits).
 4. **Eval golds**: unchanged (`{raw, components}` is already char-level by construction).
 5. **The 673M-row base corpus**: needs a one-time conversion (token labels → char spans is
@@ -78,7 +78,7 @@ Properties:
    spot-audit, not a re-alignment.
 6. **Training invariance check**: a converted corpus must produce a BIT-IDENTICAL piece-label
    stream for rows with no intra-span punctuation (the overwhelming majority) — that is the
-   regression gate for the migration itself.
+   regression check for the migration itself.
 7. **Unicode discipline** (consult keeper): char offsets over raw carrying é/ß/accented text are
    only meaningful under ONE normalization. The converter must assert the raw's normalization
    form matches what alignment saw (NFC throughout, verified per row) — a code-point-counting
@@ -86,7 +86,7 @@ Properties:
 8. **The per-piece channels** (consult keeper): `realign_anchor_to_pieces` and the gazetteer
    clue painting both key off `whitespace_spans` — the migration touches their foundation, so
    each needs its OWN invariance assertion (identical channel tensors on converted rows), not
-   just the label-stream gate.
+   just the label-stream check.
 
 ## Open questions (→ consult, then operator)
 

@@ -359,7 +359,7 @@ describe("createBDCClient: the throttle meter", () => {
 	 *
 	 * Nothing checked either claim, which is how they survived. This is the check.
 	 */
-	it("both gates composed: 10 requests per 66s, with a real 6s budget cooldown between windows", async () => {
+	it("both checks composed: 10 requests per 66s, with a real 6s budget cooldown between windows", async () => {
 		const WINDOWS = 2
 		const FAN_OUT = BDC_DEFAULT_REQUESTS_PER_MINUTE * WINDOWS + 1
 

@@ -1,7 +1,7 @@
 # Build + deploy the Docusaurus docs site.
 #
 # On pull_request: the build job runs on EVERY PR (so it can be a required status check), but the
-# structure gate + build steps execute only when a demo-affecting path changed — otherwise the job
+# structure check + build steps execute only when a demo-affecting path changed — otherwise the job
 # reports green in seconds. Catches broken links, MDX parse errors, and — before any install —
 # frontmatter/duplicate-title/orphan regressions via docs/scripts/check-docs-structure.ts.
 # On push to main: same steps (path-filtered at the trigger), then deploy to GitHub Pages.
@@ -24,7 +24,7 @@ on:
   # reports a check on EVERY PR — a prerequisite for making it a required status check in the
   # branch ruleset. A workflow-level `paths:` filter would leave PRs that touch none of these paths
   # with no check reported at all, which a required-check rule reads as "waiting forever" and the
-  # PR can never merge. Instead the heavy steps are gated per-job below on a change-detection step;
+  # PR can never merge. Instead the heavy steps are conditional per-job below on a change-detection step;
   # an unaffected PR reports green in seconds. The `push` trigger keeps its `paths:` filter — deploy
   # should only fire when the built output can actually change.
   workflow_dispatch: {}
@@ -115,7 +115,7 @@ jobs:
           # hangs through the lab's degraded path (multiple 20m job-budget deaths in Setup Node) and
           # is redundant — .yarnrc.yml's enableGlobalCache serves installs offline on the runners.
 
-      # Fast structural gate (docs-architecture cleanup, Phase 4): frontmatter contract +
+      # Fast structural check (docs-architecture cleanup, Phase 4): frontmatter contract +
       # required fields, exact duplicate titles, orphan pages. Static parse over node built-ins
       # only — no install, no build — so a structural regression fails in seconds instead of
       # after the full Docusaurus build.
@@ -125,7 +125,7 @@ jobs:
       # EVERY published page, rather than the legacy seven-role vocabulary that only required one
       # on a manifest of entry pages. It was held off until the old tree left docs/articles/,
       # because that corpus predated the contract and failed the check wholesale. Voice and
-      # section rules that the gate cannot see live in docs/engineering/writing-system.md.
+      # section rules that the check cannot see live in docs/engineering/writing-system.md.
       # (--disable-warning: sidebars.ts is format-ambiguous — the docs workspace can't carry
       # type:module without breaking the Docusaurus SSR bundle; see docs/scripts/package.json.)
       - name: Docs structure checks

@@ -25,7 +25,7 @@
 #     (calibration should not cost recall; label smoothing is a regularizer,
 #     not a capacity change).
 #
-# EARLY-KILL GATE (NaN protocol / budget stewardship): checkpoints land every
+# EARLY-KILL CHECK (NaN protocol / budget stewardship): checkpoints land every
 # 2K steps. Inspect step-20000 (~20 min). If overconfidence has NOT dropped and
 # harness has NOT improved by 20K, kill — calibration is not the change and v0.7
 # pivots to structural (#41 char-level + larger model). This is recipe-tuning

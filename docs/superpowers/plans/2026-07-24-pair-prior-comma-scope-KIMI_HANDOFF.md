@@ -136,7 +136,7 @@ names are BUILT from real place names, so naive windows hit real index pairs):**
    confidence above a threshold? (Distinct from Q1: this uses the first pass only as a veto, not
    as a segmenter — failure mode analysis welcome.)
 5. **The determiner/shape cue.** FSA confounds skew toward `The X Arms`, `X Academy`, `X Cafe` —
-   head-noun-final English compounds. Is a lightweight shape gate (definite article prefix,
+   head-noun-final English compounds. Is a lightweight shape check (definite article prefix,
    business-suffix lexicon from our poi-taxonomy synonym table) worth the brittleness, or is
    this the marker-word list again at larger scale (and doomed the same way)?
 6. **ASR contextual-biasing prior art.** Shallow fusion with prefix-trie subtractive costs

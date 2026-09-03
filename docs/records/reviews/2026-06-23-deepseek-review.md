@@ -50,7 +50,7 @@ The blog post (`docs/research/2026-06-23-we-graded-ourselves-against-the-incumbe
 
 The single biggest miss class on the EU panel: a same-named town resolved to the WRONG instance while the postcode that would disambiguate it sits resolved in the same tree. Example: "06260 Saint-Pierre" lands 617 km off because the resolver picked the Saint-Pierre in Vendée, not the one in Alpes-Maritimes — despite postcode 06260 resolving correctly.
 
-The change is backend-agnostic. After the admin resolution walk, it finds the resolved postcode anchor, then walks every resolved locality/dependent_locality node. For each one farther than `gateKm` (default 50 km) from the postcode, it re-picks from the node's already-captured `alternatives` (the runner-up gazetteer candidates `decorateNode` stored). Falls back to the postcode point if no alternative reconciles, flagging `postcode_city_mismatch`.
+The change is backend-agnostic. After the admin resolution walk, it finds the resolved postcode anchor, then walks every resolved locality/dependent_locality node. For each one farther than `thresholdKm` (default 50 km) from the postcode, it re-picks from the node's already-captured `alternatives` (the runner-up gazetteer candidates `decorateNode` stored). Falls back to the postcode point if no alternative reconciles, flagging `postcode_city_mismatch`.
 
 **Code quality:**
 
@@ -65,18 +65,18 @@ The change is backend-agnostic. After the admin resolution walk, it finds the re
 
 **Shipped across two commits:** `65c41b4c` (eval + falsifier) → `8e3de978` (production wiring, 8 tests)
 
-**`core/resolver/span-rescore.ts`** (193 lines) — pure, backend-agnostic, browser-safe core. Enumerates whitespace-token spans from the raw input (diacritics intact, unlike the model's subword tokenizer), exact-matches them against the same-country gazetteer, longest-wins (the gold locality is the more-specific name — shortest-wins grabbed the ambiguous prefix "Tomaszów" of "Tomaszów Mazowiecki"). A postcode-consistency gate rejects matches far from where the postcode resolves.
+**`core/resolver/span-rescore.ts`** (193 lines) — pure, backend-agnostic, browser-safe core. Enumerates whitespace-token spans from the raw input (diacritics intact, unlike the model's subword tokenizer), exact-matches them against the same-country gazetteer, longest-wins (the gold locality is the more-specific name — shortest-wins grabbed the ambiguous prefix "Tomaszów" of "Tomaszów Mazowiecki"). A postcode-consistency check rejects matches far from where the postcode resolves.
 
 This is the most architecturally disciplined piece on the branch.
 
 **Design decisions validated by measurement:**
 
 - Longest-exact-match-wins was proven superior to shortest-wins by the falsifier (`span-rescore-validate.ts`): gold-match 49→71%, p50 5.7→3.0 km.
-- The `rescore_gated` metadata flag (boolean) is kept SEPARATE from calibrated confidence. DeepSeek consulted: folding it would break the ECE 0.0055 isotonic guarantee. A consumer thresholds on `metadata.rescore_gated` explicitly instead of inheriting a hidden per-country coverage map. This is correct.
+- The `rescore_conditional` metadata flag (boolean) is kept SEPARATE from calibrated confidence. DeepSeek consulted: folding it would break the ECE 0.0055 isotonic guarantee. A consumer thresholds on `metadata.rescore_conditional` explicitly instead of inheriting a hidden per-country coverage map. This is correct.
 - The `#685` brake (`hasResolvedPlace`) prevents the recovery from firing on an already-resolved tree — no second-guessing a working coordinate.
-- Default-off in the library; the demo opts the change ON (user-visible recovery is better than silence). The demo labels ungated recoveries "unverified" — the precision signal surfaced honestly.
+- Default-off in the library; the demo opts the change ON (user-visible recovery is better than silence). The demo labels unconditional recoveries "unverified" — the precision signal surfaced honestly.
 
-**`core/resolver/span-rescore.test.ts`** (151 lines, 8 tests) — recovery, longest-wins, postcode gate acceptance, gate rejection, confident-span skip, `hasResolvedPlace`, resolveTree injection, byte-stable-when-unset. The fixture backend pattern (a tiny in-memory gazetteer with exact-normalized-name matching) is clean and sufficient for the logic under test.
+**`core/resolver/span-rescore.test.ts`** (151 lines, 8 tests) — recovery, longest-wins, postcode check acceptance, check rejection, confident-span skip, `hasResolvedPlace`, resolveTree injection, byte-stable-when-unset. The fixture backend pattern (a tiny in-memory gazetteer with exact-normalized-name matching) is clean and sufficient for the logic under test.
 
 **`core/resolver/resolve.ts`** — `applySpanRescore` integrates the recovery into the resolveTree path, hooked after the addressPoint/interpolation tiers. The integration is surgically simple: if `spanRescore` is set and the tree is empty (`!hasResolvedPlace`), call `findRescoreCandidate` and inject the result via `decorateNode`. 39 lines.
 
@@ -103,7 +103,7 @@ This is the German v0.9.2 artifact again — same root cause, different locale.
 The three changes on this branch — `spanRescore`, `postcodeConsistency`, `addressPoints` — all follow the same disciplined contract:
 
 1. **Default-off + byte-stable when unset.** No change to existing behavior without an explicit opt-in.
-2. **Flag + gate-km pair.** Each change has a boolean toggle and a tunable distance gate.
+2. **Flag + check-km pair.** Each change has a boolean toggle and a tunable distance check.
 3. **No extra queries.** `postcodeConsistency` reuses the node's already-captured `alternatives`; `spanRescore` runs exact-match queries that are cheap against the gazetteer.
 4. **Tests cover: on/off, corner cases, byte-stability.** The 8 + 5 new tests keep the pattern.
 
@@ -140,7 +140,7 @@ PR #782 ports span-rescore into the browser demo cascade. Design choices are cor
 
 - Reuses `findRescoreCandidate` from `core/resolver` (exported via the barrel — browser-safe, no node deps).
 - Recovery fires ONLY when the cascade produced zero hits (the demo's #685 brake).
-- Ungated recoveries are labeled "unverified" — the precision signal is surfaced, not hidden.
+- Unconditional recoveries are labeled "unverified" — the precision signal is surfaced, not hidden.
 
 ---
 

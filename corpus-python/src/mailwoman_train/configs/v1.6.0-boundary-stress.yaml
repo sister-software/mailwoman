@@ -4,14 +4,14 @@
 # FR-order recovery). DeepSeek-signed (2026-06-17): conservative 1.0 weight, tune up next iteration if short.
 #
 # BUNDLE (DeepSeek-validated 2026-06-17 — the rule is "one CONFOUNDING variable per run, each change its
-# own gate row"). The boundary slice is the headline data-mix variable. Riding alongside it, NON-confounding
-# because they don't shift the distribution the slice trains on, three additions, each gated below:
+# own check row"). The boundary slice is the headline data-mix variable. Riding alongside it, NON-confounding
+# because they don't shift the distribution the slice trains on, three additions, each conditional below:
 #   (a) use_conventions_loss_mask — ❌ DISABLED 2026-06-18. The "non-confounding, different axis" call was
 #       WRONG: the FR convention forbids street_prefix/street_suffix, but the boundary slice's fr-prefix
 #       shape TEACHES FR street_prefix ("Rue"). The mask -inf'd the gold label → train_loss ~7M, broken
 #       run killed at step 2000. v1.5.1 trained fine without it. Off until the table↔FR-data are reconciled.
-#   (c) an EXPANDED gate grading the FR/DE composition wins the slice already trains for free
-#       (fr.house_number #564, FR street_prefix, number-after-street #435). READY NOW (gate rows below).
+#   (c) an EXPANDED check grading the FR/DE composition wins the slice already trains for free
+#       (fr.house_number #564, FR street_prefix, number-after-street #435). READY NOW (check rows below).
 #   (b) [NOT ride-ready — a focused #517 corpus task, do it first if you want it this run] extend
 #       synth-po-box for NZ + military. It's more than leaders: the synthesizer needs an en-NZ template +
 #       `countryToLocale` NZ→en-NZ + a NEW military template (CMR/PSC/Unit + Box, APO/FPO/DPO + AE/AP/AA —
@@ -33,23 +33,23 @@
 # The slice puts the gold boundary on diverse realizations of exactly these 4 shapes (alignRow-clean,
 # 0% quarantine). It ALSO reinforces fr.house_number (the number-after-street shape).
 #
-# PRE-REGISTERED GATE (DeepSeek-signed targets; per-shape via scripts/eval/boundary-stress-baseline.ts):
+# PRE-REGISTERED CHECK (DeepSeek-signed targets; per-shape via scripts/eval/boundary-stress-baseline.ts):
 #   - street_suffix 40.7 → ≥55 ; comma-less(US) street 46 → ≥65 ; fr-prefix 47.7 → ≥70 ;
 #     house-number-after-street 50.7 → ≥65 ; AND the shared STREET span ≥65 on all four shapes
 #     (anchored to the diverse base-locale baseline).
-#   NON-REGRESSION FLOORS (must hold, the v4.x ship-gate): US street ≥80.4, locality ≥72.9,
+#   NON-REGRESSION FLOORS (must hold, the v4.x ship-check): US street ≥80.4, locality ≥72.9,
 #     unit ≥90.6, US postcode ≥97 ; affix prefix ≥78 / suffix ≥67 ; FR postcode ≥99.5,
 #     fr.house_number ≥87 (the v4.6.0 re-baseline) ; DE native-order locality ≥83.8 ; country band 83.3.
-#   WATCH (DeepSeek): street_suffix OVER-fire (its gate target vs the floor — a boundary slice can push
+#   WATCH (DeepSeek): street_suffix OVER-fire (its check target vs the floor — a boundary slice can push
 #     suffix onto non-suffix tokens) ; affix CRF transition stability (prefix↔street↔suffix) — a relabel
 #     bug presents as boundary noise, not dilution. If slash/comma-less land short at 1.0, sweep the
 #     weight UP (1.5) — one variable, do not stack other changes.
 #   DECISION: targets move up + floors hold → ship candidate. Spine regression → STOP, re-audit the
 #     slice's alignment before any weight surgery.
 #
-#   BUNDLE GATE ROWS (each rider attributable on its own):
+#   BUNDLE CHECK ROWS (each rider attributable on its own):
 #   - conventions loss-mask: ❌ removed (rider a disabled — it conflicts with the FR street_prefix the
-#     slice teaches; see the header). No gate row needed.
+#     slice teaches; see the header). No check row needed.
 #   - po_box NZ + military [ONLY IF rider (b) is built first]: the postal arena po_box class 0/4 → >0 (and
 #     military 0/3 → >0), with NO US/FR/CA po_box regression (existing synth-po-box rows only extended).
 #   - FREE-RIDER MEASURES (the slice trains these — grade as wins, not just floors): fr.house_number holds

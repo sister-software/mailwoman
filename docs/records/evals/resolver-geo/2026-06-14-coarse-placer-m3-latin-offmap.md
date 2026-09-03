@@ -57,11 +57,11 @@ plateau (real-data realism is the change; we just don't have enough of it yet).
 ## Decision
 
 - **Do not promote.** `model-m3` is a strict improvement but does not meet the ≥90% general target; the
-  coarse-placer isn't bundled anywhere yet, so there's nothing to gate — this is a recorded finding,
+  coarse-placer isn't bundled anywhere yet, so there's nothing to check — this is a recorded finding,
   and the canonical fp32 model stands.
 - **The next change is breadth, not weight or recipe.** Broad off-map address coverage — a full
   OpenAddresses off-map pull, or a later Overture release once the addresses theme fills in — folded
-  into OTHER, with the held-out-country probe as the gate. Tracked as a follow-up to #244.
+  into OTHER, with the held-out-country probe as the check. Tracked as a follow-up to #244.
 
 ## Reproduce
 

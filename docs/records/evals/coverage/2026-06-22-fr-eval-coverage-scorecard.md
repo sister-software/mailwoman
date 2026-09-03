@@ -83,7 +83,7 @@ So the #148 multi-locale retrain's value is **lifting parse recall on the non-IT
 
 **Root-cause check — parse gap, not coverage gap (so the change is the model, not the gazetteer).** PT resolves 52% but its label `locality`-recall is **39%** (equally low), while _where_ it resolves the coordinate is tight (1.2 km). If the unresolved half were a coverage miss (locality extracted, gazetteer can't place it), label-recall would be high and resolve-rate low — the opposite. Instead both are low: the model **fails to extract a resolvable locality** for ~half of non-IT EU addresses. So #148 (retrain to lift parse recall) is the justified change; gazetteer coverage is _not_ the bottleneck (the EU candidate is comprehensive — see the #734 retirement). ⚠ _Earlier-in-the-night caveat (verify-before-verdict): the IT-only read (p50 3 km → "median non-US geocodes well") was the BEST case; the panel corrected it — IT is the exception, not the rule._
 
-Artifacts: `scripts/eval/build-oa-coord-golden.py`, `data/eval/external/oa-{it,pt,au,pl}-coord-150.jsonl`, `scripts/eval/fr-admin-split-gate.ts --default-country <CC>` (+ resolved-only metric).
+Artifacts: `scripts/eval/build-oa-coord-golden.py`, `data/eval/external/oa-{it,pt,au,pl}-coord-150.jsonl`, `scripts/eval/fr-admin-split-check.ts --default-country <CC>` (+ resolved-only metric).
 
 ## Failure taxonomy (#375) — what kind of gap each is
 

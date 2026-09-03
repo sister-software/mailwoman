@@ -6,16 +6,16 @@
 #   3. po_box/cedex slice v2 @ 1.5 (PR #516, REBUILT minus the '#' template — probe measured it
 #      colliding with the shipped unit convention) — probe: cedex 94.6 PASS; po_box 57.5 was the
 #      punctuation-truncation class at +4k exposure; this run's 10x exposure answers it UNDER the
-#      gate's po_box floor. Bonus banked: the cedex layouts fixed the FR digit-split in-weights (6->2).
+#      check's po_box floor. Bonus banked: the cedex layouts fixed the FR digit-split in-weights (6->2).
 # STATED config decisions (no silent drift):
 #   - synth-po-box (the OLD fixed-layout slice) RETIRED — key removed, its rows drop (source filter).
 #     po_box mass now comes from one provenanced source; double-counting was the alternative.
 #   - Train-time conventions pairing DEFERRED: designed but UNPROBED — it does not ride a
 #     consolidation on theory (the discipline that caught Run B's confound). Its own probe next.
-# GATE: scripts/eval/gates/v4.4.0-boundary.json (pre-registered before any change existed) —
+# CHECK: scripts/eval/checks/v4.4.0-boundary.json (pre-registered before any change existed) —
 # incl. fr.region floored 16.2, perturb arena >= 71, po_box >= 70 real / cedex >= 70, intersection >= 50.
 # (The spec's po_box/cedex floors read data/eval/external/po-box-cedex-val.jsonl; intersection reads
-# intersection-real + the VT golden. Runner extension lands with the gate.)
+# intersection-real + the VT golden. Runner extension lands with the check.)
 # Launch: modal run -d scripts/modal/train_remote.py --config v1.3.0-boundary-consolidation.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.4.15-boundary

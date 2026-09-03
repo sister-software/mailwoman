@@ -5,7 +5,7 @@
 #   - synth-cz-pcfirst-preposition-v20: 50% spaced 'NNN NN' PSC (#1640) — the 'Praha 100 00' mangle.
 #   - synth-fr-bare-street-v20: comma / comma-free / abbreviated-voie cycle (#1641) — the fr-fr
 #     panel's comma-free loss + the geocoder-tester colloquial register.
-# GATE (pre-registered): at step-2000, the cz-full-praha-100-00 class parses postcode (spot decode)
+# CHECK (pre-registered): at step-2000, the cz-full-praha-100-00 class parses postcode (spot decode)
 # and fr comma-free boundary improves on the golden fr slice, with NO tier-1 golden regression
 # beyond noise vs the v4.4.0 base. PASS -> the 8k full run (same config, max_steps 8000). FAIL ->
 # read the probe, do not sweep lambda blind (the B11 rule).

@@ -68,7 +68,7 @@ const GazetteerBuildUPRN: ParsedCommandComponent<Options> = ({ options }) => {
 			`read ${result.read.toLocaleString()} · malformed ${result.skippedMalformed.toLocaleString()} · duplicate ${result.skippedDuplicate.toLocaleString()} (both expected zero)`,
 			`coverage ${result.coverageCells.toLocaleString()} res-6 cells (basis: designated)`,
 			`archive md5 ${result.archiveMD5 || "(offline — not re-verified)"}`,
-			result.mismatches.length ? `GATE VIOLATIONS: ${result.mismatches.join(" · ")}` : "every gate holds",
+			result.mismatches.length ? `CHECK VIOLATIONS: ${result.mismatches.join(" · ")}` : "every check holds",
 			OPEN_UPRN_COVERAGE_NOTE,
 			"licence + full OGL v3 attribution block in the layer manifest",
 			result.sealed ? "sealed 0444" : "NOT SEALED",

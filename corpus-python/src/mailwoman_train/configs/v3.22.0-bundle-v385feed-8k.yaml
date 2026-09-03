@@ -5,7 +5,7 @@
 # ablated-column golden deficits are FEED-PASSENGER damage, not bundle damage — (1) the po-box
 # regression is Canadian alphanumeric-postcode rows (box number stolen as postcode; 93-vs-9
 # asymmetric), diluted by +22u of probe-era source mass; (2) us.street losses are ALL
-# trailing-directional cuts ("74TH ST SE"→"74TH ST") — the GB boundary habit from synth-gb 10.0,
+# trailing-directional reduces ("74TH ST SE"→"74TH ST") — the GB boundary habit from synth-gb 10.0,
 # a slice weighted for the FALSIFIED dep-loc resurrection arc. Punct-drop was tested and
 # exonerated (control fails comma-intact rows too). The deploc feed was probe tooling inherited
 # for comparability; production owes it nothing.
@@ -17,7 +17,7 @@
 #   it eats v385's food — Decision B dissolves. The deploc additions (gb/nz/es-pedania/fr-lieudit
 #   + punct_drop 0.6) return LATER one at a time, each with its own promotion case.
 #
-# PRE-REGISTERED GATES — reshaped by the operator's Decision A (inputMode fragmented|formatted;
+# PRE-REGISTERED CHECKS — reshaped by the operator's Decision A (inputMode fragmented|formatted;
 # formatted runs channels-OFF, so the SHIP columns are:)
 #   G1 fragment bars (fed, P0 grid --lexicon v5 --street-lexicon v2, every save): homonym ON−OFF
 #      ≥ +0.050 asis and ≥ +0.25 lower+heal; house-number classes ≥ −0.020 asis raw; lowercase-heal
@@ -29,8 +29,8 @@
 #   G4 gauntlet ×3 (fed weights-cache).
 #   G5 golden ABLATED (the formatted-mode ship column): ALL v6.0.0-shipped-baseline floors — no
 #      named-watch exemptions this time; v385's food means v385's floors, full stop.
-#   G5b golden FED (recorded, NOT ship-gating under Decision A): the fragment-mode-on-formatted
-#      read; feeds the future misroute-cost gate (misroute rate × this harm).
+#   G5b golden FED (recorded, NOT ship-blocking under Decision A): the fragment-mode-on-formatted
+#      read; feeds the future misroute-cost check (misroute rate × this harm).
 #   G6 canary: recorded under BOTH modes; zero-flip required only in the formatted/ablated mode
 #      (Decision A routes these full-address rows there in production).
 #   VERDICT: G1-G5 + G6-formatted ⇒ the promotion battery + the inputMode implementation arc.

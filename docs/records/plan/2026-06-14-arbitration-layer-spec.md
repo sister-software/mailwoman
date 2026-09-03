@@ -3,7 +3,7 @@
 _2026-06-14. The arbitration capstone, re-specced after the reconcile retirement (#566), the grouper
 fix (#565), and the coarse-placer (#244) reshaped the landscape. The original #478 issue is substantially
 stale — its "untested / unwired / mock" framing predates this work. This is the current state, the
-design, and — the critical correction — the gate the reconcile retirement proved we need._
+design, and — the critical correction — the check the reconcile retirement proved we need._
 
 ## Why this matters (unchanged)
 
@@ -28,9 +28,9 @@ so it can't score below v0 on any component v0 wins.
   This must land first — a shared `buildTokens()` so both paths repair identically. **Still open.**
 - **The grouper bundled the house number** (#565): FIXED this session. The grouper now proposes the bare
   street phrase, so reconcile separates street + house_number (US precondition 20% → 91.7%). Reconcile is
-  viable again — but it is **OFF by default** (#566) until the gate below clears.
+  viable again — but it is **OFF by default** (#566) until the check below clears.
 
-## The landscape shift this session — and why it rewrites the gate
+## The landscape shift this session — and why it rewrites the check
 
 #566 retired joint-reconcile as the default after an audit found it **broke the street+house_number
 precondition on 77–84% of US addresses and fixed 0%** — worse-or-flat on every tag, venue included. The
@@ -41,7 +41,7 @@ never the assembled pipeline. That is the single most important input to this sp
 > ASSEMBLED PIPELINE against truth. Grading raw-neural per-tag F1 will hide an arbitration regression
 > exactly as it hid the reconcile one.**
 
-So #478's pre-registered gate, as originally written (arena re-run), is necessary but **not sufficient** —
+So #478's pre-registered check, as originally written (arena re-run), is necessary but **not sufficient** —
 it must run the assembled pipeline, and it must include the non-circular precondition/coordinate metrics
 the geocoder campaign added, not just per-tag F1.
 
@@ -71,19 +71,19 @@ The two arbitration _sites_ — the `AddressParser` proposal-pipeline (rule/neur
 and the `runtime-pipeline` (neural reconcile/argmax) — should converge on **one** registry-driven
 arbitration applied to the union of candidates. Unifying them is the bulk of the remaining wiring.
 
-## The gate (pre-registered, corrected)
+## The check (pre-registered, corrected)
 
 Re-run with arbitration on, **grading the assembled pipeline** (not raw neural):
 
-- **Arena capability** (the original #478 gate): `v0-only` → ~0 in every arena (clean/noisy/edge); every
+- **Arena capability** (the original #478 check): `v0-only` → ~0 in every arena (clean/noisy/edge); every
   v0 win captured. `neural-only` retained. `both-fail` unchanged-or-better.
 - **Assembled-pipeline precondition + coordinate** (the #566 lesson, the non-negotiable addition): on the
   non-circular holdouts (Travis E-911 + OA), street+house_number+postcode precondition does not regress
   vs argmax; geocode within-100m and the calibrated-radius coverage hold.
 - **Per-locale F1 floors hold.** Demo presets stable.
 
-Re-promoting reconcile to default is gated on this — specifically the precondition row, the one the
-original re-gate (#427) omitted.
+Re-promoting reconcile to default is blocked on this — specifically the precondition row, the one the
+original re-check (#427) omitted.
 
 ## Sequencing
 
@@ -91,7 +91,7 @@ original re-gate (#427) omitted.
    `parse()`. Prerequisite for any reconcile re-promotion.
 2. **Wire the input-shape router** as the per-component prior (kind-classifier + query-shape + #244).
 3. **Unify the two arbitration sites** on the policy registry over the candidate union.
-4. **Run the corrected gate.** Promote per-component modes only where the assembled-pipeline gate clears.
+4. **Run the corrected check.** Promote per-component modes only where the assembled-pipeline check clears.
 
 ## Scope guard (unchanged)
 

@@ -34,7 +34,7 @@ This installs the CLI, the neural runtime, and the English weights. Add
 ## Your first parse (Node.js)
 
 The recommended entry point is `createRuntimePipeline` from the `mailwoman` package — it wires up
-the full stage pipeline (normalize → locale gate → kind classify → phrase group → token classify)
+the full stage pipeline (normalize → locale check → kind classify → phrase group → token classify)
 around whatever classifier and resolver you give it:
 
 ```ts
@@ -78,7 +78,7 @@ calibrator and "0.90" means right-about-90%-of-the-time. See
 milliseconds) — see [API reference](./api.mdx) for the full `PipelineResult` shape.
 
 :::info[Direct classifier access]
-If you don't need the staged pipeline — normalize, locale gate, phrase grouping, resolution —
+If you don't need the staged pipeline — normalize, locale check, phrase grouping, resolution —
 `NeuralAddressClassifier.parse()` on its own runs the neural stage alone and returns the same
 `AddressTree` shape. See [API reference](./api.mdx#neuraladdressclassifier) for the signature.
 :::

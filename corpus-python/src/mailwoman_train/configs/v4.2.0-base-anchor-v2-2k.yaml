@@ -1,6 +1,6 @@
 # === v4.2.0-base-anchor-v2-2k — the cheap recipe-validation probe for v4.2.0-base-anchor-v2.yaml. ===
 #
-# Diagnostic-before-fix: 2,000 steps to prove the recipe RUNS before committing 60,000. Not a gate —
+# Diagnostic-before-fix: 2,000 steps to prove the recipe RUNS before committing 60,000. Not a check —
 # nothing here is pre-registered. It answers four mechanical questions the full run should not be
 # the first place to discover:
 #

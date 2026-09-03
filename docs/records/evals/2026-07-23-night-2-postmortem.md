@@ -2,7 +2,7 @@
 
 Drafted during the shift; finalized at hand-off. Window: 04:50–12:10 UTC (operator returned
 early; conn was handed with full ship autonomy: training, publishing, merging, HF — all behind
-the pre-registered gates).
+the pre-registered checks).
 
 ## What shipped
 
@@ -12,12 +12,12 @@ the pre-registered gates).
 - **PR #1253** (open, CI green, mergeable): the v3.12.0-comma-robust config as a run record + the
   deploc redesign dossier (`docs/superpowers/plans/2026-07-23-deploc-redesign-dossier.md`). The
   night-merge classifier blocked self-merge, as designed — one click in the morning.
-- **No model shipped. No npm release shipped.** Both outcomes were gate-driven, not omissions
+- **No model shipped. No npm release shipped.** Both outcomes were check-driven, not omissions
   (details below).
 
 ## The v3.12.0 verdict — stop rule executed (second time)
 
-The run itself was flawless mechanically (all startup gates green: 702 extracts, init_from
+The run itself was flawless mechanically (all startup checks green: 702 extracts, init_from
 missing=0, reinit rows [7,8], classifier LR group 12,705 params @ 0.001). Graded per the
 pre-registration — all 8 checkpoints, invariance suite in `--baseline v385` mode + gauntlet per
 checkpoint:
@@ -63,7 +63,7 @@ any re-dispatch safe.
 
 ## What went well
 
-- Gate discipline held under a full-autonomy grant, twice: no ship on a NOT-CLEAN model, no
+- Check discipline held under a full-autonomy grant, twice: no ship on a NOT-CLEAN model, no
   bypass of the branch ruleset. Both were live temptations; both had pre-registered answers.
 - The invariance suite did exactly its designed job on its first mandatory outing — cheap
   per-checkpoint verdicts, and the severity-aware baseline mode made "NEW violation class" a
@@ -98,10 +98,10 @@ any re-dispatch safe.
 2. **Redesign fork**: dossier options A (diagnose-first, zero-GPU probes headlined by gauntlet-
    grading the already-local cRT checkpoints) / B (two-phase LR schedule, never tried, launch-
    ready) / D (locality-mapped v1 = current shipped state, zero risk for October). C
-   (accept-and-gate 7k's single violation) is on the table only as an explicit gate revision.
+   (accept-and-check 7k's single violation) is on the table only as an explicit check revision.
 3. Merge the night's PRs (all CI-green): #1253 (run record + dossier + v3.13 option-B recipe
    proposal), #1254 (this postmortem), #1255 (release-skill failure mode), #1256 (CJK byte-fallback
-   fix), #1257 (pair-index country-gate warn-branch test), #1258 (fileMD5 dedup).
+   fix), #1257 (pair-index country-check warn-branch test), #1258 (fileMD5 dedup).
 
 ## Lab-health findings (07:47 UTC sweep)
 
@@ -118,7 +118,7 @@ any re-dispatch safe.
 ## Concrete next steps
 
 - Morning: merge #1253–#1258; pick the release-path fix; pick the redesign run — the cRT
-  diagnostic makes B the favored candidate, and its recipe is pre-drafted as an operator-gated
+  diagnostic makes B the favored candidate, and its recipe is pre-drafted as an operator-conditional
   proposal (`docs/superpowers/plans/2026-07-23-v313-two-phase-recipe.md`, on #1253; the one open
   parameter is the phase boundary, 2000 vs 3000).
 - If the release path reopens: re-dispatch `publish.yml -f version=7.6.0` — everything upstream
@@ -137,10 +137,10 @@ any re-dispatch safe.
   boundaries; +4 exact-tuple characterization tests (東京都渋谷区, mixed-script, curly-quote
   no-op, emoji surrogate span); neural suite 380 → 384 green, Latin byte-identical. Reviewed
   in-session. Closes the v8 non-Latin hard blocker pending merge.
-- **Pair-index country-gate warn-branch test — PR #1257** (mispackaged-sibling fixture via a
-  temp cacheRoot layout; the gate's warn branch had zero coverage). **fileMD5 dedup — PR #1258**
+- **Pair-index country-check warn-branch test — PR #1257** (mispackaged-sibling fixture via a
+  temp cacheRoot layout; the check's warn branch had zero coverage). **fileMD5 dedup — PR #1258**
   (local helper → the blessed `md5File` in core/utils). **v3.13 option-B recipe pre-drafted**
-  (operator-gated proposal on #1253 — the morning green-light is one word).
+  (operator-conditional proposal on #1253 — the morning green-light is one word).
 - **Release-skill ruleset failure mode — PR #1255** (preflight `gh api …/rulesets` before any real
   dispatch; do-not-loosen rule; verified rollback behavior).
 

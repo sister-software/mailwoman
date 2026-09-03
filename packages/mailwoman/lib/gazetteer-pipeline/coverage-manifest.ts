@@ -36,7 +36,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 /**
  * Shared source string for the #743 promote measurements.
  */
-const OA_PANEL_SOURCE = "#743 OA held-out hard-resolve panel (DeepSeek-advised gate, 2026-06-22)"
+const OA_PANEL_SOURCE = "#743 OA held-out hard-resolve panel (DeepSeek-advised check, 2026-06-22)"
 
 /**
  * Shared source string for the #928 promote OSM panels.

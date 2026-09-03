@@ -192,7 +192,7 @@ Membership is earned by a full-panel measurement, never by a shape that looks ti
 Mailwoman's runtime pipeline is a staged coordinator:
 
 ```
-normalize → query-shape → locale-gate → kind-classifier → phrase-grouper → classifier → decoder
+normalize → query-shape → locale-hint → kind-classifier → phrase-grouper → classifier → decoder
 ```
 
 Each stage is published as its own `@mailwoman/*` package. The `mailwoman`
@@ -209,7 +209,7 @@ package is the umbrella that wires them together as a single `npm install`.
 | `@mailwoman/neural-weights-fr-fr` | Trained model bundle (fr-FR)                       |
 | `@mailwoman/normalize`            | Stage 1: input preprocessing                       |
 | `@mailwoman/query-shape`          | Stage 1.5: structural priors                       |
-| `@mailwoman/locale-gate`          | Stage 2: locale detection                          |
+| `@mailwoman/locale-hint`          | Stage 2: locale detection                          |
 | `@mailwoman/kind-classifier`      | Stage 2.5: query kind classification               |
 | `@mailwoman/phrase-grouper`       | Stage 2.7: phrase boundary discovery               |
 | `@mailwoman/codex`                | Postal reference data                              |

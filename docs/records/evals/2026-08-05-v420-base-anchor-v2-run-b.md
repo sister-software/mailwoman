@@ -77,7 +77,7 @@ normalization loses the GB anchor entirely.
 33-label vocab. The loader accepted it; `createScorer`'s fail-closed path never fired, and the anchor-OFF
 arm produced its one loud warning as designed.
 
-## Gate table
+## Check table
 
 | #   | Sheet line                                                 | Bar                              | Measured                                                                                 | Verdict                                   |
 | --- | ---------------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------- |
@@ -169,7 +169,7 @@ Ad-hoc boards (100 US / 46 FR rows of `parity-corpus.jsonl` × 3 registers, per-
 
 One tag down: US `region`, 123 → 120.
 
-The standing gate (`mailwoman eval parity`, 321 live fixtures, all countries) agrees and is the number to
+The standing check (`mailwoman eval parity`, 321 live fixtures, all countries) agrees and is the number to
 quote:
 
 | floor        | baseline | candidate  | bar                      |
@@ -208,11 +208,11 @@ existing instrument, clearly not a substitute for the pre-registered bars.
 Same worktree, same resolver, candidate via `--weights-cache`; baseline is the shipped-default self-check.
 
 ```
-baseline   regression 88/90 gated, 98 tracked
-candidate  regression 84/90 gated, 91 tracked
+baseline   regression 88/90 conditional, 98 tracked
+candidate  regression 84/90 conditional, 91 tracked
 ```
 
-Shared gated failures (2): `de-r9-nippes-koeln`, `us-subvenue-googleplex-building`. **Four NEW gated
+Shared counted failures (2): `de-r9-nippes-koeln`, `us-subvenue-googleplex-building`. **Four NEW conditional
 failures, and they are one family — Caribbean / US-territory:**
 
 ```
@@ -300,8 +300,8 @@ structure). Every head carries nonzero mass.
    substitute.
 5. **G2/G5/G8 have no fixtures on this host.** `$MAILWOMAN_DATA_ROOT/eval/golden` and `.../eval/splits` are
    both EMPTY directories; the golden set the recipe points at (`/data/eval/golden/v0.1.2`) lives on the
-   Modal volume. `mailwoman eval gate` cannot run its battery here. The "SHIPPED 6.7.0 same-grader
-   reference" G2 and G5 compare against also has no artifact in `mailwoman/eval-harness/gates/` (which
+   Modal volume. `mailwoman eval check` cannot run its battery here. The "SHIPPED 6.7.0 same-grader
+   reference" G2 and G5 compare against also has no artifact in `mailwoman/eval-harness/checks/` (which
    carries `v6.0.0-shipped-baseline.json` and `v7.0.0-base.json`, not 6.7.0).
 6. **G6's canary harness was not found** under any name in `mailwoman/commands/eval/` or
    `mailwoman/eval-harness/`.

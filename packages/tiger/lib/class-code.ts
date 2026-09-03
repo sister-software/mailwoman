@@ -59,7 +59,7 @@ export const TIGERClassCode = {
 	/**
 	 * A movable barrier across a road.
 	 */
-	Gate: "C3066",
+	Check: "C3066",
 
 	/**
 	 * A structure or barrier where a fee is collected for using a road.

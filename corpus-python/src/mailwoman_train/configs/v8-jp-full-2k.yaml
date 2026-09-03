@@ -1,7 +1,7 @@
 # === v8-jp-full-2k — the cheap recipe-validation probe for v8-jp-full.yaml. ======================
 #
 # Diagnostic-before-fix: 2,000 steps (~8 GPU-minutes at the probe's measured ~4 steps/s) to prove the
-# recipe RUNS and the heads MOVE before committing 24,000. This is not a gate — nothing here is
+# recipe RUNS and the heads MOVE before committing 24,000. This is not a check — nothing here is
 # pre-registered, and it cannot PASS or FAIL the JP arc. It answers four mechanical questions the
 # full run should not be the first place to discover:
 #
@@ -15,7 +15,7 @@
 #   3. Do the 19 supported labels separate from the 28 zero-support ones, or does label smoothing
 #      over a mostly-dead 47-way head make the dead rows fire? Read per-label F1 in the eval dump.
 #   4. Does the board scorer run end to end against a `stage3-jp` checkpoint — including the
-#      per-register split? The blended number at 2k is NOT the gate; the native register clearing
+#      per-register split? The blended number at 2k is NOT the check; the native register clearing
 #      the pack is the signal that the encoder is learning the surface the source actually contains.
 #
 # DELIBERATE DEVIATIONS from v8-jp-full.yaml (so nobody reads the curves as directly comparable):

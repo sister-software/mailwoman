@@ -48,7 +48,7 @@ data:
   # active_components_present (was coarse_components_present) — accepts rows with
   # any ACTIVE tag, including fine-only rows (BAN's house_number+street, TIGER's
   # street-only segments). Keeps the existing key for ↔config-loader compat; the
-  # implementation is the relaxed gate in labels.py.
+  # implementation is the relaxed check in labels.py.
   coarse_filter: true
 
 model:

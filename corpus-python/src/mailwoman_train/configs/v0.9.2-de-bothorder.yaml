@@ -14,7 +14,7 @@
 # synth-german slice is built with `--intl-fraction 0.4` (≈40% international order, ≈60% native). Any
 # delta is attributable to the order mix, not the recipe.
 #
-# PRE-REGISTERED GATE (stop at 20k, the early gate; extend to 100k only if it holds):
+# PRE-REGISTERED CHECK (stop at 20k, the early check; extend to 100k only if it holds):
 #   - NATIVE-order DE locality >= 80% — hold the 83.8% we already have; do NOT regress native.
 #   - INTERNATIONAL-order DE locality >> 45.5% (target >= 65%) — the gap this run exists to close.
 #   - US/FR within ~1pp of v0.7.2 (no regression on the incumbents).
@@ -68,7 +68,7 @@ data:
     synth-po-box: 1.5
     synth-intersection: 0.2
     # German at ~18% of the mix — same weight as v0.9.1; the ONLY change is the slice now carries both
-    # orders. THE key tunable if a gate lags: raise for more DE, lower if US/FR slip the 1pp regression check.
+    # orders. THE key tunable if a check lags: raise for more DE, lower if US/FR slip the 1pp regression check.
     synth-german: 6.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

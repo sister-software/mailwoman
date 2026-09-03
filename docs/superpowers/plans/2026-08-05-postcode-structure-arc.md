@@ -54,7 +54,7 @@ directions it covers, so the design in Part C only proposes what is missing.
 | `PATTERNS` (query-shape)          | `query-shape/known-formats.ts:31`                         | 11 rows, 9 `KnownFormat` members. Carries `nl_postcode`, which codex has no slice for                                   | 1         |
 | `POSTCODE_PATTERNS` (neural)      | `neural/postcode-repair.ts:61`                            | 10 rows. Adds IE/NL/PT/PL — four systems with no codex slice                                                            | 1         |
 | `postcode_shapes.py`              | `corpus-python/src/mailwoman_train/postcode_shapes.py:24` | 9 rows. Header claims to mirror `postcode-repair.ts` verbatim; **it is one row behind (IE missing)**                    | 1         |
-| `scoreByPostcode`                 | `locale-gate/rules.ts:55`                                 | Format hit → locale candidate. Ambiguous 5-digit → en-US @0.5                                                           | 1         |
+| `scoreByPostcode`                 | `locale-hint/rules.ts:55`                                 | Format hit → locale candidate. Ambiguous 5-digit → en-US @0.5                                                           | 1         |
 | `scorePostcodeOnly`               | `kind-classifier/classify.ts:38`, `rules.ts:22–54`        | The `postcode_only` kind, with a share threshold and a full-vs-fragment length rule                                     | 1         |
 
 **Three divergent copies of the shape table exist** (query-shape, neural, corpus-python), which
@@ -92,11 +92,11 @@ is close to useless as a spatial prior. The FR table is also the only one wired 
 
 | Change                                      | Where                                                                        | What it does                                                                                                                                                                                                                                                                                                            | Default                            | Direction     |
 | ------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ------------- |
-| `applyPostcodeConsistency` (#370/#945)      | `resolver/resolve.ts:266-331`, called `:849`                                 | Post-walk, no backend queries. Finds the first resolved postcode's coordinate; for every `locality`/`dependent_locality` beyond `postcodeConsistencyGateKm` (50 km), re-picks from `node.alternatives`, else overwrites the node's lat/lon with the postcode's and stamps `postcode_city_mismatch`                      | **ON** (`!== false`)               | 2             |
+| `applyPostcodeConsistency` (#370/#945)      | `resolver/resolve.ts:266-331`, called `:849`                                 | Post-walk, no backend queries. Finds the first resolved postcode's coordinate; for every `locality`/`dependent_locality` beyond `postcodeConsistencyThresholdKm` (50 km), re-picks from `node.alternatives`, else overwrites the node's lat/lon with the postcode's and stamps `postcode_city_mismatch`                 | **ON** (`!== false`)               | 2             |
 | Postcode-country coherence (#42/#1477)      | `resolver/postcode-country-coherence.ts`, called `resolve.ts:790`            | The only PRE-walk pass and the only thing allowed to override `defaultCountry`. Geometric: postcode centroid vs exact-match locality centroid within 25 km (`:86`). Candidate set = `candidateSystemsForPostcode`. Abstains on 0 or ≥2 coherent countries (`:269`)                                                      | **ON**                             | 1 + 2         |
 | `(name_key, postcode)` short-circuit (#741) | `resolver-wof-sqlite/candidate-lookup.ts:310-333`                            | On a locality-wanting query with a postcode, probes `postal_city_candidate` and returns a single synthetic candidate immediately — the whole ranking cascade below is never reached. This is direction 2's REVERSE arrow, already shipped, for one country                                                              | ON when the table exists (`:258`)  | **2 reverse** |
 | Postcode abstention (#1480)                 | `resolver-wof-sqlite/candidate-lookup.ts:429-443`, `:300`                    | A `placetype: "postalcode"` query that misses exact + strip now skips the FTS trigram rung entirely instead of returning a trigram-nearest code. Cause: `BT3 9QQ` matched Sheffield's `S3 9QQ`, 200+ km wrong at full confidence                                                                                        | ON                                 | 1             |
-| `LEADING_POSTCODE_COUNTRIES`                | `neural/placetype-pair-prior.ts:701`                                         | `{fr, de, es, it}`. Gates whether the leading-postcode strip runs. `en-IN` is absent on purpose — the PIN goes last                                                                                                                                                                                                     | ON where the index country matches | 3             |
+| `LEADING_POSTCODE_COUNTRIES`                | `neural/placetype-pair-prior.ts:701`                                         | `{fr, de, es, it}`. Checks whether the leading-postcode strip runs. `en-IN` is absent on purpose — the PIN goes last                                                                                                                                                                                                    | ON where the index country matches | 3             |
 | Segment postcode strip                      | `neural/placetype-pair-prior.ts:677-684`, `:725-756`, `:773-813`             | `SEGMENT_PARENT_POSTCODE_SHAPES` (6 countries, patterns imported from codex so they cannot drift). Strips ≤2 trailing (and, for the 4 leading countries, leading) postcode words from a segment before it becomes a pair-index key. Whole-edge went 96.3% → 0.0% on `fr-lieudit-golden.jsonl` without it (`:1126-1128`) | ON                                 | 3             |
 | PCB1 anchor channel                         | `neural/postcode-binary-resolver.ts`, `neural/anchor-inference.ts`           | Per-piece feature vector: country posterior over `LOCALE_ORDER` (`anchor-inference.ts:24`) + quantized lat/lon. `ANCHOR_FEATURE_DIM = 11`                                                                                                                                                                               | Model-declared (`weights.ts:693`)  | 1 + 3         |
 | **The GB hole in PCB1**                     | `docs/records/evals/2026-08-05-en-gb-anchor-off.md`                          | Every training config points at one `pilot-anchor-lookup.json` holding 67,708 keys, **zero letter-bearing**, covering US/DE/FR only. GB slot 4 never took a gradient. `postcode-gb.bin` fired on 106/120 gb-golden rows and cost exact postcode 318/318 → 294/318. Fixed #1467 by NOT shipping the artifact             | GB channel now resolves OFF        | —             |
@@ -165,7 +165,7 @@ shape alone vs the system, on the 110 asserted codes
   accepted by NO codex system                 10
 ```
 
-**Three findings, and two of them cut against the sketch.**
+**Three findings, and two of them reduce against the sketch.**
 
 1. **Within-country, the exclusion problem is close to empty on this board.** All 6 exclusion spans
    are CROSS-system collisions: a US/PR/MX house number matching the AU/NZ 4-digit shape, or a
@@ -208,9 +208,9 @@ BT unit postcodes                          0
 ```
 
 **An outward code localizes hard.** Median p95 radius 3.22 km — half of all outward codes hold 95% of
-their units inside a 3.2 km circle. That is inside the 25 km country-coherence gate and inside the
-50 km consistency gate by a wide margin, so an outward-only prior is strictly sharper than either
-gate the resolver already trusts. The area letters are ~7× coarser (23 km median p95) but still bound
+their units inside a 3.2 km circle. That is inside the 25 km country-coherence check and inside the
+50 km consistency check by a wide margin, so an outward-only prior is strictly sharper than either
+check the resolver already trusts. The area letters are ~7× coarser (23 km median p95) but still bound
 the answer to a metro.
 
 The BT zero is not an artifact of my query. The database's own meta records it: `coverage_gap_northern_ireland`
@@ -335,7 +335,7 @@ should collapse the three divergent shape tables (A.1) into the codex, since the
 diverged is the missing slices.
 
 **D-rule.** Opt-in behind `postcodeShapeCoherence`, default-OFF. It can only ever DEMOTE a postcode,
-and demotion is the failure mode with teeth, so a default-on promotion needs the full gate set.
+and demotion is the failure mode with teeth, so a default-on promotion needs the full check set.
 
 **Pre-registered bars.**
 
@@ -375,7 +375,7 @@ where today the population-ordered `neg_rank` fetch runs blind to the postcode (
 
 **What it does.** When a locality-wanting query carries a postcode and the exact `(name_key,
 postcode)` probe misses, resolve the postcode's centroid once and re-rank the name candidates by
-distance to it, bounded by the same 25 km gate the country pass uses. `Paris TX 75460` and
+distance to it, bounded by the same 25 km check the country pass uses. `Paris TX 75460` and
 `Paris 75001` differ by which candidate the postcode is near, and the current ranking answers by
 population. This is the same move `applyPostcodeConsistency` makes post-walk against
 `node.alternatives` (`resolve.ts:298-305`), pulled EARLIER so the alternatives list is built correctly
@@ -401,7 +401,7 @@ outcome may be that mechanism 2 replaces #370 rather than joining it.
   mechanism is not doing what this document claims.
 - **B2-3 (the double-repair confound).** The same board run with `postcodeConsistency` ON and OFF.
   Bar: **the two arms agree on ≥98% of cases.** Disagreement means the two passes are fighting, and
-  the promotion question becomes replace-or-gate, not stack.
+  the promotion question becomes replace-or-check, not stack.
 - **B2-4 (cost).** The rung adds one postcode lookup per locality query that misses the fast path.
   Bar: **≤15% p95 latency increase** on the demo preset. The candidate-table probe is the
   per-keystroke hot path (`core/resolver/types.ts`, the sync-by-interface carve-out); a prior that
@@ -488,7 +488,7 @@ coordinates). US 3-digit (901 nodes, needs a ZCTA join, the only one with real a
 **D-rule.** Opt-in behind `postcodePrefixPrior`, default-OFF, and the first landing is DATA + LOADER +
 OFFLINE PROBE with **no decode wiring** — the PCN1 posture (`neural/placetype-pair-prior.ts:287-296`:
 "Nothing reads it back: no delta, no matrix write"). The header ships without `delta` until a
-calibration measures one. Per-locale gate at promotion: GB and US are separate decisions with
+calibration measures one. Per-locale check at promotion: GB and US are separate decisions with
 separate evidence, because their radius profiles differ by 45×.
 
 **Pre-registered bars.**
@@ -550,7 +550,7 @@ the taxonomy says a retrain is the tool for open-vocab distributional tags, whic
 **What would ride a training batch, and is NOT in this document:** feeding a prefix prior into the
 anchor channel (mechanism 3's second consumer). That requires a channel that has seen prefix-shaped
 values during training, and the GB hole is the standing receipt for what shipping it untrained
-costs. If a batch is being cut anyway, the cheap rider is extending
+costs. If a batch is being reduce anyway, the cheap rider is extending
 `pilot-anchor-lookup.json` past its US/DE/FR, zero-letter-bearing 67,708 keys so the letter-bearing
 systems get a gradient at all — but that is a corpus decision with its own preregistration, and
 stacking it into this arc violates one-variable-per-run.

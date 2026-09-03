@@ -188,7 +188,7 @@ v0.5.3 emits tags on all spans (no empty gaps). The grouper-audit should have no
 
 Add f1.locality, f1.region, f1.street, f1.house_number, f1.postcode, f1.venue columns to the training CSV log. Prevents the "trusted macro F1 across tokenizer versions" mistake from recurring.
 
-### Process: new eval release gate
+### Process: new eval release check
 
 | #   | Question                             | Method                                                                           |
 | --- | ------------------------------------ | -------------------------------------------------------------------------------- |
@@ -227,7 +227,7 @@ The fix is not more metrics. It's a mandatory step where you look at the actual 
 
 ### Process changes adopted
 
-1. **Demo presets are a release gate.** Run them BEFORE writing any verdict on a training run.
+1. **Demo presets are a release check.** Run them BEFORE writing any verdict on a training run.
 2. **Never compare F1 across tokenizer versions.** Add `tokenizer_version` to eval headers.
 3. **When metrics disagree with functional tests, trust the functional test.** Investigate the metric.
 4. **Print raw BIO coverage, not just JSON projection.** `decodeAsJSON` hides the model's gaps.
@@ -238,7 +238,7 @@ The fix is not more metrics. It's a mandatory step where you look at the actual 
 
 ### Prospective Claude Code skills
 
-**`eval-model`** — Demo preset release gate. Accepts model path + tokenizer, runs 6 presets through neural-only + full pipeline, reports JSON + BIO coverage + source attribution. Flags regressions from baseline. Prevents the "4/6 correct but 4% coverage" blindspot that cost hours today.
+**`eval-model`** — Demo preset release check. Accepts model path + tokenizer, runs 6 presets through neural-only + full pipeline, reports JSON + BIO coverage + source attribution. Flags regressions from baseline. Prevents the "4/6 correct but 4% coverage" blindspot that cost hours today.
 
 **`training-monitor`** — Modal training status checker. Downloads train_log.csv, parses eval points, reports val_macro_f1 trajectory and best checkpoint. Warns on tokenizer version changes. Replaces the throwaway polling scripts written 5+ times this session.
 

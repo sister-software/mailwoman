@@ -117,10 +117,10 @@ annealing won't remove it — which is exactly what the (a)-probes in option A w
 A and B compose: A's zero-GPU day, then B as the one targeted run if the trace evidence points at
 the LR/schedule.
 
-**(C) Accept-and-gate.** Ship a 7k-class checkpoint with the single Pennsylvania violation
+**(C) Accept-and-check.** Ship a 7k-class checkpoint with the single Pennsylvania violation
 adjudicated as acceptable. **NOT recommended:** the gauntlet metamorphic bar is a pre-registered
-hard gate that has now survived two stop-rule executions; waiving it post-hoc for a US-invariance
-regression on the most famous address in the eval set would be gate drift of precisely the kind the
+hard check that has now survived two stop-rule executions; waiving it post-hoc for a US-invariance
+regression on the most famous address in the eval set would be check drift of precisely the kind the
 pre-registrations exist to prevent — and a NEW violation class vs v385 is a shipped-user regression,
 not a missing feature.
 
@@ -138,7 +138,7 @@ catch) is already fully receipted whether or not a new model lands first.
 | ------------------------------------ | -----------: | ------: | --------------------------------------------------------------------------------------------- |
 | A (zero-GPU probes + 1 targeted run) |          1–2 |   ~$2–4 | probes $0 (checkpoints local); one 2k probe ~$0.50; one 8k candidate ~$1.50 + export/quantize |
 | B (two-phase schedule, one run)      |            1 |     ~$2 | 8k ≈ 25 min A100 ~$1.50 + export/quantize/grading; launch-ready today                         |
-| C (accept-and-gate 7k)               |          0.5 |      $0 | grading/battery only — but see NOT recommended                                                |
+| C (accept-and-check 7k)              |          0.5 |      $0 | grading/battery only — but see NOT recommended                                                |
 | D (v385 locality-mapped v1)          |           ~0 |      $0 | already the shipped state; code release in flight                                             |
 
 A+B combined (the likely path if the operator wants a model this week): ~2 agent-nights, ≤$5.

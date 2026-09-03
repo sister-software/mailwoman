@@ -272,7 +272,7 @@ const UNCOUNTED = [
  * make that impossible to repeat.
  */
 const BANNED_VOCABULARY =
-	/\b[A-Za-z_]*(?:[Ss]hard|SHARD)[A-Za-z_]*\b|\b[A-Za-z_]*(?:[Ll]ever|LEVER)(?!age|AGE|ano|ANO|ton|TON|ock|OCK|stock|STOCK|dalsveien|DALSVEIEN|n\b|N\b)[A-Za-z_]*\b|\b[A-Za-z_]*(?:[Ss]eam|SEAM)(?!er\b|ER\b|an\b|AN\b)[A-Za-z_]*\b/gu
+	/(?<!\p{L})(?:[Ss]hard|SHARD)(?:s|ed|ing|S|ED|ING)?(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]hard|SHARD)[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ll]ever|LEVER)(?!age|AGE|ano|ANO|ton|TON|ock|OCK|stock|STOCK|dalsveien|DALSVEIEN|n\b|N\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]eam|SEAM)(?!er\b|ER\b|an\b|AN\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})(?:gat(?:e|es|ed|ing)|Gat(?:e|es|ed|ing)|GAT(?:E|ES|ED|ING))(?!\p{L})|(?<![\p{L}])[a-z][A-Za-z]*Gat(?:e|es|ed|ing)[A-Za-z]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed)(?!\p{L})|(?<!\p{L})[A-Z_]*GAT(?:E|ES|ED|ING)_[A-Z_]*(?!\p{L})|(?<!\p{L})[Cc]ut(?:s|ting)?(?!\p{L})|(?<!\p{L})CUT(?:S|TING)?(?!\p{L})/gu
 
 /**
  * Where the banned word is allowed to survive, and why each one earns it.
@@ -301,6 +301,46 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	// `Bosshardt` and `Rashard` are real people's names; the eval rows are dated notes on committed board
 	// cases. Renaming any of them would corrupt data to satisfy a style rule.
 	["packages/core/data/", "libpostal dictionaries — real given names and surnames"],
+	["data/", "address rows and reference tables carry real place names: Golden Gate Bridge, South Gate, Cut Bank"],
+	["evals/", "the score ledger's rows are dated notes on committed board cases"],
+	["packages/corpus/data/", "the sub-venue lexicon: an airport gate is a real sub-venue token"],
+	["packages/corpus/lib/recipes/sub-venue", "sub-venue recipes name the physical gate"],
+	["packages/corpus/lib/tools/sub-venue", "sub-venue tooling names the physical gate"],
+	["packages/corpus/test/unit/recipes/sub-venue", "sub-venue recipe tests name the physical gate"],
+	["packages/corpus/test/unit/tools/sub-venue", "sub-venue tooling tests name the physical gate"],
+	["packages/corpus/lib/tools/overture-subvenue.ts", "sub-venue extraction names the physical gate"],
+	["packages/corpus/lib/tools/fetch/", "sub-venue source fetchers name the physical gate"],
+	["packages/osm/lib/sdk/extract-subvenue.ts", "sub-venue extraction names the physical gate"],
+	["packages/osm/test/unit/sdk/extract-subvenue.test.ts", "sub-venue extraction tests name the physical gate"],
+	["packages/neural/lib/venue-structure.ts", "venue structure names the physical gate"],
+	["packages/neural/lib/span/proposal-prior.ts", "span proposals name the physical gate"],
+	["packages/core/lib/pipeline/span-proposer.ts", "span proposals name the physical gate"],
+	["packages/core/test/unit/pipeline/span-proposer.test.ts", "span proposal tests name the physical gate"],
+	["packages/core/lib/decoder/containment.ts", "containment names the physical gate"],
+	["packages/mailwoman/lib/geocode/result.ts", "the result shape names the physical gate"],
+	["packages/mailwoman/lib/eval-harness/conformance/punctuation.ts", "punctuation conformance names the physical gate"],
+	[
+		"packages/mailwoman/test/unit/eval-harness/conformance/punctuation.test.ts",
+		"punctuation conformance tests name the physical gate",
+	],
+	["packages/mailwoman/test/integration/venue-structure-confounds.test.ts", "venue confounds name the physical gate"],
+	["packages/codex/lib/level-semantics.ts", "GATEPLAN is Norwegian for street level"],
+	["packages/codex/test/unit/level-semantics.test.ts", "GATEPLAN is Norwegian for street level"],
+	["packages/activity-lexicon/", "activity phrases name real-world actions"],
+	["packages/poi-taxonomy/", "category names come from Overture verbatim"],
+	["packages/geographic-model/", "world concepts name real-world things"],
+	[".yarnrc.yml", "npmMinimalAgeGate is Yarn's own setting name"],
+	["docs/static/sbom/", "an SBOM describes a published tarball; rewriting it fails verification"],
+	["docs/static/img/", "binary images"],
+	[
+		"packages/mailwoman/lib/eval-harness/semantic-utility/",
+		"a pre-registered probe definition is frozen by content hash; rewriting it breaks every receipt that cites the hash",
+	],
+	[
+		"packages/mailwoman/lib/eval-harness/phase-2-decision/",
+		"a pre-registered decision definition is frozen by content hash; rewriting it breaks every receipt that cites the hash",
+	],
+	["packages/neural/test/fixtures/", "a binary tokenizer model"],
 	["data/gazetteer/", "gazetteer place names"],
 	[".yarn/", "vendored third-party release"],
 ]

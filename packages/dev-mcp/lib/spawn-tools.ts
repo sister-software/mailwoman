@@ -32,7 +32,7 @@ import { summarizeJob, type DevTool } from "#tool-kit"
  * recovering it from printed output would fail exactly when the run died before printing any — the case where knowing
  * the directory matters most.
  */
-const gateOutDirs = new Map<string, string>()
+const promotionEvalOutDirs = new Map<string, string>()
 
 export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobRegistry): Promise<DevTool[]> {
 	return [
@@ -40,7 +40,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 			name: "mwdev_gauntlet",
 			description:
 				"Run a gauntlet layer and return a job id. The gauntlet is the release authority — this adds nothing to " +
-				"its grading, it only surfaces the gated header, the pins line and the firing count rather than leaving " +
+				"its grading, it only surfaces the counted header, the pins line and the firing count rather than leaving " +
 				"them in a log. Poll with mwdev_job.",
 			inputSchema: z.object({
 				layer: z
@@ -112,23 +112,23 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 						newest_compiled: freshness.newestCompiled?.path ?? null,
 					},
 					note:
-						"Started. Poll with mwdev_job. The result carries the gated header, the pins line and the firing " +
-						"count parsed out of the log, plus the log itself — read the gated fraction, not the tail.",
+						"Started. Poll with mwdev_job. The result carries the counted header, the pins line and the firing " +
+						"count parsed out of the log, plus the log itself — read the counted fraction, not the tail.",
 				}
 			},
 		},
 
 		{
-			name: "mwdev_gate",
+			name: "mwdev_promotion_eval",
 			description:
-				"Run the promotion gate against a spec and return a job id. Reports every floor with its reading and its " +
+				"Run the promotion check against a spec and return a job id. Reports every floor with its reading and its " +
 				"margin, names WHICH ARTIFACT was graded, and surfaces the pre-filled ledger command — which it never runs. " +
-				"Call with no `gate` to list the registered specs.",
+				"Call with no `check` to list the registered specs.",
 			inputSchema: z.object({
-				gate: z
+				check: z
 					.string()
 					.optional()
-					.describe("Gate-spec name or path. Omit to list the registered specs instead of running anything."),
+					.describe("Check-spec name or path. Omit to list the registered specs instead of running anything."),
 				weights_cache: z.string().optional().describe("Package-shaped candidate weights directory."),
 				int8_weights_cache: z.string().optional(),
 				model: z.string().optional().describe("Candidate fp32 ONNX."),
@@ -138,18 +138,18 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				out_dir: z.string().optional().describe("Battery output dir. Defaults to a scratch dir."),
 			}),
 			handler: async (args) => {
-				const gate = args["gate"] as string | undefined
+				const check = args["check"] as string | undefined
 
-				if (!gate) {
+				if (!check) {
 					return {
-						registered_gate_specs: await listEvalSpecs(),
-						note: "Pass one of these as `gate`, or an absolute path to a spec JSON.",
+						registered_threshold_specs: await listEvalSpecs(),
+						note: "Pass one of these as `check`, or an absolute path to a spec JSON.",
 					}
 				}
 
 				if (!args["weights_cache"] && !args["model"]) {
 					throw new Error(
-						"mwdev_gate needs a candidate: `weights_cache` (a package-shaped directory) or `model` (a raw fp32 " +
+						"mwdev_promotion_eval needs a candidate: `weights_cache` (a package-shaped directory) or `model` (a raw fp32 " +
 							"ONNX). They grade different things — a package cache's model.onnx is whatever the package ships, " +
 							"which is int8 in every shipped weights package."
 					)
@@ -183,8 +183,8 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				// JSON-RPC channel. The eval ALSO runs its own recompile-before-eval guard, stricter than this one and meant
 				// to fire — it is surfaced verbatim rather than pre-empted.
 				const freshness = await assertCompiledFresh(registry.repoRoot)
-				const outDir = (args["out_dir"] as string | undefined) ?? tempRootPath(`mwdev-gate-${jobs.list().length}`)
-				const argv = ["packages/mailwoman/out/cli.js", "eval", "gate", "--spec", gate, "--out-dir", outDir]
+				const outDir = (args["out_dir"] as string | undefined) ?? tempRootPath(`mwdev-check-${jobs.list().length}`)
+				const argv = ["packages/mailwoman/out/cli.js", "eval", "check", "--spec", check, "--out-dir", outDir]
 
 				for (const [flag, key] of [
 					["--weights-cache", "weights_cache"],
@@ -201,13 +201,13 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					}
 				}
 
-				const job = jobs.start(`gate:${gate}`, process.execPath, argv, registry.repoRoot)
+				const job = jobs.start(`check:${check}`, process.execPath, argv, registry.repoRoot)
 
-				gateOutDirs.set(job.jobID, outDir)
+				promotionEvalOutDirs.set(job.jobID, outDir)
 
 				return {
 					job_id: job.jobID,
-					gate,
+					check,
 					out_dir: outDir,
 					command: [process.execPath, ...argv].join(" "),
 					compiled_tree: { newest_compiled: freshness.newestCompiled?.path ?? null },
@@ -320,11 +320,11 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					return { ...summary, note: 'Still running. Call again, or use action "result" once it has finished.' }
 				}
 
-				const gateOutDir = gateOutDirs.get(jobID)
+				const promotionEvalOutDir = promotionEvalOutDirs.get(jobID)
 
 				// A check job's numbers come from its own artifacts; only a gauntlet job needs its log parsed.
-				const report = gateOutDir
-					? await readEvalReport(gateOutDir, job.stdout, job.stderr)
+				const report = promotionEvalOutDir
+					? await readEvalReport(promotionEvalOutDir, job.stdout, job.stderr)
 					: parseGauntletReport(job.stdout, job.stderr)
 
 				const tail = args["tail_lines"] as number | undefined
@@ -343,7 +343,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 								job_outcome: `The run COMPLETED and graded ${report.verdict}. The non-zero exit is the verdict, not a crash.`,
 							}
 						: {}),
-					summary: summarizeJob(job.state, summary.elapsed_s, report, Boolean(gateOutDir)),
+					summary: summarizeJob(job.state, summary.elapsed_s, report, Boolean(promotionEvalOutDir)),
 					report,
 					log,
 					stderr: job.stderr,

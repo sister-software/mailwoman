@@ -807,7 +807,7 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 		expect(on[0]!.id).toBe(SANSOME_SMALL)
 	})
 
-	test("B2-2: in-gate rows sort by distance first, the out-gate tail keeps its population order", async () => {
+	test("B2-2: in-check rows sort by distance first, the out-check tail keeps its population order", async () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		const hits = await lk.findPlace(sansomeQuery({ postcode: "94101", postcodeContainmentCoherence: true }))

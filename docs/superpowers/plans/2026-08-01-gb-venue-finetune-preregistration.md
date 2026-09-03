@@ -43,7 +43,7 @@ becomes the B11 template default. Ties break to the larger λ.
 
 - **V1 (target)**: all six #1366 gauntlet `improvement_target` fixtures flip to PASS at the ship
   config. No partial credit — six of six.
-- **B1 (the guarantee gate, the sellable sentence)**: the full `v7.0.0-base` spec passes with NO
+- **B1 (the guarantee check, the sellable sentence)**: the full `v7.0.0-base` spec passes with NO
   floor waivers; gauntlet regression + metamorphic PASS; canary zero-flip; the P0 fragment grid
   within noise of the base. A Fisher-protected fine-tune must hold every base capability — that
   is the product claim this run dogfoods.
@@ -90,7 +90,7 @@ question).
 venue on the board), λ=1e2/1e4 within noise of λ=0 → **λ=1e4 is the calibrated B11 template
 default**, with a receipt.
 
-**B1 (the guarantee gate): PASS.** The 8k main (v4.1.1, dose 12, λ=1e4, md5 02b8c323…) passes
+**B1 (the guarantee check): PASS.** The 8k main (v4.1.1, dose 12, λ=1e4, md5 02b8c323…) passes
 the FULL v7.0.0-base spec (every floor, no waivers) and the full gauntlet (regression +
 metamorphic + held-out). The sellable sentence — "a Fisher-protected fine-tune holds every base
 capability" — held on its first dogfood.
@@ -140,7 +140,7 @@ The v4.1.3 run (dose 12, λ=1e4, v0.15.2 overlay, md5 baccf7df) FAILS its bars: 
 still fails at BOTH the pipeline and bare-classifier levels — the model learned to TAG the tail
 (`country` now emits on tailed rows) without transferring venue competence through it (venue null
 everywhere; the FR control's house_number degraded 44→"4"); the corrected gauntlet shows 0 newly
-passing and a gated regression (VERDICT FAIL). Mechanism read: at fine-tune dose the model solves
+passing and a conditional regression (VERDICT FAIL). Mechanism read: at fine-tune dose the model solves
 the new pattern by its easiest route (tail token → country) and the added tail tokens dilute the
 venue boundary signal rather than extending it. The EXTRACT change stays banked (a from-scratch
 base learns the joint pattern from step 0 — the run-2 lesson says composition differs at base

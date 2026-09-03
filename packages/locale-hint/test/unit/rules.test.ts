@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { scoreByPostcode, scoreByScript, scoreFallback } from "@mailwoman/locale-gate/rules"
-import type { QueryShapeLike } from "@mailwoman/locale-gate/types"
+import { scoreByPostcode, scoreByScript, scoreFallback } from "@mailwoman/locale-hint/rules"
+import type { QueryShapeLike } from "@mailwoman/locale-hint/types"
 import type { KnownFormat } from "@mailwoman/query-shape"
 import { expect, test } from "vitest"
 
@@ -120,7 +120,7 @@ test("scoreByPostcode: unambiguous hit wins over a co-present ambiguous 5-digit"
 	})
 })
 
-test("scoreFallback: always en-US at low confidence (gate is never null)", () => {
+test("scoreFallback: always en-US at low confidence (check is never null)", () => {
 	expect(scoreFallback(shape())).toEqual({ locale: "en-US", confidence: 0.3, reason: "fallback" })
 
 	// Shape contents are ignored — it's the always-decisive whole-input fallback.

@@ -146,7 +146,7 @@ BEFORE the full register is built; receipts in `scratchpad/falsifiers/f4-scope-c
    different stored states, not one shared absence.
 3. Keep exact foreign matches available under a locale hint — scope coverage is consulted by the
    fuzzy/derived tiers only; the exact tier never reads it (the #1585 board's Paris row is the
-   standing gated witness).
+   standing conditional witness).
 4. Prevent hard negative evidence from a partial namespace — only `surveyed_complete` powers a
    negative; `surveyed_partial` must be refused at the contract level.
 5. Reconcile sampled `surveyed_complete` claims against a second source — the disagreement rate is

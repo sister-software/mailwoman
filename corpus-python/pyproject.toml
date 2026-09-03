@@ -22,7 +22,7 @@ dependencies = [
 dev = [
 	# Local toolchain + tests. ruff is EXACT-pinned because package.json and .husky/pre-commit
 	# call the same version through uvx (0.15.20) — a dev-local ruff that disagrees with CI
-	# lints or formats differently than the gate does. mypy/bandit resolve through uv.lock, so
+	# lints or formats differently than the check does. mypy/bandit resolve through uv.lock, so
 	# they carry floors only.
 	"pytest>=9.1.1",
 	"ruff==0.15.20",
@@ -79,7 +79,7 @@ ignore = ["E501"]
 docstring-code-format = true
 
 # mypy — strict typing over the SHIPPED LIBRARY first. modal/ and scripts/ are deliberately
-# outside `files`: the gate is src/, and tests live under tests/ (out of this scope) until the
+# outside `files`: the check is src/, and tests live under tests/ (out of this scope) until the
 # library baseline is zero, then the tests join it. The corpus was ~50% annotated when this
 # landed; the strict baseline is a known, shrinking list.
 [tool.mypy]

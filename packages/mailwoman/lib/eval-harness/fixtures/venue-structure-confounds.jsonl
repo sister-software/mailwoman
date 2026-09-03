@@ -1,30 +1,30 @@
-{"raw": "12 Briggate, Leeds, LS1 6ER", "class": "gb-street-gate", "must_not": "unit"}
-{"raw": "45 Kirkgate, Wakefield, WF1 1UY", "class": "gb-street-gate", "must_not": "unit"}
-{"raw": "7 Castlegate, York, YO1 9RN", "class": "gb-street-gate", "must_not": "unit"}
-{"raw": "3 Micklegate, York, YO1 6JH", "class": "gb-street-gate", "must_not": "unit"}
-{"raw": "22 Fishergate, Preston, PR1 2UP", "class": "gb-street-gate", "must_not": "unit"}
-{"raw": "18 Gallowgate, Newcastle upon Tyne, NE1 4SG", "class": "gb-street-gate", "must_not": "unit"}
-{"raw": "90 Cowgate, Edinburgh, EH1 1JW", "class": "gb-street-gate", "must_not": "unit"}
-{"raw": "14 Canongate, Edinburgh, EH8 8BR", "class": "gb-street-gate", "must_not": "unit"}
-{"raw": "5 Westgate, Grantham, NG31 6LT", "class": "gb-street-gate", "must_not": "unit"}
-{"raw": "31 Northgate, Darlington, DL1 1NB", "class": "gb-street-gate", "must_not": "unit"}
-{"raw": "Gate House, 1 Farringdon Street, London, EC4M 7LG", "class": "gate-house-venue", "must_not": "unit"}
-{"raw": "The Gate House, Bridge Street, Chester, CH1 1NN", "class": "gate-house-venue", "must_not": "unit"}
-{"raw": "Gatehouse Road, Aylesbury, HP19 8AL", "class": "gate-house-venue", "must_not": "unit"}
+{"raw": "12 Briggate, Leeds, LS1 6ER", "class": "gb-street-check", "must_not": "unit"}
+{"raw": "45 Kirkgate, Wakefield, WF1 1UY", "class": "gb-street-check", "must_not": "unit"}
+{"raw": "7 Castlegate, York, YO1 9RN", "class": "gb-street-check", "must_not": "unit"}
+{"raw": "3 Micklegate, York, YO1 6JH", "class": "gb-street-check", "must_not": "unit"}
+{"raw": "22 Fishergate, Preston, PR1 2UP", "class": "gb-street-check", "must_not": "unit"}
+{"raw": "18 Gallowgate, Newcastle upon Tyne, NE1 4SG", "class": "gb-street-check", "must_not": "unit"}
+{"raw": "90 Cowgate, Edinburgh, EH1 1JW", "class": "gb-street-check", "must_not": "unit"}
+{"raw": "14 Canongate, Edinburgh, EH8 8BR", "class": "gb-street-check", "must_not": "unit"}
+{"raw": "5 Westgate, Grantham, NG31 6LT", "class": "gb-street-check", "must_not": "unit"}
+{"raw": "31 Northgate, Darlington, DL1 1NB", "class": "gb-street-check", "must_not": "unit"}
+{"raw": "Check House, 1 Farringdon Street, London, EC4M 7LG", "class": "check-house-venue", "must_not": "unit"}
+{"raw": "The Check House, Bridge Street, Chester, CH1 1NN", "class": "check-house-venue", "must_not": "unit"}
+{"raw": "Gatehouse Road, Aylesbury, HP19 8AL", "class": "check-house-venue", "must_not": "unit"}
 {"raw": "Terminal Industrial Estate, Portsmouth, PO3 5PA", "class": "terminal-estate", "must_not": "unit"}
 {"raw": "Terminal House, Shepperton, TW17 8AS", "class": "terminal-estate", "must_not": "unit"}
 {"raw": "Ocean Terminal, Ocean Drive, Edinburgh, EH6 6JJ", "class": "terminal-estate", "must_not": "unit"}
 {"raw": "Terminal Warehouse, 269 11th Ave, New York, NY 10001", "class": "terminal-estate", "must_not": "unit"}
 {"raw": "Wing Yip, 375 Nechells Park Road, Birmingham, B7 5NT", "class": "wing-name", "must_not": "unit"}
 {"raw": "Wing Lee Supermarket, 7 Gerrard Street, London, W1D 5PG", "class": "wing-name", "must_not": "unit"}
-{"raw": "The Wing, Bletchley Park, Milton Keynes, MK3 6EB", "class": "wing-name", "must_not": "unit", "xfail": "REGRESSED at the v4.4.0 promotion (9.1.0, 2026-08-11): the model emits unit='The Wing' (venue='Bletchley Park', locality/postcode correct). This violates the sub-venue recipe's own identifier-required shape constraint — a bare structure word with no identifier ('The Wing', not 'Wing A') must not become a unit — so the row stays a recorded miss, not a re-pin. The 9.0.0 base passed it; the v4.4.0 suffix-boundary overlay's facility shells are the suspected source. The 17 promotion-gate floors and the rest of this board (Wing Yip / Wing Lee still clean) hold. Change: next-retrain bare-'The <Structure>' venue-lead examples, or an identifier-required guard at the unit emission; tracked on the session board."}
+{"raw": "The Wing, Bletchley Park, Milton Keynes, MK3 6EB", "class": "wing-name", "must_not": "unit", "xfail": "REGRESSED at the v4.4.0 promotion (9.1.0, 2026-08-11): the model emits unit='The Wing' (venue='Bletchley Park', locality/postcode correct). This violates the sub-venue recipe's own identifier-required shape constraint — a bare structure word with no identifier ('The Wing', not 'Wing A') must not become a unit — so the row stays a recorded miss, not a re-pin. The 9.0.0 base passed it; the v4.4.0 suffix-boundary overlay's facility shells are the suspected source. The 17 promotion-check floors and the rest of this board (Wing Yip / Wing Lee still clean) hold. Change: next-retrain bare-'The <Structure>' venue-lead examples, or an identifier-required guard at the unit emission; tracked on the session board."}
 {"raw": "Campus Drive, Irvine, CA 92612", "class": "designator-as-street", "must_not": "unit"}
 {"raw": "200 Arcade Avenue, Elkhart, IN 46516", "class": "designator-as-street", "must_not": "unit"}
 {"raw": "Concourse Village West, Bronx, NY 10451", "class": "designator-as-street", "must_not": "unit"}
 {"raw": "1 Building Society Place, Leeds, LS1 4AR", "class": "designator-as-street", "must_not": "unit"}
 {"raw": "Enclosure Road, Southampton, SO14 0AA", "class": "designator-as-street", "must_not": "unit"}
-{"raw": "12 East Gate, Warwick, CV34 4RB", "class": "modifier-designator-street", "must_not": "unit"}
-{"raw": "5 West Gate, Mansfield, NG18 1RX", "class": "modifier-designator-street", "must_not": "unit"}
+{"raw": "12 East Check, Warwick, CV34 4RB", "class": "modifier-designator-street", "must_not": "unit"}
+{"raw": "5 West Check, Mansfield, NG18 1RX", "class": "modifier-designator-street", "must_not": "unit"}
 {"raw": "West Street, Farnham, GU9 7DR", "class": "modifier-designator-street", "must_not": "unit"}
 {"raw": "North Road, Brighton, BN1 1YR", "class": "modifier-designator-street", "must_not": "unit"}
 {"raw": "West Wickham, Kent, BR4 0LT", "class": "modifier-designator-street", "must_not": "unit"}

@@ -148,7 +148,7 @@ describe("summarizeConformanceRun", () => {
 		"10 DOWNING STREET, LONDON": { house_number: "10", street: "Whitehall" },
 	}
 
-	it("gates on pass rows only, and reports tracked violations without blocking", async () => {
+	it("checks on pass rows only, and reports tracked violations without blocking", async () => {
 		const { observe } = tableObserver(brokenTable)
 
 		const { findings } = await runConformanceFixtures(
@@ -207,7 +207,7 @@ describe("summarizeConformanceRun", () => {
 		expect(summarizeConformanceRun(findings).pass).toBe(false)
 	})
 
-	it("marks a tracked violation apart from a gated one in the rendered line", async () => {
+	it("marks a tracked violation apart from a conditional one in the rendered line", async () => {
 		const { observe } = tableObserver(brokenTable)
 
 		const { findings } = await runConformanceFixtures(

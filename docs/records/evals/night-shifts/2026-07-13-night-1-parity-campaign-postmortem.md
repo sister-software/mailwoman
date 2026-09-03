@@ -1,7 +1,7 @@
 # 2026-07-13 — Parity campaign night 1: three cheap changes closed, the data change confirmed
 
 Conn granted ~01:30 UTC (operator nearby). Goal: execute the campaign runbook's probe sequence
-(`docs/superpowers/plans/2026-07-13-parity-campaign-runbook.md`). Gate: `mailwoman eval parity`
+(`docs/superpowers/plans/2026-07-13-parity-campaign-runbook.md`). Check: `mailwoman eval parity`
 (floors house_number ≥ 0.97, postcode ≥ 0.97, street ≥ 0.90; splice-candidate baseline
 0.7273 / 0.9861 / 0.4033).
 
@@ -56,7 +56,7 @@ are unmodified).
 
 ## Open questions (operator)
 
-1. Probe 0's AU regression suggests the morphology bias needs per-pattern gating if it's ever
+1. Probe 0's AU regression suggests the morphology bias needs per-pattern blocking if it's ever
    revisited — park permanently, or file an issue?
 2. Scoreboard grading (DeepSeek session 019f590a): prediction 1 HELD (bias didn't fix numeric
    neighbors), prediction 3 PARTIALLY HELD (fragment routing structurally poor — vocabulary gap,
@@ -91,7 +91,7 @@ Residual street failures after the assay are ~all mangle-class (offset bleed aft
 i.e. exactly what the splice change removes → **the consolidation run launched**:
 `v2.5.1-fragment-splice` (v0.9.0-multisplice tokenizer, FVT mean-init-expanded v241 via the new
 `mean_init_multisplice` modal fn, lr 5e-5/12k — the splice-adaptation idiom). Grades + the
-standard gate set follow when it lands.
+standard check set follow when it lands.
 
 Data-integrity scar worth its own line: **zipping multiple pyarrow ChunkedArrays is not
 row-aligned.** It silently fabricated the first #511 scan and biased the first transition fit to

@@ -35,8 +35,8 @@ was dropping house_number + road. Recover them from a parse and backfill country
 White House query now returns the full address at the rooftop coordinate.
 
 **Tooling:** `scripts/eval/nominatim-dropin-parity.mjs` — spins the packaged server, scores the geopy
-contract + resolve-rate over a fixed set, `/reverse`, and the countrycodes override. Gates the
-supported set (US + the #743 safelist), tracks the placer frontier non-gated.
+contract + resolve-rate over a fixed set, `/reverse`, and the countrycodes override. Checks the
+supported set (US + the #743 safelist), tracks the placer frontier non-conditional.
 
 **Docs:** comparison matrix `how-mailwoman-compares.mdx` (#819) + five `switching-from-*.mdx` guides
 (#820), in `concepts/`; package READMEs updated to the shipped reality.
@@ -45,7 +45,7 @@ supported set (US + the #743 safelist), tracks the placer frontier non-gated.
 collisions resolve to the US. Measured that widening `hardCountrySafelist` does nothing; the change is
 the placer's emission (GPU model work).
 
-**Frontier diagnostic (#822/#823).** With the scoped theme done and Phase 6 GPU-gated, a DeepSeek
+**Frontier diagnostic (#822/#823).** With the scoped theme done and Phase 6 GPU-conditional, a DeepSeek
 consult steered the remaining hours to a CPU-only measured artifact the operator needs before
 greenlighting the GPU placer work. `scripts/eval/frontier-gap.mjs` forward-geocodes the top-3
 cities/country from geonames cities15000 (187 countries, 506 cities) twice — bare and with a country
@@ -63,7 +63,7 @@ re-run on the operator's canonical candidate config. Report carries the full cav
 on input a real client sends: whitespace-only query, out-of-range reverse coordinates, and a 5000-char
 query each faulted the process. Fixed systematically — a `safe()` wrapper so an engine throw becomes a
 clean JSON error (never a stack-trace 500), `/reverse` lat/lon range validation (→ 400), and a forward
-query trim + 512-char cap. Verified all cases return 200/4xx; the parity harness now gates on them.
+query trim + 512-char cap. Verified all cases return 200/4xx; the parity harness now checks on them.
 
 ## What went well
 
@@ -76,7 +76,7 @@ query trim + 512-char cap. Verified all cases return 200/4xx; the parity harness
 - **Verify-before-verdict fired repeatedly and correctly:** caught the countrycodes no-op against the
   guide's own claim; caught a stale-buildinfo compile that would have validated the wrong binary; caught
   the placer-vs-safelist distinction (the wide-safelist probe changed nothing).
-- **DeepSeek consult turned a gate into evidence.** With Phase 6 GPU-blocked, instead of forcing risky
+- **DeepSeek consult turned a check into evidence.** With Phase 6 GPU-blocked, instead of forcing risky
   work or idling, the consult reframed the remaining hours toward a CPU-only diagnostic — which produced
   the bare-vs-hint diagnostic, the proven exonym mechanism, and #822/#823 as separable changes. The
   specific percentages were later caveated for config-dependence (below), but the structural findings
@@ -104,7 +104,7 @@ query trim + 512-char cap. Verified all cases return 200/4xx; the parity harness
   handles bare US queries (probe: even ambiguous "Springfield, IL"). Drop-in-local, doesn't touch the
   demo's GeocodeRouter. Alternative (per-request country detection) was more code for no measured gain.
 - **Did NOT widen `HARD_PLACE_COUNTRY_SAFELIST`** — measured it changes nothing (the placer abstains,
-  so the safelist never gates). The real change is GPU model work (#822). Avoided a useless shared-path
+  so the safelist never checks). The real change is GPU model work (#822). Avoided a useless shared-path
   change.
 - **Left photon lean** — no street parse / country backfill on the per-keystroke autocomplete path. The
   rich enrichment belongs on nominatim (the structured-lookup surface), per the architectural split.
@@ -121,7 +121,7 @@ query trim + 512-char cap. Verified all cases return 200/4xx; the parity harness
   first OIDC publish (same failure mode as the resolver packages in v4.14.0).
 - **#822 / #781.** The placer next-tranche and the EU recall change are GPU model work — promote
   decisions are yours.
-- **Candidate DB for the drop-in (#824).** Pin the canonical `candidate-global*.db` build; it gates any
+- **Candidate DB for the drop-in (#824).** Pin the canonical `candidate-global*.db` build; it checks any
   real non-US measurement and is the drop-in's biggest non-US limitation (unbundled + undocumented).
 - **Ship it?** The vertical is publish-ready (ci:smoke green). A release is your call.
 

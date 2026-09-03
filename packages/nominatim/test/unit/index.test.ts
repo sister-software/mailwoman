@@ -59,7 +59,7 @@ test("toNominatimResult: renders lat/lon as strings + a joined display_name + li
 	expect(typeof r.place_id).toBe("number")
 })
 
-test("toNominatimResult: addressdetails gates the address block", () => {
+test("toNominatimResult: addressdetails checks the address block", () => {
 	expect(toNominatimResult(dc).address).toBeUndefined()
 	expect(toNominatimResult(dc, { addressdetails: true }).address).toEqual(dc.address)
 })

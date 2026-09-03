@@ -49,19 +49,19 @@ const GazetteerVerifyPostcodeCodePoint: ParsedCommandComponent<Options> = ({ opt
 	const state = useCommandTask(async () => {
 		const { dataRootPath, isoDate } = await import("@mailwoman/core/utils")
 
-		const { runCodePointGate, formatCodePointGateReport } =
+		const { runCodePointCheck, formatCodePointCheckReport } =
 			await import("#gazetteer-pipeline/postcode/codepoint-comparison")
 
 		const stamp = isoDate()
 
-		const report = runCodePointGate({
+		const report = runCodePointCheck({
 			codepointPath: options.codepoint ?? String(dataRootPath("wof", `postalcode-gb-codepoint-${stamp}.db`)),
 			incumbentPath:
 				options.incumbent ?? String(dataRootPath("wof", "frozen-backup-2026-08-04", "postalcode-geonames-tail.db")),
 			onPhase: phaseReporter(),
 		})
 
-		return options.json ? [JSON.stringify(report, null, 2)] : formatCodePointGateReport(report)
+		return options.json ? [JSON.stringify(report, null, 2)] : formatCodePointCheckReport(report)
 	})
 
 	if (state.status !== "done") return <CommandTaskResult state={state} />

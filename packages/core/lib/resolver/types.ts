@@ -361,7 +361,7 @@ export interface ResolveOpts {
 	/**
 	 * Default ISO-3166 alpha-2 country to constrain top-level lookups to, when no resolved parent has supplied a country
 	 * yet. Without it, a bare component over a multi-country gazetteer (e.g. "IL") can fuzzy-match a foreign place.
-	 * Callers should set this from the detected locale (the pipeline's locale-gate). A resolved parent's country still
+	 * Callers should set this from the detected locale (the pipeline's locale-hint). A resolved parent's country still
 	 * overrides it deeper in the tree.
 	 */
 	defaultCountry?: string
@@ -572,7 +572,7 @@ export interface ResolveOpts {
 	 * from where the postcode resolves. Only bites when the backend has postcode coverage (else no anchor, no check).
 	 * Default 50.
 	 */
-	spanRescoreGateKm?: number
+	spanRescoreThresholdKm?: number
 	/**
 	 * Postal-compound recovery inside the span-rescore tier (#942). The knife-edge no-street query shape ("Kožljek 7,
 	 * 1382 Kožljek") fails as a COMPOUND: the parse globs the trailing city into the postcode span ("1382 Kožljek"),
@@ -609,7 +609,7 @@ export interface ResolveOpts {
 	 * Check radius (km) for {@link postcodeConsistency} — a locality farther than this from the resolved postcode is
 	 * re-picked or demoted. Default 50.
 	 */
-	postcodeConsistencyGateKm?: number
+	postcodeConsistencyThresholdKm?: number
 	/**
 	 * Postcode-country coherence (#42) — the ONLY mechanism permitted to override {@link defaultCountry}, and the only
 	 * one that runs BEFORE the walk rather than re-picking after it.
@@ -624,7 +624,7 @@ export interface ResolveOpts {
 	 * The postcode's SHAPE cannot settle this — `75001` is a valid US ZIP, French CP and German PLZ, and the gazetteer
 	 * holds the literal string in four countries. Its GEOMETRY can: this pass asks, per candidate country from codex's
 	 * shape test, whether the postcode resolves there AND a same-named locality sits within
-	 * {@link postcodeCountryCoherenceGateKm} of it — then scopes the whole walk to the country where the pair is
+	 * {@link postcodeCountryCoherenceThresholdKm} of it — then scopes the whole walk to the country where the pair is
 	 * consistent. Measured over 800 real pairs (400 US ZIP+city, 400 FR CP+commune): **zero** border crossings at both
 	 * the 15 km and 25 km radii.
 	 *
@@ -650,7 +650,7 @@ export interface ResolveOpts {
 	 * postcode to count that country as consistent. Default 25 (what the 800-pair scale run measured; the confound board
 	 * returned identical verdicts at 15, 25 and 50, so the pass is not radius-tuned).
 	 */
-	postcodeCountryCoherenceGateKm?: number
+	postcodeCountryCoherenceThresholdKm?: number
 	/**
 	 * Postcode-shape coherence (#31, Mechanism 1, `resolver/postcode-shape-coherence.ts`) — shape as CONFIDENCE and
 	 * EXCLUSION, downstream of the siblings. The decoder sometimes tags a HOUSE NUMBER as `postcode` when its digits form

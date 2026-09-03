@@ -114,7 +114,7 @@ import { haversineKm } from "@mailwoman/spatial"
  * Default check radius (km) for the postcode↔locality consistency test. 25 km is what the 800-pair scale run measured;
  * the confound board returned identical verdicts at 15, 25 and 50, so this is a floor choice, not a tuned one.
  */
-export const POSTCODE_COUNTRY_COHERENCE_GATE_KM = 25
+export const POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM = 25
 
 /**
  * Which half (or halves) of the address bought the verdict — the firing receipt, so a reader of a scoped result can
@@ -151,7 +151,7 @@ export interface PostcodeCountryScope {
 	 */
 	evidence: PostcodeCountryScopeEvidence
 	/**
-	 * Distance between the resolved postcode point and the nearest same-named locality, in km. Always `<= gateKm`.
+	 * Distance between the resolved postcode point and the nearest same-named locality, in km. Always `<= thresholdKm`.
 	 * Present ONLY for the `pair` rung — a single-sided verdict has no two points to measure between, and reporting a `0`
 	 * there would assert an agreement nobody tested (the meaning-of-zero rule).
 	 */
@@ -180,9 +180,9 @@ export interface PostcodeCountryScopeOpts {
 	 */
 	defaultCountry: string | undefined
 	/**
-	 * Consistency check radius in km. Defaults to {@link POSTCODE_COUNTRY_COHERENCE_GATE_KM}.
+	 * Consistency check radius in km. Defaults to {@link POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM}.
 	 */
-	gateKm?: number
+	thresholdKm?: number
 	/**
 	 * Optional narrowing of the SHAPE half of the candidate-country set — the shape-coherence pass's intersection for a
 	 * CONFIRMED postcode span (see `resolver/postcode-shape-coherence.ts`, #31 Mechanism 1). When present it REPLACES
@@ -335,7 +335,7 @@ async function coherenceIn(
 	postcode: string,
 	locality: string,
 	backend: ResolverBackend,
-	gateKm: number,
+	thresholdKm: number,
 	knownPostcodePlace?: ResolvedPlace
 ): Promise<{ postcodePlace: ResolvedPlace; localityPlace: ResolvedPlace; distanceKm: number } | null> {
 	let postcodePlace = knownPostcodePlace
@@ -371,7 +371,7 @@ async function coherenceIn(
 		if (!candidate.exactMatch || !hasCoord(candidate)) continue
 		const distanceKm = haversineKm(postcodePlace.lat, postcodePlace.lon, candidate.lat, candidate.lon)
 
-		if (distanceKm > gateKm) continue
+		if (distanceKm > thresholdKm) continue
 
 		if (!best || distanceKm < best.distanceKm) {
 			best = { localityPlace: candidate, distanceKm }
@@ -412,7 +412,7 @@ export async function findPostcodeCountryScope(
 	// and on every bare-postcode query.
 	if (!localities.length) return null
 
-	const gateKm = opts.gateKm ?? POSTCODE_COUNTRY_COHERENCE_GATE_KM
+	const thresholdKm = opts.thresholdKm ?? POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM
 
 	// 1. Is the caller's own default country coherent with ANY of the address's locality values? If so we are done —
 	//    positive evidence for the default, no override, and the common domestic path (one locality value) costs two
@@ -420,7 +420,7 @@ export async function findPostcodeCountryScope(
 	//    sweep below carries the whole verdict.
 	if (defaultCountry) {
 		for (const locality of localities) {
-			if (await coherenceIn(defaultCountry, postcode, locality, backend, gateKm)) return null
+			if (await coherenceIn(defaultCountry, postcode, locality, backend, thresholdKm)) return null
 		}
 	}
 
@@ -456,7 +456,7 @@ export async function findPostcodeCountryScope(
 		const coherent: PostcodeCountryScope[] = []
 
 		for (const country of candidates) {
-			const hit = await coherenceIn(country, postcode, locality, backend, gateKm, pcHolders.get(country))
+			const hit = await coherenceIn(country, postcode, locality, backend, thresholdKm, pcHolders.get(country))
 
 			if (hit) {
 				coherent.push({ country, postcode, locality, evidence: "pair", ...hit })
@@ -529,7 +529,7 @@ export async function findPostcodeCountryScope(
 
 		const contradicted =
 			ownPostcode !== undefined &&
-			haversineKm(ownPostcode.lat, ownPostcode.lon, localityPlace.lat, localityPlace.lon) > gateKm
+			haversineKm(ownPostcode.lat, ownPostcode.lon, localityPlace.lat, localityPlace.lon) > thresholdKm
 
 		if (country !== defaultCountry && !contradicted && !verdicts.has(country)) {
 			verdicts.set(country, { country, postcode, locality, evidence: "locality", localityPlace })

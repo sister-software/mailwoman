@@ -16,7 +16,7 @@
 # country [foreign city] AND as US region/locality [US ZIP]) + code-as-region negatives (~10%:
 # CA/GA/IN/MA/PA/AL). The contrast is the signal the over-firing v0.9.9 slice lacked.
 #
-# PRE-REGISTERED GATE (stop at 20k) — data/eval/external/country-homograph-real.jsonl (n=54, held-out):
+# PRE-REGISTERED CHECK (stop at 20k) — data/eval/external/country-homograph-real.jsonl (n=54, held-out):
 #   - `country` F1 >> 0 (was 0) AND over-fire = 0 (NO region/locality token mistagged as country).
 #   - `region` / `locality` F1 HELD vs v4.1.0 baseline (region 76.9, locality 62.1 on the homograph eval).
 #   - NO-REGRESSION (within ~1pp, fp32-to-fp32): US house_number / postcode / street / locality;
@@ -62,7 +62,7 @@ data:
     # (Georgia/Jordan/Lebanon/Mexico/Peru/Turkey rendered BOTH as country and US region/locality) +
     # code-as-region negatives (CA/GA/IN/MA/PA/AL) + breadth. Single variable vs v4.1.0 (NO affix).
     # Class-weight B/I-country HELD at 2.0 below — the shipped model already had 2.0 and country was
-    # still 0%, so the gap was DATA, not weighting. Bump to 3-4 + add the soft anchor only if the gate
+    # still 0%, so the gap was DATA, not weighting. Bump to 3-4 + add the soft anchor only if the check
     # shows long-tail recall lagging. See docs/engineering/reference/closed-vocab-fields-model-first.mdx.
     synth-country: 2.0
   train_rows_per_epoch: 1000000

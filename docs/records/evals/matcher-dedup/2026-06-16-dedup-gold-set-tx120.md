@@ -37,7 +37,7 @@ as "distinct." A real entity-truth must collapse by **org-name + address**, not 
 1. **The over-merge "problem" is a measurement artifact.** The matcher's co-located merges are correct
    org-resolution; NPI-truth (and even subpart-truth) scores them as errors. This is why the **A/B
    showed the corroboration features didn't move precision** — there is essentially no genuine
-   over-merge to cut. Optimizing the model for precision here optimizes a phantom; cost-sensitive
+   over-merge to reduce. Optimizing the model for precision here optimizes a phantom; cost-sensitive
    training would only _hurt_ (un-merge correct same-org pairs).
 
 2. **The real dedup change is the YARDSTICK, not the model.** A better entity-truth that collapses

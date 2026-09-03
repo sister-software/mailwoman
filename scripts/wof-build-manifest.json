@@ -260,7 +260,7 @@
 			"whosonfirst-data-postalcode-jp": "6fa7f0d87f0e"
 		},
 		"postal_authority": {
-			"JP": "KEN_ALL_ROME.zip (Japan Post, romanized) — CP932/Shift-JIS. Japan Post BLOCKS programmatic download (JS/geo-gated); fetch manually via browser: download.html → /zipcode/dl/roman-zip.html → roman/KEN_ALL_ROME.zip",
+			"JP": "KEN_ALL_ROME.zip (Japan Post, romanized) — CP932/Shift-JIS. Japan Post BLOCKS programmatic download (JS/geo-conditional); fetch manually via browser: download.html → /zipcode/dl/roman-zip.html → roman/KEN_ALL_ROME.zip",
 			"KR": "deferred — Juso.go.kr / Korea Post (login/geo-walled); GeoNames KR is Hangul vs WOF romaji",
 			"TW": "deferred — no GeoNames postal; TW not yet in admin DB (admin-tw clone present)"
 		},

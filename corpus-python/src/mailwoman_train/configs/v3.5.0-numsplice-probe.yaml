@@ -18,7 +18,7 @@
 #     continuations than before, so postcode recognition COULD regress. The 6 demo presets (20500,
 #     10118, 94133, 60613, 98109, 90210) and board 3 bare-pc (Norwegian 4-digit postcodes, the
 #     negative class) MUST hold. If US 5-digit postcode drops, the splice range needs 5-digit pieces
-#     or a different cut.
+#     or a different reduce.
 #   DO-NO-HARM — FR fragment board + global parity hold.
 #   NEGATIVE — if the digit rows do NOT improve after single-piece-ing the numbers, the vocab is NOT
 #     the mechanism and B4c is refuted (a big finding — it would point back to the head/decoder).

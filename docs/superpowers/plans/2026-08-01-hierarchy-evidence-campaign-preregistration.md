@@ -1,5 +1,3 @@
----
-
 ## R2 groundwork (2026-08-01, verified against the shipped admin DB)
 
 `admin-global-priority.db` carries **exactly 211 borough rows** (the design doc's number,
@@ -9,7 +7,7 @@ mis-typed?), Tokyo 23, Rotterdam 23, Paris 20, Amsterdam 8. NOTE: Amsterdam's bo
 compass-named (Noord/Zuid/West/Oost/Nieuw-West/Zuidoost) — the directional-homograph class at
 placetype grain; law-1-style care applies when these become pair entries. Berlin rows appear
 twice (locality + localadmin parents) — dedupe on (child, parent-surface). Next: emit these as
-PIX1 rows into the per-locale indexes (London → pair-index-gb; others gated on their locale's
+PIX1 rows into the per-locale indexes (London → pair-index-gb; others blocked on their locale's
 carrier + tag-aliveness per the placetype-evidence doc).
 
 ---
@@ -56,7 +54,7 @@ law-1 rows graded for venue-confound FPs before the artifact ships them.
 
 **R4b — the neighbourhood increment SHIPPED (2026-08-01):** the pre-registered bar PASSED — the
 56-row law-1 confound board (directional neighbourhood surfaces opening venue names) shows
-**0 dep-loc false positives before AND after** the 424-fresh merge; the segment-mode gating holds.
+**0 dep-loc false positives before AND after** the 424-fresh merge; the segment-mode blocking holds.
 Positive side verified: "East Acton"/"Crystal Palace"/"Nine Elms" all extract as
 dependent_locality. Artifact: `data/gazetteer/london-pairs-v2.jsonl` (966 rows = wards ∪
 neighbourhoods, sorted-unique) supersedes v1; link-dev-weights repointed; full GB index =

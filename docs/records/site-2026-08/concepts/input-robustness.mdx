@@ -18,7 +18,7 @@ So the question that matters isn't "does it parse `1600 Pennsylvania Avenue NW,
 Washington, DC 20500`?" Of course it does. It's "does `1600 PENNSYLVANIA AVE
 NW,WASHINGTON DC` land on the same rooftop?" This page is how Mailwoman answers
 that: three layers that absorb surface noise before it can move the coordinate,
-and the gates that verify each layer holds.
+and the checks that verify each layer holds.
 
 ## The absorption stack
 
@@ -86,9 +86,9 @@ handle them. The three layers are a division of labor: deterministic code takes 
 transforms with one right answer, the corpus takes the ones whose answer depends on
 context, and case normalization bridges the systematic gap between them.
 
-## The gates
+## The checks
 
-Absorption you can't measure is absorption you can't trust. Three gates watch these
+Absorption you can't measure is absorption you can't trust. Three checks watch these
 layers, and they grade different things on purpose.
 
 ### Metamorphic INV/DIR/BAND — the un-gameable layer
@@ -122,8 +122,8 @@ answer:
 
 When a perturbation deterministically fails, it doesn't get swept under the rug and it
 doesn't block the build either. It goes in `KNOWN_INV_XFAIL` or `KNOWN_BAND_XFAIL` with
-a tracked note: visible, non-blocking, so the gate fails only on _new_ regressions. The
-bookkeeping cuts the other way too: an xfail that starts passing gets flagged for
+a tracked note: visible, non-blocking, so the check fails only on _new_ regressions. The
+bookkeeping reduces the other way too: an xfail that starts passing gets flagged for
 removal, so the list can't rot into the Pelias pass-list trap it was built to avoid.
 
 Casing and spacing are green, cleared by the two normalizer changes above (#829's
@@ -143,7 +143,7 @@ The golden set (`data/eval/golden/v0.1.2`) carries a small hand-labeled adversar
 track under `graceful/*`: typos (`Pensylvania`, `Portlnad`, `Fransisco`), mis-casing,
 mis-punctuation, whitespace abuse. Around ten of these are single-character typo
 cases. They're a stress test with expected components attached, not a coordinate
-gate: the parse should survive with lower confidence, and the labels say what
+check: the parse should survive with lower confidence, and the labels say what
 "survive" means.
 
 ### `perturb-golden.ts` — the one-off arena
@@ -152,14 +152,14 @@ gate: the parse should survive with lower confidence, and the labels say what
 perturbations (strip the delimiters, lowercase everything, glue the region to the
 postcode as `OR97214`) while keeping the component labels intact. It exists to show
 that a contextual model degrades more gracefully than a delimiter-hungry rule parser.
-It's a generator you run when you want that arena, not a standing gate.
+It's a generator you run when you want that arena, not a standing check.
 
 ## The coverage matrix
 
-Put the perturbation classes against the layers that absorb them and the gates that
+Put the perturbation classes against the layers that absorb them and the checks that
 watch them, and the full picture falls out, thin spots included.
 
-| Class                                        | `normalize/` (runtime)                     | Trained (corpus aug) | Gated                                                                                                     |
+| Class                                        | `normalize/` (runtime)                     | Trained (corpus aug) | Conditional                                                                                               |
 | -------------------------------------------- | ------------------------------------------ | -------------------- | --------------------------------------------------------------------------------------------------------- |
 | Casing                                       | yes (case-normalize #690/#829, model-side) | yes                  | INV[lower/upper] green                                                                                    |
 | Spacing                                      | yes (whitespace.ts)                        | incidental           | INV[ws], INV[comma-tight] green                                                                           |
@@ -170,7 +170,7 @@ watch them, and the full picture falls out, thin spots included.
 
 The top two rows are the settled ones: casing and spacing are absorbed at runtime,
 reinforced in the corpus, and held green by a standing invariant. The bottom four used
-to be blind spots. They run through the metamorphic gate now, and the surprise was that
+to be blind spots. They run through the metamorphic check now, and the surprise was that
 several of them already hold. The EN suffix abbreviations pass the strict metre
 invariant. Ordinal street spelling (`5th`↔`Fifth`) stays inside the tolerance band even
 though nothing trains it. The gaps came out smaller than feared, and they're

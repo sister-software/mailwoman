@@ -39,7 +39,7 @@
  *   `score-country-homograph`, `de-order-eval`, `external-arenas`, `demo-cascade-smoke`,
  *   `fr-parse-recall`), re-serializing typed options into argv and scraping stdout back out of a
  *   pipe. They are now direct calls into sibling modules with typed options and a line sink,
- *   following `presetCompare` / `maskRegressionGate` / `assemblePromotionVerdict`. The artifact
+ *   following `presetCompare` / `maskRegressionCheck` / `assemblePromotionVerdict`. The artifact
  *   files are unchanged — same names, same bytes — because the sinks reproduce each child's stdout
  *   line-for-line, and the verdict assembler still reads exactly what it read before.
  *
@@ -87,7 +87,7 @@ import { deOrderEval } from "#eval-harness/de-order-eval"
 import { demoCascadeSmoke } from "#eval-harness/demo-cascade-smoke"
 import { externalArenas } from "#eval-harness/external-arenas"
 import { frParseRecall } from "#eval-harness/fr-parse-recall"
-import { maskRegressionGate } from "#eval-harness/mask-regression"
+import { maskRegressionCheck } from "#eval-harness/mask-regression"
 import { perLocaleF1 } from "#eval-harness/per-locale-f1"
 import { presetCompare } from "#eval-harness/preset-compare"
 import { assemblePromotionVerdict } from "#eval-harness/promotion-eval-verdict"
@@ -108,7 +108,7 @@ export function renderLines(lines: readonly string[]): string {
 	return lines.map((line) => `${line}\n`).join("")
 }
 
-interface GateSpec {
+interface ThresholdSpec {
 	label: string
 	requires_gazetteer_lexicon?: boolean
 	requires_conventions?: string
@@ -130,9 +130,9 @@ interface ModelCard {
 }
 
 /**
- * Options for {@linkcode runPromotionGate}.
+ * Options for {@linkcode runPromotionEval}.
  */
-export interface PromotionGateOptions {
+export interface PromotionEvalOptions {
 	/**
 	 * Candidate fp32 ONNX (required).
 	 */
@@ -144,7 +144,7 @@ export interface PromotionGateOptions {
 	/**
 	 * Check-spec JSON: a path, or a bare spec name resolved against the bundled `checks/` dir (required).
 	 */
-	gate?: string
+	check?: string
 	/**
 	 * Tokenizer path. Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
 	 */
@@ -164,11 +164,11 @@ export interface PromotionGateOptions {
 	 */
 	weightsCache?: string
 	/**
-	 * Package-shaped INT8 candidate dir, same layout as {@linkcode PromotionGateOptions.weightsCache} — pairing them runs
+	 * Package-shaped INT8 candidate dir, same layout as {@linkcode PromotionEvalOptions.weightsCache} — pairing them runs
 	 * the dual fp32+int8 battery entirely package-shaped (#47). The `--model`+`--int8` dual under-feeds the country
 	 * channel (channel siblings never load), so its absolute floors are invalid and a release grade needed a second,
 	 * single-artifact `--weights-cache` run; a pair makes floors AND deltas valid in one run. Requires
-	 * {@linkcode PromotionGateOptions.weightsCache} (the fp32 arm) and excludes the `--model`/`--int8` flow.
+	 * {@linkcode PromotionEvalOptions.weightsCache} (the fp32 arm) and excludes the `--model`/`--int8` flow.
 	 */
 	int8WeightsCache?: string
 	/**
@@ -194,10 +194,10 @@ export interface PromotionGateOptions {
  */
 const SPECS_DIR = resolvePackagePath("mailwoman", "lib", "eval-harness", "specs")
 
-export async function resolveGateSpecPath(gate: string): Promise<string> {
-	if (await pathExists(gate)) return gate
+export async function resolveThresholdSpecPath(check: string): Promise<string> {
+	if (await pathExists(check)) return check
 
-	const name = basename(gate)
+	const name = basename(check)
 
 	for (const candidate of name.endsWith(".json") ? [name] : [name, `${name}.json`]) {
 		const spec = resolvePath(SPECS_DIR, candidate)
@@ -205,7 +205,7 @@ export async function resolveGateSpecPath(gate: string): Promise<string> {
 		if (await pathExists(spec)) return spec
 	}
 
-	throw new Error(`Gate spec not found: "${gate}". Known specs: ${(await listEvalSpecs()).join(", ") || "(none)"}`)
+	throw new Error(`Check spec not found: "${check}". Known specs: ${(await listEvalSpecs()).join(", ") || "(none)"}`)
 }
 
 /**
@@ -420,7 +420,7 @@ async function runLoreGuards(env: {
  * green without it — but an eval spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by
  * design).
  *
- * Its own function because it is self-contained and `runPromotionGate` is at the statement ceiling; nothing about the
+ * Its own function because it is self-contained and `runPromotionEval` is at the statement ceiling; nothing about the
  * leg's behavior changed in the lift.
  */
 async function runDemoCascadeLeg(env: {
@@ -483,10 +483,10 @@ async function runDemoCascadeLeg(env: {
  * Run the full promotion-eval battery. Returns the process exit code: 0 = every floor met AND the mask-regression lock
  * held, 1 = any miss, 2 = usage / lore-guard refusal.
  */
-export async function runPromotionGate(options: PromotionGateOptions): Promise<number> {
+export async function runPromotionEval(options: PromotionEvalOptions): Promise<number> {
 	const MODEL = options.model ?? ""
 	const INT8 = options.int8 ?? ""
-	const GATE = options.gate ? await resolveGateSpecPath(options.gate) : ""
+	const CHECK = options.check ? await resolveThresholdSpecPath(options.check) : ""
 	let OUT_DIR = options.outDir ?? ""
 	const TOK = options.tokenizer ?? String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
 	const CARD = options.card ?? "packages/neural-weights-en-us/model-card.json"
@@ -520,7 +520,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	const WC8_PACKAGE = WC8 ? weightsCachePackageDir(WC8, "en-us") : ""
 	const WC8_MODEL = WC8 ? resolvePath(WC8_PACKAGE, "model.onnx") : ""
 
-	if (!GATE || (!MODEL && !WC)) {
+	if (!CHECK || (!MODEL && !WC)) {
 		console.error("✗ --spec and one of --model / --weights-cache required")
 
 		return 2
@@ -538,10 +538,10 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		return 2
 	}
 
-	const gate = await readLocalJSONFile<GateSpec>(GATE)
+	const check = await readLocalJSONFile<ThresholdSpec>(CHECK)
 	// A label-less spec must not crash the PASS path (the post-verdict ledger hint interpolates
 	// LABEL — bit on the first v7.0.0-base run, whose spec omitted the field).
-	const LABEL = gate.label ?? basename(GATE).replace(/\.json$/, "")
+	const LABEL = check.label ?? basename(CHECK).replace(/\.json$/, "")
 	const hhmm = String(new Date().getUTCHours()).padStart(2, "0") + String(new Date().getUTCMinutes()).padStart(2, "0")
 
 	if (!OUT_DIR) {
@@ -563,7 +563,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		"gazetteerLexicon" | "suppressGazNearPostcode" | "conventions" | "bridgeGaps"
 	> = {}
 
-	if (gate.requires_gazetteer_lexicon === true) {
+	if (check.requires_gazetteer_lexicon === true) {
 		channelOptions.gazetteerLexicon = GAZ
 		channelOptions.suppressGazNearPostcode = true
 	}
@@ -571,7 +571,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	// Conventions channel (#511 Tier A): when the eval spec declares requires_conventions, every scorer
 	// parses with the address-system conventions mask in the declared mode ("auto" = locale-head
 	// detection). Same contract discipline as the gaz flags — the spec IS the ship config.
-	const CONV_MODE = gate.requires_conventions ?? ""
+	const CONV_MODE = check.requires_conventions ?? ""
 
 	if (CONV_MODE) {
 		channelOptions.conventions = CONV_MODE
@@ -580,15 +580,15 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	// Span-bridge channel (v4.4.0 corrective): spec-declared like the conventions mask.
 	let BRIDGE_MODE = ""
 
-	if (gate.requires_bridge === true) {
+	if (check.requires_bridge === true) {
 		channelOptions.bridgeGaps = true
 		BRIDGE_MODE = "1"
 	}
 
 	// The answer key is part of the ship config, exactly like the gaz flags and the conventions mask.
 	// Recorded in the provenance line so a verdict says WHICH key produced it.
-	if (gate.golden_dir) {
-		console.log(`golden dir: ${gate.golden_dir} (spec-declared)`)
+	if (check.golden_dir) {
+		console.log(`golden dir: ${check.golden_dir} (spec-declared)`)
 	}
 
 	// The ship artifact: the int8 arm when a pair is graded (the int8 is what ships), else the
@@ -627,7 +627,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 				// Spec-declared, and spelled out rather than spread: per-locale-f1 names the lexicon field
 				// `gazetteerLexiconPath` where the affix probes call it `gazetteerLexicon`, and a spread would
 				// have carried the wrong key silently past TypeScript into a channel that stayed unfed.
-				...(gate.golden_dir ? { goldenDir: gate.golden_dir } : {}),
+				...(check.golden_dir ? { goldenDir: check.golden_dir } : {}),
 				...(channelOptions.gazetteerLexicon ? { gazetteerLexiconPath: channelOptions.gazetteerLexicon } : {}),
 				...(channelOptions.suppressGazNearPostcode ? { suppressGazNearPostcode: true } : {}),
 				...(channelOptions.conventions ? { conventions: channelOptions.conventions } : {}),
@@ -760,7 +760,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	})
 
 	// Arena leg (v4.4.0+: arena.perturb is a floor when the spec declares it) — heavy, ship artifact only.
-	if ("arena.perturb" in (gate.floors ?? {})) {
+	if ("arena.perturb" in (check.floors ?? {})) {
 		// (Historical note: the compiled v0 arena parser used to ENOENT on libpostal dicts because
 		// repo.ts's __isCompiledTree detection landed CorePackageAbsolutePath at core/out, so dict reads
 		// went to core/out/data/... while the data lives at core/data/.... A local core/out/data symlink
@@ -805,7 +805,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	// standing leg measured FR street parsing WITHOUT a postcode anchor. Reads a FROZEN 40-row OSM
 	// sample (committed fixture, no live database needed), parses each bare + anchored, and fails if the
 	// bare-intact rate drops below the spec floor. The leg self-reports its verdict + exits non-zero.
-	const bareStreetFloor = (gate.floors ?? {})["fr.bare_street_intact"]
+	const bareStreetFloor = (check.floors ?? {})["fr.bare_street_intact"]
 
 	if (bareStreetFloor !== undefined) {
 		// The `env: childEnv()` this spawn carried is gone with the child — an in-process call already
@@ -857,15 +857,15 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	// mask; skipped = PASS otherwise. Its status folds into the final verdict below. In-process since the
 	// eval-harness migration; the report lines land in mask-regression.md as the child capture did, and a
 	// throw is recorded there like the old child's stderr stack.
-	let MASK_GATE_STATUS = 0
+	let MASK_CHECK_STATUS = 0
 
 	if (CONV_MODE) {
-		console.log("== mask-regression gate (#718) ==")
+		console.log("== mask-regression check (#718) ==")
 
 		const maskLines: string[] = []
 
 		try {
-			const mask = await maskRegressionGate(
+			const mask = await maskRegressionCheck(
 				{
 					model: shipModel,
 					tokenizer: EFF_TOK,
@@ -877,23 +877,23 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 				(line) => maskLines.push(line)
 			)
 
-			MASK_GATE_STATUS = mask.pass ? 0 : 1
+			MASK_CHECK_STATUS = mask.pass ? 0 : 1
 		} catch (error) {
 			maskLines.push(error instanceof Error ? (error.stack ?? error.message) : String(error))
-			MASK_GATE_STATUS = 1
+			MASK_CHECK_STATUS = 1
 		}
 
 		await writeLocalTextFile(maskLines.map((line) => `${line}\n`).join(""), `${OUT_DIR}/mask-regression.md`)
 
-		if (MASK_GATE_STATUS === 0) {
-			console.log("✓ mask-regression gate PASS (no tag regresses >2pp under the conventions mask)")
+		if (MASK_CHECK_STATUS === 0) {
+			console.log("✓ mask-regression check PASS (no tag regresses >2pp under the conventions mask)")
 		} else {
 			console.error(
-				`✗ mask-regression gate FAIL (see ${OUT_DIR}/mask-regression.md) — a tag regresses >2pp under the '${CONV_MODE}' mask`
+				`✗ mask-regression check FAIL (see ${OUT_DIR}/mask-regression.md) — a tag regresses >2pp under the '${CONV_MODE}' mask`
 			)
 		}
 	} else {
-		console.log("⚠ mask-regression gate SKIPPED — spec declares no requires_conventions (no mask in the ship config)")
+		console.log("⚠ mask-regression check SKIPPED — spec declares no requires_conventions (no mask in the ship config)")
 	}
 
 	// --- collect + verify --------------------------------------------------------
@@ -902,7 +902,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 	try {
 		const { failed } = await assemblePromotionVerdict({
-			gate: GATE,
+			check: CHECK,
 			outDir: OUT_DIR,
 			withInt8: Boolean(INT8 || WC8),
 			...(options.weightsCache ? { gradedArtifact: "weights-cache" as const } : {}),
@@ -915,9 +915,9 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		VERDICT_STATUS = 1
 	}
 
-	if (VERDICT_STATUS !== 0 || MASK_GATE_STATUS !== 0) {
-		if (MASK_GATE_STATUS !== 0) {
-			console.error(`✗ gate FAILED the mask-regression lock (#718) — see ${OUT_DIR}/mask-regression.md`)
+	if (VERDICT_STATUS !== 0 || MASK_CHECK_STATUS !== 0) {
+		if (MASK_CHECK_STATUS !== 0) {
+			console.error(`✗ check FAILED the mask-regression lock (#718) — see ${OUT_DIR}/mask-regression.md`)
 		}
 
 		return 1

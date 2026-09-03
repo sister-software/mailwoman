@@ -31,11 +31,11 @@ metamorphic layer had been carrying its own copy of the model-selection ladder, 
 Three properties are deliberate:
 
 - **An unset flag stays unset.** Pastel hands the schema's `false` default to the command, and forwarding it verbatim
-  would pin the change OFF forever — so the day the library default flips to ON, the standard gate would silently keep
+  would pin the change OFF forever — so the day the library default flips to ON, the standard check would silently keep
   grading the old configuration. Only the ON pin is forwarded; "no flag" means "grade whatever production does".
 - **Every run states its configuration**, pinned or not: `resolver changes: (none pinned — production defaults)` or
   `resolver changes: postcodeCountryCoherence=ON`, on the combined verdict block and in each layer's build banner. Two
-  gate logs that differ only in a flag someone typed are not evidence about that flag unless each log says what it
+  check logs that differ only in a flag someone typed are not evidence about that flag unless each log says what it
   graded.
 - **The pass reports its own firing count.** `GeocodeResult.postcode_country_scope` carries the country the walk was
   re-scoped to (null whenever nothing was overridden), and the regression layer prints
@@ -43,8 +43,8 @@ Three properties are deliberate:
 
 Tests: `mailwoman/eval-harness/gauntlet/pin.test.ts`, 16 assertions over the mapping
 `run options → layer options → geocode deps`, including every model-selection ladder and the unpinned control. They
-assert a mapping on purpose — the gate itself needs the extract set and a loaded ONNX, and the failure this surface
-exists to prevent is silent: a dropped pin does not throw, it produces a gate log identical to the unpinned one.
+assert a mapping on purpose — the check itself needs the extract set and a loaded ONNX, and the failure this surface
+exists to prevent is silent: a dropped pin does not throw, it produces a check log identical to the unpinned one.
 
 ### 1.2 The first run, and why the pin alone was not enough
 
@@ -60,7 +60,7 @@ unchanged verdict from a mechanism that never ran is not evidence of anything.
 The cause is structural, not incidental. The pass is inert without a `defaultCountry`, and the curated corpus carried
 **exactly one** case with one (`fr-lyonnais-3-bare-country-bias`, an FR address under `FR`, where the pass exits at
 step 1 by design). The corpus had no case in which a country prior is in tension with the address it is applied to —
-which is precisely the defect #42 exists to fix, so the gate could not have seen the change no matter how it was pinned.
+which is precisely the defect #42 exists to fix, so the check could not have seen the change no matter how it was pinned.
 
 ### 1.3 The corpus extension
 
@@ -76,23 +76,23 @@ Seven cases, all measured through the compiled CLI on 2026-08-05 against the 202
 | `gb-downing-us-scoped` | `10 Downing Street, London SW1A 2AA`  | US      | improvement\_target | London, Ohio under a US default                          |
 | `de-linden-us-scoped`  | `Unter den Linden 77, 10117 Berlin`   | US      | improvement\_target | Berlin, Connecticut — pairs against `us-berlin-nh-03570` |
 
-The four adversarial rows are gated (`status: pass`): they must hold with the change pinned either way, and they are the
+The four adversarial rows are conditional (`status: pass`): they must hold with the change pinned either way, and they are the
 "zero newly-failing cases" bar with teeth. The three rescue rows are `improvement_target`: they fail today, which is the
 point — they ARE the defect — and under the pin they pass, which the runner's anti-rot loop reports as
-"now PASSES — promote to status=pass". That is what a default-on flip should look like from inside the gate.
+"now PASSES — promote to status=pass". That is what a default-on flip should look like from inside the check.
 
 `us-berlin-nh-03570` and `de-linden-us-scoped` are the pair worth reading together: same city name, same 5-digit shape,
 same US default, opposite correct answers. Nothing about the name or the shape separates them. The geometry does.
 
 ### 1.4 The verdicts
 
-Both legs, same corpus (137 cases, 68 gated), same model (`model.onnx` md5 `c968c24a`), same backend (the candidate
+Both legs, same corpus (137 cases, 68 conditional), same model (`model.onnx` md5 `c968c24a`), same backend (the candidate
 table, which is what `createResolverBackend` picks when one is present).
 
 **Change unpinned — `mailwoman eval gauntlet`:**
 
 ```
-=== Gauntlet · regression (65/68 gated cases pass, 68 tracked) ===
+=== Gauntlet · regression (65/68 counted cases pass, 68 tracked) ===
   ✗ si-sentinel-apace "Apače 108, 2324 Apače": coord 1040.49km off (tol 25000m); locality "null" ≠ "Apače"
   ✗ de-r9-nippes-koeln "Neusser Str. 12, Nippes, 50733 Köln": street "Neusser Str" ≠ "Neusser Str."
   ✗ us-subvenue-googleplex-building "Building 43, Googleplex, 1600 Amphitheatre Parkway, Mountain View, CA 94043": street "Amphitheatre Parkway" ≠ "Amphitheatre"
@@ -117,7 +117,7 @@ VERDICT: FAIL — do not ship
 **Change pinned — `mailwoman eval gauntlet --postcode-country-coherence`:**
 
 ```
-=== Gauntlet · regression (65/68 gated cases pass, 66 tracked) ===
+=== Gauntlet · regression (65/68 counted cases pass, 66 tracked) ===
   ✗ si-sentinel-apace "Apače 108, 2324 Apače": coord 1040.49km off (tol 25000m); locality "null" ≠ "Apače"
   ✗ de-r9-nippes-koeln "Neusser Str. 12, Nippes, 50733 Köln": street "Neusser Str" ≠ "Neusser Str."
   ✗ us-subvenue-googleplex-building "Building 43, Googleplex, 1600 Amphitheatre Parkway, Mountain View, CA 94043": street "Amphitheatre Parkway" ≠ "Amphitheatre"
@@ -172,7 +172,7 @@ proposes a foreign country for Addison TX, Paris TX, Berlin NH or Athens GA, whi
 containing only the two rescues.
 
 **`gb-downing-us-scoped` does not move, and the reason is a finding.** Under the **en-GB weights overlay** — which the
-gate selects for GB cases, and which production's locale gate also routes to — `10 Downing Street, London SW1A 2AA`
+check selects for GB cases, and which production's locale check also routes to — `10 Downing Street, London SW1A 2AA`
 parses as `region: SW1A` + `unit: 2AA`. There is no postcode node, so the coherence pass is inert by construction. The
 landing record's hand-probe showed this row FIXED because the CLI probe ran the base en-US classifier, which parses the
 same string's postcode correctly. Measured both ways on 2026-08-05:
@@ -285,7 +285,7 @@ Two consequences must be explicit:
 ## 4. Two defects found on the way
 
 **The committed regression corpus could not be built and run.** Rebuilding `regression.db` from its own seed and
-running the gate throws:
+running the check throws:
 
 ```
 Error: expect_components key "unit" has no GauntletResult mapping — extend componentOf
@@ -310,7 +310,7 @@ build-stamp comparison at layer start would do it).
 The D-rule asks one question — does this default-on mechanism carry a known regression against the shipped model on
 any tier-1 locale? The answer is measured, not argued:
 
-- **Gauntlet, the standard instrument, both ways: zero newly-failing cases.** 65/68 gated cases pass with the change
+- **Gauntlet, the standard instrument, both ways: zero newly-failing cases.** 65/68 counted cases pass with the change
   pinned and with it unpinned; the three failures are identical, pre-date this work, and are unrelated. The full diff
   between the two runs is two rescues and a banner line.
 - **The mechanism ran.** 2/137 cases fired, both correctly, and the four adversarial rows that would break first were
@@ -325,11 +325,11 @@ any tier-1 locale? The answer is measured, not argued:
 
 Three conditions attach, none of them blocking:
 
-1. **The corpus must be rebuilt for the gate to see any of this.** `mailwoman eval gauntlet-build regression-db` — the
+1. **The corpus must be rebuilt for the check to see any of this.** `mailwoman eval gauntlet-build regression-db` — the
    seven cases here exist only in the seed until it runs, and the `unit` fix in §4 is required for the rebuilt corpus
    to run at all.
-2. **On the flip, promote the two rescue rows.** The gate already says which (`fr-rivoli-us-scoped`,
-   `de-linden-us-scoped`); leaving them at `improvement_target` after the default changes turns a gated guarantee into
+2. **On the flip, promote the two rescue rows.** The check already says which (`fr-rivoli-us-scoped`,
+   `de-linden-us-scoped`); leaving them at `improvement_target` after the default changes turns a conditional guarantee into
    a tracked note.
 3. **Read the win rate correctly.** The rescue leg simulates a UNIFORMLY mis-scoped default — the demo/CLI reality
    (locale `en-US` → `US` on every query) but not traffic that already carries a correct country. The claim the
@@ -346,7 +346,7 @@ which the landing record already flagged for its own ticket.
 ## 6. Reproducing this
 
 ```bash
-# Gap (a) — the gate, both ways. Rebuild the corpus first: the committed seed carries
+# Gap (a) — the check, both ways. Rebuild the corpus first: the committed seed carries
 # seven cases the built artifact does not.
 mailwoman eval gauntlet-build regression-db
 mailwoman eval gauntlet
@@ -376,11 +376,11 @@ and are unedited; this section is what shipped and what it measured.
 
 | surface                                                              | before                                                               | after                                                                               |
 | -------------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `ResolveOpts.postcodeCountryCoherence` (`core/resolver/types.ts`)    | default OFF                                                          | default ON — `resolve.ts` gates on `!== false`                                      |
+| `ResolveOpts.postcodeCountryCoherence` (`core/resolver/types.ts`)    | default OFF                                                          | default ON — `resolve.ts` checks on `!== false`                                     |
 | `GeocodeDeps.postcodeCountryCoherence` (`mailwoman/geocode-core.ts`) | forwarded only when truthy                                           | propagated as `deps.postcodeCountryCoherence !== false`, the `adminCoherence` idiom |
 | `mailwoman parse` / `mailwoman geocode`                              | `--postcode-country-coherence`                                       | `--no-postcode-country-coherence` (schema default `true`)                           |
 | `mailwoman eval gauntlet` / `eval oa-resolver`                       | one ON pin                                                           | tri-state: `--postcode-country-coherence` / `--postcode-country-coherence-off`      |
-| gauntlet regression corpus                                           | `fr-rivoli-us-scoped`, `de-linden-us-scoped` at `improvement_target` | both `status: pass` (gated)                                                         |
+| gauntlet regression corpus                                           | `fr-rivoli-us-scoped`, `de-linden-us-scoped` at `improvement_target` | both `status: pass` (conditional)                                                   |
 
 The eval pins went tri-state for the reason §1.1 gave in the other direction: once the library default is ON, the ON
 pin only restates production, and the pin that can carry evidence is the OFF one. `-off` rather than `--no-…` because
@@ -404,7 +404,7 @@ Up from the 116 the shared artifact held (§4's silent seed drift). The seven #4
 `mailwoman eval gauntlet`, no flags — which is now production config:
 
 ```
-=== Gauntlet · regression (67/70 gated cases pass, 66 tracked) ===
+=== Gauntlet · regression (67/70 counted cases pass, 66 tracked) ===
   ✗ si-sentinel-apace "Apače 108, 2324 Apače": coord 1040.49km off (tol 25000m); locality "null" ≠ "Apače"
   ✗ de-r9-nippes-koeln "Neusser Str. 12, Nippes, 50733 Köln": street "Neusser Str" ≠ "Neusser Str."
   ✗ us-subvenue-googleplex-building "Building 43, Googleplex, 1600 Amphitheatre Parkway, Mountain View, CA 94043": street "Amphitheatre Parkway" ≠ "Amphitheatre"
@@ -434,7 +434,7 @@ VERDICT: FAIL — do not ship
 the same model (`model.onnx` md5 `c968c24a`):
 
 ```
-=== Gauntlet · regression (65/70 gated cases pass, 66 tracked) ===
+=== Gauntlet · regression (65/70 counted cases pass, 66 tracked) ===
   ✗ si-sentinel-apace "Apače 108, 2324 Apače": coord 1040.49km off (tol 25000m); locality "null" ≠ "Apače"
   ✗ de-r9-nippes-koeln "Neusser Str. 12, Nippes, 50733 Köln": street "Neusser Str" ≠ "Neusser Str."
   ✗ us-subvenue-googleplex-building "Building 43, Googleplex, 1600 Amphitheatre Parkway, Mountain View, CA 94043": street "Amphitheatre Parkway" ≠ "Amphitheatre"
@@ -449,8 +449,8 @@ four-line firing report. The metamorphic layer is byte-identical — it passes n
 inert there by construction.
 
 **The verdict is FAIL on both legs, on the same three cases, for reasons unrelated to this change** — §1.4 named all
-three, and the promotion moves none of them. Read the gated count, not the verdict word: 67/70 at the new default
-against 65/70 at the old, with the identical failure set. **Newly-failing gated cases: zero.**
+three, and the promotion moves none of them. Read the counted count, not the verdict word: 67/70 at the new default
+against 65/70 at the old, with the identical failure set. **Newly-failing counted cases: zero.**
 
 `us-subvenue-northwestern-pavilion` also reports "now PASSES — promote to status=pass" in both legs. It is a #1471
 sub-venue row, unrelated to #42, and left for that arc's owner.

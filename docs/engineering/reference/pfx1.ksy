@@ -16,7 +16,7 @@
 # Semantics Kaitai cannot express, stated here as prose:
 #
 # 1. header_json is UTF-8 JSON (`PostcodePrefixHeader`). Required fields:
-#      country        — ISO 3166-1 alpha-2 the index was built for; readers hard-gate on it.
+#      country        — ISO 3166-1 alpha-2 the index was built for; readers hard-check on it.
 #      scope          — sub-national scope slug, and the filename suffix. Two files may share a
 #                       `country`; this is what tells them apart. `gb-esw` is Code-Point Open (England,
 #                       Scotland, Wales — NO Northern Ireland), `gb-ni` is the BT districts. The split

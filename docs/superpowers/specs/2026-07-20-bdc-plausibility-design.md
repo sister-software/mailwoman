@@ -1,7 +1,7 @@
 # BDC broadband-plausibility vertical (Phase 2) — design
 
 2026-07-20. Operator + Claude. **Reworked 2026-07-30** (operator: "way old") — the design held;
-§0 records what ten days changed around it. Phase sizing and §8's counsel gates unchanged. Extends
+§0 records what ten days changed around it. Phase sizing and §8's counsel checks unchanged. Extends
 `docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md` (the Phase-1 spatial-layer
 spec); its §7 decisions bind here — the layer contract, the shipped/build-local/private tiers,
 the meaning-of-zero rule, "ship the builder, not ODbL data," the agent-as-decoder framing, and
@@ -33,7 +33,7 @@ Nothing below invalidates a §7 phase or a §2 layer decision; the deltas are su
   reference. That converts §1's "users" from personas into named routes.
 - **Counsel batching**: §8's eight questions ride the ONE consolidated G1 session (with the
   license-fence, OEM-template, and ODbL items). Question 1 (the Fabric `location_id` join key)
-  still gates 2a — unchanged, just scheduled.
+  still checks 2a — unchanged, just scheduled.
 - **The enterprise line** (ROAD_TO_MAILWOMAN_V8_3_0 / B11): 2c's CRM record-match work doubles as
   an enterprise on-ramp — the acceptance-battery discipline from the retrain arc (per-customer
   canaries, noise-honest margins) applies verbatim to record-match delivery. No design change;
@@ -185,7 +185,7 @@ registry that changes over time. It ships as a `versioned-refresh` layer whose r
 subsystem — see §5 and the integration notes). Deferred to 2c; named here so 2a's bdc.db carries
 `provider_id` in a shape the registry can later join.
 
-### 2.6 power.db — deferred, license-gated
+### 2.6 power.db — deferred, license-conditional
 
 Grid proximity (a real physical-plausibility signal for large plant) would come from HIFLD.
 HIFLD layers have mixed licensing (some public, some access-restricted). Deferred to an open
@@ -373,7 +373,7 @@ CSV parser (`enum`→const, env re-home); the bdc.db Kysely schema intersecting
 `LayerContractDatabase`; the fabric-without-fabric ingest (Redis→sqlite staging) for one pilot
 state; the layer reader + `filing_landscape`; the `mailwoman_bdc_filing_landscape` MCP tool.
 
-Gates (pre-registered):
+Checks (pre-registered):
 
 - Layer-contract conformance — `readLayerManifest`/`readLayerCoverage` pass; h3 packed as res-9
   integer short cell (byte-compatible with poi.db / address-id join).
@@ -391,11 +391,11 @@ ODbL shipped); the `plausibility.ts` scorer composing filing evidence + `nearest
 evidence into the `{ claim, evidence_found, coverage_confidence }` bundle; the
 `mailwoman_plausibility_check` MCP tool.
 
-Gates:
+Checks:
 
 - **Positive-evidence-only invariant test** — a fixture with a claim in a block that has NO
   filing and NO nearby plant returns "unknown / insufficient evidence," and asserts the scorer
-  can NEVER emit "implausible" from an absence (§4). This is the required gate.
+  can NEVER emit "implausible" from an absence (§4). This is the required check.
 - Co-presence path — a claim with a matching filing + nearby well-surveyed plant returns high
   `evidence_found` + high `coverage_confidence`.
 - Layer-absent path — with the OSM infra layer absent, the bundle says "requires the
@@ -410,7 +410,7 @@ the existing matcher (`HierarchyNode.placeID` as a blocking key, FRN as an `exac
 brand/DBA as scored `nameSimilarity` — per the integration notes); the private-CRM-layer path
 and `reconcile.ts` buckets ("our building in a competitor-claimed-served block").
 
-Gates:
+Checks:
 
 - Provider registry conforms to the layer contract (versioned-refresh, FRN-keyed).
 - No duplication of `OrganizationName` — the matcher, not a new contacts subsystem, does the
@@ -423,14 +423,14 @@ Gates:
 
 1. **CostQuest Fabric boundary** — confirm with counsel that carrying the BSL `location_id` as an
    opaque join key (no coordinate, no derived table) is clear of the Fabric license. §2.2 is
-   written to that assumption; it gates 2a.
+   written to that assumption; it checks 2a.
 2. **bdc.db distribution** — shipped continental (~10^8 rows, R2 cost) vs. shipped pilot-pocket +
    build-local for the rest? Decide at 2a exit; affects the manifest tier and the build CLI.
 3. **Which states first?** BDC is US-only (FCC). poi.db piloted CA for the demo probes — does BDC
    pilot CA too (demo alignment) or a target market state (product pull)?
 4. **BDC vintage cadence + refresh discipline** — confirm biannual `as_of_date` cadence and who
    owns re-issuing bdc.db per vintage (the `versioned-refresh` curator question).
-5. **HIFLD power.db** — is the grid layer we'd want public-domain or access-restricted? Gates
+5. **HIFLD power.db** — is the grid layer we'd want public-domain or access-restricted? Checks
    whether §2.6 ever leaves deferred.
 6. **OSM telecom infra ODbL** — same counsel sign-off as the unpublished `osm/` workspace; the
    build-local infra builder ships, but confirm the posture is identical.

@@ -165,9 +165,9 @@ Still outside it:
 **Complication, and why this is not one mechanical sweep.** The two `percentile`s take different
 units: core's takes percent (`p` in `[0,100]`), `conformal-calibrate.ts`'s takes a fraction
 (`0.9` → 90th). A find-and-replace produces a silently wrong number, not a compile error. Core's
-docstring also warns that gate parity depends on its exact nearest-rank semantics.
+docstring also warns that check parity depends on its exact nearest-rank semantics.
 
-**Cost of leaving it: medium.** Silent divergence in gate numbers.
+**Cost of leaving it: medium.** Silent divergence in check numbers.
 **Cost of fixing it: low per site, but every site needs its unit convention checked.**
 
 ### A3. Seeded PRNGs — sixteen copies of three generators

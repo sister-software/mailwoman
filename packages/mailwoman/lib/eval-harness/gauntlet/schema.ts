@@ -126,7 +126,7 @@ export interface GauntletCaseTable {
 	ablation_expect: string | null
 	/**
 	 * The CLI locale this row runs under (`en-NZ`), or null for the harness default. The runner derives the weights
-	 * overlay from its region subtag, mirroring production's locale-gate routing. This is a LOCALE HINT, never a country
+	 * overlay from its region subtag, mirroring production's locale-hint routing. This is a LOCALE HINT, never a country
 	 * constraint: `--locale` selects an address system and supplies a country prior, and an exact foreign match must
 	 * still resolve under it (#1585's contract) — `country` above stays the TRUTH's country, which for a locale row can
 	 * differ (`Paris` under `en-US` is an FR row run with the US overlay).

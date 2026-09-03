@@ -17,7 +17,7 @@ blocks you on a credential or costs a multi-gigabyte download for a single count
   is exactly the member path the recipe names, so `oa-cache/us__ia__statewide.zip` ⇄
   `us/ia/statewide.csv` ⇄ `/latest/run/us/ia/statewide.zip`.
 
-The auth gate is on collections only. If you need a handful of named sources, use the per-source
+The auth check is on collections only. If you need a handful of named sources, use the per-source
 endpoint — all seven `us__*` sources the recipes read total ~117 MB.
 
 `HEAD` against the per-source endpoint returns no `Content-Length` (it redirects). To size one
@@ -54,9 +54,9 @@ Two consequences worth not rediscovering:
   sanitizer — those IA records used to split in two and get dropped by the field checks. Widening the
   collapse to `\s+` also rewrites `NORTH   MAIN STREET` on rows with no line break at all, silently
   changing values in every slice. `scaffold.test.ts` pins both directions.
-- **Line-based pre-filters run BEFORE the parser and can cut a record in half.** `po-box-cedex`'s
+- **Line-based pre-filters run BEFORE the parser and can reduce a record in half.** `po-box-cedex`'s
   `awk 'NR%211==3'` stride and the `head -n` caps elsewhere count PHYSICAL lines. The parse cannot
-  repair what the pre-filter already cut; a halved record fails the field checks and drops. This is a
+  repair what the pre-filter already reduce; a halved record fails the field checks and drops. This is a
   sampling artefact, not a correctness bug, and it is documented at the call site. FR gets away with
   it by luck — neither physical line of its one multi-line record is `≡ 3 (mod 211)`.
 

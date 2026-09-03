@@ -75,7 +75,7 @@ CTX = 3
 WIDTH = 7
 MAX_UNITS = 96
 ACCEPT_KM = 15.0
-GATE = 0.70
+CHECK = 0.70
 
 # Which two predicted spans get concatenated into the centroid-table key, per label set. STAGE3 is
 # the Leg-1 mapping (prefecture → region, municipality → locality); stage3-jp gives them own tags.
@@ -200,7 +200,7 @@ def score_board(
     }
 
 
-def format_report(result: Mapping, *, accept_km: float = ACCEPT_KM, gate: float = GATE) -> str:
+def format_report(result: Mapping, *, accept_km: float = ACCEPT_KM, check: float = CHECK) -> str:
     """The printed read. The check line is the blended fraction and nothing else."""
     lines = [f"board rows: {result['rows']}; unresolved (pred pair not in table): {result['unresolved']}"]
     tag_total, tag_hit = result["tag_total"], result["tag_hit"]
@@ -211,7 +211,7 @@ def format_report(result: Mapping, *, accept_km: float = ACCEPT_KM, gate: float 
     per_register = result["per_register"]
     if per_register:
         lines.append("")
-        lines.append(f"per-register acceptability (<= {accept_km:g} km) — DIAGNOSTIC, not the gate:")
+        lines.append(f"per-register acceptability (<= {accept_km:g} km) — DIAGNOSTIC, not the check:")
         for name, stats in sorted(per_register.items(), key=lambda kv: -kv[1]["rows"]):
             lines.append(
                 f"  {name:<16} {stats['fraction']:.4f}  "
@@ -226,7 +226,7 @@ def format_report(result: Mapping, *, accept_km: float = ACCEPT_KM, gate: float 
         f"COORD-ACCEPTABILITY (<= {accept_km:g} km): {result['fraction']:.4f}  "
         f"({result['acceptable']}/{result['rows']})"
     )
-    lines.append(f"GATE >= {gate:.2f}: {'PASS' if result['fraction'] >= gate else 'FAIL'}")
+    lines.append(f"CHECK >= {check:.2f}: {'PASS' if result['fraction'] >= check else 'FAIL'}")
     return "\n".join(lines)
 
 

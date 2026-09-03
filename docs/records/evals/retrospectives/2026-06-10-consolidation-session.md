@@ -1,4 +1,4 @@
-# Consolidation session — 2026-06-10 (gate complete: guardrail won, affix capacity fork)
+# Consolidation session — 2026-06-10 (check complete: guardrail won, affix capacity fork)
 
 A full-day session that closed the **country** and **affix** changes, ran the **v1.0.0
 consolidation** (every proven change in one model), and then ran three corrective
@@ -12,7 +12,7 @@ decision is pending operator review (see "The fork" below).
 > (two-opposite-direction failures = fork = no further recipe iteration). Checkpoints:
 > the clean consolidation `step-040000`, Run C's `step-042000` (transient peak) and
 > `step-055000` (decayed) live in `output-v100-consolidation-s42/checkpoints`; Run B's
-> `step-020000` in `output-v101-runB-s42/checkpoints`. All four gated fp32 below.
+> `step-020000` in `output-v101-runB-s42/checkpoints`. All four conditional fp32 below.
 
 ---
 
@@ -38,9 +38,9 @@ in every variant** (canonical bar 80.4), this is a demonstrated
 will asymptote" — were both falsified; the operator's treadmill guard and the original
 capacity-competition hypothesis were right.)
 
-**Training-gate scorecard (canonical config bars, all fp32, gaz-fed + suppress):**
+**Training-check scorecard (canonical config bars, all fp32, gaz-fed + suppress):**
 
-| tag                  |        gate | v1.0.0 (40k) |  Run A (5×) | Run B (17×, init_from) |  Run C @42k |                  Run C @55k |
+| tag                  |       check | v1.0.0 (40k) |  Run A (5×) | Run B (17×, init_from) |  Run C @42k |                  Run C @55k |
 | -------------------- | ----------: | -----------: | ----------: | ---------------------: | ----------: | --------------------------: |
 | affix street_prefix  |         ≥78 |         27.6 |        64.9 |                   64.9 |    **75.0** |                      52.9 ⬇ |
 | affix street_suffix  |         ≥67 |         42.1 |        52.4 |                   48.8 |        55.8 |                        48.8 |
@@ -54,7 +54,7 @@ capacity-competition hypothesis were right.)
 | FR region (hold ~25) |           — |          ~25 |        21.7 |                   27.6 |        24.7 |         **5.3 — collapsed** |
 | DE native loc        |       ≥83.8 |       90.7 ✓ |      90.7 ✓ |                 90.7 ✓ |           — |                           — |
 
-**No variant passes the full canonical gate.** The misses are consistent: affix below the
+**No variant passes the full canonical check.** The misses are consistent: affix below the
 solo 78/67 everywhere stable, and US street −4 to −6 vs v0.9.8 everywhere (a real guardrail
 regression of the consolidation itself, likely the affix-split pressure costing plain
 `street` precision).
@@ -69,7 +69,7 @@ Per the treadmill guard, no further recipe iteration. Three options, stated:
    needs: **affix 64.9/48.8** (vs solo 78/67 — still infinitely better than the shipped
    v4.1.0's 0/0; the tag exists and fires at P≈100), **US street 76.2** (−4.2 vs v0.9.8,
    −2.3 vs v4.1.0 — the one true regression vs the shipped default), **unit 90.6** (−1.5).
-   Then the full SHIP gate (below) before tagging.
+   Then the full SHIP check (below) before tagging.
 2. **Architecture escalation** (DeepSeek's named path, now evidence-backed): wider model
    (~48M) or a dedicated affix head with shared backbone. A funded next-campaign item —
    the transient proves the representation exists; stability is what's missing.
@@ -84,15 +84,15 @@ recovered, micro +4.6) is too large to shelve over tags that were 0 in the shipp
 evaluated with `--gazetteer-lexicon` + `--suppress-gaz-near-postcode`; without them
 score-affix zero-fills the clue and reports a fake affix crash.
 
-**3. Training-gate targets + the trajectory so far (historical, superseded by the
+**3. Training-check targets + the trajectory so far (historical, superseded by the
 scorecard above):**
 
-**The gate targets below are the CANONICAL pre-registration from `v1.0.0-consolidation.yaml`.**
+**The check targets below are the CANONICAL pre-registration from `v1.0.0-consolidation.yaml`.**
 (2026-06-10 correction: an earlier revision of this table had silently relaxed several — affix
 72/64 vs the config's **78/67**, unit 91 vs 92, FR postcode 99 vs 99.5 — and had dropped the US-street
-row entirely. Restored to the config; see "Gate provenance & decisions" below.)
+row entirely. Restored to the config; see "Check provenance & decisions" below.)
 
-| tag                       |      **gate (config)** | v1.0.0 consol | Run A (5×) | diag (2k) | Run B (17×) |
+| tag                       |     **check (config)** | v1.0.0 consol | Run A (5×) | diag (2k) | Run B (17×) |
 | ------------------------- | ---------------------: | ------------: | ---------: | --------: | ----------: |
 | affix street_prefix       |                **≥78** |          27.6 |       64.9 |      75.0 |        64.9 |
 | affix street_suffix       |                **≥67** |          42.1 |       52.4 |      55.8 |        48.8 |
@@ -109,7 +109,7 @@ Baselines (fp32, same harness): **v4.1.0** US postcode 98.3 · street 78.5 · lo
 region 78.4 · micro 80.2 · FR postcode 99.5 · FR hn 91.0. **v0.9.8** US street **80.4** · locality 62.2 ·
 region 80.1 · micro 81.6 · FR hn 92.0.
 
-### Gate provenance & decisions (eval discipline — no silent drift)
+### Check provenance & decisions (eval discipline — no silent drift)
 
 - **country ≥83.3** is config-canonical (the v0.9.12 banked-change floor, "don't regress #464"). The
   consolidation _demonstrated_ 87.5, but that's a bonus, not the pre-registered bar. A first doc draft
@@ -118,8 +118,8 @@ region 80.1 · micro 81.6 · FR hn 92.0.
   Across v1.0.0/A/B, affix sits ~65 (Run C aims to clear via resume+density) and **US street is stuck
   at ~76 (−4.4 vs v0.9.8) in every run** — a genuine guardrail regression the relaxed table had hidden.
 - **Any future relaxation of these numbers is a STATED decision with a reason, made here.** As of now,
-  none is approved: the config gate stands. If Run C lands affix ~75/63 and street ~76, that is a
-  GATE MISS to confront (re-baseline-with-reason, or iterate), not a pass.
+  none is approved: the config check stands. If Run C lands affix ~75/63 and street ~76, that is a
+  CHECK MISS to confront (re-baseline-with-reason, or iterate), not a pass.
 
 **Decision tree (with the operator's TREADMILL GUARD) — RESOLVED, kept for the record:**
 this tree governed Runs A–C and terminated at its STOP branch. Run C's transient-decay
@@ -131,7 +131,7 @@ section at the top of this doc. (Historical note: DeepSeek's pre-named capacity-
 suffix under 55 AND country under 84.5 at step-8000 — was framed for a steady-state miss and did
 not anticipate the transient-then-decay shape; the guard caught what the tell didn't.)
 
-**4. SHIP gate — REQUIRED before tagging v4.2.0 (training-gate pass is necessary, NOT sufficient).**
+**4. SHIP check — REQUIRED before tagging v4.2.0 (training-check pass is necessary, NOT sufficient).**
 The flag-plant claim is made on the artifact users get, with resolver-coupled behavior verified:
 
 - **Honest-eval (VT holdout)** — this model moved locality +14 / region +10; resolver behavior
@@ -144,10 +144,10 @@ The flag-plant claim is made on the artifact users get, with resolver-coupled be
   at v4.2.0, and a row in **releases.mdx** (PR #489's "status and releases change together or not
   at all" contract — v4.2.0 is its first test).
 
-**5. Merge debt — these merge to main BEFORE v4.2.0 is cut (RELEASING flows from main; a model whose
+**5. Merge debt — these merge to main BEFORE v4.2.0 is reduce (RELEASING flows from main; a model whose
 recipe lives on an unmerged branch reproduces the #480 gap):** **#468** (choreography) → **#469**
 (affix reroll) → **`feat/consolidation-466`** (consolidation + Run A/B configs + assemblers). PR
-**#489** (docs/releases page) is independent + conflict-free — merge any order. Operator-gated (merge wall).
+**#489** (docs/releases page) is independent + conflict-free — merge any order. Operator-conditional (merge wall).
 
 **6. After the flag-plant — queue, not ad-hoc:** next substantive item is **#478** (arbitration
 layer, zero-GPU — converts the model wins into "pipeline never worse than v0"). po_box/cedex do
@@ -205,9 +205,9 @@ in **epic #488**, not an ad-hoc grab.
 - **Run B used `init_from` instead of the specified `resume`** (to avoid a checkpoint delete)
   — a fresh optimizer can't re-enter the affix basin, so the run tested the substitution, not
   the weight. Cost: ~35 min GPU. Lesson: never `init_from` to continue a fragile capability.
-- **Silent gate drift** (operator-caught): the doc's table had relaxed the config's
+- **Silent check drift** (operator-caught): the doc's table had relaxed the config's
   pre-registered bars (affix 78/67→72/64, unit, FR postcode) and dropped the US-street row,
-  hiding its −4.4 regression. Restored; `feedback-no-silent-gate-drift` memory written. No
+  hiding its −4.4 regression. Restored; `feedback-no-silent-check-drift` memory written. No
   GPU lost (no decision flipped on the relaxed numbers) but ~2h of delayed detection.
 - DeepSeek's two quantitative predictions (5× clears ≥72; "75 not a transient") were wrong;
   the cheap-diagnostic-first pattern and the treadmill guard are what bounded the damage.
@@ -215,9 +215,9 @@ in **epic #488**, not an ad-hoc grab.
 ## Open / next
 
 - **The fork decision** (this doc, above) — sent for operator review: re-baseline + ship Run
-  B / escalate architecture / hold. Then the SHIP gate (honest-eval VT, demo presets, int8
+  B / escalate architecture / hold. Then the SHIP check (honest-eval VT, demo presets, int8
   spot-check, ledger + scorecard + releases.mdx) before any v4.2.0 tag.
-- **Merge debt (ordering for the cut):** #468 (choreography) → #469 (affix) →
+- **Merge debt (ordering for the reduce):** #468 (choreography) → #469 (affix) →
   `feat/consolidation-466` (consolidation + Run A/B/C configs + assemblers + salvaged
   #463 evals). #489 already merged; #463 closed (assets salvaged).
 - **Post-parity queue:** #478 arbitration layer next (zero-GPU); po_box/cedex ride the next
@@ -226,11 +226,11 @@ in **epic #488**, not an ad-hoc grab.
 
 ## Numbers
 
-|                       |                                                                                                                       |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| models trained        | v1.0.0 consolidation (40k) + affix diagnostic (2k) + Run A (20k) + Run B (20k) + Run C (15k) ≈ 97k steps, ~2.6 A100-h |
-| GPU lost to error     | Run B ~35 min (init_from confound)                                                                                    |
-| consults              | DeepSeek-pro 4-turn (`consolidation-tradeoff-2026-06-10`); 2 of its predictions falsified by experiment               |
-| PRs/branches          | #489 MERGED, #463 closed (salvaged); #468, #469, `feat/consolidation-466` open for the cut                            |
-| regressions shipped   | 0 (nothing promoted; v4.1.0 still default)                                                                            |
-| canonical-gate status | no variant passes (affix + US street); fork pending review                                                            |
+|                        |                                                                                                                       |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| models trained         | v1.0.0 consolidation (40k) + affix diagnostic (2k) + Run A (20k) + Run B (20k) + Run C (15k) ≈ 97k steps, ~2.6 A100-h |
+| GPU lost to error      | Run B ~35 min (init_from confound)                                                                                    |
+| consults               | DeepSeek-pro 4-turn (`consolidation-tradeoff-2026-06-10`); 2 of its predictions falsified by experiment               |
+| PRs/branches           | #489 MERGED, #463 closed (salvaged); #468, #469, `feat/consolidation-466` open for the reduce                         |
+| regressions shipped    | 0 (nothing promoted; v4.1.0 still default)                                                                            |
+| canonical-check status | no variant passes (affix + US street); fork pending review                                                            |

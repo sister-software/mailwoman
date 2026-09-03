@@ -4,7 +4,7 @@
 #
 # 2026-07-22 RUN B (this launch): run A (`output-v3100-gb-probe-s42`) was a VERIFIED INSTRUMENT
 # FAILURE, not a result — the volume-side `config.py` predated commit 78adb380
-# (`reinit_label_rows` + `classifier_learning_rate`), so its `_merge` hasattr gate silently
+# (`reinit_label_rows` + `classifier_learning_rate`), so its `_merge` hasattr check silently
 # dropped both keys and the probe ran as a plain fine-tune (adjudicated from classifier rows 7/8
 # reading ~unchanged vs v385, not from the loss curve). The corpus overlay + this YAML DID reach
 # the volume correctly in run A. Run B re-syncs `corpus-python/src/` (`sync_src_gb`, verified both

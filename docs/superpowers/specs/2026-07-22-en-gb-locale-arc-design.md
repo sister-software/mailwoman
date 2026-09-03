@@ -6,7 +6,7 @@
 
 | Decision     | Choice                                                   | Why                                                                                                                                                                                                                                                                                                                                                                                             |
 | ------------ | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Corpus spine | HMLR Price Paid Data (PPD) first; EPC joins as wave 2    | PPD is field-structured (SAON/PAON/street/locality/town/district/county/postcode), ~30M rows, OGL, no registration. EPC bulk (~25M certs, UPRN-joinable) is unblocked via `UK_EPC_TOKEN` but not gating. Overture GB addresses = **0 rows** (verified 2026-07-22 on the 2026-06-17.0 snapshot) — no Overture leg.                                                                               |
+| Corpus spine | HMLR Price Paid Data (PPD) first; EPC joins as wave 2    | PPD is field-structured (SAON/PAON/street/locality/town/district/county/postcode), ~30M rows, OGL, no registration. EPC bulk (~25M certs, UPRN-joinable) is unblocked via `UK_EPC_TOKEN` but not blocking. Overture GB addresses = **0 rows** (verified 2026-07-22 on the 2026-06-17.0 snapshot) — no Overture leg.                                                                             |
 | OSM          | Excluded                                                 | ODbL share-alike quarantine (`.notes/data-sources.md`); not needed given PPD volume.                                                                                                                                                                                                                                                                                                            |
 | Dead tag     | GB probe carries the `dependent_locality` resurrection   | Mechanisms (a)+(b) from the 2026-07-18 fork: neutral re-init of the `B/I-dependent_locality` output rows AND a dedicated param-group LR (#727 fresh-head precedent: inherited 1e-5 stalled at 0.004, own 1e-3 converged). v382/v383 proved class-weight knobs alone are a no-op against the baked negative prior. PPD's locality field supplies gradient at volume the NZ synth rows never had. |
 | Probe base   | v385 step-8000, tokenizer v0.9.0-multisplice             | Shipped line; F1 comparisons across tokenizer versions are invalid, so the unshipped PT/RO splice line is the wrong base. GB is English — no tokenizer work.                                                                                                                                                                                                                                    |
@@ -38,7 +38,7 @@
   - **PRIMARY:** `dependent_locality` emission > 0 and correct on GB fixtures and the NZ fixture set (0/246 today).
   - **GUARDS:** golden us/fr micro within noise of v385; digit board bare-street-hn holds; FR fragment board holds; 6 demo presets byte-identical.
   - **FALLBACK (pre-registered):** if the primary read fails, en-GB v1 ships locality-mapped; resurrection returns as a dedicated arc. No knob-spinning past the probe (treadmill guard).
-- Pass → 8k → full absolute-floor gate battery + gauntlet (the v7.1.0 lesson: full gate at ship, not just golden-2pp).
+- Pass → 8k → full absolute-floor check battery + gauntlet (the v7.1.0 lesson: full check at ship, not just golden-2pp).
 
 ### Phase 3 — resolver/geo (independent of probe outcome)
 
@@ -56,13 +56,13 @@
 
 ### Phase 5 — demo + talk
 
-- GB demo presets; demo redeploy after npm ship; talk numbers pulled from the eval ledger (`mailwoman eval ledger-append` on gate PASS).
+- GB demo presets; demo redeploy after npm ship; talk numbers pulled from the eval ledger (`mailwoman eval ledger-append` on check PASS).
 
 ## Acceptance criteria
 
 1. GB extract built from PPD with provenance manifest; formatter-verified before training.
 2. Probe reads reported against pre-registration; fork outcome (resurrected vs locality-mapped) recorded in the ledger.
-3. 8k candidate passes the full gate battery + gauntlet before any promote (promotion is the operator's act).
+3. 8k candidate passes the full check battery + gauntlet before any promote (promotion is the operator's act).
 4. `postcode-gb.bin` shipped; GB postcode anchors verified in the pipeline.
 5. `@mailwoman/neural-weights-en-gb` publishes from CI with copy-weights coverage; demo parses a GB preset correctly end to end.
 

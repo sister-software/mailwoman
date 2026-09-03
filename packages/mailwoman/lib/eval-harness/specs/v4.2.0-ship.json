@@ -1,5 +1,5 @@
 {
-	"$comment": "Gate spec for the v4.2.0 ship (night-10, 2026-06-10). Bars are the STATED re-baselines from the fork decision + the always-on floors. A gate spec is a CONTRACT (feedback-no-silent-gate-drift): edits require a stated reason in the PR that changes this file.",
+	"$comment": "Check spec for the v4.2.0 ship (night-10, 2026-06-10). Bars are the STATED re-baselines from the fork decision + the always-on floors. A check spec is a CONTRACT (feedback-no-silent-check-drift): edits require a stated reason in the PR that changes this file.",
 	"label": "v4.2.0-ship",
 	"requires_gazetteer_lexicon": true,
 	"floors": {

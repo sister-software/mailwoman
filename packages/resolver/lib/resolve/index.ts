@@ -239,7 +239,9 @@ class WOFResolver implements Resolver {
 				postcode: state.postcode,
 				defaultCountry: state.defaultCountry,
 				...(shapeVerdict?.narrowing !== undefined ? { candidateSystems: shapeVerdict.narrowing } : {}),
-				...(opts.postcodeCountryCoherenceGateKm !== undefined ? { gateKm: opts.postcodeCountryCoherenceGateKm } : {}),
+				...(opts.postcodeCountryCoherenceThresholdKm !== undefined
+					? { thresholdKm: opts.postcodeCountryCoherenceThresholdKm }
+					: {}),
 			})
 
 			if (postcodeScope) {
@@ -307,7 +309,7 @@ class WOFResolver implements Resolver {
 		// (needs both the locality and the postcode resolved) and before the street tiers (which key off
 		// the postcode/street, not the locality coordinate this adjusts). `false` opts out, byte-stable.
 		if (opts.postcodeConsistency !== false) {
-			applyPostcodeConsistency(newRoots, opts.postcodeConsistencyGateKm ?? 50)
+			applyPostcodeConsistency(newRoots, opts.postcodeConsistencyThresholdKm ?? 50)
 		}
 
 		// Address-point tier (#476): opt-in street-level exact match. After the admin walk so the

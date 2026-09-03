@@ -1,7 +1,7 @@
 # R9 — Germany, and the campaign's first carrier package
 
 Campaign R9, 2026-08-02. Every locale after GB/US/FR was blocked on the same thing, and it was
-never data: the pair index is hard-gated on the resolved locale's country, so an artifact shipped
+never data: the pair index is hard-blocked on the resolved locale's country, so an artifact shipped
 inside another locale's package can never fire. Germany is the first locale to get its own
 **carrier package**, which is what unblocks the rest.
 

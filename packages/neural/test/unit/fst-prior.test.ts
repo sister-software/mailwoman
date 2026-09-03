@@ -215,7 +215,7 @@ describe("buildFSTEmissionPriors", () => {
 	})
 })
 
-describe("buildFSTEmissionPriors — street-context gate (#1142, syntactic context only, never importance magnitude)", () => {
+describe("buildFSTEmissionPriors — street-context check (#1142, syntactic context only, never importance magnitude)", () => {
 	const gazetteer = () =>
 		mockFST(
 			new Map([
@@ -237,91 +237,91 @@ describe("buildFSTEmissionPriors — street-context gate (#1142, syntactic conte
 	it("suffix adjacency ('Washington Blvd') scales the positive bias ×0.25 (default); suppression keeps #1173 length-scaling", () => {
 		const pieces = makePieces("Washington Blvd")
 
-		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+		const conditional = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
 
-		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.25, 2)
+		expect(conditional[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.25, 2)
 		// Suppression path untouched by the eval: 1-token match → -1.5 × 0.25 (#1173).
-		expect(gated[0]![labelCol("B-street")]).toBeCloseTo(-1.5 * 0.25, 2)
+		expect(conditional[0]![labelCol("B-street")]).toBeCloseTo(-1.5 * 0.25, 2)
 		// "Blvd" itself never matches the gazetteer — its row stays zero.
-		expect(gated[1]!.every((v) => v === 0)).toBe(true)
+		expect(conditional[1]!.every((v) => v === 0)).toBe(true)
 	})
 
 	it("prefix adjacency ('Rue Washington', FR shape) scales the positive bias", () => {
 		const pieces = makePieces("Rue Washington")
 
-		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+		const conditional = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
 
-		expect(gated[1]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.25, 2)
+		expect(conditional[1]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.25, 2)
 	})
 
 	it("house-number left ('500 Washington') scales the positive bias — 'the house number is the license' (#1143)", () => {
 		const pieces = makePieces("500 Washington")
 
-		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+		const conditional = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
 
-		expect(gated[1]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.25, 2)
+		expect(conditional[1]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.25, 2)
 	})
 
 	it("multi-token match with street adjacency ('New York Ave') scales the positive bias on the whole span", () => {
 		const pieces = makePieces("New York Ave")
 
-		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+		const conditional = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
 
-		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.95 * 3 * 0.25, 2)
-		expect(gated[1]![labelCol("I-locality")]).toBeCloseTo(0.95 * 3 * 0.25, 2)
+		expect(conditional[0]![labelCol("B-locality")]).toBeCloseTo(0.95 * 3 * 0.25, 2)
+		expect(conditional[1]![labelCol("I-locality")]).toBeCloseTo(0.95 * 3 * 0.25, 2)
 	})
 
 	it("'Washington' alone → full boost, BYTE-IDENTICAL to the unrestricted run (default-safe asymmetry)", () => {
 		const pieces = makePieces("Washington")
 		const unrestricted = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS)
 
-		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+		const conditional = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
 
-		expect(gated).toEqual(unrestricted)
-		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3, 2)
+		expect(conditional).toEqual(unrestricted)
+		expect(conditional[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3, 2)
 	})
 
-	it("'Washington DC' → adjacent region, gate silent → full boost, byte-identical to unrestricted", () => {
+	it("'Washington DC' → adjacent region, check silent → full boost, byte-identical to unrestricted", () => {
 		const pieces = makePieces("Washington DC")
 		const unrestricted = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS)
 
-		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+		const conditional = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
 
-		expect(gated).toEqual(unrestricted)
-		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3, 2)
+		expect(conditional).toEqual(unrestricted)
+		expect(conditional[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3, 2)
 	})
 
 	it("no street context anywhere in the parse → whole matrix byte-identical to unrestricted", () => {
 		const pieces = makePieces("Hello Washington Goodbye")
 		const unrestricted = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS)
 
-		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+		const conditional = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology() },
 		})
 
-		expect(gated).toEqual(unrestricted)
+		expect(conditional).toEqual(unrestricted)
 	})
 
 	it("custom positiveScale is honored (tuning range 0.15–0.4)", () => {
 		const pieces = makePieces("Washington Blvd")
 
-		const gated = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
+		const conditional = buildFSTEmissionPriors(gazetteer(), pieces, STAGE2_BIO_LABELS, {
 			streetContext: { fst: morphology(), positiveScale: 0.15 },
 		})
 
-		expect(gated[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.15, 2)
+		expect(conditional[0]![labelCol("B-locality")]).toBeCloseTo(0.8 * 3 * 0.15, 2)
 	})
 })
 
@@ -519,7 +519,7 @@ describe.skipIf(!haveProductionTokenizer)(
 	}
 )
 
-describe("street-shaped surface gate on the C4 mapped tiers (#1903)", () => {
+describe("street-shaped surface check on the C4 mapped tiers (#1903)", () => {
 	test.each([
 		[["king", "street", "east"], true],
 		[["king", "street", "west"], true],
@@ -588,7 +588,7 @@ describe("street-shaped surface gate on the C4 mapped tiers (#1903)", () => {
 		expect(matrix[1]![labelCol("I-locality")]).toBeGreaterThan(0)
 	})
 
-	it("collapseFSTBias applies the same gate through its surface parameter", () => {
+	it("collapseFSTBias applies the same check through its surface parameter", () => {
 		const entries = [{ placetype: "neighbourhood", importance: 0.8 }]
 
 		expect(collapseFSTBias(entries, ["king", "street", "east"]).size).toBe(0)

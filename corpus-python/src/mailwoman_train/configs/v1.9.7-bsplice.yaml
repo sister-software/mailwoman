@@ -3,8 +3,8 @@
 # variable: the oa-slavic street-level diacritic slice at source-weight 6.0. it forks off the
 # v4.15.0 corpus (v0.9.3a3-anchor-absorption), so it KEEPS the #723 fix — anchor_paint_mode=shaped AND the
 # synth-anchor-absorption counter-slice — which the earlier v1.9.3-slavic-diacritic PROBE (off v4.14.0)
-# lacked. Grading "v4.15.0 + oa-slavic vs v4.15.0" isolates the slice cleanly. Gate: US coord non-
-# inferiority (hard floor) + CZ/PL coord improvement + functional eyeball (scratchpad/gate-v193). max_steps
+# lacked. Grading "v4.15.0 + oa-slavic vs v4.15.0" isolates the slice cleanly. Check: US coord non-
+# inferiority (hard floor) + CZ/PL coord improvement + functional eyeball (scratchpad/check-v193). max_steps
 # 80000 matches the baseline so a US wobble can't be blamed on under-convergence. The v4.15.0 header follows.
 #
 # === v1.9.3-anchor-absorption (#220/#723 — teach the leading-5-digit disambiguation the override faked) ==
@@ -20,7 +20,7 @@
 # case it faceplants on at inference ("12345 Main St"). A train/inference WHERE-mismatch (the zero-fill
 # trap's cousin). The counter-augmentation cannot teach override unless training ALSO paints on shape.
 #
-# THE CHANGE (ONE variable for attribution = "auxiliary-channel hardening", gated as a unit):
+# THE CHANGE (ONE variable for attribution = "auxiliary-channel hardening", conditional as a unit):
 #  1. anchor_paint_mode: shaped   -> paint the anchor on postcode-SHAPED spans (port POSTCODE_PATTERNS
 #     from neural/postcode-repair.ts), MIRRORING inference, not gold spans. THE required fix.
 #  2. anchor_value_mode: region_agnostic_mindist -> demote the rich posterior+latlon vector to a weak
@@ -37,11 +37,11 @@
 #     6 slices (H-adversarial 30 / P-congruent 20 / P-incongruent[anchor-adversarial] 15 /
 #     anchor-false-positive 10 / locale-ambiguous-text 15 / standard 10). Minority floor: CASE-P >=35%.
 #
-# GATE (the $20 cap sits behind this 2k-step probe): 4 held-out slices (scripts/eval/anchor-absorption-
+# CHECK (the $20 cap sits behind this 2k-step probe): 4 held-out slices (scripts/eval/anchor-absorption-
 # probe.sh) graded vs v1.9.2: SLICE-H (US leading-5-digit house# recall RECOVERS toward no-override
 # ceiling), SLICE-P (DE/Nordic leading postcode coord HOLDS, the German lift), SLICE-ROBUST-DROP (anchor
 # forced unknown -> still right from tokens), SLICE-ROBUST-MISLEAD (anchor forced wrong -> follows TEXT).
-# Gates set RELATIVE to the measured v1.9.2 baseline on each slice (not DeepSeek's absolute %; trust
+# Checks set RELATIVE to the measured v1.9.2 baseline on each slice (not DeepSeek's absolute %; trust
 # structure, test numbers). Early-kill @1k: train_loss not O(1) decreasing OR ROBUST-MISLEAD still
 # heavily anchor-following. RESUME from v192 ckpt (grow a capability, NOT init_from). CRF CE-only.
 # conventions-loss-mask OFF. NOT promoted without operator GO + the canary.
@@ -193,7 +193,7 @@ train: # #825 B-splice fine-tune (init_from the expanded v4.15.0 checkpoint; res
   # pieces mean-initialized from their old-tokenizer constituents). Fresh optimizer + short schedule (2k
   # steps, lr 5e-5) adapts the new pieces + the tagger to the now-atomic Slavic tokens. Paired with
   # tokenizer_dir=v0.6.0-bsplice. English is byte-identical (disjoint diacritic codepoints, verified
-  # 0/2000), so US can only be touched via fine-tune drift — the US coord gate guards that.
+  # 0/2000), so US can only be touched via fine-tune drift — the US coord check guards that.
   init_from: /data/models/bsplice-expanded
   seed: 42
   batch_size: 128

@@ -202,7 +202,7 @@ export const ENGINE_CONFIG_SCHEMA = z
 			.optional()
 			.describe(
 				"Grade a CANDIDATE model instead of the installed one: a package-shaped directory " +
-					"(`<root>/node_modules/@mailwoman/neural-weights-<locale>/`), as `mwdev_gate` takes. This is what makes " +
+					"(`<root>/node_modules/@mailwoman/neural-weights-<locale>/`), as `mwdev_promotion_eval` takes. This is what makes " +
 					"shipped-vs-candidate an ordinary two-arm comparison rather than a script. A root that is not staged is " +
 					"REFUSED, not silently replaced by the shipped weights — the resolution ladder falls through, so an " +
 					"unchecked typo would grade the default model under the candidate's name."
@@ -305,7 +305,7 @@ function refusalRow(run: GeocodeRun): string[] {
 	const named = markers.map((m) => (m.evidence ? `${m.kind} (${m.evidence})` : m.kind)).join(", ")
 
 	return [
-		`intent: REFUSED as ${named} — the #1649 gate discarded a completed parse rather than the parse failing. ` +
+		`intent: REFUSED as ${named} — the #1649 check discarded a completed parse rather than the parse failing. ` +
 			"Every empty component below follows from that decision, not from the model.",
 	]
 }
@@ -541,13 +541,13 @@ export function summarizeJob(
 	state: string,
 	elapsedSeconds: number,
 	report: GauntletReport | EvalReport,
-	isGate: boolean
+	isCheck: boolean
 ): string {
 	if (state === "running") {
-		return isGate
-			? `Still running (${elapsedSeconds}s). A gate writes verdict.json only at the end, so there is nothing to read yet.`
+		return isCheck
+			? `Still running (${elapsedSeconds}s). A check writes verdict.json only at the end, so there is nothing to read yet.`
 			: `Still running (${elapsedSeconds}s). Parsed from the log SO FAR: ${summarizeGauntletReport(report as GauntletReport)}`
 	}
 
-	return isGate ? summarizeEvalReport(report as EvalReport) : summarizeGauntletReport(report as GauntletReport)
+	return isCheck ? summarizeEvalReport(report as EvalReport) : summarizeGauntletReport(report as GauntletReport)
 }

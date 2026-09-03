@@ -60,7 +60,7 @@ collects it without a single training step.
   not the model; production carries the same index and the eval surfaces are real streets), but the
   coverage is by construction ideal. Foreign-locale generalization will be lower.
 - The 14 breaks are real street names outranking gold; a locality-scoped lookup (street × locality)
-  should cut them further. Unscoped membership was the v0 policy.
+  should reduce them further. Unscoped membership was the v0 policy.
 
 ## Addendum — falsifier v2: the break audit + two guards (same night, 06:20)
 
@@ -85,7 +85,7 @@ the interface + productionization plan is
 
 - **Phase 4c is justified and specified:** merge the archived span-decode surface (it now has a
   consumer), define `StreetLocalityEvidence`, build per-country name indexes, wire the rerank behind
-  a flag, isotonic ambiguity gate on top-1/margin per the plan. The bare-fragment class no longer
+  a flag, isotonic ambiguity check on top-1/margin per the plan. The bare-fragment class no longer
   needs option C as the primary change — the arbiter beat the projected channel gains without
   touching the model.
 - The plan's discipline held: parse scores stayed in one probability space; the rerank signal is

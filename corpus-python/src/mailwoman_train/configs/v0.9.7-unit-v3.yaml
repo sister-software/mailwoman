@@ -1,12 +1,12 @@
 # === v0.9.7-unit-v3 (#451 v3) — LOWER unit weight, the v0.9.6-v2 regression check fix. ============
-# v0.9.6-v2 (format-diverse unit slice @ synth-unit 2.5) DECISIVELY won the real-designator gate
-# (unit F1 0→95.4%, street +8pp negative-space) but BREACHED the no-regression gate: US
+# v0.9.6-v2 (format-diverse unit slice @ synth-unit 2.5) DECISIVELY won the real-designator check
+# (unit F1 0→95.4%, street +8pp negative-space) but BREACHED the no-regression check: US
 # house_number 83.1→79.6 (-3.5, floor was -1pp; clean fp32 v1→v2 delta -1.5) and FR street/postcode/
 # locality -3..-4 (confounded by int8-vs-fp32 + FR noise; v1 did not hurt FR). DeepSeek's prescribed
 # remedy for a tripped regression check: lower synth-unit 2.5 -> 1.5, hold everything else. v3 changes EXACTLY
 # ONE variable vs v2 — the weight. Same FORMAT-DIVERSE corpus (v0.4.5-unit-v2), same base/recipe/seed.
 # HYPOTHESIS: starving the unit slice less aggressively trims the house_number/FR collateral while
-# keeping most of the 95% unit win (unit gate floor is 20% — huge headroom to give back). If v3 keeps
+# keeping most of the 95% unit win (unit check floor is 20% — huge headroom to give back). If v3 keeps
 # unit >=~80% AND clears house_number >=82 / FR floors, PROMOTE v3. If unit collapses toward v1's 60%
 # without recovering house_number, the trade is real and intrinsic — escalate to operator (accept v2's
 # trade, or pursue an architectural fix rather than another weight tweak).
@@ -23,11 +23,11 @@
 # collateral. See docs/articles/concepts/negative-space-coverage.md.
 #
 # SLICE PROVENANCE (eval-honesty): identical corpus to v2 — train slice is real non-Vermont US OA
-# skeletons with designators INJECTED in diverse formats; the real-in-the-wild designator gate is
+# skeletons with designators INJECTED in diverse formats; the real-in-the-wild designator check is
 # data/eval/external/unit-real-designators.jsonl (34 curated OOD cases, the TRUSTWORTHY lens — the VT
-# in-distribution number was a v1 mirage). Read the arena, not the VT number, at the gate.
+# in-distribution number was a v1 mirage). Read the arena, not the VT number, at the check.
 #
-# PRE-REGISTERED GATE (stop at 20k; the v2 verdict reframed the floors as RECOVERY targets):
+# PRE-REGISTERED CHECK (stop at 20k; the v2 verdict reframed the floors as RECOVERY targets):
 #   - `unit` F1 >= 80% on the real-designator eval — bank most of v2's 95.4% (floor was 20%; v1=60%).
 #   - `street` F1 >= +4pp vs v0.9.3 on the unit-bearing arena — negative space still holds at lower dose.
 #   - RECOVERY (the v2 breach must close): US house_number >= 82 (v0.9.3=83.1, v2=79.6) — within ~1pp.

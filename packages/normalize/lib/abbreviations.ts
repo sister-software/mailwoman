@@ -80,7 +80,7 @@ const ES_ES_DICT: ReadonlyArray<AbbreviationEntry> = [
  * Dropping the entry is NOT a table edit: `fr-op3-halles-market-bonneuil` is a passing row that asserts street "Avenue
  * de la Convention" and an `address_point` tier, so it pins the current behaviour and a removal has to be measured on a
  * resolver-gauntlet run. The real repair is upstream — the geocode path hardcodes `locale: "und"` because Stage 1
- * precedes the parse, and `@mailwoman/locale-gate` cannot presently detect Spanish (it scores script class + known
+ * precedes the parse, and `@mailwoman/locale-hint` cannot presently detect Spanish (it scores script class + known
  * postcode formats, and a 5-digit ES/MX code is indistinguishable from a US ZIP).
  */
 const LOCALE_UNKNOWN_DICT: ReadonlyArray<AbbreviationEntry> = [

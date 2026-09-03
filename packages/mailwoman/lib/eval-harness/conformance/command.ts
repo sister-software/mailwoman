@@ -249,7 +249,7 @@ export async function runConformanceCommand(options: ConformanceCommandOptions =
 	report(findings.filter((finding) => finding.held && (finding.fixture.status ?? "pass") === "pass"))
 
 	if (summary.failures.length) {
-		console.log(`\nviolations (gated):`)
+		console.log(`\nviolations (conditional):`)
 
 		report(summary.failures)
 	}

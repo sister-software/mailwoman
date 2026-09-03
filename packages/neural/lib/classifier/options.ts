@@ -283,7 +283,7 @@ export interface ParseOpts {
 	 *
 	 * @internal Instrument knob (D3) — measurement decomposition only.
 	 */
-	fstStreetContextGate?: boolean
+	fstStreetContextRequirement?: boolean
 	/**
 	 * Pre-built street-morphology FST matcher. When provided, street-type affixes (Avenue, rue, Calle, Straße, …) produce
 	 * additive emission biases toward `street_prefix`/`street_suffix` on the matched tokens AND toward `street` / away

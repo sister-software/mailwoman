@@ -43,7 +43,7 @@ p50 1.8 km. The swap is real coordinate-recall, not a same-name mirage. Build it
 
 The rescore enumerates contiguous raw-token spans (diacritics intact, unlike the model's subwords), skips any span overlapping a confident street / house-number / postcode constituent, and exact-matches each against the same-country gazetteer. The open question the falsifier _couldn't_ answer: with no gold to point at, can enumeration find the right span on its own?
 
-First cut, shortest-span-wins (the textbook over-merge guard — prefer "Santa Maria" over "Santa Maria da Feira"): 68% of the tail recovered, but only **49%** of recoveries were the right locality, and p90 blew out to 359 km. Dumping the wrong ones showed the heuristic was backwards for this data:
+First reduce, shortest-span-wins (the textbook over-merge guard — prefer "Santa Maria" over "Santa Maria da Feira"): 68% of the tail recovered, but only **49%** of recoveries were the right locality, and p90 blew out to 359 km. Dumping the wrong ones showed the heuristic was backwards for this data:
 
 ```
 gold "Tomaszów Mazowiecki"   → recovered "Tomaszów"  (135 km away — a different Tomaszów)
@@ -75,31 +75,31 @@ coordinate quality of the 175 recoveries:
 
 **The rescore lifts 136 of 259 unresolved EU rows — 53% of the entire no-result tail — to a right-place coordinate (@25 km).** That's a direct dent in the one number the benchmark said we lose on. The cost is 33 mis-fires past 100 km, and they aren't spread evenly: they're the coverage-gap locales (IT, AU) where the gold locality isn't in the gazetteer at all, so the rescore latches onto some other token that happens to name a far-off town. AU adds its own wrinkle — same-name towns across states (Springfield QLD/NSW/VIC) that need state agreement, not just country.
 
-## The consistency gate
+## The consistency check
 
-The mis-fires share a cause: nothing checks that the recovered locality is _geographically consistent_ with the rest of the address. So the validator carries a postcode-region gate — resolve the row's postcode to a point and reject any candidate match that lands more than 50 km from it. The postcode→point lookup the admin gazetteer can't do (it returns nothing for an EU postcode) the **candidate gazetteer** can: it folds postcodes in as queryable rows. The gate is conditional by construction — when the postcode doesn't resolve, it can't fire and the rescore falls through unchanged, so it never _hurts_ a locale it can't help.
+The mis-fires share a cause: nothing checks that the recovered locality is _geographically consistent_ with the rest of the address. So the validator carries a postcode-region check — resolve the row's postcode to a point and reject any candidate match that lands more than 50 km from it. The postcode→point lookup the admin gazetteer can't do (it returns nothing for an EU postcode) the **candidate gazetteer** can: it folds postcodes in as queryable rows. The check is conditional by construction — when the postcode doesn't resolve, it can't fire and the rescore falls through unchanged, so it never _hurts_ a locale it can't help.
 
-With the gate on, the IT story flips cleanly: from 4 recoveries all wrong (p50 207 km) to 2 recoveries both near (p50 22 km) — it killed the far false-positives and kept the near matches. Aggregate p90 drops 206 → 145 km; the >100 km mis-fires fall 33 → 29; the right-place count holds (136 → 137).
+With the check on, the IT story flips cleanly: from 4 recoveries all wrong (p50 207 km) to 2 recoveries both near (p50 22 km) — it killed the far false-positives and kept the near matches. Aggregate p90 drops 206 → 145 km; the >100 km mis-fires fall 33 → 29; the right-place count holds (136 → 137).
 
-| metric (175→172 recovered) | gate off | gate on (50 km) |
-| -------------------------- | -------: | --------------: |
-| right-place @25 km         |      136 |             137 |
-| coord p50                  |   3.0 km |          2.9 km |
-| coord p90                  |   206 km |      **145 km** |
-| >100 km mis-fires          |       33 |          **29** |
+| metric (175→172 recovered) | check off | check on (50 km) |
+| -------------------------- | --------: | ---------------: |
+| right-place @25 km         |       136 |              137 |
+| coord p50                  |    3.0 km |           2.9 km |
+| coord p90                  |    206 km |       **145 km** |
+| >100 km mis-fires          |        33 |           **29** |
 
-The gate's reach is bounded by where the candidate gazetteer has postcodes: IT resolves 97% of them, so its false-positives get caught; CZ and AU resolve ~none, so their mis-fires survive (AU's are the cross-state same-name problem — Springfield in three states — that needs state agreement the country gate can't supply). That's a coverage limit, not a design flaw: the gate's reach grows automatically as the postcode gazetteer fills in, with no code change.
+The check's reach is bounded by where the candidate gazetteer has postcodes: IT resolves 97% of them, so its false-positives get caught; CZ and AU resolve ~none, so their mis-fires survive (AU's are the cross-state same-name problem — Springfield in three states — that needs state agreement the country check can't supply). That's a coverage limit, not a design flaw: the check's reach grows automatically as the postcode gazetteer fills in, with no code change.
 
 ## Production wiring + the end-to-end result (#780)
 
-The wiring is now done (#780): `spanRescore` lives in `resolveTree` behind a default-off `ResolveOpts.spanRescore` — the idiomatic twin of the `addressPoints`/`interpolation` tiers, injecting the recovered locality via the same `decorateNode` path, gated on `hasResolvedPlace` (the #685 brake). And the wired path is graded end-to-end (`scripts/eval/span-rescore-e2e.ts`): parse → `resolveTree` with the flag off vs on, same model + candidate backend, the flag the only variable.
+The wiring is now done (#780): `spanRescore` lives in `resolveTree` behind a default-off `ResolveOpts.spanRescore` — the idiomatic twin of the `addressPoints`/`interpolation` tiers, injecting the recovered locality via the same `decorateNode` path, blocked on `hasResolvedPlace` (the #685 brake). And the wired path is graded end-to-end (`scripts/eval/span-rescore-e2e.ts`): parse → `resolveTree` with the flag off vs on, same model + candidate backend, the flag the only variable.
 
 ```
 EU coord panel (n=972, @25km right-place), spanRescore off → on:
   resolved:          76.0% → 95.2%   (+19.2pp)
   right-place @25km: 63.2% → 79.2%   (+16.0pp)
   PL 43→85 · CZ 29→71 · PT 62→73 · AT 79→85 · AU 35→42 · IT/FR flat
-  ~17% of new resolutions land >25km — the mis-fire rate, trimmed by the gate where postcodes resolve.
+  ~17% of new resolutions land >25km — the mis-fire rate, trimmed by the check where postcodes resolve.
 ```
 
 The strategic read, stated precisely (a trade-show claim has to survive a hostile check). The **clean, defensible result is the +16 pp lift** — a flag-only A/B that substantially narrows the EU no-result tail. What it does to the standing-vs-Nominatim is more nuanced than "parity," and the per-locale picture is the honest version. Against #775's Nominatim on the same panels:
@@ -109,10 +109,10 @@ The strategic read, stated precisely (a trade-show claim has to survive a hostil
 | mailwoman + change |  99 |  73 |  81 |  85 |  85 |  71 |  42 |
 | Nominatim (#775)   |  75 |  47 |  59 |  96 |  97 |  88 |  97 |
 
-So with the change on, mailwoman **leads** on IT/PT/FR and still **trails** on PL/AT/CZ (narrowed, not closed) and AU (the cross-state problem the country gate can't touch). The aggregates land ~79% each — but that's a _mix_ (the IT/PT/FR leads offset the Slavic/German/AU trails), **not** a uniform catch-up. And it's a **cross-harness** comparison: the e2e grades mailwoman more leniently than #775 did (e2e IT 99 vs #775's 92), so a same-harness run could put mailwoman-with-change _below_ 79%. **The honest claim: the change makes mailwoman competitive on EU aggregate and ahead on several countries — not "matches Nominatim across EU."** Confirm the aggregate standing with a single-harness mailwoman-vs-Nominatim run before claiming parity.
+So with the change on, mailwoman **leads** on IT/PT/FR and still **trails** on PL/AT/CZ (narrowed, not closed) and AU (the cross-state problem the country check can't touch). The aggregates land ~79% each — but that's a _mix_ (the IT/PT/FR leads offset the Slavic/German/AU trails), **not** a uniform catch-up. And it's a **cross-harness** comparison: the e2e grades mailwoman more leniently than #775 did (e2e IT 99 vs #775's 92), so a same-harness run could put mailwoman-with-change _below_ 79%. **The honest claim: the change makes mailwoman competitive on EU aggregate and ahead on several countries — not "matches Nominatim across EU."** Confirm the aggregate standing with a single-harness mailwoman-vs-Nominatim run before claiming parity.
 
 One process note: the first e2e run reported **+0.0 pp** because `@mailwoman/core` resolves to the _compiled_ `out/` (stale, pre-#780) while the unit tests alias to _source_ — `yarn compile`, then the real +16. Grade the wired path on compiled code, not only source unit tests.
 
 ## What stays off
 
-The rescore stays **default-off**. What remains before default-**on** is a decision, not a build: flip `ResolveOpts.spanRescore` (the +16 pp recall against the ~17% >25 km mis-fire is the trade), and widen postcode coverage so the gate reaches CZ/AU (IT today). The harness — `rescore-ceiling-probe.ts` (falsifier), `span-rescore-validate.ts` (standalone), `span-rescore-e2e.ts` (wired) — regrades any of those changes.
+The rescore stays **default-off**. What remains before default-**on** is a decision, not a build: flip `ResolveOpts.spanRescore` (the +16 pp recall against the ~17% >25 km mis-fire is the trade), and widen postcode coverage so the check reaches CZ/AU (IT today). The harness — `rescore-ceiling-probe.ts` (falsifier), `span-rescore-validate.ts` (standalone), `span-rescore-e2e.ts` (wired) — regrades any of those changes.

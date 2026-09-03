@@ -20,9 +20,9 @@
 # VERMONT OA rows (the corpus defaultHoldout, never trained), measured separately via per-locale-f1 on
 # /tmp/unit-val.jsonl. Geographic split = no leakage. NOTE: designators are injected in both, so the VT
 # eval measures designator RECOGNITION on held-out addresses; the real-in-the-wild designator signal is
-# the libpostal/postal arenas (scripts/eval/external-arenas.ts). Read BOTH lenses at the gate.
+# the libpostal/postal arenas (scripts/eval/external-arenas.ts). Read BOTH lenses at the check.
 #
-# PRE-REGISTERED GATE (DeepSeek-signed; stop at 20k):
+# PRE-REGISTERED CHECK (DeepSeek-signed; stop at 20k):
 #   - `unit` F1 >= 20% (token-level) on the held-out VT unit eval — minimally measurable (was ~0%, but
 #     on 5 golden rows = noise; this is the first real read).
 #   - `street` precision >= +1pp vs v0.9.3 — CONFIRMS negative space (unit absorbed street false-positives).

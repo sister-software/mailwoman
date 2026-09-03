@@ -17,7 +17,7 @@ found by characterizing the GB namesake tail, not by planning it).
 
 ## What shipped
 
-- **#965** (PR #978, merged) — `--hard-country` production-scoping flag for `fr-admin-split-gate`;
+- **#965** (PR #978, merged) — `--hard-country` production-scoping flag for `fr-admin-split-check`;
   the issue premise falsified (FI/SI/CZ not on the hard-country safelist → soft-prior harness was
   already production-faithful; FI p90 is intra-country). Flag proven on FR (mean 144→119 km).
 - **#963** (PR #979, merged) — NL postcode case added to the scheduled production demo smoke;
@@ -25,7 +25,7 @@ found by characterizing the GB namesake tail, not by planning it).
   salvage-first caught it.)
 - **#829** (PR #980, merged) — lowercase input normalizer, the mirror of #690. A preprocessing change,
   ZERO retrain, cleared the metamorphic INV[lower] class (34/35 held, was ~6 failing) + promoted
-  `fr-chevaleret-bare` to a gated pass (24/24). **The conditional GPU probe (#84) was obviated** —
+  `fr-chevaleret-bare` to a counted pass (24/24). **The conditional GPU probe (#84) was obviated** —
   the change left no model-level residual, so $0 of the $30 Modal budget spent.
 - **#942** (measured, not built) — the SI no-street class now resolves at **99.6%** (p50 0.73 km) via
   the shipped `postalCompoundRecovery` + v5.4.0 + #829, vs the 55 rows lost by v2.2.0 that spawned it.
@@ -115,7 +115,7 @@ found by characterizing the GB namesake tail, not by planning it).
   safe (US-safe by construction — the GB/CA formats never match a US ZIP; both well-covered so the hard
   filter is a pure win once the format prior routes them). Recommend promoting. NL was ruled out (placer
   handles Dutch); the change generalizes to any distinctive-postcode country the placer conflates.
-  **Gate complete: GB ↑63→90%, CA ↑42→67%, US flat (0/150 rows changed, flag on vs off, both scoped +
+  **Check complete: GB ↑63→90%, CA ↑42→67%, US flat (0/150 rows changed, flag on vs off, both scoped +
   unscoped) — a fully-de-risked pure win.**
 - **#942 / #977 / #981 / #985 dispositions** — #942 re-scope to #370 or close (SI 99.6%); #977 parked
   (PDOK PC6); #981 wire-or-document; #985 close (safelist moot — HU is a placer-coverage matter). Operator call.

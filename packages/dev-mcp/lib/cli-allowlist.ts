@@ -32,8 +32,8 @@ const ALLOWED_PREFIXES: readonly string[][] = [
  * Denied even though a prefix above would otherwise admit them.
  *
  * `eval ledger-append` is the one that matters and the reason this list exists at all: it is nested under an allowed
- * verb and it WRITES `evals/scores-by-version.json`, the score ledger. `mwdev_gate` deliberately reports that command
- * rather than running it, and this stops the passthrough from becoming the back door around that decision.
+ * verb and it WRITES `evals/scores-by-version.json`, the score ledger. `mwdev_promotion_eval` deliberately reports that
+ * command rather than running it, and this stops the passthrough from becoming the back door around that decision.
  */
 const DENIED_PREFIXES: readonly string[][] = [
 	["eval", "ledger-append"],
@@ -51,7 +51,7 @@ const DENIED_PREFIXES: readonly string[][] = [
  */
 const DENIED_NOTES: Readonly<Record<string, string>> = {
 	"eval ledger-append":
-		"The gate reports this command pre-filled precisely so an operator runs it at promote time; running it here " +
+		"The check reports this command pre-filled precisely so an operator runs it at promote time; running it here " +
 		"would route around that.",
 	"gazetteer inspect sync":
 		"It clones country repositories into the data root every engine reads — 145 of them measured at 65 GB — and no " +

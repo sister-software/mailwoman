@@ -12,14 +12,14 @@
 #
 # Repair: drop CRF NLL from training entirely. CRF stays at inference via the
 # frozen transition mask + Viterbi (structural validity preserved, opposing-
-# curvature problem gone). One-line model.py change gated on
+# curvature problem gone). One-line model.py change blocked on
 # crf_loss_weight > 0 — backward-compatible.
 #
 # Diffs from v0_5_0-classifier-phrase-off-smoke.yaml:
-#   - crf_loss_weight: 0.05 → 0.0  (skips CRF forward entirely via the new gate)
+#   - crf_loss_weight: 0.05 → 0.0  (skips CRF forward entirely via the new check)
 #   - max_steps: 1500 → 2000        (DeepSeek's promotion bar: pass step 2000)
 #   - eval_every_steps: 500 → 500   (unchanged; one extra eval @ 2000)
-#   - save_every_steps: 1500 → 2000 (single save at the gate)
+#   - save_every_steps: 1500 → 2000 (single save at the check)
 #   - log_every_steps: 50 → 50      (unchanged; per-tag F1 logging unchanged)
 #   - output_dir: -phrase-off-smoke → -ce-only-smoke
 #
@@ -72,10 +72,10 @@ model:
   type_vocab_size: 1
   hidden_dropout_prob: 0.1
   attention_probs_dropout_prob: 0.1
-  use_crf: true # CRF stays for inference Viterbi (frozen mask); training skips it via the gate
+  use_crf: true # CRF stays for inference Viterbi (frozen mask); training skips it via the check
   label_smoothing: 0.0
   crf_normalization: per_sequence
-  crf_loss_weight: 0.0 # NEW: triggers the crf_loss_weight > 0 gate to skip CRF forward
+  crf_loss_weight: 0.0 # NEW: triggers the crf_loss_weight > 0 check to skip CRF forward
   # class_weights omitted → uniform 1.0 per tag (v0.4.0-shipped configuration)
   use_phrase_priors: false
   phrase_feature_dim: 10

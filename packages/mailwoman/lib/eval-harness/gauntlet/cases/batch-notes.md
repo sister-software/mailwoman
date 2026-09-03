@@ -116,7 +116,7 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 > they're honorifics, digit-words, slashes, CJK script, and one Korean city. Seven of thirteen
 > resolve to the BAN rooftop TODAY (verified 2026-07-24, shipped model md5 700f3cf4, tier
 > address_point, uncertainty 1 m): the BAN tier keys on house_number+street+postcode, which all
-> parse cleanly, so the resolution is insensitive to the venue span. The six exceptions are gated
+> parse cleanly, so the resolution is insensitive to the venue span. The six exceptions are counted
 > as improvement_target: venue-delta-restaurant-paris-6 (the venue's 'Paris 6' arrondissement
 > number
 > is grabbed as the house_number — rooftop still lands), venue-bangkok-factory-boulogne ('Bis'
@@ -130,7 +130,7 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 > landing ~5.5 km from the cathedral).
 > The pinned residual across the whole batch is the LOCALITY SLOT: in every row the venue span
 > swallows `locality` ('Paris' is consumed — locality='MR', 'Le 9Neuf', 'SOKCHO 牛者', …), the
-> same venue-span/address-span separation defect the #1039 family tracks. These rows gate that
+> same venue-span/address-span separation defect the #1039 family tracks. These rows check that
 > the carried address keeps out-voting the venue name — tolerance is metro-scale, the win
 > condition is 'lands the rooftop or declines'.
 
@@ -219,7 +219,7 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 
 4 rows · `cases/de/`, `cases/es/`, `cases/in/`, `cases/it/`
 
-> ── The non-GB dependent-locality instances (campaign R9–R11), gated so each locale's win cannot
+> ── The non-GB dependent-locality instances (campaign R9–R11), counted so each locale's win cannot
 > silently regress. Every one of these emitted NOTHING before its artifact shipped, and three of
 > the four additionally emitted a WRONG span — the locality fused with the sub-locality — so these
 > rows protect against a return to corrupt output, not merely to missing output.
@@ -259,7 +259,7 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 
 > ── US dependent-locality instance (2026-08-01, campaign R5). en-us ships `pair-index-us.bin`, so
 > a US address carrying BOTH a neighbourhood/borough and its parent now resolves the hierarchy
-> instead of dropping the second admin level. The pair of gated cases below locks BOTH halves: the
+> instead of dropping the second admin level. The pair of counted cases below locks BOTH halves: the
 > new capability, and — more importantly — the guarantee that an ordinary single-admin-level US
 > address is UNTOUCHED. The prior fires only when child AND parent are both present, which is why
 > "Astoria, NY 11103" (a USPS-valid city/state/ZIP with no parent in the string) keeps locality.
@@ -285,19 +285,19 @@ Country dirs are lowercase ISO-3166 alpha-2; a row lives at `cases/<cc>/regressi
 Heathrow Airport` collapses to locality="Terminal" + house_number=5 with the airport DROPPED. The
 > asymmetry traces to the designator lexicon the span proposer reads (`neural/span-proposer-lexicon.ts`
 > over `codex/us/unit-designator.ts`), which is USPS Publication 28 — a MAIL DELIVERY standard. It
-> stocks BUILDING, HANGAR, PIER and LOBBY because mail is delivered there, and omits TERMINAL, GATE,
+> stocks BUILDING, HANGAR, PIER and LOBBY because mail is delivered there, and omits TERMINAL, CHECK,
 > CONCOURSE and WING because mail is not. The postal source is right about postal reality and silent
 > about venue interiors — the same source-shaped gap the dependent-locality arc hit for the US.
 >
-> A probe extending the designator set moved `Terminal 5` and `Gate 12` to correct units but split
+> A probe extending the designator set moved `Terminal 5` and `Check 12` to correct units but split
 > `Concourse B` into unit="Concourse" + venue="B" and left trailing-designator `West Wing` untouched,
 > so the change is real but NOT a clean sweep; it wants its own confound board (GB street names ending
-> in -gate, industrial "Terminal" estates) before anything ships default-on.
+> in -check, industrial "Terminal" estates) before anything ships default-on.
 
 <details><summary>Rows</summary>
 
 - `gb-subvenue-heathrow-terminal` — `cases/gb/regression.jsonl`
-- `gb-subvenue-manchester-gate` — `cases/gb/regression.jsonl`
+- `gb-subvenue-manchester-check` — `cases/gb/regression.jsonl`
 - `gb-subvenue-st-thomas-wing` — `cases/gb/regression.jsonl`
 - `us-subvenue-ohare-concourse` — `cases/us/regression.jsonl`
 - `us-subvenue-googleplex-building` — `cases/us/regression.jsonl`
@@ -392,8 +392,8 @@ Heathrow Airport` collapses to locality="Terminal" + house_number=5 with the air
 > "now PASSES — promote to status=pass".
 >
 > PROMOTION 2026-08-05: with `postcodeCountryCoherence` default-ON, `fr-rivoli-us-scoped` and
-> `de-linden-us-scoped` are GATED (`status: pass`) — leaving a rescued row at `improvement_target` after the
-> default changes turns a gated guarantee into a tracked note. `gb-downing-us-scoped` stays an
+> `de-linden-us-scoped` are COUNTED (`status: pass`) — leaving a rescued row at `improvement_target` after the
+> default changes turns a counted guarantee into a tracked note. `gb-downing-us-scoped` stays an
 > improvement_target: its blocker is a GB postcode parse under the en-GB overlay, not the resolver (see its
 > own note), so #42 cannot reach it at any default.
 >
@@ -430,11 +430,11 @@ Heathrow Airport` collapses to locality="Terminal" + house_number=5 with the air
 >
 > SCOPED ASSERTIONS. Several rows land the right coordinate through a wrong parse — the venue span is eaten by
 > `locality`, or the street is split. Those follow the corpus's existing idiom (see venue-mr-mrs-crab-huchette):
-> assert the coordinate + the components that ARE right, gate on that, and name the unasserted parse defect in
+> assert the coordinate + the components that ARE right, check on that, and name the unasserted parse defect in
 > the note. A row whose note describes a defect is a row that is NOT guarding that defect.
 >
 > `expectTier` is pinned ONLY where today's result is `address_point`. Pinning `interpolated` or `admin` would
-> make a future rooftop upgrade fail the gate — the tier assertion is a floor, and there is no floor to state
+> make a future rooftop upgrade fail the check — the tier assertion is a floor, and there is no floor to state
 > below the top tier.
 >
 > READINGS RECORDED RATHER THAN GUESSED (each is argued in its own row's note): "W4, The Odyssey" as
@@ -752,7 +752,7 @@ carrying its own margin note below rather than a shared header.
 
 `cases/fr/regression.jsonl` · `source: bug:#831`
 
-> #831 FIXED — promoted to a gated pass (night 34, 2026-07-05). The v5.4.0 parse fix
+> #831 FIXED — promoted to a counted pass (night 34, 2026-07-05). The v5.4.0 parse fix
 > (v2.3.0-nl-postcode, family-pinned) parses 'Chevaleret' into the street ('Rue du Chevaleret'),
 > not the locality, so the canonical mixed-case now reaches the OSM rooftop tier — verified
 > deterministic at 48.8335,2.3686 (address_point) under the shipped v5.4.0 dev weights. Not a
@@ -779,7 +779,7 @@ carrying its own margin note below rather than a shared header.
 > #832 — RESOLVED. NYC carries WOF parent_id=-4 (multi-parent sentinel), so the ancestors parent_id
 > closure left it only-self; the region hard-filter then excluded it and "New York Mills" (pop 3,190)
 > won over NYC (8.8M). Fixed by wiring the wof:hierarchy ancestry backfill into the build (PR #835) +
-> swapping the backfilled canonical DB. Gated `pass` so it can't silently regress (anti-rot).
+> swapping the backfilled canonical DB. Counted `pass` so it can't silently regress (anti-rot).
 
 ### `us-portland-me`
 

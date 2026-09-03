@@ -2,7 +2,7 @@
 
 _2026-06-13. Commissioned to answer two questions before deciding whether to ship the v1.5.0
 recovery model (fr.house_number 87.4%, +32.9pp over the shipped v4.5.0's 54.5%, missing the
-pre-registered 91% gate floor by 3.6pp): **(1) why does the recovery plateau ~87% and backfire
+pre-registered 91% check floor by 3.6pp): **(1) why does the recovery plateau ~87% and backfire
 when pushed, and (2) is the 91% threshold an accurate measure of success for this case?** Two
 independent inquiries — a literature/benchmark review and a DeepSeek-v4-pro architectural consult —
 converged on the same answers. Sources are listed at the end._
@@ -25,7 +25,7 @@ converged on the same answers. Sources are listed at the end._
    house_number `4` + postcode `7110`.
 3. **The right changes are not weight.** Highest-ROI: protect the postcode span using the
    postcode-anchor signal **we already compute** (a CRF transition penalty / consistency term against
-   relabeling postcode-anchored tokens as house_number), and gazetteer-gated disambiguation (a number
+   relabeling postcode-anchored tokens as house_number), and gazetteer-conditional disambiguation (a number
    appearing right before a known locality is overwhelmingly a postcode). Then curriculum/denoising of
    the synthetic weight, then real reordered data. Architecture (PE → RoPE/relative) is low-ROI here.
 
@@ -82,9 +82,9 @@ literature and the independent DeepSeek consult judged the 91% floor mis-calibra
 respectable for this slice; DeepSeek's phrasing: *"87.4% on the single hardest subfield in the hardest
 order permutation is not a miss — it's plausibly state-of-the-art for this specific slice."\_
 
-This **does not** mean re-baseline silently — that would violate the no-silent-gate-drift discipline.
+This **does not** mean re-baseline silently — that would violate the no-silent-check-drift discipline.
 It means: if we lower the floor, do it as a _stated, reasoned_ decision anchored to this literature
-(a defensible bar is ~85–90% for the postcode-first slice), recorded in the gate config and the ledger.
+(a defensible bar is ~85–90% for the postcode-first slice), recorded in the check config and the ledger.
 
 ## Reframed recommendation
 
@@ -94,12 +94,12 @@ The research shifts my earlier "hold" lean. The honest reading:
   improvement that sits at the literature frontier for reordered house numbers. Holding it back against
   a bar that the SOTA itself can't clear is hard to justify.
 - **So the defensible path is: re-baseline the `fr.house_number` floor to a literature-anchored
-  ~88–90% (stated + reasoned in the gate config + ledger), and ship v1.5.0** — _while_ opening the
+  ~88–90% (stated + reasoned in the check config + ledger), and ship v1.5.0** — _while_ opening the
   targeted-change work below as the real fix. This is the operator's call to make explicitly; the
   research removes the ambiguity that made it a coin-flip.
 - **Next improvement is cheap and targeted, not another weight tweak:** (1) postcode-anchor span
   protection (we already compute the signal — add a consistency term / CRF penalty so postcode-anchored
-  tokens can't be relabeled house_number), (2) gazetteer-gated numeric disambiguation (a number before
+  tokens can't be relabeled house_number), (2) gazetteer-conditional numeric disambiguation (a number before
   a known locality is a postcode), (3) curriculum/denoising of the synthetic weight, (4) real reordered
   data. (3)+(1) likely recover the last few points without the weight-6.0 backfire.
 
@@ -115,7 +115,7 @@ The research shifts my earlier "hold" lean. The honest reading:
    transformers, and the confusion is also token-identity (both are digit strings), which RoPE doesn't
    fix. Only if 1–3 fail.
 
-- **Missing change DeepSeek surfaced:** gazetteer-gated disambiguation — concatenate a
+- **Missing change DeepSeek surfaced:** gazetteer-conditional disambiguation — concatenate a
   "gazetteer-locality-hit-in-same-utterance" flag so the model learns "5-digit number before a known
   locality = postcode." Leverages an existing component; directly targets the confusion pair.
 
@@ -161,5 +161,5 @@ The research shifts my earlier "hold" lean. The honest reading:
 
 _Independent DeepSeek-v4-pro consult (2026-06-13) reached the same two top-line conclusions (91% floor
 mis-calibrated; changes are anchor-protection + curriculum + real data, not weight) and contributed the
-simplicity-bias-fallback explanation and the gazetteer-gating change. Transcript distilled into this
+simplicity-bias-fallback explanation and the gazetteer-blocking change. Transcript distilled into this
 note; raw at `~/.cache/ds-consult/sessions/`._

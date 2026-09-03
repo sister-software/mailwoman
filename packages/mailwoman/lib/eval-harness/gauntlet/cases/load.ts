@@ -48,7 +48,7 @@ const MALFORMED_EXCERPT_CHARS = 60
  *
  * `new URL`-relative for the source tree with a compiled-tree fallback — tsc emits no `.jsonl` into `out/`, so
  * `mailwoman/out/eval-harness/gauntlet/cases/` reads the source-tree copy. Same bridge as `baseline-assert.ts`'s
- * `resolveBaselineFilePath` and `promotion-eval.ts`'s `resolveGateSpecPath`.
+ * `resolveBaselineFilePath` and `promotion-eval.ts`'s `resolveThresholdSpecPath`.
  */
 export const CASES_DIR: string = resolvePackagePath("mailwoman", "lib", "eval-harness", "gauntlet", "cases")
 

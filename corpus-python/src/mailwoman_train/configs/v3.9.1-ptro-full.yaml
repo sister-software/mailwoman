@@ -25,7 +25,7 @@
 #   #378 — vocab +3.2%; embedding +2310x384 int8 ~ +0.9MB artifact. Within SLO.
 #
 # NOT A SHIP. A PASS justifies the 8k. Promotion is the operator's act (autonomous shift: stage +
-# report, do not promote defaultVersion without the full gate battery green).
+# report, do not promote defaultVersion without the full check battery green).
 # Launch: modal run -d corpus-python/modal/train_remote.py --config v3.9.0-ptro-probe.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment

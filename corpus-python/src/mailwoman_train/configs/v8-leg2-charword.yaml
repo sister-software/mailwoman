@@ -1,10 +1,10 @@
-# === v8-leg2-charword — CJK Leg 2 A (char-word): the unification bake-off (gates v9's shape, NOT v8). ===
+# === v8-leg2-charword — CJK Leg 2 A (char-word): the unification bake-off (checks v9's shape, NOT v8). ===
 # Controlled encoder pair on the PRODUCTION latam feed: identical data block (v385's mixture +
 # augmentations + affix relabel, channel painting STRIPPED from both legs), identical geometry
 # (384/4, the Leg-1 substrate), identical schedule — the ONE delta between v8-leg2-charword and
 # v8-leg2-sp is the embedding front-end. From scratch, 8k steps, no channels, no CRF.
 # PRIMARY READ: val token-F1 + per-tag F1 at 8k on the shared val stream (same seed); delta within
-# noise -> v9 may consider single-model unification. No gate — a measurement.
+# noise -> v9 may consider single-model unification. No check — a measurement.
 # Known asymmetries (recorded): the SP leg drops rows > 128 pieces while the char leg caps at 64
 # word units; the Latin char vocab (4,114 entries, min_count 2) was sealed from a 1M-row sample —
 # tail chars fall to UNK.

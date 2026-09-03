@@ -185,13 +185,13 @@ describe("collectRetrievalFacts — ranks and the flip stage", () => {
 		expect(collectRetrievalFacts([]).lookups).toEqual([])
 	})
 
-	it("collects the gates fired across every lookup, deduplicated", () => {
+	it("collects the checks fired across every lookup, deduplicated", () => {
 		const facts = collectRetrievalFacts([
 			lookup({ checks: ["region_scope_miss"] }),
 			lookup({ tag: "region", checks: ["region_scope_miss", "min_score_reject"] }),
 		])
 
-		expect(facts.gates_fired).toEqual(["region_scope_miss", "min_score_reject"])
+		expect(facts.checks_fired).toEqual(["region_scope_miss", "min_score_reject"])
 	})
 })
 

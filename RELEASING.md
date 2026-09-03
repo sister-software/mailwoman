@@ -5,7 +5,7 @@ Mailwoman publishes a coordinated set of npm packages: the `mailwoman` CLI plus 
 the dependency graph** — if `mailwoman` (or any published package) gains a new `@mailwoman/*` runtime
 dependency, it has to join that list, or the published `mailwoman` won't install (its dep 404s on npm). As
 of v7.0.0 the set is 12 workspaces: `mailwoman` + `@mailwoman/{core, normalize, query-shape, kind-classifier,
-locale-gate, phrase-grouper, codex, corpus, neural, neural-weights-en-us, neural-weights-fr-fr}`,
+locale-hint, phrase-grouper, codex, corpus, neural, neural-weights-en-us, neural-weights-fr-fr}`,
 all published at one synced version (the model too — see Versioning policy). The core ones:
 
 | Package                           | Workspace dir           | Notes                                                                               |
@@ -110,7 +110,7 @@ It grades the ASSEMBLED output (coordinate + tier), not per-tag F1 — the lesso
 # Self-check on the shipped default (regression + metamorphic):
 node packages/mailwoman/out/cli.js eval gauntlet
 
-# Promote gate for a candidate model (adds the held-out candidate-vs-prod z-test):
+# Promote check for a candidate model (adds the held-out candidate-vs-prod z-test):
 node packages/mailwoman/out/cli.js eval gauntlet --candidate ./out/<version>/model.onnx [--source us]
 ```
 
@@ -284,7 +284,7 @@ node packages/mailwoman/out/cli.js gazetteer build   # admin (fold included) →
 #    (--pc-len 0 = no lpad, the Overture-to-Overture / non-numeric-format case). Each ZIP becomes a
 #    `postalcode` candidate row so findPlace(postalcode) resolves directly, and postcodes resolve ~100%
 #    at ~1-2km even where the locality misses (LT 0→100%, NO 75→100%, FI/SK 80→100%). The demo cascade
-#    country-gates an ambiguous postcode (10115 = Berlin DE + NYC) by resolving the locality first. GB
+#    country-checks an ambiguous postcode (10115 = Berlin DE + NYC) by resolving the locality first. GB
 #    (2.6M) is left out for size.
 node resolver-wof-sqlite/out/build-candidate-cli.js \
   --in  /mnt/playpen/mailwoman-data/wof/admin-global-priority-geonames.db \
@@ -475,7 +475,7 @@ backends agree** — CI's weight fetch reads HF; the demo reads R2:
 
 ```bash
 curl -s .../en-us/releases.json | jq -r .defaultVersion         # HF and R2, both == v<NEW>
-curl -s .../en-us/v<NEW>/model.onnx | md5sum                     # HF and R2, both == the gated md5
+curl -s .../en-us/v<NEW>/model.onnx | md5sum                     # HF and R2, both == the conditional md5
 ```
 
 #### Pair-index binaries are VERSIONED (2026-08-05); the un-versioned path is FROZEN
@@ -663,7 +663,7 @@ Per-workspace publish uses `yarn pack -o <tmpfile>` (translates `workspace:*` �
 mailwoman version`), never `0.0.0` — `scripts/prepare-release-version.ts`'s drift guard refuses to
 bump an unsynced tree (bit the en-nz addition on the first 7.8.0 prepare, 2026-07-24).
 
-npm Trusted Publishing (OIDC) **cannot create a package that doesn't exist yet** — the registry returns `E404` (`PUT https://registry.npmjs.org/@scope%2Fpkg — Not found`) because there's no package, and therefore no Trusted Publisher, to authorize against. So a brand-new `@mailwoman/*` workspace needs a **one-time manual first publish with a token** before CI can ever touch it. This bit the 4.0.0 release: `@mailwoman/codex` plus the five new `mailwoman` runtime deps (`kind-classifier`, `locale-gate`, `normalize`, `phrase-grouper`, `query-shape`) all failed OIDC and had to be bootstrapped by hand.
+npm Trusted Publishing (OIDC) **cannot create a package that doesn't exist yet** — the registry returns `E404` (`PUT https://registry.npmjs.org/@scope%2Fpkg — Not found`) because there's no package, and therefore no Trusted Publisher, to authorize against. So a brand-new `@mailwoman/*` workspace needs a **one-time manual first publish with a token** before CI can ever touch it. This bit the 4.0.0 release: `@mailwoman/codex` plus the five new `mailwoman` runtime deps (`kind-classifier`, `locale-hint`, `normalize`, `phrase-grouper`, `query-shape`) all failed OIDC and had to be bootstrapped by hand.
 
 The bootstrap (on a machine with `npm login` rights to the `@mailwoman` scope — note the **lab host has no npm credentials**, so this is the operator's machine):
 

@@ -24,7 +24,7 @@ operator-directed issue sweep, and the production e2e matrix completion.
   the int8 delta cap grade package-shaped in ONE run. Verified against the shipped v9.1.0 pair on
   v9.0.0-base: PASS, zero failed floors, `us.country_homograph_f1` **83.3 in both precisions**
   (the old `--model` dual read 7.1 — under-fed, floors invalid), max delta 0.3pp byte-matching the
-  release's two-run evidence. Receipt: `scratchpad/gate-47-paired-verify/`.
+  release's two-run evidence. Receipt: `scratchpad/check-47-paired-verify/`.
 - **#1588** — the pair-index transition HEAD probe retired per its own removal condition (both
   generation objects verified 200). Its aborted HEAD was the last console error standing between
   the strict e2e and a green run against production.
@@ -177,7 +177,7 @@ The migrated suite was driven to a fully-dispositioned state against the live de
 ## What went well
 
 - The verification-finds-defects loop: every deliverable's verification pass surfaced a real
-  latent defect (repoint → #1586 + #1588; e2e → #1590 + #1589; the gate PR → the reach-around
+  latent defect (repoint → #1586 + #1588; e2e → #1590 + #1589; the check PR → the reach-around
   guard catch). None were worked around; all were fixed or filed with receipts.
 - Pre-registered falsifiers did their job: two of three KILLED their own hypotheses cleanly, and
   the convergence produced a design record instead of three disconnected negative results.
@@ -189,7 +189,7 @@ The migrated suite was driven to a fully-dispositioned state against the live de
 - The self-hosted CI runners share the lab host: the panel A/B flaked PR #1584's intent-rules
   SCALING test (3.19x against the `x < 3` bar), costing a rerun and serialization discipline all night. Timing
   tests are the canary; measurement harnesses and CI must not share the host's quiet hours.
-- One self-inflicted CI round: my gate-test fixture spelled the node_modules layout by hand and
+- One self-inflicted CI round: my check-test fixture spelled the node_modules layout by hand and
   the reach-around guard rightly rejected it — the guard's own prescription
   (`weightsCachePackageDir`) was the fix. Running the guard test locally before pushing would
   have saved the round.
@@ -217,7 +217,7 @@ The migrated suite was driven to a fully-dispositioned state against the live de
 
 - The coverage register (#1591's design record) — phase 1 items and its own pre-build falsifiers
   are enumerated in `docs/superpowers/specs/2026-08-11-coverage-register-design.md`.
-- Extend #1278 pair indexes toward the board-#33 typed-one-up class (BR/MN/CO/IE/NG), gated on a
+- Extend #1278 pair indexes toward the board-#33 typed-one-up class (BR/MN/CO/IE/NG), blocked on a
   WOF dep-locality coverage check per country (the WOF-currency lesson).
 - The autocomplete e2e spec needs an interaction-level pass against the React port.
 - `docs/articles/evals/` in the night-shift skill is stale — postmortems live in

@@ -180,7 +180,7 @@ describe("runPipeline — defaults", () => {
 		const result = await runPipeline("hello", {})
 		expect(result.timing["normalize"]).toBeGreaterThanOrEqual(0)
 		expect(result.timing["query-shape"]).toBeGreaterThanOrEqual(0)
-		expect(result.timing["locale-gate"]).toBeGreaterThanOrEqual(0)
+		expect(result.timing["locale-hint"]).toBeGreaterThanOrEqual(0)
 		expect(result.timing["kind-classifier"]).toBeGreaterThanOrEqual(0)
 	})
 })
@@ -536,13 +536,13 @@ describe("runPipeline — timing budget shape", () => {
 		alternatives: [],
 	}
 
-	it("full path with all stages: normalize / query-shape / locale-gate / kind-classifier / token-classify / resolve", async () => {
+	it("full path with all stages: normalize / query-shape / locale-hint / kind-classifier / token-classify / resolve", async () => {
 		const classifier = fakeClassifier(fakeTree("hello"))
 		const resolver = fakeResolver((t) => t)
 		const result = await runPipeline("hello", { classifier, resolver })
 
 		expect(Object.keys(result.timing).toSorted()).toEqual(
-			["kind-classifier", "locale-gate", "normalize", "query-shape", "resolve", "token-classify"].toSorted()
+			["kind-classifier", "locale-hint", "normalize", "query-shape", "resolve", "token-classify"].toSorted()
 		)
 	})
 

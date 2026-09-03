@@ -1,6 +1,6 @@
 # === v3.7.3-no-fragment-b4b3tweak-full — knob 3 MAXED (all lengths, boost 6) 8k. ESCALATION of v372. ===
 # The 8k ESCALATION of the v372 2k probe, which BROKE the v371 plateau (bare-street-hn 0.733->0.775) with
-# a clean golden gate. This run answers whether the 2k->8k trajectory clears the strict bar (~>=0.78).
+# a clean golden check. This run answers whether the 2k->8k trajectory clears the strict bar (~>=0.78).
 #
 # PRE-REGISTERED READ (written before the numbers exist; graded on the NO digit board, board 3,
 # scratchpad/run-digit-board.run.ts, package-shaped int8, vs the registered SHIPPED-v310 baselines).
@@ -29,9 +29,9 @@
 # GUARD : street-led-hn / city-first-hn / pc-first-hn do NOT regress from 0.94-0.968.
 # GUARD : the FR fragment board (board 2) does NOT re-drift below FR OVERALL ~0.725 (v310 0.733).
 # GUARD : GOLDEN (post-numsplice lesson — an on-board win can hide an off-board cost). If board 3 passes,
-#         run the golden gate delta vs v310; fr.house_number / us.unit_real must not regress >2pp.
+#         run the golden check delta vs v310; fr.house_number / us.unit_real must not regress >2pp.
 #
-# SHIP CANDIDATE. On PASS: export int8, run board 3 + FR fragment + the golden gate, then operator promotes.
+# SHIP CANDIDATE. On PASS: export int8, run board 3 + FR fragment + the golden check, then operator promotes.
 #
 # init_from v310 step-008000, fresh optimizer, LR 1.0e-5 constant, 8000 steps, warmup 500.
 #

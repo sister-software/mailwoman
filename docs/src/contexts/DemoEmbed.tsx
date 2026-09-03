@@ -65,7 +65,7 @@ export interface DemoEmbedState {
 	 */
 	lookup: MailwomanLookupLike | null
 	/**
-	 * Per-parse placetype-pair prior selector (#1278) — locale-gate over the input picks the GB/NZ dependent_locality
+	 * Per-parse placetype-pair prior selector (#1278) — locale-hint over the input picks the GB/NZ dependent_locality
 	 * index. `null` when this release staged no pair index. `PipelineExplorer` threads it into `runClassifyStage`.
 	 */
 	selectPairIndex: SelectPairIndex | null

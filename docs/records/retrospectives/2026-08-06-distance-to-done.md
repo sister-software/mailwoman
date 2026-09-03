@@ -47,12 +47,12 @@ behind its own issue tracker by four rows.
 
 `docs/engineering/SCOPE.mdx`, declared 2026-07-02. Tier 1 is **US and FR** and nothing else; tier 2
 is fourteen locales with coordinate panels; tier 5 is **JP, resolver-route only, "no parser training
-claim."** The invariants that function as gates:
+claim."** The invariants that function as checks:
 
 1. Grade the assembled coordinate, never label-F1 alone; full per-tag re-score every 5 promotes or
    on any promote that lowers a floor.
 2. The demo is the geocoder. _"A win that doesn't reach the demo is discounted to zero."_
-3. Pre-registered gates; falsified changes get reverted, not shipped.
+3. Pre-registered checks; falsified changes get reverted, not shipped.
 4. Repair retirement — every post-model patch shrinks at each consolidation.
 5. Runtime flags are instruments, not homes.
 
@@ -66,7 +66,7 @@ carries a footnote: the isotonic calibrators ship in the weights bundle, but `ca
 **default-OFF** in `ParseOpts` (runtime-flag register, "opt-in at parse, the demo exposes a toggle").
 The confidences a default consumer reads are therefore uncalibrated softmax, not the calibrated
 probabilities the README promises at line 150 ("when it says `0.88`, it is right about 88% of the
-time"). This is a one-line documentation fix or a flag flip with a gate behind it — but as written,
+time"). This is a one-line documentation fix or a flag flip with a check behind it — but as written,
 the claim and the default disagree.
 
 ### 1.4 The founding objective
@@ -80,10 +80,10 @@ measured answer, and it is not yet yes (§2.4).
 
 ## 2. The scorecard
 
-### 2.1 Model and gate — v9.0.0, model 9.0.0
+### 2.1 Model and check — v9.0.0, model 9.0.0
 
 `mailwoman@9.0.0` is on npm (published 2026-08-06 05:57 UTC), all 48 publishable workspaces in
-lockstep. The promotion gate `v9.0.0-base` **PASSES all 18 floors**. Ledger row
+lockstep. The promotion check `v9.0.0-base` **PASSES all 18 floors**. Ledger row
 `v420-base-anchor-v2-s42-20260806`.
 
 | Metric         | 7.0.0 | 9.0.0    | Floor | Read                           |
@@ -104,18 +104,18 @@ Two of those rows deserve their own paragraph.
 **us.street's −15.3 is an answer-key change, not a capability loss.** Golden v0.1.2 folded a US
 street into one span while the corpus splits it; v0.1.3 moves the key onto the corpus convention.
 Under the corrected key the candidate reads 75.2 against the 7.0.0 baseline's 71.7 — it leads by
-3.5pp. The gate spec argues this at length and re-anchors rather than ratchets. The reasoning is
+3.5pp. The check spec argues this at length and re-anchors rather than ratchets. The reasoning is
 sound and documented. What matters for a position read is the **absolute** number: street-name span
 F1 is **75.2**, and the standing campaign target in the live parity floors is **0.90**.
 
 **arena.perturb 78 → 66 is a real 12-point drop on the perturbation arena, and it appears in the
 ledger and nowhere else.** Not in the release row, not in the Run B record, not in the model card.
 It clears its floor (59.9) because that floor was ratcheted from an era with n=100 while the arena
-now regenerates 398 cases — so the floor held the old bar and the re-cut would have been looser. The
+now regenerates 398 cases — so the floor held the old bar and the rebuilt would have been looser. The
 number is defensible. Its absence from every narrative surface is not, and it is the single most
 important thing this review found that nobody had written down.
 
-**Live parity gate, 321 fixtures — both floors fail in both arms:**
+**Live parity check, 321 fixtures — both floors fail in both arms:**
 
 | Floor        | Baseline | Candidate | Bar      | Verdict        |
 | ------------ | -------- | --------- | -------- | -------------- |
@@ -124,7 +124,7 @@ important thing this review found that nobody had written down.
 | street       | 0.6554   | 0.7116    | **0.90** | FAIL both arms |
 
 The v9.0.0 release row quotes both of these as gains (".83→.93", ".66→.71") without stating that
-each remains below its bar. The gate record it links to is titled _"measurement only. No promotion
+each remains below its bar. The check record it links to is titled _"measurement only. No promotion
 decision is taken or implied here"_ and its combined gauntlet verdict is **FAIL in both arms**. The
 promotion decision was taken separately and deliberately (ROAD_TO_V9 §1, "promotes with conditions,"
 operator-ratified) — that is a legitimate call. The release note reads as though the record endorsed
@@ -132,8 +132,8 @@ it, and the record says otherwise.
 
 **Run B's own pre-registered sheet: 5 PASS, 1 FAIL (G3 invariance, 4 new violations), 2 MIXED,
 1 INCONCLUSIVE, and 5 NOT SCORED.** Five of fourteen bars had no instrument on the host — missing
-fixtures, an absent harness, an absent reference. A gate where a third of the bars cannot be
-evaluated is a gate with a hole in it, and closing that hole is bounded work (§4).
+fixtures, an absent harness, an absent reference. A check where a third of the bars cannot be
+evaluated is a check with a hole in it, and closing that hole is bounded work (§4).
 
 ### 2.2 The gauntlet
 
@@ -146,16 +146,16 @@ improvement_target  217
 known_fail            1
 ```
 
-**"88/88" is a construction, not a measurement.** The 88 is the count of gating rows after six were
-moved out of gating on 2026-08-05/06: four PR/VG/VI territory rows demoted in #1521, and
+**"88/88" is a construction, not a measurement.** The 88 is the count of blocking rows after six were
+moved out of blocking on 2026-08-05/06: four PR/VG/VI territory rows demoted in #1521, and
 `de-r9-nippes-koeln` + `us-subvenue-googleplex-building` demoted in #1526. The last _measured_ run in
-the repo is #1525's: **92/94 gated, 177 tracked**, run twice identically. There is no results
+the repo is #1525's: **92/94 conditional, 177 tracked**, run twice identically. There is no results
 artifact anywhere — no JSON, no verdict file — and the shared `regression.db` is unstamped and stale
 per #1525's own operator note.
 
 The demotions are each defensible on their own terms (#1526's rationale — _"a 'pass' status on a row
-that fails at HEAD is a mis-status, not a gate"_ — is correct). The aggregate effect is that
-**71% of the gauntlet corpus (218 of 306) does not gate**, and the headline that circulates is the
+that fails at HEAD is a mis-status, not a check"_ — is correct). The aggregate effect is that
+**71% of the gauntlet corpus (218 of 306) does not check**, and the headline that circulates is the
 number after the failures were removed from the denominator.
 
 ### 2.3 The country sweep — what coverage actually looks like
@@ -268,8 +268,8 @@ serves `/` and `/openapi.json`.
 
 | Surface              | Where we sit                                                                                                                                                      |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Parse (US)           | Gate PASS on all floors. Street-name span F1 **75.2** against a standing 0.90 target                                                                              |
-| Parse (FR)           | Gate PASS. `fr.region` 44.1 → 81.2, `fr.cedex_real` 99.8. Held-out BAN beats production z=2.85                                                                    |
+| Parse (US)           | Check PASS on all floors. Street-name span F1 **75.2** against a standing 0.90 target                                                                             |
+| Parse (FR)           | Check PASS. `fr.region` 44.1 → 81.2, `fr.cedex_real` 99.8. Held-out BAN beats production z=2.85                                                                   |
 | Parse (GB)           | The v9 cure landed: gb-golden 318/318 with the anchor fed; dependent_locality 0 → 205/207. **GB is not a declared tier** — it has capability without a tier claim |
 | Parse (JP)           | 0.9928 @15 km on a 20k held-out board, bar was 0.70. **No serving path.** No `neural-weights-ja-jp` workspace exists                                              |
 | Geocode              | 71% on the 393-row oracle sweep; 27 rows resolve to nothing; last competitor measurement had Pelias ahead 88 to 80                                                |
@@ -302,7 +302,7 @@ Each stands between today and one of the project's own definitions of done.
 | 1492 | promoted-artifact swaps race CI on the shared data root      | ROAD_TO_V9 §6 I5, untouched                                                                           |
 | 1497 | FST decoder bias invisible to every live eval                | PARTIAL — board now discriminates; `eval gauntlet` still FST-blind, per the fixing commit's own words |
 | 1516 | invariance runner measures a path users don't take           | PARTIAL — I4 landed, **I1 (the issue title) untouched**; runner still defaults en-US per row          |
-| 1519 | multi-word toponym/street truncation, 15 rows                | Demoted from gating; returns to gating when fixed                                                     |
+| 1519 | multi-word toponym/street truncation, 15 rows                | Demoted from blocking; returns to blocking when fixed                                                 |
 | 1529 | intersection queries have no crossing-point computation      | Explicitly labeled a Pelias-parity gap                                                                |
 | 1537 | geocode path collapses famous-namesake candidates to one     | Starves the declared-ambiguity margin — blocks ROAD_TO_V9 §2/§4                                       |
 | 1539 | suffix-boundary over-greed, 125 golden rows                  | Directly moves `us.street`, the metric furthest from target                                           |
@@ -342,7 +342,7 @@ describes the half that is not**.
 ### (e) INFRA / PROCESS — 4
 
 #1123 (worktree isolation), #1492, #1523, #1528. #1492 is also in (a) because ROAD_TO_V9 named it a
-release-gate item.
+release-check item.
 
 ### The stale board, not the stale issues
 
@@ -373,7 +373,7 @@ Tier 1 is US and FR only. This is the nearest bar and the gaps are mostly bounde
 | a7  | Rebuild and reship the stale FST (#1142 residual) and the candidate DB carrying #1495                                                          | single-lane              | bounded, plus a release action             |
 | a8  | Close #1492 — private symlink-overlay data root for CI                                                                                         | single-lane              | bounded engineering                        |
 | a9  | Publish a gauntlet results artifact and re-stamp `regression.db`; make "88/88" a measurement                                                   | single-lane              | bounded engineering                        |
-| a10 | Reconcile the `calibrate` default with the calibrated claim                                                                                    | single-lane              | one doc fix or one gated flip              |
+| a10 | Reconcile the `calibrate` default with the calibrated claim                                                                                    | single-lane              | one doc fix or one conditional flip        |
 | a11 | Move `us.street` from 75.2 toward the 0.90 parity target; `house_number` 0.9315 → 0.97                                                         | arc-with-preregistration | open research plus training                |
 
 a1 through a10 are bounded. **a11 is the one open research question on this bar**, and it is the
@@ -405,17 +405,17 @@ It is blocked on measurement (b1), on data (b2, b3, b9), and on finishing surfac
 
 Everything above, plus:
 
-| #   | Gap                                                                                                                                                                     | Shape                                              | Kind                                                                    |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------- |
-| c1  | JP serving path — char-path inference, weights packaging, the `ja-jp` overlay. The 0.9928 model exists and cannot be called                                             | arc-with-preregistration                           | bounded engineering, meaningful volume                                  |
-| c2  | Suggestion layer — **0 of 13 bars met**; no `suggest/` workspace; the C.4 attribution triple (`core` + `resolver-wof-sqlite` + `formatter`) blocks every downstream bar | multi-lane, then arc                               | bounded; §C.6 says explicitly no retrain needed                         |
-| c3  | Postcode-structure arc — **2 of 13 bars met** (B3-1, B1-4). Artifact built, nothing reads it                                                                            | single-lane mostly; B3-4 needs US ZCTA acquisition | bounded plus one acquisition                                            |
-| c4  | Intent §4 — 4 kinds landed; blocked downstream on #1537 and on poi.db debt                                                                                              | single-lane                                        | bounded engineering                                                     |
-| c5  | KR, CN, TW parse                                                                                                                                                        | arc-with-preregistration                           | data acquisition first — KR has no adopted open path                    |
-| c6  | Record matching (#598 family)                                                                                                                                           | multi-lane                                         | **operator decision** — parked pending funding or a pilot               |
-| c7  | `@mailwoman/osm` publish, HK ALS, the Lite artifact line                                                                                                                | external-dependency                                | **ODbL counsel review, unretained**                                     |
-| c8  | Starter kits — 22 unchecked boxes, zero checked, no artifacts exist                                                                                                     | single-lane                                        | bounded, plus two operator gates (org repo creation, npm first-publish) |
-| c9  | Secondary address support (#1100), locator[] (#295/#296), script-extract routing (#245)                                                                                 | arc-with-preregistration                           | schema changes ride retrains                                            |
+| #   | Gap                                                                                                                                                                     | Shape                                              | Kind                                                                     |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------ |
+| c1  | JP serving path — char-path inference, weights packaging, the `ja-jp` overlay. The 0.9928 model exists and cannot be called                                             | arc-with-preregistration                           | bounded engineering, meaningful volume                                   |
+| c2  | Suggestion layer — **0 of 13 bars met**; no `suggest/` workspace; the C.4 attribution triple (`core` + `resolver-wof-sqlite` + `formatter`) blocks every downstream bar | multi-lane, then arc                               | bounded; §C.6 says explicitly no retrain needed                          |
+| c3  | Postcode-structure arc — **2 of 13 bars met** (B3-1, B1-4). Artifact built, nothing reads it                                                                            | single-lane mostly; B3-4 needs US ZCTA acquisition | bounded plus one acquisition                                             |
+| c4  | Intent §4 — 4 kinds landed; blocked downstream on #1537 and on poi.db debt                                                                                              | single-lane                                        | bounded engineering                                                      |
+| c5  | KR, CN, TW parse                                                                                                                                                        | arc-with-preregistration                           | data acquisition first — KR has no adopted open path                     |
+| c6  | Record matching (#598 family)                                                                                                                                           | multi-lane                                         | **operator decision** — parked pending funding or a pilot                |
+| c7  | `@mailwoman/osm` publish, HK ALS, the Lite artifact line                                                                                                                | external-dependency                                | **ODbL counsel review, unretained**                                      |
+| c8  | Starter kits — 22 unchecked boxes, zero checked, no artifacts exist                                                                                                     | single-lane                                        | bounded, plus two operator checks (org repo creation, npm first-publish) |
+| c9  | Secondary address support (#1100), locator[] (#295/#296), script-extract routing (#245)                                                                                 | arc-with-preregistration                           | schema changes ride retrains                                             |
 
 **The only genuine external blocker across the whole project is c7** — the ODbL question holding
 `osm/`, and it has no counsel behind it. The dossier records the operator's position verbatim: _"do
@@ -462,7 +462,7 @@ quirk. The v9 sub-venue extract is the first training-side answer to it. It is n
 
 ### 5.4 The instruments have been lying, and some still are
 
-The last week's receipts are largely a catalogue of gates that did not measure what they claimed:
+The last week's receipts are largely a catalogue of checks that did not measure what they claimed:
 
 - `expectPlaceID`/`expectPlaceName` were in the schema, the DDL and the builder, and `checkCase`
   read neither. Every family-A row graded green while returning an Austrian hamlet. Fixed #1525.
@@ -474,12 +474,12 @@ The last week's receipts are largely a catalogue of gates that did not measure w
 - `resolveWeights` hard-coded a v6 lexicon filename while the model trained against v7.
 - The freshness guard compared zero checksums.
 
-Six instrument defects in one cycle, in a project whose entire method rests on pre-registered gates.
+Six instrument defects in one cycle, in a project whose entire method rests on pre-registered checks.
 The fixes are landing fast, and the class is not closed.
 
 ### 5.5 Territory coverage
 
-Four PR/VG/VI rows were demoted from gating because they pass under the old model _"by margins their
+Four PR/VG/VI rows were demoted from blocking because they pass under the old model _"by margins their
 own notes call accidental."_ Puerto Rico has TIGER coverage the corpus never ingested. This is a
 known, bounded data cure (ROAD_TO_V9 §5-C) that has not started.
 
@@ -548,7 +548,7 @@ working under pressure.
 **The corpus of failures.** 306 gauntlet cases across 115 countries, 400 oracle-verified sweep
 candidates, per-country JSONL, ablation ladders, a degradation map. Most projects at this stage know
 what works. This one has a written, structured, growing account of what does not, and 71% of it does
-not gate precisely because someone refused to grade a failing row as a pass.
+not check precisely because someone refused to grade a failing row as a pass.
 
 **JP.** 0.9928 at 15 km against a pre-registered 0.70, on a board that holds out whole
 municipalities, from a 2,237-character vocabulary trained from scratch in about 80 minutes. The
@@ -583,23 +583,23 @@ claim done and one that can prove it.
 
 ## Corrections to numbers in circulation
 
-| Circulating                    | Actual                                                                                                                                                                             |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| "gauntlet 88/88"               | 88 is the count of **gating** rows after six failing rows were demoted on 2026-08-05/06. The last measured run is #1525's **92/94 gated, 177 tracked**. No results artifact exists |
-| "279/400 pass"                 | 400 candidates → 7 `partial_match` parked → **393 through the pipeline**; 279 pass = 71.0% of 393, 69.75% of 400                                                                   |
-| "45 namesake rows"             | No 45 anywhere. `bare_city_namesake` = **17**; the draft's class-1 (bare capital / namesake) = **71 of 114**                                                                       |
-| "27 no-coordinate rows"        | Correct                                                                                                                                                                            |
-| Ledger 9.0.0 `corpus_version`  | Copied verbatim from the 7.0.0 row (`v0.13.0-latam`); the model card and release row both say `v0.17.0-batch`. `training_steps: 8000` contradicts "step-60000" in both rows        |
-| Release row "121 country dirs" | 115 two-letter dirs plus `generalization/`                                                                                                                                         |
-| README "33 published packages" | 48 in the release list; 53 workspaces                                                                                                                                              |
+| Circulating                    | Actual                                                                                                                                                                                     |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| "gauntlet 88/88"               | 88 is the count of **blocking** rows after six failing rows were demoted on 2026-08-05/06. The last measured run is #1525's **92/94 conditional, 177 tracked**. No results artifact exists |
+| "279/400 pass"                 | 400 candidates → 7 `partial_match` parked → **393 through the pipeline**; 279 pass = 71.0% of 393, 69.75% of 400                                                                           |
+| "45 namesake rows"             | No 45 anywhere. `bare_city_namesake` = **17**; the draft's class-1 (bare capital / namesake) = **71 of 114**                                                                               |
+| "27 no-coordinate rows"        | Correct                                                                                                                                                                                    |
+| Ledger 9.0.0 `corpus_version`  | Copied verbatim from the 7.0.0 row (`v0.13.0-latam`); the model card and release row both say `v0.17.0-batch`. `training_steps: 8000` contradicts "step-60000" in both rows                |
+| Release row "121 country dirs" | 115 two-letter dirs plus `generalization/`                                                                                                                                                 |
+| README "33 published packages" | 48 in the release list; 53 workspaces                                                                                                                                                      |
 
 ## Sources
 
 `docs/engineering/SCOPE.mdx` · `docs/records/site-2026-08/concepts/what-mailwoman-is.mdx` ·
 `ROAD_TO_V9.md` · epic #488 · `evals/scores-by-version.json` ·
-`mailwoman/eval-harness/gates/v9.0.0-base.json` ·
+`mailwoman/eval-harness/checks/v9.0.0-base.json` ·
 `docs/records/evals/2026-08-05-v420-base-anchor-v2-run-b.md` ·
-`docs/records/evals/2026-08-05-v8-jp-full-24k-gate.md` ·
+`docs/records/evals/2026-08-05-v8-jp-full-24k-check.md` ·
 `docs/records/evals/competitive-parity/parity-scorecard-2026-07-02.md` ·
 `docs/records/evals/competitive-parity/2026-06-23-competitive-benchmark-3way.md` ·
 `mailwoman/eval-harness/gauntlet/cases/` (306 rows, `batch-notes.md`) ·

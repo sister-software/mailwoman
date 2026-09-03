@@ -74,7 +74,7 @@ The extracts exist locally and I simply did not wire them: `/mnt/playpen/mailwom
    can adjudicate there; CZ/FR/PT bare fragments resolve to a locality centroid regardless, so the
    evidence may genuinely not exist for them. A rerank that helps US and is inert intl would be a
    perfectly good result — but it has to be measured, per-locale, not assumed.
-3. Only then: the isotonic ambiguity gate (4b) and option C (4c).
+3. Only then: the isotonic ambiguity check (4b) and option C (4c).
 
 ## The lesson, which is the same one twice in two days
 

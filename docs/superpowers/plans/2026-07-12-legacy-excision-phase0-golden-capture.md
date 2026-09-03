@@ -435,7 +435,7 @@ git commit -m "feat(phase0): capture raw v1 rules output per parity case (A4)"
 **Interfaces:**
 
 - Consumes: `parity-inputs.jsonl` (Task 2), `createServeEngine()` from `mailwoman/api-engine.ts` (`engine.parse(address, { debug: boolean }) → Promise<ParseOutcome>`).
-- Produces: rows `{ input, outcome: ParseOutcome }`. Plan 2's `/v1/parse` swap gate compares its neural output against these **semantically** (component level via the taxonomy bridge — the wire shape changes by design, spec §Evidence capture).
+- Produces: rows `{ input, outcome: ParseOutcome }`. Plan 2's `/v1/parse` swap check compares its neural output against these **semantically** (component level via the taxonomy bridge — the wire shape changes by design, spec §Evidence capture).
 
 - [ ] **Step 1: Write the synthetic inputs file**
 
@@ -485,7 +485,7 @@ c/o John Smith, 500 Oak Ln, Austin TX 78701
  *   Phase-0: golden `/v1/parse` outcomes from the CURRENT (rules-backed) serve engine, captured at
  *   the engine layer (`createServeEngine().engine.parse`) — the semantic content of the endpoint.
  *   The route/wire wrapper is exercised by `@mailwoman/api`'s own tests, and the v7 swap changes
- *   the wire shape by design, so the gate built on this artifact compares components, not bytes.
+ *   the wire shape by design, so the check built on this artifact compares components, not bytes.
  *   Run from the repo root: `node mailwoman/dev-tools/capture-v1-parse.run.ts`
  */
 
@@ -551,7 +551,7 @@ git commit -m "feat(phase0): capture /v1/parse rules-engine goldens + rare-label
 **Interfaces:**
 
 - Consumes: `createLibpostalApp`, `LibpostalEngine`, `ParseMatch` from `libpostal/index.ts`; the engine construction mirrors `libpostal/cli.ts:40-59` exactly (same parser, same mapping).
-- Produces: rows `{ input, status, body }` where `body` is the exact wire JSON (`[{label, value}]`). Plan 2's libpostal swap gate is **byte-level** non-regression against these.
+- Produces: rows `{ input, status, body }` where `body` is the exact wire JSON (`[{label, value}]`). Plan 2's libpostal swap check is **byte-level** non-regression against these.
 
 - [ ] **Step 1: Write the capture script**
 
@@ -641,7 +641,7 @@ git commit -m "feat(phase0): capture libpostal /parse wire goldens (A2)"
 **Interfaces:**
 
 - Consumes: `parity-inputs.jsonl` + `synthetic-inputs.txt`; the compiled `nominatim/out/cli.js serve` (spawned as an own child on port 8199 — full stack: weights + gazetteer from the lab data-root).
-- Produces: rows `{ query, status, body }` — full `/search?format=jsonv2&addressdetails=1` wire responses. Plan 2's `streetParts` rework gate is byte-level against these.
+- Produces: rows `{ query, status, body }` — full `/search?format=jsonv2&addressdetails=1` wire responses. Plan 2's `streetParts` rework check is byte-level against these.
 
 - [ ] **Step 1: Compile (spawning `out/cli.js` — stale builds run old code)**
 
@@ -779,7 +779,7 @@ git commit -m "feat(phase0): capture nominatim /search full-response goldens (A3
  *   Phase-0 legacy excision: integrity guard for the committed golden artifacts (spec §Evidence
  *   capture). These files are the non-regression references for the v7 production swaps; this
  *   test fails if one goes missing, truncates, or stops parsing. Deleted in plan 4 along with the
- *   legacy suite once the swaps have landed and their gates carry the load.
+ *   legacy suite once the swaps have landed and their checks carry the load.
  */
 
 import { readFileSync } from "node:fs"
@@ -888,8 +888,8 @@ git commit -m "test(phase0): integrity guard for the legacy golden artifacts"
 gh issue create --title "v7 excision: parity-corpus conversion to neural eval fixtures" \
   --body "Convert the rescued v1 parity corpus (mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl, captured per docs/superpowers/specs/2026-07-12-legacy-rules-excision-design.md §Parity-corpus rescue) into neural eval fixtures. Triage buckets: convert-straight / translate-via-legacyClassificationToComponentTag / drop-as-idiosyncratic (given_name, surname, personal_title, tokenization-quirk cases). Every converted fixture carries provenance: v1-parity:<country>: \"<address>\" mapped: <old→new>. Per-country checklist to follow in the plan-4 PR."
 
-gh issue create --title "v7 excision: libpostal house/near/category labels — revisit if golden gate shows traffic" \
-  --body "The toLibpostal projection omits (log-once) libpostal labels the ComponentTag taxonomy can't distinguish: house, near, category. The A2 golden gate (libpostal/test-fixtures/parse-golden.jsonl) will show whether real traffic hits them. If it does, decide a mapping; if not, close after the v7 swaps land. Spec: docs/superpowers/specs/2026-07-12-legacy-rules-excision-design.md §Projection layer."
+gh issue create --title "v7 excision: libpostal house/near/category labels — revisit if golden check shows traffic" \
+  --body "The toLibpostal projection omits (log-once) libpostal labels the ComponentTag taxonomy can't distinguish: house, near, category. The A2 golden check (libpostal/test-fixtures/parse-golden.jsonl) will show whether real traffic hits them. If it does, decide a mapping; if not, close after the v7 swaps land. Spec: docs/superpowers/specs/2026-07-12-legacy-rules-excision-design.md §Projection layer."
 
 gh issue create --title "Multilingual directional/suffix lookup helper over libpostal dictionary data" \
   --body "The v7 excision deletes the legacy multilingual DirectionalClassifier/StreetSuffixClassifier; codex/us/* covers US only. The libpostal dictionary DATA stays (core/data/libpostal — live corpus/FST dep). If a consumer needs a multilingual directional/suffix lookup helper, build it codex-style over that data. Not scheduled — demand-driven."
@@ -912,9 +912,9 @@ Phase 0 of the v7.0.0 legacy rules-parser excision (spec: docs/superpowers/specs
 
 Captures the four golden-evidence artifacts while the v1 parser still runs, plus the registry cold-install probe:
 
-- A1 `/v1/parse` engine goldens (semantic gate for the neural swap)
-- A2 libpostal `/parse` wire goldens (byte-level gate)
-- A3 nominatim `/search` full-response goldens (byte-level gate for the streetParts rework)
+- A1 `/v1/parse` engine goldens (semantic check for the neural swap)
+- A2 libpostal `/parse` wire goldens (byte-level check)
+- A3 nominatim `/search` full-response goldens (byte-level check for the streetParts rework)
 - A4 raw rules output per parity assertion (conversion triage)
 - Archive probe: `@mailwoman/classifiers@6.0.0` + `mailwoman@6.0.0` verified working cold from npm
 - Parity corpus rescued to committed JSONL (extractor + integrity guard in CI)

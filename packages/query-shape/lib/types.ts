@@ -118,7 +118,7 @@ export interface QueryShape {
 
 /**
  * Minimal normalized-input shape shared by the Stage 2–2.7 consumers — `computeQueryShape` here, plus
- * `@mailwoman/locale-gate`, `@mailwoman/kind-classifier`, and `@mailwoman/phrase-grouper`, which re-export it rather
+ * `@mailwoman/locale-hint`, `@mailwoman/kind-classifier`, and `@mailwoman/phrase-grouper`, which re-export it rather
  * than re-declaring. The full `NormalizedInput` from `@mailwoman/normalize` is structurally compatible — no import
  * required.
  */
@@ -144,7 +144,7 @@ export interface KnownFormatHitView {
 
 /**
  * Narrow read-only view of a `QueryShape` for consumers that read only the format hits and the whole-input class —
- * `@mailwoman/locale-gate`'s input contract. The full `QueryShape` satisfies it structurally.
+ * `@mailwoman/locale-hint`'s input contract. The full `QueryShape` satisfies it structurally.
  */
 export interface QueryShapeFormatsView {
 	knownFormats: ReadonlyArray<KnownFormatHitView>

@@ -292,7 +292,7 @@ export async function scorerClusteringEval(
 		meanDGbt > MIN_MEANINGFUL_F1_DELTA && gbtWins >= SEEDS - 1
 			? `**The learned scorer beats the FS baseline on the assembled clustering output** — GBT clustering F1 ` +
 				`${pct(mean(gbtF1)!)}% vs FS ${pct(mean(fsF1)!)}% (${sgn(meanDGbt * 100)}${(meanDGbt * 100).toFixed(1)}pp mean, ${gbtWins}/${SEEDS} ` +
-				`seeds), driven by a large PRECISION gain that cuts the over-merge — the #625 problem. The pairwise gain (#640) ` +
+				`seeds), driven by a large PRECISION gain that reduces the over-merge — the #625 problem. The pairwise gain (#640) ` +
 				`DOES translate to the entity-resolution metric. This confirms the #603 GBM as a real dedup change and justifies the ` +
 				`production build (offline XGBoost/LightGBM → tree JSON, the \`scorer\` hook for inference). The honest next axis is ` +
 				`cross-STATE generalization (train-TX / eval-other-state) and a tuned GBM on more features.`

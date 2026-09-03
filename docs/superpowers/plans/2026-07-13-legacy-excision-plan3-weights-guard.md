@@ -4,7 +4,7 @@
 
 **Goal:** `npx mailwoman parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"` keeps feeling good with zero setup: missing weights prompt an interactive download into a user cache; declining runs the real pipeline in degraded (encoder-less) structural mode with a banner; scripts stay deterministic via `--download-weights` / `--degraded`.
 
-**Spec:** `docs/superpowers/specs/2026-07-12-legacy-rules-excision-design.md` §Weights guard. Plan 3 of 5 — independent of the gate-blocked plan-2 swaps (this guards weight _presence_, not parse quality).
+**Spec:** `docs/superpowers/specs/2026-07-12-legacy-rules-excision-design.md` §Weights guard. Plan 3 of 5 — independent of the check-blocked plan-2 swaps (this guards weight _presence_, not parse quality).
 
 **Pre-v7 scoping (deliberate):** the guard is additive. Non-interactive runs with absent weights keep today's behavior (silent fallback chain, rules via `runIsolated`) until plan 4 flips that branch to a hard error. The `declined` path goes straight to the spec's degraded mode — the pipeline-without-classifier composition that `parse.tsx:362-372` documents and then bypasses today.
 

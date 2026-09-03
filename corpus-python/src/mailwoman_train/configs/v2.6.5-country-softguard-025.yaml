@@ -7,9 +7,9 @@
 # country surfaces (Georgia/Jordan) a little more. The scale multiplies the country_ambiguous feature dim
 # BEFORE country_projection (a registered buffer that BAKES INTO the exported ONNX — no lexicon or
 # inference change; inference feeds the raw [surface, ambiguous] and the graph scales it). Corpus + lexicon
-# UNCHANGED from v263. GATE (package-shaped, eval gate --weights-cache): country-homograph F1 recovers
+# UNCHANGED from v263. CHECK (package-shaped, eval check --weights-cache): country-homograph F1 recovers
 # toward 89.8 from v263's 82.6 WHILE golden WOF-admin country recall holds ~89.3% AND the held-out US/FR
-# coordinate stays flat (the #566 ship gate) + real-postal guard holds. Grade PACKAGE-SHAPED, never
+# coordinate stays flat (the #566 ship check) + real-postal guard holds. Grade PACKAGE-SHAPED, never
 # --model alone (#718 country-OFF trap).
 data:
   corpus_dir: /data/corpus/versioned/v0.10.6-fragment-v5/corpus-v0.10.6-fragment-v5

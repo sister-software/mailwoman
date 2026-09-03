@@ -13,7 +13,7 @@
  *   `geonames-tail.ts`'s `GB_LICENSE_NOTE`), not Code-Point Open, which is the authoritative upstream
  *   both datasets ultimately derive from.
  *
- *   Three questions, three sections of {@link CodePointGateReport}:
+ *   Three questions, three sections of {@link CodePointCheckReport}:
  *
  *   1. **Which postcodes are in one and not the other.** The join key is `spr.name`, which both databases
  *      store in the #920 sanitized form (`SW1A1AA`), so the comparison is exact rather than fuzzy.
@@ -106,7 +106,7 @@ export interface IncumbentOnlyBreakdown {
 	terminated: number
 }
 
-export interface CodePointGateReport {
+export interface CodePointCheckReport {
 	codepointRows: number
 	incumbentRows: number
 	onlyInCodePoint: AreaHistogram
@@ -189,7 +189,7 @@ function areaOf(name: string): string {
 	return /^[A-Z]{1,2}/.exec(name)?.[0] ?? ""
 }
 
-export interface RunCodePointGateOptions {
+export interface RunCodePointCheckOptions {
 	/**
 	 * The candidate database, e.g. `<data-root>/wof/postalcode-gb-codepoint-<date>.db`.
 	 */
@@ -208,7 +208,7 @@ export interface RunCodePointGateOptions {
  * Memory: the incumbent's GB rows are held in a `Map` of ~1.84 M entries (~250 MB) so the join is a single pass over
  * each side rather than a SQL `ATTACH` join across two 800 MB+ files. Measured at ~40 s end to end.
  */
-export function runCodePointGate(options: RunCodePointGateOptions): CodePointGateReport {
+export function runCodePointCheck(options: RunCodePointCheckOptions): CodePointCheckReport {
 	const phase = options.onPhase ?? (() => {})
 
 	const codepoint = new DatabaseClient<WOFDatabase>(options.codepointPath, { readOnly: true })
@@ -395,10 +395,10 @@ export function runCodePointGate(options: RunCodePointGateOptions): CodePointGat
 }
 
 /**
- * Render the report as plain lines. Kept separate from {@link runCodePointGate} so the numbers can be consumed
+ * Render the report as plain lines. Kept separate from {@link runCodePointCheck} so the numbers can be consumed
  * programmatically without parsing prose.
  */
-export function formatCodePointGateReport(report: CodePointGateReport): string[] {
+export function formatCodePointCheckReport(report: CodePointCheckReport): string[] {
 	const topAreas = (histogram: AreaHistogram, n = 8): string =>
 		Object.entries(histogram.byArea)
 			.toSorted((a, b) => b[1] - a[1])

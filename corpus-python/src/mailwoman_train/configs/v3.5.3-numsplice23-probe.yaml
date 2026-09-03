@@ -2,7 +2,7 @@
 #
 # THE ONE VARIABLE vs v3.5.2-numsplice3-probe: the splice RANGE adds the 2-digit pieces. v0.11.2-
 # numsplice23 adds word-start 10-999 (+988) vs numsplice3's 100-999 (+900). So `11` -> `▁11` (the
-# FR date-name DAY win the 3-digit cut forgoes) and `178` -> `▁178`, while `1945`/`6000`/`90210`
+# FR date-name DAY win the 3-digit reduce forgoes) and `178` -> `▁178`, while `1945`/`6000`/`90210`
 # STAY multi-piece (`▁194,5` / `▁600,0` / `▁902,1,0`). English letters byte-identical.
 #
 # WHY. The 3-digit probe (v352) CONFIRMED the guard: parity postcode held at 0.986 (0 regressions) vs
@@ -20,9 +20,9 @@
 #   PRIMARY (must at least MATCH v352) — board 3 bare-street-hn near v352's 0.787; `aleja Wojska
 #     Polskiego 178` -> house_number; contextful classes hold at v352's recovered levels.
 #   THE 2-DIGIT WIN (the reason to prefer 10-999) — FR date-name rises ABOVE v352's 0.367 toward the
-#     full range's 0.682. If it does NOT, the 2-digit pieces buy nothing and 3-digit is the cut.
+#     full range's 0.682. If it does NOT, the 2-digit pieces buy nothing and 3-digit is the reduce.
 #   GUARD (must HOLD) — parity postcode holds at ~0.986 (as v352 did); board 3 bare-pc holds; the 6
-#     demo presets hold. If postcode drops, a 2-digit piece IS colliding — unexpected; 3-digit is the cut.
+#     demo presets hold. If postcode drops, a 2-digit piece IS colliding — unexpected; 3-digit is the reduce.
 #   DO-NO-HARM — FR fragment OVERALL + global parity hold.
 #
 # DECISION TABLE:

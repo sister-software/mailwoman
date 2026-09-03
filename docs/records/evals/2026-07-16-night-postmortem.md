@@ -71,7 +71,7 @@ only.
   is silently dropped?" A raw-corpus country census (2M rows) vs the config filter, cross-referenced
   against `SCOPE.mdx`, found the class is **bounded to Norway**: every other dropped country is
   accounted for — JP (143k rows; tier 5, resolver-only, no parser claim), CN/TW (CJK, out of Latin
-  scope), KR (SCOPE: "no adopted open path"), HU/IE/GB (queued, #733 OSM share-alike gate). **NZ is
+  scope), KR (SCOPE: "no adopted open path"), HU/IE/GB (queued, #733 OSM share-alike check). **NZ is
   the one exception** — 8,967 corpus rows + tier-A LINZ data, in no tier and no queue. The audit
   found no second Norway; that is the finding.
 - **Track B was traced to its root, not just its symptom.** The chain: parse failures → the Norway
@@ -92,7 +92,7 @@ Polskiego 178`). Tracing its piece-level posterior showed B0's exact signature o
 - **The 2k probe did its job — it stopped an 8k run I would otherwise have wanted.** The instrument
   and extract were correct; the read was clean; the target missed its pre-registered bar and the French
   guard drifted, so the expensive run does not happen on a hunch. ~$1-2 of A100 to avoid ~$8. And I
-  held my own bar rather than relaxing it once the number disappointed — the discipline cuts both
+  held my own bar rather than relaxing it once the number disappointed — the discipline reduces both
   ways or it is not discipline.
 - **`bare-street-hn` was designed as a diagnostic, not a score, and that is why it resolved the
   track.** It carries no postcode, so nothing competes for the digit. It still fails 31%, and
@@ -176,7 +176,7 @@ pre-registered probes for a future shift.
   nod or a fresh-shift pre-registration.
 - **B5 — data-blocked, an operator decision.** The `12/345` intra-word split (instance 3, confirmed
   by B0) needs the unit/number decomposition, which the on-disk assembled AU data does not carry
-  (it's flattened to `house_number`). Re-deriving from raw G-NAF (which has the columns) is gated on
+  (it's flattened to `house_number`). Re-deriving from raw G-NAF (which has the columns) is blocked on
   the G-NAF EULA — a licensing call, not mine. NZ LINZ is the license-clean fallback.
 - **The Norway retrain** — warranted (Norway 0% → 4.19%) but B4 showed the _existing_ extract aims at
   ceiling and a fragment extract at 0.30 barely moves the target. So the retrain is really B4b: a

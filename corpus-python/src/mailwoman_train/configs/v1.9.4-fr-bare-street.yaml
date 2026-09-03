@@ -1,7 +1,7 @@
 # === v1.9.4-fr-bare-street (#251/#148 — teach the FR street→locality boundary WITHOUT a postcode anchor) ===
 # FULL RUN (probe GREEN: 2k-step step-082000 gave bare-FR street-intact 89→92%, demo "Rue du Chevaleret,
 # Paris" FIXED, US 4/4 tag-identical → imbalance confirmed, not modeling deficit). Continue from the probe's
-# step-082000 (--resume auto) to step-092000 (+10k); eval every 2k → gate each checkpoint (US per-tag floors)
+# step-082000 (--resume auto) to step-092000 (+10k); eval every 2k → check each checkpoint (US per-tag floors)
 # and ship the FR-up/US-held sweet spot. SAME single variable (the fr-bare-street slice) — clean attribution.
 # v1.9.3a3 (shipped v4.16.x) is verbatim below EXCEPT: corpus_dir → the v0.9.4 overlay, and ONE new
 # source_weight (synth-fr-bare-street). Everything else — model, anchor knobs, class_weights, country_weights,
@@ -21,12 +21,12 @@
 # (that is quarantined to the opt-in rooftop slices). Weight 6.0 = the targeted-fix precedent
 # (synth-german / synth-fr-admin-split / gnaf all 6.0).
 #
-# GATE (the probe — falsifies coverage-imbalance vs modeling-deficit, per DeepSeek): re-run
+# CHECK (the probe — falsifies coverage-imbalance vs modeling-deficit, per DeepSeek): re-run
 # scripts/diagnostic/fr-parse-recall.ts (bare FR street-intact rate, target the 90%→tail) AND US/intl
 # no-regression (the per-tag floors). MOVES → imbalance confirmed → scale to a full run within the $20 cap.
 # FLAT → modeling deficit (comma-boundary feature / decoder), a different fix. conventions-loss-mask is OFF
 # in this lineage already (v193a3), and FR street_prefix is taught by synth-fr-admin-split today, so the
-# v1.6.0 ~7M-loss mask blow-up does NOT apply here. NOT promoted without operator GO + the gate.
+# v1.6.0 ~7M-loss mask blow-up does NOT apply here. NOT promoted without operator GO + the check.
 # Launch: modal run -d scripts/modal/train_remote.py --config v1.9.4-fr-bare-street.yaml --resume auto
 data:
   # v0.9.4 overlay = v0.9.3a3's 694 slices VERBATIM (re-rooted to /data) + the 1 fr-bare-street slice.
@@ -162,7 +162,7 @@ train: # VERBATIM from v1.9.3a3 except output_dir + run_name + max_steps. RESUME
   warmup_steps: 1000
   grad_clip_norm: 1.0
   # FULL RUN: --resume auto picks the probe's step-082000 (latest in output_dir); max_steps 92000 → +10k.
-  # Constant LR 1.5e-4; anchor-dropout curriculum at full strength. Eval every 2k → gate 84/86/88/90/92k and
+  # Constant LR 1.5e-4; anchor-dropout curriculum at full strength. Eval every 2k → check 84/86/88/90/92k and
   # ship the best (FR street-intact up, US floors held).
   max_steps: 92000
   eval_every_steps: 2000

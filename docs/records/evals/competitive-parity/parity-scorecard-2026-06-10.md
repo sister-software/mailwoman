@@ -7,7 +7,7 @@ from `external-arenas.sh` + `per-locale-f1.ts` + the real-OOD scorers — do not
 
 **What changed since 06-09:** the v1.0 consolidation campaign concluded (Runs A/B/C, the
 measured 29M stability ceiling — see `2026-06-10-consolidation-session.md`), Run B shipped
-as **v4.2.0** after a 4/4 ship gate (`2026-06-10-night-10-ship-gate.md`).
+as **v4.2.0** after a 4/4 ship check (`2026-06-10-night-10-ship-check.md`).
 
 ## Lens 1 — capability arenas (v4.2.0 int8, TRUE ship config: anchor + gazetteer fed)
 
@@ -58,5 +58,5 @@ as **v4.2.0** after a 4/4 ship gate (`2026-06-10-night-10-ship-gate.md`).
 | architecture escalation | 📋 #492 — operator GO required                                                          |
 | **arbitration**         | 📋 **#478 — the post-parity capstone: converts every `v0-only` cell above into `both`** |
 
-_Emitted night-10, 2026-06-10. Gate provenance: canonical config bars; re-baselines stated
-in the ship-gate doc and the night plan, never silently._
+_Emitted night-10, 2026-06-10. Check provenance: canonical config bars; re-baselines stated
+in the ship-check doc and the night plan, never silently._

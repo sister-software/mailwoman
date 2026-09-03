@@ -10,7 +10,7 @@
 #     gradients on rare labels enough to destabilize the loss landscape)
 #   - Also diverges → §3 isn't (only) the offender; pair with the §1 ablation result
 #
-# Operator-gated: do NOT kick off without their go-ahead.
+# Operator-conditional: do NOT kick off without their go-ahead.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.3.0/corpus-v0.3.0

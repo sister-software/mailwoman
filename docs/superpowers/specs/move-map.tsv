@@ -1,4 +1,4 @@
-eval-gate.mdx	.
+eval-check.mdx	.
 score-trends.md	.
 2026-06-05-postcode-posterior-ab.mdx	calibration
 2026-06-07-conformal-coordinate-intervals.mdx	calibration
@@ -39,12 +39,12 @@ parity-scorecard-2026-07-02.md	competitive-parity
 2026-06-07-route-a-phase-ii-regate.mdx	experiments
 2026-06-08-honest-eval.mdx	experiments
 2026-06-10-relabel-probe.md	experiments
-2026-06-10-width-gate-affix-audit.md	experiments
+2026-06-10-width-check-affix-audit.md	experiments
 2026-06-13-fr-house-number-threshold-research.md	experiments
 2026-06-14-punctuation-stress.md	experiments
 2026-06-14-reconcile-regate-post-565.md	experiments
 2026-06-14-reconcile-retirement.md	experiments
-2026-06-17-478-arbitration-arena-gate.md	experiments
+2026-06-17-478-arbitration-arena-check.md	experiments
 2026-06-17-boundary-stress-baseline.md	experiments
 2026-06-17-within-token-punctuation-mechanism.md	experiments
 2026-06-19-fr-admin-split-prevalidation.md	experiments
@@ -89,9 +89,9 @@ parity-scorecard-2026-07-02.md	competitive-parity
 2026-06-06-v0.9.2-eval.mdx	model-versions
 2026-06-07-v0.9.3-eval.mdx	model-versions
 2026-06-07-v0.9.4-pip-pivot.mdx	model-versions
-2026-06-10-night-10-ship-gate.md	model-versions
-2026-06-11-v4.3.0-ship-gate.md	model-versions
-2026-06-11-v4.4.0-ship-gate.md	model-versions
+2026-06-10-night-10-ship-check.md	model-versions
+2026-06-11-v4.3.0-ship-check.md	model-versions
+2026-06-11-v4.4.0-ship-check.md	model-versions
 2026-06-18-v150-vs-v170-head-to-head.md	model-versions
 2026-06-25-v4.15.0-promotion.md	model-versions
 stage1-coarse-step-006000-eval.mdx	model-versions
@@ -152,7 +152,7 @@ v0.6.1-error-analysis.mdx	model-versions
 2026-06-14-coarse-placer-country-disambig.md	resolver-geo
 2026-06-14-coarse-placer-inmap-misroute.md	resolver-geo
 2026-06-14-coarse-placer-m2-openset.md	resolver-geo
-2026-06-14-coarse-placer-m2-pipeline-gate.md	resolver-geo
+2026-06-14-coarse-placer-m2-pipeline-check.md	resolver-geo
 2026-06-14-coarse-placer-m3-latin-offmap.md	resolver-geo
 2026-06-14-coarse-placer-milestone-1.md	resolver-geo
 2026-06-14-coarse-placer-oa-breadth.md	resolver-geo

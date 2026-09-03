@@ -410,7 +410,7 @@ describe("APIClient: bounded retry (A3)", () => {
 	})
 })
 
-describe("APIClient: the pacing gate sits downstream of the cache (I2)", () => {
+describe("APIClient: the pacing check sits downstream of the cache (I2)", () => {
 	it("does not pace a cache HIT — only a request that actually reaches the network", async () => {
 		// The check used to live in `fetch()`, upstream of the cache interceptor, so every hit burned a
 		// full pacer sleep: measured 1 dispatch, 5 hits, five 111ms sleeps for zero network traffic.
@@ -519,7 +519,7 @@ describe("APIClient: the pacer and the cooldown compose (I4)", () => {
 		const { axios, dispatchTimes } = stubTransport([{ body: { ok: true } }], { clock })
 
 		const client = new APIClient({
-			displayName: "both-gates",
+			displayName: "both-checks",
 			minRequestIntervalMs: INTERVAL_MS,
 			requestsPerMinute: 2, // a 30s cooldown every 2 dispatches
 			clock,
@@ -538,7 +538,7 @@ describe("APIClient: the pacer and the cooldown compose (I4)", () => {
 	})
 })
 
-describe("APIClient: a caller-supplied adapter cannot bypass the gate", () => {
+describe("APIClient: a caller-supplied adapter cannot bypass the check", () => {
 	it("strips a per-request adapter so the pacing grant is still taken", async () => {
 		// `mergeConfig` lets a request-level `adapter` win over the instance default, and the check lives in that
 		// instance adapter — so before this was stripped, three concurrent calls made 3 dispatches, took 0 grants and

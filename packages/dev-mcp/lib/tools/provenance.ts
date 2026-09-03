@@ -22,7 +22,7 @@ export const provenanceTool = (_deps: DevToolDeps): DevTool => ({
 		"upstream over our own corrections, or a database swapped an hour ago each produce a plausible artifact " +
 		"and a confident answer. Reports per artifact: size, mtime, symlink target (`candidate.db` is a POINTER " +
 		"that `gazetteer promote` swaps, so the target name carries the build's identity), and whether it is " +
-		"SEALED — an owner-writable database is mid-build or one a verify gate refused, and must not be graded " +
+		"SEALED — an owner-writable database is mid-build or one a verify check refused, and must not be graded " +
 		"against. Also reports each WOF repo's origin, vintage and shallowness from the `repos-sync` stamp, plus " +
 		"the last admin build-log entries. READ-ONLY: the repairs are `gazetteer repos-sync` and `gazetteer " +
 		"inspect sync`, opt-in because they change what the next build ingests. An absent repo stamp is reported " +

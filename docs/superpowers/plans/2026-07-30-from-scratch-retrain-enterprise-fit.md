@@ -2,7 +2,7 @@
 
 **For:** the operator's "I'd like to see where it fits in our enterprise stuff" (2026-07-30).
 **Context:** GTM task **B11** (enterprise fine-tune pipeline), the v8.2.0 arc's fine-tune-forgetting
-receipts, and the parked CJK char-encoder decision gating the acquired JP/KR data.
+receipts, and the parked CJK char-encoder decision blocking the acquired JP/KR data.
 
 ## The one-sentence fit
 
@@ -31,14 +31,14 @@ harness becomes the per-customer acceptance battery.
    from-scratch run.
 
 3. **The QA harness is the acceptance battery.** The v8.2.0 arc built, run by run, exactly what a
-   customer fine-tune needs at delivery: pre-registered gates, the ablated-vs-fed columns, canary
+   customer fine-tune needs at delivery: pre-registered checks, the ablated-vs-fed columns, canary
    fixtures with receipts, replay dosing, the misroute-cost measurement, the pre-ship gauntlet.
    Productizing B11 is largely _packaging this harness_ — per-customer canaries from their own
-   golden rows, the same gate sheet, the same verdict discipline. The retrain is the first
+   golden rows, the same check sheet, the same verdict discipline. The retrain is the first
    consumer of the packaged form (dogfooding the acceptance battery on our own base).
 
 4. **CJK folds in here or waits another cycle.** The JP (Japan Post/GSI) + KR (juso, 6.17M) data
-   is acquired and ready, gated on the one char-encoder decision (CharCNN front-end per the v8
+   is acquired and ready, blocked on the one char-encoder decision (CharCNN front-end per the v8
    design notes). A char-encoder change is architecturally a from-scratch event — it cannot ride a
    fine-tune. For the enterprise line, JP/KR is market surface: validation/record-matching
    customers with East-Asian address stock are a distinct segment no drop-in competitor serves
@@ -48,7 +48,7 @@ harness becomes the per-customer acceptance battery.
 
 | Debt                                              | Today                                                                | After                                                                                               |
 | ------------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| fr.cedex forgetting + re-anchored floor (82.2)    | named watch, waived                                                  | re-learned natively; floor re-cut from the new base                                                 |
+| fr.cedex forgetting + re-anchored floor (82.2)    | named watch, waived                                                  | re-learned natively; floor rebuilt from the new base                                                |
 | Fifth-Ave / num-ordinal brittleness               | trained out in v3.24 + permanent gauntlet fixture                    | invariant trained from step 0 (augmentation in the base recipe)                                     |
 | Fine-tune-of-fine-tune stacking (v385←v381←v310…) | four generations deep                                                | flattened; every capability from one recipe with one provenance                                     |
 | Evidence bundle as a fine-tune graft              | channels added at 6k-step fine-tunes, over-trust curricula bolted on | channels + curricula in the base objective from step 0 (the over-trust pattern may not form at all) |
@@ -63,7 +63,7 @@ harness becomes the per-customer acceptance battery.
    training-code work).
 2. **The run itself:** materially bigger than the arc's fine-tunes (from-scratch, larger step
    budget, possibly the encoder change) — plan in agent-nights with the full G1–G7 ladder plus
-   per-locale gates; the acceptance battery in its packaged form is the exit criterion.
+   per-locale checks; the acceptance battery in its packaged form is the exit criterion.
 3. **B11 alpha after:** the packaged battery + the Fisher-protected fine-tune recipe make the
    first enterprise fine-tune engagement mostly configuration, not research.
 

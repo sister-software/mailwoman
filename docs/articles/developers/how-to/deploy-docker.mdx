@@ -155,7 +155,7 @@ holding one file, `wof/candidate.db`, which is the shape of the mounted volume a
 server is why that is enough — and why the same server also boots when the volume is missing:
 
 ```js
-// Gate on the gazetteer being THERE, not on anything being configured.
+// Check on the gazetteer being THERE, not on anything being configured.
 const candidateDB = resolveCandidateDBPath()
 ```
 

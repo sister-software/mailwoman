@@ -6,14 +6,14 @@
 # German both-order shape, but for FR). The ONE variable vs v4.5.0 is this slice, so the run isolates
 # "did teaching reversed-order FR recover fr.house_number without disturbing anything else?"
 #
-# GOAL / GATE: re-gate against scripts/eval/gates/v0.5.0-bridge.json (bridge OFF). Acceptance:
+# GOAL / CHECK: re-check against scripts/eval/checks/v0.5.0-bridge.json (bridge OFF). Acceptance:
 # fr.house_number recovers toward 97 (>= 95 target) AND bridge-retirement holds (po_box >= 89.1 bridge-
 # off) AND every other v4.4.0 floor holds AND no NEW regression actual-vs-v4.5.0. A clean pass = v4.6.0.
 #
 # CORPUS: /data/corpus/versioned/v0.5.0/corpus-v0.5.0 + the synth-fr-order slice appended (re-emitted
 # char-offset, assembled into the MANIFEST like the v0.5.0 overlays, staged via R2 -> sync_v050).
 # KNOWN CAVEAT carried from v4.5.0: UTF-16 span offsets (#519); ~0.06% astral rows skipped at load
-# (#558 guard). Code-point re-align (corpus-v0.5.1) is DeepSeek's parallel track; does not gate this.
+# (#558 guard). Code-point re-align (corpus-v0.5.1) is DeepSeek's parallel track; does not check this.
 # Launch: modal run -d scripts/modal/train_remote.py --config v1.5.0-fr-order.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.5.0/corpus-v0.5.0

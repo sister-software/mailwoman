@@ -31,7 +31,7 @@
 #   win ABSENT + guard HOLDS -> 3-digit too narrow; the win needs 4-digit (widen to 100-9999, re-probe).
 #
 # SHIP CANDIDATE. The 2k probe (v352) confirmed guard + win; this 8k is the promotable artifact.
-# On PASS: export int8, run the gate + boards, then the operator promotes. Promotion is the operator's act.
+# On PASS: export int8, run the check + boards, then the operator promotes. Promotion is the operator's act.
 # Launch: modal run -d corpus-python/modal/train_remote.py --config v3.5.4-numsplice3-full.yaml --resume none
 
 data:

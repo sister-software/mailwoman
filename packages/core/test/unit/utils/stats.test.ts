@@ -8,7 +8,7 @@ import { formatPercent, median, percentile } from "@mailwoman/core/stats"
 import { describe, expect, it } from "vitest"
 
 describe("stats", () => {
-	it("percentile matches the gate scripts' nearest-rank shape", () => {
+	it("percentile matches the check scripts' nearest-rank shape", () => {
 		// The exact copy migrated from oa-resolver-eval/resolver-eval — check parity depends on THIS
 		// semantics: sort ascending, index = floor(p/100 * n), clamped.
 		const xs = [10, 1, 5, 3, 8]

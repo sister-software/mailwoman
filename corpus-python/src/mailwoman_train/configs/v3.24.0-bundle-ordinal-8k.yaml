@@ -3,7 +3,7 @@
 # the Fifth-Ave metamorphic hold, resolved by training the invariant rather than waiving it.)
 #
 # WHAT THE 8.2.0 PRE-SHIP GAUNTLET CAUGHT on v3.23-4k (record: progress.md 2026-07-29):
-#   1. World-city rotation on fed bare lookups — FIXED CODE-SIDE (the street-context gate at the
+#   1. World-city rotation on fed bare lookups — FIXED CODE-SIDE (the street-context check at the
 #      soft-features boundary; locality evidence needs street context; every measured win class carries
 #      street words). Ships regardless of this run.
 #   2. "350 Fifth Ave, New York, NY" → locality absorbed into region (283km resolve). v385-clean ⇒
@@ -15,13 +15,13 @@
 # The num-ordinal BAND relation is a STATED gauntlet invariant; v385 satisfied it by luck of the
 # draw, v3.23 lost it by the same luck — this trains it.
 #
-# PRE-REGISTERED GATES: G1-G6 VERBATIM from the v3.23 header (P0 grid --lexicon
+# PRE-REGISTERED CHECKS: G1-G6 VERBATIM from the v3.23 header (P0 grid --lexicon
 # locality-surface-lexicon-v6.json --street-lexicon street-type-lexicon-v3.json per save; G5
 # ablated ALL floors incl. fr.cedex 82.2; G6 canary formatted-clean) PLUS:
 #   G7 THE FULL PRE-SHIP GAUNTLET on the dev-linked flip (regression + metamorphic + held-out) —
-#      the exact instrument that stopped the 8.2.0 cut; the Fifth-Ave INV/BAND pair must clear and
-#      the world-city fixtures stay clear under the street-context gate.
-#   VERDICT: all seven ⇒ resume the 8.2.0 cut at the metadata surfaces. A save passing G1-G6 but
+#      the exact instrument that stopped the 8.2.0 reduce; the Fifth-Ave INV/BAND pair must clear and
+#      the world-city fixtures stay clear under the street-context check.
+#   VERDICT: all seven ⇒ resume the 8.2.0 reduce at the metadata surfaces. A save passing G1-G6 but
 #   not G7 ⇒ STOP, back to the operator (no further augment iteration without a fresh decision).
 #
 # Launch: modal run -d corpus-python/modal/train_remote.py --config v3.24.0-bundle-ordinal-8k.yaml --resume none

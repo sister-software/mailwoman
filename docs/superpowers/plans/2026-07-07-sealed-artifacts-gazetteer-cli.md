@@ -4,7 +4,7 @@
 
 **Goal:** Mechanically enforce the read-only-artifact policy (`sealDatabase`/`openBuiltDatabase`) and fold the scattered WOF admin-gazetteer build (1 script + 4 post-build steps) into one turnkey, verified, self-documenting `mailwoman gazetteer build admin` command.
 
-**Architecture:** A tiny sealing utility in `@mailwoman/core/utils`; the existing single-file `mailwoman/gazetteer-pipeline.ts` grows into a `gazetteer-pipeline/` module of unit-testable step functions (ingest → fold-overture → fold-geonames → freeze → enrich → fts → verify → seal); thin Pastel/Ink commands over it; a structural `verify` gate with a committed per-country node-census baseline (the #1026 lesson).
+**Architecture:** A tiny sealing utility in `@mailwoman/core/utils`; the existing single-file `mailwoman/gazetteer-pipeline.ts` grows into a `gazetteer-pipeline/` module of unit-testable step functions (ingest → fold-overture → fold-geonames → freeze → enrich → fts → verify → seal); thin Pastel/Ink commands over it; a structural `verify` check with a committed per-country node-census baseline (the #1026 lesson).
 
 **Tech Stack:** TypeScript (Node 26 type-stripping for the module; TSX compile for Ink commands), `node:sqlite` `DatabaseSync`, Pastel file-based commands, vitest, DuckDB (`@duckdb/node-api`, lazy-optional) for the Overture S3 pull.
 
@@ -236,7 +236,7 @@ git add -u mailwoman/gazetteer-pipeline.ts resolver-wof-sqlite/build-slim.ts scr
 git commit -m "feat: seal every builder's output 0444 (buildCandidate, build-slim, build-unified-wof)"
 ```
 
-_(PR A can be cut here if the operator wants the invariant shipped independently.)_
+_(PR A can be reduce here if the operator wants the invariant shipped independently.)_
 
 ---
 
@@ -583,7 +583,7 @@ export const DEFAULT_ADMIN_STAGING_SUFFIX = ".REBUILD.db"
 
 - Produces: `ingestOvertureDivisions(db: DatabaseSync, countries: readonly string[], release: string, idBase?: number): Promise<number>` and `export const OVERTURE_ID_BASE = 8_000_000_000_000` — exact behavior of the current script function (division_area bbox join + country subtype, #1021).
 
-- [ ] **Step 1: Move** — cut the entire `ingestOvertureDivisions` function, `OVERTURE_ID_BASE`, and `OVERTURE_DIVISION_SUBTYPES` from `scripts/build-unified-wof.ts` into the new file verbatim (keep every comment). Add the imports the body needs (`DatabaseSync` type, `DuckDBInstance` via the same lazy `await import("@duckdb/node-api")` pattern used by `overture-ingest.tsx` — convert the top-level import to a lazy one inside the function so importing the pipeline module never faults without DuckDB installed).
+- [ ] **Step 1: Move** — remove the entire `ingestOvertureDivisions` function, `OVERTURE_ID_BASE`, and `OVERTURE_DIVISION_SUBTYPES` from `scripts/build-unified-wof.ts` into the new file verbatim (keep every comment). Add the imports the body needs (`DatabaseSync` type, `DuckDBInstance` via the same lazy `await import("@duckdb/node-api")` pattern used by `overture-ingest.tsx` — convert the top-level import to a lazy one inside the function so importing the pipeline module never faults without DuckDB installed).
 - [ ] **Step 2: Re-point the script** — in `scripts/build-unified-wof.ts`: `import { ingestOvertureDivisions, OVERTURE_ID_BASE } from "../mailwoman/gazetteer-pipeline/admin/fold-overture.ts"` (scripts import TS directly under type-stripping; check the existing cross-workspace import style in `scripts/` — e.g. `reverse-eu-panel.ts` imports `@mailwoman/resolver-wof-sqlite` — and prefer the package-path form `mailwoman/gazetteer-pipeline/admin/fold-overture.js` if `scripts/tsconfig.json` resolves it; use whichever compiles).
 - [ ] **Step 3: Verify** — `yarn typecheck:scripts && npx tsc -b mailwoman` → exit 0.
 - [ ] **Step 4: Commit** — `git add -A && git commit -m "refactor(gazetteer): ingestOvertureDivisions moves into gazetteer-pipeline/admin/fold-overture"`
@@ -786,7 +786,7 @@ db.exec("CREATE INDEX place_abbr_by_id ON place_abbr (id)")
 
 ---
 
-### Task 11: `verify.ts` + the committed census baseline — the structural gate
+### Task 11: `verify.ts` + the committed census baseline — the structural check
 
 **Files:**
 
@@ -848,7 +848,7 @@ import("./mailwoman/out/gazetteer-pipeline/verify.js").then(async (m) => {
 
 then hand-merge the #1026 list per the spec (`requiredNodes` union), and eyeball the diff.
 
-- [ ] **Step 6: Commit** — `git add mailwoman/gazetteer-pipeline/verify* && git commit -m "feat(gazetteer): structural verify gate — node census (#1026), reverse panel (#1015), abbrev/fts checks (#440)"`
+- [ ] **Step 6: Commit** — `git add mailwoman/gazetteer-pipeline/verify* && git commit -m "feat(gazetteer): structural verify check — node census (#1026), reverse panel (#1015), abbrev/fts checks (#440)"`
 
 ---
 
@@ -956,8 +956,8 @@ export function buildAdmin(opts?: BuildAdminOptions): Promise<BuildAdminResult>
     node mailwoman/out/cli.js gazetteer build admin
 
 Builds to the staging path, runs every post-build step (abbrevs, place_abbr, FTS), then the structural
-verify gate (per-country node census, reverse EU panel, coverage floor) and SEALS the artifact 0444.
-A failed gate leaves the artifact unsealed for inspection and exits non-zero — do not swap it.
+verify check (per-country node census, reverse EU panel, coverage floor) and SEALS the artifact 0444.
+A failed check leaves the artifact unsealed for inspection and exits non-zero — do not swap it.
 Coverage recipe: `mailwoman/gazetteer-pipeline/defaults.ts` (code, reviewed like code).
 `scripts/wof-build-manifest.json` is the auto-appended build LOG.
 
@@ -975,8 +975,8 @@ keeping the existing Step-4 swap/restart text (mv → bak, promote, restart serv
 
 **Files:** none (runbook execution; findings recorded in the PR description)
 
-- [ ] **Step 1: Full staging build** — `node mailwoman/out/cli.js gazetteer build admin --out /mnt/playpen/mailwoman-data/wof/admin-global-priority.E2E-PRB.db` (~8 min). Expected: every phase streams; **verify may FAIL `node-census`** if the Overture/GeoNames country-node interplay (#1026's suspected mechanism) reproduces — that is a CORRECT gate result, not a task failure.
-- [ ] **Step 2: If node-census fails** — capture the missing list into #1026 (comment with the exact `(country, placetype)` set). The fix belongs to #1026/PR C (fold-order archaeology), NOT this PR — the gate exists precisely to block the swap.
+- [ ] **Step 1: Full staging build** — `node mailwoman/out/cli.js gazetteer build admin --out /mnt/playpen/mailwoman-data/wof/admin-global-priority.E2E-PRB.db` (~8 min). Expected: every phase streams; **verify may FAIL `node-census`** if the Overture/GeoNames country-node interplay (#1026's suspected mechanism) reproduces — that is a CORRECT check result, not a task failure.
+- [ ] **Step 2: If node-census fails** — capture the missing list into #1026 (comment with the exact `(country, placetype)` set). The fix belongs to #1026/PR C (fold-order archaeology), NOT this PR — the check exists precisely to block the swap.
 - [ ] **Step 3: If verify passes** — diff old-vs-new per-country/per-placetype census (`SELECT country, placetype, COUNT(*) FROM spr WHERE is_current!=0 GROUP BY 1,2` on both, joined) — attach the diff summary to the PR; the E2E artifact is a swap candidate for #1026 itself (operator decides; swap follows the RELEASING.md runbook).
 - [ ] **Step 4: Confirm the seal** — `ls -l` shows `-r--r--r--`; `node -e` RW-open via `openBuiltDatabase` throws `SealedArtifactError`.
 - [ ] **Step 5: Clean up** — remove the E2E artifact unless it's being promoted; push the branch; open the PR (B) referencing the spec, with the E2E findings.
@@ -986,5 +986,5 @@ keeping the existing Step-4 swap/restart text (mv → bak, promote, restart serv
 ## Self-review notes
 
 - Spec §1 → Tasks 1–2; §2 → Tasks 4, 12–14; §3 → Tasks 3, 5–10, 12; §4 → Task 11; §5's PR-B deletions → Task 15; §6 PR A/B → this plan, PR C → explicitly deferred (needs Task 11's census tooling). Covered.
-- The `verify` gate intentionally fails against the current live DB (#1026 known regression) — Tasks 13/16 call this out so an executor doesn't "fix" the gate to pass.
+- The `verify` check intentionally fails against the current live DB (#1026 known regression) — Tasks 13/16 call this out so an executor doesn't "fix" the check to pass.
 - Type names consistent: `VerifyResult`/`VerifyBaseline` (11) consumed in 12–13; `buildAdmin` (12) consumed in 13; `sealDatabase` (1) consumed in 2, 12.

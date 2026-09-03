@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Migrate `@mailwoman/nominatim` from express to Hono + `@hono/zod-openapi` with the OpenAPI document emitted from the route table, retiring `nominatim/openapi.yaml` (the last handwritten drop-in spec) through the parity gate.
+**Goal:** Migrate `@mailwoman/nominatim` from express to Hono + `@hono/zod-openapi` with the OpenAPI document emitted from the route table, retiring `nominatim/openapi.yaml` (the last handwritten drop-in spec) through the parity check.
 
 **Architecture:** The photon pattern (phase 2, merged as #1082), applied to nominatim's four GET endpoints. Same `legacyQuery` adapter (express-simple `string|string[]` query shape, null-prototype), same tolerant-union query schemas with doc-exact `.openapi()` overrides, same handlers-own-every-wire-decision mandate. The merged `photon/{engine,projection,schema,routes,app}.ts` files are the living exemplar — follow them structurally; this plan supplies the nominatim-specific code. No new api-kit atoms: nominatim's geojson envelope (`toFeatureCollection`) is its own vendor shape (polygon-capable `geometry: unknown`, result-field `properties`), not the api-kit Point envelope; the spec's `LonLat` atom stays deferred with no consumer (record in the PR).
 
@@ -207,7 +207,7 @@ export const lookupQueryParams = z.object({
 })
 ```
 
-(Match the yaml's documented parameter lists exactly — the gate compares names; if the yaml's `/lookup` also documents `accept-language`, add it here with the same tolerantParam pattern and note it. Verify against `nominatim/openapi.yaml` while writing.)
+(Match the yaml's documented parameter lists exactly — the check compares names; if the yaml's `/lookup` also documents `accept-language`, add it here with the same tolerantParam pattern and note it. Verify against `nominatim/openapi.yaml` while writing.)
 
 - [ ] **Step 5: Rewire `index.ts`** — delete moved blocks, add `export * from "./engine.ts"` / `"./format.ts"` / `"./schema.ts"` above the express code, add explicit imports the router still needs (`export *` doesn't bind locals).
 
@@ -235,7 +235,7 @@ git commit -m "refactor(nominatim): split engine, formatter, and zod wire schema
 - Consumes: Task 1's exports; api-kit's `attachOpenAPIDocs`, `serveNode`; photon's merged `routes.ts`/`app.ts` as the structural exemplar (read them first).
 - Produces: `createNominatimApp(engine: NominatimEngine, options?: NominatimAppOptions): OpenAPIHono` (`NominatimAppOptions = { cors?: boolean }`, default true); `registerNominatimRoutes(app, engine)` — BOTH re-exported from `index.ts` (registerNominatimRoutes is the phase-4 carry-forward). `createNominatimRouter`/`NominatimRouterOptions` gone.
 
-- [ ] **Step 1: `nominatim/routes.ts`.** Copy photon's structure: `legacyQuery` (verbatim from `photon/routes.ts`, null-prototype version), `asString`/`parseFormat`/`parseBool`/`DEFAULT_LIMIT` moved verbatim from old index.ts, `ROOT_HTML` moved verbatim. Route definitions: `rootRoute` (GET /, text/html 200), `searchRoute` (GET /search, query `searchQueryParams`, responses 200 `NominatimResultsSchema` + 500/501 `ErrorSchema`), `reverseRoute` (GET /reverse, query `reverseQueryParams`, responses 200 `NominatimResultSchema` + 400/500/501 `ErrorSchema`), `lookupRoute` (GET /lookup, query `lookupQueryParams`, responses 200 `NominatimResultsSchema` + 500/501 `ErrorSchema`), `statusRoute` (GET /status, responses 200 `NominatimStatusSchema` + 500 `ErrorSchema`). Handler bodies = the express handlers moved onto `legacyQuery(c)`, byte-parity: 501 issue-ref bodies, `/status` absent-method 200 default, the exact format-branch ladders (including `/lookup`'s missing jsonld branch and `/reverse`'s `null` serialization), `addressdetails: parseBool(...) || q["format"] === "jsonld"` on search/reverse only. jsonld/geojson/null response-shape unions: local casts per the photon note if typing fights — never change wire behavior. Sanity-check the exact status-code sets against the yaml's documented responses per operation while writing (the gate will verify; look once now to avoid a gate round-trip).
+- [ ] **Step 1: `nominatim/routes.ts`.** Copy photon's structure: `legacyQuery` (verbatim from `photon/routes.ts`, null-prototype version), `asString`/`parseFormat`/`parseBool`/`DEFAULT_LIMIT` moved verbatim from old index.ts, `ROOT_HTML` moved verbatim. Route definitions: `rootRoute` (GET /, text/html 200), `searchRoute` (GET /search, query `searchQueryParams`, responses 200 `NominatimResultsSchema` + 500/501 `ErrorSchema`), `reverseRoute` (GET /reverse, query `reverseQueryParams`, responses 200 `NominatimResultSchema` + 400/500/501 `ErrorSchema`), `lookupRoute` (GET /lookup, query `lookupQueryParams`, responses 200 `NominatimResultsSchema` + 500/501 `ErrorSchema`), `statusRoute` (GET /status, responses 200 `NominatimStatusSchema` + 500 `ErrorSchema`). Handler bodies = the express handlers moved onto `legacyQuery(c)`, byte-parity: 501 issue-ref bodies, `/status` absent-method 200 default, the exact format-branch ladders (including `/lookup`'s missing jsonld branch and `/reverse`'s `null` serialization), `addressdetails: parseBool(...) || q["format"] === "jsonld"` on search/reverse only. jsonld/geojson/null response-shape unions: local casts per the photon note if typing fights — never change wire behavior. Sanity-check the exact status-code sets against the yaml's documented responses per operation while writing (the check will verify; look once now to avoid a check round-trip).
 
 - [ ] **Step 2: `nominatim/app.ts`** — photon's app.ts shape: cors `GET, OPTIONS` (`allowMethods: ["GET", "OPTIONS"]`, `allowHeaders: ["*"]`, `maxAge: 86400`) when `options.cors !== false`; `app.onError((_e, c) => c.json({ error: "internal error" }, 500))`; `registerNominatimRoutes(app, engine)`; `attachOpenAPIDocs(app, { title: packageJson.name, version: packageJson.version })` with the self-referencing `@mailwoman/nominatim/package.json` JSON import; `NominatimAppOptions.cors` carries the full #1017 rationale from the old options type.
 
@@ -388,7 +388,7 @@ git commit -m "feat(nominatim)!: express Router -> Hono app with emitted OpenAPI
 
 ---
 
-### Task 3: Spec-parity gate — retire the last handwritten yaml
+### Task 3: Spec-parity check — retire the last handwritten yaml
 
 **Files:**
 
@@ -404,7 +404,7 @@ Same three assertions as phases 1–2, WITH the `$ref` dereferencer baked in fro
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   ONE-TIME migration gate (deleted once adjudicated): every legacy path, method, parameter, and
+ *   ONE-TIME migration check (deleted once adjudicated): every legacy path, method, parameter, and
  *   status code must exist in the emitted document. Legacy parameters may be $ref-shared under
  *   components.parameters — dereference before comparing (phase-2 lesson).
  */
@@ -485,15 +485,15 @@ test("every legacy status code is declared on the emitted operation", () => {
 })
 ```
 
-- [ ] **Step 1:** Write the gate; `yarn vitest run --dir ./nominatim --reporter=verbose`; adjudicate every failure (routes-bug → fix; yaml-bug → record). If unclassifiable, STOP/BLOCKED with the exact diff.
-- [ ] **Step 2:** Retire: `git rm nominatim/openapi.yaml`; drop the `files` entry if present; `rm` the gate test. Full suite + compile green; `yarn oxfmt nominatim`.
+- [ ] **Step 1:** Write the check; `yarn vitest run --dir ./nominatim --reporter=verbose`; adjudicate every failure (routes-bug → fix; yaml-bug → record). If unclassifiable, STOP/BLOCKED with the exact diff.
+- [ ] **Step 2:** Retire: `git rm nominatim/openapi.yaml`; drop the `files` entry if present; `rm` the check test. Full suite + compile green; `yarn oxfmt nominatim`.
 - [ ] **Step 3:** Commit with the full adjudication record in the body (phase-2 commit 6ca49c6f is the model — include record-only observations: required flags, enums, additionalProperties, anything else found).
 
 ```bash
 git add -A nominatim
 git commit -m "feat(nominatim): retire the handwritten OpenAPI yaml — the emitted document is the spec
 
-Parity gate adjudications: <real list>"
+Parity check adjudications: <real list>"
 ```
 
 ---

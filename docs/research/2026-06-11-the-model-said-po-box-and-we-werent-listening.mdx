@@ -6,11 +6,11 @@ tags: [neural, evals, architecture]
 date: 2026-06-11
 ---
 
-Last night our release gate failed twice before it passed, and both failures turned out
+Last night our release check failed twice before it passed, and both failures turned out
 to be the same lesson wearing different hats. If you've ever trained a model, watched it
 flunk an eval, and reached for more data or more parameters: this post is about the
 third option you might be skipping. The questions on the table: why did a model that
-scored 89 on post-office boxes in validation score 60 at the gate? Why did fixing that
+scored 89 on post-office boxes in validation score 60 at the check? Why did fixing that
 break French postcodes? And what does any of this say about where a parser's knowledge
 lives?
 
@@ -20,7 +20,7 @@ lives?
 
 Some context. Our parser had three famously empty rows on its scorecard: `po_box`,
 `cedex`, and intersections. Last night's release candidate carried fresh training data
-for all three, and the pre-registered gate floors were waiting for it. Intersections
+for all three, and the pre-registered check floors were waiting for it. Intersections
 came back a clean 100. Cedex, 96. And po_box came back at 60.4 against a floor of 70.
 
 Naturally we went looking for the failure, expecting the usual suspects. A thin layout
@@ -46,7 +46,7 @@ between them is a short run of intra-token punctuation, merge them — dots, hyp
 slashes — and absorb the punctuation the corpus could never label. Same model, same
 weights, not a second of GPU. po_box went from 60.4 to 87.
 
-Then the re-gate failed on French postcodes, and this failure was the better
+Then the re-check failed on French postcodes, and this failure was the better
 teacher. The bridge had been merging across commas too, and commas are where the bodies
 are buried: when the model saw `Sainte-Livrade-sur-Lot 47110, 9016 Route de Lablasie`,
 it sometimes double-labeled that house number as a second postcode — and the comma was
@@ -67,11 +67,11 @@ tempting move — scale the model, multiply the data — would have burned a wee
 changed nothing, because the binding constraint was sitting in a different layer,
 waiting for someone to read forty failing rows.
 
-The cost of finding it the right way: three full gate batteries in one night and a
+The cost of finding it the right way: three full check batteries in one night and a
 pre-registered floor we refused to round up. Personally, I'll pay that every time. The
-gate that fails twice and tells you exactly why is worth ten that pass without a word.
+check that fails twice and tells you exactly why is worth ten that pass without a word.
 
-There's a deeper cut coming — that punctuation gap is a property of our corpus format
+There's a deeper reduce coming — that punctuation gap is a property of our corpus format
 itself, and the proper cure (labels addressed by character offset, not token index) is a
 bigger renovation than a night allows. The bridge is containment, labeled as
 such. But the scorecard that had three empty rows yesterday has none today, and the

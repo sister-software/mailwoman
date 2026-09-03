@@ -32,18 +32,18 @@
 #                    venue 100% / street 100% / house_number 100%, under the existing
 #                    synth-house-venue source at its established weight 2.0)
 #   country_weights  25 -> 134 (the shipped 25 + IN + every gauntlet-board country + KR/TW). Measured
-#                    cost 0.778% of an epoch: the map is a per-row admission gate inside each source's
+#                    cost 0.778% of an epoch: the map is a per-row admission check inside each source's
 #                    stream while the source multinomial fixes each source's draw share.
 #
 # Everything else — 60,000 steps, batch 128, lr 5e-4, warmup 1,000, no init, no brake — is the recipe
 # that produced the model currently in production.
 #
-# GATE, against the SHIPPED model on the 649-row board:
+# CHECK, against the SHIPPED model on the 649-row board:
 #   1. net improved-minus-regressed >= 0;
 #   2. FR, GB and DE show no regression anywhere (D-rule, iron rule 6);
 #   3. the venue-led rows the fine-tunes broke must hold — gb-venue-ye-three-lords,
 #      gb-lex-cafe-st-marys, gb-op2-four-seasons-cjk;
-#   4. IMPROVEMENT metric, not gate: the 4 ve_city_postcode_trailing_state rows and in_structured.
+#   4. IMPROVEMENT metric, not check: the 4 ve_city_postcode_trailing_state rows and in_structured.
 #
 # A from-scratch run is not guaranteed to beat a tuned production model, and this one has ONE seed and
 # no hyperparameter search. If it grades negative, the finding is that the recipe needs work the

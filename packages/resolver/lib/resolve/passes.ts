@@ -368,7 +368,7 @@ export async function applySpanRescore(
 		hit = await findRescoreCandidate(raw, roots, backend, {
 			country: opts.defaultCountry,
 			postcode: firstPostcodeValue(roots),
-			gateKm: opts.spanRescoreGateKm,
+			thresholdKm: opts.spanRescoreThresholdKm,
 			// Default-ON (promoted 2026-07-03); explicit `false` opts out — the spanRescore idiom.
 			postalCompoundRecovery: opts.postalCompoundRecovery !== false,
 		})
@@ -486,7 +486,7 @@ async function recoverPostcodeNode(
  *
  * 1. Find the resolved postcode's coordinate (the trustworthy anchor — a postcode is unambiguous within a country in a way
  *    a town name is not).
- * 2. For each resolved locality node farther than `gateKm` from it: re-pick the same-named candidate from the node's
+ * 2. For each resolved locality node farther than `thresholdKm` from it: re-pick the same-named candidate from the node's
  *    already-captured `alternatives` that is NEAREST the postcode and within the radius. This keeps locality
  *    granularity at the CORRECT instance.
  * 3. If no alternative reconciles, the locality instance is unreliable — fall its coordinate back to the postcode point
@@ -497,7 +497,7 @@ async function recoverPostcodeNode(
  * (2026-07-04, commit `0010bb8c`) — `opts.postcodeConsistency: false` opts out, and the pass is byte-stable on every
  * tree with no resolved postcode point (the `!anchor` early return below).
  */
-export function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: number): void {
+export function applyPostcodeConsistency(roots: readonly AddressNode[], thresholdKm: number): void {
 	// The resolved postcode anchor (first one with a real coordinate).
 	let anchor: { lat: number; lon: number } | null = null
 	const findAnchor: AddressNode[] = [...roots]
@@ -525,7 +525,7 @@ export function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: 
 
 		if ((node.tag !== "locality" && node.tag !== "dependent_locality") || !isResolvedWithCoord(node)) continue
 
-		if (haversineKm(anchor.lat, anchor.lon, node.lat!, node.lon!) <= gateKm) continue // already consistent
+		if (haversineKm(anchor.lat, anchor.lon, node.lat!, node.lon!) <= thresholdKm) continue // already consistent
 
 		// Re-pick: the same-named candidate nearest the postcode, within the radius. `alternatives` is
 		// typed `unknown[]` on the node (decoder/types.ts can't import resolver types) — they ARE the
@@ -535,7 +535,7 @@ export function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: 
 		const reconciling = alts
 			.filter((a) => a.lat !== 0 || a.lon !== 0)
 			.map((a) => ({ a, d: haversineKm(anchor!.lat, anchor!.lon, a.lat, a.lon) }))
-			.filter((x) => x.d <= gateKm)
+			.filter((x) => x.d <= thresholdKm)
 			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 			.sort((x, y) => x.d - y.d)[0]
 

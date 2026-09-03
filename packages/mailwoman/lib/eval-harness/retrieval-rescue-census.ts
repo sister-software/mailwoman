@@ -34,7 +34,7 @@ import { DEFAULT_TOL_M } from "#eval-harness/gauntlet/check-case"
  * - `rescue_available_both` — both of the above hold.
  * - `no_rescue_on_hand` — delivered answer wrong and neither source holds the truth: these rows need retrieval or parse
  *   work, not rescue plumbing.
- * - `gate_protects` is NOT a value here — it is a separate boolean, because it can hold alongside `correct_as_is`: the
+ * - `check_protects` is NOT a value here — it is a separate boolean, because it can hold alongside `correct_as_is`: the
  *   row is correct AND an unconditional entity hit exists (necessarily elsewhere, or redundant), so loosening the check
  *   puts the row at risk. The loosening decision needs both lists, not one label.
  */
@@ -97,7 +97,7 @@ export interface RescueRowReport {
 	 * The row is CORRECT as delivered while an unconditional entity hit exists — the set a check loosening puts at risk.
 	 * Reported beside the classification, never instead of it.
 	 */
-	gateProtects: boolean
+	checkProtects: boolean
 }
 
 function within(lat: number, lon: number, row: RescueRowInput): boolean {
@@ -111,12 +111,12 @@ function within(lat: number, lon: number, row: RescueRowInput): boolean {
  */
 export function classifyRescueRow(row: RescueRowInput): {
 	classification: RescueClass
-	gateProtects: boolean
+	checkProtects: boolean
 	deliveredKm?: number
 	rescueRank?: number
 } {
 	if (row.expectLat === undefined || row.expectLon === undefined) {
-		return { classification: "ungraded", gateProtects: false }
+		return { classification: "ungraded", checkProtects: false }
 	}
 
 	const deliveredKm =
@@ -140,12 +140,12 @@ export function classifyRescueRow(row: RescueRowInput): {
 
 	// A correct row with an unconditional entity hit is the loosening-risk set — even a CORRECT entity hit belongs in
 	// it, because a changed check reorders which mechanism answers, and reordering is a behavior change to re-grade.
-	const gateProtects = deliveredCorrect && row.unconditionalEntityHit !== undefined
+	const checkProtects = deliveredCorrect && row.unconditionalEntityHit !== undefined
 
 	if (deliveredCorrect) {
 		return {
 			classification: row.entityFired ? "entity_rescued_already" : "correct_as_is",
-			gateProtects,
+			checkProtects,
 			...(deliveredKm === undefined ? {} : { deliveredKm }),
 		}
 	}
@@ -161,7 +161,7 @@ export function classifyRescueRow(row: RescueRowInput): {
 
 	return {
 		classification,
-		gateProtects: false,
+		checkProtects: false,
 		...(deliveredKm === undefined ? {} : { deliveredKm }),
 		...(rescueRank === undefined ? {} : { rescueRank }),
 	}
@@ -171,7 +171,7 @@ export interface RescueSummary {
 	rows: number
 	graded: number
 	counts: Record<RescueClass, number>
-	gateProtects: number
+	checkProtects: number
 }
 
 export function summarizeRescue(reports: readonly RescueRowReport[]): RescueSummary {
@@ -185,13 +185,13 @@ export function summarizeRescue(reports: readonly RescueRowReport[]): RescueSumm
 		ungraded: 0,
 	}
 
-	let gateProtects = 0
+	let checkProtects = 0
 
 	for (const report of reports) {
 		counts[report.classification]++
 
-		if (report.gateProtects) {
-			gateProtects++
+		if (report.checkProtects) {
+			checkProtects++
 		}
 	}
 
@@ -199,6 +199,6 @@ export function summarizeRescue(reports: readonly RescueRowReport[]): RescueSumm
 		rows: reports.length,
 		graded: reports.length - counts.ungraded,
 		counts,
-		gateProtects,
+		checkProtects,
 	}
 }

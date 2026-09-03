@@ -85,11 +85,11 @@ export async function runReliability(registry: EngineRegistryLike, args: Record<
 		surface === ReliabilitySurface.CoarsePlacer ? await placerRun(registry, args) : await decodeRun(registry, args)
 
 	const overall = reliabilityCurve(sample.observations, binCount)
-	const gate = thresholdTable(sample.observations, thresholds)
+	const check = thresholdTable(sample.observations, thresholds)
 
 	// Read at the lowest threshold that admits anything, so the classes describe an eval someone could actually set. A
 	// threshold admitting nothing has no admitted errors to rank, which reads as a clean confusion matrix.
-	const gateForClasses = gate.find((row) => row.admitted > 0)?.threshold ?? thresholds[0] ?? 0
+	const thresholdForClasses = check.find((row) => row.admitted > 0)?.threshold ?? thresholds[0] ?? 0
 
 	const reading = describeObservedRate({
 		events: sample.observations.filter((observation) => !observation.correct).length,
@@ -113,11 +113,11 @@ export async function runReliability(registry: EngineRegistryLike, args: Record<
 				.filter((key) => STRATA_FOR[surface].includes(key))
 				.map((key) => [key, curveByStratum(sample.observations, key, binCount)])
 		),
-		thresholds: gate,
-		error_classes_at: gateForClasses,
-		error_classes: errorClasses(sample.observations, gateForClasses, 12),
+		thresholds: check,
+		error_classes_at: thresholdForClasses,
+		error_classes: errorClasses(sample.observations, thresholdForClasses, 12),
 		notes: sample.notes,
-		summary: summarize(surface, overall, gate, sample, reading.sentence),
+		summary: summarize(surface, overall, check, sample, reading.sentence),
 	}
 }
 
@@ -172,7 +172,7 @@ async function placerRun(registry: EngineRegistryLike, args: Record<string, unkn
 function summarize(
 	surface: ReliabilitySurface,
 	overall: ReturnType<typeof reliabilityCurve>,
-	gate: ReturnType<typeof thresholdTable>,
+	check: ReturnType<typeof thresholdTable>,
 	sample: SurfaceSample,
 	powerSentence: string
 ): string {
@@ -182,13 +182,13 @@ function summarize(
 
 	// The most useful single row: the highest threshold that still admits a majority of what it could. Named rather
 	// than left to the reader, because a table's rows are all equally prominent and its point is not.
-	const workable = gate.toReversed().find((row) => row.admitted_share >= 0.5)
+	const workable = check.toReversed().find((row) => row.admitted_share >= 0.5)
 
-	const gateSentence = workable
-		? `A gate at ${workable.threshold} admits ${(workable.admitted_share * 100).toFixed(1)}% of observations at ` +
+	const thresholdSentence = workable
+		? `A check at ${workable.threshold} admits ${(workable.admitted_share * 100).toFixed(1)}% of observations at ` +
 			`precision ${workable.precision_above?.toFixed(3) ?? "n/a"}, letting ${workable.errors_admitted} errors ` +
 			`through and turning away ${workable.correct_below} correct ones.`
-		: "No threshold in the table admits half the observations, so the gate table describes only the tail."
+		: "No threshold in the table admits half the observations, so the check table describes only the tail."
 
 	const excludedTotal = sample.excluded.reduce((total, entry) => total + entry.n, 0)
 	const excludedSentence = excludedTotal ? ` ${excludedTotal} rows were excluded and are itemized.` : ""
@@ -202,7 +202,7 @@ function summarize(
 
 	return (
 		`${surface}: ${overall.n} graded observations, accuracy ${overall.accuracy?.toFixed(3)}, ` +
-		`ECE ${overall.ece.toFixed(3)} / MCE ${overall.mce?.toFixed(3)}. ${gateSentence}${excludedSentence}` +
+		`ECE ${overall.ece.toFixed(3)} / MCE ${overall.mce?.toFixed(3)}. ${thresholdSentence}${excludedSentence}` +
 		`${unassertedSentence} ` +
 		`${powerSentence}`
 	)

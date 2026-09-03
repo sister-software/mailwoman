@@ -1,4 +1,4 @@
-# Input-robustness gate — design
+# Input-robustness check — design
 
 **Date:** 2026-07-06
 **Status:** approved (operator, this session)
@@ -7,21 +7,21 @@
 ## Problem
 
 Input-perturbation robustness is a real, implemented capability — three absorption
-layers plus a standing metamorphic gate — but it was never written up, and an audit found
-three perturbation classes with no stability gate at all. The concept is invisible to a reader
-of the docs, and the gate silently omits abbreviation swaps, single-character corruptions, and
+layers plus a standing metamorphic check — but it was never written up, and an audit found
+three perturbation classes with no stability check at all. The concept is invisible to a reader
+of the docs, and the check silently omits abbreviation swaps, single-character corruptions, and
 number-spelling variants.
 
 Two deliverables, docs first:
 
 1. Document the current state.
-2. Extend the metamorphic gate's perturbation set to cover the untested classes, recording the
+2. Extend the metamorphic check's perturbation set to cover the untested classes, recording the
    ones that legitimately fail as tracked, non-blocking xfails rather than hiding or blocking on
    them.
 
 ## Current state (verified against source, 2026-07-06)
 
-Three absorption layers sit upstream of the gate:
+Three absorption layers sit upstream of the check:
 
 1. **Deterministic `normalize/`** — Unicode NFC, punctuation, whitespace collapse + trailing-
    punctuation trim (`normalize/whitespace.ts`). Note: `normalize/abbreviations.ts` (Rd→Road etc.)
@@ -33,7 +33,7 @@ Three absorption layers sit upstream of the gate:
    (`corpus/src/extract-recipes/intersection.ts`, `locale.ts`), abbreviation variants
    (`street-affix.ts`, `unit.ts` #454, `fr-bare-street.ts`).
 
-Gates:
+Checks:
 
 - **Metamorphic INV/DIR** (`scripts/eval/gauntlet/metamorphic.ts`) — the un-gameable layer. Grades
   the ASSEMBLED geocode (coordinate + tier), never parse F1. INV = label-preserving perturbations
@@ -44,26 +44,26 @@ Gates:
 - **Golden `graceful/*` slices** (`data/eval/golden/v0.1.2`) — small labeled adversarial slices
   (`graceful/typo|mis-casing|mis-punctuation|whitespace`, ~10 typo cases).
 - **`perturb-golden.ts`** — a one-off perturbation generator (delimiter-strip, lowercase, glue),
-  never a standing gate.
+  never a standing check.
 
 ### Coverage matrix (article centerpiece)
 
-| Class                    | normalize/ (runtime)                    | Trained (corpus aug) | Gated                                   |
-| ------------------------ | --------------------------------------- | -------------------- | --------------------------------------- |
-| Casing                   | yes (case-normalize #690/#829)          | yes                  | INV[lower/upper] green                  |
-| Spacing                  | yes (whitespace.ts)                     | incidental           | INV[ws], INV[comma-tight]               |
-| Abbreviation swap        | capable but OFF at runtime (deliberate) | yes                  | golden entries only — no stability gate |
-| Number spelling          | no                                      | no                   | nowhere                                 |
-| Typos (single-char edit) | no                                      | no                   | ~10 labeled golden cases only           |
-| Transpositions           | no                                      | no                   | folded into golden typo slice           |
+| Class                    | normalize/ (runtime)                    | Trained (corpus aug) | Conditional                              |
+| ------------------------ | --------------------------------------- | -------------------- | ---------------------------------------- |
+| Casing                   | yes (case-normalize #690/#829)          | yes                  | INV[lower/upper] green                   |
+| Spacing                  | yes (whitespace.ts)                     | incidental           | INV[ws], INV[comma-tight]                |
+| Abbreviation swap        | capable but OFF at runtime (deliberate) | yes                  | golden entries only — no stability check |
+| Number spelling          | no                                      | no                   | nowhere                                  |
+| Typos (single-char edit) | no                                      | no                   | ~10 labeled golden cases only            |
+| Transpositions           | no                                      | no                   | folded into golden typo slice            |
 
 ## Deliverable 1 — docs
 
-- New `docs/articles/concepts/input-robustness.mdx`: the three absorption layers, then the gates,
+- New `docs/articles/concepts/input-robustness.mdx`: the three absorption layers, then the checks,
   closing with the coverage matrix. Current state only.
 - Match sibling concept articles (`what-mailwoman-is.mdx`, `eval-discipline.mdx`) for frontmatter,
   tone, structure. House voice.
-- One pointer row/sentence in `CONTRIBUTING_MODEL_WORK.mdx`'s gate section + a cross-link from
+- One pointer row/sentence in `CONTRIBUTING_MODEL_WORK.mdx`'s check section + a cross-link from
   `eval-discipline.mdx`.
 
 ## Deliverable 2 — metamorphic INV extension
@@ -81,7 +81,7 @@ Extend `scripts/eval/gauntlet/metamorphic.ts`:
    legitimately shift the parse.
 3. **`number-spell`** — ordinal street swap (`5th Ave` ↔ `Fifth Ave`) and spelled-out house number
    (`100` → `One Hundred`). Tolerance-band relation. EXPECTED to fail initially (never trained,
-   never normalized); record in a known-xfail map (the band analog of `KNOWN_INV_XFAIL`) so the gate
+   never normalized); record in a known-xfail map (the band analog of `KNOWN_INV_XFAIL`) so the check
    documents the gap non-blocking.
 
 Report per class. Update the coverage-matrix rows this changes; note xfail'd gaps honestly.

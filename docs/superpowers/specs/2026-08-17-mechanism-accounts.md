@@ -31,7 +31,7 @@ commitments prevent it:
    nothing mechanistic accumulates for a truer understanding of addresses to break against.
 2. **Failure shapes are MECHANISM-STATES, never address shapes.** The vocabulary comes from the
    pipeline's own boundaries — _parsed-but-not-consulted_, _absent-from-candidates_,
-   _present-but-outranked-by-term-T_, _gated-out-by-G_, _evidence-silent_ — and makes claims about
+   _present-but-outranked-by-term-T_, _excluded-by-G_, _evidence-silent_ — and makes claims about
    what the system did, never about how addresses work. It is finite, derived from code structure,
    and versioned with the code.
 
@@ -39,7 +39,7 @@ commitments prevent it:
 
 Per-row, regenerated every run, assembled from facts the system already computes: what the parse
 produced, what each evidence channel fed, what retrieval returned, which constraints were applied,
-which gates fired, what won and on which score terms — plus the smallest counterfactual that flips
+which checks fired, what won and on which score terms — plus the smallest counterfactual that flips
 the row. Every line is checkable against execution; nothing in it is a narrative.
 
 The Weimar worked example, with today's real data:
@@ -58,7 +58,7 @@ smallest counterfactual: apply the region constraint → order inverts
 ```
 
 The interiority boundary, stated honestly: inside the weights there are no reasons to recover.
-Accounts live at the boundaries — what was fed, retrieved, gated, ranked — and when one bottoms out at
+Accounts live at the boundaries — what was fed, retrieved, conditional, ranked — and when one bottoms out at
 "the model chose X with margin m and every channel silent," that IS the class (the model flew
 blind), and the fix is evidence, not archaeology in the logits.
 
@@ -114,7 +114,7 @@ accept/review/reject band already exists as Fellegi–Sunter's clerical band in 
   D-rule before default-on.
 - **Rung 1 — counting**: p(parent|child) as literal hierarchy-table lookups (SDValidate shape);
   smoothing only where sparsity measurably bites.
-- **Rung 2+, gated** (#1724): masked-cell model (MCM/TURL-shaped) over assembled records, reusing
+- **Rung 2+, conditional** (#1724): masked-cell model (MCM/TURL-shaped) over assembled records, reusing
   the BIO masking infrastructure — only for coherence the hierarchy cannot express, and only if it
   beats the rung-1 baseline in an eval. ("Autodecoder" investigated and rejected — right intuition,
   wrong rung; coherence report §1.)
@@ -129,7 +129,7 @@ In ship order: evidence-silent predicate (no interpretability needed — shipped
 country probe + logit-lens decision depth (the model/resolver contradiction detector: hidden states
 read "DE" while the resolver commits US) → channel-reliance board metric (paired-input interchange;
 ERASER sufficiency/comprehensiveness per checkpoint) → exhaustive patch-sweep tool (~1,700 sites
-per input at this depth; seconds per case) → gated: IIT country register, at most one exploratory
+per input at this depth; seconds per case) → conditional: IIT country register, at most one exploratory
 SAE run. Non-changes, recorded so they are not re-proposed: hard concept bottlenecks (would have
 been wrong in Weimar — flag bypass decisions, never prevent them), RRR gradient penalties,
 attention-as-explanation.

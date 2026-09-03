@@ -70,7 +70,7 @@ The file lands at `<data-root>/wof/candidate.db`, and since `8.7.0` every entry 
 ignore it. Set the variable only for a gazetteer outside the data root, or to the literal `none` to
 pin the older FTS admin backend.
 
-`registry run` is the one exception, and it is a boot gate rather than a backend choice: it refuses to
+`registry run` is the one exception, and it is a boot check rather than a backend choice: it refuses to
 start without `--resolve-db` or `$MAILWOMAN_WOF_DB`, then ignores the path and resolves against the
 candidate gazetteer anyway. Pass the gazetteer's own path to get past it.
 

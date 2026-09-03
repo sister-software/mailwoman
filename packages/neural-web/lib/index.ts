@@ -16,7 +16,7 @@ export {
 	defaultGazetteerLexiconURL,
 	detectPairIndexCountry,
 	loadNeuralClassifierFromURLs,
-	resolvePairGateCountry,
+	resolvePairIndexCountry,
 	resolvePairIndexForText,
 	type LoadedPairIndex,
 	type LoadFromURLsOptions,
