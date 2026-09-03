@@ -1,7 +1,7 @@
 # Night 15 postmortem — the autonomous follow-on (2026-06-14)
 
 _The autonomous shift after the v4.7.0 geocoder-campaign ship. Plan: the six workstreams A–F of
-`nightshift/2026-06-14-NIGHT-SHIFT-PLAN.md` — reconcile re-gate, coarse-placer M3, multi-region interp
+`nightshift/2026-06-14-NIGHT-SHIFT-PLAN.md` — reconcile re-check, coarse-placer M3, multi-region interp
 recalibration, autocomplete, the marquee client-side demo geocoder, and issue housekeeping. All six
 landed (D was already shipped); the marquee shipped working and browser-verified. Then the back half
 turned into a bonus tail — a CI root-cause-and-fix, a keyboard-combobox typeahead, a 200-row
@@ -22,13 +22,13 @@ closures, zero self-merges** (PR-and-flag throughout); the operator returned ~13
   **compiled** CLI (`execFile out/cli.js parse`). `repo.ts`'s `__isCompiledTree` detection lands the
   core package root at `core/out`, so the compiled parser reads dictionaries from `core/out/data/…` —
   a path that only exists once something creates the `core/out/data → ../data` bridge. Locally that's a
-  side-effect of `promotion-gate.sh`; CI never ran the gate, so the first rule-path parse `ENOENT`s and
+  side-effect of `promotion-check.sh`; CI never ran the check, so the first rule-path parse `ENOENT`s and
   every `parse` fails (the same bridge issue behind night-13's `arena.perturb NOT FOUND`). Fix: mirror
   the sanctioned bridge as a Test-workflow step after compile — makes the suite pass **without**
   provisioning weights. Validated locally (pull the symlink → 5 fail; restore → 5 pass). The proper
   `repo.ts`-detection fix stays deferred to daylight review (#481). **This greens CI fully (225/225).**
 
-**A — reconcile re-gate (#580):** Graded the assembled pipeline (never raw neural) in argmax vs
+**A — reconcile re-check (#580):** Graded the assembled pipeline (never raw neural) in argmax vs
 reconcile mode after the #565 grouper fix. Reconcile is **strictly worse**: US street −2.4pp, FR street
 **−13.7pp** (the locale #427 claimed it helped), and it still breaks the geocoder precondition on 5.6%
 of OA rows where argmax never does. **Keep retired** — parked decision resolved, DeepSeek-concurred.
@@ -109,7 +109,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
 - **Pre-flight caught the CI fire.** The `yarn install --immutable` check surfaced a fully-red `main`
   nobody had flagged. Fixing it first meant every PR opened tonight had a clean CI story (modulo the
   flagged pre-existing weights condition).
-- **Grade-the-pipeline discipline paid off again.** The A re-gate and the C non-circular holdout both
+- **Grade-the-pipeline discipline paid off again.** The A re-check and the C non-circular holdout both
   came from the same rule that caught the original reconcile regression — never trust raw-neural F1.
 - **Probe-before-build saved hours three times.** The byte-range _measurement_ (24 KB/lookup) de-risked
   the whole marquee before a line of demo wiring; the Overture off-map _probe_ found the data ceiling
@@ -178,7 +178,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
 
 ## Concrete next steps
 
-- **Merge order (two CI gates to satisfy):**
+- **Merge order (two CI checks to satisfy):**
   - _Test/CI green_ needs **#579** (lockfile) **+ #589** (compiled-data bridge) — together they take the
     Test workflow to 225/225.
   - _docs-build green / marquee deploy_ needs **#579** (lockfile) **+ #585's `docusaurus.config.ts`**
@@ -207,7 +207,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
 | Modal / GPU time          | 0 (CPU-only shift, as planned)                                                                                 |
 | marquee verification      | 4 states in-browser (DC/MI/NY/CA), all exact, zero errors                                                      |
 | R2 hosted street extracts | DC + MI + NY + CA (the full launch trio + DC), all verified                                                    |
-| evals run                 | reconcile re-gate, 12-state conformal, coarse-placer quant, 200-row punctuation-stress (v0/neural/+SP)         |
+| evals run                 | reconcile re-check, 12-state conformal, coarse-placer quant, 200-row punctuation-stress (v0/neural/+SP)        |
 | NaN incidents             | 0                                                                                                              |
 | self-merges to main       | 0 (PR-and-flag throughout)                                                                                     |
 | CI status                 | Test: rescued 0 → 224/231 (#579) → 225/225 with #589. docs-build: red, needs #579 + #585-config (#590-finding) |

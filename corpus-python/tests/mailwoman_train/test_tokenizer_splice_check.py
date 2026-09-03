@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from mailwoman_train.tokenizer_splice import collect_sample_codepoints, gate_codepoint_overlap
+from mailwoman_train.tokenizer_splice import check_codepoint_overlap, collect_sample_codepoints
 
 
 @pytest.fixture()
@@ -28,25 +28,25 @@ def test_collect_sample_codepoints_nonascii_only(samples: dict[str, Path]) -> No
     assert "è" in collect_sample_codepoints(samples["fr"])
 
 
-def test_gate_passes_and_reports_when_disjoint(tmp_path: Path, samples: dict[str, Path]) -> None:
+def test_check_passes_and_reports_when_disjoint(tmp_path: Path, samples: dict[str, Path]) -> None:
     report_path = tmp_path / "report.json"
     # ą/ż do not appear in either sample → disjoint → PASS, empty overlaps in the report.
-    report = gate_codepoint_overlap(["▁Grudzi", "ądz", "ż"], samples, report_path)
+    report = check_codepoint_overlap(["▁Grudzi", "ądz", "ż"], samples, report_path)
     assert report == {"fr": [], "us": []}
     on_disk = json.loads(report_path.read_text(encoding="utf-8"))
     assert on_disk["per_locale_overlap"] == {"fr": [], "us": []}
 
 
-def test_gate_fails_loud_on_unaccepted_overlap(tmp_path: Path, samples: dict[str, Path]) -> None:
+def test_check_fails_loud_on_unaccepted_overlap(tmp_path: Path, samples: dict[str, Path]) -> None:
     report_path = tmp_path / "report.json"
     with pytest.raises(AssertionError, match=r"\bfr\b"):
-        gate_codepoint_overlap(["▁Lozère", "è"], samples, report_path)
+        check_codepoint_overlap(["▁Lozère", "è"], samples, report_path)
     # The report is still written before the raise — the artifact is the point.
     assert json.loads(report_path.read_text(encoding="utf-8"))["per_locale_overlap"]["fr"] == ["è"]
 
 
-def test_gate_passes_when_overlap_accepted(tmp_path: Path, samples: dict[str, Path]) -> None:
+def test_check_passes_when_overlap_accepted(tmp_path: Path, samples: dict[str, Path]) -> None:
     report_path = tmp_path / "report.json"
-    report = gate_codepoint_overlap(["▁Lozère", "è"], samples, report_path, accepted_overlap={"fr"})
+    report = check_codepoint_overlap(["▁Lozère", "è"], samples, report_path, accepted_overlap={"fr"})
     assert report["fr"] == ["è"]
     assert json.loads(report_path.read_text(encoding="utf-8"))["accepted_overlap"] == ["fr"]

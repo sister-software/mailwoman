@@ -4,7 +4,7 @@
 collection of every standing legal question (operator, 2026-07-30: "do your best and I'll forward
 it over when the project actually pays for one"). Each item carries the question, the facts we
 verified ourselves, and what we're doing in the meantime. Items are ordered by how much shipped
-product they gate. This file is the single source — new legal questions land HERE, not in
+product they check. This file is the single source — new legal questions land HERE, not in
 scattered plan docs.
 
 ## 1. ODbL — the osm/ workspace publish-block + OSM-derived corpus quarantine
@@ -26,11 +26,11 @@ The KR framework (item 4) reuses this exact posture.
 `docs/superpowers/specs/2026-07-20-bdc-plausibility-design.md`)
 
 1. **CostQuest Fabric boundary** — is carrying the BSL `location_id` as an opaque join key (no
-   coordinate, no derived table) clear of the Fabric license? Gates phase 2a.
+   coordinate, no derived table) clear of the Fabric license? Checks phase 2a.
 2. bdc.db distribution tier (shipped-continental vs build-local) — product call with a license rider.
 3. Pilot-state choice — product call, no legal rider.
 4. BDC vintage cadence — product call.
-5. **HIFLD power.db** — public-domain or access-restricted? Gates the grid layer.
+5. **HIFLD power.db** — public-domain or access-restricted? Checks the grid layer.
 6. **OSM telecom infra** — same ODbL sign-off as item 1; confirm the posture transfers.
 7. **Market-size denominator** — confirm TIGER `housing_unit_count` is an acceptable public proxy
    (the Fabric per-block count being licensed).
@@ -110,7 +110,7 @@ on the free channel) and marks every point where an instrument would be needed.
 1. **L1 — registration-form data collection.** The Lite key form collects name, email, company,
    so it is a personal-data collection. Notice text at point of collection, retention period for
    the download log, and whether the privacy page's "architecturally does not collect" framing
-   needs a written carve-out. Gates the form going up.
+   needs a written carve-out. Checks the form going up.
 2. **L2 — the instrument the Lite key is issued under.** Not the AGPL (that governs our code, not
    a compiled database) and not the commercial license. Needs a short data-use notice carrying the
    attribution condition and sitting correctly on top of the upstream licenses.

@@ -14,7 +14,7 @@
 # 1285 -> postcode: the tokenizer length prior) and (2) number absorbed into street. Knob 3 attacks BOTH
 # directly — oversampling street + LONG number teaches the street/number boundary (kills absorption) and
 # fights the length prior with volume (the ONLY on-board fix for mode 1 was numsplice, which CLOSED as a
-# golden-gate trade — this is the corpus alternative, uphill against the same prior).
+# golden-check trade — this is the corpus alternative, uphill against the same prior).
 #
 # THE MEASURED PROBLEM (board 3, n=400/class, 95% Wilson, SHIPPED v310, zero Norwegian rows pre-#1145):
 #     bare-street-hn   "Leppdalsvegen 1285"   0.693 [0.646, 0.736]   <- TARGET (no postcode competing)
@@ -27,7 +27,7 @@
 # GUARD : street-led-hn / city-first-hn / pc-first-hn do NOT regress from 0.94-0.968.
 # GUARD : the FR fragment board (board 2) does NOT re-drift below FR OVERALL ~0.725 (v310 0.733).
 # GUARD : GOLDEN (post-numsplice lesson — an on-board win can hide an off-board cost). If board 3 passes,
-#         run the golden gate delta vs v310; fr.house_number / us.unit_real must not regress >2pp.
+#         run the golden check delta vs v310; fr.house_number / us.unit_real must not regress >2pp.
 #
 # NOT A SHIP. A PASS justifies a FULL 8k pre-registered against the same board. Promotion is operator's.
 #

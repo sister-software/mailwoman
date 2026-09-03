@@ -161,7 +161,7 @@ describe("extractPostcodeAnchors — position-aware confidence (house-number dis
 		expect(a!.positionFactor).toBeLessThan(1)
 	})
 
-	it("GATES OUT a non-member system's vocabulary: a US-only code is not penalized by a German street word", () => {
+	it("CHECKS OUT a non-member system's vocabulary: a US-only code is not penalized by a German street word", () => {
 		// 12345 resolves US-only, so the German vocab is never consulted — Straußstraße does not fire.
 		// (This is the cross-locale-collision fix: an unrelated system's words can't down-weight a code
 		// that doesn't belong to that system.)

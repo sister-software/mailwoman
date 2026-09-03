@@ -121,8 +121,8 @@ export async function coverageReconciliation(
 	let total = 0
 
 	// Count placements at the boundary (parity with the retired in-script counter).
-	const seam: GeocodeAddress = async (raw) => {
-		const g = await geocoder.seam(raw)
+	const geocodeForIngest: GeocodeAddress = async (raw) => {
+		const g = await geocoder.geocodeAddress(raw)
 
 		total++
 
@@ -137,7 +137,7 @@ export async function coverageReconciliation(
 	const records: SourceRecord[] = []
 
 	for (const spec of SPECS) {
-		const recs = await ingestRows(rawBySource.get(spec.source)!, spec.mapping, { geocodeAddress: seam })
+		const recs = await ingestRows(rawBySource.get(spec.source)!, spec.mapping, { geocodeAddress: geocodeForIngest })
 
 		for (const r of recs) {
 			r.id = `${spec.source}:${r.id}`

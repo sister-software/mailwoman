@@ -38,7 +38,7 @@
 # street SURFACE, not by record row. Verified: 0 of 144,865 emitted rows carry a board surface. The
 # recipe THROWS without the list rather than mint a slice that trains on its own eval set.
 #
-# THE GATE (pre-registered; baselines.json profile fragment-fr-v264, registered against the SHIPPED
+# THE CHECK (pre-registered; baselines.json profile fragment-fr-v264, registered against the SHIPPED
 # model at commit e45e0255):
 #   MOVE  : bare-street 0.215 · street-particle 0.273 · admin-street-homonym 0.087 · date-name 0.055
 #   GUARD : street-housenumber 0.925 · alnum-housenumber 0.925  (contextful — a slice that fixes
@@ -50,7 +50,7 @@
 #   ALSO  : parity.street.hallucination_rate@v301-span 0.352 should FALL if T1c's diagnosis holds.
 # Read: `mailwoman eval fragment-board --weights-cache <dir>` + `mailwoman eval parity`.
 #
-# NOT A PROMOTE GATE. The standing floors and the 2pp golden gate are untouched; this checkpoint
+# NOT A PROMOTE CHECK. The standing floors and the 2pp golden check are untouched; this checkpoint
 # ships nowhere on its own. If the bare classes are FLAT: do NOT bump the weight and re-run — that is
 # the treadmill. One diagnostic (did the slice rows actually reach the loader? check the manifest
 # read), then fork to the operator.

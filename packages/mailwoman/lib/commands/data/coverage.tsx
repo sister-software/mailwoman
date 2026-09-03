@@ -177,7 +177,7 @@ function render(report: CoverageReport, wanted?: string[]): string {
 	}
 
 	if (m.trainedButUnmeasured.length) {
-		lines.push(`TRAINED, NOTHING GATES IT: ${m.trainedButUnmeasured.join(" ")}`)
+		lines.push(`TRAINED, NOTHING CHECKS IT: ${m.trainedButUnmeasured.join(" ")}`)
 	}
 
 	lines.push("", "country | parse | geocode | board")
@@ -199,7 +199,7 @@ function render(report: CoverageReport, wanted?: string[]): string {
 					: "—"
 
 		lines.push(
-			`${c.country} | ${parse} | ${geo} | ${c.boardRows ? `${c.boardPassedRows}/${c.boardRows} gated` : "unmeasured"}`
+			`${c.country} | ${parse} | ${geo} | ${c.boardRows ? `${c.boardPassedRows}/${c.boardRows} conditional` : "unmeasured"}`
 		)
 	}
 

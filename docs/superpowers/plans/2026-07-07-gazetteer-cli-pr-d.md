@@ -39,6 +39,6 @@ As PR A–C. Branch `feat/gazetteer-cli-pr-d`.
 
 ### Task 3: E2E + PR
 
-- [ ] E2E: `gazetteer build postcode-extract --country us` → compare row/fill counts vs the live `postalcode-us.db` (filled-coordinate count must be ≥ live; provenance tags present); artifact sealed. Do NOT swap (operator-gated; the current live extract is fine).
+- [ ] E2E: `gazetteer build postcode-extract --country us` → compare row/fill counts vs the live `postalcode-us.db` (filled-coordinate count must be ≥ live; provenance tags present); artifact sealed. Do NOT swap (operator-conditional; the current live extract is fine).
 - [ ] File the PR E tracking issue (the six ports + corpus tooling + pilot-anchor home + `scripts/` endgame).
 - [ ] Push, open PR D.

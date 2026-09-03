@@ -3,15 +3,15 @@
 # other channel are VERBATIM v2.6.4. init_from v264 step-008000 — a NEW objective (a fresh head),
 # which is the documented init_from case; `resume` is for continuing a capability already being grown.
 #
-# THE GATE (pre-registered, docs/superpowers/plans/2026-07-15-727-stage2-phase1-span-head.md):
+# THE CHECK (pre-registered, docs/superpowers/plans/2026-07-15-727-stage2-phase1-span-head.md):
 #   seg@1 > token@1 on the parity corpus. Baselines (v264, ship config): street token@1 0.573; a
 #   segment decode over the SUMMED-BIO stand-in scored 0.453 — WORSE, which is exactly why a trained
 #   span scorer is necessary and decode-hardening alone was falsified (night-3 postmortem).
 # Secondary read: oracle@10 must RISE from 0.749. If seg@1 crosses but oracle@10 is flat, the scorer
 # reshuffled the list without learning better spans.
 #
-# This is NOT a promote gate. The standing floors (street 0.90 / hn 0.97 / pc 0.97) and the 2pp golden
-# gate are untouched; this checkpoint ships nowhere on its own. Phase 2 (export) only starts if this
+# This is NOT a promote check. The standing floors (street 0.90 / hn 0.97 / pc 0.97) and the 2pp golden
+# check are untouched; this checkpoint ships nowhere on its own. Phase 2 (export) only starts if this
 # crosses. If seg@1 < token@1: do NOT tune span_loss_weight and re-run — that is the treadmill. One
 # diagnostic (is the loss decreasing?), then fork to the operator.
 #
@@ -176,7 +176,7 @@ train: # Same-vocab init_from fine-tune off the SHIPPED v264 (fresh optimizer; -
   weight_decay: 0.01
   warmup_steps: 500
   grad_clip_norm: 1.0
-  max_steps: 2000  # PROBE. A 2k probe answers the gate in minutes; 8k only if it crosses.
+  max_steps: 2000  # PROBE. A 2k probe answers the check in minutes; 8k only if it crosses.
   eval_every_steps: 1000
   save_every_steps: 2000
   log_every_steps: 50

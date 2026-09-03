@@ -1,7 +1,7 @@
 # === v8-jp-full — CJK Phase 3/4: the full JP char model on the 2M-row stage3-jp slice. ===
 #
 # The recipe the Leg-1 PASS unlocked. Leg 1 (v8-jp-probe, 200k rows, STAGE3 33-label head) scored
-# coordinate-acceptability 0.9925 against the pre-registered >= 0.70 gate (verdict on #1176,
+# coordinate-acceptability 0.9925 against the pre-registered >= 0.70 check (verdict on #1176,
 # 2026-07-29; scorer pre-registered at 34c7b6c2). This config keeps the probe's proven geometry and
 # changes exactly three things: the corpus (200k -> 2M), the label head (33 -> 47, `stage3-jp`), and
 # the char vocab (1,918 -> 2,237 sealed from the train split).
@@ -105,7 +105,7 @@ data:
 model:
   # The probe's geometry, unchanged. Scaling the encoder is a separate change with its own read;
   # this run changes the corpus and the head, so the encoder stays fixed to keep that attribution
-  # clean. 384/4 at 7.5M params cleared the gate with room.
+  # clean. 384/4 at 7.5M params cleared the check with room.
   hidden_size: 384
   num_hidden_layers: 4
   num_attention_heads: 6

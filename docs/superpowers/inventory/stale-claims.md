@@ -4,7 +4,7 @@ Verified against the code at `/home/lab/Projects/mailwoman` on 2026-07-14. Scope
 
 **Ground truth, established once, cited throughout:**
 
-- Training has been cross-entropy-only since model v0.5.0. `crf_loss_weight: 0.0` in **every** training config from `corpus-python/src/mailwoman_train/configs/v0_5_0-classifier-ce-only-full.yaml` (first CE-only config) through the current/latest `v2.9.0-country-counterweight.yaml:89` (uncommitted, today's work). `model.py:708` gates the entire CRF forward+backward pass behind `crf_loss_weight > 0`; when 0 (every current config), `model.py:748` falls through to `loss = ce_loss` — the CRF module gets **no gradient**. The shipped model card makes this explicit: `neural-weights-en-us/model-card.json:33-34` — `"crf_at_training": false, "crf_at_inference": true`.
+- Training has been cross-entropy-only since model v0.5.0. `crf_loss_weight: 0.0` in **every** training config from `corpus-python/src/mailwoman_train/configs/v0_5_0-classifier-ce-only-full.yaml` (first CE-only config) through the current/latest `v2.9.0-country-counterweight.yaml:89` (uncommitted, today's work). `model.py:708` checks the entire CRF forward+backward pass behind `crf_loss_weight > 0`; when 0 (every current config), `model.py:748` falls through to `loss = ce_loss` — the CRF module gets **no gradient**. The shipped model card makes this explicit: `neural-weights-en-us/model-card.json:33-34` — `"crf_at_training": false, "crf_at_inference": true`.
 - The shipping JS runtime decoder (`neural/viterbi.ts`) implements Viterbi over a **frozen, hand-coded BIO-structural transition mask** (`buildBIOTransitionMask`) — never learned transitions. Its own header (lines 12-20) says the learned-transition mode is "Currently not exported from the training-side ONNX bundle." `package_weights.py:104-115` (`export_crf_transitions`) confirms: returns `None` whenever `crf_loss_weight == 0.0`. No `crf-transitions.json` exists anywhere in the repo or in `neural-weights-en-us/` (confirmed by `find`).
 - fr-fr ships the en-us model verbatim. `.github/workflows/publish.yml:129-131`: `# fr-fr shares the en-us model for now (locale-specific weights are future work).` followed by `cp neural-weights-en-us/model.onnx neural-weights-fr-fr/model.onnx` and the same for `tokenizer.model`. There is no fr-fr-specific training run.
 - Current shipped model geometry (`neural-weights-en-us/model-card.json`, v5.9.0): `hidden_size: 384`, `num_attention_heads: 6`, `intermediate_size: 1536`, `num_labels: 33`, `params: "33.9M"`, `vocab_size: 66319`, `tokenizer_version: "0.8.0-fr-nsplice"`.
@@ -61,7 +61,7 @@ Verified against the code at `/home/lab/Projects/mailwoman` on 2026-07-14. Scope
 
 **Where:** `docs/articles/concepts/crf-decoder.mdx:124`
 
-**Ground truth:** This is gated behind `crf_loss_weight > 0` (`model.py:708`), which is `0.0` in the shipped recipe — see Finding 1.
+**Ground truth:** This is blocked behind `crf_loss_weight > 0` (`model.py:708`), which is `0.0` in the shipped recipe — see Finding 1.
 
 **Evidence:** `corpus-python/src/mailwoman_train/model.py:708-748`.
 

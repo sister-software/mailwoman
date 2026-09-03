@@ -93,7 +93,7 @@ pulled from WOF. It is an acquisition gap, not a modelling error, and it closes 
 ### What shipped, and what is still unverified
 
 A **seat preference** now breaks the tie: on an exact `neg_rank` tie, a `locality` carrying a _real_
-population outranks other placetypes. Both gates are required and were measured, not reasoned:
+population outranks other placetypes. Both checks are required and were measured, not reasoned:
 
 - A plain "finer placetype wins" moved the top slot on **11,377** keys, of which only **722** were the
   seat/district duplicate. The rest were contests between distinct places — 2,885 `locality → neighbourhood`

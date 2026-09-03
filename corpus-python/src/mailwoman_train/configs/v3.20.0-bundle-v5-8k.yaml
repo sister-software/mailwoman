@@ -23,7 +23,7 @@
 #   evidence at rate p to teach discounting) — deployed only if the fed-vs-ablated golden gap
 #   survives the v5 retrain.
 #
-# PRE-REGISTERED GATES (P0 grid at EVERY save 2k/4k/6k/8k via grade_evidence_bundle
+# PRE-REGISTERED CHECKS (P0 grid at EVERY save 2k/4k/6k/8k via grade_evidence_bundle
 # --lexicon locality-surface-lexicon-v5.json --street-lexicon street-type-lexicon-v2.json;
 # PLUS per-save export → LOCAL golden instruments — the v3.19 lesson: the probe track alone is
 # blind to the promotion register):

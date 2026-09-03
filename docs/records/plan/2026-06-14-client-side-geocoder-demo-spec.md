@@ -157,7 +157,7 @@ epic — it is more than "wire the existing feature," which is the nuance worth 
    worker needed for correctness.
 3. **Host MI first** (229 MB — smallest) byte-range; wire the street tier on Michigan end-to-end; verify
    via `run-docs` that the browser issues **Range** requests (pulls ~KB, not the full extract) on a real
-   geocode. The gate — confirm before NY/CA. (Local Range-serving for the verification; R2 for prod.)
+   geocode. The check — confirm before NY/CA. (Local Range-serving for the verification; R2 for prod.)
 4. **Add NY, then CA**; measure CA's real in-browser geocode latency against the < 3 s budget.
 5. **UX (#377):** map pin + calibrated-radius circle (the per-region factor from
    `data/calibration/interp-radius-conformal.json`) + tier caption; span-highlight by tag; resolved-

@@ -243,7 +243,7 @@ export async function readTriplesFromParentJoin(
  * Returns a predicate that answers `true` for everything when the gazetteer is not on disk, so a checkout without it
  * builds the same rows it did before rather than silently emitting none.
  */
-export async function createKnownLocalityGate(country: string, adminDB?: string): Promise<(name: string) => boolean> {
+export async function createKnownLocalityCheck(country: string, adminDB?: string): Promise<(name: string) => boolean> {
 	const path = adminDB ?? String(dataRootPath("wof", "admin-global-priority-importance.db"))
 
 	if (!(await pathExists(path))) return () => true
@@ -300,7 +300,7 @@ export async function createKnownLocalityGate(country: string, adminDB?: string)
  * code TWICE (`3750-000` and `3750000`, exactly 2.00× for PT and PL), so the first surface of a code wins and its twin
  * is dropped. Some countries populate the place but not admin1 — ZA is 100% place, 0% region — which yields nothing
  * this slice can use, so those rows are dropped rather than emitted with a blank region. And the "place name" is often
- * a SUB-locality, which {@link createKnownLocalityGate} filters.
+ * a SUB-locality, which {@link createKnownLocalityCheck} filters.
  */
 export async function readTriplesFromGeonames(
 	country: string,
@@ -312,7 +312,7 @@ export async function readTriplesFromGeonames(
 
 	if (!convention || !(await pathExists(path))) return []
 
-	const isKnownLocality = options.isKnownLocality ?? (await createKnownLocalityGate(country))
+	const isKnownLocality = options.isKnownLocality ?? (await createKnownLocalityCheck(country))
 	const out: PostcodeTriple[] = []
 	const seen = new Set<string>()
 

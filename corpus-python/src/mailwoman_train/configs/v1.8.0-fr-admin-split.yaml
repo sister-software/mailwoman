@@ -9,11 +9,11 @@
 # WHY IT WON'T WASH (v0.9.2 / v1.7.0 traps): (1) anchor-ON by construction — real BAN postcodes (99.9%
 # land the anchor); FR postcode is TRAILING like the US, so the anchor REINFORCES the split (the v0.9.2
 # German wash was positional, leading-PLZ — scar is conditional, not universal). (2) Pre-GPU self-
-# validation PASSED: splitting the département cuts collision-commune coordinate error -61%, merge
+# validation PASSED: splitting the département reduces collision-commune coordinate error -61%, merge
 # resolves 0% (docs/articles/evals/2026-06-19-fr-admin-split-prevalidation.md). use_conventions_loss_mask
 # stays OFF (absent here; would -inf the FR street_prefix the corpus carries -> loss explosion).
 #
-# GOAL / GATE: grade the ASSEMBLED anchor-ON coordinate, NOT label-F1. Live gate: FR centroid-shift vs
+# GOAL / CHECK: grade the ASSEMBLED anchor-ON coordinate, NOT label-F1. Live check: FR centroid-shift vs
 # v1.5.0 on the held-out commune set (mean <= 0.95x + significant) AND US guardrail (mean regress <=1%
 # rel, p90 <=0.1km) AND #727 diacritic (Lozère -> region, not "ère"). NOT promoted without operator GO.
 # CORPUS: corpus-v0.5.0 (690 slices verbatim) + synth-fr-admin-split (60k BAN rows) overlay -> R2 -> sync_v080.

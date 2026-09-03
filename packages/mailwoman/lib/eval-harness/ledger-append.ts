@@ -204,7 +204,7 @@ export async function ledgerAppend(options: LedgerAppendOptions): Promise<number
 		training_wall_clock_seconds: 0,
 		metrics,
 		notes:
-			`${notes}${exceptionNote} [graded_artifact=${verdict.graded_artifact}; gate=${verdict.label}; out-dir=${options.outDir}]`.trim(),
+			`${notes}${exceptionNote} [graded_artifact=${verdict.graded_artifact}; check=${verdict.label}; out-dir=${options.outDir}]`.trim(),
 	}
 
 	const ledger = await readLocalJSONFile<Ledger>(ledgerPath)

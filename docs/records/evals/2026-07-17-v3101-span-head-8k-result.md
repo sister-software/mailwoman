@@ -22,7 +22,7 @@ Same corpus + tokenizer as v381 → every F1 comparison below is valid.
 | ---------------------------- | ------------- | --------------- | -------------------------------- |
 | golden us micro / exact      | 86.9 / 66.2   | 86.9 / **66.3** | GUARD PASS (byte-stable)         |
 | golden fr micro / exact      | 90.1 / 75.4   | 90.0 / 75.4     | GUARD PASS (noise)               |
-| seg@1 (parity 267, starved)  | token@1 0.558 | **0.588**       | GATE PASS (+3.0pp)               |
+| seg@1 (parity 267, starved)  | token@1 0.558 | **0.588**       | CHECK PASS (+3.0pp)              |
 | oracle@5 (parity 267)        | —             | **0.7865**      | +6.4pp over v301's 0.7228        |
 | all-caps raw-case exact (P3) | 48.3          | 48.0            | FAIL (inert, −0.3pp vs +5pp bar) |
 
@@ -42,7 +42,7 @@ arc rested on (the plan cited oracle@10 0.749); the 8k ship-recipe model exceeds
 0.786), and beats the phase-1 v301 substrate by 6.4pp.
 
 **The span head plateaus by 2k.** seg@1 was 0.603 at 2k, 0.588 at 8k (−1.1pp, noise); oracle@5
-likewise saturates. The extra 6k steps refined train_loss (1.49→1.31) but not the decode gate —
+likewise saturates. The extra 6k steps refined train_loss (1.49→1.31) but not the decode check —
 the same 2k≈8k plateau the B4b digit arc hit. The 8k is the "complete" run (lowest loss, clean
 schedule) and the better-provenance substrate, but 2k would have served equally on the decode metrics.
 
@@ -55,7 +55,7 @@ open path, and it's the operator's call — this augment, as configured, is a me
 
 This model **ships nowhere on its own.** The span head is dormant until phase-4c wires the k-best
 decode + the name-evidence rerank (`docs/superpowers/specs/2026-07-17-727-phase4c-street-name-evidence.md`).
-The token path is byte-stable, so there is no BIO regression to gate and no promote decision to make
+The token path is byte-stable, so there is no BIO regression to check and no promote decision to make
 tonight. What this run produces is the **phase-4c decode substrate**: an int8 model that exports
 `span_scores` + the `semi-crf-transitions.json` sidecar (the `export_onnx` path was extended tonight
 to emit it), staged at `scratchpad/v3101-cache` + the checkpoint on the training volume.
@@ -64,7 +64,7 @@ The measured chain now runs end to end: trained span head → k-best decode (PR 
 0.786 headroom → name-evidence rerank (phase-4b: +18.5pp bare-street on the FR fragment board,
 148 fixes / 3 breaks). Every link is measured; none is promoted. Phase-4c (build
 `StreetLocalityEvidence`, wire the rerank behind a flag, re-run the full promote battery WITH the
-rerank active) is the next arc, gated on #1154 merging and the operator ratifying the spec.
+rerank active) is the next arc, blocked on #1154 merging and the operator ratifying the spec.
 
 ## Artifacts
 

@@ -10,7 +10,7 @@ The model refactor has earned the word "mature" — and the external research ba
 
 The Elasticsearch-free architecture is also no longer a contrarian bet. Pelias's Placeholder/PIP sidecars exist _because_ ES can't do admin hierarchy; Photon just finished a multi-year forced OpenSearch port; Nominatim 5.0 (Feb 2025) shipped as a pip-installable library; addok serves all of France from Redis+SQLite in 6 GB. The field is drifting toward "geocoder as a library" — which is what the ancestors-table-in-SQLite design already is.
 
-The weaknesses are not in the model or the architecture. They are operational: **stale doc entry points, a reproducibility crater in training, scattered promotion gates, and three missing geocoder table stakes** (interpolation, reverse, autocomplete integration). All fixable; none require rethinking the design.
+The weaknesses are not in the model or the architecture. They are operational: **stale doc entry points, a reproducibility crater in training, scattered promotion checks, and three missing geocoder table stakes** (interpolation, reverse, autocomplete integration). All fixable; none require rethinking the design.
 
 One calibration note from the research: the incumbent moved. Senzing retrained libpostal's CRF in 2024–2025 (~1.2B records, +4% avg accuracy, up to +87% per-country, Apache 2). Parity claims should benchmark against _that_ model, not the 2017 weights the current arenas use.
 
@@ -55,12 +55,12 @@ One calibration note from the research: the incumbent moved. Senzing retrained l
 **The five risks, ranked:**
 
 1. **No clone-and-train path.** Corpus extracts, tokenizer, anchor/gazetteer lookups all live on R2/Modal/`$MAILWOMAN_DATA_ROOT` with hardcoded paths. A fresh agent cannot reproduce v0.9.12 from the repo. → `REPRODUCIBILITY.md` + publish corpus snapshots beside model releases.
-2. **Gate scatter.** Each config carries its own pre-registered gate comment; execution is manual night-shift discipline, not CI. One `promotion-gate.sh` that parses the config's gate block and runs the listed scripts would turn lore into enforcement — and auto-append to the ledger on pass.
+2. **Check scatter.** Each config carries its own pre-registered check comment; execution is manual night-shift discipline, not CI. One `promotion-check.sh` that parses the config's check block and runs the listed scripts would turn lore into enforcement — and auto-append to the ledger on pass.
 3. **Curriculum state unlogged.** Anchor/gazetteer confidence ramps are step-aware; a resume mid-ramp silently changes training dynamics and nothing records which curriculum a checkpoint saw. Stamp curriculum state into the model card; assert on resume.
 4. **Overlay extract resolution fails silently.** Overlay manifests cross-reference base corpora by absolute path; the loader's glob fallback means a moved base corpus trains on the wrong data without erroring (the v0.7.1 trap, still open). Add strict mode + explicit `base_corpus_version` lineage.
 5. **Int8 toolchain pinning is undocumented.** The value_info-strip fix and the Safari-WebGPU opset≤17 invariant live in code comments; a well-meaning dep bump re-breaks iOS undetected. Add a version-verification script + a toy export/quant CI check.
 
-Eval-hygiene lore (tokenizer-F1 incomparability, name-match vs coordinate truth, German native-order rendering) is _partially_ encoded in tooling (`--tokenizer` flag, `de-order-eval.sh`, honest-eval) — better than memory-only, but the promotion-gate consolidation is what makes it survivable.
+Eval-hygiene lore (tokenizer-F1 incomparability, name-match vs coordinate truth, German native-order rendering) is _partially_ encoded in tooling (`--tokenizer` flag, `de-order-eval.sh`, honest-eval) — better than memory-only, but the promotion-check consolidation is what makes it survivable.
 
 ---
 
@@ -88,11 +88,11 @@ Capability checklist (evidence-based, from the resolver/data-layer pass):
 
 ## 5. Recommended roadmap
 
-**Phase A — Consolidate the parser win (now → ~2 weeks).** Land #466/#468 (affix-ml extract + gazetteer choreography) into the consolidation retrain; re-benchmark the arenas against Senzing's retrained libpostal; cut the v1.0-parity model. This finishes the campaign already in flight — don't start geocoder work mid-retrain.
+**Phase A — Consolidate the parser win (now → ~2 weeks).** Land #466/#468 (affix-ml extract + gazetteer choreography) into the consolidation retrain; re-benchmark the arenas against Senzing's retrained libpostal; remove the v1.0-parity model. This finishes the campaign already in flight — don't start geocoder work mid-retrain.
 
-**Phase B — Hygiene sprint (~1 week, parallelizable).** AGENTS.md links + status.mdx + version matrix; `promotion-gate.sh` + ledger auto-append; REPRODUCIBILITY.md; strict extract resolution; `buildTokens()` dedup + libpostal TLA removal. Cheap, and everything after gets safer.
+**Phase B — Hygiene sprint (~1 week, parallelizable).** AGENTS.md links + status.mdx + version matrix; `promotion-check.sh` + ledger auto-append; REPRODUCIBILITY.md; strict extract resolution; `buildTokens()` dedup + libpostal TLA removal. Cheap, and everything after gets safer.
 
-**Phase C — Geocoder table stakes (~6–8 weeks).** In order of leverage: (1) house-number interpolation off TIGER (biggest coverage win, gate on honest-eval coord p50 dropping from ~10 km admin-centroid toward street-level), (2) reverse geocoding off wof-polygons.db (symmetric tree output), (3) autocomplete endpoint wiring the existing FST tier with parser engagement past a token threshold. Add batch as a thin layer over all three.
+**Phase C — Geocoder table stakes (~6–8 weeks).** In order of leverage: (1) house-number interpolation off TIGER (biggest coverage win, check on honest-eval coord p50 dropping from ~10 km admin-centroid toward street-level), (2) reverse geocoding off wof-polygons.db (symmetric tree output), (3) autocomplete endpoint wiring the existing FST tier with parser engagement past a token threshold. Add batch as a thin layer over all three.
 
 **Phase D — Data + service maturity (~quarter).** Overture/GERS conflation layer for addresses; RemoteResolver + multi-instance deployment; delta-sync builds; observability (latency SLOs, per-country coverage metrics, periodic honest-eval on production traffic). addok (full France, 6 GB RAM, minutes to deploy) is the ops-simplicity benchmark to cite and beat.
 

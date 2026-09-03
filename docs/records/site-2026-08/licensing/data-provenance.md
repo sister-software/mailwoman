@@ -18,7 +18,7 @@ off from the core so its obligations never leak into the default product.
 :::caution[Legal sign-off: ☐ not cleared (as of 2026-06-30)]
 
 The OpenStreetMap precision tier is **built but not enabled** in any published artifact — not on npm, not
-on R2, not in the demo. Turning it on is gated on counsel reviewing the [questions
+on R2, not in the demo. Turning it on is blocked on counsel reviewing the [questions
 below](#what-counsel-needs-to-confirm). When that review lands, flip this to **☑ cleared**, name the
 reviewing counsel, and date it.
 
@@ -119,7 +119,7 @@ to a user.)
 
 ## What counsel needs to confirm
 
-The sign-off gate is these questions:
+The sign-off check is these questions:
 
 1. **Produced Work vs Derivative Database.** Does serving a single resolved coordinate from an OSM extract
    constitute a Produced Work (attribution only), as assumed above — or a Derivative Database hand-off

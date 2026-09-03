@@ -62,7 +62,7 @@ locality lookup see it; `#lookupAndPick` (lines 981-983) attaches it to any `loc
 It is the **backend** that drops it. `WOFSQLitePlaceLookup.findPlace` dispatches the resolved
 convention's strategies in order — `[postcode_area_resolution, fallback_fuzzy_name_match]`:
 
-- `#postcodeAreaResolution` (`lookup.ts:528`) is gated on `this.#postcodeLocalityExtract`. The repro
+- `#postcodeAreaResolution` (`lookup.ts:528`) is blocked on `this.#postcodeLocalityExtract`. The repro
   attaches one database, `admin-global-priority.db`, and it has no `postcode_locality` table.
   Probed directly: `SELECT name FROM sqlite_master WHERE name='postcode_locality'` → **no row**.
   The strategy returns `null` before touching the postcode.
@@ -120,7 +120,7 @@ if (existing.hardCountry || existing.defaultCountry) return undefined
 
 So a locale-derived `defaultCountry` demotes a 0.99999-confidence FR placement to a soft posterior.
 The same subordination appears a third time in `geocode-core.ts:640-645`, where the #928
-postcode-format prior is gated on `!opts.defaultCountry`.
+postcode-format prior is blocked on `!opts.defaultCountry`.
 
 **Proof by removal.** Same CLI, same database, one flag:
 
@@ -140,7 +140,7 @@ this right is already wired; one locale-derived default is standing on it.
 `mailwoman geocode` loads the full extract set via `wofExtractPaths`, so the postcode resolves. Under
 `defaultCountry=US` it resolves to the _US_ row — ZIP 75001, Addison TX, 32.960,-96.838. Then
 `applyPostcodeConsistency` (default-ON since 2026-07-04) measures the gap to the chosen locality and
-finds no reconciling alternative inside the 50 km gate:
+finds no reconciling alternative inside the 50 km check:
 
 | Paris candidate     | distance from ZIP 75001 (Addison TX) |
 | ------------------- | ------------------------------------ |
@@ -158,7 +158,7 @@ $ mailwoman geocode "12 Rue de Rivoli, 75001 Paris"
   "lat": 32.960001, "lon": -96.838499, "countryCode": "US"
 ```
 
-Verified twice — once by recomputing the gate arithmetic from raw gazetteer rows, once by running
+Verified twice — once by recomputing the check arithmetic from raw gazetteer rows, once by running
 the production CLI. The consistency pass is behaving exactly as specified; it is being fed a
 country it should never have been given. Credit where due: the falsehood flag _does_ fire, which is
 the one thing that went right here.
@@ -202,7 +202,7 @@ postcode instead of a region or country token:
 
 1. Country candidates from codex's postcode **shape**. Model-free, no safelist, no prior.
 2. For each candidate country: does the postcode resolve there, and is there a same-named locality
-   within `gateKm` of it?
+   within `thresholdKm` of it?
 3. The country whose (postcode, locality) pair is geographically consistent wins. Abstain on zero
    hits.
 
@@ -211,7 +211,7 @@ Prototyped out-of-tree against the live gazetteer, over the public `findPlace` s
 
 ### Confound board
 
-Verdicts were identical at 15, 25 and 50 km gates — the mechanism is not gate-tuned.
+Verdicts were identical at 15, 25 and 50 km checks — the mechanism is not check-tuned.
 
 | postcode | locality      | verdict                            | distance | note                            |
 | -------- | ------------- | ---------------------------------- | -------: | ------------------------------- |
@@ -239,7 +239,7 @@ Real pairs, sampled deterministically from the shipped artifacts:
 | 400 US (ZIP, city)   | `postalcode-us.db` + admin parent names      | US **378**, non-US **0**, abstain 22 |
 | 400 FR (CP, commune) | `postcode-locality-fr.db`, `is_containing=1` | FR **400**, other **0**, abstain 0   |
 
-800 pairs, zero border crossings, at both the 15 and 25 km gates. The 22 US abstentions are pairs
+800 pairs, zero border crossings, at both the 15 and 25 km checks. The 22 US abstentions are pairs
 where the ZIP's parent name is not an exact-matching locality in the admin gazetteer — a recall
 gap, and abstention is the safe outcome there.
 
@@ -280,22 +280,22 @@ Two things make it a decision rather than a patch:
 **(a) It has to be allowed to override `defaultCountry`, and today nothing is.** The subordination
 is deliberate and appears three times: `hardCountryFor`'s
 `if (existing.hardCountry || existing.defaultCountry) return undefined`; the `#lookupAndPick`
-precedence chain; `geocode-core`'s `!opts.defaultCountry` gate on the #928 prior. Changing that
+precedence chain; `geocode-core`'s `!opts.defaultCountry` check on the #928 prior. Changing that
 precedence is the real decision, and it is the _same_ decision the coarse placer already lost with
 a 0.99999-confidence FR call. Whatever rule is written should cover both.
 
 **(b) It needs the postal extracts attached.** `parse --resolve --resolve-db <one.db>` attaches only
 the admin database, where the postcode resolves to nothing whatsoever — no evidence to be coherent
-with. `mailwoman geocode` and `mailwoman serve` load the full set via `wofExtractPaths`. A pass gated
+with. `mailwoman geocode` and `mailwoman serve` load the full set via `wofExtractPaths`. A pass conditional
 on postcode evidence is silently inert in the single-extract configuration, which is exactly the
-configuration the bug was reported against. The gate needs to say so out loud rather than no-op.
+configuration the bug was reported against. The check needs to say so out loud rather than no-op.
 
 ### A cheaper intermediate, for comparison
 
 Stop deriving `defaultCountry` from the locale's region subtag when the tree carries a postcode or
 the placer is confident. **This precedent already exists**: #912 change 3 (`commands/geocode.tsx:287`,
 `inferredScopeOK`) skips the locale-inferred default for a bare-locality tree, with the comment
-"Paris under the en-US locale must not be hard-scoped to Paris, Texas". The gate is one predicate
+"Paris under the en-US locale must not be hard-scoped to Paris, Texas". The check is one predicate
 short of covering this case.
 
 Measured effect of removing the default entirely (`--default-country none`): all four target cases
@@ -340,7 +340,7 @@ loaded the classifier once, and looped in-process (a CLI spawn costs ~5.6 s).
 - `resolver-wof-sqlite/lookup.ts` — strategy dispatch (351-410), `#postcodeAreaResolution` (528),
   `#fuzzyNameMatch` country filter (632), `#findLocalityCoordFirst` country filter (1034).
 - `core/pipeline/runtime-pipeline.ts` — `hardCountryFor` (155-171).
-- `mailwoman/geocode-core.ts` — `countryFromPostcodeFormat` (314), the #928 gate (640-667).
+- `mailwoman/geocode-core.ts` — `countryFromPostcodeFormat` (314), the #928 check (640-667).
 - `mailwoman/commands/parse.tsx` — `localeToCountry` (271), `resolverDefaultCountry` (290).
 - `mailwoman/commands/geocode.tsx` — `inferredScopeOK` (287).
 - `codex/postcode-systems.ts` — `candidateSystemsForPostcode`, and the docstring that says the

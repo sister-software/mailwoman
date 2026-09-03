@@ -142,7 +142,7 @@ def main() -> None:
     lines.append("")
     lines.append("> Where the locale-table column beats the global-table column, a single global table is "
                  "leaving calibration error on the table for that locale (the OOD locales especially). A "
-                 "multi-locale model should ship one calibration table per locale, selected by the locale gate.")
+                 "multi-locale model should ship one calibration table per locale, selected by the locale check.")
     lines.append("")
     Path(args.report).write_text("\n".join(lines) + "\n")
 

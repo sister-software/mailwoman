@@ -70,7 +70,7 @@ const LEG_SEMANTICS = [
 	{
 		leg: "per-locale-f1",
 		spawn: "$ (throws on non-zero)",
-		onFailure: "propagates — aborts the gate",
+		onFailure: "propagates — aborts the check",
 		artifact: "<tag>-per-locale.md",
 		mergesStderr: false,
 		call: perLocaleF1,
@@ -78,7 +78,7 @@ const LEG_SEMANTICS = [
 	{
 		leg: "score-affix ×6",
 		spawn: "$ (throws on non-zero)",
-		onFailure: "propagates — aborts the gate",
+		onFailure: "propagates — aborts the check",
 		artifact: "<tag>-{affix,unit,pobox,intersection,watch-intersection-vt,watch-glue}.md",
 		mergesStderr: false,
 		call: scoreAffix,
@@ -86,7 +86,7 @@ const LEG_SEMANTICS = [
 	{
 		leg: "score-country-homograph",
 		spawn: "$ (throws on non-zero)",
-		onFailure: "propagates — aborts the gate",
+		onFailure: "propagates — aborts the check",
 		artifact: "<tag>-country.md",
 		mergesStderr: false,
 		call: scoreCountryHomograph,
@@ -94,7 +94,7 @@ const LEG_SEMANTICS = [
 	{
 		leg: "de-order-eval",
 		spawn: "$({ nothrow })",
-		onFailure: "tolerated — gate continues, exit code never read",
+		onFailure: "tolerated — check continues, exit code never read",
 		artifact: "<tag>-deorder.md",
 		mergesStderr: true,
 		call: deOrderEval,
@@ -102,7 +102,7 @@ const LEG_SEMANTICS = [
 	{
 		leg: "demo-cascade-smoke",
 		spawn: "$({ nothrow })",
-		onFailure: "tolerated — gate logs and continues; a floored spec FAILs on the missing sidecar",
+		onFailure: "tolerated — check logs and continues; a floored spec FAILs on the missing sidecar",
 		artifact: "cascade-smoke.md",
 		mergesStderr: false,
 		call: demoCascadeSmoke,
@@ -110,7 +110,7 @@ const LEG_SEMANTICS = [
 	{
 		leg: "external-arenas",
 		spawn: "$({ nothrow })",
-		onFailure: "non-zero ABORTS the gate (return 1) before the verdict",
+		onFailure: "non-zero ABORTS the check (return 1) before the verdict",
 		artifact: "arenas.md",
 		mergesStderr: true,
 		call: externalArenas,
@@ -118,7 +118,7 @@ const LEG_SEMANTICS = [
 	{
 		leg: "fr-parse-recall",
 		spawn: "$({ nothrow, env: childEnv() })",
-		onFailure: "non-zero ABORTS the gate (return 1) — the floor verdict",
+		onFailure: "non-zero ABORTS the check (return 1) — the floor verdict",
 		artifact: "fr-bare-street.md",
 		mergesStderr: true,
 		call: frParseRecall,
@@ -150,7 +150,7 @@ describe("error semantics — the per-leg table", () => {
 		}
 	})
 
-	test("the two legs that abort the gate are the arena and the FR floor", () => {
+	test("the two legs that abort the check are the arena and the FR floor", () => {
 		const aborting = LEG_SEMANTICS.filter((row) => row.onFailure.includes("ABORTS")).map((row) => row.leg)
 
 		expect(aborting).toEqual(["external-arenas", "fr-parse-recall"])

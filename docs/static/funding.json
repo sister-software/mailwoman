@@ -14,7 +14,7 @@
 		{
 			"guid": "mailwoman",
 			"name": "Mailwoman",
-			"description": "An open-source (AGPL-3.0, dual-licensed) geocoder and postal-address parser. A ~29M-parameter neural model parses messy multilingual addresses; readonly SQLite artifacts built from open data (OpenStreetMap, Who's On First, Overture, national open address registers such as France's BAN) resolve them to coordinates — on a server, offline, or entirely in the browser via WebAssembly. Drop-in compatible with the Nominatim, Photon, and libpostal APIs. Every data artifact is reproducible and checksummed; every model release is gated by a published evaluation methodology.",
+			"description": "An open-source (AGPL-3.0, dual-licensed) geocoder and postal-address parser. A ~29M-parameter neural model parses messy multilingual addresses; readonly SQLite artifacts built from open data (OpenStreetMap, Who's On First, Overture, national open address registers such as France's BAN) resolve them to coordinates — on a server, offline, or entirely in the browser via WebAssembly. Drop-in compatible with the Nominatim, Photon, and libpostal APIs. Every data artifact is reproducible and checksummed; every model release is blocked by a published evaluation methodology.",
 			"webpageUrl": {
 				"url": "https://mailwoman.sister.software"
 			},
@@ -67,7 +67,7 @@
 				"guid": "sustained-development",
 				"status": "active",
 				"name": "Sustained development",
-				"description": "Ongoing work across the parser, resolver, data pipelines, evaluation infrastructure, and drop-in APIs — including the maintenance nobody funds: gazetteer rebuilds, regression gates, dependency care.",
+				"description": "Ongoing work across the parser, resolver, data pipelines, evaluation infrastructure, and drop-in APIs — including the maintenance nobody funds: gazetteer rebuilds, regression checks, dependency care.",
 				"amount": 2000,
 				"currency": "USD",
 				"frequency": "monthly",

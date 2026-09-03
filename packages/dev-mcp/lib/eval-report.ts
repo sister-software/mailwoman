@@ -100,7 +100,7 @@ const LORE_GUARD_MARKER = "recompile"
  */
 export const LEDGER_NOTE =
 	"This command is REPORTED, never run. Appending to evals/scores-by-version.json is a repo write and a claim about " +
-	"a shipped version, while the gate runs on candidates that may never ship — so the operator runs it, with the real " +
+	"a shipped version, while the check runs on candidates that may never ship — so the operator runs it, with the real " +
 	"npm semver, at promote time."
 
 /**
@@ -122,7 +122,7 @@ export async function readEvalReport(outDir: string, stdout: string, stderr: str
 	} else {
 		notes.push(
 			`No verdict.json at ${verdictPath}. The run did not reach the verdict assembler — read the log. This is not a ` +
-				"FAIL; a gate that never graded and a gate that graded FAIL are different outcomes."
+				"FAIL; a check that never graded and a check that graded FAIL are different outcomes."
 		)
 	}
 
@@ -144,7 +144,7 @@ export async function readEvalReport(outDir: string, stdout: string, stderr: str
 	if (unmeasured.length) {
 		notes.push(
 			`${unmeasured.length} floor${unmeasured.length === 1 ? "" : "s"} had no measurement ` +
-				`(${unmeasured.map((floor) => floor.metric).join(", ")}). The gate marks an unmeasured floor failing so it ` +
+				`(${unmeasured.map((floor) => floor.metric).join(", ")}). The check marks an unmeasured floor failing so it ` +
 				"cannot pass by default — read these as 'never ran', not as 'missed the bar'."
 		)
 	}
@@ -215,7 +215,7 @@ export function summarizeEvalReport(report: EvalReport): string {
 		: ` All ${report.floors.length} floors met.`
 
 	return (
-		`Gate ${report.label ?? "(unlabelled)"} graded the ${report.graded_artifact ?? "UNRECORDED"} artifact: ` +
+		`Check ${report.label ?? "(unlabelled)"} graded the ${report.graded_artifact ?? "UNRECORDED"} artifact: ` +
 		`${report.verdict}.${detail}`
 	)
 }

@@ -25,7 +25,7 @@ body:
         - street
         - venue
         - locality
-        - gates
+        - checks
         - multilingual
         - architecture
         - neural
@@ -56,7 +56,7 @@ body:
       label: Scope
       description: |
         Locales and tiers affected. Name any tested contract this changes and
-        any gate or board row it touches.
+        any check or board row it touches.
     validations:
       required: true
   - type: textarea
@@ -75,6 +75,6 @@ body:
         the claim this issue's completion is judged by.
       placeholder: |
         - [ ] A test asserts the guess is withheld on disagreement.
-        - [ ] Gate reads 384/384 including the new row.
+        - [ ] Check reads 384/384 including the new row.
     validations:
       required: true

@@ -20,7 +20,7 @@
 #     Doctor makes no network call of its own; parsing needs none either. This is the "parse-only"
 #     leg Task 7's dropin-cold-start.test.ts convention names — the half of the page that ships
 #     unconditionally.
-#   - Gated behind MAILWOMAN_COLD_START_FULL=1: a REAL `mailwoman data pull candidate` (~1.65 GB) and
+#   - Blocked behind MAILWOMAN_COLD_START_FULL=1: a REAL `mailwoman data pull candidate` (~1.65 GB) and
 #     the two `mailwoman geocode` calls (US + FR) ten-minute-trial.mdx's step 5 shows. Off by default
 #     so a routine run (and CI) downloads nothing. Set MAILWOMAN_COLD_START_DATA_ROOT to a persistent
 #     directory to skip re-downloading candidate.db on a repeat run; left unset, a fresh throwaway
@@ -238,7 +238,7 @@ if [[ "${MAILWOMAN_COLD_START_FULL:-}" != "1" ]]; then
 fi
 
 # ---------------------------------------------------------------------------------------------------
-# Gated leg: ten-minute-trial.mdx step 5 — a REAL `data pull candidate` (~1.65 GB) then the US + FR
+# Conditional leg: ten-minute-trial.mdx step 5 — a REAL `data pull candidate` (~1.65 GB) then the US + FR
 # geocode calls. Reuses MAILWOMAN_COLD_START_DATA_ROOT if the caller points at one (so a repeat run
 # doesn't re-download), else a fresh throwaway root that's removed after.
 # ---------------------------------------------------------------------------------------------------

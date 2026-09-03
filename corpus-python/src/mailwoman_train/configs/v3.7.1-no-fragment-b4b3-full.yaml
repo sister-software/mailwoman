@@ -1,6 +1,6 @@
 # === v3.7.1-no-fragment-b4b3-full — Track B knob 3 (long-number oversample) 8k. ESCALATION of v370. ===
 # The 8k ESCALATION of the v370 2k probe — knob 3 was the first purely-additive change (target +4.7pp,
-# FR +3.4pp, golden gate PASS 0 regressions). This run answers whether more steps cross the strict bar.
+# FR +3.4pp, golden check PASS 0 regressions). This run answers whether more steps cross the strict bar.
 #
 # PRE-REGISTERED READ (written before the numbers exist; graded on the NO digit board, board 3,
 # scratchpad/run-digit-board.run.ts, package-shaped int8, vs the registered SHIPPED-v310 baselines).
@@ -15,7 +15,7 @@
 # 1285 -> postcode: the tokenizer length prior) and (2) number absorbed into street. Knob 3 attacks BOTH
 # directly — oversampling street + LONG number teaches the street/number boundary (kills absorption) and
 # fights the length prior with volume (the ONLY on-board fix for mode 1 was numsplice, which CLOSED as a
-# golden-gate trade — this is the corpus alternative, uphill against the same prior).
+# golden-check trade — this is the corpus alternative, uphill against the same prior).
 #
 # THE MEASURED PROBLEM (board 3, n=400/class, 95% Wilson, SHIPPED v310, zero Norwegian rows pre-#1145):
 #     bare-street-hn   "Leppdalsvegen 1285"   0.693 [0.646, 0.736]   <- TARGET (no postcode competing)
@@ -28,9 +28,9 @@
 # GUARD : street-led-hn / city-first-hn / pc-first-hn do NOT regress from 0.94-0.968.
 # GUARD : the FR fragment board (board 2) does NOT re-drift below FR OVERALL ~0.725 (v310 0.733).
 # GUARD : GOLDEN (post-numsplice lesson — an on-board win can hide an off-board cost). If board 3 passes,
-#         run the golden gate delta vs v310; fr.house_number / us.unit_real must not regress >2pp.
+#         run the golden check delta vs v310; fr.house_number / us.unit_real must not regress >2pp.
 #
-# SHIP CANDIDATE. On PASS: export int8, run board 3 + FR fragment + the golden gate, then operator promotes.
+# SHIP CANDIDATE. On PASS: export int8, run board 3 + FR fragment + the golden check, then operator promotes.
 #
 # init_from v310 step-008000, fresh optimizer, LR 1.0e-5 constant, 8000 steps, warmup 500.
 #

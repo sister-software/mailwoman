@@ -2,7 +2,7 @@
 # slice gains the two classes the v251 read-out named (AU compact units from OA UNIT; locality+
 # postcode polarity rows = the "Eight Mile Plains 4113" regression class). Same tokenizer
 # (v0.9.0-multisplice), same init (multisplice-expanded), same LR — v251 dynamics showed peak-early
-# drift, so 8000 steps (eval/save 2000). Gate bars: v251-best non-regression (street >= .5467 @12k,
+# drift, so 8000 steps (eval/save 2000). Check bars: v251-best non-regression (street >= .5467 @12k,
 # hn >= .7922 @2k, pc back toward .9861) + fragment-dev + per-country.
 data:
   corpus_dir: /data/corpus/versioned/v0.10.3-fragment-v2/corpus-v0.10.3-fragment-v2

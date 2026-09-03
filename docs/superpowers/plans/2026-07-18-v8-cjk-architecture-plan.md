@@ -9,8 +9,8 @@ _Planning artifact. Grounded in: `what-mailwoman-is.mdx`, `SCHEMA.mdx`, `model.p
 ## TL;DR (the decisions)
 
 1. **Approach A (char-level encoder), deployed script-routed (C at the runtime layer). Reject B outright.** A and C are not competitors — A is the _encoder_, C is the _shipping mechanism_. The Latin SP model is not touched at all; a new char-level CJK model ships beside it and a script-router dispatches. This makes the forgetting guard **provable, not measured** (Latin bytes are identical → diff 0 CI[0,0], the same proof the #825 mean-init won on).
-2. **The char path is already half-built.** `CharCNNEncoder` (`model.py`) + `char_tokenizer.py` are committed, ONNX-clean, and gated-off — the deliberate "CJK-forward path" from #825. v8 activates and trains it; it is not a from-scratch encoder rebuild. This collapses the cost gap that made A look expensive.
-3. **Schema is already done on paper.** The seven JP tags (`prefecture`/`municipality`/`district`/`block`/`sub_block`/`building_number`/`building_name`) are declared in `COMPONENT_TAGS` and gated by `LocaleProfile.componentsSupported`. v8 activates them — a universal-schema extension, not a JP-private fork.
+2. **The char path is already half-built.** `CharCNNEncoder` (`model.py`) + `char_tokenizer.py` are committed, ONNX-clean, and conditional-off — the deliberate "CJK-forward path" from #825. v8 activates and trains it; it is not a from-scratch encoder rebuild. This collapses the cost gap that made A look expensive.
+3. **Schema is already done on paper.** The seven JP tags (`prefecture`/`municipality`/`district`/`block`/`sub_block`/`building_number`/`building_name`) are declared in `COMPONENT_TAGS` and blocked by `LocaleProfile.componentsSupported`. v8 activates them — a universal-schema extension, not a JP-private fork.
 4. **The real long pole is not the encoder or the schema — it is corpus BIO alignment over _unsegmented_ kanji.** Overture gives field _values_ (`street=字崎枝`), not character-level spans, and JP addresses have no whitespace. Aligning fields back to a space-free string is the hidden risk (§5). De-risk it in week 1, before any training.
 5. **Model the large-to-small order natively (model-first). Do not normalize.** A human reads order from context; the model must too. The block grammar is learned from labels, not rewritten by a preprocessor.
 
@@ -31,7 +31,7 @@ There is also a structural fact that inverts the "A is the big rebuild" intuitio
 
 This buys the one property the operator demanded — "a new capability, not a trade" — **by construction**. The Latin model is not retrained, not spliced, not touched. Its regression is provably zero.
 
-The open question that A-internally leaves unresolved, and that the probe must answer, is whether the two models eventually **unify** into one char model serving all scripts. Unification is elegant (one transformer body, shared) and is the bitter-lesson-honest end state. But it re-introduces the dilution risk. **Decision: do not unify in v8.** Ship dual-path. Treat unification as a later consolidation gated on a Latin bake-off (§3).
+The open question that A-internally leaves unresolved, and that the probe must answer, is whether the two models eventually **unify** into one char model serving all scripts. Unification is elegant (one transformer body, shared) and is the bitter-lesson-honest end state. But it re-introduces the dilution risk. **Decision: do not unify in v8.** Ship dual-path. Treat unification as a later consolidation blocked on a Latin bake-off (§3).
 
 ### The cheapest pre-registered probe
 
@@ -39,7 +39,7 @@ Two legs, both ~1-hour A100 retrains at this model size (the pocket budget's ite
 
 **Leg 1 — CJK viability (the go/no-go for A on CJK):**
 
-- Build ~200k JP rows from Overture-JP on the JP schema subset (§2), aligned to character-level BIO (§5 must be solved first — this is the gate on the gate).
+- Build ~200k JP rows from Overture-JP on the JP schema subset (§2), aligned to character-level BIO (§5 must be solved first — this is the check on the check).
 - Wire the data loader to feed `char_ids` (currently `char_tokenizer.encode_row_charword` exists but `data_loader.py` has no char path — this is the one piece of real plumbing the probe needs).
 - Train the **bare** char model — no anchor/gazetteer/phrase channels (the scaffolding docstring already scopes the probe this way; channels re-align per-word only after the probe confirms).
 - Eval on a **held-out JP coordinate-acceptability board**, held out by locality bucket (the same discipline as the Latin coord boards).
@@ -50,7 +50,7 @@ Two legs, both ~1-hour A100 retrains at this model size (the pocket budget's ite
 - Train the _same_ bare char model on the _Latin_ corpus. Compare to the bare SP Latin model on the existing Latin coord boards.
 - **Falsifiable read:** does char-level match SP on Latin (within noise on US comma-free + FR-fragment)? If **yes**, unification is on the table for a future major. If **no**, dual-path is permanent — which is _fine_ (C handles it), but you want that answer now, cheaply, not after committing to a merge.
 
-Leg 1 gates v8. Leg 2 gates the _shape of v9+_ and costs one extra retrain — run it in the same session.
+Leg 1 checks v8. Leg 2 checks the _shape of v9+_ and costs one extra retrain — run it in the same session.
 
 ---
 
@@ -58,7 +58,7 @@ Leg 1 gates v8. Leg 2 gates the _shape of v9+_ and costs one extra retrain — r
 
 ### The tags exist; activate them
 
-`COMPONENT_TAGS` already declares the JP seven (`SCHEMA.mdx` §JP-specific), gated behind `LocaleProfile.componentsSupported`. This was Phase-0 foresight paying off exactly as designed ("so that schema additions in Phase 6 do not require a core rewrite"). v8 is that Phase 6.
+`COMPONENT_TAGS` already declares the JP seven (`SCHEMA.mdx` §JP-specific), blocked behind `LocaleProfile.componentsSupported`. This was Phase-0 foresight paying off exactly as designed ("so that schema additions in Phase 6 do not require a core rewrite"). v8 is that Phase 6.
 
 Mapping the chōme-banchi system to the tags:
 
@@ -76,7 +76,7 @@ Postcode (〒100-0005) maps to the existing universal `postcode`. Country to `co
 
 ### Universal extension, not a JP fork
 
-Activate the tags in the shared union; let `componentsSupported` per-locale gate emission. The classifier head expands from 33 → 47 labels (7 new tags × B/I). Rationale: KR and CN will need overlapping structure (KR has 시/도 province, 시/군/구 city, 동 dong, 번지 — several map onto `municipality`/`district`/`sub_block`), so a JP-private label set would just be re-forked at KR. One universal union, per-locale masks, is the established pattern (the FR `cedex` precedent).
+Activate the tags in the shared union; let `componentsSupported` per-locale check emission. The classifier head expands from 33 → 47 labels (7 new tags × B/I). Rationale: KR and CN will need overlapping structure (KR has 시/도 province, 시/군/구 city, 동 dong, 번지 — several map onto `municipality`/`district`/`sub_block`), so a JP-private label set would just be re-forked at KR. One universal union, per-locale masks, is the established pattern (the FR `cedex` precedent).
 
 **Head-expansion note (from #727 phase-1):** a freshly-added head/label group needs its **own param-group LR** — the existing warm layers and the cold new label rows must not share a learning rate. Bake this into the JP training config.
 
@@ -96,24 +96,24 @@ This is the strongest possible forgetting guard — the Latin regression is not 
 - **Cost:** +1 model artifact. The char CJK model is _small_ (few-thousand-char embedding table vs 73k SP), so the marginal MB is modest and Tier-A/Tier-B payload logic is unchanged — the router picks the model, the gazetteer split is orthogonal.
 - **Channels:** the anchor/gazetteer/country/conventions channels project per-SP-piece today. For the char model they re-align **per-word** (one projection per whitespace-or-CJK-char token). The scaffolding defers this until after the probe — correct sequencing; the bare probe isolates the encoder, channels come once CJK viability is proven.
 
-Unification into one char model is explicitly **out of v8 scope**, gated on probe Leg 2. Ship dual-path; revisit at v9+ if char matches SP on Latin.
+Unification into one char model is explicitly **out of v8 scope**, blocked on probe Leg 2. Ship dual-path; revisit at v9+ if char matches SP on Latin.
 
 ---
 
 ## 4. Phased v8 plan
 
-Gate discipline: each phase has a falsifiable read; a FAIL diagnoses before the next phase, it does not proceed on hope.
+Check discipline: each phase has a falsifiable read; a FAIL diagnoses before the next phase, it does not proceed on hope.
 
-| Phase                          | Work                                                                                                                                                                                                 | Gate                                                                                                                                                     |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **0 — Alignment de-risk** (§5) | 500 JP rows: verify Overture field → character-span BIO alignment is correct against a segmenter. _No training._                                                                                     | ≥95% of 50 hand-checked rows align correctly. FAIL → adopt MeCab/Sudachi or block-regex segmentation before spending compute. **This gates everything.** |
-| **1 — Probe**                  | Activate CharCNN; wire `char_ids` into `data_loader.py`; ~200k JP extract; bare char train; held-out JP coord board. Run Leg 2 (Latin bake-off) same session.                                        | Leg 1: JP coord-acceptability ≥ bare-Latin floor (~0.70). Leg 2: record char-vs-SP-Latin delta (informs v9, not v8).                                     |
-| **2 — Schema activation**      | Expand active labels 33→47; JP `componentsSupported`; new head param-group.                                                                                                                          | Compile-clean; downstream alignment/inference updated in the same commit (`SCHEMA.mdx` rule).                                                            |
-| **3 — JP corpus**              | Full JP extract from Overture-JP (19.6M) — `locale`-style recipe, CJK-aware synth in native order, character BIO. Postcode-anchor channel wired (JP is a WOF-priority country, gazetteer covers it). | Extract stats sane; coverage across prefecture buckets; no all-`O` rows (`JSON hides gaps` scar).                                                        |
-| **4 — JP train + channels**    | Train char CJK model with channels re-aligned per-word; int8 ONNX export.                                                                                                                            | JP coord board clears the v8 bar (TBD — set from probe, e.g. wrong-prefecture < X%). Latin: N/A, untouched (provable).                                   |
-| **5 — Ship JP-only**           | Router in `query-shape`; second model artifact; drop-in + browser (onnxruntime-web) verified; demo repoint.                                                                                          | Published-tarball md5 verify; **JP is the first non-Latin parse claim.**                                                                                 |
-| **6 — KR**                     | Pull Overture-KR; KR schema map; KR extract; train (likely _same_ char model, KR labels added).                                                                                                      | KR coord board. **See reframe below — KR may be cheaper than JP.**                                                                                       |
-| **7 — CN/TW**                  | Overture-TW 9.7M on disk; CN pullable. Hanzi, no whitespace (JP-alignment problem again).                                                                                                            | CN/TW coord board.                                                                                                                                       |
+| Phase                          | Work                                                                                                                                                                                                 | Check                                                                                                                                                     |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **0 — Alignment de-risk** (§5) | 500 JP rows: verify Overture field → character-span BIO alignment is correct against a segmenter. _No training._                                                                                     | ≥95% of 50 hand-checked rows align correctly. FAIL → adopt MeCab/Sudachi or block-regex segmentation before spending compute. **This checks everything.** |
+| **1 — Probe**                  | Activate CharCNN; wire `char_ids` into `data_loader.py`; ~200k JP extract; bare char train; held-out JP coord board. Run Leg 2 (Latin bake-off) same session.                                        | Leg 1: JP coord-acceptability ≥ bare-Latin floor (~0.70). Leg 2: record char-vs-SP-Latin delta (informs v9, not v8).                                      |
+| **2 — Schema activation**      | Expand active labels 33→47; JP `componentsSupported`; new head param-group.                                                                                                                          | Compile-clean; downstream alignment/inference updated in the same commit (`SCHEMA.mdx` rule).                                                             |
+| **3 — JP corpus**              | Full JP extract from Overture-JP (19.6M) — `locale`-style recipe, CJK-aware synth in native order, character BIO. Postcode-anchor channel wired (JP is a WOF-priority country, gazetteer covers it). | Extract stats sane; coverage across prefecture buckets; no all-`O` rows (`JSON hides gaps` scar).                                                         |
+| **4 — JP train + channels**    | Train char CJK model with channels re-aligned per-word; int8 ONNX export.                                                                                                                            | JP coord board clears the v8 bar (TBD — set from probe, e.g. wrong-prefecture < X%). Latin: N/A, untouched (provable).                                    |
+| **5 — Ship JP-only**           | Router in `query-shape`; second model artifact; drop-in + browser (onnxruntime-web) verified; demo repoint.                                                                                          | Published-tarball md5 verify; **JP is the first non-Latin parse claim.**                                                                                  |
+| **6 — KR**                     | Pull Overture-KR; KR schema map; KR extract; train (likely _same_ char model, KR labels added).                                                                                                      | KR coord board. **See reframe below — KR may be cheaper than JP.**                                                                                        |
+| **7 — CN/TW**                  | Overture-TW 9.7M on disk; CN pullable. Hanzi, no whitespace (JP-alignment problem again).                                                                                                            | CN/TW coord board.                                                                                                                                        |
 
 **What ships first: JP-only (Phase 5).** It is the operator's stated headline, the data is on disk (19.6M), and it validates the whole char+router+schema stack end-to-end before KR/CN pile on.
 

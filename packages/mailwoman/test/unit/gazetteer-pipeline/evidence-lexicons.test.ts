@@ -160,7 +160,7 @@ interface StreetTypeLexicon {
 }
 
 describe("street-type lexicon build", () => {
-	it("canonical lowercase words in entries, short abbreviations uppercase-gated", async () => {
+	it("canonical lowercase words in entries, short abbreviations uppercase-conditional", async () => {
 		const tmp = tempRootPath(`street-type-lexicon-test.json`)
 		const built = await buildStreetTypeLexicon({ output: tmp })
 

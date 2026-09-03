@@ -79,7 +79,7 @@ number, always the first piece. The tokenizer splits numbers into digit pieces (
 segment ends one piece late. Eight locales, one shape. This is not noise; it is a boundary off-by-one at
 a digit run, and it looks fixable independently of everything else here.
 
-Three more are truncations (`"bulevardul iuliu maniu"` → `"bulevardul i"`, cutting mid-word), which is
+Three more are truncations (`"bulevardul iuliu maniu"` → `"bulevardul i"`, reducing mid-word), which is
 the same boundary error in the other direction.
 
 ## 4. The falsifier: hallucination on the 54 rows nothing measures

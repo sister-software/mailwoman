@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Land the GeoJSON wire atoms in `@mailwoman/api-kit` (first consumer) and migrate `@mailwoman/photon` from express to Hono + `@hono/zod-openapi` with the OpenAPI document emitted from the route table, retiring `photon/openapi.yaml` through the same parity gate as phase 1.
+**Goal:** Land the GeoJSON wire atoms in `@mailwoman/api-kit` (first consumer) and migrate `@mailwoman/photon` from express to Hono + `@hono/zod-openapi` with the OpenAPI document emitted from the route table, retiring `photon/openapi.yaml` through the same parity check as phase 1.
 
 **Architecture:** Per the approved spec (`docs/superpowers/specs/2026-07-12-hono-api-surface-design.md`) and the phase-1 pattern — with one deliberate divergence. Photon is GET-only and its query params include _contractual_ repeatable params (`osm_tag`, `layer`) and numeric params whose degenerate handling is observable wire behavior (`/reverse` 400s on repeated `lat` because express hands `Number()` an array). So phase 1's canonicalize middlewares are NOT copied. Instead: a `legacyQuery(c)` adapter reproduces express's `req.query` shape exactly, the original parsing helpers move verbatim, and the query schemas are validator-proof unions with doc-exact `.openapi()` overrides — validation still cannot fail, wire decisions still live in handlers, but nothing is rewritten between the wire and the legacy parsing code. This is the "map the boundary, don't cargo-cult" line the phase-1 final review drew.
 
@@ -266,7 +266,7 @@ export const reverseQueryParams = z.object({
 })
 ```
 
-(If the emitted parameter schemas surface the union instead of the override, that is adjudicated at Task 4's gate — the override mechanism is the intent; verify with `emitOpenAPIDocuments` during Task 3's doc test.)
+(If the emitted parameter schemas surface the union instead of the override, that is adjudicated at Task 4's check — the override mechanism is the intent; verify with `emitOpenAPIDocuments` during Task 3's doc test.)
 
 - [ ] **Step 6: Rewire `photon/index.ts`.** Delete the moved blocks; add `export * from "./engine.ts"`, `export * from "./projection.ts"`, `export * from "./schema.ts"` above the remaining express code; add the minimal imports the remaining express router needs (`type PhotonEngine`, `photonCollection`, etc. — `export *` doesn't bind local names; phase-1 Task 3 did the same). Express router stays functional.
 
@@ -580,7 +580,7 @@ git commit -m "feat(photon)!: express Router -> Hono app with emitted OpenAPI do
 
 ---
 
-### Task 4: Spec-parity gate — emitted document vs `photon/openapi.yaml`, then retire the yaml
+### Task 4: Spec-parity check — emitted document vs `photon/openapi.yaml`, then retire the yaml
 
 **Files:**
 
@@ -601,7 +601,7 @@ git commit -m "feat(photon)!: express Router -> Hono app with emitted OpenAPI do
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   ONE-TIME migration gate (deleted once adjudicated): the emitted OpenAPI document must cover
+ *   ONE-TIME migration check (deleted once adjudicated): the emitted OpenAPI document must cover
  *   the handwritten openapi.yaml's contract — every path, method, parameter, and status code.
  */
 
@@ -661,7 +661,7 @@ test("every legacy status code is declared on the emitted operation", () => {
 })
 ```
 
-- [ ] **Step 2: Run and adjudicate.** `yarn vitest run --dir ./photon --reporter=verbose`. Every failure is either a routes.ts bug (fix, re-run) or a yaml bug (record). Likely candidates to check deliberately: `bbox` (the legacy router never parsed it — if the yaml documents it, that's a yaml-side overpromise to record AND a decision point: add it to `searchQueryParams` as documented-but-unparsed, or record its absence; prefer matching the yaml's parameter list so the gate passes with the param declared, since `PhotonSearchParams.bbox` already exists on the engine interface — but do NOT wire parsing, that would be new behavior); `format=jsonld`'s 200 body shape; any parameter the yaml documents that the router ignored. If a difference can't be confidently classified, STOP and report BLOCKED with the exact diff.
+- [ ] **Step 2: Run and adjudicate.** `yarn vitest run --dir ./photon --reporter=verbose`. Every failure is either a routes.ts bug (fix, re-run) or a yaml bug (record). Likely candidates to check deliberately: `bbox` (the legacy router never parsed it — if the yaml documents it, that's a yaml-side overpromise to record AND a decision point: add it to `searchQueryParams` as documented-but-unparsed, or record its absence; prefer matching the yaml's parameter list so the check passes with the param declared, since `PhotonSearchParams.bbox` already exists on the engine interface — but do NOT wire parsing, that would be new behavior); `format=jsonld`'s 200 body shape; any parameter the yaml documents that the router ignored. If a difference can't be confidently classified, STOP and report BLOCKED with the exact diff.
 
 - [ ] **Step 3: Retire.** `git rm photon/openapi.yaml`; drop `"openapi.yaml"` from `photon/package.json` `files` (if listed); `rm` the parity test (never staged). Full suite + compile green.
 
@@ -671,7 +671,7 @@ test("every legacy status code is declared on the emitted operation", () => {
 git add -A photon
 git commit -m "feat(photon): retire the handwritten OpenAPI yaml — the emitted document is the spec
 
-Parity gate adjudications: <the real list from Step 2>"
+Parity check adjudications: <the real list from Step 2>"
 ```
 
 ---
@@ -756,7 +756,7 @@ git commit -m "feat(photon): serve via api-kit serveNode; emitted OpenAPI at /op
 
 ```bash
 git push -u origin feat/hono-photon
-gh pr create --title "feat!: Hono API surface, phase 2 — api-kit geo atoms + photon migration" --body "<spec/plan links; geo atoms; legacyQuery adapter rationale (why photon does NOT get phase 1's canonicalizers — repeatable params and duplicate-param 400s are contract here); parity-gate adjudications; smoke receipts; breaking note (createPhotonRouter removed, no shim); next-major-train constraint. End with the Claude Code attribution line.>"
+gh pr create --title "feat!: Hono API surface, phase 2 — api-kit geo atoms + photon migration" --body "<spec/plan links; geo atoms; legacyQuery adapter rationale (why photon does NOT get phase 1's canonicalizers — repeatable params and duplicate-param 400s are contract here); parity-check adjudications; smoke receipts; breaking note (createPhotonRouter removed, no shim); next-major-train constraint. End with the Claude Code attribution line.>"
 ```
 
 ⚠ Do not merge the PR — operator's call. NOTE for the controller, not the implementer: the hosted `mailwoman-photon.service` systemd unit runs the OLD express CLI; redeploy is a post-merge operator step (standing plan: drop-in servers redeploy post-POSAIS).
@@ -765,6 +765,6 @@ gh pr create --title "feat!: Hono API surface, phase 2 — api-kit geo atoms + p
 
 ## Deferred to later phases (per spec §Order)
 
-- **Phase 3 (nominatim)**: nominatim migration + parity gate; `LonLat` atom lands with it.
+- **Phase 3 (nominatim)**: nominatim migration + parity check; `LonLat` atom lands with it.
 - **Phase 4 (native API)**: `@mailwoman/api`, api-kit error envelope + metrics port, `mailwoman serve`, delete `mailwoman/server` + express repo-wide, graceful-shutdown story.
 - **Phase 5 (CI clients)**: spec artifacts in the release workflow, Python/Rust generation, `feat/api-clients` closure, docs follow-up (orphaned static yamls + api.mdx links).

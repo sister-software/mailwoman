@@ -34,7 +34,7 @@
 # scripts/fetch-hf-weights.ts and the tarball audit in scripts/verify-tarball.ts; this workflow
 # orchestrates them, and `yarn release:preflight --source hf` runs the same two locally with no
 # dispatch. Every path that was a hand-maintained list of shell copies here went stale at least once
-# — most recently at the workspace regroup, which cost the v9.2.0 cut three of its four dispatches.
+# — most recently at the workspace regroup, which cost the v9.2.0 reduce three of its four dispatches.
 #
 # A `clients` job runs after `publish` succeeds: it regenerates the Python + Rust API clients as
 # workflow artifacts — inspection copies only. This workflow NEVER publishes clients: registry
@@ -164,7 +164,7 @@ jobs:
         env:
           # RELEASE_PR_TOKEN (fine-grained PAT: THIS repo only, contents + pull-requests write) makes
           # the release PR belong to a TRUSTED HUMAN actor, so `on: pull_request` workflows run
-          # unprompted — the 7.8.0 cut stalled in `action_required` when a bot-PR Test run started
+          # unprompted — the 7.8.0 reduce stalled in `action_required` when a bot-PR Test run started
           # requiring manual approval, and the approval policy must stay STRICT for outsiders (the
           # Test legs run on the self-hosted lab fleet; never auto-run stranger code there). Fallback
           # when the secret is absent: GITHUB_TOKEN + the explicit Test dispatch below.
@@ -274,7 +274,7 @@ jobs:
       # `yarn release:preflight --source hf` (#1894). It derives WHAT to materialize from each weights
       # package's `files` array minus what git already tracks — the same predicate verify-tarball.ts
       # refuses a publish over — so it cannot fall behind a manifest the way this step's hand-written
-      # copy list did: the v9.2.0 cut published 49 of 51 workspaces before the audit refused
+      # copy list did: the v9.2.0 reduce published 49 of 51 workspaces before the audit refused
       # @mailwoman/neural-weights-en-au over four declared lexicons the list never named. It
       # HEAD-probes the whole remote set (the Fisher pair included, which rides the bucket but is
       # never fetched) so an unstaged version fails in one pass with every missing object named, and
@@ -295,7 +295,7 @@ jobs:
       # en-gb card described neither. The fetch above wrote these binaries into the weights workspaces, so the same
       # parity test CI already runs against locally-built artifacts now grades the STAGED ones for free.
       #
-      # Selected through a package script, never by physical filename: the v9.2.0 cut's SECOND dispatch died here
+      # Selected through a package script, never by physical filename: the v9.2.0 reduce's SECOND dispatch died here
       # because this line still named the pre-regroup path and Vitest matched zero files. The script's filter is the
       # test's NAME, so the suite survives a move; Vitest exits 1 on an empty selection, so a rename fails loudly
       # rather than passing vacuously.
@@ -394,7 +394,7 @@ jobs:
   # conclude failed, on purpose and by the only mechanism Actions offers. Read that conclusion as: the
   # npm packages ARE published (this job runs after `publish` by `needs:`, and published versions are
   # immutable), and what failed is the generated Python + Rust surface for that version. The remedy is
-  # to fix the generator and dispatch publish-clients.yml — never to unpublish or re-cut the release.
+  # to fix the generator and dispatch publish-clients.yml — never to unpublish or re-publish the release.
   #
   # Written down because the earlier note here said the opposite ("it can't turn a working npm release
   # red"), which is how a job that had been failing since the workspace regroup — every release run,

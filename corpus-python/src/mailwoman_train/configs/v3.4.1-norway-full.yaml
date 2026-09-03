@@ -11,7 +11,7 @@
 #     Epleskogen 39A / Tindvegen nedre 44B / Ovste Skogen 121 -> street (+ hopefully house_number).
 #   DO-NO-HARM — the FR fragment board (board 2), global parity, and the 6 demo presets HOLD. This
 #     is v310's recipe + Norway; French/US must not regress (v310 shipped them).
-#   SHIP GATE — if the Norwegian rows fix AND do-no-harm holds, this is a v6.5.0 candidate (the
+#   SHIP CHECK — if the Norwegian rows fix AND do-no-harm holds, this is a v6.5.0 candidate (the
 #     v6.4.0 promote's successor), pre-registered against the same rows + the v6.0.0-shipped-baseline.
 #   NEGATIVE — if the Norwegian rows STILL read locality at 8k off v264, coverage alone is not the
 #     fix and the street->locality defect is deeper than the YAML bug. That would be a genuine finding.

@@ -33,7 +33,7 @@
  *   markdown parser skips inline code; its comment scanner has no markdown parser, so a
  *   backticked identifier in a `//` comment is flagged exactly like bare prose (measured on
  *   @vvago/vale 3.17.0). `Mailwoman/AmbiguousShorthandCode.yml` therefore protects contract-bearing
- *   names by NAME, and `dirty.ts` asserts the negative that matters: a backticked `the gate` MUST
+ *   names by NAME, and `dirty.ts` asserts the negative that matters: a backticked `the check` MUST
  *   still fire. If it stops, the Code rule has been replaced by the markdown one and every name in
  *   the exceptions list is relying on a mechanism that is not there.
  *

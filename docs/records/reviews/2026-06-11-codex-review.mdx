@@ -18,19 +18,19 @@ were called out as hygiene risks are no longer merely recommendations:
 - the libpostal top-level await was removed in favor of `getAvailableLanguages()`.
 - policy preference filtering now has direct tests.
 - `REPRODUCIBILITY.md` exists.
-- `scripts/eval/promotion-gate.sh` now centralizes the standard eval battery, and the current
+- `scripts/eval/promotion-check.sh` now centralizes the standard eval battery, and the current
   head commit extends the runner/verdict parser for the v4.4.0 boundary floors.
 
 That is the good news. The remaining risks are narrower and more operational than architectural:
 the v4.4.0 plan is disciplined but dense, some docs now lag the code by one round-trip, and parts
 of #480/#481 are only partially closed while their issues still read as fully open. The biggest
 thing to guard tonight is not another broad refactor; it is keeping the v4.4.0 boundary run honest:
-one artifact, one gate contract, no quiet floor drift, and no shipping if the new floors expose
+one artifact, one check contract, no quiet floor drift, and no shipping if the new floors expose
 po_box or perturb as still below the line.
 
 ## Current State
 
-Main is at `177cb41 eval(gate): teach the runner+verdict the v4.4.0 floor keys`. There are no open
+Main is at `177cb41 eval(check): teach the runner+verdict the v4.4.0 floor keys`. There are no open
 PRs. The open issue queue is now well aligned with Claude's review: #513 tracks the v4.3.0 boundary
 regression, #487 tracks intersections, #481 tracks parser hardening, #480 tracks training
 reproducibility, and #483/#484/#485 carry the resolver/service table-stakes work.
@@ -41,7 +41,7 @@ the 2026-06-11 parity scorecard exists. The active v4.4.0 candidate is
 glue augmentation, real-TIGER intersection rows, and the rebuilt po_box/cedex extract.
 
 The night-shift plan is coherent: it starts from the v4.4.0 verdict fork, allows publication on a
-clean gate pass, and constrains further GPU work with the single-variable and DeepSeek-consult
+clean check pass, and constrains further GPU work with the single-variable and DeepSeek-consult
 guardrails. I would not reorder the plan. I would tighten the stop conditions around two specific
 surfaces: po_box punctuation truncation and the perturb arena floor.
 
@@ -76,15 +76,15 @@ Curriculum stamping also remains open. The current v4.4.0 config has `gazetteer_
 so it is not an immediate ship blocker tonight, but the resume-assertion gap still matters for any
 future ramped run.
 
-### 3. The v4.4.0 gate is much better than yesterday's gate discipline, but the parser is brittle to scorer output
+### 3. The v4.4.0 check is much better than yesterday's check discipline, but the parser is brittle to scorer output
 
-`scripts/eval/promotion-gate.sh` now encodes the standard battery and carries the right lore:
+`scripts/eval/promotion-check.sh` now encodes the standard battery and carries the right lore:
 tokenizer comparability, recompile warnings, gazetteer flags, conventions mode, affix scoring from
 the unfolded scorer, int8 delta enforcement, and arena.perturb when the spec declares it.
 
-The brittle point is `scripts/eval/promotion-gate-verdict.ts`: it extracts numbers from markdown
+The brittle point is `scripts/eval/promotion-check-verdict.ts`: it extracts numbers from markdown
 tables with regexes. It fails closed when a declared floor is missing, which is the right default,
-but this still means harmless scorer formatting changes can turn into gate failures. That is
+but this still means harmless scorer formatting changes can turn into check failures. That is
 acceptable for tonight. Longer-term, the scorers should emit JSON sidecars and the markdown should
 be presentation only.
 
@@ -99,7 +99,7 @@ const jointEnabled = opts?.jointReconcile ?? opts?.forceJointReconcile ?? true
 
 But `docs/articles/status.mdx`, `docs/articles/api.mdx`, and
 `docs/articles/plan/reference/STAGES.mdx` still describe Stage 5 as opt-in / argmax default /
-`forceJointReconcile`-gated. The docs are now behind the code.
+`forceJointReconcile`-conditional. The docs are now behind the code.
 
 This is not just editorial. It changes how users interpret parser results and how reviewers reason
 about regressions. The status page should say "default when the required stages are wired, falls
@@ -108,7 +108,7 @@ back to argmax otherwise," and the API docs should prefer `jointReconcile` while
 
 ### 5. The status page points at the 2026-06-10 scorecard while the 2026-06-11 scorecard is the live truth
 
-`docs/articles/status.mdx` correctly says the release is 4.3.0 and links the v4.3.0 ship gate, but
+`docs/articles/status.mdx` correctly says the release is 4.3.0 and links the v4.3.0 ship check, but
 the per-tag health section links `parity-scorecard-2026-06-10.md`. The latest scorecard is
 `parity-scorecard-2026-06-11.md` and carries the v4.3.0 arena dip, affix closeout, and FR region
 tail. This is a one-line fix, but it is the first page readers will use to understand the release.
@@ -131,24 +131,24 @@ means the punctuation class needs its own corrective.
 
 ### 7. The v4.3.0 arena dip is now properly tracked; keep it as a hard v4.4.0 constraint
 
-The v4.3.0 ship gate and 2026-06-11 scorecard characterize the perturb drop well: fused
+The v4.3.0 ship check and 2026-06-11 scorecard characterize the perturb drop well: fused
 region+postcode tokens dominate the regression, with post-directional and unit-junction boundary
 wobbles behind it. #513 captures the right fix direction: data, not a conventions mask.
 
-The v4.4.0 gate now floors `arena.perturb` at 71, restoring the v4.2.0 mark. That is exactly the
+The v4.4.0 check now floors `arena.perturb` at 71, restoring the v4.2.0 mark. That is exactly the
 right move. If this floor fails, shipping v4.4.0 would convert a documented v4.3.0 tradeoff into a
 known unfixed regression.
 
 ## Night Shift Watch List
 
-1. Treat `scripts/eval/gates/v4.4.0-boundary.json` as immutable for this candidate. If a floor
+1. Treat `scripts/eval/checks/v4.4.0-boundary.json` as immutable for this candidate. If a floor
    needs to move, that is a new candidate or a written rebaseline, not an edit during verdict.
 2. On pass, verify the artifact identity end-to-end: fp32 path, quantized md5, HF label, R2 served
    md5, npm package version.
 3. On fail, classify to row before spending GPU. For tonight, likely classes are po_box
    punctuation truncation, perturb glue rows, and any FR region tail movement.
 4. Do not spend the train-time conventions probe until the v4.4.0 verdict is stable. It is a good
-   next change, but it is not part of the current gate's proof.
+   next change, but it is not part of the current check's proof.
 5. Keep #481/#480 cleanup as issue hygiene after the model decision, not during the ship fork.
 
 ## Suggested Follow-ups
@@ -159,17 +159,17 @@ known unfixed regression.
   versioned corpora.
 - Update status/API/STAGES docs for joint reconcile's actual default behavior.
 - Point `status.mdx` at `parity-scorecard-2026-06-11.md` and reconcile the int8 size number.
-- After v4.4.0, add JSON outputs for eval scorers so `promotion-gate-verdict.ts` does not depend
+- After v4.4.0, add JSON outputs for eval scorers so `promotion-check-verdict.ts` does not depend
   on markdown table parsing.
 
 ## Bottom Line
 
 Claude's review was directionally right, but the repo has already acted on several of the highest
-ROI items. The current project risk is no longer "the architecture is under-documented and gates
+ROI items. The current project risk is no longer "the architecture is under-documented and checks
 are scattered"; it is "the team is moving fast enough that issues/docs lag code, and the v4.4.0
 boundary candidate must not be allowed to blur experimental probe results into ship claims."
 
-Ship v4.4.0 only on a clean pre-registered gate pass. If it passes, it closes the v4.3.0 arena dip
+Ship v4.4.0 only on a clean pre-registered check pass. If it passes, it closes the v4.3.0 arena dip
 and brings po_box/cedex/intersections alive. If it fails, the right output is a short, row-classed
 postmortem and one single-variable corrective, not a widened release.
 
@@ -201,7 +201,7 @@ The main remaining parser-parity gaps look like this:
    The model-first approach does not require neural-only output. If v0 is better for a component in a specific context, the model-first system should be able to accept that candidate through policy/reconcile without becoming rule-first again.
    That is why #478 matters: parity may come from learned parsing plus disciplined arbitration, not from forcing the neural model to imitate every v0 trick.
 
-My read: parser parity is close enough that geocoder work should start as soon as the v4.4.0 boundary gate resolves cleanly, or after one more tightly scoped corrective if v4.4.0 fails for a named class. I would not wait for perfect parser
+My read: parser parity is close enough that geocoder work should start as soon as the v4.4.0 boundary check resolves cleanly, or after one more tightly scoped corrective if v4.4.0 fails for a named class. I would not wait for perfect parser
 parity.
 
 The reason is that the model already exceeds v0 in the situations that matter most for a modern geocoder: noisy, partial, degraded, mixed-format, and user-entered queries. Continuing to polish parser tail cases has diminishing returns unless
@@ -220,5 +220,5 @@ Then start geocoder table stakes in parallel with parser tail work. The first se
 - Autocomplete as a product: use the FST tier for prefixes, bring the parser in after enough signal exists.
 - Batch/service hardening: needed for peer comparison, benchmarks, and real usage.
 
-In short: finish the current boundary consolidation, then let parser work and geocoder work run in parallel. Parser parity should become a release gate for parser claims, not a blocker on building the full geocoder. The model-first bet is
+In short: finish the current boundary consolidation, then let parser work and geocoder work run in parallel. Parser parity should become a release check for parser claims, not a blocker on building the full geocoder. The model-first bet is
 already validated enough to extend upward into resolution, confidence, interpolation, reverse, and autocomplete.

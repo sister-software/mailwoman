@@ -75,7 +75,7 @@ All six merged to `main`:
 - **Multi-region recalibration of the 1.70 interp factor** — it's TX-only; Q̂ likely varies with road
   density. And promoting it to a **loadable artifact** (the #59 isotonic pattern) so recalibration is a
   data swap.
-- **#244 abstention router** — confidence-gated downgrade to admin when the calibrated radius is too large.
+- **#244 abstention router** — confidence-conditional downgrade to admin when the calibrated radius is too large.
   The remaining confidence piece.
 - **The dev weights symlink points at v140** while the shipped model-card is v4.6.0/v150 — harmless for the
   geometric calibration, but the eval scripts should pin the shipped model.

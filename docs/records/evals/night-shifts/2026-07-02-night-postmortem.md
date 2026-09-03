@@ -19,7 +19,7 @@ operator merge (no self-merge).
 
 - **#825 GPU retrain** — the multilocale diagnosis is done + damning: **CZ 84% / PL 77% content-gap**, root-caused to Slavic-diacritic mis-tokenization. Worth a Modal budget? (CZ now in scope; AU/US already clean.)
 - **#877 candidate rebuild** — #880 says **low-ROI** (English resolves ~96%; residual ~4%, split ~evenly). My read: **defer**.
-- **#875 `Json`/public-`Us` acronym batch** — version-gated (breaking). Bundle into the next major, or leave?
+- **#875 `Json`/public-`Us` acronym batch** — version-conditional (breaking). Bundle into the next major, or leave?
 - **#861 demo↔server resolver parity** — recommended **B** (converge on shared resolver) as a focused session; no regression today, not urgent.
 
 ## What shipped / opened
@@ -29,7 +29,7 @@ operator merge (no self-merge).
   (Wof/Osm/Json/Id/Us) + the pre-existing strict-null gaps; left `casing-ab`/`portland-833b` async-drift
   fixed too. Untracked, so local-only.
 - **#875 filed** — the v5.0.0 sweep missed two acronyms: `Us` and generic `Json`/`Jsonl` (~28 identifiers,
-  some public). Documented in AGENTS.md as a version-gated batch.
+  some public). Documented in AGENTS.md as a version-conditional batch.
 - **PR #876** — `recognizeUsRegions` → `recognizeUSRegions` (internal-only slice of #875; no public
   re-export → zero release impact). Compile + affected tests green. Flagged for merge.
 - **Coverage quantified (change C, closes the #823 loop).** Ran `frontier-gap.ts` against the live
@@ -40,10 +40,10 @@ operator merge (no self-merge).
   in-country record — index alt-name surface forms (Warsaw↔Warszawa is already proven). Down from the ~97
   residual countries the coverage arc started with. #823 was closed on a 5-city spot-check; this is the honest
   full measure.
-- **#305 — measured + FALSIFIED (not shipped).** Implemented the proximity gate on the coord-first exact
+- **#305 — measured + FALSIFIED (not shipped).** Implemented the proximity check on the coord-first exact
   tier (`coordFirstExactProximityKm`, default-off/byte-stable), A/B'd on the JP end-to-end eval:
-  baseline KEN_ALL 98.5% / GeoNames 93.9% → **gated 90.3% / 72.8%** (−8/−21pp). 50km ≡ 200km (identical),
-  so it's the `pcInfo`-membership gate suppressing correct FTS-exacts, not distance. Reverted; posted the
+  baseline KEN_ALL 98.5% / GeoNames 93.9% → **conditional 90.3% / 72.8%** (−8/−21pp). 50km ≡ 200km (identical),
+  so it's the `pcInfo`-membership check suppressing correct FTS-exacts, not distance. Reverted; posted the
   data + redesign direction to #305; lowered priority (the 98.5% baseline is already good, the existing
   mismatch-flag is the right conservative behavior).
 
@@ -69,7 +69,7 @@ operator merge (no self-merge).
 - **PR #879 — dropped the `as unknown as ResolverBackend` cast (closes #873).** Filed #873 (day session)
   assuming `createWOFResolver(lookup)` didn't typecheck; verified it does (`PlaceCandidate` is structurally
   a `ResolvedPlace`; method param is bivariant). Removed all **18** cast sites + dead imports. Pure
-  type-level, byte-identical runtime, 76 resolver tests green. A clean ungated API-papercut removal — and
+  type-level, byte-identical runtime, 76 resolver tests green. A clean unconditional API-papercut removal — and
   this time the assumption was verified (one cast removed + compiled) BEFORE the fix, not after.
 - **CZ/PL diacritic gap: no clean CPU fix (→ #825 GPU).** `parseWithLogits` shows the tokenizer isolates
   diacritics into own pieces the model tags O; a decoder gap-bridge would patch `Grudziądz` but not the
@@ -87,7 +87,7 @@ operator merge (no self-merge).
 - **Verify-before-verdict earned its keep on #305.** The issue's hypothesis was plausible; the eval said
   −21pp. Shipping on the hypothesis would have been a real regression. Grade the assembled output.
 - **Scope discipline on the acronym gaps.** The `Json` sweep is ~28 identifiers across packages incl.
-  public API — recognized it as a version-gated batch, not an overnight slip-in, after a partial sweep
+  public API — recognized it as a version-conditional batch, not an overnight slip-in, after a partial sweep
   half-renamed callers vs their def (caught + reverted immediately).
 
 ## What could've gone better
@@ -112,7 +112,7 @@ operator merge (no self-merge).
 
 - **Did not ship #305.** A default-off change that regresses 21pp when enabled is misleading scaffolding,
   not a fix. Reverted rather than ship-behind-a-flag.
-- **Deferred the `Json`/public-`Us` acronym batch to the operator** (breaking, version-gated) rather than
+- **Deferred the `Json`/public-`Us` acronym batch to the operator** (breaking, version-conditional) rather than
   do a piecemeal overnight sweep.
 
 ## Open questions / for the operator

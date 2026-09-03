@@ -26,9 +26,9 @@ the casualty there too.)
 tuples) gave an _inflated_ baseline — street_suffix read 48%, fr-prefix 70% — because the few lexemes
 were memorizable. Expanding the pools ~3× (≈100 distinct streets, 28 US / 12 FR / 10 DE tuples, ~100%
 unique rows) drops those to **40.7% / 47.7%** — the true gap on the real distribution. Exactly why
-CONTRIBUTING_MODEL_WORK gates on diversity: a thin extract teaches lexemes and a thin baseline hides the gap.
+CONTRIBUTING_MODEL_WORK checks on diversity: a thin extract teaches lexemes and a thin baseline hides the gap.
 
-## Base-consistency (#511 lint) — the gate caught a real contradiction
+## Base-consistency (#511 lint) — the check caught a real contradiction
 
 Running the #511 base-consistency lint (`lint-corpus-extract.ts` against sampled `v0.5.0` base-stats)
 caught two things, only one of them a true problem:
@@ -65,9 +65,9 @@ caught two things, only one of them a true problem:
 
 The extract puts the gold boundary on diverse realizations of these shapes. The locality vocabulary is now
 base-derived (the #511 contradiction is resolved, not deferred), so the extract is retrain-ready. The
-retrain's success criterion (the `v1.6.0-boundary-stress` recipe gate): move these four numbers up
+retrain's success criterion (the `v1.6.0-boundary-stress` recipe check): move these four numbers up
 (street_suffix 41.7 → ≥55, comma-less street 47 → ≥65, fr-prefix 55 → ≥70, hn-after 51.3 → ≥65) without
 regressing the clean canonical per-locale F1 (the US/FR/DE regression check) and the affix floors — one variable,
-gated, per `CONTRIBUTING_MODEL_WORK`.
+conditional, per `CONTRIBUTING_MODEL_WORK`.
 
 _Source: `scripts/eval/boundary-stress-baseline.ts` over `corpus/src/synthesize-boundary-stress.ts`._

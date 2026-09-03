@@ -36,7 +36,7 @@ verdict][verify].)
 
 ## 2. The token-level count: postcode is not rare, it is absent
 
-Cut by country and token shape — 400k rows, 563,197 bare digit tokens:
+Reduce by country and token shape — 400k rows, 563,197 bare digit tokens:
 
 | country | shape |      n | P(house_number) | P(postcode) |
 | ------- | ----- | -----: | --------------: | ----------: |

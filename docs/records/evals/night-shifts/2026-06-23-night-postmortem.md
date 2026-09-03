@@ -22,8 +22,8 @@ confidence). Zero-GPU, coordinate-graded._
    - **#776** — calibrated-confidence showcase (the differentiator). Re-fit on the shipped v4.13.0
      (ECE 0.060→0.0055), live reliability + abstention curves on the calibration concept page,
      render-verified. The trade-show centerpiece: the one thing a search index can't show.
-   - **#777** — #370 span-rescore + postcode gate (the EU-coverage change). Default-off, eval-validated:
-     lifts 53% of the EU no-result tail to right-place @25 km. _Eval infra + the gated change, no
+   - **#777** — #370 span-rescore + postcode check (the EU-coverage change). Default-off, eval-validated:
+     lifts 53% of the EU no-result tail to right-place @25 km. _Eval infra + the conditional change, no
      production wiring._
    - **#778** — EU qualified-name recall diagnostic (buffer-time bonus, answers #734). Baseline EU
      candidate recall 90.8% (confirms #734's "real ~93%"); the ≤3-char trailing-token base-name strip
@@ -38,14 +38,14 @@ confidence). Zero-GPU, coordinate-graded._
 - **#370 production wiring — SHIPPED (#780, default-off).** Reframed as do-able solo: the night-shift
   wall is on _merging/promoting_, not on building a ready default-off PR, and a flag that's off changes
   nothing until you set it. Wired `spanRescore` into `resolveTree` as the idiomatic twin of the
-  `addressPoints`/`interpolation` tiers (gated on `hasResolvedPlace` = the #685 brake, injects via the
+  `addressPoints`/`interpolation` tiers (blocked on `hasResolvedPlace` = the #685 brake, injects via the
   same `decorateNode` path). 8 new tests + the 48 existing resolver tests still pass (byte-stable);
   typecheck clean. **Then validated end-to-end** (`scripts/eval/span-rescore-e2e.ts`, on #780): flipping
   the flag through the _real_ `resolveTree` + candidate backend lifts EU right-place **@25km 63.2 → 79.2%
   (+16pp)** and resolved 76 → 95% — PL +42, CZ +42, PT +11; ~17% of new resolutions land >25km (the
   mis-fire rate #777 measured). So the wired change delivers the EU coordinate lift in production, not
   just in the standalone validator. **Your remaining calls:** flip `ResolveOpts.spanRescore` on (the
-  +16pp vs the 17% mis-fire is the trade), and widen postcode coverage so the gate reaches CZ/AU (IT today).
+  +16pp vs the 17% mis-fire is the trade), and widen postcode coverage so the check reaches CZ/AU (IT today).
 - **Demo confidence toggle — SHIPPED in #776 (default OFF).** Resolved by making it opt-in: the default
   demo still shows raw scores (no imposed presentation change), and a visitor can flip "Calibrated
   confidence" to watch the bars correct upward. One open question for you: whether the demo's tier
@@ -68,7 +68,7 @@ defensible number: enabling the flag lifts mailwoman EU **@25km 63.2 → 79.2% (
 no caveat. **That lift is the headline.** What it does to the standing-vs-Nominatim is more nuanced, and
 I corrected my own first draft of this (verify-before-verdict): it is **not** "parity across EU." Per
 locale, mailwoman-with-change **leads** IT (99 vs 75) / PT (73 vs 47) / FR (81 vs 59) and still **trails**
-PL (85 vs 96) / AT (85 vs 97) / CZ (71 vs 88) / AU (42 vs 97 — the cross-state problem the country gate
+PL (85 vs 96) / AT (85 vs 97) / CZ (71 vs 88) / AU (42 vs 97 — the cross-state problem the country check
 can't fix). The aggregates land ~79% each, but that's a _mix_ (the IT/PT/FR leads offsetting the
 Slavic/German/AU trails), not a uniform catch-up — **and** it's a cross-harness compare in which the e2e
 grades mailwoman more leniently than #775 (e2e IT 99 vs #775 92), so a same-harness run could put
@@ -116,13 +116,13 @@ live effect; `cf-cache-status: DYNAMIC` so it propagated immediately).
   `Tomaszów Mazowiecki`, 135 km off) — longest-wins fixed it. Coordinate-graded (#566, not the gold
   string): **78% of recoveries ≤25 km; lifts 136/259 = 53% of the EU no-result tail to a right-place
   coordinate**, at a cost of 33 (19%) >100 km mis-fires. PL fully solved (56/56, p50 1.8 km). Then
-  **built the postcode-region consistency gate** in the same PR: resolve the postcode → point (the
+  **built the postcode-region consistency check** in the same PR: resolve the postcode → point (the
   candidate gazetteer folds postcodes; the admin DB can't), reject matches >50 km off. IT flips
   4-wrong-207 km → 2-near-22 km; p90 206→145 km; conditional so it never hurts a locale it can't reach
   (PL untouched). Reach is bounded by candidate-DB postcode coverage (IT 97%, CZ/AU ~0) — a data limit
-  that lifts as the gazetteer fills. Stays **default-off**; remaining before default-on = wire the gated
+  that lifts as the gazetteer fills. Stays **default-off**; remaining before default-on = wire the conditional
   `spanRescore` into production `resolveTree` + widen postcode coverage. _Operator merge; eval infra +
-  the gated change, no production wiring._
+  the conditional change, no production wiring._
 - **EU qualified-name recall — #734's "measure first," answered (#778).** Buffer-time diagnostic, same
   root cause as the #370 swap tail (OA's qualified locality forms vs gazetteer base names). Coordinate-
   graded: baseline EU candidate recall **90.8%** (confirms #734's "real ~93%, not 88%" — the 88% was a
@@ -172,16 +172,16 @@ On clean OA held-out (150/locale, @25km right-place), **mailwoman trails BOTH co
 
 ## What could've gone better
 
-- **The #370 build shipped a backwards heuristic in its first cut.** Shortest-span-wins (lifted from
+- **The #370 build shipped a backwards heuristic in its first reduce.** Shortest-span-wins (lifted from
   DeepSeek's over-merge guard) was wrong for real OA, where the gold locality is the _longer_ name.
   The diagnostic caught it in one pass, but a moment's thought about the data ("gold is `Tomaszów
 Mazowiecki`, not `Tomaszów`") would have predicted it before the run.
 - **Couldn't render-verify the showcase against live R2 locally** — R2's CORS allowlist excludes
   `localhost`, so the first Playwright pass hit the component's error state. Resolved by intercepting
   the fetch, but a few minutes were spent proving it was a localhost artifact, not a bug.
-- **The #370 gate's reach is data-limited and I found that late** — the postcode→point lookup the gate
+- **The #370 check's reach is data-limited and I found that late** — the postcode→point lookup the check
   needs only covers IT among the swap locales (CZ/AU resolve ~none). The change is still net-positive,
-  but the gate is more "proof of the mechanism" than "broad fix" until postcode coverage widens.
+  but the check is more "proof of the mechanism" than "broad fix" until postcode coverage widens.
 
 ## Decisions made autonomously
 
@@ -191,8 +191,8 @@ Mazowiecki`, not `Tomaszów`") would have predicted it before the run.
 - **Re-fit the calibration on v4.13.0 + staged it on R2** — the bundled table was the stale v4.0.0 fit
   (wrong mapping for the shipped model). The R2 object isn't read by the live demo until #776 deploys,
   so no production effect; staging now was required for local + render verification.
-- **Built the #370 gate into the same PR rather than deferring it** — once the data path (candidate-DB
-  postcode rows) turned out to exist for IT, the gate was a clean, conditional, never-hurts addition;
+- **Built the #370 check into the same PR rather than deferring it** — once the data path (candidate-DB
+  postcode rows) turned out to exist for IT, the check was a clean, conditional, never-hurts addition;
   shipping it default-off with honest reach limits beat leaving it as a TODO.
 - **Shipped the demo confidence toggle as opt-in (default OFF), did NOT ship the #370 production
   wiring.** The toggle's only judgment-call risk was _changing the default presentation_ — making it
@@ -202,14 +202,14 @@ Mazowiecki`, not `Tomaszów`") would have predicted it before the run.
 
 ## Numbers
 
-| metric                           | value                                                                  |
-| -------------------------------- | ---------------------------------------------------------------------- |
-| shift window                     | 04:56 → 11:45 UTC (operator returned early; closed + kicked off then)  |
-| PRs opened                       | 6 (#774 merged; #775/#776/#777/#778/#780 open; + the postmortem PR)    |
-| models trained                   | 0 (zero-GPU night by design)                                           |
-| Modal $ spent                    | $0                                                                     |
-| GPU lost to error                | 0                                                                      |
-| local ONNX eval runs             | ~6 (benchmark, calibration collect, #370 ceiling/falsifier/build/gate) |
-| CI failures shipped              | 0 (all PRs green)                                                      |
-| demo/model/canonical regressions | 0 (everything default-off / behind PRs)                                |
-| production changes               | 1 R2 object staged (fresh calibration.json, no live effect pre-deploy) |
+| metric                           | value                                                                   |
+| -------------------------------- | ----------------------------------------------------------------------- |
+| shift window                     | 04:56 → 11:45 UTC (operator returned early; closed + kicked off then)   |
+| PRs opened                       | 6 (#774 merged; #775/#776/#777/#778/#780 open; + the postmortem PR)     |
+| models trained                   | 0 (zero-GPU night by design)                                            |
+| Modal $ spent                    | $0                                                                      |
+| GPU lost to error                | 0                                                                       |
+| local ONNX eval runs             | ~6 (benchmark, calibration collect, #370 ceiling/falsifier/build/check) |
+| CI failures shipped              | 0 (all PRs green)                                                       |
+| demo/model/canonical regressions | 0 (everything default-off / behind PRs)                                 |
+| production changes               | 1 R2 object staged (fresh calibration.json, no live effect pre-deploy)  |

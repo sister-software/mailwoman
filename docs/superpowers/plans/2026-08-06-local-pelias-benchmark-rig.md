@@ -71,7 +71,7 @@ before any import runs:
 - **(b) `pelias/polylines` may accept only a planet file, not per-country.** Probe: shallow-clone,
   grep for the `files` config key + read the download script. If per-country works, US
   interpolation is affordable; if planet-only, the US row is annotated `no-interpolation` (or we
-  hand-cut a US polylines file — an added build step, decided then).
+  hand-reduce a US polylines file — an added build step, decided then).
 - **(c) The runtime fits ~16 GB with sequential imports.** Probe: caps set, runtime stack up, one
   small importer (NZ OSM) under `docker stats`; check the compose file's DEFAULT ES heap first and
   fail fast if it exceeds 8 GB.
@@ -83,13 +83,13 @@ before any import runs:
   comes from polylines, then OA/OSM/TIGER house numbers conflate on. The US keeps interpolation
   without a US OSM Elasticsearch import.
 - **(b) FALSIFIED, favorably**: per-country polyline extraction from any PBF is documented
-  (`docker_extract.sh`, osmium-based) plus pre-cut regional extracts exist. Planet file not needed.
+  (`docker_extract.sh`, osmium-based) plus pre-reduce regional extracts exist. Planet file not needed.
 - **(c) HOLDS with override**: `pelias/docker`'s large projects default `ES_JAVA_OPTS=-Xmx8g`; our
   project pins 4g. Runtime smoke deferred to staging as planned.
-- **(d) NEW, from check-in 1 (pro)**: `pelias/api` gates interpolation on
+- **(d) NEW, from check-in 1 (pro)**: `pelias/api` checks interpolation on
   `hasResultsAtLayers('street')` (`routes/v1.js:182-187`) — OA/TIGER emit address-layer docs only,
   so a US build without street docs would never trigger interpolation. ABSORBED: the `polylines`
-  IMPORTER writes exactly those street-layer ES docs; one per-state polyline cut feeds both the ES
+  IMPORTER writes exactly those street-layer ES docs; one per-state polyline reduce feeds both the ES
   street layer and the interpolation graph.
 - **(e) WOF importer scoping (check-in 2 probe)**: `imports.whosonfirst.countryCode` accepts an
   ISO-code array — the importer's own download is country-scoped; no planet-pull risk, no manual
@@ -100,7 +100,7 @@ OA fr+de extracted from europe.zip (GB needs no OA — rides OSM); US scoping ru
 panel-states-only (the panel is the preregistered population — a sampling frame, not post-hoc
 cleansing; state list derives from TRUTH COORDINATES, never query strings, verified before
 scoring; US index annotated "US subset: N states"). Remaining fetches: panel-state OA-us +
-TIGER ADDRFEAT counties + per-state PBFs for polyline cuts — all gated on panel reconstruction.
+TIGER ADDRFEAT counties + per-state PBFs for polyline reduces — all blocked on panel reconstruction.
 
 ## §3 — Per-country acceptance probes (before any benchmark row)
 

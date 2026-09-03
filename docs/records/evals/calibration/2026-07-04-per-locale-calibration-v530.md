@@ -9,4 +9,4 @@ A separate isotonic table per locale, vs the single global table. ECE is measure
 | FR     |  814 |    0.961 |  0.0733 |           0.0087 |       **0.0047** |
 | US     | 5910 |    0.986 |  0.0679 |           0.0037 |       **0.0015** |
 
-> Where the locale-table column beats the global-table column, a single global table is leaving calibration error on the table for that locale (the OOD locales especially). A multi-locale model should ship one calibration table per locale, selected by the locale gate.
+> Where the locale-table column beats the global-table column, a single global table is leaving calibration error on the table for that locale (the OOD locales especially). A multi-locale model should ship one calibration table per locale, selected by the locale check.

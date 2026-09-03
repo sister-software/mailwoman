@@ -5,8 +5,8 @@
 # test.yml is required before any PR can merge once branch protection is on.
 #
 # STRUCTURE — six legs (static, unit-fast, unit-slow, lexicon-full, react, smoke), then the `test`
-# aggregator gates on all six. unit-fast and unit-slow run the root Vitest sweep concurrently — fast
-# leg is the pure unit/lexicon surface; slow leg is the DB-gated integration suites (CLI harness,
+# aggregator checks on all six. unit-fast and unit-slow run the root Vitest sweep concurrently — fast
+# leg is the pure unit/lexicon surface; slow leg is the DB-conditional integration suites (CLI harness,
 # WOF resolver, model-load tests).
 #
 # SIZES, measured 2026-08-29 on the lab workstation: fast 593 files / ~46-156s, slow 126 files /
@@ -18,7 +18,7 @@
 # lexicon-full is the sixth leg and the newest (2026-08-02). It exists because ONE test file was
 # unit-slow's entire wall-clock: the full-scale locality-surface build was 236.9s of a 253s leg, and
 # it grew with the gazetteer, so the problem compounded on its own. The four laws now assert against
-# a seeded fixture in unit-fast (505ms, gazetteer-invariant) and the full-scale build is path-gated
+# a seeded fixture in unit-fast (505ms, gazetteer-invariant) and the full-scale build is path-conditional
 # here, with a nightly (lexicon-nightly.yml) for data drift and a release-time run in publish.yml.
 # See the per-job comment for why all three layers are needed.
 #
@@ -50,10 +50,10 @@
 # `data-fleet` (below) decides only whether the two labelled legs RUN or SKIP; it does not move any
 # job between runners. Releases are unaffected either way: publish.yml stays pinned to the fleet.
 #
-# PATH-GATING: the smoke leg validates the PACKAGING pipeline (see per-job comment), so a
+# PATH-BLOCKING: the smoke leg validates the PACKAGING pipeline (see per-job comment), so a
 # docs-only or data-only PR skips smoke entirely — the job reports green in seconds. The unit
 # split into fast/slow means the fast leg reports in ~15s on a fleet slot that's released
-# after the prefix (~75s); the slow leg (DB-gated suites) runs in parallel on another slot.
+# after the prefix (~75s); the slow leg (DB-conditional suites) runs in parallel on another slot.
 # Each leg repeats the checkout→install→compile prefix (~75s) rather than sharing a
 # build artifact — the legs run concurrently on the same host, so the prefix costs
 # wall-clock once, and artifact round-trips through GitHub's storage would cost more.
@@ -112,11 +112,11 @@ jobs:
   # and node_modules are on it, and past the 10 GB repo-wide cache limit, with a transfer per run
   # that would cost more than the tests. Those suites are written with `describe.skipIf(!HAS_WOF)`,
   # so on a hosted runner they would SKIP and the leg would go GREEN having tested a fraction of
-  # what its name claims. A gate that silently means less while reporting the same is worse than one
+  # what its name claims. A check that silently means less while reporting the same is worse than one
   # that is honestly unavailable — hence a declared skip, annotated, over a vacuous pass.
   #
   # Releases do not get the exemption. publish.yml stays pinned to the fleet on purpose: a release
-  # must be cut against the full gate, and it wants the host anyway.
+  # must be reduce against the full check, and it wants the host anyway.
   #
   # Resolution order — first match wins:
   #   1. `vars.DATA_FLEET` (a repo variable, `up` or `down`) — the manual override, no credentials
@@ -125,7 +125,7 @@ jobs:
   #   2. The runners API, if `secrets.RUNNER_PROBE_TOKEN` is set (a PAT with `administration: read`
   #      — GITHUB_TOKEN cannot list self-hosted runners, there is no such permission scope).
   #   3. `up`. Every failure mode lands here: no token, a fork PR with no secrets, a 500 from the
-  #      API. Fail CLOSED — an unreachable probe must never silently downgrade the gate, and a job
+  #      API. Fail CLOSED — an unreachable probe must never silently downgrade the check, and a job
   #      that queues is a visible problem where a skipped one is not.
   data-fleet:
     runs-on: ubuntu-latest
@@ -176,13 +176,13 @@ jobs:
           # Anything that is not a plain integer — an empty body, `null`, an API error object — is a
           # probe that did not answer, not a fleet that is down. Fail closed.
           if ! [[ "$online" =~ ^[0-9]+$ ]]; then
-            echo "::warning::could not read the runners API (got '${online}') — assuming the data fleet is up (failing closed to the full gate)"
+            echo "::warning::could not read the runners API (got '${online}') — assuming the data fleet is up (failing closed to the full check)"
             emit true
           elif [ "$online" -gt 0 ]; then
             echo "::notice::${online} mailwoman-data runner(s) online"
             emit true
           else
-            echo "::warning::no mailwoman-data runner is online — unit-slow and smoke will be SKIPPED, not silently passed. They read ~10 GB of WOF/address-point databases that exist only on the lab host. Do not cut a release off this run."
+            echo "::warning::no mailwoman-data runner is online — unit-slow and smoke will be SKIPPED, not silently passed. They read ~10 GB of WOF/address-point databases that exist only on the lab host. Do not publish a release off this run."
             emit false
           fi
 
@@ -245,7 +245,7 @@ jobs:
       # The ONE job that runs Yarn's hardened mode. `.yarnrc.yml` pins `enableHardenedMode: false`
       # repo-wide so the other install sites — the self-hosted legs included, where the registry
       # round-trip crosses the lab's degraded uplink — install straight from the global cache. This
-      # leg is hosted, is already the lint/typecheck gate, and runs on every PR, so it is where the
+      # leg is hosted, is already the lint/typecheck check, and runs on every PR, so it is where the
       # lockfile's resolutions get re-verified against the registry. Yarn's own guidance: enable it
       # in one CI job, not all of them.
       - name: Install dependencies
@@ -278,10 +278,10 @@ jobs:
       - name: Typecheck docs
         run: yarn typecheck:docs
 
-      # The python gates run under uv: ruff via uvx, then `uv run` resolves corpus-python's
+      # The python checks run under uv: ruff via uvx, then `uv run` resolves corpus-python's
       # venv for mypy --strict + bandit (the runner image doesn't ship uv — bit 9ce83b40's push:
       # "command not found: uvx", exit 127 — so it is installed here).
-      - name: Setup uv (python lint/type/security gates)
+      - name: Setup uv (python lint/type/security checks)
         uses: astral-sh/setup-uv@v7
         with:
           # Pinned to the lab host's uv (keep in lockstep — bump deliberately, not via "latest";
@@ -289,7 +289,7 @@ jobs:
           version: "0.11.16"
 
       # Full repo-wide lint (oxlint incl. sister-software/no-process-globals, oxfmt --check, python
-      # toolchain checks: ruff, verify_toolchain, mypy --strict, bandit). This is THE complete gate:
+      # toolchain checks: ruff, verify_toolchain, mypy --strict, bandit). This is THE complete check:
       # the pre-commit hook only lints STAGED files, so repo-wide drift and --no-verify commits are
       # caught here. The first `uv run` syncs corpus-python's venv incl. the [train] extras (mypy
       # must resolve torch), so this step is slower than it looks on a cold runner.
@@ -305,11 +305,11 @@ jobs:
   # The root Vitest sweep, split into two legs that run concurrently.
   # unit-fast: every test file that does NOT load the model, hit a WOF DB, or invoke the CLI
   #   harness — the pure unit/lexicon surface (~313 files). Finishes in ~15s.
-  # unit-slow: the DB-gated integration suites (mailwoman CLI harness, resolver-wof-sqlite WOF
+  # unit-slow: the DB-conditional integration suites (mailwoman CLI harness, resolver-wof-sqlite WOF
   #   tests, neural/test model-load tests, evidence-lexicons build). ~87 files, ~5 min floor.
   #
-  # The split exploits the fleet slot freed when smoke is path-gated; without it the unit leg
-  # is the PR's long pole at ~7 min. Running both in parallel cuts it to max(slow, ~15s) ≈ 5 min.
+  # The split exploits the fleet slot freed when smoke is path-conditional; without it the unit leg
+  # is the PR's long pole at ~7 min. Running both in parallel reduces it to max(slow, ~15s) ≈ 5 min.
   unit-fast:
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -388,8 +388,8 @@ jobs:
       - name: Test (fast)
         run: yarn ci:test:fast
 
-  # The DB-gated half of the Vitest sweep — everything excluded from unit-fast. Runs in
-  # parallel with unit-fast on a separate runner slot; the aggregator gates on both.
+  # The DB-conditional half of the Vitest sweep — everything excluded from unit-fast. Runs in
+  # parallel with unit-fast on a separate runner slot; the aggregator checks on both.
   # NOT PORTABLE — requires `mailwoman-data`, and job-skipped when no such runner is online (see the
   # data-fleet header). Its suites read ~10 GB of WOF/address-point databases and are written with
   # `describe.skipIf(!HAS_WOF)`, so on a hosted runner they would skipIf their way to a green tick.
@@ -481,13 +481,13 @@ jobs:
           fi
 
   # Do the five LIVE-PIPELINE conformance suites need to run? HOSTED, for the same reason
-  # `lexicon-gate` is: deciding on a hosted runner costs nothing and keeps the four-runner
+  # `lexicon-check` is: deciding on a hosted runner costs nothing and keeps the four-runner
   # `mailwoman-data` fleet for work that needs the databases.
   #
   # WHAT THIS DECIDES. `conformance-{nfc-nfd,whitespace,punctuation,case-folding,refinement-monotonicity}.test.ts`
-  # drive the real pipeline over the gating rows: measured 2026-08-29 at 93.4s of unit-slow's 517s,
+  # drive the real pipeline over the blocking rows: measured 2026-08-29 at 93.4s of unit-slow's 517s,
   # or 18% of the leg. Unlike `lexicon-full` this is NOT its own job — a fourth data-hungry leg would
-  # queue against the same scarce slots the `lexicon-gate` header complains about — so the decision
+  # queue against the same scarce slots the `lexicon-check` header complains about — so the decision
   # is threaded into unit-slow as a vitest exclude instead.
   #
   # WHAT STILL RUNS EVERY PR when this holds them back: the `*-suite.test.ts` files in unit-fast,
@@ -519,7 +519,7 @@ jobs:
               - 'packages/mailwoman/lib/runtime-pipeline.ts'
               - 'packages/normalize/**'
               - 'packages/query-shape/**'
-              - 'packages/locale-gate/**'
+              - 'packages/locale-hint/**'
               - 'packages/kind-classifier/**'
               - 'packages/phrase-grouper/**'
               - 'packages/core/**'
@@ -551,7 +551,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   # Does the full-scale lexicon build need to run? HOSTED, and deliberately separate from the job it
-  # gates.
+  # checks.
   #
   # The path filter used to live inside `lexicon-full` itself, which meant a PR touching nothing
   # lexicon-related still had to WAIT FOR A SCARCE `mailwoman-data` SLOT just to print a notice and
@@ -559,7 +559,7 @@ jobs:
   # three data-hungry legs, so a ten-second job can sit queued for minutes — and the `test`
   # aggregator waits on it. Deciding here costs a hosted runner nothing and keeps the lab slots for
   # work that actually needs the databases.
-  lexicon-gate:
+  lexicon-check:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -579,7 +579,7 @@ jobs:
               - 'packages/core/data/libpostal/**'
               - 'packages/codex/**'
 
-      # A gate that silently means less while reporting the same is worse than one that is honestly
+      # A check that silently means less while reporting the same is worse than one that is honestly
       # unavailable — the rule the data-fleet skip path already follows. When this holds the build
       # back, the run says what it did not cover rather than showing an unexplained green tick.
       - name: Decide
@@ -594,9 +594,9 @@ jobs:
           fi
 
           echo "needed=false" >> "$GITHUB_OUTPUT"
-          echo "::notice title=lexicon-full SKIPPED::Nothing under mailwoman/gazetteer-pipeline/, data/gazetteer/, core/data/libpostal/ or codex/ changed, so the FULL-SCALE locality-surface build did not run. The four laws WERE asserted, against the fixture layer in unit-fast. Coverage-scale claims (entries > 10_000, the nonzero skip counters) were not exercised; lexicon-nightly.yml and the release gate carry those."
+          echo "::notice title=lexicon-full SKIPPED::Nothing under mailwoman/gazetteer-pipeline/, data/gazetteer/, core/data/libpostal/ or codex/ changed, so the FULL-SCALE locality-surface build did not run. The four laws WERE asserted, against the fixture layer in unit-fast. Coverage-scale claims (entries > 10_000, the nonzero skip counters) were not exercised; lexicon-nightly.yml and the release check carry those."
           {
-            echo "## lexicon-full: skipped (path-gated)"
+            echo "## lexicon-full: skipped (path-conditional)"
             echo ""
             echo "| | |"
             echo "| --- | --- |"
@@ -615,18 +615,18 @@ jobs:
   # WHAT STILL RUNS EVERY PR: the four laws, against a seeded fixture DB
   # (`evidence-lexicons.fixture.test.ts`, 505ms, in unit-fast). That file drives the REAL builder
   # through `opts.dbPath` and is invariant to gazetteer size. What is NOT covered when this job is
-  # path-gated off is the COVERAGE-SCALE claim — `entries > 10_000` and the nonzero skip counters —
+  # path-conditional off is the COVERAGE-SCALE claim — `entries > 10_000` and the nonzero skip counters —
   # which is a claim about the gazetteer rather than about the laws.
   #
-  # PATH-GATED, and the three layers are deliberate. This job catches a PR that changes the BUILDER.
+  # PATH-CONDITIONAL, and the three layers are deliberate. This job catches a PR that changes the BUILDER.
   # It cannot catch DATA DRIFT: the gazetteer is rebuilt outside any pull request, so no path filter
   # will ever see it. `lexicon-nightly.yml` is that layer, and `publish.yml` runs the build again at
-  # release so a tag is never cut on an inherited "no lexicon path changed" tick.
+  # release so a tag is never reduce on an inherited "no lexicon path changed" tick.
   #
   # NOT PORTABLE — reads the same ~10 GB of databases as unit-slow.
   lexicon-full:
-    needs: [data-fleet, lexicon-gate]
-    if: needs.data-fleet.outputs.up == 'true' && needs.lexicon-gate.outputs.needed == 'true'
+    needs: [data-fleet, lexicon-check]
+    if: needs.data-fleet.outputs.up == 'true' && needs.lexicon-check.outputs.needed == 'true'
     runs-on:
       - self-hosted
       - mailwoman-data
@@ -764,7 +764,7 @@ jobs:
   # undeclared runtime dep, an unshipped file, or a command module with an eager top-level side
   # effect — all invisible in-repo, all fatal to a fresh `npm install`.
   #
-  # PATH-GATED on pull_request: the smoke test validates the PACKAGING pipeline, so changes to
+  # PATH-CONDITIONAL on pull_request: the smoke test validates the PACKAGING pipeline, so changes to
   # docs, root *.md, data/, .github/, or any workspace NOT packed by smoke-clean-install.ts
   # (osm, tile-worker, resolver-wof-wasm, neural-web) can't affect it. On a docs-only or
   # data-only PR the heavy steps are skipped → green in seconds. On push to main, workflow_dispatch
@@ -801,7 +801,7 @@ jobs:
               - 'packages/poi-taxonomy/**'
               - 'packages/kind-classifier/**'
               - 'packages/react/**'
-              - 'packages/locale-gate/**'
+              - 'packages/locale-hint/**'
               - 'packages/normalize/**'
               - 'packages/phrase-grouper/**'
               - 'packages/query-shape/**'
@@ -941,7 +941,7 @@ jobs:
   # `if: always()` so it reports on leg failure instead of being skipped (a skipped required
   # check reads as "waiting forever" and blocks merges silently).
   test:
-    needs: [data-fleet, static, unit-fast, unit-slow, conformance-scope, lexicon-gate, lexicon-full, react, smoke]
+    needs: [data-fleet, static, unit-fast, unit-slow, conformance-scope, lexicon-check, lexicon-full, react, smoke]
     if: always()
     # Hosted, always: this job only reads its `needs`, and pinning the aggregator to the fleet would
     # make it unrunnable in exactly the situation the skip path exists for.
@@ -955,10 +955,10 @@ jobs:
       # cover.
       - name: Fail if any leg failed
         # `lexicon-full` is EXCLUDED from the skipped-is-fatal check on purpose: skipping it is its
-        # designed behaviour when lexicon-gate says no lexicon path changed, and the gate itself
+        # designed behaviour when lexicon-check says no lexicon path changed, and the check itself
         # still has to pass. Every other leg is enumerated rather than wildcarded so that a leg
         # skipping for an unexpected reason stays fatal.
-        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || (needs.data-fleet.outputs.up == 'true' && (needs.static.result == 'skipped' || needs.unit-fast.result == 'skipped' || needs.unit-slow.result == 'skipped' || needs.conformance-scope.result == 'skipped' || needs.lexicon-gate.result == 'skipped' || needs.react.result == 'skipped' || needs.smoke.result == 'skipped')) }}
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || (needs.data-fleet.outputs.up == 'true' && (needs.static.result == 'skipped' || needs.unit-fast.result == 'skipped' || needs.unit-slow.result == 'skipped' || needs.conformance-scope.result == 'skipped' || needs.lexicon-check.result == 'skipped' || needs.react.result == 'skipped' || needs.smoke.result == 'skipped')) }}
         run: |
           echo "::error::a test leg did not succeed: ${{ toJSON(needs.*.result) }}"
           exit 1
@@ -966,7 +966,7 @@ jobs:
       - name: Green, but without the data legs
         if: ${{ needs.data-fleet.outputs.up != 'true' }}
         run: |
-          echo "::warning title=PARTIAL GATE::static, unit-fast and react passed. unit-slow and smoke were SKIPPED — no mailwoman-data runner was online, and they read ~10 GB of databases that exist only on the lab host. This run did NOT exercise the WOF resolver, the CLI harness, model loading, geocode, or the packaging pipeline. Do not cut a release off it."
+          echo "::warning title=PARTIAL CHECK::static, unit-fast and react passed. unit-slow and smoke were SKIPPED — no mailwoman-data runner was online, and they read ~10 GB of databases that exist only on the lab host. This run did NOT exercise the WOF resolver, the CLI harness, model loading, geocode, or the packaging pipeline. Do not publish a release off it."
           {
             echo "## test: GREEN (partial — no data fleet)"
             echo ""

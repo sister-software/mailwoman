@@ -2,7 +2,7 @@
 
 Branch `feat/placetype-pair-prior` (unswitched throughout the arc). This is the ship-PREP
 scorecard for Task 8 — no release was dispatched, nothing was promoted, no npm version was
-bumped. It documents every number gating the decision, both checkpoints, and the one new
+bumped. It documents every number blocking the decision, both checkpoints, and the one new
 ship-blocking finding this task surfaced (the Gauntlet). Full battery/ablation source:
 `.superpowers/sdd/task-7-report.md`; this task's own additions (Gauntlet, model cards, release
 wiring): `.superpowers/sdd/task-8-prep-report.md`.
@@ -22,12 +22,12 @@ wiring): `.superpowers/sdd/task-8-prep-report.md`.
 > - 6 demo presets byte-identical to v385
 > - val macro_f1 within 1.0pp of v385's 0.7047
 >
-> SHIP GATE: full error-analysis vs v385 — no tag regresses >2pp (config-canonical); gauntlet
+> SHIP CHECK: full error-analysis vs v385 — no tag regresses >2pp (config-canonical); gauntlet
 > PASS. Ship path (HF upload → promote → npm CI → demo) is OPERATOR-AUTHORIZED for the 2026-07-22
 > night shift CONDITIONAL on every bar above passing. Any bar fails → stage only, report, no
-> promote (no silent gate drift; treadmill guard: no knob iteration).
+> promote (no silent check drift; treadmill guard: no knob iteration).
 
-## Digit gate revision (operator-ratified 2026-07-23, Teffen Ellis)
+## Digit check revision (operator-ratified 2026-07-23, Teffen Ellis)
 
 The pre-registered digit bar above (`flat vs 0.902`) was written against the sibling en-gb-locale
 probe lineage's own 8k checkpoint (`v3.10.1-gb-probe2`) — a same-lineage probe number, not a real
@@ -89,7 +89,7 @@ miss: a hallucinated-street regression, the same shape as the sibling en-gb-loca
 probe-2 checkpoint at its equivalent step (bare-locality collapsed 0.978→0.603 there too). feed-8k
 avoids it and beats v385's own 0.983.
 
-### Digit board `bare-street-hn` — see the gate-revision block above
+### Digit board `bare-street-hn` — see the check-revision block above
 
 |                                         |              feed-2k |              feed-8k |
 | --------------------------------------- | -------------------: | -------------------: |
@@ -230,10 +230,10 @@ Not run by Task 6 or Task 7; this task closed that gap and found a real ship blo
 
 | Layer           | feed-8k verdict        | Detail                                                                                                                                                                                                                                        |
 | --------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| regression      | PASS                   | 33/33 gated cases; 1 tracked known_fail now passes (should be promoted to `status=pass`)                                                                                                                                                      |
+| regression      | PASS                   | 33/33 counted cases; 1 tracked known_fail now passes (should be promoted to `status=pass`)                                                                                                                                                    |
 | **metamorphic** | **FAIL**               | NEW violation: `INV[comma-drop]` — `"1600 Pennsylvania Ave NW, Washington DC 20500"` → comma-dropped form loses the rooftop resolution entirely (38.8977,-77.0365 → **0,0**). v385 HOLDS this exact case (confirmed same session, same board) |
 | held-out        | PASS                   | z=0.00 (candidate not significantly worse), n=300 fresh FR/BAN draw                                                                                                                                                                           |
-| **combined**    | **FAIL — do not ship** | per the recipe's own pre-registered ship gate                                                                                                                                                                                                 |
+| **combined**    | **FAIL — do not ship** | per the recipe's own pre-registered ship check                                                                                                                                                                                                |
 
 **This is not checkpoint-specific.** feed-2k independently FAILS the same layer with DIFFERENT
 violations: `BAND[num-ordinal]` and `INV[comma-drop]`/`INV[abbrev]` all mis-resolve `"350 Fifth
@@ -244,7 +244,7 @@ transcripts: `.superpowers/sdd/task-8-prep-report.md`.
 
 **Ship-checkpoint choice is unaffected by this finding** — the operator-ratified reasoning
 (feed-2k's FR-fragment failure is the more dangerous, unbounded class; feed-8k's digit miss is
-narrower and now covered by the gate revision) stands regardless of which checkpoint also happens
+narrower and now covered by the check revision) stands regardless of which checkpoint also happens
 to fail the Gauntlet. Both do. The Gauntlet failure blocks promotion of **either** checkpoint until
 triaged — it is a new, independent finding layered on top of the existing checkpoint decision, not
 a tiebreaker between the two.
@@ -343,7 +343,7 @@ model of its own by design, so shipping the code introduces no behavior change u
 explicitly wires a candidate). Model promotion itself waits for a clean checkpoint under a NEW,
 separately pre-registered recipe: **v3.12**, sketched at
 `docs/superpowers/plans/2026-07-23-v312-comma-robust-recipe.md` — a comma-drop augmentation share
-extended to the new locale extracts (the augmentation implementation already exists from v381), gated on
+extended to the new locale extracts (the augmentation implementation already exists from v381), blocked on
 its own why-3 verification step before any GPU spend. See that document for the full pre-
 registration. `neural-weights-en-us/model-card.json`'s `phase` field carries this same verdict for
 lockstep — read it, not just this scorecard, for the authoritative current status.

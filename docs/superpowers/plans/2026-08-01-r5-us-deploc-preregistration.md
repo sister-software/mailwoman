@@ -34,7 +34,7 @@ training-side class weight of 0.3 on `B/I-dependent_locality` carried from v0.5.
 ("penalize hallucination of rare tags"), since corrected to 1.0 but not retrained into the shipped
 lineage.
 
-**Therefore the US instance was never gated on aliveness or on conventions. It was gated on the
+**Therefore the US instance was never blocked on aliveness or on conventions. It was blocked on the
 artifact.** Confirmed end-to-end: a US pair index built from WOF (49,033 pairs; boroughs AND
 neighbourhoods, with `borough` admitted as a parent placetype because WOF parents US
 neighbourhoods to the locality) dropped beside the en-US weights flips all three probes:
@@ -56,7 +56,7 @@ venue words ("Park Slope", "Midtown", "Riverside", "Fairview"). Nothing ships un
 
 - **B-R5.1 (no gauntlet regression).** Full gauntlet, graded through per-country overlays
   (`caseCountry` — a base-only harness reproduces the 2026-08-01 instrument artifact), with the US
-  index present vs absent. Bar: **zero newly-failing gated cases.**
+  index present vs absent. Bar: **zero newly-failing counted cases.**
 - **B-R5.2 (venue-confound floor).** A held-out US confound board — neighbourhood surfaces opening
   venue names, the law-1 class R4b boarded for London. Bar: **≤2% dependent-locality false
   positives**, the shipped GB floor.
@@ -77,12 +77,12 @@ against the same artifacts removed.
 
 - **B-R5.1 PASS.** Full gauntlet, per-country overlays: `VERDICT: PASS — clear to ship` with the
   index present, and the xfail set is **identical** to the baseline run without it (same 5 tracked
-  xfails, same `comma-drop|181 Rue du Chevaleret` xfail-now-passes note). Zero newly-failing gated
+  xfails, same `comma-drop|181 Rue du Chevaleret` xfail-now-passes note). Zero newly-failing conditional
   cases.
 - **B-R5.2 PASS.** US law-1 confound board — 60 held-out rows where a US neighbourhood surface
   OPENS a venue name (35 directional-class drawn from 4,819 available, 25 short common-word), each
   in a real street address under its true parent: **0/60 dependent-locality false positives
-  (0.0%)** against a ≤2% bar. The segment-mode gating that holds for London holds here.
+  (0.0%)** against a ≤2% bar. The segment-mode blocking that holds for London holds here.
 - **B-R5.3 PASS.** US positive board — 60 rows sampled from 31,474 state-resolved WOF pairs:
   **60/60 emit, 60/60 tag-correct (100%)**, and 60/60 assign the parent to `locality` correctly.
   Disclosure: every row's pair is necessarily IN the index, so this measures the mechanism's
@@ -102,7 +102,7 @@ correctly refused to build a US index without one), and both boards as reusable 
 `$MAILWOMAN_DATA_ROOT/scratch-r5-us/`.
 
 **Shipping `pair-index-us.bin` inside `@mailwoman/neural-weights-en-us` is left as an operator
-decision, not taken here.** The bars were the technical gate and they passed; what they do not
+decision, not taken here.** The bars were the technical check and they passed; what they do not
 settle is that this changes DEFAULT parse output for the flagship package — every US address with a
 neighbourhood or borough line starts emitting `dependent_locality` where it previously emitted
 nothing and silently dropped the second admin level. That is an improvement and a behaviour change
@@ -111,14 +111,14 @@ package nobody installs by accident) does not cover it.
 
 ## The finding worth carrying past this rung
 
-The doc's claim that the US instance is gated on "the tag's _contextual_ aliveness for US" is
+The doc's claim that the US instance is blocked on "the tag's _contextual_ aliveness for US" is
 **wrong, and was wrong for GB too**. The tag is dead uniformly — the en-GB model card had already
 measured the deficit as "large but UNIFORM (~7.0 logits mean)" — and no locale's dependent-locality
 emission comes from the model preferring it. GB emits because an artifact clears a uniform deficit;
 the US does not emit because no artifact exists. Every other locale in the campaign's wave 2–4 list
 (FR lieu-dit, ES pedanía, BR bairro, MX colonia, and the borough instances in Paris/Tokyo/Amsterdam)
 is therefore an ARTIFACT question, not a training question — which moves them out of R5's
-training-gated column and into the same decode-time lane R2–R4b already ran.
+training-conditional column and into the same decode-time lane R2–R4b already ran.
 
 ## R5 follow-on — the OTHER projections, and a three-way split
 
@@ -127,10 +127,10 @@ probe set 2 was built to exercise it. Measuring the rest of the table splits the
 into three classes that want three different mechanisms — the useful generalization of R5's finding.
 
 **Class 1 — enumerable administrative (`borough`, `neighbourhood`, `macrohood`, `microhood` →
-`dependent_locality`).** Closed, finite, already in WOF. **Artifact-gated**, and R5 is the proof:
+`dependent_locality`).** Closed, finite, already in WOF. **Artifact-conditional**, and R5 is the proof:
 build the index and the tag emits. Everything R2–R5 did lives here.
 
-**Class 2 — open-class venue names (`venue` → `venue`).** NOT artifact-gated, and the measurement
+**Class 2 — open-class venue names (`venue` → `venue`).** NOT artifact-conditional, and the measurement
 states: of the 40 probe-set-2 improvement targets carrying an expected venue string, only
 **8 (20%) exist in poi.db at all** — and most of those 8 are wrong-country homonyms ("East West"
 [US] for a London row, "Ginza" [FR] for a Dhaka row), so true coverage rounds to near zero. The
@@ -152,26 +152,26 @@ Measured behaviour, and the reason for it:
 | ------------------------------------------------------- | ------------------------------------------------------------ |
 | `Building 43, Googleplex, 1600 Amphitheatre Parkway, …` | correct — `unit=Building 43, venue=Googleplex`               |
 | `Terminal 5, Heathrow Airport, Hounslow, TW6 2GA`       | `locality="Terminal"`, `house_number=5`, **airport dropped** |
-| `Gate 12, Terminal 2, Manchester Airport, …`            | `locality="Gate"`, `house_number=12`                         |
+| `Check 12, Terminal 2, Manchester Airport, …`           | `locality="Check"`, `house_number=12`                        |
 | `West Wing, St Thomas' Hospital, …`                     | `locality="West Wing"`, hospital folded into `street`        |
 | `Concourse B, O'Hare International Airport, …`          | `street="O'Hare International Airport"`                      |
 
 The asymmetry is not random. The span proposer's designator lexicon
 (`neural/span-proposer-lexicon.ts`) reads `codex/us/unit-designator.ts`, which is **USPS Publication
 28** — a mail-delivery standard. It stocks BUILDING, HANGAR, PIER, LOBBY because mail is delivered
-there, and omits TERMINAL, GATE, CONCOURSE, WING because mail is not. The postal source is correct
+there, and omits TERMINAL, CHECK, CONCOURSE, WING because mail is not. The postal source is correct
 about postal reality and silent about venue interiors — the same source-shaped gap the
 dependent-locality arc hit when PPD turned out to have no US analogue.
 
 A probe extending the designator set moved `Terminal 5` → `unit="Terminal 5", locality="Heathrow
-Airport"` and `Gate 12` → `unit="Gate 12"`, but split `Concourse B` into `unit=Concourse` +
+Airport"` and `Check 12` → `unit="Check 12"`, but split `Concourse B` into `unit=Concourse` +
 `venue=B` and left the trailing-designator `West Wing` untouched. **Real change, not a clean sweep** —
 and it is a default-on change to unit parsing with obvious confound risk (GB street names ending in
-`-gate`, industrial estates literally named "Terminal"). It gets its own pre-registered board before
+`-check`, industrial estates literally named "Terminal"). It gets its own pre-registered board before
 anything ships; the experiment was reverted.
 
 **Landed here instead: the instrument.** Six sub-venue cases join the gauntlet — five
-`improvement_target` and one **gated control** (`Building 43`, the half that already works, locked
+`improvement_target` and one **conditional control** (`Building 43`, the half that already works, locked
 so a future designator change cannot silently regress it). The class now has coverage it has never
 had, which is the precondition for fixing it.
 
@@ -185,7 +185,7 @@ measured at, inherited from GB rather than re-swept because the classifier defic
 to the flagship package was ordinary US addresses. They are untouched, and the reason is structural:
 the prior fires only when child AND parent are BOTH present in the query. `Astoria, NY 11103` — a
 USPS-valid city/state/ZIP with no parent in the string — keeps `locality=Astoria`. That is why the
-19 candidate rows in the US golden boards needed **no edit**; both halves are now gated gauntlet
+19 candidate rows in the US golden boards needed **no edit**; both halves are now conditional gauntlet
 cases (`us-r5-park-slope-brooklyn`, `us-r5-astoria-no-parent-unchanged`).
 
 **Two latent bugs surfaced by the packaging work, both fixed here:**

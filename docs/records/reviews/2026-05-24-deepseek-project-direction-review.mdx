@@ -6,7 +6,7 @@ A third-party review synthesizing the project's documentation, blog posts, retro
 
 Mailwoman is on the right strategic track. The strongest idea in the project is the Knowledge Ladder — a staged decomposition that assigns structural priors (phrase grouping, kind classification, locale detection) to cheap rule-based layers, semantic tagging to a small neural model, sequence validity to a CRF with a frozen structural transition mask, cross-component coherence to a joint-decoding reconciler, and world hierarchy to a WOF gazetteer. This is the correct line. It is better than "rules forever" or "one model does everything."
 
-The current work is a significant step forward as architecture and instrumentation, but the model-quality story is still unproven. The v0.5.0 scaffolding — QueryShape, kind classification, phrase grouper, JS Viterbi, resolver alternatives, top-k training support, and opt-in joint decoding — is the right shape. The expensive next step should not be "run the full fresh-slate train and hope." It should be a tighter validation program that proves the destabilizer, closes the top-k-to-Stage-5 integration gap, and establishes slice-level product gates before spending H100/LLM/human-labeling budget at scale.
+The current work is a significant step forward as architecture and instrumentation, but the model-quality story is still unproven. The v0.5.0 scaffolding — QueryShape, kind classification, phrase grouper, JS Viterbi, resolver alternatives, top-k training support, and opt-in joint decoding — is the right shape. The expensive next step should not be "run the full fresh-slate train and hope." It should be a tighter validation program that proves the destabilizer, closes the top-k-to-Stage-5 integration gap, and establishes slice-level product checks before spending H100/LLM/human-labeling budget at scale.
 
 **Recommended posture: continue, but narrow the next cycle.** Treat the next spend as validation of the pipeline hypothesis, not as a release train.
 
@@ -29,7 +29,7 @@ The staged pipeline is the project's strongest intellectual contribution:
 | Layer                | What it knows                                                    | Shipped today                                            |
 | -------------------- | ---------------------------------------------------------------- | -------------------------------------------------------- |
 | 1. Normalize         | Unicode, whitespace, case folding, reversible offsets            | Yes                                                      |
-| 2. Locale gate       | Language / script family                                         | Yes (rule-based workspace; not wired as factory default) |
+| 2. Locale check      | Language / script family                                         | Yes (rule-based workspace; not wired as factory default) |
 | 2.5. Kind classifier | Overall query category (postcode-only, structured, intersection) | Yes (rule-based)                                         |
 | 2.7. Phrase grouper  | Coherent input units — boundary discovery                        | Yes (rule-based, v0.5.0)                                 |
 | 3. Token classify    | Per-token semantic type distribution                             | Yes (neural, 9M-param encoder + CRF)                     |
@@ -121,7 +121,7 @@ Specific conflicts found:
 | `TODO.md`                      | v0.5.0 threads A–E are **pending**                    | `v0-5-0-shipped.md` says most **shipped** or partially shipped |
 | `STAGES.md` header             | Stages 1/2/2.5/candidate-list **unbuilt**             | Later sections say they **shipped**                            |
 | `ARCHITECTURE.md`              | Describes **47-label** schema, old `packages/` layout | Shipped uses **21-label** Tier 2 subset                        |
-| `runtime-pipeline.ts` comments | Locale gate/kind classifier are **stubbed**           | Kind is wired; locale-gate exists as workspace                 |
+| `runtime-pipeline.ts` comments | Locale check/kind classifier are **stubbed**          | Kind is wired; locale-hint exists as workspace                 |
 | `tokenization.md`              | Describes v0.1 **16K** tokenizer as current           | v0.5.0 docs discuss **48K** A1 tokenizer                       |
 
 When next steps are expensive, stale status can burn GPU cycles on the wrong premise.
@@ -137,7 +137,7 @@ The [Codex review](./2026-05-24-codex-project-direction-review.mdx) (same date) 
 - Joint reconcile isn't wired by default. This is the largest integration gap.
 - Status docs are stale. Specific conflicts exist in five files.
 - Next spend should be validation, not release. Preflight checklist before H100 hours.
-- Eval metrics must graduate to product-level gates: calibration, exact match, graceful failure, top-k resolver recall, per-failure-class breakdowns.
+- Eval metrics must graduate to product-level checks: calibration, exact match, graceful failure, top-k resolver recall, per-failure-class breakdowns.
 - Synthetic data needs curriculum weights, not blind corpus expansion.
 - Ship-of-Theseus coexistence is correct.
 - TypeScript-first, Python-training split is correct.
@@ -162,7 +162,7 @@ Create one operational page with the current state of every component:
 | Area             | State             | Default?             | Evidence          | Next action                    |
 | ---------------- | ----------------- | -------------------- | ----------------- | ------------------------------ |
 | QueryShape       | shipped           | yes                  | tests             | keep                           |
-| locale-gate      | workspace shipped | not wired in factory | tests             | wire or document stub          |
+| locale-hint      | workspace shipped | not wired in factory | tests             | wire or document stub          |
 | phrase-grouper   | shipped rule v1   | yes in factory       | kryptonite tests  | feed into classifier/reconcile |
 | top-k classifier | Python scaffold   | no TS runtime        | tests only        | runtime adapter                |
 | joint reconcile  | shipped opt-in    | no                   | mocked tests      | integrate behind flag          |
@@ -214,7 +214,7 @@ normalize → queryShape → locale → kind → phraseProposals
   → resolved top-k output
 ```
 
-Gate behind `forceJointReconcile` or similar. Run against:
+Check behind `forceJointReconcile` or similar. Run against:
 
 - Kryptonite catalogue (4,771 rows).
 - Golden v0.1.2 (4,535 entries).
@@ -251,7 +251,7 @@ The model should not be judged only as a tagger. Add a report that gives:
 | Per-source and per-failure-class breakdown                    | Diagnostic drill-down  |
 | Rule-only vs neural-only vs hybrid vs joint-decode comparison | Policy guidance        |
 
-This report becomes the release gate for any new weights.
+This report becomes the release check for any new weights.
 
 ### Step 5 — Make synthetic data a curriculum
 
@@ -302,7 +302,7 @@ The next investment should be a validation sprint:
 2. Run the fine-tuning control experiment (~2 GPU hours).
 3. Complete the v0.5.0 bisect with corpus/tokenizer forensics.
 4. Wire real top-k joint decoding behind a flag.
-5. Establish product-level eval gates.
+5. Establish product-level eval checks.
 6. Run the expensive train only after the preflight checklist passes.
 
 The thesis is sound. The expensive part should wait until the pipeline can measure the thesis end-to-end.

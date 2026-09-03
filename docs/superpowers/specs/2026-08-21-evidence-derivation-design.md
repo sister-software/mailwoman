@@ -5,10 +5,10 @@
 **Related:** #1571 (inferential resolution), #1685 (coverage basis, landed), #1756 (`parent_fallback_retry` inert).
 
 A pure leaf workspace holding the typed-evidence vocabulary, the epistemic-status axis, the
-coverage-basis exclusion gate, and the derivation graph. Plus its first four consumers.
+coverage-basis exclusion check, and the derivation graph. Plus its first four consumers.
 
 The scope is deliberately narrow. This does not build an inference engine. It makes the evidence the
-repository **already has** sayable in one vocabulary, and it wires the one gate that is already built
+repository **already has** sayable in one vocabulary, and it wires the one check that is already built
 and has never been called.
 
 ---
@@ -46,7 +46,7 @@ inferred         parent_company 368 …
 Three independent implementations of the same idea is the signal AGENTS.md describes: not "nobody
 found the shared tool" but "there was no shared tool to find."
 
-### 1.2 The gate is built and has never been called
+### 1.2 The check is built and has never been called
 
 #1685 landed `CoverageBasis` and `supportsExclusion()` in `packages/core/lib/layers/`. A grep for
 consumers finds the definition and its own unit test, and nothing else.
@@ -136,7 +136,7 @@ fold failure   the row is present under a surface we did not probe  → repair t
 ```
 evidence.ts     Observation | Exclusion | Relation | Prior
 status.ts       EpistemicStatus + the assertion/score rule
-coverage.ts     requireExclusionBasis(cell, fold) — the gate
+coverage.ts     requireExclusionBasis(cell, fold) — the check
 derivation.ts   DerivationGraph + project()
 ```
 
@@ -151,7 +151,7 @@ them.** Evidence cannot depend on core, and the alternative — each declaring i
 three strings — is the arrangement AGENTS.md records as a defect generator: _when two copies must
 agree, share the FUNCTION; sharing the constants proves nothing_. The #861 literals matched for the
 contract's whole life while the formula diverged. The `layer_coverage` schema and its IO stay in
-core; only the vocabulary and the gate move.
+core; only the vocabulary and the check move.
 
 **Registration:** a new workspace joins four registers, and only the first fails loudly — the root
 `workspaces` array, `.release-it.json`'s publish list, and **both** root `tsconfig.json` reference
@@ -171,7 +171,7 @@ The rules that make it worth having a type at all:
 
 - **Observation** — retrieved from a named source at a named vintage. Never carries a score.
 - **Exclusion** — proves a candidate impossible. Constructible **only** through
-  `requireExclusionBasis`; there is no public constructor that skips the gate.
+  `requireExclusionBasis`; there is no public constructor that skips the check.
 - **Relation** — structural compatibility between entities. Carries `assertion`, and a `score` only
   when `assertion === "inferred"` — `filer.db`'s check constraint, lifted into the type system.
 - **Prior** — changes probability. Can never, by itself, prove or exclude.
@@ -190,7 +190,7 @@ A UPRN-matched rooftop is `address_point` + `designated`. An OSM-matched rooftop
 `observed` — same mechanism, different authority. Collapsing them silently upgrades a source's
 observation into an authority's designation, which the companion plan names as the error to avoid.
 
-### 3.3 The gate
+### 3.3 The check
 
 ```
 requireExclusionBasis(cell, fold) → Exclusion | null
@@ -205,7 +205,7 @@ null when:
 
 Only `designated` and `surveyed` pass. **Fold parity is a precondition, not a footnote:** the probe
 must import the same fold function the layer's builder wrote (`foldStreetSurface`,
-`normalizeLocalityForKey`), and the gate takes it as an argument so a mismatch is a compile-time
+`normalizeLocalityForKey`), and the check takes it as an argument so a mismatch is a compile-time
 concern rather than a silent miss.
 
 ### 3.4 Exclusion power: demote only
@@ -214,7 +214,7 @@ An exclusion contributes **one negative bit** to the existing `pickByStreetEvide
 reorder siblings. **It never removes a candidate.**
 
 The companion plan's prohibitions permit removal under an explicitly complete coverage scope. This
-spec declines that power for the first cut. The reason is the plan's own hazard: today the resolver
+spec declines that power for the first reduce. The reason is the plan's own hazard: today the resolver
 fails at 10,000 km and a user notices; an inference engine that fails at 2 km is the failure mode we
 called worse. Demote-only bounds the worst case at the model's own ranking and preserves the
 anti-Pelias rule (`street-evidence.ts`, `rerank.ts`): one bit of evidence, never a blended score.
@@ -259,7 +259,7 @@ tiger-oc.db   tabblock20  26,734   pl_block  26,734
 So this arm is: three columns on `PLBlockTable`, one additional segment read, a re-run.
 `completeness = min(1, address_points_in_block ÷ H1_001N)`, written with `basis: surveyed`.
 
-Public domain. No licence gate.
+Public domain. No licence check.
 
 ### 4.3 `plausibilityCheck` re-expressed — no behaviour change
 
@@ -270,7 +270,7 @@ stay the stable public surface of that module.
 **Acceptance is that its existing test suite passes unchanged.** This arm ships no new capability;
 it exists to prove the vocabulary is claim-type-agnostic rather than geocode-shaped.
 
-### 4.4 FR lexical negative mode — probe-gated
+### 4.4 FR lexical negative mode — probe-conditional
 
 The measured board lives here, but `street-centroids-fr.db` has no `layer_coverage` at all. Writing
 one requires answering a question first, and the question is empirical:
@@ -362,4 +362,4 @@ Run before building the arms, not after.
 | Core home       | new `@mailwoman/evidence` workspace            | three consumers, two of them leaf; core's data weight is the blocker      |
 | First arm       | GB spatial                                     | the only designated artifact that exists                                  |
 | US basis        | `surveyed`, not `designated`                   | no public designated US address register; H1 is the independent reference |
-| FR arm          | probe-gated                                    | a blanket per-commune designation claim would be false                    |
+| FR arm          | probe-conditional                              | a blanket per-commune designation claim would be false                    |

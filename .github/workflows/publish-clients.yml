@@ -6,7 +6,7 @@
 # exact bytes — no regeneration, no cross-language rebuild. The publish jobs
 # are individually skippable via the `publish_python` / `publish_cargo`
 # dispatch inputs (default true), so a single-registry retry (e.g. crates.io's
-# verified-email gate on the first attempt) republishes in seconds.
+# verified-email check on the first attempt) republishes in seconds.
 #
 # AUTH — two different mechanisms, both environment-bound:
 # - PyPI: Trusted Publishing (OIDC). PyPI's publisher config binds to THIS

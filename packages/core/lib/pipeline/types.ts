@@ -74,7 +74,7 @@ export interface PipelineOpts {
 	/**
 	 * Placetype-pair prior (placetype-pair-prior arc, #1278) — an opaque, per-parse decode-channel handle threaded
 	 * verbatim to `ClassifierOpts.placetypePair` (and on to the neural classifier's `parse`). The browser demo derives it
-	 * per input via `neural-web`'s `LoadResult.selectPairIndexForText` (locale-gate over the text shape) so a GB/NZ input
+	 * per input via `neural-web`'s `LoadResult.selectPairIndexForText` (locale-hint over the text shape) so a GB/NZ input
 	 * gets its dependent_locality-resurrecting prior while a US/FR input stays byte-stable. `undefined` (default) = no
 	 * prior. See {@link PlacetypePairPassthrough}.
 	 */

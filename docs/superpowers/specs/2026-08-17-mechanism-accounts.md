@@ -30,8 +30,8 @@ commitments prevent it:
    are recomputed from the current system on every run, free to dissolve when the code changes —
    nothing mechanistic accumulates for a truer understanding of addresses to break against.
 2. **Failure shapes are MECHANISM-STATES, never address shapes.** The vocabulary comes from the
-   pipeline's own seams — _parsed-but-not-consulted_, _absent-from-candidates_,
-   _present-but-outranked-by-term-T_, _gated-out-by-G_, _evidence-silent_ — and makes claims about
+   pipeline's own boundaries — _parsed-but-not-consulted_, _absent-from-candidates_,
+   _present-but-outranked-by-term-T_, _excluded-by-G_, _evidence-silent_ — and makes claims about
    what the system did, never about how addresses work. It is finite, derived from code structure,
    and versioned with the code.
 
@@ -39,7 +39,7 @@ commitments prevent it:
 
 Per-row, regenerated every run, assembled from facts the system already computes: what the parse
 produced, what each evidence channel fed, what retrieval returned, which constraints were applied,
-which gates fired, what won and on which score terms — plus the smallest counterfactual that flips
+which checks fired, what won and on which score terms — plus the smallest counterfactual that flips
 the row. Every line is checkable against execution; nothing in it is a narrative.
 
 The Weimar worked example, with today's real data:
@@ -58,7 +58,7 @@ smallest counterfactual: apply the region constraint → order inverts
 ```
 
 The interiority boundary, stated honestly: inside the weights there are no reasons to recover.
-Accounts live at the seams — what was fed, retrieved, gated, ranked — and when one bottoms out at
+Accounts live at the boundaries — what was fed, retrieved, conditional, ranked — and when one bottoms out at
 "the model chose X with margin m and every channel silent," that IS the class (the model flew
 blind), and the fix is evidence, not archaeology in the logits.
 
@@ -67,7 +67,7 @@ blind), and the fix is evidence, not archaeology in the logits.
 Classification is a **posterior with abstention**, never a bare label (operator's amendment,
 2026-08-16 — a hard label is a confidence of 1.0 nobody argued for).
 
-- **v1 — seam-fact matching.** Each shape predicts a pattern of seam facts; a row's posterior is
+- **v1 — stage-fact matching.** Each shape predicts a pattern of boundary facts; a row's posterior is
   scored by which predictions the observed facts match. Transparent, no training, and reports
   itself as uncalibrated. Ambiguity is useful: a posterior split evenly between
   `constraint-not-consulted` and `evidence-starvation` names the next cheapest probe (feed the
@@ -114,7 +114,7 @@ accept/review/reject band already exists as Fellegi–Sunter's clerical band in 
   D-rule before default-on.
 - **Rung 1 — counting**: p(parent|child) as literal hierarchy-table lookups (SDValidate shape);
   smoothing only where sparsity measurably bites.
-- **Rung 2+, gated** (#1724): masked-cell model (MCM/TURL-shaped) over assembled records, reusing
+- **Rung 2+, conditional** (#1724): masked-cell model (MCM/TURL-shaped) over assembled records, reusing
   the BIO masking infrastructure — only for coherence the hierarchy cannot express, and only if it
   beats the rung-1 baseline in an eval. ("Autodecoder" investigated and rejected — right intuition,
   wrong rung; coherence report §1.)
@@ -129,7 +129,7 @@ In ship order: evidence-silent predicate (no interpretability needed — shipped
 country probe + logit-lens decision depth (the model/resolver contradiction detector: hidden states
 read "DE" while the resolver commits US) → channel-reliance board metric (paired-input interchange;
 ERASER sufficiency/comprehensiveness per checkpoint) → exhaustive patch-sweep tool (~1,700 sites
-per input at this depth; seconds per case) → gated: IIT country register, at most one exploratory
+per input at this depth; seconds per case) → conditional: IIT country register, at most one exploratory
 SAE run. Non-changes, recorded so they are not re-proposed: hard concept bottlenecks (would have
 been wrong in Weimar — flag bypass decisions, never prevent them), RRR gradient penalties,
 attention-as-explanation.
@@ -146,7 +146,7 @@ attention-as-explanation.
 - Run store + recorded arms (#1714) — every comparison replayable by `run_id`, which is what makes
   account-generation over past runs possible.
 - `mwdev_diagnose` v1 (#1722) — per-row accounts over the parse / evidence / retrieval / outcome
-  seams, seven mechanism-state shapes as documented predicates, the five-change counterfactual sweep,
+  boundaries, seven mechanism-state shapes as documented predicates, the five-change counterfactual sweep,
   and `by_shape` aggregation. v1 reports the SET of matching shapes with each predicate attached and
   `calibration: "none"`, not the normalized posterior §4 describes — the scoring layer arrives with
   the v2 conformal calibration, which is what a posterior's numbers would have to mean.

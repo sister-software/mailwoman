@@ -31,7 +31,7 @@
 # STEPS: 4,000 rather than 8,000. The change is small and additive to a proven bucket, and the wall
 # clock is real; if it needs longer it can resume.
 #
-# PRE-REGISTERED GATE:
+# PRE-REGISTERED CHECK:
 #   1. the 12 venue-led rows v4.8.0 regressed must ALL hold — that is the defect this design fixes;
 #   2. FR, GB and DE show no regression anywhere (D-rule, iron rule 6);
 #   3. net improved-minus-regressed >= 0 on the 649-row board.

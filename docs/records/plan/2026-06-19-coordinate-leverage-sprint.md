@@ -151,14 +151,14 @@ strategic fork below.
 ### Workstream A — EU parse-blocker result (2026-06-19)
 
 Ran `scripts/eval/eu-parse-blocker.ts` on the in-repo OA samples (1500 rows/locale, ship-config
-v4.11.0 parse, `normalizeCase` on). The proxy is **gated on whether the admin token is actually IN the
-input** (the first cut wasn't, and wrongly flagged ES/IT/NL as parser-blocked — OA writes "street,
+v4.11.0 parse, `normalizeCase` on). The proxy is **blocked on whether the admin token is actually IN the
+input** (the first reduce wasn't, and wrongly flagged ES/IT/NL as parser-blocked — OA writes "street,
 postcode locality" and the province is implied by the postcode, NOT a token, so there is nothing to
 split). Corrected:
 
 | locale | region-in-input     | admin-split (when in input) | **loc-emit → loc-correct** | route                           |
 | ------ | ------------------- | --------------------------- | -------------------------- | ------------------------------- |
-| FR     | n/a (OA omits dépt) | — (v1.8.0 BAN gate: 99.6%)  | 100% → **97.7%**           | done                            |
+| FR     | n/a (OA omits dépt) | — (v1.8.0 BAN check: 99.6%) | 100% → **97.7%**           | done                            |
 | DE     | **100%**            | **32.7%** (drops 67%)       | 66% → **36.3%**            | **PARSER_EXTRACT**              |
 | ES     | 8.6%                | —                           | 98% → **21.3%**            | parser (locality) then coverage |
 | IT     | 1.9%                | —                           | 100% → **58.7%**           | coverage + parser polish        |
@@ -185,7 +185,7 @@ Vicente del Raspeig`); DE by the city-state drop. The relative ordering (FR ≫ 
 trustworthy signal, not the absolute floors. OA samples are clean-ish; real traffic may differ.
 
 **Routing implication:** the EU multi-locale bet is a bigger, more parser-shaped lift than "ingest WOF"
-— per-locale parser readiness gates the coordinate before coverage can pay off. The lowest-friction
+— per-locale parser readiness checks the coordinate before coverage can pay off. The lowest-friction
 EU coordinate win is a **DE admin-split extract** (resolver already covers DE; clear, measured parse
 gap), directly reusing the FR-admin-split template.
 
@@ -225,7 +225,7 @@ pipeline per the existing national-situs / Overture work; or the FR-admin-split 
 - **Span-head + lower-fertility vocab (#727):** future-enablement for CJK/Cyrillic, not this sprint.
   Coordinate-invisible today.
 - **The `enforceWordConsistency` decode-fix:** already shipped default-OFF; not revived here.
-- **A transformer reranker:** gated behind the cheap LightGBM falsifier showing ranking-gap signal.
+- **A transformer reranker:** blocked behind the cheap LightGBM falsifier showing ranking-gap signal.
 
 ## Exit criteria
 
@@ -286,4 +286,4 @@ covered control, also tails to 118 km, so this is a general resolver-ranking job
 postcode constraint, not specific to the new locales). Neither is a parser-retrain change.
 
 The staging DB (`admin-global-priority-eu.db`) is built and validated; promoting it to the shipped
-`admin-global-priority.db` is the gated canonical-DB swap awaiting operator GO.
+`admin-global-priority.db` is the conditional canonical-DB swap awaiting operator GO.

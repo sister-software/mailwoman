@@ -24,7 +24,7 @@ The stated target reader is a capable software engineer with basic geocoding int
 But the reader is repeatedly dropped into operator state:
 
 - `plan/reference/ARCHITECTURE.md` still contains old layout and label-count claims alongside useful design rationale.
-- `STAGES.md`, `how-it-works-now.md`, `the-staged-pipeline.md`, and code comments disagree on locale gate default wiring and candidate-list state.
+- `STAGES.md`, `how-it-works-now.md`, `the-staged-pipeline.md`, and code comments disagree on locale check default wiring and candidate-list state.
 - Blog posts contain the clearest explanations, but they assume a serial project-log reader.
 - There is no consolidated "install, parse, resolve, interpret output" path.
 
@@ -90,7 +90,7 @@ The central architectural claim is "candidate generation plus joint coherence be
 - `reconcileSpans`
 - resolver candidate/parent-chain scoring where available
 
-Gate should compare argmax vs joint reconcile on golden plus kryptonite cases. This is CPU/TypeScript work, not a GPU-training blocker.
+Check should compare argmax vs joint reconcile on golden plus kryptonite cases. This is CPU/TypeScript work, not a GPU-training blocker.
 
 ### Stop bundling training-side changes
 
@@ -178,7 +178,7 @@ This is manageable only if defined early and consistently. Add these terms to gl
 Examples found during review:
 
 - `CRF decoder` says JS inference-time Viterbi is "not yet"; several newer docs and code say it shipped and is default.
-- `how-it-works-now` says locale gate workspace exists but factory default falls back to caller trust; `STAGES.md` says it is wired as default; `mailwoman/runtime-pipeline.ts` still does not wire `@mailwoman/locale-gate` by default.
+- `how-it-works-now` says locale check workspace exists but factory default falls back to caller trust; `STAGES.md` says it is wired as default; `mailwoman/runtime-pipeline.ts` still does not wire `@mailwoman/locale-hint` by default.
 - `STAGES.md` status says candidate-list API is scaffold-only/designed, then later says `AddressNode.alternatives` shipped.
 - `ARCHITECTURE.md` still references a `packages/` layout and 47-label vocabulary, while current docs/code discuss root workspaces and 21 BIO labels.
 - `v0-5-0-shipped.md` says B2 is still cooking; later docs/researchs say B2 landed.
@@ -271,7 +271,7 @@ This preserves depth while giving each audience a door.
 2. Create `/docs/getting-started`.
 3. Create `/docs/api`.
 4. Add glossary entries for Stage/Tier/Phase/Thread and label historical Stage-vs-Tier artifacts.
-5. Fix the most visible state contradictions: CRF runtime status, locale gate default, candidate-list status, v0.5.0 B2 status, `ARCHITECTURE.md` layout/label count.
+5. Fix the most visible state contradictions: CRF runtime status, locale check default, candidate-list status, v0.5.0 B2 status, `ARCHITECTURE.md` layout/label count.
 
 ### Next engineering cycle
 

@@ -141,7 +141,7 @@ export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): P
 
 	const pass = Math.abs(accI - accF) <= 1
 
-	console.log(`  gate: ${pass ? "PASS (within 1pp)" : "FAIL (>1pp drop)"}`)
+	console.log(`  check: ${pass ? "PASS (within 1pp)" : "FAIL (>1pp drop)"}`)
 
 	return { n: N, accFp32: accF, accInt8: accI, pass }
 }

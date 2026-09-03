@@ -72,7 +72,7 @@ for (const c of cases) {
 		classification: graded.classification,
 		...(graded.deliveredKm === undefined ? {} : { deliveredKm: Number(graded.deliveredKm.toFixed(3)) }),
 		...(graded.rescueRank === undefined ? {} : { rescueRank: graded.rescueRank }),
-		gateProtects: graded.gateProtects,
+		checkProtects: graded.checkProtects,
 	})
 }
 
@@ -98,12 +98,12 @@ for (const cls of ["rescue_available_entity", "rescue_available_rank", "rescue_a
 	}
 }
 
-const gateRows = reports.filter((r) => r.gateProtects)
+const checkRows = reports.filter((r) => r.checkProtects)
 
-if (gateRows.length) {
-	console.log("\ngate_protects (correct today, at risk under a loosened gate):")
+if (checkRows.length) {
+	console.log("\ncheck_protects (correct today, at risk under a loosened check):")
 
-	for (const r of gateRows) {
+	for (const r of checkRows) {
 		console.log(`  ${r.id}  "${r.input}"`)
 	}
 }

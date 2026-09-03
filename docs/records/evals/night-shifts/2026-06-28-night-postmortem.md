@@ -18,7 +18,7 @@ _Drafted during the shift; finalized at hand-off. Window: 05:32–14:15 UTC. CPU
   395→16,647, Afghanistan 671→115,184). cities15000 is a download-failure fallback (0 used — all 147
   downloaded). Build-on-copy; canonical symlink untouched.
 
-## Gate (against the staged DB)
+## Check (against the staged DB)
 
 - **do-no-harm: PASS.** Supported-set (US/ES/IT/NL/DE/FR) candidate row counts byte-identical
   canonical vs staged; parity harness supported 10/10 @ 4.6 km median with **per-query coords identical**
@@ -31,7 +31,7 @@ _Drafted during the shift; finalized at hand-off. Window: 05:32–14:15 UTC. CPU
   top-3 cities, so it is equivalent to a cities15000-only build; the village dumps' added win is the
   long tail — smaller towns — the frontier can't see.)
 
-**B gate: PASS on all three halves.** Staged at `candidate-global-coverage.db`; the canonical symlink
+**B check: PASS on all three halves.** Staged at `candidate-global-coverage.db`; the canonical symlink
 swap (`mailwoman gazetteer promote`) is the operator's morning call.
 
 ## Decisions made autonomously
@@ -67,15 +67,15 @@ no calibration to fit. **Recommend re-scoping/closing #781**; the EU change is #
 
 ## Open questions (operator)
 
-1. **Promote the staged B DB?** Gate PASSES all three halves (do-no-harm zero regression, existence
+1. **Promote the staged B DB?** Check PASSES all three halves (do-no-harm zero regression, existence
    44.1→0.0% absent, coordinate residual 92→7). 147 previously-unreachable countries become reachable,
    with village-level (full town) coverage. `mailwoman gazetteer promote` does the symlink swap; the
    demo/R2 re-stage is a separate follow-up.
 2. **Phase A (placer): DATA GAP — defer to a class-set-widening retrain (branch-b).** The deployed
    placer is 28-class (US + EU-mostly); only CN/SK/LV of the 36 recoverable countries are classes
    (in_class_set false 31.6%). Crucially the placer is **99.6% correct at confidence 1.000 on its
-   in-set countries** — so no threshold/M2 change helps; the only change is adding classes (gated). And
-   B already cut namesake misroutes 11.5% → 6.1% (the recoverable cities now resolve bare via
+   in-set countries** — so no threshold/M2 change helps; the only change is adding classes (conditional). And
+   B already reduce namesake misroutes 11.5% → 6.1% (the recoverable cities now resolve bare via
    population-first), so the placer retrain is lower-priority than it was.
 3. **#825 (multilocale parse retrain) — likely NOT worth a GPU shift.** Corrected Phase D: the shipped
    model already resolves PT/PL/AU at a tight median (0.8 / 2.3 / 1.2 km); only a recall/p90 tail remains

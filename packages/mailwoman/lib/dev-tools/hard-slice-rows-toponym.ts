@@ -322,7 +322,7 @@ export const TOPONYM_ROWS: Curated[] = [
 		probeSurface: "Bristol",
 		expectID: 1_175_612_699,
 		toleranceM: ADMIN_TOL,
-		note: "The ONLY downward delta on the board: Bristol (pop 472,465) scores 0.6348 by population and 0.3561 by importance — the importance arm cuts its bias nearly in half on one of GB's largest cities. Whatever the Wikipedia join did here, it moved the wrong way.",
+		note: "The ONLY downward delta on the board: Bristol (pop 472,465) scores 0.6348 by population and 0.3561 by importance — the importance arm reduces its bias nearly in half on one of GB's largest cities. Whatever the Wikipedia join did here, it moved the wrong way.",
 	},
 	{
 		id: "gb-wpc-manchester",

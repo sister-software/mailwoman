@@ -85,7 +85,7 @@ runnable:
    FR + DE + GB locales sprinkled in proportion to the base tuple availability.
 3. **Enable Layer 1 morphology FST at inference** (infrastructure already
    landed). Provides additive anchoring on top of the corpus-side fix.
-4. **2D pre-publish eval gate** before promoting:
+4. **2D pre-publish eval check** before promoting:
    - `(recall drop >2pp AND baseline >10%)` OR
    - `(hallucination spike >100 AND rate >20% of golden occurrences)`
 5. **Re-run v0-vs-neural harness** post-train and target the failure clusters

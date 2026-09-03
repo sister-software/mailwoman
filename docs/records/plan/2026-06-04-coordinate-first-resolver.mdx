@@ -67,10 +67,10 @@ Output the canonical WOF name (that's what geocodes), and echo the parsed string
 
 ## Staged plan (cheapest and most decisive first)
 
-1. **PIP-containment metric + re-measure.** Implement the geometric metric (gold OA point inside resolved WOF locality polygon, using the WOF GeoJSON polygons already on disk) and re-score the _current_ resolver on DE — no build, no retrain. **Gate: if DE clears ~85%, the German wall was largely a measurement artifact** and the candidate table is a refinement, not a rescue. If lower, the table is mandatory. (#273)
+1. **PIP-containment metric + re-measure.** Implement the geometric metric (gold OA point inside resolved WOF locality polygon, using the WOF GeoJSON polygons already on disk) and re-score the _current_ resolver on DE — no build, no retrain. **Check: if DE clears ~85%, the German wall was largely a measurement artifact** and the candidate table is a refinement, not a rescue. If lower, the table is mandatory. (#273)
 2. **Postcode → locality candidate table** (offline precompute, WOF alt-name aliases folded in). Re-measure. (#274)
 3. **Soft-scoring reconciliation + conflict flag** in the resolver. (#275; builds on #227 population tiebreak, #189 alt-names.)
-4. **Conflict-falsehoods eval** — extend the falsehoods doc; gate on catching mismatches. (#276)
+4. **Conflict-falsehoods eval** — extend the falsehoods doc; check on catching mismatches. (#276)
 5. **No-postcode fallback** — country-filtered fuzzy over the alias index (where the trim's clean string earns its keep).
 
 The parser stays a clean token tagger throughout. PR #272 (the trim) is retained: it doesn't move the name-match metric, but it makes the name a reliable cross-check for reconciliation and feeds the string-fallback path.

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Stand up the `@mailwoman/api-kit` plumbing workspace and migrate `@mailwoman/libpostal` from express to Hono + `@hono/zod-openapi`, with the OpenAPI document emitted from the route table and the handwritten `libpostal/openapi.yaml` retired through a spec-parity gate.
+**Goal:** Stand up the `@mailwoman/api-kit` plumbing workspace and migrate `@mailwoman/libpostal` from express to Hono + `@hono/zod-openapi`, with the OpenAPI document emitted from the route table and the handwritten `libpostal/openapi.yaml` retired through a spec-parity check.
 
 **Architecture:** Per the approved spec (`docs/superpowers/specs/2026-07-12-hono-api-surface-design.md`): code-first, one direction — Zod schemas next to routes, spec emitted, never handwritten. libpostal is the pattern-prover (smallest drop-in). api-kit ships **only what libpostal consumes** in this phase (node serve wrapper + doc-emit helpers); the error envelope, GeoJSON atoms, and metrics hooks land in later phases with their first consumers (photon / native API). Deliberate deferral, not a gap.
 
@@ -352,7 +352,7 @@ git commit -m "feat(api-kit): serveNode wrapper + OpenAPI doc emit helpers"
   - `libpostal/engine.ts`: `LibpostalComponent`, `ParseMatch`, `COMPONENT_TO_LIBPOSTAL`, `toLibpostalComponents(matches: ParseMatch[]): LibpostalComponent[]`, `LibpostalEngine` — **moved verbatim from `index.ts`, zero signature changes** (public API).
   - `libpostal/schema.ts`: `ParseRequestSchema`, `ExpandRequestSchema`, `LibpostalComponentSchema`, `ParseResponseSchema`, `ExpandResponseSchema`, `ErrorSchema` (exact names — Task 4 imports them). Query-parameter schemas live in `routes.ts` beside their routes — they're route metadata, not reusable wire shapes.
 
-- [ ] **Step 1: Move the engine block.** Cut `LibpostalComponent`, `ParseMatch`, `COMPONENT_TO_LIBPOSTAL`, `toLibpostalComponents`, and `LibpostalEngine` (lines ~18–66 of `libpostal/index.ts`) verbatim into new `libpostal/engine.ts` with the standard copyright header and the docstring: engine contract + the `ComponentTag` → libpostal-label mapping (libpostal-specific knowledge lives here; the engine yields raw Mailwoman matches).
+- [ ] **Step 1: Move the engine block.** Reduce `LibpostalComponent`, `ParseMatch`, `COMPONENT_TO_LIBPOSTAL`, `toLibpostalComponents`, and `LibpostalEngine` (lines ~18–66 of `libpostal/index.ts`) verbatim into new `libpostal/engine.ts` with the standard copyright header and the docstring: engine contract + the `ComponentTag` → libpostal-label mapping (libpostal-specific knowledge lives here; the engine yields raw Mailwoman matches).
 
 - [ ] **Step 2: Write `libpostal/schema.ts`**
 
@@ -923,7 +923,7 @@ git commit -m "feat(libpostal)!: express Router -> Hono app with emitted OpenAPI
 
 ---
 
-### Task 5: Spec-parity gate — emitted document vs the handwritten yaml, then retire the yaml
+### Task 5: Spec-parity check — emitted document vs the handwritten yaml, then retire the yaml
 
 **Files:**
 
@@ -944,7 +944,7 @@ git commit -m "feat(libpostal)!: express Router -> Hono app with emitted OpenAPI
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   ONE-TIME migration gate (deleted once adjudicated): the emitted OpenAPI document must cover
+ *   ONE-TIME migration check (deleted once adjudicated): the emitted OpenAPI document must cover
  *   the handwritten openapi.yaml's contract — every path, method, parameter, and status code.
  *   Differences are either bugs in the new routes or bugs that were always in the yaml.
  */
@@ -1005,7 +1005,7 @@ test("every legacy status code is declared on the emitted operation", () => {
 })
 ```
 
-- [ ] **Step 2: Run the gate and adjudicate every failure**
+- [ ] **Step 2: Run the check and adjudicate every failure**
 
 Run: `yarn vitest run --dir ./libpostal --reporter=verbose`
 
@@ -1016,7 +1016,7 @@ Adjudication rules — each difference is exactly one of:
 
 Expected end state: all 3 parity tests PASS.
 
-- [ ] **Step 3: Retire the yaml.** Delete `libpostal/openapi.yaml` (`git rm libpostal/openapi.yaml`), remove `"openapi.yaml"` from `libpostal/package.json`'s `files` array, and delete `libpostal/openapi-parity.test.ts` (`git rm`) — the gate is one-time; the emitted document is now the only spec, continuously exercised by the `/openapi.json` test from Task 4.
+- [ ] **Step 3: Retire the yaml.** Delete `libpostal/openapi.yaml` (`git rm libpostal/openapi.yaml`), remove `"openapi.yaml"` from `libpostal/package.json`'s `files` array, and delete `libpostal/openapi-parity.test.ts` (`git rm`) — the check is one-time; the emitted document is now the only spec, continuously exercised by the `/openapi.json` test from Task 4.
 
 - [ ] **Step 4: Full-suite check + commit**
 
@@ -1027,7 +1027,7 @@ Expected: PASS / clean.
 git add -A libpostal
 git commit -m "feat(libpostal): retire the handwritten OpenAPI yaml — the emitted document is the spec
 
-Parity gate adjudications: <list each yaml-side bug found in Step 2, e.g.
+Parity check adjudications: <list each yaml-side bug found in Step 2, e.g.
 'additionalProperties: false on ParseRequest/ExpandRequest — the server
 always tolerated extra keys'>"
 ```
@@ -1140,7 +1140,7 @@ gh pr create --title "feat!: Hono API surface, phase 1 — api-kit + libpostal m
 
 ## Deferred to later phases (deliberate, per spec §Order)
 
-- **Phase 2 (photon)**: GeoJSON/LonLat/BBox wire atoms in api-kit (first consumer), photon migration + parity gate.
-- **Phase 3 (nominatim)**: nominatim migration + parity gate.
+- **Phase 2 (photon)**: GeoJSON/LonLat/BBox wire atoms in api-kit (first consumer), photon migration + parity check.
+- **Phase 3 (nominatim)**: nominatim migration + parity check.
 - **Phase 4 (native API)**: `@mailwoman/api` workspace, api-kit error envelope + metrics port (`mailwoman/server/metrics.ts` moves), `mailwoman serve` mounting, `mailwoman/server/` deletion + express removal repo-wide.
 - **Phase 5 (CI clients)**: spec artifacts in the release workflow, Python/Rust generation + publishing, `feat/api-clients` branch closure.

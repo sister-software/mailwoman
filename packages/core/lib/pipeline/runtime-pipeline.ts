@@ -295,7 +295,7 @@ function buildFastPathTree(text: string, kind: QueryKindResult, shape: QueryShap
  *
  * 1. Normalize (or identity)
  * 2. Compute QueryShape (or empty)
- * 3. `@mailwoman/locale-gate` (or caller-trust)
+ * 3. `@mailwoman/locale-hint` (or caller-trust)
  * 4. Kind classifier (or default structured_address)
  * 5. Branch: fast-path → resolver; full → classifier → resolver
  *
@@ -377,7 +377,7 @@ export async function runPipeline(
 	throwIfAborted(opts)
 	const tLocale = performance.now()
 	const locale = await detectLocale(normalized, queryShape, { hint: opts?.locale })
-	timing["locale-gate"] = performance.now() - tLocale
+	timing["locale-hint"] = performance.now() - tLocale
 
 	throwIfAborted(opts)
 	const tKind = performance.now()
@@ -597,7 +597,7 @@ async function safeClassify(
 			normalizeCase,
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 			...(placetypePair !== undefined ? { placetypePair } : {}),
-			...streetContextGateFor({ fst, streetMorphology }),
+			...streetContextRequirementFor({ fst, streetMorphology }),
 		})
 	} catch (error) {
 		recordFault(faults, PipelineFaultStage.Classifier, error)
@@ -623,7 +623,7 @@ export const ZEROED_MORPHOLOGY_OPTS = { biasScale: 0, dependentLocalityPenalty: 
  */
 export const STREET_CONTEXT_POSITIVE_SCALE = 0
 
-export function streetContextGateFor(stages: { fst?: FSTMatcherLike; streetMorphology?: FSTMatcherLike }): {
+export function streetContextRequirementFor(stages: { fst?: FSTMatcherLike; streetMorphology?: FSTMatcherLike }): {
 	fstStreetMorphology?: FSTMatcherLike
 	fstStreetMorphologyOpts?: { biasScale: number; dependentLocalityPenalty: number }
 	fstStreetContextPositiveScale?: number

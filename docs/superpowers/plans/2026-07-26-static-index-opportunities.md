@@ -33,7 +33,7 @@ cascade, AddrKG-LLM's prompt rulebook).
   independently at `mailwoman/eval-harness/parity-corpus.ts:101-102` and
   `scripts/eval/harness-neural.ts:738`.
 - **The kicker:** a repo-wide grep shows **no browser surface builds it at all** — `neural-web/`,
-  `react/`, `docs/src` have zero references. The browser demo runs WITHOUT the street-context gate
+  `react/`, `docs/src` have zero references. The browser demo runs WITHOUT the street-context check
   (#1315) that node runtimes apply by default. That violates standing invariant 2 ("the demo is the
   geocoder — must not silently trail"); serializing isn't just latency hygiene, it closes a real
   behavioral fork between runtimes.
@@ -120,7 +120,7 @@ Two hand-maintained tables in source re-derive what the gazetteer build already 
   recorded update-both trap). The degenerate-surface exclusion policy currently has no in-artifact
   record. Both belong in the FST header: the order table (self-describing format, kills the
   duplication) and the curation policy line (which dictionaries, which date — provenance). Zero
-  standalone cost if it rides the parent session's rebuild; version-gate the format bump.
+  standalone cost if it rides the parent session's rebuild; version-check the format bump.
 
 ### 7. Conventions / per-locale emission masks → artifact (L — defer until it grows)
 

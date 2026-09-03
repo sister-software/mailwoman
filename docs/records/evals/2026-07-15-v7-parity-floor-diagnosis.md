@@ -84,7 +84,7 @@ vanish on production traffic.
 
 ## Coordinate parity — measured
 
-The swap gates use **parse-tag byte parity** (`fold(actual) === fold(gold)`), a proxy inherited from
+The swap checks use **parse-tag byte parity** (`fold(actual) === fold(gold)`), a proxy inherited from
 plan 2. The drop-in surfaces serve a **geocode**, so the question that matters for the swap is whether
 the neural parse resolves to the same place as the rules parse. Measured over the 321 live fixtures,
 each resolved through the same WOF resolver with both the rules tree and the v264 tree
@@ -109,7 +109,7 @@ The signal is two-sided:
   Maryland, `Texas 76013` → Michigan, bare `6000, NSW, Australia` → the AU country centroid. These are
   the bare-fragment / US-highway / bare-state-name classes.
 
-A **pure** coordinate re-gate does not hold: it ships that tail. The tail lands on input classes the
+A **pure** coordinate re-check does not hold: it ships that tail. The tail lands on input classes the
 pipeline can already detect, which is what the recommended path below exploits.
 
 Caveats: this measures neural-vs-rules divergence, not accuracy against ground truth (the corpus has
@@ -122,13 +122,13 @@ The garbage-geocode tail concentrates on classes the runtime pipeline already se
 components bound it, in priority order:
 
 1. **Route on kind.** The pipeline classifies input kind at stage 2.5 (`@mailwoman/kind-classifier`:
-   `structured_address` / `postcode_only` / `intersection` / …). Gate the swap so `structured_address`
+   `structured_address` / `postcode_only` / `intersection` / …). Check the swap so `structured_address`
    uses the neural parser (coordinate-safe per the table above) and the bare-fragment kinds keep the
    rules/structural fallback until the model clears them.
 2. **Plausibility guard on the resolution.** Fall back when the neural resolution is implausible for
    the input's country signal — a country-centroid hit, or a cross-country jump like `California` →
    Maryland. A cheap post-resolve check, no model change.
-3. **Ship v7 on this hybrid gate**, not the 0.90 parse-tag floor. The swap is neural-primary; the
+3. **Ship v7 on this hybrid check**, not the 0.90 parse-tag floor. The swap is neural-primary; the
    fallback shrinks as the model improves and is deleted when it stops firing.
 
 **Measured** (`scratchpad/coord-parity.mjs`, extended with the kind-classifier + both guards). The
@@ -138,11 +138,11 @@ fallback), and of the 7 that classify as `structured_address`, the plausibility 
 live fixtures (0.9%)**, at a cost of **zero false-positive fallbacks** — none of the 81 coordinate-safe
 structured fixtures trip either guard. The surviving 3 are structured, in-country, wrong-locality
 neural resolutions, and their archetype is the #727 boundary class (`Korunní 810, Praha` → wrong
-Czech city). So the hybrid gate ships **paired with** #727 stage-2, which erases that residual, not as
+Czech city). So the hybrid check ships **paired with** #727 stage-2, which erases that residual, not as
 a permanent substitute for the model work.
 
 This unblocks v7 without a model campaign that re-plateaus and without shipping the tail a pure
-coordinate re-gate would. **#727 stage-2 (FSemi-CRF span head)** stays the model change for the ~39%
+coordinate re-check would. **#727 stage-2 (FSemi-CRF span head)** stays the model change for the ~39%
 boundary class and shrinks the fallback further. A **29M extract campaign is not recommended as the
 lead**: the plateau evidence says it re-plateaus.
 

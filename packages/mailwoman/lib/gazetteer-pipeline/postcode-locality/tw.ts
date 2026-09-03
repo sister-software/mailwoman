@@ -624,7 +624,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 				"Chunghwa Post 行政區經緯度(toPost).xml via data.gov.tw dataset 25489 (OGDL v1) + Overture divisions " +
 					"2026-06-17.0 (district polygons) + custom-built admin-tw.db (whosonfirst-data-admin-tw); built from source. " +
 					"Overture addresses 2026-06-17.0 carries 0 TW postcodes (verified) — the postal authority table is the " +
-					"only keying source. The 3+3 tail is road-segment granularity (below admin; full file account-gated at " +
+					"only keying source. The 3+3 tail is road-segment granularity (below admin; full file account-conditional at " +
 					"fpp.post.gov.tw); this table keys the 3-digit admin code.",
 			],
 			["country", "TW"],

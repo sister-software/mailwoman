@@ -12,7 +12,7 @@ For the narrative / why-it-exists framing, read [`concepts/the-staged-pipeline`]
   - **Shipped and wired as default:** Stage 1 (normalize), Stage 2.5 (kind classifier), Stage 2.7 (phrase grouper, rule-based), Stage 3 (neural classifier + CRF Viterbi), Stage 4a (CRF structural mask), Stage 6 (WOF SQLite resolver).
   - **Shipped, soft-signal (#244):** Stage 1.5 (coarse-placer country router). Off in the bare `core` coordinator (byte-stable); wired **on by default** in the `mailwoman` package. Runs after normalize, feeds the resolver's `anchorPosterior` re-rank — never the classifier.
   - **Shipped, opt-in (retired as default 2026-06-14, #566):** Stage 5 (joint reconcile). Was default-on when the phrase grouper + a `parseWithLogits` classifier were wired, but graded against the assembled pipeline it broke the street + house_number geocode precondition on 77–84% of clean US addresses while fixing 0% — so **argmax is now the default decode**. Code + A/B harnesses remain; `jointReconcile: true` opts back in (`forceJointReconcile` is the deprecated alias).
-  - **Shipped but not wired as factory default:** Stage 2 (`locale-gate` workspace exists, not in `createRuntimePipeline` factory).
+  - **Shipped but not wired as factory default:** Stage 2 (`locale-hint` workspace exists, not in `createRuntimePipeline` factory).
   - **Scaffold only:** Stage 4b (span re-reader — unbuilt).
   - **In-flight:** CE-only C-train producing new Stage 3 weights (step 6800/50K, val_macro_f1=0.496).
 
@@ -24,7 +24,7 @@ flowchart LR
     I --> S1["Stage 1<br>Normalize"]
     S1 --> CP["Stage 1.5<br>Coarse-placer<br>(soft country prior)"]
     CP --> QS["compute QueryShape<br>(boundary)"]
-    QS --> S2["Stage 2<br>Locale gate"]
+    QS --> S2["Stage 2<br>Locale check"]
     S2 --> S25["Stage 2.5<br>Kind classifier"]
     S25 -->|"fast-path"| S6
     S25 -->|"full pipeline"| S3["Stage 3<br>Token classify<br>(rule + neural)"]
@@ -138,14 +138,14 @@ export function computeQueryShape(input: string | NormalizedInputLite, opts?: Co
 
 **Today.** `@mailwoman/query-shape` workspace shipped 2026-05-22 (Slice A of [PHASE_7](../phases/PHASE_7_stage_1_normalize_and_query_shape.mdx)). Pure functions, no ML, zero workspace dependencies. Detects character class, punctuation-bounded segments, known postcode formats (US ZIP/ZIP+4, UK, CA, JP + ambiguous 5-digit FR/DE/US), PO Box / BP. Hyphen / apostrophe / underscore are "connectors" so `"10118-1234"` and `"Saint-Denis"` stay one token. Accepts both `string` and `NormalizedInputLite` (structurally compatible with `@mailwoman/normalize`'s `NormalizedInput`).
 
-## Stage 2 — `locale-gate`
+## Stage 2 — `locale-hint`
 
 **Purpose.** Decide which downstream weights to load based on script, language, and the caller's optional locale hint.
 
 **Interface.**
 
 ```ts
-// packages/locale-gate/src/types.ts
+// packages/locale-hint/src/types.ts
 
 export interface LocaleHint {
 	/** The detected locale tag. */
@@ -161,25 +161,25 @@ export interface LocaleHint {
 	source: "caller" | "detected" | "ensemble"
 }
 
-export interface LocaleGateOpts {
+export interface LocaleHintStageOpts {
 	/** If provided, takes precedence; detector may still emit alternatives. */
 	hint?: LocaleTag
 
 	/**
-	 * Below this confidence, the gate emits an ensemble of likely locales instead of committing to
+	 * Below this confidence, the check emits an ensemble of likely locales instead of committing to
 	 * one.
 	 */
 	confidenceFloor?: number // default 0.7
 }
 
-export interface LocaleGate {
-	detect(input: NormalizedInput, shape: QueryShape, opts?: LocaleGateOpts): Promise<LocaleHint>
+export interface LocaleHintStage {
+	detect(input: NormalizedInput, shape: QueryShape, opts?: LocaleHintStageOpts): Promise<LocaleHint>
 }
 ```
 
-**Today.** `@mailwoman/locale-gate` workspace shipped 2026-05-23. Rule-based: caller-hint precedence at confidence 1.0; otherwise derived from `QueryShape.characterClass` (CJK → ja-JP, Cyrillic → ru-RU, Arabic → ar) + known-format hits (us_zip4 → en-US, uk_postcode → en-GB, ca_postcode → en-CA, jp_postcode → ja-JP). Ambiguous 5-digit → en-US at low confidence with FR/DE as alternatives. Always returns a verdict (fallback en-US at 0.3) — it never abstains. Not yet wired as default in `createRuntimePipeline` — callers must pass `detectLocale` explicitly. The coordinator falls back to caller-trust stub.
+**Today.** `@mailwoman/locale-hint` workspace shipped 2026-05-23. Rule-based: caller-hint precedence at confidence 1.0; otherwise derived from `QueryShape.characterClass` (CJK → ja-JP, Cyrillic → ru-RU, Arabic → ar) + known-format hits (us_zip4 → en-US, uk_postcode → en-GB, ca_postcode → en-CA, jp_postcode → ja-JP). Ambiguous 5-digit → en-US at low confidence with FR/DE as alternatives. Always returns a verdict (fallback en-US at 0.3) — it never abstains. Not yet wired as default in `createRuntimePipeline` — callers must pass `detectLocale` explicitly. The coordinator falls back to caller-trust stub.
 
-**Future.** Replace the rule scorers with a small character-level classifier (~100 KB) trained on the first 200 characters of input. Per-locale corpus rows already carry the `locale` field — supervised training data is free. Below the confidence floor, `locale-gate` signals an ensemble run downstream.
+**Future.** Replace the rule scorers with a small character-level classifier (~100 KB) trained on the first 200 characters of input. Per-locale corpus rows already carry the `locale` field — supervised training data is free. Below the confidence floor, `locale-hint` signals an ensemble run downstream.
 
 **Failure classes owned.** Unicode/transliteration script-handling (#6); language-switch hybrids (#7).
 
@@ -492,8 +492,8 @@ export async function runPipeline(raw: string, opts?: PipelineOpts): Promise<Pip
 	const queryShape = computeQueryShape(normalized, opts?.locale)
 	t.mark("query-shape")
 
-	const locale = await localeGate.detect(normalized, queryShape, { hint: opts?.locale })
-	t.mark("locale-gate")
+	const locale = await localeHintStage.detect(normalized, queryShape, { hint: opts?.locale })
+	t.mark("locale-hint")
 
 	const kind = await kindClassifier.classify(normalized, queryShape, locale)
 	t.mark("kind-classifier")
@@ -565,7 +565,7 @@ Each stage lives in its own workspace where possible. Existing workspaces extend
 | ------------------------------ | ----------------------------------------------------------------- | -------------------------------- |
 | 1 Normalize                    | `@mailwoman/normalize`                                            | new                              |
 | Boundary QueryShape            | `@mailwoman/query-shape`                                          | new                              |
-| 2 `locale-gate`                | `@mailwoman/locale-gate` + `@mailwoman/locale-gate-weights`       | new                              |
+| 2 `locale-hint`                | `@mailwoman/locale-hint` + `@mailwoman/locale-hint-weights`       | new                              |
 | 2.5 Kind classifier            | `@mailwoman/kind-classifier`                                      | new (small)                      |
 | 2.7 Phrase grouper             | `@mailwoman/phrase-grouper`                                       | shipped (rule-based v1)          |
 | 3 Token classify               | `@mailwoman/neural` + `@mailwoman/neural-weights-*`               | shipped                          |
@@ -575,7 +575,7 @@ Each stage lives in its own workspace where possible. Existing workspaces extend
 | 6 Resolve                      | `@mailwoman/resolver-wof-sqlite`, `@mailwoman/resolver-wof-wasm`  | shipped (candidate-list API new) |
 | Coordinator                    | `@mailwoman/core`                                                 | new (composes the above)         |
 
-The packaging is intentional: a consumer can pull just `@mailwoman/core` + `@mailwoman/normalize` + `@mailwoman/query-shape` for cheap parsing without the neural runtime. Browser-side, the `locale-gate` weights and the kind-classifier together should fit under 1 MB so a fast-path-only deployment is feasible.
+The packaging is intentional: a consumer can pull just `@mailwoman/core` + `@mailwoman/normalize` + `@mailwoman/query-shape` for cheap parsing without the neural runtime. Browser-side, the `locale-hint` weights and the kind-classifier together should fit under 1 MB so a fast-path-only deployment is feasible.
 
 ## Versioning rules
 
@@ -593,7 +593,7 @@ These don't belong to one stage; they affect composition.
 2. **Caching.** `QueryShape` and `LocaleHint` are cheap but not free. Should they be cached keyed by `(raw, locale)`? Recommend: yes, in-memory LRU at the coordinator; configurable size.
 3. **Telemetry.** `PipelineTiming` is per-call. Should we also expose per-stage success rates and per-stage error counters? Recommend: yes, but as a plug-in observability hook, not baked into the core interface.
 4. **Streaming.** Today the pipeline is request/response. For autocomplete workflows, would a streaming variant ever ship? Recommend: not in v1. The fast path covers most of the autocomplete case via cheap repeated calls.
-5. **Server vs browser parity.** Every stage must run in both. The `locale-gate` and kind classifier should be small enough to bundle; the encoder is already isomorphic. Document each stage's bundle-size budget when implementations land.
+5. **Server vs browser parity.** Every stage must run in both. The `locale-hint` and kind classifier should be small enough to bundle; the encoder is already isomorphic. Document each stage's bundle-size budget when implementations land.
 
 ## How this relates to existing files
 

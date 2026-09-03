@@ -22,12 +22,12 @@
 2. **`filer.db` is NOT a layer-contract artifact in 3a.** It has no coordinates (ASR is 3c) and `layer_coverage` is h3-keyed with no null path, so conforming would mean writing coverage rows that assert nothing — the exact dishonesty the meaning-of-zero rule exists to prevent. 3a ships its own `filer_manifest` table (name, version, source, source_vintage, build_cmd, build_sha, created_at — mirroring `LayerManifestTable`'s fields minus the spatial ones). Layer-contract conformance is deferred to 3c, when ASR structures give coordinates and coverage means something. **Do not geocode filer HQ addresses in 3a** to manufacture a spine.
 3. **FRN is a zero-padded 10-character branded string.** Nexus types it `Tagged<number>`; `BDCProviderTable.frn` is already `string | null`. Numeric storage loses leading zeros (same defect class as 2a's `location_id`). Provide `isFRN(value): value is FRN` with a real 10-digit check, unlike the Nexus guard.
 4. **Clustering runs with `learnedScorer: false`.** `resolveEntities` defaults to a GBT model trained on **NPPES healthcare dedup** whose threshold is not in Fellegi-Sunter weight units. Corporate-name linkage needs the honest FS path the spec describes. Revisit only with a corporate-trained model.
-5. **Authoritative and inferred edges never merge.** Entity clusters are connected components over **authoritative edges only**. Inferred edges are stored with their scores and are queryable, but a rollup that includes them must say so. This is §4.1 and it is a gate.
+5. **Authoritative and inferred edges never merge.** Entity clusters are connected components over **authoritative edges only**. Inferred edges are stored with their scores and are queryable, but a rollup that includes them must say so. This is §4.1 and it is a check.
 6. **Cardinality lives in the graph; `bdc_provider` is an explicitly lossy denormalization.** A `provider_id` can carry multiple FRNs and conflicting holding companies (Nexus warns-and-overwrites, last-wins — do not copy that). `filer.db` retains every edge. When `bdc_provider` is populated (task 8), the primary FRN is the one from the most recent 499 filing date, and that rule is documented in the schema docstring. `brand_name` stays NULL — no source in the provider list.
 7. **Temporal validity: `valid_from` is mandatory, `valid_to` nullable.** In 3a the only date source is the 499 `lastFiledAt`, so `valid_from` = filing date for 499-derived edges and the file vintage for provider-list edges. Transfer-of-control dates arrive in 3b. Every rollup query takes an `asOf` date.
 8. **Streaming, not whole-file reads.** The Nexus 499 loader reads the entire TSV into memory and silently truncates short rows (`relax_column_count_less`). Parse streaming, and a short row is a loud error naming the file and line — malformed input is never silently absorbed (the 2a `peekProviderID` discipline).
 
-## Acceptance gates (§7-3a, pre-registered — Task 7 discharges them)
+## Acceptance checks (§7-3a, pre-registered — Task 7 discharges them)
 
 1. **Provenance completeness (required).** No edge can exist without `source`, `source_vintage`, `assertion`, and `valid_from`. Enforce structurally: the fields are non-optional on the insert type, pinned with `satisfies Record<keyof FilerEdgeInsert, true>`, and a runtime test asserts a partial edge is rejected.
 2. **Authoritative/inferred never conflated.** Clustering over authoritative edges only; a test builds a fixture where an inferred edge _would_ merge two authoritative components and asserts it does not, and that the API surfaces the distinction.
@@ -114,7 +114,7 @@ export interface FilerEdgeTable {
 	assertion: string // FilerEdgeAssertion
 	source: string // e.g. "form-499", "bdc-provider-list"
 	source_vintage: string // file vintage / filing date
-	valid_from: string // MANDATORY (decision 7, gate 4)
+	valid_from: string // MANDATORY (decision 7, check 4)
 	valid_to: string | null
 	match_score: number | null // inferred only
 	evidence: string | null // JSON, inferred only
@@ -185,21 +185,21 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 
 Authoritative edges emitted: FRN↔form499ID, FRN↔holdingCompanyName, FRN↔managementCompanyName (both, per decision), bdcProviderID↔FRN, bdcProviderID↔holdingCompanyName. Attributes: legal name, DBA, classifications, contact fields. `valid_from` per decision 7.
 
-- [x] TDD via the rows seams (no file IO in tests). Assert: a malformed row is loud; a provider_id with two FRNs yields two edges; every edge has non-empty provenance; the manifest carries the vintage.
+- [x] TDD via the rows boundaries (no file IO in tests). Assert: a malformed row is loud; a provider_id with two FRNs yields two edges; every edge has non-empty provenance; the manifest carries the vintage.
 - [x] Commit `feat(filer): filer.db builder — authoritative edges, staged dedup, sealed artifact (3a task 5)`.
 
 ### Task 6: Entity clustering
 
 **Files:** Create `filer/sdk/cluster-filers.ts` + test.
 
-Two passes: (a) **authoritative components** — feed authoritative edges to `cluster()` from `@mailwoman/match` (`match/clustering.ts:112`) as `ScoredLink`s with `weight: Infinity`, writing `filer_cluster` rows with `assertion: "authoritative"`; (b) **inferred links** — build `SourceRecord`s (`registry/types.ts:15`) from filer nodes with `organization` = canonicalized legal name (`record/organization.ts` `canonicalizeOrganizationName`), `address` = HQ, and `attributes` carrying FRN/form499ID/providerID as code-set strings, then call `resolveEntities(records, { exactDiscriminators: [...], learnedScorer: false })` (decision 4) and write the resulting links as `assertion: "inferred"` edges with their scores. **Inferred links never modify authoritative cluster assignments** (decision 5, gate 2).
+Two passes: (a) **authoritative components** — feed authoritative edges to `cluster()` from `@mailwoman/match` (`match/clustering.ts:112`) as `ScoredLink`s with `weight: Infinity`, writing `filer_cluster` rows with `assertion: "authoritative"`; (b) **inferred links** — build `SourceRecord`s (`registry/types.ts:15`) from filer nodes with `organization` = canonicalized legal name (`record/organization.ts` `canonicalizeOrganizationName`), `address` = HQ, and `attributes` carrying FRN/form499ID/providerID as code-set strings, then call `resolveEntities(records, { exactDiscriminators: [...], learnedScorer: false })` (decision 4) and write the resulting links as `assertion: "inferred"` edges with their scores. **Inferred links never modify authoritative cluster assignments** (decision 5, check 2).
 
-- [x] TDD including gate 2's fixture: two authoritative components that an inferred edge would bridge; assert the authoritative clustering is unchanged and the inferred edge is recorded separately.
+- [x] TDD including check 2's fixture: two authoritative components that an inferred edge would bridge; assert the authoritative clustering is unchanged and the inferred edge is recorded separately.
 - [x] Commit `feat(filer): authoritative clustering + inferred linkage, never conflated (3a task 6, decisions 4,5)`.
 
-### Task 7: Readers, the four gates, and the `filer_lookup` MCP tool
+### Task 7: Readers, the four checks, and the `filer_lookup` MCP tool
 
-**Files:** Create `filer/sdk/filer-lookup.ts` + test (the gates live here); modify `mcp/{tools.ts,cli.ts,layer-guards.ts,tools.test.ts,package.json,tsconfig.json}`.
+**Files:** Create `filer/sdk/filer-lookup.ts` + test (the checks live here); modify `mcp/{tools.ts,cli.ts,layer-guards.ts,tools.test.ts,package.json,tsconfig.json}`.
 
 **Produces:**
 
@@ -229,8 +229,8 @@ Exactly one identifier required (throw otherwise, matching `filingLandscape`'s X
 
 MCP: `mailwoman_filer_lookup` matching the house pattern exactly (snake_case zod with `.describe()` on every field, `MCPToolDeps` method, parse → deps → verbatim), plus `openFilerDatabaseIfPresent`/`assertFilerDatabaseExists` in `mcp/layer-guards.ts` following the 2b precedent.
 
-- [x] **Gate tests, written first, in a `describe("§7-3a gates")` block** — the four gates verbatim from this plan's Acceptance Gates section, including gate 1's structural pin (`satisfies Record<keyof FilerEdgeInsert, true>`) and a runtime rejection test.
-- [x] Commit `feat(filer,mcp): filer_lookup reader, the four 3a gates, MCP tool (3a task 7)`.
+- [x] **Check tests, written first, in a `describe("§7-3a checks")` block** — the four checks verbatim from this plan's Acceptance Checks section, including check 1's structural pin (`satisfies Record<keyof FilerEdgeInsert, true>`) and a runtime rejection test.
+- [x] Commit `feat(filer,mcp): filer_lookup reader, the four 3a checks, MCP tool (3a task 7)`.
 
 ### Task 8: Populate `bdc_provider` (cross-workspace)
 
@@ -241,14 +241,14 @@ MCP: `mailwoman_filer_lookup` matching the house pattern exactly (snake_case zod
 - [x] TDD; assert default-path behavior unchanged and the lossy-denormalization rule is exercised by a multi-FRN fixture.
 - [x] Commit `feat(bdc): optional provider population during build (3a task 8, decision 6)`.
 
-### Task 9: CORES enrichment via the documented FRN API — **STOPPED AT THE GATE (2026-07-31), deferred to 3b**
+### Task 9: CORES enrichment via the documented FRN API — **STOPPED AT THE CHECK (2026-07-31), deferred to 3b**
 
-**Step 0 outcome, recorded:** the stop gate fired and the task was not implemented. Probes from the lab host, with an identifying User-Agent naming the project and a contact address:
+**Step 0 outcome, recorded:** the stop check fired and the task was not implemented. Probes from the lab host, with an identifying User-Agent naming the project and a contact address:
 
 - `https://data.fcc.gov/api/frn/getInfo?frn=0001753557&format=json` → **403 Access Denied** at the Akamai edge (`errors.edgesuite.net` reference). The identifying UA did not change the outcome, so the block is host/IP-based, not agent-based.
 - `https://apps.fcc.gov/cores/api/frn/0001753557` → an HTML **"Invalid Request"** page, not JSON. That guessed path is not the documented interface.
 
-Per the gate's own terms — _"if the host 403s from this machine, or the response does not carry the documented fields, STOP and report — do not fall back to the Nexus HTML scrape"_ — no fallback was attempted and no code was written. Note `broadbandmap.fcc.gov` continues to work with credentials, so this is specific to these hosts rather than a blanket FCC block.
+Per the check's own terms — _"if the host 403s from this machine, or the response does not carry the documented fields, STOP and report — do not fall back to the Nexus HTML scrape"_ — no fallback was attempted and no code was written. Note `broadbandmap.fcc.gov` continues to work with credentials, so this is specific to these hosts rather than a blanket FCC block.
 
 **What remains true:** the FRN Conversions API is documented publicly and reportedly returns parent and subsidiary names, which would make it a family-edge source rather than mere enrichment. Nothing about that claim was disproven — it simply could not be verified from here.
 
@@ -259,7 +259,7 @@ Per the gate's own terms — _"if the host 403s from this machine, or the respon
 
 **Files:** Create `filer/sdk/cores.ts` + test. Modify `filer/sdk/build-filer.ts` to accept the enrichment as an optional input.
 
-**Step 0 is a STOP GATE.** Verify the interface actually exists and behaves as documented before writing anything: hit `data.fcc.gov/api/frn` (the FRN Conversions GetInfo call) for a known FRN — use `0001753557` (WideOpenWest Finance, LLC, from the operator's field example) and `0003768165` (Comcast) — and record the real response shape, whether parent/subsidiary names are present, whether auth is required, and any published rate limit or terms. **If the host 403s from this machine, or the response does not carry the documented fields, STOP and report — do not fall back to the Nexus HTML scrape, and do not proceed to the remaining steps.** The lab host was blocked at the Akamai edge on 2026-07-31; the operator may need to run this step, or it may work from a different network path.
+**Step 0 is a STOP CHECK.** Verify the interface actually exists and behaves as documented before writing anything: hit `data.fcc.gov/api/frn` (the FRN Conversions GetInfo call) for a known FRN — use `0001753557` (WideOpenWest Finance, LLC, from the operator's field example) and `0003768165` (Comcast) — and record the real response shape, whether parent/subsidiary names are present, whether auth is required, and any published rate limit or terms. **If the host 403s from this machine, or the response does not carry the documented fields, STOP and report — do not fall back to the Nexus HTML scrape, and do not proceed to the remaining steps.** The lab host was blocked at the Akamai edge on 2026-07-31; the operator may need to run this step, or it may work from a different network path.
 
 **Produces (only if Step 0 passes):**
 
@@ -274,7 +274,7 @@ Bounded by construction: the FRN set comes from the already-built crosswalk, so 
 
 Edges emitted (authoritative, since CORES states them): `frn ↔ parentName`, `frn ↔ subsidiaryName` (one edge per subsidiary), `source: "cores"`, `source_vintage` = retrieval date. These are the family-edge seeds 3b builds on.
 
-- [x] Step 0 stop gate — **FIRED; task not implemented, deferred to 3b.**
+- [x] Step 0 stop check — **FIRED; task not implemented, deferred to 3b.**
 
 </details>
 

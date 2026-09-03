@@ -6,8 +6,8 @@ what the campaign moves; real-OOD columns are the truth for campaign tags. Self-
 from `external-arenas.sh` + `per-locale-f1.ts` + the real-OOD scorers — do not hand-edit.
 
 **What changed since 06-10:** the #492 ladder closed (cause = a 1,039:1 label contradiction,
-NOT capacity), the #511 relabel run shipped as **v4.3.0** after a FAIL→corrective→PASS gate
-(`2026-06-11-v4.3.0-ship-gate.md`), and the conventions layer shipped its first slice (#478:
+NOT capacity), the #511 relabel run shipped as **v4.3.0** after a FAIL→corrective→PASS check
+(`2026-06-11-v4.3.0-ship-check.md`), and the conventions layer shipped its first slice (#478:
 locale head exported + fr mask). Ship config now includes `addressSystemConventions: "auto"`.
 
 ## Lens 1 — capability arenas (v4.3.0 int8, TRUE ship config: anchor + gaz + conventions fed)
@@ -22,7 +22,7 @@ locale head exported + fr mask). Ship config now includes `addressSystemConventi
 > perturbation class (region+postcode fused: `NY14201` — v1.1.0 swallows the token as postcode,
 > ~24–31 of 40 flips), plus street-boundary wobbles (post-directional `NW`, `Main St Apt`).
 > Same boundary-instability family as the FR digit-split the conventions mask fixed; the US glue
-> class needs a training-side augmentation (follow-up filed). Flagged-not-gated, same precedent
+> class needs a training-side augmentation (follow-up filed). Flagged-not-conditional, same precedent
 > as night-10. v0 still leads only on rare edge formats.
 
 ## Lens 2 — per-tag truth (int8, gaz+anchor+conventions fed)
@@ -46,11 +46,11 @@ locale head exported + fr mask). Ship config now includes `addressSystemConventi
 | de.native_locality | de-order (anchor on)         |   90.6 |   90.9 |       90.1 |
 
 ¹ v4.2.0's country figure was measured under the historically gaz-starved country leg
-(fixed this gate) — not directly comparable to v4.3.0's 85.1; both clear the 83.3 floor.
+(fixed this check) — not directly comparable to v4.3.0's 85.1; both clear the 83.3 floor.
 
-The authoritative gate record, including the honest-eval VT leg (region 99.6, coord p50/p90
-3.4/7.4 km) and the FAIL→corrective→PASS story: [v4.3.0 ship gate](../model-versions/2026-06-11-v4.3.0-ship-gate.md).
+The authoritative check record, including the honest-eval VT leg (region 99.6, coord p50/p90
+3.4/7.4 km) and the FAIL→corrective→PASS story: [v4.3.0 ship check](../model-versions/2026-06-11-v4.3.0-ship-check.md).
 
 Open per-tag gaps after this release: po_box/cedex (deferred coverage change — both Montréal
-gate rows), FR region tail (27.6 → 16.2, unfloored), the US glue/post-directional boundary
+check rows), FR region tail (27.6 → 16.2, unfloored), the US glue/post-directional boundary
 classes (arena dip above), intersections (#487, needs corpus rows).

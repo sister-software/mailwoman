@@ -29,22 +29,22 @@ Two design moves, each measured:
    street-family; argmax owns locality/region/postcode/house_number. This alone recovered most of
    the loss (fr exact −1.4pp) but still cost fr street −2.7pp — the span head over/under-extends the
    street on clean multi-component inputs where the BIO head is better.
-2. **Positive-evidence gate.** Splice only a street the atlas CONFIRMS exists. On a clean address
+2. **Positive-evidence check.** Splice only a street the atlas CONFIRMS exists. On a clean address
    the argmax street is already right + confirmed → the splice is a no-op; on a fragment the argmax
    street is wrong/absent and the confirmed segmentation street replaces it. An unconfirmed street
    never overrides the model.
 
 ## Result — the honest production delta (vs argmax, the baseline production runs)
 
-| board (evidence-gated street-splice) | argmax baseline | reranked  | delta         |
-| ------------------------------------ | --------------- | --------- | ------------- |
-| golden us exact                      | 0.724           | 0.724     | **+0.000**    |
-| golden fr exact                      | 0.828           | 0.828     | **+0.000**    |
-| golden — every tag (us+fr)           | —               | —         | **unchanged** |
-| FR fragment street@1                 | 0.673           | **0.841** | **+16.9pp**   |
-| — bare-street                        | 0.770           | 0.950     | +18.0pp       |
-| — date-name                          | 0.133           | 0.540     | +40.7pp       |
-| — street-particle                    | 0.858           | 0.935     | +7.7pp        |
+| board (evidence-conditional street-splice) | argmax baseline | reranked  | delta         |
+| ------------------------------------------ | --------------- | --------- | ------------- |
+| golden us exact                            | 0.724           | 0.724     | **+0.000**    |
+| golden fr exact                            | 0.828           | 0.828     | **+0.000**    |
+| golden — every tag (us+fr)                 | —               | —         | **unchanged** |
+| FR fragment street@1                       | 0.673           | **0.841** | **+16.9pp**   |
+| — bare-street                              | 0.770           | 0.950     | +18.0pp       |
+| — date-name                                | 0.133           | 0.540     | +40.7pp       |
+| — street-particle                          | 0.858           | 0.935     | +7.7pp        |
 
 273 fixes / 3 breaks on the fragment board. **Zero golden regression, +16.9pp on FR fragments.**
 Note the framing: the night's "+6.0pp" was measured against the span-head's own seg@1; against the
@@ -59,7 +59,7 @@ opts)`, PURE composition (injected evidence), byte-stable fallback for span-less
 - **Not yet in the runtime pipeline / CLI.** The function is the wired primitive; threading it into
   `createRuntimePipeline` behind a flag (so the CLI + drop-in servers exercise it) is the next step,
   along with the full CLI promote battery (gauntlet, metamorphic) — the golden guard here is the
-  headline gate and it passes at 0.000.
+  headline check and it passes at 0.000.
 - **FR index rebuild (BAN sdk):** `street-centroids-fr.db` predates the contract fold; rebuilding it
   with `foldStreetSurface` + a `street_norm` index closes the last few fragment misses (3 breaks) and
   makes the production lookup fast.

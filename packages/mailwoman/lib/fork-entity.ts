@@ -179,15 +179,15 @@ function applyForkEntityAnswer(
  * purpose: the anchor is a LOCALITY centroid (a metro's centroid can sit 20+ km from its edges), and the check exists
  * to separate the local bearer from same-named entities in other cities, not to assert rooftop precision.
  */
-const VENUE_ANCHOR_GATE_M = 30_000
+const VENUE_ANCHOR_THRESHOLD_M = 30_000
 
 /**
  * Probe the entity layer for a parsed VENUE near a resolved anchor — the #1684 POI-half's first mechanism, and the
  * anchored sibling of {@link probeForkEntity}. The fork probe requires WORLDWIDE uniqueness because a bare fork surface
  * has no other evidence; a venue-led address DOES — the walk already resolved its admin anchor — so the discipline here
- * is LOCAL uniqueness: exact name-key entities only, and exactly ONE of them within {@link VENUE_ANCHOR_GATE_M} of the
- * anchor. Two same-named venues in one metro is a genuine ambiguity and abstains; entities beyond the check are other
- * cities' bearers and never contest.
+ * is LOCAL uniqueness: exact name-key entities only, and exactly ONE of them within {@link VENUE_ANCHOR_THRESHOLD_M} of
+ * the anchor. Two same-named venues in one metro is a genuine ambiguity and abstains; entities beyond the check are
+ * other cities' bearers and never contest.
  */
 export function probeVenueNearAnchor(
 	venueRaw: string,
@@ -220,7 +220,9 @@ export function probeVenueNearAnchor(
 		entities.push(hit)
 	}
 
-	const near = entities.filter((e) => distanceM(anchor.lat, anchor.lon, e.latitude, e.longitude) <= VENUE_ANCHOR_GATE_M)
+	const near = entities.filter(
+		(e) => distanceM(anchor.lat, anchor.lon, e.latitude, e.longitude) <= VENUE_ANCHOR_THRESHOLD_M
+	)
 
 	if (near.length !== 1) return null
 
@@ -392,7 +394,9 @@ export function probeVenueNearAnchorFolded(
 		entities.push(hit)
 	}
 
-	const near = entities.filter((e) => distanceM(anchor.lat, anchor.lon, e.latitude, e.longitude) <= VENUE_ANCHOR_GATE_M)
+	const near = entities.filter(
+		(e) => distanceM(anchor.lat, anchor.lon, e.latitude, e.longitude) <= VENUE_ANCHOR_THRESHOLD_M
+	)
 
 	if (near.length !== 1) return null
 

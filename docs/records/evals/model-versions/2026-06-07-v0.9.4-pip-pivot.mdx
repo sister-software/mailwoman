@@ -93,7 +93,7 @@ DeepSeek signed off this pivot across four turns. The two real fixes, both off t
    gap in the eval metric without any model change. Filed as a follow-up.
 2. **Berlin city-state segmentation** — the model needs to learn the `City, City Postcode` layout where
    locality == region. A focused data-augmentation pass (city-state addresses in both orders) is the fix,
-   but it's a gated retrain for a future shift, not tonight. Filed as a follow-up.
+   but it's a conditional retrain for a future shift, not tonight. Filed as a follow-up.
 
 v0.9.5 (the `[COUNTRY_DE]` start-token that was queued if PIP fell below 90%) is **cancelled**: the
 country signal helps neither half — Saxony is already correct, and Berlin's country is never in doubt.

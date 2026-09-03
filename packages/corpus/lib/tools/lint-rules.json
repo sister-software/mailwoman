@@ -1,5 +1,5 @@
 {
-	"_comment": "Common-form anti-pattern rules for the corpus linter. Each rule encodes a (regex, label) constraint: tokens matching the regex either MUST be one of `allowed_labels` (anything else is flagged), or MUST NOT be any of `forbidden_labels`. Add patterns here as new failure modes surface. Severity: 'error' blocks unless acknowledged; 'warn' surfaces in report but doesn't gate.",
+	"_comment": "Common-form anti-pattern rules for the corpus linter. Each rule encodes a (regex, label) constraint: tokens matching the regex either MUST be one of `allowed_labels` (anything else is flagged), or MUST NOT be any of `forbidden_labels`. Add patterns here as new failure modes surface. Severity: 'error' blocks unless acknowledged; 'warn' surfaces in report but doesn't check.",
 	"rules": [
 		{
 			"id": "digit-ordinal-not-housenumber-or-O",

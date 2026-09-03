@@ -27,7 +27,7 @@ which layers back each claim.
 
 ## First class: US English and French
 
-Both carry per-tag floors in the release gate — a model that regresses either does
+Both carry per-tag floors in the release check — a model that regresses either does
 not ship. Both have rooftop-grade open registers wired in: the US situs layer
 (124.9M address points, built from state and federal open data) and the French BAN
 (26M points, Licence Ouverte). A house number in Lyon or Louisville resolves to the
@@ -54,7 +54,7 @@ national address register, but that register only fed the training corpus — no
 AU rooftop extract is wired into the resolver, so Australian addresses resolve at
 the same locality-and-postcode grade as the rest of this tier.
 
-German also carries a gate floor of its own, and the West Slavic set (Czech,
+German also carries a check floor of its own, and the West Slavic set (Czech,
 Polish, Slovak, Slovenian) got the same tokenizer-splice treatment as French —
 their wrong-city rates sit in single digits.
 
@@ -86,7 +86,7 @@ better than you'd expect — a postcode-format prior routes them correctly most 
 the time — but there is no UK training corpus, because the usable open data
 carries a share-alike license that conflicts with how we distribute training
 extracts. The blocker is licensing, not modeling, and the issue tracking it has a
-check-back owner. Ireland, Hungary, and Romania sit behind the same gate.
+check-back owner. Ireland, Hungary, and Romania sit behind the same check.
 
 Non-Latin scripts (Cyrillic, Hangul, Han, Armenian) have synthetic transliteration
 exposure in the corpus, so the parser degrades gracefully instead of shattering.
@@ -94,7 +94,7 @@ We don't count graceful degradation as support.
 
 ## Short version
 
-Floor-gated on US English and French with rooftop data behind both;
+Floor-blocked on US English and French with rooftop data behind both;
 coordinate-paneled across ~14 European locales at sub-10 km p90; Japan by
 postcode route; Britain is the known gap, blocked on licensing. When a locale is
 missing from this page, that is also a claim: we haven't measured it, so we don't

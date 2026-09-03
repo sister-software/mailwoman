@@ -15,7 +15,7 @@
 # region tail (synthesize-german.ts; build-german-slice.mjs sets the Bundesland per source since OA's
 # REGION column is empty for DE). Corpus v0.4.3-de-regiontail.
 #
-# PRE-REGISTERED GATE (DeepSeek-signed; stop at 20k):
+# PRE-REGISTERED CHECK (DeepSeek-signed; stop at 20k):
 #   - anchor-OFF international >= anchor-OFF native (both >= ~48%) — the region tail must lift the
 #     intrinsic intl ceiling (else the region rendering is broken; fix alignment + rerun).
 #   - anchor-ON international >= anchor-ON native - 10pp (gap <= 10pp) — SUCCESS: keep the anchor.
@@ -66,7 +66,7 @@ data:
     synth-po-box: 1.5
     synth-intersection: 0.2
     # German at ~18% of the mix — same weight as v0.9.1; the ONLY change is the slice now carries both
-    # orders. THE key tunable if a gate lags: raise for more DE, lower if US/FR slip the 1pp regression check.
+    # orders. THE key tunable if a check lags: raise for more DE, lower if US/FR slip the 1pp regression check.
     synth-german: 6.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

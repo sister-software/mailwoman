@@ -551,7 +551,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 	)
 
 	test.skipIf(!haveModel || !haveCLI)(
-		"en-us: ships its OWN us-gated pair index — a GB-shaped input still applies NO placetype-pair bias",
+		"en-us: ships its OWN us-conditional pair index — a GB-shaped input still applies NO placetype-pair bias",
 		async () => {
 			// en-us ships `pair-index-us.bin` (49,033 WOF-sourced pairs), so the property worth protecting is not the
 			// packaging fact that no sibling exists — it does exist — but that the index is still INERT on GB input.
@@ -576,7 +576,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 // through a correctly-built package (resolvePairIndexSibling matches on the locale's own country
 // code), so the test manufactures the mispackaging: a cacheRoot package layout whose
 // `pair-index-us.bin` carries a "gb" header.
-describe("loadFromWeights — pair-index country gate (warn branch)", () => {
+describe("loadFromWeights — pair-index country check (warn branch)", () => {
 	test.skipIf(!haveModel)(
 		"mispackaged sibling (header country ≠ locale country) warns and skips the prior",
 		async () => {
@@ -589,7 +589,7 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 			// data-root overlay, and a fixture mirroring an empty directory produces a cache with no binaries —
 			// so the resolve under test silently answers from somewhere else and the eval never fires.
 			const packageDir = dirname((await resolveWeights({ locale: "en-us" })).modelPath)
-			const cacheRoot = fixtures.use(await temporaryDirectory("mailwoman-pair-gate-")).path
+			const cacheRoot = fixtures.use(await temporaryDirectory("mailwoman-pair-check-")).path
 			const fakePackageDir = weightsCachePackageDir(cacheRoot, "en-us")
 			await makeDirectories(fakePackageDir)
 

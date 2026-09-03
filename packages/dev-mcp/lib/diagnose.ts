@@ -289,7 +289,7 @@ export interface RetrievalFacts {
 	 * case rather than leaving the reader to read the empty list as "no retrieval happened".
 	 */
 	lookups: LookupFact[] | null
-	gates_fired: string[]
+	checks_fired: string[]
 }
 
 export interface OutcomeFacts {
@@ -409,7 +409,7 @@ export function collectParseFacts(
 }
 
 export function collectRetrievalFacts(records: ReadonlyArray<ResolveNodeTrace> | undefined): RetrievalFacts {
-	if (!records) return { lookups: null, gates_fired: [] }
+	if (!records) return { lookups: null, checks_fired: [] }
 
 	const lookups = records.map((record): LookupFact => {
 		const picked = record.picked
@@ -444,12 +444,12 @@ export function collectRetrievalFacts(records: ReadonlyArray<ResolveNodeTrace> |
 	const checks = new Set<string>()
 
 	for (const lookup of lookups) {
-		for (const gate of lookup.checks) {
-			checks.add(gate)
+		for (const check of lookup.checks) {
+			checks.add(check)
 		}
 	}
 
-	return { lookups, gates_fired: [...checks] }
+	return { lookups, checks_fired: [...checks] }
 }
 
 export function collectOutcomeFacts(result: AccountInput["result"]): OutcomeFacts {

@@ -147,7 +147,7 @@ describe("resolver-interior trace (#1721)", () => {
 		expect(record!.candidates.length).toBeGreaterThan(0)
 	})
 
-	it("records picked: null with its gates when a lookup resolves nothing", async () => {
+	it("records picked: null with its checks when a lookup resolves nothing", async () => {
 		const backend = new StubBackend([])
 		const records: ResolveNodeTrace[] = []
 

@@ -74,7 +74,7 @@ const GazetteerBuildPostcodeGeonames: ParsedCommandComponent<Options> = ({ optio
 			result.missing.length ? `MISSING dumps (skipped): ${result.missing.join(",")}` : "all requested dumps present",
 			"provenance + licence in the `meta` table (GeoNames CC-BY 4.0; GB also OGL v3 / OS Code-Point Open)",
 			"sealed 0444",
-			"next: gate on per-country parity vs the frozen database, THEN swap deliberately (wofExtractPaths)",
+			"next: check on per-country parity vs the frozen database, THEN swap deliberately (wofExtractPaths)",
 		]
 	})
 

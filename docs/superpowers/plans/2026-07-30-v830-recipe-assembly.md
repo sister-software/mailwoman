@@ -21,15 +21,15 @@ at the current geometry (~29M params, 128 seq) with the full feed:
 ## D2 — feed assembly
 
 Baseline = **v385's feed verbatim** (`v0.13.0-latam`, its source weights, its augment probs) —
-the composition every golden floor was cut against — **plus**:
+the composition every golden floor was reduce against — **plus**:
 
-| Addition                                                       | Status                                                                     | Case                                                                                                                                                                |
-| -------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Evidence-channel painting (street v3 / locality-surface v6→v7) | street proven; locality UNTRAINED-TO-DATE (#1349 — see the addendum below) | the bundle native from step 0                                                                                                                                       |
-| Ordinal-street augmentation 0.3                                | proven (v3.24)                                                             | the num-ordinal invariant                                                                                                                                           |
-| Absence + false-evidence curricula                             | proven                                                                     | anti-over-trust, from step 0                                                                                                                                        |
-| DE country fold → locality lexicon **v7**                      | new increment                                                              | the deliberately-deferred fold; built + gated exactly like v5/v6 (four laws + digit guard; DE has 67k neighbourhoods — the parent-vouch path gets its third locale) |
-| synth-po-box-cedex at the **v385 share** (1.5)                 | reverts the replay boost                                                   | from-scratch re-learns the class natively; the boost was fine-tune medicine                                                                                         |
+| Addition                                                       | Status                                                                     | Case                                                                                                                                                                      |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Evidence-channel painting (street v3 / locality-surface v6→v7) | street proven; locality UNTRAINED-TO-DATE (#1349 — see the addendum below) | the bundle native from step 0                                                                                                                                             |
+| Ordinal-street augmentation 0.3                                | proven (v3.24)                                                             | the num-ordinal invariant                                                                                                                                                 |
+| Absence + false-evidence curricula                             | proven                                                                     | anti-over-trust, from step 0                                                                                                                                              |
+| DE country fold → locality lexicon **v7**                      | new increment                                                              | the deliberately-deferred fold; built + conditional exactly like v5/v6 (four laws + digit guard; DE has 67k neighbourhoods — the parent-vouch path gets its third locale) |
+| synth-po-box-cedex at the **v385 share** (1.5)                 | reverts the replay boost                                                   | from-scratch re-learns the class natively; the boost was fine-tune medicine                                                                                               |
 
 **Deploc passengers stay out** (synth-gb 10.0 / nz / es-pedania / fr-lieudit, punct_drop 0.6).
 Each re-enters only with its own promotion case — the v3.22 feed attribution is the receipt
@@ -50,7 +50,7 @@ projection absmax = the xavier bound). The trainer fix + a structural key-parity
   painted features through a frozen random projection. Per-channel ablation on the shipped
   checkpoint: locality-fed is −0.058 net in asis but **+0.035 net in the lowercase user register
   (homonym +0.270)** — the marker's existence helps where the case cue is dead; prod's
-  street-context gate masks most of the asis damage (bare-locality −0.355 ungated).
+  street-context check masks most of the asis damage (bare-locality −0.355 unconditional).
 - **The three-law selectivity receipts survive as PAINTING HYGIENE** (they made a blind marker
   net-positive by restricting it to discriminative hits), not as evidence of trained-channel
   behavior. Keep the laws in the v7 lexicon build unchanged.
@@ -59,31 +59,31 @@ projection absmax = the xavier bound). The trainer fix + a structural key-parity
   the accidental marker's own readings (homonym-lower +0.270 fed-vs-zeroed is the number to beat);
   target: the bare-locality damage class (the marker's cost) goes to ~0 under the now-actually-
   reaching-the-channel absence/false-evidence curricula.
-- **Risk note for G-gates:** the shipped reference (6.7.0) carries the marker's lowercase homonym
+- **Risk note for G-checks:** the shipped reference (6.7.0) carries the marker's lowercase homonym
   behavior; a properly-trained channel plausibly clears it, but if the homonym-lower bar sits
   exactly at the marker's accidental gain, read the miss against THIS addendum before iterating.
 
 ## D3 — tokenizer
 
-**Keep `v0.9.0-multisplice`.** Reasons: (a) every gate reference, calibration, and fixture in the
+**Keep `v0.9.0-multisplice`.** Reasons: (a) every check reference, calibration, and fixture in the
 battery assumes it — retraining SP invalidates the F1 comparability the whole verdict rests on
 (the eval-protocol rule: never compare F1 across tokenizer versions); (b) the #825 postmortem
 shows SP-vocab changes are their own arc with their own failure modes; (c) CJK does not need it —
 Arc 2's char path bypasses SP entirely. A tokenizer retrain is a v9-class decision that would ride
 the unification question, not this base.
 
-## The pre-registered gate sheet (sketch → finalized in the launch config header)
+## The pre-registered check sheet (sketch → finalized in the launch config header)
 
 1. **G1–G7 as evolved through v3.19→v3.24** (fragment bars with lowercase legs; ablation vs the
    6.7.0 same-grader reference; invariance vs 6.7.0 int8; gauntlet ×3; golden-ablated; canary;
    the pre-ship gauntlet on the dev-linked flip).
 2. **Match-or-beat 6.7.0 with zero waivers** — including fr.cedex against the 85.6-class reading
    (the unwaived shipped-same-harness number), the entire point of from-scratch. All golden floors
-   re-cut noise-honest (max(1.0pp, 2×SE) at each metric's support) from the candidate's own
+   rebuilt noise-honest (max(1.0pp, 2×SE) at each metric's support) from the candidate's own
    readings at promote, per the v6.0.0 spec's philosophy.
-3. **DE gates** (new): DE golden legs at the current de.native_locality floor + a DE fragment leg
+3. **DE checks** (new): DE golden legs at the current de.native_locality floor + a DE fragment leg
    in the P0-style board (the lexicon fold must show a win or stay out — same D-rule as every
    lexicon generation).
 4. **Fisher side-artifact sanity** (memo 2): capture completes, artifact loads, the penalty
    reproduces a null fine-tune (λ→∞ freezes, λ=0 matches unprotected) — mechanical checks, not
-   quality gates.
+   quality checks.

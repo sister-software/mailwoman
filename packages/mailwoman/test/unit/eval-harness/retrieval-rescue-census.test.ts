@@ -19,7 +19,7 @@ function row(overrides: Partial<RescueRowInput>): RescueRowInput {
 }
 
 describe("classifyRescueRow", () => {
-	it("classifies the COMER placebo shape: wrong resolvable pick, correct entity gated off", () => {
+	it("classifies the COMER placebo shape: wrong resolvable pick, correct entity conditional off", () => {
 		// The placebo delivered Comer, Georgia, US (34.062167, -83.126341) — ~7,000 km from truth — while the
 		// unconditional probe holds the restaurant 6 m away.
 		const graded = classifyRescueRow(
@@ -33,10 +33,10 @@ describe("classifyRescueRow", () => {
 
 		expect(graded.classification).toBe("rescue_available_entity")
 		expect(graded.deliveredKm).toBeGreaterThan(6000)
-		expect(graded.gateProtects).toBe(false)
+		expect(graded.checkProtects).toBe(false)
 	})
 
-	it("classifies the COMER shipped shape: entity fired under the current gate, answer correct", () => {
+	it("classifies the COMER shipped shape: entity fired under the current check, answer correct", () => {
 		const graded = classifyRescueRow(row({ ...PARIS, lat: 48.87735372, lon: 2.35159664, entityFired: true }))
 
 		expect(graded.classification).toBe("entity_rescued_already")
@@ -59,7 +59,7 @@ describe("classifyRescueRow", () => {
 		expect(graded.rescueRank).toBe(2)
 	})
 
-	it("keeps gate_protects a SEPARATE flag on a correct row with an entity hit", () => {
+	it("keeps check_protects a SEPARATE flag on a correct row with an entity hit", () => {
 		// Loosening the check reorders which mechanism answers even when both are right — that row belongs in the
 		// risk list without leaving the correct_as_is count.
 		const graded = classifyRescueRow(
@@ -72,7 +72,7 @@ describe("classifyRescueRow", () => {
 		)
 
 		expect(graded.classification).toBe("correct_as_is")
-		expect(graded.gateProtects).toBe(true)
+		expect(graded.checkProtects).toBe(true)
 	})
 
 	it("keeps an unresolved wrong row with nothing on hand out of every rescue bucket", () => {
@@ -88,11 +88,11 @@ describe("classifyRescueRow", () => {
 })
 
 describe("summarizeRescue", () => {
-	it("counts every class and the gate-protects flag with the row total as denominator", () => {
+	it("counts every class and the check-protects flag with the row total as denominator", () => {
 		const reports = [
-			{ id: "a", input: "a", markers: [], classification: "correct_as_is" as const, gateProtects: true },
-			{ id: "b", input: "b", markers: [], classification: "rescue_available_entity" as const, gateProtects: false },
-			{ id: "c", input: "c", markers: [], classification: "ungraded" as const, gateProtects: false },
+			{ id: "a", input: "a", markers: [], classification: "correct_as_is" as const, checkProtects: true },
+			{ id: "b", input: "b", markers: [], classification: "rescue_available_entity" as const, checkProtects: false },
+			{ id: "c", input: "c", markers: [], classification: "ungraded" as const, checkProtects: false },
 		]
 
 		const summary = summarizeRescue(reports)
@@ -100,6 +100,6 @@ describe("summarizeRescue", () => {
 		expect(summary.rows).toBe(3)
 		expect(summary.graded).toBe(2)
 		expect(summary.counts.rescue_available_entity).toBe(1)
-		expect(summary.gateProtects).toBe(1)
+		expect(summary.checkProtects).toBe(1)
 	})
 })

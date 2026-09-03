@@ -12,7 +12,7 @@ changes.
 - **(b)** the Option-A **locality evidence channel** (Track 2): a training-time per-span input
   feature — "this span is a known locality under a plausible parent present in the same input" —
   inside the evidence BUNDLE (street-type channel + locality channel; no single channel decisive;
-  evidence-ablation invariance gate). One build outlives the mechanism that first consumes it — the
+  evidence-ablation invariance check). One build outlives the mechanism that first consumes it — the
   anti-flag-pile property the survey named.
 
 ## What exists today (the base being generalized)
@@ -92,7 +92,7 @@ so **`schemaVersion` stays 1**:
   artifact is (dependent_locality, locality) **register-built**; a WOF `neighbourhood`-ancestry
   build of the same edge would be a geographic sibling with different evidential weight. Per-country
   calibration decides which ships; the header says which one you're holding.
-- Country scoping is unchanged from PIX1: `country` in the header, hard gate at the consumer
+- Country scoping is unchanged from PIX1: `country` in the header, hard check at the consumer
   (`loadFromWeights` peeks the header and skips construction on mismatch; no-country-context → no
   bias, per the census-bias design's decision 5).
 - **Per-edge delta = per-file delta** (D1) — no schema change needed for it, ever.
@@ -158,17 +158,17 @@ pairs (~few hundred KB); the PIX1 reader was sized for "~20k entries". The (loca
 artifacts are ~8× that. Measured at FR scale (161,749 entries): `PairIndexResolver` constructor
 111.9 ms, ~21 MB heap for the probe Map. Fine for a build/training-side consumer and for a server-side
 decode prior; **NOT fine as-is for the browser demo** — before any decode ship of a US-scale
-artifact, either lazy construction stays behind the existing peek-header-first gate (only the
+artifact, either lazy construction stays behind the existing peek-header-first check (only the
 matching country pays) and that is measured acceptable, or the reader grows a binary-search mode
 over the sorted records (the format is already sorted by (child, parent); a fixed-stride offset
 table in the header extension would make this cheap). Open question below.
 
 ## The two consumers
 
-### (a) Decode prior (future, gated — NOT this task)
+### (a) Decode prior (future, conditional — NOT this task)
 
-Same seam as today: `PairIndexLike` structural injection into `placetype-pair-prior.ts`; the
-loader's country hard gate; positive-evidence-only; probe-mode chain (segment → anchored). What
+Same boundary as today: `PairIndexLike` structural injection into `placetype-pair-prior.ts`; the
+loader's country hard check; positive-evidence-only; probe-mode chain (segment → anchored). What
 changes per edge is only calibration and the emission target (the entry tag already encodes it).
 The (locality, region) edge has a sharper confound profile than dep-loc: region names are a small
 closed set, so the pair hit fires on nearly every "city, state"-shaped input — δ must be small and
@@ -210,9 +210,9 @@ Mirrors the street-type channel plumbing (`data.street_type_lexicon_path` →
   index. A hit paints the CHILD window's pieces with that edge's feature bit
   (`known_locality_under_present_region: 1`), and optionally the parent window's pieces with the
   reciprocal bit. Per-span, presence-only, positive evidence — absence paints nothing.
-- **Bundle + gate (the P-A verdict, non-negotiable):** the locality channel enters ONLY alongside
+- **Bundle + check (the P-A verdict, non-negotiable):** the locality channel enters ONLY alongside
   the street-type channel, with feature-dropout curriculum, and the evidence-ablation invariance
-  gate (features-zeroed vs present ⇒ no regression on unaffected spans) in the standing battery.
+  check (features-zeroed vs present ⇒ no regression on unaffected spans) in the standing battery.
   The P-A probe already demonstrated a naked channel drifts into over-trust (house-number classes
   −0.070/−0.045 by 3k).
 - **Train/inference symmetry:** at inference the SAME artifact feeds the same feature — the loader
@@ -271,12 +271,12 @@ throughout and carries a comment so the trap isn't re-walked. The count check is
 
 ## Open questions for the operator
 
-1. **Reader at 140k+ entries:** accept the ~110 ms / ~21 MB Map build behind the country gate
+1. **Reader at 140k+ entries:** accept the ~110 ms / ~21 MB Map build behind the country check
    (server-side only), or invest in a binary-search/offset-table read mode before any decode use?
    The Option-A training consumer doesn't care (Python side reads the file once per run).
 2. **Name policy:** add `eng`-preferred surfaces (D3)? Bumps `namePolicy` to v2.
 3. **Edge priority after (locality, region):** (neighbourhood, locality) US/GB next per the survey,
-   or (locality, country) for the coarse-placer seam? The neighbourhood edge is the Option-A
+   or (locality, country) for the coarse-placer boundary? The neighbourhood edge is the Option-A
    channel's likelier second slot (open-vocab child, open-vocab parent — the hard case the region
    edge doesn't exercise).
 4. **FR localadmin:** WOF FR has 35,282 `localadmin` rows (communes proper) alongside 57,187
@@ -300,7 +300,7 @@ throughout and carries a comment so the trap isn't re-walked. The count check is
 3. **Next edge: (neighbourhood, locality)** — the doc's lean, now with the bundle arc's sharper
    reason: the confirmed weakness class is open-vocab×open-vocab discrimination, which this edge
    exercises and the region edge doesn't. (locality, country) stays unbuilt: the #1104 country
-   channel + coarse-placer own that seam (no double-coverage per D3). Sequenced into the
+   channel + coarse-placer own that boundary (no double-coverage per D3). Sequenced into the
    productionization plan's Phase 1 builder consolidation (one WOF-ancestry pass, both edges).
 4. **FR localadmin: YES, measure in the v2 build** — one flag, probe-safe. Expectation: genuine
    adds (communes are FR's canonical admin unit and BAN cites them); the build report states

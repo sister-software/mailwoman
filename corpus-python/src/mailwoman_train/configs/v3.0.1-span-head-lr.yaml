@@ -11,15 +11,15 @@
 # answer. This is repairing the probe, NOT tuning toward a result: the treadmill is opposite-direction
 # knob oscillation, and no knob has been pushed in two directions here.
 #
-# THE GATE (unchanged from v3.0.0, pre-registered):
+# THE CHECK (unchanged from v3.0.0, pre-registered):
 #   seg@1 > token@1 on the parity corpus, via scripts/eval_seg_at_1.py.
 #   v3.0.0 read seg@1 0.004 vs token@1 0.348 (CHANNEL-STARVED numbers — that script feeds no
-#   anchor/gazetteer/country channels, so its absolutes are NOT the JS harness's 0.573; the gate is a
+#   anchor/gazetteer/country channels, so its absolutes are NOT the JS harness's 0.573; the check is a
 #   RELATIVE comparison and both heads read the same starved encoder).
 # Secondary read: the span NLL must actually converge. If loss again ends ~17 and still falling, the
 # LR is not the binding constraint and the fork reopens.
 #
-# NOT a promote gate. Standing floors (street 0.90 / hn 0.97 / pc 0.97) and the 2pp golden gate are
+# NOT a promote check. Standing floors (street 0.90 / hn 0.97 / pc 0.97) and the 2pp golden check are
 # untouched; this checkpoint ships nowhere. Phase 2 (export) starts only if seg@1 crosses.
 #
 # If seg@1 STILL loses with a converged span loss: that IS the falsification. Do not tune further —
@@ -187,7 +187,7 @@ train: # Same-vocab init_from fine-tune off the SHIPPED v264 (fresh optimizer; -
   weight_decay: 0.01
   warmup_steps: 500
   grad_clip_norm: 1.0
-  max_steps: 2000  # PROBE. A 2k probe answers the gate in minutes; 8k only if it crosses.
+  max_steps: 2000  # PROBE. A 2k probe answers the check in minutes; 8k only if it crosses.
   eval_every_steps: 1000
   save_every_steps: 2000
   log_every_steps: 50

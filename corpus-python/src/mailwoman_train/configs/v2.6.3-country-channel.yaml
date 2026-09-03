@@ -6,7 +6,7 @@
 # [country_surface, country_ambiguous] additive feature with its OWN projection + confidence — immune to
 # suppress_gazetteer_near_postcode, unlike the shared gazetteer country slot (the #1104 signal-salience
 # gap). Corpus UNCHANGED from v261 (the feature is painted on existing rows from the lexicon at encode
-# time — no new slice). GATE (docs/superpowers/plans/2026-07-14-country-lexicon-channel.md): golden
+# time — no new slice). CHECK (docs/superpowers/plans/2026-07-14-country-lexicon-channel.md): golden
 # country recall recovers toward the 88.6% shipped bar on WOF-admin rows WHILE real-postal recall stays
 # 3/4 + hallucination 0.7%; US/FR coord + parity street/hn/postcode flat vs v261; mask-regression PASS;
 # zero NaN. Grade PACKAGE-SHAPED (--weights-cache), never --model alone (#718 country-OFF trap).

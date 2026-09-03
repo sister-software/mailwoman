@@ -30,14 +30,14 @@
 #      warmup, 100K total steps, v0.6.0-a0 tokenizer. The NaN protocol stays
 #      strict — never tune dynamics in the same release as corpus changes.
 #
-#   5. Early-eval gate at 20K steps: if dep_loc hallucinations > 100 against
+#   5. Early-eval check at 20K steps: if dep_loc hallucinations > 100 against
 #      the v0.6.0 baseline JSON, abort and bump synth-no-street row count
 #      (don't drop synth-street further). The eval pipeline must run against
 #      a 20K checkpoint, not just 100K.
 #
 # Promotion decision tree at 100K:
 #
-#   | Gate eval     | v0-vs-neural harness pass | Action                       |
+#   | Check eval     | v0-vs-neural harness pass | Action                       |
 #   | -------------- | ------------------------- | ---------------------------- |
 #   | Pass           | ≥ 25%                     | Promote to default (HF)      |
 #   | Pass           | 15-24%                    | Ship as experimental         |

@@ -209,9 +209,9 @@ export interface FindPlaceQuery {
 	postcode?: string
 	/**
 	 * Postcode-containment coherence (#31, Mechanism 2) — when true on a locality query that also carries `postcode`,
-	 * candidate rows within `POSTCODE_CONTAINMENT_GATE_KM` of the postcode's own centroid sort by distance first, the
-	 * rest appended in their original order. Set by the resolver from `ResolveOpts.postcodeContainmentCoherence`; absent
-	 * → the population-first order is untouched (byte-identical).
+	 * candidate rows within `POSTCODE_CONTAINMENT_THRESHOLD_KM` of the postcode's own centroid sort by distance first,
+	 * the rest appended in their original order. Set by the resolver from `ResolveOpts.postcodeContainmentCoherence`;
+	 * absent → the population-first order is untouched (byte-identical).
 	 */
 	postcodeContainmentCoherence?: boolean
 	/**

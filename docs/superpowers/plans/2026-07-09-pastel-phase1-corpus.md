@@ -49,7 +49,7 @@ For each of ban-full→`ban`, nad, hrsa, imls-pls, nppes, openaddresses, state-s
 - `mailwoman/corpus-tools/{align-extract,corpus-stats,overlay-manifest}.ts` → `corpus/src/tools/` (overlay-manifest's inline `createHash` → core `sha256Hex`); repoint `commands/corpus/{align-extract,stats,overlay-manifest}.tsx`; delete `mailwoman/corpus-tools/`.
 - Delete `corpus/scripts/` entirely — `run-corpus-build.ts` is a hardcoded v0.3.0 recipe of `mailwoman corpus build --inputs` (verified: build.tsx drives `buildCorpus` with arbitrary adapter inputs).
 
-### Task 6: phase gate
+### Task 6: phase check
 
 - `yarn lint`, `yarn compile`, `yarn typecheck:scripts` clean; corpus + mailwoman vitest green.
 - Smokes: `corpus audit` real run; `corpus fetch --help`; `corpus fetch imls-pls --out-root <scratch>` (the smallest real source, one file) end-to-end including manifest + sha; `corpus extract kryptonite` / `golden promote` `--help` + missing-required error paths.

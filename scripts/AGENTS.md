@@ -41,7 +41,7 @@ Everything else lives where it belongs: gazetteer builders → `mailwoman/gazett
 
 Two flat files are shared on purpose, and one of them used to be a third:
 
-- `weights-recipe.ts` reads `release.config.json`'s `weights` + `softFeed` blocks and resolves them to absolute paths. Shared by `copy-weights.ts` (release) and `link-weights-overlay.ts` (dev), which is the point: the recipe previously had a third home in ten hardcoded `DEFAULT_MODEL` constants, and the 9.0.0 cut moved only one of the three. It lives here rather than in a workspace because `release.config.json` is repo-only and a package cannot reach outside its `rootDir` to read it (`TS6059`).
+- `weights-recipe.ts` reads `release.config.json`'s `weights` + `softFeed` blocks and resolves them to absolute paths. Shared by `copy-weights.ts` (release) and `link-weights-overlay.ts` (dev), which is the point: the recipe previously had a third home in ten hardcoded `DEFAULT_MODEL` constants, and the 9.0.0 reduce moved only one of the three. It lives here rather than in a workspace because `release.config.json` is repo-only and a package cannot reach outside its `rootDir` to read it (`TS6059`).
 - `link-weights-overlay.ts` populates `$MAILWOMAN_DATA_ROOT/weights/<locale>/` from that recipe, for the overlay rung in `@mailwoman/neural`'s `resolveWeights`.
 
 `weights-overlay-linker.ts` is NOT here. It moved to `@mailwoman/resolver-wof-sqlite/weights-overlay-linker` in the workspace regroup and each overlay's `scripts/link-dev-weights.ts` imports it by package subpath — this file described it as a `scripts/` resident for some time after it left, which is the quoted-literal drift the root `AGENTS.md` warns about after a move.

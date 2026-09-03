@@ -26,7 +26,7 @@ export interface PromotionVerdictOptions {
 	/**
 	 * Path to the eval spec JSON (already resolved to a real file).
 	 */
-	gate: string
+	check: string
 	/**
 	 * The promotion-eval out-dir carrying the battery outputs.
 	 */
@@ -152,11 +152,11 @@ export async function assemblePromotionVerdict(
 	options: PromotionVerdictOptions,
 	report: (line: string) => void = console.log
 ): Promise<{ failed: boolean; verdict: PromotionVerdict }> {
-	const gate = await readLocalJSONFile<{
+	const check = await readLocalJSONFile<{
 		label: string
 		floors: Record<string, number>
 		int8_vs_fp32_max_delta_pp?: number
-	}>(options.gate)
+	}>(options.check)
 
 	const dir = options.outDir
 	const read = (f: string): Promise<string> => readLocalTextFile(dir, f)
@@ -280,7 +280,7 @@ export async function assemblePromotionVerdict(
 		"fr.bare_street_intact": { file: "fr-bare-street.json", rate: "bare_rate" },
 	}
 
-	for (const [key, floor] of Object.entries(gate.floors)) {
+	for (const [key, floor] of Object.entries(check.floors)) {
 		if (LEG_HANDLED_FLOORS.has(key)) {
 			const legSidecar = legSidecars[key]
 			const raw = legSidecar ? await maybeRead(legSidecar.file) : undefined
@@ -306,8 +306,8 @@ export async function assemblePromotionVerdict(
 
 	const deltas: Record<string, number> = {}
 
-	if (int8 && gate.int8_vs_fp32_max_delta_pp !== undefined) {
-		for (const key of Object.keys(gate.floors)) {
+	if (int8 && check.int8_vs_fp32_max_delta_pp !== undefined) {
+		for (const key of Object.keys(check.floors)) {
 			const a = fp32[key]
 			const b = int8[key]
 
@@ -315,15 +315,15 @@ export async function assemblePromotionVerdict(
 			const d = Math.abs(a - b)
 			deltas[key] = Number(d.toFixed(2))
 
-			if (d > gate.int8_vs_fp32_max_delta_pp) {
+			if (d > check.int8_vs_fp32_max_delta_pp) {
 				failed = true
-				results[`int8_delta.${key}`] = { floor: gate.int8_vs_fp32_max_delta_pp, actual: d, pass: false }
+				results[`int8_delta.${key}`] = { floor: check.int8_vs_fp32_max_delta_pp, actual: d, pass: false }
 			}
 		}
 	}
 
 	const verdict: PromotionVerdict = {
-		label: gate.label,
+		label: check.label,
 		graded_artifact: options.gradedArtifact ?? (int8 ? "int8" : "fp32"),
 		verdict: failed ? "FAIL" : "PASS",
 		results,
@@ -333,7 +333,7 @@ export async function assemblePromotionVerdict(
 
 	await writeLocalJSONFile(verdict, dir, "verdict.json")
 
-	report(`\n== promotion gate [${gate.label}] — ${verdict.verdict} ==`)
+	report(`\n== promotion check [${check.label}] — ${verdict.verdict} ==`)
 
 	for (const [k, r] of Object.entries(results)) {
 		report(`  ${r.pass ? "✓" : "✗"} ${k}: ${r.actual ?? "NOT FOUND"} (floor ${r.floor})`)

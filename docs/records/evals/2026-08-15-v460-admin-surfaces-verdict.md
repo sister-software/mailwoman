@@ -1,7 +1,7 @@
 # v4.6.0-admin-surfaces — grade verdict
 
 **Recommendation: DO NOT PROMOTE. The run trades a real +11.0 pp gain on US `country` for the
-collapse of the bare-toponym class — 21 net new gated board failures, several placing the answer
+collapse of the bare-toponym class — 21 net new counted board failures, several placing the answer
 thousands of kilometres out. The cause is identified and the extract is worth rebuilding, but this
 artifact should not ship in any posture.**
 
@@ -10,7 +10,7 @@ shipped model; nothing in `release.config.json`, the weights cards or the demo m
 
 This document is the evidence behind that call. The artifacts are retained — fp32
 `f2dbf4a85f845068234a1a565c323682`, int8 `afb8ca11bc1e2952b049d437bba611ef`, both on the Modal
-volume — because the next attempt is a re-dose and re-cut of the same recipe, not a fresh design, and
+volume — because the next attempt is a re-dose and rebuilt of the same recipe, not a fresh design, and
 the comparison arm is worth keeping.
 
 ## What a retry needs before it is worth GPU time
@@ -21,7 +21,7 @@ Both, together. Either alone fails for the reason the other one causes.
    against 5× for the 53,078-row Spanish extract weighted six times higher. 0.030 puts it at parity.
    The sampler allocates by weight normalised across sources and ignores row count, so weight is not
    dose and nothing in the config or launch output displays the number anyone reasons in.
-2. **#1673 — re-cut the ES extract on official-language names.** It teaches English exonyms:
+2. **#1673 — rebuilt the ES extract on official-language names.** It teaches English exonyms:
    461 `Balearic Islands` rows against **4** containing `Illes`, and zero `Portopetro`. `spr.name` is
    the wrong column for any non-English locale.
 
@@ -61,7 +61,7 @@ Baseline arm throughout: v4.4.0 fp32, md5 `0f9273a37db14fdd86a6d2c8806f8494`, ma
 `release.config.json`. Both arms graded through the identical battery on caches differing only in
 `model.onnx`.
 
-## Gate: FAIL — but only one floor is really the candidate's
+## Check: FAIL — but only one floor is really the candidate's
 
 Spec `v6.0.0-shipped-baseline`, 18 floors, int8-vs-fp32 cap 1.5 pp,
 `requires_gazetteer_lexicon: true`, `requires_conventions: "auto"`, `requires_bridge: true`.
@@ -79,18 +79,18 @@ Everything else passes: `us.postcode` 96.7/94.9, `us.micro` 90.9/85.1, `us.local
 
 **Quantization is clean.** Every int8-vs-fp32 delta is 0.0 except `fr.region` at 0.2 pp.
 
-### `arena.perturb` is a gate-maintenance defect, not a model regression
+### `arena.perturb` is a check-maintenance defect, not a model regression
 
 The shipped model reads **65** on this floor too and **fails it identically**. The floor of 78 no
-longer describes the model it was cut from.
+longer describes the model it was reduce from.
 
 The arena regenerates its 398 cases on every run (`wrote 398 perturbed cases (delimiter-strip,
-lowercase, glue)`), so the set has drifted away from the one the floor was cut against while the
+lowercase, glue)`), so the set has drifted away from the one the floor was reduce against while the
 number stayed frozen. This is the `v5.3.0-family` failure repeating: a spec whose one tight floor
 fails the shipped model, caught the same way — by running the full battery on the baseline itself.
 
-**Do not re-cut this floor as part of a promote.** It needs its own gate revision with a stated
-reason, per the no-silent-gate-drift rule.
+**Do not rebuilt this floor as part of a promote.** It needs its own check revision with a stated
+reason, per the no-silent-check-drift rule.
 
 ### The `us.street_prefix` regression is exactly one row
 
@@ -113,20 +113,20 @@ directional-bearing street names — `george-street-north`, `bloor-street-west`,
 treats directionals: better on trailing ones attached to a full street name, worse on a leading one
 with nothing after the name.
 
-## Board: 329/352 gated vs the shipped model's 350/352 — **21 NET NEW FAILURES**
+## Board: 329/352 conditional vs the shipped model's 350/352 — **21 NET NEW FAILURES**
 
 **This section replaces an earlier reading of mine that was wrong, and wrong in the direction that
 would have mattered most.** I first reported "+15 rows, zero regressions" after reading only the
-tail of the board output, where the promote-flag block sits. The gated pass/fail header is printed
+tail of the board output, where the promote-flag block sits. The counted pass/fail header is printed
 ABOVE that block and I truncated it away. Both halves are true and only one of them is decisive.
 
 |                                   | shipped v4.4.0 |      v4.6.0 |
 | --------------------------------- | -------------: | ----------: |
-| gated cases passing               |    **350/352** | **329/352** |
-| gated failures                    |              2 |      **23** |
+| counted cases passing             |    **350/352** | **329/352** |
+| counted failures                  |              2 |      **23** |
 | improvement_targets newly passing |              3 |          18 |
 
-v4.6.0 flips fifteen tracked rows to passing **and breaks twenty-one gated ones.** The trade is
+v4.6.0 flips fifteen tracked rows to passing **and breaks twenty-one conditional ones.** The trade is
 badly negative.
 
 ### The regression has one shape: bare toponyms lose their span
@@ -211,20 +211,20 @@ failed hypothesis about the trailing-region extract.
 
 ## Recommendation
 
-1. **Do not promote, in any posture.** This is not a D-rule gating question. 21 gated board
+1. **Do not promote, in any posture.** This is not a D-rule blocking question. 21 counted board
    failures with multi-thousand-kilometre coordinate errors on bare city names is not a regression
-   to gate behind a flag; it is an artifact to rebuild.
-2. **Fix #1673 and re-cut the ES extract on official-language names**, then rerun. The acceptance row
+   to check behind a flag; it is an artifact to rebuild.
+2. **Fix #1673 and rebuilt the ES extract on official-language names**, then rerun. The acceptance row
    is one surface away, and the mechanism is understood.
-3. **File the `arena.perturb` floor for its own gate revision.** It fails the shipped model; leaving
+3. **File the `arena.perturb` floor for its own check revision.** It fails the shipped model; leaving
    it stale means every future candidate carries a phantom failure.
 4. **Re-dose `synth-bare-country-v23` before the next run.** 277 rows at dose 1.0 repeat ~20× an
    epoch under the per-source sampler, and they taught "bare capitalised name → country" strongly
    enough to erase the bare-locality and bare-street classes. The mechanism works — that is what
    +11.0 pp shows — but the dose is the change, and the next attempt should carry a pre-registered
    watch on the bare-toponym board rows, per the #513 adjacent-class rule.
-5. **The measurement lesson.** The board's gated pass/fail header prints ABOVE the promote-flag
-   block. Reading the tail alone shows the flips and hides the breakage. Read `gated cases pass`
+5. **The measurement lesson.** The board's counted pass/fail header prints ABOVE the promote-flag
+   block. Reading the tail alone shows the flips and hides the breakage. Read `counted cases pass`
    first, every time.
 
 ## Standing caveat

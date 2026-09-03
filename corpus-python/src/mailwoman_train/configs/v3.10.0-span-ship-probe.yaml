@@ -12,7 +12,7 @@
 #
 # PRE-REGISTERED READS (2k):
 #   LEG 1 (span) — span NLL converging toward O(1) (v301 precedent: 26.4 -> ~2 by 2k with the LR
-#     group); seg@1 > token@1 on the starved python gate (scripts/eval_seg_at_1.py — RELATIVE read,
+#     group); seg@1 > token@1 on the starved python check (scripts/eval_seg_at_1.py — RELATIVE read,
 #     both heads share the starved encoder; absolutes are NOT the JS harness numbers).
 #   LEG 2 (all-caps) — uppercase-perturbed golden-us subset (n>=200), exact-match with
 #     normalizeCase OFF, package-shaped int8: probe must BEAT v381 on the same rows by >=5pp
@@ -21,9 +21,9 @@
 #   GUARDS (noise-read at 2k, binding at 8k): golden us/fr micro within noise of v381; FR fragment
 #     board + digit board no worse than -2pp; BIO decode quality unchanged on presets (the span head
 #     is an ADDITIONAL output — the token path must stay byte-stable-ish under the shared encoder).
-#   NOT a promote gate. The 8k full run pre-registers the standing battery (golden 2pp gate,
+#   NOT a promote check. The 8k full run pre-registers the standing battery (golden 2pp check,
 #   gauntlet, metamorphic, fragment boards) + oracle@5 / seg@1 on the JS harness via the PR #1154
-#   decode surface + the isotonic ambiguity-gate fit (plan req 4).
+#   decode surface + the isotonic ambiguity-check fit (plan req 4).
 #
 # fp32 partition math enforced inside span_scorer.py regardless of autocast (v0.5.0 bf16 CRF scar).
 # Same corpus + tokenizer as v381 -> all F1 comparisons vs v381 are VALID.

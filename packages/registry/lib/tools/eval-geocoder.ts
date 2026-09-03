@@ -32,7 +32,7 @@ export interface EvalGeocoder extends Disposable {
 	/**
 	 * The matcher's ingest interface (parse + geocode → `PostalAddress`), built via `geocodeAddressVia`.
 	 */
-	seam: GeocodeAddress
+	geocodeAddress: GeocodeAddress
 	/**
 	 * Raw single-address geocode — lat/lon + resolution tier.
 	 */

@@ -7,7 +7,7 @@
  *   needed (the units under test are pure):
  *
  *   1. BROWSER-SAFETY SCOPE (the hard check): the two Stage-2 modules the loader now imports —
- *      `@mailwoman/locale-gate` + `@mailwoman/query-shape` — must be free of any `node:*` / fs / path /
+ *      `@mailwoman/locale-hint` + `@mailwoman/query-shape` — must be free of any `node:*` / fs / path /
  *      process runtime import across their FULL non-test source, or they'd break the browser bundle. A
  *      static scan of the shipped source asserts it (a type-only re-export of `@mailwoman/core/pipeline`
  *      erases at compile and is explicitly allowed).
@@ -27,7 +27,7 @@ import { TextSpliterator } from "spliterator"
 import { describe, expect, test } from "vitest"
 
 const browserSafePackageRoots = {
-	"locale-gate": resolvePackageDirectory("@mailwoman/locale-gate").toString(),
+	"locale-hint": resolvePackageDirectory("@mailwoman/locale-hint").toString(),
 	"query-shape": resolvePackageDirectory("@mailwoman/query-shape").toString(),
 } as const
 
@@ -74,8 +74,8 @@ function specifierOf(line: string): string {
 	return /from\s+["']([^"']+)["']/.exec(line)?.[1] ?? ""
 }
 
-describe("browser-safety scope — locale-gate + query-shape are node-free (#1278 hard gate)", () => {
-	for (const pkg of ["locale-gate", "query-shape"]) {
+describe("browser-safety scope — locale-hint + query-shape are node-free (#1278 hard check)", () => {
+	for (const pkg of ["locale-hint", "query-shape"]) {
 		test(`@mailwoman/${pkg}: no node:* / fs / path / process runtime import in the transitive source`, async () => {
 			const files = await sourceFiles(browserSafePackageRoots[pkg as keyof typeof browserSafePackageRoots])
 
@@ -137,7 +137,7 @@ describe("detectPairIndexCountry — structural country from the input shape", (
 	})
 
 	test("bitter-lesson-safe: a bare place name with NO postcode is NOT read as gb — it falls through to the us fallback", () => {
-		// locale-gate keys off structural cues (postcode/script) only, never place-name dictionaries, so
+		// locale-hint keys off structural cues (postcode/script) only, never place-name dictionaries, so
 		// "Shoreditch London" — a real GB dependent_locality/locality pair — detects `us`, not `gb`. The pair
 		// prior is additive, so a conservative miss (no bias) is the safe failure mode; a caller who KNOWS the
 		// posture uses the `{ country }` override on resolvePairIndexForText.

@@ -5,7 +5,7 @@
 
 ## The problem
 
-`AGENTS.md` states that four words — `gate`, `seam`, `cut` and the retired one `repo-health` already
+`AGENTS.md` states that four words — the three the `AmbiguousShorthand` rule listed then, and the retired one `repo-health` already
 counts — are banned "in replies AND in
 every committed prose surface", because each stands for four or five different things and a reader
 cannot tell which one a sentence means. Three Vale configs enforce parts of that claim, and the
@@ -54,18 +54,18 @@ A per-site rewrite with no census is how a docstring loses its meaning, and this
 comments carry invariants and measured numbers that a careless reword destroys. The census is
 therefore the first deliverable, not documentation of one.
 
-Censusing by the word that modifies `gate` finds 519 distinct constructions, most appearing once.
+Censusing by the word that modifies `check` finds 519 distinct constructions, most appearing once.
 `scripts/vocab-census.ts` classifies every hit by the REMEDY it needs, and the three remedies differ
 in cost by an order of magnitude. Measured at `9996e8f60` over 2,638 tracked `.ts`/`.tsx`/`.py`
 files:
 
-| Remedy         | Count | What it means                                                                                                                                                                                                                                                  | Judgement                            |
-| -------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| `backtick`     | 163   | The site names a contract-bearing identifier — `@mailwoman/locale-gate`, `promotion-eval.ts`, `mailwoman eval promote`, `mwdev_gate`. Vale skips inline code, so backticks are both the fix and correct markdown.                                              | none                                 |
-| `rename-check` | 956   | The modifier carries the check's real name: `street-context gate` → `the street-context check`. Top modifiers: `street-context` 32, `delta` 20, `test` 19, `country` 27, `acceptance` 11, `postcode` 9, `§7-3b` 9, `existence` 8, `interval` 7, `detection` 6. | verify the modifier is the real name |
-| `read-context` | 895   | The site says only "the gate" / "a gate". Which check it means is learnable solely from the surrounding paragraph.                                                                                                                                             | full                                 |
+| Remedy         | Count | What it means                                                                                                                                                                                                                                                   | Judgement                            |
+| -------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `backtick`     | 163   | The site names a contract-bearing identifier — `@mailwoman/locale-hint`, `promotion-eval.ts`, `mailwoman eval promote`, `mwdev_promotion_eval`. Vale skips inline code, so backticks are both the fix and correct markdown.                                     | none                                 |
+| `rename-check` | 956   | The modifier carries the check's real name: `street-context check` → `the street-context check`. Top modifiers: `street-context` 32, `delta` 20, `test` 19, `country` 27, `acceptance` 11, `postcode` 9, `§7-3b` 9, `existence` 8, `interval` 7, `detection` 6. | verify the modifier is the real name |
+| `read-context` | 895   | The site says only "the check" / "a check". Which check it means is learnable solely from the surrounding paragraph.                                                                                                                                            | full                                 |
 
-By word family: `gate` 1,741, `seam` 158, `cut` 114, and one occurrence of the retired word — which
+By word family, in the rule's listing order: 1,741, 158, 114, and one occurrence of the retired word — which
 is `scripts/repo-health.ts`'s own `BANNED_VOCABULARY` constant, necessarily containing the word it
 counts.
 

@@ -126,7 +126,7 @@ A **parity check** then runs the same inputs through the original PyTorch model 
 
 ONNX models start in fp32 (32-bit floating point). For shipping, Mailwoman runs **dynamic int8 quantization**: each layer's weights get converted to 8-bit integers at load time. This:
 
-- Cuts the model file from 37 MB to 25 MB.
+- Reduces the model file from 37 MB to 25 MB.
 - Speeds up inference on CPU (smaller arithmetic).
 - Costs about 1–2% accuracy on the eval — measurable but acceptable.
 

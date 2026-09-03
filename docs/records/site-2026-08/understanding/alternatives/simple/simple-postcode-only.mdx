@@ -42,7 +42,7 @@ That's it. Three steps, each deterministic, each trivially updateable when a new
 
 Mailwoman's resolver treats the postcode as **supplementary evidence, not a primary locator.** When the postcode is present, the resolver limits gazetteer lookups to the postcode's rough administrative area — the same information the postcode-only approach uses. But Mailwoman also uses the parsed locality, region, and street to narrow the candidate set further. A postcode + locality + region match is more precise than a postcode alone.
 
-The postcode-only approach and Mailwoman are not competitors. A system that starts with postcode-only geocoding and later needs finer resolution can add Mailwoman as a **second pass**: postcode-only for the 90% of addresses where ZIP-level accuracy is sufficient, Mailwoman for the 10% where a specific building matters. The postcode extracted by the regex feeds directly into Mailwoman's locale gate and resolver constraints.
+The postcode-only approach and Mailwoman are not competitors. A system that starts with postcode-only geocoding and later needs finer resolution can add Mailwoman as a **second pass**: postcode-only for the 90% of addresses where ZIP-level accuracy is sufficient, Mailwoman for the 10% where a specific building matters. The postcode extracted by the regex feeds directly into Mailwoman's locale check and resolver constraints.
 
 ## See also
 

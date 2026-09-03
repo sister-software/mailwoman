@@ -55,7 +55,7 @@ const sidebars: SidebarsConfig = {
 	// Flat, no lead category, for the same reason as `product`: the switcher tab resolves
 	// through `useLayoutDocsSidebar("solutions").link` to the first entry.
 	solutions: [
-		"solutions/cut-the-per-request-bill",
+		"solutions/reduce-the-per-request-bill",
 		"solutions/own-what-you-look-up",
 		"solutions/keep-addresses-inside",
 		"solutions/fleet-reverse-geocoding",

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** The `poi_query` pipeline arc: a lexicon-gated `poi_query` QueryKind, the `POIIntent` record, the intent-extraction stage (subject split + anchor re-parse), an OverpassQL export emitter, and the `poiQueryKind` factory flag — default-OFF, byte-identical when off by construction.
+**Goal:** The `poi_query` pipeline arc: a lexicon-conditional `poi_query` QueryKind, the `POIIntent` record, the intent-extraction stage (subject split + anchor re-parse), an OverpassQL export emitter, and the `poiQueryKind` factory flag — default-OFF, byte-identical when off by construction.
 
 **Architecture:** Spec §3.1–3.2 (`docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md`). Detection lives in `kind-classifier` behind an injected `POIPhraseLookup` (the package keeps its "no dictionaries" invariant — the lexicon arrives only via the factory). The intent stage lives in `core` as a new optional `stages.poiIntent`; `runPipeline` branches on `kind === "poi_query"`, and a `null` outcome falls through to the full pipeline (mis-detection safety valve). Assembly happens in `mailwoman/`: the `poiQueryKind` factory flag wires `@mailwoman/poi-taxonomy` into the classifier factory and builds the intent stage with a recursion-guarded anchor re-parse. Brand subjects: the `POIIntent` contract includes the brand variant now, but Plan 2 wires **category** detection only — the brand table (Wikidata QIDs) is Plan 3 data work.
 
@@ -309,11 +309,11 @@ it("every category carries a well-formed osmTag", () => {
 })
 ```
 
-New describe (pins the deferred behavior from the Plan-1 final review — locale-GATED synonyms are invisible without a locale, ungated ones always match):
+New describe (pins the deferred behavior from the Plan-1 final review — locale-CONDITIONAL synonyms are invisible without a locale, unconditional ones always match):
 
 ```ts
 describe("lookup without a locale", () => {
-	it("hides locale-gated synonyms and keeps ungated ones", () => {
+	it("hides locale-hintd synonyms and keeps unconditional ones", () => {
 		expect(lookupPOICategory("chemist")).toEqual([])
 		expect(lookupPOICategory("drinking fountain")[0]?.confidence).toBe(1.0)
 	})
@@ -1131,7 +1131,7 @@ In `mailwoman/commands/parse.tsx`, locate where the debug JSON includes `kind` (
 In `docs/articles/plan/reference/runtime-flags.mdx`, Default-OFF table (after the `jointReconcile` row), add:
 
 ```
-| `poiQueryKind`                                                            | `CreateRuntimePipelineOpts`  | exotic-POI arc plan 2 (spec 2026-07-18): lexicon-gated `poi_query` kind + intent extraction; flag-off byte-identical by construction (default classifier never emits the kind, stage absent). Promotion gate before any default flip: golden 2pp + demo presets + the bare-venue/POI board (spec §3.6) |
+| `poiQueryKind`                                                            | `CreateRuntimePipelineOpts`  | exotic-POI arc plan 2 (spec 2026-07-18): lexicon-conditional `poi_query` kind + intent extraction; flag-off byte-identical by construction (default classifier never emits the kind, stage absent). Promotion check before any default flip: golden 2pp + demo presets + the bare-venue/POI board (spec §3.6) |
 ```
 
 - [ ] **Step 3: Verify**
@@ -1166,4 +1166,4 @@ git log -1 --oneline
 
 - Task 4 Step 5b: the file's lazy stage wiring (placeCountry/streetEvidence resolve on first call) is why the plan mandates the **inline-spread** `parseAnchor` form — it reads `stages` at call time, immune to mutation ordering. Do not "optimize" it into a pre-built anchorStages object.
 - Deferred to Plan 3 (do NOT build here): the poi.db executor, brand table + brand detection wiring, `variant-aliases` slang→taxonomy wiring, the landmark-leader abstain path, ResolveOpts kind-threading, MCP server, API/photon response variants.
-- The golden-2pp / demo-preset gate applies at DEFAULT-FLIP time, not merge time (flag ships OFF; register row records the promotion gate).
+- The golden-2pp / demo-preset check applies at DEFAULT-FLIP time, not merge time (flag ships OFF; register row records the promotion check).

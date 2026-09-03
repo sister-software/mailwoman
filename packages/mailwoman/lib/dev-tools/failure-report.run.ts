@@ -382,7 +382,7 @@ ${perModel}
 
 ## Failures by label — the class each candidate trades
 
-A count that **rises** across candidates (bold, with the delta vs the first model) is a class the candidate silently traded. This is the row that flags a regression the floor gates miss — e.g. \`country\` degrading across the fragment lineage.
+A count that **rises** across candidates (bold, with the delta vs the first model) is a class the candidate silently traded. This is the row that flags a regression the floor checks miss — e.g. \`country\` degrading across the fragment lineage.
 
 ${labelTable}
 

@@ -29,7 +29,7 @@
 #         dilution); this run must hold FR OVERALL >= ~0.725 (v310 0.733). If FR drifts again, knob 2
 #         (no-fragment weight relative to fr-fragment) is the NEXT one-at-a-time probe, not this one.
 # GUARD : GOLDEN (post-numsplice lesson — an on-board win can hide an off-board cost). If board 3 passes,
-#         run the golden gate delta vs v310; fr.house_number / us.unit_real must not regress >2pp.
+#         run the golden check delta vs v310; fr.house_number / us.unit_real must not regress >2pp.
 #
 # NOT A SHIP. A PASS justifies a FULL 8k pre-registered against the same board. Promotion is operator's.
 #

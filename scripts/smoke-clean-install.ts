@@ -71,7 +71,7 @@ const WORKSPACES: Record<string, string> = {
 	// (kind-classifier, poi-taxonomy, query-shape) are all in this closure, and the React peer is
 	// auto-installed from the registry.
 	"@mailwoman/react": "packages/react",
-	"@mailwoman/locale-gate": "packages/locale-gate",
+	"@mailwoman/locale-hint": "packages/locale-hint",
 	"@mailwoman/normalize": "packages/normalize",
 	"@mailwoman/phrase-grouper": "packages/phrase-grouper",
 	"@mailwoman/query-shape": "packages/query-shape",

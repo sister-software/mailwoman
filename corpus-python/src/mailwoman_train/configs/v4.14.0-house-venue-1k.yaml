@@ -17,7 +17,7 @@
 # net-positive where every longer one could not. Nothing in six runs tested it: they were all 4,000 or
 # 8,000 steps.
 #
-# THE GATE IS UNCHANGED and it is against the SHIPPED model, because that is what publishing costs a
+# THE CHECK IS UNCHANGED and it is against the SHIPPED model, because that is what publishing costs a
 # user. The null run is the right baseline for ATTRIBUTING a regression; it is not a licence to ship
 # one.
 #   1. net improved-minus-regressed >= 0 on the 649-row board;

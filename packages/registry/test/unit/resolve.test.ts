@@ -149,7 +149,7 @@ describe("address-frequency down-weighting (#617)", () => {
 	})
 })
 
-describe("name-or-org corroboration gate (A2, #625)", () => {
+describe("name-or-org corroboration check (A2, #625)", () => {
 	it("suppresses a spatial-only link — a shared address with disagreeing names does not merge", () => {
 		const a = coLocated("1", "Robert", "Smith") // same address...
 		const b = coLocated("2", "Maria", "Garcia") // ...different people
@@ -157,8 +157,8 @@ describe("name-or-org corroboration gate (A2, #625)", () => {
 		const without = resolveEntities([a, b], { threshold: -100 })
 		expect(without.entities).toHaveLength(1) // over-merge: an address-only link
 
-		const gated = resolveEntities([a, b], { threshold: -100, requireCorroboration: true })
-		expect(gated.entities).toHaveLength(2) // the check holds the distinct providers apart
+		const conditional = resolveEntities([a, b], { threshold: -100, requireCorroboration: true })
+		expect(conditional.entities).toHaveLength(2) // the check holds the distinct providers apart
 	})
 
 	it("still merges when names DO corroborate at a shared address", () => {

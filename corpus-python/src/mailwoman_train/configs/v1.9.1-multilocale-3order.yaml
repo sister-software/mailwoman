@@ -17,7 +17,7 @@
 # CRITICAL (data_loader.py:244): country_weights.get(country) is None -> the row is EXCLUDED. ALL 22
 # countries listed below at 1.0 (acceptance filter relative to max_weight, NOT a 1/N split).
 #
-# GOAL / GATE: grade the ASSEMBLED coordinate, never label-F1. Diagnostic-first: at step-2000/4000 run
+# GOAL / CHECK: grade the ASSEMBLED coordinate, never label-F1. Diagnostic-first: at step-2000/4000 run
 # scripts/eval/nonus-coord-panel.ts — the in-slice locales (PT/PL/AT/CZ/IT) resolve rate must RECOVER
 # toward / above the v1.8.0 baseline (PT 52, PL 53, AT 50, CZ 43, IT 79), AND the US per-locale-F1
 # guardrail must hold (not worse >1pp) + FR centroid flat. If in-slice resolve is still BELOW v1.8.0 at
@@ -74,7 +74,7 @@ data:
     synth-country: 2.0
     # #148 change: the multi-locale EU slice. Weight 3.0 — solid EU exposure (each locale's ~150k rows
     # get comparable weighted mass to fr-admin-split's 60k*6.0) without dominating the US-heavy base;
-    # the step-2000 diagnostic gate adjudicates dilution (lower if US/FR regress, raise if mid-tier flat).
+    # the step-2000 diagnostic check adjudicates dilution (lower if US/FR regress, raise if mid-tier flat).
     overture: 3.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

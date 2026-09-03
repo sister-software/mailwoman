@@ -9,13 +9,13 @@ anchor-ON coordinate** (not label-F1), by fixing the one admin-deciding, coordin
 class — on non-US formats the model fuses the trailing admin token into the locality. NOT promoted
 without operator GO (merge wall)._
 
-> **STATUS: COMPLETE.** Training finished (40k steps, loss-abort passed), gated, verdict below —
+> **STATUS: COMPLETE.** Training finished (40k steps, loss-abort passed), conditional, verdict below —
 > v1.8.0 is a clean coordinate net win (FR p50 42→2 km, US flat). Shift window: overnight →
 > hand-off ~12:53 UTC (operator returned early). GPU lost to error: ~0. Regressions shipped: 0.
 >
 > **Morning wrap (2026-06-19 ~12:53 UTC):** operator GO — the 7 night commits rebased + pushed to
 > main (`00ae8f56`, Test + Docs CI green), and **v1.8.1 launched** (`ap-K2x5hDTbABeEhdaW3i5WUS`,
-> the country-bearing extract that closes fr.country; loss-abort passed). On v1.8.1's completion: gate
+> the country-bearing extract that closes fr.country; loss-abort passed). On v1.8.1's completion: check
 > (FR centroid + US/FR guardrails) → test → publish the chosen candidate. v1.8.0 stays the fallback.
 
 ## The arc (how we got here)
@@ -31,7 +31,7 @@ without operator GO (merge wall)._
 3. **The anchor-positional unlock:** the v0.9.2 "intl washes anchor-on" scar was _positional_
    (German leading postcode); AU/FR have _trailing_ postcodes like the US → the anchor reinforces
    the split. Scar tissue is conditional, not universal (operator-named principle, now in memory).
-4. **Pre-GPU self-validation PASSED** (`db8ac933`): splitting the département cuts collision-commune
+4. **Pre-GPU self-validation PASSED** (`db8ac933`): splitting the département reduces collision-commune
    coordinate error −61%, the merge resolves 0%. The resolver demonstrably uses the région tag → the
    change moves the anchor-ON coordinate. GPU justified before a minute was spent.
 
@@ -42,16 +42,16 @@ without operator GO (merge wall)._
   derived via codex `departementForCodePostal`. Anchor-ON by construction (99.9% postcode-landing).
 - `scripts/assemble-fr-admin-split-overlay-manifest.py` — overlay manifest (corpus-v0.5.0 690 extracts
   verbatim + the extract), re-rooted to `/data` (0 `/mnt` paths).
-- `scripts/eval/fr-admin-split-gate.ts` — the live centroid gate (ship-config parse → resolve →
+- `scripts/eval/fr-admin-split-check.ts` — the live centroid check (ship-config parse → resolve →
   coord on the held-out golden; coord error + région-emit-rate + #727 diacritic break).
 - `scripts/eval/fr-admin-split-selfvalidation.ts` + `docs/.../2026-06-19-fr-admin-split-prevalidation.md`
-  — the pre-GPU gate (committed day session).
+  — the pre-GPU check (committed day session).
 - `corpus-python/.../configs/v1.8.0-fr-admin-split.yaml` + `train_remote.py::sync_v080`.
 - Issue **#727** filed (the `Lozère → ère` diacritic decode bug; rides the extract fix).
 
 ## The numbers (filled as they land)
 
-**FR centroid gate** — held-out FR golden (3000 rows, disjoint communes, ship-config anchor-ON):
+**FR centroid check** — held-out FR golden (3000 rows, disjoint communes, ship-config anchor-ON):
 
 | metric                | v1.5.0 |     v1.8.0 | Δ                                 |
 | --------------------- | -----: | ---------: | --------------------------------- |
@@ -63,11 +63,11 @@ without operator GO (merge wall)._
 | région-correct-rate   |  36.4% |  **96.4%** | +60pp                             |
 | #727 diacritic breaks |     23 |         24 | ~flat (rate among emitted halved) |
 
-**The FR centroid gate passes decisively** — the median held-out FR address now resolves at 2 km
+**The FR centroid check passes decisively** — the median held-out FR address now resolves at 2 km
 (was 42 km); the model learned the locality↔département split (région-emit 40→99.6%). This is the
 goal: surpass v1.5.0 on the shipped FR coordinate.
 
-**US guardrail** — `per-locale-f1` on `us.jsonl` (anchor-ON), 2pp gate:
+**US guardrail** — `per-locale-f1` on `us.jsonl` (anchor-ON), 2pp check:
 
 | tag          | v1.5.0 | v1.8.0 | Δ          |
 | ------------ | -----: | -----: | ---------- |
@@ -78,7 +78,7 @@ goal: surpass v1.5.0 on the shipped FR coordinate.
 | postcode     |   98.6 |   98.6 | flat       |
 | country      |   68.4 |   68.9 | +0.5       |
 
-The 2pp gate **fired on us.locality (−2.2pp)** — but the row-level read shows it's **precision-only**:
+The 2pp check **fired on us.locality (−2.2pp)** — but the row-level read shows it's **precision-only**:
 **0 new recall misses, 0 fixes** (every real US locality v1.5.0 caught, v1.8.0 still catches); the F1
 drop is spurious-locality false-positives on _gold-locality-absent_ rows.
 
@@ -113,20 +113,20 @@ Net FR improvement (incl. `fr.house_number` held at 99.5 — v1.5.0's raison d'�
 fr.country −3.5pp**. Likely mechanism: the extract's bare `Commune, Département` rows carry
 `country: FR` metadata but **no country token in the text**, so the model learns to emit country less
 often on FR. Coordinate-invisible for the FR coord eval (which is given `--default-country FR`), but
-over the 2pp gate — a clean v1.8.1 refinement is to mix in FR rows that DO carry "France".
+over the 2pp check — a clean v1.8.1 refinement is to mix in FR rows that DO carry "France".
 
 ## Verdict — v1.8.0 is a net win on the shipped coordinate; RECOMMEND promote (operator GO), with two flagged label deltas
 
 **FR coordinate massively up (p50 42→2 km, −40% mean), US coordinate flat.** This is the first model
 in the arc (v1.6.0 and v1.7.0 both HOLD) to surpass v1.5.0 on the metric we ship. **Two
-label deltas exceed the 2pp gate, and both are coordinate-invisible:** us.locality −2.2pp
+label deltas exceed the 2pp check, and both are coordinate-invisible:** us.locality −2.2pp
 (precision-only — 0 recall misses; spurious-fp on fragment rows) and fr.country −3.5pp (the resolver
 is given the country, so it doesn't reach the coordinate). No silent drift — both are stated here and
 on #728; the promote is the operator's call with the full picture.
 
 Per the merge wall this is **NOT auto-promoted** — the artifact is staged beside the canonical
 (int8 `model-v180-step-40000-int8.onnx`, md5 `d163396ce30869e117bf29ffb939177b`, on the volume +
-`./out/v180/`) and flagged for operator GO. The 2pp label gate technically fired, but the coordinate
+`./out/v180/`) and flagged for operator GO. The 2pp label check technically fired, but the coordinate
 (the canonical metric) is flat-to-better, so this is the "regression is coordinate-invisible — state
 the trade, operator promotes" path, not an experimental-as-cover ship.
 
@@ -138,7 +138,7 @@ a subword) and wants a separate decode/tokenizer look, not more extract data.
 
 - **Salvage-first paid off:** codex `departementForCodePostal`/`FR_DEPARTEMENTS`, AU `state.ts`, and
   the `build-fr-order-extract.mjs` template meant zero re-derived reference data and a fast build.
-- **Pre-GPU falsification:** the self-validation gate turned "plausible change" into "evidence-backed
+- **Pre-GPU falsification:** the self-validation check turned "plausible change" into "evidence-backed
   ceiling" before the GPU spend — the discipline the whole day's campaign was about.
 - **Real data throughout** (BAN, 27M rows → 35k distinct communes), anchor landing 99.9%.
 
@@ -155,25 +155,25 @@ a subword) and wants a separate decode/tokenizer look, not more extract data.
 
 ## Decisions made autonomously
 
-- **FR-only first build** (the min-viable cut): AU + venue-leading deferred to a second run. FR has
+- **FR-only first build** (the min-viable reduce): AU + venue-leading deferred to a second run. FR has
   hard coordinate truth and a closed département set; the space-delimited shape is covered via FR's
   own space variant. Lower-risk first GPU spend.
 - **Extract weight 6.0** (matching synth-german, the other intl coverage extract) — strong signal,
   modest enough that the ~90%-US base corpus still dominates the batch (the #375 narrowing guard).
 - **Cloned v1.5.0-fr-order verbatim** except the one added extract (one headline variable).
 - **AU iteration deferred — and now known to be BLOCKED:** the resolver DB (`admin-global-priority.db`)
-  has **zero AU rows** (US+DE+FR only), so AU places can't be resolved → no AU coordinate gate is
-  possible without first expanding the resolver DB to AU. FR-only wasn't just the min-viable cut, it
+  has **zero AU rows** (US+DE+FR only), so AU places can't be resolved → no AU coordinate check is
+  possible without first expanding the resolver DB to AU. FR-only wasn't just the min-viable reduce, it
   was the only feasible one. (Verify-before-build caught this during training-window prep.)
 
 ## Open questions (operator)
 
-- Promote v1.8.0 → v4.x default? (Gated on the verdict below + operator GO; merge wall.)
+- Promote v1.8.0 → v4.x default? (Blocked on the verdict below + operator GO; merge wall.)
 - If it lands: the AU + venue-leading second run, and whether to ship a held-out AU coordinate set.
 
 ## Concrete next steps
 
-- **Operator promote decision for v1.8.0** (the artifact + md5 are staged; gate evidence above). If
+- **Operator promote decision for v1.8.0** (the artifact + md5 are staged; check evidence above). If
   GO: the standard release flow (releases.json + HF/R2 publish; the int8 is
   `/data/models/quantized/model-v180-step-40000-int8.onnx` + `./out/v180/model.onnx`).
 - **#727 diacritic follow-up** — tokenizer/decode-level (the accent strands a subword as its own
@@ -181,7 +181,7 @@ a subword) and wants a separate decode/tokenizer look, not more extract data.
 - **AU iteration is blocked** until the resolver DB (`admin-global-priority.db`) gains AU rows — scope
   an AU WOF ingest if AU coverage is wanted (then the AU admin-split extract is a fast follow on the FR
   template).
-- **The extract + gate are reusable** — `build-fr-admin-split-extract.mjs` + `fr-admin-split-gate.ts` +
+- **The extract + check are reusable** — `build-fr-admin-split-extract.mjs` + `fr-admin-split-check.ts` +
   `fr-admin-split-selfvalidation.ts` generalize to other locales with trailing postcodes (ES/IT) once
   their resolver coverage exists.
 
@@ -193,7 +193,7 @@ a subword) and wants a separate decode/tokenizer look, not more extract data.
 | Models trained    | 1 (v1.8.0-fr-admin-split, from scratch, 40k steps)                                                                                                                                                                                                                                   |
 | Modal $           | ≈ $5 (1× A100-40GB ~2h train + export/quantize/sync)                                                                                                                                                                                                                                 |
 | NaN incidents     | 0                                                                                                                                                                                                                                                                                    |
-| Loss-abort gate   | PASSED (loss 5.0 → ~0.7, decreasing)                                                                                                                                                                                                                                                 |
+| Loss-abort check  | PASSED (loss 5.0 → ~0.7, decreasing)                                                                                                                                                                                                                                                 |
 | GPU lost to error | ~0 (one failed export attempt, CPU-side, seconds)                                                                                                                                                                                                                                    |
 | Verdict           | v1.8.0 = net win on shipped coordinate (FR −40%, US flat); 2 coordinate-invisible label deltas (us.locality −2.2 precision-only, fr.country −3.5); RECOMMEND promote (operator GO)                                                                                                   |
 | Promoted          | YES — shipped as **v4.11.0** (2026-06-19 PM, operator GO with the two coordinate-invisible deltas); HF + R2 + npm verified at md5 `d163396c`, clean `npm install mailwoman@4.11.0` resolves; npm leg needed one `publish_only` retry (transient OIDC E401). Runbook in RELEASING.md. |

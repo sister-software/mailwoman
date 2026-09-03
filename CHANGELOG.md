@@ -93,7 +93,7 @@ formats. FR coord p50 42 → 2.2 km; US flat.
 ### 4.4.0 — boundary consolidation
 
 Closed the parity campaign's last empty tags — `po_box` 0 → 89, `cedex` 0 → 96,
-intersections 0 → 100 (real-OOD) — and gated the perturbation arena floor.
+intersections 0 → 100 (real-OOD) — and conditional the perturbation arena floor.
 
 ### 4.2.0 — gazetteer-anchored consolidation
 

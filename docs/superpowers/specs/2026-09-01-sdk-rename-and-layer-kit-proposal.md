@@ -124,7 +124,7 @@ identical client factories now live in `core/layers`, `core/api`, `spatial` and 
 that **the extraction worked**, not that these packages were never duplicated. Anyone re-running this after a
 future extraction should expect the same shape and draw the same care.
 
-Two limits on the instrument, both of which cut against over-reading it:
+Two limits on the instrument, both of which reduce against over-reading it:
 
 - `--min-lines 20` cannot see the 5–15-line idioms that were the actual duplication class here — a batched
   commit loop, a manifest block. The number is a floor on duplication, not a measure of it.
@@ -201,7 +201,7 @@ measurement, and the correction dissolved the coupling:
 | distinct spellings        |      1 |          **165** |
 
 **`sdk/` is an EXTERNAL break with a small internal footprint; the vocabulary rename was the reverse** — an
-internal refactor with four subpaths attached. So it was never gated on a release, and it shipped continuously
+internal refactor with four subpaths attached. So it was never blocked on a release, and it shipped continuously
 instead: those four subpaths moved with their modules, each recorded in CHANGELOG "Unreleased".
 
 That leaves the `sdk/` rename holding a release of its own, for 83 subpaths and no other passenger — which
@@ -218,7 +218,7 @@ trap for the next vocabulary removal:
    `grep`-based ratchet would have certified zero with 54 still standing. The counter reads through Node
    instead, which has no such blind spot.
 2. **A ratchet written in the language it polices is inside its own blast radius.** The case-preserving sweep
-   renamed the counter AND rewrote the pattern it counts with, so the gate silently began measuring the
+   renamed the counter AND rewrote the pattern it counts with, so the check silently began measuring the
    REPLACEMENT word while still reporting a falling number. It stayed green throughout. The counter is now
    named neutrally, its term lives in one constant, and `scripts/repo-health.ts` excludes itself — otherwise
    the count can never reach zero, because the pattern has to spell what it bans.
@@ -239,7 +239,7 @@ content hash. Editing one is a deliberate re-pin, not a sweep.
 ```bash
 cd /home/lab/Projects/mailwoman
 for d in packages/*/lib/sdk; do [ -d "$d" ] && echo "$d: $(ls "$d" | tr '\n' ' ')"; done
-grep -rl '"#sdk/' packages --include='*.ts' | grep -v /out/ | cut -d/ -f2 | sort | uniq -c | sort -rn
+grep -rl '"#sdk/' packages --include='*.ts' | grep -v /out/ | reduce -d/ -f2 | sort | uniq -c | sort -rn
 for p in ban bdc coastal filer flood geocode-oracle osm soil tiger zoning; do
   node -e 'const q=require("./packages/'"$p"'/package.json");console.log("'"$p"'", Object.keys(q.exports||{}).filter(k=>k.startsWith("./sdk")).length)'
 done

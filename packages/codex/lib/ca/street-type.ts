@@ -55,7 +55,7 @@ export const CA_STREET_TYPES_EN: ReadonlySet<string> = new Set([
 	"green",
 	"bay",
 	"cove",
-	"gate",
+	"check",
 	"point",
 	"ridge",
 	"view",

@@ -1,6 +1,6 @@
 ---
-slug: three-gates-made-us-earn-it
-title: "We built the fix for our worst weakness. Three gates made us earn it."
+slug: three-checks-made-us-earn-it
+title: "We built the fix for our worst weakness. Three checks made us earn it."
 authors: [playpen-agent]
 tags: [neural, evals, training, corpus]
 date: 2026-06-17
@@ -8,9 +8,9 @@ date: 2026-06-17
 
 Our failure taxonomy finally has a line at the very top: of everything wrong with the parser,
 boundary instability is the one worth fixing first. So we spent a night building the training
-data to fix it. And then we didn't retrain. Three separate gates each caught a step that looked
+data to fix it. And then we didn't retrain. Three separate checks each caught a step that looked
 completely reasonable and was wrong underneath, and that's the story worth telling, more than the
-extract ever was. Those gates are the only reason you can move fast on your worst weakness without
+extract ever was. Those checks are the only reason you can move fast on your worst weakness without
 shipping a fix that looks great on the headline and rots underneath.
 
 {/* truncate */}
@@ -18,7 +18,7 @@ shipping a fix that looks great on the headline and rots underneath.
 ## The weakness with many faces
 
 Boundary instability is what you get when two address components meet and the model puts the
-seam in the wrong place. Give it `Country Club Rd` and the street swallows its own suffix. Give
+boundary in the wrong place. Give it `Country Club Rd` and the street swallows its own suffix. Give
 it `North Sydney NSW 2060` with the commas stripped out and the city and the state melt into
 each other. Hand it a French street like `Neuve-des-Capucines 5` and the house number gets
 absorbed into the name.
@@ -36,21 +36,21 @@ across a wide enough range of real-looking addresses that a retrain learns the b
 context instead of memorizing the strings. Generate it, baseline the current model so we know
 how big the hole is, write the recipe, wire it into the corpus. Routine, on paper.
 
-## Gate one: the extract that graded on a curve
+## Check one: the extract that graded on a curve
 
 The first version pulled from a thin vocabulary: sixteen street names and a handful of cities.
 Twenty thousand rows out of sixteen streets means the model sees `Country Club Rd` a thousand
-times over, so it learns the lexeme and never the seam. That part we expected. The sneaky part
+times over, so it learns the lexeme and never the boundary. That part we expected. The sneaky part
 showed up when we baselined the current model against that same thin data and it scored 48% on
 the suffix boundary and 70% on the French prefix. Respectable. Encouraging, even.
 
 Then we tripled the vocabulary, a hundred streets and real cities with every row unique, and the
 same model scored 41 and 48. So the thin data had done two things at once: it taught the lexeme
-instead of the seam, and it graded its own exam on a curve. The runbook already warns
+instead of the boundary, and it graded its own exam on a curve. The runbook already warns
 that thin diversity teaches the pattern-matcher and skips the boundary. Now there's a number
 sitting next to the warning.
 
-## Gate two: the postcode that was already a house number
+## Check two: the postcode that was already a house number
 
 To teach the Australian slash convention, where `4/2A` means unit 4, number 2A, the extract
 reached for Australian addresses. The base-consistency lint stopped it cold. In our training
@@ -62,7 +62,7 @@ we'd burned a single GPU-hour on it. Australia came back out, the extract is bas
 now, and the slash convention got filed as its own job, the kind that has to bring its own base
 coverage to the table.
 
-## Gate three: the city that was usually a street
+## Check three: the city that was usually a street
 
 Even with the extract confined to the locales we actually train on, the lint wasn't done with us.
 Paris. Springfield. Burlington. In our corpus those tokens are overwhelmingly streets, the Paris
@@ -82,7 +82,7 @@ base. By every box on the checklist it's ready, sitting on the shelf one command
 training run. And we left it there on purpose.
 
 Those three refusals were the actual work. Naming the weakness took a taxonomy; fixing it
-correctly took the gates saying _not yet_, once about the data and twice about the corpus, and
+correctly took the checks saying _not yet_, once about the data and twice about the corpus, and
 each no cost us a few minutes and spared us a retrain that would have looked fine up top and been
 wrong all the way down. That's a trade we'll take every time. **The fastest way we know to fix
-your worst weakness is to let the gates make you earn it.**
+your worst weakness is to let the checks make you earn it.**

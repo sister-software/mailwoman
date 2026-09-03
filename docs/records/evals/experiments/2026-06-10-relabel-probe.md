@@ -1,6 +1,6 @@
 # The relabel probe — #511 confirms the #492 contradiction theory (2026-06-10 evening)
 
-Same-day sequel to [the width gate + affix audit](./2026-06-10-width-gate-affix-audit.md). That
+Same-day sequel to [the width check + affix audit](./2026-06-10-width-check-affix-audit.md). That
 note ended with a theory (the affix ceiling is contradictory base-corpus labels at ≥ 1,039:1) and
 a fix design (#511, a loader-level relabel pass). This note records the probe that tested it.
 
@@ -23,8 +23,8 @@ Design was pressure-tested in a 3-turn DeepSeek consult (curl fallback — the `
 out again at 180s): concurrence on all-rows scope (GB splits are schema-correct; a country filter
 adds brittleness), relabel probability 1.0 (partial relabeling is a weaker dose of the same
 contradiction — p=0.9 still leaves ~156:1), and probe decisiveness. Its push-back we adopted: the
-32-row affix eval is too small to gate on (one instance ≈ 4pp); expand to ≥100/≥100 instances
-before the full-run gate. One correction ours: the probe keeps extract weight 20.0 for probe-0
+32-row affix eval is too small to check on (one instance ≈ 4pp); expand to ≥100/≥100 instances
+before the full-run check. One correction ours: the probe keeps extract weight 20.0 for probe-0
 parity — the weight-reduction discussion belongs to the full run.
 
 ## Result: HOLD
@@ -54,7 +54,7 @@ has not migrated; the full run owns it.
 `v1.1.0-relabel-consolidation` launched the same evening (from scratch, 40k): the v4.2.0 recipe
 on the consistent mix with both anti-contradiction compensations REVERTED as stated decisions —
 synth-affix 17.0 → 2.0 and affix tag class-weights 2.0/4.0 → 1.5/1.5 (suffix now appears on ~65%
-of base street rows; a 4× boost on a majority tag risks over-fire). Gate: the v4.2.0 ship floors
+of base street rows; a 4× boost on a majority tag risks over-fire). Check: the v4.2.0 ship floors
 unchanged, affix measured at 20k AND 40k (stability is the claim under test), plus the consult
 watches (folded-street invariance, short-street recall, house_number→street_prefix transition).
 The expanded NAD-native affix eval re-baselines before the verdict; the 32-row result is recorded

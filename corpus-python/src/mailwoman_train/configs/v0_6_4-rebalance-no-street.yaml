@@ -3,7 +3,7 @@
 # Recipe per DeepSeek turn 10 (2026-05-29) following the v0.6.3 step-20K
 # diagnostic. v0.6.3 successfully delivered house_number recovery (75.0%
 # → 77.3% at step 20K) but locality hallucinations rose 526 → 777 (rate
-# 23.0%, above gate threshold).
+# 23.0%, above check threshold).
 #
 # DeepSeek's diagnosis: dilution of anti-decompose signal. v0.6.3 added
 # 32K rows of synth-house-venue-v063 at weight 1.0 alongside the 122K
@@ -42,7 +42,7 @@
 #
 # Promotion decision tree at 100K:
 #
-#   | Gate eval | harness pass | Action                       |
+#   | Check eval | harness pass | Action                       |
 #   | --------- | ------------ | ---------------------------- |
 #   | Pass      | ≥ 25%        | Promote to default (HF)      |
 #   | Pass      | 15-24%       | Ship as experimental         |

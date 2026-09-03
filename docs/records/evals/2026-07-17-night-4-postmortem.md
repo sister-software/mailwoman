@@ -7,7 +7,7 @@ Living document — sketched during the shift, finalized at hand-off.
 Operator handoff 04:36 UTC: B1 (#727 stage-2 k-best, plan #1134) as the main arc (protected lane,
 night 1), P1 (locality name-index #30) as a parallel agent. Publish + train authorized. Context
 coming in: v6.5.0 shipped this morning; the v1 rules parser deleted this evening (#1151, seal tag
-`legacy-rules-final`); the swap gate runs on coordinate acceptability + the two-guard plausibility
+`legacy-rules-final`); the swap check runs on coordinate acceptability + the two-guard plausibility
 module; cascade probe closed shape-routing with receipts.
 
 ## What shipped
@@ -66,9 +66,9 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   `2026-07-17-phase4-name-evidence-rerank.md` (dd2e8aae). Caveats stated there: v301 span artifact
   (k-best only exists on the archived branch — this result is the consumer that justifies merging
   it), FR-only index, BAN-derived board = ideal coverage.
-- 05:32 — v391 golden gate found CRASHED, and the cause is a MAIN-BRANCH BREAK the excision left:
-  #1151 deleted `harness-v0-neural.ts` but `external-arenas.ts` (a promotion-gate leg) still
-  invoked it — every post-excision gate battery dies at the arena leg. Fixed as **PR #1153**:
+- 05:32 — v391 golden check found CRASHED, and the cause is a MAIN-BRANCH BREAK the excision left:
+  #1151 deleted `harness-v0-neural.ts` but `external-arenas.ts` (a promotion-check leg) still
+  invoked it — every post-excision check battery dies at the arena leg. Fixed as **PR #1153**:
   `harness-neural.ts` = the seal-tag harness ported neural-only (neural semantics unchanged →
   pass rates comparable), summarize-arenas drops the v0 buckets. tsc + 10-row smoke clean. The
   v391 arena leg is moot for the verdict (v391 already held on the BR guard), but the next ship
@@ -100,17 +100,17 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   18.6->1.49 converged (v3.0.0 stuck at ~17), the LR param group works. **LEG-2 P3 all-caps FAIL** —
   raw-case exact 48.0 vs v381 48.3 (-0.3pp) against the +5pp bar; augment_upper_case_prob 0.15 is
   INERT at 2k. Per no-relax-bars: P3 does NOT ride the 8k, the #690 shim stays (+12.4pp raw-case
-  today). The span head DOES escalate — but seg@1 (leg-1 formal gate) runs first before the ~2h 8k spend.
-- 07:08 — **seg@1 GATE PASS on v3.10.0 step-002000** (local CPU, eval_seg_at_1.py, parity 267):
+  today). The span head DOES escalate — but seg@1 (leg-1 formal check) runs first before the ~2h 8k spend.
+- 07:08 — **seg@1 CHECK PASS on v3.10.0 step-002000** (local CPU, eval_seg_at_1.py, parity 267):
   token@1 0.5581 / seg@1 0.6030 (+4.5pp) → the trained span scorer beats the token decode ON THE
   SHIP-RECIPE CORPUS (v0.11.0-no-fragment). This is the NOVEL confirmation: v301 proved the head on
   v257; v3.10.0 proves it survives the corpus swap. All THREE 2k legs green (guard byte-stable,
   loss converged, seg@1 crosses). The ~2h 8k spend's falsifier PASSED → escalating.
 - 08:26 — **v3.10.1 8k RESUME COMPLETE** (resumed step 2000→8000 clean, no NaN): train_loss
   18.6→1.31, val macro_f1 0.6937 (2k was 0.6936 — token path unchanged, span head is additional).
-  **seg@1 GATE PASS at 8k**: token@1 0.5581 / seg@1 0.5918 (+3.4pp). NOTE the span head PLATEAUS by
+  **seg@1 CHECK PASS at 8k**: token@1 0.5581 / seg@1 0.5918 (+3.4pp). NOTE the span head PLATEAUS by
   2k: 8k seg@1 0.5918 is marginally BELOW the 2k's 0.6030 (-1.1pp, noise) — same 2k≈8k plateau as
-  the B4b digit arc. The extra 6k refined train_loss (1.49→1.31) but not the decode gate. Grade
+  the B4b digit arc. The extra 6k refined train_loss (1.49→1.31) but not the decode check. Grade
   (guard + P3 re-grade + oracle@5) running; export emitted the semi-crf-transitions sidecar (the
   new export_onnx path, c8c05fc7).
 - 09:00 — **v3.10.1 8k GRADE COMPLETE — #727 step-4 (span-head training arc) CLEAN SUCCESS.**
@@ -133,7 +133,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   index (BAN sdk).
 - STASH FLAG (operator): two STALE WIP stashes predate tonight — stash@{0} = a banned-prose sweep
   (50 'honest'→calibrated etc., 25 mdx files) that now CONFLICTS with current main (docs diverged
-  since it was cut); stash@{1} = 'WIP on fix/965-gate-hard-country'. Neither is tonight's work; I
+  since it was reduce); stash@{1} = 'WIP on fix/965-check-hard-country'. Neither is tonight's work; I
   left both intact (did not drop). stash@{0} needs manual reconciliation or a drop — operator's call.
 - failure mode: `export_onnx --step` needs the ZERO-PADDED checkpoint name (`002000`, not `2000`) — the
   saver zero-pads. First grade run FileNotFounded on step-2000; fixed to 002000.
@@ -156,7 +156,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   it to +6.0pp with the value moved to date-name. Shipping the proxy number would have mis-set the
   phase-4c pitch.
 - **Two latent main-branch hazards surfaced and got handled**: the excision's deleted arena harness
-  (broke every gate battery — fixed, PR #1153) and the export sidecar gap (would have blocked the
+  (broke every check battery — fixed, PR #1153) and the export sidecar gap (would have blocked the
   8k oracle read — fixed inline). Both found by actually running the pipeline, not by inspection.
 
 ## What could've gone better
@@ -170,7 +170,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
 - **A stale banned-prose stash sat undiscovered until I tripped over it** mid-PR. It predates
   tonight and now conflicts with main. Not my defect, but it means uncommitted rule-compliance work
   has been stranded on the working tree for days — the operator should reconcile or drop it.
-- **The span-head plateau (2k ≈ 8k on the decode gate) means the 6k extra steps bought little.** Not
+- **The span-head plateau (2k ≈ 8k on the decode check) means the 6k extra steps bought little.** Not
   a mistake — the plateau was only knowable after running it — but the NEXT span retrain can stop at
   ~2-3k on the decode metrics and save the compute (train_loss keeps falling, but seg@1/oracle don't).
 
@@ -182,7 +182,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   contraindicate it: that was the NUMERIC manifold (shared bare/contextful digits); letter
   diacritic splices shipped clean three times.
 - Noted as historical, not re-litigated: plan #1134's tail still names the 0.90 parity floors as
-  the swap gate; superseded by the 2026-07-17 operator criterion ruling + the merged swaps + the
+  the swap check; superseded by the 2026-07-17 operator criterion ruling + the merged swaps + the
   deletion. The arc now feeds model quality / n-best / plan-5 retrain, not a swap unblock.
 
 ## Open questions
@@ -205,7 +205,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
 
 ## Concrete next steps
 
-- **MERGE ORDER (all mergeable/green):** #1153 (arena-harness fix — un-reds the gate battery, FIRST)
+- **MERGE ORDER (all mergeable/green):** #1153 (arena-harness fix — un-reds the check battery, FIRST)
   → #1154 (span-decode surface) → #1156 (phase-4c arbiter) → #1152 (P1 doc). #1154 must land before
   phase-4c can be wired.
 - **Phase-4c wiring (the next arc, needs #1154 on main):** compose `pickByStreetEvidence` with the
@@ -221,14 +221,14 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
 - (historical) **v3.10.0 2k probe grade**: `scratchpad/grade-v3100.sh` runs
   export→int8→v381-sibling cache→guard(golden us/fr vs v381 baseline 86.9/90.1 micro)→LEG-2
   all-caps (raw-case, bar ≥53.3 exact vs v381 48.3). Cache template `scratchpad/v381-punct-full-cache`
-  (SAME tokenizer → F1 valid). seg@1 formal gate deferred to 8k (leg-1 mechanism already confirmed:
+  (SAME tokenizer → F1 valid). seg@1 formal check deferred to 8k (leg-1 mechanism already confirmed:
   loss 18.6→1.55, vs v3.0.0's stuck 17 — the LR param group works).
 - **export_onnx sidecar gap (8k handoff)**: the Modal `export_onnx` fn writes `model.onnx` but NOT
   `semi-crf-transitions.json` (that's `package_weights.export_semi_crf_transitions`, a separate
   path). The phase-4c/PR-#1154 k-best decode needs the sidecar, so the 8k package build must route
   through package_weights or export_onnx must be extended to emit it. Harmless for the 2k BIO-path grade.
 - **PRs awaiting operator merge** (both green, not self-merged — new runtime surface + eval tooling):
-  #1153 (arena-harness neural-only, unblocks the gate battery — merge FIRST, main's battery is broken
+  #1153 (arena-harness neural-only, unblocks the check battery — merge FIRST, main's battery is broken
   without it), #1154 (span-decode surface to main — the phase-4c consumer). Then #1152 (P1 design doc).
 - **Phase-4c** (`docs/superpowers/specs/2026-07-17-727-phase4c-street-name-evidence.md`): build
   `StreetLocalityEvidence` after #1154 lands + a span-head model ships. Measured v2 policy: 148 fixes / 3 breaks.

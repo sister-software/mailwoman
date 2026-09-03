@@ -19,7 +19,7 @@ Three floors, all of which must hold:
 1. **Net improved-minus-regressed ≥ 0 on the 649-row board.**
 2. **No regression on FR, GB or DE** — iron rule 6, the D-rule. A winning net does not buy one.
 3. **The promotion battery passes every floor declared by the eval spec**
-   (`mwdev_gate --spec v9.0.0-base`). The command reports the passed and total floor counts; do not
+   (`mwdev_promotion_eval --spec v9.0.0-base`). The command reports the passed and total floor counts; do not
    copy a count into this runbook because adding a floor would make it stale.
 
 Run the first two with `mwdev_arc`, which also runs the controls that make the number mean anything:
@@ -43,15 +43,15 @@ Every tool below holds the engines in-process. A `for` loop spawning the CLI per
 model load each time and cannot see spans, confidence, provenance or retrieval — which is why probe
 scripts keep concluding that nothing changed.
 
-| Question                                                 | Tool                 |
-| -------------------------------------------------------- | -------------------- |
-| Did the board move, and is the number attributable?      | `mwdev_arc`          |
-| What changed on these specific addresses?                | `mwdev_diff_parse`   |
-| Why did the coordinate move — parse, retrieval, or tier? | `mwdev_diff_geocode` |
-| Two configs, one changed setting                         | `mwdev_compare`      |
-| The promotion battery                                    | `mwdev_gate`         |
-| What does the corpus contain?                            | `mwdev_coverage`     |
-| Where did this span come from?                           | `mwdev_trace`        |
+| Question                                                 | Tool                   |
+| -------------------------------------------------------- | ---------------------- |
+| Did the board move, and is the number attributable?      | `mwdev_arc`            |
+| What changed on these specific addresses?                | `mwdev_diff_parse`     |
+| Why did the coordinate move — parse, retrieval, or tier? | `mwdev_diff_geocode`   |
+| Two configs, one changed setting                         | `mwdev_compare`        |
+| The promotion battery                                    | `mwdev_promotion_eval` |
+| What does the corpus contain?                            | `mwdev_coverage`       |
+| Where did this span come from?                           | `mwdev_trace`          |
 
 `mwdev_run` with no arguments grades all 649 board rows in about a minute. That is the right
 first command, and it is cheaper than the script you were about to write.

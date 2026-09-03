@@ -85,9 +85,9 @@ each is read at runtime by something that treats absence as a NEGATIVE ANSWER ra
 - `.husky/pre-commit` matched staged files against `^mailwoman/(commands|cli-kit)/`, so the
   CLI-reference freshness guard stopped firing entirely — the guard that exists because the docs CI
   check fired four times in one day.
-- `promotion-gate.ts`'s recompile-before-eval guard probed `existsSync("core/out")`: false, so a stale
+- `promotion-check.ts`'s recompile-before-eval guard probed `existsSync("core/out")`: false, so a stale
   core would have graded silently.
-- `api-engine.test.ts` and `v1-parse-gate.test.ts` run only when
+- `api-engine.test.ts` and `v1-parse-check.test.ts` run only when
   `realpathSync("neural-weights-en-us/model.onnx")` resolves; it throws, so both suites skipped. Repairing
   the path took the slow leg from 109 to 110 files and 60 to 57 skips, all passing.
 - `publish.yml` read the model card inside two `node -e` strings and ran the pair-index parity test

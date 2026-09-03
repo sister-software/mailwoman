@@ -43,7 +43,7 @@ segment(input: string): Segment[]
 ## Pipeline position
 
 ```
-normalize → query-shape → locale-gate → kind-classifier → phrase-grouper → ...
+normalize → query-shape → locale-hint → kind-classifier → phrase-grouper → ...
 ```
 
 ## Design
@@ -56,7 +56,7 @@ normalize → query-shape → locale-gate → kind-classifier → phrase-grouper
 ## Related
 
 - [`@mailwoman/normalize`](../normalize) — Stage 1, feeds into this stage
-- [`@mailwoman/locale-gate`](../locale-gate) — Stage 2, consumes `QueryShape` for locale detection
+- [`@mailwoman/locale-hint`](../locale-hint) — Stage 2, consumes `QueryShape` for locale detection
 - [`@mailwoman/kind-classifier`](../kind-classifier) — Stage 2.5, consumes `QueryShape` for kind classification
 - [Query Shape design rationale](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/QUERY_SHAPE.mdx)
 

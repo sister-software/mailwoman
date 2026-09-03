@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Loader wiring for the PIX1 placetype-pair index (#1278 phase 2 — locale-gate wiring): fetch
+ *   Loader wiring for the PIX1 placetype-pair index (#1278 phase 2 — locale-hint wiring): fetch
  *   tolerance, LOAD-ALL construction (every fetched index becomes a live resolver, no load-time check),
  *   and the OPTIONAL config-default posture pin the `country` load-option now sets.
  *
@@ -11,7 +11,7 @@
  *   partial-mock `./tokenizer.ts` / `./classifier.ts` to stub the tokenizer + capture the classifier
  *   config, while keeping the REAL `serializePairIndex` / `PairIndexResolver`, so the fetch-construct
  *   path under test runs for real. The per-parse SELECTION among the loaded indexes lives in
- *   `web-loader.locale-gate.test.ts` (pure); the decode-level behavior (prior applied on selection,
+ *   `web-loader.locale-hint.test.ts` (pure); the decode-level behavior (prior applied on selection,
  *   byte-stability without) lives in `web-loader.pair-prior-decode.test.ts`, which runs the REAL
  *   classifier end-to-end.
  */
@@ -78,7 +78,7 @@ afterAll(() => vi.resetModules())
 // Import AFTER the mock declarations + reset. `pair-index-resolver.ts` is NOT mocked, so the
 // binaries built here decode through the real reader.
 const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair")
-const { loadNeuralClassifierFromURLs, resolvePairGateCountry } = await import("@mailwoman/neural/web-loader")
+const { loadNeuralClassifierFromURLs, resolvePairIndexCountry } = await import("@mailwoman/neural/web-loader")
 
 const SEQ = 128
 
@@ -166,13 +166,13 @@ beforeEach(() => {
 	capturedConfig = null
 })
 
-describe("resolvePairGateCountry", () => {
+describe("resolvePairIndexCountry", () => {
 	test("mirrors the node localeCountry derivation, widened to accept a bare country code", () => {
-		expect(resolvePairGateCountry(undefined)).toBe("us") // the node `opts.locale ?? "en-us"` default
-		expect(resolvePairGateCountry("en-gb")).toBe("gb")
-		expect(resolvePairGateCountry("EN-GB")).toBe("gb")
-		expect(resolvePairGateCountry("gb")).toBe("gb")
-		expect(resolvePairGateCountry("fr-fr")).toBe("fr")
+		expect(resolvePairIndexCountry(undefined)).toBe("us") // the node `opts.locale ?? "en-us"` default
+		expect(resolvePairIndexCountry("en-gb")).toBe("gb")
+		expect(resolvePairIndexCountry("EN-GB")).toBe("gb")
+		expect(resolvePairIndexCountry("gb")).toBe("gb")
+		expect(resolvePairIndexCountry("fr-fr")).toBe("fr")
 	})
 })
 

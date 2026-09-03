@@ -66,7 +66,7 @@ carrying a `node` condition that points at `.ts` source; Node refuses type-strip
 `node_modules`, so if that condition reaches a consumer the package is dead on install
 (`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`).
 
-**Whether `pnpm pack` substitutes `publishConfig.exports` identically is the migration's gate.** It
+**Whether `pnpm pack` substitutes `publishConfig.exports` identically is the migration's check.** It
 is verified against a real packed tarball before any other step lands — not asserted from
 documentation.
 
@@ -103,13 +103,13 @@ backstop, and it stays.
 | `enableScripts: true`                     | `onlyBuiltDependencies: [...]` | **pnpm 10 blocks postinstall by default**; list the 5 from Finding 3                        |
 | `supportedArchitectures`                  | `supportedArchitectures`       | same shape                                                                                  |
 | `packageExtensions` (`tr46` → `punycode`) | `packageExtensions`            | same shape                                                                                  |
-| `npmMinimalAgeGate: 0`                    | `minimumReleaseAge=0`          |                                                                                             |
+| `npmMinimalAgeCheck: 0`                   | `minimumReleaseAge=0`          |                                                                                             |
 | `approvedGitRepositories`                 | n/a                            | yarn-specific                                                                               |
 | root `resolutions` (6 entries)            | `pnpm.overrides`               | adm-zip, http-proxy-middleware, serialize-javascript, sockjs/uuid, undici, websocket-driver |
 
-### Sequencing — gate first
+### Sequencing — check first
 
-1. **Gate: pack parity.** Install pnpm, pack one representative workspace (`core` — curated
+1. **Check: pack parity.** Install pnpm, pack one representative workspace (`core` — curated
    subpaths, the `kysley/*` glob, and a `.d.ts` surface) under both tools. Diff the tarball manifests
    and file lists. `publishConfig.exports` must land identically. **Stop here on mismatch** and
    resolve before touching anything else; the fallback is to have `pack-workspace.ts` write the
@@ -149,8 +149,8 @@ specified against whichever layout this migration lands, and is not built until 
 
 ## Risks
 
-- **Pack substitution divergence.** The gate. Failure mode is a fully-broken published package, the
-  v7.2.0 class. Mitigated by gating first and by the existing exports-target guard.
+- **Pack substitution divergence.** The check. Failure mode is a fully-broken published package, the
+  v7.2.0 class. Mitigated by blocking first and by the existing exports-target guard.
 - **`@release-it-plugins/workspaces` compatibility.** The plugin is yarn/npm oriented. If it does not
   cooperate, the fallback is driving `publish-workspace.ts` per workspace directly — a path AGENTS.md
   already documents for partial-release recovery, so it is known-good.

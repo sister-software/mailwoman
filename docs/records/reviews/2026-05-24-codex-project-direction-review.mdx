@@ -4,7 +4,7 @@
 
 Mailwoman is on the right strategic track. The strongest idea in the project is still the Pelias-style split between parsing and resolving, updated for a modern TypeScript/runtime world: a small contextual parser proposes possibilities, deterministic structure supplies cheap priors, and a resolver/gazetteer checks world coherence. That direction is better than either "rules forever" or "one model does everything."
 
-The current work is a significant step forward, but mostly as architecture and instrumentation, not yet as model-quality proof. The v0.5.0 scaffolding - QueryShape, kind classification, phrase grouping, JS Viterbi, resolver alternatives, top-k training support, and opt-in joint decoding - is the right shape. The expensive next step should not be "run the full fresh-slate train again and hope." It should be a tighter validation program that proves the destabilizer, closes the top-k-to-Stage-5 integration gap, and establishes slice-level gates before spending H100/LLM/human-labeling budget at scale.
+The current work is a significant step forward, but mostly as architecture and instrumentation, not yet as model-quality proof. The v0.5.0 scaffolding - QueryShape, kind classification, phrase grouping, JS Viterbi, resolver alternatives, top-k training support, and opt-in joint decoding - is the right shape. The expensive next step should not be "run the full fresh-slate train again and hope." It should be a tighter validation program that proves the destabilizer, closes the top-k-to-Stage-5 integration gap, and establishes slice-level checks before spending H100/LLM/human-labeling budget at scale.
 
 Recommended posture: continue, but narrow the next cycle. Treat the next spend as validation of the pipeline hypothesis, not as a release train.
 
@@ -80,7 +80,7 @@ There are several status conflicts:
 
 - `TODO.md` still marks v0.5.0 threads A-E as pending, while `v0-5-0-shipped.md` says most shipped or partially shipped.
 - `STAGES.md` has an old status header saying stages 1/2/2.5/candidate-list are unbuilt, then later sections say they shipped.
-- `runtime-pipeline.ts` comments still describe locale gate/kind classifier as stubbed even though kind is wired and locale-gate exists as a workspace.
+- `runtime-pipeline.ts` comments still describe locale check/kind classifier as stubbed even though kind is wired and locale-hint exists as a workspace.
 - `ARCHITECTURE.md` still describes a 47-label schema and old `packages/` layout, while shipped weights use the 21-label Tier 2 subset.
 - `tokenization.md` describes the v0.1 16K tokenizer as if current, while v0.5 docs discuss a 48K A1 tokenizer.
 
@@ -173,7 +173,7 @@ If a new phrase-grouper rule needs a large dictionary or a bug-specific exceptio
 ### Change or tighten
 
 - Make `docs/articles/plan/v0-5-0-shipped.md` the temporary source of truth, then reconcile `TODO.md`, `STAGES.md`, `ARCHITECTURE.md`, and concept pages against it.
-- Move from "model F1" gates to "pipeline outcome" gates: parse exact match, top-k resolver recall, graceful failure, and calibration.
+- Move from "model F1" checks to "pipeline outcome" checks: parse exact match, top-k resolver recall, graceful failure, and calibration.
 - Treat `reconcileSpans` as an integration priority, not a future idea.
 - Promote `predict_top_k` from Python training support into TypeScript/browser runtime support.
 - Use synthetic data as a controlled slice with explicit weights, not just extra rows.
@@ -199,7 +199,7 @@ Create one operational page:
 | Area             | State             | Default?             | Evidence          | Next action                    |
 | ---------------- | ----------------- | -------------------- | ----------------- | ------------------------------ |
 | QueryShape       | shipped           | yes                  | tests             | keep                           |
-| locale-gate      | workspace shipped | not wired in factory | tests             | wire or document stub          |
+| locale-hint      | workspace shipped | not wired in factory | tests             | wire or document stub          |
 | phrase-grouper   | shipped rule v1   | yes in factory       | kryptonite tests  | feed into classifier/reconcile |
 | top-k classifier | Python scaffold   | no TS runtime        | tests only        | runtime adapter                |
 | joint reconcile  | shipped opt-in    | no                   | mocked tests      | integrate behind flag          |
@@ -237,7 +237,7 @@ normalize -> queryShape -> locale -> kind -> phraseProposals
   -> resolved top-k output
 ```
 
-Gate it behind `forceJointReconcile` or similar. Run it against:
+Check it behind `forceJointReconcile` or similar. Run it against:
 
 - kryptonite catalogue
 - golden v0.1.2
@@ -261,7 +261,7 @@ The model should not be judged only as a tagger. Add a report that gives:
 - per-source and per-failure-class breakdown
 - rule-only vs neural-only vs hybrid vs joint-decode comparison
 
-This report should become the release gate for any new weights.
+This report should become the release check for any new weights.
 
 ### Step 5 - Make synthetic data a curriculum
 
@@ -306,7 +306,7 @@ The next investment should be a validation sprint:
 
 1. resolve v0.5 divergence,
 2. integrate real top-k joint decoding,
-3. establish product-level eval gates,
+3. establish product-level eval checks,
 4. then run the expensive train.
 
 The thesis is sound. The expensive part should wait until the pipeline can measure the thesis end-to-end.

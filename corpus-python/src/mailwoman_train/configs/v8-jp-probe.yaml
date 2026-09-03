@@ -1,4 +1,4 @@
-# === v8-jp-probe — CJK Leg 1: bare char-level CharCNN on JP (the Arc-2 viability gate). ===
+# === v8-jp-probe — CJK Leg 1: bare char-level CharCNN on JP (the Arc-2 viability check). ===
 # FROM SCRATCH (no init_from): fresh MailwomanCoarseEncoder on the Latin-substrate width (hidden 384,
 # 4 layers per the probe spec), STAGE3 33-label head, use_char_embed over the sealed JP char vocab
 # (D2), one unit per character at ctx 3 → W 7, S 96 (D1/D3/D6). NO anchor/gazetteer/country/street/
@@ -9,12 +9,12 @@
 # stratified per-prefecture reservoirs, compact numbers as whole-span house_number (D4), 〒 fraction
 # 0.30 joined from KEN_ALL, municipality-bucket board held out (never in train/val).
 #
-# PRE-REGISTERED GATE (2026-07-18-v8-jp-char-encoder-design §d, committed before any GPU):
+# PRE-REGISTERED CHECK (2026-07-18-v8-jp-char-encoder-design §d, committed before any GPU):
 #   PASS = JP coordinate-acceptability >= 0.70 on the held-out municipality board (the bare-Latin
 #   substrate floor). PASS → Phases 2-5 (JP-seven activation, full slice, channels, ship).
 #   FAIL → the written ladder: per-tag split → boundary audit → collapse check. A FAIL indicts ONLY
 #   "bare char CharCNN alone reaches the floor" — never alignment (Phase 0 retired 1,560/1,560).
-#   Leg 2 (unification bake-off, char-word vs SP on Latin) runs in the same session, gates v9 only.
+#   Leg 2 (unification bake-off, char-word vs SP on Latin) runs in the same session, checks v9 only.
 #
 # Launch: modal run -d corpus-python/modal/train_remote.py --config v8-jp-probe.yaml --resume none
 

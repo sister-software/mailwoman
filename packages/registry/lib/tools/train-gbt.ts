@@ -123,7 +123,7 @@ export async function trainDedupGBT(
 	}
 
 	const records: SourceRecord[] = await ingestRows(rows, mapping, {
-		geocodeAddress: geocoder.seam,
+		geocodeAddress: geocoder.geocodeAddress,
 	})
 
 	geocoder[Symbol.dispose]()

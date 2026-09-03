@@ -107,7 +107,7 @@ Two things had to change for the smoke to be a real predictor:
 
 The constant-LR-mode discipline that landed in Thread F is still correct: it's what made the v0.5.0 destabilization observable at all instead of hiding under cosine decay. But the smoke configuration needs to mirror the full-run _throughput_ characteristics on top of the LR schedule.
 
-Both lessons will land in `VERDICT_SMOKES.md` as a follow-up. The current text describes constant-LR mode as the gate but doesn't say "your smoke's eff_batch must match the full run." That's an obvious-in-hindsight misuse hazard.
+Both lessons will land in `VERDICT_SMOKES.md` as a follow-up. The current text describes constant-LR mode as the check but doesn't say "your smoke's eff_batch must match the full run." That's an obvious-in-hindsight misuse hazard.
 
 ## What didn't get burned
 
@@ -126,7 +126,7 @@ That's still a useful outcome. We have a smaller hypothesis space (two architect
 
 ## What we'd tell a future ourselves
 
-1. **Smoke geometry must match the full-run geometry.** Constant-LR isn't enough if eff_batch differs. Either match the full-run batch shape or run two smokes — one at the smaller geometry for fast iteration, one at the full geometry as the actual gate.
+1. **Smoke geometry must match the full-run geometry.** Constant-LR isn't enough if eff_batch differs. Either match the full-run batch shape or run two smokes — one at the smaller geometry for fast iteration, one at the full geometry as the actual check.
 2. **The "destabilizes a few hundred steps after warmup ends" fingerprint isn't unique to v0.4.0.** It's appearing in v0.5.0 too with a different recipe. Whatever it is, it's a deeper issue with the dual-loss landscape under sustained peak LR than either retrospective has so far named.
 3. **Plan for divergence retries in the time budget.** A single full-train shot is rarely the experiment that ships. v0.4.0 needed five runs; v0.5.0 has needed four so far with at least two more bisects ahead. Realistic v0.X.0 release cadence is probably 8-12 training runs per cycle, not one.
 4. **Operator-side and host-claude-side recipe knobs need to be distinguished early.** §1+§3 entered the v0.5.0 recipe by being in the C-s scaffold YAML — a host-claude inheritance decision, not an operator confirmation. That cost us v3 in the bisect ladder.

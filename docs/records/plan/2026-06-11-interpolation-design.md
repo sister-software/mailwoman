@@ -158,7 +158,7 @@ deterministic held-out sample of Vermont points:
 - **coverage** — fraction that found a segment at all,
 - **coord error** — haversine meters vs the true point, reported p50/p90 (plus the
   parity-matched/fallback split),
-- graded against the #483 pre-registered gate: **p50 ≤ 50 m, p90 ≤ 150 m** on the VT
+- graded against the #483 pre-registered check: **p50 ≤ 50 m, p90 ≤ 150 m** on the VT
   holdout before any rollout.
 
 These are points the exact tier would mostly HIT — the eval uses them precisely because
@@ -175,32 +175,32 @@ truth is unknowable; measuring on known points is the only honest proxy.
 - **Coord error vs truth: p50 66 m, p90 249 m** (p99 1.0 km; parity-matched n=3927 p50
   65 m / fallback n=173 p50 116 m). Median claimed uncertainty (half segment length)
   137 m — the p50 error sits inside the claimed radius.
-- **Gate: MISS.** The pre-registered #483 gate (p50 ≤ 50 m, p90 ≤ 150 m) is NOT met —
+- **Check: MISS.** The pre-registered #483 check (p50 ≤ 50 m, p90 ≤ 150 m) is NOT met —
   stated directly, not re-baselined. The shortfall tracks rural Vermont's long sparse
   segments (median claimed uncertainty 137 m: the geometry itself caps precision) and
   TIGER's uniform-spacing assumption. Next changes, in measured-first order: re-run on a
-  denser county (the gate may simply be a rural-geometry artifact — measure before
+  denser county (the check may simply be a rural-geometry artifact — measure before
   building), segment subdivision at OA point anchors, ZIP+4 snapping (#525). No rollout
-  until a gate pass or a STATED re-baseline with operator sign-off.
+  until a check pass or a STATED re-baseline with operator sign-off.
 
 ## Density characterization (2026-06-12, resolution-ladder Phase 1 step 1)
 
-Same eval, same gate, same seed-42 5000-key sampling, on a dense county: Cook County IL
+Same eval, same check, same seed-42 5000-key sampling, on a dense county: Cook County IL
 (FIPS 17031; TIGER2023 EDGES + a county-scoped #476 extract — Overture carries no county
 field, so the point extract is PIP-filtered against the TIGER2023 COUNTY polygon via the
 builder's new `--county-fips` flag; 1,460,216 points, 231 ZIPs).
 
-| county                  | coverage |  p50 |   p90 | gate (≤50 / ≤150)    |
+| county                  | coverage |  p50 |   p90 | check (≤50 / ≤150)   |
 | ----------------------- | -------: | ---: | ----: | -------------------- |
 | Cook IL (dense)         |    87.8% | 41 m |  79 m | **PASS**             |
 | Vermont (rural, re-run) |    82.0% | 66 m | 249 m | **MISS** (unchanged) |
 
 Cook's median claimed uncertainty (half segment length) is 80 m vs Vermont's 137 m — the
-segment geometry itself is the divide. **Verdict: the VT gate miss is substantially a
+segment geometry itself is the divide. **Verdict: the VT check miss is substantially a
 rural-geometry artifact, not a method error.** TIGER uniform-spacing interpolation clears
-the gate where segments are short; long sparse rural segments cap precision below the
-gate. Per the resolution-ladder plan this keeps Method 2 (address-point interpolation) as
-the corrective for the sparse stratum, and any county-stratified gate re-baseline remains
+the check where segments are short; long sparse rural segments cap precision below the
+check. Per the resolution-ladder plan this keeps Method 2 (address-point interpolation) as
+the corrective for the sparse stratum, and any county-stratified check re-baseline remains
 an operator sign-off, not made here.
 
 ## Method 2 — address-point interpolation (2026-06-12, resolution-ladder Phase 1 step 2)
@@ -219,8 +219,8 @@ production-faithful: an on-file number is the exact tier's answer, never this ti
 prior eval had no extract-side holdout to lean on, so the guarantee lives in the lookup, not the
 sampler.
 
-Same eval (`--mode ladder`), same gate, same seed-42 samples. Pre-registered question: does
-Method 2 clear the gate on its bracketed stratum?
+Same eval (`--mode ladder`), same check, same seed-42 samples. Pre-registered question: does
+Method 2 clear the check on its bracketed stratum?
 
 | stratum                               | VT n |       VT p50/p90 | Cook n |    Cook p50/p90 |
 | ------------------------------------- | ---: | ---------------: | -----: | --------------: |
@@ -232,14 +232,14 @@ Method 2 clear the gate on its bracketed stratum?
 
 - **Coverage: VT 82.0% → 97.7%, Cook 87.8% → 99.6%** — bracketing answers most of TIGER's
   name-absent/range-gap miss classes because the neighbor points ARE the E911/Overture names.
-- **Gate on the bracketed stratum: Cook PASS (42/61). VT MISS — p50 50.5 m (over by 0.5 m),
+- **Check on the bracketed stratum: Cook PASS (42/61). VT MISS — p50 50.5 m (over by 0.5 m),
   p90 182 m.** stated directly: Method 2 moved VT's bracketed p90 249 → 182 m and its p50
   66 → 50.5 m, and that is still a miss. Not re-baselined.
 - The VT residual is wide-bracket concentrated, and the claimed `uncertaintyM` (half bracket
   span) predicts it: bracketed rows claiming ≤ 100 m (71.4% of the stratum) measure p50 42 m /
-  p90 116 m — inside the gate — while the > 250 m claims (7.2%) measure p50 143 m / p90 917 m.
+  p90 116 m — inside the check — while the > 250 m claims (7.2%) measure p50 143 m / p90 917 m.
   The Phase 5 calibrated-confidence work is the principled home for acting on that (per-tier
-  P(error < X) by claimed uncertainty), not a quiet stratum re-cut here.
+  P(error < X) by claimed uncertainty), not a quiet stratum rebuilt here.
 
 ## Open questions
 

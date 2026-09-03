@@ -117,14 +117,14 @@ Response schemas validate in dev/test; production is pass-through (the per-keyst
 ## Testing
 
 - Hono apps test via `app.request()` — no listener; existing suites (`photon/index.test.ts` 371 lines, `nominatim/` 189, `libpostal/` 98) port directly.
-- **Spec-parity gate (one-time):** golden test comparing each emitted spec against the handwritten redocly-validated yamls. Each difference is adjudicated — either a bug in the new routes or a bug that was always in the yaml. After adjudication the yamls are deleted.
+- **Spec-parity check (one-time):** golden test comparing each emitted spec against the handwritten redocly-validated yamls. Each difference is adjudicated — either a bug in the new routes or a bug that was always in the yaml. After adjudication the yamls are deleted.
 - CLI smoke tests run against compiled `out/cli.js` (compile before test — stale `out/` lies).
 - Both exports maps (dev `node → .ts` + `publishConfig`) updated for every new subpath, per repo convention.
 
 ## Order
 
 1. `@mailwoman/api-kit` — plumbing + atoms.
-2. `libpostal/` — smallest drop-in (198 lines) proves the pattern end-to-end, spec-parity gate included.
+2. `libpostal/` — smallest drop-in (198 lines) proves the pattern end-to-end, spec-parity check included.
 3. `photon/`, then `nominatim/`.
 4. `@mailwoman/api` — native surface.
 5. Delete `mailwoman/server/` + express deps repo-wide; `mailwoman serve` rewires.

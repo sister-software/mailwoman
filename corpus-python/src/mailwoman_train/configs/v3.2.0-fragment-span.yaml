@@ -24,7 +24,7 @@
 # class_weights, country_weights, every source_weight incl. synth-fr-fragment 12.0, encoder LR, and
 # schedule are VERBATIM v310. init_from v310 step-008000. Clean attribution.
 #
-# THE GATE (pre-registered, and the bar is HIGHER than the flag ever had to clear):
+# THE CHECK (pre-registered, and the bar is HIGHER than the flag ever had to clear):
 #   1. PARIS, THE KILL SHOT: seg@1 must beat v310's token@1 = 56/63 (0.889). This is the bar the flag
 #      FAILED. If a slice-trained span head cannot beat a slice-trained plain decode on the target
 #      class, the span head has no case at any weight and the arc closes.
@@ -35,7 +35,7 @@
 #      +0.38pp (1 fixture, production config). That is the decode's real marginal value.
 #   4. GUARD: the fragment board's 7 cells vs V310 (not v264) — bare-street 0.715, particle 0.855,
 #      homonym 0.517, date-name 0.158, street-hn 0.948, alnum 0.960, bare-locality 0.980.
-#   5. GUARD: the v6.0.0-shipped-baseline gate. ⚠ v310's TIGHTEST margin is arena.perturb 79 vs floor
+#   5. GUARD: the v6.0.0-shipped-baseline check. ⚠ v310's TIGHTEST margin is arena.perturb 79 vs floor
 #      78 (+1.0pp) — a span head could push it under, and now the floor would actually catch it.
 #
 # IF 1 FAILS: the span head is DONE. Close it, do not flag it, do not tune span_loss_weight and
@@ -195,7 +195,7 @@ model: # VERBATIM v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
   # #1143 THE ONE VARIABLE vs v310: the semi-Markov span scorer. Knobs VERBATIM v3.0.1 (the probe
-  # that passed its gate). fp32 partition math is enforced inside span_scorer.py.
+  # that passed its check). fp32 partition math is enforced inside span_scorer.py.
   use_span_scorer: true
   span_loss_weight: 0.5
   span_dim: 128

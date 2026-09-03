@@ -11,7 +11,7 @@ import { parseGauntletReport, summarizeGauntletReport } from "@mailwoman/dev-mcp
 import { describe, expect, it } from "vitest"
 
 const STDOUT = `
-=== Gauntlet · regression (352/354 gated cases pass, 203 tracked) ===
+=== Gauntlet · regression (352/354 counted cases pass, 203 tracked) ===
   ✗ es-op3-southeast-portopetro "Southeast, Carrer Passeig d'es Port, 15, 07691 Portopetro": coord 2.02km off
   ✗ gb-op2-st-margarets-hope "St Margaret's Hope, Orkney KW17 2QG": locality "null" ≠ "St Margaret's Hope"
 
@@ -30,10 +30,10 @@ verdict: FAIL
 const STDERR = `[gauntlet] gazetteerPrior=ON postcodeCountryCoherence=default\n`
 
 describe("parseGauntletReport", () => {
-	it("reads the gated header, which is the verdict's denominator", () => {
+	it("reads the counted header, which is the verdict's denominator", () => {
 		const report = parseGauntletReport(STDOUT, STDERR)
 
-		expect(report.layers).toEqual([{ layer: "regression", gated_pass: 352, gated_total: 354, tracked: 203 }])
+		expect(report.layers).toEqual([{ layer: "regression", counted_pass: 352, counted_total: 354, tracked: 203 }])
 	})
 
 	it("reads the verdict", () => {
@@ -49,28 +49,28 @@ describe("parseGauntletReport", () => {
 		expect(parseGauntletReport(STDOUT, STDERR).postcode_country_coherence_fired_on).toEqual({ n: 110, of: 558 })
 	})
 
-	it("collects gated failures and promote candidates", () => {
+	it("collects counted failures and promote candidates", () => {
 		const report = parseGauntletReport(STDOUT, STDERR)
 
-		expect(report.gated_failures).toHaveLength(2)
-		expect(report.gated_failures[0]).toContain("es-op3-southeast-portopetro")
+		expect(report.counted_failures).toHaveLength(2)
+		expect(report.counted_failures[0]).toContain("es-op3-southeast-portopetro")
 		expect(report.now_passing).toEqual(["ni-ws-antiguo-cine-gonzalez-pluscode [improvement_target]"])
 	})
 
-	it("does not count a tracked non-blocking row as a gated failure", () => {
+	it("does not count a tracked non-blocking row as a counted failure", () => {
 		// The `~` rows are non-blocking. Folding them in would inflate the failure count that a verdict rests on.
-		expect(parseGauntletReport(STDOUT, STDERR).gated_failures.every((f) => !f.includes("andorra"))).toBe(true)
+		expect(parseGauntletReport(STDOUT, STDERR).counted_failures.every((f) => !f.includes("andorra"))).toBe(true)
 	})
 
 	it("reports an absent verdict as absent, never as FAIL", () => {
 		// A killed or crashed run and a graded failure are different facts.
-		const report = parseGauntletReport("=== Gauntlet · regression (10/10 gated cases pass) ===\n", "")
+		const report = parseGauntletReport("=== Gauntlet · regression (10/10 counted cases pass) ===\n", "")
 
 		expect(report.verdict).toBeNull()
 		expect(report.unparsed.join(" ")).toContain("did not reach a verdict")
 	})
 
-	it("says when there is no gated header rather than implying a clean run", () => {
+	it("says when there is no counted header rather than implying a clean run", () => {
 		const report = parseGauntletReport("some unrelated output\n", "")
 
 		expect(report.layers).toHaveLength(0)
@@ -86,8 +86,8 @@ describe("parseGauntletReport", () => {
 
 	it("handles a multi-layer run", () => {
 		const report = parseGauntletReport(
-			"=== Gauntlet · regression (352/354 gated cases pass, 203 tracked) ===\n" +
-				"=== Gauntlet · metamorphic (48/50 gated cases pass) ===\nverdict: PASS\n",
+			"=== Gauntlet · regression (352/354 counted cases pass, 203 tracked) ===\n" +
+				"=== Gauntlet · metamorphic (48/50 counted cases pass) ===\nverdict: PASS\n",
 			""
 		)
 
@@ -97,14 +97,14 @@ describe("parseGauntletReport", () => {
 })
 
 describe("summarizeGauntletReport", () => {
-	it("leads with the gated fraction, not the verdict word", () => {
+	it("leads with the counted fraction, not the verdict word", () => {
 		// Reading the tail instead of this line is how a 329/352 run got reported as "zero regressions" against a
 		// 350/352 baseline on 2026-08-15.
 		const summary = summarizeGauntletReport(parseGauntletReport(STDOUT, STDERR))
 
-		expect(summary.startsWith("regression 352/354 gated")).toBe(true)
+		expect(summary.startsWith("regression 352/354 counted")).toBe(true)
 		expect(summary).toContain("Verdict FAIL")
-		expect(summary).toContain("2 gated failures")
+		expect(summary).toContain("2 counted failures")
 		expect(summary).toContain("fired on 110/558")
 	})
 

@@ -57,7 +57,7 @@
 # it leaves this run's GB/NL postcodes unanchored at serve time — the mirror image of the bug that
 # started this. See `neural/anchor-inference.ts`'s `AnchorSpanMode`.
 #
-# PRE-REGISTERED GATES: the v4.0.0 sheet VERBATIM (G1-G8 + Fisher sanity), plus:
+# PRE-REGISTERED CHECKS: the v4.0.0 sheet VERBATIM (G1-G8 + Fisher sanity), plus:
 #   - gb-golden: exact `postcode` >= 318/318 across three registers WITH the anchor channel FED
 #     (the #1467 mitigation reached 318/318 by switching the channel off; this run has to hold it
 #     with the channel on, which is the whole point).

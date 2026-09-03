@@ -1,4 +1,4 @@
-# v3.12 — comma-robust dep-loc recipe (pre-registered proposal, OPERATOR-GATED)
+# v3.12 — comma-robust dep-loc recipe (pre-registered proposal, OPERATOR-CONDITIONAL)
 
 **Date:** 2026-07-23 · **Status:** proposal, NOT launched · **Context:** the v3.11.x lineage is closed for shipping (stop rule executed): no checkpoint passes the gauntlet metamorphic layer; the terminal break — comma-free US address → total resolution loss — is byte-stable under damped consolidation (8k ≡ 10k), i.e. a learned behavior, not churn. Five-whys record: the dep-loc extracts are ~100% comma-structured; commas were promoted toward required boundary evidence; comma-free robustness paid the bill.
 
@@ -13,7 +13,7 @@ The base recipe inherits v381's punct-drop augmentation. Unknown: does it apply 
 ## The run (after Step 0 picks A or B)
 
 - Clone v3.11.0-deploc-feed verbatim + ONLY the Step-0 fix (one variable). Fresh output dir. 8k, same seed.
-- **Probe-level gating at 2k** (the process fix, now mandatory): the invariance mini-suite (`mailwoman eval invariance --baseline v385`) runs at EVERY checkpoint grade, not at ship time. A 2k read showing the comma-drop class regressing = stop at probe cost.
+- **Probe-level blocking at 2k** (the process fix, now mandatory): the invariance mini-suite (`mailwoman eval invariance --baseline v385`) runs at EVERY checkpoint grade, not at ship time. A 2k read showing the comma-drop class regressing = stop at probe cost.
 - Grade ALL checkpoints incl. odd ones (the 7k lesson: save_every 1000 exists to be used).
 
 ## Pre-registered acceptance (full set, no reinterpretation)

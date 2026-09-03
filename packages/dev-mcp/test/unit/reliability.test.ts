@@ -81,7 +81,7 @@ describe("reliabilityCurve", () => {
 describe("thresholdTable", () => {
 	const sample = [...at(0.95, 80, 76), ...at(0.85, 20, 10), ...at(0.4, 100, 20)]
 
-	it("counts what a gate admits and what it forgoes", () => {
+	it("counts what a check admits and what it forgoes", () => {
 		const [row] = thresholdTable(sample, [0.9])
 
 		expect(row?.admitted).toBe(80)
@@ -91,7 +91,7 @@ describe("thresholdTable", () => {
 		expect(row?.correct_below).toBe(30)
 	})
 
-	it("reports precision above an empty gate as null, not as zero", () => {
+	it("reports precision above an empty check as null, not as zero", () => {
 		const [row] = thresholdTable(sample, [0.999])
 
 		expect(row?.admitted).toBe(0)
@@ -100,7 +100,7 @@ describe("thresholdTable", () => {
 })
 
 describe("errorClasses", () => {
-	it("ranks the confusions a gate lets through", () => {
+	it("ranks the confusions a check lets through", () => {
 		const observations: Observation[] = [
 			{ confidence: 0.95, correct: false, strata: { expected: "ES", predicted: "PT" } },
 			{ confidence: 0.95, correct: false, strata: { expected: "ES", predicted: "PT" } },

@@ -45,7 +45,7 @@ const geoDeps = {
 // Parse ONCE per address (the ~3 ms/row inference is the dominant cost): share the tree between the PostalAddress
 // (decodeAsJSON) and the geocode (parsedTree). Coordinates are byte-identical to the two-parse path — geocodeAddress
 // would have produced this exact tree internally; only the PostalAddress now reflects the normalized parse.
-const seam = geocodeAddressVia({
+const geocodeForIngest = geocodeAddressVia({
 	parseAndGeocode: async (raw) => {
 		const tree = await parseForGeocode(raw, geoDeps)
 		const geo = await geocodeAddress(raw, { ...geoDeps, parsedTree: tree })
@@ -59,4 +59,4 @@ const seam = geocodeAddressVia({
  * Per-item handler the worker pool invokes. Bound to this worker's geocoder and mapping at module load, so each item
  * costs only the geocode itself.
  */
-export const handleItem = makeGeocodeHandler(seam, mapping)
+export const handleItem = makeGeocodeHandler(geocodeForIngest, mapping)

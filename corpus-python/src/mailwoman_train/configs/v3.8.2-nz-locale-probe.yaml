@@ -13,7 +13,7 @@
 # PRE-REGISTERED READ (written before the numbers; Fable design 2026-07-18):
 #   TARGET (the point): NZ coordinate-acceptability EMERGES on the held-out NZ coord board (from ~0, the
 #     shipped model can't parse NZ suburb/city order). Bar set once the board is built (report the rate).
-#   GUARD (must not regress the 23): golden 2pp gate — no shipped tag >2pp below v381. The battery MUST
+#   GUARD (must not regress the 23): golden 2pp check — no shipped tag >2pp below v381. The battery MUST
 #     include the US #1101 comma-free board + the FR fragment board (the two hard-won results a new-locale
 #     gradient most plausibly erodes) + the NO digit board (bare-street-hn 0.733, bare-pc 1.000).
 #   GUARD: gauntlet PASS; metamorphic INV[comma-drop] holds.

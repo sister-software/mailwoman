@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Give the repository one vocabulary for typed evidence and epistemic status, wire the coverage-basis exclusion gate that already exists and has never been called, and project a derivation into the geocode result.
+**Goal:** Give the repository one vocabulary for typed evidence and epistemic status, wire the coverage-basis exclusion check that already exists and has never been called, and project a derivation into the geocode result.
 
 **Architecture:** A new zero-dependency leaf workspace `@mailwoman/evidence` owns the evidence union, the epistemic-status axis, `CoverageBasis` + `supportsExclusion` (moved out of `@mailwoman/core/layers`, which re-exports them), and the derivation projection. Four consumers adopt it in order of what is buildable today: `plausibilityCheck` re-expressed with no behaviour change, a GB spatial-existence probe over `uprn.db`, the resolver's demote-only negative mode, and a US `surveyed` coverage basis from Census H1. Exclusions demote; they never remove.
 
@@ -26,7 +26,7 @@
 
 ## Task 1: Falsifier — decompose the 187 coverage misses
 
-**This task gates every other task.** If fold failures dominate, the negative-evidence arms do not get built and this plan stops at Task 9.
+**This task checks every other task.** If fold failures dominate, the negative-evidence arms do not get built and this plan stops at Task 9.
 
 **Files:**
 
@@ -199,7 +199,7 @@ Create `packages/evidence/package.json`:
 {
 	"name": "@mailwoman/evidence",
 	"version": "9.1.0",
-	"description": "The typed-evidence contract — observation, exclusion, relation and prior, the epistemic-status axis, the coverage-basis exclusion gate, and the derivation graph. Pure, zero-runtime-dep: the shared home every claim-type package reaches for.",
+	"description": "The typed-evidence contract — observation, exclusion, relation and prior, the epistemic-status axis, the coverage-basis exclusion check, and the derivation graph. Pure, zero-runtime-dep: the shared home every claim-type package reaches for.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
 		"type": "git",
@@ -463,7 +463,7 @@ rule into the type system for callers who build a link outside a database."
 
 ---
 
-## Task 3: Move `CoverageBasis` into evidence, add the exclusion gate
+## Task 3: Move `CoverageBasis` into evidence, add the exclusion check
 
 `@mailwoman/core/layers` currently owns `CoverageBasis` and `supportsExclusion`. Evidence cannot depend on core, and duplicating the union across both would be exactly the failure AGENTS.md records: "When two copies must agree, share the FUNCTION — sharing the constants proves nothing." So evidence takes ownership and core re-exports.
 
@@ -581,7 +581,7 @@ Create `packages/evidence/coverage.ts`:
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The exclusion gate. An {@link Exclusion} is the only evidence kind that can act on an ABSENCE, so it is
+ *   The exclusion check. An {@link Exclusion} is the only evidence kind that can act on an ABSENCE, so it is
  *   the only one with no public constructor: {@link requireExclusionBasis} is the sole way to make one, and
  *   it refuses far more often than it admits.
  *
@@ -618,7 +618,7 @@ export type CoverageBasis = (typeof CoverageBasis)[keyof typeof CoverageBasis]
  * Whether a coverage reading can support an EXCLUSION — a claim that the thing asked for is not there.
  *
  * Presence is supportable from any basis. Absence is not: `source_present` records that the source returned
- * rows, which says nothing about what it missed. Callers building negative evidence must gate on this rather
+ * rows, which says nothing about what it missed. Callers building negative evidence must check on this rather
  * than on `completeness` alone, or an exclusion fires identically on a genuinely empty cell and on one we
  * never surveyed.
  */
@@ -717,7 +717,7 @@ Expected: PASS, 6 tests.
 In `packages/core/lib/layers/schema.ts`, delete the `CoverageBasis` const and type declarations (the block beginning `export const CoverageBasis = {`) and replace with:
 
 ```ts
-// Owned by @mailwoman/evidence so bdc, resolver and filer can gate on the SAME FUNCTION rather than on
+// Owned by @mailwoman/evidence so bdc, resolver and filer can check on the SAME FUNCTION rather than on
 // matching copies of the same three strings. The layer_coverage schema and its IO stay here.
 export { CoverageBasis } from "@mailwoman/evidence"
 ```
@@ -794,7 +794,7 @@ export const FOLD_PROBE_CORPUS: readonly string[] = [
  * Identify a fold by its BEHAVIOUR over {@link FOLD_PROBE_CORPUS} — a name cannot do this job.
  *
  * Two folds that compute the same answers are interchangeable and share an identity, which is the property
- * the exclusion gate needs: it is asking "was this key built by a fold equivalent to mine", not "were these
+ * the exclusion check needs: it is asking "was this key built by a fold equivalent to mine", not "were these
  * two functions written in the same file".
  *
  * Deliberately NOT a cryptographic hash: the string is meant to be readable in a derivation and a diff, so a
@@ -901,7 +901,7 @@ git add packages/evidence packages/core/lib/layers packages/core/package.json pa
 git commit -m "evidence: own CoverageBasis, and refuse an exclusion whose fold does not match the layer's
 
 Duplicating the three basis strings across core and evidence would have matched
-forever while the gate diverged — the #861 failure. Core re-exports instead.
+forever while the check diverged — the #861 failure. Core re-exports instead.
 
 requireExclusionBasis adds the condition supportsExclusion could not see: a key
 that exists nowhere under OUR fold may exist under the layer's. Tel Aviv-Yafo
@@ -998,7 +998,7 @@ reason, and coverage_confidence already carries that."
 
 ## Task 5: Give `UPRNLookup`'s `null` its coverage scope
 
-**Gated on Task 1 returning PROCEED.**
+**Blocked on Task 1 returning PROCEED.**
 
 The probe already exists. `packages/resolver-wof-sqlite/lib/uprn-lookup.ts` ships `UPRNLookup` with
 `coordinateOf(uprn)` and `nearestUPRN(latitude, longitude, radiusM)` — a bounded ring-walk over the res-9
@@ -1107,7 +1107,7 @@ describe("uprnAbsenceAt", () => {
 		expect(await uprnAbsenceAt({ ...deps(lookup), ...WESTMINSTER, radiusM: 250 })).toBeNull()
 	})
 
-	it("an empty SOURCE_PRESENT cell yields null — the gate refuses regardless of emptiness", async () => {
+	it("an empty SOURCE_PRESENT cell yields null — the check refuses regardless of emptiness", async () => {
 		using lookup = new UPRNLookup(fixture("sourcepresent.db", CoverageBasis.SourcePresent))
 
 		expect(await uprnAbsenceAt({ ...deps(lookup), ...EDINBURGH, radiusM: 250 })).toBeNull()
@@ -1140,7 +1140,7 @@ In `packages/resolver-wof-sqlite/tsconfig.json` `references`, add `{ "path": "..
 - [ ] **Step 4: Implement the consult**
 
 Create `packages/resolver-wof-sqlite/uprn-existence.ts`. It is thin by construction — `nearestUPRN` does the
-search, `readLayerCoverage` does the coverage read, `requireExclusionBasis` does the gating:
+search, `readLayerCoverage` does the coverage read, `requireExclusionBasis` does the blocking:
 
 ```ts
 /**
@@ -1205,7 +1205,7 @@ a null there is unknown and must never become evidence of absence."
 
 ## Task 6: Demote-only negative mode in `pickByStreetEvidence`
 
-**Gated on Task 1 returning PROCEED.**
+**Blocked on Task 1 returning PROCEED.**
 
 **Files:**
 
@@ -1316,7 +1316,7 @@ Add to `StreetEvidencePick`:
 ```ts
 	/**
 	 * Indices an exclusion demoted, in input order. Empty when no exclusion applied — a loggable record of what
-	 * the coverage gate actually licensed, distinct from what evidence found.
+	 * the coverage check actually licensed, distinct from what evidence found.
 	 */
 	demoted: number[]
 ```
@@ -1330,7 +1330,7 @@ Expected: PASS, including every pre-existing test unchanged.
 
 - [ ] **Step 6: Run the gauntlet for regression**
 
-Run the `mwdev_gate` MCP tool. Expected: 369 rows, no regression against the recorded baseline.
+Run the `mwdev_promotion_eval` MCP tool. Expected: 369 rows, no regression against the recorded baseline.
 
 - [ ] **Step 7: Commit**
 
@@ -1562,7 +1562,7 @@ Expected: PASS.
 git add packages/evidence packages/mailwoman/lib/geocode-core.ts packages/resolver/resolve-trace.test.ts
 git commit -m "evidence: project the derivation from the trace we already record
 
-#1721 records the candidates, the per-stage ranks and every gate, with no sink
+#1721 records the candidates, the per-stage ranks and every check, with no sink
 meaning no bookkeeping. The derivation is a projection of that, so an inferred
 answer cannot be reported as a retrieved one without the record disagreeing."
 ```
@@ -1754,7 +1754,7 @@ whether that is true of the data or only of the sentence."
 
 ## Self-review notes
 
-**Spec coverage.** §1 → Tasks 2, 3. §2 three states → Task 1 (measure), Task 3 (fold gate). §3 package → Task 2. §3.1 union → Tasks 2, 3. §3.2 two axes → Task 7. §3.3 gate → Task 3. §3.4 demote-only → Task 6. §4.1 GB → Task 5. §4.2 US → Task 9. §4.3 plausibility → Task 4. §4.4 FR → Task 10. §5 derivation → Task 8. §6 falsifiers → Task 1 (F1), Task 6 step 6 (F3), Task 4 step 5 (F4), Task 8 step 6 (F5). **Gap: falsifier 2** (the GB arm's own board measurement) has no task — it cannot be written until Task 1 returns PROCEED and Task 5 lands, because the arm's shape depends on Task 1's verdict. Write it as a follow-up plan.
+**Spec coverage.** §1 → Tasks 2, 3. §2 three states → Task 1 (measure), Task 3 (fold check). §3 package → Task 2. §3.1 union → Tasks 2, 3. §3.2 two axes → Task 7. §3.3 check → Task 3. §3.4 demote-only → Task 6. §4.1 GB → Task 5. §4.2 US → Task 9. §4.3 plausibility → Task 4. §4.4 FR → Task 10. §5 derivation → Task 8. §6 falsifiers → Task 1 (F1), Task 6 step 6 (F3), Task 4 step 5 (F4), Task 8 step 6 (F5). **Gap: falsifier 2** (the GB arm's own board measurement) has no task — it cannot be written until Task 1 returns PROCEED and Task 5 lands, because the arm's shape depends on Task 1's verdict. Write it as a follow-up plan.
 
 **Type consistency.** `requireExclusionBasis` takes `RequireExclusionInput` in Tasks 3, 5 and 8 with the same field names. `Exclusion.scope` is `CoverageScope` throughout. `pickByStreetEvidence` keeps its existing name; `StreetEvidencePick.demoted` is `number[]` in both the test and the interface. `EpistemicStatus` values are lower-case strings in every assertion.
 

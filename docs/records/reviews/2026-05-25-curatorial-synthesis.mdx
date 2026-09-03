@@ -80,7 +80,7 @@ These are docs-only changes that reduce status confusion immediately. They unloc
 The five contradictions the Codex review identified as "now a docs bug class":
 
 1. **CRF runtime status**: `crf-decoder.md` says JS-side Viterbi is "not yet" — update to "shipped 2026-05-23"
-2. **Locale gate default**: `how-it-works-now.md` says "factory default falls back to caller-trust" — `STAGES.md` says "wired as default" — reconcile to "workspace shipped, not yet wired as factory default"
+2. **Locale check default**: `how-it-works-now.md` says "factory default falls back to caller-trust" — `STAGES.md` says "wired as default" — reconcile to "workspace shipped, not yet wired as factory default"
 3. **Candidate-list status**: `STAGES.md` says "scaffold-only/designed" then later says `AddressNode.alternatives` shipped — the alternatives field shipped, the top-K resolver API behind `--candidates` is in progress
 4. **ARCHITECTURE.md layout/label count**: add a dated block at the top: "⚠️ Written for Phase 2 planning (2026-05-18). Current shipped vocabulary: 21 BIO labels. See `/docs/status` for current state."
 5. **v0.5.0 B2 status**: `v0-5-0-shipped.md` still says B2 is "still cooking" — update to "landed; included in corpus-v0.4.0"
@@ -168,7 +168,7 @@ Decision matrix (from the Claude×DeepSeek follow-up):
 
 ---
 
-### Phase C — Training resolution (this week, gated on CE-only full run)
+### Phase C — Training resolution (this week, blocked on CE-only full run)
 
 **[→ #154](https://github.com/sister-software/mailwoman/issues/154)** — CE-only training: validate stability, ship v0.5.0 weights or bisect
 
@@ -199,7 +199,7 @@ Before any future training run that includes LLM-generated data:
 
 ### Phase D — Product-level evals (next 1-2 weeks)
 
-**[→ #155](https://github.com/sister-software/mailwoman/issues/155)** — Product-level eval matrix: comparison script as release gate
+**[→ #155](https://github.com/sister-software/mailwoman/issues/155)** — Product-level eval matrix: comparison script as release check
 
 #### D1. Build eval matrix script
 
@@ -214,7 +214,7 @@ A single script that runs all comparison modes against golden + kryptonite and e
 - Per-failure-class breakdown from the "addresses that break geocoders" taxonomy
 - Confusion matrix for kryptonite cases
 
-This report becomes the release gate for any new weights.
+This report becomes the release check for any new weights.
 
 #### D2. Add resolver precision caveats
 
@@ -266,13 +266,13 @@ Update `ARCHITECTURE.md` with a dated status block and audience header. Do not r
 
 ---
 
-## Decision gates
+## Decision checks
 
-| Gate                      | Condition                                                                | Pass →                                            | Fail →                                                  |
+| Check                     | Condition                                                                | Pass →                                            | Fail →                                                  |
 | ------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------- | ------------------------------------------------------- |
 | CE-only full train        | No divergence past step 2000, val_macro_f1 ≥ 0.35                        | Ship v0.5.0 weights, begin quality-knob iteration | Bisect corpus/tokenizer (Phase C2)                      |
 | Joint-reconcile vs argmax | +15pp kryptonite exact-match AND ≤1pt golden macro_F1 regression         | Architecture validated. Promote reconcile default | Fix scoring or defer to classifier improvement          |
-| Product eval matrix       | All comparison modes produce numbers, per-failure-class breakdown works  | Release gate established                          | Fix eval infrastructure                                 |
+| Product eval matrix       | All comparison modes produce numbers, per-failure-class breakdown works  | Release check established                         | Fix eval infrastructure                                 |
 | Synthetic data curriculum | B2 passes constant-LR smoke at full eff_batch with controlled weight cap | Promote B2 to main corpus                         | Investigate distributional causes, retry with lower cap |
 
 ---

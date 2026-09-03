@@ -8,7 +8,7 @@ draft: true
 # Night shift 2026-06-18 — v1.7.0 balanced boundary-extract retrain
 
 _Shift: 03:58–15:00 UTC. Goal: take the balanced boundary extract (the diagnosis-driven fix after v1.6.0
-gated NO-PROMOTE) through build → #511 lint → recipe → retrain → gate. NO promote (operator wall)._
+conditional NO-PROMOTE) through build → #511 lint → recipe → retrain → check. NO promote (operator wall)._
 
 _(Living document — sketched as the shift runs; final numbers + verdict at the end.)_
 
@@ -25,16 +25,16 @@ _(Living document — sketched as the shift runs; final numbers + verdict at the
   Replaced with venue-dominant tokens only (Clinic 98%, Practice 98%, Dental 100%, …).
 - **Phase 3 — recipe** (`bf26474b`): `v1.7.0-boundary-stress.yaml`. One headline variable (the balanced
   extract); one stated hygiene co-change (lr constant→cosine — zero code surface, it was the config default).
-- **Phase 4 — gate spec + blind-spot probe** (`d3e580fa`): `gates/v1.7.0-boundary-stress.json` +
+- **Phase 4 — check spec + blind-spot probe** (`d3e580fa`): `checks/v1.7.0-boundary-stress.json` +
   `street-recall-full-probe.ts` (DeepSeek's catch). Baselined: v1.5.1 33.7% / v1.6.0 37.9% full-address
   street-exact (v1.6.0 did NOT erode street — reassuring).
 - **Phase 5 — sync + launch** (`7307eafb`): `sync_v061`, R2 push (501s rode the retries), launched
-  `ap-dC3SU5VQdTQLVTwNdFp2Zq`. **Early-loss abort gate PASSED** (5.05→1.91 over 250 steps, decreasing).
-- **Phase 7 — gate**: run finished (step-040000, after the resume). Exported → quantized → fetched
-  (`./out/v170/model.onnx`). **4-target gate: NO-PROMOTE (1/4), targets ~flat vs v1.6.0** — fr-prefix 99.3
+  `ap-dC3SU5VQdTQLVTwNdFp2Zq`. **Early-loss abort check PASSED** (5.05→1.91 over 250 steps, decreasing).
+- **Phase 7 — check**: run finished (step-040000, after the resume). Exported → quantized → fetched
+  (`./out/v170/model.onnx`). **4-target check: NO-PROMOTE (1/4), targets ~flat vs v1.6.0** — fr-prefix 99.3
   (✓), street_suffix 55.3 (tag at target, street-span short), comma-less 57.0 (✗), hn-after 53.7 (✗). The
   balanced extract rebalanced (held the guardrail) but did NOT lift the boundary targets — they're flat, so the
-  boundary change needs more than rebalancing (weight, or capacity). Floors gate + locality-regression +
+  boundary change needs more than rebalancing (weight, or capacity). Floors check + locality-regression +
   street-recall probes + the record-matcher 3rd point running — the decisive question is whether the v1.6.0
   locality regression got FIXED.
   **COMBINED VERDICT: NO-PROMOTE — but the diagnosis-driven fix WORKED.**
@@ -43,7 +43,7 @@ _(Living document — sketched as the shift runs; final numbers + verdict at the
     probes predicted. Guardrail held end-to-end (no drift).
   - ✅ Blind-spot cleared: street-recall-full **35.0%** ≥ 32.7% floor (29 regressions, 4 "eaten" — small).
   - ✅ All other floors hold (us.street 75.7, fr.house_number 94.9, affix 98/93, arena 77, …).
-  - ❌ **4-target boundary gate 1/4** — targets ~flat vs v1.6.0 (extract rebalanced, didn't advance them).
+  - ❌ **4-target boundary check 1/4** — targets ~flat vs v1.6.0 (extract rebalanced, didn't advance them).
   - ❌ ONE red floor: `us.country_homograph_f1` 80.9 vs 83.3 — but the **v1.5.1 baseline (run after) reframed
     this: it is NOT a v1.7.0 regression.** v1.5.1 scores the _identical_ 80.9; the 83.3 floor is stale (from
     the older v4.x 85-89 models). v1.7.0 didn't touch country.
@@ -53,8 +53,8 @@ _(Living document — sketched as the shift runs; final numbers + verdict at the
   locality **+5.1** (74.9→80.0), **fr.house_number +10.2** (`84.7→94.9` — v1.5.1 was _failing_ its own 87 floor),
   fr.region +7.1, fr.cedex +2.5, unit +1.5, micro/region +~0.7; us.street **−4.3** (80.0→75.7, above floor —
   a locality/street tradeoff), street_suffix −1.6, de −1.0; country **±0.0**. **v1.7.0 is a NET IMPROVEMENT
-  over v1.5.1**, not just a regression-fix. The gate FAILs only on (a) a stale country floor v1.5.1 also
-  fails, and (b) the capacity-bound 4-target boundary gate. Candidate shipped beside the canonical
+  over v1.5.1**, not just a regression-fix. The check FAILs only on (a) a stale country floor v1.5.1 also
+  fails, and (b) the capacity-bound 4-target boundary check. Candidate shipped beside the canonical
   (`./out/v170/model.onnx`); NOT auto-promoted (the wall). The diagnostic arc is validated AND v1.7.0 beats
   the current ship — a stronger outcome than "the fix worked."
 
@@ -75,11 +75,11 @@ At step ~4000 the guardrail dipped slightly (locality 0.659, street 0.812 — be
 0.666 — the normal mid-training re-balance. By step ~16000 it had RECOVERED and climbed _past_ step-2000:
 locality 0.740, street 0.834, macro 0.690. And it's tracking MUCH healthier than v1.6.0 at the same point —
 v1.6.0's locality had collapsed to ~0.61 by step ~14k; v1.7.0 is at 0.74. The balanced extract is holding the
-guardrail where v1.6.0 traded it away. Cosine LR decaying (lr ~0.00009) should consolidate it. The gate decides.
+guardrail where v1.6.0 traded it away. Cosine LR decaying (lr ~0.00009) should consolidate it. The check decides.
 
 Confirmed post-resume at step ~28-30k: locality 0.731, street 0.819, macro 0.702 (highest yet), cosine LR
 down to 0.000022 — the guardrail is HOLDING through the decay, no end-drift (v1.6.0 had drifted locality to 0.656
-by its end). A noisy 0.623 reading near step 20k was a transient. The gate is the authoritative check.
+by its end). A noisy 0.623 reading near step 20k was a transient. The check is the authoritative check.
 
 ## 2. What went well
 
@@ -128,8 +128,8 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
   letting the model fight the base — rejected per #511.
 - **7:3 composition** over my own 1:1 — DeepSeek's reasoning (FR's own dominant order, shared cross-locale
   capacity) was sound.
-- **The two new guards (bare_locality, street_recall_full) ride as gate-time standalone probes**, NOT
-  floors-map keys — wiring unscored keys into promotion-gate-verdict.ts would FAIL loudly; the probes give
+- **The two new guards (bare_locality, street_recall_full) ride as check-time standalone probes**, NOT
+  floors-map keys — wiring unscored keys into promotion-check-verdict.ts would FAIL loudly; the probes give
   the v1.5.1→candidate comparison directly. Lower surface for an unattended night.
 - **Corpus version v0.6.1-boundary-stress** (incremental on v0.6.0, same v0.5.0 base) — signals "same base,
   improved extract."
@@ -137,13 +137,13 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
   sat at step-020000 for ~35 min with no advance, loss healthy (0.66, no NaN), app still "running" and
   burning the A100. Diagnosed it as a hang (not a divergence) via the checkpoint-not-advancing signal (the
   logs replay-window, so the checkpoint is the only reliable step). Stopped the hung app and **resumed from
-  step-020000** (`--resume auto`, app ap-wvqFyeCdRGtf3X2d0pmeGB) rather than gate a half-trained checkpoint —
+  step-020000** (`--resume auto`, app ap-wvqFyeCdRGtf3X2d0pmeGB) rather than check a half-trained checkpoint —
   resume came up clean ("[resume-drift] none", cosine LR correct at lr 0.000077). Added a STALL-WATCH to the
-  monitor: a 2nd stall does NOT trigger a 2nd resume — it gates the highest checkpoint instead (bounded risk).
+  monitor: a 2nd stall does NOT trigger a 2nd resume — it checks the highest checkpoint instead (bounded risk).
 
 ## 5. Open questions (for the operator)
 
-- **Promote v1.7.0?** — gated on the Phase 7 verdict; NOT promoted autonomously regardless (the wall).
+- **Promote v1.7.0?** — blocked on the Phase 7 verdict; NOT promoted autonomously regardless (the wall).
 - **us.street floor** — kept at the committed 74.0; the recipe's 80.4 is the pre-#492 shipped value. Worth
   re-anchoring to v1.5.1's measured us.street when convenient.
 - **The NEW `us.country_homograph_f1` regression (80.9 vs 83.3).** The one red floor on an otherwise-fixed
@@ -163,7 +163,7 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
   weight 1.5 is unsafe (amplifies the flat boundary signal, re-risks the guardrail — the change that cratered an
   affix tag) and the 4 boundary targets are capacity-bound; don't chase them. The record-matcher flatness
   confirms the boundary change doesn't move real-world dedup. v1.7.0 is the better ship.
-- **Two stated gate decisions the promote needs (operator's call, not autonomous — the no-silent-drift rule):**
+- **Two stated check decisions the promote needs (operator's call, not autonomous — the no-silent-drift rule):**
   (1) **re-baseline the stale `us.country_homograph` floor** 83.3 → ~80 (v1.5.1 fails it identically at 80.9 —
   it's not a v1.7.0 regression); (2) **re-frame the 4 capacity-bound boundary targets as WATCH-items**, not
   blockers. With both, v1.7.0 promotes with NO retrain.
@@ -181,17 +181,17 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
 
 ## Numbers
 
-| metric                        | value                                                                                                         |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| shift duration                | 03:58–15:00 UTC (~11h)                                                                                        |
-| models trained                | 1 (v1.7.0, full 40k after a mid-run resume)                                                                   |
-| Modal GPU time                | ~4h (train + stall window + resume + export/quant)                                                            |
-| local compute                 | extract builds, the gate + 5 probe evals (×2 models for the comparatives), 3 record-matcher runs, 3 lint runs |
-| NaN incidents                 | 0                                                                                                             |
-| training stalls               | 1 (hung ~step 21k; recovered via `--resume auto` from step-020000, no training lost)                          |
-| CI failures                   | 0 (docs-build green on all commits)                                                                           |
-| commits                       | 14                                                                                                            |
-| demo / production regressions | n/a (no promote — candidate shipped beside canonical)                                                         |
+| metric                        | value                                                                                                          |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| shift duration                | 03:58–15:00 UTC (~11h)                                                                                         |
+| models trained                | 1 (v1.7.0, full 40k after a mid-run resume)                                                                    |
+| Modal GPU time                | ~4h (train + stall window + resume + export/quant)                                                             |
+| local compute                 | extract builds, the check + 5 probe evals (×2 models for the comparatives), 3 record-matcher runs, 3 lint runs |
+| NaN incidents                 | 0                                                                                                              |
+| training stalls               | 1 (hung ~step 21k; recovered via `--resume auto` from step-020000, no training lost)                           |
+| CI failures                   | 0 (docs-build green on all commits)                                                                            |
+| commits                       | 14                                                                                                             |
+| demo / production regressions | n/a (no promote — candidate shipped beside canonical)                                                          |
 
 ## Addendum — promote retracted on re-eval (2026-06-18)
 
@@ -257,7 +257,7 @@ coordinate is meter-grade.
 
 ### Shipped
 
-- **#718 eval-integrity board:** the capability-manifest delta-gate + per-release mask-regression gate
+- **#718 eval-integrity board:** the capability-manifest delta-check + per-release mask-regression check
   (the D2/#719 destructive-conventions-mask bug-class is now structurally impossible to ship); D1
   `loadFromWeights` soft-feeds the anchor + gazetteer channels by default; D3 re-derived the eval
   floors from anchor-on numbers; D4 region/county placetype-equivalence groups + a fallback flag.
@@ -265,7 +265,7 @@ coordinate is meter-grade.
   mis-described the en-us model it ships — reconciled + a drift-guard test), #722 (the eval parses via
   the canonical `createScorer` for ship-config parity).
 - **The coordinate:** `--cascade` (grade what ships) + three admin-tail fixes — the directional-quadrant
-  street-key fold, the US-gated 5-digit-house-number-as-ZIP relabel (FR reversed-order #560 verified
+  street-key fold, the US-conditional 5-digit-house-number-as-ZIP relabel (FR reversed-order #560 verified
   untouched), and the spelled-ordinal fold. **Admin tail 12.0 → ~6.7%, within-100 m 85.9 → ~89.5%.**
 - **Docs + outreach:** corrected the head-to-head, the HF card, and the situs-cascade doc to the
   shipped numbers; published the methodology blog post ("Three times this week, our metrics undersold

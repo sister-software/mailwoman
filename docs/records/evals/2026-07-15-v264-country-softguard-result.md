@@ -6,7 +6,7 @@ iteration in the #1104 arc that carries no documented exception.
 
 ## Why
 
-The `eval gate --weights-cache` ledger backfill surfaced that v263's country channel cut both ways: its
+The `eval check --weights-cache` ledger backfill surfaced that v263's country channel reduce both ways: its
 `country_ambiguous` guard (a hard suppression of homograph country surfaces — Georgia/Jordan/Jamaica)
 recovered WOF-admin country recall (84.8→89.3%) but dropped the country-homograph probe 89.8→82.6. The
 guard was too strong. v264 softens it.
@@ -22,9 +22,9 @@ v264 = `0.5`. (Serialize misuse hazard fixed en route: the scale must be written
 `config.json`, else export silently rebuilds at 1.0 — the first v264 export was byte-identical to v263 on
 the homograph probe until that was caught.)
 
-## Grade (package-shaped throughout — `eval gate --weights-cache` / `loadFromWeights`, #718)
+## Grade (package-shaped throughout — `eval check --weights-cache` / `loadFromWeights`, #718)
 
-| Gate                                        | v263 (6.2.0)  | v264          | verdict                              |
+| Check                                       | v263 (6.2.0)  | v264          | verdict                              |
 | ------------------------------------------- | ------------- | ------------- | ------------------------------------ |
 | **country-homograph F1** (real, n=54)       | 82.6          | **85.1**      | ✓ +2.5pp — recovers a homograph miss |
 | **golden WOF-admin country recall**         | 200/224=89.3% | 204/224=91.1% | ✓ +1.8pp — the win holds AND grows   |

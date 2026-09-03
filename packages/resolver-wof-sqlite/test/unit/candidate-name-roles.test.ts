@@ -173,7 +173,7 @@ describe("stampNameRoles: the gloss anomaly detector", () => {
 		expect(rows.filter((r) => r.name_role === "gloss").every((r) => r.is_primary === 0)).toBe(true)
 	})
 
-	test("refuses a place below the key-count cut", async () => {
+	test("refuses a place below the key-count threshold", async () => {
 		const { roleGloss, keyTailPlaces } = await stamp(
 			[{ sid: 1, name: "Poisson", country: "FR", placetype: "locality", aliases: ["Fish"] }],
 			[]

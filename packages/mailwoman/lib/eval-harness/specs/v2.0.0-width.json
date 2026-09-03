@@ -1,5 +1,5 @@
 {
-	"$comment": "Gate spec for the #492 width run (v2.0.0-width48, operator GO 2026-06-10). Bars are the CANONICAL config floors + the affix solo levels the 29M model could only visit + no-regression vs the shipped v4.2.0. STABILITY is checked separately (20k vs 40k affix comparison, the transient lesson) — this spec grades the endpoint. intersection_a/b are REPORTED, not gated (the rider's synth lacks the audited gap forms). Edits to this file are stated decisions (feedback-no-silent-gate-drift).",
+	"$comment": "Check spec for the #492 width run (v2.0.0-width48, operator GO 2026-06-10). Bars are the CANONICAL config floors + the affix solo levels the 29M model could only visit + no-regression vs the shipped v4.2.0. STABILITY is checked separately (20k vs 40k affix comparison, the transient lesson) — this spec grades the endpoint. intersection_a/b are REPORTED, not conditional (the rider's synth lacks the audited gap forms). Edits to this file are stated decisions (feedback-no-silent-check-drift).",
 	"label": "v2.0.0-width48",
 	"requires_gazetteer_lexicon": true,
 	"floors": {

@@ -67,7 +67,7 @@ function result(over: Partial<GauntletResult> = {}): GauntletResult {
 	}
 }
 
-describe("the coordinate / tier / component gates", () => {
+describe("the coordinate / tier / component checks", () => {
 	it("asserts nothing on a case that pins nothing", () => {
 		expect(checkCase(storedCase(), result())).toEqual([])
 	})
@@ -132,7 +132,7 @@ describe("the coordinate / tier / component gates", () => {
 	})
 })
 
-describe("the place-identity gate (#1507)", () => {
+describe("the place-identity check (#1507)", () => {
 	it("passes when the resolved place matches the asserted name", () => {
 		const c = storedCase({ expect_place_name: "Gaborone" })
 
@@ -201,7 +201,7 @@ describe("the place-identity gate (#1507)", () => {
 	})
 })
 
-describe("the component gate is exact — multi-script truth is a per-row opt-in (#34)", () => {
+describe("the component check is exact — multi-script truth is a per-row opt-in (#34)", () => {
 	// The 2026-08-10 global relaxation (any dual-script got satisfied a truth freezing one rendering) let a
 	// cross-tag bleed grade as a pass, so review converted it into the `expect_component_renderings` opt-in.
 	// The first two tests pin the reversal; the rest pin the opt-in contract itself.

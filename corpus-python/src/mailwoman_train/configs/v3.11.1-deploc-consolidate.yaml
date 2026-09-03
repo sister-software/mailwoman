@@ -31,7 +31,7 @@
 # across FOUR locales (GB 6.1% + NZ 2.4% + ES 3.0% + FR-lieudit 1.8% stream; densities .328/.792/.303/1.00)
 # — combined dep-loc 6.66% ≈ probe-2's 6.6% EXACTLY (one variable = diversity), max single-locale share 20.2% → 6.1%. Same resurrection changes as the probes (reinit rows 7/8 +
 # classifier group 1e-3, init_from v385) — this is the properly-fed retrain of the confirmed mechanism.
-# Roster final 2026-07-22 ~05:5x UTC: all four slices landed + gate-checked (synth-fr-lieudit @ 100% dep-loc).
+# Roster final 2026-07-22 ~05:5x UTC: all four slices landed + check-checked (synth-fr-lieudit @ 100% dep-loc).
 #
 # PRE-REGISTERED READ (written before the numbers exist; operator-approved task list 2026-07-22):
 #   PRIMARY  : decode-layer dependent_locality emission MATERIALLY above probe-2 floors (NZ > 3/246,
@@ -44,10 +44,10 @@
 #     - digit board bare-street-hn flat vs 0.902 (probe-1/2 level; v385 fresh baseline 0.755)
 #     - 6 demo presets byte-identical to v385
 #     - val macro_f1 within 1.0pp of v385's 0.7047
-#   SHIP GATE : full error-analysis vs v385 — no tag regresses >2pp (config-canonical); gauntlet PASS.
+#   SHIP CHECK : full error-analysis vs v385 — no tag regresses >2pp (config-canonical); gauntlet PASS.
 #              Ship path (HF upload → promote → npm CI → demo) is OPERATOR-AUTHORIZED for the
 #              2026-07-22 night shift CONDITIONAL on every bar above passing. Any bar fails → stage
-#              only, report, no promote (no silent gate drift; treadmill guard: no knob iteration).
+#              only, report, no promote (no silent check drift; treadmill guard: no knob iteration).
 #
 # Launch: modal run -d corpus-python/modal/train_remote.py --config v3.11.0-deploc-feed.yaml --resume none
 #   (--resume none REQUIRED: reinit_label_rows lives in the init_from branch; --resume auto silently no-ops it.)

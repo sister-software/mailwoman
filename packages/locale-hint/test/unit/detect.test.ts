@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { detectLocaleSync } from "@mailwoman/locale-gate/detect"
-import type { NormalizedInputLite, QueryShapeLike } from "@mailwoman/locale-gate/types"
+import { detectLocaleSync } from "@mailwoman/locale-hint/detect"
+import type { NormalizedInputLite, QueryShapeLike } from "@mailwoman/locale-hint/types"
 import { describe, expect, it } from "vitest"
 
 function input(normalized: string): NormalizedInputLite {

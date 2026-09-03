@@ -27,7 +27,7 @@ pipeline (`scripts/eval-v062-checkpoint.sh`) completes.
 - **Golden set:** `data/eval/golden/v0.1.2/` (4,561 entries)
 - **v0-vs-neural harness:** `mailwoman/test/*.test.ts` (376 v0 assertions) +
   `data/eval/falsehoods/` (39 falsehoods rows) = 415 total
-- **Gate baseline:** v0.6.0 default per-tag JSON
+- **Check baseline:** v0.6.0 default per-tag JSON
   (`/tmp/eval-v060-true-baseline.json`)
 
 ## Headline numbers (TBD)
@@ -39,7 +39,7 @@ pipeline (`scripts/eval-v062-checkpoint.sh`) completes.
 | dep_locality hallucinations  | 0          | 1066 ❌           | **TBD (target ≤100)** | —           |
 | street_suffix hallucinations | 0          | 198               | **TBD**               | —           |
 | v0-vs-neural harness pass    | 14.4%      | (≈14.4%)          | **TBD**               | —           |
-| Pre-publish 2D eval gate     | (baseline) | FAIL ❌           | **TBD (target PASS)** | —           |
+| Pre-publish 2D eval check    | (baseline) | FAIL ❌           | **TBD (target PASS)** | —           |
 
 ## Per-tag breakdown (TBD)
 
@@ -74,22 +74,22 @@ The harness's 415 assertions cluster by locale. v0.6.0 baselines:
 | nor               | 9     | 0 (0%)      | TBD         | TBD |
 | (smaller locales) | —     | mostly 0%   | TBD         | TBD |
 
-## Gate verdict (TBD)
+## Check verdict (TBD)
 
 ```
-[eval-gate.ts output here]
+[eval-check.ts output here]
 ```
 
 ## Decision: TBD
 
 Apply DeepSeek turn 7's promotion decision tree:
 
-| Gate | Harness pass | Action                                |
-| ---- | ------------ | ------------------------------------- |
-| Pass | ≥ 25%        | Promote v0.6.2 to default on HF       |
-| Pass | 15-24%       | Ship as experimental — do NOT promote |
-| Pass | ≤ 14.4%      | HOLD — sidegrade not release          |
-| Fail | any          | HOLD                                  |
+| Check | Harness pass | Action                                |
+| ----- | ------------ | ------------------------------------- |
+| Pass  | ≥ 25%        | Promote v0.6.2 to default on HF       |
+| Pass  | 15-24%       | Ship as experimental — do NOT promote |
+| Pass  | ≤ 14.4%      | HOLD — sidegrade not release          |
+| Fail  | any          | HOLD                                  |
 
 **Verdict: TBD**
 
@@ -105,7 +105,7 @@ Apply DeepSeek turn 7's promotion decision tree:
   macro_f1=0.413.
 - No NaN. CE-only training is stable (as expected — the bf16-NaN issue from the
   postmortem only affected CRF, which v0.6.2 leaves disabled per the NaN protocol).
-- Early-eval gate at step 20K: **TBD** (dep_loc hallucination ceiling 100; abort + bump
+- Early-eval check at step 20K: **TBD** (dep_loc hallucination ceiling 100; abort + bump
   synth-no-street size if exceeded).
 
 ## See also

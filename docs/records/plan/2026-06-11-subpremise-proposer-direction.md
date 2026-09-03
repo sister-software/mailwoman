@@ -32,7 +32,7 @@ The architecture has rightful homes for this instinct, in escalating order of am
    never obeys. Cost: a lexicon rebuild + a channel-dim bump (retrain-coupled — rides a
    scheduled run, not its own).
 2. **Stage 2.7 phrase proposal (the operator's instinct, structurally).** The phrase grouper
-   already carries a "unit gate"; the generalization is a **sub-premise proposer**: one rule
+   already carries a "unit check"; the generalization is a **sub-premise proposer**: one rule
    layer over all codex designator tables emitting typed span proposals
    (`{span: "PO Box 123", kind: PO_BOX_PHRASE, confidence}`), consumed as phrase priors today —
    the classifier conditions on the boundary hypothesis and can still disagree. This also

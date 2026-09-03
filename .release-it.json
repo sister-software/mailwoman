@@ -23,7 +23,6 @@
 				"packages/geographic-model",
 				"packages/kind-classifier",
 				"packages/libpostal",
-				"packages/locale-gate",
 				"packages/mailwoman",
 				"packages/map-tui",
 				"packages/match",
@@ -82,7 +81,7 @@
 	},
 	"hooks": {
 		"before:init": [
-			"echo 'Pre-flight: compile + copy-weights (tests skipped — PR CI already validated)'",
+			"echo 'Pre-flight: compile + copy-weights (tests skipped \u2014 PR CI already validated)'",
 			"yarn compile",
 			"node scripts/copy-weights.ts"
 		],

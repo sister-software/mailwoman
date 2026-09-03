@@ -255,7 +255,7 @@ Source assertions remain plural. OSM, TIGER, BAN, Overture and future public add
 their own provenance and may disagree; ingestion does not overwrite them into one allegedly
 authoritative row. Reconciliation happens in the derivation graph. Users consume sealed artifacts
 and verified deltas rather than running the acquisition pipeline, while the build recipe remains
-reproducible subject to the source licence and the existing ODbL counsel gate on `@mailwoman/osm`.
+reproducible subject to the source licence and the existing ODbL counsel check on `@mailwoman/osm`.
 
 The current rooftop builder already has four sound foundations: it quarantines ODbL extracts from the
 permissive gazetteer, keeps countries independent, measures rather than guesses the street-association

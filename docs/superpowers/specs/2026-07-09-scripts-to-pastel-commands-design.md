@@ -47,7 +47,7 @@ The source enum makes `fetch` one command, not nine. Existing `mailwoman/corpus-
 
 ### `mailwoman eval` (new group)
 
-Logic lands in **`mailwoman/eval-harness/`** — deliberate deviation from owning-workspace: no workspace owns evals, and a private evals workspace can't be a dependency of the published CLI. Follows the `gazetteer-pipeline` precedent. Gate-threshold JSONs (`scripts/eval/gates/*.json`) and fixtures move with it; the ledger (`evals/scores-by-version.json`) stays at repo root (data, not code).
+Logic lands in **`mailwoman/eval-harness/`** — deliberate deviation from owning-workspace: no workspace owns evals, and a private evals workspace can't be a dependency of the published CLI. Follows the `gazetteer-pipeline` precedent. Check-threshold JSONs (`scripts/eval/checks/*.json`) and fixtures move with it; the ledger (`evals/scores-by-version.json`) stays at repo root (data, not code).
 
 | Command                      | Source script                                                                               |
 | ---------------------------- | ------------------------------------------------------------------------------------------- |
@@ -58,7 +58,7 @@ Logic lands in **`mailwoman/eval-harness/`** — deliberate deviation from ownin
 | `eval oa-resolver`           | `scripts/eval/oa-resolver-eval.ts`                                                          |
 | `eval error-analysis`        | `scripts/eval/eval-error-analysis.ts` (night-shift skill repoints)                          |
 | `eval preset-compare`        | `scripts/eval/demo-preset-compare.ts` (eval-model skill repoints)                           |
-| `eval mask-regression`       | `scripts/eval/mask-regression-gate.ts`                                                      |
+| `eval mask-regression`       | `scripts/eval/mask-regression-check.ts`                                                     |
 | `eval es-postcode-centroids` | `scripts/eval/overture-es-postcode-centroids.ts` (RELEASING.md repoints)                    |
 
 **Probe triage (the ~100-file long tail):** the rule is mechanical — a script referenced by CI, a skill, RELEASING.md, or another surviving script gets a command; every other probe moves to `scripts/diagnostic/` (the gitignored graveyard; git history preserves tracked ones at their old paths). `scripts/eval/record-matcher/` (train-gbt + learned-scorer evals) moves to `registry/tools/` with the registry phase, per the drawer spec's original intent. Python eval scripts (`fit-*.py`, `calibration-drift-guard.py`) are exempt (Python).
@@ -146,7 +146,7 @@ Commands remain TSX (compiled); tool modules in owning workspaces remain plain `
 
 ## 5. Phasing (one PR each, sequenced)
 
-| Phase | Contents                                                                                           | Gate                                                                                                                                   |
+| Phase | Contents                                                                                           | Check                                                                                                                                  |
 | ----- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | 0     | core dedupe helpers (§3 #1–3) + cli-kit/test-kit move with shims + `useCommandTask`/`CheckList`    | unit tests for new helpers; `yarn compile`; existing commands still run                                                                |
 | 1     | corpus: tools modules + commands + fetch shared util (§3 #4) + corpus-tools absorption + deletions | each command `--help` + one real invocation per command (dry-run flags where network-bound); `corpus/scripts/` empty                   |
@@ -155,11 +155,11 @@ Commands remain TSX (compiled); tool modules in owning workspaces remain plain `
 | 4     | registry/tiger/placer groups + record-matcher scripts → registry/tools + tiger dep fix             | `--help` smokes; one figure render; placer eval parity on cached dataset                                                               |
 | 5     | eval: eval-harness module extraction + commands + probe triage → diagnostic/                       | **promotion-eval + gauntlet before/after parity: identical exit codes + artifacts on the same model**; RELEASING.md + skills repointed |
 
-Phase 5 last because the gates guard releases — nothing else may wobble while they move. Phases 1/2/4 are independent after 0.
+Phase 5 last because the checks guard releases — nothing else may wobble while they move. Phases 1/2/4 are independent after 0.
 
 ## 6. Risks + contracts
 
-- **Gate parity is the hard contract:** `eval promote`/`eval gauntlet` must reproduce the old scripts' exit codes, stdout verdict lines consumed by the operator, and artifact paths (ledger append command printed on PASS). Run both on the same model before deleting.
+- **Check parity is the hard contract:** `eval promote`/`eval gauntlet` must reproduce the old scripts' exit codes, stdout verdict lines consumed by the operator, and artifact paths (ledger append command printed on PASS). Run both on the same model before deleting.
 - **Reference repoints** (enumerated during each phase's plan): RELEASING.md, `.agents/skills/{mailwoman-release,wof-build,night-shift,eval-model}`, `.pi/prompts/release-check.md`, root `package.json` scripts (`ci:smoke` untouched), workflows.
 - **Published-surface changes:** resolver-wof-sqlite loses 4 bins (breaking, accepted); `mailwoman` `./sdk/*` shimmed not removed; `mailwoman` gains `@mailwoman/tiger` (+ possibly resolver-wof-sqlite) deps — check publish weight impact is nil (deps already in the workspace tree).
 - **Pastel flag-prop caveat** (AGENTS.md): kebab flags bind lowercase-acronym props (`--resolve-db` → `resolveDB`) — schema keys must match Pastel's derivation; keep the existing exception note.
@@ -169,7 +169,7 @@ Phase 5 last because the gates guard releases — nothing else may wobble while 
 
 - [ ] `corpus/scripts/` deleted; corpus logic lives in `corpus/tools/` behind `mailwoman corpus …`
 - [ ] `scripts/` top level = release tooling + configs ONLY (codegen/lint gone to `mailwoman dev`)
-- [ ] `scripts/eval/` reduced to Python calibration scripts + `gates` data consumed by eval-harness — or empty if those move cleanly; probes in `diagnostic/`
+- [ ] `scripts/eval/` reduced to Python calibration scripts + `checks` data consumed by eval-harness — or empty if those move cleanly; probes in `diagnostic/`
 - [ ] `registry/tools/`, `tiger/tools/`, `core/coarse-placer/tools/` all reachable via commands
 - [ ] resolver-wof-sqlite has zero `bin` entries; demo smoke green
 - [ ] `mailwoman/sdk/` gone (shims at old subpaths); `sdk` = data acquisition everywhere

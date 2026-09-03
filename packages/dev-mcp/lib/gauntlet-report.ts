@@ -27,8 +27,8 @@
 
 interface GauntletLayerReport {
 	layer: string
-	gated_pass: number
-	gated_total: number
+	counted_pass: number
+	counted_total: number
 	tracked: number
 }
 
@@ -54,7 +54,7 @@ export interface GauntletReport {
 	/**
 	 * Refused rows, verbatim, in log order. These are the rows a verdict rests on.
 	 */
-	gated_failures: string[]
+	counted_failures: string[]
 	/**
 	 * Tracked rows the run flagged as now passing — the promote-to-pass candidates.
 	 */
@@ -74,12 +74,12 @@ export interface GauntletReport {
  * polynomial ReDoS. A gauntlet log is our own output rather than hostile input, so the practical exposure was small —
  * but the string version is both shorter and unconditionally linear, so there was nothing to trade away.
  */
-const HEADER = /^=== Gauntlet · (\S+) \((\d+)\/(\d+) gated cases pass(?:, (\d+) tracked)?\)/
+const HEADER = /^=== Gauntlet · (\S+) \((\d+)\/(\d+) counted cases pass(?:, (\d+) tracked)?\)/
 const VERDICT = /^verdict: (PASS|FAIL)/
 const FIRING = /^postcode-country coherence fired on (\d+)\/(\d+) cases/
 
 const PINS_PREFIX = "[gauntlet] "
-const GATED_FAILURE_MARK = "✗"
+const COUNTED_FAILURE_MARK = "✗"
 const NOW_PASSING_MARK = " now PASSES"
 const NOW_PASSING_PREFIX = "+"
 
@@ -95,7 +95,7 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 		layers: [],
 		pins: null,
 		postcode_country_coherence_fired_on: null,
-		gated_failures: [],
+		counted_failures: [],
 		now_passing: [],
 		unparsed: [],
 	}
@@ -109,8 +109,8 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 		if (header) {
 			report.layers.push({
 				layer: header[1]!,
-				gated_pass: Number(header[2]),
-				gated_total: Number(header[3]),
+				counted_pass: Number(header[2]),
+				counted_total: Number(header[3]),
 				tracked: header[4] ? Number(header[4]) : 0,
 			})
 
@@ -135,8 +135,8 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 
 		const trimmed = line.trim()
 
-		if (trimmed.startsWith(GATED_FAILURE_MARK)) {
-			report.gated_failures.push(trimmed.slice(GATED_FAILURE_MARK.length).trim())
+		if (trimmed.startsWith(COUNTED_FAILURE_MARK)) {
+			report.counted_failures.push(trimmed.slice(COUNTED_FAILURE_MARK.length).trim())
 
 			continue
 		}
@@ -172,7 +172,7 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 
 	if (!report.layers.length) {
 		report.unparsed.push(
-			"No `=== Gauntlet · <layer> (n/m gated cases pass) ===` header found, so the pass counts and their denominator " +
+			"No `=== Gauntlet · <layer> (n/m counted cases pass) ===` header found, so the pass counts and their denominator " +
 				"are unknown. Do not read the absence of failures as a clean run."
 		)
 	}
@@ -200,15 +200,15 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
  */
 export function summarizeGauntletReport(report: GauntletReport): string {
 	if (!report.layers.length) {
-		return `No gated header was found in this run's output, so there is no pass count to report. Verdict line: ${report.verdict ?? "absent"}. Read the log.`
+		return `No counted header was found in this run's output, so there is no pass count to report. Verdict line: ${report.verdict ?? "absent"}. Read the log.`
 	}
 
 	const layers = report.layers
-		.map((layer) => `${layer.layer} ${layer.gated_pass}/${layer.gated_total} gated`)
+		.map((layer) => `${layer.layer} ${layer.counted_pass}/${layer.counted_total} counted`)
 		.join("; ")
 
-	const failures = report.gated_failures.length
-		? ` ${report.gated_failures.length} gated failure${report.gated_failures.length === 1 ? "" : "s"}.`
+	const failures = report.counted_failures.length
+		? ` ${report.counted_failures.length} counted failure${report.counted_failures.length === 1 ? "" : "s"}.`
 		: ""
 
 	const promotions = report.now_passing.length

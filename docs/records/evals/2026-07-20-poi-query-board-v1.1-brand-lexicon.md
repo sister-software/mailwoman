@@ -35,8 +35,8 @@ browser table factory, but nothing consumed them — every query still only ever
    `kind-classifier` interprets it; the caller (`mailwoman`'s `poi-intent.ts`) is the one that
    knows what `kind` means.
 3. **`mailwoman`'s `poiTaxonomyLookup` became the union lookup.** Categories first (unchanged),
-   then `lookupPOIBrand` (exact-phrase, no locale gating), then `@mailwoman/variant-aliases`'
-   brand-kind slang (locale-gated) chained through `resolveBrandName` to recover a QID. On a
+   then `lookupPOIBrand` (exact-phrase, no locale blocking), then `@mailwoman/variant-aliases`'
+   brand-kind slang (locale-hintd) chained through `resolveBrandName` to recover a QID. On a
    phrase that matches both a category and a brand, **category wins** — the early return never
    even consults the brand table. No live collision exists in the shipped tables (checked: zero
    overlap between `taxonomy.json`'s synonym phrases/category ids and `brands.json`'s
@@ -77,7 +77,7 @@ nearest-distance distribution (km, results-cases with ≥1 result, n=33): min 0.
 
 **5 of 6 new brand cases pass.** The 4 brand+anchor cases (`brand-us-01` Chevron/Houston,
 `brand-fr-01` Crédit Agricole/Lyon, `brand-ca-01` Tim Hortons/Toronto — all pass; `brand-us-02`
-Applebee's/Dallas — fails, below) + the locale-gated slang case (`brand-slang-01`, "mcdo" →
+Applebee's/Dallas — fails, below) + the locale-hintd slang case (`brand-slang-01`, "mcdo" →
 McDonald's under `fr-FR`, chained through `variant-aliases`, since "mcdo" is NOT one of
 McDonald's own `brands.json` aliases — verified empty) + the bare-brand abstain (`brand-bare-01`,
 "chevron" alone → `anchor_required`) all pass.

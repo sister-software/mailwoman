@@ -17,12 +17,12 @@ lost its `é` at the parser, missed a rooftop the data held, and rendered as a l
 | **v5.8.0** | #1012 BAN FR address-point tier (26M rooftops, @1km 37.4→87.9% in-BAN, Nominatim-independent 13/14 under 200 m); #1023 namesake fix; first publish of `@mailwoman/ban` (OIDC can't create packages — operator one-time token publish + trusted-publisher config, then CI) |
 | **v5.9.0** | **v241 model promotion**: `v2.4.1-fr-nsplice-ft` (init_from fine-tune on the `v0.8.0-fr-nsplice` spliced tokenizer) + #1046 street-centroid tier (2.2M streets derived from the sealed BAN artifact, voies 0/8→7/8) + #1043 house-grade decoration + #1047/#1048 tooling  |
 
-v241 gate table (full version on #444): mangle 23.5→**17.7%** int8, Honoré+René fixed, held-out
+v241 check table (full version on #444): mangle 23.5→**17.7%** int8, Honoré+René fixed, held-out
 FR z=+0.90 / US z=+0.29, non-FR drift ~0. Training: 12k steps, constant lr 5e-5, ~33 min A100.
 
 ## Falsified (the night's real product)
 
-1. **#1039 LocaleHint-as-country-prior** — locale-gate is script+postcode by design; `en-US/0.30`
+1. **#1039 LocaleHint-as-country-prior** — locale-hint is script+postcode by design; `en-US/0.30`
    fallback on 34/36 no-postcode-tail inputs. Wiring it would be inert-to-harmful. Surviving
    changes: street-type-morphology prior, confidence floor.
 2. **Training-free FR vocab-splice (#444/#1047)** — mean-init inherits `é`'s strongly-trained
@@ -34,7 +34,7 @@ FR z=+0.90 / US z=+0.29, non-FR drift ~0. Training: 12k steps, constant lr 5e-5,
 ## What could've gone better
 
 - **release.config.json lagged the v5.4.0 promote** (#1024): copy-weights materialized the wrong
-  model and the gauntlet graded it — cost a void bisect during the 5.6.0 cut. The md5-vs-card
+  model and the gauntlet graded it — cost a void bisect during the 5.6.0 reduce. The md5-vs-card
   guard now makes this structural.
 - **npm tarball-replication lag** (~15 min, metadata-before-blob on `kind-classifier@5.9.0`) bit
   the endpoint bump — poll the tarball URL, not `npm view`, before declaring a publish consumable.
@@ -56,4 +56,4 @@ FR z=+0.90 / US z=+0.29, non-FR drift ~0. Training: 12k steps, constant lr 5e-5,
 
 ~$3 Modal (1× A100 ~40 min incl. 3 min lost to the Trackio relaunch), 1 model trained + promoted,
 0 NaN, 2 releases, 8 PRs merged, 6 public issues filed, 0 regressions shipped
-(gauntlet PASS on every cut; US held-out byte-identical through the model promote).
+(gauntlet PASS on every reduce; US held-out byte-identical through the model promote).

@@ -26,18 +26,18 @@ whose locality evidence channel actually trained (#1349).
 - **Fisher artifact**: fisher-diag-v1 (2,000 batches, all 39,261,743 trainables; md5 `79ede288…`),
   HF/R2-distributed beside the weights — the EWC brake for every fine-tune off this base.
 
-## Gate record
+## Check record
 
 - Golden (ship config): 16/17 on v6.0.0-shipped-baseline + bare-street-intact + mask-regression;
   the one nominal miss is us.street_prefix 91.3 vs the 96.0 **fallback-margin artifact** (n=25;
   four spelled-out-directional recall misses, precision 100; the 9-probe directional-homograph
   set shows zero over-splitting cost). Clears the new spec.
-- **New gate spec: `v7.0.0-base`** — cut from this candidate's ship-config readings with
+- **New check spec: `v7.0.0-base`** — reduce from this candidate's ship-config readings with
   support-aware WILSON margins (the v6 spec's 2.0pp fallback and the boundary-reading
   under-margining both retired). Final verdict vs the new spec: PASS.
-- Gauntlet (the pre-ship flip): regression **47/47 gated**, metamorphic PASS (5 tracked xfails,
+- Gauntlet (the pre-ship flip): regression **47/47 conditional**, metamorphic PASS (5 tracked xfails,
   one fewer than shipped), held-out PASS.
-- G8 (the DE fragment board, new): the v7-fold value gate MISSED → the revert executed. The
+- G8 (the DE fragment board, new): the v7-fold value check MISSED → the revert executed. The
   board itself (overture-fragments-de) joins the standing instruments.
 - Capability manifest regenerated on the shipped bytes (register-pinned formatted).
 

@@ -50,17 +50,17 @@ doctrine (operator-ratified) is required: evidence value peaks in the register u
 - Full-scale recipe off the probe's shape: the standing feed, 8k+ steps, bundle + curriculum +
   v3-selectivity lexicons. The P-A decay was time-dependent — checkpoints graded at every save, the
   over-trust watch explicit.
-- **Gates (pre-registered before launch, per the iron rules):** the full promotion battery — golden
+- **Checks (pre-registered before launch, per the iron rules):** the full promotion battery — golden
   us/fr floors, **invariance suite `--baseline v385`** (the probe chain never ran it; the P-B
   comma-drop signature is the named watch), gauntlet ×3 layers, presets byte-check, fragment boards
-  **with lowercase legs** (doctrine), and the NEW **evidence-ablation gate**: channels-zeroed parse
-  ≥ v385 baseline on unaffected spans — this gate joins the standing battery permanently.
+  **with lowercase legs** (doctrine), and the NEW **evidence-ablation check**: channels-zeroed parse
+  ≥ v385 baseline on unaffected spans — this check joins the standing battery permanently.
 
 ### Phase 4 — ship + retire (S)
 
 - The promotion ships model + lexicons together (tokenizer-mismatch discipline applies to lexicons
   now too: the card pins their identities).
-- Decode-surface retirement check (SCOPE invariant 4): which FST-prior/gate changes does the trained
+- Decode-surface retirement check (SCOPE invariant 4): which FST-prior/check changes does the trained
   bundle subsume? Measured head-to-head; retire what it beats — the anti-hellscape payoff.
 
 ## Open research items (named, not blocking Phases 1–2)

@@ -102,9 +102,9 @@ Same extract as v4.9.0, byte-identical, at a third the exposure. One variable.
 | v4.9.0      |     9.4% |       11 |        31 |     −20 |                    15 |
 | **v4.10.0** | **3.1%** |        9 |        22 | **−13** |                     9 |
 
-The damage scales with dose and does not vanish with it. A 3× cut bought back 7 net rows and 6 venue
+The damage scales with dose and does not vanish with it. A 3× reduce bought back 7 net rows and 6 venue
 rows, and the arm is still net −13, still FR −3 / GB −5 / IE −3. Regressions fall sub-linearly (25 → 22
-for a 3× cut) because what remains is not over-exposure — it is that the extract's signal is wrong for
+for a 3× reduce) because what remains is not over-exposure — it is that the extract's signal is wrong for
 the classes it does not contain, at any exposure that teaches anything.
 
 **All four runs are DO-NOT-SHIP. Nothing was promoted or published.**
@@ -190,7 +190,7 @@ the four.
 ### What this changes for anything shipped from here
 
 The baseline for grading a candidate is the NULL RUN, not the shipped model. A candidate that costs
-ten rows has cost nothing; one that costs eighteen has cost eight. Every gate in this arc used the
+ten rows has cost nothing; one that costs eighteen has cost eight. Every check in this arc used the
 wrong denominator.
 
 It also sets a floor on what a fine-tune can deliver: **it must buy back five net rows before it breaks
@@ -256,7 +256,7 @@ learned rather than grafted. That is a different order of commitment and should 
 ## The cause, stated once
 
 **PROVISIONAL, pending the null-run control described above.** Adding non-US/FR admin tails to this
-model regresses FR/GB/IE venue parsing, and neither composition, dose, nor the EWC brake removes it. Five runs: three admin-only extracts at three doses, one dose cut on
+model regresses FR/GB/IE venue parsing, and neither composition, dose, nor the EWC brake removes it. Five runs: three admin-only extracts at three doses, one dose reduce on
 a byte-identical extract, and one that carried venue+street+house_number in every row inside an
 already-shipping bucket. All five net-negative, all five losing the same classes in the same
 countries. Composition and dose modulate the size of the shift; the shift itself tracks the data.
@@ -270,7 +270,7 @@ larger commitment than a fine-tune and should be scoped as one.
 ## What this does and does not license
 
 - **Dose is not the remedy, and that is now measured rather than argued.** v4.10.0 held the extract
-  byte-identical and cut exposure 3×; net went −20 → −13 and stopped there. Extrapolating the observed
+  byte-identical and reduce exposure 3×; net went −20 → −13 and stopped there. Extrapolating the observed
   sub-linear fall, the dose that stops hurting is below the dose that teaches.
 - **It does license the corpus-authoring task**: this extract needs rows where a venue or a street
   precedes the locality before it can carry a meaningful dose. That is authoring, not tuning.
@@ -325,7 +325,7 @@ candidate of any arc, not follow the eighth.
   class the board is built to see.
 - **A smoke run proves the config loads, not that the extract is reached.** The mixed extract's leading
   arm keeps the zero-rows guard from firing even when the whole trailing arm is dropped. The check
-  that mattered was reading the extract through the loader's own gate before launching.
+  that mattered was reading the extract through the loader's own check before launching.
 - **A false negative in the measuring tool looks exactly like a real absence.** Corpus `labels` is a
   nested Arrow column (`{list:[{element:…}]}`); `Array.isArray` on it is false, so a street-label
   count silently returns zero for every country. It produced a confident wrong claim that GB has no

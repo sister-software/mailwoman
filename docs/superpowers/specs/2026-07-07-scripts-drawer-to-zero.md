@@ -34,21 +34,21 @@ scripts/ — 294 files total (272 source files)
 
 **Duplication highlight reel:**
 
-| Anti-pattern                                      | Count                                 | Fix                                                                  |
-| ------------------------------------------------- | ------------------------------------- | -------------------------------------------------------------------- |
-| `process.argv` indexed/scanned directly           | 69 scripts                            | `parseArgs` from `node:util` (already used by 71)                    |
-| `scripts/lib/cli-args` helper                     | 45 imports                            | retire; `parseArgs` is the standard                                  |
-| `readFileSync`/`writeFileSync`/`mkdirSync` ad-hoc | 140/108/26                            | fine for one-offs; flag when it's reimplementing `fs/promises` badly |
-| `$public`/`$private` env access                   | 12 scripts                            | correct pattern; 200+ scripts ignore it entirely                     |
-| `.mjs` references in docstrings/comments          | 11 scripts                            | stale — AGENTS.md bans `.mjs`                                        |
-| lone surviving `.mjs`                             | 1 (`diagnostic/gate-nl-postcode.mjs`) | convert or delete                                                    |
+| Anti-pattern                                      | Count                                  | Fix                                                                  |
+| ------------------------------------------------- | -------------------------------------- | -------------------------------------------------------------------- |
+| `process.argv` indexed/scanned directly           | 69 scripts                             | `parseArgs` from `node:util` (already used by 71)                    |
+| `scripts/lib/cli-args` helper                     | 45 imports                             | retire; `parseArgs` is the standard                                  |
+| `readFileSync`/`writeFileSync`/`mkdirSync` ad-hoc | 140/108/26                             | fine for one-offs; flag when it's reimplementing `fs/promises` badly |
+| `$public`/`$private` env access                   | 12 scripts                             | correct pattern; 200+ scripts ignore it entirely                     |
+| `.mjs` references in docstrings/comments          | 11 scripts                             | stale — AGENTS.md bans `.mjs`                                        |
+| lone surviving `.mjs`                             | 1 (`diagnostic/check-nl-postcode.mjs`) | convert or delete                                                    |
 
 ---
 
 ## The endgame: scripts/ holds ONLY three things
 
 1. **Release-it hooks + CI tooling** — the publish/verify/smoke scripts that the release pipeline invokes
-2. **The eval harness** — `eval/` (promotion gate, gauntlet, gates, probes) and `diagnostic/` (one-offs)
+2. **The eval harness** — `eval/` (promotion check, gauntlet, checks, probes) and `diagnostic/` (one-offs)
 3. **Minimal codegen/lint** — the generate-_/lint-_ scripts that don't yet have a `mailwoman dev` home
 
 Everything else either moves into a package (as a module), becomes an Ink command (`mailwoman <group> <verb>`), or gets deleted because it's stale/duplicated/superseded.
@@ -191,9 +191,9 @@ These are invoked by `.release-it.json` hooks, CI, or the operator at release ti
 
 ### ▸ Phase 9 — Eval harness (legitimate permanent resident)
 
-The 166 tracked files in `scripts/eval/` (plus the 2 gitignored), plus the 55 diagnostic scripts in `scripts/diagnostic/` (46 gitignored, 9 tracked). These are the eval/diagnostic harness — the promotion gate, the gauntlet, per-tag probes, calibration scripts, golden-set builders, and one-off investigation scripts.
+The 166 tracked files in `scripts/eval/` (plus the 2 gitignored), plus the 55 diagnostic scripts in `scripts/diagnostic/` (46 gitignored, 9 tracked). These are the eval/diagnostic harness — the promotion check, the gauntlet, per-tag probes, calibration scripts, golden-set builders, and one-off investigation scripts.
 
-**Disposition: stay as-is.** These are by design — ad-hoc evaluation probes and diagnostic investigations that don't belong in a package. The distinction between `eval/` and `diagnostic/` is already fuzzy (diagnostic is gitignored; eval has many tracked probes that read like diagnostics). Consider consolidating: `eval/` for the _gates_ (promotion-eval, gauntlet, gates/) and `diagnostic/` for everything else — but that's cleanup, not migration.
+**Disposition: stay as-is.** These are by design — ad-hoc evaluation probes and diagnostic investigations that don't belong in a package. The distinction between `eval/` and `diagnostic/` is already fuzzy (diagnostic is gitignored; eval has many tracked probes that read like diagnostics). Consider consolidating: `eval/` for the _checks_ (promotion-eval, gauntlet, checks/) and `diagnostic/` for everything else — but that's cleanup, not migration.
 
 **One cleanup task:** 2 files in `eval/` are gitignored (residual probes). Ensure the gitignore is correct and nothing tracked should be gitignored or vice versa.
 
@@ -201,7 +201,7 @@ The 166 tracked files in `scripts/eval/` (plus the 2 gitignored), plus the 55 di
 
 | File                                                                                       | Fate                           | Rationale                                                    |
 | ------------------------------------------------------------------------------------------ | ------------------------------ | ------------------------------------------------------------ |
-| `scripts/diagnostic/gate-nl-postcode.mjs`                                                  | **Convert to `.ts` or delete** | The ONLY surviving `.mjs`. AGENTS.md explicitly bans `.mjs`. |
+| `scripts/diagnostic/check-nl-postcode.mjs`                                                 | **Convert to `.ts` or delete** | The ONLY surviving `.mjs`. AGENTS.md explicitly bans `.mjs`. |
 | 11 `.mjs` references in docstrings/comments                                                | **Update comments**            | Stale references to scripts that no longer exist as `.mjs`.  |
 | `scripts/lib/zip-csv.ts:15` references `ingest-openaddresses.mjs`                          | **Fix during Phase 1**         | Stale reference.                                             |
 | `scripts/eval/audit-po-box-cedex-extract.ts:8` references `build-po-box-cedex-extract.mjs` | **Fix during Phase 0**         | Handled by gazetteer spec.                                   |
@@ -229,7 +229,7 @@ corpus-python/
   modal/             ← train_remote.py + AGENTS.md (Phase 5)
 
 scripts/             ← what remains:
-  eval/              ← promotion gate, gauntlet, gates, eval probes (Phase 9)
+  eval/              ← promotion check, gauntlet, checks, eval probes (Phase 9)
   diagnostic/        ← one-off investigations (Phase 9)
   *.ts               ← release tooling (Phase 7)
   *.ts               ← codegen/lint (Phase 6)
@@ -273,7 +273,7 @@ const verbose = values.verbose!
 
 200+ scripts use ad-hoc `process.env.X` or bare `process.env` access. 12 scripts already correctly use `$public` / `$private` from `@mailwoman/core/env`.
 
-Not all 200 need conversion (many are one-off probes where ad-hoc env is fine), but any script that ships or gates a release MUST use the typed env accessors. At minimum, ensure the release-tooling and promotion-eval scripts use them.
+Not all 200 need conversion (many are one-off probes where ad-hoc env is fine), but any script that ships or checks a release MUST use the typed env accessors. At minimum, ensure the release-tooling and promotion-eval scripts use them.
 
 ---
 

@@ -308,7 +308,7 @@ export async function warnIfFSTStale(fstPath: string, locale: string): Promise<v
 	const warning = await fstFreshnessWarning({
 		fstPath,
 		sourceDBPath: String(dataRootPath("wof", "admin-global-priority.db")),
-		rebuildCommand: `node packages/mailwoman/out/cli.js gazetteer build fst --locales ${locale}  (writes to a staging dir; swap is operator-gated)`,
+		rebuildCommand: `node packages/mailwoman/out/cli.js gazetteer build fst --locales ${locale}  (writes to a staging dir; swap is operator-conditional)`,
 	})
 
 	if (warning) {

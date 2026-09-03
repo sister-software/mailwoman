@@ -24,7 +24,7 @@ _Drafted during the shift; finalized at hand-off. Window: ~01:30–11:55 UTC (20
 
 ## Late-night additions (post-v7.1.0, ~08:00–10:30 UTC)
 
-- **BR (v7.2 candidate) — BUILT clean but FAILS the guard (country trade).** Overture BR extract clean (210k rows, house_number 96%, country=BR/source=overture-latam, CDLA-Permissive-2.0 license). Trained the full LATAM 8k (v386, CA+MX+BR, `output-v386-latam-br`). **Golden 2pp gate FAILS: `country` −5.3pp** (211/245 vs shipped 224); all else flat. v385 (CA/MX only) was country −1.6 (PASS) → BR pushed it over. **Mechanism:** the `overture-latam` source at weight 6.0 now carries 3 new countries' surfaces, and the #1104 country channel over-reacts (accumulating new-country mass degrades US/FR country recall). **BR is NOT a clean add as-is.** The clean v7.1.0 = CA/MX (v385) stands.
+- **BR (v7.2 candidate) — BUILT clean but FAILS the guard (country trade).** Overture BR extract clean (210k rows, house_number 96%, country=BR/source=overture-latam, CDLA-Permissive-2.0 license). Trained the full LATAM 8k (v386, CA+MX+BR, `output-v386-latam-br`). **Golden 2pp check FAILS: `country` −5.3pp** (211/245 vs shipped 224); all else flat. v385 (CA/MX only) was country −1.6 (PASS) → BR pushed it over. **Mechanism:** the `overture-latam` source at weight 6.0 now carries 3 new countries' surfaces, and the #1104 country channel over-reacts (accumulating new-country mass degrades US/FR country recall). **BR is NOT a clean add as-is.** The clean v7.1.0 = CA/MX (v385) stands.
 
 **ROOT CAUSE (diagnosed, no-GPU) — the fix is now precise:** the CA/MX/BR extract rows carry **0% country labels** (verified: 0/456k CA/MX, 0/210k BR — Overture addresses are country-implicit, all bare street+locality+postcode). The country lexicon DOES include Canada/Mexico/Brazil (not the gap). So the mechanism is **country-emission dilution**: 666k country-token-less rows at `overture-latam` weight 6.0 teach the model that "no country present" is normal → it under-emits country → US/FR golden country recall drops. It scales with the country-less mass (−1.6 at 456k → −5.3 at 666k), which is why v7.1.0 (CA/MX) passes and v7.2 (+BR) fails on the same axis.
 
@@ -35,7 +35,7 @@ _Drafted during the shift; finalized at hand-off. Window: ~01:30–11:55 UTC (20
 
 ## Decisions made autonomously
 
-- Shipped v7.0.0 (dry-run gate green first). Filed #1176/#1177. Corrected the NZ spec premise (#1175).
+- Shipped v7.0.0 (dry-run check green first). Filed #1176/#1177. Corrected the NZ spec premise (#1175).
 - Ran two NZ probes; STOPPED on the treadmill after the second no-op rather than blind-escalating to 8k.
 - Used the Fable window (operator-authorized until ~midnight) for 4 consults: v8 CJK, extract routing, secondary-address, (NZ resurrection folded into #1100's finding).
 
@@ -43,7 +43,7 @@ _Drafted during the shift; finalized at hand-off. Window: ~01:30–11:55 UTC (20
 
 1. `npm deprecate @mailwoman/classifiers` (needs your npm auth).
 2. NZ `dependent_locality`: resurrect via STAGE4/head-LR, or remap suburb→locality? (b) ships faster; (a) is the "right" schema and coincides with the #456/#1100 STAGE4.
-3. Promote calls: any v7.1.0 (CA/MX/BR) model is staged for your gate, never self-shipped.
+3. Promote calls: any v7.1.0 (CA/MX/BR) model is staged for your check, never self-shipped.
 
 ## Next steps (the cron drives)
 

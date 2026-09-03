@@ -67,7 +67,7 @@ ratio _and_ the no-fragment weight relative to fr-fragment — and they must be 
 prediction I could not strongly ground. fr-fragment's +50pp was measured at its **8k** final; I do
 not have its own 2k-vs-8k trajectory on a board, so I cannot say whether +1.7pp at 2k is "flat" or
 "early but real." That is precisely the class of threshold prediction that should not, by itself,
-gate a decision — so the call goes to the operator rather than being made by a bar I cannot defend.
+check a decision — so the call goes to the operator rather than being made by a bar I cannot defend.
 What I will not do is _relax_ the bar I wrote in order to launch the 8k myself.
 
 ## The likely reason it barely moved — a named hypothesis, not a knob spun

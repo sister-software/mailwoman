@@ -14,18 +14,18 @@
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
-export const description = "Promotion gate (#479) — eval battery + gate-spec floors → verdict.json"
+export const description = "Promotion check (#479) — eval battery + check-spec floors → verdict.json"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
  */
 export const spec = {
-	name: "gate",
+	name: "check",
 	description,
 	options: {
 		model: { type: "string", description: "Candidate fp32 ONNX (required)" },
 		int8: { type: "string", description: "Quantized int8 sibling — adds the int8 battery + delta cap" },
-		gate: { type: "string", description: "Gate-spec JSON path or registered name (required)" },
+		check: { type: "string", description: "Check-spec JSON path or registered name (required)" },
 		tokenizer: { type: "string", description: "Tokenizer path" },
 		card: { type: "string", description: "Model-card JSON" },
 		"gazetteer-lexicon": { type: "string", description: "Gazetteer lexicon JSON" },
@@ -38,7 +38,7 @@ export const spec = {
 interface Options {
 	model?: string
 	int8?: string
-	gate?: string
+	check?: string
 	tokenizer?: string
 	card?: string
 	gazetteerLexicon?: string
@@ -47,12 +47,12 @@ interface Options {
 	outDir?: string
 }
 
-const EvalGate: ParsedCommandComponent<Options> = ({ options }) => {
+const EvalPromote: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { runPromotionGate } = await import("#eval-harness/promotion-eval")
+			const { runPromotionEval } = await import("#eval-harness/promotion-eval")
 
-			return await runPromotionGate(options)
+			return await runPromotionEval(options)
 		},
 		(exitCode) => exitCode
 	)
@@ -63,4 +63,4 @@ const EvalGate: ParsedCommandComponent<Options> = ({ options }) => {
 	return null
 }
 
-export default EvalGate
+export default EvalPromote

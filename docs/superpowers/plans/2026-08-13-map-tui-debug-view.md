@@ -439,7 +439,7 @@ export interface LabelStyle {
 	property: string
 }
 export type LayerStyle = FillStyle | LineStyle | LabelStyle
-/** Styles applying to a protomaps-basemap layer at a zoom, draw-ordered (fills < lines < labels). Empty for unstyled/gated layers. */
+/** Styles applying to a protomaps-basemap layer at a zoom, draw-ordered (fills < lines < labels). Empty for unstyled/conditional layers. */
 export function stylesFor(layerName: string, zoom: number): LayerStyle[]
 ```
 
@@ -461,7 +461,7 @@ describe("stylesFor", () => {
 		expect(styles.some((s) => s.kind === "label" && s.property === "name")).toBe(true)
 	})
 
-	it("gates buildings until high zoom", () => {
+	it("checks buildings until high zoom", () => {
 		expect(stylesFor("buildings", 10)).toHaveLength(0)
 		expect(stylesFor("buildings", 14).length).toBeGreaterThan(0)
 	})
@@ -929,9 +929,9 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 `GeocodeSessionOptions` is a structural interface declared in `geocode-session.ts` (NOT derived from the command's zod schema — that would invert the import direction). It lists exactly the fields the session reads, with types copied from the schema: `locale`, `bias`, `defaultCountry`, `countryScope`, `resolveDB`, `candidateDB`, `dataRoot`, `addressPointsDB`, `interpolationDB`, `interpCalibration`, `localeCountryPrior`, `placeCountry`, `postcodeCountryCoherence`, `forkEntity`, `postcodeShapeCoherence`, `postcodeContainmentCoherence`, `placeCountryThreshold`. The command passes its whole parsed options object; structural typing accepts the superset.
 
-- [ ] **Step 1: Move the assembly.** `createGeocodeSession` performs, in this order (preserving today's error precedence — gazetteer path first, weights second): `resolveCandidateDBPath` → `resolveWOFPath` → classifier load → `resolver-wof-sqlite` import → lookup/RegionDatabaseProvider/explicit-extract wiring → BAN/OSM optional providers → CoarsePlacer → `createWOFResolver` → parse the `--bias` string once. All of this is a cut-and-paste from `runGeocode` with `input`-dependent code left behind.
+- [ ] **Step 1: Move the assembly.** `createGeocodeSession` performs, in this order (preserving today's error precedence — gazetteer path first, weights second): `resolveCandidateDBPath` → `resolveWOFPath` → classifier load → `resolver-wof-sqlite` import → lookup/RegionDatabaseProvider/explicit-extract wiring → BAN/OSM optional providers → CoarsePlacer → `createWOFResolver` → parse the `--bias` string once. All of this is a reduce-and-paste from `runGeocode` with `input`-dependent code left behind.
 
-  `session.geocode(input)` performs the per-input work: `parseForGeocode` → the `barePostcodeFormatConflict` / `inferredScopeOK` / `withheldCountry` derivations → the fork-entity dep probe (hoist the `existsSync(poiDBPath)` + dynamic imports into `createGeocodeSession` so they run once; keep the `options.forkEntity !== false` gate) → `geocodeAddress(...)` with the exact dep spread `runGeocode` builds today → returns `{ result, tree: parsedTree }`.
+  `session.geocode(input)` performs the per-input work: `parseForGeocode` → the `barePostcodeFormatConflict` / `inferredScopeOK` / `withheldCountry` derivations → the fork-entity dep probe (hoist the `existsSync(poiDBPath)` + dynamic imports into `createGeocodeSession` so they run once; keep the `options.forkEntity !== false` check) → `geocodeAddress(...)` with the exact dep spread `runGeocode` builds today → returns `{ result, tree: parsedTree }`.
 
   `close()`: the current `finally` block's five closes, each wrapped so one failure doesn't skip the rest.
 
@@ -955,7 +955,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 }
 ```
 
-- [ ] **Step 3: Run the regression gate.** `yarn compile && yarn vitest run mailwoman/commands/geocode.test.ts` — PASS with zero test-file edits. Also run one manual parity check against the compiled CLI if the lab data root is present: `node mailwoman/out/cli.js geocode "3215 SE Clinton St, Portland OR" > /tmp/claude-1000/-home-lab-Projects-mailwoman/*/scratchpad/after.json` and diff against the same command run from `git stash` state (byte-identical expected).
+- [ ] **Step 3: Run the regression check.** `yarn compile && yarn vitest run mailwoman/commands/geocode.test.ts` — PASS with zero test-file edits. Also run one manual parity check against the compiled CLI if the lab data root is present: `node mailwoman/out/cli.js geocode "3215 SE Clinton St, Portland OR" > /tmp/claude-1000/-home-lab-Projects-mailwoman/*/scratchpad/after.json` and diff against the same command run from `git stash` state (byte-identical expected).
 
 - [ ] **Step 4: Commit.** `geocode: extract the warm session from runGeocode`
 

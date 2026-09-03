@@ -144,7 +144,7 @@ const MULTIWORD_STREETS = [
 	"Liberty Square",
 	"Washington Crossing",
 	"Kings Highway",
-	"Queens Gate",
+	"Queens Check",
 	"Princeton Junction",
 ] as const
 

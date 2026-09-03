@@ -7,7 +7,7 @@ title: "v0.6.3 step 100K — HOLD, dilution mechanism confirmed"
 
 The v0.6.3 retrain (per the
 [street-supplement architecture](../../concepts/street-supplement-architecture.mdx))
-reached step 100K and was evaluated. Verdict: **HOLD**, three gate violations,
+reached step 100K and was evaluated. Verdict: **HOLD**, three check violations,
 and the predicted dilution failure mode materialized.
 
 ## Setup
@@ -27,7 +27,7 @@ and the predicted dilution failure mode materialized.
 | Metric                              | v0.6.0 baseline | v0.6.2 step 100K | **v0.6.3 step 100K**         |
 | ----------------------------------- | --------------- | ---------------- | ---------------------------- |
 | Exact match                         | 21.1%           | 22.4%            | **21.8%**                    |
-| Gate violations                     | (ref)           | 1                | **3**                        |
+| Check violations                    | (ref)           | 1                | **3**                        |
 | `dependent_locality` hallucinations | 0               | 0 ✓              | **844** ❌                   |
 | `locality` recall                   | 40.0%           | 41.0%            | **34.7%** ❌ (-5.3pp)        |
 | `house_number` recall               | 79.0%           | 74.0%            | **77.0%** ✓ (+3pp vs v0.6.2) |
@@ -79,18 +79,18 @@ dep_locality. The model is confusing the two tags more than v0.6.2 did.
 
 12.5% vs v0.6.0's 14.4%. v0.6.3 is **a sidegrade — worse than v0.6.0 on the
 breadth eval**. Per the decision tree, this alone is grounds for HOLD even
-if the gate passed.
+if the check passed.
 
-## Gate verdict: HOLD
+## Check verdict: HOLD
 
 Per the decision tree:
 
-| Gate eval | harness pass | Action               |
-| --------- | ------------ | -------------------- |
-| Pass      | ≥ 25%        | Promote to default   |
-| Pass      | 15-24%       | Ship as experimental |
-| Pass      | ≤ 14.4%      | HOLD (sidegrade)     |
-| **Fail**  | **any**      | **HOLD**             |
+| Check eval | harness pass | Action               |
+| ---------- | ------------ | -------------------- |
+| Pass       | ≥ 25%        | Promote to default   |
+| Pass       | 15-24%       | Ship as experimental |
+| Pass       | ≤ 14.4%      | HOLD (sidegrade)     |
+| **Fail**   | **any**      | **HOLD**             |
 
 v0.6.3 falls in row 4: **HOLD**. Two paths from here:
 

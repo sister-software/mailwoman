@@ -11,7 +11,7 @@ PR-and-flag. The verdict that motivates the soft-signal-at-0.9 choice:
   **bias** country-level disambiguation (region + locality namesake collisions), the same way a postcode
   pins it today — so `Plauen, …` (DE) stops resolving to a US/IT namesake, and an off-map address stops
   getting pinned to a wrong in-map country.
-- **Non-goal:** it is **not** a gate. It never filters candidates, never abstains the pipeline, never
+- **Non-goal:** it is **not** a check. It never filters candidates, never abstains the pipeline, never
   overrides an explicit `--default-country`/locale or a stronger signal. A wrong guess costs a little
   ranking weight, never a dropped or wrong-filtered result. (This is why ~0.9 is safe — see Threshold.)
 
@@ -47,7 +47,7 @@ Both emit country posteriors; they must not double-count.
   (deferring to a postcode posterior per the precedence rule above).
 - **`geocode-core`** wires the same: a `CoarsePlacer` dep (optional), posterior fed into the resolve opts.
 - **Off by default → byte-identical.** Like `resolve`/`fst`, absent the stage the pipeline is unchanged.
-  PR-and-flag; promotion to default is a separate, evidence-gated step.
+  PR-and-flag; promotion to default is a separate, evidence-conditional step.
 
 ## Threshold ~0.9 (and why the soft framing earns it)
 
@@ -66,7 +66,7 @@ just means "no country hint this time," which degrades gracefully (the resolver 
 correct). The harmful error is the opposite: a **confident wrong placement** on an off-map address (→ wrong
 country search). So the asymmetry favors a high threshold, and **~0.9** sits where off-map catch is high
 (~85%) while the only thing we "lose" on in-map is some boosts we'd have applied — not correctness. (A
-_hard_-gate design would force ~0.85 to keep in-map routing >90%; the soft design removes that pressure.)
+_hard_-check design would force ~0.85 to keep in-map routing >90%; the soft design removes that pressure.)
 
 ## Validation — grade the ASSEMBLED pipeline, not the model
 
@@ -77,7 +77,7 @@ Per the reconcile-retirement lesson (grade the pipeline against truth, never a c
   WITH vs WITHOUT the coarse-placer posterior. Must improve the ambiguous/off-map cases at **no in-map
   regression** (reuse the honest-eval harness + the #369 namesake set).
 - **Byte-stability check:** with the stage off, output is byte-identical (CI-assertable).
-- Gate promotion-to-default on a measured net-positive here, exactly as #584/#590 were gated.
+- Check promotion-to-default on a measured net-positive here, exactly as #584/#590 were conditional.
 
 ## Prerequisite — the model must ship
 
@@ -85,7 +85,7 @@ The coarse-placer int8 model (0.79 MB) currently lives only on `$MAILWOMAN_DATA_
 for installed consumers needs it packaged. **Recommended:** commit the int8 artifact under `core/data/` and
 add it to `@mailwoman/core`'s `files` (it already ships ~9 MB of dictionaries; +0.79 MB is negligible), with
 `CoarsePlacer.fromArtifactDir` resolving the bundled path by default + an env/opt override. (Alternative: a
-dedicated weights package — heavier process for a tiny artifact.) **This is gated by the v4.8.1
+dedicated weights package — heavier process for a tiny artifact.) **This is blocked by the v4.8.1
 clean-install smoke test** — the new artifact must resolve from a fresh `npm install`.
 
 ## Use-case impact (the three modes)
@@ -107,7 +107,7 @@ clean-install smoke test** — the new artifact must resolve from a fresh `npm i
 - **The linear ceiling** → the threshold can't push _both_ axes past ~90 (curves cross at ~88/88). The
   follow-on (separate milestone) is an **open-set / novelty method** (Mahalanobis on the in-map manifold,
   or a "not-any-of-11" head) that moves the whole frontier out — at which point the threshold relaxes and a
-  default-on (even gate) integration becomes defensible.
+  default-on (even check) integration becomes defensible.
 
 ## Phasing
 

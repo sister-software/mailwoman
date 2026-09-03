@@ -36,7 +36,7 @@ differ, the repository copy governs code contributions and this page will be cor
 
 For anything larger than a typo or an obvious fix, get in touch first so we can agree on the
 approach before you spend the time. Model-layer work (training, corpus extracts, evals) has its
-own gates and runbook: [Contributing model work](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/CONTRIBUTING_MODEL_WORK.mdx).
+own checks and runbook: [Contributing model work](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/CONTRIBUTING_MODEL_WORK.mdx).
 
 ### Requirements for acceptable contributions
 
@@ -60,7 +60,7 @@ own gates and runbook: [Contributing model work](https://github.com/sister-softw
 3. **Tests.** Tests are co-located (`*.test.ts`, vitest) and `yarn ci:test` must pass. A bug
    fix should arrive with the test that would have caught it. Changes that can move a
    geocoding result face the release gauntlet — the executable regression log, metamorphic
-   invariants, and held-out statistical gates described in
+   invariants, and held-out statistical checks described in
    [Methodology](./concepts/methodology.mdx).
 4. **Commits and PRs.** Conventional-commit messages (`fix(scope): …`), branched off `main`,
    one concept per PR, CI green (Test + Docs workflows).

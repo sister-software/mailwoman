@@ -20,7 +20,7 @@ weights/extracts aren't in the worktree).
 ## What got built — the cascade
 
 ```
-CSV / SQLite -ingest-> normalize (name, org, address) -[GeocodeAddress seam]-> SourceRecord
+CSV / SQLite -ingest-> normalize (name, org, address) -[GeocodeAddress boundary]-> SourceRecord
    -> @mailwoman/match  BLOCK (geo | canonical | phone | email)
                         SCORE (Jaro-Winkler, distance buckets, Fellegi-Sunter;
                                m/u learned label-free by EM; rare values up-weighted by TF)
@@ -96,8 +96,8 @@ Corp` equals `Acme Corporation, LLC`), DBA split, ampersand to "and", intra-toke
   - `geojson.ts`: `toGeoJSON(entities)` to a QGIS Point FeatureCollection (recordCount,
     cohesion, name/org/address, geocode tier as properties).
   - `ingest.ts`: `parseCsv`, `ColumnMapping`, `ingestRows` (pure column-map + normalize),
-    `GeocodeAddress` (the injected geocoder **seam**), `geocodeAddressVia` (the adapter
-    that wires mailwoman's **real** parse+geocode into the seam; `RawGeocode` is
+    `GeocodeAddress` (the injected geocoder **boundary**), `geocodeAddressVia` (the adapter
+    that wires mailwoman's **real** parse+geocode into the boundary; `RawGeocode` is
     structurally a `GeocodeResult` subset, so this package never imports the heavy runtime).
 
 ## Locked decisions (don't re-litigate)
@@ -139,7 +139,7 @@ solid baseline; org _matching_ needs a follow-up pass. Full detail in
   it clean for CI's `--immutable`).
 - **The heavy geocoder (weights + situs/interp extracts) is NOT in this worktree**, so the
   real end-to-end geocode run can't be unit-tested here — it's operator-verifiable via the
-  CLI. That's why geocoding is an injected seam.
+  CLI. That's why geocoding is an injected boundary.
 - Another agent was active on `eval/oa-offmap-pull` in the shared checkout during this
   shift — we stayed isolated in the worktree.
 - **Docs under `docs/articles/` are linted as MDX** — backtick any raw angle brackets or

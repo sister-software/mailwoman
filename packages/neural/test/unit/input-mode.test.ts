@@ -63,7 +63,7 @@ describe("inputMode register enforcement (Decision A)", () => {
 		expect(seen.evidence[0]).toBeUndefined()
 	})
 
-	it("street-context gate: a bare place name feeds NO locality evidence even in fragmented mode", async () => {
+	it("street-context check: a bare place name feeds NO locality evidence even in fragmented mode", async () => {
 		// The 8.2.0 pre-ship gauntlet catch: homograph-flagged locality evidence on a bare world-city
 		// lookup rotates the parse (locality → region/street). No street context → locality channel
 		// withheld (the declared-ablation identity); the street channel is inert on such input anyway.

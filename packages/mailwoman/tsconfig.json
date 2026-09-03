@@ -25,7 +25,7 @@
 		{ "path": "../resolver" },
 		{ "path": "../corpus" },
 		{ "path": "../kind-classifier" },
-		{ "path": "../locale-gate" },
+		{ "path": "../locale-hint" },
 		{ "path": "../match" },
 		{ "path": "../neural" },
 		{ "path": "../normalize" },

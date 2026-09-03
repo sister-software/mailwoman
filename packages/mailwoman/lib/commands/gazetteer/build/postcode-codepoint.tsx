@@ -75,7 +75,7 @@ const GazetteerBuildPostcodeCodePoint: ParsedCommandComponent<Options> = ({ opti
 			"coverage: England/Scotland/Wales only — ZERO Northern Ireland (BT) postcodes, by product definition",
 			"licence + full OGL v3 attribution block in the `meta` table",
 			"sealed 0444",
-			"next: gate vs the incumbent GeoNames GB rows, THEN swap DEFAULT_POSTCODE_DATABASES deliberately",
+			"next: check vs the incumbent GeoNames GB rows, THEN swap DEFAULT_POSTCODE_DATABASES deliberately",
 		]
 	})
 

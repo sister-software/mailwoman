@@ -550,7 +550,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 					})
 				).matcher
 			} catch (error) {
-				console.warn(`[mailwoman] street-morphology FST unavailable: ${(error as Error).message} — gate off`)
+				console.warn(`[mailwoman] street-morphology FST unavailable: ${(error as Error).message} — check off`)
 			}
 		}
 	}

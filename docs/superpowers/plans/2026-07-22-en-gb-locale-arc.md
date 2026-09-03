@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Branch: `feat/en-gb-locale-arc`. Commit per task. PRs cut from `origin/main`.
+- Branch: `feat/en-gb-locale-arc`. Commit per task. PRs branched from `origin/main`.
 - TS source runs under plain `node`; relative imports use explicit `.ts`; `erasableSyntaxOnly` (no enum/namespace/param-properties).
 - Lint/format: oxlint + oxfmt (pre-commit checks formatting — run `npx oxfmt <file>` before committing).
 - Compiled CLI for runs: `yarn compile` then `node mailwoman/out/cli.js ...`. Never `npx tsx`.
@@ -437,7 +437,7 @@ In `corpus/src/extract-recipes/locale.ts`, after the NZ entry:
 
 - [ ] **Step 4: Add the country-append fraction**
 
-First VERIFY current behavior: read `synthesizeLocaleRow` in `corpus/src/synthesize-german.ts` and check whether `intlFraction` rows already append a country surface form. If they do, this step is config only (set the fraction when building the GB extract) — record the finding and skip the code change. If not, add the fr-admin-split pattern (fr-admin-split.ts L122-128) to the locale recipe's emit loop, gated on a new `LocalePart`-level or recipe-level option so existing locales are byte-identical:
+First VERIFY current behavior: read `synthesizeLocaleRow` in `corpus/src/synthesize-german.ts` and check whether `intlFraction` rows already append a country surface form. If they do, this step is config only (set the fraction when building the GB extract) — record the finding and skip the code change. If not, add the fr-admin-split pattern (fr-admin-split.ts L122-128) to the locale recipe's emit loop, blocked on a new `LocalePart`-level or recipe-level option so existing locales are byte-identical:
 
 ```ts
 // In the run loop, after `const synth = synthesizeLocaleRow(...)`:
@@ -801,14 +801,14 @@ git commit -m "feat(weights): @mailwoman/neural-weights-en-gb overlay — postco
 
 ---
 
-### Task 10: Post-probe (operator-gated — NOT executed with this plan)
+### Task 10: Post-probe (operator-conditional — NOT executed with this plan)
 
-8k run on probe PASS → full gate battery + gauntlet → `mailwoman release hf` staging → CI publish (per the mailwoman-release skill) → GB demo presets in `docs/src/shared/demo-helpers.ts` (2 entries, one with dependent locality) → demo redeploy → eval ledger-append → talk numbers. Each is its own session-level decision; listed here only so the arc's tail is visible.
+8k run on probe PASS → full check battery + gauntlet → `mailwoman release hf` staging → CI publish (per the mailwoman-release skill) → GB demo presets in `docs/src/shared/demo-helpers.ts` (2 entries, one with dependent locality) → demo redeploy → eval ledger-append → talk numbers. Each is its own session-level decision; listed here only so the arc's tail is visible.
 
 ---
 
 ## Self-review notes
 
-- Spec coverage: Phase 0 done pre-plan (PPD+Code-Point on disk); Phase 1 = Tasks 1-4; Phase 2 = Tasks 6-8; Phase 3 = Tasks 5+9 (heal fix became a diagnostic per exploration — spec updated in Task 5); Phase 4 = Task 9; Phase 5 = Task 10 (gated). EPC/ONSPD are wave-2 by spec and appear in no task.
+- Spec coverage: Phase 0 done pre-plan (PPD+Code-Point on disk); Phase 1 = Tasks 1-4; Phase 2 = Tasks 6-8; Phase 3 = Tasks 5+9 (heal fix became a diagnostic per exploration — spec updated in Task 5); Phase 4 = Task 9; Phase 5 = Task 10 (conditional). EPC/ONSPD are wave-2 by spec and appear in no task.
 - Type consistency: `titleCaseGB` (1→2), `extractPPDTuples`/`PPDExtractStats` (2), `synth-gb` source name (3→7), board filenames (4→8), `reinit_label_rows`/`classifier_learning_rate` (6→7) — names match across tasks.
 - Known unknowns flagged inline rather than guessed: exact `TrainConfig` file, pytest layout, fixture-helper name in `locale.test.ts`, v385 volume path, overlay procedure (runbook-owned). Each has a verify-first step.

@@ -22,7 +22,7 @@ updates:
           - "patch"
     ignore:
       # onnxruntime bumps change inference output. They go through the eval
-      # gate as deliberate operator moves (neural-web additionally pins an
+      # check as deliberate operator moves (neural-web additionally pins an
       # exact ORT dev build), never as bot PRs.
       - dependency-name: "onnxruntime-node"
       - dependency-name: "onnxruntime-web"
@@ -53,7 +53,7 @@ updates:
       # list mirrors verify_toolchain.py's INVARIANT_DEPS: a bump to any of
       # these must land in pyproject AND the Modal image together, through
       # the export-verification discipline, so bot PRs (which touch only
-      # pyproject) always fail the verify-toolchain CI gate.
+      # pyproject) always fail the verify-toolchain CI check.
       - dependency-name: "torch"
       - dependency-name: "transformers"
       - dependency-name: "onnx"

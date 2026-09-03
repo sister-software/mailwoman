@@ -444,7 +444,7 @@ describe("buildCandidateTable", () => {
 				INSERT INTO spr VALUES (7000000000200, 'Chicago', 'locality', 'US', 41.88, -87.63, -1, 0);
 				INSERT INTO spr VALUES (7000000000202, 'Saint-Étienne', 'locality', 'FR', 45.43, 4.39, -1, 0);
 				-- Same name + country + placetype as the admin fixture's Springfield, but 1,500 km away:
-				-- a DIFFERENT town, so the gate must refuse it rather than lend it the score.
+				-- a DIFFERENT town, so the check must refuse it rather than lend it the score.
 				INSERT INTO spr VALUES (7000000000201, 'Springfield', 'locality', 'US', 42.10, -72.59, -1, 0);
 				-- A postcode-shaped row: the extract fold must not pick it up either way.
 				INSERT INTO spr VALUES (7000000060601, '60601', 'postalcode', 'US', 41.885, -87.62, -1, 0);
@@ -472,7 +472,7 @@ describe("buildCandidateTable", () => {
 
 			const result = await buildCandidateTable({ input, output, importance })
 			expect(result.importanceScored).toBe(2) // Chicago + Saint-Étienne
-			expect(result.importanceGated).toBe(1) // Springfield — same key, wrong town
+			expect(result.importanceFiltered).toBe(1) // Springfield — same key, wrong town
 
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
@@ -531,7 +531,7 @@ describe("buildCandidateTable", () => {
 			const result = await buildCandidateTable({ input, output })
 			// `undefined`, not 0: the pass did not run. A 0 would claim the source matched nothing.
 			expect(result.importanceScored).toBeUndefined()
-			expect(result.importanceGated).toBeUndefined()
+			expect(result.importanceFiltered).toBeUndefined()
 
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
@@ -737,7 +737,7 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 		;(await db).destroy()
 	})
 
-	test("keeps the gates: unattested, near-live, under-floor and superseded rows all stay dead", async () => {
+	test("keeps the checks: unattested, near-live, under-floor and superseded rows all stay dead", async () => {
 		await using db = await buildWithBackfill(true)
 
 		for (const key of ["oldblob", "nearlive", "tinyham", "ghosttown"]) {

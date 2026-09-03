@@ -12,7 +12,7 @@
 	"references": [
 		{ "path": "../core" },
 		{ "path": "../codex" },
-		{ "path": "../locale-gate" },
+		{ "path": "../locale-hint" },
 		{ "path": "../query-shape" }
 	]
 }

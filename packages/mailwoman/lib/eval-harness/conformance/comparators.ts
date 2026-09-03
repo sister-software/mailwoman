@@ -406,7 +406,7 @@ function compareMechanismShape(base: ConformanceOutcome, variant: ConformanceOut
 	// Same members, different order: the account emits shapes in pipeline-stage order, so the sequence carries which
 	// stage spoke first and a reordering is a real difference rather than a set equality.
 	if (!differences.length) {
-		differences.push(`same shapes in a different seam order: [${a.join(", ")}] → [${b.join(", ")}]`)
+		differences.push(`same shapes in a different boundary order: [${a.join(", ")}] → [${b.join(", ")}]`)
 	}
 
 	return { comparator: "mechanism_shape", observed: "diverges", basis, differences }

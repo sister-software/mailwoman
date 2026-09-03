@@ -143,7 +143,7 @@ export function sourceConflicts(sources: readonly CountrySources[]): SourceConfl
 				? `${entry.country} is cloned as a WOF repo AND listed under ${entry.sources
 						.filter((s) => s !== AdminSource.WOF)
 						.join(" + ")} — both fold into one database, and verifyAdmin tests FLOORS, so the duplication moves ` +
-					"every gate number in the passing direction and the build ships"
+					"every check number in the passing direction and the build ships"
 				: `${entry.country} is served by ${entry.sources.join(" + ")}, which the 2026-08-17 baseline does not record ` +
 					"— an existing measured trade is not the same as a country silently acquiring a second source",
 		}))

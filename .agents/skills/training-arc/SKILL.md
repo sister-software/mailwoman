@@ -112,7 +112,7 @@ publishing costs a user the difference from what they have today.
 
 - net improved-minus-regressed ≥ 0 on the 649-row board
 - FR, GB and DE show no regression anywhere — iron rule 6, the D-rule
-- the promotion battery `mwdev_gate --spec v9.0.0-base` passes every floor declared by the eval
+- the promotion battery `mwdev_promotion_eval --spec v9.0.0-base` passes every floor declared by the eval
   spec; use the passed and total counts printed by the command rather than a count copied into this
   runbook
 

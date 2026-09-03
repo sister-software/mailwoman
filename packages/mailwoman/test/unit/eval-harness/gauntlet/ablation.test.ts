@@ -84,7 +84,7 @@ describe("boundedOccurrences — the guard that keeps a deletion attributable", 
 	})
 })
 
-describe("deleteSpan — the cut, and the separator debris it leaves", () => {
+describe("deleteSpan — the deletion, and the separator debris it leaves", () => {
 	it("closes the gap a mid-string deletion opens", () => {
 		const input = "181 Rue du Chevaleret, 75013 Paris"
 
@@ -255,7 +255,7 @@ describe("scoreAblation — one deletion against its own anchor", () => {
 		expect(scored.broken).toBeNull()
 	})
 
-	it("reads the substituted slot off the SAME field the regression gate grades", () => {
+	it("reads the substituted slot off the SAME field the regression check grades", () => {
 		const scored = scoreAblation(result(), result({ postcode: "1600" }), "94043", "postcode", 5)
 
 		expect(scored.slot).toBe("substituted")

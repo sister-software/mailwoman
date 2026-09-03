@@ -13,7 +13,7 @@
 #      alone showing (+0.058/+0.035/+0.055 at 3k).
 #   2. NO house-number decay at 3k: alnum-housenumber + street-housenumber ON−OFF ≥ −0.010 (P-A
 #      naked-channel read −0.070/−0.045 — the decay the curriculum must kill).
-#   3. ABLATION GATE: the OFF (all-evidence-zeroed) column ≈ v385's P0 fixture numbers (homonym 159,
+#   3. ABLATION CHECK: the OFF (all-evidence-zeroed) column ≈ v385's P0 fixture numbers (homonym 159,
 #      bare-street 241, particle 301, …) — base competence must survive the retrain.
 #   VERDICT: all three ⇒ the bundle architecture is CONFIRMED buildable (the Track-2 brief says
 #   "build it"); any miss ⇒ the specific failing leg scopes the curriculum research. One run.

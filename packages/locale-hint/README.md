@@ -1,4 +1,4 @@
-# `@mailwoman/locale-gate`
+# `@mailwoman/locale-hint`
 
 **Stage 2 of the Mailwoman runtime pipeline** — rule-based locale detection.
 
@@ -9,7 +9,7 @@ list of candidates so the coordinator can surface disagreement when the
 caller's explicit `--locale` hint differs from what the input shape implies.
 
 ```ts
-import { detectLocale } from "@mailwoman/locale-gate"
+import { detectLocale } from "@mailwoman/locale-hint"
 
 const hint = detectLocale(queryShape, {})
 // hint.primary → "en-US"
@@ -32,14 +32,14 @@ scoreFallback(shape: QueryShapeLike): LocaleCandidate[]
 ## Pipeline position
 
 ```
-query-shape → locale-gate → kind-classifier → phrase-grouper → classifier → ...
+query-shape → locale-hint → kind-classifier → phrase-grouper → classifier → ...
 ```
 
 Stage 2 in the [Staged Pipeline Contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx).
 
 ## Design
 
-- **Rule-based v1.** `@mailwoman/locale-gate` scores candidate locales by composing
+- **Rule-based v1.** `@mailwoman/locale-hint` scores candidate locales by composing
   deterministic rules over the `QueryShape`. A trained character-level model
   is deferred to a future release.
 - **Bitter-lesson-safe:** script class, postcode regex patterns, known-format

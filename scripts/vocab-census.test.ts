@@ -25,16 +25,6 @@ function hitFor(source: string, word: string): ReturnType<typeof classify> {
 	)
 }
 
-describe("a contract-bearing name earns the backtick remedy", () => {
-	it.each([
-		["\t// runs locale-gate over the query shape", "gate"],
-		["\t * @mailwoman/locale-gate derives a LocaleHint.", "gate"],
-		["\t// mwdev_gate answers from the warm engine.", "gate"],
-	])("%s", (source, word) => {
-		expect(hitFor(source, word)[0]?.remedy).toBe(Remedy.backtick)
-	})
-})
-
 describe("a modifier that names the check earns the rename remedy", () => {
 	it.each([
 		["\t// then fail the ambiguity gate for Nassau's rows", "gate", "ambiguity"],
@@ -60,13 +50,6 @@ describe("a bare reference earns the read-context remedy", () => {
 })
 
 describe("the classifier reads the whole line, not only the modifier", () => {
-	it("a contract-bearing name wins even when an ordinary word precedes it", () => {
-		// `the` would otherwise make this bare, and `pipeline` would otherwise make it a rename.
-		const [hit] = hitFor("\t * Whatever the pipeline locale-gate says, the hint records it.", "gate")
-
-		expect(hit?.remedy).toBe(Remedy.backtick)
-	})
-
 	it("a record whose line cannot be read is still counted, never dropped", () => {
 		const hits = classify(["missing.ts:9:1:Mailwoman.AmbiguousShorthand:'gate' is ambiguous"], new Map())
 

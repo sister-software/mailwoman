@@ -9,7 +9,7 @@
 #      73,143 rows — mean_init_multisplice, the fr-precedent twin).
 #   3. lr 5.0e-5 constant / 12000 steps / eval+save 2000 — the splice-adaptation fine-tune idiom
 #      (v2.4.1 precedent: new embedding rows must move off inherited signals; 1e-5 is too cold).
-# GATES (operator reviews; NO auto-promote): parity floors + per-country non-regression (US 41%,
+# CHECKS (operator reviews; NO auto-promote): parity floors + per-country non-regression (US 41%,
 # FR>=39% from the assay read), fragment-dev separators hold, then the STANDARD set (per-locale F1
 # US/FR, gauntlet incl. held-out + metamorphic, preset-compare) before any promote/ship talk.
 data:

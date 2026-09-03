@@ -32,7 +32,7 @@ under test is that a lieu-dit pair index moves it the way GB's moved 0/69 → 69
 ## Pre-registered bars
 
 - **B-R6.1 (no regression).** Full gauntlet with the FR index present vs absent, graded through
-  per-country overlays. Bar: **zero newly-failing gated cases**, and the FR rows in particular
+  per-country overlays. Bar: **zero newly-failing counted cases**, and the FR rows in particular
   (cedex, the comma-free Rue du Chevaleret row) must not move.
 - **B-R6.2 (venue-confound floor).** A held-out FR confound board — lieu-dit surfaces opening venue
   names, the law-1 class. French lieux-dits are heavily article-led ("La Croix", "Le Moulin", "Les
@@ -65,7 +65,7 @@ had no leading form. France writes `12210 Montpeyroux`, so the parent key folded
 `"12210 montpeyroux"` and missed every bare-commune entry. Measured directly:
 `"…, Pinsonnac, 12210 Montpeyroux"` gave `applied=false`, while the identical row with the postcode
 removed gave `applied=true, dependent_locality=Pinsonnac`. Fixed with `stripLeadingSegmentPostcode`,
-gated by `LEADING_POSTCODE_COUNTRIES` and anchored full-match against the country's own codex shape,
+blocked by `LEADING_POSTCODE_COUNTRIES` and anchored full-match against the country's own codex shape,
 so a country that never writes that form is byte-identical.
 
 **2. A newline was not a segment boundary.** `computeGroupSegments` scanned for `,` only. Every row
@@ -97,6 +97,6 @@ multi-line address, in every locale, was silently missing the segment path.
 
 ## Verdict
 
-The FR instance ships. R5 predicted this locale was artifact-gated; it was artifact-gated AND
-probe-gated, and the probe half was locale-general breakage nobody had measured because no shipped
+The FR instance ships. R5 predicted this locale was artifact-conditional; it was artifact-conditional AND
+probe-conditional, and the probe half was locale-general breakage nobody had measured because no shipped
 locale wrote its postcode first or its addresses multi-line through this path.

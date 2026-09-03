@@ -25,7 +25,7 @@ The Tier 0.5 postal concept articles (postcode, ZIP code, concordance, intersect
 
 ### 2. The Knowledge Ladder / staged pipeline
 
-The six-stage decomposition — normalize → locale gate → kind classifier → phrase grouper → token classify → sequence correct → reconcile → resolve — is the best design artifact in the project. It maps cleanly to the "learn distributions, look up the world, compose constraints" principle. The Knowledge Ladder article (`the-knowledge-ladder.md`) explains not just what each stage does but _why it belongs there and not somewhere else_. This is valuable for both implementers and architecture reviewers.
+The six-stage decomposition — normalize → locale check → kind classifier → phrase grouper → token classify → sequence correct → reconcile → resolve — is the best design artifact in the project. It maps cleanly to the "learn distributions, look up the world, compose constraints" principle. The Knowledge Ladder article (`the-knowledge-ladder.md`) explains not just what each stage does but _why it belongs there and not somewhere else_. This is valuable for both implementers and architecture reviewers.
 
 ### 3. Ship of Theseus coexistence
 
@@ -93,7 +93,7 @@ The current structure — `understanding/`, `concepts/`, `plan/`, `evals/`, `ret
 
 The project uses **Tier**, **Stage**, **Phase**, and **Thread** as organizational concepts. A reader encounters all four within the first 20 minutes of reading:
 
-- **Stage** — a runtime pipeline stage (Stage 1: Normalize, Stage 2: Locale gate, ...)
+- **Stage** — a runtime pipeline stage (Stage 1: Normalize, Stage 2: Locale check, ...)
 - **Tier** — a model vocabulary expansion (Tier 1 = coarse labels, Tier 2 adds street/venue/house_number, Tier 3 future = attention/po_box)
 - **Phase** — a plan milestone (Phase 0: Foundation, Phase 1: Corpus, Phase 2: Training, ...)
 - **Thread** — a v0.5.0 parallel workstream (Thread A1: tokenizer retrain, Thread B: kryptonite catalogue, ...)

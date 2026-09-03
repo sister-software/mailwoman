@@ -72,7 +72,7 @@ const TOLS = [0.1, 0.5, 5] as const
 /**
  * The z-test runs at the locality bucket (the dominant resolvable tier)
  */
-const GATE_TOL = 5
+const THRESHOLD_TOL = 5
 
 /**
  * One drawn row — a bare-form query and the truth coordinate it came with.
@@ -276,8 +276,8 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 	candDeps[Symbol.dispose]()
 
 	const n = sample.length
-	const gateIdx = TOLS.indexOf(GATE_TOL as (typeof TOLS)[number])
-	const z = zStat(cand.hits[gateIdx]!, prod.hits[gateIdx]!, n)
+	const checkIdx = TOLS.indexOf(THRESHOLD_TOL as (typeof TOLS)[number])
+	const z = zStat(cand.hits[checkIdx]!, prod.hits[checkIdx]!, n)
 
 	console.log(`\n=== Gauntlet · held-out fresh draw (${src.label}, n=${n}) ===`)
 	console.log(`  tolerance     production   candidate`)
@@ -289,7 +289,7 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 	})
 
 	console.log(`  resolved      ${String(prod.resolved).padStart(8)}     ${String(cand.resolved).padStart(8)}`)
-	console.log(`\n  z (candidate − production) @ ≤${GATE_TOL}km: ${z.toFixed(2)}`)
+	console.log(`\n  z (candidate − production) @ ≤${THRESHOLD_TOL}km: ${z.toFixed(2)}`)
 
 	// Block ONLY on a significant regression. Candidate ahead or within noise → pass.
 	const pass = z >= Z_CRITICAL_95_TWO_SIDED

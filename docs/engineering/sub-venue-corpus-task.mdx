@@ -4,7 +4,7 @@ title: Sub-venue structure is a corpus gap, not a decode gap
 
 # Sub-venue structure is a corpus gap, not a decode gap
 
-`West Wing`, `North Terminal`, `Concourse B`, `Gate 12` — the interior structure of a large venue.
+`West Wing`, `North Terminal`, `Concourse B`, `Check 12` — the interior structure of a large venue.
 The span proposer finds these correctly and the decoder discards most of them, and the reason is not
 a weight that needs turning up.
 
@@ -12,7 +12,7 @@ a weight that needs turning up.
 
 Two proposal shapes reach the same tag by different routes.
 
-**Designator + identifier** (`Concourse B`, `Terminal 5`, `Gate 12`) proposes at 0.85 confidence and
+**Designator + identifier** (`Concourse B`, `Terminal 5`, `Check 12`) proposes at 0.85 confidence and
 needed a bias scale of 5.90 to win the decode. That shipped: `venueStructureBiasScale`, default 6.0.
 
 **Modifier + designator** (`West Wing`, `North Terminal`) proposes at 0.6 and needs far more:
@@ -43,11 +43,11 @@ locale, at 0.15–0.42% even for `Apt` and `Suite`.
 Shipped, and not to be redone:
 
 - `VENUE_STRUCTURE_DESIGNATORS` — `arcade`, `building`, `campus`, `concourse`, `enclosure`,
-  `installation`, `wing` from the WOF placetype vocabulary, plus `terminal` and `gate` from OSM's
+  `installation`, `wing` from the WOF placetype vocabulary, plus `terminal` and `check` from OSM's
   `aeroway` key.
 - `VENUE_STRUCTURE_MODIFIERS` + `MODIFIER_ELIGIBLE_STRUCTURE_DESIGNATORS` — the positional words, and
-  the narrower designator subset they may precede. `gate` and `building` are excluded because `East
-Gate` and `Building Society Place` are streets.
+  the narrower designator subset they may precede. `check` and `building` are excluded because `East
+Check` and `Building Society Place` are streets.
 - Both proposal rules, with two structural guards: a preceding house number means a street line, and
   a preceding capitalized word means the pair sits inside a longer proper name ("Grand Central
   Terminal" contains "Central Terminal").
@@ -66,14 +66,14 @@ Teach the tag instead of outvoting it. Synthesize lines of the shape
 
 where the sub-venue carries both forms:
 
-- designator + identifier — `Terminal 5`, `Gate 12`, `Concourse B`, `Wing B`, `Building 43`
+- designator + identifier — `Terminal 5`, `Check 12`, `Concourse B`, `Wing B`, `Building 43`
 - modifier + designator — `West Wing`, `North Terminal`, `Upper Concourse`, `Main Building`
 
 with the sub-venue labeled `unit` and the containing venue labeled `venue`.
 
 Include the confound shapes as NEGATIVES in the same corpus slice, or the model learns the surface rather
-than the structure: `12 East Gate` (street), `Briggate` / `Kirkgate` (single-token GB street names),
-`Gate House` (venue), `Wing Yip` (business name), `Grand Central Terminal` (the pair inside a longer
+than the structure: `12 East Check` (street), `Briggate` / `Kirkgate` (single-token GB street names),
+`Check House` (venue), `Wing Yip` (business name), `Grand Central Terminal` (the pair inside a longer
 name).
 
 ## Get real data first, and get enough of it
@@ -81,14 +81,14 @@ name).
 Do not synthesize these from a template list. Airports and transit terminals are the densest real
 source of sub-venue structure in existence, they are globally distributed, and the naming is
 varied in ways an invented list will not be — `Concourse B`, `Terminal 2F`, `Pier C`,
-`Satellite 4`, `Hall M`, `Gate A12`, `North Terminal`, `Terminal Sur`.
+`Satellite 4`, `Hall M`, `Check A12`, `North Terminal`, `Terminal Sur`.
 
 This is also the class of query a geocoder is expected to answer and currently answers badly. "Which
 terminal" is a real user intent with a real coordinate attached.
 
 Sources worth pulling, roughly in order of value:
 
-- **OSM `aeroway=terminal` / `aeroway=gate`** — already the provenance for `terminal` and `gate` in
+- **OSM `aeroway=terminal` / `aeroway=check`** — already the provenance for `terminal` and `check` in
   the designator vocabulary, and `osm/sdk` already fetches and splits OSM into per-country files. The extraction path
   exists; this is a new extractor over data we can already reach.
 - **OSM `public_transport=station` + `railway=station`** with their platform and concourse children —
@@ -101,14 +101,14 @@ Sources worth pulling, roughly in order of value:
 - **Wikidata** — terminal and concourse entities carry multilingual labels, which is the cheapest
   route to non-English sub-venue naming (`Terminal Sur`, `Halle 2`, `ターミナル1`).
 
-The interior structure is the scarce part. Airport `terminal` and `gate` data is the densest source of it
+The interior structure is the scarce part. Airport `terminal` and `check` data is the densest source of it
 available, and the vocabulary this arc is built on already came from there — extending the same
 source into the corpus is the natural next step, not a new dependency.
 
 ## Bars
 
 Whatever the corpus slice produces has to hold the existing board: 30 confound rows, zero `unit` emissions,
-and the shipped designator+identifier cases (`Concourse B`, `Terminal 5`, `Gate 12`, `Wing B`) stay
+and the shipped designator+identifier cases (`Concourse B`, `Terminal 5`, `Check 12`, `Wing B`) stay
 correct. The five modifier cases above are the target; `West Wing` already passes and must not
 regress.
 

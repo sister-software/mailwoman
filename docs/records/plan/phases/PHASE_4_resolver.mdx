@@ -134,7 +134,7 @@ CLI: `mailwoman parse --resolve --format xml` toggles the pipeline on. Default o
 
 - Feedback loop (resolver-corrects-parser) — not in v1. The output is decorated, not rewritten. A future sub-phase 4.4 can add the loop.
 - Whether to expose the joint `{tree, resolution}` type publicly — deferred to 4.3.
-- BAN-specific resolver for FR — likely a separate `WofSqliteResolver` peer using the BAN data, gated on whether WOF's France coverage is acceptable in the eval set. Defer until 4.3 hits the eval bench.
+- BAN-specific resolver for FR — likely a separate `WofSqliteResolver` peer using the BAN data, blocked on whether WOF's France coverage is acceptable in the eval set. Defer until 4.3 hits the eval bench.
 
 ## Reading material to revisit at each sub-phase
 

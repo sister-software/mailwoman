@@ -49,7 +49,7 @@ messy input) points at structured span prediction.
    is counter-evidenced. The PT/RO diacritic splice (byte-fallback coverage gap, probe-confirmed)
    outranks it in the tokenizer-work queue.
 
-## STAGE 2 PHASE 1 — DONE, GATE PASS (2026-07-15). Read this before touching the arc.
+## STAGE 2 PHASE 1 — DONE, CHECK PASS (2026-07-15). Read this before touching the arc.
 
 `seg@1 0.5693 > token@1 0.4906` on the parity corpus (+7.9pp); **+33pp on the Paris bare-fragment
 fixture** (`token@1 0.429 → seg@1 0.762`). The arc's premise holds. PR #1141; reports
@@ -64,7 +64,7 @@ fixture** (`token@1 0.429 → seg@1 0.762`). The arc's premise holds. PR #1141; 
    `build_optimizer`) → converged 1.37 and seg@1 0.569. **Any new head gets its own param group.**
 2. **`from_pretrained()` silently lacked `map_location`** — a GPU-trained checkpoint could not load
    on a CPU-only box AT ALL. Fixed; this affected every local grading run in the repo.
-3. **A python-side gate is CHANNEL-STARVED (#718).** `scripts/eval_seg_at_1.py` feeds no
+3. **A python-side check is CHANNEL-STARVED (#718).** `scripts/eval_seg_at_1.py` feeds no
    anchor/gazetteer/country channels, so its token@1 reads ~0.49 where the JS harness reads 0.573 on
    the SAME model. Its absolutes are NOT comparable across harnesses — only the internal
    seg-vs-token comparison is valid (both heads read the same starved encoder). Say so in any report.
@@ -109,13 +109,13 @@ competes with the BIO head at the same decode position. **#1103's own pre-regist
 condition is "after the #727 span-head work changes boundary placement" — that condition has now
 landed.** Under a segment decode a prefix clue can govern a whole span's type via the segment
 transition grammar (`street_prefix → street`), which is the level where "Rue governs the next thing"
-is actually well-posed. Re-probe it locale-gated per #1103's criteria; do NOT re-probe it globally
+is actually well-posed. Re-probe it locale-hintd per #1103's criteria; do NOT re-probe it globally
 (the AU compact-form regression, 55 → 40, is what parked it).
 
 ## Standing constraints
 
 One variable per run. fp32 for any CRF/transition learning (bf16 NaN scar). Grade with
-`--weights-cache` package-shaped dirs only. Floors and the 2pp gate are immutable; the triaged
+`--weights-cache` package-shaped dirs only. Floors and the 2pp check are immutable; the triaged
 gold's default-flip awaits operator ratification. Treadmill guard applies across THIS arc too:
 two opposite-direction failures = stop and fork, don't tune. **A mis-specified probe is not a
 treadmill** — repairing an LR that was never chosen for the thing it trains is fixing the
@@ -123,5 +123,5 @@ instrument, not oscillating a knob (v3.0.0 → v3.0.1 is the worked example).
 
 ## What unblocks when floors pass
 
-`hold/v1-parse-neural-gate-blocked` (swap wiring, verified) → plans 4–5 → v7. The whole excision
+`hold/v1-parse-neural-check-blocked` (swap wiring, verified) → plans 4–5 → v7. The whole excision
 tail is mechanical from that point; nothing else is waiting on anything but the model.

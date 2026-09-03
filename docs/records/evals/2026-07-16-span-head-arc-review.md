@@ -147,7 +147,7 @@ segment transition table; fp32 semi-Markov CRF loss co-trained alongside the unt
 Both DP routines (log-partition, Viterbi) verified against **brute-force enumeration of every valid
 segmentation** — a DP that's subtly wrong still trains, it just trains toward the wrong thing.
 
-**The pre-registered gate:** `seg@1 > token@1`, plus a secondary read (oracle@10 must rise).
+**The pre-registered check:** `seg@1 > token@1`, plus a secondary read (oracle@10 must rise).
 
 **First probe failed and we nearly called it falsified.** Loss 26.4 → 17.77, still falling; decode
 emitted a random type per token; seg@1 = 0.004. The diagnostic that saved it: _"is the loss even
@@ -236,7 +236,7 @@ that are already resolvable — which are the ones the parse mostly gets right a
 ## 5. Where it stands
 
 **The floors are unmoved.** street 0.90 vs seg@1 0.577. **oracle@5 is 0.723** — so even a _perfect_
-reranker lands short of the gate. The decode was never going to clear it alone. This is the fact that
+reranker lands short of the check. The decode was never going to clear it alone. This is the fact that
 phase momentum most wants to obscure.
 
 **What's proven:** a trained span scorer beats the BIO stand-in decisively (+12.4pp), fixes the
@@ -320,7 +320,7 @@ measured_ (homograph F1 82.6 → 85.1, no trade). Pelias's equivalent knob is a 
 
 Both near-misses had the same signature: **a number that couldn't reproduce something already known.**
 
-- Phase 1's gate reported `token@1` 0.348 against a known 0.573. Cause: a Python harness feeding no
+- Phase 1's check reported `token@1` 0.348 against a known 0.573. Cause: a Python harness feeding no
   soft channels, plus a bug welding words together (`▁5|th|▁|Ave` → `"5thAve"` — it dropped the
   `O`-labelled separator). Nearly published as an architecture verdict.
 - Phase 4a's first rerank showed one signal inert and another −16. Cause: the harness resolver had no
@@ -343,8 +343,8 @@ local grading run.
    Is that motivated reasoning about a phase we already built?
 2. **Is the name-existence check the right third signal**, or is the rerank a dead end and option C
    the whole answer?
-3. **The floor is 0.90 and oracle@5 is 0.723.** Is the parse-tag floor even the right gate, or is a
-   coordinate-acceptability gate the right one? (A prior study found the neural parse is 98.6%
+3. **The floor is 0.90 and oracle@5 is 0.723.** Is the parse-tag floor even the right check, or is a
+   coordinate-acceptability check the right one? (A prior study found the neural parse is 98.6%
    within 1 km of the rules parse where the street is correct, with a hard tail on exactly the
    bare-fragment class.)
 4. **Is a 63-fixture Paris corpus enough** to make per-class claims, or are we reading noise?

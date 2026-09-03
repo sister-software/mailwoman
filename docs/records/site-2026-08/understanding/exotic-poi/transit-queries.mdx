@@ -36,9 +36,9 @@ A major transit station is more than a point — it's a complex with multiple en
 - **Shibuya Station** (Tokyo) has 6 exits, multiple train and subway lines, a bus terminal, and a surrounding commercial district. The "station" is a neighborhood-scale complex. A single coordinate for "Shibuya Station" is wrong for any specific use — the Hachikō exit is 200 meters from the New South exit, and the wrong exit can mean a 10-minute walk in the wrong direction.
 - **Tokyo Station** has an underground city with shopping, dining, and office space. The Marunouchi exit faces the Imperial Palace; the Yaesu exit faces the business district.
 - **Heathrow Airport** has 5 terminals connected by train. A query for "Heathrow" could mean any terminal. A query for "Heathrow T5" is specific. The geocoder should return the airport centroid for the former and Terminal 5's coordinates for the latter.
-- **Port Authority Bus Terminal** (New York) has multiple levels, multiple carriers, and gates numbered by floor. The "station" is a building; the "gate" is a specific point within it.
+- **Port Authority Bus Terminal** (New York) has multiple levels, multiple carriers, and checks numbered by floor. The "station" is a building; the "check" is a specific point within it.
 
-Transit stations need a **hierarchical model**: station → entrance/exit → platform/gate. Most geocoders only model the station level. A user searching for "Shibuya Station Hachikō exit" needs entrance-level precision. Most geocoders return the station centroid.
+Transit stations need a **hierarchical model**: station → entrance/exit → platform/check. Most geocoders only model the station level. A user searching for "Shibuya Station Hachikō exit" needs entrance-level precision. Most geocoders return the station centroid.
 
 ## Station-name ambiguity problem
 

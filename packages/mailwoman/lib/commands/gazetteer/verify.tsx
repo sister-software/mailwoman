@@ -29,7 +29,7 @@ import { CheckList, type CommandSpec, CommandTaskResult, type ParsedCommandCompo
  */
 export const spec = {
 	name: "verify",
-	description: "Run the admin-gazetteer promotion gate.",
+	description: "Run the admin-gazetteer promotion check.",
 	options: {
 		db: { type: "string", description: "Admin DB to verify" },
 		"reverse-panel": { type: "boolean", default: true, description: "Run the reverse EU panel" },

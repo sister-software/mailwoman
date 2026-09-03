@@ -110,7 +110,7 @@ mailwoman parse --resolve --resolve-db /path/to/wof.db --format xml "..."
 
 - Unit: `resolveTree` against a tree + a fake `PlaceLookup` that returns canned candidates. Cover: full match, partial match, no match, parent-constrained child lookup, `maxLookups` budget.
 - Integration: `mailwoman parse --resolve --format xml` against a known-good WOF DB. Pinned outputs for ~6 well-known addresses (Paris,FR; Paris,TX; Springfield,IL; etc.).
-- The CLI integration tests gate on the WOF DB being present (skip-if-missing pattern, matching how the locale-flag tests handle their fixture deps).
+- The CLI integration tests check on the WOF DB being present (skip-if-missing pattern, matching how the locale-flag tests handle their fixture deps).
 
 ## Open questions
 

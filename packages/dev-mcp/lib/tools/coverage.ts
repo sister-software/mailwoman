@@ -92,7 +92,7 @@ function line(c: CountryCoverage): string {
 				? `locality (${c.gazetteerPlaces.toLocaleString()})`
 				: "none"
 
-	const board = c.boardRows ? `${c.boardPassedRows}/${c.boardRows} gated` : "unmeasured"
+	const board = c.boardRows ? `${c.boardPassedRows}/${c.boardRows} conditional` : "unmeasured"
 
 	return `${c.country} | parse: ${parse} | geocode: ${geo} | board: ${board}${c.weightsPackage ? ` | pkg: ${c.weightsPackage}` : ""}`
 }
@@ -106,7 +106,7 @@ export const coverageTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 		"overlays), the corpus holds rows (a country can hold 11M rows and none of them a street), the training " +
 		"config ADMITS the country (`country_weights` is a hard filter, so a country absent from it trains on nothing " +
 		"— the Norway bug's mechanism), the gazetteer can resolve it (244 countries, a much wider set), and the board " +
-		"measures it (rows that are not `status: pass` track rather than gate). Reports the four ways those disagree " +
+		"measures it (rows that are not `status: pass` track rather than check). Reports the four ways those disagree " +
 		"explicitly. Corpus counts are CACHED — pass refresh to recount, which costs minutes. Call this before " +
 		"claiming any country is or is not supported.",
 	inputSchema: z.object({

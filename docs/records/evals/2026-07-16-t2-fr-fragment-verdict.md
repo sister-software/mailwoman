@@ -1,12 +1,12 @@
 # T2 — the BAN fragment extract: the licence hypothesis holds
 
-**Pre-registered gate (config header + `baselines.json` profile `fragment-fr-v264`, registered against
+**Pre-registered check (config header + `baselines.json` profile `fragment-fr-v264`, registered against
 the shipped model before the run):** targets move, guards hold.
 
 **Verdict: PASS on both boards. Every target moved, every guard held, and the two contextful guards
 improved.** The house-number-licence diagnosis (T1c) is confirmed by the fix working.
 
-This is **not** a promote gate — see §5.
+This is **not** a promote check — see §5.
 
 |           |                                                                      |
 | --------- | -------------------------------------------------------------------- |
@@ -67,7 +67,7 @@ fragments with full addresses.
 
 Nothing regressed; street gained **+8 fixtures** on the broad corpus. The `FAIL` verdicts printed by
 `eval parity` are the **v7 campaign floors** (street 0.90 / hn 0.97) — v264 fails them too. They are a
-target, not a regression gate.
+target, not a regression check.
 
 ## 4. What the in-training eval said, and why it is not the verdict
 
@@ -89,17 +89,17 @@ Two things survive from it:
 - **region found a new lower equilibrium at ~0.830 (−1.0pp) and plateaued** across four evals. It
   looked like the open item — **#1102** is titled _"fragment/twin training mass erodes US
   region+locality recall (~2.5pp) — the promote blocker"_, the same failure shape at a larger
-  magnitude, and it blocked a promote before. **It did not reproduce on the canonical gate (§4.1).**
+  magnitude, and it blocked a promote before. **It did not reproduce on the canonical check (§4.1).**
 
 **The precision confound, caught in the act.** The first read graded an **fp32** export against
 **int8** baselines — the shipped weights package ships int8 (39.4 MB), a fresh `export_onnx` is fp32
-(157 MB). The gate specs cap int8-vs-fp32 at 1.5pp, larger than several cells above. The read script's
+(157 MB). The check specs cap int8-vs-fp32 at 1.5pp, larger than several cells above. The read script's
 md5 check passed it because "differs from the baseline model" is true of a precision
 change: **an md5 difference proves the file changed, not that it is comparable.** Fixed (`5e5f9c2a`) —
 the pipeline is export → quantize → grade, and the script now asserts the precision class matches.
 Every number on this page is int8-vs-int8.
 
-### 4.1 The golden per-tag battery — the 2pp pre-publish gate
+### 4.1 The golden per-tag battery — the 2pp pre-publish check
 
 The canonical instrument the promote rule names (`eval error-analysis`, strict `createScorer`, full
 ship config, int8 both sides):
@@ -115,11 +115,11 @@ ship config, int8 both sides):
 | country      | 89.0% | **90.2%** | **+1.2pp** |
 | exact match  | 25.5% | **25.7%** |     +0.2pp |
 
-**Every tag is inside the 2pp bar. Two improve. The pre-publish gate PASSES.**
+**Every tag is inside the 2pp bar. Two improve. The pre-publish check PASSES.**
 
 So the val split's −1.0pp region was a **false positive**, not a preview. Worth stating because it inverts the arc's usual failure: the other instruments here missed problems that were
 real; this one reported a problem that was not. Same root — a metric on a distribution nobody asked
-about — and the same rule: read the instrument the gate names.
+about — and the same rule: read the instrument the check names.
 
 That does not make `region` uninteresting. It is the tag the fragment mass pulls on, #1102 is real,
 and a heavier weight or a second locale's extract could push −0.2pp into −2pp. It is a thing to watch,
@@ -127,7 +127,7 @@ not a thing to ignore, and it is cheap to watch: this table is one command.
 
 ### 4.2 The pre-registered "ALSO" — which did NOT come out as predicted
 
-The gate carried a third clause: _"`hallucination_rate@v301-span` 0.352 should FALL if T1c's diagnosis
+The check carried a third clause: _"`hallucination_rate@v301-span` 0.352 should FALL if T1c's diagnosis
 holds."_ Measured on the 54 street-free parity rows — the MESSY population (venues, all-caps junk,
 French zone names), as distinct from the fragment board's clean BAN communes:
 
@@ -163,7 +163,7 @@ The fix is a sibling of what is already there — extend the counter-distributio
 designators (`ZAC`, `ZA`, `Lotissement`, `Résidence` as NOT-street). Not a new idea, a wider one.
 It is a extract change, so it belongs to the next run, not to this verdict.
 
-**This is what pre-registration is for.** Two of the three gate clauses passed decisively; the third
+**This is what pre-registration is for.** Two of the three check clauses passed decisively; the third
 went the other way and is on the page at the same size as the wins.
 
 ## 5. What this does and does not establish
@@ -175,8 +175,8 @@ synthetic coverage** source — the doctrine's whole claim — works on its firs
 
 **Does not establish:**
 
-- **Promotion.** The 2pp pre-publish gate passes (§4.1), which clears the largest single hurdle — but
-  that is one leg, not the battery. A promote still wants `mailwoman eval gate --gate <spec>` (the
+- **Promotion.** The 2pp pre-publish check passes (§4.1), which clears the largest single hurdle — but
+  that is one leg, not the battery. A promote still wants `mailwoman eval check --check <spec>` (the
   per-locale floors, the int8↔fp32 delta cap, the cascade smoke, the mask-regression lock) and an
   operator GO. Nothing ships on this page.
 - **The v7 floors.** street 0.6067 vs a 0.90 floor. +3.0pp is real and it is not 32pp.
@@ -191,5 +191,5 @@ synthetic coverage** source — the doctrine's whole claim — works on its firs
 
 ---
 
-**Reproduce:** `bash scratchpad/read-v310-gate.sh 008000` (export → quantize → both boards, with the
+**Reproduce:** `bash scratchpad/read-v310-check.sh 008000` (export → quantize → both boards, with the
 precision assertion).

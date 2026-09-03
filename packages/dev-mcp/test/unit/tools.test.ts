@@ -74,7 +74,7 @@ describe("mwdev_job", () => {
 	 * A child that prints a gauntlet-shaped log and exits 1 — what a COMPLETED run grading FAIL looks like.
 	 */
 	const FAIL_SCRIPT =
-		'console.log("=== Gauntlet · regression (350/354 gated cases pass, 203 tracked) ===");' +
+		'console.log("=== Gauntlet · regression (350/354 counted cases pass, 203 tracked) ===");' +
 		'console.log("verdict: FAIL");process.exit(1)'
 
 	async function runToCompletion(script: string, exitCode: number): Promise<Record<string, unknown>> {

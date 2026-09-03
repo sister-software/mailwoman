@@ -21,7 +21,7 @@
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
 
-export const description = "The Gauntlet gate — regression + metamorphic + held-out, one verdict"
+export const description = "The Gauntlet check — regression + metamorphic + held-out, one verdict"
 
 /**
  * Native command-line contract consumed by the filesystem command router.

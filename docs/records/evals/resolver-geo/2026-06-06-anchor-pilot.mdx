@@ -3,7 +3,7 @@
 **Date:** 2026-06-06
 **Scope:** the de-risk pilot for the postcode-anchor conditioning channel (#239/#240) — does feeding the parser a structured postcode signal break the German end-of-string collapse that self-conditioning alone couldn't?
 
-> **Update (same day):** most of the collapse this pilot fights turned out to be an eval artifact. Our German de-sample renders addresses in US word order; the model trained on German order. Re-rendered in native German order, this same anchor-on checkpoint scores **83.8% locality and beats v0/Pelias (78.7%)**. The Correction section at the end revises the "gated by postcode ambiguity" reading below it — keep reading; the pilot story stands as the record of what we believed at the time.
+> **Update (same day):** most of the collapse this pilot fights turned out to be an eval artifact. Our German de-sample renders addresses in US word order; the model trained on German order. Re-rendered in native German order, this same anchor-on checkpoint scores **83.8% locality and beats v0/Pelias (78.7%)**. The Correction section at the end revises the "blocked by postcode ambiguity" reading below it — keep reading; the pilot story stands as the record of what we believed at the time.
 
 The hypothesis was sharp: the German collapse — trailing city → `O`, locality and postcode fragmenting at end-of-string — is a _local_ emission failure, and self-conditioning's _global_ soft locale posterior was always going to miss it (it did, twice). A postcode anchor is local, near-hard, and sits right at the collapse site. So we built it, end to end, and ran the A/B.
 
@@ -38,7 +38,7 @@ The clean, unconfounded number is the **same checkpoint with the anchor off vs o
 
 It is a **partial** fix. 45.8% is well short of ~77%, so the anchor helps real and measurably but doesn't fully reverse the collapse at this pilot scale.
 
-**The per-state split is the mechanism — and points at the next change.** Sachsen (postcodes `01xxx–09xxx`, little US collision) jumps `37.1% → 54.9%` (+17.8pp); Berlin (`10xxx`, colliding hard with US ZIPs) barely moves, `34.7% → 36.7%` (+2pp). The anchor's recovery is **gated by postcode ambiguity**: where the code pins the country it works strongly; where the posterior is a DE/US collision the uniform distribution can't decide and the model stays collapsed. Disambiguating the colliding ranges is where a full fix lives.
+**The per-state split is the mechanism — and points at the next change.** Sachsen (postcodes `01xxx–09xxx`, little US collision) jumps `37.1% → 54.9%` (+17.8pp); Berlin (`10xxx`, colliding hard with US ZIPs) barely moves, `34.7% → 36.7%` (+2pp). The anchor's recovery is **blocked by postcode ambiguity**: where the code pins the country it works strongly; where the posterior is a DE/US collision the uniform distribution can't decide and the model stays collapsed. Disambiguating the colliding ranges is where a full fix lives.
 
 ## Correction: most of the "collapse" was us measuring German in the wrong order
 
@@ -66,7 +66,7 @@ Berlin's postcodes still collide with US ZIPs in German order. Nothing about the
 
 ### So what was the anchor actually fixing?
 
-We should be clear about what this does to the +9.9pp. The anchor's win was measured entirely on US-order German, the broken rendering, and it was real: same weights, off versus on, nothing else moved. It helped the model survive an order it wasn't trained for. But its value in the order that matters is now an open question we haven't measured. The 83.8% run had the anchor fed throughout, and we never ran native-order anchor-off to isolate it. The anchor earns its place elsewhere — the resolver-side centroid already cut coord p99 from 330 to 46 km — yet "the anchor recovers German" needs re-testing against an eval that isn't rendering the language wrong.
+We should be clear about what this does to the +9.9pp. The anchor's win was measured entirely on US-order German, the broken rendering, and it was real: same weights, off versus on, nothing else moved. It helped the model survive an order it wasn't trained for. But its value in the order that matters is now an open question we haven't measured. The 83.8% run had the anchor fed throughout, and we never ran native-order anchor-off to isolate it. The anchor earns its place elsewhere — the resolver-side centroid already reduce coord p99 from 330 to 46 km — yet "the anchor recovers German" needs re-testing against an eval that isn't rendering the language wrong.
 
 ### Premodel or training?
 
@@ -86,6 +86,6 @@ It un-blocks it. The German "wall" that survived three retrains — the order-ex
 
 - **Fix the eval, then retrain on both orders** — the de-sample renders German US-style; test native order (the Correction table) and most of the collapse is gone. Then ship the both-order extract (`synthesizeLocaleRow({ order })`) and retrain so the model handles either layout. This is the real fix; the items below are now secondary.
 - **Re-isolate the anchor on a correct eval** — the +9.9pp was measured on US-order German. Run native-order anchor-off vs anchor-on to learn what the anchor is worth once the eval isn't rendering the language wrong.
-- **Strategic check** — the resolver already does German at ~83% (v0 parse → resolver), and the neural parser now beats it in native order. The parser-anchor (multi-locale universal parser) and the resolver-side centroid (already cut coord p99 330 → 46 km) remain separable bets.
+- **Strategic check** — the resolver already does German at ~83% (v0 parse → resolver), and the neural parser now beats it in native order. The parser-anchor (multi-locale universal parser) and the resolver-side centroid (already reduce coord p99 330 → 46 km) remain separable bets.
 
 Artifacts: configs `v0.9.1-pilot-anchor-{off,on}.yaml`; `eval_de` + `export_onnx` (Modal); lookup `scripts/build-pilot-anchor-lookup.py`; the both-order synthesizer switch lands in the follow-up `synthesizeLocaleRow({ order })`; consult notes `.agents/skills/deepseek-consult/session-notes-2026-06-05-anchor-pilot.md`.

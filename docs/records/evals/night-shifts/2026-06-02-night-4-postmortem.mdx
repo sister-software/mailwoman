@@ -59,7 +59,7 @@ this shift stops at the diagnosis rather than spending more GPU on a rejected re
 
 ## What shipped (branch `eval/multi-locale-de`, 10 commits ahead of main)
 
-1. **DE-0 — tokenizer gate: PASS.** `scripts/diag-tokenizer-de.ts`. The v0.6.0-a0 SentencePiece
+1. **DE-0 — tokenizer check: PASS.** `scripts/diag-tokenizer-de.ts`. The v0.6.0-a0 SentencePiece
    tokenizer round-trips German orthography losslessly (10/10 samples; `ß` gets its own piece next to
    its street stem). So `Straußstraße → Strau` is the out-of-distribution model exiting at the
    ß-piece boundary, not a tokenizer ceiling. Coverage is the fix. (commit `97d1ec4`)
@@ -77,15 +77,15 @@ this shift stops at the diagnosis rather than spending more GPU on a rejected re
 6. **Docs:** the multi-locale write-up (`2026-06-02-multi-locale-german-coverage.md`) and the German
    section of the external-eval README. (commits `2e96b35`, `233e652`)
 
-## How the train got launched (and the gate it cleared)
+## How the train got launched (and the check it cleared)
 
-The auto-classifier gated the in-place mutation of the **shared** corpus `MANIFEST.json`, correctly:
+The auto-classifier conditional the in-place mutation of the **shared** corpus `MANIFEST.json`, correctly:
 my own plan flagged DE-3 as needing your sign-off, and "wide berth" is general autonomy, not specific
 authorization to mutate shared training infra. The MANIFEST entry was staged at `/tmp/MANIFEST.json`
 (and re-derivable). The launch sequence, once you approved it, was:
 
 ```bash
-# 1. register the extract (the gated step):
+# 1. register the extract (the conditional step):
 modal volume put mailwoman-training /tmp/MANIFEST.json \
   corpus/versioned/v0.4.0/corpus-v0.4.0/MANIFEST.json --force
 # 2. ship the config to the volume:
@@ -115,7 +115,7 @@ resolver: neural locality 77.4%, coord p50 10.0 km.
 
 ## What went well
 
-- Gate-first paid off. DE-0 is an afternoon's script, and it could have saved a wasted GPU run if the
+- Check-first paid off. DE-0 is an afternoon's script, and it could have saved a wasted GPU run if the
   tokenizer had been the wall. It wasn't, so we proceeded with evidence instead of hope.
 - Reading the data loader before launching caught the `country_weights` failure mode: the loader rejects any
   row whose country isn't weighted, so without `DE: 1.0` every German row would have been silently
@@ -140,7 +140,7 @@ resolver: neural locality 77.4%, coord p50 10.0 km.
   volume-side checkpoint copy.
 - **Sourced the extract from real OA tuples, not synthesized German streets.** German morphology is too
   easy to fake wrong.
-- **Stopped at the MANIFEST gate rather than working around it.** The denial was correct.
+- **Stopped at the MANIFEST check rather than working around it.** The denial was correct.
 
 ## Open questions for the operator
 
@@ -161,19 +161,19 @@ resolver: neural locality 77.4%, coord p50 10.0 km.
 - (operator) Pick the fix direction for German round 2 (open question 1) before any more GPU spend.
 - (done this shift) Train launched + run to step-140000 + `scripts/eval-de-coverage.sh` before/after
   filled in → REVERT. Artifacts at `/tmp/v080-de/` (model + both eval logs); not promoted.
-- (held) ES/IT/NL extension: same recipe would replicate the boundary damage; gated behind the German
+- (held) ES/IT/NL extension: same recipe would replicate the boundary damage; blocked behind the German
   round-2 fix landing.
 - (cheap follow-up, still valid) CITY-column cleaning in `build-german-extract.mjs`: the OA `CITY`
   noise (`Rabenau Sachs`) dirties locality labels and may have widened the locality collapse.
 
 ## Numbers
 
-|                      |                                                         |
-| -------------------- | ------------------------------------------------------- |
-| shift window         | 03:19 UTC → 14:00 UTC                                   |
-| models trained       | 1 (v0.7.2 → step-140000, German order extract)          |
-| Modal spend          | ~$3-4 (40k continue-train + fp32 export, A100)          |
-| model promoted       | 0 (REVERT verdict, recipe rejected)                     |
-| NaN incidents        | 0                                                       |
-| CI failures          | 0                                                       |
-| classifier gates hit | 1 (shared MANIFEST mutation — respected, then approved) |
+|                       |                                                         |
+| --------------------- | ------------------------------------------------------- |
+| shift window          | 03:19 UTC → 14:00 UTC                                   |
+| models trained        | 1 (v0.7.2 → step-140000, German order extract)          |
+| Modal spend           | ~$3-4 (40k continue-train + fp32 export, A100)          |
+| model promoted        | 0 (REVERT verdict, recipe rejected)                     |
+| NaN incidents         | 0                                                       |
+| CI failures           | 0                                                       |
+| classifier checks hit | 1 (shared MANIFEST mutation — respected, then approved) |

@@ -19,7 +19,7 @@ done)
 
 if [ -n "$STAGED" ]; then
 	# oxlint errors on paths it can't lint, so scope it to code files. Config discovery
-	# (oxlint.config.ts, incl. the sister-software/no-process-globals raw-access gate) is
+	# (oxlint.config.ts, incl. the sister-software/no-process-globals raw-access check) is
 	# path-independent — verified: explicit paths keep every rule active.
 	CODE=$(printf '%s\n' "$STAGED" | grep -E '\.(ts|tsx|mts|cts|js|mjs|cjs|jsx)$' || true)
 	if [ -n "$CODE" ]; then
@@ -54,7 +54,7 @@ if [ -n "$STAGED" ]; then
 	printf '%s\n' "$STAGED" | tr '\n' '\0' | xargs -0 git add
 fi
 
-# CLI-reference freshness (2026-08-05): the docs CI gate asserts docs/articles/developers/reference/
+# CLI-reference freshness (2026-08-05): the docs CI check asserts docs/articles/developers/reference/
 # cli.mdx byte-for-byte against the command schemas, and it fired four times in one day because the
 # regeneration step lives a 20-minute CI round-trip away. Staged-scoped: only runs when this commit
 # touches the command surface. The generator reads the COMPILED tree (packages/mailwoman/out/commands — the
@@ -96,7 +96,7 @@ if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailw
 			exit 1
 		fi
 	else
-		echo "pre-commit: packages/mailwoman/out/cli.js not compiled — skipping CLI-reference freshness (CI's byte-for-byte test still gates)" >&2
+		echo "pre-commit: packages/mailwoman/out/cli.js not compiled — skipping CLI-reference freshness (CI's byte-for-byte test still checks)" >&2
 	fi
 fi
 
@@ -104,7 +104,7 @@ fi
 # docs prose is a build-breaking MDX-JSX parse error; this class broke three builds on 2026-06-10.
 # The lint tool lives at mailwoman/dev-tools/lint-mdx-angles.ts
 # and needs the compiled CLI (`yarn compile`). An uncompiled tree (fresh clone) skips with a warning
-# rather than blocking every commit — CI's full lint still gates this class.
+# rather than blocking every commit — CI's full lint still checks this class.
 if [ -f packages/mailwoman/out/cli.js ]; then
 	node packages/mailwoman/out/cli.js dev lint mdx-angles
 else

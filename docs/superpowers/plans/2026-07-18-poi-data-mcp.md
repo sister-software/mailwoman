@@ -430,7 +430,7 @@ Tests (`tools.test.ts`): buildToolTable with stub deps — five tools present, n
 - Modify: `poi-taxonomy/package.json` (BOTH exports maps gain `./table`), `poi-taxonomy/lookup.ts` (extract the pure index/matching core so it's shared)
 - Test: `poi-taxonomy/table.test.ts`
 
-Refactor WITHOUT behavior change: pull the index construction + match logic out of `lookup.ts` into an internal `createLookupCore(table: POITaxonomyTable)` (not exported from the node entry barrel); `lookup.ts` keeps its `node:fs` loader + module-level singletons + identical public API (all existing tests must pass untouched). `table.ts` exports `createPOITaxonomyLookup(table: POITaxonomyTable)` returning `{ lookupPOICategory, getPOICategory, getAllCategories, requiresBuildLocalLayer }` bound to the INJECTED table — zero node imports, bundler-safe (the docs tester imports the JSON via webpack and injects it). Test: inject a two-category table, same semantics as the node entry (one locale-gated case, one infra flag case); plus a node-entry regression run.
+Refactor WITHOUT behavior change: pull the index construction + match logic out of `lookup.ts` into an internal `createLookupCore(table: POITaxonomyTable)` (not exported from the node entry barrel); `lookup.ts` keeps its `node:fs` loader + module-level singletons + identical public API (all existing tests must pass untouched). `table.ts` exports `createPOITaxonomyLookup(table: POITaxonomyTable)` returning `{ lookupPOICategory, getPOICategory, getAllCategories, requiresBuildLocalLayer }` bound to the INJECTED table — zero node imports, bundler-safe (the docs tester imports the JSON via webpack and injects it). Test: inject a two-category table, same semantics as the node entry (one locale-hintd case, one infra flag case); plus a node-entry regression run.
 
 - [ ] Steps: failing test → FAIL → refactor + table.ts + both maps → PASS (`yarn vitest run poi-taxonomy/` — ALL green incl. Plan-1/2 tests) → `yarn compile` → oxfmt → commit `feat(poi-taxonomy): browser-safe ./table entry (injected table, no node:fs)` → verify.
 
@@ -455,7 +455,7 @@ Component behavior: input box → live (debounced) intent extraction: shows dete
 
 - [ ] `yarn compile` exit 0; `yarn typecheck:scripts` exit 0.
 - [ ] `yarn vitest run resolver-wof-sqlite/ poi-taxonomy/ core/pipeline/ kind-classifier/ mailwoman/poi-intent.test.ts mailwoman/poi-executor.test.ts mailwoman/poi-overpass.test.ts mcp/` — all green, counts reported.
-- [ ] `yarn vitest run mailwoman/` full suite (weights are linked in this worktree; the parse gate must pass).
+- [ ] `yarn vitest run mailwoman/` full suite (weights are linked in this worktree; the parse check must pass).
 - [ ] `yarn lint` clean for branch files; `yarn workspace @mailwoman/docs typecheck`.
 - [ ] `yarn ci:smoke` PASS (29 workspaces packing).
 - [ ] `git status --short` clean → `git push -u origin feat/poi-data-mcp`.

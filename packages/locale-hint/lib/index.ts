@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `@mailwoman/locale-gate` — Stage 2 of the runtime pipeline.
+ *   `@mailwoman/locale-hint` — Stage 2 of the runtime pipeline.
  *
  *   Rule-based locale detection from `QueryShape`'s script + known-format hits. Returns a
  *   `LocaleHint` with the top candidate + alternatives, surfacing detector disagreement when the

@@ -8,7 +8,7 @@ completion as this is filed.
 ## What shipped
 
 - **Wave A — 6 Sonnet sub-agents, all completed and landed:**
-  - #548 — banded-gate encoding for interpolation eval (#483 ruling). VT/Cook bands PASS; tiger ≤100m p90 MISS preserved honestly.
+  - #548 — banded-check encoding for interpolation eval (#483 ruling). VT/Cook bands PASS; tiger ≤100m p90 MISS preserved honestly.
   - #549 — GeoNames US backfill _infrastructure_ (#525). `US.txt` absent on disk → 0 rows filled; ready for operator to source it. DB actually holds 8,351 placeholders (not the 4,322 from the anchor JSON).
   - #550 — eval-row expansion: punctuation-stress 120→200, demo-cascade 21→39 (39/39, every WOF id findPlace-verified). Composition shift moved the punctuation baseline 80.9→75.3 (stated, harder mix — not drift).
   - #551 — vitest worktree-exclude + STAGES docs-lag (most docs-lag already fixed by 497e8ba).
@@ -62,7 +62,7 @@ it just cost more than a clean smoke would have.
 ## Key decisions made autonomously
 
 1. **Intended same-data control — but the WOF source grew (CAVEAT for next session).** v0.5.0 uses exactly the 11 v0.3.0 adapters (no new state sources, no openaddresses es/it despite the cache), so it's _meant_ to be an uncontaminated format-change comparison. HOWEVER, the live `wof/repos` tree grew substantially since v0.3.0 (May 22): **wof-admin 4.16M → 8.92M rows (~2×, the admin-us/jp/kr/tw repos), wof-postalcode 103K → 4.61M rows (~44×, the GB+ES postcode repos)** — ~9M more WOF rows, and a postcode-heavy distribution shift. All clean (0 quarantine). So the first new-format training run is **format change + a real WOF data-distribution shift**, not a pure A/B — interpret the comparison accordingly, and consider whether the postcode-heavy WOF tilt needs rebalancing before/at training. Re-cloning WOF to the May-22 state isn't feasible; the added coverage is arguably desirable, just not a clean control.
-2. **Disk: no deletion needed.** `$MAILWOMAN_DATA_ROOT` is btrfs `compress=zstd:3`; the ~486G-logical build compresses to ~200-320G physical against 540G free. The plan's ≥1.5×-logical gate was over-conservative (it ignored compression). Left the operator's v0.3.0 scratch intact.
+2. **Disk: no deletion needed.** `$MAILWOMAN_DATA_ROOT` is btrfs `compress=zstd:3`; the ~486G-logical build compresses to ~200-320G physical against 540G free. The plan's ≥1.5×-logical check was over-conservative (it ignored compression). Left the operator's v0.3.0 scratch intact.
 3. **ban concatenation.** The adapter is single-file but the source is 103 per-department CSVs; concatenated to `staging/ban-france.csv` (9.5G→4.8G compressed), header-deduped.
 4. **Skipped the two WOF smokes, validating in-build.** wof-admin's smoke needs a full ancestry-index build (~17min, no `limit` speedup) ≈ the build's own cost. Launched the build (wof-admin = adapter 1, wof-postalcode = 2) and validate their quarantine live instead of paying the index cost twice. 9/11 adapters smoked clean across CSV/SQLite/NDJSON/concatenated shapes.
 5. **imls-pls 21% quarantine ruled benign.** 95% are `component-not-found:subregion` — the adapter emits a county subregion that never appears in the US-address raw, so the char-offset format correctly drops it (v0.3.0 kept them mis-aligned). imls is 0.003% of the corpus, venue signal redundant with nppes/hrsa. Build proceeds as-is; #552 filed to fix the adapter for v0.5.1.
@@ -72,8 +72,8 @@ it just cost more than a clean smoke would have.
 
 ## What went well
 
-- The contract+self-eval+worktree delegation pattern held: all 6 agents returned PR-ready work with honest self-reports; the gates (#517 punctuation, #483 bands) did their job.
-- The per-adapter smoke gate paid off again — caught the imls subregion class before the 22h commit (its actual purpose).
+- The contract+self-eval+worktree delegation pattern held: all 6 agents returned PR-ready work with honest self-reports; the checks (#517 punctuation, #483 bands) did their job.
+- The per-adapter smoke check paid off again — caught the imls subregion class before the 22h commit (its actual purpose).
 - btrfs compression analysis avoided a needless 398G deletion of the operator's scratch.
 
 ## What could have gone better (friction — named)
@@ -87,11 +87,11 @@ it just cost more than a clean smoke would have.
 - **Task 2 wiring:** re-evaluate the AU-level span-proposer lexicon (the "L" false-positive risk) with a clean A/B before wiring it; codex tables already shipped.
 - **GeoNames `US.txt`** sourcing to actually run the #525 backfill (#549 infra is ready).
 - **2 ambiguous-gold rows** on #550 (126 FR date-street slash — ruled keep; 177 unbalanced-vs-quoted-venue class — noted).
-- The build **crashed once and was recovered** (#554 — the #519 NFC decision written up above) and is in its final parquet-extract phase, likely completing ~shift-end or just after. It's detached; on completion the watcher writes `build-logs/v0.5.0-validation-report.md` (manifest + quarantine breakdown + holdout verification). The model-based validation (DE honest-eval) + first new-format train are next-session (gated). To resume a build crash without re-emitting: `MAILWOMAN_RESUME=1`.
+- The build **crashed once and was recovered** (#554 — the #519 NFC decision written up above) and is in its final parquet-extract phase, likely completing ~shift-end or just after. It's detached; on completion the watcher writes `build-logs/v0.5.0-validation-report.md` (manifest + quarantine breakdown + holdout verification). The model-based validation (DE honest-eval) + first new-format train are next-session (conditional). To resume a build crash without re-emitting: `MAILWOMAN_RESUME=1`.
 
 ## Concrete next steps (big-model / next session)
 
-- v0.5.0 validation campaign → first new-format training run with the pre-registered bridge-retirement gate (dotted po_box ≥ 89.1 bridge-OFF). Gated on build completion.
+- v0.5.0 validation campaign → first new-format training run with the pre-registered bridge-retirement check (dotted po_box ≥ 89.1 bridge-OFF). Blocked on build completion.
 - Artifact pass (slim/hot DB rebuild with postcodes + separated alias bags, R2 publish, anchor-lookup swap).
 - #478 arbitration; Stage-5 reconcile consumption of span proposals.
 - Fix imls subregion (#552) for v0.5.1.

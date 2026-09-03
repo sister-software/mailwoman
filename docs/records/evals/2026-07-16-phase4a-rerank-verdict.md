@@ -74,7 +74,7 @@ a geocode. `ban/street-centroids-fr.db` contains every FR street name; asking wh
 That is a lexicon lookup, not resolution — a different signal with a different failure surface, and
 it interacts directly with #1142 (the `matched` vs `importance` split: "is this a known name" is
 _exactly_ the `matched` bit that today's multiply destroys). It earns a probe only with the same bar
-the others got: a pre-registered gate and a measured win.
+the others got: a pre-registered check and a measured win.
 
 **Two signals have now failed** (plausibility veto: inert; resolution specificity: −16, rewards the
 locality-reading failure mode). Per the treadmill guard, a third goes to the operator before it goes
@@ -85,7 +85,7 @@ to a branch.
 - **4a rerank — DONE, negative.** Code stays (7 tests, sound); it is inert by default because
   `maxResolve` only vetoes country-centroids, which is a real if rare guard. It ships nothing on its
   own.
-- **4b (isotonic ambiguity gate)** — still valuable, and now _more_ so: if evidence cannot pick the
+- **4b (isotonic ambiguity check)** — still valuable, and now _more_ so: if evidence cannot pick the
   winner, calibrated confidence is what lets a caller know the answer is uncertain. Unblocked.
 - **4c (option C: kind-posterior + recall-weighted loss)** — now the **primary** change for the
   bare-fragment class, not a follow-up. It attacks the parse where evidence cannot.

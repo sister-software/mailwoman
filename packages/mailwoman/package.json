@@ -409,7 +409,7 @@
 		"@mailwoman/formatter": "workspace:*",
 		"@mailwoman/geographic-model": "workspace:*",
 		"@mailwoman/kind-classifier": "workspace:*",
-		"@mailwoman/locale-gate": "workspace:*",
+		"@mailwoman/locale-hint": "workspace:*",
 		"@mailwoman/map-tui": "workspace:*",
 		"@mailwoman/match": "workspace:*",
 		"@mailwoman/neural": "workspace:*",

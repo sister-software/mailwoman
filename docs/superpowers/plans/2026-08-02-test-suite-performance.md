@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Cut `test.yml` green wall-clock from 6m29s to ~2m00–2m15s, and make the evidence-lexicons gate invariant to gazetteer size.
+**Goal:** Reduce `test.yml` green wall-clock from 6m29s to ~2m00–2m15s, and make the evidence-lexicons check invariant to gazetteer size.
 
-**Architecture:** Five independent changes, ordered most-certain-prize first. Two are CI configuration (an Actions cache prune; caching the compiled `out/` tree). One moves derived weights artifacts from GitHub's cache service to the local data root the self-hosted runner already has. One splits the single test file that is 93% of the slow leg's runtime into four layers — a fast fixture on every PR, and the full-scale build path-gated, nightly, and at release. One hoists repeated model loads in `neural/test/weights.test.ts`.
+**Architecture:** Five independent changes, ordered most-certain-prize first. Two are CI configuration (an Actions cache prune; caching the compiled `out/` tree). One moves derived weights artifacts from GitHub's cache service to the local data root the self-hosted runner already has. One splits the single test file that is 93% of the slow leg's runtime into four layers — a fast fixture on every PR, and the full-scale build path-conditional, nightly, and at release. One hoists repeated model loads in `neural/test/weights.test.ts`.
 
 **Tech Stack:** GitHub Actions, `gh` CLI, vitest 4.1.10, `node:sqlite` (`DatabaseSync`), TypeScript run directly under Node 24 (type stripping, no flags), yarn 4.17.0.
 
@@ -17,7 +17,7 @@
 - **ZERO raw `process.env` / `process.argv`** — CI-enforced by oxlint (`sister-software/no-process-globals`). The only blessed accessors are `@mailwoman/core/env` (`$public`) and `@mailwoman/core/utils/scripting`.
 - **Data-root paths go through `@mailwoman/core/utils`** — `dataRootPath(...)` / `mailwomanDataRoot()`. The `/mnt/playpen/mailwoman-data` default lives in exactly one place (`core/utils/data-root.ts`). Never re-hardcode it; in docs and help text reference `$MAILWOMAN_DATA_ROOT`.
 - **Acronym casing:** acronyms capitalize as whole camelCase components — `parseJSON`, `readID`, `modelURL`. Not `parseJson` / `readId`. Does not apply to `snake_case` DB columns or wire keys.
-- **Two pre-commit gates fire on every commit** and both reject silently-looking failures:
+- **Two pre-commit checks fire on every commit** and both reject silently-looking failures:
   1. `oxfmt --check` on staged files — it reformats **markdown tables** too. Run `yarn oxfmt <paths>` before committing docs.
   2. An MDX safety check — a raw `<` before an alphanumeric in markdown prose (e.g. `<1s`) is rejected because MDX parses it as a JSX tag. Backtick it.
 - **`yarn compile` before test runs** that touch compiled output. The CLI integration tests exec `mailwoman/out/cli.js`.
@@ -42,8 +42,8 @@
 | `mailwoman/gazetteer-pipeline/evidence-lexicons.ts`              | modify      | Memoize `loadPersonNameSurfaces`.                                                                     |
 | `mailwoman/gazetteer-pipeline/evidence-lexicons.test.ts`         | modify      | Drop the two full-DB tests; keep the pure-unit surface.                                               |
 | `mailwoman/gazetteer-pipeline/evidence-lexicons.fixture.test.ts` | create      | The fixture admin DB + the four laws end to end. Runs on every PR.                                    |
-| `mailwoman/gazetteer-pipeline/evidence-lexicons.full.test.ts`    | create      | The full-scale build. Path-gated / nightly / release only.                                            |
-| `.github/workflows/test.yml`                                     | modify      | `lexicon-full` job, the PARTIAL GATE annotation, the `out/` cache.                                    |
+| `mailwoman/gazetteer-pipeline/evidence-lexicons.full.test.ts`    | create      | The full-scale build. Path-conditional / nightly / release only.                                      |
+| `.github/workflows/test.yml`                                     | modify      | `lexicon-full` job, the PARTIAL CHECK annotation, the `out/` cache.                                   |
 | `.github/workflows/lexicon-nightly.yml`                          | create      | Nightly full-scale build against the live data root.                                                  |
 | `neural/test/weights.test.ts`                                    | modify      | Hoist the link scripts and the shared classifier.                                                     |
 | `vitest.config.ts`                                               | modify      | Exclude `.venv` and `scratchpad`.                                                                     |
@@ -634,7 +634,7 @@ Expected: PASS. This is the guard that caught the 2026-08-02 stale-artifact inci
 In `.github/workflows/test.yml`, delete from both the `unit-slow` and `smoke` jobs:
 
 - the `Restore weights cache (model + soft-feed siblings)` step,
-- the `if: steps.weights-cache.outputs.cache-hit != 'true'` conditions on `Materialize weights` and `Symlink base-latn model` (the steps stay; they become unconditional, modulo the smoke leg's existing path-gate condition).
+- the `if: steps.weights-cache.outputs.cache-hit != 'true'` conditions on `Materialize weights` and `Symlink base-latn model` (the steps stay; they become unconditional, modulo the smoke leg's existing path-check condition).
 
 For `unit-slow` the two steps become:
 
@@ -1230,10 +1230,10 @@ Create `mailwoman/gazetteer-pipeline/evidence-lexicons.full.test.ts` containing 
  *   NOT ON THE PR PATH by default. Measured 2026-08-02 this file was 236.9s of a 253s CI leg, and it
  *   grows with the gazetteer. It runs in three places, each catching something the others cannot:
  *
- *     - `test.yml` job `lexicon-full`, path-gated — a PR that changes the builder or its inputs.
+ *     - `test.yml` job `lexicon-full`, path-conditional — a PR that changes the builder or its inputs.
  *     - `lexicon-nightly.yml` — DATA drift. The gazetteer is rebuilt outside any PR, so no path
  *       filter can see it. This is the only layer that catches that.
- *     - `publish.yml` prepare — the release gate.
+ *     - `publish.yml` prepare — the release check.
  *
  *   The every-PR law coverage lives in `evidence-lexicons.fixture.test.ts`, which is invariant to
  *   gazetteer size. What stays HERE is the coverage-scale claims — `entries > 10_000` and the
@@ -1319,7 +1319,7 @@ EOF
 
 ### Task 5: Give the full-scale build its three CI homes
 
-`evidence-lexicons.full.test.ts` is in no leg after Task 4. It gets a path-gated job, a nightly workflow, and a release-time run — plus an annotation so a PR that skipped it says so.
+`evidence-lexicons.full.test.ts` is in no leg after Task 4. It gets a path-conditional job, a nightly workflow, and a release-time run — plus an annotation so a PR that skipped it says so.
 
 **Files:**
 
@@ -1330,9 +1330,9 @@ EOF
 **Interfaces:**
 
 - Consumes: the test file from Task 4, and the derived-store materialization from Task 2.
-- Produces: a `lexicon-full` job that the `test` aggregator gates on.
+- Produces: a `lexicon-full` job that the `test` aggregator checks on.
 
-- [ ] **Step 1: Add the path-gated job to `test.yml`**
+- [ ] **Step 1: Add the path-conditional job to `test.yml`**
 
 Insert after the `unit-slow` job:
 
@@ -1391,15 +1391,15 @@ lexicon-full:
       if: github.event_name != 'pull_request' || steps.changes.outputs.lexicon == 'true'
       run: yarn vitest run mailwoman/gazetteer-pipeline/evidence-lexicons.full.test.ts
 
-    # A gate that silently means less while reporting the same is worse than one that is honestly
+    # A check that silently means less while reporting the same is worse than one that is honestly
     # unavailable — the same rule the data-fleet skip path follows. When the path filter holds this
     # job back, the run says so rather than showing an unexplained green tick.
     - name: Say what this run did NOT cover
       if: github.event_name == 'pull_request' && steps.changes.outputs.lexicon != 'true'
       run: |
-        echo "::notice title=lexicon-full SKIPPED::No path under mailwoman/gazetteer-pipeline/, data/gazetteer/, core/data/ or codex/ changed, so the FULL-SCALE locality-surface build did not run. The four laws were still asserted against the fixture layer (evidence-lexicons.fixture.test.ts) in unit-fast. Coverage-scale claims (entries > 10_000, the nonzero skip counters) were NOT exercised on this run; lexicon-nightly.yml and the release gate carry those."
+        echo "::notice title=lexicon-full SKIPPED::No path under mailwoman/gazetteer-pipeline/, data/gazetteer/, core/data/ or codex/ changed, so the FULL-SCALE locality-surface build did not run. The four laws were still asserted against the fixture layer (evidence-lexicons.fixture.test.ts) in unit-fast. Coverage-scale claims (entries > 10_000, the nonzero skip counters) were NOT exercised on this run; lexicon-nightly.yml and the release check carry those."
         {
-          echo "## lexicon-full: skipped (path-gated)"
+          echo "## lexicon-full: skipped (path-conditional)"
           echo ""
           echo "Laws asserted: **yes** — fixture layer, in \`unit-fast\`."
           echo "Full-scale build: **no** — no lexicon-affecting path changed."
@@ -1421,7 +1421,7 @@ to:
 needs: [data-fleet, static, unit-fast, unit-slow, react, smoke, lexicon-full]
 ```
 
-and add a row to the partial-gate summary table, after the `smoke` row:
+and add a row to the partial-check summary table, after the `smoke` row:
 
 ```yaml
 echo "| lexicon-full | \`mailwoman-data\` | ${{ needs.lexicon-full.result }} |"
@@ -1436,7 +1436,7 @@ Create `.github/workflows/lexicon-nightly.yml`:
 ```yaml
 # The full-scale locality-surface build, nightly, against the LIVE data root.
 #
-# WHY A NIGHTLY AND NOT JUST A PATH GATE: the path-gated `lexicon-full` job in test.yml catches a PR
+# WHY A NIGHTLY AND NOT JUST A PATH CHECK: the path-conditional `lexicon-full` job in test.yml catches a PR
 # that changes the BUILDER. It cannot catch the other failure mode — the gazetteer itself being
 # rebuilt. That happens outside any pull request, so no path filter will ever see it, and the first
 # symptom would otherwise be a bad lexicon shipping at release. This job is the control for the
@@ -1497,7 +1497,7 @@ jobs:
 `publish.yml` already runs `yarn vitest run neural/test/pair-index-card-parity.test.ts` at line 376. Add immediately after it, in the same job:
 
 ```yaml
-# The full-scale locality-surface build. On the PR path this is gated behind a path filter
+# The full-scale locality-surface build. On the PR path this is blocked behind a path filter
 # (test.yml `lexicon-full`), so a release must exercise it explicitly rather than inheriting a
 # green tick that meant "no lexicon path changed".
 - name: Full-scale locality-surface build
@@ -1522,7 +1522,7 @@ git push
 gh pr create --fill --base main
 ```
 
-Expected on a PR that does **not** touch the gazetteer pipeline: `lexicon-full` is green in seconds and the run summary carries the "skipped (path-gated)" block. On a PR that does touch it: the job runs the full build.
+Expected on a PR that does **not** touch the gazetteer pipeline: `lexicon-full` is green in seconds and the run summary carries the "skipped (path-conditional)" block. On a PR that does touch it: the job runs the full build.
 
 ⚠ Verify the aggregator still reports. `test` is the required status check and both the ruleset and publish.yml's auto-merge match on that exact context name — adding a `needs` entry must not rename it.
 
@@ -1531,20 +1531,20 @@ Expected on a PR that does **not** touch the gazetteer pipeline: `lexicon-full` 
 ```bash
 git add .github/workflows/test.yml .github/workflows/lexicon-nightly.yml .github/workflows/publish.yml
 git commit -m "$(cat <<'EOF'
-ci(lexicon): give the full-scale build a path gate, a nightly, and a release run
+ci(lexicon): give the full-scale build a path check, a nightly, and a release run
 
 Task 4 took the full-scale locality-surface build off the PR path. It comes
 back in three places, each catching what the others cannot:
 
-  - test.yml `lexicon-full`, path-gated on the pipeline and its inputs —
+  - test.yml `lexicon-full`, path-blocked on the pipeline and its inputs —
     catches a PR that changes the builder.
   - lexicon-nightly.yml — catches DATA DRIFT. The gazetteer is rebuilt
     outside any PR, so no path filter can see it. This is the control for
     the fixture layer.
-  - publish.yml — the release gate, run explicitly rather than inherited.
+  - publish.yml — the release check, run explicitly rather than inherited.
 
-When the path gate holds the job back the run says so, in the style of the
-existing PARTIAL GATE annotation. A gate that silently means less while
+When the path check holds the job back the run says so, in the style of the
+existing PARTIAL CHECK annotation. A check that silently means less while
 reporting the same is worse than one that is honestly unavailable.
 
 Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
@@ -1607,7 +1607,7 @@ Add a module-scope helper near the top of the file, after the imports:
  * two of them — five tests, ten spawns, for a result that cannot change after the first. Measured
  * 2026-08-02, this file was 96.6s of a 253s CI leg.
  *
- * Kept lazy rather than moved to a top-level `beforeAll`: the tests that need it are `skipIf`-gated
+ * Kept lazy rather than moved to a top-level `beforeAll`: the tests that need it are `skipIf`-conditional
  * on the dev model being present, and a `beforeAll` would spawn the scripts even on a host where
  * every one of those tests skips.
  */

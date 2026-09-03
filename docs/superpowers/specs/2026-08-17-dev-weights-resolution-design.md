@@ -27,14 +27,14 @@ could not build an engine until the farm stopped re-pointing the weights workspa
 Three, and the en-us link script's own docstring names all three plus the incident:
 
 > Bump this path, model-card.json `files_md5`, and release.config.json `weights.model` in LOCKSTEP on each
-> ship — the 9.0.0 cut moved only release.config, which left this default and the card's md5 record on the
+> ship — the 9.0.0 reduce moved only release.config, which left this default and the card's md5 record on the
 > prior base for a full release cycle.
 
-| Register                                                                | Holds                                                                                                    | Read by                                                                            |
-| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `release.config.json` `weights.model` / `weights.tokenizer`             | the data-root-relative path, plus `lineage` prose carrying both md5s, the gate verdict and receipt paths | `scripts/copy-weights.ts:177` — the release path                                   |
-| `<package>/model-card.json` `files_md5`                                 | the digest of the shipped bytes                                                                          | `link-dev-weights.ts`, re-verified against the published tarball at release step 4 |
-| `packages/neural-weights-*/scripts/link-dev-weights.ts` `DEFAULT_MODEL` | the same path again, as a hardcoded constant                                                             | the dev path only                                                                  |
+| Register                                                                | Holds                                                                                                     | Read by                                                                            |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `release.config.json` `weights.model` / `weights.tokenizer`             | the data-root-relative path, plus `lineage` prose carrying both md5s, the check verdict and receipt paths | `scripts/copy-weights.ts:177` — the release path                                   |
+| `<package>/model-card.json` `files_md5`                                 | the digest of the shipped bytes                                                                           | `link-dev-weights.ts`, re-verified against the published tarball at release step 4 |
+| `packages/neural-weights-*/scripts/link-dev-weights.ts` `DEFAULT_MODEL` | the same path again, as a hardcoded constant                                                              | the dev path only                                                                  |
 
 The third is a duplicate of the first, byte-identical today, in ten scripts totalling **2,001 lines** and
 ranging from 24 (`it-it`) to 586 (`en-gb`). AGENTS.md predicts this shape ("the template is a defect
@@ -103,7 +103,7 @@ This is the risk the rung introduces and it must not ship unreported.
 question `ten-minute-trial.mdx` teaches the reader to ask — answers at the artifact level rather than at the
 package level.
 
-### 4. The `files_md5` gate
+### 4. The `files_md5` check
 
 Measured across the ten weights workspaces: only `en-us` carries a populated `files_md5`. Every overlay's is
 empty and `base-latn` has no card at all.
@@ -114,7 +114,7 @@ ten packages, and it covers nothing an overlay actually ships: `postcode-gb.bin`
 lexicons, the per-locale FSTs.
 
 The link command refuses to link an overlay-owned artifact that has no recorded digest, rather than linking
-it unchecked. This is the runbook's closing move — "promote the warning to a gate" — applied here.
+it unchecked. This is the runbook's closing move — "promote the warning to a check" — applied here.
 
 ## What is NOT in scope
 

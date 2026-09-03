@@ -78,7 +78,7 @@ describe("isStrictlyFiner", () => {
 		expect(isStrictlyFiner("region", "locality")).toBe(false)
 	})
 
-	it("gates differently from a negated isAtLeastAsSpecific at the EQUAL rung — the 955-row conflation", () => {
+	it("checks differently from a negated isAtLeastAsSpecific at the EQUAL rung — the 955-row conflation", () => {
 		// The currency backfill blocks a resurrection when a live row covers the dead one. Written the wrong way round
 		// it reads "block when the live row is strictly COARSER", which stops a live locality from blocking a dead
 		// locality of the same name. Measured on the real artifact that took blocked rows 973 → 18.
@@ -99,7 +99,7 @@ describe("isStrictlyFiner", () => {
 		}
 	})
 
-	it("returns undefined for an unranked placetype so a gate can choose to block on it", () => {
+	it("returns undefined for an unranked placetype so a check can choose to block on it", () => {
 		expect(isStrictlyFiner("bookstore", "locality")).toBeUndefined()
 	})
 })
@@ -168,7 +168,7 @@ describe("agreement with PLACETYPE_DEPTH", () => {
 		expect(
 			disagreements,
 			"These pairs order differently from `PLACETYPE_DEPTH`. A `borough` ranked coarser than its `locality` is " +
-				"what let a live child cover its own dead parent in the currency gate; keep the two ladders in step."
+				"what let a live child cover its own dead parent in the currency check; keep the two ladders in step."
 		).toEqual([])
 	})
 

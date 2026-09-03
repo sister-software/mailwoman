@@ -43,11 +43,11 @@ import { inputSetProvenance, provenanceFor } from "#tool-kit"
 export const CENSUS_ALLOWLIST: Partial<Record<string, string>> = {
 	placetypeCensus:
 		"applied: false by construction — the PCN1 census records parent-candidate observations and composes no bias; " +
-		"a true here would mean someone wired a census bias into the decoder (gated behind a calibration δ the " +
+		"a true here would mean someone wired a census bias into the decoder (blocked behind a calibration δ the " +
 		"artifact deliberately does not carry).",
 	streetMorphology:
 		"Deliberately zeroed in production (ZEROED_MORPHOLOGY_OPTS, runtime-pipeline.ts): the morphology FST is loaded " +
-		"to serve the #1142 street-context gate INSIDE the fst prior, and its own emission bias ships at scale 0 — " +
+		"to serve the #1142 street-context check INSIDE the fst prior, and its own emission bias ships at scale 0 — " +
 		"unrestricted it measured US-golden −48. A firing here means a non-default morphology config, worth knowing.",
 }
 

@@ -31,7 +31,7 @@ import {
 	findPostcodeCountryScope,
 	firstLocalityValue,
 	localityValuesInDocumentOrder,
-	POSTCODE_COUNTRY_COHERENCE_GATE_KM,
+	POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM,
 } from "@mailwoman/resolver/postcode"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { describe, expect, it } from "vitest"
@@ -458,19 +458,19 @@ describe("findPostcodeCountryScope", () => {
 		expect(scope).toBeNull()
 	})
 
-	it("respects the gate — a same-named locality outside gateKm is not evidence", async () => {
+	it("respects the check — a same-named locality outside thresholdKm is not evidence", async () => {
 		const backend = await makeBackend(RIVOLI_POOL)
 		const roots = addressTree("75001", "Paris").roots
 
 		expect(
-			await findPostcodeCountryScope(roots, backend, { postcode: "75001", defaultCountry: "US", gateKm: 25 })
+			await findPostcodeCountryScope(roots, backend, { postcode: "75001", defaultCountry: "US", thresholdKm: 25 })
 		).not.toBeNull()
 
 		// Paris 1er's postcode point sits ~0.8 km from the locality point, so a sub-metre check excludes it.
 		const tight = await findPostcodeCountryScope(roots, backend, {
 			postcode: "75001",
 			defaultCountry: "US",
-			gateKm: 0.0001,
+			thresholdKm: 0.0001,
 		})
 
 		expect(tight).toBeNull()
@@ -832,7 +832,7 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 		expect(scope?.evidence).toBe("pair")
 		expect(scope?.locality).toBe("Madrid")
 		expect(scope?.postcodePlace?.id).toBe(PC_28023_ES.id)
-		expect(scope?.distanceKm).toBeLessThan(POSTCODE_COUNTRY_COHERENCE_GATE_KM)
+		expect(scope?.distanceKm).toBeLessThan(POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM)
 	})
 
 	it("a DOMESTIC value neutralizes itself, not its siblings — Green Point/Cape Town → ZA (rung 4a)", async () => {
@@ -1161,13 +1161,13 @@ describe("resolveTree + postcode-country coherence", () => {
 		expect(nodeByTag(out, "locality")?.metadata?.["resolver_country"]).toBe("US")
 	})
 
-	it("honours a custom gate radius", async () => {
+	it("honours a custom check radius", async () => {
 		const resolver = createWOFResolver(await makeBackend(RIVOLI_POOL))
 
 		const out = await resolver.resolveTree(addressTree("75001", "Paris"), {
 			defaultCountry: "US",
 			postcodeCountryCoherence: true,
-			postcodeCountryCoherenceGateKm: 0.0001,
+			postcodeCountryCoherenceThresholdKm: 0.0001,
 		})
 
 		expect(nodeByTag(out, "locality")?.metadata?.["postcode_country_scope"]).toBeUndefined()

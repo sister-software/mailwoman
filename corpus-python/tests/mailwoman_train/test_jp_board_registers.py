@@ -11,7 +11,7 @@ What these tests pin, in order of how badly a regression would hurt:
 1. The CHECK. ``fraction`` is ``acceptable / rows`` over the whole board, an unresolved pair counts
    as unacceptable, and the bar is 0.70 — the 2026-07-18 pre-registration, unchanged. The
    per-register split is diagnostic and must not be able to move it: the board in
-   ``test_gate_is_the_blended_number_even_when_a_register_is_wiped_out`` has one register at 0.0000
+   ``test_check_is_the_blended_number_even_when_a_register_is_wiped_out`` has one register at 0.0000
    and still reads PASS, because the blend clears 0.70.
 2. The split is a partition of those same outcomes — per-register rows/acceptable/unresolved sum
    back to the blended totals. A bucketing bug that double-counted or dropped rows would otherwise
@@ -140,7 +140,7 @@ def test_per_register_totals_partition_the_blended_totals():
     assert sum(s["unresolved"] for s in per) == result["unresolved"]
 
 
-def test_gate_is_the_blended_number_even_when_a_register_is_wiped_out():
+def test_check_is_the_blended_number_even_when_a_register_is_wiped_out():
     """The pre-registered bar reads the blend. A dead minority register cannot flip it, by design."""
     # 5 of 6 acceptable = 0.8333 >= 0.70, with designator at 0.0000.
     correct = {r["raw"] for r in ALL_ROWS} - {"TOKYOCHIYODA3BAN16GO"}
@@ -149,16 +149,16 @@ def test_gate_is_the_blended_number_even_when_a_register_is_wiped_out():
     assert result["per_register"]["designator"]["fraction"] == 0.0
     assert result["fraction"] == pytest.approx(5 / 6)
     report = scorer.format_report(result)
-    assert "GATE >= 0.70: PASS" in report
+    assert "CHECK >= 0.70: PASS" in report
     # …and the diagnostic is labeled as one, so nobody quotes it as a bar.
-    assert "DIAGNOSTIC, not the gate" in report
+    assert "DIAGNOSTIC, not the check" in report
 
 
-def test_gate_still_fails_on_a_bad_blend():
+def test_check_still_fails_on_a_bad_blend():
     correct = {"TOKYOCHIYODA1-2-3"}
     result = _score(correct)
     assert result["fraction"] == pytest.approx(1 / 6)
-    assert "GATE >= 0.70: FAIL" in scorer.format_report(result)
+    assert "CHECK >= 0.70: FAIL" in scorer.format_report(result)
 
 
 def test_board_without_a_register_column_scores_identically_and_gets_no_breakdown():

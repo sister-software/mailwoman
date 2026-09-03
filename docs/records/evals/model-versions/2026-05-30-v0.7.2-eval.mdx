@@ -2,7 +2,7 @@
 
 **Verdict: EXPERIMENTAL.** Best neural model to date and strictly dominates
 v0.6.0, but does not clear the ≥25% harness PROMOTE bar. Do not promote to
-default on the strict gate; ship as experimental. The path to ≥25% is coverage
+default on the strict check; ship as experimental. The path to ≥25% is coverage
 and the resolver, not another recipe tweak.
 
 ## What v0.7.2 was
@@ -21,7 +21,7 @@ Base recipe, tokenizer (v0.6.0-a0), and everything else unchanged → F1 valid.
 | v0.6.0                      | 14.4%                                               |
 | v0.7.0 calibration (ls=0.1) | 13.8%                                               |
 | **v0.7.2**                  | **19.5%** (81/415)                                  |
-| — gate bands                | ≤14% sidegrade · 15–24% experimental · ≥25% promote |
+| — check bands               | ≤14% sidegrade · 15–24% experimental · ≥25% promote |
 
 **+5.1pp over v0.6.0** — the largest single-release harness gain of the v0.6/0.7
 cycle. v0 (rules) is at 93.7% on this suite, as expected (it's a Pelias/addressit
@@ -34,7 +34,7 @@ _directionally_ (+7 assertions) but did not reach "most-of-65." Format diversity
 helped; it wasn't sufficient. Bare-intersection coverage is still thin relative
 to the 65 hand-curated adversarial cases.
 
-## Per-tag gate vs v0.6.0 — **PASS**
+## Per-tag check vs v0.6.0 — **PASS**
 
 Golden exact-match 21.1% → 22.0%. No tag regressed >2pp. Highlights:
 
@@ -79,9 +79,9 @@ needs a coverage extract (backlog B3'). Stays opt-in.
 
 ## Recommendation
 
-- **Don't promote v0.7.2 to default on the strict gate** (19.5% < 25%). But it
+- **Don't promote v0.7.2 to default on the strict check** (19.5% < 25%). But it
   _strictly dominates_ the current default (v0.6.0): +5.1pp harness, +7
-  intersections, per-tag gate clean. Shipping it as **experimental** (model card,
+  intersections, per-tag check clean. Shipping it as **experimental** (model card,
   not `defaultVersion`) is the right call — it's the best artifact we have and is
   A/B-able. The promote-to-default decision is the operator's.
 - **The 25% bar is not a recipe-tuning problem.** Two cycles (v0.6.x, v0.7.x) of
@@ -96,5 +96,5 @@ needs a coverage extract (backlog B3'). Stays opt-in.
   same low-risk mould as postcode/unit repair.
 
 Artifacts (volatile, `/tmp/v072-eval/` + `/tmp/external-arenas-v072/`): harness.md,
-gate-report.md, eval-morphology.json, the three arena results, postal-unitrepair-v2.json.
+check-report.md, eval-morphology.json, the three arena results, postal-unitrepair-v2.json.
 Model checkpoint is durable on the Modal volume: `output-v072-intersection/checkpoints/step-100000`.

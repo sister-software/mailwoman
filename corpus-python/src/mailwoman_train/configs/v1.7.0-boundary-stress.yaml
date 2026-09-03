@@ -1,5 +1,5 @@
 # === v1.7.0-boundary-stress (night shift 2026-06-18) =============================================
-# The corrective retrain after v1.6.0 gated NO-PROMOTE. v1.6.0 added the boundary slice at weight 1.0 and
+# The corrective retrain after v1.6.0 conditional NO-PROMOTE. v1.6.0 added the boundary slice at weight 1.0 and
 # LIFTED the boundaries (fr-prefix 55→99.7) but was a NARROW distribution — every row a clean full address
 # — so the model over-fit it and regressed on OOD real rows (held-out us.locality 66.3→58.2%; 84% of the
 # regression was DROPPED locality on bare "City, STATE" rows). Diagnosed via three probes + a DeepSeek consult.
@@ -8,14 +8,14 @@
 # (7:3 before:after, the confounding mirror for the order-bias). Co-change (hygiene): lr constant→cosine.
 #
 # BUNDLE (DeepSeek-validated 2026-06-17 — the rule is "one CONFOUNDING variable per run, each change its
-# own gate row"). The boundary slice is the headline data-mix variable. Riding alongside it, NON-confounding
-# because they don't shift the distribution the slice trains on, three additions, each gated below:
+# own check row"). The boundary slice is the headline data-mix variable. Riding alongside it, NON-confounding
+# because they don't shift the distribution the slice trains on, three additions, each conditional below:
 #   (a) use_conventions_loss_mask — ❌ DISABLED 2026-06-18. The "non-confounding, different axis" call was
 #       WRONG: the FR convention forbids street_prefix/street_suffix, but the boundary slice's fr-prefix
 #       shape TEACHES FR street_prefix ("Rue"). The mask -inf'd the gold label → train_loss ~7M, broken
 #       run killed at step 2000. v1.5.1 trained fine without it. Off until the table↔FR-data are reconciled.
-#   (c) an EXPANDED gate grading the FR/DE composition wins the slice already trains for free
-#       (fr.house_number #564, FR street_prefix, number-after-street #435). READY NOW (gate rows below).
+#   (c) an EXPANDED check grading the FR/DE composition wins the slice already trains for free
+#       (fr.house_number #564, FR street_prefix, number-after-street #435). READY NOW (check rows below).
 #   (b) [NOT ride-ready — a focused #517 corpus task, do it first if you want it this run] extend
 #       synth-po-box for NZ + military. It's more than leaders: the synthesizer needs an en-NZ template +
 #       `countryToLocale` NZ→en-NZ + a NEW military template (CMR/PSC/Unit + Box, APO/FPO/DPO + AE/AP/AA —
@@ -37,25 +37,25 @@
 # The slice puts the gold boundary on diverse realizations of exactly these 4 shapes (alignRow-clean,
 # 0% quarantine). It ALSO reinforces fr.house_number (the number-after-street shape).
 #
-# PRE-REGISTERED GATE (DeepSeek-signed targets; per-shape via scripts/eval/boundary-stress-baseline.ts):
+# PRE-REGISTERED CHECK (DeepSeek-signed targets; per-shape via scripts/eval/boundary-stress-baseline.ts):
 #   - street_suffix 40.7 → ≥55 ; comma-less(US) street 46 → ≥65 ; fr-prefix 47.7 → ≥70 ;
 #     house-number-after-street 50.7 → ≥65 ; AND the shared STREET span ≥65 on all four shapes
 #     (anchored to the diverse base-locale baseline).
-#   NON-REGRESSION FLOORS (gates/v1.7.0-boundary-stress.json): the v1.6.0 floors (us.street 74, locality
+#   NON-REGRESSION FLOORS (checks/v1.7.0-boundary-stress.json): the v1.6.0 floors (us.street 74, locality
 #     72.9, US postcode 97, affix 78/67, FR postcode 99.5, fr.house_number 87, DE locality 83.8, country
 #     83.3) PLUS two NEW v1.7.0 guards — us.bare_locality (the 84%-drop surface; re-probe v1.5.1, floor just
 #     below) and us.street_recall_full (street recall where gold has BOTH street+locality — DeepSeek's
 #     blind-spot: bare-locality emphasis can eat the street on full addresses; >1% drop below v1.5.1 = STOP).
-#   WATCH (DeepSeek): street_suffix OVER-fire (its gate target vs the floor — a boundary slice can push
+#   WATCH (DeepSeek): street_suffix OVER-fire (its check target vs the floor — a boundary slice can push
 #     suffix onto non-suffix tokens) ; affix CRF transition stability (prefix↔street↔suffix) — a relabel
 #     bug presents as boundary noise, not dilution. If slash/comma-less land short at 1.0, sweep the
 #     weight UP (1.5) — one variable, do not stack other changes.
 #   DECISION: targets move up + floors hold → ship candidate. Spine regression → STOP, re-audit the
 #     slice's alignment before any weight surgery.
 #
-#   BUNDLE GATE ROWS (each rider attributable on its own):
+#   BUNDLE CHECK ROWS (each rider attributable on its own):
 #   - conventions loss-mask: ❌ removed (rider a disabled — it conflicts with the FR street_prefix the
-#     slice teaches; see the header). No gate row needed.
+#     slice teaches; see the header). No check row needed.
 #   - po_box NZ + military [ONLY IF rider (b) is built first]: the postal arena po_box class 0/4 → >0 (and
 #     military 0/3 → >0), with NO US/FR/CA po_box regression (existing synth-po-box rows only extended).
 #   - FREE-RIDER MEASURES (the slice trains these — grade as wins, not just floors): fr.house_number holds
@@ -202,7 +202,7 @@ train:
   csv_log_path: "{output_dir}/../train_log.csv"
   # v1.7.0 hygiene co-change (STATED, not a change): was `constant`. v1.6.0's constant LR let the spine
   # drift PAST its ~26k optimum (final-checkpoint spine worse than mid-training). Cosine decay (peak after
-  # warmup → ~0 over max_steps) makes the final checkpoint the best, so the gate needn't checkpoint-select.
+  # warmup → ~0 over max_steps) makes the final checkpoint the best, so the check needn't checkpoint-select.
   lr_schedule: cosine
   gazetteer_curriculum: false
   trackio_project: mailwoman

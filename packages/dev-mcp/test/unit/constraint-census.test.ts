@@ -98,7 +98,7 @@ describe("constraint census", () => {
 		expect(r.summary).toContain("never summed")
 	})
 
-	it("calls a gate INERT only when it fired enough AND never accompanied a pick", async () => {
+	it("calls a check INERT only when it fired enough AND never accompanied a pick", async () => {
 		const { runConstraintCensus } = await import("@mailwoman/dev-mcp/constraint-census")
 		const dead = Array.from({ length: 25 }, (_, i) => `dead${i}`)
 		const byInput: Record<string, FakeLookup[]> = {}
@@ -109,28 +109,28 @@ describe("constraint census", () => {
 
 		// A second check fires just as often but DOES pick sometimes — it must not be called inert.
 		byInput["alive"] = [
-			{ tag: "locality", value: "Bayern", placetype: "locality", checks: ["live_gate"], picked: true },
+			{ tag: "locality", value: "Bayern", placetype: "locality", checks: ["live_check"], picked: true },
 		]
 
 		const r = await runConstraintCensus(fakeRegistry(byInput), { inputs: LITERAL([...dead, "alive"]) }, dependencies)
 
-		expect(r.inert_gates.join()).toContain("some_retry")
-		expect(r.inert_gates.join()).not.toContain("live_gate")
+		expect(r.inert_checks.join()).toContain("some_retry")
+		expect(r.inert_checks.join()).not.toContain("live_check")
 	})
 
-	it("does not call a rarely-fired gate inert, because that claim needs firings", async () => {
+	it("does not call a rarely-fired check inert, because that claim needs firings", async () => {
 		const { runConstraintCensus } = await import("@mailwoman/dev-mcp/constraint-census")
 
 		const r = await runConstraintCensus(
 			fakeRegistry({
-				a: [{ tag: "locality", value: "Bayern", placetype: "locality", checks: ["rare_gate"], picked: false }],
+				a: [{ tag: "locality", value: "Bayern", placetype: "locality", checks: ["rare_check"], picked: false }],
 			}),
 			{ inputs: LITERAL(["a"]) },
 			dependencies
 		)
 
-		expect(r.inert_gates).toEqual([])
-		expect(r.summary).toContain("No gate reached the inert threshold")
+		expect(r.inert_checks).toEqual([])
+		expect(r.summary).toContain("No check reached the inert threshold")
 	})
 
 	it("separates a null pick WITH candidates (rejected downstream) from an empty probe", async () => {

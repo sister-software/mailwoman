@@ -50,7 +50,7 @@ mailwoman-training models/tokenizer`). Re-using the base run's tokenizer keeps i
    ~7M. Killed at step 2000, disabled the mask, relaunched (loss 5.0→1.6)._ Don't bundle a per-locale
    label/transition mask with a slice that teaches a label that locale's convention forbids — reconcile
    the convention table with the actual training labels first.
-9. **Watch the gate:** the recipe's pre-registered gate is canonical — targets move up, non-regression
+9. **Watch the check:** the recipe's pre-registered check is canonical — targets move up, non-regression
    floors hold. A below-bar number is a MISS to confront (re-baseline with a stated reason, or iterate),
    never a quiet pass. Restating a bar from memory drifts it.
 
@@ -65,14 +65,14 @@ The Volume persists across runs (outputs under `/data/output*`). A failed train 
 synced corpus, so re-launch after fixing the config/recipe — no re-sync needed unless the corpus changed.
 `modal volume get mailwoman-training /output-<run>/ ./output/` pulls a finished run's artifacts.
 
-## After the run: the promote/no-promote gate (v1.6.0-boundary-stress example)
+## After the run: the promote/no-promote check (v1.6.0-boundary-stress example)
 
 The training function writes ONLY checkpoints + `train_log.csv` to the output dir — **no `model.onnx`,
 `model-card.json`, or `crf-transitions.json`.** You produce the evaluatable artifact yourself. Two
 simplifiers for this model: (1) the STAGE3 label set is stable, so the existing
 `neural-weights-en-us/model-card.json` (labels-identical) is reused as-is — no packaging step for the
 eval. (2) `crf_loss_weight` is `0.0`, so `export_crf_transitions()` returns `None` and the bundle ships
-no `crf-transitions.json`; production therefore decodes **argmax**, and a gate run without it is faithful.
+no `crf-transitions.json`; production therefore decodes **argmax**, and a check run without it is faithful.
 
 ```bash
 # 1. Export the final checkpoint to fp32 ONNX (writes {output-dir}/model.onnx on the volume)
@@ -90,20 +90,20 @@ modal volume get mailwoman-training /models/quantized/model-v160-step-40000-int8
 
 TOK=/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model
 
-# 4a. The 4-shape TARGET gate (the headline — street_suffix/comma-less/fr-prefix/hn-after)
+# 4a. The 4-shape TARGET check (the headline — street_suffix/comma-less/fr-prefix/hn-after)
 node scripts/eval/boundary-stress-eval.ts \
   --model ./out/v160/model.onnx --tokenizer "$TOK" \
   --model-card neural-weights-en-us/model-card.json --n 300
 
-# 4b. The per-locale FLOORS gate (guardrail non-regression). score-affix.ts hardcodes the repo card +
+# 4b. The per-locale FLOORS check (guardrail non-regression). score-affix.ts hardcodes the repo card +
 #     tokenizer — both already correct for v1.6.0 (labels identical, same v0.6.0-a0 tokenizer).
-node packages/mailwoman/out/cli.js eval gate \
+node packages/mailwoman/out/cli.js eval check \
   --model ./out/v160/model.onnx --int8 ./out/v160/model.onnx \
   --spec mailwoman/eval-harness/specs/v1.6.0-boundary-stress.json \
   --tokenizer "$TOK" --card neural-weights-en-us/model-card.json \
   --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json \
-  --out-dir /tmp/gate-v160
-cat /tmp/gate-v160/verdict.json
+  --out-dir /tmp/check-v160
+cat /tmp/check-v160/verdict.json
 ```
 
 Both must pass to ship: 4a moves the four boundary targets up; 4b holds the guardrail floors. The floors

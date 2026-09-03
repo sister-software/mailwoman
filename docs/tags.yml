@@ -202,9 +202,9 @@ lexicon:
   label: Lexicons
   description: The painted evidence lexicons — street-type, locality-surface, the four-law selectivity rules.
 
-gates:
-  label: Gates & margins
-  description: Pre-registered promotion gates — floors, noise-honest margins, boards, and gauntlets.
+checks:
+  label: Checks & margins
+  description: Pre-registered promotion checks — floors, noise-honest margins, boards, and gauntlets.
 
 process:
   label: Process discipline
@@ -220,11 +220,11 @@ doctrine:
 
 runtime:
   label: Runtime behavior
-  description: Decode-time and serving-time mechanisms — input modes, gates, riders, and routers.
+  description: Decode-time and serving-time mechanisms — input modes, checks, riders, and routers.
 
 api:
   label: API surface
-  description: The HTTP/library contract — endpoints, options, and the annotation seams.
+  description: The HTTP/library contract — endpoints, options, and the annotation boundaries.
 
 schema:
   label: Schema
@@ -232,7 +232,7 @@ schema:
 
 locale:
   label: Locale mechanics
-  description: Per-locale gating, overlays, tiers, and locale-conditional behavior.
+  description: Per-locale blocking, overlays, tiers, and locale-conditional behavior.
 
 cjk:
   label: CJK

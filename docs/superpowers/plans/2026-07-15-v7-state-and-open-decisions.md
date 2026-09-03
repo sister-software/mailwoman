@@ -3,9 +3,9 @@
 > **⚠ SUPERSEDED (2026-07-17).** All three "open decisions" below have been answered and the
 > model-investment arc it deferred has shipped — do not act on this doc's open questions:
 >
-> - **#1 acceptance criterion →** re-gated to **coordinate acceptability** (#1147), retiring the
+> - **#1 acceptance criterion →** re-blocked to **coordinate acceptability** (#1147), retiring the
 >   0.90/0.97 parse-tag floor.
-> - **#2 demote vs delete →** **delete** won; the hybrid swap gate was rejected. The rules parser was
+> - **#2 demote vs delete →** **delete** won; the hybrid swap check was rejected. The rules parser was
 >   deleted in plan 4 (#1151, −9650 LOC); seal tag `legacy-rules-final` @ fd48c21c.
 > - **#3 which model change →** all three pursued: the **FSemi-CRF span head shipped** (v3.10.1, the
 >   #727 arc — phase-4c name-evidence rerank now default-on), the **PT/RO diacritic splice** landed
@@ -37,7 +37,7 @@ Ship v7.0.0 = **delete** the legacy rules parser. "Delete" qualifies as all of:
 4. The rules parser's hand-written gold (the parity corpus) rescued to neural eval fixtures.
 5. NOT deleted: the libpostal dictionary data + the generic tokenization utilities.
 
-The swaps for (1) are already built on `origin/hold/v1-parse-neural-gate-blocked`. Deletion is gated
+The swaps for (1) are already built on `origin/hold/v1-parse-neural-check-blocked`. Deletion is conditional
 on **the three swapped surfaces producing acceptable output**, not on the model reaching a specific
 parity score. That distinction is the crux of the open decisions below.
 
@@ -62,7 +62,7 @@ head and the country channel did not erode fragment parsing. [measured]
 Where it breaks is one joint: the **street ↔ house-number boundary**. Coarse geography is fine
 (postcode ~98.6% resolve; locality/region/country land correctly). About 60–70% of failures are the
 number landing on the wrong side of the street, splitting, or dropping. Sampled class shares (85-row
-`--failing 50` cut): empty/not-emitted 40%, boundary-digit 20%, boundary-span 19%, accent 15%, unit
+`--failing 50` reduce): empty/not-emitted 40%, boundary-digit 20%, boundary-span 19%, accent 15%, unit
 4%. [measured, small sample]
 
 ## What the failing addresses have in common
@@ -75,7 +75,7 @@ Interstate 35`, or unit-compound `U12/345`), often on a street token that resist
 
 Two claims I made and then corrected under review — **do not carry these forward as findings**:
 
-- **"The model overfit the US template" — [retracted].** The evidence cuts against it. The non-US
+- **"The model overfit the US template" — [retracted].** The evidence reduces against it. The non-US
   forms were well-fed, several above US weight (`gnaf` AU 6.0, `synth-german` 6.0,
   `synth-fr-admin-split` 6.0 vs `tiger` US 4.0), and the targeted bare-street extracts ride at 12.0.
   Under-exposure would have been fixed by that; it wasn't. Part of the failure (per-digit number
@@ -113,9 +113,9 @@ fragment/edge-case-heavy, so the tail is smaller on real drop-in traffic than th
 ## What I built, and where it conflicts with the spec
 
 - **Resolution-plausibility guard** — `resolver/plausibility.ts`, `isImplausibleResolution(tree)`,
-  6 tests passing, committed on branch `feat/v7-hybrid-swap-gate` (NOT merged). Trips when a tree
-  resolves no finer than a country centroid. Reusable for any gate direction. [done]
-- I then drafted a **hybrid swap gate** (route `structured_address`→neural, everything else→rules
+  6 tests passing, committed on branch `feat/v7-hybrid-swap-check` (NOT merged). Trips when a tree
+  resolves no finer than a country centroid. Reusable for any check direction. [done]
+- I then drafted a **hybrid swap check** (route `structured_address`→neural, everything else→rules
   fallback, + the guard) and measured it bounds the garbage tail to ~3/321 (0.9%) with zero
   false-positive fallbacks. **But this keeps rules as a fallback = demote, not delete.** The held
   `/v1/parse` swap's own docstring says its design is "no rules fallback (the legacy-excision's
@@ -140,11 +140,11 @@ fragment/edge-case-heavy, so the tail is smaller on real drop-in traffic than th
 
 1. **What is the acceptance criterion for deleting rules?** The parse-tag floor is a proxy that may be
    unreachable at 29M. Candidates: (a) hold the 0.90/0.97 parse-tag floors and invest in the model
-   until it clears them; (b) re-gate on coordinate acceptability of the swapped surfaces; (c) accept
+   until it clears them; (b) re-check on coordinate acceptability of the swapped surfaces; (c) accept
    a thin rules fallback for the classes the model can't carry (demote, softens "delete"); (d) some
    mix. Everything else waits on this.
 2. **Is demote-with-fallback acceptable, or is delete non-negotiable?** If delete is firm, the hybrid
-   gate is off the table and the path is model investment (FSemi-CRF / PT-RO splice / digit work) to
+   check is off the table and the path is model investment (FSemi-CRF / PT-RO splice / digit work) to
    carry the failing classes outright.
 3. **If we invest in the model, which change first** — FSemi-CRF (literature-backed, multi-night), a
    PT/RO diacritic splice (fills a confirmed coverage gap), or a digit-atomicity probe (validate the
@@ -152,9 +152,9 @@ fragment/edge-case-heavy, so the tail is smaller on real drop-in traffic than th
 
 ## Artifacts + state
 
-- Branch `feat/v7-hybrid-swap-gate` (off main): the plausibility guard + tests, committed, not pushed.
-- Held swaps: `origin/hold/v1-parse-neural-gate-blocked` (T1 libpostal / T2 /v1/parse / T4 nominatim),
-  blocked by `mailwoman/test/v1-parse-gate.test.ts` (the 0.90/0.97 parse-tag floors).
+- Branch `feat/v7-hybrid-swap-check` (off main): the plausibility guard + tests, committed, not pushed.
+- Held swaps: `origin/hold/v1-parse-neural-check-blocked` (T1 libpostal / T2 /v1/parse / T4 nominatim),
+  blocked by `mailwoman/test/v1-parse-check.test.ts` (the 0.90/0.97 parse-tag floors).
 - Diagnosis write-up: `docs/articles/evals/2026-07-15-v7-parity-floor-diagnosis.md`.
 - Probes (repro): `scratchpad/{coord-parity,ctx-probe2,tok-probe,tok-digits,parity-split}.mjs`;
   package-shaped v264 cache at `scratchpad/v264-cache`.

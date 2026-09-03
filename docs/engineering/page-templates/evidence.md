@@ -43,7 +43,7 @@ Lead with what was measured and against which baseline, in one sentence, before 
 <!-- illustrative -->
 
 ```
-GATE FAILED: 3 violation(s).
+CHECK FAILED: 3 violation(s).
 - locality (recall) — recall 39.7% → 31.1% (Δ -8.6pp; baseline > 10%)
 - house_number (recall) — recall 79.0% → 75.9% (Δ -3.1pp; baseline > 10%)
 - dependent_locality (hallucination) — hallucinated 0 → 1066 (Δ +1066; new rate 2665.0%)

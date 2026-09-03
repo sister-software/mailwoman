@@ -136,7 +136,7 @@ assembled; `packages/mcp/lib/cli.ts` simply does not use it.
   package-shaped weights cache, and it routes per-country weights overlays (`:283-290`).
 - `packages/mailwoman/lib/eval-harness/gauntlet/run.ts:186` `runGauntlet` runs the four layers —
   `regression`, `metamorphic`, `holdout`, `ablation` — and emits the combined verdict.
-- `packages/mailwoman/lib/eval-harness/promotion-eval.ts` runs the full battery against a gate spec in
+- `packages/mailwoman/lib/eval-harness/promotion-eval.ts` runs the full battery against a check spec in
   `eval-harness/specs/*.json` and writes `verdict.json`.
 - The board corpus is **837 rows** across 129 case directories under
   `packages/mailwoman/lib/eval-harness/gauntlet/cases/` (128 ISO country directories plus
@@ -144,7 +144,7 @@ assembled; `packages/mcp/lib/cli.ts` simply does not use it.
   (25).
 - `parity-corpus.ts` holds the 321-row triaged parse-parity fixture set with pre-registered floors;
   `preset-compare.ts` holds a **hardcoded 6-address eyeball comparison with no scoring at all**
-  (`preset-compare.ts:13,39`) — a small self-selected panel wired into the release gate, and a good
+  (`preset-compare.ts:13,39`) — a small self-selected panel wired into the release check, and a good
   example of the shape this surface should make unattractive.
 
 ### 2.4 The head-to-head benchmark rig — the protocol is already locked
@@ -179,7 +179,7 @@ Both are `APIClient`s with disk caching under `$MAILWOMAN_DATA_ROOT/geocode-orac
 minute, and `minRequestIntervalMs` set alongside the budget. Google requires
 `$private.GOOGLE_MAPS_API_KEY` and is **billed**; Census needs no credential.
 
-Its header states the boundary this spec inherits: _"Not truth, and not a gate. … Nothing here should
+Its header states the boundary this spec inherits: _"Not truth, and not a check. … Nothing here should
 ever decide whether a build ships; a human reads it and decides what to pin."_
 
 ### 2.6 `packages/mailwoman/lib/dev-tools/*.run.ts` — the sanctioned probes
@@ -209,7 +209,7 @@ zero. The two are different facts and the output keeps them apart.").
         │  fork/IPC
         ├── engine worker  (config A)   ← one process per resident configuration
         ├── engine worker  (config B)
-        └── job worker     (gauntlet / gate / bench)
+        └── job worker     (gauntlet / check / bench)
 ```
 
 **Why the MCP process is not the daemon.** MCP stdio servers live and die with the agent process. The
@@ -288,7 +288,7 @@ This repo has scar tissue for three of these. The design adds a fourth of its ow
 
 **(a) A stale compiled `out/`.** The pattern is documented twice. `corpus-stamp.ts:10-16` records
 2026-08-06: `eval gauntlet-build regression-db` ran from a compiled tree whose `out/` loader still held
-a deleted case array, wrote a DB, printed "built", exited 0, and every gate afterwards graded a corpus
+a deleted case array, wrote a DB, printed "built", exited 0, and every check afterwards graded a corpus
 nobody had. `promotion-eval.ts:250-278` carries the recompile-before-eval lore guard that walks
 `packages/core` two levels deep for a `.ts` newer than `packages/core/out`.
 
@@ -311,7 +311,7 @@ caches a stamp verdict.
 **(c) A drifted or under-fed model artifact.** Two existing guards, both in
 `gauntlet/harness.ts`: `assertShippedModelMatchesCard` (#1024, `:137`) refuses when the materialized
 `model.onnx` md5 disagrees with the model-card's `files_md5`, because a config/card drift once shipped
-a superseded model past a silent gate. `assertDeclaredAnchorBins` (#1516, `:184`) refuses when a
+a superseded model past a silent check. `assertDeclaredAnchorBins` (#1516, `:184`) refuses when a
 weights package is missing the anchor artifact **its own card declares**, because that failure has no
 signal of its own — the channel resolves OFF, the run scores three or four cases lower, and the
 operator reads a model regression.
@@ -381,19 +381,19 @@ across its nine tools and hand-maps between them (`tools.ts:337-339`); one conve
 
 Prefix `mwdev_`, server name `mailwoman-dev`, bin `mwdev-mcp`. Eleven tools.
 
-| Tool             | Purpose                                                              | Replaces                                                                                                                                      |
-| ---------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `mwdev_daemon`   | status / reload / evict / stop                                       | `autoload-check.ts`, `mailwoman doctor`                                                                                                       |
-| `mwdev_inputs`   | list and describe input sets; report coverage and denominators       | the implicit "which cases shall I use?" step                                                                                                  |
-| `mwdev_run`      | parse or geocode one input set under one configuration               | `acceptance-probe.ts`, most one-off parse scripts                                                                                             |
-| `mwdev_compare`  | two arms over one input set, diffed and graded                       | `fst-probe.ts`, `fst-board-probe.ts`, `hierarchy-benefit.ts`, `affix-diff.ts`, `backend-parity.ts`, all Pelias/Photon/Nominatim head-to-heads |
-| `mwdev_trace`    | per-stage evidence for a handful of inputs                           | `pgn-probe.ts`                                                                                                                                |
-| `mwdev_gauntlet` | run gauntlet layers, whole or single, with model and change pins     | `mailwoman eval gauntlet` spawns                                                                                                              |
-| `mwdev_gate`     | run the promotion gate against a spec                                | `mailwoman eval promote` spawns                                                                                                               |
-| `mwdev_lookup`   | direct data-source probes (FST, candidate table, normalizer, poi.db) | `icu-probe.mjs`, `keynorm-probe.ts`, `probe-fst-bias.run.ts`                                                                                  |
-| `mwdev_bench`    | latency and throughput, cold and warm distinguished                  | `bench-reverse-throughput.ts`                                                                                                                 |
-| `mwdev_cli`      | allowlisted read-only CLI passthrough                                | ad-hoc `Bash` invocations of the CLI                                                                                                          |
-| `mwdev_job`      | poll, stream logs from, and cancel long-running jobs                 | backgrounded shell jobs                                                                                                                       |
+| Tool                   | Purpose                                                              | Replaces                                                                                                                                      |
+| ---------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mwdev_daemon`         | status / reload / evict / stop                                       | `autoload-check.ts`, `mailwoman doctor`                                                                                                       |
+| `mwdev_inputs`         | list and describe input sets; report coverage and denominators       | the implicit "which cases shall I use?" step                                                                                                  |
+| `mwdev_run`            | parse or geocode one input set under one configuration               | `acceptance-probe.ts`, most one-off parse scripts                                                                                             |
+| `mwdev_compare`        | two arms over one input set, diffed and graded                       | `fst-probe.ts`, `fst-board-probe.ts`, `hierarchy-benefit.ts`, `affix-diff.ts`, `backend-parity.ts`, all Pelias/Photon/Nominatim head-to-heads |
+| `mwdev_trace`          | per-stage evidence for a handful of inputs                           | `pgn-probe.ts`                                                                                                                                |
+| `mwdev_gauntlet`       | run gauntlet layers, whole or single, with model and change pins     | `mailwoman eval gauntlet` spawns                                                                                                              |
+| `mwdev_promotion_eval` | run the promotion check against a spec                               | `mailwoman eval promote` spawns                                                                                                               |
+| `mwdev_lookup`         | direct data-source probes (FST, candidate table, normalizer, poi.db) | `icu-probe.mjs`, `keynorm-probe.ts`, `probe-fst-bias.run.ts`                                                                                  |
+| `mwdev_bench`          | latency and throughput, cold and warm distinguished                  | `bench-reverse-throughput.ts`                                                                                                                 |
+| `mwdev_cli`            | allowlisted read-only CLI passthrough                                | ad-hoc `Bash` invocations of the CLI                                                                                                          |
+| `mwdev_job`            | poll, stream logs from, and cancel long-running jobs                 | backgrounded shell jobs                                                                                                                       |
 
 ### 4.1 `mwdev_daemon`
 
@@ -524,27 +524,27 @@ would be a second answer key.
 
 Two properties it must surface rather than bury in the log:
 
-- `describeResolverChanges`'s line, which prints on every run, pinned or not, because "two gate logs
+- `describeResolverChanges`'s line, which prints on every run, pinned or not, because "two check logs
   that differ only in a flag someone typed are not evidence about that flag unless each log says which
   configuration it graded" (`run.ts:220-222`).
 - The **firing count** — how many rows the pinned mechanism actually spoke on
   (`GauntletResult.postcode_country_scope`, `harness.ts:441-445`). §6 generalizes this.
 
-### 4.7 `mwdev_gate`
+### 4.7 `mwdev_promotion_eval`
 
 ```
-in:  { gate: string, weights_cache: string, int8_weights_cache?: string, model?: string,
+in:  { check: string, weights_cache: string, int8_weights_cache?: string, model?: string,
        int8?: string, tokenizer?: string, card?: string, out_dir?: string }
 out: { job_id } → { exit_code, verdict_json, floors: [{metric, floor, observed, margin, pass}],
-                    provenance_txt, gate_spec_path }
+                    provenance_txt, threshold_spec_path }
 ```
 
-Passthrough to `runPromotionGate`. Runs its own lore guards, which will refuse a stale `packages/core/out`
+Passthrough to `runPromotionEval`. Runs its own lore guards, which will refuse a stale `packages/core/out`
 even though the daemon itself runs source — that refusal is correct and should be surfaced verbatim
 rather than worked around.
 
-`mwdev_gate` **never writes the eval ledger.** `mailwoman eval ledger-append` is state change (§7).
-The tool prints the pre-filled command the gate already emits on PASS, and the operator runs it.
+`mwdev_promotion_eval` **never writes the eval ledger.** `mailwoman eval ledger-append` is state change (§7).
+The tool prints the pre-filled command the check already emits on PASS, and the operator runs it.
 
 ### 4.8 `mwdev_lookup`
 
@@ -647,8 +647,8 @@ was 2.9%. The sentence above makes writing that conclusion require deleting the 
 contradicts it.
 
 The bound is the exact one-sided Clopper–Pearson upper limit for zero events, `1 − α^(1/n)`; for
-non-zero counts, the Wilson interval, which is what the gate specs already cut their floors from
-(`gates/v9.0.0-base.json`'s `$margin_rationale`: "2 × the downward Wilson 95% half-width at the
+non-zero counts, the Wilson interval, which is what the check specs already reduce their floors from
+(`checks/v9.0.0-base.json`'s `$margin_rationale`: "2 × the downward Wilson 95% half-width at the
 metric's own support").
 
 `parity-corpus.ts` already encodes the same instinct with `MIN_BUCKET_EXAMPLES = 8` before a bucket's
@@ -696,7 +696,7 @@ happened to have truth, which is why "24 changed" could become "22 are clear imp
 ### 5.6 State the test, and state the minimum detectable effect
 
 Comparisons report a two-proportion z-test on the paired rows — the same instrument the held-out layer
-already gates on (`holdout.ts`, `Z_CRITICAL_95_TWO_SIDED = -1.96`) — plus, always, the **minimum
+already checks on (`holdout.ts`, `Z_CRITICAL_95_TWO_SIDED = -1.96`) — plus, always, the **minimum
 detectable effect at this n**. When the observed delta sits inside noise the verdict is
 `"indistinguishable"`, never `"no effect"`, and the MDE says how large an effect this run could have
 missed.
@@ -752,7 +752,7 @@ mwdev_compare({
 type ArmSpec =
 	| { kind: "mailwoman"; config: EngineConfig }
 	| { kind: "external"; engine: "pelias" | "photon" | "nominatim"; endpoint: string; version?: string }
-	| { kind: "oracle"; provider: "census" | "google" } // gated, §7.3
+	| { kind: "oracle"; provider: "census" | "google" } // conditional, §7.3
 	| { kind: "recorded"; run_id: string } // a stored past run
 ```
 
@@ -896,7 +896,7 @@ constrains this package specifically because it is a _lab_ tool:
 - inherits the existing disk cache under `$MAILWOMAN_DATA_ROOT/geocode-oracle/google` (30-day TTL) and
   60 req/min pacing, so a repeated panel costs nothing;
 - is **never** a scored arm and never a grading truth. `packages/geocode-oracle/lib/index.ts`'s own header
-  is explicit: _"Not truth, and not a gate … Nothing here should ever decide whether a build ships."_
+  is explicit: _"Not truth, and not a check … Nothing here should ever decide whether a build ships."_
   A comparison with an oracle arm always reports `grade: "diff-only"` and `verdict: null`, and its
   purpose is flagging rows for a human to read.
 
@@ -930,9 +930,9 @@ pins the _published_ server's tool list.
 
 - **Not a replacement for `@mailwoman/mcp`.** That is the user-facing, published, supported surface.
   This one is maintainer-only, unpublished, and free to break.
-- **Not a new grader.** It calls `runGauntlet`, `runPromotionGate`, `checkCase`, `runParityEval` and
+- **Not a new grader.** It calls `runGauntlet`, `runPromotionEval`, `checkCase`, `runParityEval` and
   the resolver-eval harness. It never re-implements a metric, and it cannot invent or relax a floor.
-  The gate stays the release authority.
+  The check stays the release authority.
 - **Not a general code-execution tool.** A `run_typescript` tool would subsume every probe in §1.1 in
   one afternoon and would re-open the exact hole this surface exists to close: it would let an agent
   choose its own panel, its own denominator and its own grading, invisibly. If an experiment genuinely
@@ -955,7 +955,7 @@ These need a decision from the operator; each is a real fork, not a detail.
 
 1. **Does the daemon get to rebuild `regression.db`?** Adding a board case is a common agent task, and
    the case is inert until `eval gauntlet-build regression-db` runs. That build is a derived artifact
-   the gate reads, which puts it on the wrong side of §7.1's boundary — but refusing it makes
+   the check reads, which puts it on the wrong side of §7.1's boundary — but refusing it makes
    case-authoring a two-tool dance with a shell step in the middle. The build already has a stamp and an
    emptiness guard, so the 2026-08-06 failure mode is closed. Allow it as the single sanctioned write,
    or keep the boundary clean?
@@ -1019,7 +1019,7 @@ These need a decision from the operator; each is a real fork, not a detail.
 
 10. **Should `mwdev_trace` be allowed to accept a `run_id`** so an agent can trace exactly the rows a
     comparison flagged, rather than retyping them? Convenient, and it also makes the small-panel path
-    slightly easier to reach — which cuts against §5.1.
+    slightly easier to reach — which reduces against §5.1.
 
 ---
 
@@ -1115,7 +1115,7 @@ different cost, not a larger `n` on this one.
 
 ## 11. First slice
 
-> **§3.1 update, 2026-08-18.** The supervisor/socket split was resolved by a different cut than the
+> **§3.1 update, 2026-08-18.** The supervisor/socket split was resolved by a different reduce than the
 > one sketched here, driven by measured need: staleness (not warmth) was the binding cost — the
 > refusal-on-source-edit locked the tool developer out for most of two working days. The shipped
 > shape is a never-stale stdio SHIM (`cli.ts`, imports nothing from the repo runtime) forking a
@@ -1148,7 +1148,7 @@ Build exactly this:
 | `mwdev_run` (§4.3)        | The warm engine over `{kind:"board"}` by default. This is the whole §5.1 mechanism: the full corpus is the shortest legal thing to type. |
 | `mwdev_trace` (§4.5, §10) | Two exports and a pass-through. Cheapest high-value tool in the spec, and it retires four of the nine probe scripts on its own.          |
 
-Everything else waits: `compare`, `gauntlet`, `gate`, `bench`, `cli`, `job`, `lookup`, `inputs`, the run
+Everything else waits: `compare`, `gauntlet`, `check`, `bench`, `cli`, `job`, `lookup`, `inputs`, the run
 store, recorded arms, external arms and the oracles. Seven of the ten §9 questions are downstream of one
 of those and cost nothing to defer — regression.db writes, the memory budget, oracle billing, who starts
 Pelias, retention, board-case writes, `run_id` tracing.

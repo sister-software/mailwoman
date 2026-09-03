@@ -65,7 +65,7 @@ wrong default — a tagger consumes the full sequence bidirectionally, and CLM
 trails on every task family except (contestedly) token classification. The _only_
 scenario where CLM earns a place is if mailwoman later wants a **generative repair
 / rewrite / canonicalization head** — the AddrLLM pattern (JD Logistics combined
-address _parsing_ + _rewriting_ in one model, cutting parcel re-routing ~43%). If
+address _parsing_ + _rewriting_ in one model, reducing parcel re-routing ~43%). If
 that lands on the roadmap, adopt the biphasic CLM→MLM recipe rather than pure CLM:
 early CLM data-efficiency + a bidirectional MLM/RTD finish. For pure BIO tagging
 today, that's speculative future-proofing, not a current need.
@@ -115,7 +115,7 @@ pre-training on 50–100M strings, still ~1 GPU-day.
 2. **OOD robustness** — accuracy on a comma-stripped / non-canonical held-out set.
 3. **Resolver end-to-end Acc@1** — the product metric (must not regress; ideally
    improves via fewer confident-wrong parses).
-4. Harness pass-rate as a regression gate (not the promote bar — see the
+4. Harness pass-rate as a regression check (not the promote bar — see the
    harness-lineage doc).
 
 ### Pre-registered revert

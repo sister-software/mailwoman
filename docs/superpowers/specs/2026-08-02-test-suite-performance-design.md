@@ -5,8 +5,8 @@
 **Optimizing for:** PR wall-clock (time to green). Machine-cost, local dev loop, and split
 durability are secondary and only picked up where they ride along free.
 **Deliverable:** PR wall-clock 6m29s → ~2m00–2m15s (projected from measured per-step numbers), and
-an evidence-lexicons gate that stops growing with the gazetteer.
-**Sibling:** `2026-08-02-pnpm-migration-design.md` — approved but DEFERRED 2026-08-02. It gated only
+an evidence-lexicons check that stops growing with the gazetteer.
+**Sibling:** `2026-08-02-pnpm-migration-design.md` — approved but DEFERRED 2026-08-02. It conditional only
 step (e1), so **(e1) is deferred with it**. In-scope here: (a), (b), (c), (d), (e3), free items.
 
 ## The question
@@ -243,14 +243,14 @@ The path must stay correct when the derived store is cold: first run after a key
 
 ### c — evidence-lexicons, four layers
 
-Four layers because there are four distinct failure classes and no single gate covers them.
+Four layers because there are four distinct failure classes and no single check covers them.
 
-| layer            | when                                                                                  | catches                                                                                |           cost |
-| ---------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------: |
-| fixture          | every PR                                                                              | law logic regressions                                                                  |          `<1s` |
-| full, path-gated | PRs touching `mailwoman/gazetteer-pipeline/**`, `data/gazetteer/**`, the FST curation | builder code changes                                                                   | ~130s, own job |
-| full, nightly    | `schedule`, on `mailwoman-data`                                                       | **data drift** — the gazetteer is rebuilt outside any PR, which no path filter can see |          ~130s |
-| full, release    | `publish.yml` prepare                                                                 | final gate                                                                             |          ~130s |
+| layer                  | when                                                                                  | catches                                                                                |           cost |
+| ---------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------: |
+| fixture                | every PR                                                                              | law logic regressions                                                                  |          `<1s` |
+| full, path-conditional | PRs touching `mailwoman/gazetteer-pipeline/**`, `data/gazetteer/**`, the FST curation | builder code changes                                                                   | ~130s, own job |
+| full, nightly          | `schedule`, on `mailwoman-data`                                                       | **data drift** — the gazetteer is rebuilt outside any PR, which no path filter can see |          ~130s |
+| full, release          | `publish.yml` prepare                                                                 | final check                                                                            |          ~130s |
 
 The fixture follows the established `resolver-wof-sqlite/candidate-lookup.test.ts` idiom: a tiny
 admin DB built with the production DDL, seeded rows, and the **real** `buildLocalitySurfaceLexicon`
@@ -267,8 +267,8 @@ a full-build assertion, because that is a claim about the gazetteer, not about t
 Memoize `computeSurfaceCountryCounts` and `loadPersonNameSurfaces` by `dbPath` + mtime so the FR and
 US builds in one process share the scan: 237s → ~130s (estimate) wherever the full build runs.
 
-**Decision taken:** when the path-gated full build does not run, `unit-slow`'s step summary must say
-so, in the style of the existing PARTIAL GATE annotation. Otherwise the leg reports the same while
+**Decision taken:** when the path-conditional full build does not run, `unit-slow`'s step summary must say
+so, in the style of the existing PARTIAL CHECK annotation. Otherwise the leg reports the same while
 meaning less, which is the thing `test.yml`'s header explicitly refuses.
 
 ### d — `neural/test/weights.test.ts` session reuse
@@ -308,7 +308,7 @@ migration spec — it has to be fixed before the layout changes, not after.
 
 `e2` is done (negative). The pnpm migration is a **sibling project**, not a step here — it touches
 the publish pipeline, which is orthogonal to test performance and is the most-scarred surface in the
-repo. It gates only (e1).
+repo. It checks only (e1).
 
 Remaining order, most-certain-prize first:
 
@@ -356,7 +356,7 @@ below ~185s, so steps 5–6 should be re-justified against a fresh measurement r
 - Replacing vitest. Finding 5 shows the Vite transform pipeline costs ~17× plain node for the same
   graph, but changing runners is a different project with a different risk profile.
 - The pnpm migration. Approved, but its own project with its own driver (ecosystem direction, not
-  speed) — `2026-08-02-pnpm-migration-design.md`. It gates only (e1).
+  speed) — `2026-08-02-pnpm-migration-design.md`. It checks only (e1).
 - Making the fast/slow split declarative (vitest projects instead of the hand-maintained exclude list
   in `package.json`). Worth doing, does not serve wall-clock, deliberately deferred.
 
@@ -369,7 +369,7 @@ below ~185s, so steps 5–6 should be re-justified against a fresh measurement r
   (2026-08-02: the currency-filter change produced new artifacts while the cache served old ones,
   and the pair-index↔card parity guard failed with `expected 47878 to be 49033`). The derived-store
   key must include the generating CLI modules, and the parity guard stays as the backstop.
-- **(c) fixture drift.** A fixture that stops representing the real data is a gate that passes while
+- **(c) fixture drift.** A fixture that stops representing the real data is a check that passes while
   meaning nothing. The nightly full build is the control for exactly this; if it is disabled, the
   fixture layer alone is not sufficient.
 - **(a) pruning something live.** The prune skips caches accessed within the last hour, and deletes

@@ -10,7 +10,7 @@ day conversation, plus night-3 measurements. Confidence marked per claim: **[mea
 From the 2026-07-15 operator conversation: **[operator]**
 
 - **Delete stays delete.** The v7 excision removes the rules parser outright. The hybrid
-  rules-fallback gate is off the table; no consumer may route through legacy rules. The
+  rules-fallback check is off the table; no consumer may route through legacy rules. The
   plausibility guard survives as a direction-agnostic signal (PR #1133).
 - **The architecture bet is one level up from tokens.** The encoder does context-sensitive
   weighing over tokens well; what's missing is the same concept over _phrases_ — joint scoring of
@@ -35,11 +35,11 @@ From the 2026-07-15 operator conversation: **[operator]**
    empty-street fails have no street-family label anywhere in the raw argmax (model emits
    locality/venue/O); 8 are viterbi flipping street away; 0 are lost to priors/repairs/tree-build.
 3. **Word-consistency heal shipped default-ON (PR #1132).** [measured] The 2026-06-19 shelving
-   ("vote amplifies noise, confidence gate is the path") was a mis-diagnosis: the regression was
+   ("vote amplifies noise, confidence check is the path") was a mis-diagnosis: the regression was
    two bugs — the heal re-decoding already-consistent words against viterbi, and punctuation
    pieces joining vote groups. Fixed, the heal is a clean win with NO confidence floor: golden fr
    macro 42.2→51.5, us street 82.0→82.2, parity house_number .767→.808, postcode →1.000, street
-   .543→.573, error-analysis 2pp gate PASS, presets 6/6.
+   .543→.573, error-analysis 2pp check PASS, presets 6/6.
 4. **Diacritics confirmed "visibility, not regression."** [measured] With the heal on,
    resolve-locality is 100% on every scored diacritic locale (CZ 3/3, PL 2/2, PT 2/2, RO 3/3,
    SK 1/1) while street-tag surface exactness sits at 0.63–1.00. The city never goes wrong. The
@@ -76,7 +76,7 @@ From the 2026-07-15 operator conversation: **[operator]**
 3. **k-best decode** — k-way extension of the semi-Markov Viterbi recurrence over the pruned span
    graph. Scores within one input share the partition function → directly comparable for the
    reranker. [consult]
-4. **Calibration** — raw joint log-probs rank fine WITHIN an input, but the ambiguity gate
+4. **Calibration** — raw joint log-probs rank fine WITHIN an input, but the ambiguity check
    ("margin < τ → let the resolver decide") needs the isotonic pass on top-1/margin, reusing the
    existing span-confidence infra. Skipping it makes τ unpredictable across inputs. [consult]
 5. **ONNX/browser** — encoder + boundary/span projections in the graph; span enumeration,
@@ -90,7 +90,7 @@ From the 2026-07-15 operator conversation: **[operator]**
 
 ## Eval additions (build BEFORE the head — instrument-blindness rule)
 
-The night-3 conversation named why this architecture sat unbuilt: every gate scores top-1, so
+The night-3 conversation named why this architecture sat unbuilt: every check scores top-1, so
 hypothesis-space improvements were invisible. Before the first training run:
 
 - **oracle-recall@k** (k = 1, 5, 10) on the parity floors — the probe's decoder IS the
@@ -98,8 +98,8 @@ hypothesis-space improvements were invisible. Before the first training run:
   Baseline registered above.
 - **rank-2-beats-rank-1 rate** through the resolver (requires wiring k-best into a resolve loop —
   the plausibility guard PR #1133 is the first rerank signal).
-- Standing floors unchanged (0.90/0.97 parse-tag parity; the 2pp golden gate; gauntlet;
-  metamorphic). No silent gate drift: the k-best metrics ADD, they do not replace.
+- Standing floors unchanged (0.90/0.97 parse-tag parity; the 2pp golden check; gauntlet;
+  metamorphic). No silent check drift: the k-best metrics ADD, they do not replace.
 
 ## Process changes (from the same conversation)
 
@@ -126,8 +126,8 @@ hypothesis-space improvements were invisible. Before the first training run:
    neural/ + neural-web mirroring the probe.
 5. Wire resolver rerank behind a flag; measure rank-2-beats-rank-1 + coordinate parity; the
    plausibility guard becomes a rerank feature, not a router.
-6. Re-run the v7 parity floors. The floors gate the excision swaps exactly as plan-2 wrote them;
-   if the arc clears them, `hold/v1-parse-neural-gate-blocked` unblocks mechanically.
+6. Re-run the v7 parity floors. The floors check the excision swaps exactly as plan-2 wrote them;
+   if the arc clears them, `hold/v1-parse-neural-check-blocked` unblocks mechanically.
 
 ## Open for the operator
 
@@ -135,5 +135,5 @@ hypothesis-space improvements were invisible. Before the first training run:
   treat it as one arc, not re-decide it nightly).
 - The parity floors stay the acceptance criterion for the swap (option (a) of night-2's decision
   1); the coordinate-parity evidence now rides UNDER the floors as diagnosis, not as a
-  replacement gate. If the span arc stalls below 0.90 street with everything above shipped, the
-  floor-vs-coordinate-gate question reopens WITH data.
+  replacement check. If the span arc stalls below 0.90 street with everything above shipped, the
+  floor-vs-coordinate-check question reopens WITH data.

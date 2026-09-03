@@ -18,7 +18,7 @@ copyleft condition, not access to the code. Neither of those is a recurring cost
 the flaw in pricing them alone: a perpetual grant against a one-time build.
 
 The recurring cost is the **data**. Rebuilding the admin gazetteer is a ten-minute build on top
-of a multi-hour ingest, a verify gate, a swap, and a publish; poi.db is a four-country DuckDB
+of a multi-hour ingest, a verify check, a swap, and a publish; poi.db is a four-country DuckDB
 pass over a 13.68M-row Overture release; the situs extracts are a 50-state ingest. Somebody has to
 run those, grade them, and eat the R2 bill. That work is periodic, so a subscription is the
 honest shape for it.
@@ -40,7 +40,7 @@ The first design fork: does Lite differ from the subscriber artifact by being **
 being **worse**?
 
 **Decision: older.** Lite and subscriber are the same bytes at different times. There is one
-build, one verify gate, one artifact, and two publish dates.
+build, one verify check, one artifact, and two publish dates.
 
 The argument against degradation is operational, not philosophical. A degraded artifact is a
 second product line: a second build recipe, a second verify baseline, a second set of eval
@@ -117,7 +117,7 @@ on everything already published is irrevocable and the pricing page publishes th
 - **Never expire an artifact.** A lapsed key stops future downloads. It does not disable, phase
   out, or degrade a copy already on disk. There is no kill switch, and adding one later would
   contradict a published commitment.
-- **Never gate the engine.** npm installs stay keyless.
+- **Never check the engine.** npm installs stay keyless.
 
 ### 3.3 Mechanics
 
@@ -189,7 +189,7 @@ waives this one, because this one is genuinely ours to waive.
 
 The rule is one sentence: **an artifact can enter the two-channel line only if every upstream
 source folded into it is permissive.** A share-alike source makes the artifact's redistribution
-terms not ours to set, so gating it would be both unenforceable and misleading.
+terms not ours to set, so blocking it would be both unenforceable and misleading.
 
 ### 5.1 Gateable — permissive upstreams only
 
@@ -213,13 +213,13 @@ Two caveats that are not optional:
   applies no license filter. A measurement is the right basis for a decision and the wrong basis
   for a standing product. Before the US situs extracts enter the line, that audit becomes a
   build-time filter over the per-row `source` column, with a test, so a future Overture release
-  that quietly adds an ODbL contributor fails the build rather than the gate.
+  that quietly adds an ODbL contributor fails the build rather than the check.
 - **The corpus filter is the precedent to copy.** `SHARE_ALIKE_PATTERN` /
   `--exclude-share-alike` already does exactly this job on the training side, and it is why the
   weights are clean. The artifact side needs the same discipline, wired to the per-row `source`
   column the address-point schema already carries.
 
-### 5.2 Not gateable — share-alike, stays ungated and opt-in
+### 5.2 Not gateable — share-alike, stays unconditional and opt-in
 
 | Artifact                              | Why                                                                                                                                   |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
@@ -229,7 +229,7 @@ Two caveats that are not optional:
 | `timezone.db`                         | timezone-boundary-builder is ODbL; attribution and share-alike apply to the built database. The builder ships; the database does not. |
 
 The reasoning, stated once so it does not get re-litigated per artifact: ODbL share-alike on a
-Derivative Database means every recipient may redistribute it under the same terms. A paid gate
+Derivative Database means every recipient may redistribute it under the same terms. A paid check
 on such an artifact is unenforceable by construction, and worse, charging for it signals to the
 buyer that they have bought something exclusive when they have bought a copy of something they
 are obliged to pass on. The `build-local` tier already exists precisely to avoid that, and it
@@ -261,7 +261,7 @@ later, and the pricing page already publishes durable commitments we intend to k
    difference is documented on the catalog page before it ships.
 3. **No runtime metering.** Restated from §3.2 because it is the single claim most likely to be
    eroded by a well-meaning feature request.
-4. **No gating of anything AGPL.** The weights bundles ship on npm under the same dual license
+4. **No blocking of anything AGPL.** The weights bundles ship on npm under the same dual license
    as the code and stay there. If a weights bundle ever enters the Lite line it does so as an
    _additional_ distribution channel, never as a replacement for the npm package.
 5. **No third channel.** Two channels, one rule. An "academic tier" or a "startup tier" is a
@@ -281,7 +281,7 @@ make the later claims true.
    stays out of §5.1.
 4. **Put the artifact builds on a schedule.** A cadence claim needs a scheduled build behind it.
    This is the largest item and the one most likely to be underestimated.
-5. **Stand up the key issuance + edge check.** Worker, form, download log. Gated on L1.
+5. **Stand up the key issuance + edge check.** Worker, form, download log. Blocked on L1.
 6. **Write the instruments.** L2 and L3, with counsel, once there is counsel.
 7. **Publish the channel terms** on the pricing page's OEM section and the catalog page.
 

@@ -5,7 +5,7 @@
 ## property of Vale's MARKDOWN parser, and the comment scanner has none.
 ##
 ## That rule's docstring says contracts "survive by being written as
-## contracts ... `mailwoman eval promote`, `@mailwoman/locale-gate` and
+## contracts ... `mailwoman eval promote`, `@mailwoman/locale-hint` and
 ## `promotion-eval.ts` all pass when they are backticked". Measured on
 ## @vvago/vale 3.17.0 against a .ts file: they do not. Vale extracts comment
 ## prose and hands the raw text to the rules, so a backticked identifier in a
@@ -30,19 +30,12 @@ level: error
 ignorecase: true
 ## Every entry is a REAL artifact: a package, a command, or a tracked filename. Prose that means
 ## one of them must spell it in full, which is the "name the artifact by its filename" remedy
-## rather than an escape from it. `locale-gated` is deliberately ABSENT — an inflected verb form
+## rather than an escape from it. `locale-hintd` is deliberately ABSENT — an inflected verb form
 ## is the ambiguous usage, and "restricted to the locale" is the plain verb it should be.
-exceptions:
-  ## The two names that survive the #2077 rename. Everything else that sat here — `promotion-gate`,
-  ## `v1-parse-gate`, `boundary-stress-gate`, `fr-admin-split-gate`, `codepoint-gate`,
-  ## `capability-gate`, `gate-report`, `gate.tsx` — was renamed rather than excepted.
-  ##
-  ## `@mailwoman/locale-gate` is a PUBLISHED npm package: renaming it means a new name, a
-  ## `bless-package` first publish and a deprecation, which is a release arc rather than a rename.
-  ## `mwdev_gate` is an MCP tool an agent calls by string.
-  - locale-gate
-  - "@mailwoman/locale-gate"
-  - mwdev_gate
+## `exceptions` is empty: #2090 renamed every contract-bearing identifier that carried one of these
+## words (`@mailwoman/locale-hint`, `mwdev_promotion_eval`, `promotion-eval.ts`, ...). Add an entry only
+## when a new contract must carry one, and say why here.
+exceptions: []
 tokens:
   ## The hyphenated prefix REPEATS, because a real filename carries more than one segment:
   ## `v1-parse-eval`, `boundary-stress-eval`, `fr-admin-split-eval`. A single optional prefix

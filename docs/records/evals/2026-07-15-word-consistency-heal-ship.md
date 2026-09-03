@@ -1,14 +1,14 @@
 # Word-consistency heal: re-diagnosis, contract fix, ship default-ON (night-3)
 
 **Model:** v264 (v6.3.0 shipped weights) — no retrain; every change is decode-side library code.
-**Change set:** PR #1132. **Gate revision (explicit):** the parity gate now grades the ship-config
+**Change set:** PR #1132. **Check revision (explicit):** the parity check now grades the ship-config
 parse (heal ON, `--no-word-consistency` for pre-heal continuity). Floors untouched.
 
 ## What was wrong
 
 The per-word BIO consistency heal (`neural/word-consistency.ts`, built for #727) was shelved
-default-OFF at the 2026-06-19 gate: street −12.6 on the adversarial golden, attributed to "the
-confidence-weighted vote amplifies noise on byte-soup rows," with a confidence-gated variant named
+default-OFF at the 2026-06-19 check: street −12.6 on the adversarial golden, attributed to "the
+confidence-weighted vote amplifies noise on byte-soup rows," with a confidence-conditional variant named
 as the path to a clean win.
 
 Night-3 re-diagnosis: the regression was **two defects in the heal**, not vote noise —
@@ -33,8 +33,8 @@ ship default.
 
 ## Measurements
 
-Gate bars (config-canonical, unchanged): parity floors house_number ≥ 0.97 / postcode ≥ 0.97 /
-street ≥ 0.90; golden 2pp per-tag promote gate; demo presets 6/6.
+Check bars (config-canonical, unchanged): parity floors house_number ≥ 0.97 / postcode ≥ 0.97 /
+street ≥ 0.90; golden 2pp per-tag promote check; demo presets 6/6.
 
 ### Golden per-locale-f1 (dev us/fr/adversarial, v264, anchor+gazetteer fed)
 
@@ -54,7 +54,7 @@ The historical −12.6 street regression is not just neutralized — every file 
 | postcode     | 0.9722 | **0.9861** | 0.97  | **PASS**          |
 | street       | 0.5431 | **0.5730** | 0.90  | FAIL (arc target) |
 
-### Golden error-analysis (2pp promote gate): PASS
+### Golden error-analysis (2pp promote check): PASS
 
 Worst regression country −0.4pp (n=245, noise); gains locality +1.9, venue +1.0, po_box +3.7;
 exact-match 24.5% → 25.5%. Full tables: `scratchpad/ea-wc-{off,on}.md` (session artifacts).
@@ -84,4 +84,4 @@ splice coverage gap stands (smaller than night-2 believed).
 Decode-side only: no ONNX change, no #378 SLO impact, browser runtime shares the classifier. Ship
 sites: `core/pipeline/runtime-pipeline.ts` (`safeClassify`) + `mailwoman/geocode-core.ts`
 (`parseForGeocode`), via the shared `WORD_CONSISTENCY_SHIP_DEFAULT` constant. The
-2026-06-19 gate history is preserved in the module docstring with the corrected attribution.
+2026-06-19 check history is preserved in the module docstring with the corrected attribution.

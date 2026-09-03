@@ -343,7 +343,7 @@ reports legacy artifacts and the equivalent catalog request. Migration never rew
 legacy database automatically; `data prune` requires an explicit selection and prints what becomes
 unavailable.
 
-## Prototype gates
+## Prototype checks
 
 No distribution migration begins until a prototype answers these with receipts:
 

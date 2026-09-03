@@ -24,7 +24,7 @@ The level a postcode actually resolves to — the municipality — is essentiall
 
 If you can't ask "which polygon contains this point," you ask the postal authority "what's the municipality for this postcode," and then you find that municipality in WOF. Japan's postal authority publishes exactly that — **KEN_ALL**, from Japan Post, and crucially a _romanized_ edition whose municipality column reads `SAPPORO SHI CHUO KU`, in the same alphabet as WOF's romanized place names. Authoritative, and matchable.
 
-Getting it was its own small saga: every KEN_ALL download URL we knew was a 404, the new ones are gated behind JavaScript and a Japan-only fetch, and the file when it finally arrives is CP932/Shift-JIS from 2025. But it arrives, and it carries the one thing WOF's own postcode hierarchy doesn't — the municipality, not just the prefecture (WOF's postcode→admin chain stops at the prefecture, far too coarse).
+Getting it was its own small saga: every KEN_ALL download URL we knew was a 404, the new ones are blocked behind JavaScript and a Japan-only fetch, and the file when it finally arrives is CP932/Shift-JIS from 2025. But it arrives, and it carries the one thing WOF's own postcode hierarchy doesn't — the municipality, not just the prefecture (WOF's postcode→admin chain stops at the prefecture, far too coarse).
 
 The build is then a different shape feeding the _same_ implementation:
 
@@ -58,6 +58,6 @@ Merging Japan into the shared asset left the European locales **byte-identical**
 
 ## What it doesn't do yet, and what it proved
 
-The honest edges: a bare ward name shared across cities (`Chuo` alone, no city) can still let the resolver's exact-name tiering pick the wrong region over the postcode — the realistic city-token flow resolves at 98.5%, so it's an edge, but a proximity-gated exact tier would close it and help the European locales too (filed separately). Korea is obtainable but its GeoNames names are Hangul against WOF's romaji, so it wants a coordinate-match to sidestep transliteration. Taiwan is the real gap — no GeoNames postal file at all, and it isn't in the admin DB yet.
+The honest edges: a bare ward name shared across cities (`Chuo` alone, no city) can still let the resolver's exact-name tiering pick the wrong region over the postcode — the realistic city-token flow resolves at 98.5%, so it's an edge, but a proximity-conditional exact tier would close it and help the European locales too (filed separately). Korea is obtainable but its GeoNames names are Hangul against WOF's romaji, so it wants a coordinate-match to sidestep transliteration. Taiwan is the real gap — no GeoNames postal file at all, and it isn't in the admin DB yet.
 
 But the thing this validated is bigger than Japan. The point-geometry wall is CJK-wide, which means name-based-from-the-postal-authority isn't a Japanese workaround — it's the CJK resolution architecture, and the convention/strategy implementation already holds it: a different build for a different data shape, feeding one unchanged resolver. The European recipe didn't have to bend to fit Asia. We just wrote the second recipe and pointed the same engine at it.

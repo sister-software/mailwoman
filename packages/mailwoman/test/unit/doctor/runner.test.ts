@@ -57,7 +57,7 @@ const byID = (checks: DoctorCheck[], id: string): DoctorCheck => {
 	return c
 }
 
-describe("runDoctor (injected seams)", () => {
+describe("runDoctor (injected boundaries)", () => {
 	it("all-healthy → every check ok, exit 0, 7 checks in render order", async () => {
 		const report = await runDoctor(healthyDeps())
 		expect(report.exitCode).toBe(0)
@@ -186,7 +186,7 @@ describe("defaultDoctorDeps — engines floor via package self-reference", () =>
 })
 
 describe("describeEnvironment (--verbose)", () => {
-	it("reports the resolved paths through the same seams the checks used", async () => {
+	it("reports the resolved paths through the same boundaries the checks used", async () => {
 		const entries = await describeEnvironment(healthyDeps())
 		const byKey = new Map(entries.map((entry) => [entry.key, entry]))
 

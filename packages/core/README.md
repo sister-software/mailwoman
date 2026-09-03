@@ -20,7 +20,7 @@ const result = pipeline.parse("1600 Amphitheatre Parkway, Mountain View, CA 9404
 | **`tokenization/`**   | Tokenizer primitives, whitespace/punctuation rules, token classification                                                                  |
 | **`classification/`** | `Classification` data structure, `ClassificationMap`, span overlap resolution                                                             |
 | **`decoder/`**        | Span proposal → tree projection, BIO decoding, reconcile/merge strategies, confidence calibration                                         |
-| **`pipeline/`**       | `createRuntimePipeline` — the staged pipeline coordinator that wires normalize → query-shape → `locale-gate` → ... → classifier → decoder |
+| **`pipeline/`**       | `createRuntimePipeline` — the staged pipeline coordinator that wires normalize → query-shape → `locale-hint` → ... → classifier → decoder |
 | **`solver/`**         | Rule-based solver (the v0 rules engine), `Solution`, `Solver`                                                                             |
 | **`parser/`**         | `AddressParser` — high-level parse entry point (consumed by `mailwoman` CLI)                                                              |
 | **`resources/`**      | ~9 MB of shipped reference data: libpostal dictionaries, WOF place data, chromium-i18n address formats                                    |
@@ -58,7 +58,7 @@ Mailwoman's runtime pipeline is a staged coordinator that chains pure-function
 stages with typed handoffs:
 
 ```
-normalize → query-shape → locale-gate → kind-classifier → phrase-grouper → classifier → decoder
+normalize → query-shape → locale-hint → kind-classifier → phrase-grouper → classifier → decoder
 ```
 
 Each stage is published as its own `@mailwoman/*` package and wired together by

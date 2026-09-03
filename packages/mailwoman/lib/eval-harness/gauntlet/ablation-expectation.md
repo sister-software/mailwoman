@@ -38,5 +38,5 @@ degradation it caused, not for a miss already present in the base case.
 Candidates within `COINCIDENT_PLACE_KM` collapse before comparing rank, because WOF can represent one physical city at
 multiple placetypes. A remaining name is decisive when only one distinct place remains or when the population-rank margin
 is at least `DECISIVE_MARGIN_LOG10` (0.5 log10, roughly 3.2×). The 0.5 threshold was selected from the coordinate-backed
-gauntlet rows: above the cut, the top candidate matched the asserted place in 89.1% of decisive rows; below it, the
+gauntlet rows: above the reduce, the top candidate matched the asserted place in 89.1% of decisive rows; below it, the
 ambiguous group was effectively a coin flip.

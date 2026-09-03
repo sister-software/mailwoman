@@ -139,7 +139,7 @@ describe("createRuntimePipeline — wiring", () => {
 		expect(customKind).toHaveBeenCalled()
 	})
 
-	it("locale gate override is respected", async () => {
+	it("locale check override is respected", async () => {
 		const customDetect = vi.fn(async () => ({
 			locale: "fr-FR",
 			confidence: 0.92,

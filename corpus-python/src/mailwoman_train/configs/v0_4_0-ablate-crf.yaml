@@ -13,7 +13,7 @@
 #     is producing a CRF gradient that's still too large despite the normalization)
 #   - Also diverges → §1 isn't (only) the offender; pair with the §3 ablation
 #
-# Operator-gated: do NOT kick off without their go-ahead.
+# Operator-conditional: do NOT kick off without their go-ahead.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.3.0/corpus-v0.3.0

@@ -15,7 +15,7 @@ import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { listEvalSpecs, resolveGateSpecPath, runPromotionGate } from "mailwoman/eval-harness/promotion-eval"
+import { listEvalSpecs, resolveThresholdSpecPath, runPromotionEval } from "mailwoman/eval-harness/promotion-eval"
 import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -112,22 +112,22 @@ describe("listEvalSpecs", () => {
 	})
 })
 
-describe("resolveGateSpecPath", () => {
+describe("resolveThresholdSpecPath", () => {
 	it("resolves a bare spec NAME — what the help advertises and what people type", async () => {
-		const path = await resolveGateSpecPath("v5.3.0-family")
+		const path = await resolveThresholdSpecPath("v5.3.0-family")
 
 		expect(await pathExists(path)).toBe(true)
 		expect(path).toContain("v5.3.0-family.json")
 	})
 
 	it("resolves a spec name that already carries .json", async () => {
-		const path = await resolveGateSpecPath("v5.3.0-family.json")
+		const path = await resolveThresholdSpecPath("v5.3.0-family.json")
 
 		expect(await pathExists(path)).toBe(true)
 	})
 
-	it("resolves by basename, so legacy scripts/eval/gates/<spec>.json invocations keep working", async () => {
-		const path = await resolveGateSpecPath("scripts/eval/gates/v5.3.0-family.json")
+	it("resolves by basename, so legacy scripts/eval/checks/<spec>.json invocations keep working", async () => {
+		const path = await resolveThresholdSpecPath("scripts/eval/checks/v5.3.0-family.json")
 
 		expect(await pathExists(path)).toBe(true)
 	})
@@ -135,14 +135,14 @@ describe("resolveGateSpecPath", () => {
 	it("prefers a real path verbatim", async () => {
 		const real = "packages/mailwoman/lib/eval-harness/specs/v5.3.0-family.json"
 
-		expect(await resolveGateSpecPath(real)).toBe(real)
+		expect(await resolveThresholdSpecPath(real)).toBe(real)
 	})
 
 	it("throws a USEFUL error naming the known specs, not a bare ENOENT", async () => {
 		// The old behaviour returned the string and let readFileSync throw, which told the operator
 		// nothing about what they could have typed instead.
-		await expect(resolveGateSpecPath("v9.9.9-nope")).rejects.toThrow(
-			/Gate spec not found.*Known specs.*v5\.3\.0-family/s
+		await expect(resolveThresholdSpecPath("v9.9.9-nope")).rejects.toThrow(
+			/Check spec not found.*Known specs.*v5\.3\.0-family/s
 		)
 	})
 
@@ -173,7 +173,7 @@ describe("paired weights-caches (#47)", () => {
 	 * ever loaded.
 	 */
 	async function stageFakeCache(kind: "fp32" | "int8", salt: string): Promise<string> {
-		const root = fixtures.use(await temporaryDirectory(`gate-pair-${kind}-`)).path
+		const root = fixtures.use(await temporaryDirectory(`check-pair-${kind}-`)).path
 		const pkg = weightsCachePackageDir(root, "en-us")
 
 		await makeDirectories(pkg)
@@ -192,7 +192,7 @@ describe("paired weights-caches (#47)", () => {
 	it("refuses --int8-weights-cache without --weights-cache", async () => {
 		const int8 = await stageFakeCache("int8", "a")
 
-		expect(await runPromotionGate({ gate: "v9.0.0-base", int8WeightsCache: int8 })).toBe(2)
+		expect(await runPromotionEval({ check: "v9.0.0-base", int8WeightsCache: int8 })).toBe(2)
 	})
 
 	it("refuses --int8-weights-cache alongside the --model/--int8 flow", async () => {
@@ -200,36 +200,36 @@ describe("paired weights-caches (#47)", () => {
 		const int8 = await stageFakeCache("int8", "c")
 
 		expect(
-			await runPromotionGate({ gate: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, model: "x.onnx" })
+			await runPromotionEval({ check: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, model: "x.onnx" })
 		).toBe(2)
 	})
 
 	it("refuses a paired fp32 arm that carries quant nodes — the arms are swapped or mislabeled", async () => {
 		const wc = await stageFakeCache("int8", "d")
 		const int8 = await stageFakeCache("int8", "e")
-		await using outDirDirectory = await temporaryDirectory("gate-pair-out-")
+		await using outDirDirectory = await temporaryDirectory("check-pair-out-")
 		const outDir = outDirDirectory.path
 
-		expect(await runPromotionGate({ gate: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, outDir })).toBe(2)
+		expect(await runPromotionEval({ check: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, outDir })).toBe(2)
 	})
 
 	it("refuses a paired int8 arm with no quant nodes", async () => {
 		const wc = await stageFakeCache("fp32", "f")
 		const int8 = await stageFakeCache("fp32", "g")
-		await using outDirDirectory = await temporaryDirectory("gate-pair-out-")
+		await using outDirDirectory = await temporaryDirectory("check-pair-out-")
 		const outDir = outDirDirectory.path
 
-		expect(await runPromotionGate({ gate: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, outDir })).toBe(2)
+		expect(await runPromotionEval({ check: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, outDir })).toBe(2)
 	})
 
 	it("refuses byte-identical paired arms", async () => {
 		const wc = await stageFakeCache("int8", "h")
 		const int8 = await stageFakeCache("int8", "h")
-		await using outDirDirectory = await temporaryDirectory("gate-pair-out-")
+		await using outDirDirectory = await temporaryDirectory("check-pair-out-")
 		const outDir = outDirDirectory.path
 
 		// Same salt, same bytes: dql alone cannot tell them apart, the md5 identity check must.
-		const swapped = await runPromotionGate({ gate: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, outDir })
+		const swapped = await runPromotionEval({ check: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, outDir })
 
 		expect(swapped).toBe(2)
 	})

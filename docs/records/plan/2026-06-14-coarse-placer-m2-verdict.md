@@ -38,10 +38,10 @@ detector. ⇒ **Phase 2 (a retrained binary reject-head) is unnecessary.** (Inde
 DeepSeek, which had pre-registered Mahalanobis/reject-head; it agreed the reasoning is sound and the simpler
 rule is the right call.)
 
-## Phase 3 — the assembled-pipeline gate (grade the pipeline, not the component)
+## Phase 3 — the assembled-pipeline check (grade the pipeline, not the component)
 
-Re-ran the country-disambiguation gate (parse → resolve, the real wiring) on the **bundled int8** model with
-the open-set rule. Report: `docs/articles/evals/2026-06-14-coarse-placer-m2-pipeline-gate.md`.
+Re-ran the country-disambiguation check (parse → resolve, the real wiring) on the **bundled int8** model with
+the open-set rule. Report: `docs/articles/evals/2026-06-14-coarse-placer-m2-pipeline-check.md`.
 
 | rule              | in-map right-country      |  wins | regressions | off-map      |
 | ----------------- | ------------------------- | ----: | ----------: | ------------ |
@@ -55,22 +55,22 @@ The two **new** wins are exactly the cases the rule targets — **Birmingham, AL
 ## Decision: the threshold, and the asymmetry
 
 DeepSeek's sharpest point: **90/90 is the wrong objective for a _soft_ prior.** The prior never filters — it
-only re-ranks, tier-safe — so a wrong off-map guess costs ~nothing (the M1 + M2 gates both show off-map
+only re-ranks, tier-safe — so a wrong off-map guess costs ~nothing (the M1 + M2 checks both show off-map
 0→0, 0 regressions), while a false _reject_ of an in-map address forfeits the disambiguation win. The cost is
 **asymmetric** → bias toward in-map recall, and set the threshold on the **assembled pipeline**, not the
 component min.
 
-On the assembled gate the threshold is a **flat optimum** in [0.5, 0.9] (identical 9 wins / 0 regressions —
+On the assembled check the threshold is a **flat optimum** in [0.5, 0.9] (identical 9 wins / 0 regressions —
 the homograph wins are all high-mass). So we keep **`abstainBelow` 0.9**: it captures every win, keeps
 off-map catch high on the component (≈88% at 0.9-ish), and minimizes in-map _misrouting_ exposure (inject
 only when confident). The rule — not the threshold — is the M2 change (+5.9pp in-map over max-prob).
 
-## Status + what's gated
+## Status + what's conditional
 
 - **Shipped in M2 (this branch):** the `openSet` rule on `CoarsePlacer` (opt-in, default-off → byte-stable);
   `--place-country` uses it. The whole prior remains **default-off** overall.
-- **Misrouting gate — PASSED (the pre-default-on check).** The 54-row homograph set under-tests in-map
-  _misrouting_ (the prior injecting a _wrong in-map country_). The across-11 gate
+- **Misrouting check — PASSED (the pre-default-on check).** The 54-row homograph set under-tests in-map
+  _misrouting_ (the prior injecting a _wrong in-map country_). The across-11 check
   (`scripts/eval/coarse-placer-inmap-misroute.ts`, report
   `docs/articles/evals/2026-06-14-coarse-placer-inmap-misroute.md`) resolves 2 000 in-map addresses
   (200/country × 10; TW excluded — 0 WOF rows) with the country token **stripped** so the country must be
@@ -86,7 +86,7 @@ only when confident). The rule — not the threshold — is the M2 change (+5.9p
   weighted by mass, so the resolver breaks country-ambiguous ties with its own place-level evidence and can
   never be committed to a wrong argmax. New `inMapPosterior()` on the core placer; `placeCountry` stage gained
   an optional `posterior` (consumers fall back to the one-hot when absent); the default placer emits it. A/B
-  on both gates (`--distribution`): homograph **identical** (91.2%, 9 wins, 0 regressions — those wins are
+  on both checks (`--distribution`): homograph **identical** (91.2%, 9 wins, 0 regressions — those wins are
   confidently single-country, so distribution ≈ one-hot), misroute **+1 win (59 vs 58), still 0 regressions /
   0 misroutes** — a strict, principled improvement (larger on data with more in-map ambiguity, e.g. European
   cross-border namesakes).
@@ -98,7 +98,7 @@ yarn compile
 # Phase 1 — post-hoc score comparison on the frozen model:
 node scripts/coarse-placer/eval-openset.mjs --model $MAILWOMAN_DATA_ROOT/coarse-placer/model \
   --out-md docs/articles/evals/2026-06-14-coarse-placer-m2-openset.md
-# Phase 3 — assembled-pipeline gate with the open-set rule (bundled int8 model):
+# Phase 3 — assembled-pipeline check with the open-set rule (bundled int8 model):
 node scripts/eval/coarse-placer-country-disambig.ts --openset --abstain-below 0.9 \
-  --out-md docs/articles/evals/2026-06-14-coarse-placer-m2-pipeline-gate.md
+  --out-md docs/articles/evals/2026-06-14-coarse-placer-m2-pipeline-check.md
 ```

@@ -103,7 +103,7 @@ describe("rerankByStreetEvidence", () => {
 		expect(res.rank).toBe(0)
 	})
 
-	test("anchor gate: an argmax region anchor makes the rerank stand down even with a confirmed move", async () => {
+	test("anchor check: an argmax region anchor makes the rerank stand down even with a confirmed move", async () => {
 		// Same tuned k-best that WOULD move (see the G1-skip test), but the argmax now carries a region token. The input
 		// is structured; the rerank must not steal the region-labeled token. It returns the argmax tree, not moved.
 		const t = trace(tunedSpanScores())

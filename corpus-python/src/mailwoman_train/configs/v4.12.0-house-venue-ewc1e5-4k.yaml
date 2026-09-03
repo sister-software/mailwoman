@@ -18,7 +18,7 @@
 #     tail at once;
 #   - nothing moves -> the brake is not the change either, and the search moves to capacity.
 #
-# PRE-REGISTERED GATE, unchanged from v4.11.0:
+# PRE-REGISTERED CHECK, unchanged from v4.11.0:
 #   1. the venue-led rows v4.8.0 regressed must ALL hold;
 #   2. FR, GB and DE show no regression anywhere (D-rule, iron rule 6);
 #   3. net improved-minus-regressed >= 0 on the 649-row board.
@@ -54,7 +54,7 @@
 # STEPS: 4,000 rather than 8,000. The change is small and additive to a proven bucket, and the wall
 # clock is real; if it needs longer it can resume.
 #
-# PRE-REGISTERED GATE:
+# PRE-REGISTERED CHECK:
 #   1. the 12 venue-led rows v4.8.0 regressed must ALL hold — that is the defect this design fixes;
 #   2. FR, GB and DE show no regression anywhere (D-rule, iron rule 6);
 #   3. net improved-minus-regressed >= 0 on the 649-row board.

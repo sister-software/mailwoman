@@ -24,7 +24,7 @@ _TX-scoped, ≤2000 rows/source (NPPES org + TX HHSC nursing = eligibility-ish; 
 
 FS baseline: **27** cross-source links (0 triple), phone-corrob 56% (15/27).
 
-**No GBT threshold dominates FS** — none matches FS's 27 cross-source links at ≥ its 56% phone-corrob without over-merging (entity count collapsing below 3019). At its dedup threshold the GBT finds FEWER cross-source links than FS; lowering the threshold to admit more only over-merges (the over-merge features REPLACE the FS weight, so true cross-source pairs share a logit band with genuine over-merges). Threshold alone (option 1) is **INSUFFICIENT** — FS stays pinned (correct + best-precision for this objective); a cross-objective retrain (option 2), gated on cross-source labels, is the only change. See #655.
+**No GBT threshold dominates FS** — none matches FS's 27 cross-source links at ≥ its 56% phone-corrob without over-merging (entity count collapsing below 3019). At its dedup threshold the GBT finds FEWER cross-source links than FS; lowering the threshold to admit more only over-merges (the over-merge features REPLACE the FS weight, so true cross-source pairs share a logit band with genuine over-merges). Threshold alone (option 1) is **INSUFFICIENT** — FS stays pinned (correct + best-precision for this objective); a cross-objective retrain (option 2), blocked on cross-source labels, is the only change. See #655.
 
 ## Candidate verdict (org-cross-GBT, added at review — the run predates the harness's candidate-verdict wiring)
 

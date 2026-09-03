@@ -15,7 +15,7 @@
 # probe 0): prefix at +2k >= ~75 AND drop +2k->+4k <= 2pts  => contradiction theory CONFIRMED ->
 # proceed to the full relabel retrain (the #511 run, operator-GO'd). Decay reproduced (>= 10pt
 # drop) => hidden factor survives relabeling -> STOP, no full run, back to #492.
-# Secondary watches (not gates here): US street folded F1 (should hold — folding is invariant to
+# Secondary watches (not checks here): US street folded F1 (should hold — folding is invariant to
 # the split), house_number->street_prefix CRF transition sanity, short-street ("Main St") recall.
 # Expected transient: a val-loss spike at resume is NORMAL (the label distribution changed under
 # the model at step 40k); the +2k read absorbs it.

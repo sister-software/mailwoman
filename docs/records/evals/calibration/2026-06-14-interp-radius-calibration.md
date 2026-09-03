@@ -63,7 +63,7 @@ is a property of the calibration set, not the geometry), and the caller supplies
   is a data swap, not a code change.
 - **Abstention router (#244)** is the remaining confidence piece: when the calibrated radius exceeds a
   threshold, return the coarser admin tier instead of a falsely-precise street point. The 403 no-hit rows
-  already abstain to admin; #244 generalizes that to a confidence-gated downgrade.
+  already abstain to admin; #244 generalizes that to a confidence-conditional downgrade.
 
 ## Reproduce
 

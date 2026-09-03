@@ -68,7 +68,7 @@ What it confirmed is the more interesting half, and it's something our own desig
 
 ## What shipped, and what we left alone
 
-So we shipped the piece that survived contact with the evidence. The street-vocabulary check is now gated by the postcode's real gazetteer membership: a US-only ZIP consults the American vocabulary and never asks the German one, because there's nothing German about it. An unrelated language's words can no longer down-weight a code that was never theirs. It scales to twenty countries cleanly, the resolver evals come out byte-identical to before (a precision change you can't see on a clean sample is exactly the change you want), and the shared inverse-shape function is now in place for whatever reads it next.
+So we shipped the piece that survived contact with the evidence. The street-vocabulary check is now blocked by the postcode's real gazetteer membership: a US-only ZIP consults the American vocabulary and never asks the German one, because there's nothing German about it. An unrelated language's words can no longer down-weight a code that was never theirs. It scales to twenty countries cleanly, the resolver evals come out byte-identical to before (a precision change you can't see on a clean sample is exactly the change you want), and the shared inverse-shape function is now in place for whatever reads it next.
 
 And we left the flag alone, on purpose, with a number to point at. `--default-country` stays until the country signal comes from where the evidence says it has to: the trained model, conditioning on the full address. That's a heavier piece of work, and now it's a justified one rather than a hopeful one.
 

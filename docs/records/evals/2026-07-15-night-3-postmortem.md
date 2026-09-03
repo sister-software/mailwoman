@@ -11,9 +11,9 @@ GPU, zero Modal spend, zero training runs.** Six PRs, all measurements on the sh
 
 The stack matters — #1136 and #1137 are based on #1132, not `main`.
 
-1. **[#1132] `fix(neural)`: word-consistency heal → ship default-ON.** The 2026-06-19 gate shelved
+1. **[#1132] `fix(neural)`: word-consistency heal → ship default-ON.** The 2026-06-19 check shelved
    this heal (street −12.6 adversarial) and blamed "the vote amplifies noise on byte-soup rows,"
-   naming a confidence-gated variant as the fix. That diagnosis was wrong. The regression was **two
+   naming a confidence-conditional variant as the fix. That diagnosis was wrong. The regression was **two
    bugs in the heal**: (a) it re-decoded words whose pieces already _agreed_, overriding viterbi
    (`▁Broadway` B-street→O; all-street `Gamle`→locality) — the docstring had always promised
    agree⇒byte-identical, but the code only honored it when the vote happened to concur; (b)
@@ -40,7 +40,7 @@ The stack matters — #1136 and #1137 are based on #1132, not `main`.
 | parity street                | 0.543 | **0.573** |
 | golden exact-match           | 24.5% | 25.5%     |
 
-2pp promote gate PASS (worst: country −0.4pp, n=245). Presets 6/6, zero grouper-audit. Gate
+2pp promote check PASS (worst: country −0.4pp, n=245). Presets 6/6, zero grouper-audit. Check
 revision declared explicitly: `eval parity` now grades the ship-config parse; floors untouched.
 
 ## What we learned (the measurements that change the plan)
@@ -74,8 +74,8 @@ revision declared explicitly: `eval parity` now grades the ship-config parse; fl
   segment granularity in fp32). The operator's own memory says scar tissue is conditional; tonight
   is the receipt.
 - **Diagnostic-before-fix, twice.** The failure partition killed the digit-splice before it cost a
-  run; the source-data check killed the OA splice before it cost a gate battery.
-- **The #900 splice gate did its job** — it fired on codepoint overlap _before_ grading, which is
+  run; the source-data check killed the OA splice before it cost a check battery.
+- **The #900 splice check did its job** — it fired on codepoint overlap _before_ grading, which is
   the whole reason it exists.
 - **Verification caught two would-be false claims.** An "ASCII row broke" reading that would have
   contradicted the byte-identity guarantee was a `--failing 50` **truncation artifact**; and the
@@ -92,11 +92,11 @@ revision declared explicitly: `eval parity` now grades the ship-config parse; fl
   `core/pipeline` doesn't export on `main` — so every commit on a freshly-checked-out branch died
   until `out/` was rebuilt. This is the known stale-`out/`-when-branch-hopping scar wearing a
   disguise, and the disguise worked twice. The pre-registration commit is the casualty: it was
-  supposed to land _before_ grading and didn't; the gate-spec doc states that sequencing rather
+  supposed to land _before_ grading and didn't; the check-spec doc states that sequencing rather
   than claiming an ordering git can't show. **Lessons: verify the commit landed (`git log -1`) —
   never trust the tail of a pipe; and when a workaround succeeds twice, that's the signal to
   diagnose, not to keep working around.**
-- **I wrote the PT/RO gate spec before checking the source data.** The 15 minutes that would have
+- **I wrote the PT/RO check spec before checking the source data.** The 15 minutes that would have
   gone into `head -3 countrywide.csv` would have retargeted the whole task. Pre-registration is not
   a substitute for looking at the inputs.
 - **Two PRs get no CI and I only noticed at the end.** `test.yml` triggers on
@@ -109,9 +109,9 @@ revision declared explicitly: `eval parity` now grades the ship-config parse; fl
   clean sweep across every instrument; the alternative (ship opt-in, defer) would leave a measured
   win unshipped for no reason. Production parse behavior changes, so it's called out first in the
   handoff.
-- **Declared the parity gate revision explicitly** (grade the ship-config parse) instead of leaving
-  the gate measuring a parse production no longer performs. Floors untouched; `--no-word-consistency`
-  preserves the old baseline. Per the no-silent-gate-drift rule, this is stated, not slipped in.
+- **Declared the parity check revision explicitly** (grade the ship-config parse) instead of leaving
+  the check measuring a parse production no longer performs. Floors untouched; `--no-word-consistency`
+  preserves the old baseline. Per the no-silent-check-drift rule, this is stated, not slipped in.
 - **Did NOT ship v267.** It fixes both target rows and breaks a Brazilian one, and its overlap
   surface now includes FR — the exact locale of the v5.1.0 "net-positive by luck" incident. A
   six-leg battery finished near the shift boundary with the operator asleep is the artifact I'd be
@@ -127,8 +127,8 @@ revision declared explicitly: `eval parity` now grades the ship-config parse; fl
    nightly cadence is precisely what has kept it unbuilt for ~200 model versions.
 3. **v267 disposition** — worth a proper multi-leg pre-registration (incl. a pt-BR leg), or park it?
    The RO byte-fallback fix is real (4/5 → 5/5) but the corpus exposure is 13/321 fixtures.
-4. **Gate-inventory gap, independent of v267**: `pt-BR` / OA `br` should join the standing
-   `--trained-samples` list — the overlap gate currently cannot see Brazilian Portuguese.
+4. **Check-inventory gap, independent of v267**: `pt-BR` / OA `br` should join the standing
+   `--trained-samples` list — the overlap check currently cannot see Brazilian Portuguese.
 
 ## Next steps
 

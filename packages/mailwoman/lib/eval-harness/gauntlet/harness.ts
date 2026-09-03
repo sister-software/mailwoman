@@ -201,7 +201,7 @@ export interface GauntletGeocodeOpts {
 	defaultCountry?: string
 	/**
 	 * The case's country (ISO-3166 alpha-2) — selects the per-locale weights OVERLAY the classifier loads with (GB →
-	 * en-GB's pair-index, NZ → en-NZ's). Production routes by locale-gate; a harness that grades every row through the
+	 * en-GB's pair-index, NZ → en-NZ's). Production routes by locale-hint; a harness that grades every row through the
 	 * bare en-US package silently drops the deploc prior (caught 2026-08-01: 53 operator probes read "dependent_locality
 	 * never emitted" when the MECHANISM was fine and the INSTRUMENT was base-only). Absent → en-US.
 	 */
@@ -378,7 +378,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				: await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 
 	// Per-country overlay classifiers (2026-08-01): a case's country selects the weights OVERLAY so
-	// GB rows grade with en-GB's pair-index + transition-beta exactly as production's locale-gate
+	// GB rows grade with en-GB's pair-index + transition-beta exactly as production's locale-hint
 	// routes them. Lazy + memoized; a missing overlay package (e.g. a candidate weights-cache built
 	// without neural-weights-en-gb) falls back to the base classifier with ONE loud warning per
 	// locale — base-only grading must never be silent again (the meaning-of-zero rule).

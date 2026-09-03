@@ -7,7 +7,7 @@ title: WOF placetypes ↔ OSM tags — where the two vocabularies meet, and wher
 Who's On First's placetype vocabulary and OpenStreetMap's tagging scheme both describe places, but
 they are not two dialects of one language. WOF has a **single-axis hierarchy of place kinds**; OSM
 has **free-form key/value tags** with an administrative hierarchy expressed as a country-relative
-number. Mapping between them is useful — it is how `terminal` and `gate` reached our venue-structure
+number. Mapping between them is useful — it is how `terminal` and `check` reached our venue-structure
 vocabulary — but three structural mismatches make a naive table dangerous.
 
 Written 2026-08-02 while extending the span proposer's designator vocabulary. Confidence is flagged
@@ -78,7 +78,7 @@ sub-venue parsing lives in OSM's _indoor_ scheme, not its _place_ scheme.
 
 The venue-structure designator vocabulary (`core/resources/whosonfirst/placetypes/venue-structure.ts`)
 takes `arcade`, `building`, `campus`, `concourse`, `enclosure`, `installation`, `wing` from WOF and
-adds `terminal` and `gate` from OSM's `aeroway` key — precisely because WOF has no placetype for
+adds `terminal` and `check` from OSM's `aeroway` key — precisely because WOF has no placetype for
 either and they are the two commonest sub-venue designators in real airport addresses.
 
 The table suggests where that vocabulary could grow, and where it should not:

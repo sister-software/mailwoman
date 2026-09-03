@@ -1,6 +1,6 @@
-# v8-jp-full 24k: the JP char model clears its pre-registered gate
+# v8-jp-full 24k: the JP char model clears its pre-registered check
 
-**Date:** 2026-08-05 · **Run:** `v8-jp-full` seed 42, 24,000 steps on Modal (app `ap-sQNIbzfiHx5OgmG8iG8Xa8`) · **Arc:** CJK Phase 3/4 (#1176) · **Status:** GATE PASS
+**Date:** 2026-08-05 · **Run:** `v8-jp-full` seed 42, 24,000 steps on Modal (app `ap-sQNIbzfiHx5OgmG8iG8Xa8`) · **Arc:** CJK Phase 3/4 (#1176) · **Status:** CHECK PASS
 
 The scorer and bar were pre-registered on #1176 (2026-07-29, scorer pinned at `34c7b6c2`): blended
 coordinate-acceptability ≥ 0.70 at 15 km on the held-out 20,000-row board, scored with
@@ -22,7 +22,7 @@ The bar was set from Leg-1's 200k-row probe (0.9925 on 33 labels); the full mode
 10× corpus with the 47-label `stage3-jp` head — 2,000,000 train rows, char vocab 2,237, from
 scratch, 3.07 epochs, ~80 min at ~5 steps/s.
 
-## 2. Per-register acceptability (diagnostic, not the gate)
+## 2. Per-register acceptability (diagnostic, not the check)
 
 | register       | @15 km                 | unresolved |
 | -------------- | ---------------------- | ---------- |
@@ -55,7 +55,7 @@ printed, supported labels separated, scorer ran end to end) — which is all a p
 
 ## 5. What this does NOT decide
 
-- Shipping. This is a training-gate record, not a release: the JP model has no serving path yet
+- Shipping. This is a training-check record, not a release: the JP model has no serving path yet
   (char-path inference, weights packaging, and the `ja-jp` overlay are the next arc). The ledger
   keys by shipped npm model versions and does not take this row.
 - The head-LR change (`classifier_learning_rate: 1e-3`, a 2× head/body ratio). The run converged

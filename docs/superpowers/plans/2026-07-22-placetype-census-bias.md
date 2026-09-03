@@ -10,7 +10,7 @@ The decoder consults the gazetteer _as it parses_: candidate word-spans of the i
 
 ## Evidence (zero-GPU ladder on frozen checkpoints; full record `.superpowers/sdd/task-8-report.md`)
 
-| Rung | Gate                                     | Best GB (correct/FP)                             | Verdict                                    |
+| Rung | Check                                    | Best GB (correct/FP)                             | Verdict                                    |
 | ---- | ---------------------------------------- | ------------------------------------------------ | ------------------------------------------ |
 | 1    | flat δ                                   | 62% / 26%                                        | signal present, precision unusable         |
 | 2    | name-in-country set (WOF)                | 49% / 20%                                        | FP 100→20; WOF coverage caps GB 52%, NZ 0% |
@@ -24,7 +24,7 @@ The decoder consults the gazetteer _as it parses_: candidate word-spans of the i
 
 1. **Sources = the registers**, WOF as contributor later; provenance-tracked snapshots.
 2. **Soft additive bias, never a mask.** Composed as **the sixth emission prior** at the existing `addEmissionMatrix` pre-Viterbi slot in `classifier.ts#decode`, alongside query-shape/FST/street-morphology/span-proposer/conventions (Kimi #2) — NOT a bespoke hook. New `neural/placetype-pair-prior.ts` returns the standard `[seqLen][numLabels]` log-bias matrix; `matrixHasBias` applied-flag convention; new `TRACE_PRIOR_KINDS` entry for flip attribution; probe injected via structural typing (`PairIndexLike { probe(child, parent): boolean }`), loader never imported by `neural/` internals.
-3. **Segmentation = word-span windows** over the `▁`-grouped pieces, the `fst-prior.ts` walk pattern (Kimi #4) — uniform across comma/comma-free input; the comma-segment gate is the degenerate case. Window N from the PPD CITY length distribution (measure in the builder task; expect ≤3). **Window-mode enablement gates on the venue-confound board** (DeepSeek): FP = 0 on ≥5k confounds built from FSA/CQC venue names colliding with index child names; plus a marker-suppression filter (child span followed by "House"/"Road"/"Flat"-class structural markers → no bias). If the confound board fails: comma-segments-only v1 (zero-FP by construction), window mode behind the flag.
+3. **Segmentation = word-span windows** over the `▁`-grouped pieces, the `fst-prior.ts` walk pattern (Kimi #4) — uniform across comma/comma-free input; the comma-segment check is the degenerate case. Window N from the PPD CITY length distribution (measure in the builder task; expect ≤3). **Window-mode enablement checks on the venue-confound board** (DeepSeek): FP = 0 on ≥5k confounds built from FSA/CQC venue names colliding with index child names; plus a marker-suppression filter (child span followed by "House"/"Road"/"Flat"-class structural markers → no bias). If the confound board fails: comma-segments-only v1 (zero-FP by construction), window mode behind the flag.
 4. **δ is flat per-country, calibrated** (p-style from held-out register rows), shipped in the artifact header. **No model-veto parameter** (DeepSeek turn 2: a veto fights exactly the deficit the bias compensates — either kills deep-buried recall or is toothless). The encoder's veto is the existing prior-composition semantics + word-consistency vote over post-prior emissions.
 5. **Country scoping is hard**: index selected by locale/postcode-anchor context; **no country context → no bias** (Kimi #5, explicit test). Probe-all fallback NOT enabled (colonial-name overlap = named FP vector; would require a cross-country confusables board first).
 6. **Normalization single-sourced from the FST bridge fold** (NFKC, lowercase, strip non-alnum — hyphen/space equivalence included); builder and probe share the module (Kimi #7). Diacritic policy documented there; ES equal-value guard discussion points at it.
@@ -39,13 +39,13 @@ The decoder consults the gazetteer _as it parses_: candidate word-spans of the i
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Segmenting               | word-span windows (fst-prior pattern); comma-stripped board re-run decides empirically; #727 k-best predicted unnecessary (Kimi pre-registered prediction — test, don't assume) |
 | Decode-order interaction | safe by construction (heal votes over post-prior emissions); two registered TEST classes: bias-united word stays united; encoder-confident word stays vetoed                    |
-| Checkpoint               | full battery decides; **feed-8k @ δ=6.0 (95.5/100, guards measured) is a peer option**, not a fallback to feed-2k (100/100, guards partial, digit trade cuts both ways)         |
+| Checkpoint               | full battery decides; **feed-8k @ δ=6.0 (95.5/100, guards measured) is a peer option**, not a fallback to feed-2k (100/100, guards partial, digit trade reduces both ways)      |
 | NZ packaging             | hold (see decision 8)                                                                                                                                                           |
 | Multi-word names         | window-size percentile question, answered in the builder task                                                                                                                   |
 
 ## Parallel training-side experiment (DeepSeek's surviving recommendation)
 
-**cRT probe** (config-only, ~5 min GPU): `freeze_encoder: true` + hot classifier LR + dep-loc-heavy stream, 2k→8k. Pre-registered: does classifier-only + balanced stream hold emission WITHOUT re-burial at 8k? If yes → better base weights, smaller δ, less bias dependence; composes with (never replaces) the pair prior. DeepSeek's "cRT recovers the window" is a logged hypothesis, not a gate.
+**cRT probe** (config-only, ~5 min GPU): `freeze_encoder: true` + hot classifier LR + dep-loc-heavy stream, 2k→8k. Pre-registered: does classifier-only + balanced stream hold emission WITHOUT re-burial at 8k? If yes → better base weights, smaller δ, less bias dependence; composes with (never replaces) the pair prior. DeepSeek's "cRT recovers the window" is a logged hypothesis, not a check.
 
 ## Plan (tasks; expand to TDD step level next)
 

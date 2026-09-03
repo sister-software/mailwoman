@@ -114,7 +114,7 @@ describe("postal-compound recovery (#942)", () => {
 		expect(locality!.lat).toBeCloseTo(45.8, 1)
 	})
 
-	it("flag ON: recovers the trailing city from the globbed postcode span, gate-validated", async () => {
+	it("flag ON: recovers the trailing city from the globbed postcode span, check-validated", async () => {
 		const resolver = createWOFResolver(await makeBackend())
 		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "SI", postalCompoundRecovery: true })
 		const locality = out.roots.find((n) => n.tag === "locality" && n.placeID)
@@ -185,7 +185,7 @@ describe("postal-compound recovery (#942)", () => {
 		expect(out.roots.filter((n) => n.placeID)).toHaveLength(0)
 	})
 
-	it("gate rejects a cross-border same-named decoy (unscoped)", async () => {
+	it("check rejects a cross-border same-named decoy (unscoped)", async () => {
 		// No defaultCountry: the HR decoy is name-identical. The code-subset anchor (SI 1382) plus the
 		// 50km check must reject the 400+km decoy and accept the SI village.
 		const resolver = createWOFResolver(await makeBackend())

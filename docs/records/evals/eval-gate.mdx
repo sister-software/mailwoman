@@ -1,21 +1,21 @@
 ---
 sidebar_position: 38
-title: "Pre-publish 2D eval gate"
+title: "Pre-publish 2D eval check"
 ---
 
-# Pre-publish 2D eval gate
+# Pre-publish 2D eval check
 
 Mechanical guard that runs before any neural-weights release lands on the default HF channel.
 Compares a candidate model's per-tag eval output against a baseline (typically the current
 default), applies a two-dimensional threshold, and exits non-zero if any tag violates either
 dimension.
 
-The shape of the gate is the lesson the
+The shape of the check is the lesson the
 2026-05-28 night-2 postmortem and the
-[Layer 1 eval](./experiments/2026-05-28-layer-1-morphology-fst.mdx) both pointed at: a recall-only gate
+[Layer 1 eval](./experiments/2026-05-28-layer-1-morphology-fst.mdx) both pointed at: a recall-only check
 would have **passed** v0.6.1 (no tag regressed > 2pp in recall on tags where the model
 already had > 10% baseline), letting the 1066 `dependent_locality` hallucinations through.
-The two-dimensional gate catches both halves.
+The two-dimensional check catches both halves.
 
 ## The 2D rule
 
@@ -34,21 +34,21 @@ Defaults:
 | `hall_abs_threshold`      | 100     | Below this is plausibly normal training drift                                   |
 | `hall_rate_threshold_pct` | 20      | A tag hallucinating more than 20% of its expected count is a structural failure |
 
-Each dimension stands alone but they compose: a regression has to clear BOTH gates to ship.
+Each dimension stands alone but they compose: a regression has to clear BOTH checks to ship.
 
 ## Why both dimensions matter — the v0.6.1 retroactive check
 
-Running the gate against v0.6.0 → v0.6.1 produces:
+Running the check against v0.6.0 → v0.6.1 produces:
 
 ```
-GATE FAILED: 3 violation(s).
+CHECK FAILED: 3 violation(s).
 - locality (recall) — recall 39.7% → 31.1% (Δ -8.6pp; baseline > 10%)
 - house_number (recall) — recall 79.0% → 75.9% (Δ -3.1pp; baseline > 10%)
 - dependent_locality (hallucination) — hallucinated 0 → 1066 (Δ +1066; new rate 2665.0%)
 ```
 
-The first two would be caught by a recall-only gate. The third — `dependent_locality`
-going 0 → 1066 — would NOT be caught by a recall-only gate (recall there actually
+The first two would be caught by a recall-only check. The third — `dependent_locality`
+going 0 → 1066 — would NOT be caught by a recall-only check (recall there actually
 _improved_, 0% → 30%). That's the v0.6.1 failure pattern from the postmortem encoded as a
 mechanical check: a tag silently exploding in false-positive count even as nominal recall
 holds up.
@@ -70,39 +70,39 @@ holds up.
 
 2. **Score the candidate** (same eval, new weights).
 
-3. **Run the gate:**
+3. **Run the check:**
 
    ```bash
-   node scripts/eval-gate.ts \
+   node scripts/eval-check.ts \
      --baseline /tmp/eval-v060.json \
      --candidate /tmp/eval-v062.json \
-     --out-md /tmp/gate-report.md
+     --out-md /tmp/check-report.md
    ```
 
    Exit 0 → safe to promote. Exit 1 → block the release-it dispatch.
 
-The gate is reusable forever — it doesn't know about specific tags or specific models, only
+The check is reusable forever — it doesn't know about specific tags or specific models, only
 about the threshold contract. v0.7+ models with `dependent_street`, `unit_designator`, JP
 tags will be measured the same way.
 
-## What the gate does NOT replace
+## What the check does NOT replace
 
 - The [v0-vs-neural harness](./model-versions/2026-05-28-v0-vs-neural-harness.mdx) (per-locale + per-file
-  pass rates across 376 hand-tuned assertions). The gate works on aggregate golden-set
+  pass rates across 376 hand-tuned assertions). The check works on aggregate golden-set
   metrics; the harness works on the legacy rule-based pipeline's harsh acceptance criteria.
   Both should be green.
-- Manual demo-preset eval. The `/eval-model` skill remains the human-eyeballs gate before
+- Manual demo-preset eval. The `/eval-model` skill remains the human-eyeballs check before
   any push to default.
 - Falsehoods catalog regression check
   ([`data/eval/falsehoods/streets.jsonl`](./model-versions/2026-05-28-v0-vs-neural-harness.mdx#falsehoods-extension)).
 
-The gate is one slice of the pre-publish protocol, not the whole thing.
+The check is one slice of the pre-publish protocol, not the whole thing.
 
 ## See also
 
 - [Layer 1 eval](./experiments/2026-05-28-layer-1-morphology-fst.mdx) — the eval-script's `--out-json` flag
-  emits the format this gate consumes
+  emits the format this check consumes
 - [v0-vs-neural harness](./model-versions/2026-05-28-v0-vs-neural-harness.mdx) — the complementary breadth
   metric
 - 2026-05-28 night-2 postmortem — DeepSeek-turn-1
-  rubric this gate operationalizes
+  rubric this check operationalizes

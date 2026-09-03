@@ -294,10 +294,10 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 		`**Tier 2D — tightening the org-name ruler with the geocode coordinate.** The org-name truth above blocks by the address ` +
 			`STRING (\`addressFrequencyKey\`), so two records at one building whose text differs — \`1504 Taub LOOP\` vs ` +
 			`\`1504 Taub LP STE 100\` — key apart and the merge is still charged as an error. Block by the GEOCODED BUILDING instead ` +
-			`(union co-located NPIs within ${COLOCATION_KM * 1000} m whose org names agree, same Jaccard gate) and the truth tightens ` +
+			`(union co-located NPIs within ${COLOCATION_KM * 1000} m whose org names agree, same Jaccard check) and the truth tightens ` +
 			`further: GBT **org-name ${pct(gbtOrg.f1)}% → org-name-coord ${pct(gbtOrgCoord.f1)}%** ` +
 			`(${signed(100 * (gbtOrgCoord.f1 - gbtOrg.f1))}), ${orgCount} → ${orgCoordCount} classes, over ${geocodedNpis}/${keptNpis} ` +
-			`geocoded NPIs. The string org-name F1 is a conservative LOWER bound; the coordinate one is tighter (the Jaccard gate ` +
+			`geocoded NPIs. The string org-name F1 is a conservative LOWER bound; the coordinate one is tighter (the Jaccard check ` +
 			`still blocks distinct co-located orgs). Both are honest — the coordinate is the geocode-first key.`
 	)
 
@@ -350,7 +350,7 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 			`the address+distance double-count. What remains is **precision / over-merge** — ${fullStack.score.overMergedClusters} ` +
 			`clusters still fuse distinct co-located providers, because even one down-weighted spatial agreement can outvote a ` +
 			`disagreeing name. The setting search (#625) — two negatives, then the first positive: a name/org/phone ` +
-			`**corroboration gate** (A2/A3) — phone is an unreliable secondary identifier on NPPES (shared institutional ` +
+			`**corroboration check** (A2/A3) — phone is an unreliable secondary identifier on NPPES (shared institutional ` +
 			`switchboard lines), so it over-links and falsely corroborates co-phone distinct providers; and **average-linkage ` +
 			`clustering** (A4) — the over-merged clusters are joined by STRONG shared-address edges, not weak bridges, so ` +
 			`average-linkage can't split them and only trades away name-drift recall. The over-merge is a **scoring** problem ` +

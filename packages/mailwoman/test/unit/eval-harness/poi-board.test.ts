@@ -367,7 +367,7 @@ describe("the committed poi-board fixture set", () => {
 		}
 	})
 
-	it("gates at least one locale-synonym case to an exact locale, and at least one is unrestricted", () => {
+	it("checks at least one locale-synonym case to an exact locale, and at least one is unrestricted", () => {
 		const withLocale = fixtures.filter((f) => f.locale)
 
 		expect(withLocale.length).toBeGreaterThanOrEqual(1)

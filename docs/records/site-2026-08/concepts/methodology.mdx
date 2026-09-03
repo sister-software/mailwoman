@@ -1,15 +1,15 @@
 ---
 sidebar_position: 14
-title: Methodology — falsification-first, gate-promoted
+title: Methodology — falsification-first, check-promoted
 sidebar_label: Methodology
-description: How Mailwoman development runs — every change is a hypothesis with a pre-registered gate, negative results ship with mechanisms, and the eval suite is an executable bug log.
+description: How Mailwoman development runs — every change is a hypothesis with a pre-registered check, negative results ship with mechanisms, and the eval suite is an executable bug log.
 tags:
   - concepts
   - training
   - evals
 ---
 
-# Methodology — falsification-first, gate-promoted
+# Methodology — falsification-first, check-promoted
 
 Model work tempts you toward vibes. A metric moved, the demo feels better, ship it. Every team
 says they resist this; the resistance only holds if it's built into the implementation rather than
@@ -17,7 +17,7 @@ the mood. This article describes the implementation: how a change moves from hyp
 and why the same rules that keep the work rigorous are the ones that keep it open.
 
 One sentence, if you want it portable: **we run the scientific method on an engineering
-budget.** The model is ~29M parameters, so the full loop — hypothesis, probe, retrain, gate,
+budget.** The model is ~29M parameters, so the full loop — hypothesis, probe, retrain, check,
 ship or falsify — fits inside an evening. Cheap inference is the advertised benefit of small
 models; cheap _rigor_ is the underrated one.
 
@@ -36,7 +36,7 @@ languages — was tried first, measured, and _made things worse_, for a reason w
 the isolated `é` piece carried a strongly-trained signal, and averaging embeddings inherited
 its confidence. That falsification, with its mechanism, became the spec for the fix that
 worked: a 12,000-step fine-tune on the spliced tokenizer. Thirty-three minutes on one A100.
-Falsified, respecified, retrained, gated, and shipped between dinner and sunrise.
+Falsified, respecified, retrained, conditional, and shipped between dinner and sunrise.
 
 ## Ablation with a control group
 
@@ -54,12 +54,12 @@ controls: ablation, with the control group most ablation studies skip.
 
 Coverage grows one locale at a time, and each locale gets its own floor — a panel and a
 threshold that later changes must not sink. A change that lifts French while taxing
-English would pass any aggregate metric; it cannot pass a per-locale gate. This is what lets
+English would pass any aggregate metric; it cannot pass a per-locale check. This is what lets
 the system take on new address conventions without silently spending the quality budget of the
 old ones. (For why aggregates mislead in this domain specifically, see
 [Eval discipline](./eval-discipline.mdx).)
 
-## Gates that can't drift
+## Checks that can't drift
 
 The failure mode of self-administered rigor is the goalpost that moves between runs — the re-derived
 baseline, the softened threshold, the deleted test. Three structural rules close it:
@@ -71,7 +71,7 @@ baseline, the softened threshold, the deleted test. Three structural rules close
   reference — it stays visible in every run's output. Deleting a failing case and tracking it
   are different acts, and the diff shows which one happened.
 - **The regression suite is an executable bug log.** Every bug ever fixed remains a permanent,
-  named test with its coordinates and tolerances. A fixed bug that un-fixes fails the gate —
+  named test with its coordinates and tolerances. A fixed bug that un-fixes fails the check —
   loudly, before release, as one did the night before v5.6.0 shipped, when a data rebuild
   re-broke a namesake case the suite had guarded for weeks.
 

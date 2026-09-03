@@ -12,20 +12,20 @@ as briefed; one Modal call (int8 quantize, ~seconds); no training, no promotion.
   per-tag re-score since 06-11: **17/17 floors PASS** on the shipped 5.0.0 bytes, md5-verified
   against the published npm tarball), releases.mdx brought current from "4.11.0 (current)" to
   5.0.0, status.mdx re-verified, F1ScoreTable +v4.4.0/+v5.0.0 columns.
-- **#884 comments**: n=1k gate results, int8 + browser-budget numbers, and the **#295 promotion
+- **#884 comments**: n=1k check results, int8 + browser-budget numbers, and the **#295 promotion
   brief** (GO recommendation, one operator decision open).
-- **#887 filed**: de-order-eval's anchor-OFF ablation broken by the #718 fail-closed gate.
+- **#887 filed**: de-order-eval's anchor-OFF ablation broken by the #718 fail-closed check.
 
 ## The numbers
 
-| gate (pre-registered before each measurement) | result                                                                      |
-| --------------------------------------------- | --------------------------------------------------------------------------- |
-| US-2k ni, int8 feed parity                    | PASS — candidate row dump **byte-identical** to shipped v193a3 int8         |
-| CZ-1k improve                                 | PASS — wrong-city 22.4→14.8% (CI [−10.3,−5.1]pp), resolved-p50 3.29→2.73 km |
-| PL-1k improve                                 | PASS — wrong-city 27.9→7.9% (CI [−22.7,−17.4]pp), resolved-p50 2.07→1.33 km |
-| int8 size                                     | 33.8 MB, **+3.8 MB over the ~30 MB browser SLO** (operator fallback call)   |
-| WASM latency (Node, 1-thread bound)           | flat ~41–44 ms p50/p95 both models; load 66→85 ms                           |
-| #885 re-score                                 | 17/17 floors PASS; fp32↔int8 max delta 0.8pp                                |
+| check (pre-registered before each measurement) | result                                                                      |
+| ---------------------------------------------- | --------------------------------------------------------------------------- |
+| US-2k ni, int8 feed parity                     | PASS — candidate row dump **byte-identical** to shipped v193a3 int8         |
+| CZ-1k improve                                  | PASS — wrong-city 22.4→14.8% (CI [−10.3,−5.1]pp), resolved-p50 3.29→2.73 km |
+| PL-1k improve                                  | PASS — wrong-city 27.9→7.9% (CI [−22.7,−17.4]pp), resolved-p50 2.07→1.33 km |
+| int8 size                                      | 33.8 MB, **+3.8 MB over the ~30 MB browser SLO** (operator fallback call)   |
+| WASM latency (Node, 1-thread bound)            | flat ~41–44 ms p50/p95 both models; load 66→85 ms                           |
+| #885 re-score                                  | 17/17 floors PASS; fp32↔int8 max delta 0.8pp                                |
 
 ## What went well
 
@@ -83,8 +83,8 @@ as briefed; one Modal call (int8 quantize, ~seconds); no training, no promotion.
 | Session             | Lab, 2026-07-02, ~00:30–01:45 UTC                                                             |
 | Models trained      | 0                                                                                             |
 | Modal spend         | 1 quantize call (~seconds of CPU)                                                             |
-| Promotions          | 0 (by design — #295 is operator-gated)                                                        |
+| Promotions          | 0 (by design — #295 is operator-conditional)                                                  |
 | Regressions shipped | 0                                                                                             |
 | PRs opened          | #888, #889                                                                                    |
 | Issues filed        | #887                                                                                          |
-| Gates run           | 3 pre-registered batteries (n=1k CZ/PL fp32, int8 feed-parity, #885 full re-score) — all PASS |
+| Checks run          | 3 pre-registered batteries (n=1k CZ/PL fp32, int8 feed-parity, #885 full re-score) — all PASS |

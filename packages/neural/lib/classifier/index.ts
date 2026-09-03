@@ -448,7 +448,7 @@ export class NeuralAddressClassifier {
 						: {}),
 					// Street-context check (#1142): reuse the morphology FST already loaded for the
 					// street-morphology prior. Inert when the morphology FST isn't loaded.
-					...(opts.fstStreetMorphology && opts.fstStreetContextGate !== false
+					...(opts.fstStreetMorphology && opts.fstStreetContextRequirement !== false
 						? {
 								streetContext: {
 									fst: opts.fstStreetMorphology,

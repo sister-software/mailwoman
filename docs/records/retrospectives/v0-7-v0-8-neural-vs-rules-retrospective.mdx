@@ -26,7 +26,7 @@ comparisons are valid. `v0` is the rule parser, scored through the same implemen
 
 ## Scoreboard 1 — the harness says neural is 4.5× worse
 
-The regression gate is `scripts/harness-v0-neural.ts`: 415 tag-level assertions ported
+The regression check is `scripts/harness-v0-neural.ts`: 415 tag-level assertions ported
 from the Pelias / `addressit` test suites. Current standings:
 
 | parser          | pass |      rate |
@@ -48,7 +48,7 @@ So "neural scores 20.7%" measures one thing: **how often neural disagrees with P
 exact tagging conventions** — 75% of the time, on different tokenization of multi-word
 streets, different venue/locality boundaries, and the cases addressit happened to encode.
 It says nothing about whether neural is _wrong_. The harness is a faithful
-_regression gate_ (it catches when a retrain breaks a convention we previously matched),
+_regression check_ (it catches when a retrain breaks a convention we previously matched),
 but not a parsing-quality verdict. Treating it as one is the
 [harness-lineage trap](../evals/resolver-geo/2026-05-30-harness-lineage-and-the-resolver-scoreboard.mdx).
 
@@ -162,7 +162,7 @@ possible future larger model — the negative result is specific to this 29M-par
 
 1. **Don't let a Pelias-derived suite judge a non-Pelias parser.** A test suite ported from
    the system you're trying to beat scores that system at 100% by construction. Use it as a
-   regression gate; judge quality on independent arenas + the product metric.
+   regression check; judge quality on independent arenas + the product metric.
 2. **Pick the metric that matches the product.** Per-tag agreement is not geocoding
    accuracy. The resolver-on-real-points number is the one that tracks the metric that matters, and
    it tells the opposite story from the harness.
@@ -174,7 +174,7 @@ possible future larger model — the negative result is specific to this 29M-par
 
 1. **Street-level geometry** (TIGER/Line + house-number interpolation). We win on
    _locality_ but coordinates are admin-centroid only (p50 2.4 km). This is the km →
-   tens-of-meters jump that makes "production geocoder" literally true. Gate: **p50 ≤ 200 m,
+   tens-of-meters jump that makes "production geocoder" literally true. Check: **p50 ≤ 200 m,
    p90 ≤ 1 km** on a 1,000-point ground-truth set. ⚠ Requires geometry we don't yet have
    (our `tiger.db` is street-name + ZIP only) — a new data pipeline, not a wiring job.
 2. **Resolver ranking depth** — fix the same-state wrong-town bug (`Saint Albans, VT` →

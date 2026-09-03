@@ -1,6 +1,6 @@
 # === v1.4.0-charoffset (the FIRST char-offset-corpus run) =======================================
 # Identical recipe to v1.3.0-boundary-consolidation (the v4.4.0 ship), retargeted at the v0.5.0
-# CHAR-OFFSET corpus. This is the format-change run: same changes, same source mix, same gates — the
+# CHAR-OFFSET corpus. This is the format-change run: same changes, same source mix, same checks — the
 # ONE variable is that labels now come from the #519 span triple (span_starts/ends/tags) instead of
 # per-token BIO. The loader's span path (PR #534) trains FROM the spans; encode_row realigns them to
 # SentencePiece pieces. Holding the recipe fixed is deliberate: it isolates "did the format change
@@ -8,7 +8,7 @@
 #
 # WHY THIS RUN EXISTS — the bridge-retirement test. The decode-side span bridge (adjacent same-tag
 # merge) has been carrying dotted po_box / cedex since the token era. Char-offset labels let the model
-# learn those spans INTRINSICALLY. The gate (scripts/eval/gates/v0.5.0-bridge.json) asks: does dotted
+# learn those spans INTRINSICALLY. The check (scripts/eval/checks/v0.5.0-bridge.json) asks: does dotted
 # po_box hold >= 89.1 with the bridge OFF? If yes, the bridge retires. That test is only meaningful
 # because the po_box signal is now a char-span the model can learn — which is exactly why the corpus
 # HAD to carry the re-emitted synth-po-box-cedex overlay (it does: 50k rows, char-offset, source-tagged).
@@ -17,7 +17,7 @@
 # 1.89M val, 1.89M test. 18 weighted sources, all present (11 base + 7 re-emitted parity overlays).
 # KNOWN CAVEAT (stopgap, not a recipe choice): the corpus stores UTF-16 span offsets (#519); the
 # ~0.06% astral-script rows are skipped at load by the #558 iter_encoded guard. The lasting fix
-# (code-point re-align → corpus-v0.5.1) is DeepSeek's follow-on; it does not gate this run.
+# (code-point re-align → corpus-v0.5.1) is DeepSeek's follow-on; it does not check this run.
 # Launch: modal run -d scripts/modal/train_remote.py --config v1.4.0-charoffset.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.5.0/corpus-v0.5.0

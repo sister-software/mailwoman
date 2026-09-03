@@ -18,7 +18,7 @@
 #     continuations than before, so postcode recognition COULD regress. The 6 demo presets (20500,
 #     10118, 94133, 60613, 98109, 90210) and board 3 bare-pc (Norwegian 4-digit postcodes, the
 #     negative class) MUST hold. If US 5-digit postcode drops, the splice range needs 5-digit pieces
-#     or a different cut.
+#     or a different reduce.
 #   DO-NO-HARM — FR fragment board + global parity hold.
 #   NEGATIVE — if the digit rows do NOT improve after single-piece-ing the numbers, the vocab is NOT
 #     the mechanism and B4c is refuted (a big finding — it would point back to the head/decoder).
@@ -29,7 +29,7 @@
 # Norwegian CONTEXTFUL classes (city-first/pc-first/street-led, -5..-8.5pp) — US contextful held, so
 # it is under-convergence of the fresh tokenizer, not a trade. This 8k gives the model time to
 # re-learn contextful number handling with the new vocab while keeping the bare-street win.
-#   SHIP GATE: bare-street-hn holds its +13pp AND the contextful classes recover to ~ceiling AND
+#   SHIP CHECK: bare-street-hn holds its +13pp AND the contextful classes recover to ~ceiling AND
 #   US/5-digit/demo presets + FR fragment board + parity hold -> v6.5.0 candidate (first real
 #   house_number improvement). Promotion is the operator's act.
 # Launch: modal run -d corpus-python/modal/train_remote.py --config v3.5.0-numsplice-probe.yaml --resume none

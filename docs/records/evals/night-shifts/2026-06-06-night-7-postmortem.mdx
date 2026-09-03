@@ -13,7 +13,7 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
   homonym (`IL`→France, `WA`→Spain); now inferred from `--locale` (the demo already passed `country:"US"`).
   10/10 tests, the NY→NYC integration guard included.
 - **#325 — order-robustness eval & diag tooling** (merged). `scripts/eval/de-order-eval.sh` (the 2×2
-  native/intl × anchor on/off + US/FR gate harness), `--model-anchor-lookup` on `per-locale-f1.ts`
+  native/intl × anchor on/off + US/FR check harness), `--model-anchor-lookup` on `per-locale-f1.ts`
   (anchor-aware per-tag F1), and the three diag scripts the finding/memories reference.
 - **v0.9.2 both-order retrain** — trained clean (20k, no NaN), evaluated, **not shipped** (research result,
   not a production regression). Full report: `2026-06-06-v0.9.2-eval.md`. Headline: both-order training moved
@@ -73,7 +73,7 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
   - **#342 (S38 design doc)** — the service-worker cache groundwork. We did NOT ship a SW: the heavy assets are
     fetched cross-origin from HF by version, HF 302s to an hourly-expiring signed CDN URL, so a blind cache
     would store a dead redirect. Documented the gotchas + a hand-rolled Cache-API sketch + a 5-behavior
-    Playwright gate, so a focused session starts fast instead of half-shipping at the shift tail.
+    Playwright check, so a focused session starts fast instead of half-shipping at the shift tail.
 
 ## What went well
 
@@ -108,7 +108,7 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
 ## Decisions made autonomously
 
 - **Did NOT bump the critical dependabot alert (vitest, dev-scoped).** The exploit needs the Vitest UI
-  server listening (never run); bumping the test runner mid-shift risked destabilizing the CI gate I depend
+  server listening (never run); bumping the test runner mid-shift risked destabilizing the CI check I depend
   on. Logged for the operator instead. _(Alternative: bump it — rejected as higher-risk-than-reward.)_
 - **Held `build-locale-extract.mjs`** rather than ship a generalizer that doesn't yet beat the German builder.
 - **Reused the pilot model card** (33 labels, identical schema) for the v0.9.2 eval rather than block on a
@@ -120,7 +120,7 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
   locality, 2×2: US/off 35.9 · US/on 45.8 · native/off 48.4 · **native/on 83.8**. The anchor adds +35.4pp
   on native order (vs +9.9 on US). Revises the #321 guess that the anchor merely rescued a US-order symptom.
   Caveat: `c=0` deprives an anchor-_trained_ model of a learned signal; the clean test is whether v0.9.2
-  reaches native perf WITHOUT the anchor (the gate's 2×2).
+  reaches native perf WITHOUT the anchor (the check's 2×2).
 - **S2 — the order artifact is systemic but the anchor is the bigger change.** Re-measured the PR3
   v0.9.0-selfcond model (no anchor): US-order 35.5 → native **48.2** (+12.7pp, Sachsen-driven 36.8→62.2;
   Berlin flat 34.2 both). So the earlier "collapses" were partly the eval order — but the no-anchor native
@@ -143,13 +143,13 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
   mechanistic read reframes the multi-locale plan: the anchor's direction is **learned per locale** from the
   dominant training order (US trains postcode-after-city → anchor looks left → never hurt US; German native is
   postcode-before-city → looks right; one shared vector can't serve both). The plan is constrained, not dead —
-  the documented next thread is a **country-conditioned anchor vector** (a future iteration with its own gate),
+  the documented next thread is a **country-conditioned anchor vector** (a future iteration with its own check),
   plus a no-GPU operational change: route international-order inputs to the `c=0` path via a lightweight
   order check. None of v0.9.2/3/4 promote; v0.6.0 stays production. The operator can revisit the next-thread
   choice; the shift's experimental arc is closed. _(Decision record: `2026-06-06-v0.9.2-eval.md`, §"accept the
   asymmetry"; #327.)_
 - **The next anchor thread is the country-conditioned vector** — pick when you're ready. The shift mapped the
-  ground and #327 now tracks it; it gates the multi-locale retrain program, so it's the change before any
+  ground and #327 now tracks it; it checks the multi-locale retrain program, so it's the change before any
   ES/IT/NL/FR retrain. A cheap no-GPU interim (route international-order inputs to the `c=0` path via a
   lightweight order check) is filed there too.
 - **Eyeball the deployed demo.** The span ribbon / timing bar / copy button were validated by `tsc` + the docs
@@ -167,10 +167,10 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
 ## Concrete next steps
 
 - **Country-conditioned anchor (#327):** a per-locale anchor direction (DE specializes on postcode-before-city,
-  US on postcode-after-city), so no shared vector is forced to compromise. Its own gate via `de-order-eval.sh`.
+  US on postcode-after-city), so no shared vector is forced to compromise. Its own check via `de-order-eval.sh`.
   The interim no-GPU change (order-check → `c=0` route) is the cheap first move.
 - **Multi-locale databases:** DE / NL / FR / IT / **ES** are all extract-ready via `build-locale-extract.mjs` (ES via
-  a per-part `conform` map on the raw CNIG upstream). The gate before any retrain is the country-conditioned
+  a per-part `conform` map on the raw CNIG upstream). The check before any retrain is the country-conditioned
   anchor (#327), not the data.
 - **Demo S38 — service-worker precache** for the ~60 MB bundle, keyed by `selectedVersion` (see above).
 - **FR (#330):** assemble a venue+region FR extract (real OSM/WOF POIs + FR région forms), measure with

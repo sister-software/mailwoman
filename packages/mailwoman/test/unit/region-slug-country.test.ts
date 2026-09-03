@@ -37,7 +37,7 @@ const tree = (region: string, country?: string): AddressTree => ({
 	],
 })
 
-describe("regionSlugFromTree country gate", () => {
+describe("regionSlugFromTree country check", () => {
 	it("still yields a slug for a US tree, in both registers", () => {
 		expect(regionSlugFromTree(tree("MI", "US"))).toBe("mi")
 		expect(regionSlugFromTree(tree("Michigan", "US"))).toBe("mi")
@@ -80,7 +80,7 @@ describe("regionSlugFromTree country gate", () => {
 		expect(regionSlugFromTree(t)).toBeNull()
 	})
 
-	it("returns null for a tree with no region at all, gate or no gate", () => {
+	it("returns null for a tree with no region at all, check or no check", () => {
 		expect(regionSlugFromTree({ raw: "", roots: [] })).toBeNull()
 		expect(regionSlugFromTree({ raw: "x", roots: [node({ tag: "locality", value: "x" })] })).toBeNull()
 	})

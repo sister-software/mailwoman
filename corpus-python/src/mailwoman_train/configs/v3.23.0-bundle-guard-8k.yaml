@@ -22,7 +22,7 @@
 #   2. synth-po-box-cedex 1.5 -> 3.0 (fine-tune replay boost; independent instrument, measured on
 #      the ablated-column cedex read + the us.po_box_real overfit watch).
 #
-# PRE-REGISTERED GATES (Decision-A shape, v3.22 wording):
+# PRE-REGISTERED CHECKS (Decision-A shape, v3.22 wording):
 #   G1 fragment bars (P0 grid, --lexicon locality-surface-lexicon-v6.json
 #      --street-lexicon street-type-lexicon-v3.json, every save): homonym ON-OFF >= +0.050 asis
 #      and >= +0.25 lower+heal; house-number classes >= -0.020 asis raw; lowercase-heal ALL >= +0.015.

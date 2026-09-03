@@ -46,7 +46,7 @@ export interface SpanRescoreOptions {
 	 * the postcode resolves to a point in the backend; otherwise it can't and the match is accepted (so it never
 	 * penalizes a backend without postcode coverage). 0 disables. Default 50.
 	 */
-	gateKm?: number
+	thresholdKm?: number
 	/**
 	 * Max contiguous raw tokens to treat as one locality span. Default 4.
 	 */
@@ -95,11 +95,11 @@ export interface RescoreCandidate {
 	place: ResolvedPlace
 	/**
 	 * Whether the postcode-consistency check FIRED for this recovery — i.e. the postcode resolved to a point and the
-	 * match was validated within `gateKm` of it. `true` = high-precision (postcode- consistent); `false` = unrestricted
-	 * (no postcode→point coverage for this country, so the match wasn't geo-validated — the ~83%-precision case). The
-	 * caller surfaces this as `metadata.rescore_postcode_verified` so a consumer can threshold on it WITHOUT a hidden
-	 * per-country coverage map. Deliberately NOT folded into the calibrated `confidence` — that would break the isotonic
-	 * guarantee (a true calibrated 0.83 must not be confused with a rescore plug-in estimate).
+	 * match was validated within `thresholdKm` of it. `true` = high-precision (postcode- consistent); `false` =
+	 * unrestricted (no postcode→point coverage for this country, so the match wasn't geo-validated — the ~83%-precision
+	 * case). The caller surfaces this as `metadata.rescore_postcode_verified` so a consumer can threshold on it WITHOUT a
+	 * hidden per-country coverage map. Deliberately NOT folded into the calibrated `confidence` — that would break the
+	 * isotonic guarantee (a true calibrated 0.83 must not be confused with a rescore plug-in estimate).
 	 */
 	postcodeVerified: boolean
 	/**
@@ -307,7 +307,7 @@ export async function findRescoreCandidate(
 	backend: ResolverBackend,
 	opts: SpanRescoreOptions = {}
 ): Promise<RescoreCandidate | null> {
-	const gateKm = opts.gateKm ?? 50
+	const thresholdKm = opts.thresholdKm ?? 50
 	const maxSpan = opts.maxSpanTokens ?? 4
 	const threshold = opts.confidentThreshold ?? 0.7
 	const country = opts.country
@@ -317,7 +317,7 @@ export async function findRescoreCandidate(
 	// no postcode coverage — findPlace returns nothing → no anchor → check can't fire → match accepted.)
 	let anchor: { lat: number; lon: number } | null = null
 
-	if (postcode && gateKm > 0) {
+	if (postcode && thresholdKm > 0) {
 		// #961: both anchor probes are postalcode-TYPED. Untyped, a truncated code fragment (v5.3.0
 		// emits "250 Zabiče" → subset "250") name-matches arbitrary places ("Chak No 250", PK) and the
 		// false anchor then EXCLUDES the true village. A typed miss leaves anchor=null → the match is
@@ -451,13 +451,13 @@ export async function findRescoreCandidate(
 		// put it.
 		const exact = rankByImportance(hits.filter((h) => h.exactMatch && (h.lat !== 0 || h.lon !== 0)))
 
-		const withinGate = (p: ResolvedPlace): boolean =>
-			!anchor || gateKm <= 0 || haversineKm(anchor.lat, anchor.lon, p.lat, p.lon) <= gateKm
+		const withinThreshold = (p: ResolvedPlace): boolean =>
+			!anchor || thresholdKm <= 0 || haversineKm(anchor.lat, anchor.lon, p.lat, p.lon) <= thresholdKm
 
 		for (const h of exact) {
-			if (!withinGate(h)) continue
+			if (!withinThreshold(h)) continue
 
-			// conditional = the postcode anchor existed AND validated this match (within gateKm). When no anchor
+			// conditional = the postcode anchor existed AND validated this match (within thresholdKm). When no anchor
 			// (no postcode→point coverage), the match is unrestricted — returned, but flagged lower-precision.
 			//
 			// #1537: carry the rest of the SAME lookup's exact matches as the namesake runner-ups. Check-filtered on the
@@ -469,7 +469,7 @@ export async function findRescoreCandidate(
 				end: sp.end,
 				place: h,
 				postcodeVerified: anchor !== null,
-				alternatives: exact.filter((a) => a !== h && withinGate(a)),
+				alternatives: exact.filter((a) => a !== h && withinThreshold(a)),
 			}
 		}
 	}
@@ -483,7 +483,7 @@ export async function findRescoreCandidate(
 	// cross-country promotion is accepted ONLY postcode-verified within the radius — never unverified —
 	// so a US-shaped query can't wander abroad on a name coincidence (the 48026 guard: resolved
 	// trees never reach this code, and unresolved ones must pass the joint postcode check).
-	if (opts.postalCompoundRecovery && postcode && gateKm > 0) {
+	if (opts.postalCompoundRecovery && postcode && thresholdKm > 0) {
 		const code = postcodeCodeSubset(postcode) || postcode.trim()
 
 		for (const sp of spans) {
@@ -509,7 +509,7 @@ export async function findRescoreCandidate(
 
 				const verified = pcHits.find((p) => p.lat !== 0 || p.lon !== 0)
 
-				if (verified && haversineKm(verified.lat, verified.lon, h.lat, h.lon) <= gateKm) {
+				if (verified && haversineKm(verified.lat, verified.lon, h.lat, h.lon) <= thresholdKm) {
 					// No alternatives from this pass, deliberately. Admission here is per-candidate postcode
 					// verification — one `findPlace` per runner-up — and the class it serves is the opposite of the
 					// namesake one: a postcode is present and has already picked the country, so there is nothing

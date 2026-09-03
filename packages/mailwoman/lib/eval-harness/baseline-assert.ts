@@ -338,7 +338,7 @@ export function formatVerdict(verdict: BaselineVerdict): string {
 	lines.push(
 		"If the number legitimately moved (new fixture, new tokenizer, a real model change),",
 		"RE-REGISTER the baseline with a new row and a reason. Do not widen tolerance_rel to make",
-		"this quiet — that is silent gate drift."
+		"this quiet — that is silent check drift."
 	)
 
 	return lines.join("\n")

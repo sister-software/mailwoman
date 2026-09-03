@@ -41,7 +41,7 @@ export const PIPELINE_PRESETS: ReadonlyArray<Preset> = [
 	},
 	// NZ dependent_locality (en-nz pair-prior arc) — Plimmerton is a suburb (dependent_locality) of Porirua. Postcode
 	// DELIBERATELY OMITTED: a trailing "Porirua 5026" folds "porirua 5026" in segment mode and misses the index's bare
-	// "porirua" key (tracked as #1308). The `country: "nz"` pin is required — locale-gate can't structurally detect
+	// "porirua" key (tracked as #1308). The `country: "nz"` pin is required — locale-hint can't structurally detect
 	// NZ (4-digit postcode isn't distinctive), so only the pin selects the nz index; free-typed NZ stays unfired.
 	{ label: "Plimmerton (NZ dependent_locality)", value: "35 Steyne Avenue, Plimmerton, Porirua", country: "nz" },
 ]

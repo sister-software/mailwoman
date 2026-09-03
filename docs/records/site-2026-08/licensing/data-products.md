@@ -261,7 +261,7 @@ bounding box, and member-point count, for street-only queries.
 
 **License.** **Licence Ouverte / Open Licence 2.0 (Etalab)** — attribution only, **no share-alike**.
 BAN is dual-licensed and we elect the permissive option, which is why the extract ships under the same
-terms as the permissive core and needed no counsel gate.
+terms as the permissive core and needed no counsel check.
 
 **Attribution.** "© les contributeurs de la Base Adresse Nationale (adresse.data.gouv.fr)", carried
 per-row as `source = ban:fr` and recorded in `ban/ATTRIBUTION.json` alongside source URL, release,

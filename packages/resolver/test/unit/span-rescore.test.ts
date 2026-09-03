@@ -218,52 +218,52 @@ describe("findRescoreCandidate", () => {
 
 	it("prefers the LONGEST exact match (specific name beats its own prefix)", async () => {
 		const raw = "Tomaszów Mazowiecki" // gold is the longer name; shortest-wins would grab "Tomaszów"
-		const hit = await findRescoreCandidate(raw, [], await makeBackend(), { country: "PL", gateKm: 0 })
+		const hit = await findRescoreCandidate(raw, [], await makeBackend(), { country: "PL", thresholdKm: 0 })
 		expect(hit?.text).toBe("Tomaszów Mazowiecki")
 		expect(hit?.place.id).toBe(3)
-		expect(hit?.postcodeVerified).toBe(false) // check disabled (gateKm 0)
+		expect(hit?.postcodeVerified).toBe(false) // check disabled (thresholdKm 0)
 	})
 
-	it("flags a recovery GATED when the postcode resolves and the match is within range", async () => {
+	it("flags a recovery CONDITIONAL when the postcode resolves and the match is within range", async () => {
 		// 97-200 resolves (fixture) near Tomaszów Mazowiecki; the longest match lands within 50km → conditional.
 		const hit = await findRescoreCandidate("Tomaszów Mazowiecki", [], await makeBackend(), {
 			country: "PL",
 			postcode: "97-200",
-			gateKm: 50,
+			thresholdKm: 50,
 		})
 
 		expect(hit?.place.id).toBe(3)
 		expect(hit?.postcodeVerified).toBe(true)
 	})
 
-	it("postcode gate rejects a match far from where the postcode resolves", async () => {
+	it("postcode check rejects a match far from where the postcode resolves", async () => {
 		// "Tomaszów" alone exact-matches the FAR Tomaszów (id 2); the 97-200 postcode anchors near the
 		// Mazowiecki one (~240 km away), so the check rejects it → no recovery.
 		const hit = await findRescoreCandidate("Tomaszów", [], await makeBackend(), {
 			country: "PL",
 			postcode: "97-200",
-			gateKm: 50,
+			thresholdKm: 50,
 		})
 
 		expect(hit).toBeNull()
 	})
 
 	it("#1537: carries the same-span namesake runner-ups, in rank order, without moving the winner", async () => {
-		const hit = await findRescoreCandidate("Springfield", [], await makeBackend(), { country: "US", gateKm: 0 })
+		const hit = await findRescoreCandidate("Springfield", [], await makeBackend(), { country: "US", thresholdKm: 0 })
 
 		// The winner is what it always was — the first exact match in the backend's rank order.
 		expect(hit?.place.id).toBe(10)
 		expect(hit?.alternatives.map((a) => a.id)).toEqual([11, 12, 13])
 	})
 
-	it("#1537: the postcode gate filters the runner-ups on the same rule as the winner", async () => {
+	it("#1537: the postcode check filters the runner-ups on the same rule as the winner", async () => {
 		// 62701 anchors next to id 11 (IL). MO (id 10) and MA (id 12) are >50 km out, so the check drops them
 		// from BOTH roles: id 11 wins, and only the ~5 km id 13 survives as an alternative. A candidate the
 		// postcode already excluded is not a namesake worth offering.
 		const hit = await findRescoreCandidate("Springfield", [], await makeBackend(), {
 			country: "US",
 			postcode: "62701",
-			gateKm: 50,
+			thresholdKm: 50,
 		})
 
 		expect(hit?.place.id).toBe(11)
@@ -272,7 +272,7 @@ describe("findRescoreCandidate", () => {
 	})
 
 	it("#1537: a lone namesake yields an empty runner-up list", async () => {
-		const hit = await findRescoreCandidate("Grudziądzek", [], await makeBackend(), { country: "PL", gateKm: 0 })
+		const hit = await findRescoreCandidate("Grudziądzek", [], await makeBackend(), { country: "PL", thresholdKm: 0 })
 		expect(hit?.place.id).toBe(20)
 		expect(hit?.alternatives).toEqual([])
 	})
@@ -283,20 +283,20 @@ describe("findRescoreCandidate", () => {
 		// is "" and could never equal "moscow", so Moscow, Idaho won by default among the Latin-named
 		// bearers. Population-first ranking was starved, not violated; recall fixes it with no ranking
 		// change.
-		const hit = await findRescoreCandidate("Moscow", [], await makeBackend(), { gateKm: 0 })
+		const hit = await findRescoreCandidate("Moscow", [], await makeBackend(), { thresholdKm: 0 })
 		expect(hit?.place.id).toBe(30)
 		expect(hit?.place.name).toBe("Москва")
 		expect(hit?.alternatives.map((a) => a.id)).toEqual([31, 32])
 	})
 
-	it("#1546: the postcode gate still rejects the non-Latin namesake when it is far from the anchor", async () => {
+	it("#1546: the postcode check still rejects the non-Latin namesake when it is far from the anchor", async () => {
 		// "Moscow, ID 83843": the postcode anchors next to the Idaho bearer (id 31); Moscow RU is
 		// thousands of km away, so the check excludes it and the Idaho winner is unchanged. Admission is
 		// recall; the check still decides.
 		const hit = await findRescoreCandidate("Moscow", [], await makeBackend(), {
 			country: "US",
 			postcode: "83843",
-			gateKm: 50,
+			thresholdKm: 50,
 		})
 
 		expect(hit?.place.id).toBe(31)
@@ -307,7 +307,7 @@ describe("findRescoreCandidate", () => {
 		// "New York City" matches New York only through its alias row. The old primary-name re-check
 		// (norm("New York") !== norm("New York City")) dropped the exact match the backend had already
 		// flagged — the same recall defect, without any non-Latin script.
-		const hit = await findRescoreCandidate("New York City", [], await makeBackend(), { gateKm: 0 })
+		const hit = await findRescoreCandidate("New York City", [], await makeBackend(), { thresholdKm: 0 })
 		expect(hit?.place.id).toBe(40)
 		expect(hit?.alternatives).toEqual([])
 	})
@@ -316,7 +316,7 @@ describe("findRescoreCandidate", () => {
 		// "Grudziądz" sits where a confident postcode node is declared → not eligible as a locality span.
 		const raw = "Grudziądz 4"
 		const roots: AddressNode[] = [node({ tag: "postcode", value: "Grudziądz", start: 0, end: 9, confidence: 0.95 })]
-		const hit = await findRescoreCandidate(raw, roots, await makeBackend(), { country: "PL", gateKm: 0 })
+		const hit = await findRescoreCandidate(raw, roots, await makeBackend(), { country: "PL", thresholdKm: 0 })
 		expect(hit).toBeNull()
 	})
 })

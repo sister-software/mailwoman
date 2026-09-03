@@ -58,9 +58,9 @@ consults a single primary in a world with multilingual official names.**
   bit per name row).
 - Lookup: the exact-tier classifier consults `names WHERE official = 1` for the name-exact test
   (one indexed probe, same shape as today's alias check).
-- Gate: the bare-namesake gauntlet rows (Paris/Dublin/Melbourne/Vancouver/Åbo + ME/NY abbrevs) +
+- Check: the bare-namesake gauntlet rows (Paris/Dublin/Melbourne/Vancouver/Åbo + ME/NY abbrevs) +
   US-2k ni + the quad panel ni set — the same battery #927 ran, plus the Åbo row flipping to
-  gated.
+  conditional.
 - Risk probe (RUN, 2026-07-03): 6,910 names are shared by 2+ localities above 100k population —
   but that's the UPPER BOUND across ALL name classes, because today's `names` table cannot
   distinguish official-language rows from transliterations/colloquialisms ("A-shih-ko" counts the

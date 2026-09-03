@@ -1,6 +1,6 @@
 # DE-inclusive corpus assembly (2026-06-04)
 
-The data step that gates the PR3 self-conditioning pilot ([plan](../../plan/2026-06-04-pr3-self-conditioned-retrain.mdx)). The Pilot A config wanted a US/FR/**DE** corpus from scratch; v0.4.0 is US/FR only. This records how the German rows were added and how to deploy them.
+The data step that checks the PR3 self-conditioning pilot ([plan](../../plan/2026-06-04-pr3-self-conditioned-retrain.mdx)). The Pilot A config wanted a US/FR/**DE** corpus from scratch; v0.4.0 is US/FR only. This records how the German rows were added and how to deploy them.
 
 ## What was built
 
@@ -19,7 +19,7 @@ The v0.8.0 German order-extract failed — German street/house-number F1 jumped 
 
 ## The mix knob
 
-In `v0.9.0-pilot-selfcond.yaml`, `synth-german` is weighted 6.0 of a ~34 source-weight total — German at ~18% of the mix. Enough for a from-scratch model to learn it, inside the synthesis-as-supplement guideline. It is **the key tunable**: raise it if DE locality F1 lags the 70% gate, lower it if US/FR slip past the 1pp regression check.
+In `v0.9.0-pilot-selfcond.yaml`, `synth-german` is weighted 6.0 of a ~34 source-weight total — German at ~18% of the mix. Enough for a from-scratch model to learn it, inside the synthesis-as-supplement guideline. It is **the key tunable**: raise it if DE locality F1 lags the 70% check, lower it if US/FR slip past the 1pp regression check.
 
 ## Reproduce + deploy
 

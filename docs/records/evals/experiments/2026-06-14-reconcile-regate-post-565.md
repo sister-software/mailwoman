@@ -1,4 +1,4 @@
-# Re-gating joint-reconcile after the #565 grouper fix
+# Re-blocking joint-reconcile after the #565 grouper fix
 
 _2026-06-14. We retired joint-reconcile to argmax (#566) after an audit found it broke the
 street + house-number geocode precondition on 77–84% of clean US addresses. The root cause — the
@@ -9,7 +9,7 @@ pipeline in both modes, the answer is no. #565 repaired the structural break, bu
 strictly worse than argmax on tag values — worst on the exact locale it was supposed to help. Argmax
 stays the default; the parked re-promotion decision is resolved as "keep retired."_
 
-## Why we re-gated
+## Why we re-conditional
 
 The retirement was a de-promotion under fire — the geocoder needed a clean street and a separate house
 number, reconcile was merging them, so we flipped the default to argmax and moved on. But two things
@@ -91,7 +91,7 @@ missed. The break pattern is consistent — multi-word residential streets:
 ## The mechanism
 
 #565 fixed the grouper's house-number bundling — the structural break that the retirement blamed. What
-this re-gate shows is that reconcile's harm was never only structural. By **merging** tokens into one
+this re-check shows is that reconcile's harm was never only structural. By **merging** tokens into one
 candidate span rather than **selecting** the neural argmax, reconcile destroys internal street
 structure that argmax keeps intact. On FR that is the `Rue de la <X>` / `Chemin du <X>` prefix +
 particle + core pattern — the merge collapses it and the street value falls apart (−13.7pp). On US
@@ -102,7 +102,7 @@ second bundling bug to patch.
 
 ## Verdict — keep reconcile retired
 
-Both gates fail. Reconcile loses tag-value accuracy on US and FR with no locale where it wins overall,
+Both checks fail. Reconcile loses tag-value accuracy on US and FR with no locale where it wins overall,
 and it still breaks the geocoder precondition on 5.6% of rows where argmax never does. There is no slice
 — not even FR — where re-promotion is net-positive. **Argmax stays the default. Joint-reconcile remains
 opt-in (`jointReconcile: true`) and undefaulted; this report is the record of why.** The #427 "reconcile
@@ -128,4 +128,4 @@ node scripts/eval/reconcile-precondition-regate.mjs /tmp/ood-truth.jsonl
 ```
 
 See also: [`2026-06-14-reconcile-retirement.md`](./2026-06-14-reconcile-retirement.md) (the de-promotion
-that prompted this re-gate).
+that prompted this re-check).

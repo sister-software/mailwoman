@@ -51,7 +51,7 @@ export const GB_STREET_TYPES = [
 	"vale",
 	"wharf",
 	"yard",
-	"gate",
+	"check",
 	"croft",
 	"dene",
 	"end",

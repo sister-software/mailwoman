@@ -198,7 +198,7 @@ const reloadRoute = createRoute({
 	method: "post",
 	path: "/v1/reload",
 	operationId: "reload",
-	summary: "Reload versioned data extracts (deploy-only; gate at ingress)",
+	summary: "Reload versioned data extracts (deploy-only; check at ingress)",
 	tags: ["meta"],
 	responses: reloadResponses,
 })

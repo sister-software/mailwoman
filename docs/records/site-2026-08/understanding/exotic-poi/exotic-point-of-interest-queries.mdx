@@ -20,13 +20,13 @@ This series catalogues the categories of POI queries, how traditional geocoders 
 
 ## Categories
 
-| Query type                                          | Example                                                 | What the user wants                                                |
-| --------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------ |
-| [Amenities](./amenity-queries.mdx)                  | water fountain, gas station, ATM, restroom              | The nearest instance of a generic category                         |
-| [Franchises and brands](./franchise-queries.mdx)    | Walmart, McDonalds, Hilton, Starbucks                   | The nearest or all locations of a named chain                      |
-| [Regional variants](./regional-variant-queries.mdx) | servo, bodega, マクド, off-licence, chemist             | The same thing as an amenity or brand, but using local terminology |
-| [Landmarks](./landmark-queries.mdx)                 | Eiffel Tower, Golden Gate Bridge, Empire State Building | A specific named place, usually unique or nearly unique            |
-| [Transit](./transit-queries.mdx)                    | subway station, bus stop, airport, train station        | A transit facility, named or unnamed                               |
+| Query type                                          | Example                                                  | What the user wants                                                |
+| --------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------ |
+| [Amenities](./amenity-queries.mdx)                  | water fountain, gas station, ATM, restroom               | The nearest instance of a generic category                         |
+| [Franchises and brands](./franchise-queries.mdx)    | Walmart, McDonalds, Hilton, Starbucks                    | The nearest or all locations of a named chain                      |
+| [Regional variants](./regional-variant-queries.mdx) | servo, bodega, マクド, off-licence, chemist              | The same thing as an amenity or brand, but using local terminology |
+| [Landmarks](./landmark-queries.mdx)                 | Eiffel Tower, Golden Check Bridge, Empire State Building | A specific named place, usually unique or nearly unique            |
+| [Transit](./transit-queries.mdx)                    | subway station, bus stop, airport, train station         | A transit facility, named or unnamed                               |
 
 ## Why POI queries break the parser
 
@@ -42,7 +42,7 @@ The right behavior for a POI query is:
 
 The category branch — detect, extract, resolve — is built:
 
-- **Detection + extraction.** The kind classifier matches category phrases against the [`@mailwoman/poi-taxonomy`](https://www.npmjs.com/package/@mailwoman/poi-taxonomy) lexicon (23 categories in the current seed, with locale-gated synonyms), then splits the anchor off and parses it through the normal address pipeline.
+- **Detection + extraction.** The kind classifier matches category phrases against the [`@mailwoman/poi-taxonomy`](https://www.npmjs.com/package/@mailwoman/poi-taxonomy) lexicon (23 categories in the current seed, with locale-hintd synonyms), then splits the anchor off and parses it through the normal address pipeline.
 - **`poi.db`.** A sealed, readonly spatial layer built from Overture Places (CDLA-Permissive-2.0) at confidence ≥ 0.85, covering the US, Canada, Mexico, and France — the locales Mailwoman already trains against. Build it yourself with `mailwoman gazetteer build poi`.
 - **The CLI.** `mailwoman poi "coffee near Honolulu" --db poi.db` returns distance-ranked results — a live run against a built database returned 20 results, nearest 1,265 m away.
 - **`@mailwoman/mcp`.** An MCP server (`mailwoman-mcp`) exposing five stdio tools to agents: `mailwoman_parse`, `mailwoman_geocode`, `mailwoman_poi_search`, `mailwoman_overpass_export`, `mailwoman_layer_manifest`. This is the intended consumer for most POI queries: an agent calling tools, with the planning left to the agent.

@@ -118,7 +118,7 @@ md5sum neural-weights-en-us/model.onnx   # MUST equal your Step-1 int8 md5 (a st
 # Stage (HF_TOKEN from .env; hf CLI authed as the org). Uploads to en-us/v<target>/ (additive, safe).
 # The list below MUST cover every artifact publish.yml's preflight checks (model, tokenizer, all three
 # postcodes, both pair-indexes, all three FSTs) or the real run stops at the preflight:
-HF_TOKEN=$(grep -E '^HF_TOKEN=' .env | cut -d= -f2-) \
+HF_TOKEN=$(grep -E '^HF_TOKEN=' .env | sed 's/^[^=]*=//') \
 node packages/mailwoman/out/cli.js release hf v<target> \
   --locale en-us \
   --model neural-weights-en-us/model.onnx \

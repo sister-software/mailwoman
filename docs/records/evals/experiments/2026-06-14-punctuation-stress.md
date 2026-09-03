@@ -1,6 +1,6 @@
 # Punctuation-stress + paired-delimiter eval — the span proposer doesn't earn its revival (2026-06-14)
 
-_Closes the measurement half of #518. The question was narrow and gated: our eval surfaces (OA/NAD/golden)
+_Closes the measurement half of #518. The question was narrow and conditional: our eval surfaces (OA/NAD/golden)
 are government data, punctuation-poor by construction, so neither engine had ever been graded on the
 quadrant where real user input lives — quoted venue names, parenthetical annotations, `c/o` lines,
 unbalanced delimiters. #518 said: measure the class first, and only revive the abandoned Stage 2.7

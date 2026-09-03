@@ -163,7 +163,7 @@ describe("ExternalGeocoderClient.probeIdentity", () => {
 })
 
 describe("ExternalGeocoderClient pacing", () => {
-	it("spaces dispatches at the configured interval, which is the gate that actually holds a rate", async () => {
+	it("spaces dispatches at the configured interval, which is the check that actually holds a rate", async () => {
 		// Asserted rather than assumed: `requestsPerMinute` alone does NOT deliver N requests per minute (AGENTS.md
 		// records 100/min measured against a budget of 10), so the claim that this client is paced rests entirely on
 		// the interval limit being the one configured.

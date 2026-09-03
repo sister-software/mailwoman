@@ -41,13 +41,13 @@
 #   6. Training dynamics unchanged: LR 1.5e-4 constant, 1000-step warmup,
 #      100K total steps, v0.6.0-a0 tokenizer, bf16 precision.
 #
-# Early-eval gate at 20K steps: if dep_loc hallucinations > 100, abort
+# Early-eval check at 20K steps: if dep_loc hallucinations > 100, abort
 # (composition change has unwound the dep_loc fix). Also check that
 # house_number recall is on track ≥ 77% (the recovery we're testing).
 #
 # Promotion decision tree at 100K:
 #
-#   | Gate eval | harness pass | Action                       |
+#   | Check eval | harness pass | Action                       |
 #   | --------- | ------------ | ---------------------------- |
 #   | Pass      | ≥ 25%        | Promote to default (HF)      |
 #   | Pass      | 15-24%       | Ship as experimental         |

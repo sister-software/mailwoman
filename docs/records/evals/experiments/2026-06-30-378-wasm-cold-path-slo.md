@@ -54,13 +54,13 @@ SQLite path.
 **Per-keystroke is the opposite** — transfer is done, so it's WASM inference (estimated in-budget) + the
 candidate SQLite probe (unmeasured, suspected bottleneck). This is exactly where the **#372 flatbush
 pre-filter** would help — pruning candidates by bbox before the name search. Per the diagnostic-before-fix
-discipline, #372 should be gated on the per-keystroke trace below, not built ahead of it.
+discipline, #372 should be blocked on the per-keystroke trace below, not built ahead of it.
 
 ## Open — the empirical trace
 
 These numbers bound the cold path from sizes + a compute floor, but the in-browser **P95 on a real device**
-(the SLO's actual gate) needs a browser trace: cold-load waterfall (model/wasm/db fetch overlap), and a
+(the SLO's actual check) needs a browser trace: cold-load waterfall (model/wasm/db fetch overlap), and a
 per-keystroke breakdown (WASM inference vs the SQLite probe). That trace was blocked this shift — **no Chrome
 on the lab box** for the chrome-devtools profiler. Next step: run it against the live `/demo` from a machine
 with Chrome (or a throttled headless run), confirm the model-fetch-dominates-cold hypothesis, and measure the
-resolve-half per-keystroke cost that gates #372.
+resolve-half per-keystroke cost that checks #372.

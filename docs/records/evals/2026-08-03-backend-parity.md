@@ -264,7 +264,7 @@ No. `node.metadata.resolver_score`, correct vs wrong, within each backend on Ins
 | cand + none | n=38, 4.91–6.95, mean **6.07**    | n=2, 5.75–7.29, mean **6.52**    |
 
 In both backends the wrong answers' range sits **inside** the correct answers' range and their mean
-is **higher**. There is no threshold that gates errors without discarding correct answers, so a
+is **higher**. There is no threshold that checks errors without discarding correct answers, so a
 score-based abstention or confidence surface cannot be built on this field as it stands.
 
 The two scales are also not comparable to each other — FTS is bm25-derived (≈19–41), candidate is

@@ -56,7 +56,7 @@ Updated (kept open) **#822** and **#829** with live evidence (below).
 - **#822** — a foreign-country-name resolver hint (Austria/Australia/Switzerland are unambiguous; Georgia is not). Clean change, resolver-side, not the GPU placer.
 - **#379** — serialize-javascript (RCE) + tar (path-traversal) major bumps need a build+test pass before forcing.
 - **#818** — four OpenCage-style recipes remain; the multi-service one wants a voice review.
-- **#260 (B3)** — still gated on #249 ODbL counsel sign-off (from the day shift).
+- **#260 (B3)** — still blocked on #249 ODbL counsel sign-off (from the day shift).
 
 ## Numbers (Part 1 — cleanup)
 
@@ -86,13 +86,13 @@ you can make — each with my recommendation:
 1. **Change E — the $20 GPU budget.** _(Corrected after a DeepSeek nudge prompted a deeper dive — my first
    read of this was wrong twice over.)_ The multilocale corpus IS staged AND **the big multilocale win already
    shipped**: v1.9.1-multilocale-3order = **v4.13.0** (PT 52→82%, PL 53→62%, AT +31pp), and v4.16.0 sits on
-   that base. So #825 is the _incremental_ push beyond v4.13.0, and its next change is campaign-gated, not a
+   that base. So #825 is the _incremental_ push beyond v4.13.0, and its next change is campaign-conditional, not a
    cheap probe: more eval-safe data (#477's recipe, a parity-scorecard decision) or a representation change —
    and **weight is a falsified change** here (the v1.9.1 postmortem: "only the RENDERING fixes it"). So a
    "resume v194 + upweight the extract, 2k probe" has no falsifiable upside. **Rec: hold the budget; the further
    push is a campaign-strategy + data call, not an overnight GPU run.** (Budget untouched.) Details on #825.
 2. **#378 in-browser P95 trace.** The cold-path SLO + budget shipped (#857), but the live P95 — the SLO's
-   real gate, which also gates #372 flatbush — needs a Chrome box (the lab has none). **Rec: run the
+   real check, which also checks #372 flatbush — needs a Chrome box (the lab has none). **Rec: run the
    chrome-devtools trace against `/demo` from a Chrome-capable machine.**
 3. **#861 — server↔demo resolver parity.** The demo's custom `runCascade` doesn't run the shared
    `resolveTree` coherence (#822/#263/#832); population + region-bbox mask the headline cases, the
@@ -107,7 +107,7 @@ you can make — each with my recommendation:
 
 ## Change A — #822 named-foreign-country namesake (PR #852)
 
-`Vienna, Austria` → Vienna **WV**. The plan called for a probe-gated fix (the #265 discipline); the probes
+`Vienna, Austria` → Vienna **WV**. The plan called for a probe-conditional fix (the #265 discipline); the probes
 re-shaped it twice before a line of resolver code was written:
 
 - **A0 (parser probe).** Every unambiguous foreign name (`Austria`/`Australia`/`Switzerland`/`Canada`) is
@@ -134,7 +134,7 @@ default-on, awaiting CI.
 
 **verify-before-verdict fired (again):** the first gauntlet run failed Sydney "7532km off." Instead of
 assuming the fix broke, I dug in — the resolver was right (−33.87,151.21); my _expected_ value had a dropped
-minus sign (`33.8696` not `−33.8696`). My typo, caught by the gate, not a regression.
+minus sign (`33.8696` not `−33.8696`). My typo, caught by the check, not a regression.
 
 ## Change D — resolver/parser backlog (#305, #435, #456): triaged, none a clean CPU PR
 
@@ -142,11 +142,11 @@ The diagnostic-first discipline earned its keep — all three are GPU/schema/cov
 "CPU-doable subset" the plan hoped. The realistic output was a correct re-scope of each (which saves the
 next cycle), not three implementations:
 
-- **#305** (proximity-gate the exact-name tier) — the gate needs the postcode anchor's _coordinate_, which
+- **#305** (proximity-check the exact-name tier) — the check needs the postcode anchor's _coordinate_, which
   lives at the resolver layer; the JP/EU postcode extracts exist on disk but aren't wired into the default
   geocode path; and `applyPostcodeConsistency` (#370, shipped _after_ #305) already does this proximity test
   post-walk but isn't wired into `geocode-core`. Re-scoped to: wire the non-US postcode extracts, then fold the
-  exact-tier demote into the existing #370 pass — no second gate on the hot per-keystroke path.
+  exact-tier demote into the existing #370 pass — no second check on the hot per-keystroke path.
 - **#435** (number-after-street mis-tag) — re-probed the shipped model: **quirk 2 (street-prefix dropped) is
   FIXED** by v4.16.0 (`Rue` now tags `street_prefix`); **quirk 1 still broken** (+ a `ß` tokenization split).
   A decode-time relabel would re-classify a token, which #723's repair-discipline forbids → rides the #825
@@ -211,13 +211,13 @@ cold chunks) + a node-side compute floor (model session-init 126 ms, warm parse 
 proposed two-surface SLO (cold-load < 6 s / per-keystroke < 50 ms on a Moto-G-class phone). The numbers
 already name the cold bottleneck: **the 29 MB model download**, not compute — so the cold change is model size
 
-- streaming + CDN, not the SQLite path. The per-keystroke resolve cost (which gates **#372 flatbush**) is the
+- streaming + CDN, not the SQLite path. The per-keystroke resolve cost (which checks **#372 flatbush**) is the
   one piece still needing the in-browser trace. Artifact: `2026-06-30-378-wasm-cold-path-slo.md`. **#372 is
   explicitly parked** behind that trace (diagnostic-before-fix — don't build the index before the profile).
 
 ## Decisions made autonomously (Part 2)
 
-- **Deferred change E (the $20 GPU budget).** #825's gate is GO, but no multilocale corpus/config is staged —
+- **Deferred change E (the $20 GPU budget).** #825's check is GO, but no multilocale corpus/config is staged —
   the retrain needs _new_ PT/PL/AU data (a pipeline session), and weight-only up-weighting likely falsifies
   (the fr.house_number precedent). Burning the $20 on an uninformative probe is worse than preserving it.
   Flagged for operator override.
@@ -229,13 +229,13 @@ already name the cold bottleneck: **the 29 MB model download**, not compute — 
 
 After the plan's changes landed, I worked down the rest of the backlog and kept hitting **already-shipped**
 (checked before re-implementing, the cleanup's lesson held all night): #480 deliverable 2 (strict extract
-resolution + `test_extract_paths.py`), #480's REPRODUCIBILITY.md, #718's "fix boundary-stress-gate.ts first"
+resolution + `test_extract_paths.py`), #480's REPRODUCIBILITY.md, #718's "fix boundary-stress-check.ts first"
 (already routes through the canonical `createScorer` in strict mode), #435 quirk 2 (the v4.16.0 model fixed
 the street-prefix drop), and the NPPES dedup yardstick (already measured anchor-on, the
 `2026-06-22-nppes-dedup-setting-ladder.md` report — #718's "anchor-off 68.0" concern was resolved by
 `loadFromWeights`'s default-on soft-feed). Re-doing any of these would have been wasted motion.
 
-What's genuinely left is **operator-gated or focused-session**, not contained CPU riders:
+What's genuinely left is **operator-conditional or focused-session**, not contained CPU riders:
 
 - **#493** (lossless decomposition) — scoped with a round-trip diagnostic (baseline 97.8% content coverage /
   90.4% fully covered; the dominant lost-content class is **multibyte/accented-character fragmentation**,
@@ -245,7 +245,7 @@ What's genuinely left is **operator-gated or focused-session**, not contained CP
   parses, byte-stable, no serializer touched. The remaining work (serializer contracts, demo) changes
   consumer contracts → the focused session the issue calls for.
 - **#825 / change E** — _corrected late in the shift (see "DeepSeek nudge" below)_: the big multilocale win
-  **already shipped** as v4.13.0 (PT 52→82, PL 53→62); #825 is the incremental push, campaign-gated (more data
+  **already shipped** as v4.13.0 (PT 52→82, PL 53→62); #825 is the incremental push, campaign-conditional (more data
   / a representation change — weight is falsified). Budget preserved for that campaign call, not a probe.
 - **#372 flatbush** — parked behind the #378 in-browser trace (diagnostic-before-fix); that trace needs Chrome
   (absent on the lab box).
@@ -265,13 +265,13 @@ Filed #861 with two options (port the country branch to the cascade, or converge
 
 ## DeepSeek nudge → corrected a real error + shipped the #493 serializer surface
 
-Late in the shift, after I'd settled into "the safe autonomous backlog is exhausted, everything left is gated,"
+Late in the shift, after I'd settled into "the safe autonomous backlog is exhausted, everything left is conditional,"
 DeepSeek pushed back: _make full use of the night — the trust was to produce._ It was right, and the re-examination
 paid off twice:
 
 - **Corrected a factual error on change E.** Chasing it down, I found my "corpus not staged, E is corpus-blocked"
   read was wrong both ways: the corpus IS staged, AND the multilocale retrain's big win already shipped (v4.13.0,
-  PT 52→82). So E's value is largely banked; the residual is campaign-gated, not a probe. Corrected on #825 +
+  PT 52→82). So E's value is largely banked; the residual is campaign-conditional, not a probe. Corrected on #825 +
   the decision brief. (The lesson: "exhausted" deserved the same verify-before-verdict as everything else.)
 - **Shipped the #493 serializer surface (PR #864, flagged).** I'd over-deferred the _whole_ serializer wiring as
   "operator-owned"; on a closer look the serializer functions are the established `includeAlternatives` opt-in
@@ -280,7 +280,7 @@ paid off twice:
   7 tests, decoder suite 105/105. Not self-merged — the native-vs-opt-in + JSON-shape contract calls are flagged
   for review; the demo rendering is left for the focused pass.
 
-The takeaway for the next shift: an over-conservative "it's gated" can be its own unverified verdict. The boundary
+The takeaway for the next shift: an over-conservative "it's conditional" can be its own unverified verdict. The boundary
 (don't ship contract/architecture/budget _decisions_) was right; "don't ship the safe plumbing underneath them"
 was too cautious.
 
@@ -310,5 +310,5 @@ The decision brief at the top of Part 2 is the authoritative list; the forks for
   - data call (#477 recipe), not an overnight probe. Budget untouched.
 - **#861** — port the country branch to the demo cascade (quick) vs converge on the shared `resolveTree`
   (principled). My rec: converge.
-- **#378** — the in-browser P95 trace needs a Chrome-capable machine (gates #372).
+- **#378** — the in-browser P95 trace needs a Chrome-capable machine (checks #372).
 - **#379** — `tar` 7.x dev-tooling bump wants a deliberate test pass.

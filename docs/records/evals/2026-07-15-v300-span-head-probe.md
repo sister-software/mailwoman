@@ -2,9 +2,9 @@
 title: v3.0.0 span-head probe — INCONCLUSIVE (under-trained), not falsified
 ---
 
-# v3.0.0-span-head 2k probe — the head never trained; the gate does not adjudicate
+# v3.0.0-span-head 2k probe — the head never trained; the check does not adjudicate
 
-**Gate (config-canonical, quoted verbatim from `v3.0.0-span-head.yaml`):**
+**Check (config-canonical, quoted verbatim from `v3.0.0-span-head.yaml`):**
 
 > `seg@1 > token@1` on the parity corpus. Baselines (v264, ship config): street token@1 0.573; a
 > segment decode over the SUMMED-BIO stand-in scored 0.453.
@@ -12,7 +12,7 @@ title: v3.0.0 span-head probe — INCONCLUSIVE (under-trained), not falsified
 > If seg@1 < token@1: do NOT tune span_loss_weight and re-run — that is the treadmill. One
 > diagnostic (is the loss decreasing?), then fork to the operator.
 
-**Result: the gate reads FAIL, but it does not adjudicate the arc.** Per the pre-registered
+**Result: the check reads FAIL, but it does not adjudicate the arc.** Per the pre-registered
 diagnostic, this is **under-trained, not falsified** — and the honest call is the fork, which is why
 this doc exists rather than a relaunch.
 
@@ -77,7 +77,7 @@ postcodeRepair, no word-consistency heal** — the #718 channel-starvation trap.
 0.348 where the JS harness reads **0.573 on the same model**. The absolute numbers here are NOT
 comparable to `mailwoman eval parity --weights-cache`, and the script now prints that in its output.
 
-The _relative_ gate survives (both heads read the same starved encoder state), but any future
+The _relative_ check survives (both heads read the same starved encoder state), but any future
 Phase-1 re-run should either feed the channels or accept that only the comparison is meaningful.
 
 Two harness bugs were found and fixed getting here, both by refusing to accept a token@1 that
@@ -85,7 +85,7 @@ couldn't reproduce a known baseline:
 
 1. `from_pretrained()` never passed `map_location`, so a GPU-trained checkpoint **could not load on a
    CPU-only box at all**. This affects every local grading run, not just this one.
-2. The gate concatenated street-family _pieces_, dropping the `O`-labelled bare `▁` separator and
+2. The check concatenated street-family _pieces_, dropping the `O`-labelled bare `▁` separator and
    welding words (`▁5|th|▁|Ave` → `"5thAve"`). Now slices by char offsets. token@1 0.285 → 0.348.
 
 ## The fork (operator's call — the pre-registration says so)

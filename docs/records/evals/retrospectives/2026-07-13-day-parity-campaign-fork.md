@@ -2,14 +2,14 @@
 
 Day session (conn 06:50–15:00 UTC, operator on sponsorship work; standing grant for
 promote/merge/publish). Continues the night-1 postmortem. Three more one-variable runs (v254,
-v255 + the v253 gates), the gold triage, two codex deliverables, and the treadmill guard's first
+v255 + the v253 checks), the gold triage, two codex deliverables, and the treadmill guard's first
 firing of the campaign.
 
 ## The trade matrix (why iteration stopped)
 
-Gates: parity floors (hn/pc .97, street .90 — the SWAPS bar) on v1 AND triaged gold (33
+Checks: parity floors (hn/pc .97, street .90 — the SWAPS bar) on v1 AND triaged gold (33
 rules-idiosyncratic tombstones, proposal published as `2026-07-13-parity-gold-triage.md`;
-default gate remains v1 until operator ratifies); the pre-publish 2pp error-analysis gate (the
+default check remains v1 until operator ratifies); the pre-publish 2pp error-analysis check (the
 NPM-promote bar); the full gauntlet.
 
 | run               | one variable                        | parity triaged (hn/pc/street) | US recall delta (region/locality) | gauntlet                                   |
@@ -23,7 +23,7 @@ repairs US recall and re-breaks bare-locality — is a capacity/stability constr
 under the 5e-5/8k fine-tune idiom, not a extract-composition problem. Per the treadmill guard: no
 seventh solo run; the fork goes to the operator (documented on #1102):
 (a) dynamics probe (v255 composition, gentler LR/warmup, 2k steps), (b) ship v254 experimental
-(the only gauntlet-green candidate; default blocked by the 2pp gate), (c) the #727 span-head arc,
+(the only gauntlet-green candidate; default blocked by the 2pp check), (c) the #727 span-head arc,
 (d) hold for night-2.
 
 ## What the day banked besides the fork
@@ -72,7 +72,7 @@ was PARSE-level, and the v255 FAIL was a COORDINATE assertion. Rather than the #
 path or a destructive package swap, a `--weights-cache` path was added to the gauntlet (#9, commit
 e0ab8b32; mirrors `eval parity --weights-cache`, resolves the candidate package-shaped). v256
 graded through it (md5-confirmed the cache model loaded, not the shipped one) and **PASSED the
-regression layer 30/30 gated cases — including the Dublin bare-city coordinate pin** that broke
+regression layer 30/30 counted cases — including the Dublin bare-city coordinate pin** that broke
 v255. The schedule verdict is now confirmed at the coordinate level, not just the parse level.
 
 **Next (operator greenlight):** `v2.5.7-fragment-v5-gentle-full` staged and committed but NOT
@@ -84,7 +84,7 @@ without the oscillation. Held for greenlight because the probe result reframes t
 Operator greenlit the fork ("unblock those and move forward"); v257 trained (8k, gentle, 0 NaN,
 loss 0.75→0.70) and graded package-shaped. It is the campaign's **first stable candidate**:
 
-| gate                    | v257                           | vs shipped | vs v255 unstable peak |
+| check                   | v257                           | vs shipped | vs v255 unstable peak |
 | ----------------------- | ------------------------------ | ---------- | --------------------- |
 | parity street (triaged) | 0.5356                         | +0.139     | −0.060                |
 | parity house_number     | 0.7671                         | +0.066     | ~                     |
@@ -95,27 +95,27 @@ loss 0.75→0.70) and graded package-shaped. It is the campaign's **first stable
 
 v257 trades ~6pp of v255's unstable street peak for full gauntlet stability + preserved US recall —
 the schedule fix at 8k scale. It does **not** clear the SWAPS street floor (0.90), so the v7 swaps
-stay gated; the residual is the #727 boundary-absorption class (golden confused-tags confirm it:
+stay conditional; the residual is the #727 boundary-absorption class (golden confused-tags confirm it:
 "05770 VT DELONG LN" → street got "VT Delong"). **NOT promoted:** doesn't unblock v7, needs card
-regen, and the golden 2pp gate is schema-confounded (golden v0.1.2 uses the flat pre-split street
-schema — parity is the schema-correct gate). Promote-as-strict-improvement is a clean operator call.
+regen, and the golden 2pp check is schema-confounded (golden v0.1.2 uses the flat pre-split street
+schema — parity is the schema-correct check). Promote-as-strict-improvement is a clean operator call.
 Full grade: `models/candidates/v257-fragment-v5-gentle-full/MANIFEST.md`.
 
 ## Decisions under the standing grant
 
 Merged/pushed directly to main throughout (docs, tooling, codex tables, configs). Did NOT
-exercise the promote/publish grant: v253/v254 fail the 2pp default gate, v255 fails the gauntlet
+exercise the promote/publish grant: v253/v254 fail the 2pp default check, v255 fails the gauntlet
 — experimental-shipping a blocked-for-default artifact buys nothing the fork decision doesn't
 supersede. Treadmill compliance outranked grant flexing.
 
 ## Numbers
 
-|                   |                                                                                  |
-| ----------------- | -------------------------------------------------------------------------------- |
-| Session           | 06:50–15:00 UTC conn (hourly cron reports)                                       |
-| Runs              | 4 trained today (v254, v255, v256 probe + v253's gate battery); 7 total campaign |
-| Modal GPU         | ~+$18 today (~$53 campaign total); 0 NaN                                         |
-| Campaign street   | 0.3967 → **0.5955** peak (triaged; +20pp in ~30h)                                |
-| number→postcode   | 21.8% → under 1%                                                                 |
-| Promote state     | BLOCKED (2pp gate / gauntlet, per candidate — see matrix)                        |
-| v7 excision state | swaps still floor-gated; everything non-model staged and waiting                 |
+|                   |                                                                                   |
+| ----------------- | --------------------------------------------------------------------------------- |
+| Session           | 06:50–15:00 UTC conn (hourly cron reports)                                        |
+| Runs              | 4 trained today (v254, v255, v256 probe + v253's check battery); 7 total campaign |
+| Modal GPU         | ~+$18 today (~$53 campaign total); 0 NaN                                          |
+| Campaign street   | 0.3967 → **0.5955** peak (triaged; +20pp in ~30h)                                 |
+| number→postcode   | 21.8% → under 1%                                                                  |
+| Promote state     | BLOCKED (2pp check / gauntlet, per candidate — see matrix)                        |
+| v7 excision state | swaps still floor-conditional; everything non-model staged and waiting            |

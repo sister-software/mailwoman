@@ -16,7 +16,7 @@ Weimar DE **is not in the candidate list** — no reorder of the returned rows c
 change therefore injects contained same-key candidates (additive, never a filter — recall only
 widens) and partitions contained-first via one shared function at both deciding sites (backend
 pre-window and the walk's post-importance re-rank). It stands down entirely under an explicit
-caller country (#912 posture) and on artifacts without the ancestors sidecar (capability-gated;
+caller country (#912 posture) and on artifacts without the ancestors sidecar (capability-conditional;
 the pick's `metadata.admin_containment` reads `unavailable`).
 
 ## Evidence (ON vs OFF, one declared variable, house graders)

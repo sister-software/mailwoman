@@ -170,7 +170,7 @@ describe("robustness contract", () => {
 	})
 })
 
-describe("the normalizeToken seam", () => {
+describe("the normalizeToken boundary", () => {
 	it("the same normalizer on both sides makes cased queries meet folded entries", () => {
 		const fold = (token: string) => token.normalize("NFKC").toLowerCase()
 		const builder = new AncestrieBuilder({ normalizeToken: fold })

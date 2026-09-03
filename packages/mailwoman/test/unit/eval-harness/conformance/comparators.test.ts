@@ -241,7 +241,7 @@ describe("component_map", () => {
 })
 
 describe("mechanism_shape", () => {
-	it("holds on the same shapes in the same seam order", () => {
+	it("holds on the same shapes in the same boundary order", () => {
 		const reading = compareOutcomes(MECHANISM, outcome({}, ["retrieval_empty"]), outcome({}, ["retrieval_empty"]))
 
 		expect(reading.observed).toBe("equivalent")
@@ -259,7 +259,7 @@ describe("mechanism_shape", () => {
 		expect(reading.differences).toContain("only in variant: retrieval_empty, wrong_instance_detected")
 	})
 
-	it("diverges on the same shapes in a different seam order", () => {
+	it("diverges on the same shapes in a different boundary order", () => {
 		const reading = compareOutcomes(
 			MECHANISM,
 			outcome({}, ["retrieval_empty", "rank_flip"]),
@@ -267,7 +267,7 @@ describe("mechanism_shape", () => {
 		)
 
 		expect(reading.observed).toBe("diverges")
-		expect(reading.differences[0]).toContain("different seam order")
+		expect(reading.differences[0]).toContain("different boundary order")
 	})
 
 	it("reads two empty accounts as equivalent — an account that matched no shape is a reading", () => {
