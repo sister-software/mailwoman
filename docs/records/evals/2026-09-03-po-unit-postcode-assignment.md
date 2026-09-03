@@ -21,7 +21,7 @@ register.
 | Centroids          | `$MAILWOMAN_DATA_ROOT/wof/postalcode-gb-codepoint.db` (Code-Point Open), PO box + 0.05°                          | 43,069 (24,496 `PO`)                | OGL-UK-3.0                                                                                                |
 | Footprints         | OS Open Map – Local, tiles SU (md5 `8ca1f100…`) and SZ (md5 `8ac47c52…`), `Building` layer clipped to the PO box | 318,373 polygons                    | OGL-UK-3.0                                                                                                |
 
-The PO box is 50.5662–50.9745 N, 1.5863 W–0.5857 W. Centroids from neighbouring areas are included so
+The PO box is 50.5662–50.9745 N, 1.5863 W–0.5857 W. Centroids from neighboring areas are included so
 a boundary point is not forced into PO.
 
 ## Method
@@ -42,7 +42,7 @@ a boundary point is not forced into PO.
 | same-coordinate majority (control) | 369,626 of 531,266 | 69.57% | 0.00 pp  |
 
 Of the nearest-centroid misses, 159,445 (30.0%) are the wrong unit in the right outward district and
-2,195 (0.4%) the wrong outward district. 19,747 points (3.7%) sit within a metre of equidistant from
+2,195 (0.4%) the wrong outward district. 19,747 points (3.7%) sit within a meter of equidistant from
 two centroids. Distance to the assigned centroid: p50 32 m, p90 72 m, p99 278 m. 460,106 points
 (86.6%) fall inside a footprint; 144,164 buildings hold 397,900 points; 16,370 points sit in buildings
 whose vote tied. 1,272 points (0.24%) are farther than 500 m from every centroid.
