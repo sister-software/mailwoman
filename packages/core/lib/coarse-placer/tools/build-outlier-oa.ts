@@ -218,14 +218,14 @@ export async function buildOutlierOA(
 
 	await writeLocalTextFile(
 		testRows.map((r) => JSON.stringify(r)).join("\n") + "\n",
-		resolvePath(dataDir, "test-latin-offmap.jsonl")
+		resolvePath(dataDir, "test-latin-offmap-oa.jsonl")
 	)
 
 	report?.(`\nTRAIN countries: ${trainCC} · HELDOUT countries: ${heldCC}`)
 	report?.(`appended OTHER → train +${trainAppend.length}, val +${valAppend.length}`)
 
 	report?.(
-		`wrote test-latin-offmap.jsonl: ${testRows.length} (indist ${testRows.filter((r) => r.group === "indist").length} / heldout ${testRows.filter((r) => r.group === "heldout").length})`
+		`wrote test-latin-offmap-oa.jsonl: ${testRows.length} (indist ${testRows.filter((r) => r.group === "indist").length} / heldout ${testRows.filter((r) => r.group === "heldout").length})`
 	)
 
 	return {

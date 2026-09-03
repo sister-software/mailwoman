@@ -14,10 +14,9 @@
  */
 
 import { basename, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
-import { JSONSpliterator } from "spliterator"
 
 import { CoarsePlacer, isOffMapHandled } from "#coarse-placer/coarse-placer"
-import { defaultDataDir, defaultModelDir } from "#coarse-placer/tools/paths"
+import { defaultDataDir, defaultModelDir, readLatinOffmapRows } from "#coarse-placer/tools/paths"
 import { formatPercent } from "#utils"
 
 /**
@@ -45,7 +44,7 @@ export interface EvalLatinOffmapOptions {
 	 */
 	abstain?: number
 	/**
-	 * Dataset dir (`test-latin-offmap.jsonl`). Default `<repo>/data/coarse-placer`.
+	 * Dataset dir holding the Latin off-map test sets. Default `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 }
@@ -68,9 +67,7 @@ export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Pro
 
 	const placer = await CoarsePlacer.fromArtifactDir(resolvePath(modelDir), { abstainBelow: abstain })
 
-	const rows = await Array.fromAsync(
-		JSONSpliterator.fromAsync<OffMapRow>(resolvePath(dataDir, "test-latin-offmap.jsonl"))
-	)
+	const rows = await readLatinOffmapRows<OffMapRow>(dataDir)
 
 	const by: Record<string, { n: number; ok: number }> = {} // key → {n, ok}
 	const missTo: Record<string, number> = {} // wrong country → count
