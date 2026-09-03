@@ -4602,7 +4602,6 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
-    path-ts: "npm:^2.3.0"
   languageName: unknown
   linkType: soft
 
@@ -4619,10 +4618,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-weights-en-au@workspace:packages/neural-weights-en-au"
   dependencies:
-    "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
-    path-ts: "npm:^2.3.0"
   languageName: unknown
   linkType: soft
 
@@ -4653,7 +4650,6 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
-    path-ts: "npm:^2.3.0"
   languageName: unknown
   linkType: soft
 
@@ -4663,7 +4659,6 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
-    path-ts: "npm:^2.3.0"
   languageName: unknown
   linkType: soft
 
@@ -4683,7 +4678,6 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
-    path-ts: "npm:^2.3.0"
   languageName: unknown
   linkType: soft
 

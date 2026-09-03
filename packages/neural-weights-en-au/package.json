@@ -43,9 +43,7 @@
 		"@mailwoman/neural-weights-en-us": "workspace:*"
 	},
 	"devDependencies": {
-		"@mailwoman/core": "workspace:*",
-		"@mailwoman/resolver-wof-sqlite": "workspace:*",
-		"path-ts": "^2.3.0"
+		"@mailwoman/resolver-wof-sqlite": "workspace:*"
 	},
 	"mailwoman": {
 		"baseWeights": "@mailwoman/neural-weights-en-us"
