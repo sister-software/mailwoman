@@ -15,6 +15,8 @@
  *   What en-nz DOES own locally (`resolveFromPackageDir` resolves these from the overlay dir with no base fallback):
  *
  *   - `anchor-lexicon-v1.json` / `country-surface-lexicon-v1.json` — checked-in repo files.
+ *   - `street-type-lexicon-v*.json` / `locality-surface-lexicon-v*.json` — the evidence lexicons, by the generation
+ *       the card names under `requires.<channel>.lexicon`, the same pair the `files` array ships.
  *   - `pair-index-nz.bin` (NZ arc, #1277) — no committed source (derived from the LINZ-derived OpenAddresses NZ
  *       countrywide CSV, the same register `synth-nz-v2` was built from), built through the shared
  *       `buildPairIndexOverlay` (whose freshness guard compares the format, every calibrated magnitude, and the
@@ -47,6 +49,7 @@ await materializeDevOverlay({
 	locale: "en-nz",
 	model: { kind: "inherit" },
 	softFeed: [ANCHOR_LEXICON_LINK, COUNTRY_SURFACE_LEXICON_LINK],
+	evidenceLexiconsFromCard: true,
 	pairIndex: {
 		country: "nz",
 		delta: PAIR_INDEX_DELTA,
