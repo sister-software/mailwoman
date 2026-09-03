@@ -2,12 +2,21 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * Shared development tooling for weights overlays: the symlink primitives every overlay linker uses, and the
- * placetype-pair index build.
+ * Shared development tooling for weights overlays: the symlink primitives every overlay linker uses, the
+ * placetype-pair index build, and the manifest form ({@link materializeDevOverlay}) each locale's
+ * `scripts/link-dev-weights.ts` declares itself in.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readLocalTextFile, statPath, readLocalBuffer, statLink } from "@mailwoman/core/fs/readers"
+import { $public } from "@mailwoman/core/env"
+import {
+	pathExists,
+	readLocalJSONFile,
+	readLocalTextFile,
+	statPath,
+	readLocalBuffer,
+	statLink,
+} from "@mailwoman/core/fs/readers"
 import {
 	createSymbolicLink,
 	makeDirectories,
@@ -17,7 +26,7 @@ import {
 } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { workspacePath } from "@mailwoman/core/paths"
+import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { weightsOverlayPath } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
@@ -519,4 +528,301 @@ export async function buildPairIndexOverlay(overlay: PairIndexOverlay): Promise<
 	}
 
 	console.log(`built ${ARTIFACT}`)
+}
+
+// --- the manifest form ----------------------------------------------------------------------------------------------
+
+/**
+ * A soft-feed sibling an overlay links: where it comes from, the name it takes in the overlay, and the consequence line
+ * printed when the source is missing (the link is warn-and-continue; the channel resolves OFF).
+ */
+export interface SoftFeedLink {
+	source: string
+	name: string
+	consequenceIfMissing: string
+}
+
+/**
+ * The anchor lexicon every model-bearing overlay links — a committed repo file, the same source `release.config.json`'s
+ * `softFeed.gazetteerLexicon` names and `scripts/copy-weights.ts` copies at publish time.
+ */
+export const ANCHOR_LEXICON_LINK: SoftFeedLink = {
+	source: String(repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")),
+	name: "anchor-lexicon-v1.json",
+	consequenceIfMissing: "gazetteer channel will resolve OFF in this worktree.",
+}
+
+/**
+ * The country-surface lexicon, linked by every overlay whose country channel constrains the resolver; see
+ * {@link ANCHOR_LEXICON_LINK} for the provenance.
+ */
+export const COUNTRY_SURFACE_LEXICON_LINK: SoftFeedLink = {
+	source: String(repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")),
+	name: "country-surface-lexicon-v1.json",
+	consequenceIfMissing: "country channel will resolve OFF in this worktree.",
+}
+
+/**
+ * The slice of a weights package's committed `model-card.json` the dev materialization reads: the shipped digests the
+ * release re-verifies against the published tarball, and the channel requirements that name evidence lexicons.
+ */
+export interface WeightsCard {
+	files_md5?: Record<string, string>
+	requires?: Record<string, { lexicon?: string; span_mode?: string } | undefined>
+}
+
+/**
+ * What one locale's `scripts/link-dev-weights.ts` declares, so an overlay is a manifest plus a call rather than a
+ * script cloned from a sibling. Every step is optional and runs only when named, in a fixed order: model pair,
+ * soft-feed siblings, card-named evidence lexicons, postcode binary, pair index, FSTs.
+ */
+export interface DevOverlayManifest {
+	/**
+	 * The overlay's locale tag, lower-case. The workspace is `neural-weights-<locale>` and the artifacts land in
+	 * `$MAILWOMAN_DATA_ROOT/weights/<locale>/`, never in the tracked package: the binaries are not in git, so
+	 * materializing them there made a fresh worktree unable to geocode, made `yarn test` mutate a tracked directory, and
+	 * put a symlink into a publish tarball (`YN0035`).
+	 */
+	locale: string
+	/**
+	 * What happens to `model.onnx` + `tokenizer.model`. `link`: the pair is symlinked from the paths
+	 * `release.config.json`'s `weights` block names under the data root (`$MAILWOMAN_DEV_MODEL` /
+	 * `$MAILWOMAN_DEV_TOKENIZER` override them), and when `digestCard` names a workspace the linked default bytes must
+	 * match that workspace's card `files_md5` — the #397 drift guard, which fails loud instead of grading the wrong
+	 * model; an override skips the check and says so. `inherit`: the package declares `mailwoman.baseWeights`, so any
+	 * local pair is REMOVED — a stale local file shadows the base fallback and silently serves outdated bytes. Omitted:
+	 * the pair is left to `scripts/link-weights-overlay.ts`, the recipe writer.
+	 */
+	model?: { kind: "link"; digestCard?: string } | { kind: "inherit" }
+	/**
+	 * Soft-feed siblings linked warn-and-continue, in order.
+	 */
+	softFeed?: ReadonlyArray<SoftFeedLink>
+	/**
+	 * Link the evidence lexicons the overlay's own card names under `requires.<channel>.lexicon`, so the generation comes
+	 * from the card the loader reads and a card bump moves the artifact with it. `street-type-lexicon-v*.json` is
+	 * committed under `data/gazetteer/`; `locality-surface-lexicon-v*.json` is 7–13 MB and lives in the data root.
+	 */
+	evidenceLexiconsFromCard?: boolean
+	/**
+	 * Build `postcode-<country>.bin` from a WOF postcode extract through the compiled `gazetteer postcode-binary` CLI,
+	 * skipped when already present (it rebuilds in seconds, and the extract is versionless on disk).
+	 */
+	postcodeBinary?: { country: string; database: string }
+	/**
+	 * The placetype-pair index build, minus `packageDir`, which follows from `locale`.
+	 */
+	pairIndex?: Omit<PairIndexOverlay, "packageDir">
+	/**
+	 * Link `fst-<locale>.bin` with its freshness warning.
+	 */
+	localeFST?: boolean
+	/**
+	 * Link the shared street-morphology FST.
+	 */
+	streetMorphologyFST?: boolean
+}
+
+/**
+ * What a materialized overlay hands back for the locale-specific step a manifest cannot express (en-gb's
+ * card-conditional postcode binary is the one that exists).
+ */
+export interface DevOverlay {
+	destDir: string
+	cli: string
+	card: WeightsCard | undefined
+}
+
+/**
+ * Where each evidence channel's lexicon is found, by the name the card declares.
+ */
+const EVIDENCE_LEXICON_SOURCES: ReadonlyArray<{
+	channel: "street_type" | "locality_surface"
+	source: (name: string) => string
+}> = [
+	{ channel: "street_type", source: (name) => String(repoRootPath("data", "gazetteer", name)) },
+	{ channel: "locality_surface", source: (name) => String(dataRootPath("gazetteer", name)) },
+]
+
+/**
+ * Read a weights workspace's committed card, or `undefined` when the workspace carries none.
+ */
+async function readWeightsCard(workspace: string): Promise<WeightsCard | undefined> {
+	const path = resolvePath(String(workspacePath(workspace)), "model-card.json")
+
+	if (!(await pathExists(path))) return undefined
+
+	return readLocalJSONFile<WeightsCard>(path)
+}
+
+/**
+ * Link the base model pair from the release recipe and, when a digest card is named, hold the linked default bytes to
+ * that card's `files_md5`. The recipe and the card are the two registers a ship bumps in lockstep; a path bumped
+ * without the card, or the reverse, fails here rather than after an eval shift graded against the wrong weights.
+ */
+async function linkBaseModelPair(destDir: string, digestCard: string | undefined): Promise<void> {
+	const recipe = await readLocalJSONFile<{ weights: { model: string; tokenizer: string } }>(
+		repoRootPath("release.config.json")
+	)
+
+	const dataRoot = String(dataRootPath())
+	const digests = digestCard ? (await readWeightsCard(digestCard))?.files_md5 : undefined
+
+	const pair = [
+		{ label: "model", name: "model.onnx", override: $public.MAILWOMAN_DEV_MODEL, recipe: recipe.weights.model },
+		{
+			label: "tokenizer",
+			name: "tokenizer.model",
+			override: $public.MAILWOMAN_DEV_TOKENIZER,
+			recipe: recipe.weights.tokenizer,
+		},
+	]
+
+	for (const { label, name, override, recipe: recipePath } of pair) {
+		const source = override || resolvePath(dataRoot, recipePath)
+
+		if (!(await pathExists(source))) {
+			throw new Error(`missing source ${label}: ${source} — set MAILWOMAN_DEV_${label.toUpperCase()} to override`)
+		}
+
+		const dest = resolvePath(destDir, name)
+
+		await linkForce(source, dest)
+
+		console.log(`linked ${dest} ← ${source}`)
+
+		if (!digestCard) continue
+
+		if (override) {
+			console.error(`  (${label} override active — skipping the #397 default-digest check)`)
+
+			continue
+		}
+
+		const expected = digests?.[name]
+
+		if (!expected) {
+			throw new Error(
+				`#397 guard: ${digestCard}/model-card.json has no files_md5 entry for ${name} — cannot verify the dev pin.`
+			)
+		}
+
+		const actual = await md5File(dest)
+
+		if (actual !== expected) {
+			throw new Error(
+				`#397 guard: linked default ${label} md5 ${actual} != shipped ${expected} (${digestCard} model-card files_md5). ` +
+					`The dev link has drifted from the shipped default: bump release.config.json weights.${label} and the card's ` +
+					`files_md5 in lockstep.`
+			)
+		}
+
+		console.log(`  ${name} digest ok`)
+	}
+}
+
+/**
+ * Build a postcode binary from a WOF postcode extract, skip-if-present. A missing CLI or extract is a warning (the
+ * anchor channel resolves OFF for that country); a build that runs and fails is an error.
+ */
+async function buildPostcodeBinary(
+	destDir: string,
+	cli: string,
+	{ country, database }: { country: string; database: string }
+): Promise<void> {
+	const artifact = `postcode-${country.toLowerCase()}.bin`
+	const dest = resolvePath(destDir, artifact)
+
+	if (await pathExists(dest)) {
+		console.log(`skipped ${artifact} build — ${dest} already present`)
+
+		return
+	}
+
+	if (!(await pathExists(cli))) {
+		console.error(
+			`WARNING: ${cli} not built — run \`yarn compile\` first, then re-run this script to build ${artifact}.`
+		)
+
+		return
+	}
+
+	if (!(await pathExists(database))) {
+		console.error(
+			`WARNING: missing ${database} — ${artifact} not built; the anchor channel will resolve OFF for ${country.toUpperCase()}.`
+		)
+
+		return
+	}
+
+	const result = spawnProcessSync(
+		process.execPath,
+		[cli, "gazetteer", "postcode-binary", "--out", destDir, "--locale", `${country.toUpperCase()}:${database}`],
+		{ stdio: "inherit" }
+	)
+
+	if (result.status !== 0 || !(await pathExists(dest))) {
+		throw new Error(`failed to build ${dest} (exit ${result.status})`)
+	}
+
+	console.log(`built ${dest}`)
+}
+
+/**
+ * Materialize one locale's dev overlay from its manifest. The steps run in the order {@link DevOverlayManifest}
+ * documents, each independent on disk, and the result carries what a locale-specific step needs afterwards.
+ */
+export async function materializeDevOverlay(manifest: DevOverlayManifest): Promise<DevOverlay> {
+	const destDir = String(weightsOverlayPath(manifest.locale))
+	const cli = String(workspacePath("mailwoman", "out", "cli.js"))
+	const card = await readWeightsCard(`neural-weights-${manifest.locale}`)
+
+	await makeDirectories(destDir)
+
+	if (manifest.model?.kind === "inherit") {
+		await removeIfPresent(resolvePath(destDir, "model.onnx"))
+		await removeIfPresent(resolvePath(destDir, "tokenizer.model"))
+	} else if (manifest.model?.kind === "link") {
+		await linkBaseModelPair(destDir, manifest.model.digestCard)
+	}
+
+	for (const { source, name, consequenceIfMissing } of manifest.softFeed ?? []) {
+		await linkSoftFeedSibling(source, resolvePath(destDir, name), consequenceIfMissing)
+	}
+
+	if (manifest.evidenceLexiconsFromCard) {
+		for (const { channel, source } of EVIDENCE_LEXICON_SOURCES) {
+			const declared = card?.requires?.[channel]?.lexicon
+
+			if (!declared) {
+				console.error(`WARNING: model-card declares no requires.${channel}.lexicon — the ${channel} channel stays OFF.`)
+
+				continue
+			}
+
+			await linkSoftFeedSibling(
+				source(declared),
+				resolvePath(destDir, declared),
+				`the ${channel} channel will resolve OFF in this worktree.`
+			)
+		}
+	}
+
+	if (manifest.postcodeBinary) {
+		await buildPostcodeBinary(destDir, cli, manifest.postcodeBinary)
+	}
+
+	if (manifest.pairIndex) {
+		await buildPairIndexOverlay({ packageDir: `neural-weights-${manifest.locale}`, ...manifest.pairIndex })
+	}
+
+	if (manifest.localeFST) {
+		await linkLocaleFST(destDir, manifest.locale)
+	}
+
+	if (manifest.streetMorphologyFST) {
+		await linkStreetMorphologyFST(destDir)
+	}
+
+	return { destDir, cli, card }
 }
