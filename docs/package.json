@@ -25,6 +25,11 @@
 		"./components/ModelVisualizer/fixtures/white-house.trace.json": "./src/components/ModelVisualizer/fixtures/white-house.trace.json",
 		"./components/ModelVisualizer/helpers": "./src/components/ModelVisualizer/helpers.ts",
 		"./pages/demo/map-helpers": "./src/pages/demo/_map-helpers.ts",
+		"./plugins/demo-assets/artifacts": {
+			"node": "./plugins/demo-assets/artifacts.ts",
+			"default": "./plugins/demo-assets/artifacts.ts",
+			"types": "./plugins/demo-assets/artifacts.ts"
+		},
 		"./plugins/demo-assets/webpack-policy": {
 			"node": "./plugins/demo-assets/webpack-policy.ts",
 			"default": "./plugins/demo-assets/webpack-policy.ts",
