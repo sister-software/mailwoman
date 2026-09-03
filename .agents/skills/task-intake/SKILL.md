@@ -50,7 +50,7 @@ gh issue create --label enhancement --label resolver \
 
 ## Scope
 
-<locales and tiers affected; tested contracts changed; gate or board rows touched>
+<locales and tiers affected; tested contracts changed; promotion-eval or board rows touched>
 
 ## Tradeoff
 

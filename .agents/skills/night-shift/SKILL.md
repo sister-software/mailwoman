@@ -215,7 +215,7 @@ scorecard.
 When writing a scorecard or comparison table in `docs/records/evals/`:
 
 1. **Quote the config-canonical bar above the table.** Example:
-   `gate (config v1.0.0-consolidation.yaml): affix prefix ≥78, suffix ≥67, US street ≥80.4, …`
+   `promotion eval (config v1.0.0-consolidation.yaml): affix prefix ≥78, suffix ≥67, US street ≥80.4, …`
 2. **Don't drop rows that fail.** A row that fails the canonical bar is the
    most important row in the table; if it's "noisy" or "out of scope," say so
    in a footnote next to the row, don't remove it.

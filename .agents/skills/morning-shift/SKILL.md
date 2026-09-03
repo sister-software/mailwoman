@@ -73,7 +73,7 @@ shorthand:
 
 **Needs your eyes (priority order):**
 1. <merge wall: PR #XXX → #YYY in this order; #XXX un-reds main first>
-2. <decision deferred: e.g. promote v0.9.8-affix? — gate context here>
+2. <decision deferred: e.g. promote v0.9.8-affix? — promotion-eval context here>
 3. <regression / open NaN / open question>
 
 **What changed in production:**

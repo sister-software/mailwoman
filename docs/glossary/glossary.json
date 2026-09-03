@@ -420,7 +420,7 @@
 			"term": "country",
 			"definition": "The top-level address component (an ISO country). Closed-vocabulary, so it is best handled by a deterministic matcher feeding a proposal rather than a retrained model head.",
 			"tags": ["country"],
-			"relatedTerms": ["region", "component tag", "lever-shape taxonomy"]
+			"relatedTerms": ["region", "component tag", "change-shape taxonomy"]
 		},
 		{
 			"term": "country posterior",
@@ -604,7 +604,7 @@
 		},
 		{
 			"term": "ensemble",
-			"definition": "Combining several models' predictions to cut variance and improve robustness. A general ML technique, noted in the docs as a lever Mailwoman has not needed to pull.",
+			"definition": "Combining several models' predictions to cut variance and improve robustness. A general ML technique, noted in the docs as a technique Mailwoman has not needed.",
 			"tags": ["neural"],
 			"relatedTerms": ["neural classifier", "generalization"]
 		},
@@ -1156,7 +1156,7 @@
 			"relatedTerms": ["learning rate", "warmup"]
 		},
 		{
-			"term": "lever-shape taxonomy",
+			"term": "change-shape taxonomy",
 			"definition": "A classification of parity-gap fixes by mechanism: distributional tags (street_prefix, unit, locality) need synthetic extracts plus retraining; closed-vocab tags (country, po_box, cedex) respond better to deterministic matchers as proposal sources.",
 			"tags": ["training", "evals"],
 			"relatedTerms": ["parity campaign", "synthetic extract", "country"]
@@ -1526,7 +1526,7 @@
 			"term": "parity scorecard",
 			"definition": "The authoritative per-tag table tracking neural-vs-v0/Pelias F1 and resolver accuracy across head-to-head arenas. It answers 'where are we at parity, where do we still bleed?' and governs the parity campaign's priorities.",
 			"tags": ["evals"],
-			"relatedTerms": ["parity campaign", "arena", "lever-shape taxonomy"]
+			"relatedTerms": ["parity campaign", "arena", "change-shape taxonomy"]
 		},
 		{
 			"term": "Parquet",

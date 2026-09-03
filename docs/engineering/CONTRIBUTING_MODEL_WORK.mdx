@@ -1,7 +1,7 @@
 ---
 sidebar_position: 2
 title: Contributing model work — the runbook
-description: Which evals decide a change, the lever-shape taxonomy, and how to ship a corpus slice without breaking four locales.
+description: Which evals decide a change, the change-shape taxonomy, and how to ship a corpus slice without breaking four locales.
 ---
 
 # Contributing model work — the runbook
@@ -22,7 +22,7 @@ hands.
 2. **Never compare F1 across tokenizer versions.** Same tokenizer or the comparison is void
    (`per-locale-f1.ts --tokenizer` enforces this; the model card records the version).
 3. **Compare fp32-to-fp32.** Int8 is a release artifact, not an experiment lens.
-4. **One variable per run.** Prove a lever solo, then consolidate. Stacking corpus slices in one 20k run
+4. **One variable per run.** Prove one change solo, then consolidate. Stacking corpus slices in one 20k run
    dilutes every tag (measured, twice — see the cumulative-dilution note in the
    [parity scorecard](../evals/competitive-parity/parity-scorecard-2026-06-09.md)).
 5. **Recompile before eval.** Eval harnesses load compiled `core/out` — a stale build makes your
@@ -50,7 +50,7 @@ hands.
    `addressPointBboxFallback`, `diagnoseUnreachable` — read as a gap rather than as a style, and so
    the next mechanism parked behind a flag does not join them.
 
-## Which tool for which tag (the lever-shape taxonomy)
+## Which tool for which tag (the change-shape taxonomy)
 
 - **Open-vocab / distributional tags** (street, affixes, unit, locality): the model must learn the
   boundary from context → **format-diverse synth corpus slice + retrain** is the tool.
@@ -76,10 +76,10 @@ hands.
 **The base-consistency check (the #511 lesson — run it BEFORE weighting any corpus slice):** a coverage
 slice cannot outvote a contradicting base corpus. The affix slice spent four releases fighting
 ~467M base rows that labeled the same surfaces the other way (≥1,000:1 effective gradient mass);
-every weight/architecture lever failed because the equilibrium was the mixing ratio. Audit what
+every weight and architecture change failed because the equilibrium was the mixing ratio. Audit what
 the base corpus says about your tag's surfaces first (`scripts/eval/audit-affix-misses.ts` is the
 template — per-row miss classification + absorption check). If the base contradicts the slice,
-the lever is a relabel pass (make the mix agree), not a bigger weight. Corollary, measured on
+the fix is a relabel pass (make the mix agree), not a bigger weight. Corollary, measured on
 v4.3.0: relabeling one boundary loosens its neighbors — pre-register watches on the adjacent
 classes (#513).
 
@@ -308,7 +308,7 @@ is not a resume at all: it is a new process initialized from old weights, with t
 turned down ~50x. The three regimes — resume, extend, fine-tune — are distinct objects; naming
 which one you mean is half the recipe.
 
-## When your lever doesn't clear the bar
+## When your change doesn't clear the bar
 
 Tune-and-retry once, then stop and write the postmortem instead of a third run — the v0.6.x cycle
 is the cautionary retrospective. A negative result recorded in the ledger is a contribution; a

@@ -153,7 +153,7 @@ not run, say so — an unattributed regression count is not a finding.
   This rule shipped once already (commit aa6f149b2, the share figures) and recurred — in place, not in a
   footnote.
 - Define each project term at first use or link the doc that does. Name the corpus recipe file, config
-  key, or weight — the words the `AmbiguousShorthand` Vale rule refuses, and `lever`, are banned in reports.
+  key, or weight — the words the `AmbiguousShorthand` and `ProjectShorthand` Vale rules refuse are banned in reports.
 - Denominate spend: "$29 of the $40 Modal budget for this experiment", never a bare dollar figure.
 - State the next action and stop. No scheduling (`tomorrow`), no wind-down narration — the operator sets
   cadence, and completion is acceptance criteria, not elapsed turns.
