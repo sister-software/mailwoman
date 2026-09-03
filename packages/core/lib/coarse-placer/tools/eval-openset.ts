@@ -39,7 +39,7 @@ import { JSONSpliterator } from "spliterator"
 import { type CoarsePlacerMeta, readWeightsBin } from "#coarse-placer/coarse-placer"
 import { COARSE_CLASSES, featurize } from "#coarse-placer/featurize"
 import { logsumexp, softmaxInto } from "#coarse-placer/math"
-import { defaultDataDir, defaultModelDir } from "#coarse-placer/tools/paths"
+import { defaultDataDir, defaultModelDir, readLatinOffmapRows } from "#coarse-placer/tools/paths"
 import { readLocalJSONFile } from "#fs/readers"
 import { writeLocalFile } from "#fs/writers"
 
@@ -362,7 +362,7 @@ export async function evalOpenSet(
 	}
 
 	const inmapTest = (await load("test.jsonl")).filter((r) => r.country !== "OTHER") // the 11 countries only
-	const heldout = (await load("test-latin-offmap.jsonl")).filter((r) => r.group === "heldout")
+	const heldout = (await readLatinOffmapRows<DataRow>(dataDir)).filter((r) => r.group === "heldout")
 
 	const inmapScored = inmapTest.map((r) => scoreRow(r.raw, r.country))
 	const heldoutScored = heldout.map((r) => scoreRow(r.raw, undefined))
