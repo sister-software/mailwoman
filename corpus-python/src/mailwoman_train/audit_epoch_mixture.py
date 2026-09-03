@@ -36,9 +36,10 @@ import hashlib
 import json
 import random
 from collections import Counter
+from collections.abc import Iterator
 from itertools import islice
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from .augment import augment_row
 from .data_loader import _raw_row_stream, source_row_counts
@@ -52,7 +53,7 @@ _AUGMENT_KEYS = ("directional", "region", "glue", "case", "punct_drop", "upper_c
 class CorpusReceiptError(ValueError):
     """A failed receipt audit with its complete report attached for persistence."""
 
-    def __init__(self, message: str, report: dict):
+    def __init__(self, message: str, report: dict[str, Any]):
         super().__init__(message)
         self.report = report
 
@@ -117,7 +118,7 @@ def audit_mixture(
     coarse_filter: bool,
     augment: dict[str, float] | None = None,
     required_receipts: list[CorpusReceiptConfig] | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Run both passes over one epoch of ``draws`` rows and return the report dict."""
     augment = dict.fromkeys(_AUGMENT_KEYS, 0.0) | (augment or {})
     unknown = set(augment) - set(_AUGMENT_KEYS)
@@ -131,7 +132,7 @@ def audit_mixture(
         positive_total = sum(w for w in source_weights.values() if w > 0)
         requested = {src: w / positive_total for src, w in sorted(source_weights.items()) if w > 0}
 
-    def _stream(rng: random.Random):
+    def _stream(rng: random.Random) -> Iterator[dict[str, Any]]:
         return _raw_row_stream(
             Path(corpus_dir),
             "train",
@@ -143,9 +144,9 @@ def audit_mixture(
 
     # Pass 1 — draw level, straight off the sampler.
     n_windows = (draws + window - 1) // window
-    window_counts: list[Counter] = [Counter() for _ in range(n_windows)]
-    draw_countries: Counter = Counter()
-    receipt_counts: Counter = Counter()
+    window_counts: list[Counter[str]] = [Counter() for _ in range(n_windows)]
+    draw_countries: Counter[str] = Counter()
+    receipt_counts: Counter[str] = Counter()
     for i, row in enumerate(islice(_stream(random.Random(seed)), draws)):
         window_counts[i // window][row["source"]] += 1
         draw_countries[row["country"]] += 1
@@ -162,7 +163,7 @@ def audit_mixture(
     # smallest number in the config — by someone reading 1.0 as a small dose.
     rows_by_source = source_row_counts(Path(corpus_dir), "train")
 
-    draw_per_source: dict[str, dict] = {}
+    draw_per_source: dict[str, dict[str, Any]] = {}
     for src in sorted(set(draw_totals) | set(requested)):
         req = requested.get(src)
         share = draw_totals.get(src, 0) / total_draws if total_draws else 0.0
@@ -180,7 +181,7 @@ def audit_mixture(
             "reps_per_row": (draws_for_src / rows) if rows else None,
         }
 
-    receipts = [
+    receipts: list[dict[str, Any]] = [
         {
             "name": receipt.name,
             "required_draws": receipt.min_draws,
@@ -197,8 +198,8 @@ def audit_mixture(
     # counting what fills the trainer's row_limit budget.
     rng2 = random.Random(seed)
     do_augment = any(p > 0 for p in augment.values())
-    emitted_totals: Counter = Counter()
-    emitted_countries: Counter = Counter()
+    emitted_totals: Counter[str] = Counter()
+    emitted_countries: Counter[str] = Counter()
     augmented_rows = 0
     emitted = 0
     for row in _stream(rng2):
@@ -231,7 +232,7 @@ def audit_mixture(
             emitted += 1
 
     total_emitted = sum(emitted_totals.values())
-    emitted_per_source: dict[str, dict] = {}
+    emitted_per_source: dict[str, dict[str, Any]] = {}
     for src in sorted(set(emitted_totals) | set(requested)):
         e_share = emitted_totals.get(src, 0) / total_emitted if total_emitted else 0.0
         d_share = draw_per_source.get(src, {}).get("draw_share", 0.0)
@@ -241,7 +242,7 @@ def audit_mixture(
             "distortion_vs_draw_share": (e_share / d_share) if d_share else None,
         }
 
-    report = {
+    report: dict[str, Any] = {
         "requested": requested,
         "draw_level": {
             "totals": dict(draw_totals),
@@ -302,7 +303,7 @@ def _contains_contiguous(sequence: list[str], expected: list[str]) -> bool:
     return any(sequence[start : start + width] == expected for start in range(len(sequence) - width + 1))
 
 
-def _matches_receipt(row: dict, receipt: CorpusReceiptConfig) -> bool:
+def _matches_receipt(row: dict[str, Any], receipt: CorpusReceiptConfig) -> bool:
     if receipt.source is not None and row.get("source") != receipt.source:
         return False
     if receipt.country is not None and row.get("country") != receipt.country:
@@ -318,7 +319,7 @@ def run(
     window: int = 100_000,
     epoch: int = 1,
     draws: int | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Audit one epoch exactly as the trainer would sample it for ``epoch``.
 
     Seed follows the train loop's convention (``cfg.train.seed + epoch``); the epoch length
@@ -376,7 +377,7 @@ def run(
 _DOSE_OUTLIER_MULTIPLE = 8.0
 
 
-def _print_summary(report: dict) -> None:
+def _print_summary(report: dict[str, Any]) -> None:
     per_source = report["draw_level"]["per_source"]
 
     print(f"\n=== epoch mixture audit ({report['meta']['draws_realized']:,} draws) ===")
