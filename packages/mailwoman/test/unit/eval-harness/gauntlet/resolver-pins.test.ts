@@ -26,6 +26,11 @@ describe("resolverPinDeps — the pin set → geocodeAddress deps", () => {
 		expect(resolverPinDeps({ postcodeCountryCoherence: false })).toEqual({ postcodeCountryCoherence: false })
 	})
 
+	it("carries the venue-tier pin, ON and OFF, so the routed board can grade #1684's POI half", () => {
+		expect(resolverPinDeps({ poiVenueTier: true })).toEqual({ poiVenueTier: true })
+		expect(resolverPinDeps({ poiVenueTier: false })).toEqual({ poiVenueTier: false })
+	})
+
 	it("emits NOTHING for an absent pin set — production defaults stay in force", () => {
 		expect(resolverPinDeps(undefined)).toEqual({})
 		expect(resolverPinDeps({})).toEqual({})

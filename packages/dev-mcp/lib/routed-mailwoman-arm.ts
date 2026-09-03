@@ -31,6 +31,7 @@ const SUPPORTED_CONFIG_KEYS = new Set<keyof EngineConfig>([
 	"admin_containment_rerank",
 	"capital_tier",
 	"variant_alias_exemption",
+	"poi_venue_tier",
 ])
 
 export interface RoutedArtifactProvenance {
@@ -196,6 +197,7 @@ export async function buildRoutedMailwomanArm(
 				...(config.variant_alias_exemption === undefined
 					? {}
 					: { variantAliasExemption: config.variant_alias_exemption }),
+				...(config.poi_venue_tier === undefined ? {} : { poiVenueTier: config.poi_venue_tier }),
 			},
 		})
 	)
