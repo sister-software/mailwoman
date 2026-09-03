@@ -52,6 +52,11 @@
 			"default": "./out/uprn/index.js",
 			"types": "./out/uprn/index.d.ts"
 		},
+		"#nsul": {
+			"node": "./lib/nsul/index.ts",
+			"default": "./out/nsul/index.js",
+			"types": "./out/nsul/index.d.ts"
+		},
 		"#poi": {
 			"node": "./lib/poi/index.ts",
 			"default": "./out/poi/index.js",
@@ -269,6 +274,11 @@
 			"node": "./lib/uprn/index.ts",
 			"default": "./out/uprn/index.js",
 			"types": "./out/uprn/index.d.ts"
+		},
+		"./nsul": {
+			"node": "./lib/nsul/index.ts",
+			"default": "./out/nsul/index.js",
+			"types": "./out/nsul/index.d.ts"
 		},
 		"./poi": {
 			"node": "./lib/poi/index.ts",
