@@ -134,15 +134,15 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/filer": "packages/filer",
 	// The flood layer reader is a hard dependency of `mailwoman`: `geocode-session` imports the
 	// authority-designation route on the presence of a `flood.db`, and `--help`'s command-module load reaches
-	// `gazetteer build flood`. Unpacked, npm would resolve a name that is not yet published at all.
+	// `gazetteer build flood`.
 	"@mailwoman/flood": "packages/flood",
 	// The soil layer reader is a declared dependency of `mailwoman`, so npm resolves it at INSTALL time whether or not any
-	// code path reaches it — and unpacked that is a name which is not yet published at all. Its runtime reach is narrower
+	// code path reaches it. Its runtime reach is narrower
 	// than flood's above: `gazetteer build soil` imports the SDK inside its task rather than at module scope, so only
 	// `geocode-session`'s dynamic route load reaches the package, and only where a `soil.db` is on disk.
 	"@mailwoman/soil": "packages/soil",
 	// The coastal layer reader is a declared dependency of `mailwoman` on the same terms as soil above: npm resolves it at
-	// INSTALL time whether or not any code path reaches it, and unpacked that is a name which is not yet published at all.
+	// INSTALL time whether or not any code path reaches it.
 	// `gazetteer build coastal` imports the SDK inside its task rather than at module scope, so only `geocode-session`'s
 	// dynamic route load reaches the package, and only where a `coastal-england.db` is on disk.
 	"@mailwoman/coastal": "packages/coastal",

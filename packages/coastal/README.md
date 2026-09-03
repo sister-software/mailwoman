@@ -347,7 +347,4 @@ OGL v3.0, with the published attribution string
 **condition**, not decoration. Both services report `<Fees>NONE</Fees>`; no registration and no key.
 `tier: shipped`.
 
-The workspace is held out of `.release-it.json` until `@mailwoman/coastal` gets its `bless-package`
-first publish — npm Trusted Publishing cannot perform a first publish from CI, and an unblessed name
-fails the whole release at this workspace with a bare `E404`. The absence is recorded by name in
-`SANCTIONED_RELEASE_ABSENCES`.
+The workspace publishes with every release from `.release-it.json`'s workspace list.

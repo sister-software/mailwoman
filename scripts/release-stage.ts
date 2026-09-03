@@ -38,23 +38,6 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 	"packages/neural-weights-base-latn": "parked shared base for #1177 — publish wiring deliberately not landed",
 	"packages/dev-mcp": "private maintainer MCP server — never publishes",
 	"packages/osm": "public but held out of the release — ODbL counsel sign-off pending (packages/osm/README.md)",
-	"packages/flood":
-		"new npm name — awaiting the bless-package first publish, which npm Trusted Publishing cannot do from CI " +
-		"(RELEASING.md, “Adding a NEW package”). Joining the list before that fails the whole release at this " +
-		"workspace with a bare E404.",
-	"packages/soil":
-		"new npm name — awaiting the bless-package first publish, for the same reason as @mailwoman/flood above. " +
-		"An unblessed name fails the whole release at this workspace with a bare E404.",
-	"packages/coastal":
-		"new npm name — awaiting the bless-package first publish, for the same reason as @mailwoman/flood above. " +
-		"An unblessed name fails the whole release at this workspace with a bare E404.",
-	"packages/sqlite":
-		"new npm name — awaiting the bless-package first publish, for the same reason as @mailwoman/flood above. " +
-		"An unblessed name fails the whole release at this workspace with a bare E404.",
-	"packages/zoning":
-		"new npm name — awaiting the bless-package first publish, for the same reason as @mailwoman/flood above. " +
-		"An unblessed name fails the whole release at this workspace with a bare E404. Its DATA is separately " +
-		"build-local: three published statements disagree about the Irish source's licence (packages/zoning/README.md).",
 }
 
 /**

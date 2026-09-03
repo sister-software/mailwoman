@@ -280,10 +280,8 @@ of conditions of use please see map viewer splash screen"), and that splash text
 instant-app configurations linked from the viewer page were read and neither is the zoning viewer's. That is
 the single fact that would move this layer from `build-local` to `shipped`.
 
-**And the npm hold is separate.** `@mailwoman/zoning` is a brand-new npm name awaiting its `bless-package`
-first publish, which Trusted Publishing cannot perform from CI — so the workspace is held out of
-`.release-it.json` with its reason recorded as data in `SANCTIONED_RELEASE_ABSENCES`
-(`scripts/release-stage.ts`). Resolving either hold does not resolve the other.
+The npm side holds nothing: `@mailwoman/zoning` publishes with every release from `.release-it.json`'s
+workspace list. The `build-local` tier is a statement about the DATA alone.
 
 ## The mapped-footprint question — what is settled, and what would change it
 

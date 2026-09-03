@@ -233,8 +233,5 @@ recorded in `flood_map_extent`:
 
 ## Publish posture
 
-`@mailwoman/flood` is a **brand-new npm name** and is deliberately absent from `.release-it.json`'s
-publish list, recorded as data in `SANCTIONED_RELEASE_ABSENCES`. npm Trusted Publishing cannot
-create a package that does not exist, so the name needs the `bless-package` first publish before it
-may enter the release list; joining it early fails the whole release at this workspace with a bare
-`E404`. See [`RELEASING.md`](../../RELEASING.md).
+`@mailwoman/flood` publishes with every release from `.release-it.json`'s workspace list. See
+[`RELEASING.md`](../../RELEASING.md).
