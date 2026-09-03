@@ -33,8 +33,8 @@
  *     `retainOvertureLeaves` when each mapped leaf remains independently meaningful.
  *   • Every other snapshot row becomes an identity Overture record (id = code, humanized label,
  *     hierarchy path retained, `basicLabel: null`, no `osmTag`, no `overtureCategories`).
- *   • Deterministic order: categories by id, synonyms by (phrase, categoryID) — `localeCompare`, the
- *     same tie-break discipline as `build-brands.ts`.
+ *   • Deterministic order: categories by id, synonyms by (phrase, categoryID) — code-point order, so two
+ *     machines with different ICU builds commit the same bytes.
  *
  *   Run: `node poi-taxonomy/scripts/generate-taxonomy.ts && npx oxfmt poi-taxonomy/data/taxonomy.json`
  *   (reads the committed CSV; the oxfmt pass is the repo law — committed JSON is oxfmt-clean, which raw
@@ -52,6 +52,7 @@ import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { sentenceCaseSnake } from "@mailwoman/core/strings/case"
+import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { resolvePath } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
@@ -161,10 +162,10 @@ export function buildTaxonomyTable(snapshot: OvertureSnapshotRow[], overlay: Cur
 			source: "overture",
 		}))
 
-	const categories = [...overlay.categories, ...snapshotRecords].toSorted((a, b) => a.id.localeCompare(b.id))
+	const categories = [...overlay.categories, ...snapshotRecords].toSorted((a, b) => compareByCodePoint(a.id, b.id))
 
 	const synonyms = [...overlay.synonyms].toSorted(
-		(a, b) => a.phrase.localeCompare(b.phrase) || a.categoryID.localeCompare(b.categoryID)
+		(a, b) => compareByCodePoint(a.phrase, b.phrase) || compareByCodePoint(a.categoryID, b.categoryID)
 	)
 
 	return { version: TAXONOMY_VERSION, overtureRelease: OVERTURE_RELEASE, categories, synonyms }
