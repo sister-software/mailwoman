@@ -265,7 +265,7 @@ None of these are Phase 0–3 scope. Filed for Phase 4 territory or beyond. spaC
 
 ### Frameworks + tooling stance — what we use, what we don't, what we steal
 
-**Use**: HuggingFace Transformers + PyTorch for training (Python-only, single-shot, output is the ONNX file). `onnxruntime-node` for inference (TypeScript / Node, the user-facing path). SentencePiece for tokenization on both sides. `@dsnp/parquetjs` (patched — see `.yarn/patches/` in the repo) for corpus output. That's the production stack — anything not on this list is either dead weight or duplicative.
+**Use**: HuggingFace Transformers + PyTorch for training (Python-only, single-shot, output is the ONNX file). `onnxruntime-node` for inference (TypeScript / Node, the user-facing path). SentencePiece for tokenization on both sides. `parquet-wasm` with Apache Arrow for corpus Parquet output. That's the production stack — anything not on this list is either dead weight or duplicative.
 
 **Don't use**: spaCy as a dependency, either runtime or training. Reasons:
 

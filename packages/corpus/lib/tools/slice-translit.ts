@@ -35,18 +35,9 @@ import { sha256File } from "@mailwoman/core/hash"
 import { join } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
-import { ParquetWriter } from "#parquet-wrapper/index"
 import type { CanonicalRow, LabeledRow } from "#types"
-import {
-	alignRow,
-	appendShape,
-	LABELED_ROW_SCHEMA,
-	PARQUET_COLUMNS,
-	ROW_GROUP_SIZE,
-	rowToParquet,
-	SLICE_COMPRESSION,
-} from "#utils"
-import type { ParquetRow, SliceDescriptor, SliceManifest } from "#utils"
+import { alignRow, PARQUET_COLUMNS, ROW_GROUP_SIZE, rowToParquet, SLICE_COMPRESSION, writeParquetRows } from "#utils"
+import type { SliceDescriptor, SliceManifest } from "#utils"
 
 export interface SliceTranslitOptions {
 	jsonl: string
@@ -87,35 +78,19 @@ function toCanonicalRow(raw: Record<string, unknown>, corpusVersion: string): Ca
  * Write one slice for a single source slug. Returns the populated SliceDescriptor + a list of quarantine reasons for
  * rows that failed alignment.
  */
-async function writeOneSlice(
-	rows: readonly LabeledRow[],
-	outPath: string,
-	source: string,
-	corpusVersion: string
-): Promise<SliceDescriptor> {
+async function writeOneSlice(rows: readonly LabeledRow[], outPath: string, source: string): Promise<SliceDescriptor> {
 	let firstSourceID = ""
 	let lastSourceID = ""
 
-	{
-		await using writer = await ParquetWriter.openFile<ParquetRow>(LABELED_ROW_SCHEMA, outPath, {
-			rowGroupSize: ROW_GROUP_SIZE,
-		})
-
-		writer.setMetadata("mailwoman.corpus_version", corpusVersion)
-		writer.setMetadata("mailwoman.split", "train")
-		writer.setMetadata("mailwoman.slice_source", source)
-
-		for (const row of rows) {
-			const pq = rowToParquet(row)
-			await writer.appendRow(appendShape(pq))
-
-			if (firstSourceID === "") {
-				firstSourceID = row.source_id
-			}
-
-			lastSourceID = row.source_id
+	for (const row of rows) {
+		if (firstSourceID === "") {
+			firstSourceID = row.source_id
 		}
+
+		lastSourceID = row.source_id
 	}
+
+	await writeParquetRows(rows.map(rowToParquet), outPath)
 
 	const fileStat = await tryStat(outPath)
 	const sha256 = await sha256File(outPath)
@@ -192,7 +167,7 @@ export async function buildTranslitSlice(
 		const rows = buckets.get(source)!
 		const slug = source.startsWith("deepseek-translit-") ? source.slice("deepseek-translit-".length) : source
 		const outPath = join(trainDir, `part-translit-${slug}.parquet`)
-		const descriptor = await writeOneSlice(rows, outPath, source, corpusVersion)
+		const descriptor = await writeOneSlice(rows, outPath, source)
 		newSlices.push(descriptor)
 		report?.(`  ${source}: ${descriptor.rows} rows → ${outPath} (${descriptor.bytes} bytes)`)
 	}

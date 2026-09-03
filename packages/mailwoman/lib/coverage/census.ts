@@ -40,6 +40,7 @@ import {
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { streamParquetRows } from "@mailwoman/corpus/utils/parquet"
 import { allRows } from "@mailwoman/core/utils"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -183,6 +184,27 @@ export function normalizeArrowListColumn(value: unknown, column: string): string
 
 const STREET_LABEL = /(^|-)street($|_)|house_number/
 
+async function* streamCorpusCensusRows(path: string): AsyncGenerator<Record<string, unknown>> {
+	let sawFirst = false
+	let projectedLabels = true
+
+	for await (const record of streamParquetRows<Record<string, unknown>>(path, ["country", "labels"])) {
+		if (!sawFirst) {
+			sawFirst = true
+			if (record["labels"] === undefined) {
+				projectedLabels = false
+				break
+			}
+		}
+
+		yield record
+	}
+
+	if (!projectedLabels) {
+		for await (const record of streamParquetRows<Record<string, unknown>>(path)) yield record
+	}
+}
+
 /**
  * Count every train row in the corpus, per country, and how many carry a street span.
  *
@@ -190,10 +212,6 @@ const STREET_LABEL = /(^|-)street($|_)|house_number/
  * reports their countries as the corpus's. Column projection keeps the full read affordable.
  */
 export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCensus> {
-	const { ParquetReader } = (await import("@mailwoman/corpus/parquet-wrapper")) as {
-		ParquetReader: { openFile(path: string): Promise<ParquetLike> }
-	}
-
 	const manifest = await readLocalJSONFile<{
 		corpus_version?: string
 		databases?: Array<{ split?: string; path?: string }>
@@ -208,16 +226,20 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 	let total = 0
 
 	for (const path of databases) {
-		for await (const record of readDatabaseRecords(path, (databasePath) => ParquetReader.openFile(databasePath))) {
-			total++
+		try {
+			for await (const record of streamCorpusCensusRows(path)) {
+				total++
 
-			const country = String(record["country"] ?? "").toUpperCase() || "??"
+				const country = String(record["country"] ?? "").toUpperCase() || "??"
 
-			rows[country] = (rows[country] ?? 0) + 1
+				rows[country] = (rows[country] ?? 0) + 1
 
-			if (normalizeArrowListColumn(record["labels"], "labels").some((label) => STREET_LABEL.test(String(label)))) {
-				streetRows[country] = (streetRows[country] ?? 0) + 1
+				if (normalizeArrowListColumn(record["labels"], "labels").some((label) => STREET_LABEL.test(String(label)))) {
+					streetRows[country] = (streetRows[country] ?? 0) + 1
+				}
 			}
+		} catch {
+			continue
 		}
 	}
 
@@ -228,56 +250,6 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 		total,
 		rows,
 		streetRows,
-	}
-}
-
-interface ParquetLike extends AsyncDisposable {
-	getCursor(columns?: string[]): { next(): Promise<Record<string, unknown> | null> }
-}
-
-/**
- * Every record of one database, or nothing at all when the file will not open.
- *
- * Column projection is what makes a full read affordable, and on SOME databases it silently drops `labels` rather than
- * erroring: the overlay family written by one writer era returns `{country}` alone for `getCursor(["country",
- * "labels"])`, while the base returns both. A dropped label column reads as "this country has no street rows", which is
- * indistinguishable from the truth and is exactly the mistake this file exists to prevent — it reported 4 countries
- * with street data where an unprojected read finds GB alone at 1,519 of 2,000 rows. So the first record decides: when
- * it arrives without `labels`, the database is read again with no projection at all.
- */
-async function* readDatabaseRecords(
-	path: string,
-	open: (path: string) => Promise<ParquetLike>
-): AsyncGenerator<Record<string, unknown>> {
-	let opened: ParquetLike
-
-	try {
-		opened = await open(path)
-	} catch {
-		return
-	}
-
-	{
-		await using projected = opened
-		const cursor = projected.getCursor(["country", "labels"])
-		let record = await cursor.next()
-
-		if (!record || record["labels"] !== undefined) {
-			while (record) {
-				yield record
-
-				record = await cursor.next()
-			}
-
-			return
-		}
-	}
-
-	await using whole = await open(path)
-	const cursor = whole.getCursor()
-
-	for (let record = await cursor.next(); record; record = await cursor.next()) {
-		yield record
 	}
 }
 

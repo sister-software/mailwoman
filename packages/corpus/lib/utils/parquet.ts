@@ -10,10 +10,8 @@
  *   writer. The build pipeline no longer touches Python at all in its hot path; the only remaining
  *   Python is the one-shot `train_tokenizer.py` SentencePiece step.
  *
- *   Compression: `SNAPPY`. The plan in #18 §4 specified `zstd`, but `@dsnp/parquetjs` 1.7.0 only
- *   supports UNCOMPRESSED / GZIP / SNAPPY / BROTLI (see `node_modules/@dsnp/parquetjs/dist/lib/
- *   compression.js`). SNAPPY is the standard ML-corpus default (PyArrow's default too) and is the
- *   closest substitute on speed; revisit if @dsnp/parquetjs gains zstd support. Documented in
+ *   Compression: `SNAPPY`. The plan in #18 §4 specified `zstd`; parquet-wasm supports SNAPPY,
+ *   which is the standard ML-corpus default (and PyArrow's default). Documented in
  *   `DECISIONS.md`.
  *
  *   Layout under `<outputDir>`:
@@ -31,23 +29,27 @@
  *     part-0000.parquet
  * ```
  *
- *   Each slice caps at `rowsPerSlice` (default 1_000_000); within a slice, parquetjs flushes row
+ *   Each slice caps at `rowsPerSlice` (default 1_000_000); within a slice, DuckDB writes row
  *   groups every `ROW_GROUP_SIZE` (50_000) rows per the issue spec. The MANIFEST captures every
  *   slice's path, row count, byte size, and SHA-256 (computed by re-reading the slice once after
  *   close — cheap relative to writing it).
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers"
-import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalBuffer, writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
+import { once } from "@mailwoman/core/utils/events"
+import { Field, Int32, List, Table as ArrowTable, tableToIPC, Utf8, vectorFromArray } from "apache-arrow"
+import { Compression, Table as WasmTable, WriterPropertiesBuilder, writeParquet } from "parquet-wasm"
 import { join, type PathBuilderLike } from "path-ts"
 
-import { ParquetWriter, type ParquetSchemaDefinition } from "#parquet-wrapper"
 import type { LabeledRow } from "#types"
 import type { SplitName } from "#utils/split"
 
 /**
- * Row groups flush at this many rows (parquetjs internal cadence within a slice).
+ * Row groups are written at this cadence within a slice.
  */
 export const ROW_GROUP_SIZE = 50_000
 
@@ -76,17 +78,24 @@ export async function connectDuckDB(): Promise<import("@duckdb/node-api").DuckDB
 }
 
 /**
- * Snappy is the only zstd-equivalent codec available in @dsnp/parquetjs 1.7.0.
+ * Snappy is the codec selected for corpus slices.
  */
 export const SLICE_COMPRESSION = "SNAPPY" as const
 
+export interface ParquetFieldDefinition {
+	// oxlint-disable-next-line unicorn/text-encoding-identifier-case -- Parquet logical type name.
+	type: "UTF8" | "INT32"
+	compression: typeof SLICE_COMPRESSION
+	repeated?: boolean
+	optional?: boolean
+}
+
+export type ParquetSchemaDefinition<T> = Record<Extract<keyof T, string>, ParquetFieldDefinition>
+
 /**
- * A single Parquet-style row shape. The `[key: string]: unknown` index signature is required for compatibility with
- * `ParquetRecordLike` in the wrapper — parquetjs accepts any string key on rows.
+ * A single Parquet row shape. The index signature allows callers to carry source fields before projection.
  *
- * The three columns the schema marks `optional: true` are optional here too: `appendRow` receives the row with them
- * OMITTED rather than null (see {@link appendShape}), and a reader gets back whichever of null/absent parquetjs
- * surfaces.
+ * Optional fields are represented as null in the Arrow table and read back as null.
  */
 export interface ParquetRow {
 	raw: string
@@ -152,6 +161,201 @@ export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 	license: { type: "UTF8", compression: SLICE_COMPRESSION },
 	synth_method: { type: "UTF8", compression: SLICE_COMPRESSION, optional: true },
 	synth_base_id: { type: "UTF8", compression: SLICE_COMPRESSION, optional: true },
+}
+
+const stringListType = new List(new Field("item", new Utf8(), true))
+const int32ListType = new List(new Field("item", new Int32(), true))
+
+const PARQUET_COLUMN_TYPES: Record<(typeof PARQUET_COLUMNS)[number], string> = {
+	raw: "VARCHAR",
+	tokens: "VARCHAR[]",
+	labels: "VARCHAR[]",
+	span_starts: "INTEGER[]",
+	span_ends: "INTEGER[]",
+	span_tags: "VARCHAR[]",
+	country: "VARCHAR",
+	locale: "VARCHAR",
+	source: "VARCHAR",
+	source_id: "VARCHAR",
+	corpus_version: "VARCHAR",
+	license: "VARCHAR",
+	synth_method: "VARCHAR",
+	synth_base_id: "VARCHAR",
+}
+
+function parquetTable(rows: readonly ParquetRow[]) {
+	return new ArrowTable({
+		raw: vectorFromArray(
+			rows.map((row) => row.raw),
+			new Utf8()
+		),
+		tokens: vectorFromArray(
+			rows.map((row) => row.tokens),
+			stringListType
+		),
+		labels: vectorFromArray(
+			rows.map((row) => row.labels),
+			stringListType
+		),
+		span_starts: vectorFromArray(
+			rows.map((row) => row.span_starts),
+			int32ListType
+		),
+		span_ends: vectorFromArray(
+			rows.map((row) => row.span_ends),
+			int32ListType
+		),
+		span_tags: vectorFromArray(
+			rows.map((row) => row.span_tags),
+			stringListType
+		),
+		country: vectorFromArray(
+			rows.map((row) => row.country),
+			new Utf8()
+		),
+		locale: vectorFromArray(
+			rows.map((row) => row.locale ?? null),
+			new Utf8()
+		),
+		source: vectorFromArray(
+			rows.map((row) => row.source),
+			new Utf8()
+		),
+		source_id: vectorFromArray(
+			rows.map((row) => row.source_id),
+			new Utf8()
+		),
+		corpus_version: vectorFromArray(
+			rows.map((row) => row.corpus_version),
+			new Utf8()
+		),
+		license: vectorFromArray(
+			rows.map((row) => row.license),
+			new Utf8()
+		),
+		synth_method: vectorFromArray(
+			rows.map((row) => row.synth_method ?? null),
+			new Utf8()
+		),
+		synth_base_id: vectorFromArray(
+			rows.map((row) => row.synth_base_id ?? null),
+			new Utf8()
+		),
+	})
+}
+
+export async function writeParquetRows(rows: readonly ParquetRow[], path: string): Promise<void> {
+	const arrow = parquetTable(rows)
+	const wasmTable = WasmTable.fromIPCStream(tableToIPC(arrow, "stream"))
+
+	const properties = new WriterPropertiesBuilder()
+		.setCompression(Compression.SNAPPY)
+		.setCreatedBy("mailwoman")
+		.setMaxRowGroupSize(ROW_GROUP_SIZE)
+		.build()
+
+	// parquet-wasm serializes key-value metadata through a hash map, whose order is not stable between writes.
+	// Slice identity and provenance live in MANIFEST.json, so omitting file metadata preserves deterministic bytes.
+	await writeLocalBuffer(writeParquet(wasmTable, properties), path)
+}
+
+function normalizeDuckDBValue(value: unknown): unknown {
+	if (value && typeof value === "object" && "items" in value && Array.isArray(value.items)) {
+		return value.items.map(normalizeDuckDBValue)
+	}
+
+	if (value && typeof value === "object" && "toArray" in value && typeof value.toArray === "function") {
+		return Array.from(value.toArray() as ArrayLike<unknown>, normalizeDuckDBValue)
+	}
+
+	if (Array.isArray(value)) return value.map(normalizeDuckDBValue)
+
+	if (ArrayBuffer.isView(value)) return Array.from(value as unknown as ArrayLike<unknown>, normalizeDuckDBValue)
+
+	return value
+}
+
+/**
+ * Stream rows from a local Parquet file in DuckDB-managed chunks.
+ *
+ * DuckDB opens the path itself and exposes its DataChunks through `fetchChunk()`. Rows are converted and yielded one
+ * chunk at a time; the complete Parquet file and complete result set are never copied into JavaScript memory.
+ */
+export async function* streamParquetRows<T>(
+	path: string,
+	columns?: readonly string[],
+	options?: { limit?: number }
+): AsyncGenerator<T> {
+	const db = await connectDuckDB()
+	const projection = columns?.length ? columns.map(escapeSQLIdentifier).join(", ") : "*"
+	const limit = options?.limit
+	const limitClause = limit === undefined ? "" : ` LIMIT ${validateLimit(limit)}`
+	const sql = `SELECT ${projection} FROM read_parquet('${escapeSQLString(path)}')${limitClause}`
+
+	try {
+		const stream = await db.stream(sql)
+		const columnNames = stream.columnNames()
+
+		for (let chunk = await stream.fetchChunk(); chunk && chunk.rowCount > 0; chunk = await stream.fetchChunk()) {
+			const rows = chunk.getRowObjects(columnNames) as Record<string, unknown>[]
+
+			for (const row of rows) {
+				yield Object.fromEntries(Object.entries(row).map(([key, value]) => [key, normalizeDuckDBValue(value)])) as T
+			}
+		}
+	} catch (error) {
+		if (columns && /Binder Error|Referenced column|does not exist/.test(String(error))) {
+			const missing =
+				String(error).match(/(?:Referenced column|field named) ["']([^"']+)["']/)?.[1] ?? columns.join(", ")
+
+			throw new Error(`Parquet projection requested column absent from the file schema: ${missing}`, {
+				cause: error,
+			})
+		}
+
+		throw error
+	} finally {
+		db.closeSync()
+	}
+}
+
+function escapeSQLIdentifier(value: string): string {
+	return `"${value.replaceAll('"', '""')}"`
+}
+
+function validateLimit(value: number): number {
+	if (!Number.isSafeInteger(value) || value < 0)
+		throw new Error(`Parquet row limit must be a non-negative integer: ${value}`)
+
+	return value
+}
+
+async function writeStagedParquet(stagePath: string, outputPath: string): Promise<void> {
+	const db = await connectDuckDB()
+	const columns = [...PARQUET_COLUMNS]
+
+	const columnsLiteral =
+		"{" + columns.map((column) => `'${column}': '${PARQUET_COLUMN_TYPES[column]}'`).join(", ") + "}"
+
+	const selectList = columns.map(escapeSQLIdentifier).join(", ")
+
+	try {
+		await db.run("SET preserve_insertion_order=true")
+
+		await db.run(
+			`COPY (SELECT ${selectList} FROM read_json('${escapeSQLString(stagePath)}', ` +
+				`columns = ${columnsLiteral}, format = 'newline_delimited')) ` +
+				`TO '${escapeSQLString(outputPath)}' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE ${ROW_GROUP_SIZE})`
+		)
+	} finally {
+		db.closeSync()
+	}
+}
+
+async function writeStagedRow(stage: WriteStream, row: ParquetRow): Promise<void> {
+	if (!stage.write(JSON.stringify(row) + "\n")) {
+		await once(stage, "drain")
+	}
 }
 
 /**
@@ -257,48 +461,9 @@ export function rowToParquet(row: LabeledRow): ParquetRow {
 }
 
 /**
- * Project a `ParquetRow` for `appendRow`. parquetjs treats `null` as "skip" for `optional` columns; passing it
- * explicitly is fine, but cleaner to omit so the on-disk Definition Levels match what PyArrow / DuckDB / etc. produce
- * for the same logical row.
- *
- * EXPORTED because it was not, and a second producer hand-rolled its own copy that predates the v0.5.0 span triple
- * (#519). `LABELED_ROW_SCHEMA` declares those three columns `repeated` and NOT optional, so the copy wrote empty arrays
- * under a schema promising values. Every new column has to arrive here once, not once per writer.
- */
-export function appendShape(row: ParquetRow): ParquetRow {
-	const out: ParquetRow = {
-		raw: row.raw,
-		tokens: row.tokens,
-		labels: row.labels,
-		span_starts: row.span_starts,
-		span_ends: row.span_ends,
-		span_tags: row.span_tags,
-		country: row.country,
-		source: row.source,
-		source_id: row.source_id,
-		corpus_version: row.corpus_version,
-		license: row.license,
-	}
-
-	if (row.locale !== null) {
-		out.locale = row.locale
-	}
-
-	if (row.synth_method !== null) {
-		out.synth_method = row.synth_method
-	}
-
-	if (row.synth_base_id !== null) {
-		out.synth_base_id = row.synth_base_id
-	}
-
-	return out
-}
-
-/**
  * Stream labeled rows into `.parquet` slices, one set of slices per split. Splits are processed sequentially so that
- * only one slice writer is open at a time — memory cost is bounded by the parquetjs row-group buffer (~`ROW_GROUP_SIZE
- * × row_size`), not by the labeled-row count.
+ * only one slice is open at a time. Rows are staged to newline-delimited JSON with backpressure, then DuckDB writes the
+ * Parquet file from disk.
  *
  * Callers pass per-split `AsyncIterable<LabeledRow>` (`PerSplitRows`); the prior `splitFor(sourceID)` callback is gone
  * because pre-partitioning at the caller eliminates the O(n) `Map<source_id, SplitName>` it required. See `buildCorpus`
@@ -318,10 +483,13 @@ export async function writeSlices(perSplit: PerSplitRows, opts: WriteSlicesOptio
 
 		if (!rows) continue
 
+		await using staging = await temporaryDirectory(`mailwoman-parquet-${split}-`)
+
 		let sliceIndex = 0
-		let writer: ParquetWriter<ParquetRow> | null = null
 		let path = ""
+		let stagePath = ""
 		let sliceRows = 0
+		let stage: WriteStream | null = null
 		let firstSourceID = ""
 		let lastSourceID = ""
 
@@ -330,23 +498,25 @@ export async function writeSlices(perSplit: PerSplitRows, opts: WriteSlicesOptio
 			await makeDirectories(splitDir)
 			path = join(splitDir, `part-${String(sliceIndex).padStart(4, "0")}.parquet`)
 
-			writer = await ParquetWriter.openFile<ParquetRow>(LABELED_ROW_SCHEMA, path, {
-				rowGroupSize: ROW_GROUP_SIZE,
-			})
-
-			writer.setMetadata("mailwoman.corpus_version", opts.corpusVersion)
-			writer.setMetadata("mailwoman.split", split)
-			writer.setMetadata("mailwoman.slice_index", String(sliceIndex))
+			stagePath = staging.resolve(`part-${String(sliceIndex).padStart(4, "0")}.ndjson`)
+			stage = staging.use(openWriteStream(stagePath))
 			sliceRows = 0
 			firstSourceID = ""
 			lastSourceID = ""
 		}
 
 		const closeSlice = async (): Promise<void> => {
-			if (!writer) return
-			await writer[Symbol.asyncDispose]()
+			const activeStage = stage
 
-			if (sliceRows > 0) {
+			if (!activeStage) return
+
+			await new Promise<void>((resolve, reject) => {
+				activeStage.end((error?: Error | null) => (error ? reject(error) : resolve()))
+			})
+
+			if (sliceRows) {
+				await writeStagedParquet(stagePath, path)
+
 				const fileStat = await tryStat(path)
 				const sha256 = await sha256File(path)
 
@@ -363,24 +533,27 @@ export async function writeSlices(perSplit: PerSplitRows, opts: WriteSlicesOptio
 				})
 			}
 
-			writer = null
+			stage = null
+			sliceRows = 0
 		}
 
 		for await (const row of rows) {
-			if (!writer) {
+			if (!path) {
 				await openSlice()
 			}
 
 			const pq = rowToParquet(row)
-			await writer!.appendRow(appendShape(pq))
 
-			if (sliceRows === 0) {
+			if (!stage) throw new Error("Parquet slice writer was not opened")
+			await writeStagedRow(stage, pq)
+
+			sliceRows++
+
+			if (sliceRows === 1) {
 				firstSourceID = row.source_id
 			}
 
 			lastSourceID = row.source_id
-
-			sliceRows++
 
 			counts[split]++
 
@@ -390,6 +563,7 @@ export async function writeSlices(perSplit: PerSplitRows, opts: WriteSlicesOptio
 				await closeSlice()
 
 				sliceIndex++
+				path = ""
 			}
 		}
 

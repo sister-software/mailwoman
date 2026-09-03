@@ -55,7 +55,7 @@ import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { dirname } from "path-ts"
 import { createNewlineWriter } from "spliterator"
 
-import { ParquetReader } from "#parquet-wrapper/index"
+import { streamParquetRows } from "#utils/parquet"
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -214,14 +214,7 @@ async function loadSeeds(
 	let skippedThinComponents = 0
 
 	for (const path of paths) {
-		await using reader = await ParquetReader.openFile(path)
-		const cursor = reader.getCursor()
-
-		while (true) {
-			const row = (await cursor.next()) as CorpusRow | null
-
-			if (!row) break
-
+		for await (const row of streamParquetRows<CorpusRow>(path)) {
 			scanned++
 
 			// Source allow-list (--include-sources) — applied early to skip parsing rows we won't use

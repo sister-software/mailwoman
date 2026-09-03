@@ -16,12 +16,12 @@ import {
 	ROW_GROUP_SIZE,
 	SLICE_COMPRESSION,
 	rowToParquet,
+	streamParquetRows,
 	writeSlices,
 	type ParquetRow,
 } from "@mailwoman/corpus/utils/parquet"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { ParquetReader } from "#parquet-wrapper"
 import type { LabeledRow } from "#types"
 
 const labeled = (over: Partial<LabeledRow>): LabeledRow => ({
@@ -50,17 +50,13 @@ async function* asyncFrom<T>(items: readonly T[]): AsyncIterable<T> {
  * Read every row from a `.parquet` file in on-disk order.
  */
 async function readParquet(path: string): Promise<ParquetRow[]> {
-	await using reader = await ParquetReader.openFile<ParquetRow>(path)
-	const cursor = reader.getCursor()
-	const out: ParquetRow[] = []
-	let row: ParquetRow | null
+	const rows: ParquetRow[] = []
 
-	// oxlint-disable-next-line eslint/no-unmodified-loop-condition -- `row` is reassigned by the assignment inside the condition
-	while ((row = (await cursor.next()) as ParquetRow | null)) {
-		out.push(row)
+	for await (const row of streamParquetRows<ParquetRow>(path)) {
+		rows.push(row)
 	}
 
-	return out
+	return rows
 }
 
 let scratch: TemporaryDirectory
@@ -170,13 +166,11 @@ describe("writeSlices", () => {
 			{ outputDir: scratch.path, corpusVersion: "0.1.0" }
 		)
 
-		await using reader = await ParquetReader.openFile<ParquetRow & { missing_measurement_column: string }>(
-			m.slices[0]!.path
-		)
-
 		const consume = async () => {
-			for await (const _row of reader.project("country", "missing_measurement_column")) {
-				// The schema check runs before the first row can be yielded.
+			for await (const _row of streamParquetRows<ParquetRow & { missing_measurement_column: string }>(
+				m.slices[0]!.path,
+				["country", "missing_measurement_column"]
+			)) {
 			}
 		}
 
@@ -204,7 +198,7 @@ describe("writeSlices", () => {
 		])
 	})
 
-	it("writes per-split .parquet slices readable by ParquetReader, with MANIFEST.json", async () => {
+	it("writes per-split .parquet slices readable by DuckDB, with MANIFEST.json", async () => {
 		// Pre-partitioned input shape: callers supply one AsyncIterable per split.
 		const trainRows: LabeledRow[] = [
 			labeled({ source_id: "t-3", raw: "Marseille" }),
@@ -239,7 +233,7 @@ describe("writeSlices", () => {
 		expect(trainBack[0]!.raw).toBe("Marseille")
 		expect(trainBack[0]!.tokens).toEqual(["Paris"])
 		expect(trainBack[0]!.labels).toEqual(["B-locality"])
-		// `locale` is optional + absent on train rows — parquetjs may surface as null or undefined.
+		// `locale` is optional and absent on train rows.
 		expect(trainBack[0]!.locale ?? null).toBeNull()
 		expect(trainBack[1]!.raw).toBe("Nice")
 
@@ -305,8 +299,7 @@ describe("writeSlices", () => {
 		expect(pobox.span_ends).toEqual([11])
 		expect(pobox.span_tags).toEqual(["po_box"])
 
-		// parquetjs reads an empty repeated field back as an absent key — normalize to [] and assert
-		// the row carries no spurious spans.
+		// Normalize an empty repeated field to [] and assert the row carries no spurious spans.
 		const allO = back.find((r) => r.source_id === "t-all-o")!
 		expect(allO.span_starts ?? []).toEqual([])
 		expect(allO.span_ends ?? []).toEqual([])
@@ -351,7 +344,7 @@ describe("writeSlices", () => {
 		expect(a.slices[0]!.sha256).toBe(b.slices[0]!.sha256)
 	})
 
-	it("rows projected through appendShape omit nulls so optional columns are absent on disk", async () => {
+	it("rows with optional null columns round-trip through Parquet", async () => {
 		// One row with locale set, one without. Both should round-trip the relevant value.
 		const rows = [
 			labeled({ source_id: "t-with", raw: "with locale", locale: "fr-FR" }),
@@ -365,6 +358,23 @@ describe("writeSlices", () => {
 		const withoutLocale = back.find((r) => r.source_id === "t-without")!
 		expect(withLocale.locale).toBe("fr-FR")
 		expect(withoutLocale.locale ?? null).toBeNull()
+	})
+
+	it("streams projected rows without materializing the file", async () => {
+		const rows = Array.from({ length: 5 }, (_, index) => labeled({ source_id: `t-${index}` }))
+		const m = await writeSlices({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
+
+		const streamed = []
+
+		for await (const row of streamParquetRows<{ country: string; labels: string[] }>(m.slices[0]!.path, [
+			"country",
+			"labels",
+		])) {
+			streamed.push(row)
+		}
+
+		expect(streamed).toHaveLength(5)
+		expect(streamed[0]).toEqual({ country: "FR", labels: ["B-locality"] })
 	})
 
 	it("skips splits not present in PerSplitRows (no empty slice files written)", async () => {
