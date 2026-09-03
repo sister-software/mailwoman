@@ -38,9 +38,10 @@ from collections import Counter
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import pyarrow.parquet as pq
-import sentencepiece as spm  # type: ignore[import-not-found]
+import sentencepiece as spm
 
 logger = logging.getLogger(__name__)
 
@@ -204,7 +205,7 @@ class TrainerConfig:
     user_defined_symbols: tuple[str, ...] = ()
     eval_fixture: Path | None = None
     seed: int = 42
-    extra_sp_kwargs: dict = field(default_factory=dict)
+    extra_sp_kwargs: dict[str, Any] = field(default_factory=dict)
 
 
 def iter_train_slices(corpus_dir: Path) -> list[Path]:
@@ -307,7 +308,11 @@ def mine_postcode_literals(
         countries_col = t["country"] if countries is not None else None
         country_filter = set(countries) if countries is not None else None
         for i in range(t.num_rows):
-            if country_filter is not None and countries_col[i].as_py() not in country_filter:
+            if (
+                countries_col is not None
+                and country_filter is not None
+                and countries_col[i].as_py() not in country_filter
+            ):
                 continue
             toks = tokens_col[i].as_py()
             labs = labels_col[i].as_py()
@@ -367,7 +372,7 @@ def detect_script(text: str) -> str:
     return top if n / total >= 0.9 else "mixed"
 
 
-def measure_byte_fallback(sp: spm.SentencePieceProcessor, lines: Iterable[str]) -> dict:
+def measure_byte_fallback(sp: spm.SentencePieceProcessor, lines: Iterable[str]) -> dict[str, Any]:
     """Encode each line and tally byte-fallback piece rate, overall + per script.
 
     Returns a dict shaped::
@@ -489,7 +494,7 @@ def _dedupe_keep_order(items: Iterable[str]) -> list[str]:
     return out
 
 
-def train_tokenizer(cfg: TrainerConfig) -> dict:
+def train_tokenizer(cfg: TrainerConfig) -> dict[str, Any]:
     """End-to-end SentencePiece training + byte-fallback measurement.
 
     Steps:
@@ -592,7 +597,7 @@ def train_tokenizer(cfg: TrainerConfig) -> dict:
 
     # 4. Byte-fallback measurement.
     sp = spm.SentencePieceProcessor(model_file=str(model_path))
-    byte_fb: dict | None = None
+    byte_fb: dict[str, Any] | None = None
     if cfg.eval_fixture is not None:
         fixture_lines = load_fixture_lines(cfg.eval_fixture)
         byte_fb = measure_byte_fallback(sp, fixture_lines)
