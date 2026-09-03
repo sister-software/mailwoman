@@ -15,14 +15,16 @@
  */
 
 import {
-	buildPairIndexOverlay,
+	materializeDevOverlay,
 	PAIR_INDEX_DELTA,
 	PAIR_INDEX_TRANSITION_BETA,
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
-await buildPairIndexOverlay({
-	packageDir: "neural-weights-it-it",
-	country: "it",
-	delta: PAIR_INDEX_DELTA,
-	transitionBeta: PAIR_INDEX_TRANSITION_BETA,
+await materializeDevOverlay({
+	locale: "it-it",
+	pairIndex: {
+		country: "it",
+		delta: PAIR_INDEX_DELTA,
+		transitionBeta: PAIR_INDEX_TRANSITION_BETA,
+	},
 })

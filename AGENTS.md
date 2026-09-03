@@ -127,7 +127,7 @@ The `neural-weights-<locale>` workspaces ship binary artifacts (`model.onnx`, `t
 
 ### Pitfall: the overlay `link-dev-weights.ts` is a copy-paste template
 
-Each locale overlay carries its own `scripts/link-dev-weights.ts`, cloned from a sibling. Copying localizes the CODE and leaves the PROSE behind, and nothing catches a docstring that describes the wrong country — the script works. If you add an overlay, rewrite the docstring for the locale you are adding, not the paths alone. Extracting the shared implementation so a new overlay is a manifest plus a call is tracked in https://github.com/sister-software/mailwoman/issues/2035. Membership in `LEADING_POSTCODE_COUNTRIES` (`packages/neural/lib/placetype-pair-prior.ts`) is earned by a codex postcode shape plus a confound board; a country's absence there is not always a gap, and the file says which absences are deliberate.
+Each locale overlay carries its own `scripts/link-dev-weights.ts`, cloned from a sibling. Copying localizes the CODE and leaves the PROSE behind, and nothing catches a docstring that describes the wrong country — the script works. If you add an overlay, rewrite the docstring for the locale you are adding, not the paths alone. The shared implementation is `materializeDevOverlay` in `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`, so each script is a manifest plus a call (#2035); the one step no manifest expresses, en-gb's card-conditional postcode binary, stays in en-gb's file. Membership in `LEADING_POSTCODE_COUNTRIES` (`packages/neural/lib/placetype-pair-prior.ts`) is earned by a codex postcode shape plus a confound board; a country's absence there is not always a gap, and the file says which absences are deliberate.
 
 ### Pitfall: symlinks in the publish tarball
 

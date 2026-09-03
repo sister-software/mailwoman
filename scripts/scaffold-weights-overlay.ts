@@ -127,8 +127,8 @@ await writeLocalTextFile(
  *
  *   Dev-weights linker for \`${packageName}\`.
  *
- *   The build itself lives in \`@mailwoman/resolver-wof-sqlite/weights-overlay-linker\` — this overlay declares
- *   \`mailwoman.baseWeights\`, so it symlinks nothing and its only job is building the index that makes
+ *   The steps live in \`@mailwoman/resolver-wof-sqlite/weights-overlay-linker\` and this file is the manifest — the
+ *   overlay declares \`mailwoman.baseWeights\`, so it symlinks nothing and its only job is building the index that makes
  *   \`resolveWeights({locale: "${slug}"})\` surface \`pairIndexPath\` in local dev.
  *
  *   TODO(${slug}): say what makes this locale's index required, and what it is INERT without. If
@@ -139,15 +139,17 @@ await writeLocalTextFile(
  *   for whichever locale you read first.
  */
 
-import { buildPairIndexOverlay } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import { materializeDevOverlay } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
-buildPairIndexOverlay({
-	packageDir: "packages/neural-weights-",
-	country: "${country}",
-	// TODO(${slug}): calibrate. These are the magnitudes every existing overlay was measured at, not
-	// a measurement of this one.
-	delta: 10,
-	transitionBeta: 5,
+await materializeDevOverlay({
+	locale: "${slug}",
+	pairIndex: {
+		country: "${country}",
+		// TODO(${slug}): calibrate. These are the magnitudes every existing overlay was measured at, not
+		// a measurement of this one.
+		delta: 10,
+		transitionBeta: 5,
+	},
 })
 `
 )

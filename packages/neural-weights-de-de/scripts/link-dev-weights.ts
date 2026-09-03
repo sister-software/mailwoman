@@ -16,15 +16,17 @@
  */
 
 import {
-	buildPairIndexOverlay,
+	materializeDevOverlay,
 	PAIR_INDEX_DELTA,
 	PAIR_INDEX_TRANSITION_BETA,
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
-await buildPairIndexOverlay({
-	packageDir: "neural-weights-de-de",
-	country: "de",
-	// The pair the R9 bars were measured at (0/70 confound FPs, 60/60 tag-correct).
-	delta: PAIR_INDEX_DELTA,
-	transitionBeta: PAIR_INDEX_TRANSITION_BETA,
+await materializeDevOverlay({
+	locale: "de-de",
+	pairIndex: {
+		country: "de",
+		// The pair the R9 bars were measured at (0/70 confound FPs, 60/60 tag-correct).
+		delta: PAIR_INDEX_DELTA,
+		transitionBeta: PAIR_INDEX_TRANSITION_BETA,
+	},
 })
