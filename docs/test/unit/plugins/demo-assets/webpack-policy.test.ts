@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readDirectory, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { bundleAliases, configureDemoWebpack } from "@mailwoman/docs/plugins/demo-assets/webpack-policy"
 import { buildWorkspaceAliases } from "@mailwoman/docs/plugins/demo-assets/workspace-aliases"
@@ -53,6 +53,47 @@ describe("docs webpack policy", () => {
 		}
 
 		expect(offenders, "import the leaf module instead — see NODE_BACKED_BARRELS").toEqual([])
+	})
+
+	test("every package stylesheet the docs import is declared a side effect by its package", async () => {
+		// Webpack drops a bare `import "pkg/file.css"` when `pkg` declares `sideEffects: false`, and it does so
+		// silently: the page still builds and serves, with that stylesheet's rules missing. A package that ships
+		// a stylesheet must name it in its `sideEffects` array for the import to survive the production bundle.
+		const stylesheetImport = /import\s+"(@mailwoman\/([^/"]+))\/([^"]+[.]css)"/g
+		const offenders: string[] = []
+		const seen = new Set<string>()
+
+		for await (const file of browserSources(String(resolvePath(docsDir, "src")))) {
+			const text = await readLocalTextFile(file)
+
+			for (const [, packageName, , stylesheet] of text.matchAll(stylesheetImport)) {
+				if (!packageName || !stylesheet) continue
+
+				const key = `${packageName}/${stylesheet}`
+
+				if (seen.has(key)) continue
+				seen.add(key)
+
+				const manifest = await readLocalJSONFile<{ sideEffects?: boolean | string[] }>(
+					resolvePackagePath(packageName, "package.json")
+				)
+
+				const declared = manifest.sideEffects
+
+				const covered =
+					!("sideEffects" in manifest) ||
+					declared === true ||
+					(Array.isArray(declared) &&
+						declared.some((pattern) => pattern === `./${stylesheet}` || pattern === stylesheet))
+
+				if (!covered) {
+					offenders.push(`${key} (sideEffects: ${JSON.stringify(declared)})`)
+				}
+			}
+		}
+
+		expect(seen.size, "the docs import at least one package stylesheet").toBeGreaterThan(0)
+		expect(offenders, 'add "./<file>.css" to that package\'s sideEffects array').toEqual([])
 	})
 
 	test("places browser-safe leaf aliases before their Node-backed barrels", async () => {
