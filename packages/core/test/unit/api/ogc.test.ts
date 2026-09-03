@@ -7,7 +7,7 @@
  *   must stay three answers: a count, a refusal to count, and a malformed response.
  */
 
-import { type APIClient, readWFSFeatureCount } from "@mailwoman/core/api"
+import { type APIClient, OGCServiceError, readOGCServiceException, readWFSFeatureCount } from "@mailwoman/core/api"
 import type { AxiosResponse } from "axios"
 import { describe, expect, it } from "vitest"
 
@@ -42,5 +42,44 @@ describe("readWFSFeatureCount", () => {
 		await expect(readWFSFeatureCount(clientReturning("<wfs:FeatureCollection/>"), options)).rejects.toThrow(
 			/carried no numberMatched/u
 		)
+	})
+})
+
+const INVALID_COLUMN = `<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
+<ServiceExceptionReport xmlns="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ServiceException>
+Invalid query: Invalid column name &#39;nosuchcolumn&#39;.</ServiceException>
+</ServiceExceptionReport>
+`
+
+describe("readOGCServiceException", () => {
+	it("reads the exception out of the report and decodes its entities", () => {
+		expect(readOGCServiceException(INVALID_COLUMN)).toBe("Invalid query: Invalid column name 'nosuchcolumn'.")
+	})
+
+	it("returns nothing for a real answer", () => {
+		expect(readOGCServiceException('<wfs:FeatureCollection numberMatched="3"/>')).toBeUndefined()
+	})
+
+	it("answers in linear time on a report whose exception element is never closed", () => {
+		const unclosed = `<ServiceExceptionReport xmlns="http://www.opengis.net/ogc"><ServiceException>${"x".repeat(200_000)}`
+		const started = performance.now()
+
+		expect(readOGCServiceException(unclosed)).toMatch(/no readable ServiceException/u)
+		expect(performance.now() - started).toBeLessThan(1000)
+	})
+
+	it("never mistakes the enclosing report element for the exception it wraps", () => {
+		const nested = `<ServiceExceptionReport xmlns="http://www.opengis.net/ogc">
+<ServiceException>Invalid query - access denied.</ServiceException>
+</ServiceExceptionReport>`
+
+		expect(readOGCServiceException(nested)).toBe("Invalid query - access denied.")
+	})
+})
+
+describe("readWFSFeatureCount over an exception report", () => {
+	it("refuses a ServiceExceptionReport that arrived on a 200 instead of reading it as a missing count", async () => {
+		await expect(readWFSFeatureCount(clientReturning(INVALID_COLUMN), options)).rejects.toBeInstanceOf(OGCServiceError)
 	})
 })

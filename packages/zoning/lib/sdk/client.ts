@@ -32,7 +32,7 @@
  *      rather than filled with a plausible one.
  */
 
-import { APIClient, type APIClientConfig } from "@mailwoman/core/api"
+import { APIClient, type APIClientConfig, assertNoArcGISError } from "@mailwoman/core/api"
 import { createPacedCachedClient, type CreatePacedCachedClientOptions } from "@mailwoman/core/api/paced-client"
 import { htmlToText } from "@mailwoman/core/html/text"
 
@@ -126,6 +126,8 @@ export class GZTClient extends APIClient<APIClientConfig> {
 			params: { f: "json" },
 		})
 
+		assertNoArcGISError(data, "zoning client")
+
 		if (data.id !== GZT_ITEM_ID) {
 			throw new Error(
 				`zoning client: the item endpoint answered for ${JSON.stringify(data.id)}, expected ${GZT_ITEM_ID}`
@@ -173,6 +175,8 @@ export class GZTClient extends APIClient<APIClientConfig> {
 			maxRecordCount?: number
 		}>({ method: "GET", url: GZT_SERVICE_URL, params: { f: "json" } })
 
+		assertNoArcGISError(data, "zoning client")
+
 		const epsg = data.extent?.spatialReference?.latestWkid ?? data.extent?.spatialReference?.wkid
 
 		if (epsg !== GZT_SOURCE_EPSG) {
@@ -186,6 +190,8 @@ export class GZTClient extends APIClient<APIClientConfig> {
 			url: `${GZT_SERVICE_URL}/query`,
 			params: { where: "1=1", returnCountOnly: "true", f: "json" },
 		})
+
+		assertNoArcGISError(counted, "zoning client")
 
 		if (typeof counted.count !== "number") {
 			throw new TypeError("zoning client: the service returned no feature count")
@@ -214,6 +220,8 @@ export class GZTClient extends APIClient<APIClientConfig> {
 			},
 		})
 
+		assertNoArcGISError(data, "zoning client")
+
 		const sum = data.features?.[0]?.attributes?.area_sum
 
 		if (typeof sum !== "number" || !Number.isFinite(sum)) {
@@ -240,6 +248,8 @@ export class GZTClient extends APIClient<APIClientConfig> {
 			url: `${HUB_DOWNLOAD_API_BASE_URL}/${GZT_ITEM_ID}/geojson`,
 			params: { redirect: "false", layers: "0" },
 		})
+
+		assertNoArcGISError(data, "zoning client")
 
 		if (data.status !== "Completed" || !data.resultUrl) {
 			throw new Error(
@@ -286,6 +296,8 @@ export class GZTClient extends APIClient<APIClientConfig> {
 				f: "geojson",
 			},
 		})
+
+		assertNoArcGISError(data, "zoning client")
 
 		return data.features ?? []
 	}

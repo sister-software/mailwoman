@@ -159,7 +159,6 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"entities": "^8.0.0",
 		"h3-js": "^4.5.0",
 		"kysely": "^0.29.5",
 		"path-ts": "^2.3.0",

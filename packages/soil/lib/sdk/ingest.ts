@@ -178,8 +178,10 @@ export async function* readSoilDelineations(
 		"-f",
 		"GeoJSONSeq",
 		"/vsistdout/",
+		// The OUTPUT projection. `expectEPSG` is the assertion `readSoilSourceIdentity` makes about the SOURCE and is not
+		// the same thing: the consumer reads WGS84, whatever the shapefile declares.
 		"-t_srs",
-		`EPSG:${options.expectEPSG ?? SSURGO_SOURCE_EPSG}`,
+		"EPSG:4326",
 		"-lco",
 		`COORDINATE_PRECISION=${COORDINATE_PRECISION}`,
 		...(options.limit === undefined ? [] : ["-limit", String(options.limit)]),

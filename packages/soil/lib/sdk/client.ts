@@ -31,11 +31,10 @@
  *   embeds.
  */
 
-import { APIClient, type APIClientConfig, type ClockLike } from "@mailwoman/core/api"
+import { APIClient, type APIClientConfig, type ClockLike, readOGCServiceException } from "@mailwoman/core/api"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { decodeXML } from "entities"
 
 import { saverestToISODate } from "#sdk/tabular"
 
@@ -97,62 +96,6 @@ export class SoilDataAccessError extends Error {
 }
 
 /**
- * The `<ServiceException>` text inside an OGC exception report, or `undefined` when the body is not one.
- *
- * Split from the request so the detection is testable against captured bodies. Both shapes below were taken from the
- * live service: the report arrives with an XML declaration and an `xmlns` of `http://www.opengis.net/ogc`.
- */
-export function readServiceException(body: string): string | undefined {
-	if (!body.includes("ServiceExceptionReport")) return undefined
-
-	// A report whose exception element cannot be read is still a report, and reporting it as a successful empty answer
-	// is the failure this whole function exists to prevent.
-	return decodeXML((exceptionText(body) ?? "the report carried no readable ServiceException element").trim())
-}
-
-/**
- * The opening tag, without its terminator — the prefix `<ServiceExceptionReport …>` unhelpfully shares.
- */
-const EXCEPTION_OPEN = "<ServiceException"
-
-/**
- * The inner text of the first real `<ServiceException>` element.
- *
- * INDEX SCANS RATHER THAN A REGEX. The obvious form — `/<ServiceException(?:\s[^>]*)?>([\s\S]*?)<\/ServiceException>/`
- * — backtracks polynomially on a body whose opening tag has no closing partner, and this body is whatever a network
- * service returned. Two more things it has to get right, both of which cost nothing here: the tag name must END at the
- * match, because `<ServiceExceptionReport xmlns="…">` shares the prefix and taking it captures the entire report as the
- * message; and an unclosed element reads as unreadable rather than as empty.
- */
-function exceptionText(body: string): string | undefined {
-	let cursor = 0
-
-	for (;;) {
-		const start = body.indexOf(EXCEPTION_OPEN, cursor)
-
-		if (start === -1) return undefined
-
-		const after = start + EXCEPTION_OPEN.length
-
-		cursor = after
-
-		// `>` closes a bare tag; whitespace introduces attributes. Anything else continues the tag NAME, which means this
-		// is `ServiceExceptionReport` or a sibling and not the element being read.
-		if (!/^[\s>]/u.test(body.slice(after, after + 1))) continue
-
-		const contentStart = body.indexOf(">", after)
-
-		if (contentStart === -1) return undefined
-
-		const end = body.indexOf("</ServiceException>", contentStart)
-
-		if (end === -1) return undefined
-
-		return body.slice(contentStart + 1, end)
-	}
-}
-
-/**
  * One published survey area, as the catalogue reports it.
  */
 export interface SurveyAreaCatalogEntry {
@@ -186,7 +129,7 @@ export class SoilDataAccessClient extends APIClient<APIClientConfig> {
 			data: { SERVICE: "query", FORMAT: "JSON", QUERY: sql },
 		})
 
-		const exception = readServiceException(data)
+		const exception = readOGCServiceException(data)
 
 		if (exception) throw new SoilDataAccessError(exception, sql)
 

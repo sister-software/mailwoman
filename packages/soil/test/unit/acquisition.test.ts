@@ -11,7 +11,7 @@
  *   which is why the detection is on the body rather than on the status.
  */
 
-import { readServiceException } from "@mailwoman/soil/sdk/client"
+import { readOGCServiceException as readServiceException } from "@mailwoman/core/api"
 import { readFGDCMetadata } from "@mailwoman/soil/sdk/survey-area"
 import { FarmlandScope, farmlandScope, soilLayerName } from "@mailwoman/soil/vocabulary"
 import { describe, expect, it } from "vitest"
