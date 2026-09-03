@@ -33,6 +33,7 @@
  */
 
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
+import { addBoundingBoxColumns, addCellIndexColumns, addRingGeometryColumns } from "@mailwoman/sqlite/schema-columns"
 import { sql, type Kysely } from "kysely"
 
 /**
@@ -351,29 +352,22 @@ export type SoilSchemaHandle = Pick<Kysely<SoilDatabase>, "schema">
  * penalizes.
  */
 export async function createSoilMapUnitAreaTable(db: SoilSchemaHandle): Promise<void> {
-	await db.schema
+	const table = db.schema
 		.createTable("soil_map_unit_area")
 		.addColumn("area_id", "text", (c) => c.primaryKey())
 		.addColumn("mukey", "text", (c) => c.notNull())
 		.addColumn("areasymbol", "text", (c) => c.notNull())
-		.addColumn("min_lat", "real", (c) => c.notNull())
-		.addColumn("min_lon", "real", (c) => c.notNull())
-		.addColumn("max_lat", "real", (c) => c.notNull())
-		.addColumn("max_lon", "real", (c) => c.notNull())
-		.addColumn("rings", "blob", (c) => c.notNull())
-		.execute()
+
+	await addRingGeometryColumns(table).execute()
 }
 
 /**
  * Create `soil_map_unit_cell` — the containment index. Small fixed-width rows probed by their exact primary key.
  */
 export async function createSoilMapUnitCellTable(db: SoilSchemaHandle): Promise<void> {
-	await db.schema
-		.createTable("soil_map_unit_cell")
-		.addColumn("h3_cell", "integer", (c) => c.notNull())
-		.addColumn("resolution", "integer", (c) => c.notNull())
-		.addColumn("area_id", "text", (c) => c.notNull())
-		.addColumn("containment", "text", (c) => c.notNull())
+	const table = db.schema.createTable("soil_map_unit_cell")
+
+	await addCellIndexColumns(table, "area_id")
 		.addPrimaryKeyConstraint("soil_map_unit_cell_pk", ["h3_cell", "area_id"])
 		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
@@ -444,7 +438,7 @@ export async function createSoilCapabilityCellTable(db: SoilSchemaHandle): Promi
  * Create `soil_survey_area`.
  */
 export async function createSoilSurveyAreaTable(db: SoilSchemaHandle): Promise<void> {
-	await db.schema
+	const table = db.schema
 		.createTable("soil_survey_area")
 		.addColumn("areasymbol", "text", (c) => c.primaryKey())
 		.addColumn("areaname", "text", (c) => c.notNull())
@@ -455,10 +449,8 @@ export async function createSoilSurveyAreaTable(db: SoilSchemaHandle): Promise<v
 		.addColumn("source_scale", "integer")
 		.addColumn("mapping_scale", "integer")
 		.addColumn("area_acres", "integer")
-		.addColumn("min_lat", "real", (c) => c.notNull())
-		.addColumn("min_lon", "real", (c) => c.notNull())
-		.addColumn("max_lat", "real", (c) => c.notNull())
-		.addColumn("max_lon", "real", (c) => c.notNull())
+
+	await addBoundingBoxColumns(table)
 		.addColumn("coverage_cells", "integer", (c) => c.notNull())
 		.addColumn("coverage_resolution", "integer", (c) => c.notNull())
 		.execute()
