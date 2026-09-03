@@ -107,9 +107,10 @@ Bognor Rd, Bognor Regis PO21 1HR` landing on the Chichester campus 9.87 km away:
 - #2115: choose the hygiene fix — `copy-weights.ts` materializes only the `files` set a workspace publishes,
   or `resolveEvidenceLexicon` stops guessing the legacy filename for a card that names nothing. Neither changes
   a board row.
-- #2035 was sized medium-large (the ten scripts ran 28 to 331 lines) and closed in PR #2114; en-gb
-  builds two binaries; not a manifest-plus-a-call extraction yet.
-- #2046 needs a rebuild and byte check per layer artifact.
+- #2035 was sized medium-large (the ten scripts ran 28 to 331 lines) and closed in PR #2114; en-gb keeps
+  its card-conditional postcode binary beside the manifest, the one step no manifest expresses.
+- #2046 closed in PR #2113 without a rebuild: composition kept the stored column order, and a DDL byte check
+  on an in-memory build stood in for the per-artifact rebuild.
 
 | Quantity                    | Value                                                                                           |
 | --------------------------- | ----------------------------------------------------------------------------------------------- |
