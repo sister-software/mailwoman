@@ -17,32 +17,36 @@
  */
 
 /**
- * Highest ASCII code point. Above it the input is accented or non-Latin, where case conversion is locale-sensitive and
- * can change length (`ß`→`SS`, Turkish dotted/dotless I) — which would break the token-offset invariant the caller
- * relies on, so those inputs are left alone entirely.
+ * A Latin-script letter, in either case and with any diacritic. Case conversion is applied to Latin script only: other
+ * scripts are either uncased or carry locale-sensitive rules (Turkish dotted and dotless I, Greek final sigma) that the
+ * length guard in {@link titleCaseInput} would refuse run by run anyway, so they are left alone as a whole.
+ */
+const LATIN_LETTER = /\p{Script=Latin}/u
+const LATIN_RUN = /\p{Script=Latin}+/gu
+const UPPER = /\p{Lu}/u
+const LOWER = /\p{Ll}/u
+const ANY_LETTER = /\p{L}/u
+/**
+ * Highest ASCII code point. {@link isAllLowerInput} still binds to pure ASCII: a lowercase input with diacritics parses
+ * as typed (measured on the case-folding conformance suite), so the #829 restore has no accented population to serve.
  */
 const ASCII_MAX = 127
-
 /**
  * Code point of `A`.
  */
 const ASCII_UPPER_A = 65
-
 /**
  * Code point of `Z`.
  */
 const ASCII_UPPER_Z = 90
-
 /**
  * Code point of `a`.
  */
 const ASCII_LOWER_A = 97
-
 /**
  * Code point of `z`.
  */
 const ASCII_LOWER_Z = 122
-
 /**
  * Cased letters an input needs before it counts as uniformly-cased rather than shouting punctuation or a stray token.
  * The floor exists so a digit- or punctuation-only input is not treated as a whole shouting address.
@@ -50,25 +54,23 @@ const ASCII_LOWER_Z = 122
 const MIN_CASED_LETTERS = 3
 
 /**
- * True when `text` is PURE-ASCII ALL-CAPS: it has cased ASCII letters and ZERO lowercase, and NO non-ASCII characters.
- * The pure-ASCII requirement is deliberate — title-casing accented/non-Latin text is locale-sensitive and can change
- * length (`ß`→`SS`, Turkish dotted/dotless I), which would break the token-offset invariant the caller relies on. So
- * this fix targets ASCII registry data only; accented or non-Latin input falls back to the model's current behavior.
+ * True when `text` is LATIN-SCRIPT ALL-CAPS: every letter in it is Latin script, it has at least three uppercase
+ * letters, and no lowercase letter anywhere. Diacritics are admitted (`RUE DU FAUBOURG SAINT-HONORÉ` qualifies): an
+ * accented uppercase input reaches the model as single-character pieces otherwise, which is the #1938 defect. A letter
+ * from another script disqualifies the whole input, because its case rules are locale-sensitive and can change length.
  * The 3-letter floor avoids treating a digit/punctuation-only or tiny-token input as a whole shouting address.
  */
 export function isAllCapsInput(text: string): boolean {
 	let upper = 0
 
-	for (let i = 0; i < text.length; i++) {
-		const c = text.charCodeAt(i)
+	for (const ch of text) {
+		if (!ANY_LETTER.test(ch)) continue
 
-		if (c > ASCII_MAX) return false
+		if (!LATIN_LETTER.test(ch)) return false
 
-		// any non-ASCII (accented/non-Latin) → leave it alone
-		if (c >= ASCII_LOWER_A && c <= ASCII_LOWER_Z) return false
+		if (LOWER.test(ch)) return false
 
-		// any [a-z] → mixed case, leave it alone
-		if (c >= ASCII_UPPER_A && c <= ASCII_UPPER_Z) {
+		if (UPPER.test(ch)) {
 			upper++
 		}
 	}
@@ -77,17 +79,25 @@ export function isAllCapsInput(text: string): boolean {
 }
 
 /**
- * Title-case each ASCII alphabetic run ≥3 letters (`PALESTINE` → `Palestine`), PRESERVING runs of ≤2 letters. The
- * preserve is the #690→#252 fix (the Gauntlet's casing-invariance catch): an all-caps input title-cased BLINDLY turns a
- * 2-letter region code into a non-region form the model mis-parses — `NY`→`Ny`, `DC`→`Dc` land as a _locality_, not a
- * region, so `350 5TH AVE, NEW YORK, NY` lost its state. Every ≤2-letter all-caps token in a US address is an
- * abbreviation the model already reads correctly all-caps (state codes NY/DC, directionals N/NW/SE, suffixes ST/RD), so
- * keeping them shouting restores the model's correct input — `1600 PENNSYLVANIA AVE NW, WASHINGTON DC` now title-cases
- * to exactly the mixed-case form that parses `region:DC`. Length-preserving — token offsets unchanged. The #690 benefit
- * (≥3-letter locality/name recovery: PALESTINE→Palestine, ELKHART→Elkhart) is untouched.
+ * Title-case each Latin alphabetic run ≥3 letters (`PALESTINE` → `Palestine`, `HONORÉ` → `Honoré`), PRESERVING runs of
+ * ≤2 letters. The preserve is the #690→#252 fix (the Gauntlet's casing-invariance catch): an all-caps input title-cased
+ * BLINDLY turns a 2-letter region code into a non-region form the model mis-parses — `NY`→`Ny`, `DC`→`Dc` land as a
+ * _locality_, not a region, so `350 5TH AVE, NEW YORK, NY` lost its state. Every ≤2-letter all-caps token in a US
+ * address is an abbreviation the model already reads correctly all-caps (state codes NY/DC, directionals N/NW/SE,
+ * suffixes ST/RD), so keeping them shouting restores the model's correct input — `1600 PENNSYLVANIA AVE NW, WASHINGTON
+ * DC` now title-cases to exactly the mixed-case form that parses `region:DC`.
+ *
+ * LENGTH-PRESERVING by construction: a run whose lowercase form is a different length (`İ` lowercases to two code
+ * units) is kept as typed, so token offsets never move.
  */
 export function titleCaseInput(text: string): string {
-	return text.replaceAll(/[A-Za-z]+/g, (w) => (w.length <= 2 ? w : w[0]!.toUpperCase() + w.slice(1).toLowerCase()))
+	return text.replaceAll(LATIN_RUN, (w) => {
+		if (w.length <= 2) return w
+
+		const rest = w.slice(1).toLowerCase()
+
+		return rest.length === w.length - 1 ? w[0]!.toUpperCase() + rest : w
+	})
 }
 
 /**

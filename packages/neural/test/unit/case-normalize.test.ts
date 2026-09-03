@@ -23,10 +23,16 @@ test("isAllCapsInput: any lowercase letter disqualifies (mixed case stays byte-s
 	expect(isAllCapsInput("MAINe ST")).toBe(false)
 })
 
-test("isAllCapsInput: any non-ASCII char disqualifies (the length-invariant guard)", () => {
-	// title-casing ß→SS / Turkish I is length-changing & locale-sensitive → left untouched.
-	expect(isAllCapsInput("STRASSE PARÍS")).toBe(false)
-	expect(isAllCapsInput("MÜNCHEN")).toBe(false)
+test("isAllCapsInput: Latin letters with diacritics qualify; a letter from another script disqualifies", () => {
+	// #1938: `É` kept the gate shut and the model read the shouting form letter by letter.
+	expect(isAllCapsInput("RUE DU FAUBOURG SAINT-HONORÉ")).toBe(true)
+	expect(isAllCapsInput("STRASSE PARÍS")).toBe(true)
+	expect(isAllCapsInput("MÜNCHEN")).toBe(true)
+	// Non-Latin case rules are locale-sensitive → the whole input is left alone.
+	expect(isAllCapsInput("ΑΘΗΝΑ ODOS")).toBe(false)
+	expect(isAllCapsInput("МОСКВА STREET")).toBe(false)
+	// Uncased non-Latin characters do not disqualify a Latin shouting input.
+	expect(isAllCapsInput("RUE D’ULM")).toBe(true)
 })
 
 test("isAllCapsInput: needs ≥3 cased letters; digits/punctuation alone do not qualify", () => {
@@ -56,7 +62,20 @@ test("normalizeInputCase: the #690 hook — title-case iff all-caps, else unchan
 	expect(normalizeInputCase("214 JONES RD, ELKHART, TX 75839")).toBe("214 Jones RD, Elkhart, TX 75839")
 	// mixed-case and non-ASCII inputs pass through byte-for-byte
 	expect(normalizeInputCase("214 Jones Rd")).toBe("214 Jones Rd")
-	expect(normalizeInputCase("MÜNCHEN HBF")).toBe("MÜNCHEN HBF")
+	// Accented Latin shouting title-cases like ASCII (#1938); the ≤2-letter rule is unchanged.
+	expect(normalizeInputCase("MÜNCHEN HBF")).toBe("München Hbf")
+	expect(normalizeInputCase("RUE DU FAUBOURG SAINT-HONORÉ")).toBe("Rue DU Faubourg Saint-Honoré")
+	expect(normalizeInputCase("AVENUE DES CHAMPS-ÉLYSÉES")).toBe("Avenue Des Champs-Élysées")
+})
+
+test("titleCaseInput: a run whose lowercase form changes length is kept as typed (offsets never move)", () => {
+	// U+0130 lowercases to two code units. In `CADDESİ` it sits inside the lowered tail, so that run stays shouting
+	// rather than shifting every later offset; in `İSTANBUL` it is the untouched first letter, so the run title-cases.
+	const input = "İSTANBUL CADDESİ"
+	const out = titleCaseInput(input)
+
+	expect(out).toHaveLength(input.length)
+	expect(out).toBe("İstanbul CADDESİ")
 })
 
 test("isAllLowerInput: #829 — pure-ASCII whispering qualifies; one uppercase or non-ASCII disqualifies", () => {
