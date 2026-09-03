@@ -278,9 +278,10 @@ jobs:
       - name: Typecheck docs
         run: yarn typecheck:docs
 
-      # lint:python runs ruff via uvx — the runner image doesn't ship uv (bit 9ce83b40's push:
-      # "command not found: uvx", exit 127).
-      - name: Setup uv (ruff for lint:python)
+      # The python gates run under uv: ruff via uvx, then `uv run` resolves corpus-python's
+      # venv for mypy --strict + bandit (the runner image doesn't ship uv — bit 9ce83b40's push:
+      # "command not found: uvx", exit 127 — so it is installed here).
+      - name: Setup uv (python lint/type/security gates)
         uses: astral-sh/setup-uv@v7
         with:
           # Pinned to the lab host's uv (keep in lockstep — bump deliberately, not via "latest";
@@ -288,8 +289,10 @@ jobs:
           version: "0.11.16"
 
       # Full repo-wide lint (oxlint incl. sister-software/no-process-globals, oxfmt --check, python
-      # toolchain checks). This is THE complete gate: the pre-commit hook only lints STAGED files,
-      # so repo-wide drift and --no-verify commits are caught here.
+      # toolchain checks: ruff, verify_toolchain, mypy --strict, bandit). This is THE complete gate:
+      # the pre-commit hook only lints STAGED files, so repo-wide drift and --no-verify commits are
+      # caught here. The first `uv run` syncs corpus-python's venv incl. the [train] extras (mypy
+      # must resolve torch), so this step is slower than it looks on a cold runner.
       - name: Lint
         run: yarn lint
 
