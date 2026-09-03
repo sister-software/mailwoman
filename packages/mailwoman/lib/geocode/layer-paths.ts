@@ -14,7 +14,7 @@ import { resolvePath, type PathBuilderLike } from "path-ts"
  * The layer databases the session attaches when present, keyed by the layer's short id, each as the path segments under
  * the data root.
  */
-export const LAYER_DATABASES = {
+const LAYER_DATABASES = {
 	flood: { label: "Flood zones (EA England)", segments: ["flood", "flood.db"] },
 	soil: { label: "Soil capability (NRCS SSURGO)", segments: ["soil", "soil.db"] },
 	coastal: { label: "Coastal erosion (EA NCERM)", segments: ["coastal", "coastal-england.db"] },
