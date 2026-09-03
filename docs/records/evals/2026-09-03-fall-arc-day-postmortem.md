@@ -25,6 +25,12 @@ All via PRs on auto-merge after CI; no release, no npm publish, no GPU.
   the venue tier. **#2112** (#2110, on auto-merge at the time of writing) — the venue tier's reach
   follows the anchor's grade: a unit-grade postcode hit bounds the entity to 1 km, every other admin
   or street anchor keeps 30 km.
+- **#2113** (#2046) — the four layer schemas take their shared column runs from
+  `@mailwoman/sqlite/schema-columns` by composition, so the two tables that interleave product columns keep
+  their order; the stored DDL of all 24 tables is byte-identical before and after (7,918 bytes).
+- **#2114** (#2035, on auto-merge at the time of writing) — each overlay's `link-dev-weights.ts` is a manifest
+  plus a call to `materializeDevOverlay`; ten scripts go from 1,143 to 540 lines, the 90-entry overlay listing
+  is stable across all ten and byte-identical on a second pass, `weights.test.ts` 15 of 15.
 
 ## Measurements and their verdicts
 
@@ -39,6 +45,8 @@ All via PRs on auto-merge after CI; no release, no npm publish, no GPU.
 | 4 (first pass) | #1684 exp 1 via `poi_venue_tier`    | visit: 11 of 119 rows move, 2 cross tolerance, 0 regress; deliver: 1 of 424 panel rows moves (the one venue-led row), 0 of 13 trap rows | no build; the suppress branch stays undesigned              |
 
 | 4 (treatment) | #2110 venue-tier reach | tier off vs on on the branch: 2 improve, 0 regress (routed, 651 rows); tier off, main vs branch: 0 of 651 differ; of the old reach's 17 moved rows, only Chichester is refused |
+
+| housekeeping | #2115 street-type lexicon mismatch | the lab resolves `street-type-lexicon-v3.json` for de/es/it/in through the legacy-filename rung from files materialized in the tracked package directory, while the published overlays ship none; A/B with and without the file, board-routed: DE 0 of 12, ES 0 of 25, IT 0 of 12 differ, control 0 differ — hygiene only |
 
 Decision packages posted, no build: #1998, #1999, #2048, and step 4 (#1684 exp 1, on #1684).
 
@@ -96,7 +104,10 @@ Bognor Rd, Bognor Regis PO21 1HR` landing on the Chichester campus 9.87 km away:
   battery is the one that decides.
 - #1946 (comma-free segmentation) is a `computeQueryShape` change that moves every single-segment
   query; grade on the full board and all conformance suites.
-- #2035 sizes as medium-large: the ten `link-dev-weights.ts` scripts run 28 to 331 lines and en-gb
+- #2115: choose the hygiene fix — `copy-weights.ts` materializes only the `files` set a workspace publishes,
+  or `resolveEvidenceLexicon` stops guessing the legacy filename for a card that names nothing. Neither changes
+  a board row.
+- #2035 was sized medium-large (the ten scripts ran 28 to 331 lines) and closed in PR #2114; en-gb
   builds two binaries; not a manifest-plus-a-call extraction yet.
 - #2046 needs a rebuild and byte check per layer artifact.
 
