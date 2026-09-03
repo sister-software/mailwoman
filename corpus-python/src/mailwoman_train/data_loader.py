@@ -39,6 +39,7 @@ import random
 from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import pyarrow.parquet as pq
 
@@ -211,7 +212,10 @@ def _slice_first_source(slice: Path) -> str:
     """
     pf = pq.ParquetFile(slice)
     rg = pf.read_row_group(0, columns=["source"])
-    return rg["source"][0].as_py()
+    raw = rg["source"][0].as_py()
+    if not isinstance(raw, str):
+        raise TypeError(f"source column cell is {type(raw).__name__}, expected str")
+    return raw
 
 
 def source_row_counts(corpus_dir: Path, split: str = "train") -> dict[str, int]:
@@ -253,7 +257,7 @@ def _slice_row_iter(
     country_weights: dict[str, float],
     max_weight: float,
     coarse_filter: bool,
-) -> Iterator[dict]:
+) -> Iterator[dict[str, Any]]:
     """Yield filter-accepted rows from a single parquet slice, with row-group + row shuffle.
 
     Applies the country-weight acceptance test, (when ``coarse_filter`` is set) the
@@ -348,7 +352,7 @@ def _source_iter(
     country_weights: dict[str, float],
     max_weight: float,
     coarse_filter: bool,
-) -> Iterator[dict]:
+) -> Iterator[dict[str, Any]]:
     """Yield rows from a sequence of slices, restricted to ``expected_source``.
 
     Slices are visited in shuffled order; within each slice, row-groups and row indices
@@ -377,7 +381,7 @@ def _raw_row_stream(
     country_weights: dict[str, float],
     source_weights: dict[str, float] | None,
     coarse_filter: bool,
-) -> Iterator[dict]:
+) -> Iterator[dict[str, Any]]:
     """Internal stream: yields filter-accepted rows, sampled by weighted source multinomial.
 
     Wrapped by ``iter_rows`` with a reservoir-style shuffle buffer.
@@ -497,7 +501,7 @@ def _raw_row_stream(
                 f"is missing from or zero-weighted in source_weights={source_weights!r}"
             )
 
-    def _fresh_iter(src: str) -> Iterator[dict]:
+    def _fresh_iter(src: str) -> Iterator[dict[str, Any]]:
         return _source_iter(
             by_source[src],
             expected_source=src,
@@ -507,7 +511,7 @@ def _raw_row_stream(
             coarse_filter=coarse_filter,
         )
 
-    iters: dict[str, Iterator[dict]] = {src: _fresh_iter(src) for src in by_source}
+    iters: dict[str, Iterator[dict[str, Any]]] = {src: _fresh_iter(src) for src in by_source}
     weights: dict[str, float] = {
         src: float(source_weights[src]) if source_weights is not None else 1.0 for src in iters
     }
@@ -585,7 +589,7 @@ def iter_rows(
     augment_exclude_sources: Sequence[str] = (),
     affix_relabel_lexicon: AffixRelabelLexicon | None = None,
     shuffle_buffer: int = 131072,
-) -> Iterator[dict]:
+) -> Iterator[dict[str, Any]]:
     """Yield rows from parquet slices, filtered + shuffled.
 
     Shuffling is done at three levels:
@@ -662,7 +666,7 @@ def iter_rows(
         source_weights=source_weights,
         coarse_filter=coarse_filter,
     )
-    buf: list[dict] = []
+    buf: list[dict[str, Any]] = []
     yielded = 0
     # Fill the buffer first.
     try:
@@ -682,7 +686,7 @@ def iter_rows(
 
     augment_excluded = frozenset(augment_exclude_sources)
 
-    def _emit(row: dict) -> Iterator[dict]:
+    def _emit(row: dict[str, Any]) -> Iterator[dict[str, Any]]:
         # Relabel runs AFTER augmentation so label-inheriting directional expansions are caught
         # (#511 — see relabel.py). augment_row yields fresh dicts but shares the labels list with
         # the source row on the no-op path, so relabel copies before mutating.
@@ -758,7 +762,8 @@ def iter_encoded(
         raise ValueError(f"unknown data.char_mode {char_mode!r} (expected off | word | char)")
     char_vocab = None
     if char_mode != "off":
-        if not getattr(cfg_data, "char_vocab_path", None):
+        char_vocab_path = getattr(cfg_data, "char_vocab_path", None)
+        if not char_vocab_path:
             raise ValueError("data.char_mode requires data.char_vocab_path (build_char_vocab's sealed JSON)")
         channel_paths = [
             name
@@ -784,7 +789,7 @@ def iter_encoded(
                 f"char_ctx={char_ctx} needs W >= {2 * char_ctx + 1}"
             )
         max_units = int(getattr(cfg_data, "max_units", None) or cfg_data.max_length)
-        char_vocab = load_char_vocab(cfg_data.char_vocab_path)
+        char_vocab = load_char_vocab(char_vocab_path)
     # Label vocabulary (v8 CJK Phase 2): non-default sets are threaded through the CHAR path only.
     # The SP path still encodes against the module-global STAGE3 maps, so a non-default set there
     # would silently mislabel — raise instead (the #1349 lesson: silent label-space mismatches).
@@ -796,32 +801,37 @@ def iter_encoded(
     anchor_lookup = load_anchor_lookup(cfg_data.anchor_lookup_path) if cfg_data.anchor_lookup_path else None
     # Gazetteer-anchor lexicon (#464): loaded once. None → no gazetteer features (back-compat).
     gazetteer_lexicon = None
-    if getattr(cfg_data, "gazetteer_lexicon_path", None):
+    gazetteer_path = getattr(cfg_data, "gazetteer_lexicon_path", None)
+    if gazetteer_path:
         from .gazetteer_anchor import load_gazetteer_lexicon
 
-        gazetteer_lexicon = load_gazetteer_lexicon(cfg_data.gazetteer_lexicon_path)
+        gazetteer_lexicon = load_gazetteer_lexicon(gazetteer_path)
     # Country-lexicon (#1104): loaded once. None → no country features (back-compat).
     country_lexicon = None
-    if getattr(cfg_data, "country_lexicon_path", None):
+    country_path = getattr(cfg_data, "country_lexicon_path", None)
+    if country_path:
         from .country_lexicon import load_country_lexicon
 
-        country_lexicon = load_country_lexicon(cfg_data.country_lexicon_path)
+        country_lexicon = load_country_lexicon(country_path)
     # Street-type lexicon (P-A / Option A): same JSON schema as the gazetteer lexicon, so it reuses
     # load_gazetteer_lexicon. None → no street-type features (back-compat).
     street_type_lexicon = None
-    if getattr(cfg_data, "street_type_lexicon_path", None):
+    street_type_path = getattr(cfg_data, "street_type_lexicon_path", None)
+    if street_type_path:
         from .gazetteer_anchor import load_gazetteer_lexicon
 
-        street_type_lexicon = load_gazetteer_lexicon(cfg_data.street_type_lexicon_path)
+        street_type_lexicon = load_gazetteer_lexicon(street_type_path)
     # Locality-surface lexicon (v3.16.0): same JSON schema → same loader.
     locality_surface_lexicon = None
-    if getattr(cfg_data, "locality_surface_lexicon_path", None):
+    locality_path = getattr(cfg_data, "locality_surface_lexicon_path", None)
+    if locality_path:
         from .gazetteer_anchor import load_gazetteer_lexicon
 
-        locality_surface_lexicon = load_gazetteer_lexicon(cfg_data.locality_surface_lexicon_path)
+        locality_surface_lexicon = load_gazetteer_lexicon(locality_path)
     affix_relabel_lexicon = None
-    if getattr(cfg_data, "affix_relabel_lexicon_path", None):
-        affix_relabel_lexicon = AffixRelabelLexicon.load(cfg_data.affix_relabel_lexicon_path)
+    affix_path = getattr(cfg_data, "affix_relabel_lexicon_path", None)
+    if affix_path:
+        affix_relabel_lexicon = AffixRelabelLexicon.load(affix_path)
     astral_skipped = 0
     for row in iter_rows(
         Path(cfg_data.corpus_dir),
@@ -895,6 +905,8 @@ def iter_encoded(
                 char_ids=enc["char_ids"],
             )
             continue
+        if tokenizer is None:
+            raise ValueError("the SentencePiece path requires a tokenizer")
         enc = encode_row(
             tokenizer,
             row["raw"],
@@ -939,7 +951,7 @@ def iter_encoded(
         )
 
 
-def collate(batch: list[EncodedExample]) -> dict:
+def collate(batch: list[EncodedExample]) -> dict[str, Any]:
     """Stack a list of ``EncodedExample`` into batched lists. Caller wraps in torch tensors."""
     out = {
         "input_ids": [ex.input_ids for ex in batch],
@@ -983,7 +995,7 @@ def iter_batches(
     batch_size: int,
     seed: int = 0,
     row_limit: int | None = None,
-) -> Iterator[dict]:
+) -> Iterator[dict[str, Any]]:
     """Yield collated batches indefinitely until the underlying iterator exhausts."""
     rng = random.Random(seed)
     buf: list[EncodedExample] = []
