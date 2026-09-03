@@ -9,10 +9,12 @@
  *   `gb-fork-entity-savile-row-guard` tracks the live behavior; THIS test is the blocking half.
  */
 
+import type { AddressNode } from "@mailwoman/core/decoder"
 import {
 	probeForkEntity,
 	probeVenueNearAnchor,
 	probeVenueNearAnchorFolded,
+	venueAnchorRadiusM,
 	type ForkEntityProbeOpts,
 } from "mailwoman/fork-entity"
 import type { POIExecutorLookup } from "mailwoman/poi"
@@ -129,6 +131,18 @@ describe("probeVenueNearAnchor (#1684's venue tier)", () => {
 		expect(probeVenueNearAnchor("The Red Lion", LONDON, { lookup })).toBeNull()
 	})
 
+	it("honors a tightened reach — a unit-postcode anchor refuses the namesake 9.9 km away", () => {
+		// The board row: the walk answered "University of Chichester, Bognor Regis" to its unit postcode,
+		// 80 m from the campus, and the only same-named entity in the metro was the OTHER campus, 9.87 km
+		// away. Under the locality reach that entity is locally unique and replaces a better answer.
+		const bognor = { lat: 50.7876, lon: -0.6717 }
+		const lookup = stubLookup([{ name: "University of Chichester", lat: 50.8455, lon: -0.7756, country: "GB" }])
+
+		expect(probeVenueNearAnchor("University of Chichester", bognor, { lookup })?.country).toBe("GB")
+		expect(probeVenueNearAnchor("University of Chichester", { ...bognor, radiusM: 1000 }, { lookup })).toBeNull()
+		expect(probeVenueNearAnchorFolded("University of Chichester", { ...bognor, radiusM: 1000 }, { lookup })).toBeNull()
+	})
+
 	it("abstains when the only exact bearer is beyond the check — another city's venue never contests", () => {
 		const lookup = stubLookup([{ name: "Nine Elms Tavern", lat: 40.7, lon: -74, country: "US" }])
 
@@ -204,5 +218,41 @@ describe("probeVenueNearAnchorFolded (the qualifier-folding second leg)", () => 
 		const decoration = "x".repeat(100_000)
 
 		expect(probeVenueNearAnchorFolded(`Mischicks Day Spa - ${decoration}`, LONDON, { lookup })).toBeNull()
+	})
+})
+
+describe("venueAnchorRadiusM (the reach the anchor's grade allows)", () => {
+	const ANSWER = { lat: 50.7876, lon: -0.6717 }
+
+	function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode {
+		return { start: 0, end: 0, confidence: 1, children: [], ...partial }
+	}
+
+	it("tightens to 1 km when the answer IS a unit-grade postcode hit", () => {
+		const roots = [
+			node({ tag: "locality", value: "Bognor Regis", lat: 50.78, lon: -0.68 }),
+			node({ tag: "postcode", value: "PO21 1HR", ...ANSWER, metadata: { resolver_name: "PO21 1HR" } }),
+		]
+
+		expect(venueAnchorRadiusM(ANSWER, roots)).toBe(1000)
+	})
+
+	it("keeps the locality reach for an AREA-grade hit — an outward district is a centroid, not a door", () => {
+		const roots = [node({ tag: "postcode", value: "PO21", ...ANSWER, metadata: { resolver_name: "PO21" } })]
+
+		expect(venueAnchorRadiusM(ANSWER, roots)).toBe(30_000)
+	})
+
+	it("keeps the locality reach when the postcode node is not the answer — the locality centroid won", () => {
+		const roots = [
+			node({ tag: "locality", value: "Bognor Regis", ...ANSWER }),
+			node({ tag: "postcode", value: "PO21 1HR", lat: 50.79, lon: -0.67, metadata: { resolver_name: "PO21 1HR" } }),
+		]
+
+		expect(venueAnchorRadiusM(ANSWER, roots)).toBe(30_000)
+	})
+
+	it("keeps the locality reach with no postcode node at all", () => {
+		expect(venueAnchorRadiusM(ANSWER, [node({ tag: "locality", value: "Bognor Regis", ...ANSWER })])).toBe(30_000)
 	})
 })

@@ -25,7 +25,8 @@
  *      query resolve at all.
  */
 
-import type { AddressNode } from "@mailwoman/core/decoder"
+import { isUnitGradePostcodeHit } from "@mailwoman/codex"
+import { collectNodes, type AddressNode } from "@mailwoman/core/decoder"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 
 import { type AdminCoherenceReport, type AdminCoherenceTreeNode, forkedEntityCoherenceField } from "#admin-coherence"
@@ -182,16 +183,57 @@ function applyForkEntityAnswer(
 const VENUE_ANCHOR_THRESHOLD_M = 30_000
 
 /**
+ * The same bound when the anchor is a UNIT-GRADE postcode hit rather than a centroid, meters. A unit postcode names a
+ * handful of doors, so a same-named entity kilometers from it is another bearer (a second campus, a chain's other
+ * branch), and the locality bound admits exactly that: it replaced an answer 80 m from a venue with its namesake 9.9 km
+ * away. Every board row the tier improves moves its answer under 1.6 km from a LOCALITY anchor; a unit anchor is finer
+ * still, so the bound is tighter than any of those moves.
+ */
+const VENUE_UNIT_ANCHOR_THRESHOLD_M = 1000
+
+/**
+ * The anchor the venue tier measures from, with the reach its GRADE allows. The answer coordinate is the anchor;
+ * `radiusM` defaults to {@link VENUE_ANCHOR_THRESHOLD_M} and {@link venueAnchorRadiusM} tightens it.
+ */
+export interface VenueAnchor {
+	lat: number
+	lon: number
+	radiusM?: number
+}
+
+/**
+ * How far the venue tier may reach from the answer it is replacing. A unit-grade postcode hit
+ * ({@link isUnitGradePostcodeHit}) whose coordinate IS the answer resolved the walk to a handful of doors, so the venue
+ * must sit within {@link VENUE_UNIT_ANCHOR_THRESHOLD_M}; every other admin or street answer is a centroid and keeps
+ * {@link VENUE_ANCHOR_THRESHOLD_M}. The coordinate equality is exact on purpose: result assembly copies the winning
+ * node's coordinate verbatim, so a postcode node that is NOT the answer never narrows the bound.
+ */
+export function venueAnchorRadiusM(anchor: { lat: number; lon: number }, roots: readonly AddressNode[]): number {
+	const postcode = collectNodes(
+		roots,
+		(node) => node.tag === "postcode" && node.lat === anchor.lat && node.lon === anchor.lon
+	)[0]
+
+	if (!postcode) return VENUE_ANCHOR_THRESHOLD_M
+
+	const resolverName = postcode.metadata?.["resolver_name"]
+
+	return isUnitGradePostcodeHit(postcode.value, typeof resolverName === "string" ? resolverName : undefined)
+		? VENUE_UNIT_ANCHOR_THRESHOLD_M
+		: VENUE_ANCHOR_THRESHOLD_M
+}
+
+/**
  * Probe the entity layer for a parsed VENUE near a resolved anchor — the #1684 POI-half's first mechanism, and the
  * anchored sibling of {@link probeForkEntity}. The fork probe requires WORLDWIDE uniqueness because a bare fork surface
  * has no other evidence; a venue-led address DOES — the walk already resolved its admin anchor — so the discipline here
- * is LOCAL uniqueness: exact name-key entities only, and exactly ONE of them within {@link VENUE_ANCHOR_THRESHOLD_M} of
- * the anchor. Two same-named venues in one metro is a genuine ambiguity and abstains; entities beyond the check are
- * other cities' bearers and never contest.
+ * is LOCAL uniqueness: exact name-key entities only, and exactly ONE of them within the anchor's reach
+ * ({@link VenueAnchor}, {@link VENUE_ANCHOR_THRESHOLD_M} unless the caller tightened it). Two same-named venues in one
+ * metro is a genuine ambiguity and abstains; entities beyond the check are other cities' bearers and never contest.
  */
 export function probeVenueNearAnchor(
 	venueRaw: string,
-	anchor: { lat: number; lon: number },
+	anchor: VenueAnchor,
 	opts: Pick<ForkEntityProbeOpts, "lookup">
 ): ForkEntityHit | null {
 	const nameKey = normalizeLocalityForKey(venueRaw)
@@ -220,9 +262,9 @@ export function probeVenueNearAnchor(
 		entities.push(hit)
 	}
 
-	const near = entities.filter(
-		(e) => distanceM(anchor.lat, anchor.lon, e.latitude, e.longitude) <= VENUE_ANCHOR_THRESHOLD_M
-	)
+	const radiusM = anchor.radiusM ?? VENUE_ANCHOR_THRESHOLD_M
+
+	const near = entities.filter((e) => distanceM(anchor.lat, anchor.lon, e.latitude, e.longitude) <= radiusM)
 
 	if (near.length !== 1) return null
 
@@ -287,9 +329,11 @@ export function applyEntityTiers(
 		result.lon !== null &&
 		(result.resolution_tier === "admin" || result.resolution_tier === "street")
 	) {
+		const anchor = { lat: result.lat, lon: result.lon }
+
 		const hit = probeVenueNearAnchorFolded(
 			result.venue,
-			{ lat: result.lat, lon: result.lon },
+			{ ...anchor, radiusM: venueAnchorRadiusM(anchor, resolvedRoots) },
 			{ lookup: deps.poiLookup }
 		)
 
@@ -352,7 +396,7 @@ function venueHeadSegment(venueRaw: string): string | null {
  */
 export function probeVenueNearAnchorFolded(
 	venueRaw: string,
-	anchor: { lat: number; lon: number },
+	anchor: VenueAnchor,
 	opts: Pick<ForkEntityProbeOpts, "lookup">
 ): ForkEntityHit | null {
 	const exact = probeVenueNearAnchor(venueRaw, anchor, opts)
@@ -394,9 +438,9 @@ export function probeVenueNearAnchorFolded(
 		entities.push(hit)
 	}
 
-	const near = entities.filter(
-		(e) => distanceM(anchor.lat, anchor.lon, e.latitude, e.longitude) <= VENUE_ANCHOR_THRESHOLD_M
-	)
+	const radiusM = anchor.radiusM ?? VENUE_ANCHOR_THRESHOLD_M
+
+	const near = entities.filter((e) => distanceM(anchor.lat, anchor.lon, e.latitude, e.longitude) <= radiusM)
 
 	if (near.length !== 1) return null
 
