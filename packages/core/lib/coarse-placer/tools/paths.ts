@@ -7,11 +7,10 @@
  *   a relocated artifact is a one-line change rather than a sweep of every tool's option default.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
-import type { PathBuilderLike } from "path-ts"
-import { resolvePath } from "path-ts"
+import { type PathBuilderLike, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { pathExists } from "#fs/readers"
 import { corePackagePath, dataRootPath, repoRootPath } from "#utils"
 
 /**
