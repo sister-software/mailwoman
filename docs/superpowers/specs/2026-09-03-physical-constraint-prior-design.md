@@ -165,7 +165,7 @@ posture is data in the artifact, not prose here.
 GeoPlace data © Local Government Information House Limited copyright and database right [year]`,
   and `Source: Office for National Statistics licensed under the Open Government Licence v.3.0`.
   Northern Ireland (`BT`) postcode data is excluded from the open terms and needs a separate
-  Land & Property Services licence, which the NI section already assumed.
+  Land & Property Services license, which the NI section already assumed.
 - **F2.** The null model on `PO`: exact-assignment rate against NSUL. Below 80%, stop.
 - **F3.** The footprint rule lifts exact assignment by at least 5 pp over F2. Otherwise drop the
   footprint input.
