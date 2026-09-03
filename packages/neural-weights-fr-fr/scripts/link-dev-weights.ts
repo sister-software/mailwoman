@@ -17,6 +17,8 @@
  *   What fr-fr DOES own locally (`resolveFromPackageDir` resolves these from the overlay dir with no base fallback):
  *
  *   - `anchor-lexicon-v1.json` / `country-surface-lexicon-v1.json` — checked-in repo files.
+ *   - `street-type-lexicon-v*.json` / `locality-surface-lexicon-v*.json` — the evidence lexicons, by the generation
+ *       the card names under `requires.<channel>.lexicon`, the same pair the `files` array ships.
  *   - `postcode-fr.bin` — derived from the WOF intl postcode extract (`softFeed.postcodeDBByCountry.fr` =
  *       postalcode-intl.db), built skip-if-present. Without it a fresh worktree parses anchor-OFF.
  *   - `pair-index-fr.bin` (hierarchy campaign R6) — built from the raw BAN dump through the shared
@@ -50,6 +52,7 @@ await materializeDevOverlay({
 	locale: "fr-fr",
 	model: { kind: "inherit" },
 	softFeed: [ANCHOR_LEXICON_LINK, COUNTRY_SURFACE_LEXICON_LINK],
+	evidenceLexiconsFromCard: true,
 	postcodeBinary: { country: "fr", database: String(dataRootPath("wof", "postalcode-intl.db")) },
 	pairIndex: {
 		country: "fr",
