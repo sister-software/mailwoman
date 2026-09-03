@@ -9,6 +9,7 @@
 
 import { expandAbbreviations } from "#abbreviations"
 import { applyCjkNormalization } from "#cjk"
+import { spaceAfterComma } from "#comma-spacing"
 import { applyNFC } from "#nfc"
 import { composeMaps, identityMap } from "#offset-map"
 import { applyPunctuation } from "#punctuation"
@@ -49,6 +50,19 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 			text = r.text
 			map = composeMaps(map, r.map)
 			transforms.push({ kind: "normalize_punctuation", replacements: r.replacements })
+		}
+	}
+
+	// 2.5 Comma spacing — a comma glued to a letter gains a space. Runs after punctuation (so a folded
+	// full-width comma is seen) and before whitespace collapse (so a comma already followed by a space is
+	// never doubled).
+	{
+		const r = spaceAfterComma(text)
+
+		if (r.inserted > 0) {
+			text = r.text
+			map = composeMaps(map, r.map)
+			transforms.push({ kind: "space_after_comma", inserted: r.inserted })
 		}
 	}
 

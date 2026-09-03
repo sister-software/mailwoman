@@ -69,6 +69,11 @@
 			"default": "./out/punctuation.js",
 			"types": "./out/punctuation.d.ts"
 		},
+		"./comma-spacing": {
+			"node": "./lib/comma-spacing.ts",
+			"default": "./out/comma-spacing.js",
+			"types": "./out/comma-spacing.d.ts"
+		},
 		"./fold": {
 			"node": "./lib/fold.ts",
 			"default": "./out/fold.js",
