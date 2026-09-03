@@ -88,6 +88,7 @@ import unicodedata
 from collections import Counter
 from collections.abc import Iterable, Iterator, Sequence
 from pathlib import Path
+from typing import Any
 
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -316,7 +317,7 @@ def render_row(
     spaced: bool,
     country: bool,
     hyphen: str = "-",
-) -> dict:
+) -> dict[str, Any]:
     """Render one JP row in one register, returning the #519 span-triple slice record.
 
     Order is native large-to-small and space-free by default (``spaced`` inserts single ASCII spaces
@@ -493,8 +494,8 @@ def iter_source_rows(
     parquet: Path,
     max_row_groups: int | None = None,
     max_field_chars: int = MAX_FIELD_CHARS,
-    dropped: Counter | None = None,
-) -> Iterator[tuple]:
+    dropped: Counter[str] | None = None,
+) -> Iterator[tuple[str, str, str, str, float, float]]:
     """Yield ``(prefecture, municipality, street, number, lon, lat)`` for every eligible source row.
 
     Eligibility, and why each rule exists — all four counts measured over the full 19,587,926 rows:
@@ -592,7 +593,7 @@ def water_fill(counts: dict[str, int], target: int) -> int:
 # --- Verification --------------------------------------------------------------------------------
 
 
-def verify_record(record: dict, tag_set: frozenset[str]) -> None:
+def verify_record(record: dict[str, Any], tag_set: frozenset[str]) -> None:
     """Re-validate one rendered record through the TRAINING consumer, not through its own author.
 
     Five independent checks, each of which has a scar behind it: the row fits S=96 so the loader
@@ -617,7 +618,7 @@ def verify_record(record: dict, tag_set: frozenset[str]) -> None:
     char_label_array_from_spans(raw, record["span_starts"], record["span_ends"], record["span_tags"])
 
 
-def coverage_stats(records: Iterable[dict]) -> dict:
+def coverage_stats(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
     """The BIO coverage the eval protocol asks for — counted on the LABEL ARRAY, not on the JSON.
 
     ``JSON hides gaps``: a span triple can look complete while the array the model reads is mostly
@@ -663,7 +664,7 @@ def coverage_stats(records: Iterable[dict]) -> dict:
 # --- Build ---------------------------------------------------------------------------------------
 
 
-def build(args: argparse.Namespace) -> dict:
+def build(args: argparse.Namespace) -> dict[str, Any]:
     rng = random.Random(args.seed)
     tag_set = frozenset(resolve_label_set(LABEL_SET_NAME).tags)
     kenall = load_kenall_postcodes(Path(args.kenall))
@@ -711,8 +712,8 @@ def build(args: argparse.Namespace) -> dict:
     # --- Pass 2: exact selection, streamed. ------------------------------------------------------
     selectors = {p: select_exact(pool_counts[p], quotas[p], rng) for p in pool_counts}
     board_selector = select_exact(board_count, args.board_rows, rng)
-    selected: list[tuple] = []
-    board: list[tuple] = []
+    selected: list[tuple[str, str, str, str, float, float]] = []
+    board: list[tuple[str, str, str, str, float, float]] = []
     for row in iter_source_rows(parquet, args.max_row_groups, args.max_field_chars):
         if muni_bucket(row[1]) >= BOARD_BUCKET_MIN:
             if next(board_selector):
@@ -728,8 +729,8 @@ def build(args: argparse.Namespace) -> dict:
     kenall_tiers: Counter[str] = Counter()
     register_unavailable: Counter[str] = Counter()
 
-    def encode(rows: Sequence[tuple]) -> list[dict]:
-        out: list[dict] = []
+    def encode(rows: Sequence[tuple[str, str, str, str, float, float]]) -> list[dict[str, Any]]:
+        out: list[dict[str, Any]] = []
         for prefecture, municipality, street, number, _lon, _lat in rows:
             district, chome = split_street(street)
             options = available_registers(chome, number)
@@ -762,10 +763,10 @@ def build(args: argparse.Namespace) -> dict:
             f"{out_dir} exists and is non-empty — pass --force to overwrite (a slice is a read-only artifact)"
         )
 
-    splits: dict[str, dict] = {}
+    splits: dict[str, dict[str, Any]] = {}
     for split, source_rows in (("train", train_source), ("val", val_source)):
         (out_dir / split).mkdir(parents=True, exist_ok=True)
-        stats_input: list[dict] = []
+        stats_input: list[dict[str, Any]] = []
         part = 0
         written = 0
         for start in range(0, len(source_rows), args.rows_per_part):
@@ -784,7 +785,7 @@ def build(args: argparse.Namespace) -> dict:
 
     # --- Held-out board (same municipality rule as the probe; rendered across registers). --------
     board_path = out_dir / "jp-board.jsonl"
-    board_records: list[dict] = []
+    board_records: list[dict[str, Any]] = []
     with board_path.open("w", encoding="utf-8") as handle:
         for prefecture, municipality, street, number, lon, lat in board:
             district, chome = split_street(street)
