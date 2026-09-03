@@ -77,7 +77,7 @@ def character_script(char: str) -> str | None:
     # their Unicode category (Lo) as a separate script manufactures Latin→Other transitions.
     compatibility = unicodedata.normalize("NFKD", char)
     if compatibility != char:
-        scripts = {script for item in compatibility if (script := character_script(item)) is not None}
+        scripts = {sc for item in compatibility if (sc := character_script(item)) is not None}
         if len(scripts) == 1:
             return scripts.pop()
     return "Other"
@@ -221,7 +221,8 @@ def _parse_mappings(values: list[str]) -> list[tuple[str, str]]:
     for value in values:
         if "=" not in value:
             raise ValueError(f"--path-prefix must be OLD=NEW, got {value!r}")
-        mappings.append(tuple(value.split("=", 1)))
+        old, new = value.split("=", 1)
+        mappings.append((old, new))
     return mappings
 
 

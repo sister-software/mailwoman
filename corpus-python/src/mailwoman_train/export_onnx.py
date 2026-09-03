@@ -12,6 +12,7 @@ Per Phase 2 §7:
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import torch
@@ -79,7 +80,7 @@ def export_to_onnx(
             self.with_locale = False
             self.with_spans = False
 
-        def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
+        def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> Any:
             out = self.inner(input_ids=input_ids, attention_mask=attention_mask)
             outs = [out.logits]
             if self.with_locale:
@@ -101,7 +102,7 @@ def export_to_onnx(
             attention_mask: torch.Tensor,
             anchor_features: torch.Tensor,
             anchor_confidence: torch.Tensor,
-        ) -> torch.Tensor:
+        ) -> Any:
             out = self.inner(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
@@ -130,7 +131,7 @@ def export_to_onnx(
             anchor_confidence: torch.Tensor,
             gazetteer_features: torch.Tensor,
             gazetteer_confidence: torch.Tensor,
-        ) -> torch.Tensor:
+        ) -> Any:
             out = self.inner(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
@@ -163,7 +164,7 @@ def export_to_onnx(
             gazetteer_confidence: torch.Tensor,
             country_features: torch.Tensor,
             country_confidence: torch.Tensor,
-        ) -> torch.Tensor:
+        ) -> Any:
             out = self.inner(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
@@ -206,7 +207,7 @@ def export_to_onnx(
             street_type_confidence: torch.Tensor,
             locality_surface_features: torch.Tensor,
             locality_surface_confidence: torch.Tensor,
-        ) -> torch.Tensor:
+        ) -> Any:
             out = self.inner(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
@@ -241,7 +242,7 @@ def export_to_onnx(
             attention_mask: torch.Tensor,
             gazetteer_features: torch.Tensor,
             gazetteer_confidence: torch.Tensor,
-        ) -> torch.Tensor:
+        ) -> Any:
             out = self.inner(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
@@ -299,8 +300,10 @@ def export_to_onnx(
             torch.zeros((dummy_batch, max_length, locality_surface_dim), dtype=torch.float32),
             torch.zeros((dummy_batch, max_length), dtype=torch.float32),
         )
-        export_model = _LogitsOnlyBundle(model_cpu).eval()
-        args = (
+        export_model: Any = _LogitsOnlyBundle(
+            model_cpu
+        ).eval()  # wrapper picked dynamically below; carries with_locale/with_spans
+        args: tuple[Any, ...] = (
             dummy_ids,
             dummy_mask,
             *anchor_args,
@@ -437,12 +440,12 @@ def verify_parity(
     sample_inputs: list[tuple[list[int], list[int]]],
     *,
     atol: float = 1e-4,
-) -> dict:
+) -> dict[str, Any]:
     """Compare ONNX logits to PyTorch logits over a sample. Returns a metrics dict.
 
     Logs the max absolute diff across samples; raises if any exceeds ``atol``.
     """
-    import onnxruntime as ort  # type: ignore[import-not-found]
+    import onnxruntime as ort
 
     session = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
     model_cpu = model.to("cpu").eval()

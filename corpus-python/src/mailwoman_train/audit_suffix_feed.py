@@ -35,6 +35,7 @@ import random
 from collections import Counter
 from itertools import islice
 from pathlib import Path
+from typing import Any
 
 from .data_loader import _raw_row_stream
 from .relabel import AffixRelabelLexicon, relabel_row
@@ -90,7 +91,7 @@ def classify_street_group(words: list[str], classify_lex: AffixRelabelLexicon) -
 
 
 def evaluate_row(
-    row: dict,
+    row: dict[str, Any],
     *,
     classify_lex: AffixRelabelLexicon,
     relabel_lex: AffixRelabelLexicon,
@@ -137,7 +138,7 @@ def audit_feed(
     coarse_filter: bool,
     classify_lex: AffixRelabelLexicon,
     relabel_lex: AffixRelabelLexicon,
-) -> dict:
+) -> dict[str, Any]:
     stream = _raw_row_stream(
         Path(corpus_dir),
         "train",
@@ -146,10 +147,10 @@ def audit_feed(
         source_weights=source_weights,
         coarse_filter=coarse_filter,
     )
-    carriers: Counter = Counter()
-    correct: Counter = Counter()
-    per_source_carriers: Counter = Counter()
-    per_source_correct: Counter = Counter()
+    carriers: Counter[tuple[str, str]] = Counter()
+    correct: Counter[tuple[str, str]] = Counter()
+    per_source_carriers: Counter[tuple[str, str]] = Counter()
+    per_source_correct: Counter[tuple[str, str]] = Counter()
     sampled = 0
     for row in islice(stream, rows):
         sampled += 1
@@ -160,7 +161,7 @@ def audit_feed(
             per_source_carriers[(cls, row["source"])] += 1
             per_source_correct[(cls, row["source"])] += int(ok)
 
-    def _cell(cls: str, bucket: str) -> dict:
+    def _cell(cls: str, bucket: str) -> dict[str, Any]:
         n = carriers[(cls, bucket)]
         k = correct[(cls, bucket)]
         return {"carriers": n, "correct": k, "rate": (k / n) if n else None}
@@ -202,7 +203,7 @@ def run(
     seed: int = 1569,
     corpus_dir: Path | None = None,
     json_path: Path | None = None,
-) -> dict:
+) -> dict[str, Any]:
     from .config import load_config
 
     cfg = load_config(config_path)

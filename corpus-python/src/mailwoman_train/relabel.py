@@ -41,6 +41,7 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from .augment import row_span_triple
 
@@ -142,7 +143,7 @@ def split_street_span(words: list[str], lex: AffixRelabelLexicon) -> tuple[int, 
     return (prefix, 1)
 
 
-def relabel_row(row: dict, lex: AffixRelabelLexicon) -> bool:
+def relabel_row(row: dict[str, Any], lex: AffixRelabelLexicon) -> bool:
     """Relabel every street span in ``row`` (mutates ``row['labels']`` in place; replaces the
     char-offset span arrays when the row carries them — #519).
 
@@ -185,7 +186,7 @@ def relabel_row(row: dict, lex: AffixRelabelLexicon) -> bool:
     return changed
 
 
-def relabel_spans(row: dict, lex: AffixRelabelLexicon) -> bool:
+def relabel_spans(row: dict[str, Any], lex: AffixRelabelLexicon) -> bool:
     """Split every ``street`` char-offset span in ``row`` with the builder's exact semantics —
     pure char arithmetic (#519).
 

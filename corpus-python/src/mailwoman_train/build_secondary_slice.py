@@ -32,6 +32,7 @@ import argparse
 import json
 import random
 from pathlib import Path
+from typing import Any
 
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -74,7 +75,7 @@ EU_BASES: tuple[tuple[str, str, str, str], ...] = (
 )
 
 
-def _row_from_groups(groups: list[list[tuple[str, str]]], sep: str) -> dict:
+def _row_from_groups(groups: list[list[tuple[str, str]]], sep: str) -> dict[str, Any]:
     """Build a row (raw + tokens + labels + char-offset spans) from ordered GROUPS. Within a group the
     (tag, text) parts are ALWAYS space-joined (a designator + its id — "STE 200", "FL 3" — are one
     logical unit); groups are joined by ``sep`` (", " punctuated / " " delimiter-free, #1101). Cursor
@@ -133,11 +134,11 @@ def _secondary_forms(rng: random.Random) -> list[list[tuple[str, str]]]:
     return forms
 
 
-def generate(cap: int) -> list[dict]:
+def generate(cap: int) -> list[dict[str, Any]]:
     """Combinatorial secondary-address rows: each base × each secondary form, punctuated AND
     delimiter-free (#1101), US streets and EU orders. Deterministic under SEED."""
     rng = random.Random(SEED)
-    rows: list[dict] = []
+    rows: list[dict[str, Any]] = []
 
     for _ in range(cap):
         for sep in (", ", " "):  # punctuated + whitespace-only (#1101)
@@ -164,7 +165,7 @@ def generate(cap: int) -> list[dict]:
     return rows
 
 
-def _self_check(rows: list[dict]) -> None:
+def _self_check(rows: list[dict[str, Any]]) -> None:
     """Every span MUST slice its own entity text in raw, spans sorted + non-overlapping — the corruption
     guard. Raises on the first violation rather than writing a silently mislabeled slice."""
     for r in rows:

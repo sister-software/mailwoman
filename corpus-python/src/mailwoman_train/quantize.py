@@ -29,7 +29,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import onnx
-from onnxruntime.quantization import QuantType, quantize_dynamic  # type: ignore[import-not-found]
+from onnxruntime.quantization import QuantType, quantize_dynamic
 
 
 def _strip_value_info(src: Path, dst: Path) -> Path:

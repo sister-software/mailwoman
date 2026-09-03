@@ -103,7 +103,8 @@ class SpanScorer(nn.Module):
             dim=2,
         )  # (B, S, L, D)
         span_h = torch.tanh(starts.unsqueeze(2) + shifted)  # (B, S, L, D)
-        return self.type_out(span_h)  # (B, S, L, T)
+        type_out: torch.Tensor = self.type_out(span_h)  # Module-call Any narrowed to Tensor
+        return type_out  # (B, S, L, T)
 
 
 # Finite sentinel rather than -inf: an all-masked row's logsumexp would be -inf - (-inf) = NaN, and

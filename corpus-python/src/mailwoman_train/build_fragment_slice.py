@@ -29,6 +29,7 @@ import glob as globlib
 import json
 import random
 from pathlib import Path
+from typing import Any
 
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -57,7 +58,17 @@ PER_LOCALE_CAP = 4000
 SEED = 42
 
 
-def collect_oa_pairs(oa_root: Path, locale_dir: str, cap: int) -> tuple[list[tuple[str, str]], list[str]]:
+def collect_oa_pairs(
+    oa_root: Path,
+    locale_dir: str,
+    cap: int,
+) -> tuple[
+    list[tuple[str, str]],
+    list[str],
+    list[tuple[str, str]],
+    list[tuple[str, str, str]],
+    list[tuple[str, str, str]],
+]:
     """Distinct (street, number) pairs + distinct CITY names from a locale's OA CSVs.
 
     The city names feed bare-locality POLARITY rows: the #511 spread-scan measured slice street
@@ -175,7 +186,7 @@ def span_rows_from_corpus(
     return {c: rng.sample(sorted(v), min(cap, len(v))) for c, v in out.items() if v}
 
 
-def render(surface: str, number: str | None, tag: str = "street") -> dict:
+def render(surface: str, number: str | None, tag: str = "street") -> dict[str, Any]:
     """Render a fragment row with by-construction BIO labels + char spans (tag: street|locality)."""
     surface_tokens = surface.split()
     tokens = list(surface_tokens)
@@ -205,7 +216,7 @@ def render(surface: str, number: str | None, tag: str = "street") -> dict:
     }
 
 
-def render_locality_postcode(city: str, postcode: str) -> dict:
+def render_locality_postcode(city: str, postcode: str) -> dict[str, Any]:
     """Slice-v2 (v251 read-out): the "Eight Mile Plains 4113" class — locality + trailing postcode."""
     tokens = city.split() + [postcode]
     labels = ["B-locality"] + ["I-locality"] * (len(city.split()) - 1) + ["B-postcode"]
@@ -241,7 +252,9 @@ COUNTRY_NAMES = {
 }
 
 
-def render_context(street: str, number: str, city: str, country: str, trailing: bool, with_country: bool) -> dict:
+def render_context(
+    street: str, number: str, city: str, country: str, trailing: bool, with_country: bool
+) -> dict[str, Any]:
     """Slice-v4: COMMA-FREE context rows — the failure-census headline class (71/143 street misses
     were unpunctuated street<->admin boundaries: "Rue Henri Barbusse Paris France"). Euro order
     STREET NUMBER CITY [COUNTRY]; en order NUMBER STREET CITY [COUNTRY]. No punctuation anywhere."""
@@ -283,7 +296,7 @@ def render_context(street: str, number: str, city: str, country: str, trailing: 
     }
 
 
-def render_unit(unit: str, number: str, street: str) -> dict:
+def render_unit(unit: str, number: str, street: str) -> dict[str, Any]:
     """Slice-v2: AU compact unit rows — "UNIT 711 139 BOUVERIE STREET" (unit, house_number, street)."""
     unit_tokens, street_tokens = unit.split(), street.split()
     tokens = unit_tokens + [number] + street_tokens
@@ -343,7 +356,7 @@ def admin_pairs_from_corpus(parquet_glob: str, cap: int) -> list[tuple[str, str]
     return rng.sample(sorted(pairs), min(cap, len(pairs)))
 
 
-def render_admin_pair(locality: str, region: str) -> dict:
+def render_admin_pair(locality: str, region: str) -> dict[str, Any]:
     """US "LOCALITY REGION" comma-free pair — the locality<->region boundary row."""
     locality_tokens, region_tokens = locality.split(), region.split()
     tokens = locality_tokens + region_tokens
@@ -380,7 +393,9 @@ COUNTRY_SURFACES: dict[str, list[str]] = {
 COUNTRY_SURFACES = {iso2: forms for iso2, forms in COUNTRY_SURFACES.items() if forms}
 
 
-def render_country_context(street: str, number: str, city: str, country_name: str, trailing: bool, comma: bool) -> dict:
+def render_country_context(
+    street: str, number: str, city: str, country_name: str, trailing: bool, comma: bool
+) -> dict[str, Any]:
     """#1104 country counterweight: a full address ENDING in a country token, comma'd OR comma-free, so the
     fine-tune keeps the country class alive — the slice-v5 mass (bare streets/localities/admin pairs) is
     country-SPARSE and eroded country recall 88.6%→82.0%. Fields are groups (number+street space-joined as
@@ -429,7 +444,7 @@ def render_country_context(street: str, number: str, city: str, country_name: st
     }
 
 
-def render_country_leading(surface: str, region: str, locality: str) -> dict:
+def render_country_leading(surface: str, region: str, locality: str) -> dict[str, Any]:
     """#1104 v2.9.1: a LEADING-position country admin row — "United States of America, Wyoming, Лорейн"
     (country FIRST, then region, then locality). This is the golden WOF-admin distribution the v290
     tail-only counterweight missed; the locality may be NON-Latin (transliterated WOF alt-names), which
@@ -489,9 +504,9 @@ def main() -> None:
     args = ap.parse_args()
 
     rng = random.Random(SEED)
-    rows: list[dict] = []
+    rows: list[dict[str, Any]] = []
 
-    def push(base: dict, country: str, locale: str, license_note: str) -> None:
+    def push(base: dict[str, Any], country: str, locale: str, license_note: str) -> None:
         rows.append(
             {
                 **base,

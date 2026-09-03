@@ -22,12 +22,13 @@ import json
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import torch
 
 from .config import Config
 from .labels import ACTIVE_BIO_LABELS, ACTIVE_TAGS
-from .tokenizer import Tokenizer
+from .tokenizer import PieceSpan, Tokenizer
 
 
 @dataclass
@@ -111,7 +112,7 @@ def golden_to_bio_labels(
     return input_ids, attention, label_ids
 
 
-def decode_components(pieces, pred_label_ids: list[int], raw: str) -> dict[str, str]:
+def decode_components(pieces: list[PieceSpan], pred_label_ids: list[int], raw: str) -> dict[str, str]:
     """Convert a per-piece predicted label sequence into a {tag: surface_string} dict.
 
     For each contiguous run of ``B-TAG`` + ``I-TAG`` pieces, slice ``raw`` from the run's
@@ -195,8 +196,9 @@ def run_eval(
         # Trim to non-padding length first so the decoder sees the same length the model
         # used. With CRF, predict() honors attention_mask + returns mask-trimmed lists.
         real_len = min(len(pieces), cfg.data.max_length)
-        if hasattr(model, "predict") and getattr(model, "crf", None) is not None:
-            decoded_batch = model.predict(input_ids=x, attention_mask=m)
+        predict_fn = getattr(model, "predict", None)
+        if predict_fn is not None and getattr(model, "crf", None) is not None:
+            decoded_batch = predict_fn(input_ids=x, attention_mask=m)
             pred_ids = decoded_batch[0][:real_len] if decoded_batch else []
         else:
             pred_ids = probs.argmax(dim=-1).tolist()[:real_len]
@@ -239,9 +241,9 @@ def run_eval(
     # Calibration buckets: 10 evenly spaced.
     buckets = [{"low": i / 10, "high": (i + 1) / 10, "n": 0, "acc": 0.0} for i in range(10)]
     for conf, correct in confidence_correct:
-        b = min(9, int(conf * 10))
-        buckets[b]["n"] += 1
-        buckets[b]["acc"] += correct
+        b_i = min(9, int(conf * 10))
+        buckets[b_i]["n"] += 1
+        buckets[b_i]["acc"] += correct
     for b in buckets:
         if b["n"] > 0:
             b["acc"] = b["acc"] / b["n"]
@@ -283,7 +285,7 @@ def render_report_markdown(report: EvalReport, header: str = "") -> str:
     return "\n".join(lines)
 
 
-def report_to_json(report: EvalReport) -> dict:
+def report_to_json(report: EvalReport) -> dict[str, Any]:
     return {
         "n_entries": report.n_entries,
         "full_parse_exact_match": report.full_parse_exact_match,

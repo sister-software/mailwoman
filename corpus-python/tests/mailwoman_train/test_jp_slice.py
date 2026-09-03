@@ -11,7 +11,7 @@ import random
 
 import pytest
 
-from .build_jp_slice import (
+from mailwoman_train.build_jp_slice import (
     REGISTER_WEIGHTS,
     available_registers,
     coverage_stats,
@@ -27,7 +27,7 @@ from .build_jp_slice import (
     verify_record,
     water_fill,
 )
-from .labels import resolve_label_set
+from mailwoman_train.labels import resolve_label_set
 
 TAG_SET = frozenset(resolve_label_set("stage3-jp").tags)
 

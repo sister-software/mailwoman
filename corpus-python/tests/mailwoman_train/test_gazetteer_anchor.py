@@ -8,13 +8,13 @@ paint every word, and the char→piece projection mirrors the postcode anchor's 
 
 from __future__ import annotations
 
-from .gazetteer_anchor import (
+from mailwoman_train.gazetteer_anchor import (
     GazetteerLexicon,
     gazetteer_char_paint,
     realign_gazetteer_to_pieces,
     suppress_gazetteer_near_postcode,
 )
-from .tokenizer import PieceSpan
+from mailwoman_train.tokenizer import PieceSpan
 
 BITS = {"country": 1, "region": 2, "po_box": 4, "cedex": 8, "homograph": 16}
 SLOTS = ("country", "region", "po_box", "cedex", "homograph")
