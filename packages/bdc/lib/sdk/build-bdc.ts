@@ -311,7 +311,7 @@ const PROVIDER_ID_PEEK_BYTES = 64 * 1024
  * Peeks each file's `provider_id` off its head ({@linkcode peekProviderID}, passing the path through so a malformed
  * file's error names it), then STREAMS every row via `readAvailabilityRows` — the file is never resident. This is the
  * production counterpart to the TEST INJECTION POINT's injected `rows` — exercised by `build-bdc.test.ts` only for the
- * malformed-provider-id rejection path, same as `build-poi.ts`'s `readParquetRows`.
+ * malformed-provider-id rejection path, same as `build-poi.ts`'s Parquet reader.
  */
 async function* readAvailabilityRowsFromCSVPaths(csvPaths: readonly string[]): AsyncIterable<BDCAvailabilityRow> {
 	for (const csvPath of csvPaths) {

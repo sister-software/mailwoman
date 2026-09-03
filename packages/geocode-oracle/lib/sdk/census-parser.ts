@@ -41,7 +41,7 @@ export const CENSUS_RESOLUTION_TIER: ResolutionTier = "interpolated"
  *
  * `@mailwoman/corpus`'s `HOUSE_NUMBER_PREFIX` (`corpus/src/adapter.ts`) is this repo's declared home for the
  * house-number/street split, and it is DELIBERATELY not used here. Reaching it means taking a dependency on
- * `@mailwoman/corpus`, which brings `@dsnp/parquetjs`, `@mailwoman/ban`, `spliterator` and the rest of the
+ * `@mailwoman/corpus`, which brings `parquet-wasm`, `apache-arrow`, `@mailwoman/ban`, `spliterator` and the rest of the
  * training-corpus pipeline behind it — for one regular expression, into a package whose entire job is to make two HTTP
  * calls. The dependency is what is wrong, not the sharing.
  *

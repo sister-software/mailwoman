@@ -276,7 +276,7 @@ export interface POISourceRow {
 /**
  * Reads a country Parquet materialized by {@link ingestPlaces} back into {@link POISourceRow}s via DuckDB.
  */
-async function* readParquetRows(parquetPaths: readonly string[]): AsyncIterable<POISourceRow> {
+async function* streamPOIRows(parquetPaths: readonly string[]): AsyncIterable<POISourceRow> {
 	// Lazy DuckDB import — this generator is only invoked when the caller didn't inject `rows`
 	// (buildPOIDatabase's test path never reaches here), preserving the "DuckDB touches only the
 	// ingest/read functions" rule.
@@ -511,8 +511,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 
 	await makeDirectories(dirname(opts.out))
 
-	const rowSource: AsyncIterable<POISourceRow> | Iterable<POISourceRow> =
-		opts.rows ?? readParquetRows(opts.parquetPaths!)
+	const rowSource: AsyncIterable<POISourceRow> | Iterable<POISourceRow> = opts.rows ?? streamPOIRows(opts.parquetPaths!)
 
 	const categoryCodes = new Map<string, number>()
 	const countries = new Map<string, number>()
