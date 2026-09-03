@@ -24,7 +24,7 @@ test("isAllCapsInput: any lowercase letter disqualifies (mixed case stays byte-s
 })
 
 test("isAllCapsInput: Latin letters with diacritics qualify; a letter from another script disqualifies", () => {
-	// #1938: `É` kept the gate shut and the model read the shouting form letter by letter.
+	// #1938: `É` kept the all-caps check from firing and the model read the shouting form letter by letter.
 	expect(isAllCapsInput("RUE DU FAUBOURG SAINT-HONORÉ")).toBe(true)
 	expect(isAllCapsInput("STRASSE PARÍS")).toBe(true)
 	expect(isAllCapsInput("MÜNCHEN")).toBe(true)
