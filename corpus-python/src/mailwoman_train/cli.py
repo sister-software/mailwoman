@@ -21,6 +21,7 @@ import json
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 
 def _find_packages_root() -> Path:
@@ -51,7 +52,7 @@ def cmd_train(args: argparse.Namespace) -> int:
     return 0
 
 
-def _apply_smoke_mode(args: argparse.Namespace, cfg) -> None:
+def _apply_smoke_mode(args: argparse.Namespace, cfg: Any) -> None:
     """Translate the operator-facing ``--smoke-mode`` flag into ``cfg.train.lr_schedule``.
 
     Lives here (not in config.py) because the policy is CLI-shaped: ``constant`` overrides
@@ -182,7 +183,7 @@ def cmd_package(args: argparse.Namespace) -> int:
     ck_dir = Path(args.checkpoint)
     tokenizer = Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")
     model = MailwomanCoarseEncoder.from_pretrained(ck_dir)
-    eval_report_dict: dict
+    eval_report_dict: dict[str, Any]
     if args.golden_dir or cfg.eval.golden_dir:
         golden_dir = Path(args.golden_dir or cfg.eval.golden_dir)
         entries = load_golden_dir(golden_dir)
@@ -464,7 +465,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m mailwoman_train", description=__doc__)
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    def common(p):
+    def common(p: argparse.ArgumentParser) -> None:
         p.add_argument("--config", default=None, help="Path to YAML config (optional)")
 
     p = sub.add_parser("train", help="Train a Stage 1 coarse model")
@@ -605,7 +606,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None) -> Any:  # subcommand handlers return int; Namespace.func is set dynamically
     # Apply the gfx1103 SDPA workaround for every subcommand that touches torch.cuda. Math
     # SDPA is the only kernel that runs stably on Radeon 780M (flash + mem-efficient hang).
     # Importing torch lazily inside main keeps the CLI fast for help-only invocations.
