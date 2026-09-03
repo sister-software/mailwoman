@@ -40,6 +40,7 @@
  *   two-path check rather than the archive agreeing with itself. See `sdk/client.ts`.
  */
 
+import { declaredFeatureCount } from "@mailwoman/core/layers"
 import { assertRingsInsideExtent, requireArealPolygons } from "@mailwoman/spatial"
 import { readOGRLayerIdentity } from "@mailwoman/spatial/tools/ogr"
 import { spawnOGR2OGR } from "@mailwoman/spatial/tools/ogr-stream"
@@ -392,9 +393,11 @@ export async function createExportFeatureSource(options: ExportSourceOptions): P
 	return {
 		// A RANGE's or an authority's own count is supplied by the caller, because `ogrinfo` reports a layer's total and
 		// nothing narrower.
-		declaredFeatureCount:
-			options.declaredFeatureCount ??
-			(options.limit === undefined ? identity.featureCount : Math.min(options.limit, identity.featureCount)),
+		declaredFeatureCount: declaredFeatureCount({
+			declared: options.declaredFeatureCount,
+			limit: options.limit,
+			layerCount: identity.featureCount,
+		}),
 		epsg: identity.epsg,
 		origin: options.exportPath,
 		features: () => readZoningFeatures(options),
