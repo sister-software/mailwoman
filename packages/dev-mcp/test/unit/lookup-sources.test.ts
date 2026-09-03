@@ -372,7 +372,7 @@ describe("lookupCodex", () => {
 	it("answers the shape question and says it is not a membership question", () => {
 		const [row] = lookupCodex(["68161"])
 
-		expect(row!.entries).toMatchObject([{ table: "postcode_systems", systems: ["us", "de", "fr"] }])
+		expect(row!.entries).toMatchObject([{ table: "postcode_systems", systems: ["us", "de", "fr", "es", "it"] }])
 		expect(row!.note).toContain("SHAPE test, not gazetteer membership")
 	})
 

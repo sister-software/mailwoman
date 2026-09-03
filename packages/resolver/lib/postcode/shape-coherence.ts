@@ -74,7 +74,7 @@
  *   false exclusions; kill on any B1-3 δ).
  */
 
-import { candidateSystemsForPostcode } from "@mailwoman/codex"
+import { candidateSystemsForPostcode, SYSTEM_CODES } from "@mailwoman/codex"
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
 import { isUSStateAbbreviation } from "@mailwoman/codex/us"
 import type { AddressNode } from "@mailwoman/core/decoder"
@@ -83,9 +83,10 @@ import type { AddressNode } from "@mailwoman/core/decoder"
  * The codex address systems a sibling signal can speak for — the universe `candidateSystemsForPostcode` can return, in
  * the upper-case ISO form this module's signals are emitted in (`SystemCode` itself is lower-case). Signals from
  * countries with no codex slice are filtered out BEFORE the intersection test, so a slice-less country can never
- * manufacture an empty intersection (the false-exclusion trap; see the header).
+ * manufacture an empty intersection (the false-exclusion trap; see the header). Derived from codex's own list so a
+ * system added there is admitted here in the same change.
  */
-const SYSTEM_UNIVERSE: ReadonlySet<string> = new Set<string>(["US", "DE", "FR", "CA", "GB", "JP", "AU", "NZ"])
+const SYSTEM_UNIVERSE: ReadonlySet<string> = new Set<string>(SYSTEM_CODES.map((system) => system.toUpperCase()))
 
 /**
  * The pass's per-tree verdict — the caller (and the B1 board tests) can see exactly which spans were confirmed,

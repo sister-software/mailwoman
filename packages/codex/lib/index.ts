@@ -42,6 +42,7 @@ export {
 	areaPostcodeLeadsLocality,
 	candidateSystemsForPostcode,
 	isUnitGradePostcodeHit,
+	SYSTEM_CODES,
 	type SystemCode,
 	UNIT_GRADE_POSTCODE,
 } from "#postcode-systems"

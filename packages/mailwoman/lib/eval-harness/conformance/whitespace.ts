@@ -116,9 +116,9 @@ function splitOnWhitespaceRuns(text: string): string[] {
 /**
  * Is `candidate` a postcode under some address system's own shape?
  *
- * Both instruments are codex's, and using two is not belt-and-braces: `candidateSystemsForPostcode` asks the eight
- * systems that have a codex slice, and `UNIT_GRADE_POSTCODE` carries the NL PC6 and CA urban LDU shapes, neither of
- * which has one. A local regex here would be the third copy of a shape the codex already owns.
+ * Both instruments are codex's, and using two is not belt-and-braces: `candidateSystemsForPostcode` asks every system
+ * that has a codex slice, and `UNIT_GRADE_POSTCODE` carries the NL PC6 and CA urban LDU shapes, neither of which has
+ * one. A local regex here would be the third copy of a shape the codex already owns.
  */
 function isPostcodeShape(candidate: string): boolean {
 	if (candidateSystemsForPostcode(candidate).length) return true
