@@ -116,7 +116,7 @@ function Fork(): ReactNode {
 							</p>
 							<code className={styles.cardTransform}>metered: $/request · flat: $250/mo, any volume</code>
 							<p className={styles.cardLinks}>
-								<Link to="/docs/solutions/reduce-the-per-request-bill">Read the case →</Link>
+								<Link to="/docs/solutions/eliminate-the-per-request-bill">Read the case →</Link>
 							</p>
 						</div>
 					</div>

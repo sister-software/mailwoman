@@ -295,7 +295,7 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 
 ### Task 20: Solutions door
 
-**Files:** Create `solutions/{reduce-the-per-request-bill,own-what-you-look-up,keep-addresses-inside,fleet-reverse-geocoding,resolve-a-messy-file}.mdx`.
+**Files:** Create `solutions/{eliminate-the-per-request-bill,own-what-you-look-up,keep-addresses-inside,fleet-reverse-geocoding,resolve-a-messy-file}.mdx`.
 
 - The manager register: problem → what changes → proof link → try-it + pricing links (the same two, every page). The storage-rights page draws licence contrasts ONLY from published terms with dated citations, neutrally framed. Price anchors only where publicly published.
 - [ ] Same pipeline. **Commit** `docs(solutions): five pains, five pages`.
