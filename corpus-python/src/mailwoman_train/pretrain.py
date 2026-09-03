@@ -25,6 +25,7 @@ import json
 import math
 import time
 from pathlib import Path
+from typing import Any
 
 import torch
 from torch.optim import AdamW
@@ -45,7 +46,7 @@ from .train import (
 
 
 @torch.no_grad()
-def _mlm_eval(cfg: Config, model, tokenizer: Tokenizer, device, *, mask_token_id: int) -> dict:
+def _mlm_eval(cfg: Config, model: Any, tokenizer: Tokenizer, device: Any, *, mask_token_id: int) -> dict[str, Any]:
     """MLM cross-entropy + perplexity over a bounded slice of the val split."""
     was_training = model.training
     model.eval()
@@ -134,7 +135,7 @@ def pretrain(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     log_every = max(1, cfg.train.log_every_steps)
     grad_clip = float(getattr(cfg.train, "grad_clip_norm", 1.0))
 
-    def extras() -> dict:
+    def extras() -> dict[str, Any]:
         from dataclasses import asdict
 
         return {
@@ -172,7 +173,9 @@ def pretrain(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                 out = model.forward_mlm(
                     input_ids=masked.to(device), attention_mask=tb["attention_mask"], mlm_labels=labels.to(device)
                 )
-                loss = out.loss
+                loss: Any = out.loss
+                if loss is None:
+                    raise RuntimeError("forward_mlm returned no loss")
                 loss.backward()
                 if grad_clip > 0:
                     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=grad_clip)
