@@ -28,9 +28,11 @@ All via PRs on auto-merge after CI; no release, no npm publish, no GPU.
 - **#2113** (#2046) — the four layer schemas take their shared column runs from
   `@mailwoman/sqlite/schema-columns` by composition, so the two tables that interleave product columns keep
   their order; the stored DDL of all 24 tables is byte-identical before and after (7,918 bytes).
-- **#2114** (#2035, on auto-merge at the time of writing) — each overlay's `link-dev-weights.ts` is a manifest
+- **#2114** (#2035) — each overlay's `link-dev-weights.ts` is a manifest
   plus a call to `materializeDevOverlay`; ten scripts go from 1,143 to 540 lines, the 90-entry overlay listing
   is stable across all ten and byte-identical on a second pass, `weights.test.ts` 15 of 15.
+- **#2116** — the fr-fr, en-nz and en-au manifests link the evidence lexicons their cards name and their
+  `files` arrays ship; the lab overlay listing for the three locales is byte-identical before and after.
 
 ## Measurements and their verdicts
 
