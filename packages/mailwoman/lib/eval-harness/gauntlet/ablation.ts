@@ -500,7 +500,7 @@ export async function ablationOverrides(db: DatabaseClient<GauntletDatabase>): P
  */
 export function ablationBoardID(cases: readonly { id: string; input: string }[]): string {
 	const fingerprint = cases
-		.map((c) => `${c.id} ${c.input}`)
+		.map((c) => `${c.id}\0${c.input}`)
 		.toSorted()
 		.join("")
 

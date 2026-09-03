@@ -403,7 +403,7 @@ export function diffCandidateRows(rowsA: LookupRow[], rowsB: LookupRow[]): Candi
 		const rowB = rowsB[index]
 		const entriesA = (rowA.entries ?? []) as CandidateEntry[]
 		const entriesB = (rowB?.entries ?? []) as CandidateEntry[]
-		const identity = (entry: CandidateEntry): string => `${entry.spr_id} ${entry.name ?? ""}`
+		const identity = (entry: CandidateEntry): string => `${entry.spr_id}\0${entry.name ?? ""}`
 		const byIDA = new Map(entriesA.map((entry) => [identity(entry), entry]))
 		const byIDB = new Map(entriesB.map((entry) => [identity(entry), entry]))
 

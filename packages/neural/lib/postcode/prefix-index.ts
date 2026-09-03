@@ -210,7 +210,7 @@ export interface PostcodePrefixHeader {
 }
 
 function ancestorKey(a: PostcodePrefixAncestor): string {
-	return `${a.placetype} ${a.wofID} ${a.name}`
+	return `${a.placetype}\0${a.wofID}\0${a.name}`
 }
 
 /**

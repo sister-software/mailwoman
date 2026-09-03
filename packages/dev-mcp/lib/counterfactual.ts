@@ -295,7 +295,7 @@ export async function runCounterfactuals(
 		})
 
 		for (const flip of flips) {
-			const key = `${flip.setting} ${JSON.stringify(flip.patch)}`
+			const key = `${flip.setting}\0${JSON.stringify(flip.patch)}`
 			const batch = batches.get(key)
 
 			if (batch) {
