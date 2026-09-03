@@ -33,13 +33,20 @@ of points assigned to it, or to their bound. No runtime component reasons about 
 the same shape as `poi.db`, `uprn.db` and the postcode binaries: the intelligence lives in the
 builder, the runtime consumes a register.
 
-**There is an open register to grade against.** The ONS National Statistics UPRN Lookup (NSUL)
-publishes UPRN → unit postcode for Great Britain under OGL-UK-3.0, quarterly, on the
-Open Geography portal. Its license and coverage are UNKNOWN until read from the portal, which is
-falsifier F1 below. If it holds, NSUL is the truth the prototype is graded against, and the method's
-value is measured as how much of the register it recovers from physical inputs alone. That
-measurement is what the Northern Ireland test needs, because NI has no Open UPRN and no NSUL: the
-method has to work where the register does not exist, and GB is where its error can be measured.
+**There is an open register, and it answers the GB assignment directly.** The ONS National
+Statistics UPRN Lookup (NSUL) publishes, for every GB UPRN in AddressBase, the unit postcode as field
+`PCDS` (null when the postcode is not in Code-Point Open), the OSGB grid reference, and the
+statistical geographies, as a CSV collection of about 487 MB, every six weeks, under OGL-UK-3.0 with
+four attribution lines (section 8). Falsifier F1 is therefore answered, and it reshapes the
+prototype:
+
+- For GB, the open UPRN → unit postcode register exists. The shippable artifact is a sealed build of
+  NSUL joined to Open UPRN's coordinates, not a generative reconstruction of it.
+- The generative method is graded against NSUL as a measurement of how much of the register
+  physical inputs alone recover. That number is what Northern Ireland needs, where neither Open UPRN
+  nor NSUL exists, and it is the only place the method's error can be measured.
+- NSUL's postcodes are those of Code-Point Open, so the two inputs agree by construction on the
+  universe of unit postcodes; the grade's denominator is UPRNs present in both.
 
 ## 3. Placement in the pipeline
 
@@ -97,12 +104,12 @@ postcodes and UPRNs in `PO` are filled by the run, with the arithmetic stated.
 
 **Inputs on disk.**
 
-| Input                     | Artifact                                                                | Rows                                  | License                                                         |
-| ------------------------- | ----------------------------------------------------------------------- | ------------------------------------- | --------------------------------------------------------------- |
-| Unit postcode centroids   | `$MAILWOMAN_DATA_ROOT/wof/postalcode-gb-codepoint.db` (Code-Point Open) | 1,746,976 (`spr`)                     | OGL-UK-3.0                                                      |
-| Addressable-object points | `$MAILWOMAN_DATA_ROOT/uprn/uprn.db` (OS Open UPRN, release 2026-08)     | 41,629,393; coverage `designated` 1.0 | OGL-UK-3.0 (manifest)                                           |
-| Building footprints       | none on disk                                                            | —                                     | OS Open Map – Local `Building` layer, OGL-UK-3.0, to acquire    |
-| Truth for grading         | none on disk                                                            | —                                     | ONS NSUL, expected OGL-UK-3.0 — falsifier F1 confirms or denies |
+| Input                     | Artifact                                                                | Rows                                        | License                                                      |
+| ------------------------- | ----------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------ |
+| Unit postcode centroids   | `$MAILWOMAN_DATA_ROOT/wof/postalcode-gb-codepoint.db` (Code-Point Open) | 1,746,976 (`spr`)                           | OGL-UK-3.0                                                   |
+| Addressable-object points | `$MAILWOMAN_DATA_ROOT/uprn/uprn.db` (OS Open UPRN, release 2026-08)     | 41,629,393; coverage `designated` 1.0       | OGL-UK-3.0 (manifest)                                        |
+| Building footprints       | none on disk                                                            | —                                           | OS Open Map – Local `Building` layer, OGL-UK-3.0, to acquire |
+| Truth for grading         | none on disk; ~487 MB CSV collection to acquire                         | one row per GB UPRN, `PCDS` = unit postcode | ONS NSUL, OGL-UK-3.0 (F1 answered)                           |
 
 OSM buildings (ODbL) are excluded from the GB prototype on purpose, so the GB artifact's posture is
 OGL throughout. They return in section 7, where no OGL footprint source exists.
@@ -138,22 +145,27 @@ rates) and states that exact-assignment accuracy is UNMEASURABLE there, which is
 
 ## 8. License posture per input
 
-| Input                         | License                       | Obligation summary       | Posture for the prototype                            |
-| ----------------------------- | ----------------------------- | ------------------------ | ---------------------------------------------------- |
-| Code-Point Open               | OGL-UK-3.0                    | attribution              | already built and shipped in `postcode-gb.bin`       |
-| OS Open UPRN                  | OGL-UK-3.0                    | attribution              | built, `build-local`; counsel review before shipping |
-| OS Open Map – Local buildings | OGL-UK-3.0                    | attribution              | to acquire; same review                              |
-| ONS NSUL                      | expected OGL-UK-3.0 (confirm) | attribution              | grading only; never joined into a shipped artifact   |
-| OSM buildings (NI only)       | ODbL-1.0                      | attribution, share-alike | `build-local`; the same posture `packages/osm` holds |
+| Input                         | License                | Obligation summary       | Posture for the prototype                                    |
+| ----------------------------- | ---------------------- | ------------------------ | ------------------------------------------------------------ |
+| Code-Point Open               | OGL-UK-3.0             | attribution              | already built and shipped in `postcode-gb.bin`               |
+| OS Open UPRN                  | OGL-UK-3.0             | attribution              | built, `build-local`; counsel review before shipping         |
+| OS Open Map – Local buildings | OGL-UK-3.0             | attribution              | to acquire; same review                                      |
+| ONS NSUL                      | OGL-UK-3.0 (confirmed) | attribution (four lines) | the GB register itself, once counsel reviews the attribution |
+| OSM buildings (NI only)       | ODbL-1.0               | attribution, share-alike | `build-local`; the same posture `packages/osm` holds         |
 
 The doctor summarizes each of these from the artifact's own `layer_manifest` once built, so the
 posture is data in the artifact, not prose here.
 
 ## 9. Falsifiers, in order
 
-- **F1.** NSUL is published under OGL with UPRN → unit postcode for GB, and its `PO` rows join to
-  Open UPRN by UPRN. If not, the prototype has no open truth and section 6's grade is replaced by
-  internal consistency, as in section 7.
+- **F1.** Answered 2026-09-03: NSUL is published under OGL-UK-3.0, GB coverage, six-weekly, and each
+  row carries `PCDS`, the unit postcode from Code-Point Open. The user guide (May 2025, Epoch 118)
+  requires four attribution statements: `Contains OS data © Crown copyright and database right
+[year]`, `Contains Royal Mail data © Royal Mail copyright and Database right [year]`, `Contains
+GeoPlace data © Local Government Information House Limited copyright and database right [year]`,
+  and `Source: Office for National Statistics licensed under the Open Government Licence v.3.0`.
+  Northern Ireland (`BT`) postcode data is excluded from the open terms and needs a separate
+  Land & Property Services licence, which the NI section already assumed.
 - **F2.** The null model on `PO`: exact-assignment rate against NSUL. Below 80%, stop.
 - **F3.** The footprint rule lifts exact assignment by at least 5 pp over F2. Otherwise drop the
   footprint input.
