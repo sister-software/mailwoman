@@ -43,6 +43,7 @@ import { md5Hex } from "@mailwoman/core/hash"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 
 import type { VenueWordHint, VenueWordHintTable } from "#venue-word-hints"
 
@@ -100,7 +101,7 @@ export function buildVenueWordHintTable(source: SourceLexicon, sourceMD5: string
 			row.place_rate_ppm <= PLACE_RATE_PPM_MAX
 	)
 
-	qualifying.sort(([a], [b]) => a.localeCompare(b, "en"))
+	qualifying.sort(([a], [b]) => compareByCodePoint(a, b))
 
 	for (const [token, row] of qualifying) {
 		hints[token] = {

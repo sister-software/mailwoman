@@ -19,6 +19,7 @@ export type NormalizationTransform =
 	| { kind: "expand_abbreviation"; from: string; to: string; at: SpanRange }
 	| { kind: "collapse_whitespace"; runs: number }
 	| { kind: "normalize_punctuation"; replacements: number }
+	| { kind: "space_after_comma"; inserted: number }
 	| { kind: "normalize_cjk"; folded: number; stripped: number }
 
 /**

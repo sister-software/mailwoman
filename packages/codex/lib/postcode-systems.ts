@@ -15,8 +15,8 @@
  *   depend on this pure function, never on each other.
  *
  *   Note this is a SHAPE test, not a gazetteer-membership test. A bare `68161` matches the US,
- *   German, AND French 5-digit shapes, so it returns `["us", "de", "fr"]` — the shape alone cannot
- *   split the numeric-postcode systems. The anchor uses real gazetteer membership for the finer
+ *   German, French, Spanish and Italian 5-digit shapes, so it returns `["us", "de", "fr", "es", "it"]` —
+ *   the shape alone cannot split the numeric-postcode systems. The anchor uses real gazetteer membership for the finer
  *   call; this function answers the coarser, model-free "which systems is this shape even eligible
  *   for".
  */
@@ -24,8 +24,10 @@
 import { normalizeAuPostcode } from "#au/index"
 import { normalizeCaPostalCode } from "#ca/index"
 import { normalizePLZ } from "#de/index"
+import { normalizeCodigoPostal } from "#es/index"
 import { normalizeCodePostal } from "#fr/index"
 import { normalizeUkPostcode } from "#gb/index"
+import { normalizeCAP } from "#it/index"
 import { normalizeJpPostalCode } from "#jp/index"
 import { normalizeNZPostcode } from "#nz/index"
 import { isZipCode } from "#us/index"
@@ -33,7 +35,7 @@ import { isZipCode } from "#us/index"
 /**
  * A codex address-system code — the subpath under `@mailwoman/codex/<system>`.
  */
-export type SystemCode = "us" | "de" | "fr" | "ca" | "gb" | "jp" | "au" | "nz"
+export type SystemCode = "us" | "de" | "fr" | "es" | "it" | "ca" | "gb" | "jp" | "au" | "nz"
 
 /**
  * Per-system membership test: each entry returns true when the string is accepted by that system's own postcode shape
@@ -44,12 +46,20 @@ const SYSTEM_ACCEPTS: ReadonlyArray<readonly [SystemCode, (s: string) => boolean
 	["us", (s) => isZipCode(s)],
 	["de", (s) => normalizePLZ(s) !== null],
 	["fr", (s) => normalizeCodePostal(s) !== null],
+	["es", (s) => normalizeCodigoPostal(s) !== null],
+	["it", (s) => normalizeCAP(s) !== null],
 	["ca", (s) => normalizeCaPostalCode(s) !== null],
 	["gb", (s) => normalizeUkPostcode(s) !== null],
 	["jp", (s) => normalizeJpPostalCode(s) !== null],
 	["au", (s) => normalizeAuPostcode(s) !== null],
 	["nz", (s) => normalizeNZPostcode(s) !== null],
 ]
+
+/**
+ * Every address system with a postcode shape, in {@link SYSTEM_ACCEPTS} order. The one list a consumer that needs the
+ * universe of systems (rather than the systems a given code fits) should read, so it cannot drift from the table.
+ */
+export const SYSTEM_CODES: readonly SystemCode[] = SYSTEM_ACCEPTS.map(([system]) => system)
 
 /**
  * Every address system whose own postcode shape accepts `postcode`. Empty when no system recognizes the shape (e.g. a

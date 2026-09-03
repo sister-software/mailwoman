@@ -188,13 +188,13 @@ export async function buildOutlierLatin(
 
 	await writeLocalTextFile(
 		testRows.map((r) => JSON.stringify(r)).join("\n") + "\n",
-		resolvePath(dataDir, "test-latin-offmap.jsonl")
+		resolvePath(dataDir, "test-latin-offmap-overture.jsonl")
 	)
 
 	report?.(`\nappended OTHER → train +${trainAppend.length}, val +${valAppend.length}`)
 
 	report?.(
-		`wrote test-latin-offmap.jsonl: ${testRows.length} rows (indist ${testRows.filter((r) => r.group === "indist").length} / heldout ${testRows.filter((r) => r.group === "heldout").length})`
+		`wrote test-latin-offmap-overture.jsonl: ${testRows.length} rows (indist ${testRows.filter((r) => r.group === "indist").length} / heldout ${testRows.filter((r) => r.group === "heldout").length})`
 	)
 
 	return { train: trainAppend.length, val: valAppend.length, test: testRows.length }
