@@ -18,6 +18,16 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Added — `nsul.db`, the GB UPRN → unit-postcode register
+
+`mailwoman gazetteer build nsul` builds a sealed, `build-local` layer database from the ONS National Statistics
+UPRN Lookup (OGL-UK-3.0) joined to OS Open UPRN's coordinates: one row per GB UPRN whose postcode is in
+Code-Point Open and that Open UPRN publishes a point for, carrying the postcode both as NSUL writes it (`RG40 4HR`)
+and compacted (`RG404HR`, Code-Point's `spr.name` form). The reader is `NSULLookup` in the new
+`@mailwoman/resolver-wof-sqlite/nsul` subpath (`postcodeForUPRN`, `uprnsForPostcode`); the schema and the shared
+`compactPostcode` derivation live beside it. Nothing on the parse or resolve path reads it yet — it is the GB
+artifact of the physical-constraint design record (#1975), and its runtime surface is a separate proposal.
+
 ### Breaking — `@mailwoman/spatial` drops its `./sdk` subpaths
 
 `@mailwoman/spatial/sdk`, `@mailwoman/spatial/sdk/ogr` and `@mailwoman/spatial/sdk/well-known-text` are **removed

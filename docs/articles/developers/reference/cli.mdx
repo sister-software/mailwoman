@@ -15,7 +15,7 @@ This page is the flag contract for the `mailwoman` command-line interface. Each 
 the command's own schema, and each description is that flag's help text verbatim, so this page and
 `mailwoman <command> --help` cannot disagree.
 
-The CLI carries 159 commands. This page documents the 24 that a consumer of the published
+The CLI carries 160 commands. This page documents the 24 that a consumer of the published
 package runs. The rest build the datasets and train the models inside a checkout of the repository,
 and they are listed by group under [Commands this page does not cover](#commands-this-page-does-not-cover).
 
@@ -557,7 +557,7 @@ tutorials under [See also](#see-also) run the ones a self-hosting reader needs.
 | `mailwoman dev`       | 11       | Repository maintenance: source generation, fixture capture, lint passes.      |
 | `mailwoman eval`      | 23       | Runs the evaluations that decide whether a model ships.                       |
 | `mailwoman filer`     | 2        | Record-linkage evaluation over regulatory filings.                            |
-| `mailwoman gazetteer` | 57       | Builds every gazetteer artifact, including the candidate and admin databases. |
+| `mailwoman gazetteer` | 58       | Builds every gazetteer artifact, including the candidate and admin databases. |
 | `mailwoman gnaf`      | 1        | Assembles the Australian G-NAF address register.                              |
 | `mailwoman placer`    | 5        | Trains and evaluates the coarse country placer.                               |
 | `mailwoman release`   | 1        | Stages model weights for a release.                                           |
@@ -573,7 +573,7 @@ flag changes, and nothing catches it. The generator reads the same command speci
 build the binary, so a flag string here is the flag string `--help` prints. A test asserts the
 committed page against a fresh render, which turns a stale page into a failing build.
 
-The scope split is deliberate. Publishing all 159 commands would bury the 24 that run against
+The scope split is deliberate. Publishing all 160 commands would bury the 24 that run against
 an installed package under training and dataset tooling that requires the repository, its data root,
 and hours of wall clock. The generator refuses to run if it meets a command group it has never been
 told about, so the boundary is a decision someone makes rather than an omission.
