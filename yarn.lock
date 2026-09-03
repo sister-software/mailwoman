@@ -13853,9 +13853,9 @@ __metadata:
   linkType: hard
 
 "fast-uri@npm:^3.0.0, fast-uri@npm:^3.0.1":
-  version: 3.1.6
-  resolution: "fast-uri@npm:3.1.6"
-  checksum: 10/de34fceafd3a1d917989a1116b092d9b6ebe6fa3c9e908a308b988a6455449fa0a0256b6ef628aa7da80f1f84031d704c290d6ba0ea4c6f4c42b7974a3bd43ae
+  version: 3.1.7
+  resolution: "fast-uri@npm:3.1.7"
+  checksum: 10/6d62ea818841e1b460f60482fd31582faa23ea9d9b33f856412b24c42da11fd72bd003be6696390ec896dbe4e9e78d3bb8d93bf70a511c7f69e5e807ac9b284f
   languageName: node
   linkType: hard
 
@@ -20426,12 +20426,12 @@ __metadata:
   linkType: hard
 
 "postcss-selector-parser@npm:^6.0.11, postcss-selector-parser@npm:^6.0.16":
-  version: 6.1.2
-  resolution: "postcss-selector-parser@npm:6.1.2"
+  version: 6.1.4
+  resolution: "postcss-selector-parser@npm:6.1.4"
   dependencies:
     cssesc: "npm:^3.0.0"
     util-deprecate: "npm:^1.0.2"
-  checksum: 10/190034c94d809c115cd2f32ee6aade84e933450a43ec3899c3e78e7d7b33efd3a2a975bb45d7700b6c5b196c06a7d9acf3f1ba6f1d87032d9675a29d8bca1dd3
+  checksum: 10/68d122d44ea248f570252a08f4967758168b110a7a5349b1d5605d2a10b2ca4bbb257e36b0925053abf35b406955e730febe5a4aa3cf6997ce222d46ec0ab840
   languageName: node
   linkType: hard
 
