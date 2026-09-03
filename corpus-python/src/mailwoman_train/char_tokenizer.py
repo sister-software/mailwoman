@@ -28,6 +28,7 @@ from __future__ import annotations
 import json
 from collections.abc import Callable, Iterable, Sequence
 from pathlib import Path
+from typing import Any
 
 from .labels import IGNORE_INDEX, LABEL_TO_ID, collapse_label
 
@@ -58,7 +59,10 @@ def save_char_vocab(vocab: dict[str, int], path: Path | str) -> None:
 
 
 def load_char_vocab(path: Path | str) -> dict[str, int]:
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+    loaded = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict) or not all(isinstance(k, str) and isinstance(v, int) for k, v in loaded.items()):
+        raise TypeError(f"char vocab {path} is not a dict[str, int]")
+    return loaded
 
 
 def encode_row_units(
@@ -72,7 +76,7 @@ def encode_row_units(
     *,
     label_to_id: dict[str, int] | None = None,
     collapse: Callable[[str], str] | None = None,
-) -> dict[str, list]:
+) -> dict[str, list[Any]]:
     """Encode one row under the D1 contract: ``char_ids (S, W)`` where S = label units, W = window.
 
     The generalization the v8 CJK plan's contract note specifies: a UNIT is anything carrying one
@@ -136,7 +140,7 @@ def encode_row_charword(
     char_to_id: dict[str, int],
     max_tokens: int,
     max_word_len: int,
-) -> dict[str, list]:
+) -> dict[str, list[Any]]:
     """Encode one row into ``char_ids`` ``(max_tokens, max_word_len)`` + ``attention_mask`` + ``labels``.
 
     Each whitespace token becomes one position; its characters map to char IDs (unknown -> UNK), truncated
