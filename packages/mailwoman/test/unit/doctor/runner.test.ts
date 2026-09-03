@@ -42,6 +42,14 @@ function healthyDeps(): DoctorDeps {
 		wofExtractPaths: () => ["/data/wof/admin.db"],
 		poiPath: () => "/data/poi/poi.db",
 		readPOIManifest: async () => ({ name: "poi", version: "2026-07-20a", sourceVintage: "2026-07" }),
+		layerDatabases: () => [{ id: "poi", label: "POI layer", path: "/data/poi/poi.db" }],
+		readLayerLicense: async () => ({
+			name: "poi",
+			license: "CDLA-Permissive-2.0",
+			attribution: "Overture Maps Foundation",
+		}),
+		runtimeLicense: async () => "AGPL-3.0-only OR LicenseRef-Commercial",
+		commercialAgreement: () => false,
 		loadONNX: async () => {},
 		nodeVersion: "24.18.0",
 		enginesFloor: ">=24.18.0",
@@ -58,7 +66,7 @@ const byID = (checks: DoctorCheck[], id: string): DoctorCheck => {
 }
 
 describe("runDoctor (injected boundaries)", () => {
-	it("all-healthy → every check ok, exit 0, 7 checks in render order", async () => {
+	it("all-healthy → every check ok, exit 0, 9 checks in render order", async () => {
 		const report = await runDoctor(healthyDeps())
 		expect(report.exitCode).toBe(0)
 
@@ -71,6 +79,8 @@ describe("runDoctor (injected boundaries)", () => {
 			"data-root",
 			"gazetteer",
 			"poi-layer",
+			"license-mailwoman",
+			"license-poi",
 			"locale-overlay-fr-fr",
 		])
 
@@ -155,6 +165,60 @@ describe("runDoctor (injected boundaries)", () => {
 		expect(report.exitCode).toBe(0)
 		expect(byID(report.checks, "gazetteer").status).toBe(CheckStatus.Missing)
 		expect(byID(report.checks, "poi-layer").status).toBe(CheckStatus.Missing)
+	})
+
+	it("license posture: the open-source branch applies without a commercial agreement, and a layer's recorded license is summarized", async () => {
+		const report = await runDoctor(healthyDeps())
+		const runtime = byID(report.checks, "license-mailwoman")
+		const poi = byID(report.checks, "license-poi")
+
+		expect(runtime.license).toEqual({
+			subject: "mailwoman",
+			expression: "AGPL-3.0-only OR LicenseRef-Commercial",
+			applied: "AGPL-3.0-only",
+			obligations: ["attribution", "share_alike", "source_offer"],
+			recognized: true,
+		})
+
+		expect(poi.license).toEqual({
+			subject: "poi",
+			expression: "CDLA-Permissive-2.0",
+			applied: "CDLA-Permissive-2.0",
+			obligations: ["attribution"],
+			recognized: true,
+			attribution: "Overture Maps Foundation",
+		})
+	})
+
+	it("license posture: a commercial agreement applies the commercial branch", async () => {
+		const report = await runDoctor({ ...healthyDeps(), commercialAgreement: () => true })
+
+		expect(byID(report.checks, "license-mailwoman").license?.applied).toBe("LicenseRef-Commercial")
+		expect(byID(report.checks, "license-mailwoman").license?.obligations).toEqual(["attribution"])
+	})
+
+	it("license posture: an absent layer gets no license line; a layer recording NOASSERTION is degraded, not guessed", async () => {
+		const absent = await runDoctor({
+			...healthyDeps(),
+			layerDatabases: () => [
+				{ id: "poi", label: "POI layer", path: "/data/poi/poi.db" },
+				{ id: "zoning", label: "Zoning (Ireland)", path: "/data/zoning/zoning-ireland.db" },
+			],
+			exists: async (path) => path !== "/data/zoning/zoning-ireland.db",
+		})
+
+		expect(absent.checks.some((c) => c.id === "license-zoning")).toBe(false)
+
+		const unasserted = await runDoctor({
+			...healthyDeps(),
+			readLayerLicense: async () => ({ name: "zoning-ie-gzt", license: "NOASSERTION", attribution: null }),
+		})
+
+		const check = byID(unasserted.checks, "license-poi")
+
+		expect(check.status).toBe(CheckStatus.Degraded)
+		expect(check.license?.recognized).toBe(false)
+		expect(unasserted.exitCode).toBe(0)
 	})
 
 	it("poi.db present but manifest unreadable → degraded (not a hard error)", async () => {

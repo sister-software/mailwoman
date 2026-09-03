@@ -15,6 +15,7 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { chooseLicenseBranch, summarizeLicense, type LicenseObligation } from "@mailwoman/core/license"
 
 /**
  * A check's outcome. `ok` = works; `missing` = absent but fixable; `degraded` = present but impaired.
@@ -56,6 +57,40 @@ export interface DoctorCheck {
 	 * data-layer checks report their gap but never fail the process (parse runs without them).
 	 */
 	core: boolean
+	/**
+	 * The license posture this check reports, when it is a license check: the expression as recorded, the branch that
+	 * applies, and the responsibility classes it is known to carry. Structured so a JSON consumer reads the array rather
+	 * than the sentence.
+	 */
+	license?: LicensePosture
+}
+
+/**
+ * A license summary as the doctor reports it.
+ */
+export interface LicensePosture {
+	/**
+	 * What the posture describes: `mailwoman` itself, or a layer database by its layer id.
+	 */
+	subject: string
+	/**
+	 * The SPDX expression as recorded (a package's `license` field, or a layer manifest's `license` column).
+	 */
+	expression: string
+	/**
+	 * The branch of a dual license that applies here; equal to `expression` when there is one branch.
+	 */
+	applied: string
+	/**
+	 * The responsibility classes `applied` is known to carry. Empty with `recognized: true` means the license asks
+	 * nothing of the operator; empty with `recognized: false` means the doctor does not know this identifier.
+	 */
+	obligations: LicenseObligation[]
+	recognized: boolean
+	/**
+	 * The attribution line the source asks for, when the manifest records one.
+	 */
+	attribution?: string
 }
 
 /**
@@ -427,6 +462,117 @@ export function onnxRuntimeCheck(o: ONNXRuntimeObservation): DoctorCheck {
 			"parse degrades to the structural pipeline no matter what else this report says is green.",
 		fix: "npm install onnxruntime-node   (or reinstall @mailwoman/neural)",
 	}
+}
+
+//#endregion
+
+//#region License posture
+
+export interface RuntimeLicenseObservation {
+	/**
+	 * Mailwoman's own `license` expression, read from its package manifest.
+	 */
+	expression: string
+	/**
+	 * Whether a commercial agreement is configured for this installation. Until a license key format lands this is always
+	 * false, and the open-source branch applies.
+	 */
+	commercialAgreement: boolean
+}
+
+/**
+ * The license that governs THIS installation of mailwoman, and what it asks of the operator. Without a commercial
+ * agreement the AGPL-3.0-only branch applies, and the summary says so in the responsibility vocabulary: attribution,
+ * share-alike on modifications, and a source offer to network users (section 13). Informational, never core.
+ */
+export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
+	const applied = chooseLicenseBranch(o.expression, { commercialAgreement: o.commercialAgreement })
+	const summary = summarizeLicense(applied)
+
+	const license: LicensePosture = {
+		subject: "mailwoman",
+		expression: o.expression,
+		applied,
+		obligations: summary.obligations,
+		recognized: summary.recognized,
+	}
+
+	const basis = o.commercialAgreement
+		? "commercial agreement configured"
+		: "no commercial agreement configured, so the open-source branch applies"
+
+	return {
+		id: "license-mailwoman",
+		label: "License (mailwoman)",
+		core: false,
+		status: CheckStatus.OK,
+		detail: `${applied} — ${basis} · obligations: ${describeObligations(summary.obligations, summary.recognized)}`,
+		license,
+	}
+}
+
+export interface LayerLicenseObservation {
+	id: string
+	label: string
+	path: string
+	/**
+	 * The manifest fields the doctor reads, or absent when the manifest could not be read.
+	 */
+	manifest?: { name: string; license: string; attribution: string | null }
+	error?: string
+}
+
+/**
+ * What one attached layer database's recorded license asks of the operator. The expression comes from the layer's own
+ * `layer_manifest`, never from a table in code, so a layer that records `NOASSERTION` or a vendor-suffixed identifier
+ * is reported as unrecognized rather than guessed at. Informational, never core.
+ */
+export function layerLicenseCheck(o: LayerLicenseObservation): DoctorCheck {
+	const base = { id: `license-${o.id}`, label: `License (${o.label})`, core: false }
+
+	if (!o.manifest) {
+		return {
+			...base,
+			status: CheckStatus.Degraded,
+			detail: `${o.path} present but its layer manifest is unreadable${o.error ? `: ${firstLine(o.error)}` : ""}`,
+			consequence: "Without the manifest the doctor cannot say which license this data carries or what it asks of you.",
+		}
+	}
+
+	const summary = summarizeLicense(o.manifest.license)
+
+	const license: LicensePosture = {
+		subject: o.id,
+		expression: o.manifest.license,
+		applied: o.manifest.license,
+		obligations: summary.obligations,
+		recognized: summary.recognized,
+		...(o.manifest.attribution ? { attribution: o.manifest.attribution } : {}),
+	}
+
+	if (!summary.recognized) {
+		return {
+			...base,
+			status: CheckStatus.Degraded,
+			detail: `${o.manifest.name} records license ${JSON.stringify(o.manifest.license)}, which the doctor does not recognize`,
+			consequence:
+				"An unrecognized license expression carries obligations the doctor cannot summarize. Read the source's own terms before redistributing results derived from this layer.",
+			license,
+		}
+	}
+
+	return {
+		...base,
+		status: CheckStatus.OK,
+		detail: `${o.manifest.name} · ${o.manifest.license} · obligations: ${describeObligations(summary.obligations, true)}`,
+		license,
+	}
+}
+
+function describeObligations(obligations: readonly LicenseObligation[], recognized: boolean): string {
+	if (!recognized) return "unrecognized license"
+
+	return obligations.length ? obligations.join(", ") : "none"
 }
 
 //#endregion
