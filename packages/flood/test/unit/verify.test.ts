@@ -31,13 +31,13 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
  * A service that answers every point with one polygon carrying `zone`, drawn `offsetDegrees` away from the fixture's
  * own FZ3 square so the nearest-vertex distance is under this test's control. `null` answers with nothing.
  */
-function scriptedService(zone: string | null, offsetDegrees = 0): ServiceFeatureReader {
+function scriptedService(zone: string | null | undefined, offsetDegrees = 0): ServiceFeatureReader {
 	return async () =>
 		zone === null
 			? []
 			: [
 					{
-						properties: { flood_zone: zone },
+						properties: zone === undefined ? {} : { flood_zone: zone },
 						geometry: {
 							type: "Polygon",
 							coordinates: [
@@ -128,6 +128,22 @@ describe("verifyFloodDatabase", () => {
 		expect(result.agreement[0]!.service).toBeNull()
 		expect(result.agreement[0]!.nearestEdgeMetres).toBeUndefined()
 		expect(result.disagreed).toBe(1)
+	})
+
+	it("reports a containing polygon with no zone label as service_unlabelled, never as agreement", async () => {
+		// The artifact reads FZ3 here; the service's polygon contains the point and says nothing. Reading that as `null`
+		// would let it agree with an absence reading elsewhere, which is the manufactured Zone 1 the contract forbids.
+		const result = await verifyFloodDatabase({
+			databasePath,
+			readServiceFeatures: scriptedService(undefined),
+			points: [INSIDE_FZ3],
+		})
+
+		expect(result.agreement[0]!.outcome).toBe("service_unlabelled")
+		expect(result.agreement[0]!.service).toBeNull()
+		expect(result.serviceUnlabelled).toBe(1)
+		expect(result.agreed).toBe(0)
+		expect(result.disagreed).toBe(0)
 	})
 
 	it("passes the negative half: every point outside the footprint reads unknown", async () => {
