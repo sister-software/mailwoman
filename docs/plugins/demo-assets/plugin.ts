@@ -9,7 +9,7 @@ import type { LoadContext, Plugin } from "@docusaurus/types"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { resolvePath } from "path-ts"
 
-import { stagePairIndexes, stageSQLJSHTTPVFS } from "./artifacts.ts"
+import { stageMapLibreWorker, stagePairIndexes, stageSQLJSHTTPVFS } from "./artifacts.ts"
 import { bundleAliases, configureDemoWebpack } from "./webpack-policy.ts"
 
 export default async function demoAssetsPlugin(context: LoadContext): Promise<Plugin> {
@@ -35,6 +35,9 @@ export default async function demoAssetsPlugin(context: LoadContext): Promise<Pl
 			const pairIndexDir = resolvePath(staticDir, "pair-index")
 			await makeDirectories(pairIndexDir)
 			await stagePairIndexes(pairIndexDir)
+			const maplibreDir = resolvePath(staticDir, "maplibre")
+			await makeDirectories(maplibreDir)
+			await stageMapLibreWorker(maplibreDir)
 
 			return {}
 		},

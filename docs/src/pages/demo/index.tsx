@@ -20,6 +20,7 @@
 
 import "maplibre-gl/dist/maplibre-gl.css"
 import "@mailwoman/react/styles.css"
+import "#shared/maplibre-worker"
 import BrowserOnly from "@docusaurus/BrowserOnly"
 import Head from "@docusaurus/Head"
 import { GeocoderDemo } from "@mailwoman/react/map"

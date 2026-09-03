@@ -16,6 +16,7 @@ import {
 } from "@mailwoman/cartographer"
 
 import "maplibre-gl/dist/maplibre-gl.css"
+import "#shared/maplibre-worker"
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { MapRef, ViewStateChangeEvent } from "react-map-gl/maplibre"
 import { Map, NavigationControl } from "react-map-gl/maplibre"

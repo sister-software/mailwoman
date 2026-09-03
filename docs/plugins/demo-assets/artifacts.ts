@@ -34,9 +34,9 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { pathExists, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
-import { dirname, resolvePath } from "path-ts"
+import { basename, dirname, resolvePath } from "path-ts"
 
 import { resolvePackagePath, resolvePackageSpecifier } from "./workspace-resolution.ts"
 
@@ -124,6 +124,78 @@ export async function stageSQLJSHTTPVFS(destDir: string): Promise<boolean> {
 	}
 
 	return true
+}
+
+/**
+ * Relative imports of a staged ES module, from its `from "./…"` and `import "./…"` specifiers. A worker's siblings must
+ * be staged beside it or the worker fails at its first import, which the browser reports nowhere useful.
+ */
+export function relativeImportSpecifiers(source: string): string[] {
+	const specifiers = new Set<string>()
+
+	for (const match of source.matchAll(/(?:from|import)\s*["'](\.\.?\/[^"']+)["']/g)) {
+		specifiers.add(match[1]!)
+	}
+
+	return [...specifiers]
+}
+
+/**
+ * Stage MapLibre's tile worker (`maplibre-gl-worker.mjs`) and the module it imports into `destDir`, and answer the
+ * staged file names.
+ *
+ * MapLibre derives its default worker URL from `import.meta.url` and answers an EMPTY string when that is not an
+ * `http(s):` URL. The docs client bundle is classic-script output, so webpack inlines `import.meta.url` as the `file:`
+ * path of `maplibre-gl.mjs` on the build host; the empty URL then spawns the PAGE ITSELF as the worker, which dies at
+ * its first byte of HTML. No error reaches the console, `map.loaded()` stays false, and no tile is ever requested. The
+ * demo sets `setWorkerUrl` to the staged copy (`docs/src/shared/maplibre-worker.ts`), which is same-origin and
+ * therefore loads as a module worker.
+ *
+ * Staging from the installed package, at build time, is what keeps the worker at the same version as the bundled main
+ * thread; a committed copy would drift on the next dependency bump.
+ *
+ * @param destDir - E.g. static/mailwoman/maplibre
+ */
+export async function stageMapLibreWorker(destDir: string): Promise<string[]> {
+	const workerPath = resolvePackageSpecifier("maplibre-gl/dist/maplibre-gl-worker.mjs")
+
+	if (!workerPath) {
+		console.warn("[demo-assets] maplibre-gl worker not resolvable — MapLibre worker not staged")
+
+		return []
+	}
+
+	const distDir = dirname(workerPath)
+	const workerSource = await readLocalTextFile(workerPath)
+
+	const files = [
+		basename(workerPath),
+		...relativeImportSpecifiers(workerSource).map((specifier) => basename(specifier)),
+	]
+
+	const staged: string[] = []
+	let copied = 0
+
+	for (const file of files) {
+		const src = resolvePath(distDir, file)
+
+		if (!(await pathExists(src))) {
+			throw new Error(`[demo-assets] maplibre-gl worker imports ${file}, which is missing from ${distDir}`)
+		}
+
+		// Idempotent stage (same reload-loop guard as stageSQLJSHTTPVFS): syncArtifact skips a size-identical copy.
+		if (await syncArtifact(src, resolvePath(destDir, file), `maplibre-gl ${file}`)) {
+			copied++
+		}
+
+		staged.push(file)
+	}
+
+	if (copied > 0) {
+		console.log(`[demo-assets] maplibre-gl: staged ${copied} worker asset(s)`)
+	}
+
+	return staged
 }
 
 /**
