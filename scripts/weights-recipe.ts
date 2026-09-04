@@ -26,104 +26,16 @@
  *   rather than failing.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readReleaseConfig, repoCommittedSoftFeedSources, type SoftFeedRecipe } from "@mailwoman/core/release-config"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
-/**
- * Build inputs for one country's placetype-pair index, mirrored from `release.config.json`.
- *
- * Every field the `gazetteer pair-index` command accepts is represented: the release path builds the SHIPPED artifact,
- * and any flag a reader silently drops produces a materially different binary from the one the model card's md5
- * records. `source` is optional — it is the GB postal register (PPD), and countries whose pairs come entirely from the
- * WOF admin DB have no equivalent; the command itself refuses a build with no source of any kind. Unknown keys pass
- * through the index signature.
- */
-export interface PairIndexInputs {
-	source?: string
-	delta: number
-	transitionBeta?: number
-	/**
-	 * The whole-edge parent-bias magnitude (#46). Present only on the locales whose parent side has a board — absence
-	 * means the shipped artifact carries no header key and the parent bias is OFF for that locale, which is the D-rule's
-	 * per-locale check rather than an oversight.
-	 */
-	parentDelta?: number
-	boroughDB?: string
-	// oxlint-disable-next-line sister-software/no-title-case-acronym -- mirrors release.config.json's literal `pairsJsonl` wire key; renaming the member would stop it typing the parsed JSON
-	pairsJsonl?: string
-	banDir?: string
-	[key: string]: unknown
-}
-
-/**
- * The soft-feed block, verbatim. Indexed rather than exhaustively typed because a release may add a channel before this
- * reader knows about it, and an unknown channel must not fail the parse.
- */
-export interface SoftFeedRecipe {
-	gazetteerLexicon?: string
-	countryLexicon?: string
-	streetTypeLexicon?: string
-	localitySurfaceLexicon?: string
-	pairIndexByCountry?: Record<string, PairIndexInputs>
-	postcodeDBByCountry?: Record<string, string>
-	[key: string]: unknown
-}
-
-/**
- * The slice of `release.config.json` the weights paths come from.
- */
-export interface ReleaseConfig {
-	locales: string[]
-	weights: { model: string; tokenizer: string; lineage?: string }
-	softFeed?: SoftFeedRecipe
-	/**
-	 * Where a model release lives for the demo and the CI weights pull. `hfBucket` is the bucket half of the resolve URL
-	 * `fetch-hf-weights.ts` builds; the R2 keys are the gazetteer publisher's and are not read here.
-	 */
-	assets?: { hfBucket?: string; [key: string]: unknown }
-}
-
-/**
- * Read `release.config.json`. The one parse, so a second reader cannot invent a different shape for the same file.
- */
-export async function readReleaseConfig(repoRoot: PathBuilderLike): Promise<ReleaseConfig> {
-	return readLocalJSONFile<ReleaseConfig>(repoRoot, "release.config.json")
-}
-
-/**
- * The soft-feed channels whose `release.config.json` path is REPO-relative: generated files that are COMMITTED, so a
- * checkout already carries them and no bucket has to.
- *
- * `localitySurfaceLexicon` is deliberately absent — it is BUILT (~8.6 MB) and never in git, so it resolves against the
- * data root. That per-key asymmetry is the whole reason this module exists; see the file docstring.
- */
-const REPO_COMMITTED_SOFT_FEED_CHANNELS = [
-	["anchor-lexicon-v1.json", "gazetteerLexicon"],
-	["country-surface-lexicon-v1.json", "countryLexicon"],
-	["street-type-lexicon-v3.json", "streetTypeLexicon"],
-] as const satisfies ReadonlyArray<readonly [string, keyof SoftFeedRecipe]>
-
-/**
- * The repo-committed soft-feed artifacts this release names, keyed by the filename a weights package ships them as.
- *
- * Shared with `fetch-hf-weights.ts`, which needs the same answer from the other side: an artifact in this table is
- * copied out of the checkout and everything else a weights package declares is fetched from the bucket. Two readers
- * disagreeing would ship a lexicon of a different generation than the checkout's, and nothing downstream compares
- * them.
- */
-export function repoCommittedSoftFeedSources(repoRoot: PathBuilderLike, softFeed: SoftFeedRecipe): Map<string, string> {
-	const sources = new Map<string, string>()
-
-	for (const [shippedName, key] of REPO_COMMITTED_SOFT_FEED_CHANNELS) {
-		const rel = softFeed[key]
-
-		if (typeof rel === "string") {
-			sources.set(shippedName, resolvePath(repoRoot, rel))
-		}
-	}
-
-	return sources
-}
+export {
+	type PairIndexInputs,
+	type ReleaseConfig,
+	readReleaseConfig,
+	repoCommittedSoftFeedSources,
+	type SoftFeedRecipe,
+} from "@mailwoman/core/release-config"
 
 /**
  * A file the recipe names that can be materialized by copying or linking it.

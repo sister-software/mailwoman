@@ -21,6 +21,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { makeLcg } from "@mailwoman/core/random"
+import { isoDate } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
 import { dirname } from "path-ts"
 
@@ -96,7 +97,7 @@ export async function trainDedupGBT(
 	const OUT = options.out || "packages/registry/lib/models/dedup-gbt-en-us.ts"
 	const LOCALE = options.locale || "en-US"
 	const COST = options.cost ?? 1
-	const TRAIN_DATE = options.date || new Date().toISOString().slice(0, 10) // overridable for reproducible commits
+	const TRAIN_DATE = options.date || isoDate() // overridable for reproducible commits
 
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 	const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`

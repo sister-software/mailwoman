@@ -31,7 +31,7 @@
  *   embeds.
  */
 
-import { APIClient, type APIClientConfig, type ClockLike, readOGCServiceException } from "@mailwoman/core/api"
+import { APIClient, type APIClientConfig, type ClockLike, assertNoOGCServiceException } from "@mailwoman/core/api"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseJSONStrict } from "@mailwoman/core/objects"
@@ -68,34 +68,6 @@ export const SDA_MIN_REQUEST_INTERVAL_MS = 500
 const SDA_CACHE_TTL_MS = 12 * 60 * 60 * 1000
 
 /**
- * The error a `ServiceExceptionReport` becomes.
- *
- * Its own class rather than a bare `Error`, because the three failures it carries need different responses from a
- * caller: a timeout is worth narrowing the query for, an invalid column is a schema change, and access denied is a
- * query the service will never run.
- */
-export class SoilDataAccessError extends Error {
-	public readonly serviceException: string
-
-	constructor(serviceException: string, query: string) {
-		super(
-			`soil data access: the service returned a ServiceExceptionReport — ${serviceException} (query: ${query.slice(0, 200)})`
-		)
-
-		this.name = "SoilDataAccessError"
-		this.serviceException = serviceException
-	}
-
-	/**
-	 * Did the service exceed its own query timeout? There is no published figure for it, so the message is the only
-	 * signal — and it arrives on an HTTP 200.
-	 */
-	public get timedOut(): boolean {
-		return /timed out/iu.test(this.serviceException)
-	}
-}
-
-/**
  * One published survey area, as the catalogue reports it.
  */
 export interface SurveyAreaCatalogEntry {
@@ -115,8 +87,8 @@ export class SoilDataAccessClient extends APIClient<APIClientConfig> {
 	/**
 	 * Run one query and return its rows.
 	 *
-	 * @throws {SoilDataAccessError} When the service answers with an exception report — including on an HTTP 200, which
-	 *   is what a server-side timeout does.
+	 * @throws {OGCServiceError} When the service answers with an exception report — including on an HTTP 200, which is
+	 *   what a server-side timeout does.
 	 */
 	public async query(sql: string): Promise<string[][]> {
 		const { data } = await this.fetch<string>({
@@ -129,9 +101,7 @@ export class SoilDataAccessClient extends APIClient<APIClientConfig> {
 			data: { SERVICE: "query", FORMAT: "JSON", QUERY: sql },
 		})
 
-		const exception = readOGCServiceException(data)
-
-		if (exception) throw new SoilDataAccessError(exception, sql)
+		assertNoOGCServiceException(data, `soil data access (query: ${sql.slice(0, 200)})`)
 
 		const parsed = parseJSONStrict<{ Table?: unknown }>(data)
 

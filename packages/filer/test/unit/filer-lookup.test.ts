@@ -22,6 +22,7 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { changeMode } from "@mailwoman/core/fs/writers"
+import { isoDate } from "@mailwoman/core/utils"
 import { familyRollup } from "@mailwoman/filer/family-rollup"
 import {
 	filerLookup,
@@ -955,9 +956,9 @@ describe("§7-3a criteria", () => {
 			const explicit = await filerLookup(db, { frn: toFRN("9999999999")!, asOf: "2026-02-01" })
 			expect(explicit.as_of).toBe("2026-02-01")
 
-			const beforeCall = new Date().toISOString().slice(0, 10)
+			const beforeCall = isoDate()
 			const defaulted = await filerLookup(db, { frn: toFRN("9999999999")! })
-			const afterCall = new Date().toISOString().slice(0, 10)
+			const afterCall = isoDate()
 
 			expect(defaulted.as_of).toBeDefined()
 			expect([beforeCall, afterCall]).toContain(defaulted.as_of)

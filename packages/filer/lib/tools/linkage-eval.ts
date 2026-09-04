@@ -10,6 +10,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { changeMode, writeLocalFile } from "@mailwoman/core/fs/writers"
+import { isoDate } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 
@@ -921,7 +922,7 @@ export async function filerLinkageEval(
 	report?: (line: string) => void
 ): Promise<FilerLinkageEvalResult> {
 	const progress = report ?? ((): void => {})
-	const date = options.date ?? new Date().toISOString().slice(0, 10)
+	const date = options.date ?? isoDate()
 
 	const truthForm499Rows = buildLinkageEvalForm499Rows()
 	const truthProviderRows = buildLinkageEvalProviderRows()

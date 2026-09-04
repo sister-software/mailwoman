@@ -28,6 +28,7 @@ import { md5File } from "@mailwoman/core/hash"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
+import { readReleaseConfig, repoCommittedSoftFeedSources } from "@mailwoman/core/release-config"
 import { weightsOverlayPath } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 
@@ -543,23 +544,36 @@ export interface SoftFeedLink {
 }
 
 /**
- * The anchor lexicon every model-bearing overlay links — a committed repo file, the same source `release.config.json`'s
- * `softFeed.gazetteerLexicon` names and `scripts/copy-weights.ts` copies at publish time.
+ * The committed soft-feed lexicons as links, by channel, read from `release.config.json` so the filename a manifest
+ * links is the one the release ships. `streetType` is offered for completeness; the manifests link the evidence
+ * lexicons by the generation their CARD names instead (`evidenceLexiconsFromCard`).
  */
-export const ANCHOR_LEXICON_LINK: SoftFeedLink = {
-	source: String(repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")),
-	name: "anchor-lexicon-v1.json",
-	consequenceIfMissing: "gazetteer channel will resolve OFF in this worktree.",
-}
+export async function committedSoftFeedLinks(): Promise<{
+	anchor: SoftFeedLink
+	country: SoftFeedLink
+	streetType?: SoftFeedLink
+}> {
+	const config = await readReleaseConfig()
+	const sources = repoCommittedSoftFeedSources(repoRootPath(), config.softFeed ?? {})
 
-/**
- * The country-surface lexicon, linked by every overlay whose country channel constrains the resolver; see
- * {@link ANCHOR_LEXICON_LINK} for the provenance.
- */
-export const COUNTRY_SURFACE_LEXICON_LINK: SoftFeedLink = {
-	source: String(repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")),
-	name: "country-surface-lexicon-v1.json",
-	consequenceIfMissing: "country channel will resolve OFF in this worktree.",
+	const link = (name: string, consequenceIfMissing: string): SoftFeedLink | undefined => {
+		const source = sources.get(name)
+
+		return source ? { source, name, consequenceIfMissing } : undefined
+	}
+
+	const anchor = link("anchor-lexicon-v1.json", "gazetteer channel will resolve OFF in this worktree.")
+	const country = link("country-surface-lexicon-v1.json", "country channel will resolve OFF in this worktree.")
+
+	if (!anchor || !country) {
+		throw new Error(
+			"release.config.json names no softFeed.gazetteerLexicon / softFeed.countryLexicon — the overlays cannot link them."
+		)
+	}
+
+	const streetType = link("street-type-lexicon-v3.json", "the street_type channel will resolve OFF in this worktree.")
+
+	return { anchor, country, ...(streetType ? { streetType } : {}) }
 }
 
 /**
@@ -661,9 +675,7 @@ async function readWeightsCard(workspace: string): Promise<WeightsCard | undefin
  * without the card, or the reverse, fails here rather than after an eval shift graded against the wrong weights.
  */
 async function linkBaseModelPair(destDir: string, digestCard: string | undefined): Promise<void> {
-	const recipe = await readLocalJSONFile<{ weights: { model: string; tokenizer: string } }>(
-		repoRootPath("release.config.json")
-	)
+	const recipe = await readReleaseConfig()
 
 	const dataRoot = String(dataRootPath())
 	const digests = digestCard ? (await readWeightsCard(digestCard))?.files_md5 : undefined

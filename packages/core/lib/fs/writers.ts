@@ -140,9 +140,11 @@ export async function writePrivateTextFile<S extends PathBuilderLike[]>(
 
 	const filePath = resolvePath(...pathSegments)
 
-	await mkdir(dirname(filePath), { recursive: true })
+	await makeDirectories(dirname(filePath))
+	// Not `writeLocalTextFile` + `changeMode`: the mode has to be set at CREATION, or the secret exists world-readable
+	// between the two calls. `changeMode` afterwards covers a file that already existed with a wider mode.
 	await writeFile(filePath, await content, { encoding: "utf8", mode: 0o600 })
-	await chmod(filePath, 0o600)
+	await changeMode(filePath, 0o600)
 }
 
 export async function writeLocalFile<S extends PathBuilderLike[]>(

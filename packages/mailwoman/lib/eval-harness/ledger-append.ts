@@ -26,6 +26,7 @@
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { movePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { isoDate } from "@mailwoman/core/utils"
 
 /**
  * Options for {@linkcode ledgerAppend}.
@@ -198,7 +199,7 @@ export async function ledgerAppend(options: LedgerAppendOptions): Promise<number
 		corpus_sha256: "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
 		eval_set_version: `promotion-eval battery (${verdict.label}): golden v0.1.2 + real-OOD + arena perturb`,
 		eval_set_sha256: "per-file, see data/eval/external",
-		trained_at: options.trainedAt ?? new Date().toISOString().slice(0, 10),
+		trained_at: options.trainedAt ?? isoDate(),
 		hardware: modelCard.training?.hardware ?? "unknown",
 		training_steps: modelCard.training?.steps ?? 0,
 		training_wall_clock_seconds: 0,

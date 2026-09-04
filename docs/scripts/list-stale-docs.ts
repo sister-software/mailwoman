@@ -17,6 +17,8 @@
  *   `node docs/scripts/list-stale-docs.ts` from the repo root).
  */
 
+import { isoDate } from "@mailwoman/core/utils"
+
 import { collectDocPages } from "./docs-frontmatter.ts"
 
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})/
@@ -27,7 +29,7 @@ interface StalePage {
 	owner: string | undefined
 }
 
-const today = new Date().toISOString().slice(0, 10)
+const today = isoDate()
 const stalePages: StalePage[] = []
 
 for (const page of await collectDocPages()) {

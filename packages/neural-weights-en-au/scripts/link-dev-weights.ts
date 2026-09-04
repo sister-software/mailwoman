@@ -22,15 +22,14 @@
  *   go stale.
  */
 
-import {
-	COUNTRY_SURFACE_LEXICON_LINK,
-	materializeDevOverlay,
-} from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import { committedSoftFeedLinks, materializeDevOverlay } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+
+const softFeed = await committedSoftFeedLinks()
 
 await materializeDevOverlay({
 	locale: "en-au",
 	model: { kind: "inherit" },
-	softFeed: [COUNTRY_SURFACE_LEXICON_LINK],
+	softFeed: [softFeed.country],
 	evidenceLexiconsFromCard: true,
 	streetMorphologyFST: true,
 })

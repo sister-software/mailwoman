@@ -26,6 +26,7 @@ import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { isoDate } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { basename, resolvePath } from "path-ts"
@@ -262,7 +263,7 @@ const summary = {
 // the MDX angle-lint. Trades are marked in markdown (**N (+Δ)**), not color.
 
 const outPath = flags.out || "docs/articles/evals/competitive-parity/failure-report.mdx"
-const stamp = flags.date || new Date().toISOString().slice(0, 10)
+const stamp = flags.date || isoDate()
 
 const cell = (s: string): string => "`" + (s || "∅").replaceAll("`", "ˋ").replaceAll("|", "\\|") + "`"
 // NOT `formatPercent`: this rounds `(n / d) * 100` where core computes `(100 * n) / d`, and the two can differ in the

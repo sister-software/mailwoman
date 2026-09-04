@@ -18,6 +18,7 @@ import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { removePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { isoDate } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -236,7 +237,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 			counts: { wof: ingest.placesIngested, overture: overtureIngested, geonames: folded.placesIngested },
 			buildSHA: sha,
 			vintages: { overture: overtureRelease },
-			version: new Date().toISOString().slice(0, 10),
+			version: isoDate(),
 			createdAt: new Date().toISOString(),
 		})
 	)
@@ -254,7 +255,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		phase("build-log", buildLogPath)
 		const log = await readLocalJSONFile<{ notes?: string[] }>(buildLogPath)
 		const md5 = (await md5File(out)).slice(0, 8)
-		const stamp = new Date().toISOString().slice(0, 10)
+		const stamp = isoDate()
 		log.notes ??= []
 
 		log.notes.push(

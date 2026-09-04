@@ -28,6 +28,7 @@
 import { isUnitGradePostcodeHit } from "@mailwoman/codex"
 import { collectNodes, type AddressNode } from "@mailwoman/core/decoder"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
+import { haversineKm } from "@mailwoman/spatial"
 
 import { type AdminCoherenceReport, type AdminCoherenceTreeNode, forkedEntityCoherenceField } from "#admin-coherence"
 import type { POIExecutorLookup } from "#poi/executor"
@@ -62,18 +63,10 @@ export interface ForkEntityProbeOpts {
 }
 
 /**
- * Great-circle meters — local copy of the haversine at the two-point scale this module needs; the shared
- * `@mailwoman/spatial` km helper would round through km for a 150 m check.
+ * Great-circle distance in meters — `@mailwoman/spatial`'s haversine, in the unit this file's thresholds are stated in.
  */
 function distanceM(latA: number, lonA: number, latB: number, lonB: number): number {
-	const R = 6_371_000
-	const rad = (d: number): number => (d * Math.PI) / 180
-
-	const h =
-		Math.sin(rad(latB - latA) / 2) ** 2 +
-		Math.cos(rad(latA)) * Math.cos(rad(latB)) * Math.sin(rad(lonB - lonA) / 2) ** 2
-
-	return 2 * R * Math.asin(Math.sqrt(h))
+	return haversineKm(latA, lonA, latB, lonB) * 1000
 }
 
 /**

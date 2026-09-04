@@ -35,6 +35,7 @@
 import { APIClient, type APIClientConfig, assertNoArcGISError } from "@mailwoman/core/api"
 import { createPacedCachedClient, type CreatePacedCachedClientOptions } from "@mailwoman/core/api/paced-client"
 import { htmlToText } from "@mailwoman/core/html/text"
+import { isoDate } from "@mailwoman/core/utils"
 
 import { GZT_ATTRIBUTION, GZT_ITEM_ID, GZT_SERVICE_URL, GZT_SOURCE_EPSG } from "#vocabulary"
 
@@ -155,7 +156,7 @@ export class GZTClient extends APIClient<APIClientConfig> {
 		return {
 			itemID: data.id,
 			title: data.title ?? "",
-			modifiedDate: new Date(data.modified).toISOString().slice(0, 10),
+			modifiedDate: isoDate(new Date(data.modified)),
 			accessInformation: data.accessInformation ?? "",
 			licenseInfo: htmlToText(data.licenseInfo ?? ""),
 			declaredBBox: bbox,

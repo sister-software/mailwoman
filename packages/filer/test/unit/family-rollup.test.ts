@@ -41,6 +41,7 @@
  *   into the primary key) live in `filer-lookup.test.ts`.
  */
 
+import { isoDate } from "@mailwoman/core/utils"
 import { familyRollup } from "@mailwoman/filer/family-rollup"
 import {
 	createFilerEdgeTable,
@@ -350,9 +351,9 @@ describe("familyRollup — general reader contract", () => {
 			})
 			.execute()
 
-		const beforeCall = new Date().toISOString().slice(0, 10)
+		const beforeCall = isoDate()
 		const result = await familyRollup(db, { familyID: FAMILY_ID })
-		const afterCall = new Date().toISOString().slice(0, 10)
+		const afterCall = isoDate()
 
 		expect(result[0]?.as_of).toBeDefined()
 		expect([beforeCall, afterCall]).toContain(result[0]?.as_of)

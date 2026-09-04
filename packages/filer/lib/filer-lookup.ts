@@ -114,6 +114,7 @@
  *   read path calls it.
  */
 
+import { isoDate } from "@mailwoman/core/utils"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { isFRN, type FRN } from "#frn"
@@ -418,13 +419,13 @@ function resolveQueriedIdentifier(query: FilerLookupQuery): QueriedIdentifier {
 }
 
 /**
- * `new Date().toISOString().slice(0, 10)` — today, as an ISO `YYYY-MM-DD` date string, the same sortable shape every
- * real `valid_from`/`valid_to` in `filer.db` uses. {@linkcode filerLookup}'s default `asOf` when the caller omits one.
- * Exported so `family-rollup.ts` shares this exact definition of "today" rather than growing its own — every reader in
- * this SDK should default `asOf` identically.
+ * `isoDate()` — today, as an ISO `YYYY-MM-DD` date string, the same sortable shape every real `valid_from`/`valid_to`
+ * in `filer.db` uses. {@linkcode filerLookup}'s default `asOf` when the caller omits one. Exported so
+ * `family-rollup.ts` shares this exact definition of "today" rather than growing its own — every reader in this SDK
+ * should default `asOf` identically.
  */
 export function todayISODate(): string {
-	return new Date().toISOString().slice(0, 10)
+	return isoDate()
 }
 
 /**

@@ -27,6 +27,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { isoDate } from "@mailwoman/core/utils"
 
 import { addressFrequencyKey, streamRows } from "#index"
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
@@ -80,7 +81,7 @@ export async function trainOrgCrossSourceGBT(
 	const LOCALE = options.locale || "en-US"
 	// #655 threshold rule: max cross-source recall subject to this held-out pairwise precision.
 	const PRECISION_BAR = options.precisionBar ?? 0.95
-	const TRAIN_DATE = options.date || new Date().toISOString().slice(0, 10)
+	const TRAIN_DATE = options.date || isoDate()
 
 	const POS = `${SOURCES}/cms-pos_hospital-other_2026q1.csv`
 	const CARE_COMPARE = `${SOURCES}/cms-carecompare_hospital-general_20260706.csv`

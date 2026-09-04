@@ -26,16 +26,41 @@ export function argument(config: CommandArgumentMetadata): string {
  *
  * @throws {TypeError} When the manifest carries no string version — a broken install, not a formatting choice.
  */
-export async function readMailwomanVersion(): Promise<string> {
+/**
+ * The fields of mailwoman's own `package.json` that the CLI reports about itself: the version (`--version`), the Node
+ * engines floor (the doctor), and the license expression (the doctor's posture line).
+ */
+export interface MailwomanManifest {
+	version: string
+	engines?: { node?: string }
+	license?: string
+}
+
+/**
+ * Read mailwoman's own manifest by package self-reference, so the same file answers from the source tree, `out/`, and a
+ * published tarball. The one place this read happens; the doctor and the license command both call it.
+ */
+export async function readMailwomanManifest(): Promise<MailwomanManifest> {
 	const { resolvePackagePath } = await import("@mailwoman/core/module/resolvers")
 	const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
 
 	const manifestPath = resolvePackagePath("mailwoman", "package.json")
-	const manifest = await readLocalJSONFile<{ version?: unknown }>(manifestPath)
+
+	const manifest = await readLocalJSONFile<{ version?: unknown; engines?: { node?: string }; license?: string }>(
+		manifestPath
+	)
 
 	if (typeof manifest.version !== "string") {
 		throw new TypeError(`Missing string version in ${manifestPath}`)
 	}
 
-	return manifest.version
+	return {
+		version: manifest.version,
+		...(manifest.engines ? { engines: manifest.engines } : {}),
+		...(manifest.license ? { license: manifest.license } : {}),
+	}
+}
+
+export async function readMailwomanVersion(): Promise<string> {
+	return (await readMailwomanManifest()).version
 }

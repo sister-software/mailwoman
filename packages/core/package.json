@@ -496,6 +496,11 @@
 			"default": "./out/paths.js",
 			"types": "./out/paths.d.ts"
 		},
+		"./release-config": {
+			"node": "./lib/release-config.ts",
+			"default": "./out/release-config.js",
+			"types": "./out/release-config.d.ts"
+		},
 		"./data-root": {
 			"node": "./lib/data-root.ts",
 			"default": "./out/data-root.js",
