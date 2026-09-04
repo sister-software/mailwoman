@@ -79,8 +79,9 @@ export function weightsPackageName(locale?: Intl.UnicodeBCP47LocaleIdentifier): 
  * where it is the correct answer, and it earns that by being the inverse of a resolution rather than a substitute for
  * one. The directory does not exist yet at the moment the layout is needed — `mailwoman parse --download-weights` runs
  * `npm install --prefix <cacheRoot>`, and an eval harness lays a CANDIDATE bundle out with
- * `scripts/stage-weights-cache.ts` — so there is nothing for a resolver to resolve. `import.meta.resolve` would also
- * answer from THIS module's graph (the monorepo), which is precisely the bundle the candidate is being graded against.
+ * `packages/release-kit/lib/weights/stage-weights-cache.ts` — so there is nothing for a resolver to resolve.
+ * `import.meta.resolve` would also answer from THIS module's graph (the monorepo), which is precisely the bundle the
+ * candidate is being graded against.
  *
  * Every caller composes the path through this, so the day npm's prefix layout or the package scope changes, one line
  * moves. The one file that still spells it out is `neural/test/weights-cache.test.ts`, on purpose — it is the ORACLE

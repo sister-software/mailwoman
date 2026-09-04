@@ -9,5 +9,10 @@
 	},
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [{ "path": "../core" }]
+	"references": [
+		{ "path": "../core" },
+		{ "path": "../neural" },
+		{ "path": "../resolver-wof-sqlite" },
+		{ "path": "../mailwoman" }
+	]
 }

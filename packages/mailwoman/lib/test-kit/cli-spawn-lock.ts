@@ -79,7 +79,7 @@ export async function withCLISpawnLockAsync<T>(fn: () => Promise<T>): Promise<T>
 	let held = false
 
 	// The catch path sleeps and retries; only a successful mkdir breaks out. oxlint reads the try/break as
-	// the loop's sole exit and misses the fallthrough, the same false positive scripts/bless-package.ts
+	// the loop's sole exit and misses the fallthrough, the same false positive packages/release-kit/lib/release/bless-package.ts
 	// suppressed for its OTP retry. The directive must sit immediately above the loop — on a multi-line
 	// note it lands on the next COMMENT line and silently does nothing.
 	// oxlint-disable-next-line eslint/no-unreachable-loop -- retryable catch falls through to the next timed attempt

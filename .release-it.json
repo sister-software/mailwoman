@@ -63,7 +63,7 @@
 				"packages/zoning"
 			],
 			"publish": true,
-			"publishCommand": "node scripts/publish-workspace.ts",
+			"publishCommand": "yarn mwops release publish-workspace --allow-unplanned",
 			"skipChecks": true
 		}
 	},
@@ -84,7 +84,7 @@
 		"before:init": [
 			"echo 'Pre-flight: compile + copy-weights (tests skipped \u2014 PR CI already validated)'",
 			"yarn compile",
-			"node scripts/copy-weights.ts"
+			"yarn mwops release copy-weights"
 		],
 		"after:bump": "yarn oxfmt package.json '**/package.json'",
 		"after:release": "echo 'Released v${version}'"

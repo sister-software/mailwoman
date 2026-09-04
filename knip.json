@@ -1,23 +1,6 @@
 {
 	"$schema": "https://unpkg.com/knip@6/schema.json",
-	"entry": [
-		"scripts/check-release-parity.ts",
-		"scripts/copy-weights.ts",
-		"scripts/derived-weights-key.ts",
-		"scripts/fetch-hf-weights.ts",
-		"scripts/pack-workspace.ts",
-		"scripts/prepare-release-version.ts",
-		"scripts/publish-workspace.ts",
-		"scripts/release-generated-surfaces.ts",
-		"scripts/release-preflight.ts",
-		"scripts/smoke-clean-install.ts",
-		"scripts/verify-release-metadata.ts",
-		"scripts/verify-tarball.ts",
-		"corpus-python/scripts/**/*.ts",
-		"docker/server.ts",
-		"*.config.ts",
-		"oxlint.plugin.ts"
-	],
+	"entry": ["corpus-python/scripts/**/*.ts", "docker/server.ts", "*.config.ts", "oxlint.plugin.ts"],
 	"ignore": [
 		"scripts/**/*.ts",
 		"corpus-python/scripts/**/*.ts",

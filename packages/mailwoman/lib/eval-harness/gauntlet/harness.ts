@@ -260,7 +260,7 @@ async function assertShippedModelMatchesCard(materializedMd5: string): Promise<v
 			`[gauntlet] materialized model md5 ${materializedMd5} ≠ model-card files_md5["model.onnx"] ${expected} ` +
 				`(neural-weights-en-us/model-card.json, v${card.version ?? "?"}). The card is the source of truth; ` +
 				`release.config.json / the dev-weights symlink has DRIFTED from it (#1024). Re-materialize the card's model ` +
-				`(scripts/copy-weights.ts) or fix release.config.json weights.model before verifying/shipping.`
+				`(packages/release-kit/lib/weights/copy-weights.ts) or fix release.config.json weights.model before verifying/shipping.`
 		)
 	}
 }

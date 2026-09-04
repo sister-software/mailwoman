@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   The typed reader of `release.config.json`, the register that names the shipped model, tokenizer and soft-feed
- *   artifacts per locale. One home, because it is read at publish time (`scripts/copy-weights.ts`), by the overlay
- *   writers (`scripts/link-weights-overlay.ts`, the per-locale `link-dev-weights.ts` manifests through
+ *   artifacts per locale. One home, because it is read at publish time (`packages/release-kit/lib/weights/copy-weights.ts`), by the overlay
+ *   writers (`packages/release-kit/lib/weights/link-weights-overlay.ts`, the per-locale `link-dev-weights.ts` manifests through
  *   `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`) and by the HF fetch — and a reader that lived under
  *   `scripts/` was unreachable from the package, which is how the linker came to hardcode the lexicon filenames the
  *   config already names.

@@ -56,7 +56,8 @@ const ALLOWED: Record<string, string> = {
 	// Probes a FOREIGN scratch project it just created with `npm install`. The whole point is to read the install
 	// layout from outside; `import.meta.resolve` would answer from the monorepo's graph — the exact thing the clean-
 	// install smoke exists to NOT consult.
-	"scripts/smoke-clean-install.ts": "inspects a scratch project's install layout from outside, by design",
+	"packages/release-kit/lib/release/smoke-clean-install.ts":
+		"inspects a scratch project's install layout from outside, by design",
 	// BUILDS a node_modules tree rather than reading one — the symlink farm a worktree arm needs, because a git
 	// worktree has none and symlinking the main checkout's directory across resolves every workspace back into the
 	// main checkout (yarn links `@mailwoman/core -> ../../packages/core`, resolved against the symlink's REAL path).
@@ -72,7 +73,8 @@ const ALLOWED: Record<string, string> = {
 	// LINKS the checkout's node_modules into the staging tree rather than reading a package's layout — `yarn pack`
 	// needs the project context there, and the link target is the checkout root's own directory, not another
 	// package's install dir. Same principle as worktree-arm: nothing package-owned is being addressed by hand.
-	"scripts/release-stage.ts": "symlinks the checkout's node_modules into the staging tree; not a package lookup",
+	"packages/release-kit/lib/release/stage.ts":
+		"symlinks the checkout's node_modules into the staging tree; not a package lookup",
 	// THE ONE HOME. `weightsCachePackageDir` is the inverse of a resolution, not a substitute for one: the directory
 	// does not exist yet when the layout is needed (`npm install --prefix <cacheRoot>` is about to create it, or
 	// `stage-weights-cache.ts` is about to write a candidate bundle into it), so there is nothing to resolve. Every

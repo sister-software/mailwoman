@@ -19,7 +19,7 @@
  *   turns "merge" into "replace," which is what a reinstall should mean.
  *
  *   No destination-side symlink can precede the copy in this pipeline, so the `unlink`-then-`copyFile`
- *   discipline `scripts/copy-weights.ts` needs (AGENTS.md's "Pitfall: symlinks in the publish
+ *   discipline `packages/release-kit/lib/weights/copy-weights.ts` needs (AGENTS.md's "Pitfall: symlinks in the publish
  *   tarball") does not apply here: `rmSync` removes whatever sits at `destDir` — a symlink, a real
  *   directory, or nothing — as an unlink of that path itself, never by following it, so `cpSync`
  *   always writes into a directory it just created fresh. There is no step here that could write

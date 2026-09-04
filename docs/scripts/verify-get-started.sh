@@ -59,8 +59,8 @@ trap cleanup EXIT
 # ---------------------------------------------------------------------------------------------------
 # Pack the mailwoman + neural + neural-weights-en-us closure — the exact `npm install` line
 # install-and-first-parse.mdx's Step 1 prints — into $TAR_DIR, deriving the full workspace:* closure
-# live (mirrors scripts/smoke-clean-install.ts's WORKSPACES map, computed instead of hand-typed) and
-# reusing the SAME publish-shaped pack (scripts/pack-workspace.ts's packWorkspaceForPublish) release
+# live (mirrors the clean-install smoke's WORKSPACES map in @mailwoman/release-kit, computed instead of
+# hand-typed) and reusing the SAME publish-shaped pack (release-kit's packWorkspaceForPublish) release
 # actually ships, so a dev-only `exports` map never sneaks past this check.
 # ---------------------------------------------------------------------------------------------------
 PACK_HELPER="$TAR_DIR/pack-closure.mjs"
@@ -72,7 +72,7 @@ import { resolve } from "node:path"
 const [, , repoRoot, tarDir] = process.argv
 const seeds = ["mailwoman", "@mailwoman/neural", "@mailwoman/neural-weights-en-us"]
 
-const { packWorkspaceForPublish } = await import(resolve(repoRoot, "scripts/pack-workspace.ts"))
+const { packWorkspaceForPublish } = await import(resolve(repoRoot, "packages/release-kit/lib/pack/pack-workspace.ts"))
 
 const rootPkg = JSON.parse(await readFile(resolve(repoRoot, "package.json"), "utf8"))
 const nameToDir = {}

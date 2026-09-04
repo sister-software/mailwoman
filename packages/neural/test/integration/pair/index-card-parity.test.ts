@@ -15,7 +15,7 @@
  *   the same sources reproduces them exactly. The card's `md5` is NOT compared: a PIX1 header
  *   embeds `buildDate`, so identical sources produce different bytes on every rebuild, and asserting
  *   on it would fail constantly for a reason that is not a defect. The md5 documents the artifact
- *   STAGED for a release; the release-side check in `scripts/verify-release-metadata.ts` is where
+ *   STAGED for a release; the release-side check in `packages/release-kit/lib/release/verify-metadata.ts` is where
  *   staged bytes get checked.
  *
  *   Skips per-package when the binary is absent — these are derived artifacts, gitignored and built
