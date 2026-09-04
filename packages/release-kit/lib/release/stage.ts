@@ -41,6 +41,8 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 	"packages/repo-health": "private repository health registry — never publishes",
 	"packages/ops-cli": "private operator CLI (mwops) — never publishes",
 	"packages/osm": "public but held out of the release — ODbL counsel sign-off pending (packages/osm/README.md)",
+	"packages/evidence":
+		"public, awaiting `mwops release bless-package` — an unblessed name fails the whole release at that workspace with a bare E404",
 }
 
 /**

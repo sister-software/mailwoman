@@ -1,0 +1,67 @@
+{
+	"name": "@mailwoman/evidence",
+	"version": "9.2.0",
+	"description": "The typed-evidence contract — observation, relation and prior, and the epistemic-status axis that says what may be claimed about a value, kept separate from the mechanism that produced it.",
+	"keywords": [
+		"epistemic-status",
+		"evidence",
+		"geocoding",
+		"provenance"
+	],
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/evidence"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"*.ts",
+		"**/*.ts",
+		"!*.test.ts",
+		"!**/*.test.ts",
+		"!test/**"
+	],
+	"type": "module",
+	"sideEffects": false,
+	"imports": {
+		"#*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./lib/index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./evidence": {
+			"node": "./lib/evidence.ts",
+			"default": "./out/evidence.js",
+			"types": "./out/evidence.d.ts"
+		},
+		"./status": {
+			"node": "./lib/status.ts",
+			"default": "./out/status.js",
+			"types": "./out/status.d.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=24.18.0"
+	}
+}

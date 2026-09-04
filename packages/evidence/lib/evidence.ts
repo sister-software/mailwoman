@@ -1,0 +1,81 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ * @file The typed evidence union. The difference between the kinds is what each is ALLOWED to do:
+ *
+ *   - `observation` — retrieved from a named source at a named vintage. Carries no score; a source either said it or
+ *     did not.
+ *   - `relation` — structural compatibility between entities. Carries an assertion, and a score only when that
+ *     assertion is `inferred`.
+ *   - `prior` — moves probability. Can never, by itself, prove or exclude.
+ *
+ *   An `exclusion` — proof that a candidate is impossible — is deliberately absent from this module: one is
+ *   constructed only through the coverage-basis check, because an exclusion built without a coverage check is the
+ *   defect this package exists to prevent.
+ */
+
+import { Assertion } from "#status"
+
+export interface Observation {
+	kind: "observation"
+	source: string
+	vintage: string
+	value: unknown
+}
+
+export interface Relation {
+	kind: "relation"
+	source: string
+	vintage: string
+	relationship: string
+	assertion: Assertion
+	score?: number
+}
+
+export interface Prior {
+	kind: "prior"
+	source: string
+	label: string
+	weight: number
+}
+
+export type Evidence = Observation | Relation | Prior
+
+export interface RelationInput {
+	source: string
+	vintage: string
+	relationship: string
+	assertion: Assertion
+	score?: number
+}
+
+export function observation(source: string, vintage: string, value: unknown): Observation {
+	return { kind: "observation", source, vintage, value }
+}
+
+/**
+ * A relation stated by a source is authoritative and carries no score; one we concluded is inferred and may. A score on
+ * an authoritative relation is refused, because it means the link was concluded, not stated.
+ */
+export function relation(input: RelationInput): Relation {
+	if (input.assertion === Assertion.Authoritative && input.score !== undefined) {
+		throw new Error(
+			`authoritative relation cannot carry a score (${input.relationship} from ${input.source}): a score means the link was concluded, not stated`
+		)
+	}
+
+	const base = {
+		kind: "relation" as const,
+		source: input.source,
+		vintage: input.vintage,
+		relationship: input.relationship,
+		assertion: input.assertion,
+	}
+
+	return input.score === undefined ? base : { ...base, score: input.score }
+}
+
+export function prior(source: string, label: string, weight: number): Prior {
+	return { kind: "prior", source, label, weight }
+}

@@ -4415,6 +4415,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/evidence@workspace:packages/evidence":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/evidence@workspace:packages/evidence"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/fastify@workspace:packages/fastify":
   version: 0.0.0-use.local
   resolution: "@mailwoman/fastify@workspace:packages/fastify"
