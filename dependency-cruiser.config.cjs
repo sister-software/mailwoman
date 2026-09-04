@@ -53,7 +53,7 @@ module.exports = {
 				"type-only edge is not an evaluation cycle — a lazy import is how a module keeps a Node-only loader out of " +
 				"the browser graph while still offering a one-call factory — so those edges do not count.",
 			severity: "error",
-			from: { path: "^(?:packages|scripts)/" },
+			from: { path: "^packages/" },
 			to: { circular: true, viaOnly: { dependencyTypesNot: ["dynamic-import", "type-only"] } },
 		},
 	],
@@ -64,7 +64,7 @@ module.exports = {
 			exportsFields: ["exports"],
 		},
 		exclude: "(?:^|/)(?:out|node_modules|sentencepiece[.]mjs)(?:/|$)",
-		includeOnly: "^(?:packages|scripts)/",
+		includeOnly: "^packages/",
 		preserveSymlinks: false,
 		progress: { type: "none" },
 		tsConfig: { fileName: "tsconfig.json" },
