@@ -20,6 +20,10 @@
  *   `no-import-meta-resolve`: `fileURLToPath(import.meta.resolve(…))` has a typed home in
  *   `@mailwoman/core/module/resolvers`.
  *
+ *   `prefer-home`: a table of helper shapes that already have a home (`HELPER_HOMES`) — the UTC date string, the
+ *   Earth radius, the seeded generators' constants. A review that finds a helper typed twice adds a row; the
+ *   pre-commit hook then reports the third copy before it lands, so the review stops needing a reminder.
+ *
  *   `prefer-spliterator`: `text.split("\n")` (or `"\t"`) materializes every segment into one array
  *   before the first is read — the whole-buffer parse the spliterator library exists to avoid (the
  *   quadratic-CSV episode in AGENTS.md started exactly there). The rule warns on those two literal
@@ -502,6 +506,147 @@ const noImportMetaDirnameWalkRule: Rule = {
 	},
 }
 
+/**
+ * A helper shape that already has a home. `signature` is what a re-typed copy looks like in the AST; `home` is the
+ * import the copy should become. Add a row when a review finds the same helper typed twice — the row is the durable
+ * half of that review, and the pre-commit hook then reports the third copy before it is committed.
+ *
+ * Two signature kinds cover every row so far. A `method-chain` names the method calls of the outermost call
+ * innermost-first, matched as a suffix of the chain the call stands on (`new Date().toISOString().slice(0, 10)` is
+ * `["toISOString", "slice"]`), optionally with the literal arguments the outer call must carry. A `numeric-literal`
+ * names the constants a re-typed algorithm cannot avoid writing: Earth's mean radius, a generator's multiplier.
+ */
+interface HelperHome {
+	readonly id: string
+	readonly signature:
+		| { readonly kind: "method-chain"; readonly chain: readonly string[]; readonly arguments?: readonly number[] }
+		| { readonly kind: "numeric-literal"; readonly values: ReadonlySet<number> }
+	readonly specifier: string
+	readonly symbol: string
+	readonly reason: string
+}
+
+const HELPER_HOMES: readonly HelperHome[] = [
+	{
+		id: "iso-date",
+		signature: { kind: "method-chain", chain: ["toISOString", "slice"], arguments: [0, 10] },
+		specifier: "@mailwoman/core/utils",
+		symbol: "isoDate",
+		reason: "the UTC calendar date as `YYYY-MM-DD`",
+	},
+	{
+		id: "iso-seconds",
+		signature: { kind: "method-chain", chain: ["toISOString", "replace"] },
+		specifier: "@mailwoman/core/utils",
+		symbol: "isoSeconds (`Z` suffix) or isoSecondsUTC (`+00:00`, the Python manifest shape)",
+		reason: "the UTC instant at second precision",
+	},
+	{
+		id: "earth-radius",
+		signature: { kind: "numeric-literal", values: new Set([6371, 6_371_000]) },
+		specifier: "@mailwoman/spatial",
+		symbol: "haversineKm (with EARTH_RADIUS beside it)",
+		reason: "Earth's mean radius, and with it the great-circle distance",
+	},
+	{
+		id: "mulberry32",
+		signature: { kind: "numeric-literal", values: new Set([0x6d_2b_79_f5]) },
+		specifier: "@mailwoman/core/random",
+		symbol: "mulberry32",
+		reason: "the mulberry32 seeded generator, whose stream every eval split and corpus sampler shares",
+	},
+	{
+		id: "lcg",
+		signature: { kind: "numeric-literal", values: new Set([1_664_525, 1_013_904_223]) },
+		specifier: "@mailwoman/core/random",
+		symbol: "makeLcg",
+		reason: "the linear congruential stream baked into shipped corpus rows",
+	},
+]
+
+/**
+ * The method names a call stands on, innermost first: `a.b().c().d()` is `["b", "c", "d"]`. A non-call object (an
+ * identifier, a `new` expression, a member read) ends the chain.
+ */
+function methodChain(node: AstNode): string[] {
+	const names: string[] = []
+	let current: AstNode | undefined = node
+
+	while (current?.type === "CallExpression") {
+		const method = calledMethod(current)
+
+		if (method === null) break
+		names.unshift(method)
+		current = current.callee?.object
+	}
+
+	return names
+}
+
+function numericLiteralValue(node: AstNode): number | null {
+	if ((node.type === "Literal" || node.type === "NumericLiteral") && typeof node.value === "number") return node.value
+
+	return null
+}
+
+function endsWith(chain: readonly string[], suffix: readonly string[]): boolean {
+	if (suffix.length > chain.length) return false
+
+	return suffix.every((name, index) => chain[chain.length - suffix.length + index] === name)
+}
+
+function homeMessage(home: HelperHome): string {
+	return (
+		`This re-types ${home.reason}, which already has a home: \`${home.symbol}\` from \`${home.specifier}\`. ` +
+		"Import it. If this site is the home itself, or the package deliberately carries no dependency on it, " +
+		"keep the copy behind a scoped disable stating why."
+	)
+}
+
+const preferHomeRule: Rule = {
+	meta: {
+		name: "prefer-home",
+		type: "suggestion",
+		schema: [],
+	},
+	create(context: RuleContext) {
+		return {
+			CallExpression(node: AstNode) {
+				const chain = methodChain(node)
+
+				if (!chain.length) return
+
+				for (const home of HELPER_HOMES) {
+					if (home.signature.kind !== "method-chain" || !endsWith(chain, home.signature.chain)) continue
+					const expected = home.signature.arguments
+
+					if (expected) {
+						const actual = (node.arguments ?? []).map((argument: AstNode) => numericLiteralValue(argument))
+
+						if (actual.length !== expected.length || expected.some((value, index) => actual[index] !== value)) continue
+					}
+
+					context.report({ node, message: homeMessage(home) })
+
+					return
+				}
+			},
+			Literal(node: AstNode) {
+				const value = numericLiteralValue(node)
+
+				if (value === null) return
+
+				for (const home of HELPER_HOMES) {
+					if (home.signature.kind !== "numeric-literal" || !home.signature.values.has(value)) continue
+					context.report({ node, message: homeMessage(home) })
+
+					return
+				}
+			},
+		}
+	},
+}
+
 const mailwomanPlugin: Plugin = {
 	meta: { name: "mailwoman" },
 	rules: {
@@ -511,6 +656,7 @@ const mailwomanPlugin: Plugin = {
 		"no-import-meta-resolve": noImportMetaResolveRule,
 		"no-relative-dynamic-import": noRelativeDynamicImportRule,
 		"no-sync-fs-in-async": noSyncFSInAsyncRule,
+		"prefer-home": preferHomeRule,
 		"prefer-spliterator": preferSpliteratorRule,
 		"require-database-schema-argument": requireDatabaseSchemaArgumentRule,
 		"require-disable-reason": requireDisableReasonRule,

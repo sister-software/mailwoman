@@ -60,6 +60,7 @@ import { openReadStream, openWriteStream, pipeline } from "@mailwoman/core/fs/st
 import { movePath, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { runFile, spawnProcess } from "@mailwoman/core/process"
+import { isoSeconds } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
@@ -316,7 +317,7 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 
 	const sha = await sha256File(outputFile)
 	const rowCount = await countLines(outputFile)
-	const downloadedAt = new Date().toISOString().replace(/\.\d{3}Z$/, "Z")
+	const downloadedAt = isoSeconds()
 
 	const manifest = {
 		source_url: sourceURL,

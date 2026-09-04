@@ -195,6 +195,21 @@ export default {
 			},
 		},
 		{
+			// The homes `prefer-home` points at are the one place each shape is typed out: the clock helpers, the seeded
+			// generators, and `@mailwoman/spatial`, which owns Earth's radius and every reading of it.
+			// The table that names each shape, and its test, spell the constants out by necessity.
+			files: [
+				"packages/core/lib/utils/time.ts",
+				"packages/core/lib/random.ts",
+				"packages/spatial/**/*.ts",
+				"oxlint.plugin.ts",
+				"oxlint.plugin.test.ts",
+			],
+			rules: {
+				"mailwoman/prefer-home": "off",
+			},
+		},
+		{
 			// `packages/core/lib/process.ts` is the child-process idiom and the one place `node:child_process` is reached.
 			files: ["packages/core/lib/process.ts"],
 			rules: {
@@ -297,6 +312,9 @@ export default {
 		// read — the whole-buffer parse spliterator exists to avoid. Bounded-input sites keep split
 		// behind a scoped disable saying why their bound is durable.
 		"mailwoman/prefer-spliterator": "error",
+		// A helper shape that already has a home (`HELPER_HOMES` in `oxlint.plugin.ts`) is reported at the copy, with
+		// the import that replaces it. The home files themselves are exempted in `overrides`.
+		"mailwoman/prefer-home": "error",
 		// `JSON.parse` throws on corrupt input and returns `any`, so every direct call site either
 		// wraps it in its own try/catch or lets the exception escape untyped. `tryParsingJSON<T>`
 		// (`@mailwoman/core/objects`) is the house wrapper: typed result, non-throwing, explicit

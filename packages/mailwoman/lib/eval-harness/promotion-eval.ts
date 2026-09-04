@@ -80,7 +80,7 @@ import {
 import { makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { isoDate } from "@mailwoman/core/utils"
+import { isoDate, isoSeconds } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { basename, dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 
@@ -334,10 +334,7 @@ async function runLoreGuards(env: {
 	if (WC) {
 		const wcDql = await dql(WC_MODEL)
 
-		const provLines = [
-			`graded at ${new Date().toISOString().replace(/\.\d{3}Z$/, "Z")}`,
-			`WEIGHTS-CACHE  ${await md5(WC_MODEL)}  dql=${wcDql}  ${WC_MODEL}`,
-		]
+		const provLines = [`graded at ${isoSeconds()}`, `WEIGHTS-CACHE  ${await md5(WC_MODEL)}  dql=${wcDql}  ${WC_MODEL}`]
 
 		let wc8Dql = ""
 
@@ -372,10 +369,7 @@ async function runLoreGuards(env: {
 	} else {
 		const modelDql = await dql(MODEL)
 
-		const provLines = [
-			`graded at ${new Date().toISOString().replace(/\.\d{3}Z$/, "Z")}`,
-			`MODEL  ${await md5(MODEL)}  dql=${modelDql}  ${MODEL}`,
-		]
+		const provLines = [`graded at ${isoSeconds()}`, `MODEL  ${await md5(MODEL)}  dql=${modelDql}  ${MODEL}`]
 
 		let int8Dql = ""
 
