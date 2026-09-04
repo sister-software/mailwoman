@@ -47,6 +47,11 @@
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
+		"./coverage": {
+			"node": "./lib/coverage.ts",
+			"default": "./out/coverage.js",
+			"types": "./out/coverage.d.ts"
+		},
 		"./evidence": {
 			"node": "./lib/evidence.ts",
 			"default": "./out/evidence.js",

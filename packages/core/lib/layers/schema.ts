@@ -13,6 +13,7 @@
  *   never "surveyed and empty". Consumers must treat absence as absence of evidence.
  */
 
+import type { CoverageBasis } from "@mailwoman/evidence"
 import { sql, type Kysely } from "kysely"
 
 /**
@@ -82,37 +83,9 @@ export interface LayerManifestTable {
 	created_at: string
 }
 
-/**
- * Per-cell survey completeness. Missing row = unknown, NOT zero.
- */
-/**
- * What a `completeness` value RESTS ON. The magnitude alone cannot be acted on: a cell recorded at `1.0` because an
- * authority designates the set complete, and a cell recorded at `1.0` because the source happened to return rows there,
- * license entirely different conclusions.
- *
- * Only {@link CoverageBasis.Designated} and {@link CoverageBasis.Surveyed} can support an EXCLUSION — "the thing you
- * asked for is not here". {@link CoverageBasis.SourcePresent} supports presence and nothing else: the source looked,
- * which is not the same as the source found everything.
- */
-export const CoverageBasis = {
-	/**
-	 * An authority declares the set complete for this cell — BAN holding every address in a commune. A miss inside a
-	 * designated cell IS evidence of absence.
-	 */
-	Designated: "designated",
-	/**
-	 * We measured completeness ourselves against an independent reference, and `completeness` carries that measurement. A
-	 * miss is evidence of absence in proportion to the value.
-	 */
-	Surveyed: "surveyed",
-	/**
-	 * The source returned rows in this cell and we recorded that. Says nothing about what the source missed. A miss here
-	 * is UNKNOWN, never absence.
-	 */
-	SourcePresent: "source_present",
-} as const
-
-export type CoverageBasis = (typeof CoverageBasis)[keyof typeof CoverageBasis]
+// Owned by @mailwoman/evidence so bdc, resolver and filer can check on the SAME FUNCTION rather than on matching copies
+// of the same three strings. The layer_coverage schema and its IO stay here.
+export { CoverageBasis } from "@mailwoman/evidence"
 
 export interface LayerCoverageTable {
 	/**

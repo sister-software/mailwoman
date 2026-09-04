@@ -9,7 +9,7 @@
  *   by `./index.ts`, so keeping them together closed an import cycle.
  */
 
-import { isValidCell } from "h3-js"
+import { cellToParent, isValidCell } from "h3-js"
 import type { Tagged } from "type-fest"
 
 /**
@@ -197,4 +197,15 @@ export function recoverShortCellResolution(cells: readonly number[], context = "
 	}
 
 	return recovered!
+}
+
+/**
+ * Reconstruct a short-cell int's ancestor at a coarser resolution WITHOUT going through a centroid.
+ *
+ * The centroid is the wrong input: re-deriving a parent from a stored cell's center can land in a different parent than
+ * the original cell belonged to (measured at ~6% of CONUS blocks between res 9 and res 6), so a coverage read and the
+ * build that wrote it disagree on a fraction of cells. Reconstructing from the stored cell itself is exact.
+ */
+export function shortCellToParentInt(shortCell: number, from: number, to: number): number {
+	return shortCellToInt(cellToParent(expandShortCellInt(shortCell, from), to) as H3Cell)
 }

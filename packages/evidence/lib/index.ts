@@ -9,5 +9,6 @@
  *   a dependency here.
  */
 
+export * from "#coverage"
 export * from "#evidence"
 export * from "#status"

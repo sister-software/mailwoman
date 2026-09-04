@@ -6,6 +6,7 @@
 				"packages/activity-lexicon",
 				"packages/address-id",
 				"packages/ancestrie",
+				"packages/evidence",
 				"packages/annotations",
 				"packages/api",
 				"packages/api-kit",

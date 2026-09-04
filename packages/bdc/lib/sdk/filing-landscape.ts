@@ -34,9 +34,8 @@
  */
 
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
-import { expandH3Cell, shortCellToInt, type H3Cell, type H3CellShort } from "@mailwoman/spatial"
+import { shortCellToParentInt } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
-import { cellToParent } from "h3-js"
 import { sql } from "kysely"
 
 import { BDC_COVERAGE_H3_RESOLUTION, BDC_H3_RESOLUTION, type BDCDatabase } from "#schema"
@@ -145,10 +144,7 @@ END`
  * coverage-cell derivation (the two MUST share this derivation — see that file's docstring).
  */
 export function res9ShortCellToRes6Parent(h3CellShortInt: number): number {
-	const fullCell = expandH3Cell(h3CellShortInt.toString(16) as H3CellShort, BDC_H3_RESOLUTION)
-	const parentCell = cellToParent(fullCell, BDC_COVERAGE_H3_RESOLUTION) as H3Cell
-
-	return shortCellToInt(parentCell)
+	return shortCellToParentInt(h3CellShortInt, BDC_H3_RESOLUTION, BDC_COVERAGE_H3_RESOLUTION)
 }
 
 /**

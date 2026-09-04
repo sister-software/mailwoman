@@ -4272,6 +4272,7 @@ __metadata:
   dependencies:
     "@duckdb/node-api": "npm:1.5.5-r.4"
     "@mailwoman/codex": "workspace:*"
+    "@mailwoman/evidence": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
     "@types/d3-color": "npm:^3.1.3"
@@ -4415,7 +4416,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/evidence@workspace:packages/evidence":
+"@mailwoman/evidence@workspace:*, @mailwoman/evidence@workspace:packages/evidence":
   version: 0.0.0-use.local
   resolution: "@mailwoman/evidence@workspace:packages/evidence"
   languageName: unknown

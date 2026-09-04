@@ -10,11 +10,12 @@
  *     assertion is `inferred`.
  *   - `prior` — moves probability. Can never, by itself, prove or exclude.
  *
- *   An `exclusion` — proof that a candidate is impossible — is deliberately absent from this module: one is
- *   constructed only through the coverage-basis check, because an exclusion built without a coverage check is the
- *   defect this package exists to prevent.
+ *   An `exclusion` — proof that a candidate is impossible — joins the union from `./coverage.ts` and has no constructor
+ *   here: one is built only through `requireExclusionBasis`, because an exclusion built without a coverage check is
+ *   the defect this package exists to prevent.
  */
 
+import type { Exclusion } from "#coverage"
 import { Assertion } from "#status"
 
 export interface Observation {
@@ -40,7 +41,7 @@ export interface Prior {
 	weight: number
 }
 
-export type Evidence = Observation | Relation | Prior
+export type Evidence = Observation | Exclusion | Relation | Prior
 
 export interface RelationInput {
 	source: string

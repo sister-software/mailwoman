@@ -526,6 +526,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"adm-zip": "^0.6.0",
 		"async-init": "^1.0.0",
