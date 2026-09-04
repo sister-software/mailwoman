@@ -124,21 +124,6 @@
 			"default": "./out/cli-kit/weights-guard.js",
 			"types": "./out/cli-kit/weights-guard.d.ts"
 		},
-		"#geocode-core": {
-			"node": "./lib/geocode-core.ts",
-			"default": "./out/geocode-core.js",
-			"types": "./out/geocode-core.d.ts"
-		},
-		"#geocode-regions": {
-			"node": "./lib/geocode-regions.ts",
-			"default": "./out/geocode-regions.js",
-			"types": "./out/geocode-regions.d.ts"
-		},
-		"#geocode-session": {
-			"node": "./lib/geocode-session.ts",
-			"default": "./out/geocode-session.js",
-			"types": "./out/geocode-session.d.ts"
-		},
 		"#autocomplete-core": {
 			"node": "./lib/autocomplete-core.ts",
 			"default": "./out/autocomplete-core.js",

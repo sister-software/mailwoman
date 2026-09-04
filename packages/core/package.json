@@ -471,16 +471,6 @@
 			"default": "./out/types/mapping.js",
 			"types": "./out/types/mapping.d.ts"
 		},
-		"./utils/hash": {
-			"node": "./lib/utils/hash.ts",
-			"default": "./out/utils/hash.js",
-			"types": "./out/utils/hash.d.ts"
-		},
-		"./utils/stats": {
-			"node": "./lib/utils/stats.ts",
-			"default": "./out/utils/stats.js",
-			"types": "./out/utils/stats.d.ts"
-		},
 		"./random": {
 			"node": "./lib/random.ts",
 			"default": "./out/random.js",
