@@ -12,7 +12,9 @@
  *   asked. The command verifies the SHA and refuses with the checkout command otherwise.
  */
 
+import { gitHead } from "@mailwoman/core/git"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { Box, Text } from "ink"
 import { $ } from "zx"
 
@@ -85,7 +87,7 @@ async function mergeAdmin(prNumber: string, method: string): Promise<MergeAdminR
 		throw new Error(`PR #${prNumber} is ${pr.state}, not OPEN.`)
 	}
 
-	const localHead = (await $`git rev-parse HEAD`.quiet()).stdout.trim()
+	const localHead = await gitHead(repoRootPath())
 
 	if (localHead !== pr.headRefOid) {
 		throw new Error(

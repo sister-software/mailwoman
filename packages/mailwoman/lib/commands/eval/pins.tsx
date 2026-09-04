@@ -14,7 +14,9 @@
  *   without Ink.
  */
 
+import { gitHead } from "@mailwoman/core/git"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { Box, Text } from "ink"
 import { $ } from "zx"
 
@@ -63,7 +65,7 @@ const STALE_PIN_ISSUE_TITLE = "board pins are stale on main"
  * Open the deduplicated stale-pin issue, or comment on the open one. Answers what it did, for the command's output.
  */
 async function reportStalePins(drift: string, testPath: string): Promise<string> {
-	const commit = (await $`git rev-parse HEAD`.quiet()).stdout.trim()
+	const commit = await gitHead(repoRootPath())
 
 	const body =
 		`The board-pin audit found the committed constants stale at ${commit}:\n\n${drift}\n\n` +

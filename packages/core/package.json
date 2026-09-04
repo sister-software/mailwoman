@@ -186,6 +186,11 @@
 			"default": "./out/module/*.js",
 			"types": "./out/module/*.d.ts"
 		},
+		"./git": {
+			"node": "./lib/git.ts",
+			"default": "./out/git.js",
+			"types": "./out/git.d.ts"
+		},
 		"./process": {
 			"node": "./lib/process.ts",
 			"default": "./out/process.js",

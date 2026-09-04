@@ -15,11 +15,10 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/git"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { canonicalJSON } from "mailwoman/eval-harness/preregistration"
 import { resolvePath } from "path-ts"
-import { TextSpliterator } from "spliterator"
-import { $ } from "zx"
 
 import { releaseWorkspaces } from "#release/stage"
 import {
@@ -53,22 +52,6 @@ export interface ReleasePlan {
 }
 
 const NPM_REGISTRY = "https://registry.npmjs.org"
-
-async function gitHead(repoRoot: string): Promise<string> {
-	const result = await $({ cwd: repoRoot })`git rev-parse HEAD`.quiet()
-
-	return result.stdout.trim()
-}
-
-/**
- * Tracked files with uncommitted changes. Untracked files are excluded on purpose: materialized weights binaries and
- * compiled `out/` trees are gitignored, and the publish path creates both before publishing.
- */
-async function dirtyTrackedFiles(repoRoot: string): Promise<string[]> {
-	const result = await $({ cwd: repoRoot })`git status --porcelain --untracked-files=no`.quiet()
-
-	return [...TextSpliterator.from(result.stdout)].map((line) => line.trimEnd()).filter((line) => line.length > 0)
-}
 
 export async function computeReleasePlan(repoRoot: string): Promise<ReleasePlan> {
 	const head = await gitHead(repoRoot)

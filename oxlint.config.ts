@@ -201,6 +201,7 @@ export default {
 			files: [
 				"packages/core/lib/utils/time.ts",
 				"packages/core/lib/random.ts",
+				"packages/core/lib/git.ts",
 				"packages/spatial/**/*.ts",
 				"oxlint.plugin.ts",
 				"oxlint.plugin.test.ts",
