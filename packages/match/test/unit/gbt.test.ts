@@ -20,6 +20,7 @@ function lcg(seed: number): () => number {
 	let s = seed >>> 0
 
 	return () => {
+		// oxlint-disable-next-line mailwoman/prefer-home -- `@mailwoman/match` carries no dependency on core, and this stream is pinned by the fixture expectations below
 		s = (s * 1_664_525 + 1_013_904_223) >>> 0
 
 		return s / 0x1_00_00_00_00

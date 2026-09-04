@@ -20,3 +20,11 @@ export function isoDate(now: Date = new Date()): string {
 export function isoSecondsUTC(now: Date = new Date()): string {
 	return now.toISOString().replace(/\.\d{3}Z$/, "+00:00")
 }
+
+/**
+ * The UTC instant at second precision with the `Z` suffix — the RFC 3339 shape the artifact manifests and eval reports
+ * stamp.
+ */
+export function isoSeconds(now: Date = new Date()): string {
+	return now.toISOString().replace(/\.\d{3}Z$/, "Z")
+}

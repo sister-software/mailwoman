@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { isoDate, isoSecondsUTC } from "@mailwoman/core/utils"
+import { isoDate, isoSeconds, isoSecondsUTC } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
 describe("time", () => {
@@ -16,6 +16,10 @@ describe("time", () => {
 
 	it("isoSecondsUTC truncates to seconds with an explicit offset", () => {
 		expect(isoSecondsUTC(instant)).toBe("2026-08-31T13:45:12+00:00")
+	})
+
+	it("isoSeconds truncates to seconds with the Z suffix", () => {
+		expect(isoSeconds(instant)).toBe("2026-08-31T13:45:12Z")
 	})
 
 	it("both default to the current clock", () => {

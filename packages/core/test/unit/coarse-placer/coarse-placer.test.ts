@@ -21,6 +21,7 @@ import { afterAll, describe, expect, test } from "vitest"
 
 import { temporaryDirectory } from "#fs/temporary"
 import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "#fs/writers"
+import { makeLcg } from "#random"
 
 const tmpRoot = await temporaryDirectory("coarse-placer-test-")
 afterAll(() => tmpRoot[Symbol.asyncDispose]())
@@ -30,11 +31,10 @@ afterAll(() => tmpRoot[Symbol.asyncDispose]())
  */
 function seededWeights(classCount: number, dim: number, seed: number): Float32Array {
 	const w = new Float32Array(classCount * dim)
-	let s = seed >>> 0
+	const next = makeLcg(seed)
 
 	for (let i = 0; i < w.length; i++) {
-		s = (Math.imul(s, 1_664_525) + 1_013_904_223) >>> 0
-		w[i] = (s / 0xff_ff_ff_ff - 0.5) * 0.1
+		w[i] = (next() - 0.5) * 0.1
 	}
 
 	return w

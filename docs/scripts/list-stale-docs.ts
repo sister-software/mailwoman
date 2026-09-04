@@ -27,6 +27,7 @@ interface StalePage {
 	owner: string | undefined
 }
 
+// oxlint-disable-next-line mailwoman/prefer-home -- this script runs before `yarn install` and may reach only Node builtins (`preinstall-scripts.test.ts`), so `isoDate` is out of reach
 const today = new Date().toISOString().slice(0, 10)
 const stalePages: StalePage[] = []
 

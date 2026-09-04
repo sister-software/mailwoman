@@ -98,3 +98,47 @@ test("require-disable-reason requires an inline explanation", () => {
 	expect(commentReports(" oxlint-disable-next-line complexity -- one-pass state machine")).toEqual([])
 	expect(commentReports(" ordinary comment")).toEqual([])
 })
+
+function chainedCall(chain: string[], args: TestNode[] = []): TestNode {
+	let object: TestNode = { type: "NewExpression", range: [0, 0] }
+
+	for (const [index, method] of chain.entries()) {
+		object = {
+			type: "CallExpression",
+			range: [0, 0],
+			callee: { type: "MemberExpression", range: [0, 0], object, property: identifier(method) },
+			arguments: index === chain.length - 1 ? args : [],
+		}
+	}
+
+	return object
+}
+
+function numeric(value: number): TestNode {
+	return { type: "Literal", value, range: [0, 0] }
+}
+
+test("prefer-home names isoDate for toISOString().slice(0, 10) and stays silent on other slices", () => {
+	const messages = reportsFor("prefer-home", chainedCall(["toISOString", "slice"], [numeric(0), numeric(10)]))
+
+	expect(messages).toHaveLength(1)
+	expect(messages[0]).toContain("`isoDate` from `@mailwoman/core/utils`")
+	expect(reportsFor("prefer-home", chainedCall(["toISOString", "slice"], [numeric(0), numeric(7)]))).toEqual([])
+	expect(reportsFor("prefer-home", chainedCall(["trim", "slice"], [numeric(0), numeric(10)]))).toEqual([])
+})
+
+test("prefer-home matches the chain as a suffix of a longer call chain", () => {
+	const messages = reportsFor("prefer-home", chainedCall(["valueOf", "toISOString", "replace"]))
+
+	expect(messages).toHaveLength(1)
+	expect(messages[0]).toContain("isoSeconds")
+})
+
+test("prefer-home names the home for a re-typed constant and ignores other numbers", () => {
+	expect(reportsFor("prefer-home", numeric(6371))[0]).toContain("`@mailwoman/spatial`")
+	expect(reportsFor("prefer-home", numeric(6_371_000))[0]).toContain("haversineKm")
+	expect(reportsFor("prefer-home", numeric(0x6d_2b_79_f5))[0]).toContain("`mulberry32`")
+	expect(reportsFor("prefer-home", numeric(1_013_904_223))[0]).toContain("`makeLcg`")
+	expect(reportsFor("prefer-home", numeric(6372))).toEqual([])
+	expect(reportsFor("prefer-home", { type: "Literal", value: "6371", range: [0, 0] })).toEqual([])
+})

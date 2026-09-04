@@ -25,6 +25,7 @@ import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
+import { isoSeconds } from "@mailwoman/core/utils"
 import { sleep } from "@mailwoman/core/utils/sleep"
 import { basename, join } from "path-ts"
 
@@ -278,7 +279,7 @@ export async function fetchTigerFull(
 
 		const manifestDoc = {
 			state_fips: stateFips,
-			updated_at: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
+			updated_at: isoSeconds(),
 			tiger_base_url: TIGER_BASE_URL,
 			counties,
 		}

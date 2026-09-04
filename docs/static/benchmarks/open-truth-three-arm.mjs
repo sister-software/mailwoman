@@ -85,6 +85,7 @@ function haversineKm(aLat, aLon, bLat, bLon) {
 	const a =
 		Math.pow(Math.sin(dLat / 2), 2) + Math.cos(aLat * D2R) * Math.cos(bLat * D2R) * Math.pow(Math.sin(dLon / 2), 2)
 
+	// oxlint-disable-next-line mailwoman/prefer-home -- a static browser script under docs/static cannot import a workspace package
 	return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
@@ -92,6 +93,7 @@ function haversineKm(aLat, aLon, bLat, bLon) {
 function mulberry32(a) {
 	return function () {
 		a |= 0
+		// oxlint-disable-next-line mailwoman/prefer-home -- a static browser script under docs/static cannot import a workspace package
 		a = (a + 0x6d_2b_79_f5) | 0
 		let t = Math.imul(a ^ (a >>> 15), 1 | a)
 		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
