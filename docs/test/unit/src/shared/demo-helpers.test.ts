@@ -9,7 +9,7 @@
  *   `parentID` support (the adapter translates parent scopes to country/bbox — that translation is
  *   what these tests exercise, alongside pin extraction and the cross-country postcode check). The
  *   coherence passes themselves are tested in `resolver/admin-coherence.test.ts`; integration
- *   coverage against the real DB lives in `scripts/eval/demo-cascade-smoke.ts`.
+ *   coverage against the real DB lives in `packages/mailwoman/lib/dev-tools/demo-cascade-smoke.run.ts`.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder/types"

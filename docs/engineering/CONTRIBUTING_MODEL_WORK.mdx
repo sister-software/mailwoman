@@ -77,7 +77,7 @@ hands.
 slice cannot outvote a contradicting base corpus. The affix slice spent four releases fighting
 ~467M base rows that labeled the same surfaces the other way (≥1,000:1 effective gradient mass);
 every weight and architecture change failed because the equilibrium was the mixing ratio. Audit what
-the base corpus says about your tag's surfaces first (`scripts/eval/audit-affix-misses.ts` is the
+the base corpus says about your tag's surfaces first (`packages/mailwoman/lib/dev-tools/audit-affix-misses.run.ts` is the
 template — per-row miss classification + absorption check). If the base contradicts the slice,
 the fix is a relabel pass (make the mix agree), not a bigger weight. Corollary, measured on
 v4.3.0: relabeling one boundary loosens its neighbors — pre-register watches on the adjacent
@@ -115,15 +115,15 @@ kept verbatim — it already carries a designed margin.
 Run for _every_ candidate, regardless of what you changed (this is what
 [`promotion-eval.ts`, #479](https://github.com/sister-software/mailwoman/issues/479) automates):
 
-| Check               | Command                                                                            | Bar                                     |
-| ------------------- | ---------------------------------------------------------------------------------- | --------------------------------------- |
-| Per-locale floors   | `scripts/eval/per-locale-f1.ts` (US/FR, `--tokenizer`) + `per-locale-f1-floors.py` | within 1pp, fp32-to-fp32                |
-| German native order | `scripts/eval/de-order-eval.ts`                                                    | NO-REGRESSION                           |
-| Unit retention      | unit-real designators eval                                                         | ≥ 88                                    |
-| Affix split         | `scripts/eval/score-affix.ts` (NOT `per-locale-f1` — its fold can't see the split) | hold the spec's floors                  |
-| Demo smoke          | `eval-model` skill / `mailwoman eval preset-compare`                               | presets stable                          |
-| Geographic accuracy | `scripts/eval/honest-eval.ts`                                                      | region-match + coord p50/p90 + PIP hold |
-| Input robustness    | `mailwoman eval gauntlet --layer metamorphic` (INV/DIR)                            | no new drift; xfails tracked            |
+| Check               | Command                                                                                                    | Bar                                     |
+| ------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| Per-locale floors   | `packages/mailwoman/lib/dev-tools/per-locale-f1.run.ts` (US/FR, `--tokenizer`) + `per-locale-f1-floors.py` | within 1pp, fp32-to-fp32                |
+| German native order | `packages/mailwoman/lib/dev-tools/de-order-eval.run.ts`                                                    | NO-REGRESSION                           |
+| Unit retention      | unit-real designators eval                                                                                 | ≥ 88                                    |
+| Affix split         | `packages/mailwoman/lib/dev-tools/score-affix.run.ts` (NOT `per-locale-f1` — its fold can't see the split) | hold the spec's floors                  |
+| Demo smoke          | `eval-model` skill / `mailwoman eval preset-compare`                                                       | presets stable                          |
+| Geographic accuracy | `packages/mailwoman/lib/dev-tools/honest-eval.run.ts`                                                      | region-match + coord p50/p90 + PIP hold |
+| Input robustness    | `mailwoman eval gauntlet --layer metamorphic` (INV/DIR)                                                    | no new drift; xfails tracked            |
 
 The input-robustness check is the metamorphic layer of the Gauntlet — label-preserving
 perturbations that must not move the assembled coordinate. See

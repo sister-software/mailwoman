@@ -43,10 +43,10 @@
  *   (the `report` sink) into `<out-dir>/<tag>-per-locale.md` — the file the verdict assembler
  *   regex-reads for `us.postcode`, `us.locality`, `us.region`, `us.street`, `fr.house_number` and
  *   `us.micro`. The progress narration goes to `reportError`, which is where the child process's
- *   stderr went: captured and dropped. `scripts/eval/per-locale-f1.ts` is the thin CLI that keeps
+ *   stderr went: captured and dropped. `packages/mailwoman/lib/dev-tools/per-locale-f1.run.ts` is the thin CLI that keeps
  *   standalone invocation working.
  *
- *   Usage: node scripts/eval/per-locale-f1.ts\
+ *   Usage: node packages/mailwoman/lib/dev-tools/per-locale-f1.run.ts\
  *   --golden-dir data/eval/golden/v0.1.2/dev\
  *   --model /tmp/v072-eval/model.onnx\
  *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\

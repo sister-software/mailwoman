@@ -25,7 +25,7 @@ in `@mailwoman/codex/us`. 1,907 of 2,956 US rows changed; 140 carry a review fla
 question this relabel did not answer.
 
 A scorer that folds `street_prefix`/`street`/`street_suffix` back together is not
-grading this answer key. `scripts/eval/per-locale-f1.ts` reads the declaration in
+grading this answer key. `packages/mailwoman/lib/dev-tools/per-locale-f1.run.ts` reads the declaration in
 `MANIFEST.json` and scores split-convention rows unfolded.
 
 Numbers here are NOT comparable with v0.1.2 numbers. The gate spec that grades

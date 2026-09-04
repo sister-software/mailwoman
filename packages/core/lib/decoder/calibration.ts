@@ -9,7 +9,7 @@
  *   probabilities (`build-tree.ts`). Softmax probabilities are NOT calibrated — a CE-trained model
  *   is systematically over/under-confident in bands. Task #59 fits an isotonic-regression
  *   calibrator on a held-out OpenAddresses + corpus set
- *   (`scripts/eval/fit-isotonic-calibration.py`) and ships the result as a 20-bin lookup table
+ *   (`corpus-python/scripts/fit-isotonic-calibration.py`) and ships the result as a 20-bin lookup table
  *   (`data/eval/calibration/isotonic-<locale>-<version>.json`).
  *
  *   This module turns that table into a pure `(rawConfidence) => calibratedConfidence` function. It

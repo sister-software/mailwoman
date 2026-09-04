@@ -22,7 +22,7 @@
  *
  *   Data contract: `reliability_raw` / `reliability_cal` (arrays of `{n, conf, acc}`),
  *   `abstention_curve` (`{threshold, coverage, precision}`), and `metrics.ece_{raw,cal}_eval`, all
- *   emitted by `scripts/eval/fit-isotonic-calibration.py`.
+ *   emitted by `corpus-python/scripts/fit-isotonic-calibration.py`.
  */
 
 import React, { useEffect, useState } from "react"

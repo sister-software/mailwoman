@@ -1,0 +1,264 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Fr-admin-split-selfvalidation.ts — the PRE-GPU eval for the international admin-split retrain
+ *   (night 2026-06-19). Before spending an A100, falsify the premise: does splitting the
+ *   département out of the locality actually move the resolved coordinate, anchor-ON, through the
+ *   production resolver? Or does FTS land the same commune either way (DeepSeek's silent-wash risk
+ *   — the v1.7.0 trap: a label change that the resolver ignores)?
+ *
+ *   For each sampled FR commune (truth = its own WOF centroid) we resolve THREE parse states through
+ *   the SAME resolver the geocoder ships (`createWOFResolver` over `admin-global-priority.db`,
+ *   `defaultCountry: FR`):
+ *
+ *   - DROPPED {locality:[commune]} — the model's "région → null" failure
+ *   - MERGED {locality:[commune + " " + dept]} — the "CANBERRA ACT" fuse failure
+ *   - SPLIT {locality:[commune], region:[dept]} — the corrected parse and measure the great-circle
+ *       error to the commune's true centroid.
+ *
+ *   The premise is REAL iff SPLIT's mean error is materially below DROPPED/MERGED — concentrated on
+ *   COLLISION communes (a name in >1 département), where the région is the only disambiguator.
+ *   UNIQUE communes are the control (the resolver should find them with or without the région).
+ *
+ *   Eval: ≥5% mean centroid-error reduction (SPLIT vs DROPPED) on the collision stratum, else STOP —
+ *   the premise is false and no retrain can fix it.
+ *
+ *   Run (compiled CLI): node packages/mailwoman/lib/dev-tools/fr-admin-split-selfvalidation.run.ts\
+ *   --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db --n 200 --out /tmp/fr-split.md
+ */
+
+import { dataRootPath } from "@mailwoman/core/data-root"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { percentile } from "@mailwoman/core/stats"
+import { allRows, mean } from "@mailwoman/core/utils"
+import { createWOFResolver } from "@mailwoman/resolver"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { resolvePath } from "path-ts"
+
+import { collectResolved, mostSpecific } from "#eval-harness/oa-resolver/tree-hits"
+import { v0RecordToTree } from "#eval-harness/v0-tree-adapter"
+import type { ClassificationRecord } from "#index"
+
+// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+/**
+ * Percentage-point collision reduction the split must deliver to be judged effective.
+ */
+const MIN_COLLISION_REDUCTION = 5
+
+const { values: rawValues } = parseArguments({
+	options: { db: { type: "string" }, n: { type: "string" }, out: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+})
+
+// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+const values = rawValues as { db?: string; n?: string; out?: string }
+
+// The resolved-tree readers are the shared `mailwoman/eval-harness/oa-resolver/tree-hits` helpers —
+// the home the oa-resolver-eval copies moved to. `mostSpecific` there delegates to the production
+// resolver ladder (`mostSpecificResolved`), replacing the flat `placetypeSpecificity` sort this file
+// carried. Note the sibling `fr-admin-split-eval.ts` deliberately keeps its own flat ranking (the
+// post-#945 locality-over-postcode convention), which the shared ladder would not preserve on the
+// postcode-vs-locality axis.
+
+/**
+ * --- args ----------------------------------------------------------------------------------------.
+ */
+const DB = resolvePath(values["db"] || dataRootPath("wof", "admin-global-priority.db"))
+/**
+ * Per stratum.
+ */
+const N = Number(values["n"] || "200")
+
+// --- sample FR communes (collision + unique strata) ----------------------------------------------
+using db = new DatabaseClient<WOFDatabase>(DB, { readOnly: true })
+
+interface Commune {
+	id: number
+	commune: string
+	dept: string
+	lat: number
+	lon: number
+	collisionCount: number
+}
+
+// Communes with their département (placetype 'region' in WOF-FR) + how many distinct départements
+// share the same commune NAME (the collision degree — the disambiguation pressure).
+const rows = allRows<Commune>(
+	db.prepare(
+		`WITH fr_comm AS (
+       SELECT l.id, l.name AS commune, l.latitude AS lat, l.longitude AS lon, r.name AS dept
+       FROM spr l
+       JOIN ancestors a ON a.id = l.id AND a.ancestor_placetype = 'region'
+       JOIN spr r ON r.id = a.ancestor_id
+       WHERE l.country = 'FR' AND l.placetype = 'locality' AND l.is_current = 1
+         AND l.latitude != 0 AND l.name != '' AND r.name != ''
+     ),
+     coll AS (SELECT commune, COUNT(DISTINCT dept) c FROM fr_comm GROUP BY commune)
+     SELECT f.id, f.commune, f.dept, f.lat, f.lon, coll.c AS collisionCount
+     FROM fr_comm f JOIN coll ON coll.commune = f.commune`
+	)
+)
+
+// Deterministic shuffle (no Math.random in this env) — order by id hash.
+const shuffled = [...rows].toSorted((a, b) => ((a.id * 2_654_435_761) % 1e9) - ((b.id * 2_654_435_761) % 1e9))
+const collision = shuffled.filter((r) => r.collisionCount > 1).slice(0, N)
+const unique = shuffled.filter((r) => r.collisionCount === 1).slice(0, N)
+
+// --- resolver (production path) ------------------------------------------------------------------
+const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+using backend = new WOFSQLitePlaceLookup({ databasePath: DB })
+const resolver = createWOFResolver(backend)
+const resolveOpts = { defaultCountry: "FR" }
+
+/**
+ * Unresolved penalty = the coordinate the geocoder actually falls back to when the place isn't found: the country
+ * centroid. Makes the three states comparable on ONE error metric (resolved point if found, else country-centroid)
+ * instead of averaging over different resolved subsets.
+ */
+const FR_CENTROID = { lat: 46.6, lon: 2.5 }
+
+type State = "dropped" | "merged" | "split"
+
+async function resolveState(c: Commune, state: State): Promise<{ km: number; resolved: boolean }> {
+	let raw: string
+	let record: ClassificationRecord
+
+	if (state === "dropped") {
+		raw = c.commune
+		record = { locality: [c.commune] } as ClassificationRecord
+	} else if (state === "merged") {
+		raw = `${c.commune} ${c.dept}`
+		record = { locality: [`${c.commune} ${c.dept}`] } as ClassificationRecord
+	} else {
+		raw = `${c.commune}, ${c.dept}`
+		record = { locality: [c.commune], region: [c.dept] } as ClassificationRecord
+	}
+
+	const { tree } = v0RecordToTree(raw, record)
+	const decorated = await resolver.resolveTree(tree, resolveOpts)
+	const best = mostSpecific(collectResolved(decorated))
+
+	return best
+		? { km: haversineKm(best.lat, best.lon, c.lat, c.lon), resolved: true }
+		: { km: haversineKm(FR_CENTROID.lat, FR_CENTROID.lon, c.lat, c.lon), resolved: false }
+}
+
+// --- run -----------------------------------------------------------------------------------------
+interface StratumAgg {
+	dropped: number[]
+	merged: number[]
+	split: number[]
+	res: { dropped: number; merged: number; split: number }
+	splitBeatsDroppedBy2km: number
+	n: number
+}
+
+async function runStratum(label: string, sample: Commune[]): Promise<StratumAgg> {
+	const agg: StratumAgg = {
+		dropped: [],
+		merged: [],
+		split: [],
+		res: { dropped: 0, merged: 0, split: 0 },
+		splitBeatsDroppedBy2km: 0,
+		n: 0,
+	}
+
+	for (const c of sample) {
+		const [d, m, s] = await Promise.all([
+			resolveState(c, "dropped"),
+			resolveState(c, "merged"),
+			resolveState(c, "split"),
+		])
+
+		agg.n++
+		agg.dropped.push(d.km)
+		agg.merged.push(m.km)
+		agg.split.push(s.km)
+
+		if (d.resolved) {
+			agg.res.dropped++
+		}
+
+		if (m.resolved) {
+			agg.res.merged++
+		}
+
+		if (s.resolved) {
+			agg.res.split++
+		}
+
+		if (d.km - s.km > 2) {
+			agg.splitBeatsDroppedBy2km++
+		}
+	}
+
+	console.error(`  ${label}: n=${agg.n} resolve-rate(d/m/s)=${agg.res.dropped}/${agg.res.merged}/${agg.res.split}`)
+
+	return agg
+}
+
+console.error(`[fr-split] collision=${collision.length} unique=${unique.length} (from ${rows.length} FR communes)`)
+
+const collAgg = await runStratum("collision", collision)
+const uniqAgg = await runStratum("unique", unique)
+
+// --- report --------------------------------------------------------------------------------------
+const row = (label: string, a: StratumAgg): string => {
+	const dM = mean(a.dropped) ?? Number.NaN
+	const mM = mean(a.merged) ?? Number.NaN
+	const sM = mean(a.split) ?? Number.NaN
+
+	const reduction = dM > 0 ? (100 * (dM - sM)) / dM : 0
+	const rr = (k: number): string => `${((100 * k) / a.n).toFixed(0)}%`
+
+	return [
+		`### ${label} (n=${a.n}) — error in km, unresolved penalized to FR centroid`,
+		"",
+		"| state | mean km | p50 | p90 | resolve-rate |",
+		"| --- | --: | --: | --: | --: |",
+		`| dropped (région→null) | ${dM.toFixed(1)} | ${(percentile(a.dropped, 50) ?? Number.NaN).toFixed(1)} | ${(percentile(a.dropped, 90) ?? Number.NaN).toFixed(1)} | ${rr(a.res.dropped)} |`,
+		`| merged (loc=commune+dept) | ${mM.toFixed(1)} | ${(percentile(a.merged, 50) ?? Number.NaN).toFixed(1)} | ${(percentile(a.merged, 90) ?? Number.NaN).toFixed(1)} | ${rr(a.res.merged)} |`,
+		`| **split (corrected)** | **${sM.toFixed(1)}** | ${(percentile(a.split, 50) ?? Number.NaN).toFixed(1)} | ${(percentile(a.split, 90) ?? Number.NaN).toFixed(1)} | ${rr(a.res.split)} |`,
+		"",
+		`**SPLIT vs DROPPED mean reduction: ${reduction.toFixed(1)}%** · split beats dropped by >2km on ${a.splitBeatsDroppedBy2km}/${a.n} rows`,
+		"",
+	].join("\n")
+}
+
+const collDroppedMean = mean(collAgg.dropped) ?? Number.NaN
+const collSplitMean = mean(collAgg.split) ?? Number.NaN
+const collReduction = collDroppedMean > 0 ? (100 * (collDroppedMean - collSplitMean)) / collDroppedMean : 0
+
+const verdict =
+	collReduction >= MIN_COLLISION_REDUCTION
+		? `✅ PREMISE REAL — collision SPLIT-vs-DROPPED reduction ${collReduction.toFixed(1)}% ≥ 5%. The resolver uses the région tag. Retrain premise holds.`
+		: `❌ PREMISE FALSE — collision reduction ${collReduction.toFixed(1)}% < 5%. The resolver lands the same place without the région. STOP — no retrain fixes this.`
+
+const out = [
+	"# FR admin-split self-validation (pre-GPU eval, 2026-06-19)",
+	"",
+	"Does splitting the département out of the locality move the resolved coordinate, anchor-ON, through the production resolver? Tested on FR communes (truth = WOF centroid), collision (name in >1 département) vs unique control.",
+	"",
+	row("Collision communes — where the région disambiguates", collAgg),
+	row("Unique communes — control", uniqAgg),
+	"## Verdict",
+	"",
+	verdict,
+	"",
+].join("\n")
+
+const outPath = values["out"] || ""
+
+if (outPath) {
+	await writeLocalFile(out, outPath)
+
+	console.error(`[fr-split] wrote ${outPath}`)
+}
+
+console.log(out)

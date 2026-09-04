@@ -7,11 +7,16 @@
  *   under the constant names `load.test.ts` pins them as. `--check`: compare measured against the
  *   committed constants and exit nonzero with the exact replacement values. `--update`: rewrite
  *   ONLY the three constants (the test's dated history comments survive byte-identically), then
- *   re-check. The calculation lives in `eval-harness/gauntlet/cases/pins.ts` so the admin-merge
- *   wrapper and the cheap CI check call it without Ink.
+ *   re-check. `--report-issue` is `--check` for the main-branch audit: on drift it additionally
+ *   opens or updates ONE deduplicated issue through `gh` — the backstop for a stale pin reaching
+ *   `main` through an admin-merge that bypassed `mailwoman release merge-admin` or a web edit. The
+ *   calculation lives in `eval-harness/gauntlet/cases/pins.ts` so the admin-merge command calls it
+ *   without Ink.
  */
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { Box, Text } from "ink"
+import { $ } from "zx"
 
 import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
@@ -34,12 +39,50 @@ export const spec = {
 			default: false,
 			description: "Rewrite only the three committed constants to the measured values, then re-check.",
 		},
+		"report-issue": {
+			type: "boolean",
+			default: false,
+			description:
+				"Check, and on drift open or update the one deduplicated stale-pin issue through gh (the main-branch audit).",
+		},
 	},
 } as const satisfies CommandSpec
 
 interface Options {
 	check?: boolean
 	update?: boolean
+	reportIssue?: boolean
+}
+
+/**
+ * The title the audit searches for, so a second drift updates the open issue rather than opening a sibling.
+ */
+const STALE_PIN_ISSUE_TITLE = "board pins are stale on main"
+
+/**
+ * Open the deduplicated stale-pin issue, or comment on the open one. Answers what it did, for the command's output.
+ */
+async function reportStalePins(drift: string, testPath: string): Promise<string> {
+	const commit = (await $`git rev-parse HEAD`.quiet()).stdout.trim()
+
+	const body =
+		`The board-pin audit found the committed constants stale at ${commit}:\n\n${drift}\n\n` +
+		`Run \`mailwoman eval pins --update\`, commit ${testPath}, and this issue closes on the next green audit.`
+
+	const search = `in:title ${JSON.stringify(STALE_PIN_ISSUE_TITLE)}`
+	const issueList = await $`gh issue list --state open --search ${search} --json number`.quiet()
+	const existing = parseJSONStrict<Array<{ number: number }>>(issueList.stdout)
+	const first = existing[0]
+
+	if (first) {
+		await $`gh issue comment ${first.number} --body ${body}`.quiet()
+
+		return `updated issue #${first.number}`
+	}
+
+	await $`gh issue create --title ${STALE_PIN_ISSUE_TITLE} --body ${body}`.quiet()
+
+	return "opened the audit issue"
 }
 
 const EvalPins: ParsedCommandComponent<Options> = ({ options }) => {
@@ -57,7 +100,7 @@ const EvalPins: ParsedCommandComponent<Options> = ({ options }) => {
 			return { mode: "update" as const, pins: verified.measured, testPath: PIN_TEST_PATH, stale: [] }
 		}
 
-		if (options.check) {
+		if (options.check || options.reportIssue) {
 			const check = await checkBoardPins()
 
 			if (check.stale.length) {
@@ -65,9 +108,12 @@ const EvalPins: ParsedCommandComponent<Options> = ({ options }) => {
 					.map((key) => `${key}: committed ${String(check.committed[key])} → measured ${String(check.measured[key])}`)
 					.join("\n")
 
+				const reported = options.reportIssue ? `\n${await reportStalePins(replacements, PIN_TEST_PATH)}` : ""
+
 				throw new Error(
 					`the committed pins are STALE in ${PIN_TEST_PATH}:\n${replacements}\n` +
-						"Run `mailwoman eval pins --update` (or paste the measured values) and commit the test with the board edit."
+						"Run `mailwoman eval pins --update` (or paste the measured values) and commit the test with the board edit." +
+						reported
 				)
 			}
 

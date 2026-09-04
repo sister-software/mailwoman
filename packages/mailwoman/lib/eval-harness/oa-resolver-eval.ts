@@ -172,7 +172,7 @@ export async function oaResolverEval(
 	const collectErrors = !!(options.errorsJSON || "")
 	const errorRows: Record<string, unknown>[] = []
 
-	// `--out-resolved <path>`: per-row dump for the PIP-containment metric (scripts/eval/pip-containment.py).
+	// `--out-resolved <path>`: per-row dump for the PIP-containment metric (packages/mailwoman/lib/dev-tools/pip-containment.run.ts).
 	// Carries the gold OA point + the neural-resolved locality's WOF id, so an offline pass can test
 	// whether the gold point lies INSIDE the resolved locality's polygon — a name-surface-independent
 	// truth check (the "Plauen" vs gold "Plauen Vogtl" name-match artifact, see the coordinate-first plan).

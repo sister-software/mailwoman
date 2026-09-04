@@ -12,7 +12,7 @@
  *   `<out-dir>/<tag>-country.md`, with the machine-readable sidecar at `<tag>-country.json` (the
  *   verdict reads `tags.country.f1` from it). Every printed line goes through the `report` sink, one
  *   call per line, so the captured markdown is byte-identical to the child stdout it replaced.
- *   `scripts/eval/score-country-homograph.ts` is the thin CLI that keeps standalone invocation
+ *   `packages/mailwoman/lib/dev-tools/score-country-homograph.run.ts` is the thin CLI that keeps standalone invocation
  *   working.
  */
 

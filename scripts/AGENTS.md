@@ -27,15 +27,20 @@ Scripts for inspecting the training data, model, or artifacts. These are not par
 
 ## The drawer is closed (2026-07-07; specs: 2026-07-07-scripts-cleanup-gazetteer-cli-design.md + 2026-07-07-scripts-drawer-to-zero.md in docs/superpowers/specs/)
 
-`scripts/` holds ONLY four things:
+`scripts/` holds ONLY three things:
 
-1. **Release tooling** (`publish-workspace`, `copy-weights`, `bless-package`, `check-release-parity`, `verify-*`, `rewrite-workspace-imports`, `release-workspace-repository.test`) + **CI smoke** (`smoke-*`) — the release pipeline's residents.
-2. **Codegen + lint tooling** (`generate-*`, `lint-*`, `jsonl-to-parquet`) — candidates for a future `mailwoman dev` namespace.
-3. **`eval/`** — CI and release probes plus Python calibration scripts and helpers in `eval/lib/`.
-   Command implementations live in `mailwoman/eval-harness/` behind `mailwoman eval …`.
-   `eval/oa-resolver-eval.ts` forwards existing direct invocations to that implementation.
-4. **`diagnostic/`** — gitignored one-off investigations.
-   - This has since been deprecated in favor of `eval/` and `mailwoman eval …` commands. If you're reaching for this it means you should be adding a new `mailwoman eval …` command or updating the mailwoman-dev MCP.
+1. **Release tooling** (`publish-workspace`, `copy-weights`, `bless-package`, `check-release-parity`, `verify-*`, `release-workspace-repository.test`) + **CI smoke** (`smoke-clean-install`) — the release pipeline's residents.
+2. **Codegen + health tooling** (`generate-*`, `repo-health`, `vocab-census`, `typecheck-tests`) — candidates for a future `mailwoman dev` namespace.
+3. **`diagnostic/`** — gitignored one-off investigations.
+   - This has since been deprecated in favor of `mailwoman eval …` commands. If you're reaching for this it means you should be adding a new `mailwoman eval …` command or updating the mailwoman-dev MCP.
+
+There is no `scripts/eval/` any more. Its residents were triaged one destination per file: a probe a
+record cites is `packages/mailwoman/lib/dev-tools/<name>.run.ts` (run from source with
+`node packages/mailwoman/lib/dev-tools/<name>.run.ts`, header naming the record); a question a
+`mailwoman eval …` command already answers is that command; the Python calibration fitters live in
+`corpus-python/scripts/`; the FR bare-street fixture is `packages/mailwoman/lib/eval-harness/fixtures/`;
+everything cited by nothing was deleted. `repo-health.ts`'s `scriptsUnreferenced` counter is the
+ratchet — a script here that no workflow, hook, `package.json` or `.release-it.json` names is debt.
 
 Everything else lives where it belongs: gazetteer builders → `mailwoman/gazetteer-pipeline/` (`mailwoman gazetteer …`); corpus tools → `mailwoman/corpus-tools/` (`mailwoman corpus …`); coarse-placer training → `core/coarse-placer/tools/`; matcher-only tools + viz → `registry/tools/`; census/TIGER tools → `tiger/tools/`; the Modal training launcher → `corpus-python/modal/train_remote.py`. There is no `scripts/lib/` — use `node:util` `parseArgs` and `@mailwoman/core/utils`. Do NOT add new builders, mutators, or shared-lib dirs here.
 

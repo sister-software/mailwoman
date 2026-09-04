@@ -91,7 +91,7 @@ modal volume get mailwoman-training /models/quantized/model-v160-step-40000-int8
 TOK=/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model
 
 # 4a. The 4-shape TARGET check (the headline — street_suffix/comma-less/fr-prefix/hn-after)
-node scripts/eval/boundary-stress-eval.ts \
+node packages/mailwoman/lib/dev-tools/boundary-stress-eval.run.ts \
   --model ./out/v160/model.onnx --tokenizer "$TOK" \
   --model-card neural-weights-en-us/model-card.json --n 300
 
