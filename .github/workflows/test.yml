@@ -256,13 +256,6 @@ jobs:
       - name: Compile
         run: yarn compile
 
-      # Type-check the toolshed. `scripts/` is in no build project (compile = `tsc -b` over the
-      # workspaces only), so it was the one untyped corner where drift accumulated. This leaf
-      # project (scripts/tsconfig.json, noEmit) keeps it honest. Runs after Compile so the
-      # workspace .d.ts under each `out/` exist for `@mailwoman/*` resolution.
-      - name: Typecheck scripts
-        run: yarn typecheck:scripts
-
       # Test files are excluded from every build project on purpose — the build emits what it includes,
       # and an included test lands in `out/` and then in the tarball. That `exclude` suppressed the emit
       # AND the checking, so until this step tests were compiled by vitest's esbuild transform, which

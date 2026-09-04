@@ -142,7 +142,7 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 		}
 	}
 
-	const buildLogPath = String(repoRootPath("scripts", "wof-build-manifest.json"))
+	const buildLogPath = String(repoRootPath("data", "gazetteer", "wof-build-manifest.json"))
 	let buildLog: string[] = []
 
 	if (await pathExists(buildLogPath)) {

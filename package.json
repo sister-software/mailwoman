@@ -126,7 +126,6 @@
 		"test:unit": "vitest --config vitest.fast.config.ts",
 		"typecheck": "run-s compile typecheck:tests typecheck:docs",
 		"typecheck:docs": "tsc -p docs/tsconfig.json --noEmit",
-		"typecheck:scripts": "tsc -p scripts/tsconfig.json --noEmit",
 		"typecheck:tests": "yarn mwops health typecheck-tests",
 		"lint:prose:vocab": "yarn workspace @mailwoman/docs lint:prose:vocab",
 		"lint:prose:code": "node_modules/@vvago/vale/bin/vale --config docs/.vale-code.ini $(git ls-files '*.ts' '*.tsx' 'corpus-python/*.py')"

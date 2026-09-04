@@ -12,7 +12,7 @@
  *   bumped dep here is never a free upgrade — it must re-prove the Safari int8 graph (opset <= 17,
  *   value_info strip) end to end.
  *
- *   Plain-node tool-script (no env banner, no zx). Run: node scripts/verify-export-quant-versions.ts
+ *   Plain-node tool-script (no env banner, no zx). Run: node packages/mailwoman/lib/dev-tools/verify-export-quant-versions.run.ts
  */
 
 import { $public } from "@mailwoman/core/env"

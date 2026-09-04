@@ -6,7 +6,7 @@
  *   The canonical admin-gazetteer coverage recipe — the durable replacement for reconstruct-from-artifact
  *   (#1015: the manifest lagged the live DB by 71 Overture + 161 GeoNames countries, and the recipe had to
  *   be recovered from the artifact's synthetic-id ranges). The recipe now lives HERE, reviewed like code;
- *   `scripts/wof-build-manifest.json` is a build LOG (what ran, when, md5), not a recipe store.
+ *   `data/gazetteer/wof-build-manifest.json` is a build LOG (what ran, when, md5), not a recipe store.
  *
  *   Provenance of the lists: reconstructed 2026-07-07 from the live `admin-global-priority.db` — WOF rows
  *   (`id < 2e9`) → the priority countries; Overture divisions (`8e12 ≤ id < 9e12`) → the 86; the GeoNames

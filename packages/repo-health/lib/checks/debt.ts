@@ -36,19 +36,6 @@ export interface DebtCounters {
 	 */
 	rawNULBytes: number
 	/**
-	 * Non-test TypeScript files under `scripts/` that nothing executes or imports: not named in `package.json`, a
-	 * workflow, a husky hook or `.release-it.json`, and not imported by another script. knip could never see these
-	 * because the directory was an entry glob; this counter is the measurement the `scripts/` migration is graded
-	 * against, and it ratchets to zero as each file becomes a registered operation, a registered check, a command, a
-	 * measurement, or is deleted (`docs/superpowers/specs/2026-09-04-scripts-directory-migration-proposal.md`).
-	 *
-	 * THE FILE SET IS THE PATHSPEC `scripts/**\/*.ts` AS GIT READS IT, which requires a directory between `scripts/` and
-	 * the file (see `pathspecPattern`): the counter reads `scripts/eval/` and has never read a top-level `scripts/*.ts`.
-	 * Its semantics are kept as they were so the baseline stays comparable; widening it is a baseline ratchet, not a
-	 * silent edit here.
-	 */
-	scriptsUnreferenced: number
-	/**
 	 * Occurrences of the retired vocabulary word — see {@link BANNED_VOCABULARY} for which — in any spelling, anywhere in
 	 * tracked source: identifiers, comments and string literals alike.
 	 *
@@ -90,7 +77,6 @@ function emptyCounters(): DebtCounters {
 		selfPackageImports: 0,
 		synchronousFilesystemCalls: 0,
 		rawNULBytes: 0,
-		scriptsUnreferenced: 0,
 		bannedVocabulary: 0,
 	}
 }
@@ -435,68 +421,7 @@ export async function computeDebtCounters(context: RepoContext): Promise<DebtCou
 		counters.bannedVocabulary += text.match(BANNED_VOCABULARY)?.length ?? 0
 	}
 
-	counters.scriptsUnreferenced = await countUnreferencedScripts(context)
-
 	return counters
-}
-
-/**
- * Unreferenced scripts: the set of consumers is the same one the migration proposal enumerates, read from the files
- * themselves rather than from a list kept beside them, so a workflow that starts or stops calling a script moves the
- * number without anyone editing this file.
- */
-async function countUnreferencedScripts(context: RepoContext): Promise<number> {
-	const root = context.repoRoot
-
-	const scriptPaths = (await trackedSourcePaths(context, { globs: ["scripts/**/*.ts"], existingOnly: true }))
-		.map((path) => relative(root, path))
-		.filter((path) => !/\.test\.tsx?$/.test(path))
-
-	const consumerTexts: string[] = []
-
-	for (const consumer of [".release-it.json", "package.json"]) {
-		try {
-			consumerTexts.push(await readLocalTextFile(resolvePath(root, consumer)))
-		} catch {
-			// a consumer that does not exist references nothing
-		}
-	}
-
-	for (const consumer of await trackedSourcePaths(context, {
-		globs: [".github/workflows/*", ".husky/*"],
-		existingOnly: true,
-	})) {
-		try {
-			consumerTexts.push(await readLocalTextFile(consumer))
-		} catch {
-			// binary or unreadable: references nothing
-		}
-	}
-
-	const scriptTexts = new Map<string, string>()
-
-	for (const path of scriptPaths) {
-		scriptTexts.set(path, await readLocalTextFile(resolvePath(root, path)))
-	}
-
-	const consumers = consumerTexts.join("\n")
-	let unreferenced = 0
-
-	for (const path of scriptPaths) {
-		if (consumers.includes(path)) continue
-
-		const basename = path.slice(path.lastIndexOf("/") + 1)
-
-		const importedByAnotherScript = [...scriptTexts].some(
-			([other, text]) => other !== path && (text.includes(`./${basename}`) || text.includes(`/${basename}`))
-		)
-
-		if (!importedByAnotherScript) {
-			unreferenced++
-		}
-	}
-
-	return unreferenced
 }
 
 /**

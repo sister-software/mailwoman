@@ -7,6 +7,5 @@
 	"selfPackageImports": 0,
 	"synchronousFilesystemCalls": 0,
 	"bannedVocabulary": 0,
-	"rawNULBytes": 0,
-	"scriptsUnreferenced": 27
+	"rawNULBytes": 0
 }

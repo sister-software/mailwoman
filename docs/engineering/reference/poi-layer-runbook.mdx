@@ -132,7 +132,7 @@ labeled regional slice, as fallback only.
 **Publish flow (canonical POI path, 2026-07-20).** The poi.db goes up via the demo-assets
 uploader, not the gazetteer path: stage a hardlink dir mirroring the R2 layout
 `poi/<version>/poi.db` (a hardlink avoids re-copying the 3.7 GB file), then
-`set -a; . ./.env; set +a; python3 scripts/publish-demo-assets-to-r2.py --src <staged-dir>`
+`set -a; . ./.env; set +a; python3 docs/scripts/publish-demo-assets-to-r2.py --src <staged-dir>`
 (source the repo `.env` first — the R2 credentials live there). Then bump the demo
 version constant (`POI_LAYER_VERSION` in `docs/src/shared/resources.tsx`). Note:
 `gazetteer publish` is admin-gazetteer-shaped — it uploads as `candidate.db` — and is **not**

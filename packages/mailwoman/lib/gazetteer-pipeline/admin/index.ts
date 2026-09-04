@@ -10,7 +10,7 @@
  *   ingest-wof → fold-overture → fold-geonames → freeze → enrich → VACUUM INTO → FTS → VERIFY → SEAL.
  *
  *   A failed verify THROWS and leaves the artifact UNSEALED for inspection — do not swap it. On
- *   success the build appends itself to the build log (`scripts/wof-build-manifest.json` — a LOG, not
+ *   success the build appends itself to the build log (`data/gazetteer/wof-build-manifest.json` — a LOG, not
  *   a recipe; the recipe is `../defaults.ts`).
  */
 
@@ -66,7 +66,7 @@ export interface BuildAdminOptions {
 	concurrency?: number
 	batchCommitSize?: number
 	/**
-	 * Build-log path. Default `<repo>/scripts/wof-build-manifest.json`; absent file → the append is skipped.
+	 * Build-log path. Default `<repo>/data/gazetteer/wof-build-manifest.json`; absent file → the append is skipped.
 	 */
 	buildLogPath?: string
 	onPhase?: (phase: string, detail?: string) => void
@@ -249,7 +249,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 
 	// Build log — an auto-appended record (what ran, when, fingerprint), so the manifest can't lag the
 	// artifact again (#1015's reconstruct-from-artifact). The recipe itself lives in defaults.ts.
-	const buildLogPath = opts.buildLogPath ?? repoRootPath("scripts", "wof-build-manifest.json")
+	const buildLogPath = opts.buildLogPath ?? repoRootPath("data", "gazetteer", "wof-build-manifest.json")
 
 	if (await pathExists(buildLogPath)) {
 		phase("build-log", buildLogPath)

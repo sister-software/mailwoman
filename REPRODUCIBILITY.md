@@ -50,7 +50,7 @@ before trusting anything.
 keep the int8 graph Safari-WebGPU-safe. Check your local env against it:
 
 ```bash
-node scripts/verify-export-quant-versions.ts   # exits nonzero on any mismatch
+node packages/mailwoman/lib/dev-tools/verify-export-quant-versions.run.ts   # exits nonzero on any mismatch
 ```
 
 ## Eval procedure invariants
