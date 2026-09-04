@@ -155,7 +155,7 @@
 		"sherif": "^1.13.0",
 		"spliterator": "^6.4.1",
 		"ts-morph": "^28.0.0",
-		"typescript": "^6.0.3",
+		"typescript": "^7.0.2",
 		"vitest": "4.1.11",
 		"zx": "^8.8.5"
 	},
