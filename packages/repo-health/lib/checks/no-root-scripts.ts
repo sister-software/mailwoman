@@ -37,6 +37,12 @@ const BARE_LIB_RUN = /(?:^|[\s"'`(])(?:node|tsx|yarn node)\s+\S*\/lib\/\S*\.tsx?
 const COMMENT_LINE = /^\s*(?:\/\/|\*|\/\*)/u
 
 /**
+ * This module's own repo-relative path, excluded from the code walk: the patterns above have to spell `scripts/` to
+ * match it, and a check that reports itself would fail on every tree.
+ */
+const SELF = "packages/repo-health/lib/checks/no-root-scripts.ts"
+
+/**
  * The one library path a target may run: the `mwops` adapter is the registry's command-line view, and the private CLI
  * has no compiled bin, so `package.json`'s `mwops` target names its source. Every other executable reaches CI through
  * it.
@@ -87,7 +93,7 @@ export const noRootScriptsCheck: RepoCheck = {
 		for (const filePath of codeFiles) {
 			const file = relative(root, filePath)
 
-			if (isTestFile(file)) continue
+			if (file === SELF || isTestFile(file)) continue
 			let index = 0
 
 			for (const line of TextSpliterator.from(await readLocalTextFile(filePath), { skipEmpty: false })) {
