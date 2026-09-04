@@ -1,7 +1,8 @@
 # Moving out of `scripts/` — proposal
 
-Status: proposal for operator decision. Nothing moves until the three decisions in section 6 are
-made. Measured on `main` at 86f050d99 (2026-09-04).
+Status: proposal, revised after operator review on 2026-09-04. The diagnosis (sections 1 and 2) stands;
+the destination model (sections 3 to 7) is the revised one. Nothing moves until section 8's decisions
+are confirmed. Measured on `main` at 86f050d99.
 
 ## 1. What is in the drawer
 
@@ -38,97 +39,184 @@ Three properties of the directory, each a mechanism rather than a habit:
    directory that CI reasons about; `scripts/` has a tsconfig. The `sdk/` regroup and the `tools/`
    census in AGENTS.md happened to packages because packages have boundaries to enforce.
 
-## 3. The rule that replaces the directory
+## 3. The rule that replaces the directory: capability, then interface
 
-Every file under `scripts/` is one of four things, and each already has a home in the repository:
+A file under `scripts/` is an implementation and an interface at once: the path is the API. The revised
+model separates the two.
 
-| Kind                                                                                        | Home                                                                                                                                                        | Existing examples                                                               |
-| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| a maintainer pipeline that must not ship to npm (release, publish, weights materialization) | a **private workspace** `packages/release-kit` (`@mailwoman/release-kit`, `private: true`, like `dev-mcp`) with `lib/release/`, `lib/weights/`, `lib/pack/` | none yet; `@mailwoman/dev-mcp` is the private-workspace precedent               |
-| a repository health check                                                                   | a **private workspace** `packages/repo-health`                                                                                                              | none yet; `scripts/repo-health.ts` is the seed                                  |
-| a product or maintainer command                                                             | the mailwoman CLI: `commands/release/` (has `hf.tsx`), `commands/dev/` (`download`, `generate`, `lint`), `commands/eval/` (23 commands)                     | `eval/oa-resolver.tsx` already exists beside `scripts/eval/oa-resolver-eval.ts` |
-| a measurement                                                                               | `packages/mailwoman/lib/dev-tools/*.run.ts` (33 today) or a `dev-mcp` tool (24 today)                                                                       | the five scratchpad ports of 2026-08-21                                         |
+```
+release operation (release-kit)
+      │
+      ├── private CLI adapter  →  CI and humans      (mwops release …)
+      │
+      └── MCP adapter          →  agents             (release-mcp, separately enabled)
+```
 
-Anything that is none of the four is deleted, with its receipt naming the record that already carries
-its result.
+Capabilities live in domain packages that contain the logic and nothing else. Interfaces are thin
+adapters that expose a capability set to a consumer: a private CLI for CI and humans, an MCP server
+for agents, the public `mailwoman` CLI for users. Neither adapter carries meaningful logic.
 
-## 4. Destinations, file by file
+| Kind                              | Home                                                           | Admission rule (mechanical)                                                                                                                |
+| --------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| a release capability              | private `packages/release-kit` (`@mailwoman/release-kit`)      | the operation participates in the construction, verification, staging, or publication of a release artifact                                |
+| a repository health check         | private `packages/repo-health`                                 | inspects the repository and returns diagnostics or pass/fail; no mutation, generation, publishing, benchmark, probe, or one-shot migration |
+| a measurement                     | `packages/mailwoman/lib/dev-tools/*.run.ts` (33 today)         | reproducible, and it produces evidence a record can cite                                                                                   |
+| an agent adapter over diagnostics | `@mailwoman/dev-mcp` (24 tools today)                          | an adapter over maintained diagnostic and measurement capabilities, never a second implementation home                                     |
+| an agent adapter over release     | new private `@mailwoman/release-mcp`                           | an adapter over `release-kit`'s registry, separately enabled, the only MCP surface with external-write effects                             |
+| the private operator CLI          | `mwops`, either `packages/ops-cli` or a `bin` of `release-kit` | views over the two registries below; no logic                                                                                              |
+| a one-shot task or codemod        | nowhere                                                        | deleted after use, or graduated into a capability                                                                                          |
 
-**Release and weights (25) → `packages/release-kit`.** `release-stage`, `release-preflight`,
-`prepare-release-version`, `release-config-version`, `release-generated-surfaces`,
-`publish-workspace`, `publish-exports`, `pack-workspace`, `bless-package`, `verify-release-metadata`,
-`check-release-parity`, `verify-tarball`, `copy-weights`, `fetch-hf-weights`, `derived-weights-key`,
-`weights-recipe` (now a re-export of core), `link-weights-overlay`, `stage-weights-cache`,
-`scaffold-weights-overlay`, `smoke-clean-install`, `generate-sbom`, and their six tests. The
-workflows and `.release-it.json` call `node packages/release-kit/lib/<area>/<name>.ts` — type-stripped
-source, as today, so the pipeline still runs on a checkout with no compile step. RELEASING.md's nine
-`scripts/` paths and AGENTS.md's release-pipeline pitfalls section move with them.
+Two rules apply everywhere: no directory-wide knip entry glob anywhere in the repository, and no
+workflow executes a `lib/*.ts` path. The earlier draft's `node packages/release-kit/lib/release/x.ts`
+was `scripts/` with a longer name; it exposed implementation files as an operational API and is
+withdrawn.
 
-**Health and verification (13) → `packages/repo-health`.** `repo-health`, `verify-exports`,
+## 4. Registries are the only executable entry points
+
+Each capability package exports one registry; the registry is the package's knip entry point, so an
+implementation file nobody registers is dead code again — which is exactly the failure mode section 2
+names and `scripts/**/*.ts` as an entry glob made impossible to see.
+
+`repo-health`:
+
+```ts
+interface RepoCheck {
+	id: string
+	description: string
+	run(context: RepoContext): Promise<Diagnostic[]>
+}
+
+export const checks: readonly RepoCheck[] = [
+	verifyExports,
+	verifyVersionSync,
+	verifyTestContract,
+	nodeModulesReacharound,
+	debtCounters,
+	vocabCensus,
+]
+```
+
+`release-kit`:
+
+```ts
+interface ReleaseOperation<In, Out> {
+	id: string // "release.publish"
+	effect: "read" | "local-write" | "external-write"
+	inputSchema: ZodType<In>
+	outputSchema: ZodType<Out>
+	run(input: In, context: ReleaseContext): Promise<Out>
+}
+
+export const operations = [preflight, prepare, pack, verify, stage, publish, publishWeights, sbom]
+```
+
+The CLI and the MCP adapter are views over these arrays: `mwops release <id>` binds flags from
+`inputSchema` and prints `outputSchema`; `release-mcp` exposes each operation as a tool with the same
+schemas and surfaces `effect` as the tool's annotation. A capability added to the registry appears in
+both; a file added beside the registry appears in neither and knip reports it.
+
+## 5. External writes are plan → execute
+
+Publishing has credentials and irreversible effects, so no adapter runs it in one step. The contract,
+shared by CI and agents:
+
+```
+release_plan(…)     → { gitHead, version, packages, artifacts, destinations, planDigest }
+release_publish({ planDigest })
+```
+
+`release_publish` recomputes the plan and refuses when HEAD is dirty or has moved, or when the recomputed
+digest differs from the one presented. The CLI uses the same two operations:
+
+```
+mwops release plan --json > release-plan.json
+mwops release publish --plan release-plan.json
+```
+
+One implementation, one contract, two consumers; CI's publish workflow becomes those two lines plus
+`mwops release preflight`, in place of eight `node scripts/…` invocations.
+
+`dev-mcp` stays non-publishing. Its package description is a warm geocoder and measurement; an
+ordinary agent session that receives it must not thereby receive npm, Hugging Face or R2 publishing
+authority. `release-mcp` is enabled separately, and its every tool carries `effect`.
+
+## 6. Destinations, file by file
+
+**Release and weights (25) → `release-kit` operations.** `release-stage`, `release-preflight`,
+`prepare-release-version`, `release-config-version`, `release-generated-surfaces`, `publish-workspace`,
+`publish-exports`, `pack-workspace`, `bless-package`, `verify-release-metadata`, `check-release-parity`,
+`verify-tarball`, `copy-weights`, `fetch-hf-weights`, `derived-weights-key`, `weights-recipe` (now a
+re-export of `@mailwoman/core/release-config`), `link-weights-overlay`, `stage-weights-cache`,
+`scaffold-weights-overlay`, `smoke-clean-install`, `generate-sbom`, and their six tests. Each becomes a
+registered operation with an `effect`; the six workflows and `.release-it.json` call `mwops release …`.
+`mailwoman release hf` (`commands/release/hf.tsx`), which publishes a release to Hugging Face from
+inside the public CLI, moves under the same registry as `release.publish-weights`: an external write
+does not belong on the installed product's help tree. RELEASING.md's nine `scripts/` paths and
+AGENTS.md's release-pipeline pitfalls follow the operations.
+
+**Health (13) → `repo-health` checks.** `repo-health` (the debt counters), `verify-exports`,
 `verify-test-contract`, `verify-version-sync`, `vocab-census`, `node-modules-reacharound.test`,
-`typecheck-tests`, `tracked-sources`, `ts-ast`, and their tests. `package.json`'s `health:*` and
-`typecheck:tests` point there. `generate-man` goes to the CLI's `commands/dev/generate/` beside the
-generators already there, and the husky hook calls the command. `verify-slice-acks` and
-`verify-export-quant-versions` are unreferenced and carry a retired word in one name: delete unless
-a record claims them.
+`typecheck-tests`, with `tracked-sources` and `ts-ast` as its internal helpers. `package.json`'s
+`health:*` targets become `mwops health <id>` and `mwops health all`. `generate-man` generates, so it
+fails the admission rule; it goes to the CLI's `commands/dev/generate/` beside the generators there.
+`verify-slice-acks` and `verify-export-quant-versions` are unreferenced and one carries a retired word:
+delete unless a record claims them.
 
 **Eval (31 + 3 `.py`) → three destinations by a per-file triage.**
 
 - A command exists: `oa-resolver-eval` (→ `eval/oa-resolver.tsx`), `per-locale-f1` and `score-affix`
-  (→ `eval/parity.tsx` or `eval/score-trends.tsx`, whichever already reads the same ledger),
-  `harness-neural` and `fullstack-compare` (→ `dev-mcp`'s `compare` and `run`). Delete the script
-  after confirming the command answers the same question; the receipt states the row count both
-  produce.
-- Cited by a record, no command: port to `dev-tools/<name>.run.ts` unchanged, the way the 2026-08-21
-  scratchpad ports were done.
-- Cited by nothing (the ten above): delete. Their internal libraries `value-match.ts` and
-  `two-model-probe.ts` go with the last consumer.
-- The three Python files (`fit-isotonic-calibration`, `fit-per-locale-calibration`,
-  `calibration-drift-guard`) and `fixtures/` move to `corpus-python/`, where the other Python lives.
+  (→ `eval/parity.tsx` or `eval/score-trends.tsx`, whichever reads the same ledger), `harness-neural`
+  and `fullstack-compare` (→ `dev-mcp`'s `compare` and `run`). Delete the script once the command is
+  shown to answer the same question, with both row counts in the receipt.
+- Cited by a record, no command: port to `dev-tools/<name>.run.ts` unchanged, as the 2026-08-21
+  scratchpad ports were.
+- Cited by nothing (the ten in section 1): delete; `value-match.ts` and `two-model-probe.ts` go with
+  their last consumer.
+- The three Python files and `fixtures/` move to `corpus-python/`.
 
 **Other (14).** `merge-admin` and `check-board-pins` become `mailwoman wof merge-admin` and
-`mailwoman eval pins` (a `pins.tsx` command already exists; confirm it is the same check, then the
-workflow calls the command). `process-util` is deleted in favor of `@mailwoman/core/process`.
-`rewrite-workspace-imports` was a one-shot codemod: delete. The four probes (`probe-gb-anchor-fire`,
-`probe-shaped-obligation`, `overlay-channel-smoke`, `smoke-resolve`) follow the eval triage.
+`mailwoman eval pins` (a `pins.tsx` command exists; confirm it is the same check). `process-util` is
+deleted for `@mailwoman/core/process`. `rewrite-workspace-imports` was a one-shot codemod: delete. The
+four probes follow the eval triage.
 
-## 5. Sequence
+## 7. Sequence
 
-0. **Make the drawer visible before moving anything.** Remove `scripts/**/*.ts` from knip's `entry`
-   and list the referenced paths explicitly (the 19 + 8 + 2 + 1 above). knip then reports the
-   unreferenced files; record the number and put it in `repo-health` as `scriptsUnreferenced` with
-   that baseline, ratcheting to zero as files move or die. This is the measurement every later PR is
-   graded against.
-1. `packages/release-kit`: the release and weights family, workflows, `.release-it.json`, RELEASING.md,
-   AGENTS.md. One PR, exercised by `release:preflight` against a staging root before merge, since the
-   publish workflow is the consumer that only runs on release day.
-2. `packages/repo-health`: the health family and the `package.json` targets. `yarn health` is the
-   proof.
-3. Eval triage, one PR per destination class, each with the receipt named per file.
-4. The remainder of "other", then delete `scripts/`, its two tsconfig references in the root
-   `tsconfig.json`, the knip and jscpd `path` entries, and the `scripts/out` ignore.
+0. **Make the drawer visible.** Remove `scripts/**/*.ts` from knip's `entry`, list the 30 referenced
+   paths explicitly, record the count of files knip then reports, and put it in the debt counters as
+   `scriptsUnreferenced`, ratcheting to zero. Every later PR is graded against it.
+1. **`release-kit` with its registry, and `mwops`.** The release family becomes registered operations;
+   `mwops release …` replaces every `node scripts/…` in the six workflows and `.release-it.json`;
+   `release plan` and `release publish` carry the digest contract; `mailwoman release hf` moves in.
+   Proof before merge: `mwops release preflight` against a staging root, since the publish workflow
+   only runs on release day.
+2. **`repo-health` with its registry.** `yarn health` becomes `mwops health all`.
+3. **`release-mcp`.** An adapter over the registry, separately enabled, `effect` on every tool.
+4. **Eval triage**, one PR per destination class, each receipt naming the file and its record.
+5. **The remainder of "other"**, then delete `scripts/`, its two `tsconfig.json` references, the knip
+   and jscpd `path` entries, and the `scripts/out` ignore. A `repo-health` check refuses any `scripts/`
+   path literal outside `docs/records/` from then on, and a second refuses a workflow step that runs a
+   `lib/*.ts` path.
 
-Each move follows AGENTS.md "Moving a workspace": after the move, sweep for QUOTED `scripts/`
-literals in `.github/`, `.husky/`, `.release-it.json`, `package.json`, `jscpd.json`, `knip.json`,
-`docs/`, `RELEASING.md` and `AGENTS.md`, because those strings are read at runtime by something that
-treats absence as a negative answer. A one-line check in `repo-health` that fails on any remaining
-`scripts/` path literal outside `docs/records/` closes the sweep permanently. CodeQL re-raises
-existing alerts at the new paths; re-dismiss after merge.
+Each move follows AGENTS.md "Moving a workspace": sweep for QUOTED path literals in `.github/`,
+`.husky/`, `.release-it.json`, `package.json`, `jscpd.json`, `knip.json`, `docs/`, `RELEASING.md` and
+`AGENTS.md`, because those strings are read at runtime by something that treats absence as a negative
+answer. CodeQL re-raises existing alerts at the new paths; re-dismiss after merge. `smoke-clean-install`
+keeps its foreign-install allowlist entry, and `copy-weights` collapses its `REPO_COMMITTED_SOURCES`
+into `repoCommittedSoftFeedSources` when it becomes an operation.
 
-Two things that must keep their shape when they move: `smoke-clean-install.ts` reads a FOREIGN
-install's layout on purpose and holds an allowlist entry in `node-modules-reacharound.test.ts`, which
-moves with it; `copy-weights.ts` still holds its own `REPO_COMMITTED_SOURCES` beside
-`repoCommittedSoftFeedSources`, and the move is the moment to collapse them.
+## 8. Decisions
 
-## 6. Decisions
+1. `release-kit` and `repo-health` stay separate. Yes.
+2. Release tooling is a private capability package, a private CLI (`mwops`), and a privileged MCP
+   adapter — not public `mailwoman` commands and not bare files. Open: `mwops` as `packages/ops-cli`
+   or as a `bin` of `release-kit`.
+3. The ten uncited eval scripts are deleted. Yes.
+4. CI never executes an arbitrary `lib/*.ts` path; workflows call stable `mwops` commands.
+5. Registries are the only executable entry points; knip keeps the power to report an orphan
+   implementation file.
+6. `dev-mcp` remains non-publishing; external-write operations live behind the separately enabled
+   `release-mcp`.
 
-1. **One private workspace or two.** `release-kit` and `repo-health` have different consumers (the
-   publish workflow versus every PR's `test` context) and different failure costs. Recommendation:
-   two.
-2. **Release tooling as CLI commands or as a private package.** `commands/release/hf.tsx` exists, so
-   the CLI route is open. Recommendation: the private package. The CLI ships to npm and its help tree
-   is a documented surface (`generate-man`, the CLI reference page); a publish pipeline belongs in
-   neither.
-3. **Delete versus archive for the ten uncited eval scripts.** Recommendation: delete. The results
-   they produced, where they produced any, are in the records that would have cited them; git keeps
-   the source.
+With these, "is this a script?" stops being a question. The question becomes what maintained
+capability this is, who consumes it, and what its effect is — and the free-standing executable file is
+no longer a category the repository has.
