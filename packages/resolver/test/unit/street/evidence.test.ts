@@ -131,3 +131,63 @@ describe("pickByStreetEvidence — the v2 policy", () => {
 		expect(() => pickByStreetEvidence([], mockEvidence([]))).toThrow(/no candidates/)
 	})
 })
+
+describe("demote-only exclusions", () => {
+	const exclusion = {
+		kind: "exclusion" as const,
+		source: "os-open-uprn",
+		vintage: "2026-08",
+		scope: { layer: "os-open-uprn", h3Cell: 1, basis: "designated" as const, fold: "uprn-point@res9" },
+	}
+
+	const none = mockEvidence([])
+
+	test("an exclusion on rank-1 promotes rank-2 without deleting rank-1", () => {
+		const candidates = [cand("Avenida Corrientes", 10), cand("Turner Street", 9)]
+		const pick = pickByStreetEvidence(candidates, none, { exclusions: [exclusion, null] })
+
+		expect(pick.index).toBe(1)
+		expect(pick.moved).toBe(true)
+		expect(pick.demoted).toEqual([0])
+		// The candidate array is never mutated and nothing is removed.
+		expect(candidates).toHaveLength(2)
+	})
+
+	test("a null exclusion changes nothing — fail open", () => {
+		const pick = pickByStreetEvidence([cand("Avenida Corrientes", 10), cand("Turner Street", 9)], none, {
+			exclusions: [null, null],
+		})
+
+		expect(pick.index).toBe(0)
+		expect(pick.demoted).toEqual([])
+	})
+
+	test("every candidate excluded still returns rank-1 — an exclusion never empties the set", () => {
+		const pick = pickByStreetEvidence([cand("Avenida Corrientes", 10), cand("Turner Street", 9)], none, {
+			exclusions: [exclusion, exclusion],
+		})
+
+		expect(pick.index).toBe(0)
+		expect(pick.moved).toBe(false)
+		expect(pick.demoted).toEqual([0, 1])
+	})
+
+	test("positive evidence on an excluded candidate still loses to an un-excluded sibling with evidence", () => {
+		const both = mockEvidence(["avenida corrientes", "turner street"])
+
+		const pick = pickByStreetEvidence([cand("Avenida Corrientes", 10), cand("Turner Street", 9)], both, {
+			exclusions: [exclusion, null],
+		})
+
+		expect(pick.index).toBe(1)
+		expect(pick.demoted).toEqual([0])
+	})
+
+	test("omitting exclusions entirely reproduces the v2 policy byte-for-byte", () => {
+		const candidates = [cand("rue de la Paix", 10), cand("rue Pillet-Will", 9)]
+		const evidence = mockEvidence(["rue pillet will"])
+
+		expect(pickByStreetEvidence(candidates, evidence, {})).toEqual(pickByStreetEvidence(candidates, evidence))
+		expect(pickByStreetEvidence(candidates, evidence).demoted).toEqual([])
+	})
+})

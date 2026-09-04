@@ -4981,6 +4981,7 @@ __metadata:
   dependencies:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/evidence": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     path-ts: "npm:^2.3.0"
   languageName: unknown

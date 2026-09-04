@@ -27,6 +27,8 @@
  *   mirroring the `PlaceLookup` pattern.
  */
 
+import type { Exclusion } from "@mailwoman/evidence"
+
 /**
  * A street-name existence probe. Backend-agnostic; the FR instance is BAN street-centroids, a future US instance is
  * TIGER, etc. (per the registry-backed-structured-prediction doctrine tiers).
@@ -151,6 +153,14 @@ export interface PickByStreetEvidenceOpts {
 	 * it.)
 	 */
 	marginCap?: number
+	/**
+	 * One entry per candidate, positionally aligned. A non-null entry DEMOTES that candidate by one bit — it is
+	 * considered only after every un-excluded sibling. It is never removed: with every candidate excluded the pick is
+	 * still rank-1, because the worst case this policy accepts is the model's own ranking.
+	 *
+	 * Omitted or all-null reproduces the measured v2 policy exactly.
+	 */
+	exclusions?: ReadonlyArray<Exclusion | null>
 }
 
 export interface StreetEvidencePick<T = unknown> {
@@ -166,6 +176,11 @@ export interface StreetEvidencePick<T = unknown> {
 	 * True when evidence MOVED the pick off rank-1 (a rank-2-beats-rank-1 correction — loggable training signal).
 	 */
 	moved: boolean
+	/**
+	 * Indices an exclusion demoted, in input order. Empty when no exclusion applied — a loggable record of what the
+	 * coverage check licensed, distinct from what evidence found.
+	 */
+	demoted: number[]
 }
 
 /**
@@ -173,7 +188,8 @@ export interface StreetEvidencePick<T = unknown> {
  * first candidate whose street surface passes ALL of: (1) exists in the index, (2) G1 — not pure type vocabulary, (3)
  * G2 — within `marginCap` of rank-1. If none passes, return rank-1 (fail-open). Positive evidence only; the model's
  * order is preserved among equal-evidence candidates. This is the `resolver/rerank.ts` anti-Pelias discipline applied
- * to the name signal: one bit, no blending.
+ * to the name signal: one bit, no blending. `opts.exclusions` adds one more bit in the same fold: a coverage-licensed
+ * absence demotes its candidate behind every un-excluded sibling and never removes it.
  *
  * @param candidates Parse candidates, rank-1 FIRST (the caller sorts by score descending).
  */
@@ -190,22 +206,39 @@ export function pickByStreetEvidence<T>(
 
 	const rank1 = candidates[0]!
 	const topScore = rank1.score
+	const demoted: number[] = []
+	const considered: number[] = []
 
 	for (let i = 0; i < candidates.length; i++) {
+		if (opts.exclusions?.[i]) {
+			demoted.push(i)
+		} else {
+			considered.push(i)
+		}
+	}
+
+	// An excluded candidate is considered only after every un-excluded sibling; it is never dropped.
+	const order = demoted.length ? [...considered, ...demoted] : considered
+
+	for (const i of order) {
 		const c = candidates[i]!
 
 		if (!c.streetSurface) continue
 
-		// G2: candidates are score-ordered, so once one falls past the cap nothing deeper qualifies either.
-		if (topScore - c.score > marginCap) break
+		// G2: the margin is measured from rank-1's score, whatever position the candidate is considered at.
+		if (topScore - c.score > marginCap) continue
 
 		// G1: a pure street-type/particle surface (bare `rue`) carries no name — no evidence credit.
 		if (isPureTypeVocabulary(foldStreetSurface(c.streetSurface))) continue
 
 		if (evidence.hasStreetName(c.streetSurface, opts.scope)) {
-			return { candidate: c, index: i, moved: i > 0 }
+			return { candidate: c, index: i, moved: i > 0, demoted }
 		}
 	}
 
-	return { candidate: rank1, index: 0, moved: false }
+	// Fail-open: the first un-excluded candidate, which is rank-1 unless an exclusion demoted it, and rank-1 again when
+	// every candidate is excluded.
+	const fallback = order[0] ?? 0
+
+	return { candidate: candidates[fallback]!, index: fallback, moved: fallback > 0, demoted }
 }
