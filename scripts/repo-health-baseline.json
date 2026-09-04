@@ -9,5 +9,6 @@
 	"bannedVocabulary": 0,
 	"rawNULBytes": 0,
 	"reTypedISODate": 0,
-	"earthRadiusLiterals": 0
+	"earthRadiusLiterals": 0,
+	"scriptsUnreferenced": 27
 }

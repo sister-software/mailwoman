@@ -1,0 +1,41 @@
+{
+	"name": "@mailwoman/release-kit",
+	"version": "9.2.0",
+	"private": true,
+	"description": "Release operations as a registry — preflight, prepare, pack, verify, stage, publish, weights materialization — consumed through adapters (the private mwops CLI, the release MCP), never run as files.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/release-kit"
+	},
+	"files": [
+		"lib",
+		"out",
+		"README.md"
+	],
+	"type": "module",
+	"imports": {
+		"#*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./lib/index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./registry": {
+			"node": "./lib/registry.ts",
+			"default": "./out/registry.js",
+			"types": "./out/registry.d.ts"
+		}
+	},
+	"dependencies": {
+		"zod": "^4.5.4"
+	}
+}

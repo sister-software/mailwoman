@@ -4764,6 +4764,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/ops-cli@workspace:packages/ops-cli":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/ops-cli@workspace:packages/ops-cli"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/release-kit": "workspace:*"
+    "@mailwoman/repo-health": "workspace:*"
+  bin:
+    mwops: ./lib/cli.ts
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/osm@workspace:*, @mailwoman/osm@workspace:packages/osm":
   version: 0.0.0-use.local
   resolution: "@mailwoman/osm@workspace:packages/osm"
@@ -4889,6 +4901,20 @@ __metadata:
     path-ts: "npm:^2.3.0"
     playwright: "npm:^1.62.1"
     spliterator: "npm:^6.4.1"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/release-kit@workspace:*, @mailwoman/release-kit@workspace:packages/release-kit":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/release-kit@workspace:packages/release-kit"
+  dependencies:
+    zod: "npm:^4.5.4"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/repo-health@workspace:*, @mailwoman/repo-health@workspace:packages/repo-health":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/repo-health@workspace:packages/repo-health"
   languageName: unknown
   linkType: soft
 
