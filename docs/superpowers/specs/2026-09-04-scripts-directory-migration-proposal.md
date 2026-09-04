@@ -220,3 +220,30 @@ into `repoCommittedSoftFeedSources` when it becomes an operation.
 With these, "is this a script?" stops being a question. The question becomes what maintained
 capability this is, who consumes it, and what its effect is — and the free-standing executable file is
 no longer a category the repository has.
+
+## 9. Status (2026-09-04)
+
+The sequence in §7 ran the same day, with three sub-agents on the families and the operator's revised model as the
+target. Receipts, in merge order:
+
+| Step           | Receipt                           | What landed                                                                                                                                                                                                                                                                                                                                                          |
+| -------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0, scaffolds   | #2133                             | `packages/release-kit`, `packages/repo-health`, `packages/ops-cli` (`mwops`); knip's root entry list made explicit; the `scriptsUnreferenced` counter at baseline 27                                                                                                                                                                                                 |
+| eval triage    | #2137                             | 25 `dev-tools/*.run.ts`, two libraries, 12 deletions, `mailwoman release merge-admin`, `mailwoman eval pins --check`; two latent defects fixed (the merge-admin pin guard matched a pre-`lib/` path; `honest-eval` spawned a deleted script)                                                                                                                         |
+| health family  | #2138                             | eight registered checks, `mwops health <id>                                                                                                                                                                                                                                                                                                                          | all`, `mwops health baseline debt`; `generate-man`became`mailwoman dev generate man-page` |
+| release family | #2140                             | fifteen registered operations with effect classes; `mwops release plan` → `planDigest`; `publish-workspace` and `bless-package` take `--plan` and refuse a dirty or moved HEAD; `.release-it.json`, `publish.yml`, `test.yml`, `version-parity.yml` call `mwops`. Found on the way: `auditStagedWorkspaces` never awaited the pack, so preflight had audited 0 of 58 |
+| closure        | #2144                             | `scripts/` deleted; residue rehomed (`data/gazetteer/wof-build-manifest.json`, `docs/scripts/publish-demo-assets-to-r2.py`, `dev-tools/verify-export-quant-versions.run.ts`); `no-root-scripts` check registered; `scriptsUnreferenced` retired                                                                                                                      |
+| follow-ups     | #2139, #2141, #2145, #2146, #2147 | two release-list workspaces at `0.0.0` raised to the root version; five stale manifest targets removed and the `manifest-targets` check registered (#2142); `version-sync` imports release-kit's release-list reader and `@mailwoman/core/git` replaces seven git shell-outs (#2143)                                                                                 |
+
+Two findings changed the measurement itself. The `scriptsUnreferenced` counter had only ever counted `scripts/eval/`:
+git's fnmatch reads `**` as two stars, so `scripts/**/*.ts` needed a directory between `scripts/` and the file, and the
+44-of-71 figure in §1 was read by a different instrument than the counter. And the release preflight's tarball audit,
+once it ran, refused 2 of 58 packages for manifest entries whose targets had moved (§5's plan → execute would
+have stopped there; #2141 and #2147 make that a PR-time check).
+
+Not done: step 4, the `release-mcp` adapter. The registry and `mwops` are the only views today. Its tool contract —
+which operations it exposes and how `release_publish({planDigest})` is authorized — is the operator's decision before
+it is built (decision 2, still open on the `bin`-of-`release-kit` question, decides its packaging too).
+
+Decision 4 is now enforced rather than stated: `no-root-scripts` refuses a workflow or `package.json` target that runs a
+bare `lib/*.ts` path, with `packages/ops-cli/lib/cli.ts` as the one named exemption.
