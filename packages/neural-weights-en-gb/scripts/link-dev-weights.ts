@@ -29,8 +29,7 @@ import { removePath } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import {
-	ANCHOR_LEXICON_LINK,
-	COUNTRY_SURFACE_LEXICON_LINK,
+	committedSoftFeedLinks,
 	materializeDevOverlay,
 	PAIR_INDEX_DELTA,
 	PAIR_INDEX_PARENT_DELTA,
@@ -60,10 +59,12 @@ const GB_REGIONS_JSONL = String(repoRootPath("data", "gazetteer", "gb-regions-v1
 // Hierarchy campaign R2+R3: the WOF borough pairs + the checked-in ONSPD London ward pairs join the
 // build — without these flags a dev rebuild would silently DROP them. The `sources` list is what the
 // shared freshness guard md5s, in the order the build records them (CSV, borough DB, pairs JSONLs).
+const softFeed = await committedSoftFeedLinks()
+
 const overlay = await materializeDevOverlay({
 	locale: "en-gb",
 	model: { kind: "link", digestCard: "neural-weights-en-us" },
-	softFeed: [ANCHOR_LEXICON_LINK, COUNTRY_SURFACE_LEXICON_LINK],
+	softFeed: [softFeed.anchor, softFeed.country],
 	evidenceLexiconsFromCard: true,
 	pairIndex: {
 		country: "gb",

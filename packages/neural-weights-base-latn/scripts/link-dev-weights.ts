@@ -16,18 +16,16 @@
  */
 
 import { workspacePath } from "@mailwoman/core/paths"
-import {
-	ANCHOR_LEXICON_LINK,
-	COUNTRY_SURFACE_LEXICON_LINK,
-	materializeDevOverlay,
-} from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import { committedSoftFeedLinks, materializeDevOverlay } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+
+const softFeed = await committedSoftFeedLinks()
 
 await materializeDevOverlay({
 	locale: "base-latn",
 	model: { kind: "link" },
 	softFeed: [
-		ANCHOR_LEXICON_LINK,
-		COUNTRY_SURFACE_LEXICON_LINK,
+		softFeed.anchor,
+		softFeed.country,
 		{
 			source: String(workspacePath("neural-weights-en-us", "model-card.json")),
 			name: "model-card.json",

@@ -33,8 +33,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import {
-	ANCHOR_LEXICON_LINK,
-	COUNTRY_SURFACE_LEXICON_LINK,
+	committedSoftFeedLinks,
 	materializeDevOverlay,
 	PAIR_INDEX_DELTA,
 	PAIR_INDEX_PARENT_DELTA,
@@ -45,10 +44,12 @@ import {
  */
 const NZ_SOURCE_CSV = String(dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"))
 
+const softFeed = await committedSoftFeedLinks()
+
 await materializeDevOverlay({
 	locale: "en-nz",
 	model: { kind: "inherit" },
-	softFeed: [ANCHOR_LEXICON_LINK, COUNTRY_SURFACE_LEXICON_LINK],
+	softFeed: [softFeed.anchor, softFeed.country],
 	evidenceLexiconsFromCard: true,
 	pairIndex: {
 		country: "nz",

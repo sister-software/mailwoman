@@ -185,7 +185,13 @@ describe("checkPOI (optional)", () => {
 		const c = checkPOI({
 			path: "/poi/poi.db",
 			exists: true,
-			manifest: { name: "poi", version: "2026-07-20a", sourceVintage: "2026-07" },
+			manifest: {
+				name: "poi",
+				version: "2026-07-20a",
+				sourceVintage: "2026-07",
+				license: "CDLA-Permissive-2.0",
+				attribution: "Overture Maps Foundation",
+			},
 		})
 
 		expect(c.status).toBe(CheckStatus.OK)

@@ -41,6 +41,7 @@
  *   nobody points it at a genuinely large workbook expecting otherwise.
  */
 
+import { isoDate } from "@mailwoman/core/utils"
 import { normalizeColumnNames, XLSXSpliterator, type XLSXCellValue } from "spliterator"
 
 import { toFRN } from "#frn"
@@ -176,7 +177,7 @@ function cell(row: WorkbookRow, key: string): string {
 
 	if (value === null || value === undefined) return ""
 
-	if (value instanceof Date) return value.toISOString().slice(0, 10)
+	if (value instanceof Date) return isoDate(value)
 
 	return String(value).trim()
 }

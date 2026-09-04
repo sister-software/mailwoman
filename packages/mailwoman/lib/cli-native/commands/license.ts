@@ -10,8 +10,9 @@
  *   mailwoman.ai whether the key id is still listed.
  */
 
+import { configRootPath } from "@mailwoman/core/data-root"
 import { $public } from "@mailwoman/core/env"
-import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, writePrivateTextFile } from "@mailwoman/core/fs/writers"
 import {
 	confirmLicenseKeyPublished,
@@ -23,9 +24,10 @@ import {
 	verifyLicenseKey,
 	type LicenseKeyPayload,
 } from "@mailwoman/core/license"
-import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
+import { isoDate } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 
+import { readMailwomanManifest } from "#cli-kit/metadata"
 import {
 	booleanValue,
 	CLIError,
@@ -89,21 +91,17 @@ const SIGNING_KEY_FILE = "signing-key.pem"
 const PUBLIC_KEY_FILE = "signing-key.pub.pem"
 
 function licenseConfigPath(...segments: string[]): string {
-	return resolvePath($public.MAILWOMAN_CONFIG_ROOT, "license", ...segments)
+	return String(configRootPath("license", ...segments))
 }
 
 async function thisMajorVersion(): Promise<number> {
-	const manifest = await readLocalJSONFile<{ version?: string }>(resolvePackageDirectory("mailwoman")("package.json"))
-	const major = Number.parseInt(manifest.version?.split(".")[0] ?? "", 10)
+	const manifest = await readMailwomanManifest()
+	const major = Number.parseInt(manifest.version.split(".")[0] ?? "", 10)
 
 	if (!Number.isFinite(major))
 		throw new CLIError("Could not read this build's major version from its package manifest.")
 
 	return major
-}
-
-function today(): string {
-	return new Date().toISOString().slice(0, 10)
 }
 
 async function keygen(parsed: ParsedCommand): Promise<number> {
@@ -195,7 +193,7 @@ async function issue(parsed: ParsedCommand): Promise<number> {
 		v: 1,
 		kid: trusted[0],
 		licensee,
-		issued: today(),
+		issued: isoDate(),
 		...(expires ? { expires } : {}),
 		scope,
 		terms: "LicenseRef-Commercial",

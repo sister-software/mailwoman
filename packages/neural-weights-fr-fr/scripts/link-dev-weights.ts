@@ -34,8 +34,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import {
-	ANCHOR_LEXICON_LINK,
-	COUNTRY_SURFACE_LEXICON_LINK,
+	committedSoftFeedLinks,
 	materializeDevOverlay,
 	PAIR_INDEX_DELTA,
 	PAIR_INDEX_PARENT_DELTA,
@@ -48,10 +47,12 @@ import {
  */
 const BAN_DIR = String(dataRootPath("corpus", "sources", "ban"))
 
+const softFeed = await committedSoftFeedLinks()
+
 await materializeDevOverlay({
 	locale: "fr-fr",
 	model: { kind: "inherit" },
-	softFeed: [ANCHOR_LEXICON_LINK, COUNTRY_SURFACE_LEXICON_LINK],
+	softFeed: [softFeed.anchor, softFeed.country],
 	evidenceLexiconsFromCard: true,
 	postcodeBinary: { country: "fr", database: String(dataRootPath("wof", "postalcode-intl.db")) },
 	pairIndex: {

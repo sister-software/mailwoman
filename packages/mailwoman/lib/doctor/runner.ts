@@ -15,7 +15,7 @@
 
 import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { $public, DefaultMailwomanPaths } from "@mailwoman/core/env"
-import { isWritable, pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { isWritable, pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import {
 	confirmLicenseKeyPublished,
@@ -23,10 +23,10 @@ import {
 	type LicenseKeyVerification,
 	verifyConfiguredLicenseKey,
 } from "@mailwoman/core/license"
-import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import { readMailwomanManifest } from "#cli-kit/metadata"
 import {
 	assembleReport,
 	checkPOI,
@@ -41,6 +41,7 @@ import {
 	type DoctorCheck,
 	type DoctorReport,
 	type GazetteerObservation,
+	type LayerIdentity,
 	type LayerLicenseObservation,
 	type POIObservation,
 	type WeightsObservation,
@@ -105,16 +106,16 @@ export interface DoctorDeps {
 	/**
 	 * Read + validate a POI layer manifest (throws on a missing/invalid manifest).
 	 */
-	readPOIManifest(path: string): Promise<{ name: string; version: string; sourceVintage: string }>
+	/**
+	 * Read the identity fields of a layer manifest (throws on a missing/invalid manifest). Serves the POI presence check
+	 * and every layer's license line.
+	 */
+	readLayerIdentity(path: string): Promise<LayerIdentity>
 	/**
 	 * Every layer database the geocode session would attach, present or not; the doctor reports the license of each one
 	 * that is on disk.
 	 */
 	layerDatabases(): LayerDatabaseRef[]
-	/**
-	 * Read the license fields of a layer manifest (throws on a missing/invalid manifest).
-	 */
-	readLayerLicense(path: string): Promise<{ name: string; license: string; attribution: string | null }>
 	/**
 	 * Mailwoman's own `license` expression, from its package manifest.
 	 */
@@ -159,11 +160,7 @@ export interface DoctorDeps {
  */
 async function readEnginesFloor(): Promise<string> {
 	try {
-		const pkg = await readLocalJSONFile<{ engines?: { node?: string } }>(
-			resolvePackageDirectory("mailwoman")("package.json")
-		)
-
-		return pkg.engines?.node ?? ">=0"
+		return (await readMailwomanManifest()).engines?.node ?? ">=0"
 	} catch {
 		return ">=0"
 	}
@@ -184,13 +181,19 @@ async function defaultConventionCandidatePath(dataRoot: string): Promise<string 
  * Open a POI db READ-ONLY, read its layer manifest, and narrow it to the identity fields doctor prints.
  */
 /**
- * Open a layer db READ-ONLY and read the license fields of its manifest.
+ * Open a layer db READ-ONLY and read the identity fields of its manifest — what the layer is and what it asks.
  */
-async function readLayerLicense(path: string): Promise<{ name: string; license: string; attribution: string | null }> {
+async function readLayerIdentity(path: string): Promise<LayerIdentity> {
 	using kdb = new DatabaseClient<LayerContractDatabase>(path, { readOnly: true })
 	const manifest = await readLayerManifest(kdb)
 
-	return { name: manifest.name, license: manifest.license, attribution: manifest.attribution ?? null }
+	return {
+		name: manifest.name,
+		version: manifest.version,
+		sourceVintage: manifest.sourceVintage,
+		license: manifest.license,
+		attribution: manifest.attribution ?? null,
+	}
 }
 
 /**
@@ -198,17 +201,7 @@ async function readLayerLicense(path: string): Promise<{ name: string; license: 
  * `readEnginesFloor` uses), so the doctor reports the license that ships rather than a string in this file.
  */
 async function readRuntimeLicense(): Promise<string> {
-	const manifest = await readLocalJSONFile<{ license?: string }>(resolvePackageDirectory("mailwoman")("package.json"))
-
-	return manifest.license ?? "NOASSERTION"
-}
-
-async function readPOIManifest(path: string): Promise<{ name: string; version: string; sourceVintage: string }> {
-	using kdb = new DatabaseClient<LayerContractDatabase>(path, { readOnly: true })
-
-	const manifest = await readLayerManifest(kdb)
-
-	return { name: manifest.name, version: manifest.version, sourceVintage: manifest.sourceVintage }
+	return (await readMailwomanManifest()).license ?? "NOASSERTION"
 }
 
 /**
@@ -235,9 +228,8 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 		conventionCandidatePath: () => defaultConventionCandidatePath(dataRoot),
 		wofExtractPaths: () => resolveWOFDatabasePaths(undefined, dataRoot),
 		poiPath: () => layerDatabasePath(dataRoot, "poi"),
-		readPOIManifest,
+		readLayerIdentity,
 		layerDatabases: () => layerDatabases(dataRoot),
-		readLayerLicense,
 		runtimeLicense: readRuntimeLicense,
 		licenseKey: () => verifyConfiguredLicenseKey(),
 		confirmLicenseKeyPublished: (kid) => confirmLicenseKeyPublished(kid),
@@ -310,7 +302,7 @@ async function gatherPOI(deps: DoctorDeps): Promise<POIObservation> {
 	if (!(await deps.exists(path))) return { path, exists: false }
 
 	try {
-		return { path, exists: true, manifest: await deps.readPOIManifest(path) }
+		return { path, exists: true, manifest: await deps.readLayerIdentity(path) }
 	} catch (error) {
 		return { path, exists: true, error: error instanceof Error ? error.message : String(error) }
 	}
@@ -327,7 +319,7 @@ async function gatherLayerLicense(
 	if (!(await deps.exists(layer.path))) return undefined
 
 	try {
-		return { ...layer, manifest: await deps.readLayerLicense(layer.path) }
+		return { ...layer, manifest: await deps.readLayerIdentity(layer.path) }
 	} catch (error) {
 		return { ...layer, error: error instanceof Error ? error.message : String(error) }
 	}

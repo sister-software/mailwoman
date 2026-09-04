@@ -63,7 +63,7 @@ export async function confirmLicenseKeyPublished(
 	kid: string,
 	options: { timeoutMs?: number; url?: string } = {}
 ): Promise<LicenseKeyPublication> {
-	const client = new APIClient({
+	await using client = new APIClient({
 		displayName: "license-keys",
 		// The doctor and `license verify --json` own stdout; the client's request line must not land in the document.
 		logger: silentLogger(),
@@ -79,7 +79,5 @@ export async function confirmLicenseKeyPublished(
 		return entry.status === "active" ? "listed" : "retired"
 	} catch {
 		return "unreachable"
-	} finally {
-		await client[Symbol.asyncDispose]()
 	}
 }

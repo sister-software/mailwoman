@@ -80,6 +80,7 @@ import {
 import { makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { isoDate } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { basename, dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 
@@ -928,7 +929,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	// the exact ledger-append command with everything pre-filled; the release-prep flow runs it with
 	// the real npm version. (Not auto-executed here: the runner runs on candidates that may never
 	// ship, and the ledger records shipped/shippable versions keyed by npm semver.)
-	const shipDate = new Date().toISOString().slice(0, 10)
+	const shipDate = isoDate()
 
 	console.log(
 		`\nledger (#885): on promote, append this run —\n` +

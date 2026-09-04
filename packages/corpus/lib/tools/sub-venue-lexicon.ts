@@ -40,6 +40,7 @@
 
 import { readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { isoDate } from "@mailwoman/core/utils"
 import { basename, join } from "path-ts"
 
 import { SUBVENUE_PROMOTIONS, type SubVenuePromotion } from "#tools/sub-venue-promotions"
@@ -391,7 +392,7 @@ export async function generateSubVenueLexicon(options: GenerateSubVenueLexiconOp
 			// The extract's mtime — when the rows were produced. `corpus/AGENTS.md`'s standing warning that
 			// a file's mtime is not its DATA's vintage applies to a downloaded archive; this file is a build
 			// output of ours, so its mtime is exactly the right number.
-			retrieved: (await statPath(extract.path)).mtime.toISOString().slice(0, 10),
+			retrieved: isoDate((await statPath(extract.path)).mtime),
 			rows: rows.length,
 		})
 	}

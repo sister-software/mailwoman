@@ -29,6 +29,7 @@ import {
 } from "@mailwoman/core/fs/writers"
 import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { runFileSync } from "@mailwoman/core/process"
+import { isoDate } from "@mailwoman/core/utils"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
 // DYNAMICALLY inside the functions (the geocode.tsx convention), NOT at module load, so that merely
 // loading these commands (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault
@@ -440,7 +441,7 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 			},
 			importance: Boolean(importance),
 			buildSHA: sha,
-			version: new Date().toISOString().slice(0, 10),
+			version: isoDate(),
 			createdAt: new Date().toISOString(),
 		})
 	)

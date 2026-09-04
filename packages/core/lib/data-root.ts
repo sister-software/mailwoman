@@ -25,6 +25,24 @@ export function mailwomanDataRoot(): string {
 }
 
 /**
+ * The per-user configuration root (`$MAILWOMAN_CONFIG_ROOT`, defaulting to the platform config directory): where the
+ * license signing key lives, and anything else that is the operator's rather than the data's.
+ */
+export function mailwomanConfigRoot(): string {
+	return $public.MAILWOMAN_CONFIG_ROOT
+}
+
+/**
+ * A path under the config root — the sibling of {@link dataRootPath}, so no caller composes `$MAILWOMAN_CONFIG_ROOT` by
+ * hand.
+ */
+export const configRootPath: PathBuilderResolver = ((...segments: PathBuilderLike[]) => {
+	const resolver = createPathBuilderResolver(mailwomanConfigRoot())
+
+	return segments.length ? resolver(...(segments as [PathBuilderLike, ...string[]])) : resolver()
+}) as PathBuilderResolver
+
+/**
  * Build a path under the data root, e.g. `dataRootPath("wof", "admin-global-priority.db")`.
  *
  * Reads the env on each call, so a late environment change (or a test stub) is honored — a resolver bound once at

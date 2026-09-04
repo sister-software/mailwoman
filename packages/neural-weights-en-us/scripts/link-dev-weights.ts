@@ -25,18 +25,19 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import {
-	ANCHOR_LEXICON_LINK,
-	COUNTRY_SURFACE_LEXICON_LINK,
+	committedSoftFeedLinks,
 	materializeDevOverlay,
 	PAIR_INDEX_DELTA,
 	PAIR_INDEX_PARENT_DELTA,
 	PAIR_INDEX_TRANSITION_BETA,
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
+const softFeed = await committedSoftFeedLinks()
+
 await materializeDevOverlay({
 	locale: "en-us",
 	model: { kind: "link", digestCard: "neural-weights-en-us" },
-	softFeed: [ANCHOR_LEXICON_LINK, COUNTRY_SURFACE_LEXICON_LINK],
+	softFeed: [softFeed.anchor, softFeed.country],
 	evidenceLexiconsFromCard: true,
 	postcodeBinary: { country: "us", database: String(dataRootPath("wof", "postalcode-us.db")) },
 	pairIndex: {

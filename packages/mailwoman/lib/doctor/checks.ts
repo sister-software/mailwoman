@@ -373,13 +373,25 @@ export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
 /**
  * Facts about the POI layer (mirrors `gazetteer build poi`'s default output path).
  */
+/**
+ * The identity fields the doctor reads from a layer's manifest: what it is (name, version, vintage) and what it asks
+ * (license, attribution). One read serves both the presence check and the license posture.
+ */
+export interface LayerIdentity {
+	name: string
+	version: string
+	sourceVintage: string
+	license: string
+	attribution: string | null
+}
+
 export interface POIObservation {
 	path: string
 	exists: boolean
 	/**
 	 * The parsed layer manifest, when the db opened and validated.
 	 */
-	manifest?: { name: string; version: string; sourceVintage: string }
+	manifest?: LayerIdentity
 	/**
 	 * A read error, when the db exists but the manifest couldn't be read.
 	 */
@@ -574,7 +586,7 @@ export interface LayerLicenseObservation {
 	/**
 	 * The manifest fields the doctor reads, or absent when the manifest could not be read.
 	 */
-	manifest?: { name: string; license: string; attribution: string | null }
+	manifest?: LayerIdentity
 	error?: string
 }
 

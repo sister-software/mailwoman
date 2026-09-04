@@ -41,13 +41,14 @@ function healthyDeps(): DoctorDeps {
 		conventionCandidatePath: async () => "/data/wof/candidate.db",
 		wofExtractPaths: () => ["/data/wof/admin.db"],
 		poiPath: () => "/data/poi/poi.db",
-		readPOIManifest: async () => ({ name: "poi", version: "2026-07-20a", sourceVintage: "2026-07" }),
-		layerDatabases: () => [{ id: "poi", label: "POI layer", path: "/data/poi/poi.db" }],
-		readLayerLicense: async () => ({
+		readLayerIdentity: async () => ({
 			name: "poi",
+			version: "2026-07-20a",
+			sourceVintage: "2026-07",
 			license: "CDLA-Permissive-2.0",
 			attribution: "Overture Maps Foundation",
 		}),
+		layerDatabases: () => [{ id: "poi", label: "POI layer", path: "/data/poi/poi.db" }],
 		runtimeLicense: async () => "AGPL-3.0-only OR LicenseRef-Commercial",
 		licenseKey: () => undefined,
 		confirmLicenseKeyPublished: async () => "unreachable",
@@ -140,7 +141,7 @@ describe("runDoctor (injected boundaries)", () => {
 			envCandidatePath: async () => undefined,
 			exists: async () => false,
 			conventionCandidatePath: async () => "/data/wof/candidate.db",
-			readPOIManifest: async () => {
+			readLayerIdentity: async () => {
 				throw new Error("unreachable — poi path does not exist")
 			},
 		})
@@ -158,7 +159,7 @@ describe("runDoctor (injected boundaries)", () => {
 			envCandidatePath: async () => undefined,
 			conventionCandidatePath: async () => undefined,
 			exists: async () => false,
-			readPOIManifest: async () => {
+			readLayerIdentity: async () => {
 				throw new Error("unreachable — poi path does not exist")
 			},
 		})
@@ -312,7 +313,13 @@ describe("runDoctor (injected boundaries)", () => {
 
 		const unasserted = await runDoctor({
 			...healthyDeps(),
-			readLayerLicense: async () => ({ name: "zoning-ie-gzt", license: "NOASSERTION", attribution: null }),
+			readLayerIdentity: async () => ({
+				name: "zoning-ie-gzt",
+				version: "2026-08",
+				sourceVintage: "2026-08",
+				license: "NOASSERTION",
+				attribution: null,
+			}),
 		})
 
 		const check = byID(unasserted.checks, "license-poi")
@@ -325,7 +332,7 @@ describe("runDoctor (injected boundaries)", () => {
 	it("poi.db present but manifest unreadable → degraded (not a hard error)", async () => {
 		const report = await runDoctor({
 			...healthyDeps(),
-			readPOIManifest: async () => {
+			readLayerIdentity: async () => {
 				throw new Error("layer manifest: expected exactly 1 row, found 0")
 			},
 		})
