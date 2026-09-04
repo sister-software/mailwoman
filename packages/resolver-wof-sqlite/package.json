@@ -348,6 +348,7 @@
 		"@mailwoman/ancestrie": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/match": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",

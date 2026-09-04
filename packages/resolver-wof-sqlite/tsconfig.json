@@ -13,6 +13,7 @@
 		{ "path": "../sqlite" },
 		{ "path": "../ancestrie" },
 		{ "path": "../core" },
+		{ "path": "../evidence" },
 		{ "path": "../resolver" },
 		{ "path": "../spatial" }
 	]
