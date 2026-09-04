@@ -286,11 +286,6 @@
 			"default": "./out/routing/index.js",
 			"types": "./out/routing/index.d.ts"
 		},
-		"./filters/*": {
-			"node": "./lib/filters/*.ts",
-			"default": "./out/filters/*.js",
-			"types": "./out/filters/*.d.ts"
-		},
 		"./tools": {
 			"node": "./lib/tools/index.ts",
 			"default": "./out/tools/index.js",
