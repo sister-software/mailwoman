@@ -119,7 +119,7 @@ for (const name of [...closure].sort()) {
 	const tgz = resolve(tarDir, `${dir}.tgz`)
 
 	console.error(`[pack-closure] ${name} (${dir}) -> ${tgz}`)
-	packWorkspaceForPublish(resolve(repoRoot, dir), tgz)
+	await packWorkspaceForPublish(resolve(repoRoot, dir), tgz)
 	deps[name] = `file:${tgz}`
 }
 
