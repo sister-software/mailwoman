@@ -36,6 +36,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readDirectory } from "@mailwoman/core/fs/readers"
+import { pyRound } from "@mailwoman/core/numeric"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { join } from "path-ts"
 
@@ -69,21 +70,6 @@ function isDigit(token: string): boolean {
 }
 
 /**
- * Round half to even (banker's rounding) — Python's built-in `round()` and `format(..., ".0%")` both use it, so percent
- * strings and the proportional `fraction` slice match the Python output exactly.
- */
-function pyRound(x: number): number {
-	const floor = Math.floor(x)
-	const diff = x - floor
-
-	if (diff < 0.5) return floor
-
-	if (diff > 0.5) return floor + 1
-
-	return floor % 2 === 0 ? floor : floor + 1
-}
-
-/**
  * Format a fraction as a whole-percent string the way Python's `:.0%` does, e.g. 0.73 -> "73%".
  */
 function pct(frac: number): string {
@@ -95,7 +81,7 @@ function pct(frac: number): string {
  * everything else is its shortest decimal (0.5 -> "0.5"). Used for the `fraction` echo so the banner matches the Python
  * print.
  */
-function pyFloat(n: number): string {
+function formatPyFloat(n: number): string {
 	return Number.isInteger(n) ? n.toFixed(1) : String(n)
 }
 
@@ -327,7 +313,9 @@ export async function lintSliceVocab(options: LintSliceVocabOptions): Promise<Li
 		parts = sliced
 	}
 
-	console.log(`base ${baseVersion}: scanning ${parts.length} parts (fraction=${pyFloat(fraction)}), COUNTRY-scoped`)
+	console.log(
+		`base ${baseVersion}: scanning ${parts.length} parts (fraction=${formatPyFloat(fraction)}), COUNTRY-scoped`
+	)
 
 	// 3. tally each slice token's base tag, SCOPED to the country the slice uses it in
 	const baseTags = new Map<string, Map<string, number>>()

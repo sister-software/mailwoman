@@ -12,6 +12,8 @@
  *   state: under `node:cluster` each worker reports its own snapshot — aggregate at the scraper.
  */
 
+import { percentileSorted } from "@mailwoman/core/stats"
+
 /**
  * Recent-latency reservoir size. ~2k samples gives stable p99 without unbounded memory.
  */
@@ -50,18 +52,15 @@ export function recordTimed(latencyMs: number, tier: string): void {
 }
 
 /**
- * Percentile for the metrics snapshot — deliberately NOT `percentile` from `@mailwoman/core/utils`.
- *
- * Three differences, each on purpose for a hot request-path counter: it takes an ALREADY-sorted array (the caller sorts
- * once per snapshot, not once per percentile), returns `0` rather than `null` on empty so the snapshot stays a plain
- * number map, and rounds to two decimals because these are milliseconds on a wire format. Core's returns `null` and
- * does not round.
+ * A latency percentile as milliseconds on a wire format: two decimals. The caller sorts once per snapshot and
+ * guarantees a non-empty sample, so `percentileSorted`'s `null` is a caller error here, never a reading.
  */
-function percentile(sorted: number[], p: number): number {
-	if (!sorted.length) return 0
-	const idx = Math.min(sorted.length - 1, Math.floor(p * sorted.length))
+function latencyPercentile(sorted: readonly number[], p: number): number {
+	const value = percentileSorted(sorted, p)
 
-	return Math.round(sorted[idx]! * 100) / 100
+	if (value === null) throw new Error("latencyPercentile requires a non-empty sample")
+
+	return Math.round(value * 100) / 100
 }
 
 export interface MetricsSnapshot {
@@ -93,9 +92,9 @@ export function metricsSnapshot(): MetricsSnapshot {
 			tiers: { ...tierCounts },
 			latency_ms: sorted.length
 				? {
-						p50: percentile(sorted, 0.5),
-						p90: percentile(sorted, 0.9),
-						p99: percentile(sorted, 0.99),
+						p50: latencyPercentile(sorted, 50),
+						p90: latencyPercentile(sorted, 90),
+						p99: latencyPercentile(sorted, 99),
 						max: Math.round(sorted.at(-1)! * 100) / 100,
 					}
 				: null,

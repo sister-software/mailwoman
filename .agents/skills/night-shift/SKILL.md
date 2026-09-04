@@ -68,6 +68,26 @@ The operator has called this out twice; the cost of forgetting is a polite but
 firm "I warned you about recreating existing work." Salvage-first is part of
 pre-flight, not an optional optimization.
 
+### Sub-agent briefs carry the same check
+
+A sub-agent inherits none of this file, and a re-typed helper it commits waits
+for a reviewer unless the brief and the hook carry the rule. Every brief includes:
+
+1. The reuse instruction: "Before writing a helper, read the _Before writing a
+   small utility_ bullet in AGENTS.md and `git grep` the concept across
+   `packages/*/lib`. Import the home; do not re-type it."
+2. The PR-body requirement: "List every new module-private function with the
+   home you checked for it." An empty list is a claim the reviewer reads the
+   diff against.
+3. The hook: the pre-commit `oxlint` run includes `mailwoman/prefer-home`. A
+   finding is answered by the import, or by a scoped disable whose reason names
+   the constraint (no dependency on the home; a preinstall script).
+
+Before enabling auto-merge on an agent PR, read its diff for module-private
+functions and compare each against the home its body implies. A re-typed helper
+is fixed in the PR, and its shape joins `HELPER_HOMES` in `oxlint.plugin.ts` so
+the next copy is reported at commit time instead of at review.
+
 ## Compute placement
 
 **Default: Modal for heavy work, local for light work.**
