@@ -142,3 +142,19 @@ test("prefer-home names the home for a re-typed constant and ignores other numbe
 	expect(reportsFor("prefer-home", numeric(6372))).toEqual([])
 	expect(reportsFor("prefer-home", { type: "Literal", value: "6371", range: [0, 0] })).toEqual([])
 })
+
+test("prefer-home names the git home for a shell-out string in a literal or a template", () => {
+	expect(reportsFor("prefer-home", { type: "Literal", value: "rev-parse HEAD", range: [0, 0] })[0]).toContain(
+		"`@mailwoman/core/git`"
+	)
+
+	const template = {
+		type: "TemplateLiteral",
+		range: [0, 0] as [number, number],
+		quasis: [{ type: "TemplateElement", range: [0, 0], value: { cooked: "git status --porcelain" } }],
+		expressions: [],
+	}
+
+	expect(reportsFor("prefer-home", template)).toHaveLength(1)
+	expect(reportsFor("prefer-home", { type: "Literal", value: "git push", range: [0, 0] })).toEqual([])
+})

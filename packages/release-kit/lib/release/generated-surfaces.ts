@@ -17,6 +17,7 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { dirtyTrackedFiles } from "@mailwoman/core/git"
 import { resolvePath } from "path-ts"
 import { $ } from "zx"
 
@@ -62,8 +63,7 @@ export async function releaseGeneratedSurfaces(
 	const states: GeneratedSurfaceState[] = []
 
 	for (const surface of GENERATED_SURFACES) {
-		const status = await $({ cwd: repoRoot })`git status --porcelain -- ${surface.file}`.quiet()
-		const changed = status.stdout.trim().length > 0
+		const changed = (await dirtyTrackedFiles(repoRoot, [surface.file])).length > 0
 
 		log(`${changed ? "changed  " : "unchanged"} ${surface.file}`)
 		states.push({ file: surface.file, changed })

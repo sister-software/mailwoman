@@ -27,6 +27,7 @@ const GLOSSARY_NO_AUTO_LINK = ["state", "tier"] as const
 
 const gitHash = (() => {
 	try {
+		// oxlint-disable-next-line mailwoman/prefer-home -- the Docusaurus config loader is synchronous, and `@mailwoman/core/git` answers a promise
 		return runShellSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim()
 	} catch {
 		return "unknown"

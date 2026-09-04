@@ -7,8 +7,8 @@
  *   `git ls-files` themselves, so every check reads the same file set.
  */
 
+import { trackedFiles } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { runFile } from "@mailwoman/core/process"
 
 import type { RepoContext } from "#check"
 
@@ -17,9 +17,7 @@ import type { RepoContext } from "#check"
  * wire so a path carrying a newline survives).
  */
 export async function listTrackedFiles(repoRoot: string): Promise<string[]> {
-	const { stdout } = await runFile("git", ["ls-files", "-z"], { cwd: repoRoot, maxBuffer: 64 * 1024 * 1024 })
-
-	return stdout.split("\0").filter((relativePath) => relativePath.length > 0)
+	return trackedFiles(repoRoot)
 }
 
 /**

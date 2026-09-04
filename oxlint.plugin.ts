@@ -514,13 +514,16 @@ const noImportMetaDirnameWalkRule: Rule = {
  * Two signature kinds cover every row so far. A `method-chain` names the method calls of the outermost call
  * innermost-first, matched as a suffix of the chain the call stands on (`new Date().toISOString().slice(0, 10)` is
  * `["toISOString", "slice"]`), optionally with the literal arguments the outer call must carry. A `numeric-literal`
- * names the constants a re-typed algorithm cannot avoid writing: Earth's mean radius, a generator's multiplier.
+ * names the constants a re-typed algorithm cannot avoid writing: Earth's mean radius, a generator's multiplier. A
+ * `string-literal` names a substring a re-typed shell-out cannot avoid: the git subcommand it runs, in a plain string,
+ * a template literal, or a `$\`…`` command.
  */
 interface HelperHome {
 	readonly id: string
 	readonly signature:
 		| { readonly kind: "method-chain"; readonly chain: readonly string[]; readonly arguments?: readonly number[] }
 		| { readonly kind: "numeric-literal"; readonly values: ReadonlySet<number> }
+		| { readonly kind: "string-literal"; readonly includes: readonly string[] }
 	readonly specifier: string
 	readonly symbol: string
 	readonly reason: string
@@ -554,6 +557,22 @@ const HELPER_HOMES: readonly HelperHome[] = [
 		specifier: "@mailwoman/core/random",
 		symbol: "mulberry32",
 		reason: "the mulberry32 seeded generator, whose stream every eval split and corpus sampler shares",
+	},
+	{
+		id: "git-state",
+		signature: {
+			kind: "string-literal",
+			includes: [
+				"rev-parse HEAD",
+				"rev-parse --short HEAD",
+				"rev-parse --abbrev-ref HEAD",
+				"status --porcelain",
+				"ls-files -z",
+			],
+		},
+		specifier: "@mailwoman/core/git",
+		symbol: "gitHead, currentBranch, dirtyTrackedFiles, or trackedFiles",
+		reason: "a reading of the working tree's git state",
 	},
 	{
 		id: "lcg",
@@ -595,6 +614,17 @@ function endsWith(chain: readonly string[], suffix: readonly string[]): boolean 
 	return suffix.every((name, index) => chain[chain.length - suffix.length + index] === name)
 }
 
+function reportStringHome(context: RuleContext, node: AstNode, text: string): void {
+	for (const home of HELPER_HOMES) {
+		if (home.signature.kind !== "string-literal") continue
+
+		if (!home.signature.includes.some((needle) => text.includes(needle))) continue
+		context.report({ node, message: homeMessage(home) })
+
+		return
+	}
+}
+
 function homeMessage(home: HelperHome): string {
 	return (
 		`This re-types ${home.reason}, which already has a home: \`${home.symbol}\` from \`${home.specifier}\`. ` +
@@ -634,7 +664,13 @@ const preferHomeRule: Rule = {
 			Literal(node: AstNode) {
 				const value = numericLiteralValue(node)
 
-				if (value === null) return
+				if (value === null) {
+					if (typeof node.value === "string") {
+						reportStringHome(context, node, node.value)
+					}
+
+					return
+				}
 
 				for (const home of HELPER_HOMES) {
 					if (home.signature.kind !== "numeric-literal" || !home.signature.values.has(value)) continue
@@ -642,6 +678,10 @@ const preferHomeRule: Rule = {
 
 					return
 				}
+			},
+			TemplateLiteral(node: AstNode) {
+				const text = (node.quasis ?? []).map((quasi: AstNode) => quasi.value?.cooked ?? "").join(" ")
+				reportStringHome(context, node, text)
 			},
 		}
 	},
