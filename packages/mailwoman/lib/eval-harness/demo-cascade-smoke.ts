@@ -20,7 +20,7 @@
  *   Usage (after `yarn compile`):
  *
  *   ```
- *   node scripts/eval/demo-cascade-smoke.ts \
+ *   node packages/mailwoman/lib/dev-tools/demo-cascade-smoke.run.ts \
  *   [--stage-dir <release-dir>] [--db <wof-hot.db>] [--model <onnx>] \
  *   [--tokenizer <tokenizer.model>] [--card <model-card.json>] [--fst <fst.bin>] \
  *   [--gazetteer-lexicon <lexicon.json>] [--file <rows.jsonl>] [--json <sidecar.json>] \

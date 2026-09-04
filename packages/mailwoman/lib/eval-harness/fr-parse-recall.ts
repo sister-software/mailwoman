@@ -17,12 +17,13 @@
  *   and any sibling helper swept in beside it would have vanished. See `demo-cascade-rows.ts` for
  *   what that looks like when it goes wrong.
  *
- *   Run: node scripts/eval/fr-parse-recall.ts
+ *   Run: node packages/mailwoman/lib/dev-tools/fr-parse-recall.run.ts
  */
 
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { workspacePath } from "@mailwoman/core/paths"
 import { allRows } from "@mailwoman/core/utils"
@@ -35,6 +36,18 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TextSpliterator } from "spliterator"
 
 const STREET_TAGS = new Set(["street", "street_prefix", "street_suffix"])
+
+/**
+ * The FROZEN 40-row OSM sample the bare-street floor is graded on. A package sibling, so the same file is named from
+ * the source tree and from `out/`.
+ */
+const FR_BARE_STREET_FIXTURE_PATH = resolvePackagePath(
+	"mailwoman",
+	"lib",
+	"eval-harness",
+	"fixtures",
+	"fr-bare-street-40.jsonl"
+)
 
 /**
  * How many bare-street failures the report lists before it stops. The fixture is 40 rows, so a dozen is enough to see
@@ -101,7 +114,7 @@ export interface FRParseRecallOptions {
 	label?: string
 	/**
 	 * Eval-leg mode (#949): the FROZEN 40-row sample, so the bare-street floor is reproducible anywhere (incl. CI, which
-	 * has no database). Default `scripts/eval/fixtures/fr-bare-street-40.jsonl`.
+	 * has no database). Default `lib/eval-harness/fixtures/fr-bare-street-40.jsonl` in this package.
 	 */
 	fixture?: string
 	/**
@@ -183,7 +196,7 @@ export async function frParseRecall(
 	const args = {
 		modelCard: options.modelCard ?? "packages/neural-weights-en-us/model-card.json",
 		label: options.label ?? "",
-		fixture: options.fixture ?? "scripts/eval/fixtures/fr-bare-street-40.jsonl",
+		fixture: options.fixture ?? FR_BARE_STREET_FIXTURE_PATH,
 		fromDB: options.fromDB ?? false,
 		model: options.model,
 		tokenizer: options.tokenizer,

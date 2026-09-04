@@ -92,7 +92,7 @@ on the first branch that ran the suite. The bypass stays available for slow-flee
 exactly one route:
 
 ```bash
-node scripts/merge-admin.ts <pr-number> [--method merge|squash|rebase]
+mailwoman release merge-admin <pr-number> [--method merge|squash|rebase]
 ```
 
 It verifies the local checkout is at the PR's head, runs the sub-second guards relevant to the

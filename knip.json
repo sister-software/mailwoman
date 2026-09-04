@@ -1,13 +1,11 @@
 {
 	"$schema": "https://unpkg.com/knip@6/schema.json",
 	"entry": [
-		"scripts/check-board-pins.ts",
 		"scripts/check-release-parity.ts",
 		"scripts/copy-weights.ts",
 		"scripts/derived-weights-key.ts",
 		"scripts/fetch-hf-weights.ts",
 		"scripts/generate-man.ts",
-		"scripts/merge-admin.ts",
 		"scripts/pack-workspace.ts",
 		"scripts/prepare-release-version.ts",
 		"scripts/publish-workspace.ts",

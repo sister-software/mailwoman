@@ -22,16 +22,11 @@
 	"include": ["./**/*.ts", "./**/*.tsx"],
 	// `diagnostic/` and `scratchpad/` are the throwaway namespaces (.gitignore'd);
 	// excluding them keeps `yarn typecheck:scripts` clean against local scratch as well as in CI.
-	// `demo-cascade-smoke.ts` imports the docs-app browser source (`docs/src/shared/*`) by relative
-	// path; under this node module config TS mis-detects those ESM files as CommonJS (TS1287). It's a
-	// runtime smoke test (exercised by promotion-eval). Follow-up: extract the shared cascade logic
-	// into a package so both the demo and the smoke test import it across a clean boundary.
 	"exclude": [
 		"./**/out/**",
 		"./**/node_modules/**",
 		"./diagnostic/**",
 		"./scratchpad/**",
-		"./eval/demo-cascade-smoke.ts",
 		"./**/*.test.ts",
 		"./**/*.test.tsx"
 	]

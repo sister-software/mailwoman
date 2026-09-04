@@ -235,7 +235,7 @@ failures you have already seen in production before you read the numbers.
   en-US does not transfer to fr-FR.
 - **The shipped table predates the shipped model.** Its `model_version` is `5.3.0` against a `7.0.0`
   model card. Re-fitting is a repo-side job
-  ([`scripts/eval/fit-isotonic-calibration.py`](https://github.com/sister-software/mailwoman/blob/main/scripts/eval/fit-isotonic-calibration.py)),
+  ([`corpus-python/scripts/fit-isotonic-calibration.py`](https://github.com/sister-software/mailwoman/blob/main/corpus-python/scripts/fit-isotonic-calibration.py)),
   not a consumer-side one.
 - **There is no threshold that removes review.** At 0.97 the accepted spans were still right 99.10% of
   the time, not 100%. Budget for the residual rather than tuning to remove it.

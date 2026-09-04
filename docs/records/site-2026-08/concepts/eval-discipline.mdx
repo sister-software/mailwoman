@@ -96,7 +96,7 @@ Three metrics survive a name collision:
 - **coordinate error** (great-circle, gold point to resolved centroid, p50/p90) — handles point geometry natively and exposes the wrong-instance resolves that name-match ties.
 - **PIP-containment** — is the gold point inside the resolved place's polygon? Name-surface-independent, but report it _with a polygon-coverage denominator_: WOF point-geometry localities have no polygon and would otherwise count as silent failures, and tight municipal polygons reject rural addresses ascribed to the nearest town. Lead with region-match and coordinate; treat locality-PIP as a coverage-adjusted secondary.
 
-`scripts/eval/honest-eval.ts` + `scripts/eval/pip-containment.py` implement this; see [the honest-eval report](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/experiments/2026-06-08-honest-eval.mdx) for the full run.
+`packages/mailwoman/lib/dev-tools/honest-eval.run.ts` + `packages/mailwoman/lib/dev-tools/pip-containment.run.ts` implement this; see [the honest-eval report](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/experiments/2026-06-08-honest-eval.mdx) for the full run.
 
 ### When aggregate and functional disagree, functional wins
 

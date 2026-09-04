@@ -18,10 +18,10 @@
  *
  *   All three are scored with --postcode-repair.
  *
- *   Usage (default shipped weights): node scripts/eval/external-arenas.ts
+ *   Usage (default shipped weights): node packages/mailwoman/lib/dev-tools/external-arenas.run.ts
  *   Against a specific model (e.g. a fresh v0.7.2 export): MODEL=/path/model.int8.onnx
  *   TOKENIZER=/path/tokenizer.model\
- *   MODELCARD=/path/model-card.json node scripts/eval/external-arenas.ts
+ *   MODELCARD=/path/model-card.json node packages/mailwoman/lib/dev-tools/external-arenas.run.ts
  *
  *   Emits per-arena three-bucket tables (neural-only / both / v0-only / both-fail) and, for the
  *   postal arena, a breakdown by edge_class. Run `yarn compile` first — the harness resolves
@@ -33,16 +33,25 @@
  *   non-zero exit was, and the check aborts on it exactly as before.
  *
  *   SCOPE NOTE (de-shell): the three inner probes this still spawns as child processes —
- *   `perturb-golden.ts`, `harness-neural.ts` (×3) and `summarize-arenas.ts` — are `scripts/eval`
- *   residents, not eval legs, and de-shelling them is a separate job. `zx` therefore survives HERE
- *   while it is gone from `promotion-eval.ts`.
+ *   `perturb-golden.run.ts`, `harness-neural.run.ts` (×3) and `summarize-arenas.run.ts` — are
+ *   `lib/dev-tools/` residents, not eval legs, and de-shelling them is a separate job. `zx`
+ *   therefore survives HERE while it is gone from `promotion-eval.ts`.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile, copyFileTo, makeDirectories } from "@mailwoman/core/fs/writers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
+
+/**
+ * The three child processes, located from the package root so the same file is named from the source tree and from
+ * `out/`.
+ */
+const PERTURB_GOLDEN_PATH = resolvePackagePath("mailwoman", "lib", "dev-tools", "perturb-golden.run.ts")
+const HARNESS_NEURAL_PATH = resolvePackagePath("mailwoman", "lib", "dev-tools", "harness-neural.run.ts")
+const SUMMARIZE_ARENAS_PATH = resolvePackagePath("mailwoman", "lib", "dev-tools", "summarize-arenas.run.ts")
 
 /**
  * Options for {@linkcode externalArenas} — one field per flag the check used to serialize into argv.
@@ -130,7 +139,7 @@ export async function externalArenas(
 	report("== regenerating perturbation arena ==")
 
 	const perturbed =
-		await $`node scripts/eval/perturb-golden.ts --golden data/eval/golden/v0.1.2 --out ${join(outDir, "perturb", "perturbed.jsonl")} --per-file 60`
+		await $`node ${PERTURB_GOLDEN_PATH} --golden data/eval/golden/v0.1.2 --out ${join(outDir, "perturb", "perturbed.jsonl")} --per-file 60`
 
 	if (perturbed.stdout.trim()) {
 		report(perturbed.stdout.trimEnd())
@@ -151,7 +160,7 @@ export async function externalArenas(
 		report(`== arena: ${name} ==`)
 
 		const r =
-			await $`node scripts/eval/harness-neural.ts --tests ${emptyTests} --falsehoods ${dir} ${modelArgs} --postcode-repair --out-json ${join(outDir, `${name}.results.json`)}`
+			await $`node ${HARNESS_NEURAL_PATH} --tests ${emptyTests} --falsehoods ${dir} ${modelArgs} --postcode-repair --out-json ${join(outDir, `${name}.results.json`)}`
 
 		await writeLocalFile(r.stderr, join(outDir, `${name}.stderr`))
 
@@ -165,7 +174,7 @@ export async function externalArenas(
 	report("")
 	report("== arena summary + postal edge-class breakdown ==")
 
-	const summary = await $`node scripts/eval/summarize-arenas.ts ${outDir} data/eval/external/postal-cases.jsonl`
+	const summary = await $`node ${SUMMARIZE_ARENAS_PATH} ${outDir} data/eval/external/postal-cases.jsonl`
 
 	report(summary.stdout.trimEnd())
 

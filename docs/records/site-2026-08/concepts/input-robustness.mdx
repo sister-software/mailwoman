@@ -148,7 +148,7 @@ check: the parse should survive with lower confidence, and the labels say what
 
 ### `perturb-golden.ts` — the one-off arena
 
-`scripts/eval/perturb-golden.ts` takes golden rows and applies rule-defeating
+`packages/mailwoman/lib/dev-tools/perturb-golden.run.ts` takes golden rows and applies rule-defeating
 perturbations (strip the delimiters, lowercase everything, glue the region to the
 postcode as `OR97214`) while keeping the component labels intact. It exists to show
 that a contextual model degrades more gracefully than a delimiter-hungry rule parser.

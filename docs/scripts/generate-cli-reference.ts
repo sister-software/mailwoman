@@ -60,7 +60,7 @@ export const GROUP_NOTES: Readonly<Record<string, string>> = {
 	gazetteer: "Builds every gazetteer artifact, including the candidate and admin databases.",
 	gnaf: "Assembles the Australian G-NAF address register.",
 	placer: "Trains and evaluates the coarse country placer.",
-	release: "Stages model weights for a release.",
+	release: "Stages model weights for a release and admin-merges a pull request behind its guards.",
 	situs: "Builds the US rooftop address-point and interpolation databases.",
 	tiger: "Processes US Census TIGER/Line road and boundary data.",
 	tiles: "Publishes vector tiles to the demo map's bucket.",

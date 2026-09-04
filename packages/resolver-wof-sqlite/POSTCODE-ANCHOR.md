@@ -73,7 +73,7 @@ node scripts/backfill-postcode-centroids.ts \
 
 # 4. functional check + accuracy
 node scripts/diagnostic/diag-postcode-anchor.ts
-node scripts/eval/postcode-anchor-accuracy.ts \
+node packages/mailwoman/lib/dev-tools/postcode-anchor-accuracy.run.ts \
   --eval data/eval/external/openaddresses-de-sample.jsonl --country DE
 ```
 

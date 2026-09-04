@@ -73,7 +73,7 @@ This convention is one contract with three readers, and they are only useful in 
 2. **The golden answer key** splits, from **v0.1.3** onward (`data/eval/golden/v0.1.3`, relabelled
    from v0.1.2 by `mailwoman corpus golden-relabel`). The version's `MANIFEST.json` DECLARES it in
    `convention.street_convention`.
-3. **The scorer** reads that declaration. `scripts/eval/per-locale-f1.ts` folds
+3. **The scorer** reads that declaration. `packages/mailwoman/lib/dev-tools/per-locale-f1.run.ts` folds
    `street_prefix`/`street`/`street_suffix` back into one string only for rows whose country is not
    declared split — so a split-convention key is graded on the spans, never on the glue.
 

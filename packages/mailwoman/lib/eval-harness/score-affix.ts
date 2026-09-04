@@ -13,7 +13,7 @@
  *   `glue-rows-perturb`) — capturing each report into its own `.md` and the machine-readable sidecar
  *   into its own `.json`. Every printed line goes through the `report` sink, one call per line, so
  *   the captured markdown is byte-identical to the child-process stdout it replaced.
- *   `scripts/eval/score-affix.ts` is the thin CLI that keeps standalone invocation working.
+ *   `packages/mailwoman/lib/dev-tools/score-affix.run.ts` is the thin CLI that keeps standalone invocation working.
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"

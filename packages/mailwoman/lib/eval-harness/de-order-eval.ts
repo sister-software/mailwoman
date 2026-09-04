@@ -21,7 +21,7 @@
  *   `<out>/<name>.md` and their narration in `<out>/<name>.log`, byte-for-byte as the child
  *   processes wrote them.
  *
- *   Usage: node scripts/eval/de-order-eval.ts\
+ *   Usage: node packages/mailwoman/lib/dev-tools/de-order-eval.run.ts\
  *   --model /tmp/v092-eval/model.onnx --card /tmp/v092-eval/model-card.json\
  *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --anchor-lookup $MAILWOMAN_DATA_ROOT/anchor/pilot-anchor-lookup.json\
