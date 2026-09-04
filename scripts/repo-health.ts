@@ -401,7 +401,10 @@ for (const path of paths) {
 
 	counters.rawNULBytes += text.split("\0").length - 1
 
-	if (!path.endsWith("packages/core/lib/utils/time.ts")) {
+	// A file that reaches no `@mailwoman/*` module cannot import the helper: the pre-install scripts
+	// (`scripts/preinstall-scripts.test.ts` names them) run in workflows with no install step and may
+	// reach only Node builtins, so their re-typed date is the contract, not debt.
+	if (!path.endsWith("packages/core/lib/utils/time.ts") && text.includes("@mailwoman/")) {
 		counters.reTypedISODate += text.match(/\.toISOString\(\)\.slice\(0, ?10\)/g)?.length ?? 0
 	}
 
