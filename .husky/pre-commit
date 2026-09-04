@@ -89,7 +89,7 @@ if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailw
 		# The SECOND generated artifact, same freshness contract: the man page's CI drift test fired on
 		# 2026-08-17 (cli.mdx prose) and again on 2026-08-18 (a new flag) because only cli.mdx was
 		# hook-covered. Same guard, same remediation shape.
-		node scripts/generate-man.ts
+		node packages/mailwoman/out/cli.js dev generate man-page
 		if ! git diff --quiet -- packages/mailwoman/man/mailwoman.1; then
 			echo "pre-commit: the man page moved — it has been regenerated in your worktree; stage it and retry:" >&2
 			echo "  git add packages/mailwoman/man/mailwoman.1" >&2

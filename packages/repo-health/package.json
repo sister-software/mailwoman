@@ -12,6 +12,7 @@
 	"files": [
 		"lib",
 		"out",
+		"baseline.json",
 		"README.md"
 	],
 	"type": "module",
@@ -33,6 +34,40 @@
 			"node": "./lib/registry.ts",
 			"default": "./out/registry.js",
 			"types": "./out/registry.d.ts"
+		},
+		"./baseline": {
+			"node": "./lib/baseline.ts",
+			"default": "./out/baseline.js",
+			"types": "./out/baseline.d.ts"
+		},
+		"./context": {
+			"node": "./lib/context.ts",
+			"default": "./out/context.js",
+			"types": "./out/context.d.ts"
+		},
+		"./tracked-sources": {
+			"node": "./lib/tracked-sources.ts",
+			"default": "./out/tracked-sources.js",
+			"types": "./out/tracked-sources.d.ts"
+		},
+		"./ts-ast": {
+			"node": "./lib/ts-ast.ts",
+			"default": "./out/ts-ast.js",
+			"types": "./out/ts-ast.d.ts"
+		},
+		"./checks/*": {
+			"node": "./lib/checks/*.ts",
+			"default": "./out/checks/*.js",
+			"types": "./out/checks/*.d.ts"
 		}
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"path-ts": "^2.3.0",
+		"spliterator": "^6.4.1",
+		"typescript": "^6.0.3"
+	},
+	"devDependencies": {
+		"@vvago/vale": "^3.17.1"
 	}
 }

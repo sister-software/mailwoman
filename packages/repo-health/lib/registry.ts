@@ -9,13 +9,29 @@
  */
 
 import type { RepoCheck } from "#check"
+import { debtCheck } from "#checks/debt"
+import { exportsCheck } from "#checks/exports"
+import { nodeModulesReacharoundCheck } from "#checks/node-modules-reacharound"
+import { runtimeFlagsCheck } from "#checks/runtime-flags"
+import { testContractCheck } from "#checks/test-contract"
+import { typecheckTestsCheck } from "#checks/typecheck-tests"
+import { versionSyncCheck } from "#checks/version-sync"
+import { vocabCensusCheck } from "#checks/vocab-census"
 
 /**
- * Every health check, in the order `mwops health all` runs them. Empty at the scaffold: the checks under `scripts/`
- * move in one by one (`verify-exports`, `verify-version-sync`, `verify-test-contract`, `node-modules-reacharound`, the
- * debt counters, `vocab-census`), and `scripts/` loses a file for each.
+ * Every health check, in the order `mwops health all` runs them: the ones that only read files first, then the ones
+ * that spawn Vale, knip and tsc.
  */
-export const checks: ReadonlyArray<RepoCheck> = []
+export const checks: ReadonlyArray<RepoCheck> = [
+	versionSyncCheck,
+	testContractCheck,
+	nodeModulesReacharoundCheck,
+	runtimeFlagsCheck,
+	debtCheck,
+	vocabCensusCheck,
+	exportsCheck,
+	typecheckTestsCheck,
+]
 
 export function findCheck(id: string): RepoCheck | undefined {
 	return checks.find((check) => check.id === id)

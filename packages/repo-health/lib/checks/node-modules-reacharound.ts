@@ -3,41 +3,37 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Guard for the node_modules reach-around (2026-08-06 triage).
+ *   Guard for the node_modules reach-around.
  *
  *   The defect this catches: hand-assembling a path INTO another package's install directory —
- *   `resolve(root, "node_modules/@mailwoman/neural-weights-en-us/model.onnx")` — instead of asking
- *   Node where that package lives (`import.meta.resolve`, `createRequire().resolve`) or exposing the
- *   file through an `exports` subpath. The assembled literal encodes a layout its owner never agreed
- *   to: it survives a package moving, a scope rename, a hoist, and a `files` change by silently
- *   pointing at nothing, and the caller reads that as "the artifact is missing" rather than "I looked
- *   in the wrong place". `promotion-check.ts` carried three of these and graded a bundle by a path no
- *   resolver had ever confirmed.
+ *   `resolve(root, "node_modules/@mailwoman/neural-weights-en-us/model.onnx")` — instead of asking Node where that
+ *   package lives (`import.meta.resolve`, `createRequire().resolve`) or exposing the file through an `exports` subpath.
+ *   The assembled literal encodes a layout its owner never agreed to: it survives a package moving, a scope rename, a
+ *   hoist, and a `files` change by silently pointing at nothing, and the caller reads that as "the artifact is missing"
+ *   rather than "I looked in the wrong place".
  *
- *   WHY THIS AND NOT A BLANKET `node:path` BAN. The 2026-08-06 survey counted 1,095 `join`/`resolve`
- *   call sites across 244 files, and the great majority are the right tool: CLI `--out` flags,
- *   `mkdtemp` scratch dirs, walking a user-supplied tree, composing under a root a caller passed in.
- *   Banning the import would flag 1,075 correct lines to catch 20. This guard is keyed on the ONE
- *   substring that separates the classes — a `node_modules` segment inside a path-building call — so
- *   a false positive is a real design question every time, and the allowlist stays short enough to
- *   read.
+ *   WHY THIS AND NOT A BLANKET `node:path` BAN. A survey counted 1,095 `join`/`resolve` call sites across 244 files, and
+ *   the great majority are the right tool: CLI `--out` flags, `mkdtemp` scratch dirs, walking a user-supplied tree,
+ *   composing under a root a caller passed in. Banning the import would flag 1,075 correct lines to catch 20. This guard
+ *   is keyed on the ONE substring that separates the classes — a `node_modules` segment inside a path-building call — so
+ *   a false positive is a real design question every time, and the allowlist stays short enough to read.
  *
- *   Scoped to `join`/`resolve` ARGUMENTS via the TypeScript AST rather than a grep, because
- *   `node_modules` appears legitimately (and constantly) in vitest exclude globs, `.gitignore`-shaped
- *   arrays, and prose. Source-parsing over importing follows `command-option-collisions.test.ts`: no
- *   module-resolution surface, nothing an alias-table change can break. Files are prefiltered on the
- *   substring first, so the AST cost is paid on ~30 files, not ~2,700.
+ *   Scoped to `join`/`resolve` ARGUMENTS via the TypeScript AST rather than a grep, because `node_modules` appears
+ *   legitimately (and constantly) in vitest exclude globs, `.gitignore`-shaped arrays, and prose. Files are prefiltered
+ *   on the substring first, so the AST cost is paid on ~30 files, not ~2,700.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { repoRootPath } from "@mailwoman/core/paths"
 import { join, relative } from "path-ts"
 import ts from "typescript"
-import { describe, expect, test } from "vitest"
 
-import { trackedSourcePaths } from "./tracked-sources.ts"
+import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
+import { trackedSourcePaths } from "#tracked-sources"
 
-const REPO_ROOT = repoRootPath()
+/**
+ * The shortest allowlist reason a reviewer can read as a reason rather than a label.
+ */
+const MINIMUM_REASON_LENGTH = 20
 
 /**
  * The path-building functions this guard watches: `node:path`'s two composers and path-ts's, in bare or `path.`-
@@ -86,11 +82,11 @@ const ALLOWED: Record<string, string> = {
 
 /**
  * Every tracked source that mentions `node_modules` at all — the AST cost is paid on ~30 files, not ~2,700. "Ours" is
- * the set git TRACKS: see scripts/tracked-sources.ts for why enumeration reads the index rather than the disk
- * (scratchpad probes, agent worktrees, and local build output must not fail a guard CI cannot reproduce).
+ * the set git TRACKS: see `tracked-sources.ts` for why enumeration reads the index rather than the disk (scratchpad
+ * probes, agent worktrees, and local build output must not fail a guard CI cannot reproduce).
  */
-async function listCandidateSources(): Promise<string[]> {
-	const tracked = await trackedSourcePaths(String(REPO_ROOT), { existingOnly: true })
+async function listCandidateSources(context: RepoContext): Promise<string[]> {
+	const tracked = await trackedSourcePaths(context, { existingOnly: true })
 
 	const found = await Promise.all(
 		tracked.map(async (path) => ((await readLocalTextFile(path)).includes("node_modules") ? path : null))
@@ -100,24 +96,23 @@ async function listCandidateSources(): Promise<string[]> {
 }
 
 /**
- * The `node_modules`-bearing string arguments of every path-building call in one source file.
+ * The `node_modules`-bearing string arguments of every path-building call in one source file, each with its line.
  *
  * Both literal forms count: a plain string and a template literal (`` `node_modules/${scope}/${name}` ``), since the
  * interpolated form is the one a "make it dynamic" refactor reaches for first.
  */
-function findReachArounds(source: string, fileName: string): string[] {
+export function findReachArounds(source: string, fileName: string): Array<{ line: number; text: string }> {
 	const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true)
-	const hits: string[] = []
+	const hits: Array<{ line: number; text: string }> = []
 
 	const argumentText = (node: ts.Node): string | undefined => {
 		// `isStringLiteralLike` already covers a no-substitution template.
 		if (ts.isStringLiteralLike(node)) return node.text
 
-		// An interpolated template: splice the literal chunks together with a SPACE standing in for each `${…}` (a
-		// space cannot be a path separator, so it can never manufacture a segment boundary that isn't there). The
-		// segment test below then sees `node_modules/ / ` instead of the raw source — which begins with a backtick,
-		// and so could never match the leading-segment anchor. That was the bug the first draft of this guard shipped,
-		// caught by probing it against the four shapes the triage had just removed.
+		// An interpolated template: splice the literal chunks together with a NUL standing in for each `${…}` (a NUL
+		// cannot be a path separator, so it can never manufacture a segment boundary that isn't there). The segment
+		// test below then sees the chunks instead of the raw source — which begins with a backtick, and so could never
+		// match the leading-segment anchor.
 		if (ts.isTemplateExpression(node)) {
 			return node.head.text + node.templateSpans.map((span) => `\0${span.literal.text}`).join("")
 		}
@@ -154,7 +149,7 @@ function findReachArounds(source: string, fileName: string): string[] {
 					if (text && /(^|[/\\])node_modules([/\\]|$)/.test(text) && !text.startsWith("**")) {
 						const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
 
-						hits.push(`${line + 1}: ${sourceFile.text.slice(node.getStart(sourceFile), node.getEnd())}`)
+						hits.push({ line: line + 1, text: sourceFile.text.slice(node.getStart(sourceFile), node.getEnd()) })
 					}
 				}
 			}
@@ -168,44 +163,76 @@ function findReachArounds(source: string, fileName: string): string[] {
 	return hits
 }
 
-describe("the node_modules reach-around guard", () => {
-	test("no path-building call spells a node_modules layout by hand outside the allowlist", async () => {
-		const sources = await listCandidateSources()
+/**
+ * The `node-modules-reacharound` check: one error per hand-spelled `node_modules` path outside the allowlist, and one
+ * per allowlist entry that no longer exists or no longer reaches around.
+ */
+export const nodeModulesReacharoundCheck: RepoCheck = {
+	id: "node-modules-reacharound",
+	description: "No path-building call spells a node_modules layout by hand outside the reasoned allowlist.",
+	async run(context) {
+		const diagnostics: Diagnostic[] = []
+		const sources = await listCandidateSources(context)
 
 		// A guard that silently stops looking is worse than no guard: if the prefilter ever finds nothing, the walk
 		// is broken, not the tree clean.
-		expect(sources.length).toBeGreaterThan(0)
-
-		const offenders: Record<string, string[]> = {}
+		if (!sources.length) {
+			diagnostics.push({
+				severity: DiagnosticSeverity.Error,
+				message: "no tracked source mentions node_modules at all — the prefilter is broken, not the tree clean",
+			})
+		}
 
 		await Promise.all(
 			sources.map(async (path) => {
-				const key = relative(REPO_ROOT, path)
+				const key = relative(context.repoRoot, path)
 
 				if (key in ALLOWED) return
 
-				const hits = findReachArounds(await readLocalTextFile(path), path)
-
-				if (hits.length) {
-					offenders[key] = hits
+				for (const hit of findReachArounds(await readLocalTextFile(path), path)) {
+					diagnostics.push({
+						severity: DiagnosticSeverity.Error,
+						message: `hand-assembled node_modules path: ${hit.text}`,
+						file: key,
+						line: hit.line,
+					})
 				}
 			})
 		)
 
-		expect(offenders).toEqual({})
-	})
-
-	test("every allowlist entry still exists and still needs the exemption", async () => {
 		for (const [key, reason] of Object.entries(ALLOWED)) {
-			const source = await readLocalTextFile(join(REPO_ROOT, key))
+			if (reason.length <= MINIMUM_REASON_LENGTH) {
+				diagnostics.push({
+					severity: DiagnosticSeverity.Error,
+					message: "allowlist entries carry a reason a reviewer can read",
+					file: key,
+				})
+			}
 
-			expect(reason.length, `${key}: allowlist entries carry a reason`).toBeGreaterThan(20)
+			let source: string
+
+			try {
+				source = await readLocalTextFile(join(context.repoRoot, key))
+			} catch {
+				diagnostics.push({
+					severity: DiagnosticSeverity.Error,
+					message: "allowlisted file no longer exists — drop its entry, or move it with the file",
+					file: key,
+				})
+
+				continue
+			}
 
 			// A stale exemption is a hole. When the site stops reaching around, the entry must go.
-			expect(
-				findReachArounds(source, key).length,
-				`${key} no longer reaches around — drop its allowlist entry`
-			).toBeGreaterThan(0)
+			if (!findReachArounds(source, key).length) {
+				diagnostics.push({
+					severity: DiagnosticSeverity.Error,
+					message: "no longer reaches around — drop its allowlist entry",
+					file: key,
+				})
+			}
 		}
-	})
-})
+
+		return diagnostics.toSorted((a, b) => (a.file ?? "").localeCompare(b.file ?? "") || (a.line ?? 0) - (b.line ?? 0))
+	},
+}

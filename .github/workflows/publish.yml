@@ -253,17 +253,17 @@ jobs:
 
       # The release PR must have merged: every workspace manifest on main must agree with the root.
       # A drifted tree means phase 1 hasn't landed (or landed partially) — publishing it would ship
-      # mixed versions. The comparison lives in scripts/verify-version-sync.ts rather than in a
-      # heredoc: embedded JS in YAML is the one code in this repo no compiler, linter or test reads,
-      # which is how this workflow's other hand-maintained paths went stale after the workspace
-      # regroup. Same `RESOLVED_VERSION=` output contract as prepare-release-version.ts above.
+      # mixed versions. The comparison is the `version-sync` check in @mailwoman/repo-health rather
+      # than a heredoc: embedded JS in YAML is the one code in this repo no compiler, linter or test
+      # reads, which is how this workflow's other hand-maintained paths went stale after the
+      # workspace regroup. A passing check has established that the root's version IS every release
+      # workspace's version, so the root manifest is read for the number.
       - name: Verify version sync on main
         id: version
         run: | # shell
           set -euo pipefail
-          OUT=$(node scripts/verify-version-sync.ts)
-          echo "${OUT}"
-          echo "version=$(echo "${OUT}" | grep -oP '(?<=^RESOLVED_VERSION=).+')" >> "${GITHUB_OUTPUT}"
+          yarn mwops health version-sync
+          echo "version=$(node -p "require('./package.json').version")" >> "${GITHUB_OUTPUT}"
 
       # Materialize the weight artifacts from the PUBLIC Hugging Face bucket (the same files the demo
       # loads at runtime — no auth needed, and none is wanted: a credential here would only hide the

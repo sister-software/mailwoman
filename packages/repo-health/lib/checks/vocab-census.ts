@@ -2,27 +2,27 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Classifies every `Mailwoman.AmbiguousShorthand` hit by the REMEDY it needs.
+ * @file Classifies every `Mailwoman.AmbiguousShorthand` hit by the REMEDY it needs, and reports each as a diagnostic.
  *
- *   The sweep that removes these words is only safe if each site's replacement is decided by a
- *   rule rather than guessed at, one comment at a time — a careless reword drops the invariant or
- *   the measured number the comment existed to state. `shard` reached zero from 3,481 the same
- *   way: its four concepts were named first, so every site had one agreed replacement.
+ *   The sweep that removes these words is only safe if each site's replacement is decided by a rule rather than guessed
+ *   at, one comment at a time — a careless reword drops the invariant or the measured number the comment existed to
+ *   state. `shard` reached zero from 3,481 the same way: its four concepts were named first, so every site had one
+ *   agreed replacement.
  *
- *   Three remedies, in ascending cost. A CONTRACT-BEARING name keeps its spelling and only needs
- *   backticks, because Vale skips inline code. A MODIFIED reference carries the check's real name
- *   in the word before it, so `street-context gate` becomes `the street-context check`. A BARE
- *   reference says only "the gate", and which check that is can be learned solely by reading the
- *   surrounding paragraph.
+ *   Three remedies, in ascending cost. A CONTRACT-BEARING name keeps its spelling and only needs backticks, because Vale
+ *   skips inline code. A MODIFIED reference carries the check's real name in the word before it, so `street-context
+ *   gate` becomes `the street-context check`. A BARE reference says only "the gate", and which check that is can be
+ *   learned solely by reading the surrounding paragraph.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
-import { repoRootPath } from "@mailwoman/core/paths"
 import { isProcessError, runFile } from "@mailwoman/core/process"
-import { parseArguments, scriptEntryPath } from "@mailwoman/core/scripting/arguments"
-import { resolvePath } from "path-ts"
+import { relative, resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
+
+import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
+import { trackedSourcePaths } from "#tracked-sources"
 
 /**
  * A Vale `--output line` record: `path:line:col:Rule:message`.
@@ -31,8 +31,8 @@ const HIT_PATTERN = /^(.*?):(\d+):(\d+):Mailwoman\.AmbiguousShorthand(?:Code)?:'
 
 /**
  * Names that keep their spelling — `AGENTS.md` lists them as contract-bearing. A hit naming one of these is a
- * formatting fix, not a rewrite. Empty since #2090 renamed every contract-bearing identifier that carried a banned
- * word; add a name here only when a new one must carry one, and record why in `AmbiguousShorthandCode.yml`.
+ * formatting fix, not a rewrite. Empty: every contract-bearing identifier that carried a banned word has been renamed;
+ * add a name here only when a new one must carry one, and record why in `AmbiguousShorthandCode.yml`.
  */
 const CONTRACT_BEARING = /(?!)/
 
@@ -146,11 +146,8 @@ function locate(
  * Classifies each Vale `--output line` record against `sources`, a map from path to that file's lines. Pure, so the
  * fixture test states its cases inline rather than writing files.
  *
- * A reported line number is Vale's, and it was right in every case measured — a run of line comments, a block
- * docstring, and the first line of a file. One file (`packages/neural/test/integration/weights.test.ts`) reported two
- * lines past the match and the cause was not found: it carries no CR, no U+2028 or U+2029, and its line count agrees
- * with `splitlines()`. The COUNT is unaffected either way. Only the MODIFIER a hit is bucketed by comes from the
- * indexed line, so a stray offset mislabels a bucket rather than losing a site — read the line before editing it.
+ * Only the MODIFIER a hit is bucketed by comes from the indexed line, so a stray offset mislabels a bucket rather than
+ * losing a site — read the line before editing it.
  */
 export function classify(hitLines: readonly string[], sources: ReadonlyMap<string, readonly string[]>): Hit[] {
 	const hits: Hit[] = []
@@ -199,51 +196,6 @@ export function wordFamily(word: string): "gate" | "seam" | "shard" | "cut" {
 }
 
 /**
- * Counts by remedy, then by modifier within the rename bucket — the two numbers that size the sweep. Printed rather
- * than written to a baseline file: this is a measuring instrument for a sweep that ends at zero, not a debt counter
- * that ratchets.
- */
-export function report(hits: readonly Hit[]): string {
-	const byRemedy = new Map<Remedy, number>()
-	const byWord = new Map<string, number>()
-	const modifiers = new Map<string, number>()
-	const files = new Set<string>()
-
-	for (const hit of hits) {
-		byRemedy.set(hit.remedy, (byRemedy.get(hit.remedy) ?? 0) + 1)
-
-		byWord.set(wordFamily(hit.word), (byWord.get(wordFamily(hit.word)) ?? 0) + 1)
-		files.add(hit.path)
-
-		if (hit.remedy === Remedy.renameCheck) {
-			modifiers.set(hit.modifier, (modifiers.get(hit.modifier) ?? 0) + 1)
-		}
-	}
-
-	const lines = [`${hits.length} hits across ${files.size} files`, "", "by word family:"]
-
-	for (const [family, count] of [...byWord].toSorted((left, right) => right[1] - left[1])) {
-		lines.push(`  ${family.padEnd(6)} ${String(count).padStart(5)}`)
-	}
-
-	lines.push("", "by remedy:")
-
-	for (const [remedy, count] of [...byRemedy].toSorted((left, right) => right[1] - left[1])) {
-		lines.push(`  ${remedy.padEnd(14)} ${String(count).padStart(5)}`)
-	}
-
-	lines.push("", "rename-check bucket, by the modifier that names it (top 20):")
-
-	for (const [modifier, count] of [...modifiers].toSorted((left, right) => right[1] - left[1]).slice(0, 20)) {
-		lines.push(`  ${modifier.padEnd(24)} ${String(count).padStart(5)}`)
-	}
-
-	lines.push("", `distinct modifiers: ${modifiers.size}`)
-
-	return lines.join("\n")
-}
-
-/**
  * The tracked surfaces the ban covers. Dated point-in-time records are exempt by the same rule that exempts them from
  * the acronym-casing convention, and `docs/` source is included because a plugin's docstring is as much committed prose
  * as a package's.
@@ -254,18 +206,23 @@ const TRACKED_GLOBS = ["*.ts", "*.tsx", "corpus-python/*.py"] as const
  * Runs Vale over every tracked source file and returns its `--output line` records. Vale is resolved through the
  * workspace rather than the PATH, so the census reads the same binary `yarn lint:prose` does.
  */
-async function collectHits(root: string): Promise<string[]> {
-	const tracked = await runFile("git", ["ls-files", ...TRACKED_GLOBS], { cwd: root, maxBuffer: 1 << 26 })
-	const files = TextSpliterator.from(tracked.stdout, { skipEmpty: true }).toArray()
+async function collectHits(context: RepoContext): Promise<string[]> {
+	const root = context.repoRoot
+
+	const files = (await trackedSourcePaths(context, { globs: TRACKED_GLOBS, existingOnly: true })).map((path) =>
+		relative(root, path)
+	)
 
 	// The CENSUS config, not the enforcing one: enforcement exempts the Vale fixtures, and the census
-	// needs one of them to trip so its positive control still means something.
+	// needs one of them to trip so its positive control still means something. `@vvago/vale` is this
+	// package's devDependency for exactly this line; knip cannot see a specifier passed to a resolver,
+	// so `knip.json` names the dependency as used.
 	const vale = resolveModulePath("@vvago/vale/bin/vale")
 	const config = resolvePath(root, "docs/.vale-code-census.ini")
 
-	// Run from the REPO ROOT, because `git ls-files` answers repo-relative paths. Run it from
-	// anywhere else and Vale resolves none of them, reports zero alerts, and exits 0 — the reading
-	// is identical to a clean tree. That is why the positive control below is not optional.
+	// Run from the REPO ROOT, because the paths are repo-relative. Run it from anywhere else and Vale
+	// resolves none of them, reports zero alerts, and exits 0 — the reading is identical to a clean tree.
+	// That is why the positive control below is not optional.
 	// Vale exits non-zero when it reports alerts, which is this command's expected outcome. Only a
 	// process error carries the output; a spawn failure has none and must not read as zero hits.
 	const result = await runFile(vale, ["--config", config, "--output", "line", ...files], {
@@ -298,84 +255,79 @@ const POSITIVE_CONTROL = "docs/scripts/vale-fixtures/dirty.ts"
  */
 const UNMEASURED: ReadonlyArray<readonly [path: string, reason: string]> = [
 	["docs/scripts/vale-fixtures/", "the rule's own fixtures; the dirty one must keep failing forever"],
-	["scripts/vocab-census.ts", "this file — its exceptions pattern has to spell the words it classifies"],
-	["scripts/vocab-census.test.ts", "its cases are lines of source quoted verbatim"],
-	["scripts/repo-health.ts", "its banned-vocabulary constant has to spell the word it counts"],
+	["packages/repo-health/lib/checks/vocab-census.ts", "this file — its patterns have to spell the words it classifies"],
+	["packages/repo-health/test/unit/vocab-census.test.ts", "its cases are lines of source quoted verbatim"],
+	["packages/repo-health/lib/checks/debt.ts", "its banned-vocabulary constant has to spell the word it counts"],
 	[
 		"docs/scripts/check-vale-rules.ts",
 		"the rule fixtures' own harness; its docstring quotes the words the rules match",
 	],
 ]
 
-async function main(): Promise<void> {
-	const root = String(repoRootPath())
-	const hitLines = await collectHits(root)
+/**
+ * The `vocab-census` check: one error per ambiguous-shorthand hit Vale reports in tracked source outside the unmeasured
+ * instrument files, each naming the remedy it needs.
+ */
+export const vocabCensusCheck: RepoCheck = {
+	id: "vocab-census",
+	description:
+		"Every ambiguous-shorthand hit Vale finds in tracked source, classified by the remedy it needs; the target is zero.",
+	async run(context) {
+		const hitLines = await collectHits(context)
+		const paths = new Set<string>()
 
-	const paths = new Set<string>()
+		for (const raw of hitLines) {
+			const match = HIT_PATTERN.exec(raw)
 
-	for (const raw of hitLines) {
-		const match = HIT_PATTERN.exec(raw)
-
-		if (match) {
-			paths.add(match[1]!)
+			if (match) {
+				paths.add(match[1]!)
+			}
 		}
-	}
 
-	const sources = new Map<string, readonly string[]>()
+		const sources = new Map<string, readonly string[]>()
 
-	await Promise.all(
-		[...paths].map(async (path) => {
-			// Indexed by line number, so the whole file is resident by necessity rather than by choice.
-			// `skipEmpty: false` is REQUIRED: the default drops blank lines, which shifts every line
-			// number after the first one and silently classifies each hit against a different line of
-			// source. Measured: the default moved 731 of 2,014 hits between remedy buckets.
-			sources.set(
-				path,
-				TextSpliterator.from(await readLocalTextFile(resolvePath(root, path)), { skipEmpty: false }).toArray()
-			)
-		})
-	)
-
-	const hits = classify(hitLines, sources)
-
-	// Asserted on the CLASSIFIED hits, not on the raw Vale lines. A control that greps the raw
-	// output tests a different string than the classifier parses: renaming the rule to
-	// `AmbiguousShorthandCode` kept every raw line matching a substring check while the classifier's
-	// pattern matched none, and the census reported a clean tree.
-	if (!hits.some((hit) => hit.path === POSITIVE_CONTROL)) {
-		throw new Error(
-			`vocab-census: the positive control ${POSITIVE_CONTROL} classified no hits, so this run measured nothing — its count is not an absence`
+		await Promise.all(
+			[...paths].map(async (path) => {
+				// Indexed by line number, so the whole file is resident by necessity rather than by choice.
+				// `skipEmpty: false` is REQUIRED: the default drops blank lines, which shifts every line
+				// number after the first one and silently classifies each hit against a different line of
+				// source. Measured: the default moved 731 of 2,014 hits between remedy buckets.
+				sources.set(
+					path,
+					TextSpliterator.from(await readLocalTextFile(resolvePath(context.repoRoot, path)), {
+						skipEmpty: false,
+					}).toArray()
+				)
+			})
 		)
-	}
 
-	// Excluded AFTER the control is checked, never before: the control must be measured to prove the run resolved
-	// files, and excluded to keep the target of zero reachable.
-	const counted = hits.filter((hit) => !UNMEASURED.some(([path]) => hit.path.startsWith(path)))
+		const hits = classify(hitLines, sources)
 
-	const { values } = parseArguments({
-		options: { remedy: { type: "string" }, modifier: { type: "string" } },
-		allowPositionals: false,
-	})
+		// Asserted on the CLASSIFIED hits, not on the raw Vale lines. A control that greps the raw
+		// output tests a different string than the classifier parses: renaming the rule to
+		// `AmbiguousShorthandCode` kept every raw line matching a substring check while the classifier's
+		// pattern matched none, and the census reported a clean tree.
+		if (!hits.some((hit) => hit.path === POSITIVE_CONTROL)) {
+			return [
+				{
+					severity: DiagnosticSeverity.Error,
+					message: `the positive control ${POSITIVE_CONTROL} classified no hits, so this run measured nothing — its count is not an absence`,
+					file: POSITIVE_CONTROL,
+				},
+			]
+		}
 
-	if (!values.remedy && !values.modifier) {
-		console.log(report(counted))
+		// Excluded AFTER the control is checked, never before: the control must be measured to prove the run resolved
+		// files, and excluded to keep the target of zero reachable.
+		const counted = hits.filter((hit) => !UNMEASURED.some(([path]) => hit.path.startsWith(path)))
 
-		return
-	}
+		const diagnostics: Diagnostic[] = counted.map((hit) => ({
+			severity: DiagnosticSeverity.Error,
+			message: `${JSON.stringify(hit.word)} (${wordFamily(hit.word)}) needs the ${hit.remedy} remedy${hit.modifier ? `; modifier ${JSON.stringify(hit.modifier)}` : ""}`,
+			file: hit.path,
+			line: hit.line,
+		}))
 
-	// Site listing, for working one bucket at a time. Every PR in the sweep carries ONE remedy or
-	// ONE sense, so a reviewer checks a single rationale rather than each edit on its own.
-	const selected = counted.filter(
-		(hit) => (!values.remedy || hit.remedy === values.remedy) && (!values.modifier || hit.modifier === values.modifier)
-	)
-
-	for (const hit of selected) {
-		console.log(`${hit.path}:${hit.line}\t${hit.word}\t${hit.modifier}`)
-	}
-
-	console.error(`${selected.length} of ${counted.length} hits`)
-}
-
-if (import.meta.filename === scriptEntryPath()) {
-	await main()
+		return diagnostics
+	},
 }

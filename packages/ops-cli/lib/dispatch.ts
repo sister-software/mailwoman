@@ -7,10 +7,21 @@
  *   `@mailwoman/release-kit` and `health <check>|all` over `@mailwoman/repo-health`. It parses arguments, hands them to
  *   the registered capability, and prints the result; every decision about WHAT happens belongs to the operation or the
  *   check. Kept free of `process` so it is unit-testable: the bin wrapper supplies argv, stdout, and the exit code.
+ *
+ *   `health baseline debt` is the ONE mutation the health verb performs: it rewrites `packages/repo-health/baseline.json`
+ *   from the current readings. Writing a baseline is not a check, so `writeBaseline` is exported by repo-health and not
+ *   registered; this is the only caller.
  */
 
 import { findOperation, operations, type ReleaseContext } from "@mailwoman/release-kit"
-import { checkPassed, checks, findCheck, type Diagnostic, type RepoContext } from "@mailwoman/repo-health"
+import {
+	checkPassed,
+	checks,
+	findCheck,
+	type Diagnostic,
+	type RepoContext,
+	writeBaseline,
+} from "@mailwoman/repo-health"
 
 export interface DispatchIO {
 	stdout: (text: string) => void
@@ -58,6 +69,7 @@ function usage(io: DispatchIO): number {
 			"",
 			"  mwops release <operation> [--json] [--dry-run] [--key value …]",
 			"  mwops health <check>|all [--json]",
+			"  mwops health baseline debt        (the one mutation: rewrite packages/repo-health/baseline.json)",
 			"",
 			`release operations: ${operations.length ? operations.map((operation) => `${operation.id} (${operation.effect})`).join(", ") : "(none registered yet)"}`,
 			`health checks:      ${checks.length ? checks.map((check) => check.id).join(", ") : "(none registered yet)"}`,
@@ -110,11 +122,46 @@ async function runRelease(args: readonly string[], io: DispatchIO): Promise<numb
 	return 0
 }
 
+/**
+ * `mwops health baseline <counter-set>` — rewrite a baseline from the current readings. `debt` is the only counter set
+ * with a baseline; the target is named so a second one has a place to go.
+ */
+async function runBaseline(
+	targets: readonly string[],
+	options: Record<string, string | boolean>,
+	io: DispatchIO
+): Promise<number> {
+	const target = targets[0]
+
+	if (target !== "debt") {
+		io.stderr(`mwops health baseline: no baseline ${JSON.stringify(target ?? "")}; the one that exists is "debt"\n`)
+
+		return 2
+	}
+
+	const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
+	const written = await writeBaseline(context)
+
+	if (options.json === true) {
+		io.stdout(`${JSON.stringify(written, null, 2)}\n`)
+	} else {
+		for (const [name, count] of Object.entries(written.counters)) {
+			io.stdout(`${name}: ${count}\n`)
+		}
+
+		io.stdout(`Updated ${written.file}\n`)
+	}
+
+	return 0
+}
+
 async function runHealth(args: readonly string[], io: DispatchIO): Promise<number> {
 	const { options, rest } = parseOptions(args)
 	const id = rest[0]
 
 	if (!id) return usage(io)
+
+	if (id === "baseline") return await runBaseline(rest.slice(1), options, io)
 
 	const selected = id === "all" ? checks : [findCheck(id)].filter((check) => check !== undefined)
 

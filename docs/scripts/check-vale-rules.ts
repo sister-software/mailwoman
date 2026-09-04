@@ -169,7 +169,7 @@ const LEGS: StyleLeg[] = [
  * `@vvago/vale` is a devDependency of this workspace, but yarn's node-modules linker hoists it to whichever install
  * directory has no conflicting version — the repo root here, not `docs/`. Asking `require.resolve` for the package
  * manifest and joining from its directory finds it wherever the linker put it, and keeps this file clear of the
- * hand-assembled install path that `scripts/node-modules-reacharound.test.ts` refuses.
+ * hand-assembled install path that the `node-modules-reacharound` check in `packages/repo-health` refuses.
  */
 function resolveValeBinary(): string {
 	const manifest = createRequire(import.meta.url).resolve("@vvago/vale/package.json")

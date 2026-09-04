@@ -5,20 +5,14 @@
 		"scripts/copy-weights.ts",
 		"scripts/derived-weights-key.ts",
 		"scripts/fetch-hf-weights.ts",
-		"scripts/generate-man.ts",
 		"scripts/pack-workspace.ts",
 		"scripts/prepare-release-version.ts",
 		"scripts/publish-workspace.ts",
 		"scripts/release-generated-surfaces.ts",
 		"scripts/release-preflight.ts",
-		"scripts/repo-health.ts",
 		"scripts/smoke-clean-install.ts",
-		"scripts/typecheck-tests.ts",
-		"scripts/verify-exports.ts",
 		"scripts/verify-release-metadata.ts",
 		"scripts/verify-tarball.ts",
-		"scripts/verify-test-contract.ts",
-		"scripts/verify-version-sync.ts",
 		"corpus-python/scripts/**/*.ts",
 		"docker/server.ts",
 		"*.config.ts",
@@ -93,8 +87,12 @@
 				"static/**/*.{js,mjs,ts}"
 			]
 		},
-		"packages/{release-kit,repo-health}": {
+		"packages/release-kit": {
 			"entry": ["lib/index.ts", "lib/registry.ts"]
+		},
+		"packages/repo-health": {
+			"entry": ["lib/index.ts", "lib/registry.ts"],
+			"ignoreDependencies": ["@vvago/vale"]
 		},
 		"packages/ops-cli": {
 			"entry": ["lib/index.ts", "lib/cli.ts"]

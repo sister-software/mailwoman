@@ -45,6 +45,13 @@ describe("mwops dispatch", () => {
 		expect(await dispatch(["health", "nope"], h.io)).toBe(2)
 	})
 
+	it("refuses a baseline target other than debt without writing anything", async () => {
+		const h = io()
+
+		expect(await dispatch(["health", "baseline", "nope"], h.io)).toBe(2)
+		expect(h.err.join("")).toContain('no baseline "nope"')
+	})
+
 	it("parses --key value, --key=value and bare flags, leaving values as strings for the schema", () => {
 		expect(parseOptions(["plan", "--json", "--version", "9.3.0", "--out=x.json", "--dry-run"])).toEqual({
 			options: { json: true, version: "9.3.0", out: "x.json", "dry-run": true },

@@ -4,32 +4,27 @@
  * @author Teffen Ellis, et al.
  * @file Monotonic debt counters for patterns that are too contextual for a blanket lint error.
  *
- * Existing debt is recorded in `repo-health-baseline.json`; CI rejects growth. Run with
- * `--write-baseline` only after reviewing a deliberate reduction. Never raise a counter to make a
- * failure disappear.
+ *   Existing debt is recorded in `baseline.json` beside this package; the `debt` check reports a counter that grew as an
+ *   error and a counter that fell as a warning asking for the baseline to be ratcheted. WRITING the baseline is a
+ *   mutation, so it is not a check: `mwops health baseline debt` calls {@link computeDebtCounters} through
+ *   `lib/baseline.ts`, which the registry does not list. Never raise a counter to make a failure disappear.
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { repoRootPath } from "@mailwoman/core/paths"
-import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { relative, resolvePath } from "path-ts"
 import ts from "typescript"
 
-import { trackedSourcePaths } from "./tracked-sources.ts"
+import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
+import { trackedSourcePaths } from "#tracked-sources"
 
-interface DebtCounters {
+export interface DebtCounters {
 	asNever: number
 	doubleCast: number
 	deepRelativeImports: number
 	filterBoolean: number
 	/**
-	 * Non-generated, non-test source files over 1,000 lines.
-	 *
-	 * BASELINE 0, RESTORED 2026-09-01. `packages/filer/lib/sdk/exhibit21.ts` crossed the line at 1,023 when `c8b5c1c6f`
-	 * added 30 lines of `TODO`/`@deprecated` annotations — cleanup notes tripping a debt counter. The cleanup it kept
-	 * asking for happened: the SGML/HTML table machinery moved to `@mailwoman/core/html/tables` and the parser now sits
-	 * at 611 lines. Any file crossing 1,000 fails the check again.
+	 * Non-generated, non-test source files over 1,000 lines. Any file crossing 1,000 fails the check.
 	 */
 	productionFilesOver1000Lines: number
 	selfPackageImports: number
@@ -46,31 +41,44 @@ interface DebtCounters {
 	 * because the directory was an entry glob; this counter is the measurement the `scripts/` migration is graded
 	 * against, and it ratchets to zero as each file becomes a registered operation, a registered check, a command, a
 	 * measurement, or is deleted (`docs/superpowers/specs/2026-09-04-scripts-directory-migration-proposal.md`).
+	 *
+	 * THE FILE SET IS THE PATHSPEC `scripts/**\/*.ts` AS GIT READS IT, which requires a directory between `scripts/` and
+	 * the file (see `pathspecPattern`): the counter reads `scripts/eval/` and has never read a top-level `scripts/*.ts`.
+	 * Its semantics are kept as they were so the baseline stays comparable; widening it is a baseline ratchet, not a
+	 * silent edit here.
 	 */
 	scriptsUnreferenced: number
 	/**
 	 * Occurrences of the retired vocabulary word — see {@link BANNED_VOCABULARY} for which — in any spelling, anywhere in
 	 * tracked source: identifiers, comments and string literals alike.
 	 *
-	 * THIS SENTENCE DOES NOT NAME THE WORD, deliberately. It named it until 2026-09-01, when the case-preserving sweep
-	 * rewrote the name to the REPLACEMENT and left the doc describing a different word than the pattern counts. One
-	 * constant holds the term; prose points at the constant.
+	 * THIS SENTENCE DOES NOT NAME THE WORD, deliberately: a case-preserving sweep once rewrote the name to the
+	 * REPLACEMENT and left the doc describing a different word than the pattern counts. One constant holds the term;
+	 * prose points at the constant.
 	 *
 	 * The vocabulary is being removed because the word stood for FOUR different things (corpus recipes, per-country
 	 * postcode databases, WOF extracts, and the providers' region databases), so there is no replacement synonym — each
 	 * site takes the noun for the thing it actually names. The target is ZERO, and this counter is the finish line:
 	 * ratcheted down per PR, it can only fall.
 	 *
-	 * COUNTED HERE RATHER THAN WITH `grep` ON PURPOSE. Five tracked sources carry raw NUL bytes (#2018), which `grep`
-	 * treats as binary and skips SILENTLY — no error, no count. Measured 2026-09-01: 3,481 occurrences with `grep -a`
-	 * against 3,427 without, so a `grep`-based ratchet would hide 54 occurrences and could certify zero while they
-	 * remained. `readLocalTextFile` has no such blind spot.
+	 * COUNTED HERE RATHER THAN WITH `grep` ON PURPOSE. Tracked sources can carry raw NUL bytes, which `grep` treats as
+	 * binary and skips SILENTLY — no error, no count. Measured: 3,481 occurrences with `grep -a` against 3,427 without,
+	 * so a `grep`-based ratchet would hide 54 occurrences and could certify zero while they remained. `readLocalTextFile`
+	 * has no such blind spot.
 	 */
 	bannedVocabulary: number
 }
 
-const root = String(repoRootPath())
-const baselinePath = resolvePath(root, "scripts/repo-health-baseline.json")
+/**
+ * The committed baseline the `debt` check compares against, beside this package's manifest.
+ */
+export const BASELINE_PATH = resolvePackagePath("@mailwoman/repo-health", "baseline.json")
+
+/**
+ * This module's own repo-relative path — excluded from the counts it takes, because the pattern below has to spell the
+ * words it bans.
+ */
+const SELF = "packages/repo-health/lib/checks/debt.ts"
 
 function emptyCounters(): DebtCounters {
 	return {
@@ -157,12 +165,10 @@ const SYNCHRONOUS_FILESYSTEM_CALLS = new Set([
 /**
  * Whether a call reaches the synchronous filesystem directly, bypassing `@mailwoman/core/fs`.
  *
- * The baseline is EIGHT, and each is named. Seven sit in workspaces that do not depend on `@mailwoman/core` — `api-kit`
- * (2), `nuts-lookup`, `timezone-lookup`, `un-locode-lookup`, `variant-aliases` (2) — where reaching the idiom would
- * install core's ~9 MB of data to replace a `mkdir` or a `readFileSync`. The eighth is
- * `corpus-python/scripts/train_with_resume.ts`'s `openSync(LOG, "a")`: a log DESCRIPTOR opened in append mode for a
- * child's stdio, which no path helper accepts. `oxlint.config.ts` exempts all eight files by name. They collapse the
- * day the fs helpers can be reached without core's tarball; until then a NINTH call anywhere fails this check.
+ * The baseline is ZERO. Workspaces that do not depend on `@mailwoman/core` — `api-kit`, `nuts-lookup`,
+ * `timezone-lookup`, `un-locode-lookup`, `variant-aliases` — would install core's ~9 MB of data to replace a `mkdir` or
+ * a `readFileSync`, and `oxlint.config.ts` exempts those files by name; they collapse the day the fs helpers can be
+ * reached without core's tarball.
  *
  * A bare identifier is counted; a property access is counted only when the receiver is spelled `fs`. That receiver rule
  * is what separates this population from two unrelated ones that share a method name: `node:sqlite`'s
@@ -270,7 +276,7 @@ const UNCOUNTED = [
 	"packages/core/lib/fs/",
 	// THIS FILE COUNTS ITSELF OTHERWISE, and the count could never reach zero: {@link BANNED_VOCABULARY} has to
 	// spell the word it bans. Excluded for the same reason as the line above — the implementation is not a caller.
-	"scripts/repo-health.ts",
+	SELF,
 ]
 
 /**
@@ -299,12 +305,13 @@ const BANNED_VOCABULARY =
  * is a vocabulary an agent writes, so prose is in scope.
  */
 const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason: string]> = [
-	["scripts/repo-health.ts", "the pattern above has to spell the words it bans"],
+	[SELF, "the pattern above has to spell the words it bans"],
 	["docs/styles/", "the Vale rules that REFUSE the word must name it"],
 	[
-		"scripts/vocab-census",
-		"the ambiguous-shorthand census (and its test fixtures) files a match under one of four words and must name each",
+		"packages/repo-health/lib/checks/vocab-census.ts",
+		"the ambiguous-shorthand census files a match under one of four words and must name each",
 	],
+	["packages/repo-health/test/unit/vocab-census.test.ts", "the census fixtures are lines of source quoted verbatim"],
 	["docs/scripts/vale-fixtures/", "Vale fixtures whose purpose is to keep failing, permanently"],
 	[".claude/output-styles/", "the same refusal list, mirrored for agent replies"],
 	["AGENTS.md", "carries that refusal list, plus the note recording that this family reached zero"],
@@ -361,73 +368,87 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	[".yarn/", "vendored third-party release"],
 ]
 
-// `existingOnly`: a tracked path can be absent from the working tree (a deletion staged but not
-// committed); skip it rather than failing the whole check on a file the next commit removes anyway.
-// The enumerate-the-index rationale lives on scripts/tracked-sources.ts.
-const paths = await trackedSourcePaths(root, { excludePrefixes: UNCOUNTED, existingOnly: true })
+/**
+ * Count every debt counter over the tracked tree of `context`.
+ */
+export async function computeDebtCounters(context: RepoContext): Promise<DebtCounters> {
+	const root = context.repoRoot
 
-const counters = emptyCounters()
-const rootManifest = await readLocalJSONFile<{ workspaces: string[] }>(resolvePath(root, "package.json"))
+	// `existingOnly`: a tracked path can be absent from the working tree (a deletion staged but not
+	// committed); skip it rather than failing the whole check on a file the next commit removes anyway.
+	const paths = await trackedSourcePaths(context, { excludePrefixes: UNCOUNTED, existingOnly: true })
 
-const workspacePackages = await Promise.all(
-	rootManifest.workspaces.map(async (workspace) => ({
-		directory: resolvePath(root, workspace),
-		name: (await readLocalJSONFile<{ name: string }>(resolvePath(root, workspace, "package.json"))).name,
-	}))
-)
+	const counters = emptyCounters()
+	const rootManifest = await readLocalJSONFile<{ workspaces: string[] }>(resolvePath(root, "package.json"))
 
-for (const path of paths) {
-	const text = await readLocalTextFile(path)
-
-	const source = ts.createSourceFile(
-		path,
-		text,
-		ts.ScriptTarget.Latest,
-		false,
-		path.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+	const workspacePackages = await Promise.all(
+		rootManifest.workspaces.map(async (workspace) => ({
+			directory: resolvePath(root, workspace),
+			name: (await readLocalJSONFile<{ name: string }>(resolvePath(root, workspace, "package.json"))).name,
+		}))
 	)
 
-	const workspacePackage = workspacePackages.find(({ directory }) => path.startsWith(`${directory}/`))
+	for (const path of paths) {
+		const text = await readLocalTextFile(path)
 
-	// Package tests intentionally import their own package name: that is the contract this repository's
-	// test layout verifies. Self-imports remain debt in production source, where `#imports` avoid cycles/noise.
-	const countSelfPackageImports = !path.includes("/test/")
+		const source = ts.createSourceFile(
+			path,
+			text,
+			ts.ScriptTarget.Latest,
+			false,
+			path.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+		)
 
-	visit(source, counters, workspacePackage?.name, countSelfPackageImports)
+		const workspacePackage = workspacePackages.find(({ directory }) => path.startsWith(`${directory}/`))
 
-	counters.rawNULBytes += text.split("\0").length - 1
+		// Package tests intentionally import their own package name: that is the contract this repository's
+		// test layout verifies. Self-imports remain debt in production source, where `#imports` avoid cycles/noise.
+		const countSelfPackageImports = !path.includes("/test/")
 
-	const lineCount = (text.match(/\n/g)?.length ?? 0) + 1
-	const generated = /(?:@generated|This file was generated by:)/.test(text.slice(0, 1000))
+		visit(source, counters, workspacePackage?.name, countSelfPackageImports)
 
-	if (!generated && !/[.]test[.]tsx?$/.test(path) && lineCount > 1000) {
-		counters.productionFilesOver1000Lines++
-	}
-}
+		counters.rawNULBytes += text.split("\0").length - 1
 
-// The banned vocabulary is counted over EVERY tracked text file rather than the TypeScript-only set above:
-// prose an agent reads is prose an agent copies. Binary blobs are skipped by the read failing, not by a list.
-for (const trackedPath of await trackedSourcePaths(root, { globs: ["*"], existingOnly: true })) {
-	const relativePath = relative(root, trackedPath)
+		const lineCount = (text.match(/\n/g)?.length ?? 0) + 1
+		const generated = /(?:@generated|This file was generated by:)/.test(text.slice(0, 1000))
 
-	if (BANNED_VOCABULARY_ALLOWED.some(([prefix]) => relativePath.startsWith(prefix))) continue
-
-	let text: string
-
-	try {
-		text = await readLocalTextFile(trackedPath)
-	} catch {
-		continue
+		if (!generated && !/[.]test[.]tsx?$/.test(path) && lineCount > 1000) {
+			counters.productionFilesOver1000Lines++
+		}
 	}
 
-	counters.bannedVocabulary += text.match(BANNED_VOCABULARY)?.length ?? 0
+	// The banned vocabulary is counted over EVERY tracked text file rather than the TypeScript-only set above:
+	// prose an agent reads is prose an agent copies. Binary blobs are skipped by the read failing, not by a list.
+	for (const trackedPath of await trackedSourcePaths(context, { globs: ["*"], existingOnly: true })) {
+		const relativePath = relative(root, trackedPath)
+
+		if (BANNED_VOCABULARY_ALLOWED.some(([prefix]) => relativePath.startsWith(prefix))) continue
+
+		let text: string
+
+		try {
+			text = await readLocalTextFile(trackedPath)
+		} catch {
+			continue
+		}
+
+		counters.bannedVocabulary += text.match(BANNED_VOCABULARY)?.length ?? 0
+	}
+
+	counters.scriptsUnreferenced = await countUnreferencedScripts(context)
+
+	return counters
 }
 
-// Unreferenced scripts: the set of consumers is the same one the migration proposal enumerates, read from the files
-// themselves rather than from a list kept beside them, so a workflow that starts or stops calling a script moves the
-// number without anyone editing this file.
-{
-	const scriptPaths = (await trackedSourcePaths(root, { globs: ["scripts/**/*.ts"], existingOnly: true }))
+/**
+ * Unreferenced scripts: the set of consumers is the same one the migration proposal enumerates, read from the files
+ * themselves rather than from a list kept beside them, so a workflow that starts or stops calling a script moves the
+ * number without anyone editing this file.
+ */
+async function countUnreferencedScripts(context: RepoContext): Promise<number> {
+	const root = context.repoRoot
+
+	const scriptPaths = (await trackedSourcePaths(context, { globs: ["scripts/**/*.ts"], existingOnly: true }))
 		.map((path) => relative(root, path))
 		.filter((path) => !/\.test\.tsx?$/.test(path))
 
@@ -441,7 +462,7 @@ for (const trackedPath of await trackedSourcePaths(root, { globs: ["*"], existin
 		}
 	}
 
-	for (const consumer of await trackedSourcePaths(root, {
+	for (const consumer of await trackedSourcePaths(context, {
 		globs: [".github/workflows/*", ".husky/*"],
 		existingOnly: true,
 	})) {
@@ -459,6 +480,7 @@ for (const trackedPath of await trackedSourcePaths(root, { globs: ["*"], existin
 	}
 
 	const consumers = consumerTexts.join("\n")
+	let unreferenced = 0
 
 	for (const path of scriptPaths) {
 		if (consumers.includes(path)) continue
@@ -470,34 +492,65 @@ for (const trackedPath of await trackedSourcePaths(root, { globs: ["*"], existin
 		)
 
 		if (!importedByAnotherScript) {
-			counters.scriptsUnreferenced++
+			unreferenced++
 		}
 	}
+
+	return unreferenced
 }
 
-// The key IS the flag text parseArgs matches, so it must stay kebab-case: `package.json`'s `health:debt:update`
-// invokes this with `--write-baseline`, and a camelCase key rejects that as an unknown option.
-const { values } = parseArguments({
-	options: {
-		"write-baseline": { type: "boolean", default: false },
+/**
+ * The committed counters.
+ */
+export async function readBaseline(): Promise<DebtCounters> {
+	return await readLocalJSONFile<DebtCounters>(BASELINE_PATH)
+}
+
+/**
+ * One line per counter, each with its baseline, for a human reading the readings.
+ */
+export function formatCounters(counters: DebtCounters, baseline: DebtCounters): string[] {
+	return Object.entries(counters).map(
+		([name, count]) => `${name}: ${count} (baseline ${baseline[name as keyof DebtCounters]})`
+	)
+}
+
+/**
+ * The `debt` check: an error per counter above its baseline, a warning per counter below it.
+ */
+export const debtCheck: RepoCheck = {
+	id: "debt",
+	description:
+		"Monotonic debt counters against baseline.json: a counter that grew fails, one that fell asks for a ratchet.",
+	async run(context) {
+		const [counters, baseline] = await Promise.all([computeDebtCounters(context), readBaseline()])
+		const diagnostics: Diagnostic[] = []
+		const file = relative(context.repoRoot, BASELINE_PATH)
+
+		for (const [name, count] of Object.entries(counters) as Array<[keyof DebtCounters, number]>) {
+			const recorded = baseline[name]
+
+			if (typeof recorded !== "number") {
+				diagnostics.push({
+					severity: DiagnosticSeverity.Error,
+					message: `${name} is ${count} and has no baseline entry — record one with \`mwops health baseline debt\``,
+					file,
+				})
+			} else if (count > recorded) {
+				diagnostics.push({
+					severity: DiagnosticSeverity.Error,
+					message: `Repository debt grew: ${name} ${recorded} → ${count}`,
+					file,
+				})
+			} else if (count < recorded) {
+				diagnostics.push({
+					severity: DiagnosticSeverity.Warning,
+					message: `${name} fell ${recorded} → ${count}; ratchet the baseline with \`mwops health baseline debt\``,
+					file,
+				})
+			}
+		}
+
+		return diagnostics
 	},
-})
-
-if (values["write-baseline"]) {
-	await writeLocalJSONFile(counters, baselinePath)
-
-	process.stdout.write(`Updated ${relative(root, baselinePath)}\n`)
-} else {
-	const baseline = await readLocalJSONFile<DebtCounters>(baselinePath)
-	const regressions = Object.entries(counters).filter(([name, count]) => count > baseline[name as keyof DebtCounters])
-
-	for (const [name, count] of Object.entries(counters)) {
-		process.stdout.write(`${name}: ${count} (baseline ${baseline[name as keyof DebtCounters]})\n`)
-	}
-
-	if (regressions.length) {
-		throw new Error(
-			`Repository debt grew: ${regressions.map(([name, count]) => `${name} ${baseline[name as keyof DebtCounters]} → ${count}`).join(", ")}`
-		)
-	}
 }

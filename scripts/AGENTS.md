@@ -30,7 +30,8 @@ Scripts for inspecting the training data, model, or artifacts. These are not par
 `scripts/` holds ONLY three things:
 
 1. **Release tooling** (`publish-workspace`, `copy-weights`, `bless-package`, `check-release-parity`, `verify-*`, `release-workspace-repository.test`) + **CI smoke** (`smoke-clean-install`) — the release pipeline's residents.
-2. **Codegen + health tooling** (`generate-*`, `repo-health`, `vocab-census`, `typecheck-tests`) — candidates for a future `mailwoman dev` namespace.
+2. **Codegen tooling** (`generate-*`) — candidates for a future `mailwoman dev` namespace. The man page's generator already made that move: `mailwoman dev generate man-page`.
+   The repository health checks (the debt counters, `verify-exports`, `verify-test-contract`, `verify-version-sync`, the vocabulary census, the reach-around and runtime-flag guards, the test type-check) are not here either — they are registered checks in `packages/repo-health/lib/checks/`, run as `yarn mwops health <id>|all`.
 3. **`diagnostic/`** — gitignored one-off investigations.
    - This has since been deprecated in favor of `mailwoman eval …` commands. If you're reaching for this it means you should be adding a new `mailwoman eval …` command or updating the mailwoman-dev MCP.
 
@@ -39,7 +40,7 @@ record cites is `packages/mailwoman/lib/dev-tools/<name>.run.ts` (run from sourc
 `node packages/mailwoman/lib/dev-tools/<name>.run.ts`, header naming the record); a question a
 `mailwoman eval …` command already answers is that command; the Python calibration fitters live in
 `corpus-python/scripts/`; the FR bare-street fixture is `packages/mailwoman/lib/eval-harness/fixtures/`;
-everything cited by nothing was deleted. `repo-health.ts`'s `scriptsUnreferenced` counter is the
+everything cited by nothing was deleted. The `debt` check's `scriptsUnreferenced` counter (`packages/repo-health`) is the
 ratchet — a script here that no workflow, hook, `package.json` or `.release-it.json` names is debt.
 
 Everything else lives where it belongs: gazetteer builders → `mailwoman/gazetteer-pipeline/` (`mailwoman gazetteer …`); corpus tools → `mailwoman/corpus-tools/` (`mailwoman corpus …`); coarse-placer training → `core/coarse-placer/tools/`; matcher-only tools + viz → `registry/tools/`; census/TIGER tools → `tiger/tools/`; the Modal training launcher → `corpus-python/modal/train_remote.py`. There is no `scripts/lib/` — use `node:util` `parseArgs` and `@mailwoman/core/utils`. Do NOT add new builders, mutators, or shared-lib dirs here.

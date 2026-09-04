@@ -4915,6 +4915,12 @@ __metadata:
 "@mailwoman/repo-health@workspace:*, @mailwoman/repo-health@workspace:packages/repo-health":
   version: 0.0.0-use.local
   resolution: "@mailwoman/repo-health@workspace:packages/repo-health"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@vvago/vale": "npm:^3.17.1"
+    path-ts: "npm:^2.3.0"
+    spliterator: "npm:^6.4.1"
+    typescript: "npm:^6.0.3"
   languageName: unknown
   linkType: soft
 
