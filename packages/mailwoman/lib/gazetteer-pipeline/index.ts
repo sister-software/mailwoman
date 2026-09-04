@@ -12,7 +12,7 @@
  *   `fold` and `build` reuse the CANONICAL package functions (`ingestGeonamesAliases`,
  *   `buildPlaceSearchFTS`, `buildCandidateTable`) so the CLI, the standalone scripts, and a future
  *   `build-unified-wof --geonames-countries` all share ONE implementation. `publish` shells out to
- *   the proven `scripts/publish-demo-assets-to-r2.py` (boto3 + the R2 cache-control gotchas) and
+ *   the proven `docs/scripts/publish-demo-assets-to-r2.py` (boto3 + the R2 cache-control gotchas) and
  *   bumps the demo's `ADMIN_GAZETTEER_VERSION` — the only repo-coupled step, so its repo paths are
  *   passed in.
  */
@@ -484,7 +484,7 @@ export interface PublishOptions {
 	 */
 	version: string
 	/**
-	 * Path to `scripts/publish-demo-assets-to-r2.py`.
+	 * Path to `docs/scripts/publish-demo-assets-to-r2.py`.
 	 */
 	uploadScript: string
 	/**

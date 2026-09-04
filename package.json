@@ -108,7 +108,7 @@
 		"python:security": "cd corpus-python && uv run --extra dev --extra train bandit -c pyproject.toml -r src",
 		"python:typecheck": "cd corpus-python && uv run --extra dev --extra train mypy",
 		"health": "run-s health:debt health:architecture health:manifests health:knip health:exports health:test-contract health:duplicates",
-		"health:architecture": "depcruise packages scripts --config dependency-cruiser.config.cjs",
+		"health:architecture": "depcruise packages --config dependency-cruiser.config.cjs",
 		"health:debt": "yarn mwops health debt",
 		"health:debt:update": "yarn mwops health baseline debt",
 		"mwops": "node packages/ops-cli/lib/cli.ts",
@@ -126,7 +126,6 @@
 		"test:unit": "vitest --config vitest.fast.config.ts",
 		"typecheck": "run-s compile typecheck:tests typecheck:docs",
 		"typecheck:docs": "tsc -p docs/tsconfig.json --noEmit",
-		"typecheck:scripts": "tsc -p scripts/tsconfig.json --noEmit",
 		"typecheck:tests": "yarn mwops health typecheck-tests",
 		"lint:prose:vocab": "yarn workspace @mailwoman/docs lint:prose:vocab",
 		"lint:prose:code": "node_modules/@vvago/vale/bin/vale --config docs/.vale-code.ini $(git ls-files '*.ts' '*.tsx' 'corpus-python/*.py')"

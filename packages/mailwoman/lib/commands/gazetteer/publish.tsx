@@ -5,7 +5,7 @@
  *
  *   `mailwoman gazetteer publish [<candidate-db>]` — upload the candidate gazetteer to R2 (the demo's
  *   byte-range source) and bump the demo's `ADMIN_GAZETTEER_VERSION`. Shells out to the proven
- *   `scripts/publish-demo-assets-to-r2.py` (boto3 + the R2 cache-control gotchas). The version
+ *   `docs/scripts/publish-demo-assets-to-r2.py` (boto3 + the R2 cache-control gotchas). The version
  *   defaults to today's date + `a` (e.g. `2026-06-27a`), the immutable convention.
  *
  *   Creds: `RCLONE_S3_PUBLIC_*` must be in the process env — `set -a; . ./.env; set +a` first. This
@@ -59,7 +59,7 @@ const GazetteerPublish: ParsedCommandComponent<Options> = ({ options, args }) =>
 		const root = mailwomanDataRoot()
 		const candidateDB = args[0] ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
 		const version = options.gazetteerVersion ?? defaultGazetteerVersion(new Date())
-		const uploadScript = String(repoRootPathBuilder("scripts", "publish-demo-assets-to-r2.py"))
+		const uploadScript = String(repoRootPathBuilder("docs", "scripts", "publish-demo-assets-to-r2.py"))
 
 		const resourcesFile = options.bumpDemo
 			? String(repoRootPathBuilder("docs", "src", "shared", "resources", "index.ts"))

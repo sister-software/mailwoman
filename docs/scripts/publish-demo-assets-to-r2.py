@@ -23,7 +23,7 @@ project-sqlite-over-http-spike):
     immutable Cache-Control so Cloudflare edge-caches the byte ranges.
 
 Credentials come from the RCLONE_S3_PUBLIC_* env vars (repo .env): source them
-first, e.g.  `set -a; . ./.env; set +a; python3 scripts/publish-demo-assets-to-r2.py ...`
+first, e.g.  `set -a; . ./.env; set +a; python3 docs/scripts/publish-demo-assets-to-r2.py ...`
 
 Usage:
   publish-demo-assets-to-r2.py --src <staged-dir> [--bucket nexus-public] [--prefix mailwoman] [--dry-run]

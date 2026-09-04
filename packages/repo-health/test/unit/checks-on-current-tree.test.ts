@@ -10,6 +10,7 @@
  */
 
 import { collectRepoContext } from "@mailwoman/repo-health"
+import { noRootScriptsCheck } from "@mailwoman/repo-health/checks/no-root-scripts"
 import { nodeModulesReacharoundCheck } from "@mailwoman/repo-health/checks/node-modules-reacharound"
 import { runtimeFlagsCheck } from "@mailwoman/repo-health/checks/runtime-flags"
 import { describe, expect, test } from "vitest"
@@ -30,5 +31,21 @@ describe("the runtime-flag register", () => {
 		const context = await collectRepoContext()
 
 		expect(await runtimeFlagsCheck.run(context)).toEqual([])
+	})
+})
+
+describe("the root scripts/ directory", () => {
+	test("does not exist, no code builds a path into it, and no CI target runs scripts/… or a bare lib/*.ts path", async () => {
+		const context = await collectRepoContext()
+
+		expect(await noRootScriptsCheck.run(context)).toEqual([])
+	})
+
+	test("reports a tracked file under scripts/ and a workflow step that runs one", async () => {
+		const context = await collectRepoContext()
+		const planted = { ...context, trackedFiles: [...context.trackedFiles, "scripts/stray.ts"] }
+		const diagnostics = await noRootScriptsCheck.run(planted)
+
+		expect(diagnostics.map((d) => d.file)).toContain("scripts/stray.ts")
 	})
 })

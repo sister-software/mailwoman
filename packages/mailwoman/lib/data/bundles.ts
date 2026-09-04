@@ -40,7 +40,7 @@
  *   lsjson --hash` reports no native hash either, since these are multipart uploads). So every
  *   `BUNDLES` entry below carries `md5Sidecar: false` today; `needsDownload`'s md5-comparison branch
  *   exists and is unit-tested against synthetic remote state for the day a bundle publishes one (see
- *   `scripts/publish-demo-assets-to-r2.py` / `gazetteer publish` — neither writes a sidecar yet).
+ *   `docs/scripts/publish-demo-assets-to-r2.py` / `gazetteer publish` — neither writes a sidecar yet).
  *
  *   LOCAL PATH CONVENTIONS — confirmed by reading the actual consumers, not assumed:
  *

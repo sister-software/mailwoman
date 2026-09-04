@@ -179,7 +179,7 @@ fix a source-ingest bug (#1015). The artifact is SEALED read-only (0444) — nev
 rebuild → verify → swap.
 
 The coverage RECIPE lives in code: `mailwoman/gazetteer-pipeline/defaults.ts` (86 Overture + 161 GeoNames +
-11 WOF-priority countries + the pinned Overture release), reviewed like code. `scripts/wof-build-manifest.json`
+11 WOF-priority countries + the pinned Overture release), reviewed like code. `data/gazetteer/wof-build-manifest.json`
 is the auto-appended build LOG (what ran, when, verify result, md5) — the command writes it, so it can't lag
 the artifact (the #1015 reconstruct-from-artifact ordeal).
 
@@ -230,7 +230,7 @@ systemctl --user restart mailwoman-photon.service                       # + nomi
 The build freezes to `journal_mode=delete` + VACUUM, so there are no `-wal`/`-shm` sidecars to carry. A
 long-running server that already opened the OLD inode keeps serving it until restarted — the `mv` is atomic
 on-disk but processes don't re-`open()` on their own. The build log
-(`scripts/wof-build-manifest.json`) was already appended by the build command — commit it with the swap.
+(`data/gazetteer/wof-build-manifest.json`) was already appended by the build command — commit it with the swap.
 
 ### Step 5 — propagating to the demo/browser (rebuild the candidate gazetteer)
 
@@ -299,7 +299,7 @@ node resolver-wof-sqlite/out/build-candidate-cli.js \
 mkdir -p /tmp/stage/gazetteer/<NEW_VERSION>
 ln -s /mnt/playpen/mailwoman-data/wof/candidate-global.db /tmp/stage/gazetteer/<NEW_VERSION>/candidate.db
 set -a; . ./.env; set +a
-python3 scripts/publish-demo-assets-to-r2.py --src /tmp/stage --prefix mailwoman
+python3 docs/scripts/publish-demo-assets-to-r2.py --src /tmp/stage --prefix mailwoman
 # 4. The map-highlight sibling (wof-polygons.db) builds from --admin now (the --points wof-hot.db source is
 #    gone): mailwoman gazetteer polygons --admin <admin.db> [--countries US,DE,FR] --out wof-polygons.db
 ```
@@ -351,11 +351,11 @@ pipeline more than once because the moving parts aren't obvious. This is the exa
 Read this first — it's the 30-minute version once you know the shape. Three backends, decoupled, and a
 "promote" isn't done until all three agree on one md5:
 
-| backend       | tool                                   | what it feeds                                                                  |
-| ------------- | -------------------------------------- | ------------------------------------------------------------------------------ |
-| **npm**       | `publish.yml` (CI, OIDC)               | library consumers — **fetches the binary from HF**, so HF must be staged FIRST |
-| **HF bucket** | `mailwoman release hf`                 | the npm fetch source + HF-direct `loadFromWeights`                             |
-| **R2/demo**   | `scripts/publish-demo-assets-to-r2.py` | the browser demo (reads `public.mailwoman.ai`, NOT HF)                         |
+| backend       | tool                                        | what it feeds                                                                  |
+| ------------- | ------------------------------------------- | ------------------------------------------------------------------------------ |
+| **npm**       | `publish.yml` (CI, OIDC)                    | library consumers — **fetches the binary from HF**, so HF must be staged FIRST |
+| **HF bucket** | `mailwoman release hf`                      | the npm fetch source + HF-direct `loadFromWeights`                             |
+| **R2/demo**   | `docs/scripts/publish-demo-assets-to-r2.py` | the browser demo (reads `public.mailwoman.ai`, NOT HF)                         |
 
 The end-to-end order that worked: **the promotion eval (revised if needed) → commit card+config to main → HF stage → `publish.yml` (real) → verify npm md5 → R2 demo repoint.** Time-savers and traps, each cost real minutes once:
 
@@ -430,7 +430,7 @@ HF_TOKEN=$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli.js re
   --postcodes "<csv of postcode-*.bin>" --pair-indexes "<csv of pair-index-*.bin, if any locale ships one>" \
   --polygons <src>/.../wof-polygons.db --steps <step> --set-default
 
-set -a; . ./.env; set +a; python3 scripts/publish-demo-assets-to-r2.py --src <src>
+set -a; . ./.env; set +a; python3 docs/scripts/publish-demo-assets-to-r2.py --src <src>
 ```
 
 The flag list above is not the authority on what a release must stage, and prose here has gone stale before.
@@ -458,7 +458,7 @@ from `FST_LOCALES` (`mailwoman/gazetteer-pipeline/fst.ts:428`), and its output t
   (`ADMIN_DERIVED_FST_ARTIFACTS`), which `openSync`s the 32-byte header and never reads the body. Every
   real FST load resolves `fst-${locale}.bin` from a weights package (`neural/weights.ts:382`), so the
   global artifact has had no consumer since #1318. Its last mention in a shipped card
-  (`scripts/v062-model-card-template.json`'s `inference.admin_fst`) was removed in the same change.
+  (the retired v0.6.2 model-card template's `inference.admin_fst`) was removed in the same change.
   **Release-time action, for the operator, once:** delete the file from the HF
   `sister-software/mailwoman` bucket. Left undone this is harmless — a 317 MB orphan carrying a
   2026-05-28 build stamp — so it is a cleanup, never a release blocker.
@@ -723,7 +723,7 @@ fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release 
    >
    > ```bash
    > set -a; . ./.env; set +a   # RCLONE_S3_PUBLIC_* creds
-   > python3 scripts/publish-demo-assets-to-r2.py --src <staged-dir>
+   > python3 docs/scripts/publish-demo-assets-to-r2.py --src <staged-dir>
    > ```
    >
    > Verify with `curl -s https://public.mailwoman.ai/mailwoman/en-us/releases.json | jq .defaultVersion`

@@ -83,7 +83,7 @@ async function publishTiles(options: Options): Promise<string> {
 	}
 
 	// rclone reads RCLONE_S3_* from the inherited env for the on-the-fly `:s3:` remote. The flags skip the
-	// post-PUT HEAD + checksum ops that 501 against R2 (see scripts/publish-demo-assets-to-r2.py rationale).
+	// post-PUT HEAD + checksum ops that 501 against R2 (see docs/scripts/publish-demo-assets-to-r2.py rationale).
 	const remote = `:s3:${options.bucket}/${key}`
 	const flags = ["--s3-no-head", "--s3-disable-checksum", "--no-update-modtime"]
 	const result = await $({ nothrow: true, quiet: true })`rclone copyto ${options.file} ${remote} ${flags}`
