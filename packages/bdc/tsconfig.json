@@ -13,6 +13,7 @@
 		{ "path": "../sqlite" },
 		// ---
 		{ "path": "../core" },
+		{ "path": "../evidence" },
 		{ "path": "../filer" },
 		{ "path": "../resolver-wof-sqlite" },
 		{ "path": "../spatial" },

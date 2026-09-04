@@ -113,6 +113,7 @@
  */
 
 import { readLayerCoverage, readLayerManifest, type LayerContractHandle } from "@mailwoman/core/layers"
+import type { Evidence } from "@mailwoman/evidence"
 import type { POILookup } from "@mailwoman/resolver-wof-sqlite/poi"
 import { shortCellToInt, type H3Cell, type PointLiteral } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -164,9 +165,28 @@ export interface PlausibilityClaim {
 export type PlausibilityAbstainReason = "requires_build_local_layer" | "requires_bdc_layer" | "insufficient_survey_data"
 
 export type PlausibilityEvidence =
-	| { type: "filing"; filing: ProviderFilingSummary; vintage: string; corroborates: boolean }
-	| { type: "physical_plant"; hit: InfrastructureHit }
+	| {
+			kind: "observation"
+			type: "filing"
+			source: "bdc"
+			vintage: string
+			filing: ProviderFilingSummary
+			corroborates: boolean
+	  }
+	| { kind: "observation"; type: "physical_plant"; source: "poi"; vintage: string; hit: InfrastructureHit }
 	| { type: "abstain"; reason: PlausibilityAbstainReason; layer?: string }
+
+/**
+ * The two non-abstain variants are {@link Evidence} observations wearing their original field names, so a caller that
+ * already reads `.filing` keeps working while a caller that wants the shared vocabulary can narrow on `kind`. The
+ * abstain variant deliberately does NOT join the union: an abstain is the ABSENCE of evidence plus a reason, which
+ * `coverage_confidence` already reports, and minting an evidence object for "we could not look" would put a claim where
+ * there is none.
+ */
+export type PlausibilitySharedEvidence =
+	Extract<PlausibilityEvidence, { kind: "observation" }> extends Evidence
+		? Extract<PlausibilityEvidence, { kind: "observation" }>
+		: never
 
 /**
  * One evidence channel's survey-completeness state for THIS claim, WITH the reason a non-`"covered"` state applies.
@@ -449,7 +469,9 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 
 			for (const filing of landscape.filings) {
 				evidence.push({
+					kind: "observation",
 					type: "filing",
+					source: "bdc",
 					filing,
 					vintage: landscape.vintage,
 					corroborates: filingCorroborates(filing, claim),
@@ -480,8 +502,10 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 				categoryIDs: [...physicalCategories],
 			})
 
+			const poiVintage = (await readLayerManifest(deps.poi.contractDB)).sourceVintage
+
 			for (const hit of hits) {
-				evidence.push({ type: "physical_plant", hit })
+				evidence.push({ kind: "observation", type: "physical_plant", source: "poi", vintage: poiVintage, hit })
 			}
 
 			const coverageCell = await readLayerCoverage(deps.poi.contractDB, res9ShortCellToRes6Parent(pointCell!))

@@ -8,7 +8,7 @@
  *   corrupted layer fails loudly at open time rather than misbehaving downstream.
  */
 
-import { requireExclusionBasis, supportsExclusion } from "@mailwoman/evidence"
+import { supportsExclusion } from "@mailwoman/evidence"
 
 import { CoverageBasis, LayerFreshnessPolicy, LayerTier, type LayerContractHandle } from "#layers/schema"
 import { parseJSONStrict } from "#objects"
