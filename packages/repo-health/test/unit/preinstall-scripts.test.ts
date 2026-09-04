@@ -5,28 +5,26 @@
  *
  *   Guard for the scripts CI runs before `yarn install`.
  *
- *   Two workflow steps run `node <script>` against a checkout with no `node_modules`: the Docs
- *   workflow's structure check (early on purpose, so a frontmatter or orphan regression fails in
- *   seconds instead of after a full Docusaurus build) and the docs-freshness sweep, which never
- *   installs. Every module those entry points reach must resolve from the checkout alone — a relative
- *   path, or a `node:` builtin.
+ *   Two workflow steps run `node <script>` against a checkout with no `node_modules`: the Docs workflow's structure
+ *   check (early on purpose, so a frontmatter or orphan regression fails in seconds instead of after a full Docusaurus
+ *   build) and the docs-freshness sweep, which never installs. Every module those entry points reach must resolve from
+ *   the checkout alone — a relative path, or a `node:` builtin.
  *
- *   A local run cannot see the break. `node_modules` exists on a developer machine, so a workspace
- *   import added to one of these files resolves, passes review, and passes the fast suite. It fails
- *   only on CI, as `ERR_MODULE_NOT_FOUND`, which looks like a broken checkout.
+ *   A local run cannot see the break. `node_modules` exists on a developer machine, so a workspace import added to one
+ *   of these files resolves, passes review, and passes the fast suite. It fails only on CI, as `ERR_MODULE_NOT_FOUND`,
+ *   which looks like a broken checkout.
  *
- *   So these files keep their `node:*` imports behind a scoped `typescript/no-restricted-imports`
- *   disable. The list below is the executable half of that exemption. Add an entry when a workflow
- *   starts running a script before its install step; remove one when that ordering changes.
+ *   So these files keep their `node:*` imports behind a scoped `typescript/no-restricted-imports` disable. The list
+ *   below is the executable half of that exemption. Add an entry when a workflow starts running a script before its
+ *   install step; remove one when that ordering changes.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { moduleSpecifiers } from "@mailwoman/repo-health/ts-ast"
 import { dirname, join, relative, resolvePath } from "path-ts"
 import ts from "typescript"
 import { describe, expect, test } from "vitest"
-
-import { moduleSpecifiers } from "./ts-ast.ts"
 
 const REPO_ROOT = repoRootPath()
 
@@ -59,8 +57,7 @@ async function collectReachableExternals(entryPoint: string): Promise<Array<{ fi
 		const source = await readLocalTextFile(filePath)
 
 		// Runtime specifiers only: type-only imports are erased by Node's type stripping (see ts-ast.ts).
-		// The shared walk reads string-literal-LIKE specifiers, so a no-substitution template literal now
-		// counts too — the old local `isStringLiteral` walk missed it.
+		// The shared walk reads string-literal-LIKE specifiers, so a no-substitution template literal counts too.
 		for (const specifier of moduleSpecifiers(ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true))) {
 			if (!specifier.startsWith(".")) {
 				externals.push({ file: relative(REPO_ROOT, filePath), specifier })

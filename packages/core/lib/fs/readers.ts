@@ -5,7 +5,7 @@
  * @file The asynchronous read surface. Every reader here takes a {@linkcode PathBuilderLike} and answers a promise.
  *
  *   `node:fs` is reached from this directory alone, and every reader answers a promise: no executable repository
- *   code makes a blocking filesystem call, and `repo-health.ts` counts any that appears.
+ *   code makes a blocking filesystem call, and the `debt` check in `packages/repo-health` counts any that appears.
  */
 
 import type { Dirent, Mode, Stats } from "node:fs"

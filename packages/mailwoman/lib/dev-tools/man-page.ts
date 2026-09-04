@@ -3,38 +3,34 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Generate `mailwoman/man/mailwoman.1` from the CLI's OWN help tree (#1577's `man mailwoman`
- *   item). The command descriptions already live once, in each command module — a hand-written man
- *   page would be a second copy of every sentence, stale by the first help edit, so this derives
- *   the page instead: root help supplies NAME/SYNOPSIS/COMMANDS, each user-facing command's
- *   `--help` supplies its own section. npm links `package.json#man` on a global install, which is
- *   what makes `man mailwoman` answer.
+ *   Generate `man/mailwoman.1` from the CLI's OWN help tree. The command descriptions already live once, in each
+ *   command module — a hand-written man page would be a second copy of every sentence, stale by the first help edit, so
+ *   this derives the page instead: root help supplies NAME/SYNOPSIS/COMMANDS, each user-facing command's `--help`
+ *   supplies its own section. npm links `package.json#man` on a global install, which is what makes `man mailwoman`
+ *   answer.
  *
- *   Committed-artifact discipline: the page is generated INTO the tree and committed
- *   (`mailwoman/test/man-page.test.ts` re-renders and fails on drift), matching the
- *   sentencepiece-wasm single-file-ESM precedent — consumers get the artifact, CI proves it fresh.
+ *   Committed-artifact discipline: the page is generated INTO the tree and committed (the freshness test under
+ *   `test/unit/` re-renders and fails on drift), matching the sentencepiece-wasm single-file-ESM precedent — consumers
+ *   get the artifact, CI proves it fresh.
  *
- *   Run: `node scripts/generate-man.ts` (after `yarn compile` — it spawns the COMPILED CLI, the
- *   same binary consumers run).
+ *   Run: `mailwoman dev generate man-page` (after `yarn compile` — it spawns the COMPILED CLI, the same binary consumers
+ *   run).
  */
 
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { repoRootPath } from "@mailwoman/core/paths"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { runFile } from "@mailwoman/core/process"
-import { runIfScript } from "@mailwoman/core/scripting"
-import { dirname, resolvePath } from "path-ts"
-
-const REPO_ROOT = repoRootPath()
+import { dirname } from "path-ts"
 
 /**
- * The committed artifact this script maintains — also read by the freshness test.
+ * The committed artifact this generator maintains — also read by the freshness test.
  */
-export const MAN_PAGE_PATH = resolvePath(REPO_ROOT, "packages/mailwoman/man/mailwoman.1")
+export const MAN_PAGE_PATH = resolvePackagePath("mailwoman", "man", "mailwoman.1")
 
 /**
  * The compiled CLI the page derives from — the same binary consumers run.
  */
-export const CLI_PATH = resolvePath(REPO_ROOT, "packages/mailwoman/out/cli.js")
+export const CLI_PATH = resolvePackagePath("mailwoman", "out", "cli.js")
 
 /**
  * The user-facing commands a man reader cares about. `dev`, `clients`, and the model-work groups (`corpus`, `eval`,
@@ -73,7 +69,7 @@ function preformatted(text: string): string {
 
 /**
  * Render the whole page from a CLI binary's help tree. Pure with respect to the filesystem — the write happens only in
- * the script entrypoint below, so the freshness test can render and compare without touching the tree.
+ * {@link generateManPage}, so the freshness test can render and compare without touching the tree.
  */
 export async function renderManPage(cliPath: string = CLI_PATH): Promise<string> {
 	const version = (await runFile("node", [cliPath, "--version"])).stdout.trim()
@@ -129,11 +125,24 @@ export async function renderManPage(cliPath: string = CLI_PATH): Promise<string>
 	return sections.join("\n") + "\n"
 }
 
-runIfScript(import.meta, async () => {
+/**
+ * Summary returned by {@link generateManPage}.
+ */
+export interface GenerateManPageSummary {
+	outPath: string
+	bytes: number
+}
+
+/**
+ * Render the page from the compiled CLI and write the committed artifact.
+ */
+export async function generateManPage(report?: (line: string) => void): Promise<GenerateManPageSummary> {
+	report?.(`rendering from ${CLI_PATH}`)
+
 	const page = await renderManPage()
 
 	await makeDirectories(dirname(MAN_PAGE_PATH))
 	await writeLocalFile(page, MAN_PAGE_PATH)
 
-	console.log(`wrote ${MAN_PAGE_PATH}`)
-})
+	return { outPath: MAN_PAGE_PATH, bytes: Buffer.byteLength(page) }
+}

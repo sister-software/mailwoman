@@ -9,9 +9,9 @@
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"
-import { spawnProcessSync } from "@mailwoman/core/process"
 import { cliArguments } from "@mailwoman/core/scripting/arguments"
 import { runCLICommand } from "@mailwoman/core/scripting/command"
+import { listTrackedFiles } from "@mailwoman/repo-health"
 
 import { dispatch } from "#dispatch"
 
@@ -23,13 +23,6 @@ process.exitCode =
 			stdout: (text) => process.stdout.write(text),
 			stderr: (text) => process.stderr.write(text),
 			repoRoot,
-			trackedFiles: async () => {
-				const result = spawnProcessSync("git", ["ls-files"], { cwd: repoRoot, encoding: "utf8" })
-
-				// oxlint-disable-next-line mailwoman/prefer-spliterator -- `git ls-files` output is bounded by the checkout and every line is needed
-				return String(result.stdout ?? "")
-					.split("\n")
-					.filter((line) => line.length > 0)
-			},
+			trackedFiles: () => listTrackedFiles(repoRoot),
 		})
 	)) ?? 0

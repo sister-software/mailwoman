@@ -35,7 +35,7 @@
 
 // Node builtins on purpose. The "Docs structure checks" step in .github/workflows/docs-build.yml runs this before
 // `yarn install`, so there is no node_modules and a workspace specifier cannot resolve.
-// scripts/preinstall-scripts.test.ts holds this whole import graph to builtins and relative paths.
+// packages/repo-health/test/unit/preinstall-scripts.test.ts holds this whole import graph to builtins and relative paths.
 // oxlint-disable-next-line typescript/no-restricted-imports -- runs before `yarn install`; see above
 import { parseArgs } from "node:util"
 

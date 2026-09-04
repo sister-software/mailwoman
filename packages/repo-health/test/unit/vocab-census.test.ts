@@ -9,9 +9,8 @@
  *   other measuring tool. Each case below states one line of real source and the remedy it earns.
  */
 
+import { classify, Remedy } from "@mailwoman/repo-health/checks/vocab-census"
 import { describe, expect, it } from "vitest"
-
-import { classify, Remedy } from "./vocab-census.ts"
 
 /**
  * Builds the Vale `--output line` record and the one-line source it points at.
@@ -93,7 +92,7 @@ describe("the classifier reads the whole line, not only the modifier", () => {
 	})
 
 	it("indexes source by ABSOLUTE line number, blank lines included", () => {
-		// The driver reads files with `TextSpliterator.from(..., { skipEmpty: false })`. The default
+		// The check reads files with `TextSpliterator.from(..., { skipEmpty: false })`. The default
 		// drops blank lines, which shifts every line number after the first one — the hit below then
 		// classifies against the wrong source line and lands in a different bucket with nothing
 		// failing. Measured on the real corpus: the default moved 731 of 2,014 hits.

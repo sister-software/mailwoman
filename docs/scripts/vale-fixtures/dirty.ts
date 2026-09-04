@@ -1,9 +1,9 @@
 /**
  * @file Dirty fixture for `docs/.vale-code.ini` + `Mailwoman/AmbiguousShorthandCode.yml`. Every line below must trip
- *   the rule. `scripts/vocab-census.ts` also uses this file as its positive control, so it must keep containing the
- *   words permanently — it is excluded from the census COUNT for the same reason, a fixture is not repository prose.
- *   The gate blocks a release when the count grows. A seam between two packages moved. We cut a new shard before the
- *   check runs.
+ *   the rule. the `vocab-census` check in `packages/repo-health` also uses this file as its positive control, so it
+ *   must keep containing the words permanently — it is excluded from the census COUNT for the same reason, a fixture is
+ *   not repository prose. The gate blocks a release when the count grows. A seam between two packages moved. We cut a
+ *   new shard before the check runs.
  */
 
 // BACKTICKS DO NOT EXEMPT A CODE COMMENT. This is the negative assertion that matters most:
