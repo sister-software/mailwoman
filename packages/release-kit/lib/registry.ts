@@ -10,13 +10,43 @@
  */
 
 import type { ReleaseOperation } from "#operation"
+import { blessPackage } from "#operations/bless-package"
+import { checkParity } from "#operations/check-parity"
+import { copyWeightsOperation } from "#operations/copy-weights"
+import { fetchHFWeightsOperation } from "#operations/fetch-hf-weights"
+import { generatedSurfaces } from "#operations/generated-surfaces"
+import { linkWeightsOverlayOperation } from "#operations/link-weights-overlay"
+import { plan } from "#operations/plan"
+import { preflight } from "#operations/preflight"
+import { prepareVersion } from "#operations/prepare-version"
+import { publishWorkspaceOperation } from "#operations/publish-workspace"
+import { sbom } from "#operations/sbom"
+import { scaffoldWeightsOverlayOperation } from "#operations/scaffold-weights-overlay"
+import { smokeCleanInstallOperation } from "#operations/smoke-clean-install"
+import { stageWeightsCacheOperation } from "#operations/stage-weights-cache"
+import { verifyMetadata } from "#operations/verify-metadata"
 
 /**
- * Every release operation, in the order an adapter lists them. Empty at the scaffold: each family moves in from
- * `scripts/` as a registered operation, one PR per family, and the `scriptsUnreferenced` debt counter falls as it
- * does.
+ * Every release operation, in the order an adapter lists them: the plan first, then the read-only checks, the local
+ * writes in release order, and the two external writes last.
  */
-export const operations: ReadonlyArray<ReleaseOperation<unknown, unknown>> = []
+export const operations: ReadonlyArray<ReleaseOperation<unknown, unknown>> = [
+	plan,
+	verifyMetadata,
+	checkParity,
+	prepareVersion,
+	generatedSurfaces,
+	copyWeightsOperation,
+	fetchHFWeightsOperation,
+	preflight,
+	smokeCleanInstallOperation,
+	sbom,
+	linkWeightsOverlayOperation,
+	stageWeightsCacheOperation,
+	scaffoldWeightsOverlayOperation,
+	publishWorkspaceOperation,
+	blessPackage,
+] as ReadonlyArray<ReleaseOperation<unknown, unknown>>
 
 /**
  * Look an operation up by id, or `undefined`.

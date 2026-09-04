@@ -42,7 +42,7 @@ This will:
 
 1. Compile (`yarn compile`). The pre-flight **does not run tests** — PR CI already validated them; see the
    `before:init` hook in `.release-it.json`.
-2. Materialize trained weights into `neural-weights-{en-us,fr-fr}/` via `scripts/copy-weights.ts` (paths from
+2. Materialize trained weights into `neural-weights-{en-us,fr-fr}/` via `yarn mwops release copy-weights` (paths from
    `release.config.json`)
 3. Show the proposed version bump for each workspace
 4. Stage the would-be tag + GitHub release + npm publishes — without executing them
@@ -64,15 +64,15 @@ It stages the TRACKED tree (`git archive`) into an isolated root, materializes t
 artifacts there, then packs and audits every `.release-it.json` workspace with the exact
 `packWorkspaceForPublish` + `verifyTarball` path the publish workflow uses — collecting every
 failure in one sweep, plus the named-absence identity (root workspaces minus the release list must
-equal the six sanctioned absences by name; see `scripts/release-stage.ts`). Add `--keep` or
+equal the six sanctioned absences by name; see `packages/release-kit/lib/release/stage.ts`). Add `--keep` or
 `--staging <dir>` to inspect the tree afterwards. Zero git/GitHub/npm/R2/HF writes; an interrupted
 run cannot dirty the checkout.
 
 The two sources differ only in where the bytes come from:
 
-- `--source repo` runs `scripts/copy-weights.ts` against `$MAILWOMAN_DATA_ROOT` — the recipe a local
+- `--source repo` runs `release.copy-weights` against `$MAILWOMAN_DATA_ROOT` — the recipe a local
   `yarn release` uses. Measured 2026-08-25: PASS, 51/51 in 37.4 s.
-- `--source hf` runs `scripts/fetch-hf-weights.ts` against the PUBLIC bucket — the recipe
+- `--source hf` runs `release.fetch-hf-weights` against the PUBLIC bucket — the recipe
   `publish.yml` runs, and the same call the workflow makes. No credentials. `--version <model-card
 version>` overrides the version, which otherwise comes from the base package's `model-card.json`
   exactly as CI reads it.
@@ -141,7 +141,7 @@ Once the new version is on npm, regenerate the Software Bill of Materials so the
 SBOM for the release in both open standards (SPDX 2.3 + CycloneDX 1.5):
 
 ```bash
-node scripts/generate-sbom.ts --version <version>   # writes docs/static/sbom/mailwoman-<version>.{spdx,cdx}.json
+yarn mwops release sbom --version <version>   # writes docs/static/sbom/mailwoman-<version>.{spdx,cdx}.json
 ```
 
 Commit the two files with the release. The generator reads the **published** tarball, so it must run
@@ -578,13 +578,13 @@ promotion always touches both: a new row on the releases matrix, a re-verified b
 
 Step 5 used to rely on discipline, and discipline slipped: when 6.4.0 shipped, the eval ledger, the
 `releases.mdx` `(current)` row, and the `status.mdx` info box were all silently left on 6.3.0 and
-only caught at 6.5.0 (all three hand-backfilled during that ship). `scripts/verify-release-metadata.ts`
+only caught at 6.5.0 (all three hand-backfilled during that ship). `yarn mwops release verify-metadata`
 now fails the publish fast if those three surfaces haven't caught up — the CI step **Verify release
 metadata is propagated** runs it after the Hugging Face weight preflight and before release-it, on
 both dry and real runs (skipped only on `publish_only` recovery). Run it locally any time:
 
 ```bash
-node scripts/verify-release-metadata.ts   # exit 0 = propagated; exit 1 = one actionable error per stale surface
+yarn mwops release verify-metadata   # exit 0 = propagated; exit 1 = one actionable error per stale surface
 ```
 
 It keys off the **model** version — the `version` field of `neural-weights-en-us/model-card.json`,
@@ -620,7 +620,7 @@ gh workflow run publish.yml -f mode=publish
 The E401/Web-Auth flavor was transient for v4.11.0 (the `publish_only` retry cleared it). If it recurs on the
 SAME packages, their npm Trusted Publisher is unconfigured — configure it on npmjs.com, or token-publish the
 stragglers in dependency order (`record` before `registry`). **Note:** despite older notes saying "the lab host
-has no npm credentials," it currently has an `~/.npmrc` authToken, so `node scripts/publish-workspace.ts` per
+has no npm credentials," it currently has an `~/.npmrc` authToken, so `yarn mwops release publish-workspace --allow-unplanned` per
 the recovery loop below can finish stragglers from here without OIDC.
 
 ## Common failures
@@ -643,8 +643,8 @@ the recovery loop below can finish stragglers from here without OIDC.
    `test` check — the direct release-it push was retired 2026-07-23 after it started bouncing off
    the ruleset with GH013):
    - **`mode=prepare`** with `version` (`patch` / `minor` / `major` / specific semver like `2.1.0`):
-     runs the metadata check (`scripts/verify-release-metadata.ts`), bumps the root + every
-     `.release-it.json` workspace via `scripts/prepare-release-version.ts`, pushes
+     runs the metadata check (`mwops release verify-metadata`), bumps the root + every
+     `.release-it.json` workspace via `mwops release prepare-version`, pushes
      `release/v<NEW>`, opens the release PR, dispatches the Test workflow against the branch
      (GITHUB_TOKEN-created PRs never trigger `on: pull_request` — anti-recursion), and enables
      auto-merge. The PR merges itself when `test` is green — no human click, so a solo night
@@ -660,7 +660,7 @@ Per-workspace publish uses `yarn pack -o <tmpfile>` (translates `workspace:*` �
 ### Adding a NEW package: it can't be first-published from CI
 
 **Version field first**: a new workspace must join at the CURRENT unified version (`npm view
-mailwoman version`), never `0.0.0` — `scripts/prepare-release-version.ts`'s drift guard refuses to
+mailwoman version`), never `0.0.0` — `mwops release prepare-version`'s drift guard refuses to
 bump an unsynced tree (bit the en-nz addition on the first 7.8.0 prepare, 2026-07-24).
 
 npm Trusted Publishing (OIDC) **cannot create a package that doesn't exist yet** — the registry returns `E404` (`PUT https://registry.npmjs.org/@scope%2Fpkg — Not found`) because there's no package, and therefore no Trusted Publisher, to authorize against. So a brand-new `@mailwoman/*` workspace needs a **one-time manual first publish with a token** before CI can ever touch it. This bit the 4.0.0 release: `@mailwoman/codex` plus the five new `mailwoman` runtime deps (`kind-classifier`, `locale-hint`, `normalize`, `phrase-grouper`, `query-shape`) all failed OIDC and had to be bootstrapped by hand.
@@ -670,20 +670,19 @@ The bootstrap (on a machine with `npm login` rights to the `@mailwoman` scope �
 ```bash
 git checkout main && git pull   # main already carries the release commit's versions
 for ws in <new-workspace-dirs>; do
-  RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE=./$ws \
   RELEASE_IT_WORKSPACES_TAG=latest RELEASE_IT_WORKSPACES_ACCESS=public \
-  node scripts/publish-workspace.ts || break
+  yarn mwops release publish-workspace --workspace ./$ws --plan release-plan.json || break
 done
 ```
 
-> **Use the script above (or `yarn pack -o <tmp> && npm publish <tmp>`) — never a raw `npm publish` from the workspace dir.** Yarn 4's `workspace:*` dep protocol is yarn-specific; `npm publish` ships the literal string `"workspace:*"`, and consumers then fail to install with `EUNSUPPORTEDPROTOCOL`. `yarn pack` (which `publish-workspace.ts` runs) rewrites `workspace:*` → the concrete sibling version. This bit `@mailwoman/address-id`'s 4.9.0 first publish (shipped `"@mailwoman/codex": "workspace:*"`); it was fixed by republishing 4.9.1 from a `yarn pack`'d tarball.
+> **Use the operation above (write the plan first with `yarn mwops release plan --json > release-plan.json`; or `yarn pack -o <tmp> && npm publish <tmp>`) — never a raw `npm publish` from the workspace dir.** Yarn 4's `workspace:*` dep protocol is yarn-specific; `npm publish` ships the literal string `"workspace:*"`, and consumers then fail to install with `EUNSUPPORTEDPROTOCOL`. `yarn pack` (which `publish-workspace.ts` runs) rewrites `workspace:*` → the concrete sibling version. This bit `@mailwoman/address-id`'s 4.9.0 first publish (shipped `"@mailwoman/codex": "workspace:*"`); it was fixed by republishing 4.9.1 from a `yarn pack`'d tarball.
 
 Then, on npmjs.com, **configure each new package's Trusted Publisher** (repo `sister-software/mailwoman`, workflow `.github/workflows/publish.yml`). After that, OIDC publishes it like every other package and you never touch it manually again.
 
-`scripts/bless-package.ts` does both halves (first publish + trust config) from the terminal — it
+`yarn mwops release bless-package --dirs <dir>[,<dir>…] --plan release-plan.json` does both halves (first publish + trust config) from the terminal — it
 runs npm's web-auth flow, so a hardware key on the laptop signs for a publish from the lab host. **The
-workflow filename it claims must be the workflow that publishes** (`publish.yml`; the script
-now refuses a name that is not in `.github/workflows/`). npm stores the claim verbatim and never
+workflow filename it claims must be the workflow that publishes** (`publish.yml`; the operation
+refuses a name that is not in `.github/workflows/`). npm stores the claim verbatim and never
 checks it, so a wrong one is accepted and then denies every CI publish with a bare `E404 Not Found -
 PUT` that names neither trust nor the workflow. That is what held `neural-weights-{en-in,it-it,es-es}`
 at 8.6.0 through the 9.0.0 and 9.1.0 releases: they were blessed on 2026-08-02 with this flag's
@@ -866,16 +865,15 @@ never be used to validate a real change — the verify step is the entire point.
 If a release fails partway through publishing:
 
 - The git commit + tag are already created by release-it.
-- `yarn npm publish --tolerate-republish` (used by `scripts/publish-workspace.ts`) makes re-publishing already-published versions a no-op.
+- `yarn npm publish --tolerate-republish` (used by `mwops release publish-workspace`) makes re-publishing already-published versions a no-op.
 - Fix the underlying issue, then resume by invoking the publish script directly for each remaining workspace:
 
   ```bash
   for ws in <remaining workspaces>; do
-    RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE=./$ws \
     RELEASE_IT_WORKSPACES_TAG=latest \
     RELEASE_IT_WORKSPACES_ACCESS=public \
     RELEASE_IT_WORKSPACES_OTP=<otp-if-needed> \
-    node scripts/publish-workspace.ts || break
+    yarn mwops release publish-workspace --workspace ./$ws --plan release-plan.json || break
   done
   ```
 

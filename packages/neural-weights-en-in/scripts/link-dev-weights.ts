@@ -18,7 +18,7 @@
  *
  *   THE FILE THIS BUILDS IS THE PACKAGE'S ENTIRE PAYLOAD. It is gitignored (derived), and a workspace
  *   that has never run this script packs to three metadata files describing an artifact that is not
- *   there — which is exactly how v8.6.0 shipped. `scripts/verify-tarball.ts` now refuses that publish,
+ *   there — which is exactly how v8.6.0 shipped. `packages/release-kit/lib/pack/verify-tarball.ts` now refuses that publish,
  *   but the fix is to run this first.
  */
 

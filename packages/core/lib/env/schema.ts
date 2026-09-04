@@ -89,14 +89,14 @@ export const PublicEnvSchema = z.object({
 	PYTHON: z.string().optional(),
 	MAILWOMAN_RESUME: z.string().optional(),
 
-	// Weights dev-linking + release copy (`neural-weights-*/scripts/link-dev-weights.ts`, `scripts/copy-weights.ts`).
+	// Weights dev-linking + release copy (`neural-weights-*/scripts/link-dev-weights.ts`, `packages/release-kit/lib/weights/copy-weights.ts`).
 	MAILWOMAN_DEV_MODEL: z.string().optional(),
 	MAILWOMAN_DEV_TOKENIZER: z.string().optional(),
 	MAILWOMAN_PUBLISH_MODEL: z.string().optional(),
 	MAILWOMAN_PUBLISH_TOKENIZER: z.string().optional(),
 	MAILWOMAN_SKIP_WEIGHTS_COPY: z.string().optional(),
 
-	// Release-it publish flow (`scripts/publish-workspace.ts`). The OTP is a secret — see `$private`.
+	// Release-it publish flow (`packages/release-kit/lib/pack/publish-workspace.ts`). The OTP is a secret — see `$private`.
 	MAILWOMAN_SKIP_WEIGHTS: z.string().optional(),
 	/**
 	 * Set to `0` to publish WITHOUT a sigstore provenance attestation. Provenance is otherwise on by default under GitHub
@@ -212,7 +212,7 @@ export const PrivateEnvSchema = z.object({
 	// OpenAddresses batch-download API token (`corpus/src/tools/fetch/openaddresses.ts`).
 	OA_BATCH_TOKEN: z.string().optional(),
 
-	// npm 2FA OTP for the release publish flow (`scripts/publish-workspace.ts`).
+	// npm 2FA OTP for the release publish flow (`packages/release-kit/lib/pack/publish-workspace.ts`).
 	RELEASE_IT_WORKSPACES_OTP: z.string().optional(),
 
 	// FCC Broadband Map (BDC) public-API credentials (`bdc/sdk/client.ts`) — username + hash_value header auth.

@@ -33,9 +33,30 @@
 			"node": "./lib/registry.ts",
 			"default": "./out/registry.js",
 			"types": "./out/registry.d.ts"
+		},
+		"./pack/pack-workspace": {
+			"node": "./lib/pack/pack-workspace.ts",
+			"default": "./out/pack/pack-workspace.js",
+			"types": "./out/pack/pack-workspace.d.ts"
+		},
+		"./release/stage": {
+			"node": "./lib/release/stage.ts",
+			"default": "./out/release/stage.js",
+			"types": "./out/release/stage.d.ts"
 		}
 	},
 	"dependencies": {
-		"zod": "^4.5.4"
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/neural": "workspace:*",
+		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"mailwoman": "workspace:*",
+		"path-ts": "^2.3.0",
+		"semver": "^7.8.5",
+		"spliterator": "^6.4.1",
+		"zod": "^4.5.4",
+		"zx": "^8.8.5"
+	},
+	"devDependencies": {
+		"@types/semver": "^7.8.0"
 	}
 }

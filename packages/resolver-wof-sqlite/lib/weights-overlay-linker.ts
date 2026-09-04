@@ -605,7 +605,7 @@ export interface DevOverlayManifest {
 	 * match that workspace's card `files_md5` — the #397 drift guard, which fails loud instead of grading the wrong
 	 * model; an override skips the check and says so. `inherit`: the package declares `mailwoman.baseWeights`, so any
 	 * local pair is REMOVED — a stale local file shadows the base fallback and silently serves outdated bytes. Omitted:
-	 * the pair is left to `scripts/link-weights-overlay.ts`, the recipe writer.
+	 * the pair is left to `packages/release-kit/lib/weights/link-weights-overlay.ts`, the recipe writer.
 	 */
 	model?: { kind: "link"; digestCard?: string } | { kind: "inherit" }
 	/**

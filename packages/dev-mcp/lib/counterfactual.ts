@@ -55,8 +55,8 @@ export const BASE_LOCALE = "en-US"
 
 /**
  * Repo-relative home of the release manifest, whose `locales` array is the list of weights overlays that exist. Read
- * rather than re-typed: an overlay added by `scripts/scaffold-weights-overlay.ts` lands there, and a hand-kept copy
- * here would make the locale setting silently stop offering the newest locale.
+ * rather than re-typed: an overlay added by `packages/release-kit/lib/weights/scaffold-weights-overlay.ts` lands there,
+ * and a hand-kept copy here would make the locale setting silently stop offering the newest locale.
  */
 const RELEASE_CONFIG_RELATIVE_PATH = "release.config.json"
 

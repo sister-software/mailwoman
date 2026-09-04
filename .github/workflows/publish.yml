@@ -6,7 +6,7 @@
 # release therefore splits at the merge boundary:
 #
 #   PHASE 1 — mode=prepare (dispatch with a version): bump every workspace manifest on a
-#   `release/v<version>` branch (scripts/prepare-release-version.ts — no git side effects of its
+#   `release/v<version>` branch (`mwops release prepare-version` — no git side effects of its
 #   own), open the release PR, dispatch the Test workflow against the branch (required because
 #   GITHUB_TOKEN-created PRs never trigger `on: pull_request` workflows — GitHub's anti-recursion
 #   rule), and enable auto-merge. The PR merges itself the moment `test` goes green; no human click
@@ -31,9 +31,9 @@
 # hf` (HF token, run on the operator's host) first.
 #
 # THE ARTIFACT RECIPE IS NOT IN THIS FILE (#1894). Materialization lives in
-# scripts/fetch-hf-weights.ts and the tarball audit in scripts/verify-tarball.ts; this workflow
-# orchestrates them, and `yarn release:preflight --source hf` runs the same two locally with no
-# dispatch. Every path that was a hand-maintained list of shell copies here went stale at least once
+# `@mailwoman/release-kit` (`mwops release fetch-hf-weights`, lib/weights/fetch-hf-weights.ts) and the
+# tarball audit in lib/pack/verify-tarball.ts; this workflow orchestrates them, and
+# `yarn release:preflight --source hf` runs the same two locally with no dispatch. Every path that was a hand-maintained list of shell copies here went stale at least once
 # — most recently at the workspace regroup, which cost the v9.2.0 reduce three of its four dispatches.
 #
 # A `clients` job runs after `publish` succeeds: it regenerates the Python + Rust API clients as
@@ -124,15 +124,15 @@ jobs:
       # packages/neural-weights-en-us/model-card.json, so a code-only release passes cleanly. Runs on dry
       # runs too — the dry run is the operator's last look before the real dispatch.
       - name: Verify release metadata is propagated
-        run: node scripts/verify-release-metadata.ts
+        run: yarn mwops release verify-metadata
 
       - name: Resolve + bump versions
         id: bump
         run: | # shell
           set -euo pipefail
-          OUT=$(node scripts/prepare-release-version.ts --version "${{ inputs.version }}")
+          OUT=$(yarn mwops release prepare-version --version "${{ inputs.version }}" --json)
           echo "${OUT}"
-          VERSION=$(echo "${OUT}" | grep -oP '(?<=^RESOLVED_VERSION=).+')
+          VERSION=$(echo "${OUT}" | jq -r '.resolvedVersion')
           # Collision guards — the version must be new to both git and npm.
           if git tag -l "v${VERSION}" | grep -q .; then
             echo "::error::tag v${VERSION} already exists — pick a different version"; exit 1
@@ -150,7 +150,7 @@ jobs:
       - name: Compile + regenerate version-stamped surfaces
         run: | # shell
           yarn compile
-          node scripts/release-generated-surfaces.ts
+          yarn mwops release generated-surfaces
 
       - name: "Dry run: show the bump and stop"
         if: ${{ inputs.dry_run }}
@@ -270,8 +270,8 @@ jobs:
       # day the bucket stops being public). The whole release, weights included, publishes from CI via
       # OIDC, so no npm credentials live anywhere.
       #
-      # The recipe is scripts/fetch-hf-weights.ts, shared byte for byte with
-      # `yarn release:preflight --source hf` (#1894). It derives WHAT to materialize from each weights
+      # The recipe is `mwops release fetch-hf-weights` (release-kit's lib/weights/fetch-hf-weights.ts), shared
+      # byte for byte with `yarn release:preflight --source hf` (#1894). It derives WHAT to materialize from each weights
       # package's `files` array minus what git already tracks — the same predicate verify-tarball.ts
       # refuses a publish over — so it cannot fall behind a manifest the way this step's hand-written
       # copy list did: the v9.2.0 reduce published 49 of 51 workspaces before the audit refused
@@ -286,7 +286,7 @@ jobs:
       # instead of the checkout.
       - name: Materialize weight artifacts from Hugging Face
         if: ${{ !inputs.dry_run }}
-        run: node scripts/fetch-hf-weights.ts
+        run: yarn mwops release fetch-hf-weights
 
       # The FETCHED pair indexes must agree with the model cards that describe them. The step above proves each file
       # EXISTS and is non-empty; this one proves it is the RIGHT one. Both are needed: a stale artifact left on the
@@ -344,15 +344,21 @@ jobs:
           RELEASE_IT_WORKSPACES_ACCESS: public
         run: | # shell
           set -uo pipefail
-          # publish-workspace.ts imports @mailwoman/core/env, which resolves to the COMPILED
+          # The publish operation imports @mailwoman/core/env, which resolves to the COMPILED
           # core/out tree (#874) — compile first or every workspace publish dies ERR_MODULE_NOT_FOUND.
           yarn compile
+          # Plan → execute: seal HEAD, the version, every release workspace and every weights artifact
+          # under one digest, then hand that plan to each publish. publish-workspace refuses when HEAD
+          # is dirty, HEAD moved, or the recomputed digest differs from the plan it was given.
+          PLAN="${RUNNER_TEMP}/release-plan.json"
+          yarn mwops release plan --json > "${PLAN}"
+          echo "release plan: $(jq -r '.planDigest' "${PLAN}") at $(jq -r '.gitHead' "${PLAN}") for v$(jq -r '.version' "${PLAN}")"
           WORKSPACES=$(node -p "require('./.release-it.json').plugins['@release-it-plugins/workspaces'].workspaces.join(' ')")
           echo "workspaces (from .release-it.json): ${WORKSPACES}"
           FAILED=()
           for ws in ${WORKSPACES}; do
             echo "::group::publish ${ws}"
-            if RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE="./${ws}" node scripts/publish-workspace.ts; then
+            if yarn mwops release publish-workspace --workspace "./${ws}" --plan "${PLAN}"; then
               echo "  ✓ ${ws}"
             else
               echo "::warning::publish failed for ${ws}"
@@ -382,7 +388,7 @@ jobs:
         run: | # shell
           set -euo pipefail
           yarn compile
-          node scripts/release-preflight.ts --source hf
+          yarn mwops release preflight --source hf
           echo "Dry run: v${{ steps.version.outputs.version }} staged, packed and audited. No tag, no release, no publish."
 
   # Regenerate the Python + Rust API clients (Phase 5 Task 4) as INSPECTION ARTIFACTS — this job

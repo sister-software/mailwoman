@@ -459,9 +459,9 @@ jobs:
       # model on local disk. `copy-weights.ts` now serves the derived binaries from that store and
       # pays the multi-minute build only on a genuine key change; the key hashes the generating CLI
       # modules as well as the config and data, which the retired workflow key did not. See
-      # scripts/derived-weights-key.ts.
+      # packages/release-kit/lib/weights/derived-weights-key.ts.
       - name: Materialize weights (derived store; multi-minute build only on a key change)
-        run: node scripts/copy-weights.ts
+        run: yarn mwops release copy-weights
 
       - name: Symlink base-latn model (en-us already materialized)
         run: |
@@ -837,9 +837,9 @@ jobs:
               - 'packages/soil/**'
               - 'packages/coastal/**'
               - 'packages/zoning/**'
-              # --- Smoke script + packaging pipeline ---
-              - 'scripts/smoke-clean-install.ts'
-              - 'scripts/pack-workspace.ts'
+              # --- Smoke operation + packaging pipeline (release-kit owns both) ---
+              - 'packages/release-kit/**'
+              - 'packages/ops-cli/**'
               # --- Root config that affects packaging ---
               - 'package.json'
               - 'tsconfig.json'
@@ -920,10 +920,10 @@ jobs:
       # model on local disk. `copy-weights.ts` now serves the derived binaries from that store and
       # pays the multi-minute build only on a genuine key change; the key hashes the generating CLI
       # modules as well as the config and data, which the retired workflow key did not. See
-      # scripts/derived-weights-key.ts.
+      # packages/release-kit/lib/weights/derived-weights-key.ts.
       - name: Materialize weights (derived store; multi-minute build only on a key change)
         if: github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true'
-        run: node scripts/copy-weights.ts
+        run: yarn mwops release copy-weights
 
       - name: Symlink base-latn model (en-us already materialized)
         if: github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true'

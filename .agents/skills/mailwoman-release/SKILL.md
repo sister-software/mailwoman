@@ -106,7 +106,7 @@ there first, or the real run fails the `[ -s "$f" ]` guard.
 ```bash
 # Materialize the binaries into the workspaces (reads release.config.json → the new int8;
 # BUILDS postcode-us.bin / postcode-fr.bin):
-node scripts/copy-weights.ts
+yarn mwops release copy-weights
 md5sum neural-weights-en-us/model.onnx   # MUST equal your Step-1 int8 md5 (a stale leftover reads wrong)
 
 # Per-locale FST gazetteers (#1318 — MODEL-INDEPENDENT): copy-weights.ts already materialized them
