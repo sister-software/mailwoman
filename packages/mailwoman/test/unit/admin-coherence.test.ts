@@ -211,6 +211,7 @@ describe("toGauntletResult threading (additive optional field)", () => {
 		lat: 29.7,
 		lon: -96.78,
 		resolution_tier: "admin",
+		epistemic_status: "observed",
 		uncertainty_m: null,
 		locality: "Weimar",
 		region: "Thüringen",

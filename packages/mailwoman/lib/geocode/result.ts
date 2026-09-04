@@ -16,10 +16,12 @@ import {
 	type DroppedSpan,
 } from "@mailwoman/core/decoder"
 import type { QueryIntentMarker } from "@mailwoman/core/pipeline"
+import type { EpistemicStatus } from "@mailwoman/evidence"
 import { adminLadderForNodes } from "@mailwoman/resolver"
 
 import { adminCoherenceField, type AdminCoherenceReport } from "#admin-coherence"
 import type { AuthoritativeAssertion } from "#authoritative"
+import { epistemicStatusFor } from "#geocode/epistemic-status"
 import { capitalPromotionOf, postcodeCountryScopeOf, variantAliasExemptionOf } from "#geocode/tree-reads"
 import { assembleHierarchy, lineageAnchorNode, type HierarchyEntry } from "#hierarchy-lineage"
 import { assembleStreetName } from "#street/name-assembly"
@@ -56,6 +58,13 @@ export interface GeocodeResult {
 	lat: number | null
 	lon: number | null
 	resolution_tier: ResolutionTier
+	/**
+	 * WHAT MAY BE CLAIMED about this coordinate, orthogonal to {@link resolution_tier}, which says how it was PRODUCED. A
+	 * rooftop matched against a register its authority declares complete is `designated`; the same rooftop matched
+	 * against a crowdsourced extract is `observed`. Same tier, different authority — and reporting only the tier silently
+	 * upgrades one into the other. Derived by `epistemicStatusFor`, the one place the mapping lives.
+	 */
+	epistemic_status: EpistemicStatus
 	/**
 	 * The entity the fork→entity probe resolved (#1585's entity half) — present ONLY when the `venue` tier answered: the
 	 * decoder declared a fork, the incumbent path produced no coordinate, and exactly one poi.db entity bears the query's
@@ -216,6 +225,9 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 	let uncertaintyM: number | null = null
 
 	let rooftop: { localityNorm?: string; postcode?: string } | undefined
+	// The answering register row's coverage basis, when the address-point lookup stamped one. No lookup stamps it yet, so
+	// today every rooftop reads `observed`; the hook exists so a register with a designated basis can say so.
+	let answeringBasis: string | undefined
 
 	// The admin-ladder node whose coordinate won (#1717) — captured where the ladder picks it, because
 	// the primary-node probe below requires a `resolver_name` and a postcode-lookup winner may lack one.
@@ -223,7 +235,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 
 	if (streetNode?.metadata?.["resolution_tier"] === "address_point") {
 		const ap = streetNode.metadata["address_point"] as
-			| { lat: number; lon: number; locality_norm?: string; postcode?: string }
+			| { lat: number; lon: number; locality_norm?: string; postcode?: string; basis?: string }
 			| undefined
 
 		if (ap) {
@@ -231,6 +243,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 			lon = ap.lon
 			tier = "address_point"
 			uncertaintyM = 1
+			answeringBasis = ap.basis
 
 			// Floor: situs point is essentially exact.
 
@@ -397,6 +410,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 		lat,
 		lon,
 		resolution_tier: tier,
+		epistemic_status: epistemicStatusFor(tier, lat, answeringBasis),
 		uncertainty_m: uncertaintyM,
 		locality,
 		region,

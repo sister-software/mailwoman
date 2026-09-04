@@ -31,6 +31,7 @@ import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { type AdminCoherenceReport, type AdminCoherenceTreeNode, forkedEntityCoherenceField } from "#admin-coherence"
+import { epistemicStatusFor } from "#geocode/epistemic-status"
 import type { POIExecutorLookup } from "#poi/executor"
 
 /**
@@ -132,6 +133,7 @@ export interface ForkEntityAnswerTarget {
 	lat: number | null
 	lon: number | null
 	resolution_tier: string | null
+	epistemic_status?: string
 	countryCode: string | null
 	venue: string | null
 	entity?: { name: string; categoryID: string | null; confidence: number; country: string }
@@ -151,6 +153,7 @@ function applyForkEntityAnswer(
 	result.lat = entity.latitude
 	result.lon = entity.longitude
 	result.resolution_tier = "venue"
+	result.epistemic_status = epistemicStatusFor("venue", result.lat)
 	result.countryCode = entity.country
 	result.venue = entity.name
 
@@ -334,6 +337,7 @@ export function applyEntityTiers(
 			result.lat = hit.latitude
 			result.lon = hit.longitude
 			result.resolution_tier = "venue"
+			result.epistemic_status = epistemicStatusFor("venue", result.lat)
 			result.entity = { name: hit.name, categoryID: hit.categoryID, confidence: hit.confidence, country: hit.country }
 		}
 	}

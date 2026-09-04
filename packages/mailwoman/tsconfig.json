@@ -16,6 +16,7 @@
 		{ "path": "../sqlite" },
 		{ "path": "../api" },
 		{ "path": "../api-kit" },
+		{ "path": "../evidence" },
 		{ "path": "../bdc" },
 		{ "path": "../coastal" },
 		{ "path": "../core" },

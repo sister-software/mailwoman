@@ -13,6 +13,8 @@ import type { AddressTree } from "@mailwoman/core/decoder"
 import { firstNodeWhere } from "@mailwoman/core/decoder"
 import { decodePlusCode, isFullPlusCode, recoverNearestPlusCode } from "@mailwoman/spatial"
 
+import { epistemicStatusFor } from "#geocode/epistemic-status"
+
 /**
  * A plus-code token anywhere in the input: `VFQ6+92P` (short) or `764MVFQ6+92P` (full). The digit alphabet excludes
  * every vowel-like letter, so an ordinary word cannot match; the boundary guard keeps the token from being split out of
@@ -68,5 +70,6 @@ export function applyPlusCodeOverride(result: GeocodeOutcomeLike, input: string,
 	result.lat = cell.lat
 	result.lon = cell.lon
 	result.resolution_tier = "plus_code"
+	result.epistemic_status = epistemicStatusFor("plus_code", result.lat)
 	result.uncertainty_m = Math.max(1, Math.round(Math.hypot(latHalfM, lonHalfM)))
 }

@@ -31,6 +31,7 @@ const RESULT = {
 	lat: 45.50380788700005,
 	lon: -122.6322,
 	resolution_tier: "address_point",
+	epistemic_status: "observed",
 	uncertainty_m: 1,
 	countryCode: "US",
 	components: {},

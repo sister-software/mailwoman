@@ -25,6 +25,7 @@ const RESULT = {
 	lat: 45.5034,
 	lon: -122.6023,
 	resolution_tier: "address_point",
+	epistemic_status: "observed",
 	uncertainty_m: 8,
 	locality: "Portland",
 	region: "Oregon",

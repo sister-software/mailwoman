@@ -243,6 +243,9 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	lat: z.number().nullable(),
 	lon: z.number().nullable(),
 	resolution_tier: z.enum(["address_point", "interpolated", "street", "admin", "venue", "plus_code"]),
+	// What the evidence permits a consumer to claim about the coordinate, orthogonal to how it was produced; see
+	// `@mailwoman/evidence`'s `EpistemicStatus`.
+	epistemic_status: z.enum(["designated", "observed", "derived", "inferred", "unresolved"]),
 	// The fork→entity probe's answer (#1585) — present only on the `venue` tier; see geocode-core's
 	// GeocodeResult.entity.
 	entity: z

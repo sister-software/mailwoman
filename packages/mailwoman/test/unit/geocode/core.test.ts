@@ -672,3 +672,71 @@ describe("#1537: a famous namesake the model reads as a `street` keeps its candi
 		expect(marker!.evidence?.["margin"]).toBeCloseTo(0.05, 4)
 	})
 })
+
+describe("epistemic_status — what the evidence permits, beside how the coordinate was made", () => {
+	const rooftopTree = (
+		metadata: Record<string, unknown> | undefined,
+		locality: { lat: number; lon: number } | null = { lat: 48.8566, lon: 2.3522 }
+	): AddressTree => ({
+		raw: "123 east sheldon rd 75001 paris",
+		roots: [
+			node({ tag: "street", value: "Sheldon", start: 9, end: 16, metadata, children: [] }),
+			node({
+				tag: "locality",
+				value: "paris",
+				start: 26,
+				end: 31,
+				...(locality ? { lat: locality.lat, lon: locality.lon, placeID: "wof:1159322569" } : {}),
+			}),
+		],
+	})
+
+	it("is unresolved when no coordinate was produced", () => {
+		const r = extractGeocodeResult("123 east sheldon rd 75001 paris", rooftopTree(undefined, null))
+
+		expect(r.lat).toBeNull()
+		expect(r.epistemic_status).toBe("unresolved")
+	})
+
+	it("is derived for an interpolated tier — a rule computed it, no authority assigned it", () => {
+		const r = extractGeocodeResult(
+			"123 east sheldon rd 75001 paris",
+			rooftopTree({
+				resolution_tier: "interpolated",
+				interpolated_point: { lat: 48.8548, lon: 2.3451 },
+				uncertainty_m: 40,
+			})
+		)
+
+		expect(r.resolution_tier).toBe("interpolated")
+		expect(r.epistemic_status).toBe("derived")
+	})
+
+	// The axes are orthogonal: the mechanism is the same, the authority is not.
+	it("separates mechanism from authority: a rooftop is observed until its register says designated", () => {
+		const observed = extractGeocodeResult(
+			"123 east sheldon rd 75001 paris",
+			rooftopTree({ resolution_tier: "address_point", address_point: { lat: 48.8548, lon: 2.3451 } })
+		)
+
+		const designated = extractGeocodeResult(
+			"123 east sheldon rd 75001 paris",
+			rooftopTree({
+				resolution_tier: "address_point",
+				address_point: { lat: 48.8548, lon: 2.3451, basis: "designated" },
+			})
+		)
+
+		expect(observed.resolution_tier).toBe("address_point")
+		expect(observed.epistemic_status).toBe("observed")
+		expect(designated.resolution_tier).toBe("address_point")
+		expect(designated.epistemic_status).toBe("designated")
+	})
+
+	it("is observed for an admin label point", () => {
+		const r = extractGeocodeResult("123 east sheldon rd 75001 paris", rooftopTree(undefined))
+
+		expect(r.resolution_tier).toBe("admin")
+		expect(r.epistemic_status).toBe("observed")
+	})
+})

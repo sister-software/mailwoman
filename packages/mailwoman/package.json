@@ -389,6 +389,7 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/corpus": "workspace:*",
+		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/filer": "workspace:*",
 		"@mailwoman/flood": "workspace:*",
 		"@mailwoman/formatter": "workspace:*",
