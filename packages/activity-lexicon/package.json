@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/activity-lexicon",
-	"version": "0.0.0",
+	"version": "9.2.0",
 	"description": "Reviewed surface forms for activity concepts — the phrases a person types for what they want to do, each carrying the record that attests it and the locales it is used in.",
 	"keywords": [
 		"activity",
