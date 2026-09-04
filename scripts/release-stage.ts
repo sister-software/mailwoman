@@ -37,6 +37,9 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 	"packages/geocode-oracle": "private verification oracle — never a runtime dependency, never publishes",
 	"packages/neural-weights-base-latn": "parked shared base for #1177 — publish wiring deliberately not landed",
 	"packages/dev-mcp": "private maintainer MCP server — never publishes",
+	"packages/release-kit": "private release-operation registry — never publishes",
+	"packages/repo-health": "private repository health registry — never publishes",
+	"packages/ops-cli": "private operator CLI (mwops) — never publishes",
 	"packages/osm": "public but held out of the release — ODbL counsel sign-off pending (packages/osm/README.md)",
 }
 

@@ -52,6 +52,14 @@ interface DebtCounters {
 	 */
 	earthRadiusLiterals: number
 	/**
+	 * Non-test TypeScript files under `scripts/` that nothing executes or imports: not named in `package.json`, a
+	 * workflow, a husky hook or `.release-it.json`, and not imported by another script. knip could never see these
+	 * because the directory was an entry glob; this counter is the measurement the `scripts/` migration is graded
+	 * against, and it ratchets to zero as each file becomes a registered operation, a registered check, a command, a
+	 * measurement, or is deleted (`docs/superpowers/specs/2026-09-04-scripts-directory-migration-proposal.md`).
+	 */
+	scriptsUnreferenced: number
+	/**
 	 * Occurrences of the retired vocabulary word — see {@link BANNED_VOCABULARY} for which — in any spelling, anywhere in
 	 * tracked source: identifiers, comments and string literals alike.
 	 *
@@ -87,6 +95,7 @@ function emptyCounters(): DebtCounters {
 		rawNULBytes: 0,
 		reTypedISODate: 0,
 		earthRadiusLiterals: 0,
+		scriptsUnreferenced: 0,
 		bannedVocabulary: 0,
 	}
 }
@@ -436,6 +445,58 @@ for (const trackedPath of await trackedSourcePaths(root, { globs: ["*"], existin
 	}
 
 	counters.bannedVocabulary += text.match(BANNED_VOCABULARY)?.length ?? 0
+}
+
+// Unreferenced scripts: the set of consumers is the same one the migration proposal enumerates, read from the files
+// themselves rather than from a list kept beside them, so a workflow that starts or stops calling a script moves the
+// number without anyone editing this file.
+{
+	const scriptPaths = (await trackedSourcePaths(root, { globs: ["scripts/**/*.ts"], existingOnly: true }))
+		.map((path) => relative(root, path))
+		.filter((path) => !/\.test\.tsx?$/.test(path))
+
+	const consumerTexts: string[] = []
+
+	for (const consumer of [".release-it.json", "package.json"]) {
+		try {
+			consumerTexts.push(await readLocalTextFile(resolvePath(root, consumer)))
+		} catch {
+			// a consumer that does not exist references nothing
+		}
+	}
+
+	for (const consumer of await trackedSourcePaths(root, {
+		globs: [".github/workflows/*", ".husky/*"],
+		existingOnly: true,
+	})) {
+		try {
+			consumerTexts.push(await readLocalTextFile(consumer))
+		} catch {
+			// binary or unreadable: references nothing
+		}
+	}
+
+	const scriptTexts = new Map<string, string>()
+
+	for (const path of scriptPaths) {
+		scriptTexts.set(path, await readLocalTextFile(resolvePath(root, path)))
+	}
+
+	const consumers = consumerTexts.join("\n")
+
+	for (const path of scriptPaths) {
+		if (consumers.includes(path)) continue
+
+		const basename = path.slice(path.lastIndexOf("/") + 1)
+
+		const importedByAnotherScript = [...scriptTexts].some(
+			([other, text]) => other !== path && (text.includes(`./${basename}`) || text.includes(`/${basename}`))
+		)
+
+		if (!importedByAnotherScript) {
+			counters.scriptsUnreferenced++
+		}
+	}
 }
 
 // The key IS the flag text parseArgs matches, so it must stay kebab-case: `package.json`'s `health:debt:update`

@@ -1,0 +1,38 @@
+{
+	"name": "@mailwoman/repo-health",
+	"version": "9.2.0",
+	"private": true,
+	"description": "Repository health checks as a registry — each inspects the checkout and returns diagnostics or pass/fail, and nothing here mutates, generates, publishes, benchmarks, or probes.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/repo-health"
+	},
+	"files": [
+		"lib",
+		"out",
+		"README.md"
+	],
+	"type": "module",
+	"imports": {
+		"#*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./lib/index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./registry": {
+			"node": "./lib/registry.ts",
+			"default": "./out/registry.js",
+			"types": "./out/registry.d.ts"
+		}
+	}
+}

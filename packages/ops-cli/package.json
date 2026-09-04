@@ -1,0 +1,41 @@
+{
+	"name": "@mailwoman/ops-cli",
+	"version": "9.2.0",
+	"private": true,
+	"description": "The private operator CLI, mwops — a view over the release-kit and repo-health registries for CI and humans. Carries no logic of its own.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/ops-cli"
+	},
+	"bin": {
+		"mwops": "./lib/cli.ts"
+	},
+	"files": [
+		"lib",
+		"out",
+		"README.md"
+	],
+	"type": "module",
+	"imports": {
+		"#*": {
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./lib/index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		}
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/release-kit": "workspace:*",
+		"@mailwoman/repo-health": "workspace:*"
+	}
+}
