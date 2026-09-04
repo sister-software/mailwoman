@@ -202,3 +202,6 @@ nightshift
 ## Subagent-driven-development scratch (ledgers, briefs, review packages) — per-plan, never committed
 .superpowers/
 
+
+# dev-mcp writes its worktree-arm runner here for the life of one mwdev_compare; never commit it
+.mwdev-arm-runner.ts
