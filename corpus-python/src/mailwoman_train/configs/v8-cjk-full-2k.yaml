@@ -9,13 +9,14 @@
 #   2. Does the CN source yield? The first full-run launch died before step 1 because `country_weights`
 #      rejected 98% of the 126 CN rows (see v8-cjk-full.yaml's header). The eval dump must carry a
 #      `support_tag.locality_unit` > 0 and an `f1.locality_unit` column that moves off zero.
-#   3. Does the mixture wreck early JP learning? The comparison arm is v8-jp-full-2k's step-2000 board read
-#      on the SAME instrument (`score_jp_probe_board.py`, jp-board.jsonl): blended coordinate-acceptability
-#      0.2237, municipality span exact-match 0.1847 (the 24k record, section 4). Those are low because the
-#      probe's cosine anneals inside 2k steps, so the rule is a BAND, not a tag table: this probe's blended
-#      read must land within ±0.05 of 0.2237. Below 0.17 the mixture cost JP something at 2k, and the
-#      full run does not launch until the control (CN source 0.0) has been read at 2k too. The tag-for-tag
-#      JP comparison is the 24k run's job, against the 24k record.
+#   3. Does the mixture cost early JP learning? The comparison arm is v8-jp-full-2k's step-2000 checkpoint
+#      re-scored on the SAME instrument (`score_jp_probe_board.py`, jp-board.jsonl, 20,000 rows) on
+#      2026-09-05: blended coordinate-acceptability 0.9931, municipality span exact-match 0.9947, district
+#      0.9870, block 0.9980. (The 24k record's original 0.2237 / 0.1847 was a scorer artifact; the record
+#      carries the correction.) Rule: no JP tag more than 1pp under that arm at step 2,000, the same width
+#      the full run applies against the 24k record. Read on 2026-09-05: blended 0.9840, municipality 0.9856,
+#      district 0.9808, block 0.9954, house_number 0.9928 — every tag inside 1pp, municipality and district
+#      the closest to it, and the full run launched on that reading (app ap-J0uaLu8mQutAWu4ZdtBNzZ).
 #   4. Does the scorer run end to end against a `stage3-cjk` checkpoint with `--label-set stage3-cjk`?
 #
 # Everything not named above is byte-identical to v8-cjk-full.yaml. If you change that file, change this one.

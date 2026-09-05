@@ -53,6 +53,17 @@ held: the same head at 24k reads municipality 0.9943. The probe's four mechanica
 answered yes (head loads/saves on the char path, `[classifier_learning_rate] 18,095 params @ 0.001`
 printed, supported labels separated, scorer ran end to end) — which is all a probe is for.
 
+**Correction, 2026-09-05.** The 0.2237 / 0.1847 probe read above was a scorer artifact, not a model
+state. Re-scored on 2026-09-05 with the current `score_jp_probe_board.py --label-set stage3-jp` against
+the same jp-board.jsonl, the `v8-jp-full-2k` step-2000 checkpoint reads coordinate-acceptability
+**0.9931** (19,862 / 20,000; 107 unresolved) with municipality span exact-match **0.9947**, prefecture
+1.0000, district 0.9870, block 0.9980, house_number 0.9899. The probe ran before the `--label-set`
+parameterization existed, so the 47-label checkpoint was LIKELY read through the 33-label `ID_TO_LABEL`,
+the silent mislabeling the scorer's docstring names. The probe's own log had token macro-F1 0.9996 at
+step 2,000, which was never compatible with a 0.18 span match on the same board. Consequence for the
+reading above: the head learns municipality by step 2,000, not "at 24k"; the cosine-anneal explanation
+was not needed. The v8-cjk 2k probe (#2034) uses the corrected figure as its comparison arm.
+
 ## 5. What this does NOT decide
 
 - Shipping. This is a training-check record, not a release: the JP model has no serving path yet
