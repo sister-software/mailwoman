@@ -44,3 +44,7 @@ Every one of these is `improvement_target` except **`us-addison-zip-75001`** (`4
 - `mwdev_compare` does not yet accept a ladder input; the per-country JSON reports are in the session scratchpad and the next run should land beside this file.
 
 https://claude.ai/code/session_019mAe7AK8EQYwGmnJcctW2N
+
+## PT, added the same evening (fdf2b00c2 tree)
+
+`mailwoman eval autocomplete --country PT --limit 40`: the PT board holds 7 rows, 2 of them with a coordinate truth (5 excluded, no truth), none stratified out above 25 km. Both truth rows are hit by `parse_resolve` and only at the full string (median first-hit 100% of characters); 2 of the 4 one- and two-character rungs answered. The `fst` arm has no PT artifact, so it reads 0 rows rather than a score. Latency p95 on `parse_resolve`: 19 ms (1–2 chars), 15 ms (3–5), 123 ms (6–12), 21 ms (13+). Two rows are a reading of the instrument on PT, not a PT result; the PT board needs truth rows before the ladder says anything about Portuguese autocomplete.
