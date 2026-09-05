@@ -21,6 +21,13 @@ export interface CategoryMatch {
 	 * 1.0 = unrestricted or exact-locale; 0.5 = language-only locale match.
 	 */
 	confidence: number
+	/**
+	 * What put the phrase in the index: a curated synonym row, or the category's own id or label spelled as a phrase. At
+	 * equal confidence a synonym outranks an identity phrase — a curator wrote the redirect on purpose, and an id that
+	 * happens to read as English is not evidence anyone meant that branch (`drugstore` → `pharmacy` in en-US, `credit
+	 * union` → `bank`, `motel` → `hotel`).
+	 */
+	phraseSource: "synonym" | "identity"
 }
 
 export interface POITaxonomyLookup {
@@ -37,6 +44,7 @@ interface PhraseEntry {
 	category: CategoryRecord
 	phrase: string
 	locales?: string[]
+	phraseSource: CategoryMatch["phraseSource"]
 }
 
 /**
@@ -57,8 +65,13 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	 */
 	const byPhrase: ReadonlyMap<string, ReadonlyArray<PhraseEntry>> = createPhraseIndex<PhraseEntry>((add) => {
 		for (const category of table.categories) {
-			add(category.id.replaceAll("_", " "), { category, phrase: category.id.replaceAll("_", " ") })
-			add(category.label, { category, phrase: category.label.toLowerCase() })
+			add(category.id.replaceAll("_", " "), {
+				category,
+				phrase: category.id.replaceAll("_", " "),
+				phraseSource: "identity",
+			})
+
+			add(category.label, { category, phrase: category.label.toLowerCase(), phraseSource: "identity" })
 		}
 
 		for (const synonym of table.synonyms as SynonymEntry[]) {
@@ -73,6 +86,7 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 			add(synonym.phrase, {
 				category,
 				phrase: synonym.phrase,
+				phraseSource: "synonym",
 				...(synonym.locales ? { locales: synonym.locales } : {}),
 			})
 		}
@@ -82,7 +96,11 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	 * Exact-phrase category lookup. `locale` selects locale-restricted synonyms with the variant-aliases semantics
 	 * (`@mailwoman/variant-aliases`' `resolveLocaleScope` owns that rule; the copies here stay local to keep this package
 	 * dependency-free): exact locale 1.0, language-only 0.5, otherwise no match. unrestricted phrases always match at
-	 * 1.0. Deduplicated by category (best confidence wins), sorted by confidence descending.
+	 * 1.0. Deduplicated by category (best confidence wins), sorted by confidence descending, and at equal confidence a
+	 * curated synonym before an identity phrase ({@link CategoryMatch.phraseSource}). Without that tie-break a synonym
+	 * whose phrase is also some category's id could never reach a caller: the index inserts identity phrases first, the
+	 * sort is stable, and `matchPOISubject` reads `hits[0]` — so `drugstore → pharmacy` sat behind the `drugstore`
+	 * category for every en-US caller (#1933).
 	 */
 	function lookupPOICategory(text: string, locale?: string): CategoryMatch[] {
 		const norm = text.trim().toLowerCase()
@@ -112,11 +130,19 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 			const existing = best.get(entry.category.id)
 
 			if (!existing || existing.confidence < confidence) {
-				best.set(entry.category.id, { category: entry.category, matchedPhrase: entry.phrase, confidence })
+				best.set(entry.category.id, {
+					category: entry.category,
+					matchedPhrase: entry.phrase,
+					confidence,
+					phraseSource: entry.phraseSource,
+				})
 			}
 		}
 
-		return [...best.values()].toSorted((a, b) => b.confidence - a.confidence)
+		return [...best.values()].toSorted(
+			(a, b) =>
+				b.confidence - a.confidence || Number(b.phraseSource === "synonym") - Number(a.phraseSource === "synonym")
+		)
 	}
 
 	/**
@@ -147,7 +173,12 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 				const existing = best.get(entry.category.id)
 
 				if (!existing || existing.confidence < confidence) {
-					best.set(entry.category.id, { category: entry.category, matchedPhrase: entry.phrase, confidence })
+					best.set(entry.category.id, {
+						category: entry.category,
+						matchedPhrase: entry.phrase,
+						confidence,
+						phraseSource: entry.phraseSource,
+					})
 				}
 			}
 		}
@@ -195,6 +226,7 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 					category: entry.category,
 					matchedPhrase: entry.phrase,
 					confidence: 0.82,
+					phraseSource: entry.phraseSource,
 				})
 			}
 		}

@@ -200,8 +200,31 @@ describe("full Overture snapshot + curated overlay", () => {
 
 		// `credit union` is special: Overture keeps a standalone `credit_union` category (its own id-phrase), and the
 		// curated `bank` record absorbs the SEPARATE `bank_credit_union` leaf. The added synonym maps the phrase onto
-		// bank too, so it now yields both — the specific standalone category first, then the curated bank rollup.
-		expect(lookupPOICategory("credit union").map((m) => m.category.id)).toEqual(["credit_union", "bank"])
+		// bank too, so it yields both — the curated redirect first (#1933 precedence), then the standalone category.
+		expect(lookupPOICategory("credit union").map((m) => m.category.id)).toEqual(["bank", "credit_union"])
+	})
+
+	// Eight of the 55 curated synonyms spell a phrase that is also some category's id or label. Four of those redirect
+	// somewhere else, and before the tie-break none of the four could reach a caller: the identity phrase was inserted
+	// first, the sort was stable, and `matchPOISubject` reads `hits[0]`. The other four collide with their own label and
+	// are unaffected either way.
+	it("lets a curated synonym outrank a category whose id spells the same phrase (#1933)", () => {
+		expect(lookupPOICategory("drugstore", "en-US").map((m) => [m.category.id, m.phraseSource])).toEqual([
+			["pharmacy", "synonym"],
+			["drugstore", "identity"],
+		])
+
+		// The `drugstore → pharmacy` row is scoped to en-US; elsewhere the phrase means the category it names.
+		expect(lookupPOICategory("drugstore", "en-GB")[0]?.category.id).toBe("drugstore")
+		expect(lookupPOICategory("drugstore")[0]?.category.id).toBe("drugstore")
+
+		// The three ungated redirects flip everywhere.
+		expect(lookupPOICategory("motel")[0]?.category.id).toBe("hotel")
+		expect(lookupPOICategory("emergency room")[0]?.category.id).toBe("hospital")
+		expect(lookupPOICategory("credit union")[0]?.category.id).toBe("bank")
+
+		// A synonym colliding with its own category's label is one category, reported once.
+		expect(lookupPOICategory("fire hydrant").map((m) => m.category.id)).toEqual(["fire_hydrant"])
 	})
 
 	it("regenerates deterministically and matches the committed table by content", async () => {
