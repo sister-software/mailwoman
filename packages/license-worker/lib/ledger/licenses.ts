@@ -180,3 +180,11 @@ export async function tokensWithFailedEmail(ledger: Ledger): Promise<LicenseToke
 export async function findLicenseByCheckoutSession(ledger: Ledger, sessionID: string): Promise<LicenseRow | undefined> {
 	return ledger.selectFrom("licenses").selectAll().where("checkout_session_id", "=", sessionID).executeTakeFirst()
 }
+
+/**
+ * Every license, for the reconciliation pass. The table holds one row per customer, so the pass reads it whole rather
+ * than asking Stripe what changed, which its subscription list cannot answer.
+ */
+export async function allLicenses(ledger: Ledger): Promise<LicenseRow[]> {
+	return ledger.selectFrom("licenses").selectAll().orderBy("created_at", "asc").execute()
+}

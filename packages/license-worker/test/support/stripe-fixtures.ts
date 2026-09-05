@@ -195,3 +195,20 @@ export function invoicePaymentList(init: { invoiceID: string; paymentIntentID: s
 		],
 	}
 }
+
+/**
+ * The dispute list for one PaymentIntent, as the reconciliation pass asks for it.
+ */
+export function disputeList(disputes: Array<{ id: string; paymentIntentID: string; status: string }>) {
+	return {
+		object: "list",
+		url: "/v1/disputes",
+		has_more: false,
+		data: disputes.map((dispute) => ({
+			id: dispute.id,
+			object: "dispute",
+			payment_intent: dispute.paymentIntentID,
+			status: dispute.status,
+		})),
+	}
+}

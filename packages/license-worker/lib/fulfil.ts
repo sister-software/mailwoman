@@ -25,7 +25,7 @@ import {
 	setEmailState,
 	setPlanCode,
 } from "#ledger/licenses"
-import type { LicenseRow } from "#ledger/schema"
+import type { EmailState, LicenseRow, LicenseTokenRow } from "#ledger/schema"
 import { planForPrice } from "#plans"
 
 export interface FulfilDependencies {
@@ -231,24 +231,41 @@ export async function fulfilInvoice(
 		token,
 	})
 
+	await sendTokenEmail(deps, license, { invoice_id: invoiceID, token, issued, expires })
+
+	return { outcome: "minted", lid: license.lid, invoiceID }
+}
+
+/**
+ * Send a token to its licensee under the invoice id and record the outcome. The refresh secret rides along while it is
+ * still pending, so a re-send after a failed first attempt carries what the first would have. A provider failure is
+ * recorded as `failed` for the reconciliation pass; it never fails the mint.
+ */
+export async function sendTokenEmail(
+	deps: Pick<FulfilDependencies, "ledger" | "email">,
+	license: LicenseRow,
+	token: Pick<LicenseTokenRow, "invoice_id" | "token" | "issued" | "expires">
+): Promise<EmailState> {
 	try {
 		const { messageID } = await deps.email.send(
 			{
 				to: license.email,
 				licensee: license.licensee,
-				token,
+				token: token.token,
 				lid: license.lid,
-				issued,
-				expires,
+				issued: token.issued,
+				expires: token.expires,
 				...(license.refresh_secret_pending ? { refreshSecret: license.refresh_secret_pending } : {}),
 			},
-			invoiceID
+			token.invoice_id
 		)
 
-		await setEmailState(deps.ledger, invoiceID, "sent", messageID)
-	} catch {
-		await setEmailState(deps.ledger, invoiceID, "failed")
-	}
+		await setEmailState(deps.ledger, token.invoice_id, "sent", messageID)
 
-	return { outcome: "minted", lid: license.lid, invoiceID }
+		return "sent"
+	} catch {
+		await setEmailState(deps.ledger, token.invoice_id, "failed")
+
+		return "failed"
+	}
 }

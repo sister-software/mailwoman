@@ -14,10 +14,18 @@ import { type AppDependencies, createLicenseWorkerApp } from "#app"
 import { resendProvider } from "#email/resend"
 import { type LicenseWorkerBindings, type LicenseWorkerEnv, readEnv } from "#env"
 import { openLedger } from "#ledger/client"
+import { reconcile } from "#reconcile"
 import type { SigningStatusReport } from "#routes/health"
 import { type SigningSelfTest, signingSelfTest } from "#signing"
+import { stripeClient } from "#stripe/client"
 
 const MISCONFIGURED = JSON.stringify({ error: "worker misconfigured" })
+
+/**
+ * How far back each reconciliation pass lists paid invoices: a week, against a six-hour cron, so a pass that fails
+ * leaves nothing unminted before the next one.
+ */
+const RECONCILE_WINDOW_SECONDS = 7 * 24 * 3600
 
 interface IsolateState {
 	deps: AppDependencies
@@ -76,6 +84,27 @@ const handler: ExportedHandler<LicenseWorkerBindings> = {
 		await state.selfTest
 
 		return createLicenseWorkerApp(env, state.deps).fetch(request as never) as never
+	},
+
+	async scheduled(_controller, bindings, ctx) {
+		const env = readEnv(bindings)
+		const state = isolateState(env)
+		const selfTest = await state.selfTest
+
+		// A worker that would refuse to mint over HTTP refuses to mint on a schedule too; the report says why.
+		if (selfTest.status !== "ok") {
+			console.error(JSON.stringify({ reconcile: "skipped", reason: selfTest.reason }))
+
+			return
+		}
+
+		ctx.waitUntil(
+			reconcile(
+				env,
+				{ stripe: stripeClient(env), ledger: state.deps.ledger, email: state.deps.email },
+				{ sinceSeconds: RECONCILE_WINDOW_SECONDS }
+			).then((report) => console.log(JSON.stringify({ reconcile: report })))
+		)
 	},
 }
 

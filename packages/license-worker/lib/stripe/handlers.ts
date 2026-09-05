@@ -48,6 +48,23 @@ async function invoiceIDForCharge(stripe: Stripe, charge: Stripe.Charge): Promis
 	return idOf(payments.data[0]?.invoice)
 }
 
+/**
+ * What a subscription's current state says the license state should be. A revoked license stays revoked whatever the
+ * subscription does; a `review` license stays under review; otherwise a subscription that has ended lapses the license
+ * and any other status keeps it active.
+ */
+export function licenseStateFromSubscription(
+	current: LicenseState,
+	subscription: Pick<Stripe.Subscription, "status">,
+	options: { deleted?: boolean } = {}
+): LicenseState {
+	if (current === LicenseState.Revoked || current === LicenseState.Review) return current
+
+	const ended = options.deleted === true || subscription.status === "canceled" || subscription.status === "unpaid"
+
+	return ended ? LicenseState.Lapsed : LicenseState.Active
+}
+
 export async function handleStripeEvent(
 	env: LicenseWorkerEnv,
 	deps: FulfilDependencies,
@@ -88,18 +105,9 @@ export async function handleStripeEvent(
 
 			if (!license) return { handled: "no license for subscription" }
 
-			const ended =
-				event.type === "customer.subscription.deleted" ||
-				subscription.status === "canceled" ||
-				subscription.status === "unpaid"
-
-			// A revoked license stays revoked whatever the subscription does; otherwise the subscription decides.
-			const next =
-				license.license_state === LicenseState.Revoked
-					? LicenseState.Revoked
-					: ended
-						? LicenseState.Lapsed
-						: LicenseState.Active
+			const next = licenseStateFromSubscription(license.license_state, subscription, {
+				deleted: event.type === "customer.subscription.deleted",
+			})
 
 			await setLicenseState(deps.ledger, license.lid, next, { subscriptionState: subscription.status })
 
