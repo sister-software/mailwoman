@@ -833,6 +833,7 @@ jobs:
               # --- Smoke operation + packaging pipeline (release-kit owns both) ---
               - 'packages/release-kit/**'
               - 'packages/ops-cli/**'
+              - 'packages/release-mcp/**'
               # --- Root config that affects packaging ---
               - 'package.json'
               - 'tsconfig.json'

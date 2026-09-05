@@ -241,9 +241,12 @@ git's fnmatch reads `**` as two stars, so `scripts/**/*.ts` needed a directory b
 once it ran, refused 2 of 58 packages for manifest entries whose targets had moved (§5's plan → execute would
 have stopped there; #2141 and #2147 make that a PR-time check).
 
-Not done: step 4, the `release-mcp` adapter. The registry and `mwops` are the only views today. Its tool contract —
-which operations it exposes and how `release_publish({planDigest})` is authorized — is the operator's decision before
-it is built (decision 2, still open on the `bin`-of-`release-kit` question, decides its packaging too).
+Step 4, the `release-mcp` adapter, landed 2026-09-05 as `packages/release-mcp` (private): one tool per registered
+operation, named after its id, the declared `effect` opening every description, `dry_run` threaded on the writers, and a
+`release_operations` tool listing the whole registry. The operator's contract decision: the two `external-write`
+operations are OFF the tool list by default and appear only when the server starts with `--allow-external-write`; they
+then still run the plan → execute contract the operations enforce. Packaging follows `ops-cli` (its own private
+workspace with a `bin`), which settles decision 2's `bin` question for the MCP view; `release-kit` itself stays bin-less.
 
 Decision 4 is now enforced rather than stated: `no-root-scripts` refuses a workflow or `package.json` target that runs a
 bare `lib/*.ts` path, with `packages/ops-cli/lib/cli.ts` as the one named exemption.

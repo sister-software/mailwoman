@@ -34,6 +34,7 @@
 		"packages/release-kit",
 		"packages/repo-health",
 		"packages/ops-cli",
+		"packages/release-mcp",
 		"packages/fastify",
 		"packages/filer",
 		"packages/flood",
