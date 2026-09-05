@@ -74,6 +74,7 @@ beforeAll(async () => {
 	// A BAN-shaped row for the bbox rung's contradiction case (#1913): Servon's `10 rue de la République`, whose own
 	// postcode and commune disagree with a `75008 Paris` query, sits inside a box drawn around Paris.
 	const republiqueKey = normalizeStreetForKey("Rue de la République")
+
 	insert.run(
 		republiqueKey,
 		republiqueKey,
@@ -87,6 +88,12 @@ beforeAll(async () => {
 		"ban:fr",
 		"r"
 	)
+
+	// Two villages under one DE postcode, both with a Teichstraße 3 (#1631): the postcode rung must not answer the other
+	// village's rooftop when the query names a locality.
+	const teichKey = normalizeStreetForKey("Teichstraße")
+	insert.run(teichKey, teichKey, "3", null, "04509", "werlitzsch", "Teichstraße", 51.4367, 12.1958, "osm", "r")
+	insert.run(teichKey, teichKey, "3", null, "04509", "krensitz", "Teichstraße", 51.52, 12.45, "osm", "r")
 	// An OSM-shaped row with NO scope of its own — the case the bbox rung exists for.
 	insert.run("mill lane", "mill lane", "7", null, null, null, "Mill Lane", 51.5, -0.1, "osm", "r")
 	lookup = new AddressPointSqliteLookup(path)
@@ -181,5 +188,24 @@ describe("the bbox fall-through's scope contradiction (#1913)", () => {
 
 		expect(lookup.find({ street: "Mill Lane", number: "7", locality: "London", bbox: londonBox })?.lat).toBe(51.5)
 		expect(lookup.find({ street: "Rue de la République", number: "10", postcode: "77170" })?.lat).toBe(48.718479)
+	})
+})
+
+describe("the postcode rung's locality contradiction (#1631)", () => {
+	it("answers the row whose locality agrees, whichever village the query names", () => {
+		expect(lookup.find({ street: "Teichstraße", number: "3", postcode: "04509", locality: "Krensitz" })?.lat).toBe(
+			51.52
+		)
+		expect(lookup.find({ street: "Teichstraße", number: "3", postcode: "04509", locality: "Werlitzsch" })?.lat).toBe(
+			51.4367
+		)
+	})
+
+	it("answers nothing when the query names a third place under the same postcode — admin is the better answer", () => {
+		expect(lookup.find({ street: "Teichstraße", number: "3", postcode: "04509", locality: "Schönwölkau" })).toBeNull()
+	})
+
+	it("keeps answering by postcode alone when the query names no locality", () => {
+		expect(lookup.find({ street: "Teichstraße", number: "3", postcode: "04509" })).not.toBeNull()
 	})
 })

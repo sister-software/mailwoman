@@ -188,7 +188,12 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		let row: AddressPointRow | undefined
 
 		if (query.postcode) {
-			row = this.#byPostcode!(query.postcode.trim(), streetNorm, number)
+			const candidate = this.#byPostcode!(query.postcode.trim(), streetNorm, number)
+
+			// A postcode can span several places — DE 04509 covers Schönwölkau and Werlitzsch, both with a Teichstraße 3 —
+			// so a row whose own locality names a different place than the query did is a different address that shares
+			// the postcode, and it falls through to the locality rung rather than answering at rooftop tier.
+			row = candidate && !this.#scopeContradicts(candidate, query) ? candidate : undefined
 		}
 
 		if (!row && query.locality) {
@@ -220,8 +225,9 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	}
 
 	/**
-	 * Whether a bbox-rung row's OWN postcode or locality names a different place than the query did. Absent scope on the
-	 * row is not a contradiction — it is the case the rung was built for.
+	 * Whether a row's OWN postcode or locality names a different place than the query did. Absent scope on the row is not
+	 * a contradiction — it is the case the bbox rung was built for — and a rung that matched ON a field cannot contradict
+	 * it, so at the postcode rung only the locality can disagree and at the bbox rung either can.
 	 */
 	#scopeContradicts(row: AddressPointRow, query: { postcode?: string; locality?: string }): boolean {
 		if (query.postcode && row.postcode && row.postcode.trim() !== query.postcode.trim()) return true
