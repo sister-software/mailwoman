@@ -3,6 +3,40 @@
 	"version": "7.0.0",
 	"locale": "en-IN",
 	"license": "AGPL-3.0",
+	"requires": {
+		"$comment": "Copy of the base card's requires block — same trained ship-config, same fail-closed contract via createScorer. This overlay shares the base model.onnx byte-for-byte, so the channels it was trained against are the base's; keep in lockstep with neural-weights-en-us/model-card.json on every base ship. Without this block the loader inferred the channels from the ONNX graph and resolved the evidence lexicons by legacy filename, which fed street_type by guess and left locality_surface OFF (v6 sought, v7 shipped); a consumer of the published tarball, which carried no lexicon at all, ran gazetteer, country and both evidence channels OFF against a model trained with them (#1668, #2115). Measured before shipping: locality_surface ON vs OFF, 0 of 49 board rows differ (DE 12, ES 25, IT 12).",
+		"anchor": {
+			"required": true,
+			"span_mode": "shaped",
+			"$comment": "span_mode 'shaped' is the 9.0.0 SHIP OBLIGATION (recipe header + ROAD_TO_V9 A2): the train painter keys postcodes as shape-detected spans, space-stripped upper ('SW1A 2AA' → 'SW1A2AA'); the default alnum-run scan can NEVER produce that key, so omitting this leaves GB/NL postcodes unanchored at serve — the mirror image of #1467. createScorer fails closed on a shaped-declaring card paired with an artifact whose keys the scan cannot reach."
+		},
+		"gazetteer": {
+			"required": true
+		},
+		"country": {
+			"required": true
+		},
+		"conventions": {
+			"required": true,
+			"mode": "auto"
+		},
+		"bridge": {
+			"required": false
+		},
+		"suppress_gazetteer_near_postcode": true,
+		"street_type": {
+			"required": true,
+			"feature_dim": 1,
+			"slots": ["street_type"],
+			"lexicon": "street-type-lexicon-v3.json"
+		},
+		"locality_surface": {
+			"required": true,
+			"feature_dim": 2,
+			"slots": ["locality", "locality_homograph"],
+			"lexicon": "locality-surface-lexicon-v7.json"
+		}
+	},
 	"$comment": "Data-only overlay. Shares model.onnx + tokenizer.model with @mailwoman/neural-weights-en-us via mailwoman.baseWeights — this package ships ONLY the IN placetype-pair index.",
 	"in_artifacts": {
 		"$comment": "Hierarchy campaign R10 (2026-08-02). The Indian instance of the dependent-locality prior.",
@@ -11,7 +45,7 @@
 			"source": "Who's On First admin hierarchy. India Post routes house/street, area, city, state, PIN — the AREA line is the dependent-locality slot, and it is written on essentially every Indian address.",
 			"pairs": 176092,
 			"bytes": 4519038,
-			"$comment_pix2": "PIX2 (schema 3, 2026-08-04): every record now carries the PARENT's ComponentTag alongside the child's \u2014 +1 byte per pair, pair COUNT unchanged. The recorded parent tag is the WOF parent ROW's placetype projected through PLACETYPE_PROJECTION, so a locality/localadmin parent reads `locality` and a borough parent reads `dependent_locality`. This artifact deliberately ships WITHOUT a `parentDelta`: no board has graded the parent side for this locale, and the D-rule's answer to an unmeasured locale is a per-locale check rather than a magnitude inherited from us/gb/nz/fr. Absent means the parent bias is OFF here, not zero.",
+			"$comment_pix2": "PIX2 (schema 3, 2026-08-04): every record now carries the PARENT's ComponentTag alongside the child's — +1 byte per pair, pair COUNT unchanged. The recorded parent tag is the WOF parent ROW's placetype projected through PLACETYPE_PROJECTION, so a locality/localadmin parent reads `locality` and a borough parent reads `dependent_locality`. This artifact deliberately ships WITHOUT a `parentDelta`: no board has graded the parent side for this locale, and the D-rule's answer to an unmeasured locale is a per-locale check rather than a magnitude inherited from us/gb/nz/fr. Absent means the parent bias is OFF here, not zero.",
 			"delta_calibration": "δ=10, transitionBeta=5 — inherited from GB per R5's uniform-deficit finding.",
 			"country_check": "hard-blocked on the header's country (in).",
 			"parent_alias_expansion": "ENABLED. WOF stores Bangalore; an address today says Bengaluru (renamed 2014, an `eng` VARIANT). Aliases are drawn from names whose language is OFFICIAL for the country (codex isOfficialLanguage) plus English, and must be LATIN-SCRIPT: India has 22 official languages and WOF carries Devanagari, Tamil and Bengali forms this Latin model never sees. Widening from eng-only to official-languages+Latin at R11 moved the count 175744 → 176086; the 2026-08-04 admin rebuild (ancestry backfill, #1447) moved it 176086 → 176092.",

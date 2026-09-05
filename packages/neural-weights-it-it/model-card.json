@@ -3,6 +3,40 @@
 	"version": "7.0.0",
 	"locale": "it-IT",
 	"license": "AGPL-3.0",
+	"requires": {
+		"$comment": "Copy of the base card's requires block — same trained ship-config, same fail-closed contract via createScorer. This overlay shares the base model.onnx byte-for-byte, so the channels it was trained against are the base's; keep in lockstep with neural-weights-en-us/model-card.json on every base ship. Without this block the loader inferred the channels from the ONNX graph and resolved the evidence lexicons by legacy filename, which fed street_type by guess and left locality_surface OFF (v6 sought, v7 shipped); a consumer of the published tarball, which carried no lexicon at all, ran gazetteer, country and both evidence channels OFF against a model trained with them (#1668, #2115). Measured before shipping: locality_surface ON vs OFF, 0 of 49 board rows differ (DE 12, ES 25, IT 12).",
+		"anchor": {
+			"required": true,
+			"span_mode": "shaped",
+			"$comment": "span_mode 'shaped' is the 9.0.0 SHIP OBLIGATION (recipe header + ROAD_TO_V9 A2): the train painter keys postcodes as shape-detected spans, space-stripped upper ('SW1A 2AA' → 'SW1A2AA'); the default alnum-run scan can NEVER produce that key, so omitting this leaves GB/NL postcodes unanchored at serve — the mirror image of #1467. createScorer fails closed on a shaped-declaring card paired with an artifact whose keys the scan cannot reach."
+		},
+		"gazetteer": {
+			"required": true
+		},
+		"country": {
+			"required": true
+		},
+		"conventions": {
+			"required": true,
+			"mode": "auto"
+		},
+		"bridge": {
+			"required": false
+		},
+		"suppress_gazetteer_near_postcode": true,
+		"street_type": {
+			"required": true,
+			"feature_dim": 1,
+			"slots": ["street_type"],
+			"lexicon": "street-type-lexicon-v3.json"
+		},
+		"locality_surface": {
+			"required": true,
+			"feature_dim": 2,
+			"slots": ["locality", "locality_homograph"],
+			"lexicon": "locality-surface-lexicon-v7.json"
+		}
+	},
 	"$comment": "Data-only overlay. Shares model.onnx + tokenizer.model with en-us via mailwoman.baseWeights.",
 	"files": {
 		"model_card": "model-card.json",
@@ -11,16 +45,16 @@
 	"it_artifacts": {
 		"$comment": "Hierarchy campaign R11 (2026-08-02). The Italian instance of the dependent-locality prior.",
 		"pair_index_it_bin": {
-			"format": "PIX1 placetype-pair index \u2014 a retrieval-augmented (quartiere, comune) dependent_locality prior, e.g. (\"Trastevere\", \"Roma\")",
-			"source": "Who's On First admin hierarchy. No postal register carries the sub-city line for this country, so WOF is the source \u2014 the same call the US, DE and IN instances made.",
+			"format": "PIX1 placetype-pair index — a retrieval-augmented (quartiere, comune) dependent_locality prior, e.g. (\"Trastevere\", \"Roma\")",
+			"source": "Who's On First admin hierarchy. No postal register carries the sub-city line for this country, so WOF is the source — the same call the US, DE and IN instances made.",
 			"pairs": 4026,
 			"bytes": 107845,
-			"$comment_pix2": "PIX2 (schema 3, 2026-08-04): every record now carries the PARENT's ComponentTag alongside the child's \u2014 +1 byte per pair, pair COUNT unchanged. The recorded parent tag is the WOF parent ROW's placetype projected through PLACETYPE_PROJECTION, so a locality/localadmin parent reads `locality` and a borough parent reads `dependent_locality`. This artifact deliberately ships WITHOUT a `parentDelta`: no board has graded the parent side for this locale, and the D-rule's answer to an unmeasured locale is a per-locale check rather than a magnitude inherited from us/gb/nz/fr. Absent means the parent bias is OFF here, not zero.",
-			"delta_calibration": "\u03b4=10, transitionBeta=5 \u2014 inherited from GB per R5's uniform-deficit finding.",
+			"$comment_pix2": "PIX2 (schema 3, 2026-08-04): every record now carries the PARENT's ComponentTag alongside the child's — +1 byte per pair, pair COUNT unchanged. The recorded parent tag is the WOF parent ROW's placetype projected through PLACETYPE_PROJECTION, so a locality/localadmin parent reads `locality` and a borough parent reads `dependent_locality`. This artifact deliberately ships WITHOUT a `parentDelta`: no board has graded the parent side for this locale, and the D-rule's answer to an unmeasured locale is a per-locale check rather than a magnitude inherited from us/gb/nz/fr. Absent means the parent bias is OFF here, not zero.",
+			"delta_calibration": "δ=10, transitionBeta=5 — inherited from GB per R5's uniform-deficit finding.",
 			"country_check": "hard-blocked on the header's country (it).",
-			"requires_leading_postcode_strip": "INERT without the `it` entries in SEGMENT_PARENT_POSTCODE_SHAPES and LEADING_POSTCODE_COUNTRIES (neural/placetype-pair-prior.ts) \u2014 Italian addresses write the postcode first.",
-			"parent_alias_expansion": "ENABLED. WOF stores `Rome` (its English preferred name) for a city Italians write `Roma`, carried as the `ita` preferred name. Aliases are drawn from names whose language is OFFICIAL for the country (codex isOfficialLanguage) plus English, and must be LATIN-SCRIPT \u2014 the model never sees other scripts.",
-			"not_committed": "derived artifact, .gitignore'd \u2014 rebuilt via `mailwoman gazetteer pair-index --out neural-weights-it-it --country it --delta 10 --transition-beta 5 --borough-db <wof/admin-global-priority.db>`"
+			"requires_leading_postcode_strip": "INERT without the `it` entries in SEGMENT_PARENT_POSTCODE_SHAPES and LEADING_POSTCODE_COUNTRIES (neural/placetype-pair-prior.ts) — Italian addresses write the postcode first.",
+			"parent_alias_expansion": "ENABLED. WOF stores `Rome` (its English preferred name) for a city Italians write `Roma`, carried as the `ita` preferred name. Aliases are drawn from names whose language is OFFICIAL for the country (codex isOfficialLanguage) plus English, and must be LATIN-SCRIPT — the model never sees other scripts.",
+			"not_committed": "derived artifact, .gitignore'd — rebuilt via `mailwoman gazetteer pair-index --out neural-weights-it-it --country it --delta 10 --transition-beta 5 --borough-db <wof/admin-global-priority.db>`"
 		}
 	}
 }

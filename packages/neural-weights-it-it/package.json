@@ -11,6 +11,10 @@
 	"files": [
 		"model-card.json",
 		"pair-index-it.bin",
+		"anchor-lexicon-v1.json",
+		"locality-surface-lexicon-v7.json",
+		"street-type-lexicon-v3.json",
+		"country-surface-lexicon-v1.json",
 		"README.md",
 		"*.ts",
 		"**/*.ts",
