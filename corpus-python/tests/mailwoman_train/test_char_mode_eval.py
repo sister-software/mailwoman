@@ -72,3 +72,18 @@ def test_eval_val_runs_without_a_tokenizer_on_the_char_path(tmp_path: Path) -> N
     assert metrics["val_rows"] == len(ROWS)
     assert "macro_f1" in metrics
     assert metrics["val_loss"] == metrics["val_loss"]  # not NaN
+
+
+def test_eval_csv_row_has_one_cell_per_label_set_tag() -> None:
+    from mailwoman_train.labels import resolve_label_set
+    from mailwoman_train.train import eval_csv_row
+
+    tags = resolve_label_set("stage3-cjk").tags
+    header = ["step", "wall_seconds", "train_loss", "lr", "val_loss", "val_macro_f1", *(f"f1.{t}" for t in tags)]
+    val = {"val_loss": 0.7, "macro_f1": 0.99, "support_tag.locality_unit": 3, "f1_tag.locality_unit": 0.5}
+    row = eval_csv_row(2000, 412.0, val, tags)
+
+    assert len(row) == len(header)
+    assert row[header.index("f1.locality_unit")] == "0.500000"
+    # No support → an empty cell, never a zero that reads as a model failure.
+    assert row[header.index("f1.prefecture")] == ""

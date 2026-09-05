@@ -23,6 +23,7 @@ import math
 import random
 import shutil
 import time
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any, cast
@@ -33,7 +34,7 @@ from torch.optim.lr_scheduler import LambdaLR
 
 from .config import Config, csv_log_path
 from .data_loader import IGNORE_INDEX, iter_batches, verify_tokenizer_alignment
-from .labels import ACTIVE_BIO_LABELS, ACTIVE_TAGS, ID_TO_LOCALE, LABEL_TO_ID
+from .labels import ACTIVE_BIO_LABELS, ID_TO_LOCALE, LABEL_TO_ID
 from .model import build_model, force_math_sdpa, model_param_count
 from .tokenizer import Tokenizer
 
@@ -506,6 +507,28 @@ def _cross_pollution(
             if int((start & sel).sum()) > 0:
                 out[f"cross_pollution.{ID_TO_LOCALE[lid]}"] = _rate(start & sel, polluted & sel)
     return out
+
+
+def eval_csv_row(step: int, elapsed: float, val: Mapping[str, float], tags: Sequence[str]) -> list[str | int]:
+    """The train_log.csv eval row, one `f1.<tag>` cell per tag of the ACTIVE LABEL SET.
+
+    The header is written from the run's label set, so the row must be too: a row built from the
+    default 16-tag list against a 35-tag ``stage3-cjk`` header left every JP fine tag and
+    ``locality_unit`` unreadable and shifted the cells that were present under the wrong names. A tag
+    with no val support writes an empty cell so a chart draws a gap, not a zero.
+    """
+    cells: list[str | int] = [
+        step,
+        f"{elapsed:.1f}",
+        "",
+        "",
+        f"{val.get('val_loss', float('nan')):.6f}",
+        f"{val.get('macro_f1', 0.0):.6f}",
+    ]
+    for tag in tags:
+        supported = int(val.get(f"support_tag.{tag}", 0)) > 0
+        cells.append(f"{val.get(f'f1_tag.{tag}', 0.0):.6f}" if supported else "")
+    return cells
 
 
 @torch.no_grad()
@@ -1033,21 +1056,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                     elapsed = time.time() - started
                     # CSV: per-tag F1, but a blank cell ("") for tags with no val support so readers
                     # see NaN rather than a misleading 0.0.
-                    tag_f1_values = [
-                        (f"{val.get(f'f1_tag.{tag}', 0.0):.6f}" if int(val.get(f"support_tag.{tag}", 0)) > 0 else "")
-                        for tag in ACTIVE_TAGS
-                    ]
-                    csv_writer.writerow(
-                        [
-                            step,
-                            f"{elapsed:.1f}",
-                            "",
-                            "",
-                            f"{val.get('val_loss', float('nan')):.6f}",
-                            f"{val.get('macro_f1', 0.0):.6f}",
-                            *tag_f1_values,
-                        ]
-                    )
+                    csv_writer.writerow(eval_csv_row(step, elapsed, val, _label_set.tags))
                     csv_fh.flush()
                     eval_metrics: dict[str, float] = {
                         "val_loss": float(val.get("val_loss", float("nan"))),
@@ -1060,7 +1069,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                     # OMIT `f1.<tag>` when support is 0 so the dashboard draws a gap, not a flat-zero
                     # line that reads as a model failure.
                     tags_with_support = 0
-                    for tag in ACTIVE_TAGS:
+                    for tag in _label_set.tags:
                         sup = int(val.get(f"support_tag.{tag}", 0))
                         eval_metrics[f"support.{tag}"] = sup
                         if sup > 0:
