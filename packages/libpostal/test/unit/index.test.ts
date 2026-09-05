@@ -5,6 +5,7 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import type { EngineStamp } from "@mailwoman/core/license"
 import {
 	COMPONENT_TO_LIBPOSTAL,
 	createLibpostalApp,
@@ -360,4 +361,31 @@ test("COMPONENT_TO_LIBPOSTAL: plan-2 additions", () => {
 	expect(COMPONENT_TO_LIBPOSTAL.subregion).toBe("state_district")
 	expect(COMPONENT_TO_LIBPOSTAL.intersection_a).toBe("road")
 	expect(COMPONENT_TO_LIBPOSTAL.intersection_b).toBe("road")
+})
+
+// MARK: engine stamp
+
+const stamp: EngineStamp = {
+	name: "mailwoman",
+	version: "9.2.0",
+	license: "AGPL-3.0-only",
+	license_url: "https://mailwoman.ai/license",
+	notice: "n",
+}
+
+test("engine option: headers only — the /parse body is byte-identical with and without it", async () => {
+	const request = (app: ReturnType<typeof createLibpostalApp>) =>
+		app.request("/parse", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ query: "1600 pennsylvania ave" }),
+		})
+
+	const stamped = await request(createLibpostalApp(fixtureEngine, { engine: stamp }))
+	const plain = await request(createLibpostalApp(fixtureEngine))
+
+	expect(stamped.headers.get("server")).toBe("mailwoman/9.2.0 (AGPL-3.0-only)")
+	expect(stamped.headers.get("link")).toBe('<https://mailwoman.ai/license>; rel="license"')
+	expect(plain.headers.get("server")).toBeNull()
+	expect(await stamped.text()).toBe(await plain.text())
 })
