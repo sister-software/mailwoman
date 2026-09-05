@@ -9,7 +9,8 @@
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
-import { asString, errorContent, legacyQuery } from "@mailwoman/api-kit"
+import { asString, errorContent, legacyQuery, withEngineStamp } from "@mailwoman/api-kit"
+import type { EngineStamp } from "@mailwoman/core/license"
 
 import type {
 	NominatimEngine,
@@ -187,7 +188,18 @@ const statusRoute = createRoute({
 /**
  * Register the Nominatim-compatible routes against an injected engine.
  */
-export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngine): void {
+export function registerNominatimRoutes(
+	app: OpenAPIHono,
+	engine: NominatimEngine,
+	options: { engine?: EngineStamp } = {}
+): void {
+	const stamp = options.engine
+
+	// jsonv2 answers a bare array by protocol, so the stamp rides on each result; the jsonld projection is schema.org
+	// vocabulary and takes no foreign key.
+	const stampEach = <T extends object>(results: readonly T[]) =>
+		stamp ? results.map((result) => ({ ...result, engine: stamp })) : results
+
 	app.openapi(rootRoute, (c) => c.html(ROOT_HTML))
 
 	app.openapi(searchRoute, async (c) => {
@@ -214,13 +226,13 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 		const results = await engine.search(params)
 
 		if (params.format === "geojson") {
-			return c.json(toFeatureCollection(results), 200)
+			return c.json(withEngineStamp(toFeatureCollection(results), stamp), 200)
 		} else if (params.format === "jsonld") {
 			// #1052: re-serialize the SAME results as schema.org `Place[]`; jsonv2 stays the default.
 			return c.json(results.map(nominatimResultToSchemaOrg), 200)
 		}
 
-		return c.json(results, 200)
+		return c.json(stampEach(results), 200)
 	})
 
 	app.openapi(reverseRoute, async (c) => {
@@ -250,13 +262,13 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 		const result = await engine.reverse(params)
 
 		if (params.format === "geojson") {
-			return c.json(toFeatureCollection(result ? [result] : []), 200)
+			return c.json(withEngineStamp(toFeatureCollection(result ? [result] : []), stamp), 200)
 		} else if (params.format === "jsonld") {
 			// #1052: a single reverse hit → one schema.org `Place` (or null when unresolved).
 			return c.json(result ? nominatimResultToSchemaOrg(result) : null, 200)
 		}
 
-		return c.json(result, 200)
+		return c.json(result ? withEngineStamp(result, stamp) : result, 200)
 	})
 
 	app.openapi(lookupRoute, async (c) => {
@@ -273,7 +285,10 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 
 		// NOTE: no jsonld branch here — a legacy quirk of the express handler, preserved verbatim. `format=jsonld`
 		// on `/lookup` falls through to the raw jsonv2 results, unlike `/search` and `/reverse`.
-		return c.json(params.format === "geojson" ? toFeatureCollection(results) : results, 200)
+		return c.json(
+			params.format === "geojson" ? withEngineStamp(toFeatureCollection(results), stamp) : stampEach(results),
+			200
+		)
 	})
 
 	app.openapi(statusRoute, async (c) => {

@@ -10,6 +10,7 @@
  */
 
 import { z } from "@hono/zod-openapi"
+import { EngineStampSchema } from "@mailwoman/api-kit"
 
 /**
  * The `addressdetails=1` breakdown — OSM-derived keys; tolerant of extras.
@@ -52,6 +53,7 @@ export const NominatimResultSchema = z
 		address: NominatimAddressDetailsSchema.optional(),
 		geojson: z.unknown().optional(),
 		annotations: z.looseObject({}).optional(),
+		engine: EngineStampSchema.optional(),
 	})
 	.loose()
 	.openapi("NominatimResult")
@@ -82,6 +84,7 @@ const NominatimFeatureSchema = z.object({
 export const NominatimFeatureCollectionSchema = z
 	.object({
 		type: z.literal("FeatureCollection"),
+		engine: EngineStampSchema.optional(),
 		features: z.array(NominatimFeatureSchema),
 	})
 	.openapi("NominatimFeatureCollection")
