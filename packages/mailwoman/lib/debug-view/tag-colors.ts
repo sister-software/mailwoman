@@ -43,6 +43,8 @@ const TAG_COLORS: Partial<Record<ComponentTag, string>> = {
 	sub_block: "#57606a",
 	building_number: "#1f6feb",
 	building_name: "#bc4c00",
+	// CN organizational chain — the admin family it sits below
+	locality_unit: "#bf8700",
 }
 
 /**

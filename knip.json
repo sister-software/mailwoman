@@ -85,6 +85,9 @@
 		},
 		"packages/ops-cli": {
 			"entry": ["lib/index.ts", "lib/cli.ts"]
+		},
+		"packages/release-mcp": {
+			"entry": ["lib/index.ts", "lib/cli.ts"]
 		}
 	}
 }

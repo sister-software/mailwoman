@@ -76,3 +76,45 @@ export function whitespaceTokenizer(): Tokenizer {
 		},
 	}
 }
+
+/**
+ * Han characters, the script CJK addresses are written in and the one the whitespace tokenizer cannot split: a run like
+ * `三分场八队` is one "word" to `\p{L}+`, so the aligner could give it one label and never two.
+ */
+const HAN = /\p{Script=Han}/u
+
+/**
+ * Whitespace tokenizer for Latin runs, ONE TOKEN PER CHARACTER for Han runs.
+ *
+ * The CJK sibling model is character-level (CharCNN), so a per-character token is the unit it labels; the Latin tail of
+ * a mixed row (`赵光三分场二十九队, Heilongjiang, China`) keeps the word tokens the Latin aligner has always used. Spans still
+ * come back as `[start, end)` offsets over the source string, so the aligner's span-overlap rule needs no change.
+ */
+export function cjkAwareTokenizer(): Tokenizer {
+	const base = whitespaceTokenizer()
+
+	return {
+		tokenize(text: string): readonly TokenSpan[] {
+			const out: TokenSpan[] = []
+
+			for (const token of base.tokenize(text)) {
+				if (!HAN.test(token.text)) {
+					out.push(token)
+
+					continue
+				}
+
+				// A Han run may carry Latin letters or digits inside it (`3分场2队`); those stay glued to their neighbours
+				// only if they are Han too, so every code point of a Han-bearing token becomes its own token.
+				let offset = token.start
+
+				for (const codePoint of token.text) {
+					out.push({ text: codePoint, start: offset, end: offset + codePoint.length })
+					offset += codePoint.length
+				}
+			}
+
+			return out
+		},
+	}
+}

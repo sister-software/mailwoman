@@ -13,8 +13,10 @@ import pytest
 from mailwoman_train.char_tokenizer import build_char_vocab, encode_row_units
 from mailwoman_train.labels import (
     ACTIVE_BIO_LABELS,
+    CN_FINE_TAGS,
     JP_FINE_TAGS,
     STAGE3_BIO_LABELS,
+    STAGE3_CN_BIO_LABELS,
     STAGE3_JP_BIO_LABELS,
     STAGE3_TAGS,
     resolve_label_set,
@@ -33,6 +35,19 @@ def test_jp_set_is_stage3_plus_the_seven() -> None:
     # The shared prefix is ID-stable: every STAGE3 label keeps its STAGE3 id under the JP set.
     for i, label in enumerate(STAGE3_BIO_LABELS):
         assert JP.label_to_id[label] == i
+
+
+def test_cn_set_is_stage3_plus_locality_unit() -> None:
+    # #2034: one tag for the whole ordinal chain; the rung is read off the generic after decode.
+    cn = resolve_label_set("stage3-cn")
+    assert CN_FINE_TAGS == ("locality_unit",)
+    assert cn.tags == STAGE3_TAGS + CN_FINE_TAGS
+    assert len(cn.bio_labels) == 35
+    assert cn.bio_labels == STAGE3_CN_BIO_LABELS
+    for i, label in enumerate(STAGE3_BIO_LABELS):
+        assert cn.label_to_id[label] == i
+    assert cn.collapse_label("B-locality_unit") == "B-locality_unit"
+    assert DEFAULT.collapse_label("B-locality_unit") == "O"
 
 
 def test_unknown_set_raises() -> None:

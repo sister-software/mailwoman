@@ -154,6 +154,25 @@ STAGE3_JP_BIO_LABELS: Final[tuple[str, ...]] = (
     *(prefix + tag for tag in STAGE3_JP_TAGS for prefix in ("B-", "I-")),
 )
 
+# --- CN fine tags (#2034 — the organizational ladder) ---------------------------------
+#
+# ONE tag, ``locality_unit``, for the whole ordinal chain China's rural and state-farm addresses
+# carry below the named settlement (``三分场八队``: No. 3 sub-farm, No. 8 production team; the XPCC
+# ``一四三团十二连``; the villager group ``民权三组``). Which rung each generic names is a deterministic
+# reading of the suffix (``分场``/``大队``/``队``/``连``/``团``/``组``), done after decode by
+# ``@mailwoman/core``'s CN unit reader, so the label set does not grow with every ladder found
+# (five overlap in the coarse-placer census alone). The named head unit (``孟定农场``) is
+# ``dependent_locality``. Mirrors ``core/types/component.ts`` and SCHEMA.mdx. A CJK CHAR-model set
+# like ``stage3-jp``: the Latin model never trains on it.
+CN_FINE_TAGS: Final[tuple[str, ...]] = ("locality_unit",)
+
+STAGE3_CN_TAGS: Final[tuple[str, ...]] = STAGE3_TAGS + CN_FINE_TAGS
+
+STAGE3_CN_BIO_LABELS: Final[tuple[str, ...]] = (
+    "O",
+    *(prefix + tag for tag in STAGE3_CN_TAGS for prefix in ("B-", "I-")),
+)
+
 # --- Active set (points at the most-recent stage) ------------------------------------
 # Bump to STAGE3 when training with v0.6.0 corpus. Until then, STAGE2 is active so
 # existing v0.5.x models keep working. STAGE4 is DEFINED above but NOT active — its
@@ -197,6 +216,7 @@ class LabelSet:
 _LABEL_SETS: Final[dict[str, tuple[tuple[str, ...], tuple[str, ...]]]] = {
     "stage3": (STAGE3_TAGS, STAGE3_BIO_LABELS),
     "stage3-jp": (STAGE3_JP_TAGS, STAGE3_JP_BIO_LABELS),
+    "stage3-cn": (STAGE3_CN_TAGS, STAGE3_CN_BIO_LABELS),
     "stage4": (STAGE4_TAGS, STAGE4_BIO_LABELS),
 }
 

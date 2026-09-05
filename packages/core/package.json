@@ -436,6 +436,11 @@
 			"default": "./out/locale/registry.js",
 			"types": "./out/locale/registry.d.ts"
 		},
+		"./locale/zh-cn-units": {
+			"node": "./lib/locale/zh-cn-units.ts",
+			"default": "./out/locale/zh-cn-units.js",
+			"types": "./out/locale/zh-cn-units.d.ts"
+		},
 		"./pipeline/runtime-pipeline": {
 			"node": "./lib/pipeline/runtime-pipeline.ts",
 			"default": "./out/pipeline/runtime-pipeline.js",

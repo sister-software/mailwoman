@@ -46,7 +46,7 @@ afterAll(() => fixtures.disposeAsync())
  * relative addressing). Country dirs went 29 → 121 in the country-sweep batch, and 121 → 125 with this one (gh, mn, ne,
  * ng are new).
  */
-const CORPUS_SIZE = 653
+const CORPUS_SIZE = 674
 
 /**
  * `regressionCorpusHash` of the corpus.
@@ -227,7 +227,7 @@ const CORPUS_SIZE = 653
  * purpose. Every built `regression.db` carrying the old stamp is now stale and a runner will refuse to grade against it
  * until it is rebuilt — also by design, and the reason this is prose-only rather than bundled with a row change.
  */
-const CORPUS_HASH = "2e25d269643ecba7b873d6e5bd1e2d169644e71646305fcb3a2687e3b4b4488e"
+const CORPUS_HASH = "1c38abd24cbec92b1af2fde02357025490e590d3b05ecb3c9ab0e74c41aae2ab"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -248,7 +248,7 @@ const CORPUS_HASH = "2e25d269643ecba7b873d6e5bd1e2d169644e71646305fcb3a2687e3b4b
  * 11-row lexical-boundary adversarial board (`@580:7ff4bfccaa0e` → `@649:3df68a3c428a`), and for the Brest split plus
  * the Whitby cap-bound row (`@649:3df68a3c428a` → this).
  */
-const BOARD_ID = "gauntlet-regression@653:c39ab59eaebd"
+const BOARD_ID = "gauntlet-regression@674:49936be1d86a"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.

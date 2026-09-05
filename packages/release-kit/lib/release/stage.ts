@@ -41,6 +41,7 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 	"packages/release-kit": "private release-operation registry — never publishes",
 	"packages/repo-health": "private repository health registry — never publishes",
 	"packages/ops-cli": "private operator CLI (mwops) — never publishes",
+	"packages/release-mcp": "private maintainer MCP server over the release registry — never publishes",
 	"packages/osm": "public but held out of the release — ODbL counsel sign-off pending (packages/osm/README.md)",
 }
 
