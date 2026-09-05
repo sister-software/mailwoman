@@ -9,5 +9,10 @@
 	},
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [{ "path": "../core" }, { "path": "../release-kit" }, { "path": "../repo-health" }]
+	"references": [
+		{ "path": "../core" },
+		{ "path": "../release-kit" },
+		{ "path": "../repo-health" },
+		{ "path": "../license-worker" }
+	]
 }

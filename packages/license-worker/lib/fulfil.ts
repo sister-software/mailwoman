@@ -28,6 +28,7 @@ import {
 } from "#ledger/licenses"
 import type { EmailState, LicenseRow, LicenseTokenRow } from "#ledger/schema"
 import { planForPrice } from "#plans"
+import { AGREEMENT_METADATA_KEY, LICENSEE_FIELD_KEY } from "#shop/catalog"
 import { idOf, invoiceSubscriptionID, linePriceID } from "#stripe/shapes"
 
 export interface FulfilDependencies {
@@ -43,18 +44,6 @@ export interface FulfilDependencies {
 export type FulfilOutcome =
 	| { outcome: "minted" | "already_minted"; lid: string; invoiceID: string }
 	| { outcome: "refused"; reason: string }
-
-/**
- * The Payment Link's custom field that collects the licensee's legal name; the key is set on the Payment Link.
- */
-const LICENSEE_FIELD_KEY = "licensee_legal_name"
-
-/**
- * The Payment Link metadata key naming the agreement version the page presented, which Stripe copies onto the Checkout
- * Session. It is recorded on the license once and signed into every token for its life: the environment's
- * `AGREEMENT_VERSION` is what NEW purchases are expected to carry, never what an existing subscriber is moved to.
- */
-const AGREEMENT_METADATA_KEY = "agreement_version"
 
 /**
  * The license row for a Checkout Session: created on first sight with a fresh lid and refresh secret, read back after.
