@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The autocomplete ladder (#2154): every board row cut at every prefix boundary, each rung graded against the
+ * @file The autocomplete ladder (#2154): every board row truncated at every prefix boundary, each rung graded against the
  *   row's own truth, on two arms — the parse → resolve path today's Photon `/api` runs on a partial query, and the FST
  *   autocomplete tier. Four readings per row per arm: the FIRST-HIT rung (how many characters before the truth enters
  *   the top-k), STABILITY (once in, does it stay in on every later rung), LATENCY per rung-length band, and ABSTENTION
