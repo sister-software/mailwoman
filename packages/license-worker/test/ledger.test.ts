@@ -15,6 +15,7 @@ import {
 	insertToken,
 	recordEventOnce,
 	setLicenseState,
+	takePendingRefreshSecret,
 } from "#ledger/licenses"
 import { LicenseState } from "#ledger/schema"
 
@@ -101,5 +102,20 @@ test("state transitions write the license, subscription and payment states", asy
 		license_state: "revoked",
 		subscription_state: "canceled",
 		payment_state: "refunded",
+	})
+})
+
+test("the pending refresh secret is answered to exactly one taker, and the stored digest stays", async () => {
+	const ledger = openLedger(env.LICENSE_LEDGER)
+	const row = license("d")
+
+	await createLicense(ledger, row)
+
+	expect(await takePendingRefreshSecret(ledger, row.lid)).toBe("secret")
+	expect(await takePendingRefreshSecret(ledger, row.lid)).toBeUndefined()
+
+	expect(await findLicenseBySubscription(ledger, row.subscription_id)).toMatchObject({
+		refresh_secret_pending: null,
+		refresh_secret_sha256: "0".repeat(64),
 	})
 })

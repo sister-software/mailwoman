@@ -9,9 +9,15 @@ import { expect, test } from "vitest"
 
 import { createLicenseWorkerApp } from "#app"
 import { readEnv } from "#env"
+import { openLedger } from "#ledger/client"
 
 test("GET /health answers issuance, the environment's mode, and no-store", async () => {
-	const app = createLicenseWorkerApp(readEnv(env))
+	const app = createLicenseWorkerApp(readEnv(env), {
+		signingStatus: () => "unchecked",
+		ledger: openLedger(env.LICENSE_LEDGER),
+		email: { send: async () => ({ messageID: "msg_unused" }) },
+	})
+
 	const res = await app.request("/health")
 
 	expect(res.status).toBe(200)

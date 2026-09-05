@@ -32,6 +32,20 @@ export async function recordEventOnce(
 	return Number(result.numInsertedOrUpdatedRows ?? 0) > 0 ? "recorded" : "duplicate"
 }
 
+/**
+ * Whether a webhook event id has been acted on. Read before the handler runs; `recordEventOnce` writes after it
+ * succeeds.
+ */
+export async function eventRecorded(ledger: Ledger, eventID: string): Promise<boolean> {
+	const row = await ledger
+		.selectFrom("stripe_events")
+		.select("event_id")
+		.where("event_id", "=", eventID)
+		.executeTakeFirst()
+
+	return row !== undefined
+}
+
 export async function findLicenseBySubscription(
 	ledger: Ledger,
 	subscriptionID: string
@@ -74,18 +88,29 @@ export async function setLicenseState(
 }
 
 /**
- * Read and clear the plaintext refresh secret in one statement, so it is answered to exactly one claim.
+ * Read and clear the plaintext refresh secret so it is answered to exactly one claim. A read then a clear conditioned
+ * on the value read: two claims racing both read it, but only the one whose clear lands a row answers it. (`RETURNING`
+ * on the update alone would answer the cleared column, which is null.)
  */
 export async function takePendingRefreshSecret(ledger: Ledger, lid: string): Promise<string | undefined> {
 	const row = await ledger
+		.selectFrom("licenses")
+		.select("refresh_secret_pending")
+		.where("lid", "=", lid)
+		.executeTakeFirst()
+
+	const pending = row?.refresh_secret_pending
+
+	if (!pending) return undefined
+
+	const cleared = await ledger
 		.updateTable("licenses")
 		.set({ refresh_secret_pending: null, updated_at: nowISO() })
 		.where("lid", "=", lid)
-		.where("refresh_secret_pending", "is not", null)
-		.returning("refresh_secret_pending")
+		.where("refresh_secret_pending", "=", pending)
 		.executeTakeFirst()
 
-	return row?.refresh_secret_pending ?? undefined
+	return Number(cleared.numUpdatedRows ?? 0) > 0 ? pending : undefined
 }
 
 export async function findToken(ledger: Ledger, invoiceID: string): Promise<LicenseTokenRow | undefined> {

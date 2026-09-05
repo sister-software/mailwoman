@@ -23,6 +23,16 @@ export const LicenseState = {
 
 export type LicenseState = (typeof LicenseState)[keyof typeof LicenseState]
 
+export type PublicLicenseStatus = "active" | "lapsed" | "revoked"
+
+/**
+ * The word the public routes answer for a state. `review` reads `active`: the customer paid, and the question is the
+ * operator's.
+ */
+export function publicLicenseStatus(state: LicenseState): PublicLicenseStatus {
+	return state === LicenseState.Review ? LicenseState.Active : state
+}
+
 export type EmailState = "pending" | "sent" | "failed"
 
 export interface LicensesTable {

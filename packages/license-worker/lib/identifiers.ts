@@ -35,3 +35,19 @@ export async function secretDigest(text: string): Promise<string> {
 	// A copy, so the bytes sit on a plain ArrayBuffer, which is what the digest's signature admits.
 	return hexOf(await sha256Bytes(new Uint8Array(new TextEncoder().encode(text))))
 }
+
+/**
+ * Compare two hex digests in time that depends on their length alone: every byte is visited, and the verdict is folded
+ * in rather than returned early, so a wrong secret cannot be told from a wronger one by the clock.
+ */
+export function secretDigestsMatch(stored: string, candidate: string): boolean {
+	if (stored.length !== candidate.length) return false
+
+	let difference = 0
+
+	for (let index = 0; index < stored.length; index += 1) {
+		difference |= stored.charCodeAt(index) ^ candidate.charCodeAt(index)
+	}
+
+	return difference === 0
+}
