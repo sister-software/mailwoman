@@ -1736,13 +1736,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cloudflare/workers-types@npm:^5.20260905.1":
-  version: 5.20260905.1
-  resolution: "@cloudflare/workers-types@npm:5.20260905.1"
-  checksum: 10/abdc1a39ebbfeef4e5b1991ceb3fac0e67af8b912b7e53e404ca98d44cf1789a236afaddf1da3879f2fb9ae3b600af3ce434e192b34ff3ff33a43e59fba1bc76
-  languageName: node
-  linkType: hard
-
 "@colors/colors@npm:1.5.0":
   version: 1.5.0
   resolution: "@colors/colors@npm:1.5.0"
@@ -3799,20 +3792,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hono/zod-openapi@npm:^1.6.3":
-  version: 1.6.3
-  resolution: "@hono/zod-openapi@npm:1.6.3"
-  dependencies:
-    "@asteasolutions/zod-to-openapi": "npm:^9.1.0"
-    "@hono/zod-validator": "npm:^0.9.1"
-    openapi3-ts: "npm:^4.5.0"
-  peerDependencies:
-    hono: ">=4.10.0"
-    zod: ^4.0.0
-  checksum: 10/9204ddbdab85af0fc6fc4b78f2097cc04f76eafdd6766a3885e172eac540bb355831fab01f8fa0b1d8d6f89b2b41d1b54f22102fcbe79e9126a5eddf36d9b4d7
-  languageName: node
-  linkType: hard
-
 "@hono/zod-validator@npm:^0.9.1":
   version: 0.9.1
   resolution: "@hono/zod-validator@npm:0.9.1"
@@ -5124,10 +5103,10 @@ __metadata:
   resolution: "@mailwoman/license-worker@workspace:packages/license-worker"
   dependencies:
     "@cloudflare/vitest-pool-workers": "npm:^0.22.0"
-    "@cloudflare/workers-types": "npm:^5.20260905.1"
-    "@hono/zod-openapi": "npm:^1.6.3"
+    "@cloudflare/workers-types": "npm:^5.20260903.1"
+    "@hono/zod-openapi": "npm:^1.6.2"
     "@mailwoman/core": "workspace:*"
-    hono: "npm:^4.13.7"
+    hono: "npm:^4.13.5"
     kysely: "npm:^0.29.5"
     kysely-d1: "npm:^0.4.0"
     stripe: "npm:^22.6.1"
@@ -15207,13 +15186,6 @@ __metadata:
   version: 4.13.5
   resolution: "hono@npm:4.13.5"
   checksum: 10/a302e8d3a5329276ca436333e54679ef864e92e1b3fbd4db0d98cc56e71748622a1654103fcdf9ee866027b797255557e1ade05c8ceb866411603d74bf71bf43
-  languageName: node
-  linkType: hard
-
-"hono@npm:^4.13.7":
-  version: 4.13.7
-  resolution: "hono@npm:4.13.7"
-  checksum: 10/0f7b6bede2101e0fade436dd5054aa205f9271d905a2f638dd52fb6307354a7ae81d07ac5ec4e1a80603c618a0d50685650bb8a7e2f77b3d96a2423e1473c474
   languageName: node
   linkType: hard
 

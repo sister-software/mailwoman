@@ -2664,7 +2664,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 ### Task 9: CHANGELOG, full check, PR
 
-- [ ] **Step 1: CHANGELOG** under `## Unreleased`:
+- [x] **Step 1: CHANGELOG** under `## Unreleased`:
 
 ```markdown
 ### Added — `@mailwoman/license-worker` (private)
@@ -2677,7 +2677,7 @@ separate Wrangler environments; issuance is off until `ISSUANCE_ENABLED` is flip
 key is not an active entry of the shipped register. Deploys by manual dispatch only.
 ```
 
-- [ ] **Step 2: Full check**
+- [x] **Step 2: Full check**
 
 ```bash
 yarn compile
@@ -2689,6 +2689,6 @@ yarn vitest run packages/release-kit/test packages/repo-health/test
 
 Then `yarn test` alone. The root sweep excludes the worker's tests; CI's new step runs them.
 
-- [ ] **Step 3: Push and PR**
+- [x] **Step 3: Push and PR**
 
 Push `feat/license-worker`, open the PR against `main` with the template, the spec linked, and these stated: the seven-event allowlist (dispute closure via reconciliation), the `refresh_secret_pending` column, the handler-then-record order and why, and the sandbox key's relationship to the register. The PR closes the tracking issue created at execution start.

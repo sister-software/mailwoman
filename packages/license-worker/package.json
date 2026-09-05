@@ -31,9 +31,9 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"@hono/zod-openapi": "^1.6.3",
+		"@hono/zod-openapi": "^1.6.2",
 		"@mailwoman/core": "workspace:*",
-		"hono": "^4.13.7",
+		"hono": "^4.13.5",
 		"kysely": "^0.29.5",
 		"kysely-d1": "^0.4.0",
 		"stripe": "^22.6.1",
@@ -41,7 +41,7 @@
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.22.0",
-		"@cloudflare/workers-types": "^5.20260905.1",
+		"@cloudflare/workers-types": "^5.20260903.1",
 		"vitest": "4.1.11",
 		"wrangler": "^4.129.0"
 	},
