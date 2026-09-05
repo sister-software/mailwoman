@@ -28,7 +28,7 @@ const cliBin = workspacePath("mailwoman", "out", "cli.js")
  * `@mailwoman/core/license/publication` carries the HTTP client and sits outside the `license` barrel (321 with it
  * inside), and `spliterator` left when the JSON helpers moved to `core/json` (164 with it).
  */
-const MEASURED_MODULE_COUNT = 132
+const MEASURED_MODULE_COUNT = 136
 
 /**
  * The ceiling allows launcher changes while rejecting a command or UI graph entering the version path.

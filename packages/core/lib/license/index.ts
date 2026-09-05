@@ -12,6 +12,7 @@
 export * from "#license/configured"
 export * from "#license/docs-site"
 export * from "#license/key"
+export * from "#license/key-file"
 export * from "#license/obligations"
 export * from "#license/register"
 export * from "#license/stamp"
