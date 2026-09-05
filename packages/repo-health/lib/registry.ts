@@ -11,6 +11,7 @@
 import type { RepoCheck } from "#check"
 import { debtCheck } from "#checks/debt"
 import { exportsCheck } from "#checks/exports"
+import { licenseRegisterCheck } from "#checks/license-register"
 import { manifestTargetsCheck } from "#checks/manifest-targets"
 import { noRootScriptsCheck } from "#checks/no-root-scripts"
 import { nodeModulesReacharoundCheck } from "#checks/node-modules-reacharound"
@@ -27,6 +28,7 @@ import { vocabCensusCheck } from "#checks/vocab-census"
  */
 export const checks: ReadonlyArray<RepoCheck> = [
 	versionSyncCheck,
+	licenseRegisterCheck,
 	testContractCheck,
 	nodeModulesReacharoundCheck,
 	noRootScriptsCheck,
