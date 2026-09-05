@@ -15,10 +15,10 @@ import { trustedLicenseSigningKeys } from "#license/register"
 /**
  * Verify `MAILWOMAN_LICENSE_KEY` offline, or `undefined` when none is configured.
  */
-export function verifyConfiguredLicenseKey(now?: Date): LicenseKeyVerification | undefined {
+export async function verifyConfiguredLicenseKey(now?: Date): Promise<LicenseKeyVerification | undefined> {
 	const token = $public.MAILWOMAN_LICENSE_KEY
 
 	if (!token) return undefined
 
-	return verifyLicenseKey(token, { trustedKeys: trustedLicenseSigningKeys(), ...(now ? { now } : {}) })
+	return await verifyLicenseKey(token, { trustedKeys: trustedLicenseSigningKeys(), ...(now ? { now } : {}) })
 }

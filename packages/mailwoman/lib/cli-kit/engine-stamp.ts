@@ -33,12 +33,12 @@ let resolved: Promise<ResolvedEngineStamp> | undefined
  * and every stamped output must agree.
  */
 export function resolveEngineStamp(): Promise<ResolvedEngineStamp> {
-	resolved ??= readMailwomanManifest().then((manifest) => {
-		const key = verifyConfiguredLicenseKey()
+	resolved ??= (async () => {
+		const [manifest, key] = await Promise.all([readMailwomanManifest(), verifyConfiguredLicenseKey()])
 		const stamp = buildEngineStamp({ version: manifest.version, expression: manifest.license, key })
 
 		return { stamp, key }
-	})
+	})()
 
 	return resolved
 }

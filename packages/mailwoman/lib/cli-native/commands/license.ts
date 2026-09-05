@@ -3,11 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman license <keygen|issue|verify>` — the issuer's side of the commercial license key, and the check any
- *   installation can run. `keygen` mints an Ed25519 signing pair into the config root and prints the public half with
+ *   `mailwoman license <keygen|issue|verify|register>` — the issuer's side of the commercial license key, and the check
+ *   any installation can run. `keygen` mints an Ed25519 signing pair into the config root and prints the public half with
  *   its key id; `issue` signs a payload with that private key and prints the token; `verify` checks a token (or
- *   `$MAILWOMAN_LICENSE_KEY`) offline against the trusted keys this build ships, and with `--online` also asks
- *   mailwoman.ai whether the key id is still listed.
+ *   `$MAILWOMAN_LICENSE_KEY`) offline against the register this build ships, and with `--online` also asks mailwoman.ai
+ *   whether the key id is still listed; `register` prints the well-known file the register derives, or writes it under
+ *   `docs/static` with `--write`.
  */
 
 import { configRootPath } from "@mailwoman/core/data-root"
@@ -18,11 +19,13 @@ import {
 	encodeLicenseKey,
 	generateLicenseSigningKeyPair,
 	licenseKeyID,
-	TRUSTED_LICENSE_SIGNING_KEYS,
+	publishedLicenseKeys,
+	trustedLicenseSigningKeys,
 	verifyLicenseKey,
 	type LicenseKeyPayload,
 } from "@mailwoman/core/license"
 import { confirmLicenseKeyPublished, licenseKeysWellKnownURL } from "@mailwoman/core/license/publication"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { isoDate } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 
@@ -43,8 +46,8 @@ import {
 export const spec = {
 	name: "license",
 	description:
-		"Mint, issue and verify commercial license keys. `keygen` writes an Ed25519 signing pair under $MAILWOMAN_CONFIG_ROOT/license and prints the public key with its id; `issue` signs a key for a licensee; `verify` checks a token offline against the public keys this build trusts. Without a key the AGPL-3.0-only branch applies — `mailwoman doctor` says which branch applies and why.",
-	positionals: [{ name: "action", description: "One of: keygen, issue, verify.", required: true }],
+		"Mint, issue and verify commercial license keys. `keygen` writes an Ed25519 signing pair under $MAILWOMAN_CONFIG_ROOT/license and prints the public key with its id; `issue` signs a key for a licensee; `verify` checks a token offline against the public keys this build trusts; `register` prints the well-known key file the shipped register derives. Without a key the AGPL-3.0-only branch applies — `mailwoman doctor` says which branch applies and why.",
+	positionals: [{ name: "action", description: "One of: keygen, issue, verify, register.", required: true }],
 	options: {
 		licensee: {
 			type: "string",
@@ -81,6 +84,11 @@ export const spec = {
 			type: "boolean",
 			default: false,
 			description: "verify: also ask mailwoman.ai's well-known register whether the key id is still listed.",
+		},
+		write: {
+			type: "boolean",
+			default: false,
+			description: "register: write the well-known file under docs/static instead of printing it.",
 		},
 		json: { type: "boolean", default: false, description: "Emit the result as JSON." },
 	},
@@ -119,8 +127,8 @@ async function keygen(parsed: ParsedCommand): Promise<number> {
 	if (!Number.isFinite(major))
 		throw new CLIUsageError(`--major must be an integer, got ${JSON.stringify(majorOption)}.`)
 
-	const pair = generateLicenseSigningKeyPair()
-	const kid = licenseKeyID(pair.publicKeyPEM, major)
+	const pair = await generateLicenseSigningKeyPair()
+	const kid = await licenseKeyID(pair.publicKeyPEM, major)
 
 	await writePrivateTextFile(pair.privateKeyPEM, privatePath)
 	await writeLocalTextFile(pair.publicKeyPEM, publicPath)
@@ -136,9 +144,9 @@ async function keygen(parsed: ParsedCommand): Promise<number> {
 				`public key written:  ${publicPath}`,
 				`key id:              ${kid}`,
 				"",
-				"Register the public key in TWO places before issuing keys against it:",
-				"  1. packages/core/lib/license/trusted-keys.ts — TRUSTED_LICENSE_SIGNING_KEYS[kid]",
-				`  2. docs/static${licenseKeysWellKnownURL().replace(/^https?:\/\/[^/]+/u, "")} — the well-known register`,
+				"Register the public key, then regenerate the well-known file, before issuing keys against it:",
+				'  1. packages/core/lib/license/register.ts — add an entry with status "active"',
+				"  2. mailwoman license register --write",
 				"",
 				pair.publicKeyPEM.trimEnd(),
 				"",
@@ -167,12 +175,12 @@ async function issue(parsed: ParsedCommand): Promise<number> {
 	const publicKeyPEM = (await pathExists(publicKeyPath)) ? await readLocalTextFile(publicKeyPath) : undefined
 
 	const trusted = publicKeyPEM
-		? Object.entries(TRUSTED_LICENSE_SIGNING_KEYS).find(([, pem]) => pem.trim() === publicKeyPEM.trim())
+		? Object.entries(trustedLicenseSigningKeys()).find(([, pem]) => pem.trim() === publicKeyPEM.trim())
 		: undefined
 
 	if (!trusted) {
 		throw new CLIError(
-			`The public half of ${signingKeyPath} is not in this build's TRUSTED_LICENSE_SIGNING_KEYS, so a key it signs would verify nowhere. Register it (see \`mailwoman license keygen\`) and rebuild first.`
+			`The public half of ${signingKeyPath} is not in this build's register (packages/core/lib/license/register.ts), so a key it signs would verify nowhere. Add it and rebuild first.`
 		)
 	}
 
@@ -198,7 +206,7 @@ async function issue(parsed: ParsedCommand): Promise<number> {
 		terms: "LicenseRef-Commercial",
 	}
 
-	const token = encodeLicenseKey(payload, privateKeyPEM)
+	const token = await encodeLicenseKey(payload, privateKeyPEM)
 
 	process.stdout.write(
 		booleanValue(parsed.values, "json") ? `${JSON.stringify({ token, payload }, null, 2)}\n` : `${token}\n`
@@ -212,7 +220,7 @@ async function verifyCommand(parsed: ParsedCommand): Promise<number> {
 
 	if (!token) throw new CLIUsageError("verify needs a token: pass --key <token> or set MAILWOMAN_LICENSE_KEY.")
 
-	const verification = verifyLicenseKey(token, { trustedKeys: TRUSTED_LICENSE_SIGNING_KEYS })
+	const verification = await verifyLicenseKey(token, { trustedKeys: trustedLicenseSigningKeys() })
 	const kid = "kid" in verification ? verification.kid : undefined
 	const publication = booleanValue(parsed.values, "online") && kid ? await confirmLicenseKeyPublished(kid) : undefined
 	const ok = verification.status === "valid" && publication !== "retired" && publication !== "unlisted"
@@ -246,6 +254,23 @@ async function verifyCommand(parsed: ParsedCommand): Promise<number> {
 	return ok ? 0 : 1
 }
 
+async function registerCommand(parsed: ParsedCommand): Promise<number> {
+	const document = `${JSON.stringify(publishedLicenseKeys(), null, "\t")}\n`
+
+	if (booleanValue(parsed.values, "write")) {
+		const target = repoRootPath("docs", "static", ".well-known", "mailwoman", "license-keys.json")
+
+		await writeLocalTextFile(document, target)
+		process.stdout.write(`wrote ${target}\n`)
+
+		return 0
+	}
+
+	process.stdout.write(document)
+
+	return 0
+}
+
 export async function run(args: readonly string[]): Promise<number> {
 	return await runNativeCommand(spec, args, async (parsed) => {
 		const action = parsed.positionals[0]
@@ -257,8 +282,10 @@ export async function run(args: readonly string[]): Promise<number> {
 				return await issue(parsed)
 			case "verify":
 				return await verifyCommand(parsed)
+			case "register":
+				return await registerCommand(parsed)
 			default:
-				throw new CLIUsageError(`Unknown action ${JSON.stringify(action)}. Expected keygen, issue or verify.`)
+				throw new CLIUsageError(`Unknown action ${JSON.stringify(action)}. Expected keygen, issue, verify or register.`)
 		}
 	})
 }

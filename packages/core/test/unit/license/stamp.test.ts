@@ -17,8 +17,8 @@ import {
 import { describe, expect, it } from "vitest"
 
 const EXPRESSION = "AGPL-3.0-only OR LicenseRef-Commercial"
-const pair = generateLicenseSigningKeyPair()
-const kid = licenseKeyID(pair.publicKeyPEM, 9)
+const pair = await generateLicenseSigningKeyPair()
+const kid = await licenseKeyID(pair.publicKeyPEM, 9)
 const trustedKeys = { [kid]: pair.publicKeyPEM }
 
 const payload: LicenseKeyPayload = {
@@ -31,11 +31,11 @@ const payload: LicenseKeyPayload = {
 	terms: "LicenseRef-Commercial",
 }
 
-const token = encodeLicenseKey(payload, pair.privateKeyPEM)
-const valid = verifyLicenseKey(token, { trustedKeys, now: new Date("2027-01-01T00:00:00Z") })
-const expired = verifyLicenseKey(token, { trustedKeys, now: new Date("2027-09-04T00:00:00Z") })
-const unknownKey = verifyLicenseKey(token, { trustedKeys: {}, now: new Date("2027-01-01T00:00:00Z") })
-const invalid = verifyLicenseKey("mwl1.not.real", { trustedKeys })
+const token = await encodeLicenseKey(payload, pair.privateKeyPEM)
+const valid = await verifyLicenseKey(token, { trustedKeys, now: new Date("2027-01-01T00:00:00Z") })
+const expired = await verifyLicenseKey(token, { trustedKeys, now: new Date("2027-09-04T00:00:00Z") })
+const unknownKey = await verifyLicenseKey(token, { trustedKeys: {}, now: new Date("2027-01-01T00:00:00Z") })
+const invalid = await verifyLicenseKey("mwl1.not.real", { trustedKeys })
 
 describe("licensePageURL", () => {
 	it("defaults to mailwoman.ai and strips a trailing slash", () => {
