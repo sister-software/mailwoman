@@ -227,3 +227,32 @@ describe.skipIf(!haveHoldoutUS)("resolveInputSet — holdout", () => {
 		await expect(resolveInputSet(unknownSource)).rejects.toThrow(/unknown holdout source/)
 	})
 })
+
+describe("resolveInputSet — ladder", () => {
+	it("expands every truth-bearing board row into prefix rungs that carry the row's truth and locale hint", async () => {
+		const board = await resolveInputSet({ kind: "board", country: "GB" })
+		const ladder = await resolveInputSet({ kind: "ladder", country: "GB" })
+		const truthRows = board.inputs.filter((row) => typeof row.truthLat === "number")
+
+		expect(ladder.setID).toBe("ladder:GB")
+		expect(ladder.n).toBe(ladder.inputs.length)
+		expect(ladder.n).toBeGreaterThan(truthRows.length)
+
+		const first = truthRows[0]!
+		const rungs = ladder.inputs.filter((row) => row.id.startsWith(`${first.id}@`))
+
+		// The full string is a rung, so the row's ordinary grade is reproducible inside the ladder.
+		expect(rungs.at(-1)?.input).toBe(first.input)
+		expect(rungs.at(-1)?.id).toBe(`${first.id}@${first.input.length}`)
+
+		for (const rung of rungs) {
+			expect(rung.truthLat).toBe(first.truthLat)
+			expect(rung.toleranceM).toBe(first.toleranceM)
+			expect(rung.routeCountry).toBe("GB")
+			expect(rung.fuzzyCountryScope).toBe("GB")
+			expect(rung.defaultCountry).toBe("GB")
+		}
+
+		expect(ladder.hasTruth.coordinates).toBe(ladder.n)
+	})
+})

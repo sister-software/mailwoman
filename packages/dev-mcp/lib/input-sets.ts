@@ -21,6 +21,7 @@ import { parseJSONStrict } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { mulberry32 } from "@mailwoman/core/random"
+import { ladderRungs } from "mailwoman/eval-harness/autocomplete-ladder"
 import { loadRegressionCases, regressionCorpusHash } from "mailwoman/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
 import { drawHoldoutSample, holdoutSources } from "mailwoman/eval-harness/gauntlet/holdout"
@@ -44,6 +45,7 @@ export type InputSetRef =
 	| { kind: "golden"; version?: string; split?: GoldenSplit }
 	| { kind: "parity"; country?: string }
 	| { kind: "holdout"; source?: HoldoutSource; n?: number; seed?: number }
+	| { kind: "ladder"; country?: string; address_kind?: string; status?: string }
 	| {
 			kind: "literal"
 			inputs: Array<string | LiteralInputWithTruth>
@@ -252,6 +254,68 @@ export async function resolveInputSet(ref: InputSetRef): Promise<ResolvedInputSe
 			return resolveParity(ref)
 		case "holdout":
 			return resolveHoldout(ref)
+		case "ladder":
+			return resolveLadder(ref)
+	}
+}
+
+/**
+ * The autocomplete ladder over a board filter (#2154): every board row that carries a coordinate truth, expanded into
+ * its prefix rungs — the input truncated at each token boundary plus the first three single characters — with each rung
+ * graded against the ROW's truth and tolerance. This is what lets `mwdev_compare` run two arms over partial queries
+ * under the same grading and significance report as a finished one; `mailwoman eval autocomplete` reads the ladder in
+ * its own top-k terms, and the full-string rung here must equal the ordinary board grade for the row.
+ *
+ * The locale hint is part of the input contract: a two-letter prefix carries no country evidence of its own, so every
+ * rung runs with the row's country as its route, its fuzzy scope and its default country. A rung measured without the
+ * hint would grade the gazetteer's population prior, not autocomplete.
+ */
+async function resolveLadder(ref: Extract<InputSetRef, { kind: "ladder" }>): Promise<ResolvedInputSet> {
+	const board = await resolveBoard({
+		kind: "board",
+		...(ref.country ? { country: ref.country } : {}),
+		...(ref.address_kind ? { address_kind: ref.address_kind } : {}),
+		...(ref.status ? { status: ref.status } : {}),
+	})
+
+	const withTruth = board.inputs.filter((row) => typeof row.truthLat === "number" && typeof row.truthLon === "number")
+	const rungs: ResolvedInput[] = []
+
+	for (const row of withTruth) {
+		for (const rung of ladderRungs(row.input)) {
+			rungs.push({
+				...row,
+				id: `${row.id}@${rung.length}`,
+				input: rung,
+				routeCountry: row.routeCountry ?? row.country,
+				fuzzyCountryScope: row.fuzzyCountryScope ?? row.country,
+				defaultCountry: row.defaultCountry ?? row.country,
+			})
+		}
+	}
+
+	const slug = board.setID.replace(/^board/, "ladder")
+
+	return {
+		setID: slug,
+		inputs: rungs,
+		n: rungs.length,
+		sha256: sha256Hex(rungs.map((r) => `${r.id}\t${r.input}`)),
+		selection: "slice",
+		populationN: board.populationN ?? board.n,
+		notCovered: [
+			...board.notCovered,
+			...(withTruth.length !== board.inputs.length
+				? [`${board.inputs.length - withTruth.length} board rows carry no coordinate truth and have no ladder`]
+				: []),
+		],
+		hasTruth: truthCounts(rungs.map((r) => r.seed).filter(isPresent)),
+		corpusHash: board.corpusHash,
+		notes: [
+			`${withTruth.length} board rows expanded into ${rungs.length} prefix rungs; a row's id becomes <id>@<rung length>.`,
+			"Every rung is graded at its ROW's truth and tolerance, and runs with the row's country as the locale hint (route, fuzzy scope and default country) — a prefix carries no country evidence of its own.",
+			"The full-string rung of each row must equal the ordinary board grade for that row and arm; a difference is a harness defect, not a finding.",
+		],
 	}
 }
 

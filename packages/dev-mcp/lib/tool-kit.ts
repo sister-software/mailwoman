@@ -170,6 +170,16 @@ export const INPUT_SET_SCHEMA = z
 						"comparison); a seeded set can be iterated against, which is how a held-out set stops being one."
 				),
 		}),
+		z
+			.object({
+				kind: z.literal("ladder"),
+				country: z.string().optional(),
+				address_kind: z.string().optional(),
+				status: z.string().optional(),
+			})
+			.describe(
+				"The autocomplete ladder over a board filter: every truth-bearing row expanded into its prefix rungs, each graded at the row's own truth and tolerance with the row's country as the locale hint. Rows read as <id>@<rung length>."
+			),
 		z.object({
 			kind: z.literal("literal"),
 			inputs: z.array(LITERAL_INPUT_SCHEMA).min(1).describe(LITERAL_INPUTS_DESCRIPTION),
