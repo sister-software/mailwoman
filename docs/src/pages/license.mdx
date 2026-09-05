@@ -1,7 +1,9 @@
 ---
 title: License
-description: Mailwoman is AGPL-3.0-only, or commercial under a paid license. This page says what each branch asks of you and how a key is configured and checked.
+description: Mailwoman is AGPL-3.0-only, or commercial under a paid license. This page says what each branch asks of you, how to buy a license, and how a key is configured, checked and kept current.
 ---
+
+import { BuyLicense } from "@site/src/components/License/BuyLicense"
 
 # License
 
@@ -26,7 +28,13 @@ the branch and a `Link: rel="license"` header pointing here. JSON responses carr
 A commercial license releases you from the source offer and the share-alike condition, so you can
 build closed products and services on Mailwoman. The terms are in
 [`COMMERCIAL-LICENSE.md`](https://github.com/sister-software/mailwoman/blob/main/COMMERCIAL-LICENSE.md);
-the price and what it covers are on the [pricing page](/docs/pricing). To obtain one,
+the price and what it covers are on the [pricing page](/docs/pricing).
+
+### Buy a license
+
+<BuyLicense />
+
+For enterprise terms, seats, or a negotiated agreement,
 [email us about a license](mailto:teffen@sister.software?subject=Mailwoman%20licensing).
 
 ## Configuring and checking a key
@@ -40,6 +48,35 @@ mailwoman doctor
 ```
 
 `license verify` reports `valid`, `expired`, `unknown_key` or `invalid`, and with `--online` also whether
-mailwoman.ai still lists the key id as active. `doctor` reports the branch that applies and the
-obligations it carries. With a valid key the notice is silent and `engine.license` reads
-`LicenseRef-Commercial`.
+mailwoman.ai still lists the key id as active and, for a self-service license, whether the license
+still stands. `doctor` reports the branch that applies and the obligations it carries. With a valid
+key the notice is silent and `engine.license` reads `LicenseRef-Commercial`.
+
+## Keeping the key current
+
+A self-service license renews with its subscription, and each renewal issues a new key whose date is
+the paid period's end plus 14 days. The purchase page and the first email carry a refresh secret.
+Adopt the key once:
+
+```bash
+mailwoman license adopt "mwl1.…" --secret "<refresh secret>"
+```
+
+That writes the key to `$MAILWOMAN_CONFIG_ROOT/license/key`, which mailwoman reads when
+`MAILWOMAN_LICENSE_KEY` is unset, and the secret to `refresh.json` beside it with owner-only
+permissions. After a renewal, fetch the current key:
+
+```bash
+mailwoman license refresh
+```
+
+`license verify --online` and `mailwoman doctor` report the license's online status as one word:
+`active`, `lapsed`, `revoked`, `unknown`, or `unreachable`.
+
+## Refunds and disputes
+
+A full refund or a payment dispute marks the license `revoked` online at once. The key you hold keeps
+verifying offline until its date: it is a signed statement about a period that was paid for when it
+was signed, and revoking it early would break the installation of a customer whose dispute is later
+decided in their favour. A dispute decided in your favour returns the license to its subscription's
+state. Online checks are how a revocation reaches an installation before the key's date.

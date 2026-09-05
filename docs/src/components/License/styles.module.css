@@ -1,0 +1,98 @@
+/**
+ * The license pages' components: the Buy section's two plan cards and the claim page's key and secret blocks. Every
+ * color comes from Infima vars so both themes hold without theme-specific rules; the plan cards follow the pricing
+ * tiers' flat, quiet shape.
+ */
+
+.buy {
+	margin-block: 1rem 1.5rem;
+}
+
+.plans {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+	gap: 1rem;
+	margin-block: 1rem;
+}
+
+.plan {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: var(--ifm-card-border-radius, 0.4rem);
+	background: var(--ifm-card-background-color, var(--ifm-background-surface-color));
+	padding: 1.25rem;
+	color: inherit;
+	text-decoration: none;
+}
+
+.plan:hover {
+	border-color: var(--ifm-color-primary);
+	color: inherit;
+	text-decoration: none;
+}
+
+.plan strong {
+	font-size: 0.8rem;
+	font-weight: var(--ifm-font-weight-bold);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.fine {
+	font-size: 0.9rem;
+	color: var(--ifm-color-emphasis-800);
+}
+
+.secret {
+	border: 1px solid var(--ifm-color-warning-dark);
+	border-radius: var(--ifm-card-border-radius, 0.4rem);
+	padding: 0.75rem 1rem;
+	margin-block: 1rem;
+}
+
+.token {
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.8rem;
+	overflow-wrap: anywhere;
+	white-space: pre-wrap;
+	margin: 0.5rem 0;
+}
+
+.copyRow {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+}
+
+.copyButton {
+	border: 1px solid var(--ifm-color-emphasis-400);
+	border-radius: var(--ifm-button-border-radius, 0.4rem);
+	background: var(--ifm-background-surface-color);
+	color: inherit;
+	padding: 0.3rem 0.75rem;
+	font-size: 0.85rem;
+	cursor: pointer;
+}
+
+.copyButton:hover {
+	border-color: var(--ifm-color-primary);
+}
+
+.facts {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 0.25rem 1rem;
+	margin-block: 1rem;
+}
+
+.facts dt {
+	color: var(--ifm-color-emphasis-700);
+}
+
+.facts dd {
+	margin: 0;
+}
