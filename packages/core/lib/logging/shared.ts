@@ -61,6 +61,7 @@ const LogLevelColors = {
 function diagnosticsSink(): Console {
 	// oxlint-disable-next-line sister-software/no-process-globals -- the stream object itself, not configuration; a browser has no `process` and falls through
 	const stderr = globalThis.process?.stderr
+
 	const ConsoleConstructor = (
 		globalThis.console as {
 			Console?: new (options: { stdout: NodeJS.WritableStream; stderr: NodeJS.WritableStream }) => Console

@@ -196,6 +196,7 @@ describe("the postcode rung's locality contradiction (#1631)", () => {
 		expect(lookup.find({ street: "Teichstraße", number: "3", postcode: "04509", locality: "Krensitz" })?.lat).toBe(
 			51.52
 		)
+
 		expect(lookup.find({ street: "Teichstraße", number: "3", postcode: "04509", locality: "Werlitzsch" })?.lat).toBe(
 			51.4367
 		)

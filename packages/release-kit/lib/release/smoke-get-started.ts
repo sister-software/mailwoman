@@ -175,11 +175,13 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 	legs.push("doctor")
 
 	log("[get-started] ten-minute-trial.mdx step 3: mailwoman parse (shell)…")
+
 	assertNeedles(
 		run("node", [cli, "parse", SHELL_PARSE_INPUT], project),
 		SHELL_PARSE_NEEDLES,
 		"ten-minute-trial.mdx (parse)"
 	)
+
 	legs.push("shell-parse")
 
 	if (!options.full) {
