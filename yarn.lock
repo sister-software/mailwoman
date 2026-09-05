@@ -5193,6 +5193,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/neural-weights-cjk@workspace:packages/neural-weights-cjk":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/neural-weights-cjk@workspace:packages/neural-weights-cjk"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/neural-weights-de-de@workspace:packages/neural-weights-de-de":
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-weights-de-de@workspace:packages/neural-weights-de-de"

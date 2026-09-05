@@ -37,6 +37,8 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 	"packages/license-worker": "private license worker — Cloudflare infrastructure, never publishes",
 	"packages/geocode-oracle": "private verification oracle — never a runtime dependency, never publishes",
 	"packages/neural-weights-base-latn": "parked shared base for #1177 — publish wiring deliberately not landed",
+	"packages/neural-weights-cjk":
+		"0.0.1 name reservation for the CJK char-path base (#2164) — joins the release list with its first functional release",
 	"packages/dev-mcp": "private maintainer MCP server — never publishes",
 	"packages/release-kit": "private release-operation registry — never publishes",
 	"packages/repo-health": "private repository health registry — never publishes",

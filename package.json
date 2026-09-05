@@ -52,6 +52,7 @@
 		"packages/neural",
 		"packages/neural-web",
 		"packages/neural-weights-base-latn",
+		"packages/neural-weights-cjk",
 		"packages/neural-weights-de-de",
 		"packages/neural-weights-en-au",
 		"packages/neural-weights-en-gb",
