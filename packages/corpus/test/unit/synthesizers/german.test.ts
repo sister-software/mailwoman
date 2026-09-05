@@ -56,6 +56,55 @@ describe("synthesizeGermanRow", () => {
 	})
 })
 
+describe("the comma-free separator (#1946)", () => {
+	const KOELN: LocaleBaseTuple = {
+		house_number: "12",
+		street: "Neusser Str.",
+		dependent_locality: "Nippes",
+		locality: "Köln",
+		region: "Nordrhein-Westfalen",
+		postcode: "50733",
+	}
+
+	it("renders the native order with no commas, every component still verbatim", () => {
+		const row = synthesizeGermanRow(KOELN, { random: keepAll, separator: " " })!
+
+		expect(row.raw).toBe("Neusser Str. 12 Nippes 50733 Köln")
+		expect(row.components.dependent_locality).toBe("Nippes")
+	})
+
+	it("is the template's comma form with the default separator", () => {
+		expect(synthesizeGermanRow(KOELN, { random: keepAll })!.raw).toBe("Neusser Str. 12, Nippes, 50733 Köln")
+	})
+
+	it("aligns the comma-free row to BIO with the district as dependent_locality between street and postcode", () => {
+		const row = synthesizeGermanRow(KOELN, { random: keepAll, separator: " " })!
+
+		const canonical = {
+			...row,
+			country: "DE",
+			source: "synth-german",
+			source_id: "synth-german:nippes",
+		} as CanonicalRow
+
+		const aligned = alignRow(canonical)
+
+		if (aligned.kind !== "labeled") throw new Error("expected a labeled row")
+		const labels = aligned.row.labels
+		const firstOf = (tag: string) => labels.findIndex((l) => l.includes(tag))
+
+		expect(firstOf("dependent_locality")).toBeGreaterThan(firstOf("house_number"))
+		expect(firstOf("postcode")).toBeGreaterThan(firstOf("dependent_locality"))
+		expect(labels.filter((l) => l.startsWith("B-street"))).toHaveLength(1)
+	})
+
+	it("leaves the international layout on its own separator", () => {
+		const row = synthesizeLocaleRow(BERLIN, "DE", { random: keepAll, order: "international", separator: " " })!
+
+		expect(row.raw).toBe("27 Straußstraße, Berlin, Berlin 12623")
+	})
+})
+
 describe("synthesizeLocaleRow (generic)", () => {
 	it("ES renders Spanish order (house after street, postcode before city) and tags the locale", () => {
 		const madrid: LocaleBaseTuple = { house_number: "12", street: "Calle Mayor", locality: "Madrid", postcode: "28013" }

@@ -94,6 +94,14 @@ export interface LocaleSynthesisOpts {
 	 * house-first space-joined).
 	 */
 	nativeHouseJoin?: "template" | "space"
+	/**
+	 * The string between rendered address lines. `", "` (default) is the template's own join. `" "` renders the
+	 * comma-free single-line register — dictation, a copy out of a one-field form — `Neusser Str. 12 Nippes 50733 Köln`
+	 * for the same components. Stage 2 segments the comma form into three and the comma-free form into ONE, and a single
+	 * segment starves the placetype-pair prior, which is how the comma-free form loses `Nippes` (#1946). Only the native
+	 * order reads it; the international layout keeps its own separator.
+	 */
+	separator?: ", " | " "
 }
 
 /**
@@ -205,14 +213,15 @@ export function synthesizeLocaleRow(
 	// house-first, postcode-after-city, with a region slot for the tail. Neither branch consumes a
 	// `random()` draw for the template, so the RNG sequence existing callers/tests depend on is stable.
 	const renderCountry = order === "international" ? "US" : country
-	let raw = formatAddress(components, renderCountry, { separator: ", " })
+	const separator = order === "native" ? (opts.separator ?? ", ") : ", "
+	let raw = formatAddress(components, renderCountry, { separator })
 
 	if (!raw) return null
 
 	// Native-order space-join (see {@link LocaleSynthesisOpts.nativeHouseJoin}): collapse the template's
 	// `<street>, <hn>` comma to a space — the OA/feed layout. A no-op for templates that already
 	// space-join (the substring isn't present), and skipped when the house number was dropped above.
-	if (order === "native" && opts.nativeHouseJoin === "space" && components.house_number) {
+	if (order === "native" && separator === ", " && opts.nativeHouseJoin === "space" && components.house_number) {
 		raw = raw.replace(
 			`${components.street}, ${components.house_number}`,
 			`${components.street} ${components.house_number}`

@@ -340,6 +340,21 @@ export interface SliceRecipeOpts {
 	country?: string
 	intlFraction?: number
 	/**
+	 * `german`: fraction of NATIVE-order rows rendered with no commas at all (`Neusser Str. 12 Nippes 50733 Köln`), the
+	 * single-line register #1946 found the model loses the district on. Default 0.3.
+	 */
+	commaFreeFraction?: number
+	/**
+	 * `german`: fraction of rows that carry a WOF Ortsteil of the tuple's locality as `dependent_locality`. Default 0.3;
+	 * 0 when no admin database is readable.
+	 */
+	ortsteilFraction?: number
+	/**
+	 * `german`: the WOF admin database the Ortsteil pool is read from. Default
+	 * `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority-importance.db`.
+	 */
+	adminDB?: string
+	/**
 	 * `locale`: fraction of rows that append an explicit country surface form + a `country` component. Default 0.
 	 */
 	countryFraction?: number

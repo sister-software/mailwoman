@@ -52,6 +52,9 @@ export const spec = {
 		"edges-dir": stringOption("TIGER EDGES directory"),
 		country: stringOption("target country"),
 		"intl-fraction": stringOption("international-order fraction"),
+		"comma-free-fraction": stringOption("german: comma-free native-order fraction"),
+		"ortsteil-fraction": stringOption("german: fraction carrying a WOF Ortsteil as dependent_locality"),
+		"admin-db": stringOption("german: WOF admin database for the Ortsteil pool"),
 		"country-fraction": stringOption("explicit-country fraction"),
 		"district-as-locality": { type: "boolean", description: "Override district-as-locality mapping" },
 		"bare-prob": stringOption("bare-street probability"),
@@ -84,6 +87,9 @@ interface Options {
 	edgesDir?: string
 	country?: string
 	intlFraction?: string
+	commaFreeFraction?: string
+	ortsteilFraction?: string
+	adminDB?: string
 	countryFraction?: string
 	districtAsLocality?: boolean
 	bareProb?: string
@@ -145,6 +151,9 @@ const CorpusSlice: ParsedCommandComponent<Options> = ({ options, args }) => {
 			edgesDir: options.edgesDir,
 			country: options.country,
 			intlFraction: num(options.intlFraction),
+			commaFreeFraction: num(options.commaFreeFraction),
+			ortsteilFraction: num(options.ortsteilFraction),
+			adminDB: options.adminDB,
 			countryFraction: num(options.countryFraction),
 			districtAsLocality: options.districtAsLocality,
 			bareProb: num(options.bareProb),
