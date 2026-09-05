@@ -94,7 +94,16 @@ function functionSites(file: string, text: string): FunctionSite[] {
 		const start = statement.getStart(source)
 		const line = source.getLineAndCharacterOfPosition(start).line
 		const leading = ts.getLeadingCommentRanges(text, statement.getFullStart()) ?? []
-		const ignored = leading.some((range) => text.slice(range.pos, range.end).includes(SHADOW_IGNORE_MARKER))
+
+		// A formatter re-wraps a long JSDoc line and capitalizes a paragraph's first word, so the marker is matched with
+		// the comment's line breaks and leading asterisks collapsed to single spaces and the case folded.
+		const ignored = leading.some((range) =>
+			text
+				.slice(range.pos, range.end)
+				.replaceAll(/\s*\n\s*\*?\s*/gu, " ")
+				.toLowerCase()
+				.includes(SHADOW_IGNORE_MARKER)
+		)
 
 		sites.push({ file, line: line + 1, name, exported: hasExportModifier(statement), ignored })
 	}

@@ -58,6 +58,8 @@ const ALLOWED: Record<string, string> = {
 	// install smoke exists to NOT consult.
 	"packages/release-kit/lib/release/smoke-clean-install.ts":
 		"inspects a scratch project's install layout from outside, by design",
+	"packages/release-kit/lib/release/smoke-get-started.ts":
+		"inspects a scratch project's install layout from outside, by design — the get-started pages' cold trial",
 	// BUILDS a node_modules tree rather than reading one — the symlink farm a worktree arm needs, because a git
 	// worktree has none and symlinking the main checkout's directory across resolves every workspace back into the
 	// main checkout (yarn links `@mailwoman/core -> ../../packages/core`, resolved against the symlink's REAL path).

@@ -43,6 +43,7 @@ const WORKSPACES: Record<string, string> = {
 	// Runtime capability boundary shared by the publish graph. Pack it first so every consumer resolves
 	// the source-coherent tarball instead of a stale (or not-yet-published) registry version.
 	"@mailwoman/core": "packages/core",
+	"@mailwoman/evidence": "packages/evidence",
 	"@mailwoman/spatial": "packages/spatial",
 	"@mailwoman/sqlite": "packages/sqlite",
 	"@mailwoman/resolver": "packages/resolver",
