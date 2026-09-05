@@ -10,7 +10,7 @@
 
 import type { GeocodeOutcomeLike } from "@mailwoman/api"
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { firstNodeWhere } from "@mailwoman/core/decoder"
+import { collectNodes, firstNodeWhere, slotNodes } from "@mailwoman/core/decoder"
 import { decodePlusCode, isFullPlusCode, recoverNearestPlusCode } from "@mailwoman/spatial"
 
 import { epistemicStatusFor } from "#geocode/epistemic-status"
@@ -33,6 +33,10 @@ const PLUS_CODE_TOKEN = /(?:^|[\s,])([23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJ
  */
 export function applyPlusCodeOverride(result: GeocodeOutcomeLike, input: string, resolved: AddressTree): void {
 	const token = PLUS_CODE_TOKEN.exec(input)?.[1]
+
+	if (token) {
+		evictCodeFromComponents(result, resolved, token)
+	}
 
 	if (!token) return
 	const upper = token.toUpperCase()
@@ -72,4 +76,57 @@ export function applyPlusCodeOverride(result: GeocodeOutcomeLike, input: string,
 	result.resolution_tier = "plus_code"
 	result.epistemic_status = epistemicStatusFor("plus_code", result.lat)
 	result.uncertainty_m = Math.max(1, Math.round(Math.hypot(latHalfM, lonHalfM)))
+}
+
+/**
+ * The named component slots the parse can put a plus-code token into.
+ */
+const COMPONENT_SLOTS = [
+	"locality",
+	"region",
+	"postcode",
+	"house_number",
+	"street",
+	"venue",
+	"dependent_locality",
+	"unit",
+] as const
+
+/**
+ * A plus code is a coordinate claim and never a component, whatever tag the parse gave it. Evict the token from every
+ * slot it landed in and let the next span of that tag — grounded first, then text order, the same `slotNodes` order the
+ * projections read — take the slot. `Simpson's Field, 5G8H+8F5, Douglas, Isle of Man IM2 4RE, Isle of Man` parses the
+ * code as `postcode`; without this the row's postcode was the code and `IM2 4RE` was the dropped span. Runs whether or
+ * not the code decodes: a short code with no reference is still not a postcode.
+ */
+function evictCodeFromComponents(result: GeocodeOutcomeLike, tree: AddressTree, token: string): void {
+	const upper = token.toUpperCase()
+	const isCode = (value: string): boolean => value.trim().toUpperCase() === upper
+	const components = result.components as Partial<Record<string, string>>
+
+	for (const node of collectNodes(tree.roots, (n) => isCode(n.value))) {
+		const tag = node.tag
+		const current = components[tag]
+
+		const replacement =
+			slotNodes(tree.roots)
+				.find((n) => n.tag === tag && !isCode(n.value))
+				?.value.trim() || null
+
+		if (current !== undefined && isCode(current)) {
+			if (replacement) {
+				components[tag] = replacement
+			} else {
+				Reflect.deleteProperty(components, tag)
+			}
+		}
+
+		if ((COMPONENT_SLOTS as readonly string[]).includes(tag)) {
+			const slot = tag as (typeof COMPONENT_SLOTS)[number]
+
+			if (result[slot] !== null && isCode(result[slot]!)) {
+				result[slot] = replacement
+			}
+		}
+	}
 }
