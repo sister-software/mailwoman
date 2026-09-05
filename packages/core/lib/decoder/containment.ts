@@ -44,11 +44,12 @@ export const WESTERN_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = 
 	cedex: ["postcode", "locality"],
 
 	// Street-level — street nests inside locality; house_number/unit/intersections nest inside street.
-	street: ["dependent_locality", "locality", "subregion", "region"],
+	street: ["locality_unit", "dependent_locality", "locality", "subregion", "region"],
 	street_prefix: ["street"],
 	street_prefix_particle: ["street_prefix", "street"],
 	street_suffix: ["street"],
-	house_number: ["street"],
+	// A CN production team can carry a house number with no street at all (`古北口村南关生产队6号`).
+	house_number: ["street", "locality_unit"],
 	// `venue` is here for the SUB-VENUE case — `Terminal 5` of `Heathrow Airport`, `Gate 12` of `Manchester Airport`.
 	// The table modelled `attention: ["venue"]` but not a unit of a venue, so `validateTree` reported a correct,
 	// passing parse (gb-subvenue-heathrow-terminal) as a stranded dependent: the contract was narrower than the
@@ -71,6 +72,8 @@ export const WESTERN_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = 
 	sub_block: ["block"],
 	building_number: ["sub_block", "block"],
 	building_name: ["building_number", "sub_block", "block"],
+	// CN — the ordinal chain nests under the named unit it belongs to (`孟定农场` → `三分场二队`), else the settlement.
+	locality_unit: ["dependent_locality", "locality", "subregion", "region"],
 }
 
 /**

@@ -58,6 +58,12 @@ export const COMPONENT_TAGS = [
 	"sub_block",
 	"building_number",
 	"building_name",
+	// CN-specific (#2034): the organizational ladder China's rural addresses carry below the named settlement —
+	// state-farm sub-farms (分场), production brigades and teams (大队, 队, 生产队), XPCC regiments and companies (团, 连),
+	// villager groups (组). ONE contiguous span holds the whole ordinal chain (`三分场八队`); which rung each generic names
+	// is a deterministic reading of the suffix, not a label distinction, so the tag stays one and the split is derived.
+	// The named head unit (`孟定农场`, `新合`) is `dependent_locality`. Emitted by the CJK sibling model only.
+	"locality_unit",
 ] as const
 
 /**

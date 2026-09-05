@@ -163,6 +163,7 @@ const ComponentTagSchema = z.enum([
 	"sub_block",
 	"building_number",
 	"building_name",
+	"locality_unit",
 ])
 
 /**

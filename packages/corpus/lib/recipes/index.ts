@@ -11,6 +11,7 @@
 import { anchorAbsorptionRecipe } from "#recipes/anchor-absorption"
 import { bareCountryRecipe } from "#recipes/bare-country"
 import { boundaryStressRecipe } from "#recipes/boundary-stress"
+import { cnOrganizationalUnitsRecipe } from "#recipes/cn-organizational-units"
 import { countryBalancedRecipe } from "#recipes/country-balanced"
 import { czPcFirstPrepositionRecipe } from "#recipes/cz-pcfirst-preposition"
 import { frAdminSplitRecipe } from "#recipes/fr-admin-split"
@@ -58,6 +59,7 @@ const RECIPES: readonly CorpusRecipe[] = [
 	unitRecipe,
 	intersectionRecipe,
 	germanRecipe,
+	cnOrganizationalUnitsRecipe,
 	localeRecipe,
 	frOrderRecipe,
 	frAdminSplitRecipe,

@@ -42,6 +42,10 @@ describe("COMPONENT_TAGS", () => {
 		}
 	})
 
+	test("declares the CN organizational-unit tag (#2034)", () => {
+		expect(COMPONENT_TAGS).toContain("locality_unit")
+	})
+
 	test("type narrows from the readonly tuple", () => {
 		// Compile-time assertion: ComponentTag is the union of literals.
 		const sample: ComponentTag = "country"
