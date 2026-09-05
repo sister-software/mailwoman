@@ -18,6 +18,24 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Changed — the license key signs and verifies on WebCrypto
+
+`encodeLicenseKey`, `verifyLicenseKey`, `licenseKeyID`, `generateLicenseSigningKeyPair` and `verifyConfiguredLicenseKey`
+answer promises; Ed25519 and the key-id digest run on `crypto.subtle`, so the same module serves Node, a Cloudflare
+Worker and a browser. Tokens are unchanged: a key signed by the previous implementation verifies, and the same key and
+payload sign to the same bytes. The payload gains two optional fields a self-service issuer sets, `lid` and
+`agreement`. `TRUSTED_LICENSE_SIGNING_KEYS` is replaced by the typed register in `@mailwoman/core/license/register`
+(`LICENSE_SIGNING_KEYS`, `trustedLicenseSigningKeys()`, `publishedLicenseKeys()`), which also produces the well-known
+file; `mailwoman license register --write` regenerates it and the `license-register` health check refuses drift. The
+`./license/key` and `./license/register` subpaths are the Worker-safe imports, held by a bundle test under the
+`workerd,worker,browser` conditions; the four Ed25519 helpers leave `@mailwoman/core/hash`.
+
+### Changed — the JSON helpers move to `@mailwoman/core/json`
+
+`parseJSONStrict`, `JSONParseError`, `parseJSONArray`, `tryParsingJSON` and `prettyJSON` are exported from
+`@mailwoman/core/json`, no longer from `@mailwoman/core/objects`, whose runtime import of `spliterator` reaches `fs` and
+`node:path`. Nothing forwards from the old path.
+
 ### Added — the engine stamp and the license notice
 
 Every JSON record the CLI emits (`geocode --json`, `reverse --json`, `autocomplete --json`), every `/v1` body, each
