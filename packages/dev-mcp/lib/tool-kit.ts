@@ -456,6 +456,11 @@ export interface ComparedRow {
 	 * on is unchanged, and identity is its own claim.
 	 */
 	identity_differed?: boolean
+	/**
+	 * Whether the two arms answered with different result tiers — PRESENT only when both arms answered and stated one.
+	 * Outside `differed` for the same reason as identity: a tier is a claim about the answer, not its coordinate.
+	 */
+	tier_differed?: boolean
 }
 
 /**

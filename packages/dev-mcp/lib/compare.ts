@@ -34,6 +34,7 @@ import {
 } from "#arms"
 import {
 	armsDiffered,
+	tierDiffered,
 	ARM_SEPARATION_THRESHOLD_KM,
 	assertedStratum,
 	type GeoRow,
@@ -684,12 +685,13 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 			country: item.country,
 			address_kind: item.addressKind,
 			status: item.status,
-			differed: armsDiffered(a, b, distanceA, distanceB, hasTruth),
+			differed: armsDiffered(a, b, distanceA, distanceB, hasTruth, item.toleranceM ?? null),
 			// Tri-state, and separate from `differed` ON PURPOSE: identity comparison runs only when BOTH
 			// arms state a place-identity chain (absent = incomparable, never "same"), and it does not feed
 			// `arms_differed_on` — a battery pinned on the coordinate-level zero-diff contract keeps its
 			// meaning, while a wrong-instance swap under a stable coordinate becomes visible beside it.
 			...(a.place_ids && b.place_ids ? { identity_differed: a.place_ids.join(">") !== b.place_ids.join(">") } : {}),
+			...(tierDiffered(a, b) === undefined ? {} : { tier_differed: tierDiffered(a, b) }),
 			grade: hasTruth && !hasOracle ? gradeAtThreshold(distanceA, distanceB, options.gradeThresholdKm) : "ungradeable",
 			a,
 			b,
@@ -704,10 +706,12 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 
 	const graded = rows.filter((row) => row.grade !== "ungradeable")
 	const differed = rows.filter((row) => row.differed)
-	// The emitted change list also carries identity-only rows (differed stays coordinate-level; the row's
-	// own identity_differed flag says which kind of change a reader is looking at).
-	const changedRows = rows.filter((row) => row.differed || row.identity_differed === true)
+	// The emitted change list also carries identity-only and tier-only rows (differed stays coordinate-level; the
+	// row's own identity_differed / tier_differed flag says which kind of change a reader is looking at).
+	const changedRows = rows.filter((row) => row.differed || row.identity_differed === true || row.tier_differed === true)
+
 	const withTruth = rows.filter((row) => row.truth_lat !== null).length
+	const withRowTolerance = rows.filter((row) => row.truth_tolerance_m !== null && row.truth_tolerance_m > 0).length
 
 	const mode = hasOracle
 		? ORACLE_GRADE_MODE
@@ -845,11 +849,27 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 				"of_comparable below the row count means at least one arm (an external engine, an oracle, or a run " +
 				'recorded before identity was stored) states no identity — incomparable, never "same".',
 		},
-		differed_basis: withTruth === rows.length ? "threshold-crossing-vs-truth" : "arm-separation",
+		tier_changed: {
+			n: rows.filter((row) => row.tier_differed === true).length,
+			of_comparable: rows.filter((row) => row.tier_differed !== undefined).length,
+			note:
+				"Rows where both arms answered with a result tier and the tiers differ (address_point → interpolated, say). " +
+				"Separate from arms_differed_on: a tier change under a stable coordinate is a different claim about the " +
+				"answer and counts HERE. of_comparable below the row count means an arm states no tier — incomparable.",
+		},
+		differed_basis:
+			withTruth === rows.length
+				? withRowTolerance > 0
+					? "threshold-crossing-vs-truth+row-tolerance"
+					: "threshold-crossing-vs-truth"
+				: "arm-separation",
+		rows_graded_at_own_tolerance: { n: withRowTolerance, of: rows.length },
 		arms_differed_on_note:
 			withTruth === rows.length
-				? "A row counts as differed when the arms land on opposite sides of at least one threshold. Two results 900m " +
-					"apart that are both hits at 1km do NOT count — across engines, the raw coordinates always differ."
+				? "A row counts as differed when the arms land on opposite sides of at least one protocol threshold " +
+					`(1/5/25km) or, for the ${withRowTolerance} rows that state their own tolerance, of that tolerance. ` +
+					"Two results 900m apart that are both hits at 1km on a row with no stated tolerance do NOT count — " +
+					"across engines, the raw coordinates always differ."
 				: `${rows.length - withTruth} of ${rows.length} rows carry no truth coordinate, so there is no verdict for ` +
 					`the arms to land on opposite sides of. Those rows count as differed when exactly one arm answered, or ` +
 					`when both answered more than ${ARM_SEPARATION_THRESHOLD_KM}km apart.`,
