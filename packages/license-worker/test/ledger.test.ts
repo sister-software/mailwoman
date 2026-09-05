@@ -91,6 +91,7 @@ test("state transitions write the license, subscription and payment states", asy
 	const row = license("c")
 
 	await createLicense(ledger, row)
+
 	await setLicenseState(ledger, row.lid, LicenseState.Revoked, {
 		subscriptionState: "canceled",
 		paymentState: "refunded",

@@ -5126,6 +5126,7 @@ __metadata:
     "@cloudflare/vitest-pool-workers": "npm:^0.22.0"
     "@cloudflare/workers-types": "npm:^5.20260905.1"
     "@hono/zod-openapi": "npm:^1.6.3"
+    "@mailwoman/core": "workspace:*"
     hono: "npm:^4.13.7"
     kysely: "npm:^0.29.5"
     kysely-d1: "npm:^0.4.0"
