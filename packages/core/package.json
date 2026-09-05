@@ -501,6 +501,16 @@
 			"default": "./out/data-root.js",
 			"types": "./out/data-root.d.ts"
 		},
+		"./crypto/base64url": {
+			"node": "./lib/crypto/base64url.ts",
+			"default": "./out/crypto/base64url.js",
+			"types": "./out/crypto/base64url.d.ts"
+		},
+		"./crypto/ed25519": {
+			"node": "./lib/crypto/ed25519.ts",
+			"default": "./out/crypto/ed25519.js",
+			"types": "./out/crypto/ed25519.d.ts"
+		},
 		"./hash": {
 			"node": "./lib/hash.ts",
 			"default": "./out/hash.js",
