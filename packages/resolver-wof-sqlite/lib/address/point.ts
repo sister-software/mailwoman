@@ -47,7 +47,11 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 {
 	readonly #db: DatabaseClient<DB>
 	readonly #locale: StreetLocale
+	readonly #localityKeys: "full" | "abbreviated"
 	readonly #byPostcode: PreparedGet<[postcode: string, street: StreetKey, number: string], AddressPointRow> | undefined
+	readonly #byPostcodeLocality:
+		| PreparedGet<[postcode: string, locality: NameKey, street: StreetKey, number: string], AddressPointRow>
+		| undefined
 	readonly #byLocality: PreparedGet<[locality: NameKey, street: StreetKey, number: string], AddressPointRow> | undefined
 	readonly #byBbox:
 		| PreparedGet<
@@ -60,10 +64,17 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	 * @param dbPath Extract path.
 	 * @param opts.streetLocale The street-normalization locale this extract was BUILT with — must match, or every key
 	 *   misses. Defaults to `"us"` (the situs tier), so existing callers are unchanged.
+	 * @param opts.localityKeys Whether the extract's `locality_norm` is a FULL place name a query can be held to. The BAN
+	 *   and OSM extracts write the commune or `addr:city` in full; the US situs extract writes the NAD city field, which
+	 *   several counties abbreviate (`addi` for Addison on 5,174 Texas rows, 327,264 Texas rows at four characters or
+	 *   fewer) or give as the parent town (`easton` for North Easton). A key like that can steer WHICH row answers but
+	 *   cannot refuse one, so it never contradicts. Defaults from the street locale: `"us"` is abbreviated, the rest
+	 *   full.
 	 */
-	constructor(dbPath: string, opts: { streetLocale?: StreetLocale } = {}) {
+	constructor(dbPath: string, opts: { streetLocale?: StreetLocale; localityKeys?: "full" | "abbreviated" } = {}) {
 		this.#db = new DatabaseClient<DB>(dbPath, { readOnly: true })
 		this.#locale = opts.streetLocale ?? "us"
+		this.#localityKeys = opts.localityKeys ?? (this.#locale === "us" ? "abbreviated" : "full")
 
 		// Degrade gracefully on an empty/tableless extract (interrupted build, stray 0-byte file): with no
 		// `address_point` table this lookup is a no-op miss, not a crash that loses the whole state (#568).
@@ -72,6 +83,12 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 				this.#db,
 				`SELECT ${SELECT_COLS} FROM address_point
 				 WHERE postcode = ? AND street_norm = ? AND number = ? LIMIT 1`
+			)
+
+			this.#byPostcodeLocality = prepareGet(
+				this.#db,
+				`SELECT ${SELECT_COLS} FROM address_point
+				 WHERE postcode = ? AND locality_norm = ? AND street_norm = ? AND number = ? LIMIT 1`
 			)
 
 			this.#byLocality = prepareGet(
@@ -188,11 +205,17 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		let row: AddressPointRow | undefined
 
 		if (query.postcode) {
-			const candidate = this.#byPostcode!(query.postcode.trim(), streetNorm, number)
+			const postcode = query.postcode.trim()
+			const localityKey = query.locality ? this.#localityKey(query.locality) : undefined
 
 			// A postcode can span several places — DE 04509 covers Schönwölkau and Werlitzsch, both with a Teichstraße 3 —
-			// so a row whose own locality names a different place than the query did is a different address that shares
-			// the postcode, and it falls through to the locality rung rather than answering at rooftop tier.
+			// so when the query names a locality the row whose own locality agrees is asked for FIRST. Only when no such
+			// row exists does the postcode-only row answer, and then only if its locality does not name a different place
+			// (see `#scopeContradicts` for what "different" tolerates): a query naming a third village under the postcode
+			// falls through to the locality rung rather than answering the wrong rooftop.
+			const agreeing = localityKey ? this.#byPostcodeLocality!(postcode, localityKey, streetNorm, number) : undefined
+			const candidate = agreeing ?? this.#byPostcode!(postcode, streetNorm, number)
+
 			row = candidate && !this.#scopeContradicts(candidate, query) ? candidate : undefined
 		}
 
@@ -200,12 +223,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			// FR extracts key arrondissement communes at the base city (both-sides fold, see the BAN
 			// builder + stripArrondissement) — fold the probe too so "Paris 13e Arrondissement" and
 			// "Paris" both hit. No-op for "us" extracts and every non-arrondissement commune.
-			const localityKey =
-				this.#locale === "fr"
-					? stripArrondissement(normalizeLocalityForKey(query.locality))
-					: normalizeLocalityForKey(query.locality)
-
-			row = this.#byLocality!(localityKey, streetNorm, number)
+			row = this.#byLocality!(this.#localityKey(query.locality), streetNorm, number)
 		}
 
 		// Bbox fall-through (#247): the point carries no postcode/locality of its own, but its coordinate falls
@@ -225,20 +243,32 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	}
 
 	/**
+	 * The query's locality folded the way the extract's builder folded its `locality_norm`. FR extracts key
+	 * arrondissement communes at the base city (both-sides fold, see the BAN builder + stripArrondissement), so "Paris
+	 * 13e Arrondissement" and "Paris" both hit; a no-op for every other locale.
+	 */
+	#localityKey(locality: string): NameKey {
+		return this.#locale === "fr"
+			? stripArrondissement(normalizeLocalityForKey(locality))
+			: normalizeLocalityForKey(locality)
+	}
+
+	/**
 	 * Whether a row's OWN postcode or locality names a different place than the query did. Absent scope on the row is not
 	 * a contradiction — it is the case the bbox rung was built for — and a rung that matched ON a field cannot contradict
 	 * it, so at the postcode rung only the locality can disagree and at the bbox rung either can.
+	 *
+	 * The locality is consulted only on an extract whose keys are full names (the constructor's `localityKeys`). Under
+	 * exact comparison against the US extract's abbreviated keys, the postcode rung refused `4900 Airport Pkwy, Addison
+	 * TX 75001`'s own rooftop row (`addi`) and `678 Depot St, North Easton, MA 02356`'s (`easton`), and both `pass` board
+	 * rows fell to interpolation 144–198 m away — invisible to a 1 km grade (#2155). `servon` against `paris` and
+	 * `werlitzsch` against `krensitz`, on the BAN and OSM extracts, are different places and still refuse.
 	 */
 	#scopeContradicts(row: AddressPointRow, query: { postcode?: string; locality?: string }): boolean {
 		if (query.postcode && row.postcode && row.postcode.trim() !== query.postcode.trim()) return true
 
-		if (query.locality && row.locality_norm) {
-			const localityKey =
-				this.#locale === "fr"
-					? stripArrondissement(normalizeLocalityForKey(query.locality))
-					: normalizeLocalityForKey(query.locality)
-
-			return row.locality_norm !== localityKey
+		if (this.#localityKeys === "full" && query.locality && row.locality_norm) {
+			return row.locality_norm !== this.#localityKey(query.locality)
 		}
 
 		return false

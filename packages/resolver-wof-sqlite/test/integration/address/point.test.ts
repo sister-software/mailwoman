@@ -25,6 +25,10 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 let lookup: AddressPointSqliteLookup
+/**
+ * The same fixture read as a BAN/OSM-shaped extract, whose locality keys are full place names a query can be held to.
+ */
+let fullKeys: AddressPointSqliteLookup
 
 beforeAll(async () => {
 	const dir = fixtures.use(await temporaryDirectory("ap-lookup-")).path
@@ -96,7 +100,27 @@ beforeAll(async () => {
 	insert.run(teichKey, teichKey, "3", null, "04509", "krensitz", "Teichstraße", 51.52, 12.45, "osm", "r")
 	// An OSM-shaped row with NO scope of its own — the case the bbox rung exists for.
 	insert.run("mill lane", "mill lane", "7", null, null, null, "Mill Lane", 51.5, -0.1, "osm", "r")
+	// A NAD-shaped US row whose city field is ABBREVIATED — the Texas extract writes `addi` for Addison on 5,174 rows. The
+	// board's `us-addison-zip-75001` (status pass) is this row; a locality check that reads the truncation as a
+	// different place loses it to interpolation.
+	const airportKey = normalizeStreetForKey("Airport Pkwy")
+
+	insert.run(
+		airportKey,
+		airportKey,
+		"4900",
+		null,
+		"75001",
+		"addi",
+		"AIRPORT Parkway",
+		32.965477444,
+		-96.82785054,
+		"overture:NAD",
+		"r"
+	)
+
 	lookup = new AddressPointSqliteLookup(path)
+	fullKeys = new AddressPointSqliteLookup(path, { localityKeys: "full" })
 })
 
 describe("AddressPointSqliteLookup", () => {
@@ -169,7 +193,7 @@ describe("the bbox fall-through's scope contradiction (#1913)", () => {
 
 	it("refuses a row whose own postcode names a different place than the query's", () => {
 		expect(
-			lookup.find({
+			fullKeys.find({
 				street: "Rue de la République",
 				number: "10",
 				postcode: "75008",
@@ -180,33 +204,53 @@ describe("the bbox fall-through's scope contradiction (#1913)", () => {
 	})
 
 	it("refuses a row whose own locality disagrees when the query names no postcode", () => {
-		expect(lookup.find({ street: "Rue de la République", number: "10", locality: "Paris", bbox: parisBox })).toBeNull()
+		expect(
+			fullKeys.find({ street: "Rue de la République", number: "10", locality: "Paris", bbox: parisBox })
+		).toBeNull()
 	})
 
 	it("still answers a scope-less point inside the box, and a scoped row through its scoped rung", () => {
 		const londonBox = { minLat: 51.4, maxLat: 51.6, minLon: -0.2, maxLon: 0 }
 
-		expect(lookup.find({ street: "Mill Lane", number: "7", locality: "London", bbox: londonBox })?.lat).toBe(51.5)
-		expect(lookup.find({ street: "Rue de la République", number: "10", postcode: "77170" })?.lat).toBe(48.718479)
+		expect(fullKeys.find({ street: "Mill Lane", number: "7", locality: "London", bbox: londonBox })?.lat).toBe(51.5)
+		expect(fullKeys.find({ street: "Rue de la République", number: "10", postcode: "77170" })?.lat).toBe(48.718479)
 	})
 })
 
 describe("the postcode rung's locality contradiction (#1631)", () => {
 	it("answers the row whose locality agrees, whichever village the query names", () => {
-		expect(lookup.find({ street: "Teichstraße", number: "3", postcode: "04509", locality: "Krensitz" })?.lat).toBe(
+		expect(fullKeys.find({ street: "Teichstraße", number: "3", postcode: "04509", locality: "Krensitz" })?.lat).toBe(
 			51.52
 		)
 
-		expect(lookup.find({ street: "Teichstraße", number: "3", postcode: "04509", locality: "Werlitzsch" })?.lat).toBe(
+		expect(fullKeys.find({ street: "Teichstraße", number: "3", postcode: "04509", locality: "Werlitzsch" })?.lat).toBe(
 			51.4367
 		)
 	})
 
 	it("answers nothing when the query names a third place under the same postcode — admin is the better answer", () => {
-		expect(lookup.find({ street: "Teichstraße", number: "3", postcode: "04509", locality: "Schönwölkau" })).toBeNull()
+		expect(fullKeys.find({ street: "Teichstraße", number: "3", postcode: "04509", locality: "Schönwölkau" })).toBeNull()
 	})
 
 	it("keeps answering by postcode alone when the query names no locality", () => {
-		expect(lookup.find({ street: "Teichstraße", number: "3", postcode: "04509" })).not.toBeNull()
+		expect(fullKeys.find({ street: "Teichstraße", number: "3", postcode: "04509" })).not.toBeNull()
+	})
+
+	// `us-addison-zip-75001`: the US extract's key is the NAD abbreviation `addi`, the query says Addison. An abbreviated
+	// key steers the choice among same-postcode rows but never refuses one, so the postcode-only row answers at rooftop;
+	// exact comparison sent this row to interpolation 198 m away.
+	it("never refuses on the locality under the US extract, whose keys are abbreviated (#1631 follow-up)", () => {
+		const hit = lookup.find({ street: "Airport Pkwy", number: "4900", postcode: "75001", locality: "Addison" })
+
+		expect(hit?.lat).toBe(32.965477444)
+		expect(hit?.localityNorm).toBe("addi")
+
+		expect(lookup.find({ street: "Airport Pkwy", number: "4900", postcode: "75001", locality: "Dallas" })?.lat).toBe(
+			32.965477444
+		)
+	})
+
+	it("holds a full-name extract to the locality it names", () => {
+		expect(fullKeys.find({ street: "Airport Pkwy", number: "4900", postcode: "75001", locality: "Dallas" })).toBeNull()
 	})
 })
