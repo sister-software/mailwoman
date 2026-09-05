@@ -5098,7 +5098,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/license-worker@workspace:packages/license-worker":
+"@mailwoman/license-worker@workspace:*, @mailwoman/license-worker@workspace:packages/license-worker":
   version: 0.0.0-use.local
   resolution: "@mailwoman/license-worker@workspace:packages/license-worker"
   dependencies:
@@ -5106,6 +5106,7 @@ __metadata:
     "@cloudflare/workers-types": "npm:^5.20260903.1"
     "@hono/zod-openapi": "npm:^1.6.2"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/release-kit": "workspace:*"
     hono: "npm:^4.13.5"
     kysely: "npm:^0.29.5"
     kysely-d1: "npm:^0.4.0"
@@ -5357,6 +5358,7 @@ __metadata:
   resolution: "@mailwoman/ops-cli@workspace:packages/ops-cli"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/license-worker": "workspace:*"
     "@mailwoman/release-kit": "workspace:*"
     "@mailwoman/repo-health": "workspace:*"
   bin:
