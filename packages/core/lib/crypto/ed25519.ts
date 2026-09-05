@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Ed25519 and SHA-256 on `crypto.subtle`, the one implementation Node, a Cloudflare Worker and a browser share. Keys
+ *   Ed25519 on `crypto.subtle`, the one implementation Node, a Cloudflare Worker and a browser share. Keys
  *   travel as PEM: PKCS8 for the private half, SPKI for the public half, which is what `node:crypto` wrote before and
  *   what an operator's signing key file already holds. The PEM codec here is a base64 transform of the DER bytes the
  *   WebCrypto API imports and exports; nothing parses ASN.1.
@@ -90,8 +90,4 @@ export async function verifyEd25519(
 	} catch {
 		return false
 	}
-}
-
-export async function sha256Bytes(data: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> {
-	return new Uint8Array(await crypto.subtle.digest("SHA-256", data))
 }

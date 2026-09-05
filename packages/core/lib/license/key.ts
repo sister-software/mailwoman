@@ -20,7 +20,8 @@
 import { z } from "zod"
 
 import { fromBase64URL, toBase64URL, utf8Bytes, utf8Text } from "#crypto/base64url"
-import { generateEd25519KeyPair, publicKeyDER, sha256Bytes, signEd25519, verifyEd25519 } from "#crypto/ed25519"
+import { hexOf, sha256Bytes } from "#crypto/digest"
+import { generateEd25519KeyPair, publicKeyDER, signEd25519, verifyEd25519 } from "#crypto/ed25519"
 import { errorMessage } from "#errors/schema"
 import { parseJSONStrict } from "#json"
 
@@ -111,17 +112,13 @@ export function generateLicenseSigningKeyPair(): Promise<LicenseSigningKeyPair> 
 	return generateEd25519KeyPair()
 }
 
-function hex(bytes: Uint8Array): string {
-	return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("")
-}
-
 /**
  * The id a public key is registered under: the mailwoman major version it was minted for, then the first eight hex
  * digits of the SHA-256 of the key's DER encoding — `v9-3f2a9c1d`. The version prefix is what lets a well-known file on
  * mailwoman.ai be read per major version; the digest is what makes two keys distinguishable without a registry.
  */
 export async function licenseKeyID(publicKeyPEM: string, majorVersion: number): Promise<string> {
-	const digest = hex(await sha256Bytes(publicKeyDER(publicKeyPEM))).slice(0, 8)
+	const digest = hexOf(await sha256Bytes(publicKeyDER(publicKeyPEM))).slice(0, 8)
 
 	return `v${majorVersion}-${digest}`
 }
