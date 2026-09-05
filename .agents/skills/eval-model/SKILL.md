@@ -19,7 +19,7 @@ Three floors, all of which must hold:
 1. **Net improved-minus-regressed ≥ 0 on the 649-row board.**
 2. **No regression on FR, GB or DE** — iron rule 6, the D-rule. A winning net does not buy one.
 3. **The promotion battery passes every floor declared by the eval spec**
-   (`mwdev_promotion_eval --spec v9.0.0-base`). The command reports the passed and total floor counts; do not
+   (`mwdev_promotion_eval` with `check: "v9.0.0-base.json"` and a package-shaped `weights_cache`). The command reports the passed and total floor counts; do not
    copy a count into this runbook because adding a floor would make it stale.
 
 Run the first two with `mwdev_arc`, which also runs the controls that make the number mean anything:
