@@ -21,7 +21,12 @@ import { Assertion } from "#status"
 export interface Observation {
 	kind: "observation"
 	source: string
-	vintage: string
+	/**
+	 * The vintage the source recorded this at. `null` when the record does not carry one — the gazetteer trace, for
+	 * instance, names the row it picked and not the extract's date — and a `null` is the statement that it was not
+	 * recorded, which a fabricated date could never be.
+	 */
+	vintage: string | null
 	value: unknown
 }
 
@@ -51,7 +56,7 @@ export interface RelationInput {
 	score?: number
 }
 
-export function observation(source: string, vintage: string, value: unknown): Observation {
+export function observation(source: string, vintage: string | null, value: unknown): Observation {
 	return { kind: "observation", source, vintage, value }
 }
 

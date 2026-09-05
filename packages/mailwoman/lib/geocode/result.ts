@@ -16,7 +16,7 @@ import {
 	type DroppedSpan,
 } from "@mailwoman/core/decoder"
 import type { QueryIntentMarker } from "@mailwoman/core/pipeline"
-import type { EpistemicStatus } from "@mailwoman/evidence"
+import type { DerivationProjection, EpistemicStatus } from "@mailwoman/evidence"
 import { adminLadderForNodes } from "@mailwoman/resolver"
 
 import { adminCoherenceField, type AdminCoherenceReport } from "#admin-coherence"
@@ -65,6 +65,13 @@ export interface GeocodeResult {
 	 * upgrades one into the other. Derived by `epistemicStatusFor`, the one place the mapping lives.
 	 */
 	epistemic_status: EpistemicStatus
+	/**
+	 * The derivation behind this answer, present only when the caller asked for it by supplying a resolver trace sink.
+	 * Projected from the resolver-interior trace (#1721) rather than separately recorded — with no trace sink the walk
+	 * does zero bookkeeping and stays byte-identical, and that property is what makes this safe to ship on by default for
+	 * debug surfaces and off everywhere else.
+	 */
+	derivation?: DerivationProjection
 	/**
 	 * The entity the fork→entity probe resolved (#1585's entity half) — present ONLY when the `venue` tier answered: the
 	 * decoder declared a fork, the incumbent path produced no coordinate, and exactly one poi.db entity bears the query's

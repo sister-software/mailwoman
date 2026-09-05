@@ -10,5 +10,6 @@
  */
 
 export * from "#coverage"
+export * from "#derivation"
 export * from "#evidence"
 export * from "#status"

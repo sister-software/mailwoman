@@ -16,3 +16,5 @@ export * from "#geocode/tree-reads"
 // `#geocode/worker` is deliberately absent. It is a worker-thread ENTRY, not a library module: its body
 // destructures `workerData` at import, so pulling it through this barrel runs it on the main thread and
 // throws before any test reaches an assertion. Entries are spawned by path; only `stream.ts` names it.
+export * from "#geocode/derivation"
+export * from "#geocode/epistemic-status"

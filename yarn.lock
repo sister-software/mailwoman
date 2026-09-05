@@ -4192,6 +4192,7 @@ __metadata:
     "@hono/zod-openapi": "npm:^1.6.2"
     "@mailwoman/api-kit": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/evidence": "workspace:*"
     "@mailwoman/formatter": "workspace:*"
     hono: "npm:^4.13.5"
     zod: "npm:^4.5.4"

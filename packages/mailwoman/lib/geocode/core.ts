@@ -37,8 +37,8 @@ import {
 	WORD_CONSISTENCY_SHIP_DEFAULT,
 	streetContextRequirementFor,
 } from "@mailwoman/core/pipeline"
-import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/core/resolver"
 import type { AuthoritativeProvider } from "@mailwoman/core/resolver"
+import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/core/resolver"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { normalize } from "@mailwoman/normalize"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
@@ -47,6 +47,7 @@ import type { AddressPointLookup, PostcodePrefixIndexLike, ResolveOpts, Resolver
 import { authoritativeQueryFrom, consultAuthoritativeProvider } from "#authoritative"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "#default/placer"
 import { applyEntityTiers } from "#fork-entity"
+import { traceCollector } from "#geocode/derivation"
 import { type RegionDatabaseResolver, type RegionDatabases, regionSlugFromTree } from "#geocode/regions"
 import { extractGeocodeResult } from "#geocode/result"
 import {
@@ -619,6 +620,11 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	let addressPoints = usDatabases.addressPoints
 	const interpolation = usDatabases.interpolation
 
+	// The caller's trace sink, wrapped so the same records also feed the derivation projection at the end; see
+	// `traceCollector` for the no-sink guarantee.
+	const trace = traceCollector(deps.resolveTraceSink)
+	const traceSink = trace.traceSink
+
 	const opts: ResolveOpts = {
 		// Admin descendant-consistency (#263) — joint-consistency resolve over the gazetteer's containment
 		// graph. Default-ON at the core resolver too since #895 (drift D1 settled); the explicit propagation
@@ -631,7 +637,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		// the same reason as `adminCoherence` above. The resolver still guards on the backend actually
 		// serving `ancestors()`, so an artifact predating the sidecar stays byte-identical.
 		includeAncestors: deps.includeAncestors !== false,
-		...(deps.resolveTraceSink ? { traceSink: deps.resolveTraceSink } : {}),
+		...(traceSink ? { traceSink } : {}),
 		...(deps.diagnoseUnreachable ? { diagnoseUnreachable: true } : {}),
 	}
 
@@ -969,5 +975,5 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		result.authoritative = await consultAuthoritativeProvider(deps.authoritativeProvider, query)
 	}
 
-	return result
+	return trace.attach(result)
 }

@@ -52,6 +52,11 @@
 			"default": "./out/coverage.js",
 			"types": "./out/coverage.d.ts"
 		},
+		"./derivation": {
+			"node": "./lib/derivation.ts",
+			"default": "./out/derivation.js",
+			"types": "./out/derivation.d.ts"
+		},
 		"./evidence": {
 			"node": "./lib/evidence.ts",
 			"default": "./out/evidence.js",

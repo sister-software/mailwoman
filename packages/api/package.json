@@ -53,6 +53,7 @@
 		"@hono/zod-openapi": "^1.6.2",
 		"@mailwoman/api-kit": "workspace:*",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/formatter": "workspace:*",
 		"hono": "^4.13.5",
 		"zod": "^4.5.4"

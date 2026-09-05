@@ -9,5 +9,5 @@
 	},
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [{ "path": "../api-kit" }, { "path": "../core" }, { "path": "../formatter" }]
+	"references": [{ "path": "../evidence" }, { "path": "../api-kit" }, { "path": "../core" }, { "path": "../formatter" }]
 }

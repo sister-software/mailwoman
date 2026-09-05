@@ -18,6 +18,7 @@
 
 import { z } from "@hono/zod-openapi"
 import type { AddressNode } from "@mailwoman/core/decoder"
+import type { DerivationProjection, Evidence } from "@mailwoman/evidence"
 
 export { APIErrorSchema } from "@mailwoman/api-kit"
 
@@ -227,6 +228,51 @@ const AuthoritativeMatchSchema = z.object({
 	provider_score: z.number().optional(),
 })
 
+const EpistemicStatusSchema = z.enum(["designated", "observed", "derived", "inferred", "unresolved"])
+
+const CoverageBasisSchema = z.enum(["designated", "surveyed", "source_present"])
+
+/**
+ * `@mailwoman/evidence`'s `Evidence` union, spelled for the wire. The `EvidencePin` below fails to compile the moment
+ * either side gains, loses or retypes a field.
+ */
+const EvidenceSchema = z.discriminatedUnion("kind", [
+	z.object({ kind: z.literal("observation"), source: z.string(), vintage: z.string().nullable(), value: z.unknown() }),
+	z.object({
+		kind: z.literal("exclusion"),
+		source: z.string(),
+		vintage: z.string(),
+		scope: z.object({ layer: z.string(), h3Cell: z.number(), basis: CoverageBasisSchema, fold: z.string() }),
+	}),
+	z.object({
+		kind: z.literal("relation"),
+		source: z.string(),
+		vintage: z.string(),
+		relationship: z.string(),
+		assertion: z.enum(["authoritative", "inferred"]),
+		score: z.number().optional(),
+	}),
+	z.object({ kind: z.literal("prior"), source: z.string(), label: z.string(), weight: z.number() }),
+])
+
+/**
+ * The derivation behind a geocode answer, present only when the engine was asked to trace — `@mailwoman/evidence`'s
+ * `DerivationProjection` on the wire.
+ */
+export const DerivationProjectionSchema = z.object({
+	status: EpistemicStatusSchema,
+	constraints: z.array(z.object({ label: z.string(), evidence: EvidenceSchema, contribution: z.string() })).readonly(),
+	uncertaintyM: z.number().nullable(),
+})
+
+// Both directions: the schema's inferred type is exactly the evidence package's, or this does not compile.
+type Mutual<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false
+const evidencePin: Mutual<z.infer<typeof EvidenceSchema>, Evidence> = true
+const derivationPin: Mutual<z.infer<typeof DerivationProjectionSchema>, DerivationProjection> = true
+
+void evidencePin
+void derivationPin
+
 /**
  * `POST /v1/geocode` response — a hand-modeled mirror of `GeocodeResult`'s wire shape (`mailwoman/geocode-core.ts`),
  * `.loose()` so a field the engine adds that this schema doesn't yet know about still rides through undocumented rather
@@ -246,6 +292,9 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	// What the evidence permits a consumer to claim about the coordinate, orthogonal to how it was produced; see
 	// `@mailwoman/evidence`'s `EpistemicStatus`.
 	epistemic_status: z.enum(["designated", "observed", "derived", "inferred", "unresolved"]),
+	// The derivation behind the answer, present only when the engine was asked to trace. `DerivationProjectionSchema` is
+	// pinned to `@mailwoman/evidence`'s types below, so the wire contract and the evidence union cannot drift apart.
+	derivation: DerivationProjectionSchema.optional(),
 	// The fork→entity probe's answer (#1585) — present only on the `venue` tier; see geocode-core's
 	// GeocodeResult.entity.
 	entity: z
