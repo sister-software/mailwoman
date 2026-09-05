@@ -67,12 +67,6 @@ export const PublicEnvSchema = z.object({
 	MAILWOMAN_LOG_ROOT: blankAsAbsent(z.string().default(DefaultMailwomanPaths.log)),
 	MAILWOMAN_TEMP_ROOT: blankAsAbsent(z.string().default(DefaultMailwomanPaths.temp)),
 
-	// #region Stripe
-
-	MAILWOMAN_STRIPE_SECRET_KEY: z.string().optional(),
-
-	// #endregion
-
 	// Corpus source-fetch tools (`corpus/src/tools/fetch/*` — env knobs are now command flags; these remain for compat). Callers do their own numeric/boolean parsing on these,
 	// so they stay raw strings — the schema only selects which keys surface, not how they're coerced.
 	OUT_ROOT: z.string().optional(),
