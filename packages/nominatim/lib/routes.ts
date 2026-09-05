@@ -188,18 +188,7 @@ const statusRoute = createRoute({
 /**
  * Register the Nominatim-compatible routes against an injected engine.
  */
-export function registerNominatimRoutes(
-	app: OpenAPIHono,
-	engine: NominatimEngine,
-	options: { engine?: EngineStamp } = {}
-): void {
-	const stamp = options.engine
-
-	// jsonv2 answers a bare array by protocol, so the stamp rides on each result; the jsonld projection is schema.org
-	// vocabulary and takes no foreign key.
-	const stampEach = <T extends object>(results: T[]): Array<T | (T & { engine: EngineStamp })> =>
-		stamp ? results.map((result) => ({ ...result, engine: stamp })) : results
-
+export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngine, stamp?: EngineStamp): void {
 	app.openapi(rootRoute, (c) => c.html(ROOT_HTML))
 
 	app.openapi(searchRoute, async (c) => {
@@ -232,7 +221,11 @@ export function registerNominatimRoutes(
 			return c.json(results.map(nominatimResultToSchemaOrg), 200)
 		}
 
-		return c.json(stampEach(results), 200)
+		// jsonv2 answers a bare array by protocol, so the stamp rides on each result.
+		return c.json(
+			results.map((result) => withEngineStamp(result, stamp)),
+			200
+		)
 	})
 
 	app.openapi(reverseRoute, async (c) => {
@@ -286,7 +279,9 @@ export function registerNominatimRoutes(
 		// NOTE: no jsonld branch here — a legacy quirk of the express handler, preserved verbatim. `format=jsonld`
 		// on `/lookup` falls through to the raw jsonv2 results, unlike `/search` and `/reverse`.
 		return c.json(
-			params.format === "geojson" ? withEngineStamp(toFeatureCollection(results), stamp) : stampEach(results),
+			params.format === "geojson"
+				? withEngineStamp(toFeatureCollection(results), stamp)
+				: results.map((result) => withEngineStamp(result, stamp)),
 			200
 		)
 	})

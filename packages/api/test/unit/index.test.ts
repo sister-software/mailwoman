@@ -7,7 +7,7 @@
 import { createMailwomanAPI, type MailwomanAPIEngine, type ParsedAddressResult } from "@mailwoman/api"
 import { metricsSnapshot, resetMetricsForTest } from "@mailwoman/api-kit"
 import { type GeocodeOutcomeLike, MAX_ADDRESS_LENGTH } from "@mailwoman/api/schema"
-import type { EngineStamp } from "@mailwoman/core/license"
+import { buildEngineStamp, type EngineStamp } from "@mailwoman/core/license"
 import { beforeEach, expect, test } from "vitest"
 
 beforeEach(() => {
@@ -611,13 +611,7 @@ test("POST /v1/batch: the length bound applies PER ROW, not just to the request"
 
 // MARK: engine stamp
 
-const stamp: EngineStamp = {
-	name: "mailwoman",
-	version: "9.2.0",
-	license: "AGPL-3.0-only",
-	license_url: "https://mailwoman.ai/license",
-	notice: "n",
-}
+const stamp = buildEngineStamp({ version: "9.2.0", expression: "AGPL-3.0-only OR LicenseRef-Commercial" })
 
 test("engine option: every /v1 body carries `engine` and every response carries the two headers", async () => {
 	const app = createMailwomanAPI(fullEngine, { engine: stamp })

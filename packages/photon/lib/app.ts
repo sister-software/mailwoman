@@ -93,7 +93,7 @@ export function createPhotonApp(engine: PhotonEngine, options: PhotonAppOptions 
 	// envelope — NOT `{error}`, which is the libpostal/nominatim shape).
 	app.onError((_error, c) => c.json({ type: "FeatureCollection", features: [], message: "internal error" }, 500))
 
-	registerPhotonRoutes(app, engine, options.engine ? { engine: options.engine } : {})
+	registerPhotonRoutes(app, engine, options.engine)
 	attachOpenAPIDocs(app, PHOTON_DOC_INFO)
 
 	return app

@@ -5,7 +5,7 @@
  */
 
 import type { SchemaOrgPlace } from "@mailwoman/annotations"
-import type { EngineStamp } from "@mailwoman/core/license"
+import { buildEngineStamp, type EngineStamp } from "@mailwoman/core/license"
 import {
 	createNominatimApp,
 	MAILWOMAN_LICENCE,
@@ -326,13 +326,7 @@ test("GET /openapi.json serves the emitted 3.1 document with all five paths", as
 
 // MARK: engine stamp
 
-const stamp: EngineStamp = {
-	name: "mailwoman",
-	version: "9.2.0",
-	license: "AGPL-3.0-only",
-	license_url: "https://mailwoman.ai/license",
-	notice: "n",
-}
+const stamp = buildEngineStamp({ version: "9.2.0", expression: "AGPL-3.0-only OR LicenseRef-Commercial" })
 
 test("engine option: each jsonv2 result carries `engine` beside an unchanged `licence`; the geojson collection carries it once", async () => {
 	const app = createNominatimApp(jsonldEngine, { engine: stamp })

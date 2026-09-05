@@ -9,7 +9,7 @@
  */
 
 import { APIClient } from "#api/APIClient"
-import { $public } from "#env"
+import { docsSiteURL } from "#license/docs-site"
 import { silentLogger } from "#logging/index"
 
 /**
@@ -18,9 +18,7 @@ import { silentLogger } from "#logging/index"
 export const LICENSE_KEYS_WELL_KNOWN_PATH = "/.well-known/mailwoman/license-keys.json"
 
 export function licenseKeysWellKnownURL(): string {
-	const base = ($public.MAILWOMAN_DOCS_URL ?? "https://mailwoman.ai").replace(/\/+$/u, "")
-
-	return `${base}${LICENSE_KEYS_WELL_KNOWN_PATH}`
+	return `${docsSiteURL()}${LICENSE_KEYS_WELL_KNOWN_PATH}`
 }
 
 /**

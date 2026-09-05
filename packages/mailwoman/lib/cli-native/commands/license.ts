@@ -15,15 +15,14 @@ import { $public } from "@mailwoman/core/env"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, writePrivateTextFile } from "@mailwoman/core/fs/writers"
 import {
-	confirmLicenseKeyPublished,
 	encodeLicenseKey,
 	generateLicenseSigningKeyPair,
 	licenseKeyID,
-	licenseKeysWellKnownURL,
 	TRUSTED_LICENSE_SIGNING_KEYS,
 	verifyLicenseKey,
 	type LicenseKeyPayload,
 } from "@mailwoman/core/license"
+import { confirmLicenseKeyPublished, licenseKeysWellKnownURL } from "@mailwoman/core/license/publication"
 import { isoDate } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 

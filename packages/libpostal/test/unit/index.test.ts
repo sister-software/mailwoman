@@ -5,7 +5,7 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import type { EngineStamp } from "@mailwoman/core/license"
+import { buildEngineStamp } from "@mailwoman/core/license"
 import {
 	COMPONENT_TO_LIBPOSTAL,
 	createLibpostalApp,
@@ -365,13 +365,7 @@ test("COMPONENT_TO_LIBPOSTAL: plan-2 additions", () => {
 
 // MARK: engine stamp
 
-const stamp: EngineStamp = {
-	name: "mailwoman",
-	version: "9.2.0",
-	license: "AGPL-3.0-only",
-	license_url: "https://mailwoman.ai/license",
-	notice: "n",
-}
+const stamp = buildEngineStamp({ version: "9.2.0", expression: "AGPL-3.0-only OR LicenseRef-Commercial" })
 
 test("engine option: headers only — the /parse body is byte-identical with and without it", async () => {
 	const request = (app: ReturnType<typeof createLibpostalApp>) =>

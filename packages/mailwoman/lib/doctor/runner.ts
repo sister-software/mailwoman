@@ -17,12 +17,8 @@ import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { $public, DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { isWritable, pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
-import {
-	confirmLicenseKeyPublished,
-	type LicenseKeyPublication,
-	type LicenseKeyVerification,
-	verifyConfiguredLicenseKey,
-} from "@mailwoman/core/license"
+import { type LicenseKeyVerification, verifyConfiguredLicenseKey } from "@mailwoman/core/license"
+import { confirmLicenseKeyPublished, type LicenseKeyPublication } from "@mailwoman/core/license/publication"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -211,7 +207,7 @@ async function readLayerIdentity(path: string): Promise<LayerIdentity> {
  * `readEnginesFloor` uses), so the doctor reports the license that ships rather than a string in this file.
  */
 async function readRuntimeLicense(): Promise<string> {
-	return (await readMailwomanManifest()).license ?? "NOASSERTION"
+	return (await readMailwomanManifest()).license
 }
 
 /**

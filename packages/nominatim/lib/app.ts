@@ -92,7 +92,7 @@ export function createNominatimApp(engine: NominatimEngine, options: NominatimAp
 	// clean legacy JSON error instead (`{error}` — NOT photon's FeatureCollection+message envelope).
 	app.onError((_error, c) => c.json({ error: "internal error" }, 500))
 
-	registerNominatimRoutes(app, engine, options.engine ? { engine: options.engine } : {})
+	registerNominatimRoutes(app, engine, options.engine)
 	attachOpenAPIDocs(app, NOMINATIM_DOC_INFO)
 
 	return app

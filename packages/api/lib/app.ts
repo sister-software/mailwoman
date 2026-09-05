@@ -155,7 +155,7 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 
 	registerMailwomanAPIRoutes(app, engine, {
 		batchMax: options.batchMax ?? DEFAULT_BATCH_MAX,
-		...(options.engine ? { engine: options.engine } : {}),
+		engine: options.engine,
 	})
 
 	attachOpenAPIDocs(app, MAILWOMAN_API_DOC_INFO)

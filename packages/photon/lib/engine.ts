@@ -9,8 +9,6 @@
  *   `projection.ts`.
  */
 
-import type { EngineStamp } from "@mailwoman/core/license"
-
 /**
  * Photon feature properties — OSM-derived tag names, populated from Mailwoman's `ComponentTag` / resolved place.
  * `extent` is `[minLon, maxLat, maxLon, minLat]` per Photon's convention.
@@ -53,10 +51,6 @@ export interface PhotonFeature {
 export interface PhotonFeatureCollection {
 	type: "FeatureCollection"
 	features: PhotonFeature[]
-	/**
-	 * The engine stamp as a GeoJSON foreign member (RFC 7946 section 6.1). Present when the app was given one.
-	 */
-	engine?: EngineStamp
 }
 
 /**

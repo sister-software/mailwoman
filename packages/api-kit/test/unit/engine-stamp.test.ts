@@ -6,16 +6,10 @@
 
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi"
 import { engineHeaders, EngineStampSchema, withEngineStamp } from "@mailwoman/api-kit"
-import type { EngineStamp } from "@mailwoman/core/license"
+import { buildEngineStamp } from "@mailwoman/core/license"
 import { expect, test } from "vitest"
 
-const stamp: EngineStamp = {
-	name: "mailwoman",
-	version: "9.2.0",
-	license: "AGPL-3.0-only",
-	license_url: "https://mailwoman.ai/license",
-	notice: "n",
-}
+const stamp = buildEngineStamp({ version: "9.2.0", expression: "AGPL-3.0-only OR LicenseRef-Commercial" })
 
 function createPingApp(): OpenAPIHono {
 	const app = new OpenAPIHono()

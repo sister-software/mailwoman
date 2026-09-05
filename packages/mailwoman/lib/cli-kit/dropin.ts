@@ -31,6 +31,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { failScript } from "@mailwoman/core/scripting/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
+import { printLicenseNotice, resolveEngineStamp, type ResolvedEngineStamp } from "#cli-kit/engine-stamp"
 import { type FreshnessArtifact, type FreshnessReport, readFreshness } from "#freshness"
 import {
 	buildNoGazetteerMessage,
@@ -221,7 +222,11 @@ export interface DropInCLI {
 	 * Usage lines for the subcommands, without the leading `Usage:` header.
 	 */
 	usage: string[]
-	serve: () => Promise<void>
+	/**
+	 * Boot the listener and resolve once it is bound; the engine stamp is the process's, resolved here so every drop-in
+	 * carries it the same way and the license notice prints after the listening banner.
+	 */
+	serve: (engineStamp: ResolvedEngineStamp) => Promise<void>
 	openapi: () => void | Promise<void>
 }
 
@@ -235,9 +240,15 @@ export async function runDropInCLI({ binaryName, openapi, serve, usage }: DropIn
 	const command = parseArguments({ strict: false, allowPositionals: true }).positionals[0]
 
 	switch (command) {
-		case "serve":
-			await serve()
+		case "serve": {
+			const engineStamp = await resolveEngineStamp()
+
+			await serve(engineStamp)
+
+			printLicenseNotice(engineStamp)
+
 			break
+		}
 		case "openapi":
 			await openapi()
 			break

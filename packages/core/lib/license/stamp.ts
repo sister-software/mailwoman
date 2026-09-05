@@ -13,13 +13,9 @@
  *   register is the doctor's freshness check, not a per-process network call.
  */
 
+import { docsSiteURL } from "#license/docs-site"
 import type { LicenseKeyVerification } from "#license/key"
-import { chooseLicenseBranch } from "#license/obligations"
-
-/**
- * Where the docs site lives when `MAILWOMAN_DOCS_URL` is unset; the same default `licenseKeysWellKnownURL` applies.
- */
-export const DEFAULT_DOCS_URL = "https://mailwoman.ai"
+import { appliedLicenseBranch } from "#license/obligations"
 
 /**
  * The page the notice and the `Link: rel="license"` header point at. Singular, matching `license_url` and the `license`
@@ -52,8 +48,8 @@ export interface EngineStamp {
 	notice?: string
 }
 
-export function licensePageURL(docsURL: string = DEFAULT_DOCS_URL): string {
-	return `${docsURL.replace(/\/+$/u, "")}${LICENSE_PAGE_PATH}`
+export function licensePageURL(docsURL?: string): string {
+	return `${docsSiteURL(docsURL)}${LICENSE_PAGE_PATH}`
 }
 
 function noticeSentence(license: string, expiredOn?: string): string {
@@ -63,23 +59,23 @@ function noticeSentence(license: string, expiredOn?: string): string {
 }
 
 /**
- * Build the stamp. `key` is the offline verification of the configured key, or absent when none is configured; only a
- * `valid` reading selects the commercial branch, the same rule `runtimeLicenseCheck` applies in the doctor.
+ * Build the stamp. `key` is the offline verification of the configured key, or absent when none is configured. The
+ * branch comes from `appliedLicenseBranch`, the function the doctor calls too; the stamp passes no publication because
+ * it is offline by design.
  */
 export function buildEngineStamp(input: {
 	version: string
 	expression: string
 	key?: LicenseKeyVerification
-	docsURL?: string
 }): EngineStamp {
-	const license = chooseLicenseBranch(input.expression, { commercialAgreement: input.key?.status === "valid" })
-	const commercial = license.startsWith("LicenseRef-")
+	const commercial = input.key?.status === "valid"
+	const license = appliedLicenseBranch(input.expression, input.key)
 
 	return {
 		name: "mailwoman",
 		version: input.version,
 		license,
-		license_url: licensePageURL(input.docsURL),
+		license_url: licensePageURL(),
 		...(commercial ? {} : { notice: `${noticeSentence(license)} ${NOTICE_REMEDY}.` }),
 	}
 }

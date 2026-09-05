@@ -33,7 +33,7 @@ import {
 	resolveGazetteerOrExit,
 	runDropInCLI,
 } from "mailwoman/cli-kit/dropin"
-import { printLicenseNotice, resolveEngineStamp } from "mailwoman/cli-kit/engine-stamp"
+import type { ResolvedEngineStamp } from "mailwoman/cli-kit/engine-stamp"
 import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
 import type { GeocodeResult } from "mailwoman/geocode"
 import { createResolverBackend, dataRootPath, mailwomanDataRoot } from "mailwoman/resolver-backend"
@@ -109,7 +109,7 @@ function forwardToResolved(r: GeocodeResult): ResolvedAddress {
 	}
 }
 
-async function serve(): Promise<void> {
+async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const { values } = parseArguments({
 		options: {
 			port: { type: "string", default: "8080" },
@@ -310,10 +310,9 @@ async function serve(): Promise<void> {
 		},
 	}
 
-	const engineStamp = await resolveEngineStamp()
 	const app = createNominatimApp(engine, { cors: values.cors, engine: engineStamp.stamp })
 
-	serveNode({
+	await serveNode({
 		fetch: app.fetch,
 		port,
 		hostname: host,
@@ -326,8 +325,6 @@ async function serve(): Promise<void> {
 
 			console.error(corsBannerLine(values.cors))
 			console.error(`  endpoints: GET /  GET /search  GET /reverse  GET /lookup  GET /status  GET /openapi.json`)
-
-			printLicenseNotice(engineStamp)
 		},
 	})
 }

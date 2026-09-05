@@ -18,6 +18,7 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 
 import type { CommandSpec, ParsedCommandComponent } from "#cli-kit"
+import { printLicenseNotice, resolveEngineStamp } from "#cli-kit/engine-stamp"
 
 interface ServerConfig {
 	port: number
@@ -58,6 +59,12 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 		let liveWorkerCount = cpus
 
 		cluster.on("listening", () => {
+			// One notice per server, from the primary, the first time a worker binds. The launcher's own notice prints
+			// at exit, which for a daemon is the wrong moment.
+			if (!anyListened) {
+				void resolveEngineStamp().then(printLicenseNotice)
+			}
+
 			anyListened = true
 		})
 
@@ -199,7 +206,6 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 			const { serveNode } = await import("@mailwoman/api-kit")
 			const { $public } = await import("@mailwoman/core/env")
 			const { createServeEngine } = await import("#api-engine")
-			const { printLicenseNotice, resolveEngineStamp } = await import("#cli-kit/engine-stamp")
 
 			const { engine, preflight } = await createServeEngine()
 
@@ -234,15 +240,7 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 				fetch: app.fetch,
 				port,
 				hostname: host,
-				onListen: () => {
-					cluster.worker?.send("HTTP server ready")
-
-					// One notice per server, not one per worker: the first-forked worker prints, by the same rule the
-					// preflight banner above uses.
-					if ((cluster.worker?.id ?? 1) === 1) {
-						printLicenseNotice(engineStamp)
-					}
-				},
+				onListen: () => cluster.worker?.send("HTTP server ready"),
 			})
 
 			if (disposed) {

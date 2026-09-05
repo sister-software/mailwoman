@@ -29,8 +29,7 @@ describe("mailwoman openapi", () => {
 
 		expect(stdout.startsWith('{"openapi":"3.1.0"')).toBe(true)
 
-		// The two notice lines are the launcher's, printed for every command; anything else on stderr is a boot the
-		// stub engine must not have triggered. Anchored at both ends, so the match IS the whole stream.
+		// Anchored at both ends, so the match IS the whole stream.
 		expect(stderr).toMatch(/^mailwoman is licensed [^\n]*\nA commercial license waives that obligation: [^\n]*\n$/u)
 
 		const doc = parseJSONStrict<{ openapi: string; paths: Record<string, unknown> }>(stdout)

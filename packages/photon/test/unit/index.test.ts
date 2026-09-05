@@ -5,7 +5,7 @@
  */
 
 import type { SchemaOrgPlace } from "@mailwoman/annotations"
-import type { EngineStamp } from "@mailwoman/core/license"
+import { buildEngineStamp, type EngineStamp } from "@mailwoman/core/license"
 import {
 	createPhotonApp,
 	photonFeature,
@@ -509,13 +509,7 @@ test("absent engine methods answer the exact legacy 501 envelopes", async () => 
 
 // MARK: engine stamp
 
-const stamp: EngineStamp = {
-	name: "mailwoman",
-	version: "9.2.0",
-	license: "AGPL-3.0-only",
-	license_url: "https://mailwoman.ai/license",
-	notice: "n",
-}
+const stamp = buildEngineStamp({ version: "9.2.0", expression: "AGPL-3.0-only OR LicenseRef-Commercial" })
 
 test("engine option: the FeatureCollection carries `engine` as a foreign member; features and jsonld are unchanged", async () => {
 	const app = createPhotonApp(jsonldEngine, { engine: stamp })

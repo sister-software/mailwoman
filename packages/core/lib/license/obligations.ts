@@ -8,6 +8,9 @@
  *   known to carry, and it says `recognized: false` for an identifier it does not know rather than guessing.
  */
 
+import type { LicenseKeyVerification } from "#license/key"
+import type { LicenseKeyPublication } from "#license/publication"
+
 /**
  * The responsibility classes the summary reports.
  *
@@ -123,6 +126,21 @@ export function summarizeLicense(expression: string): LicenseSummary {
 		recognized: identifiers.length > 0 && unrecognized.length === 0,
 		unrecognized,
 	}
+}
+
+/**
+ * The branch of mailwoman's own expression that applies, from what the configured key reads offline and, when a caller
+ * has asked the well-known register, what it said. Only a `valid` key that the register has not retired or dropped
+ * selects the commercial branch. The doctor passes both answers; the stamp, offline by design, passes the key alone.
+ */
+export function appliedLicenseBranch(
+	expression: string,
+	key?: LicenseKeyVerification,
+	publication?: LicenseKeyPublication
+): string {
+	const retired = publication === "retired" || publication === "unlisted"
+
+	return chooseLicenseBranch(expression, { commercialAgreement: key?.status === "valid" && !retired })
 }
 
 /**

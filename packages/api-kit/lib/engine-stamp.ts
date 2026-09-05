@@ -5,7 +5,8 @@
  *
  *   The engine stamp on the HTTP side: the zod schema every app documents it with, the two headers every response
  *   carries, and the helper that attaches the body field. The stamp itself is built by the `mailwoman` package and
- *   arrives as an option value, because the app packages may not depend on `mailwoman`.
+ *   arrives as an option value: an app factory (`lib/app.ts`, `lib/routes.ts`, `lib/schema.ts`) is engine-agnostic and
+ *   must not import `mailwoman`; the bin (`lib/cli.ts`) is the wiring layer that resolves the stamp and passes it in.
  */
 
 import { z } from "@hono/zod-openapi"
@@ -24,7 +25,17 @@ export const EngineStampSchema = z
 		license_url: z.string(),
 		notice: z.string().optional(),
 	})
-	.openapi("EngineStamp")
+	.openapi("EngineStamp") satisfies z.ZodType<EngineStamp>
+
+/**
+ * A route's response schema once the route attaches the stamp: the body schema intersected with the optional `engine`
+ * field. Applied at the ROUTE, never on an outcome schema, so an outcome schema keeps describing what the engine
+ * produces (the schema drift pin in `mailwoman` depends on that) and the OpenAPI document references the outcome
+ * component through `allOf` instead of cloning it.
+ */
+export function stampedResponseSchema<S extends z.ZodTypeAny>(schema: S) {
+	return z.intersection(schema, z.object({ engine: EngineStampSchema.optional() }))
+}
 
 /**
  * `Server` names the engine and its license branch; `Link: rel="license"` is the registered relation (RFC 8288) that
@@ -50,6 +61,6 @@ export function engineHeaders(stamp: EngineStamp): MiddlewareHandler {
 export function withEngineStamp<T extends object>(
 	body: T,
 	stamp: EngineStamp | undefined
-): T | (T & { engine: EngineStamp }) {
+): T & { engine?: EngineStamp } {
 	return stamp ? { ...body, engine: stamp } : body
 }

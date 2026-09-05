@@ -126,10 +126,10 @@
 			"default": "./out/license/index.js",
 			"types": "./out/license/index.d.ts"
 		},
-		"./license/*": {
-			"node": "./lib/license/*.ts",
-			"default": "./out/license/*.js",
-			"types": "./out/license/*.d.ts"
+		"./license/publication": {
+			"node": "./lib/license/publication.ts",
+			"default": "./out/license/publication.js",
+			"types": "./out/license/publication.d.ts"
 		},
 		"./resources": {
 			"node": "./lib/resources/index.ts",

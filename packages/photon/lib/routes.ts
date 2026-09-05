@@ -132,13 +132,7 @@ const reverseRoute = createRoute({
 /**
  * Register the Photon-compatible routes against an injected engine.
  */
-export function registerPhotonRoutes(
-	app: OpenAPIHono,
-	engine: PhotonEngine,
-	options: { engine?: EngineStamp } = {}
-): void {
-	const stamp = options.engine
-
+export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine, stamp?: EngineStamp): void {
 	app.openapi(rootRoute, (c) => c.html(ROOT_HTML))
 
 	app.openapi(searchRoute, async (c) => {

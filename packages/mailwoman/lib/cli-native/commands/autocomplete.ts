@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { resolveEngineStamp } from "#cli-kit/engine-stamp"
 import {
 	booleanValue,
 	CLIUsageError,
@@ -50,7 +51,6 @@ export async function run(args: readonly string[]): Promise<number> {
 		const fstPath = resolveFSTPath(stringValue(parsed.values, "fst"))
 		const entries = await runAutocomplete(prefix, { fstPath, limit: numberValue(parsed.values, "limit")! })
 
-		const { resolveEngineStamp } = await import("#cli-kit/engine-stamp")
 		const { stamp } = await resolveEngineStamp()
 
 		const output = booleanValue(parsed.values, "json")

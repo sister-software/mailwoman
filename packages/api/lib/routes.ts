@@ -20,7 +20,13 @@
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
-import { geocoderUnavailableError, metricsSnapshot, recordTimed, withEngineStamp } from "@mailwoman/api-kit"
+import {
+	geocoderUnavailableError,
+	metricsSnapshot,
+	recordTimed,
+	stampedResponseSchema,
+	withEngineStamp,
+} from "@mailwoman/api-kit"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { EngineStamp } from "@mailwoman/core/license"
 import type { ComponentTag } from "@mailwoman/core/types"
@@ -33,8 +39,8 @@ import {
 	BatchResponseSchema,
 	FormatRequestSchema,
 	FormatResponseSchema,
+	GeocodeOutcomeSchema,
 	GeocodeRequestSchema,
-	GeocodeResponseSchema,
 	HealthResponseSchema,
 	ParseOutcomeSchema,
 	ParseRequestSchema,
@@ -84,7 +90,7 @@ const parseQueryParams = z.object({
 const parseResponses = {
 	200: {
 		description: "The tokenized input span + ranked solutions.",
-		content: { "application/json": { schema: ParseOutcomeSchema } },
+		content: { "application/json": { schema: stampedResponseSchema(ParseOutcomeSchema) } },
 	},
 	400: errorContent("`address` is required."),
 	501: errorContent("The backing engine method is not wired for this deployment."),
@@ -92,9 +98,8 @@ const parseResponses = {
 
 const geocodeResponses = {
 	200: {
-		description:
-			"One geocode result (parse → resolve cascade), passed through from the engine verbatim, plus the engine stamp.",
-		content: { "application/json": { schema: GeocodeResponseSchema } },
+		description: "One geocode result (parse → resolve cascade), passed through from the engine verbatim.",
+		content: { "application/json": { schema: stampedResponseSchema(GeocodeOutcomeSchema) } },
 	},
 	400: errorContent("`address` is required."),
 	503: errorContent("The geocoding engine is not wired for this deployment (dependencies missing)."),
@@ -103,7 +108,7 @@ const geocodeResponses = {
 const batchResponses = {
 	200: {
 		description: "One result per input address, in input order (per-row error isolation).",
-		content: { "application/json": { schema: BatchResponseSchema } },
+		content: { "application/json": { schema: stampedResponseSchema(BatchResponseSchema) } },
 	},
 	400: errorContent("Body must be `{ addresses: string[] }`."),
 	413: errorContent("`addresses.length` exceeds the configured batch cap."),
@@ -113,7 +118,7 @@ const batchResponses = {
 const resolveResponses = {
 	200: {
 		description: "The same tree, decorated in place with gazetteer coordinates + attribution.",
-		content: { "application/json": { schema: ResolveResponseSchema } },
+		content: { "application/json": { schema: stampedResponseSchema(ResolveResponseSchema) } },
 	},
 	400: errorContent("Body must be `{ tree: AddressTree, opts? }`."),
 	503: errorContent("The resolver is not wired for this deployment (dependencies missing)."),
@@ -132,7 +137,7 @@ const reloadResponses = {
 const formatResponses = {
 	200: {
 		description: "The rendered address string + the deterministic canonical match key.",
-		content: { "application/json": { schema: FormatResponseSchema } },
+		content: { "application/json": { schema: stampedResponseSchema(FormatResponseSchema) } },
 	},
 	400: errorContent("Invalid request body."),
 }
