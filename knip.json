@@ -35,6 +35,9 @@
 			],
 			"ignoreDependencies": ["@mailwoman/neural-weights-en-us"]
 		},
+		"packages/api-kit": {
+			"entry": ["lib/index.ts", "test/fixtures/**/*.ts"]
+		},
 		"packages/dev-mcp": {
 			"entry": ["lib/index.ts", "lib/cli.ts", "lib/worker.ts", "lib/hooks/*.ts"]
 		},
