@@ -52,6 +52,26 @@ const LogLevelColors = {
 /**
  * Creates a logger with the given prefix.
  */
+/**
+ * Where diagnostics are written. Under Node, a `Console` whose BOTH streams are stderr: `console.debug`, `console.info`
+ * and `console.log` write to stdout there, so a request line from an HTTP client landed in the middle of any command
+ * whose stdout is data (`mailwoman doctor --json` was the case that surfaced it). Diagnostics belong on stderr, the
+ * stream a shell keeps apart from the data. In a browser there is one console and this is that console.
+ */
+function diagnosticsSink(): Console {
+	// oxlint-disable-next-line sister-software/no-process-globals -- the stream object itself, not configuration; a browser has no `process` and falls through
+	const stderr = globalThis.process?.stderr
+	const ConsoleConstructor = (
+		globalThis.console as {
+			Console?: new (options: { stdout: NodeJS.WritableStream; stderr: NodeJS.WritableStream }) => Console
+		}
+	).Console
+
+	return stderr && ConsoleConstructor ? new ConsoleConstructor({ stdout: stderr, stderr }) : console
+}
+
+const sink = diagnosticsSink()
+
 export const createConsoleLogger: LoggerFactory = (prefix, ...args) => {
 	const msgPrefix = prefix ? `(${prefix}):` : ":"
 
@@ -64,9 +84,9 @@ export const createConsoleLogger: LoggerFactory = (prefix, ...args) => {
 
 		// @ts-expect-error Alias the log method to the appropriate console method,
 		// defaulting to console.log if the level is not supported.
-		const method = level in console ? console[level] : console.log
+		const method = level in sink ? sink[level] : sink.log
 
-		logger[level] = method.bind(console, `${label} ${msgPrefix}`, ...args)
+		logger[level] = method.bind(sink, `${label} ${msgPrefix}`, ...args)
 	}
 
 	return logger as Logger
@@ -113,10 +133,10 @@ export function createLogger(prefix?: string, ...args: string[][]): Logger {
 
 		// @ts-expect-error Alias the log method to the appropriate console method,
 		// defaulting to console.log if the level is not supported.
-		const method = level in console ? console[level] : console.log
+		const method = level in sink ? sink[level] : sink.log
 
 		logger[level] = method.bind(
-			console,
+			sink,
 			`%c${label}%c ${msgPrefix}%c`,
 			`font-weight: 700; color: ${color};`,
 			`font-weight: 600; color: CanvasText;`,

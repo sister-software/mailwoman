@@ -4,7 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
-import { chooseLicenseBranch, LicenseObligation, licenseIdentifiers, summarizeLicense } from "@mailwoman/core/license"
+import {
+	assertAdmissibleLicenseExpression,
+	chooseLicenseBranch,
+	LicenseObligation,
+	licenseIdentifiers,
+	summarizeLicense,
+} from "@mailwoman/core/license"
 import { describe, expect, it } from "vitest"
 
 describe("summarizeLicense", () => {
@@ -71,5 +77,27 @@ describe("chooseLicenseBranch", () => {
 
 	it("returns a single-branch expression whole", () => {
 		expect(chooseLicenseBranch("ODbL-1.0", { commercialAgreement: true })).toBe("ODbL-1.0")
+	})
+})
+
+describe("assertAdmissibleLicenseExpression", () => {
+	it("admits a known identifier, a defined LicenseRef, NOASSERTION, and expressions over them", () => {
+		for (const expression of [
+			"AGPL-3.0-only OR LicenseRef-Commercial",
+			"LicenseRef-USGov-Public-Domain",
+			"NOASSERTION",
+			"OGL-UK-3.0",
+			"CC-BY-4.0 AND ODbL-1.0",
+		]) {
+			expect(() => assertAdmissibleLicenseExpression(expression)).not.toThrow()
+		}
+	})
+
+	it("refuses a vendor-suffixed identifier and a bare phrase, naming the identifier", () => {
+		expect(() => assertAdmissibleLicenseExpression("PDDL-1.0-USGov-NRCS", "layer manifest")).toThrow(
+			/layer manifest: "PDDL-1.0-USGov-NRCS" is not an admissible/u
+		)
+
+		expect(() => assertAdmissibleLicenseExpression("public-domain")).toThrow(/"public-domain"/u)
 	})
 })

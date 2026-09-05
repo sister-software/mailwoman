@@ -214,7 +214,7 @@ describe("buildBDCDatabase", () => {
 		expect(manifest).toMatchObject({
 			name: "bdc",
 			tier: "shipped",
-			license: "public-domain",
+			license: "LicenseRef-USGov-Public-Domain",
 			source: "fcc-bdc",
 			sourceVintage: "2026-06-30",
 			buildCmd: "mailwoman gazetteer build bdc",

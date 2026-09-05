@@ -11,6 +11,7 @@
 import { supportsExclusion } from "@mailwoman/evidence"
 
 import { CoverageBasis, LayerFreshnessPolicy, LayerTier, type LayerContractHandle } from "#layers/schema"
+import { assertAdmissibleLicenseExpression } from "#license/obligations"
 import { parseJSONStrict } from "#objects"
 
 /**
@@ -102,7 +103,11 @@ function assertCoverageCellInvariants(cell: CoverageCell): void {
 const TIERS = new Set<string>(Object.values(LayerTier))
 const POLICIES = new Set<string>(Object.values(LayerFreshnessPolicy))
 
-function assertManifestInvariants(manifest: Pick<LayerManifest, "tier" | "freshnessPolicy" | "spineKeys">): void {
+function assertManifestInvariants(
+	manifest: Pick<LayerManifest, "tier" | "freshnessPolicy" | "spineKeys" | "license">
+): void {
+	assertAdmissibleLicenseExpression(manifest.license, "layer manifest")
+
 	if (!TIERS.has(manifest.tier)) {
 		throw new Error(`layer manifest: unknown tier ${JSON.stringify(manifest.tier)}`)
 	}

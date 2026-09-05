@@ -780,7 +780,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			version: options.asOfDate,
 			schemaVersion: 1,
 			tier: LayerTier.Shipped,
-			license: "public-domain",
+			license: "LicenseRef-USGov-Public-Domain",
 			attribution: BDC_ATTRIBUTION,
 			source: "fcc-bdc",
 			sourceVintage: options.asOfDate,

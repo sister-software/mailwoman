@@ -49,6 +49,7 @@ function healthyDeps(): DoctorDeps {
 			attribution: "Overture Maps Foundation",
 		}),
 		layerDatabases: () => [{ id: "poi", label: "POI layer", path: "/data/poi/poi.db" }],
+		layerAlternates: async () => [],
 		runtimeLicense: async () => "AGPL-3.0-only OR LicenseRef-Commercial",
 		licenseKey: () => undefined,
 		confirmLicenseKeyPublished: async () => "unreachable",

@@ -588,6 +588,11 @@ export interface LayerLicenseObservation {
 	 */
 	manifest?: LayerIdentity
 	error?: string
+	/**
+	 * Other `.db` files in the layer's directory when the attached file itself is absent — the artifact built under a
+	 * name the session does not look for.
+	 */
+	alternates?: string[]
 }
 
 /**
@@ -597,6 +602,16 @@ export interface LayerLicenseObservation {
  */
 export function layerLicenseCheck(o: LayerLicenseObservation): DoctorCheck {
 	const base = { id: `license-${o.id}`, label: `License (${o.label})`, core: false }
+
+	if (o.alternates?.length) {
+		return {
+			...base,
+			status: CheckStatus.Degraded,
+			detail: `${o.path} is absent, but ${o.alternates.join(", ")} sits beside where it would be — a build under another name`,
+			consequence:
+				"The session attaches nothing for this layer, so every answer reads as if no such data existed. Rename or rebuild the artifact to the attached filename, or point the build's --out at it.",
+		}
+	}
 
 	if (!o.manifest) {
 		return {

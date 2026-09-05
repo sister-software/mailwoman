@@ -46,7 +46,13 @@ import {
 	type POIObservation,
 	type WeightsObservation,
 } from "#doctor/checks"
-import { layerDatabasePath, layerDatabases, type LayerDatabaseRef } from "#geocode/layer-paths"
+import {
+	layerDatabaseAlternates,
+	layerDatabasePath,
+	layerDatabases,
+	type LayerDatabaseRef,
+	type LayerID,
+} from "#geocode/layer-paths"
 import { conventionCandidateDBPath, resolveCandidateDBPath, resolveWOFDatabasePaths } from "#resolver-backend"
 
 /**
@@ -116,6 +122,10 @@ export interface DoctorDeps {
 	 * that is on disk.
 	 */
 	layerDatabases(): LayerDatabaseRef[]
+	/**
+	 * `.db` files in a layer's directory other than the one the session attaches — a build under another name.
+	 */
+	layerAlternates(id: LayerID): Promise<string[]>
 	/**
 	 * Mailwoman's own `license` expression, from its package manifest.
 	 */
@@ -230,6 +240,7 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 		poiPath: () => layerDatabasePath(dataRoot, "poi"),
 		readLayerIdentity,
 		layerDatabases: () => layerDatabases(dataRoot),
+		layerAlternates: (id) => layerDatabaseAlternates(dataRoot, id),
 		runtimeLicense: readRuntimeLicense,
 		licenseKey: () => verifyConfiguredLicenseKey(),
 		confirmLicenseKeyPublished: (kid) => confirmLicenseKeyPublished(kid),
@@ -316,7 +327,11 @@ async function gatherLayerLicense(
 	deps: DoctorDeps,
 	layer: LayerDatabaseRef
 ): Promise<LayerLicenseObservation | undefined> {
-	if (!(await deps.exists(layer.path))) return undefined
+	if (!(await deps.exists(layer.path))) {
+		const alternates = await deps.layerAlternates(layer.id)
+
+		return alternates.length ? { ...layer, alternates } : undefined
+	}
 
 	try {
 		return { ...layer, manifest: await deps.readLayerIdentity(layer.path) }

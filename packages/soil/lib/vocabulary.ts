@@ -62,7 +62,7 @@ export const SSURGO_ATTRIBUTION = "U.S. Department of Agriculture, Natural Resou
  * blanket grant and tells the reader to check with the agency. The agency was checked at the strongest available place
  * — the FGDC metadata NRCS ships inside the archive — and it says {@link SSURGO_PUBLIC_INFORMATION_SENTENCE}.
  */
-export const SSURGO_LICENSE = "PDDL-1.0-USGov-NRCS"
+export const SSURGO_LICENSE = "LicenseRef-USGov-Public-Domain"
 
 /**
  * The sentence that makes this layer shippable, verbatim from the `useconst` element of the FGDC metadata inside every

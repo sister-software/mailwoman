@@ -238,15 +238,15 @@ is the primary key; the writer inserts exactly once. `readLayerManifest` refuses
 is empty or multi-row — a layer with no identity, or two, fails loudly rather than misbehaving
 downstream.
 
-| field                                                | meaning                                                                           |
-| ---------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `name`, `version`, `schema_version`                  | identity                                                                          |
-| `tier`                                               | `shipped` \| `build-local` \| `private` (see below)                               |
-| `license`, `attribution`                             | SPDX-ish expression, e.g. `CDLA-Permissive-2.0`, `ODbL-1.0`; attribution nullable |
-| `source`, `source_vintage`, `build_cmd`, `build_sha` | provenance — pin baselines by SHA + the command that produced them                |
-| `freshness_policy`                                   | `sealed` (rebuild-only) \| `versioned-refresh` (re-issued under the same name)    |
-| `spine_keys`                                         | which spine columns this layer carries, and the H3 resolution (JSON-encoded)      |
-| `created_at`                                         | ISO-8601, supplied by the build script — never generated in-library               |
+| field                                                | meaning                                                                                                    |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `name`, `version`, `schema_version`                  | identity                                                                                                   |
+| `tier`                                               | `shipped` \| `build-local` \| `private` (see below)                                                        |
+| `license`, `attribution`                             | SPDX expression the build admits (see below), e.g. `CDLA-Permissive-2.0`, `ODbL-1.0`; attribution nullable |
+| `source`, `source_vintage`, `build_cmd`, `build_sha` | provenance — pin baselines by SHA + the command that produced them                                         |
+| `freshness_policy`                                   | `sealed` (rebuild-only) \| `versioned-refresh` (re-issued under the same name)                             |
+| `spine_keys`                                         | which spine columns this layer carries, and the H3 resolution (JSON-encoded)                               |
+| `created_at`                                         | ISO-8601, supplied by the build script — never generated in-library                                        |
 
 `created_at` is deliberately caller-supplied: the library never stamps a timestamp, so a
 rebuild from the same inputs is reproducible rather than carrying a fresh "now" on every run.
@@ -399,3 +399,15 @@ Building a new layer? The contract obligations, in order:
 - [The meaning of zero](./the-meaning-of-zero.mdx) — the general epistemics principle behind the
   coverage rule.
 - [Address-data sources](./address-data-sources.mdx) — the source catalog the shipped layers draw from.
+
+## Admissible license expressions
+
+`writeLayerManifest` refuses a `license` whose identifiers are not one of: an identifier in the obligations table
+(`packages/core/lib/license/obligations.ts`, which is also what `mailwoman doctor` summarizes), a `LicenseRef-` this
+repository defines, or `NOASSERTION` when the publisher states no license. A manifest is sealed data: a vendor-suffixed
+identifier such as `PDDL-1.0-USGov-NRCS` would otherwise ship and read as unrecognized on every machine that opens it.
+
+| `LicenseRef`                     | Meaning                                                                                                              | Obligations |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ----------- |
+| `LicenseRef-Commercial`          | mailwoman's commercial agreement (`COMMERCIAL-LICENSE.md`)                                                           | attribution |
+| `LicenseRef-USGov-Public-Domain` | a work of the United States Government, 17 U.S.C. § 105 — SSURGO, the FCC BDC filings; SPDX has no identifier for it | none        |

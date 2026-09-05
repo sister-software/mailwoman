@@ -44,6 +44,9 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 	["CC-BY-4.0", [LicenseObligation.Attribution]],
 	["CC0-1.0", []],
 	["PDDL-1.0", []],
+	// A work of the United States Government (17 U.S.C. § 105): no copyright, so no obligation. SPDX has no identifier
+	// for it; the `LicenseRef` is defined in docs/engineering/reference/layer-contract.mdx.
+	["LicenseRef-USGov-Public-Domain", []],
 	// Licence Ouverte 2.0 (etalab), BAN's elected license.
 	["etalab-2.0", [LicenseObligation.Attribution]],
 	["MIT", [LicenseObligation.Attribution]],
@@ -143,4 +146,23 @@ export function chooseLicenseBranch(expression: string, options: { commercialAgr
 	if (options.commercialAgreement && commercial) return commercial
 
 	return open ?? branches[0]!
+}
+
+const LICENSE_REF = /^LicenseRef-[A-Za-z0-9.-]+$/u
+
+/**
+ * Whether an SPDX expression may be RECORDED in a layer manifest: every identifier is one the obligations table knows,
+ * a `LicenseRef-…` this repository defines, or `NOASSERTION` (the publisher has stated no license; the doctor reports
+ * that as degraded, which is the correct reading). Anything else is refused at build time, because a manifest is sealed
+ * data and a vendor-suffixed identifier such as `PDDL-1.0-USGov-NRCS` would otherwise ship and read as unrecognized on
+ * every machine that opens it.
+ */
+export function assertAdmissibleLicenseExpression(expression: string, context = "license"): void {
+	for (const identifier of licenseIdentifiers(expression)) {
+		if (identifier === "NOASSERTION" || KNOWN_OBLIGATIONS.has(identifier) || LICENSE_REF.test(identifier)) continue
+
+		throw new Error(
+			`${context}: ${JSON.stringify(identifier)} is not an admissible license identifier. Use the SPDX identifier the obligations table knows (packages/core/lib/license/obligations.ts), a LicenseRef- this repository defines, or NOASSERTION.`
+		)
+	}
 }

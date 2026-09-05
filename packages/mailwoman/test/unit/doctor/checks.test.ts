@@ -16,6 +16,7 @@ import {
 	computeExitCode,
 	dataRootCheck,
 	gazetteerCheck,
+	layerLicenseCheck,
 	localeOverlayCheck,
 	nodeVersionCheck,
 	onnxRuntimeCheck,
@@ -323,5 +324,46 @@ describe("every failing check states its consequence (#1577)", () => {
 		const c = nodeVersionCheck({ nodeVersion: "24.18.0", enginesFloor: ">=24.18.0" })
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.consequence).toBeUndefined()
+	})
+})
+
+describe("layerLicenseCheck", () => {
+	it("reports an artifact built under another name as degraded, naming the file, and never as coverage absence", () => {
+		const check = layerLicenseCheck({
+			id: "soil",
+			label: "Soil capability (NRCS SSURGO)",
+			path: "/data/soil/soil.db",
+			alternates: ["soil-ia.db"],
+		})
+
+		expect(check.status).toBe("degraded")
+		expect(check.detail).toContain("soil-ia.db")
+		expect(check.consequence).toContain("attaches nothing")
+	})
+
+	it("summarizes a recognized license and reports an unrecognized one as degraded", () => {
+		const identity = {
+			name: "soil",
+			version: "2026-08",
+			sourceVintage: "2026-08",
+			license: "LicenseRef-USGov-Public-Domain",
+			attribution: "USDA NRCS",
+			path: "/data/soil/soil.db",
+			exists: true,
+		}
+
+		const ok = layerLicenseCheck({ id: "soil", label: "Soil", path: "/data/soil/soil.db", manifest: identity })
+
+		const odd = layerLicenseCheck({
+			id: "soil",
+			label: "Soil",
+			path: "/data/soil/soil.db",
+			manifest: { ...identity, license: "PDDL-1.0-USGov-NRCS" },
+		})
+
+		expect(ok.status).toBe("ok")
+		expect(ok.license?.recognized).toBe(true)
+		expect(odd.status).toBe("degraded")
+		expect(odd.license?.recognized).toBe(false)
 	})
 })
