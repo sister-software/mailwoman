@@ -13,7 +13,7 @@
  *   a source arrives that does.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 
 import { assertDatumTransformationAvailable } from "#projection-transform"

@@ -27,8 +27,8 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
+import { prettyJSON } from "@mailwoman/core/json"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
-import { prettyJSON } from "@mailwoman/core/objects"
 import { workspacePath } from "@mailwoman/core/paths"
 import { allRows } from "@mailwoman/core/utils"
 import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "@mailwoman/poi-taxonomy"

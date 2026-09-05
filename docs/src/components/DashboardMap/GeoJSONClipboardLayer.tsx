@@ -5,7 +5,7 @@
  */
 
 import { ResourceError } from "@mailwoman/core/errors"
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import type { GeoFeature, GeoFeatureCollection, GeometryLiteral } from "@mailwoman/spatial"
 
 import "maplibre-gl/dist/maplibre-gl.css"

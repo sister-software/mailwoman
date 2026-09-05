@@ -10,7 +10,7 @@
  *   districts), and a duplicate prefix must throw rather than silently keep one of two counts.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import {
 	PostcodePrefixIndexResolver,
 	serializePostcodePrefixIndex,

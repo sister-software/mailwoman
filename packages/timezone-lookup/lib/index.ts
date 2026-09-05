@@ -10,7 +10,7 @@
  */
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { TimezoneDatabase } from "#schema"

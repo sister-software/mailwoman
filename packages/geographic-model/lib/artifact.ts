@@ -27,7 +27,8 @@
  *   Boundary record: `docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md` (#1917).
  */
 
-import { prettyJSON, isPlainObject } from "@mailwoman/core/objects"
+import { prettyJSON } from "@mailwoman/core/json"
+import { isPlainObject } from "@mailwoman/core/objects"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 
 import type {

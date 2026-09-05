@@ -9,7 +9,7 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import type { AddressPointLookup, InterpolationLookup, ResolveOpts } from "@mailwoman/core/resolver"
 import { RemoteResolver, serializableResolveOpts } from "@mailwoman/resolver/remote-resolver"
 import { describe, expect, test, vi } from "vitest"

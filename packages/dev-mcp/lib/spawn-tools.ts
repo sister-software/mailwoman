@@ -13,7 +13,7 @@
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { listEvalSpecs } from "mailwoman/eval-harness/promotion-eval"
 import { z } from "zod"
 

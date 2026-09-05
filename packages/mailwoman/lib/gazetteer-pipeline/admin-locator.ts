@@ -14,7 +14,7 @@
  *   sub-second pass rather than an overnight one.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { pointInMultiPolygon, pointInPolygon } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

@@ -10,7 +10,7 @@
  *   build-time operation).
  */
 
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 
 import {
 	EDGE_ENTRY_SIZE,

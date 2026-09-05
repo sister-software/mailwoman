@@ -10,9 +10,9 @@
 
 import { supportsExclusion } from "@mailwoman/evidence"
 
+import { parseJSONStrict } from "#json"
 import { CoverageBasis, LayerFreshnessPolicy, LayerTier, type LayerContractHandle } from "#layers/schema"
 import { assertAdmissibleLicenseExpression } from "#license/obligations"
-import { parseJSONStrict } from "#objects"
 
 /**
  * Which spine columns a layer carries. At least one key is required.

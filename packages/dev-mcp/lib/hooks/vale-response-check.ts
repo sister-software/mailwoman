@@ -21,7 +21,7 @@
  */
 
 import { readLocalTextFile, readStandardInputJSON } from "@mailwoman/core/fs/readers"
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import { TextSpliterator } from "spliterator"
 
 import { lintReply, renderVerdict } from "#hooks/vale-check-core"

@@ -10,7 +10,7 @@
  *   browser runtime loads the same artifacts.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 
 /**
  * Sequential little-endian reader over a byte buffer. Reads advance `offset`; an out-of-bounds fixed-width read throws

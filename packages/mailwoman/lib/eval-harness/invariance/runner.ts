@@ -38,7 +38,7 @@
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { resolvePath } from "path-ts"

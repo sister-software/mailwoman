@@ -30,7 +30,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import FastGlob from "fast-glob"
 
 /**

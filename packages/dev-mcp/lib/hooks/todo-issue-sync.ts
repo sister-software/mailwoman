@@ -36,7 +36,7 @@ import {
 	removePath,
 	writeLocalJSONFile,
 } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import { runFileSync, spawnProcess } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { join, resolvePath as resolve } from "path-ts"

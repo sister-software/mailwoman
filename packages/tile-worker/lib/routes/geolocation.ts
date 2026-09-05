@@ -5,7 +5,7 @@
  */
 
 import { ResourceError } from "@mailwoman/core/errors"
-import { prettyJSON } from "@mailwoman/core/objects"
+import { prettyJSON } from "@mailwoman/core/json"
 import type { GeoFeature, PointLiteral } from "@mailwoman/spatial"
 
 import { applyAccessControlAllowOrigin } from "#cors"

@@ -130,7 +130,7 @@ export interface DoctorDeps {
 	 * The configured license key, verified offline against the trusted keys this build ships; `undefined` when none is
 	 * configured.
 	 */
-	licenseKey(): LicenseKeyVerification | undefined
+	licenseKey(): Promise<LicenseKeyVerification | undefined>
 	/**
 	 * Ask mailwoman.ai's well-known register whether a key id is still listed. Called only when a key is configured;
 	 * answers `unreachable` rather than throwing when there is no route.
@@ -391,7 +391,7 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 	const poi = checkPOI(await gatherPOI(deps))
 
 	// License posture: mailwoman's own branch, then each attached layer's recorded license. Informational.
-	const key = deps.licenseKey()
+	const key = await deps.licenseKey()
 	const publication = key && "kid" in key ? await deps.confirmLicenseKeyPublished(key.kid) : undefined
 
 	const runtimeLicense = runtimeLicenseCheck({

@@ -28,7 +28,7 @@
  *   repeated across SSURGO, which is why asserting it is cheap and why a change in it is loud.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import type { ParsedGeometry } from "@mailwoman/spatial"
 import type { PathBuilderLike } from "path-ts"

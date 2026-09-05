@@ -5,7 +5,7 @@
  * @file Strict knip export verification with a narrow compatibility-alias allowlist.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"

@@ -11,7 +11,7 @@
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import type { WOFFeature, WOFProperties } from "@mailwoman/core/resources/whosonfirst"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"

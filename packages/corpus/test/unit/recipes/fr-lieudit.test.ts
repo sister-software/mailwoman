@@ -12,7 +12,7 @@
 import { gzip } from "@mailwoman/core/fs/compression"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { frLieuditRecipe } from "@mailwoman/corpus/recipes/fr-lieudit"
 import type { SliceRecipeOpts } from "@mailwoman/corpus/recipes/scaffold"
 import { join, resolvePath } from "path-ts"

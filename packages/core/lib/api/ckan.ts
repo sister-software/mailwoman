@@ -13,7 +13,7 @@
  */
 
 import type { APIClient } from "#api/APIClient"
-import { parseJSONArray } from "#objects"
+import { parseJSONArray } from "#json"
 
 /**
  * The catalogue API a package entry is read from.

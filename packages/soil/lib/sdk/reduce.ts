@@ -36,7 +36,7 @@
  *   than one.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { pointInEncodedRings, type H3Cell } from "@mailwoman/spatial"
 import { cellToChildren, cellToLatLng } from "h3-js"
 

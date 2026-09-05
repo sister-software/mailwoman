@@ -12,7 +12,7 @@
  */
 
 import { COMPONENT_TAGS } from "@mailwoman/core"
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import { haversineKm } from "@mailwoman/spatial"
 
 import type { GauntletResult } from "#eval-harness/gauntlet/harness"

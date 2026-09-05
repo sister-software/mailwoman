@@ -52,6 +52,7 @@
 
 import { pathExists, readDirectory, readFileRange } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent, movePath, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import {
 	createLayerCoverageTable,
 	createLayerManifestTable,
@@ -61,7 +62,6 @@ import {
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
-import { tryParsingJSON } from "@mailwoman/core/objects"
 import type { FilerDatabase } from "@mailwoman/filer"
 // `pickPrimaryFRN`/`readFRNFilingCandidates` are loaded via a LAZY `await import("@mailwoman/filer/filer-lookup")`
 // inside `populateBDCProviderTable`, not a top-level runtime import — see that function's docstring

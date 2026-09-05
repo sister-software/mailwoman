@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { tryParsingJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { tryParsingJSON } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { runFileSync } from "@mailwoman/core/process"
 import { describe, expect, it } from "vitest"

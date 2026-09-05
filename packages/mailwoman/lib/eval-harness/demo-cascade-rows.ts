@@ -20,7 +20,7 @@
  *   when a `wof-hot.db` was present, which is why nothing surfaced it for four weeks.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 
 export interface SmokeRowExpect {
 	/**

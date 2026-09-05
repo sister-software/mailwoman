@@ -29,7 +29,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readDirectory, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { join, type PathBuilderLike } from "path-ts"
 
 /**

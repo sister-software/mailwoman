@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { describe, expect, it } from "vitest"
 

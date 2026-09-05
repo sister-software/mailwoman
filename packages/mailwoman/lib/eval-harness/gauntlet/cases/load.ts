@@ -24,8 +24,8 @@
 
 import { readDirectory, readDirectoryEntries } from "@mailwoman/core/fs/readers"
 import { sha256Hex } from "@mailwoman/core/hash"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { tryParsingJSON } from "@mailwoman/core/objects"
 import { basename, join, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 

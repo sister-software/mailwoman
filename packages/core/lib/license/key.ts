@@ -7,18 +7,22 @@
  *
  *   Format: `mwl1.<payload>.<signature>`, both parts base64url. The payload is JSON ({@link LicenseKeyPayload}); the
  *   signature is Ed25519 over the UTF-8 bytes of `mwl1.<payload>` — the prefix is inside the signed bytes so a token
- *   cannot be replayed under another format version. Verification needs only the public key `trusted-keys.ts` ships,
- *   so it works with no network; the well-known file on mailwoman.ai is a freshness check on top, not the anchor.
+ *   cannot be replayed under another format version. Verification needs only the public keys the register ships, so it
+ *   works with no network; the well-known file on mailwoman.ai is a freshness check on top, not the anchor.
  *
  *   Why a signature and not an HMAC: an HMAC is verified with the same secret that mints it, so shipping a verifier would
- *   ship the minting key, and the alternative is a license server. Ed25519 keeps the private key with the issuer and
- *   costs one `node:crypto` call to check.
+ *   ship the minting key, and the alternative is a license server. Ed25519 keeps the private key with the issuer.
+ *
+ *   Signing and verification run on WebCrypto and the codec on the web platform's primitives, so this module has no
+ *   `node:` import and runs where a Cloudflare Worker and a browser run as well as under Node.
  */
 
 import { z } from "zod"
 
-import { generateEd25519KeyPair, publicKeyDER, sha256Hex, signEd25519, verifyEd25519 } from "#hash"
-import { parseJSONStrict } from "#objects"
+import { fromBase64URL, toBase64URL, utf8Bytes, utf8Text } from "#crypto/base64url"
+import { generateEd25519KeyPair, publicKeyDER, sha256Bytes, signEd25519, verifyEd25519 } from "#crypto/ed25519"
+import { errorMessage } from "#errors/schema"
+import { parseJSONStrict } from "#json"
 
 /**
  * The format prefix, bumped only when the payload schema or signing scheme changes incompatibly.
@@ -64,9 +68,27 @@ export const LicenseKeyPayloadSchema = z.object({
 	 * The SPDX branch the key selects. One value today; the field exists so a different agreement can be named later.
 	 */
 	terms: z.literal("LicenseRef-Commercial"),
+	/**
+	 * An opaque per-license serial a self-service issuer sets, stable for the subscription's life. Online status is keyed
+	 * by it, and it names nothing about the customer.
+	 */
+	lid: z.string().min(1).optional(),
+	/**
+	 * The version of the clickwrap terms the licensee accepted, set by a self-service issuer.
+	 */
+	agreement: z.string().min(1).optional(),
 })
 
 export type LicenseKeyPayload = z.infer<typeof LicenseKeyPayloadSchema>
+
+/**
+ * A payload a self-service issuer produced: both fields present. A hand-issued payload has neither.
+ */
+export type SelfServiceLicenseKeyPayload = LicenseKeyPayload & { lid: string; agreement: string }
+
+export function isSelfServicePayload(payload: LicenseKeyPayload): payload is SelfServiceLicenseKeyPayload {
+	return typeof payload.lid === "string" && typeof payload.agreement === "string"
+}
 
 /**
  * The outcome of verifying a token. Every failure names its reason; a caller that only wants a yes reads `status`.
@@ -85,8 +107,12 @@ export interface LicenseSigningKeyPair {
 	publicKeyPEM: string
 }
 
-export function generateLicenseSigningKeyPair(): LicenseSigningKeyPair {
+export function generateLicenseSigningKeyPair(): Promise<LicenseSigningKeyPair> {
 	return generateEd25519KeyPair()
+}
+
+function hex(bytes: Uint8Array): string {
+	return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("")
 }
 
 /**
@@ -94,25 +120,21 @@ export function generateLicenseSigningKeyPair(): LicenseSigningKeyPair {
  * digits of the SHA-256 of the key's DER encoding — `v9-3f2a9c1d`. The version prefix is what lets a well-known file on
  * mailwoman.ai be read per major version; the digest is what makes two keys distinguishable without a registry.
  */
-export function licenseKeyID(publicKeyPEM: string, majorVersion: number): string {
-	const digest = sha256Hex(publicKeyDER(publicKeyPEM)).slice(0, 8)
+export async function licenseKeyID(publicKeyPEM: string, majorVersion: number): Promise<string> {
+	const digest = hex(await sha256Bytes(publicKeyDER(publicKeyPEM))).slice(0, 8)
 
 	return `v${majorVersion}-${digest}`
-}
-
-function base64url(input: Uint8Array | string): string {
-	return Buffer.from(input).toString("base64url")
 }
 
 /**
  * Sign a payload into a token. The issuer's private key never leaves the machine that calls this.
  */
-export function encodeLicenseKey(payload: LicenseKeyPayload, privateKeyPEM: string): string {
+export async function encodeLicenseKey(payload: LicenseKeyPayload, privateKeyPEM: string): Promise<string> {
 	const checked = LicenseKeyPayloadSchema.parse(payload)
-	const body = `${LICENSE_KEY_PREFIX}.${base64url(JSON.stringify(checked))}`
-	const signature = signEd25519(Buffer.from(body, "utf8"), privateKeyPEM)
+	const body = `${LICENSE_KEY_PREFIX}.${toBase64URL(utf8Bytes(JSON.stringify(checked)))}`
+	const signature = await signEd25519(utf8Bytes(body), privateKeyPEM)
 
-	return `${body}.${base64url(signature)}`
+	return `${body}.${toBase64URL(signature)}`
 }
 
 /**
@@ -123,12 +145,12 @@ function expiryInstant(expires: string): Date {
 }
 
 /**
- * Verify a token against the trusted public keys, keyed by kid. Pure and offline; `now` is injectable for tests.
+ * Verify a token against the trusted public keys, keyed by kid. Offline; `now` is injectable for tests.
  */
-export function verifyLicenseKey(
+export async function verifyLicenseKey(
 	token: string,
 	options: { trustedKeys: Readonly<Record<string, string>>; now?: Date }
-): LicenseKeyVerification {
+): Promise<LicenseKeyVerification> {
 	const parts = token.trim().split(".")
 
 	if (parts.length !== LICENSE_KEY_PARTS || parts[0] !== LICENSE_KEY_PREFIX) {
@@ -139,12 +161,9 @@ export function verifyLicenseKey(
 	let payload: LicenseKeyPayload
 
 	try {
-		payload = LicenseKeyPayloadSchema.parse(parseJSONStrict(Buffer.from(payloadPart, "base64url").toString("utf8")))
+		payload = LicenseKeyPayloadSchema.parse(parseJSONStrict(utf8Text(fromBase64URL(payloadPart))))
 	} catch (error) {
-		return {
-			status: "invalid",
-			reason: `payload unreadable: ${error instanceof Error ? error.message : String(error)}`,
-		}
+		return { status: "invalid", reason: `payload unreadable: ${errorMessage(error)}` }
 	}
 
 	const publicKeyPEM = options.trustedKeys[payload.kid]
@@ -157,11 +176,7 @@ export function verifyLicenseKey(
 		}
 	}
 
-	const signed = verifyEd25519(
-		Buffer.from(`${prefix}.${payloadPart}`, "utf8"),
-		publicKeyPEM,
-		Buffer.from(signaturePart, "base64url")
-	)
+	const signed = await verifyEd25519(utf8Bytes(`${prefix}.${payloadPart}`), publicKeyPEM, fromBase64URL(signaturePart))
 
 	if (!signed) {
 		return { status: "invalid", reason: `signature does not verify under key id ${payload.kid}` }

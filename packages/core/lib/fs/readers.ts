@@ -26,7 +26,7 @@ import {
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { ByteFormatter, type ByteFormatterOptions } from "#fs/formatters"
-import { parseJSONStrict } from "#objects"
+import { parseJSONStrict } from "#json"
 
 export type { Dirent, PathLike, Stats } from "node:fs"
 export type { FileHandle } from "node:fs/promises"

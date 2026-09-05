@@ -24,7 +24,7 @@
 
 import { validateTree } from "@mailwoman/core/decoder"
 import { readDirectory, readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { parseForGeocode } from "mailwoman/geocode"

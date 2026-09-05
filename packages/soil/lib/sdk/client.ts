@@ -34,7 +34,7 @@
 import { APIClient, type APIClientConfig, type ClockLike, assertNoOGCServiceException } from "@mailwoman/core/api"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 
 import { saverestToISODate } from "#sdk/tabular"
 

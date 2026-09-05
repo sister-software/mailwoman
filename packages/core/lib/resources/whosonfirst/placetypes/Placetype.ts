@@ -9,7 +9,7 @@ import type { PathBuilder } from "path-ts"
 import { parallelMap } from "spliterator"
 
 import { readLocalTextFile } from "#fs/readers"
-import { parseJSONStrict } from "#objects"
+import { parseJSONStrict } from "#json"
 import { prepareRepositoryDirectories, type RepositorySource } from "#resources/git"
 import {
 	normalizePlacetypeDefinition,

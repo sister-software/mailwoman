@@ -27,7 +27,8 @@
  *        the v7.2.0 ship-break: exports pointing at files the `files` globs excluded.
  */
 
-import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
+import { isPresent } from "@mailwoman/core/objects"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { TextSpliterator } from "spliterator"
 

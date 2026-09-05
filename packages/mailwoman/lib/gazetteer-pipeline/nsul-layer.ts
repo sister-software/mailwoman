@@ -57,6 +57,7 @@ import { pathExists, readDirectory, readLocalTextFile } from "@mailwoman/core/fs
 import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { listZipEntries, readZipEntry } from "@mailwoman/core/fs/zip"
 import { md5File } from "@mailwoman/core/hash"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -67,7 +68,6 @@ import {
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
-import { tryParsingJSON } from "@mailwoman/core/objects"
 import type { NSULDatabase } from "@mailwoman/resolver-wof-sqlite/nsul"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn"
 import { expandShortCellInt, shortCellToInt, type H3Cell } from "@mailwoman/spatial"

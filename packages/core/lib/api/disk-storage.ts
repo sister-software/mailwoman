@@ -30,8 +30,8 @@ import { errorMessage } from "#errors/schema"
 import { readLocalTextFile } from "#fs/readers"
 import { makeDirectories, movePath, removePath, removePathIfPresent, writeLocalFile } from "#fs/writers"
 import { sha256Hex } from "#hash"
+import { tryParsingJSON } from "#json"
 import { ConsoleLogger, type IRuntimeLogger } from "#logging/index"
-import { tryParsingJSON } from "#objects"
 
 /**
  * Options for {@linkcode buildDiskStorage}.

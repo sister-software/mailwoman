@@ -1,0 +1,15 @@
+{
+	"privateKeyPEM": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIKXXTD3NdC3DqxecgdkRP5ViNBEqxAP+Q1KlQEHcyJu0\n-----END PRIVATE KEY-----\n",
+	"publicKeyPEM": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAgWbYlzKzcw1PPXZiUkmhdReKPzrddH/L2Z+xmh6C2jQ=\n-----END PUBLIC KEY-----\n",
+	"kid": "v9-a3d47e8b",
+	"payload": {
+		"v": 1,
+		"kid": "v9-a3d47e8b",
+		"licensee": "Legacy Fixture Ltd",
+		"issued": "2026-09-05",
+		"expires": "2027-09-05",
+		"scope": "all",
+		"terms": "LicenseRef-Commercial"
+	},
+	"token": "mwl1.eyJ2IjoxLCJraWQiOiJ2OS1hM2Q0N2U4YiIsImxpY2Vuc2VlIjoiTGVnYWN5IEZpeHR1cmUgTHRkIiwiaXNzdWVkIjoiMjAyNi0wOS0wNSIsImV4cGlyZXMiOiIyMDI3LTA5LTA1Iiwic2NvcGUiOiJhbGwiLCJ0ZXJtcyI6IkxpY2Vuc2VSZWYtQ29tbWVyY2lhbCJ9.OEbPu72cExcmWFh__RbhHxvfA-KOG0bPB6w0Nv_-hbVlf5NejF6jy8oKtBpv4_1YQx61uXpOc_zZhDccnLncDA"
+}

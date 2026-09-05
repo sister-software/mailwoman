@@ -51,7 +51,7 @@ function healthyDeps(): DoctorDeps {
 		layerDatabases: () => [{ id: "poi", label: "POI layer", path: "/data/poi/poi.db" }],
 		layerAlternates: async () => [],
 		runtimeLicense: async () => "AGPL-3.0-only OR LicenseRef-Commercial",
-		licenseKey: () => undefined,
+		licenseKey: async () => undefined,
 		confirmLicenseKeyPublished: async () => "unreachable",
 		loadONNX: async () => {},
 		nodeVersion: "24.18.0",
@@ -212,7 +212,7 @@ describe("runDoctor (injected boundaries)", () => {
 
 		const report = await runDoctor({
 			...healthyDeps(),
-			licenseKey: () => valid,
+			licenseKey: async () => valid,
 			confirmLicenseKeyPublished: async (kid) => {
 				asked.push(kid)
 
@@ -249,7 +249,7 @@ describe("runDoctor (injected boundaries)", () => {
 
 		const expired = await runDoctor({
 			...healthyDeps(),
-			licenseKey: () => ({ status: "expired", kid: "v9-deadbeef", payload }),
+			licenseKey: async () => ({ status: "expired", kid: "v9-deadbeef", payload }),
 		})
 
 		const expiredCheck = byID(expired.checks, "license-mailwoman")
@@ -261,7 +261,7 @@ describe("runDoctor (injected boundaries)", () => {
 
 		const unknown = await runDoctor({
 			...healthyDeps(),
-			licenseKey: () => ({
+			licenseKey: async () => ({
 				status: "unknown_key",
 				kid: "v9-00000000",
 				reason: "signed by key id v9-00000000, which this build does not trust",
@@ -275,7 +275,7 @@ describe("runDoctor (injected boundaries)", () => {
 
 		const retired = await runDoctor({
 			...healthyDeps(),
-			licenseKey: () => ({ status: "valid", kid: "v9-deadbeef", payload: { ...payload, expires: "2030-01-01" } }),
+			licenseKey: async () => ({ status: "valid", kid: "v9-deadbeef", payload: { ...payload, expires: "2030-01-01" } }),
 			confirmLicenseKeyPublished: async () => "retired",
 		})
 

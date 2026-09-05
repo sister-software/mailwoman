@@ -31,7 +31,8 @@
  */
 
 import { readDirectory } from "@mailwoman/core/fs/readers"
-import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
+import { isPresent } from "@mailwoman/core/objects"
 import { reconcileComponents } from "@mailwoman/formatter"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"

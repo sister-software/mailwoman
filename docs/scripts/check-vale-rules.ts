@@ -46,8 +46,8 @@
  *   loudly instead of silently drifting.
  */
 
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { createRequire } from "@mailwoman/core/module/resolvers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { failScript } from "@mailwoman/core/scripting/utils"
 import { dirname, join } from "path-ts"

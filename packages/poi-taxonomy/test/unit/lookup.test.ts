@@ -5,8 +5,8 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { prettyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { prettyJSON } from "@mailwoman/core/objects"
 import {
 	getAllCategories,
 	getPOICategory,

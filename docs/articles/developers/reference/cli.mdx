@@ -109,15 +109,15 @@ mailwoman geocode [options] [address...]
 
 ### `mailwoman license`
 
-Mint, issue and verify commercial license keys. `keygen` writes an Ed25519 signing pair under $MAILWOMAN_CONFIG_ROOT/license and prints the public key with its id; `issue` signs a key for a licensee; `verify` checks a token offline against the public keys this build trusts. Without a key the AGPL-3.0-only branch applies — `mailwoman doctor` says which branch applies and why.
+Mint, issue and verify commercial license keys. `keygen` writes an Ed25519 signing pair under $MAILWOMAN_CONFIG_ROOT/license and prints the public key with its id; `issue` signs a key for a licensee; `verify` checks a token offline against the public keys this build trusts; `register` prints the well-known key file the shipped register derives. Without a key the AGPL-3.0-only branch applies — `mailwoman doctor` says which branch applies and why.
 
 ```
 mailwoman license [options] <action>
 ```
 
-| Argument   | Required | Description                    |
-| ---------- | -------- | ------------------------------ |
-| `<action>` | Yes      | One of: keygen, issue, verify. |
+| Argument   | Required | Description                              |
+| ---------- | -------- | ---------------------------------------- |
+| `<action>` | Yes      | One of: keygen, issue, verify, register. |
 
 | Flag                          | Type    | Default | Description                                                                                |
 | ----------------------------- | ------- | ------- | ------------------------------------------------------------------------------------------ |
@@ -128,6 +128,7 @@ mailwoman license [options] <action>
 | `--key [key]`                 | string  | —       | verify: the token to check. Defaults to $MAILWOMAN_LICENSE_KEY.                            |
 | `--signing-key [signing-key]` | string  | —       | issue: the private key PEM. Defaults to $MAILWOMAN_CONFIG_ROOT/license/signing-key.pem.    |
 | `--online`                    | boolean | `false` | verify: also ask mailwoman.ai's well-known register whether the key id is still listed.    |
+| `--write`                     | boolean | `false` | register: write the well-known file under docs/static instead of printing it.              |
 | `--json`                      | boolean | `false` | Emit the result as JSON.                                                                   |
 
 ### `mailwoman openapi`

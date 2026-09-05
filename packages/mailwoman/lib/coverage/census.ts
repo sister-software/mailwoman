@@ -38,7 +38,7 @@ import {
 	readLocalTextFile,
 } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { streamParquetRows } from "@mailwoman/corpus/utils/parquet"
 import { allRows } from "@mailwoman/core/utils"
