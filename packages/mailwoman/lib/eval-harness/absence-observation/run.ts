@@ -27,6 +27,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { repoRootPath } from "@mailwoman/core/paths"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
+import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 
 import {
 	type AbsenceCounts,
@@ -182,13 +183,29 @@ async function gradeRow(
 
 	const poiOutcome = !result.poiIntent ? "none" : result.poiIntent.type === "abstain" ? "abstain" : "intent"
 
+	// The set the branch searched, after the anchor's country bound it (#1999). Compared as sets: the lookup's
+	// enumeration order states no preference, so the registration is code-point ordered and so is this.
+	const searchedCategories =
+		result.poiIntent?.type === "intent" && result.poiIntent.intent.subject.kind === "category"
+			? [...result.poiIntent.intent.subject.categoryIDs].toSorted(compareByCodePoint)
+			: undefined
+
+	const searchedSetBreach =
+		row.searchedCategories && row.searchedCategories.join("\u0000") !== (searchedCategories ?? []).join("\u0000")
+			? `registered searched set [${row.searchedCategories.join(", ")}], observed ${
+					searchedCategories ? `[${searchedCategories.join(", ")}]` : "no category intent"
+				}`
+			: undefined
+
 	const outcome: AbsenceRowOutcome = {
 		id: row.id,
 		group: row.group,
 		query: row.query,
 		expectedOutcome: row.expectedOutcome,
 		observedOutcome,
-		holds: observedOutcome === row.expectedOutcome,
+		holds: observedOutcome === row.expectedOutcome && !searchedSetBreach,
+		...(searchedCategories ? { searchedCategories } : {}),
+		...(searchedSetBreach ? { searchedSetBreach } : {}),
 		...(decision.fired ? { observationLine: describeAbsenceObservation(decision.observation) } : {}),
 		poiOutcome,
 		...(result.poiIntent?.type === "abstain" ? { abstainReason: result.poiIntent.reason } : {}),
@@ -248,7 +265,8 @@ export function printAbsenceProbeReceipt(receipt: AbsenceProbeReceipt): void {
 
 	for (const row of receipt.rows) {
 		console.log(
-			`  ${row.group.padEnd(17)} ${row.id.padEnd(12)} ${row.holds ? " ✓  " : " ✗  "}  ${row.expectedOutcome.padEnd(31)} ${row.observedOutcome}`
+			`  ${row.group.padEnd(17)} ${row.id.padEnd(12)} ${row.holds ? " ✓  " : " ✗  "}  ${row.expectedOutcome.padEnd(31)} ${row.observedOutcome}` +
+				(row.searchedCategories ? `  searched [${row.searchedCategories.join(", ")}]` : "")
 		)
 	}
 

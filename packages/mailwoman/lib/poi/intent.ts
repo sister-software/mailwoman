@@ -28,6 +28,8 @@ import {
 import type { AliasLookupResult, BrandAlias } from "@mailwoman/variant-aliases"
 import { lookupVariantAliases } from "@mailwoman/variant-aliases"
 
+import { resolvePOIAnchorCountry } from "#poi/executor"
+
 interface POINameSearch {
 	search(query: { name: string; limit?: number }): ReadonlyArray<{ name: string | null; confidence: number }>
 }
@@ -212,6 +214,66 @@ export function createPOIIntentStage(
 			intent.anchor = { text: matched.remainder, tree: anchor.tree }
 		}
 
+		// The place binding (#1999). A hit's `countryScope` is a claim about establishments, so it is judged against the
+		// country the anchor RESOLVED to — which exists only now, after the anchor parse — and never against the caller's
+		// locale. Recorded on the intent whether or not it removed anything, so a receipt can say which country the set
+		// was bound to and what fell out.
+		if (intent.subject.kind === "category") {
+			const binding = bindCountryScope(matched.matches, resolvePOIAnchorCountry(intent))
+
+			if (binding) {
+				intent.subject.countryBinding = {
+					anchorCountry: binding.anchorCountry,
+					excludedCategoryIDs: binding.excludedCategoryIDs,
+				}
+
+				if (!binding.categoryIDs.length) {
+					return { type: "abstain", reason: "country_scope_excluded" }
+				}
+
+				intent.subject.categoryIDs = binding.categoryIDs
+			}
+		}
+
 		return deps.execute ? deps.execute(intent) : { type: "intent", intent }
+	}
+}
+
+/**
+ * What the anchor's country does to a reached set: which categories stay searchable and which fall out.
+ *
+ * A category stays when ANY hit reaching it holds where the anchor is — an unscoped hit holds everywhere, a scoped one
+ * holds when its list names the anchor's country. A `null` anchor country admits no scoped hit: a claim the curator
+ * scoped to a place cannot be checked without knowing the place, and searching as though it held would answer with a
+ * category the data there may not carry. Order is the lookup's own enumeration, and it still states no preference.
+ *
+ * `null` when no hit carries a scope at all — there was nothing to bind, and a receipt should not record a binding that
+ * decided nothing.
+ */
+export function bindCountryScope(
+	matches: ReadonlyArray<POIPhraseMatch>,
+	anchorCountry: string | null
+): { anchorCountry: string | null; categoryIDs: string[]; excludedCategoryIDs: string[] } | null {
+	if (!matches.some((hit) => hit.countryScope?.length)) return null
+
+	const reached: string[] = []
+	const admitted = new Set<string>()
+
+	for (const hit of matches) {
+		if (!reached.includes(hit.categoryID)) {
+			reached.push(hit.categoryID)
+		}
+
+		const scope = hit.countryScope
+
+		if (!scope?.length || (anchorCountry && scope.some((country) => country.toUpperCase() === anchorCountry))) {
+			admitted.add(hit.categoryID)
+		}
+	}
+
+	return {
+		anchorCountry,
+		categoryIDs: reached.filter((id) => admitted.has(id)),
+		excludedCategoryIDs: reached.filter((id) => !admitted.has(id)),
 	}
 }

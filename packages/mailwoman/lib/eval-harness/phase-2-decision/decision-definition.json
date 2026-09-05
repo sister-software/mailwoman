@@ -1,6 +1,6 @@
 {
 	"decisionID": "phase-2-decision-1967",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"issue": "https://github.com/sister-software/mailwoman/issues/1967",
 	"program": "Geographic world model — facts and derivations for learned resolution (#1916), phase 2",
 	"authorizedOutcome": "PROCEED-AS-AUTHORIZED means the supported OPT-IN surface the integration record (#1966, docs/superpowers/specs/2026-08-27-semantic-route-integration-decision.md) authorizes, and nothing beyond it: `createRuntimePipeline`'s `poiSemanticLookup` option, default OFF, presence as the switch, `mailwoman` → `@mailwoman/geographic-model` as the dependency direction. That record states in §4.1 that a default change is not authorized by it and cannot be authorized by #1967 alone, and its §5 bar is recorded separately in `defaultChangeBar` below with what each row reads today.",
@@ -12,12 +12,12 @@
 		"weightsLocale": "en-US",
 		"weightsVersion": "9.1.0",
 		"resolverBackend": "candidate",
-		"geographicModelVersion": "0.2.0",
+		"geographicModelVersion": "0.3.0",
 		"phraseLexiconID": "mailwoman-activity-phrases",
 		"phraseLexiconVersion": "1.0.0",
 		"declaredPhrases": 11,
 		"semanticUtilityDefinitionSHA256": "df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c",
-		"absenceDefinitionSHA256": "3b265bc7fef0b1c19b0dd690b63f8f68c35ae7877501dcc11391a923b1057af1",
+		"absenceDefinitionSHA256": "6cc71ff0a6678784f798704e5b4ceeefd1213970caabb47eeee9ad6ede7f1856",
 		"coverageLayerFile": "poi-coverage-pharmacy-ile-de-france.db",
 		"coverageLayerVersion": "260627"
 	},
@@ -211,7 +211,7 @@
 				"source": "merged-pr-receipt",
 				"reference": "https://github.com/sister-software/mailwoman/pull/1981 — route identity on the treatment arm",
 				"value": 1,
-				"note": "mailwoman-activity-phrases v1.0.0, 11 declared phrases, geographic model 0.2.0, reachable categories [pharmacy]."
+				"note": "mailwoman-activity-phrases v1.0.0, 11 declared phrases, geographic model 0.2.0, reachable categories [pharmacy] at PR #1981. Pin amended 2026-09-05 to geographic model 0.3.0, reachable categories [drugstore, pharmacy]: wave 1 (#1980) landed the drugstore records on 2026-08-28 and the receipt had not been re-run against them; the pin now names the artifact the 1.1.0 receipt measured."
 			},
 			"bar": { "kind": "at_least", "value": 1 },
 			"guards": "An arm label standing in for a measurement of what ran. A route dropped on the way in produces exactly the numbers a route that changed nothing produces, and the two are opposite findings."
@@ -392,7 +392,7 @@
 				"source": "committed-artifact",
 				"reference": "packages/mailwoman/eval-harness/absence-observation/probe-freeze.json",
 				"value": 1,
-				"note": "3b265bc7fef0b1c19b0dd690b63f8f68c35ae7877501dcc11391a923b1057af1, unmoved across PRs #1979 and #1981."
+				"note": "3b265bc7fef0b1c19b0dd690b63f8f68c35ae7877501dcc11391a923b1057af1 through PRs #1979 and #1981; moved to 6cc71ff0a6678784f798704e5b4ceeefd1213970caabb47eeee9ad6ede7f1856 (absence probe v1.1.0) when #1998 registered the searched set per row and re-registered abs-c-02 as category_not_surveyed under the anchor country binding (#1999). This definition moved to 1.1.0 for that pin and nothing else."
 			},
 			"bar": { "kind": "at_least", "value": 1 },
 			"guards": "The absence ruler moving underneath this one — the same reason `rec-c-04` exists for the phase-1 ruler."

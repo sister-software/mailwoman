@@ -315,6 +315,19 @@ third place to look for the same answer and would let a mis-scoped assertion pas
 it. So the decision is to repair the two rather than add a third, and §8.2 makes that a
 prerequisite.
 
+**Amended 2026-09-05 (#1999).** The two scopes bind to different things, and the first
+implementation bound both to the caller. Recognition is the caller's: a phrase's locale scope says who
+uses that wording, so it is read against the caller's locale. Semantics are the place's: an
+assertion's `countries` says where the establishments it describes exist, so it is judged against the
+country the ANCHOR resolved to — the caller's locale is a lens through which the phrase is read, not a
+definition of where the claim holds. Under the caller binding an `en-US` caller asking about
+Garancières admitted the US-scoped `drugstore` claim into a French search (#1996's receipts, #1998's
+three refusals). The route now returns every reached kind with the assertion's scope on the match
+(`POIPhraseMatch.countryScope`); `createPOIIntentStage` binds it after the anchor parse and records
+the result on the intent (`countryBinding`), abstaining as `country_scope_excluded` when nothing the
+phrase reached holds there. An anchor that resolved to no country admits no scoped claim. §5 row 7
+already said "anchored"; the implementation now agrees with it.
+
 The route's phrase normalization is deliberately locale-independent — `toLowerCase` rather than
 `toLocaleLowerCase`, so a Turkish host locale cannot make the same query answer differently on two
 machines. That property is separate from locale scoping and stays as it is.
@@ -449,6 +462,13 @@ returns zero rows, `drugstore` returns two, and the union answers `drugstore` at
 that stays silent outside its scope, per §5 row 7. This is a prerequisite for #1963, not for the
 surface — a scoped assertion authored against a route that ignores scope is a record that means
 something different from what it says.
+
+**Amended 2026-09-05 (#1999).** Consulted, and bound where §4.3's amendment says: the locale scope in
+the route's `lookup`, the country scope in the POI intent stage against the anchor's resolved
+country. The row for §5 row 7 is `abs-c-02` in the absence probe (a US anchor keeps `drugstore`, so
+the searched set exceeds the surveyed class and the route refuses `category_not_surveyed`) beside
+`abs-t-02`/`abs-t-05` (a French anchor drops it, and the observation fires); the probe registers the
+searched set per row so the binding is graded, not inferred.
 
 ### 8.3 Observations must reach the caller
 

@@ -30,6 +30,8 @@
  */
 
 // The canonical-JSON encoder is IMPORTED rather than re-typed: two freeze records hashing the same content
+import { compareByCodePoint } from "@mailwoman/core/strings/compare"
+
 import {
 	definitionContentHash,
 	duplicateRowIDProblems,
@@ -67,6 +69,14 @@ export interface AbsenceProbeRow {
 	 * never reached it.
 	 */
 	requiresSemanticRoute: boolean
+	/**
+	 * The category set the row is graded on, in code-point order — the union the POI branch searched AFTER the anchor's
+	 * country bound the reached set (#1999). A row's registered outcome binds to the categories the coverage layer
+	 * surveyed, and an activity phrase whose afforded set exceeds them can only be decidable if the binding narrowed it;
+	 * stating the set per row is what lets the runner refuse a row that fired for a set nobody registered. Optional for a
+	 * venue-noun row, whose set is the noun.
+	 */
+	searchedCategories?: string[]
 	/**
 	 * How the anchor was derived — the cell first, the place second. Stated per row so a reader can re-derive it.
 	 */
@@ -165,6 +175,16 @@ export function auditAbsenceProbeDefinition(definition: AbsenceProbeDefinition):
 			)
 		}
 
+		if (row.searchedCategories !== undefined) {
+			const sorted = [...new Set(row.searchedCategories)].toSorted(compareByCodePoint)
+
+			if (!row.searchedCategories.length || sorted.join("\u0000") !== row.searchedCategories.join("\u0000")) {
+				problems.push(
+					`row ${row.id}: searchedCategories must be a non-empty, deduplicated, code-point-ordered list — got ${JSON.stringify(row.searchedCategories)}`
+				)
+			}
+		}
+
 		if (!row.anchorDerivation.trim()) {
 			problems.push(`row ${row.id}: anchorDerivation is blank — an anchor nobody can re-derive is an invented one`)
 		}
@@ -219,7 +239,21 @@ export interface AbsenceRowOutcome {
 	query: string
 	expectedOutcome: AbsenceExpectedOutcome
 	observedOutcome: AbsenceExpectedOutcome
+	/**
+	 * The registered outcome was observed AND, when the row registers a `searchedCategories`, the POI branch searched
+	 * exactly that set.
+	 */
 	holds: boolean
+	/**
+	 * The category set the POI branch searched, in code-point order — present whenever the branch formed a category
+	 * intent, registered or not, so a receipt shows what the binding produced on every row.
+	 */
+	searchedCategories?: string[]
+	/**
+	 * Named when the row registers a searched set and the observed one differs. The outcome may still match — a route
+	 * that fired over a set nobody registered is exactly the breach this field exists to name.
+	 */
+	searchedSetBreach?: string
 	/**
 	 * The observation the row produced, when it produced one. Absent — the key omitted — on a silent row.
 	 */
@@ -297,7 +331,12 @@ export function decideAbsenceProbe(
 
 	const breaches = outcomes
 		.filter((outcome) => !outcome.holds)
-		.map((outcome) => `${outcome.id}: registered ${outcome.expectedOutcome}, observed ${outcome.observedOutcome}`)
+		.map((outcome) =>
+			outcome.observedOutcome === outcome.expectedOutcome && outcome.searchedSetBreach
+				? `${outcome.id}: ${outcome.searchedSetBreach}`
+				: `${outcome.id}: registered ${outcome.expectedOutcome}, observed ${outcome.observedOutcome}` +
+					(outcome.searchedSetBreach ? ` — ${outcome.searchedSetBreach}` : "")
+		)
 
 	const reasons = [
 		`rows holding their registered outcome ${counts.holds}/${counts.rows} (required ${definition.requiredRowHolds})`,

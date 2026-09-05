@@ -1,6 +1,6 @@
 {
 	"probeID": "absence-observation-pharmacy-idf-v1",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"issue": "https://github.com/sister-software/mailwoman/issues/1965",
 	"claim": "Where the compiled artifact asserts that the answered category affords an activity AND the coverage layer surveyed the cell the search was centred on and holds nothing there, the answer carries a coverage-qualified absence observation. Everywhere else the route is silent.",
 	"asymmetry": "A lookup answering `[]` under exclusion-grade coverage is a fact; the same `[]` under `source_present`, or with no coverage row at all, is silence. The control groups put the same query and the same empty answer on the silent side of that line.",
@@ -22,8 +22,9 @@
 			"query": "where can i pick up a prescription near Garancières",
 			"expectedOutcome": "absence_observation",
 			"requiresSemanticRoute": true,
+			"searchedCategories": ["pharmacy"],
 			"anchorDerivation": "The same cell and the same anchor as abs-t-01; only the subject form varies.",
-			"guards": "The activity-phrased form reaching the same absence through the semantic route. Paired with abs-t-01 it shows the observation is a property of the answered category and the cell, not of how the category was recognized."
+			"guards": "The activity-phrased form reaching the same absence through the semantic route. Paired with abs-t-01 it shows the observation is a property of the answered category and the cell, not of how the category was recognized. The phrase reaches drugstore and pharmacy; the French anchor binds the set to pharmacy (#1999), which is the class the layer surveyed, so the row states that set."
 		},
 		{
 			"id": "abs-t-03",
@@ -49,8 +50,9 @@
 			"query": "where can i pick up a prescription near Amillis",
 			"expectedOutcome": "absence_observation",
 			"requiresSemanticRoute": true,
+			"searchedCategories": ["pharmacy"],
 			"anchorDerivation": "Cell 557499774140415 (861fb0b07ffffff), zero-observed and surveyed. `Amillis` resolves to 48.7353, 3.1347, inside it.",
-			"guards": "The activity phrase at a cell no venue-noun target uses, so the two forms are not both resting on one anchor."
+			"guards": "The activity phrase at a cell no venue-noun target uses, so the two forms are not both resting on one anchor. Searched set bound to pharmacy by the French anchor, as abs-t-02."
 		},
 		{
 			"id": "abs-c-01",
@@ -65,10 +67,11 @@
 			"id": "abs-c-02",
 			"group": "outside_coverage",
 			"query": "where can i pick up a prescription near Denver CO",
-			"expectedOutcome": "cell_unsurveyed",
+			"expectedOutcome": "category_not_surveyed",
 			"requiresSemanticRoute": true,
+			"searchedCategories": ["drugstore", "pharmacy"],
 			"anchorDerivation": "The same anchor as abs-c-01, reached through the activity phrase.",
-			"guards": "The activity phrase must not buy an absence claim the venue noun cannot. Paired with abs-c-01 it shows the semantic route supplies recognition and no epistemics."
+			"guards": "The activity phrase must not buy an absence claim the venue noun cannot. At a US anchor the phrase reaches drugstore AND pharmacy — the US-scoped drugstore claim holds where the search looks (#1999) — and the pilot layer surveyed pharmacy alone, so the route refuses on the category before it reaches the cell. Paired with abs-c-01 it shows the semantic route supplies recognition and no epistemics."
 		},
 		{
 			"id": "abs-c-03",
@@ -107,7 +110,7 @@
 			"guards": "The ordinary answered query, inside exclusion-grade coverage, returning rows. The route must stay silent on the case it will meet most often."
 		}
 	],
-	"rowsNote": "Anchors were selected cell-first: the pilot layer's own zero-observed cells were enumerated, gazetteer places whose coordinates fall inside one were collected, and a place was admitted only when the pipeline's resolved search centre landed back in the same cell. No street line is written by hand anywhere in this file. A cell centroid is a coordinate, and the anchor a row carries is a place the gazetteer already holds — not an address composed to reach one.",
+	"rowsNote": "Anchors were selected cell-first: the pilot layer's own zero-observed cells were enumerated, gazetteer places whose coordinates fall inside one were collected, and a place was admitted only when the pipeline's resolved search centre landed back in the same cell. No street line is written by hand anywhere in this file. A cell centroid is a coordinate, and the anchor a row carries is a place the gazetteer already holds — not an address composed to reach one. A row's registered outcome binds to the categories the layer surveyed. An activity phrase reaches a SET of categories, and the anchor's country binds that set before the search (#1999); a row whose set the binding decides states the searched set it is graded on in `searchedCategories`, and the runner refuses a row that fired or refused over a set nobody registered (#1998).",
 	"requiredRowHolds": 11,
 	"decisionRule": [
 		"HOLDS — every registered row produced the outcome registered for it.",

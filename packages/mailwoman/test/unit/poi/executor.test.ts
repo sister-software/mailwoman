@@ -7,7 +7,7 @@
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { POIIntent } from "@mailwoman/core/pipeline"
 import type { POISearchHit, POISearchQuery } from "@mailwoman/resolver-wof-sqlite/poi"
-import { createPOIExecutor, type POIExecutorLookup } from "mailwoman/poi"
+import { createPOIExecutor, type POIExecutorLookup, resolvePOIAnchorCountry } from "mailwoman/poi"
 import { describe, expect, it } from "vitest"
 
 const SPRINGFIELD_TREE: AddressTree = {
@@ -469,5 +469,49 @@ describe("createPOIExecutor", () => {
 
 		if (outcome.type !== "intent") throw new Error("unreachable")
 		expect("ancestry" in outcome.results![0]!).toBe(false)
+	})
+})
+
+describe("resolvePOIAnchorCountry", () => {
+	const stamped = (country: string | undefined, child = false): AddressTree => {
+		const node = {
+			tag: "locality" as const,
+			value: "Springfield",
+			start: 0,
+			end: 11,
+			confidence: 0.9,
+			children: [],
+			lat: 39.78,
+			lon: -89.65,
+			...(country ? { metadata: { resolver_country: country } } : {}),
+		}
+
+		return child
+			? {
+					raw: "Springfield IL",
+					roots: [{ tag: "region", value: "IL", start: 12, end: 14, confidence: 0.9, children: [node] }],
+				}
+			: { raw: "Springfield", roots: [node] }
+	}
+
+	it("reads the country off the node the search is centred on, upper-cased", () => {
+		expect(resolvePOIAnchorCountry({ subject: { kind: "name", text: "x" }, anchor: { tree: stamped("us") } })).toBe(
+			"US"
+		)
+	})
+
+	it("falls back to a stamped root when the centred child carries none", () => {
+		const tree = stamped(undefined, true)
+		tree.roots[0]!.metadata = { resolver_country: "US" }
+
+		expect(resolvePOIAnchorCountry({ subject: { kind: "name", text: "x" }, anchor: { tree } })).toBe("US")
+	})
+
+	it("answers null for a country-less node, a biasPoint anchor, and no anchor", () => {
+		const subject = { kind: "name" as const, text: "x" }
+
+		expect(resolvePOIAnchorCountry({ subject, anchor: { tree: stamped(undefined) } })).toBeNull()
+		expect(resolvePOIAnchorCountry({ subject, anchor: { biasPoint: { latitude: 1, longitude: 2 } } })).toBeNull()
+		expect(resolvePOIAnchorCountry({ subject })).toBeNull()
 	})
 })

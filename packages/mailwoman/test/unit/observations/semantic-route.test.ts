@@ -4,7 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the semantic observation route: the phrase rule, the locale scope, the assertion's country
- *   scope, the plural affordance, the authority an observation carries, and every construction refusal.
+ *   scope (carried on the match, never applied here — the POI intent stage binds it to the anchor's
+ *   resolved country, see `poi/intent.test.ts`), the plural affordance, the authority an observation
+ *   carries, and every construction refusal.
  *
  *   No model, no database, no pipeline. The route is a `POIPhraseLookup` over a compiled artifact and a
  *   reviewed lexicon, and both are injectable — so the refusals are exercised against synthetic
@@ -201,11 +203,19 @@ describe("the committed lexicon against the committed artifact", () => {
 })
 
 describe("the phrase rule", () => {
-	// No locale, so the US-scoped drugstore assertion is not admitted and the set is `pharmacy` alone. `searchAsSet` is
-	// on it anyway: it says what the array MEANS, not how long it happens to be, and a caller that read it as a length
-	// signal would narrow the moment a second kind arrived.
+	// No locale, and the US-scoped drugstore assertion is returned anyway, carrying its scope: the route reads the
+	// phrase, and where the claim holds is the intent stage's question once the anchor has resolved. `searchAsSet` says
+	// what the array MEANS, not how long it happens to be.
 	it("claims a candidate that ends in a declared phrase", () => {
 		expect(committedRoute.lookup("where can i pick up a prescription")).toEqual([
+			{
+				kind: "category",
+				categoryID: "drugstore",
+				matchedPhrase: "pick up a prescription",
+				confidence: 1,
+				searchAsSet: true,
+				countryScope: ["US"],
+			},
 			{
 				kind: "category",
 				categoryID: "pharmacy",
@@ -217,7 +227,7 @@ describe("the phrase rule", () => {
 	})
 
 	it("claims a candidate that IS a declared phrase", () => {
-		expect(committedRoute.lookup("prescription")).toHaveLength(1)
+		expect(committedRoute.lookup("prescription")).toHaveLength(2)
 	})
 
 	it("refuses the same query with its anchor still attached, which is what keeps the anchor split intact", () => {
@@ -237,7 +247,7 @@ describe("the phrase rule", () => {
 		})
 
 		expect(route.lookup("premedication")).toEqual([])
-		expect(route.lookup("my medication")).toHaveLength(1)
+		expect(route.lookup("my medication")).toHaveLength(2)
 	})
 
 	it("returns nothing for every control subject the committed lexicon already answers", () => {
@@ -247,7 +257,7 @@ describe("the phrase rule", () => {
 	})
 
 	it("normalizes case and whitespace without consulting the host locale", () => {
-		expect(committedRoute.lookup("  WHERE CAN I   Pick Up A Prescription  ")).toHaveLength(1)
+		expect(committedRoute.lookup("  WHERE CAN I   Pick Up A Prescription  ")).toHaveLength(2)
 	})
 })
 
@@ -281,8 +291,8 @@ describe("the locale scope", () => {
 	})
 
 	it("leaves an unscoped phrase answering under every locale, and under none", () => {
-		expect(committedRoute.lookup("prescription", "fr-FR")).toHaveLength(1)
-		expect(committedRoute.lookup("prescription")).toHaveLength(1)
+		expect(committedRoute.lookup("prescription", "fr-FR")).toHaveLength(2)
+		expect(committedRoute.lookup("prescription")).toHaveLength(2)
 	})
 
 	it("falls through to the unscoped phrase the candidate also ends in, rather than going silent", () => {
@@ -310,7 +320,7 @@ describe("the observation", () => {
 		committedRoute.takeObservations()
 		committedRoute.lookup("where can i pick up a prescription")
 
-		const [observation] = committedRoute.takeObservations()
+		const observation = committedRoute.takeObservations().find((recorded) => recorded.concept === "pharmacy")
 
 		expect(observation).toBeDefined()
 		expect(observation!.activity).toBe("obtain_medication")
@@ -323,7 +333,7 @@ describe("the observation", () => {
 		expect(observation!.mapping.vocabulary).toBe("poi-taxonomy")
 		expect(observation!.mapping.provenance.source).toBe("mailwoman-curated")
 		expect(observation!.phraseProvenance.source).toBe("mailwoman-curated")
-		expect(observation!.mappedKindCount).toBe(1)
+		expect(observation!.mappedKindCount).toBe(2)
 	})
 
 	it("names what attests the surface form, which the assertion's own provenance does not cover", () => {
@@ -354,20 +364,21 @@ describe("the observation", () => {
 		expect(unscoped!.declaredLocales).toBeNull()
 	})
 
+	// Two members reached, so two observations — one per authority — however many times the rung was driven.
 	it("deduplicates a drain — one query drives the rung several times", () => {
 		committedRoute.takeObservations()
 		committedRoute.lookup("prescription")
 		committedRoute.lookup("prescription")
 		committedRoute.lookup("prescription")
 
-		expect(committedRoute.takeObservations()).toHaveLength(1)
+		expect(committedRoute.takeObservations()).toHaveLength(2)
 	})
 
 	it("drains, so an observation is addressed to the row it happened on", () => {
 		committedRoute.takeObservations()
 		committedRoute.lookup("prescription")
 
-		expect(committedRoute.takeObservations()).toHaveLength(1)
+		expect(committedRoute.takeObservations()).toHaveLength(2)
 		expect(committedRoute.takeObservations()).toEqual([])
 	})
 
@@ -385,7 +396,14 @@ describe("a plural affordance", () => {
 	// reaching 44,945, on a sort key nobody authored as a preference.
 	it("returns every mapped kind the activity reaches, in concept code-point order", () => {
 		expect(committedRoute.lookup("prescription", "en-US")).toEqual([
-			{ kind: "category", categoryID: "drugstore", matchedPhrase: "prescription", confidence: 1, searchAsSet: true },
+			{
+				kind: "category",
+				categoryID: "drugstore",
+				matchedPhrase: "prescription",
+				confidence: 1,
+				searchAsSet: true,
+				countryScope: ["US"],
+			},
 			{ kind: "category", categoryID: "pharmacy", matchedPhrase: "prescription", confidence: 1, searchAsSet: true },
 		])
 	})
@@ -426,15 +444,17 @@ describe("a plural affordance", () => {
 		expect(matched?.remainder).toBe("Denver CO")
 	})
 
-	// The committed route driven through the surface that used to narrow, at both locales. France reaches one category
-	// because the drugstore assertion is scoped to the US and the layer holds zero drugstore rows there; the US reaches
-	// two, and the POI branch searches both.
-	it("reaches the query surface as one category in France and two in the US", () => {
+	// The committed route driven through the surface that used to narrow, at both locales. Both reach two: the
+	// drugstore assertion is scoped to the US, and that scope is a fact about where drugstores are, not about who is
+	// asking — so a French CALLER is not what narrows the set. A French ANCHOR is (`poi/intent.test.ts`), and the scope
+	// rides on the match so the stage can read it.
+	it("reaches the query surface as the same two categories under a French caller and a US caller", () => {
 		const fr = matchPOISubject("prescription near Toulouse", "fr-FR", committedRoute.lookup)
 		const us = matchPOISubject("prescription near Denver CO", "en-US", committedRoute.lookup)
 
-		expect(fr?.matches.map((hit) => hit.categoryID)).toEqual(["pharmacy"])
+		expect(fr?.matches.map((hit) => hit.categoryID)).toEqual(["drugstore", "pharmacy"])
 		expect(us?.matches.map((hit) => hit.categoryID)).toEqual(["drugstore", "pharmacy"])
+		expect(fr?.matches.map((hit) => hit.countryScope)).toEqual([["US"], undefined])
 	})
 
 	// One observation per member, each naming its OWN assertion and mapping. Folding them into one would lose which
@@ -455,20 +475,24 @@ describe("a plural affordance", () => {
 		expect(observations.map((observation) => observation.mappedKindCount)).toEqual([2, 2])
 	})
 
-	// The scope narrows the SET, which is the one narrowing that is a reading of the records rather than of a sort key:
-	// the committed drugstore assertion is US-scoped, so France reaches `pharmacy` alone and the observation says so.
-	// Strip the scope off and France reaches both, which is what says the scope did the work.
-	it("narrows the set by the assertion's country scope, and by nothing else", async () => {
-		expect(committedRoute.lookup("prescription", "fr-FR").map((hit) => hit.categoryID)).toEqual(["pharmacy"])
+	// The route narrows the set by NOTHING. The committed drugstore assertion is US-scoped, and that scope is carried
+	// on the match for the intent stage to bind against the anchor's country; here France reaches both and every
+	// observation reports the whole set. Strip the scope off the record and the only thing that changes is that the
+	// match stops carrying it.
+	it("carries the assertion's country scope on the match instead of applying it", async () => {
+		const hits = committedRoute.lookup("prescription", "fr-FR")
+
+		expect(hits.map((hit) => hit.categoryID)).toEqual(["drugstore", "pharmacy"])
+		expect(hits.map((hit) => hit.countryScope)).toEqual([["US"], undefined])
 
 		committedRoute.takeObservations()
 		committedRoute.lookup("prescription", "fr-FR")
 
-		expect(committedRoute.takeObservations().map((observation) => observation.mappedKindCount)).toEqual([1])
+		expect(committedRoute.takeObservations().map((observation) => observation.mappedKindCount)).toEqual([2, 2])
 
 		const unscoped = await scratchRoute(withoutDrugstoreCountryScope)
 
-		expect(unscoped.lookup("prescription", "fr-FR").map((hit) => hit.categoryID)).toEqual(["drugstore", "pharmacy"])
+		expect(unscoped.lookup("prescription", "fr-FR").map((hit) => hit.countryScope)).toEqual([undefined, undefined])
 	})
 })
 
@@ -497,42 +521,50 @@ describe("the assertion's country scope", () => {
 		expect(drugstore?.assertions[0]?.countries).toEqual(["US"])
 	})
 
-	it("answers under a locale whose region the assertion names", async () => {
+	// The claim is about establishments, so the caller's locale cannot decide it — a French caller asking about Denver
+	// is asking about US drugstores. The route answers identically under every locale and under none, and the scope
+	// rides on the match for the intent stage to judge against the anchor.
+	it("carries the scope under every locale, since the claim binds to the anchor and not the caller", async () => {
 		const route = await usScopedRoute()
 
-		expect(route.lookup("prescription", "en-US")).toEqual([
-			{ kind: "category", categoryID: "drugstore", matchedPhrase: "prescription", confidence: 1, searchAsSet: true },
-		])
+		for (const locale of ["en-US", "fr-FR", "en", undefined]) {
+			expect(route.lookup("prescription", locale)).toEqual([
+				{
+					kind: "category",
+					categoryID: "drugstore",
+					matchedPhrase: "prescription",
+					confidence: 1,
+					searchAsSet: true,
+					countryScope: ["US"],
+				},
+			])
+		}
 	})
 
-	// The measured half of the defect: the layer holds zero `drugstore` rows in France, so a US-scoped claim firing at
-	// Toulouse would answer a French query with a category the data there cannot serve.
-	it("stays silent at Toulouse, where the assertion's scope does not reach", async () => {
+	// The measured half of the defect this replaces: the layer holds zero `drugstore` rows in France. Under the old
+	// binding a French CALLER silenced the claim and a US caller with a French anchor admitted it — the wrong axis. The
+	// observation is now recorded either way, and the anchor decides (`poi/intent.test.ts`).
+	it("records the observation at Toulouse as at Denver — the anchor, not the caller, narrows", async () => {
 		const route = await usScopedRoute()
 
-		expect(route.lookup("prescription", "fr-FR")).toEqual([])
-		expect(route.takeObservations()).toEqual([])
+		route.lookup("prescription", "fr-FR")
+
+		const [observation] = route.takeObservations()
+
+		expect(observation!.concept).toBe("drugstore")
+		expect(observation!.localeCountry).toBe("FR")
 	})
 
-	it("stays silent when the locale names no region at all", async () => {
-		const route = await usScopedRoute()
+	// The committed pharmacy assertion is unscoped and carries no `countryScope` key at all — never an empty list.
+	it("leaves an unscoped assertion carrying no scope, beside a scoped one that does", () => {
+		const hits = committedRoute.lookup("prescription", "fr-FR")
 
-		expect(route.lookup("prescription", "en")).toEqual([])
-		expect(route.lookup("prescription")).toEqual([])
+		expect(hits.map((hit) => hit.categoryID)).toEqual(["drugstore", "pharmacy"])
+		expect(hits[0]).toHaveProperty("countryScope", ["US"])
+		expect(hits[1]).not.toHaveProperty("countryScope")
 	})
 
-	// The committed pharmacy assertion is unscoped, so it is in the set under both locales. The US-scoped drugstore
-	// assertion joins it only where the locale names the US, which is the whole difference between the two lengths.
-	it("leaves an unscoped assertion answering everywhere, including at Toulouse", () => {
-		expect(committedRoute.lookup("prescription", "fr-FR").map((hit) => hit.categoryID)).toEqual(["pharmacy"])
-
-		expect(committedRoute.lookup("prescription", "en-US").map((hit) => hit.categoryID)).toEqual([
-			"drugstore",
-			"pharmacy",
-		])
-	})
-
-	it("records the scope and the country it met, so a receipt can be checked", async () => {
+	it("records the scope and the caller's lens, so a receipt can be checked", async () => {
 		const route = await usScopedRoute()
 
 		route.lookup("prescription", "en-US")
@@ -560,10 +592,10 @@ describe("the assertion's country scope", () => {
 		expect(byConcept.get("pharmacy")!.localeCountry).toBe("US")
 	})
 
-	// The country check sits INSIDE the phrase search for the same reason the locale check does: a longer phrase whose
-	// assertion the country refuses must not stand in front of a shorter one whose assertion admits it, or one scope
-	// would silence a phrase it does not cover.
-	it("lets a shorter phrase answer where the longer one's assertion is out of scope", async () => {
+	// Only the LOCALE scope is read inside the phrase search. The longer phrase wins recognition under every caller and
+	// carries its assertion's scope; whether that claim holds where the anchor is, is the intent stage's question, and
+	// a set it empties abstains rather than falling back to a phrase the user did not use.
+	it("takes the longer phrase under every caller and carries the scope for the stage to bind", async () => {
 		const route = await scratchRoute((model, lexicon) => {
 			withAffordingKind("walk_in_clinic", { activity: "see_a_doctor" })(model)
 			withoutPharmacyAffordance(model)
@@ -574,25 +606,18 @@ describe("the assertion's country scope", () => {
 			]
 		})
 
-		expect(route.lookup("collect a prescription", "en-US")).toEqual([
-			{
-				kind: "category",
-				categoryID: "drugstore",
-				matchedPhrase: "collect a prescription",
-				confidence: 1,
-				searchAsSet: true,
-			},
-		])
-
-		expect(route.lookup("collect a prescription", "fr-FR")).toEqual([
-			{
-				kind: "category",
-				categoryID: "walk_in_clinic",
-				matchedPhrase: "prescription",
-				confidence: 1,
-				searchAsSet: true,
-			},
-		])
+		for (const locale of ["en-US", "fr-FR"]) {
+			expect(route.lookup("collect a prescription", locale)).toEqual([
+				{
+					kind: "category",
+					categoryID: "drugstore",
+					matchedPhrase: "collect a prescription",
+					confidence: 1,
+					searchAsSet: true,
+					countryScope: ["US"],
+				},
+			])
+		}
 	})
 })
 

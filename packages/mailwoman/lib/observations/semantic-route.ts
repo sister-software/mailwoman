@@ -40,20 +40,25 @@
  *   shipped.
  *
  *   EVERY AFFORDED KIND, AND THE RESOLVER RANKS THEM. An activity is afforded by a SET of entity kinds, and
- *   every kind the artifact admits for the caller's country is returned — each match flagged
+ *   every kind the artifact maps is returned — each match flagged
  *   `searchAsSet`, which is what tells `matchPOISubject` to carry the whole set rather than its first
  *   member. The POI branch then searches the union of those categories and the candidate ordering the
  *   resolver already owns decides the answer. Nothing here picks a winner: the enumeration is in concept
  *   code-point order, which is a stable listing and not a preference, and a reader who takes the first
  *   entry as the best one is reading rank into a sort key.
  *
- *   COUNTRY SCOPE IS THE ASSERTION'S, LOCALE SCOPE IS THE PHRASE'S, AND BOTH ARE READ HERE. A
- *   `RelationAssertion` may scope its claim to a country list; an assertion so scoped is admitted only when
- *   the caller's locale names a region inside it, and an unknown region admits nothing — a claim scoped to
- *   the US answering a French query would serve a category the data there cannot serve. An assertion with
- *   no country list is admitted everywhere, which is the weaker statement the schema says it is. There is
- *   deliberately no third scoping control on the pipeline option: a per-caller allow-list would be another
- *   place to look for the same answer, and would let a mis-scoped assertion pass unnoticed behind it.
+ *   LOCALE SCOPE IS THE PHRASE'S AND BINDS TO THE CALLER; COUNTRY SCOPE IS THE ASSERTION'S AND BINDS TO
+ *   THE PLACE. A phrase's locale scope says who uses that wording, so it is read here against the caller's
+ *   locale. A `RelationAssertion`'s country list says where the establishments it describes exist, so it is
+ *   judged against the country of the resolved ANCHOR, not the caller's locale — the locale is the lens the
+ *   phrase is read through, not a definition of where the claim holds. This route therefore returns every
+ *   kind the activity reaches and stamps each match with the assertion's `countryScope`;
+ *   `createPOIIntentStage` drops the members whose scope excludes the anchor's country once the anchor
+ *   has resolved, and records what it dropped on the intent's `countryBinding`. An anchor that did not
+ *   resolve to a country admits no scoped claim. An assertion with no country list holds everywhere, which
+ *   is the weaker statement the schema says it is. There is deliberately no third scoping control on the
+ *   pipeline option: a per-caller allow-list would be another place to look for the same answer, and would
+ *   let a mis-scoped assertion pass unnoticed behind it.
  *
  *   `mailwoman` and `@mailwoman/geographic-model` must bump in ONE coordinated release. `yarn pack` freezes
  *   `workspace:*` to whatever the sibling reads at pack time, so a `mailwoman` packed ahead of the sibling's
@@ -135,9 +140,9 @@ export interface SemanticObservation {
 	 */
 	declaredLocales: string[] | null
 	/**
-	 * The country the caller's locale named, or `null` when it named none. Carried on every observation because it is the
-	 * value an assertion's country scope was tested against, and a receipt that shows the scope without the value it met
-	 * cannot be checked.
+	 * The country the caller's locale named, or `null` when it named none — the lens the phrase was read through. It is
+	 * NOT what the assertion's country scope was tested against: that is the resolved anchor's country, which the POI
+	 * intent stage binds after this observation is recorded and reports on the intent's `countryBinding`.
 	 */
 	localeCountry: string | null
 	activity: string
@@ -163,10 +168,10 @@ export interface SemanticObservation {
 	 */
 	categoryID: string
 	/**
-	 * How many mapped entity kinds the activity reached on this firing, after the assertion's country scope was applied —
-	 * the size of the set the POI branch searched. One observation is recorded per member, each naming its own assertion
-	 * and mapping, and every one of them carries this same count. A receipt showing it is what distinguishes a genuinely
-	 * singular reach from a set that collapsed quietly.
+	 * How many mapped entity kinds the activity reached on this firing — the set handed to the POI branch BEFORE the
+	 * anchor's country was bound. One observation is recorded per member, each naming its own assertion and mapping, and
+	 * every one of them carries this same count. A receipt showing it is what distinguishes a genuinely singular reach
+	 * from a set that collapsed quietly.
 	 */
 	mappedKindCount: number
 	modelVersion: string
@@ -244,9 +249,10 @@ interface ReachedKind {
  * the POI branch searches their union. Deciding which of several kinds answers best would be the candidate ordering
  * this program does not author.
  *
- * Country scope is NOT applied here. The assertion's scope is met by the caller's locale, which is a per-query fact,
- * while this enumeration is what construction audits — and the audit has to see the whole set, or a phrase would be
- * audited against one country's reach and used in another's.
+ * Country scope is NOT applied here, or anywhere in this route: the assertion's scope is met by the country of the
+ * resolved anchor, which exists only after the intent stage has parsed the anchor. This enumeration is what
+ * construction audits, and the audit has to see the whole set, or a phrase would be audited against one country's reach
+ * and used in another's.
  */
 function reachKinds(model: CompiledGeographicModel, activity: string): ReachedKind[] {
 	const mappings = new Map<string, ExternalMappingRecord>()
@@ -328,21 +334,6 @@ function auditRoute(
 	}
 
 	return problems
-}
-
-/**
- * Whether an assertion's country scope admits the country the caller's locale named.
- *
- * An assertion with no country list is admitted everywhere. A scoped one needs the country, and an unknown country
- * admits nothing: a claim the curator scoped to a place cannot be reached without knowing the place, or the record
- * means something different from what it says. Same containment the locale scope applies to a regional phrasing.
- */
-function admitsCountry(assertion: RelationAssertion, country: string | undefined): boolean {
-	if (!assertion.countries?.length) return true
-
-	if (!country) return false
-
-	return assertion.countries.some((scoped) => scoped.toUpperCase() === country)
 }
 
 /**
@@ -458,6 +449,11 @@ export async function createSemanticObservationRoute(
 				confidence: localeMatch.confidence,
 				// These matches are one afforded set, not a preference list: the POI branch searches their union.
 				searchAsSet: true,
+				// The assertion's claim rides with the match for the intent stage to bind against the anchor's country. It
+				// is not applied here: the anchor has not been parsed yet when this runs.
+				...(assertion.countries?.length
+					? { countryScope: assertion.countries.map((scoped) => scoped.toUpperCase()) }
+					: {}),
 			})
 		}
 
@@ -471,8 +467,8 @@ export async function createSemanticObservationRoute(
 
 		const country = localeToCountry(locale)
 
-		// Both scopes are read INSIDE the search rather than after it: a longer phrase one of them refuses must not stand in
-		// front of a shorter one both admit, or a scope would silence a phrase it does not cover.
+		// The locale scope is read INSIDE the search rather than after it: a longer phrase it refuses must not stand in
+		// front of a shorter one it admits, or the scope would silence a phrase it does not cover.
 		for (const declared of ordered) {
 			if (candidate !== declared.normalized && !candidate.endsWith(` ${declared.normalized}`)) continue
 
@@ -480,11 +476,7 @@ export async function createSemanticObservationRoute(
 
 			if (!localeMatch) continue
 
-			const admitted = declared.reached.filter(({ assertion }) => admitsCountry(assertion, country))
-
-			if (!admitted.length) continue
-
-			return claim(declared, candidate, localeMatch, country ?? null, admitted)
+			return claim(declared, candidate, localeMatch, country ?? null, declared.reached)
 		}
 
 		return []

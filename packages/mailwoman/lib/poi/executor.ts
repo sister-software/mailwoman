@@ -217,6 +217,31 @@ export function resolvePOISearchCenter(intent: POIIntent): { latitude: number; l
 }
 
 /**
+ * The ISO 3166-1 alpha-2 country of the place the search is centred on, or `null` when the anchor did not resolve to
+ * one. Read off the same node {@link resolvePOISearchCenter} reads, so the country and the coordinate name one place;
+ * when that node carries no country stamp the roots are consulted, since a resolved root names the country every
+ * descendant shares. A `biasPoint` anchor has no resolved place and therefore no country.
+ *
+ * This is the value an assertion's country scope (`POIPhraseMatch.countryScope`) is judged against: the claim is about
+ * establishments, so it binds to where the search looks, not to the caller's locale.
+ */
+export function resolvePOIAnchorCountry(intent: POIIntent): string | null {
+	const tree = intent.anchor?.tree
+
+	if (!tree) return null
+
+	const node = deepestGeoNode(tree.roots)
+
+	const stamped = [node, ...tree.roots].find(
+		(candidate) => typeof candidate?.metadata?.["resolver_country"] === "string"
+	)
+
+	const country = stamped?.metadata?.["resolver_country"]
+
+	return typeof country === "string" && country.length ? country.toUpperCase() : null
+}
+
+/**
  * One level deep beats a root: a child's centroid is more specific than its parent's.
  */
 function deepestGeoNode(roots: AddressNode[]): AddressNode | undefined {

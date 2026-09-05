@@ -45,16 +45,26 @@ export interface POIPhraseMatch {
 	 * list.
 	 *
 	 * A lookup returning several hits means two different things, and the difference decides whether narrowing to the
-	 * first is an answer or an invented ordering. A phrase index returns the categories one typed phrase could name, most
-	 * specific first (`credit union` → `credit_union`, then the `bank` rollup that absorbed the leaf), and the first
-	 * entry IS the subject. An affordance rung returns every entity kind that affords ONE activity, in a stable
-	 * enumeration that is not a preference, and taking the first picks a winner nobody authored.
+	 * first is an answer or an invented ordering. A phrase index returns the categories one typed phrase could name, the
+	 * curated reading first (`credit union` → the `bank` rollup its synonym redirects to, then the standalone
+	 * `credit_union` category), and the first entry IS the subject. An affordance rung returns every entity kind that
+	 * affords ONE activity, in a stable enumeration that is not a preference, and taking the first picks a winner nobody
+	 * authored.
 	 *
 	 * Set on every member of such a set. {@link matchPOISubject} then carries them all, the POI branch searches their
 	 * union, and the candidate ordering the resolver already owns decides the answer. Absent — the committed lexicon's
 	 * shape — keeps the first-hit reading unchanged.
 	 */
 	searchAsSet?: boolean
+	/**
+	 * ISO 3166-1 alpha-2 countries the authority behind this hit scopes its claim to. Absent = the claim holds
+	 * everywhere.
+	 *
+	 * A scope is a statement about ESTABLISHMENTS, so it is judged against the country of the place being searched, not
+	 * the caller's locale: the locale is the lens the phrase is read through, and it says nothing about where the claim
+	 * holds. `matchPOISubject` carries the value untouched; the POI intent stage binds it once the anchor has resolved.
+	 */
+	countryScope?: readonly string[]
 }
 
 /**

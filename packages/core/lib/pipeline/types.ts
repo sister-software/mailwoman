@@ -331,6 +331,14 @@ export interface POIIntent {
 				 */
 				categoryIDs: string[]
 				matched: string
+				/**
+				 * How the set was bound to the PLACE, present only when at least one reached category carried a country scope.
+				 * `anchorCountry` is the resolved anchor's ISO 3166-1 alpha-2 country, or `null` when no anchor resolved to one
+				 * — and `null` admits no scoped claim. `excludedCategoryIDs` are the categories every one of whose authorities
+				 * scoped its claim to countries that do not include it; they were reached by the phrase and are NOT in
+				 * `categoryIDs`. A set that empties this way abstains as `country_scope_excluded`.
+				 */
+				countryBinding?: { anchorCountry: string | null; excludedCategoryIDs: string[] }
 		  }
 		| { kind: "brand"; name: string; wikidata?: string; matched: string }
 		| { kind: "name"; text: string }

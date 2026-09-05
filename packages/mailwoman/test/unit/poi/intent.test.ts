@@ -7,10 +7,11 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { LocaleHint, PipelineResult } from "@mailwoman/core/pipeline"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
+import type { POIPhraseMatch } from "@mailwoman/kind-classifier"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { loadDefaultReverseGeocoder } from "mailwoman/default"
-import { createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "mailwoman/poi"
+import { bindCountryScope, createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "mailwoman/poi"
 import { createRuntimePipeline } from "mailwoman/runtime-pipeline"
 import { join } from "path-ts"
 import { describe, expect, it, vi } from "vitest"
@@ -240,6 +241,169 @@ describe("createPOIIntentStage", () => {
 		const outcome = await stage({ raw: "Empire State Building", normalized: "Empire State Building" }, LOCALE)
 
 		expect(outcome).toBeNull()
+	})
+})
+
+/**
+ * An anchor parse whose one locality node the resolver won, stamped with the resolved place's country the way
+ * `decorateNode` stamps it. `undefined` leaves the node located but country-less.
+ */
+const resolvedAnchor = (raw: string, country: string | undefined): PipelineResult => ({
+	...anchorResult(raw),
+	tree: {
+		raw,
+		roots: [
+			{
+				tag: "locality",
+				value: raw,
+				start: 0,
+				end: raw.length,
+				confidence: 0.9,
+				children: [],
+				lat: 48.82,
+				lon: 1.7553,
+				...(country ? { metadata: { resolver_country: country } } : {}),
+			},
+		],
+	},
+})
+
+/**
+ * The wave-1 plural shape as the semantic route returns it: a US-scoped drugstore beside an unscoped pharmacy.
+ */
+const PRESCRIPTION_SET: POIPhraseMatch[] = [
+	{
+		kind: "category",
+		categoryID: "drugstore",
+		matchedPhrase: "prescription",
+		confidence: 1,
+		searchAsSet: true,
+		countryScope: ["US"],
+	},
+	{ kind: "category", categoryID: "pharmacy", matchedPhrase: "prescription", confidence: 1, searchAsSet: true },
+]
+
+const prescriptionLookup = (phrase: string): ReadonlyArray<POIPhraseMatch> =>
+	phrase === "prescription" ? PRESCRIPTION_SET : []
+
+describe("the place binding of a country-scoped claim (#1999)", () => {
+	// The US-scoped drugstore claim is about US establishments; a French anchor is where the search looks, so the claim
+	// falls out there and the receipt says so. The caller's locale is en-US throughout — it is the lens, not the place.
+	it("drops a scoped category at an anchor outside its scope, and records what fell out", async () => {
+		const stage = createPOIIntentStage({
+			lookup: prescriptionLookup,
+			parseAnchor: async (text) => resolvedAnchor(text, "FR"),
+		})
+
+		const outcome = await stage(
+			{ raw: "prescription near Garancières", normalized: "prescription near Garancières" },
+			LOCALE
+		)
+
+		if (outcome?.type !== "intent") throw new Error(`expected an intent, got ${JSON.stringify(outcome)}`)
+
+		expect(outcome.intent.subject).toEqual({
+			kind: "category",
+			categoryIDs: ["pharmacy"],
+			matched: "prescription",
+			countryBinding: { anchorCountry: "FR", excludedCategoryIDs: ["drugstore"] },
+		})
+	})
+
+	it("keeps a scoped category at an anchor inside its scope, and still records the binding", async () => {
+		const stage = createPOIIntentStage({
+			lookup: prescriptionLookup,
+			parseAnchor: async (text) => resolvedAnchor(text, "US"),
+		})
+
+		const outcome = await stage(
+			{ raw: "prescription near Denver CO", normalized: "prescription near Denver CO" },
+			LOCALE
+		)
+
+		if (outcome?.type !== "intent") throw new Error("unreachable")
+
+		expect(outcome.intent.subject).toEqual({
+			kind: "category",
+			categoryIDs: ["drugstore", "pharmacy"],
+			matched: "prescription",
+			countryBinding: { anchorCountry: "US", excludedCategoryIDs: [] },
+		})
+	})
+
+	// A claim scoped to a place cannot be checked without knowing the place. A located anchor with no country stamp and
+	// a bare subject with no anchor at all are the same reading: `null`, which admits no scoped claim.
+	it("admits no scoped claim when the anchor resolved to no country, or when there is no anchor", async () => {
+		const countryless = createPOIIntentStage({
+			lookup: prescriptionLookup,
+			parseAnchor: async (text) => resolvedAnchor(text, undefined),
+		})
+
+		const bare = createPOIIntentStage({
+			lookup: prescriptionLookup,
+			parseAnchor: async () => {
+				throw new Error("must not parse an anchor for a bare subject")
+			},
+		})
+
+		for (const outcome of [
+			await countryless({ raw: "prescription near Zzyzx", normalized: "prescription near Zzyzx" }, LOCALE),
+			await bare({ raw: "prescription", normalized: "prescription" }, LOCALE),
+		]) {
+			if (outcome?.type !== "intent") throw new Error("unreachable")
+
+			expect(outcome.intent.subject).toMatchObject({
+				categoryIDs: ["pharmacy"],
+				countryBinding: { anchorCountry: null, excludedCategoryIDs: ["drugstore"] },
+			})
+		}
+	})
+
+	// The set empties: nothing the phrase reaches holds where the anchor is. Falling back to some other phrase would
+	// answer a question the user did not ask, so the stage abstains with a reason a receipt can read.
+	it("abstains as country_scope_excluded when every reached category falls out", async () => {
+		const stage = createPOIIntentStage({
+			lookup: (phrase) => (phrase === "prescription" ? [PRESCRIPTION_SET[0]!] : []),
+			parseAnchor: async (text) => resolvedAnchor(text, "FR"),
+			execute: () => {
+				throw new Error("the executor must not run on an emptied set")
+			},
+		})
+
+		const outcome = await stage({ raw: "prescription near Toulouse", normalized: "prescription near Toulouse" }, LOCALE)
+
+		expect(outcome).toEqual({ type: "abstain", reason: "country_scope_excluded" })
+	})
+
+	it("records no binding when no reached category carries a scope — there was nothing to bind", async () => {
+		const stage = createPOIIntentStage({
+			lookup: poiTaxonomyLookup,
+			parseAnchor: async (text) => resolvedAnchor(text, "FR"),
+		})
+
+		const outcome = await stage({ raw: "hospital near Toulouse", normalized: "hospital near Toulouse" }, LOCALE)
+
+		if (outcome?.type !== "intent") throw new Error("unreachable")
+
+		expect(outcome.intent.subject).not.toHaveProperty("countryBinding")
+	})
+
+	// A category two authorities reach stays when EITHER holds at the anchor; the scope is on the claim, not the id.
+	it("bindCountryScope keeps a category that an unscoped hit also reaches", () => {
+		const scoped: POIPhraseMatch = { ...PRESCRIPTION_SET[1]!, countryScope: ["US"] }
+
+		expect(bindCountryScope([scoped, PRESCRIPTION_SET[1]!], "FR")).toEqual({
+			anchorCountry: "FR",
+			categoryIDs: ["pharmacy"],
+			excludedCategoryIDs: [],
+		})
+
+		expect(bindCountryScope([PRESCRIPTION_SET[1]!], "FR")).toBeNull()
+
+		// The scope's own casing is folded; the anchor country arrives upper-case from `resolvePOIAnchorCountry`.
+		const lowerScoped: POIPhraseMatch = { ...PRESCRIPTION_SET[0]!, countryScope: ["us"] }
+
+		expect(bindCountryScope([lowerScoped], "US")?.categoryIDs).toEqual(["drugstore"])
 	})
 })
 

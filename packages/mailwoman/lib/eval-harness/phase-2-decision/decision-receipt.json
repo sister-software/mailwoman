@@ -1,9 +1,9 @@
 {
 	"decisionID": "phase-2-decision-1967",
-	"definitionVersion": "1.0.0",
-	"definitionSHA256": "cf7c9ac417bd2b9683b6f4e23a73a8cd655d8ff2c71ad62f6d40fbdb0d18663b",
-	"generatedAt": "2026-08-27T05:16:07.426Z",
-	"gitCommit": "41e308c05",
+	"definitionVersion": "1.1.0",
+	"definitionSHA256": "5ca934472f9755d61c6d99ccc55103ee6bb77a6fe0c489c0502bc518da60d8d6",
+	"generatedAt": "2026-09-05T12:33:13.203Z",
+	"gitCommit": "82d96d859",
 	"artifact": {
 		"poiDatabasePath": "/mnt/playpen/mailwoman-data/poi/poi.db",
 		"poiLayerManifestVersion": "2026-07-22.0",
@@ -11,12 +11,12 @@
 		"weightsLocale": "en-US",
 		"weightsVersion": "9.1.0",
 		"resolverBackend": "candidate",
-		"geographicModelVersion": "0.2.0",
+		"geographicModelVersion": "0.3.0",
 		"phraseLexiconID": "mailwoman-activity-phrases",
 		"phraseLexiconVersion": "1.0.0",
 		"declaredPhrases": 11,
 		"semanticUtilityDefinitionSHA256": "df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c",
-		"absenceDefinitionSHA256": "3b265bc7fef0b1c19b0dd690b63f8f68c35ae7877501dcc11391a923b1057af1",
+		"absenceDefinitionSHA256": "6cc71ff0a6678784f798704e5b4ceeefd1213970caabb47eeee9ad6ede7f1856",
 		"coverageLayerFile": "poi-coverage-pharmacy-ile-de-france.db",
 		"coverageLayerVersion": "260627"
 	},
@@ -26,12 +26,12 @@
 		"weightsLocale": "en-US",
 		"weightsVersion": "9.1.0",
 		"resolverBackend": "candidate",
-		"geographicModelVersion": "0.2.0",
+		"geographicModelVersion": "0.3.0",
 		"phraseLexiconID": "mailwoman-activity-phrases",
 		"phraseLexiconVersion": "1.0.0",
 		"declaredPhrases": 11,
 		"semanticUtilityDefinitionSHA256": "df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c",
-		"absenceDefinitionSHA256": "3b265bc7fef0b1c19b0dd690b63f8f68c35ae7877501dcc11391a923b1057af1",
+		"absenceDefinitionSHA256": "6cc71ff0a6678784f798704e5b4ceeefd1213970caabb47eeee9ad6ede7f1856",
 		"coverageLayerFile": "poi-coverage-pharmacy-ile-de-france.db",
 		"coverageLayerVersion": "260627"
 	},
@@ -39,7 +39,7 @@
 	"instruments": [
 		{
 			"instrument": "semantic_utility_probe",
-			"identity": "#1928 ruler df32f00d · both arms · route mailwoman-activity-phrases v1.0.0 (11 phrases) → model 0.2.0"
+			"identity": "#1928 ruler df32f00d · both arms · route mailwoman-activity-phrases v1.0.0 (11 phrases) → model 0.3.0"
 		},
 		{
 			"instrument": "activity_lexicon",
@@ -47,11 +47,11 @@
 		},
 		{
 			"instrument": "committed_collision_census",
-			"identity": "packages/mailwoman/eval-harness/activity-lexicon/collision-census.json · 19 probes · lexicon mailwoman-activity-phrases v1.0.0 · poi 2026-07-22.0"
+			"identity": "packages/mailwoman/lib/eval-harness/activity-lexicon/collision-census.json · 19 probes · lexicon mailwoman-activity-phrases v1.0.0 · poi 2026-07-22.0"
 		},
 		{
 			"instrument": "absence_observation_probe",
-			"identity": "#1965 ruler 3b265bc7 · coverage poi-coverage-pharmacy-ile-de-france.db (poi 260627, 290 cells at res 6, 88 exclusion-grade and empty) · model 0.2.0"
+			"identity": "#1965 ruler 6cc71ff0 · coverage poi-coverage-pharmacy-ile-de-france.db (poi 260627, 290 cells at res 6, 88 exclusion-grade and empty) · model 0.3.0"
 		},
 		{
 			"instrument": "poi_board",
@@ -63,7 +63,7 @@
 		},
 		{
 			"instrument": "observation_marker",
-			"identity": "\"where can i pick up a prescription near Denver CO\" → marker kind poi_query, code poi_category, mechanism semantic:affords, evidence names assertion pharmacy-affords-obtain-medication"
+			"identity": "\"where can i pick up a prescription near Denver CO\" → marker kind poi_query, code poi_category, mechanism semantic:affords, evidence names assertion drugstore-affords-obtain-medication"
 		}
 	],
 	"readings": [
@@ -105,7 +105,7 @@
 		{
 			"measurement": "semantic_utility.route_identity_matches_pins",
 			"observed": 1,
-			"detail": "built from mailwoman-activity-phrases v1.0.0 (11 declared phrases) → geographic model 0.2.0 → pharmacy"
+			"detail": "built from mailwoman-activity-phrases v1.0.0 (11 declared phrases) → geographic model 0.3.0 → drugstore, pharmacy"
 		},
 		{
 			"measurement": "activity_lexicon.declared_phrases",
@@ -160,7 +160,7 @@
 		{
 			"measurement": "absence_probe.definition_hash_matches_pin",
 			"observed": 1,
-			"detail": "#1965 ruler 3b265bc7fef0b1c19b0dd690b63f8f68c35ae7877501dcc11391a923b1057af1"
+			"detail": "#1965 ruler 6cc71ff0a6678784f798704e5b4ceeefd1213970caabb47eeee9ad6ede7f1856"
 		},
 		{
 			"measurement": "poi_board.floors_unmet",
@@ -184,13 +184,13 @@
 		},
 		{
 			"measurement": "conformance.decided_rows",
-			"observed": 183,
-			"detail": "183 rows gated and decided across 5 laws"
+			"observed": 187,
+			"detail": "187 rows conditional and decided across 5 laws"
 		},
 		{
 			"measurement": "conformance.decided_failures",
 			"observed": 0,
-			"detail": "every decided row holds; 5 tracked"
+			"detail": "every decided row holds; 1 tracked"
 		},
 		{
 			"measurement": "conformance.unmeasured_rows",
@@ -199,8 +199,8 @@
 		},
 		{
 			"measurement": "observation_marker.semantic_marker_reaches_caller",
-			"observed": 1,
-			"detail": "marker kind poi_query, code poi_category, mechanism semantic:affords, evidence names assertion pharmacy-affords-obtain-medication"
+			"observed": 2,
+			"detail": "marker kind poi_query, code poi_category, mechanism semantic:affords, evidence names assertion drugstore-affords-obtain-medication"
 		}
 	],
 	"lanes": [
@@ -387,7 +387,7 @@
 				"value": 1
 			},
 			"met": true,
-			"detail": "built from mailwoman-activity-phrases v1.0.0 (11 declared phrases) → geographic model 0.2.0 → pharmacy"
+			"detail": "built from mailwoman-activity-phrases v1.0.0 (11 declared phrases) → geographic model 0.3.0 → drugstore, pharmacy"
 		},
 		{
 			"id": "rec-t-04",
@@ -557,7 +557,7 @@
 				"value": 1
 			},
 			"met": true,
-			"detail": "#1965 ruler 3b265bc7fef0b1c19b0dd690b63f8f68c35ae7877501dcc11391a923b1057af1"
+			"detail": "#1965 ruler 6cc71ff0a6678784f798704e5b4ceeefd1213970caabb47eeee9ad6ede7f1856"
 		},
 		{
 			"id": "srf-c-01",
@@ -624,7 +624,7 @@
 			"lane": "surface_inertness",
 			"role": "control",
 			"measurement": "conformance.decided_rows",
-			"observed": 183,
+			"observed": 187,
 			"denominator": 183,
 			"baselineValue": 183,
 			"bar": {
@@ -632,7 +632,7 @@
 				"value": 183
 			},
 			"met": true,
-			"detail": "183 rows gated and decided across 5 laws"
+			"detail": "187 rows conditional and decided across 5 laws"
 		},
 		{
 			"id": "srf-c-06",
@@ -647,7 +647,7 @@
 				"value": 0
 			},
 			"met": true,
-			"detail": "every decided row holds; 5 tracked"
+			"detail": "every decided row holds; 1 tracked"
 		},
 		{
 			"id": "srf-c-07",
@@ -670,7 +670,7 @@
 			"role": "target",
 			"tier": "evidence",
 			"measurement": "observation_marker.semantic_marker_reaches_caller",
-			"observed": 1,
+			"observed": 2,
 			"denominator": 1,
 			"baselineValue": 1,
 			"bar": {
@@ -678,7 +678,7 @@
 				"value": 1
 			},
 			"met": true,
-			"detail": "marker kind poi_query, code poi_category, mechanism semantic:affords, evidence names assertion pharmacy-affords-obtain-medication"
+			"detail": "marker kind poi_query, code poi_category, mechanism semantic:affords, evidence names assertion drugstore-affords-obtain-medication"
 		}
 	],
 	"verdict": {
