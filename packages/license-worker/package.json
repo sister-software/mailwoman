@@ -33,6 +33,8 @@
 	"dependencies": {
 		"@hono/zod-openapi": "^1.6.3",
 		"hono": "^4.13.7",
+		"kysely": "^0.29.5",
+		"kysely-d1": "^0.4.0",
 		"zod": "^4.5.4"
 	},
 	"devDependencies": {

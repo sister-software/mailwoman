@@ -8,8 +8,11 @@
  *   vitest sweep excludes this workspace, and CI runs it as its own step.
  */
 
-import { cloudflareTest } from "@cloudflare/vitest-pool-workers"
+import { cloudflareTest, readD1Migrations } from "@cloudflare/vitest-pool-workers"
 import { defineConfig } from "vitest/config"
+
+// The migrations are read here, on the Node side, and handed to the runtime as a binding the tests apply.
+const migrations = await readD1Migrations("./migrations")
 
 export default defineConfig({
 	plugins: [
@@ -21,6 +24,7 @@ export default defineConfig({
 					STRIPE_WEBHOOK_SECRET: "whsec_test_placeholder",
 					LICENSE_SIGNING_KEY_PEM: "",
 					EMAIL_API_KEY: "re_test_placeholder",
+					TEST_MIGRATIONS: migrations,
 				},
 			},
 		}),

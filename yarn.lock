@@ -5127,6 +5127,8 @@ __metadata:
     "@cloudflare/workers-types": "npm:^5.20260905.1"
     "@hono/zod-openapi": "npm:^1.6.3"
     hono: "npm:^4.13.7"
+    kysely: "npm:^0.29.5"
+    kysely-d1: "npm:^0.4.0"
     vitest: "npm:4.1.11"
     wrangler: "npm:^4.129.0"
     zod: "npm:^4.5.4"
@@ -16759,6 +16761,15 @@ __metadata:
     knip: bin/knip.js
     knip-bun: bin/knip-bun.js
   checksum: 10/eeebec459f516630cc4066e257f098a4bd35024c65e536b63a8e0a343ac4af0f7f0564ecaaa21d7caa2a0f0b9f256c361b3c9bdcde700546e34ef8282091c821
+  languageName: node
+  linkType: hard
+
+"kysely-d1@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "kysely-d1@npm:0.4.0"
+  peerDependencies:
+    kysely: "*"
+  checksum: 10/39e65316bd2f862a16a964cbb5c34ca4ae53ca5b1939b6793560816a98356176f2b44fc1eccdb193d5e70b17b306e5f7b3d03d828f176127e777dcf55bbc2e2c
   languageName: node
   linkType: hard
 
