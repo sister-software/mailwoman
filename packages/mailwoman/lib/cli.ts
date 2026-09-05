@@ -95,4 +95,16 @@ function dispatchCommand(): Promise<number> {
 	)
 }
 
-process.exitCode = await (rootVersionRequest ? printVersion() : dispatchCommand())
+const exitCode = await (rootVersionRequest ? printVersion() : dispatchCommand())
+
+// The notice is the last thing written, for every command and every exit code, and it never changes the exit code: a
+// failure to build it is reported on stderr and the command's own result stands.
+try {
+	const { printLicenseNotice, resolveEngineStamp } = await import("#cli-kit/engine-stamp")
+
+	printLicenseNotice(await resolveEngineStamp())
+} catch (error) {
+	console.error(`[license] posture unavailable: ${error instanceof Error ? error.message : String(error)}`)
+}
+
+process.exitCode = exitCode

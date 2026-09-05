@@ -11,7 +11,8 @@
  */
 
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { runFileSync } from "@mailwoman/core/process"
+import { runFile, runFileSync } from "@mailwoman/core/process"
+import { childEnv } from "@mailwoman/core/scripting/utils"
 import { describe, expect, it } from "vitest"
 
 const CLI = resolvePackagePath("mailwoman", "lib", "cli.ts")
@@ -41,6 +42,24 @@ describe("the CLI launcher", () => {
 
 		expect(output).not.toContain("ERR_PARSE_ARGS_UNKNOWN_OPTION")
 		expect(output).toContain("Unknown command: nosuchcommand")
+	})
+
+	it("prints the license notice on stderr and keeps stdout to the bare version", async () => {
+		const { stdout, stderr } = await runFile("node", [CLI, "--version"], {
+			env: childEnv({ MAILWOMAN_LICENSE_KEY: "" }),
+		})
+
+		expect(stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/)
+		expect(stderr).toContain("mailwoman is licensed AGPL-3.0-only")
+		expect(stderr).toContain("/license")
+	})
+
+	it("prints the notice for a key this build does not trust", async () => {
+		const { stderr } = await runFile("node", [CLI, "--version"], {
+			env: childEnv({ MAILWOMAN_LICENSE_KEY: "mwl1.eyJ2IjoxfQ.AAAA" }),
+		})
+
+		expect(stderr).toContain("mailwoman is licensed AGPL-3.0-only")
 	})
 
 	it("treats --version as a root request only, not as one belonging to a subcommand", () => {
