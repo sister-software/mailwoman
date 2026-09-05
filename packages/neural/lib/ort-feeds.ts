@@ -50,6 +50,14 @@ export type InferFunction = (
 	evidence?: InferEvidenceChannels
 ) => Promise<InferResult>
 
+/**
+ * The char-path twin of {@link InferFunction}: one S-padded encoding in, per-unit logits out (#2164).
+ */
+export type InferCharsFunction = (
+	charIDs: ReadonlyArray<readonly number[]>,
+	attentionMask: readonly number[]
+) => Promise<InferResult>
+
 export interface InferResult {
 	/**
 	 * Logits per token per label, indexed as `logits[tokenIdx][labelIdx]`.
@@ -118,6 +126,41 @@ export function packTokenFeed(
 	return {
 		inputIDs: { data: padded, dims: [1, fixedSeqLen] },
 		attentionMask: { data: mask, dims: [1, fixedSeqLen] },
+		seqLen,
+	}
+}
+
+/**
+ * Pack a char-path encoding (`char_ids (S, W)` + `attention_mask (S)`, already S-padded by the encoder) into the two
+ * int64 tensors the char graph declares. `seqLen` is the count of real units, what the logits are sliced back to.
+ */
+export function packCharFeed(
+	charIDs: ReadonlyArray<readonly number[]>,
+	attentionMask: readonly number[]
+): { charIDs: PackedFeed<BigInt64Array>; attentionMask: PackedFeed<BigInt64Array>; seqLen: number } {
+	const units = charIDs.length
+	const width = charIDs[0]?.length ?? 0
+	const chars = new BigInt64Array(units * width)
+	const mask = new BigInt64Array(units)
+	let seqLen = 0
+
+	for (let unit = 0; unit < units; unit++) {
+		const row = charIDs[unit]!
+
+		for (let slot = 0; slot < width; slot++) {
+			chars[unit * width + slot] = BigInt(row[slot] ?? 0)
+		}
+
+		mask[unit] = BigInt(attentionMask[unit] ?? 0)
+
+		if (attentionMask[unit]) {
+			seqLen++
+		}
+	}
+
+	return {
+		charIDs: { data: chars, dims: [1, units, width] },
+		attentionMask: { data: mask, dims: [1, units] },
 		seqLen,
 	}
 }

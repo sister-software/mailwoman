@@ -12,6 +12,7 @@ import type { SystemCode } from "@mailwoman/codex"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 
 import type { AnchorLookup } from "#anchor-inference"
+import { loadCharVocabulary } from "#char-encoder"
 import { NeuralAddressClassifier } from "#classifier/index"
 import { parseCountryLexicon } from "#country-inference"
 import { parseGazetteerLexicon } from "#gazetteer-inference"
@@ -99,8 +100,22 @@ export async function loadClassifierFromWeights(
 		}
 	}
 
+	// A char-path package (#2164) has no SentencePiece model: the encoder is the sealed character vocabulary plus the
+	// (S, W, ctx) contract the card declares, and the runner's `inferChars` feeds the graph.
+	const charEncoder =
+		resolved.encoder.kind === "char"
+			? {
+					vocabulary: await loadCharVocabulary(resolved.charVocabPath!),
+					contract: {
+						maxUnits: resolved.encoder.maxUnits,
+						maxUnitWidth: resolved.encoder.maxUnitWidth,
+						ctxChars: resolved.encoder.ctxChars,
+					},
+				}
+			: undefined
+
 	const [tokenizer, runner] = await Promise.all([
-		MailwomanTokenizer.loadFromFile(resolved.tokenizerPath),
+		charEncoder ? undefined : MailwomanTokenizer.loadFromFile(resolved.tokenizerPath),
 		ONNXRunner.create(resolved.modelPath, {
 			executionProviders: opts.executionProviders,
 			// Cap the intra-op pool. Left unset, ORT sizes it to the core count, so N concurrent processes
@@ -269,7 +284,8 @@ export async function loadClassifierFromWeights(
 	const addressSystemConventions = declared?.conventions?.required ? (declared.conventions.mode ?? "auto") : undefined
 
 	return new NeuralAddressClassifier({
-		tokenizer,
+		...(tokenizer ? { tokenizer } : {}),
+		...(charEncoder ? { charEncoder } : {}),
 		runner,
 		labels,
 		transitions: crf?.transitions,

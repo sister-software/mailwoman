@@ -14,6 +14,7 @@ import type { SpanProposerLexicon } from "@mailwoman/core/pipeline"
 import type { PathBuilderLike } from "path-ts"
 
 import type { AnchorLookup, AnchorSpanMode } from "#anchor-inference"
+import type { CharEncoderContract, CharVocabulary } from "#char-encoder"
 import type { NeuralRunner } from "#classifier/index"
 import type { CountryLexicon } from "#country-inference"
 import type { FSTMatcherLike, ImportanceLengthScaleMode } from "#fst-prior"
@@ -28,7 +29,16 @@ import type { MailwomanTokenizer } from "#tokenizer"
 import type { WordConsistencyOpts } from "#word-consistency"
 
 export interface NeuralAddressClassifierConfig {
-	tokenizer: MailwomanTokenizer
+	/**
+	 * The SentencePiece tokenizer. Exactly one of `tokenizer` and `charEncoder` is set: a char-path model has no
+	 * SentencePiece vocabulary and its units are code points.
+	 */
+	tokenizer?: MailwomanTokenizer
+	/**
+	 * The char-path encoder (#2164): the sealed character vocabulary and the (S, W, ctx) contract the model was trained
+	 * under. The runner must carry `inferChars`.
+	 */
+	charEncoder?: { vocabulary: CharVocabulary; contract: CharEncoderContract }
 	runner: NeuralRunner
 	/**
 	 * Label vocabulary in the order the model emits them. Defaults to Stage 2 (v0.3.0). Stage 2 strictly extends Stage 1

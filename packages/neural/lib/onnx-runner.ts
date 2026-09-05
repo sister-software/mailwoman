@@ -19,8 +19,10 @@ import type { PathBuilderLike } from "path-ts"
 
 import {
 	decodeInferOutput,
+	packCharFeed,
 	packSoftChannelFeeds,
 	packTokenFeed,
+	type InferCharsFunction,
 	type InferFunction,
 	type OutputTensor,
 } from "#ort-feeds"
@@ -29,6 +31,7 @@ import {
 // import them without touching this node-only module.
 export { LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "#gazetteer-inference"
 // Back-compat: the result type moved to ort-feeds.ts (pure, shared with the browser runner).
+export { packCharFeed } from "#ort-feeds"
 export type { InferResult } from "#ort-feeds"
 
 export interface ONNXRunnerOpts {
@@ -229,6 +232,29 @@ export class ONNXRunner {
 				...(output.span_scores ? { spanScores: outputTensor(output.span_scores) } : {}),
 			},
 			seqLen
+		)
+	}
+
+	/**
+	 * Run a char-path graph (`char_ids` + `attention_mask`, no `input_ids`; #2164) on one encoding. The encoder already
+	 * padded to S, so no fixed sequence length applies; the output is sliced to the real unit count. The char path is
+	 * channel-free by contract, so no soft-feed tensors are packed.
+	 */
+	inferChars: InferCharsFunction = async (charIDs, attentionMask) => {
+		const session = await this.ensureSession()
+		const packed = packCharFeed(charIDs, attentionMask)
+
+		const output = await session.run({
+			char_ids: new ort.Tensor("int64", packed.charIDs.data, packed.charIDs.dims),
+			attention_mask: new ort.Tensor("int64", packed.attentionMask.data, packed.attentionMask.dims),
+		})
+
+		return decodeInferOutput(
+			{
+				...(output.logits ? { logits: outputTensor(output.logits) } : {}),
+				...(output.locale_logits ? { localeLogits: outputTensor(output.locale_logits) } : {}),
+			},
+			packed.seqLen
 		)
 	}
 

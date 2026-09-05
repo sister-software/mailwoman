@@ -34,6 +34,7 @@ function resolved(
 	return {
 		modelPath: model,
 		tokenizerPath: "/candidate/node_modules/@mailwoman/neural-weights-en-us/tokenizer.model",
+		encoder: { kind: "sentencepiece" },
 		modelCardPath: `${packageDir}/model-card.json`,
 		source: `cache:@mailwoman/neural-weights-${locale.toLowerCase()}`,
 		packageDir: resolvePathBuilder(packageDir),

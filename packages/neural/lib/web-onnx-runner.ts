@@ -27,8 +27,10 @@ import * as ort from "onnxruntime-web/webgpu"
 import type { NeuralRunner } from "#classifier/index"
 import {
 	decodeInferOutput,
+	packCharFeed,
 	packSoftChannelFeeds,
 	packTokenFeed,
+	type InferCharsFunction,
 	type InferFunction,
 	type OutputTensor,
 } from "#ort-feeds"
@@ -172,6 +174,27 @@ export class WebONNXRunner implements NeuralRunner {
 	 */
 	get inputNames(): readonly string[] | null {
 		return this.#session?.inputNames ?? null
+	}
+
+	/**
+	 * Mirror of the node `ONNXRunner.inferChars` — the char-path graph, no soft-feed channels (#2164).
+	 */
+	inferChars: InferCharsFunction = async (charIDs, attentionMask) => {
+		const session = await this.#ensureSession()
+		const packed = packCharFeed(charIDs, attentionMask)
+
+		const output = await session.run({
+			char_ids: new ort.Tensor("int64", packed.charIDs.data, packed.charIDs.dims),
+			attention_mask: new ort.Tensor("int64", packed.attentionMask.data, packed.attentionMask.dims),
+		})
+
+		return decodeInferOutput(
+			{
+				...(output.logits ? { logits: outputTensor(output.logits) } : {}),
+				...(output.locale_logits ? { localeLogits: outputTensor(output.locale_logits) } : {}),
+			},
+			packed.seqLen
+		)
 	}
 
 	/**

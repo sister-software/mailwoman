@@ -57,7 +57,7 @@ const cfg = classifier.config
 
 const normalizeCase = values["normalize-case"] !== "false"
 const text = normalizeCase ? normalizeInputCase(values.text!) : values.text!
-const pieces = cfg.tokenizer.encode(text).pieces
+const pieces = cfg.tokenizer!.encode(text).pieces
 
 const channels = buildSoftFeatures(text, pieces, {
 	...(cfg.postcodeAnchorLookup ? { postcodeAnchorLookup: cfg.postcodeAnchorLookup } : {}),

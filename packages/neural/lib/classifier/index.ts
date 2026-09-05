@@ -28,6 +28,7 @@ import type { PathBuilderLike } from "path-ts"
 
 import { confidentLocaleCountry, LOCALE_COUNTRIES, resolveSystemVerdict } from "#address-system"
 import { normalizeInputCase } from "#case-normalize"
+import { encodeCharUnits } from "#char-encoder"
 import type {
 	NeuralAddressClassifierConfig,
 	ParseOpts,
@@ -36,18 +37,18 @@ import type {
 } from "#classifier/options"
 import { buildFSTEmissionPriors } from "#fst-prior"
 import { STAGE2_BIO_LABELS } from "#labels"
-import type { InferFunction } from "#ort-feeds"
+import type { InferFunction, InferCharsFunction } from "#ort-feeds"
 import type { PlacetypeCensusLike } from "#placetype/census"
 import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "#placetype/pair-prior"
 import { repairPostcodeLabels } from "#postcode/repair"
 import { addEmissionMatrix, buildEmissionPriors } from "#query-shape-prior"
 import type { SemiCRFTransitions } from "#semi-markov-decode"
-import { buildSoftFeatures, type SoftFeatureChannel } from "#soft-features"
+import { buildSoftFeatures, type SoftFeatureChannel, type SoftFeatures } from "#soft-features"
 import { bridgePunctuationGaps } from "#span/bridge"
 import { buildSpanProposalPriors } from "#span/proposal-prior"
 import { buildCodexSpanLexicon } from "#span/proposer-lexicon"
 import { buildStreetMorphologyEmissionPriors } from "#street-morphology-prior"
-import type { MailwomanTokenizer } from "#tokenizer"
+import type { MailwomanTokenizer, TokenizedPiece } from "#tokenizer"
 import { TRACE_PRIOR_KINDS } from "#trace"
 import type { NeuralParseTrace, TracePrior, TraceRepair, TraceRepairPass } from "#trace"
 import { repairUnitLabels } from "#unit-repair"
@@ -75,6 +76,11 @@ export type {
  */
 export interface NeuralRunner {
 	infer: InferFunction
+	/**
+	 * The char-path graph's entry (#2164). Absent on a runner built for a SentencePiece graph; a classifier configured
+	 * with a `charEncoder` refuses a runner without it at construction rather than at the first parse.
+	 */
+	inferChars?: InferCharsFunction
 }
 
 /**
@@ -114,6 +120,14 @@ export class NeuralAddressClassifier {
 	}
 
 	constructor(cfg: NeuralAddressClassifierConfig) {
+		if (!cfg.tokenizer && !cfg.charEncoder) {
+			throw new Error("NeuralAddressClassifier needs a tokenizer (SentencePiece graph) or a charEncoder (char graph)")
+		}
+
+		if (cfg.charEncoder && !cfg.runner.inferChars) {
+			throw new Error("NeuralAddressClassifier: a charEncoder needs a runner with inferChars (a char_ids graph)")
+		}
+
 		this.cfg = cfg
 		this.labels = cfg.labels ?? STAGE2_BIO_LABELS
 		this.decodeMode = cfg.decode ?? "viterbi"
@@ -334,7 +348,7 @@ export class NeuralAddressClassifier {
 			repairs: TraceRepair[]
 		}
 	}> {
-		const encoded = this.cfg.tokenizer.encode(text)
+		const encoded = this.encode(text)
 		// Reassigned after inference — the runner clamps to the model's fixed sequence length and
 		// `pieces` has to follow it. See the clamp below.
 		let pieces = encoded.pieces
@@ -349,25 +363,31 @@ export class NeuralAddressClassifier {
 		// identity — the fed channels lift fragments but damage full-address parses.
 		const evidenceOn = (opts?.inputMode ?? "fragmented") === "fragmented"
 
-		const soft = buildSoftFeatures(text, pieces, {
-			postcodeAnchorLookup: this.cfg.postcodeAnchorLookup,
-			postcodeAnchorSpanMode: this.cfg.postcodeAnchorSpanMode,
-			gazetteerLexicon: this.cfg.gazetteerLexicon,
-			countryLexicon: this.cfg.countryLexicon,
-			suppressGazetteerNearPostcode: this.cfg.suppressGazetteerNearPostcode,
-			streetTypeLexicon: evidenceOn ? this.cfg.streetTypeLexicon : undefined,
-			localitySurfaceLexicon: evidenceOn ? this.cfg.localitySurfaceLexicon : undefined,
-		})
+		// The char path is channel-free by contract (D5): no anchor, gazetteer, country or evidence features are built
+		// or fed, so `soft` stays empty and the trace reports every channel silent.
+		const soft: SoftFeatures = encoded.charIDs
+			? {}
+			: buildSoftFeatures(text, pieces, {
+					postcodeAnchorLookup: this.cfg.postcodeAnchorLookup,
+					postcodeAnchorSpanMode: this.cfg.postcodeAnchorSpanMode,
+					gazetteerLexicon: this.cfg.gazetteerLexicon,
+					countryLexicon: this.cfg.countryLexicon,
+					suppressGazetteerNearPostcode: this.cfg.suppressGazetteerNearPostcode,
+					streetTypeLexicon: evidenceOn ? this.cfg.streetTypeLexicon : undefined,
+					localitySurfaceLexicon: evidenceOn ? this.cfg.localitySurfaceLexicon : undefined,
+				})
 
-		const { logits, localeLogits, spanScores } = await this.cfg.runner.infer(
-			encoded.ids,
-			soft.anchor,
-			soft.gazetteer,
-			soft.country,
-			soft.streetType || soft.localitySurface
-				? { streetType: soft.streetType, localitySurface: soft.localitySurface }
-				: undefined
-		)
+		const { logits, localeLogits, spanScores } = encoded.charIDs
+			? await this.cfg.runner.inferChars!(encoded.charIDs, encoded.attentionMask!)
+			: await this.cfg.runner.infer(
+					encoded.ids,
+					soft.anchor,
+					soft.gazetteer,
+					soft.country,
+					soft.streetType || soft.localitySurface
+						? { streetType: soft.streetType, localitySurface: soft.localitySurface }
+						: undefined
+				)
 
 		this.assertEmissionWidth(logits)
 
@@ -636,8 +656,13 @@ export class NeuralAddressClassifier {
 		//
 		// The repair upholds an invariant no valid parse can violate: the pieces of one word carry one tag.
 		// `false` opts out for callers who want the raw emissions.
-		const wordConsistency =
-			opts?.enforceWordConsistency ?? this.cfg.enforceWordConsistency ?? WORD_CONSISTENCY_SHIP_DEFAULT
+		// The invariant is SentencePiece's: a "word" is a whitespace-delimited run of pieces. On the char path every unit
+		// is one code point and a Japanese address has no whitespace, so the whole string is one "word" and the repair
+		// would fold prefecture, municipality, district and block into a single span (#2164). The char path is never
+		// word-consistent by construction, so the repair does not run there.
+		const wordConsistency = this.cfg.charEncoder
+			? false
+			: (opts?.enforceWordConsistency ?? this.cfg.enforceWordConsistency ?? WORD_CONSISTENCY_SHIP_DEFAULT)
 
 		if (wordConsistency) {
 			const beforeLabels = traceRepairs ? labelIndices.map((i) => (this.labels[i] ?? "O") as string) : []
@@ -771,6 +796,30 @@ export class NeuralAddressClassifier {
 	 * STAGE1_BIO_LABELS so a Stage 1 model loaded with Stage 2 labels decodes correctly via the first 15 logits. See
 	 * labels.ts for the contract.
 	 */
+	/**
+	 * Turn the text into the units the model reads: SentencePiece pieces with vocabulary ids, or — on the char path — one
+	 * piece per code point (id 0, unused by the graph) beside the `(S, W)` character ids the graph takes instead.
+	 */
+	private encode(text: string): {
+		pieces: TokenizedPiece[]
+		ids: number[]
+		charIDs?: number[][]
+		attentionMask?: number[]
+	} {
+		if (this.cfg.charEncoder) {
+			const encoding = encodeCharUnits(text, this.cfg.charEncoder.vocabulary, this.cfg.charEncoder.contract)
+
+			return {
+				pieces: encoding.units.map((unit) => ({ piece: unit.text, id: 0, start: unit.start, end: unit.end })),
+				ids: [],
+				charIDs: encoding.charIDs,
+				attentionMask: encoding.attentionMask,
+			}
+		}
+
+		return this.cfg.tokenizer!.encode(text)
+	}
+
 	private assertEmissionWidth(logits: readonly number[][]): void {
 		if (!logits.length) return
 		const width = logits[0]!.length

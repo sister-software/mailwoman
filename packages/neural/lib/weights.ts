@@ -29,7 +29,13 @@ import { cacheRootPathBuilder, weightsOverlayPath } from "@mailwoman/core/utils"
 import { basename, dirname, PathBuilder, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 
 import { PlacetypeCensusResolver } from "#placetype/census"
-import { readRequiredChannels } from "#weights-channels"
+import {
+	type EncoderDescriptor,
+	packageHasBinaries,
+	readEncoderFromModelCard,
+	readRequiredChannels,
+	resolveCharVocab,
+} from "#weights-channels"
 
 /**
  * The user-level npm-prefix cache the CLI weights guard installs into (`mailwoman parse --download-weights`):
@@ -110,6 +116,11 @@ export interface ResolveWeightsOpts {
 	 */
 	tokenizerPath?: string
 	/**
+	 * Explicit `char-vocab.json` for a char-path model (#2164), the alternative to `tokenizerPath`; pass it with
+	 * `modelPath` and a card that says `encoder: "char"`.
+	 */
+	charVocabPath?: string
+	/**
 	 * Explicit `model-card.json` path (for the label vocab) on the explicit model+tokenizer path. When omitted, falls
 	 * back to a `model-card.json` co-located with `modelPath`. Without a card, labels default to `STAGE2_BIO_LABELS` —
 	 * which silently mis-decodes a STAGE3 (33-label) model into empty/garbage parses. Pass this (or co-locate the card)
@@ -188,7 +199,18 @@ export interface WeightsArtifactReport {
 
 export interface ResolvedWeights {
 	modelPath: string
+	/**
+	 * The SentencePiece model. On a char-path package (`encoder.kind === "char"`) this is the conventional path inside
+	 * the package and does not exist; `charVocabPath` is the artifact the encoder reads. Branch on `encoder` before
+	 * loading it.
+	 */
 	tokenizerPath: string
+	/**
+	 * How the package encodes text — the card's `encoder` block (#2164); SentencePiece when absent. `charVocabPath` is
+	 * the sealed character vocabulary, present only on a char-path package.
+	 */
+	encoder: EncoderDescriptor
+	charVocabPath?: string
 	/**
 	 * Path to `model-card.json` for the resolved model. On the package path, the card co-located in the package dir. On
 	 * the explicit path, `opts.modelCardPath` or a card co-located with `modelPath`. `undefined` only when no card is
@@ -346,13 +368,17 @@ function buildArtifactReport(
 export async function resolveWeights(opts: ResolveWeightsOpts): Promise<ResolvedWeights> {
 	const tried: PathBuilder[] = []
 
-	if (opts.modelPath && opts.tokenizerPath) {
+	if (opts.modelPath && (opts.tokenizerPath || opts.charVocabPath)) {
 		if (!(await pathExists(opts.modelPath))) {
 			throw new Error(`Explicit modelPath does not exist: ${opts.modelPath}`)
 		}
 
-		if (!(await pathExists(opts.tokenizerPath))) {
+		if (opts.tokenizerPath && !(await pathExists(opts.tokenizerPath))) {
 			throw new Error(`Explicit tokenizerPath does not exist: ${opts.tokenizerPath}`)
+		}
+
+		if (opts.charVocabPath && !(await pathExists(opts.charVocabPath))) {
+			throw new Error(`Explicit charVocabPath does not exist: ${opts.charVocabPath}`)
 		}
 
 		// Resolve a model-card for the label vocab: explicit opt first, else one co-located with the
@@ -360,16 +386,25 @@ export async function resolveWeights(opts: ResolveWeightsOpts): Promise<Resolved
 		// STAGE3 (33-label) checkpoint into empty parses — the trap that broke eval-matrix --model-path.
 		const coLocatedCard = resolvePath(dirname(opts.modelPath), "model-card.json")
 		const modelCardPath = opts.modelCardPath ?? ((await pathExists(coLocatedCard)) ? coLocatedCard : undefined)
+		const encoder = await readEncoderFromModelCard(modelCardPath)
+
+		if (encoder.kind === "char" ? !opts.charVocabPath : !opts.tokenizerPath) {
+			throw new Error(
+				`The card at ${modelCardPath ?? "(none)"} ${encoder.kind === "char" ? "declares a char encoder; pass charVocabPath" : "declares no char encoder; pass tokenizerPath"} beside modelPath`
+			)
+		}
 
 		return {
 			modelPath: opts.modelPath,
-			tokenizerPath: opts.tokenizerPath,
+			tokenizerPath: opts.tokenizerPath ?? resolvePath(dirname(opts.modelPath), "tokenizer.model"),
+			encoder,
+			...(opts.charVocabPath ? { charVocabPath: opts.charVocabPath } : {}),
 			modelCardPath,
 			source: "explicit",
 			artifacts: buildArtifactReport(
 				[
 					["model.onnx", opts.modelPath],
-					["tokenizer.model", opts.tokenizerPath],
+					encoder.kind === "char" ? ["char-vocab.json", opts.charVocabPath] : ["tokenizer.model", opts.tokenizerPath],
 					["model-card.json", modelCardPath],
 				],
 				{
@@ -388,9 +423,7 @@ export async function resolveWeights(opts: ResolveWeightsOpts): Promise<Resolved
 
 	const cacheDir = weightsCachePackageDir(opts.cacheRoot ?? weightsCacheDir(), locale)
 
-	const cacheHasBinaries = async () =>
-		(await pathExists(resolvePath(cacheDir, "model.onnx"))) &&
-		(await pathExists(resolvePath(cacheDir, "tokenizer.model")))
+	const cacheHasBinaries = async () => packageHasBinaries(cacheDir)
 
 	// 0. An EXPLICIT cacheRoot is authoritative — it names a candidate/package dir the caller wants
 	// graded (eval harnesses laying out a candidate bundle). In-repo the workspace weights package
@@ -521,14 +554,28 @@ async function resolveFromPackageDir(
 		}
 	}
 
-	tried.push(modelPath, tokenizerPath)
+	const modelCardCandidate = resolvePath(packageDir, "model-card.json")
+	const baseModelCardCandidate = baseDir ? resolvePath(baseDir, "model-card.json") : undefined
 
-	if (!(await pathExists(modelPath)) || !(await pathExists(tokenizerPath))) {
+	// The card names the second binary the package owes — `tokenizer.model`, or a char graph's vocabulary (#2164) —
+	// and is read before the missing-files check so a char package is not refused for a tokenizer it never had.
+	const encoder = await readEncoderFromModelCard(
+		(await pathExists(modelCardCandidate)) ? modelCardCandidate : baseModelCardCandidate
+	)
+
+	const charVocabPath =
+		encoder.kind === "char" ? await resolveCharVocab(packageDir, baseDir ?? undefined, encoder.charVocab) : undefined
+
+	const secondBinary = charVocabPath ?? tokenizerPath
+
+	tried.push(modelPath, secondBinary)
+
+	if (!(await pathExists(modelPath)) || !(await pathExists(secondBinary))) {
 		throw new Error(
 			`Weights package resolved at ${packageDir} but is missing model files.\n` +
 				`Tried:\n  ${tried.join("\n  ")}\n` +
 				`Run \`scripts/link-dev-weights.ts\` inside the package to symlink dev weights, ` +
-				`or pass --model + --tokenizer with explicit paths.`
+				`or pass --model + --tokenizer (or --char-vocab) with explicit paths.`
 		)
 	}
 
@@ -538,9 +585,6 @@ async function resolveFromPackageDir(
 	// labels) while the shared base model emits a wider STAGE3+ vocabulary (33 labels), and the first
 	// parse throws in `assertEmissionWidth`. Mirrors the model/tokenizer base fallback above — same
 	// `+base` source suffix convention.
-	const modelCardCandidate = resolvePath(packageDir, "model-card.json")
-	const baseModelCardCandidate = baseDir ? resolvePath(baseDir, "model-card.json") : undefined
-
 	const modelCardPath = (await pathExists(modelCardCandidate))
 		? modelCardCandidate
 		: baseModelCardCandidate && (await pathExists(baseModelCardCandidate))
@@ -625,7 +669,7 @@ async function resolveFromPackageDir(
 	const artifacts = buildArtifactReport(
 		[
 			["model.onnx", modelPath],
-			["tokenizer.model", tokenizerPath],
+			encoder.kind === "char" ? ["char-vocab.json", charVocabPath] : ["tokenizer.model", tokenizerPath],
 			["model-card.json", modelCardPath],
 			["crf-transitions.json", crfTransitionsPath],
 			["semi-crf-transitions.json", semiCRFTransitionsPath],
@@ -647,6 +691,8 @@ async function resolveFromPackageDir(
 	return {
 		modelPath,
 		tokenizerPath,
+		encoder,
+		...(charVocabPath ? { charVocabPath } : {}),
 		modelCardPath,
 		packageDir,
 		artifacts,
