@@ -46,6 +46,18 @@ export interface PLBlockTable {
 	nhpi: number
 	other: number
 	multi: number
+	/**
+	 * P.L. 94-171 table H1 — total housing units in the block.
+	 */
+	housing_units: number
+	/**
+	 * H1 occupied. `occupied + vacant === housing_units` by construction; the reader refuses a row where it is not.
+	 */
+	occupied: number
+	/**
+	 * H1 vacant.
+	 */
+	vacant: number
 }
 
 /**
@@ -106,6 +118,25 @@ PRAGMA journal_mode = WAL;
  * The `text(N)` length hints in the prior raw DDL were documentary only (SQLite uses TEXT affinity regardless); the
  * lengths live on the {@link TIGERBlockTable} interface instead.
  */
+/**
+ * Refuse a `pl_block` built before the H1 columns existed. `createTable(...).ifNotExists()` leaves an older table as it
+ * is, and the next load would fail on the first insert with a message about a column, not about the cause. The table is
+ * derived (the redistricting command reloads it state by state), so the remedy is a rebuild: drop it and re-run
+ * `mailwoman tiger redistricting` for each state you hold. Databases are never patched in place.
+ */
+async function assertPLBlockShape(db: Kysely<TIGERDatabase>): Promise<void> {
+	const columns = await sql<{ name: string }>`select name from pragma_table_info('pl_block')`.execute(db)
+	const names = new Set(columns.rows.map((row) => row.name))
+
+	for (const required of ["housing_units", "occupied", "vacant"]) {
+		if (!names.has(required)) {
+			throw new Error(
+				`pl_block predates its H1 columns (missing ${required}). It is a derived table: drop it and re-run \`mailwoman tiger redistricting\` for each state, which reloads P2 and H1 together.`
+			)
+		}
+	}
+}
+
 export async function initializeTIGERSchema(db: Kysely<TIGERDatabase>): Promise<void> {
 	await db.schema
 		.createTable("us_state")
@@ -177,10 +208,15 @@ export async function initializeTIGERSchema(db: Kysely<TIGERDatabase>): Promise<
 		.addColumn("nhpi", "integer", (c) => c.notNull())
 		.addColumn("other", "integer", (c) => c.notNull())
 		.addColumn("multi", "integer", (c) => c.notNull())
+		.addColumn("housing_units", "integer", (c) => c.notNull())
+		.addColumn("occupied", "integer", (c) => c.notNull())
+		.addColumn("vacant", "integer", (c) => c.notNull())
 		// pl_block is small (no geometry) and always probed by its GEOID PK (1:1 join to tabblock20), so
 		// cluster it WITHOUT ROWID — one B-tree probe per join, no separate rowid + PK-index pair.
 		.modifyEnd(sql`without rowid`)
 		.execute()
+
+	await assertPLBlockShape(db)
 
 	await db.schema
 		.createTable("tiger_streets")

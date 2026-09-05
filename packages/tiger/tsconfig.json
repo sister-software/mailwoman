@@ -10,7 +10,7 @@
 		"experimentalDecorators": true
 	},
 	"include": ["./lib/**/*"],
-	"exclude": ["./out/**/*"],
+	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts"],
 	"references": [
 		{ "path": "../sqlite" },
 		// ---

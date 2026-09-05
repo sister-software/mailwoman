@@ -47,6 +47,60 @@ const SEG_LOGRECNO = 4
 const P2 = (fieldNo: number) => 76 + (fieldNo - 1)
 
 /**
+ * Segment 2: FILEID|STUSAB|CHARITER|CIFSN|LOGRECNO(4)| P3×71 | P4×73 | H1×3 — 152 fields, H1 at the tail. Verified
+ * against the real file: `ca000022020.pl`'s state row reads 14,392,140 / 13,475,623 / 916,517, the published CA 2020
+ * figures. `occupied + vacant === housing_units` is the invariant that distinguishes a correct offset from a plausible
+ * one, and {@link parseH1} refuses a row where it does not hold.
+ */
+export const SEG2_FIELD_COUNT = 152
+/**
+ * H0010001 — total housing units, the third-from-last field of a segment-2 row.
+ */
+export const H1_TOTAL = SEG2_FIELD_COUNT - 3
+/**
+ * H0010002 — occupied housing units, the second-from-last field.
+ */
+export const H1_OCCUPIED = SEG2_FIELD_COUNT - 2
+/**
+ * H0010003 — vacant housing units, the last field (and so the one that carries a CRLF file's trailing CR).
+ */
+export const H1_VACANT = SEG2_FIELD_COUNT - 1
+
+export interface H1Counts {
+	housing_units: number
+	occupied: number
+	vacant: number
+}
+
+/**
+ * The three H1 counts from one segment-2 row. The last field carries CRLF's trailing CR when the file has one, so each
+ * field is trimmed before it is read as a number; a row whose counts do not add up is refused rather than stored.
+ */
+export function parseH1(fields: readonly string[]): H1Counts {
+	if (fields.length !== SEG2_FIELD_COUNT) {
+		throw new Error(`segment 2 row has ${fields.length} fields, expected ${SEG2_FIELD_COUNT}`)
+	}
+
+	const counts = {
+		housing_units: Number(fields[H1_TOTAL]!.trim()),
+		occupied: Number(fields[H1_OCCUPIED]!.trim()),
+		vacant: Number(fields[H1_VACANT]!.trim()),
+	}
+
+	if (![counts.housing_units, counts.occupied, counts.vacant].every(Number.isInteger)) {
+		throw new Error(`segment 2 row carries a non-integer H1 count: ${fields.slice(H1_TOTAL).join("|")}`)
+	}
+
+	if (counts.occupied + counts.vacant !== counts.housing_units) {
+		throw new Error(
+			`segment 2 row breaks the H1 invariant: occupied ${counts.occupied} + vacant ${counts.vacant} != housing_units ${counts.housing_units} (LOGRECNO ${fields[SEG_LOGRECNO]})`
+		)
+	}
+
+	return counts
+}
+
+/**
  * The eight P2 categories that partition the total (P0020001), in `pl_block` column order.
  */
 const CATEGORY_INDEX = {
@@ -146,6 +200,7 @@ export async function* fetchRedistricting(
 	await extractZipEntries(zipPath, cacheDir)
 	const geoPath = join(cacheDir, `${fileAbbr}geo${vintage}.pl`)
 	const seg1Path = join(cacheDir, `${fileAbbr}00001${vintage}.pl`)
+	const seg2Path = join(cacheDir, `${fileAbbr}00002${vintage}.pl`)
 	yield { phase: "extract", file: `${fileAbbr}geo${vintage}.pl` }
 
 	// Pass 1: header → LOGRECNO → GEOID for the blocks we want.
@@ -164,6 +219,21 @@ export async function* fetchRedistricting(
 
 	const total = logToGeoid.size
 	yield { phase: "header", blocks: total }
+
+	// Pass 1b: segment 2 → H1 housing counts for the mapped LOGRECNOs. Read before segment 1 so a block's P2 and H1
+	// land in one row; a mapped block with no segment-2 row is a data defect the load refuses, never a zero.
+	const h1ByLogrecno = new Map<string, H1Counts>()
+
+	await eachLine(seg2Path, (line) => {
+		const f = line.split("|")
+		const logrecno = f[SEG_LOGRECNO] ?? ""
+
+		if (!logToGeoid.has(logrecno)) return
+
+		h1ByLogrecno.set(logrecno, parseH1(f))
+	})
+
+	yield { phase: "extract", file: `${fileAbbr}00002${vintage}.pl` }
 
 	const kdb = new DatabaseClient<TIGERDatabase>(outPath)
 	kdb.exec(TIGER_PRAGMAS)
@@ -191,12 +261,20 @@ export async function* fetchRedistricting(
 		for await (const line of TextSpliterator.fromAsync(seg1Path)) {
 			if (!line) continue
 			const f = line.split("|")
-			const geoid = logToGeoid.get(f[SEG_LOGRECNO] ?? "")
+			const logrecno = f[SEG_LOGRECNO] ?? ""
+			const geoid = logToGeoid.get(logrecno)
 
 			if (!geoid) continue
 
+			const h1 = h1ByLogrecno.get(logrecno)
+
+			if (!h1) {
+				throw new Error(`block ${geoid} (LOGRECNO ${logrecno}) has a segment-1 row and no segment-2 row`)
+			}
+
 			batch.push({
 				GEOID: geoid,
+				...h1,
 				pop_total: Number(f[CATEGORY_INDEX.pop_total] ?? 0),
 				hispanic: Number(f[CATEGORY_INDEX.hispanic] ?? 0),
 				white: Number(f[CATEGORY_INDEX.white] ?? 0),

@@ -24,6 +24,7 @@
 		{ "path": "./packages/spatial" },
 		{ "path": "./packages/sqlite" },
 		{ "path": "./packages/tiger" },
+		{ "path": "./packages/tiger/tsconfig.test.json" },
 		{ "path": "./packages/osm" },
 		{ "path": "./packages/ban" },
 		{ "path": "./packages/bdc" },
