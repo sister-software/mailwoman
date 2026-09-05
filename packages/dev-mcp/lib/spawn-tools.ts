@@ -184,7 +184,9 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				// to fire — it is surfaced verbatim rather than pre-empted.
 				const freshness = await assertCompiledFresh(registry.repoRoot)
 				const outDir = (args["out_dir"] as string | undefined) ?? tempRootPath(`mwdev-check-${jobs.list().length}`)
-				const argv = ["packages/mailwoman/out/cli.js", "eval", "check", "--spec", check, "--out-dir", outDir]
+				// The promotion battery is `mailwoman eval promote --check <spec>`; `eval check --spec` named a command that no
+				// longer exists, and the CLI answered its command list with exit 0, so the job "succeeded" with no verdict.
+				const argv = ["packages/mailwoman/out/cli.js", "eval", "promote", "--check", check, "--out-dir", outDir]
 
 				for (const [flag, key] of [
 					["--weights-cache", "weights_cache"],
