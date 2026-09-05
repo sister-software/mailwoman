@@ -20,7 +20,7 @@
  *       carries a `street` field.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import { makeLcg } from "@mailwoman/core/random"
 import { TextSpliterator } from "spliterator"
 

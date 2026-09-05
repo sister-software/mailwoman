@@ -28,7 +28,7 @@
  *   line). Open G-NAF licence — attribute "Geoscape Australia".
  */
 
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import { reconcileComponents } from "@mailwoman/formatter"
 import { TextSpliterator } from "spliterator"
 

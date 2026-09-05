@@ -16,7 +16,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/objects"
+import { prettyJSON } from "@mailwoman/core/json"
 import { compileGeographicModel, serializeCompiledModel, ValidationIssueCode } from "@mailwoman/geographic-model"
 import {
 	type GeographicModelSourceFile,

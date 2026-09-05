@@ -158,7 +158,7 @@ function parityOf(from: number, to: number): "odd" | "even" | "mixed" {
 const SitusInterpolationDatabase: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { parseJSONStrict } = await import("@mailwoman/core/objects")
+		const { parseJSONStrict } = await import("@mailwoman/core/json")
 		const { INTERP_RADIUS_CALIBRATION } = await import("#interp-calibration")
 
 		if (!options.state || !STATE_FIPS[options.state.toUpperCase()]) {

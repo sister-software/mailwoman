@@ -16,7 +16,7 @@
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import { join } from "path-ts"
 
 import type { BundleArtifact } from "#data/bundles"

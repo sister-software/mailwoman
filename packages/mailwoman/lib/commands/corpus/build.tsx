@@ -90,7 +90,7 @@ const CorpusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 	const [stage, setStage] = useState<{ name: BuildStage; message: string }>()
 
 	const state = useCommandTask(async () => {
-		const { parseJSONStrict } = await import("@mailwoman/core/objects")
+		const { parseJSONStrict } = await import("@mailwoman/core/json")
 		const { buildCorpus, defaultAdapterRegistry } = await import("@mailwoman/corpus")
 
 		let inputsParsed: unknown

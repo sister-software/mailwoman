@@ -194,7 +194,7 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { createPolygonsTable } = await import("@mailwoman/resolver-wof-sqlite/polygon-schema")
-		const { tryParsingJSON } = await import("@mailwoman/core/objects")
+		const { tryParsingJSON } = await import("@mailwoman/core/json")
 
 		const out = options.out
 		const points = options.points ?? ""

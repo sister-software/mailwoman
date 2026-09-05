@@ -11,7 +11,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { toFRN } from "@mailwoman/filer/frn"
 import {
 	FilerEdgeAssertion,

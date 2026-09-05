@@ -60,6 +60,7 @@ describe("Ed25519 on WebCrypto", () => {
 		expect(await verifyEd25519(utf8Bytes(`${prefix}.x${payloadPart}`), fixture.publicKeyPEM, legacySignature)).toBe(
 			false
 		)
+
 		expect(await verifyEd25519(signedBytes, fixture.publicKeyPEM, new Uint8Array(3))).toBe(false)
 	})
 
@@ -80,6 +81,7 @@ describe("Ed25519 on WebCrypto", () => {
 		expect(pair.publicKeyPEM).toMatch(
 			/^-----BEGIN PUBLIC KEY-----\n(?:[A-Za-z0-9+/=]{1,64}\n)+-----END PUBLIC KEY-----\n$/u
 		)
+
 		expect(publicKeyDER(pair.publicKeyPEM)).toHaveLength(SPKI_ED25519_DER_LENGTH)
 
 		const signature = await signEd25519(signedBytes, pair.privateKeyPEM)

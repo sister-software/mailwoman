@@ -30,7 +30,7 @@
  *   `postcode` | | `locality`| `locality` (Overture address_levels municipality, or postal_city) |
  */
 
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import { formatAddress, reconcileComponents } from "@mailwoman/formatter"
 import { TextSpliterator } from "spliterator"
 

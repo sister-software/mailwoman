@@ -22,7 +22,7 @@ import { z } from "zod"
 import { fromBase64URL, toBase64URL, utf8Bytes, utf8Text } from "#crypto/base64url"
 import { generateEd25519KeyPair, publicKeyDER, sha256Bytes, signEd25519, verifyEd25519 } from "#crypto/ed25519"
 import { errorMessage } from "#errors/schema"
-import { parseJSONStrict } from "#objects"
+import { parseJSONStrict } from "#json"
 
 /**
  * The format prefix, bumped only when the payload schema or signing scheme changes incompatibly.

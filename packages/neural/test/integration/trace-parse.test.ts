@@ -12,7 +12,7 @@
  */
 
 import { buildAddressTree } from "@mailwoman/core/decoder"
-import { prettyJSON } from "@mailwoman/core/objects"
+import { prettyJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
 import type { AnchorLookup } from "@mailwoman/neural/anchor-inference"
 import { NeuralAddressClassifier, type NeuralRunner } from "@mailwoman/neural/classifier"

@@ -33,7 +33,7 @@
  *   V4-and-below artifact as format-stale for exactly this reason: its single float is unattributable.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 
 import {
 	EDGE_ENTRY_SIZE,

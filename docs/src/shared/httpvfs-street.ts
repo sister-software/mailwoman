@@ -17,7 +17,7 @@
  *   query cost.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,

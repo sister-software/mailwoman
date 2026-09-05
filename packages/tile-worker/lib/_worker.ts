@@ -8,7 +8,7 @@
 
 import type { ExportedHandler } from "@cloudflare/workers-types"
 import { ResourceError } from "@mailwoman/core/errors"
-import { prettyJSON } from "@mailwoman/core/objects"
+import { prettyJSON } from "@mailwoman/core/json"
 
 import { applyAccessControlAllowOrigin } from "#cors"
 import { DatabaseRetrieveRoute } from "#routes/db"

@@ -521,6 +521,11 @@
 			"default": "./out/crypto/ed25519.js",
 			"types": "./out/crypto/ed25519.d.ts"
 		},
+		"./json": {
+			"node": "./lib/json.ts",
+			"default": "./out/json.js",
+			"types": "./out/json.d.ts"
+		},
 		"./hash": {
 			"node": "./lib/hash.ts",
 			"default": "./out/hash.js",
@@ -586,6 +591,7 @@
 		"@types/d3-color": "^3.1.3",
 		"@types/d3-scale-chromatic": "^3.1.0",
 		"@types/trusted-types": "^2.0.7",
-		"@types/yauzl-promise": "^4.0.1"
+		"@types/yauzl-promise": "^4.0.1",
+		"esbuild": "0.28.2"
 	}
 }

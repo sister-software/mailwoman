@@ -20,7 +20,7 @@
  */
 
 import { readDirectory } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
 import { reconcileComponents } from "@mailwoman/formatter"
 import { join } from "path-ts"

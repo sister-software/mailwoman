@@ -15,7 +15,7 @@
  *   swallowed.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { ADDRESS_CONVENTION_TABLE, type Convention, type ConventionSource } from "#convention/index"

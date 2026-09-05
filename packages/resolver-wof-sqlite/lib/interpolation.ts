@@ -26,7 +26,7 @@
  *   `AddressPointLookup.find()` to keep that wiring mechanical.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import type { InterpolationLookup } from "@mailwoman/resolver"
 import { clampFraction, haversineKm, pointAlong } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

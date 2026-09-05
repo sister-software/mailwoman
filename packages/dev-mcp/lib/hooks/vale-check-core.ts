@@ -20,8 +20,8 @@
  *   not have, so the agent weighs them.
  */
 
+import { tryParsingJSON } from "@mailwoman/core/json"
 import { createRequire } from "@mailwoman/core/module/resolvers"
-import { tryParsingJSON } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
 

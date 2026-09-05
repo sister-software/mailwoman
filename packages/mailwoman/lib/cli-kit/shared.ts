@@ -12,7 +12,7 @@
 
 // Never the `@mailwoman/core` barrel: this is shared by every interactive command, and the barrel needlessly widens
 // each selected command's import graph.
-import { prettyJSON } from "@mailwoman/core/objects"
+import { prettyJSON } from "@mailwoman/core/json"
 import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { CommandError, formatCommandError } from "@mailwoman/core/scripting/command"

@@ -23,7 +23,7 @@
  */
 
 import { readLocalBuffer, readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { describe, expect, test } from "vitest"
 

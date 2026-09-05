@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import type { SetStateAction } from "react"
 import { createContext, useCallback, useContext, useMemo } from "react"
 import type { ViewState } from "react-map-gl"

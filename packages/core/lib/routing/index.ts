@@ -6,7 +6,7 @@
 
 import type { AxiosRequestConfig } from "axios"
 
-import { prettyJSON } from "#objects"
+import { prettyJSON } from "#json"
 
 /**
  * Derived from React Router, this type helper is used to extract the parameters from a path pattern.

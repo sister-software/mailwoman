@@ -39,6 +39,7 @@
  *   shape. The DDL that created these tables IS Kysely — see `schema.ts`.
  */
 
+import { parseJSONStrict } from "@mailwoman/core/json"
 import {
 	assertCoverageNotEmpty,
 	singleManifestRow,
@@ -46,7 +47,6 @@ import {
 	type CoverageCell,
 	type LayerManifest,
 } from "@mailwoman/core/layers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { readCoverageAt } from "@mailwoman/spatial/h3/coverage"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

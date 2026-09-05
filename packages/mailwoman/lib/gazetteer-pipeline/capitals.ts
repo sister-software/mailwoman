@@ -21,7 +21,7 @@
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/objects"
+import { prettyJSON } from "@mailwoman/core/json"
 import { looksLikeGazetteerDump, parseCountryInfo } from "@mailwoman/corpus/tools"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { dirname, join, type PathBuilderLike } from "path-ts"

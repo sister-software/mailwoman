@@ -52,7 +52,8 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { movePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
+import { isPresent } from "@mailwoman/core/objects"
 import { isoSecondsUTC } from "@mailwoman/core/utils"
 import { geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

@@ -4,14 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import {
-	flattenObject,
-	isRecordLike,
-	omitNullable,
-	parseJSONArray,
-	pick,
-	tryParsingJSON,
-} from "@mailwoman/core/objects"
+import { parseJSONArray, tryParsingJSON } from "@mailwoman/core/json"
+import { flattenObject, isRecordLike, omitNullable, pick } from "@mailwoman/core/objects"
 import { describe, expect, it, test } from "vitest"
 
 test("pick: selects the listed keys from an array of keys", () => {

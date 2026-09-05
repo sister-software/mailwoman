@@ -25,7 +25,7 @@ import {
 	writeLocalTextFile,
 } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { repoRootPath, workspacePath } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { readReleaseConfig, repoCommittedSoftFeedSources } from "@mailwoman/core/release-config"

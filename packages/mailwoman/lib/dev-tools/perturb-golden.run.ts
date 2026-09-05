@@ -22,7 +22,7 @@
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dirname, join } from "path-ts"
 

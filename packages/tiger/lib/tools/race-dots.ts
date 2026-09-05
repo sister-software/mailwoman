@@ -23,7 +23,7 @@
 
 import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { TIGERDatabase } from "#sdk/schema"

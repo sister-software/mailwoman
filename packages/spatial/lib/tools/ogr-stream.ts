@@ -5,7 +5,7 @@
  * @file One ogr2ogr harness for every streaming extraction.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import { spawnProcess } from "@mailwoman/core/process"
 import { TextSpliterator } from "spliterator"
 

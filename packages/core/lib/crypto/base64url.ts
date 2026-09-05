@@ -22,6 +22,7 @@ export function fromBase64URL(text: string): Uint8Array<ArrayBuffer> {
 		.replaceAll("-", "+")
 		.replaceAll("_", "/")
 		.padEnd(Math.ceil(text.length / 4) * 4, "=")
+
 	const binary = atob(padded)
 	const bytes = new Uint8Array(binary.length)
 

@@ -14,7 +14,7 @@
  *   keeps the coordinate radius from promoting a capital's same-name neighbours (`capitals.ts`).
  */
 
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { Kysely } from "kysely"
 

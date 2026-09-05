@@ -9,7 +9,7 @@
  *   empty entries).
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import { COMPONENT_TAGS } from "@mailwoman/core/types"
 import {
 	PairIndexResolver,

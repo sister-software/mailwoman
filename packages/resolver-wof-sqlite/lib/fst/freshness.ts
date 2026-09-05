@@ -32,7 +32,7 @@
 import { pathExists, readFileRange, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import { basename, resolvePath, type PathBuilderLike } from "path-ts"
 
 import { FST_FORMAT_VERSION } from "#fst/serialize"

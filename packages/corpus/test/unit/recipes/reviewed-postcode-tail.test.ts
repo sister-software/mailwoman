@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import {
 	readReviewedPostcodeTuples,
 	REVIEWED_POSTCODE_TAIL_SOURCE,

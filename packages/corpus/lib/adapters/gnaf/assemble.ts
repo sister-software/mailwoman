@@ -28,7 +28,7 @@
 
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import { join } from "path-ts"
 import { PSVSpliterator, TextSpliterator } from "spliterator"
 

@@ -9,13 +9,13 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { parseJSONStrict } from "@mailwoman/core/json"
 import {
 	encodeLicenseKey,
 	generateLicenseSigningKeyPair,
 	licenseKeyID,
 	publishedLicenseKeys,
 } from "@mailwoman/core/license"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { workspacePath } from "@mailwoman/core/paths"
 import { isProcessError, runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
