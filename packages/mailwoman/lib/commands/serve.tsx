@@ -199,6 +199,7 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 			const { serveNode } = await import("@mailwoman/api-kit")
 			const { $public } = await import("@mailwoman/core/env")
 			const { createServeEngine } = await import("#api-engine")
+			const { printLicenseNotice, resolveEngineStamp } = await import("#cli-kit/engine-stamp")
 
 			const { engine, preflight } = await createServeEngine()
 
@@ -222,13 +223,26 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 
 			// 2 MiB body cap (accommodates a full /v1/batch up to MAILWOMAN_BATCH_MAX addresses) is
 			// createMailwomanAPI's own default — carried from the express server's `express.json({ limit: "2mb" })`.
-			const app = createMailwomanAPI(engine, { batchMax: Math.max(1, $public.MAILWOMAN_BATCH_MAX) })
+			const engineStamp = await resolveEngineStamp()
+
+			const app = createMailwomanAPI(engine, {
+				batchMax: Math.max(1, $public.MAILWOMAN_BATCH_MAX),
+				engine: engineStamp.stamp,
+			})
 
 			const server = await serveNode({
 				fetch: app.fetch,
 				port,
 				hostname: host,
-				onListen: () => cluster.worker?.send("HTTP server ready"),
+				onListen: () => {
+					cluster.worker?.send("HTTP server ready")
+
+					// One notice per server, not one per worker: the first-forked worker prints, by the same rule the
+					// preflight banner above uses.
+					if ((cluster.worker?.id ?? 1) === 1) {
+						printLicenseNotice(engineStamp)
+					}
+				},
 			})
 
 			if (disposed) {

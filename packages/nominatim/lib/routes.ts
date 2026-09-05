@@ -197,7 +197,7 @@ export function registerNominatimRoutes(
 
 	// jsonv2 answers a bare array by protocol, so the stamp rides on each result; the jsonld projection is schema.org
 	// vocabulary and takes no foreign key.
-	const stampEach = <T extends object>(results: readonly T[]) =>
+	const stampEach = <T extends object>(results: T[]): Array<T | (T & { engine: EngineStamp })> =>
 		stamp ? results.map((result) => ({ ...result, engine: stamp })) : results
 
 	app.openapi(rootRoute, (c) => c.html(ROOT_HTML))

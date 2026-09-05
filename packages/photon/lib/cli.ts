@@ -27,6 +27,7 @@ import {
 	resolveGazetteerOrExit,
 	runDropInCLI,
 } from "mailwoman/cli-kit/dropin"
+import { printLicenseNotice, resolveEngineStamp } from "mailwoman/cli-kit/engine-stamp"
 import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
 import { createResolverBackend, mailwomanDataRoot } from "mailwoman/resolver-backend"
 
@@ -219,7 +220,8 @@ async function serve(): Promise<void> {
 		},
 	}
 
-	const app = createPhotonApp(engine, { cors: values.cors })
+	const engineStamp = await resolveEngineStamp()
+	const app = createPhotonApp(engine, { cors: values.cors, engine: engineStamp.stamp })
 
 	serveNode({
 		fetch: app.fetch,
@@ -234,6 +236,8 @@ async function serve(): Promise<void> {
 
 			console.error(corsBannerLine(values.cors))
 			console.error(`  endpoints: GET /  GET /api  GET /reverse  GET /openapi.json`)
+
+			printLicenseNotice(engineStamp)
 		},
 	})
 }
