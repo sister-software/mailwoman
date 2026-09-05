@@ -511,13 +511,17 @@ def _cross_pollution(
 @torch.no_grad()
 def _eval_val(
     cfg: Config,
-    tokenizer: Tokenizer,
+    tokenizer: Tokenizer | None,
     model: torch.nn.Module,
     device: torch.device,
     max_rows: int | None,
 ) -> dict[str, float]:
     """Streaming val-set eval. Returns mean val loss + token-level macro F1 + (PR3) the
-    cross-pollution regression check and the aux locale-head accuracy when self-conditioning is on."""
+    cross-pollution regression check and the aux locale-head accuracy when self-conditioning is on.
+
+    ``tokenizer`` is None on the char path (``char_mode: char`` skips SentencePiece entirely) and
+    ``iter_batches`` encodes per character in that case; the val eval runs there like the train loop
+    does. A guard that refused a None tokenizer here stopped every char-mode run at its first eval."""
     model.eval()
     loss_total = 0.0
     seen_batches = 0
@@ -1003,8 +1007,6 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                     tracker.log({"train_loss": avg, "lr": lr, "wall_seconds": elapsed}, step=step)
 
                 if step % cfg.train.eval_every_steps == 0:
-                    if tokenizer is None:
-                        raise RuntimeError("eval requires a tokenizer; char-only runs must not reach _eval_val")
                     val = _eval_val(cfg, tokenizer, model, device, max_rows=cfg.data.val_rows)
                     tag_summary = "  ".join(
                         f"{t}={val.get(f'f1_tag.{t}', 0.0):.3f}"
