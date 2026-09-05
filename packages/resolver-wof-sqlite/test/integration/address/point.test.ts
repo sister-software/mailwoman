@@ -71,6 +71,24 @@ beforeAll(async () => {
 	const egliseKey = normalizeStreetForKey("Rue de l'Église")
 
 	insert.run(egliseKey, egliseKey, "3 a", null, "67530", "boersch", "Rue de l'Église", 48.4771, 7.4433, "t", "r")
+	// A BAN-shaped row for the bbox rung's contradiction case (#1913): Servon's `10 rue de la République`, whose own
+	// postcode and commune disagree with a `75008 Paris` query, sits inside a box drawn around Paris.
+	const republiqueKey = normalizeStreetForKey("Rue de la République")
+	insert.run(
+		republiqueKey,
+		republiqueKey,
+		"10",
+		null,
+		"77170",
+		"servon",
+		"Rue de la République",
+		48.718479,
+		2.587971,
+		"ban:fr",
+		"r"
+	)
+	// An OSM-shaped row with NO scope of its own — the case the bbox rung exists for.
+	insert.run("mill lane", "mill lane", "7", null, null, null, "Mill Lane", 51.5, -0.1, "osm", "r")
 	lookup = new AddressPointSqliteLookup(path)
 })
 
@@ -136,5 +154,32 @@ describe("AddressPointSqliteLookup", () => {
 
 		expect(hit?.localityNorm).toBe("burpengary")
 		expect(hit?.postcode).toBe("4505")
+	})
+})
+
+describe("the bbox fall-through's scope contradiction (#1913)", () => {
+	const parisBox = { minLat: 48.5, maxLat: 49.1, minLon: 2, maxLon: 2.8 }
+
+	it("refuses a row whose own postcode names a different place than the query's", () => {
+		expect(
+			lookup.find({
+				street: "Rue de la République",
+				number: "10",
+				postcode: "75008",
+				locality: "Paris",
+				bbox: parisBox,
+			})
+		).toBeNull()
+	})
+
+	it("refuses a row whose own locality disagrees when the query names no postcode", () => {
+		expect(lookup.find({ street: "Rue de la République", number: "10", locality: "Paris", bbox: parisBox })).toBeNull()
+	})
+
+	it("still answers a scope-less point inside the box, and a scoped row through its scoped rung", () => {
+		const londonBox = { minLat: 51.4, maxLat: 51.6, minLon: -0.2, maxLon: 0 }
+
+		expect(lookup.find({ street: "Mill Lane", number: "7", locality: "London", bbox: londonBox })?.lat).toBe(51.5)
+		expect(lookup.find({ street: "Rue de la République", number: "10", postcode: "77170" })?.lat).toBe(48.718479)
 	})
 })

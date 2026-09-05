@@ -207,10 +207,35 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		// inside the resolved locality's box. Only reached when the scoped probes missed AND a bbox was supplied.
 		if (!row && query.bbox) {
 			const b = query.bbox
-			row = this.#byBbox!(streetNorm, number, b.minLat, b.maxLat, b.minLon, b.maxLon)
+			const candidate = this.#byBbox!(streetNorm, number, b.minLat, b.maxLat, b.minLon, b.maxLon)
+
+			// A register row that carries its own scope and was NOT found by the scoped rungs is a different address that
+			// happens to share the street and number inside the box: `10 rue de la République, 75008 Paris` reached
+			// Servon's `10 rue de la République` (postcode 77170) 26 km away this way, at rooftop tier and 1 m uncertainty.
+			// The rung exists for points with no scope of their own; a point whose scope disagrees with the query is a miss.
+			row = candidate && !this.#scopeContradicts(candidate, query) ? candidate : undefined
 		}
 
 		return row
+	}
+
+	/**
+	 * Whether a bbox-rung row's OWN postcode or locality names a different place than the query did. Absent scope on the
+	 * row is not a contradiction — it is the case the rung was built for.
+	 */
+	#scopeContradicts(row: AddressPointRow, query: { postcode?: string; locality?: string }): boolean {
+		if (query.postcode && row.postcode && row.postcode.trim() !== query.postcode.trim()) return true
+
+		if (query.locality && row.locality_norm) {
+			const localityKey =
+				this.#locale === "fr"
+					? stripArrondissement(normalizeLocalityForKey(query.locality))
+					: normalizeLocalityForKey(query.locality)
+
+			return row.locality_norm !== localityKey
+		}
+
+		return false
 	}
 
 	[Symbol.dispose](): void {
