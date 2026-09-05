@@ -147,8 +147,9 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 			// exist; the loader's delta check is a no-op until the block is written. After a `--write`,
 			// regenerating uses the already-written block, but mask-OFF construction never trips the
 			// check (it only fires for a forbidden CERTIFIED tag, and mask-off forbids none).
-			// `inputMode: "formatted"` is deliberate and score-relevant: certification probes are
-			// formatted postal addresses, whose production path disables evidence-bundle channels.
+			// `inputMode: "formatted"`: certification probes are formatted postal addresses, whose
+			// production path disables evidence-bundle channels. The mask-regression check grades the
+			// same mode (#2048), so the two report one number for one row.
 			const { off, on } = await scoreConventionsMaskOffOn(
 				rows,
 				TAGS,

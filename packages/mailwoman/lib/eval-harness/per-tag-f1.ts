@@ -270,10 +270,11 @@ export interface MaskOffOnOptions {
 	 */
 	tierOverrides?: ScorerOverrides
 	/**
-	 * ⚠️ SCORE-RELEVANT DIVERGENCE — DELIBERATE, DO NOT UNIFY. The capability-manifest generator parses with `inputMode:
-	 * "formatted"` (certification probes are formatted postal addresses, whose production path disables evidence-bundle
-	 * channels); the mask-regression release check parses in the default input mode. The two produce different numbers
-	 * for the same rows, and each consumer's published figures depend on its own mode.
+	 * The parse mode the rows are graded in. Both callers — the capability-manifest generator and the mask-regression
+	 * release check — pass `"formatted"`: the rows are formatted postal addresses, on which the production pipeline
+	 * derives `formatted` and runs the evidence-bundle channels OFF as a declared ablation. Omitting it grades the
+	 * bare-library default (`fragmented`), a path production does not take on these inputs; the option stays so a caller
+	 * can measure that path on purpose, never by accident (#2048).
 	 */
 	inputMode?: "formatted"
 }

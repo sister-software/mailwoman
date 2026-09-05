@@ -151,16 +151,22 @@ export async function maskRegressionCheck(
 		const rows = await loadPerTagEvalRows(spec.files)
 		report(`\n[${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
-		// Default input mode ON PURPOSE — the capability-manifest generator's `inputMode: "formatted"`
-		// is a deliberate, score-relevant divergence (see `MaskOffOnOptions.inputMode`); this release
-		// check grades the default parse path.
-		const { off, on } = await scoreConventionsMaskOffOn(rows, TAGS, {
-			modelPath: MODEL,
-			tokenizerPath: TOKENIZER,
-			modelCardPath: MODEL_CARD,
-			anchorLookupPath: ANCHOR_LOOKUP,
-			gazetteerLexiconPath: GAZETTEER_LEXICON,
-		})
+		// `inputMode: "formatted"`, the same mode the capability-manifest generator grades (#2048). The rows are
+		// formatted postal addresses, and on those the production pipeline derives `formatted` and runs the
+		// evidence-bundle channels OFF as a declared ablation; grading them in the bare-library default measured a
+		// path production never takes on these inputs. The per-tag numbers before this change grade `fragmented`.
+		const { off, on } = await scoreConventionsMaskOffOn(
+			rows,
+			TAGS,
+			{
+				modelPath: MODEL,
+				tokenizerPath: TOKENIZER,
+				modelCardPath: MODEL_CARD,
+				anchorLookupPath: ANCHOR_LOOKUP,
+				gazetteerLexiconPath: GAZETTEER_LEXICON,
+			},
+			{ inputMode: "formatted" }
+		)
 
 		for (const tag of TAGS) {
 			const inScope = rowsHaveTag(rows, tag) || off[tag]! > 0 || on[tag]! > 0
