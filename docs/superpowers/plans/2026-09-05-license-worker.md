@@ -4,7 +4,33 @@
 
 **Goal:** A private Cloudflare Worker, `packages/license-worker/`, that verifies Stripe webhooks, mints a signed license token on every paid invoice, keeps the ledger in D1, and answers the claim, refresh, and status routes, with every path covered by tests that run under the Workers runtime.
 
-**Architecture:** A Hono app on `@hono/zod-openapi`, the same route idiom as the drop-in servers, exported as the Worker's `fetch` handler, plus a `scheduled` handler for reconciliation. Stripe's SDK runs on `fetch` and WebCrypto. The ledger is three D1 tables written under unique constraints, so Stripe's at-least-once, unordered delivery is idempotent without a queue. Signing calls `encodeLicenseKey` from `@mailwoman/core/license/key`, which the bundle test on `main` already proves `node:`-free. Tests run under `@cloudflare/vitest-pool-workers` with Miniflare's D1 and its `fetchMock` standing in for `api.stripe.com`.
+## Execution notes
+
+The plan below is the text the work started from. Where the code that landed differs, this section is the record; the
+task bodies are left as written.
+
+- **No `fetchMock`.** `@cloudflare/vitest-pool-workers` 0.22 exports none. The Stripe client takes a fetch
+  implementation (`stripeClient(env, fetchImplementation)`), and `test/support/stripe-mock.ts` exports `stripeFetch(routes)`,
+  a fetch that answers by method and path prefix and 404s anything else, which the SDK raises as an error.
+- **`env` comes from `cloudflare:workers`.** The pool deprecates `env` from `cloudflare:test`. `test/support/env.d.ts`
+  declares `Cloudflare.Env` as the worker's bindings plus `TEST_MIGRATIONS`, and `tsconfig.test.json` carries the pool's
+  `cloudflare:test` types, so no test casts `env`.
+- **A charge no longer names its invoice.** Under the pinned API the link runs `charge.payment_intent` →
+  `invoicePayments.list({ payment: { type: "payment_intent", payment_intent } })` → `data[0].invoice`
+  (`invoiceIDForCharge` in `lib/stripe/handlers.ts`).
+- **The claim route re-reads an unseen session.** A Checkout Session the ledger has not seen is retrieved from Stripe by
+  id and its license row created there, so the success page never depends on webhook order; only a session Stripe does
+  not know is a 404.
+- **`takePendingRefreshSecret` is a read and a conditional clear.** `RETURNING` on the update alone answers the cleared
+  column, which is null.
+- **Reconciliation has a third sweep and a `failed` list.** Every license is compared with its subscription's current
+  state; a dispute Stripe has ruled `won` hands a revoked license back to its subscription's state; a license whose
+  Stripe records cannot be read is reported by id and never stops the sweep.
+- **The webhook checks `eventRecorded` first, runs the handler, then `recordEventOnce`.** The order the Task 6 body
+  argues for, with the pre-check named.
+- **The deploy workflow refuses a `node:` import** from the dry-run bundle before deploying. Measured 2.1 MB, zero hits.
+
+**Architecture:** A Hono app on `@hono/zod-openapi`, the same route idiom as the drop-in servers, exported as the Worker's `fetch` handler, plus a `scheduled` handler for reconciliation. Stripe's SDK runs on `fetch` and WebCrypto. The ledger is three D1 tables written under unique constraints, so Stripe's at-least-once, unordered delivery is idempotent without a queue. Signing calls `encodeLicenseKey` from `@mailwoman/core/license/key`, which the bundle test on `main` already proves `node:`-free. Tests run under `@cloudflare/vitest-pool-workers` with Miniflare's D1 and a fetch stub handed to the Stripe SDK standing in for `api.stripe.com`.
 
 **Tech Stack:** TypeScript, Hono 4.13 + `@hono/zod-openapi` 1.6, `stripe` 22.6 (`Stripe.createFetchHttpClient()`, `Stripe.createSubtleCryptoProvider()`), Kysely over `kysely-d1`, wrangler 4.129, `@cloudflare/vitest-pool-workers` 0.22, `@cloudflare/workers-types` 5.
 
@@ -68,7 +94,7 @@
 
 `sha256Bytes` sits in `ed25519.ts` today because the key id needed it; the worker needs the same digest for the refresh secret, and a third copy would be the duplicate the review of #2153 refused. One module, three importers.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // packages/core/test/unit/crypto/digest.test.ts
@@ -83,7 +109,7 @@ it("digests to the SHA-256 test vector and renders lowercase hex", async () => {
 })
 ```
 
-- [ ] **Step 2: Implement**
+- [x] **Step 2: Implement**
 
 ```ts
 // packages/core/lib/crypto/digest.ts
@@ -108,7 +134,7 @@ export function hexOf(bytes: Uint8Array): string {
 
 Remove `sha256Bytes` from `ed25519.ts` and import it from `#crypto/digest` where it was used (`key.ts` and the Ed25519 test); remove `hex` from `key.ts` and import `hexOf`. Add the `./crypto/digest` export beside `./crypto/ed25519`.
 
-- [ ] **Step 3: Run, lint, commit**
+- [x] **Step 3: Run, lint, commit**
 
 Run: `yarn compile`, then `yarn vitest run packages/core/test/unit/crypto packages/core/test/unit/license packages/core/test/integration/worker-bundle.test.ts`. Expected: PASS. Commit as `refactor(core): the WebCrypto digest has one home, crypto/digest, for the key id and the worker alike`.
 
@@ -153,7 +179,7 @@ export function readEnv(bindings: LicenseWorkerBindings): LicenseWorkerEnv // zo
 export function createLicenseWorkerApp(env: LicenseWorkerEnv): OpenAPIHono
 ```
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // packages/license-worker/test/health.test.ts
@@ -179,7 +205,7 @@ test("GET /health answers issuance, the environment's mode, and no-store", async
 })
 ```
 
-- [ ] **Step 2: Create the workspace**
+- [x] **Step 2: Create the workspace**
 
 `packages/license-worker/package.json`:
 
@@ -346,7 +372,7 @@ LICENSE_SIGNING_KEY_PEM="-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-
 EMAIL_API_KEY=re_…
 ```
 
-- [ ] **Step 3: Write `env.ts`, `app.ts`, `routes/health.ts`, `index.ts`**
+- [x] **Step 3: Write `env.ts`, `app.ts`, `routes/health.ts`, `index.ts`**
 
 ```ts
 // lib/env.ts
@@ -531,7 +557,7 @@ export default handler
 
 The `request as unknown as Request` cast reconciles `@cloudflare/workers-types`' `Request` with the DOM-typed one Hono declares; if the two unify under the installed types, drop the cast.
 
-- [ ] **Step 4: Register the workspace**
+- [x] **Step 4: Register the workspace**
 
 - Root `package.json` `workspaces`: add `"packages/license-worker"` in alphabetical position. Add a script `"test:license-worker": "yarn workspace @mailwoman/license-worker test"`.
 - Root `tsconfig.json`: add `{ "path": "./packages/license-worker" }` and `{ "path": "./packages/license-worker/tsconfig.test.json" }` beside the tile-worker entry.
@@ -542,14 +568,14 @@ The `request as unknown as Request` cast reconciles `@cloudflare/workers-types`'
 
 Run `yarn install` (the lockfile changes; commit it).
 
-- [ ] **Step 5: Run the test**
+- [x] **Step 5: Run the test**
 
 Run: `yarn workspace @mailwoman/license-worker test`
 Expected: PASS, 1 test. If `cloudflare:test` fails to resolve, the pool did not install; check `yarn why @cloudflare/vitest-pool-workers`.
 
 Then `yarn tsc -b packages/license-worker` (or `yarn compile`) and `yarn health:architecture`, and the release-stage identity: `yarn vitest run packages/release-kit/test/integration/release-stage.test.ts` (the `publishCount` pin stays 59; the absence set grows by one).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/license-worker package.json tsconfig.json knip.json vitest.config.ts yarn.lock packages/release-kit/lib/release/stage.ts .github/workflows/test.yml
@@ -627,7 +653,7 @@ export async function findTokenByCheckoutSession(
 ): Promise<{ license: LicenseRow; token: LicenseTokenRow } | undefined>
 ```
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // packages/license-worker/test/ledger.test.ts
@@ -740,12 +766,12 @@ test("state transitions write the license and subscription states", async () => 
 
 `test/support/migrations.ts` reads `migrations/*.sql` in order and runs each statement with `db.exec` (Miniflare's D1 runs the migration files the same way `wrangler d1 migrations apply` does). Under `@cloudflare/vitest-pool-workers` the D1 database is fresh per test file, and the `beforeEach` drops and recreates through `DROP TABLE IF EXISTS` lines at the top of the support helper so each test starts empty.
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `yarn workspace @mailwoman/license-worker test test/ledger.test.ts`
 Expected: FAIL — modules missing.
 
-- [ ] **Step 3: Write the migration**
+- [x] **Step 3: Write the migration**
 
 ```sql
 -- migrations/0001_ledger.sql
@@ -795,7 +821,7 @@ CREATE TABLE stripe_events (
 
 D1 migrations are SQL files by Wrangler's contract; that is the "raw on purpose" category AGENTS.md lists. The typed access below goes through Kysely.
 
-- [ ] **Step 4: Write the schema, client, and access module**
+- [x] **Step 4: Write the schema, client, and access module**
 
 ```ts
 // lib/ledger/schema.ts
@@ -863,12 +889,12 @@ export function openLedger(db: D1Database): Ledger {
 
 `lib/ledger/licenses.ts` implements the functions in the Interfaces block with Kysely query builders: `recordEventOnce` is `insertInto("stripe_events").values(...).onConflict((oc) => oc.doNothing()).executeTakeFirst()` and reads `numInsertedOrUpdatedRows` (0 → `"duplicate"`); `currentToken` orders by `expires desc` and takes one; `findTokenByCheckoutSession` joins `licenses` on `checkout_session_id` with the current token; `setLicenseState` updates `license_state`, the two optional states, and `updated_at`. Use `Insertable<LicenseRow>` for `NewLicense` with the defaulted columns omitted (`Omit<Insertable<LicenseRow>, "subscription_state" | "payment_state" | "license_state" | "created_at" | "updated_at">`).
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 Run: `yarn workspace @mailwoman/license-worker test test/ledger.test.ts`
 Expected: PASS, 4 tests.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/license-worker/migrations packages/license-worker/lib/ledger packages/license-worker/test
@@ -908,7 +934,7 @@ export type SigningStatus = "ok" | "mismatch"
 export async function signingSelfTest(env): Promise<{ status: SigningStatus; kid: string; reason?: string }>
 ```
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 // test/dates.test.ts
@@ -1051,12 +1077,12 @@ describe("the signing self-test", () => {
 
 There is no `ok` case at unit level: an `ok` needs a key the shipped register carries, and no test key is. The route tests inject `signingStatus` through `AppDependencies`.
 
-- [ ] **Step 2: Run to verify they fail**
+- [x] **Step 2: Run to verify they fail**
 
 Run: `yarn workspace @mailwoman/license-worker test test/dates.test.ts test/plans.test.ts test/identifiers.test.ts test/signing.test.ts`
 Expected: FAIL, modules missing.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```ts
 // lib/dates.ts
@@ -1213,11 +1239,11 @@ export async function signingSelfTest(
 
 `licenseKeyID` is imported for the sandbox-side check below; if it stays unused, drop it. (A sandbox deploy's kid is not in the register by design; `ISSUANCE_ENABLED` and a sandbox-only register override are how the sandbox mints: see Task 5's `trustedKeysForVerification` note.)
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: the four files. Expected: PASS, 10 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/license-worker/lib/plans.ts packages/license-worker/lib/dates.ts packages/license-worker/lib/identifiers.ts packages/license-worker/lib/signing.ts packages/license-worker/test
@@ -1252,10 +1278,10 @@ export async function signedWebhook(
 	secret: string,
 	timestamp?: number
 ): Promise<{ body: string; signature: string }>
-export function mockStripe(routes: Record<string, unknown>): void // fetchMock for api.stripe.com/v1/...
+export function stripeFetch(routes: Record<string, unknown>): typeof fetch // a fetch the Stripe SDK calls instead of api.stripe.com
 ```
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // test/webhook.test.ts
@@ -1310,11 +1336,11 @@ describe("webhook verification", () => {
 })
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Expected: modules missing.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```ts
 // lib/stripe/client.ts
@@ -1451,7 +1477,7 @@ export function mockStripe(routes: Record<string, unknown>): void {
 
 `test/support/stripe-fixtures.ts` builds minimal Stripe objects: `invoicePaidEvent({ id = "evt_in_1", invoiceID = "in_1", subscriptionID = "sub_1" })`, `checkoutCompletedEvent(...)` with `custom_fields: [{ key: "licensee_legal_name", text: { value: "Example Ltd" } }]`, `consent: { terms_of_service: "accepted" }`, `customer_details.email`, `client_reference_id`, `subscription`; `invoiceObject(...)` with `status: "paid"`, `lines.data[0].price.id`, `subscription`, `status_transitions.paid_at`, `period_end`; `subscriptionObject(...)` with `current_period_end`, `items.data[0].price.id`, `status`; `checkoutSessionList(...)`. Fixtures carry only the fields the handlers read.
 
-- [ ] **Step 4: Run and commit**
+- [x] **Step 4: Run and commit**
 
 Run: `yarn workspace @mailwoman/license-worker test test/webhook.test.ts`. Expected: PASS, 4 tests.
 
@@ -1508,7 +1534,7 @@ export async function ensureLicenseFromCheckoutSession(env, deps, session: Strip
 export async function handleStripeEvent(env, deps, event: Stripe.Event): Promise<{ handled: string }>
 ```
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // test/fulfil.test.ts
@@ -1734,11 +1760,11 @@ describe("fulfilment", () => {
 
 The `currentToken(d.ledger, "lic_x")` line is a placeholder for "the checkout event minted nothing new": replace it with a count of `license_tokens` rows for `sub_4`'s lid being 1 (add `countTokens(ledger, lid)` to the access module if no simpler read exists).
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Expected: modules missing.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `lib/email/provider.ts` declares the two interfaces. `lib/email/resend.ts`:
 
@@ -2104,7 +2130,7 @@ export async function handleStripeEvent(
 
 Where the handler reads the ledger directly (`selectFrom("license_tokens")`), move that read into the access module as `findTokenLid(ledger, invoiceID)` so `handlers.ts` holds no query.
 
-- [ ] **Step 4: Run and commit**
+- [x] **Step 4: Run and commit**
 
 Run: `yarn workspace @mailwoman/license-worker test test/fulfil.test.ts`. Expected: PASS, 5 tests. If the Stripe SDK's typed field names differ from the fixtures (`current_period_end` placement, `status_transitions`), correct the fixtures to the SDK's types rather than casting.
 
@@ -2127,7 +2153,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 **Interfaces produced:** the HTTP surface of the spec: `POST /v1/webhooks/stripe`, `GET /v1/checkout-sessions/:sessionID/license`, `POST /v1/licenses/refresh`, `POST /v1/license-status`, `GET /health`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // test/routes.test.ts
@@ -2358,11 +2384,11 @@ describe("the routes", () => {
 
 `AppDependencies` grows to `{ signingStatus, email, ledger, stripe? }`; the app builds the Stripe client from env when not injected.
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Expected: routes 404.
 
-- [ ] **Step 3: Implement the routes**
+- [x] **Step 3: Implement the routes**
 
 Each route file exports `register<Name>Route(app, env, deps)` in the drop-in style. Behaviours:
 
@@ -2373,7 +2399,7 @@ Each route file exports `register<Name>Route(app, env, deps)` in the drop-in sty
 - **app.ts**: a middleware before the `/v1/*` routes that answers 503 `{ error: "signing unavailable" }` when `deps.signingStatus() !== "ok"`, except `/health`.
 - **index.ts**: build deps once per isolate: `const ledger = openLedger(bindings.LICENSE_LEDGER)`, `resendProvider(env)`, and a memoized `signingSelfTest(env)` promise whose result `signingStatus` reads (`"unchecked"` until it settles).
 
-- [ ] **Step 4: Run and commit**
+- [x] **Step 4: Run and commit**
 
 Run: `yarn workspace @mailwoman/license-worker test`. Expected: every file passes (health, ledger, dates, plans, identifiers, signing, webhook, fulfil, routes).
 
@@ -2394,7 +2420,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 - Modify: `lib/index.ts` (`scheduled` handler)
 - Test: `test/reconcile.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // test/reconcile.test.ts
@@ -2480,7 +2506,7 @@ describe("reconciliation", () => {
 })
 ```
 
-- [ ] **Step 2: Implement**
+- [x] **Step 2: Implement**
 
 ```ts
 // lib/reconcile.ts
@@ -2543,7 +2569,7 @@ export async function reconcile(
 
 `tokensWithFailedEmail(ledger)` joins the access module. `index.ts` gains `scheduled: (_controller, bindings, ctx) => ctx.waitUntil(reconcile(readEnv(bindings), deps, { sinceSeconds: 7 * 24 * 3600 }).then((report) => console.log(JSON.stringify(report))))`. Stripe's auto-pagination (`for await`) works on the fetch client.
 
-- [ ] **Step 3: Run and commit**
+- [x] **Step 3: Run and commit**
 
 Run: `yarn workspace @mailwoman/license-worker test`. Expected: PASS.
 
@@ -2563,7 +2589,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 - Create: `.github/workflows/license-worker.yml`
 - Create: `packages/license-worker/README.md`
 
-- [ ] **Step 1: The workflow**
+- [x] **Step 1: The workflow**
 
 ```yaml
 # Deploy the license worker to one Wrangler environment, by hand. Nothing here runs on push: a worker that mints
@@ -2612,11 +2638,11 @@ jobs:
 
 Match the checkout, node, and yarn steps to what `test.yml` uses (`.nvmrc` may not exist; copy the exact lines). The two GitHub environments hold the Cloudflare token per target and let production require a reviewer.
 
-- [ ] **Step 2: The README**
+- [x] **Step 2: The README**
 
 A page for the operator, in the house voice: what the worker does in three sentences; the two environments; the bindings table from the spec with which are secrets; the first-deploy order (register the worker's key in core and release, `wrangler secret put` ×4 per environment, `migrate`, deploy with issuance off, check `/health` reads `signing: ok`, flip `ISSUANCE_ENABLED`); the kill switch; the reconciliation cron; where the tests run (`yarn test:license-worker`); and the refund and dispute table. Vale it with `docs/.vale-vocab.ini`.
 
-- [ ] **Step 3: The dry run**
+- [x] **Step 3: The dry run**
 
 ```bash
 yarn workspace @mailwoman/license-worker wrangler deploy --env sandbox --dry-run --outdir /tmp/claude-1000/-home-lab-Projects-mailwoman/dc5b25ae-2f59-4cfe-a00a-391f0b430ece/scratchpad/worker-dry-run
@@ -2625,7 +2651,7 @@ grep -c "node:" /tmp/claude-1000/-home-lab-Projects-mailwoman/dc5b25ae-2f59-4cfe
 
 Expected: the dry run bundles without error and the grep reads `0`. A `node:` hit names the module to fix at its source, never with `nodejs_compat`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add .github/workflows/license-worker.yml packages/license-worker/README.md
