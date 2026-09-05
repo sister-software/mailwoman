@@ -15,15 +15,23 @@ import { envWithSigningKey } from "./support/keys.ts"
 const base = readEnv(env)
 
 describe("the signing self-test", () => {
-	it("reads mismatch when the configured kid is not an active entry of the shipped register, even for a key that matches it", async () => {
-		// A test key is never in the register: the register is release-bound trust, and this is the property that keeps a
-		// sandbox key out of production.
+	it("trusts the worker's own key in a sandbox when its public half digests to the configured kid, and reads mismatch for the same key in live mode", async () => {
+		// A test key is never in the register: the register is release-bound trust, and that is what keeps a sandbox key
+		// out of production. In a sandbox the worker vouches for itself, so an end-to-end run can mint.
 		const { env: worker, kid } = await envWithSigningKey(base)
 
-		expect(await signingSelfTest(worker)).toMatchObject({
+		expect(await signingSelfTest(worker)).toEqual({ status: "ok", kid, trust: "sandbox" })
+
+		expect(await signingSelfTest({ ...worker, liveMode: true })).toMatchObject({
 			status: "mismatch",
 			kid,
 			reason: expect.stringContaining("register"),
+		})
+
+		expect(await signingSelfTest({ ...worker, LICENSE_SIGNING_KID: "v9-00000000" })).toMatchObject({
+			status: "mismatch",
+			kid: "v9-00000000",
+			reason: expect.stringContaining(`signs for ${kid}`),
 		})
 	})
 

@@ -14,7 +14,6 @@ export interface CommercialPlan {
 	stripePriceID: string
 	scope: "all"
 	terms: "LicenseRef-Commercial"
-	agreement: string
 	/**
 	 * Days past the paid period's end the token stays valid, so a renewal that lands late does not lapse a working
 	 * install.
@@ -29,7 +28,6 @@ export function planCatalog(env: LicenseWorkerEnv): readonly CommercialPlan[] {
 			stripePriceID: env.STRIPE_PRICE_MONTHLY,
 			scope: "all",
 			terms: "LicenseRef-Commercial",
-			agreement: env.AGREEMENT_VERSION,
 			graceDays: 14,
 		},
 		{
@@ -37,7 +35,6 @@ export function planCatalog(env: LicenseWorkerEnv): readonly CommercialPlan[] {
 			stripePriceID: env.STRIPE_PRICE_YEARLY,
 			scope: "all",
 			terms: "LicenseRef-Commercial",
-			agreement: env.AGREEMENT_VERSION,
 			graceDays: 14,
 		},
 	]

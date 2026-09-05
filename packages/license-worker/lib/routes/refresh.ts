@@ -5,7 +5,8 @@
  *
  *   `POST /v1/licenses/refresh`: the lid and its secret answer the current token. A wrong secret and an unknown lid
  *   answer the same body, so the route confirms nothing about which lids exist. Rate limited per lid, which is what an
- *   attacker guessing secrets holds constant.
+ *   attacker guessing secrets holds constant, and per address independently, so a stranger who learns a lid cannot
+ *   spend its owner's allowance.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
@@ -15,6 +16,7 @@ import { secretDigest, secretDigestsMatch } from "#identifiers"
 import type { Ledger } from "#ledger/client"
 import { currentToken, findLicense } from "#ledger/licenses"
 import { LicenseState } from "#ledger/schema"
+import { clientAddress, withinLimits } from "#routes/rate-limit"
 
 /**
  * A license id as `newLicenseID` mints it: `lic_` plus 22 url-safe characters. Anything else is refused before a query
@@ -52,7 +54,7 @@ const refreshRoute = createRoute({
 			content: { "application/json": { schema: ErrorSchema } },
 		},
 		429: {
-			description: "Too many refreshes for this lid.",
+			description: "Too many refreshes for this lid or from this address.",
 			content: { "application/json": { schema: ErrorSchema } },
 		},
 	},
@@ -61,9 +63,10 @@ const refreshRoute = createRoute({
 export function registerRefreshRoute(app: OpenAPIHono, env: LicenseWorkerEnv, ledger: Ledger): void {
 	app.openapi(refreshRoute, async (c) => {
 		const { lid, secret } = c.req.valid("json")
-		const { success } = await env.REFRESH_LIMITER.limit({ key: lid })
 
-		if (!success) return c.json({ error: "rate limited" }, 429)
+		if (!(await withinLimits(env.REFRESH_LIMITER, [`lid:${lid}`, `ip:${clientAddress(c)}`]))) {
+			return c.json({ error: "rate limited" }, 429)
+		}
 
 		const license = await findLicense(ledger, lid)
 		const digest = await secretDigest(secret)

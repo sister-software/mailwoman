@@ -11,7 +11,7 @@ import { createLicenseWorkerApp } from "#app"
 import { readEnv } from "#env"
 import { openLedger } from "#ledger/client"
 
-test("GET /health answers issuance, the environment's mode, and no-store", async () => {
+test("GET /health answers issuance, the environment's mode, a reachable ledger, and no-store", async () => {
 	const app = createLicenseWorkerApp(readEnv(env), {
 		signingStatus: () => "unchecked",
 		ledger: openLedger(env.LICENSE_LEDGER),
@@ -22,5 +22,5 @@ test("GET /health answers issuance, the environment's mode, and no-store", async
 
 	expect(res.status).toBe(200)
 	expect(res.headers.get("cache-control")).toBe("no-store")
-	expect(await res.json()).toEqual({ issuance: false, liveMode: false, signing: "unchecked" })
+	expect(await res.json()).toEqual({ issuance: false, liveMode: false, signing: "unchecked", ledger: "ok" })
 })

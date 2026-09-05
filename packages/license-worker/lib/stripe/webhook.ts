@@ -5,7 +5,9 @@
  *
  *   Webhook verification: the official constructor over the untouched raw body, with the SubtleCrypto provider the
  *   Workers runtime has, a five-minute timestamp tolerance, and two checks the SDK does not make — that the event is one
- *   this worker acts on, and that its Stripe mode is this environment's. A refusal is a 400, which Stripe does not retry.
+ *   this worker acts on, and that its Stripe mode is this environment's. The two refusals differ in kind: a signature
+ *   that does not verify is a request to reject, and a verified event this worker does not act on is one to
+ *   acknowledge and log, because Stripe retries every non-2xx answer for three days and a retry cannot change either.
  */
 
 import Stripe from "stripe"
@@ -14,9 +16,8 @@ import type { LicenseWorkerEnv } from "#env"
 import { stripeClient } from "#stripe/client"
 
 /**
- * The event types the destination is subscribed to and this worker acts on. An event outside the list is a
- * misconfigured destination, and answering 400 keeps Stripe from retrying it for three days. A closed dispute is not
- * here: the reconciliation pass reads Stripe's current state for a disputed license instead.
+ * The event types the destination is subscribed to and this worker acts on. A closed dispute is not here: the
+ * reconciliation pass reads Stripe's current dispute state for a disputed license instead.
  */
 export const ACCEPTED_EVENT_TYPES = [
 	"checkout.session.completed",
@@ -32,7 +33,10 @@ export type AcceptedEventType = (typeof ACCEPTED_EVENT_TYPES)[number]
 
 const SIGNATURE_TOLERANCE_SECONDS = 300
 
-export type WebhookVerification = { ok: true; event: Stripe.Event } | { ok: false; status: 400; reason: string }
+export type WebhookVerification =
+	| { ok: true; event: Stripe.Event }
+	| { ok: false; kind: "signature"; reason: string }
+	| { ok: false; kind: "ignored"; reason: string }
 
 const cryptoProvider = Stripe.createSubtleCryptoProvider()
 
@@ -41,7 +45,7 @@ export async function verifyStripeEvent(
 	signatureHeader: string | null,
 	env: LicenseWorkerEnv
 ): Promise<WebhookVerification> {
-	if (!signatureHeader) return { ok: false, status: 400, reason: "missing Stripe-Signature" }
+	if (!signatureHeader) return { ok: false, kind: "signature", reason: "missing Stripe-Signature" }
 
 	let event: Stripe.Event
 
@@ -54,15 +58,19 @@ export async function verifyStripeEvent(
 			cryptoProvider
 		)
 	} catch (error) {
-		return { ok: false, status: 400, reason: error instanceof Error ? error.message : "signature verification failed" }
+		return {
+			ok: false,
+			kind: "signature",
+			reason: error instanceof Error ? error.message : "signature verification failed",
+		}
 	}
 
 	if (!(ACCEPTED_EVENT_TYPES as readonly string[]).includes(event.type)) {
-		return { ok: false, status: 400, reason: `event type ${event.type} is not one this worker acts on` }
+		return { ok: false, kind: "ignored", reason: `event type ${event.type} is not one this worker acts on` }
 	}
 
 	if (event.livemode !== env.liveMode) {
-		return { ok: false, status: 400, reason: `event livemode ${event.livemode} does not match this environment` }
+		return { ok: false, kind: "ignored", reason: `event livemode ${event.livemode} does not match this environment` }
 	}
 
 	return { ok: true, event }

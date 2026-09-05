@@ -5,13 +5,14 @@
  *
  *   The scheduled pass. Stripe is the authority on what was paid and what stands; this ledger is the authority on what
  *   was minted and sent. Three sweeps, each safe to repeat: a paid invoice in the window with no token is minted through
- *   the path the webhook takes; a token whose email failed is sent again under the same invoice id; and a license whose
+ *   the path the webhook takes; a token whose email is not confirmed sent goes again under the same invoice id; and a license whose
  *   state disagrees with its subscription is corrected, including a dispute Stripe has since ruled in the customer's
  *   favour. The report names ids only.
  */
 
 import type Stripe from "stripe"
 
+import { todayUTC } from "#dates"
 import type { LicenseWorkerEnv } from "#env"
 import { type FulfilDependencies, fulfilInvoice, sendTokenEmail } from "#fulfil"
 import {
@@ -20,7 +21,7 @@ import {
 	findLicense,
 	findToken,
 	setLicenseState,
-	tokensWithFailedEmail,
+	tokensAwaitingEmail,
 } from "#ledger/licenses"
 import { type LicenseRow, LicenseState } from "#ledger/schema"
 import { licenseStateFromSubscription } from "#stripe/handlers"
@@ -41,7 +42,6 @@ export interface ReconcileOptions {
 	 * How far back to list paid invoices. Wider than the cron interval, so a pass that fails leaves nothing unminted.
 	 */
 	sinceSeconds: number
-	now?: () => number
 }
 
 const PAYMENT_STATE_DISPUTED = "disputed"
@@ -52,8 +52,7 @@ export async function reconcileLedger(
 	options: ReconcileOptions
 ): Promise<ReconcileReport> {
 	const report: ReconcileReport = { minted: [], resent: [], refused: [], corrected: [], failed: [] }
-	const now = options.now ?? Date.now
-	const since = Math.floor(now() / 1000) - options.sinceSeconds
+	const since = Math.floor((deps.now ?? Date.now)() / 1000) - options.sinceSeconds
 
 	for await (const invoice of deps.stripe.invoices.list({ status: "paid", created: { gte: since }, limit: 100 })) {
 		if (await findToken(deps.ledger, invoice.id)) continue
@@ -67,7 +66,7 @@ export async function reconcileLedger(
 		}
 	}
 
-	for (const token of await tokensWithFailedEmail(deps.ledger)) {
+	for (const token of await tokensAwaitingEmail(deps.ledger)) {
 		const license = await findLicense(deps.ledger, token.lid)
 
 		if (!license) continue
@@ -109,15 +108,14 @@ async function stateStripeSays(
 ): Promise<LicenseState | undefined> {
 	const subscription = await stripe.subscriptions.retrieve(license.subscription_id)
 
+	const token = await currentToken(deps.ledger, license.lid)
+	const today = todayUTC(deps.now)
+
 	if (license.license_state !== LicenseState.Revoked) {
-		return licenseStateFromSubscription(license.license_state, subscription)
+		return licenseStateFromSubscription(license.license_state, subscription, { graceUntil: token?.expires, today })
 	}
 
-	if (license.payment_state !== PAYMENT_STATE_DISPUTED) return undefined
-
-	const token = await currentToken(deps.ledger, license.lid)
-
-	if (!token) return undefined
+	if (license.payment_state !== PAYMENT_STATE_DISPUTED || !token) return undefined
 
 	const payments = await stripe.invoicePayments.list({ invoice: token.invoice_id, limit: 1 })
 	const payment = payments.data[0]?.payment
@@ -132,5 +130,5 @@ async function stateStripeSays(
 
 	if (dispute?.status !== "won") return undefined
 
-	return licenseStateFromSubscription(LicenseState.Active, subscription)
+	return licenseStateFromSubscription(LicenseState.Active, subscription, { graceUntil: token.expires, today })
 }

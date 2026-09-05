@@ -70,6 +70,7 @@ async function app(suffix: string, options: { issuance?: boolean; signing?: "ok"
 				subscriptionID: `sub_${suffix}`,
 				priceID: worker.STRIPE_PRICE_MONTHLY,
 				paidAt: OCT_1,
+				periodEnd: NOV_1,
 			}),
 			[`GET /v1/subscriptions/sub_${suffix}`]: subscriptionObject({
 				id: `sub_${suffix}`,
@@ -123,7 +124,7 @@ async function app(suffix: string, options: { issuance?: boolean; signing?: "ok"
 }
 
 describe("the routes", () => {
-	it("webhook: a valid event is 200; the same event id again is 200 with no second token; a bad signature is 400", async () => {
+	it("webhook: a valid event is 200; the same event id again is 200 with no second token; a bad signature is 400; a verified stray type is 200 and ignored", async () => {
 		const a = await app("w")
 
 		expect((await a.webhook(invoicePaidEvent({ id: "evt_w", invoiceID: "in_w" }))).status).toBe(200)
@@ -140,6 +141,11 @@ describe("the routes", () => {
 		})
 
 		expect(bad.status).toBe(400)
+
+		const stray = await a.webhook({ ...invoicePaidEvent({ id: "evt_w_stray" }), type: "customer.created" })
+
+		expect(stray.status).toBe(200)
+		expect(await stray.json()).toMatchObject({ received: true, ignored: expect.stringContaining("customer.created") })
 	})
 
 	it("claim: pending before the invoice is paid, then the token, the lid and the refresh secret exactly once, with no-store and exact-origin CORS", async () => {

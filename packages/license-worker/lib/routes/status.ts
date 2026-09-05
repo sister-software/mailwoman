@@ -13,6 +13,7 @@ import type { LicenseWorkerEnv } from "#env"
 import type { Ledger } from "#ledger/client"
 import { findLicense } from "#ledger/licenses"
 import { publicLicenseStatus } from "#ledger/schema"
+import { clientAddress, withinLimits } from "#routes/rate-limit"
 import { LicenseIDSchema } from "#routes/refresh"
 
 const StatusSchema = z.object({ status: z.enum(["active", "lapsed", "revoked", "unknown"]) })
@@ -31,7 +32,7 @@ const statusRoute = createRoute({
 			content: { "application/json": { schema: StatusSchema } },
 		},
 		429: {
-			description: "Too many checks for this lid.",
+			description: "Too many checks for this lid or from this address.",
 			content: { "application/json": { schema: ErrorSchema } },
 		},
 	},
@@ -40,9 +41,10 @@ const statusRoute = createRoute({
 export function registerStatusRoute(app: OpenAPIHono, env: LicenseWorkerEnv, ledger: Ledger): void {
 	app.openapi(statusRoute, async (c) => {
 		const { lid } = c.req.valid("json")
-		const { success } = await env.STATUS_LIMITER.limit({ key: lid })
 
-		if (!success) return c.json({ error: "rate limited" }, 429)
+		if (!(await withinLimits(env.STATUS_LIMITER, [`lid:${lid}`, `ip:${clientAddress(c)}`]))) {
+			return c.json({ error: "rate limited" }, 429)
+		}
 
 		const license = await findLicense(ledger, lid)
 

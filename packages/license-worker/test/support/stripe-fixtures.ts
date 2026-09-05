@@ -15,6 +15,10 @@ export interface InvoiceInit {
 	subscriptionID: string
 	priceID: string
 	paidAt: number
+	/**
+	 * The end of the period the one line covers: what the token's `expires` is derived from.
+	 */
+	periodEnd: number
 	status?: "paid" | "open" | "void" | "draft"
 	livemode?: boolean
 	quantity?: number
@@ -27,6 +31,7 @@ export function invoiceObject(init: InvoiceInit) {
 		object: "line_item",
 		quantity: init.quantity ?? 1,
 		pricing: { price_details: { price: init.priceID } },
+		period: { start: init.paidAt, end: init.periodEnd },
 	}
 
 	return {
@@ -83,6 +88,10 @@ export interface CheckoutSessionInit {
 	priceID?: string
 	consent?: "accepted" | null
 	mode?: "subscription" | "payment"
+	/**
+	 * The agreement version the Payment Link carried; `null` omits the metadata, as a link without it would.
+	 */
+	agreementVersion?: string | null
 }
 
 export function checkoutSessionObject(init: CheckoutSessionInit) {
@@ -95,6 +104,8 @@ export function checkoutSessionObject(init: CheckoutSessionInit) {
 		customer: init.customerID ?? `cus_${init.subscriptionID}`,
 		customer_details: { email: init.email, name: init.licensee },
 		consent: { terms_of_service: init.consent === undefined ? "accepted" : init.consent },
+		metadata:
+			init.agreementVersion === null ? {} : { agreement_version: init.agreementVersion ?? "commercial-2026-10" },
 		custom_fields: [{ key: "licensee_legal_name", type: "text", text: { value: init.licensee } }],
 		line_items: init.priceID
 			? {
@@ -171,6 +182,17 @@ export function chargeRefundedEvent(init: EventInit & Omit<ChargeInit, "id"> & {
 		livemode: init.livemode ?? false,
 		created: Math.floor(Date.now() / 1000),
 		data: { object: chargeObject({ ...init, id: init.chargeID }) },
+	} as Stripe.Event
+}
+
+export function subscriptionDeletedEvent(init: EventInit & { subscriptionID: string }): Stripe.Event {
+	return {
+		id: init.id ?? "evt_sub_del_1",
+		object: "event",
+		type: "customer.subscription.deleted",
+		livemode: init.livemode ?? false,
+		created: Math.floor(Date.now() / 1000),
+		data: { object: { id: init.subscriptionID, object: "subscription", status: "canceled" } },
 	} as Stripe.Event
 }
 

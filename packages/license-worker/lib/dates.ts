@@ -13,6 +13,13 @@ export function calendarDateUTC(unixSeconds: number): string {
 	return new Date(unixSeconds * 1000).toISOString().slice(0, 10)
 }
 
+/**
+ * Today's UTC calendar date under a clock that answers milliseconds; `Date.now` unless a test injects one.
+ */
+export function todayUTC(now: () => number = Date.now): string {
+	return calendarDateUTC(Math.floor(now() / 1000))
+}
+
 export function plusDays(date: string, days: number): string {
 	const [year, month, day] = date.split("-").map(Number) as [number, number, number]
 

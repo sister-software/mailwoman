@@ -29,6 +29,17 @@ task bodies are left as written.
 - **The webhook checks `eventRecorded` first, runs the handler, then `recordEventOnce`.** The order the Task 6 body
   argues for, with the pre-check named.
 - **The deploy workflow refuses a `node:` import** from the dry-run bundle before deploying. Measured 2.1 MB, zero hits.
+  It also refuses a private-key marker or a Stripe key prefix in the bundle, and `upload_source_maps = true`.
+- **From the PR #2160 review.** The email is re-sent while `pending` as well as `failed`, by the retry that finds the
+  token and by reconciliation. The agreement version comes from the Checkout Session's `agreement_version` metadata
+  (set on the Payment Link), is recorded on the license once, and is signed into every token for its life; the plan
+  catalog carries no agreement. A subscription that ends leaves the license `active` until the current token's date
+  passes, then reconciliation lapses it. In a sandbox (`liveMode === false`) the self-test trusts the worker's own key
+  when the public half derived from the private key (`publicKeyFromPrivateKey`) digests to the configured kid; live
+  mode still requires the shipped register. `expires` derives from `invoice.lines[0].period.end`, not the
+  subscription's current period. A verified event of a stray type or the other Stripe mode answers 200 and is logged;
+  only a failed signature answers 400, and Stripe retries every non-2xx. Refresh and status hold a per-lid and a
+  per-address limit independently. `/health` reports `ledger` and answers 503 when D1 does not respond.
 
 **Architecture:** A Hono app on `@hono/zod-openapi`, the same route idiom as the drop-in servers, exported as the Worker's `fetch` handler, plus a `scheduled` handler for reconciliation. Stripe's SDK runs on `fetch` and WebCrypto. The ledger is three D1 tables written under unique constraints, so Stripe's at-least-once, unordered delivery is idempotent without a queue. Signing calls `encodeLicenseKey` from `@mailwoman/core/license/key`, which the bundle test on `main` already proves `node:`-free. Tests run under `@cloudflare/vitest-pool-workers` with Miniflare's D1 and a fetch stub handed to the Stripe SDK standing in for `api.stripe.com`.
 

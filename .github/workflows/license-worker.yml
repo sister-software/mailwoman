@@ -59,13 +59,24 @@ jobs:
         run: yarn test:license-worker
 
       # The bundle must carry no Node builtin: the worker runs without `nodejs_compat`, and a `node:` import
-      # would deploy and then fail on the first request that reached it.
-      - name: Dry-run bundle and refuse a Node builtin
+      # would deploy and then fail on the first request that reached it. It must carry no secret either: a
+      # private key or a Stripe key belongs in a Wrangler secret binding, and one that reached the bundle was
+      # committed or inlined. Source maps carry the same text, so they must not be uploaded.
+      - name: Dry-run bundle and refuse a Node builtin, a secret, or a source-map upload
         run: |
           yarn workspace @mailwoman/license-worker wrangler deploy --env "${{ inputs.environment }}" --dry-run --outdir "$RUNNER_TEMP/license-worker"
-          if grep -q '"node:' "$RUNNER_TEMP/license-worker/index.js"; then
+          bundle="$RUNNER_TEMP/license-worker/index.js"
+          if grep -q '"node:' "$bundle"; then
             echo "the bundle imports a Node builtin:" >&2
-            grep -o '"node:[a-z_/]*"' "$RUNNER_TEMP/license-worker/index.js" | sort -u >&2
+            grep -o '"node:[a-z_/]*"' "$bundle" | sort -u >&2
+            exit 1
+          fi
+          if grep -Eq 'BEGIN (EC |RSA )?PRIVATE KEY|sk_(test|live)_[A-Za-z0-9]{8}|rk_(test|live)_[A-Za-z0-9]{8}|whsec_[A-Za-z0-9]{8}' "$bundle"; then
+            echo "the bundle carries key material; it belongs in a secret binding" >&2
+            exit 1
+          fi
+          if grep -Eq '^\s*upload_source_maps\s*=\s*true' packages/license-worker/wrangler.toml; then
+            echo "wrangler.toml uploads source maps; the worker's source is not for the dashboard" >&2
             exit 1
           fi
 

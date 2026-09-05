@@ -28,9 +28,9 @@ describe("the plan catalog", () => {
 		expect(planForPrice(worker, "price_somebody_elses")).toBeUndefined()
 	})
 
-	it("carries the agreement version and a 14-day grace on every plan", () => {
+	it("carries a 14-day grace on every plan, and no agreement version: that is the license's, recorded at purchase", () => {
 		for (const plan of planCatalog(worker)) {
-			expect(plan.agreement).toBe(worker.AGREEMENT_VERSION)
+			expect(plan).not.toHaveProperty("agreement")
 			expect(plan.graceDays).toBe(14)
 			expect(plan.scope).toBe("all")
 		}

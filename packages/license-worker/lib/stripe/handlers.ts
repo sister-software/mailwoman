@@ -10,9 +10,10 @@
 
 import type Stripe from "stripe"
 
+import { todayUTC } from "#dates"
 import type { LicenseWorkerEnv } from "#env"
 import { ensureLicenseFromCheckoutSession, type FulfilDependencies, fulfilInvoice } from "#fulfil"
-import { findLicenseBySubscription, findTokenLid, setLicenseState } from "#ledger/licenses"
+import { currentToken, findLicenseBySubscription, findTokenLid, setLicenseState } from "#ledger/licenses"
 import { LicenseState } from "#ledger/schema"
 import { idOf, invoiceSubscriptionID } from "#stripe/shapes"
 
@@ -35,19 +36,26 @@ async function invoiceIDForCharge(stripe: Stripe, charge: Stripe.Charge): Promis
 
 /**
  * What a subscription's current state says the license state should be. A revoked license stays revoked whatever the
- * subscription does; a `review` license stays under review; otherwise a subscription that has ended lapses the license
- * and any other status keeps it active.
+ * subscription does; a `review` license stays under review. A subscription that has ended lapses the license only once
+ * the current token's date has passed: the token carries the paid period plus its grace, and online status must not
+ * refuse a license whose offline token is still good. Until then the license stays active and reconciliation lapses it
+ * on the day.
  */
 export function licenseStateFromSubscription(
 	current: LicenseState,
 	subscription: Pick<Stripe.Subscription, "status">,
-	options: { deleted?: boolean } = {}
+	options: { deleted?: boolean; graceUntil?: string; today: string }
 ): LicenseState {
 	if (current === LicenseState.Revoked || current === LicenseState.Review) return current
 
 	const ended = options.deleted === true || subscription.status === "canceled" || subscription.status === "unpaid"
 
-	return ended ? LicenseState.Lapsed : LicenseState.Active
+	if (!ended) return LicenseState.Active
+
+	// Calendar dates compare as strings.
+	return options.graceUntil !== undefined && options.today <= options.graceUntil
+		? LicenseState.Active
+		: LicenseState.Lapsed
 }
 
 export async function handleStripeEvent(
@@ -90,8 +98,12 @@ export async function handleStripeEvent(
 
 			if (!license) return { handled: "no license for subscription" }
 
+			const token = await currentToken(deps.ledger, license.lid)
+
 			const next = licenseStateFromSubscription(license.license_state, subscription, {
 				deleted: event.type === "customer.subscription.deleted",
+				graceUntil: token?.expires,
+				today: todayUTC(deps.now),
 			})
 
 			await setLicenseState(deps.ledger, license.lid, next, { subscriptionState: subscription.status })

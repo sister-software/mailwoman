@@ -42,7 +42,9 @@ function isolateState(env: LicenseWorkerEnv): IsolateState {
 	const selfTest = signingSelfTest(env).then((result) => {
 		signing = result.status
 
-		if (result.status !== "ok") {
+		if (result.status === "ok") {
+			console.log(`signing self-test: ok, trusted by the ${result.trust}`)
+		} else {
 			console.error(`signing self-test: ${result.reason}`)
 		}
 

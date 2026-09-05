@@ -5,8 +5,9 @@
  *
  *   Two stand-ins for Stripe. `signedWebhook` signs a payload the way Stripe's destination does, so the verifier under
  *   test sees a real `Stripe-Signature`. `stripeFetch` is a fetch the SDK's HTTP client calls instead of the network:
- *   `routes` maps `GET /v1/invoices/in_1`-style keys to JSON bodies, matched by method and path prefix, and anything else
- *   is a 404 the SDK raises as an error, so an unexpected retrieval is loud rather than silently absent.
+ *   `routes` maps `GET /v1/invoices/in_1`-style keys to JSON bodies. An object path matches exactly, so `in_1` never
+ *   answers for `in_1b`; a list key ends in `?` and matches by prefix, whatever the query. Anything else is a 404 the
+ *   SDK raises as an error, so an unexpected retrieval is loud rather than silently absent.
  */
 
 export async function signedWebhook(
@@ -38,7 +39,12 @@ export function stripeFetch(routes: Record<string, unknown>): typeof fetch {
 		const request = new Request(input, init)
 		const url = new URL(request.url)
 		const target = `${url.pathname}${url.search}`
-		const route = entries.find((entry) => entry.method === request.method && target.startsWith(entry.path))
+
+		const route = entries.find(
+			(entry) =>
+				entry.method === request.method &&
+				(entry.path.endsWith("?") ? target.startsWith(entry.path) : url.pathname === entry.path)
+		)
 
 		if (!route) {
 			return Response.json(

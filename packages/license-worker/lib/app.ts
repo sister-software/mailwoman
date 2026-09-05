@@ -33,11 +33,12 @@ export interface AppDependencies {
 	 * Built from the environment when absent; a test injects one over a fetch stub.
 	 */
 	stripe?: Stripe
+	now?: () => number
 }
 
 export function createLicenseWorkerApp(env: LicenseWorkerEnv, deps: AppDependencies): OpenAPIHono {
 	const app = new OpenAPIHono()
-	const fulfil = { stripe: deps.stripe ?? stripeClient(env), ledger: deps.ledger, email: deps.email }
+	const fulfil = { stripe: deps.stripe ?? stripeClient(env), ledger: deps.ledger, email: deps.email, now: deps.now }
 
 	app.use(async (c, next) => {
 		c.header("Cache-Control", "no-store")
@@ -59,7 +60,7 @@ export function createLicenseWorkerApp(env: LicenseWorkerEnv, deps: AppDependenc
 		return c.json({ error: "internal error" }, 500)
 	})
 
-	registerHealthRoute(app, env, deps.signingStatus)
+	registerHealthRoute(app, env, deps.signingStatus, deps.ledger)
 	registerWebhookRoute(app, env, fulfil)
 	registerClaimRoute(app, env, fulfil)
 	registerRefreshRoute(app, env, deps.ledger)

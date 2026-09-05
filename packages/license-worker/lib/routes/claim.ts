@@ -16,6 +16,7 @@ import type { LicenseWorkerEnv } from "#env"
 import { ensureLicenseFromCheckoutSession, type FulfilDependencies } from "#fulfil"
 import { currentToken, findLicenseByCheckoutSession, takePendingRefreshSecret } from "#ledger/licenses"
 import { LicenseState } from "#ledger/schema"
+import { clientAddress, withinLimits } from "#routes/rate-limit"
 import { isStripeNotFound } from "#stripe/client"
 
 const ClaimSchema = z.discriminatedUnion("status", [
@@ -59,9 +60,10 @@ const claimRoute = createRoute({
 export function registerClaimRoute(app: OpenAPIHono, env: LicenseWorkerEnv, deps: FulfilDependencies): void {
 	app.openapi(claimRoute, async (c) => {
 		const { sessionID } = c.req.valid("param")
-		const { success } = await env.CLAIM_LIMITER.limit({ key: c.req.header("cf-connecting-ip") ?? "unknown" })
 
-		if (!success) return c.json({ error: "rate limited" }, 429)
+		if (!(await withinLimits(env.CLAIM_LIMITER, [`ip:${clientAddress(c)}`]))) {
+			return c.json({ error: "rate limited" }, 429)
+		}
 
 		let license = await findLicenseByCheckoutSession(deps.ledger, sessionID)
 

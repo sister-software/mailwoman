@@ -65,6 +65,7 @@ async function fixture(
 		subscriptionID: `sub_${suffix}`,
 		priceID: worker.STRIPE_PRICE_MONTHLY,
 		paidAt: OCT_1,
+		periodEnd: NOV_1,
 	})
 
 	const stripe = stripeClient(
@@ -107,7 +108,7 @@ async function fixture(
 }
 
 describe("reconciliation", () => {
-	it("mints a paid invoice the webhook never delivered, and re-sends a token whose email failed, once each", async () => {
+	it("mints a paid invoice the webhook never delivered, and re-sends a token whose email failed or stayed pending, once each", async () => {
 		const { worker, stripe, ledger } = await fixture("9")
 		const email = recordingEmail()
 		const deps = { stripe, ledger, email: email.provider }
@@ -129,6 +130,11 @@ describe("reconciliation", () => {
 		expect(resent.resent).toEqual(["in_9"])
 		expect(email.sent).toEqual(["in_9", "in_9"])
 		expect((await findToken(ledger, "in_9"))?.email_state).toBe("sent")
+
+		await setEmailState(ledger, "in_9", "pending")
+
+		expect((await reconcileLedger(worker, deps, { sinceSeconds: WEEK })).resent).toEqual(["in_9"])
+		expect(email.sent).toEqual(["in_9", "in_9", "in_9"])
 	})
 
 	it("lapses a license whose subscription Stripe now reads as canceled, and reports the correction by id", async () => {
@@ -139,9 +145,10 @@ describe("reconciliation", () => {
 
 		const canceled = await fixture("10", { subscriptionStatus: "canceled", listInvoices: false })
 
+		// After the token's date: within its grace the license stays active, which the fulfil test covers.
 		const report = await reconcileLedger(
 			canceled.worker,
-			{ stripe: canceled.stripe, ledger: canceled.ledger, email: email.provider },
+			{ stripe: canceled.stripe, ledger: canceled.ledger, email: email.provider, now: () => Date.UTC(2026, 10, 20) },
 			{ sinceSeconds: WEEK }
 		)
 

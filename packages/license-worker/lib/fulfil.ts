@@ -19,6 +19,7 @@ import { newLicenseID, newRefreshSecret, secretDigest } from "#identifiers"
 import type { Ledger } from "#ledger/client"
 import {
 	createLicense,
+	findLicense,
 	findLicenseBySubscription,
 	findToken,
 	insertToken,
@@ -27,12 +28,16 @@ import {
 } from "#ledger/licenses"
 import type { EmailState, LicenseRow, LicenseTokenRow } from "#ledger/schema"
 import { planForPrice } from "#plans"
-import { idOf, invoiceSubscriptionID, linePriceID, subscriptionPeriodEnd } from "#stripe/shapes"
+import { idOf, invoiceSubscriptionID, linePriceID } from "#stripe/shapes"
 
 export interface FulfilDependencies {
 	stripe: Stripe
 	ledger: Ledger
 	email: EmailProvider
+	/**
+	 * The clock, in milliseconds; `Date.now` unless a test injects one. Read where a date decides a state.
+	 */
+	now?: () => number
 }
 
 export type FulfilOutcome =
@@ -43,6 +48,13 @@ export type FulfilOutcome =
  * The Payment Link's custom field that collects the licensee's legal name; the key is set on the Payment Link.
  */
 const LICENSEE_FIELD_KEY = "licensee_legal_name"
+
+/**
+ * The Payment Link metadata key naming the agreement version the page presented, which Stripe copies onto the Checkout
+ * Session. It is recorded on the license once and signed into every token for its life: the environment's
+ * `AGREEMENT_VERSION` is what NEW purchases are expected to carry, never what an existing subscriber is moved to.
+ */
+const AGREEMENT_METADATA_KEY = "agreement_version"
 
 /**
  * The license row for a Checkout Session: created on first sight with a fresh lid and refresh secret, read back after.
@@ -73,6 +85,16 @@ export async function ensureLicenseFromCheckoutSession(
 	if (session.consent?.terms_of_service !== "accepted")
 		throw new Error(`checkout session ${session.id} records no terms acceptance`)
 
+	const agreement = session.metadata?.[AGREEMENT_METADATA_KEY]
+
+	if (!agreement) throw new Error(`checkout session ${session.id} carries no ${AGREEMENT_METADATA_KEY} metadata`)
+
+	if (agreement !== env.AGREEMENT_VERSION) {
+		console.warn(
+			`checkout session ${session.id} accepted agreement ${agreement}; this environment sells ${env.AGREEMENT_VERSION}`
+		)
+	}
+
 	const priceID = idOf(session.line_items?.data[0]?.price)
 	const plan = priceID ? planForPrice(env, priceID) : undefined
 	const refreshSecret = newRefreshSecret()
@@ -83,7 +105,7 @@ export async function ensureLicenseFromCheckoutSession(
 		customer_id: customerID,
 		checkout_session_id: session.id,
 		plan_code: plan?.code ?? "pending",
-		agreement_version: env.AGREEMENT_VERSION,
+		agreement_version: agreement,
 		licensee,
 		email,
 		refresh_secret_sha256: await secretDigest(refreshSecret),
@@ -109,7 +131,18 @@ export async function fulfilInvoice(
 
 	const existingToken = await findToken(deps.ledger, invoiceID)
 
-	if (existingToken) return { outcome: "already_minted", lid: existingToken.lid, invoiceID }
+	if (existingToken) {
+		// A crash between the insert and the send leaves the email pending; the retry that finds the token sends it.
+		if (existingToken.email_state !== "sent") {
+			const holder = await findLicense(deps.ledger, existingToken.lid)
+
+			if (holder) {
+				await sendTokenEmail(deps, holder, existingToken)
+			}
+		}
+
+		return { outcome: "already_minted", lid: existingToken.lid, invoiceID }
+	}
 
 	const invoice = await deps.stripe.invoices.retrieve(invoiceID)
 
@@ -143,11 +176,11 @@ export async function fulfilInvoice(
 		}
 	}
 
-	const subscription = await deps.stripe.subscriptions.retrieve(subscriptionID)
-	const periodEnd = subscriptionPeriodEnd(subscription)
+	// The line's own period, not the subscription's current one: a replayed or backfilled invoice after a later renewal
+	// must mint the period it paid for, never the newer one.
+	const periodEnd = line.period?.end
 
-	if (periodEnd === undefined)
-		return { outcome: "refused", reason: `subscription ${subscriptionID} carries no period end` }
+	if (periodEnd === undefined) return { outcome: "refused", reason: `invoice ${invoiceID} line carries no period end` }
 
 	let license = await findLicenseBySubscription(deps.ledger, subscriptionID)
 
@@ -181,7 +214,7 @@ export async function fulfilInvoice(
 		scope: plan.scope,
 		terms: plan.terms,
 		lid: license.lid,
-		agreement: plan.agreement,
+		agreement: license.agreement_version,
 	}
 
 	const token = await encodeLicenseKey(payload, env.LICENSE_SIGNING_KEY_PEM)

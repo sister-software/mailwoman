@@ -12,7 +12,7 @@ import type { EmailProvider, LicenseEmail } from "#email/provider"
 import { readEnv } from "#env"
 import { fulfilInvoice } from "#fulfil"
 import { openLedger } from "#ledger/client"
-import { countTokens, findLicenseBySubscription, findToken } from "#ledger/licenses"
+import { countTokens, findLicenseBySubscription, findToken, setEmailState } from "#ledger/licenses"
 import { stripeClient } from "#stripe/client"
 import { handleStripeEvent } from "#stripe/handlers"
 
@@ -27,6 +27,7 @@ import {
 	invoiceObject,
 	invoicePaidEvent,
 	invoicePaymentList,
+	subscriptionDeletedEvent,
 	subscriptionObject,
 } from "./support/stripe-fixtures.ts"
 import { stripeFetch } from "./support/stripe-mock.ts"
@@ -43,6 +44,7 @@ const email: EmailProvider = {
 
 const OCT_1 = Date.UTC(2026, 9, 1) / 1000
 const NOV_1 = Date.UTC(2026, 10, 1) / 1000
+const DEC_1 = Date.UTC(2026, 11, 1) / 1000
 const OCT_1_NEXT_YEAR = Date.UTC(2027, 9, 1) / 1000
 
 beforeAll(async () => {
@@ -55,7 +57,15 @@ beforeEach(() => {
 
 async function fixture(
 	suffix: string,
-	options: { issuance?: boolean; priceID?: string; status?: "paid" | "open"; licensee?: string } = {}
+	options: {
+		issuance?: boolean
+		priceID?: string
+		status?: "paid" | "open"
+		licensee?: string
+		subscriptionStatus?: string
+		agreementVersion?: string | null
+		renewalInvoiceID?: string
+	} = {}
 ) {
 	const bindings = {
 		...env,
@@ -65,6 +75,16 @@ async function fixture(
 	const signing = await envWithSigningKey(readEnv(bindings))
 	const worker = signing.env
 	const priceID = options.priceID ?? worker.STRIPE_PRICE_MONTHLY
+	const periodEnd = priceID === worker.STRIPE_PRICE_YEARLY ? OCT_1_NEXT_YEAR : NOV_1
+
+	const session = checkoutSessionObject({
+		id: `cs_${suffix}`,
+		subscriptionID: `sub_${suffix}`,
+		licensee: options.licensee ?? "Example Ltd",
+		email: "ops@example.com",
+		priceID,
+		agreementVersion: options.agreementVersion,
+	})
 
 	const fetchStripe = stripeFetch({
 		[`GET /v1/invoices/in_${suffix}`]: invoiceObject({
@@ -72,29 +92,28 @@ async function fixture(
 			subscriptionID: `sub_${suffix}`,
 			priceID,
 			paidAt: OCT_1,
+			periodEnd,
 			status: options.status,
 		}),
+		...(options.renewalInvoiceID
+			? {
+					[`GET /v1/invoices/${options.renewalInvoiceID}`]: invoiceObject({
+						id: options.renewalInvoiceID,
+						subscriptionID: `sub_${suffix}`,
+						priceID,
+						paidAt: NOV_1,
+						periodEnd: DEC_1,
+					}),
+				}
+			: {}),
 		[`GET /v1/subscriptions/sub_${suffix}`]: subscriptionObject({
 			id: `sub_${suffix}`,
 			priceID,
-			currentPeriodEnd: priceID === worker.STRIPE_PRICE_YEARLY ? OCT_1_NEXT_YEAR : NOV_1,
+			currentPeriodEnd: periodEnd,
+			status: options.subscriptionStatus,
 		}),
-		"GET /v1/checkout/sessions?": checkoutSessionList([
-			checkoutSessionObject({
-				id: `cs_${suffix}`,
-				subscriptionID: `sub_${suffix}`,
-				licensee: options.licensee ?? "Example Ltd",
-				email: "ops@example.com",
-				priceID,
-			}),
-		]),
-		[`GET /v1/checkout/sessions/cs_${suffix}`]: checkoutSessionObject({
-			id: `cs_${suffix}`,
-			subscriptionID: `sub_${suffix}`,
-			licensee: options.licensee ?? "Example Ltd",
-			email: "ops@example.com",
-			priceID,
-		}),
+		"GET /v1/checkout/sessions?": checkoutSessionList([session]),
+		[`GET /v1/checkout/sessions/cs_${suffix}`]: session,
 		[`GET /v1/charges/ch_${suffix}`]: chargeObject({
 			id: `ch_${suffix}`,
 			paymentIntentID: `pi_${suffix}`,
@@ -203,5 +222,61 @@ describe("fulfilment", () => {
 
 		expect((await findLicenseBySubscription(deps.ledger, "sub_5"))?.license_state).toBe("revoked")
 		expect(await findToken(deps.ledger, "in_5")).toBeDefined()
+	})
+
+	it("a retry that finds the token with its email still pending sends it, once, under the invoice id", async () => {
+		const { env: worker, deps } = await fixture("6")
+
+		await fulfilInvoice(worker, deps, "in_6")
+		await setEmailState(deps.ledger, "in_6", "pending")
+
+		expect(await fulfilInvoice(worker, deps, "in_6")).toMatchObject({ outcome: "already_minted" })
+		expect((await findToken(deps.ledger, "in_6"))?.email_state).toBe("sent")
+		expect(sent.map((entry) => entry.idempotencyKey)).toEqual(["in_6", "in_6"])
+	})
+
+	it("signs the agreement version the Checkout Session carried, on the first token and on a renewal after the environment moved on; a session without one is refused", async () => {
+		const { env: worker, deps, kid, publicKeyPEM } = await fixture("7", { renewalInvoiceID: "in_7b" })
+
+		await fulfilInvoice(worker, deps, "in_7")
+		await fulfilInvoice({ ...worker, AGREEMENT_VERSION: "commercial-2027-01" }, deps, "in_7b")
+
+		const verify = (token: string, now: string) =>
+			verifyLicenseKey(token, { trustedKeys: { [kid]: publicKeyPEM }, now: new Date(now) })
+
+		const first = await verify((await findToken(deps.ledger, "in_7"))!.token, "2026-10-15T00:00:00Z")
+		const renewal = await verify((await findToken(deps.ledger, "in_7b"))!.token, "2026-11-15T00:00:00Z")
+
+		expect(first).toMatchObject({ status: "valid", payload: { agreement: "commercial-2026-10" } })
+
+		expect(renewal).toMatchObject({
+			status: "valid",
+			payload: { agreement: "commercial-2026-10", expires: "2026-12-15" },
+		})
+
+		const bare = await fixture("7n", { agreementVersion: null })
+
+		await expect(fulfilInvoice(bare.env, bare.deps, "in_7n")).rejects.toThrow(/agreement_version/u)
+		expect(await findToken(bare.deps.ledger, "in_7n")).toBeUndefined()
+	})
+
+	it("a subscription that ends keeps the license active until the current token's date passes, then lapses it", async () => {
+		const { env: worker, deps } = await fixture("8", { subscriptionStatus: "canceled" })
+
+		await fulfilInvoice(worker, deps, "in_8")
+
+		const during = { ...deps, now: () => Date.UTC(2026, 9, 20) }
+		const after = { ...deps, now: () => Date.UTC(2026, 10, 20) }
+
+		await handleStripeEvent(worker, during, subscriptionDeletedEvent({ id: "evt_8d", subscriptionID: "sub_8" }))
+
+		expect(await findLicenseBySubscription(deps.ledger, "sub_8")).toMatchObject({
+			license_state: "active",
+			subscription_state: "canceled",
+		})
+
+		await handleStripeEvent(worker, after, subscriptionDeletedEvent({ id: "evt_8e", subscriptionID: "sub_8" }))
+
+		expect((await findLicenseBySubscription(deps.ledger, "sub_8"))?.license_state).toBe("lapsed")
 	})
 })
