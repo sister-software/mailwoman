@@ -75,7 +75,9 @@ if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^packages/mailw
 		REF=packages/mailwoman/tsconfig.tsbuildinfo
 		[ -f "$REF" ] || REF=packages/mailwoman/out/tsconfig.tsbuildinfo
 		[ -f "$REF" ] || REF=packages/mailwoman/out/cli.js
-		NEWEST_SRC=$(find packages/mailwoman/lib/commands packages/mailwoman/lib/cli-kit \( -name '*.tsx' -o -name '*.ts' \) -newer "$REF" -print -quit 2>/dev/null)
+		# cli-native holds the specs of the native commands (license, doctor, geocode …); the reference reads them from
+		# the compiled CLI too, so a spec edit there is the same staleness as one under commands/.
+		NEWEST_SRC=$(find packages/mailwoman/lib/commands packages/mailwoman/lib/cli-kit packages/mailwoman/lib/cli-native \( -name '*.tsx' -o -name '*.ts' \) -newer "$REF" -print -quit 2>/dev/null)
 		if [ -n "$NEWEST_SRC" ]; then
 			echo "pre-commit: $NEWEST_SRC is newer than the compiled CLI — run 'yarn compile' so the CLI reference regenerates from what you actually changed" >&2
 			exit 1

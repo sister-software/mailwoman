@@ -17,6 +17,7 @@ const SECRET = "s".repeat(43)
 describe("the license worker client", () => {
 	it("derives the worker origin with no trailing slash", () => {
 		expect(licenseWorkerURL("https://license.example/")).toBe("https://license.example")
+		expect(licenseWorkerURL(`https://license.example${"/".repeat(50_000)}`)).toBe("https://license.example")
 		expect(licenseWorkerURL(undefined)).toBe("https://license.mailwoman.ai")
 	})
 
