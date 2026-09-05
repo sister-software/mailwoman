@@ -17,8 +17,9 @@ import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { $public, DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { isWritable, pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
-import { type LicenseKeyVerification, verifyConfiguredLicenseKey } from "@mailwoman/core/license"
+import { isSelfServicePayload, type LicenseKeyVerification, verifyConfiguredLicenseKey } from "@mailwoman/core/license"
 import { confirmLicenseKeyPublished, type LicenseKeyPublication } from "@mailwoman/core/license/publication"
+import { checkLicenseStatus, type LicenseStatusAnswer } from "@mailwoman/core/license/status"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -137,6 +138,11 @@ export interface DoctorDeps {
 	 */
 	confirmLicenseKeyPublished(kid: string): Promise<LicenseKeyPublication>
 	/**
+	 * Ask the license worker whether a self-service license still stands. Called only when the configured key names one;
+	 * answers `unreachable` rather than throwing when there is no route.
+	 */
+	checkLicenseStatus(lid: string): Promise<LicenseStatusAnswer>
+	/**
 	 * Attempt to load the ONNX native binding (throws when unavailable).
 	 */
 	loadONNX(): Promise<void>
@@ -240,6 +246,7 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 		runtimeLicense: readRuntimeLicense,
 		licenseKey: () => verifyConfiguredLicenseKey(),
 		confirmLicenseKeyPublished: (kid) => confirmLicenseKeyPublished(kid),
+		checkLicenseStatus: (lid) => checkLicenseStatus(lid),
 		loadONNX: async () => {
 			await import("onnxruntime-node")
 		},
@@ -394,10 +401,16 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 	const key = await deps.licenseKey()
 	const publication = key && "kid" in key ? await deps.confirmLicenseKeyPublished(key.kid) : undefined
 
+	const lidStatus =
+		key && "payload" in key && isSelfServicePayload(key.payload)
+			? await deps.checkLicenseStatus(key.payload.lid)
+			: undefined
+
 	const runtimeLicense = runtimeLicenseCheck({
 		expression: await deps.runtimeLicense(),
 		...(key ? { key } : {}),
 		...(publication ? { publication } : {}),
+		...(lidStatus ? { lidStatus } : {}),
 	})
 
 	const layerLicenses = (await Promise.all(deps.layerDatabases().map((layer) => gatherLayerLicense(deps, layer))))

@@ -109,27 +109,30 @@ mailwoman geocode [options] [address...]
 
 ### `mailwoman license`
 
-Mint, issue and verify commercial license keys. `keygen` writes an Ed25519 signing pair under $MAILWOMAN_CONFIG_ROOT/license and prints the public key with its id; `issue` signs a key for a licensee; `verify` checks a token offline against the public keys this build trusts; `register` prints the well-known key file the shipped register derives. Without a key the AGPL-3.0-only branch applies — `mailwoman doctor` says which branch applies and why.
+Mint, issue, verify, adopt and refresh commercial license keys. `keygen` writes an Ed25519 signing pair under $MAILWOMAN_CONFIG_ROOT/license and prints the public key with its id; `issue` signs a key for a licensee; `verify` checks a token offline against the public keys this build trusts; `register` prints the well-known key file the shipped register derives; `adopt &lt;token&gt; --secret &lt;s&gt;` writes a purchased key to $MAILWOMAN_CONFIG_ROOT/license/key and its refresh secret beside it; `refresh` fetches the current key after a renewal. Without a key the AGPL-3.0-only branch applies — `mailwoman doctor` says which branch applies and why.
 
 ```
-mailwoman license [options] <action>
+mailwoman license [options] <action> [argument]
 ```
 
-| Argument   | Required | Description                              |
-| ---------- | -------- | ---------------------------------------- |
-| `<action>` | Yes      | One of: keygen, issue, verify, register. |
+| Argument     | Required | Description                                              |
+| ------------ | -------- | -------------------------------------------------------- |
+| `<action>`   | Yes      | One of: keygen, issue, verify, register, adopt, refresh. |
+| `[argument]` | No       | adopt: the token to adopt.                               |
 
-| Flag                          | Type    | Default | Description                                                                                |
-| ----------------------------- | ------- | ------- | ------------------------------------------------------------------------------------------ |
-| `--licensee [licensee]`       | string  | —       | issue: who holds the license, as the doctor should print it.                               |
-| `--expires [expires]`         | string  | —       | issue: the last day the key is valid, inclusive. Omit for a key with no expiry.            |
-| `--scope [scope]`             | string  | `all`   | issue: `all`, or a comma-separated list of package names the agreement covers.             |
-| `--major [major]`             | string  | —       | keygen: the mailwoman major version the key id is prefixed with. Defaults to this build's. |
-| `--key [key]`                 | string  | —       | verify: the token to check. Defaults to $MAILWOMAN_LICENSE_KEY.                            |
-| `--signing-key [signing-key]` | string  | —       | issue: the private key PEM. Defaults to $MAILWOMAN_CONFIG_ROOT/license/signing-key.pem.    |
-| `--online`                    | boolean | `false` | verify: also ask mailwoman.ai's well-known register whether the key id is still listed.    |
-| `--write`                     | boolean | `false` | register: write the well-known file under docs/static instead of printing it.              |
-| `--json`                      | boolean | `false` | Emit the result as JSON.                                                                   |
+| Flag                          | Type    | Default | Description                                                                                                                                                 |
+| ----------------------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--lid [lid]`                 | string  | —       | refresh: the license id, when not reading $MAILWOMAN_CONFIG_ROOT/license/refresh.json.                                                                      |
+| `--secret [secret]`           | string  | —       | adopt: the refresh secret from the purchase page or the first email, stored beside the key; refresh: the secret, when not reading the credentials file.     |
+| `--licensee [licensee]`       | string  | —       | issue: who holds the license, as the doctor should print it.                                                                                                |
+| `--expires [expires]`         | string  | —       | issue: the last day the key is valid, inclusive. Omit for a key with no expiry.                                                                             |
+| `--scope [scope]`             | string  | `all`   | issue: `all`, or a comma-separated list of package names the agreement covers.                                                                              |
+| `--major [major]`             | string  | —       | keygen: the mailwoman major version the key id is prefixed with. Defaults to this build's.                                                                  |
+| `--key [key]`                 | string  | —       | verify: the token to check. Defaults to $MAILWOMAN_LICENSE_KEY.                                                                                             |
+| `--signing-key [signing-key]` | string  | —       | issue: the private key PEM. Defaults to $MAILWOMAN_CONFIG_ROOT/license/signing-key.pem.                                                                     |
+| `--online`                    | boolean | `false` | verify: also ask mailwoman.ai's well-known register whether the key id is still listed, and the license worker whether a self-service license still stands. |
+| `--write`                     | boolean | `false` | register: write the well-known file under docs/static instead of printing it.                                                                               |
+| `--json`                      | boolean | `false` | Emit the result as JSON.                                                                                                                                    |
 
 ### `mailwoman openapi`
 

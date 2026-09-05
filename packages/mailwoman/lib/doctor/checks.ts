@@ -16,12 +16,15 @@
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import {
+	docsSiteURL,
+	isSelfServicePayload,
 	appliedLicenseBranch,
 	summarizeLicense,
 	type LicenseKeyVerification,
 	type LicenseObligation,
 } from "@mailwoman/core/license"
 import type { LicenseKeyPublication } from "@mailwoman/core/license/publication"
+import type { LicenseStatusAnswer } from "@mailwoman/core/license/status"
 
 /**
  * A check's outcome. `ok` = works; `missing` = absent but fixable; `degraded` = present but impaired.
@@ -103,6 +106,11 @@ export interface LicensePosture {
 	licensee?: string
 	keyID?: string
 	keyStatus?: "valid" | "expired" | "unknown_key" | "invalid" | "retired"
+	/**
+	 * For a self-service license: its id, and what the license worker said about it when the doctor could ask.
+	 */
+	lid?: string
+	lidStatus?: LicenseStatusAnswer
 }
 
 /**
@@ -505,6 +513,11 @@ export interface RuntimeLicenseObservation {
 	 * What mailwoman.ai's well-known register said about the key id, when the doctor could ask.
 	 */
 	publication?: LicenseKeyPublication
+	/**
+	 * What the license worker said about the license the key names, when the key is a self-service one and the doctor
+	 * could ask. A fifth word beside the publication, never a change to the branch: the offline token decides that.
+	 */
+	lidStatus?: LicenseStatusAnswer
 }
 
 /**
@@ -522,6 +535,7 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 	const applied = appliedLicenseBranch(o.expression, key, o.publication)
 	const summary = summarizeLicense(applied)
 	const obligations = `obligations: ${describeObligations(summary.obligations, summary.recognized)}`
+	const lid = key && "payload" in key && isSelfServicePayload(key.payload) ? key.payload.lid : undefined
 
 	const license: LicensePosture = {
 		subject: "mailwoman",
@@ -532,6 +546,8 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 		...(key && "payload" in key ? { licensee: key.payload.licensee } : {}),
 		...(key && "kid" in key ? { keyID: key.kid } : {}),
 		...(key ? { keyStatus: retired && key.status === "valid" ? "retired" : key.status } : {}),
+		...(lid ? { lid } : {}),
+		...(o.lidStatus ? { lidStatus: o.lidStatus } : {}),
 	}
 
 	if (!key) {
@@ -553,10 +569,32 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 
 		const expiry = key.payload.expires ? `expires ${key.payload.expires}` : "no expiry"
 
+		// The worker's word about the license itself. Revoked or lapsed is a degraded posture the offline token cannot
+		// see; unknown and unreachable are reported as what they are and change nothing.
+		if (o.lidStatus === "revoked" || o.lidStatus === "lapsed") {
+			return {
+				...base,
+				status: CheckStatus.Degraded,
+				detail: `${applied} — license key for ${key.payload.licensee} (${key.kid}; ${expiry}); online this license is ${o.lidStatus} · ${obligations}`,
+				consequence:
+					`The key verifies offline until its date, so the runtime still applies the commercial branch; online, the license it names is ${o.lidStatus}. ` +
+					`Manage billing at ${docsSiteURL()}/license.`,
+				fix: "mailwoman license refresh",
+				license,
+			}
+		}
+
+		const standing =
+			o.lidStatus === undefined
+				? ""
+				: o.lidStatus === "unreachable"
+					? "; license status unreachable"
+					: `; license ${o.lidStatus}`
+
 		return {
 			...base,
 			status: CheckStatus.OK,
-			detail: `${applied} — license key for ${key.payload.licensee} (${key.kid}; ${expiry}; ${freshness}) · ${obligations}`,
+			detail: `${applied} — license key for ${key.payload.licensee} (${key.kid}; ${expiry}; ${freshness}${standing}) · ${obligations}`,
 			license,
 		}
 	}

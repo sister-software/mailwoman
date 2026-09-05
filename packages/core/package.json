@@ -141,6 +141,11 @@
 			"default": "./out/license/publication.js",
 			"types": "./out/license/publication.d.ts"
 		},
+		"./license/status": {
+			"node": "./lib/license/status.ts",
+			"default": "./out/license/status.js",
+			"types": "./out/license/status.d.ts"
+		},
 		"./resources": {
 			"node": "./lib/resources/index.ts",
 			"default": "./out/resources/index.js",

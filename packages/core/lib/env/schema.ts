@@ -126,6 +126,11 @@ export const PublicEnvSchema = z.object({
 	 * and expiry rather than the token.
 	 */
 	MAILWOMAN_LICENSE_KEY: blankAsAbsent(z.string().min(1).optional()),
+	/**
+	 * The license worker's origin (`https://license.mailwoman.ai` when unset), for `mailwoman license refresh` and the
+	 * online per-license status. Pointed at a sandbox deploy or a test stub.
+	 */
+	MAILWOMAN_LICENSE_URL: blankAsAbsent(z.string().min(1).optional()),
 
 	// Eval scripts (`scripts/eval/*`) — diagnostic toggles + DB/probe overrides.
 	MAILWOMAN_WOF_HOT_DB: z.string().optional(),

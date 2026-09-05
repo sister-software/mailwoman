@@ -18,6 +18,19 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Added — self-service license: the site and the CLI
+
+`/license` gains a Buy section (the two Payment Links and the billing portal, rendered once the operator fills them in
+`docs/src/license/shop.ts`), a section on keeping the key current, and the reason a refunded license keeps verifying
+offline until its date. `/license/issued` is the page Stripe returns a buyer to: it polls the worker's claim route and
+shows the key, the one-time refresh secret, the `.env` fragment and the two commands to run. `mailwoman license adopt
+<token> --secret <s>` writes the key to `$MAILWOMAN_CONFIG_ROOT/license/key` and the credentials to `refresh.json`
+(mode 0600); `mailwoman license refresh` fetches the current key after a renewal; neither writes a token this build does
+not trust. `verifyConfiguredLicenseKey` reads the key file when `MAILWOMAN_LICENSE_KEY` is unset. `license verify
+--online` and `mailwoman doctor` report the per-license status as a fifth word beside the key-id publication: `active`,
+`lapsed`, `revoked`, `unknown`, or `unreachable`. New in core: `@mailwoman/core/license/status` (the worker client),
+`decodeLicenseKeyPayload`, and the env var `MAILWOMAN_LICENSE_URL`. `mailwoman --version` loads 136 modules, from 132.
+
 ### Added — `@mailwoman/license-worker` (private)
 
 A Cloudflare Worker that turns a paid Stripe invoice into a signed license token: webhook verification on SubtleCrypto,

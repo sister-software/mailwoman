@@ -53,6 +53,7 @@ function healthyDeps(): DoctorDeps {
 		runtimeLicense: async () => "AGPL-3.0-only OR LicenseRef-Commercial",
 		licenseKey: async () => undefined,
 		confirmLicenseKeyPublished: async () => "unreachable",
+		checkLicenseStatus: async () => "unknown",
 		loadONNX: async () => {},
 		nodeVersion: "24.18.0",
 		enginesFloor: ">=24.18.0",
@@ -234,6 +235,88 @@ describe("runDoctor (injected boundaries)", () => {
 		})
 
 		expect(check.detail).toContain("confirmed by mailwoman.ai")
+	})
+
+	it("license posture: a self-service key reports the license's status as its own word; revoked degrades the check, unreachable does not, and a hand-issued key never asks", async () => {
+		const lid = `lic_${"a".repeat(22)}`
+
+		const selfService = {
+			status: "valid" as const,
+			kid: "v9-deadbeef",
+			payload: {
+				v: 1 as const,
+				kid: "v9-deadbeef",
+				licensee: "Example Ltd",
+				issued: "2026-10-01",
+				expires: "2026-11-15",
+				scope: "all" as const,
+				terms: "LicenseRef-Commercial" as const,
+				lid,
+				agreement: "commercial-2026-10",
+			},
+		}
+
+		const asked: string[] = []
+
+		const active = await runDoctor({
+			...healthyDeps(),
+			licenseKey: async () => selfService,
+			confirmLicenseKeyPublished: async () => "listed",
+			checkLicenseStatus: async (id) => {
+				asked.push(id)
+
+				return "active"
+			},
+		})
+
+		const activeCheck = byID(active.checks, "license-mailwoman")
+
+		expect(asked).toEqual([lid])
+		expect(activeCheck.status).toBe(CheckStatus.OK)
+		expect(activeCheck.detail).toContain("license active")
+		expect(activeCheck.license).toMatchObject({ applied: "LicenseRef-Commercial", lid, lidStatus: "active" })
+
+		const revoked = await runDoctor({
+			...healthyDeps(),
+			licenseKey: async () => selfService,
+			confirmLicenseKeyPublished: async () => "listed",
+			checkLicenseStatus: async () => "revoked",
+		})
+
+		const revokedCheck = byID(revoked.checks, "license-mailwoman")
+
+		expect(revokedCheck.status).toBe(CheckStatus.Degraded)
+		expect(revokedCheck.detail).toContain("online this license is revoked")
+		expect(revokedCheck.consequence).toContain("offline")
+		expect(revokedCheck.fix).toBe("mailwoman license refresh")
+		// The branch is the offline token's: the stamp and the doctor keep agreeing on it.
+		expect(revokedCheck.license).toMatchObject({ applied: "LicenseRef-Commercial", lidStatus: "revoked" })
+
+		const unreachable = await runDoctor({
+			...healthyDeps(),
+			licenseKey: async () => selfService,
+			confirmLicenseKeyPublished: async () => "unreachable",
+			checkLicenseStatus: async () => "unreachable",
+		})
+
+		const unreachableCheck = byID(unreachable.checks, "license-mailwoman")
+
+		expect(unreachableCheck.status).toBe(CheckStatus.OK)
+		expect(unreachableCheck.detail).toContain("license status unreachable")
+
+		const handIssued = await runDoctor({
+			...healthyDeps(),
+			licenseKey: async () => ({
+				...selfService,
+				payload: { ...selfService.payload, lid: undefined, agreement: undefined },
+			}),
+			confirmLicenseKeyPublished: async () => "listed",
+			checkLicenseStatus: async () => {
+				throw new Error("a hand-issued key names no license")
+			},
+		})
+
+		expect(byID(handIssued.checks, "license-mailwoman").license).not.toHaveProperty("lidStatus")
 	})
 
 	it("license posture: an expired, unknown or retired key reports its reason and the open-source branch applies", async () => {
