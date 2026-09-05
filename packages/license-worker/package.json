@@ -1,0 +1,47 @@
+{
+	"name": "@mailwoman/license-worker",
+	"version": "0.0.0",
+	"private": true,
+	"description": "The self-service license worker: Stripe webhooks in, signed license tokens out, ledger in D1.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"type": "module",
+	"imports": {
+		"#*": {
+			"workerd": "./lib/*.ts",
+			"node": "./lib/*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
+	"exports": {
+		"./package.json": "./package.json"
+	},
+	"scripts": {
+		"dev": "wrangler dev --env sandbox",
+		"deploy:sandbox": "wrangler deploy --env sandbox",
+		"deploy:production": "wrangler deploy --env production",
+		"migrate:sandbox": "wrangler d1 migrations apply LICENSE_LEDGER --env sandbox --remote",
+		"migrate:production": "wrangler d1 migrations apply LICENSE_LEDGER --env production --remote",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@hono/zod-openapi": "^1.6.3",
+		"hono": "^4.13.7",
+		"zod": "^4.5.4"
+	},
+	"devDependencies": {
+		"@cloudflare/vitest-pool-workers": "^0.22.0",
+		"@cloudflare/workers-types": "^5.20260905.1",
+		"vitest": "4.1.11",
+		"wrangler": "^4.129.0"
+	},
+	"engines": {
+		"node": ">=24.18.0"
+	}
+}

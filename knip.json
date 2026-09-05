@@ -62,6 +62,10 @@
 		"packages/tile-worker": {
 			"entry": ["lib/index.ts", "lib/_worker.ts"]
 		},
+		"packages/license-worker": {
+			"entry": ["lib/index.ts", "test/**/*.ts", "vitest.config.ts"],
+			"ignoreDependencies": ["@cloudflare/vitest-pool-workers", "cloudflare", "wrangler"]
+		},
 		"docs": {
 			"entry": [
 				"docusaurus.config.ts",

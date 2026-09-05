@@ -752,6 +752,11 @@ jobs:
       - name: Test react (browser mode)
         run: yarn workspace @mailwoman/react test:browser
 
+      # The license worker's tests run under the Workers runtime (Miniflare) through the workspace's own vitest
+      # config; the root sweep excludes them for the same reason it excludes the react browser leg.
+      - name: Test license worker (Workers pool)
+        run: yarn test:license-worker
+
   # Packs every published workspace + installs the tarballs into a throwaway project (no monorepo
   # hoisting) + runs the compiled CLI. Catches the class of bug that shipped in v4.8.0: an
   # undeclared runtime dep, an unshipped file, or a command module with an eager top-level side
