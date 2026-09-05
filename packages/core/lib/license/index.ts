@@ -10,5 +10,6 @@
 export * from "#license/configured"
 export * from "#license/key"
 export * from "#license/obligations"
+export * from "#license/publication"
 export * from "#license/trusted-keys"
 export * from "#license/stamp"

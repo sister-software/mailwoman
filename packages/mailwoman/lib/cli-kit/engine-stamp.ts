@@ -9,13 +9,11 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import {
-	buildEngineStamp,
-	type EngineStamp,
-	type LicenseKeyVerification,
-	licenseNoticeLines,
-	verifyConfiguredLicenseKey,
-} from "@mailwoman/core/license"
+// The subpaths, not the `@mailwoman/core/license` barrel: the barrel re-exports the well-known freshness check and its
+// HTTP client, and this module runs on every CLI invocation, `--version` included.
+import { verifyConfiguredLicenseKey } from "@mailwoman/core/license/configured"
+import type { LicenseKeyVerification } from "@mailwoman/core/license/key"
+import { buildEngineStamp, type EngineStamp, licenseNoticeLines } from "@mailwoman/core/license/stamp"
 
 import { readMailwomanManifest } from "#cli-kit/metadata"
 
