@@ -10,6 +10,7 @@
 
 import { APIClient } from "#api/APIClient"
 import { docsSiteURL } from "#license/docs-site"
+import type { PublishedLicenseKeys } from "#license/register"
 import { silentLogger } from "#logging/index"
 
 /**
@@ -19,20 +20,6 @@ export const LICENSE_KEYS_WELL_KNOWN_PATH = "/.well-known/mailwoman/license-keys
 
 export function licenseKeysWellKnownURL(): string {
 	return `${docsSiteURL()}${LICENSE_KEYS_WELL_KNOWN_PATH}`
-}
-
-/**
- * The shape of the well-known file.
- */
-export interface PublishedLicenseKeys {
-	format: "mailwoman-license-keys/1"
-	keys: Array<{
-		kid: string
-		algorithm: "Ed25519"
-		publicKey: string
-		majorVersions: number[]
-		status: "active" | "retired"
-	}>
 }
 
 /**

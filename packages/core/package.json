@@ -126,6 +126,16 @@
 			"default": "./out/license/index.js",
 			"types": "./out/license/index.d.ts"
 		},
+		"./license/key": {
+			"node": "./lib/license/key.ts",
+			"default": "./out/license/key.js",
+			"types": "./out/license/key.d.ts"
+		},
+		"./license/register": {
+			"node": "./lib/license/register.ts",
+			"default": "./out/license/register.js",
+			"types": "./out/license/register.d.ts"
+		},
 		"./license/publication": {
 			"node": "./lib/license/publication.ts",
 			"default": "./out/license/publication.js",

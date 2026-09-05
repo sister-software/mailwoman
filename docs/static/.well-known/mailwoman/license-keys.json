@@ -1,6 +1,6 @@
 {
 	"format": "mailwoman-license-keys/1",
-	"$comment": "The public halves of the commercial license signing keys, by key id. `mailwoman doctor` and `mailwoman license verify --online` read this to confirm a configured key's id is still active; offline verification uses the same keys shipped in @mailwoman/core/license. Retire a key by setting its status to `retired` here and removing it from the shipped table in the next release.",
+	"$comment": "The public halves of the commercial license signing keys, by key id, with each key's status. `mailwoman doctor --online` and `mailwoman license verify --online` read this to confirm a configured key's id is still active; offline verification uses the same keys shipped in @mailwoman/core/license. Derived from packages/core/lib/license/register.ts by `mailwoman license register --write`; edit the register, not this file.",
 	"keys": [
 		{
 			"kid": "v9-ecec29be",

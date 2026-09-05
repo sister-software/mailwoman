@@ -10,7 +10,7 @@
 
 import { $public } from "#env"
 import { verifyLicenseKey, type LicenseKeyVerification } from "#license/key"
-import { TRUSTED_LICENSE_SIGNING_KEYS } from "#license/trusted-keys"
+import { trustedLicenseSigningKeys } from "#license/register"
 
 /**
  * Verify `MAILWOMAN_LICENSE_KEY` offline, or `undefined` when none is configured.
@@ -20,5 +20,5 @@ export function verifyConfiguredLicenseKey(now?: Date): LicenseKeyVerification |
 
 	if (!token) return undefined
 
-	return verifyLicenseKey(token, { trustedKeys: TRUSTED_LICENSE_SIGNING_KEYS, ...(now ? { now } : {}) })
+	return verifyLicenseKey(token, { trustedKeys: trustedLicenseSigningKeys(), ...(now ? { now } : {}) })
 }
