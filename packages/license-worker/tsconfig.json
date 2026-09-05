@@ -7,7 +7,7 @@
 		"noEmit": false,
 		"rewriteRelativeImportExtensions": true,
 		"erasableSyntaxOnly": true,
-		"types": ["@cloudflare/workers-types", "@cloudflare/vitest-pool-workers"],
+		"types": ["@cloudflare/workers-types"],
 		"resolveJsonModule": true
 	},
 	"include": ["./lib/**/*"],

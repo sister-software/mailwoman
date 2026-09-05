@@ -147,35 +147,51 @@ export function checkoutCompletedEvent(
 	}
 }
 
-export function chargeRefundedEvent(
-	init: EventInit & { chargeID: string; invoiceID: string; amount: number; refunded: number }
-) {
+export interface ChargeInit {
+	id: string
+	paymentIntentID: string
+	amount: number
+	refunded: number
+}
+
+export function chargeObject(init: ChargeInit) {
+	return {
+		id: init.id,
+		object: "charge",
+		payment_intent: init.paymentIntentID,
+		amount: init.amount,
+		amount_refunded: init.refunded,
+		refunded: init.refunded >= init.amount,
+	}
+}
+
+export function chargeRefundedEvent(init: EventInit & Omit<ChargeInit, "id"> & { chargeID: string }) {
 	return {
 		id: init.id ?? "evt_ch_1",
 		object: "event",
 		type: "charge.refunded",
 		livemode: init.livemode ?? false,
 		created: Math.floor(Date.now() / 1000),
-		data: {
-			object: {
-				id: init.chargeID,
-				object: "charge",
-				invoice: init.invoiceID,
-				amount: init.amount,
-				amount_refunded: init.refunded,
-				refunded: init.refunded >= init.amount,
-			},
-		},
+		data: { object: chargeObject({ ...init, id: init.chargeID }) },
 	}
 }
 
-export function chargeObject(init: { id: string; invoiceID: string; amount: number; refunded: number }) {
+/**
+ * The invoice-payments list for one PaymentIntent: the one query that links a charge back to its invoice.
+ */
+export function invoicePaymentList(init: { invoiceID: string; paymentIntentID: string }) {
 	return {
-		id: init.id,
-		object: "charge",
-		invoice: init.invoiceID,
-		amount: init.amount,
-		amount_refunded: init.refunded,
-		refunded: init.refunded >= init.amount,
+		object: "list",
+		url: "/v1/invoice_payments",
+		has_more: false,
+		data: [
+			{
+				id: `inpay_${init.invoiceID}`,
+				object: "invoice_payment",
+				invoice: init.invoiceID,
+				status: "paid",
+				payment: { type: "payment_intent", payment_intent: init.paymentIntentID },
+			},
+		],
 	}
 }

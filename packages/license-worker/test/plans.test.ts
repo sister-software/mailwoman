@@ -4,13 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
-import { env } from "cloudflare:test"
+import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
 
-import { type LicenseWorkerBindings, readEnv } from "#env"
+import { readEnv } from "#env"
 import { planCatalog, planForPrice } from "#plans"
 
-const worker = readEnv(env as unknown as LicenseWorkerBindings)
+const worker = readEnv(env)
 
 describe("the plan catalog", () => {
 	it("maps exactly the two configured Price IDs to the two plan codes", () => {

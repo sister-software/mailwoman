@@ -4,15 +4,15 @@
  * @author Teffen Ellis, et al.
  */
 
-import { env } from "cloudflare:test"
+import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
 
-import { type LicenseWorkerBindings, readEnv } from "#env"
+import { readEnv } from "#env"
 import { signingSelfTest } from "#signing"
 
 import { envWithSigningKey } from "./support/keys.ts"
 
-const base = readEnv(env as unknown as LicenseWorkerBindings)
+const base = readEnv(env)
 
 describe("the signing self-test", () => {
 	it("reads mismatch when the configured kid is not an active entry of the shipped register, even for a key that matches it", async () => {

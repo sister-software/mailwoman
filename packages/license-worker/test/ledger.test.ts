@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { env } from "cloudflare:test"
+import { env } from "cloudflare:workers"
 import { beforeAll, expect, test } from "vitest"
 
 import { openLedger } from "#ledger/client"

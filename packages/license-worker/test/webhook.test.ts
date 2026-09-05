@@ -4,16 +4,16 @@
  * @author Teffen Ellis, et al.
  */
 
-import { env } from "cloudflare:test"
+import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
 
-import { type LicenseWorkerBindings, readEnv } from "#env"
+import { readEnv } from "#env"
 import { ACCEPTED_EVENT_TYPES, verifyStripeEvent } from "#stripe/webhook"
 
 import { invoicePaidEvent } from "./support/stripe-fixtures.ts"
 import { signedWebhook } from "./support/stripe-mock.ts"
 
-const worker = readEnv(env as unknown as LicenseWorkerBindings)
+const worker = readEnv(env)
 
 describe("webhook verification", () => {
 	it("accepts a valid signature over the untouched body", async () => {

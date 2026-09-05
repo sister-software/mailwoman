@@ -4,12 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   Two stand-ins for Stripe. `signedWebhook` signs a payload the way Stripe's destination does, so the verifier under
- *   test sees a real `Stripe-Signature`. `mockStripe` intercepts `api.stripe.com` through Miniflare's fetch mock: `routes`
- *   maps `GET /v1/invoices/in_1`-style keys to JSON bodies, and anything else is a 404 the test sees as a failure, so an
- *   unexpected retrieval is loud rather than silently absent.
+ *   test sees a real `Stripe-Signature`. `stripeFetch` is a fetch the SDK's HTTP client calls instead of the network:
+ *   `routes` maps `GET /v1/invoices/in_1`-style keys to JSON bodies, matched by method and path prefix, and anything else
+ *   is a 404 the SDK raises as an error, so an unexpected retrieval is loud rather than silently absent.
  */
-
-import { fetchMock } from "cloudflare:test"
 
 export async function signedWebhook(
 	payload: object,
@@ -29,18 +27,26 @@ export async function signedWebhook(
 	return { body, signature: `t=${timestamp},v1=${v1}` }
 }
 
-export function mockStripe(routes: Record<string, unknown>): void {
-	fetchMock.activate()
-	fetchMock.disableNetConnect()
-
-	const origin = fetchMock.get("https://api.stripe.com")
-
-	for (const [key, body] of Object.entries(routes)) {
+export function stripeFetch(routes: Record<string, unknown>): typeof fetch {
+	const entries = Object.entries(routes).map(([key, body]) => {
 		const [method, path] = key.split(" ") as [string, string]
 
-		origin
-			.intercept({ method, path: (actual) => actual.startsWith(path) })
-			.reply(200, JSON.stringify(body), { headers: { "content-type": "application/json" } })
-			.persist()
+		return { method, path, body }
+	})
+
+	return async (input, init) => {
+		const request = new Request(input, init)
+		const url = new URL(request.url)
+		const target = `${url.pathname}${url.search}`
+		const route = entries.find((entry) => entry.method === request.method && target.startsWith(entry.path))
+
+		if (!route) {
+			return Response.json(
+				{ error: { type: "invalid_request_error", message: `no fixture for ${request.method} ${target}` } },
+				{ status: 404 }
+			)
+		}
+
+		return Response.json(route.body, { headers: { "request-id": "req_fixture" } })
 	}
 }

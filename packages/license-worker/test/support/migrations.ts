@@ -8,8 +8,9 @@
  *   runs the ones not yet recorded. Each test file gets a fresh D1, so a `beforeAll` per file is enough.
  */
 
-import { applyD1Migrations, type D1Migration, env } from "cloudflare:test"
+import { applyD1Migrations } from "cloudflare:test"
+import { env } from "cloudflare:workers"
 
 export async function applyMigrations(db: D1Database): Promise<void> {
-	await applyD1Migrations(db, (env as unknown as { TEST_MIGRATIONS: D1Migration[] }).TEST_MIGRATIONS)
+	await applyD1Migrations(db, env.TEST_MIGRATIONS)
 }

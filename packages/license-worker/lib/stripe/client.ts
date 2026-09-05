@@ -17,10 +17,14 @@ import type { LicenseWorkerEnv } from "#env"
  */
 export const STRIPE_API_VERSION = "2026-08-26.dahlia"
 
-export function stripeClient(env: LicenseWorkerEnv): Stripe {
+/**
+ * @param fetchImplementation The fetch the SDK calls; a test passes a stub that answers by method and path, so no
+ *   request leaves the process and an unexpected retrieval fails loudly.
+ */
+export function stripeClient(env: LicenseWorkerEnv, fetchImplementation: typeof fetch = fetch): Stripe {
 	return new Stripe(env.STRIPE_SECRET_KEY, {
 		apiVersion: STRIPE_API_VERSION,
-		httpClient: Stripe.createFetchHttpClient(),
-		maxNetworkRetries: 2,
+		httpClient: Stripe.createFetchHttpClient(fetchImplementation),
+		maxNetworkRetries: 0,
 	})
 }
