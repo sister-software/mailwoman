@@ -207,6 +207,11 @@
 			"default": "./out/cli-kit/metadata.js",
 			"types": "./out/cli-kit/metadata.d.ts"
 		},
+		"./cli-kit/engine-stamp": {
+			"node": "./lib/cli-kit/engine-stamp.ts",
+			"default": "./out/cli-kit/engine-stamp.js",
+			"types": "./out/cli-kit/engine-stamp.d.ts"
+		},
 		"./cli-kit/dropin": {
 			"node": "./lib/cli-kit/dropin.ts",
 			"default": "./out/cli-kit/dropin.js",

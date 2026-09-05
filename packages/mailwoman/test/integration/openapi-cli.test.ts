@@ -8,7 +8,8 @@
  *   engine: no model, no gazetteer, no data-root env required. The per-package `/openapi.json` tests
  *   (`api/index.test.ts`) already pin the document's content in depth; this test only pins the CLI
  *   wiring itself — that the command exists, prints a real v3.1.0 document to stdout with zero
- *   preamble, and that `--flavor 3.0` switches the diet.
+ *   preamble, and that `--flavor 3.0` switches the diet. stderr carries the license notice the launcher
+ *   prints after every command and nothing else: a model boot or a resolver banner would land there too.
  */
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
@@ -27,7 +28,9 @@ describe("mailwoman openapi", () => {
 		})
 
 		expect(stdout.startsWith('{"openapi":"3.1.0"')).toBe(true)
-		expect(stderr).toBe("")
+
+		// Anchored at both ends, so the match IS the whole stream.
+		expect(stderr).toMatch(/^mailwoman is licensed [^\n]*\nA commercial license waives that obligation: [^\n]*\n$/u)
 
 		const doc = parseJSONStrict<{ openapi: string; paths: Record<string, unknown> }>(stdout)
 		expect(doc.openapi).toBe("3.1.0")

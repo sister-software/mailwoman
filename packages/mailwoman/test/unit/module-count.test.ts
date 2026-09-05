@@ -22,14 +22,18 @@ import { describe, expect, test } from "vitest"
 const cliBin = workspacePath("mailwoman", "out", "cli.js")
 
 /**
- * Current whole-process module count for `mailwoman --version`.
+ * Current whole-process module count for `mailwoman --version`. The license notice the launcher prints after every
+ * command verifies the configured key offline, and reading `MAILWOMAN_LICENSE_KEY` goes through the typed env boundary:
+ * zod is 94 of the modules the notice adds over the launcher's own 55, and the key payload schema shares it. The
+ * well-known freshness check is NOT on this path: `@mailwoman/core/license/publication` carries the HTTP client and
+ * sits outside the `license` barrel, because with it inside this read 321.
  */
-const MEASURED_MODULE_COUNT = 36
+const MEASURED_MODULE_COUNT = 164
 
 /**
  * The ceiling allows launcher changes while rejecting a command or UI graph entering the version path.
  */
-const MODULE_COUNT_CEILING = 100
+const MODULE_COUNT_CEILING = 200
 
 /**
  * `registerHooks` covers ESM and CJS. `node:` builtins are excluded — they are resident before the CLI starts and

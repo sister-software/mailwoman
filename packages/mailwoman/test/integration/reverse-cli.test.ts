@@ -97,8 +97,12 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 				lon: number
 				containment: string
 				hierarchy: Array<{ id: number; name: string; placetype: string; country: string }>
+				engine: { name: string; license: string; licensee?: string }
 			}>(stripAnsiSpinner(result.stdout))
 
+			expect(json.engine.name).toBe("mailwoman")
+			expect(json.engine.license).toMatch(/^(AGPL-3\.0-only|LicenseRef-Commercial)$/u)
+			expect(json.engine).not.toHaveProperty("licensee")
 			expect(json.lat).toBe(40.7128)
 			expect(json.lon).toBe(-74.006)
 			expect(["polygon", "approximate"]).toContain(json.containment)

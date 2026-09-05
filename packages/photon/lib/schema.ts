@@ -10,7 +10,7 @@
  */
 
 import { z } from "@hono/zod-openapi"
-import { featureCollectionSchema, featureSchema } from "@mailwoman/api-kit"
+import { featureCollectionSchema, featureSchema, stampedResponseSchema } from "@mailwoman/api-kit"
 
 /**
  * Photon feature properties — OSM-derived keys; tolerant of extras (`[key: string]: unknown` on the wire type).
@@ -108,7 +108,7 @@ export const SchemaOrgPlaceSchema = z
  * Doc-only; the wire behavior is unchanged.
  */
 export const PhotonResponseSchema = z
-	.union([PhotonFeatureCollectionSchema, z.array(SchemaOrgPlaceSchema)])
+	.union([stampedResponseSchema(PhotonFeatureCollectionSchema), z.array(SchemaOrgPlaceSchema)])
 	.openapi("PhotonResponse")
 
 /**

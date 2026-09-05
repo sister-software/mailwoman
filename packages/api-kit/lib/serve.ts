@@ -25,10 +25,14 @@ export type ServeNodeOptions = Parameters<typeof serve>[0] & {
 	onListen?: (info: { port: number; address: string }) => void
 }
 
+/**
+ * The listener plus the port it bound, which `port: 0` callers need. Only `port` is added: `net.Server` already owns an
+ * `address()` method, and Node's cluster child calls it inside its own `listening` handler, so a value property of that
+ * name on the handle breaks every cluster worker at listen.
+ */
 export type ServerHandle = ServerType &
 	AsyncDisposable & {
 		readonly port: number
-		readonly address: string
 	}
 
 const defaultOnListen = ({ port, address }: { port: number; address: string }) =>
@@ -42,10 +46,7 @@ export function serveNode({ onListen = defaultOnListen, ...options }: ServeNodeO
 		const server = serve(options, (info) => {
 			server.off("error", reject)
 
-			Object.defineProperties(server, {
-				port: { value: info.port, writable: false },
-				address: { value: info.address, writable: false },
-			})
+			Object.defineProperty(server, "port", { value: info.port, writable: false })
 
 			try {
 				onListen(info)

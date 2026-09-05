@@ -18,6 +18,7 @@ import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 
 import type { CommandSpec, ParsedCommandComponent } from "#cli-kit"
+import { printLicenseNotice, resolveEngineStamp } from "#cli-kit/engine-stamp"
 
 interface ServerConfig {
 	port: number
@@ -58,6 +59,12 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 		let liveWorkerCount = cpus
 
 		cluster.on("listening", () => {
+			// One notice per server, from the primary, the first time a worker binds. The launcher's own notice prints
+			// at exit, which for a daemon is the wrong moment.
+			if (!anyListened) {
+				void resolveEngineStamp().then(printLicenseNotice)
+			}
+
 			anyListened = true
 		})
 
@@ -222,7 +229,12 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 
 			// 2 MiB body cap (accommodates a full /v1/batch up to MAILWOMAN_BATCH_MAX addresses) is
 			// createMailwomanAPI's own default — carried from the express server's `express.json({ limit: "2mb" })`.
-			const app = createMailwomanAPI(engine, { batchMax: Math.max(1, $public.MAILWOMAN_BATCH_MAX) })
+			const engineStamp = await resolveEngineStamp()
+
+			const app = createMailwomanAPI(engine, {
+				batchMax: Math.max(1, $public.MAILWOMAN_BATCH_MAX),
+				engine: engineStamp.stamp,
+			})
 
 			const server = await serveNode({
 				fetch: app.fetch,

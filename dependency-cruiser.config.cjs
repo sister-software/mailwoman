@@ -47,6 +47,20 @@ module.exports = {
 			to: { path: "^packages/[^/]+/lib/(?:tools|sdk)/" },
 		},
 		{
+			name: "no-app-factory-to-mailwoman",
+			comment:
+				"An HTTP surface's app factory — `lib/app.ts`, `lib/routes.ts`, `lib/schema.ts`, `lib/engine.ts` and the " +
+				"format/projection modules beside them — is engine-agnostic: tests inject a fixture engine, and the engine " +
+				"stamp arrives as an option value. Only the bin (`lib/cli.ts`) may reach the `mailwoman` package, which " +
+				"carries the CLI, the model loader and the resolver graph. `nominatim`, `photon` and `libpostal` list " +
+				"`mailwoman` as a dependency for their bins, so nothing but this rule stops a factory from importing it.",
+			severity: "error",
+			from: {
+				path: "^packages/(?:api|nominatim|photon|libpostal)/lib/(?:app|routes|schema|engine|format|projection)[.]ts$",
+			},
+			to: { path: "^packages/mailwoman/" },
+		},
+		{
 			name: "no-circular-dependencies",
 			comment:
 				"Keep the workspace dependency graph acyclic. A cycle that closes only through a dynamic `import()` or a " +

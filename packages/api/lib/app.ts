@@ -9,8 +9,9 @@
  */
 
 import { OpenAPIHono } from "@hono/zod-openapi"
-import { errorResponse, attachOpenAPIDocs, type OpenAPIDocInfo } from "@mailwoman/api-kit"
+import { attachOpenAPIDocs, engineHeaders, errorResponse, type OpenAPIDocInfo } from "@mailwoman/api-kit"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import type { EngineStamp } from "@mailwoman/core/license"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { bodyLimit } from "hono/body-limit"
 import { cors } from "hono/cors"
@@ -53,6 +54,13 @@ export interface MailwomanAPIOptions {
 	 * Max `addresses` rows accepted by `POST /v1/batch`. Default 500 (see `routes.ts`'s `DEFAULT_BATCH_MAX`).
 	 */
 	batchMax?: number
+
+	/**
+	 * The engine stamp to carry on every response: `engine` in each `/v1` body and the `Server` + `Link: rel="license"`
+	 * headers everywhere. Absent when an embedding application builds the app without the `mailwoman` package; the
+	 * `mailwoman serve` command always passes one.
+	 */
+	engine?: EngineStamp
 }
 
 /**
@@ -118,6 +126,10 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 		app.use(cors({ origin: "*", allowMethods: ["GET", "POST", "OPTIONS"], allowHeaders: ["*"], maxAge: 86_400 }))
 	}
 
+	if (options.engine) {
+		app.use(engineHeaders(options.engine))
+	}
+
 	// Safety net: an engine fault answers the native envelope, never a crash. `detail` carries the raw message —
 	// this surface is ours to design, so (unlike the vendor-constrained drop-in envelopes) we can be helpful.
 	app.onError((error, c) => {
@@ -141,7 +153,10 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 		})
 	)
 
-	registerMailwomanAPIRoutes(app, engine, { batchMax: options.batchMax ?? DEFAULT_BATCH_MAX })
+	registerMailwomanAPIRoutes(app, engine, {
+		batchMax: options.batchMax ?? DEFAULT_BATCH_MAX,
+		engine: options.engine,
+	})
 
 	attachOpenAPIDocs(app, MAILWOMAN_API_DOC_INFO)
 

@@ -8,6 +8,7 @@
 
 import type { PipelineTiming } from "@mailwoman/core/pipeline"
 
+import { resolveEngineStamp } from "#cli-kit/engine-stamp"
 import {
 	booleanValue,
 	CLIUsageError,
@@ -305,7 +306,9 @@ async function formatResult(result: GeocodeResult, format: Format, compact: bool
 		return JSON.stringify(value, null, compact ? 0 : 2)
 	}
 
-	return JSON.stringify(result, null, compact ? 0 : 2)
+	const { stamp } = await resolveEngineStamp()
+
+	return JSON.stringify({ ...result, engine: stamp }, null, compact ? 0 : 2)
 }
 
 async function openSession(options: GeocodeOptions) {

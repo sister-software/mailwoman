@@ -18,6 +18,22 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Added — the engine stamp and the license notice
+
+Every JSON record the CLI emits (`geocode --json`, `reverse --json`, `autocomplete --json`), every `/v1` body, each
+Nominatim result, and the Photon FeatureCollection carry an `engine` object: `name`, `version`, the license branch that
+applies (`AGPL-3.0-only` or `LicenseRef-Commercial`), `license_url`, and, under the open-source branch, a one-sentence
+`notice`. Every HTTP response from the four servers carries `Server: mailwoman/<version> (<license>)` and
+`Link: <https://mailwoman.ai/license>; rel="license"`. Every CLI invocation ends with the same notice on stderr, and each
+server prints it once at listen. A valid `MAILWOMAN_LICENSE_KEY` silences the notice; nothing else does. The stamp never
+carries the licensee or the key id. Nothing here changes what runs. The page the stamp links to is new:
+`https://mailwoman.ai/license`.
+
+### Changed — `mailwoman autocomplete --json` wraps its array
+
+The command emitted a bare JSON array. It now emits `{ "engine": …, "entries": […] }`, so the record carries the
+same `engine` stamp as `geocode --json` and `reverse --json`. Read `entries` where you read the array before.
+
 ### Added — `nsul.db`, the GB UPRN → unit-postcode register
 
 `mailwoman gazetteer build nsul` builds a sealed, `build-local` layer database from the ONS National Statistics

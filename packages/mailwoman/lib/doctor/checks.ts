@@ -16,12 +16,12 @@
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import {
-	chooseLicenseBranch,
+	appliedLicenseBranch,
 	summarizeLicense,
-	type LicenseKeyPublication,
 	type LicenseKeyVerification,
 	type LicenseObligation,
 } from "@mailwoman/core/license"
+import type { LicenseKeyPublication } from "@mailwoman/core/license/publication"
 
 /**
  * A check's outcome. `ok` = works; `missing` = absent but fixable; `degraded` = present but impaired.
@@ -519,7 +519,7 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 	const key = o.key
 	const retired = o.publication === "retired" || o.publication === "unlisted"
 	const commercial = key?.status === "valid" && !retired
-	const applied = chooseLicenseBranch(o.expression, { commercialAgreement: commercial })
+	const applied = appliedLicenseBranch(o.expression, key, o.publication)
 	const summary = summarizeLicense(applied)
 	const obligations = `obligations: ${describeObligations(summary.obligations, summary.recognized)}`
 

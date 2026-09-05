@@ -8,8 +8,9 @@
  */
 
 import { OpenAPIHono } from "@hono/zod-openapi"
-import { attachOpenAPIDocs, type OpenAPIDocInfo } from "@mailwoman/api-kit"
+import { attachOpenAPIDocs, engineHeaders, type OpenAPIDocInfo } from "@mailwoman/api-kit"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import type { EngineStamp } from "@mailwoman/core/license"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { bodyLimit } from "hono/body-limit"
 import { cors } from "hono/cors"
@@ -43,6 +44,13 @@ export interface LibpostalAppOptions {
 	 * already owns the CORS headers.
 	 */
 	cors?: boolean
+
+	/**
+	 * The engine stamp behind the `Server` + `Link: rel="license"` headers on every response. Headers only: `/parse`
+	 * answers a bare array by protocol, so there is no body field to carry it. Absent when an embedding application
+	 * builds the app without the `mailwoman` package; the `libpostal` bin always passes one.
+	 */
+	engine?: EngineStamp
 }
 
 /**
@@ -81,6 +89,10 @@ export function createLibpostalApp(engine: LibpostalEngine, options: LibpostalAp
 
 	if (options.cors !== false) {
 		app.use(cors({ origin: "*", allowMethods: ["GET", "POST", "OPTIONS"], allowHeaders: ["*"], maxAge: 86_400 }))
+	}
+
+	if (options.engine) {
+		app.use(engineHeaders(options.engine))
 	}
 
 	// Safety net: an engine fault returns the clean legacy JSON error, never a crash (wire contract).

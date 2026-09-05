@@ -95,4 +95,22 @@ function dispatchCommand(): Promise<number> {
 	)
 }
 
-process.exitCode = await (rootVersionRequest ? printVersion() : dispatchCommand())
+const exitCode = await (rootVersionRequest ? printVersion() : dispatchCommand())
+
+// The notice is the last thing written, for every command and every exit code, and it never changes the exit code: a
+// failure to build it is reported on stderr and the command's own result stands. Only the cluster primary prints it —
+// `mailwoman serve` forks workers that run this same file, and one notice per process would be one per CPU. A builtin
+// reached through `process.getBuiltinModule` keeps this file at its one static import.
+if (process.getBuiltinModule("node:cluster").isPrimary) {
+	try {
+		const { printLicenseNotice, resolveEngineStamp } = await import("#cli-kit/engine-stamp")
+
+		printLicenseNotice(await resolveEngineStamp())
+	} catch (error) {
+		const { errorMessage } = await import("@mailwoman/core/errors")
+
+		console.error(`[license] posture unavailable: ${errorMessage(error)}`)
+	}
+}
+
+process.exitCode = exitCode

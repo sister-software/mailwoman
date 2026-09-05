@@ -1,0 +1,45 @@
+---
+title: License
+description: Mailwoman is AGPL-3.0-only, or commercial under a paid license. This page says what each branch asks of you and how a key is configured and checked.
+---
+
+# License
+
+Mailwoman is dual-licensed: **AGPL-3.0-only**, or **LicenseRef-Commercial** under a paid agreement. Every
+release ships under both, and the branch that applies to an installation is the one it can show a
+key for.
+
+## The open-source branch
+
+Under the AGPL, three obligations attach. You keep the copyright notices (attribution). A modified
+copy carries the same license (share-alike). And if people use your modified copy over a network,
+they are entitled to its corresponding source (the source offer, section 13). `mailwoman doctor`
+reports these three by name for the installation it runs on.
+
+Without a license key, every `mailwoman` command ends with a two-line notice on stderr that says so,
+and every HTTP response from the native API and the drop-in servers carries a `Server` header naming
+the branch and a `Link: rel="license"` header pointing here. JSON responses carry the same in an
+`engine` object. None of it changes what runs.
+
+## The commercial branch
+
+A commercial license releases you from the source offer and the share-alike condition, so you can
+build closed products and services on Mailwoman. The terms are in
+[`COMMERCIAL-LICENSE.md`](https://github.com/sister-software/mailwoman/blob/main/COMMERCIAL-LICENSE.md);
+the price and what it covers are on the [pricing page](/docs/pricing). To obtain one,
+[email us about a license](mailto:teffen@sister.software?subject=Mailwoman%20licensing).
+
+## Configuring and checking a key
+
+A key is a signed token verified offline against the public keys each release ships.
+
+```bash
+export MAILWOMAN_LICENSE_KEY="mwl1.…"
+mailwoman license verify --online
+mailwoman doctor
+```
+
+`license verify` reports `valid`, `expired`, `unknown_key` or `invalid`, and with `--online` also whether
+mailwoman.ai still lists the key id as active. `doctor` reports the branch that applies and the
+obligations it carries. With a valid key the notice is silent and `engine.license` reads
+`LicenseRef-Commercial`.

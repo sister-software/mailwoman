@@ -8,8 +8,9 @@
  */
 
 import { OpenAPIHono } from "@hono/zod-openapi"
-import { attachOpenAPIDocs, type OpenAPIDocInfo } from "@mailwoman/api-kit"
+import { attachOpenAPIDocs, engineHeaders, type OpenAPIDocInfo } from "@mailwoman/api-kit"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import type { EngineStamp } from "@mailwoman/core/license"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { cors } from "hono/cors"
 
@@ -34,6 +35,13 @@ export interface NominatimAppOptions {
 	 * (#1017). Set `false` when a reverse proxy already owns the CORS headers.
 	 */
 	cors?: boolean
+
+	/**
+	 * The engine stamp to carry on every response: `engine` on each jsonv2 result and geojson collection, and the
+	 * `Server` + `Link: rel="license"` headers everywhere. Absent when an embedding application builds the app without
+	 * the `mailwoman` package; the `nominatim` bin always passes one.
+	 */
+	engine?: EngineStamp
 }
 
 /**
@@ -76,11 +84,15 @@ export function createNominatimApp(engine: NominatimEngine, options: NominatimAp
 		app.use(cors({ origin: "*", allowMethods: ["GET", "OPTIONS"], allowHeaders: ["*"], maxAge: 86_400 }))
 	}
 
+	if (options.engine) {
+		app.use(engineHeaders(options.engine))
+	}
+
 	// Safety net: a malformed query or an engine fault must never crash the process into a stack-trace 500 — the
 	// clean legacy JSON error instead (`{error}` — NOT photon's FeatureCollection+message envelope).
 	app.onError((_error, c) => c.json({ error: "internal error" }, 500))
 
-	registerNominatimRoutes(app, engine)
+	registerNominatimRoutes(app, engine, options.engine)
 	attachOpenAPIDocs(app, NOMINATIM_DOC_INFO)
 
 	return app

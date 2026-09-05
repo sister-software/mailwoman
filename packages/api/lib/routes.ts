@@ -20,8 +20,15 @@
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
-import { geocoderUnavailableError, metricsSnapshot, recordTimed } from "@mailwoman/api-kit"
+import {
+	geocoderUnavailableError,
+	metricsSnapshot,
+	recordTimed,
+	stampedResponseSchema,
+	withEngineStamp,
+} from "@mailwoman/api-kit"
 import type { AddressTree } from "@mailwoman/core/decoder"
+import type { EngineStamp } from "@mailwoman/core/license"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { canonicalKey, type ComponentDict, formatAddress, type FormatAddressOptions } from "@mailwoman/formatter"
 
@@ -59,6 +66,11 @@ export interface RegisterMailwomanAPIRoutesOptions {
 	 * Max `addresses` rows accepted by `POST /v1/batch`. Default {@link DEFAULT_BATCH_MAX}.
 	 */
 	batchMax?: number
+
+	/**
+	 * The engine stamp attached as `engine` to every `/v1` success body. Absent: no field is added.
+	 */
+	engine?: EngineStamp
 }
 
 const errorContent = (description: string) => ({
@@ -78,7 +90,7 @@ const parseQueryParams = z.object({
 const parseResponses = {
 	200: {
 		description: "The tokenized input span + ranked solutions.",
-		content: { "application/json": { schema: ParseOutcomeSchema } },
+		content: { "application/json": { schema: stampedResponseSchema(ParseOutcomeSchema) } },
 	},
 	400: errorContent("`address` is required."),
 	501: errorContent("The backing engine method is not wired for this deployment."),
@@ -87,7 +99,7 @@ const parseResponses = {
 const geocodeResponses = {
 	200: {
 		description: "One geocode result (parse → resolve cascade), passed through from the engine verbatim.",
-		content: { "application/json": { schema: GeocodeOutcomeSchema } },
+		content: { "application/json": { schema: stampedResponseSchema(GeocodeOutcomeSchema) } },
 	},
 	400: errorContent("`address` is required."),
 	503: errorContent("The geocoding engine is not wired for this deployment (dependencies missing)."),
@@ -96,7 +108,7 @@ const geocodeResponses = {
 const batchResponses = {
 	200: {
 		description: "One result per input address, in input order (per-row error isolation).",
-		content: { "application/json": { schema: BatchResponseSchema } },
+		content: { "application/json": { schema: stampedResponseSchema(BatchResponseSchema) } },
 	},
 	400: errorContent("Body must be `{ addresses: string[] }`."),
 	413: errorContent("`addresses.length` exceeds the configured batch cap."),
@@ -106,7 +118,7 @@ const batchResponses = {
 const resolveResponses = {
 	200: {
 		description: "The same tree, decorated in place with gazetteer coordinates + attribution.",
-		content: { "application/json": { schema: ResolveResponseSchema } },
+		content: { "application/json": { schema: stampedResponseSchema(ResolveResponseSchema) } },
 	},
 	400: errorContent("Body must be `{ tree: AddressTree, opts? }`."),
 	503: errorContent("The resolver is not wired for this deployment (dependencies missing)."),
@@ -125,7 +137,7 @@ const reloadResponses = {
 const formatResponses = {
 	200: {
 		description: "The rendered address string + the deterministic canonical match key.",
-		content: { "application/json": { schema: FormatResponseSchema } },
+		content: { "application/json": { schema: stampedResponseSchema(FormatResponseSchema) } },
 	},
 	400: errorContent("Invalid request body."),
 }
@@ -259,6 +271,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 	options: RegisterMailwomanAPIRoutesOptions = {}
 ): void {
 	const batchMax = options.batchMax ?? DEFAULT_BATCH_MAX
+	const stamp = options.engine
 
 	app.openapi(parseGetRoute, async (c) => {
 		if (!engine.parse) return c.json({ error: "parse not implemented" }, 501)
@@ -271,7 +284,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 		const inputMode = inputModeRaw === "fragmented" || inputModeRaw === "formatted" ? inputModeRaw : undefined
 		const outcome = await engine.parse(address, { debug, inputMode })
 
-		return c.json(outcome, 200)
+		return c.json(withEngineStamp(outcome, stamp), 200)
 	})
 
 	app.openapi(
@@ -290,7 +303,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 
 			const outcome = await engine.parse(trimmed, { debug: debug ?? false, inputMode: input_mode })
 
-			return c.json(outcome, 200)
+			return c.json(withEngineStamp(outcome, stamp), 200)
 		},
 		(result, c) => {
 			if (!result.success) return c.json({ error: "address is required" }, 400)
@@ -317,7 +330,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 				.then((outcome) => {
 					recordTimed(performance.now() - t0, String(outcome.resolution_tier ?? "admin"))
 
-					return c.json(outcome as GeocodeOutcome, 200)
+					return c.json(withEngineStamp(outcome as GeocodeOutcome, stamp), 200)
 				})
 				.catch((error) => {
 					recordTimed(performance.now() - t0, "error")
@@ -339,7 +352,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 		async (c) => {
 			const { addresses, input_mode } = c.req.valid("json")
 
-			if (!addresses.length) return c.json({ results: [] }, 200)
+			if (!addresses.length) return c.json(withEngineStamp({ results: [] }, stamp), 200)
 
 			if (addresses.length > batchMax) {
 				return c.json({ error: `batch too large: ${addresses.length} > ${batchMax}` }, 413)
@@ -361,7 +374,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 				// Same wire-vs-domain cast as `/v1/geocode` above — `BatchRow`'s `GeocodeOutcome` half is a
 				// `Record<string, unknown>` passthrough; `BatchResponseSchema` now types its `GeocodeOutcome` union
 				// member as the real shape.
-				return c.json(outcome as z.infer<typeof BatchResponseSchema>, 200)
+				return c.json(withEngineStamp(outcome as z.infer<typeof BatchResponseSchema>, stamp), 200)
 			} catch (error) {
 				recordTimed(performance.now() - t0, "error")
 				throw error
@@ -390,7 +403,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 
 			const outcome = await engine.resolveTree(tree as AddressTree, opts ?? {})
 
-			return c.json(outcome, 200)
+			return c.json(withEngineStamp(outcome, stamp), 200)
 		},
 		(result, c) => {
 			if (!result.success) return c.json({ error: "body must be { tree: AddressTree, opts? }" }, 400)
@@ -414,7 +427,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 		const dict = toComponentDict(components)
 		const formatted = formatAddress(dict, country, formatOptions as FormatAddressOptions | undefined)
 
-		return c.json({ formatted, canonicalKey: canonicalKey(dict) }, 200)
+		return c.json(withEngineStamp({ formatted, canonicalKey: canonicalKey(dict) }, stamp), 200)
 	})
 
 	app.openapi(healthRoute, async (c) => {

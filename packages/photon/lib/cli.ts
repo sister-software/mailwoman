@@ -27,6 +27,7 @@ import {
 	resolveGazetteerOrExit,
 	runDropInCLI,
 } from "mailwoman/cli-kit/dropin"
+import type { ResolvedEngineStamp } from "mailwoman/cli-kit/engine-stamp"
 import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
 import { createResolverBackend, mailwomanDataRoot } from "mailwoman/resolver-backend"
 
@@ -62,7 +63,7 @@ const MAX_QUERY_LEN = 512
 
 const BINARY_NAME = "mailwoman-photon"
 
-async function serve(): Promise<void> {
+async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const { values } = parseArguments({
 		options: {
 			port: { type: "string", default: "2322" },
@@ -219,9 +220,9 @@ async function serve(): Promise<void> {
 		},
 	}
 
-	const app = createPhotonApp(engine, { cors: values.cors })
+	const app = createPhotonApp(engine, { cors: values.cors, engine: engineStamp.stamp })
 
-	serveNode({
+	await serveNode({
 		fetch: app.fetch,
 		port,
 		hostname: host,

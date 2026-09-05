@@ -5,6 +5,7 @@
  */
 
 import type { SchemaOrgPlace } from "@mailwoman/annotations"
+import { buildEngineStamp, type EngineStamp } from "@mailwoman/core/license"
 import {
 	createNominatimApp,
 	MAILWOMAN_LICENCE,
@@ -321,4 +322,56 @@ test("GET /openapi.json serves the emitted 3.1 document with all five paths", as
 	const doc = (await res.json()) as { openapi: string; paths: Record<string, unknown> }
 	expect(doc.openapi).toBe("3.1.0")
 	expect(Object.keys(doc.paths)).toEqual(expect.arrayContaining(["/", "/search", "/reverse", "/lookup", "/status"]))
+})
+
+// MARK: engine stamp
+
+const stamp = buildEngineStamp({ version: "9.2.0", expression: "AGPL-3.0-only OR LicenseRef-Commercial" })
+
+test("engine option: each jsonv2 result carries `engine` beside an unchanged `licence`; the geojson collection carries it once", async () => {
+	const app = createNominatimApp(jsonldEngine, { engine: stamp })
+
+	const jsonv2 = await app.request("/search?q=1600+Pennsylvania&format=jsonv2")
+
+	expect(jsonv2.headers.get("link")).toBe('<https://mailwoman.ai/license>; rel="license"')
+
+	const results = (await jsonv2.json()) as Array<{ licence: string; engine: EngineStamp }>
+
+	expect(results.length).toBeGreaterThan(0)
+
+	for (const r of results) {
+		expect(r.licence).toBe(MAILWOMAN_LICENCE)
+		expect(r.engine).toEqual(stamp)
+	}
+
+	const geojson = (await (await app.request("/search?q=1600+Pennsylvania&format=geojson")).json()) as {
+		engine: EngineStamp
+		features: object[]
+	}
+
+	expect(geojson.engine).toEqual(stamp)
+
+	for (const f of geojson.features) {
+		expect(f).not.toHaveProperty("engine")
+	}
+
+	const reverse = (await (await app.request("/reverse?lat=38.8977&lon=-77.0365")).json()) as { engine: EngineStamp }
+
+	expect(reverse.engine).toEqual(stamp)
+
+	const jsonld = (await (await app.request("/search?q=1600+Pennsylvania&format=jsonld")).json()) as object[]
+
+	for (const place of jsonld) {
+		expect(place).not.toHaveProperty("engine")
+	}
+})
+
+test("no engine option: results and headers are unchanged", async () => {
+	const res = await createNominatimApp(jsonldEngine).request("/search?q=1600+Pennsylvania&format=jsonv2")
+
+	expect(res.headers.get("server")).toBeNull()
+
+	for (const r of (await res.json()) as object[]) {
+		expect(r).not.toHaveProperty("engine")
+	}
 })

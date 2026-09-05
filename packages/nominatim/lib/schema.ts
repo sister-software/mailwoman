@@ -10,6 +10,7 @@
  */
 
 import { z } from "@hono/zod-openapi"
+import { stampedResponseSchema } from "@mailwoman/api-kit"
 
 /**
  * The `addressdetails=1` breakdown — OSM-derived keys; tolerant of extras.
@@ -174,7 +175,11 @@ export const SchemaOrgPlaceSchema = z
  * Doc-only; the wire behavior is unchanged.
  */
 export const NominatimSearchResponseSchema = z
-	.union([NominatimResultsSchema, NominatimFeatureCollectionSchema, z.array(SchemaOrgPlaceSchema)])
+	.union([
+		z.array(stampedResponseSchema(NominatimResultSchema)),
+		stampedResponseSchema(NominatimFeatureCollectionSchema),
+		z.array(SchemaOrgPlaceSchema),
+	])
 	.openapi("NominatimSearchResponse")
 
 /**
@@ -183,7 +188,12 @@ export const NominatimSearchResponseSchema = z
  * Doc-only; the wire behavior is unchanged.
  */
 export const NominatimReverseResponseSchema = z
-	.union([NominatimResultSchema, z.null(), NominatimFeatureCollectionSchema, SchemaOrgPlaceSchema])
+	.union([
+		stampedResponseSchema(NominatimResultSchema),
+		z.null(),
+		stampedResponseSchema(NominatimFeatureCollectionSchema),
+		SchemaOrgPlaceSchema,
+	])
 	.openapi("NominatimReverseResponse")
 
 /**
@@ -193,7 +203,10 @@ export const NominatimReverseResponseSchema = z
  * `/search`'s three-wide union.
  */
 export const NominatimLookupResponseSchema = z
-	.union([NominatimResultsSchema, NominatimFeatureCollectionSchema])
+	.union([
+		z.array(stampedResponseSchema(NominatimResultSchema)),
+		stampedResponseSchema(NominatimFeatureCollectionSchema),
+	])
 	.openapi("NominatimLookupResponse")
 
 /**

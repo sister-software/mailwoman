@@ -6,6 +6,7 @@
 
 import { isValidLatitude, isValidLongitude } from "@mailwoman/spatial/coordinate-bounds"
 
+import { resolveEngineStamp } from "#cli-kit/engine-stamp"
 import {
 	CLIError,
 	CLIUsageError,
@@ -96,6 +97,7 @@ async function reverseGeocodeCommand(parsed: ParsedCommand): Promise<number> {
 
 	try {
 		const result = await geocoder.reverseGeocode(lat, lon)
+		const { stamp } = await resolveEngineStamp()
 
 		if (parsed.values.format === "text") {
 			const lines = [`containment: ${result.containment}`]
@@ -127,6 +129,7 @@ async function reverseGeocodeCommand(parsed: ParsedCommand): Promise<number> {
 							lon: place.lon,
 							...(place.distanceKm === undefined ? {} : { distanceKm: place.distanceKm }),
 						})),
+						engine: stamp,
 					},
 					null,
 					2

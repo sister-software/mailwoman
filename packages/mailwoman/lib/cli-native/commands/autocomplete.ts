@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { resolveEngineStamp } from "#cli-kit/engine-stamp"
 import {
 	booleanValue,
 	CLIUsageError,
@@ -29,7 +30,11 @@ export const spec = {
 			validationMessage: "--limit must be an integer between 1 and 100.",
 		},
 		fst: { type: "string", hint: "path", description: "FST binary; defaults from $MAILWOMAN_FST_BIN." },
-		json: { type: "boolean", default: false, description: "Emit a JSON array instead of formatted text." },
+		json: {
+			type: "boolean",
+			default: false,
+			description: "Emit { engine, entries } as JSON instead of formatted text.",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -45,7 +50,12 @@ export async function run(args: readonly string[]): Promise<number> {
 		const { formatAutocomplete, resolveFSTPath, runAutocomplete } = await import("#autocomplete-core")
 		const fstPath = resolveFSTPath(stringValue(parsed.values, "fst"))
 		const entries = await runAutocomplete(prefix, { fstPath, limit: numberValue(parsed.values, "limit")! })
-		const output = booleanValue(parsed.values, "json") ? JSON.stringify(entries, null, 2) : formatAutocomplete(entries)
+
+		const { stamp } = await resolveEngineStamp()
+
+		const output = booleanValue(parsed.values, "json")
+			? JSON.stringify({ engine: stamp, entries }, null, 2)
+			: formatAutocomplete(entries)
 
 		process.stdout.write(`${output}\n`)
 

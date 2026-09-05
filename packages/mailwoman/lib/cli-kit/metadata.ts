@@ -33,31 +33,46 @@ export function argument(config: CommandArgumentMetadata): string {
 export interface MailwomanManifest {
 	version: string
 	engines?: { node?: string }
-	license?: string
+	license: string
 }
+
+let manifest: Promise<MailwomanManifest> | undefined
 
 /**
  * Read mailwoman's own manifest by package self-reference, so the same file answers from the source tree, `out/`, and a
- * published tarball. The one place this read happens; the doctor and the license command both call it.
+ * published tarball. The one place this read happens, and it happens once per process: the version line, the license
+ * notice, the doctor and the license command all read the same file.
+ *
+ * @throws {TypeError} When the manifest carries no string `version` or `license` — a broken install, not a choice.
  */
-export async function readMailwomanManifest(): Promise<MailwomanManifest> {
+export function readMailwomanManifest(): Promise<MailwomanManifest> {
+	manifest ??= readManifestFile()
+
+	return manifest
+}
+
+async function readManifestFile(): Promise<MailwomanManifest> {
 	const { resolvePackagePath } = await import("@mailwoman/core/module/resolvers")
 	const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
 
 	const manifestPath = resolvePackagePath("mailwoman", "package.json")
 
-	const manifest = await readLocalJSONFile<{ version?: unknown; engines?: { node?: string }; license?: string }>(
+	const raw = await readLocalJSONFile<{ version?: unknown; engines?: { node?: string }; license?: unknown }>(
 		manifestPath
 	)
 
-	if (typeof manifest.version !== "string") {
+	if (typeof raw.version !== "string") {
 		throw new TypeError(`Missing string version in ${manifestPath}`)
 	}
 
+	if (typeof raw.license !== "string") {
+		throw new TypeError(`Missing string license in ${manifestPath}`)
+	}
+
 	return {
-		version: manifest.version,
-		...(manifest.engines ? { engines: manifest.engines } : {}),
-		...(manifest.license ? { license: manifest.license } : {}),
+		version: raw.version,
+		license: raw.license,
+		...(raw.engines ? { engines: raw.engines } : {}),
 	}
 }
 

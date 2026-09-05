@@ -17,12 +17,13 @@ import { serveNode } from "@mailwoman/api-kit"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { expandAbbreviations, normalize } from "@mailwoman/normalize"
 import { corsBannerLine, loadClassifierOrExit, openAPICommand, runDropInCLI } from "mailwoman/cli-kit/dropin"
+import type { ResolvedEngineStamp } from "mailwoman/cli-kit/engine-stamp"
 
 import { createLibpostalApp, LIBPOSTAL_DOC_INFO, type LibpostalEngine, treeToParseMatches } from "#index"
 
 const BINARY_NAME = "mailwoman-libpostal"
 
-async function serve(): Promise<void> {
+async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const { values } = parseArguments({
 		options: {
 			port: { type: "string", default: "8081" },
@@ -63,9 +64,9 @@ async function serve(): Promise<void> {
 		},
 	}
 
-	const app = createLibpostalApp(engine, { cors: values.cors })
+	const app = createLibpostalApp(engine, { cors: values.cors, engine: engineStamp.stamp })
 
-	serveNode({
+	await serveNode({
 		fetch: app.fetch,
 		port,
 		hostname: host,
