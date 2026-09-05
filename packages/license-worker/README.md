@@ -68,7 +68,8 @@ the installed release does not trust is a token no installation accepts, which i
    required, and metadata `agreement_version` equal to `AGREEMENT_VERSION`. Stripe copies the metadata onto each
    Checkout Session; the worker records it on the license once and signs it into every token for that license's
    life, so changing `AGREEMENT_VERSION` later moves no existing subscriber. A session without the metadata is not
-   fulfilled.
+   fulfilled. The success URL is `https://mailwoman.ai/license/issued?session_id={CHECKOUT_SESSION_ID}`, the page that
+   polls the claim route; the links themselves go into `docs/src/license/shop.ts`.
 8. Set `ISSUANCE_ENABLED = "true"` and run the workflow again without `migrate`.
 
 The same steps with `--env sandbox` stand up the sandbox on a key pair generated for it alone
