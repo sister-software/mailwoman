@@ -3,8 +3,10 @@
 Mailwoman neural-classifier weights for CJK scripts: the char-path base model, Japanese and Chinese under one
 49-label head (`stage3-cjk`). Data-only; `@mailwoman/neural` loads it at runtime.
 
-**0.0.1 is a name reservation.** The first functional release ships with the next `mailwoman` minor, once the served
-board read is recorded on the epic (#2164) and the `ja-jp` / `zh-cn` overlays exist.
+**0.0.1 is a name reservation** and ships the card and the vocabulary only; `model.onnx` joins the manifest's `files`
+with the first functional release, which ships with the next `mailwoman` minor once the served board read is recorded
+on the epic (#2164) and the `ja-jp` / `zh-cn` overlays exist. The tarball audit refuses a manifest that promises a file
+the tarball lacks, so the graph is not listed until it is materialized at release time.
 
 ## What this package ships
 
