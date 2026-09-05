@@ -5130,6 +5130,7 @@ __metadata:
     hono: "npm:^4.13.7"
     kysely: "npm:^0.29.5"
     kysely-d1: "npm:^0.4.0"
+    stripe: "npm:^22.6.1"
     vitest: "npm:4.1.11"
     wrangler: "npm:^4.129.0"
     zod: "npm:^4.5.4"
@@ -23500,6 +23501,18 @@ __metadata:
   version: 2.0.1
   resolution: "strip-json-comments@npm:2.0.1"
   checksum: 10/1074ccb63270d32ca28edfb0a281c96b94dc679077828135141f27d52a5a398ef5e78bcf22809d23cadc2b81dfbe345eb5fd8699b385c8b1128907dec4a7d1e1
+  languageName: node
+  linkType: hard
+
+"stripe@npm:^22.6.1":
+  version: 22.6.1
+  resolution: "stripe@npm:22.6.1"
+  peerDependencies:
+    "@types/node": ">=18"
+  peerDependenciesMeta:
+    "@types/node":
+      optional: true
+  checksum: 10/e93dcf9991c598fd7260153e011690c9ef4b7e4cfba5e112c20ed175c993619490ccb32ce56da2e1cab95d66dbbc24384e7f30bfa7763dac55cd0e958ec9fff4
   languageName: node
   linkType: hard
 
