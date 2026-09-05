@@ -105,6 +105,11 @@
 			"default": "./out/tokenizer.js",
 			"types": "./out/tokenizer.d.ts"
 		},
+		"./char-encoder": {
+			"node": "./lib/char-encoder.ts",
+			"default": "./out/char-encoder.js",
+			"types": "./out/char-encoder.d.ts"
+		},
 		"./onnx-runner": {
 			"types": "./out/onnx-runner.d.ts",
 			"browser": "./out/onnx-runner-browser.js",

@@ -1,0 +1,138 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ * @file The character encoder for char-path models — the runtime twin of `encode_row_units` in
+ *   `corpus-python/src/mailwoman_train/char_tokenizer.py`, under the same contract (D1): one UNIT per Unicode code point,
+ *   `char_ids (S, W)` where slot `j` of unit `[b, e)` is the code point at `b - ctx + j`, PAD outside the string or at
+ *   and past `e + ctx`, UNK for a code point the sealed vocabulary lacks; the row truncated to S units and padded with
+ *   all-PAD unit rows carrying attention 0. A CJK model never meets SentencePiece: this is its whole tokenizer.
+ *
+ *   Code points, not UTF-16 units. Python indexes `str` by code point, so an astral character (𠮷) is one unit there
+ *   and must be one unit here; iterating the string with `Array.from` is what keeps the two encoders producing the same
+ *   `char_ids` for the same text, which `test/unit/char-encoder.test.ts` pins against a fixture the Python side wrote.
+ */
+
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import type { PathBuilderLike } from "path-ts"
+
+/**
+ * The padding id: every slot outside the string or the unit's window, and every all-padding unit row. Fixed at 0 by the
+ * trainer's `build_char_vocab`, which writes `<pad>` first.
+ */
+export const PAD_CHAR_ID = 0
+
+/**
+ * The unknown id: a code point the sealed vocabulary lacks. Fixed at 1 by `build_char_vocab`, which writes `<unk>`
+ * second; every real character follows in code-point order.
+ */
+export const UNK_CHAR_ID = 1
+
+/**
+ * A sealed character vocabulary: code point → id. The JSON artifact (`char-vocab-*.json`) is this map verbatim.
+ */
+export type CharVocabulary = ReadonlyMap<string, number>
+
+export interface CharEncoderContract {
+	/**
+	 * S — the unit count every row is truncated or padded to (the training config's `max_units`).
+	 */
+	maxUnits: number
+	/**
+	 * W — slots per unit (`max_unit_width`); the unit's own code point plus `ctxChars` on each side.
+	 */
+	maxUnitWidth: number
+	/**
+	 * Context code points on each side of the unit (`char_ctx`).
+	 */
+	ctxChars: number
+}
+
+export interface CharUnit {
+	/**
+	 * The unit's text — one code point in char mode.
+	 */
+	text: string
+	/**
+	 * UTF-16 offsets into the original string, so a decoded span can be sliced from the input as typed.
+	 */
+	start: number
+	end: number
+}
+
+export interface CharEncoding {
+	/**
+	 * `(S, W)` code-point ids, row-major, padded to S.
+	 */
+	charIDs: number[][]
+	/**
+	 * `(S)` — 1 for a real unit, 0 for padding.
+	 */
+	attentionMask: number[]
+	/**
+	 * The real units, in order — the token list the decoder receives (length ≤ S).
+	 */
+	units: CharUnit[]
+}
+
+/**
+ * Encode one string under the contract. Every real unit is one code point of `raw`; the first S of them are kept.
+ */
+export function encodeCharUnits(raw: string, vocabulary: CharVocabulary, contract: CharEncoderContract): CharEncoding {
+	const { maxUnits, maxUnitWidth, ctxChars } = contract
+	const codePoints = Array.from(raw)
+	const kept = codePoints.slice(0, maxUnits)
+	const charIDs: number[][] = []
+	const units: CharUnit[] = []
+	let offset = 0
+
+	for (const [index, codePoint] of kept.entries()) {
+		const row: number[] = []
+
+		for (let slot = 0; slot < maxUnitWidth; slot++) {
+			const position = index - ctxChars + slot
+
+			if (position >= 0 && position < codePoints.length && position < index + 1 + ctxChars) {
+				row.push(vocabulary.get(codePoints[position]!) ?? UNK_CHAR_ID)
+			} else {
+				row.push(PAD_CHAR_ID)
+			}
+		}
+
+		charIDs.push(row)
+		units.push({ text: codePoint, start: offset, end: offset + codePoint.length })
+		offset += codePoint.length
+	}
+
+	const attentionMask = new Array<number>(charIDs.length).fill(1)
+
+	while (charIDs.length < maxUnits) {
+		charIDs.push(new Array<number>(maxUnitWidth).fill(PAD_CHAR_ID))
+		attentionMask.push(0)
+	}
+
+	return { charIDs, attentionMask, units }
+}
+
+/**
+ * Read a sealed `char-vocab-*.json` artifact. Refuses a file that is not a flat `{ character: integer }` map, because a
+ * malformed vocabulary would encode every character as UNK and the model would answer confidently on nothing.
+ */
+export async function loadCharVocabulary(path: PathBuilderLike): Promise<CharVocabulary> {
+	const parsed = await readLocalJSONFile<Record<string, unknown>>(path)
+	const vocabulary = new Map<string, number>()
+
+	for (const [character, id] of Object.entries(parsed)) {
+		if (typeof id !== "number" || !Number.isInteger(id)) {
+			throw new TypeError(`char vocabulary ${String(path)}: entry ${JSON.stringify(character)} has a non-integer id`)
+		}
+
+		vocabulary.set(character, id)
+	}
+
+	if (vocabulary.get("<pad>") !== PAD_CHAR_ID || vocabulary.get("<unk>") !== UNK_CHAR_ID) {
+		throw new TypeError(`char vocabulary ${String(path)}: <pad> must be ${PAD_CHAR_ID} and <unk> ${UNK_CHAR_ID}`)
+	}
+
+	return vocabulary
+}
