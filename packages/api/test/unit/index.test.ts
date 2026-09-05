@@ -7,6 +7,7 @@
 import { createMailwomanAPI, type MailwomanAPIEngine, type ParsedAddressResult } from "@mailwoman/api"
 import { metricsSnapshot, resetMetricsForTest } from "@mailwoman/api-kit"
 import { type GeocodeOutcomeLike, MAX_ADDRESS_LENGTH } from "@mailwoman/api/schema"
+import type { EngineStamp } from "@mailwoman/core/license"
 import { beforeEach, expect, test } from "vitest"
 
 beforeEach(() => {
@@ -606,4 +607,71 @@ test("POST /v1/batch: the length bound applies PER ROW, not just to the request"
 	})
 
 	expect(res.status).toBe(400)
+})
+
+// MARK: engine stamp
+
+const stamp: EngineStamp = {
+	name: "mailwoman",
+	version: "9.2.0",
+	license: "AGPL-3.0-only",
+	license_url: "https://mailwoman.ai/license",
+	notice: "n",
+}
+
+test("engine option: every /v1 body carries `engine` and every response carries the two headers", async () => {
+	const app = createMailwomanAPI(fullEngine, { engine: stamp })
+
+	const post = (path: string, body: unknown) =>
+		app.request(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })
+
+	for (const res of [
+		await post("/v1/parse", { address: "1600 Pennsylvania Ave NW" }),
+		await post("/v1/geocode", { address: "1600 Pennsylvania Ave NW" }),
+		await post("/v1/resolve", { tree: { raw: "x", roots: [] } }),
+		await post("/v1/format", { components: { house_number: "1600", road: "Pennsylvania Ave NW" }, country: "US" }),
+	]) {
+		expect(res.status).toBe(200)
+		expect(res.headers.get("server")).toBe("mailwoman/9.2.0 (AGPL-3.0-only)")
+		expect(res.headers.get("link")).toBe('<https://mailwoman.ai/license>; rel="license"')
+		expect(((await res.json()) as { engine: EngineStamp }).engine).toEqual(stamp)
+	}
+
+	const health = await app.request("/health")
+
+	expect(health.headers.get("link")).toBe('<https://mailwoman.ai/license>; rel="license"')
+	expect((await health.json()) as object).not.toHaveProperty("engine")
+})
+
+test("engine option: /v1/batch stamps the envelope once, not the rows", async () => {
+	const app = createMailwomanAPI(fullEngine, { engine: stamp })
+
+	const res = await app.request("/v1/batch", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify({ addresses: ["a", "b"] }),
+	})
+
+	const body = (await res.json()) as { engine: EngineStamp; results: object[] }
+
+	expect(body.engine).toEqual(stamp)
+	expect(body.results).toHaveLength(2)
+
+	for (const row of body.results) {
+		expect(row).not.toHaveProperty("engine")
+	}
+})
+
+test("no engine option: no `engine` field and no headers", async () => {
+	const app = createMailwomanAPI(fullEngine)
+
+	const res = await app.request("/v1/parse", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify({ address: "1600 Pennsylvania Ave NW" }),
+	})
+
+	expect(res.headers.get("server")).toBeNull()
+	expect(res.headers.get("link")).toBeNull()
+	expect((await res.json()) as object).not.toHaveProperty("engine")
 })

@@ -17,6 +17,7 @@
  */
 
 import { z } from "@hono/zod-openapi"
+import { EngineStampSchema } from "@mailwoman/api-kit"
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { DerivationProjection, Evidence } from "@mailwoman/evidence"
 
@@ -85,6 +86,7 @@ export const ParseOutcomeSchema = z
 		components: z.array(ParseComponentSchema),
 		tree: z.looseObject({ raw: z.string(), roots: z.array(AddressNodeSchema) }),
 		debug: z.string().optional(),
+		engine: EngineStampSchema.optional(),
 	})
 	.openapi("ParseOutcome")
 
@@ -401,6 +403,15 @@ export const GeocodeOutcomeSchema = GeocodeOutcomeLikeSchema.loose().openapi("Ge
 export type GeocodeOutcome = z.infer<typeof GeocodeOutcomeSchema>
 
 /**
+ * `POST /v1/geocode`'s 200 body: the outcome plus the optional `engine` stamp the ROUTE attaches. Separate from
+ * `GeocodeOutcomeSchema` on purpose — that schema's key set is pinned to the engine's `GeocodeResult` by
+ * `mailwoman/test/integration/api-schema-drift.test.ts`, and `engine` is a wire addition the engine never produces.
+ */
+export const GeocodeResponseSchema = GeocodeOutcomeLikeSchema.extend({ engine: EngineStampSchema.optional() })
+	.loose()
+	.openapi("GeocodeResponse")
+
+/**
  * `POST /v1/batch` request body.
  */
 export const BatchRequestSchema = z
@@ -431,6 +442,7 @@ const BatchRowSchema = z.union([GeocodeOutcomeSchema, BatchRowErrorSchema])
 export const BatchResponseSchema = z
 	.object({
 		results: z.array(BatchRowSchema),
+		engine: EngineStampSchema.optional(),
 	})
 	.openapi("BatchResponse")
 
@@ -451,6 +463,7 @@ export const ResolveRequestSchema = z
 export const ResolveResponseSchema = z
 	.object({
 		tree: z.looseObject({ raw: z.string(), roots: z.array(AddressNodeSchema) }),
+		engine: EngineStampSchema.optional(),
 	})
 	.openapi("ResolveResponse")
 
@@ -481,6 +494,7 @@ export const FormatResponseSchema = z
 	.object({
 		formatted: z.string(),
 		canonicalKey: z.string(),
+		engine: EngineStampSchema.optional(),
 	})
 	.openapi("FormatResponse")
 
