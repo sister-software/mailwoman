@@ -130,10 +130,39 @@ def cmd_export(args: argparse.Namespace) -> int:
 
     cfg = load_config(args.config)
     ck_dir = Path(args.checkpoint)
-    tokenizer = Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")
     model = MailwomanCoarseEncoder.from_pretrained(ck_dir)
-
     out = Path(args.output)
+
+    if getattr(cfg.data, "char_mode", "off") == "char":
+        # The char path has no SentencePiece tokenizer: the graph takes `char_ids (B, S, W)` where S is the
+        # config's max_units and W its max_unit_width, and the parity sample is real val rows encoded the way
+        # training encoded them.
+        from .export_onnx import verify_char_parity
+
+        if cfg.data.max_units is None or cfg.data.max_unit_width is None:
+            sys.stderr.write("char_mode: char needs data.max_units and data.max_unit_width to export\n")
+            return 2
+
+        export_to_onnx(
+            model,
+            out,
+            opset=args.opset,
+            max_length=cfg.data.max_units,
+            pad_token_id=0,
+            char_window=cfg.data.max_unit_width,
+        )
+        char_samples: list[tuple[list[list[int]], list[int]]] = []
+        for batch in iter_batches(cfg, None, split="val", batch_size=1, seed=0, row_limit=args.parity_samples):
+            char_samples.append((batch["char_ids"][0], batch["attention_mask"][0]))
+            if len(char_samples) >= args.parity_samples:
+                break
+        if not char_samples:
+            sys.stderr.write("warning: no val rows available for parity check\n")
+        metrics = verify_char_parity(model, out, char_samples, atol=args.tolerance)
+        print(json.dumps({"output": str(out), "encoder": "char", **metrics}, indent=2))
+        return 0
+
+    tokenizer = Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")
     export_to_onnx(
         model,
         out,

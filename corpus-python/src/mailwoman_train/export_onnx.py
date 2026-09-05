@@ -27,8 +27,17 @@ def export_to_onnx(
     max_length: int = 128,
     pad_token_id: int = 0,
     dummy_batch: int = 1,
+    char_window: int | None = None,
 ) -> Path:
     """Export the token-classification model to ONNX. Returns the output path.
+
+    A char-path model (``use_char_embed``) exports behind ``char_ids (batch, sequence, char_window)`` +
+    ``attention_mask (batch, sequence)`` and no ``input_ids``: its forward never reads token ids, and a
+    graph that took them would bind the runtime to a SentencePiece vocabulary the model does not have.
+    ``char_window`` is the training config's ``max_unit_width`` (the unit plus its context characters), a
+    data-side constant the model does not carry, so the caller must pass it; ``max_length`` is
+    ``max_units``. The char path is channel-free by contract (D5), so none of the anchor, gazetteer or
+    lexicon inputs are exported for it.
 
     Always exports from CPU. torch.onnx.export on a ROCm/HIP device on gfx1103 has been
     observed to hang during graph tracing (HW Exception, GPU node-1 hang) — exporting from
@@ -82,6 +91,22 @@ def export_to_onnx(
 
         def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> Any:
             out = self.inner(input_ids=input_ids, attention_mask=attention_mask)
+            outs = [out.logits]
+            if self.with_locale:
+                outs.append(out.locale_logits)
+            if self.with_spans:
+                outs.append(out.span_scores)
+            return tuple(outs) if len(outs) > 1 else outs[0]
+
+    class _LogitsOnlyChar(nn.Module):
+        def __init__(self, inner: nn.Module) -> None:
+            super().__init__()
+            self.inner = inner
+            self.with_locale = False
+            self.with_spans = False
+
+        def forward(self, char_ids: torch.Tensor, attention_mask: torch.Tensor) -> Any:
+            out = self.inner(char_ids=char_ids, attention_mask=attention_mask)
             outs = [out.logits]
             if self.with_locale:
                 outs.append(out.locale_logits)
@@ -291,7 +316,20 @@ def export_to_onnx(
             f"(got street_type={has_street_type}, locality_surface={has_locality_surface}, "
             f"anchor={has_anchor}, gaz={has_gaz}, country={has_country})."
         )
-    if has_bundle:
+    has_char = bool(getattr(model_cpu, "use_char_embed", False))
+    if has_char:
+        if char_window is None or char_window <= 0:
+            raise ValueError("a char-path model needs char_window (the config's max_unit_width) to export")
+        dummy_chars = torch.zeros((dummy_batch, max_length, char_window), dtype=torch.long)
+        dummy_chars[:, 0, :] = 1  # <unk>, so the first unit is a real unit rather than all padding
+        export_model: Any = _LogitsOnlyChar(model_cpu).eval()
+        args: tuple[Any, ...] = (dummy_chars, dummy_mask)
+        input_names: list[str] = ["char_ids", "attention_mask"]
+        dynamic_shapes: dict[str, dict[int, str]] = {
+            "char_ids": {0: "batch", 1: "sequence"},  # dim 2 (char_window) is fixed
+            "attention_mask": {0: "batch", 1: "sequence"},
+        }
+    elif has_bundle:
         street_type_args = (
             torch.zeros((dummy_batch, max_length, street_type_dim), dtype=torch.float32),
             torch.zeros((dummy_batch, max_length), dtype=torch.float32),
@@ -300,10 +338,8 @@ def export_to_onnx(
             torch.zeros((dummy_batch, max_length, locality_surface_dim), dtype=torch.float32),
             torch.zeros((dummy_batch, max_length), dtype=torch.float32),
         )
-        export_model: Any = _LogitsOnlyBundle(
-            model_cpu
-        ).eval()  # wrapper picked dynamically below; carries with_locale/with_spans
-        args: tuple[Any, ...] = (
+        export_model = _LogitsOnlyBundle(model_cpu).eval()  # carries with_locale/with_spans
+        args = (
             dummy_ids,
             dummy_mask,
             *anchor_args,
@@ -468,4 +504,38 @@ def verify_parity(
             n += 1
     if max_diff > atol:
         raise RuntimeError(f"ONNX/PyTorch parity broken: max_abs_diff={max_diff} > tolerance={atol}")
+    return {"samples": n, "max_abs_diff": max_diff, "tolerance": atol}
+
+
+def verify_char_parity(
+    model: nn.Module,
+    onnx_path: Path,
+    sample_inputs: list[tuple[list[list[int]], list[int]]],
+    *,
+    atol: float = 1e-4,
+) -> dict[str, Any]:
+    """The char-path twin of :func:`verify_parity`: each sample is ``(char_ids (S, W), attention_mask (S))``."""
+    import onnxruntime as ort
+
+    session = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
+    model_cpu = model.to("cpu").eval()
+    max_diff = 0.0
+    n = 0
+    with torch.no_grad():
+        for chars, mask in sample_inputs:
+            x = torch.tensor([chars], dtype=torch.long)
+            m = torch.tensor([mask], dtype=torch.long)
+            torch_logits = model_cpu(char_ids=x, attention_mask=m).logits.cpu().numpy()
+            ort_logits = session.run(
+                ["logits"],
+                {
+                    "char_ids": np.asarray([chars], dtype=np.int64),
+                    "attention_mask": np.asarray([mask], dtype=np.int64),
+                },
+            )[0]
+            diff = float(np.max(np.abs(torch_logits - ort_logits)))
+            max_diff = max(max_diff, diff)
+            n += 1
+    if max_diff > atol:
+        raise RuntimeError(f"ONNX/PyTorch char parity broken: max_abs_diff={max_diff} > tolerance={atol}")
     return {"samples": n, "max_abs_diff": max_diff, "tolerance": atol}
