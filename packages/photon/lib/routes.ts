@@ -9,7 +9,8 @@
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
-import { asString, legacyQuery } from "@mailwoman/api-kit"
+import { asString, legacyQuery, withEngineStamp } from "@mailwoman/api-kit"
+import type { EngineStamp } from "@mailwoman/core/license"
 
 import type { PhotonEngine, PhotonFeatureCollection, PhotonReverseParams, PhotonSearchParams } from "#engine"
 import { photonToSchemaOrg } from "#projection"
@@ -131,7 +132,13 @@ const reverseRoute = createRoute({
 /**
  * Register the Photon-compatible routes against an injected engine.
  */
-export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): void {
+export function registerPhotonRoutes(
+	app: OpenAPIHono,
+	engine: PhotonEngine,
+	options: { engine?: EngineStamp } = {}
+): void {
+	const stamp = options.engine
+
 	app.openapi(rootRoute, (c) => c.html(ROOT_HTML))
 
 	app.openapi(searchRoute, async (c) => {
@@ -158,7 +165,7 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): vo
 			return c.json(photonToSchemaOrg(collection), 200)
 		}
 
-		return c.json(collection, 200)
+		return c.json(withEngineStamp(collection, stamp), 200)
 	})
 
 	app.openapi(reverseRoute, async (c) => {
@@ -190,6 +197,6 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): vo
 			return c.json(photonToSchemaOrg(collection), 200)
 		}
 
-		return c.json(collection, 200)
+		return c.json(withEngineStamp(collection, stamp), 200)
 	})
 }

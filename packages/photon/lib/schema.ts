@@ -10,7 +10,7 @@
  */
 
 import { z } from "@hono/zod-openapi"
-import { featureCollectionSchema, featureSchema } from "@mailwoman/api-kit"
+import { EngineStampSchema, featureCollectionSchema, featureSchema } from "@mailwoman/api-kit"
 
 /**
  * Photon feature properties — OSM-derived keys; tolerant of extras (`[key: string]: unknown` on the wire type).
@@ -45,8 +45,9 @@ export const PhotonFeatureSchema = featureSchema(PhotonPropertiesSchema).openapi
 /**
  * Response body of `/api`, a GeoJSON FeatureCollection as Photon returns it.
  */
-export const PhotonFeatureCollectionSchema =
-	featureCollectionSchema(PhotonFeatureSchema).openapi("PhotonFeatureCollection")
+export const PhotonFeatureCollectionSchema = featureCollectionSchema(PhotonFeatureSchema)
+	.extend({ engine: EngineStampSchema.optional() })
+	.openapi("PhotonFeatureCollection")
 
 /**
  * The error/degenerate envelope: an EMPTY FeatureCollection carrying a message. Never `{error}` on this surface.

@@ -8,8 +8,9 @@
  */
 
 import { OpenAPIHono } from "@hono/zod-openapi"
-import { attachOpenAPIDocs, type OpenAPIDocInfo } from "@mailwoman/api-kit"
+import { attachOpenAPIDocs, engineHeaders, type OpenAPIDocInfo } from "@mailwoman/api-kit"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import type { EngineStamp } from "@mailwoman/core/license"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { cors } from "hono/cors"
 
@@ -35,6 +36,13 @@ export interface PhotonAppOptions {
 	 * without it (#1017). Set `false` when a reverse proxy already owns the CORS headers.
 	 */
 	cors?: boolean
+
+	/**
+	 * The engine stamp to carry on every response: `engine` as a foreign member of each FeatureCollection, and the
+	 * `Server` + `Link: rel="license"` headers everywhere. Absent when an embedding application builds the app without
+	 * the `mailwoman` package; the `photon` bin always passes one.
+	 */
+	engine?: EngineStamp
 }
 
 /**
@@ -77,11 +85,15 @@ export function createPhotonApp(engine: PhotonEngine, options: PhotonAppOptions 
 		app.use(cors({ origin: "*", allowMethods: ["GET", "OPTIONS"], allowHeaders: ["*"], maxAge: 86_400 }))
 	}
 
+	if (options.engine) {
+		app.use(engineHeaders(options.engine))
+	}
+
 	// Safety net: malformed input or an engine fault returns an empty FeatureCollection, never a crash (photon's
 	// envelope — NOT `{error}`, which is the libpostal/nominatim shape).
 	app.onError((_error, c) => c.json({ type: "FeatureCollection", features: [], message: "internal error" }, 500))
 
-	registerPhotonRoutes(app, engine)
+	registerPhotonRoutes(app, engine, options.engine ? { engine: options.engine } : {})
 	attachOpenAPIDocs(app, PHOTON_DOC_INFO)
 
 	return app

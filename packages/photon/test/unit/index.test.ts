@@ -5,6 +5,7 @@
  */
 
 import type { SchemaOrgPlace } from "@mailwoman/annotations"
+import type { EngineStamp } from "@mailwoman/core/license"
 import {
 	createPhotonApp,
 	photonFeature,
@@ -504,4 +505,48 @@ test("absent engine methods answer the exact legacy 501 envelopes", async () => 
 		features: [],
 		message: "reverse not implemented",
 	})
+})
+
+// MARK: engine stamp
+
+const stamp: EngineStamp = {
+	name: "mailwoman",
+	version: "9.2.0",
+	license: "AGPL-3.0-only",
+	license_url: "https://mailwoman.ai/license",
+	notice: "n",
+}
+
+test("engine option: the FeatureCollection carries `engine` as a foreign member; features and jsonld are unchanged", async () => {
+	const app = createPhotonApp(jsonldEngine, { engine: stamp })
+	const res = await app.request("/api?q=berlin")
+
+	expect(res.headers.get("server")).toBe("mailwoman/9.2.0 (AGPL-3.0-only)")
+
+	const body = (await res.json()) as { type: string; engine: EngineStamp; features: object[] }
+
+	expect(body.type).toBe("FeatureCollection")
+	expect(body.engine).toEqual(stamp)
+	expect(body.features.length).toBeGreaterThan(0)
+
+	for (const f of body.features) {
+		expect(f).not.toHaveProperty("engine")
+	}
+
+	const reverse = (await (await app.request("/reverse?lat=52.52&lon=13.405")).json()) as { engine: EngineStamp }
+
+	expect(reverse.engine).toEqual(stamp)
+
+	const jsonld = (await (await app.request("/api?q=berlin&format=jsonld")).json()) as object[]
+
+	for (const place of jsonld) {
+		expect(place).not.toHaveProperty("engine")
+	}
+})
+
+test("no engine option: the collection has no `engine` member and no headers", async () => {
+	const res = await createPhotonApp(jsonldEngine).request("/api?q=berlin")
+
+	expect(res.headers.get("server")).toBeNull()
+	expect((await res.json()) as object).not.toHaveProperty("engine")
 })
