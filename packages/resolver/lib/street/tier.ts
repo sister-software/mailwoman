@@ -13,7 +13,7 @@
  */
 
 import { isStreetDirectionalToken } from "@mailwoman/codex/us"
-import type { AddressNode } from "@mailwoman/core/decoder"
+import { type AddressNode, walkNodes } from "@mailwoman/core/decoder"
 import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/core/resolver"
 
 import { foldName } from "#fold-name"
@@ -79,45 +79,67 @@ const isDirectionalUnit = (value: string): boolean => isStreetDirectionalToken(v
  */
 const LOCALITY_BBOX_RADIUS_DEG = 0.25
 
-export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLookup, bboxFallback?: boolean): void {
-	let street: AddressNode | undefined
-	let houseNumber: AddressNode | undefined
-	let directionalUnit: AddressNode | undefined
-	let localityNode: AddressNode | undefined
-	let locality: string | undefined
-	let postcode: string | undefined
-	const stack = [...roots]
+/**
+ * Every `(street, house_number)` pair the tree offers, nearest pair first: the house number whose span sits closest to
+ * the street's, a number BEFORE the street winning a tie. A venue-led string parses more than one of each — `Bar 1802,
+ * 22 Rue Pascal, 75005 Paris, France` carries two house numbers and one street, and `22` is the one written beside `Rue
+ * Pascal`. The tiers probe the pairs in this order and stop at the first register hit, and the pair that hit is what
+ * the result names; a walk that took "the first node of each tag" paired whatever the traversal met first.
+ */
+export function streetNumberPairs(
+	roots: readonly AddressNode[]
+): Array<{ street: AddressNode; houseNumber: AddressNode }> {
+	const streets: AddressNode[] = []
+	const numbers: AddressNode[] = []
 
-	while (stack.length) {
-		const n = stack.pop()!
-
-		if (n.tag === "street" && !street) {
-			street = n
+	for (const node of walkNodes(roots)) {
+		if (node.tag === "street") {
+			streets.push(node)
 		}
 
-		if (n.tag === "house_number" && !houseNumber) {
-			houseNumber = n
+		if (node.tag === "house_number") {
+			numbers.push(node)
 		}
-
-		if (n.tag === "unit" && !directionalUnit && isDirectionalUnit(n.value)) {
-			directionalUnit = n
-		}
-
-		if (n.tag === "locality" && !localityNode && n.value.trim()) {
-			localityNode = n
-			locality = n.value.trim()
-		}
-
-		if (n.tag === "postcode" && !postcode && n.value.trim()) {
-			postcode = n.value.trim()
-		}
-
-		stack.push(...n.children)
 	}
 
-	if (!street || !houseNumber) return
+	const pairs = streets.flatMap((street) => numbers.map((houseNumber) => ({ street, houseNumber })))
 
-	if (street.metadata?.["resolution_tier"] === "address_point") return
+	return pairs.toSorted((a, b) => pairGap(a) - pairGap(b))
+}
+
+/**
+ * Characters between a house number and its street; a number after the street costs one extra so the tie goes to the
+ * number written before it, the order every Latin-script address system this resolver serves writes.
+ */
+function pairGap(pair: { street: AddressNode; houseNumber: AddressNode }): number {
+	const { street, houseNumber } = pair
+
+	if (houseNumber.end <= street.start) return street.start - houseNumber.end
+
+	return houseNumber.start - street.end + 1
+}
+
+/**
+ * The first node of `tag` in document order whose value is non-blank, when the tree carries one.
+ */
+function firstOfTag(roots: readonly AddressNode[], tag: AddressNode["tag"]): AddressNode | undefined {
+	for (const node of walkNodes(roots)) {
+		if (node.tag === tag && node.value.trim()) return node
+	}
+
+	return undefined
+}
+
+export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLookup, bboxFallback?: boolean): void {
+	const pairs = streetNumberPairs(roots)
+	const directionalUnit = [...walkNodes(roots)].find((n) => n.tag === "unit" && isDirectionalUnit(n.value))
+	const localityNode = firstOfTag(roots, "locality")
+	const locality = localityNode?.value.trim()
+	const postcode = firstOfTag(roots, "postcode")?.value.trim()
+
+	if (!pairs.length) return
+
+	if (pairs.some((pair) => pair.street.metadata?.["resolution_tier"] === "address_point")) return
 
 	// #247 OSM bbox fall-through: when enabled (an OSM extract is wired) and the locality resolved to a
 	// coordinate, scope a final `(street, number)` probe by the locality's box — recovering OSM points that
@@ -133,15 +155,31 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 		}
 	}
 
-	const hit = lookup.find({
-		street: assembleStreetValue(street, directionalUnit),
-		number: houseNumber.value,
-		postcode,
-		locality,
-		bbox,
-	})
+	let street: AddressNode | undefined
+	let houseNumber: AddressNode | undefined
+	let hit: ReturnType<AddressPointLookup["find"]> | undefined
 
-	if (!hit) return
+	for (const pair of pairs) {
+		hit = lookup.find({
+			street: assembleStreetValue(pair.street, directionalUnit),
+			number: pair.houseNumber.value,
+			postcode,
+			locality,
+			bbox,
+		})
+
+		if (hit) {
+			street = pair.street
+			houseNumber = pair.houseNumber
+
+			break
+		}
+	}
+
+	if (!hit || !street || !houseNumber) return
+
+	// The number the register answered for is the one the result names (tree-shape.ts `slotNodes` reads the stamp).
+	houseNumber.metadata = { ...houseNumber.metadata, resolution_tier: "address_point" }
 
 	street.metadata = {
 		...street.metadata,
@@ -171,57 +209,46 @@ export function applyInterpolation(
 	lookup: InterpolationLookup,
 	radiusCalibration?: number
 ): void {
-	let street: AddressNode | undefined
-	let houseNumber: AddressNode | undefined
-	let directionalUnit: AddressNode | undefined
-	let postcode: string | undefined
-	let localityCoord: { lat: number; lon: number } | undefined
-	const stack = [...roots]
+	const pairs = streetNumberPairs(roots)
+	const directionalUnit = [...walkNodes(roots)].find((n) => n.tag === "unit" && isDirectionalUnit(n.value))
+	const postcode = firstOfTag(roots, "postcode")?.value.trim()
+	// The resolved locality's coordinate — the `near` tie-breaker the interpolator may consult when the query carries
+	// no postcode and the covering ranges span several ZIPs (the borough-namesake class). Only a RESOLVED locality
+	// qualifies; an unresolved one contributes nothing.
+	const resolvedLocality = [...walkNodes(roots)].find((n) => n.tag === "locality" && n.lat != null && n.lon != null)
 
-	while (stack.length) {
-		const n = stack.pop()!
+	const localityCoord = resolvedLocality ? { lat: resolvedLocality.lat!, lon: resolvedLocality.lon! } : undefined
 
-		if (n.tag === "street" && !street) {
-			street = n
-		}
-
-		if (n.tag === "house_number" && !houseNumber) {
-			houseNumber = n
-		}
-
-		if (n.tag === "unit" && !directionalUnit && isDirectionalUnit(n.value)) {
-			directionalUnit = n
-		}
-
-		if (n.tag === "postcode" && !postcode && n.value.trim()) {
-			postcode = n.value.trim()
-		}
-
-		// The resolved locality's coordinate — the `near` tie-breaker the interpolator may consult when
-		// the query carries no postcode and the covering ranges span several ZIPs (the borough-namesake
-		// class). Only a RESOLVED locality qualifies; an unresolved one contributes nothing.
-		if (n.tag === "locality" && !localityCoord && n.lat != null && n.lon != null) {
-			localityCoord = { lat: n.lat, lon: n.lon }
-		}
-
-		stack.push(...n.children)
-	}
-
-	if (!street || !houseNumber) return
+	if (!pairs.length) return
 
 	// The fall-through check: an exact situs point already won — never override it with an estimate.
-	if (street.metadata?.["resolution_tier"] === "address_point") return
+	if (pairs.some((pair) => pair.street.metadata?.["resolution_tier"] === "address_point")) return
 
 	const near = postcode ? undefined : localityCoord
 
-	const hit = lookup.find({
-		street: assembleStreetValue(street, directionalUnit),
-		number: houseNumber.value,
-		postcode,
-		...(near ? { near } : {}),
-	})
+	let street: AddressNode | undefined
+	let houseNumber: AddressNode | undefined
+	let hit: ReturnType<InterpolationLookup["find"]> | undefined
 
-	if (!hit) return
+	for (const pair of pairs) {
+		hit = lookup.find({
+			street: assembleStreetValue(pair.street, directionalUnit),
+			number: pair.houseNumber.value,
+			postcode,
+			...(near ? { near } : {}),
+		})
+
+		if (hit) {
+			street = pair.street
+			houseNumber = pair.houseNumber
+
+			break
+		}
+	}
+
+	if (!hit || !street || !houseNumber) return
+
+	houseNumber.metadata = { ...houseNumber.metadata, resolution_tier: "interpolated" }
 	// Conformal-calibrated radius (#374): the raw half-segment heuristic underestimates the true spread
 	// (~72% coverage on Travis); ×1.70 → a 90% bound. The ARTIFACT's own multiplier (read from the extract's
 	// `interp_calibration` metadata table at open time — `lookup.radiusCalibration`) is the default; an
@@ -359,13 +386,12 @@ export function applyStreetCentroid(
 	let streetNode: AddressNode | undefined
 	let houseNumber = false
 	let postcode: string | undefined
-	const adminValues: string[] = [] // region / locality values, in tree order (thoroughfare and commune both hide here)
-	const resolvedCountries: string[] = [] // countries the tree actually resolved to — a post-resolution country hint
-	const stack = [...roots]
+	// Region / locality values in document order (thoroughfare and commune both hide here), and the countries the tree
+	// resolved to — a post-resolution country hint.
+	const adminValues: string[] = []
+	const resolvedCountries: string[] = []
 
-	while (stack.length) {
-		const n = stack.pop()!
-
+	for (const n of walkNodes(roots)) {
 		if (n.tag === "house_number") {
 			houseNumber = true
 		}
@@ -392,8 +418,6 @@ export function applyStreetCentroid(
 		if (rc && !resolvedCountries.includes(rc)) {
 			resolvedCountries.push(rc)
 		}
-
-		stack.push(...n.children)
 	}
 
 	if (houseNumber) return // street-only tier — a numbered address is the rooftop tiers' job

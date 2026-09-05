@@ -13,6 +13,7 @@
  *   city-state. The shared span means every role gets the same `value`.
  */
 
+import { slotNodes } from "#decoder/tree-shape"
 import type { AddressNode, AddressTree } from "#decoder/types"
 import { type UnknownSpan, unknownSpans } from "#decoder/unknown-spans"
 import type { ComponentTag } from "#types/component"
@@ -57,10 +58,12 @@ export interface SerializeJSONOpts {
 	includeDropped?: boolean
 }
 
-function visit(node: AddressNode, out: Partial<Record<ComponentTag, string>>, dropped: DroppedSpan[]): void {
+/**
+ * Place one node's tag (and its alternative interpretations) into the flat map, first occurrence in the slot order
+ * winning, and receipt every span the taken slot deletes.
+ */
+function place(node: AddressNode, out: Partial<Record<ComponentTag, string>>, dropped: DroppedSpan[]): void {
 	if (node.tag in out) {
-		// The slot is taken and this span is about to cease to exist. Record it BEFORE the recursion, so the order of
-		// `dropped` follows the walk rather than the tree's depth.
 		if (out[node.tag] !== node.value) {
 			dropped.push({ tag: node.tag, value: node.value, kept: out[node.tag]! })
 		}
@@ -76,10 +79,6 @@ function visit(node: AddressNode, out: Partial<Record<ComponentTag, string>>, dr
 				dropped.push({ tag: interp.tag, value: node.value, kept: out[interp.tag]! })
 			}
 		}
-	}
-
-	for (const child of node.children) {
-		visit(child, out, dropped)
 	}
 }
 
@@ -100,8 +99,9 @@ export function decodeAsJSON(
 	const out: Partial<Record<ComponentTag, string>> & { unknown?: UnknownSpan[]; dropped?: DroppedSpan[] } = {}
 	const dropped: DroppedSpan[] = []
 
-	for (const root of tree.roots) {
-		visit(root, out, dropped)
+	// Grounded spans first, then text order — the same order the named result slots read (tree-shape.ts).
+	for (const node of slotNodes(tree.roots)) {
+		place(node, out, dropped)
 	}
 
 	// Always emit `unknown` (even `[]`) when asked — a consumer that opted in can iterate it without a

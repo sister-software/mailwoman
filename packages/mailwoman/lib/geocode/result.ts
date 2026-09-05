@@ -8,13 +8,7 @@
 
 import type { GeocodeOutcomeLike } from "@mailwoman/api"
 import type { ComponentTag } from "@mailwoman/core"
-import {
-	collectNodes,
-	decodeAsJSON,
-	type AddressNode,
-	type AddressTree,
-	type DroppedSpan,
-} from "@mailwoman/core/decoder"
+import { slotNodes, decodeAsJSON, type AddressNode, type AddressTree, type DroppedSpan } from "@mailwoman/core/decoder"
 import type { QueryIntentMarker } from "@mailwoman/core/pipeline"
 import type { DerivationProjection, EpistemicStatus } from "@mailwoman/evidence"
 import { adminLadderForNodes } from "@mailwoman/resolver"
@@ -222,7 +216,9 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 	// parsed, mistagged `locality`, and deleted at this line, which is why no decode pin ever moved that class.
 	const projected = decodeAsJSON(tree, { includeDropped: true })
 	const { dropped, ...components } = projected
-	const allNodes = collectNodes(tree.roots, () => true)
+	// Grounded spans first, then text order — the order `decodeAsJSON` used for `components` above, so a named slot
+	// and the flat map name the same span when a tag occurs twice (tree-shape.ts explains the rule).
+	const allNodes = slotNodes(tree.roots)
 
 	const streetNode = allNodes.find((n) => n.tag === "street")
 
