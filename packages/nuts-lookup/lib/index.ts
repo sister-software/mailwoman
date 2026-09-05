@@ -44,6 +44,9 @@ export type MultiPolygonCoords = number[][][][]
  * `@mailwoman/core` with it, whose published tarball carries ~11 MB of libpostal/WOF/chromium-i18n data. Eleven
  * megabytes for fifteen lines is the wrong trade for a leaf lookup package. If this package ever gains a real spatial
  * dependency, delete these and import them.
+ *
+ * Repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup package stays off @mailwoman/core's ~11
+ * MB of shipped data; see the docstring
  */
 function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
 	let inside = false
@@ -62,6 +65,7 @@ function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
 	return inside
 }
 
+// repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup package stays off @mailwoman/core's ~11 MB of shipped data; see the docstring
 function pointInPolygon(lon: number, lat: number, polygon: number[][][]): boolean {
 	if (!polygon[0] || !pointInRing(lon, lat, polygon[0])) return false
 

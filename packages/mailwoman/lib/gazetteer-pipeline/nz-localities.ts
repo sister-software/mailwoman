@@ -86,6 +86,9 @@ function cleanName(raw: string | undefined): string {
  * DELIBERATELY NOT `@mailwoman/core/utils`'s `percentileSorted`: this copy uses the ceil-based nearest rank
  * (`ceil(p/100 · n) − 1`) the shipped NZ label points were computed with, where core floors (`floor(p/100 · n)`) —
  * swapping conventions moves a percentile by up to one member row and with it every derived label point.
+ *
+ * Repo-health-ignore private-name-shadows-export -- the ceil-based nearest rank the shipped NZ label points were
+ * computed with; core floors
  */
 function percentileSorted(sorted: readonly number[], p: number): number {
 	const idx = Math.min(sorted.length - 1, Math.max(0, Math.ceil((p / 100) * sorted.length) - 1))

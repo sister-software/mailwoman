@@ -40,10 +40,12 @@ describe("manifest-targets", () => {
 
 	test("reports a target whose source is gone", async () => {
 		const context = await collectRepoContext()
+
 		const withoutStats = {
 			...context,
 			trackedFiles: context.trackedFiles.filter((p) => p !== "packages/core/lib/stats.ts"),
 		}
+
 		const diagnostics = await manifestTargetsCheck.run(withoutStats)
 
 		expect(diagnostics.some((d) => d.file === "packages/core/package.json" && d.message.includes('"./stats"'))).toBe(

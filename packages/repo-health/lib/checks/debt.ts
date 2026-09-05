@@ -16,9 +16,16 @@ import { relative, resolvePath } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
+import { findPrivateNameShadows } from "#checks/private-name-shadows"
 import { trackedSourcePaths } from "#tracked-sources"
 
 export interface DebtCounters {
+	/**
+	 * Module-private functions in `packages/*\/lib` sharing a name with a function another module exports, minus the
+	 * marked copies — the population `private-name-shadows-export` lists site by site. Ratchets down as copies are
+	 * replaced by imports or given their reason.
+	 */
+	privateNameShadows: number
 	asNever: number
 	doubleCast: number
 	deepRelativeImports: number
@@ -69,6 +76,7 @@ const SELF = "packages/repo-health/lib/checks/debt.ts"
 
 function emptyCounters(): DebtCounters {
 	return {
+		privateNameShadows: 0,
 		asNever: 0,
 		doubleCast: 0,
 		deepRelativeImports: 0,
@@ -420,6 +428,8 @@ export async function computeDebtCounters(context: RepoContext): Promise<DebtCou
 
 		counters.bannedVocabulary += text.match(BANNED_VOCABULARY)?.length ?? 0
 	}
+
+	counters.privateNameShadows = (await findPrivateNameShadows(context)).length
 
 	return counters
 }

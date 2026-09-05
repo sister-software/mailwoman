@@ -26,12 +26,10 @@ import { APIClient } from "@mailwoman/core/api"
 import { $private } from "@mailwoman/core/env"
 import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePathIfPresent, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { isPresent } from "@mailwoman/core/objects"
+import { trackedFiles } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { md5Hex } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
-import { TextSpliterator } from "spliterator"
-import { $ } from "zx"
 
 import { literalFilesEntries } from "#pack/verify-tarball"
 import { readReleaseConfig, repoCommittedSoftFeedSources } from "#weights/weights-recipe"
@@ -147,10 +145,8 @@ function weightsWorkspace(locale: string): string {
  * Which of these workspaces' files git already tracks — i.e. what `stageReleaseTree`'s `git archive` puts in the
  * staging tree for free (`model-card.json`, `calibration.json`, `README.md`, the sources).
  */
-function trackedFiles(repoRoot: string, workspaces: readonly string[]): Set<string> {
-	const listing = $.sync({ cwd: repoRoot })`git ls-files -- ${workspaces}`
-
-	return new Set([...TextSpliterator.from(listing.stdout)].filter(isPresent))
+async function trackedWorkspaceFiles(repoRoot: string, workspaces: readonly string[]): Promise<Set<string>> {
+	return new Set(await trackedFiles(repoRoot, [...workspaces]))
 }
 
 /**
@@ -289,7 +285,7 @@ export async function planWeightsMaterialization(repoRoot: string): Promise<Weig
 	const config = await readReleaseConfig(repoRoot)
 	const repoSources = repoCommittedSoftFeedSources(repoRoot, config.softFeed ?? {})
 	const workspaces = config.locales.map((locale) => weightsWorkspace(locale))
-	const tracked = trackedFiles(repoRoot, workspaces)
+	const tracked = await trackedWorkspaceFiles(repoRoot, workspaces)
 	const checksums = await declaredChecksums(repoRoot, workspaces)
 	const plans: WeightsArtifactPlan[] = []
 
