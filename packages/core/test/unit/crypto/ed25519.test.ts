@@ -11,10 +11,11 @@
  */
 
 import { fromBase64URL, utf8Bytes } from "@mailwoman/core/crypto/base64url"
+import { hexOf, sha256Bytes } from "@mailwoman/core/crypto/digest"
 import {
 	generateEd25519KeyPair,
 	publicKeyDER,
-	sha256Bytes,
+	publicKeyFromPrivateKey,
 	signEd25519,
 	verifyEd25519,
 } from "@mailwoman/core/crypto/ed25519"
@@ -42,10 +43,6 @@ const legacySignature = fromBase64URL(signaturePart)
  */
 const SPKI_ED25519_DER_LENGTH = 44
 
-function hex(bytes: Uint8Array): string {
-	return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("")
-}
-
 describe("Ed25519 on WebCrypto", () => {
 	it("verifies the signature the node:crypto signer produced over the fixture token", async () => {
 		expect(legacySignature).toHaveLength(64)
@@ -68,7 +65,7 @@ describe("Ed25519 on WebCrypto", () => {
 		const der = publicKeyDER(fixture.publicKeyPEM)
 
 		expect(der).toHaveLength(SPKI_ED25519_DER_LENGTH)
-		expect(hex(await sha256Bytes(der)).slice(0, 8)).toBe(fixture.kid.replace(/^v\d+-/u, ""))
+		expect(hexOf(await sha256Bytes(der)).slice(0, 8)).toBe(fixture.kid.replace(/^v\d+-/u, ""))
 	})
 
 	it("generates a pair whose halves sign and verify, in PEM with 64-column lines", async () => {
@@ -88,5 +85,15 @@ describe("Ed25519 on WebCrypto", () => {
 
 		expect(await verifyEd25519(signedBytes, pair.publicKeyPEM, signature)).toBe(true)
 		expect(await verifyEd25519(signedBytes, fixture.publicKeyPEM, signature)).toBe(false)
+	})
+
+	it("derives the public key from the private one, byte for byte in DER, for the fixture and a fresh pair", async () => {
+		expect(publicKeyDER(await publicKeyFromPrivateKey(fixture.privateKeyPEM))).toEqual(
+			publicKeyDER(fixture.publicKeyPEM)
+		)
+
+		const pair = await generateEd25519KeyPair()
+
+		expect(publicKeyDER(await publicKeyFromPrivateKey(pair.privateKeyPEM))).toEqual(publicKeyDER(pair.publicKeyPEM))
 	})
 })

@@ -1,0 +1,93 @@
+# The license worker: Stripe webhooks in, signed license tokens out, ledger in D1.
+#
+# Two environments and nothing at the top level that could deploy by accident. Every secret arrives through
+# `wrangler secret put` (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, LICENSE_SIGNING_KEY_PEM, EMAIL_API_KEY); a var still
+# reading REPLACE makes `readEnv` refuse every request with 503, so an unfilled production deploy never mints.
+# No `nodejs_compat`: every dependency runs on the Workers runtime as shipped, and core's worker-bundle test holds the
+# license subpaths free of Node builtins.
+
+name = "mailwoman-license"
+main = "./lib/index.ts"
+compatibility_date = "2026-08-22"
+
+[triggers]
+crons = ["0 */6 * * *"]
+
+[vars]
+ISSUANCE_ENABLED = "false"
+SITE_ORIGIN = "https://mailwoman.ai"
+AGREEMENT_VERSION = "commercial-2026-10"
+EMAIL_FROM = "licenses@mailwoman.ai"
+STRIPE_LIVE_MODE = "false"
+LICENSE_SIGNING_KID = "REPLACE"
+STRIPE_PRICE_MONTHLY = "REPLACE"
+STRIPE_PRICE_YEARLY = "REPLACE"
+
+[env.sandbox]
+name = "mailwoman-license-sandbox"
+
+[env.sandbox.vars]
+ISSUANCE_ENABLED = "false"
+SITE_ORIGIN = "https://mailwoman.ai"
+AGREEMENT_VERSION = "commercial-2026-10"
+EMAIL_FROM = "licenses@mailwoman.ai"
+STRIPE_LIVE_MODE = "false"
+LICENSE_SIGNING_KID = "v9-sandbox0"
+STRIPE_PRICE_MONTHLY = "price_sandbox_monthly"
+STRIPE_PRICE_YEARLY = "price_sandbox_yearly"
+
+[[env.sandbox.d1_databases]]
+binding = "LICENSE_LEDGER"
+database_name = "mailwoman-license-sandbox"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+[[env.sandbox.ratelimits]]
+name = "CLAIM_LIMITER"
+namespace_id = "1001"
+simple = { limit = 30, period = 60 }
+
+[[env.sandbox.ratelimits]]
+name = "REFRESH_LIMITER"
+namespace_id = "1002"
+simple = { limit = 10, period = 60 }
+
+[[env.sandbox.ratelimits]]
+name = "STATUS_LIMITER"
+namespace_id = "1003"
+simple = { limit = 60, period = 60 }
+
+[env.production]
+name = "mailwoman-license"
+routes = [{ pattern = "license.mailwoman.ai", custom_domain = true }]
+
+[env.production.vars]
+ISSUANCE_ENABLED = "false"
+SITE_ORIGIN = "https://mailwoman.ai"
+AGREEMENT_VERSION = "commercial-2026-10"
+EMAIL_FROM = "licenses@mailwoman.ai"
+STRIPE_LIVE_MODE = "true"
+LICENSE_SIGNING_KID = "REPLACE"
+STRIPE_PRICE_MONTHLY = "REPLACE"
+STRIPE_PRICE_YEARLY = "REPLACE"
+
+[[env.production.d1_databases]]
+binding = "LICENSE_LEDGER"
+database_name = "mailwoman-license"
+database_id = "REPLACE"
+migrations_dir = "migrations"
+
+[[env.production.ratelimits]]
+name = "CLAIM_LIMITER"
+namespace_id = "2001"
+simple = { limit = 30, period = 60 }
+
+[[env.production.ratelimits]]
+name = "REFRESH_LIMITER"
+namespace_id = "2002"
+simple = { limit = 10, period = 60 }
+
+[[env.production.ratelimits]]
+name = "STATUS_LIMITER"
+namespace_id = "2003"
+simple = { limit = 60, period = 60 }

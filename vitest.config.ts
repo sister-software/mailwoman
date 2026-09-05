@@ -170,6 +170,10 @@ export default defineConfig({
 			// Mode"), which is exactly what broke CI's Test leg from #1215 onward. CI runs the
 			// browser leg as its own step (test.yml "Test react (browser mode)").
 			"**/react/**/*.test.{ts,tsx}",
+			// @mailwoman/license-worker's tests import `cloudflare:test` and run under the Workers pool through the
+			// workspace's own vitest.config.ts (`yarn test:license-worker`); this forks pool cannot load them. CI runs them
+			// as their own step, beside the react browser leg.
+			"**/license-worker/**/*.test.ts",
 		],
 	},
 })

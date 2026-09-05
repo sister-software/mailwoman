@@ -521,6 +521,11 @@
 			"default": "./out/crypto/base64url.js",
 			"types": "./out/crypto/base64url.d.ts"
 		},
+		"./crypto/digest": {
+			"node": "./lib/crypto/digest.ts",
+			"default": "./out/crypto/digest.js",
+			"types": "./out/crypto/digest.d.ts"
+		},
 		"./crypto/ed25519": {
 			"node": "./lib/crypto/ed25519.ts",
 			"default": "./out/crypto/ed25519.js",

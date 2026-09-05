@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Ed25519 and SHA-256 on `crypto.subtle`, the one implementation Node, a Cloudflare Worker and a browser share. Keys
+ *   Ed25519 on `crypto.subtle`, the one implementation Node, a Cloudflare Worker and a browser share. Keys
  *   travel as PEM: PKCS8 for the private half, SPKI for the public half, which is what `node:crypto` wrote before and
  *   what an operator's signing key file already holds. The PEM codec here is a base64 transform of the DER bytes the
  *   WebCrypto API imports and exports; nothing parses ASN.1.
@@ -65,6 +65,31 @@ export async function generateEd25519KeyPair(): Promise<Ed25519KeyPairPEM> {
 	}
 }
 
+/**
+ * The SPKI DER header for an Ed25519 public key: a SEQUENCE holding the AlgorithmIdentifier (OID 1.3.101.112) and a
+ * 32-byte BIT STRING. Fixed for the algorithm, so the public key's DER is this header plus the point.
+ */
+const SPKI_ED25519_HEADER = new Uint8Array([0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x03, 0x21, 0x00])
+
+/**
+ * The public half of a PKCS8 private key, as SPKI PEM. A private key's JWK carries its public point as `x`, so an
+ * issuer holding only the private key can still say which key id it signs for.
+ */
+export async function publicKeyFromPrivateKey(privateKeyPEM: string): Promise<string> {
+	const key = await crypto.subtle.importKey("pkcs8", pemToDER(privateKeyPEM), ALGORITHM, true, ["sign"])
+	const jwk = await crypto.subtle.exportKey("jwk", key)
+
+	if (!jwk.x) throw new TypeError("the private key's JWK carries no public point")
+
+	const point = fromBase64URL(jwk.x)
+	const der = new Uint8Array(SPKI_ED25519_HEADER.length + point.length)
+
+	der.set(SPKI_ED25519_HEADER)
+	der.set(point, SPKI_ED25519_HEADER.length)
+
+	return derToPEM(der, "PUBLIC KEY")
+}
+
 export async function signEd25519(
 	data: Uint8Array<ArrayBuffer>,
 	privateKeyPEM: string
@@ -90,8 +115,4 @@ export async function verifyEd25519(
 	} catch {
 		return false
 	}
-}
-
-export async function sha256Bytes(data: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> {
-	return new Uint8Array(await crypto.subtle.digest("SHA-256", data))
 }

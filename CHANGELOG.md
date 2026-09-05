@@ -18,6 +18,18 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Added — `@mailwoman/license-worker` (private)
+
+A Cloudflare Worker that turns a paid Stripe invoice into a signed license token: webhook verification on SubtleCrypto,
+fulfilment that re-reads the invoice, subscription and Checkout Session from Stripe by id, a D1 ledger written under
+unique constraints so replayed and reordered events mint one token per invoice, an email per token under the invoice
+id, and the claim, refresh and status routes the site and `mailwoman license refresh` call. A six-hourly reconciliation
+mints what the webhook missed, re-sends what failed, and corrects a license's state against Stripe, including a dispute
+ruled in the customer's favour. Sandbox and production are separate Wrangler environments; issuance is off until
+`ISSUANCE_ENABLED` is flipped, and refuses whenever the signing key is not an active entry of the shipped register.
+Deploys by manual dispatch only (`.github/workflows/license-worker.yml`), which refuses a bundle that imports a Node
+builtin.
+
 ### Changed — the license key signs and verifies on WebCrypto
 
 `encodeLicenseKey`, `verifyLicenseKey`, `licenseKeyID`, `generateLicenseSigningKeyPair` and `verifyConfiguredLicenseKey`

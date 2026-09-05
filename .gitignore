@@ -205,3 +205,6 @@ nightshift
 
 # dev-mcp writes its worktree-arm runner here for the life of one mwdev_compare; never commit it
 .mwdev-arm-runner.ts
+
+# Wrangler's local secrets for `wrangler dev`; the committed shape is .dev.vars.example
+.dev.vars

@@ -76,6 +76,8 @@
 		{ "path": "./packages/un-locode-lookup" },
 		{ "path": "./packages/nuts-lookup" },
 		{ "path": "./packages/tile-worker" },
+		{ "path": "./packages/license-worker" },
+		{ "path": "./packages/license-worker/tsconfig.test.json" },
 		{ "path": "./docker" },
 		{ "path": "./packages/map-tui" },
 		{ "path": "./packages/activity-lexicon/tsconfig.test.json" },
