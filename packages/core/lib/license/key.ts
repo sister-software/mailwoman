@@ -142,6 +142,22 @@ function expiryInstant(expires: string): Date {
 }
 
 /**
+ * The payload a token carries, AS WRITTEN and unverified: for reporting what a token this build cannot verify claims
+ * (its key id, its license id), never for a decision. `undefined` for anything that is not a well-formed token.
+ */
+export function decodeLicenseKeyPayload(token: string): LicenseKeyPayload | undefined {
+	const parts = token.trim().split(".")
+
+	if (parts.length !== LICENSE_KEY_PARTS || parts[0] !== LICENSE_KEY_PREFIX) return undefined
+
+	try {
+		return LicenseKeyPayloadSchema.parse(parseJSONStrict(utf8Text(fromBase64URL(parts[1] ?? ""))))
+	} catch {
+		return undefined
+	}
+}
+
+/**
  * Verify a token against the trusted public keys, keyed by kid. Offline; `now` is injectable for tests.
  */
 export async function verifyLicenseKey(

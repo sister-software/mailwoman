@@ -6,6 +6,7 @@
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import {
+	decodeLicenseKeyPayload,
 	encodeLicenseKey,
 	generateLicenseSigningKeyPair,
 	isSelfServicePayload,
@@ -128,5 +129,12 @@ describe("license key", () => {
 	it("refuses an empty lid or agreement", async () => {
 		await expect(encodeLicenseKey({ ...payload, lid: "" }, pair.privateKeyPEM)).rejects.toThrow(/Too small/u)
 		await expect(encodeLicenseKey({ ...payload, agreement: "" }, pair.privateKeyPEM)).rejects.toThrow(/Too small/u)
+	})
+
+	it("decodes a token's payload as written, without trusting it, and answers nothing for a malformed token", () => {
+		expect(decodeLicenseKeyPayload(legacy.token)).toMatchObject({ kid: legacy.kid, licensee: expect.any(String) })
+		expect(decodeLicenseKeyPayload("mwl1.not-base64url.sig")).toBeUndefined()
+		expect(decodeLicenseKeyPayload("mwl2.a.b")).toBeUndefined()
+		expect(decodeLicenseKeyPayload("two.parts")).toBeUndefined()
 	})
 })
