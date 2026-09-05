@@ -12,7 +12,8 @@ import { cloudflareTest, readD1Migrations } from "@cloudflare/vitest-pool-worker
 import { defineConfig } from "vitest/config"
 
 // The migrations are read here, on the Node side, and handed to the runtime as a binding the tests apply.
-const migrations = await readD1Migrations("./migrations")
+// Anchored on this file, not the working directory: knip and the root tooling load this config from the repo root.
+const migrations = await readD1Migrations(`${import.meta.dirname}/migrations`)
 
 export default defineConfig({
 	plugins: [

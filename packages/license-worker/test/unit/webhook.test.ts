@@ -9,9 +9,8 @@ import { describe, expect, it } from "vitest"
 
 import { readEnv } from "#env"
 import { ACCEPTED_EVENT_TYPES, verifyStripeEvent } from "#stripe/webhook"
-
-import { invoicePaidEvent } from "./support/stripe-fixtures.ts"
-import { signedWebhook } from "./support/stripe-mock.ts"
+import { invoicePaidEvent } from "#test/support/stripe-fixtures"
+import { signedWebhook } from "#test/support/stripe-mock"
 
 const worker = readEnv(env)
 

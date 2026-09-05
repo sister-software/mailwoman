@@ -29,8 +29,6 @@ export const ACCEPTED_EVENT_TYPES = [
 	"charge.dispute.created",
 ] as const
 
-export type AcceptedEventType = (typeof ACCEPTED_EVENT_TYPES)[number]
-
 const SIGNATURE_TOLERANCE_SECONDS = 300
 
 export type WebhookVerification =

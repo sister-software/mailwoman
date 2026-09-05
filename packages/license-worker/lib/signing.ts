@@ -16,12 +16,12 @@ import { LICENSE_SIGNING_KEYS, LicenseKeyStatus } from "@mailwoman/core/license/
 
 import type { LicenseWorkerEnv } from "#env"
 
-export type SigningStatus = "ok" | "mismatch"
+type SigningStatus = "ok" | "mismatch"
 
 /**
  * Who trusts the key: the shipped register, or only this worker because the environment is a sandbox.
  */
-export type SigningTrust = "register" | "sandbox"
+type SigningTrust = "register" | "sandbox"
 
 export interface SigningSelfTest {
 	status: SigningStatus

@@ -14,9 +14,8 @@ import { findLicenseBySubscription, findToken, setEmailState } from "#ledger/lic
 import { reconcileLedger } from "#reconcile"
 import { stripeClient } from "#stripe/client"
 import { handleStripeEvent } from "#stripe/handlers"
-
-import { envWithSigningKey } from "./support/keys.ts"
-import { applyMigrations } from "./support/migrations.ts"
+import { envWithSigningKey } from "#test/support/keys"
+import { applyMigrations } from "#test/support/migrations"
 import {
 	chargeDisputeCreatedEvent,
 	chargeObject,
@@ -28,8 +27,8 @@ import {
 	invoiceObject,
 	invoicePaymentList,
 	subscriptionObject,
-} from "./support/stripe-fixtures.ts"
-import { stripeFetch } from "./support/stripe-mock.ts"
+} from "#test/support/stripe-fixtures"
+import { stripeFetch } from "#test/support/stripe-mock"
 
 const OCT_1 = Date.UTC(2026, 9, 1) / 1000
 const NOV_1 = Date.UTC(2026, 10, 1) / 1000

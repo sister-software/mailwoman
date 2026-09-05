@@ -15,9 +15,8 @@ import { openLedger } from "#ledger/client"
 import { countTokens, findLicenseBySubscription, findToken, setEmailState } from "#ledger/licenses"
 import { stripeClient } from "#stripe/client"
 import { handleStripeEvent } from "#stripe/handlers"
-
-import { envWithSigningKey } from "./support/keys.ts"
-import { applyMigrations } from "./support/migrations.ts"
+import { envWithSigningKey } from "#test/support/keys"
+import { applyMigrations } from "#test/support/migrations"
 import {
 	chargeObject,
 	chargeRefundedEvent,
@@ -29,8 +28,8 @@ import {
 	invoicePaymentList,
 	subscriptionDeletedEvent,
 	subscriptionObject,
-} from "./support/stripe-fixtures.ts"
-import { stripeFetch } from "./support/stripe-mock.ts"
+} from "#test/support/stripe-fixtures"
+import { stripeFetch } from "#test/support/stripe-mock"
 
 const sent: Array<{ message: LicenseEmail; idempotencyKey: string }> = []
 

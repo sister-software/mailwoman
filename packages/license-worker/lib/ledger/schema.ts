@@ -35,7 +35,7 @@ export function publicLicenseStatus(state: LicenseState): PublicLicenseStatus {
 
 export type EmailState = "pending" | "sent" | "failed"
 
-export interface LicensesTable {
+interface LicensesTable {
 	lid: string
 	subscription_id: string
 	customer_id: string
@@ -53,7 +53,7 @@ export interface LicensesTable {
 	updated_at: Generated<string>
 }
 
-export interface LicenseTokensTable {
+interface LicenseTokensTable {
 	invoice_id: string
 	lid: string
 	issued: string
@@ -65,7 +65,7 @@ export interface LicenseTokensTable {
 	created_at: Generated<string>
 }
 
-export interface StripeEventsTable {
+interface StripeEventsTable {
 	event_id: string
 	type: string
 	object_id: string

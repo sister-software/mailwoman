@@ -11,9 +11,8 @@ import { createLicenseWorkerApp } from "#app"
 import { readEnv } from "#env"
 import { openLedger } from "#ledger/client"
 import { stripeClient } from "#stripe/client"
-
-import { envWithSigningKey } from "./support/keys.ts"
-import { applyMigrations } from "./support/migrations.ts"
+import { envWithSigningKey } from "#test/support/keys"
+import { applyMigrations } from "#test/support/migrations"
 import {
 	chargeObject,
 	chargeRefundedEvent,
@@ -23,8 +22,8 @@ import {
 	invoicePaidEvent,
 	invoicePaymentList,
 	subscriptionObject,
-} from "./support/stripe-fixtures.ts"
-import { signedWebhook, stripeFetch } from "./support/stripe-mock.ts"
+} from "#test/support/stripe-fixtures"
+import { signedWebhook, stripeFetch } from "#test/support/stripe-mock"
 
 const email = { send: async () => ({ messageID: "msg_1" }) }
 

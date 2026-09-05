@@ -15,7 +15,7 @@ import type { LicenseWorkerEnv } from "#env"
 /**
  * The version the installed SDK's types describe (`stripe/esm/apiVersion.js`); the two move together.
  */
-export const STRIPE_API_VERSION = "2026-08-26.dahlia"
+const STRIPE_API_VERSION = "2026-08-26.dahlia"
 
 /**
  * @param fetchImplementation The fetch the SDK calls; a test passes a stub that answers by method and path, so no

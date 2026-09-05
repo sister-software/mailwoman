@@ -9,8 +9,7 @@ import { describe, expect, it } from "vitest"
 
 import { readEnv } from "#env"
 import { signingSelfTest } from "#signing"
-
-import { envWithSigningKey } from "./support/keys.ts"
+import { envWithSigningKey } from "#test/support/keys"
 
 const base = readEnv(env)
 

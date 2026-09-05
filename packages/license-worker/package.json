@@ -12,6 +12,7 @@
 	],
 	"type": "module",
 	"imports": {
+		"#test/*": "./test/*.ts",
 		"#*": {
 			"workerd": "./lib/*.ts",
 			"node": "./lib/*.ts",

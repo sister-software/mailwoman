@@ -18,8 +18,7 @@ import {
 	takePendingRefreshSecret,
 } from "#ledger/licenses"
 import { LicenseState } from "#ledger/schema"
-
-import { applyMigrations } from "./support/migrations.ts"
+import { applyMigrations } from "#test/support/migrations"
 
 beforeAll(async () => {
 	await applyMigrations(env.LICENSE_LEDGER)

@@ -39,7 +39,7 @@ export function resendProvider(env: LicenseWorkerEnv): EmailProvider {
 	}
 }
 
-export function renderLicenseEmail(message: LicenseEmail, siteOrigin: string): string {
+function renderLicenseEmail(message: LicenseEmail, siteOrigin: string): string {
 	const refresh = message.refreshSecret
 		? [
 				"Your refresh secret (shown once; keep it with the key):",
