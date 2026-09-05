@@ -4697,6 +4697,61 @@ def sync_v530_reviewed_postcode_tail():
         raise RuntimeError(f"v5.3 sync verification failed: {', '.join(missing)}")
 
 
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
+def sync_v8cjk():
+    """Stage the v8 CJK overlay (#2034) through R2 and verify mounted visibility.
+
+    The overlay holds only the CN parts, the re-sealed char vocabulary and a MANIFEST whose JP entries point at
+    `/data/corpus/versioned/v8-jp-full-2026-08-04/...`, so the JP parts must already be on the volume from the
+    v8-jp-full run; this function verifies that rather than re-syncing 136 MB of parquet.
+    """
+    import shutil
+    import subprocess
+
+    vol.reload()
+    retry = "--low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {retry}",
+        f"rclone copy :s3:{BUCKET}/corpus/v8-cjk-2026-09-05/ {VOL_MOUNT}/corpus/versioned/v8-cjk-2026-09-05/ {retry}",
+    ]
+    for command in commands:
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"rclone failed: {result.stderr[:300]}")
+
+    package = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    for pyc in (f"{package}/__pycache__", f"{package}/configs/__pycache__"):
+        if os.path.isdir(pyc):
+            shutil.rmtree(pyc)
+
+    vol.commit()
+    overlay = f"{VOL_MOUNT}/corpus/versioned/v8-cjk-2026-09-05"
+    jp = f"{VOL_MOUNT}/corpus/versioned/v8-jp-full-2026-08-04"
+    checks = {
+        "v8-cjk-full config": os.path.isfile(f"{package}/configs/v8-cjk-full.yaml"),
+        "stage3-cjk label set": _file_contains(f"{package}/labels.py", '"stage3-cjk"'),
+        "overlay manifest": os.path.isfile(f"{overlay}/MANIFEST.json"),
+        "CN train part": os.path.isfile(f"{overlay}/train/cn-units-0000.parquet"),
+        "CN val part": os.path.isfile(f"{overlay}/val/cn-units-0000.parquet"),
+        "CJK char vocab": os.path.isfile(f"{overlay}/char-vocab-cjk.json"),
+        "JP train parts (base, from the v8-jp-full run)": all(
+            os.path.isfile(f"{jp}/train/part-{index:04d}.parquet") for index in range(8)
+        ),
+        "JP val part": os.path.isfile(f"{jp}/val/part-0000.parquet"),
+        "JP board": os.path.isfile(f"{jp}/jp-board.jsonl"),
+    }
+    for label, present in checks.items():
+        print(f"  {label}: {present}")
+    missing = [label for label, present in checks.items() if not present]
+    if missing:
+        raise RuntimeError(f"v8-cjk sync verification failed: {', '.join(missing)}")
+
+
 def _file_contains(path: str, needle: str) -> bool:
     with open(path, encoding="utf-8") as fh:
         return needle in fh.read()

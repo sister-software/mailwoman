@@ -16,8 +16,10 @@ from mailwoman_train.labels import (
     CN_FINE_TAGS,
     JP_FINE_TAGS,
     STAGE3_BIO_LABELS,
+    STAGE3_CJK_BIO_LABELS,
     STAGE3_CN_BIO_LABELS,
     STAGE3_JP_BIO_LABELS,
+    STAGE3_JP_TAGS,
     STAGE3_TAGS,
     resolve_label_set,
 )
@@ -48,6 +50,18 @@ def test_cn_set_is_stage3_plus_locality_unit() -> None:
         assert cn.label_to_id[label] == i
     assert cn.collapse_label("B-locality_unit") == "B-locality_unit"
     assert DEFAULT.collapse_label("B-locality_unit") == "O"
+
+
+def test_cjk_set_is_the_jp_set_plus_locality_unit() -> None:
+    # One head for both character models: every stage3-jp id survives, locality_unit is appended.
+    cjk = resolve_label_set("stage3-cjk")
+    assert cjk.tags == STAGE3_JP_TAGS + CN_FINE_TAGS
+    assert len(cjk.bio_labels) == 49
+    assert cjk.bio_labels == STAGE3_CJK_BIO_LABELS
+    for i, label in enumerate(JP.bio_labels):
+        assert cjk.label_to_id[label] == i
+    assert cjk.collapse_label("B-locality_unit") == "B-locality_unit"
+    assert JP.collapse_label("B-locality_unit") == "O"
 
 
 def test_unknown_set_raises() -> None:

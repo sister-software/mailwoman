@@ -173,6 +173,21 @@ STAGE3_CN_BIO_LABELS: Final[tuple[str, ...]] = (
     *(prefix + tag for tag in STAGE3_CN_TAGS for prefix in ("B-", "I-")),
 )
 
+# --- CJK union (#2034 — one head for the JP and CN character models) ---------------------
+#
+# The JP seven and the CN one behind ONE classifier, so a single from-scratch character model can
+# train on the 2M-row JP slice and the CN organizational-unit slice together. STAGE3 keeps its ids,
+# the JP tags keep theirs (this is ``stage3-jp`` with ``locality_unit`` appended), so a JP-only
+# consumer reading a CJK checkpoint sees every JP label at the id it already knows.
+CJK_FINE_TAGS: Final[tuple[str, ...]] = JP_FINE_TAGS + CN_FINE_TAGS
+
+STAGE3_CJK_TAGS: Final[tuple[str, ...]] = STAGE3_TAGS + CJK_FINE_TAGS
+
+STAGE3_CJK_BIO_LABELS: Final[tuple[str, ...]] = (
+    "O",
+    *(prefix + tag for tag in STAGE3_CJK_TAGS for prefix in ("B-", "I-")),
+)
+
 # --- Active set (points at the most-recent stage) ------------------------------------
 # Bump to STAGE3 when training with v0.6.0 corpus. Until then, STAGE2 is active so
 # existing v0.5.x models keep working. STAGE4 is DEFINED above but NOT active — its
@@ -217,6 +232,7 @@ _LABEL_SETS: Final[dict[str, tuple[tuple[str, ...], tuple[str, ...]]]] = {
     "stage3": (STAGE3_TAGS, STAGE3_BIO_LABELS),
     "stage3-jp": (STAGE3_JP_TAGS, STAGE3_JP_BIO_LABELS),
     "stage3-cn": (STAGE3_CN_TAGS, STAGE3_CN_BIO_LABELS),
+    "stage3-cjk": (STAGE3_CJK_TAGS, STAGE3_CJK_BIO_LABELS),
     "stage4": (STAGE4_TAGS, STAGE4_BIO_LABELS),
 }
 

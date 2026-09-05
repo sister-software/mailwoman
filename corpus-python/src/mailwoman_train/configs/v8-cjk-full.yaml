@@ -1,0 +1,81 @@
+# === v8-cjk-full — the JP full slice plus the CN organizational-unit slice, one 49-label head (#2034). ===
+#
+# `v8-jp-full` (seed 42, 24k steps) cleared its pre-registered check: coordinate-acceptability 0.9928 on
+# the held-out 20,000-row JP board (the v8-jp-full 24k record under docs/records/evals/, dated 2026-08-05). This run
+# keeps EVERYTHING that config decided — geometry, schedule, head LR, from-scratch, char path, register
+# mix — and changes two things, both attributable:
+#
+#   1. The head. `label_set: stage3-cjk` = stage3-jp + `locality_unit` (47 → 49 BIO). Every stage3-jp
+#      label keeps its id, so the JP per-tag read is comparable against the 24k record label for label.
+#   2. The mixture. The corpus is the v8-cjk overlay: the eight JP train parts referenced where they
+#      already sit on the volume, plus ONE CN part of 126 rows the `cn-organizational-units` recipe labeled
+#      by the suffix grammar (train 126 / val 11 / board 14; docs on #2034). `country_weights` gives CN a
+#      2% share of the sampler, so the 126 rows are each presented roughly (24000 × 256 × 0.02) / 126 ≈
+#      975 times over the run — a rule-shaped tag learned from a small register, not a claim about Chinese
+#      addresses at large. Set CN to 0.0 and this config IS v8-jp-full with a wider head, which is the
+#      control if the JP read moves.
+#
+# --- FROM SCRATCH, for the same two reasons v8-jp-full states: the classifier is (49, 384) here and
+# (47, 384) at the JP checkpoint, and the char vocabulary is re-sealed (2,237 JP characters plus every CN
+# train character, re-sorted by code point), so a padded copy would map the wrong row to the wrong
+# character. Never `init_from` to grow a capability.
+#
+# --- WHAT THE RUN MUST SHOW (pre-registered, read on the same instruments as the JP record) ----------
+#   * JP half: the 24k record's per-tag span exact-match table, re-scored on jp-board.jsonl with
+#     `score_jp_probe_board.py --label-set stage3-cjk`; coordinate-acceptability ≥ 0.70 is the check the
+#     JP arc registered and stays the check here. A drop of more than 1pp on any JP tag against the 24k
+#     record is the finding that says the CN rows cost something.
+#   * CN half: per-tag F1 for `locality_unit` and `dependent_locality` on the 11 CN val rows every eval
+#     step (train_log.csv), and span exact-match on the 14 rows of cn-board.jsonl at the end. n is small
+#     and the bar is stated as a READING, not a check: the rows are the register's whole labeled supply.
+#     The zh-CN gauntlet rows stay improvement targets until a serving path exists.
+#
+# --- Char mode is channel-free (D5): no anchor / gazetteer / country / evidence paths here, by contract.
+#
+# Launch (operator's call — the corpus and this config are staged by `sync_v8cjk` first):
+#   modal run corpus-python/modal/train_remote.py::sync_v8cjk
+#   modal run -d corpus-python/modal/train_remote.py --config v8-cjk-full.yaml --resume auto
+
+data:
+  corpus_dir: /data/corpus/versioned/v8-cjk-2026-09-05
+  # Unused in char mode (SentencePiece is skipped entirely); kept pointing at the production
+  # tokenizer so config auditing stays uniform. Same as v8-jp-full.
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 96
+  country_weights:
+    JP: 0.98
+    CN: 0.02
+  coarse_filter: false
+  # JP val 20,000 + CN val 11.
+  val_rows: 20011
+  # The 49-label CJK head. Supported ONLY on the char path; the SP path raises (#1349's lesson).
+  label_set: stage3-cjk
+  char_mode: char
+  char_vocab_path: /data/corpus/versioned/v8-cjk-2026-09-05/char-vocab-cjk.json
+  char_ctx: 3
+  max_unit_width: 7
+  max_units: 96
+
+model:
+  # v8-jp-full's geometry, unchanged, so the two deltas above are the only deltas.
+  hidden_size: 384
+  num_hidden_layers: 4
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 96
+  use_crf: false
+  label_smoothing: 0.1
+  use_char_embed: true
+  char_embed_dim: 64
+
+train:
+  output_dir: /data/output-v8-cjk-full-s42
+  seed: 42
+  batch_size: 256
+  eval_batch_size: 512
+  learning_rate: 5.0e-4
+  classifier_learning_rate: 1.0e-3
+  warmup_steps: 1000
+  max_steps: 24000
+  eval_every_steps: 2000
+  save_every_steps: 4000
