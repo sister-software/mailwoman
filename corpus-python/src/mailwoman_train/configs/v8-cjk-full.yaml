@@ -9,11 +9,34 @@
 #      label keeps its id, so the JP per-tag read is comparable against the 24k record label for label.
 #   2. The mixture. The corpus is the v8-cjk overlay: the eight JP train parts referenced where they
 #      already sit on the volume, plus ONE CN part of 126 rows the `cn-organizational-units` recipe labeled
-#      by the suffix grammar (train 126 / val 11 / board 14; docs on #2034). `country_weights` gives CN a
-#      2% share of the sampler, so the 126 rows are each presented roughly (24000 × 256 × 0.02) / 126 ≈
-#      975 times over the run — a rule-shaped tag learned from a small register, not a claim about Chinese
-#      addresses at large. Set CN to 0.0 and this config IS v8-jp-full with a wider head, which is the
-#      control if the JP read moves.
+#      by the suffix grammar (train 126 / val 11 / board 14; docs on #2034). `source_weights` is the
+#      mixture knob — the loader samples a SOURCE per pull from this multinomial and restarts an exhausted
+#      source with a fresh shuffled pass — so CN's 2% share means the 126 rows are each presented roughly
+#      (24000 × 256 × 0.02) / 126 ≈ 975 times over the run: a rule-shaped tag learned from a small register,
+#      not a claim about Chinese addresses at large. `country_weights` is NOT that knob: it is a per-row
+#      acceptance filter (a row survives with probability weight / max weight), and the first launch set
+#      CN to 0.02 there, which REJECTED 98% of the 126 rows and left the CN source with nothing to yield —
+#      the loader raised `generator raised StopIteration` before step 1 (app ap-sBZtCQpys7yNmVHN8TcsDb).
+#      Both countries accept every row; the mixture lives in source_weights. Set the CN source to 0.0 and
+#      this config IS v8-jp-full with a wider head, which is the control if the JP read moves.
+#
+# --- WHY ONE HEAD AND NOT A CN MODEL (the distribution decision, operator 2026-09-05) ---------------------
+# The consumer-facing shape is ONE CJK weights package a consumer installs as a unit: #1177 Phase B makes
+# the CJK char model the second script-routed weights package beside the Latin SentencePiece model, and JP + CN
+# ride it together. A per-script CN model was refused on supply — 126 labeled rows cannot train a model
+# that stands on its own; they can supplement one.
+#
+# Han unification is the cost this pays, measured before the spend (JP train/part-0000, 250,000 rows,
+# against the 126 CN train rows): 103 of the 203 distinct CN characters are shared code points, 55% of
+# the `locality_unit` label mass (171 / 311 labeled characters) sits on them, and every one of the 103
+# carries a different JP majority label (一 is `block` 68% in JP and `locality_unit` 89% in CN; 三 is
+# `prefecture` 29% / `locality_unit` 92%; 分 is `prefecture` 57% via 大分県 / `locality_unit` 73%).
+# What the model has to separate the scripts: 126 / 126 CN rows carry a simplified-only character INSIDE
+# the `locality_unit` span (队 场 连 团 组 are not JP code points), so the ±3 character window always sees
+# a script marker beside the colliding numeral. The auxiliary locale head is NOT switched on for this:
+# `use_locale_conditioning` was off in v8-jp-full, CN is not in `LOCALE_COUNTRIES`, and adding both here
+# would be a third delta the 24k comparison could not attribute. If the JP read moves, the control above
+# (CN source 0.0) separates the head widening from the mixture; the locale head is the fix to try after.
 #
 # --- FROM SCRATCH, for the same two reasons v8-jp-full states: the classifier is (49, 384) here and
 # (47, 384) at the JP checkpoint, and the char vocabulary is re-sealed (2,237 JP characters plus every CN
@@ -28,12 +51,19 @@
 #   * CN half: per-tag F1 for `locality_unit` and `dependent_locality` on the 11 CN val rows every eval
 #     step (train_log.csv), and span exact-match on the 14 rows of cn-board.jsonl at the end. n is small
 #     and the bar is stated as a READING, not a check: the rows are the register's whole labeled supply.
-#     The zh-CN gauntlet rows stay improvement targets until a serving path exists.
+#     The zh-CN gauntlet rows stay improvement targets until a serving path exists. The val stream
+#     draws from the SAME source multinomial as train, so the 11 CN val rows are pulled about 2% of
+#     val pulls with restarts (≈ 400 pulls at val_rows 20011, each row ≈ 36 times); the F1 is over 11
+#     distinct rows however many times they are shown.
 #
 # --- Char mode is channel-free (D5): no anchor / gazetteer / country / evidence paths here, by contract.
 #
-# Launch (operator's call — the corpus and this config are staged by `sync_v8cjk` first):
+# `precision`, `lr_schedule` and `grad_clip_norm` are spelled out because the trainer's default precision
+# is fp32 and v8-jp-full ran bf16; an omitted field here would be a silent third delta.
+#
+# Launch order (`v8-cjk-full-2k.yaml` runs FIRST and this file waits on its read):
 #   modal run corpus-python/modal/train_remote.py::sync_v8cjk
+#   modal run -d corpus-python/modal/train_remote.py --config v8-cjk-full-2k.yaml --resume none
 #   modal run -d corpus-python/modal/train_remote.py --config v8-cjk-full.yaml --resume auto
 
 data:
@@ -43,8 +73,12 @@ data:
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 96
   country_weights:
-    JP: 0.98
-    CN: 0.02
+    JP: 1.0
+    CN: 1.0
+  # The mixture (see the header): per-pull source multinomial, exhausted sources restart.
+  source_weights:
+    overture-jp: 0.98
+    coarse-placer-cn-units: 0.02
   coarse_filter: false
   # JP val 20,000 + CN val 11.
   val_rows: 20011
@@ -79,3 +113,7 @@ train:
   max_steps: 24000
   eval_every_steps: 2000
   save_every_steps: 4000
+  log_every_steps: 100
+  precision: bf16
+  lr_schedule: cosine
+  grad_clip_norm: 1.0

@@ -4717,6 +4717,7 @@ def sync_v8cjk():
     retry = "--low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
     commands = [
         f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {retry}",
+        f"rclone copy :s3:{BUCKET}/corpus-python/scripts/ {VOL_MOUNT}/corpus-python/scripts/ {retry}",
         f"rclone copy :s3:{BUCKET}/corpus/v8-cjk-2026-09-05/ {VOL_MOUNT}/corpus/versioned/v8-cjk-2026-09-05/ {retry}",
     ]
     for command in commands:
@@ -4734,6 +4735,13 @@ def sync_v8cjk():
     jp = f"{VOL_MOUNT}/corpus/versioned/v8-jp-full-2026-08-04"
     checks = {
         "v8-cjk-full config": os.path.isfile(f"{package}/configs/v8-cjk-full.yaml"),
+        "v8-cjk-full-2k probe config": os.path.isfile(f"{package}/configs/v8-cjk-full-2k.yaml"),
+        "v8-cjk-full runs bf16 like v8-jp-full": _file_contains(
+            f"{package}/configs/v8-cjk-full.yaml", "precision: bf16"
+        ),
+        "scorer knows stage3-cjk": _file_contains(
+            f"{VOL_MOUNT}/corpus-python/scripts/score_jp_probe_board.py", '"stage3-cjk"'
+        ),
         "stage3-cjk label set": _file_contains(f"{package}/labels.py", '"stage3-cjk"'),
         "overlay manifest": os.path.isfile(f"{overlay}/MANIFEST.json"),
         "CN train part": os.path.isfile(f"{overlay}/train/cn-units-0000.parquet"),

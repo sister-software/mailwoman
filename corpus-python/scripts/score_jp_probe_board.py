@@ -82,6 +82,8 @@ CHECK = 0.70
 RESOLVE_TAGS: dict[str, tuple[str, str]] = {
     "stage3": ("region", "locality"),
     "stage3-jp": ("prefecture", "municipality"),
+    # The CJK head is stage3-jp plus `locality_unit`; the JP board resolves on the same two tags.
+    "stage3-cjk": ("prefecture", "municipality"),
 }
 
 

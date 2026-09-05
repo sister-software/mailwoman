@@ -1,0 +1,78 @@
+# === v8-cjk-full-2k — the 2,000-step probe that runs BEFORE v8-cjk-full.yaml. ===========================
+#
+# Same role as v8-jp-full-2k for v8-jp-full, with the same deliberate deviations (warmup 200, cosine fully
+# annealed inside 2,000 steps, eval every 250, val_rows 4096, two saves) so the two probes are read against
+# EACH OTHER and neither against a full run. It answers, before the 24k spend:
+#
+#   1. Does the 49-label `stage3-cjk` head load, train, save and reload on the char path? The launch log
+#      must print the head param group as 49 × 384 + 49 = 18,865 params at 0.001.
+#   2. Does the CN source yield? The first full-run launch died before step 1 because `country_weights`
+#      rejected 98% of the 126 CN rows (see v8-cjk-full.yaml's header). The eval dump must carry a
+#      `support_tag.locality_unit` > 0 and an `f1.locality_unit` column that moves off zero.
+#   3. Does the mixture wreck early JP learning? The comparison arm is v8-jp-full-2k's step-2000 board read
+#      on the SAME instrument (`score_jp_probe_board.py`, jp-board.jsonl): blended coordinate-acceptability
+#      0.2237, municipality span exact-match 0.1847 (the 24k record, section 4). Those are low because the
+#      probe's cosine anneals inside 2k steps, so the rule is a BAND, not a tag table: this probe's blended
+#      read must land within ±0.05 of 0.2237. Below 0.17 the mixture cost JP something at 2k, and the
+#      full run does not launch until the control (CN source 0.0) has been read at 2k too. The tag-for-tag
+#      JP comparison is the 24k run's job, against the 24k record.
+#   4. Does the scorer run end to end against a `stage3-cjk` checkpoint with `--label-set stage3-cjk`?
+#
+# Everything not named above is byte-identical to v8-cjk-full.yaml. If you change that file, change this one.
+#
+# Launch:
+#   modal run corpus-python/modal/train_remote.py::sync_v8cjk
+#   modal run -d corpus-python/modal/train_remote.py --config v8-cjk-full-2k.yaml --resume none
+
+data:
+  corpus_dir: /data/corpus/versioned/v8-cjk-2026-09-05
+  # Unused in char mode (SentencePiece is skipped entirely); kept pointing at the production
+  # tokenizer so config auditing stays uniform. Same as v8-jp-full.
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 96
+  country_weights:
+    JP: 1.0
+    CN: 1.0
+  # The mixture (see the header): per-pull source multinomial, exhausted sources restart.
+  source_weights:
+    overture-jp: 0.98
+    coarse-placer-cn-units: 0.02
+  coarse_filter: false
+  # 4,096 as in v8-jp-full-2k: eight eval points read the SHAPE. About 82 of them are CN pulls.
+  val_rows: 4096
+  # The 49-label CJK head. Supported ONLY on the char path; the SP path raises (#1349's lesson).
+  label_set: stage3-cjk
+  char_mode: char
+  char_vocab_path: /data/corpus/versioned/v8-cjk-2026-09-05/char-vocab-cjk.json
+  char_ctx: 3
+  max_unit_width: 7
+  max_units: 96
+
+model:
+  # v8-jp-full's geometry, unchanged, so the two deltas above are the only deltas.
+  hidden_size: 384
+  num_hidden_layers: 4
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 96
+  use_crf: false
+  label_smoothing: 0.1
+  use_char_embed: true
+  char_embed_dim: 64
+
+train:
+  output_dir: /data/output-v8-cjk-full-2k-s42
+  seed: 42
+  batch_size: 256
+  eval_batch_size: 512
+  learning_rate: 5.0e-4
+  classifier_learning_rate: 1.0e-3
+  warmup_steps: 200
+  max_steps: 2000
+  eval_every_steps: 250
+  # Saves at step 1000 AND 2000: the char-path save is what v8-jp-full-2k bought insurance against.
+  save_every_steps: 1000
+  log_every_steps: 50
+  precision: bf16
+  lr_schedule: cosine
+  grad_clip_norm: 1.0
