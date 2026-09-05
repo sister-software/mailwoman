@@ -1,6 +1,6 @@
 # Typed evidence and derivation — design spec
 
-**Status:** proposal, not implemented. **Written:** 2026-08-21.
+**Status:** implemented 2026-09-04/05 (plan Tasks 1–10; receipts below). **Written:** 2026-08-21.
 **Public companion:** [`docs/superpowers/plans/2026-08-08-inferential-resolution.md`](../plans/2026-08-08-inferential-resolution.md) — the design record this implements the first slice of.
 **Related:** #1571 (inferential resolution), #1685 (coverage basis, landed), #1756 (`parent_fallback_retry` inert).
 
@@ -363,3 +363,20 @@ Run before building the arms, not after.
 | First arm       | GB spatial                                     | the only designated artifact that exists                                  |
 | US basis        | `surveyed`, not `designated`                   | no public designated US address register; H1 is the independent reference |
 | FR arm          | probe-conditional                              | a blanket per-commune designation claim would be false                    |
+
+## Receipts (2026-09-05)
+
+Task 1 (the falsifier) read PROCEED on 2026-09-03: 44 of 61 locality-band coverage misses were mis-tags, 4 fold failures (#1571). The rest landed on `main` directly, each after local tests:
+
+| Commit      | What                                                                                             |
+| ----------- | ------------------------------------------------------------------------------------------------ |
+| `765c33704` | feat(evidence): one vocabulary for what is known and how well it is known                        |
+| `64008930c` | feat(evidence): own CoverageBasis, and refuse an exclusion whose fold does not match the layer's |
+| `893f87c9f` | refactor(bdc): say plausibility's evidence in the shared vocabulary, same answers                |
+| `b033d3faf` | feat(resolver-wof-sqlite): separate uprn's two nulls                                             |
+| `690dc28d1` | feat(resolver): let a coverage-licensed absence demote a sibling, never delete one               |
+| `1458916f8` | feat(geocode): report what the evidence permits, beside how the coordinate was made              |
+| `c9e0cb73a` | feat(evidence): project the derivation from the trace we already record                          |
+| `b83600c2b` | feat(tiger): P.L. 94-171 H1 housing counts join pl_block, read from segment 2                    |
+
+Task 10's answer: `docs/records/evals/2026-09-05-ban-designation-probe.md`. Open after the plan: `@mailwoman/evidence` is in the release list and its npm name is unblessed; the FR designated basis waits on the extract carrying `certification_commune`; no address-point lookup stamps a coverage basis yet, so every rooftop reads `observed`.
