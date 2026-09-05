@@ -96,6 +96,8 @@ async function reverseGeocodeCommand(parsed: ParsedCommand): Promise<number> {
 
 	try {
 		const result = await geocoder.reverseGeocode(lat, lon)
+		const { resolveEngineStamp } = await import("#cli-kit/engine-stamp")
+		const { stamp } = await resolveEngineStamp()
 
 		if (parsed.values.format === "text") {
 			const lines = [`containment: ${result.containment}`]
@@ -127,6 +129,7 @@ async function reverseGeocodeCommand(parsed: ParsedCommand): Promise<number> {
 							lon: place.lon,
 							...(place.distanceKm === undefined ? {} : { distanceKm: place.distanceKm }),
 						})),
+						engine: stamp,
 					},
 					null,
 					2

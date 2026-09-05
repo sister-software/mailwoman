@@ -6,6 +6,7 @@
  * Native `mw geocode`: no React, Ink, or Zod on the ordinary data path.
  */
 
+import type { EngineStamp } from "@mailwoman/core/license"
 import type { PipelineTiming } from "@mailwoman/core/pipeline"
 
 import {
@@ -272,7 +273,12 @@ function formatText(result: GeocodeResult): string {
 	return lines.join("\n")
 }
 
-async function formatResult(result: GeocodeResult, format: Format, compact: boolean): Promise<string> {
+async function formatResult(
+	result: GeocodeResult,
+	format: Format,
+	compact: boolean,
+	stamp: EngineStamp
+): Promise<string> {
 	if (format === "text") {
 		return formatText(result)
 	}
@@ -305,7 +311,7 @@ async function formatResult(result: GeocodeResult, format: Format, compact: bool
 		return JSON.stringify(value, null, compact ? 0 : 2)
 	}
 
-	return JSON.stringify(result, null, compact ? 0 : 2)
+	return JSON.stringify({ ...result, engine: stamp }, null, compact ? 0 : 2)
 }
 
 async function openSession(options: GeocodeOptions) {
@@ -336,6 +342,8 @@ async function openSession(options: GeocodeOptions) {
 
 async function runOne(input: string, options: GeocodeOptions): Promise<void> {
 	const format = resolveFormat(options)
+	const { resolveEngineStamp } = await import("#cli-kit/engine-stamp")
+	const { stamp } = await resolveEngineStamp()
 	const session = await openSession(options)
 
 	try {
@@ -345,7 +353,7 @@ async function runOne(input: string, options: GeocodeOptions): Promise<void> {
 			reportTiming("geocode", geocoded.timing)
 		}
 
-		process.stdout.write(`${await formatResult(geocoded.result, format, false)}\n`)
+		process.stdout.write(`${await formatResult(geocoded.result, format, false, stamp)}\n`)
 	} finally {
 		session[Symbol.dispose]()
 	}
@@ -359,6 +367,8 @@ async function runStdin(options: GeocodeOptions): Promise<void> {
 	}
 
 	const { createInterface } = await import("node:readline")
+	const { resolveEngineStamp } = await import("#cli-kit/engine-stamp")
+	const { stamp } = await resolveEngineStamp()
 	const session = await openSession(options)
 	let index = 0
 
@@ -378,7 +388,7 @@ async function runStdin(options: GeocodeOptions): Promise<void> {
 				reportTiming(`geocode[${index}]`, geocoded.timing)
 			}
 
-			process.stdout.write(`${await formatResult(geocoded.result, format, true)}\n`)
+			process.stdout.write(`${await formatResult(geocoded.result, format, true, stamp)}\n`)
 		}
 	} finally {
 		session[Symbol.dispose]()

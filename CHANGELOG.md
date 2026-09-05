@@ -18,6 +18,11 @@ settling, so treat `4.x` as pre-stable.
 
 ## Unreleased
 
+### Changed — `mailwoman autocomplete --json` wraps its array
+
+The command emitted a bare JSON array. It now emits `{ "engine": …, "entries": […] }`, so the record carries the
+same `engine` stamp as `geocode --json` and `reverse --json`. Read `entries` where you read the array before.
+
 ### Added — `nsul.db`, the GB UPRN → unit-postcode register
 
 `mailwoman gazetteer build nsul` builds a sealed, `build-local` layer database from the ONS National Statistics
