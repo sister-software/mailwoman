@@ -5,6 +5,8 @@ per-period token chosen by the operator).
 **Builds on:** PR #2117 (the signed key), PR #2153 (the engine stamp, the `/license` page, the notice), issue #2121
 (the original proposal, whose security requirements this design keeps).
 **Supersedes:** the scratchpad proposal's one-time payment, `POST /v1/checkout-sessions` endpoint, and Cloudflare Queue.
+**Revised 2026-09-05:** no separate key package and no compatibility re-exports; the key format stays in core on
+WebCrypto and the worker imports it by subpath under export conditions.
 
 ## The problem
 
@@ -41,9 +43,15 @@ purchase, so a "My Licenses" web page is not needed until a customer holds sever
 returns 5xx on any failure and writes D1 under unique constraints gets at-least-once delivery and idempotency from
 that alone. A queue arrives when a measurement calls for one.
 
-**The worker never imports `@mailwoman/core`.** Core reaches `node:fs` from many modules and ships megabytes of data;
-a worker bundle that pulls it fails in the browser-SLO test's way. The key format moves to a portable leaf package,
-`@mailwoman/license`, built on WebCrypto, which core re-exports so every existing import keeps working.
+**The key format stays in `@mailwoman/core`, and the worker imports it by subpath.** Ed25519 moves from `node:crypto`
+onto WebCrypto, which Node, `workerd`, and browsers all implement, so one implementation signs and verifies everywhere.
+The worker imports `@mailwoman/core/license/key` and `@mailwoman/core/license/register`, never the `license` barrel and
+never a module that reaches `node:fs`; a bundle test holds that line. Where a core module's implementation must differ
+per platform, its `package.json` export carries `workerd` and `browser` conditions beside `node`, the way the browser
+tier of `@mailwoman/neural` already does. No second package.
+
+**No compatibility re-exports.** A name that moves is imported from its new home by every caller in the same change.
+A function that becomes async is awaited by every caller in the same change.
 
 **The worker holds its own signing key.** A second key id, never the operator's local `v9-ecec29be`. A leaked worker
 key then retires without touching hand-issued licenses.
@@ -77,7 +85,7 @@ flowchart LR
   Checkout -->|success URL| Issued[mailwoman.ai /license/issued]
   Stripe[Stripe] -->|signed webhooks| Worker[license.mailwoman.ai]
   Worker --> D1[(D1)]
-  Worker -->|encodeLicenseKey| Key[@mailwoman/license]
+  Worker -->|encodeLicenseKey| Key[@mailwoman/core/license/key]
   Worker -->|one message per token| Email[email provider]
   Issued -->|poll claim| Worker
   CLI[mailwoman license refresh] -->|lid + secret| Worker
@@ -91,31 +99,44 @@ Three places, each with one job:
 | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `docs/` (GitHub Pages, `mailwoman.ai`)                                 | the `/license` page with both Payment Links and the portal link; the `/license/issued` success page; the static well-known register |
 | `packages/license-worker/` (Cloudflare Worker, `license.mailwoman.ai`) | webhook verification, fulfilment, D1 ledger, signing, claim, refresh, status, email                                                 |
-| `packages/license/` (npm, `@mailwoman/license`)                        | the key format: payload schema, `encodeLicenseKey`, `verifyLicenseKey`, `licenseKeyID`, on WebCrypto                                |
+| `@mailwoman/core/license/key`, `/register` (subpath exports)           | the key format: payload schema, `encodeLicenseKey`, `verifyLicenseKey`, `licenseKeyID`, on WebCrypto; the typed key register        |
 
-## `@mailwoman/license`, the portable key package
+## The key format on WebCrypto, worker-safe by subpath
 
-A new public workspace, modelled on `@mailwoman/evidence`: `lib/` source, `#*` imports, curated exports, `files`
-shipping source and `out/`. Dependencies: `zod` only. No `node:*` import anywhere in it; Ed25519 goes through
-`globalThis.crypto.subtle` (Node 20+, Cloudflare Workers, and browsers all implement it), and PEM handling is a
-base64 transform of the SPKI/PKCS8 DER bytes the WebCrypto API imports and exports.
+`packages/core/lib/license/key.ts` keeps the payload schema, `encodeLicenseKey`, `verifyLicenseKey`, `licenseKeyID` and
+`generateLicenseSigningKeyPair`. The four Ed25519 helpers leave `#hash`, which reaches `node:fs` for `sha256File`, for a
+new `packages/core/lib/crypto/ed25519.ts` on `globalThis.crypto.subtle`: import and export of SPKI and PKCS8 DER, PEM
+as a base64 transform of those bytes, sign, verify. Node 24 implements Ed25519 in `SubtleCrypto`, as do `workerd` and
+every current browser, so there is one implementation and no condition is needed for it. `sha256Hex`, which
+`licenseKeyID` uses on the DER bytes, moves beside it onto `crypto.subtle.digest`; `#hash` keeps the file digests.
 
-Moves from `packages/core/lib/license/key.ts` and `trusted-keys.ts`: `LICENSE_KEY_PREFIX`, `LicenseKeyPayloadSchema`,
-`LicenseKeyPayload`, `LicenseKeyVerification`, `encodeLicenseKey`, `verifyLicenseKey`, `licenseKeyID`,
-`generateLicenseSigningKeyPair`, `TRUSTED_LICENSE_SIGNING_KEYS`. Signing and verifying become `async`, because WebCrypto
-is; the two callers that need it synchronous (`verifyConfiguredLicenseKey`, and through it the doctor and the stamp) are
-addressed below.
+Signing and verifying become `async`, because WebCrypto is. Every caller changes in the same PR: `verifyConfiguredLicenseKey`
+and `buildEngineStamp`'s input, `resolveEngineStamp`, `runtimeLicenseCheck`'s observation, the `license
+keygen|issue|verify` command, and the tests. `resolveEngineStamp` already answers a promise and the doctor's runner is
+already async, so the change is in signatures, not in control flow.
 
-`@mailwoman/core/license` keeps exporting every name: `key.ts` and `trusted-keys.ts` become re-exports, `#hash`
-loses its four Ed25519 helpers once nothing else calls them, and every existing import site is unchanged. The
-`mailwoman license keygen|issue|verify` commands move onto the package's functions with the same output.
+**Export conditions.** The worker bundles with Wrangler's esbuild, which resolves `exports` under the `workerd`,
+`worker`, and `browser` conditions before `default`. Every core subpath the worker imports must resolve to a module
+graph free of `node:*` on those conditions. For `./license/key` and `./license/register` the graph is already free of
+them once Ed25519 is on WebCrypto (`#objects` reaches `spliterator` and a type from `path-ts`, both platform-neutral).
+A core module that needs a platform-specific implementation gets two files and a conditional entry:
 
-**The synchronous callers.** `verifyConfiguredLicenseKey()` is synchronous today and sits under the doctor, the stamp
-resolver, and the launcher's notice. Two shapes were weighed: make the chain async end to end, or keep a synchronous
-verifier in core on `node:crypto`. The design takes the async chain: `resolveEngineStamp` is already a promise,
-`runtimeLicenseCheck` runs inside an async runner, and the launcher already awaits the notice. One key-verifying
-implementation is worth the signature change, and a second implementation on `node:crypto` is the "shared constants,
-not a shared function" defect in a new coat.
+```json
+"./license/key": {
+	"types": "./out/license/key.d.ts",
+	"node": "./lib/license/key.ts",
+	"default": "./out/license/key.js"
+}
+```
+
+is the shape for a neutral module; a split module adds `"workerd"` and `"browser"` entries pointing at its web file,
+as `@mailwoman/neural/onnx-runner` does with its `browser` condition today. The bundle test below is what says whether a
+subpath is neutral or needs the split; the design does not guess.
+
+**The bundle test.** `packages/core/test/integration/worker-bundle.test.ts` runs esbuild with
+`--platform=neutral --conditions=workerd,worker,browser` over an entry that imports `@mailwoman/core/license/key` and
+`@mailwoman/core/license/register`, and fails on any `node:` specifier the bundle would need. It is the same shape as
+`browser-slo.test.ts` in `@mailwoman/neural`, and it is the check that refuses a `node:` import reaching the worker as core grows.
 
 **Payload v1 gains two optional fields, required for self-service tokens:**
 
@@ -131,11 +152,12 @@ An installed release that predates the fields verifies such a token: the schema 
 unknown keys, and the signature covers the raw payload bytes. The token carries no email, no Stripe IDs, no amount,
 no currency. `licensee` stays the one human identity in it.
 
-**Key states** become data rather than prose. One typed register in `@mailwoman/license`,
-`packages/license/lib/register.ts`, holds every key with its `status`: `active` (may sign and verify), `retired` (may no
+**Key states** become data rather than prose. One typed register, `packages/core/lib/license/register.ts`, exported as
+`@mailwoman/core/license/register`, holds every key with its `status`: `active` (may sign and verify), `retired` (may no
 longer sign; existing tokens still verify offline), `revoked` (compromised; online status rejects at once and the next
 release removes offline trust). `TRUSTED_LICENSE_SIGNING_KEYS` and the well-known JSON both derive from it at build
-time, so the two cannot disagree. Today's `retired` acts as revocation; after this change it does not.
+time, so the two cannot disagree; `trusted-keys.ts` is deleted, and its importers read the register. Today's `retired`
+acts as revocation; after this change it does not.
 
 ## The worker
 
@@ -166,7 +188,7 @@ sandbox signing key never enters shipped trust.
 
 At startup the worker signs a fixed probe with `LICENSE_SIGNING_KEY_PEM`, derives the key id from the matching public
 key, and refuses every request with a 503 if it differs from `LICENSE_SIGNING_KID` or is absent from the shipped
-register's `active` entries.
+register's `active` entries. The worker's own bundle is what the bundle test above proves `node:`-free.
 
 ### Plan catalog
 
@@ -304,10 +326,11 @@ prefixes; and a kill switch that stops issuance without stopping verification or
 
 ## Verification
 
-Unit (`@mailwoman/license`): round trip on WebCrypto matches tokens signed by the current `node:crypto` implementation
-byte for byte for the same key and payload (a fixture token from `v9-ecec29be`'s test twin); `lid` and `agreement`
-optional-but-required-for-self-service; register derivation yields today's `trusted-keys.ts` map and today's
-well-known JSON exactly; the three key states have distinct verdicts.
+Unit (core): the WebCrypto round trip verifies a token signed by the `node:crypto` implementation it replaces and
+produces a byte-identical token for the same key and payload (a fixture token committed before the swap); `lid` and
+`agreement` optional-but-required-for-self-service; register derivation yields today's trusted-key map and today's
+well-known JSON exactly; the three key states have distinct verdicts. Integration (core): the worker bundle test
+resolves `./license/key` and `./license/register` under `workerd,worker,browser` with no `node:` specifier.
 
 Unit (worker): the plan catalog refuses an unknown Price and a mismatched mode; period-end plus grace across a
 month boundary, a year boundary, and February 29; the licensee-row-missing path on an early `invoice.paid`; every state
@@ -339,7 +362,7 @@ failure, on any `email_state = failed` older than an hour, and on reconciliation
 - A full refund or a dispute makes the license read `revoked` online while the offline token keeps its date, and the
   docs say why.
 - A release that predates the shop but trusts the worker's key verifies the token offline.
-- Every existing hand-issued token stays valid with no migration; `@mailwoman/core/license` keeps every export.
+- Every existing hand-issued token stays valid with no migration.
 - Issuance can be disabled in one variable without disabling verification or refresh.
 
 ## Out of scope
@@ -351,9 +374,9 @@ Each keeps the local issuer as its path.
 
 - [ ] **A — Terms and merchant identity** (operator): clickwrap agreement, version scheme, `/license/terms/<version>`,
       Stripe account name.
-- [ ] **B — `@mailwoman/license`**: the portable key package on WebCrypto, `lid` and `agreement`, the typed key register
-      that derives `trusted-keys.ts` and the well-known JSON, core re-exports, the async chain through the doctor and
-      the stamp.
+- [ ] **B — The key format on WebCrypto**: `crypto/ed25519.ts`, the async chain through every caller, `lid` and
+      `agreement`, the typed key register that derives the trust map and the well-known JSON, the `./license/key` and
+      `./license/register` subpath exports, the worker bundle test.
 - [ ] **C — Worker foundation**: workspace, the seven registers, Wrangler environments, D1 schema, deploy workflow,
       signing self-test, kill switch.
 - [ ] **D — Fulfilment**: webhook verification, the event handlers, the early-`invoice.paid` path, minting, email.
