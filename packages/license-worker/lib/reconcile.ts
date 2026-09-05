@@ -46,7 +46,7 @@ export interface ReconcileOptions {
 
 const PAYMENT_STATE_DISPUTED = "disputed"
 
-export async function reconcile(
+export async function reconcileLedger(
 	env: LicenseWorkerEnv,
 	deps: FulfilDependencies,
 	options: ReconcileOptions

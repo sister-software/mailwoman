@@ -14,7 +14,7 @@ import { type AppDependencies, createLicenseWorkerApp } from "#app"
 import { resendProvider } from "#email/resend"
 import { type LicenseWorkerBindings, type LicenseWorkerEnv, readEnv } from "#env"
 import { openLedger } from "#ledger/client"
-import { reconcile } from "#reconcile"
+import { reconcileLedger } from "#reconcile"
 import type { SigningStatusReport } from "#routes/health"
 import { type SigningSelfTest, signingSelfTest } from "#signing"
 import { stripeClient } from "#stripe/client"
@@ -75,7 +75,7 @@ const handler: ExportedHandler<LicenseWorkerBindings> = {
 		try {
 			env = readEnv(bindings)
 		} catch {
-			return misconfigured() as never
+			return misconfigured()
 		}
 
 		const state = isolateState(env)
@@ -83,7 +83,7 @@ const handler: ExportedHandler<LicenseWorkerBindings> = {
 		// The first request in an isolate waits for the self-test so `/v1` never answers from an unchecked key.
 		await state.selfTest
 
-		return createLicenseWorkerApp(env, state.deps).fetch(request as never) as never
+		return createLicenseWorkerApp(env, state.deps).fetch(request)
 	},
 
 	async scheduled(_controller, bindings, ctx) {
@@ -99,7 +99,7 @@ const handler: ExportedHandler<LicenseWorkerBindings> = {
 		}
 
 		ctx.waitUntil(
-			reconcile(
+			reconcileLedger(
 				env,
 				{ stripe: stripeClient(env), ledger: state.deps.ledger, email: state.deps.email },
 				{ sinceSeconds: RECONCILE_WINDOW_SECONDS }

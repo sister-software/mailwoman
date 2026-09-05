@@ -4,8 +4,11 @@
  * @author Teffen Ellis, et al.
  *
  *   Minimal Stripe objects: only the fields the handlers read. A test that needs another field adds it here, so the
- *   fixtures say what the worker depends on.
+ *   fixtures say what the worker depends on. Event builders answer `Stripe.Event`, so a handler test passes them as
+ *   the handler is typed; the assertion is the one place the fixture meets the SDK's union.
  */
+
+import type Stripe from "stripe"
 
 export interface InvoiceInit {
 	id: string
@@ -13,7 +16,6 @@ export interface InvoiceInit {
 	priceID: string
 	paidAt: number
 	status?: "paid" | "open" | "void" | "draft"
-	chargeID?: string
 	livemode?: boolean
 	quantity?: number
 	lines?: number
@@ -24,7 +26,6 @@ export function invoiceObject(init: InvoiceInit) {
 		id: `il_${init.id}`,
 		object: "line_item",
 		quantity: init.quantity ?? 1,
-		price: { id: init.priceID, object: "price" },
 		pricing: { price_details: { price: init.priceID } },
 	}
 
@@ -34,9 +35,7 @@ export function invoiceObject(init: InvoiceInit) {
 		status: init.status ?? "paid",
 		livemode: init.livemode ?? false,
 		created: init.paidAt - 60,
-		subscription: init.subscriptionID,
 		parent: { type: "subscription_details", subscription_details: { subscription: init.subscriptionID } },
-		charge: init.chargeID ?? null,
 		status_transitions: { paid_at: init.paidAt },
 		lines: { object: "list", data: Array.from({ length: init.lines ?? 1 }, () => line), has_more: false },
 	}
@@ -60,7 +59,6 @@ export function subscriptionObject(init: SubscriptionInit) {
 		object: "subscription",
 		status: init.status ?? "active",
 		livemode: init.livemode ?? false,
-		current_period_end: init.currentPeriodEnd,
 		items: {
 			object: "list",
 			data: [
@@ -116,7 +114,7 @@ export interface EventInit {
 	livemode?: boolean
 }
 
-export function invoicePaidEvent(init: EventInit & { invoiceID?: string } = {}) {
+export function invoicePaidEvent(init: EventInit & { invoiceID?: string } = {}): Stripe.Event {
 	return {
 		id: init.id ?? "evt_in_1",
 		object: "event",
@@ -124,12 +122,12 @@ export function invoicePaidEvent(init: EventInit & { invoiceID?: string } = {}) 
 		livemode: init.livemode ?? false,
 		created: Math.floor(Date.now() / 1000),
 		data: { object: { id: init.invoiceID ?? "in_1", object: "invoice" } },
-	}
+	} as Stripe.Event
 }
 
 export function checkoutCompletedEvent(
 	init: EventInit & { sessionID?: string; subscriptionID?: string; licensee?: string } = {}
-) {
+): Stripe.Event {
 	return {
 		id: init.id ?? "evt_cs_1",
 		object: "event",
@@ -144,7 +142,7 @@ export function checkoutCompletedEvent(
 				email: "ops@example.com",
 			}),
 		},
-	}
+	} as Stripe.Event
 }
 
 export interface ChargeInit {
@@ -165,7 +163,7 @@ export function chargeObject(init: ChargeInit) {
 	}
 }
 
-export function chargeRefundedEvent(init: EventInit & Omit<ChargeInit, "id"> & { chargeID: string }) {
+export function chargeRefundedEvent(init: EventInit & Omit<ChargeInit, "id"> & { chargeID: string }): Stripe.Event {
 	return {
 		id: init.id ?? "evt_ch_1",
 		object: "event",
@@ -173,7 +171,18 @@ export function chargeRefundedEvent(init: EventInit & Omit<ChargeInit, "id"> & {
 		livemode: init.livemode ?? false,
 		created: Math.floor(Date.now() / 1000),
 		data: { object: chargeObject({ ...init, id: init.chargeID }) },
-	}
+	} as Stripe.Event
+}
+
+export function chargeDisputeCreatedEvent(init: EventInit & { disputeID: string; chargeID: string }): Stripe.Event {
+	return {
+		id: init.id ?? "evt_dp_1",
+		object: "event",
+		type: "charge.dispute.created",
+		livemode: init.livemode ?? false,
+		created: Math.floor(Date.now() / 1000),
+		data: { object: { id: init.disputeID, object: "dispute", charge: init.chargeID, status: "needs_response" } },
+	} as Stripe.Event
 }
 
 /**

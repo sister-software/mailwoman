@@ -73,7 +73,6 @@ async function fixture(
 			priceID,
 			paidAt: OCT_1,
 			status: options.status,
-			chargeID: `ch_${suffix}`,
 		}),
 		[`GET /v1/subscriptions/sub_${suffix}`]: subscriptionObject({
 			id: `sub_${suffix}`,
@@ -165,7 +164,7 @@ describe("fulfilment", () => {
 	it("handles invoice.paid arriving before checkout.session.completed: the licensee comes from the listed session, and the later checkout event mints nothing more", async () => {
 		const { env: worker, deps } = await fixture("4", { licensee: "Late Checkout Ltd" })
 
-		await handleStripeEvent(worker, deps, invoicePaidEvent({ id: "evt_4a", invoiceID: "in_4" }) as never)
+		await handleStripeEvent(worker, deps, invoicePaidEvent({ id: "evt_4a", invoiceID: "in_4" }))
 
 		await handleStripeEvent(
 			worker,
@@ -175,7 +174,7 @@ describe("fulfilment", () => {
 				sessionID: "cs_4",
 				subscriptionID: "sub_4",
 				licensee: "Late Checkout Ltd",
-			}) as never
+			})
 		)
 
 		const license = await findLicenseBySubscription(deps.ledger, "sub_4")
@@ -199,7 +198,7 @@ describe("fulfilment", () => {
 				paymentIntentID: "pi_5",
 				amount: 25_000,
 				refunded: 25_000,
-			}) as never
+			})
 		)
 
 		expect((await findLicenseBySubscription(deps.ledger, "sub_5"))?.license_state).toBe("revoked")

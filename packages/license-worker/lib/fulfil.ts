@@ -27,6 +27,7 @@ import {
 } from "#ledger/licenses"
 import type { EmailState, LicenseRow, LicenseTokenRow } from "#ledger/schema"
 import { planForPrice } from "#plans"
+import { idOf, invoiceSubscriptionID, linePriceID, subscriptionPeriodEnd } from "#stripe/shapes"
 
 export interface FulfilDependencies {
 	stripe: Stripe
@@ -42,43 +43,6 @@ export type FulfilOutcome =
  * The Payment Link's custom field that collects the licensee's legal name; the key is set on the Payment Link.
  */
 const LICENSEE_FIELD_KEY = "licensee_legal_name"
-
-function idOf(value: string | { id: string } | null | undefined): string | undefined {
-	return typeof value === "string" ? value : value?.id
-}
-
-/**
- * The subscription an invoice bills. Stripe moved this from `invoice.subscription` to
- * `invoice.parent.subscription_details.subscription` across API versions; the pinned SDK types the newer shape and
- * older objects in a test fixture may carry the older one, so both are read.
- */
-function invoiceSubscriptionID(invoice: Stripe.Invoice): string | undefined {
-	const parent = invoice.parent?.subscription_details?.subscription
-	const legacy = (invoice as unknown as { subscription?: string | { id: string } | null }).subscription
-
-	return idOf(parent) ?? idOf(legacy)
-}
-
-/**
- * The Price a line bills. The pinned SDK reads it from `pricing.price_details.price`; the older shape is `price`.
- */
-function linePriceID(line: Stripe.InvoiceLineItem): string | undefined {
-	const priced = line.pricing?.price_details?.price
-	const legacy = (line as unknown as { price?: string | { id: string } | null }).price
-
-	return idOf(priced) ?? idOf(legacy)
-}
-
-/**
- * The subscription's current period end, read from its first item, where the pinned SDK puts it, with the older
- * subscription-level field as the fallback.
- */
-function subscriptionPeriodEnd(subscription: Stripe.Subscription): number | undefined {
-	const item = subscription.items.data[0]?.current_period_end
-	const legacy = (subscription as unknown as { current_period_end?: number }).current_period_end
-
-	return item ?? legacy
-}
 
 /**
  * The license row for a Checkout Session: created on first sight with a fresh lid and refresh secret, read back after.

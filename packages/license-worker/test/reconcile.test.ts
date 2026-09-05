@@ -11,13 +11,14 @@ import { readEnv } from "#env"
 import { fulfilInvoice } from "#fulfil"
 import { openLedger } from "#ledger/client"
 import { findLicenseBySubscription, findToken, setEmailState } from "#ledger/licenses"
-import { reconcile } from "#reconcile"
+import { reconcileLedger } from "#reconcile"
 import { stripeClient } from "#stripe/client"
 import { handleStripeEvent } from "#stripe/handlers"
 
 import { envWithSigningKey } from "./support/keys.ts"
 import { applyMigrations } from "./support/migrations.ts"
 import {
+	chargeDisputeCreatedEvent,
 	chargeObject,
 	chargeRefundedEvent,
 	checkoutSessionList,
@@ -110,20 +111,20 @@ describe("reconciliation", () => {
 		const { worker, stripe, ledger } = await fixture("9")
 		const email = recordingEmail()
 		const deps = { stripe, ledger, email: email.provider }
-		const report = await reconcile(worker, deps, { sinceSeconds: WEEK })
+		const report = await reconcileLedger(worker, deps, { sinceSeconds: WEEK })
 
 		expect(report).toMatchObject({ minted: ["in_9"], resent: [], refused: [], corrected: [] })
 		expect((await findToken(ledger, "in_9"))?.email_state).toBe("sent")
 		expect(email.sent).toEqual(["in_9"])
 
-		const again = await reconcile(worker, deps, { sinceSeconds: WEEK })
+		const again = await reconcileLedger(worker, deps, { sinceSeconds: WEEK })
 
 		expect(again.minted).toEqual([])
 		expect(email.sent).toEqual(["in_9"])
 
 		await setEmailState(ledger, "in_9", "failed")
 
-		const resent = await reconcile(worker, deps, { sinceSeconds: WEEK })
+		const resent = await reconcileLedger(worker, deps, { sinceSeconds: WEEK })
 
 		expect(resent.resent).toEqual(["in_9"])
 		expect(email.sent).toEqual(["in_9", "in_9"])
@@ -138,7 +139,7 @@ describe("reconciliation", () => {
 
 		const canceled = await fixture("10", { subscriptionStatus: "canceled", listInvoices: false })
 
-		const report = await reconcile(
+		const report = await reconcileLedger(
 			canceled.worker,
 			{ stripe: canceled.stripe, ledger: canceled.ledger, email: email.provider },
 			{ sinceSeconds: WEEK }
@@ -155,18 +156,15 @@ describe("reconciliation", () => {
 
 		await fulfilInvoice(disputed.worker, deps, "in_11")
 
-		await handleStripeEvent(disputed.worker, deps, {
-			id: "evt_11d",
-			object: "event",
-			type: "charge.dispute.created",
-			livemode: false,
-			created: OCT_1,
-			data: { object: { id: "dp_11", object: "dispute", charge: "ch_11", status: "needs_response" } },
-		} as never)
+		await handleStripeEvent(
+			disputed.worker,
+			deps,
+			chargeDisputeCreatedEvent({ id: "evt_11d", disputeID: "dp_11", chargeID: "ch_11" })
+		)
 
 		expect((await findLicenseBySubscription(disputed.ledger, "sub_11"))?.license_state).toBe("revoked")
 
-		const report = await reconcile(disputed.worker, deps, { sinceSeconds: WEEK })
+		const report = await reconcileLedger(disputed.worker, deps, { sinceSeconds: WEEK })
 
 		expect(report.corrected).toContainEqual({ lid: expect.any(String), from: "revoked", to: "active" })
 		expect((await findLicenseBySubscription(disputed.ledger, "sub_11"))?.license_state).toBe("active")
@@ -185,10 +183,10 @@ describe("reconciliation", () => {
 				paymentIntentID: "pi_12",
 				amount: 25_000,
 				refunded: 25_000,
-			}) as never
+			})
 		)
 
-		const unchanged = await reconcile(refunded.worker, refundedDeps, { sinceSeconds: WEEK })
+		const unchanged = await reconcileLedger(refunded.worker, refundedDeps, { sinceSeconds: WEEK })
 
 		expect(unchanged.corrected.filter((entry) => entry.from === "revoked")).toEqual([])
 		expect((await findLicenseBySubscription(refunded.ledger, "sub_12"))?.license_state).toBe("revoked")

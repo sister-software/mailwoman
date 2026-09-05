@@ -14,22 +14,7 @@ import type { LicenseWorkerEnv } from "#env"
 import { ensureLicenseFromCheckoutSession, type FulfilDependencies, fulfilInvoice } from "#fulfil"
 import { findLicenseBySubscription, findTokenLid, setLicenseState } from "#ledger/licenses"
 import { LicenseState } from "#ledger/schema"
-
-function idOf(value: string | { id: string } | null | undefined): string | undefined {
-	return typeof value === "string" ? value : value?.id
-}
-
-/**
- * The subscription an invoice bills, across the two shapes Stripe has used for it.
- */
-function invoiceSubscriptionID(invoice: { id: string }): string | undefined {
-	const shaped = invoice as {
-		parent?: { subscription_details?: { subscription?: string | { id: string } | null } | null } | null
-		subscription?: string | { id: string } | null
-	}
-
-	return idOf(shaped.parent?.subscription_details?.subscription) ?? idOf(shaped.subscription)
-}
+import { idOf, invoiceSubscriptionID } from "#stripe/shapes"
 
 /**
  * The invoice a charge paid. A charge no longer names its invoice; the link runs through the PaymentIntent, and the
