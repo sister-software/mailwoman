@@ -43,6 +43,16 @@
 			"node": "./lib/release/stage.ts",
 			"default": "./out/release/stage.js",
 			"types": "./out/release/stage.d.ts"
+		},
+		"./release/smoke-get-started": {
+			"node": "./lib/release/smoke-get-started.ts",
+			"default": "./out/release/smoke-get-started.js",
+			"types": "./out/release/smoke-get-started.d.ts"
+		},
+		"./release/workspace-closure": {
+			"node": "./lib/release/workspace-closure.ts",
+			"default": "./out/release/workspace-closure.js",
+			"types": "./out/release/workspace-closure.d.ts"
 		}
 	},
 	"dependencies": {

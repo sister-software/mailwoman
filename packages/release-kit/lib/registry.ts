@@ -23,6 +23,7 @@ import { publishWorkspaceOperation } from "#operations/publish-workspace"
 import { sbom } from "#operations/sbom"
 import { scaffoldWeightsOverlayOperation } from "#operations/scaffold-weights-overlay"
 import { smokeCleanInstallOperation } from "#operations/smoke-clean-install"
+import { smokeGetStartedOperation } from "#operations/smoke-get-started"
 import { stageWeightsCacheOperation } from "#operations/stage-weights-cache"
 import { verifyMetadata } from "#operations/verify-metadata"
 
@@ -40,6 +41,7 @@ export const operations: ReadonlyArray<ReleaseOperation<unknown, unknown>> = [
 	fetchHFWeightsOperation,
 	preflight,
 	smokeCleanInstallOperation,
+	smokeGetStartedOperation,
 	sbom,
 	linkWeightsOverlayOperation,
 	stageWeightsCacheOperation,

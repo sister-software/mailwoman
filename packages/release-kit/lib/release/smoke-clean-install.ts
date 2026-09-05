@@ -29,7 +29,7 @@ import { tryParsingJSON } from "@mailwoman/core/objects"
 import { runFileSync, spawnProcess } from "@mailwoman/core/process"
 import { join, resolvePath as resolve } from "path-ts"
 
-import { packWorkspaceForPublish } from "#pack/pack-workspace"
+import { packWorkspaces } from "#release/workspace-closure"
 
 /**
  * The `mailwoman` CLI's full first-party runtime closure. Every `@mailwoman/*` package the CLI can load at runtime MUST
@@ -421,16 +421,7 @@ export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOpti
 
 		log(`[smoke] packing ${Object.keys(WORKSPACES).length} workspaces…`)
 
-		const deps: Record<string, string> = {}
-
-		for (const [name, dir] of Object.entries(WORKSPACES)) {
-			const tgz = join(tarDir, `${dir}.tgz`)
-			// Pack via the SHARED publish path (injected publishConfig.exports) — a raw `yarn pack`
-			// ships the dev map (node → .ts), which consumers can never load (node_modules type-strip
-			// refusal) and which this smoke exists to catch.
-			await packWorkspaceForPublish(resolve(repoRoot, dir), tgz)
-			deps[name] = `file:${tgz}`
-		}
+		const deps = await packWorkspaces(repoRoot, new Map(Object.entries(WORKSPACES)), String(tarDir))
 
 		await writeLocalJSONFile({ name: "mw-smoke", private: true, dependencies: deps }, join(proj, "package.json"))
 
