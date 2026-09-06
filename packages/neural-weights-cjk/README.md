@@ -11,7 +11,7 @@ functional release ships with the next `mailwoman` minor once the `ja-jp` / `zh-
 
 - `model.onnx` — the char graph: inputs `char_ids` int64 `(batch, sequence, 7)` and `attention_mask` int64
   `(batch, sequence)`, output `logits (batch, sequence, 49)`. No `input_ids`.
-- `char-vocab.json` — the sealed character vocabulary (2,335 entries, `<pad>` 0, `<unk>` 1, code-point order). This
+- `char-vocab.json` — the sealed character vocabulary (2,337 entries, `<pad>` 0, `<unk>` 1, code-point order). This
   is the model's whole tokenizer: one unit per Unicode code point, a ±3 character window per unit, 96 units per row.
 - `model-card.json` — the `encoder: "char"` block (`char_vocab`, `max_units`, `max_unit_width`, `char_ctx`), the 49
   BIO labels, the training provenance, and the board reads.
@@ -43,11 +43,13 @@ await classifier.parseJSON("東京都千代田区丸の内1丁目9-1")
 
 ## Provenance
 
-`v8-cjk-full` seed 42, 24,000 steps from scratch on the v8-jp-full JP corpus (2,000,000 rows, Overture-JP) plus 126
-Chinese organizational-unit rows at a 2% source share. On the 20,000-row held-out JP board the PyTorch read is 0.9653
-coordinate-acceptability at 15 km and the served TypeScript read 0.9633, every tag within 0.2 pp of the other; 598 of
-the 664 failed rows are one held-out hiragana municipality, which the JP-only control also fails (#2165). Decision
-record: `docs/superpowers/specs/2026-09-05-cjk-serving-path.md`; receipts on #1176, #2034 and #2164.
+`v8-cjk-kana` seed 42, 24,000 steps from scratch on the v8-jp-kana JP corpus (2,000,000 rows, Overture-JP, five
+registers including the municipality's kana reading) plus 126 Chinese organizational-unit rows at a 2% source share.
+On the 20,000-row held-out JP board the PyTorch read is 0.9924 coordinate-acceptability at 15 km (municipality macro
+0.9821); the shared head it replaces, `v8-cjk-full`, read 0.9653 on the same board and failed 598 rows of one hiragana
+municipality that this run fails 0 of (#2165). The remaining low municipality is a 町 with 市 inside its name (#2178).
+Decision record: `docs/superpowers/specs/2026-09-05-cjk-serving-path.md`; the run record is
+`docs/records/evals/2026-09-06-v8-cjk-shared-head.md`; receipts on #1176, #2034, #2164 and #2165.
 
 ## Dev setup
 
