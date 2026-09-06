@@ -152,6 +152,11 @@ def score_board(
     reg_rows: Counter[str] = Counter()
     reg_acceptable: Counter[str] = Counter()
     reg_unresolved: Counter[str] = Counter()
+    # Per held-out municipality (the gold locality-tag span): the board holds out whole municipalities, and one of
+    # them carries 823 of 20,000 rows, so a row-weighted number moves 2 pp on a single name. The macro over
+    # municipalities is reported beside the blended fraction; the check stays the blended one.
+    muni_rows: Counter[str] = Counter()
+    muni_acceptable: Counter[str] = Counter()
 
     for r in rows:
         n += 1
@@ -169,6 +174,9 @@ def score_board(
         register = r.get("register")
         if register is not None:
             reg_rows[register] += 1
+        gold_muni = gold.get(locality_tag)
+        if gold_muni is not None:
+            muni_rows[gold_muni] += 1
 
         key = norm_key(pred.get(region_tag, "") + "|" + pred.get(locality_tag, ""))
         hit = centroids.get(key)
@@ -181,6 +189,8 @@ def score_board(
             acceptable += 1
             if register is not None:
                 reg_acceptable[register] += 1
+            if gold_muni is not None:
+                muni_acceptable[gold_muni] += 1
 
     per_register = {
         name: {
@@ -191,6 +201,15 @@ def score_board(
         }
         for name, count in reg_rows.items()
     }
+    per_municipality = {
+        name: {"rows": count, "acceptable": muni_acceptable[name], "fraction": muni_acceptable[name] / count}
+        for name, count in muni_rows.items()
+    }
+    municipality_macro = (
+        sum(stats["fraction"] for stats in per_municipality.values()) / len(per_municipality)
+        if per_municipality
+        else 0.0
+    )
     return {
         "rows": n,
         "acceptable": acceptable,
@@ -199,6 +218,8 @@ def score_board(
         "tag_hit": tag_hit,
         "tag_total": tag_total,
         "per_register": per_register,
+        "per_municipality": per_municipality,
+        "municipality_macro": municipality_macro,
     }
 
 
@@ -222,6 +243,18 @@ def format_report(result: Mapping, *, accept_km: float = ACCEPT_KM, check: float
     else:
         lines.append("")
         lines.append("per-register acceptability: board carries no `register` column — no breakdown.")
+
+    per_municipality = result.get("per_municipality") or {}
+    if per_municipality:
+        lines.append("")
+        lines.append(
+            f"municipality macro (mean of per-municipality acceptability over {len(per_municipality)} held-out "
+            f"municipalities) — a READING beside the blended check: {result['municipality_macro']:.4f}"
+        )
+        worst = sorted(per_municipality.items(), key=lambda kv: (kv[1]["fraction"], -kv[1]["rows"]))[:5]
+        lines.append("  lowest five (name, acceptable/rows):")
+        for name, stats in worst:
+            lines.append(f"    {name:<12} {stats['fraction']:.4f}  ({stats['acceptable']}/{stats['rows']})")
 
     lines.append("")
     lines.append(

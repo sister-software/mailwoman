@@ -209,3 +209,19 @@ def test_resolve_tags_select_which_spans_form_the_centroid_key():
 def test_resolve_tag_defaults_track_the_label_set():
     assert scorer.RESOLVE_TAGS["stage3"] == ("region", "locality")
     assert scorer.RESOLVE_TAGS["stage3-jp"] == ("prefecture", "municipality")
+
+
+def test_municipality_macro_weights_each_held_out_municipality_once():
+    # CHIYODA carries 4 of 6 rows, KITA 2. Wiping KITA out moves the blended number by a third and the macro by a half:
+    # the macro is what says "one of two municipalities failed", whatever the row split.
+    chiyoda = {r["raw"] for r in ALL_ROWS if "CHIYODA" in r["raw"]}
+    result = _score(chiyoda)
+
+    assert result["fraction"] == pytest.approx(4 / 6)
+    assert result["per_municipality"]["CHIYODA"] == {"rows": 4, "acceptable": 4, "fraction": 1.0}
+    assert result["per_municipality"]["KITA"] == {"rows": 2, "acceptable": 0, "fraction": 0.0}
+    assert result["municipality_macro"] == pytest.approx(0.5)
+
+    report = scorer.format_report(result)
+    assert "municipality macro" in report
+    assert "KITA" in report.split("lowest five")[1]

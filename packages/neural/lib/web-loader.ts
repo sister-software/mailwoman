@@ -17,6 +17,7 @@ import { detectLocaleSync } from "@mailwoman/locale-hint"
 import { computeQueryShape } from "@mailwoman/query-shape"
 
 import { type AnchorLookup, mergeAnchorLookups } from "#anchor-inference"
+import { type EncoderDescriptor, encoderDescriptorFromCard, parseCharVocabulary } from "#char-encoder"
 import { NeuralAddressClassifier, type NeuralAddressClassifierConfig } from "#classifier/index"
 import { type CountryLexicon, parseCountryLexicon } from "#country-inference"
 import { type GazetteerLexicon, parseGazetteerLexicon } from "#gazetteer-inference"
@@ -108,9 +109,15 @@ export interface LoadFromURLsOptions {
 	 */
 	modelURL: string
 	/**
-	 * URL to the SentencePiece tokenizer model (e.g. `/static/mailwoman/tokenizer.model`).
+	 * URL to the SentencePiece tokenizer model (e.g. `/static/mailwoman/tokenizer.model`). Required unless the card
+	 * declares `encoder: "char"`, in which case `charVocabURL` takes its place.
 	 */
-	tokenizerURL: string
+	tokenizerURL?: string
+	/**
+	 * URL to the sealed character vocabulary of a char-path package (#2164). Defaults to the card's `char_vocab` file
+	 * name beside `modelURL`. Ignored for a SentencePiece card.
+	 */
+	charVocabURL?: string
 	/**
 	 * URL to `model-card.json`. When provided, its `labels` field is threaded into the classifier so post-Stage-2 bundles
 	 * (33-label Stage 3 and beyond) decode correctly. Skip for legacy bundles whose cards predate the `labels` field —
@@ -424,6 +431,15 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 	// becomes a silent 404 → channel-off here.
 	const modelCard = opts.modelCardURL ? await fetchModelCardJSON(opts.modelCardURL, fetchImpl) : null
 	const labels = modelCard ? labelsFromModelCard(modelCard, opts.modelCardURL!) : null
+	const encoder = encoderDescriptorFromCard(modelCard ?? undefined, opts.modelCardURL ?? "(no card)")
+
+	if (encoder.kind === "char") {
+		return loadCharClassifierFromURLs(opts, encoder, labels, fetchImpl)
+	}
+
+	if (!opts.tokenizerURL) {
+		throw new Error("loadNeuralClassifierFromURLs: the card declares no char encoder, so tokenizerURL is required")
+	}
 
 	const gazetteerLexiconURL =
 		opts.gazetteerLexiconURL === null ? null : (opts.gazetteerLexiconURL ?? defaultGazetteerLexiconURL(opts.modelURL))
@@ -735,4 +751,50 @@ function toBase64(bytes: Uint8Array): string {
 	// Node: Buffer is the lower-friction path; the lazy import keeps the file from pulling in
 	// node:buffer when bundlers are statically analyzing browser entries.
 	return Buffer.from(binary, "binary").toString("base64")
+}
+
+/**
+ * The char-path branch of {@link loadNeuralClassifierFromURLs} (#2164): fetch the graph and the sealed character
+ * vocabulary, no tokenizer, no lexicons, no postcode binaries and no pair index — the char path is channel-free by
+ * contract, and a `WebONNXRunner` already carries `inferChars`.
+ */
+async function loadCharClassifierFromURLs(
+	opts: LoadFromURLsOptions,
+	encoder: Extract<EncoderDescriptor, { kind: "char" }>,
+	labels: readonly string[] | null,
+	fetchImpl: typeof fetch
+): Promise<LoadResult> {
+	const charVocabURL = opts.charVocabURL ?? new URL(encoder.charVocab, opts.modelURL).toString()
+
+	const [modelBytes, vocabularyJSON] = await Promise.all([
+		fetchBytes(opts.modelURL, fetchImpl),
+		fetchImpl(charVocabURL).then(async (response) => {
+			if (!response.ok) {
+				throw new Error(`failed to fetch char vocabulary ${charVocabURL}: HTTP ${response.status}`)
+			}
+
+			return response.json() as Promise<unknown>
+		}),
+	])
+
+	const runner = await WebONNXRunner.fromBytes(modelBytes, opts.runner)
+
+	const classifier = new NeuralAddressClassifier({
+		charEncoder: {
+			vocabulary: parseCharVocabulary(vocabularyJSON, charVocabURL),
+			contract: { maxUnits: encoder.maxUnits, maxUnitWidth: encoder.maxUnitWidth, ctxChars: encoder.ctxChars },
+		},
+		runner,
+		...(labels ? { labels } : {}),
+	})
+
+	return {
+		classifier,
+		diagnostics: runner.diagnostics,
+		labels,
+		pairIndexes: [],
+		// No pair index on the char path: the placetype-pair prior is a Latin retrieval channel, and the char graph
+		// declares no channel inputs.
+		selectPairIndexForText: () => undefined,
+	}
 }

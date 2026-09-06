@@ -12,6 +12,7 @@ import { tryParsingJSON } from "@mailwoman/core/json"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { type AnchorLookup, type AnchorSpanMode, parseAnchorLookup } from "#anchor-inference"
+import { type EncoderDescriptor, encoderDescriptorFromCard } from "#char-encoder"
 import { PostcodeBinaryResolver } from "#postcode/binary-resolver"
 
 // The graph-input inference lives in ort-feeds.ts (pure, so the browser loader shares it); re-exported
@@ -248,62 +249,12 @@ export async function unfedAnchorDetail(packageDir: PathBuilderLike | undefined)
  * re-default.
  */
 /**
- * How a weights package turns text into model input. Absent from a card means SentencePiece — every Latin bundle
- * shipped before the char path existed says nothing here.
+ * The card's `encoder` block read from a file — the node-side twin of `encoderDescriptorFromCard` (#2164).
  */
-export type EncoderDescriptor =
-	| { kind: "sentencepiece" }
-	| {
-			kind: "char"
-			/**
-			 * The sealed character vocabulary sibling's file name, relative to the package directory (`char-vocab.json`).
-			 */
-			charVocab: string
-			maxUnits: number
-			maxUnitWidth: number
-			ctxChars: number
-	  }
+export type { EncoderDescriptor } from "#char-encoder"
 
-/**
- * Read the card's `encoder` block (#2164). A char card names its vocabulary sibling and the `(S, W, ctx)` contract the
- * model was trained under; a runtime that guessed any of the three would encode every row differently from training and
- * score confidently on garbage, so a char card missing one of them is refused rather than defaulted.
- */
 export async function readEncoderFromModelCard(modelCardPath: PathBuilderLike | undefined): Promise<EncoderDescriptor> {
-	const card = await readModelCardObject(modelCardPath)
-	const encoder = card?.encoder
-
-	if (encoder === undefined || encoder === "sentencepiece") return { kind: "sentencepiece" }
-
-	if (encoder !== "char") {
-		throw new Error(`model-card.json at ${modelCardPath} declares an unknown \`encoder\` ${JSON.stringify(encoder)}`)
-	}
-
-	const charVocab = card?.char_vocab
-	const maxUnits = card?.max_units
-	const maxUnitWidth = card?.max_unit_width
-	const ctxChars = card?.char_ctx
-
-	if (
-		typeof charVocab !== "string" ||
-		!charVocab ||
-		!Number.isInteger(maxUnits) ||
-		!Number.isInteger(maxUnitWidth) ||
-		!Number.isInteger(ctxChars)
-	) {
-		throw new Error(
-			`model-card.json at ${modelCardPath} declares \`encoder: "char"\` but not all of char_vocab (string), ` +
-				`max_units, max_unit_width and char_ctx (integers) — the char path cannot encode without them`
-		)
-	}
-
-	return {
-		kind: "char",
-		charVocab,
-		maxUnits: maxUnits as number,
-		maxUnitWidth: maxUnitWidth as number,
-		ctxChars: ctxChars as number,
-	}
+	return encoderDescriptorFromCard(await readModelCardObject(modelCardPath), String(modelCardPath))
 }
 
 export async function readRequiredChannels(

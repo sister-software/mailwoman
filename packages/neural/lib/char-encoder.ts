@@ -141,3 +141,65 @@ export function parseCharVocabulary(parsed: unknown, source: string): CharVocabu
 
 	return vocabulary
 }
+
+/**
+ * How a weights package turns text into model input. Absent from a card means SentencePiece — every Latin bundle
+ * shipped before the char path existed says nothing here.
+ */
+export type EncoderDescriptor =
+	| { kind: "sentencepiece" }
+	| {
+			kind: "char"
+			/**
+			 * The sealed character vocabulary sibling's file name, relative to the package directory (`char-vocab.json`).
+			 */
+			charVocab: string
+			maxUnits: number
+			maxUnitWidth: number
+			ctxChars: number
+	  }
+
+/**
+ * Read a parsed card's `encoder` block (#2164). A char card names its vocabulary sibling and the `(S, W, ctx)` contract
+ * the model was trained under; a runtime that guessed any of the three would encode every row differently from training
+ * and score confidently on garbage, so a char card missing one of them is refused rather than defaulted. Pure, so the
+ * browser loader reads it from a fetched card and the node loader from a file.
+ */
+export function encoderDescriptorFromCard(
+	card: Record<string, unknown> | undefined,
+	source: string
+): EncoderDescriptor {
+	const encoder = card?.encoder
+
+	if (encoder === undefined || encoder === "sentencepiece") return { kind: "sentencepiece" }
+
+	if (encoder !== "char") {
+		throw new Error(`model-card at ${source} declares an unknown \`encoder\` ${JSON.stringify(encoder)}`)
+	}
+
+	const charVocab = card?.char_vocab
+	const maxUnits = card?.max_units
+	const maxUnitWidth = card?.max_unit_width
+	const ctxChars = card?.char_ctx
+
+	if (
+		typeof charVocab !== "string" ||
+		!charVocab ||
+		!Number.isInteger(maxUnits) ||
+		!Number.isInteger(maxUnitWidth) ||
+		!Number.isInteger(ctxChars)
+	) {
+		throw new Error(
+			`model-card at ${source} declares \`encoder: "char"\` but not all of char_vocab (string), ` +
+				`max_units, max_unit_width and char_ctx (integers) — the char path cannot encode without them`
+		)
+	}
+
+	return {
+		kind: "char",
+		charVocab,
+		maxUnits: maxUnits as number,
+		maxUnitWidth: maxUnitWidth as number,
+		ctxChars: ctxChars as number,
+	}
+}
