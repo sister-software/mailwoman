@@ -116,12 +116,16 @@ no JP postcode extract, so the probe returns nothing. Simulated on the same rows
 and the 51 unlocated codes fall through to today's answer because the fold skips 0,0 rows. `postalcode-jp.db` is now in
 `DEFAULT_POSTCODE_DATABASES`; the candidate rebuild that carries it is the operator's.
 
-**The fold, rebuilt and read.** `candidate-global-2026-09-06-jppostcode.db` (15,277,808 rows, 94,388 JP postcode
+**The fold, rebuilt and read.** `candidate-global-2026-09-06-jppostcode.db` (15,278,095 rows, 94,388 JP postcode
 rows) keys `885-0061`, and the walk resolves it — but the locality-first admin ladder still read the municipality
 centroid first. The area-postcode rule (`AREA_POSTCODE_FINER_THAN_LOCALITY`, `@mailwoman/codex`) now admits Japan on
 the measurement its table asks for: over the 586 board rows whose code the table keys, locality-first 4.93 km p50 /
 13.55 p90 / 19.63 p99 against the postcode point 0.48 / 1.21 / 3.54, the postcode closer on 97.3% of rows. Served
-read on the new table, 2,000 rows: **1,925 accepted @15 km (96.3%)**, 574 within 1 km (from 117), 75 beyond 15 km.
+read on the new table, 2,000 rows: **1,925 accepted @15 km (96.3%)**, 574 within 1 km (from 113 on the promoted
+table, 1,889 accepted), 75 beyond 15 km. The first rebuild read the standing fold `admin-global-priority-geonames.db`
+(Aug 18, before the #1905 label points) without `--fold` and moved `Frankfurt` to its geometric centroid (2.8 km →
+10.4 km on the board); the table above was rebuilt with `--fold` from the adjudicated admin database, and
+`gazetteer build candidate` now refuses a fold output older than its source unless `--allow-stale-fold` is passed.
 
 ## 4. Artifacts of record
 
