@@ -5,7 +5,7 @@
  *
  *   The body of `/license/issued`: poll the worker's claim route for the Checkout Session Stripe returned the buyer
  *   with, then show the key, the one-time refresh secret, the `.env` fragment and the two commands to run. The state is
- *   the pure reducer in `src/license/claim.ts`; this component owns only the timer, the abort, and the copy. Nothing the
+ *   the pure reducer in `@mailwoman/license-worker/sdk/claim`; this component owns only the timer, the abort, and the copy. Nothing the
  *   worker answers is stored anywhere but the DOM.
  */
 
