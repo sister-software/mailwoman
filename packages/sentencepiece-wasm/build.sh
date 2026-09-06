@@ -82,5 +82,11 @@ emcc "$SCRIPT_DIR/binding.cpp" \
 	-sFILESYSTEM=0 \
 	-o "$SCRIPT_DIR/sentencepiece.mjs"
 
+# The Node branch of the preamble imports `node:module` dynamically, behind ENVIRONMENT_IS_NODE. A browser bundler
+# bundles a literal dynamic import, and webpack has no handler for the `node:` scheme; the comment tells webpack to
+# leave the import to run time, where the branch never executes in a browser. esbuild and Vite ignore the comment
+# and treat the specifier as a builtin, which is what the bundle-graph health check's allowance names.
+sed -i 's|await import("node:module")|await import(/* webpackIgnore: true */ "node:module")|' "$SCRIPT_DIR/sentencepiece.mjs"
+
 echo "Built $SCRIPT_DIR/sentencepiece.mjs from sentencepiece $SP_TAG:"
 ls -la "$SCRIPT_DIR/sentencepiece.mjs"

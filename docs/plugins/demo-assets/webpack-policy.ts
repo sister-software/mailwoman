@@ -2,44 +2,19 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Browser/SSR bundle policy for the docs demo.
+ * @file Browser/SSR bundle policy for the geocoder page.
+ *
+ *   What remains here is Docusaurus-specific: the workspace source aliases for development, the SSR bundle's
+ *   externals, the WASM asset rule, and a cache key that follows the alias map. Module resolution for `@mailwoman/*`
+ *   is NOT rewritten here: a package the client reaches carries a `browser` export condition, and the `bundle-graph`
+ *   health check refuses a Node builtin on the client's static path.
  */
 
 import { md5Hex } from "@mailwoman/core/hash"
 import type { Configuration } from "webpack"
-import webpack from "webpack"
 
 import { buildWorkspaceAliases } from "./workspace-aliases.ts"
 import { resolvePackageFile } from "./workspace-resolution.ts"
-
-const NODE_BUILTIN_SHIMS = {
-	"node:path": "./node-path-shim.js",
-	"node:fs": "./node-builtin-stubs.js",
-	"node:fs/promises": "./node-builtin-stubs.js",
-	"node:worker_threads": "./node-builtin-stubs.js",
-	"node:stream/web": "./node-builtin-stubs.js",
-} as const
-
-const EMPTY_NODE_BUILTINS = [
-	"module",
-	"url",
-	"crypto",
-	"stream",
-	"buffer",
-	"util",
-	"perf_hooks",
-	"os",
-	"child_process",
-	"node:module",
-	"node:url",
-	"node:crypto",
-	"node:stream",
-	"node:buffer",
-	"node:util",
-	"node:perf_hooks",
-	"node:os",
-	"node:child_process",
-] as const
 
 function hashAliases(alias: Record<string, string>): string {
 	const entries = Object.keys(alias)
@@ -49,19 +24,19 @@ function hashAliases(alias: Record<string, string>): string {
 	return md5Hex(entries.join("\n"))
 }
 
-export async function bundleAliases(isServer: boolean, emptyShim: string): Promise<Record<string, string>> {
+export async function bundleAliases(isServer: boolean): Promise<Record<string, string>> {
 	const alias = await buildWorkspaceAliases()
 
 	if (isServer) {
+		// The SSR bundle resolves the `node` condition, under which `@mailwoman/neural/onnx-runner` is the
+		// `onnxruntime-node` half, which webpack cannot bundle. The page is browser-only; the server bundle only has to
+		// build, so it takes the browser runner.
 		const browserRunner = await resolvePackageFile("@mailwoman/neural", "onnx-runner-browser")
 
 		if (browserRunner) {
 			alias["@mailwoman/neural/onnx-runner"] = browserRunner
 			alias["#onnx-runner"] = browserRunner
 		}
-	} else {
-		alias["read-excel-file/node"] = emptyShim
-		alias["write-excel-file/node"] = emptyShim
 	}
 
 	return alias
@@ -77,33 +52,13 @@ function filesystemCache(config: Configuration, alias: Record<string, string>): 
 	}
 }
 
-function fallbackMap(): NonNullable<NonNullable<Configuration["resolve"]>["fallback"]> {
-	const fallback: NonNullable<NonNullable<Configuration["resolve"]>["fallback"]> = {
-		fs: require.resolve("./node-builtin-stubs.js"),
-		path: require.resolve("./node-path-shim.js"),
-		worker_threads: require.resolve("./node-builtin-stubs.js"),
-		"node:fs": require.resolve("./node-builtin-stubs.js"),
-		"node:fs/promises": require.resolve("./node-builtin-stubs.js"),
-		"node:path": require.resolve("./node-path-shim.js"),
-		"node:worker_threads": require.resolve("./node-builtin-stubs.js"),
-		"node:stream/web": require.resolve("./node-builtin-stubs.js"),
-	}
-
-	for (const builtin of EMPTY_NODE_BUILTINS) {
-		fallback[builtin] = false
-	}
-
-	return fallback
-}
-
 /**
  * Docusaurus calls `configureWebpack` SYNCHRONOUSLY, so the alias map is resolved by the caller — the plugin factory,
  * which Docusaurus does await — and handed in here. Resolving it at this point would return a promise the lifecycle
- * never unwraps. `emptyShim` is the caller's resolved `src/empty-shim.js` path, computed once beside the alias maps.
+ * never unwraps.
  */
 export function configureDemoWebpack(
 	config: Configuration,
-	emptyShim: string,
 	alias: Record<string, string>,
 	isServer: boolean
 ): Configuration {
@@ -114,16 +69,9 @@ export function configureDemoWebpack(
 		// node_modules at render time instead, so SSR sanitizes through the same jsdom-backed engine as any other Node
 		// process. The client bundle keeps bundling it — the package's `browser` build, plain DOMPurify.
 		...(isServer ? { externals: [{ "isomorphic-dompurify": "commonjs isomorphic-dompurify" }] } : {}),
-		plugins: [
-			new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {
-				const shim = NODE_BUILTIN_SHIMS[resource.request as keyof typeof NODE_BUILTIN_SHIMS]
-				resource.request = shim ? require.resolve(shim) : require.resolve(emptyShim)
-			}),
-		],
 		resolve: {
 			alias,
 			extensionAlias: { ".js": [".ts", ".js"] },
-			fallback: fallbackMap(),
 		},
 		module: { rules: [{ test: /[.]wasm$/, type: "asset/resource" }] },
 	}
