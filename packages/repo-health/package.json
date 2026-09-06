@@ -67,7 +67,7 @@
 		"esbuild": "0.28.2",
 		"path-ts": "^2.3.0",
 		"spliterator": "^6.4.1",
-		"typescript": "^6.0.3"
+		"typescript": "^7.0.2"
 	},
 	"devDependencies": {
 		"@vvago/vale": "^3.20.0"
