@@ -22,6 +22,7 @@ import { z } from "zod"
 import { AGREEMENT_VERSION, SHOP_PLANS } from "#shop/catalog"
 import { $private } from "#shop/env"
 import { type ProvisionReport, provisionShop } from "#shop/provision"
+import { advanceRehearsal, startRehearsal } from "#shop/rehearse"
 import { readEnvironmentVar, withEnvironmentVars } from "#shop/wrangler-vars"
 import { STRIPE_API_VERSION } from "#stripe/client"
 
@@ -195,10 +196,78 @@ const statusOperation = defineOperation({
 	},
 })
 
+const PLAN_CODES = SHOP_PLANS.map((plan) => plan.code) as [ShopPlanCode, ...ShopPlanCode[]]
+
+type ShopPlanCode = (typeof SHOP_PLANS)[number]["code"]
+
+const TokenDatesSchema = z.object({ issued: z.string(), expires: z.string() })
+
+/**
+ * Past one monthly period, with room for the renewal window Stripe opens before the period end.
+ */
+const DEFAULT_ADVANCE_DAYS = 32
+
+const rehearseOperation = defineOperation({
+	id: "shop.rehearse",
+	description:
+		"Start a rehearsal purchase in Stripe's test mode: a customer on a test clock and a Checkout Session shaped as the Payment Link is. Prints the URL to pay with the test card; then run shop.rehearse-renewal with the session id.",
+	effect: OperationEffect.ExternalWrite,
+	inputSchema: z.object({
+		plan: z.enum(PLAN_CODES).optional(),
+		licensee: z.string().optional(),
+		email: z.string().optional(),
+		"site-origin": z.string().optional(),
+	}),
+	outputSchema: z.object({ clock: z.string(), customer: z.string(), session: z.string(), url: z.string() }),
+	async run(input, context) {
+		if (context.dryRun) throw new Error("a rehearsal creates test-mode objects; there is no dry run of it")
+
+		return await startRehearsal(stripeFor("test"), {
+			siteOrigin: input["site-origin"] ?? DEFAULT_SITE_ORIGIN,
+			plan: input.plan ?? "commercial-monthly-v1",
+			licensee: input.licensee ?? "Rehearsal Licensee Ltd",
+			email: input.email ?? "rehearsal@example.com",
+		})
+	},
+})
+
+const rehearseRenewalOperation = defineOperation({
+	id: "shop.rehearse-renewal",
+	description:
+		"Second half of a rehearsal: wait for the worker to issue the first token, advance the test clock past the period end, and wait for the renewal's token. Reports both tokens' dates and whether the renewed expiry is the new period end plus the grace.",
+	effect: OperationEffect.ExternalWrite,
+	inputSchema: z.object({
+		session: z.string(),
+		"worker-origin": z.string(),
+		days: z.number().int().positive().optional(),
+	}),
+	outputSchema: z.object({
+		subscription: z.string(),
+		clock: z.string(),
+		first: TokenDatesSchema,
+		renewed: TokenDatesSchema,
+		periodEnd: z.string(),
+		expected: z.string(),
+		agrees: z.boolean(),
+	}),
+	async run(input, context) {
+		if (context.dryRun) throw new Error("advancing a test clock is the rehearsal; there is no dry run of it")
+
+		return await advanceRehearsal(stripeFor("test"), {
+			session: input.session,
+			workerOrigin: input["worker-origin"],
+			days: input.days ?? DEFAULT_ADVANCE_DAYS,
+			log: context.log,
+		})
+	},
+})
+
 /**
  * The registry `mwops shop` is a view over, in the order the usage lists them.
  */
 export const shopOperations: ReadonlyArray<ReleaseOperation<unknown, unknown>> = [
 	statusOperation,
 	provisionOperation,
+	rehearseOperation,
+	rehearseRenewalOperation,
 ] as ReadonlyArray<ReleaseOperation<unknown, unknown>>

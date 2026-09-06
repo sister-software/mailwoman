@@ -9,6 +9,11 @@
 
 import type { LicenseWorkerEnv } from "#env"
 
+/**
+ * Days past the paid period's end a token stays valid, the same on every plan.
+ */
+export const GRACE_DAYS = 14
+
 export interface CommercialPlan {
 	code: "commercial-monthly-v1" | "commercial-yearly-v1"
 	stripePriceID: string
@@ -18,7 +23,7 @@ export interface CommercialPlan {
 	 * Days past the paid period's end the token stays valid, so a renewal that lands late does not lapse a working
 	 * install.
 	 */
-	graceDays: 14
+	graceDays: typeof GRACE_DAYS
 }
 
 export function planCatalog(env: LicenseWorkerEnv): readonly CommercialPlan[] {
@@ -28,14 +33,14 @@ export function planCatalog(env: LicenseWorkerEnv): readonly CommercialPlan[] {
 			stripePriceID: env.STRIPE_PRICE_MONTHLY,
 			scope: "all",
 			terms: "LicenseRef-Commercial",
-			graceDays: 14,
+			graceDays: GRACE_DAYS,
 		},
 		{
 			code: "commercial-yearly-v1",
 			stripePriceID: env.STRIPE_PRICE_YEARLY,
 			scope: "all",
 			terms: "LicenseRef-Commercial",
-			graceDays: 14,
+			graceDays: GRACE_DAYS,
 		},
 	]
 }

@@ -35,6 +35,34 @@ export const AGREEMENT_METADATA_KEY = "agreement_version"
 export const SHOP_METADATA_KEY = "mailwoman_shop"
 
 /**
+ * The value under `SHOP_METADATA_KEY`.
+ */
+export const SHOP_MARK = "commercial-license"
+
+/**
+ * What Checkout collects from a buyer beyond the payment, spread into a Payment Link and into a Checkout Session built
+ * for a rehearsal alike: the licensee's legal name, a billing address, consent to the terms, and the metadata the
+ * worker reads a session by. One function, so the two cannot drift.
+ */
+export interface CheckoutCollection {
+	custom_fields: Array<{ key: string; label: { type: "custom"; custom: string }; type: "text" }>
+	billing_address_collection: "required"
+	consent_collection: { terms_of_service: "required" }
+	metadata: Record<string, string>
+}
+
+export function checkoutCollection(planCode: ShopPlan["code"]): CheckoutCollection {
+	return {
+		custom_fields: [
+			{ key: LICENSEE_FIELD_KEY, label: { type: "custom", custom: "Licensee legal name" }, type: "text" },
+		],
+		billing_address_collection: "required",
+		consent_collection: { terms_of_service: "required" },
+		metadata: { [SHOP_METADATA_KEY]: SHOP_MARK, plan_code: planCode, [AGREEMENT_METADATA_KEY]: AGREEMENT_VERSION },
+	}
+}
+
+/**
  * The one Product both Prices belong to, as the dashboard and the receipts name it.
  */
 export const SHOP_PRODUCT = {
