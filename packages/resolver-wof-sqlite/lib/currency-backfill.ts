@@ -57,9 +57,48 @@ const CURRENCY_BACKFILL_POP_FLOOR = 1000
  * lets the row stand in prominence races (the dead record's own population is absent). Each name is judged once per
  * country; the resurrected place joins `attrs`, so the alias pass explodes its alt names like any primary's.
  */
+export interface CurrencyBackfillOutcomes {
+	judged: number
+	blocked: number
+	unattested: number
+	floored: number
+	resurrected: number
+}
+
+/**
+ * One country's read of the gate — every dead name judged, by outcome and by the dead row's placetype — so a census can
+ * say what a wider dead-row query admits before a build carries it.
+ */
+export interface CurrencyBackfillCountryReport extends CurrencyBackfillOutcomes {
+	country: string
+	deadPlacetypes: readonly string[]
+	dumpPresent: boolean
+	byDeadPlacetype: Record<string, CurrencyBackfillOutcomes>
+	/**
+	 * The first resurrected names, `placetype:name`, so a census reads what a wider query admits — capped, because the
+	 * report is a receipt and not the table.
+	 */
+	sample: string[]
+}
+
+const REPORT_SAMPLE_SIZE = 25
+
+/**
+ * The placetypes a dead row may carry to be judged at all. `locality` is the shipped default; `localadmin` is the
+ * second cause #1746 named (one GB row of seventeen) and is admitted through this option once its census is read.
+ */
+export const DEFAULT_DEAD_PLACETYPES: readonly string[] = ["locality"]
+
+function emptyOutcomes(): CurrencyBackfillOutcomes {
+	return { judged: 0, blocked: 0, unattested: 0, floored: 0, resurrected: 0 }
+}
+
 export async function resurrectCurrencyHoles(ctx: {
 	src: DatabaseClient<WOFDatabase>
-	tx: DatabaseClient<CandidateDatabase>
+	/**
+	 * The candidate build's transaction. Required unless `dryRun` — a dry run judges every row and stages nothing.
+	 */
+	tx?: DatabaseClient<CandidateDatabase>
 	geonamesDir: string
 	countries: readonly string[]
 	attrs: Map<number, PlaceAttrs>
@@ -69,11 +108,32 @@ export async function resurrectCurrencyHoles(ctx: {
 	importance: ReturnType<typeof loadImportanceIndex> | undefined
 	stageRow: StageRow
 	progress: (phase: string, message: string) => void
+	/**
+	 * Which dead placetypes are judged. Default {@link DEFAULT_DEAD_PLACETYPES}.
+	 */
+	deadPlacetypes?: readonly string[]
+	/**
+	 * Judge and count, stage nothing — the census mode. No transaction is opened.
+	 */
+	dryRun?: boolean
+	/**
+	 * Receives one report per country judged (a country with no dump or no dead rows reports zero outcomes).
+	 */
+	onCountry?: (report: CurrencyBackfillCountryReport) => void
 }): Promise<number> {
+	const deadPlacetypes = ctx.deadPlacetypes ?? DEFAULT_DEAD_PLACETYPES
+	const dryRun = ctx.dryRun === true
+
+	if (!dryRun && !ctx.tx) {
+		throw new Error(
+			"resurrectCurrencyHoles: a build run needs the candidate transaction (tx); pass dryRun to judge only"
+		)
+	}
+
 	const deadStmt = ctx.src.prepare(
 		`SELECT id, name, placetype, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude
 		 FROM spr
-		 WHERE country = ? AND placetype = 'locality'
+		 WHERE country = ? AND placetype IN (${deadPlacetypes.map(() => "?").join(", ")})
 		   AND is_current = 0 AND is_deprecated = 1 AND is_superseded = 0`
 	)
 
@@ -87,8 +147,18 @@ export async function resurrectCurrencyHoles(ctx: {
 		const cc = country.toUpperCase()
 		const dumpPath = resolvePath(ctx.geonamesDir, `${cc}.txt`)
 
-		if (!(await pathExists(dumpPath))) {
+		const report: CurrencyBackfillCountryReport = {
+			country: cc,
+			deadPlacetypes,
+			dumpPresent: await pathExists(dumpPath),
+			...emptyOutcomes(),
+			byDeadPlacetype: {},
+			sample: [],
+		}
+
+		if (!report.dumpPresent) {
 			ctx.progress("currency-backfill", `${cc}: no GeoNames dump at ${dumpPath} — holes stay dead`)
+			ctx.onCountry?.(report)
 
 			continue
 		}
@@ -96,10 +166,11 @@ export async function resurrectCurrencyHoles(ctx: {
 		// Dead rows FIRST: a country with no deprecated-no-successor localities needs no attestors at all, and
 		// loading a national dump to judge zero rows is pure heap pressure on a build already near its ceiling
 		// (the first live run OOM'd in a later pass with JP/KR dumps loaded for 0 dead names each).
-		const dead = deadStmt.all(cc)
+		const dead = deadStmt.all(cc, ...deadPlacetypes)
 
 		if (!dead.length) {
 			ctx.progress("currency-backfill", `${cc}: 0 dead names — dump not loaded`)
+			ctx.onCountry?.(report)
 
 			continue
 		}
@@ -142,14 +213,18 @@ export async function resurrectCurrencyHoles(ctx: {
 			}
 		}
 
-		let judged = 0
-		let blocked = 0
-		let unattested = 0
-		let floored = 0
-		let resurrected = 0
 		const seen = new Set<string>()
 
-		ctx.tx.exec("BEGIN")
+		const count = (deadPlacetype: string, outcome: keyof CurrencyBackfillOutcomes): void => {
+			report[outcome] += 1
+			const bucket = (report.byDeadPlacetype[deadPlacetype] ??= emptyOutcomes())
+
+			bucket[outcome] += 1
+		}
+
+		if (!dryRun) {
+			ctx.tx!.exec("BEGIN")
+		}
 
 		for (const d of dead) {
 			const name = String(d.name ?? "")
@@ -157,14 +232,13 @@ export async function resurrectCurrencyHoles(ctx: {
 
 			if (!pkey || seen.has(pkey)) continue
 			seen.add(pkey)
+			// Read from the row: the query admits whatever `deadPlacetypes` names, and the rank comparison below must
+			// judge each candidate against ITS dead rung, never a hardcoded one.
+			const deadPlacetype = String(d.placetype ?? "locality")
 
-			judged++
-
+			count(deadPlacetype, "judged")
 			const dLat = Number(d.latitude)
 			const dLon = Number(d.longitude)
-			// The dead-row query is scoped to `locality` today; read it from the row anyway so widening that query
-			// cannot silently start comparing every candidate against a hardcoded rung.
-			const deadPlacetype = String(d.placetype ?? "locality")
 
 			// A live row blocks only when it is AT LEAST AS COARSE as the dead one. The original check compared name and
 			// distance alone, on the premise that a nearby same-name row means "the place is alive under another
@@ -187,7 +261,7 @@ export async function resurrectCurrencyHoles(ctx: {
 			})
 
 			if (liveNear) {
-				blocked++
+				count(deadPlacetype, "blocked")
 
 				continue
 			}
@@ -197,7 +271,7 @@ export async function resurrectCurrencyHoles(ctx: {
 			)
 
 			if (!near.length) {
-				unattested++
+				count(deadPlacetype, "unattested")
 
 				continue
 			}
@@ -205,17 +279,25 @@ export async function resurrectCurrencyHoles(ctx: {
 			const pop = Math.max(...near.map((g) => g.pop))
 
 			if (pop < CURRENCY_BACKFILL_POP_FLOOR) {
-				floored++
+				count(deadPlacetype, "floored")
 
 				continue
 			}
+
+			count(deadPlacetype, "resurrected")
+
+			if (report.sample.length < REPORT_SAMPLE_SIZE) {
+				report.sample.push(`${deadPlacetype}:${name}`)
+			}
+
+			if (dryRun) continue
 
 			const sid = Number(d.id)
 
 			const a: PlaceAttrs = {
 				cid: ctx.ccID(cc),
 				rid: ctx.regionOf.get(sid) ?? 0,
-				ptid: ctx.ptID("locality"),
+				ptid: ctx.ptID(deadPlacetype),
 				name,
 				lat: dLat,
 				lon: dLon,
@@ -226,24 +308,26 @@ export async function resurrectCurrencyHoles(ctx: {
 				pop,
 				neg: -Math.log10(pop + 1),
 				pkey,
-				imp: ctx.importance?.find(name, cc, "locality", dLat, dLon) ?? null,
+				imp: ctx.importance?.find(name, cc, deadPlacetype, dLat, dLon) ?? null,
 			}
 
 			ctx.attrs.set(sid, a)
 			ctx.stageRow(pkey, a, sid, 1)
-
-			resurrected++
 		}
 
-		ctx.tx.exec("COMMIT")
+		if (!dryRun) {
+			ctx.tx!.exec("COMMIT")
+		}
 
 		ctx.progress(
 			"currency-backfill",
-			`${cc}: ${resurrected} resurrected of ${judged} dead names ` +
-				`(${blocked} blocked by a live near row, ${unattested} unattested, ${floored} under the population floor)`
+			`${cc}: ${report.resurrected} resurrected of ${report.judged} dead names ` +
+				`(${report.blocked} blocked by a live near row, ${report.unattested} unattested, ` +
+				`${report.floored} under the population floor)${dryRun ? " — dry run, nothing staged" : ""}`
 		)
 
-		total += resurrected
+		ctx.onCountry?.(report)
+		total += report.resurrected
 	}
 
 	return total

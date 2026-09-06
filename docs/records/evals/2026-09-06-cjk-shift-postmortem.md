@@ -31,6 +31,11 @@ suites, `mwdev_compare` over the Latin board where a resolver mechanism moved), 
   `en-us/v<version>/` by basename, so the cjk `model.onnx` would have been refused or, worse, materialized as the Latin
   graph under the cjk card. A family now reads from `<family>/v<card version>/` against its own card, once its
   workspace is in the release list; `mailwoman release hf --char-vocab` stages it. Preflight `--source hf` unchanged.
+- **The currency gate has a census mode** (#1746): `resurrectCurrencyHoles` judges in dry-run with a per-country
+  report split by the dead row's placetype, and the dead-row query takes the placetypes it admits. Read on the admin
+  gazetteer, shipped query vs `+localadmin`: GB 2 → 3 resurrected (Newtownabbey), DE 1 → 155 (dissolved Gemeinden:
+  Gleichamberg, Guttau, Kirschau …), FR / IT / ES / US / JP unchanged. The widening is one build option away and
+  waits on a DE board read before and after.
 - **Release preflight found a real defect** (fa6965011): `@mailwoman/corpus` promised `./test-kit` exports its tsconfig
   never compiled; `manifest-targets` now reads each workspace's `include` / `exclude` and refuses the shape at PR time.
 - Records and docs: SCOPE's tier-5 row (JP, CN on the character path, 94.5% @15 km through the resolver), the CJK run
