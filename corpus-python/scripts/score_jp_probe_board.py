@@ -157,6 +157,9 @@ def score_board(
     # municipalities is reported beside the blended fraction; the check stays the blended one.
     muni_rows: Counter[str] = Counter()
     muni_acceptable: Counter[str] = Counter()
+    gold_exact = 0
+    reg_gold_exact: Counter[str] = Counter()
+    muni_gold_exact: Counter[str] = Counter()
 
     for r in rows:
         n += 1
@@ -184,6 +187,18 @@ def score_board(
             unresolved += 1
             if register is not None:
                 reg_unresolved[register] += 1
+            # A surface the centroid table does not key (the kana register renders うんぜん市 for 雲仙市) can still
+            # be read: when the predicted pair equals the gold pair span for span, the row's own kanji fields name
+            # the centroid. Reported beside the pre-registered number, never folded into it.
+            if pred.get(region_tag) == gold.get(region_tag) and pred.get(locality_tag) == gold_muni:
+                gold_key = norm_key(str(r.get("pref", "")) + "|" + str(r.get("muni", "")))
+                gold_hit = centroids.get(gold_key)
+                if gold_hit is not None and haversine_km(gold_hit[0], gold_hit[1], r["lon"], r["lat"]) <= accept_km:
+                    gold_exact += 1
+                    if register is not None:
+                        reg_gold_exact[register] += 1
+                    if gold_muni is not None:
+                        muni_gold_exact[gold_muni] += 1
             continue
         if haversine_km(hit[0], hit[1], r["lon"], r["lat"]) <= accept_km:
             acceptable += 1
@@ -197,12 +212,18 @@ def score_board(
             "rows": count,
             "acceptable": reg_acceptable[name],
             "unresolved": reg_unresolved[name],
+            "gold_exact": reg_gold_exact[name],
             "fraction": reg_acceptable[name] / count,
         }
         for name, count in reg_rows.items()
     }
     per_municipality = {
-        name: {"rows": count, "acceptable": muni_acceptable[name], "fraction": muni_acceptable[name] / count}
+        name: {
+            "rows": count,
+            "acceptable": muni_acceptable[name],
+            "gold_exact": muni_gold_exact[name],
+            "fraction": muni_acceptable[name] / count,
+        }
         for name, count in muni_rows.items()
     }
     municipality_macro = (
@@ -213,6 +234,7 @@ def score_board(
     return {
         "rows": n,
         "acceptable": acceptable,
+        "gold_exact_unresolved": gold_exact,
         "unresolved": unresolved,
         "fraction": acceptable / n if n else 0.0,
         "tag_hit": tag_hit,
@@ -223,9 +245,14 @@ def score_board(
     }
 
 
-def format_report(result: Mapping, *, accept_km: float = ACCEPT_KM, check: float = CHECK) -> str:
+def format_report(
+    result: Mapping, *, accept_km: float = ACCEPT_KM, check: float = CHECK, all_municipalities: bool = False
+) -> str:
     """The printed read. The check line is the blended fraction and nothing else."""
-    lines = [f"board rows: {result['rows']}; unresolved (pred pair not in table): {result['unresolved']}"]
+    lines = [
+        f"board rows: {result['rows']}; unresolved (pred pair not in table): {result['unresolved']}"
+        f" (of which gold-exact, centroid within {accept_km:g} km by the row's own kanji: {result.get('gold_exact_unresolved', 0)})"
+    ]
     tag_total, tag_hit = result["tag_total"], result["tag_hit"]
     lines.append("per-tag span exact-match:")
     for t in sorted(tag_total):
@@ -239,6 +266,7 @@ def format_report(result: Mapping, *, accept_km: float = ACCEPT_KM, check: float
             lines.append(
                 f"  {name:<16} {stats['fraction']:.4f}  "
                 f"({stats['acceptable']}/{stats['rows']})  unresolved {stats['unresolved']}"
+                f" (gold-exact {stats.get('gold_exact', 0)})"
             )
     else:
         lines.append("")
@@ -255,6 +283,13 @@ def format_report(result: Mapping, *, accept_km: float = ACCEPT_KM, check: float
         lines.append("  lowest five (name, acceptable/rows):")
         for name, stats in worst:
             lines.append(f"    {name:<12} {stats['fraction']:.4f}  ({stats['acceptable']}/{stats['rows']})")
+        if all_municipalities:
+            lines.append("  every held-out municipality (name, acceptable/rows, gold-exact among unresolved):")
+            for name, stats in sorted(per_municipality.items(), key=lambda kv: (kv[1]["fraction"], -kv[1]["rows"])):
+                lines.append(
+                    f"    {name:<12} {stats['fraction']:.4f}  ({stats['acceptable']}/{stats['rows']})"
+                    f"  gold-exact {stats.get('gold_exact', 0)}"
+                )
 
     lines.append("")
     lines.append(
@@ -268,6 +303,9 @@ def format_report(result: Mapping, *, accept_km: float = ACCEPT_KM, check: float
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--checkpoint", required=True)
+    ap.add_argument(
+        "--all-municipalities", action="store_true", help="print every held-out municipality, not the lowest five"
+    )
     ap.add_argument("--board", default=str(PROBE_DIR / "jp-probe-board.jsonl"))
     ap.add_argument("--vocab", default=str(PROBE_DIR / "char-vocab-jp-v1.json"))
     ap.add_argument("--centroids", default=str(PROBE_DIR / "jp-muni-centroids.json"))
@@ -335,7 +373,7 @@ def main() -> None:
             id_to_label=label_set.id_to_label,
             resolve_tags=resolve_tags,
         )
-    print(format_report(result))
+    print(format_report(result, all_municipalities=args.all_municipalities))
 
 
 if __name__ == "__main__":

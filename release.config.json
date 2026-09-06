@@ -1,5 +1,5 @@
 {
-	"$comment": "Single source of truth for the coordinated release. The npm packages all publish at `version` (sync mode — see RELEASING.md). The model identity (which trained artifact + tokenizer the neural-weights-* packages bundle) lives under `weights`, decoupled from the artifact's historical filename. Paths are relative to the data root ($MAILWOMAN_DATA_ROOT, resolved by `mailwomanDataRoot()` — override individual files with MAILWOMAN_PUBLISH_MODEL / MAILWOMAN_PUBLISH_TOKENIZER). Bump `version` here in lockstep with the release; copy-weights.ts, the ship script, and the model card all read this instead of hardcoding the numbers.",
+	"$comment": "Single source of truth for the coordinated release. The npm packages all publish at `version` (sync mode \u2014 see RELEASING.md). The model identity (which trained artifact + tokenizer the neural-weights-* packages bundle) lives under `weights`, decoupled from the artifact's historical filename. Paths are relative to the data root ($MAILWOMAN_DATA_ROOT, resolved by `mailwomanDataRoot()` \u2014 override individual files with MAILWOMAN_PUBLISH_MODEL / MAILWOMAN_PUBLISH_TOKENIZER). Bump `version` here in lockstep with the release; copy-weights.ts, the ship script, and the model card all read this instead of hardcoding the numbers.",
 	"version": "9.2.0",
 	"locales": ["en-us", "fr-fr", "en-gb", "de-de", "en-in", "es-es", "it-it", "en-nz", "en-au"],
 	"weights": {
@@ -7,24 +7,24 @@
 		"tokenizer": "models/tokenizer/v0.9.0-multisplice/tokenizer.model",
 		"tokenizerVersion": "0.9.0-multisplice",
 		"trainingStep": 60000,
-		"lineage": "v4.4.0-suffix-boundary-v2 — step-60000 (the suffix-boundary cure, 2026-08-10/11; int8 md5 98a49b5ca2948cdbe1dd981d60ef637d, fp32 0f9273a37db14fdd86a6d2c8806f8494, quantized on Modal in the training image). From scratch 60k cosine s42 on the v0.19.0 overlay: the slice-v2 diversity-first suffix-boundary generator — positional licensing lifted ordinary-source label correctness ~21%→94%, real facility shells, reduced repetition — plus the loader's exclusion of the suffix slices from the augmentation pool. Anchor-lookup v2 and the rest of the 9.0.0 recipe carried unchanged. Closes #1569: B1 target 119/128, contrast 39/48; all 17 aggregate fp32 campaign legs PASS incl. the French bare-street floor (the training-schedule cooldown branch ruled out the schedule; the ordinary corpus had taught suffix absorption). Release grade 2026-08-11: package-shaped int8 promotion check PASS 17/17 on v9.0.0-base floors; fp32↔int8 deltas ≤0.3pp on all 17 legs vs the restored 1.5pp cap; eval-model presets byte-identical to the shipped 9.0.0 weights. Receipts scratchpad/check-v440-60k-int8{,-wc} + scratchpad/v440-step-060000/score.json."
+		"lineage": "v4.4.0-suffix-boundary-v2 \u2014 step-60000 (the suffix-boundary cure, 2026-08-10/11; int8 md5 98a49b5ca2948cdbe1dd981d60ef637d, fp32 0f9273a37db14fdd86a6d2c8806f8494, quantized on Modal in the training image). From scratch 60k cosine s42 on the v0.19.0 overlay: the slice-v2 diversity-first suffix-boundary generator \u2014 positional licensing lifted ordinary-source label correctness ~21%\u219294%, real facility shells, reduced repetition \u2014 plus the loader's exclusion of the suffix slices from the augmentation pool. Anchor-lookup v2 and the rest of the 9.0.0 recipe carried unchanged. Closes #1569: B1 target 119/128, contrast 39/48; all 17 aggregate fp32 campaign legs PASS incl. the French bare-street floor (the training-schedule cooldown branch ruled out the schedule; the ordinary corpus had taught suffix absorption). Release grade 2026-08-11: package-shaped int8 promotion check PASS 17/17 on v9.0.0-base floors; fp32\u2194int8 deltas \u22640.3pp on all 17 legs vs the restored 1.5pp cap; eval-model presets byte-identical to the shipped 9.0.0 weights. Receipts scratchpad/check-v440-60k-int8{,-wc} + scratchpad/v440-step-060000/score.json."
 	},
 	"softFeed": {
-		"$comment": "Soft-feed artifacts (#718 D1) materialized into each neural-weights-<locale> workspace at publish time by copy-weights.ts so the library default `loadFromWeights` feeds the channels the anchor+gazetteer-trained model expects (closing the anchor-OFF crater). The PCB1 postcode binary is built from the WOF postcode extract (per locale's country code); the gazetteer lexicon is the codex-generated repo file. Paths under `db` are relative to the data root's `wof/`. Like the weights binaries, these are skipped in CI (MAILWOMAN_SKIP_WEIGHTS_COPY) — the publish workflow places them via the HF fetch step.",
+		"$comment": "Soft-feed artifacts (#718 D1) materialized into each neural-weights-<locale> workspace at publish time by copy-weights.ts so the library default `loadFromWeights` feeds the channels the anchor+gazetteer-trained model expects (closing the anchor-OFF crater). The PCB1 postcode binary is built from the WOF postcode extract (per locale's country code); the gazetteer lexicon is the codex-generated repo file. Paths under `db` are relative to the data root's `wof/`. Like the weights binaries, these are skipped in CI (MAILWOMAN_SKIP_WEIGHTS_COPY) \u2014 the publish workflow places them via the HF fetch step.",
 		"gazetteerLexicon": "data/gazetteer/anchor-lexicon-v1.json",
 		"streetTypeLexicon": "data/gazetteer/street-type-lexicon-v3.json",
 		"localitySurfaceLexicon": "gazetteer/locality-surface-lexicon-v7.json",
 		"countryLexicon": "data/gazetteer/country-surface-lexicon-v1.json",
 		"postcodeDBByCountry": {
-			"$comment_gb": "`gb` RETURNED 2026-08-06 (ROAD_TO_V9 §1 A4) after being removed 2026-08-05 (#1467). The removal was required while the encoder's GB anchor slot was untrained (see $comment_gb_readd's history); v4.2.0-base-anchor-v2 trained the slot (Fisher receipts in the 9.0.0 lineage) and the three-part re-add below is now IN EFFECT: the en-gb card declares span_mode 'shaped', its files[] names postcode-gb.bin, and this key points at the licence-clean Code-Point source. The GeoNames-lineage postalcode-gb.db stays retired.",
-			"$comment_gb_readd": "WHEN `gb` COMES BACK (2026-08-06, ROAD_TO_V9 §1 A4). It is no longer a one-line edit, and that is deliberate — three things move together or the release is incoherent, and each half now fails loudly on its own. (1) neural-weights-en-gb/model-card.json declares `requires.anchor.span_mode: \"shaped\"`; without it the runtime refuses the pairing (`createScorer` throws, a parse warns) because the binary's unit keys are unreachable by the default alnum-run scan. (2) neural-weights-en-gb/package.json's `files` gains `postcode-gb.bin` — `neural/test/weights.test.ts` asserts the files entry and the card's span_mode are present together, and `packages/release-kit/lib/pack/verify-tarball.ts` fails the publish if a literal files entry is missing from the tarball. (3) this key returns as `postalcode-gb-codepoint.db` (the licence-clean OGL v3.0 Code-Point Open source, 1,749,839 keys — NOT the retired GeoNames-lineage postalcode-gb.db). `scripts/link-dev-weights.ts` already builds it in dev off the same card check, so a worktree tells you the answer before CI does.",
+			"$comment_gb": "`gb` RETURNED 2026-08-06 (ROAD_TO_V9 \u00a71 A4) after being removed 2026-08-05 (#1467). The removal was required while the encoder's GB anchor slot was untrained (see $comment_gb_readd's history); v4.2.0-base-anchor-v2 trained the slot (Fisher receipts in the 9.0.0 lineage) and the three-part re-add below is now IN EFFECT: the en-gb card declares span_mode 'shaped', its files[] names postcode-gb.bin, and this key points at the licence-clean Code-Point source. The GeoNames-lineage postalcode-gb.db stays retired.",
+			"$comment_gb_readd": "WHEN `gb` COMES BACK (2026-08-06, ROAD_TO_V9 \u00a71 A4). It is no longer a one-line edit, and that is deliberate \u2014 three things move together or the release is incoherent, and each half now fails loudly on its own. (1) neural-weights-en-gb/model-card.json declares `requires.anchor.span_mode: \"shaped\"`; without it the runtime refuses the pairing (`createScorer` throws, a parse warns) because the binary's unit keys are unreachable by the default alnum-run scan. (2) neural-weights-en-gb/package.json's `files` gains `postcode-gb.bin` \u2014 `neural/test/weights.test.ts` asserts the files entry and the card's span_mode are present together, and `packages/release-kit/lib/pack/verify-tarball.ts` fails the publish if a literal files entry is missing from the tarball. (3) this key returns as `postalcode-gb-codepoint.db` (the licence-clean OGL v3.0 Code-Point Open source, 1,749,839 keys \u2014 NOT the retired GeoNames-lineage postalcode-gb.db). `scripts/link-dev-weights.ts` already builds it in dev off the same card check, so a worktree tells you the answer before CI does.",
 			"gb": "postalcode-gb-codepoint.db",
 			"us": "postalcode-us.db",
 			"fr": "postalcode-intl.db"
 		},
 		"pairIndexByCountry": {
-			"$comment": "The placetype-pair-prior arc's PIX1 retrieval index (placetype-pair-prior arc, Task 3/8) — mirrors postcodeDBByCountry's shape exactly, but the source is a CSV of (child, parent) tuples rather than a WOF DB, and `--delta` is a REQUIRED calibrated value (no default — see `mailwoman gazetteer pair-index --help`). `source` is relative to the data root (NOT its `wof/`, unlike postcodeDBByCountry). COUNTRY-SPECIFIC BY DESIGN, same as the runtime resolver (neural/weights.ts's resolvePairIndexSibling): a locale with no entry here simply ships no pair-index sibling and the prior stays inert for it.",
-			"$comment_parentDelta": "`parentDelta` (#46, the whole-edge parent bias) is present on us/gb/nz/fr ONLY, at the δ=5 the 2026-08-04 verdict recommended (docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md). de/in/es/it deliberately omit it: no board has graded the parent side on those locales, and the D-rule's answer to an unmeasured locale is a per-locale check rather than an inherited magnitude. An ABSENT key means the shipped artifact carries no parentDelta and the parent bias is OFF for that locale — not zero.",
+			"$comment": "The placetype-pair-prior arc's PIX1 retrieval index (placetype-pair-prior arc, Task 3/8) \u2014 mirrors postcodeDBByCountry's shape exactly, but the source is a CSV of (child, parent) tuples rather than a WOF DB, and `--delta` is a REQUIRED calibrated value (no default \u2014 see `mailwoman gazetteer pair-index --help`). `source` is relative to the data root (NOT its `wof/`, unlike postcodeDBByCountry). COUNTRY-SPECIFIC BY DESIGN, same as the runtime resolver (neural/weights.ts's resolvePairIndexSibling): a locale with no entry here simply ships no pair-index sibling and the prior stays inert for it.",
+			"$comment_parentDelta": "`parentDelta` (#46, the whole-edge parent bias) is present on us/gb/nz/fr ONLY, at the \u03b4=5 the 2026-08-04 verdict recommended (docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md). de/in/es/it deliberately omit it: no board has graded the parent side on those locales, and the D-rule's answer to an unmeasured locale is a per-locale check rather than an inherited magnitude. An ABSENT key means the shipped artifact carries no parentDelta and the parent bias is OFF for that locale \u2014 not zero.",
 			"gb": {
 				"source": "ppd/2026-07-22/gb-tuples.csv",
 				"delta": 10,
@@ -34,14 +34,14 @@
 				"pairsJsonl": "data/gazetteer/london-pairs-v2.jsonl,data/gazetteer/ni-pairs-v1.jsonl,data/gazetteer/gb-regions-v1.jsonl"
 			},
 			"fr": {
-				"$comment": "Hierarchy campaign R6 (2026-08-01). Source is the raw BAN dump (DINUM/IGN, Licence Ouverte 2.0) read through ban/sdk's cleanLieuDit — NOT WOF, whose French neighbourhood records are Paris quartiers that never appear in a postal address. The line French addresses DO carry is the lieu-dit.",
+				"$comment": "Hierarchy campaign R6 (2026-08-01). Source is the raw BAN dump (DINUM/IGN, Licence Ouverte 2.0) read through ban/sdk's cleanLieuDit \u2014 NOT WOF, whose French neighbourhood records are Paris quartiers that never appear in a postal address. The line French addresses DO carry is the lieu-dit.",
 				"delta": 10,
 				"transitionBeta": 5,
 				"parentDelta": 5,
 				"banDir": "corpus/sources/ban"
 			},
 			"in": {
-				"$comment": "Hierarchy campaign R10 (2026-08-02). WOF-sourced (area, city) pairs with parent-alias expansion — India Post carries an area line on essentially every address, and WOF's city names lag official renames.",
+				"$comment": "Hierarchy campaign R10 (2026-08-02). WOF-sourced (area, city) pairs with parent-alias expansion \u2014 India Post carries an area line on essentially every address, and WOF's city names lag official renames.",
 				"delta": 10,
 				"transitionBeta": 5,
 				"boroughDB": "wof/admin-global-priority.db"
@@ -59,13 +59,13 @@
 				"boroughDB": "wof/admin-global-priority.db"
 			},
 			"de": {
-				"$comment": "Hierarchy campaign R9 (2026-08-02). WOF-sourced (Ortsteil, Gemeinde) pairs — Deutsche Post routes 'PLZ Stadt' and carries no Ortsteil field, so there is no postal register to harvest.",
+				"$comment": "Hierarchy campaign R9 (2026-08-02). WOF-sourced (Ortsteil, Gemeinde) pairs \u2014 Deutsche Post routes 'PLZ Stadt' and carries no Ortsteil field, so there is no postal register to harvest.",
 				"delta": 10,
 				"transitionBeta": 5,
 				"boroughDB": "wof/admin-global-priority.db"
 			},
 			"us": {
-				"$comment": "Hierarchy campaign R5 (2026-08-01). No `source`: the US has no postal register carrying dependent localities (USPS routes city/state/ZIP), so every pair is WOF-sourced via --borough-db. Same delta/beta as GB — that is the pair the R5 bars were measured with.",
+				"$comment": "Hierarchy campaign R5 (2026-08-01). No `source`: the US has no postal register carrying dependent localities (USPS routes city/state/ZIP), so every pair is WOF-sourced via --borough-db. Same delta/beta as GB \u2014 that is the pair the R5 bars were measured with.",
 				"delta": 10,
 				"transitionBeta": 5,
 				"parentDelta": 5,
@@ -87,9 +87,9 @@
 	},
 	"charWeights": {
 		"cjk": {
-			"model": "models/v8-cjk-full-s42/served-package/model.onnx",
-			"charVocab": "models/v8-cjk-full-s42/served-package/char-vocab.json",
-			"lineage": "v8-cjk-full step-024000 — fp32 ONNX behind char_ids (#2164). JP board: PyTorch 0.9653, served 0.9633; CN board locality_unit 12/14 served. The 0.0.1 name reservation shipped without the graph; the first functional release materializes it here."
+			"model": "models/v8-cjk-kana-s42/served-package/model.onnx",
+			"charVocab": "models/v8-cjk-kana-s42/served-package/char-vocab.json",
+			"lineage": "v8-cjk-kana step-024000 \u2014 fp32 ONNX behind char_ids (#2164, #2165). JP board (pre-registered v8-jp-full-2026-08-04): PyTorch 0.9924 blended / 0.9821 municipality macro, \u304b\u3059\u307f\u304c\u3046\u3089\u5e02 0 of 823 failed; CN board locality_unit 11/14 PyTorch. Replaces v8-cjk-full (0.9653 / 0.9757). The 0.0.1 name reservation shipped without the graph; the first functional release materializes it here."
 		}
 	}
 }

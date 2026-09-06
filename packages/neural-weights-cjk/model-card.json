@@ -2,14 +2,14 @@
 	"name": "neural-weights-cjk",
 	"version": "0.0.1",
 	"locale": "cjk",
-	"phase": "NAME RESERVATION (0.0.1). The graph and vocabulary below are the v8-cjk-full 24k candidate (2026-09-05); the first functional release ships with the next mailwoman minor once the served board read is recorded (#2164 step 6) and the ja-jp / zh-cn overlays exist.",
+	"phase": "NAME RESERVATION (0.0.1). The graph and vocabulary below are the v8-cjk-kana 24k candidate (2026-09-06, #2165); the first functional release ships with the next mailwoman minor once the ja-jp / zh-cn overlays exist.",
 	"encoder": "char",
 	"char_vocab": "char-vocab.json",
 	"max_units": 96,
 	"max_unit_width": 7,
 	"char_ctx": 3,
 	"format": {
-		"model": "ONNX fp32 (opset 17), inputs char_ids int64 (batch, sequence, 7) + attention_mask int64 (batch, sequence), output logits (batch, sequence, 49). No SentencePiece tokenizer: the encoder is one unit per Unicode code point with a ±3 character window over the sealed vocabulary in char-vocab.json (2,335 entries, <pad> 0, <unk> 1, code-point order).",
+		"model": "ONNX fp32 (opset 17), inputs char_ids int64 (batch, sequence, 7) + attention_mask int64 (batch, sequence), output logits (batch, sequence, 49). No SentencePiece tokenizer: the encoder is one unit per Unicode code point with a ±3 character window over the sealed vocabulary in char-vocab.json (2,337 entries, <pad> 0, <unk> 1, code-point order).",
 		"tokenizer": null
 	},
 	"architecture": {
@@ -81,31 +81,29 @@
 	},
 	"files_md5": {
 		"$comment": "The candidate artifacts' md5s — what a materialized package is verified against.",
-		"model.onnx": "e14ef4c426dabb22e9433ab04b584d48",
-		"char-vocab.json": "62b437d090015623038436fb6586484a"
+		"model.onnx": "f0bb12e0c021fab19998759cc32dab30",
+		"char-vocab.json": "6f2d7efdbcd6c36edd186bf871336b13"
 	},
 	"training": {
-		"run": "v8-cjk-full seed 42, 24,000 steps, batch 256, bf16, cosine, from scratch (corpus-python/src/mailwoman_train/configs/v8-cjk-full.yaml)",
-		"corpus": "v8-cjk-2026-09-05 overlay: the v8-jp-full-2026-08-04 JP corpus (2,000,000 train rows, Overture-JP, four registers) plus 126 CN organizational-unit rows (cn-organizational-units recipe); source mixture overture-jp 0.98 / coarse-placer-cn-units 0.02",
-		"modal_app": "ap-J0uaLu8mQutAWu4ZdtBNzZ"
+		"run": "v8-cjk-kana seed 42, 24,000 steps, batch 256, bf16, cosine, from scratch (corpus-python/src/mailwoman_train/configs/v8-cjk-kana.yaml)",
+		"corpus": "v8-cjk-kana-2026-09-06 overlay: the v8-jp-kana-2026-09-06 JP corpus (2,000,000 train rows, Overture-JP, five registers — native, arabic_chome, compact_folded, designator, kana_municipality) plus 126 CN organizational-unit rows; source mixture overture-jp 0.98 / coarse-placer-cn-units 0.02",
+		"modal_app": "ap-PWNbrv0yjoQiEfzY19fuDV"
 	},
 	"eval": {
 		"jp_board_20000": {
-			"$comment": "Held-out municipalities, coordinate-acceptability at 15 km via the municipality centroid table (corpus-python/scripts/score_jp_probe_board.py --label-set stage3-cjk). PyTorch read; the served TypeScript path reads 0.9633 with every tag within 0.2pp.",
-			"coordinate_acceptability": 0.9653,
-			"municipality_exact": 0.9668,
-			"district_exact": 0.9644,
+			"$comment": "Held-out municipalities, coordinate-acceptability at 15 km via the municipality centroid table (corpus-python/scripts/score_jp_probe_board.py --label-set stage3-cjk), on the pre-registered v8-jp-full-2026-08-04 board. PyTorch read; the shared head (v8-cjk-full) read 0.9653 / 0.9757 on the same instrument.",
+			"coordinate_acceptability": 0.9924,
+			"municipality_macro": 0.9821,
+			"municipality_exact": 0.994,
+			"district_exact": 0.987,
 			"prefecture_exact": 1.0,
 			"block_exact": 1.0,
-			"house_number_exact": 0.9924,
-			"note": "598 of the 664 failed rows are one held-out hiragana municipality (かすみがうら市, 823 rows); the JP-only 49-label control fails 398 of them with no CN row in the mixture (#2165). Against the 47-label JP record (0.9928) the difference is that one name."
+			"house_number_exact": 0.9933,
+			"note": "かすみがうら市 (823 held-out rows) fails 0 (the shared head failed 598); 中新川郡上市町 fails 121 of 136 (the shared head 66) — the model closes the municipality at the inner 市. On the v8-jp-kana-2026-09-06 board the 1,127 kana_municipality rows read 1,125 gold-exact."
 		},
 		"cn_board_14": {
-			"$comment": "The 14 held-out CN organizational-unit rows; span exact-match only, no coordinate truth.",
-			"locality_unit_exact": "10/14",
-			"dependent_locality_exact": "10/14",
-			"region_exact": "12/13",
-			"country_exact": "8/8"
+			"$comment": "locality_unit span exact-match, PyTorch per-unit argmax; the shared head read 10 (PyTorch) / 12 (served, Viterbi).",
+			"locality_unit_exact": "11/14"
 		}
 	},
 	"model_lineage": "0.0.1: v8-cjk-full step-024000 (fp32 ONNX md5 e14ef4c426dabb22e9433ab04b584d48). Decision record: docs/superpowers/specs/2026-09-05-cjk-serving-path.md; receipts on #1176, #2034, #2164.",

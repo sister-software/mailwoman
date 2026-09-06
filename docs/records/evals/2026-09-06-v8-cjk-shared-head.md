@@ -1,6 +1,6 @@
 # v8-cjk: one head for Japanese and Chinese, and the served path that reads it
 
-**Date:** 2026-09-05/06 · **Runs:** `v8-cjk-full` (app `ap-J0uaLu8mQutAWu4ZdtBNzZ`), `v8-cjk-control` (`ap-XxMaxBMOhBYiCbP8bQ1c4U`), probe `v8-cjk-full-2k` (`ap-caJ1AN10iZOACLuFQrT7rG`) · **Arc:** #1176 / #2034 / #2164 · **Status:** the shared head is the CJK base candidate; the kana register run (#2165) is the next read.
+**Date:** 2026-09-05/06 · **Runs:** `v8-cjk-full` (app `ap-J0uaLu8mQutAWu4ZdtBNzZ`), `v8-cjk-control` (`ap-XxMaxBMOhBYiCbP8bQ1c4U`), probe `v8-cjk-full-2k` (`ap-caJ1AN10iZOACLuFQrT7rG`) · **Arc:** #1176 / #2034 / #2164 · **Status:** the kana register run (§6) replaces the shared head as the CJK base candidate; `release.config.json` `charWeights.cjk` names it.
 
 The decision this records: one CJK weights package a consumer installs as a unit, Japanese and Chinese under one
 49-label head (`stage3-cjk` = `stage3-jp` + `locality_unit`), trained on the char path from scratch. A per-script
@@ -128,3 +128,34 @@ and the 51 unlocated codes fall through to today's answer because the fold skips
 
 The `ja-jp` / `zh-cn` overlays and the release-list move (operator); the CN numeral boundary; Korean; the FST
 autocomplete tier for CJK (#1493, built and staged, swap operator-approved).
+
+## 6. The kana register run replaces the base: 0.9924, かすみがうら市 0 of 823
+
+`v8-cjk-kana` (app `ap-PWNbrv0yjoQiEfzY19fuDV`, 24,000 steps) is `v8-cjk-full` with one change, the `kana_municipality`
+register at weight 0.05 (#2165 item 2: 厚木市 → あつぎ市, the municipality as its kana stem plus the kanji generic, on the
+73.5% of rows the admin DB reads). Scored on the pre-registered board with the same scorer, the shared head re-scored
+beside it on the same instrument:
+
+| Pre-registered board (`v8-jp-full-2026-08-04`, 51 held-out municipalities) | shared head |       kana | bar      |
+| -------------------------------------------------------------------------- | ----------: | ---------: | -------- |
+| coordinate-acceptability @15 km (the check)                                |      0.9653 | **0.9924** | ≥ 0.9653 |
+| municipality macro                                                         |      0.9757 | **0.9821** | ≥ 0.9757 |
+| `かすみがうら市`, failed of 823                                            |         598 |      **0** | < 100    |
+| `中新川郡上市町`, failed of 136                                            |          66 |        121 | —        |
+| `三木市`, failed of 685                                                    |          13 |         13 | —        |
+| unresolved pairs                                                           |         664 |        121 | —        |
+
+On the new board (`v8-jp-kana-2026-09-06`, same seed and held-out set plus 1,127 kana-register rows) the kana rows read
+1,125 of 1,127 gold-exact (the centroid table keys kanji, so the scorer reports a prediction that equals the gold span
+with the kanji centroid within 15 km beside the unresolved count, never inside the check); native 0.9924, designator
+0.9905, arabic_chome 0.9952, compact_folded 0.9960. CN `locality_unit` 11 of 14 (PyTorch), beside 10 (shared,
+PyTorch) and 12 (shared, served). The Han split's CJK-only failure set is empty.
+
+The one trade is `中新川郡上市町`: the register taught "…市 ends a municipality" and this 町 carries 市 inside its name, so the
+model closes the span at `中新川郡上市` (121 of 136, from 66). The JP-only arm fails 112 of 130 on the new board, so the
+shape was always under-served; a register over the 市-inside-name 町 (上市町, 市貝町, 市川三郷町) is the follow-up (#2178).
+
+Served: the ONNX export reads max_abs_diff 6.4e-6 over 256 rows; the 2,000-row resolver read is unchanged at 1,889
+(the resolver already keyed the かすみがうら stem), while `かすみがうら市` and `うんぜん市` now parse with their generic.
+`release.config.json` `charWeights.cjk`, the workspace card and vocabulary (2,337 entries) name the kana package;
+artifacts under `$MAILWOMAN_DATA_ROOT/models/v8-cjk-kana-s42/`.
