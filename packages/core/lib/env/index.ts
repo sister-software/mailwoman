@@ -1,7 +1,14 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
 import { join } from "path-ts"
 import type { z } from "zod"
 
-import { PrivateEnvSchema, PublicEnvSchema } from "#env/schema"
+import { PrivateEnvSchema } from "#env/private-schema"
+import { PublicEnvSchema } from "#env/public-schema"
 
 export { DefaultMailwomanPaths } from "#env/paths"
 
