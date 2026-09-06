@@ -1,0 +1,22 @@
+{
+	"test": {
+		"prices": {
+			"commercial-monthly-v1": "price_1UCTF7ANyI6tE9Bz9jYATsOF",
+			"commercial-yearly-v1": "price_1UCTF8ANyI6tE9BzmJnVxNiS"
+		},
+		"paymentLinks": {
+			"commercial-monthly-v1": "https://buy.stripe.com/test_bJe00iabDeqibfk9D90RG00",
+			"commercial-yearly-v1": "https://buy.stripe.com/test_bJeaEW4Rj4PI97c3eL0RG01"
+		}
+	},
+	"live": {
+		"prices": {
+			"commercial-monthly-v1": "price_1UCmj9PAQ5sFXKKVAMhbPSfU",
+			"commercial-yearly-v1": "price_1UCmj9PAQ5sFXKKVjnI8Fpko"
+		},
+		"paymentLinks": {
+			"commercial-monthly-v1": "https://buy.stripe.com/00weVffho9G7bgfeMl9oc00",
+			"commercial-yearly-v1": "https://buy.stripe.com/5kQbJ3c5c05xdonaw59oc01"
+		}
+	}
+}

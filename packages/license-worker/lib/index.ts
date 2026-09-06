@@ -23,8 +23,9 @@ import { stripeClient } from "#stripe/client"
 const MISCONFIGURED = JSON.stringify({ error: "worker misconfigured" })
 
 /**
- * How far back each reconciliation pass lists paid invoices: a week, against a six-hour cron, so a pass that fails
- * leaves nothing unminted before the next one.
+ * How far back each reconciliation pass lists paid invoices by creation time: the bound on recovering a subscription
+ * the ledger has never seen (`reconcile.ts` says what is recovered without a bound). A week against a six-hour cron, so
+ * one failed pass costs nothing.
  */
 const RECONCILE_WINDOW_SECONDS = 7 * 24 * 3600
 

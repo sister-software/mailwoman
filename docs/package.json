@@ -8,7 +8,6 @@
 		"#e2e": "./test/e2e/index.ts",
 		"#e2e/*": "./test/e2e/*",
 		"#unit/*": "./test/unit/*.ts",
-		"#license/*": "./src/license/*.ts",
 		"#glossary-plugin": "./plugins/glossary/plugin.ts",
 		"#components/*": "./src/components/*.tsx",
 		"#contexts/*": "./src/contexts/*.tsx",
@@ -50,8 +49,7 @@
 			"node": "./scripts/generate-cli-reference.ts",
 			"default": "./scripts/generate-cli-reference.ts",
 			"types": "./scripts/generate-cli-reference.ts"
-		},
-		"./license/claim": "./src/license/claim.ts"
+		}
 	},
 	"scripts": {
 		"build": "yarn prebuild && docusaurus build",

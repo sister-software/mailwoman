@@ -12,7 +12,7 @@ import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
 import type { LicenseWorkerEnv } from "#env"
 import type { Ledger } from "#ledger/client"
 import { findLicense } from "#ledger/licenses"
-import { publicLicenseStatus } from "#ledger/schema"
+import { publicLicenseStatus } from "#policy"
 import { clientAddress, withinLimits } from "#routes/rate-limit"
 import { LicenseIDSchema } from "#routes/refresh"
 

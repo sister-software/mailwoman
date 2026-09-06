@@ -48,8 +48,26 @@ export interface CheckoutCollection {
 	custom_fields: Array<{ key: string; label: { type: "custom"; custom: string }; type: "text" }>
 	billing_address_collection: "required"
 	consent_collection: { terms_of_service: "required" }
+	/**
+	 * The promotion-code field on the checkout page; the codes themselves live in the dashboard.
+	 */
+	allow_promotion_codes: true
+	/**
+	 * No card when nothing is due: a 100%-off first invoice collects none, and Stripe asks for one at the first invoice
+	 * that charges.
+	 */
+	payment_method_collection: "if_required"
 	metadata: Record<string, string>
 }
+
+/**
+ * The fields of the collection a Payment Link can change after creation; the provisioner holds an existing link to
+ * these, and a change to any other field is a new link.
+ */
+export const RECONCILED_LINK_FIELDS = {
+	allow_promotion_codes: true,
+	payment_method_collection: "if_required",
+} as const
 
 export function checkoutCollection(planCode: ShopPlan["code"]): CheckoutCollection {
 	return {
@@ -58,6 +76,7 @@ export function checkoutCollection(planCode: ShopPlan["code"]): CheckoutCollecti
 		],
 		billing_address_collection: "required",
 		consent_collection: { terms_of_service: "required" },
+		...RECONCILED_LINK_FIELDS,
 		metadata: { [SHOP_METADATA_KEY]: SHOP_MARK, plan_code: planCode, [AGREEMENT_METADATA_KEY]: AGREEMENT_VERSION },
 	}
 }
@@ -88,6 +107,14 @@ export const SHOP_PLANS: readonly ShopPlan[] = [
 	{ code: "commercial-monthly-v1", interval: "month", unitAmount: 25_000, currency: "usd" },
 	{ code: "commercial-yearly-v1", interval: "year", unitAmount: 240_000, currency: "usd" },
 ]
+
+/**
+ * The plan codes as a non-empty tuple, the shape a zod enum takes.
+ */
+export const SHOP_PLAN_CODES = [
+	"commercial-monthly-v1",
+	"commercial-yearly-v1",
+] as const satisfies readonly ShopPlan["code"][]
 
 /**
  * The route the webhook destination posts to, on the worker's origin.

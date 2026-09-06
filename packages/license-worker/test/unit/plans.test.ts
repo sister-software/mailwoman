@@ -9,6 +9,8 @@ import { planCatalog, planForPrice } from "@mailwoman/license-worker/plans"
 import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
 
+import { priceOf } from "../support/plans.ts"
+
 const worker = readEnv(env)
 
 describe("the plan catalog", () => {
@@ -19,8 +21,8 @@ describe("the plan catalog", () => {
 				.toSorted()
 		).toEqual(["commercial-monthly-v1", "commercial-yearly-v1"])
 
-		expect(planForPrice(worker, worker.STRIPE_PRICE_MONTHLY)?.code).toBe("commercial-monthly-v1")
-		expect(planForPrice(worker, worker.STRIPE_PRICE_YEARLY)?.code).toBe("commercial-yearly-v1")
+		expect(planForPrice(worker, priceOf(worker, "commercial-monthly-v1"))?.code).toBe("commercial-monthly-v1")
+		expect(planForPrice(worker, priceOf(worker, "commercial-yearly-v1"))?.code).toBe("commercial-yearly-v1")
 	})
 
 	it("answers nothing for a Price it was not configured with", () => {

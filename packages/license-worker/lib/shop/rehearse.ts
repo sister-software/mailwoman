@@ -13,6 +13,7 @@
 
 import type Stripe from "stripe"
 
+import { type ClaimResponse, parseClaimResponse } from "#claim-contract"
 import { calendarDateUTC, plusDays } from "#dates"
 import { GRACE_DAYS } from "#plans"
 import { checkoutCollection, type ShopPlan, shopURLs } from "#shop/catalog"
@@ -68,11 +69,6 @@ export async function startRehearsal(stripe: Stripe, input: StartRehearsalInput)
 	return { clock: clock.id, customer: customer.id, session: session.id, url: session.url }
 }
 
-/**
- * What the claim route answers, as far as the rehearsal reads it.
- */
-type Claim = { status: "pending" } | { status: "revoked" } | { status: "issued"; issued: string; expires: string }
-
 export interface TokenDates {
 	issued: string
 	expires: string
@@ -123,14 +119,18 @@ function defaultSleep(ms: number): Promise<void> {
 	})
 }
 
-async function readClaim(fetchFn: typeof fetch, workerOrigin: string, session: string): Promise<Claim> {
+async function readClaim(fetchFn: typeof fetch, workerOrigin: string, session: string): Promise<ClaimResponse> {
 	const response = await fetchFn(`${workerOrigin}/v1/checkout-sessions/${session}/license`, {
 		headers: { accept: "application/json" },
 	})
 
 	if (!response.ok) throw new Error(`the claim route answered ${response.status} for ${session}`)
 
-	return (await response.json()) as Claim
+	const claim = parseClaimResponse(await response.json())
+
+	if (!claim) throw new Error(`the claim route answered a body that is no claim for ${session}`)
+
+	return claim
 }
 
 /**
