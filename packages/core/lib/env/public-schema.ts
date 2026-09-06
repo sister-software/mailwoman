@@ -87,10 +87,6 @@ export const PublicEnvSchema = z
 			title: "ONNX intra-op threads",
 			description: "Maximum ONNX Runtime intra-op worker threads for each Mailwoman process.",
 		}),
-		WOF_DATA_DIR: z.string().optional().meta({
-			title: "Who's On First data directory",
-			description: "Legacy Who's On First data-directory override retained for repository compatibility.",
-		}),
 		// Geocode server batch row cap (`POST /v1/batch`).
 		//
 		// `MAILWOMAN_BATCH_CONCURRENCY` was REMOVED 2026-07-16 — it was inert. In-process concurrency
@@ -118,63 +114,9 @@ export const PublicEnvSchema = z
 			title: "Cache root",
 			description: "Directory for reusable downloaded and generated caches.",
 		}),
-		MAILWOMAN_LOG_ROOT: blankAsAbsent(z.string().default(DefaultMailwomanPaths.log)).meta({
-			title: "Log root",
-			description: "Directory for persistent Mailwoman logs.",
-		}),
 		MAILWOMAN_TEMP_ROOT: blankAsAbsent(z.string().default(DefaultMailwomanPaths.temp)).meta({
 			title: "Temporary root",
 			description: "Directory for named temporary outputs and evaluation staging.",
-		}),
-		// Corpus source-fetch tools (`corpus/src/tools/fetch/*` — env knobs are now command flags; these remain for compat). Callers do their own numeric/boolean parsing on these,
-		// so they stay raw strings — the schema only selects which keys surface, not how they're coerced.
-		OUT_ROOT: z.string().optional().meta({
-			title: "Corpus output root",
-			description: "Compatibility override for the destination root used by corpus source fetchers.",
-		}),
-		NAD_MODE: z.string().optional().meta({
-			title: "NAD fetch mode",
-			description: "Compatibility override for the NAD fetch strategy: `featureserver` or `bulk`.",
-		}),
-		NAD_URL: z.string().optional().meta({
-			title: "NAD bulk URL",
-			description: "Compatibility override for the National Address Database bulk-download URL.",
-		}),
-		FS_END_OID: z.string().optional().meta({
-			title: "NAD ending OBJECTID",
-			description: "Compatibility override for the exclusive final NAD OBJECTID fetched from FeatureServer.",
-		}),
-		FS_START_OID: z.string().optional().meta({
-			title: "NAD starting OBJECTID",
-			description: "Compatibility override for the first NAD OBJECTID fetched from FeatureServer.",
-		}),
-		FS_CHUNK_SIZE: z.string().optional().meta({
-			title: "NAD chunk size",
-			description: "Compatibility override for NAD records written per output file.",
-		}),
-		FS_PAGE_SIZE: z.string().optional().meta({
-			title: "NAD page size",
-			description: "Compatibility override for NAD records requested per FeatureServer page.",
-		}),
-		FS_CONCURRENCY: z.string().optional().meta({
-			title: "NAD fetch concurrency",
-			description: "Compatibility override for parallel NAD FeatureServer page fetches.",
-		}),
-		SKIP_STATE_FIPS: z.string().optional().meta({
-			title: "Skipped TIGER states",
-			description: "Compatibility override for TIGER state FIPS codes to skip.",
-		}),
-		RATE_SLEEP: z.string().optional().meta({
-			title: "TIGER download delay",
-			description: "Compatibility override for the delay between TIGER downloads.",
-		}),
-		MAX_PARALLEL: z.string().optional().meta({
-			title: "TIGER download concurrency",
-			description: "Compatibility override for the maximum number of concurrent TIGER downloads.",
-		}),
-		DRY_RUN: z.string().optional().meta({
-			title: "Corpus fetch dry run",
-			description: "Compatibility toggle that prints planned corpus downloads without fetching them.",
 		}),
 		// Python training driver (`corpus-python/scripts/train_with_resume.ts`) + build resume (`corpus/src/build.ts`).
 		MAX_ATTEMPTS: z.string().optional().meta({
@@ -255,19 +197,6 @@ export const PublicEnvSchema = z
 		RELEASE_IT_WORKSPACES_DRY_RUN: z.string().optional().meta({
 			title: "Release dry run",
 			description: "Dry-run override consumed by the release-it workspaces publish flow.",
-		}),
-		// Demo artifact staging (`docs/plugins/demo-assets/artifacts.ts`) + docs driver.
-		PLAYPEN_WOF_ADMIN_DB: z.string().optional().meta({
-			title: "Playpen WOF admin database",
-			description: "Who's On First admin database staged for demo and documentation artifacts.",
-		}),
-		PLAYPEN_WOF_POSTCODE_DB: z.string().optional().meta({
-			title: "Playpen WOF postcode database",
-			description: "Who's On First postcode database staged for demo and documentation artifacts.",
-		}),
-		SLIM_COUNTRIES: z.string().optional().meta({
-			title: "Slim demo countries",
-			description: "Country selection used when building slim demo artifacts.",
 		}),
 		MAILWOMAN_DOCS_URL: z.string().optional().meta({
 			title: "Documentation URL",
@@ -367,18 +296,6 @@ export const PublicEnvSchema = z
 		MAILWOMAN_COLD_START_DATA_ROOT: z.string().optional().meta({
 			title: "Cold-start data root",
 			description: "Existing populated data root reused by the conditional full cold-start suite.",
-		}),
-		MW_DUMP_REGRESSIONS: z.string().optional().meta({
-			title: "Dump evaluation regressions",
-			description: "Set to enable row-level regression dumps from evaluation harnesses that support it.",
-		}),
-		PROBE_N: z.string().optional().meta({
-			title: "Evaluation probe size",
-			description: "Repository evaluation probe-size override retained for diagnostic tooling.",
-		}),
-		DEBUG: z.string().optional().meta({
-			title: "Debug mode",
-			description: "Repository-wide debug toggle consumed by development and diagnostic tooling.",
 		}),
 		// The informal-standard color kill switch (no-color.org). chalk/Ink honor it on their own; declared here because the debug view's map pane emits raw SGR and must consult it itself — the schema strips unlisted vars.
 		NO_COLOR: z.string().optional().meta({

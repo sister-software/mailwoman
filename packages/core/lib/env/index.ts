@@ -5,10 +5,10 @@
  */
 
 import { join } from "path-ts"
-import type { z } from "zod"
 
 import { PrivateEnvSchema } from "#env/private-schema"
 import { PublicEnvSchema } from "#env/public-schema"
+import { liveEnv } from "#env/utils"
 
 export { DefaultMailwomanPaths } from "#env/paths"
 
@@ -25,20 +25,6 @@ try {
 	process.loadEnvFile(join(process.cwd(), ".env"))
 } catch {
 	// No `.env` beside the working directory — `process.env` alone is the environment.
-}
-
-function liveEnv<Shape extends z.ZodRawShape>(schema: z.ZodObject<Shape>): z.infer<z.ZodObject<Shape>> {
-	const view = {} as z.infer<z.ZodObject<Shape>>
-
-	for (const key of Object.keys(schema.shape)) {
-		Object.defineProperty(view, key, {
-			enumerable: true,
-			// oxlint-disable-next-line sister-software/no-process-globals -- this module is the typed process.env boundary
-			get: () => schema.parse(process.env)[key as keyof z.infer<z.ZodObject<Shape>>],
-		})
-	}
-
-	return view
 }
 
 /**

@@ -14,7 +14,7 @@
  *   interaction between `z.coerce` and a constraint rather than in either one.
  */
 
-import { PublicEnvSchema } from "@mailwoman/core/env/schema"
+import { PublicEnvSchema } from "@mailwoman/core/env/public-schema"
 import { describe, expect, test } from "vitest"
 
 /**
