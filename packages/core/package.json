@@ -211,6 +211,11 @@
 			"default": "./out/git.js",
 			"types": "./out/git.d.ts"
 		},
+		"./vale": {
+			"node": "./lib/vale.ts",
+			"default": "./out/vale.js",
+			"types": "./out/vale.d.ts"
+		},
 		"./process": {
 			"node": "./lib/process.ts",
 			"default": "./out/process.js",

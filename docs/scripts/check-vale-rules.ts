@@ -47,10 +47,9 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/json"
-import { createRequire } from "@mailwoman/core/module/resolvers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { failScript } from "@mailwoman/core/scripting/utils"
-import { dirname, join } from "path-ts"
+import { valeCommand } from "@mailwoman/core/vale"
 import { $ } from "zx"
 
 /**
@@ -163,28 +162,14 @@ const LEGS: StyleLeg[] = [
 	},
 ]
 
-/**
- * Locate the Vale binary through Node's own resolution algorithm.
- *
- * `@vvago/vale` is a devDependency of this workspace, but yarn's node-modules linker hoists it to whichever install
- * directory has no conflicting version — the repo root here, not `docs/`. Asking `require.resolve` for the package
- * manifest and joining from its directory finds it wherever the linker put it, and keeps this file clear of the
- * hand-assembled install path that the `node-modules-reacharound` check in `packages/repo-health` refuses.
- */
-function resolveValeBinary(): string {
-	const manifest = createRequire(import.meta.url).resolve("@vvago/vale/package.json")
-
-	return join(dirname(manifest), "bin", "vale")
-}
-
-const VALE_BIN = resolveValeBinary()
+const VALE = valeCommand(import.meta.url)
 const $vale = $({ cwd: DOCS_DIR, nothrow: true })
 
 /**
  * A single Vale run: its parsed alerts plus the exit code, which the dirty legs assert on.
  */
 async function runVale(config: string, fixture: string): Promise<{ alerts: ValeAlert[]; exitCode: number }> {
-	const result = await $vale`${VALE_BIN} --config ${config} --output=JSON ${fixture}`.quiet()
+	const result = await $vale`${VALE.file} ${VALE.argv} --config ${config} --output=JSON ${fixture}`.quiet()
 	const report = parseJSONStrict<ValeReport>(result.stdout)
 
 	return { alerts: Object.values(report).flat(), exitCode: result.exitCode ?? 0 }
