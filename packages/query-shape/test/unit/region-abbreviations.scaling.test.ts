@@ -16,9 +16,8 @@
  *   clear of a loaded runner without letting the real failure through.
  */
 
+import { computeQueryShape } from "@mailwoman/query-shape"
 import { expect, test } from "vitest"
-
-import { computeQueryShape } from "#index"
 
 /**
  * One "City, ST ZIP" record. Repeating it grows segments and tokens together, which is the pairing that made the

@@ -53,12 +53,11 @@ import { createSymbolicLink, makeDirectories, writeLocalFile } from "@mailwoman/
 import { workspacePath } from "@mailwoman/core/paths"
 import { runFileSync } from "@mailwoman/core/process"
 import { NeuralAddressClassifier, resolveWeights } from "@mailwoman/neural"
+import { $public } from "@mailwoman/neural/env"
 import { PairIndexResolver, serializePairIndex, type PairIndexLike } from "@mailwoman/neural/pair"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { dirname, join } from "path-ts"
 import { afterAll, describe, expect, test, vi } from "vitest"
-
-import { $public } from "#env"
 
 const fixtures = new AsyncDisposableStack()
 

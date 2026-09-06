@@ -20,7 +20,7 @@ import type { DecoderToken } from "@mailwoman/core/decoder/types"
 import { validateTree } from "@mailwoman/core/decoder/validate-tree"
 import { describe, expect, test } from "vitest"
 
-import { tok, WHITE_HOUSE_RAW } from "#test/unit/decoder/fixtures"
+import { tok, WHITE_HOUSE_RAW } from "./fixtures.ts"
 
 function tokens(): DecoderToken[] {
 	return [

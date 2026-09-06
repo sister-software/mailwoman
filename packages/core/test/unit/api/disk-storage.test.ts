@@ -11,12 +11,11 @@
 import { APIClient } from "@mailwoman/core/api/APIClient"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { isTransientResourceError } from "@mailwoman/core/api/responses"
+import { readDirectory, readDirectoryEntries, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { changeMode, removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import type { CachedStorageValue, NotEmptyStorageValue } from "axios-cache-interceptor"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
-
-import { readDirectory, readDirectoryEntries, readLocalJSONFile } from "#fs/readers"
-import { temporaryDirectory, type TemporaryDirectory } from "#fs/temporary"
-import { changeMode, removePathIfPresent, writeLocalTextFile } from "#fs/writers"
 
 const ONE_HOUR_MS = 60 * 60 * 1000
 

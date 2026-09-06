@@ -50,7 +50,8 @@
 			"node": "./scripts/generate-cli-reference.ts",
 			"default": "./scripts/generate-cli-reference.ts",
 			"types": "./scripts/generate-cli-reference.ts"
-		}
+		},
+		"./license/claim": "./src/license/claim.ts"
 	},
 	"scripts": {
 		"build": "yarn prebuild && docusaurus build",

@@ -5,7 +5,7 @@
 // so the bare "Paris" locality probe hits directly). Guards: the national fallback slug dispatch,
 // the fr street-key locale, the commune fold, and the hosted artifact — any one missing falls back
 // to the admin centroid and fails the tolerance.
-import { expect, test } from "#e2e"
+import { expect, test } from "../e2e/index.ts"
 
 const TOL = 0.006
 

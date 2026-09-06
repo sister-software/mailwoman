@@ -386,6 +386,11 @@
 			"node": "./lib/coverage/index.ts",
 			"default": "./out/coverage/index.js",
 			"types": "./out/coverage/index.d.ts"
+		},
+		"./plus-code-override": {
+			"node": "./lib/plus-code-override.ts",
+			"default": "./out/plus-code-override.js",
+			"types": "./out/plus-code-override.d.ts"
 		}
 	},
 	"publishConfig": {

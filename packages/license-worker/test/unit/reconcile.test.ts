@@ -4,18 +4,18 @@
  * @author Teffen Ellis, et al.
  */
 
+import { readEnv } from "@mailwoman/license-worker/env"
+import { fulfilInvoice } from "@mailwoman/license-worker/fulfil"
+import { openLedger } from "@mailwoman/license-worker/ledger/client"
+import { findLicenseBySubscription, findToken, setEmailState } from "@mailwoman/license-worker/ledger/licenses"
+import { reconcileLedger } from "@mailwoman/license-worker/reconcile"
+import { stripeClient } from "@mailwoman/license-worker/stripe/client"
+import { handleStripeEvent } from "@mailwoman/license-worker/stripe/handlers"
 import { env } from "cloudflare:workers"
 import { beforeAll, describe, expect, it } from "vitest"
 
-import { readEnv } from "#env"
-import { fulfilInvoice } from "#fulfil"
-import { openLedger } from "#ledger/client"
-import { findLicenseBySubscription, findToken, setEmailState } from "#ledger/licenses"
-import { reconcileLedger } from "#reconcile"
-import { stripeClient } from "#stripe/client"
-import { handleStripeEvent } from "#stripe/handlers"
-import { envWithSigningKey } from "#test/support/keys"
-import { applyMigrations } from "#test/support/migrations"
+import { envWithSigningKey } from "../support/keys.ts"
+import { applyMigrations } from "../support/migrations.ts"
 import {
 	chargeDisputeCreatedEvent,
 	chargeObject,
@@ -27,8 +27,8 @@ import {
 	invoiceObject,
 	invoicePaymentList,
 	subscriptionObject,
-} from "#test/support/stripe-fixtures"
-import { stripeFetch } from "#test/support/stripe-mock"
+} from "../support/stripe-fixtures.ts"
+import { stripeFetch } from "../support/stripe-mock.ts"
 
 const OCT_1 = Date.UTC(2026, 9, 1) / 1000
 const NOV_1 = Date.UTC(2026, 10, 1) / 1000

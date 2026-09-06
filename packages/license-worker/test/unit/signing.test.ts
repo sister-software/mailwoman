@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  */
 
+import { readEnv } from "@mailwoman/license-worker/env"
+import { signingSelfTest } from "@mailwoman/license-worker/signing"
 import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
 
-import { readEnv } from "#env"
-import { signingSelfTest } from "#signing"
-import { envWithSigningKey } from "#test/support/keys"
+import { envWithSigningKey } from "../support/keys.ts"
 
 const base = readEnv(env)
 

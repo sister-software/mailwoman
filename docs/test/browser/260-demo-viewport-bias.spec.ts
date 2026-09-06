@@ -7,7 +7,7 @@
  *   contributes nothing.
  */
 
-import { expect, test } from "#e2e"
+import { expect, test } from "../e2e/index.ts"
 
 test.describe("Demo — viewport bias (#938)", () => {
 	test("map over Ohio biases 'Dublin' to Dublin, OH", async ({ demo, page }) => {

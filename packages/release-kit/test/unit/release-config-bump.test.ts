@@ -12,10 +12,9 @@
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { bumpReleaseConfigVersion } from "@mailwoman/release-kit/release/config-version"
 import { resolvePath } from "path-ts"
 import { beforeAll, describe, expect, it } from "vitest"
-
-import { bumpReleaseConfigVersion } from "#release/config-version"
 
 describe("release.config.json under the prepare bump", () => {
 	const path = resolvePath(String(repoRootPath()), "release.config.json")

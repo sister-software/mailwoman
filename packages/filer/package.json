@@ -171,6 +171,21 @@
 			"node": "./lib/tools/linkage-metrics.ts",
 			"default": "./out/tools/linkage-metrics.js",
 			"types": "./out/tools/linkage-metrics.d.ts"
+		},
+		"./sdk/build/edgar-match": {
+			"node": "./lib/sdk/build/edgar-match.ts",
+			"default": "./out/sdk/build/edgar-match.js",
+			"types": "./out/sdk/build/edgar-match.d.ts"
+		},
+		"./sdk/build/form499-rows": {
+			"node": "./lib/sdk/build/form499-rows.ts",
+			"default": "./out/sdk/build/form499-rows.js",
+			"types": "./out/sdk/build/form499-rows.d.ts"
+		},
+		"./sdk/build/node-ids": {
+			"node": "./lib/sdk/build/node-ids.ts",
+			"default": "./out/sdk/build/node-ids.js",
+			"types": "./out/sdk/build/node-ids.d.ts"
 		}
 	},
 	"publishConfig": {

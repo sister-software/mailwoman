@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { GeometryLiteral } from "@mailwoman/spatial"
 import {
 	geometryToEWKB,
 	geometryToEWKH,
@@ -14,8 +15,6 @@ import {
 } from "@mailwoman/spatial/well-known-text"
 import { expect, test } from "vitest"
 import wkx from "wkx"
-
-import type { GeometryLiteral } from "#index"
 
 const POINT: GeometryLiteral = { type: "Point", coordinates: [30, 10] }
 

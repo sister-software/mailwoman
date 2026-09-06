@@ -24,10 +24,9 @@ import {
 	resolveLocaleParts,
 } from "@mailwoman/corpus/recipes/locale"
 import { makeMulberry32 } from "@mailwoman/corpus/recipes/scaffold"
+import type { SynthesizedLocaleRow } from "@mailwoman/corpus/synthesizers/german"
 import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
-
-import type { SynthesizedLocaleRow } from "#synthesizers/german"
 
 const fixtures = new AsyncDisposableStack()
 

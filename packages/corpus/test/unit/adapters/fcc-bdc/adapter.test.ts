@@ -14,12 +14,11 @@ import {
 	buildPostcode,
 	createFccBdcAdapter,
 } from "@mailwoman/corpus/adapters/fcc-bdc/adapter"
+import { runAdapter } from "@mailwoman/corpus/runner"
+import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 import { beforeEach, describe, expect, it } from "vitest"
-
-import { runAdapter } from "#runner"
-import { readCanonicalRows, useScratchDir } from "#test-kit"
 
 const scratch = useScratchDir("fcc-bdc")
 

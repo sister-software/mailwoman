@@ -12,11 +12,10 @@ import {
 	nameSlotsFor,
 	variantsFor,
 } from "@mailwoman/corpus/adapters/wof-admin-json/adapter"
+import { runAdapter } from "@mailwoman/corpus/runner"
+import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
 import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
-
-import { runAdapter } from "#runner"
-import { readCanonicalRows, useScratchDir } from "#test-kit"
 
 const scratch = useScratchDir("wof-admin-json")
 

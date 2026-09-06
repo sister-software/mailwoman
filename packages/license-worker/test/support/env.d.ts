@@ -7,9 +7,8 @@
  *   vitest.config.ts. Declared once so no test re-asserts it with a cast.
  */
 
+import type { LicenseWorkerBindings } from "@mailwoman/license-worker/env"
 import type { D1Migration } from "cloudflare:test"
-
-import type { LicenseWorkerBindings } from "#env"
 
 declare global {
 	namespace Cloudflare {

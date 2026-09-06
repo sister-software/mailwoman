@@ -16,7 +16,7 @@ import type { ReactNode } from "react"
 import { expect, test, vi } from "vitest"
 import { userEvent } from "vitest/browser"
 
-import { renderComponent } from "#test/render"
+import { renderComponent } from "../../render.tsx"
 
 interface TestRelease extends DemoReleaseBase {
 	modelSize: string

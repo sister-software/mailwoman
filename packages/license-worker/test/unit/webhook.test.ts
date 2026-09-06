@@ -4,13 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
+import { readEnv } from "@mailwoman/license-worker/env"
+import { ACCEPTED_EVENT_TYPES, verifyStripeEvent } from "@mailwoman/license-worker/stripe/webhook"
 import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
 
-import { readEnv } from "#env"
-import { ACCEPTED_EVENT_TYPES, verifyStripeEvent } from "#stripe/webhook"
-import { invoicePaidEvent } from "#test/support/stripe-fixtures"
-import { signedWebhook } from "#test/support/stripe-mock"
+import { invoicePaidEvent } from "../support/stripe-fixtures.ts"
+import { signedWebhook } from "../support/stripe-mock.ts"
 
 const worker = readEnv(env)
 

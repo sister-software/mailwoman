@@ -20,10 +20,9 @@ import { workspacePath } from "@mailwoman/core/paths"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { runStaticDebug } from "mailwoman/debug-view/command"
 import { mapPaneCellSize } from "mailwoman/debug-view/DebugFrame"
+import { $public } from "mailwoman/env"
 import { createGeocodeCommandOptions } from "mailwoman/geocode"
 import { describe, expect, test } from "vitest"
-
-import { $public } from "#env"
 
 // MARK: Environment guard
 

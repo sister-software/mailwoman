@@ -4,11 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { resolveWOFDataDir, resolveWOFRepo, wofRepoName } from "@mailwoman/core/resources/whosonfirst/extract-repo"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
-
-import { temporaryDirectory, type TemporaryDirectory } from "#fs/temporary"
-import { makeDirectories } from "#fs/writers"
 
 const REPO = "whosonfirst-data-postalcode-tr"
 

@@ -17,7 +17,7 @@ import { DemoMap, type DemoMapStyle } from "@mailwoman/react/map/DemoMap"
 import { act } from "react"
 import { expect, test } from "vitest"
 
-import { renderComponent } from "#test/render"
+import { renderComponent } from "../../render.tsx"
 
 const STUB_STYLE: DemoMapStyle = {
 	version: 8,

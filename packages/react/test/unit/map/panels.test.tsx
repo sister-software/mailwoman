@@ -19,9 +19,9 @@ import { useState } from "react"
 import { expect, test, vi } from "vitest"
 import { userEvent } from "vitest/browser"
 
-import { actDelay } from "#test/act"
-import { FAKE_SUGGESTIONS, makeFakeParseResult } from "#test/mocks"
-import { renderComponent } from "#test/render"
+import { actDelay } from "../../act.ts"
+import { FAKE_SUGGESTIONS, makeFakeParseResult } from "../../mocks.tsx"
+import { renderComponent } from "../../render.tsx"
 
 const VERSIONS: DemoVersionOption[] = [
 	{ version: "v7.2.0", label: "v7.2.0 (latest)" },

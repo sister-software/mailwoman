@@ -34,9 +34,8 @@ import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { workspacePath } from "@mailwoman/core/paths"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { createServeEngine } from "mailwoman/api-engine"
+import { $public } from "mailwoman/env"
 import { beforeAll, beforeEach, describe, expect, test } from "vitest"
-
-import { $public } from "#env"
 
 const wofPath = $public.MAILWOMAN_WOF_DB ?? String(dataRootPath("wof", "admin-global-priority.db"))
 const txSitus = String(dataRootPath("address-points", "address-points-us-tx.db"))

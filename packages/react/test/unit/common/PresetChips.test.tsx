@@ -8,7 +8,7 @@ import { PresetChips } from "@mailwoman/react/common/PresetChips"
 import { expect, test } from "vitest"
 import { userEvent } from "vitest/browser"
 
-import { renderComponent } from "#test/render"
+import { renderComponent } from "../../render.tsx"
 
 test("PresetChips renders one chip per preset and calls onPick with its value", async () => {
 	let picked = ""

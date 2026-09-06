@@ -215,6 +215,14 @@ export default {
 			},
 		},
 		{
+			// A test file imports the package under test through its public exports and a helper by relative path; the
+			// `#` map is the package's private naming and stays inside `lib/`.
+			files: ["packages/*/test/**/*.ts", "packages/*/test/**/*.tsx", "docs/test/**/*.ts", "docs/test/**/*.tsx"],
+			rules: {
+				"mailwoman/no-private-import-in-test": "error",
+			},
+		},
+		{
 			// `packages/core/lib/process.ts` is the child-process idiom and the one place `node:child_process` is reached.
 			files: ["packages/core/lib/process.ts"],
 			rules: {

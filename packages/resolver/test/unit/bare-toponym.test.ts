@@ -24,7 +24,7 @@ import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { findRescoreCandidate } from "@mailwoman/resolver/span-rescore"
 import { describe, expect, it } from "vitest"
 
-import { backendNameKey } from "#test/backend-name-key"
+import { backendNameKey } from "../helpers/backend-name-key.ts"
 
 const norm = backendNameKey
 

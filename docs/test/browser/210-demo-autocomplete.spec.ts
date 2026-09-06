@@ -1,4 +1,4 @@
-import { expect, test } from "#e2e"
+import { expect, test } from "../e2e/index.ts"
 
 test.describe("Demo — place autocomplete typeahead (#587)", () => {
 	test("a partial last token surfaces a char-level FST suggestion that fills the box", async ({ demo }) => {

@@ -37,12 +37,12 @@ vi.mock("onnxruntime-web/webgpu", () => {
 	return { Tensor, InferenceSession: { create: sessionCreateMock }, env: { wasm: {} } }
 })
 
-vi.mock("../../lib/tokenizer.ts", async (importOriginal) => ({
+vi.mock("@mailwoman/neural/tokenizer", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@mailwoman/neural/tokenizer")>()),
 	MailwomanTokenizer: { loadFromBase64: vi.fn(async () => ({ tokenizerStub: true })) },
 }))
 
-vi.mock("../../lib/classifier/index.ts", async (importOriginal) => ({
+vi.mock("@mailwoman/neural/classifier", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@mailwoman/neural/classifier")>()),
 	NeuralAddressClassifier: class {},
 }))

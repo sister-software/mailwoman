@@ -17,7 +17,7 @@ import { OracleMeter, OracleProviderName, type OracleGeocoderLike } from "@mailw
 import { listRuns } from "@mailwoman/dev-mcp/run-store"
 import { afterAll, describe, expect, it } from "vitest"
 
-import { stubEngine, stubEngineRegistry } from "#test/stub-registry"
+import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
 
 const RUN_STORE = await temporaryDirectory("mwdev-arms-runs-")
 

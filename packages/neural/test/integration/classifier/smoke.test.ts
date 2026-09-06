@@ -17,11 +17,10 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { workspacePath } from "@mailwoman/core/paths"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
+import { $public } from "@mailwoman/neural/env"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { describe, expect, test } from "vitest"
-
-import { $public } from "#env"
 
 const TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 

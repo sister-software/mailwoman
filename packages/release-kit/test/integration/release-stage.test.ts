@@ -14,14 +14,13 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { literalFilesEntries, verifyTarball } from "@mailwoman/release-kit/pack/verify-tarball"
+import { checkReleaseListIdentity, SANCTIONED_RELEASE_ABSENCES } from "@mailwoman/release-kit/release/stage"
+import { planWeightsMaterialization } from "@mailwoman/release-kit/weights/fetch-hf-weights"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { afterAll, describe, expect, it } from "vitest"
 import { $ } from "zx"
-
-import { literalFilesEntries, verifyTarball } from "#pack/verify-tarball"
-import { checkReleaseListIdentity, SANCTIONED_RELEASE_ABSENCES } from "#release/stage"
-import { planWeightsMaterialization } from "#weights/fetch-hf-weights"
 
 const fixtures = new AsyncDisposableStack()
 

@@ -4,12 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
+import { createLicenseWorkerApp } from "@mailwoman/license-worker/app"
+import { readEnv } from "@mailwoman/license-worker/env"
+import { openLedger } from "@mailwoman/license-worker/ledger/client"
 import { env } from "cloudflare:workers"
 import { expect, test } from "vitest"
-
-import { createLicenseWorkerApp } from "#app"
-import { readEnv } from "#env"
-import { openLedger } from "#ledger/client"
 
 test("GET /health answers issuance, the environment's mode, a reachable ledger, and no-store", async () => {
 	const app = createLicenseWorkerApp(readEnv(env), {

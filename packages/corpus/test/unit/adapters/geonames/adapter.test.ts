@@ -11,10 +11,9 @@ import {
 	GEONAMES_ADAPTER_ID,
 	GEONAMES_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/adapters/geonames/adapter"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
 import { join, type PathBuilderLike } from "path-ts"
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
-
-import type { CanonicalRow } from "#types"
 
 const fixtures = new AsyncDisposableStack()
 

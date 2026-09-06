@@ -11,9 +11,8 @@ import {
 	stableSourceID,
 	streamingSha256,
 } from "@mailwoman/corpus/adapters/utils"
+import type { CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
 import { describe, expect, it } from "vitest"
-
-import type { CanonicalRow, CorpusAdapter } from "#types"
 
 function fixtureRow(overrides: Partial<CanonicalRow> = {}): CanonicalRow {
 	return {

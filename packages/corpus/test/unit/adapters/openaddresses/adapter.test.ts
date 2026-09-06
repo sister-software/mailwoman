@@ -11,11 +11,10 @@ import {
 	OPENADDRESSES_DEFAULT_LICENSE,
 	createOpenaddressesAdapter,
 } from "@mailwoman/corpus/adapters/openaddresses/adapter"
+import { runAdapter } from "@mailwoman/corpus/runner"
+import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
 import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
-
-import { runAdapter } from "#runner"
-import { readCanonicalRows, useScratchDir } from "#test-kit"
 
 const scratch = useScratchDir("oa")
 

@@ -11,10 +11,9 @@ import {
 	cnOrganizationalUnitsRecipe,
 	labelCNOrganizationalRow,
 } from "@mailwoman/corpus/recipes/cn-organizational-units"
+import { sliceRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { cjkAwareTokenizer } from "@mailwoman/corpus/utils/tokenize"
 import { describe, expect, it } from "vitest"
-
-import { sliceRunner } from "#test-kit/corpus-recipe"
 
 const run = sliceRunner("cn-units", cnOrganizationalUnitsRecipe, 11)
 

@@ -11,8 +11,8 @@ import { PipelineExplorer } from "@mailwoman/react/pipeline/PipelineExplorer"
 import { expect, test, vi } from "vitest"
 import { userEvent } from "vitest/browser"
 
-import { makePipelineRuntime } from "#test/mocks"
-import { renderComponent } from "#test/render"
+import { makePipelineRuntime } from "../../mocks.tsx"
+import { renderComponent } from "../../render.tsx"
 
 test("parses on submit and renders components + resolved place", async () => {
 	const { container } = renderComponent(

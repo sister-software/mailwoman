@@ -10,6 +10,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
+import type { LabeledRow } from "@mailwoman/corpus/types"
 import {
 	LABELED_ROW_SCHEMA,
 	PARQUET_COLUMNS,
@@ -21,8 +22,6 @@ import {
 	type ParquetRow,
 } from "@mailwoman/corpus/utils/parquet"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
-
-import type { LabeledRow } from "#types"
 
 const labeled = (over: Partial<LabeledRow>): LabeledRow => ({
 	raw: "Paris",

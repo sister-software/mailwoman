@@ -7,7 +7,7 @@
 import { ResolvedPlace } from "@mailwoman/react/pipeline/ResolvedPlace"
 import { expect, test } from "vitest"
 
-import { renderComponent } from "#test/render"
+import { renderComponent } from "../../render.tsx"
 
 const PLACE = { id: 85_977_539, name: "New York", placetype: "locality", lat: 40.7128, lon: -74.006, score: 0.82 }
 

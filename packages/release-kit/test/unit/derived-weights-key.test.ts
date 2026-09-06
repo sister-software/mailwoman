@@ -20,9 +20,6 @@ import {
 	writeLocalFile,
 	writeLocalTextFile,
 } from "@mailwoman/core/fs/writers"
-import { join, type PathBuilder } from "path-ts"
-import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest"
-
 import {
 	DERIVED_WEIGHTS_INPUTS,
 	type DerivedWeightsInput,
@@ -30,7 +27,9 @@ import {
 	derivedWeightsDir,
 	derivedWeightsKey,
 	derivedWeightsKeyFrom,
-} from "#weights/derived-weights-key"
+} from "@mailwoman/release-kit/weights/derived-weights-key"
+import { join, type PathBuilder } from "path-ts"
+import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
 

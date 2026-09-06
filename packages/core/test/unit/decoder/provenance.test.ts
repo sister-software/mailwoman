@@ -16,7 +16,7 @@ import { Span } from "@mailwoman/core/tokenization/Span"
 import type { ClassificationProposal } from "@mailwoman/core/types"
 import { describe, expect, test } from "vitest"
 
-import { tok } from "#test/unit/decoder/fixtures"
+import { tok } from "./fixtures.ts"
 
 function proposal(
 	body: string,

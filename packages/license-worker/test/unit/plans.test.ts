@@ -4,11 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+import { readEnv } from "@mailwoman/license-worker/env"
+import { planCatalog, planForPrice } from "@mailwoman/license-worker/plans"
 import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
-
-import { readEnv } from "#env"
-import { planCatalog, planForPrice } from "#plans"
 
 const worker = readEnv(env)
 

@@ -15,10 +15,9 @@
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { cacheRootPath } from "@mailwoman/core/utils"
+import { resolveWeights, weightsCacheDir, weightsCachePackageDir, weightsPackageName } from "@mailwoman/neural/weights"
 import { join } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
-
-import { resolveWeights, weightsCacheDir, weightsCachePackageDir, weightsPackageName } from "#weights"
 
 const LOCALE = "pt-BR"
 const PACKAGE_NAME = "@mailwoman/neural-weights-pt-br"

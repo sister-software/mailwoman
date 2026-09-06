@@ -11,14 +11,13 @@
 import type { LineStringPath, ParsedGeometry, PolygonRings } from "@mailwoman/spatial"
 import { geometryContains } from "@mailwoman/spatial"
 import { cellToBoundary } from "h3-js"
-import { describe, expect, it } from "vitest"
-
 import {
 	geometryBBox,
 	interiorCoverageCells,
 	interiorCoverageCellSet,
 	regionCoverageCells,
-} from "#gazetteer-pipeline/poi/coverage-region"
+} from "mailwoman/gazetteer-pipeline/poi/coverage-region"
+import { describe, expect, it } from "vitest"
 
 /**
  * A lon/lat square, counter-clockwise and closed.

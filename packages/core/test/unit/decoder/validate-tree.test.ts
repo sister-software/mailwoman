@@ -13,7 +13,7 @@ import type { AddressNode } from "@mailwoman/core/decoder/types"
 import { validateTree } from "@mailwoman/core/decoder/validate-tree"
 import { describe, expect, test } from "vitest"
 
-import { tok } from "#test/unit/decoder/fixtures"
+import { tok } from "./fixtures.ts"
 
 function node(tag: AddressNode["tag"], value: string, children: AddressNode[] = []): AddressNode {
 	return { tag, value, start: 0, end: value.length, confidence: 1, children }

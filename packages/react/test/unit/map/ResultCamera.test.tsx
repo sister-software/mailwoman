@@ -24,7 +24,7 @@ import { act } from "react"
 import type { MapRef } from "react-map-gl/maplibre"
 import { expect, test } from "vitest"
 
-import { renderComponent } from "#test/render"
+import { renderComponent } from "../../render.tsx"
 
 const STUB_STYLE: DemoMapStyle = {
 	version: 8,

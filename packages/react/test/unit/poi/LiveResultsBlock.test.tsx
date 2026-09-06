@@ -9,7 +9,7 @@ import type { POISearchHit } from "@mailwoman/react/poi/types"
 import { expect, test } from "vitest"
 import { userEvent } from "vitest/browser"
 
-import { renderComponent } from "#test/render"
+import { renderComponent } from "../../render.tsx"
 
 const HITS: POISearchHit[] = [
 	{ name: "Washington Park Fountain", lat: 39.79, lon: -89.65, distanceM: 320, country: "US", confidence: 0.8 },

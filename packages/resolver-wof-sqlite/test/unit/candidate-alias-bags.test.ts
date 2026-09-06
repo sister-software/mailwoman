@@ -13,14 +13,13 @@
  */
 
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import { explodeAliasBags } from "@mailwoman/resolver-wof-sqlite/candidate/alias-bags"
+import type { PlaceAttrs } from "@mailwoman/resolver-wof-sqlite/candidate/place-attrs"
 import { ALIAS_SEPARATOR } from "@mailwoman/resolver-wof-sqlite/fts"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
-
-import { explodeAliasBags } from "#candidate/alias-bags"
-import type { PlaceAttrs } from "#candidate/place-attrs"
 
 /**
  * The separator `fts.ts` joins the bag with, space-padded and trailing, exactly as a real `place_search` row carries

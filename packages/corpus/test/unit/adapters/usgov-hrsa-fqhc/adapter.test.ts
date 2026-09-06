@@ -11,12 +11,11 @@ import {
 	USGOV_HRSA_FQHC_DEFAULT_LICENSE,
 	createUSGovHRSAFQHCAdapter,
 } from "@mailwoman/corpus/adapters/usgov-hrsa-fqhc/adapter"
+import { runAdapter } from "@mailwoman/corpus/runner"
+import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
-
-import { runAdapter } from "#runner"
-import { readCanonicalRows, useScratchDir } from "#test-kit"
-import { alignRow } from "#utils"
 
 const scratch = useScratchDir("usgov-hrsa")
 

@@ -10,7 +10,7 @@ import { JobRegistry } from "@mailwoman/dev-mcp/jobs"
 import { buildToolTable, type DevTool } from "@mailwoman/dev-mcp/tools"
 import { describe, expect, it } from "vitest"
 
-import { stubEngine as buildEngine, stubEngineRegistry } from "#test/stub-registry"
+import { stubEngine as buildEngine, stubEngineRegistry } from "../stub-registry.ts"
 
 /**
  * A session whose answer is a pure function of the input, so a test can make two arms agree or disagree at will.

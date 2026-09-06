@@ -4,7 +4,7 @@
 // the truth coord IS the extract's coord; we grade the assembled coordinate within ~500 m (tight enough
 // to distinguish rooftop from a centroid fallback, loose enough for any normalization). Representative
 // spread: TX/GA/WA urban + MT rural.
-import { expect, test } from "#e2e"
+import { expect, test } from "../e2e/index.ts"
 
 const TOL = 0.006
 

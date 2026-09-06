@@ -4,9 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { newLicenseID, newRefreshSecret, secretDigest } from "@mailwoman/license-worker/identifiers"
 import { describe, expect, it } from "vitest"
-
-import { newLicenseID, newRefreshSecret, secretDigest } from "#identifiers"
 
 describe("identifiers", () => {
 	it("mints a lid of 4 + 22 url-safe characters and never the same one twice", () => {

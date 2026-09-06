@@ -7,8 +7,6 @@
  *   estimator's job is to be checkable without an extract in the loop.
  */
 
-import { describe, expect, it } from "vitest"
-
 import {
 	chapmanEstimate,
 	completenessAcrossProtocols,
@@ -17,7 +15,8 @@ import {
 	matchInventories,
 	type CaptureRow,
 	type MatchProtocol,
-} from "#gazetteer-pipeline/poi/capture-recapture"
+} from "mailwoman/gazetteer-pipeline/poi/capture-recapture"
+import { describe, expect, it } from "vitest"
 
 const PRIMARY = MATCH_PROTOCOL_GRID.find((p) => p.label === "primary")!
 

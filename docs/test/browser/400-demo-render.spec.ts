@@ -10,7 +10,7 @@
  *   lands. A fast, deterministic "the page renders correctly" guard.
  */
 
-import { expect, test } from "#e2e"
+import { expect, test } from "../e2e/index.ts"
 
 test.describe("Demo — structural render", () => {
 	test("paints the page shell, map, about box, and form on load", async ({ demo, page }) => {

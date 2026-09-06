@@ -14,6 +14,10 @@
  *   `no-relative-dynamic-import`: `import("./x.ts")` names a module by the importer's location; the package's
  *   `imports` map names it once.
  *
+ *   `no-private-import-in-test`: a test file reaches the package under test through its public exports, never the
+ *   `#` map — the map is the package's private naming, and a test that uses it never exercises the surface a consumer
+ *   gets.
+ *
  *   `no-import-meta-dirname-walk`: `resolvePath(import.meta.dirname, "../..")` counts directories; a package's own
  *   file is `resolvePackagePath`, a repository file is `repoRootPath`.
  *
@@ -432,6 +436,69 @@ const noRelativeDynamicImportRule: Rule = {
 }
 
 /**
+ * A test file reaches the package under test the way a consumer does — through its public `exports`
+ * (`@mailwoman/<pkg>/<subpath>`, `mailwoman/<subpath>`) — and a test helper or an unexported module by relative path,
+ * which makes the private dependency visible at the import. `#` specifiers are the package's own `imports` map: legal
+ * in `lib/`, where the module names its siblings, and a bypass of the public surface everywhere a test uses one.
+ */
+const noPrivateImportInTestRule: Rule = {
+	meta: {
+		name: "no-private-import-in-test",
+		type: "suggestion",
+		schema: [],
+	},
+	create(context: RuleContext) {
+		const report = (node: AstNode, specifier: string) => {
+			context.report({
+				node,
+				message:
+					`${JSON.stringify(specifier)} is the package's private \`imports\` map. A test imports the package under ` +
+					"test through its public exports (`@mailwoman/<pkg>/<subpath>`); a module no export names gets an " +
+					"`exports` entry, and only a helper under `test/` is imported by relative path.",
+			})
+		}
+
+		const checkSource = (node: AstNode) => {
+			const specifier = literalDelimiter(node.source)
+
+			if (specifier !== null && specifier.startsWith("#")) {
+				report(node, specifier)
+			}
+		}
+
+		return {
+			ImportDeclaration: checkSource,
+			ExportNamedDeclaration: checkSource,
+			ExportAllDeclaration: checkSource,
+			ImportExpression: checkSource,
+			TSImportType(node: AstNode) {
+				const specifier = literalDelimiter(node.argument)
+
+				if (specifier !== null && specifier.startsWith("#")) {
+					report(node, specifier)
+				}
+			},
+			CallExpression(node: AstNode) {
+				// `vi.mock("#x")`, `vi.doMock`, `vi.importActual`, `vi.importMock`: the specifier is the first argument.
+				const callee = node.callee
+
+				if (callee?.type !== "MemberExpression" || callee.object?.name !== "vi") return
+
+				if (!["mock", "doMock", "importActual", "importMock", "unmock", "doUnmock"].includes(callee.property?.name)) {
+					return
+				}
+
+				const specifier = literalDelimiter(node.arguments?.[0])
+
+				if (specifier !== null && specifier.startsWith("#")) {
+					report(node, specifier)
+				}
+			},
+		}
+	},
+}
+
+/**
  * `fileURLToPath(import.meta.resolve(…))` is string plumbing around a question with a typed answer.
  * `@mailwoman/core/module/resolvers` owns it: `resolveModulePath` for a file a specifier names,
  * `resolvePackageDirectory` for a package's root; a module's own neighbours are `resolvePath(import.meta.dirname, …)`.
@@ -694,6 +761,7 @@ const mailwomanPlugin: Plugin = {
 		"no-database-handle-cast": noDatabaseHandleCastRule,
 		"no-import-meta-dirname-walk": noImportMetaDirnameWalkRule,
 		"no-import-meta-resolve": noImportMetaResolveRule,
+		"no-private-import-in-test": noPrivateImportInTestRule,
 		"no-relative-dynamic-import": noRelativeDynamicImportRule,
 		"no-sync-fs-in-async": noSyncFSInAsyncRule,
 		"prefer-home": preferHomeRule,

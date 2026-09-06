@@ -12,9 +12,8 @@
  */
 
 import { trailingRegionRecipe } from "@mailwoman/corpus/recipes/trailing-region"
+import { sliceRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
-
-import { sliceRunner } from "#test-kit/corpus-recipe"
 
 const run = sliceRunner("trailing-region", trailingRegionRecipe, 901)
 

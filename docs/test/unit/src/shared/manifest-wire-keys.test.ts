@@ -14,9 +14,8 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { normalizeReleasesManifest } from "@mailwoman/docs/shared/demo-helpers"
+import type { WireReleaseEntry } from "@mailwoman/docs/shared/demo-helpers"
 import { describe, expect, test } from "vitest"
-
-import type { WireReleaseEntry } from "#shared/demo-helpers"
 
 const entry = (over: Partial<WireReleaseEntry>) => ({
 	version: "vX",

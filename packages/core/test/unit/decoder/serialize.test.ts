@@ -11,7 +11,7 @@ import { decodeAsXML } from "@mailwoman/core/decoder/serialize-xml"
 import type { DecoderToken } from "@mailwoman/core/decoder/types"
 import { describe, expect, test } from "vitest"
 
-import { tok, WHITE_HOUSE_RAW, whiteHouseTokens } from "#test/unit/decoder/fixtures"
+import { tok, WHITE_HOUSE_RAW, whiteHouseTokens } from "./fixtures.ts"
 
 describe("decodeAsJSON (libpostal-compat)", () => {
 	test("flattens to a tag→value map", () => {

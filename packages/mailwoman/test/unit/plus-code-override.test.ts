@@ -9,9 +9,8 @@
 import type { GeocodeOutcomeLike } from "@mailwoman/api"
 import { buildAddressTree, type DecoderToken } from "@mailwoman/core/decoder"
 import type { BIOLabel } from "@mailwoman/core/types/component"
+import { applyPlusCodeOverride } from "mailwoman/plus-code-override"
 import { describe, expect, it } from "vitest"
-
-import { applyPlusCodeOverride } from "#plus-code-override"
 
 function tok(piece: string, start: number, end: number, label: BIOLabel): DecoderToken {
 	return { piece, start, end, label, confidence: 0.9 }

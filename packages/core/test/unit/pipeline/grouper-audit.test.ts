@@ -6,9 +6,8 @@
 
 import { runPipeline } from "@mailwoman/core/pipeline/runtime-pipeline"
 import type { PhraseProposal, RuntimePipelineStages } from "@mailwoman/core/pipeline/types"
+import { Span } from "@mailwoman/core/tokenization"
 import { describe, expect, it } from "vitest"
-
-import { Span } from "#tokenization"
 
 function makeStages(overrides: Partial<RuntimePipelineStages> = {}): RuntimePipelineStages {
 	return {

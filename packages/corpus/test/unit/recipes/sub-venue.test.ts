@@ -30,9 +30,8 @@ import {
 	SUBVENUE_LEGS,
 	type SubVenueLeg,
 } from "@mailwoman/corpus/recipes/sub-venue"
+import { SUBVENUE_PROMOTIONS } from "@mailwoman/corpus/tools"
 import { describe, expect, it } from "vitest"
-
-import { SUBVENUE_PROMOTIONS } from "#tools"
 
 const lexicon = await readSubVenueLexicon(defaultLexiconPath())
 const shippedModifiers = lexicon.modifiers.filter((m) => m.shipped).map((m) => m.id)

@@ -19,11 +19,10 @@ import {
 import { type LineStringPath, type ParsedGeometry, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToBoundary, latLngToCell } from "h3-js"
+import type { CaptureRow } from "mailwoman/gazetteer-pipeline/poi/capture-recapture"
+import { interiorCoverageCells } from "mailwoman/gazetteer-pipeline/poi/coverage-region"
+import { buildExclusionCoverage } from "mailwoman/gazetteer-pipeline/poi/exclusion-coverage"
 import { describe, expect, it } from "vitest"
-
-import type { CaptureRow } from "#gazetteer-pipeline/poi/capture-recapture"
-import { interiorCoverageCells } from "#gazetteer-pipeline/poi/coverage-region"
-import { buildExclusionCoverage } from "#gazetteer-pipeline/poi/exclusion-coverage"
 
 const RESOLUTION = 6
 

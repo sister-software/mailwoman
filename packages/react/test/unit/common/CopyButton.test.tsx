@@ -8,7 +8,7 @@ import { CopyButton } from "@mailwoman/react/common/CopyButton"
 import { expect, test, vi } from "vitest"
 import { userEvent } from "vitest/browser"
 
-import { renderComponent } from "#test/render"
+import { renderComponent } from "../../render.tsx"
 
 test("CopyButton flips to the copied label after a click", async () => {
 	const { container } = renderComponent(<CopyButton value="payload" />)

@@ -18,14 +18,13 @@ import {
 	type CandidateDatabase,
 	createCandidateStagingTables,
 } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import { GLOSS_EXCLUDED_PLACETYPES, stampNameRoles } from "@mailwoman/resolver-wof-sqlite/candidate/name-roles"
+import type { PlaceAttrs } from "@mailwoman/resolver-wof-sqlite/candidate/place-attrs"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { allRows } from "@mailwoman/resolver-wof-sqlite/sqlite-utils"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
-
-import { GLOSS_EXCLUDED_PLACETYPES, stampNameRoles } from "#candidate/name-roles"
-import type { PlaceAttrs } from "#candidate/place-attrs"
-import { allRows } from "#sqlite-utils"
 
 const CCODES = new Map([
 	["FR", 0],

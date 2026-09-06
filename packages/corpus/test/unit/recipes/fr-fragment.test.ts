@@ -17,9 +17,8 @@
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { frFragmentRecipe, frTitleCase } from "@mailwoman/corpus/recipes/fr-fragment"
+import { scratch, sliceRunner, type SliceRow } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
-
-import { scratch, sliceRunner, type SliceRow } from "#test-kit/corpus-recipe"
 
 const run = sliceRunner("fr-fragment", frFragmentRecipe, 727)
 

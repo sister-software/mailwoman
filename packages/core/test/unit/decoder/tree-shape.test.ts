@@ -11,7 +11,7 @@ import { collectNodes, decodeAsJSON, slotNodes, walkNodes } from "@mailwoman/cor
 import { buildAddressTree } from "@mailwoman/core/decoder/build-tree"
 import { describe, expect, test } from "vitest"
 
-import { tok } from "#test/unit/decoder/fixtures"
+import { tok } from "./fixtures.ts"
 
 const RAW = "Village of Fae, Camino Real, Carmel-By-The-Sea, CA 93921"
 

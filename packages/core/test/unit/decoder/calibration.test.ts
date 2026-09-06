@@ -7,11 +7,11 @@
 import { buildAddressTree } from "@mailwoman/core/decoder/build-tree"
 import { createCalibrator, type CalibrationTable } from "@mailwoman/core/decoder/calibration"
 import type { DecoderToken } from "@mailwoman/core/decoder/types"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
-import { readLocalJSONFile } from "#fs/readers"
-import { findByTag, tok } from "#test/unit/decoder/fixtures"
-import { repoRootPath } from "#utils"
+import { findByTag, tok } from "./fixtures.ts"
 
 // A tiny monotone table: low confidence maps down, high maps up.
 const TABLE: CalibrationTable = {

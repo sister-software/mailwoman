@@ -16,10 +16,9 @@ import {
 	synthesizeIntersectionRow,
 	type SynthesizedIntersectionRow,
 } from "@mailwoman/corpus/synthesizers/intersection"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
-
-import type { CanonicalRow } from "#types"
-import { alignRow } from "#utils"
 
 function asCanonical(r: SynthesizedIntersectionRow): CanonicalRow {
 	return { ...r, country: "US", source: "synth-intersection", source_id: "synth-intersection:test" } as CanonicalRow

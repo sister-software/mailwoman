@@ -10,9 +10,8 @@
  *   projection bug hide inside the datum budget.
  */
 
+import { osgb36GridToAiryLatLon, osgb36ToCoordinates2D, osgb36ToWGS84 } from "@mailwoman/spatial"
 import { expect, test } from "vitest"
-
-import { osgb36GridToAiryLatLon, osgb36ToCoordinates2D, osgb36ToWGS84 } from "#index"
 
 /**
  * Degrees-minutes-seconds → decimal degrees. OS publishes its worked examples in DMS, and transcribing them by hand

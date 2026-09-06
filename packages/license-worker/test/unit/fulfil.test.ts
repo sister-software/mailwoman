@@ -5,18 +5,23 @@
  */
 
 import { verifyLicenseKey } from "@mailwoman/core/license/key"
+import type { EmailProvider, LicenseEmail } from "@mailwoman/license-worker/email/provider"
+import { readEnv } from "@mailwoman/license-worker/env"
+import { fulfilInvoice } from "@mailwoman/license-worker/fulfil"
+import { openLedger } from "@mailwoman/license-worker/ledger/client"
+import {
+	countTokens,
+	findLicenseBySubscription,
+	findToken,
+	setEmailState,
+} from "@mailwoman/license-worker/ledger/licenses"
+import { stripeClient } from "@mailwoman/license-worker/stripe/client"
+import { handleStripeEvent } from "@mailwoman/license-worker/stripe/handlers"
 import { env } from "cloudflare:workers"
 import { beforeAll, beforeEach, describe, expect, it } from "vitest"
 
-import type { EmailProvider, LicenseEmail } from "#email/provider"
-import { readEnv } from "#env"
-import { fulfilInvoice } from "#fulfil"
-import { openLedger } from "#ledger/client"
-import { countTokens, findLicenseBySubscription, findToken, setEmailState } from "#ledger/licenses"
-import { stripeClient } from "#stripe/client"
-import { handleStripeEvent } from "#stripe/handlers"
-import { envWithSigningKey } from "#test/support/keys"
-import { applyMigrations } from "#test/support/migrations"
+import { envWithSigningKey } from "../support/keys.ts"
+import { applyMigrations } from "../support/migrations.ts"
 import {
 	chargeObject,
 	chargeRefundedEvent,
@@ -28,8 +33,8 @@ import {
 	invoicePaymentList,
 	subscriptionDeletedEvent,
 	subscriptionObject,
-} from "#test/support/stripe-fixtures"
-import { stripeFetch } from "#test/support/stripe-mock"
+} from "../support/stripe-fixtures.ts"
+import { stripeFetch } from "../support/stripe-mock.ts"
 
 const sent: Array<{ message: LicenseEmail; idempotencyKey: string }> = []
 

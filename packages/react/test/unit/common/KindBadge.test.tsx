@@ -7,7 +7,7 @@
 import { KindBadge } from "@mailwoman/react/common/KindBadge"
 import { expect, test } from "vitest"
 
-import { renderComponent } from "#test/render"
+import { renderComponent } from "../../render.tsx"
 
 test("KindBadge shows the top kind + confidence and lists alternatives", () => {
 	const { container } = renderComponent(

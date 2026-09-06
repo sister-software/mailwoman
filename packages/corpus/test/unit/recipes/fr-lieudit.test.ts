@@ -15,10 +15,9 @@ import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { frLieuditRecipe } from "@mailwoman/corpus/recipes/fr-lieudit"
 import type { SliceRecipeOpts } from "@mailwoman/corpus/recipes/scaffold"
+import type { SliceRow } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
-
-import type { SliceRow } from "#test-kit/corpus-recipe"
 
 const fixtures = new AsyncDisposableStack()
 

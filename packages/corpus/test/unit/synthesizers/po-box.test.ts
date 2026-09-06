@@ -13,10 +13,9 @@ import {
 	synthesizeMilitaryPoBoxRow,
 	synthesizePoBoxRow,
 } from "@mailwoman/corpus/synthesizers/po-box"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
-
-import type { CanonicalRow } from "#types"
-import { alignRow } from "#utils"
 
 // Deterministic RNG for reproducible tests.
 describe("synthesizePoBoxRow", () => {

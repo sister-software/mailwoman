@@ -1,4 +1,4 @@
-import { expect, test } from "#e2e"
+import { expect, test } from "../e2e/index.ts"
 
 test.describe("Demo — resolution cascade", () => {
 	test("Chicago, IL → resolves to the Chicago locality", async ({ demo }) => {

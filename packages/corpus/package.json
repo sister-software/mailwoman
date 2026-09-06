@@ -207,6 +207,16 @@
 			"node": "./lib/utils/wof-json.ts",
 			"default": "./out/utils/wof-json.js",
 			"types": "./out/utils/wof-json.d.ts"
+		},
+		"./test-kit": {
+			"node": "./lib/test-kit/index.ts",
+			"default": "./out/test-kit/index.js",
+			"types": "./out/test-kit/index.d.ts"
+		},
+		"./test-kit/corpus-recipe": {
+			"node": "./lib/test-kit/corpus-recipe.ts",
+			"default": "./out/test-kit/corpus-recipe.js",
+			"types": "./out/test-kit/corpus-recipe.d.ts"
 		}
 	},
 	"publishConfig": {

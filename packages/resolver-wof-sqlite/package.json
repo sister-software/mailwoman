@@ -344,6 +344,26 @@
 			"node": "./lib/fts/query.ts",
 			"default": "./out/fts/query.js",
 			"types": "./out/fts/query.d.ts"
+		},
+		"./sqlite-utils": {
+			"node": "./lib/sqlite-utils.ts",
+			"default": "./out/sqlite-utils.js",
+			"types": "./out/sqlite-utils.d.ts"
+		},
+		"./candidate/alias-bags": {
+			"node": "./lib/candidate/alias-bags.ts",
+			"default": "./out/candidate/alias-bags.js",
+			"types": "./out/candidate/alias-bags.d.ts"
+		},
+		"./candidate/place-attrs": {
+			"node": "./lib/candidate/place-attrs.ts",
+			"default": "./out/candidate/place-attrs.js",
+			"types": "./out/candidate/place-attrs.d.ts"
+		},
+		"./candidate/name-roles": {
+			"node": "./lib/candidate/name-roles.ts",
+			"default": "./out/candidate/name-roles.js",
+			"types": "./out/candidate/name-roles.d.ts"
 		}
 	},
 	"publishConfig": {

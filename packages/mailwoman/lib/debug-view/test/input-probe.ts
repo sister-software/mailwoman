@@ -13,9 +13,8 @@
  */
 
 import { Box, render, Text, useApp, useInput } from "ink"
+import { QueryInput, type InputState } from "mailwoman/debug-view/QueryInput"
 import { createElement as h, useState, type ReactElement } from "react"
-
-import { QueryInput, type InputState } from "#debug-view/QueryInput"
 
 function Probe(): ReactElement {
 	const { exit } = useApp()

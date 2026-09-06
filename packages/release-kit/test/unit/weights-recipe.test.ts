@@ -14,10 +14,9 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { readWeightsRecipe } from "@mailwoman/release-kit/weights/weights-recipe"
 import { join, type PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
-
-import { readWeightsRecipe } from "#weights/weights-recipe"
 
 const fixtures = new AsyncDisposableStack()
 

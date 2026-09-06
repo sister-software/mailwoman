@@ -4,14 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
-import { describe, expect, it } from "vitest"
-
 import {
 	assertNoSourceTargets,
 	collectExportTargets,
 	transformExportsForPublish,
 	transformImportsForPublish,
-} from "#pack/publish-exports"
+} from "@mailwoman/release-kit/pack/publish-exports"
+import { describe, expect, it } from "vitest"
 
 // Source lives under `lib/`, so a real dev map's `node` condition names `./lib/…` while its `default`/`types`
 // name `./out/…` WITHOUT that segment — `rootDir: "./lib"` strips it from the emit. The expectations below are

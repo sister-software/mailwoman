@@ -5,7 +5,7 @@ import type { ResolvedInput } from "@mailwoman/dev-mcp/input-sets"
 import type { RoutedMailwomanArm } from "@mailwoman/dev-mcp/routed-mailwoman-arm"
 import { afterAll, describe, expect, it } from "vitest"
 
-import { stubEngineRegistry } from "#test/stub-registry"
+import { stubEngineRegistry } from "../stub-registry.ts"
 
 const RUN_STORE = await temporaryDirectory("mwdev-routed-compare-")
 

@@ -93,6 +93,41 @@
 			"node": "./lib/reconcile.ts",
 			"default": "./out/reconcile.js",
 			"types": "./out/reconcile.d.ts"
+		},
+		"./tools/nppes/org-name": {
+			"node": "./lib/tools/nppes/org-name.ts",
+			"default": "./out/tools/nppes/org-name.js",
+			"types": "./out/tools/nppes/org-name.d.ts"
+		},
+		"./tools/nppes/overmerge-packet": {
+			"node": "./lib/tools/nppes/overmerge-packet.ts",
+			"default": "./out/tools/nppes/overmerge-packet.js",
+			"types": "./out/tools/nppes/overmerge-packet.d.ts"
+		},
+		"./tools/nppes/report": {
+			"node": "./lib/tools/nppes/report.ts",
+			"default": "./out/tools/nppes/report.js",
+			"types": "./out/tools/nppes/report.d.ts"
+		},
+		"./tools/nppes/sample": {
+			"node": "./lib/tools/nppes/sample.ts",
+			"default": "./out/tools/nppes/sample.js",
+			"types": "./out/tools/nppes/sample.d.ts"
+		},
+		"./tools/nppes/scoring": {
+			"node": "./lib/tools/nppes/scoring.ts",
+			"default": "./out/tools/nppes/scoring.js",
+			"types": "./out/tools/nppes/scoring.d.ts"
+		},
+		"./tools/nppes/settings": {
+			"node": "./lib/tools/nppes/settings.ts",
+			"default": "./out/tools/nppes/settings.js",
+			"types": "./out/tools/nppes/settings.d.ts"
+		},
+		"./tools/nppes/truth-grains": {
+			"node": "./lib/tools/nppes/truth-grains.ts",
+			"default": "./out/tools/nppes/truth-grains.js",
+			"types": "./out/tools/nppes/truth-grains.d.ts"
 		}
 	},
 	"publishConfig": {

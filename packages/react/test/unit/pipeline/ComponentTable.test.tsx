@@ -7,7 +7,7 @@
 import { ComponentTable } from "@mailwoman/react/pipeline/ComponentTable"
 import { expect, test } from "vitest"
 
-import { renderComponent } from "#test/render"
+import { renderComponent } from "../../render.tsx"
 
 test("ComponentTable renders a row per node with a tiered confidence bar", () => {
 	const { container } = renderComponent(

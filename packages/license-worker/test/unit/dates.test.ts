@@ -4,9 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { calendarDateUTC, plusDays } from "@mailwoman/license-worker/dates"
 import { describe, expect, it } from "vitest"
-
-import { calendarDateUTC, plusDays } from "#dates"
 
 describe("calendar dates", () => {
 	it("reads a unix second as a UTC calendar date", () => {

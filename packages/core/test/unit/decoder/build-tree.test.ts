@@ -8,7 +8,7 @@ import { buildAddressTree } from "@mailwoman/core/decoder/build-tree"
 import type { AddressNode, DecoderToken } from "@mailwoman/core/decoder/types"
 import { describe, expect, test } from "vitest"
 
-import { findByTag, tok, WHITE_HOUSE_RAW, whiteHouseTokens } from "#test/unit/decoder/fixtures"
+import { findByTag, tok, WHITE_HOUSE_RAW, whiteHouseTokens } from "./fixtures.ts"
 
 describe("buildAddressTree", () => {
 	test("emits one span per B-/I- group, dropping O", () => {

@@ -28,12 +28,11 @@ import {
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { ALIAS_SEPARATOR } from "@mailwoman/resolver-wof-sqlite/fts"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { allRows } from "@mailwoman/resolver-wof-sqlite/sqlite-utils"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
-
-import { allRows } from "#sqlite-utils"
 
 let scratch: TemporaryDirectory
 

@@ -18,7 +18,7 @@
 
 import { haversineKm } from "@mailwoman/spatial"
 
-import { expect, test } from "#e2e"
+import { expect, test } from "../e2e/index.ts"
 
 const WHITE_HOUSE = { lat: 38.8977, lon: -77.0365 }
 const DC_SITUS_BYTES = 119_889_920

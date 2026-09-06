@@ -10,12 +10,11 @@ import {
 	STATE_HI_SCHOOLS_ADAPTER_ID,
 	STATE_HI_SCHOOLS_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/adapters/state-hi-schools/adapter"
+import { InMemoryAdapterRegistry } from "@mailwoman/corpus/adapters/utils"
+import { writeDelimitedFixture } from "@mailwoman/corpus/test-kit"
 import { join, type PathBuilderLike } from "path-ts"
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
 import writeXlsxFile, { type SheetData } from "write-excel-file/node"
-
-import { InMemoryAdapterRegistry } from "#adapters/utils"
-import { writeDelimitedFixture } from "#test-kit"
 
 const fixtures = new AsyncDisposableStack()
 

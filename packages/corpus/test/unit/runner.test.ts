@@ -8,10 +8,9 @@ import { readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { runAdapter, type RunnerProgress } from "@mailwoman/corpus/runner"
+import type { CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
 import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
-
-import type { CanonicalRow, CorpusAdapter } from "#types"
 
 function makeAdapter(opts: {
 	id?: string

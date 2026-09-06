@@ -9,22 +9,21 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { jaccard, type TermFrequencyTable } from "@mailwoman/match"
-import type { ResolvedEntity, SourceRecord } from "@mailwoman/registry/types"
-import { join } from "path-ts"
-import { describe, expect, it } from "vitest"
-
-import { ORG_TAU, orgTokens, type NPIPrimary } from "#tools/nppes/org-name"
-import { writeOvermergePacket } from "#tools/nppes/overmerge-packet"
-import { renderNPPESDedupReport, type NPPESReportInput, type SweepArm } from "#tools/nppes/report"
-import type { MessyRow } from "#tools/nppes/sample"
-import { choose2, scoreEntities, type Score } from "#tools/nppes/scoring"
-import { buildSettings } from "#tools/nppes/settings"
+import { ORG_TAU, orgTokens, type NPIPrimary } from "@mailwoman/registry/tools/nppes/org-name"
+import { writeOvermergePacket } from "@mailwoman/registry/tools/nppes/overmerge-packet"
+import { renderNPPESDedupReport, type NPPESReportInput, type SweepArm } from "@mailwoman/registry/tools/nppes/report"
+import type { MessyRow } from "@mailwoman/registry/tools/nppes/sample"
+import { choose2, scoreEntities, type Score } from "@mailwoman/registry/tools/nppes/scoring"
+import { buildSettings } from "@mailwoman/registry/tools/nppes/settings"
 import {
 	buildOrgNameCoordGrain,
 	buildOrgNameGrain,
 	buildOrgNameH3Grain,
 	collectPrimaryCoordinates,
-} from "#tools/nppes/truth-grains"
+} from "@mailwoman/registry/tools/nppes/truth-grains"
+import type { ResolvedEntity, SourceRecord } from "@mailwoman/registry/types"
+import { join } from "path-ts"
+import { describe, expect, it } from "vitest"
 
 function record(id: string, latitude?: number, longitude?: number): SourceRecord {
 	return {

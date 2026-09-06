@@ -16,12 +16,11 @@ import {
 	featurize,
 	inMapPosterior,
 } from "@mailwoman/core/coarse-placer"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { makeLcg } from "@mailwoman/core/random"
 import { join } from "path-ts"
 import { afterAll, describe, expect, test } from "vitest"
-
-import { temporaryDirectory } from "#fs/temporary"
-import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "#fs/writers"
-import { makeLcg } from "#random"
 
 const tmpRoot = await temporaryDirectory("coarse-placer-test-")
 afterAll(() => tmpRoot[Symbol.asyncDispose]())

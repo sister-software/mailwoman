@@ -11,12 +11,11 @@ import {
 	USGOV_SAMHSA_DEFAULT_LICENSE,
 	createUsgovSamhsaTreatmentLocatorAdapter,
 } from "@mailwoman/corpus/adapters/usgov-samhsa-treatment-locator/adapter"
+import { runAdapter } from "@mailwoman/corpus/runner"
+import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
-
-import { runAdapter } from "#runner"
-import { readCanonicalRows, useScratchDir } from "#test-kit"
-import { alignRow } from "#utils"
 
 const scratch = useScratchDir("samhsa")
 

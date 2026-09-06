@@ -16,7 +16,7 @@
  *     this asserts the coordinate lands in the NETHERLANDS, the exact bug v5.4.0 shipped to fix.
  */
 
-import { expect, test } from "#e2e"
+import { expect, test } from "../e2e/index.ts"
 
 test.describe("Demo — production functional smoke @smoke", () => {
 	test("the basemap requests a vector tile (the tile worker is alive)", async ({ demo, page }) => {

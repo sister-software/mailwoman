@@ -26,10 +26,9 @@ import { parseJSONStrict } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { $public } from "mailwoman/env"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
 import { describe, expect, test, vi } from "vitest"
-
-import { $public } from "#env"
 
 // MARK: Paths
 

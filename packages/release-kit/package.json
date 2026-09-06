@@ -58,6 +58,36 @@
 			"node": "./lib/release/workspace-closure.ts",
 			"default": "./out/release/workspace-closure.js",
 			"types": "./out/release/workspace-closure.d.ts"
+		},
+		"./pack/verify-tarball": {
+			"node": "./lib/pack/verify-tarball.ts",
+			"default": "./out/pack/verify-tarball.js",
+			"types": "./out/pack/verify-tarball.d.ts"
+		},
+		"./weights/fetch-hf-weights": {
+			"node": "./lib/weights/fetch-hf-weights.ts",
+			"default": "./out/weights/fetch-hf-weights.js",
+			"types": "./out/weights/fetch-hf-weights.d.ts"
+		},
+		"./weights/derived-weights-key": {
+			"node": "./lib/weights/derived-weights-key.ts",
+			"default": "./out/weights/derived-weights-key.js",
+			"types": "./out/weights/derived-weights-key.d.ts"
+		},
+		"./pack/publish-exports": {
+			"node": "./lib/pack/publish-exports.ts",
+			"default": "./out/pack/publish-exports.js",
+			"types": "./out/pack/publish-exports.d.ts"
+		},
+		"./release/config-version": {
+			"node": "./lib/release/config-version.ts",
+			"default": "./out/release/config-version.js",
+			"types": "./out/release/config-version.d.ts"
+		},
+		"./weights/weights-recipe": {
+			"node": "./lib/weights/weights-recipe.ts",
+			"default": "./out/weights/weights-recipe.js",
+			"types": "./out/weights/weights-recipe.d.ts"
 		}
 	},
 	"dependencies": {

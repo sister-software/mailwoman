@@ -6,7 +6,7 @@
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { relative, resolvePath, sep } from "path-ts"
+import { dirname, relative, resolvePath, sep } from "path-ts"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
@@ -28,7 +28,7 @@ const docsSuites = new Set([...packageSuites, "browser", "build", "e2e"])
 export const testContractCheck: RepoCheck = {
 	id: "test-contract",
 	description:
-		"Every workspace test sits under test/{unit,integration,full}/ and imports the package by its contract, never relatively.",
+		"Every workspace test sits under test/{unit,integration,full}/ and imports the package by its contract; a relative import names a test helper only.",
 	async run(context) {
 		const root = context.repoRoot
 		const manifest = await readLocalJSONFile<RootManifest>(resolvePath(root, "package.json"))
@@ -57,15 +57,24 @@ export const testContractCheck: RepoCheck = {
 				const sourceText = await readLocalTextFile(filePath)
 				const sourceFile = ts.createSourceFile(filePath, sourceText, ts.ScriptTarget.Latest, true)
 
-				// Type-only specifiers count here: tests are consumers of the package CONTRACT, types included.
+				// Type-only specifiers count here: tests are consumers of the package CONTRACT, types included. A relative
+				// specifier that stays inside `test/` names a test helper, which has no contract to bypass; one that leaves
+				// `test/` reaches the package's source by location, and the `#` map is refused in tests by
+				// `mailwoman/no-private-import-in-test`, so the module needs an `exports` entry instead.
+				const testRoot = resolvePath(workspaceRoot, "test")
+
 				for (const specifier of moduleSpecifiers(sourceFile, { includeTypeOnly: true })) {
-					if (specifier.startsWith(".")) {
-						diagnostics.push({
-							severity: DiagnosticSeverity.Error,
-							message: `relative module import ${JSON.stringify(specifier)} bypasses the package contract`,
-							file,
-						})
-					}
+					if (!specifier.startsWith(".")) continue
+
+					const target = resolvePath(dirname(filePath), specifier)
+
+					if (target.startsWith(`${testRoot}${sep}`)) continue
+
+					diagnostics.push({
+						severity: DiagnosticSeverity.Error,
+						message: `relative module import ${JSON.stringify(specifier)} leaves test/ and bypasses the package contract`,
+						file,
+					})
 				}
 			}
 		}

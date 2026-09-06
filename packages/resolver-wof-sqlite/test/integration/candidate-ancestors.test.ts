@@ -32,11 +32,10 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/candidate-ancestors-schema"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite/candidate-lookup"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { allRows, getRow } from "@mailwoman/resolver-wof-sqlite/sqlite-utils"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
-
-import { allRows, getRow } from "#sqlite-utils"
 
 const GERMANY = 100
 const THURINGEN = 101

@@ -4,9 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { GOOGLE_PLACE_ID_PATTERN, isGooglePlaceID } from "@mailwoman/spatial"
 import { expect, test } from "vitest"
-
-import { GOOGLE_PLACE_ID_PATTERN, isGooglePlaceID } from "#index"
 
 // A Google Place ID is a non-empty string of base64url-style characters: letters, digits, "_", "-".
 // The pattern is anchored end-to-end, so any other character (or an empty string) is rejected.

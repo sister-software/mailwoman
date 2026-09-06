@@ -11,8 +11,8 @@ import { POIExplorer } from "@mailwoman/react/poi/POIExplorer"
 import { expect, test, vi } from "vitest"
 import { userEvent } from "vitest/browser"
 
-import { makePOIRuntime, mockLiveSearchSuccess } from "#test/mocks"
-import { renderComponent } from "#test/render"
+import { makePOIRuntime, mockLiveSearchSuccess } from "../../mocks.tsx"
+import { renderComponent } from "../../render.tsx"
 
 test("detects a POI subject and runs an injected live search", async () => {
 	const { container } = renderComponent(

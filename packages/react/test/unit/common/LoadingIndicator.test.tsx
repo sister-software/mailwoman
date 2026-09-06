@@ -7,7 +7,7 @@
 import { LoadingIndicator } from "@mailwoman/react/common/LoadingIndicator"
 import { expect, test } from "vitest"
 
-import { renderComponent } from "#test/render"
+import { renderComponent } from "../../render.tsx"
 
 test("staged mode tiers steps into complete / active / pending", () => {
 	const { container } = renderComponent(

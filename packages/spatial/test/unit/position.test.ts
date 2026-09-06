@@ -4,9 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { haversineKm } from "@mailwoman/spatial"
 import { expect, test } from "vitest"
-
-import { haversineKm } from "#index"
 
 // Earth mean radius the formula uses (RADII.km). Reference distances below are derived from it, not
 // looked up — so they pin the exact constant + formula, not an approximation.

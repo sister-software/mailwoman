@@ -10,10 +10,9 @@
  */
 
 import { type LocaleBaseTuple, synthesizeGermanRow, synthesizeLocaleRow } from "@mailwoman/corpus/synthesizers/german"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
-
-import type { CanonicalRow } from "#types"
-import { alignRow } from "#utils"
 
 const BERLIN: LocaleBaseTuple = {
 	house_number: "27",

@@ -1,4 +1,4 @@
-import { expect, test } from "#e2e"
+import { expect, test } from "../e2e/index.ts"
 
 test.describe("Demo — cold load", () => {
 	test("hydrates without style / terrain / asset errors", async ({ demo }) => {

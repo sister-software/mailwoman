@@ -8,14 +8,13 @@
  *   package's exact manifest and exact tarball listing.
  */
 
-import { describe, expect, it } from "vitest"
-
 import {
 	collectMissingBinTargets,
 	collectMissingExportTargets,
 	collectMissingFileEntries,
 	collectMissingImportTargets,
-} from "#pack/verify-tarball"
+} from "@mailwoman/release-kit/pack/verify-tarball"
+import { describe, expect, it } from "vitest"
 
 /**
  * What `@mailwoman/neural-weights-en-in@8.6.0` actually shipped — read back off the registry.

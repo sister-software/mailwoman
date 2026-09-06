@@ -15,9 +15,8 @@
  */
 
 import { noFragmentRecipe } from "@mailwoman/corpus/recipes/no-fragment"
+import { scratch, sliceRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
-
-import { scratch, sliceRunner } from "#test-kit/corpus-recipe"
 
 const run = sliceRunner("no-fragment", noFragmentRecipe, 901)
 

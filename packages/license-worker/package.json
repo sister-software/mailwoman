@@ -26,6 +26,96 @@
 			"node": "./lib/shop/operations.ts",
 			"default": "./out/shop/operations.js",
 			"types": "./out/shop/operations.d.ts"
+		},
+		"./env": {
+			"node": "./lib/env.ts",
+			"default": "./out/env.js",
+			"types": "./out/env.d.ts"
+		},
+		"./dates": {
+			"node": "./lib/dates.ts",
+			"default": "./out/dates.js",
+			"types": "./out/dates.d.ts"
+		},
+		"./email/provider": {
+			"node": "./lib/email/provider.ts",
+			"default": "./out/email/provider.js",
+			"types": "./out/email/provider.d.ts"
+		},
+		"./fulfil": {
+			"node": "./lib/fulfil.ts",
+			"default": "./out/fulfil.js",
+			"types": "./out/fulfil.d.ts"
+		},
+		"./ledger/client": {
+			"node": "./lib/ledger/client.ts",
+			"default": "./out/ledger/client.js",
+			"types": "./out/ledger/client.d.ts"
+		},
+		"./ledger/licenses": {
+			"node": "./lib/ledger/licenses.ts",
+			"default": "./out/ledger/licenses.js",
+			"types": "./out/ledger/licenses.d.ts"
+		},
+		"./stripe/client": {
+			"node": "./lib/stripe/client.ts",
+			"default": "./out/stripe/client.js",
+			"types": "./out/stripe/client.d.ts"
+		},
+		"./stripe/handlers": {
+			"node": "./lib/stripe/handlers.ts",
+			"default": "./out/stripe/handlers.js",
+			"types": "./out/stripe/handlers.d.ts"
+		},
+		"./app": {
+			"node": "./lib/app.ts",
+			"default": "./out/app.js",
+			"types": "./out/app.d.ts"
+		},
+		"./identifiers": {
+			"node": "./lib/identifiers.ts",
+			"default": "./out/identifiers.js",
+			"types": "./out/identifiers.d.ts"
+		},
+		"./ledger/schema": {
+			"node": "./lib/ledger/schema.ts",
+			"default": "./out/ledger/schema.js",
+			"types": "./out/ledger/schema.d.ts"
+		},
+		"./plans": {
+			"node": "./lib/plans.ts",
+			"default": "./out/plans.js",
+			"types": "./out/plans.d.ts"
+		},
+		"./reconcile": {
+			"node": "./lib/reconcile.ts",
+			"default": "./out/reconcile.js",
+			"types": "./out/reconcile.d.ts"
+		},
+		"./shop/catalog": {
+			"node": "./lib/shop/catalog.ts",
+			"default": "./out/shop/catalog.js",
+			"types": "./out/shop/catalog.d.ts"
+		},
+		"./shop/provision": {
+			"node": "./lib/shop/provision.ts",
+			"default": "./out/shop/provision.js",
+			"types": "./out/shop/provision.d.ts"
+		},
+		"./shop/wrangler-vars": {
+			"node": "./lib/shop/wrangler-vars.ts",
+			"default": "./out/shop/wrangler-vars.js",
+			"types": "./out/shop/wrangler-vars.d.ts"
+		},
+		"./signing": {
+			"node": "./lib/signing.ts",
+			"default": "./out/signing.js",
+			"types": "./out/signing.d.ts"
+		},
+		"./stripe/webhook": {
+			"node": "./lib/stripe/webhook.ts",
+			"default": "./out/stripe/webhook.js",
+			"types": "./out/stripe/webhook.d.ts"
 		}
 	},
 	"scripts": {

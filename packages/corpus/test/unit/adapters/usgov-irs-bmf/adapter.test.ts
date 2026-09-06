@@ -10,11 +10,10 @@ import {
 	USGOV_IRS_BMF_ADAPTER_ID,
 	USGOV_IRS_BMF_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/adapters/usgov-irs-bmf/adapter"
+import { writeDelimitedFixture } from "@mailwoman/corpus/test-kit"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
 import { join, type PathBuilderLike } from "path-ts"
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
-
-import { writeDelimitedFixture } from "#test-kit"
-import type { CanonicalRow } from "#types"
 
 const fixtures = new AsyncDisposableStack()
 

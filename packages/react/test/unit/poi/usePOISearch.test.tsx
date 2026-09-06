@@ -14,8 +14,8 @@ import type { ReactNode } from "react"
 import { expect, test, vi } from "vitest"
 import { userEvent } from "vitest/browser"
 
-import { makeBrandPOIRuntime, makePOIRuntime, mockBrandLiveSearchSuccess, mockLiveSearchSuccess } from "#test/mocks"
-import { renderComponent } from "#test/render"
+import { makeBrandPOIRuntime, makePOIRuntime, mockBrandLiveSearchSuccess, mockLiveSearchSuccess } from "../../mocks.tsx"
+import { renderComponent } from "../../render.tsx"
 
 // Stable module-level loader so the Harness passes the same closure every render.
 const loadRuntime = async () => makePOIRuntime()

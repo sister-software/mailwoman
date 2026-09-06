@@ -11,10 +11,9 @@ import {
 	GEONAMES_POSTAL_ADAPTER_ID,
 	GEONAMES_POSTAL_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/adapters/geonames-postal/adapter"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
 import { join, type PathBuilderLike } from "path-ts"
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
-
-import type { CanonicalRow } from "#types"
 
 const fixtures = new AsyncDisposableStack()
 

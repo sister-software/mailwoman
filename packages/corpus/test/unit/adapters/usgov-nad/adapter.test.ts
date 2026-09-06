@@ -10,9 +10,8 @@ import {
 	USGOV_NAD_ADAPTER_ID,
 	USGOV_NAD_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/adapters/usgov-nad/adapter"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
 import { describe, expect, it } from "vitest"
-
-import type { CanonicalRow } from "#types"
 
 const FIXTURE_DIR = workspacePath("corpus", "lib", "adapters", "usgov-nad", "fixtures")
 

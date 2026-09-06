@@ -27,10 +27,9 @@ import {
 	unitDesignatorExpand,
 	zipPlus4DashDrop,
 } from "@mailwoman/corpus/synthesizers/utils"
+import type { CanonicalRow, LabeledRow } from "@mailwoman/corpus/types"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
-
-import type { CanonicalRow, LabeledRow } from "#types"
-import { alignRow } from "#utils"
 
 const baseRow = (over: Partial<CanonicalRow>): CanonicalRow => ({
 	raw: "",

@@ -10,10 +10,9 @@
  */
 
 import { resolveProposalOverlaps } from "@mailwoman/core/decoder/resolve-proposal-overlaps"
+import { Span } from "@mailwoman/core/tokenization"
+import type { ClassificationProposal, ComponentTag } from "@mailwoman/core/types"
 import { describe, expect, test } from "vitest"
-
-import { Span } from "#tokenization"
-import type { ClassificationProposal, ComponentTag } from "#types"
 
 /**
  * Build a proposal with an explicit span (`new Span(body, start)` derives `end = start + len`).

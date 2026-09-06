@@ -44,11 +44,10 @@ import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/json"
 import { workspacePath } from "@mailwoman/core/paths"
 import { type ChildProcess, runFile, spawnProcess } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { $public } from "mailwoman/env"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
 import { join } from "path-ts"
 import { afterAll, afterEach, describe, expect, test } from "vitest"
-
-import { $public } from "#env"
 
 const fixtures = new AsyncDisposableStack()
 

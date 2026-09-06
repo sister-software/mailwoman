@@ -8,15 +8,15 @@
  *   nothing. The wrangler rewrite is held to the file's own shape.
  */
 
+import { readEnv } from "@mailwoman/license-worker/env"
+import { AGREEMENT_VERSION, SHOP_PLANS, WEBHOOK_EVENTS } from "@mailwoman/license-worker/shop/catalog"
+import { provisionShop } from "@mailwoman/license-worker/shop/provision"
+import { readEnvironmentVar, withEnvironmentVars } from "@mailwoman/license-worker/shop/wrangler-vars"
+import { stripeClient } from "@mailwoman/license-worker/stripe/client"
 import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
 
-import { readEnv } from "#env"
-import { AGREEMENT_VERSION, SHOP_PLANS, WEBHOOK_EVENTS } from "#shop/catalog"
-import { provisionShop } from "#shop/provision"
-import { readEnvironmentVar, withEnvironmentVars } from "#shop/wrangler-vars"
-import { stripeClient } from "#stripe/client"
-import { recordingStripeFetch, type StripeRoute } from "#test/support/stripe-mock"
+import { recordingStripeFetch, type StripeRoute } from "../support/stripe-mock.ts"
 
 const worker = readEnv(env)
 const SITE = "https://mailwoman.ai"

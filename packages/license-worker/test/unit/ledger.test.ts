@@ -4,10 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { env } from "cloudflare:workers"
-import { beforeAll, expect, test } from "vitest"
-
-import { openLedger } from "#ledger/client"
+import { openLedger } from "@mailwoman/license-worker/ledger/client"
 import {
 	createLicense,
 	currentToken,
@@ -16,9 +13,12 @@ import {
 	recordEventOnce,
 	setLicenseState,
 	takePendingRefreshSecret,
-} from "#ledger/licenses"
-import { LicenseState } from "#ledger/schema"
-import { applyMigrations } from "#test/support/migrations"
+} from "@mailwoman/license-worker/ledger/licenses"
+import { LicenseState } from "@mailwoman/license-worker/ledger/schema"
+import { env } from "cloudflare:workers"
+import { beforeAll, expect, test } from "vitest"
+
+import { applyMigrations } from "../support/migrations.ts"
 
 beforeAll(async () => {
 	await applyMigrations(env.LICENSE_LEDGER)

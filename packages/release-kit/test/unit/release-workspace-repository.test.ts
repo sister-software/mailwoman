@@ -1,5 +1,6 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { releaseWorkspaces } from "@mailwoman/release-kit/release/stage"
 import { resolvePath } from "path-ts"
 /**
  * @copyright Sister Software
@@ -19,8 +20,6 @@ import { resolvePath } from "path-ts"
  *   `repository` block, so a drift fails at PR/CI time instead of mid-release.
  */
 import { describe, expect, it } from "vitest"
-
-import { releaseWorkspaces } from "#release/stage"
 
 const repoRoot = repoRootPath()
 const CANONICAL_URL = "https://github.com/sister-software/mailwoman.git"

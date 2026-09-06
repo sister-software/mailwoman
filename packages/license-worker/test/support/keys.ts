@@ -9,8 +9,7 @@
  */
 
 import { generateLicenseSigningKeyPair, licenseKeyID } from "@mailwoman/core/license/key"
-
-import type { LicenseWorkerEnv } from "#env"
+import type { LicenseWorkerEnv } from "@mailwoman/license-worker/env"
 
 export interface SigningFixture {
 	env: LicenseWorkerEnv

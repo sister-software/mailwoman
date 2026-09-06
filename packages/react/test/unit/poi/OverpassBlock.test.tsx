@@ -7,7 +7,7 @@
 import { OverpassBlock } from "@mailwoman/react/poi/OverpassBlock"
 import { expect, test } from "vitest"
 
-import { renderComponent } from "#test/render"
+import { renderComponent } from "../../render.tsx"
 
 const QL = "[out:json];\nnode[amenity=drinking_water];\nout;"
 

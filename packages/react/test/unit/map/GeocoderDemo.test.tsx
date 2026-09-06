@@ -16,8 +16,8 @@ import { act } from "react"
 import { expect, test, vi } from "vitest"
 import { userEvent } from "vitest/browser"
 
-import { makeDemoRuntime } from "#test/mocks"
-import { renderComponent } from "#test/render"
+import { makeDemoRuntime } from "../../mocks.tsx"
+import { renderComponent } from "../../render.tsx"
 
 /**
  * Poll `get` inside act() until truthy or timeout; never throws (returns null on timeout).
