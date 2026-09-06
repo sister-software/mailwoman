@@ -45,6 +45,7 @@ export interface ReconcileOptions {
 }
 
 const PAYMENT_STATE_DISPUTED = "disputed"
+const PAYMENT_STATE_REFUNDED = "refunded"
 
 export async function reconcileLedger(
 	env: LicenseWorkerEnv,
@@ -77,7 +78,7 @@ export async function reconcileLedger(
 	}
 
 	for (const license of await allLicenses(deps.ledger)) {
-		let next: LicenseState | undefined
+		let next: Correction | undefined
 
 		try {
 			next = await stateStripeSays(deps.stripe, deps, license)
@@ -87,41 +88,80 @@ export async function reconcileLedger(
 			continue
 		}
 
-		if (next === undefined || next === license.license_state) continue
+		if (next === undefined || next.state === license.license_state) continue
 
-		await setLicenseState(deps.ledger, license.lid, next)
-		report.corrected.push({ lid: license.lid, from: license.license_state, to: next })
+		await setLicenseState(
+			deps.ledger,
+			license.lid,
+			next.state,
+			next.paymentState ? { paymentState: next.paymentState } : {}
+		)
+
+		report.corrected.push({ lid: license.lid, from: license.license_state, to: next.state })
 	}
 
 	return report
 }
 
+interface Correction {
+	state: LicenseState
+	paymentState?: string
+}
+
 /**
- * The state Stripe's current records say a license should hold, or `undefined` when Stripe has nothing to add. A refund
- * is final. A dispute that Stripe has ruled `won` hands the license back to its subscription's state; any other dispute
- * outcome leaves it revoked.
+ * The payment intent behind an invoice, through its payment record.
+ */
+async function paymentIntentOf(stripe: Stripe, invoiceID: string): Promise<string | undefined> {
+	const payments = await stripe.invoicePayments.list({ invoice: invoiceID, limit: 1 })
+	const payment = payments.data[0]?.payment
+
+	return typeof payment?.payment_intent === "string" ? payment.payment_intent : payment?.payment_intent?.id
+}
+
+/**
+ * Whether the charge behind an invoice has been refunded in full. Stripe's `refunded` is false for a partial refund,
+ * which is the line the `charge.refunded` handler draws too.
+ */
+async function fullyRefunded(stripe: Stripe, invoiceID: string): Promise<boolean> {
+	const paymentIntent = await paymentIntentOf(stripe, invoiceID)
+
+	if (!paymentIntent) return false
+
+	const charges = await stripe.charges.list({ payment_intent: paymentIntent, limit: 1 })
+
+	return charges.data[0]?.refunded === true
+}
+
+/**
+ * The state Stripe's current records say a license should hold, or `undefined` when Stripe has nothing to add. A full
+ * refund is final, and it is read from the charge rather than the subscription, which a refund leaves `active`: a
+ * license minted by the missed-invoice sweep, or one whose `charge.refunded` event never arrived, is revoked here at
+ * the cost of two Stripe reads per active license per pass. A dispute that Stripe has ruled `won` hands the license
+ * back to its subscription's state; any other dispute outcome leaves it revoked.
  */
 async function stateStripeSays(
 	stripe: Stripe,
 	deps: FulfilDependencies,
 	license: LicenseRow
-): Promise<LicenseState | undefined> {
+): Promise<Correction | undefined> {
 	const subscription = await stripe.subscriptions.retrieve(license.subscription_id)
 
 	const token = await currentToken(deps.ledger, license.lid)
 	const today = todayUTC(deps.now)
 
 	if (license.license_state !== LicenseState.Revoked) {
-		return licenseStateFromSubscription(license.license_state, subscription, { graceUntil: token?.expires, today })
+		if (token && (await fullyRefunded(stripe, token.invoice_id))) {
+			return { state: LicenseState.Revoked, paymentState: PAYMENT_STATE_REFUNDED }
+		}
+
+		return {
+			state: licenseStateFromSubscription(license.license_state, subscription, { graceUntil: token?.expires, today }),
+		}
 	}
 
 	if (license.payment_state !== PAYMENT_STATE_DISPUTED || !token) return undefined
 
-	const payments = await stripe.invoicePayments.list({ invoice: token.invoice_id, limit: 1 })
-	const payment = payments.data[0]?.payment
-
-	const paymentIntent =
-		typeof payment?.payment_intent === "string" ? payment.payment_intent : payment?.payment_intent?.id
+	const paymentIntent = await paymentIntentOf(stripe, token.invoice_id)
 
 	if (!paymentIntent) return undefined
 
@@ -130,5 +170,7 @@ async function stateStripeSays(
 
 	if (dispute?.status !== "won") return undefined
 
-	return licenseStateFromSubscription(LicenseState.Active, subscription, { graceUntil: token.expires, today })
+	return {
+		state: licenseStateFromSubscription(LicenseState.Active, subscription, { graceUntil: token.expires, today }),
+	}
 }

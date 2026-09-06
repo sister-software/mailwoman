@@ -73,7 +73,10 @@ ruled in the customer's favour. Sandbox and production are separate Wrangler env
 `ISSUANCE_ENABLED` is flipped, and refuses whenever the signing key is not an active entry of the shipped register.
 Deploys by manual dispatch only (`.github/workflows/license-worker.yml`), which refuses a bundle that imports a Node
 builtin. `GET /health` carries `email: ok | failing`, the latter when a token's email has stayed `failed` for over an
-hour, so one external check covers the ledger alert and the email alert.
+hour, so one external check covers the ledger alert and the email alert. The reconciliation's drift sweep reads the
+charge behind each active license's current token and revokes on a full refund, the rule the `charge.refunded` handler
+applies; a subscription stays `active` through a refund, so a license minted from a missed invoice, or one whose refund
+event never arrived, was standing.
 
 ### Changed — the license key signs and verifies on WebCrypto
 

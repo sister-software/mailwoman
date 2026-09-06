@@ -67,6 +67,13 @@ async function fixture(
 		periodEnd: NOV_1,
 	})
 
+	const charge = chargeObject({
+		id: `ch_${suffix}`,
+		paymentIntentID: `pi_${suffix}`,
+		amount: 25_000,
+		refunded: options.chargeRefunded ?? 0,
+	})
+
 	const stripe = stripeClient(
 		worker,
 		stripeFetch({
@@ -86,12 +93,8 @@ async function fixture(
 					email: "m@example.com",
 				}),
 			]),
-			[`GET /v1/charges/ch_${suffix}`]: chargeObject({
-				id: `ch_${suffix}`,
-				paymentIntentID: `pi_${suffix}`,
-				amount: 25_000,
-				refunded: options.chargeRefunded ?? 0,
-			}),
+			[`GET /v1/charges/ch_${suffix}`]: charge,
+			"GET /v1/charges?": { object: "list", url: "/v1/charges", has_more: false, data: [charge] },
 			"GET /v1/invoice_payments?": invoicePaymentList({ invoiceID: `in_${suffix}`, paymentIntentID: `pi_${suffix}` }),
 			"GET /v1/disputes?": disputeList(
 				options.disputeStatus
@@ -196,5 +199,30 @@ describe("reconciliation", () => {
 
 		expect(unchanged.corrected.filter((entry) => entry.from === "revoked")).toEqual([])
 		expect((await findLicenseBySubscription(refunded.ledger, "sub_12"))?.license_state).toBe("revoked")
+	})
+
+	it("revokes a license whose charge Stripe reads as fully refunded although no refund event reached the ledger, and leaves a partial refund standing", async () => {
+		const email = recordingEmail()
+
+		// The missed-invoice sweep mints the refunded payment; the drift sweep of the same pass reads the charge.
+		const refunded = await fixture("13", { chargeRefunded: 25_000 })
+		const refundedDeps = { stripe: refunded.stripe, ledger: refunded.ledger, email: email.provider }
+		const report = await reconcileLedger(refunded.worker, refundedDeps, { sinceSeconds: WEEK })
+
+		const license = await findLicenseBySubscription(refunded.ledger, "sub_13")
+
+		expect(report.minted).toEqual(["in_13"])
+		expect(report.corrected).toEqual([{ lid: license?.lid, from: "active", to: "revoked" }])
+		expect(license).toMatchObject({ license_state: "revoked", payment_state: "refunded" })
+
+		const partial = await fixture("14", { chargeRefunded: 10_000 })
+		const partialDeps = { stripe: partial.stripe, ledger: partial.ledger, email: email.provider }
+		const standing = await reconcileLedger(partial.worker, partialDeps, { sinceSeconds: WEEK })
+
+		const partialLicense = await findLicenseBySubscription(partial.ledger, "sub_14")
+
+		expect(standing.minted).toEqual(["in_14"])
+		expect(standing.corrected.filter((entry) => entry.lid === partialLicense?.lid)).toEqual([])
+		expect((await findLicenseBySubscription(partial.ledger, "sub_14"))?.license_state).toBe("active")
 	})
 })
