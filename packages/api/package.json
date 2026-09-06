@@ -50,12 +50,12 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@hono/zod-openapi": "^1.6.2",
+		"@hono/zod-openapi": "^1.6.3",
 		"@mailwoman/api-kit": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/formatter": "workspace:*",
-		"hono": "^4.13.5",
+		"hono": "^4.13.7",
 		"zod": "^4.5.4"
 	}
 }

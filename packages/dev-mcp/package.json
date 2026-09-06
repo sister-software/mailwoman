@@ -61,6 +61,6 @@
 		"zod": "^4.5.4"
 	},
 	"devDependencies": {
-		"@vvago/vale": "^3.17.1"
+		"@vvago/vale": "^3.20.0"
 	}
 }
