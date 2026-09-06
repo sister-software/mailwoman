@@ -22,6 +22,11 @@
 	},
 	"exports": {
 		"./package.json": "./package.json",
+		"./sdk/*": {
+			"node": "./lib/sdk/*.ts",
+			"default": "./out/sdk/*.js",
+			"types": "./out/sdk/*.d.ts"
+		},
 		"./shop": {
 			"node": "./lib/shop/operations.ts",
 			"default": "./out/shop/operations.js",

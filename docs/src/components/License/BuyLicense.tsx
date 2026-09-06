@@ -8,30 +8,17 @@
  */
 
 import Link from "@docusaurus/Link"
-import type React from "react"
-
 import {
 	BILLING_PORTAL_URL,
 	PAYMENT_LINK_MONTHLY,
 	PAYMENT_LINK_YEARLY,
-	shopIsOpen,
-	SUPPORT_EMAIL,
 	TERMS_PATH,
-} from "../../license/shop.ts"
+} from "@mailwoman/license-worker/sdk/constants"
+import type React from "react"
 
 import styles from "./styles.module.css"
 
-const CONTACT_HREF = `mailto:${SUPPORT_EMAIL}?subject=Mailwoman%20licensing`
-
 export const BuyLicense: React.FC = () => {
-	if (!shopIsOpen()) {
-		return (
-			<p>
-				To obtain a license, <a href={CONTACT_HREF}>email us</a>. Self-service purchase is on its way.
-			</p>
-		)
-	}
-
 	return (
 		<div className={styles.buy}>
 			<div className={styles.plans}>

@@ -7,7 +7,7 @@
  *   events', so the deadline is asserted by arithmetic rather than by waiting.
  */
 
-import { CLAIM_DEADLINE_MS, claimURL, initialClaimState, nextClaimState } from "@mailwoman/docs/license/claim"
+import { CLAIM_DEADLINE_MS, claimURL, initialClaimState, nextClaimState } from "@mailwoman/license-worker/sdk/claim"
 import { describe, expect, it } from "vitest"
 
 const T0 = 1_000_000

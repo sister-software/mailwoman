@@ -4941,6 +4941,7 @@ __metadata:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/kind-classifier": "workspace:*"
+    "@mailwoman/license-worker": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/phrase-grouper": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
