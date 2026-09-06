@@ -180,6 +180,21 @@ export async function tokensAwaitingEmail(ledger: Ledger): Promise<LicenseTokenR
 }
 
 /**
+ * Tokens whose email failed and were minted before `cutoff` (an ISO instant, the ledger's own timestamp shape): the
+ * alert condition, since a failure that old has outlived the mint's attempt and is waiting on the six-hourly resend.
+ */
+export async function countFailedEmailsBefore(ledger: Ledger, cutoff: string): Promise<number> {
+	const row = await ledger
+		.selectFrom("license_tokens")
+		.select((eb) => eb.fn.countAll<number>().as("count"))
+		.where("email_state", "=", "failed")
+		.where("created_at", "<", cutoff)
+		.executeTakeFirst()
+
+	return Number(row?.count ?? 0)
+}
+
+/**
  * The license a Checkout Session created and its current token, for the success page's claim.
  */
 export async function findLicenseByCheckoutSession(ledger: Ledger, sessionID: string): Promise<LicenseRow | undefined> {

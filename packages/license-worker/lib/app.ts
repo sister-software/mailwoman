@@ -60,7 +60,7 @@ export function createLicenseWorkerApp(env: LicenseWorkerEnv, deps: AppDependenc
 		return c.json({ error: "internal error" }, 500)
 	})
 
-	registerHealthRoute(app, env, deps.signingStatus, deps.ledger)
+	registerHealthRoute(app, env, deps.signingStatus, deps.ledger, deps.now)
 	registerWebhookRoute(app, env, fulfil)
 	registerClaimRoute(app, env, fulfil)
 	registerRefreshRoute(app, env, deps.ledger)

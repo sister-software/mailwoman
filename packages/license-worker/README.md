@@ -72,7 +72,7 @@ the installed release does not trust is a token no installation accepts, which i
 4. Fill `LICENSE_SIGNING_KID` in `wrangler.toml`. Leave `ISSUANCE_ENABLED = "false"`.
 5. Run the `license-worker` workflow with `migrate` checked. It tests, bundles, refuses a `node:` import, applies the
    migrations, and deploys.
-6. Confirm `GET /health` reads `{"issuance":false,"liveMode":true,"signing":"ok","ledger":"ok"}`; it answers 503
+6. Confirm `GET /health` reads `{"issuance":false,"liveMode":true,"signing":"ok","ledger":"ok","email":"ok"}`; it answers 503
    when the ledger does not respond.
 7. Create the webhook destination against the deployed origin, and store the secret it answers once:
 

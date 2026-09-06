@@ -61,7 +61,7 @@ yarn workspace @mailwoman/license-worker deploy:sandbox
 curl -s https://mailwoman-license-sandbox.<account>.workers.dev/health
 ```
 
-Expected: `{"issuance":false,"liveMode":false,"signing":"ok","ledger":"ok"}`. `signing: ok` here is the worker trusting its own sandbox key.
+Expected: `{"issuance":false,"liveMode":false,"signing":"ok","ledger":"ok","email":"ok"}`. `signing: ok` here is the worker trusting its own sandbox key.
 
 - [ ] **Step 4:** the webhook destination against the deployed origin, then its secret.
 
@@ -115,7 +115,7 @@ Expected: `status: unknown_key` (the shipped register does not carry `v9-ac522cf
 ### Task 7: production
 
 - [ ] Steps 1 to 8 of the README's "First deploy" against `--env production`, with the trust release published first (Task 4) and `ISSUANCE_ENABLED = "false"` throughout.
-- [ ] Alerts: on `/health` answering anything but 200, on any `email_state = failed` older than an hour, and on a reconciliation report with a non-empty `failed` list. Cloudflare's health check plus a Logpush query on the worker log cover the three.
+- [ ] Alerts: on `/health` answering anything but 200, on `/health` reading `"email":"failing"` (a token whose email has stayed `failed` for over an hour), and on a reconciliation report with a non-empty `failed` list. Cloudflare's health check covers the first; a monitor that reads the body (an uptime check with a keyword, or a Worker cron that fetches it) covers the second; a Logpush query on the worker log for `"reconcile"` with `"failed":[` followed by anything but `]` covers the third.
 - [ ] The kill-switch drill once in production with a live card refunded afterwards, then `ISSUANCE_ENABLED = "true"`.
 
 ## Acceptance
