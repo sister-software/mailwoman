@@ -22,6 +22,11 @@ suites, `mwdev_compare` over the Latin board where a resolver mechanism moved), 
 - **The kana-register run is the CJK base** (d363d1955, #2165 closed). Pre-registered board, same scorer both arms:
   0.9924 blended against 0.9653, municipality macro 0.9821 against 0.9757, `かすみがうら市` 0 of 823 failed against 598;
   CN `locality_unit` 11 of 14; ONNX parity 6.4e-6. One trade, `中新川郡上市町` 66 → 121 failed rows (#2178).
+- **Korean is one command from a probe** (1197b9544, 764a14ff6, 3fee0a4ce): `build_kr_slice.py` renders the 6,173,505
+  juso rows on the `stage3-cjk` head with no new tag (2,000,000 / 20,000 / 20,000 rows, 27 held-out 시군구, 0 dropped),
+  the overlay takes it as an extra corpus (vocabulary 3,165), both are staged to R2 with a Modal sync, and the probe
+  and full configs carry their pre-registration. The untrained base reads 0.0000 on the KR board. The launch is the
+  operator's (spec §6, decision 4).
 - **The Hugging Face leg learned the family shape** (de5e8c28f): the fetch read every object flat from
   `en-us/v<version>/` by basename, so the cjk `model.onnx` would have been refused or, worse, materialized as the Latin
   graph under the cjk card. A family now reads from `<family>/v<card version>/` against its own card, once its
