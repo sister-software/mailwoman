@@ -21,8 +21,13 @@ export type PlacetypeMap = Partial<Record<ComponentTag, string>>
  * The map used when a backend does not supply its own.
  *
  * `street` and `house_number` are absent because WOF admin has no rows for them — they resolve through the situs
- * extracts instead, which are keyed by street, not by placetype. Locale-specific tiers (JP-style prefecture
- * subdivisions) are absent for the same reason: a different extract entirely.
+ * extracts instead, which are keyed by street, not by placetype.
+ *
+ * The JP tiers are present because the candidate gazetteer keys them: 91.3% of Japanese records carry a kanji or kana
+ * key (49,255 of 53,920), a prefecture is a WOF `region`, a municipality a `locality` (its filter group admits the
+ * `borough` wards and `localadmin`), and a district (大字 / 町名) sits in the `locality` band beside the neighbourhoods.
+ * Measured on 300 JP board rows: with these entries and the JP rungs on the admin ladder, 271 resolve within 15 km;
+ * without them, 0. Only the character-path CJK model emits the tags, so no Latin parse reaches these rows.
  */
 export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
 	country: "country",
@@ -30,6 +35,9 @@ export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
 	locality: "locality",
 	dependent_locality: "locality",
 	subregion: "county",
+	prefecture: "region",
+	municipality: "locality",
+	district: "locality",
 	// `postcode` (mailwoman tag) maps to WOF's `postalcode` placetype. Resolves only when the
 	// backend has the postcode extract available — `WOFSQLitePlaceLookup` auto-routes `postalcode`
 	// queries to a `postalcode_us` (or similarly-named) extract, falling back to main if absent.

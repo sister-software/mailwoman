@@ -1,6 +1,6 @@
 # The CJK weights package and its serving path — proposal
 
-Status: steps 1–5 and the release wiring of step 7 landed on `main` 2026-09-06 (epic #2164; record
+Status: steps 1–6 and the release wiring of step 7 landed on `main` 2026-09-06 (epic #2164; record
 `docs/records/evals/2026-09-06-v8-cjk-shared-head.md`); the release-list move and the `ja-jp` / `zh-cn` overlays are
 the operator's. Written 2026-09-05 after the operator's distribution decision on #2034 / #1176 ("a consumer can
 choose to engage with CJK entirely"), measured on `main` at 1d23433e9.

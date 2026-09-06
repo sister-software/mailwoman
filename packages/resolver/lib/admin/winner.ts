@@ -20,12 +20,20 @@ import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/spe
 /**
  * The admin fallback order when the postcode leads — a unit-grade exact hit, or an address system whose area-grade code
  * is still finer than its locality ({@link areaPostcodeLeadsLocality}).
+ *
+ * The JP rungs (`municipality`, `district`, `prefecture`) sit beside their Latin counterparts, and `municipality`
+ * stands ABOVE `district` on purpose: a district (大字 / 町名) resolves without its municipality as a parent more often
+ * than not, and the unscoped namesake it then picks can be another prefecture's (`市原市大作` → 921 km). Measured on 300 JP
+ * board rows @15 km: district-first 202 accepted, municipality-first 271.
  */
 export const ADMIN_LADDER_POSTCODE_FIRST: ReadonlyArray<string> = [
 	"postcode",
 	"locality",
+	"municipality",
 	"dependent_locality",
+	"district",
 	"region",
+	"prefecture",
 	"country",
 ]
 
@@ -37,9 +45,12 @@ export const ADMIN_LADDER_POSTCODE_FIRST: ReadonlyArray<string> = [
  */
 export const ADMIN_LADDER_LOCALITY_FIRST: ReadonlyArray<string> = [
 	"locality",
+	"municipality",
 	"dependent_locality",
+	"district",
 	"postcode",
 	"region",
+	"prefecture",
 	"country",
 ]
 

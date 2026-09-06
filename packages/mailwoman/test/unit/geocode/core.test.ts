@@ -514,6 +514,20 @@ describe("parseForGeocode — query-shape emission prior (#981)", () => {
 		return { classifier, calls }
 	}
 
+	it("keeps the postal mark 〒 for a character-path classifier and strips it for a SentencePiece one", async () => {
+		const sentencepiece = recordingClassifier()
+		await parseForGeocode("〒885-0061 宮崎県都城市下長飯町1867-2", { classifier: sentencepiece.classifier })
+		expect(sentencepiece.calls[0]!.text).toBe("885-0061 宮崎県都城市下長飯町1867-2")
+
+		const char = recordingClassifier()
+
+		await parseForGeocode("〒885-0061 宮崎県都城市下長飯町1867-2", {
+			classifier: { ...char.classifier, encoder: "char" },
+		})
+
+		expect(char.calls[0]!.text).toBe("〒885-0061 宮崎県都城市下長飯町1867-2")
+	})
+
 	it("passes a queryShape computed on the exact model input (converges with the runtime pipeline)", async () => {
 		const { classifier, calls } = recordingClassifier()
 		await parseForGeocode("Damrak 1, 1012 LG Amsterdam", { classifier })

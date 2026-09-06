@@ -56,10 +56,55 @@ The runtime could neither export, resolve nor run a char-path model before this 
 word-consistency repair, which folds the pieces of one whitespace word onto one tag, folded a Japanese address —
 no whitespace, so one "word" — into a single municipality span on the first served parse.
 
+## 3b. The served path through the RESOLVER: 0 of 300 before, 1,823 of 2,000 after
+
+Section 3 graded the parse. `mailwoman geocode 大阪府大阪市北区梅田3-1-1 --locale ja-JP` on that tree answered the parse
+with no coordinate, and `〒885-0061 宮崎県都城市下長飯町1867-2` answered a wrong parse (prefecture `崎県都`, municipality
+`城市`). Three separate causes, each measured on the same 300 board rows (seed 42, @15 km on the board's own point) with
+`packages/mailwoman/lib/dev-tools/jp-served-resolve.run.ts`:
+
+| Arm                                                                           | resolved | accepted @15 km |
+| ----------------------------------------------------------------------------- | -------: | --------------: |
+| shipped map + shipped ladder (the JP tags are never queried)                  |       15 |        0 (0.0%) |
+| JP placetype map, JP ladder district-first, 〒 stripped by the normalizer     |      267 |     171 (57.0%) |
+| JP placetype map, JP ladder district-first, 〒 kept                           |      300 |     202 (67.3%) |
+| JP placetype map, JP ladder municipality-first, 〒 kept — **shipped**         |      300 |     271 (90.3%) |
+| the same, with a compound municipality reduced to its trailing unit, unscoped |      300 |     251 (83.7%) |
+
+1. **The placetype map.** `DEFAULT_PLACETYPE_MAP` carried no entry for `prefecture`, `municipality` or `district`, so the
+   resolver's walk skipped them by design ("a different extract entirely", written when JP was postcode-route only). The
+   candidate gazetteer keys them: 49,255 of 53,920 JP records (91.3%) carry a kanji or kana key, `大阪府` is a `region`,
+   `大阪市` a `locality`, `北区` a `borough` (in the locality filter group), `知名町` a `locality`. The three entries are now
+   in the default map; only the character-path model emits the tags, so no Latin parse reaches them.
+2. **The admin ladder.** `extractGeocodeResult` reads the coordinate off `adminLadderFor`'s rungs, which named no JP
+   tag, so a resolved municipality was never read. The JP rungs sit beside their Latin counterparts, `municipality`
+   ABOVE `district`: a district resolves without its municipality as a parent more often than not, and the unscoped
+   namesake it then picks can be another prefecture's (`千葉県市原市大作` → 921 km). District-first 202, municipality-first 271.
+3. **The postal mark.** The normalizer strips `〒` for the SentencePiece tokenizer, where it is byte-fallback OOV. The
+   character model was trained with the mark in front of every postcode and misreads the prefecture boundary without it.
+   `NormalizeOpts.postalMark` keeps it when the classifier reports `encoder: "char"`, on both the geocode and the
+   parse-only paths; the default stays `strip`, so every Latin caller is byte-identical.
+
+The Korean side of the same register was read while looking: 46,178 of 52,894 KR candidate records (87.3%) carry a
+Hangul key, stored NFD (conjoining jamo), which a precomposed-range glob misses — the first count read 0.
+
+Shipped, over 2,000 rows (seed 42): **1,823 accepted @15 km (91.2%)**, 963 within 5 km, 26 beyond 50 km. By register:
+arabic_chome 62/62, compact_folded 71/72, designator 410/454, native 1,280/1,412. What remains is one class: the
+compound municipality. A county-town (`猿島郡五霞町`) or city-ward (`新潟市秋葉区`) value has no single key, the walk
+falls to the prefecture centroid (25–52 km), and reducing the value to its trailing unit UNSCOPED loses more than it
+gains (251 of 300) because a bare ward resolves a namesake in another city (`神戸市西区` → Fukuoka, 407 km). The design
+that arm waits for is the scoped form: the city resolved first, the ward probed as its child. The result's named slots
+(`locality`, `region`) also stay null for a JP tree; the coordinate is on the result and the components are in
+`components`.
+
+The Latin board did not move: `mwdev_compare` origin/main vs the working tree over the full regression board,
+board-routed, reads 0 rows differed (the run id is in the #2164 comment).
+
 ## 4. Artifacts of record
 
 - `$MAILWOMAN_DATA_ROOT/models/v8-cjk-full-s42/{step-024000, served-package/, train_log.csv, jp-board-score.txt, cn-board-score.txt}`
 - `$MAILWOMAN_DATA_ROOT/models/v8-cjk-control-s42/step-024000`
+- `packages/mailwoman/lib/dev-tools/jp-served-resolve.run.ts` and its 300 / 2,000-row JSON reads on the lab scratchpad.
 - `@mailwoman/neural-weights-cjk` 0.0.1 on npm (name reservation: card + vocabulary); `release.config.json` `charWeights.cjk` names the graph for the first functional release.
 - Trainer defects this launch found and fixed on main: the char-mode eval guard (5ca3d6ca0) and the label-set CSV columns (6c44386da); the record's probe-read correction (2ed1a0c37).
 

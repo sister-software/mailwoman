@@ -69,6 +69,16 @@ describe("adminLadderFor", () => {
 		expect([...ADMIN_LADDER_POSTCODE_FIRST].toSorted()).toEqual([...ADMIN_LADDER_LOCALITY_FIRST].toSorted())
 	})
 
+	it("ranks a JP municipality above its district on both arms — an unscoped district picks namesakes", () => {
+		for (const ladder of [ADMIN_LADDER_POSTCODE_FIRST, ADMIN_LADDER_LOCALITY_FIRST]) {
+			expect(ladder.indexOf("locality")).toBeLessThan(ladder.indexOf("municipality"))
+			expect(ladder.indexOf("municipality")).toBeLessThan(ladder.indexOf("district"))
+			expect(ladder.indexOf("district")).toBeLessThan(ladder.indexOf("region"))
+			expect(ladder.indexOf("region")).toBeLessThan(ladder.indexOf("prefecture"))
+			expect(ladder.indexOf("prefecture")).toBeLessThan(ladder.indexOf("country"))
+		}
+	})
+
 	// #1780. The second route to postcode-first: the CODE is ordinary, the address SYSTEM is not.
 	it("leads with an area-grade postcode for a country whose codes outrank its localities", () => {
 		expect(adminLadderFor({ ...DE_PLZ, country: "DE" })).toBe(ADMIN_LADDER_POSTCODE_FIRST)

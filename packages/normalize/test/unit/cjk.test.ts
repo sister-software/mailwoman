@@ -19,6 +19,13 @@ describe("applyCjkNormalization", () => {
 		expect(r.map).toEqual([1, 2, 3, 4, 5, 6, 7, 8])
 	})
 
+	it("keeps 〒 for a classifier whose vocabulary carries it (postalMark: keep)", () => {
+		const r = applyCjkNormalization("〒104-0061", { postalMark: "keep" })
+		expect(r.text).toBe("〒104-0061")
+		expect(r.stripped).toBe(0)
+		expect(r.map).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8])
+	})
+
 	it("folds full-width digits, letters, and the full-width hyphen-minus to ASCII", () => {
 		const r = applyCjkNormalization("１０４－００６１") // full-width digits + full-width hyphen-minus U+FF0D
 		expect(r.text).toBe("104-0061")

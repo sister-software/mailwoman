@@ -119,6 +119,14 @@ export class NeuralAddressClassifier {
 		return this.cfg
 	}
 
+	/**
+	 * Which encoder feeds the graph. A caller preparing the input reads it: the character path wants the postal mark 〒
+	 * kept, the SentencePiece path wants it stripped (`NormalizeOpts.postalMark`).
+	 */
+	get encoder(): "sentencepiece" | "char" {
+		return this.cfg.charEncoder ? "char" : "sentencepiece"
+	}
+
 	constructor(cfg: NeuralAddressClassifierConfig) {
 		if (!cfg.tokenizer && !cfg.charEncoder) {
 			throw new Error("NeuralAddressClassifier needs a tokenizer (SentencePiece graph) or a charEncoder (char graph)")

@@ -70,18 +70,19 @@ function isHalfwidthKatakana(code: number): boolean {
 	return code >= HALFWIDTH_KATAKANA_START && code <= HALFWIDTH_KATAKANA_END
 }
 
-export function applyCjkNormalization(input: string): CjkResult {
+export function applyCjkNormalization(input: string, opts: { postalMark?: "strip" | "keep" } = {}): CjkResult {
 	let folded = 0
 	let stripped = 0
 	const out: string[] = []
 	const map: number[] = []
+	const stripPostalMark = opts.postalMark !== "keep"
 
 	// All transformed code points are in the BMP (single UTF-16 unit), and every other character is
 	// passed through verbatim, so a per-unit walk is safe for surrogate-pair input too.
 	for (let i = 0; i < input.length; i++) {
 		const code = input.charCodeAt(i)
 
-		if (code === POSTAL_MARK) {
+		if (code === POSTAL_MARK && stripPostalMark) {
 			stripped += 1
 
 			continue // drop — no addressing content; whitespace collapse later tidies any gap

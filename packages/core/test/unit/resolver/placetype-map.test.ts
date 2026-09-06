@@ -25,6 +25,16 @@ const FACT = (country: string, hardFilterSafe: boolean): CountryCoverageFact => 
 	source: "unit fixture",
 })
 
+describe("DEFAULT_PLACETYPE_MAP", () => {
+	it("routes the JP tiers the candidate gazetteer keys, and leaves the street tiers to the extracts", () => {
+		expect(DEFAULT_PLACETYPE_MAP.prefecture).toBe("region")
+		expect(DEFAULT_PLACETYPE_MAP.municipality).toBe("locality")
+		expect(DEFAULT_PLACETYPE_MAP.district).toBe("locality")
+		expect(DEFAULT_PLACETYPE_MAP.street).toBeUndefined()
+		expect(DEFAULT_PLACETYPE_MAP.house_number).toBeUndefined()
+	})
+})
+
 describe("expandPlacetypeFilter", () => {
 	it("passes null through, so an unfiltered query stays unfiltered", () => {
 		expect(expandPlacetypeFilter(null)).toBeNull()

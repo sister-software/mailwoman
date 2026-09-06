@@ -363,8 +363,12 @@ export function createRuntimePipeline(
 		return opts.poiSemanticLookup?.(phrase, locale) ?? []
 	}
 
+	// The character-path CJK model was trained with the postal mark 〒 in front of every postcode and misreads the
+	// prefecture boundary without it; the SentencePiece path wants it stripped (`NormalizeOpts.postalMark`).
+	const postalMark = (opts.classifier as { encoder?: string } | undefined)?.encoder === "char" ? "keep" : undefined
+
 	const stages: RuntimePipelineStages = {
-		normalize,
+		normalize: postalMark ? (raw, normalizeOpts) => normalize(raw, { ...normalizeOpts, postalMark }) : normalize,
 		computeQueryShape,
 		// Default kind classifier: rule-based from @mailwoman/kind-classifier. Caller can override.
 		// POI arc (default-ON since 2026-07-20). The poi-aware classifier only exists when the flag

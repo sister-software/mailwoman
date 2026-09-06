@@ -83,6 +83,11 @@ export {
  * The minimal classifier surface the cascade needs (a `NeuralAddressClassifier` satisfies it).
  */
 export interface GeocodeClassifier {
+	/**
+	 * Which encoder feeds the model. Absent reads as `sentencepiece`. The character path keeps the postal mark 〒 the
+	 * normalizer otherwise strips: the CJK model was trained with it and misreads the prefecture boundary without it.
+	 */
+	encoder?: "sentencepiece" | "char"
 	parse(
 		text: string,
 		opts?: {
@@ -403,17 +408,31 @@ export interface GeocodeParseInputs {
 	opts: NonNullable<Parameters<GeocodeClassifier["parse"]>[1]>
 }
 
+/**
+ * The normalizer call every geocode entry shares, so the three call sites cannot disagree about the postal mark.
+ */
+function normalizeGeocodeInput(
+	input: string,
+	classifier: Pick<GeocodeClassifier, "encoder"> | undefined
+): ReturnType<typeof normalize> {
+	return normalize(input, {
+		expandAbbreviations: true,
+		locale: "und",
+		postalMark: classifier?.encoder === "char" ? "keep" : "strip",
+	})
+}
+
 export function geocodeParseInputs(
 	input: string,
-	deps: Pick<GeocodeDeps, "normalizeInput" | "normalizeCase" | "inputMode" | "fst" | "streetMorphology">
+	deps: Pick<GeocodeDeps, "normalizeInput" | "normalizeCase" | "inputMode" | "fst" | "streetMorphology"> &
+		Partial<Pick<GeocodeDeps, "classifier">>
 ): GeocodeParseInputs {
 	// #1002: expandAbbreviations with the locale-UNKNOWN safe set (Bd/Bvd/Av/Imp → the expanded street
 	// type). The model mis-parses undertrained FR abbreviations ("2 Bd du Palais" → house_number "2 Bd",
 	// which then fails the point-tier number match); the EN suffixes are deliberately NOT expanded (the
 	// model is trained-robust on them, and St/Dr are ambiguous with Saint/Doctor). The locale isn't known
 	// pre-parse, so only the collision-free multi-locale entries apply — see LOCALE_UNKNOWN_DICT.
-	const parseInput =
-		deps.normalizeInput === false ? input : normalize(input, { expandAbbreviations: true, locale: "und" }).normalized
+	const parseInput = deps.normalizeInput === false ? input : normalizeGeocodeInput(input, deps.classifier).normalized
 
 	// #981: apply the query-shape emission prior the runtime pipeline applies (core/pipeline/runtime-pipeline.ts:336
 	// `computeQueryShape` → `safeClassify` → parse with `queryShape`). Without it the geocode path — the drop-in
@@ -506,8 +525,7 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	// #1649 first refusal — BEFORE the resolve and before the register-flip retry rider, so a refused
 	// thing-query can neither resolve nor be retried into nonsense. See intent-refusal.ts.
 	if (deps.classifyKind && !deps.inputMode) {
-		const parseInput =
-			deps.normalizeInput === false ? input : normalize(input, { expandAbbreviations: true, locale: "und" }).normalized
+		const parseInput = deps.normalizeInput === false ? input : normalizeGeocodeInput(input, deps.classifier).normalized
 
 		const refusal = await thingQueryRefusalMarkers(deps.classifyKind, parseInput)
 
@@ -610,8 +628,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// createRuntimePipeline wrapper, so without this a double-spaced / odd-punctuation query was fragile. `input` stays
 	// raw for the result; the parse + placer see the normalized form. A caller-supplied `parsedTree` (from
 	// parseForGeocode, same input + opts) skips the re-parse — the address's most expensive step.
-	const parseInput =
-		deps.normalizeInput === false ? input : normalize(input, { expandAbbreviations: true, locale: "und" }).normalized
+	const parseInput = deps.normalizeInput === false ? input : normalizeGeocodeInput(input, deps.classifier).normalized
 
 	const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
 	const queryShape = computeQueryShape(parseInput)

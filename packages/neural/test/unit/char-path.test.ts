@@ -169,6 +169,8 @@ describe("NeuralAddressClassifier on the char path", () => {
 			labels: LABELS,
 		})
 
+		expect(classifier.encoder).toBe("char")
+
 		const tree = await classifier.parse(RAW)
 
 		const walk = (node: { tag: string; value: string; children: unknown[] }): Array<[string, string]> => [

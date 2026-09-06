@@ -33,7 +33,7 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 	// parse) and fold full-width ASCII + the ideographic space. Runs after NFC so it sees composed
 	// forms, before punctuation/whitespace so any gap left by 〒 is then collapsed. No-op off-script.
 	{
-		const r = applyCjkNormalization(text)
+		const r = applyCjkNormalization(text, opts?.postalMark ? { postalMark: opts.postalMark } : {})
 
 		if (r.folded > 0 || r.stripped > 0) {
 			text = r.text
