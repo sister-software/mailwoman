@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/neural-weights-zh-cn",
-	"version": "9.2.0",
+	"version": "9.3.0",
 	"description": "zh-CN weights overlay for mailwoman — data-only; shares the base model with @mailwoman/neural-weights-cjk.",
 	"license": "AGPL-3.0",
 	"repository": {
