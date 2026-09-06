@@ -6,8 +6,16 @@
  *   Utility functions for working with objects.
  */
 
-import { isIterable } from "spliterator"
 import type { JsonObject } from "type-fest"
+
+/**
+ * True when `value` carries `Symbol.iterator`: arrays, sets, maps, strings, generators. `null` and `undefined` answer
+ * false. The same predicate exists in `spliterator`, whose barrel also carries that library's Node fs, worker-thread
+ * and XLSX readers; this module is on the browser client's static import path, so it must not reach that barrel.
+ */
+export function isIterable(value: unknown): value is Iterable<unknown> {
+	return Symbol.iterator in new Object(value)
+}
 
 export function isPlainObject(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value)
