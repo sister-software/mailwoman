@@ -15,6 +15,7 @@ import {
 	findToken,
 	setEmailState,
 } from "@mailwoman/license-worker/ledger/licenses"
+import { AGREEMENT_VERSION } from "@mailwoman/license-worker/shop/catalog"
 import { stripeClient } from "@mailwoman/license-worker/stripe/client"
 import { handleStripeEvent } from "@mailwoman/license-worker/stripe/handlers"
 import { env } from "cloudflare:workers"
@@ -22,6 +23,7 @@ import { beforeAll, beforeEach, describe, expect, it } from "vitest"
 
 import { envWithSigningKey } from "../support/keys.ts"
 import { applyMigrations } from "../support/migrations.ts"
+import { priceOf } from "../support/plans.ts"
 import {
 	chargeObject,
 	chargeRefundedEvent,
@@ -78,8 +80,8 @@ async function fixture(
 
 	const signing = await envWithSigningKey(readEnv(bindings))
 	const worker = signing.env
-	const priceID = options.priceID ?? worker.STRIPE_PRICE_MONTHLY
-	const periodEnd = priceID === worker.STRIPE_PRICE_YEARLY ? OCT_1_NEXT_YEAR : NOV_1
+	const priceID = options.priceID ?? priceOf(worker, "commercial-monthly-v1")
+	const periodEnd = priceID === priceOf(worker, "commercial-yearly-v1") ? OCT_1_NEXT_YEAR : NOV_1
 
 	const session = checkoutSessionObject({
 		id: `cs_${suffix}`,
@@ -151,7 +153,7 @@ describe("fulfilment", () => {
 
 		expect(verified).toMatchObject({
 			status: "valid",
-			payload: { licensee: "Example Ltd", agreement: worker.AGREEMENT_VERSION, scope: "all", expires: "2026-11-15" },
+			payload: { licensee: "Example Ltd", agreement: AGREEMENT_VERSION, scope: "all", expires: "2026-11-15" },
 		})
 
 		expect(sent).toHaveLength(1)
@@ -243,7 +245,7 @@ describe("fulfilment", () => {
 		const { env: worker, deps, kid, publicKeyPEM } = await fixture("7", { renewalInvoiceID: "in_7b" })
 
 		await fulfilInvoice(worker, deps, "in_7")
-		await fulfilInvoice({ ...worker, AGREEMENT_VERSION: "commercial-2027-01" }, deps, "in_7b")
+		await fulfilInvoice(worker, deps, "in_7b")
 
 		const verify = (token: string, now: string) =>
 			verifyLicenseKey(token, { trustedKeys: { [kid]: publicKeyPEM }, now: new Date(now) })

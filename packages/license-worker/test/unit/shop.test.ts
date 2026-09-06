@@ -10,8 +10,8 @@
 
 import { readEnv } from "@mailwoman/license-worker/env"
 import { AGREEMENT_VERSION, SHOP_PLANS, WEBHOOK_EVENTS } from "@mailwoman/license-worker/shop/catalog"
+import { withShopIDs } from "@mailwoman/license-worker/shop/ids"
 import { provisionShop } from "@mailwoman/license-worker/shop/provision"
-import { readEnvironmentVar, withEnvironmentVars } from "@mailwoman/license-worker/shop/wrangler-vars"
 import { stripeClient } from "@mailwoman/license-worker/stripe/client"
 import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
@@ -247,42 +247,23 @@ describe("the shop provisioner", () => {
 	})
 })
 
-describe("the wrangler vars rewrite", () => {
-	const toml = [
-		'name = "mailwoman-license"',
-		"",
-		"[env.sandbox.vars]",
-		'ISSUANCE_ENABLED = "false"',
-		'STRIPE_PRICE_MONTHLY = "price_sandbox_monthly"',
-		"",
-		"[[env.sandbox.d1_databases]]",
-		'binding = "LICENSE_LEDGER"',
-		"",
-	].join("\n")
+describe("the ids record", () => {
+	const current = {
+		test: {
+			prices: { "commercial-monthly-v1": "price_t1", "commercial-yearly-v1": "price_t2" },
+			paymentLinks: { "commercial-monthly-v1": "https://t/1", "commercial-yearly-v1": "https://t/2" },
+		},
+		live: {
+			prices: { "commercial-monthly-v1": "price_l1", "commercial-yearly-v1": "price_l2" },
+			paymentLinks: { "commercial-monthly-v1": "https://l/1", "commercial-yearly-v1": "https://l/2" },
+		},
+	}
 
-	it("replaces a var in place and appends a missing one inside the block, leaving the rest byte-identical", () => {
-		const next = withEnvironmentVars(toml, "sandbox", {
-			STRIPE_PRICE_MONTHLY: "price_1",
-			STRIPE_PRICE_YEARLY: "price_2",
-		})
+	it("replaces the ids a run answered for one mode and leaves an absent id and the other mode standing", () => {
+		const next = withShopIDs(current, "live", { prices: { "commercial-monthly-v1": "price_l1_new" }, paymentLinks: {} })
 
-		expect(next).toBe(
-			[
-				'name = "mailwoman-license"',
-				"",
-				"[env.sandbox.vars]",
-				'ISSUANCE_ENABLED = "false"',
-				'STRIPE_PRICE_MONTHLY = "price_1"',
-				'STRIPE_PRICE_YEARLY = "price_2"',
-				"",
-				"[[env.sandbox.d1_databases]]",
-				'binding = "LICENSE_LEDGER"',
-				"",
-			].join("\n")
-		)
-
-		expect(readEnvironmentVar(next, "sandbox", "STRIPE_PRICE_YEARLY")).toBe("price_2")
-		expect(readEnvironmentVar(next, "production", "STRIPE_PRICE_YEARLY")).toBeUndefined()
-		expect(() => withEnvironmentVars(toml, "production", { X: "y" })).toThrow(/no \[env\.production\.vars\]/u)
+		expect(next.live.prices).toEqual({ "commercial-monthly-v1": "price_l1_new", "commercial-yearly-v1": "price_l2" })
+		expect(next.live.paymentLinks).toEqual(current.live.paymentLinks)
+		expect(next.test).toEqual(current.test)
 	})
 })

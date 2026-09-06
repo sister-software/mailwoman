@@ -13,6 +13,7 @@
 	"type": "module",
 	"imports": {
 		"#test/*": "./test/*.ts",
+		"#shop/ids.json": "./lib/shop/ids.json",
 		"#*": {
 			"workerd": "./lib/*.ts",
 			"node": "./lib/*.ts",
@@ -122,10 +123,10 @@
 			"default": "./out/shop/rehearse.js",
 			"types": "./out/shop/rehearse.d.ts"
 		},
-		"./shop/wrangler-vars": {
-			"node": "./lib/shop/wrangler-vars.ts",
-			"default": "./out/shop/wrangler-vars.js",
-			"types": "./out/shop/wrangler-vars.d.ts"
+		"./shop/ids": {
+			"node": "./lib/shop/ids.ts",
+			"default": "./out/shop/ids.js",
+			"types": "./out/shop/ids.d.ts"
 		},
 		"./signing": {
 			"node": "./lib/signing.ts",

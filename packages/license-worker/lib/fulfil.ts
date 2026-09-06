@@ -28,7 +28,7 @@ import {
 } from "#ledger/licenses"
 import type { EmailState, LicenseRow, LicenseTokenRow } from "#ledger/schema"
 import { planForPrice } from "#plans"
-import { AGREEMENT_METADATA_KEY, LICENSEE_FIELD_KEY } from "#shop/catalog"
+import { AGREEMENT_METADATA_KEY, AGREEMENT_VERSION, LICENSEE_FIELD_KEY } from "#shop/catalog"
 import { idOf, invoiceSubscriptionID, linePriceID } from "#stripe/shapes"
 
 export interface FulfilDependencies {
@@ -78,9 +78,9 @@ export async function ensureLicenseFromCheckoutSession(
 
 	if (!agreement) throw new Error(`checkout session ${session.id} carries no ${AGREEMENT_METADATA_KEY} metadata`)
 
-	if (agreement !== env.AGREEMENT_VERSION) {
+	if (agreement !== AGREEMENT_VERSION) {
 		console.warn(
-			`checkout session ${session.id} accepted agreement ${agreement}; this environment sells ${env.AGREEMENT_VERSION}`
+			`checkout session ${session.id} accepted agreement ${agreement}; the catalog sells ${AGREEMENT_VERSION}`
 		)
 	}
 

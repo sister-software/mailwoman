@@ -23,9 +23,6 @@ export interface LicenseWorkerBindings {
 	 */
 	EMAIL_SENDER?: SendEmail
 	LICENSE_SIGNING_KID: string
-	STRIPE_PRICE_MONTHLY: string
-	STRIPE_PRICE_YEARLY: string
-	AGREEMENT_VERSION: string
 	ISSUANCE_ENABLED: string
 	SITE_ORIGIN: string
 	EMAIL_FROM: string
@@ -42,9 +39,6 @@ const notPlaceholder = z
 
 const VarsSchema = z.object({
 	LICENSE_SIGNING_KID: notPlaceholder,
-	STRIPE_PRICE_MONTHLY: notPlaceholder,
-	STRIPE_PRICE_YEARLY: notPlaceholder,
-	AGREEMENT_VERSION: notPlaceholder,
 	ISSUANCE_ENABLED: z.enum(["true", "false"]),
 	SITE_ORIGIN: z.url(),
 	EMAIL_FROM: z.email(),

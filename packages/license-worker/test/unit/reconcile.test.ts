@@ -16,6 +16,7 @@ import { beforeAll, describe, expect, it } from "vitest"
 
 import { envWithSigningKey } from "../support/keys.ts"
 import { applyMigrations } from "../support/migrations.ts"
+import { priceOf } from "../support/plans.ts"
 import {
 	chargeDisputeCreatedEvent,
 	chargeObject,
@@ -62,7 +63,7 @@ async function fixture(
 	const invoice = invoiceObject({
 		id: `in_${suffix}`,
 		subscriptionID: `sub_${suffix}`,
-		priceID: worker.STRIPE_PRICE_MONTHLY,
+		priceID: priceOf(worker, "commercial-monthly-v1"),
 		paidAt: OCT_1,
 		periodEnd: NOV_1,
 	})
@@ -81,7 +82,7 @@ async function fixture(
 			[`GET /v1/invoices/in_${suffix}`]: invoice,
 			[`GET /v1/subscriptions/sub_${suffix}`]: subscriptionObject({
 				id: `sub_${suffix}`,
-				priceID: worker.STRIPE_PRICE_MONTHLY,
+				priceID: priceOf(worker, "commercial-monthly-v1"),
 				currentPeriodEnd: NOV_1,
 				status: options.subscriptionStatus,
 			}),

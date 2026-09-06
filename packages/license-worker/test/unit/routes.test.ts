@@ -13,6 +13,7 @@ import { beforeAll, describe, expect, it } from "vitest"
 
 import { envWithSigningKey } from "../support/keys.ts"
 import { applyMigrations } from "../support/migrations.ts"
+import { priceOf } from "../support/plans.ts"
 import {
 	chargeObject,
 	chargeRefundedEvent,
@@ -58,7 +59,7 @@ async function app(suffix: string, options: { issuance?: boolean; signing?: "ok"
 		subscriptionID: `sub_${suffix}`,
 		licensee: "Example Ltd",
 		email: "ops@example.com",
-		priceID: worker.STRIPE_PRICE_MONTHLY,
+		priceID: priceOf(worker, "commercial-monthly-v1"),
 	})
 
 	const stripe = stripeClient(
@@ -67,13 +68,13 @@ async function app(suffix: string, options: { issuance?: boolean; signing?: "ok"
 			[`GET /v1/invoices/in_${suffix}`]: invoiceObject({
 				id: `in_${suffix}`,
 				subscriptionID: `sub_${suffix}`,
-				priceID: worker.STRIPE_PRICE_MONTHLY,
+				priceID: priceOf(worker, "commercial-monthly-v1"),
 				paidAt: OCT_1,
 				periodEnd: NOV_1,
 			}),
 			[`GET /v1/subscriptions/sub_${suffix}`]: subscriptionObject({
 				id: `sub_${suffix}`,
-				priceID: worker.STRIPE_PRICE_MONTHLY,
+				priceID: priceOf(worker, "commercial-monthly-v1"),
 				currentPeriodEnd: NOV_1,
 			}),
 			"GET /v1/checkout/sessions?": checkoutSessionList([session]),

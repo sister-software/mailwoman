@@ -27,8 +27,6 @@ production only an `active` entry of the shipped register passes the self-test.
 | `EMAIL_SENDER`                                       | send_email | Cloudflare's email sending; the license message goes out through it, from `EMAIL_FROM` on the zone         |
 | `EMAIL_API_KEY`                                      | secret     | a Resend API key, read only when the environment has no `EMAIL_SENDER` binding                             |
 | `LICENSE_SIGNING_KID`                                | var        | the key id the private key must match, an `active` entry of the shipped register                           |
-| `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`        | var        | the allowlisted Price IDs; `lib/plans.ts` maps each to a plan code                                         |
-| `AGREEMENT_VERSION`                                  | var        | the terms version new Payment Links carry; a session with another version is fulfilled and logged          |
 | `ISSUANCE_ENABLED`                                   | var        | the kill switch: `false` refuses to mint and answers claims `pending`; refresh and status keep working     |
 | `STRIPE_LIVE_MODE`                                   | var        | the Stripe mode this environment accepts; an event or invoice from the other mode is refused               |
 | `SITE_ORIGIN`                                        | var        | the one CORS origin the claim route admits                                                                 |
@@ -52,12 +50,12 @@ the installed release does not trust is a token no installation accepts, which i
 
    ```bash
    yarn mwops shop status --mode live                      # read what the account holds; writes nothing
-   yarn mwops shop provision --mode live --apply           # create what is missing; write the Price ids into wrangler.toml
+   yarn mwops shop provision --mode live --apply           # create what is missing; write the ids into lib/shop/ids.json
    ```
 
-   `--mode test` does the same in test mode against `MAILWOMAN_STRIPE_SECRET_KEY` and writes the sandbox
-   environment; `--mode live` reads `MAILWOMAN_STRIPE_LIVE_SECRET_KEY`, refuses any other prefix, and also writes the
-   Payment Links into `lib/sdk/constants.ts`, which the site reads. A Payment Link is created only with consent collection; if Stripe
+   `--mode test` does the same in test mode against `MAILWOMAN_STRIPE_SECRET_KEY`; `--mode live` reads
+   `MAILWOMAN_STRIPE_LIVE_SECRET_KEY` and refuses any other prefix. Both write `lib/shop/ids.json`, the one file that
+   names the Price ids the worker allowlists and the Payment Links the site renders. A Payment Link is created only with consent collection; if Stripe
    refuses it, the report reads `blocked` and the remedy is the terms-of-service URL under the account's public details
    in the dashboard. The run is idempotent: a second run reads `exists` everywhere and creates nothing.
 
