@@ -95,7 +95,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from .char_tokenizer import build_char_vocab, save_char_vocab
-from .jp_kana import municipality_kana_from_admin_db
+from .jp_kana import municipality_kana_from_admin_db, municipality_kana_lookup
 from .labels import resolve_label_set
 from .tokenizer import char_label_array_from_spans
 
@@ -750,7 +750,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
         out: list[dict[str, Any]] = []
         for prefecture, municipality, street, number, _lon, _lat in rows:
             district, chome = split_street(street)
-            municipality_kana = kana_by_municipality.get(municipality)
+            municipality_kana = municipality_kana_lookup(kana_by_municipality, municipality)
             options = available_registers(chome, number, kana=municipality_kana is not None)
             register_unavailable["full" if len(options) == len(REGISTER_WEIGHTS) else "reduced"] += 1
             register = choose_register(rng, options)
@@ -808,7 +808,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     with board_path.open("w", encoding="utf-8") as handle:
         for prefecture, municipality, street, number, lon, lat in board:
             district, chome = split_street(street)
-            municipality_kana = kana_by_municipality.get(municipality)
+            municipality_kana = municipality_kana_lookup(kana_by_municipality, municipality)
             register = choose_register(rng, available_registers(chome, number, kana=municipality_kana is not None))
             postcode = None
             if rng.random() < args.postcode_fraction:

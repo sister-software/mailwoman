@@ -2,8 +2,9 @@
 #
 # ONE change against v8-cjk-full (app ap-J0uaLu8mQutAWu4ZdtBNzZ, 0.9653 blended / 0.9757 municipality macro on the
 # 20,000-row JP board): the JP corpus is `v8-jp-kana-2026-09-06`, the same renderer, sampler and seed with a fifth
-# register, `kana_municipality`, weight 0.05 among the registers where the admin DB reads the municipality (12,857
-# of them): the municipality as its kana stem plus the kanji generic, 厚木市 → あつぎ市. The CN overlay (126 train /
+# register, `kana_municipality`, weight 0.05 among the registers where the admin DB reads the municipality (73.5% of
+# municipality rows on the val split; 2,399 kanji keys): the municipality as its kana stem plus the kanji generic,
+# 厚木市 → あつぎ市, 大阪市北区 → 大阪市きた区. The CN overlay (126 train /
 # 11 val / 14 board rows, `coarse-placer-cn-units` at source share 0.02) and the 49-label `stage3-cjk` head are
 # unchanged; the char vocabulary is re-sealed over the new JP train split plus the CN characters.
 #

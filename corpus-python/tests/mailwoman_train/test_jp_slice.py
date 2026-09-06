@@ -377,6 +377,18 @@ def test_kana_stem_is_the_shortest_hiragana_variant_and_keeps_the_kanji_generic(
     assert pick_kana_stem("かすみがうら市", ["かすみがうら"]) is None
     # No hiragana variant at all → no register.
     assert pick_kana_stem("大阪市", ["大阪"]) is None
+    # Only the full reading exists: the generic's reading comes off so the kanji generic is not doubled.
+    assert pick_kana_stem("鳥取市", ["とっとりし"]) == "とっとり"
+    assert pick_kana_stem("上市町", ["かみいちまち"]) == "かみいち"
+
+
+def test_kana_lookup_strips_the_county_prefix_when_the_full_form_has_no_reading() -> None:
+    from mailwoman_train.jp_kana import municipality_kana_lookup
+
+    table = {"上市町": "かみいち町", "厚木市": "あつぎ市"}
+    assert municipality_kana_lookup(table, "厚木市") == "あつぎ市"
+    assert municipality_kana_lookup(table, "中新川郡上市町") == "かみいち町"
+    assert municipality_kana_lookup(table, "大阪市北区") is None
 
 
 def test_kana_register_renders_the_reading_with_the_kanji_generic_and_spans_by_construction() -> None:
