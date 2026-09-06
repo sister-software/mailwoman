@@ -1013,7 +1013,7 @@ git commit -m "feat(astrogeology): the search artifact over feature names, and t
 **Interfaces:**
 
 - Consumes: `CommandSpec`, `ParsedCommandComponent`, `useCommandTask`, `CommandTaskResult` from `mailwoman/cli-kit`; `runDropInCLI` is for drop-in servers and is not used here.
-- Produces: `astrogeology fetch --body <moon|mars> [--kind nomenclature|dem]`, `astrogeology build --body <moon|mars> [--max-zoom 6] [--out <dir>]`, `astrogeology verify --body <moon|mars>`, `astrogeology publish --body <moon|mars> [--dry-run]`; `publishTiles(options): Promise<string>` from `mailwoman/tiles/publish`.
+- Produces: `astrogeology fetch --body <moon|mars> [--kind nomenclature|dem]`, `astrogeology build --body <moon|mars> [--max-zoom 6] [--out <dir>]`, `astrogeology verify --body <moon|mars>`, `astrogeology publish --body <moon|mars> [--dry-run]`; `publishTiles(options): Promise<string>` and `uploadToBucket(options): Promise<string>` from `mailwoman/tiles/publish`. The planetary app pins the printed `version`.
 
 - [ ] **Step 1: Read the two CLIs this one copies from**
 
@@ -1027,7 +1027,9 @@ grep -n "^export" packages/mailwoman/lib/cli-kit/index.ts | cut -c1-120
 
 - [ ] **Step 2: Move `publishTiles`**
 
-Move the `publishTiles` function and its `Options` type from `packages/mailwoman/lib/commands/tiles/publish.tsx` into `packages/mailwoman/lib/tiles/publish.ts` (exported), import it back into the command, add `"./tiles/publish"` to `mailwoman`'s `exports`. The command's `spec` stays where it is. The astrogeology `publish` command calls `publishTiles({ file, tileset: body, bucket: "nexus-assets", prefix: "tiles", dryRun })` twice (the vector and the hillshade archive), then fetches `https://tiles.mailwoman.ai/<body>.json` and the z0 tile of each and reports the status codes.
+Move the `publishTiles` function and its `Options` type from `packages/mailwoman/lib/commands/tiles/publish.tsx` into `packages/mailwoman/lib/tiles/publish.ts` (exported), import it back into the command, add `"./tiles/publish"` to `mailwoman`'s `exports`. The command's `spec` stays where it is. Inside `publish.ts`, the `rclone copyto` call becomes its own exported function, `uploadToBucket({ file, bucket, key, dryRun })`, which `publishTiles` calls with `key = ${prefix}/${tileset}.pmtiles`; the search artifact and the manifest go through the same function under a different key.
+
+The astrogeology `publish` command calls `publishTiles({ file, tileset: body, bucket: "nexus-assets", prefix: "tiles", dryRun })` twice (the vector and the hillshade archive), then `uploadToBucket` for `search.ancestrie` and `manifest.json` under `planetary/<body>/<version>/` (the `version` is the manifest's `builtAt` date compacted to `YYYYMMDD` plus the first eight characters of the vector archive's SHA-256, e.g. `20260907-3f2a9c1b`, so a republish never overwrites an artifact a deployed app pins), fetches `https://tiles.mailwoman.ai/<body>.json`, the z0 tile of each archive and `https://public.mailwoman.ai/planetary/<body>/<version>/manifest.json`, reports the status codes, and prints the version and the two public URLs the planetary app pins.
 
 - [ ] **Step 3: The four commands**
 
@@ -1065,9 +1067,10 @@ node packages/astrogeology/out/cli.js publish --body mars
 curl -sI https://tiles.mailwoman.ai/moon.json | head -1
 curl -sI https://tiles.mailwoman.ai/moon-hillshade/0/0/0.png | head -1
 curl -s https://tiles.mailwoman.ai/mars.json | head -c 300
+curl -sI "https://public.mailwoman.ai/planetary/moon/<the printed version>/search.ancestrie" | head -1
 ```
 
-Expected: `200` for the TileJSON and the z0 hillshade tile, and the Mars TileJSON naming the `nomenclature` layer. The R2 credentials are the ones `mailwoman tiles publish` already reads from the private environment.
+Expected: `200` for the TileJSON, the z0 hillshade tile and the search artifact, and the Mars TileJSON naming the `nomenclature` layer. The printed versions and URLs go into the PR description; the planetary app's body configs pin them. The R2 credentials are the ones `mailwoman tiles publish` already reads from the private environment.
 
 - [ ] **Step 2: README**
 
