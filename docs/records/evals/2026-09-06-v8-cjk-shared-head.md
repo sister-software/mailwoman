@@ -109,6 +109,13 @@ has no key) and the candidate backend's own region-scope fallback re-admitted Ai
 refuses a `regionScopeMiss` answer, and those rows fall to the prefecture centroid (27 km) instead. The remaining
 15–19 km rows are municipality-centroid distances (`新潟市秋葉区`, `かすみがうら市`), the board tolerance's edge.
 
+**The postcode the walk cannot reach yet.** 637 of the 2,000 rows carry a `〒` code, every one keyed in
+`$MAILWOMAN_DATA_ROOT/wof/postalcode-jp.db` (142,604 WOF rows; 48,216 unlocated at 0,0), and the candidate table folds
+no JP postcode extract, so the probe returns nothing. Simulated on the same rows: the located code's centroid is 0.52 km
+(p50) / 2.31 km (p90) from the entrance point; 586 of 637 pass on it, 36 of them rows the municipality centroid fails,
+and the 51 unlocated codes fall through to today's answer because the fold skips 0,0 rows. `postalcode-jp.db` is now in
+`DEFAULT_POSTCODE_DATABASES`; the candidate rebuild that carries it is the operator's.
+
 ## 4. Artifacts of record
 
 - `$MAILWOMAN_DATA_ROOT/models/v8-cjk-full-s42/{step-024000, served-package/, train_log.csv, jp-board-score.txt, cn-board-score.txt}`

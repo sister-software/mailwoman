@@ -66,7 +66,7 @@ import { mailwomanDataRoot } from "#resolver-backend"
  * enforces the tier, and nothing else needs to.
  *
  * What is left out: the WOF **`postalcode-gb.db`** (2,719,772 rows, 694 MB — superseded by Code-Point Open, the same
- * underlying survey under a clean licence) and **`postalcode-jp.db`** (142,604 rows, 37 MB).
+ * underlying survey under a clean licence).
  *
  * Every member is spelled `postalcode-`, and that is a routing contract rather than a house style. `deriveSchemaName`
  * (`resolver-wof-sqlite/extracts.ts`) turns the filename into the attached SQL schema name, and
@@ -98,6 +98,12 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	// Rebuild: `mailwoman gazetteer build postcode-ni-osm` (add `--offline` to rebuild from the saved
 	// Overpass response rather than re-querying a volunteer endpoint).
 	"postalcode-ni-osm.db",
+	// Japan's 7-digit codes from WOF (142,604 rows; 48,216 carry the 0,0 unlocated sentinel, which the candidate fold
+	// skips by construction). The located 94,388 answer a 町域 centroid: on 637 postcode-bearing JP board rows the
+	// centroid sits 0.52 km (p50) / 2.31 km (p90) from the entrance point, against the 15–19 km municipality centroid
+	// the admin walk otherwise reaches; every located row passes @15 km and 36 of 2,000 that failed on the municipality
+	// pass on the code. The fold arrives with the next candidate rebuild.
+	"postalcode-jp.db",
 	// #920: the GeoNames-postal tail database — TEN countries in ingest order FI/CZ/SK/SI/DK/NO/HR/PL/SE/BE
 	// (57,221 rows; BE joined 2026-08-12 with 1,146 codes after the Overture BE parquet measured too thin —
 	// 203 codes, none of the eu-mixed panel's). GB rode in this database 2026-07-03 → 2026-08-05 and moved to
