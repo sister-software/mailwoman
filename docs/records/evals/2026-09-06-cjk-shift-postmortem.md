@@ -59,6 +59,9 @@ suites, `mwdev_compare` over the Latin board where a resolver mechanism moved), 
   re-measure in Python read 87.3%. The fourth instance of a measuring-tool false negative this quarter.
 - The Modal log stream stalled after two heartbeat failures, so the monitor that watched it emitted nothing after
   step 4,000; the volume listing was the signal that worked. Watch the artifact, not the log.
+- One push went out with the root health suite red (2aac2de38: the ambiguous-noun counter and a double cast): the
+  shell ran `yarn health` and then committed and pushed regardless of its exit. Chain the push on the exit code; the
+  correction landed four minutes later (3486a25fa).
 - `zsh` does not word-split an unquoted variable: a loop that passed `"$1 $2 $3"` as one argument ran four silent
   no-ops before the shape was noticed.
 
