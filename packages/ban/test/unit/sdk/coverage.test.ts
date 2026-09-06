@@ -8,7 +8,7 @@
  */
 
 import { certifiedCoverageCells, wholeCommunes } from "@mailwoman/ban/sdk/coverage"
-import { CoverageBasis } from "@mailwoman/core/layers"
+import { CoverageBasis } from "@mailwoman/evidence"
 import { describe, expect, it } from "vitest"
 
 describe("wholeCommunes", () => {

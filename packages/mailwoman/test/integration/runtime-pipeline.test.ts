@@ -9,7 +9,7 @@
  */
 
 import type { AddressClassifier } from "@mailwoman/core/pipeline"
-import type { Resolver } from "@mailwoman/resolver"
+import type { Resolver } from "@mailwoman/core/resolver"
 import { createRuntimePipeline } from "mailwoman/runtime-pipeline"
 import { describe, expect, it, vi } from "vitest"
 

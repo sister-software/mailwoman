@@ -21,11 +21,11 @@ import {
 	fixtureFeature,
 	fixtureFeatures,
 	fixtureSource,
-	rectangleRing,
 	FIXTURE_ORIGIN,
 	FIXTURE_SIDE,
 } from "@mailwoman/flood/test-kit"
 import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL, EA_FLOOD_LAYER_NAME } from "@mailwoman/flood/vocabulary"
+import { rectangleRing } from "@mailwoman/spatial"
 import { latLngToCell } from "h3-js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 

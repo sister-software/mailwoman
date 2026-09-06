@@ -18,7 +18,7 @@
  *   rather than convention-driven.
  */
 
-import { expandPlacetypeFilter, type CoincidentLocality } from "@mailwoman/resolver"
+import { expandPlacetypeFilter, type CoincidentLocality } from "@mailwoman/core/resolver"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "@mailwoman/resolver-wof-sqlite"
 // Browser-safe subpath imports (fts.ts's only node:sqlite import is type-only) — the shared
 // alias-bag parser, query fold, FTS sanitizer, and ranking weights keep this backend

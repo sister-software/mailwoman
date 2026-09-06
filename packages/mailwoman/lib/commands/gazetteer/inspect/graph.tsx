@@ -16,18 +16,12 @@ import { Spinner } from "@inkjs/ui"
 import type { PlacetypeRole } from "@mailwoman/core"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { PlacetypeRoles } from "@mailwoman/core/placetypes"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { availableParallelism } from "@mailwoman/core/utils/system"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 
-import {
-	CommandError,
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	parseRoles,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, parseRoles, useCommandTask } from "#cli-kit"
 
 const BATCH_SIZE = availableParallelism()
 

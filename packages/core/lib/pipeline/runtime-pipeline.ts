@@ -21,7 +21,6 @@ import type {
 	FSTMatcherLike,
 	InputMode,
 	LocaleHint,
-	LocaleTag,
 	NormalizedInputLite,
 	PhraseProposal,
 	PipelineFault,
@@ -193,7 +192,7 @@ function emptyQueryShape(): QueryShapeLite {
 async function defaultDetectLocale(
 	_input: NormalizedInputLite,
 	_shape: QueryShapeLite,
-	opts?: { hint?: LocaleTag }
+	opts?: { hint?: Intl.UnicodeBCP47LocaleIdentifier }
 ): Promise<LocaleHint> {
 	const locale = opts?.hint ?? "und"
 

@@ -14,14 +14,15 @@ npx mailwoman parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"
 
 ```ts
 // Library — parse programmatically
-import { createRuntimePipeline, decodeAsJson } from "mailwoman"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { createRuntimePipeline } from "mailwoman"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 const parse = createRuntimePipeline({ classifier })
 
 const { tree } = await parse("1600 Amphitheatre Parkway, Mountain View, CA 94043")
-console.log(decodeAsJson(tree))
+console.log(decodeAsJSON(tree))
 // { region: "CA", locality: "Mountain View", street: "Amphitheatre",
 //   house_number: "1600", street_suffix: "Parkway", postcode: "94043" }
 ```
@@ -89,7 +90,8 @@ up normalization, locale detection, kind classification, phrase grouping, and to
 classification with production-ready defaults.
 
 ```ts
-import { createRuntimePipeline, decodeAsJson, decodeAsTuples } from "mailwoman"
+import { decodeAsJSON, decodeAsTuples } from "@mailwoman/core/decoder"
+import { createRuntimePipeline } from "mailwoman"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
@@ -111,7 +113,7 @@ result.timing // per-stage wall-clock breakdown
 Project the tree into the shape you need:
 
 ```ts
-decodeAsJson(result.tree)
+decodeAsJSON(result.tree)
 // { region: "NY", locality: "New York", street: "5th",
 //   house_number: "350", street_suffix: "Ave", postcode: "10118" }
 

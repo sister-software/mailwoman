@@ -44,8 +44,6 @@ import { ResourceError } from "@mailwoman/core/errors"
 import { $private } from "#env"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.
-export { isTransientResourceError } from "@mailwoman/core/api"
-export { ResourceError } from "@mailwoman/core/errors"
 
 /**
  * The FCC BDC public-API base URL every request is resolved against.

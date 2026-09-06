@@ -8,10 +8,14 @@
  *   works on title case is a rule that only works on our test data.
  */
 
+import type { QueryKind } from "@mailwoman/core/pipeline"
 import { classifyKindSync } from "@mailwoman/kind-classifier/classify"
 import { scoreBareToponym, scoreNearMe, scoreRoutePair } from "@mailwoman/kind-classifier/intent-rules"
-import type { NormalizedInputLite, QueryKind, QueryShapeLike } from "@mailwoman/kind-classifier/types"
-import { computeQueryShape } from "@mailwoman/query-shape"
+import {
+	computeQueryShape,
+	type NormalizedInputLite,
+	type QueryShapeSegmentsView as QueryShapeLike,
+} from "@mailwoman/query-shape"
 import { describe, expect, test } from "vitest"
 
 function shapeOf(text: string): { input: NormalizedInputLite; shape: QueryShapeLike } {

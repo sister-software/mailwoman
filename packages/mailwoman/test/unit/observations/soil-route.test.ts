@@ -20,7 +20,7 @@
 import type { AddressNode } from "@mailwoman/core/decoder"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { QueryKind } from "@mailwoman/core/pipeline"
-import type { Resolver } from "@mailwoman/resolver"
+import type { Resolver } from "@mailwoman/core/resolver"
 import { buildSoilDatabase } from "@mailwoman/soil/sdk/build-soil"
 import {
 	FIXTURE_ORIGIN,

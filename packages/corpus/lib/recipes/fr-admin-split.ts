@@ -33,10 +33,11 @@
 import { departementForCodePostal } from "@mailwoman/codex/fr"
 import { tempRootPath } from "@mailwoman/core/data-root"
 import type { ComponentTag } from "@mailwoman/core/types"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { CSVSpliterator, Delimiters } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
-import { makeMulberry32, type CorpusRecipe } from "#recipes/scaffold"
+import type { CorpusRecipe } from "#recipes/scaffold"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 

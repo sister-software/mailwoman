@@ -15,15 +15,7 @@
  *   See `docs/engineering/reference/STAGES.md` § Stage 2 for the contract.
  */
 
-export { detectLocale, detectLocaleSync } from "#detect"
+export { detectLocale } from "#detect"
 export { scoreByPostcode, scoreByScript, scoreFallback } from "#rules"
 export type { LocaleCandidate } from "#rules"
-
-export type {
-	DetectLocaleOpts,
-	LocaleHint,
-	LocaleTag,
-	MachinePreferences,
-	NormalizedInputLite,
-	QueryShapeLike,
-} from "#types"
+export type { DetectLocaleOpts } from "#types"

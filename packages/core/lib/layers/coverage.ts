@@ -5,8 +5,9 @@
  * @file Coverage rows and the area check shared by the polygon-layer builders.
  */
 
-import { supportsExclusion, type CoverageCell } from "#layers/manifest"
-import { CoverageBasis } from "#layers/schema"
+import { supportsExclusion, CoverageBasis } from "@mailwoman/evidence"
+
+import type { CoverageCell } from "#layers/manifest"
 
 /**
  * The coverage rows for a layer whose coverage is `source_present`: one per cell the authority's own polygons reach,

@@ -10,16 +10,16 @@ import { errorMessage } from "@mailwoman/core/errors/schema"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { PolicyMode } from "@mailwoman/core/policy"
+import type { Resolver } from "@mailwoman/core/resolver"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { percentile } from "@mailwoman/core/stats"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
 import type { ScriptRoutedClassifier } from "@mailwoman/neural"
 import { weightsPackageName } from "@mailwoman/neural/weights"
-import type { Resolver } from "@mailwoman/resolver"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
 import type React from "react"
 
 import {
-	CommandError,
 	type CommandSpec,
 	CommandTaskResult,
 	loadClassifierTolerant,

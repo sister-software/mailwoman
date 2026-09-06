@@ -16,8 +16,8 @@
  *   a second zoned area. Every case below arrives in that shape.
  */
 
+import { pointInEncodedRings, encodeRings, ringAreaReadings, ringSignedAreaM2 } from "@mailwoman/spatial"
 import { resolveRingRoles } from "@mailwoman/zoning/ring-roles"
-import { pointInEncodedRings, encodeRings, ringAreaReadings, ringSignedAreaM2 } from "@mailwoman/zoning/rings"
 import { exteriorRing, holeRing } from "@mailwoman/zoning/test-kit"
 import { describe, expect, it } from "vitest"
 

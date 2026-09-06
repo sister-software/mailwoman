@@ -93,7 +93,6 @@ export interface CompiledGeographicModel {
  * `String.prototype.localeCompare` is the trap this exists to avoid — its answer depends on the machine's collation, so
  * an artifact ordered with it is reproducible only on the machine that built it.
  */
-export { compareByCodePoint as compareIdentifiers } from "@mailwoman/core/strings/compare"
 
 /**
  * Rebuild `value` with every object's keys in code-point order, at every depth. Arrays keep their order — ordering

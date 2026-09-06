@@ -39,13 +39,13 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { copyPath, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { Text } from "ink"
 import { resolvePath } from "path-ts"
 
 import {
 	type Check,
 	CheckList,
-	CommandError,
 	type CommandSpec,
 	CommandTaskResult,
 	type ParsedCommandComponent,

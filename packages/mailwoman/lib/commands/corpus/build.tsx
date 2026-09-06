@@ -14,18 +14,13 @@
  *   the CLI handles partial builds during development.
  */
 
+import { CommandError } from "@mailwoman/core/scripting/command"
 import type { BuildStage } from "@mailwoman/corpus"
 import type { AdapterOptions } from "@mailwoman/corpus/types"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
-import {
-	CommandError,
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * `--inputs` accepts either:

@@ -30,7 +30,7 @@ import {
 import type { AddressNode } from "@mailwoman/core/decoder"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { QueryKind } from "@mailwoman/core/pipeline"
-import type { Resolver } from "@mailwoman/resolver"
+import type { Resolver } from "@mailwoman/core/resolver"
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode"
 import { createCoastalErosionRoute, describeCoastalErosion } from "mailwoman/observations"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"

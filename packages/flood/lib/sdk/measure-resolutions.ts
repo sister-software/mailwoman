@@ -18,8 +18,9 @@
  */
 
 import type { ResolutionMeasurementOptions } from "@mailwoman/core/layers"
+import { classifyFeatureCells } from "@mailwoman/spatial"
 
-import { classifyFeatureCells, FloodCellIndex, type CellIndexMeasurement } from "#sdk/cells"
+import { FloodCellIndex, type CellIndexMeasurement } from "#sdk/cells"
 import { readFloodSourceFeatures, readFloodSourceIdentity, type FloodIngestOptions } from "#sdk/ingest"
 
 export interface MeasureResolutionsOptions extends FloodIngestOptions, ResolutionMeasurementOptions {}

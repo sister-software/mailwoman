@@ -7,8 +7,10 @@
  *   {@link synthesizeStreetRow} → aligned LabeledRow. Ported from scripts/build-street-slice.mjs.
  */
 
+import { makeLcg } from "@mailwoman/core/utils"
+
 import { stableSourceID } from "#adapters/utils"
-import { alignAndWrite, makeLcg, readTuples, type CorpusRecipe } from "#recipes/scaffold"
+import { alignAndWrite, readTuples, type CorpusRecipe } from "#recipes/scaffold"
 import { synthesizeStreetRow, type StreetBaseTuple } from "#synthesizers/street"
 
 /**

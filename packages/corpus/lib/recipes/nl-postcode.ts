@@ -18,7 +18,9 @@
  *   keep polarity balanced (the v1.9.9 lesson).
  */
 
-import { alignAndWrite, makeMulberry32, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+
+import { alignAndWrite, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
 
 /**
  * "1012LG" → "1012 LG". The tuples carry the unspaced OA form; the spaced form is the failing case.

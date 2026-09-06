@@ -29,10 +29,11 @@ import {
 	type CountryCoverageFact,
 	type GazetteerArtifactCoverage,
 } from "@mailwoman/core/resolver"
+import { allRows } from "@mailwoman/core/utils"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql, type Kysely } from "kysely"
 
-import { allRows, hasTable } from "#sqlite-utils"
+import { hasTable } from "#sqlite-utils"
 
 /**
  * One country's hard-filter coverage measurement — the storage form of {@link CountryCoverageFact}.

@@ -12,7 +12,8 @@
  *   happened to return rows. Four routes writing the same mapping is four places for one to drop the basis.
  */
 
-import type { CoverageBasis, LayerManifest } from "@mailwoman/core/layers"
+import type { LayerManifest } from "@mailwoman/core/layers"
+import type { CoverageBasis } from "@mailwoman/evidence"
 
 /**
  * Which artifact answered, and on what terms. Everything a reader needs to go and check the claim.

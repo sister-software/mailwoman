@@ -30,15 +30,15 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { isPresent } from "@mailwoman/core/objects"
 import type { ComponentTag } from "@mailwoman/core/types"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { join, type PathBuilderLike } from "path-ts"
 
 import { decomposeFrStreet } from "#adapters/ban/street-decompose"
 import { stableSourceID } from "#adapters/utils"
-import { makeMulberry32, type CorpusRecipe } from "#recipes/scaffold"
+import type { CorpusRecipe } from "#recipes/scaffold"
 import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
-
 /**
  * Matches the `ban` adapter's Tier-B election for BAN data.
  */

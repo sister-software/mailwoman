@@ -38,8 +38,6 @@ import { EA_DECLARED_BBOX, EA_FLOOD_LAYER, EA_SOURCE_EPSG } from "#vocabulary"
  * The ring types, and the PROJ guard, both re-exported from `@mailwoman/spatial`: neither is flood-specific, and a
  * second copy of the `projinfo` parse would be a second place for the ballpark check to stop refusing.
  */
-export { assessDatumTransformation, type DatumTransformationVerdict } from "@mailwoman/spatial/projection-transform"
-export type { MultiPolygonRings, PolygonRings } from "@mailwoman/spatial"
 
 /**
  * One source feature, reprojected to WGS84.

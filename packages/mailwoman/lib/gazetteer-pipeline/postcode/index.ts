@@ -14,6 +14,7 @@
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { resolveWOFRepo, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
+import { dataRootPath } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -28,7 +29,6 @@ import {
 	parseGeonamesCentroids,
 	parseZCTACentroids,
 } from "#gazetteer-pipeline/postcode/zcta-centroids"
-import { dataRootPath } from "#resolver-backend"
 
 export interface BuildPostcodeDatabaseOptions {
 	/**

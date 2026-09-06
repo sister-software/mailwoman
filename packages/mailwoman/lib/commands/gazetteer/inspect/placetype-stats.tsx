@@ -13,19 +13,13 @@
  *   chain. Read-only. The `--json` payload is shaped to feed an "effective placetype" soft-prior later.
  */
 
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 
-import {
-	CommandError,
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
-
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 /**
  * Row count below which a trained placetype is flagged as thin relative to its peers.
  */

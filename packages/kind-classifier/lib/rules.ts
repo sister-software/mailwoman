@@ -11,9 +11,7 @@
  */
 
 import { NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us/street-suffix"
-
-import type { NormalizedInputLite, QueryShapeLike } from "#types"
-
+import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
 /**
  * Longest input still plausible as a bare venue or landmark name. Beyond it the query is carrying an address as well,
  * and belongs to the structured-address scorer.

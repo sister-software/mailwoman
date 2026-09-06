@@ -14,8 +14,8 @@
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder/types"
 import type { ComponentTag } from "@mailwoman/core/types/component"
-import { runCascade } from "@mailwoman/docs/shared/demo-helpers"
 import type { MailwomanLookupLike } from "@mailwoman/docs/shared/resources"
+import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { describe, expect, test, vi } from "vitest"
 
 type FindPlaceQuery = Parameters<MailwomanLookupLike["findPlace"]>[0]

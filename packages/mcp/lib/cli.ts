@@ -49,26 +49,23 @@
  */
 
 import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
+import type { PipelineResult } from "@mailwoman/core"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
+import type { Resolver } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { mailwomanDataRoot, wofExtractPaths } from "@mailwoman/core/utils"
 import { familyRollup } from "@mailwoman/filer/family-rollup"
 import { filerLookup } from "@mailwoman/filer/filer-lookup"
 import { toFRN, type FRN } from "@mailwoman/filer/frn"
 import { NeuralAddressClassifier, type ScriptRoutedClassifier } from "@mailwoman/neural"
 import { getPOICategory } from "@mailwoman/poi-taxonomy"
-import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
+import { emitOverpassQL } from "@mailwoman/poi-taxonomy/overpass"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { createRuntimePipeline, type PipelineResult } from "mailwoman"
+import { createRuntimePipeline } from "mailwoman"
 import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
-import { emitOverpassQL } from "mailwoman/poi"
-import {
-	buildNoGazetteerMessage,
-	createResolverBackend,
-	mailwomanDataRoot,
-	resolveCandidateDBPath,
-	wofExtractPaths,
-} from "mailwoman/resolver-backend"
+import { buildNoGazetteerMessage, createResolverBackend, resolveCandidateDBPath } from "mailwoman/resolver-backend"
 
 import {
 	assertBDCDatabaseExists,

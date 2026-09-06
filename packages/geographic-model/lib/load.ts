@@ -28,9 +28,9 @@
 
 import { readDirectoryEntries, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { isPlainObject } from "@mailwoman/core/objects"
+import { compareByCodePoint as compareIdentifiers } from "@mailwoman/core/strings/compare"
 import { resolvePath } from "path-ts"
 
-import { compareIdentifiers } from "#artifact"
 import type { GeographicModelDocument } from "#schema"
 import { validateGeographicModelDocument } from "#validate"
 import {
@@ -41,7 +41,6 @@ import {
 	type ValidationIssue,
 	ValidationIssueCode,
 } from "#validation-issues"
-
 /**
  * The manifest every model directory carries: the document's `version`, and nothing else.
  */

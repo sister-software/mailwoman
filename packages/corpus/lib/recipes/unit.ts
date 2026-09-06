@@ -24,14 +24,14 @@
 import { US_UNIT_DESIGNATOR_PREFERRED_ABBR, type USUnitDesignator } from "@mailwoman/codex/us"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import type { ComponentTag } from "@mailwoman/core/types"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
-import { makeMulberry32, readOATuples, type CorpusRecipe } from "#recipes/scaffold"
+import { readOATuples, type CorpusRecipe } from "#recipes/scaffold"
 import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
-
 /**
  * A cached OpenAddresses extract: the zip, the CSV member, and the implied (file-level) region.
  */

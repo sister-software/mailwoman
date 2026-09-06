@@ -11,11 +11,11 @@
  */
 
 import { ProgressBar } from "@inkjs/ui"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
 import {
-	CommandError,
 	type CommandSpec,
 	CommandTaskResult,
 	type ParsedCommandComponent,

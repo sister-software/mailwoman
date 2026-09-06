@@ -30,8 +30,8 @@ import {
 	AuthoritativeResponseStatus,
 	createFixtureAuthoritativeProvider,
 	fixtureExactMatch,
+	type Resolver,
 } from "@mailwoman/core/resolver"
-import type { Resolver } from "@mailwoman/resolver"
 
 import { type PremiseLinkageInputRow, PremiseLinkageInputShapeClass } from "#eval-harness/premise-linkage/schema"
 import type { GeocodeClassifier, GeocodeDeps } from "#geocode/core"

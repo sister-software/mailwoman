@@ -8,18 +8,17 @@ import {
 	COVERAGE_INSERT_BATCH,
 	readLayerCoverage,
 	readLayerManifest,
-	supportsExclusion,
 	writeLayerCoverage,
 	writeLayerManifest,
 	type CoverageCell,
 	type LayerManifest,
 } from "@mailwoman/core/layers/manifest"
 import {
-	CoverageBasis,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers/schema"
+import { supportsExclusion, CoverageBasis } from "@mailwoman/evidence"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 import { describe, expect, it } from "vitest"

@@ -8,10 +8,10 @@
  *   corrupted layer fails loudly at open time rather than misbehaving downstream.
  */
 
-import { supportsExclusion } from "@mailwoman/evidence"
+import { supportsExclusion, CoverageBasis } from "@mailwoman/evidence"
 
 import { parseJSONStrict } from "#json"
-import { CoverageBasis, LayerFreshnessPolicy, LayerTier, type LayerContractHandle } from "#layers/schema"
+import { LayerFreshnessPolicy, LayerTier, type LayerContractHandle } from "#layers/schema"
 import { assertAdmissibleLicenseExpression } from "#license/obligations"
 
 /**
@@ -69,8 +69,6 @@ export interface CoverageCell {
 	basis?: CoverageBasis
 	observedRows: number
 }
-
-export { requireExclusionBasis, supportsExclusion } from "@mailwoman/evidence"
 
 const BASES = new Set<string>(Object.values(CoverageBasis))
 

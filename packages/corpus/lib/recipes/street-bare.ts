@@ -17,7 +17,9 @@
  *   reproduces the legacy run byte-for-byte.
  */
 
-import { makeMulberry32, sliceSourceID, type CanonicalSliceRow, type CorpusRecipe } from "#recipes/scaffold"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+
+import { sliceSourceID, type CanonicalSliceRow, type CorpusRecipe } from "#recipes/scaffold"
 import { DEFAULT_US_BASES } from "#synthesizers/intersection"
 import { synthesizeStreetRow, type StreetBaseTuple } from "#synthesizers/street"
 import { alignRow } from "#utils"

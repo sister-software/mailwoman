@@ -40,6 +40,7 @@ import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { streamToDisk } from "@mailwoman/core/utils"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Text } from "ink"
@@ -48,7 +49,6 @@ import { basename, dirname, resolvePath } from "path-ts"
 import {
 	type Check,
 	CheckList,
-	CommandError,
 	type CommandSpec,
 	CommandTaskResult,
 	type ParsedCommandComponent,

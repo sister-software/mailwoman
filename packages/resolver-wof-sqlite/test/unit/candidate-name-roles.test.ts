@@ -13,6 +13,7 @@
  *   does not speak. Both stamp non-primary rows only.
  */
 
+import { allRows } from "@mailwoman/core/utils"
 import {
 	CANDIDATE_COLUMNS,
 	type CandidateDatabase,
@@ -21,7 +22,6 @@ import {
 import { GLOSS_EXCLUDED_PLACETYPES, stampNameRoles } from "@mailwoman/resolver-wof-sqlite/candidate/name-roles"
 import type { PlaceAttrs } from "@mailwoman/resolver-wof-sqlite/candidate/place-attrs"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
-import { allRows } from "@mailwoman/resolver-wof-sqlite/sqlite-utils"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"

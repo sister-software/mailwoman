@@ -28,8 +28,7 @@
 
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
-import { referentialFromPopulation } from "@mailwoman/core/resolver"
-import { expandPlacetypeFilter } from "@mailwoman/resolver"
+import { referentialFromPopulation, expandPlacetypeFilter } from "@mailwoman/core/resolver"
 // The SHARED candidate schema (build-candidate.ts writes it; the Node WOFCandidateTableLookup reads it
 // too) — so this browser reader's row accesses are type-checked against the same column contract.
 import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate-schema"

@@ -10,7 +10,7 @@
  *   six words; the difference in the artifact is 3.4 metres over every coordinate in England.
  */
 
-import { assessDatumTransformation } from "@mailwoman/flood/sdk/ingest"
+import { assessDatumTransformation } from "@mailwoman/spatial/projection-transform"
 import { describe, expect, it } from "vitest"
 
 /**

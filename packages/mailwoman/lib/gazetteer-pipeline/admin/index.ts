@@ -18,7 +18,7 @@ import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { removePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { repoRootPath } from "@mailwoman/core/paths"
-import { isoDate } from "@mailwoman/core/utils"
+import { isoDate, dataRootPath } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -42,7 +42,6 @@ import { buildFTS, type BuildFTSResult } from "#gazetteer-pipeline/fts"
 import { checkOvertureRelease } from "#gazetteer-pipeline/overture-release"
 import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
 import { loadDefaultBaseline, verifyAdmin, verifyReversePanel, type VerifyResult } from "#gazetteer-pipeline/verify"
-import { dataRootPath } from "#resolver-backend"
 
 export interface BuildAdminOptions {
 	/**

@@ -12,7 +12,6 @@ import { hasColumn as columnExists, tableExists } from "@mailwoman/sqlite/intros
 
 // The row-shape assertion itself lives in `core` so the readers that cannot depend on this package reach the same
 // helper; re-exported here because this module is where this package's readers already look for it.
-export { allRows, getRow } from "@mailwoman/core/utils"
 
 /**
  * A prepared single-row query whose parameter tuple remains visible to TypeScript. `StatementSync` accepts only the

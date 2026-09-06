@@ -71,7 +71,12 @@ export type {
 	SpanProposerConfig,
 } from "#classifier/options"
 
-export { ScriptRoutedClassifier, scriptFamilyForText, type ScriptRoutedClassifierOpts } from "#classifier/script-router"
+export {
+	type RoutableClassifier,
+	ScriptRoutedClassifier,
+	scriptFamilyForText,
+	type ScriptRoutedClassifierOpts,
+} from "#classifier/script-router"
 
 /**
  * Structural type the classifier needs from a runner. Lets callers swap the Node-side `ONNXRunner` for a browser-side

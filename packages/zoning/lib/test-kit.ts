@@ -26,9 +26,13 @@
  *   fixture stays in the coordinate space the product occupies, and clear of every real zoning polygon.
  */
 
-import { rectangleRing as counterClockwiseRing, reversedRing as clockwiseRing } from "@mailwoman/spatial"
+import {
+	rectangleRing as counterClockwiseRing,
+	reversedRing as clockwiseRing,
+	type MultiPolygonRings,
+} from "@mailwoman/spatial"
 
-import { resolveRingRoles, type MultiPolygonRings } from "#rings"
+import { resolveRingRoles } from "#rings"
 import type { ZoningFeatureSource, ZoningSourceFeature } from "#sdk/ingest"
 import { GZT_SOURCE_EPSG, GZT_UNZONED_LOCAL_CODE } from "#vocabulary"
 

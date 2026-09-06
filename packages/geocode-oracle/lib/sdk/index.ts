@@ -13,8 +13,6 @@
 // put theirs. Those are one client per package, so the convenience re-export cannot collide; this
 // package holds two, and `export *` over two modules that both re-export `ResourceError` makes the
 // name ambiguous and drops it from the barrel entirely — silently.
-export { isTransientResourceError } from "@mailwoman/core/api"
-export { ResourceError } from "@mailwoman/core/errors"
 
 export * from "#sdk/census-client"
 export * from "#sdk/census-parser"

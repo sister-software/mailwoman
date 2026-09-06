@@ -37,16 +37,16 @@ import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { pathExists, tryStat } from "@mailwoman/core/fs/readers"
 import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { spawnProcessSync } from "@mailwoman/core/process"
-import { resolvePath } from "path-ts"
-
-import { $public } from "#env/index"
-import { derivedStoreServeViolation, derivedWeightsDir, derivedWeightsKey } from "#weights/derived-weights-key"
 import {
 	type PairIndexInputs,
 	readReleaseConfig,
 	repoCommittedSoftFeedSources,
 	type SoftFeedRecipe,
-} from "#weights/weights-recipe"
+} from "@mailwoman/core/release-config"
+import { resolvePath } from "path-ts"
+
+import { $public } from "#env/index"
+import { derivedStoreServeViolation, derivedWeightsDir, derivedWeightsKey } from "#weights/derived-weights-key"
 
 export interface CopyWeightsOptions {
 	/**

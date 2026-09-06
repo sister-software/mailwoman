@@ -41,8 +41,6 @@ import { createPacedCachedClient, type CreatePacedCachedClientOptions } from "@m
 import { NCERM_ATTRIBUTION, NCERM_CATALOGUE_PACKAGE_ID, NCERM_DATASET_ID, NCERM_SERVICE_SLUG } from "#vocabulary"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.
-export { isTransientResourceError } from "@mailwoman/core/api"
-export { ResourceError } from "@mailwoman/core/errors"
 
 /**
  * The EA's spatial-data service root for NCERM. Built on the MISSPELLED slug — see this file's header.
@@ -58,7 +56,6 @@ export const EA_CSW_URL = "https://environment.data.gov.uk/discover/ea/csw"
 /**
  * The catalogue API the data.gov.uk entry is read from.
  */
-export { CKAN_CATALOGUE_API_BASE_URL as CATALOGUE_API_BASE_URL } from "@mailwoman/core/api"
 
 /**
  * Minimum spacing between EA requests, in milliseconds.

@@ -9,17 +9,21 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { type NeuralAddressClassifier, ScriptRoutedClassifier, scriptFamilyForText } from "@mailwoman/neural"
+import { type ParseOpts, type RoutableClassifier, ScriptRoutedClassifier, scriptFamilyForText } from "@mailwoman/neural"
 import { describe, expect, it, vi } from "vitest"
 
-function stubClassifier(name: string, encoder: "sentencepiece" | "char"): NeuralAddressClassifier {
+function stubClassifier(name: string, encoder: "sentencepiece" | "char") {
 	const tree = (raw: string): AddressTree => ({ raw, roots: [] })
 
 	return {
 		encoder,
-		parse: vi.fn(async (text: string) => tree(`${name}:${text}`)),
-		traceParse: vi.fn(async (text: string) => ({ name, text })),
-	} as unknown as NeuralAddressClassifier
+		parse: vi.fn(async (text: string): Promise<AddressTree> => tree(`${name}:${text}`)),
+		traceParse: vi.fn<RoutableClassifier["traceParse"]>(),
+		fstPath: undefined,
+		streetMorphologyPath: undefined,
+		resolvedWeights: undefined,
+		spanGrammar: undefined,
+	} satisfies RoutableClassifier
 }
 
 describe("scriptFamilyForText", () => {
@@ -95,13 +99,12 @@ describe("ScriptRoutedClassifier", () => {
 		const primary = stubClassifier("latin", "sentencepiece")
 		const family = stubClassifier("cjk", "char")
 		const routed = new ScriptRoutedClassifier({ primary, loadFamily: async () => family })
-		const fst = { kind: "fst" }
-		const opts = { postcodeRepair: true, fst, fstStreetMorphology: { kind: "morph" } } as never
+		const opts: ParseOpts = { postcodeRepair: true, fstStreetMorphologyOpts: { biasScale: 2 } }
 
 		await routed.parse("富山県中新川郡上市町大岩148-7", opts)
 		await routed.parse("1 Riverlight Quay, Nine Elms Lane, London SW11 8AY", opts)
 
-		expect(vi.mocked(family.parse).mock.calls[0]?.[1]).toEqual({ postcodeRepair: true })
-		expect(vi.mocked(primary.parse).mock.calls[0]?.[1]).toBe(opts)
+		expect(family.parse.mock.calls[0]?.[1]).toEqual({ postcodeRepair: true })
+		expect(primary.parse.mock.calls[0]?.[1]).toBe(opts)
 	})
 })

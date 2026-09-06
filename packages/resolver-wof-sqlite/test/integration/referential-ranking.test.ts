@@ -28,8 +28,8 @@
  *   this is where it would show.
  */
 
+import { referentialFromPopulation } from "@mailwoman/core/resolver"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
-import { referentialFromPopulation } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, describe, expect, it } from "vitest"

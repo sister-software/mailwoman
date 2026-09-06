@@ -14,7 +14,6 @@ import { statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import {
-	CoverageBasis,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	LayerFreshnessPolicy,
@@ -25,6 +24,7 @@ import {
 	writeLayerManifest,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
+import { CoverageBasis } from "@mailwoman/evidence"
 import { NSUL_COVERAGE_H3_RESOLUTION, NSULLookup } from "@mailwoman/resolver-wof-sqlite/nsul"
 import { createUPRNTable, uprnFullCell, uprnH3Cell, type UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"

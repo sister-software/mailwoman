@@ -7,13 +7,15 @@
  *   the adaptive resolution that keeps a continental polygon inside h3's allocator.
  */
 
+import { FIXTURE_ORIGIN } from "@mailwoman/flood/test-kit"
 import {
 	classifyFeatureCells,
 	estimateCellCount,
 	resolutionForFeature,
 	CELL_ESTIMATE_BUDGET,
-} from "@mailwoman/flood/sdk/cells"
-import { FIXTURE_ORIGIN, holeRing, rectangleRing } from "@mailwoman/flood/test-kit"
+	reversedRing as holeRing,
+	rectangleRing,
+} from "@mailwoman/spatial"
 import { POLYGON_TO_CELLS_FLAGS, polygonToCells, polygonToCellsExperimental } from "h3-js"
 import { describe, expect, it } from "vitest"
 

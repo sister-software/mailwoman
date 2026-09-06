@@ -109,7 +109,7 @@ const GazetteerBuildPOICoverage: ParsedCommandComponent<Options> = ({ options })
 
 		const { buildPOIDatabase } = await import("#gazetteer-pipeline/poi/build-poi")
 		const { buildExclusionCoverage } = await import("#gazetteer-pipeline/poi/exclusion-coverage")
-		const { geometryBBox } = await import("#gazetteer-pipeline/poi/coverage-region")
+		const { geometryBBox } = await import("@mailwoman/spatial")
 		const { readReferenceInventory } = await import("#gazetteer-pipeline/poi/reference-inventory")
 
 		const category = getPOICategory(options.category)

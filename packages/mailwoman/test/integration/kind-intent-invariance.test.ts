@@ -38,7 +38,7 @@
  *   displaced an incumbent, which is the exact thing it exists to forbid.
  */
 
-import { deriveInputMode } from "@mailwoman/core/pipeline"
+import { deriveInputMode, type QueryKind, type QueryKindResult } from "@mailwoman/core/pipeline"
 import {
 	classifyKindSync,
 	createKindClassifier,
@@ -51,8 +51,11 @@ import {
 	scoreVague,
 	scoreVenueLandmark,
 } from "@mailwoman/kind-classifier"
-import type { NormalizedInputLite, QueryKind, QueryKindResult, QueryShapeLike } from "@mailwoman/kind-classifier"
-import { computeQueryShape } from "@mailwoman/query-shape"
+import {
+	computeQueryShape,
+	type NormalizedInputLite,
+	type QueryShapeSegmentsView as QueryShapeLike,
+} from "@mailwoman/query-shape"
 import { loadRegressionCases } from "mailwoman/eval-harness/gauntlet/cases/load"
 import { poiTaxonomyLookup } from "mailwoman/poi"
 import { beforeAll, describe, expect, test } from "vitest"

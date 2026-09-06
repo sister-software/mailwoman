@@ -40,8 +40,6 @@ import { isoDate } from "@mailwoman/core/utils"
 import { GZT_ATTRIBUTION, GZT_ITEM_ID, GZT_SERVICE_URL, GZT_SOURCE_EPSG } from "#vocabulary"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.
-export { isTransientResourceError } from "@mailwoman/core/api"
-export { ResourceError } from "@mailwoman/core/errors"
 
 /**
  * The ArcGIS Online sharing API, where the item's licence and attribution fields are readable.

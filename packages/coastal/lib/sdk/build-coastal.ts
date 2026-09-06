@@ -39,7 +39,6 @@ import {
 	areaAgreementFrom,
 	assertAreaAgreement,
 	assertNoNegativeClaim as assertCoverageNoNegativeClaim,
-	CoverageBasis,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	polygonLayerManifest,
@@ -51,6 +50,7 @@ import {
 } from "@mailwoman/core/layers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { ingestChunkArguments, mergeCountsInto, runChunkProcess } from "@mailwoman/core/utils"
+import { CoverageBasis } from "@mailwoman/evidence"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildSealedArtifact } from "@mailwoman/sqlite/sealed-build"
 
@@ -72,7 +72,6 @@ import {
 	NCERM_SCENARIOS_BY_KEY,
 	NCERM_DATASET_URL,
 } from "#vocabulary"
-
 /**
  * Schema version of the domain tables. Bumped when a column changes meaning, never for an added column a reader can
  * ignore.

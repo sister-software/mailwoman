@@ -14,8 +14,9 @@
  *   cycle (the lesson); canonical and city-first keep the polarity balanced (the v1.9.9 lesson).
  */
 
-import { alignAndWrite, makeMulberry32, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
+import { alignAndWrite, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
 /**
  * The order-cycle slot for the STREET-LESS form (`«city» «pc», Česko`) — the exact surface of the
  * `cz-full-praha-100-00` board row, whose absence from the street-bearing orders was the v4.5.0 no-promote's measured

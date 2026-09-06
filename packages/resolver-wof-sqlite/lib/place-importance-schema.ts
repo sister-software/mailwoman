@@ -32,10 +32,9 @@
  */
 
 import { referentialFromPopulation } from "@mailwoman/core/resolver"
+import { allRows } from "@mailwoman/core/utils"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { Kysely } from "kysely"
-
-import { allRows } from "#sqlite-utils"
 
 //#region Schema
 
@@ -106,13 +105,6 @@ export async function createPlaceImportanceTable(db: Kysely<PlaceImportanceDatab
  * (backend-agnostic — it cannot import this package) reads the same number. Re-exported HERE so the schema module stays
  * the one-stop read for the table: the column and the function that fills it are one hop apart.
  */
-export {
-	compareReferential,
-	REFERENTIAL_LOG2_SCALE,
-	REFERENTIAL_POPULATION_DIVISOR,
-	REFERENTIAL_SATURATION_POPULATION,
-	referentialFromPopulation,
-} from "@mailwoman/core/resolver"
 
 //#endregion
 

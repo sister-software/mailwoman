@@ -27,11 +27,11 @@
 
 import { Spinner } from "@inkjs/ui"
 import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
-import type { Resolver } from "@mailwoman/resolver"
+import type { Resolver } from "@mailwoman/core/resolver"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { Text } from "ink"
 
 import {
-	CommandError,
 	type CommandSpec,
 	CommandTaskResult,
 	loadClassifierTolerant,
@@ -130,7 +130,7 @@ function formatSubject(subject: POIIntent["subject"]): string {
  * Resolve the OverpassQL block, or a clear message when a category subject has no osmTag mapping.
  */
 async function formatOverpassBlock(intent: POIIntent): Promise<string> {
-	const { emitOverpassQL } = await import("#poi/overpass")
+	const { emitOverpassQL } = await import("@mailwoman/poi-taxonomy/overpass")
 
 	if (intent.subject.kind === "category") {
 		const { getPOICategory } = await import("@mailwoman/poi-taxonomy")

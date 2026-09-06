@@ -23,6 +23,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { CommandError } from "@mailwoman/core/scripting/command"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman; its runtime value `BUILTIN_STRATEGY_NAMES`
 // is imported DYNAMICALLY inside the command (the gazetteer-pipeline convention) so merely loading the
 // commands (e.g. `mailwoman --help`) doesn't fault when the peer is absent. `Convention` is type-only.
@@ -35,13 +36,7 @@ import {
 import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
 
-import {
-	CommandError,
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.

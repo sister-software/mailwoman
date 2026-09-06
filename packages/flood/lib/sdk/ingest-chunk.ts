@@ -20,12 +20,18 @@
  *   concurrent writer and no locking to reason about.
  */
 
-import { addCoverageCells, encodeRings, ringAreaReadings, ringsBoundingBox, shortCellToInt } from "@mailwoman/spatial"
+import {
+	addCoverageCells,
+	encodeRings,
+	ringAreaReadings,
+	ringsBoundingBox,
+	shortCellToInt,
+	classifyFeatureCells,
+} from "@mailwoman/spatial"
 import { beginBatched } from "@mailwoman/sqlite/batched"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { FloodDatabase } from "#schema"
-import { classifyFeatureCells } from "#sdk/cells"
 import type { FloodFeatureSource } from "#sdk/ingest"
 import { EA_FLOOD_ZONE_CODES } from "#vocabulary"
 

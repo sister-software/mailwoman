@@ -16,6 +16,9 @@
  *   inform the markers without moving the routing decision.
  */
 
+import type { LocaleHint, QueryIntentMarker, QueryKind, QueryKindResult } from "@mailwoman/core/pipeline"
+import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
+
 import { deriveIntentMarkers } from "#intent-markers"
 import { scoreBareToponym, scoreNearMe, scoreRoutePair } from "#intent-rules"
 import { createScorePOICategory, createScorePOIQuery, type POIPhraseLookup } from "#poi"
@@ -29,14 +32,6 @@ import {
 	scoreVague,
 	scoreVenueLandmark,
 } from "#rules"
-import type {
-	LocaleHint,
-	NormalizedInputLite,
-	QueryIntentMarker,
-	QueryKind,
-	QueryKindResult,
-	QueryShapeLike,
-} from "#types"
 
 interface KindScorer {
 	kind: QueryKind

@@ -59,7 +59,6 @@ import { listZipEntries, readZipEntry } from "@mailwoman/core/fs/zip"
 import { md5File } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import {
-	CoverageBasis,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	LayerFreshnessPolicy,
@@ -68,6 +67,7 @@ import {
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
+import { CoverageBasis } from "@mailwoman/evidence"
 import type { NSULDatabase } from "@mailwoman/resolver-wof-sqlite/nsul"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn"
 import { expandShortCellInt, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
@@ -78,7 +78,6 @@ import { dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { UNKNOWN_PROVENANCE } from "#gazetteer-pipeline/database-lifecycle"
-
 /**
  * SPDX id for the Open Government Licence v3.0 — the `layer_manifest.license` form.
  */

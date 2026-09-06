@@ -13,7 +13,7 @@
  *   files; for a static deploy, copy them into the public bundle and pass the resulting URLs.
  */
 
-import { detectLocaleSync } from "@mailwoman/locale-hint"
+import { detectLocale } from "@mailwoman/locale-hint"
 import { computeQueryShape } from "@mailwoman/query-shape"
 
 import { type AnchorLookup, mergeAnchorLookups } from "#anchor-inference"
@@ -318,7 +318,7 @@ async function loadPairIndexes(urls: readonly string[], fetchImpl: typeof fetch)
 /**
  * Detect the placetype-pair country subtag for one input from its STRUCTURAL shape (#1278 phase 2). Runs the two
  * browser-safe Stage-2 modules the runtime pipeline uses — `@mailwoman/query-shape`'s `computeQueryShape` then
- * `@mailwoman/locale-hint`'s `detectLocaleSync` — and reduces the resulting `LocaleHint.locale` (e.g. "en-GB") to its
+ * `@mailwoman/locale-hint`'s `detectLocale` — and reduces the resulting `LocaleHint.locale` (e.g. "en-GB") to its
  * country subtag ("gb") via {@link resolvePairIndexCountry}.
  *
  * The detection is bitter-lesson-safe by construction: locale-hint keys ONLY off universal cues (postcode format,
@@ -328,7 +328,7 @@ async function loadPairIndexes(urls: readonly string[], fetchImpl: typeof fetch)
  */
 export function detectPairIndexCountry(text: string): string {
 	const shape = computeQueryShape(text)
-	const hint = detectLocaleSync({ raw: text, normalized: text }, shape)
+	const hint = detectLocale(shape)
 
 	return resolvePairIndexCountry(hint.locale)
 }

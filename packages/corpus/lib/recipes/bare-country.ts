@@ -18,9 +18,9 @@
  */
 
 import { COUNTRY_SURFACE_FORMS, CountryNames, matchCountry } from "@mailwoman/codex/country"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { alignAndWrite, makeMulberry32, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
-
+import { alignAndWrite, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
 /**
  * Surfaces shorter than this are the code register (`JP`, `GER`), not a name — excluded (see the module doc).
  */

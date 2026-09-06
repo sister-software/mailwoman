@@ -40,15 +40,24 @@ export function scriptFamilyForText(text: string): string | undefined {
 	return candidate ? scriptFamilyBase(candidate.locale) : undefined
 }
 
+/**
+ * What the router reads from a classifier: the parse entries and the weights-package metadata the session forwards. A
+ * `NeuralAddressClassifier` satisfies it; so does a test stub.
+ */
+export type RoutableClassifier = Pick<
+	NeuralAddressClassifier,
+	"encoder" | "parse" | "traceParse" | "fstPath" | "streetMorphologyPath" | "resolvedWeights" | "spanGrammar"
+>
+
 export interface ScriptRoutedClassifierOpts {
 	/**
 	 * The classifier for the locale the caller asked for. Every input reaches it unless its script names a family.
 	 */
-	primary: NeuralAddressClassifier
+	primary: RoutableClassifier
 	/**
 	 * Load the family's classifier (`cjk`). Called once per family; a rejection marks the family unavailable.
 	 */
-	loadFamily: (family: string) => Promise<NeuralAddressClassifier>
+	loadFamily: (family: string) => Promise<RoutableClassifier>
 	/**
 	 * Told once per family whose load failed, with the cause, before the primary answers in its place.
 	 */
@@ -67,10 +76,10 @@ function withoutPrimaryArtifacts(opts: ParseOpts | undefined): ParseOpts | undef
 }
 
 export class ScriptRoutedClassifier {
-	readonly primary: NeuralAddressClassifier
+	readonly primary: RoutableClassifier
 	readonly #loadFamily: ScriptRoutedClassifierOpts["loadFamily"]
 	readonly #onFamilyUnavailable: ScriptRoutedClassifierOpts["onFamilyUnavailable"]
-	readonly #families = new Map<string, Promise<NeuralAddressClassifier>>()
+	readonly #families = new Map<string, Promise<RoutableClassifier>>()
 	readonly #unavailable = new Set<string>()
 
 	constructor(opts: ScriptRoutedClassifierOpts) {
@@ -83,23 +92,23 @@ export class ScriptRoutedClassifier {
 	 * The primary's encoder. A per-input reading is {@link forInput}: the normalizer's postal-mark decision must follow
 	 * the classifier that will run, not the one the process was opened with.
 	 */
-	get encoder(): NeuralAddressClassifier["encoder"] {
+	get encoder(): RoutableClassifier["encoder"] {
 		return this.primary.encoder
 	}
 
-	get fstPath(): NeuralAddressClassifier["fstPath"] {
+	get fstPath(): RoutableClassifier["fstPath"] {
 		return this.primary.fstPath
 	}
 
-	get streetMorphologyPath(): NeuralAddressClassifier["streetMorphologyPath"] {
+	get streetMorphologyPath(): RoutableClassifier["streetMorphologyPath"] {
 		return this.primary.streetMorphologyPath
 	}
 
-	get resolvedWeights(): NeuralAddressClassifier["resolvedWeights"] {
+	get resolvedWeights(): RoutableClassifier["resolvedWeights"] {
 		return this.primary.resolvedWeights
 	}
 
-	get spanGrammar(): NeuralAddressClassifier["spanGrammar"] {
+	get spanGrammar(): RoutableClassifier["spanGrammar"] {
 		return this.primary.spanGrammar
 	}
 
@@ -107,7 +116,7 @@ export class ScriptRoutedClassifier {
 	 * The classifier this text will run on: the family's when the text's script names one the primary cannot read, else
 	 * the primary.
 	 */
-	async forInput(text: string): Promise<NeuralAddressClassifier> {
+	async forInput(text: string): Promise<RoutableClassifier> {
 		const family = scriptFamilyForText(text)
 
 		if (!family || this.primary.encoder === "char" || this.#unavailable.has(family)) {

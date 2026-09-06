@@ -146,7 +146,6 @@ export async function peekFSTStampFields(path: string): Promise<FSTStampFields |
  * Re-exported from `@mailwoman/core/hash`. This package's own test imports it from here, and the sidecar convention
  * below is what it is for.
  */
-export { md5File } from "@mailwoman/core/hash"
 
 /**
  * The source identity an FST build should stamp, or a check should compare against.

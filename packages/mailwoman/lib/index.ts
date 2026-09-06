@@ -4,6 +4,5 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "@mailwoman/core"
 export * from "#runtime-pipeline"
 export * from "#default/placer"

@@ -15,9 +15,11 @@
  *   is false 89.1% of the time (the measured table behind `DECISIVE_MARGIN_LOG10`).
  */
 
+import type { QueryIntentMarker, QueryKind } from "@mailwoman/core/pipeline"
+import type { NormalizedInputLite } from "@mailwoman/query-shape"
+
 import { nearMeSubject } from "#intent-rules"
 import { matchPOICategory, type POIPhraseLookup } from "#poi"
-import type { NormalizedInputLite, QueryIntentMarker, QueryKind } from "#types"
 
 /**
  * Context the marker builder needs beyond the scored kinds.

@@ -23,8 +23,9 @@
  */
 
 import type { ResolutionMeasurementOptions } from "@mailwoman/core/layers"
+import { classifyFeatureCells } from "@mailwoman/spatial"
 
-import { classifyFeatureCells, CoastalCellIndex, type CellIndexMeasurement } from "#sdk/cells"
+import { CoastalCellIndex, type CellIndexMeasurement } from "#sdk/cells"
 import { readCoastalScenarioFeatures, readCoastalSourceIdentity, type CoastalIngestOptions } from "#sdk/ingest"
 import { NCERM_SCENARIOS_BY_KEY } from "#vocabulary"
 

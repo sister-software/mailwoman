@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `detectLocale` — Stage 2 entry point. Composes the per-rule scorers and emits a `LocaleHint`.
+ *   `detectLocale` — Stage 2 entry point. Composes the per-rule scorers over the query shape and emits a `LocaleHint`.
+ *   Synchronous and pure; the runtime pipeline wraps it into the coordinator's async `LocaleDetector` contract.
  *
  *   Caller-hint precedence: when `opts.hint` is provided, it wins at confidence 1.0 with
  *   `source="caller"`. The detector still runs the rules to populate `alternatives` so downstream
@@ -11,17 +12,16 @@
  *   disagreement-detection metrics).
  */
 
+import type { LocaleHint } from "@mailwoman/core/pipeline"
+import type { QueryShapeFormatsView } from "@mailwoman/query-shape"
+
 import { scoreByPostcode, scoreByScript, scoreFallback, type LocaleCandidate } from "#rules"
-import type { DetectLocaleOpts, LocaleHint, NormalizedInputLite, QueryShapeLike } from "#types"
+import type { DetectLocaleOpts } from "#types"
 
 /**
- * Synchronous, pure rule-based implementation. The async wrapper matches the pipeline contract.
+ * The rule-based read of a query shape: script class, then known postcode formats, then the caller's precedence ladder.
  */
-export function detectLocaleSync(
-	_input: NormalizedInputLite,
-	shape: QueryShapeLike,
-	opts: DetectLocaleOpts = {}
-): LocaleHint {
+export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpts = {}): LocaleHint {
 	const scored: LocaleCandidate[] = []
 	const script = scoreByScript(shape)
 
@@ -95,16 +95,4 @@ export function detectLocaleSync(
 		alternatives: deduped.slice(1).map((c) => ({ locale: c.locale, confidence: c.confidence })),
 		source: "detected",
 	}
-}
-
-/**
- * Async variant matching `RuntimePipelineStages.detectLocale`. Wraps the sync impl so the pipeline coordinator can use
- * it as-is.
- */
-export async function detectLocale(
-	input: NormalizedInputLite,
-	shape: QueryShapeLike,
-	opts?: DetectLocaleOpts
-): Promise<LocaleHint> {
-	return detectLocaleSync(input, shape, opts)
 }

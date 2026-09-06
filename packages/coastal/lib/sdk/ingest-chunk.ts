@@ -25,12 +25,18 @@
  *   and no locking to reason about.
  */
 
-import { addCoverageCells, encodeRings, ringAreaReadings, ringsBoundingBox } from "@mailwoman/spatial"
+import {
+	addCoverageCells,
+	encodeRings,
+	ringAreaReadings,
+	ringsBoundingBox,
+	classifyFeatureCells,
+	featureCellRows,
+} from "@mailwoman/spatial"
 import { beginBatched } from "@mailwoman/sqlite/batched"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { CoastalDatabase } from "#schema"
-import { classifyFeatureCells, featureCellRows } from "#sdk/cells"
 import type { CoastalFeatureSource, CoastalSourceFeature } from "#sdk/ingest"
 import {
 	foldDefenceType,

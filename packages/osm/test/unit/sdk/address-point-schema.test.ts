@@ -6,9 +6,12 @@ import {
 	OSM_ADDRESS_H3_RESOLUTION,
 	type OSMAddressPointDatabase,
 } from "@mailwoman/osm/sdk/address-point-schema"
-import { normalizeStreetForKeyLocale } from "@mailwoman/osm/sdk/street-locale"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
-import { canonicalizeRouteKey, normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
+import {
+	canonicalizeRouteKey,
+	normalizeLocalityForKey,
+	normalizeStreetForKeyLocale,
+} from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 import { describe, expect, it } from "vitest"

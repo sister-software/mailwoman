@@ -18,6 +18,7 @@ import { serveNode } from "@mailwoman/api-kit"
 import { matchCountry } from "@mailwoman/codex/country"
 import { pyTitle } from "@mailwoman/core"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import {
 	corsBannerLine,
@@ -29,7 +30,7 @@ import {
 } from "mailwoman/cli-kit/dropin"
 import type { ResolvedEngineStamp } from "mailwoman/cli-kit/engine-stamp"
 import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
-import { createResolverBackend, mailwomanDataRoot } from "mailwoman/resolver-backend"
+import { createResolverBackend } from "mailwoman/resolver-backend"
 
 import {
 	createPhotonApp,

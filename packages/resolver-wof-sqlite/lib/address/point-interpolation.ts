@@ -33,7 +33,7 @@
  *   Standalone like the segment tier — core wiring rides the Phase 2 ordered `spatialTiers` list.
  */
 
-import type { InterpolationLookup } from "@mailwoman/resolver"
+import type { InterpolationLookup } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -41,7 +41,6 @@ import type { AddressPointDatabase } from "#address/point-schema"
 import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "#interpolation"
 import { hasTable, prepareAll, type PreparedAll } from "#sqlite-utils"
 import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "#street/normalize"
-
 /**
  * Extrapolation cap for a single-sided bracket: at most one pair-span beyond the nearest known point (`t = 2`). Past
  * it, the two-point line carries no evidence about the query number.

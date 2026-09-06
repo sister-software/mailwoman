@@ -63,9 +63,10 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { isPresent } from "@mailwoman/core/objects"
 import type { ComponentTag } from "@mailwoman/core/types"
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
-import { makeMulberry32, sliceSourceID, type CorpusRecipe } from "#recipes/scaffold"
+import { sliceSourceID, type CorpusRecipe } from "#recipes/scaffold"
 import {
 	buildIdentifierModel,
 	buildStreetNegatives,

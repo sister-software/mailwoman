@@ -39,8 +39,6 @@ import { parseJSONStrict } from "@mailwoman/core/json"
 import { saverestToISODate } from "#sdk/tabular"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.
-export { isTransientResourceError } from "@mailwoman/core/api"
-export { ResourceError } from "@mailwoman/core/errors"
 
 /**
  * The tabular endpoint. Anonymous: no key, no account, and no rate-limit header on any observed response.

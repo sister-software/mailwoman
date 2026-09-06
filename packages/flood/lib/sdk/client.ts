@@ -34,8 +34,6 @@ import { createPacedCachedClient, type CreatePacedCachedClientOptions } from "@m
 import { EA_FLOOD_DATASET_ID, EA_FLOOD_LAYER } from "#vocabulary"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.
-export { isTransientResourceError } from "@mailwoman/core/api"
-export { ResourceError } from "@mailwoman/core/errors"
 
 /**
  * The EA's spatial-data service root for the Flood Map for Planning product.
@@ -77,7 +75,6 @@ export const EA_CATALOGUE_PACKAGE_ID = "104434b0-5263-4c90-9b1e-e43b1d57c750"
 /**
  * The catalogue API the entry is read from.
  */
-export { CKAN_CATALOGUE_API_BASE_URL as CATALOGUE_API_BASE_URL } from "@mailwoman/core/api"
 
 /**
  * The licence value the catalogue entry must carry. A different value is a licence change, and a build that absorbed

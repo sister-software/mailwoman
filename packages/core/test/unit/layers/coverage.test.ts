@@ -4,7 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { assertAreaAgreement, CoverageBasis, sourcePresentCoverageCells } from "@mailwoman/core/layers"
+import { assertAreaAgreement, sourcePresentCoverageCells } from "@mailwoman/core/layers"
+import { CoverageBasis } from "@mailwoman/evidence"
 import { describe, expect, it } from "vitest"
 
 describe("sourcePresentCoverageCells", () => {

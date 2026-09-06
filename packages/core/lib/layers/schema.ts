@@ -85,7 +85,6 @@ export interface LayerManifestTable {
 
 // Owned by @mailwoman/evidence so bdc, resolver and filer can check on the SAME FUNCTION rather than on matching copies
 // of the same three strings. The layer_coverage schema and its IO stay here.
-export { CoverageBasis } from "@mailwoman/evidence"
 
 export interface LayerCoverageTable {
 	/**

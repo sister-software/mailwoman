@@ -21,12 +21,12 @@
  *   Fastify-native, so it reuses those SHAPES rather than `@mailwoman/api-kit`'s Hono plumbing.
  */
 
+import type { AddressTree, PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/core"
 import type { decodeAsTuples } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify"
 import fp from "fastify-plugin"
-import type { AddressTree, PipelineOpts, PipelineResult, POIIntentOutcome } from "mailwoman"
 import type { extractGeocodeResult, GeocodeResult } from "mailwoman/geocode"
 
 /**

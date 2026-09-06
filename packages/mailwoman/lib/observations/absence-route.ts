@@ -57,16 +57,10 @@
  *   so a caller who never builds a route never loads it.
  */
 
-import {
-	CoverageBasis,
-	type CoverageCell,
-	type LayerManifest,
-	readLayerCoverage,
-	readLayerManifest,
-	supportsExclusion,
-} from "@mailwoman/core/layers"
+import { type CoverageCell, type LayerManifest, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import type { POIIntentOutcome } from "@mailwoman/core/pipeline"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
+import { CoverageBasis, supportsExclusion } from "@mailwoman/evidence"
 import type {
 	CompiledGeographicModel,
 	ConceptRecord,
@@ -81,7 +75,6 @@ import { latLngToCell } from "h3-js"
 
 import { readCommittedModel } from "#observations/committed-model"
 import { resolvePOISearchCenter } from "#poi/executor"
-
 /**
  * The relation an affordance is asserted under — the one the frozen vertical slice defines, and the only one this route
  * reads. The semantic route reads the same relation for the opposite direction (phrase → category); this one reads it

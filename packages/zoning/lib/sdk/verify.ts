@@ -34,11 +34,18 @@
  *   it reads, which is how a rendering difference gets reported as a conversion defect.
  */
 
-import { nearestRingEdgeMetres, pointInEncodedRings, strideSampleInteriorPoints } from "@mailwoman/spatial"
+import {
+	nearestRingEdgeMetres,
+	pointInEncodedRings,
+	strideSampleInteriorPoints,
+	encodeRings,
+	type MultiPolygonRings,
+	type PolygonRings,
+} from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { ZoningLookup, ZoningReadingKind, type ZoningReading } from "#index"
-import { encodeRings, resolveRingRoles, type MultiPolygonRings, type PolygonRings } from "#rings"
+import { resolveRingRoles } from "#rings"
 import type { ZoningDatabase } from "#schema"
 import type { GZTClient } from "#sdk/client"
 

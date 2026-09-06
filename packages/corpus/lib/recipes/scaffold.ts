@@ -79,7 +79,6 @@ export interface SliceTuple {
  * A recipe must seed the same one its `.mjs` did, the same way it did (usually `seed`, but some derive a per-stream
  * seed), or `--seed N` stops being byte-reproducible.
  */
-export { makeLcg, mulberry32 as makeMulberry32, makeLcg as makeRandom } from "@mailwoman/core/utils"
 
 /**
  * One CSV record, keyed by its lower-cased header name, every value trimmed. A column the header does not declare reads

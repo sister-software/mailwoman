@@ -33,12 +33,12 @@ import {
 	FIXTURE_ORIGIN,
 	FIXTURE_SCENARIOS,
 	FIXTURE_SIDE,
-	rectangleRing,
 } from "@mailwoman/coastal/test-kit"
 import { NCERM_LAYER_NAME } from "@mailwoman/coastal/vocabulary"
 import { statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { CoverageBasis, supportsExclusion } from "@mailwoman/core/layers"
+import { CoverageBasis, supportsExclusion } from "@mailwoman/evidence"
+import { rectangleRing } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 

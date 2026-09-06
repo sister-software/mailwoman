@@ -29,18 +29,17 @@
  */
 
 import { writeLocalTextFile, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
 import {
-	CommandError,
 	type CommandSpec,
 	CommandTaskResult,
 	type ParsedCommandComponent,
 	splitUpperList,
 	useCommandTask,
 } from "#cli-kit"
-
 // Overture prunes old releases from the bucket (the 2026-08-19 listing held exactly one), so a stale
 // pin fails the default ingest outright. Moves together with `gazetteer-pipeline/poi/defaults.ts`'s
 // pin — see its docstring for why the two constants stay independent.

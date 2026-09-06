@@ -17,13 +17,9 @@
  *   faults without the optional `@mailwoman/resolver-wof-sqlite` peer.
  */
 
-import {
-	CommandError,
-	type CommandSpec,
-	CommandTaskResult,
-	type ParsedCommandComponent,
-	useCommandTask,
-} from "#cli-kit"
+import { CommandError } from "@mailwoman/core/scripting/command"
+
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.

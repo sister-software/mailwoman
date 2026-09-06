@@ -25,14 +25,13 @@
  *   `@mailwoman/spatial`'s `shortCellToInt` via `uprnFullCell` — never reimplemented here.
  */
 
+import { allRows } from "@mailwoman/core/utils"
 import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { gridDisk } from "h3-js"
 
-import { allRows } from "#sqlite-utils"
 import type { UPRNDatabase } from "#uprn/schema"
 import { uprnFullCell } from "#uprn/schema"
-
 /**
  * Conservative FLOOR on how much CENTRE distance one unit of res-9 GRID distance buys, metres. Adjacent centres sit √3
  * × edge apart (avg edge 174.4 m → ≈302 m); the worst bearing across a ring costs a further ×0.866, and H3's projection

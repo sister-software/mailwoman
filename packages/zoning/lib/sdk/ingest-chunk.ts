@@ -33,12 +33,18 @@
  *   plans and about 880 vocabulary rows cross a process boundary for nothing.
  */
 
-import { addCoverageCells, encodeRings, ringAreaReadings, ringsBoundingBox } from "@mailwoman/spatial"
+import {
+	addCoverageCells,
+	encodeRings,
+	ringAreaReadings,
+	ringsBoundingBox,
+	classifyFeatureCells,
+	featureCellRows,
+} from "@mailwoman/spatial"
 import { beginBatched } from "@mailwoman/sqlite/batched"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { ZoningDatabase } from "#schema"
-import { classifyFeatureCells, featureCellRows } from "#sdk/cells"
 import type { ZoningFeatureSource, ZoningSourceFeature } from "#sdk/ingest"
 import { GZT_CROSSWALK_SCHEME, GZT_PROVENANCE_GRADE, GZT_ROLLUP_SCHEME, localSchemeFor } from "#vocabulary"
 

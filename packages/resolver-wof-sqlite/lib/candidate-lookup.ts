@@ -23,13 +23,15 @@
  *   `bbox` field on {@link FindPlaceQuery}).
  */
 
-import { jaroWinkler, levenshteinSimilarity } from "@mailwoman/match/comparators"
 import {
 	expandPlacetypeFilter,
-	partitionByContainment,
 	type Ancestor,
 	type GazetteerArtifactCoverage,
-} from "@mailwoman/resolver"
+	referentialFromPopulation,
+} from "@mailwoman/core/resolver"
+import { allRows } from "@mailwoman/core/utils"
+import { jaroWinkler, levenshteinSimilarity } from "@mailwoman/match/comparators"
+import { partitionByContainment } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
@@ -44,12 +46,11 @@ import {
 import { CANDIDATE_FTS_TABLE } from "#candidate-fts"
 import type { CandidateDatabase, CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "#candidate-schema"
 import { readGazetteerCoverageManifest } from "#coverage-manifest-schema"
-import { referentialFromPopulation } from "#place-importance-schema"
 import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "#postal/city-candidate-schema"
 import { rankByPrimaryPreference, type RankedRow, RERANK_FETCH } from "#primary-preference"
 import { applyProximityRerank } from "#proximity-rerank"
 import { REGION_CLASS_PLACETYPES, regionQualifierProbeKeys } from "#region-keys"
-import { allRows, hasColumn, hasTable } from "#sqlite-utils"
+import { hasColumn, hasTable } from "#sqlite-utils"
 import { type NameKey, normalizeLocalityForKey, stripLocalityQualifier } from "#street/normalize"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#types"
 

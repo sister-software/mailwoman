@@ -17,7 +17,8 @@
 
 import { isFile, statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { CoverageBasis, LayerTier, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
+import { LayerTier, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
+import { CoverageBasis } from "@mailwoman/evidence"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi"
 import type { POICategoryCodeTable, POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"

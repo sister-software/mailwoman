@@ -68,10 +68,11 @@
  *   blow-up). Disable that mask for any run including this slice.
  */
 
+import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
 import { decomposeFrStreet } from "#adapters/ban/street-decompose"
-import { alignAndWrite, makeMulberry32, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
+import { alignAndWrite, readTuples, type CorpusRecipe, sliceSourceID } from "#recipes/scaffold"
 import { pick } from "#synthesizers/utils"
 
 /**

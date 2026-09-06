@@ -39,10 +39,12 @@ import type {
 	ResolvedMapPlace,
 	Suggestion,
 } from "@mailwoman/react/map"
+import type { ResolveBias } from "@mailwoman/resolver-wof-wasm/browser-cascade"
+import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import type { Coordinates2D } from "@mailwoman/spatial"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
-import type { ReleaseInfo, ResolveBias, StreetResolution } from "#shared/demo-helpers"
+import type { ReleaseInfo, StreetResolution } from "#shared/demo-helpers"
 import {
 	DEFAULT_LOCALE,
 	fetchReleasesManifest,
@@ -50,7 +52,6 @@ import {
 	projectCascadeHits,
 	resolveDualRoles,
 	resolveStreet,
-	runCascade,
 	runClassifyStage,
 } from "#shared/demo-helpers"
 import type { DocsDemoAssets } from "#shared/demo-loader"

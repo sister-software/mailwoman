@@ -754,10 +754,52 @@ const preferHomeRule: Rule = {
 	},
 }
 
+/**
+ * A package re-exporting another workspace package's names (`export { X } from "@mailwoman/core"`, `export * from
+ * "@mailwoman/core/resolver"`) gives one declaration two public homes, and a reader can no longer tell from an import
+ * which package owns a type. The declaring package is the only public home: a consumer imports `Resolver` from
+ * `@mailwoman/core/resolver`, never through `@mailwoman/resolver`. `node:*` and third-party re-exports are not in scope
+ * — `@mailwoman/core/fs` re-exporting `node:stream` IS the funnel that keeps the builtin out of every other package —
+ * and a package's own `#` map is the module naming its siblings, not a foreign name.
+ */
+const noCrossPackageReexportRule: Rule = {
+	meta: {
+		name: "no-cross-package-reexport",
+		type: "problem",
+		schema: [],
+	},
+	create(context: RuleContext) {
+		const check = (node: AstNode): void => {
+			const specifier = literalDelimiter(node.source)
+
+			if (specifier === null || !/^(?:@mailwoman\/|mailwoman(?:\/|$))/.test(specifier)) return
+
+			context.report({
+				node,
+				message:
+					`Re-exporting from ${JSON.stringify(specifier)} gives its names a second public home. Consumers import ` +
+					"them from the package that declares them; delete the re-export and repoint the importers.",
+			})
+		}
+
+		return {
+			ExportNamedDeclaration(node: AstNode) {
+				if (node.source) {
+					check(node)
+				}
+			},
+			ExportAllDeclaration(node: AstNode) {
+				check(node)
+			},
+		}
+	},
+}
+
 const mailwomanPlugin: Plugin = {
 	meta: { name: "mailwoman" },
 	rules: {
 		"no-database-boundary-cast": noDatabaseBoundaryCastRule,
+		"no-cross-package-reexport": noCrossPackageReexportRule,
 		"no-database-handle-cast": noDatabaseHandleCastRule,
 		"no-import-meta-dirname-walk": noImportMetaDirnameWalkRule,
 		"no-import-meta-resolve": noImportMetaResolveRule,

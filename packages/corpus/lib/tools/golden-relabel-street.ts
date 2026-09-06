@@ -56,7 +56,12 @@
  *   fails.
  */
 
-import { isStreetDirectionalToken, matchTrailingSuffix, type USStreetSuffix } from "@mailwoman/codex/us"
+import {
+	isStreetDirectionalToken,
+	matchTrailingSuffix,
+	type USStreetSuffix,
+	NAME_PRONE_US_SUFFIXES,
+} from "@mailwoman/codex/us"
 import { pathExists, readDirectoryEntries, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
@@ -65,8 +70,6 @@ import { isPresent } from "@mailwoman/core/objects"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 import { basename, join } from "path-ts"
 import { TextSpliterator } from "spliterator"
-
-import { NAME_PRONE_US_SUFFIXES } from "#name-prone-us-suffixes"
 
 // ── Types ──────────────────────────────────────────────────────────────────
 

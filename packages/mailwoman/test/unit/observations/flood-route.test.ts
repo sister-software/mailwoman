@@ -20,6 +20,7 @@
 import type { AddressNode } from "@mailwoman/core/decoder"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { QueryKind } from "@mailwoman/core/pipeline"
+import type { Resolver } from "@mailwoman/core/resolver"
 import { buildFloodDatabase } from "@mailwoman/flood/sdk/build-flood"
 import { realizeFloodMapExtent } from "@mailwoman/flood/sdk/extent"
 import {
@@ -30,7 +31,6 @@ import {
 	FIXTURE_SIDE,
 } from "@mailwoman/flood/test-kit"
 import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL } from "@mailwoman/flood/vocabulary"
-import type { Resolver } from "@mailwoman/resolver"
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode"
 import { createAuthorityDesignationRoute } from "mailwoman/observations"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"

@@ -8,15 +8,17 @@
  *   ground the source never saw.
  */
 
-import type { LineStringPath, ParsedGeometry, PolygonRings } from "@mailwoman/spatial"
-import { geometryContains } from "@mailwoman/spatial"
-import { cellToBoundary } from "h3-js"
 import {
+	type LineStringPath,
+	type ParsedGeometry,
+	type PolygonRings,
 	geometryBBox,
 	interiorCoverageCells,
 	interiorCoverageCellSet,
 	regionCoverageCells,
-} from "mailwoman/gazetteer-pipeline/poi/coverage-region"
+	geometryContains,
+} from "@mailwoman/spatial"
+import { cellToBoundary } from "h3-js"
 import { describe, expect, it } from "vitest"
 
 /**

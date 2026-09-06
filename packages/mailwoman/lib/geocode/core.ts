@@ -36,11 +36,16 @@ import {
 	WORD_CONSISTENCY_SHIP_DEFAULT,
 	streetContextRequirementFor,
 } from "@mailwoman/core/pipeline"
-import type { AuthoritativeProvider } from "@mailwoman/core/resolver"
+import type {
+	AuthoritativeProvider,
+	AddressPointLookup,
+	PostcodePrefixIndexLike,
+	ResolveOpts,
+	Resolver,
+} from "@mailwoman/core/resolver"
 import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/core/resolver"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
-import type { AddressPointLookup, PostcodePrefixIndexLike, ResolveOpts, Resolver } from "@mailwoman/resolver"
 
 import { authoritativeQueryFrom, consultAuthoritativeProvider } from "#authoritative"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "#default/placer"
@@ -69,14 +74,6 @@ import { declaredAmbiguityMarker } from "#query-intent"
 import { recognizeUSRegions } from "#region-recognition"
 import { repairStrandedAffix } from "#stranded-affix-repair"
 import { applyStreetMissFallback } from "#street/miss-fallback"
-
-export { isUnitGradePostcodeHit, UNIT_GRADE_POSTCODE } from "@mailwoman/codex"
-
-export {
-	countriesFromPostcodeFormat,
-	countryFromPostcodeFormat,
-	POSTCODE_FORMAT_COUNTRY,
-} from "@mailwoman/core/resolver"
 
 export type { GeocodeClassifier } from "#geocode/classifier"
 

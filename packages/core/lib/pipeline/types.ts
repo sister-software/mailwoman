@@ -17,13 +17,11 @@ import type { AddressTree } from "#decoder/types"
 import type { ResolveOpts, Resolver, ResolverBackend } from "#resolver/types"
 import type { Section } from "#types/classifier"
 
-export type LocaleTag = string
-
 /**
  * Independent host/browser preferences. A timezone is evidence, never a locale conversion.
  */
 export interface MachinePreferences {
-	locale?: LocaleTag
+	locale?: Intl.UnicodeBCP47LocaleIdentifier
 	timeZone?: string
 }
 
@@ -45,7 +43,7 @@ export type PlacetypePairPassthrough = object | false
  * Common opts threaded through every stage.
  */
 export interface PipelineOpts {
-	locale?: LocaleTag
+	locale?: Intl.UnicodeBCP47LocaleIdentifier
 	userLocation?: UserLocation
 	/**
 	 * Explicit input register (operator Decision A / GTM B10 — see {@link InputMode}). When unset the pipeline derives it
@@ -128,9 +126,9 @@ export interface QueryShapeLite {
  * Detected (or asserted) locale + alternatives.
  */
 export interface LocaleHint {
-	locale: LocaleTag
+	locale: Intl.UnicodeBCP47LocaleIdentifier
 	confidence: number
-	alternatives: ReadonlyArray<{ locale: LocaleTag; confidence: number }>
+	alternatives: ReadonlyArray<{ locale: Intl.UnicodeBCP47LocaleIdentifier; confidence: number }>
 	source: "caller" | "environment" | "machine" | "detected" | "ensemble"
 	/**
 	 * Diagnostic provenance for inferred preferences. Locale and timezone remain independent signals.
@@ -138,7 +136,7 @@ export interface LocaleHint {
 	evidence?: {
 		intlLocale?: string
 		timeZone?: string
-		environmentLocale?: string
+		environmentLocale?: Intl.UnicodeBCP47LocaleIdentifier
 	}
 }
 
@@ -523,6 +521,21 @@ export interface AddressClassifier {
 }
 
 /**
+ * The Stage-2 locale detector the coordinator calls: the normalized input and its shape in, a {@link LocaleHint} out.
+ * The caller's hint wins outright; an environment locale sits below it and above inferred machine preferences.
+ * `@mailwoman/locale-hint` implements it over the query shape alone.
+ */
+export type LocaleDetector = (
+	input: NormalizedInputLite,
+	shape: QueryShapeLite,
+	opts?: {
+		hint?: Intl.UnicodeBCP47LocaleIdentifier
+		machinePreferences?: MachinePreferences
+		environmentLocale?: Intl.UnicodeBCP47LocaleIdentifier
+	}
+) => Promise<LocaleHint>
+
+/**
  * Injectable stage implementations. All optional — when a stage is absent, the coordinator either skips it (resolver)
  * or substitutes a no-op stub (normalize / queryShape / `@mailwoman/locale-check` stage / kind classifier). The
  * classifier is required for the full pipeline path; without it, the coordinator can only fast-path on QueryShape
@@ -531,11 +544,7 @@ export interface AddressClassifier {
 export interface RuntimePipelineStages {
 	normalize?: (raw: string, opts?: { locale?: string }) => NormalizedInputLite
 	computeQueryShape?: (input: NormalizedInputLite | string, opts?: { locale?: string }) => QueryShapeLite
-	detectLocale?: (
-		input: NormalizedInputLite,
-		shape: QueryShapeLite,
-		opts?: { hint?: LocaleTag; machinePreferences?: MachinePreferences; environmentLocale?: LocaleTag }
-	) => Promise<LocaleHint>
+	detectLocale?: LocaleDetector
 	classifyKind?: (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise<QueryKindResult>
 	/**
 	 * Coarse country router (#244). A `(normalizedText) → { country, confidence, posterior? }` predictor (a

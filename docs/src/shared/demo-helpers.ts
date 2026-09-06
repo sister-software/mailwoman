@@ -19,7 +19,6 @@ import type { DualRole, FSTMatcherLike, MailwomanClassifierLike, MailwomanLookup
 import { releasesManifestURL } from "./resources/index.ts"
 
 // Moved into the package so the resolvers can reach it; re-exported for the demo's callers.
-export { type ResolveBias, runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 
 /**
  * Project the cascade's hits onto the package's {@link ResolvedPlaceView} — the shape `useParsePipeline` and the result
@@ -221,7 +220,6 @@ export function pairCountryForInput(input: string): string | undefined {
  * copy this replaces sorted by TRAVERSAL order — which put a child ahead of its parent on 7 of 10 ordinary addresses
  * (`street_suffix` before `street`, `house_number` before `street`, `postcode` before `locality`).
  */
-export { flattenTreeNodes as flattenTree } from "@mailwoman/core/decoder"
 
 //#endregion
 

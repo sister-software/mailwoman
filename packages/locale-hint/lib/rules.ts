@@ -10,7 +10,7 @@
  *   highest-confidence non-null result; ties broken by scorer order (most-specific first).
  */
 
-import type { QueryShapeLike } from "#types"
+import type { QueryShapeFormatsView } from "@mailwoman/query-shape"
 
 /**
  * Confidence at or above which a known-format hit counts as unambiguous. Ambiguous hits — a bare 5-digit run, which
@@ -32,7 +32,7 @@ export interface LocaleCandidate {
  * - Arabic → ar (similar)
  * - Alpha / alphanumeric / numeric → no script-based commit (other scorers decide)
  */
-export function scoreByScript(shape: QueryShapeLike): LocaleCandidate | null {
+export function scoreByScript(shape: QueryShapeFormatsView): LocaleCandidate | null {
 	switch (shape.characterClass) {
 		case "cjk":
 			return { locale: "ja-JP", confidence: 0.8, reason: "characterClass=cjk" }
@@ -52,7 +52,7 @@ export function scoreByScript(shape: QueryShapeLike): LocaleCandidate | null {
  * low-confidence US (the most common 5-digit reading globally) — the caller can override with `--locale
  * fr-FR`/`--locale de-DE` when the disambiguating context isn't in the string.
  */
-export function scoreByPostcode(shape: QueryShapeLike): LocaleCandidate | null {
+export function scoreByPostcode(shape: QueryShapeFormatsView): LocaleCandidate | null {
 	// Prefer unambiguous (confidence ≥ 0.9) hits over ambiguous (0.6) — among them, pick the one
 	// with the highest confidence + most-specific country mapping.
 	const unambiguous = shape.knownFormats.filter((f) => f.confidence >= UNAMBIGUOUS_FORMAT_CONFIDENCE)
@@ -90,6 +90,6 @@ export function scoreByPostcode(shape: QueryShapeLike): LocaleCandidate | null {
  * Whole-input fallback: when nothing else fires, return en-US at low confidence. Keeps this stage always-decisive (no
  * `null` to the caller, ever).
  */
-export function scoreFallback(_shape: QueryShapeLike): LocaleCandidate {
+export function scoreFallback(_shape: QueryShapeFormatsView): LocaleCandidate {
 	return { locale: "en-US", confidence: 0.3, reason: "fallback" }
 }
