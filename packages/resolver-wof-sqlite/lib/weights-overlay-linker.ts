@@ -607,7 +607,7 @@ export interface DevOverlayManifest {
 	 * local pair is REMOVED — a stale local file shadows the base fallback and silently serves outdated bytes. Omitted:
 	 * the pair is left to `packages/release-kit/lib/weights/link-weights-overlay.ts`, the recipe writer.
 	 */
-	model?: { kind: "link"; digestCard?: string } | { kind: "inherit" }
+	model?: { kind: "link"; digestCard?: string } | { kind: "inherit" } | { kind: "char"; family: string }
 	/**
 	 * Soft-feed siblings linked warn-and-continue, in order.
 	 */
@@ -674,6 +674,42 @@ async function readWeightsCard(workspace: string): Promise<WeightsCard | undefin
  * that card's `files_md5`. The recipe and the card are the two registers a ship bumps in lockstep; a path bumped
  * without the card, or the reverse, fails here rather than after an eval shift graded against the wrong weights.
  */
+/**
+ * A char-path base (#2164): the graph and its sealed vocabulary from `release.config.json`'s `charWeights[family]`, no
+ * tokenizer. The dev overlay carries both so `resolveWeights` finds the package whole.
+ */
+async function linkCharModel(destDir: string, family: string): Promise<void> {
+	const recipe = (await readReleaseConfig()).charWeights?.[family]
+
+	if (!recipe) {
+		throw new Error(`release.config.json declares no charWeights.${family} — nothing to link for the ${family} base`)
+	}
+
+	const dataRoot = String(dataRootPath())
+
+	for (const [name, relative] of [
+		["model.onnx", recipe.model],
+		["char-vocab.json", recipe.charVocab],
+	] as const) {
+		const source = resolvePath(dataRoot, relative)
+
+		if (!(await pathExists(source))) {
+			throw new Error(`missing char-path source ${name} for ${family}: ${source}`)
+		}
+
+		await linkForce(source, resolvePath(destDir, name))
+
+		console.log(`linked ${resolvePath(destDir, name)} ← ${source}`)
+	}
+
+	// The card is what tells `resolveWeights` this package owes a vocabulary rather than a tokenizer (its `encoder`
+	// block), so the overlay carries the workspace's committed card beside the two binaries.
+	const card = resolvePath(String(workspacePath(`neural-weights-${family}`)), "model-card.json")
+
+	await linkForce(card, resolvePath(destDir, "model-card.json"))
+	await removeIfPresent(resolvePath(destDir, "tokenizer.model"))
+}
+
 async function linkBaseModelPair(destDir: string, digestCard: string | undefined): Promise<void> {
 	const recipe = await readReleaseConfig()
 
@@ -796,6 +832,8 @@ export async function materializeDevOverlay(manifest: DevOverlayManifest): Promi
 		await removeIfPresent(resolvePath(destDir, "tokenizer.model"))
 	} else if (manifest.model?.kind === "link") {
 		await linkBaseModelPair(destDir, manifest.model.digestCard)
+	} else if (manifest.model?.kind === "char") {
+		await linkCharModel(destDir, manifest.model.family)
 	}
 
 	for (const { source, name, consequenceIfMissing } of manifest.softFeed ?? []) {

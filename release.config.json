@@ -84,5 +84,12 @@
 		"r2ReleasePath": "releases/v${version}",
 		"hfBucket": "sister-software/mailwoman",
 		"hfModelRepo": "sister-software/mailwoman-${locale}"
+	},
+	"charWeights": {
+		"cjk": {
+			"model": "models/v8-cjk-full-s42/served-package/model.onnx",
+			"charVocab": "models/v8-cjk-full-s42/served-package/char-vocab.json",
+			"lineage": "v8-cjk-full step-024000 — fp32 ONNX behind char_ids (#2164). JP board: PyTorch 0.9653, served 0.9633; CN board locality_unit 12/14 served. The 0.0.1 name reservation shipped without the graph; the first functional release materializes it here."
+		}
 	}
 }

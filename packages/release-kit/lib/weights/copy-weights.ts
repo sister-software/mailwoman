@@ -237,6 +237,31 @@ export async function copyWeights({
 		await materializePairIndex(context, workspace, dir)
 	}
 
+	// Char-path bases (#2164): one graph and one sealed vocabulary per script family, no tokenizer, no soft feed.
+	for (const [family, recipe] of Object.entries(config.charWeights ?? {})) {
+		const workspace = `packages/neural-weights-${family}`
+		const dir = resolvePath(destRoot, workspace)
+
+		await makeDirectories(dir)
+
+		for (const [name, source] of [
+			["model.onnx", resolvePath(dataRoot, recipe.model)],
+			["char-vocab.json", resolvePath(dataRoot, recipe.charVocab)],
+		] as const) {
+			if (!(await tryStat(source))) {
+				throw new Error(`Missing char-path source for ${family}: ${source}`)
+			}
+
+			const dest = resolvePath(dir, name)
+
+			await removePathIfPresent(dest)
+			await copyFileTo(source, dest)
+		}
+
+		log(`copied char weights → ${workspace}/{model.onnx,char-vocab.json}`)
+		targets.push(workspace)
+	}
+
 	return { skipped: false, workspaces: targets }
 }
 

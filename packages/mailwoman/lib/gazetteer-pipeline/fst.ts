@@ -102,6 +102,12 @@ export const FST_LOCALES: ReadonlyMap<string, string[]> = new Map([
 	["de-de", ["DE"]],
 	["es-es", ["ES"]],
 	["it-it", ["IT"]],
+	// The CJK three (#1493): the autocomplete tier's place FST per locale, built from the same admin DB. The char-path
+	// model reads no FST prior (channel-free by contract); these serve `mailwoman eval autocomplete`'s `fst` arm and
+	// the Photon drop-in's type-ahead.
+	["ja-jp", ["JP"]],
+	["zh-cn", ["CN"]],
+	["ko-kr", ["KR"]],
 ])
 
 /**

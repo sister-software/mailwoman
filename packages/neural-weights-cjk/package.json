@@ -9,6 +9,7 @@
 		"directory": "packages/neural-weights-cjk"
 	},
 	"files": [
+		"model.onnx",
 		"char-vocab.json",
 		"model-card.json",
 		"README.md"
@@ -18,6 +19,9 @@
 	},
 	"publishConfig": {
 		"access": "public"
+	},
+	"devDependencies": {
+		"@mailwoman/resolver-wof-sqlite": "workspace:*"
 	},
 	"mailwoman": {
 		"encoder": "char"

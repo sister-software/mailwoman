@@ -5203,6 +5203,8 @@ __metadata:
 "@mailwoman/neural-weights-cjk@workspace:packages/neural-weights-cjk":
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-weights-cjk@workspace:packages/neural-weights-cjk"
+  dependencies:
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
 

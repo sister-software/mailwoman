@@ -3,10 +3,9 @@
 Mailwoman neural-classifier weights for CJK scripts: the char-path base model, Japanese and Chinese under one
 49-label head (`stage3-cjk`). Data-only; `@mailwoman/neural` loads it at runtime.
 
-**0.0.1 is a name reservation** and ships the card and the vocabulary only; `model.onnx` joins the manifest's `files`
-with the first functional release, which ships with the next `mailwoman` minor once the served board read is recorded
-on the epic (#2164) and the `ja-jp` / `zh-cn` overlays exist. The tarball audit refuses a manifest that promises a file
-the tarball lacks, so the graph is not listed until it is materialized at release time.
+**0.0.1 is a name reservation** and shipped the card and the vocabulary only. The manifest now lists `model.onnx`, which
+`mwops release copy-weights` materializes from `release.config.json`'s `charWeights.cjk` at release time; the first
+functional release ships with the next `mailwoman` minor once the `ja-jp` / `zh-cn` overlays exist.
 
 ## What this package ships
 
@@ -52,10 +51,10 @@ record: `docs/superpowers/specs/2026-09-05-cjk-serving-path.md`; receipts on #11
 
 ## Dev setup
 
-The graph is not committed. Copy it from the data root's artifact of record:
+The graph is not committed. Link it into the data-root overlay from `release.config.json`'s `charWeights.cjk`:
 
 ```bash
-cp $MAILWOMAN_DATA_ROOT/models/v8-cjk-full-s42/served-package/model.onnx packages/neural-weights-cjk/
+node packages/neural-weights-cjk/scripts/link-dev-weights.ts
 ```
 
-A `link-dev-weights` script over `materializeDevOverlay` follows with the first functional release.
+At release time `mwops release copy-weights` materializes the same two files into the workspace from that recipe.
