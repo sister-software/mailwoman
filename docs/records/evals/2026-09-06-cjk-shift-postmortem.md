@@ -62,6 +62,9 @@ suites, `mwdev_compare` over the Latin board where a resolver mechanism moved), 
 - One push went out with the root health suite red (2aac2de38: the ambiguous-noun counter and a double cast): the
   shell ran `yarn health` and then committed and pushed regardless of its exit. Chain the push on the exit code; the
   correction landed four minutes later (3486a25fa).
+- The Korean builder's `COUNTRY_TOKEN = "대한민국"` read as a hardcoded password to bandit (B105) and failed the `static`
+  CI job on 3486a25fa; the local `yarn lint:python` had reported it too, and its exit code went unread. Renamed to
+  `COUNTRY_NAME`. Read the exit code, not the tail of the output.
 - `zsh` does not word-split an unquoted variable: a loop that passed `"$1 $2 $3"` as one argument ran four silent
   no-ops before the shape was noticed.
 

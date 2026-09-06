@@ -69,7 +69,7 @@ DEFAULT_SOURCE_DIR = Path(DATA_ROOT) / "openaddresses" / "extracted" / "kr"
 LABEL_SET_NAME = "stage3-cjk"
 SOURCE = "juso-kr"
 COUNTRY = "KR"
-COUNTRY_TOKEN = "대한민국"
+COUNTRY_NAME = "대한민국"
 BOARD_BUCKET_MIN = 90
 
 # The spoken / typed short forms of the 17 시·도. A region absent here has no `short_region` register; the build
@@ -128,7 +128,7 @@ def render_row(
         renderer.put("postcode", postcode)
         renderer.glue(" ")
     if country:
-        renderer.put("country", COUNTRY_TOKEN)
+        renderer.put("country", COUNTRY_NAME)
         renderer.glue(sep)
     if register == "short_region":
         if not short_region:
