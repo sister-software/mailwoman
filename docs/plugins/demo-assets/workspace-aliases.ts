@@ -5,7 +5,7 @@
  * @file Source aliases used by the interactive docs demo.
  */
 
-import { resolvePackageSpecifier } from "@mailwoman/core/module/resolvers"
+import { tryResolvePackageSpecifier } from "@mailwoman/core/module/resolve-from"
 
 import { resolvePackageDirectoryEntry, resolvePackageEntry, resolvePackageFile } from "./workspace-resolution.ts"
 
@@ -113,7 +113,7 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 
 	for (const subpath of CODEX_SUBPATHS) {
 		const specifier = subpath ? `@mailwoman/codex/${subpath}` : "@mailwoman/codex"
-		const target = resolvePackageSpecifier(import.meta, `@mailwoman/codex`, subpath)
+		const target = tryResolvePackageSpecifier(import.meta.url, "@mailwoman/codex", subpath)
 
 		if (!target) {
 			console.warn(`[demo-assets] ${specifier} not resolvable — alias skipped`)

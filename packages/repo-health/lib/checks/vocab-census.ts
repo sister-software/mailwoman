@@ -217,7 +217,7 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 	// needs one of them to trip so its positive control still means something. `@vvago/vale` is this
 	// package's devDependency for exactly this line; knip cannot see a specifier passed to a resolver,
 	// so `knip.json` names the dependency as used.
-	const vale = await valeCommand(import.meta)
+	const vale = await valeCommand(import.meta.url)
 	const config = resolvePath(root, "docs/.vale-code-census.ini")
 
 	// Run from the REPO ROOT, because the paths are repo-relative. Run it from anywhere else and Vale

@@ -9,7 +9,7 @@
  *   from the caller's own location keeps the lookup inside the package that declares the dependency.
  */
 
-import { readPackageJSON, resolvePackageJSON, resolvePackageSpecifier } from "#module/resolvers"
+import { readPackageJSON, resolvePackageJSON, resolvePackageSpecifier } from "#module/resolve-from"
 
 export interface ValeCommand {
 	/**
@@ -29,10 +29,10 @@ interface ValeManifest {
 }
 
 /**
- * @param meta The caller's `import.meta`.
+ * @param base The caller's `import.meta.url`, so `@vvago/vale` resolves from the package that declares it.
  */
-export async function valeCommand(meta: ImportMeta): Promise<ValeCommand> {
-	const manifestPath = resolvePackageJSON(meta, "@vvago/vale")
+export async function valeCommand(base: string): Promise<ValeCommand> {
+	const manifestPath = resolvePackageJSON(base, "@vvago/vale")
 	const manifest = await readPackageJSON<ValeManifest>(manifestPath)
 
 	const bin = typeof manifest.bin === "string" ? manifest.bin : manifest.bin.vale
@@ -41,7 +41,7 @@ export async function valeCommand(meta: ImportMeta): Promise<ValeCommand> {
 		throw new TypeError(`@vvago/vale's package.json has no bin.vale entry`)
 	}
 
-	const binPath = resolvePackageSpecifier(meta, "@vvago/vale", bin)
+	const binPath = resolvePackageSpecifier(base, "@vvago/vale", bin)
 
 	return /\.[cm]?js$/u.test(bin) ? { file: process.execPath, argv: [binPath] } : { file: binPath, argv: [] }
 }

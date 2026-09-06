@@ -162,7 +162,7 @@ const LEGS: StyleLeg[] = [
 	},
 ]
 
-const VALE = await valeCommand(import.meta)
+const VALE = await valeCommand(import.meta.url)
 const $vale = $({ cwd: DOCS_DIR, nothrow: true })
 
 /**
