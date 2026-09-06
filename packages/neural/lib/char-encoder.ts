@@ -11,10 +11,10 @@
  *   Code points, not UTF-16 units. Python indexes `str` by code point, so an astral character (𠮷) is one unit there
  *   and must be one unit here; iterating the string with `Array.from` is what keeps the two encoders producing the same
  *   `char_ids` for the same text, which `test/unit/char-encoder.test.ts` pins against a fixture the Python side wrote.
+ *
+ *   This module is on the browser bundle (the classifier imports it), so it reaches no `node:` module: the vocabulary
+ *   file is read by the node-only loader and validated here.
  */
-
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import type { PathBuilderLike } from "path-ts"
 
 /**
  * The padding id: every slot outside the string or the unit's window, and every all-padding unit row. Fixed at 0 by the
@@ -115,23 +115,28 @@ export function encodeCharUnits(raw: string, vocabulary: CharVocabulary, contrac
 }
 
 /**
- * Read a sealed `char-vocab-*.json` artifact. Refuses a file that is not a flat `{ character: integer }` map, because a
- * malformed vocabulary would encode every character as UNK and the model would answer confidently on nothing.
+ * Validate a parsed `char-vocab-*.json` artifact into a vocabulary. Refuses anything that is not a flat `{ character:
+ * integer }` map with the reserved ids in place, because a malformed vocabulary would encode every character as UNK and
+ * the model would answer confidently on nothing. Pure: the file read lives on the node-only loader, so this module
+ * stays on the browser graph without a `node:` reach (#2168).
  */
-export async function loadCharVocabulary(path: PathBuilderLike): Promise<CharVocabulary> {
-	const parsed = await readLocalJSONFile<Record<string, unknown>>(path)
+export function parseCharVocabulary(parsed: unknown, source: string): CharVocabulary {
+	if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+		throw new TypeError(`char vocabulary ${source}: expected a { character: id } map`)
+	}
+
 	const vocabulary = new Map<string, number>()
 
-	for (const [character, id] of Object.entries(parsed)) {
+	for (const [character, id] of Object.entries(parsed as Record<string, unknown>)) {
 		if (typeof id !== "number" || !Number.isInteger(id)) {
-			throw new TypeError(`char vocabulary ${String(path)}: entry ${JSON.stringify(character)} has a non-integer id`)
+			throw new TypeError(`char vocabulary ${source}: entry ${JSON.stringify(character)} has a non-integer id`)
 		}
 
 		vocabulary.set(character, id)
 	}
 
 	if (vocabulary.get("<pad>") !== PAD_CHAR_ID || vocabulary.get("<unk>") !== UNK_CHAR_ID) {
-		throw new TypeError(`char vocabulary ${String(path)}: <pad> must be ${PAD_CHAR_ID} and <unk> ${UNK_CHAR_ID}`)
+		throw new TypeError(`char vocabulary ${source}: <pad> must be ${PAD_CHAR_ID} and <unk> ${UNK_CHAR_ID}`)
 	}
 
 	return vocabulary

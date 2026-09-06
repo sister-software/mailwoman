@@ -12,7 +12,7 @@ import type { SystemCode } from "@mailwoman/codex"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 
 import type { AnchorLookup } from "#anchor-inference"
-import { loadCharVocabulary } from "#char-encoder"
+import { parseCharVocabulary } from "#char-encoder"
 import { NeuralAddressClassifier } from "#classifier/index"
 import { parseCountryLexicon } from "#country-inference"
 import { parseGazetteerLexicon } from "#gazetteer-inference"
@@ -105,7 +105,7 @@ export async function loadClassifierFromWeights(
 	const charEncoder =
 		resolved.encoder.kind === "char"
 			? {
-					vocabulary: await loadCharVocabulary(resolved.charVocabPath!),
+					vocabulary: parseCharVocabulary(await readLocalJSONFile(resolved.charVocabPath!), resolved.charVocabPath!),
 					contract: {
 						maxUnits: resolved.encoder.maxUnits,
 						maxUnitWidth: resolved.encoder.maxUnitWidth,
