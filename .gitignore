@@ -208,3 +208,5 @@ nightshift
 
 # Wrangler's local secrets for `wrangler dev`; the committed shape is .dev.vars.example
 .dev.vars
+# Wrangler's local state (the local D1, cached builds) beside a worker
+.wrangler/

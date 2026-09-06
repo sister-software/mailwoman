@@ -94,6 +94,33 @@ Expected: `status: unknown_key` (the shipped register does not carry `v9-ac522cf
 - [ ] **Step 4:** a renewal under a Stripe test clock mints a second token with the next period's dates; a full refund in the dashboard flips `/v1/license-status` to `revoked`; the reconciliation cron's log names the ids only.
 - [ ] **Step 5:** the kill-switch drill: `ISSUANCE_ENABLED = "false"`, redeploy, pay again; the webhook answers 200 with `refused: issuance is disabled`, the claim reads `pending`, refresh still answers; flip back, and the next reconciliation mints the missed invoice.
 
+#### Receipt: the local run, 2026-09-06
+
+Every Task 3 step except the test-clock renewal ran against the real Stripe test account with the worker on the local
+Workers runtime (`wrangler dev --env sandbox --test-scheduled`, local D1, the sandbox pair from `.dev.vars`), Stripe's
+delivery replaced by fetching each event from `/v1/events` and posting it signed with the local webhook secret. The
+worker re-read every object from Stripe by id, so only the delivery was simulated.
+
+| Step                                                                             | Observed                                                                                                                                                                                                                                                          |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Monthly Payment Link, card 4242, licensee "Sandbox Licensee Ltd", terms accepted | redirect to `https://mailwoman.ai/license/issued?session_id=cs_test_a1aqjc5pP22HDn38M1E6Mm3qrKxtSVVJgHfwbCpk5MnfvXfGZqDRf2Nv7Z`; the session carried `consent.terms_of_service: accepted`, the custom field, and `metadata.agreement_version: commercial-2026-10` |
+| Claim before any webhook                                                         | `{"status":"pending"}`, `Access-Control-Allow-Origin: https://mailwoman.ai`, `Cache-Control: no-store`                                                                                                                                                            |
+| `invoice.paid` then `checkout.session.completed`                                 | `minted`, then `license row ensured`                                                                                                                                                                                                                              |
+| Claim after                                                                      | `issued`, `lid_NCwfjzo5Uwahg_-vc4PVoA`, `issued 2026-09-06`, `expires 2026-10-20` (period end 2026-10-06 plus 14), `refresh_secret` present once and absent on the next claim                                                                                     |
+| `mailwoman license verify --key … --online` on the shipped register              | `unknown_key` for `v9-ac522cf3`, `license lic_…: active` from the local worker                                                                                                                                                                                    |
+| `verifyLicenseKey` against the sandbox public key                                | `valid`, payload `lid`, `agreement`, `scope: all`                                                                                                                                                                                                                 |
+| `mailwoman license refresh --lid … --secret …`                                   | `Not written: this release does not trust key id v9-ac522cf3`, exit 1                                                                                                                                                                                             |
+| Wrong secret on the refresh route; status route                                  | 404; `{"status":"active"}`                                                                                                                                                                                                                                        |
+| The same two events again                                                        | `duplicate: true` for both                                                                                                                                                                                                                                        |
+| Full refund through the API, `charge.refunded` replayed                          | `handled: revoked`; status and claim read `revoked`                                                                                                                                                                                                               |
+| Kill switch: issuance off, yearly Payment Link purchase, events replayed         | `refused: issuance is disabled`, claim `pending`, refresh for the revoked license still answers                                                                                                                                                                   |
+| Issuance on, `__scheduled` cron triggered                                        | `{"minted":["in_1UCW8sANyI6tE9BzoWT7iV4f"],"resent":[],"refused":[],"corrected":[],"failed":[]}`; claim reads `issued`, `expires 2027-09-20`                                                                                                                      |
+
+Two findings from the run. The live site answered 404 for `/.well-known/mailwoman/license-keys.json` although the file
+is tracked and the local build emits it: `actions/upload-pages-artifact` excludes every dot-entry unless
+`include-hidden-files: true`, now set in `docs-build.yml`. And the email provider key was a placeholder, so each token's
+`email_state` read `failed` and every reconciliation retried it, which is the designed path.
+
 ### Task 4: the production signing key and the trust release
 
 **Files:** `packages/core/lib/license/register.ts`, `docs/static/.well-known/mailwoman/license-keys.json`
